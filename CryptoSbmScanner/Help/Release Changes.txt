@@ -1,0 +1,153 @@
+Mis je iets in onderstaande bevindingen/todo's of toekomstige todo's, geef het AUB aan want dan is wat we besproken hebben ergens tussen wal en schip gevallen...
+
+
+Bevindingen/Todo's:
+- Zien hoeveel een munt gestegen of gedaald is na de initiele melding (dat vereist een ander grid).
+- Een Telegram die de meldingen kan weergeven (dat is eigenlijk wat overkill, maar omdat het kan)
+- Het geheel open source maken (eerste aanvang reeds gemaakt op github, nog wat vertalen naar het Engels)
+- Bij het opstarten de laatste X candles opnieuw berekenen (dat geeft helaas aardig wat overhead, moet optimaler, ook geluiden e.d.)
+- Op de naam van de kolom kunnen sorteren en via een tweede en derde sleutel iets aan volgorde aanbrengen (nadruk op grote intervallen)
+- Experiment om een Mac versie te bouwen dmv MAUI XAML (een compleet nieuwe aanvliegroute van Microsoft)
+  Maar ik verwacht een duizendtal nieuwe problemen met geluid, voice, storage, sockets, hibernate/sleep enzovoort)
+- Visuele herkenning dat de scanner loopt (de getallen linksboven zeggen de mensen niet zoveel)
+  (ik heb hier eigenlijk geen alternatief voor, als iemand goede ideen heet laat het me weten aub)
+- Het font van de menuitem (en popup?) wordt niet aangepast (indien een ander lettertype of grootte wordt gekozen)
+- Validatie van de trenddetails voor de CC 2.0 methode (de trend is gerealiseerd, maar de validatie van de trend en % moet nog) 
+  De trend berekening is gebaseerd op de P&T en de analyse daarvan, maar deze kan nog niet helemaal okay zijn (ook lastig te bewijzen).
+  Een EMA8>EMA21 vergelijking is afgekeurd vanwege de obvious pullbacks (dat maakt een trend bearisch terwijl het overduidelijk bullish is)
+  Het alternatief is om de ma's in te zetten (ma50 > ma100 of ma100 > ma200), maar het voelt niet goed om de P&T in te ruilen voor MA's.
+  Besloten om het voor nu consequent te houden en helemaal niets te veranderen (afgezien van het toevoegen van 2 nieuwe intervallen).
+- Het symbol overzicht uitbreiden met volume, prijs e.d. Kunnen filteren op volume etc.
+- Black theming  https://stackoverflow.com/questions/61145347/c-how-to-make-a-dark-mode-theme-in-windows-forms-separate-form-as-select-the <geen prio>
+  Er is nu een slappe variant die iets met grijs doet (omdat anders de scrollbars en headers zo'n lelijk getoond worden), ik ben er niet tevreden over.
+- Bij veel signalen wordt de applicatie traag. Het verversen van de lijst met signalen lijkt hiervan zelf de veroorzaker te zijn
+  Dat zou opgelost kunnen zijn, er stond een vertraging (sleep(250) in, werkelijk?), zonder deze is het wel stukken beter, nog steeds tikkeltje langzaam..
+- Ondersteuning van andere exchanges (dat heeft momenteel niet mijn prioriteit)
+  Gezien het geheugengebruik die de tool heeft is een combinatie van exchanges niet aan te raden.
+
+
+xx-xx-2023 1.7
+- De instelling "Nieuwe munt dagen" deed helemaal niets, de code erachter is geherintroduceerd
+- Andere indicaties zoals de Bitcoin Dominantie, de DXY dolar index, de Market Cap and Volume en de SP&D.
+- Documentatie - Hoe start je de applicatie op.
+- Een nieuwe white- en black list speciaal voor de overbought (zodat je slechts bepaalde assets kunt gaan shorten, is nu een waterval van meldingen)
+  NB: De migratie van de oude white- en black list naar de nieuwe is niet gelukt, dus gaarne extra attentie daarvoor.
+- Een tabblad algemeen geintroduceerd om de instelingen te fatsoeneren.
+- Kleurtjes voor het accentueren van basismunten (Robin)
+- De limiet van de kruising maX/maY staat op 30, verhoogd naar 60
+- Onthouden van de laatste plaatsing op het scherm, en welk scherm
+- combobox interval: Het laatst gekozen interval onthouden
+- combobox barometer: De basis munten die niet aangevinkt zijn niet tonen in de barometer combobox, dan kun je ze ook niet kiezen en zie je de niet ingevulde data niet)
+- combobox barometer: De BUSD wordt standaard geselecteerd bij het opstarten (de instellingen zijn nog niet ingelezen)
+- combobox barometer: (duplicaat) Na een sleep/hybernate wordt de combobox barometer niet correct hersteld
+- De JUMP over een aantal candles laten lopen en optioneel ook via de highs en low's
+- Gray theming (een echte dark mode heeft teveel consequenties op dit moment, consessie is dat het voorlopig grijs is <work in progress!>)
+- De minimum prijs heeft 9 decimalen in plaats van de gebruikelijke 8 die voor een sat wordt gebruikt.
+- Black en whitelist: Eventuele spaties worden nu automatisch uit de invoer gehaald.
+- Documentatie - In de uitleg van de SBM werd gezegd dat de PSAR aan de "verkeerde" kant van de MA20 moet zitten
+- De instelling om een te lage barometer te loggen doet helemaal niets, deze alsnog geimplementeerd
+- Een fout opgelost die kan optreden bij het ophalen van de Binance info terwijl tegelijk verouderde candle informatie wordt verwijderd (ontbrekende locking)
+  "Exception: De verzameling is gewijzigd nadat de enumerator is gemaakt"
+- De melding "ma200 en ma50 gekruist" uitgebreid met het interval (kosmetisch)
+- De jump up/down wordt op basis van de voorgaande candle berekend (en niet de laatste candle)
+- De barometer 1h, 4h en 24h resizen niet netjes na het kiezen van een ander lettertype/grootte
+
+28-01-2023 1.61
+- Via dubbelklik op de prijzen rechtstreeks naar de trading application
+- Er worden geen meldingen meer gemaakt voor alle intervallen boven de 1 minuten
+- Op verzoek staan de waarden van de 1h, de 4h en de 1d weer op het hoofdscherm (via een grid dit keer)
+
+27-01-2023 1.6
+- De overgang van de 1.5 de 1.6 gaat niet oevral even goed dus iedereen moet de instellingen echt even controleren!
+- Aanpassing van de berekening van de SBM3, de BB moet van laag naar hoog gaan en ten opzichte van de eerste zoveel % gestegen zijn
+- Technische informatie optioneel verbergen via een instelling tonen (rsi, psar, ma's enzovoort)
+- Wat icoontjes toevoegen voor het kiezen en het testen van de sounds
+- Herstellen van de verbindingen als er binnen een aantal minuten geen candles of ticker infomatie meer binnenkomt
+  Dat gaat niet snel, maar werkt uiteindelijk wel, het duurt tot circa 2.5m dat de ontbrekende candles gesynched worden met Binance.
+- Initiele caption aangepast en het versie nummer tonen (altijd handig bij screenshots)
+- Een nieuwe optie om alle instellingen te resetten (na bevestiging dialoog)
+- Het lettertype kunnen instellen (via een dialoog)
+- Bijwerken van diverse overbought opties (stobb, sbm 1, 2 en 3), c.q. bijwerken met de nieuw geintroduceerde opties
+- De getoonde symbol en prijzen uitgebreid met de Fear en Greed index
+- Kleurtjes voor het accentueren van de type meldingen stobb, sbm of jump's?
+- Nieuwe (of delisted) symbols blijven in de scanner, daarom iedere uur opnieuw synchoniseren (de coint blijft wel een uur in de scanner hangen, opletten traders!)
+- De prijzen en 24h volume van een paar munten tonen (en kleuren toepassen ten opzichte van de voorgaande "interval" <dag/minuut>)
+- De icoontjes bijgewerkt (wat een werk voor wat suffe graphics)
+- Niet alle intervallen worden correct opgehaald, want Binance ondersteund niet alle intervallen die wij willen, hierdoor gaat de trend berekening niet correct
+- De 1d barometer (en wellicht ook de 4h) kan soms niet goed berekend worden (er moeten extra info opgehaald worden om de ontbrekende informatie op te bouwen). 
+  De 24 barometer moet voor de laatste 6 uur berekend worden (vanwege grafiek) en dus zijn er een paar uurtjes extra aan candle info nodig (denkfout)
+- De display van de 24 uur barometer wijkt qua display x-as af van de 1h (bevinding: er zijn te weinig candles omdat ze te snel worden opgeruimd)
+- Obfuscation alsnog activeren, maar dit keer slechts een beetje. Daarvoor is wel de serialization c.q. opslag structuur aangepast (probleem 1.5 -> 1.6 overgang)
+- Introductie folder "sounds" met daarin de geluidjes
+- Introductie folder "Help" met de pdf en release changes
+- De Binance.Exchangeinfo.json wordt niet meer bewaard
+- Als iets zowel een jump en een sbm is dan wordt daar intern niet correct mee omgesprongen (dat kan resulteren in een rare melding die wel te herkennen is, maar van verkeerde type)
+- Het bewaren en laden van de symbols is overbodig, alles loopt exclusief via de symbols die we ophalen van Binance (overblijfsel merge?)
+- De Barometer is enigzins traag (c.q. loopt ongeveer 25 seconden achter). Nu is er wel enige vertraging om alles te kunnen verwerken. Nu 10 seconden achterstand
+- Laden en bewaren van de json bestanden via een andere library (en sneller is dan de Newtonsoft <geen prio>)
+- De sbm3 gebruikt onderhuids een verkeerde formule (het is de bedoeling dat deze een sbm kan detecteren via oprekking van de bb.width, 100*max/min > 175 <instelbaar>)
+- Introductie van de 3h en 8h interval (voor de trendberekening is het van belang om ook genoeg zware intervallen te hebben)
+- Diverse nieuwe opties voor kruising van de ma's voor SBM in de laatste zoveel candles
+- Een grafische weergave van de 1h barometer (klein grafiekje rechtsboven met de laatste 3 uur), hiervoor de bovenste panel iets hoger gemaakt.
+- Ondersteuning van sleep/hybernate zodat het gewoon door werkt (en zonder dat de app crasht bij het herstellen van de verbinding)
+- Aangepaste interval berekening, het gebruikte gewicht is te laag ten opzichte van het interval (maar zonder alle candles zowiezo niet correct)
+- De kolom laatste 48h is vervallen (dan hoeven we niet 48 uur aan candles in het geheugen te hebben)
+- Bij het afspelen van de geluiden voor SBM wordt de stobb geluiden gebruikt.
+
+08-01-2023 1.5
+- Optie om zelf te kiezen uit geluiden (zonder dat je ze zelf in de map moet zetten)
+- De stobb melding kan optioneel uitgebreid worden met een extra RSI oversold (of overbought) controle
+- De stobb melding kan optioneel uitgebreid worden met een extra SBM oversold (of overbought) (zonder de psar)
+- Bij een technische fout staan de regelnummers niet in de stackdump, lastig traceren (pdf file bijleveren)
+- Instellingen voor het afspelen, configureren en testen van speech uitbreiden
+- Naast Altrady ook een Altrady web ondersteuning (als je de Altrady applicatie niet gebruikt)
+- De 3 verschillende signalen kunnen nu via speech meegedeeld worden (male adult voice).
+  Attentie: er wordt per type signaal slechts 1 mededeling via voice gedaan (anders wordt je "gek")
+- Vanwege gebrek aan meldingen variaties op SBM bedacht, namelijk de SBM2, SBM3 en SBM4 mogelijkheid (niet publiseren denk ik?)
+- Vanwege audio problemen is een test-knop handig. Op deze manier kan bv op de mac/parallels snel iets testen.
+- De white- en black-list werkt helemaal niet. Na invoer (en opnieuw openen van de instellingen) zijn de munten verdwenen
+  (er is een stukje code niet overgezet van de "grote broertje" van de scanner naar de light-scanner)
+- Candles worden na 24 of 48 uur uit de cache gehaald, hiervoor si er een opruim routine, maar die heeft een bug omdat deze ook een First() doet op een lege lijst.
+- Als je in de signalen dubbelklikt wordt een andere munt in Hypertrader geopend.
+- De 24h barometer wordt niet meer getoond (na een recente aanpassing)
+- Instelling voor het verwijderen van signalen, die staat standaard op 15 candles.
+- Een "About" scherm, zodat je kan zien welke versie je draait.
+- Correcties op de hints van de STOBB en SBM (correcte tekst en nu met linebreaks)
+- De display van de Stochastic signal en oscillator bevatten te veel decimalen (het aantal decimalen van de munt worden gebruikt)
+- De bestanden voor de geluiden uitgebreid naar de 6 type signalen die de applicatie kan genereren (+ instellingen daarvoor)
+- Het onderdrukken van (te frequente geluiden) zorgde ervoor dat het stobb geluidje niet correct werd afgespeeld
+- Het browser tab alvast vullen met BTCBUSD bij het opstarten om er zo voor te zorgen dat deze het direct doet (geen witte pagina).
+- STOBB: De afronding verwijderd. want deze zou vanwege "barcode charts" (1 tick is een grote percentage) problemen kunnen veroorzaken
+- Trenddetails (deel 1 - ophalen van candle informatie van alle intervallen) zodat de CC 2.0 methode er ook op werkt
+  (de eerste keer opstarten duurt hierdoor vbeel langer,, ook het geheugengebruik gaat hierdoor omhoog)
+- Afwijkend waarden voor de BB% percentage (en daarom ook kans kans op verkeerde signalen), formule Percentage=100 * (UpperBand / LowerBand) -1
+- Trenddetails zodat de CC 2.0 methode er ook op werkt (dit is gerealiseerd maar de trend en % is nog niet gevalideerd!)
+
+23-12-2023 1.4
+- De documentatie moet in pdf (met wat plaatjes)
+- Een verborgen browser gebruiken om Altrady op te starten
+- De 48h% change klopte niet. Deze heeft net 1 candle te kort om het te berekenen
+- Documentatie via de Tooltip, dan hoeft er niet persee een apart document bij..
+- De trend indicatie klopt niet, achteraf logisch, want deze tool berekend dit vanuit de laagste 3 intervallen.
+- De barometer symbool niet in de lijst zetten (dit is een muntje voor de interne administratie van de barometer)
+- Er worden geen (broncode) obfuscators meer gebruikt, de virus scanners zouden nu allemaal braaf moeten zijn
+- Het browser tab alvast vullen met BTCBUSD bij het opstarten om er zo voor te zorgen dat deze het direct doet (geen witte pagina).
+
+21-12-2022 1.3
+- Ik zag een nullable error in de log voorbij komen (een psar object was niet berekend)
+
+21-12-2022 1.2
+- Alle serializable classes moeten wel worden uitgesloten van obfuscatie.
+- Een andere c# obfuscator ingezet (een trial van .NET Reactor v6.9 waardoor deze applicatie 14 dagen kan draaien)
+- De applicatie word helaas als een false positive verwijderd door MS Defender (op zoek naar andere obfuscator)
+
+21-12-2022 1.1
+- Object CandleFetched verwijderd.
+- Obfuscator zorgde voor valse virus meldingen.
+- Opslag voor candle aangepast binance\quote\base.
+- Opslag folder C:\Users\YourName\AppData\Roaming\CryptoScanner
+- Het geselecteerde barometer symbool wordt nu bewaard
+
+03-12-2022
+- Hypertrader werd niet op de juiste manier geactiveerd
+
