@@ -1,0 +1,6 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Obfuscator>
+  <Var name="InPath" value="obj\Release\" />
+  <Var name="OutPath" value="obj\Release\\Out" />
+  <Include path="_Obfuscar\obfuscar.xml" />
+</Obfuscator>
