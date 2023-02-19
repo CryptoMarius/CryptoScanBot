@@ -93,8 +93,8 @@ namespace CryptoSbmScanner
                             GlobalData.AddTextToLogTab(lastCandle.DateLocal.ToString() + " " + Symbol.Name + " " + Interval.Name + " ma200-50, geen candledata! " +
                                 Candles.Count + " " + candleCount + " prevcandle= " + Toelichting(prevCandle) + " lastcandle=" + Toelichting(lastCandle));
                         }
-                    }
 #endif
+                    }
                 }
 #if DEBUG
                 else GlobalData.AddTextToLogTab(lastCandle.DateLocal.ToString() + " " + Symbol.Name + " " + Interval.Name + " ma200-50, geen candle! " + Candles.Count);
@@ -195,8 +195,8 @@ namespace CryptoSbmScanner
                             GlobalData.AddTextToLogTab(lastCandle.DateLocal.ToString() + " " + Symbol.Name + " " + Interval.Name + " ma50-20, geen candledata! " +
                             Candles.Count + " " + candleCount + " prevcandle= " + Toelichting(prevCandle) + " lastcandle=" + Toelichting(lastCandle));
                         }
-                    }
 #endif
+                    }
                 }
 #if DEBUG
                 else GlobalData.AddTextToLogTab(lastCandle.DateLocal.ToString() + " " + Symbol.Name + " " + Interval.Name + " ma50-20, geen candle! " + Candles.Count);
