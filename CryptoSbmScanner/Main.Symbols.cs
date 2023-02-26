@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.Web.WebView2.Core;
+using System;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace CryptoSbmScanner
@@ -85,11 +87,13 @@ namespace CryptoSbmScanner
 
                 if (webViewTradingView.Source == null)
                 {
-                    Invoke((MethodInvoker)(() => ActivateTradingViewBrowser()));
+                    Invoke((MethodInvoker)(async() => ActivateTradingViewBrowser()));
                 }
 
             }
         }
+
+
 
 
         private void listBoxSymbolsMenuItemActivateTradingApp_Click(object sender, EventArgs e)

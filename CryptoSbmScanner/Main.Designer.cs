@@ -31,6 +31,8 @@
             this.labelVersion = new System.Windows.Forms.Label();
             this.applicationMenuStrip = new System.Windows.Forms.MenuStrip();
             this.MenuMain = new System.Windows.Forms.ToolStripMenuItem();
+            this.ApplicationPlaySounds = new System.Windows.Forms.ToolStripMenuItem();
+            this.ApplicationCreateSignals = new System.Windows.Forms.ToolStripMenuItem();
             this.ToolStripMenuItemSettings = new System.Windows.Forms.ToolStripMenuItem();
             this.ToolStripMenuItemRefresh = new System.Windows.Forms.ToolStripMenuItem();
             this.clearMenusToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -214,6 +216,8 @@
             // MenuMain
             // 
             this.MenuMain.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.ApplicationPlaySounds,
+            this.ApplicationCreateSignals,
             this.ToolStripMenuItemSettings,
             this.ToolStripMenuItemRefresh,
             this.clearMenusToolStripMenuItem,
@@ -222,31 +226,49 @@
             this.MenuMain.Size = new System.Drawing.Size(50, 20);
             this.MenuMain.Text = "Menu";
             // 
+            // ApplicationPlaySounds
+            // 
+            this.ApplicationPlaySounds.Checked = true;
+            this.ApplicationPlaySounds.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.ApplicationPlaySounds.Name = "ApplicationPlaySounds";
+            this.ApplicationPlaySounds.Size = new System.Drawing.Size(180, 22);
+            this.ApplicationPlaySounds.Text = "Geluiden afspelen";
+            this.ApplicationPlaySounds.Click += new System.EventHandler(this.ApplicationPlaySounds_Click);
+            // 
+            // ApplicationCreateSignals
+            // 
+            this.ApplicationCreateSignals.Checked = true;
+            this.ApplicationCreateSignals.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.ApplicationCreateSignals.Name = "ApplicationCreateSignals";
+            this.ApplicationCreateSignals.Size = new System.Drawing.Size(180, 22);
+            this.ApplicationCreateSignals.Text = "Signalen maken";
+            this.ApplicationCreateSignals.Click += new System.EventHandler(this.ApplicationCreateSignals_Click);
+            // 
             // ToolStripMenuItemSettings
             // 
             this.ToolStripMenuItemSettings.Name = "ToolStripMenuItemSettings";
-            this.ToolStripMenuItemSettings.Size = new System.Drawing.Size(135, 22);
+            this.ToolStripMenuItemSettings.Size = new System.Drawing.Size(180, 22);
             this.ToolStripMenuItemSettings.Text = "Instellingen";
             this.ToolStripMenuItemSettings.Click += new System.EventHandler(this.ToolStripMenuItemSettings_Click);
             // 
             // ToolStripMenuItemRefresh
             // 
             this.ToolStripMenuItemRefresh.Name = "ToolStripMenuItemRefresh";
-            this.ToolStripMenuItemRefresh.Size = new System.Drawing.Size(135, 22);
+            this.ToolStripMenuItemRefresh.Size = new System.Drawing.Size(180, 22);
             this.ToolStripMenuItemRefresh.Text = "Verversen";
             this.ToolStripMenuItemRefresh.Click += new System.EventHandler(this.ToolStripMenuItemRefresh_Click_1);
             // 
             // clearMenusToolStripMenuItem
             // 
             this.clearMenusToolStripMenuItem.Name = "clearMenusToolStripMenuItem";
-            this.clearMenusToolStripMenuItem.Size = new System.Drawing.Size(135, 22);
+            this.clearMenusToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.clearMenusToolStripMenuItem.Text = "Clear";
             this.clearMenusToolStripMenuItem.Click += new System.EventHandler(this.mainMenuClearAll_Click);
             // 
             // applicationMenuItemAbout
             // 
             this.applicationMenuItemAbout.Name = "applicationMenuItemAbout";
-            this.applicationMenuItemAbout.Size = new System.Drawing.Size(135, 22);
+            this.applicationMenuItemAbout.Size = new System.Drawing.Size(180, 22);
             this.applicationMenuItemAbout.Text = "About";
             this.applicationMenuItemAbout.Click += new System.EventHandler(this.applicationMenuItemAbout_Click);
             // 
@@ -676,6 +698,8 @@
         private System.Windows.Forms.Timer timerCandles;
         private System.Windows.Forms.Label labelVersion;
         private CryptoSbmScanner.ListViewDoubleBuffered listViewInformation;
+        private System.Windows.Forms.ToolStripMenuItem ApplicationPlaySounds;
+        private System.Windows.Forms.ToolStripMenuItem ApplicationCreateSignals;
     }
 }
 

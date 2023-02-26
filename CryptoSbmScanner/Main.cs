@@ -13,6 +13,8 @@ using Newtonsoft.Json;
 using System.Reflection;
 using System.Drawing.Drawing2D;
 using TradingView;
+using Microsoft.Web.WebView2.Core;
+using Google.Protobuf.WellKnownTypes;
 
 namespace CryptoSbmScanner
 {
@@ -43,8 +45,8 @@ namespace CryptoSbmScanner
 
 
             // Om vanuit achtergrond threads iets te kunnen loggen (kan charmanter?) 
-            GlobalData.PlaySound += new AddTextEvent(PlaySound);
-            GlobalData.PlaySpeech += new AddTextEvent(PlaySpeech);
+            GlobalData.PlaySound += new PlayMediaEvent(PlaySound);
+            GlobalData.PlaySpeech += new PlayMediaEvent(PlaySpeech);
             GlobalData.LogToTelegram += new AddTextEvent(AddTextToTelegram);
             GlobalData.LogToLogTabEvent += new AddTextEvent(AddTextToLogTab);
             GlobalData.SetCandleTimerEnableEvent += new SetCandleTimerEnable(SetCandleTimerEnableHandler);
@@ -62,6 +64,7 @@ namespace CryptoSbmScanner
             listBoxSymbols.DoubleClick += new System.EventHandler(this.listBoxSymbols_DoubleClick);
             listViewSignals.DoubleClick += new System.EventHandler(this.listViewSignalsMenuItem_DoubleClick);
             listViewSymbolPrices.DoubleClick += new System.EventHandler(this.listViewSymbolPrices_DoubleClick);
+
 
             // Instelling laden waaronder de API enzovoort
             GlobalData.LoadSettings();
@@ -187,6 +190,9 @@ namespace CryptoSbmScanner
             listViewSymbolPrices.GridLines = false;
             listViewSymbolPrices.View = View.Details;
 
+            ApplicationPlaySounds.Checked = GlobalData.Settings.Signal.SoundsActive;
+            ApplicationCreateSignals.Checked = GlobalData.Settings.Signal.SignalsActive;
+
             this.Refresh();
         }
 
@@ -269,19 +275,21 @@ namespace CryptoSbmScanner
         }
 
 
-        private void PlaySound(string text, bool extraLineFeed = false)
+        private void PlaySound(string text, bool test = false)
         {
             if ((!ProgramExit) && (IsHandleCreated))
             {
-                ThreadSoundPlayer.AddToQueue(text);
+                if (GlobalData.Settings.Signal.SoundsActive)
+                    ThreadSoundPlayer.AddToQueue(text);
             }
         }
 
-        private void PlaySpeech(string text, bool extraLineFeed = false)
+        private void PlaySpeech(string text, bool test = false)
         {
             if ((!ProgramExit) && (IsHandleCreated))
             {
-                ThreadSpeechPlayer.AddToQueue(text);
+                if (GlobalData.Settings.Signal.SoundsActive || test)
+                    ThreadSpeechPlayer.AddToQueue(text);
             }
         }
 
@@ -573,6 +581,8 @@ namespace CryptoSbmScanner
 
         private void ShowSymbolPrice(SymbolHist hist, ListViewItem item, CryptoExchange exchange, CryptoQuoteData quoteData, string baseCoin, SymbolValue tvValues)
         {
+            // Not a really charming way to display items, but voila, it works for now..
+
             if (baseCoin == "FNG")
             {
                 ListViewItem.ListViewSubItem subItem = item.SubItems[0];
@@ -587,8 +597,14 @@ namespace CryptoSbmScanner
                 subItem = item.SubItems[3];
                 subItem.Text = tvValues.Name;
 
+                decimal value = tvValues.Lp;
                 subItem = item.SubItems[4];
-                subItem.Text = tvValues.Lp.ToString(tvValues.DisplayFormat);
+                subItem.Text = value.ToString(tvValues.DisplayFormat);
+                if (value < tvValues.LastValue)
+                    subItem.ForeColor = Color.Red;
+                else if (value > tvValues.LastValue)
+                    subItem.ForeColor = Color.Green;
+                tvValues.LastValue = value;
 
                 return;
             }
@@ -641,8 +657,14 @@ namespace CryptoSbmScanner
                 subItem = item.SubItems[3];
                 subItem.Text = tvValues.Name;
 
+                value = tvValues.Lp;
                 subItem = item.SubItems[4];
-                subItem.Text = tvValues.Lp.ToString(tvValues.DisplayFormat);
+                subItem.Text = value.ToString(tvValues.DisplayFormat);
+                if (value < tvValues.LastValue)
+                    subItem.ForeColor = Color.Red;
+                else if (value > tvValues.LastValue)
+                    subItem.ForeColor = Color.Green;
+                tvValues.LastValue = value;
 
 
                 hist.Symbol = symbol.Name;
@@ -1031,6 +1053,8 @@ namespace CryptoSbmScanner
         {
             // Dan wordt de basecoin en coordinaten etc. bewaard voor een volgende keer
             WindowLocationSave();
+            GlobalData.Settings.Signal.SoundsActive = ApplicationPlaySounds.Checked;
+            GlobalData.Settings.Signal.SignalsActive = ApplicationCreateSignals.Checked;
             GlobalData.Settings.General.SelectedBarometerQuote = comboBoxBarometerQuote.Text;
             GlobalData.Settings.General.SelectedBarometerInterval = comboBoxBarometerInterval.Text;
             try
@@ -1190,7 +1214,7 @@ namespace CryptoSbmScanner
 
 
 
-        private void ActivateTradingViewBrowser(string symbolname = "BTCBUSD")
+        async private void ActivateTradingViewBrowser(string symbolname = "BTCBUSD")
         {
             CryptoInterval interval;
             if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1m, out interval))
@@ -1202,6 +1226,11 @@ namespace CryptoSbmScanner
                 CryptoSymbol symbol;
                 if (exchange.SymbolListName.TryGetValue(symbolname, out symbol))
                 {
+                    // https://stackoverflow.com/questions/63404822/how-to-disable-cors-in-wpf-webview2
+                    var userPath = GlobalData.GetBaseDir();
+                    var webView2Environment = await CoreWebView2Environment.CreateAsync(null, userPath);
+                    await webViewTradingView.EnsureCoreWebView2Async(webView2Environment);
+
                     var href = TradingView.GetRef(symbol, interval);
                     Uri uri = new Uri(href);
                     webViewTradingView.Source = uri;
@@ -1209,53 +1238,53 @@ namespace CryptoSbmScanner
             }
         }
 
-        //private void ChangeTheme(ColorSchemeTest theme, Control.ControlCollection container)
-        //{
-        //    //return;
-        //    //foreach (Control component in container)
-        //    //{
-        //    //    if (component is Form)
-        //    //        ((MetroFramework.Forms.MetroForm)component).StyleManager = this.StyleManager;
-        //    //    if (component is MetroFramework.Controls.MetroPanel)
-        //    //        ((MetroFramework.Controls.MetroPanel)component).StyleManager = this.StyleManager;
-        //    //    else if (component is MetroFramework.Controls.MetroButton)
-        //    //        ((MetroFramework.Controls.MetroButton)component).StyleManager = this.StyleManager;
-        //    //    else if (component is MetroFramework.Controls.MetroTextBox)
-        //    //        ((MetroFramework.Controls.MetroTextBox)component).StyleManager = this.StyleManager;
-        //    //    else if (component is MetroFramework.Controls.MetroScrollBar)
-        //    //        ((MetroFramework.Controls.MetroScrollBar)component).StyleManager = this.StyleManager;
-        //    //    else if (component is MetroFramework.Controls.MetroLabel)
-        //    //        ((MetroFramework.Controls.MetroLabel)component).StyleManager = this.StyleManager;
-        //    //    else if (component is MetroFramework.Controls.MetroTabControl)
-        //    //        ((MetroFramework.Controls.MetroTabControl)component).StyleManager = this.StyleManager;
-        //    //    else if (component is MetroFramework.Controls.MetroTabPage)
-        //    //        ((MetroFramework.Controls.MetroTabPage)component).StyleManager = this.StyleManager;
-        //    //    //else if (component is MetroFramework.Controls.MetroListBox)
-        //    //    //    ((MetroFramework.Controls.MetroListBox)component).StyleManager = this.StyleManager;
+    //private void ChangeTheme(ColorSchemeTest theme, Control.ControlCollection container)
+    //{
+    //    //return;
+    //    //foreach (Control component in container)
+    //    //{
+    //    //    if (component is Form)
+    //    //        ((MetroFramework.Forms.MetroForm)component).StyleManager = this.StyleManager;
+    //    //    if (component is MetroFramework.Controls.MetroPanel)
+    //    //        ((MetroFramework.Controls.MetroPanel)component).StyleManager = this.StyleManager;
+    //    //    else if (component is MetroFramework.Controls.MetroButton)
+    //    //        ((MetroFramework.Controls.MetroButton)component).StyleManager = this.StyleManager;
+    //    //    else if (component is MetroFramework.Controls.MetroTextBox)
+    //    //        ((MetroFramework.Controls.MetroTextBox)component).StyleManager = this.StyleManager;
+    //    //    else if (component is MetroFramework.Controls.MetroScrollBar)
+    //    //        ((MetroFramework.Controls.MetroScrollBar)component).StyleManager = this.StyleManager;
+    //    //    else if (component is MetroFramework.Controls.MetroLabel)
+    //    //        ((MetroFramework.Controls.MetroLabel)component).StyleManager = this.StyleManager;
+    //    //    else if (component is MetroFramework.Controls.MetroTabControl)
+    //    //        ((MetroFramework.Controls.MetroTabControl)component).StyleManager = this.StyleManager;
+    //    //    else if (component is MetroFramework.Controls.MetroTabPage)
+    //    //        ((MetroFramework.Controls.MetroTabPage)component).StyleManager = this.StyleManager;
+    //    //    //else if (component is MetroFramework.Controls.MetroListBox)
+    //    //    //    ((MetroFramework.Controls.MetroListBox)component).StyleManager = this.StyleManager;
 
-        //    //    else if (component is ListBox)
-        //    //    {
-        //    //    }
-        //    //    else if (component is MetroFramework.Controls.MetroListView)
-        //    //        ((MetroFramework.Controls.MetroListView)component).StyleManager = this.StyleManager;
+    //    //    else if (component is ListBox)
+    //    //    {
+    //    //    }
+    //    //    else if (component is MetroFramework.Controls.MetroListView)
+    //    //        ((MetroFramework.Controls.MetroListView)component).StyleManager = this.StyleManager;
 
-        //    //    else if (component is MetroFramework.Controls.MetroComboBox)
-        //    //        ((MetroFramework.Controls.MetroComboBox)component).StyleManager = this.StyleManager;
-        //    //    else if (component is CheckBox)
-        //    //    {
-        //    //    }
-        //    //    else if (component is MetroFramework.Controls.MetroListView)
-        //    //        ((MetroFramework.Controls.MetroListView)component).StyleManager = this.StyleManager;
-        //    //    else if (component is MenuStrip)
-        //    //    {
-        //    //    }
-        //    //    else
-        //    //        GlobalData.AddTextToLogTab(component.ToString());
-        //    //    ChangeTheme(component.Controls);
-        //    //}
-        //}
+    //    //    else if (component is MetroFramework.Controls.MetroComboBox)
+    //    //        ((MetroFramework.Controls.MetroComboBox)component).StyleManager = this.StyleManager;
+    //    //    else if (component is CheckBox)
+    //    //    {
+    //    //    }
+    //    //    else if (component is MetroFramework.Controls.MetroListView)
+    //    //        ((MetroFramework.Controls.MetroListView)component).StyleManager = this.StyleManager;
+    //    //    else if (component is MenuStrip)
+    //    //    {
+    //    //    }
+    //    //    else
+    //    //        GlobalData.AddTextToLogTab(component.ToString());
+    //    //    ChangeTheme(component.Controls);
+    //    //}
+    //}
 
-        private void ChangeTheme(ColorSchemeTest scheme, Control container)
+    private void ChangeTheme(ColorSchemeTest scheme, Control container)
         {
             //return;
             foreach (Control component in container.Controls)
@@ -1518,7 +1547,19 @@ namespace CryptoSbmScanner
             return false;
         }
 
+        private void ApplicationCreateSignals_Click(object sender, EventArgs e)
+        {
+            ApplicationCreateSignals.Checked = !ApplicationCreateSignals.Checked;
+            GlobalData.Settings.Signal.SignalsActive = ApplicationCreateSignals.Checked;
+            GlobalData.SaveSettings();
+        }
 
+        private void ApplicationPlaySounds_Click(object sender, EventArgs e)
+        {
+            ApplicationPlaySounds.Checked = !ApplicationPlaySounds.Checked;
+            GlobalData.Settings.Signal.SoundsActive = ApplicationPlaySounds.Checked;
+            GlobalData.SaveSettings();
+        }
     }
 
 }
