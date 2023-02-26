@@ -88,7 +88,7 @@ namespace CryptoSbmScanner
             ExtraText = "";
 
             // De breedte van de bb is ten minste 1.5%
-            if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.AnalysisBBMinPercentage, 100))
+            if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.SbmBBMinPercentage, GlobalData.Settings.Signal.SbmBBMaxPercentage))
             {
                 ExtraText = "bb.width te klein " + CandleLast.CandleData.BollingerBandsPercentage.ToString("N2");
                 return false;
@@ -100,10 +100,10 @@ namespace CryptoSbmScanner
                 return false;
             }
             
-            if (!IsMacdRecoveryOverbought(GlobalData.Settings.Signal.SbmCandlesForMacdRecovery))
+            if (!IsMacdRecoveryOverbought(GlobalData.Settings.Signal.Sbm3CandlesForMacdRecovery))
                 return false;
 
-            if (!HasPriceDecreased(GlobalData.Settings.Signal.Sbm3CandlesBbRecovery, GlobalData.Settings.Signal.Sbm3CandlesBbRecoveryPercentage))
+            if (!HasPriceDecreased(GlobalData.Settings.Signal.Sbm3CandlesLookbackCount, GlobalData.Settings.Signal.Sbm3CandlesBbRecoveryPercentage))
                 return false;
 
             if (CheckMaCrossings())

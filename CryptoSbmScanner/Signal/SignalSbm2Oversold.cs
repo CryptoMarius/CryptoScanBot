@@ -57,7 +57,7 @@ namespace CryptoSbmScanner
             ExtraText = "";
 
             // De breedte van de bb is ten minste 1.5%
-            if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.AnalysisBBMinPercentage, 100))
+            if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.SbmBBMinPercentage, GlobalData.Settings.Signal.SbmBBMaxPercentage))
             {
                 ExtraText = "bb.width te klein " + CandleLast.CandleData.BollingerBandsPercentage.ToString("N2");
                 return false;
@@ -72,7 +72,7 @@ namespace CryptoSbmScanner
             if (!IsInLowerPartOfBollingerBands(GlobalData.Settings.Signal.Sbm2CandlesLookbackCount, GlobalData.Settings.Signal.Sbm2LowerPartOfBbPercentage))
                 return false;
 
-            if (!IsMacdRecoveryOversold(GlobalData.Settings.Signal.SbmCandlesForMacdRecovery))
+            if (!IsMacdRecoveryOversold(GlobalData.Settings.Signal.Sbm2CandlesForMacdRecovery))
                 return false;
 
 

@@ -27,7 +27,7 @@ namespace CryptoSbmScanner
             ExtraText = "";
 
             // De breedte van de bb is ten minste 1.5%
-            if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.AnalysisBBMinPercentage, 100))
+            if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.SbmBBMinPercentage, GlobalData.Settings.Signal.SbmBBMaxPercentage))
             {
                 ExtraText = "bb.width te klein " + CandleLast.CandleData.BollingerBandsPercentage.ToString("N2");
                 return false;
@@ -41,7 +41,7 @@ namespace CryptoSbmScanner
 
 
             // Er een candle onder de bb opent of sluit
-            if (!CandleLast.IsAboveBollingerBands())
+            if (!CandleLast.IsAboveBollingerBands(GlobalData.Settings.Signal.SbmUseLowHigh))
             {
                 ExtraText = "niet beneden de bb";
                 return false;

@@ -49,14 +49,14 @@ namespace CryptoSbmScanner
             ExtraText = "";
 
             // De breedte van de bb is ten minste 1.5%
-            if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.AnalysisBBMinPercentage, GlobalData.Settings.Signal.AnalysisBBMaxPercentage))
+            if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.StobbBBMinPercentage, GlobalData.Settings.Signal.StobbBBMaxPercentage))
             {
                 ExtraText = "bb.width te klein " + CandleLast.CandleData.BollingerBandsPercentage.ToString("N2");
                 return false;
             }
 
             // Er een candle onder de bb opent of sluit
-            if (!CandleLast.IsBelowBollingerBands())
+            if (!CandleLast.IsBelowBollingerBands(GlobalData.Settings.Signal.StobbUseLowHigh))
             {
                 ExtraText = "niet beneden de bb";
                 return false;
@@ -111,7 +111,7 @@ namespace CryptoSbmScanner
 
 
             // Breedte bb in 1.5% t/m 5.0%
-            if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.AnalysisBBMinPercentage, GlobalData.Settings.Signal.AnalysisBBMaxPercentage))
+            if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.StobbBBMinPercentage, GlobalData.Settings.Signal.StobbBBMaxPercentage))
             {
                 ExtraText = "De BB is te smal of te breed";
                 return false;
@@ -119,7 +119,7 @@ namespace CryptoSbmScanner
 
 
             // Er een candle onder de bb opent of sluit
-            if (CandleLast.IsBelowBollingerBands())
+            if (CandleLast.IsBelowBollingerBands(GlobalData.Settings.Signal.StobbUseLowHigh))
             {
                 ExtraText = "prijs beneden bb";
                 return false;
