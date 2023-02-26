@@ -27,7 +27,7 @@ Bevindingen/Todo's:
   Gezien het geheugengebruik die de tool heeft is een combinatie van exchanges niet aan te raden.
 
 
-xx-xx-2023 1.7
+26-02-2023 1.7
 - De instellingen opgesplitst (intervallen, STOBB/SBM/JUMP)
   de SBM instellingen staan nu eindelijk bij elkaar.
 - De folder voor de webview2 browser wordt nu in de data folder geplaatst
