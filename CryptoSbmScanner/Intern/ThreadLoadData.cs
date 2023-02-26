@@ -101,7 +101,7 @@ namespace CryptoSbmScanner
         private void RecalculateLastXCandles(int lookback = 1)
         {
             // PAS OP, die extra candles moeten overeenkomen met de extra 10 in de GetCandleFetchStart()! Dus 260 + X
-            if (GlobalData.Settings.Signal.Active)
+            if (GlobalData.Settings.Signal.SignalsActive)
             {
                 while (lookback > 0)
                 {

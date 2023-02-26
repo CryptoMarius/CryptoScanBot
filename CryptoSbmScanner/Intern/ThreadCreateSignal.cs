@@ -42,7 +42,7 @@ namespace CryptoSbmScanner
                 try
                 {
                     // Heeft de gebruiker het vinkje voor calculatie aan staat?                     
-                    if (GlobalData.Settings.Signal.Active)
+                    if (GlobalData.Settings.Signal.SignalsActive)
                     {
                         CryptoQuoteData quoteData;
                         if (candle.Symbol.IsSpotTradingAllowed && (GlobalData.Settings.QuoteCoins.TryGetValue(candle.Symbol.Quote, out quoteData)) && quoteData.CreateSignals)

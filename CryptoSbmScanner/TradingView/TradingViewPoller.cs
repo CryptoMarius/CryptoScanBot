@@ -12,8 +12,9 @@ namespace TradingView
         public string Name{ get; set; }
         public string DisplayFormat { get; set; }
         public DateTime LastCheck { get; set; }
+        public decimal LastValue { get; set; } // For colors
 
-        public double Lp { get; set; } // Close?
+        public decimal Lp { get; set; } // Close?
         public double Ch { get; set; }
         public double Chp { get; set; }
         public string MarketStatus { get; set; }
@@ -81,7 +82,7 @@ namespace TradingView
 
         private void ApplyRates(List<string> e)
         {
-            double lastValue = value.Lp;
+            //decimal lastValue = value.Lp;
             var flag = 0;
             foreach (var json in e)
             {
@@ -160,7 +161,7 @@ namespace TradingView
         private int ApplyTickerCurrentValues(JObject jObject)
         {
             if (jObject.ContainsKey("lp"))
-                value.Lp = (double)jObject["lp"];
+                value.Lp = (decimal)jObject["lp"];
             if (jObject.ContainsKey("ch"))
                 value.Ch = (double)jObject["ch"];
             if (jObject.ContainsKey("chp"))
