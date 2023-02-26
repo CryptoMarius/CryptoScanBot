@@ -15,8 +15,8 @@ namespace CryptoSbmScanner
         {
             InitializeComponent();
 
-            // Laad in 1x alle intervallen 
-            EditAnalysisPriceCrossingMa.Visible = GlobalData.ShowExtraStuff;
+            tabExtra.Visible = GlobalData.ShowExtraStuff;
+
 
             toolTip1.SetToolTip(EditAnalysisShowStobbOverbought, "Dit type signaal is een dubbele indicatie dat een munt overbought is en die bestaat uit:" +
                 "\n-een candle die opent of sluit boven de bovenste bollingerband\n" +
@@ -45,9 +45,39 @@ namespace CryptoSbmScanner
             toolTip1.SetToolTip(EditAnalysisCandleJumpPercentage, "Percentage dat de munt naar boven of beneden moet bewegen");
 
 
+            // Stupid designer removes events (after moving, sick of it...)
             EditPlaySoundSbmSignal.Click += SetGrayed;
             EditPlaySoundStobbSignal.Click += SetGrayed;
             EditPlaySoundCandleJumpSignal.Click += SetGrayed;
+
+            buttonReset.Click += buttonReset_Click;
+            buttonTestSpeech.Click += buttonTestSpeech_Click;
+            buttonFontDialog.Click += buttonFontDialog_Click;
+
+            buttonColorBTC.Click += buttonColorBTC_Click;
+            buttonColorETH.Click += buttonColorETH_Click;
+            buttonColorBNB.Click += buttonColorBNB_Click;
+            buttonColorBUSD.Click += buttonColorBUSD_Click;
+            buttonColorUSDT.Click += buttonColorUSDT_Click;
+
+            buttonColorStobb.Click += buttonColorStobb_Click;
+            buttonColorSbm.Click += buttonColorSbm_Click;
+            buttonColorJump.Click += buttonColorJump_Click;
+
+            buttonSelectSoundStobbOverbought.Click += buttonSelectSoundStobbOverbought_Click;
+            buttonSelectSoundStobbOversold.Click += buttonSelectSoundStobbOversold_Click;
+            buttonSelectSoundSbmOverbought.Click += buttonSelectSoundSbmOverbought_Click;
+            buttonSelectSoundSbmOversold.Click += buttonSelectSoundSbmOversold_Click;
+            buttonSelectSoundCandleJumpUp.Click += buttonSelectSoundCandleJumpUp_Click;
+            buttonSelectSoundCandleJumpDown.Click += buttonSelectSoundCandleJumpDown_Click;
+
+            buttonPlaySoundStobbOverbought.Click += buttonPlaySoundStobbOverbought_Click;
+            buttonPlaySoundStobbOversold.Click += buttonPlaySoundStobbOversold_Click;
+            buttonPlaySoundSbmOverbought.Click += buttonPlaySoundSbmOverbought_Click;
+            buttonPlaySoundSbmOversold.Click += buttonPlaySoundSbmOversold_Click;
+            buttonPlaySoundCandleJumpUp.Click += buttonPlaySoundCandleJumpUp_Click;
+            buttonPlaySoundCandleJumpDown.Click += buttonPlaySoundCandleJumpDown_Click;
+
         }
 
         private void SetGrayed(object sender, EventArgs e)
@@ -106,13 +136,27 @@ namespace CryptoSbmScanner
             EditDoubleClickAction.SelectedIndex = (int)settings.General.DoubleClickAction;
             EditSoundHeartBeatMinutes.Value = settings.Signal.SoundHeartBeatMinutes;
 
-            // ------------------------------------------------------------------------------
-            // Signals
-            // ------------------------------------------------------------------------------
-            EditSignalsActive.Checked = settings.Signal.Active;
             EditHideTechnicalStuffSignals.Checked = settings.Signal.HideTechnicalStuffSignals;
             EditGlobalDataRemoveSignalAfterxCandles.Value = settings.Signal.RemoveSignalAfterxCandles;
 
+            EditBarometer1hMinimal.Value = settings.Signal.Barometer1hMinimal;
+            EditLogBarometerToLow.Checked = settings.Signal.LogBarometerToLow;
+
+            // ------------------------------------------------------------------------------
+            // Base coins
+            // ------------------------------------------------------------------------------
+
+            SetQuoteCoin("BNB", EditFetchCandlesBNB, EditMinVolumeBNB, EditMinPriceBNB, EditCreateSignalsBNB, panelColorBNB);
+            SetQuoteCoin("BTC", EditFetchCandlesBTC, EditMinVolumeBTC, EditMinPriceBTC, EditCreateSignalsBTC, panelColorBTC);
+            SetQuoteCoin("BUSD", EditFetchCandlesBUSD, EditMinVolumeBUSD, EditMinPriceBUSD, EditCreateSignalsBUSD, panelColorBUSD);
+            SetQuoteCoin("ETH", EditFetchCandlesETH, EditMinVolumeETH, EditMinPriceETH, EditCreateSignalsETH, panelColorETH);
+            SetQuoteCoin("USDT", EditFetchCandlesUSDT, EditMinVolumeUSDT, EditMinPriceUSDT, EditCreateSignalsUSDT, panelColorUSDT);
+            SetQuoteCoin("EUR", EditFetchCandlesEUR, EditMinVolumeEUR, EditMinPriceEUR, EditCreateSignalsEUR, panelColorEUR);
+
+
+            // ------------------------------------------------------------------------------
+            // Signals
+            // ------------------------------------------------------------------------------
             EditAnalyseInterval1m.Checked = settings.Signal.AnalyseInterval[(int)CryptoIntervalPeriod.interval1m];
             EditAnalyseInterval2m.Checked = settings.Signal.AnalyseInterval[(int)CryptoIntervalPeriod.interval2m];
             EditAnalyseInterval3m.Checked = settings.Signal.AnalyseInterval[(int)CryptoIntervalPeriod.interval3m];
@@ -128,8 +172,31 @@ namespace CryptoSbmScanner
             EditAnalyseInterval12h.Checked = settings.Signal.AnalyseInterval[(int)CryptoIntervalPeriod.interval12h];
             EditAnalyseInterval1d.Checked = settings.Signal.AnalyseInterval[(int)CryptoIntervalPeriod.interval1d];
 
-            EditBarometer1hMinimal.Value = settings.Signal.Barometer1hMinimal;
-            EditLogBarometerToLow.Checked = settings.Signal.LogBarometerToLow;
+            // STOBB
+            EditStobbBBMinPercentage.Value = (decimal)settings.Signal.StobbBBMinPercentage;
+            EditStobbBBMaxPercentage.Value = (decimal)settings.Signal.StobbBBMaxPercentage;
+            EditStobbUseLowHigh.Checked = settings.Signal.StobbUseLowHigh;
+            EditPlaySoundStobbSignal.Checked = settings.Signal.PlaySoundStobbSignal;
+            EditPlaySpeechStobbSignal.Checked = settings.Signal.PlaySpeechStobbSignal;
+            EditAnalysisShowStobbOversold.Checked = settings.Signal.AnalysisShowStobbOversold;
+            EditAnalysisShowStobbOverbought.Checked = settings.Signal.AnalysisShowStobbOverbought;
+            EditSoundStobbOverbought.Text = settings.Signal.SoundStobbOverbought;
+            EditSoundStobbOversold.Text = settings.Signal.SoundStobbOversold;
+            EditStobIncludeRsi.Checked = settings.Signal.StobIncludeRsi;
+            EditStobIncludeSoftSbm.Checked = settings.Signal.StobIncludeSoftSbm;
+            panelColorStobb.BackColor = settings.Signal.ColorStobb;
+
+            // SBM
+            EditSbmBBMinPercentage.Value = (decimal)settings.Signal.SbmBBMinPercentage;
+            EditSbmBBMaxPercentage.Value = (decimal)settings.Signal.SbmBBMaxPercentage;
+            EditSbmUseLowHigh.Checked = settings.Signal.SbmUseLowHigh;
+            EditPlaySoundSbmSignal.Checked = settings.Signal.PlaySoundSbmSignal;
+            EditPlaySpeechSbmSignal.Checked = settings.Signal.PlaySpeechSbmSignal;
+            EditAnalysisShowSbmOversold.Checked = settings.Signal.AnalysisShowSbmOversold;
+            EditAnalysisShowSbmOverbought.Checked = settings.Signal.AnalysisShowSbmOverbought;
+            EditSoundFileSbmOverbought.Text = settings.Signal.SoundSbmOverbought;
+            EditSoundFileSbmOversold.Text = settings.Signal.SoundSbmOversold;
+            panelColorSbm.BackColor = settings.Signal.ColorSbm;
 
             // JUMP
             EditPlaySoundCandleJumpSignal.Checked = settings.Signal.PlaySoundCandleJumpSignal;
@@ -143,37 +210,8 @@ namespace CryptoSbmScanner
             EditJumpUseLowHighCalculation.Checked = settings.Signal.JumpUseLowHighCalculation;
             panelColorJump.BackColor = settings.Signal.ColorJump;
 
-            // STOBB
-            EditPlaySoundStobbSignal.Checked = settings.Signal.PlaySoundStobbSignal;
-            EditPlaySpeechStobbSignal.Checked = settings.Signal.PlaySpeechStobbSignal;
-            EditAnalysisShowStobbOversold.Checked = settings.Signal.AnalysisShowStobbOversold;
-            EditAnalysisShowStobbOverbought.Checked = settings.Signal.AnalysisShowStobbOverbought;
-            EditSoundStobbOverbought.Text = settings.Signal.SoundStobbOverbought;
-            EditSoundStobbOversold.Text = settings.Signal.SoundStobbOversold;
-            EditStobIncludeRsi.Checked = settings.Signal.StobIncludeRsi;
-            EditStobIncludeSoftSbm.Checked = settings.Signal.StobIncludeSoftSbm;
-            panelColorStobb.BackColor = settings.Signal.ColorStobb;
 
-            // SBM
-            EditPlaySoundSbmSignal.Checked = settings.Signal.PlaySoundSbmSignal;
-            EditPlaySpeechSbmSignal.Checked = settings.Signal.PlaySpeechSbmSignal;
-            EditAnalysisShowSbmOversold.Checked = settings.Signal.AnalysisShowSbmOversold;
-            EditAnalysisShowSbmOverbought.Checked = settings.Signal.AnalysisShowSbmOverbought;
-            EditSoundFileSbmOverbought.Text = settings.Signal.SoundSbmOverbought;
-            EditSoundFileSbmOversold.Text = settings.Signal.SoundSbmOversold;
-            panelColorSbm.BackColor = settings.Signal.ColorSbm;
-
-            SetQuoteCoin("BNB", EditFetchCandlesBNB, EditMinVolumeBNB, EditMinPriceBNB, EditCreateSignalsBNB, panelColorBNB);
-            SetQuoteCoin("BTC", EditFetchCandlesBTC, EditMinVolumeBTC, EditMinPriceBTC, EditCreateSignalsBTC, panelColorBTC);
-            SetQuoteCoin("BUSD", EditFetchCandlesBUSD, EditMinVolumeBUSD, EditMinPriceBUSD, EditCreateSignalsBUSD, panelColorBUSD);
-            SetQuoteCoin("ETH", EditFetchCandlesETH, EditMinVolumeETH, EditMinPriceETH, EditCreateSignalsETH, panelColorETH);
-            SetQuoteCoin("USDT", EditFetchCandlesUSDT, EditMinVolumeUSDT, EditMinPriceUSDT, EditCreateSignalsUSDT, panelColorUSDT);
-            SetQuoteCoin("EUR", EditFetchCandlesEUR, EditMinVolumeEUR, EditMinPriceEUR, EditCreateSignalsEUR, panelColorEUR);
-
-            EditAnalysisBBMinPercentage.Value = (decimal)settings.Signal.AnalysisBBMinPercentage;
-            EditAnalysisBBMaxPercentage.Value = (decimal)settings.Signal.AnalysisBBMaxPercentage;
-            EditLogAnalysisBBMinMaxPercentage.Checked = settings.Signal.LogAnalysisBBMinMaxPercentage;
-
+            
             EditAnalysisMinChangePercentage.Value = settings.Signal.AnalysisMinChangePercentage;
             EditAnalysisMaxChangePercentage.Value = settings.Signal.AnalysisMaxChangePercentage;
             EditLogAnalysisMinMaxChangePercentage.Checked = settings.Signal.LogAnalysisMinMaxChangePercentage;
@@ -183,17 +221,15 @@ namespace CryptoSbmScanner
 
             EditMinimumTickPercentage.Value = settings.Signal.MinimumTickPercentage;
             EditLogMinimumTickPercentage.Checked = settings.Signal.LogMinimumTickPercentage;
-
-            // SBM-X
-            EditBbOversoldUseLowHigh.Checked = settings.Signal.BbOversoldUseLowHigh;
+       
             EditSbmMa200AndMa50Percentage.Value = settings.Signal.SbmMa200AndMa50Percentage;
             EditSbmMa50AndMa20Percentage.Value = settings.Signal.SbmMa50AndMa20Percentage;
             EditSbmMa200AndMa20Percentage.Value = settings.Signal.SbmMa200AndMa20Percentage;
-            EditSbmCandlesForMacdRecovery.Value = settings.Signal.SbmCandlesForMacdRecovery;
+            EditSbm2CandlesForMacdRecovery.Value = settings.Signal.Sbm2CandlesForMacdRecovery;
             EditSbm2CandlesLookbackCount.Value = settings.Signal.Sbm2CandlesLookbackCount;
             EditSbm2UpperPartOfBbPercentage.Value = settings.Signal.Sbm2UpperPartOfBbPercentage;
             EditSbm2LowerPartOfBbPercentage.Value = settings.Signal.Sbm2LowerPartOfBbPercentage;
-            EditSbm3CandlesForBBRecovery.Value = settings.Signal.Sbm3CandlesBbRecovery;
+            EditSbm3CandlesForBBRecovery.Value = settings.Signal.Sbm3CandlesLookbackCount;
             EditSbm3CandlesForBBRecoveryPercentage.Value = settings.Signal.Sbm3CandlesBbRecoveryPercentage;
 
             checkBoxAnalysisSbm2Oversold.Checked = settings.Signal.AnalysisSbm2Oversold;
@@ -230,11 +266,6 @@ namespace CryptoSbmScanner
             SetGrayed(null, null);
         }
 
-        private void buttonCancel_Click(object sender, EventArgs e)
-        {
-            DialogResult = DialogResult.Cancel;
-        }
-
 
         private void SetQuoteCoin(string quoteName, CheckBox fetchCandles, NumericUpDown minVolume, NumericUpDown minPrice, CheckBox createSignals, Panel panelColor)
         {
@@ -269,6 +300,12 @@ namespace CryptoSbmScanner
         }
 
 
+        private void buttonCancel_Click(object sender, EventArgs e)
+        {
+            DialogResult = DialogResult.Cancel;
+        }
+
+
         private void ButtonOk_Click(object sender, EventArgs e)
         {
             //settings.General.GetCandleInterval = (int)EditGetCandleInterval.Value;
@@ -283,12 +320,35 @@ namespace CryptoSbmScanner
             settings.General.FontName = this.Font.Name;
             settings.General.FontSize = this.Font.Size;
 
+            settings.Signal.HideTechnicalStuffSignals = EditHideTechnicalStuffSignals.Checked;
+            settings.Signal.RemoveSignalAfterxCandles = (int)EditGlobalDataRemoveSignalAfterxCandles.Value;
+
+
+            // ------------------------------------------------------------------------------
+            // Base coins
+            // ------------------------------------------------------------------------------
+            GetQuoteCoin("BNB", EditFetchCandlesBNB, EditMinVolumeBNB, EditMinPriceBNB, EditCreateSignalsBNB, panelColorBNB);
+            GetQuoteCoin("BTC", EditFetchCandlesBTC, EditMinVolumeBTC, EditMinPriceBTC, EditCreateSignalsBTC, panelColorBTC);
+            GetQuoteCoin("BUSD", EditFetchCandlesBUSD, EditMinVolumeBUSD, EditMinPriceBUSD, EditCreateSignalsBUSD, panelColorBUSD);
+            GetQuoteCoin("ETH", EditFetchCandlesETH, EditMinVolumeETH, EditMinPriceETH, EditCreateSignalsETH, panelColorETH);
+            GetQuoteCoin("USDT", EditFetchCandlesUSDT, EditMinVolumeUSDT, EditMinPriceUSDT, EditCreateSignalsUSDT, panelColorUSDT);
+            GetQuoteCoin("EUR", EditFetchCandlesEUR, EditMinVolumeEUR, EditMinPriceEUR, EditCreateSignalsEUR, panelColorEUR);
+
             // ------------------------------------------------------------------------------
             // Signals
             // ------------------------------------------------------------------------------
-            settings.Signal.Active = EditSignalsActive.Checked;
-            settings.Signal.HideTechnicalStuffSignals = EditHideTechnicalStuffSignals.Checked;
-            settings.Signal.RemoveSignalAfterxCandles = (int)EditGlobalDataRemoveSignalAfterxCandles.Value;
+            settings.Signal.AnalysisMinChangePercentage = EditAnalysisMinChangePercentage.Value;
+            settings.Signal.AnalysisMaxChangePercentage = EditAnalysisMaxChangePercentage.Value;
+            settings.Signal.LogAnalysisMinMaxChangePercentage = EditLogAnalysisMinMaxChangePercentage.Checked;
+
+            settings.Signal.Barometer1hMinimal = EditBarometer1hMinimal.Value;
+            settings.Signal.LogBarometerToLow = EditLogBarometerToLow.Checked;
+
+            settings.Signal.SymbolMustExistsDays = EditSymbolMustExistsDays.Value;
+            settings.Signal.LogSymbolMustExistsDays = EditLogSymbolMustExistsDays.Checked;
+
+            settings.Signal.MinimumTickPercentage = EditMinimumTickPercentage.Value;
+            settings.Signal.LogMinimumTickPercentage = EditLogMinimumTickPercentage.Checked;
 
             settings.Signal.AnalyseInterval = new bool[Enum.GetNames(typeof(CryptoIntervalPeriod)).Length];
             settings.Signal.AnalyseInterval[(int)CryptoIntervalPeriod.interval1m] = EditAnalyseInterval1m.Checked;
@@ -306,19 +366,9 @@ namespace CryptoSbmScanner
             settings.Signal.AnalyseInterval[(int)CryptoIntervalPeriod.interval12h] = EditAnalyseInterval12h.Checked;
             settings.Signal.AnalyseInterval[(int)CryptoIntervalPeriod.interval1d] = EditAnalyseInterval1d.Checked;
 
-            // JUMP
-            settings.Signal.PlaySoundCandleJumpSignal = EditPlaySoundCandleJumpSignal.Checked;
-            settings.Signal.PlaySpeechCandleJumpSignal = EditPlaySpeechCandleJumpSignal.Checked;
-            settings.Signal.AnalysisShowCandleJumpDown = EditAnalysisShowCandleJumpDown.Checked;
-            settings.Signal.AnalysisShowCandleJumpUp = EditAnalysisShowCandleJumpUp.Checked;
-            settings.Signal.SoundCandleJumpDown = EditSoundFileCandleJumpDown.Text;
-            settings.Signal.SoundCandleJumpUp = EditSoundFileCandleJumpUp.Text;
-            settings.Signal.AnalysisCandleJumpPercentage = EditAnalysisCandleJumpPercentage.Value;
-            settings.Signal.JumpCandlesLookbackCount = (int)EditJumpCandlesLookbackCount.Value;
-            settings.Signal.JumpUseLowHighCalculation = EditJumpUseLowHighCalculation.Checked;
-            settings.Signal.ColorJump = panelColorJump.BackColor;
-
             // STOBB
+            settings.Signal.StobbBBMinPercentage = EditStobbBBMinPercentage.Value;
+            settings.Signal.StobbBBMaxPercentage = EditStobbBBMaxPercentage.Value;
             settings.Signal.PlaySoundStobbSignal = EditPlaySoundStobbSignal.Checked;
             settings.Signal.PlaySpeechStobbSignal = EditPlaySpeechStobbSignal.Checked;
             settings.Signal.AnalysisShowStobbOversold = EditAnalysisShowStobbOversold.Checked;
@@ -329,7 +379,12 @@ namespace CryptoSbmScanner
             settings.Signal.StobIncludeSoftSbm = EditStobIncludeSoftSbm.Checked;
             settings.Signal.ColorStobb = panelColorStobb.BackColor;
 
-            // SBM
+            // SBM x
+            settings.Signal.SbmBBMinPercentage = EditSbmBBMinPercentage.Value;
+            settings.Signal.SbmBBMaxPercentage = EditSbmBBMaxPercentage.Value;
+            settings.Signal.SbmUseLowHigh = EditStobbUseLowHigh.Checked;
+
+            // SBM 1
             settings.Signal.PlaySoundSbmSignal = EditPlaySoundSbmSignal.Checked;
             settings.Signal.PlaySpeechSbmSignal = EditPlaySpeechSbmSignal.Checked;
             settings.Signal.AnalysisShowSbmOversold = EditAnalysisShowSbmOversold.Checked;
@@ -338,42 +393,15 @@ namespace CryptoSbmScanner
             settings.Signal.SoundSbmOversold = EditSoundFileSbmOversold.Text;
             settings.Signal.ColorSbm = panelColorSbm.BackColor;
 
-            GetQuoteCoin("BNB", EditFetchCandlesBNB, EditMinVolumeBNB, EditMinPriceBNB, EditCreateSignalsBNB, panelColorBNB);
-            GetQuoteCoin("BTC", EditFetchCandlesBTC, EditMinVolumeBTC, EditMinPriceBTC, EditCreateSignalsBTC, panelColorBTC);
-            GetQuoteCoin("BUSD", EditFetchCandlesBUSD, EditMinVolumeBUSD, EditMinPriceBUSD, EditCreateSignalsBUSD, panelColorBUSD);
-            GetQuoteCoin("ETH", EditFetchCandlesETH, EditMinVolumeETH, EditMinPriceETH, EditCreateSignalsETH, panelColorETH);
-            GetQuoteCoin("USDT", EditFetchCandlesUSDT, EditMinVolumeUSDT, EditMinPriceUSDT, EditCreateSignalsUSDT, panelColorUSDT);
-            GetQuoteCoin("EUR", EditFetchCandlesEUR, EditMinVolumeEUR, EditMinPriceEUR, EditCreateSignalsEUR, panelColorEUR);
-
-            settings.Signal.AnalysisBBMinPercentage = EditAnalysisBBMinPercentage.Value;
-            settings.Signal.AnalysisBBMaxPercentage = EditAnalysisBBMaxPercentage.Value;
-            settings.Signal.LogAnalysisBBMinMaxPercentage = EditLogAnalysisBBMinMaxPercentage.Checked;
-
-            settings.Signal.AnalysisMinChangePercentage = EditAnalysisMinChangePercentage.Value;
-            settings.Signal.AnalysisMaxChangePercentage = EditAnalysisMaxChangePercentage.Value;
-            settings.Signal.LogAnalysisMinMaxChangePercentage = EditLogAnalysisMinMaxChangePercentage.Checked;
-
-            settings.Signal.Barometer1hMinimal = EditBarometer1hMinimal.Value;
-            settings.Signal.LogBarometerToLow = EditLogBarometerToLow.Checked;
-
-            settings.Signal.SymbolMustExistsDays = EditSymbolMustExistsDays.Value;
-            settings.Signal.LogSymbolMustExistsDays = EditLogSymbolMustExistsDays.Checked;
-
-
-            settings.Signal.MinimumTickPercentage = EditMinimumTickPercentage.Value;
-            settings.Signal.LogMinimumTickPercentage = EditLogMinimumTickPercentage.Checked;
-
-
             // SBM-X
-            settings.Signal.BbOversoldUseLowHigh = EditBbOversoldUseLowHigh.Checked;
             settings.Signal.SbmMa200AndMa50Percentage = EditSbmMa200AndMa50Percentage.Value;
             settings.Signal.SbmMa50AndMa20Percentage = EditSbmMa50AndMa20Percentage.Value;
-            settings.Signal.SbmMa200AndMa20Percentage = EditSbmMa200AndMa20Percentage.Value;            
-            settings.Signal.SbmCandlesForMacdRecovery = (int)EditSbmCandlesForMacdRecovery.Value;
+            settings.Signal.SbmMa200AndMa20Percentage = EditSbmMa200AndMa20Percentage.Value;
+            settings.Signal.Sbm2CandlesForMacdRecovery = (int)EditSbm2CandlesForMacdRecovery.Value;
             settings.Signal.Sbm2CandlesLookbackCount = (int)EditSbm2CandlesLookbackCount.Value;
             settings.Signal.Sbm2UpperPartOfBbPercentage = EditSbm2UpperPartOfBbPercentage.Value;
             settings.Signal.Sbm2LowerPartOfBbPercentage = EditSbm2LowerPartOfBbPercentage.Value;
-            settings.Signal.Sbm3CandlesBbRecovery = (int)EditSbm3CandlesForBBRecovery.Value;
+            settings.Signal.Sbm3CandlesLookbackCount = (int)EditSbm3CandlesForBBRecovery.Value;
             settings.Signal.Sbm3CandlesBbRecoveryPercentage = EditSbm3CandlesForBBRecoveryPercentage.Value;
 
             settings.Signal.AnalysisSbm2Oversold = checkBoxAnalysisSbm2Oversold.Checked;
@@ -388,40 +416,56 @@ namespace CryptoSbmScanner
             settings.Signal.SbmMa50AndMa20Crossing = EditSbmMa50AndMa20Crossing.Checked;
             settings.Signal.SbmMa50AndMa20Lookback = (int)EditSbmMa50AndMa20Lookback.Value;
 
-            settings.Signal.AnalysisPriceCrossingMa = EditAnalysisPriceCrossingMa.Checked;
+            // JUMP
+            settings.Signal.PlaySoundCandleJumpSignal = EditPlaySoundCandleJumpSignal.Checked;
+            settings.Signal.PlaySpeechCandleJumpSignal = EditPlaySpeechCandleJumpSignal.Checked;
+            settings.Signal.AnalysisShowCandleJumpDown = EditAnalysisShowCandleJumpDown.Checked;
+            settings.Signal.AnalysisShowCandleJumpUp = EditAnalysisShowCandleJumpUp.Checked;
+            settings.Signal.SoundCandleJumpDown = EditSoundFileCandleJumpDown.Text;
+            settings.Signal.SoundCandleJumpUp = EditSoundFileCandleJumpUp.Text;
+            settings.Signal.AnalysisCandleJumpPercentage = EditAnalysisCandleJumpPercentage.Value;
+            settings.Signal.JumpCandlesLookbackCount = (int)EditJumpCandlesLookbackCount.Value;
+            settings.Signal.JumpUseLowHighCalculation = EditJumpUseLowHighCalculation.Checked;
+            settings.Signal.ColorJump = panelColorJump.BackColor;
+
 
             // --------------------------------------------------------------------------------
             // Black & White list
             // --------------------------------------------------------------------------------
 
             settings.UseBlackListOversold = checkBoxUseBlackListOversold.Checked;
-            string blackText = textBoxBlackListOversold.Text.Replace(" ", "");
+            string blackText = textBoxBlackListOversold.Text.Replace(" ", "").Replace("\r\n", "");
             settings.BlackListOversold = blackText.Split(',').ToList<string>();
             settings.BlackListOversold.Sort();
 
             settings.UseWhiteListOversold = checkBoxUseWhiteListOversold.Checked;
-            string whiteText = textBoxWhiteListOversold.Text.Replace(" ", "");
+            string whiteText = textBoxWhiteListOversold.Text.Replace(" ", "").Replace("\r\n", "");
             settings.WhiteListOversold = whiteText.Split(',').ToList<string>();
             settings.WhiteListOversold.Sort();
 
             settings.UseBlackListOverbought = checkBoxUseBlackListOverbought.Checked;
-            blackText = textBoxBlackListOverbought.Text.Replace(" ", "");
+            blackText = textBoxBlackListOverbought.Text.Replace(" ", "").Replace("\r\n", "");
             settings.BlackListOverbought = blackText.Split(',').ToList<string>();
             settings.BlackListOverbought.Sort();
 
             settings.UseWhiteListOverbought = checkBoxUseWhiteListOverbought.Checked;
-            whiteText = textBoxWhiteListOverbought.Text.Replace(" ", "");
+            whiteText = textBoxWhiteListOverbought.Text.Replace(" ", "").Replace("\r\n", "");
             settings.WhiteListOverbought = whiteText.Split(',').ToList<string>();
             settings.WhiteListOverbought.Sort();
 
-            GlobalData.InitWhiteAndBlackListSettings();
 
+            // --------------------------------------------------------------------------------
+            // Extra
+            // --------------------------------------------------------------------------------
+            settings.Signal.AnalysisPriceCrossingMa = EditAnalysisPriceCrossingMa.Checked;
+
+            GlobalData.InitWhiteAndBlackListSettings();
             DialogResult = DialogResult.OK;
         }
 
         private void buttonTestSpeech_Click(object sender, EventArgs e)
         {
-            GlobalData.PlaySomeSpeech("Found a signal for BTC/BUSD interval 1m (it is going to the moon)");
+            GlobalData.PlaySomeSpeech("Found a signal for BTC/BUSD interval 1m (it is going to the moon)", true);
         }
 
         private void browseForWavFile(ref System.Windows.Forms.TextBox textBox)
@@ -479,32 +523,32 @@ namespace CryptoSbmScanner
 
         private void buttonPlaySoundStobbOverbought_Click(object sender, EventArgs e)
         {
-            GlobalData.PlaySomeMusic(EditSoundStobbOverbought.Text);
+            GlobalData.PlaySomeMusic(EditSoundStobbOverbought.Text, true);
         }
 
         private void buttonPlaySoundStobbOversold_Click(object sender, EventArgs e)
         {
-            GlobalData.PlaySomeMusic(EditSoundStobbOversold.Text);
+            GlobalData.PlaySomeMusic(EditSoundStobbOversold.Text, true);
         }
 
         private void buttonPlaySoundSbmOverbought_Click(object sender, EventArgs e)
         {
-            GlobalData.PlaySomeMusic(EditSoundFileSbmOverbought.Text);
+            GlobalData.PlaySomeMusic(EditSoundFileSbmOverbought.Text, true);
         }
 
         private void buttonPlaySoundSbmOversold_Click(object sender, EventArgs e)
         {
-            GlobalData.PlaySomeMusic(EditSoundFileSbmOversold.Text);
+            GlobalData.PlaySomeMusic(EditSoundFileSbmOversold.Text, true);
         }
 
         private void buttonPlaySoundCandleJumpUp_Click(object sender, EventArgs e)
         {
-            GlobalData.PlaySomeMusic(EditSoundFileCandleJumpUp.Text);
+            GlobalData.PlaySomeMusic(EditSoundFileCandleJumpUp.Text, true);
         }
 
         private void buttonPlaySoundCandleJumpDown_Click(object sender, EventArgs e)
         {
-            GlobalData.PlaySomeMusic(EditSoundFileCandleJumpDown.Text);
+            GlobalData.PlaySomeMusic(EditSoundFileCandleJumpDown.Text, true);
         }
 
         private void PickColor(ref Panel panel)
@@ -530,19 +574,6 @@ namespace CryptoSbmScanner
         private void buttonColorJump_Click(object sender, EventArgs e)
         {
             PickColor(ref panelColorJump);
-        }
-
-        private void button1_Click(object sender, EventArgs e)
-        {
-            FontDialog fontDialog = new FontDialog();
-            fontDialog.Font = this.Font;
-            fontDialog.FontMustExist = true;
-            fontDialog.MinSize = 7;
-            fontDialog.MaxSize = 20;
-            if (fontDialog.ShowDialog() == DialogResult.OK)
-            {
-                this.Font = fontDialog.Font;
-            }
         }
 
         private void buttonReset_Click(object sender, EventArgs e)
@@ -583,6 +614,17 @@ namespace CryptoSbmScanner
         private void buttonColorEUR_Click(object sender, EventArgs e)
         {
             PickColor(ref panelColorEUR);
+        }
+
+        private void buttonFontDialog_Click(object sender, EventArgs e)
+        {
+            FontDialog dialog = new System.Windows.Forms.FontDialog();
+            dialog.Font = this.Font;
+            if (dialog.ShowDialog() == DialogResult.OK)
+            {
+                this.Font = dialog.Font;
+            }
+
         }
     }
 }
