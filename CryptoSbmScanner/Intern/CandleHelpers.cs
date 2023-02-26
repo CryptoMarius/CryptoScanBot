@@ -18,7 +18,7 @@ namespace CryptoSbmScanner
 
         /// <summary>Remove trailing zeroes on the decimal.</summary>
         /// <param name="value">The value to normalize.</param>
-        /// Uit de CryptoAdvisor sources, thanks!
+        /// From the CryptoAdvisor sources, thanks!
         /// <returns>1.230000 becomes 1.23</returns>
         public static decimal Normalize(this decimal value)
         {
@@ -35,7 +35,7 @@ namespace CryptoSbmScanner
 
         public static string OhlcText(this CryptoCandle candle, string fmt, bool includeSymbol = false, bool includeInterval = false, bool includeVolume = false)
         {
-            // Ook de volgende tijd melden zodat deuidelijk is over welke candle we het exact hebben
+            // Include the next time so it is clear what candle has focus (it saves a lot of questions)
             DateTime date = CandleTools.GetUnixDate(candle.OpenTime);
             string s = date.ToLocalTime().ToString("yyyy-MM-dd HH:mm") + "-" + date.AddSeconds(candle.Interval.Duration).ToLocalTime().ToString("HH:mm");
 
@@ -55,7 +55,7 @@ namespace CryptoSbmScanner
         }
 
         /// <summary>
-        /// Verwijder de 0's van het einde
+        /// Remove any trailing 0's 
         /// </summary>
         /// <param name="value"></param>
         /// <param name="fmt"></param>
@@ -82,7 +82,7 @@ namespace CryptoSbmScanner
         }
 
         /// <summary>
-        /// Verwijder de 0's van het einde
+        /// Remove any trailing 0's 
         /// </summary>
         /// <param name="value"></param>
         /// <param name="fmt"></param>
@@ -212,11 +212,11 @@ namespace CryptoSbmScanner
 
 
         
-        public static bool IsBelowBollingerBands(this CryptoCandle candle)
+        public static bool IsBelowBollingerBands(this CryptoCandle candle, bool useLowHigh)
         {
             // Geopend of gesloten onder de bollinger band
             decimal value;
-            if (GlobalData.Settings.Signal.BbOversoldUseLowHigh)
+            if (useLowHigh)
                 value = candle.Low;
             else
                 value = Math.Min(candle.Open, candle.Close);
@@ -229,11 +229,11 @@ namespace CryptoSbmScanner
 
 
         
-        public static bool IsAboveBollingerBands(this CryptoCandle candle)
+        public static bool IsAboveBollingerBands(this CryptoCandle candle, bool useLowHigh)
         {
             // Geopend of gesloten boven de bollinger band
             decimal value;
-            if (GlobalData.Settings.Signal.BbOversoldUseLowHigh)
+            if (useLowHigh)
                 value = candle.High;
             else
                 value = Math.Max(candle.Open, candle.Close);
