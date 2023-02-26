@@ -2,6 +2,7 @@ Mis je iets in onderstaande bevindingen/todo's of toekomstige todo's, geef het A
 
 
 Bevindingen/Todo's:
+- Teksten kunnen vertalen (NL en EN lopen nu wel erg vaak door elkaar)
 - Zien hoeveel een munt gestegen of gedaald is na de initiele melding (dat vereist een ander grid).
 - Een Telegram die de meldingen kan weergeven (dat is eigenlijk wat overkill, maar omdat het kan)
 - Het geheel open source maken (eerste aanvang reeds gemaakt op github, nog wat vertalen naar het Engels)
@@ -27,6 +28,12 @@ Bevindingen/Todo's:
 
 
 xx-xx-2023 1.7
+- De instellingen opgesplitst (intervallen, STOBB/SBM/JUMP)
+  de SBM instellingen staan nu eindelijk bij elkaar.
+- De folder voor de webview2 browser wordt nu in de data folder geplaatst
+- De signalen en/of geluiden vanaf het hoofdscherm uit kunnen zetten
+- De maximale BB breedte bij SBM word niet gecontroleerd, deze staat intern op 100%
+  (er zijn nu extra instellingen voor geintroduceerd die een default waarde hebben)
 - De instelling "Nieuwe munt dagen" deed helemaal niets, de code erachter is geherintroduceerd
 - Andere indicaties zoals de Bitcoin Dominantie, de DXY dolar index, de Market Cap and Volume en de SP&D.
 - Documentatie - Hoe start je de applicatie op.
