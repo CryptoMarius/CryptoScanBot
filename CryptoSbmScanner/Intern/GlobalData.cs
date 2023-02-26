@@ -21,6 +21,8 @@ namespace CryptoSbmScanner
     /// </summary>
     public delegate void AddTextEvent(string text, bool extraLineFeed = false);
 
+    public delegate void PlayMediaEvent(string text, bool test = false);
+
     /// <summary>
     /// Om vanuit de threads de timer voor ophalen Candles te disablen
     /// </summary>
@@ -68,8 +70,8 @@ namespace CryptoSbmScanner
         // To avoid duplicate signals
         static public Dictionary<string, long> AnalyseNotification = new Dictionary<string, long>();
 
-        static public event AddTextEvent PlaySound;
-        static public event AddTextEvent PlaySpeech;
+        static public event PlayMediaEvent PlaySound;
+        static public event PlayMediaEvent PlaySpeech;
         static public event AddTextEvent LogToTelegram;
         static public event AddTextEvent LogToLogTabEvent;
 
@@ -338,11 +340,11 @@ namespace CryptoSbmScanner
         }
 
 
-        static public void PlaySomeMusic(string text)
+        static public void PlaySomeMusic(string text, bool test = false)
         {
             try
             {
-                PlaySound(text);
+                PlaySound(text, test);
             }
             catch (Exception error)
             {
@@ -352,11 +354,11 @@ namespace CryptoSbmScanner
             }
         }
 
-        static public void PlaySomeSpeech(string text)
+        static public void PlaySomeSpeech(string text, bool test = false)
         {
             try
             {
-                PlaySpeech(text);
+                PlaySpeech(text, test);
             }
             catch (Exception error)
             {
