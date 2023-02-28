@@ -16,3 +16,6 @@ SBM (STOBB + 3 Ma lines in the right order + PSAR)
 JUMP (information on sudden increasing or decreasing prices).
 
 ![image](https://user-images.githubusercontent.com/125691344/219961181-4c9e3ff0-5421-4aa2-972b-dd9fb848b7be.png)
+
+
+You can find the installation/start quide in the document (Dutch only)
