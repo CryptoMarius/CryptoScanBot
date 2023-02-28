@@ -2,6 +2,10 @@ Mis je iets in onderstaande bevindingen/todo's of toekomstige todo's, geef het A
 
 
 Bevindingen/Todo's:
+- Een typefoutje in een error-melding in de log. Ik had even internet uitstaan en toen kwam in de log deze melding: "HttpRequestException - Er is een fout opgetreden bij het verzenden van het aanvraag" : het/de aanvraag.
+(ik kan deze zo snel niet vinden, zijn er nog andere vertaal zaken aanwezig?)
+- De logmeldingen werken van boven naar beneden (iemand stelde voor om het om te draaien)
+
 - Teksten kunnen vertalen (NL en EN lopen nu wel erg vaak door elkaar)
 - Zien hoeveel een munt gestegen of gedaald is na de initiele melding (dat vereist een ander grid).
 - Een Telegram die de meldingen kan weergeven (dat is eigenlijk wat overkill, maar omdat het kan)
