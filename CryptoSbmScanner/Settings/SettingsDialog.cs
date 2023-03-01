@@ -31,13 +31,13 @@ namespace CryptoSbmScanner
                 "-een stobb overbought signaal\n" +
                 "-de ma200 onder de ma50 is\n" +
                 "-de ma50 onder de ma20 is\n" +
-                "-de psar op of onder de ma20\n" +
+                "-de psar op of boven de ma20\n" +
                 "(dit kan een instapmoment zijn voor een short positie)");
             toolTip1.SetToolTip(EditAnalysisShowSbmOversold, "Dit is een variatie op de stobb oversold signaal en bestaat uit:\n" +
                 "-een stobb oversold signaal\n" +
                 "-de ma200 boven de ma50 is\n" +
                 "-de ma50 boven de ma20 is\n" +
-                "-de psar op of boven de ma20\n" +
+                "-de psar op of onder de ma20\n" +
                 "(dit kan een instapmoment zijn voor een long positie)");
 
             toolTip1.SetToolTip(EditAnalysisShowCandleJumpUp, "Een signaal dat een munt een bepaald percentage naar boven \"spingt\" (info)");

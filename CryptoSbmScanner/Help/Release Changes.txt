@@ -5,7 +5,6 @@ Bevindingen/Todo's:
 - Een typefoutje in een error-melding in de log. Ik had even internet uitstaan en toen kwam in de log deze melding: "HttpRequestException - Er is een fout opgetreden bij het verzenden van het aanvraag" : het/de aanvraag.
 (ik kan deze zo snel niet vinden, zijn er nog andere vertaal zaken aanwezig?)
 - De logmeldingen werken van boven naar beneden (iemand stelde voor om het om te draaien)
-
 - Teksten kunnen vertalen (NL en EN lopen nu wel erg vaak door elkaar)
 - Zien hoeveel een munt gestegen of gedaald is na de initiele melding (dat vereist een ander grid).
 - Een Telegram die de meldingen kan weergeven (dat is eigenlijk wat overkill, maar omdat het kan)
@@ -30,6 +29,10 @@ Bevindingen/Todo's:
 - Ondersteuning van andere exchanges (dat heeft momenteel niet mijn prioriteit)
   Gezien het geheugengebruik die de tool heeft is een combinatie van exchanges niet aan te raden.
 
+
+01-03-2023 1.7.1
+- Een verkeerde tooltip op de SBM oversold en overbought vinkje
+- De laatste Obfuscation restanten verwijderd (toch een stukje versleuteld!)
 
 26-02-2023 1.7
 - De instellingen opgesplitst (intervallen, STOBB/SBM/JUMP)
