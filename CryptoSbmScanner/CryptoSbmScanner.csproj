@@ -572,6 +572,5 @@
   </PropertyGroup>
   <Target Name="AfterCompile">
     <Exec Command="echo Release@@Win32&#xD;&#xA;if &quot;$(ConfigurationName)&quot; == &quot;Release&quot; (if &quot;$(PlatformName)&quot; == &quot;Win32&quot; (&quot;$(ProjectDir)_Obfuscar\Obfuscar.Console.exe&quot; &quot;$(ProjectDir)_Obfuscar\obfuscar_Release_Win32.xml&quot;&#xD;&#xA;xcopy /e /v &quot;$(ProjectDir)obj\Win32\Release\\Out\&quot; &quot;$(ProjectDir)obj\Win32\Release\&quot; /Y))" />
-    <Exec Command="echo Release@@Any CPU&#xD;&#xA;if &quot;$(ConfigurationName)&quot; == &quot;Release&quot; (if &quot;$(PlatformName)&quot; == &quot;AnyCPU&quot; (&quot;$(ProjectDir)_Obfuscar\Obfuscar.Console.exe&quot; &quot;$(ProjectDir)_Obfuscar\obfuscar_Release_Any_CPU.xml&quot;&#xD;&#xA;xcopy /e /v &quot;$(ProjectDir)obj\Release\\Out\&quot; &quot;$(ProjectDir)obj\Release\&quot; /Y))" />
   </Target>
 </Project>
