@@ -31,7 +31,14 @@ Bevindingen/Todo's:
 
 
 xx-xx-2023 1.8.0
+- Sorteer indicatie op de kolom waarop gesorteerd wordt
+- Op de naam van de kolom kunnen sorteren (2e sleutel is de eindtijd, 3e sleutel de symbol en de 4e is het interval).
+  Sorteren moet niet op basis van de tekst maar op basis van de waarde (indien relevant)
+- De signalen sorteren op candle-eindtijd, naam en dan interval (de default sortering).
 - Met de basismunt USDT actief wordt bij iedere herstart alsnog candles opgehaald, dit zijn dan de UP en de DOWN munten (die sluit ik normaliter uit, bij het ophalen van de candles kloppen de condities niet)
+- Bij veel signalen wordt de applicatie traag. De mutaties op de lijst met signalen lijkt de oorzaak te zijn
+  (de signalen worden nu gecached en 1 seconde vertraging helpt al behoorlijk)
+  NB: Dit was ook echt een ergernis voor mij, blij dat het opgelost is!
 - Aanpassingen trend, 2 nieuwe variaties, 1 op basis van cAlgo en een op basis van EMA.
   Het is een experiment om dit te verbeteren, maar echt veel beter is het niet geworden.
   Zie opmerking bij de TODO's "Validatie van de trenddetails" in het voorgaande stukje

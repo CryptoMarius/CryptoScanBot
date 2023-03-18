@@ -1157,7 +1157,45 @@ namespace CryptoSbmScanner
         private long LastSignalSoundCandleJumpDown = 0;
 
 
-        private void BinanceShowNotification(CryptoSignal signal) //, string MethodText, string EventText)
+        private Queue<CryptoSignal> signalQueue = new Queue<CryptoSignal>();
+
+
+        private void timerAddSignal_Tick(object sender, EventArgs e)
+        {
+            // Verwerk de signalen tot dusver..
+            // AddRange speedup!
+
+            if (signalQueue.Count > 0)
+            {
+                Monitor.Enter(signalQueue);
+                try
+                {
+                    List<CryptoSignal> signals = new List<CryptoSignal>();
+
+                    while (signalQueue.Count > 0)
+                    {
+                        CryptoSignal signal = signalQueue.Dequeue();
+                        signals.Add(signal);
+                    }
+
+                    // verwerken..
+                    //listViewSignalsAddSignalRange(signals);
+                    Task.Factory.StartNew(() =>
+                    {
+                        Invoke(new Action(() =>
+                        {
+                            listViewSignalsAddSignalRange(signals);
+                        }));
+                    });
+                }
+                finally
+                {
+                    Monitor.Exit(signalQueue);
+                }
+            }
+        }
+
+        private void BinanceShowNotification(CryptoSignal signal)
         {
             createdSignalCount++;
             string text = "signal: " + signal.Symbol.Name + " " + signal.Interval.Name + " " + signal.ModeText + " " + signal.StrategyText + " " + signal.EventText;
@@ -1166,14 +1204,16 @@ namespace CryptoSbmScanner
             // Zet de laatste munt in de "caption" (en taskbar) van de applicatie bar (visuele controle of er meldingen zijn)
             Invoke(new Action(() => { this.Text = signal.Symbol.Name + " " + createdSignalCount.ToString(); }));
 
-            Task.Factory.StartNew(() =>
-            {
-                Invoke(new Action(() =>
-                {
-                    listViewSignalsAddSignal(signal);
-                }));
-            });
 
+            Monitor.Enter(signalQueue);
+            try
+            {
+                signalQueue.Enqueue(signal);
+            }
+            finally
+            {
+                Monitor.Exit(signalQueue);
+            }
 
 
             // Play a sound
