@@ -2,272 +2,440 @@
 using System.Linq;
 using System.Collections.Generic;
 using System.Threading;
+using System.Text;
+using Microsoft.Build.Evaluation;
 
 namespace CryptoSbmScanner
 {
     public class CryptoZigZagResult
     {
         public string PointType { get; set; } // indicates a specific point and type e.g. H or L
-        public decimal Value { get; set; }
+        public double Value { get; set; }
         public CryptoCandle Candle { get; set; }
     }
 
     public class TrendIndicator
     {
-        public List<CryptoZigZagResult> zigZagList = new List<CryptoZigZagResult>();
+        //public List<CryptoZigZagResult> zigZagList = new List<CryptoZigZagResult>();
+        private CryptoSymbol Symbol { get; set; }
+        private CryptoInterval Interval { get; set; }
+        private SortedList<long, CryptoCandle> Candles;
+        private bool ShowTrend { get; set; }
+        public StringBuilder Log { get; set; }
 
 
-        private List<CryptoCandle> CalculateHistory(SortedList<long, CryptoCandle> candleSticks, int maxCandles)
+        public TrendIndicator(CryptoSymbol symbol, CryptoInterval interval, bool showTrend = false)
         {
-            // TODO: Deze routine is gedupliceerd, optimaliseren in de TradeTools of iets dergelijks?
-
-            //Transporteer de candles naar de Stock list
-            //Jammer dat we met tussen-array's moeten werken
-            List<CryptoCandle> history = new List<CryptoCandle>();
-            Monitor.Enter(candleSticks);
-            try
-            {
-                //Vanwege performance nemen we een gedeelte van de candles
-                for (int i = candleSticks.Values.Count - 1; i >= 0; i--)
-                {
-                    CryptoCandle candle = candleSticks.Values[i];
-
-                    // In omgekeerde volgorde in de lijst zetten
-                    if (history.Count == 0)
-                        history.Add(candle);
-                    else
-                        history.Insert(0, candle);
-
-                    maxCandles--;
-                    if (maxCandles == 0)
-                        break;
-                }
-            }
-            finally
-            {
-                Monitor.Exit(candleSticks);
-            }
-            return history;
+            this.Symbol = symbol;
+            this.Interval = interval;
+            this.ShowTrend = showTrend;
+            this.Candles = Symbol.GetSymbolInterval(Interval.IntervalPeriod).CandleList;
         }
 
 
         /// <summary>
         /// ZigZag afkomstig uit de cAlgo wereld
         /// </summary>
-        public CryptoTrendIndicator CalculateTrend(CryptoSymbol symbol, CryptoInterval interval)
+        public CryptoTrendIndicator CalculateTrend()
         {
-            CryptoTrendIndicator trend = CryptoTrendIndicator.trendSideways;
-
-            SortedList<long, CryptoCandle> candles = symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList;
-
-            // TODO: Uitzoeken hoe veel candles deze zigzag nu eigenlijk nodig heeft. 20.000+ candles lijkt me nogal overdreven
-            //List<CryptoCandle> history = candles.Values.ToList(); // Nee, allemaal - CalculateHistory(candles, 600);
-            List<CryptoCandle> history = CalculateHistory(candles, 1000); // Toch ingekort
-            if (history.Count == 0)
+            if (GlobalData.Settings.General.TrendCalculationMethod == TrendCalculationMethod.trendCalculationViaAlgo1)
             {
-                //Signal.Reaction = string.Format("not enough quotes for {0} trend", interval.Name);
+                // Methode 1 via een cAlgo ZigZag
+
+                //GlobalData.AddTextToLogTab("");
+                //GlobalData.AddTextToLogTab("");
+                //GlobalData.AddTextToLogTab("ZigZagTest cAlgo#1");
+                //GlobalData.AddTextToLogTab("");
+
+                //List<CryptoCandle> history = CalculateHistory(this.Candles, 1000); // Toch ingekort
+                List<CryptoCandle> history = this.Candles.Values.ToList();
+                if (history.Count == 0)
+                {
+                    // Hele discussies, maar als we niet genoeg candles hebben om een trend te berekenen
+                    // gebruiken we toch de sideway's om aan te geven dat het niet berekend kon worden.
+                    // Bij nieuwe munten, Flatliners (busdusdt) en andere gedrochten is het dus sideway's!
+                    //Signal.Reaction = string.Format("not enough quotes for {0} trend", interval.Name);
+                    return CryptoTrendIndicator.trendSideways;
+                }
+
+                TrendIndicatorZigZag1 zigZagTest = new TrendIndicatorZigZag1();
+                // Bied de candles een voor 1 aan
+                for (int i = 0; i < history.Count; i++)
+                    zigZagTest.Calculate(history[i], true);
+
+                // Maak van de gevonden punten een bruikbare ZigZag lijst
+                List<CryptoZigZagResult> zigZagList = PickupZigZagValues(zigZagTest);
+
+                CryptoTrendIndicator trend = InterpretationZigZagValues(zigZagList);
+                return trend;
+            }
+            else if (GlobalData.Settings.General.TrendCalculationMethod == TrendCalculationMethod.trendCalculationViaAlgo2)
+            {
+                // Methode 2 via een cAlgo ZigZag (net iets anders)
+
+                //GlobalData.AddTextToLogTab("");
+                //GlobalData.AddTextToLogTab("");
+                //GlobalData.AddTextToLogTab("ZigZagTest cAlgo#2");
+                //GlobalData.AddTextToLogTab("");
+
+                //List<CryptoCandle> history = CalculateHistory(this.Candles, 1000); // Toch ingekort
+                List<CryptoCandle> history = this.Candles.Values.ToList();
+                if (history.Count == 0)
+                {
+                    // Hele discussies, maar als we niet genoeg candles hebben om een trend te berekenen
+                    // gebruiken we toch de sideway's om aan te geven dat het niet berekend kon worden.
+                    // Bij nieuwe munten, Flatliners (busdusdt) en andere gedrochten is het dus sideway's!
+                    //Signal.Reaction = string.Format("not enough quotes for {0} trend", interval.Name);
+                    return CryptoTrendIndicator.trendSideways;
+                }
+
+
+
+                int depth;
+                switch (Interval.IntervalPeriod)
+                {
+                    case CryptoIntervalPeriod.interval1m:
+                        depth = 50;
+                        break;
+
+                    case CryptoIntervalPeriod.interval2m:
+                        depth = 20;
+                        break;
+
+                    case CryptoIntervalPeriod.interval3m:
+                        depth = 16;
+                        break;
+
+                    case CryptoIntervalPeriod.interval5m:
+                        depth = 15;
+                        break;
+
+                    case CryptoIntervalPeriod.interval10m:
+                        depth = 14;
+                        break;
+
+                    case CryptoIntervalPeriod.interval15m:
+                        depth = 13;
+                        break;
+
+                    //case CryptoIntervalPeriod.interval30m:
+                    //  depth = 12;
+                    //break;
+
+                    //case CryptoIntervalPeriod.interval1h:
+                    //  depth = 13;
+                    //break;
+
+                    //case CryptoIntervalPeriod.interval2h:
+                    //  depth = 13;
+                    //break;
+
+                    //case CryptoIntervalPeriod.interval4h:
+                    //case CryptoIntervalPeriod.interval6h:
+                    //case CryptoIntervalPeriod.interval12h:
+                    //case CryptoIntervalPeriod.interval1d:
+                    default:
+                        depth = 12;
+                        break;
+                }
+
+                // Dit keer een ander cAlgo ZigZag indicator (ze lijken op elkaar, deze heeft echter een backStep)
+                TrendIndicatorZigZag2 zigZagTest = new TrendIndicatorZigZag2(Symbol, history, 3, depth, 5);
+                // Bied de candles een voor 1 aan
+                for (int i = 0; i < history.Count; i++)
+                    zigZagTest.Calculate(i);
+
+                // Maak van de gevonden punten een bruikbare ZigZag lijst
+                List<CryptoZigZagResult> zigZagList = PickupZigZagValues(zigZagTest);
+
+                CryptoTrendIndicator trend = InterpretationZigZagValues(zigZagList);
                 return trend;
             }
 
-            //GlobalData.AddTextToLogTab("");
-            //GlobalData.AddTextToLogTab("");
-            //GlobalData.AddTextToLogTab("ZigZagTest2 cAlgo");
-            //GlobalData.AddTextToLogTab("");
-            TrendIndicatorZigZag zigZagTest2 = new TrendIndicatorZigZag();
+            else //if (GlobalData.Settings.General.TrendCalculationMethod == TrendCalculationMethod.trendCalculationcViaEma)
+            {
+                // Methode 3 via de EMA 8 / EMA21
 
-            // Naarmate het het interval hoger is moet ook de depth hoger zijn.
-            // Eigenlijk is de trend voor lage intervallen niet heel betrouwbaar.
-            if (interval.IntervalPeriod >= CryptoIntervalPeriod.interval4h)
-                zigZagTest2.Depth = 8;
-            else
-                zigZagTest2.Depth = 5;
+                //GlobalData.AddTextToLogTab("");
+                //GlobalData.AddTextToLogTab("");
+                //GlobalData.AddTextToLogTab("EMA8/21 test");
+                //GlobalData.AddTextToLogTab("");
 
-            foreach (CryptoCandle candle in history)
-                zigZagTest2.OnProcess(candle, true);
+                TrendIndicatorZigZag3 zigZagTest = new TrendIndicatorZigZag3(Symbol, Interval, this.Candles);
+                CryptoTrendIndicator trend = zigZagTest.Calculate();
+                return trend;
+            }
 
-            zigZagList.Clear();
+        }
 
+
+        /// <summary>
+        /// De lows en highs in 1 lijst zetten voor de vervolg interpretatie  van de P&T
+        /// (source reeks bevat meerdere low's of high's, neem daarvan de laagste of hoogste)
+        /// </summary>
+        private List<CryptoZigZagResult> PickupZigZagValues(TrendIndicatorZigZag2 zigZagTest)
+        {
+            CryptoZigZagResult zigZagResult = null;
+            List<CryptoZigZagResult> zigZagList = new List<CryptoZigZagResult>();
+
+            if (Log != null)
+            {
+                Log.AppendLine("");
+                Log.AppendLine("ZigZag points:");
+            }
+            for (int x = 0; x < zigZagTest.Result.Count; x++)
+            {
+                CryptoCandle candle = zigZagTest.CandleList[x];
+
+                if (zigZagTest._highZigZags[x] != 0)
+                {
+                    //candle.CandleData.ZigZag = rsi;
+                    if (Log != null)
+                    {
+                        string s = string.Format("date={0} H {1:N8} rsi={2:N8}", candle.Date.ToLocalTime(), zigZagTest._highZigZags[x], candle.CandleData?.Rsi);
+                        Log.AppendLine(s);
+                    }
+
+                    if ((zigZagResult != null) && (zigZagResult.PointType == "H"))
+                    {
+                        if (zigZagTest._highZigZags[x] > zigZagResult.Value)
+                        {
+                            zigZagResult.Candle = candle;
+                            zigZagResult.Value = zigZagTest._highZigZags[x];
+                        }
+                    }
+                    else
+                    {
+                        zigZagResult = new CryptoZigZagResult();
+                        zigZagResult.Candle = candle;
+                        zigZagResult.PointType = "H";
+                        zigZagResult.Value = zigZagTest._highZigZags[x];
+                        zigZagList.Add(zigZagResult);
+                    }
+                }
+
+                if (zigZagTest._lowZigZags[x] != 0)
+                {
+                    if (Log != null)
+                    {
+                        string s = string.Format("date={0} L {1:N8} rsi={2:N8}", candle.Date.ToLocalTime(), zigZagTest._lowZigZags[x], candle.CandleData?.Rsi);
+                        Log.AppendLine(s);
+                    }
+                    if ((zigZagResult != null) && (zigZagResult.PointType == "L"))
+                    {
+                        if (zigZagTest._lowZigZags[x] < zigZagResult.Value)
+                        {
+                            zigZagResult.Candle = candle;
+                            zigZagResult.Value = zigZagTest._lowZigZags[x];
+                        }
+                    }
+                    else
+                    {
+                        zigZagResult = new CryptoZigZagResult();
+                        zigZagResult.Candle = candle;
+                        zigZagResult.PointType = "L";
+                        zigZagResult.Value = zigZagTest._lowZigZags[x];
+                        zigZagList.Add(zigZagResult);
+                    }
+                }
+            }
+            return zigZagList;
+        }
+
+
+        private List<CryptoZigZagResult> PickupZigZagValues(TrendIndicatorZigZag1 zigZagTest)
+        {
+            CryptoZigZagResult zigZagResult = null;
+            List<CryptoZigZagResult> zigZagList = new List<CryptoZigZagResult>();
+
+            if (Log != null)
+            {
+                Log.AppendLine("");
+                Log.AppendLine("ZigZag points:");
+            }
 
             //GlobalData.AddTextToLogTab("");
             //GlobalData.AddTextToLogTab("ZigZag points:");
             // De lows en highs in 1 lijst zetten voor interpretatie verderop
             // Deze indicator zet de candles net andersom (voila)
-            for (int x = zigZagTest2.Candles.Count - 1; x >= 0; x--)
+            for (int x = zigZagTest.Candles.Count - 1; x >= 0; x--)
             {
-                CryptoCandle candle = zigZagTest2.Candles[x];
+                CryptoCandle candle = zigZagTest.Candles[x];
 
-                if (zigZagTest2._highBuffer[x] != 0)
+                if (zigZagTest._highBuffer[x] != 0)
                 {
-                    //candle.CandleData.ZigZag = rsi;
-                    //s = string.Format("date={0} H {1:N8} rsi={2:N8}", candle.Date.ToLocalTime(), zigZagTest2._highBuffer[x], candle.CandleData.Rsi.Rsi);
-                    //GlobalData.AddTextToLogTab(s);
+                    if (Log != null)
+                    {
+                        string s = string.Format("date={0} H {1:N8} rsi={2:N8}", candle.Date.ToLocalTime(), zigZagTest._highBuffer[x], candle.CandleData?.Rsi);
+                        Log.AppendLine(s);
+                    }
 
-                    CryptoZigZagResult zigZagResult = new CryptoZigZagResult();
+                    zigZagResult = new CryptoZigZagResult();
                     zigZagResult.Candle = candle;
                     zigZagResult.PointType = "H";
-                    zigZagResult.Value = zigZagTest2._highBuffer[x];
+                    zigZagResult.Value = (double)zigZagTest._highBuffer[x];
                     zigZagList.Add(zigZagResult);
                 }
 
-                if (zigZagTest2._lowBuffer[x] != 0)
+                if (zigZagTest._lowBuffer[x] != 0)
                 {
-                    //s = string.Format("date={0} L {1:N8} rsi={2:N8}", candle.Date.ToLocalTime(), zigZagTest2._lowBuffer[x], candle.CandleData.Rsi.Rsi);
-                    //GlobalData.AddTextToLogTab(s);
-                    CryptoZigZagResult zigZagResult = new CryptoZigZagResult();
+                    if (Log != null)
+                    {
+                        string s = string.Format("date={0} L {1:N8} rsi={2:N8}", candle.Date.ToLocalTime(), zigZagTest._lowBuffer[x], candle.CandleData?.Rsi);
+                        Log.AppendLine(s);
+                    }
+
+                    zigZagResult = new CryptoZigZagResult();
                     zigZagResult.Candle = candle;
                     zigZagResult.PointType = "L";
-                    zigZagResult.Value = zigZagTest2._lowBuffer[x];
+                    zigZagResult.Value = (double)zigZagTest._lowBuffer[x];
                     zigZagList.Add(zigZagResult);
                 }
+            }          
+            return zigZagList;
+        }
+
+        /// <summary>
+        /// Interpreteer de zigzag values (P&T) en identificeer de trend
+        /// </summary>
+        public CryptoTrendIndicator InterpretationZigZagValues(List<CryptoZigZagResult> zigZagList)
+        {
+            if (Log != null)
+            {
+                Log.AppendLine("");
+                Log.AppendLine("ZigZag interpretation:");
+            }
+
+            CryptoTrendIndicator trend = CryptoTrendIndicator.trendSideways;
+
+            // Zijn er meer dan 1 punt?, zoniet laat dan maar, want dan is er niets uit te extraheren
+            if (zigZagList.Count < 2)
+                return trend;
+
+
+            // Pak de 1e 2 punten en bepaal een start situatie (de sideway's komt dan niet meer voor).
+            int count = 0;
+            double lastLow;
+            double lastHigh;
+            if (zigZagList[1].Value > zigZagList[0].Value)
+            {
+                lastLow = zigZagList[0].Value;
+                lastHigh = zigZagList[1].Value;
+                trend = CryptoTrendIndicator.trendBullish;
+            }
+            else
+            {
+                lastLow = zigZagList[1].Value;
+                lastHigh = zigZagList[0].Value;
+                trend = CryptoTrendIndicator.trendBearish;
             }
 
 
-
-
-            // Niewe bepaling (experiment)
-            // NB: Discussie over de laatste waarde (lijkt een extra L/H die niet correct is? actuele marktprijs?)?
-            int count = 0;
-            decimal? low = null;
-            decimal? high = null;
-            for (int i = 0; i < zigZagList.Count; i++)
+            // Nieuwe bepaling [NB: Er is discussie over de laatste zigzag waarde (market value ipv een low/high)]
+            // Je wilt naar een soort van pairs toe (l,h) zodat je kan vergelijken met de vorige (l,h)
+            // (?verwarring of je een (l,h) of (h,l) gebruikt, beide zou kunnen, misschien vanwege start situatie?
+            // Maar maakt het uit, zolang je maar genoeg zigzag punten hebt boeit het niet?)
+            CryptoZigZagResult zigZagResult;
+            for (int i = 2; i < zigZagList.Count; i++)
             {
-                CryptoZigZagResult zigZagResult = zigZagList[i];
+                zigZagResult = zigZagList[i];
 
-                decimal? value, previous;
-                switch (zigZagResult.PointType)
+                // Pickup last value
+                double value;
+                if (zigZagResult.PointType == "H")
+                    value = lastHigh;
+                else
+                    value = lastLow;
+
+                // Check Values
+                switch (trend)
                 {
-                    // NB: De inner switch code voor de L en H zijn hetzelfde
-                    case "H":
-                        previous = high;
-                        value = zigZagResult.Value;
-                        switch (trend)
-                        {
-                            case CryptoTrendIndicator.trendBearish: // bearish
-                                if (value > previous)
-                                {
-                                    // de nieuwe is hoger dan de vorige, dan kan het geen bearish trend meer zijn
-                                    // Het kan eventueel nog een false breakout zijn (houden we nu geen rekening mee)
-                                    trend = CryptoTrendIndicator.trendBullish;
-                                    count = 1;
-                                }
-                                else
-                                    count++;
-                                break;
-                            case CryptoTrendIndicator.trendSideways: // er is nog geen trend gedetecteerd (c.q. sideway's)
-                                if ((previous != null) && (value > previous))
-                                {
-                                    // de nieuwe is hoger dan de vorige, laten we aannemen dat het bullish wordt
-                                    trend = CryptoTrendIndicator.trendBullish;
-                                    count = 1;
-                                }
-                                else if ((previous != null) && (value < previous))
-                                {
-                                    // de nieuwe is lager dan de vorige, laten we aannemen dat het bearish wordt
-                                    trend = CryptoTrendIndicator.trendBearish;
-                                    count = 1;
-                                }
-                                break;
-                            case CryptoTrendIndicator.trendBullish: // bullish
-                                if (value <= previous)
-                                {
-                                    // de nieuwe is lager dan de vorige, dan kan het geen bullish trend meer zijn
-                                    trend = CryptoTrendIndicator.trendBearish;
-                                    count = 1;
-                                }
-                                else
-                                    count++;
-                                break;
-
-                        }
-                        high = value;
+                    case CryptoTrendIndicator.trendBearish:
+                        if (zigZagResult.Value > value)
+                            count++;
+                        else count = 0;
                         break;
-                    case "L":
-                        previous = low;
-                        value = zigZagResult.Value;
-                        switch (trend)
-                        {
-                            case CryptoTrendIndicator.trendBearish: // bearish
-                                if (value > previous)
-                                {
-                                    // de nieuwe is hoger dan de vorige, dan kan het geen bearish trend meer zijn
-                                    trend = CryptoTrendIndicator.trendBullish;
-                                    count = 1;
-                                }
-                                else
-                                    count++;
-                                break;
-                            case CryptoTrendIndicator.trendSideways: // er is nog geen trend gedetecteerd (c.q. sideway's)
-                                if ((previous != null) && (value > previous))
-                                {
-                                    // de nieuwe is hoger dan de vorige, laten we aannemen dat het bullish wordt
-                                    trend = CryptoTrendIndicator.trendBullish;
-                                    count = 1;
-                                }
-                                else if ((previous != null) && (value < previous))
-                                {
-                                    // de nieuwe is lager dan de vorige, laten we aannemen dat het bearish wordt
-                                    trend = CryptoTrendIndicator.trendBearish;
-                                    count = 1;
-                                }
-                                break;
-                            case CryptoTrendIndicator.trendBullish: // bullish
-                                if (value <= previous)
-                                {
-                                    // de nieuwe is lager dan de vorige, dan kan het geen bullish trend meer zijn
-                                    trend = CryptoTrendIndicator.trendBearish;
-                                    count = 1;
-                                }
-                                else
-                                    count++;
-                                break;
-
-                        }
-                        low = value;
+                    case CryptoTrendIndicator.trendBullish:
+                        if (zigZagResult.Value <= value)
+                            count++;
+                        else count = 0;
                         break;
+
                 }
 
+                // Save the last value
+                if (zigZagResult.PointType == "H")
+                    lastHigh = zigZagResult.Value;
+                else
+                    lastLow = zigZagResult.Value;
+
+
+                if (this.Log != null) // && zigZagResult.PointType != ""
+                {
+                    Log.AppendLine(string.Format("date={0} {1} {2:N8} rsi={3:N8} count={4}, trend={5}", zigZagResult.Candle.Date.ToLocalTime(), 
+                        zigZagResult.PointType, zigZagResult.Value, zigZagResult.Candle.CandleData?.Rsi, count, trend));
+                }
+
+                // switch trend if 2 values are opposite
+                if (count > 1)
+                {
+                    count = 0;
+                    if (trend == CryptoTrendIndicator.trendBearish)
+                        trend = CryptoTrendIndicator.trendBullish;
+                    else if (trend == CryptoTrendIndicator.trendBullish)
+                        trend = CryptoTrendIndicator.trendBearish;
+
+                    if (this.Log != null) // && zigZagResult.PointType != ""
+                    {
+                        Log.AppendLine("The trend switched");
+                    }
+
+                }
             }
 
 
-            if (count < 3)
-                trend = CryptoTrendIndicator.trendSideways; // trendBearish;
+            //s = string.Format("interval={0} count={1}", interval.Name, count);
+            //GlobalData.AddTextToLogTab(s);
+            //if (count < 3)
+            //{
+            //    GlobalData.AddTextToLogTab("reset to sideway's");
+            //    trend = CryptoTrendIndicator.trendSideways; // trendBearish;
+            //}
 
-            // De zigzag heeft soms problemen met de laatste piek of dal, daarom het volgende ter correctie:
+            // De zigzag heeft (denk ik) problemen met de laatste piek of dal, daarom het volgende ter correctie:
             // Als de allerlaatste candle alweer onder of boven de l/h staat is de trend niet meer geldig
-            CryptoCandle candleLast = history.Last();
-            if (trend == CryptoTrendIndicator.trendBullish)
-            {
-                if (candleLast.Close < low)
-                    trend = CryptoTrendIndicator.trendSideways; // trendBearish;
-            }
-            if (trend == CryptoTrendIndicator.trendBearish)
-            {
-                if (candleLast.Close > high)
-                    trend = CryptoTrendIndicator.trendSideways; // trendBullish;
-            }
 
-
+            //CryptoCandle candleLast = history.Last();
+            //if (trend == CryptoTrendIndicator.trendBullish)
+            //{
+            //    if (candleLast.Close < (decimal)low)
+            //        trend = CryptoTrendIndicator.trendSideways; // trendBearish;
+            //}
+            //if (trend == CryptoTrendIndicator.trendBearish)
+            //{
+            //    if (candleLast.Close > (decimal)high)
+            //        trend = CryptoTrendIndicator.trendSideways; // trendBullish;
+            //}
 
             //GlobalData.AddTextToLogTab("");
             //GlobalData.AddTextToLogTab("Trend(2):");
-            //string s = "";
-            //if (trend == CryptoTrend.trendBullish)
-            //    s = string.Format("{0} {1}, candles={2}, count={3}, trend=bullish, ", symbol.Name, interval.IntervalPeriod, candles.Count, count);
-            //else if (trend == CryptoTrend.trendBearish)
-            //    s = string.Format("{0} {1}, candles={2}, count={3}, trend=bearish, ", symbol.Name, interval.IntervalPeriod, candles.Count, count);
-            //else
-            //    s = string.Format("{0} {1}, candles={2}, count={3}, trend=sideway's?, ", symbol.Name, interval.IntervalPeriod, candles.Count, count);
-            //GlobalData.AddTextToLogTab(s);
+            if (this.ShowTrend)
+            {
+                string s;
+                if (trend == CryptoTrendIndicator.trendBullish)
+                    s = string.Format("{0} {1}, candles={2}, count={3}, trend=bullish", Symbol.Name, Interval.Name, this.Candles.Count, count);
+                else if (trend == CryptoTrendIndicator.trendBearish)
+                    s = string.Format("{0} {1}, candles={2}, count={3}, trend=bearish", Symbol.Name, Interval.Name, this.Candles.Count, count);
+                else
+                    s = string.Format("{0} {1}, candles={2}, count={3}, trend=sideway's?", Symbol.Name, Interval.Name, this.Candles.Count, count);
+                GlobalData.AddTextToLogTab(s);
 
-            //if (trend == CryptoTrend.trendBullish)
-            //    procentje += (int)interval.IntervalPeriod * y;
-            //else if (trend == CryptoTrend.trendBearish)
-            //    procentje -= (int)interval.IntervalPeriod * y;
+                if (this.Log != null)
+                    this.Log.AppendLine(s);
+            }
+
             return trend;
         }
 
-
-        //decimal xyz = 100 * (decimal)procentje / sum;
-        //GlobalData.AddTextToLogTab(xyz.ToString("N2"));
     }
 }

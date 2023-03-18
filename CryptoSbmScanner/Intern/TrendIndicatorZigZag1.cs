@@ -14,7 +14,7 @@ namespace CryptoSbmScanner
     /// <remarks>
     /// ZigZag traces and combines extreme points of the chart, distanced for not less than specified percentage by the price scale.
     /// </remarks>
-    public class TrendIndicatorZigZag
+    public class TrendIndicatorZigZag1
     {
 		public readonly IList<CryptoCandle> Candles = new List<CryptoCandle>();
 
@@ -30,7 +30,7 @@ namespace CryptoSbmScanner
 		/// <summary>
 		/// Initializes a new instance of the <see cref="ZigZag"/>.
 		/// </summary>
-		public TrendIndicatorZigZag()
+		public TrendIndicatorZigZag1()
 		{
 			BackStep = 3;
 			Depth = 12;
@@ -154,7 +154,7 @@ namespace CryptoSbmScanner
 		}
 
 		/// <inheritdoc />
-		public void OnProcess(CryptoCandle candle, bool isFinal)
+		public void Calculate(CryptoCandle candle, bool isFinal)
 		{
 			//var candle = input.GetValue<CryptoCandle>();
 			

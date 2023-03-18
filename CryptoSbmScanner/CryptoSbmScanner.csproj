@@ -138,6 +138,9 @@
     </Compile>
     <Compile Include="Intern\Indicators.cs" />
     <Compile Include="Intern\SpeechPlayer.cs" />
+    <Compile Include="Intern\TrendIndicatorZigZag1.cs" />
+    <Compile Include="Intern\TrendIndicatorZigZag2.cs" />
+    <Compile Include="Intern\TrendIndicatorZigZag3.cs" />
     <Compile Include="Signal\SignalBase.cs" />
     <Compile Include="Signal\SignalPriceCrossedMa20.cs" />
     <Compile Include="Signal\SignalSbm2Overbought.cs" />
@@ -158,7 +161,6 @@
     <Compile Include="Intern\BarometerTools.cs" />
     <Compile Include="Intern\SoundPlayer.cs" />
     <Compile Include="Intern\TrendIndicator.cs" />
-    <Compile Include="Intern\TrendIndicatorZigZag.cs" />
     <Compile Include="Main.Signals.cs">
       <SubType>Form</SubType>
     </Compile>

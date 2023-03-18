@@ -15,6 +15,8 @@ using System.Drawing.Drawing2D;
 using TradingView;
 using Microsoft.Web.WebView2.Core;
 using Google.Protobuf.WellKnownTypes;
+using System.Text;
+using System.IO;
 
 namespace CryptoSbmScanner
 {
@@ -1385,6 +1387,9 @@ namespace CryptoSbmScanner
         private void ShowTrendInformation(CryptoSymbol symbol)
         {
 
+            StringBuilder log = new StringBuilder();
+            log.AppendLine("Trend " + symbol.Name);
+
             GlobalData.AddTextToLogTab("");
             GlobalData.AddTextToLogTab("Trend " + symbol.Name);
 
@@ -1392,51 +1397,16 @@ namespace CryptoSbmScanner
             long maxPercentageSum = 0;
             foreach (CryptoInterval interval in GlobalData.IntervalList)
             {
+                log.AppendLine("");
+                log.AppendLine("----");
+                log.AppendLine("Interval " + interval.Name);
+
                 // Wat is het maximale som (voor de eindberekening)
                 maxPercentageSum += interval.Duration;
 
-                CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-                //TrendIndicator trendIndicatorClass = new TrendIndicator();
-                //CryptoTrendIndicator trendIndicator = trendIndicatorClass.CalculateTrend(symbol, interval);
-
-                //TrendIndicator trendIndicatorClass = new TrendIndicator();
-                CryptoTrendIndicator trendIndicator; // = trendIndicatorClass.CalculateTrend(symbol, interval);
-
-                //SortedList<long, CryptoCandle> intervalCandles = symbolInterval.CandleList;
-                //if (!intervalCandles.Any())
-                //{
-                //    GlobalData.AddTextToLogTab("No candles available");
-                //    continue;
-                //}
-
-                //string text;
-                //CryptoCandle candle = intervalCandles.Values.Last();
-                //if (candle.CandleData == null)
-                //{
-                //    List<CryptoCandle> history = CandleIndicatorData.CalculateCandles(symbol, interval, candle.OpenTime, out text);
-                //    if (history == null)
-                //    {
-                //        GlobalData.AddTextToLogTab("No indicators available " + intervalCandles.Count.ToString());
-                //        continue;
-                //    }
-
-                //    // Eenmalig de indicators klaarzetten
-                //    candle = history[history.Count - 1];
-                //    if (candle.CandleData == null)
-                //        CandleIndicatorData.CalculateIndicators(history);
-                //}
-
-
-                //if (candle.CandleData.Ema8.Ema.Value > candle.CandleData.Ema21.Ema.Value)
-                //    trendIndicator = CryptoTrendIndicator.trendBullish;
-                //else if (candle.CandleData.Ema8.Ema.Value < candle.CandleData.Ema21.Ema.Value)
-                //    trendIndicator = CryptoTrendIndicator.trendBearish;
-                //else
-                //    trendIndicator = CryptoTrendIndicator.trendSideways;
-
-
-                TrendIndicator trendIndicatorClass = new TrendIndicator();
-                trendIndicator = trendIndicatorClass.CalculateTrend(symbol, interval);
+                TrendIndicator trendIndicatorClass = new TrendIndicator(symbol, interval);
+                trendIndicatorClass.Log = log;
+                CryptoTrendIndicator trendIndicator = trendIndicatorClass.CalculateTrend();
                 if (trendIndicator == CryptoTrendIndicator.trendBullish)
                     percentageSum += interval.Duration;
                 else if (trendIndicator == CryptoTrendIndicator.trendBearish)
@@ -1456,6 +1426,7 @@ namespace CryptoSbmScanner
                 else
                     s = string.Format("{0} {1}, trend=sideway's", symbol.Name, interval.IntervalPeriod);
                 GlobalData.AddTextToLogTab(s);
+                log.AppendLine(s);
             }
 
             if (maxPercentageSum > 0)
@@ -1463,8 +1434,14 @@ namespace CryptoSbmScanner
                 decimal trendPercentage = 100 * (decimal)percentageSum / (decimal)maxPercentageSum;
                 string t = string.Format("{0} {1:N2}", symbol.Name, trendPercentage);
                 GlobalData.AddTextToLogTab(t);
+                log.AppendLine(t);
             }
 
+
+
+            //Laad de gecachte (langere historie, minder overhad)
+            string filename = GlobalData.GetBaseDir() + "Trend information.txt";
+            File.WriteAllText(filename, log.ToString());
         }
 
         private void timerCandles_Tick(object sender, EventArgs e)

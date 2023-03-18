@@ -25,6 +25,12 @@ namespace CryptoSbmScanner
         activateTradingViewBrowerExternal
     }
 
+    public enum TrendCalculationMethod
+    {
+        trendCalculationViaAlgo1,
+        trendCalculationViaAlgo2,
+        trendCalculationcViaEma
+    }
 
     // TODO indelen in categorien
     [Serializable]
@@ -44,6 +50,8 @@ namespace CryptoSbmScanner
 
         public Rectangle WindowPosition { get; set; } = new Rectangle();
         public FormWindowState WindowState { get; set; } = FormWindowState.Normal;
+
+        public TrendCalculationMethod TrendCalculationMethod { get; set; } = TrendCalculationMethod.trendCalculationViaAlgo1;
 
         public SettingsGeneral()
         {
