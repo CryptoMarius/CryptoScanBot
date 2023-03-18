@@ -134,6 +134,7 @@ namespace CryptoSbmScanner
             EditBlackTheming.Checked = settings.General.BlackTheming;
             EditTradingApp.SelectedIndex = (int)settings.General.TradingApp;
             EditDoubleClickAction.SelectedIndex = (int)settings.General.DoubleClickAction;
+            EditTrendCalculationMethod.SelectedIndex = (int)settings.General.TrendCalculationMethod;
             EditSoundHeartBeatMinutes.Value = settings.Signal.SoundHeartBeatMinutes;
 
             EditHideTechnicalStuffSignals.Checked = settings.Signal.HideTechnicalStuffSignals;
@@ -171,6 +172,11 @@ namespace CryptoSbmScanner
             EditAnalyseInterval8h.Checked = settings.Signal.AnalyseInterval[(int)CryptoIntervalPeriod.interval8h];
             EditAnalyseInterval12h.Checked = settings.Signal.AnalyseInterval[(int)CryptoIntervalPeriod.interval12h];
             EditAnalyseInterval1d.Checked = settings.Signal.AnalyseInterval[(int)CryptoIntervalPeriod.interval1d];
+
+
+            // ------------------------------------------------------------------------------
+            // Signal types
+            // ------------------------------------------------------------------------------
 
             // STOBB
             EditStobbBBMinPercentage.Value = (decimal)settings.Signal.StobbBBMinPercentage;
@@ -316,6 +322,7 @@ namespace CryptoSbmScanner
             settings.General.BlackTheming = EditBlackTheming.Checked;
             settings.General.TradingApp = (TradingApp)EditTradingApp.SelectedIndex;
             settings.General.DoubleClickAction = (DoubleClickAction)EditDoubleClickAction.SelectedIndex;
+            settings.General.TrendCalculationMethod = (TrendCalculationMethod)EditTrendCalculationMethod.SelectedIndex;
             settings.Signal.SoundHeartBeatMinutes = (int)EditSoundHeartBeatMinutes.Value;
             settings.General.FontName = this.Font.Name;
             settings.General.FontSize = this.Font.Size;
@@ -365,6 +372,10 @@ namespace CryptoSbmScanner
             settings.Signal.AnalyseInterval[(int)CryptoIntervalPeriod.interval8h] = EditAnalyseInterval8h.Checked;
             settings.Signal.AnalyseInterval[(int)CryptoIntervalPeriod.interval12h] = EditAnalyseInterval12h.Checked;
             settings.Signal.AnalyseInterval[(int)CryptoIntervalPeriod.interval1d] = EditAnalyseInterval1d.Checked;
+
+            // ------------------------------------------------------------------------------
+            // Signal types
+            // ------------------------------------------------------------------------------
 
             // STOBB
             settings.Signal.StobbBBMinPercentage = EditStobbBBMinPercentage.Value;

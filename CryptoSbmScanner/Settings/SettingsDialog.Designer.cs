@@ -38,6 +38,8 @@
             this.panel1 = new System.Windows.Forms.Panel();
             this.tabControl = new System.Windows.Forms.TabControl();
             this.tabAlgemeen = new System.Windows.Forms.TabPage();
+            this.label40 = new System.Windows.Forms.Label();
+            this.EditTrendCalculationMethod = new System.Windows.Forms.ComboBox();
             this.EditHideTechnicalStuffSignals = new System.Windows.Forms.CheckBox();
             this.label6 = new System.Windows.Forms.Label();
             this.EditGlobalDataRemoveSignalAfterxCandles = new System.Windows.Forms.NumericUpDown();
@@ -381,6 +383,8 @@
             // 
             // tabAlgemeen
             // 
+            this.tabAlgemeen.Controls.Add(this.label40);
+            this.tabAlgemeen.Controls.Add(this.EditTrendCalculationMethod);
             this.tabAlgemeen.Controls.Add(this.EditHideTechnicalStuffSignals);
             this.tabAlgemeen.Controls.Add(this.label6);
             this.tabAlgemeen.Controls.Add(this.EditGlobalDataRemoveSignalAfterxCandles);
@@ -400,10 +404,33 @@
             this.tabAlgemeen.Text = "Algemeen";
             this.tabAlgemeen.UseVisualStyleBackColor = true;
             // 
+            // label40
+            // 
+            this.label40.AutoSize = true;
+            this.label40.Location = new System.Drawing.Point(19, 91);
+            this.label40.Name = "label40";
+            this.label40.Size = new System.Drawing.Size(89, 13);
+            this.label40.TabIndex = 160;
+            this.label40.Text = "Trend calculation";
+            // 
+            // EditTrendCalculationMethod
+            // 
+            this.EditTrendCalculationMethod.Cursor = System.Windows.Forms.Cursors.Default;
+            this.EditTrendCalculationMethod.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.EditTrendCalculationMethod.FormattingEnabled = true;
+            this.EditTrendCalculationMethod.Items.AddRange(new object[] {
+            "cAlgo#1 zigzag + interpretatie",
+            "cAlgo#2 zigzag + interpretatie",
+            "EMA 8 > EMA 20 "});
+            this.EditTrendCalculationMethod.Location = new System.Drawing.Point(109, 88);
+            this.EditTrendCalculationMethod.Name = "EditTrendCalculationMethod";
+            this.EditTrendCalculationMethod.Size = new System.Drawing.Size(163, 21);
+            this.EditTrendCalculationMethod.TabIndex = 159;
+            // 
             // EditHideTechnicalStuffSignals
             // 
             this.EditHideTechnicalStuffSignals.AutoSize = true;
-            this.EditHideTechnicalStuffSignals.Location = new System.Drawing.Point(25, 175);
+            this.EditHideTechnicalStuffSignals.Location = new System.Drawing.Point(25, 199);
             this.EditHideTechnicalStuffSignals.Name = "EditHideTechnicalStuffSignals";
             this.EditHideTechnicalStuffSignals.Size = new System.Drawing.Size(351, 17);
             this.EditHideTechnicalStuffSignals.TabIndex = 158;
@@ -413,7 +440,7 @@
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(22, 140);
+            this.label6.Location = new System.Drawing.Point(22, 164);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(219, 13);
             this.label6.TabIndex = 156;
@@ -421,7 +448,7 @@
             // 
             // EditGlobalDataRemoveSignalAfterxCandles
             // 
-            this.EditGlobalDataRemoveSignalAfterxCandles.Location = new System.Drawing.Point(277, 138);
+            this.EditGlobalDataRemoveSignalAfterxCandles.Location = new System.Drawing.Point(277, 162);
             this.EditGlobalDataRemoveSignalAfterxCandles.Maximum = new decimal(new int[] {
             60,
             0,
@@ -445,7 +472,7 @@
             // EditBlackTheming
             // 
             this.EditBlackTheming.AutoSize = true;
-            this.EditBlackTheming.Location = new System.Drawing.Point(27, 261);
+            this.EditBlackTheming.Location = new System.Drawing.Point(27, 285);
             this.EditBlackTheming.Name = "EditBlackTheming";
             this.EditBlackTheming.Size = new System.Drawing.Size(77, 17);
             this.EditBlackTheming.TabIndex = 155;
@@ -454,7 +481,7 @@
             // 
             // buttonFontDialog
             // 
-            this.buttonFontDialog.Location = new System.Drawing.Point(27, 212);
+            this.buttonFontDialog.Location = new System.Drawing.Point(27, 236);
             this.buttonFontDialog.Name = "buttonFontDialog";
             this.buttonFontDialog.Size = new System.Drawing.Size(119, 23);
             this.buttonFontDialog.TabIndex = 154;
@@ -464,7 +491,7 @@
             // label18
             // 
             this.label18.AutoSize = true;
-            this.label18.Location = new System.Drawing.Point(22, 103);
+            this.label18.Location = new System.Drawing.Point(22, 127);
             this.label18.Name = "label18";
             this.label18.Size = new System.Drawing.Size(231, 13);
             this.label18.TabIndex = 152;
@@ -472,7 +499,7 @@
             // 
             // EditSoundHeartBeatMinutes
             // 
-            this.EditSoundHeartBeatMinutes.Location = new System.Drawing.Point(277, 101);
+            this.EditSoundHeartBeatMinutes.Location = new System.Drawing.Point(277, 125);
             this.EditSoundHeartBeatMinutes.Maximum = new decimal(new int[] {
             60,
             0,
@@ -3073,6 +3100,8 @@
         private System.Windows.Forms.Label label32;
         private System.Windows.Forms.Label label33;
         private System.Windows.Forms.Label label34;
+        private System.Windows.Forms.Label label40;
+        private System.Windows.Forms.ComboBox EditTrendCalculationMethod;
         private System.Windows.Forms.Label label36;
     }
 }
