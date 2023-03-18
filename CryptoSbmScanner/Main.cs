@@ -703,26 +703,32 @@ namespace CryptoSbmScanner
 
         private void ConnectionWasRestoredEvent(string text, bool extraLineFeed = false)
         {
-            // Plan een verversing omdat er een connection timeout was.
-            // Dit kan een aantal berekeningen onderbroken hebben
-            // (er komen een aantal reconnects, daarom circa 20 seconden)
-            if ((components != null) && (!ProgramExit) && (IsHandleCreated))
+            if (GlobalData.ApplicationStatus == ApplicationStatus.AppStatusRunning)
             {
-                Invoke((MethodInvoker)(() => timerCandles.Enabled = false));
-                Invoke((MethodInvoker)(() => timerCandles.Interval = 20 * 1000));
-                Invoke((MethodInvoker)(() => timerCandles.Enabled = true));
+                // Plan een verversing omdat er een connection timeout was.
+                // Dit kan een aantal berekeningen onderbroken hebben
+                // (er komen een aantal reconnects, daarom circa 20 seconden)
+                if ((components != null) && (!ProgramExit) && (IsHandleCreated))
+                {
+                    Invoke((MethodInvoker)(() => timerCandles.Enabled = false));
+                    Invoke((MethodInvoker)(() => timerCandles.Interval = 20 * 1000));
+                    Invoke((MethodInvoker)(() => timerCandles.Enabled = true));
+                }
             }
         }
 
 
         private void SetCandleTimerEnableHandler(bool value)
         {
-            if ((components != null) && (!ProgramExit) && (IsHandleCreated))
+            if (GlobalData.ApplicationStatus == ApplicationStatus.AppStatusRunning)
             {
-                if (InvokeRequired)
-                    Invoke((MethodInvoker)(() => timerCandles.Enabled = value));
-                else
-                    timerCandles.Enabled = value;
+                if ((components != null) && (!ProgramExit) && (IsHandleCreated))
+                {
+                    if (InvokeRequired)
+                        Invoke((MethodInvoker)(() => timerCandles.Enabled = value));
+                    else
+                        timerCandles.Enabled = value;
+                }
             }
         }
 
@@ -1486,19 +1492,23 @@ namespace CryptoSbmScanner
 
         private void timerCandles_Tick(object sender, EventArgs e)
         {
-            // De reguliere verversing herstellen (igv een connection timeout)
-            if ((components != null) && (!ProgramExit) && (IsHandleCreated))
+            if (GlobalData.ApplicationStatus == ApplicationStatus.AppStatusRunning)
             {
-                // Plan een volgende verversing omdat er bv een connection timeout was.
-                // Dit kan een aantal berekeningen onderbroken hebben
-                Invoke((MethodInvoker)(() => timerCandles.Enabled = false));
-                Invoke((MethodInvoker)(() => timerCandles.Interval = GlobalData.Settings.General.GetCandleInterval * 60 * 1000));
-                Invoke((MethodInvoker)(() => timerCandles.Enabled = timerCandles.Interval > 0));
+                // De reguliere verversing herstellen (igv een connection timeout)
+                if ((components != null) && (!ProgramExit) && (IsHandleCreated))
+                {
+                    // Plan een volgende verversing omdat er bv een connection timeout was.
+                    // Dit kan een aantal berekeningen onderbroken hebben
+                    Invoke((MethodInvoker)(() => timerCandles.Enabled = false));
+                    Invoke((MethodInvoker)(() => timerCandles.Interval = GlobalData.Settings.General.GetCandleInterval * 60 * 1000));
+                    Invoke((MethodInvoker)(() => timerCandles.Enabled = timerCandles.Interval > 0));
+                }
+
+                BinanceFetchCandles binanceFetchCandles = new BinanceFetchCandles();
+                Task.Run(async () => { await binanceFetchCandles.ExecuteAsync(); }); // niet wachten tot deze klaar is
             }
-
-            BinanceFetchCandles binanceFetchCandles = new BinanceFetchCandles();
-            Task.Run(async () => { await binanceFetchCandles.ExecuteAsync(); }); // niet wachten tot deze klaar is
-
+            else
+                Invoke((MethodInvoker)(() => timerCandles.Enabled = false));
         }
 
 
@@ -1577,6 +1587,7 @@ namespace CryptoSbmScanner
             GlobalData.Settings.Signal.SoundsActive = ApplicationPlaySounds.Checked;
             GlobalData.SaveSettings();
         }
+
     }
 
 }

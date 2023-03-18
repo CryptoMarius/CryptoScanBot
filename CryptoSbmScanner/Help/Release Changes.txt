@@ -32,6 +32,12 @@ Bevindingen/Todo's:
 
 xx-xx-2023 1.8.0
 - Sorteer indicatie op de kolom waarop gesorteerd wordt
+- Bij het afsluiten kan de applicatie alsnog candles gaan ophalen doordat de timer nog loopt en de applicatie status niet gecontroleerd wordt
+- De logmeldingen werken van boven naar beneden (iemand stelde voor om het om te draaien)
+  Niet opgelost: Dat laat ik achterwege want er zijn ook multiline teksten zoals trend details met meerdere regels (en het was bovendien geen groot issue)
+- Een typefoutje in een error-melding in de log. Ik had even internet uitstaan en toen kwam in de log deze melding: 
+  "HttpRequestException - Er is een fout opgetreden bij het verzenden van het aanvraag" : het/de aanvraag.
+  Niet opgelost: want waarschijnlijk zijn er andere vertaal zaken aanwezig die door de libraries (of Google?) krom zijn vertaald.
 - Op de naam van de kolom kunnen sorteren (2e sleutel is de eindtijd, 3e sleutel de symbol en de 4e is het interval).
   Sorteren moet niet op basis van de tekst maar op basis van de waarde (indien relevant)
 - De signalen sorteren op candle-eindtijd, naam en dan interval (de default sortering).
