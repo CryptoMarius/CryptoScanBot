@@ -335,7 +335,10 @@ namespace CryptoSbmScanner
                         Queue<CryptoSymbol> queue = new Queue<CryptoSymbol>();
                         foreach (var symbol in exchange.SymbolListName.Values)
                         {
-                            if (CandleTools.MatchingQuote(symbol) && (symbol.Status == 1) && (!symbol.IsBarometerSymbol()))
+                            if (!symbol.IsSpotTradingAllowed || (symbol.Status == 0) || symbol.IsBarometerSymbol())
+                                continue;
+
+                            if (CandleTools.MatchingQuote(symbol))
                             {
                                 //if (symbol.Name.Equals("LEVERBUSD"))
                                     queue.Enqueue(symbol);

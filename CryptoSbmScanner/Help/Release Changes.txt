@@ -30,6 +30,10 @@ Bevindingen/Todo's:
   Gezien het geheugengebruik die de tool heeft is een combinatie van exchanges niet aan te raden.
 
 
+xx-xx-2023 1.8.0
+- Met de basismunt USDT actief wordt bij iedere herstart alsnog candles opgehaald, dit zijn dan de UP en de DOWN munten 
+  (die sluit ik normaliter uit, bij het ophalen van de candles kloppen de condities niet)
+
 01-03-2023 1.7.1
 - Een verkeerde tooltip op de SBM oversold en overbought vinkje
 - De laatste Obfuscation restanten verwijderd (toch een stukje versleuteld!)
