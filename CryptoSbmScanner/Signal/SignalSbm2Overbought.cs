@@ -14,14 +14,6 @@ namespace CryptoSbmScanner
         }
 
 
-        public override bool IndicatorsOkay()
-        {
-            if (!IndicatorCandleOkay(CandleLast))
-                return false;
-            return true;
-        }
-
-
         public bool IsInLowerPartOfBollingerBands(int candleCount = 10, decimal percentage = 1.0m)
         {
             // Is de prijs onlangs dicht bij de onderste bb geweest?
@@ -41,7 +33,7 @@ namespace CryptoSbmScanner
                     ExtraText = "geen prev candle! " + last.DateLocal.ToString();
                     return false;
                 }
-                if (!IndicatorCandleOkay(last))
+                if (!IndicatorsOkay(last))
                     return false;
 
                 candleCount--;

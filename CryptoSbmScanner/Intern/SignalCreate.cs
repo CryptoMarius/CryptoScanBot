@@ -561,21 +561,21 @@ namespace CryptoSbmScanner
             {
                 // De officiele SBM methode van Maurice
                 SignalBase algorithm = new SignalSbm1Oversold(Symbol, Interval, candle);
-                if (algorithm.IndicatorsOkay() && algorithm.IsSignal())
+                if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
                     isSbmSignal = PrepareAndSendSignal(algorithm, candle, backTest);
             }
             if (!isSbmSignal && GlobalData.Settings.Signal.AnalysisSbm2Oversold)
             {
                 // De SBM methode - Marco - (min(Candle.Open/Close) > 99.50%
                 SignalBase algorithm = new SignalSbm2Oversold(Symbol, Interval, candle);
-                if (algorithm.IndicatorsOkay() && algorithm.IsSignal())
+                if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
                     isSbmSignal = PrepareAndSendSignal(algorithm, candle, backTest);
             }
             if (!isSbmSignal && GlobalData.Settings.Signal.AnalysisSbm3Oversold)
             {
                 // De SBM methode - BB.Width is > xx% veranderd
                 SignalBase algorithm = new SignalSbm3Oversold(Symbol, Interval, candle);
-                if (algorithm.IndicatorsOkay() && algorithm.IsSignal())
+                if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
                     isSbmSignal = PrepareAndSendSignal(algorithm, candle, backTest);
             }
 
@@ -583,7 +583,7 @@ namespace CryptoSbmScanner
             {
                 // STOBB (is eigenlijk een "zwakke" variant van SBM)
                 SignalBase algorithm = new SignalStobbOversold(Symbol, Interval, candle);
-                if (algorithm.IndicatorsOkay() && algorithm.IsSignal())
+                if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
                     PrepareAndSendSignal(algorithm, candle, backTest);
             }
         }
@@ -610,25 +610,25 @@ namespace CryptoSbmScanner
             if (GlobalData.Settings.Signal.AnalysisShowSbmOverbought)
             {
                 SignalBase algorithm = new SignalSbm1Overbought(Symbol, Interval, candle);
-                if (algorithm.IndicatorsOkay() && algorithm.IsSignal())
+                if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
                     isSbmSignal = PrepareAndSendSignal(algorithm, candle, backTest);
             }
             if (!isSbmSignal && GlobalData.Settings.Signal.AnalysisSbm2Overbought)
             {
                 SignalBase algorithm = new SignalSbm2Overbought(Symbol, Interval, candle);
-                if (algorithm.IndicatorsOkay() && algorithm.IsSignal())
+                if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
                     PrepareAndSendSignal(algorithm, candle, backTest);
             }
             if (!isSbmSignal && GlobalData.Settings.Signal.AnalysisSbm3Overbought)
             {
                 SignalBase algorithm = new SignalSbm3Overbought(Symbol, Interval, candle);
-                if (algorithm.IndicatorsOkay() && algorithm.IsSignal())
+                if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
                     PrepareAndSendSignal(algorithm, candle, backTest);
             }
             if (!isSbmSignal && GlobalData.Settings.Signal.AnalysisShowStobbOverbought)
             {
                 SignalBase algorithm = new SignalStobbOverbought(Symbol, Interval, candle);
-                if (algorithm.IndicatorsOkay() && algorithm.IsSignal())
+                if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
                     PrepareAndSendSignal(algorithm, candle, backTest);
             }
         }
@@ -642,13 +642,13 @@ namespace CryptoSbmScanner
             if (GlobalData.Settings.Signal.AnalysisShowCandleJumpUp)
             {
                 SignalBase algorithm = new SignalCandleJumpUp(Symbol, Interval, candle);
-                if (algorithm.IndicatorsOkay() && algorithm.IsSignal())
+                if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
                     PrepareAndSendSignal(algorithm, candle, backTest);
             }
             if (GlobalData.Settings.Signal.AnalysisShowCandleJumpDown)
             {
                 SignalBase algorithm = new SignalCandleJumpDown(Symbol, Interval, candle);
-                if (algorithm.IndicatorsOkay() && algorithm.IsSignal())
+                if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
                     PrepareAndSendSignal(algorithm, candle, backTest);
             }
         }
@@ -660,11 +660,11 @@ namespace CryptoSbmScanner
             if (GlobalData.Settings.Signal.AnalysisPriceCrossingMa && GlobalData.ShowExtraStuff)
             {
                 SignalBase algorithm = new SignalPriceCrossedMa20(Symbol, Interval, candle);
-                if (algorithm.IndicatorsOkay() && algorithm.IsSignal())
+                if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
                     PrepareAndSendSignal(algorithm, candle, backTest);
 
                 algorithm = new SignalPriceCrossedMa50(Symbol, Interval, candle);
-                if (algorithm.IndicatorsOkay() && algorithm.IsSignal())
+                if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
                     PrepareAndSendSignal(algorithm, candle, backTest);
             }
 

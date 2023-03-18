@@ -11,13 +11,7 @@ namespace CryptoSbmScanner
         }
 
 
-        public override bool IndicatorsOkay()
-        {
-            return true;
-        }
-
-
-        public override bool IsSignal()
+       public override bool IsSignal()
         {
             ExtraText = "";
 

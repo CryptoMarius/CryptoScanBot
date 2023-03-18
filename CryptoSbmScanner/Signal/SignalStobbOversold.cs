@@ -13,7 +13,7 @@ namespace CryptoSbmScanner
         }
 
 
-        private bool IndicatorCandleOkay(CryptoCandle candle)
+        public override bool IndicatorsOkay(CryptoCandle candle)
         {
             if ((candle == null)
                || (candle.CandleData.Stoch == null)
@@ -23,14 +23,6 @@ namespace CryptoSbmScanner
                )
                 return false;
 
-            return true;
-        }
-
-
-        public override bool IndicatorsOkay()
-        {
-            if (!IndicatorCandleOkay(CandleLast))
-                return false;
             return true;
         }
 
