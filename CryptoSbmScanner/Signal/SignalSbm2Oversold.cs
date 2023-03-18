@@ -62,11 +62,13 @@ namespace CryptoSbmScanner
             }
 
             if (!IsInLowerPartOfBollingerBands(GlobalData.Settings.Signal.Sbm2CandlesLookbackCount, GlobalData.Settings.Signal.Sbm2LowerPartOfBbPercentage))
+            {
+                ExtraText = "geen lage prijs in de laatste x candles";
                 return false;
+            }
 
             if (!IsMacdRecoveryOversold(GlobalData.Settings.Signal.Sbm2CandlesForMacdRecovery))
                 return false;
-
 
             if (CheckMaCrossings())
                 return false;
@@ -80,6 +82,14 @@ namespace CryptoSbmScanner
         public override bool AllowStepIn(CryptoSignal signal)
         {
             // Na de initiele melding hebben we 3 candles de tijd om in te stappen, maar alleen indien de MACD verbetering laat zien.
+
+            // Er een candle onder de bb opent of sluit
+            if (CandleLast.IsBelowBollingerBands(GlobalData.Settings.Signal.SbmUseLowHigh))
+            {
+                ExtraText = "beneden de bb";
+                return false;
+            }
+
 
             if (!IsMacdRecoveryOversold())
                 return false;
@@ -110,8 +120,11 @@ namespace CryptoSbmScanner
             ExtraText = "";
 
             // Als de prijs alweer boven de sma zit ophouden
-            if ((Math.Max(CandleLast.Open, CandleLast.Close) >= (decimal)CandleLast.CandleData.BollingerBands.Sma.Value))
+            if ((Math.Max(CandleLast.Open, CandleLast.Close) >= (decimal)CandleLast.CandleData.Sma20.Sma.Value))
+            {
+                ExtraText = "Candle above SMA20";
                 return true;
+            }
 
             // Als de psar bovenin komt te staan
             //if (((decimal)CandleLast.CandleData.PSar > Math.Max(CandleLast.Open, CandleLast.Close)))
