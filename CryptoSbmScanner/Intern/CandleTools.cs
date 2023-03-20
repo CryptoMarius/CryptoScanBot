@@ -71,6 +71,7 @@ namespace CryptoSbmScanner
             SortedList<long, CryptoCandle> candles = symbolPeriod.CandleList;
 
             long candleOpenUnix = CandleTools.GetUnixTime(openTime, 60);
+            //DateTime candleOpenDate = CandleTools.GetUnixDate(candleOpenUnix); //ter debug want een unix date is onleesbaar
 
             // Altijd de candle maken als deze niet bestaat
             CryptoCandle candle;

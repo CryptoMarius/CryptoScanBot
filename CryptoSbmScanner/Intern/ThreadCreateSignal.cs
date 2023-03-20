@@ -27,9 +27,9 @@ namespace CryptoSbmScanner
             GlobalData.AddTextToLogTab(string.Format("Stop create signals"));
         }
 
-        public void AddToQueue(CryptoCandle data)
+        public void AddToQueue(CryptoCandle candle)
         {
-            Queue.Add(data);
+            Queue.Add(candle);
         }
 
         /// <summary>

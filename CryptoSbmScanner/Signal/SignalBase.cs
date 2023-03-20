@@ -40,14 +40,9 @@ namespace CryptoSbmScanner
         /// <summary>
         /// Zijn de indicatoren aanwezig
         /// </summary>
-        public virtual bool IndicatorsOkay()
+        public virtual bool IndicatorsOkay(CryptoCandle candle)
         {
-            return false;
-        }
-
-        public virtual void Reset()
-        {
-            // niets
+            return true;
         }
 
 
@@ -84,6 +79,26 @@ namespace CryptoSbmScanner
             return false;
         }
 
+        /// <summary>
+        /// Is de RSI oversold geweest in de laatste x candles
+        /// </summary>
+        public bool wasRsiOversoldInTheLast(int candleCount = 30)
+        {
+            // We gaan van rechts naar links (dus prev en last zijn ietwat raar)
+            long time = CandleLast.OpenTime;
+            while (candleCount >= 0)
+            {
+                CryptoCandle candle;
+                if (Candles.TryGetValue(time, out candle))
+                {
+                    if (IndicatorsOkay(candle) && candle.IsRsiOversold())
+                       return true;
+                }
+                candleCount--;
+                time -= Interval.Duration;
+            }
+            return false;
+        }
 
 
     }

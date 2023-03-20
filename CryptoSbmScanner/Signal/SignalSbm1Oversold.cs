@@ -14,17 +14,6 @@ namespace CryptoSbmScanner
         }
 
 
-        /// <summary>
-        /// Is het een signaal?
-        /// </summary>
-        public override bool IndicatorsOkay()
-        {
-            if (!IndicatorCandleOkay(CandleLast))
-                return false;
-            return true;
-        }
-
-
         public override string DisplayText()
         {
             decimal value = -999m;

@@ -14,14 +14,6 @@ namespace CryptoSbmScanner
         }
 
 
-        public override bool IndicatorsOkay()
-        {
-            if (!IndicatorCandleOkay(CandleLast))
-                return false;
-            return true;
-        }
-
-
         public override bool IsSignal()
         {
             ExtraText = "";

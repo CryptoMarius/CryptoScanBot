@@ -16,7 +16,7 @@ namespace CryptoSbmScanner
         /// <summary>
         /// Is het een signaal?
         /// </summary>
-        public override bool IndicatorsOkay()
+        public override bool IndicatorsOkay(CryptoCandle candle)
         {
             if ((CandleLast.CandleData.Sma200 == null) 
                 || (CandleLast.CandleData.Sma50 == null) 

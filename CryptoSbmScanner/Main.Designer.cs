@@ -72,6 +72,7 @@
             this.timerSoundHeartBeat = new System.Windows.Forms.Timer(this.components);
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.timerCandles = new System.Windows.Forms.Timer(this.components);
+            this.timerAddSignal = new System.Windows.Forms.Timer(this.components);
             this.panelLeft.SuspendLayout();
             this.panel4.SuspendLayout();
             this.listBoxSymbolsMenuStrip.SuspendLayout();
@@ -231,7 +232,7 @@
             this.ApplicationPlaySounds.Checked = true;
             this.ApplicationPlaySounds.CheckState = System.Windows.Forms.CheckState.Checked;
             this.ApplicationPlaySounds.Name = "ApplicationPlaySounds";
-            this.ApplicationPlaySounds.Size = new System.Drawing.Size(180, 22);
+            this.ApplicationPlaySounds.Size = new System.Drawing.Size(168, 22);
             this.ApplicationPlaySounds.Text = "Geluiden afspelen";
             this.ApplicationPlaySounds.Click += new System.EventHandler(this.ApplicationPlaySounds_Click);
             // 
@@ -240,35 +241,35 @@
             this.ApplicationCreateSignals.Checked = true;
             this.ApplicationCreateSignals.CheckState = System.Windows.Forms.CheckState.Checked;
             this.ApplicationCreateSignals.Name = "ApplicationCreateSignals";
-            this.ApplicationCreateSignals.Size = new System.Drawing.Size(180, 22);
+            this.ApplicationCreateSignals.Size = new System.Drawing.Size(168, 22);
             this.ApplicationCreateSignals.Text = "Signalen maken";
             this.ApplicationCreateSignals.Click += new System.EventHandler(this.ApplicationCreateSignals_Click);
             // 
             // ToolStripMenuItemSettings
             // 
             this.ToolStripMenuItemSettings.Name = "ToolStripMenuItemSettings";
-            this.ToolStripMenuItemSettings.Size = new System.Drawing.Size(180, 22);
+            this.ToolStripMenuItemSettings.Size = new System.Drawing.Size(168, 22);
             this.ToolStripMenuItemSettings.Text = "Instellingen";
             this.ToolStripMenuItemSettings.Click += new System.EventHandler(this.ToolStripMenuItemSettings_Click);
             // 
             // ToolStripMenuItemRefresh
             // 
             this.ToolStripMenuItemRefresh.Name = "ToolStripMenuItemRefresh";
-            this.ToolStripMenuItemRefresh.Size = new System.Drawing.Size(180, 22);
+            this.ToolStripMenuItemRefresh.Size = new System.Drawing.Size(168, 22);
             this.ToolStripMenuItemRefresh.Text = "Verversen";
             this.ToolStripMenuItemRefresh.Click += new System.EventHandler(this.ToolStripMenuItemRefresh_Click_1);
             // 
             // clearMenusToolStripMenuItem
             // 
             this.clearMenusToolStripMenuItem.Name = "clearMenusToolStripMenuItem";
-            this.clearMenusToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.clearMenusToolStripMenuItem.Size = new System.Drawing.Size(168, 22);
             this.clearMenusToolStripMenuItem.Text = "Clear";
             this.clearMenusToolStripMenuItem.Click += new System.EventHandler(this.mainMenuClearAll_Click);
             // 
             // applicationMenuItemAbout
             // 
             this.applicationMenuItemAbout.Name = "applicationMenuItemAbout";
-            this.applicationMenuItemAbout.Size = new System.Drawing.Size(180, 22);
+            this.applicationMenuItemAbout.Size = new System.Drawing.Size(168, 22);
             this.applicationMenuItemAbout.Text = "About";
             this.applicationMenuItemAbout.Click += new System.EventHandler(this.applicationMenuItemAbout_Click);
             // 
@@ -609,6 +610,12 @@
             this.timerCandles.Interval = 10000;
             this.timerCandles.Tick += new System.EventHandler(this.timerCandles_Tick);
             // 
+            // timerAddSignal
+            // 
+            this.timerAddSignal.Enabled = true;
+            this.timerAddSignal.Interval = 1250;
+            this.timerAddSignal.Tick += new System.EventHandler(this.timerAddSignal_Tick);
+            // 
             // FrmMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -700,6 +707,7 @@
         private CryptoSbmScanner.ListViewDoubleBuffered listViewInformation;
         private System.Windows.Forms.ToolStripMenuItem ApplicationPlaySounds;
         private System.Windows.Forms.ToolStripMenuItem ApplicationCreateSignals;
+        private System.Windows.Forms.Timer timerAddSignal;
     }
 }
 

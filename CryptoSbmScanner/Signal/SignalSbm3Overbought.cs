@@ -14,14 +14,6 @@ namespace CryptoSbmScanner
         }
 
 
-        public override bool IndicatorsOkay()
-        {
-            if (!IndicatorCandleOkay(CandleLast))
-                return false;
-            return true;
-        }
-
-
         public bool HasPriceDecreased(int candleCount = 5, decimal percentage = 1.5m)
         {
             // Een waarde die plotseling ~2% hoger of lager ligt dan de vorige candle kan interressant 

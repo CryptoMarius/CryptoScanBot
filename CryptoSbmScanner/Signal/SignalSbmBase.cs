@@ -75,7 +75,7 @@ namespace CryptoSbmScanner
                     //TimeDebug = CandleTools.GetUnixDate(lCandle.OpenTime);
                     if (prevCandle != null)
                     {
-                        if (IndicatorCandleOkay(lastCandle) && IndicatorCandleOkay(prevCandle))
+                        if (IndicatorsOkay(lastCandle) && IndicatorsOkay(prevCandle))
                         {
                             // de 50 kruist de 200 naar boven
                             if ((prevCandle.CandleData.Sma50.Sma.Value < prevCandle.CandleData.Sma200.Sma.Value) &&
@@ -126,7 +126,7 @@ namespace CryptoSbmScanner
                     //TimeDebug = CandleTools.GetUnixDate(lCandle.OpenTime);
                     if (prevCandle != null)
                     {
-                        if (IndicatorCandleOkay(lastCandle) && IndicatorCandleOkay(prevCandle))
+                        if (IndicatorsOkay(lastCandle) && IndicatorsOkay(prevCandle))
                         {
                             // de 50 kruist de 200 naar boven
                             if ((prevCandle.CandleData.BollingerBands.Sma.Value < prevCandle.CandleData.Sma200.Sma.Value) &&
@@ -176,7 +176,7 @@ namespace CryptoSbmScanner
                     //TimeDebug = CandleTools.GetUnixDate(lCandle.OpenTime);
                     if (prevCandle != null)
                     {
-                        if (IndicatorCandleOkay(lastCandle) && IndicatorCandleOkay(prevCandle))
+                        if (IndicatorsOkay(lastCandle) && IndicatorsOkay(prevCandle))
                         {
                             // de 50 kruist de 20 naar boven
                             if ((prevCandle.CandleData.Sma50.Sma.Value < prevCandle.CandleData.BollingerBands.Sma.Value) &&
@@ -235,12 +235,7 @@ namespace CryptoSbmScanner
         }
 
 
-        public override void Reset()
-        {
-        }
-
-
-        internal bool IndicatorCandleOkay(CryptoCandle candle)
+        public override bool IndicatorsOkay(CryptoCandle candle)
         {
             if ((candle == null)
                || (candle.CandleData == null)
@@ -299,7 +294,7 @@ namespace CryptoSbmScanner
                     ExtraText = string.Format("No MACD[{0:N0}]", iterator);
                     return false;
                 }
-                if (!IndicatorCandleOkay(prev))
+                if (!IndicatorsOkay(prev))
                     return false;
 
                 if (last.CandleData.Macd.Histogram.Value <= prev.CandleData.Macd.Histogram.Value)
@@ -335,7 +330,7 @@ namespace CryptoSbmScanner
                     ExtraText = string.Format("No MACD[{0:N0}]", iterator);
                     return false;
                 }
-                if (!IndicatorCandleOkay(prev))
+                if (!IndicatorsOkay(prev))
                     return false;
 
                 // Een groene is ook goed (zolang ie maar niet lager wordt)

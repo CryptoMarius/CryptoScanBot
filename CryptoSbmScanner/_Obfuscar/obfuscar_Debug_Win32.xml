@@ -1,6 +1,0 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Obfuscator>
-  <Var name="InPath" value="obj\Win32\Debug\" />
-  <Var name="OutPath" value="obj\Win32\Debug\\Out" />
-  <Include path="_Obfuscar\obfuscar.xml" />
-</Obfuscator>

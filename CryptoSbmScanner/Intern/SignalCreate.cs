@@ -26,7 +26,7 @@ namespace CryptoSbmScanner
         }
 
 
-        public static void CalculateAdditionalAlarmProperties(CryptoSignal signal, List<CryptoCandle> history, int candleCount, long unixFrom = 0)
+        public static void CalculateAdditionalSignalProperties(CryptoSignal signal, List<CryptoCandle> history, int candleCount, long unixFrom = 0)
         {
             // dit zou ook bij het verzamelen van de history lijst kunnen (scheelt een iteratie)
             int candlesWithFlatPrice = 0;
@@ -182,8 +182,8 @@ namespace CryptoSbmScanner
 
 
 
-                TrendIndicator trendIndicatorClass = new TrendIndicator();
-                trendIndicator = trendIndicatorClass.CalculateTrend(Symbol, interval);
+                TrendIndicator trendIndicatorClass = new TrendIndicator(Symbol, interval);
+                trendIndicator = trendIndicatorClass.CalculateTrend();
 
                 if (trendIndicator == CryptoTrendIndicator.trendBullish)
                     percentageSum += interval.Duration;
@@ -194,7 +194,6 @@ namespace CryptoSbmScanner
                     signal.TrendIndicator = trendIndicator;
 
                 // Ahh, dat gaat niet naar een tabel (zoals ik eerst dacht)
-                //CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(intervalPeriod);
                 symbolInterval.TrendIndicator = trendIndicator;
                 symbolInterval.TrendInfoDate = DateTime.UtcNow;
 
@@ -209,7 +208,7 @@ namespace CryptoSbmScanner
         }
 
 
-        void SendAlarm(CryptoSignal signal, string eventText)
+        void SendSignal(CryptoSignal signal, string eventText)
         {
             AnalyseNotificationClearOutOld();
 
@@ -317,85 +316,85 @@ namespace CryptoSbmScanner
 
 
         
-        /// <summary>
-        /// Dit is gebaseerd op de "RSI Multi Length [LuxAlgo]"
-        /// We gebruiken de oversell of overbuy indicator als extra tekst in de melding
-        /// </summary>
-        /// <param name="overSell">Retourneer de oversell of de overbuy tellertje</param>
-        /// <returns></returns>
-        private int GetFluxIndcator(bool overSell)
-        {
-            SortedList<long, CryptoCandle> candles = Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval5m).CandleList;
+        ///// <summary>
+        ///// Dit is gebaseerd op de "RSI Multi Length [LuxAlgo]"
+        ///// We gebruiken de oversell of overbuy indicator als extra tekst in de melding
+        ///// </summary>
+        ///// <param name="overSell">Retourneer de oversell of de overbuy tellertje</param>
+        ///// <returns></returns>
+        //private int GetFluxIndcator(bool overSell)
+        //{
+        //    SortedList<long, CryptoCandle> candles = Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval5m).CandleList;
 
-            // Dat array van 10 (nu globaal)
-            decimal[] num = new decimal[10];
-            decimal[] den = new decimal[10];
-            for (int j = 0; j < 10; j++)
-            {
-                num[j] = 0m;
-                den[j] = 0m;
-            }
+        //    // Dat array van 10 (nu globaal)
+        //    decimal[] num = new decimal[10];
+        //    decimal[] den = new decimal[10];
+        //    for (int j = 0; j < 10; j++)
+        //    {
+        //        num[j] = 0m;
+        //        den[j] = 0m;
+        //    }
 
-            // Gefixeerde getallen
-            int min = 10;
-            int max = 20;
-            int oversold = 30;
-            int overbought = 70;
-            decimal N = max - min + 1;
+        //    // Gefixeerde getallen
+        //    int min = 10;
+        //    int max = 20;
+        //    int oversold = 30;
+        //    int overbought = 70;
+        //    decimal N = max - min + 1;
 
-            int overbuy = 0; // gebruiken we dit keer niet, maar laat maar staan
-            int oversell = 0;
-            CryptoCandle candlePrev;
-            CryptoCandle candleLast = null;
+        //    int overbuy = 0; // gebruiken we dit keer niet, maar laat maar staan
+        //    int oversell = 0;
+        //    CryptoCandle candlePrev;
+        //    CryptoCandle candleLast = null;
 
-            for (int j = candles.Count - 30; j < candles.Count; j++)
-            {
-                if (j < 1)
-                    continue;
-                candlePrev = candleLast;
-                candleLast = candles.Values[j];
-                if (candlePrev == null)
-                    continue;
+        //    for (int j = candles.Count - 30; j < candles.Count; j++)
+        //    {
+        //        if (j < 1)
+        //            continue;
+        //        candlePrev = candleLast;
+        //        candleLast = candles.Values[j];
+        //        if (candlePrev == null)
+        //            continue;
 
-                int k = 0;
-                decimal avg = 0m;
-                overbuy = 0;
-                oversell = 0;
-                decimal diff = candleLast.Close - candlePrev.Close;
+        //        int k = 0;
+        //        decimal avg = 0m;
+        //        overbuy = 0;
+        //        oversell = 0;
+        //        decimal diff = candleLast.Close - candlePrev.Close;
 
-                for (int i = min; i < max; i++)
-                {
-                    decimal alpha = 1 / (decimal)i;
+        //        for (int i = min; i < max; i++)
+        //        {
+        //            decimal alpha = 1 / (decimal)i;
 
-                    decimal num_rma = alpha * diff + (1m - alpha) * num[k];
-                    decimal den_rma = alpha * Math.Abs(diff) + (1m - alpha) * den[k];
+        //            decimal num_rma = alpha * diff + (1m - alpha) * num[k];
+        //            decimal den_rma = alpha * Math.Abs(diff) + (1m - alpha) * den[k];
 
-                    decimal rsi;
-                    if (den_rma == 0)
-                        rsi = 50m;
-                    else
-                        rsi = 50m * num_rma / den_rma + 50m;
+        //            decimal rsi;
+        //            if (den_rma == 0)
+        //                rsi = 50m;
+        //            else
+        //                rsi = 50m * num_rma / den_rma + 50m;
 
-                    avg += rsi;
+        //            avg += rsi;
 
-                    if (rsi > overbought)
-                        overbuy++;
-                    if (rsi < oversold)
-                        oversell++;
+        //            if (rsi > overbought)
+        //                overbuy++;
+        //            if (rsi < oversold)
+        //                oversell++;
 
 
-                    num[k] = num_rma;
-                    den[k] = den_rma;
-                    k++;
+        //            num[k] = num_rma;
+        //            den[k] = den_rma;
+        //            k++;
 
-                }
-            }
+        //        }
+        //    }
 
-            if (overSell)
-                return 10 * oversell;
-            else
-                return 10 * overbuy;
-        }
+        //    if (overSell)
+        //        return 10 * oversell;
+        //    else
+        //        return 10 * overbuy;
+        //}
 
 
         static public List<CryptoCandle> CalculateHistory(SortedList<long, CryptoCandle> candleSticks, int maxCandles)
@@ -467,7 +466,7 @@ namespace CryptoSbmScanner
         //}
 
 
-        private bool PrepareAndSendAlarm(SignalBase algorithm, CryptoCandle candle, bool backTest)
+        private bool PrepareAndSendSignal(SignalBase algorithm, CryptoCandle candle, bool backTest)
         {
             // Dit signaal mag niet meerdere keren gerapporteerd worden.
             // Anders dubbele signalen met verschillende type algoritmes!
@@ -477,20 +476,20 @@ namespace CryptoSbmScanner
             signal.Strategy = algorithm.SignalStrategy;
 
             // Extra attributen erbij halen
-            CalculateAdditionalAlarmProperties(signal, history, 60);
+            CalculateAdditionalSignalProperties(signal, history, 60);
             if (!CheckAdditionalAlarmProperties(signal))
                 return false;
 
             string eventText = algorithm.ExtraText;
 
-            if (GlobalData.ShowExtraStuff)
-            {
-                int oversell = GetFluxIndcator(true);
-                if (oversell > 0)
-                    eventText += " (" + oversell.ToString() + ")";
-            }
+            //if (GlobalData.ShowExtraStuff)
+            //{
+            //    int oversell = GetFluxIndcator(true);
+            //    if (oversell > 0)
+            //        eventText += " (" + oversell.ToString() + ")";
+            //}
 
-            SendAlarm(signal, eventText);
+            SendSignal(signal, eventText);
 
             return true;
         }
@@ -542,9 +541,6 @@ namespace CryptoSbmScanner
 
         private void AnalyseSymbolOversold(CryptoCandle candle, bool backTest)
         {
-            // Oversold (SBM is an advanced version of STOBB)
-            bool isSbmSignal = false;
-
             // Geen nieuwe signalen ivm blacklist
             // Als de muntpaar op de zwarte lijst staat dit signaal overslagen
             // Indien blacklist: Staat de muntpaar op de blacklist -> ja = signaal negeren
@@ -557,34 +553,38 @@ namespace CryptoSbmScanner
             if (!backTest && (GlobalData.Settings.UseWhiteListOversold && !GlobalData.SymbolWhiteListOversold.ContainsKey(Symbol.Name)))
                 return;
 
+
+            // Oversold (SBM is an advanced version of STOBB)
+            bool isSbmSignal = false;
+
             if (GlobalData.Settings.Signal.AnalysisShowSbmOversold)
             {
                 // De officiele SBM methode van Maurice
                 SignalBase algorithm = new SignalSbm1Oversold(Symbol, Interval, candle);
-                if (algorithm.IndicatorsOkay() && algorithm.IsSignal())
-                    isSbmSignal = PrepareAndSendAlarm(algorithm, candle, backTest);
+                if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
+                    isSbmSignal = PrepareAndSendSignal(algorithm, candle, backTest);
             }
             if (!isSbmSignal && GlobalData.Settings.Signal.AnalysisSbm2Oversold)
             {
                 // De SBM methode - Marco - (min(Candle.Open/Close) > 99.50%
                 SignalBase algorithm = new SignalSbm2Oversold(Symbol, Interval, candle);
-                if (algorithm.IndicatorsOkay() && algorithm.IsSignal())
-                    isSbmSignal = PrepareAndSendAlarm(algorithm, candle, backTest);
+                if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
+                    isSbmSignal = PrepareAndSendSignal(algorithm, candle, backTest);
             }
             if (!isSbmSignal && GlobalData.Settings.Signal.AnalysisSbm3Oversold)
             {
                 // De SBM methode - BB.Width is > xx% veranderd
                 SignalBase algorithm = new SignalSbm3Oversold(Symbol, Interval, candle);
-                if (algorithm.IndicatorsOkay() && algorithm.IsSignal())
-                    isSbmSignal = PrepareAndSendAlarm(algorithm, candle, backTest);
+                if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
+                    isSbmSignal = PrepareAndSendSignal(algorithm, candle, backTest);
             }
 
             if (!isSbmSignal && GlobalData.Settings.Signal.AnalysisShowStobbOversold)
             {
                 // STOBB (is eigenlijk een "zwakke" variant van SBM)
                 SignalBase algorithm = new SignalStobbOversold(Symbol, Interval, candle);
-                if (algorithm.IndicatorsOkay() && algorithm.IsSignal())
-                    PrepareAndSendAlarm(algorithm, candle, backTest);
+                if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
+                    PrepareAndSendSignal(algorithm, candle, backTest);
             }
         }
 
@@ -610,26 +610,26 @@ namespace CryptoSbmScanner
             if (GlobalData.Settings.Signal.AnalysisShowSbmOverbought)
             {
                 SignalBase algorithm = new SignalSbm1Overbought(Symbol, Interval, candle);
-                if (algorithm.IndicatorsOkay() && algorithm.IsSignal())
-                    isSbmSignal = PrepareAndSendAlarm(algorithm, candle, backTest);
+                if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
+                    isSbmSignal = PrepareAndSendSignal(algorithm, candle, backTest);
             }
             if (!isSbmSignal && GlobalData.Settings.Signal.AnalysisSbm2Overbought)
             {
                 SignalBase algorithm = new SignalSbm2Overbought(Symbol, Interval, candle);
-                if (algorithm.IndicatorsOkay() && algorithm.IsSignal())
-                    PrepareAndSendAlarm(algorithm, candle, backTest);
+                if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
+                    PrepareAndSendSignal(algorithm, candle, backTest);
             }
             if (!isSbmSignal && GlobalData.Settings.Signal.AnalysisSbm3Overbought)
             {
                 SignalBase algorithm = new SignalSbm3Overbought(Symbol, Interval, candle);
-                if (algorithm.IndicatorsOkay() && algorithm.IsSignal())
-                    PrepareAndSendAlarm(algorithm, candle, backTest);
+                if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
+                    PrepareAndSendSignal(algorithm, candle, backTest);
             }
             if (!isSbmSignal && GlobalData.Settings.Signal.AnalysisShowStobbOverbought)
             {
                 SignalBase algorithm = new SignalStobbOverbought(Symbol, Interval, candle);
-                if (algorithm.IndicatorsOkay() && algorithm.IsSignal())
-                    PrepareAndSendAlarm(algorithm, candle, backTest);
+                if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
+                    PrepareAndSendSignal(algorithm, candle, backTest);
             }
         }
 
@@ -642,14 +642,14 @@ namespace CryptoSbmScanner
             if (GlobalData.Settings.Signal.AnalysisShowCandleJumpUp)
             {
                 SignalBase algorithm = new SignalCandleJumpUp(Symbol, Interval, candle);
-                if (algorithm.IndicatorsOkay() && algorithm.IsSignal())
-                    PrepareAndSendAlarm(algorithm, candle, backTest);
+                if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
+                    PrepareAndSendSignal(algorithm, candle, backTest);
             }
             if (GlobalData.Settings.Signal.AnalysisShowCandleJumpDown)
             {
                 SignalBase algorithm = new SignalCandleJumpDown(Symbol, Interval, candle);
-                if (algorithm.IndicatorsOkay() && algorithm.IsSignal())
-                    PrepareAndSendAlarm(algorithm, candle, backTest);
+                if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
+                    PrepareAndSendSignal(algorithm, candle, backTest);
             }
         }
 
@@ -660,12 +660,12 @@ namespace CryptoSbmScanner
             if (GlobalData.Settings.Signal.AnalysisPriceCrossingMa && GlobalData.ShowExtraStuff)
             {
                 SignalBase algorithm = new SignalPriceCrossedMa20(Symbol, Interval, candle);
-                if (algorithm.IndicatorsOkay() && algorithm.IsSignal())
-                    PrepareAndSendAlarm(algorithm, candle, backTest);
+                if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
+                    PrepareAndSendSignal(algorithm, candle, backTest);
 
                 algorithm = new SignalPriceCrossedMa50(Symbol, Interval, candle);
-                if (algorithm.IndicatorsOkay() && algorithm.IsSignal())
-                    PrepareAndSendAlarm(algorithm, candle, backTest);
+                if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
+                    PrepareAndSendSignal(algorithm, candle, backTest);
             }
 
 
@@ -675,7 +675,7 @@ namespace CryptoSbmScanner
             //    SignalBase algorithm = new Signal3Green(Symbol, Interval, candle);
             //    algorithm.CandleLast = candle;
             //    if (algorithm.IsSignal())
-            //        PrepareAndSendAlarm(signal, SignalStrategy.strategy3GreenOversold, SignalMode.modeLong);
+            //        PrepareAndSendSignal(signal, SignalStrategy.strategy3GreenOversold, SignalMode.modeLong);
             //}
             ////if (GlobalData.Settings.Signal.AnalysisShow3GreenPlus)
             ////    BinanceAnalyseSymbol3GreenOverbought();
@@ -741,8 +741,8 @@ namespace CryptoSbmScanner
 
             // Munten waarvan de ticksize percentage nogal groot is (barcode charts)
             //if (Symbol.LastPrice.HasValue) al gecontroleerd
-            {
-                Symbol.BarcodePercentage = 100 * (Symbol.PriceTickSize) / (decimal)Symbol.LastPrice.Value;
+            //{
+            //    Symbol.BarcodePercentage = 100 * (Symbol.PriceTickSize) / (decimal)Symbol.LastPrice.Value;
 
             // Dit gebruikt ik wel in een bot om uit de barcode charts weg te blijven, laat ik nog even staan
             //    Signal.BarcodePercentage = (decimal)Symbol.BarcodePercentage;
@@ -761,7 +761,7 @@ namespace CryptoSbmScanner
             //            }
             //        }
             //    }
-            }
+            //}
 
 
 

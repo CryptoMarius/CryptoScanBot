@@ -15,6 +15,8 @@ using System.Drawing.Drawing2D;
 using TradingView;
 using Microsoft.Web.WebView2.Core;
 using Google.Protobuf.WellKnownTypes;
+using System.Text;
+using System.IO;
 
 namespace CryptoSbmScanner
 {
@@ -701,26 +703,32 @@ namespace CryptoSbmScanner
 
         private void ConnectionWasRestoredEvent(string text, bool extraLineFeed = false)
         {
-            // Plan een verversing omdat er een connection timeout was.
-            // Dit kan een aantal berekeningen onderbroken hebben
-            // (er komen een aantal reconnects, daarom circa 20 seconden)
-            if ((components != null) && (!ProgramExit) && (IsHandleCreated))
+            if (GlobalData.ApplicationStatus == ApplicationStatus.AppStatusRunning)
             {
-                Invoke((MethodInvoker)(() => timerCandles.Enabled = false));
-                Invoke((MethodInvoker)(() => timerCandles.Interval = 20 * 1000));
-                Invoke((MethodInvoker)(() => timerCandles.Enabled = true));
+                // Plan een verversing omdat er een connection timeout was.
+                // Dit kan een aantal berekeningen onderbroken hebben
+                // (er komen een aantal reconnects, daarom circa 20 seconden)
+                if ((components != null) && (!ProgramExit) && (IsHandleCreated))
+                {
+                    Invoke((MethodInvoker)(() => timerCandles.Enabled = false));
+                    Invoke((MethodInvoker)(() => timerCandles.Interval = 20 * 1000));
+                    Invoke((MethodInvoker)(() => timerCandles.Enabled = true));
+                }
             }
         }
 
 
         private void SetCandleTimerEnableHandler(bool value)
         {
-            if ((components != null) && (!ProgramExit) && (IsHandleCreated))
+            if (GlobalData.ApplicationStatus == ApplicationStatus.AppStatusRunning)
             {
-                if (InvokeRequired)
-                    Invoke((MethodInvoker)(() => timerCandles.Enabled = value));
-                else
-                    timerCandles.Enabled = value;
+                if ((components != null) && (!ProgramExit) && (IsHandleCreated))
+                {
+                    if (InvokeRequired)
+                        Invoke((MethodInvoker)(() => timerCandles.Enabled = value));
+                    else
+                        timerCandles.Enabled = value;
+                }
             }
         }
 
@@ -1155,7 +1163,45 @@ namespace CryptoSbmScanner
         private long LastSignalSoundCandleJumpDown = 0;
 
 
-        private void BinanceShowNotification(CryptoSignal signal) //, string MethodText, string EventText)
+        private Queue<CryptoSignal> signalQueue = new Queue<CryptoSignal>();
+
+
+        private void timerAddSignal_Tick(object sender, EventArgs e)
+        {
+            // Verwerk de signalen tot dusver..
+            // AddRange speedup!
+
+            if (signalQueue.Count > 0)
+            {
+                Monitor.Enter(signalQueue);
+                try
+                {
+                    List<CryptoSignal> signals = new List<CryptoSignal>();
+
+                    while (signalQueue.Count > 0)
+                    {
+                        CryptoSignal signal = signalQueue.Dequeue();
+                        signals.Add(signal);
+                    }
+
+                    // verwerken..
+                    //listViewSignalsAddSignalRange(signals);
+                    Task.Factory.StartNew(() =>
+                    {
+                        Invoke(new Action(() =>
+                        {
+                            listViewSignalsAddSignalRange(signals);
+                        }));
+                    });
+                }
+                finally
+                {
+                    Monitor.Exit(signalQueue);
+                }
+            }
+        }
+
+        private void BinanceShowNotification(CryptoSignal signal)
         {
             createdSignalCount++;
             string text = "signal: " + signal.Symbol.Name + " " + signal.Interval.Name + " " + signal.ModeText + " " + signal.StrategyText + " " + signal.EventText;
@@ -1164,14 +1210,16 @@ namespace CryptoSbmScanner
             // Zet de laatste munt in de "caption" (en taskbar) van de applicatie bar (visuele controle of er meldingen zijn)
             Invoke(new Action(() => { this.Text = signal.Symbol.Name + " " + createdSignalCount.ToString(); }));
 
-            Task.Factory.StartNew(() =>
-            {
-                Invoke(new Action(() =>
-                {
-                    listViewSignalsAddSignal(signal);
-                }));
-            });
 
+            Monitor.Enter(signalQueue);
+            try
+            {
+                signalQueue.Enqueue(signal);
+            }
+            finally
+            {
+                Monitor.Exit(signalQueue);
+            }
 
 
             // Play a sound
@@ -1385,6 +1433,9 @@ namespace CryptoSbmScanner
         private void ShowTrendInformation(CryptoSymbol symbol)
         {
 
+            StringBuilder log = new StringBuilder();
+            log.AppendLine("Trend " + symbol.Name);
+
             GlobalData.AddTextToLogTab("");
             GlobalData.AddTextToLogTab("Trend " + symbol.Name);
 
@@ -1392,51 +1443,16 @@ namespace CryptoSbmScanner
             long maxPercentageSum = 0;
             foreach (CryptoInterval interval in GlobalData.IntervalList)
             {
+                log.AppendLine("");
+                log.AppendLine("----");
+                log.AppendLine("Interval " + interval.Name);
+
                 // Wat is het maximale som (voor de eindberekening)
                 maxPercentageSum += interval.Duration;
 
-                CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-                //TrendIndicator trendIndicatorClass = new TrendIndicator();
-                //CryptoTrendIndicator trendIndicator = trendIndicatorClass.CalculateTrend(symbol, interval);
-
-                //TrendIndicator trendIndicatorClass = new TrendIndicator();
-                CryptoTrendIndicator trendIndicator; // = trendIndicatorClass.CalculateTrend(symbol, interval);
-
-                //SortedList<long, CryptoCandle> intervalCandles = symbolInterval.CandleList;
-                //if (!intervalCandles.Any())
-                //{
-                //    GlobalData.AddTextToLogTab("No candles available");
-                //    continue;
-                //}
-
-                //string text;
-                //CryptoCandle candle = intervalCandles.Values.Last();
-                //if (candle.CandleData == null)
-                //{
-                //    List<CryptoCandle> history = CandleIndicatorData.CalculateCandles(symbol, interval, candle.OpenTime, out text);
-                //    if (history == null)
-                //    {
-                //        GlobalData.AddTextToLogTab("No indicators available " + intervalCandles.Count.ToString());
-                //        continue;
-                //    }
-
-                //    // Eenmalig de indicators klaarzetten
-                //    candle = history[history.Count - 1];
-                //    if (candle.CandleData == null)
-                //        CandleIndicatorData.CalculateIndicators(history);
-                //}
-
-
-                //if (candle.CandleData.Ema8.Ema.Value > candle.CandleData.Ema21.Ema.Value)
-                //    trendIndicator = CryptoTrendIndicator.trendBullish;
-                //else if (candle.CandleData.Ema8.Ema.Value < candle.CandleData.Ema21.Ema.Value)
-                //    trendIndicator = CryptoTrendIndicator.trendBearish;
-                //else
-                //    trendIndicator = CryptoTrendIndicator.trendSideways;
-
-
-                TrendIndicator trendIndicatorClass = new TrendIndicator();
-                trendIndicator = trendIndicatorClass.CalculateTrend(symbol, interval);
+                TrendIndicator trendIndicatorClass = new TrendIndicator(symbol, interval);
+                trendIndicatorClass.Log = log;
+                CryptoTrendIndicator trendIndicator = trendIndicatorClass.CalculateTrend();
                 if (trendIndicator == CryptoTrendIndicator.trendBullish)
                     percentageSum += interval.Duration;
                 else if (trendIndicator == CryptoTrendIndicator.trendBearish)
@@ -1456,6 +1472,7 @@ namespace CryptoSbmScanner
                 else
                     s = string.Format("{0} {1}, trend=sideway's", symbol.Name, interval.IntervalPeriod);
                 GlobalData.AddTextToLogTab(s);
+                log.AppendLine(s);
             }
 
             if (maxPercentageSum > 0)
@@ -1463,25 +1480,35 @@ namespace CryptoSbmScanner
                 decimal trendPercentage = 100 * (decimal)percentageSum / (decimal)maxPercentageSum;
                 string t = string.Format("{0} {1:N2}", symbol.Name, trendPercentage);
                 GlobalData.AddTextToLogTab(t);
+                log.AppendLine(t);
             }
 
+
+
+            //Laad de gecachte (langere historie, minder overhad)
+            string filename = GlobalData.GetBaseDir() + "Trend information.txt";
+            File.WriteAllText(filename, log.ToString());
         }
 
         private void timerCandles_Tick(object sender, EventArgs e)
         {
-            // De reguliere verversing herstellen (igv een connection timeout)
-            if ((components != null) && (!ProgramExit) && (IsHandleCreated))
+            if (GlobalData.ApplicationStatus == ApplicationStatus.AppStatusRunning)
             {
-                // Plan een volgende verversing omdat er bv een connection timeout was.
-                // Dit kan een aantal berekeningen onderbroken hebben
-                Invoke((MethodInvoker)(() => timerCandles.Enabled = false));
-                Invoke((MethodInvoker)(() => timerCandles.Interval = GlobalData.Settings.General.GetCandleInterval * 60 * 1000));
-                Invoke((MethodInvoker)(() => timerCandles.Enabled = timerCandles.Interval > 0));
+                // De reguliere verversing herstellen (igv een connection timeout)
+                if ((components != null) && (!ProgramExit) && (IsHandleCreated))
+                {
+                    // Plan een volgende verversing omdat er bv een connection timeout was.
+                    // Dit kan een aantal berekeningen onderbroken hebben
+                    Invoke((MethodInvoker)(() => timerCandles.Enabled = false));
+                    Invoke((MethodInvoker)(() => timerCandles.Interval = GlobalData.Settings.General.GetCandleInterval * 60 * 1000));
+                    Invoke((MethodInvoker)(() => timerCandles.Enabled = timerCandles.Interval > 0));
+                }
+
+                BinanceFetchCandles binanceFetchCandles = new BinanceFetchCandles();
+                Task.Run(async () => { await binanceFetchCandles.ExecuteAsync(); }); // niet wachten tot deze klaar is
             }
-
-            BinanceFetchCandles binanceFetchCandles = new BinanceFetchCandles();
-            Task.Run(async () => { await binanceFetchCandles.ExecuteAsync(); }); // niet wachten tot deze klaar is
-
+            else
+                Invoke((MethodInvoker)(() => timerCandles.Enabled = false));
         }
 
 
@@ -1560,6 +1587,7 @@ namespace CryptoSbmScanner
             GlobalData.Settings.Signal.SoundsActive = ApplicationPlaySounds.Checked;
             GlobalData.SaveSettings();
         }
+
     }
 
 }

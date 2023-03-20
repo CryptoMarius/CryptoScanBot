@@ -5,7 +5,6 @@ Bevindingen/Todo's:
 - Een typefoutje in een error-melding in de log. Ik had even internet uitstaan en toen kwam in de log deze melding: "HttpRequestException - Er is een fout opgetreden bij het verzenden van het aanvraag" : het/de aanvraag.
 (ik kan deze zo snel niet vinden, zijn er nog andere vertaal zaken aanwezig?)
 - De logmeldingen werken van boven naar beneden (iemand stelde voor om het om te draaien)
-
 - Teksten kunnen vertalen (NL en EN lopen nu wel erg vaak door elkaar)
 - Zien hoeveel een munt gestegen of gedaald is na de initiele melding (dat vereist een ander grid).
 - Een Telegram die de meldingen kan weergeven (dat is eigenlijk wat overkill, maar omdat het kan)
@@ -30,6 +29,31 @@ Bevindingen/Todo's:
 - Ondersteuning van andere exchanges (dat heeft momenteel niet mijn prioriteit)
   Gezien het geheugengebruik die de tool heeft is een combinatie van exchanges niet aan te raden.
 
+
+xx-xx-2023 1.8.0
+- Sorteer indicatie op de kolom waarop gesorteerd wordt
+- Bij het afsluiten kan de applicatie alsnog candles gaan ophalen doordat de timer nog loopt en de applicatie status niet gecontroleerd wordt
+- De logmeldingen werken van boven naar beneden (iemand stelde voor om het om te draaien)
+  Niet opgelost: Dat laat ik achterwege want er zijn ook multiline teksten zoals trend details met meerdere regels (en het was bovendien geen groot issue)
+- Een typefoutje in een error-melding in de log. Ik had even internet uitstaan en toen kwam in de log deze melding: 
+  "HttpRequestException - Er is een fout opgetreden bij het verzenden van het aanvraag" : het/de aanvraag.
+  Niet opgelost: want waarschijnlijk zijn er andere vertaal zaken aanwezig die door de libraries (of Google?) krom zijn vertaald.
+- Op de naam van de kolom kunnen sorteren (2e sleutel is de eindtijd, 3e sleutel de symbol en de 4e is het interval).
+  Sorteren moet niet op basis van de tekst maar op basis van de waarde (indien relevant)
+- De signalen sorteren op candle-eindtijd, naam en dan interval (de default sortering).
+- Met de basismunt USDT actief wordt bij iedere herstart alsnog candles opgehaald, dit zijn dan de UP en de DOWN munten (die sluit ik normaliter uit, bij het ophalen van de candles kloppen de condities niet)
+- Bij veel signalen wordt de applicatie traag. De mutaties op de lijst met signalen lijkt de oorzaak te zijn
+  (de signalen worden nu gecached en 1 seconde vertraging helpt al behoorlijk)
+  NB: Dit was ook echt een ergernis voor mij, blij dat het opgelost is!
+- Aanpassingen trend, 2 nieuwe variaties, 1 op basis van cAlgo en een op basis van EMA.
+  Het is een experiment om dit te verbeteren, maar echt veel beter is het niet geworden.
+  Zie opmerking bij de TODO's "Validatie van de trenddetails" in het voorgaande stukje
+
+01-03-2023 1.7.1
+- Het geheel open source maken (https://github.com/CryptoMarius/CryptoSbmScanner)
+- Een verkeerde tooltip op de SBM oversold en overbought vinkje
+- De laatste Obfuscation restanten verwijderd (toch een stukje versleuteld!)
+  En er zijn vast virus scanners die problemen met die restant hebben.
 
 26-02-2023 1.7
 - De instellingen opgesplitst (intervallen, STOBB/SBM/JUMP)

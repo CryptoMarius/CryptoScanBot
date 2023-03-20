@@ -7,7 +7,6 @@ using Binance.Net.Clients;
 using Binance.Net.Objects.Models.Spot.Socket;
 using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Sockets;
-using static CryptoSbmScanner.BinanceStream1mCandles;
 
 namespace CryptoSbmScanner
 {
@@ -19,7 +18,7 @@ namespace CryptoSbmScanner
 
         public async Task ExecuteAsync()
         {
-            GlobalData.AddTextToLogTab("Starting ticker stream");
+            GlobalData.AddTextToLogTab("Starting price ticker stream");
 
             // Wordt gebruikt voor het zetten van de 24 uur volume
             socketClient = new BinanceSocketClient();
@@ -70,7 +69,7 @@ namespace CryptoSbmScanner
             }   
             else
             {
-                GlobalData.AddTextToLogTab("ERROR starting ticker stream " + subscriptionResult.Error.Message);
+                GlobalData.AddTextToLogTab("ERROR starting price ticker stream " + subscriptionResult.Error.Message);
 
             }
         }
@@ -80,7 +79,7 @@ namespace CryptoSbmScanner
             if (_subscription == null)
                 return; // Task.CompletedTask;
 
-            GlobalData.AddTextToLogTab("Stopping ticker stream");
+            GlobalData.AddTextToLogTab("Stopping price ticker stream");
 
             _subscription.Exception -= Exception;
             _subscription.ConnectionLost -= ConnectionLost;
@@ -93,7 +92,7 @@ namespace CryptoSbmScanner
 
         private void ConnectionLost()
         {
-            GlobalData.AddTextToLogTab("Binance ticker stream connection lost.");
+            GlobalData.AddTextToLogTab("Binance price ticker stream connection lost.");
         }
 
         private void ConnectionRestored(TimeSpan timeSpan)
