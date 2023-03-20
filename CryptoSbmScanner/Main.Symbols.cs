@@ -1,192 +1,184 @@
-﻿using Microsoft.Web.WebView2.Core;
-using System;
-using System.Threading.Tasks;
-using System.Windows.Forms;
+﻿using CryptoSbmScanner.Intern;
+using CryptoSbmScanner.Model;
+using CryptoSbmScanner.Settings;
 
-namespace CryptoSbmScanner
+namespace CryptoSbmScanner;
+
+public partial class FrmMain
 {
-    public partial class FrmMain
+    private void ListboxSymbolsInitCaptions()
     {
-        private void listboxSymbolsInitCaptions()
+        switch (GlobalData.Settings.General.TradingApp)
         {
-            switch (GlobalData.Settings.General.TradingApp)
-            {
-                case TradingApp.Altrady:
-                case TradingApp.AltradyWeb:
-                    listBoxSymbolsMenuItemActivateTradingApp.Text = "Altrady";
-                    listBoxSymbolsMenuItemActivateTradingApps.Text = "Altrady + TradingView";
-                    break;
-                case TradingApp.Hypertrader:
-                    listBoxSymbolsMenuItemActivateTradingApp.Text = "Hypertrader";
-                    listBoxSymbolsMenuItemActivateTradingApps.Text = "Hypertrader + TradingView";
-                    break;
-            }
+            case TradingApp.Altrady:
+            case TradingApp.AltradyWeb:
+                listBoxSymbolsMenuItemActivateTradingApp.Text = "Altrady";
+                listBoxSymbolsMenuItemActivateTradingApps.Text = "Altrady + TradingView";
+                break;
+            case TradingApp.Hypertrader:
+                listBoxSymbolsMenuItemActivateTradingApp.Text = "Hypertrader";
+                listBoxSymbolsMenuItemActivateTradingApps.Text = "Hypertrader + TradingView";
+                break;
         }
+    }
 
 
-        private CryptoSymbol GetSymbolFromListBox()
-        {
-            // Neem de door de gebruiker geselecteerde coin
-            string symbolName = listBoxSymbols.Text.ToString();
-            if (string.IsNullOrEmpty(symbolName))
-                return null;
-
-            CryptoExchange exchange;
-            if (GlobalData.ExchangeListName.TryGetValue("Binance", out exchange))
-            {
-                // Bestaat de coin? (uiteraard, net geladen)
-                CryptoSymbol symbol;
-                if (exchange.SymbolListName.TryGetValue(symbolName, out symbol))
-                {
-                    if (CandleTools.MatchingQuote(symbol) && (symbol.Status == 1))
-                    {
-                        return symbol;
-                    }
-                }
-            }
+    private CryptoSymbol GetSymbolFromListBox()
+    {
+        // Neem de door de gebruiker geselecteerde coin
+        string symbolName = listBoxSymbols.Text.ToString();
+        if (string.IsNullOrEmpty(symbolName))
             return null;
-        }
 
-
-        /// <summary>
-        /// Dan is er in de achtergrond een verversing actie geweest, display bijwerken!
-        /// </summary>
-        private void SymbolsHaveChangedEvent(string text, bool extraLineFeed = false)
+        if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
         {
-            if ((components != null) && (!ProgramExit) && (IsHandleCreated))
+            // Bestaat de coin? (uiteraard, net geladen)
+            if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol symbol))
             {
-                CryptoSbmScanner.CryptoExchange exchange;
-                if (GlobalData.ExchangeListName.TryGetValue("Binance", out exchange))
+                if (CandleTools.MatchingQuote(symbol) && (symbol.Status == 1))
                 {
-                    string filter = "";
-                    symbolFilter.Invoke((MethodInvoker)(() => filter = symbolFilter.Text.ToUpper()));
+                    return symbol;
+                }
+            }
+        }
+        return null;
+    }
 
-                    //De muntparen toevoegen aan de userinterface
-                    foreach (var symbol in exchange.SymbolListName.Values)
+
+    /// <summary>
+    /// Dan is er in de achtergrond een verversing actie geweest, display bijwerken!
+    /// </summary>
+    private void SymbolsHaveChangedEvent(string text, bool extraLineFeed = false)
+    {
+        if ((components != null) && (!ProgramExit) && (IsHandleCreated))
+        {
+            if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
+            {
+                string filter = "";
+                symbolFilter.Invoke((MethodInvoker)(() => filter = symbolFilter.Text.ToUpper()));
+
+                //De muntparen toevoegen aan de userinterface
+                foreach (var symbol in exchange.SymbolListName.Values)
+                {
+                    if ((CandleTools.MatchingQuote(symbol)) && (symbol.Status == 1))
                     {
-                        if ((CandleTools.MatchingQuote(symbol)) && (symbol.Status == 1))
-                        {
-                            if (!symbol.IsSpotTradingAllowed || symbol.IsBarometerSymbol())
-                                continue;
+                        if (!symbol.IsSpotTradingAllowed || symbol.IsBarometerSymbol())
+                            continue;
 
-                            bool addSymbol = true;
-                            if ((filter != "") && (!symbol.Name.Contains(filter)))
-                                addSymbol = false;
+                        bool addSymbol = true;
+                        if ((filter != "") && (!symbol.Name.Contains(filter)))
+                            addSymbol = false;
 
-                            int indexSymbol = 0;
-                            listBoxSymbols.Invoke((MethodInvoker)(() => indexSymbol = listBoxSymbols.Items.IndexOf(symbol.Name)));
+                        int indexSymbol = 0;
+                        listBoxSymbols.Invoke((MethodInvoker)(() => indexSymbol = listBoxSymbols.Items.IndexOf(symbol.Name)));
 
-                            if ((indexSymbol < 0) && (addSymbol))
-                                listBoxSymbols.Invoke((MethodInvoker)(() => listBoxSymbols.Items.Add(symbol.Name)));
-                            if ((indexSymbol >= 0) && (!addSymbol))
-                                listBoxSymbols.Invoke((MethodInvoker)(() => listBoxSymbols.Items.RemoveAt(indexSymbol)));
-                        }
+                        if ((indexSymbol < 0) && (addSymbol))
+                            listBoxSymbols.Invoke((MethodInvoker)(() => listBoxSymbols.Items.Add(symbol.Name)));
+                        if ((indexSymbol >= 0) && (!addSymbol))
+                            listBoxSymbols.Invoke((MethodInvoker)(() => listBoxSymbols.Items.RemoveAt(indexSymbol)));
                     }
-
-                }
-
-                if (webViewTradingView.Source == null)
-                {
-                    Invoke((MethodInvoker)(async() => ActivateTradingViewBrowser()));
                 }
 
             }
-        }
 
-
-
-
-        private void listBoxSymbolsMenuItemActivateTradingApp_Click(object sender, EventArgs e)
-        {
-            CryptoInterval interval;
-            if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1m, out interval))
-                return;
-
-            CryptoSymbol symbol = GetSymbolFromListBox();
-            if (symbol == null)
-                return;
-
-            ActivateTradingApp(symbol, interval);
-        }
-
-
-        private void listBoxSymbolsMenuItemActivateTradingApps_Click(object sender, EventArgs e)
-        {
-            listBoxSymbolsMenuItemActivateTradingApp_Click(sender, e);
-            listBoxSymbolsMenuItemActivateTradingviewInternal_Click(sender, e);
-        }
-
-        private void listBoxSymbolsMenuItemActivateTradingviewInternal_Click(object sender, EventArgs e)
-        {
-            CryptoInterval interval;
-            if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1m, out interval))
-                return;
-
-            CryptoSymbol symbol = GetSymbolFromListBox();
-            if (symbol == null)
-                return;
-
-            var href = TradingView.GetRef(symbol, interval);
-            Uri uri = new Uri(href);
-            webViewTradingView.Source = uri;
-            tabControl.SelectedTab = tabPageBrowser;
-        }
-
-
-        private void listBoxSymbolsMenuItemActivateTradingviewExternal_Click(object sender, EventArgs e)
-        {
-            CryptoInterval interval;
-            if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1m, out interval))
-                return;
-
-            CryptoSymbol symbol = GetSymbolFromListBox();
-            if (symbol == null)
-                return;
-
-            var href = TradingView.GetRef(symbol, interval);
-            System.Diagnostics.Process.Start(href);
-        }
-
-
-        private void listBoxSymbols_DoubleClick(object sender, EventArgs e)
-        {
-            switch (GlobalData.Settings.General.DoubleClickAction)
+            if (webViewTradingView.Source == null)
             {
-                case DoubleClickAction.activateTradingApp:
-                    listBoxSymbolsMenuItemActivateTradingApp_Click(sender, e);
-                    break;
-                case DoubleClickAction.activateTradingAppAndTradingViewInternal:
-                    listBoxSymbolsMenuItemActivateTradingApps_Click(sender, e);
-                    break;
-                case DoubleClickAction.activateTradingViewBrowerInternal:
-                    listBoxSymbolsMenuItemActivateTradingviewInternal_Click(sender, e);
-                    break;
-                case DoubleClickAction.activateTradingViewBrowerExternal:
-                    listBoxSymbolsMenuItemActivateTradingviewExternal_Click(sender, e);
-                    break;
+                Invoke((MethodInvoker)(async () => await ActivateTradingViewBrowser()));
             }
 
         }
+    }
 
-        private void MenuSymbolsShowTrendInformation_Click(object sender, EventArgs e)
+
+
+
+    private void ListBoxSymbolsMenuItemActivateTradingApp_Click(object sender, EventArgs e)
+    {
+        if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1m, out CryptoInterval interval))
+            return;
+
+        CryptoSymbol symbol = GetSymbolFromListBox();
+        if (symbol == null)
+            return;
+
+        ActivateTradingApp(symbol, interval);
+    }
+
+
+    private void ListBoxSymbolsMenuItemActivateTradingApps_Click(object sender, EventArgs e)
+    {
+        ListBoxSymbolsMenuItemActivateTradingApp_Click(sender, e);
+        ListBoxSymbolsMenuItemActivateTradingviewInternal_Click(sender, e);
+    }
+
+    private void ListBoxSymbolsMenuItemActivateTradingviewInternal_Click(object sender, EventArgs e)
+    {
+        if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1m, out CryptoInterval interval))
+            return;
+
+        CryptoSymbol symbol = GetSymbolFromListBox();
+        if (symbol == null)
+            return;
+
+        var href = Intern.TradingView.GetRef(symbol, interval);
+        Uri uri = new(href);
+        webViewTradingView.Source = uri;
+        tabControl.SelectedTab = tabPageBrowser;
+    }
+
+
+    private void ListBoxSymbolsMenuItemActivateTradingviewExternal_Click(object sender, EventArgs e)
+    {
+        if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1m, out CryptoInterval interval))
+            return;
+
+        CryptoSymbol symbol = GetSymbolFromListBox();
+        if (symbol == null)
+            return;
+
+        var href = Intern.TradingView.GetRef(symbol, interval);
+        System.Diagnostics.Process.Start(href);
+    }
+
+
+    private void ListBoxSymbols_DoubleClick(object sender, EventArgs e)
+    {
+        switch (GlobalData.Settings.General.DoubleClickAction)
         {
-            // Show trend information
-            CryptoSymbol symbol = GetSymbolFromListBox();
-            if (symbol == null)
-                return;
-
-            ShowTrendInformation(symbol);
+            case DoubleClickAction.activateTradingApp:
+                ListBoxSymbolsMenuItemActivateTradingApp_Click(sender, e);
+                break;
+            case DoubleClickAction.activateTradingAppAndTradingViewInternal:
+                ListBoxSymbolsMenuItemActivateTradingApps_Click(sender, e);
+                break;
+            case DoubleClickAction.activateTradingViewBrowerInternal:
+                ListBoxSymbolsMenuItemActivateTradingviewInternal_Click(sender, e);
+                break;
+            case DoubleClickAction.activateTradingViewBrowerExternal:
+                ListBoxSymbolsMenuItemActivateTradingviewExternal_Click(sender, e);
+                break;
         }
 
+    }
 
-        private void listBoxSymbolsMenuItemCopy_Click(object sender, EventArgs e)
-        {
-            // Show trend information
-            CryptoSymbol symbol = GetSymbolFromListBox();
-            if (symbol == null)
-                return;
+    private void MenuSymbolsShowTrendInformation_Click(object sender, EventArgs e)
+    {
+        // Show trend information
+        CryptoSymbol symbol = GetSymbolFromListBox();
+        if (symbol == null)
+            return;
 
-            Clipboard.SetText(symbol.Name, TextDataFormat.UnicodeText);
-        }
+        ShowTrendInformation(symbol);
+    }
+
+
+    private void ListBoxSymbolsMenuItemCopy_Click(object sender, EventArgs e)
+    {
+        // Show trend information
+        CryptoSymbol symbol = GetSymbolFromListBox();
+        if (symbol == null)
+            return;
+
+        Clipboard.SetText(symbol.Name, TextDataFormat.UnicodeText);
     }
 }

@@ -143,28 +143,28 @@
             this.listBoxSymbolsMenuItemActivateTradingApp.Name = "listBoxSymbolsMenuItemActivateTradingApp";
             this.listBoxSymbolsMenuItemActivateTradingApp.Size = new System.Drawing.Size(214, 22);
             this.listBoxSymbolsMenuItemActivateTradingApp.Text = "Activate trading app";
-            this.listBoxSymbolsMenuItemActivateTradingApp.Click += new System.EventHandler(this.listBoxSymbolsMenuItemActivateTradingApp_Click);
+            this.listBoxSymbolsMenuItemActivateTradingApp.Click += new System.EventHandler(this.ListBoxSymbolsMenuItemActivateTradingApp_Click);
             // 
             // listBoxSymbolsMenuItemActivateTradingApps
             // 
             this.listBoxSymbolsMenuItemActivateTradingApps.Name = "listBoxSymbolsMenuItemActivateTradingApps";
             this.listBoxSymbolsMenuItemActivateTradingApps.Size = new System.Drawing.Size(214, 22);
             this.listBoxSymbolsMenuItemActivateTradingApps.Text = "Trading app + TradingView";
-            this.listBoxSymbolsMenuItemActivateTradingApps.Click += new System.EventHandler(this.listBoxSymbolsMenuItemActivateTradingApps_Click);
+            this.listBoxSymbolsMenuItemActivateTradingApps.Click += new System.EventHandler(this.ListBoxSymbolsMenuItemActivateTradingApps_Click);
             // 
             // listBoxSymbolsMenuItemActivateTradingviewInternal
             // 
             this.listBoxSymbolsMenuItemActivateTradingviewInternal.Name = "listBoxSymbolsMenuItemActivateTradingviewInternal";
             this.listBoxSymbolsMenuItemActivateTradingviewInternal.Size = new System.Drawing.Size(214, 22);
             this.listBoxSymbolsMenuItemActivateTradingviewInternal.Text = "Tradingview browser";
-            this.listBoxSymbolsMenuItemActivateTradingviewInternal.Click += new System.EventHandler(this.listBoxSymbolsMenuItemActivateTradingviewInternal_Click);
+            this.listBoxSymbolsMenuItemActivateTradingviewInternal.Click += new System.EventHandler(this.ListBoxSymbolsMenuItemActivateTradingviewInternal_Click);
             // 
             // listBoxSymbolsMenuItemActivateTradingviewExternal
             // 
             this.listBoxSymbolsMenuItemActivateTradingviewExternal.Name = "listBoxSymbolsMenuItemActivateTradingviewExternal";
             this.listBoxSymbolsMenuItemActivateTradingviewExternal.Size = new System.Drawing.Size(214, 22);
             this.listBoxSymbolsMenuItemActivateTradingviewExternal.Text = "Tradingview external";
-            this.listBoxSymbolsMenuItemActivateTradingviewExternal.Click += new System.EventHandler(this.listBoxSymbolsMenuItemActivateTradingviewExternal_Click);
+            this.listBoxSymbolsMenuItemActivateTradingviewExternal.Click += new System.EventHandler(this.ListBoxSymbolsMenuItemActivateTradingviewExternal_Click);
             // 
             // listBoxSymbolsMenuItemShowTrendInformation
             // 
@@ -178,7 +178,7 @@
             this.listBoxSymbolsMenuItemCopy.Name = "listBoxSymbolsMenuItemCopy";
             this.listBoxSymbolsMenuItemCopy.Size = new System.Drawing.Size(214, 22);
             this.listBoxSymbolsMenuItemCopy.Text = "Copy";
-            this.listBoxSymbolsMenuItemCopy.Click += new System.EventHandler(this.listBoxSymbolsMenuItemCopy_Click);
+            this.listBoxSymbolsMenuItemCopy.Click += new System.EventHandler(this.ListBoxSymbolsMenuItemCopy_Click);
             // 
             // panel3
             // 
@@ -264,14 +264,14 @@
             this.clearMenusToolStripMenuItem.Name = "clearMenusToolStripMenuItem";
             this.clearMenusToolStripMenuItem.Size = new System.Drawing.Size(168, 22);
             this.clearMenusToolStripMenuItem.Text = "Clear";
-            this.clearMenusToolStripMenuItem.Click += new System.EventHandler(this.mainMenuClearAll_Click);
+            this.clearMenusToolStripMenuItem.Click += new System.EventHandler(this.MainMenuClearAll_Click);
             // 
             // applicationMenuItemAbout
             // 
             this.applicationMenuItemAbout.Name = "applicationMenuItemAbout";
             this.applicationMenuItemAbout.Size = new System.Drawing.Size(168, 22);
             this.applicationMenuItemAbout.Text = "About";
-            this.applicationMenuItemAbout.Click += new System.EventHandler(this.applicationMenuItemAbout_Click);
+            this.applicationMenuItemAbout.Click += new System.EventHandler(this.ApplicationMenuItemAbout_Click);
             // 
             // symbolFilter
             // 
@@ -280,7 +280,7 @@
             this.symbolFilter.Name = "symbolFilter";
             this.symbolFilter.Size = new System.Drawing.Size(141, 20);
             this.symbolFilter.TabIndex = 0;
-            this.symbolFilter.KeyDown += new System.Windows.Forms.KeyEventHandler(this.symbolFilter_KeyDown);
+            this.symbolFilter.KeyDown += new System.Windows.Forms.KeyEventHandler(this.SymbolFilter_KeyDown);
             // 
             // panelClient
             // 
@@ -348,28 +348,28 @@
             this.listViewSignalsMenuItemActivateTradingApp.Name = "listViewSignalsMenuItemActivateTradingApp";
             this.listViewSignalsMenuItemActivateTradingApp.Size = new System.Drawing.Size(214, 22);
             this.listViewSignalsMenuItemActivateTradingApp.Text = "Activate trading app";
-            this.listViewSignalsMenuItemActivateTradingApp.Click += new System.EventHandler(this.listViewSignalsMenuItemActivateTradingApp_Click);
+            this.listViewSignalsMenuItemActivateTradingApp.Click += new System.EventHandler(this.ListViewSignalsMenuItemActivateTradingApp_Click);
             // 
             // listViewSignalsMenuItemActivateTradingApps
             // 
             this.listViewSignalsMenuItemActivateTradingApps.Name = "listViewSignalsMenuItemActivateTradingApps";
             this.listViewSignalsMenuItemActivateTradingApps.Size = new System.Drawing.Size(214, 22);
             this.listViewSignalsMenuItemActivateTradingApps.Text = "Trading app + TradingView";
-            this.listViewSignalsMenuItemActivateTradingApps.Click += new System.EventHandler(this.listViewSignalsMenuItemActivateTradingApps_Click);
+            this.listViewSignalsMenuItemActivateTradingApps.Click += new System.EventHandler(this.ListViewSignalsMenuItemActivateTradingApps_Click);
             // 
             // listViewSignalsMenuItemActivateTradingViewInternal
             // 
             this.listViewSignalsMenuItemActivateTradingViewInternal.Name = "listViewSignalsMenuItemActivateTradingViewInternal";
             this.listViewSignalsMenuItemActivateTradingViewInternal.Size = new System.Drawing.Size(214, 22);
             this.listViewSignalsMenuItemActivateTradingViewInternal.Text = "TradingView browser";
-            this.listViewSignalsMenuItemActivateTradingViewInternal.Click += new System.EventHandler(this.listViewSignalsMenuItemActivateTradingViewInternal_Click);
+            this.listViewSignalsMenuItemActivateTradingViewInternal.Click += new System.EventHandler(this.ListViewSignalsMenuItemActivateTradingViewInternal_Click);
             // 
             // listViewSignalsMenuItemActivateTradingViewExternal
             // 
             this.listViewSignalsMenuItemActivateTradingViewExternal.Name = "listViewSignalsMenuItemActivateTradingViewExternal";
             this.listViewSignalsMenuItemActivateTradingViewExternal.Size = new System.Drawing.Size(214, 22);
             this.listViewSignalsMenuItemActivateTradingViewExternal.Text = "Tradingview extern";
-            this.listViewSignalsMenuItemActivateTradingViewExternal.Click += new System.EventHandler(this.listViewSignalsMenuItemActivateTradingviewExternal_Click);
+            this.listViewSignalsMenuItemActivateTradingViewExternal.Click += new System.EventHandler(this.ListViewSignalsMenuItemActivateTradingviewExternal_Click);
             // 
             // listViewSignalsMenuItemShowTrendInformation
             // 
@@ -383,14 +383,14 @@
             this.listViewSignalsMenuItemClearSignals.Name = "listViewSignalsMenuItemClearSignals";
             this.listViewSignalsMenuItemClearSignals.Size = new System.Drawing.Size(214, 22);
             this.listViewSignalsMenuItemClearSignals.Text = "Clear";
-            this.listViewSignalsMenuItemClearSignals.Click += new System.EventHandler(this.listViewSignalsMenuItemClearSignals_Click);
+            this.listViewSignalsMenuItemClearSignals.Click += new System.EventHandler(this.ListViewSignalsMenuItemClearSignals_Click);
             // 
             // listViewSignalsMenuItemCopySignal
             // 
             this.listViewSignalsMenuItemCopySignal.Name = "listViewSignalsMenuItemCopySignal";
             this.listViewSignalsMenuItemCopySignal.Size = new System.Drawing.Size(214, 22);
             this.listViewSignalsMenuItemCopySignal.Text = "Copy";
-            this.listViewSignalsMenuItemCopySignal.Click += new System.EventHandler(this.listViewSignalsMenuItemCopySignal_Click);
+            this.listViewSignalsMenuItemCopySignal.Click += new System.EventHandler(this.ListViewSignalsMenuItemCopySignal_Click);
             // 
             // tabPageBrowser
             // 
@@ -593,12 +593,12 @@
             // 
             this.timerBarometer.Enabled = true;
             this.timerBarometer.Interval = 5000;
-            this.timerBarometer.Tick += new System.EventHandler(this.timerBarometer_Tick);
+            this.timerBarometer.Tick += new System.EventHandler(this.TimerBarometer_Tick);
             // 
             // timerSoundHeartBeat
             // 
             this.timerSoundHeartBeat.Interval = 600000;
-            this.timerSoundHeartBeat.Tick += new System.EventHandler(this.timerSoundHeartBeat_Tick);
+            this.timerSoundHeartBeat.Tick += new System.EventHandler(this.TimerSoundHeartBeat_Tick);
             // 
             // contextMenuStrip1
             // 
@@ -608,13 +608,13 @@
             // timerCandles
             // 
             this.timerCandles.Interval = 10000;
-            this.timerCandles.Tick += new System.EventHandler(this.timerCandles_Tick);
+            this.timerCandles.Tick += new System.EventHandler(this.TimerCandles_Tick);
             // 
             // timerAddSignal
             // 
             this.timerAddSignal.Enabled = true;
             this.timerAddSignal.Interval = 1250;
-            this.timerAddSignal.Tick += new System.EventHandler(this.timerAddSignal_Tick);
+            this.timerAddSignal.Tick += new System.EventHandler(this.TimerAddSignal_Tick);
             // 
             // FrmMain
             // 
