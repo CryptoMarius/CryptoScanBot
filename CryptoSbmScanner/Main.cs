@@ -1502,14 +1502,13 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
                     Invoke((MethodInvoker)(() => timerCandles.Enabled = timerCandles.Interval > 0));
                 }
 
-            BinanceFetchCandles binanceFetchCandles = new();
-            Task.Run(async () => { await BinanceFetchCandles.ExecuteAsync(); }); // niet wachten tot deze klaar is
+                BinanceFetchCandles binanceFetchCandles = new();
+                Task.Run(async () => { await BinanceFetchCandles.ExecuteAsync(); }); // niet wachten tot deze klaar is
+            }
+            else
+                Invoke((MethodInvoker)(() => timerCandles.Enabled = false));
         }
-        else
-            Invoke((MethodInvoker)(() => timerCandles.Enabled = false));
     }
-
-
 
     public void WindowLocationSave()
     {
