@@ -1490,15 +1490,17 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
     {
         if (GlobalData.ApplicationStatus == ApplicationStatus.AppStatusRunning)
         {
-            // De reguliere verversing herstellen (igv een connection timeout)
-            if ((components != null) && (!ProgramExit) && (IsHandleCreated))
+            if (GlobalData.ApplicationStatus == ApplicationStatus.AppStatusRunning)
             {
-                // Plan een volgende verversing omdat er bv een connection timeout was.
-                // Dit kan een aantal berekeningen onderbroken hebben
-                Invoke((MethodInvoker)(() => timerCandles.Enabled = false));
-                Invoke((MethodInvoker)(() => timerCandles.Interval = GlobalData.Settings.General.GetCandleInterval * 60 * 1000));
-                Invoke((MethodInvoker)(() => timerCandles.Enabled = timerCandles.Interval > 0));
-            }
+                // De reguliere verversing herstellen (igv een connection timeout)
+                if ((components != null) && (!ProgramExit) && (IsHandleCreated))
+                {
+                    // Plan een volgende verversing omdat er bv een connection timeout was.
+                    // Dit kan een aantal berekeningen onderbroken hebben
+                    Invoke((MethodInvoker)(() => timerCandles.Enabled = false));
+                    Invoke((MethodInvoker)(() => timerCandles.Interval = GlobalData.Settings.General.GetCandleInterval * 60 * 1000));
+                    Invoke((MethodInvoker)(() => timerCandles.Enabled = timerCandles.Interval > 0));
+                }
 
             BinanceFetchCandles binanceFetchCandles = new();
             Task.Run(async () => { await BinanceFetchCandles.ExecuteAsync(); }); // niet wachten tot deze klaar is

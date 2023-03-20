@@ -67,6 +67,7 @@ public class SignalSbm2Oversold : SignalSbmBase
             ExtraText = "geen lage prijs in de laatste x candles";
             return false;
         }
+            }
 
         if (!IsMacdRecoveryOversold(GlobalData.Settings.Signal.Sbm2CandlesForMacdRecovery))
             return false;
