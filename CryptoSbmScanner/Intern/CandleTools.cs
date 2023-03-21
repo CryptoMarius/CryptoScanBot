@@ -39,7 +39,11 @@ public static class CandleTools
     /// De reverse van de GetUnixTime
     /// Oppassen: De candles bevatten altijd een datumtijd in UTC, deze moet dus ook
     /// </summary>
-    static public DateTime GetUnixDate(long? unixDate) => DateTimeOffset.FromUnixTimeSeconds((long)unixDate).UtcDateTime;
+    static public DateTime GetUnixDate(long? unixDate)
+    {
+        DateTime datetime = DateTimeOffset.FromUnixTimeSeconds((long)unixDate).UtcDateTime;
+        return datetime;
+    }
 
 
     /// <summary>
@@ -96,7 +100,7 @@ public static class CandleTools
 
         // De unix tijd "afgekapt" naar het gewenste interval
         long candleOpenUnix = openTime - openTime % interval.Duration;
-        _ = GetUnixDate(candleOpenUnix); //ter debug want een unix date is onleesbaar
+        //DateTime candleOpenDate = GetUnixDate(candleOpenUnix); //ter debug want een unix date is onleesbaar
 
         //bool IsChanged = false;
         if (!candles.TryGetValue(candleOpenUnix, out CryptoCandle candleNew))

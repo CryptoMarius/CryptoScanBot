@@ -19,14 +19,13 @@ public class ThreadLoadData
             GlobalData.SymbolBlackListOverbought.Clear();
             GlobalData.SymbolWhiteListOverbought.Clear();
 
-            DataStore dataStore = new();
             {
                 //************************************************************************************
                 //Informatie uit de database lezen
                 //************************************************************************************
                 GlobalData.InitExchanges();
-                //dataStore.LoadExchanges();
-                //dataStore.LoadSymbols(); overbodig
+                //DataStore.LoadExchanges();
+                //DataStore.LoadSymbols(); overbodig
 
 
                 //************************************************************************************

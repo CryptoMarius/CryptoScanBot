@@ -160,18 +160,20 @@ public class CandleIndicatorData
         List<BollingerBandsResult> bollingerBandsList = (List<BollingerBandsResult>)history.GetBollingerBands();
 
         // Because Skender.Psar has different results  we use the old ta-lib (I dont like that)
-        var inLow = history.Select(x => Convert.ToDouble(x.Low)).ToArray();
-        var inHigh = history.Select(x => Convert.ToDouble(x.High)).ToArray();
         //var inOpen = history.Select(x => Convert.ToDouble(x.Open)).ToArray();
+        var inHigh = history.Select(x => Convert.ToDouble(x.High)).ToArray();
+        var inLow = history.Select(x => Convert.ToDouble(x.Low)).ToArray();
         //var inClose = history.Select(x => Convert.ToDouble(x.Close)).ToArray();
 
         int startIdx = 0;
         int endIdx = history.Count - 1;
+        int outNbElement; // aantal elementen in de array vanaf 0
         TicTacTec.TA.Library.Core.RetCode retCode;
 
+        int outBegIdxPSar;
         double[] pSarOutput = new double[history.Count];
         retCode = TicTacTec.TA.Library.Core.Sar(startIdx, endIdx, inHigh, inLow, 0.02, 0.2,
-            out int outBegIdxPSar, out int outNbElement, pSarOutput);
+            out outBegIdxPSar, out outNbElement, pSarOutput);
 
         // We might do everything via ta-lib, but its a tricky library (only use it for psar)
         //int outBegIdxBb;
@@ -235,7 +237,10 @@ public class CandleIndicatorData
     // Extended with 1 day + 9 hours because of the 24 hour market climate (or barometer).  (we show ~6 hours of that in the display)
     private static long InitialCandleCountFetch = 24 * 60 * 60 + 9 * 60 * 60;
 
-    public static void SetInitialCandleCountFetch(long value) => InitialCandleCountFetch = value;
+    public static void SetInitialCandleCountFetch(long value)
+	{
+	    InitialCandleCountFetch = value;
+    }
 
     public static long GetCandleFetchStart(CryptoSymbol symbol, CryptoInterval interval, DateTime utcNow)
     {
@@ -262,8 +267,7 @@ public class CandleIndicatorData
             // Lets extend that with 1 extra candle just in case...
             startFetchUnix -= interval.Duration;
         }
-
-        _ = CandleTools.GetUnixDate(startFetchUnix);  //debug
+        //DateTime symbolfetchCandleDebug = CandleTools.GetUnixDate(startFetchUnix);  //debug
         return startFetchUnix;
 
     }

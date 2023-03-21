@@ -235,25 +235,27 @@ public class BinanceFetchCandles
         {
             // Reuse the socket in this thread, because:
             // "An operation on a socket could not be performed because the system lacked sufficient buffer space or because a queue was full"
-            using BinanceClient client = new();
-            while (true)
+            using (BinanceClient client = new())
             {
-                CryptoSymbol symbol;
-
-                Monitor.Enter(queue);
-                try
+                while (true)
                 {
-                    if (queue.Count > 0)
-                        symbol = queue.Dequeue();
-                    else
-                        break;
-                }
-                finally
-                {
-                    Monitor.Exit(queue);
-                }
+                    CryptoSymbol symbol;
 
-                await FetchCandlesInternal(client, symbol, fetchEndUnix);
+                    Monitor.Enter(queue);
+                    try
+                    {
+                        if (queue.Count > 0)
+                            symbol = queue.Dequeue();
+                        else
+                            break;
+                    }
+                    finally
+                    {
+                        Monitor.Exit(queue);
+                    }
+
+                    await FetchCandlesInternal(client, symbol, fetchEndUnix);
+                }
             }
         }
         catch (Exception error)
@@ -281,7 +283,6 @@ public class BinanceFetchCandles
 
                     if (GlobalData.ApplicationStatus != ApplicationStatus.AppStatusPrepare)
                     {
-                        BinanceFetchSymbols fetchSymbols = new();
                         await Task.Run(BinanceFetchSymbols.ExecuteAsync); // NO await, this one has to be parallel
                     }
                     GlobalData.AddTextToLogTab("Aantal symbols = " + exchange.SymbolListName.Values.Count.ToString());
