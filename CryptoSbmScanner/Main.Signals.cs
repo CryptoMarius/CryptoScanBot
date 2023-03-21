@@ -32,7 +32,7 @@ public partial class FrmMain
         };
         this.listViewSignals.ListViewItemSorter = listViewColumnSorter;
         this.listViewSignals.ColumnClick += ListViewSignals_ColumnClick;
-        //this.listViewSignals.SetSortIcon(listViewColumnSorter.SortColumn, listViewColumnSorter.Order);
+        this.listViewSignals.SetSortIcon(listViewColumnSorter.SortColumn, listViewColumnSorter.Order);
 
 
         // Create columns and subitems. Width of -2 indicates auto-size
@@ -501,7 +501,7 @@ public partial class FrmMain
 
         // Perform the sort with these new sort options.
         this.listViewSignals.Sort();
-        //this.listViewSignals.SetSortIcon(listViewColumnSorter.SortColumn, listViewColumnSorter.Order);
+        this.listViewSignals.SetSortIcon(listViewColumnSorter.SortColumn, listViewColumnSorter.Order);
 
     }
 }

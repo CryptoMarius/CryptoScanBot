@@ -47,7 +47,7 @@ public class BinanceFetchSymbols
 
                     //Zo af en toe komt er geen data of is de Data niet gezet.
                     //De verbindingen naar extern kunnen (tijdelijk) geblokkeerd zijn
-                    if (exchangeInfo == null | exchangeInfo.Data == null)
+                    if (exchangeInfo == null || exchangeInfo.Data == null)
                         throw new ExchangeException("Geen exchange data ontvangen");
                 }
                 exchange.ExchangeInfoLastTime = DateTime.UtcNow;
