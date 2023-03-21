@@ -1,15 +1,12 @@
-﻿using System;
-using System.Runtime.Serialization;
+﻿using System.Runtime.Serialization;
 
-namespace CryptoSbmScanner
+namespace CryptoSbmScanner.Intern;
+
+public class ExchangeException : SystemException, ISerializable
 {
-    public class ExchangeException : SystemException, ISerializable
+
+    public ExchangeException(string message) : base(message)
     {
 
-        public ExchangeException(string message) : base(message)
-        {
-
-        }
     }
-
 }
