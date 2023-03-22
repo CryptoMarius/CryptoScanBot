@@ -61,20 +61,19 @@ public class CryptoSymbol
 
     public CryptoQuoteData QuoteData { get; set; }
 
-    // Een verzameling van data gekoppeld aan de IntervalPeriod (per interval de candles, candlefetched etc.)
+    // Interval related data like candles, candlefetched etc.
     public List<CryptoSymbolInterval> IntervalPeriodList { get; set; } = new List<CryptoSymbolInterval>();
 
     // NB: Verwijst nu naar de IntervalPeriodList<1m>.CandleList
     public SortedList<long, CryptoCandle> CandleList { get { return IntervalPeriodList[0].CandleList; } }
 
-    // Indicatie barcode chart
-    public decimal? BarcodePercentage { get; set; }
-
     //[Computed]
     public string DisplayFormat { get; set; } = "N8";
 
 
-    public void InitializePeriods() => IntervalPeriodList = GlobalData.IntervalList.Select(interval => new CryptoSymbolInterval { Interval = interval }).ToList();
+    public void InitializePeriods() 
+	    => IntervalPeriodList = GlobalData.IntervalList.Select(interval 
+        => new CryptoSymbolInterval { Interval = interval }).ToList();
 
     public CryptoSymbol() => InitializePeriods();
 

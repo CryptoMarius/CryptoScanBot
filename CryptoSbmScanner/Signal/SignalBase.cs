@@ -67,23 +67,44 @@ public class SignalBase
     /// </summary>
     public virtual bool AllowStepIn(CryptoSignal signal) => false;
 
+
+    public bool GetPrevCandle(CryptoCandle oldCandle, out CryptoCandle newCandle)
+    {
+        if (!Candles.TryGetValue(oldCandle.OpenTime - Interval.Duration, out newCandle))
+        {
+            ExtraText = "No prev candle! " + oldCandle.DateLocal.ToString();
+            return false;
+        }
+
+        if (!IndicatorsOkay(newCandle))
+        {
+            ExtraText = "Prev problem indicators " + newCandle.DateLocal.ToString();
+            return false;
+        }
+
+        return true;
+    }
+
+
+
     /// <summary>
     /// Is de RSI oversold geweest in de laatste x candles
     /// </summary>
     public bool WasRsiOversoldInTheLast(int candleCount = 30)
     {
         // We gaan van rechts naar links (dus prev en last zijn ietwat raar)
-        long time = CandleLast.OpenTime;
+        CryptoCandle candle = CandleLast;
         while (candleCount >= 0)
         {
-            if (Candles.TryGetValue(time, out CryptoCandle candle))
-            {
-                if (IndicatorsOkay(candle) && candle.IsRsiOversold())
-                    return true;
-            }
+            if (candle.IsRsiOversold())
+                return true;
+
+            if (!GetPrevCandle(candle, out candle))
+                return false;
             candleCount--;
-            time -= Interval.Duration;
         }
         return false;
     }
+
+
 }

@@ -32,7 +32,6 @@ public class ThreadLoadData
                 // Alle symbols van de exchange halen en mergen met de ingelezen symbols.
                 // Via een event worden de muntparen in de userinterface gezet (dat duurt even)
                 //************************************************************************************
-                BinanceFetchSymbols fetchSymbols = new();
                 await Task.Run(async () => { await BinanceFetchSymbols.ExecuteAsync(); }); // Geen await, deze mag/MOET parallel
 
                 // Na het inlezen van de symbols de lijsten goed zetten
@@ -196,7 +195,6 @@ public class ThreadLoadData
             // De (ontbrekende) candles downloaden (en de achterstand inhalen, blocking!)
             //************************************************************************************
             // Deze methode werkt alleen op Binance
-            BinanceFetchCandles binanceFetchCandles = new();
             await Task.Run(async () => { await BinanceFetchCandles.ExecuteAsync(); }); // wachten tot deze klaar is
 
             //Ze zijn er allemaal wel, deze is overbodig

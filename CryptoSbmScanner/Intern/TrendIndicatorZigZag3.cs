@@ -1,10 +1,5 @@
 ﻿using CryptoSbmScanner.Model;
 using Skender.Stock.Indicators;
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Text;
-using System.Threading;
 
 namespace CryptoSbmScanner.Intern;
 

@@ -59,9 +59,9 @@ public partial class FrmMain
             listViewSignals.Columns.Add("Sma20", -2, HorizontalAlignment.Right);
             listViewSignals.Columns.Add("PSar", -2, HorizontalAlignment.Right);
 #if DEBUG
-            listViewSignals.Columns.Add("PSarDave", -2, HorizontalAlignment.Right);
-            listViewSignals.Columns.Add("PSarJason", -2, HorizontalAlignment.Right);
-            listViewSignals.Columns.Add("PSarTulip", -2, HorizontalAlignment.Right);
+            //listViewSignals.Columns.Add("PSarDave", -2, HorizontalAlignment.Right);
+            //listViewSignals.Columns.Add("PSarJason", -2, HorizontalAlignment.Right);
+            //listViewSignals.Columns.Add("PSarTulip", -2, HorizontalAlignment.Right);
 #endif
         }
         listViewSignals.Columns.Add("", -2, HorizontalAlignment.Right); // filler
@@ -126,7 +126,7 @@ public partial class FrmMain
 
             case SignalStrategy.strategyStobbOverbought:
             case SignalStrategy.strategyStobbOversold:
-                if (GlobalData.Settings.Signal.ColorStobb != Color.White)
+                if ((signal.Mode != SignalMode.modeInfo) && (GlobalData.Settings.Signal.ColorStobb != Color.White))
                     subItem.BackColor = GlobalData.Settings.Signal.ColorStobb;
                 break;
 
@@ -136,14 +136,14 @@ public partial class FrmMain
             case SignalStrategy.strategySbm2Oversold:
             case SignalStrategy.strategySbm3Overbought:
             case SignalStrategy.strategySbm3Oversold:
-                if (GlobalData.Settings.Signal.ColorSbm != Color.White)
+                if ((signal.Mode != SignalMode.modeInfo) && (GlobalData.Settings.Signal.ColorSbm != Color.White))
                     subItem.BackColor = GlobalData.Settings.Signal.ColorSbm;
                 break;
 
-            case SignalStrategy.strategyPriceCrossedMa20:
-            case SignalStrategy.strategyPriceCrossedMa50:
-                if (GlobalData.Settings.Signal.ColorJump != Color.White)
-                    subItem.BackColor = GlobalData.Settings.Signal.ColorJump;
+            case SignalStrategy.strategyPriceCrossedSma20:
+            case SignalStrategy.strategyPriceCrossedSma50:
+                //if (GlobalData.Settings.Signal.ColorJump != Color.White)
+                //    subItem.BackColor = GlobalData.Settings.Signal.ColorJump;
                 break;
         }
 
@@ -243,28 +243,28 @@ public partial class FrmMain
                 item1.SubItems.Add(orgValue);
 
 #if DEBUG
-            string newValue;
+            //string newValue;
 
-            value = signal.PSarDave; //.Clamp(signal.Symbol.PriceMinimum, signal.Symbol.PriceMaximum, signal.Symbol.PriceTickSize);
-            newValue = ((decimal?)value)?.ToString(signal.Symbol.DisplayFormat);
-            if (orgValue != newValue)
-                item1.SubItems.Add(newValue).ForeColor = Color.Red;
-            else
-                item1.SubItems.Add(newValue);
+            //value = signal.PSarDave; //.Clamp(signal.Symbol.PriceMinimum, signal.Symbol.PriceMaximum, signal.Symbol.PriceTickSize);
+            //newValue = value?.ToString(signal.Symbol.DisplayFormat);
+            //if (orgValue != newValue)
+            //    item1.SubItems.Add(newValue).ForeColor = Color.Red;
+            //else
+            //    item1.SubItems.Add(newValue);
 
-            value = signal.PSarJason; //.Clamp(signal.Symbol.PriceMinimum, signal.Symbol.PriceMaximum, signal.Symbol.PriceTickSize);
-            newValue = ((decimal?)value)?.ToString(signal.Symbol.DisplayFormat);
-            if (orgValue != newValue)
-                item1.SubItems.Add(newValue).ForeColor = Color.Red;
-            else
-                item1.SubItems.Add(newValue);
+            //value = signal.PSarJason; //.Clamp(signal.Symbol.PriceMinimum, signal.Symbol.PriceMaximum, signal.Symbol.PriceTickSize);
+            //newValue = value?.ToString(signal.Symbol.DisplayFormat);
+            //if (orgValue != newValue)
+            //    item1.SubItems.Add(newValue).ForeColor = Color.Red;
+            //else
+            //    item1.SubItems.Add(newValue);
 
-            value = signal.PSarTulip; //.Clamp(signal.Symbol.PriceMinimum, signal.Symbol.PriceMaximum, signal.Symbol.PriceTickSize);
-            newValue = ((decimal?)value)?.ToString(signal.Symbol.DisplayFormat);
-            if (orgValue != newValue)
-                item1.SubItems.Add(newValue).ForeColor = Color.Red;
-            else
-                item1.SubItems.Add(newValue);
+            //value = signal.PSarTulip; //.Clamp(signal.Symbol.PriceMinimum, signal.Symbol.PriceMaximum, signal.Symbol.PriceTickSize);
+            //newValue = value?.ToString(signal.Symbol.DisplayFormat);
+            //if (orgValue != newValue)
+            //    item1.SubItems.Add(newValue).ForeColor = Color.Red;
+            //else
+            //    item1.SubItems.Add(newValue);
 #endif
 
         }
@@ -274,7 +274,6 @@ public partial class FrmMain
 
     private void ListViewSignalsAddSignalRange(List<CryptoSignal> signals)
     {
-
         listViewSignals.BeginUpdate();
         timerClearEvents.Enabled = false;
         try
@@ -317,6 +316,34 @@ public partial class FrmMain
     }
 
 
+    //private void ListViewSignalsAddSignal(CryptoSignal signal)
+    //{
+    //    listViewSignals.BeginUpdate();
+    //    try
+    //    {
+    //        ListViewItem item = AddSignalItem(signal);
+
+    //        // Add the items to the ListView.
+    //        if (listViewSignals.Items.Count > 0)
+    //            listViewSignals.Items.Insert(0, item);
+    //        else
+    //            listViewSignals.Items.Add(item);
+
+    //        //listView1.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
+    //        for (int i = 0; i <= listViewSignals.Columns.Count - 1; i++)
+    //        {
+    //            listViewSignals.Columns[i].Width = -2;
+    //        }
+
+    //        //Thread.Sleep(250);
+    //    }
+    //    finally
+    //    {
+    //        listViewSignals.EndUpdate();
+    //    }
+    //}
+
+
     private void TimerClearOldSignals_Tick(object sender, EventArgs e)
     {
         if (listViewSignals.Items.Count > 0)
@@ -339,7 +366,7 @@ public partial class FrmMain
                         }
                         listViewSignals.Items.RemoveAt(index);
                     }
-                    else break;
+                    //else break; // Mhhh, werkt niet als de sortering anders is!
 
                 }
             }

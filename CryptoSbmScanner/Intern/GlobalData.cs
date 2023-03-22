@@ -62,7 +62,7 @@ static public class GlobalData
 
     /// Exchanges indexed on name
     static public SortedList<string, Model.CryptoExchange> ExchangeListName { get; } = new SortedList<string, Model.CryptoExchange>();
-    public static Dictionary<string, long> AnalyseNotification { get; } = new();
+    static public Dictionary<string, long> AnalyseNotification { get; } = new();
 
     static public event PlayMediaEvent PlaySound;
     static public event PlayMediaEvent PlaySpeech;

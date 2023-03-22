@@ -12,6 +12,8 @@ public class SettingsSignal
     public int RemoveSignalAfterxCandles { get; set; } = 15;
     public bool HideTechnicalStuffSignals { get; set; } = false;
 
+    public bool ShowInvalidSignals { get; set; } = false;
+
     public int SoundHeartBeatMinutes { get; set; } = 0;
     public string SoundHeartBeat { get; set; } = "sound-heart-beat.wav";
 
@@ -84,6 +86,7 @@ public class SettingsSignal
     public decimal SbmMa200AndMa50Percentage { get; set; } = 0.3m;
     public decimal SbmMa50AndMa20Percentage { get; set; } = 0.3m;
     public decimal SbmMa200AndMa20Percentage { get; set; } = 0.7m;
+
     public bool SbmMa200AndMa50Crossing { get; set; } = true;
     public int SbmMa200AndMa50Lookback { get; set; } = 20;
     public bool SbmMa50AndMa20Crossing { get; set; } = true;

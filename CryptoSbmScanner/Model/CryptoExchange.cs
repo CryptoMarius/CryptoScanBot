@@ -7,5 +7,5 @@ public class CryptoExchange
     public DateTime ExchangeInfoLastTime { get; set; } = DateTime.MinValue;
 
     //De basecoins geindexeerd op naam 
-    public SortedList<string, CryptoSymbol> SymbolListName { get; } = new SortedList<string, CryptoSymbol>();
+    public SortedList<string, CryptoSymbol> SymbolListName { get; } = new();
 }

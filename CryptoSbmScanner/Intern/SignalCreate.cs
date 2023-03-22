@@ -1,5 +1,6 @@
 ﻿using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Signal;
+using Humanizer;
 
 namespace CryptoSbmScanner.Intern;
 
@@ -139,47 +140,10 @@ public class SignalCreate
 
             // Nu gebaseerd op de SMA's
             CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(interval.IntervalPeriod);
-            CryptoTrendIndicator trendIndicator;
-
-
-
-            //SortedList<long, CryptoCandle> intervalCandles = symbolInterval.CandleList;
-            //if (!intervalCandles.Any())
-            //{
-            //    GlobalData.AddTextToLogTab("No candles available");
-            //    continue;
-            //}
-
-            //string text;
-            //CryptoCandle candle = intervalCandles.Values.Last();
-            //if (candle.CandleData == null)
-            //{
-            //    List<CryptoCandle> history = CandleIndicatorData.CalculateCandles(Symbol, interval, candle.OpenTime, out text);
-            //    if (history == null)
-            //    {
-            //        //GlobalData.AddTextToLogTab("No indicators available " + intervalCandles.Count.ToString());
-            //        continue;
-            //    }
-
-            //    // Eenmalig de indicators klaarzetten
-            //    candle = history[history.Count - 1];
-            //    if (candle.CandleData == null)
-            //        CandleIndicatorData.CalculateIndicators(history);
-            //}
-
-            //if (candle.CandleData.Sma100.Sma.Value > candle.CandleData.Sma200.Sma.Value)
-            //    trendIndicator = CryptoTrendIndicator.trendBullish;
-            //else if (candle.CandleData.Sma100.Sma.Value < candle.CandleData.Sma200.Sma.Value)
-            //    trendIndicator = CryptoTrendIndicator.trendBearish;
-            //else
-            //    trendIndicator = CryptoTrendIndicator.trendSideways;
-
-
-
-
             TrendIndicator trendIndicatorClass = new(Symbol, interval);
-            trendIndicator = trendIndicatorClass.CalculateTrend();
 
+            CryptoTrendIndicator trendIndicator;
+            trendIndicator = trendIndicatorClass.CalculateTrend();
             if (trendIndicator == CryptoTrendIndicator.trendBullish)
                 percentageSum += interval.Duration;
             else if (trendIndicator == CryptoTrendIndicator.trendBearish)
@@ -485,7 +449,6 @@ public class SignalCreate
         //}
 
         SendSignal(signal, eventText);
-
         return true;
     }
 
@@ -520,12 +483,9 @@ public class SignalCreate
         signal.StochSignal = (float)candle.CandleData.Stoch.Signal.Value;
         signal.StochOscillator = (float)candle.CandleData.Stoch.Oscillator.Value;
 #if DEBUG
-        signal.PSarDave = (float)candle.CandleData.PSarDave;
-        signal.PSarJason = (float)candle.CandleData.PSarJason;
-        signal.PSarTulip = (float)candle.CandleData.PSarTulip;
-        //signal.Slope200 = (float)candle.CandleData.Slope200;
-        //signal.Slope50 = (float)candle.CandleData.Slope50;
-        //signal.Slope20 = (float)candle.CandleData.Slope20;
+        //signal.PSarDave = (float)candle.CandleData.PSarDave;
+        //signal.PSarJason = (float)candle.CandleData.PSarJason;
+        //signal.PSarTulip = (float)candle.CandleData.PSarTulip;
 #endif
 
         signal.Sma200 = (float)candle.CandleData.Sma200.Sma.Value;
@@ -553,7 +513,7 @@ public class SignalCreate
         // Oversold (SBM is an advanced version of STOBB)
         bool isSbmSignal = false;
 
-        if (GlobalData.Settings.Signal.AnalysisShowSbmOversold)
+        if (!isSbmSignal && GlobalData.Settings.Signal.AnalysisShowSbmOversold)
         {
             // De officiele SBM methode van Maurice
             SignalBase algorithm = new SignalSbm1Oversold(Symbol, Interval, candle);
@@ -562,7 +522,6 @@ public class SignalCreate
         }
         if (!isSbmSignal && GlobalData.Settings.Signal.AnalysisSbm2Oversold)
         {
-            // De SBM methode - Marco - (min(Candle.Open/Close) > 99.50%
             SignalBase algorithm = new SignalSbm2Oversold(Symbol, Interval, candle);
             if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
                 isSbmSignal = PrepareAndSendSignal(algorithm, candle, backTest);
@@ -574,6 +533,18 @@ public class SignalCreate
             if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
                 isSbmSignal = PrepareAndSendSignal(algorithm, candle, backTest);
         }
+        //if (!isSbmSignal && GlobalData.Settings.Signal.AnalysisSbm4Oversold)
+        //{
+        //    SignalBase algorithm = new SignalSbm4Oversold(Symbol, Interval, candle);
+        //    if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
+        //        isSbmSignal = PrepareAndSendSignal(algorithm, candle, backTest);
+        //}
+        //if (!isSbmSignal && GlobalData.Settings.Signal.AnalysisSbm5Oversold)
+        //{
+        //    SignalBase algorithm = new SignalSbm5Oversold(Symbol, Interval, candle);
+        //    if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
+        //        isSbmSignal = PrepareAndSendSignal(algorithm, candle, backTest);
+        //}
 
         if (!isSbmSignal && GlobalData.Settings.Signal.AnalysisShowStobbOversold)
         {
@@ -621,6 +592,13 @@ public class SignalCreate
             if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
                 PrepareAndSendSignal(algorithm, candle, backTest);
         }
+        //if (!isSbmSignal && GlobalData.Settings.Signal.AnalysisSbm4Overbought)
+        //{
+        //    SignalBase algorithm = new SignalSbm4Overbought(Symbol, Interval, candle);
+        //    if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
+        //        PrepareAndSendSignal(algorithm, candle, backTest);
+        //}
+
         if (!isSbmSignal && GlobalData.Settings.Signal.AnalysisShowStobbOverbought)
         {
             SignalBase algorithm = new SignalStobbOverbought(Symbol, Interval, candle);
@@ -655,11 +633,11 @@ public class SignalCreate
         // Experimentele zaken..
         if (GlobalData.Settings.Signal.AnalysisPriceCrossingMa && GlobalData.ShowExtraStuff)
         {
-            SignalBase algorithm = new SignalPriceCrossedMa20(Symbol, Interval, candle);
+            SignalBase algorithm = new SignalPriceCrossedSma20(Symbol, Interval, candle);
             if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
                 PrepareAndSendSignal(algorithm, candle, backTest);
 
-            algorithm = new SignalPriceCrossedMa50(Symbol, Interval, candle);
+            algorithm = new SignalPriceCrossedSma50(Symbol, Interval, candle);
             if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
                 PrepareAndSendSignal(algorithm, candle, backTest);
         }

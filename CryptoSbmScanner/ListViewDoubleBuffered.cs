@@ -188,11 +188,11 @@ public class ListViewColumnSorter : IComparer
                 17 => ObjectCompare.Compare(signalA.Sma50, signalB.Sma50),
                 18 => ObjectCompare.Compare(signalA.Sma20, signalB.Sma20),
                 19 => ObjectCompare.Compare(signalA.PSar, signalB.PSar),
-#if DEBUG
-                20 => ObjectCompare.Compare(signalA.PSarDave, signalB.PSarDave),
-                21 => ObjectCompare.Compare(signalA.PSarJason, signalB.PSarJason),
-                22 => ObjectCompare.Compare(signalA.PSarTulip, signalB.PSarTulip),
-#endif
+                //#if DEBUG
+                //20 => ObjectCompare.Compare(signalA.PSarDave, signalB.PSarDave),
+                //21 => ObjectCompare.Compare(signalA.PSarJason, signalB.PSarJason),
+                //22 => ObjectCompare.Compare(signalA.PSarTulip, signalB.PSarTulip),
+                //#endif
                 _ => ObjectCompare.Compare(listviewA.SubItems[SortColumn].Text, listviewB.SubItems[SortColumn].Text),// Compare via string
             };
         }

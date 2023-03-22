@@ -13,9 +13,6 @@ public partial class FrmSettings : Form
     {
         InitializeComponent();
 
-        tabExtra.Visible = GlobalData.ShowExtraStuff;
-
-
         toolTip1.SetToolTip(EditAnalysisShowStobbOverbought, "Dit type signaal is een dubbele indicatie dat een munt overbought is en die bestaat uit:" +
             "\n-een candle die opent of sluit boven de bovenste bollingerband\n" +
             "-zowel de %d als %k van de stochastic zijn boven de 80\n" +
@@ -118,6 +115,10 @@ public partial class FrmSettings : Form
     public void InitSettings(SettingsBasic settings)
     {
         this.settings = settings;
+
+        // tabPage.Visible doet niets
+        if (!GlobalData.ShowExtraStuff)
+            tabExtra.Parent = null;
 
         if (GlobalData.Settings.General.FontSize != Font.Size || GlobalData.Settings.General.FontName.Equals(Font.Name))
         {
