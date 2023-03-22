@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+﻿using System.Text.Json;
 
 namespace CryptoSbmScanner.TradingView;
 
@@ -101,79 +100,72 @@ public class TradingViewSymbolInfo
         }
     }
 
-    private int ApplyPreMarket(JObject jObject)
+    private int ApplyPreMarket(JsonDocument jDocument)
     {
-        JToken rtcToken = jObject["rtc"];
-        if (!rtcToken.IsNullOrEmpty())
-            value.Rtc = (double)jObject["rtc"];
+        if (jDocument.RootElement.TryGetProperty("rtc", out JsonElement rtcValue) && rtcValue.TryGetDouble(out double rtc))
+            value.Rtc = rtc;
 
-        JToken rchToken = jObject["rch"];
-        if (!rchToken.IsNullOrEmpty())
-            value.Rch = (double)jObject["rch"];
+        if (jDocument.RootElement.TryGetProperty("rch", out JsonElement rchValue) && rchValue.TryGetDouble(out double rch))
+            value.Rch = rch;
 
-        JToken rchpToken = jObject["rchp"];
-        if (!rchpToken.IsNullOrEmpty())
-            value.Rchp = (double)jObject["rchp"];
+        if (jDocument.RootElement.TryGetProperty("rchp", out JsonElement rchpValue) && rchpValue.TryGetDouble(out double rchp))
+            value.Rchp = rchp;
 
         return 1;
     }
 
-    private int ApplyMarketStatus(JObject jObject)
+    private int ApplyMarketStatus(JsonDocument jDocument)
     {
         // Its not really a short name...
         //if (jObject.ContainsKey("short_description"))
         //    value.Name = jObject["short_description"].ToString();
-
-
-        if (!jObject.ContainsKey("market-status"))
-            return 0;
-        var ms = jObject["market-status"].ToString();
-        var marketStatus = JsonConvert.DeserializeObject<TradingViewMarketStatusObject>(ms);
-        if (marketStatus == null) return 0;
-        value.MarketStatus = marketStatus.Phase;
-        return 1;
+        if(jDocument.RootElement.TryGetProperty("market-status", out JsonElement msValue))
+        {
+            var marketStatus = JsonSerializer.Deserialize<TradingViewMarketStatusObject>(msValue.ToString(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true});
+            if(marketStatus is not null)
+            {
+                value.MarketStatus = marketStatus.Phase;
+                return 1;
+            }
+        }
+        return 0;
     }
 
-    private int ApplyCurrentSession(JObject jObject)
+    private int ApplyCurrentSession(JsonDocument jDocument)
     {
-        if (jObject.ContainsKey("current_session"))
-            value.CurrentSession = jObject["current_session"].ToString();
-        if (jObject.ContainsKey("prev_close_price"))
-            value.PrevClosePrice = (double)jObject["prev_close_price"];
-        if (jObject.ContainsKey("open_price"))
-            value.OpenPrice = (double)jObject["open_price"];
-        if (jObject.ContainsKey("open_time"))
-        {
-            var ms = (int)jObject["open_time"];
-            TimeSpan time = TimeSpan.FromSeconds(ms);
+        if (jDocument.RootElement.TryGetProperty("current_session", out JsonElement csValue))
+            value.CurrentSession = csValue.GetString();
+
+        if (jDocument.RootElement.TryGetProperty("prev_close_price", out JsonElement pcpValue) && pcpValue.TryGetDouble(out double pcp))
+            value.PrevClosePrice = pcp;
+
+        if (jDocument.RootElement.TryGetProperty("open_price", out JsonElement opValue) && opValue.TryGetDouble(out double op))
+            value.OpenPrice = op;
+
+        if (jDocument.RootElement.TryGetProperty("open_time", out JsonElement otValue) && otValue.TryGetInt32(out int ot))
+        {            
+            TimeSpan time = TimeSpan.FromSeconds(ot);
             DateTime startdate = new DateTime(1970, 1, 1) + time;
             value.OpenTime = startdate;
         }
-        if (jObject.ContainsKey("timezone"))
-            value.TimeZone = jObject["timezone"].ToString();
+
+        if (jDocument.RootElement.TryGetProperty("timezone", out JsonElement tzValue))
+            value.TimeZone = tzValue.GetString();
+
         return 1;
     }
 
-    private int ApplyTickerCurrentValues(JObject jObject)
+    private int ApplyTickerCurrentValues(JsonDocument jDocument)
     {
-        if (jObject.ContainsKey("lp"))
-            value.Lp = (decimal)jObject["lp"];
-        if (jObject.ContainsKey("ch"))
-            value.Ch = (double)jObject["ch"];
-        if (jObject.ContainsKey("chp"))
-            value.Chp = (double)jObject["chp"];
-        return 1;
-    }
-}
+        if (jDocument.RootElement.TryGetProperty("lp", out JsonElement lpValue) && lpValue.TryGetDecimal(out decimal lp))
+            value.Lp = lp;
 
-public static class JsonExtensions
-{
-    public static bool IsNullOrEmpty(this JToken token)
-    {
-        return token == null ||
-               token.Type == JTokenType.Array && !token.HasValues ||
-               token.Type == JTokenType.Object && !token.HasValues ||
-               token.Type == JTokenType.String && token.ToString() == string.Empty ||
-               token.Type == JTokenType.Null;
+        if (jDocument.RootElement.TryGetProperty("ch", out JsonElement chValue) && chValue.TryGetDouble(out double ch))
+            value.Ch = ch;
+
+        if (jDocument.RootElement.TryGetProperty("chp", out JsonElement chpValue) && chpValue.TryGetDouble(out double chp))
+            value.Chp = chp;
+
+        return 1;
     }
 }

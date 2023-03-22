@@ -137,9 +137,6 @@
     <PackageReference Include="Microsoft.Web.WebView2">
       <Version>1.0.1587.40</Version>
     </PackageReference>
-    <PackageReference Include="Newtonsoft.Json.Bson">
-      <Version>1.0.2</Version>
-    </PackageReference>
     <PackageReference Include="NLog">
       <Version>5.1.2</Version>
     </PackageReference>
@@ -222,10 +219,6 @@
   </ItemGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Main.Signals.resx" />
-    <None Include="Main.Symbols.resx" />
   </ItemGroup>
   <ItemGroup>
     <Compile Update="Properties\Settings.Designer.cs">

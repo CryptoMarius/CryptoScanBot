@@ -7,7 +7,6 @@ using CryptoSbmScanner.Settings;
 using CryptoSbmScanner.TradingView;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Win32;
-using Newtonsoft.Json.Linq;
 using System.Drawing.Drawing2D;
 using System.Net.Http.Json;
 using System.Reflection;
