@@ -1,25 +1,24 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+﻿using System.Text.Json;
 
 namespace CryptoSbmScanner.TradingView;
 
 public static class TradingViewJsonParser
 {
-    public static JObject TryParse(string message)
+    public static JsonDocument TryParse(string message)
     {
         try
         {
             if (!message.StartsWith("{\"m"))
                 return null;
 
-            var root = JsonConvert.DeserializeObject<TradingViewJsonRootObject>(message);
+            var root = JsonSerializer.Deserialize<TradingViewJsonRootObject>(message, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             var p = root.P[1].ToString();
             if (root.M != "qsd")
                 return null;
 
-            var branch = JsonConvert.DeserializeObject<TradingViewJsonPayloadObject>(p);
+            var branch = JsonSerializer.Deserialize<TradingViewJsonPayloadObject>(p, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
-            return JObject.Parse(branch.V.ToString());
+            return JsonDocument.Parse(branch.V.ToString());
         }
         catch (Exception)
         {

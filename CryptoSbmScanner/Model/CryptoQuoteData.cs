@@ -1,7 +1,7 @@
 ﻿using CryptoSbmScanner.Binance;
 using CryptoSbmScanner.Intern;
-using Newtonsoft.Json;
 using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
 
 namespace CryptoSbmScanner.Model;
 

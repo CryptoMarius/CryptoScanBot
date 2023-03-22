@@ -2,10 +2,9 @@
 using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Settings;
 using CryptoSbmScanner.TradingView;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace CryptoSbmScanner.Intern;
-
 
 public enum ApplicationStatus
 {
@@ -264,7 +263,7 @@ static public class GlobalData
             //}
 
             string text = File.ReadAllText(filename);
-            Settings = JsonConvert.DeserializeObject<SettingsBasic>(text);
+            Settings = JsonSerializer.Deserialize<SettingsBasic>(text, new JsonSerializerOptions { });
         }
         else
             DefaultSettings();
@@ -336,7 +335,7 @@ static public class GlobalData
         //    writeStream.Close();
         //}
 
-        string text = JsonConvert.SerializeObject(Settings, Formatting.Indented);
+        string text = JsonSerializer.Serialize(Settings, new JsonSerializerOptions { WriteIndented = true });
         //var accountFile = new FileInfo(filename);
         File.WriteAllText(filename, text);
 
