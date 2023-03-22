@@ -61,6 +61,7 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
         GlobalData.SetCandleTimerEnableEvent += new SetCandleTimerEnable(SetCandleTimerEnableHandler);
 
         // Niet echt een text event, meer misbruik van dit event type (en luiigheid)
+        //GlobalData.AssetsHaveChangedEvent += new AddTextEvent(AssetsHaveChangedEvent);
         GlobalData.SymbolsHaveChangedEvent += new AddTextEvent(SymbolsHaveChangedEvent);
         GlobalData.ConnectionWasLostEvent += new AddTextEvent(ConnectionWasLostEvent);
         GlobalData.ConnectionWasRestoredEvent += new AddTextEvent(ConnectionWasRestoredEvent);
@@ -156,6 +157,7 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
             comboBoxBarometerInterval.EndUpdate();
             comboBoxBarometerQuote.EndUpdate();
         }
+
 
         if ((GlobalData.Settings.General.FontSize != this.Font.Size) || (GlobalData.Settings.General.FontName.Equals(this.Font.Name)))
         {
@@ -260,8 +262,6 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
         GlobalData.Settings.General.SelectedBarometerInterval = comboBoxBarometerInterval.Text;
         GlobalData.SaveSettings();
 
-        // Hier moet alles bewaard worden (zie threadLoadData)
-        DataStore dataStore = new();
         DataStore.SaveCandles();
     }
 
@@ -335,7 +335,6 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
 
     private void ToolStripMenuItemRefresh_Click_1(object sender, EventArgs e)
     {
-        BinanceFetchCandles binanceFetchCandles = new();
         Task.Run(async () => { await BinanceFetchCandles.ExecuteAsync(); }); // niet wachten tot deze klaar is
     }
 
@@ -586,7 +585,7 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
     private readonly List<SymbolHist> symbolHistList = new(3);
 
 
-    private void ShowSymbolPrice(SymbolHist hist, ListViewItem item, Model.CryptoExchange exchange, CryptoQuoteData quoteData, string baseCoin, SymbolValue tvValues)
+    private void ShowSymbolPrice(SymbolHist hist, ListViewItem item, Model.CryptoExchange exchange, CryptoQuoteData quoteData, string baseCoin, TradingView.SymbolValue tvValues)
     {
         // Not a really charming way to display items, but voila, it works for now..
 
@@ -1161,14 +1160,14 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
     private long LastSignalSoundCandleJumpDown = 0;
 
 
+    //testen!
+    private readonly Queue<string> logQueue = new();
     private readonly Queue<CryptoSignal> signalQueue = new();
 
 
     private void TimerAddSignal_Tick(object sender, EventArgs e)
     {
-        // Verwerk de signalen tot dusver..
-        // AddRange speedup!
-
+        // Speed up adding signals
         if (signalQueue.Count > 0)
         {
             Monitor.Enter(signalQueue);
@@ -1183,7 +1182,6 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
                 }
 
                 // verwerken..
-                //listViewSignalsAddSignalRange(signals);
                 Task.Factory.StartNew(() =>
                 {
                     Invoke(new Action(() =>
@@ -1209,15 +1207,23 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
         Invoke(new Action(() => { this.Text = signal.Symbol.Name + " " + createdSignalCount.ToString(); }));
 
 
-        Monitor.Enter(signalQueue);
+        //Monitor.Enter(signalQueue);
         try
         {
             signalQueue.Enqueue(signal);
         }
         finally
         {
-            Monitor.Exit(signalQueue);
+            //Monitor.Exit(signalQueue);
         }
+        //Task.Factory.StartNew(() =>
+        //{
+        //    Invoke(new Action(() =>
+        //    {
+        //        listViewSignalsAddSignal(signal);
+        //    }));
+        //});
+
 
 
         // Play a sound
@@ -1421,7 +1427,8 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
         form.ShowDialog();
     }
 
-    private void TimerSoundHeartBeat_Tick(object sender, EventArgs e) => GlobalData.PlaySomeMusic("sound-heartbeat.wav");
+    private void TimerSoundHeartBeat_Tick(object sender, EventArgs e)
+	  => GlobalData.PlaySomeMusic("sound-heartbeat.wav");
 
 
     private static void ShowTrendInformation(CryptoSymbol symbol)
@@ -1489,25 +1496,23 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
     {
         if (GlobalData.ApplicationStatus == ApplicationStatus.AppStatusRunning)
         {
-            if (GlobalData.ApplicationStatus == ApplicationStatus.AppStatusRunning)
+            // De reguliere verversing herstellen (igv een connection timeout)
+            if ((components != null) && (!ProgramExit) && (IsHandleCreated))
             {
-                // De reguliere verversing herstellen (igv een connection timeout)
-                if ((components != null) && (!ProgramExit) && (IsHandleCreated))
-                {
-                    // Plan een volgende verversing omdat er bv een connection timeout was.
-                    // Dit kan een aantal berekeningen onderbroken hebben
-                    Invoke((MethodInvoker)(() => timerCandles.Enabled = false));
-                    Invoke((MethodInvoker)(() => timerCandles.Interval = GlobalData.Settings.General.GetCandleInterval * 60 * 1000));
-                    Invoke((MethodInvoker)(() => timerCandles.Enabled = timerCandles.Interval > 0));
-                }
-
-                BinanceFetchCandles binanceFetchCandles = new();
-                Task.Run(async () => { await BinanceFetchCandles.ExecuteAsync(); }); // niet wachten tot deze klaar is
-            }
-            else
+                // Plan een volgende verversing omdat er bv een connection timeout was.
+                // Dit kan een aantal berekeningen onderbroken hebben
                 Invoke((MethodInvoker)(() => timerCandles.Enabled = false));
+                Invoke((MethodInvoker)(() => timerCandles.Interval = GlobalData.Settings.General.GetCandleInterval * 60 * 1000));
+                Invoke((MethodInvoker)(() => timerCandles.Enabled = timerCandles.Interval > 0));
+            }
+
+            Task.Run(async () => { await BinanceFetchCandles.ExecuteAsync(); }); // niet wachten tot deze klaar is
         }
+        else
+            Invoke((MethodInvoker)(() => timerCandles.Enabled = false));
     }
+
+
 
     public void WindowLocationSave()
     {
@@ -1551,7 +1556,8 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
         }
     }
 
-    private static bool IsVisibleOnAnyScreen(Rectangle rect) => Screen.AllScreens.Any(screen => screen.WorkingArea.IntersectsWith(rect));
+    private static bool IsVisibleOnAnyScreen(Rectangle rect)
+	  => Screen.AllScreens.Any(screen => screen.WorkingArea.IntersectsWith(rect));
 
     private void ApplicationCreateSignals_Click(object sender, EventArgs e)
     {

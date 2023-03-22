@@ -14,17 +14,17 @@ static public class Constants
 public class SettingsBasic
 {
     //Welke basis munten willen we gebruiken
-    public SortedList<string, CryptoQuoteData> QuoteCoins { get; } = new SortedList<string, CryptoQuoteData>();
+    public SortedList<string, CryptoQuoteData> QuoteCoins { get; } = new();
 
     /// <summary>
     ///  Standaard instellingen
     /// </summary>
-    public SettingsGeneral General { get; set; } = new SettingsGeneral();
+    public SettingsGeneral General { get; set; } = new();
 
     /// <summary>
     ///  Signal gerelateerde instellingen
     /// </summary>
-    public SettingsSignal Signal { get; set; } = new SettingsSignal();
+    public SettingsSignal Signal { get; set; } = new();
 
 
     // Als dit aan staat moet de symbol staat in de whitelist dan wordt het toegestaan

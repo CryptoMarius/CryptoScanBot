@@ -18,8 +18,8 @@ public enum SignalStrategy
     strategySbm3Oversold, // 9
 
     // Experimental (need to go)
-    strategyPriceCrossedMa20,
-    strategyPriceCrossedMa50
+    strategyPriceCrossedSma20,
+    strategyPriceCrossedSma50
 }
 
 
@@ -77,8 +77,8 @@ public class CryptoSignal
                 SignalStrategy.strategySbm2Oversold => "sbm2-",
                 SignalStrategy.strategySbm3Overbought => "sbm3+",
                 SignalStrategy.strategySbm3Oversold => "sbm3-",
-                SignalStrategy.strategyPriceCrossedMa20 => "close>ma20",
-                SignalStrategy.strategyPriceCrossedMa50 => "close>ma50",
+                SignalStrategy.strategyPriceCrossedSma20 => "close>sma20",
+                SignalStrategy.strategyPriceCrossedSma50 => "close>sma50",
                 _ => "?",
             };
             return text;

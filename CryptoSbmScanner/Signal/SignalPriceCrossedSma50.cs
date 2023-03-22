@@ -3,12 +3,12 @@ using CryptoSbmScanner.Model;
 
 namespace CryptoSbmScanner.Signal;
 
-public class SignalPriceCrossedMa50 : SignalBase
+public class SignalPriceCrossedSma50 : SignalBase
 {
-    public SignalPriceCrossedMa50(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
+    public SignalPriceCrossedSma50(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
         SignalMode = SignalMode.modeLong;
-        SignalStrategy = SignalStrategy.strategyPriceCrossedMa50;
+        SignalStrategy = SignalStrategy.strategyPriceCrossedSma50;
     }
 
     public override bool IsSignal()
