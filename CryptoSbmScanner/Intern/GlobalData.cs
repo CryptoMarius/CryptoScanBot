@@ -6,6 +6,7 @@ using System.Text.Json;
 
 namespace CryptoSbmScanner.Intern;
 
+
 public enum ApplicationStatus
 {
     AppStatusPrepare,
@@ -46,21 +47,21 @@ static public class GlobalData
 {
     static public bool ShowExtraStuff { get; set; } = false;
 
-    static public SettingsBasic Settings { get; set; } = new SettingsBasic();
+    static public SettingsBasic Settings { get; set; } = new();
     static public ApplicationStatus ApplicationStatus { get; set; } = ApplicationStatus.AppStatusPrepare;
-    public static NLog.Logger Logger { get; } = NLog.LogManager.GetCurrentClassLogger();
-    public static List<CryptoInterval> IntervalList { get; } = new();
+	static public NLog.Logger Logger { get; } = NLog.LogManager.GetCurrentClassLogger();
+    static public List<CryptoInterval> IntervalList { get; } = new();
     //static public SortedList<long, CryptoInterval> IntervalListId { get; } = new SortedList<long, CryptoInterval>();
-    static public SortedList<CryptoIntervalPeriod, CryptoInterval> IntervalListPeriod { get; } = new SortedList<CryptoIntervalPeriod, CryptoInterval>();
+    static public SortedList<CryptoIntervalPeriod, CryptoInterval> IntervalListPeriod { get; } = new();
 
-    static public SortedList<string, bool> SymbolBlackListOversold { get; } = new SortedList<string, bool>();
-    static public SortedList<string, bool> SymbolWhiteListOversold { get; } = new SortedList<string, bool>();
+    static public SortedList<string, bool> SymbolBlackListOversold { get; } = new();
+    static public SortedList<string, bool> SymbolWhiteListOversold { get; } = new();
 
-    static public SortedList<string, bool> SymbolBlackListOverbought { get; } = new SortedList<string, bool>();
-    static public SortedList<string, bool> SymbolWhiteListOverbought { get; } = new SortedList<string, bool>();
+    static public SortedList<string, bool> SymbolBlackListOverbought { get; } = new();
+    static public SortedList<string, bool> SymbolWhiteListOverbought { get; } = new();
 
     /// Exchanges indexed on name
-    static public SortedList<string, Model.CryptoExchange> ExchangeListName { get; } = new SortedList<string, Model.CryptoExchange>();
+    static public SortedList<string, Model.CryptoExchange> ExchangeListName { get; } = new();
     static public Dictionary<string, long> AnalyseNotification { get; } = new();
 
     static public event PlayMediaEvent PlaySound;
@@ -69,7 +70,7 @@ static public class GlobalData
     static public event AddTextEvent LogToLogTabEvent;
 
     // Events for refresing data
-    //static public event AddTextEvent AssetsHaveChangedEvent;
+    static public event AddTextEvent AssetsHaveChangedEvent;
     static public event AddTextEvent SymbolsHaveChangedEvent;
     static public event AddTextEvent ConnectionWasLostEvent;
     static public event AddTextEvent ConnectionWasRestoredEvent;
@@ -89,10 +90,10 @@ static public class GlobalData
 
 
     // On special request of a hardcore trader..
-    static public SymbolValue TradingViewDollarIndex { get; set; } = new SymbolValue();
-    static public SymbolValue TradingViewSpx500 { get; set; } = new SymbolValue();
-    static public SymbolValue TradingViewBitcoinDominance { get; set; } = new SymbolValue();
-    static public SymbolValue TradingViewMarketCapTotal { get; set; } = new SymbolValue();
+    static public SymbolValue TradingViewDollarIndex { get; set; } = new();
+    static public SymbolValue TradingViewSpx500 { get; set; } = new();
+    static public SymbolValue TradingViewBitcoinDominance { get; set; } = new();
+    static public SymbolValue TradingViewMarketCapTotal { get; set; } = new();
 
 
     static public void InitializeIntervalList()
@@ -188,12 +189,11 @@ static public class GlobalData
                 {
                     if (!exchange.SymbolListName.ContainsKey(Constants.SymbolNameBarometerPrice + quoteData.Name))
                     {
-                        CryptoSymbol cryptoSymbol = new()
+                        CryptoSymbol symbol = new()
                         {
                             Base = Constants.SymbolNameBarometerPrice, //De "munt"
                             Quote = quoteData.Name //USDT, BTC etc.
                         };
-                        CryptoSymbol symbol = cryptoSymbol;
                         symbol.Name = symbol.Base + symbol.Quote;
                         symbol.Volume = 0;
                         symbol.Status = 1;
@@ -353,8 +353,7 @@ static public class GlobalData
         catch (Exception error)
         {
             Logger.Error(error);
-            // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
-            AddTextToLogTab(" error play music (1) " + error.ToString(), false);
+            AddTextToLogTab("Error playing music " + error.ToString(), false);
         }
     }
 
@@ -367,7 +366,7 @@ static public class GlobalData
         catch (Exception error)
         {
             Logger.Error(error);
-            AddTextToLogTab(" error play speech (1) " + error.ToString(), false);
+            AddTextToLogTab("Error playing speech " + error.ToString(), false);
         }
     }
 
@@ -391,6 +390,11 @@ static public class GlobalData
         LogToLogTabEvent(text, extraLineFeed);
     }
 
+
+    static public void AssetsHaveChanged(string text)
+    {
+        AssetsHaveChangedEvent(text);
+    }
 
     static public void SymbolsHaveChanged(string text)
     {
