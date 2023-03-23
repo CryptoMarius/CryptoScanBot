@@ -263,7 +263,9 @@ static public class GlobalData
             //}
 
             string text = File.ReadAllText(filename);
-            Settings = JsonSerializer.Deserialize<SettingsBasic>(text, new JsonSerializerOptions { });
+            var options = new JsonSerializerOptions();
+            options.Converters.Add(new RectangleConverter());
+            Settings = JsonSerializer.Deserialize<SettingsBasic>(text, options);
         }
         else
             DefaultSettings();
