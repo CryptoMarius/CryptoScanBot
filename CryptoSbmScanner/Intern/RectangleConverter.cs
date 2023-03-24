@@ -21,9 +21,12 @@ public class RectangleConverter : JsonConverter<Rectangle>
             {
                 if (char.IsDigit(value))
                 {
-                    values[i] = value - '0';
-                    i++;
+                    values[i] *= 10;
+                    values[i] += value - '0';
                 }
+                else 
+                if (value == ',')
+                    i++;
             }
             ArrayPool<char>.Shared.Return(buffer);
             return new Rectangle(values[0], values[1], values[2], values[3]);
