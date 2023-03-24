@@ -35,10 +35,6 @@ public class SettingsSignal
     public bool LogAnalysisMinMaxChangePercentage { get; set; } = true;
 
 
-    // Intervals
-    public bool[] AnalyseInterval { get; set; } = new bool[Enum.GetNames(typeof(CryptoIntervalPeriod)).Length];
-
-
     // STOBB signals
     // Het BB percentage kan via de user interface uit worden gezet (nomargin)
     public decimal StobbBBMinPercentage { get; set; } = 1.50m;
@@ -132,6 +128,10 @@ public class SettingsSignal
     public bool LogCandlesWithFlatPrice { get; set; } = false;
 
 
+    // Welke intervallen willen we analyseren?
+    public bool[] AnalyseInterval { get; set; } = new bool[Enum.GetNames(typeof(CryptoIntervalPeriod)).Length];
+    // Welke strategieën willen we analyseren?
+    public bool[] AnalyseStrategy { get; set; } = new bool[Enum.GetNames(typeof(SignalStrategy)).Length];
 
     // For me..
     public bool AnalysisPriceCrossingMa { get; set; } = false;
