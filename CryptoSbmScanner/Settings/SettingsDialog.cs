@@ -22,18 +22,18 @@ public partial class FrmSettings : Form
             "-zowel de % d als % k van de stochastic zijn onder de 20\n" +
             "(dit kan een instapmoment zijn voor een long positie).");
 
-            toolTip1.SetToolTip(EditAnalysisShowSbmOverbought, "Dit is een variatie op de stobb overbought signaal en bestaat uit:\n" +
-                "-een stobb overbought signaal\n" +
-                "-de ma200 onder de ma50 is\n" +
-                "-de ma50 onder de ma20 is\n" +
-                "-de psar op of boven de ma20\n" +
-                "(dit kan een instapmoment zijn voor een short positie)");
-            toolTip1.SetToolTip(EditAnalysisShowSbmOversold, "Dit is een variatie op de stobb oversold signaal en bestaat uit:\n" +
-                "-een stobb oversold signaal\n" +
-                "-de ma200 boven de ma50 is\n" +
-                "-de ma50 boven de ma20 is\n" +
-                "-de psar op of onder de ma20\n" +
-                "(dit kan een instapmoment zijn voor een long positie)");
+        toolTip1.SetToolTip(EditAnalysisShowSbmOverbought, "Dit is een variatie op de stobb overbought signaal en bestaat uit:\n" +
+            "-een stobb overbought signaal\n" +
+            "-de ma200 onder de ma50 is\n" +
+            "-de ma50 onder de ma20 is\n" +
+            "-de psar op of boven de ma20\n" +
+            "(dit kan een instapmoment zijn voor een short positie)");
+        toolTip1.SetToolTip(EditAnalysisShowSbmOversold, "Dit is een variatie op de stobb oversold signaal en bestaat uit:\n" +
+            "-een stobb oversold signaal\n" +
+            "-de ma200 boven de ma50 is\n" +
+            "-de ma50 boven de ma20 is\n" +
+            "-de psar op of onder de ma20\n" +
+            "(dit kan een instapmoment zijn voor een long positie)");
 
         toolTip1.SetToolTip(EditAnalysisShowCandleJumpUp, "Een signaal dat een munt een bepaald percentage naar boven \"spingt\" (info)");
         toolTip1.SetToolTip(EditAnalysisShowCandleJumpDown, "Een signaal dat een munt een bepaald percentage naar beneden \"spingt\"(info)");
@@ -116,7 +116,8 @@ public partial class FrmSettings : Form
     {
         this.settings = settings;
 
-        // tabPage.Visible doet niets
+        // Oppassen: De tabPage.Visible=x doet niets
+        // (dat was weer een onaangename verrassing)
         if (!GlobalData.ShowExtraStuff)
             tabExtra.Parent = null;
 
@@ -125,6 +126,18 @@ public partial class FrmSettings : Form
             Font = new Font(GlobalData.Settings.General.FontName, GlobalData.Settings.General.FontSize,
                 FontStyle.Regular, GraphicsUnit.Point, 0);
         }
+
+
+        // Deze worden na de overgang naar .net 7 regelmatig gereset naar 0
+        // Benieuwd waarom dit gebeurd (het zijn er gelukkig niet zo veel)
+        EditGlobalBuyVarying.Minimum = -0.5m;
+        EditBarometer1hMinimal.Minimum = -100;
+        EditBarometer15mBotMinimal.Minimum = -100;
+        EditBarometer30mBotMinimal.Minimum = -100;
+        EditBarometer01hBotMinimal.Minimum = -100;
+        EditBarometer04hBotMinimal.Minimum = -100;
+        EditBarometer24hBotMinimal.Minimum = -100;
+        EditAnalysisMinChangePercentage.Minimum = -100;
 
         //EditGetCandleInterval.Value = settings.General.GetCandleInterval;
         // ------------------------------------------------------------------------------
