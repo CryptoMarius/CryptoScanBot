@@ -1,4 +1,6 @@
-﻿namespace CryptoSbmScanner.Settings;
+﻿using System.Text.Json.Serialization;
+
+namespace CryptoSbmScanner.Settings;
 
 public enum TradingApp
 {
@@ -38,6 +40,7 @@ public class SettingsGeneral
 
     public int GetCandleInterval { get; set; } = 60;
 
+    [JsonConverter(typeof(Intern.RectangleConverter))]
     public Rectangle WindowPosition { get; set; } = new Rectangle();
     public FormWindowState WindowState { get; set; } = FormWindowState.Normal;
 

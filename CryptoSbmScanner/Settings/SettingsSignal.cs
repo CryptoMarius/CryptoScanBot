@@ -1,4 +1,5 @@
 ﻿using CryptoSbmScanner.Model;
+using System.Text.Json.Serialization;
 
 namespace CryptoSbmScanner.Settings;
 
@@ -40,6 +41,8 @@ public class SettingsSignal
     public decimal StobbBBMinPercentage { get; set; } = 1.50m;
     public decimal StobbBBMaxPercentage { get; set; } = 5.0m;
     public bool StobbUseLowHigh { get; set; } = false;
+
+    [JsonConverter(typeof(Intern.ColorConverter))]
     public Color ColorStobb { get; set; } = Color.White;
     public bool PlaySoundStobbSignal { get; set; } = false;
     public bool PlaySpeechStobbSignal { get; set; } = false;
@@ -55,6 +58,8 @@ public class SettingsSignal
     public decimal SbmBBMinPercentage { get; set; } = 1.50m;
     public decimal SbmBBMaxPercentage { get; set; } = 100.0m;
     public bool SbmUseLowHigh { get; set; } = false;
+
+    [JsonConverter(typeof(Intern.ColorConverter))]
     public Color ColorSbm { get; set; } = Color.White;
     public bool PlaySoundSbmSignal { get; set; } = true;
     public bool PlaySpeechSbmSignal { get; set; } = true;
@@ -92,6 +97,7 @@ public class SettingsSignal
 
 
     // JUMP
+    [JsonConverter(typeof(Intern.ColorConverter))]
     public Color ColorJump { get; set; } = Color.White;
     public bool PlaySoundCandleJumpSignal { get; set; } = false;
     public bool PlaySpeechCandleJumpSignal { get; set; } = false;

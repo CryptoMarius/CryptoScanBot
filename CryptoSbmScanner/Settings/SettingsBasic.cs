@@ -14,7 +14,7 @@ static public class Constants
 public class SettingsBasic
 {
     //Welke basis munten willen we gebruiken
-    public SortedList<string, CryptoQuoteData> QuoteCoins { get; } = new();
+    public SortedList<string, CryptoQuoteData> QuoteCoins { get; set; } = new();
 
     /// <summary>
     ///  Standaard instellingen

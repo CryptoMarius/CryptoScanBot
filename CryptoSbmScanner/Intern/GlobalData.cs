@@ -262,10 +262,8 @@ static public class GlobalData
             //    readStream.Close();
             //}
 
-            string text = File.ReadAllText(filename);
-            var options = new JsonSerializerOptions();
-            options.Converters.Add(new RectangleConverter());
-            Settings = JsonSerializer.Deserialize<SettingsBasic>(text, options);
+            string text = File.ReadAllText(filename);            
+            Settings = JsonSerializer.Deserialize<SettingsBasic>(text);
         }
         else
             DefaultSettings();

@@ -14,6 +14,8 @@ public class CryptoQuoteData
     public bool CreateSignals { get; set; }
     public decimal MinimalVolume { get; set; }
     public decimal MinimalPrice { get; set; }
+
+    [JsonConverter(typeof(Intern.ColorConverter))]
     public Color DisplayColor { get; set; } = Color.White;
 
     [JsonIgnore]
