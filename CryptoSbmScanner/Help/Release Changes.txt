@@ -31,6 +31,7 @@ Bevindingen/Todo's:
 
 
 xx-xx-2023 1.8.0
+- Naar aanleding van de Binance storing op 24 maart, ontbrekende candles in het verleden automatisch invullen (na een herkansing)
 - Upgrade naar .net 7 (met dank aan Harmen Kooiker)
 - Sorteer indicatie op de kolom waarop gesorteerd wordt
 - Bij het afsluiten kan de applicatie alsnog candles gaan ophalen doordat de timer nog loopt en de applicatie status niet gecontroleerd wordt

@@ -88,6 +88,8 @@ public class BinanceFetchCandles
         Monitor.Enter(symbol.CandleList);
         try
         {
+            CryptoCandle stickOld = null;
+
             // Combine the candles, caulutaing the ones from other interval's
             foreach (BinanceSpotKline kline in result.Data.Cast<BinanceSpotKline>())
             {
@@ -97,6 +99,39 @@ public class BinanceFetchCandles
 
                 // For the next GetCandles() session
                 symbolInterval.LastCandleSynchronized = candle.OpenTime;
+
+                // onthoud de 1e candle
+                if (stickOld == null)
+                    stickOld = candle;
+            }
+
+            // We hebben de candles opgevraagd van x tot y, dat betekend dat we alle candles hebben,
+            // eventueel ontbrekende candles in deze reeks mogen we opvullen met een "zero" candle
+
+
+            if (stickOld != null && interval.IntervalPeriod == CryptoIntervalPeriod.interval1m)
+            {
+                long unixTime = stickOld.OpenTime;
+                while (unixTime < (long)symbolInterval.LastCandleSynchronized)
+                {
+                    if (!symbolInterval.CandleList.TryGetValue(unixTime, out CryptoCandle candle))
+                    {
+                        candle = new()
+                        {
+                            Symbol = symbol,
+                            Interval = interval,
+                            OpenTime = unixTime,
+                            Open = stickOld.Close,
+                            High = stickOld.Close,
+                            Low = stickOld.Close,
+                            Close = stickOld.Close,
+                            Volume = 0
+                        };
+                        symbolInterval.CandleList.Add(candle.OpenTime, candle);
+                    }
+                    stickOld = candle;
+                    unixTime += interval.Duration;
+                }
             }
         }
         finally
