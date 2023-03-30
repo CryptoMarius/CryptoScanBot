@@ -162,7 +162,7 @@
       <Version>15.0.4795.1001</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.Web.WebView2">
-      <Version>1.0.1587.40</Version>
+      <Version>1.0.1661.34</Version>
     </PackageReference>
     <PackageReference Include="NLog">
       <Version>5.1.2</Version>
@@ -243,6 +243,10 @@
   </ItemGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Main.Signals.resx" />
+    <None Include="Main.Symbols.resx" />
   </ItemGroup>
   <ItemGroup>
     <Compile Update="Properties\Settings.Designer.cs">
