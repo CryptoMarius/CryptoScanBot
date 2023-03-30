@@ -46,11 +46,13 @@ public class BinanceStream1mCandles
                 Monitor.Enter(symbol.CandleList);
                 try
                 {
-                    // Verwerk de 1m candle in onze data
+                    // Process the single 1m candle
                     candle = CandleTools.HandleFinalCandleData(symbol, GlobalData.IntervalList[0], temp.Data.OpenTime,
                         temp.Data.OpenPrice, temp.Data.HighPrice, temp.Data.LowPrice, temp.Data.ClosePrice, temp.Data.QuoteVolume);
+                    if (!symbol.LastPrice.HasValue)
+						symbol.LastPrice = temp.Data.ClosePrice;
 
-                    // Herbereken de candles in andere intervallen
+                    // Calculate the higher timeframes
                     foreach (CryptoInterval interval in GlobalData.IntervalList)
                     {
                         if (interval.ConstructFrom != null)
