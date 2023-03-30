@@ -49,9 +49,12 @@ static public class GlobalData
 
     static public SettingsBasic Settings { get; set; } = new();
     static public ApplicationStatus ApplicationStatus { get; set; } = ApplicationStatus.AppStatusPrepare;
-	static public NLog.Logger Logger { get; } = NLog.LogManager.GetCurrentClassLogger();
+
+    // The nlogger stuff
+    static public NLog.Logger Logger { get; } = NLog.LogManager.GetCurrentClassLogger();
+
     static public List<CryptoInterval> IntervalList { get; } = new();
-    //static public SortedList<long, CryptoInterval> IntervalListId { get; } = new SortedList<long, CryptoInterval>();
+    //static public SortedList<long, CryptoInterval> IntervalListId { get; } = new();
     static public SortedList<CryptoIntervalPeriod, CryptoInterval> IntervalListPeriod { get; } = new();
 
     static public SortedList<string, bool> SymbolBlackListOversold { get; } = new();
@@ -62,6 +65,8 @@ static public class GlobalData
 
     /// Exchanges indexed on name
     static public SortedList<string, Model.CryptoExchange> ExchangeListName { get; } = new();
+
+    // To avoid duplicate signals
     static public Dictionary<string, long> AnalyseNotification { get; } = new();
 
     static public event PlayMediaEvent PlaySound;
@@ -279,7 +284,6 @@ static public class GlobalData
 
             Settings.Signal.AnalyseInterval = intervals;
         }
-
 
         InitWhiteAndBlackListSettings();
     }
