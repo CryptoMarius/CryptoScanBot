@@ -38,7 +38,7 @@ public class BinanceFetchCandles
             //case IntervalPeriod.interval1w:
             //    binanceInterval = KlineInterval.OneWeek;
             //    break;
-            _ => KlineInterval.OneMonth,// Ten teken dat het ondersteund wordt
+            _ => KlineInterval.OneMonth,// Ten teken dat het niet ondersteund wordt
         };
         return binanceInterval;
     }
@@ -88,8 +88,6 @@ public class BinanceFetchCandles
         Monitor.Enter(symbol.CandleList);
         try
         {
-            CryptoCandle stickOld = null;
-
             // Combine the candles, caulutaing the ones from other interval's
             foreach (BinanceSpotKline kline in result.Data.Cast<BinanceSpotKline>())
             {
@@ -99,40 +97,8 @@ public class BinanceFetchCandles
 
                 // For the next GetCandles() session
                 symbolInterval.LastCandleSynchronized = candle.OpenTime;
-
-                // onthoud de 1e candle
-                if (stickOld == null)
-                    stickOld = candle;
             }
 
-            // We hebben de candles opgevraagd van x tot y, dat betekend dat we alle candles hebben,
-            // eventueel ontbrekende candles in deze reeks mogen we opvullen met een "zero" candle
-
-
-            if (stickOld != null && interval.IntervalPeriod == CryptoIntervalPeriod.interval1m)
-            {
-                long unixTime = stickOld.OpenTime;
-                while (unixTime < (long)symbolInterval.LastCandleSynchronized)
-                {
-                    if (!symbolInterval.CandleList.TryGetValue(unixTime, out CryptoCandle candle))
-                    {
-                        candle = new()
-                        {
-                            Symbol = symbol,
-                            Interval = interval,
-                            OpenTime = unixTime,
-                            Open = stickOld.Close,
-                            High = stickOld.Close,
-                            Low = stickOld.Close,
-                            Close = stickOld.Close,
-                            Volume = 0
-                        };
-                        symbolInterval.CandleList.Add(candle.OpenTime, candle);
-                    }
-                    stickOld = candle;
-                    unixTime += interval.Duration;
-                }
-            }
         }
         finally
         {
@@ -157,8 +123,8 @@ public class BinanceFetchCandles
             fetchFrom[(int)interval.IntervalPeriod] = utcNow;
 
         // Determine the (maximum) startdate (without knowing what we already have)
-        // If Binance does not have this interval than make the lower timeframe a bit bigger
-        // so we can calculate the candles
+        // If Binance does not have this interval than make the lower timeframe
+        // a bit bigger so we can calculate the candles ourselves
         foreach (CryptoInterval interval in GlobalData.IntervalList)
         {
             long startFetchUnix = CandleIndicatorData.GetCandleFetchStart(symbol, interval, utcNow);
@@ -186,81 +152,105 @@ public class BinanceFetchCandles
         // Correct the start date with what we already have
         foreach (CryptoInterval interval in GlobalData.IntervalList)
         {
-            CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-
             DateTime startFetchUnixDate = fetchFrom[(int)interval.IntervalPeriod];
-            long startFetchUnix = CandleTools.GetUnixTime(startFetchUnixDate, 60);  //debug
+            long startFetchUnix = CandleTools.GetUnixTime(startFetchUnixDate, 60);
 
+            CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
             if (symbolInterval.LastCandleSynchronized == null || startFetchUnix > symbolInterval.LastCandleSynchronized)
                 symbolInterval.LastCandleSynchronized = startFetchUnix;
-
-            //DateTime LastCandleSynchronizedDate = CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized);  //debug
         }
 
 
-        foreach (CryptoInterval interval in GlobalData.IntervalList)
+        for (int i = 0; i < GlobalData.IntervalList.Count; i++)
         {
+            CryptoInterval interval = GlobalData.IntervalList[i];
             CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
 
+            // Fetch the Binance candles
             while (symbolInterval.LastCandleSynchronized < fetchEndUnix)
             {
                 long lastDate = (long)symbolInterval.LastCandleSynchronized;
-                DateTime symbolfetchCandleDebug = CandleTools.GetUnixDate(lastDate);  //debug
 
-                DateTime debug = CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized);  //debug
                 if (symbolInterval.LastCandleSynchronized + interval.Duration > fetchEndUnix)
                     break;
 
-                long candleCount = await GetCandlesForInterval(client, symbol, interval, symbolInterval);
                 // Nothing more? (we have coins stopping, beaware for endless loops)
+                long candleCount = await GetCandlesForInterval(client, symbol, interval, symbolInterval);
                 if (symbolInterval.LastCandleSynchronized == lastDate || candleCount == 0)
                     break;
             }
 
-
-            // Try to calculate new candles from what we have collected
             Monitor.Enter(symbol.CandleList);
             try
             {
-                foreach (CryptoInterval intervalCalc in GlobalData.IntervalList)
+                // Fill missing candles (the only place we know fore it can be done)
+                // We hebben de candles opgevraagd van x tot y, dat betekend dat we alle candles hebben,
+                // eventueel ontbrekende candles in deze reeks mogen we opvullen met een "zero" candle
+                if (symbolInterval.CandleList.Any())
                 {
-                    if (intervalCalc.ConstructFrom != null) // de 1m overslagen
+                    CryptoCandle stickOld = symbolInterval.CandleList.Values.First();
+                    //GlobalData.AddTextToLogTab(symbol.Name + " " + interval.Name + " Debug missing candle " + CandleTools.GetUnixDate(stickOld.OpenTime).ToLocalTime());
+                    long unixTime = stickOld.OpenTime;
+                    while (unixTime < (long)symbolInterval.LastCandleSynchronized)
                     {
-                        if (intervalCalc.IntervalPeriod > interval.IntervalPeriod)
+                        if (!symbolInterval.CandleList.TryGetValue(unixTime, out CryptoCandle candle))
                         {
-                            CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(intervalCalc.ConstructFrom.IntervalPeriod);
-                            SortedList<long, CryptoCandle> candlesInterval = symbolPeriod.CandleList;
-                            if (candlesInterval.Values.Count > 0)
+                            candle = new()
                             {
-                                long unixFirst = candlesInterval.Values.First().OpenTime;
-                                unixFirst -= unixFirst % intervalCalc.Duration;
-                                //DateTime dateFirstDebug = CandleTools.GetUnixDate(unixFirst);
+                                Symbol = symbol,
+                                Interval = interval,
+                                OpenTime = unixTime,
+                                Open = stickOld.Close,
+                                High = stickOld.Close,
+                                Low = stickOld.Close,
+                                Close = stickOld.Close,
+                                Volume = 0
+                            };
+                            symbolInterval.CandleList.Add(candle.OpenTime, candle);
+                            //GlobalData.AddTextToLogTab(symbol.Name + " " + interval.Name + " Added missing candle " + CandleTools.GetUnixDate(candle.OpenTime).ToLocalTime());
+                        }
+                        stickOld = candle;
+                        unixTime += interval.Duration;
+                    }
+                }
 
-                                long unixLast = candlesInterval.Values.Last().OpenTime;
-                                unixLast -= unixLast % intervalCalc.Duration;
-                                //DateTime dateLastDebug = CandleTools.GetUnixDate(unixLast);
+                // Calculate higher interval candles from the lower interval (if available)
+                // (this does calculate some additional interval's but how to exclude, do i care?)
+                for (int j = i + 1; j < GlobalData.IntervalList.Count; j++)
+                {
+                    CryptoInterval intervalCalc = GlobalData.IntervalList[j];
+                    if (intervalCalc.IntervalPeriod > interval.IntervalPeriod) // Alway's?
+                    {
+                        CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(intervalCalc.ConstructFrom.IntervalPeriod);
+                        SortedList<long, CryptoCandle> candlesInterval = symbolPeriod.CandleList;
+                        if (candlesInterval.Values.Any())
+                        {
+                            long unixFirst = candlesInterval.Values.First().OpenTime;
+                            unixFirst -= unixFirst % intervalCalc.Duration; // too much?
+                            //DateTime dateFirstDebug = CandleTools.GetUnixDate(unixFirst);
 
-                                long unixLoop = unixFirst;
+                            long unixLast = candlesInterval.Values.Last().OpenTime;
+                            unixLast -= unixLast % intervalCalc.Duration; // too much? ++ ?
+                            //DateTime dateLastDebug = CandleTools.GetUnixDate(unixLast);
+
+                            // Bulk calculation (shared code with the 1m stream)
+                            long unixLoop = unixFirst;
+                            while (unixLoop <= unixLast)
+                            {
                                 //DateTime dateLoopDebug = CandleTools.GetUnixDate(unixLoop);
-
-                                // Bulk calculatie
-                                while (unixLoop <= unixLast)
-                                {
-                                    CandleTools.CalculateCandleForInterval(intervalCalc, intervalCalc.ConstructFrom, symbol, unixLoop);
-                                    unixLoop += intervalCalc.Duration;
-                                    //dateLoopDebug = CandleTools.GetUnixDate(unixLoop); //ter debug want een unix date is onleesbaar
-                                }
-                                CandleTools.UpdateCandleFetched(symbol, intervalCalc);
+                                CandleTools.CalculateCandleForInterval(intervalCalc, intervalCalc.ConstructFrom, symbol, unixLoop);
+                                unixLoop += intervalCalc.Duration;
                             }
+                            CandleTools.UpdateCandleFetched(symbol, intervalCalc);
                         }
                     }
                 }
+
             }
             finally
             {
                 Monitor.Exit(symbol.CandleList);
             }
-
         }
     }
 
@@ -270,27 +260,26 @@ public class BinanceFetchCandles
         {
             // Reuse the socket in this thread, because:
             // "An operation on a socket could not be performed because the system lacked sufficient buffer space or because a queue was full"
-            using (BinanceClient client = new())
+            using BinanceClient client = new();
+
+            while (true)
             {
-                while (true)
+                CryptoSymbol symbol;
+
+                Monitor.Enter(queue);
+                try
                 {
-                    CryptoSymbol symbol;
-
-                    Monitor.Enter(queue);
-                    try
-                    {
-                        if (queue.Count > 0)
-                            symbol = queue.Dequeue();
-                        else
-                            break;
-                    }
-                    finally
-                    {
-                        Monitor.Exit(queue);
-                    }
-
-                    await FetchCandlesInternal(client, symbol, fetchEndUnix);
+                    if (queue.Count > 0)
+                        symbol = queue.Dequeue();
+                    else
+                        break;
                 }
+                finally
+                {
+                    Monitor.Exit(queue);
+                }
+
+                await FetchCandlesInternal(client, symbol, fetchEndUnix);
             }
         }
         catch (Exception error)
@@ -329,7 +318,7 @@ public class BinanceFetchCandles
                         if (!symbol.IsSpotTradingAllowed || symbol.Status == 0 || symbol.IsBarometerSymbol())
                             continue;
 
-                        if (CandleTools.MatchingQuote(symbol))
+                        if (symbol.QuoteData.FetchCandles)
                         {
                             //if (symbol.Name.Equals("LEVERBUSD"))
                             queue.Enqueue(symbol);
