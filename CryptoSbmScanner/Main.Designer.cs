@@ -15,640 +15,637 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
+            components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FrmMain));
-            this.panelLeft = new System.Windows.Forms.Panel();
-            this.panel4 = new System.Windows.Forms.Panel();
-            this.listBoxSymbols = new System.Windows.Forms.ListBox();
-            this.listBoxSymbolsMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.listBoxSymbolsMenuItemActivateTradingApp = new System.Windows.Forms.ToolStripMenuItem();
-            this.listBoxSymbolsMenuItemActivateTradingApps = new System.Windows.Forms.ToolStripMenuItem();
-            this.listBoxSymbolsMenuItemActivateTradingviewInternal = new System.Windows.Forms.ToolStripMenuItem();
-            this.listBoxSymbolsMenuItemActivateTradingviewExternal = new System.Windows.Forms.ToolStripMenuItem();
-            this.listBoxSymbolsMenuItemShowTrendInformation = new System.Windows.Forms.ToolStripMenuItem();
-            this.listBoxSymbolsMenuItemCopy = new System.Windows.Forms.ToolStripMenuItem();
-            this.panel3 = new System.Windows.Forms.Panel();
-            this.labelVersion = new System.Windows.Forms.Label();
-            this.applicationMenuStrip = new System.Windows.Forms.MenuStrip();
-            this.MenuMain = new System.Windows.Forms.ToolStripMenuItem();
-            this.ApplicationPlaySounds = new System.Windows.Forms.ToolStripMenuItem();
-            this.ApplicationCreateSignals = new System.Windows.Forms.ToolStripMenuItem();
-            this.ToolStripMenuItemSettings = new System.Windows.Forms.ToolStripMenuItem();
-            this.ToolStripMenuItemRefresh = new System.Windows.Forms.ToolStripMenuItem();
-            this.clearMenusToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.applicationMenuItemAbout = new System.Windows.Forms.ToolStripMenuItem();
-            this.symbolFilter = new System.Windows.Forms.TextBox();
-            this.panelClient = new System.Windows.Forms.Panel();
-            this.tabControl = new System.Windows.Forms.TabControl();
-            this.tabPageSignals = new System.Windows.Forms.TabPage();
-            this.listViewSignals = new CryptoSbmScanner.ListViewDoubleBuffered();
-            this.listViewSignalsMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.listViewSignalsMenuItemActivateTradingApp = new System.Windows.Forms.ToolStripMenuItem();
-            this.listViewSignalsMenuItemActivateTradingApps = new System.Windows.Forms.ToolStripMenuItem();
-            this.listViewSignalsMenuItemActivateTradingViewInternal = new System.Windows.Forms.ToolStripMenuItem();
-            this.listViewSignalsMenuItemActivateTradingViewExternal = new System.Windows.Forms.ToolStripMenuItem();
-            this.listViewSignalsMenuItemShowTrendInformation = new System.Windows.Forms.ToolStripMenuItem();
-            this.listViewSignalsMenuItemClearSignals = new System.Windows.Forms.ToolStripMenuItem();
-            this.listViewSignalsMenuItemCopySignal = new System.Windows.Forms.ToolStripMenuItem();
-            this.tabPageBrowser = new System.Windows.Forms.TabPage();
-            this.webViewTradingView = new Microsoft.Web.WebView2.WinForms.WebView2();
-            this.tabPageLog = new System.Windows.Forms.TabPage();
-            this.TextBoxLog = new System.Windows.Forms.TextBox();
-            this.tabPageAltrady = new System.Windows.Forms.TabPage();
-            this.webViewAltrady = new Microsoft.Web.WebView2.WinForms.WebView2();
-            this.panelTop = new System.Windows.Forms.Panel();
-            this.listViewInformation = new CryptoSbmScanner.ListViewDoubleBuffered();
-            this.listViewSymbolPrices = new CryptoSbmScanner.ListViewDoubleBuffered();
-            this.labelBarometerDateValue = new System.Windows.Forms.Label();
-            this.comboBoxBarometerInterval = new System.Windows.Forms.ComboBox();
-            this.pictureBox1 = new System.Windows.Forms.PictureBox();
-            this.labelKLinesTickerCount = new System.Windows.Forms.Label();
-            this.labelAnalyseCount = new System.Windows.Forms.Label();
-            this.labelPriceTicker = new System.Windows.Forms.Label();
-            this.comboBoxBarometerQuote = new System.Windows.Forms.ComboBox();
-            this.panelClient1 = new System.Windows.Forms.Panel();
-            this.timerBarometer = new System.Windows.Forms.Timer(this.components);
-            this.timerClearEvents = new System.Windows.Forms.Timer(this.components);
-            this.timerSoundHeartBeat = new System.Windows.Forms.Timer(this.components);
-            this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.timerCandles = new System.Windows.Forms.Timer(this.components);
-            this.timerAddSignal = new System.Windows.Forms.Timer(this.components);
-            this.panelLeft.SuspendLayout();
-            this.panel4.SuspendLayout();
-            this.listBoxSymbolsMenuStrip.SuspendLayout();
-            this.panel3.SuspendLayout();
-            this.applicationMenuStrip.SuspendLayout();
-            this.panelClient.SuspendLayout();
-            this.tabControl.SuspendLayout();
-            this.tabPageSignals.SuspendLayout();
-            this.listViewSignalsMenuStrip.SuspendLayout();
-            this.tabPageBrowser.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.webViewTradingView)).BeginInit();
-            this.tabPageLog.SuspendLayout();
-            this.tabPageAltrady.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.webViewAltrady)).BeginInit();
-            this.panelTop.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
-            this.panelClient1.SuspendLayout();
-            this.SuspendLayout();
+            panelLeft = new Panel();
+            panel4 = new Panel();
+            listBoxSymbols = new ListBox();
+            listBoxSymbolsMenuStrip = new ContextMenuStrip(components);
+            listBoxSymbolsMenuItemActivateTradingApp = new ToolStripMenuItem();
+            listBoxSymbolsMenuItemActivateTradingApps = new ToolStripMenuItem();
+            listBoxSymbolsMenuItemActivateTradingviewInternal = new ToolStripMenuItem();
+            listBoxSymbolsMenuItemActivateTradingviewExternal = new ToolStripMenuItem();
+            listBoxSymbolsMenuItemShowTrendInformation = new ToolStripMenuItem();
+            listBoxSymbolsMenuItemCopy = new ToolStripMenuItem();
+            panel3 = new Panel();
+            labelVersion = new Label();
+            applicationMenuStrip = new MenuStrip();
+            MenuMain = new ToolStripMenuItem();
+            ApplicationPlaySounds = new ToolStripMenuItem();
+            ApplicationCreateSignals = new ToolStripMenuItem();
+            ToolStripMenuItemSettings = new ToolStripMenuItem();
+            ToolStripMenuItemRefresh = new ToolStripMenuItem();
+            clearMenusToolStripMenuItem = new ToolStripMenuItem();
+            applicationMenuItemAbout = new ToolStripMenuItem();
+            symbolFilter = new TextBox();
+            panelClient = new Panel();
+            tabControl = new TabControl();
+            tabPageSignals = new TabPage();
+            listViewSignals = new ListViewDoubleBuffered();
+            listViewSignalsMenuStrip = new ContextMenuStrip(components);
+            listViewSignalsMenuItemActivateTradingApp = new ToolStripMenuItem();
+            listViewSignalsMenuItemActivateTradingApps = new ToolStripMenuItem();
+            listViewSignalsMenuItemActivateTradingViewInternal = new ToolStripMenuItem();
+            listViewSignalsMenuItemActivateTradingViewExternal = new ToolStripMenuItem();
+            listViewSignalsMenuItemShowTrendInformation = new ToolStripMenuItem();
+            listViewSignalsMenuItemClearSignals = new ToolStripMenuItem();
+            listViewSignalsMenuItemCopySignal = new ToolStripMenuItem();
+            tabPageBrowser = new TabPage();
+            webViewTradingView = new Microsoft.Web.WebView2.WinForms.WebView2();
+            tabPageLog = new TabPage();
+            TextBoxLog = new TextBox();
+            tabPageAltrady = new TabPage();
+            webViewAltrady = new Microsoft.Web.WebView2.WinForms.WebView2();
+            panelTop = new Panel();
+            listViewInformation = new ListViewDoubleBuffered();
+            listViewSymbolPrices = new ListViewDoubleBuffered();
+            labelBarometerDateValue = new Label();
+            comboBoxBarometerInterval = new ComboBox();
+            pictureBox1 = new PictureBox();
+            labelKLinesTickerCount = new Label();
+            labelAnalyseCount = new Label();
+            labelPriceTicker = new Label();
+            comboBoxBarometerQuote = new ComboBox();
+            panelClient1 = new Panel();
+            timerBarometer = new System.Windows.Forms.Timer(components);
+            timerClearEvents = new System.Windows.Forms.Timer(components);
+            timerSoundHeartBeat = new System.Windows.Forms.Timer(components);
+            contextMenuStrip1 = new ContextMenuStrip(components);
+            timerCandles = new System.Windows.Forms.Timer(components);
+            timerAddSignal = new System.Windows.Forms.Timer(components);
+            backtestToolStripMenuItem = new ToolStripMenuItem();
+            panelLeft.SuspendLayout();
+            panel4.SuspendLayout();
+            listBoxSymbolsMenuStrip.SuspendLayout();
+            panel3.SuspendLayout();
+            applicationMenuStrip.SuspendLayout();
+            panelClient.SuspendLayout();
+            tabControl.SuspendLayout();
+            tabPageSignals.SuspendLayout();
+            listViewSignalsMenuStrip.SuspendLayout();
+            tabPageBrowser.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)webViewTradingView).BeginInit();
+            tabPageLog.SuspendLayout();
+            tabPageAltrady.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)webViewAltrady).BeginInit();
+            panelTop.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
+            panelClient1.SuspendLayout();
+            SuspendLayout();
             // 
             // panelLeft
             // 
-            this.panelLeft.Controls.Add(this.panel4);
-            this.panelLeft.Controls.Add(this.panel3);
-            this.panelLeft.Dock = System.Windows.Forms.DockStyle.Left;
-            this.panelLeft.Location = new System.Drawing.Point(0, 0);
-            this.panelLeft.Margin = new System.Windows.Forms.Padding(2);
-            this.panelLeft.Name = "panelLeft";
-            this.panelLeft.Size = new System.Drawing.Size(163, 642);
-            this.panelLeft.TabIndex = 12;
+            panelLeft.Controls.Add(panel4);
+            panelLeft.Controls.Add(panel3);
+            panelLeft.Dock = DockStyle.Left;
+            panelLeft.Location = new Point(0, 0);
+            panelLeft.Margin = new Padding(2);
+            panelLeft.Name = "panelLeft";
+            panelLeft.Size = new Size(190, 741);
+            panelLeft.TabIndex = 12;
             // 
             // panel4
             // 
-            this.panel4.Controls.Add(this.listBoxSymbols);
-            this.panel4.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panel4.Location = new System.Drawing.Point(0, 72);
-            this.panel4.Margin = new System.Windows.Forms.Padding(2);
-            this.panel4.Name = "panel4";
-            this.panel4.Size = new System.Drawing.Size(163, 570);
-            this.panel4.TabIndex = 2;
+            panel4.Controls.Add(listBoxSymbols);
+            panel4.Dock = DockStyle.Fill;
+            panel4.Location = new Point(0, 83);
+            panel4.Margin = new Padding(2);
+            panel4.Name = "panel4";
+            panel4.Size = new Size(190, 658);
+            panel4.TabIndex = 2;
             // 
             // listBoxSymbols
             // 
-            this.listBoxSymbols.ContextMenuStrip = this.listBoxSymbolsMenuStrip;
-            this.listBoxSymbols.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.listBoxSymbols.FormattingEnabled = true;
-            this.listBoxSymbols.Location = new System.Drawing.Point(0, 0);
-            this.listBoxSymbols.Margin = new System.Windows.Forms.Padding(2);
-            this.listBoxSymbols.Name = "listBoxSymbols";
-            this.listBoxSymbols.Size = new System.Drawing.Size(163, 570);
-            this.listBoxSymbols.Sorted = true;
-            this.listBoxSymbols.TabIndex = 0;
+            listBoxSymbols.ContextMenuStrip = listBoxSymbolsMenuStrip;
+            listBoxSymbols.Dock = DockStyle.Fill;
+            listBoxSymbols.FormattingEnabled = true;
+            listBoxSymbols.ItemHeight = 15;
+            listBoxSymbols.Location = new Point(0, 0);
+            listBoxSymbols.Margin = new Padding(2);
+            listBoxSymbols.Name = "listBoxSymbols";
+            listBoxSymbols.Size = new Size(190, 658);
+            listBoxSymbols.Sorted = true;
+            listBoxSymbols.TabIndex = 0;
             // 
             // listBoxSymbolsMenuStrip
             // 
-            this.listBoxSymbolsMenuStrip.ImageScalingSize = new System.Drawing.Size(20, 20);
-            this.listBoxSymbolsMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.listBoxSymbolsMenuItemActivateTradingApp,
-            this.listBoxSymbolsMenuItemActivateTradingApps,
-            this.listBoxSymbolsMenuItemActivateTradingviewInternal,
-            this.listBoxSymbolsMenuItemActivateTradingviewExternal,
-            this.listBoxSymbolsMenuItemShowTrendInformation,
-            this.listBoxSymbolsMenuItemCopy});
-            this.listBoxSymbolsMenuStrip.Name = "contextMenuStrip1";
-            this.listBoxSymbolsMenuStrip.Size = new System.Drawing.Size(215, 136);
+            listBoxSymbolsMenuStrip.ImageScalingSize = new Size(20, 20);
+            listBoxSymbolsMenuStrip.Items.AddRange(new ToolStripItem[] { listBoxSymbolsMenuItemActivateTradingApp, listBoxSymbolsMenuItemActivateTradingApps, listBoxSymbolsMenuItemActivateTradingviewInternal, listBoxSymbolsMenuItemActivateTradingviewExternal, listBoxSymbolsMenuItemShowTrendInformation, listBoxSymbolsMenuItemCopy });
+            listBoxSymbolsMenuStrip.Name = "contextMenuStrip1";
+            listBoxSymbolsMenuStrip.Size = new Size(215, 136);
             // 
             // listBoxSymbolsMenuItemActivateTradingApp
             // 
-            this.listBoxSymbolsMenuItemActivateTradingApp.Name = "listBoxSymbolsMenuItemActivateTradingApp";
-            this.listBoxSymbolsMenuItemActivateTradingApp.Size = new System.Drawing.Size(214, 22);
-            this.listBoxSymbolsMenuItemActivateTradingApp.Text = "Activate trading app";
-            this.listBoxSymbolsMenuItemActivateTradingApp.Click += new System.EventHandler(this.ListBoxSymbolsMenuItemActivateTradingApp_Click);
+            listBoxSymbolsMenuItemActivateTradingApp.Name = "listBoxSymbolsMenuItemActivateTradingApp";
+            listBoxSymbolsMenuItemActivateTradingApp.Size = new Size(214, 22);
+            listBoxSymbolsMenuItemActivateTradingApp.Text = "Activate trading app";
+            listBoxSymbolsMenuItemActivateTradingApp.Click += ListBoxSymbolsMenuItemActivateTradingApp_Click;
             // 
             // listBoxSymbolsMenuItemActivateTradingApps
             // 
-            this.listBoxSymbolsMenuItemActivateTradingApps.Name = "listBoxSymbolsMenuItemActivateTradingApps";
-            this.listBoxSymbolsMenuItemActivateTradingApps.Size = new System.Drawing.Size(214, 22);
-            this.listBoxSymbolsMenuItemActivateTradingApps.Text = "Trading app + TradingView";
-            this.listBoxSymbolsMenuItemActivateTradingApps.Click += new System.EventHandler(this.ListBoxSymbolsMenuItemActivateTradingApps_Click);
+            listBoxSymbolsMenuItemActivateTradingApps.Name = "listBoxSymbolsMenuItemActivateTradingApps";
+            listBoxSymbolsMenuItemActivateTradingApps.Size = new Size(214, 22);
+            listBoxSymbolsMenuItemActivateTradingApps.Text = "Trading app + TradingView";
+            listBoxSymbolsMenuItemActivateTradingApps.Click += ListBoxSymbolsMenuItemActivateTradingApps_Click;
             // 
             // listBoxSymbolsMenuItemActivateTradingviewInternal
             // 
-            this.listBoxSymbolsMenuItemActivateTradingviewInternal.Name = "listBoxSymbolsMenuItemActivateTradingviewInternal";
-            this.listBoxSymbolsMenuItemActivateTradingviewInternal.Size = new System.Drawing.Size(214, 22);
-            this.listBoxSymbolsMenuItemActivateTradingviewInternal.Text = "Tradingview browser";
-            this.listBoxSymbolsMenuItemActivateTradingviewInternal.Click += new System.EventHandler(this.ListBoxSymbolsMenuItemActivateTradingviewInternal_Click);
+            listBoxSymbolsMenuItemActivateTradingviewInternal.Name = "listBoxSymbolsMenuItemActivateTradingviewInternal";
+            listBoxSymbolsMenuItemActivateTradingviewInternal.Size = new Size(214, 22);
+            listBoxSymbolsMenuItemActivateTradingviewInternal.Text = "Tradingview browser";
+            listBoxSymbolsMenuItemActivateTradingviewInternal.Click += ListBoxSymbolsMenuItemActivateTradingviewInternal_Click;
             // 
             // listBoxSymbolsMenuItemActivateTradingviewExternal
             // 
-            this.listBoxSymbolsMenuItemActivateTradingviewExternal.Name = "listBoxSymbolsMenuItemActivateTradingviewExternal";
-            this.listBoxSymbolsMenuItemActivateTradingviewExternal.Size = new System.Drawing.Size(214, 22);
-            this.listBoxSymbolsMenuItemActivateTradingviewExternal.Text = "Tradingview external";
-            this.listBoxSymbolsMenuItemActivateTradingviewExternal.Click += new System.EventHandler(this.ListBoxSymbolsMenuItemActivateTradingviewExternal_Click);
+            listBoxSymbolsMenuItemActivateTradingviewExternal.Name = "listBoxSymbolsMenuItemActivateTradingviewExternal";
+            listBoxSymbolsMenuItemActivateTradingviewExternal.Size = new Size(214, 22);
+            listBoxSymbolsMenuItemActivateTradingviewExternal.Text = "Tradingview external";
+            listBoxSymbolsMenuItemActivateTradingviewExternal.Click += ListBoxSymbolsMenuItemActivateTradingviewExternal_Click;
             // 
             // listBoxSymbolsMenuItemShowTrendInformation
             // 
-            this.listBoxSymbolsMenuItemShowTrendInformation.Name = "listBoxSymbolsMenuItemShowTrendInformation";
-            this.listBoxSymbolsMenuItemShowTrendInformation.Size = new System.Drawing.Size(214, 22);
-            this.listBoxSymbolsMenuItemShowTrendInformation.Text = "Trend informatie";
-            this.listBoxSymbolsMenuItemShowTrendInformation.Click += new System.EventHandler(this.MenuSymbolsShowTrendInformation_Click);
+            listBoxSymbolsMenuItemShowTrendInformation.Name = "listBoxSymbolsMenuItemShowTrendInformation";
+            listBoxSymbolsMenuItemShowTrendInformation.Size = new Size(214, 22);
+            listBoxSymbolsMenuItemShowTrendInformation.Text = "Trend informatie";
+            listBoxSymbolsMenuItemShowTrendInformation.Click += MenuSymbolsShowTrendInformation_Click;
             // 
             // listBoxSymbolsMenuItemCopy
             // 
-            this.listBoxSymbolsMenuItemCopy.Name = "listBoxSymbolsMenuItemCopy";
-            this.listBoxSymbolsMenuItemCopy.Size = new System.Drawing.Size(214, 22);
-            this.listBoxSymbolsMenuItemCopy.Text = "Copy";
-            this.listBoxSymbolsMenuItemCopy.Click += new System.EventHandler(this.ListBoxSymbolsMenuItemCopy_Click);
+            listBoxSymbolsMenuItemCopy.Name = "listBoxSymbolsMenuItemCopy";
+            listBoxSymbolsMenuItemCopy.Size = new Size(214, 22);
+            listBoxSymbolsMenuItemCopy.Text = "Copy";
+            listBoxSymbolsMenuItemCopy.Click += ListBoxSymbolsMenuItemCopy_Click;
             // 
             // panel3
             // 
-            this.panel3.Controls.Add(this.labelVersion);
-            this.panel3.Controls.Add(this.applicationMenuStrip);
-            this.panel3.Controls.Add(this.symbolFilter);
-            this.panel3.Dock = System.Windows.Forms.DockStyle.Top;
-            this.panel3.Location = new System.Drawing.Point(0, 0);
-            this.panel3.Margin = new System.Windows.Forms.Padding(2);
-            this.panel3.Name = "panel3";
-            this.panel3.Size = new System.Drawing.Size(163, 72);
-            this.panel3.TabIndex = 1;
+            panel3.Controls.Add(labelVersion);
+            panel3.Controls.Add(applicationMenuStrip);
+            panel3.Controls.Add(symbolFilter);
+            panel3.Dock = DockStyle.Top;
+            panel3.Location = new Point(0, 0);
+            panel3.Margin = new Padding(2);
+            panel3.Name = "panel3";
+            panel3.Size = new Size(190, 83);
+            panel3.TabIndex = 1;
             // 
             // labelVersion
             // 
-            this.labelVersion.AutoSize = true;
-            this.labelVersion.Location = new System.Drawing.Point(12, 27);
-            this.labelVersion.Name = "labelVersion";
-            this.labelVersion.Size = new System.Drawing.Size(98, 13);
-            this.labelVersion.TabIndex = 50;
-            this.labelVersion.Text = "CryptoScanner x.xx";
+            labelVersion.AutoSize = true;
+            labelVersion.Location = new Point(14, 31);
+            labelVersion.Margin = new Padding(4, 0, 4, 0);
+            labelVersion.Name = "labelVersion";
+            labelVersion.Size = new Size(109, 15);
+            labelVersion.TabIndex = 50;
+            labelVersion.Text = "CryptoScanner x.xx";
             // 
             // applicationMenuStrip
             // 
-            this.applicationMenuStrip.ImageScalingSize = new System.Drawing.Size(20, 20);
-            this.applicationMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.MenuMain});
-            this.applicationMenuStrip.Location = new System.Drawing.Point(0, 0);
-            this.applicationMenuStrip.Name = "applicationMenuStrip";
-            this.applicationMenuStrip.Padding = new System.Windows.Forms.Padding(4, 2, 0, 2);
-            this.applicationMenuStrip.RenderMode = System.Windows.Forms.ToolStripRenderMode.Professional;
-            this.applicationMenuStrip.Size = new System.Drawing.Size(163, 24);
-            this.applicationMenuStrip.TabIndex = 16;
-            this.applicationMenuStrip.Text = "menuStrip1";
+            applicationMenuStrip.ImageScalingSize = new Size(20, 20);
+            applicationMenuStrip.Items.AddRange(new ToolStripItem[] { MenuMain });
+            applicationMenuStrip.Location = new Point(0, 0);
+            applicationMenuStrip.Name = "applicationMenuStrip";
+            applicationMenuStrip.Padding = new Padding(5, 2, 0, 2);
+            applicationMenuStrip.RenderMode = ToolStripRenderMode.Professional;
+            applicationMenuStrip.Size = new Size(190, 24);
+            applicationMenuStrip.TabIndex = 16;
+            applicationMenuStrip.Text = "menuStrip1";
             // 
             // MenuMain
             // 
-            this.MenuMain.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.ApplicationPlaySounds,
-            this.ApplicationCreateSignals,
-            this.ToolStripMenuItemSettings,
-            this.ToolStripMenuItemRefresh,
-            this.clearMenusToolStripMenuItem,
-            this.applicationMenuItemAbout});
-            this.MenuMain.Name = "MenuMain";
-            this.MenuMain.Size = new System.Drawing.Size(50, 20);
-            this.MenuMain.Text = "Menu";
+            MenuMain.DropDownItems.AddRange(new ToolStripItem[] { ApplicationPlaySounds, ApplicationCreateSignals, ToolStripMenuItemSettings, ToolStripMenuItemRefresh, clearMenusToolStripMenuItem, applicationMenuItemAbout, backtestToolStripMenuItem });
+            MenuMain.Name = "MenuMain";
+            MenuMain.Size = new Size(50, 20);
+            MenuMain.Text = "Menu";
             // 
             // ApplicationPlaySounds
             // 
-            this.ApplicationPlaySounds.Checked = true;
-            this.ApplicationPlaySounds.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.ApplicationPlaySounds.Name = "ApplicationPlaySounds";
-            this.ApplicationPlaySounds.Size = new System.Drawing.Size(168, 22);
-            this.ApplicationPlaySounds.Text = "Geluiden afspelen";
-            this.ApplicationPlaySounds.Click += new System.EventHandler(this.ApplicationPlaySounds_Click);
+            ApplicationPlaySounds.Checked = true;
+            ApplicationPlaySounds.CheckState = CheckState.Checked;
+            ApplicationPlaySounds.Name = "ApplicationPlaySounds";
+            ApplicationPlaySounds.Size = new Size(180, 22);
+            ApplicationPlaySounds.Text = "Geluiden afspelen";
+            ApplicationPlaySounds.Click += ApplicationPlaySounds_Click;
             // 
             // ApplicationCreateSignals
             // 
-            this.ApplicationCreateSignals.Checked = true;
-            this.ApplicationCreateSignals.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.ApplicationCreateSignals.Name = "ApplicationCreateSignals";
-            this.ApplicationCreateSignals.Size = new System.Drawing.Size(168, 22);
-            this.ApplicationCreateSignals.Text = "Signalen maken";
-            this.ApplicationCreateSignals.Click += new System.EventHandler(this.ApplicationCreateSignals_Click);
+            ApplicationCreateSignals.Checked = true;
+            ApplicationCreateSignals.CheckState = CheckState.Checked;
+            ApplicationCreateSignals.Name = "ApplicationCreateSignals";
+            ApplicationCreateSignals.Size = new Size(180, 22);
+            ApplicationCreateSignals.Text = "Signalen maken";
+            ApplicationCreateSignals.Click += ApplicationCreateSignals_Click;
             // 
             // ToolStripMenuItemSettings
             // 
-            this.ToolStripMenuItemSettings.Name = "ToolStripMenuItemSettings";
-            this.ToolStripMenuItemSettings.Size = new System.Drawing.Size(168, 22);
-            this.ToolStripMenuItemSettings.Text = "Instellingen";
-            this.ToolStripMenuItemSettings.Click += new System.EventHandler(this.ToolStripMenuItemSettings_Click);
+            ToolStripMenuItemSettings.Name = "ToolStripMenuItemSettings";
+            ToolStripMenuItemSettings.Size = new Size(180, 22);
+            ToolStripMenuItemSettings.Text = "Instellingen";
+            ToolStripMenuItemSettings.Click += ToolStripMenuItemSettings_Click;
             // 
             // ToolStripMenuItemRefresh
             // 
-            this.ToolStripMenuItemRefresh.Name = "ToolStripMenuItemRefresh";
-            this.ToolStripMenuItemRefresh.Size = new System.Drawing.Size(168, 22);
-            this.ToolStripMenuItemRefresh.Text = "Verversen";
-            this.ToolStripMenuItemRefresh.Click += new System.EventHandler(this.ToolStripMenuItemRefresh_Click_1);
+            ToolStripMenuItemRefresh.Name = "ToolStripMenuItemRefresh";
+            ToolStripMenuItemRefresh.Size = new Size(180, 22);
+            ToolStripMenuItemRefresh.Text = "Verversen";
+            ToolStripMenuItemRefresh.Click += ToolStripMenuItemRefresh_Click_1;
             // 
             // clearMenusToolStripMenuItem
             // 
-            this.clearMenusToolStripMenuItem.Name = "clearMenusToolStripMenuItem";
-            this.clearMenusToolStripMenuItem.Size = new System.Drawing.Size(168, 22);
-            this.clearMenusToolStripMenuItem.Text = "Clear";
-            this.clearMenusToolStripMenuItem.Click += new System.EventHandler(this.MainMenuClearAll_Click);
+            clearMenusToolStripMenuItem.Name = "clearMenusToolStripMenuItem";
+            clearMenusToolStripMenuItem.Size = new Size(180, 22);
+            clearMenusToolStripMenuItem.Text = "Clear";
+            clearMenusToolStripMenuItem.Click += MainMenuClearAll_Click;
             // 
             // applicationMenuItemAbout
             // 
-            this.applicationMenuItemAbout.Name = "applicationMenuItemAbout";
-            this.applicationMenuItemAbout.Size = new System.Drawing.Size(168, 22);
-            this.applicationMenuItemAbout.Text = "About";
-            this.applicationMenuItemAbout.Click += new System.EventHandler(this.ApplicationMenuItemAbout_Click);
+            applicationMenuItemAbout.Name = "applicationMenuItemAbout";
+            applicationMenuItemAbout.Size = new Size(180, 22);
+            applicationMenuItemAbout.Text = "About";
+            applicationMenuItemAbout.Click += ApplicationMenuItemAbout_Click;
             // 
             // symbolFilter
             // 
-            this.symbolFilter.Location = new System.Drawing.Point(11, 47);
-            this.symbolFilter.Margin = new System.Windows.Forms.Padding(2);
-            this.symbolFilter.Name = "symbolFilter";
-            this.symbolFilter.Size = new System.Drawing.Size(141, 20);
-            this.symbolFilter.TabIndex = 0;
-            this.symbolFilter.KeyDown += new System.Windows.Forms.KeyEventHandler(this.SymbolFilter_KeyDown);
+            symbolFilter.Location = new Point(13, 54);
+            symbolFilter.Margin = new Padding(2);
+            symbolFilter.Name = "symbolFilter";
+            symbolFilter.Size = new Size(164, 23);
+            symbolFilter.TabIndex = 0;
+            symbolFilter.KeyDown += SymbolFilter_KeyDown;
             // 
             // panelClient
             // 
-            this.panelClient.Controls.Add(this.tabControl);
-            this.panelClient.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panelClient.Location = new System.Drawing.Point(0, 73);
-            this.panelClient.Margin = new System.Windows.Forms.Padding(2);
-            this.panelClient.Name = "panelClient";
-            this.panelClient.Size = new System.Drawing.Size(1322, 569);
-            this.panelClient.TabIndex = 13;
+            panelClient.Controls.Add(tabControl);
+            panelClient.Dock = DockStyle.Fill;
+            panelClient.Location = new Point(0, 84);
+            panelClient.Margin = new Padding(2);
+            panelClient.Name = "panelClient";
+            panelClient.Size = new Size(1542, 657);
+            panelClient.TabIndex = 13;
             // 
             // tabControl
             // 
-            this.tabControl.Controls.Add(this.tabPageSignals);
-            this.tabControl.Controls.Add(this.tabPageBrowser);
-            this.tabControl.Controls.Add(this.tabPageLog);
-            this.tabControl.Controls.Add(this.tabPageAltrady);
-            this.tabControl.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tabControl.Location = new System.Drawing.Point(0, 0);
-            this.tabControl.Margin = new System.Windows.Forms.Padding(2);
-            this.tabControl.Name = "tabControl";
-            this.tabControl.SelectedIndex = 0;
-            this.tabControl.Size = new System.Drawing.Size(1322, 569);
-            this.tabControl.TabIndex = 12;
+            tabControl.Controls.Add(tabPageSignals);
+            tabControl.Controls.Add(tabPageBrowser);
+            tabControl.Controls.Add(tabPageLog);
+            tabControl.Controls.Add(tabPageAltrady);
+            tabControl.Dock = DockStyle.Fill;
+            tabControl.Location = new Point(0, 0);
+            tabControl.Margin = new Padding(2);
+            tabControl.Name = "tabControl";
+            tabControl.SelectedIndex = 0;
+            tabControl.Size = new Size(1542, 657);
+            tabControl.TabIndex = 12;
             // 
             // tabPageSignals
             // 
-            this.tabPageSignals.Controls.Add(this.listViewSignals);
-            this.tabPageSignals.Location = new System.Drawing.Point(4, 22);
-            this.tabPageSignals.Name = "tabPageSignals";
-            this.tabPageSignals.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageSignals.Size = new System.Drawing.Size(1314, 543);
-            this.tabPageSignals.TabIndex = 4;
-            this.tabPageSignals.Text = "Signals";
-            this.tabPageSignals.UseVisualStyleBackColor = true;
+            tabPageSignals.Controls.Add(listViewSignals);
+            tabPageSignals.Location = new Point(4, 24);
+            tabPageSignals.Margin = new Padding(4, 3, 4, 3);
+            tabPageSignals.Name = "tabPageSignals";
+            tabPageSignals.Padding = new Padding(4, 3, 4, 3);
+            tabPageSignals.Size = new Size(1534, 629);
+            tabPageSignals.TabIndex = 4;
+            tabPageSignals.Text = "Signals";
+            tabPageSignals.UseVisualStyleBackColor = true;
             // 
             // listViewSignals
             // 
-            this.listViewSignals.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.listViewSignals.ContextMenuStrip = this.listViewSignalsMenuStrip;
-            this.listViewSignals.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.listViewSignals.HideSelection = false;
-            this.listViewSignals.Location = new System.Drawing.Point(3, 3);
-            this.listViewSignals.Name = "listViewSignals";
-            this.listViewSignals.Size = new System.Drawing.Size(1308, 537);
-            this.listViewSignals.TabIndex = 1;
-            this.listViewSignals.UseCompatibleStateImageBehavior = false;
-            this.listViewSignals.View = System.Windows.Forms.View.Details;
+            listViewSignals.BorderStyle = BorderStyle.None;
+            listViewSignals.ContextMenuStrip = listViewSignalsMenuStrip;
+            listViewSignals.Dock = DockStyle.Fill;
+            listViewSignals.Location = new Point(4, 3);
+            listViewSignals.Margin = new Padding(4, 3, 4, 3);
+            listViewSignals.Name = "listViewSignals";
+            listViewSignals.Size = new Size(1526, 623);
+            listViewSignals.TabIndex = 1;
+            listViewSignals.UseCompatibleStateImageBehavior = false;
+            listViewSignals.View = View.Details;
             // 
             // listViewSignalsMenuStrip
             // 
-            this.listViewSignalsMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.listViewSignalsMenuItemActivateTradingApp,
-            this.listViewSignalsMenuItemActivateTradingApps,
-            this.listViewSignalsMenuItemActivateTradingViewInternal,
-            this.listViewSignalsMenuItemActivateTradingViewExternal,
-            this.listViewSignalsMenuItemShowTrendInformation,
-            this.listViewSignalsMenuItemClearSignals,
-            this.listViewSignalsMenuItemCopySignal});
-            this.listViewSignalsMenuStrip.Name = "contextMenuStripSignals";
-            this.listViewSignalsMenuStrip.Size = new System.Drawing.Size(215, 158);
+            listViewSignalsMenuStrip.Items.AddRange(new ToolStripItem[] { listViewSignalsMenuItemActivateTradingApp, listViewSignalsMenuItemActivateTradingApps, listViewSignalsMenuItemActivateTradingViewInternal, listViewSignalsMenuItemActivateTradingViewExternal, listViewSignalsMenuItemShowTrendInformation, listViewSignalsMenuItemClearSignals, listViewSignalsMenuItemCopySignal });
+            listViewSignalsMenuStrip.Name = "contextMenuStripSignals";
+            listViewSignalsMenuStrip.Size = new Size(215, 158);
             // 
             // listViewSignalsMenuItemActivateTradingApp
             // 
-            this.listViewSignalsMenuItemActivateTradingApp.Name = "listViewSignalsMenuItemActivateTradingApp";
-            this.listViewSignalsMenuItemActivateTradingApp.Size = new System.Drawing.Size(214, 22);
-            this.listViewSignalsMenuItemActivateTradingApp.Text = "Activate trading app";
-            this.listViewSignalsMenuItemActivateTradingApp.Click += new System.EventHandler(this.ListViewSignalsMenuItemActivateTradingApp_Click);
+            listViewSignalsMenuItemActivateTradingApp.Name = "listViewSignalsMenuItemActivateTradingApp";
+            listViewSignalsMenuItemActivateTradingApp.Size = new Size(214, 22);
+            listViewSignalsMenuItemActivateTradingApp.Text = "Activate trading app";
+            listViewSignalsMenuItemActivateTradingApp.Click += ListViewSignalsMenuItemActivateTradingApp_Click;
             // 
             // listViewSignalsMenuItemActivateTradingApps
             // 
-            this.listViewSignalsMenuItemActivateTradingApps.Name = "listViewSignalsMenuItemActivateTradingApps";
-            this.listViewSignalsMenuItemActivateTradingApps.Size = new System.Drawing.Size(214, 22);
-            this.listViewSignalsMenuItemActivateTradingApps.Text = "Trading app + TradingView";
-            this.listViewSignalsMenuItemActivateTradingApps.Click += new System.EventHandler(this.ListViewSignalsMenuItemActivateTradingApps_Click);
+            listViewSignalsMenuItemActivateTradingApps.Name = "listViewSignalsMenuItemActivateTradingApps";
+            listViewSignalsMenuItemActivateTradingApps.Size = new Size(214, 22);
+            listViewSignalsMenuItemActivateTradingApps.Text = "Trading app + TradingView";
+            listViewSignalsMenuItemActivateTradingApps.Click += ListViewSignalsMenuItemActivateTradingApps_Click;
             // 
             // listViewSignalsMenuItemActivateTradingViewInternal
             // 
-            this.listViewSignalsMenuItemActivateTradingViewInternal.Name = "listViewSignalsMenuItemActivateTradingViewInternal";
-            this.listViewSignalsMenuItemActivateTradingViewInternal.Size = new System.Drawing.Size(214, 22);
-            this.listViewSignalsMenuItemActivateTradingViewInternal.Text = "TradingView browser";
-            this.listViewSignalsMenuItemActivateTradingViewInternal.Click += new System.EventHandler(this.ListViewSignalsMenuItemActivateTradingViewInternal_Click);
+            listViewSignalsMenuItemActivateTradingViewInternal.Name = "listViewSignalsMenuItemActivateTradingViewInternal";
+            listViewSignalsMenuItemActivateTradingViewInternal.Size = new Size(214, 22);
+            listViewSignalsMenuItemActivateTradingViewInternal.Text = "TradingView browser";
+            listViewSignalsMenuItemActivateTradingViewInternal.Click += ListViewSignalsMenuItemActivateTradingViewInternal_Click;
             // 
             // listViewSignalsMenuItemActivateTradingViewExternal
             // 
-            this.listViewSignalsMenuItemActivateTradingViewExternal.Name = "listViewSignalsMenuItemActivateTradingViewExternal";
-            this.listViewSignalsMenuItemActivateTradingViewExternal.Size = new System.Drawing.Size(214, 22);
-            this.listViewSignalsMenuItemActivateTradingViewExternal.Text = "Tradingview extern";
-            this.listViewSignalsMenuItemActivateTradingViewExternal.Click += new System.EventHandler(this.ListViewSignalsMenuItemActivateTradingviewExternal_Click);
+            listViewSignalsMenuItemActivateTradingViewExternal.Name = "listViewSignalsMenuItemActivateTradingViewExternal";
+            listViewSignalsMenuItemActivateTradingViewExternal.Size = new Size(214, 22);
+            listViewSignalsMenuItemActivateTradingViewExternal.Text = "Tradingview extern";
+            listViewSignalsMenuItemActivateTradingViewExternal.Click += ListViewSignalsMenuItemActivateTradingviewExternal_Click;
             // 
             // listViewSignalsMenuItemShowTrendInformation
             // 
-            this.listViewSignalsMenuItemShowTrendInformation.Name = "listViewSignalsMenuItemShowTrendInformation";
-            this.listViewSignalsMenuItemShowTrendInformation.Size = new System.Drawing.Size(214, 22);
-            this.listViewSignalsMenuItemShowTrendInformation.Text = "Trend informatie";
-            this.listViewSignalsMenuItemShowTrendInformation.Click += new System.EventHandler(this.MenuSignalsShowTrendInformation_Click);
+            listViewSignalsMenuItemShowTrendInformation.Name = "listViewSignalsMenuItemShowTrendInformation";
+            listViewSignalsMenuItemShowTrendInformation.Size = new Size(214, 22);
+            listViewSignalsMenuItemShowTrendInformation.Text = "Trend informatie";
+            listViewSignalsMenuItemShowTrendInformation.Click += MenuSignalsShowTrendInformation_Click;
             // 
             // listViewSignalsMenuItemClearSignals
             // 
-            this.listViewSignalsMenuItemClearSignals.Name = "listViewSignalsMenuItemClearSignals";
-            this.listViewSignalsMenuItemClearSignals.Size = new System.Drawing.Size(214, 22);
-            this.listViewSignalsMenuItemClearSignals.Text = "Clear";
-            this.listViewSignalsMenuItemClearSignals.Click += new System.EventHandler(this.ListViewSignalsMenuItemClearSignals_Click);
+            listViewSignalsMenuItemClearSignals.Name = "listViewSignalsMenuItemClearSignals";
+            listViewSignalsMenuItemClearSignals.Size = new Size(214, 22);
+            listViewSignalsMenuItemClearSignals.Text = "Clear";
+            listViewSignalsMenuItemClearSignals.Click += ListViewSignalsMenuItemClearSignals_Click;
             // 
             // listViewSignalsMenuItemCopySignal
             // 
-            this.listViewSignalsMenuItemCopySignal.Name = "listViewSignalsMenuItemCopySignal";
-            this.listViewSignalsMenuItemCopySignal.Size = new System.Drawing.Size(214, 22);
-            this.listViewSignalsMenuItemCopySignal.Text = "Copy";
-            this.listViewSignalsMenuItemCopySignal.Click += new System.EventHandler(this.ListViewSignalsMenuItemCopySignal_Click);
+            listViewSignalsMenuItemCopySignal.Name = "listViewSignalsMenuItemCopySignal";
+            listViewSignalsMenuItemCopySignal.Size = new Size(214, 22);
+            listViewSignalsMenuItemCopySignal.Text = "Copy";
+            listViewSignalsMenuItemCopySignal.Click += ListViewSignalsMenuItemCopySignal_Click;
             // 
             // tabPageBrowser
             // 
-            this.tabPageBrowser.Controls.Add(this.webViewTradingView);
-            this.tabPageBrowser.Location = new System.Drawing.Point(4, 22);
-            this.tabPageBrowser.Name = "tabPageBrowser";
-            this.tabPageBrowser.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageBrowser.Size = new System.Drawing.Size(1314, 543);
-            this.tabPageBrowser.TabIndex = 5;
-            this.tabPageBrowser.Text = "Tradingview";
-            this.tabPageBrowser.UseVisualStyleBackColor = true;
+            tabPageBrowser.Controls.Add(webViewTradingView);
+            tabPageBrowser.Location = new Point(4, 24);
+            tabPageBrowser.Margin = new Padding(4, 3, 4, 3);
+            tabPageBrowser.Name = "tabPageBrowser";
+            tabPageBrowser.Padding = new Padding(4, 3, 4, 3);
+            tabPageBrowser.Size = new Size(1534, 629);
+            tabPageBrowser.TabIndex = 5;
+            tabPageBrowser.Text = "Tradingview";
+            tabPageBrowser.UseVisualStyleBackColor = true;
             // 
             // webViewTradingView
             // 
-            this.webViewTradingView.AllowExternalDrop = true;
-            this.webViewTradingView.CreationProperties = null;
-            this.webViewTradingView.DefaultBackgroundColor = System.Drawing.Color.White;
-            this.webViewTradingView.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.webViewTradingView.Location = new System.Drawing.Point(3, 3);
-            this.webViewTradingView.Name = "webViewTradingView";
-            this.webViewTradingView.Size = new System.Drawing.Size(1308, 537);
-            this.webViewTradingView.TabIndex = 0;
-            this.webViewTradingView.ZoomFactor = 1D;
+            webViewTradingView.AllowExternalDrop = true;
+            webViewTradingView.CreationProperties = null;
+            webViewTradingView.DefaultBackgroundColor = Color.White;
+            webViewTradingView.Dock = DockStyle.Fill;
+            webViewTradingView.Location = new Point(4, 3);
+            webViewTradingView.Margin = new Padding(4, 3, 4, 3);
+            webViewTradingView.Name = "webViewTradingView";
+            webViewTradingView.Size = new Size(1526, 623);
+            webViewTradingView.TabIndex = 0;
+            webViewTradingView.ZoomFactor = 1D;
             // 
             // tabPageLog
             // 
-            this.tabPageLog.Controls.Add(this.TextBoxLog);
-            this.tabPageLog.Location = new System.Drawing.Point(4, 22);
-            this.tabPageLog.Margin = new System.Windows.Forms.Padding(2);
-            this.tabPageLog.Name = "tabPageLog";
-            this.tabPageLog.Padding = new System.Windows.Forms.Padding(2);
-            this.tabPageLog.Size = new System.Drawing.Size(1314, 543);
-            this.tabPageLog.TabIndex = 1;
-            this.tabPageLog.Text = "Log";
-            this.tabPageLog.UseVisualStyleBackColor = true;
+            tabPageLog.Controls.Add(TextBoxLog);
+            tabPageLog.Location = new Point(4, 24);
+            tabPageLog.Margin = new Padding(2);
+            tabPageLog.Name = "tabPageLog";
+            tabPageLog.Padding = new Padding(2);
+            tabPageLog.Size = new Size(1534, 629);
+            tabPageLog.TabIndex = 1;
+            tabPageLog.Text = "Log";
+            tabPageLog.UseVisualStyleBackColor = true;
             // 
             // TextBoxLog
             // 
-            this.TextBoxLog.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.TextBoxLog.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.TextBoxLog.Location = new System.Drawing.Point(2, 2);
-            this.TextBoxLog.Margin = new System.Windows.Forms.Padding(2);
-            this.TextBoxLog.Multiline = true;
-            this.TextBoxLog.Name = "TextBoxLog";
-            this.TextBoxLog.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.TextBoxLog.Size = new System.Drawing.Size(1310, 539);
-            this.TextBoxLog.TabIndex = 1;
+            TextBoxLog.BorderStyle = BorderStyle.None;
+            TextBoxLog.Dock = DockStyle.Fill;
+            TextBoxLog.Location = new Point(2, 2);
+            TextBoxLog.Margin = new Padding(2);
+            TextBoxLog.Multiline = true;
+            TextBoxLog.Name = "TextBoxLog";
+            TextBoxLog.ScrollBars = ScrollBars.Both;
+            TextBoxLog.Size = new Size(1530, 625);
+            TextBoxLog.TabIndex = 1;
             // 
             // tabPageAltrady
             // 
-            this.tabPageAltrady.Controls.Add(this.webViewAltrady);
-            this.tabPageAltrady.Location = new System.Drawing.Point(4, 22);
-            this.tabPageAltrady.Name = "tabPageAltrady";
-            this.tabPageAltrady.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageAltrady.Size = new System.Drawing.Size(1314, 543);
-            this.tabPageAltrady.TabIndex = 6;
-            this.tabPageAltrady.Text = "tabPage1";
-            this.tabPageAltrady.UseVisualStyleBackColor = true;
+            tabPageAltrady.Controls.Add(webViewAltrady);
+            tabPageAltrady.Location = new Point(4, 24);
+            tabPageAltrady.Margin = new Padding(4, 3, 4, 3);
+            tabPageAltrady.Name = "tabPageAltrady";
+            tabPageAltrady.Padding = new Padding(4, 3, 4, 3);
+            tabPageAltrady.Size = new Size(1534, 629);
+            tabPageAltrady.TabIndex = 6;
+            tabPageAltrady.Text = "tabPage1";
+            tabPageAltrady.UseVisualStyleBackColor = true;
             // 
             // webViewAltrady
             // 
-            this.webViewAltrady.AllowExternalDrop = true;
-            this.webViewAltrady.CreationProperties = null;
-            this.webViewAltrady.DefaultBackgroundColor = System.Drawing.Color.White;
-            this.webViewAltrady.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.webViewAltrady.Location = new System.Drawing.Point(3, 3);
-            this.webViewAltrady.Name = "webViewAltrady";
-            this.webViewAltrady.Size = new System.Drawing.Size(1308, 537);
-            this.webViewAltrady.TabIndex = 1;
-            this.webViewAltrady.ZoomFactor = 1D;
+            webViewAltrady.AllowExternalDrop = true;
+            webViewAltrady.CreationProperties = null;
+            webViewAltrady.DefaultBackgroundColor = Color.White;
+            webViewAltrady.Dock = DockStyle.Fill;
+            webViewAltrady.Location = new Point(4, 3);
+            webViewAltrady.Margin = new Padding(4, 3, 4, 3);
+            webViewAltrady.Name = "webViewAltrady";
+            webViewAltrady.Size = new Size(1526, 623);
+            webViewAltrady.TabIndex = 1;
+            webViewAltrady.ZoomFactor = 1D;
             // 
             // panelTop
             // 
-            this.panelTop.Controls.Add(this.listViewInformation);
-            this.panelTop.Controls.Add(this.listViewSymbolPrices);
-            this.panelTop.Controls.Add(this.labelBarometerDateValue);
-            this.panelTop.Controls.Add(this.comboBoxBarometerInterval);
-            this.panelTop.Controls.Add(this.pictureBox1);
-            this.panelTop.Controls.Add(this.labelKLinesTickerCount);
-            this.panelTop.Controls.Add(this.labelAnalyseCount);
-            this.panelTop.Controls.Add(this.labelPriceTicker);
-            this.panelTop.Controls.Add(this.comboBoxBarometerQuote);
-            this.panelTop.Dock = System.Windows.Forms.DockStyle.Top;
-            this.panelTop.Location = new System.Drawing.Point(0, 0);
-            this.panelTop.Margin = new System.Windows.Forms.Padding(2);
-            this.panelTop.Name = "panelTop";
-            this.panelTop.Size = new System.Drawing.Size(1322, 73);
-            this.panelTop.TabIndex = 14;
+            panelTop.Controls.Add(listViewInformation);
+            panelTop.Controls.Add(listViewSymbolPrices);
+            panelTop.Controls.Add(labelBarometerDateValue);
+            panelTop.Controls.Add(comboBoxBarometerInterval);
+            panelTop.Controls.Add(pictureBox1);
+            panelTop.Controls.Add(labelKLinesTickerCount);
+            panelTop.Controls.Add(labelAnalyseCount);
+            panelTop.Controls.Add(labelPriceTicker);
+            panelTop.Controls.Add(comboBoxBarometerQuote);
+            panelTop.Dock = DockStyle.Top;
+            panelTop.Location = new Point(0, 0);
+            panelTop.Margin = new Padding(2);
+            panelTop.Name = "panelTop";
+            panelTop.Size = new Size(1542, 84);
+            panelTop.TabIndex = 14;
             // 
             // listViewInformation
             // 
-            this.listViewInformation.Activation = System.Windows.Forms.ItemActivation.OneClick;
-            this.listViewInformation.BackColor = System.Drawing.SystemColors.Control;
-            this.listViewInformation.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.listViewInformation.GridLines = true;
-            this.listViewInformation.HideSelection = false;
-            this.listViewInformation.Location = new System.Drawing.Point(5, 5);
-            this.listViewInformation.Margin = new System.Windows.Forms.Padding(0);
-            this.listViewInformation.MultiSelect = false;
-            this.listViewInformation.Name = "listViewInformation";
-            this.listViewInformation.Scrollable = false;
-            this.listViewInformation.Size = new System.Drawing.Size(337, 63);
-            this.listViewInformation.TabIndex = 76;
-            this.listViewInformation.UseCompatibleStateImageBehavior = false;
-            this.listViewInformation.View = System.Windows.Forms.View.Details;
+            listViewInformation.Activation = ItemActivation.OneClick;
+            listViewInformation.BackColor = SystemColors.Control;
+            listViewInformation.BorderStyle = BorderStyle.None;
+            listViewInformation.GridLines = true;
+            listViewInformation.Location = new Point(6, 6);
+            listViewInformation.Margin = new Padding(0);
+            listViewInformation.MultiSelect = false;
+            listViewInformation.Name = "listViewInformation";
+            listViewInformation.Scrollable = false;
+            listViewInformation.Size = new Size(393, 73);
+            listViewInformation.TabIndex = 76;
+            listViewInformation.UseCompatibleStateImageBehavior = false;
+            listViewInformation.View = View.Details;
             // 
             // listViewSymbolPrices
             // 
-            this.listViewSymbolPrices.Activation = System.Windows.Forms.ItemActivation.OneClick;
-            this.listViewSymbolPrices.BackColor = System.Drawing.SystemColors.Control;
-            this.listViewSymbolPrices.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.listViewSymbolPrices.GridLines = true;
-            this.listViewSymbolPrices.HideSelection = false;
-            this.listViewSymbolPrices.Location = new System.Drawing.Point(676, 0);
-            this.listViewSymbolPrices.Name = "listViewSymbolPrices";
-            this.listViewSymbolPrices.Scrollable = false;
-            this.listViewSymbolPrices.Size = new System.Drawing.Size(556, 73);
-            this.listViewSymbolPrices.TabIndex = 71;
-            this.listViewSymbolPrices.UseCompatibleStateImageBehavior = false;
-            this.listViewSymbolPrices.View = System.Windows.Forms.View.Details;
+            listViewSymbolPrices.Activation = ItemActivation.OneClick;
+            listViewSymbolPrices.BackColor = SystemColors.Control;
+            listViewSymbolPrices.BorderStyle = BorderStyle.None;
+            listViewSymbolPrices.GridLines = true;
+            listViewSymbolPrices.Location = new Point(789, 0);
+            listViewSymbolPrices.Margin = new Padding(4, 3, 4, 3);
+            listViewSymbolPrices.Name = "listViewSymbolPrices";
+            listViewSymbolPrices.Scrollable = false;
+            listViewSymbolPrices.Size = new Size(649, 84);
+            listViewSymbolPrices.TabIndex = 71;
+            listViewSymbolPrices.UseCompatibleStateImageBehavior = false;
+            listViewSymbolPrices.View = View.Details;
             // 
             // labelBarometerDateValue
             // 
-            this.labelBarometerDateValue.AutoSize = true;
-            this.labelBarometerDateValue.Location = new System.Drawing.Point(345, 53);
-            this.labelBarometerDateValue.Name = "labelBarometerDateValue";
-            this.labelBarometerDateValue.Size = new System.Drawing.Size(55, 13);
-            this.labelBarometerDateValue.TabIndex = 70;
-            this.labelBarometerDateValue.Text = "Barometer";
+            labelBarometerDateValue.AutoSize = true;
+            labelBarometerDateValue.Location = new Point(402, 61);
+            labelBarometerDateValue.Margin = new Padding(4, 0, 4, 0);
+            labelBarometerDateValue.Name = "labelBarometerDateValue";
+            labelBarometerDateValue.Size = new Size(62, 15);
+            labelBarometerDateValue.TabIndex = 70;
+            labelBarometerDateValue.Text = "Barometer";
             // 
             // comboBoxBarometerInterval
             // 
-            this.comboBoxBarometerInterval.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboBoxBarometerInterval.FormattingEnabled = true;
-            this.comboBoxBarometerInterval.Location = new System.Drawing.Point(348, 27);
-            this.comboBoxBarometerInterval.Margin = new System.Windows.Forms.Padding(2);
-            this.comboBoxBarometerInterval.Name = "comboBoxBarometerInterval";
-            this.comboBoxBarometerInterval.Size = new System.Drawing.Size(68, 21);
-            this.comboBoxBarometerInterval.TabIndex = 69;
+            comboBoxBarometerInterval.DropDownStyle = ComboBoxStyle.DropDownList;
+            comboBoxBarometerInterval.FormattingEnabled = true;
+            comboBoxBarometerInterval.Location = new Point(406, 31);
+            comboBoxBarometerInterval.Margin = new Padding(2);
+            comboBoxBarometerInterval.Name = "comboBoxBarometerInterval";
+            comboBoxBarometerInterval.Size = new Size(79, 23);
+            comboBoxBarometerInterval.TabIndex = 69;
             // 
             // pictureBox1
             // 
-            this.pictureBox1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left)));
-            this.pictureBox1.Location = new System.Drawing.Point(431, 0);
-            this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(235, 71);
-            this.pictureBox1.TabIndex = 67;
-            this.pictureBox1.TabStop = false;
+            pictureBox1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
+            pictureBox1.Location = new Point(503, 0);
+            pictureBox1.Margin = new Padding(4, 3, 4, 3);
+            pictureBox1.Name = "pictureBox1";
+            pictureBox1.Size = new Size(274, 82);
+            pictureBox1.TabIndex = 67;
+            pictureBox1.TabStop = false;
             // 
             // labelKLinesTickerCount
             // 
-            this.labelKLinesTickerCount.AutoSize = true;
-            this.labelKLinesTickerCount.Location = new System.Drawing.Point(999, 53);
-            this.labelKLinesTickerCount.Name = "labelKLinesTickerCount";
-            this.labelKLinesTickerCount.Size = new System.Drawing.Size(90, 13);
-            this.labelKLinesTickerCount.TabIndex = 66;
-            this.labelKLinesTickerCount.Text = "1m candle stream";
+            labelKLinesTickerCount.AutoSize = true;
+            labelKLinesTickerCount.Location = new Point(1166, 61);
+            labelKLinesTickerCount.Margin = new Padding(4, 0, 4, 0);
+            labelKLinesTickerCount.Name = "labelKLinesTickerCount";
+            labelKLinesTickerCount.Size = new Size(101, 15);
+            labelKLinesTickerCount.TabIndex = 66;
+            labelKLinesTickerCount.Text = "1m candle stream";
             // 
             // labelAnalyseCount
             // 
-            this.labelAnalyseCount.AutoSize = true;
-            this.labelAnalyseCount.Location = new System.Drawing.Point(999, 33);
-            this.labelAnalyseCount.Name = "labelAnalyseCount";
-            this.labelAnalyseCount.Size = new System.Drawing.Size(74, 13);
-            this.labelAnalyseCount.TabIndex = 60;
-            this.labelAnalyseCount.Text = "Analyse count";
+            labelAnalyseCount.AutoSize = true;
+            labelAnalyseCount.Location = new Point(1166, 38);
+            labelAnalyseCount.Margin = new Padding(4, 0, 4, 0);
+            labelAnalyseCount.Name = "labelAnalyseCount";
+            labelAnalyseCount.Size = new Size(82, 15);
+            labelAnalyseCount.TabIndex = 60;
+            labelAnalyseCount.Text = "Analyse count";
             // 
             // labelPriceTicker
             // 
-            this.labelPriceTicker.AutoSize = true;
-            this.labelPriceTicker.Location = new System.Drawing.Point(999, 11);
-            this.labelPriceTicker.Name = "labelPriceTicker";
-            this.labelPriceTicker.Size = new System.Drawing.Size(90, 13);
-            this.labelPriceTicker.TabIndex = 59;
-            this.labelPriceTicker.Text = "Price ticker count";
+            labelPriceTicker.AutoSize = true;
+            labelPriceTicker.Location = new Point(1166, 13);
+            labelPriceTicker.Margin = new Padding(4, 0, 4, 0);
+            labelPriceTicker.Name = "labelPriceTicker";
+            labelPriceTicker.Size = new Size(99, 15);
+            labelPriceTicker.TabIndex = 59;
+            labelPriceTicker.Text = "Price ticker count";
             // 
             // comboBoxBarometerQuote
             // 
-            this.comboBoxBarometerQuote.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboBoxBarometerQuote.FormattingEnabled = true;
-            this.comboBoxBarometerQuote.Location = new System.Drawing.Point(348, 3);
-            this.comboBoxBarometerQuote.Margin = new System.Windows.Forms.Padding(2);
-            this.comboBoxBarometerQuote.Name = "comboBoxBarometerQuote";
-            this.comboBoxBarometerQuote.Size = new System.Drawing.Size(68, 21);
-            this.comboBoxBarometerQuote.TabIndex = 41;
+            comboBoxBarometerQuote.DropDownStyle = ComboBoxStyle.DropDownList;
+            comboBoxBarometerQuote.FormattingEnabled = true;
+            comboBoxBarometerQuote.Location = new Point(406, 3);
+            comboBoxBarometerQuote.Margin = new Padding(2);
+            comboBoxBarometerQuote.Name = "comboBoxBarometerQuote";
+            comboBoxBarometerQuote.Size = new Size(79, 23);
+            comboBoxBarometerQuote.TabIndex = 41;
             // 
             // panelClient1
             // 
-            this.panelClient1.Controls.Add(this.panelClient);
-            this.panelClient1.Controls.Add(this.panelTop);
-            this.panelClient1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panelClient1.Location = new System.Drawing.Point(163, 0);
-            this.panelClient1.Margin = new System.Windows.Forms.Padding(2);
-            this.panelClient1.Name = "panelClient1";
-            this.panelClient1.Size = new System.Drawing.Size(1322, 642);
-            this.panelClient1.TabIndex = 12;
+            panelClient1.Controls.Add(panelClient);
+            panelClient1.Controls.Add(panelTop);
+            panelClient1.Dock = DockStyle.Fill;
+            panelClient1.Location = new Point(190, 0);
+            panelClient1.Margin = new Padding(2);
+            panelClient1.Name = "panelClient1";
+            panelClient1.Size = new Size(1542, 741);
+            panelClient1.TabIndex = 12;
             // 
             // timerBarometer
             // 
-            this.timerBarometer.Enabled = true;
-            this.timerBarometer.Interval = 5000;
-            this.timerBarometer.Tick += new System.EventHandler(this.TimerBarometer_Tick);
+            timerBarometer.Enabled = true;
+            timerBarometer.Interval = 5000;
+            timerBarometer.Tick += TimerBarometer_Tick;
             // 
             // timerSoundHeartBeat
             // 
-            this.timerSoundHeartBeat.Interval = 600000;
-            this.timerSoundHeartBeat.Tick += new System.EventHandler(this.TimerSoundHeartBeat_Tick);
+            timerSoundHeartBeat.Interval = 600000;
+            timerSoundHeartBeat.Tick += TimerSoundHeartBeat_Tick;
             // 
             // contextMenuStrip1
             // 
-            this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(61, 4);
+            contextMenuStrip1.Name = "contextMenuStrip1";
+            contextMenuStrip1.Size = new Size(61, 4);
             // 
             // timerCandles
             // 
-            this.timerCandles.Interval = 10000;
-            this.timerCandles.Tick += new System.EventHandler(this.TimerCandles_Tick);
+            timerCandles.Interval = 10000;
+            timerCandles.Tick += TimerCandles_Tick;
             // 
             // timerAddSignal
             // 
-            this.timerAddSignal.Enabled = true;
-            this.timerAddSignal.Interval = 1250;
-            this.timerAddSignal.Tick += new System.EventHandler(this.TimerAddSignal_Tick);
+            timerAddSignal.Enabled = true;
+            timerAddSignal.Interval = 1250;
+            timerAddSignal.Tick += TimerAddSignal_Tick;
+            // 
+            // backtestToolStripMenuItem
+            // 
+            backtestToolStripMenuItem.Name = "backtestToolStripMenuItem";
+            backtestToolStripMenuItem.Size = new Size(180, 22);
+            backtestToolStripMenuItem.Text = "Backtest";
+            backtestToolStripMenuItem.Click += backtestToolStripMenuItem_Click;
             // 
             // FrmMain
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1485, 642);
-            this.Controls.Add(this.panelClient1);
-            this.Controls.Add(this.panelLeft);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.Margin = new System.Windows.Forms.Padding(2);
-            this.Name = "FrmMain";
-            this.panelLeft.ResumeLayout(false);
-            this.panel4.ResumeLayout(false);
-            this.listBoxSymbolsMenuStrip.ResumeLayout(false);
-            this.panel3.ResumeLayout(false);
-            this.panel3.PerformLayout();
-            this.applicationMenuStrip.ResumeLayout(false);
-            this.applicationMenuStrip.PerformLayout();
-            this.panelClient.ResumeLayout(false);
-            this.tabControl.ResumeLayout(false);
-            this.tabPageSignals.ResumeLayout(false);
-            this.listViewSignalsMenuStrip.ResumeLayout(false);
-            this.tabPageBrowser.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.webViewTradingView)).EndInit();
-            this.tabPageLog.ResumeLayout(false);
-            this.tabPageLog.PerformLayout();
-            this.tabPageAltrady.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.webViewAltrady)).EndInit();
-            this.panelTop.ResumeLayout(false);
-            this.panelTop.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
-            this.panelClient1.ResumeLayout(false);
-            this.ResumeLayout(false);
-
+            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleMode = AutoScaleMode.Font;
+            ClientSize = new Size(1732, 741);
+            Controls.Add(panelClient1);
+            Controls.Add(panelLeft);
+            Icon = (Icon)resources.GetObject("$this.Icon");
+            Margin = new Padding(2);
+            Name = "FrmMain";
+            panelLeft.ResumeLayout(false);
+            panel4.ResumeLayout(false);
+            listBoxSymbolsMenuStrip.ResumeLayout(false);
+            panel3.ResumeLayout(false);
+            panel3.PerformLayout();
+            applicationMenuStrip.ResumeLayout(false);
+            applicationMenuStrip.PerformLayout();
+            panelClient.ResumeLayout(false);
+            tabControl.ResumeLayout(false);
+            tabPageSignals.ResumeLayout(false);
+            listViewSignalsMenuStrip.ResumeLayout(false);
+            tabPageBrowser.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)webViewTradingView).EndInit();
+            tabPageLog.ResumeLayout(false);
+            tabPageLog.PerformLayout();
+            tabPageAltrady.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)webViewAltrady).EndInit();
+            panelTop.ResumeLayout(false);
+            panelTop.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
+            panelClient1.ResumeLayout(false);
+            ResumeLayout(false);
         }
 
         #endregion
@@ -708,6 +705,7 @@
         private System.Windows.Forms.ToolStripMenuItem ApplicationPlaySounds;
         private System.Windows.Forms.ToolStripMenuItem ApplicationCreateSignals;
         private System.Windows.Forms.Timer timerAddSignal;
+        private ToolStripMenuItem backtestToolStripMenuItem;
     }
 }
 

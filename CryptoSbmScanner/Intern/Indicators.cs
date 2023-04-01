@@ -148,7 +148,198 @@ public static class Indicators
         }
 
         return results;
-    }   
+    }
+
+
+    /// <summary>
+    /// Dave Skender Parabolic Sar
+    /// </summary>
+    static List<ParabolicSarResult> CalcParabolicSarDaveSkender(List<CryptoCandle> history,
+        decimal accelerationStep = 0.02m, decimal maxAccelerationFactor = 0.2m)
+    {
+        // https://handwiki.org/wiki/Parabolic_SAR
+
+        // https://en.wikipedia.org/wiki/Parabolic_SAR
+        // Sar(n+1) =  Sar(n) + alfa*(EP - Sar(n))
+        // De alfa is initieel 0.02 (The α value represents the acceleration factor)
+        // acceleration is initially 0.2
+
+
+        //EP(the extreme point) is a record kept during each trend that represents the highest value reached by the price
+        //during the current uptrend – or lowest value during a downtrend. During each period, if a new maximum(or minimum)
+        //is observed, the EP is updated with that value.
+
+        //The α value represents the acceleration factor. Usually, this is set initially to a value of 0.02, but can be
+        //chosen by the trader.This factor is increased by 0.02 each time a new EP is recorded, which means that every time
+        //a new EP is observed, it will make the acceleration factor go up. The rate will then quicken to a point where the
+        //SAR converges towards the price.To prevent it from getting too large, a maximum value for the acceleration factor
+        //is normally set to 0.20.The traders can set these numbers depending on their trading style and the instruments
+        //being traded.Generally, it is preferable in stocks trading to set the acceleration factor to 0.01, so that it is
+        //not too sensitive to local decreases.For commodity or currency trading, the preferred value is 0.02.
+
+        //The SAR is calculated in this manner for each new period.However, two special cases will modify the SAR value:
+
+        //If the next period's SAR value is inside (or beyond) the current period or the previous period's price range, the
+        //SAR must be set to the closest price bound.For example, if in an upward trend, the new SAR value is calculated and
+        //if it results to be more than today's or yesterday's lowest price, it must be set equal to that lower boundary.
+        //If the next period's SAR value is inside (or beyond) the next period's price range, a new trend direction is then
+        //signaled. The SAR must then switch sides.
+        //Upon a trend switch, the first SAR value for this new trend is set to the last EP recorded on the prior trend, EP is
+        //then reset accordingly to this period's maximum, and the acceleration factor is reset to its initial value of 0.02.
+
+
+        decimal initialFactor = accelerationStep;
+
+        // check parameter arguments
+        if (accelerationStep <= 0)
+            throw new ArgumentOutOfRangeException(nameof(accelerationStep), accelerationStep,
+                "Acceleration Step must be greater than 0 for Parabolic SAR.");
+
+        if (maxAccelerationFactor <= 0)
+            throw new ArgumentOutOfRangeException(nameof(maxAccelerationFactor), maxAccelerationFactor,
+                "Max Acceleration Factor must be greater than 0 for Parabolic SAR.");
+
+        if (accelerationStep > maxAccelerationFactor)
+        {
+            string message = string.Format(
+                //EnglishCulture,
+                "Acceleration Step must be smaller than provided Max Acceleration Factor ({0}) for Parabolic SAR.",
+                maxAccelerationFactor);
+
+            throw new ArgumentOutOfRangeException(nameof(accelerationStep), accelerationStep, message);
+        }
+
+        if (initialFactor <= 0 || initialFactor >= maxAccelerationFactor)
+            throw new ArgumentOutOfRangeException(nameof(initialFactor), initialFactor,
+                "Initial Step must be greater than 0 and less than Max Acceleration Factor for Parabolic SAR.");
+
+
+
+        // initialize
+        int length = history.Count;
+        List<ParabolicSarResult> results = new(length);
+
+        CryptoCandle candle;
+        if (length == 0)
+            return results;
+        else
+            candle = history[0];
+
+        decimal accelerationFactor = initialFactor; // 0.02
+        decimal extremePoint = candle.High;
+        decimal priorSar = candle.Low;
+        bool isRising = true;  // initial guess
+
+        // roll through quotes
+        for (int i = 0; i < length; i++)
+        {
+            candle = history[i];
+
+            ParabolicSarResult r = new(candle.Date);
+            results.Add(r);
+
+            // skip first one
+            if (i == 0)
+                continue;
+
+            // was rising
+            if (isRising)
+            {
+                decimal sar = priorSar + (accelerationFactor * (extremePoint - priorSar));
+
+                // SAR cannot be higher than last two lows
+                if (i >= 2)
+                {
+                    decimal minLastTwo = Math.Min(history[i - 1].Low, history[i - 2].Low);
+                    sar = Math.Min(sar, minLastTwo);
+                }
+
+                // turn down
+                if (candle.Low < sar)
+                {
+                    r.IsReversal = true;
+                    r.Sar = (double)extremePoint;
+
+                    isRising = false;
+                    accelerationFactor = initialFactor;
+                    extremePoint = candle.Low;
+                }
+
+                // continue rising
+                else
+                {
+                    r.IsReversal = false;
+                    r.Sar = (double)sar;
+
+                    // new high extreme point
+                    if (candle.High > extremePoint)
+                    {
+                        extremePoint = candle.High;
+                        accelerationFactor = Math.Min(accelerationFactor + accelerationStep, maxAccelerationFactor);
+                    }
+                }
+            }
+
+            // was falling
+            else
+
+            {
+                decimal sar = priorSar - (accelerationFactor * (priorSar - extremePoint));
+
+                // SAR cannot be lower than last two highs
+                if (i >= 2)
+                {
+                    decimal maxLastTwo = Math.Max(history[i - 1].High, history[i - 2].High);
+                    sar = Math.Max(sar, maxLastTwo);
+                }
+
+                // turn up
+                if (candle.High > sar)
+                {
+                    r.IsReversal = true;
+                    r.Sar = (double)extremePoint;
+
+                    isRising = true;
+                    accelerationFactor = initialFactor;
+                    extremePoint = candle.High;
+                }
+
+                // continue falling
+                else
+                {
+                    r.IsReversal = false;
+                    r.Sar = (double)sar;
+
+                    // new low extreme point
+                    if (candle.Low < extremePoint)
+                    {
+                        extremePoint = candle.Low;
+                        accelerationFactor = Math.Min(accelerationFactor + accelerationStep, maxAccelerationFactor);
+                    }
+                }
+            }
+
+            priorSar = (decimal)r.Sar;
+        }
+
+
+        //// remove first trendline since it is an invalid guess
+        //ParabolicSarResult? firstReversal = results
+        //    .Where(x => x.IsReversal == true)
+        //    .OrderBy(x => x.Date)
+        //    .FirstOrDefault();
+
+        //int cutIndex = (firstReversal != null) ? results.IndexOf(firstReversal) : length - 1;
+
+        //for (int d = 0; d <= cutIndex; d++)
+        //{
+        //    ParabolicSarResult r = results[d];
+        //    r.Sar = null;
+        //    r.IsReversal = null;
+        //}
+
+        return results;
+    }
 
 
     /// <summary>
@@ -393,3 +584,4 @@ public static class Indicators
     }
 
 }
+

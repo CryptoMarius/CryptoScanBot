@@ -6,6 +6,8 @@ public class CryptoExchange
 
     public DateTime ExchangeInfoLastTime { get; set; } = DateTime.MinValue;
 
+    public SemaphoreSlim AssetListSemaphore { get; set; } = new(1);
+    public SortedList<string, CryptoAsset> AssetList { get; } = new();
     //De basecoins geindexeerd op naam 
     public SortedList<string, CryptoSymbol> SymbolListName { get; } = new();
 }

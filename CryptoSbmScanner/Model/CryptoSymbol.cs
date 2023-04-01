@@ -59,21 +59,41 @@ public class CryptoSymbol
     // Handig om hier een datum van berekening bij te zetten? (voor wie?)
     public float? TrendPercentage { get; set; }
 
+    public DateTime? LastTradeDate { get; set; }
+
     public CryptoQuoteData QuoteData { get; set; }
 
+
     // Interval related data like candles, candlefetched etc.
-    public List<CryptoSymbolInterval> IntervalPeriodList { get; set; } = new List<CryptoSymbolInterval>();
+    public List<CryptoSymbolInterval> IntervalPeriodList { get; set; } = new();
 
     // NB: Verwijst nu naar de IntervalPeriodList<1m>.CandleList
     public SortedList<long, CryptoCandle> CandleList { get { return IntervalPeriodList[0].CandleList; } }
 
     //[Computed]
+    /// Signals
+    public List<CryptoSignal> SignalList { get; } = new();
+    /// Open positions
+    public List<CryptoPosition> PositionList { get; } = new();
+    public SemaphoreSlim PositionListSemaphore { get; set; } = new SemaphoreSlim(1);
     public string DisplayFormat { get; set; } = "N8";
 
 
-    public void InitializePeriods() 
-	    => IntervalPeriodList = GlobalData.IntervalList.Select(interval 
-        => new CryptoSymbolInterval { Interval = interval }).ToList();
+    public void InitializePeriods()
+	//???
+	//    => IntervalPeriodList = GlobalData.IntervalList.Select(interval 
+    //    => new CryptoSymbolInterval { Interval = interval }).ToList();
+    {
+        IntervalPeriodList = new List<CryptoSymbolInterval>();
+        foreach (CryptoInterval interval in GlobalData.IntervalList)
+        {
+            CryptoSymbolInterval symbolPeriod = new()
+            {
+                Interval = interval
+            };
+            IntervalPeriodList.Add(symbolPeriod);
+        }
+    }
 
     public CryptoSymbol() => InitializePeriods();
 

@@ -7,6 +7,122 @@ namespace CryptoSbmScanner.Intern;
 
 public class ThreadLoadData
 {
+
+    //private static void CalculateMissingCandles()
+    //{
+    //    //************************************************************************************
+    //    // Alle intervallen herberekenen (het is een bulk hercalculatie voor de laatste in het geheugen gelezen candles)
+    //    // In theorie is dit allemaal reeds in de database opgeslagen, maar baat het niet dan schaad het niet
+    //    //************************************************************************************
+    //    foreach (CryptoExchange exchange in GlobalData.ExchangeListName.Values)
+    //    {
+    //        //break; //Laat maar even... (HEEL waarschijnlijk een verschil in UTC bij de omzetactie)
+
+    //        GlobalData.AddTextToLogTab("Calculating candle intervals for " + exchange.Name + " (" + exchange.SymbolListName.Count.ToString() + " symbols)");
+    //        foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
+    //        {
+    //            //De "barometer" munten overslagen AUB, die hebben slechts 3 intervallen (beetje quick en dirty allemaal)
+    //            if (symbol.IsBarometerSymbol())
+    //                continue;
+
+    //            if (symbol.CandleList.Any())
+    //            {
+    //                try
+    //                {
+    //                    // Van laag naar hoog zodat de hogere intervallen worden berekend
+    //                    foreach (CryptoSymbolInterval symbolPeriod in symbol.IntervalPeriodList)
+    //                    {
+    //                        CryptoInterval interval = symbolPeriod.Interval;
+    //                        if (interval.ConstructFrom != null)
+    //                        {
+    //                            // Voeg een candle toe aan een hogere tijd interval (eventueel uit db laden)
+    //                            SortedList<long, CryptoCandle> candlesInterval = symbolPeriod.CandleList;
+    //                            if (candlesInterval.Values.Count > 0)
+    //                            {
+    //                                // Periode start
+    //                                long unixFirst = candlesInterval.Values.First().OpenTime;
+    //                                unixFirst -= unixFirst % interval.Duration;
+    //                                DateTime dateFirst = CandleTools.GetUnixDate(unixFirst);
+
+    //                                // Periode einde
+    //                                long unixLast = candlesInterval.Values.Last().OpenTime;
+    //                                unixLast -= unixLast % interval.Duration;
+    //                                DateTime dateLast = CandleTools.GetUnixDate(unixLast);
+
+
+    //                                // TODO: Het aantal variabelen verminderen
+    //                                long unixLoop = unixFirst;
+    //                                DateTime dateLoop = CandleTools.GetUnixDate(unixLoop);
+
+    //                                // Herbereken deze periode opnieuw uit het onderliggende interval
+    //                                while (unixLoop <= unixLast)
+    //                                {
+    //                                    CandleTools.CalculateCandleForInterval(interval, interval.ConstructFrom, symbol, unixLoop);
+
+    //                                    unixLoop += interval.Duration;
+    //                                    dateLoop = CandleTools.GetUnixDate(unixLoop); //ter debug want een unix date is onleesbaar
+    //                                }
+    //                            }
+    //                        }
+
+    //                        // De laatste datum bijwerken (zodat we minder candles hoeven op te halen)
+    //                        CandleTools.UpdateCandleFetched(symbol, interval);
+    //                    }
+    //                }
+    //                catch (Exception error)
+    //                {
+    //                    GlobalData.Logger.Error(error);
+    //                    GlobalData.AddTextToLogTab(error.ToString());
+    //                    throw;
+    //                }
+
+    //            }
+    //        }
+    //    }
+    //}
+
+
+    //private static void RecalculateLastXCandles(int lookback = 1)
+    //{
+    //    // PAS OP, die extra candles moeten overeenkomen met de extra 10 in de GetCandleFetchStart()! Dus 260 + X
+    //    if (GlobalData.Settings.Signal.SignalsActive)
+    //    {
+    //        while (lookback > 0)
+    //        {
+    //            foreach (CryptoSbmScanner.CryptoExchange exchange in GlobalData.ExchangeListName.Values)
+    //            {
+    //                foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
+    //                {
+    //                    if (quoteData.CreateSignals)
+    //                    {
+    //                        foreach (CryptoSymbol symbol in quoteData.SymbolList)
+    //                        {
+    //                            if ((symbol.Status == 1) && !symbol.IsBarometerSymbol() && symbol.IsSpotTradingAllowed)
+    //                            {
+    //                                //foreach (CryptoSymbolInterval period in symbol.IntervalPeriodList)
+    //                                //{
+    //                                //    GlobalData.AddTextToLogTab(string.Format("{0} {1} candles={2}", symbol.Name, period.Interval.Name, period.CandleList.Count));
+    //                                //}
+
+    //                                // Aanbieden voor analyse
+    //                                if (symbol.CandleList.Any() && (symbol.CandleList.Count - lookback >= 0))
+    //                                {
+    //                                    CryptoCandle candle = symbol.CandleList.Values[symbol.CandleList.Count - lookback];
+    //                                    GlobalData.ThreadCreateSignal.AddToQueue(candle);
+    //                                }
+    //                            }
+    //                        }
+    //                    }
+
+    //                }
+    //            }
+
+    //            lookback--;
+    //        }
+    //    }
+    //}
+
+
     public static async Task ExecuteAsync()
     {
         try
@@ -169,7 +285,7 @@ public class ThreadLoadData
                                     BinanceStream1mCandles.symbols.Add(symbol.Name);
 
                                     // Ergens een lijn trekken? 
-                                    if (BinanceStream1mCandles.symbols.Count >= 175)
+                                    if (BinanceStream1mCandles.symbols.Count >= 180)
                                         break;
                                 }
 
@@ -214,6 +330,19 @@ public class ThreadLoadData
             var whatever3 = Task.Run(() => { GlobalData.ThreadCreateSignal.Execute(); }); // Geen await, forever long running
 
 
+            //************************************************************************************
+            // Nu we de achterstand ingehaald hebben kunnen/mogen we analyseren (signals maken)
+            //************************************************************************************
+            //GlobalData.AddTextToLogTab("Starting task for handling orders");
+            //var whatever31 = Task.Run(() => { GlobalData.ThreadOrderHandler.ExecuteAsync(); }); // Geen await, forever long running
+
+
+            //************************************************************************************
+            // Nu we de achterstand ingehaald hebben kunnen/mogen we monitoren
+            //************************************************************************************
+            //GlobalData.AddTextToLogTab("Starting task for monitor candles");
+            //var whatever4 = Task.Run(async () => { GlobalData.TaskMonitorSignal.Execute(); }); // Geen await, forever long running
+
             var assembly = Assembly.GetExecutingAssembly().GetName();
             string appName = assembly.Name.ToString();
             string appVersion = assembly.Version.ToString();
@@ -244,3 +373,4 @@ public class ThreadLoadData
 
 
 }
+

@@ -6,14 +6,6 @@ namespace CryptoSbmScanner.Intern;
 public static class CandleTools
 {
     /// <summary>
-    /// Is de basismunt van deze munt in de instellingen aangevinkt?
-    /// </summary>
-    /// <param name="symbol"></param>
-    /// <returns></returns>
-    static public bool MatchingQuote(CryptoSymbol symbol) => GlobalData.Settings.QuoteCoins.TryGetValue(symbol.Quote, out CryptoQuoteData quote) && quote.FetchCandles;
-
-
-    /// <summary>
     /// Datum's kunnen afrondings problemen veroorzaken (op dit moment niet meer duidelijk waarom dat zo was?)
     /// Het resultaat valt in het opgegeven interval (60, 120, etc)
     /// NB: De candles bevatten altijd een datumtijd in UTC
@@ -193,6 +185,8 @@ public static class CandleTools
     {
         // De eventueel ontbrekende candles maken (dat kan een hele reeks zijn)
         // Die zetten we op de close van laatste candle (wat moeten we anders?)
+        // (niet bedoeld om ontbrekende <tussenliggende> candles in te voegen)
+
         if (candles.Count > 0)
         {
             CryptoCandle stickOld = candles.Values.Last();
@@ -211,16 +205,15 @@ public static class CandleTools
                     CryptoCandle stickNew = new()
                     {
                         Symbol = stickOld.Symbol,
-                        Interval = interval
+                        Interval = interval,
+                        OpenTime = nextCandleUnix,
+                        Open = stickOld.Close,
+                        Close = stickOld.Close,
+                        Low = stickOld.Close,
+                        High = stickOld.Close,
+                        Volume = 0
                     };
                     candles.Add(nextCandleUnix, stickNew);
-
-                    stickNew.OpenTime = nextCandleUnix;
-                    stickNew.Open = stickOld.Close;
-                    stickNew.Close = stickOld.Close;
-                    stickNew.Low = stickOld.Close;
-                    stickNew.High = stickOld.Close;
-                    stickNew.Volume = 1;
                 }
 
                 // De gegevens voor de volgende candle (bevat dezelfde gegevens)

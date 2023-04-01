@@ -8,7 +8,7 @@ public class SignalCandleJumpDown : SignalBase
     public SignalCandleJumpDown(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
         SignalMode = SignalMode.modeInfo;
-        SignalStrategy = SignalStrategy.strategyCandlesJumpDown;
+        SignalStrategy = SignalStrategy.candlesJumpDown;
     }
 
 

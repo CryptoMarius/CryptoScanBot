@@ -6,16 +6,17 @@ namespace CryptoSbmScanner.Signal;
 
 // De SBM methode die Marco hanteerd
 
-public class SignalSbm2Overbought : SignalSbmBase
+public class SignalSbm2Overbought : SignalSbmBaseOverbought
 {
     public SignalSbm2Overbought(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
         SignalMode = SignalMode.modeShort;
-        SignalStrategy = SignalStrategy.strategySbm2Overbought;
+        SignalStrategy = SignalStrategy.sbm2Overbought;
     }
 
 
-    public bool IsInLowerPartOfBollingerBands(int candleCount = 10, decimal percentage = 1.0m)
+
+    public bool IsInLowerPartOfBollingerBands(int candleCount = 10, decimal percentage = 99.50m)
     {
         // Is de prijs onlangs dicht bij de onderste bb geweest?
         CryptoCandle last = CandleLast;
@@ -25,23 +26,18 @@ public class SignalSbm2Overbought : SignalSbmBase
             // Dat is eigenlijk precies andersom dan wat we in gedachten hebben
             // Onderstaande berekening doet het andersom, bovenste is 0% en onderste is 100%
             // Dan loopt ie gelijk met die van Marco wat makkelijker te vergelijken is
-            decimal value = 100m * (decimal)last.CandleData.BollingerBands.UpperBand / last.Close;
+            decimal value = 100m * (decimal)last.CandleData.BollingerBandsUpperBand / (decimal)last.Close;
             if (value <= percentage)
                 return true;
 
-            if (!Candles.TryGetValue(last.OpenTime - 1 * Interval.Duration, out last))
-            {
-                ExtraText = "geen prev candle! " + last.DateLocal.ToString();
+            if (!GetPrevCandle(last, out last))
                 return false;
-            }
-            if (!IndicatorsOkay(last))
-                return false;
-
             candleCount--;
         }
 
         return false;
     }
+
 
 
     public override bool IsSignal()
@@ -51,7 +47,7 @@ public class SignalSbm2Overbought : SignalSbmBase
         // De breedte van de bb is ten minste 1.5%
         if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.SbmBBMinPercentage, GlobalData.Settings.Signal.SbmBBMaxPercentage))
         {
-            ExtraText = "bb.width te klein " + CandleLast.CandleData.BollingerBandsPercentage.ToString("N2");
+            ExtraText = "bb.width te klein " + CandleLast.CandleData.BollingerBandsPercentage?.ToString("N2");
             return false;
         }
 
@@ -63,13 +59,19 @@ public class SignalSbm2Overbought : SignalSbmBase
         }
 
         if (!IsInLowerPartOfBollingerBands(GlobalData.Settings.Signal.Sbm2CandlesLookbackCount, GlobalData.Settings.Signal.Sbm2UpperPartOfBbPercentage))
+        {
+            ExtraText = "geen hoge prijs in de laatste x candles";
             return false;
+        }
 
-        if (!IsMacdRecoveryOverbought(GlobalData.Settings.Signal.Sbm2CandlesForMacdRecovery))
-            return false;
+        //if (!IsMacdRecoveryOverbought(GlobalData.Settings.Signal.SbmCandlesForMacdRecovery))
+        //{
+        //    ExtraText = "Heen herstel van MACD";
+        //    return true;
+        //}
 
-        if (CheckMaCrossings())
-            return false;
+        //if (CheckMaCrossings())
+        //    return false;
 
         return true;
     }

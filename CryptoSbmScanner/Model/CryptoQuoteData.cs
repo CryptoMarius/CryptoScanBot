@@ -15,6 +15,15 @@ public class CryptoQuoteData
     public decimal MinimalVolume { get; set; }
     public decimal MinimalPrice { get; set; }
 
+    // Het initiele aankoopbedrag
+    public decimal BuyAmount { get; set; }
+
+    // Het initiele aankooppercentage
+    public decimal BuyPercentage { get; set; }
+
+    // Maximaal aantal slots op de exchange
+    public int SlotsMaximal { get; set; }
+
     [JsonConverter(typeof(Intern.ColorConverter))]
     public Color DisplayColor { get; set; } = Color.White;
 

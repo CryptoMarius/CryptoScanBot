@@ -2,15 +2,15 @@ Mis je iets in onderstaande bevindingen/todo's of toekomstige todo's, geef het A
 
 
 Bevindingen/Todo's:
-- Een typefoutje in een error-melding in de log. Ik had even internet uitstaan en toen kwam in de log deze melding: "HttpRequestException - Er is een fout opgetreden bij het verzenden van het aanvraag" : het/de aanvraag.
-(ik kan deze zo snel niet vinden, zijn er nog andere vertaal zaken aanwezig?)
-- De logmeldingen werken van boven naar beneden (iemand stelde voor om het om te draaien)
+- Meldingen naar een syslog server sturen (statistiek)
+- Eem detectie maken die als de candlestream niet meer werkt deze opnieuw opstart (mag best wel een paar minuten duren)
+- Indien de applicatie traag(?) afsluit wordt tijdens het afsluiten opnieuw begonnen met het activeren van de scanner (ophalen candles enzovoort)
+- Kunnen dubbelklikken op de US dollar index e.d. en dat je dan in Tradingview uitkomy bij de juist chart uitkomt.
+- De listbox met munten op links met een splitter kunnen verbergen / c.q. dichtklappen
 - Teksten kunnen vertalen (NL en EN lopen nu wel erg vaak door elkaar)
 - Zien hoeveel een munt gestegen of gedaald is na de initiele melding (dat vereist een ander grid).
 - Een Telegram die de meldingen kan weergeven (dat is eigenlijk wat overkill, maar omdat het kan)
-- Het geheel open source maken (eerste aanvang reeds gemaakt op github, nog wat vertalen naar het Engels)
 - Bij het opstarten de laatste X candles opnieuw berekenen (dat geeft helaas aardig wat overhead, moet optimaler, ook geluiden e.d.)
-- Op de naam van de kolom kunnen sorteren en via een tweede en derde sleutel iets aan volgorde aanbrengen (nadruk op grote intervallen)
 - Experiment om een Mac versie te bouwen dmv MAUI XAML (een compleet nieuwe aanvliegroute van Microsoft)
   Maar ik verwacht een duizendtal nieuwe problemen met geluid, voice, storage, sockets, hibernate/sleep enzovoort)
 - Visuele herkenning dat de scanner loopt (de getallen linksboven zeggen de mensen niet zoveel)
@@ -24,10 +24,26 @@ Bevindingen/Todo's:
 - Het symbol overzicht uitbreiden met volume, prijs e.d. Kunnen filteren op volume etc.
 - Black theming  https://stackoverflow.com/questions/61145347/c-how-to-make-a-dark-mode-theme-in-windows-forms-separate-form-as-select-the <geen prio>
   Er is nu een slappe variant die iets met grijs doet (omdat anders de scrollbars en headers zo'n lelijk getoond worden), ik ben er niet tevreden over.
-- Bij veel signalen wordt de applicatie traag. Het verversen van de lijst met signalen lijkt hiervan zelf de veroorzaker te zijn
-  Dat zou opgelost kunnen zijn, er stond een vertraging (sleep(250) in, werkelijk?), zonder deze is het wel stukken beter, nog steeds tikkeltje langzaam..
 - Ondersteuning van andere exchanges (dat heeft momenteel niet mijn prioriteit)
   Gezien het geheugengebruik die de tool heeft is een combinatie van exchanges niet aan te raden.
+
+TODO:
+  Is het nieuwe experiment met de SMA20 - Slope positive iets, of is dat ten dode opgeschreven
+  (ik heb echt 1 mooie mogelijkheid gezien, maar je moet het maar net openen en opmerken)
+  Ik denk niet dat deze aanpak geschikt is voor een bot?
+  (ach, waarom niet, 1 extra conditie, de ema50 > sma50)
+
+TODO: De oversold en Overbought zijn "verschillend"
+  de GiveUp() en CanStepIn zijn soms niet geimplementeerd
+
+TODO: Wil ik de bot uitleveren in de volgende versie?
+  Dat is nog wel een dingetje om te introduceren en te documenteren?
+
+TODO: HARDCODED API KEY's weghalen (ze kunner er niets mee, maar just in case)
+  Alleen voro Papertrading dus big deal...
+
+- In de Overbought van de SBM wordt geen rekening gehouden met de percentages tussen de MA lijnen
+
 
 
 xx-xx-2023 1.8.0

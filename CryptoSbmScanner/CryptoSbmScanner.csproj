@@ -167,6 +167,7 @@
     <PackageReference Include="NLog">
       <Version>5.1.2</Version>
     </PackageReference>
+    <PackageReference Include="NPOI" Version="2.6.0" />
     <PackageReference Include="SimpleInjector">
       <Version>5.4.1</Version>
     </PackageReference>

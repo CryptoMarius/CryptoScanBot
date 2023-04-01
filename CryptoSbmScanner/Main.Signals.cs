@@ -116,35 +116,44 @@ public partial class FrmMain
 
 
         subItem = item1.SubItems.Add(signal.StrategyText);
-        switch (signal.Strategy)
+        if (signal.Mode != SignalMode.modeInfo2)
         {
-            case SignalStrategy.strategyCandlesJumpUp:
-            case SignalStrategy.strategyCandlesJumpDown:
-                if (GlobalData.Settings.Signal.ColorJump != Color.White)
-                    subItem.BackColor = GlobalData.Settings.Signal.ColorJump;
-                break;
+            switch (signal.Strategy)
+            {
+                case SignalStrategy.candlesJumpUp:
+                case SignalStrategy.candlesJumpDown:
+                    if (GlobalData.Settings.Signal.ColorJump != Color.White)
+                        subItem.BackColor = GlobalData.Settings.Signal.ColorJump;
+                    break;
 
-            case SignalStrategy.strategyStobbOverbought:
-            case SignalStrategy.strategyStobbOversold:
-                if ((signal.Mode != SignalMode.modeInfo) && (GlobalData.Settings.Signal.ColorStobb != Color.White))
-                    subItem.BackColor = GlobalData.Settings.Signal.ColorStobb;
-                break;
+                case SignalStrategy.stobbOverbought:
+                case SignalStrategy.stobbOversold:
+                    if (GlobalData.Settings.Signal.ColorStobb != Color.White)
+                        subItem.BackColor = GlobalData.Settings.Signal.ColorStobb;
+                    break;
 
-            case SignalStrategy.strategySbm1Overbought:
-            case SignalStrategy.strategySbm1Oversold:
-            case SignalStrategy.strategySbm2Overbought:
-            case SignalStrategy.strategySbm2Oversold:
-            case SignalStrategy.strategySbm3Overbought:
-            case SignalStrategy.strategySbm3Oversold:
-                if ((signal.Mode != SignalMode.modeInfo) && (GlobalData.Settings.Signal.ColorSbm != Color.White))
-                    subItem.BackColor = GlobalData.Settings.Signal.ColorSbm;
-                break;
+                case SignalStrategy.sbm1Overbought:
+                case SignalStrategy.sbm1Oversold:
+                case SignalStrategy.sbm2Overbought:
+                case SignalStrategy.sbm2Oversold:
+                case SignalStrategy.sbm3Overbought:
+                case SignalStrategy.sbm3Oversold:
+                case SignalStrategy.sbm4Overbought:
+                case SignalStrategy.sbm4Oversold:
+                case SignalStrategy.sbm5Overbought:
+                case SignalStrategy.sbm5Oversold:
+                    if (GlobalData.Settings.Signal.ColorSbm != Color.White)
+                        subItem.BackColor = GlobalData.Settings.Signal.ColorSbm;
+                    break;
 
-            case SignalStrategy.strategyPriceCrossedSma20:
-            case SignalStrategy.strategyPriceCrossedSma50:
-                //if (GlobalData.Settings.Signal.ColorJump != Color.White)
-                //    subItem.BackColor = GlobalData.Settings.Signal.ColorJump;
-                break;
+                case SignalStrategy.priceCrossedEma20:
+                case SignalStrategy.priceCrossedEma50:
+                case SignalStrategy.priceCrossedSma20:
+                case SignalStrategy.priceCrossedSma50:
+                    //if (GlobalData.Settings.Signal.ColorJump != Color.White)
+                    //    subItem.BackColor = GlobalData.Settings.Signal.ColorJump;
+                    break;
+            }
         }
 
 
@@ -176,65 +185,65 @@ public partial class FrmMain
             item1.SubItems.Add(signal.Last24Hours.ToString("N2")).ForeColor = Color.Green;
 
 
-        item1.SubItems.Add(signal.BollingerBandsPercentage.ToString("N2"));
+        item1.SubItems.Add(signal.BollingerBandsPercentage?.ToString("N2"));
 
 
         if (!GlobalData.Settings.Signal.HideTechnicalStuffSignals)
         {
             item1.SubItems.Add(" ");
-            float value;
+            double? value;
 
 
             // Oversold/overbougt
             value = signal.Rsi; // 0..100
             if (value < 30f)
-                item1.SubItems.Add(value.ToString("N2")).ForeColor = Color.Red;
+                item1.SubItems.Add(value?.ToString("N2")).ForeColor = Color.Red;
             else if (value > 70f)
-                item1.SubItems.Add(value.ToString("N2")).ForeColor = Color.Green;
+                item1.SubItems.Add(value?.ToString("N2")).ForeColor = Color.Green;
             else
-                item1.SubItems.Add(value.ToString("N2"));
+                item1.SubItems.Add(value?.ToString("N2"));
 
             // Oversold/overbougt
             value = signal.StochOscillator;
             if (value < 20f)
-                item1.SubItems.Add(value.ToString("N2")).ForeColor = Color.Red;
+                item1.SubItems.Add(value?.ToString("N2")).ForeColor = Color.Red;
             else if (value > 80f)
-                item1.SubItems.Add(value.ToString("N2")).ForeColor = Color.Green;
+                item1.SubItems.Add(value?.ToString("N2")).ForeColor = Color.Green;
             else
-                item1.SubItems.Add(value.ToString("N2"));
+                item1.SubItems.Add(value?.ToString("N2"));
 
             // Oversold/overbougt
             value = signal.StochSignal;
             if (value < 20f)
-                item1.SubItems.Add(value.ToString("N2")).ForeColor = Color.Red;
+                item1.SubItems.Add(value?.ToString("N2")).ForeColor = Color.Red;
             else if (value > 80f)
-                item1.SubItems.Add(value.ToString("N2")).ForeColor = Color.Green;
+                item1.SubItems.Add(value?.ToString("N2")).ForeColor = Color.Green;
             else
-                item1.SubItems.Add(value.ToString("N2"));
+                item1.SubItems.Add(value?.ToString("N2"));
 
 
             value = signal.Sma200;
-            item1.SubItems.Add(value.ToString(signal.Symbol.DisplayFormat));
+            item1.SubItems.Add(value?.ToString(signal.Symbol.DisplayFormat));
 
             value = signal.Sma50;
             if (value < signal.Sma200)
-                item1.SubItems.Add(value.ToString(signal.Symbol.DisplayFormat)).ForeColor = Color.Green;
+                item1.SubItems.Add(value?.ToString(signal.Symbol.DisplayFormat)).ForeColor = Color.Green;
             else if (value > signal.Sma200)
-                item1.SubItems.Add(value.ToString(signal.Symbol.DisplayFormat)).ForeColor = Color.Red;
+                item1.SubItems.Add(value?.ToString(signal.Symbol.DisplayFormat)).ForeColor = Color.Red;
             else
-                item1.SubItems.Add(value.ToString(signal.Symbol.DisplayFormat));
+                item1.SubItems.Add(value?.ToString(signal.Symbol.DisplayFormat));
 
             value = signal.Sma20;
             if (value < signal.Sma50)
-                item1.SubItems.Add(value.ToString(signal.Symbol.DisplayFormat)).ForeColor = Color.Green;
+                item1.SubItems.Add(value?.ToString(signal.Symbol.DisplayFormat)).ForeColor = Color.Green;
             else if (value > signal.Sma50)
-                item1.SubItems.Add(value.ToString(signal.Symbol.DisplayFormat)).ForeColor = Color.Red;
+                item1.SubItems.Add(value?.ToString(signal.Symbol.DisplayFormat)).ForeColor = Color.Red;
             else
-                item1.SubItems.Add(value.ToString(signal.Symbol.DisplayFormat));
+                item1.SubItems.Add(value?.ToString(signal.Symbol.DisplayFormat));
 
             // de psar zou je wel mogen "clampen"???
             value = signal.PSar; //.Clamp(signal.Symbol.PriceMinimum, signal.Symbol.PriceMaximum, signal.Symbol.PriceTickSize);
-            string orgValue = ((decimal?)value)?.ToString(signal.Symbol.DisplayFormat);
+            string orgValue = value?.ToString(signal.Symbol.DisplayFormat);
             if (value <= signal.Sma20)
                 item1.SubItems.Add(orgValue).ForeColor = Color.Green;
             else if (value > signal.Sma20)
@@ -505,7 +514,8 @@ public partial class FrmMain
     private void ListViewSignals_ColumnClick(object sender, ColumnClickEventArgs e)
     {
         ListViewColumnSorter listViewColumnSorter = (ListViewColumnSorter)listViewSignals.ListViewItemSorter;
-        
+
+
         // Determine if clicked column is already the column that is being sorted.
         if (e.Column == listViewColumnSorter.SortColumn)
         {

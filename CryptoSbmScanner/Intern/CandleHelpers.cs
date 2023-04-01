@@ -219,9 +219,9 @@ public static class Helper
             value = candle.Low;
         else
             value = Math.Min(candle.Open, candle.Close);
-        decimal band = (decimal)candle.CandleData.BollingerBands.LowerBand.Value;
+        double? band = candle.CandleData.Sma20 - candle.CandleData.BollingerBandsDeviation;
         //band = band.Clamp(candle.Symbol.PriceMinimum, candle.Symbol.PriceMaximum, candle.Symbol.PriceTickSize);
-        if (value <= band)
+        if (value <= (decimal)band)
             return true;
         return false;
     }
@@ -236,9 +236,9 @@ public static class Helper
             value = candle.High;
         else
             value = Math.Max(candle.Open, candle.Close);
-        decimal band = (decimal)candle.CandleData.BollingerBands.UpperBand.Value;
+        double? band = candle.CandleData.Sma20 + candle.CandleData.BollingerBandsDeviation;
         //band = band.Clamp(candle.Symbol.PriceMinimum, candle.Symbol.PriceMaximum, candle.Symbol.PriceTickSize);
-        if (value >= band)
+        if (value >= (decimal)band)
             return true;
         return false;
     }
@@ -247,9 +247,9 @@ public static class Helper
 
     public static bool IsStochOverbought(this CryptoCandle candle)
     {
-        if (candle.CandleData.Stoch.Signal.Value < 80)
+        if (candle.CandleData.StochSignal < 80)
             return false;
-        if (candle.CandleData.Stoch.Oscillator.Value < 80)
+        if (candle.CandleData.StochOscillator < 80)
             return false;
         return true;
     }
@@ -259,9 +259,9 @@ public static class Helper
     public static bool IsStochOversold(this CryptoCandle candle)
     {
         // Stochastic Oscillator: K en D (langzaam) moeten kleiner zijn dan 20% (oversold)
-        if (candle.CandleData.Stoch.Signal.Value > 20)
+        if (candle.CandleData.StochSignal > 20)
             return false;
-        if (candle.CandleData.Stoch.Oscillator.Value > 20)
+        if (candle.CandleData.StochOscillator > 20)
             return false;
         return true;
     }
@@ -269,7 +269,7 @@ public static class Helper
 
     public static bool IsRsiOverbought(this CryptoCandle candle)
     {
-        if (candle.CandleData.Rsi.Rsi.Value < 70)
+        if (candle.CandleData.Rsi < 70)
             return false;
         return true;
     }
@@ -279,118 +279,56 @@ public static class Helper
     public static bool IsRsiOversold(this CryptoCandle candle)
     {
         // Rsiastic Oscillator: K en D (langzaam) moeten kleiner zijn dan 20% (oversold)
-        if (candle.CandleData.Rsi.Rsi.Value > 30)
+        if (candle.CandleData.Rsi > 30)
             return false;
         return true;
     }
 
 
-    public static bool IsSbmConditionsOversold(this CryptoCandle candle, bool includePsarCheck = true)
+    public static bool InsideBoundaries(this CryptoSymbol symbol, decimal? quantity, decimal? price, out string text)
     {
-        // Oversold (denk groen-geel-rood) - long
-        // 200 (red)
-        // 50 (orange)
-        // 20 (green)
-        // psar
-
-        // Staan de 3 ma-lijnen (200, 50, 20) en psar in de juiste volgorde
-        if (candle.CandleData.Sma50.Sma.Value >= candle.CandleData.Sma200.Sma.Value)
-            return false;
-        if (candle.CandleData.BollingerBands.Sma.Value >= candle.CandleData.Sma200.Sma.Value)
-            return false;
-        if (candle.CandleData.BollingerBands.Sma.Value >= candle.CandleData.Sma50.Sma.Value)
-            return false;
-
-        if (includePsarCheck)
+        if (quantity.HasValue)
         {
-            if (candle.CandleData.PSar > candle.CandleData.BollingerBands.Sma.Value)
+            if (quantity < symbol.QuantityMinimum)
+            {
+                text = string.Format("ERROR minimum quantity {0} < {1}", quantity.ToString0("N6"), symbol.QuantityMinimum.ToString0());
                 return false;
-            // Dan is de psar omgeslagen
-            if ((decimal)candle.CandleData.PSar <= candle.Close)
+            }
+            if (quantity > symbol.QuantityMaximum)
+            {
+                text = string.Format("ERROR maximum quantity {0} > {1}", quantity.ToString0("N6"), symbol.QuantityMaximum.ToString0());
                 return false;
+            }
         }
 
-        if (!candle.IsMa200AndMa50OkayOversold(GlobalData.Settings.Signal.SbmMa200AndMa50Percentage))
-            return false;
-        if (!candle.IsMa200AndMa20OkayOversold(GlobalData.Settings.Signal.SbmMa200AndMa20Percentage))
-            return false;
-        if (!candle.IsMa50AndMa20OkayOversold(GlobalData.Settings.Signal.SbmMa50AndMa20Percentage))
-            return false;
 
-        return true;
-    }
-
-
-    public static bool IsSbmConditionsOverbought(this CryptoCandle candle, bool includePsarCheck = true)
-    {
-        // Overbought (denk groen-geel-rood) - short
-        // psar
-        // 20 (green)
-        // 50 (orange)
-        // 200 (red)
-
-        // Staan de 3 ma-lijnen (200, 50, 20) en psar in de juiste volgorde
-        if (candle.CandleData.Sma200.Sma.Value >= candle.CandleData.Sma50.Sma.Value)
-            return false;
-        if (candle.CandleData.Sma200.Sma.Value >= candle.CandleData.BollingerBands.Sma.Value)
-            return false;
-        if (candle.CandleData.Sma50.Sma.Value >= candle.CandleData.BollingerBands.Sma.Value)
-            return false;
-
-        if (includePsarCheck)
+        if (price.HasValue)
         {
-            if (candle.CandleData.PSar < candle.CandleData.BollingerBands.Sma.Value)
+            if (price < symbol.PriceMinimum)
+            {
+                text = string.Format("ERROR minimum price {0} < {1}", price.ToString0("N6"), symbol.PriceMinimum.ToString0());
                 return false;
-            // Dan is de psar omgeslagen
-            if ((decimal)candle.CandleData.PSar >= candle.Close)
+            }
+            if (price > symbol.PriceMaximum)
+            {
+                text = string.Format("ERROR maximum price {0} > {1}", price.ToString0("N6"), symbol.PriceMaximum.ToString0());
                 return false;
+            }
         }
 
-        return true;
-    }
 
-
-
-    public static bool IsMa200AndMa50OkayOversold(this CryptoCandle candle, decimal percentage = 0.3m)
-    {
-        // En aanvullend, de ma lijnen moeten afwijken (bij benadering, dat hoeft niet geheel exact)
-        decimal value = (decimal)candle.CandleData.Sma200.Sma.Value - (decimal)candle.CandleData.Sma50.Sma.Value;
-        decimal value2 = ((decimal)candle.CandleData.Sma200.Sma.Value + (decimal)candle.CandleData.Sma50.Sma.Value) / 2;
-        decimal perc = 100 * value / value2;
-        if (perc < percentage)
+        if (quantity.HasValue && price.HasValue)
         {
-            //ExtraText = string.Format("sma200 en sma50 < {0}%", percentage);
-            return false;
+            // En product van de twee
+            if (price * quantity <= symbol.MinNotional)
+            {
+                //(buyPrice * buyQuantity).ToString0()
+                text = string.Format("ERROR minimal notation {0} * {1} <= {2}", quantity.ToString0("N6"), price.ToString0("N6"), symbol.MinNotional.ToString0());
+                return false;
+            }
         }
-        return true;
-    }
 
-
-    public static bool IsMa50AndMa20OkayOversold(this CryptoCandle candle, decimal percentage = 0.5m)
-    {
-        decimal value = (decimal)candle.CandleData.Sma50.Sma.Value - (decimal)candle.CandleData.BollingerBands.Sma.Value;
-        decimal value2 = ((decimal)candle.CandleData.Sma50.Sma.Value + (decimal)candle.CandleData.BollingerBands.Sma.Value) / 2;
-        decimal perc = 100 * value / value2;
-        if (perc < percentage)
-        {
-            //ExtraText = string.Format("sma50 en sma20  < {0}%", percentage);
-            return false;
-        }
-        return true;
-    }
-
-
-    public static bool IsMa200AndMa20OkayOversold(this CryptoCandle candle, decimal percentage = 0.7m)
-    {
-        // En aanvullend, de ma lijnen moeten afwijken (bij benadering, dat hoeft niet geheel exact)
-        decimal value = (decimal)candle.CandleData.Sma200.Sma.Value - (decimal)candle.CandleData.BollingerBands.Sma.Value;
-        decimal value2 = ((decimal)candle.CandleData.Sma200.Sma.Value + (decimal)candle.CandleData.BollingerBands.Sma.Value) / 2;
-        decimal perc = 100 * value / value2;
-        if (perc < percentage)
-        {
-            //ExtraText = string.Format("sma200 en sma20  < {0}%", percentage);
-            return false;
-        }
+        text = "";
         return true;
     }
 

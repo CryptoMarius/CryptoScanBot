@@ -47,7 +47,8 @@ public class SignalBase
     /// <summary>
     /// Is het een signaal?
     /// </summary>
-    public virtual bool IsSignal() => false;
+    public virtual bool IsSignal()
+        => false;
 
 
     public virtual bool AdditionalChecks(CryptoCandle candle, out string response)
@@ -57,7 +58,8 @@ public class SignalBase
     }
 
 
-    public virtual string DisplayText() => $"stoch={CandleLast.CandleData.Stoch.Oscillator.Value:N2} signal={CandleLast.CandleData.Stoch.Signal.Value:N2}";
+    public virtual string DisplayText() 
+        => $"stoch={CandleLast.CandleData.StochOscillator.Value:N8} signal={CandleLast.CandleData.StochSignal.Value:N8}";
 
 
     /// <summary>

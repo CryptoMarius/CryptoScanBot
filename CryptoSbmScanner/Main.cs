@@ -4,6 +4,7 @@ using CryptoSbmScanner.Binance;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Settings;
+using CryptoSbmScanner.Signal;
 using CryptoSbmScanner.TradingView;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Win32;
@@ -115,6 +116,10 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
 
     private void ApplySettings()
     {
+        // fix duplicate storage of bool's (need migration)
+        FrmSettings.FixStupidCheckboxes(GlobalData.Settings);
+
+
         comboBoxBarometerQuote.BeginUpdate();
         comboBoxBarometerInterval.BeginUpdate();
         try
@@ -229,6 +234,7 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
     {
         GlobalData.ApplicationStatus = ApplicationStatus.AppStatusPrepare;
         GlobalData.ThreadCreateSignal = new ThreadCreateSignal(BinanceShowNotification);
+        //GlobalData.TaskMonitorSignal = new ThreadMonitorSignal();
 
         // Iets met netwerk verbindingen wat nog niet "up" is?
         if (sleepAwhile)
@@ -242,17 +248,17 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
         GlobalData.ApplicationStatus = ApplicationStatus.AppStatusExiting;
 
         // De socket streams
-        if (GlobalData.TaskBinanceStreamPriceTicker != null)
-            _ = GlobalData.TaskBinanceStreamPriceTicker.StopAsync();
+        GlobalData.TaskBinanceStreamPriceTicker?.StopAsync();
 
         // Threads (of tasks)
-        GlobalData.ThreadCreateSignal.Stop();
+        GlobalData.ThreadCreateSignal?.Stop();
+        //GlobalData.TaskMonitorSignal?.Stop();
 
         foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
         {
             foreach (BinanceStream1mCandles binanceStream1mCandles in quoteData.BinanceStream1mCandles)
             {
-                _ = binanceStream1mCandles.StopAsync();
+                binanceStream1mCandles?.StopAsync();
             }
             quoteData.BinanceStream1mCandles.Clear();
         }
@@ -319,15 +325,20 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
 
             if (text != "")
                 text = DateTime.Now.ToLocalTime() + " " + text;
-            if (extraLineFeed)
-                text += "\r\n\r\n";
-            else
-                text += "\r\n";
+            //if (extraLineFeed)
+            //    text += "\r\n\r\n";
+            //else
+            //    text += "\r\n";
 
-            if (InvokeRequired)
-                Invoke((MethodInvoker)(() => TextBoxLog.AppendText(text)));
-            else
-                TextBoxLog.AppendText(text);
+            //if (InvokeRequired)
+            //    Invoke((MethodInvoker)(() => TextBoxLog.AppendText(text)));
+            //else
+            //    TextBoxLog.AppendText(text);
+
+            //testen!
+            if (extraLineFeed)
+                text += "\r\n";
+            logQueue.Enqueue(text);
         }
     }
 
@@ -1096,14 +1107,22 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
 
     private void MainMenuClearAll_Click(object sender, EventArgs e)
     {
+        this.Text = "";
         TextBoxLog.Clear();
         createdSignalCount = 0;
         ListViewSignalsMenuItemClearSignals_Click(null, null);
 
-        GlobalData.TaskBinanceStreamPriceTicker.tickerCount = 0;
         GlobalData.ThreadCreateSignal.analyseCount = 0;
+        GlobalData.TaskBinanceStreamPriceTicker.tickerCount = 0;
 
-        this.Text = "";
+        foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
+        {
+            for (int i = 0; i < quoteData.BinanceStream1mCandles.Count; i++)
+            {
+                BinanceStream1mCandles binanceStream1mCandles = quoteData.BinanceStream1mCandles[i];
+                binanceStream1mCandles.CandlesKLinesCount = 0;
+            }
+        }
     }
 
 
@@ -1138,7 +1157,7 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
     private static void PlaySound(CryptoSignal signal, bool playSound, bool playSpeech, string soundName, ref long lastSound)
     {
         // Reduce the amount of sounds/speech
-        if (signal.EventTime > lastSound)
+        if (signal.EventTime > lastSound && signal.Mode != SignalMode.modeInfo2)
         {
             //GlobalData.AddTextToLogTab(signal.Symbol.Name + " " + signal.StrategyText + " " + lastSound.ToString());
             if (playSound && (soundName != ""))
@@ -1178,7 +1197,8 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
                 while (signalQueue.Count > 0)
                 {
                     CryptoSignal signal = signalQueue.Dequeue();
-                    signals.Add(signal);
+                    if (signal != null)
+                        signals.Add(signal);
                 }
 
                 // verwerken..
@@ -1195,6 +1215,42 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
                 Monitor.Exit(signalQueue);
             }
         }
+
+
+        // Speed up adding text
+        if (logQueue.Count > 0)
+        {
+            Monitor.Enter(logQueue);
+            try
+            {
+                List<CryptoSignal> signals = new();
+
+                StringBuilder stringBuilder = new();
+
+                while (logQueue.Count > 0)
+                {
+                    string text = logQueue.Dequeue();
+                    stringBuilder.AppendLine(text);
+                }
+
+                // verwerken..
+                Task.Factory.StartNew(() =>
+                {
+                    Invoke(new Action(() =>
+                    {
+                        string text = stringBuilder.ToString().TrimEnd() + "\r\n";
+                        if (InvokeRequired)
+                            Invoke((MethodInvoker)(() => TextBoxLog.AppendText(text)));
+                        else
+                            TextBoxLog.AppendText(text);
+                    }));
+                });
+            }
+            finally
+            {
+                Monitor.Exit(logQueue);
+            }
+        }
     }
 
     private void BinanceShowNotification(CryptoSignal signal)
@@ -1202,6 +1258,9 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
         createdSignalCount++;
         string text = "signal: " + signal.Symbol.Name + " " + signal.Interval.Name + " " + signal.ModeText + " " + signal.StrategyText + " " + signal.EventText;
         GlobalData.AddTextToLogTab(text);
+
+        if (signal.BackTest)
+            return;
 
         // Zet de laatste munt in de "caption" (en taskbar) van de applicatie bar (visuele controle of er meldingen zijn)
         Invoke(new Action(() => { this.Text = signal.Symbol.Name + " " + createdSignalCount.ToString(); }));
@@ -1226,42 +1285,49 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
 
 
 
-        // Play a sound
-        switch (signal.Strategy)
+        // Speech and/or sound
+        if (signal.Mode != SignalMode.modeInfo2) // disqualifield signals
         {
-            case SignalStrategy.strategyCandlesJumpUp:
-                PlaySound(signal, GlobalData.Settings.Signal.PlaySoundCandleJumpSignal, GlobalData.Settings.Signal.PlaySpeechCandleJumpSignal,
-                    GlobalData.Settings.Signal.SoundCandleJumpUp, ref LastSignalSoundCandleJumpUp);
-                break;
-            case SignalStrategy.strategyCandlesJumpDown:
-                PlaySound(signal, GlobalData.Settings.Signal.PlaySoundCandleJumpSignal, GlobalData.Settings.Signal.PlaySpeechCandleJumpSignal,
-                    GlobalData.Settings.Signal.SoundCandleJumpDown, ref LastSignalSoundCandleJumpDown);
-                break;
+            switch (signal.Strategy)
+            {
+                case SignalStrategy.candlesJumpUp:
+                    PlaySound(signal, GlobalData.Settings.Signal.PlaySoundCandleJumpSignal, GlobalData.Settings.Signal.PlaySpeechCandleJumpSignal,
+                        GlobalData.Settings.Signal.SoundCandleJumpUp, ref LastSignalSoundCandleJumpUp);
+                    break;
+                case SignalStrategy.candlesJumpDown:
+                    PlaySound(signal, GlobalData.Settings.Signal.PlaySoundCandleJumpSignal, GlobalData.Settings.Signal.PlaySpeechCandleJumpSignal,
+                        GlobalData.Settings.Signal.SoundCandleJumpDown, ref LastSignalSoundCandleJumpDown);
+                    break;
 
-            case SignalStrategy.strategyStobbOversold:
-                PlaySound(signal, GlobalData.Settings.Signal.PlaySoundStobbSignal, GlobalData.Settings.Signal.PlaySpeechStobbSignal,
-                    GlobalData.Settings.Signal.SoundStobbOversold, ref LastSignalSoundStobbOversold);
-                break;
-            case SignalStrategy.strategyStobbOverbought:
-                PlaySound(signal, GlobalData.Settings.Signal.PlaySoundStobbSignal, GlobalData.Settings.Signal.PlaySpeechStobbSignal,
-                    GlobalData.Settings.Signal.SoundStobbOverbought, ref LastSignalSoundStobbOverbought);
-                break;
+                case SignalStrategy.stobbOversold:
+                    PlaySound(signal, GlobalData.Settings.Signal.PlaySoundStobbSignal, GlobalData.Settings.Signal.PlaySpeechStobbSignal,
+                        GlobalData.Settings.Signal.SoundStobbOversold, ref LastSignalSoundStobbOversold);
+                    break;
+                case SignalStrategy.stobbOverbought:
+                    PlaySound(signal, GlobalData.Settings.Signal.PlaySoundStobbSignal, GlobalData.Settings.Signal.PlaySpeechStobbSignal,
+                        GlobalData.Settings.Signal.SoundStobbOverbought, ref LastSignalSoundStobbOverbought);
+                    break;
 
-            case SignalStrategy.strategySbm1Oversold:
-            case SignalStrategy.strategySbm2Oversold:
-            case SignalStrategy.strategySbm3Oversold:
-                PlaySound(signal, GlobalData.Settings.Signal.PlaySoundSbmSignal, GlobalData.Settings.Signal.PlaySpeechSbmSignal,
-                    GlobalData.Settings.Signal.SoundSbmOversold, ref LastSignalSoundSbmOversold);
-                break;
+                case SignalStrategy.sbm1Oversold:
+                case SignalStrategy.sbm2Oversold:
+                case SignalStrategy.sbm3Oversold:
+                case SignalStrategy.sbm4Oversold:
+                case SignalStrategy.sbm5Oversold:
+                    PlaySound(signal, GlobalData.Settings.Signal.PlaySoundSbmSignal, GlobalData.Settings.Signal.PlaySpeechSbmSignal,
+                        GlobalData.Settings.Signal.SoundSbmOversold, ref LastSignalSoundSbmOversold);
+                    break;
 
-            case SignalStrategy.strategySbm1Overbought:
-            case SignalStrategy.strategySbm2Overbought:
-            case SignalStrategy.strategySbm3Overbought:
-                PlaySound(signal, GlobalData.Settings.Signal.PlaySoundSbmSignal, GlobalData.Settings.Signal.PlaySpeechSbmSignal,
-                    GlobalData.Settings.Signal.SoundSbmOverbought, ref LastSignalSoundSbmOverbought);
-                break;
+                case SignalStrategy.sbm1Overbought:
+                case SignalStrategy.sbm2Overbought:
+                case SignalStrategy.sbm3Overbought:
+                case SignalStrategy.sbm4Overbought:
+                case SignalStrategy.sbm5Overbought:
+
+                    PlaySound(signal, GlobalData.Settings.Signal.PlaySoundSbmSignal, GlobalData.Settings.Signal.PlaySpeechSbmSignal,
+                        GlobalData.Settings.Signal.SoundSbmOverbought, ref LastSignalSoundSbmOverbought);
+                    break;
+            }
         }
-
     }
 
 
@@ -1428,7 +1494,7 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
     }
 
     private void TimerSoundHeartBeat_Tick(object sender, EventArgs e)
-	  => GlobalData.PlaySomeMusic("sound-heartbeat.wav");
+      => GlobalData.PlaySomeMusic("sound-heartbeat.wav");
 
 
     private static void ShowTrendInformation(CryptoSymbol symbol)
@@ -1557,7 +1623,7 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
     }
 
     private static bool IsVisibleOnAnyScreen(Rectangle rect)
-	  => Screen.AllScreens.Any(screen => screen.WorkingArea.IntersectsWith(rect));
+      => Screen.AllScreens.Any(screen => screen.WorkingArea.IntersectsWith(rect));
 
     private void ApplicationCreateSignals_Click(object sender, EventArgs e)
     {
@@ -1573,4 +1639,89 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
         GlobalData.SaveSettings();
     }
 
+    
+
+    private void backtestToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            AskSymbolDialog form = new()
+            {
+                StartPosition = FormStartPosition.CenterParent
+            };
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                GlobalData.SaveSettings();
+
+                if (!GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
+                {
+                    MessageBox.Show("Exchange bestaat niet");
+                    return;
+                }
+
+                // Bestaat de coin? (uiteraard, net geladen)
+                if (!exchange.SymbolListName.TryGetValue(GlobalData.Settings.BackTestSymbol, out CryptoSymbol symbol))
+                {
+                    MessageBox.Show("Symbol bestaat niet");
+                    return;
+                }
+
+                CryptoInterval interval = null;
+                //CryptoInterval interval = GlobalData.IntervalList => (Name == GlobalData.Settings.BackTestInterval); ???
+                foreach (CryptoInterval intervalX in GlobalData.IntervalList)
+                {
+                    if (intervalX.Name == GlobalData.Settings.BackTestInterval)
+                    {
+                        interval = intervalX;
+                        break;
+                    }
+                }
+                if (interval == null)
+                {
+                    MessageBox.Show("Interval bestaat niet");
+                    return;
+                }
+
+                long unix = CandleTools.GetUnixTime(GlobalData.Settings.BackTestTime, interval.Duration);
+                if (!symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList.TryGetValue(unix, out CryptoCandle candle))
+                {
+                    MessageBox.Show("Candle bestaat niet");
+                    return;
+                }
+
+                long einde = candle.OpenTime;
+                long start = einde - 2 * 60 * interval.Duration;
+                SignalCreate createSignal = new(symbol, interval, true, BinanceShowNotification);
+                while (start <= einde)
+                {
+                    if (symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList.TryGetValue(start, out candle))
+                    {
+                        if (createSignal.Prepare(start))
+                        {
+                            SignalBase algorithm = SignalHelper.GetSignalAlgorithm(GlobalData.Settings.BackTestAlgoritm, symbol, interval, candle);
+                            if (algorithm != null)
+                            {
+                                if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
+                                {
+                                    //createSignal.PrepareAndSendSignal(algorithm);
+                                    algorithm.ExtraText = "Signal!";
+                                }
+                                candle.ExtraText = algorithm.ExtraText;
+                            }
+                        }
+                    }
+                    start += interval.Duration;
+                }
+
+                //SignalBase algorithm = createSignal.AnalyseSymbolUsingStrategy(start, SignalStrategy.sbm1Oversold);
+                createSignal.ExportToExcell(GlobalData.Settings.BackTestAlgoritm);
+            }
+        }
+        catch (Exception error)
+        {
+            GlobalData.Logger.Error(error);
+            GlobalData.AddTextToLogTab("ERROR settings " + error.ToString());
+        }
+
+    }
 }

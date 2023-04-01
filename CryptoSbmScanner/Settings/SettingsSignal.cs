@@ -67,6 +67,7 @@ public class SettingsSignal
     public string SoundSbmOversold { get; set; } = "sound-sbm-oversold.wav";
     public bool AnalysisShowSbmOverbought { get; set; } = false;
     public string SoundSbmOverbought { get; set; } = "sound-sbm-overbought.wav";
+    public int Sbm1CandlesLookbackCount { get; set; } = 1;
 
     // SBM2 signals
     public bool AnalysisSbm2Oversold { get; set; } = false;
@@ -74,16 +75,26 @@ public class SettingsSignal
     public int Sbm2CandlesLookbackCount { get; set; } = 2;
     public decimal Sbm2UpperPartOfBbPercentage { get; set; } = 00.50m;
     public decimal Sbm2LowerPartOfBbPercentage { get; set; } = 99.50m;
-    public int Sbm2CandlesForMacdRecovery { get; set; } = 2;
 
     // SBM3 signals
     public bool AnalysisSbm3Oversold { get; set; } = false;
     public bool AnalysisSbm3Overbought { get; set; } = false;
     public int Sbm3CandlesLookbackCount { get; set; } = 8;
     public decimal Sbm3CandlesBbRecoveryPercentage { get; set; } = 225m;
-    public int Sbm3CandlesForMacdRecovery { get; set; } = 2;
 
-    // SBM percentages, crossing && lookback
+    // SBM4 signals
+    //public bool AnalysisSbm4Oversold { get; set; } = false;
+    //public bool AnalysisSbm4Overbought { get; set; } = false;
+    //public decimal Sbm4BbPercent { get; set; } = 1.5m;
+    //public decimal Sbm4Percentage { get; set; } = 0.80m;
+    //public int Sbm4CandlesLookback { get; set; } = 2;
+
+    // SBM5 signals
+    //public bool AnalysisSbm5Oversold { get; set; } = false;
+
+    // SBM algemene instellingen recovery, percentages, crossing && lookback
+    public int SbmCandlesForMacdRecovery { get; set; } = 2;
+
     public decimal SbmMa200AndMa50Percentage { get; set; } = 0.3m;
     public decimal SbmMa50AndMa20Percentage { get; set; } = 0.3m;
     public decimal SbmMa200AndMa20Percentage { get; set; } = 0.7m;
@@ -140,7 +151,7 @@ public class SettingsSignal
     public bool[] AnalyseStrategy { get; set; } = new bool[Enum.GetNames(typeof(SignalStrategy)).Length];
 
     // For me..
-    public bool AnalysisPriceCrossingMa { get; set; } = false;
+    public bool AltradyWebhookActive { get; set; } = false;
 
 
 

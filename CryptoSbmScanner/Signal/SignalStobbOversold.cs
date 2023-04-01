@@ -3,23 +3,23 @@ using CryptoSbmScanner.Model;
 
 namespace CryptoSbmScanner.Signal;
 
-public class SignalStobbOversold : SignalBase
+public class SignalStobbOversold : SignalSbmBaseOversold // inherit from sbm because of 1 call there
 {
     public SignalStobbOversold(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
         ReplaceSignal = true;
         SignalMode = SignalMode.modeLong;
-        SignalStrategy = SignalStrategy.strategyStobbOversold;
+        SignalStrategy = SignalStrategy.stobbOversold;
     }
 
 
     public override bool IndicatorsOkay(CryptoCandle candle)
     {
-        if (candle == null
-           || candle.CandleData.Stoch == null
-           || candle.CandleData.Stoch.Signal == null
-           || candle.CandleData.Stoch.Oscillator == null
-           || candle.CandleData.BollingerBands == null || !candle.CandleData.BollingerBands.Sma.HasValue
+        if ((candle == null)
+           || (candle.CandleData == null)
+           || (candle.CandleData.StochSignal == null)
+           || (candle.CandleData.StochOscillator == null)
+           || (candle.CandleData.BollingerBandsDeviation == null)
            )
             return false;
 
@@ -30,11 +30,23 @@ public class SignalStobbOversold : SignalBase
     public override string DisplayText()
     {
         return string.Format("stoch.oscillator={0:N8} stoch.signal={1:N8}",
-            CandleLast.CandleData.Stoch.Oscillator.Value,
-            CandleLast.CandleData.Stoch.Signal.Value
+            CandleLast.CandleData.StochOscillator,
+            CandleLast.CandleData.StochSignal
         );
     }
 
+
+    public override bool AdditionalChecks(CryptoCandle candle, out string response)
+    {
+        if (GlobalData.Settings.Signal.StobIncludeSoftSbm && !CandleLast.IsSbmConditionsOversold(false))
+        {
+            response = "maar geen sbm condities";
+            return false;
+        }
+
+        response = "";
+        return true;
+    }
 
     public override bool IsSignal()
     {
@@ -43,14 +55,14 @@ public class SignalStobbOversold : SignalBase
         // De breedte van de bb is ten minste 1.5%
         if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.StobbBBMinPercentage, GlobalData.Settings.Signal.StobbBBMaxPercentage))
         {
-            ExtraText = "bb.width te klein " + CandleLast.CandleData.BollingerBandsPercentage.ToString("N2");
+            ExtraText = "bb.width te klein " + CandleLast.CandleData.BollingerBandsPercentage?.ToString("N2");
             return false;
         }
 
         // Er een candle onder de bb opent of sluit
         if (!CandleLast.IsBelowBollingerBands(GlobalData.Settings.Signal.StobbUseLowHigh))
         {
-            ExtraText = "niet beneden de bb";
+            ExtraText = "niet beneden de bb.lower";
             return false;
         }
 
@@ -82,12 +94,6 @@ public class SignalStobbOversold : SignalBase
             return false;
         }
 
-        if (GlobalData.Settings.Signal.StobIncludeSoftSbm && !CandleLast.IsSbmConditionsOversold(false))
-        {
-            ExtraText = "geen soft sbm condities";
-            return false;
-        }
-
         return true;
     }
 
@@ -95,7 +101,7 @@ public class SignalStobbOversold : SignalBase
     public override bool AllowStepIn(CryptoSignal signal)
     {
 
-        if (CandleLast.CandleData.Stoch.Oscillator.Value < CandleLast.CandleData.Stoch.Signal.Value)
+        if (CandleLast.CandleData.StochOscillator < CandleLast.CandleData.StochSignal)
         {
             ExtraText = "Stoch Oscillator onder stoch signal";
             return false;
@@ -139,19 +145,19 @@ public class SignalStobbOversold : SignalBase
 
 
         // De %D en %k moeten elkaar gekruist hebben. Dus %K(snel) > %D(traag), geeft goede instapmomenten (voor zover ik dat gecontroleerd heb)
-        if ((decimal)CandleLast.CandleData.Stoch.Oscillator.Value <= (decimal)CandleLast.CandleData.Stoch.Signal.Value)
+        if ((decimal)CandleLast.CandleData.StochOscillator <= (decimal)CandleLast.CandleData.StochSignal)
         {
             string text = "Monitor " + Symbol.Name + " " + signal.Interval.Name + " signal from=" + signal.OpenDate.ToLocalTime() + " price=" + Symbol.LastPrice;
-            ExtraText = text + " below(k < d) " + CandleLast.CandleData.Stoch.Oscillator.Value.ToString("N5") + "   " + CandleLast.CandleData.Stoch.Signal.Value.ToString("N5");
+            ExtraText = text + " below(k < d) " + CandleLast.CandleData.StochOscillator?.ToString("N5") + "   " + CandleLast.CandleData.StochSignal?.ToString("N5");
             return false;
         }
 
         // %K Oscillator (geel, de "snelle"), was 14, maar ik stap dan te vroeg in?
         //decimal value = GlobalData.Settings.Bot.StepInStochValue;
-        //if ((decimal)CandleLast.CandleData.Stoch.Oscillator.Value < value)
+        //if ((decimal)CandleLast.CandleData.StochOscillator < value)
         //{
         //    string text = "Monitor " + Symbol.Name + " " + signal.Interval.Name + " signal from=" + signal.OpenDate.ToLocalTime() + " price=" + Symbol.LastPrice;
-        //    ExtraText = string.Format("{0}  stoch to low ({1} < {2})", text, CandleLast.CandleData.Stoch.Oscillator.Value.ToString("N5"), value);
+        //    ExtraText = string.Format("{0}  stoch to low ({1} < {2})", text, CandleLast.CandleData.StochOscillator.ToString("N5"), value);
         //    return false;
         //}
 
@@ -163,7 +169,7 @@ public class SignalStobbOversold : SignalBase
 
     public override bool GiveUp(CryptoSignal signal)
     {
-        if (CandleLast.CandleData.Stoch.Oscillator.Value >= 80)
+        if (CandleLast.CandleData.StochOscillator >= 80)
         {
             ExtraText = "give up(stoch.osc > 80)";
             //AppendLine(string.Format("{0} give up (stoch.osc > 80) {1}", text, dcaPrice.ToString0());
@@ -171,7 +177,7 @@ public class SignalStobbOversold : SignalBase
         }
 
 
-        if (Math.Min(CandleLast.Open, CandleLast.Close) >= (decimal)CandleLast.CandleData.BollingerBands.Sma.Value)
+        if (Math.Min(CandleLast.Open, CandleLast.Close) >= (decimal)CandleLast.CandleData.Sma20)
         {
             //reason = string.Format("{0} give up (pricewise.body > bb) {1}", text, dcaPrice.ToString0());
             ExtraText = "give up (pricewise.body > bb)";
@@ -221,3 +227,4 @@ public class SignalStobbOversold : SignalBase
 
 
 }
+

@@ -118,6 +118,7 @@ public class DataStore
                 {
                     symbolInterval.TrendIndicator = CryptoTrendIndicator.trendSideways;
                     symbolInterval.LastCandleSynchronized = null;
+                    symbolInterval.LastStobbOrdSbmDate = null;
                     symbolInterval.TrendInfoDate = null;
                 }
 
@@ -128,6 +129,7 @@ public class DataStore
                     {
                         // Een experiment (vanwege de obfuscator)
                         using FileStream readStream = new(filename, FileMode.Open);
+
                         using (BinaryReader binaryReader = new(readStream, Encoding.UTF8, false))
                         {
                             // Iets met een version
@@ -141,6 +143,16 @@ public class DataStore
                                 symbolInterval.LastCandleSynchronized = binaryReader.ReadInt64();
                                 if (symbolInterval.LastCandleSynchronized == 0)
                                     symbolInterval.LastCandleSynchronized = null;
+
+                                if (version >= 2)
+                                {
+                                    long lastStobbOrdSbmDate = binaryReader.ReadInt64();
+                                    if (lastStobbOrdSbmDate == 0)
+                                        symbolInterval.LastStobbOrdSbmDate = null;
+                                    else
+                                        symbolInterval.LastStobbOrdSbmDate = CandleTools.GetUnixDate(lastStobbOrdSbmDate);
+                                }
+
                                 int candleCount = binaryReader.ReadInt32();
                                 while (candleCount > 0)
                                 {
@@ -218,10 +230,13 @@ public class DataStore
 
                     // Een experiment (vanwege de obfuscator)
                     using FileStream writeStream = new(filename, FileMode.Create);
+
                     using (BinaryWriter binaryWriter = new(writeStream, Encoding.UTF8, false))
                     {
+                        int version = 1; // Even teruggezet
+
                         // Iets met een version
-                        binaryWriter.Write(1);
+                        binaryWriter.Write(version);
                         binaryWriter.Write(symbol.Name);
 
                         foreach (CryptoSymbolInterval symbolInterval in symbol.IntervalPeriodList)
@@ -231,6 +246,14 @@ public class DataStore
                                 binaryWriter.Write((long)symbolInterval.LastCandleSynchronized); // int64
                             else
                                 binaryWriter.Write((long)0); // int64
+
+                            if (version >= 2)
+                            {
+                                long lastStobbOrdSbmDate = 0;
+                                if (symbolInterval.LastStobbOrdSbmDate.HasValue)
+                                    lastStobbOrdSbmDate = CandleTools.GetUnixTime((DateTime)symbolInterval.LastStobbOrdSbmDate, 60);
+                                binaryWriter.Write((long)lastStobbOrdSbmDate); // int64
+                            }
                             binaryWriter.Write(symbolInterval.CandleList.Count);
 
                             foreach (CryptoCandle candle in symbolInterval.CandleList.Values)
@@ -245,6 +268,7 @@ public class DataStore
                         }
                     }
                     writeStream.Close();
+
                 }
             }
         }

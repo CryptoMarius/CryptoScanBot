@@ -168,12 +168,14 @@ public class BarometerTools
     private static void CalculateBarometerIntervals(CryptoSymbol symbol, CryptoQuoteData quoteData, CalcBarometerMethod calcBarometerMethod, bool pricebarometer)
     {
 
-        // Herbereken de candles in de andere intervallen (voor de 1h, 4h en 1d)
+        // Herbereken de candles in de andere intervallen (voor de 15m, 30m, 1h, 4h en 1d)
         foreach (CryptoInterval interval in GlobalData.IntervalList)
         {
-            if (interval.IntervalPeriod == CryptoIntervalPeriod.interval1h ||
-                interval.IntervalPeriod == CryptoIntervalPeriod.interval4h ||
-                interval.IntervalPeriod == CryptoIntervalPeriod.interval1d)
+            if ((interval.IntervalPeriod == CryptoIntervalPeriod.interval15m) ||
+                (interval.IntervalPeriod == CryptoIntervalPeriod.interval30m) ||
+                (interval.IntervalPeriod == CryptoIntervalPeriod.interval1h) ||
+                (interval.IntervalPeriod == CryptoIntervalPeriod.interval4h) ||
+                (interval.IntervalPeriod == CryptoIntervalPeriod.interval1d))
             {
                 //GlobalData.AddTextToLogTab("Calculating barometer chart " + bmSymbol.Name + " " + interval.Name);
                 CalculateBarometerInternal(symbol, interval, quoteData, calcBarometerMethod, pricebarometer);

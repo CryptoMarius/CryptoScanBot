@@ -26,6 +26,18 @@ public class SettingsBasic
     /// </summary>
     public SettingsSignal Signal { get; set; } = new();
 
+    /// <summary>
+    ///  Bot gerelateerde instellingen
+    /// </summary>
+    public SettingsTradeBot Bot { get; set; } = new();
+
+
+    /// <summary>
+    ///  Balance Bot instellingen
+    /// </summary>
+    //public SettingsBalanceBot BalanceBot { get; set; } = new SettingsBalanceBot();
+
+
 
     // Als dit aan staat moet de symbol staat in de whitelist dan wordt het toegestaan
     public bool UseWhiteListOversold { get; set; } = false;
@@ -45,6 +57,12 @@ public class SettingsBasic
     public bool UseBlackListOverbought { get; set; } = false;
     public List<string> BlackListOverbought = new();
 
+
+
+    public string BackTestSymbol { get; set; } = "BTCUSDT";
+    public string BackTestInterval { get; set; } = "1M";
+    public DateTime BackTestTime { get; set; } = DateTime.Now;
+    public SignalStrategy BackTestAlgoritm { get; set; } = SignalStrategy.sbm1Oversold;
 
     /// <summary>
     /// De basis instellingen voor de Settings

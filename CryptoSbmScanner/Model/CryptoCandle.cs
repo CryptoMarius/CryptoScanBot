@@ -18,4 +18,6 @@ public class CryptoCandle : IQuote
     public virtual CryptoSymbol Symbol { get; set; }
     public virtual CryptoInterval Interval { get; set; }
     public CandleIndicatorData CandleData { get; set; }
+
+    public string ExtraText; // beetje quick en dirty
 }

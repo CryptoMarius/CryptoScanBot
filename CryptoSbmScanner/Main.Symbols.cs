@@ -35,7 +35,7 @@ public partial class FrmMain
             // Bestaat de coin? (uiteraard, net geladen)
             if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol symbol))
             {
-                if (CandleTools.MatchingQuote(symbol) && (symbol.Status == 1))
+                if (symbol.QuoteData.FetchCandles && symbol.Status == 1)
                 {
                     return symbol;
                 }
@@ -60,7 +60,7 @@ public partial class FrmMain
                 //De muntparen toevoegen aan de userinterface
                 foreach (var symbol in exchange.SymbolListName.Values)
                 {
-                    if ((CandleTools.MatchingQuote(symbol)) && (symbol.Status == 1))
+                    if (symbol.QuoteData.FetchCandles && symbol.Status == 1)
                     {
                         if (!symbol.IsSpotTradingAllowed || symbol.IsBarometerSymbol())
                             continue;

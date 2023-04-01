@@ -44,6 +44,17 @@ public class BinanceStreamPriceTicker
                         symbol.AskPrice = tick.BestAskPrice;
                         //symbol.Volume = tick.BaseVolume; //=Quoted = het volume wat verhandeld is
                         symbol.Volume = tick.QuoteVolume; //=Quoted = het volume * de prijs                                
+
+                        //// Aanbieden voor analyse (dit gebeurd zowel in de ticker als ProcessCandles)
+                        //if (GlobalData.ApplicationStatus == ApplicationStatus.AppStatusRunning)
+                        //{
+                        //    // Het signal monitoring aanroepen (In ieder geval aanroepen)?
+                        //    if ((symbol.SignalList.Count + symbol.PositionList.Count) > 0)
+                        //        GlobalData.TaskMonitorSignal.AddToQueue(symbol);
+
+                        //    //if (GlobalData.Settings.BalanceBot.Active && (symbol.IsBalancing))
+                        //    //    GlobalData.ThreadBalanceSymbols.AddToQueue(symbol);
+                        //}
                     }
                 }
 

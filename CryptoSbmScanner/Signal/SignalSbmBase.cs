@@ -3,9 +3,6 @@ using CryptoSbmScanner.Model;
 
 namespace CryptoSbmScanner.Signal;
 
-
-// De officiele SBM methode van Maurice Orsel
-
 public class SignalSbmBase : SignalBase
 {
     public SignalSbmBase(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
@@ -31,39 +28,50 @@ public class SignalSbmBase : SignalBase
 
         if (candle.CandleData.PSar == 0)
             text += "geen candledata.psar";
-        if (candle.CandleData.Stoch == null)
-            text += "geen candledata.stoch";
-        if (candle.CandleData.Stoch.Signal == null)
+        if (candle.CandleData.StochSignal == null)
             text += "geen candledata.stoch.signal";
-        if (candle.CandleData.Stoch.Oscillator == null)
+        if (candle.CandleData.StochOscillator == null)
             text += "geen candledata.stoch.Oscillator";
 
-        if (candle.CandleData.Sma50.Sma == null)
+        if (candle.CandleData.Sma20 == null)
+            text += "geen candledata.sma20.sma";
+        if (candle.CandleData.Sma50 == null)
             text += "geen candledata.sma50.sma";
-        if (!candle.CandleData.Sma50.Sma.HasValue)
-            text += "geen candledata.sma50.sma.value";
-        if (candle.CandleData.Sma200.Sma == null)
+        if (candle.CandleData.Sma200 == null)
             text += "geen candledata.sma200.sma";
-        if (!candle.CandleData.Sma200.Sma.HasValue)
-            text += "geen candledata.sma200.sma.value";
 
-        if (candle.CandleData.BollingerBands == null)
+        if (candle.CandleData.BollingerBandsDeviation == null)
             text += "geen candledata.BollingerBands";
-        if (!candle.CandleData.BollingerBands.Sma.HasValue)
-            text += "geen candledata.BollingerBands.Sma.Value";
 
         return text;
     }
 #endif
 
 
+    public override string DisplayText()
+    {
+        decimal value = -999m;
+
+        return string.Format("ma200={0:N8} ma50={1:N8} ma20={2:N8} psar={3:N8} macd.h={4:N8} bm={5:N2} bb%={6:N2}",
+            CandleLast.CandleData.Sma200,
+            CandleLast.CandleData.Sma50,
+            CandleLast.CandleData.Sma20,
+            CandleLast.CandleData.PSar,
+            CandleLast.CandleData.MacdHistogram,
+            value,
+            CandleLast.CandleData.BollingerBandsPercentage
+        );
+    }
+
+
     /// <summary>
     /// Als de ma200 en ma50 elkaar gekruist of geraakt hebben dan is het een nogo
     /// Er geen crosover is geweest van de 200 en 50 in de laatste x candles.
     /// </summary>
-    public bool HasCrossed200and50(int candleCount = 30)
+    public bool HasCrossed200and50(int candleCount, out int candlesAgo)
     {
         // We gaan van rechts naar links (dus prev en last zijn ietwat raar)
+        candlesAgo = 0;
         long time = CandleLast.OpenTime;
         //DateTime TimeDebug = CandleTools.GetUnixDate(CandleLast.OpenTime);
         CryptoCandle prevCandle = null;
@@ -77,12 +85,12 @@ public class SignalSbmBase : SignalBase
                     if (IndicatorsOkay(lastCandle) && IndicatorsOkay(prevCandle))
                     {
                         // de 50 kruist de 200 naar boven
-                        if (prevCandle.CandleData.Sma50.Sma.Value < prevCandle.CandleData.Sma200.Sma.Value &&
-                                lastCandle.CandleData.Sma50.Sma.Value >= lastCandle.CandleData.Sma200.Sma.Value)
+                        if ((prevCandle.CandleData.Sma50 < prevCandle.CandleData.Sma200) &&
+                                (lastCandle.CandleData.Sma50 >= lastCandle.CandleData.Sma200))
                             return true;
                         // de 50 kruist de 200 naar beneden
-                        if (prevCandle.CandleData.Sma50.Sma.Value > prevCandle.CandleData.Sma200.Sma.Value &&
-                                lastCandle.CandleData.Sma50.Sma.Value <= lastCandle.CandleData.Sma200.Sma.Value)
+                        if ((prevCandle.CandleData.Sma50 > prevCandle.CandleData.Sma200) &&
+                                (lastCandle.CandleData.Sma50 <= lastCandle.CandleData.Sma200))
                             return true;
                     }
 #if DEBUG
@@ -99,6 +107,7 @@ public class SignalSbmBase : SignalBase
             else GlobalData.AddTextToLogTab(lastCandle.DateLocal.ToString() + " " + Symbol.Name + " " + Interval.Name + " ma200-50, geen candle! " + Candles.Count);
 #endif
 
+            candlesAgo++;
             candleCount--;
             prevCandle = lastCandle;
             time -= Interval.Duration;
@@ -111,9 +120,10 @@ public class SignalSbmBase : SignalBase
     /// Als de ma200 en ma20 elkaar gekruist of geraakt hebben dan is het een nogo
     /// Er geen crosover is geweest van de 200 en 50 in de laatste x candles.
     /// </summary>
-    public bool HasCrossed200and20(int candleCount = 30)
+    public bool HasCrossed200and20(int candleCount, out int candlesAgo)
     {
         // We gaan van rechts naar links (dus prev en last zijn ietwat raar)
+        candlesAgo = 0;
         long time = CandleLast.OpenTime;
         //DateTime TimeDebug = CandleTools.GetUnixDate(CandleLast.OpenTime);
         CryptoCandle prevCandle = null;
@@ -127,12 +137,12 @@ public class SignalSbmBase : SignalBase
                     if (IndicatorsOkay(lastCandle) && IndicatorsOkay(prevCandle))
                     {
                         // de 50 kruist de 200 naar boven
-                        if (prevCandle.CandleData.BollingerBands.Sma.Value < prevCandle.CandleData.Sma200.Sma.Value &&
-                                lastCandle.CandleData.BollingerBands.Sma.Value >= lastCandle.CandleData.Sma200.Sma.Value)
+                        if (prevCandle.CandleData.Sma20 < prevCandle.CandleData.Sma200 &&
+                                lastCandle.CandleData.Sma20 >= lastCandle.CandleData.Sma200)
                             return true;
                         // de 50 kruist de 200 naar beneden
-                        if (prevCandle.CandleData.BollingerBands.Sma.Value > prevCandle.CandleData.Sma200.Sma.Value &&
-                                lastCandle.CandleData.BollingerBands.Sma.Value <= lastCandle.CandleData.Sma200.Sma.Value)
+                        if (prevCandle.CandleData.Sma20 > prevCandle.CandleData.Sma200 &&
+                                lastCandle.CandleData.Sma20 <= lastCandle.CandleData.Sma200)
                             return true;
                     }
 #if DEBUG
@@ -148,6 +158,7 @@ public class SignalSbmBase : SignalBase
 #if DEBUG
             else GlobalData.AddTextToLogTab(lastCandle.DateLocal.ToString() + " " + Symbol.Name + " " + Interval.Name + " ma200-20, geen candle! " + Candles.Count);
 #endif
+            candlesAgo++;
             candleCount--;
             prevCandle = lastCandle;
             time -= Interval.Duration;
@@ -160,9 +171,10 @@ public class SignalSbmBase : SignalBase
     /// Als de ma200 en ma50 elkaar gekruist of geraakt hebben dan is het een nogo
     /// Er geen crosover is geweest van de 200 en 50 in de laatste x candles.
     /// </summary>
-    public bool HasCrossed50and20(int candleCount = 30)
+    public bool HasCrossed50and20(int candleCount, out int candlesAgo)
     {
         // We gaan van rechts naar links (dus prev en last zijn ietwat raar)
+        candlesAgo = 0;
         long time = CandleLast.OpenTime;
         //DateTime TimeDebug = CandleTools.GetUnixDate(CandleLast.OpenTime);
         CryptoCandle prevCandle = null;
@@ -176,13 +188,13 @@ public class SignalSbmBase : SignalBase
                     if (IndicatorsOkay(lastCandle) && IndicatorsOkay(prevCandle))
                     {
                         // de 50 kruist de 20 naar boven
-                        if (prevCandle.CandleData.Sma50.Sma.Value < prevCandle.CandleData.BollingerBands.Sma.Value &&
-                                lastCandle.CandleData.Sma50.Sma.Value >= lastCandle.CandleData.BollingerBands.Sma.Value)
+                        if (prevCandle.CandleData.Sma50 < prevCandle.CandleData.Sma20 &&
+                                lastCandle.CandleData.Sma50 >= lastCandle.CandleData.Sma20)
                             return true;
 
                         // de 50 kruist de 20 naar beneden
-                        if (prevCandle.CandleData.Sma50.Sma.Value > prevCandle.CandleData.BollingerBands.Sma.Value &&
-                                lastCandle.CandleData.Sma50.Sma.Value <= lastCandle.CandleData.BollingerBands.Sma.Value)
+                        if (prevCandle.CandleData.Sma50 > prevCandle.CandleData.Sma20 &&
+                                lastCandle.CandleData.Sma50 <= lastCandle.CandleData.Sma20)
                             return true;
                     }
 #if DEBUG
@@ -199,6 +211,7 @@ public class SignalSbmBase : SignalBase
             else GlobalData.AddTextToLogTab(lastCandle.DateLocal.ToString() + " " + Symbol.Name + " " + Interval.Name + " ma50-20, geen candle! " + Candles.Count);
 #endif
 
+            candlesAgo++;
             candleCount--;
             prevCandle = lastCandle;
             time -= Interval.Duration;
@@ -207,42 +220,43 @@ public class SignalSbmBase : SignalBase
     }
 
 
-    public bool CheckMaCrossings()
+    public bool CheckMaCrossings(out string response)
     {
-        if (GlobalData.Settings.Signal.SbmMa200AndMa20Crossing && HasCrossed200and20(GlobalData.Settings.Signal.SbmMa200AndMa20Lookback))
+        if (GlobalData.Settings.Signal.SbmMa200AndMa20Crossing && HasCrossed200and20(GlobalData.Settings.Signal.SbmMa200AndMa20Lookback, out int candlesAgo))
         {
-            ExtraText = "ma200 en ma20 gekruist";
-            GlobalData.AddTextToLogTab(Symbol.Name + " " + Interval.Name + " " + ExtraText);
-            return true;
+            response = string.Format("ma200 and ma20 gekruist ({0} candles)", candlesAgo);
+            GlobalData.AddTextToLogTab(Symbol.Name + " " + Interval.Name + " " + response);
+            return false;
         }
-        if (GlobalData.Settings.Signal.SbmMa200AndMa50Crossing && HasCrossed200and50(GlobalData.Settings.Signal.SbmMa200AndMa50Lookback))
+        if (GlobalData.Settings.Signal.SbmMa200AndMa50Crossing && HasCrossed200and50(GlobalData.Settings.Signal.SbmMa200AndMa50Lookback, out candlesAgo))
         {
-            ExtraText = "ma200 en ma50 gekruist";
-            GlobalData.AddTextToLogTab(Symbol.Name + " " + Interval.Name + " " + ExtraText);
-            return true;
+            response = string.Format("ma200 en ma50 gekruist ({0} candles)", candlesAgo);
+            GlobalData.AddTextToLogTab(Symbol.Name + " " + Interval.Name + " " + response);
+            return false;
         }
-        if (GlobalData.Settings.Signal.SbmMa50AndMa20Crossing && HasCrossed50and20(GlobalData.Settings.Signal.SbmMa50AndMa20Lookback))
+        if (GlobalData.Settings.Signal.SbmMa50AndMa20Crossing && HasCrossed50and20(GlobalData.Settings.Signal.SbmMa50AndMa20Lookback, out candlesAgo))
         {
-            ExtraText = "ma50 en ma20 gekruist";
-            GlobalData.AddTextToLogTab(Symbol.Name + " " + Interval.Name + " " + ExtraText);
-            return true;
+            response = string.Format("ma50 and ma20 gekruist ({0} candles)", candlesAgo);
+            GlobalData.AddTextToLogTab(Symbol.Name + " " + Interval.Name + " " + response);
+            return false;
         }
 
-        return false;
+        response = "";
+        return true;
     }
 
 
     public override bool IndicatorsOkay(CryptoCandle candle)
     {
-        if (candle == null
-           || candle.CandleData == null
-           || candle.CandleData.PSar == 0
-           || candle.CandleData.Stoch == null
-           || candle.CandleData.Stoch.Signal == null
-           || candle.CandleData.Stoch.Oscillator == null
-           || candle.CandleData.Sma50.Sma == null || !candle.CandleData.Sma50.Sma.HasValue
-           || candle.CandleData.Sma200.Sma == null || !candle.CandleData.Sma200.Sma.HasValue
-           || candle.CandleData.BollingerBands == null || !candle.CandleData.BollingerBands.Sma.HasValue
+        if ((candle == null)
+           || (candle.CandleData == null)
+           || (candle.CandleData.Sma20 == null)
+           || (candle.CandleData.Sma50 == null)
+           || (candle.CandleData.Sma200 == null)
+           || (candle.CandleData.PSar == null)
+           || (candle.CandleData.StochSignal == null)
+           || (candle.CandleData.StochOscillator == null)
+           || (candle.CandleData.BollingerBandsDeviation == null)
            )
         {
             ExtraText = "indicators not ok!";
@@ -253,104 +267,5 @@ public class SignalSbmBase : SignalBase
     }
 
 
-    public override string DisplayText()
-    {
-        decimal value = -999m;
-
-        return string.Format("ma200={0:N8} ma50={1:N8} ma20={2:N8} psar={3:N8} macd.h={4:N8} bm={5:N2} bb%={6:N2}",
-            CandleLast.CandleData.Sma200.Sma.Value,
-            CandleLast.CandleData.Sma50.Sma.Value,
-            CandleLast.CandleData.BollingerBands.Sma.Value,
-            CandleLast.CandleData.PSar,
-            CandleLast.CandleData.Macd.Histogram.Value,
-            value,
-            CandleLast.CandleData.BollingerBandsPercentage
-        );
-    }
-
-
-    public bool IsMacdRecoveryOversold(int candleCount = 2)
-    {
-        // We stappen in op het moment dat er herstel is, zijn er 2 macd candles roze?
-        // Die negatieve waarden van de macd zijn killing voor de gemaakte vergelijking (dat klopt namelijk niet als een van beide positief wordt)
-        //decimal value = (decimal)CandleLast.CandleData.Macd.Histogram.Value - (decimal)CandlePrev1.CandleData.Macd.Histogram.Value;
-        int iterator = 0;
-        CryptoCandle last = CandleLast;
-        while (candleCount > 0)
-        {
-            if (last.CandleData.Macd.Histogram.Value >= 0)
-            {
-                ExtraText = $"De MACD[{iterator:N0}].Hist is ondertussen groen {iterator:N8}";
-                return false;
-            }
-            iterator--;
-
-            if (!Candles.TryGetValue(last.OpenTime - 1 * Interval.Duration, out CryptoCandle prev))
-            {
-                ExtraText = string.Format("No MACD[{0:N0}]", iterator);
-                return false;
-            }
-            if (!IndicatorsOkay(prev))
-                return false;
-
-            if (last.CandleData.Macd.Histogram.Value <= prev.CandleData.Macd.Histogram.Value)
-            {
-                ExtraText = string.Format("De MACD[{0:N0}].Hist is niet roze {1:N8} {2:N8} (last)", iterator, prev.CandleData.Macd.Histogram.Value, last.CandleData.Macd.Histogram.Value);
-                return false;
-            }
-
-            last = prev;
-            candleCount--;
-        }
-
-        return true;
-    }
-
-    public bool IsMacdRecoveryOverbought(int candleCount = 2)
-    {
-        // Is er herstel ten opzichte van de vorige macd histogram candle?
-        int iterator = 0;
-        CryptoCandle last = CandleLast;
-        while (candleCount > 0)
-        {
-            if (last.CandleData.Macd.Histogram.Value <= 0)
-            {
-                ExtraText = $"De MACD[{iterator:N0}].Hist is ondertussen rood {iterator:N8}";
-                return false;
-            }
-            iterator--;
-
-            if (!Candles.TryGetValue(last.OpenTime - 1 * Interval.Duration, out CryptoCandle prev))
-            {
-                ExtraText = string.Format("No MACD[{0:N0}]", iterator);
-                return false;
-            }
-            if (!IndicatorsOkay(prev))
-                return false;
-
-            // Een groene is ook goed (zolang ie maar niet lager wordt)
-            if (last.CandleData.Macd.Histogram.Value >= prev.CandleData.Macd.Histogram.Value)
-            {
-                ExtraText = string.Format("De MACD[{0:N0}].Hist is niet lichtgroen {1:N8} {2:N8} (last)", iterator, prev.CandleData.Macd.Histogram.Value, last.CandleData.Macd.Histogram.Value);
-                return false;
-            }
-
-            last = prev;
-            candleCount--;
-        }
-
-        return true;
-    }
-
-
-    public override bool AllowStepIn(CryptoSignal signal)
-    {
-        return true;
-    }
-
-
-    public override bool GiveUp(CryptoSignal signal)
-    {
-        return false;
-    }
 }
+

@@ -19,6 +19,8 @@ public class CryptoSymbolInterval
     public CryptoTrendIndicator TrendIndicator { get; set; }
     public DateTime? TrendInfoDate { get; set; }
 
+    public DateTime? LastStobbOrdSbmDate { get; set; }
+
     // De candles voor dit interval
     public SortedList<long, CryptoCandle> CandleList { get; set; } = new SortedList<long, CryptoCandle>();
 }

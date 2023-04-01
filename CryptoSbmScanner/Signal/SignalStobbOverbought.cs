@@ -9,16 +9,17 @@ public class SignalStobbOverbought : SignalBase
     {
         ReplaceSignal = true;
         SignalMode = SignalMode.modeShort;
-        SignalStrategy = SignalStrategy.strategyStobbOverbought;
+        SignalStrategy = SignalStrategy.stobbOverbought;
     }
 
     public override bool IndicatorsOkay(CryptoCandle candle)
     {
-        if (candle == null
-           || candle.CandleData.Stoch == null
-           || candle.CandleData.Stoch.Signal == null
-           || candle.CandleData.Stoch.Oscillator == null
-           || candle.CandleData.BollingerBands == null || !candle.CandleData.BollingerBands.Sma.HasValue
+        if ((candle == null)
+           || (candle.CandleData == null)
+           || (candle.CandleData.Sma20 == null)
+           || (candle.CandleData.StochSignal == null)
+           || (candle.CandleData.StochOscillator == null)
+           || (candle.CandleData.BollingerBandsDeviation == null)
            )
             return false;
 
@@ -33,7 +34,7 @@ public class SignalStobbOverbought : SignalBase
         // De breedte van de bb is ten minste 1.5%
         if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.StobbBBMinPercentage, GlobalData.Settings.Signal.StobbBBMaxPercentage))
         {
-            ExtraText = "bb.width te klein " + CandleLast.CandleData.BollingerBandsPercentage.ToString("N2");
+            ExtraText = "bb.width te klein " + CandleLast.CandleData.BollingerBandsPercentage?.ToString("N2");
             return false;
         }
 

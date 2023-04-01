@@ -6,16 +6,17 @@ namespace CryptoSbmScanner.Signal;
 
 // De SBM methode die Marco hanteerd (de candle jump variant)
 
-public class SignalSbm3Overbought : SignalSbmBase
+public class SignalSbm3Overbought : SignalSbmBaseOverbought
 {
     public SignalSbm3Overbought(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
         SignalMode = SignalMode.modeShort;
-        SignalStrategy = SignalStrategy.strategySbm3Overbought;
+        SignalStrategy = SignalStrategy.sbm3Overbought;
     }
 
 
-    public bool HasPriceDecreased(int candleCount = 5, decimal percentage = 1.5m)
+
+    public bool HasBollingerBandsIncreased(int candleCount = 5, decimal percentage = 1.5m)
     {
         // Een waarde die plotseling ~2% hoger of lager ligt dan de vorige candle kan interressant 
         // zijn, ook als dat binnen de bollinger bands plaats vindt (dit is dus aanvullend 
@@ -26,49 +27,31 @@ public class SignalSbm3Overbought : SignalSbmBase
         if (candleCount <= 0)
             return false;
 
-        decimal maxValue = decimal.MinValue;
-        decimal minValue = decimal.MaxValue;
+        decimal minValue = (decimal)CandleLast.CandleData.BollingerBandsPercentage;
         CryptoCandle last = CandleLast;
         while (candleCount > 0)
         {
             decimal value;
-            //decimal value = last.Open;
-            //if (value > maxValue)
-            //    maxValue = value;
-            //if (value < minValue)
-            //    minValue = value;
-            //value = last.Close;
-            //if (value > maxValue)
-            //    maxValue = value;
-            //if (value < minValue)
-            //    minValue = value;
             value = (decimal)last.CandleData.BollingerBandsPercentage;
-            if (value > maxValue)
-                maxValue = value;
             if (value < minValue)
                 minValue = value;
 
-            if (!Candles.TryGetValue(last.OpenTime - 1 * Interval.Duration, out last))
-            {
-                ExtraText = "geen prev candle! " + last.DateLocal.ToString();
+            if (!GetPrevCandle(last, out last))
                 return false;
-            }
-
             candleCount--;
         }
 
         // NB: Ik denk dat we alleen de laatste value willen hebben (zodat het niet van max naar min gaat)
         // Daar komt waarschijnlijk ook de verwarring weg met de voorgaande oplossing
 
+        decimal maxValue = (decimal)CandleLast.CandleData.BollingerBandsPercentage;
         decimal bbDiffPerc = 100 * maxValue / minValue;
 
         if (bbDiffPerc < percentage)
         {
-            ExtraText = string.Format("Niet genoeg gevallen {0:N8} {1:N8}", bbDiffPerc, percentage);
+            ExtraText = string.Format("Niet genoeg gestegen {0:N8} {1:N8}", bbDiffPerc, percentage);
             return false;
         }
-
-
 
         ExtraText = bbDiffPerc.ToString("N2") + "%";
         return true;
@@ -83,7 +66,7 @@ public class SignalSbm3Overbought : SignalSbmBase
         // De breedte van de bb is ten minste 1.5%
         if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.SbmBBMinPercentage, GlobalData.Settings.Signal.SbmBBMaxPercentage))
         {
-            ExtraText = "bb.width te klein " + CandleLast.CandleData.BollingerBandsPercentage.ToString("N2");
+            ExtraText = "bb.width te klein " + CandleLast.CandleData.BollingerBandsPercentage?.ToString("N2");
             return false;
         }
 
@@ -93,14 +76,14 @@ public class SignalSbm3Overbought : SignalSbmBase
             return false;
         }
 
-        if (!IsMacdRecoveryOverbought(GlobalData.Settings.Signal.Sbm3CandlesForMacdRecovery))
+        if (!IsMacdRecoveryOverbought(GlobalData.Settings.Signal.SbmCandlesForMacdRecovery))
             return false;
 
-        if (!HasPriceDecreased(GlobalData.Settings.Signal.Sbm3CandlesLookbackCount, GlobalData.Settings.Signal.Sbm3CandlesBbRecoveryPercentage))
+        if (!HasBollingerBandsIncreased(GlobalData.Settings.Signal.Sbm3CandlesLookbackCount, GlobalData.Settings.Signal.Sbm3CandlesBbRecoveryPercentage))
             return false;
 
-        if (CheckMaCrossings())
-            return false;
+        //if (CheckMaCrossings())
+        //    return false;
 
         return true;
     }

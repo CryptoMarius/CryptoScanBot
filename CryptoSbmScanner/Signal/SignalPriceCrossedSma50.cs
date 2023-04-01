@@ -8,40 +8,64 @@ public class SignalPriceCrossedSma50 : SignalBase
     public SignalPriceCrossedSma50(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
         SignalMode = SignalMode.modeLong;
-        SignalStrategy = SignalStrategy.strategyPriceCrossedSma50;
+        SignalStrategy = SignalStrategy.priceCrossedSma50;
     }
+
+    public override bool IndicatorsOkay(CryptoCandle candle)
+    {
+        if ((candle == null)
+           || (candle.CandleData == null)
+           || (candle.CandleData.Rsi == null)
+           || (candle.CandleData.Sma50 == null)
+           )
+            return false;
+
+        return true;
+    }
+
 
     public override bool IsSignal()
     {
         ExtraText = "";
 
-        // De breedte van de bb is ten minste 1.5%
+        // De breedte van de bb is ten minste X%
         if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.StobbBBMinPercentage, GlobalData.Settings.Signal.StobbBBMaxPercentage))
         {
-            ExtraText = "bb.width te klein " + CandleLast.CandleData.BollingerBandsPercentage.ToString("N2");
+            ExtraText = "bb.width te klein " + CandleLast.CandleData.BollingerBandsPercentage?.ToString("N2");
             return false;
         }
 
-        if (!Candles.TryGetValue(CandleLast.OpenTime - 1 * Interval.Duration, out CryptoCandle prevCandle))
+        // Er is een goed opwaarts momentum
+        if (CandleLast.CandleData.Rsi <= 60)
+            return false;
+
+        if (CandleLast.CandleData.StochSignal <= 70)
+            return false;
+
+        if (CandleLast.CandleData.StochOscillator <= 70)
+            return false;
+
+        CryptoCandle prevCandle;
+        if (!Candles.TryGetValue(CandleLast.OpenTime - Interval.Duration, out prevCandle))
         {
             ExtraText = "geen prev candle! " + CandleLast.DateLocal.ToString();
             return false;
         }
 
-        if (CandleLast.CandleData.Rsi.Rsi.Value <= 50)
+        // De vorige candle mag de ema niet gekruist hebben
+        if ((prevCandle.Open > (decimal)prevCandle.CandleData.Sma50) || (prevCandle.Close > (decimal)CandleLast.CandleData.Sma50))
             return false;
+        //if (prevCandle.CandleData.Tema > prevCandle.CandleData.Sma50)
+        //    return false;
 
-        if (CandleLast.CandleData.Stoch.Oscillator.Value <= 50)
+
+        // De laatste candle moet de ema opwaarts kruisen
+        if ((CandleLast.Open > (decimal)CandleLast.CandleData.Sma50) || (CandleLast.Close < (decimal)CandleLast.CandleData.Sma50))
             return false;
+        //if (CandleLast.CandleData.Tema < CandleLast.CandleData.Sma50)
+        //    return false;
 
-        // Kruising van de candle
-        if (prevCandle.Close > (decimal)prevCandle.CandleData.Sma50.Sma.Value)
-            return false;
-
-        if (CandleLast.Close < (decimal)CandleLast.CandleData.Sma50.Sma.Value)
-            return false;
-
-        if (CandleLast.CandleData.Sma50.Sma.Value > CandleLast.CandleData.Sma200.Sma.Value)
+        if (!WasRsiOversoldInTheLast(20))
             return false;
 
 
@@ -55,12 +79,42 @@ public class SignalPriceCrossedSma50 : SignalBase
 
     public override bool AllowStepIn(CryptoSignal signal)
     {
+        if ((CandleLast.CandleData.Rsi < 50))
+        {
+            ExtraText = string.Format("De RSI is niet > 50 {0:N8} (last)", CandleLast.CandleData.Rsi);
+            return false;
+        }
+
+
+        CryptoCandle CandlePrev1;
+        if (!Candles.TryGetValue(CandleLast.OpenTime - Interval.Duration, out CandlePrev1))
+        {
+            ExtraText = "No prev1";
+            return false;
+        }
+
+        // Herstel? Verbeterd de RSI
+        if ((CandleLast.CandleData.Rsi < CandlePrev1.CandleData.Rsi))
+        {
+            ExtraText = string.Format("De RSI niet herstellend {0:N8} {1:N8} (last)", CandlePrev1.CandleData.Rsi, CandleLast.CandleData.Rsi);
+            return false;
+        }
+
         return true;
     }
 
 
     public override bool GiveUp(CryptoSignal signal)
     {
+        ExtraText = "";
+        int value = 5;
+        //Langer dan 60 candles willen we niet wachten(is 60 niet heel erg lang ?)
+        if ((CandleLast.OpenTime - signal.EventTime) / Interval.Duration > value)
+        {
+            ExtraText = "Ophouden na " + value.ToString() + " candles";
+            return true;
+        }
+
         return false;
     }
 

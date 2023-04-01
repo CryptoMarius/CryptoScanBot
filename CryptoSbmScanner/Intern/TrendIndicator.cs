@@ -348,11 +348,6 @@ public class TrendIndicator
             else
                 lastLow = zigZagResult.Value;
 
-                // Save the last value
-                if (zigZagResult.PointType == "H")
-                    lastHigh = zigZagResult.Value;
-                else
-                    lastLow = zigZagResult.Value;
 
             Log?.AppendLine(string.Format("date={0} {1} {2:N8} rsi={3:N8} count={4}, trend={5}", zigZagResult.Candle.Date.ToLocalTime(),
                     zigZagResult.PointType, zigZagResult.Value, zigZagResult.Candle.CandleData?.Rsi, count, trend));
