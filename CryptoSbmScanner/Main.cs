@@ -1641,7 +1641,7 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
 
     
 
-    private void backtestToolStripMenuItem_Click(object sender, EventArgs e)
+    private void BacktestToolStripMenuItem_Click(object sender, EventArgs e)
     {
         try
         {

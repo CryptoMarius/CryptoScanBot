@@ -11,12 +11,24 @@ namespace CryptoSbmScanner.Settings
     internal class SettingsBaseCoin
     {
         public CryptoQuoteData QuoteData;
+
+        // Signal settings
         public CheckBox FetchCandles;
         public NumericUpDown MinVolume;
         public NumericUpDown MinPrice;
         public CheckBox CreateSignals;
+
+        // Display settings
         public Panel PanelColor;
         public Button ButtonColor;
+
+#if tradebot
+        // Trade bot settings
+        public NumericUpDown BuyAmount;
+        public NumericUpDown BuyPercentage;
+        public NumericUpDown SlotsMaximal;
+#endif
+
 
         public SettingsBaseCoin(CryptoQuoteData quoteData, int yPos, Control.ControlCollection controls)
         {
@@ -32,6 +44,8 @@ namespace CryptoSbmScanner.Settings
                 Text = quoteData.Name,
                 UseVisualStyleBackColor = true
             };
+            controls.Add(FetchCandles);
+
             MinVolume = new()
             {
                 Location = new Point(118, yPos),
@@ -41,6 +55,8 @@ namespace CryptoSbmScanner.Settings
                 Size = new Size(140, 23),
                 ThousandsSeparator = true
             };
+            controls.Add(MinVolume);
+
             MinPrice = new()
             {
                 DecimalPlaces = 8,
@@ -52,6 +68,52 @@ namespace CryptoSbmScanner.Settings
                 Size = new Size(140, 23),
                 ThousandsSeparator = true
             };
+            controls.Add(MinPrice);
+
+#if tradebot
+            // Het initiele aankoopbedrag
+            //public decimal BuyAmount { get; set; }
+            BuyAmount = new()
+            {
+                DecimalPlaces = 8,
+                Increment = new decimal(new int[] { 1, 0, 0, 393216 }),
+                Location = new Point(265, yPos),
+                Margin = new Padding(4, 3, 4, 3),
+                Maximum = new decimal(new int[] { 276447231, 23283, 0, 0 }),
+                Size = new Size(140, 23),
+                ThousandsSeparator = true
+            };
+            controls.Add(BuyAmount);
+
+            // Het initiele aankooppercentage
+            //public decimal BuyPercentage { get; set; }
+            BuyPercentage = new()
+            {
+                DecimalPlaces = 2,
+                Increment = new decimal(new int[] { 1, 0, 0, 393216 }),
+                Location = new Point(265, yPos),
+                Margin = new Padding(4, 3, 4, 3),
+                Maximum = new decimal(new int[] { 276447231, 23283, 0, 0 }),
+                Size = new Size(140, 23),
+                ThousandsSeparator = true
+            };
+            controls.Add(BuyPercentage);
+
+            // Maximaal aantal slots op de exchange
+            //public int SlotsMaximal { get; set; }
+            SlotsMaximal = new()
+            {
+                DecimalPlaces = 0,
+                Increment = new decimal(new int[] { 1, 0, 0, 393216 }),
+                Location = new Point(265, yPos),
+                Margin = new Padding(4, 3, 4, 3),
+                Maximum = new decimal(new int[] { 276447231, 23283, 0, 0 }),
+                Size = new Size(140, 23),
+                ThousandsSeparator = true
+            };
+            controls.Add(SlotsMaximal);
+#endif
+
             CreateSignals = new()
             {
                 AutoSize = true,
@@ -61,7 +123,10 @@ namespace CryptoSbmScanner.Settings
                 Size = new Size(15, 23),
                 UseVisualStyleBackColor = true
             };
-            PanelColor = new()
+            controls.Add(CreateSignals);
+
+
+            PanelColor = new ()
             {
                 BackColor = Color.Transparent,
                 BorderStyle = BorderStyle.FixedSingle,
@@ -70,6 +135,8 @@ namespace CryptoSbmScanner.Settings
                 //Name = "panelColorBTC",
                 Size = new Size(70, 23)
             };
+            controls.Add(PanelColor);
+
             ButtonColor = new()
             {
                 Location = new Point(542, yPos),
@@ -80,15 +147,19 @@ namespace CryptoSbmScanner.Settings
                 UseVisualStyleBackColor = true,
                 //Tag = PanelColor,
             };
-
             ButtonColor.Click += PickColor_Click;
-
-            controls.Add(FetchCandles);
-            controls.Add(MinVolume);
-            controls.Add(MinPrice);
-            controls.Add(CreateSignals);
-            controls.Add(PanelColor);
             controls.Add(ButtonColor);
+
+            Label labelInfo = new()
+            {
+                Location = new Point(642, yPos + 3),
+                Margin = new Padding(4, 3, 4, 3),
+                //Name = "buttonColorBTC",
+                Size = new Size(88, 23),
+                Text = quoteData.SymbolList.Count.ToString() + " symbols",
+            };
+            controls.Add(labelInfo);
+
         }
 
         private void PickColor_Click(object sender, EventArgs e)

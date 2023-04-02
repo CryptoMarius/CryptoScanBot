@@ -634,10 +634,10 @@ public partial class FrmSettings : Form
         settings.Bot.TradeOnStrategy[(int)SignalStrategy.sbm1Oversold] = EditBotSbm1.Checked;
         settings.Bot.TradeOnStrategy[(int)SignalStrategy.sbm2Oversold] = EditBotSbm2.Checked;
         settings.Bot.TradeOnStrategy[(int)SignalStrategy.sbm3Oversold] = EditBotSbm3.Checked;
-        settings.Signal.TradeOnStrategy[(int)SignalStrategy.sbm4Overbought] = false;
-        settings.Signal.TradeOnStrategy[(int)SignalStrategy.sbm4Oversold] = false;
-        settings.Signal.TradeOnStrategy[(int)SignalStrategy.sbm5Overbought] = false;
-        settings.Signal.TradeOnStrategy[(int)SignalStrategy.sbm5Oversold] = false;
+        settings.Bot.TradeOnStrategy[(int)SignalStrategy.sbm4Overbought] = false;
+        settings.Bot.TradeOnStrategy[(int)SignalStrategy.sbm4Oversold] = false;
+        settings.Bot.TradeOnStrategy[(int)SignalStrategy.sbm5Overbought] = false;
+        settings.Bot.TradeOnStrategy[(int)SignalStrategy.sbm5Oversold] = false;
 
         settings.Bot.TradeOnStrategy[(int)SignalStrategy.bearischEngulfing] = EditBotBullishEngulfing.Checked;
         settings.Bot.TradeOnStrategy[(int)SignalStrategy.priceCrossedEma20] = EditBotPriceCrossingEma20.Checked;

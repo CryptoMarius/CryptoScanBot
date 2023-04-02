@@ -27,6 +27,7 @@ Bevindingen/Todo's:
 - Ondersteuning van andere exchanges (dat heeft momenteel niet mijn prioriteit)
   Gezien het geheugengebruik die de tool heeft is een combinatie van exchanges niet aan te raden.
 
+
 TODO:
   Is het nieuwe experiment met de SMA20 - Slope positive iets, of is dat ten dode opgeschreven
   (ik heb echt 1 mooie mogelijkheid gezien, maar je moet het maar net openen en opmerken)
@@ -48,7 +49,7 @@ TODO: HARDCODED API KEY's weghalen (ze kunner er niets mee, maar just in case)
 
 xx-xx-2023 1.8.0
 - Uitbreiding van basismunten (waaronder de TUSD enzovoort)
-- Naar aanleiding van de Binance storing op 24 maart, ontbrekende candles in het verleden automatisch invullen (na een herkansing)
+- Naar aanleiding van de Binance storing op 24 maart de ontbrekende candles automatisch invullen
 - Upgrade naar .net 7 (met dank aan Harmen Kooiker)
 - Sorteer indicatie op de kolom waarop gesorteerd wordt
 - Bij het afsluiten kan de applicatie alsnog candles gaan ophalen doordat de timer nog loopt en de applicatie status niet gecontroleerd wordt

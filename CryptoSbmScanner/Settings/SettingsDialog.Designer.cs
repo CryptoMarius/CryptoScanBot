@@ -52,6 +52,7 @@ partial class FrmSettings
         label2 = new Label();
         EditTradingApp = new ComboBox();
         tabBasismunten = new TabPage();
+        label15 = new Label();
         label24 = new Label();
         label37 = new Label();
         label38 = new Label();
@@ -266,7 +267,6 @@ partial class FrmSettings
         EditBarometer30mBotMinimal = new NumericUpDown();
         EditSlopeEma50TurningNegative = new CheckBox();
         EditSlopeEma50TurningPositive = new CheckBox();
-        EditBotSbm4 = new CheckBox();
         EditBotStobb = new CheckBox();
         EditBotSbm1 = new CheckBox();
         EditBotSbm2 = new CheckBox();
@@ -612,6 +612,7 @@ partial class FrmSettings
         // 
         // tabBasismunten
         // 
+        tabBasismunten.Controls.Add(label15);
         tabBasismunten.Controls.Add(label24);
         tabBasismunten.Controls.Add(label37);
         tabBasismunten.Controls.Add(label38);
@@ -626,6 +627,16 @@ partial class FrmSettings
         tabBasismunten.Text = "Basismunten";
         tabBasismunten.UseVisualStyleBackColor = true;
         // 
+        // label15
+        // 
+        label15.AutoSize = true;
+        label15.Location = new Point(477, 53);
+        label15.Margin = new Padding(4, 0, 4, 0);
+        label15.Name = "label15";
+        label15.Size = new Size(34, 15);
+        label15.TabIndex = 151;
+        label15.Text = "Kleur";
+        // 
         // label24
         // 
         label24.AutoSize = true;
@@ -639,7 +650,7 @@ partial class FrmSettings
         // label37
         // 
         label37.AutoSize = true;
-        label37.Location = new Point(423, 53);
+        label37.Location = new Point(408, 53);
         label37.Margin = new Padding(4, 0, 4, 0);
         label37.Name = "label37";
         label37.Size = new Size(52, 15);
@@ -672,9 +683,9 @@ partial class FrmSettings
         label19.Location = new Point(16, 12);
         label19.Margin = new Padding(4, 0, 4, 0);
         label19.Name = "label19";
-        label19.Size = new Size(447, 15);
+        label19.Size = new Size(473, 15);
         label19.TabIndex = 146;
-        label19.Text = "NB: Wijzigingen in de kolom \"Candles halen\"vereisen een herstart van de applicatie!";
+        label19.Text = "Attentie: Wijzigingen in de kolom \"Candles halen\"vereisen een herstart van de applicatie!";
         // 
         // tabPageSignals
         // 
@@ -2352,7 +2363,6 @@ partial class FrmSettings
         tabExtra.Controls.Add(EditBarometer30mBotMinimal);
         tabExtra.Controls.Add(EditSlopeEma50TurningNegative);
         tabExtra.Controls.Add(EditSlopeEma50TurningPositive);
-        tabExtra.Controls.Add(EditBotSbm4);
         tabExtra.Controls.Add(EditBotStobb);
         tabExtra.Controls.Add(EditBotSbm1);
         tabExtra.Controls.Add(EditBotSbm2);
@@ -2775,7 +2785,7 @@ partial class FrmSettings
         // label73
         // 
         label73.AutoSize = true;
-        label73.Location = new Point(19, 245);
+        label73.Location = new Point(19, 243);
         label73.Margin = new Padding(4, 0, 4, 0);
         label73.Name = "label73";
         label73.Size = new Size(92, 15);
@@ -3073,17 +3083,6 @@ partial class FrmSettings
         EditSlopeEma50TurningPositive.TabIndex = 161;
         EditSlopeEma50TurningPositive.Text = "De ema50 wordt positief";
         EditSlopeEma50TurningPositive.UseVisualStyleBackColor = true;
-        // 
-        // EditBotSbm4
-        // 
-        EditBotSbm4.AutoSize = true;
-        EditBotSbm4.Location = new Point(550, 129);
-        EditBotSbm4.Margin = new Padding(4, 3, 4, 3);
-        EditBotSbm4.Name = "EditBotSbm4";
-        EditBotSbm4.Size = new Size(56, 19);
-        EditBotSbm4.TabIndex = 160;
-        EditBotSbm4.Text = "SBM4";
-        EditBotSbm4.UseVisualStyleBackColor = true;
         // 
         // EditBotStobb
         // 
@@ -3624,7 +3623,6 @@ partial class FrmSettings
     private System.Windows.Forms.CheckBox EditPriceCrossedEma50;
     private System.Windows.Forms.CheckBox EditAltradyWebhookActive;
     private System.Windows.Forms.CheckBox EditSlopeSma50TurningPositive;
-    private System.Windows.Forms.CheckBox EditBotSbm4;
     private System.Windows.Forms.CheckBox EditBotStobb;
     private System.Windows.Forms.CheckBox EditBotSbm1;
     private System.Windows.Forms.CheckBox EditBotSbm2;
@@ -3714,4 +3712,5 @@ partial class FrmSettings
     private Label label37;
     private Label label38;
     private Label label48;
+    private Label label15;
 }
