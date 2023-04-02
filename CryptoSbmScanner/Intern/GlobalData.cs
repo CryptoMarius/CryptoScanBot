@@ -86,7 +86,9 @@ static public class GlobalData
     //static public ThreadSaveCandles TaskSaveCandles { get; set; }
     static public ThreadCreateSignal ThreadCreateSignal { get; set; }
     //static public ThreadOrderHandler ThreadOrderHandler { get; set; }        
-    //static public ThreadMonitorSignal TaskMonitorSignal { get; set; }
+#if tradebot
+    static public ThreadMonitorSignal TaskMonitorSignal { get; set; }
+#endif
     //static public ThreadBalanceSymbols ThreadBalanceSymbols { get; set; }
 
     // Binance stuff

@@ -205,8 +205,13 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
         listViewSymbolPrices.GridLines = false;
         listViewSymbolPrices.View = View.Details;
 
+        ApplicationTradingBot.Checked = GlobalData.Settings.Bot.Active;
         ApplicationPlaySounds.Checked = GlobalData.Settings.Signal.SoundsActive;
         ApplicationCreateSignals.Checked = GlobalData.Settings.Signal.SignalsActive;
+
+#if !tradebot
+        ApplicationTradingBot.Visible = false;
+#endif
 
         this.Refresh();
     }
@@ -234,7 +239,9 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
     {
         GlobalData.ApplicationStatus = ApplicationStatus.AppStatusPrepare;
         GlobalData.ThreadCreateSignal = new ThreadCreateSignal(BinanceShowNotification);
-        //GlobalData.TaskMonitorSignal = new ThreadMonitorSignal();
+#if tradebot
+        GlobalData.TaskMonitorSignal = new ThreadMonitorSignal();
+#endif
 
         // Iets met netwerk verbindingen wat nog niet "up" is?
         if (sleepAwhile)
@@ -252,7 +259,9 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
 
         // Threads (of tasks)
         GlobalData.ThreadCreateSignal?.Stop();
-        //GlobalData.TaskMonitorSignal?.Stop();
+#if tradebot
+        GlobalData.TaskMonitorSignal?.Stop();
+#endif
 
         foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
         {
@@ -1067,6 +1076,7 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
     {
         // Dan wordt de basecoin en coordinaten etc. bewaard voor een volgende keer
         WindowLocationSave();
+        GlobalData.Settings.Bot.Active = ApplicationTradingBot.Checked;
         GlobalData.Settings.Signal.SoundsActive = ApplicationPlaySounds.Checked;
         GlobalData.Settings.Signal.SignalsActive = ApplicationCreateSignals.Checked;
         GlobalData.Settings.General.SelectedBarometerQuote = comboBoxBarometerQuote.Text;
@@ -1639,7 +1649,13 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
         GlobalData.SaveSettings();
     }
 
-    
+    private void ApplicationTradingBot_Click(object sender, EventArgs e)
+    {
+        ApplicationTradingBot.Checked = !ApplicationTradingBot.Checked;
+        GlobalData.Settings.Bot.Active = ApplicationTradingBot.Checked;
+        GlobalData.SaveSettings();
+    }
+
 
     private void BacktestToolStripMenuItem_Click(object sender, EventArgs e)
     {
@@ -1724,4 +1740,5 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
         }
 
     }
+
 }

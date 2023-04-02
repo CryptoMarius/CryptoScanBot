@@ -70,14 +70,24 @@ public class CryptoSymbol
     // NB: Verwijst nu naar de IntervalPeriodList<1m>.CandleList
     public SortedList<long, CryptoCandle> CandleList { get { return IntervalPeriodList[0].CandleList; } }
 
-    //[Computed]
-    /// Signals
-    public List<CryptoSignal> SignalList { get; } = new();
     /// Open positions
     public List<CryptoPosition> PositionList { get; } = new();
     public SemaphoreSlim PositionListSemaphore { get; set; } = new SemaphoreSlim(1);
     public string DisplayFormat { get; set; } = "N8";
 
+    public int SignalCount
+    {
+        get
+        {
+            int count = 0;
+            foreach (CryptoSymbolInterval symbolInterval in IntervalPeriodList)
+            {
+                if (symbolInterval.Signal != null)
+                    count++;
+            }
+            return count;
+        }
+    }
 
     public void InitializePeriods()
     //???
@@ -99,4 +109,9 @@ public class CryptoSymbol
 
     public CryptoSymbolInterval GetSymbolInterval(CryptoIntervalPeriod intervalPeriod) => IntervalPeriodList[(int)intervalPeriod];
 
+    public void ClearSignals()
+    {
+        foreach (CryptoSymbolInterval symbolInterval in IntervalPeriodList)
+            symbolInterval.Signal = null;
+    }
 }

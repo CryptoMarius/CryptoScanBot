@@ -214,53 +214,31 @@ public class SignalCreate
         {
             try
             {
-                bool existSignal = false;
-                for (int i = 0; i < signal.Symbol.SignalList.Count; i++)
+                // We gebruiken (nog) geen exit signalen, echter dat is best realistisch voor de toekomst
+                if (signal.Mode == SignalMode.modeLong) //|| (Alarm.Mode == SignalMode.modeSell) 
                 {
-                    CryptoSignal signalTemp = signal.Symbol.SignalList[i];
-                    if (signalTemp.EventTime == signal.EventTime && signalTemp.Interval == signal.Interval)
+                    if (GlobalData.Settings.Bot.TradeOnInterval[(int)signal.Interval.IntervalPeriod])
                     {
-                        existSignal = true;
-                        break;
-                    }
-                }
-
-                if (!existSignal)
-                {
-                    // Bied het aan het monitorings systeem (indien aangevinkt)
-                    // NB: De SignalList bevat alle intervallen
-                    if (signal.Mode == SignalMode.modeLong) //|| (Alarm.Mode == SignalMode.modeSell) we gebruiken nog geen exit signalen
-                    {
-                        if (GlobalData.Settings.Bot.TradeOnInterval[(int)signal.Interval.IntervalPeriod])
+                        if (GlobalData.Settings.Bot.TradeOnStrategy[(int)signal.Strategy])
                         {
-                            if (GlobalData.Settings.Bot.TradeOnStrategy[(int)signal.Strategy])
+                            await signal.Symbol.PositionListSemaphore.WaitAsync();
+                            try
                             {
-                                await signal.Symbol.PositionListSemaphore.WaitAsync();
-                                try
+                                // Bied het aan het monitorings systeem (indien aangevinkt)
+                                // Intern willen we een nieuwer SBM signaal niet direct vervangen
+                                // (anders krijgen we continue nieuwe signalen en is de instap weg)
+                                // Bij STOBB wil je echt alleen het laatste signaal gebruiken..
+
+                                CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(Interval.IntervalPeriod);
+                                if (symbolInterval.Signal == null || symbolInterval.Signal?.EventTime != signal.EventTime)
                                 {
-
-                                    if (signal.Symbol.SignalList.Any())
-                                    {
-                                        // Intern willen we het nieuwere SBM signaal niet direct vervangen
-                                        // (anders krijgen we continue nieuwe signalen en is de instap weg)
-                                        // Bij STOBB wil je echt alleen het laatste signaal gebruiken..
-
-                                        // MAAR in de ThreadMonitorSignal blijft er uiteindelijk altijd maar 1 over (echter, wel per interval)
-
-                                        if (algorithm.ReplaceSignal)
-                                        {
-                                            signal.Symbol.SignalList.Clear();
-                                            signal.Symbol.SignalList.Add(signal);
-                                        }
-                                    }
-                                    else
-                                        signal.Symbol.SignalList.Add(signal);
-
+                                    if (symbolInterval.Signal == null || algorithm.ReplaceSignal)
+                                        symbolInterval.Signal = signal;
                                 }
-                                finally
-                                {
-                                    signal.Symbol.PositionListSemaphore.Release();
-                                }
+                            }
+                            finally
+                            {
+                                signal.Symbol.PositionListSemaphore.Release();
                             }
                         }
                     }
@@ -1095,7 +1073,7 @@ public class SignalCreate
         return cell;
     }
 
-    private int ExcellHeaders(HSSFSheet sheet, int row)
+    private static int ExcellHeaders(HSSFSheet sheet, int row)
     {
         int column = 0;
         // Columns...
@@ -1331,8 +1309,7 @@ public class SignalCreate
                     cell = WriteCell(sheet, column++, row, "no");
                 }
 
-                string response;
-                if (candle.IsSma200AndSma20OkayOversold(GlobalData.Settings.Signal.SbmMa200AndMa20Percentage, out response))
+                if (candle.IsSma200AndSma20OkayOversold(GlobalData.Settings.Signal.SbmMa200AndMa20Percentage, out string response))
                 {
                     cell = WriteCell(sheet, column++, row, "yes");
                     cell.CellStyle = cellStyleStringGreen;

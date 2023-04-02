@@ -28,7 +28,7 @@ public class ThreadCreateSignal
         Queue.Add(candle);
     }
 
-    private void CleanSymbolData(CryptoSymbol symbol)
+    private static void CleanSymbolData(CryptoSymbol symbol)
     {
         // Analyseer de pair in de opgegeven intervallen (zou in aparte threads kunnen om dit te versnellen, maar dit gaat best goed momenteel)
         foreach (CryptoInterval interval in GlobalData.IntervalList)
@@ -111,9 +111,11 @@ public class ThreadCreateSignal
                 if (symbol.QuoteData.CreateSignals && GlobalData.Settings.Signal.SignalsActive && symbol.IsSpotTradingAllowed)
                     AnalyseSymbolData(candle);
 
+#if tradebot
                 // Alway's: if any available positions or signals
-                //if (symbol.SignalList.Count > 0 || symbol.PositionList.Count > 0)
-                //    GlobalData.TaskMonitorSignal.AddToQueue(symbol);
+                if (symbol.PositionList.Count > 0 || symbol.SignalCount > 0)
+                    GlobalData.TaskMonitorSignal.AddToQueue(symbol);
+#endif
 
                 CleanSymbolData(symbol);
             }

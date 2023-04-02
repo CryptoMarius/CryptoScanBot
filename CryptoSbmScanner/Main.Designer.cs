@@ -33,10 +33,12 @@
             MenuMain = new ToolStripMenuItem();
             ApplicationPlaySounds = new ToolStripMenuItem();
             ApplicationCreateSignals = new ToolStripMenuItem();
+            ApplicationTradingBot = new ToolStripMenuItem();
             ToolStripMenuItemSettings = new ToolStripMenuItem();
             ToolStripMenuItemRefresh = new ToolStripMenuItem();
             clearMenusToolStripMenuItem = new ToolStripMenuItem();
             applicationMenuItemAbout = new ToolStripMenuItem();
+            backtestToolStripMenuItem = new ToolStripMenuItem();
             symbolFilter = new TextBox();
             panelClient = new Panel();
             tabControl = new TabControl();
@@ -73,7 +75,6 @@
             contextMenuStrip1 = new ContextMenuStrip(components);
             timerCandles = new System.Windows.Forms.Timer(components);
             timerAddSignal = new System.Windows.Forms.Timer(components);
-            backtestToolStripMenuItem = new ToolStripMenuItem();
             panelLeft.SuspendLayout();
             panel4.SuspendLayout();
             listBoxSymbolsMenuStrip.SuspendLayout();
@@ -212,7 +213,7 @@
             // 
             // MenuMain
             // 
-            MenuMain.DropDownItems.AddRange(new ToolStripItem[] { ApplicationPlaySounds, ApplicationCreateSignals, ToolStripMenuItemSettings, ToolStripMenuItemRefresh, clearMenusToolStripMenuItem, applicationMenuItemAbout, backtestToolStripMenuItem });
+            MenuMain.DropDownItems.AddRange(new ToolStripItem[] { ApplicationPlaySounds, ApplicationCreateSignals, ApplicationTradingBot, ToolStripMenuItemSettings, ToolStripMenuItemRefresh, clearMenusToolStripMenuItem, applicationMenuItemAbout, backtestToolStripMenuItem });
             MenuMain.Name = "MenuMain";
             MenuMain.Size = new Size(50, 20);
             MenuMain.Text = "Menu";
@@ -234,6 +235,13 @@
             ApplicationCreateSignals.Size = new Size(180, 22);
             ApplicationCreateSignals.Text = "Signalen maken";
             ApplicationCreateSignals.Click += ApplicationCreateSignals_Click;
+            // 
+            // ApplicationTradingBot
+            // 
+            ApplicationTradingBot.Name = "ApplicationTradingBot";
+            ApplicationTradingBot.Size = new Size(180, 22);
+            ApplicationTradingBot.Text = "Trading bot actief";
+            ApplicationTradingBot.Click += ApplicationTradingBot_Click;
             // 
             // ToolStripMenuItemSettings
             // 
@@ -262,6 +270,13 @@
             applicationMenuItemAbout.Size = new Size(180, 22);
             applicationMenuItemAbout.Text = "About";
             applicationMenuItemAbout.Click += ApplicationMenuItemAbout_Click;
+            // 
+            // backtestToolStripMenuItem
+            // 
+            backtestToolStripMenuItem.Name = "backtestToolStripMenuItem";
+            backtestToolStripMenuItem.Size = new Size(180, 22);
+            backtestToolStripMenuItem.Text = "Backtest";
+            backtestToolStripMenuItem.Click += BacktestToolStripMenuItem_Click;
             // 
             // symbolFilter
             // 
@@ -607,13 +622,6 @@
             timerAddSignal.Interval = 1250;
             timerAddSignal.Tick += TimerAddSignal_Tick;
             // 
-            // backtestToolStripMenuItem
-            // 
-            backtestToolStripMenuItem.Name = "backtestToolStripMenuItem";
-            backtestToolStripMenuItem.Size = new Size(180, 22);
-            backtestToolStripMenuItem.Text = "Backtest";
-            backtestToolStripMenuItem.Click += BacktestToolStripMenuItem_Click;
-            // 
             // FrmMain
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -706,6 +714,7 @@
         private System.Windows.Forms.ToolStripMenuItem ApplicationCreateSignals;
         private System.Windows.Forms.Timer timerAddSignal;
         private ToolStripMenuItem backtestToolStripMenuItem;
+        private ToolStripMenuItem ApplicationTradingBot;
     }
 }
 

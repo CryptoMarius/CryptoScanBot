@@ -178,6 +178,11 @@ public partial class FrmSettings : Form
         {
             if (quoteData.SymbolList.Count > 5)
                 BaseCoinList.Add(new SettingsBaseCoin(quoteData, yPos += 26, tabBasismunten.Controls));
+            else
+            {
+                quoteData.FetchCandles = false;
+                quoteData.CreateSignals = false;
+            }
         }
 
         foreach (SettingsBaseCoin x in BaseCoinList)

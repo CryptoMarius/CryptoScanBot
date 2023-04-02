@@ -337,11 +337,13 @@ public class ThreadLoadData
             //var whatever31 = Task.Run(() => { GlobalData.ThreadOrderHandler.ExecuteAsync(); }); // Geen await, forever long running
 
 
+#if tradebot
             //************************************************************************************
             // Nu we de achterstand ingehaald hebben kunnen/mogen we monitoren
             //************************************************************************************
-            //GlobalData.AddTextToLogTab("Starting task for monitor candles");
-            //var whatever4 = Task.Run(async () => { GlobalData.TaskMonitorSignal.Execute(); }); // Geen await, forever long running
+            GlobalData.AddTextToLogTab("Starting task for monitor candles");
+            var whatever4 = Task.Run(async () => { GlobalData.TaskMonitorSignal.Execute(); }); // Geen await, forever long running
+#endif
 
             var assembly = Assembly.GetExecutingAssembly().GetName();
             string appName = assembly.Name.ToString();
