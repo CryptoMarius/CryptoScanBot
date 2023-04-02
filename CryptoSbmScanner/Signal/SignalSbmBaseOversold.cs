@@ -278,12 +278,15 @@ public class SignalSbmBaseOversold : SignalSbmBase
         }
 
         // profiteren van een nog lagere prijs...?
-        if (Symbol.LastPrice <= signal.LastPrice)
+        if (Symbol.LastPrice < signal.LastPrice)
         {
-            ExtraText = string.Format("Symbol.LastPrice gaat nog verder naar beneden (ff wachten) {0:N8} {1:N8}", Symbol.LastPrice, signal.LastPrice);
-            return false;
+            if (Symbol.LastPrice != signal.LastPrice)
+            {
+                ExtraText = string.Format("Symbol.LastPrice gaat nog verder naar beneden (ff wachten) {0:N8} {1:N8}", Symbol.LastPrice, signal.LastPrice);
+                return false;
+            }
+            signal.LastPrice = Symbol.LastPrice;
         }
-        signal.LastPrice = Symbol.LastPrice;
 
         //if (CandleLast.CandleData.SlopeRsi <= 0)
         //{

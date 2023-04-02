@@ -80,8 +80,8 @@ public class CryptoSymbol
 
 
     public void InitializePeriods()
-	//???
-	//    => IntervalPeriodList = GlobalData.IntervalList.Select(interval 
+    //???
+    //    => IntervalPeriodList = GlobalData.IntervalList.Select(interval 
     //    => new CryptoSymbolInterval { Interval = interval }).ToList();
     {
         IntervalPeriodList = new List<CryptoSymbolInterval>();

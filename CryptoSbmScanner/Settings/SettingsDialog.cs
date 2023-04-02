@@ -6,8 +6,8 @@ namespace CryptoSbmScanner.Settings;
 
 public partial class FrmSettings : Form
 {
-
     private SettingsBasic settings;
+    private readonly List<SettingsBaseCoin> BaseCoinList = new();
 
     public FrmSettings()
     {
@@ -49,11 +49,6 @@ public partial class FrmSettings : Form
         buttonTestSpeech.Click += ButtonTestSpeech_Click;
         buttonFontDialog.Click += ButtonFontDialog_Click;
 
-        buttonColorBTC.Click += ButtonColorBTC_Click;
-        buttonColorETH.Click += ButtonColorETH_Click;
-        buttonColorBNB.Click += ButtonColorBNB_Click;
-        buttonColorBUSD.Click += ButtonColorBUSD_Click;
-        buttonColorUSDT.Click += ButtonColorUSDT_Click;
 
         buttonColorStobb.Click += ButtonColorStobb_Click;
         buttonColorSbm.Click += ButtonColorSbm_Click;
@@ -89,76 +84,6 @@ public partial class FrmSettings : Form
         settings.Signal.AnalyseStrategy[(int)SignalStrategy.sbm3Overbought] = settings.Signal.AnalysisSbm3Overbought;
     }
 
-
-    private void CreateBaseCoin(CryptoQuoteData quoteData, int yPos)
-    {
-        //EditFetchCandlesBTC = new CheckBox();
-        //groupBoxCoin.Controls.Add(EditFetchCandlesBTC);
-        //EditFetchCandlesBTC.AutoSize = true;
-        //EditFetchCandlesBTC.Location = new Point(18, yPos + 2);
-        //EditFetchCandlesBTC.Margin = new Padding(4, 3, 4, 3);
-        //EditFetchCandlesBTC.Name = "EditFetchCandlesBTC";
-        //EditFetchCandlesBTC.Size = new Size(45, 19);
-        //EditFetchCandlesBTC.Text = "BTC";
-        //EditFetchCandlesBTC.UseVisualStyleBackColor = true;
-
-        //EditMinVolumeBTC = new NumericUpDown();
-        //((System.ComponentModel.ISupportInitialize)EditMinVolumeBTC).BeginInit();
-        //groupBoxCoin.Controls.Add(EditMinVolumeBTC);
-        //EditMinVolumeBTC.Location = new Point(118, yPos);
-        //EditMinVolumeBTC.Margin = new Padding(4, 3, 4, 3);
-        //EditMinVolumeBTC.Maximum = new decimal(new int[] { 276447231, 23283, 0, 0 });
-        //EditMinVolumeBTC.Name = "EditMinVolumeBTC";
-        //EditMinVolumeBTC.Size = new Size(140, 23);
-        //EditMinVolumeBTC.ThousandsSeparator = true;
-        //((System.ComponentModel.ISupportInitialize)EditMinVolumeBTC).EndInit();
-
-        //EditMinPriceBTC = new NumericUpDown();
-        //((System.ComponentModel.ISupportInitialize)EditMinPriceBTC).BeginInit();
-        //groupBoxCoin.Controls.Add(EditMinPriceBTC);
-        //EditMinPriceBTC.DecimalPlaces = 8;
-        //EditMinPriceBTC.Increment = new decimal(new int[] { 1, 0, 0, 393216 });
-        //EditMinPriceBTC.Location = new Point(265, yPos);
-        //EditMinPriceBTC.Margin = new Padding(4, 3, 4, 3);
-        //EditMinPriceBTC.Maximum = new decimal(new int[] { 276447231, 23283, 0, 0 });
-        //EditMinPriceBTC.Name = "EditMinPriceBTC";
-        //EditMinPriceBTC.Size = new Size(140, 23);
-        //EditMinPriceBTC.ThousandsSeparator = true;
-        //((System.ComponentModel.ISupportInitialize)EditMinPriceBTC).EndInit();
-
-        //EditCreateSignalsBTC = new CheckBox();
-        //groupBoxCoin.Controls.Add(EditCreateSignalsBTC);
-        //EditCreateSignalsBTC.AutoSize = true;
-        //EditCreateSignalsBTC.Location = new Point(425, yPos + 2);
-        //EditCreateSignalsBTC.Margin = new Padding(4, 3, 4, 3);
-        //EditCreateSignalsBTC.Name = "EditCreateSignalsBTC";
-        //EditCreateSignalsBTC.Size = new Size(15, 14);
-        //EditCreateSignalsBTC.UseVisualStyleBackColor = true;
-
-        //panelColorBTC = new Panel();
-        //groupBoxCoin.Controls.Add(panelColorBTC);
-        //panelColorBTC.BackColor = Color.Transparent;
-        //panelColorBTC.BorderStyle = BorderStyle.FixedSingle;
-        //panelColorBTC.Location = new Point(465, yPos);
-        //panelColorBTC.Margin = new Padding(4, 3, 4, 3);
-        //panelColorBTC.Name = "panelColorBTC";
-        //panelColorBTC.Size = new Size(70, 22);
-
-        //buttonColorBTC = new Button();
-        //groupBoxCoin.Controls.Add(buttonColorBTC);
-        //buttonColorBTC.Location = new Point(542, yPos);
-        //buttonColorBTC.Margin = new Padding(4, 3, 4, 3);
-        //buttonColorBTC.Name = "buttonColorBTC";
-        //buttonColorBTC.Size = new Size(88, 27);
-        //buttonColorBTC.Text = "Achtergrond";
-        //buttonColorBTC.UseVisualStyleBackColor = true;
-        //buttonColorBTC.Tag = panelColorBTC;
-        //buttonColorBTC.Click += ButtonColorBTC_Click;
-
-        // mhhh, hoe zet je de waarden er in en haal je ze er weer uit?
-        // Wellicht met een custom control (kan ik daar ook eens mee oefenen) ;-)
-        // Zo heel ingewikkeld hoeft deze storage nu ook weer niet te zijn.. toch?
-    }
 
 
     private void SetGrayed(object sender, EventArgs e)
@@ -198,12 +123,13 @@ public partial class FrmSettings : Form
         buttonPlaySoundCandleJumpDown.Enabled = EditPlaySoundCandleJumpSignal.Checked;
     }
 
+
     public void InitSettings(SettingsBasic settings)
     {
         this.settings = settings;
 
-        // Oppassen: De tabPage.Visible=x doet niets
-        // (dat was weer een onaangename verrassing)
+        // Oppassen: Een tabPage.Visible=x doet helemaal niets
+        // (dat was weer een onaangename WinForms verrassing)
         if (!GlobalData.ShowExtraStuff)
             tabExtra.Parent = null;
         if (!GlobalData.ShowExtraStuff)
@@ -247,13 +173,15 @@ public partial class FrmSettings : Form
         // Base coins
         // ------------------------------------------------------------------------------
 
-        SetQuoteCoin("BNB", EditFetchCandlesBNB, EditMinVolumeBNB, EditMinPriceBNB, EditCreateSignalsBNB, panelColorBNB);
-        SetQuoteCoin("BTC", EditFetchCandlesBTC, EditMinVolumeBTC, EditMinPriceBTC, EditCreateSignalsBTC, panelColorBTC);
-        SetQuoteCoin("BUSD", EditFetchCandlesBUSD, EditMinVolumeBUSD, EditMinPriceBUSD, EditCreateSignalsBUSD, panelColorBUSD);
-        SetQuoteCoin("ETH", EditFetchCandlesETH, EditMinVolumeETH, EditMinPriceETH, EditCreateSignalsETH, panelColorETH);
-        SetQuoteCoin("USDT", EditFetchCandlesUSDT, EditMinVolumeUSDT, EditMinPriceUSDT, EditCreateSignalsUSDT, panelColorUSDT);
-        SetQuoteCoin("EUR", EditFetchCandlesEUR, EditMinVolumeEUR, EditMinPriceEUR, EditCreateSignalsEUR, panelColorEUR);
+        int yPos = 50;
+        foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
+        {
+            if (quoteData.SymbolList.Count > 5)
+                BaseCoinList.Add(new SettingsBaseCoin(quoteData, yPos += 26, tabBasismunten.Controls));
+        }
 
+        foreach (SettingsBaseCoin x in BaseCoinList)
+            x.SetControlValues();
 
         // ------------------------------------------------------------------------------
         // Signals
@@ -349,7 +277,7 @@ public partial class FrmSettings : Form
         //EditSbm4BbPercent.Value = settings.Signal.Sbm4BbPercent;
 
         // SBM 5
-        EditSbm5Oversold.Checked = settings.Signal.AnalyseStrategy[(int)SignalStrategy.sbm5Oversold];
+        //EditSbm5Oversold.Checked = settings.Signal.AnalyseStrategy[(int)SignalStrategy.sbm5Oversold];
 
         // SBM aanvullend
         EditSbmCandlesForMacdRecovery.Value = settings.Signal.SbmCandlesForMacdRecovery;
@@ -428,8 +356,6 @@ public partial class FrmSettings : Form
         EditBotSbm1.Checked = settings.Bot.TradeOnStrategy[(int)SignalStrategy.sbm1Oversold];
         EditBotSbm2.Checked = settings.Bot.TradeOnStrategy[(int)SignalStrategy.sbm2Oversold];
         EditBotSbm3.Checked = settings.Bot.TradeOnStrategy[(int)SignalStrategy.sbm3Oversold];
-        EditBotSbm4.Checked = settings.Bot.TradeOnStrategy[(int)SignalStrategy.sbm4Oversold];
-        EditBotSbm5.Checked = settings.Bot.TradeOnStrategy[(int)SignalStrategy.sbm5Oversold];
 
         EditBotBullishEngulfing.Checked = settings.Bot.TradeOnStrategy[(int)SignalStrategy.bearischEngulfing];
         EditBotPriceCrossingEma20.Checked = settings.Bot.TradeOnStrategy[(int)SignalStrategy.priceCrossedEma20];
@@ -466,41 +392,6 @@ public partial class FrmSettings : Form
     }
 
 
-    private void SetQuoteCoin(string quoteName, CheckBox fetchCandles, NumericUpDown minVolume, NumericUpDown minPrice, CheckBox createSignals, Panel panelColor)
-    {
-        if (!settings.QuoteCoins.TryGetValue(quoteName, out CryptoQuoteData quote))
-        {
-            quote = new CryptoQuoteData
-            {
-                Name = quoteName
-            };
-            settings.QuoteCoins.Add(quote.Name, quote);
-        }
-        fetchCandles.Checked = quote.FetchCandles;
-        minVolume.Value = quote.MinimalVolume;
-        minPrice.Value = quote.MinimalPrice;
-        createSignals.Checked = quote.CreateSignals;
-        panelColor.BackColor = quote.DisplayColor;
-    }
-
-    private void GetQuoteCoin(string quoteName, CheckBox fetchCandles, NumericUpDown minVolume, NumericUpDown minPrice, CheckBox createSignals, Panel panelColor)
-    {
-        if (!settings.QuoteCoins.TryGetValue(quoteName, out CryptoQuoteData quote))
-        {
-            quote = new CryptoQuoteData
-            {
-                Name = quoteName
-            };
-            settings.QuoteCoins.Add(quote.Name, quote);
-        }
-        quote.FetchCandles = fetchCandles.Checked;
-        quote.MinimalVolume = minVolume.Value;
-        quote.MinimalPrice = minPrice.Value;
-        quote.CreateSignals = createSignals.Checked;
-        quote.DisplayColor = panelColor.BackColor;
-    }
-
-
     private void ButtonCancel_Click(object sender, EventArgs e)
     {
         DialogResult = DialogResult.Cancel;
@@ -529,12 +420,8 @@ public partial class FrmSettings : Form
         // ------------------------------------------------------------------------------
         // Base coins
         // ------------------------------------------------------------------------------
-        GetQuoteCoin("BNB", EditFetchCandlesBNB, EditMinVolumeBNB, EditMinPriceBNB, EditCreateSignalsBNB, panelColorBNB);
-        GetQuoteCoin("BTC", EditFetchCandlesBTC, EditMinVolumeBTC, EditMinPriceBTC, EditCreateSignalsBTC, panelColorBTC);
-        GetQuoteCoin("BUSD", EditFetchCandlesBUSD, EditMinVolumeBUSD, EditMinPriceBUSD, EditCreateSignalsBUSD, panelColorBUSD);
-        GetQuoteCoin("ETH", EditFetchCandlesETH, EditMinVolumeETH, EditMinPriceETH, EditCreateSignalsETH, panelColorETH);
-        GetQuoteCoin("USDT", EditFetchCandlesUSDT, EditMinVolumeUSDT, EditMinPriceUSDT, EditCreateSignalsUSDT, panelColorUSDT);
-        GetQuoteCoin("EUR", EditFetchCandlesEUR, EditMinVolumeEUR, EditMinPriceEUR, EditCreateSignalsEUR, panelColorEUR);
+        foreach (SettingsBaseCoin x in BaseCoinList)
+            x.GetControlValues();
 
         // ------------------------------------------------------------------------------
         // Signals
@@ -620,9 +507,13 @@ public partial class FrmSettings : Form
         //settings.Signal.Sbm4Percentage = EditSbm4TemaPercent.Value;
         //settings.Signal.Sbm4CandlesLookback = (int)EditSbm4CandlesLookbackCount.Value;
         //settings.Signal.Sbm4BbPercent = EditSbm4BbPercent.Value;
+        settings.Signal.AnalyseStrategy[(int)SignalStrategy.sbm4Overbought] = false;
+        settings.Signal.AnalyseStrategy[(int)SignalStrategy.sbm4Oversold] = false;
 
         // SBM5
-        settings.Signal.AnalyseStrategy[(int)SignalStrategy.sbm5Oversold] = EditSbm5Oversold.Checked;
+        //settings.Signal.AnalyseStrategy[(int)SignalStrategy.sbm5Oversold] = EditSbm5Oversold.Checked;
+        settings.Signal.AnalyseStrategy[(int)SignalStrategy.sbm5Overbought] = false;
+        settings.Signal.AnalyseStrategy[(int)SignalStrategy.sbm5Oversold] = false;
 
         // SBM aanvullend
         settings.Signal.SbmCandlesForMacdRecovery = (int)EditSbmCandlesForMacdRecovery.Value;
@@ -743,8 +634,10 @@ public partial class FrmSettings : Form
         settings.Bot.TradeOnStrategy[(int)SignalStrategy.sbm1Oversold] = EditBotSbm1.Checked;
         settings.Bot.TradeOnStrategy[(int)SignalStrategy.sbm2Oversold] = EditBotSbm2.Checked;
         settings.Bot.TradeOnStrategy[(int)SignalStrategy.sbm3Oversold] = EditBotSbm3.Checked;
-        settings.Bot.TradeOnStrategy[(int)SignalStrategy.sbm4Oversold] = EditBotSbm4.Checked;
-        settings.Bot.TradeOnStrategy[(int)SignalStrategy.sbm5Oversold] = EditBotSbm5.Checked;
+        settings.Signal.TradeOnStrategy[(int)SignalStrategy.sbm4Overbought] = false;
+        settings.Signal.TradeOnStrategy[(int)SignalStrategy.sbm4Oversold] = false;
+        settings.Signal.TradeOnStrategy[(int)SignalStrategy.sbm5Overbought] = false;
+        settings.Signal.TradeOnStrategy[(int)SignalStrategy.sbm5Oversold] = false;
 
         settings.Bot.TradeOnStrategy[(int)SignalStrategy.bearischEngulfing] = EditBotBullishEngulfing.Checked;
         settings.Bot.TradeOnStrategy[(int)SignalStrategy.priceCrossedEma20] = EditBotPriceCrossingEma20.Checked;
@@ -794,40 +687,40 @@ public partial class FrmSettings : Form
         }
     }
 
-    private void ButtonSelectSoundStobbOverbought_Click(object sender, EventArgs e) 
+    private void ButtonSelectSoundStobbOverbought_Click(object sender, EventArgs e)
         => BrowseForWavFile(ref EditSoundStobbOverbought);
 
-    private void ButtonSelectSoundStobbOversold_Click(object sender, EventArgs e) 
+    private void ButtonSelectSoundStobbOversold_Click(object sender, EventArgs e)
         => BrowseForWavFile(ref EditSoundStobbOversold);
 
-    private void ButtonSelectSoundSbmOverbought_Click(object sender, EventArgs e) 
+    private void ButtonSelectSoundSbmOverbought_Click(object sender, EventArgs e)
         => BrowseForWavFile(ref EditSoundFileSbmOverbought);
 
-    private void ButtonSelectSoundSbmOversold_Click(object sender, EventArgs e) 
+    private void ButtonSelectSoundSbmOversold_Click(object sender, EventArgs e)
         => BrowseForWavFile(ref EditSoundFileSbmOversold);
 
-    private void ButtonSelectSoundCandleJumpUp_Click(object sender, EventArgs e) 
+    private void ButtonSelectSoundCandleJumpUp_Click(object sender, EventArgs e)
         => BrowseForWavFile(ref EditSoundFileCandleJumpUp);
 
-    private void ButtonSelectSoundCandleJumpDown_Click(object sender, EventArgs e) 
+    private void ButtonSelectSoundCandleJumpDown_Click(object sender, EventArgs e)
         => BrowseForWavFile(ref EditSoundFileCandleJumpDown);
 
-    private void ButtonPlaySoundStobbOverbought_Click(object sender, EventArgs e) 
+    private void ButtonPlaySoundStobbOverbought_Click(object sender, EventArgs e)
         => GlobalData.PlaySomeMusic(EditSoundStobbOverbought.Text, true);
 
-    private void ButtonPlaySoundStobbOversold_Click(object sender, EventArgs e) 
+    private void ButtonPlaySoundStobbOversold_Click(object sender, EventArgs e)
         => GlobalData.PlaySomeMusic(EditSoundStobbOversold.Text, true);
 
-    private void ButtonPlaySoundSbmOverbought_Click(object sender, EventArgs e) 
+    private void ButtonPlaySoundSbmOverbought_Click(object sender, EventArgs e)
         => GlobalData.PlaySomeMusic(EditSoundFileSbmOverbought.Text, true);
 
-    private void ButtonPlaySoundSbmOversold_Click(object sender, EventArgs e) 
+    private void ButtonPlaySoundSbmOversold_Click(object sender, EventArgs e)
         => GlobalData.PlaySomeMusic(EditSoundFileSbmOversold.Text, true);
 
-    private void ButtonPlaySoundCandleJumpUp_Click(object sender, EventArgs e) 
+    private void ButtonPlaySoundCandleJumpUp_Click(object sender, EventArgs e)
         => GlobalData.PlaySomeMusic(EditSoundFileCandleJumpUp.Text, true);
 
-    private void ButtonPlaySoundCandleJumpDown_Click(object sender, EventArgs e) 
+    private void ButtonPlaySoundCandleJumpDown_Click(object sender, EventArgs e)
         => GlobalData.PlaySomeMusic(EditSoundFileCandleJumpDown.Text, true);
 
     private static void PickColor(ref Panel panel)
@@ -842,13 +735,13 @@ public partial class FrmSettings : Form
         }
     }
 
-    private void ButtonColorStobb_Click(object sender, EventArgs e) 
+    private void ButtonColorStobb_Click(object sender, EventArgs e)
         => PickColor(ref panelColorStobb);
 
-    private void ButtonColorSbm_Click(object sender, EventArgs e) 
+    private void ButtonColorSbm_Click(object sender, EventArgs e)
         => PickColor(ref panelColorSbm);
 
-    private void ButtonColorJump_Click(object sender, EventArgs e) 
+    private void ButtonColorJump_Click(object sender, EventArgs e)
         => PickColor(ref panelColorJump);
 
     private void ButtonReset_Click(object sender, EventArgs e)
@@ -860,24 +753,6 @@ public partial class FrmSettings : Form
             InitSettings(GlobalData.Settings);
         }
     }
-
-    private void ButtonColorBTC_Click(object sender, EventArgs e) 
-        => PickColor(ref panelColorBTC);
-
-    private void ButtonColorETH_Click(object sender, EventArgs e) 
-        => PickColor(ref panelColorETH);
-
-    private void ButtonColorBNB_Click(object sender, EventArgs e) 
-        => PickColor(ref panelColorBNB);
-
-    private void ButtonColorBUSD_Click(object sender, EventArgs e) 
-        => PickColor(ref panelColorBUSD);
-
-    private void ButtonColorUSDT_Click(object sender, EventArgs e) 
-        => PickColor(ref panelColorUSDT);
-
-    private void ButtonColorEUR_Click(object sender, EventArgs e) 
-        => PickColor(ref panelColorEUR);
 
     private void ButtonFontDialog_Click(object sender, EventArgs e)
     {

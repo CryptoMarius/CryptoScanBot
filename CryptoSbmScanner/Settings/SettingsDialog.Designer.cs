@@ -52,48 +52,11 @@ partial class FrmSettings
         label2 = new Label();
         EditTradingApp = new ComboBox();
         tabBasismunten = new TabPage();
+        label24 = new Label();
+        label37 = new Label();
+        label38 = new Label();
+        label48 = new Label();
         label19 = new Label();
-        groupBoxCoin = new GroupBox();
-        panelColorETH = new Panel();
-        panelColorBNB = new Panel();
-        panelColorBUSD = new Panel();
-        panelColorUSDT = new Panel();
-        panelColorEUR = new Panel();
-        panelColorBTC = new Panel();
-        buttonColorEUR = new Button();
-        buttonColorUSDT = new Button();
-        buttonColorBUSD = new Button();
-        buttonColorBNB = new Button();
-        buttonColorETH = new Button();
-        buttonColorBTC = new Button();
-        EditMinPriceEUR = new NumericUpDown();
-        EditCreateSignalsEUR = new CheckBox();
-        EditMinVolumeEUR = new NumericUpDown();
-        EditFetchCandlesEUR = new CheckBox();
-        label51 = new Label();
-        EditMinPriceBUSD = new NumericUpDown();
-        EditMinPriceBNB = new NumericUpDown();
-        EditMinPriceETH = new NumericUpDown();
-        EditMinPriceBTC = new NumericUpDown();
-        EditMinPriceUSDT = new NumericUpDown();
-        EditCreateSignalsBUSD = new CheckBox();
-        EditCreateSignalsBNB = new CheckBox();
-        EditCreateSignalsETH = new CheckBox();
-        EditCreateSignalsUSDT = new CheckBox();
-        EditCreateSignalsBTC = new CheckBox();
-        label16 = new Label();
-        label15 = new Label();
-        label29 = new Label();
-        EditMinVolumeBUSD = new NumericUpDown();
-        EditFetchCandlesBUSD = new CheckBox();
-        EditMinVolumeBNB = new NumericUpDown();
-        EditFetchCandlesBNB = new CheckBox();
-        EditMinVolumeETH = new NumericUpDown();
-        EditFetchCandlesETH = new CheckBox();
-        EditMinVolumeBTC = new NumericUpDown();
-        EditMinVolumeUSDT = new NumericUpDown();
-        EditFetchCandlesUSDT = new CheckBox();
-        EditFetchCandlesBTC = new CheckBox();
         tabPageSignals = new TabPage();
         EditShowInvalidSignals = new CheckBox();
         label26 = new Label();
@@ -147,7 +110,6 @@ partial class FrmSettings
         EditStobbBBMinPercentage = new NumericUpDown();
         EditStobbBBMaxPercentage = new NumericUpDown();
         tabSignalSbm = new TabPage();
-        EditSbm5Oversold = new CheckBox();
         label21 = new Label();
         label20 = new Label();
         label9 = new Label();
@@ -237,7 +199,6 @@ partial class FrmSettings
         panel6 = new Panel();
         checkBoxUseBlackListOverbought = new CheckBox();
         tabExtra = new TabPage();
-        EditBotSbm5 = new CheckBox();
         EditBotSlopeEma20TurningPositive = new CheckBox();
         EditBotSlopeSma20TurningPositive = new CheckBox();
         EditSlopeEma20TurningPositive = new CheckBox();
@@ -340,19 +301,6 @@ partial class FrmSettings
         ((System.ComponentModel.ISupportInitialize)EditGlobalDataRemoveSignalAfterxCandles).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditSoundHeartBeatMinutes).BeginInit();
         tabBasismunten.SuspendLayout();
-        groupBoxCoin.SuspendLayout();
-        ((System.ComponentModel.ISupportInitialize)EditMinPriceEUR).BeginInit();
-        ((System.ComponentModel.ISupportInitialize)EditMinVolumeEUR).BeginInit();
-        ((System.ComponentModel.ISupportInitialize)EditMinPriceBUSD).BeginInit();
-        ((System.ComponentModel.ISupportInitialize)EditMinPriceBNB).BeginInit();
-        ((System.ComponentModel.ISupportInitialize)EditMinPriceETH).BeginInit();
-        ((System.ComponentModel.ISupportInitialize)EditMinPriceBTC).BeginInit();
-        ((System.ComponentModel.ISupportInitialize)EditMinPriceUSDT).BeginInit();
-        ((System.ComponentModel.ISupportInitialize)EditMinVolumeBUSD).BeginInit();
-        ((System.ComponentModel.ISupportInitialize)EditMinVolumeBNB).BeginInit();
-        ((System.ComponentModel.ISupportInitialize)EditMinVolumeETH).BeginInit();
-        ((System.ComponentModel.ISupportInitialize)EditMinVolumeBTC).BeginInit();
-        ((System.ComponentModel.ISupportInitialize)EditMinVolumeUSDT).BeginInit();
         tabPageSignals.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)EditMinimumTickPercentage).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditAnalysisMinChangePercentage).BeginInit();
@@ -664,8 +612,11 @@ partial class FrmSettings
         // 
         // tabBasismunten
         // 
+        tabBasismunten.Controls.Add(label24);
+        tabBasismunten.Controls.Add(label37);
+        tabBasismunten.Controls.Add(label38);
+        tabBasismunten.Controls.Add(label48);
         tabBasismunten.Controls.Add(label19);
-        tabBasismunten.Controls.Add(groupBoxCoin);
         tabBasismunten.Location = new Point(4, 24);
         tabBasismunten.Margin = new Padding(4, 3, 4, 3);
         tabBasismunten.Name = "tabBasismunten";
@@ -675,495 +626,55 @@ partial class FrmSettings
         tabBasismunten.Text = "Basismunten";
         tabBasismunten.UseVisualStyleBackColor = true;
         // 
+        // label24
+        // 
+        label24.AutoSize = true;
+        label24.Location = new Point(262, 53);
+        label24.Margin = new Padding(4, 0, 4, 0);
+        label24.Name = "label24";
+        label24.Size = new Size(56, 15);
+        label24.TabIndex = 150;
+        label24.Text = "Min. prijs";
+        // 
+        // label37
+        // 
+        label37.AutoSize = true;
+        label37.Location = new Point(423, 53);
+        label37.Margin = new Padding(4, 0, 4, 0);
+        label37.Name = "label37";
+        label37.Size = new Size(52, 15);
+        label37.TabIndex = 149;
+        label37.Text = "Signalen";
+        // 
+        // label38
+        // 
+        label38.AutoSize = true;
+        label38.Location = new Point(15, 53);
+        label38.Margin = new Padding(4, 0, 4, 0);
+        label38.Name = "label38";
+        label38.Size = new Size(81, 15);
+        label38.TabIndex = 148;
+        label38.Text = "Candles halen";
+        // 
+        // label48
+        // 
+        label48.AutoSize = true;
+        label48.Location = new Point(115, 53);
+        label48.Margin = new Padding(4, 0, 4, 0);
+        label48.Name = "label48";
+        label48.Size = new Size(74, 15);
+        label48.TabIndex = 147;
+        label48.Text = "Min. volume";
+        // 
         // label19
         // 
         label19.AutoSize = true;
-        label19.Location = new Point(51, 288);
+        label19.Location = new Point(16, 12);
         label19.Margin = new Padding(4, 0, 4, 0);
         label19.Name = "label19";
         label19.Size = new Size(447, 15);
         label19.TabIndex = 146;
         label19.Text = "NB: Wijzigingen in de kolom \"Candles halen\"vereisen een herstart van de applicatie!";
-        // 
-        // groupBoxCoin
-        // 
-        groupBoxCoin.Controls.Add(panelColorETH);
-        groupBoxCoin.Controls.Add(panelColorBNB);
-        groupBoxCoin.Controls.Add(panelColorBUSD);
-        groupBoxCoin.Controls.Add(panelColorUSDT);
-        groupBoxCoin.Controls.Add(panelColorEUR);
-        groupBoxCoin.Controls.Add(panelColorBTC);
-        groupBoxCoin.Controls.Add(buttonColorEUR);
-        groupBoxCoin.Controls.Add(buttonColorUSDT);
-        groupBoxCoin.Controls.Add(buttonColorBUSD);
-        groupBoxCoin.Controls.Add(buttonColorBNB);
-        groupBoxCoin.Controls.Add(buttonColorETH);
-        groupBoxCoin.Controls.Add(buttonColorBTC);
-        groupBoxCoin.Controls.Add(EditMinPriceEUR);
-        groupBoxCoin.Controls.Add(EditCreateSignalsEUR);
-        groupBoxCoin.Controls.Add(EditMinVolumeEUR);
-        groupBoxCoin.Controls.Add(EditFetchCandlesEUR);
-        groupBoxCoin.Controls.Add(label51);
-        groupBoxCoin.Controls.Add(EditMinPriceBUSD);
-        groupBoxCoin.Controls.Add(EditMinPriceBNB);
-        groupBoxCoin.Controls.Add(EditMinPriceETH);
-        groupBoxCoin.Controls.Add(EditMinPriceBTC);
-        groupBoxCoin.Controls.Add(EditMinPriceUSDT);
-        groupBoxCoin.Controls.Add(EditCreateSignalsBUSD);
-        groupBoxCoin.Controls.Add(EditCreateSignalsBNB);
-        groupBoxCoin.Controls.Add(EditCreateSignalsETH);
-        groupBoxCoin.Controls.Add(EditCreateSignalsUSDT);
-        groupBoxCoin.Controls.Add(EditCreateSignalsBTC);
-        groupBoxCoin.Controls.Add(label16);
-        groupBoxCoin.Controls.Add(label15);
-        groupBoxCoin.Controls.Add(label29);
-        groupBoxCoin.Controls.Add(EditMinVolumeBUSD);
-        groupBoxCoin.Controls.Add(EditFetchCandlesBUSD);
-        groupBoxCoin.Controls.Add(EditMinVolumeBNB);
-        groupBoxCoin.Controls.Add(EditFetchCandlesBNB);
-        groupBoxCoin.Controls.Add(EditMinVolumeETH);
-        groupBoxCoin.Controls.Add(EditFetchCandlesETH);
-        groupBoxCoin.Controls.Add(EditMinVolumeBTC);
-        groupBoxCoin.Controls.Add(EditMinVolumeUSDT);
-        groupBoxCoin.Controls.Add(EditFetchCandlesUSDT);
-        groupBoxCoin.Controls.Add(EditFetchCandlesBTC);
-        groupBoxCoin.Location = new Point(37, 20);
-        groupBoxCoin.Margin = new Padding(4, 3, 4, 3);
-        groupBoxCoin.Name = "groupBoxCoin";
-        groupBoxCoin.Padding = new Padding(4, 3, 4, 3);
-        groupBoxCoin.Size = new Size(640, 260);
-        groupBoxCoin.TabIndex = 27;
-        groupBoxCoin.TabStop = false;
-        groupBoxCoin.Text = "Basismunten (Binance)";
-        // 
-        // panelColorETH
-        // 
-        panelColorETH.BorderStyle = BorderStyle.FixedSingle;
-        panelColorETH.Location = new Point(465, 92);
-        panelColorETH.Margin = new Padding(4, 3, 4, 3);
-        panelColorETH.Name = "panelColorETH";
-        panelColorETH.Size = new Size(70, 22);
-        panelColorETH.TabIndex = 106;
-        // 
-        // panelColorBNB
-        // 
-        panelColorBNB.BorderStyle = BorderStyle.FixedSingle;
-        panelColorBNB.Location = new Point(465, 119);
-        panelColorBNB.Margin = new Padding(4, 3, 4, 3);
-        panelColorBNB.Name = "panelColorBNB";
-        panelColorBNB.Size = new Size(70, 22);
-        panelColorBNB.TabIndex = 108;
-        // 
-        // panelColorBUSD
-        // 
-        panelColorBUSD.BorderStyle = BorderStyle.FixedSingle;
-        panelColorBUSD.Location = new Point(465, 148);
-        panelColorBUSD.Margin = new Padding(4, 3, 4, 3);
-        panelColorBUSD.Name = "panelColorBUSD";
-        panelColorBUSD.Size = new Size(70, 22);
-        panelColorBUSD.TabIndex = 110;
-        // 
-        // panelColorUSDT
-        // 
-        panelColorUSDT.BorderStyle = BorderStyle.FixedSingle;
-        panelColorUSDT.Location = new Point(465, 178);
-        panelColorUSDT.Margin = new Padding(4, 3, 4, 3);
-        panelColorUSDT.Name = "panelColorUSDT";
-        panelColorUSDT.Size = new Size(70, 22);
-        panelColorUSDT.TabIndex = 112;
-        // 
-        // panelColorEUR
-        // 
-        panelColorEUR.BorderStyle = BorderStyle.FixedSingle;
-        panelColorEUR.Location = new Point(465, 204);
-        panelColorEUR.Margin = new Padding(4, 3, 4, 3);
-        panelColorEUR.Name = "panelColorEUR";
-        panelColorEUR.Size = new Size(70, 22);
-        panelColorEUR.TabIndex = 114;
-        // 
-        // panelColorBTC
-        // 
-        panelColorBTC.BackColor = Color.Transparent;
-        panelColorBTC.BorderStyle = BorderStyle.FixedSingle;
-        panelColorBTC.Location = new Point(465, 63);
-        panelColorBTC.Margin = new Padding(4, 3, 4, 3);
-        panelColorBTC.Name = "panelColorBTC";
-        panelColorBTC.Size = new Size(70, 22);
-        panelColorBTC.TabIndex = 148;
-        // 
-        // buttonColorEUR
-        // 
-        buttonColorEUR.Location = new Point(542, 202);
-        buttonColorEUR.Margin = new Padding(4, 3, 4, 3);
-        buttonColorEUR.Name = "buttonColorEUR";
-        buttonColorEUR.Size = new Size(88, 27);
-        buttonColorEUR.TabIndex = 113;
-        buttonColorEUR.Text = "Achtergrond";
-        buttonColorEUR.UseVisualStyleBackColor = true;
-        buttonColorEUR.Click += ButtonColorEUR_Click;
-        // 
-        // buttonColorUSDT
-        // 
-        buttonColorUSDT.Location = new Point(542, 175);
-        buttonColorUSDT.Margin = new Padding(4, 3, 4, 3);
-        buttonColorUSDT.Name = "buttonColorUSDT";
-        buttonColorUSDT.Size = new Size(88, 27);
-        buttonColorUSDT.TabIndex = 111;
-        buttonColorUSDT.Text = "Achtergrond";
-        buttonColorUSDT.UseVisualStyleBackColor = true;
-        buttonColorUSDT.Click += ButtonColorUSDT_Click;
-        // 
-        // buttonColorBUSD
-        // 
-        buttonColorBUSD.Location = new Point(542, 145);
-        buttonColorBUSD.Margin = new Padding(4, 3, 4, 3);
-        buttonColorBUSD.Name = "buttonColorBUSD";
-        buttonColorBUSD.Size = new Size(88, 27);
-        buttonColorBUSD.TabIndex = 109;
-        buttonColorBUSD.Text = "Achtergrond";
-        buttonColorBUSD.UseVisualStyleBackColor = true;
-        buttonColorBUSD.Click += ButtonColorBUSD_Click;
-        // 
-        // buttonColorBNB
-        // 
-        buttonColorBNB.Location = new Point(542, 117);
-        buttonColorBNB.Margin = new Padding(4, 3, 4, 3);
-        buttonColorBNB.Name = "buttonColorBNB";
-        buttonColorBNB.Size = new Size(88, 27);
-        buttonColorBNB.TabIndex = 107;
-        buttonColorBNB.Text = "Achtergrond";
-        buttonColorBNB.UseVisualStyleBackColor = true;
-        buttonColorBNB.Click += ButtonColorBNB_Click;
-        // 
-        // buttonColorETH
-        // 
-        buttonColorETH.Location = new Point(542, 90);
-        buttonColorETH.Margin = new Padding(4, 3, 4, 3);
-        buttonColorETH.Name = "buttonColorETH";
-        buttonColorETH.Size = new Size(88, 27);
-        buttonColorETH.TabIndex = 105;
-        buttonColorETH.Text = "Achtergrond";
-        buttonColorETH.UseVisualStyleBackColor = true;
-        buttonColorETH.Click += ButtonColorETH_Click;
-        // 
-        // buttonColorBTC
-        // 
-        buttonColorBTC.Location = new Point(542, 60);
-        buttonColorBTC.Margin = new Padding(4, 3, 4, 3);
-        buttonColorBTC.Name = "buttonColorBTC";
-        buttonColorBTC.Size = new Size(88, 27);
-        buttonColorBTC.TabIndex = 103;
-        buttonColorBTC.Text = "Achtergrond";
-        buttonColorBTC.UseVisualStyleBackColor = true;
-        buttonColorBTC.Click += ButtonColorBTC_Click;
-        // 
-        // EditMinPriceEUR
-        // 
-        EditMinPriceEUR.DecimalPlaces = 8;
-        EditMinPriceEUR.Increment = new decimal(new int[] { 1, 0, 0, 393216 });
-        EditMinPriceEUR.Location = new Point(265, 208);
-        EditMinPriceEUR.Margin = new Padding(4, 3, 4, 3);
-        EditMinPriceEUR.Maximum = new decimal(new int[] { 1316134911, 2328, 0, 0 });
-        EditMinPriceEUR.Name = "EditMinPriceEUR";
-        EditMinPriceEUR.Size = new Size(140, 23);
-        EditMinPriceEUR.TabIndex = 77;
-        EditMinPriceEUR.ThousandsSeparator = true;
-        // 
-        // EditCreateSignalsEUR
-        // 
-        EditCreateSignalsEUR.AutoSize = true;
-        EditCreateSignalsEUR.Checked = true;
-        EditCreateSignalsEUR.CheckState = CheckState.Checked;
-        EditCreateSignalsEUR.Location = new Point(426, 210);
-        EditCreateSignalsEUR.Margin = new Padding(4, 3, 4, 3);
-        EditCreateSignalsEUR.Name = "EditCreateSignalsEUR";
-        EditCreateSignalsEUR.Size = new Size(15, 14);
-        EditCreateSignalsEUR.TabIndex = 75;
-        EditCreateSignalsEUR.UseVisualStyleBackColor = true;
-        // 
-        // EditMinVolumeEUR
-        // 
-        EditMinVolumeEUR.Location = new Point(118, 209);
-        EditMinVolumeEUR.Margin = new Padding(4, 3, 4, 3);
-        EditMinVolumeEUR.Maximum = new decimal(new int[] { 1316134911, 2328, 0, 0 });
-        EditMinVolumeEUR.Name = "EditMinVolumeEUR";
-        EditMinVolumeEUR.Size = new Size(140, 23);
-        EditMinVolumeEUR.TabIndex = 72;
-        EditMinVolumeEUR.ThousandsSeparator = true;
-        EditMinVolumeEUR.Value = new decimal(new int[] { 100000, 0, 0, 0 });
-        // 
-        // EditFetchCandlesEUR
-        // 
-        EditFetchCandlesEUR.AutoSize = true;
-        EditFetchCandlesEUR.Checked = true;
-        EditFetchCandlesEUR.CheckState = CheckState.Checked;
-        EditFetchCandlesEUR.Location = new Point(18, 210);
-        EditFetchCandlesEUR.Margin = new Padding(4, 3, 4, 3);
-        EditFetchCandlesEUR.Name = "EditFetchCandlesEUR";
-        EditFetchCandlesEUR.Size = new Size(47, 19);
-        EditFetchCandlesEUR.TabIndex = 71;
-        EditFetchCandlesEUR.Text = "EUR";
-        EditFetchCandlesEUR.UseVisualStyleBackColor = true;
-        // 
-        // label51
-        // 
-        label51.AutoSize = true;
-        label51.Location = new Point(261, 31);
-        label51.Margin = new Padding(4, 0, 4, 0);
-        label51.Name = "label51";
-        label51.Size = new Size(56, 15);
-        label51.TabIndex = 70;
-        label51.Text = "Min. prijs";
-        // 
-        // EditMinPriceBUSD
-        // 
-        EditMinPriceBUSD.DecimalPlaces = 8;
-        EditMinPriceBUSD.Increment = new decimal(new int[] { 1, 0, 0, 393216 });
-        EditMinPriceBUSD.Location = new Point(265, 149);
-        EditMinPriceBUSD.Margin = new Padding(4, 3, 4, 3);
-        EditMinPriceBUSD.Maximum = new decimal(new int[] { 276447231, 23283, 0, 0 });
-        EditMinPriceBUSD.Name = "EditMinPriceBUSD";
-        EditMinPriceBUSD.Size = new Size(140, 23);
-        EditMinPriceBUSD.TabIndex = 69;
-        EditMinPriceBUSD.ThousandsSeparator = true;
-        // 
-        // EditMinPriceBNB
-        // 
-        EditMinPriceBNB.DecimalPlaces = 8;
-        EditMinPriceBNB.Increment = new decimal(new int[] { 1, 0, 0, 393216 });
-        EditMinPriceBNB.Location = new Point(265, 122);
-        EditMinPriceBNB.Margin = new Padding(4, 3, 4, 3);
-        EditMinPriceBNB.Maximum = new decimal(new int[] { 276447231, 23283, 0, 0 });
-        EditMinPriceBNB.Name = "EditMinPriceBNB";
-        EditMinPriceBNB.Size = new Size(140, 23);
-        EditMinPriceBNB.TabIndex = 68;
-        EditMinPriceBNB.ThousandsSeparator = true;
-        // 
-        // EditMinPriceETH
-        // 
-        EditMinPriceETH.DecimalPlaces = 8;
-        EditMinPriceETH.Increment = new decimal(new int[] { 1, 0, 0, 393216 });
-        EditMinPriceETH.Location = new Point(265, 96);
-        EditMinPriceETH.Margin = new Padding(4, 3, 4, 3);
-        EditMinPriceETH.Maximum = new decimal(new int[] { 276447231, 23283, 0, 0 });
-        EditMinPriceETH.Name = "EditMinPriceETH";
-        EditMinPriceETH.Size = new Size(140, 23);
-        EditMinPriceETH.TabIndex = 67;
-        EditMinPriceETH.ThousandsSeparator = true;
-        // 
-        // EditMinPriceBTC
-        // 
-        EditMinPriceBTC.DecimalPlaces = 8;
-        EditMinPriceBTC.Increment = new decimal(new int[] { 1, 0, 0, 393216 });
-        EditMinPriceBTC.Location = new Point(265, 63);
-        EditMinPriceBTC.Margin = new Padding(4, 3, 4, 3);
-        EditMinPriceBTC.Maximum = new decimal(new int[] { 276447231, 23283, 0, 0 });
-        EditMinPriceBTC.Name = "EditMinPriceBTC";
-        EditMinPriceBTC.Size = new Size(140, 23);
-        EditMinPriceBTC.TabIndex = 66;
-        EditMinPriceBTC.ThousandsSeparator = true;
-        // 
-        // EditMinPriceUSDT
-        // 
-        EditMinPriceUSDT.DecimalPlaces = 8;
-        EditMinPriceUSDT.Increment = new decimal(new int[] { 1, 0, 0, 393216 });
-        EditMinPriceUSDT.Location = new Point(265, 179);
-        EditMinPriceUSDT.Margin = new Padding(4, 3, 4, 3);
-        EditMinPriceUSDT.Maximum = new decimal(new int[] { 1316134911, 2328, 0, 0 });
-        EditMinPriceUSDT.Name = "EditMinPriceUSDT";
-        EditMinPriceUSDT.Size = new Size(140, 23);
-        EditMinPriceUSDT.TabIndex = 65;
-        EditMinPriceUSDT.ThousandsSeparator = true;
-        // 
-        // EditCreateSignalsBUSD
-        // 
-        EditCreateSignalsBUSD.AutoSize = true;
-        EditCreateSignalsBUSD.Location = new Point(426, 149);
-        EditCreateSignalsBUSD.Margin = new Padding(4, 3, 4, 3);
-        EditCreateSignalsBUSD.Name = "EditCreateSignalsBUSD";
-        EditCreateSignalsBUSD.Size = new Size(15, 14);
-        EditCreateSignalsBUSD.TabIndex = 58;
-        EditCreateSignalsBUSD.UseVisualStyleBackColor = true;
-        // 
-        // EditCreateSignalsBNB
-        // 
-        EditCreateSignalsBNB.AutoSize = true;
-        EditCreateSignalsBNB.Location = new Point(425, 122);
-        EditCreateSignalsBNB.Margin = new Padding(4, 3, 4, 3);
-        EditCreateSignalsBNB.Name = "EditCreateSignalsBNB";
-        EditCreateSignalsBNB.Size = new Size(15, 14);
-        EditCreateSignalsBNB.TabIndex = 57;
-        EditCreateSignalsBNB.UseVisualStyleBackColor = true;
-        // 
-        // EditCreateSignalsETH
-        // 
-        EditCreateSignalsETH.AutoSize = true;
-        EditCreateSignalsETH.Location = new Point(425, 97);
-        EditCreateSignalsETH.Margin = new Padding(4, 3, 4, 3);
-        EditCreateSignalsETH.Name = "EditCreateSignalsETH";
-        EditCreateSignalsETH.Size = new Size(15, 14);
-        EditCreateSignalsETH.TabIndex = 56;
-        EditCreateSignalsETH.UseVisualStyleBackColor = true;
-        // 
-        // EditCreateSignalsUSDT
-        // 
-        EditCreateSignalsUSDT.AutoSize = true;
-        EditCreateSignalsUSDT.Checked = true;
-        EditCreateSignalsUSDT.CheckState = CheckState.Checked;
-        EditCreateSignalsUSDT.Location = new Point(426, 180);
-        EditCreateSignalsUSDT.Margin = new Padding(4, 3, 4, 3);
-        EditCreateSignalsUSDT.Name = "EditCreateSignalsUSDT";
-        EditCreateSignalsUSDT.Size = new Size(15, 14);
-        EditCreateSignalsUSDT.TabIndex = 55;
-        EditCreateSignalsUSDT.UseVisualStyleBackColor = true;
-        // 
-        // EditCreateSignalsBTC
-        // 
-        EditCreateSignalsBTC.AutoSize = true;
-        EditCreateSignalsBTC.Location = new Point(425, 66);
-        EditCreateSignalsBTC.Margin = new Padding(4, 3, 4, 3);
-        EditCreateSignalsBTC.Name = "EditCreateSignalsBTC";
-        EditCreateSignalsBTC.Size = new Size(15, 14);
-        EditCreateSignalsBTC.TabIndex = 54;
-        EditCreateSignalsBTC.UseVisualStyleBackColor = true;
-        // 
-        // label16
-        // 
-        label16.AutoSize = true;
-        label16.Location = new Point(422, 31);
-        label16.Margin = new Padding(4, 0, 4, 0);
-        label16.Name = "label16";
-        label16.Size = new Size(52, 15);
-        label16.TabIndex = 53;
-        label16.Text = "Signalen";
-        // 
-        // label15
-        // 
-        label15.AutoSize = true;
-        label15.Location = new Point(14, 31);
-        label15.Margin = new Padding(4, 0, 4, 0);
-        label15.Name = "label15";
-        label15.Size = new Size(81, 15);
-        label15.TabIndex = 52;
-        label15.Text = "Candles halen";
-        // 
-        // label29
-        // 
-        label29.AutoSize = true;
-        label29.Location = new Point(114, 31);
-        label29.Margin = new Padding(4, 0, 4, 0);
-        label29.Name = "label29";
-        label29.Size = new Size(74, 15);
-        label29.TabIndex = 39;
-        label29.Text = "Min. volume";
-        // 
-        // EditMinVolumeBUSD
-        // 
-        EditMinVolumeBUSD.Location = new Point(118, 149);
-        EditMinVolumeBUSD.Margin = new Padding(4, 3, 4, 3);
-        EditMinVolumeBUSD.Maximum = new decimal(new int[] { 276447231, 23283, 0, 0 });
-        EditMinVolumeBUSD.Name = "EditMinVolumeBUSD";
-        EditMinVolumeBUSD.Size = new Size(140, 23);
-        EditMinVolumeBUSD.TabIndex = 35;
-        EditMinVolumeBUSD.ThousandsSeparator = true;
-        // 
-        // EditFetchCandlesBUSD
-        // 
-        EditFetchCandlesBUSD.AutoSize = true;
-        EditFetchCandlesBUSD.Location = new Point(18, 149);
-        EditFetchCandlesBUSD.Margin = new Padding(4, 3, 4, 3);
-        EditFetchCandlesBUSD.Name = "EditFetchCandlesBUSD";
-        EditFetchCandlesBUSD.Size = new Size(55, 19);
-        EditFetchCandlesBUSD.TabIndex = 34;
-        EditFetchCandlesBUSD.Text = "BUSD";
-        EditFetchCandlesBUSD.UseVisualStyleBackColor = true;
-        // 
-        // EditMinVolumeBNB
-        // 
-        EditMinVolumeBNB.Location = new Point(118, 122);
-        EditMinVolumeBNB.Margin = new Padding(4, 3, 4, 3);
-        EditMinVolumeBNB.Maximum = new decimal(new int[] { 276447231, 23283, 0, 0 });
-        EditMinVolumeBNB.Name = "EditMinVolumeBNB";
-        EditMinVolumeBNB.Size = new Size(140, 23);
-        EditMinVolumeBNB.TabIndex = 33;
-        EditMinVolumeBNB.ThousandsSeparator = true;
-        // 
-        // EditFetchCandlesBNB
-        // 
-        EditFetchCandlesBNB.AutoSize = true;
-        EditFetchCandlesBNB.Location = new Point(16, 122);
-        EditFetchCandlesBNB.Margin = new Padding(4, 3, 4, 3);
-        EditFetchCandlesBNB.Name = "EditFetchCandlesBNB";
-        EditFetchCandlesBNB.Size = new Size(49, 19);
-        EditFetchCandlesBNB.TabIndex = 32;
-        EditFetchCandlesBNB.Text = "BNB";
-        EditFetchCandlesBNB.UseVisualStyleBackColor = true;
-        // 
-        // EditMinVolumeETH
-        // 
-        EditMinVolumeETH.Location = new Point(118, 96);
-        EditMinVolumeETH.Margin = new Padding(4, 3, 4, 3);
-        EditMinVolumeETH.Maximum = new decimal(new int[] { 276447231, 23283, 0, 0 });
-        EditMinVolumeETH.Name = "EditMinVolumeETH";
-        EditMinVolumeETH.Size = new Size(140, 23);
-        EditMinVolumeETH.TabIndex = 31;
-        EditMinVolumeETH.ThousandsSeparator = true;
-        // 
-        // EditFetchCandlesETH
-        // 
-        EditFetchCandlesETH.AutoSize = true;
-        EditFetchCandlesETH.Location = new Point(16, 97);
-        EditFetchCandlesETH.Margin = new Padding(4, 3, 4, 3);
-        EditFetchCandlesETH.Name = "EditFetchCandlesETH";
-        EditFetchCandlesETH.Size = new Size(47, 19);
-        EditFetchCandlesETH.TabIndex = 30;
-        EditFetchCandlesETH.Text = "ETH";
-        EditFetchCandlesETH.UseVisualStyleBackColor = true;
-        // 
-        // EditMinVolumeBTC
-        // 
-        EditMinVolumeBTC.Location = new Point(118, 63);
-        EditMinVolumeBTC.Margin = new Padding(4, 3, 4, 3);
-        EditMinVolumeBTC.Maximum = new decimal(new int[] { 276447231, 23283, 0, 0 });
-        EditMinVolumeBTC.Name = "EditMinVolumeBTC";
-        EditMinVolumeBTC.Size = new Size(140, 23);
-        EditMinVolumeBTC.TabIndex = 29;
-        EditMinVolumeBTC.ThousandsSeparator = true;
-        // 
-        // EditMinVolumeUSDT
-        // 
-        EditMinVolumeUSDT.Location = new Point(118, 179);
-        EditMinVolumeUSDT.Margin = new Padding(4, 3, 4, 3);
-        EditMinVolumeUSDT.Maximum = new decimal(new int[] { 1316134911, 2328, 0, 0 });
-        EditMinVolumeUSDT.Name = "EditMinVolumeUSDT";
-        EditMinVolumeUSDT.Size = new Size(140, 23);
-        EditMinVolumeUSDT.TabIndex = 28;
-        EditMinVolumeUSDT.ThousandsSeparator = true;
-        EditMinVolumeUSDT.Value = new decimal(new int[] { 100000, 0, 0, 0 });
-        // 
-        // EditFetchCandlesUSDT
-        // 
-        EditFetchCandlesUSDT.AutoSize = true;
-        EditFetchCandlesUSDT.Checked = true;
-        EditFetchCandlesUSDT.CheckState = CheckState.Checked;
-        EditFetchCandlesUSDT.Location = new Point(18, 180);
-        EditFetchCandlesUSDT.Margin = new Padding(4, 3, 4, 3);
-        EditFetchCandlesUSDT.Name = "EditFetchCandlesUSDT";
-        EditFetchCandlesUSDT.Size = new Size(53, 19);
-        EditFetchCandlesUSDT.TabIndex = 26;
-        EditFetchCandlesUSDT.Text = "USDT";
-        EditFetchCandlesUSDT.UseVisualStyleBackColor = true;
-        // 
-        // EditFetchCandlesBTC
-        // 
-        EditFetchCandlesBTC.AutoSize = true;
-        EditFetchCandlesBTC.Location = new Point(18, 65);
-        EditFetchCandlesBTC.Margin = new Padding(4, 3, 4, 3);
-        EditFetchCandlesBTC.Name = "EditFetchCandlesBTC";
-        EditFetchCandlesBTC.Size = new Size(45, 19);
-        EditFetchCandlesBTC.TabIndex = 25;
-        EditFetchCandlesBTC.Text = "BTC";
-        EditFetchCandlesBTC.UseVisualStyleBackColor = true;
         // 
         // tabPageSignals
         // 
@@ -1768,7 +1279,6 @@ partial class FrmSettings
         // 
         // tabSignalSbm
         // 
-        tabSignalSbm.Controls.Add(EditSbm5Oversold);
         tabSignalSbm.Controls.Add(label21);
         tabSignalSbm.Controls.Add(label20);
         tabSignalSbm.Controls.Add(label9);
@@ -1829,18 +1339,6 @@ partial class FrmSettings
         tabSignalSbm.TabIndex = 5;
         tabSignalSbm.Text = "SBM";
         tabSignalSbm.UseVisualStyleBackColor = true;
-        // 
-        // EditSbm5Oversold
-        // 
-        EditSbm5Oversold.AutoSize = true;
-        EditSbm5Oversold.ForeColor = SystemColors.ControlText;
-        EditSbm5Oversold.Location = new Point(464, 589);
-        EditSbm5Oversold.Margin = new Padding(4, 3, 4, 3);
-        EditSbm5Oversold.Name = "EditSbm5Oversold";
-        EditSbm5Oversold.Size = new Size(143, 19);
-        EditSbm5Oversold.TabIndex = 153;
-        EditSbm5Oversold.Text = "Create SBM5 Oversold";
-        EditSbm5Oversold.UseVisualStyleBackColor = true;
         // 
         // label21
         // 
@@ -2787,7 +2285,6 @@ partial class FrmSettings
         // 
         // tabExtra
         // 
-        tabExtra.Controls.Add(EditBotSbm5);
         tabExtra.Controls.Add(EditBotSlopeEma20TurningPositive);
         tabExtra.Controls.Add(EditBotSlopeSma20TurningPositive);
         tabExtra.Controls.Add(EditSlopeEma20TurningPositive);
@@ -2886,17 +2383,6 @@ partial class FrmSettings
         tabExtra.TabIndex = 11;
         tabExtra.Text = "Extra";
         tabExtra.UseVisualStyleBackColor = true;
-        // 
-        // EditBotSbm5
-        // 
-        EditBotSbm5.AutoSize = true;
-        EditBotSbm5.Location = new Point(550, 156);
-        EditBotSbm5.Margin = new Padding(4, 3, 4, 3);
-        EditBotSbm5.Name = "EditBotSbm5";
-        EditBotSbm5.Size = new Size(56, 19);
-        EditBotSbm5.TabIndex = 234;
-        EditBotSbm5.Text = "SBM5";
-        EditBotSbm5.UseVisualStyleBackColor = true;
         // 
         // EditBotSlopeEma20TurningPositive
         // 
@@ -3054,7 +2540,7 @@ partial class FrmSettings
         // checkBoxDoNotEnterTrade
         // 
         checkBoxDoNotEnterTrade.AutoSize = true;
-        checkBoxDoNotEnterTrade.Location = new Point(20, 609);
+        checkBoxDoNotEnterTrade.Location = new Point(357, 17);
         checkBoxDoNotEnterTrade.Margin = new Padding(4, 3, 4, 3);
         checkBoxDoNotEnterTrade.Name = "checkBoxDoNotEnterTrade";
         checkBoxDoNotEnterTrade.Size = new Size(153, 19);
@@ -3778,7 +3264,7 @@ partial class FrmSettings
         // EditAltradyWebhookActive
         // 
         EditAltradyWebhookActive.AutoSize = true;
-        EditAltradyWebhookActive.Location = new Point(357, 17);
+        EditAltradyWebhookActive.Location = new Point(357, 42);
         EditAltradyWebhookActive.Margin = new Padding(4, 3, 4, 3);
         EditAltradyWebhookActive.Name = "EditAltradyWebhookActive";
         EditAltradyWebhookActive.Size = new Size(154, 19);
@@ -3888,20 +3374,6 @@ partial class FrmSettings
         ((System.ComponentModel.ISupportInitialize)EditSoundHeartBeatMinutes).EndInit();
         tabBasismunten.ResumeLayout(false);
         tabBasismunten.PerformLayout();
-        groupBoxCoin.ResumeLayout(false);
-        groupBoxCoin.PerformLayout();
-        ((System.ComponentModel.ISupportInitialize)EditMinPriceEUR).EndInit();
-        ((System.ComponentModel.ISupportInitialize)EditMinVolumeEUR).EndInit();
-        ((System.ComponentModel.ISupportInitialize)EditMinPriceBUSD).EndInit();
-        ((System.ComponentModel.ISupportInitialize)EditMinPriceBNB).EndInit();
-        ((System.ComponentModel.ISupportInitialize)EditMinPriceETH).EndInit();
-        ((System.ComponentModel.ISupportInitialize)EditMinPriceBTC).EndInit();
-        ((System.ComponentModel.ISupportInitialize)EditMinPriceUSDT).EndInit();
-        ((System.ComponentModel.ISupportInitialize)EditMinVolumeBUSD).EndInit();
-        ((System.ComponentModel.ISupportInitialize)EditMinVolumeBNB).EndInit();
-        ((System.ComponentModel.ISupportInitialize)EditMinVolumeETH).EndInit();
-        ((System.ComponentModel.ISupportInitialize)EditMinVolumeBTC).EndInit();
-        ((System.ComponentModel.ISupportInitialize)EditMinVolumeUSDT).EndInit();
         tabPageSignals.ResumeLayout(false);
         tabPageSignals.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)EditMinimumTickPercentage).EndInit();
@@ -4002,47 +3474,6 @@ partial class FrmSettings
     private System.Windows.Forms.ComboBox EditTradingApp;
     private System.Windows.Forms.TabPage tabBasismunten;
     private System.Windows.Forms.Label label19;
-    private System.Windows.Forms.GroupBox groupBoxCoin;
-    private System.Windows.Forms.Panel panelColorBTC;
-    private System.Windows.Forms.Panel panelColorEUR;
-    private System.Windows.Forms.Panel panelColorUSDT;
-    private System.Windows.Forms.Panel panelColorBUSD;
-    private System.Windows.Forms.Panel panelColorBNB;
-    private System.Windows.Forms.Panel panelColorETH;
-    private System.Windows.Forms.Button buttonColorEUR;
-    private System.Windows.Forms.Button buttonColorUSDT;
-    private System.Windows.Forms.Button buttonColorBUSD;
-    private System.Windows.Forms.Button buttonColorBNB;
-    private System.Windows.Forms.Button buttonColorETH;
-    private System.Windows.Forms.Button buttonColorBTC;
-    private System.Windows.Forms.NumericUpDown EditMinPriceEUR;
-    private System.Windows.Forms.CheckBox EditCreateSignalsEUR;
-    private System.Windows.Forms.NumericUpDown EditMinVolumeEUR;
-    private System.Windows.Forms.CheckBox EditFetchCandlesEUR;
-    private System.Windows.Forms.Label label51;
-    private System.Windows.Forms.NumericUpDown EditMinPriceBUSD;
-    private System.Windows.Forms.NumericUpDown EditMinPriceBNB;
-    private System.Windows.Forms.NumericUpDown EditMinPriceETH;
-    private System.Windows.Forms.NumericUpDown EditMinPriceBTC;
-    private System.Windows.Forms.NumericUpDown EditMinPriceUSDT;
-    private System.Windows.Forms.CheckBox EditCreateSignalsBUSD;
-    private System.Windows.Forms.CheckBox EditCreateSignalsBNB;
-    private System.Windows.Forms.CheckBox EditCreateSignalsETH;
-    private System.Windows.Forms.CheckBox EditCreateSignalsUSDT;
-    private System.Windows.Forms.CheckBox EditCreateSignalsBTC;
-    private System.Windows.Forms.Label label16;
-    private System.Windows.Forms.Label label15;
-    private System.Windows.Forms.Label label29;
-    private System.Windows.Forms.NumericUpDown EditMinVolumeBUSD;
-    private System.Windows.Forms.CheckBox EditFetchCandlesBUSD;
-    private System.Windows.Forms.NumericUpDown EditMinVolumeBNB;
-    private System.Windows.Forms.CheckBox EditFetchCandlesBNB;
-    private System.Windows.Forms.NumericUpDown EditMinVolumeETH;
-    private System.Windows.Forms.CheckBox EditFetchCandlesETH;
-    private System.Windows.Forms.NumericUpDown EditMinVolumeBTC;
-    private System.Windows.Forms.NumericUpDown EditMinVolumeUSDT;
-    private System.Windows.Forms.CheckBox EditFetchCandlesUSDT;
-    private System.Windows.Forms.CheckBox EditFetchCandlesBTC;
     private System.Windows.Forms.TabPage tabPageSignals;
     private System.Windows.Forms.Label label26;
     private System.Windows.Forms.CheckBox EditLogMinimumTickPercentage;
@@ -4276,9 +3707,11 @@ partial class FrmSettings
     private System.Windows.Forms.CheckBox EditBotSlopeSma20TurningPositive;
     private System.Windows.Forms.CheckBox EditSlopeEma20TurningPositive;
     private System.Windows.Forms.CheckBox EditSlopeSma20TurningPositive;
-    private System.Windows.Forms.CheckBox EditSbm5Oversold;
     private System.Windows.Forms.CheckBox EditShowInvalidSignals;
-    private System.Windows.Forms.CheckBox EditBotSbm5;
     private TabPage tabExtra2;
     private TextBox textBox1;
+    private Label label24;
+    private Label label37;
+    private Label label38;
+    private Label label48;
 }

@@ -42,7 +42,7 @@ namespace CryptoSbmScanner
             EditTime.Text = GlobalData.Settings.BackTestTime.ToLocalTime().ToString("dd-MM-yyyy HH:mm");
         }
 
-        private void buttonOk_Click(object sender, EventArgs e)
+        private void ButtonOk_Click(object sender, EventArgs e)
         {
             DateTime date = DateTime.ParseExact(EditTime.Text.Trim(), "dd-MM-yyyy HH:mm", System.Globalization.CultureInfo.InvariantCulture);
 
@@ -54,7 +54,7 @@ namespace CryptoSbmScanner
             DialogResult = DialogResult.OK;
         }
 
-        private void buttonCancel_Click(object sender, EventArgs e)
+        private void ButtonCancel_Click(object sender, EventArgs e)
         {
             DialogResult = DialogResult.Cancel;
         }

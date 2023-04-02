@@ -612,7 +612,7 @@
             backtestToolStripMenuItem.Name = "backtestToolStripMenuItem";
             backtestToolStripMenuItem.Size = new Size(180, 22);
             backtestToolStripMenuItem.Text = "Backtest";
-            backtestToolStripMenuItem.Click += backtestToolStripMenuItem_Click;
+            backtestToolStripMenuItem.Click += BacktestToolStripMenuItem_Click;
             // 
             // FrmMain
             // 

@@ -34,8 +34,8 @@
             label1 = new Label();
             label2 = new Label();
             label3 = new Label();
-            buttonCancel = new Button();
-            buttonOk = new Button();
+            ButtonCancel = new Button();
+            ButtonOk = new Button();
             label4 = new Label();
             EditAlgoritm = new ComboBox();
             SuspendLayout();
@@ -93,29 +93,29 @@
             label3.TabIndex = 75;
             label3.Text = "Time";
             // 
-            // buttonCancel
+            // ButtonCancel
             // 
-            buttonCancel.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            buttonCancel.Location = new Point(161, 161);
-            buttonCancel.Margin = new Padding(4, 3, 4, 3);
-            buttonCancel.Name = "buttonCancel";
-            buttonCancel.Size = new Size(88, 27);
-            buttonCancel.TabIndex = 74;
-            buttonCancel.Text = "&Cancel";
-            buttonCancel.UseVisualStyleBackColor = true;
-            buttonCancel.Click += buttonCancel_Click;
+            ButtonCancel.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            ButtonCancel.Location = new Point(161, 161);
+            ButtonCancel.Margin = new Padding(4, 3, 4, 3);
+            ButtonCancel.Name = "ButtonCancel";
+            ButtonCancel.Size = new Size(88, 27);
+            ButtonCancel.TabIndex = 74;
+            ButtonCancel.Text = "&Cancel";
+            ButtonCancel.UseVisualStyleBackColor = true;
+            ButtonCancel.Click += ButtonCancel_Click;
             // 
-            // buttonOk
+            // ButtonOk
             // 
-            buttonOk.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            buttonOk.Location = new Point(65, 161);
-            buttonOk.Margin = new Padding(4, 3, 4, 3);
-            buttonOk.Name = "buttonOk";
-            buttonOk.Size = new Size(88, 27);
-            buttonOk.TabIndex = 73;
-            buttonOk.Text = "&Ok";
-            buttonOk.UseVisualStyleBackColor = true;
-            buttonOk.Click += buttonOk_Click;
+            ButtonOk.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            ButtonOk.Location = new Point(65, 161);
+            ButtonOk.Margin = new Padding(4, 3, 4, 3);
+            ButtonOk.Name = "ButtonOk";
+            ButtonOk.Size = new Size(88, 27);
+            ButtonOk.TabIndex = 73;
+            ButtonOk.Text = "&Ok";
+            ButtonOk.UseVisualStyleBackColor = true;
+            ButtonOk.Click += ButtonOk_Click;
             // 
             // label4
             // 
@@ -144,8 +144,8 @@
             ClientSize = new Size(264, 200);
             Controls.Add(label4);
             Controls.Add(EditAlgoritm);
-            Controls.Add(buttonCancel);
-            Controls.Add(buttonOk);
+            Controls.Add(ButtonCancel);
+            Controls.Add(ButtonOk);
             Controls.Add(label3);
             Controls.Add(label2);
             Controls.Add(label1);
@@ -165,8 +165,8 @@
         private Label label1;
         private Label label2;
         private Label label3;
-        private Button buttonCancel;
-        private Button buttonOk;
+        private Button ButtonCancel;
+        private Button ButtonOk;
         private Label label4;
         private ComboBox EditAlgoritm;
     }
