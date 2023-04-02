@@ -209,7 +209,7 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
         ApplicationPlaySounds.Checked = GlobalData.Settings.Signal.SoundsActive;
         ApplicationCreateSignals.Checked = GlobalData.Settings.Signal.SignalsActive;
 
-#if !tradebot
+#if !TRADEBOT
         ApplicationTradingBot.Visible = false;
 #endif
 
@@ -239,7 +239,7 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
     {
         GlobalData.ApplicationStatus = ApplicationStatus.AppStatusPrepare;
         GlobalData.ThreadCreateSignal = new ThreadCreateSignal(BinanceShowNotification);
-#if tradebot
+#if TRADEBOT
         GlobalData.TaskMonitorSignal = new ThreadMonitorSignal();
 #endif
 
@@ -259,7 +259,7 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
 
         // Threads (of tasks)
         GlobalData.ThreadCreateSignal?.Stop();
-#if tradebot
+#if TRADEBOT
         GlobalData.TaskMonitorSignal?.Stop();
 #endif
 
@@ -362,7 +362,7 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
 
     private void CreateBarometerBitmap(CryptoQuoteData quoteData, CryptoInterval interval)
     {
-        float blocks = 4;
+        float blocks = 6;
 
         // pixel dimensies van het plaatje
         int intWidth = pictureBox1.Width;
@@ -490,17 +490,55 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
                         break;
                 }
 
+
+                // Maak de linkerkant ff grijs en zet het stuff erover heen
+                {
+                    // hoe breed?
+                    Rectangle rect = new(0, 0, 55, intHeight);
+                    SolidBrush solidBrush = new SolidBrush(panelTop.BackColor);
+                    g.FillRectangle(solidBrush, rect);
+                }
+
+                // Barometer met 3 cirkels zoals Altrady
+                {
+                    int y = 1;
+                    int offset = 4;
+                    int offsetValue = 20;
+                    Rectangle rect1 = new Rectangle(0, 0, intWidth, intHeight);
+                    Font drawFont1 = new Font("Microsoft Sans Serif", this.Font.Size);
+                    CryptoIntervalPeriod[] list = { CryptoIntervalPeriod.interval1h, CryptoIntervalPeriod.interval4h, CryptoIntervalPeriod.interval1d };
+
+                    foreach (CryptoIntervalPeriod intervalPeriod in list)
+                    {
+                        Color color;
+                        BarometerData barometerData = quoteData.BarometerList[(int)intervalPeriod];
+                        if (barometerData?.PriceBarometer < 0)
+                            color = Color.Red;
+                        else
+                            color = Color.Green;
+
+                        //TextRenderer.DrawText(g, "1h", drawFont1, rect1, Color.Black, Color.Transparent, TextFormatFlags.Top);
+                        SolidBrush solidBrush = new SolidBrush(color);
+                        g.FillEllipse(solidBrush, offset, y, 14, 14);
+                        rect1 = new Rectangle(offsetValue, y, intWidth, intHeight);
+                        TextRenderer.DrawText(g, barometerData?.PriceBarometer?.ToString("N2"), drawFont1, rect1, color, Color.Transparent, TextFormatFlags.Top);
+                        y += 19;
+                    }
+
+                }
+
+                // Barometer tijd
                 if (candleList.Values.Count > 0)
                 {
                     CryptoCandle candle = candleList.Values[candleList.Values.Count - 1];
-                    Rectangle rect = new(0, 0, intWidth, intHeight - 8);
+                    Rectangle rect = new(6, 0, intWidth, intHeight - 8);
                     string text = CandleTools.GetUnixDate((long)candle.OpenTime + 60).ToLocalTime().ToString("HH:mm");
 
                     Font drawFont = new("Microsoft Sans Serif", this.Font.Size);
                     TextRenderer.DrawText(g, text, drawFont, rect, Color.Black, Color.Transparent, TextFormatFlags.Bottom);
-                    //g.DrawString(text, drawFont, Brushes.Black, rect);
 
                 }
+
 
 
                 //bmp.Save(@"e:\test.bmp");
@@ -543,18 +581,6 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
                     return;
                 }
 
-                BarometerData barometerData;
-
-                //barometerData = quoteData.BarometerList[(long)CryptoIntervalPeriod.interval1h];
-                //ApplyMoodColor(panelBarometer1h, labelBarometer1hValue, "1h: ", barometerData.PriceBarometer);
-
-                //barometerData = quoteData.BarometerList[(long)CryptoIntervalPeriod.interval4h];
-                //ApplyMoodColor(panelBarometer4h, labelBarometer4hValue, "4h: ", barometerData.PriceBarometer);
-
-                //barometerData = quoteData.BarometerList[(long)CryptoIntervalPeriod.interval1d];
-                //ApplyMoodColor(panelBarometer1d, labelBarometer1dValue, "24h: ", barometerData.PriceBarometer);
-
-
                 // Het grafiek gedeelte
                 // Toon de waarden van de geselecteerde basismunt
                 int baseIndex = 0;
@@ -575,7 +601,7 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
                     return;
                 }
 
-                barometerData = quoteData.BarometerList[(int)intervalPeriod];
+                BarometerData barometerData = quoteData.BarometerList[(int)intervalPeriod];
                 CreateBarometerBitmap(quoteData, interval);
             }
         }
@@ -780,7 +806,8 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
     }
 
 
-    private static void UpdateInfoAndbarometerValuesIntern(ListViewItem item, int? count, CryptoQuoteData quoteData, CryptoIntervalPeriod cryptoIntervalPeriod)
+    private static void UpdateInfoAndbarometerValuesIntern(ListViewItem item, int? count)
+    //, CryptoQuoteData quoteData, CryptoIntervalPeriod cryptoIntervalPeriod
     {
         ListViewItem.ListViewSubItem subItem;
 
@@ -791,38 +818,38 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
             subItem.Text = count?.ToString("N0");
 
 
-        if (quoteData == null)
-        {
-            subItem = item.SubItems[3];
-            subItem.BackColor = Color.White;
-            subItem = item.SubItems[4];
-            subItem.Text = "?";
-        }
-        else
-        {
-            BarometerData barometerData = quoteData.BarometerList[(long)cryptoIntervalPeriod];
-            decimal? value = barometerData.PriceBarometer;
-            subItem = item.SubItems[3];
-            if (!value.HasValue)
-                subItem.BackColor = Color.White;
-            else if (value < 0.0M)
-                subItem.BackColor = Color.Red;
-            else
-                subItem.BackColor = Color.Green;
+        //if (quoteData == null)
+        //{
+        //subItem = item.SubItems[3];
+        //subItem.BackColor = Color.White;
+        //subItem = item.SubItems[4];
+        //subItem.Text = "?";
+        //}
+        //else
+        //{
+        //    BarometerData barometerData = quoteData.BarometerList[(long)cryptoIntervalPeriod];
+        //    decimal? value = barometerData.PriceBarometer;
+        //    subItem = item.SubItems[3];
+        //    if (!value.HasValue)
+        //        subItem.BackColor = Color.White;
+        //    else if (value < 0.0M)
+        //        subItem.BackColor = Color.Red;
+        //    else
+        //        subItem.BackColor = Color.Green;
 
-            subItem = item.SubItems[4];
-            subItem.Text = value?.ToString("N2");
-            if (!value.HasValue)
-            {
-                subItem.Text = "?";
-                subItem.ForeColor = Color.Black;
-            }
-            else if (value < 0.0M)
-                subItem.ForeColor = Color.Red;
-            else
-                subItem.ForeColor = Color.Green;
+        //    subItem = item.SubItems[4];
+        //    subItem.Text = value?.ToString("N2");
+        //    if (!value.HasValue)
+        //    {
+        //        subItem.Text = "?";
+        //        subItem.ForeColor = Color.Black;
+        //    }
+        //    else if (value < 0.0M)
+        //        subItem.ForeColor = Color.Red;
+        //    else
+        //        subItem.ForeColor = Color.Green;
 
-        }
+        //}
 
     }
 
@@ -848,9 +875,9 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
             {
                 listViewInformation.Columns.Add("Binance price ticker", -2, HorizontalAlignment.Left);
                 listViewInformation.Columns.Add("8.123.123", -2, HorizontalAlignment.Right);
-                listViewInformation.Columns.Add("Int", -2, HorizontalAlignment.Right);
-                listViewInformation.Columns.Add("12", -2, HorizontalAlignment.Right);
-                listViewInformation.Columns.Add("Val", -2, HorizontalAlignment.Right);
+                //listViewInformation.Columns.Add("Int", -2, HorizontalAlignment.Right);
+                //listViewInformation.Columns.Add("12", -2, HorizontalAlignment.Right);
+                //listViewInformation.Columns.Add("Val", -2, HorizontalAlignment.Right);
                 listViewInformation.Columns.Add("", -2, HorizontalAlignment.Right); // filler
 
                 listViewInformation.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
@@ -860,9 +887,9 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
                     UseItemStyleForSubItems = false
                 };
                 item1.SubItems.Add("?");
-                item1.SubItems.Add("1H:");
-                item1.SubItems.Add("");
-                item1.SubItems.Add("");
+                //item1.SubItems.Add("1H:");
+                //item1.SubItems.Add("");
+                //item1.SubItems.Add("");
                 listViewInformation.Items.Add(item1);
 
                 item1 = new("Binance 1m stream count", -1)
@@ -870,9 +897,9 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
                     UseItemStyleForSubItems = false
                 };
                 item1.SubItems.Add("?");
-                item1.SubItems.Add("4H:");
-                item1.SubItems.Add("");
-                item1.SubItems.Add("");
+                //item1.SubItems.Add("4H:");
+                //item1.SubItems.Add("");
+                //item1.SubItems.Add("");
                 listViewInformation.Items.Add(item1);
 
                 item1 = new("Scanner analyse count", -1)
@@ -880,31 +907,31 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
                     UseItemStyleForSubItems = false
                 };
                 item1.SubItems.Add("?");
-                item1.SubItems.Add("1D:");
-                item1.SubItems.Add("");
-                item1.SubItems.Add("");
+                //item1.SubItems.Add("1D:");
+                //item1.SubItems.Add("");
+                //item1.SubItems.Add("");
                 listViewInformation.Items.Add(item1);
             }
 
 
 
-            string baseCoin;
+            //string baseCoin;
             //Invoke((MethodInvoker)(() => baseCoin = comboBoxBarometerQuote.Text));
-            baseCoin = comboBoxBarometerQuote.Text;
-            GlobalData.Settings.QuoteCoins.TryGetValue(baseCoin, out CryptoQuoteData quoteData);
+            //baseCoin = comboBoxBarometerQuote.Text;
+            //GlobalData.Settings.QuoteCoins.TryGetValue(baseCoin, out CryptoQuoteData quoteData);
 
-            int count;
-            if (GlobalData.TaskBinanceStreamPriceTicker != null)
-                count = GlobalData.TaskBinanceStreamPriceTicker.tickerCount;
-            else
-                count = 0;
-            UpdateInfoAndbarometerValuesIntern(listViewInformation.Items[0], count, quoteData, CryptoIntervalPeriod.interval1h);
-            UpdateInfoAndbarometerValuesIntern(listViewInformation.Items[1], CandlesKLinesCount, quoteData, CryptoIntervalPeriod.interval4h);
-            if (GlobalData.ThreadCreateSignal != null)
-                count = GlobalData.ThreadCreateSignal.analyseCount;
-            else
-                count = 0;
-            UpdateInfoAndbarometerValuesIntern(listViewInformation.Items[2], count, quoteData, CryptoIntervalPeriod.interval1d);
+            //int count;
+            //if (GlobalData.TaskBinanceStreamPriceTicker != null)
+            //    count = GlobalData.TaskBinanceStreamPriceTicker.tickerCount;
+            //else
+            //    count = 0;
+            UpdateInfoAndbarometerValuesIntern(listViewInformation.Items[0], GlobalData.TaskBinanceStreamPriceTicker?.tickerCount); //, quoteData, CryptoIntervalPeriod.interval1h
+            UpdateInfoAndbarometerValuesIntern(listViewInformation.Items[1], CandlesKLinesCount); //, quoteData, CryptoIntervalPeriod.interval4h
+            //if (GlobalData.ThreadCreateSignal != null)
+            //    count = GlobalData.ThreadCreateSignal.analyseCount;
+            //else
+            //    count = 0;
+            UpdateInfoAndbarometerValuesIntern(listViewInformation.Items[2], GlobalData.ThreadCreateSignal?.analyseCount); //quoteData, CryptoIntervalPeriod.interval1d
 
 
             for (int i = 0; i <= listViewInformation.Columns.Count - 1; i++)

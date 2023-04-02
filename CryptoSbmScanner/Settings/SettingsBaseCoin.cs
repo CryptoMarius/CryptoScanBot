@@ -22,7 +22,7 @@ internal class SettingsBaseCoin
     public Panel PanelColor;
     public Button ButtonColor;
 
-#if tradebot
+#if TRADEBOT
         // Trade bot settings
         public NumericUpDown BuyAmount;
         public NumericUpDown BuyPercentage;
@@ -70,48 +70,51 @@ internal class SettingsBaseCoin
         };
         controls.Add(MinPrice);
 
-#if tradebot
-            // Het initiele aankoopbedrag
-            //public decimal BuyAmount { get; set; }
-            BuyAmount = new()
-            {
-                DecimalPlaces = 8,
-                Increment = new decimal(new int[] { 1, 0, 0, 393216 }),
-                Location = new Point(265, yPos),
-                Margin = new Padding(4, 3, 4, 3),
-                Maximum = new decimal(new int[] { 276447231, 23283, 0, 0 }),
-                Size = new Size(140, 23),
-                ThousandsSeparator = true
-            };
-            controls.Add(BuyAmount);
+#if TRADEBOT
+        // TODO: uitlijnen ten opzichte van de andere controls!
+        // (daarom is de controls.Add even afgesterd)
 
-            // Het initiele aankooppercentage
-            //public decimal BuyPercentage { get; set; }
-            BuyPercentage = new()
-            {
-                DecimalPlaces = 2,
-                Increment = new decimal(new int[] { 1, 0, 0, 393216 }),
-                Location = new Point(265, yPos),
-                Margin = new Padding(4, 3, 4, 3),
-                Maximum = new decimal(new int[] { 276447231, 23283, 0, 0 }),
-                Size = new Size(140, 23),
-                ThousandsSeparator = true
-            };
-            controls.Add(BuyPercentage);
+        // Het initiele aankoopbedrag
+        //public decimal BuyAmount { get; set; }
+        BuyAmount = new()
+        {
+            DecimalPlaces = 8,
+            Increment = new decimal(new int[] { 1, 0, 0, 393216 }),
+            Location = new Point(265, yPos),
+            Margin = new Padding(4, 3, 4, 3),
+            Maximum = new decimal(new int[] { 276447231, 23283, 0, 0 }),
+            Size = new Size(140, 23),
+            ThousandsSeparator = true
+        };
+        //controls.Add(BuyAmount);
 
-            // Maximaal aantal slots op de exchange
-            //public int SlotsMaximal { get; set; }
-            SlotsMaximal = new()
-            {
-                DecimalPlaces = 0,
-                Increment = new decimal(new int[] { 1, 0, 0, 393216 }),
-                Location = new Point(265, yPos),
-                Margin = new Padding(4, 3, 4, 3),
-                Maximum = new decimal(new int[] { 276447231, 23283, 0, 0 }),
-                Size = new Size(140, 23),
-                ThousandsSeparator = true
-            };
-            controls.Add(SlotsMaximal);
+        // Het initiele aankooppercentage
+        //public decimal BuyPercentage { get; set; }
+        BuyPercentage = new()
+        {
+            DecimalPlaces = 2,
+            Increment = new decimal(new int[] { 1, 0, 0, 393216 }),
+            Location = new Point(265, yPos),
+            Margin = new Padding(4, 3, 4, 3),
+            Maximum = new decimal(new int[] { 276447231, 23283, 0, 0 }),
+            Size = new Size(140, 23),
+            ThousandsSeparator = true
+        };
+        //controls.Add(BuyPercentage);
+
+        // Maximaal aantal slots op de exchange
+        //public int SlotsMaximal { get; set; }
+        SlotsMaximal = new()
+        {
+            DecimalPlaces = 0,
+            Increment = new decimal(new int[] { 1, 0, 0, 393216 }),
+            Location = new Point(265, yPos),
+            Margin = new Padding(4, 3, 4, 3),
+            Maximum = new decimal(new int[] { 276447231, 23283, 0, 0 }),
+            Size = new Size(140, 23),
+            ThousandsSeparator = true
+        };
+        //controls.Add(SlotsMaximal);
 #endif
 
         CreateSignals = new()
@@ -181,6 +184,7 @@ internal class SettingsBaseCoin
         MinPrice.Value = QuoteData.MinimalPrice;
         CreateSignals.Checked = QuoteData.CreateSignals;
         PanelColor.BackColor = QuoteData.DisplayColor;
+        // TODO: nieuwe trading controls!
     }
 
     public void GetControlValues()
@@ -190,6 +194,7 @@ internal class SettingsBaseCoin
         QuoteData.MinimalPrice = MinPrice.Value;
         QuoteData.CreateSignals = CreateSignals.Checked;
         QuoteData.DisplayColor = PanelColor.BackColor;
+        // TODO: nieuwe trading controls!
     }
 }
 

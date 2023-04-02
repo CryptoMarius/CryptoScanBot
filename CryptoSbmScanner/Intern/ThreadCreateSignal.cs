@@ -111,7 +111,7 @@ public class ThreadCreateSignal
                 if (symbol.QuoteData.CreateSignals && GlobalData.Settings.Signal.SignalsActive && symbol.IsSpotTradingAllowed)
                     AnalyseSymbolData(candle);
 
-#if tradebot
+#if TRADEBOT
                 // Alway's: if any available positions or signals
                 if (symbol.PositionList.Count > 0 || symbol.SignalCount > 0)
                     GlobalData.TaskMonitorSignal.AddToQueue(symbol);

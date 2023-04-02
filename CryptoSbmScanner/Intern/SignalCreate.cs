@@ -826,91 +826,90 @@ public class SignalCreate
         }
     }
 
+#if TRADEBOT
     public void AnalyseSymbolExperimental()
     {
         //----------------------------------------------------------------
         // Experimentele zaken..
-        if (GlobalData.ShowExtraStuff)
+        //if (GlobalData.Settings.Signal.BullishEngulfing)
+        //{
+        //    SignalBase algorithm = new SignalBullishEngulfing(Symbol, Interval, candle);
+        //    if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
+        //        PrepareAndSendSignal(algorithm);
+        //}
+
+
+        if (GlobalData.Settings.Signal.AnalyseStrategy[(int)SignalStrategy.priceCrossedSma20])
         {
-            //if (GlobalData.Settings.Signal.BullishEngulfing)
-            //{
-            //    SignalBase algorithm = new SignalBullishEngulfing(Symbol, Interval, candle);
-            //    if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
-            //        PrepareAndSendSignal(algorithm);
-            //}
+            SignalBase algorithm = new SignalPriceCrossedSma20(Symbol, Interval, Candle);
+            if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
+                PrepareAndSendSignal(algorithm);
+        }
+
+        if (GlobalData.Settings.Signal.AnalyseStrategy[(int)SignalStrategy.priceCrossedSma50])
+        {
+            SignalBase algorithm = new SignalPriceCrossedSma50(Symbol, Interval, Candle);
+            if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
+                PrepareAndSendSignal(algorithm);
+        }
 
 
-            if (GlobalData.Settings.Signal.AnalyseStrategy[(int)SignalStrategy.priceCrossedSma20])
-            {
-                SignalBase algorithm = new SignalPriceCrossedSma20(Symbol, Interval, Candle);
-                if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
-                    PrepareAndSendSignal(algorithm);
-            }
+        if (GlobalData.Settings.Signal.AnalyseStrategy[(int)SignalStrategy.priceCrossedEma20])
+        {
+            SignalBase algorithm = new SignalPriceCrossedEma20(Symbol, Interval, Candle);
+            if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
+                PrepareAndSendSignal(algorithm);
+        }
 
-            if (GlobalData.Settings.Signal.AnalyseStrategy[(int)SignalStrategy.priceCrossedSma50])
-            {
-                SignalBase algorithm = new SignalPriceCrossedSma50(Symbol, Interval, Candle);
-                if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
-                    PrepareAndSendSignal(algorithm);
-            }
-
-
-            if (GlobalData.Settings.Signal.AnalyseStrategy[(int)SignalStrategy.priceCrossedEma20])
-            {
-                SignalBase algorithm = new SignalPriceCrossedEma20(Symbol, Interval, Candle);
-                if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
-                    PrepareAndSendSignal(algorithm);
-            }
-
-            if (GlobalData.Settings.Signal.AnalyseStrategy[(int)SignalStrategy.priceCrossedEma50])
-            {
-                SignalBase algorithm = new SignalPriceCrossedEma50(Symbol, Interval, Candle);
-                if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
-                    PrepareAndSendSignal(algorithm);
-            }
+        if (GlobalData.Settings.Signal.AnalyseStrategy[(int)SignalStrategy.priceCrossedEma50])
+        {
+            SignalBase algorithm = new SignalPriceCrossedEma50(Symbol, Interval, Candle);
+            if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
+                PrepareAndSendSignal(algorithm);
+        }
 
 
-            if (GlobalData.Settings.Signal.AnalyseStrategy[(int)SignalStrategy.slopeEma50TurningNegative])
-            {
-                SignalBase algorithm = new SignalSlopeEma50TurningNegative(Symbol, Interval, Candle);
-                if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
-                    PrepareAndSendSignal(algorithm);
-            }
-            if (GlobalData.Settings.Signal.AnalyseStrategy[(int)SignalStrategy.slopeSma50TurningNegative])
-            {
-                SignalBase algorithm = new SignalSlopeSma50TurningNegative(Symbol, Interval, Candle);
-                if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
-                    PrepareAndSendSignal(algorithm);
-            }
+        if (GlobalData.Settings.Signal.AnalyseStrategy[(int)SignalStrategy.slopeEma50TurningNegative])
+        {
+            SignalBase algorithm = new SignalSlopeEma50TurningNegative(Symbol, Interval, Candle);
+            if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
+                PrepareAndSendSignal(algorithm);
+        }
+        if (GlobalData.Settings.Signal.AnalyseStrategy[(int)SignalStrategy.slopeSma50TurningNegative])
+        {
+            SignalBase algorithm = new SignalSlopeSma50TurningNegative(Symbol, Interval, Candle);
+            if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
+                PrepareAndSendSignal(algorithm);
+        }
 
-            if (GlobalData.Settings.Signal.AnalyseStrategy[(int)SignalStrategy.slopeEma50TurningPositive])
-            {
-                SignalBase algorithm = new SignalSlopeEma50TurningPositive(Symbol, Interval, Candle);
-                if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
-                    PrepareAndSendSignal(algorithm);
-            }
-            if (GlobalData.Settings.Signal.AnalyseStrategy[(int)SignalStrategy.slopeSma50TurningPositive])
-            {
-                SignalBase algorithm = new SignalSlopeSma50TurningPositive(Symbol, Interval, Candle);
-                if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
-                    PrepareAndSendSignal(algorithm);
-            }
+        if (GlobalData.Settings.Signal.AnalyseStrategy[(int)SignalStrategy.slopeEma50TurningPositive])
+        {
+            SignalBase algorithm = new SignalSlopeEma50TurningPositive(Symbol, Interval, Candle);
+            if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
+                PrepareAndSendSignal(algorithm);
+        }
+        if (GlobalData.Settings.Signal.AnalyseStrategy[(int)SignalStrategy.slopeSma50TurningPositive])
+        {
+            SignalBase algorithm = new SignalSlopeSma50TurningPositive(Symbol, Interval, Candle);
+            if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
+                PrepareAndSendSignal(algorithm);
+        }
 
 
-            if (GlobalData.Settings.Signal.AnalyseStrategy[(int)SignalStrategy.slopeEma20TurningPositive])
-            {
-                SignalBase algorithm = new SignalSlopeEma20TurningPositive(Symbol, Interval, Candle);
-                if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
-                    PrepareAndSendSignal(algorithm);
-            }
-            if (GlobalData.Settings.Signal.AnalyseStrategy[(int)SignalStrategy.slopeSma20TurningPositive])
-            {
-                SignalBase algorithm = new SignalSlopeSma20TurningPositive(Symbol, Interval, Candle);
-                if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
-                    PrepareAndSendSignal(algorithm);
-            }
+        if (GlobalData.Settings.Signal.AnalyseStrategy[(int)SignalStrategy.slopeEma20TurningPositive])
+        {
+            SignalBase algorithm = new SignalSlopeEma20TurningPositive(Symbol, Interval, Candle);
+            if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
+                PrepareAndSendSignal(algorithm);
+        }
+        if (GlobalData.Settings.Signal.AnalyseStrategy[(int)SignalStrategy.slopeSma20TurningPositive])
+        {
+            SignalBase algorithm = new SignalSlopeSma20TurningPositive(Symbol, Interval, Candle);
+            if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
+                PrepareAndSendSignal(algorithm);
         }
     }
+#endif
 
     public bool Prepare(long candleOpenTime)
     {
@@ -1003,8 +1002,10 @@ public class SignalCreate
             AnalyseSymbolJumps();
 
 
+#if TRADEBOT
             // Experimenteel, kan wellicht weg
             AnalyseSymbolExperimental();
+#endif
 
             // TODO! Nog eens uitzoeken of het hierdoor makkelijker wordt
             // prepare the overbought and oversold black and white list

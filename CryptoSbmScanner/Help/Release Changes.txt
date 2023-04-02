@@ -45,9 +45,8 @@ TODO: HARDCODED API KEY's weghalen (ze kunner er niets mee, maar just in case)
 
 - In de Overbought van de SBM wordt geen rekening gehouden met de percentages tussen de MA lijnen
 
-
-
 xx-xx-2023 1.8.0
+- De 1h, 4h en 24h barometer in de graph zetten zodat ze niet iedere 5 seconden worden bijgewerkt
 - Uitbreiding van basismunten (waaronder de TUSD enzovoort)
 - Naar aanleiding van de Binance storing op 24 maart de ontbrekende candles automatisch invullen
 - Upgrade naar .net 7 (met dank aan Harmen Kooiker)

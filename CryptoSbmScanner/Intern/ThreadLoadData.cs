@@ -337,7 +337,7 @@ public class ThreadLoadData
             //var whatever31 = Task.Run(() => { GlobalData.ThreadOrderHandler.ExecuteAsync(); }); // Geen await, forever long running
 
 
-#if tradebot
+#if TRADEBOT
             //************************************************************************************
             // Nu we de achterstand ingehaald hebben kunnen/mogen we monitoren
             //************************************************************************************

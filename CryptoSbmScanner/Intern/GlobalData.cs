@@ -45,8 +45,6 @@ public class BarometerData
 /// </summary>
 static public class GlobalData
 {
-    static public bool ShowExtraStuff { get; set; } = false;
-
     static public SettingsBasic Settings { get; set; } = new();
     static public ApplicationStatus ApplicationStatus { get; set; } = ApplicationStatus.AppStatusPrepare;
 
@@ -86,7 +84,7 @@ static public class GlobalData
     //static public ThreadSaveCandles TaskSaveCandles { get; set; }
     static public ThreadCreateSignal ThreadCreateSignal { get; set; }
     //static public ThreadOrderHandler ThreadOrderHandler { get; set; }        
-#if tradebot
+#if TRADEBOT
     static public ThreadMonitorSignal TaskMonitorSignal { get; set; }
 #endif
     //static public ThreadBalanceSymbols ThreadBalanceSymbols { get; set; }
@@ -257,8 +255,6 @@ static public class GlobalData
 
     static public void LoadSettings()
     {
-        ShowExtraStuff = File.Exists(GetBaseDir() + "ShowExtraStuff");
-
         string filename = GetBaseDir() + "GlobalData.Settings2.json";
         if (File.Exists(filename))
         {
@@ -329,8 +325,6 @@ static public class GlobalData
 
     static public void SaveSettings()
     {
-        ShowExtraStuff = File.Exists(GetBaseDir() + "ShowExtraStuff");
-
         //Laad de gecachte (langere historie, minder overhad)
         string filename = GetBaseDir() + "GlobalData.Settings2.json";
 

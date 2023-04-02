@@ -45,7 +45,7 @@ public class BinanceStreamPriceTicker
                         //symbol.Volume = tick.BaseVolume; //=Quoted = het volume wat verhandeld is
                         symbol.Volume = tick.QuoteVolume; //=Quoted = het volume * de prijs                                
 
-#if tradebot
+#if TRADEBOT
                         // Aanbieden voor analyse (dit gebeurd zowel in de ticker als ProcessCandles)
                         if (GlobalData.ApplicationStatus == ApplicationStatus.AppStatusRunning)
                         {

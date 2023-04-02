@@ -128,12 +128,14 @@ public partial class FrmSettings : Form
     {
         this.settings = settings;
 
+#if !TRADEBOT
         // Oppassen: Een tabPage.Visible=x doet helemaal niets
         // (dat was weer een onaangename WinForms verrassing)
-        if (!GlobalData.ShowExtraStuff)
-            tabExtra.Parent = null;
-        if (!GlobalData.ShowExtraStuff)
-            tabExtra2.Parent = null;
+        tabExtra.Parent = null;
+        tabExtra2.Parent = null;
+#else
+        settings.Bot.Active = false;
+#endif
 
         if (GlobalData.Settings.General.FontSize != Font.Size || GlobalData.Settings.General.FontName.Equals(Font.Name))
         {

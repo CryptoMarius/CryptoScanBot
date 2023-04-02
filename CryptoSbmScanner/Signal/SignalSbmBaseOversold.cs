@@ -228,11 +228,15 @@ public class SignalSbmBaseOversold : SignalSbmBase
         if (CandleLast.IsBelowBollingerBands(false))
         {
             ExtraText = "beneden de bb.lower";
+            signal.LastPrice = Symbol.LastPrice;
             return false;
         }
 
         if (!IsMacdRecoveryOversold(GlobalData.Settings.Signal.SbmCandlesForMacdRecovery))
+        {
+            signal.LastPrice = Symbol.LastPrice;
             return false;
+        }
 
         //if (CandleLast.CandleData.Tema < CandleLast.CandleData.Sma8)
         //{
@@ -270,23 +274,26 @@ public class SignalSbmBaseOversold : SignalSbmBase
         //}
 
         // Koop als de close vlak bij de bb.lower is (c.q. niet te ver naar boven zit)
+        // Werkt goed!!! (toch even experimenteren) - maar negeert hierdoor ook veel signalen die wel bruikbaar waren
         double? value = CandleLast.CandleData.BollingerBandsLowerBand + 0.25 * CandleLast.CandleData.BollingerBandsDeviation;
         if (Symbol.LastPrice > (decimal)value)
         {
             ExtraText = string.Format("Symbol.Lastprice {0:N8} > BB.lower + 0.25 * StdDev {1:N8}", Symbol.LastPrice, value);
+            signal.LastPrice = Symbol.LastPrice;
             return false;
         }
 
         // profiteren van een nog lagere prijs...?
-        if (Symbol.LastPrice < signal.LastPrice)
-        {
-            if (Symbol.LastPrice != signal.LastPrice)
-            {
-                ExtraText = string.Format("Symbol.LastPrice gaat nog verder naar beneden (ff wachten) {0:N8} {1:N8}", Symbol.LastPrice, signal.LastPrice);
-                return false;
-            }
-            signal.LastPrice = Symbol.LastPrice;
-        }
+        // Maar nu schier ie vrij vaak door naar de eerste de beste groene macd candle
+        //if (Symbol.LastPrice < signal.LastPrice)
+        //{
+        //    if (Symbol.LastPrice != signal.LastPrice)
+        //    {
+        //        ExtraText = string.Format("Symbol.LastPrice gaat nog verder naar beneden (ff wachten) {0:N8} {1:N8}", Symbol.LastPrice, signal.LastPrice);
+        //    }
+        //    signal.LastPrice = Symbol.LastPrice;
+        //    return false;
+        //}
 
         //if (CandleLast.CandleData.SlopeRsi <= 0)
         //{

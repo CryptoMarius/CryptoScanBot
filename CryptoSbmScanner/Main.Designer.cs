@@ -223,7 +223,7 @@
             ApplicationPlaySounds.Checked = true;
             ApplicationPlaySounds.CheckState = CheckState.Checked;
             ApplicationPlaySounds.Name = "ApplicationPlaySounds";
-            ApplicationPlaySounds.Size = new Size(180, 22);
+            ApplicationPlaySounds.Size = new Size(168, 22);
             ApplicationPlaySounds.Text = "Geluiden afspelen";
             ApplicationPlaySounds.Click += ApplicationPlaySounds_Click;
             // 
@@ -232,49 +232,49 @@
             ApplicationCreateSignals.Checked = true;
             ApplicationCreateSignals.CheckState = CheckState.Checked;
             ApplicationCreateSignals.Name = "ApplicationCreateSignals";
-            ApplicationCreateSignals.Size = new Size(180, 22);
+            ApplicationCreateSignals.Size = new Size(168, 22);
             ApplicationCreateSignals.Text = "Signalen maken";
             ApplicationCreateSignals.Click += ApplicationCreateSignals_Click;
             // 
             // ApplicationTradingBot
             // 
             ApplicationTradingBot.Name = "ApplicationTradingBot";
-            ApplicationTradingBot.Size = new Size(180, 22);
+            ApplicationTradingBot.Size = new Size(168, 22);
             ApplicationTradingBot.Text = "Trading bot actief";
             ApplicationTradingBot.Click += ApplicationTradingBot_Click;
             // 
             // ToolStripMenuItemSettings
             // 
             ToolStripMenuItemSettings.Name = "ToolStripMenuItemSettings";
-            ToolStripMenuItemSettings.Size = new Size(180, 22);
+            ToolStripMenuItemSettings.Size = new Size(168, 22);
             ToolStripMenuItemSettings.Text = "Instellingen";
             ToolStripMenuItemSettings.Click += ToolStripMenuItemSettings_Click;
             // 
             // ToolStripMenuItemRefresh
             // 
             ToolStripMenuItemRefresh.Name = "ToolStripMenuItemRefresh";
-            ToolStripMenuItemRefresh.Size = new Size(180, 22);
+            ToolStripMenuItemRefresh.Size = new Size(168, 22);
             ToolStripMenuItemRefresh.Text = "Verversen";
             ToolStripMenuItemRefresh.Click += ToolStripMenuItemRefresh_Click_1;
             // 
             // clearMenusToolStripMenuItem
             // 
             clearMenusToolStripMenuItem.Name = "clearMenusToolStripMenuItem";
-            clearMenusToolStripMenuItem.Size = new Size(180, 22);
+            clearMenusToolStripMenuItem.Size = new Size(168, 22);
             clearMenusToolStripMenuItem.Text = "Clear";
             clearMenusToolStripMenuItem.Click += MainMenuClearAll_Click;
             // 
             // applicationMenuItemAbout
             // 
             applicationMenuItemAbout.Name = "applicationMenuItemAbout";
-            applicationMenuItemAbout.Size = new Size(180, 22);
+            applicationMenuItemAbout.Size = new Size(168, 22);
             applicationMenuItemAbout.Text = "About";
             applicationMenuItemAbout.Click += ApplicationMenuItemAbout_Click;
             // 
             // backtestToolStripMenuItem
             // 
             backtestToolStripMenuItem.Name = "backtestToolStripMenuItem";
-            backtestToolStripMenuItem.Size = new Size(180, 22);
+            backtestToolStripMenuItem.Size = new Size(168, 22);
             backtestToolStripMenuItem.Text = "Backtest";
             backtestToolStripMenuItem.Click += BacktestToolStripMenuItem_Click;
             // 
@@ -494,7 +494,7 @@
             listViewInformation.MultiSelect = false;
             listViewInformation.Name = "listViewInformation";
             listViewInformation.Scrollable = false;
-            listViewInformation.Size = new Size(393, 73);
+            listViewInformation.Size = new Size(257, 73);
             listViewInformation.TabIndex = 76;
             listViewInformation.UseCompatibleStateImageBehavior = false;
             listViewInformation.View = View.Details;
@@ -517,7 +517,7 @@
             // labelBarometerDateValue
             // 
             labelBarometerDateValue.AutoSize = true;
-            labelBarometerDateValue.Location = new Point(402, 61);
+            labelBarometerDateValue.Location = new Point(269, 61);
             labelBarometerDateValue.Margin = new Padding(4, 0, 4, 0);
             labelBarometerDateValue.Name = "labelBarometerDateValue";
             labelBarometerDateValue.Size = new Size(62, 15);
@@ -528,7 +528,7 @@
             // 
             comboBoxBarometerInterval.DropDownStyle = ComboBoxStyle.DropDownList;
             comboBoxBarometerInterval.FormattingEnabled = true;
-            comboBoxBarometerInterval.Location = new Point(406, 31);
+            comboBoxBarometerInterval.Location = new Point(273, 31);
             comboBoxBarometerInterval.Margin = new Padding(2);
             comboBoxBarometerInterval.Name = "comboBoxBarometerInterval";
             comboBoxBarometerInterval.Size = new Size(79, 23);
@@ -537,10 +537,10 @@
             // pictureBox1
             // 
             pictureBox1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
-            pictureBox1.Location = new Point(503, 0);
+            pictureBox1.Location = new Point(358, 0);
             pictureBox1.Margin = new Padding(4, 3, 4, 3);
             pictureBox1.Name = "pictureBox1";
-            pictureBox1.Size = new Size(274, 82);
+            pictureBox1.Size = new Size(419, 82);
             pictureBox1.TabIndex = 67;
             pictureBox1.TabStop = false;
             // 
@@ -578,7 +578,7 @@
             // 
             comboBoxBarometerQuote.DropDownStyle = ComboBoxStyle.DropDownList;
             comboBoxBarometerQuote.FormattingEnabled = true;
-            comboBoxBarometerQuote.Location = new Point(406, 3);
+            comboBoxBarometerQuote.Location = new Point(273, 3);
             comboBoxBarometerQuote.Margin = new Padding(2);
             comboBoxBarometerQuote.Name = "comboBoxBarometerQuote";
             comboBoxBarometerQuote.Size = new Size(79, 23);
