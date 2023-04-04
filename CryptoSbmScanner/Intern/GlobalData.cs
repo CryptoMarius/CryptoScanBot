@@ -95,6 +95,7 @@ static public class GlobalData
 
 
     // On special request of a hardcore trader..
+    static public SymbolValue FearAndGreedIndex { get; set; } = new();
     static public SymbolValue TradingViewDollarIndex { get; set; } = new();
     static public SymbolValue TradingViewSpx500 { get; set; } = new();
     static public SymbolValue TradingViewBitcoinDominance { get; set; } = new();

@@ -32,7 +32,13 @@ public class CandleIndicatorData
     public double? MacdSignal { get; set; }
     public double? MacdHistogram { get; set; }
 
+    /// <summary>
+    /// Stoch Oscillator %K (blauw)
+    /// </summary>
     public double? StochOscillator { get; set; } // K
+    /// <summary>
+    /// Stoch Signal %D (rood)
+    /// </summary>
     public double? StochSignal { get; set; } // D
 
     public double? PSar { get; set; }

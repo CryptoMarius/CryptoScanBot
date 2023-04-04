@@ -283,23 +283,26 @@ public class SignalSbmBaseOversold : SignalSbmBase
             return false;
         }
 
-        // profiteren van een nog lagere prijs...?
-        // Maar nu schier ie vrij vaak door naar de eerste de beste groene macd candle
-        //if (Symbol.LastPrice < signal.LastPrice)
-        //{
-        //    if (Symbol.LastPrice != signal.LastPrice)
-        //    {
-        //        ExtraText = string.Format("Symbol.LastPrice gaat nog verder naar beneden (ff wachten) {0:N8} {1:N8}", Symbol.LastPrice, signal.LastPrice);
-        //    }
-        //    signal.LastPrice = Symbol.LastPrice;
-        //    return false;
-        //}
+        // Deze wacht op een gesloten candle
+        if (CandleLast.CandleData.SlopeRsi <= 0)
+        {
+            ExtraText = string.Format("Slope RSI <= 0 {0:N8}", CandleLast.CandleData.SlopeRsi);
+            signal.LastPrice = Symbol.LastPrice;
+            return false;
+        }
 
-        //if (CandleLast.CandleData.SlopeRsi <= 0)
-        //{
-        //    ExtraText = string.Format("Slope RSI <= 0 {0:N8}", CandleLast.CandleData.SlopeRsi);
-        //    return false;
-        //}
+        // Profiteren van een nog lagere prijs?
+        // Maar nu schiet ie door naar de 1e de beste groene macd candle?
+        if (Symbol.LastPrice < signal.LastPrice)
+        {
+            if (Symbol.LastPrice != signal.LastPrice)
+            {
+                ExtraText = string.Format("Symbol.LastPrice gaat nog verder naar beneden (ff wachten) {0:N8} {1:N8}", Symbol.LastPrice, signal.LastPrice);
+            }
+            signal.LastPrice = Symbol.LastPrice;
+            return false;
+        }
+
 
         // Deze is wel redelijk streng
         //if (!HadIncreasingVolume(out ExtraText))
@@ -357,7 +360,7 @@ public class SignalSbmBaseOversold : SignalSbmBase
 
 
         // Langer dan 60 candles willen we niet wachten (is 60 niet heel erg lang?)
-        if ((CandleLast.OpenTime - signal.EventTime) > 5 * Interval.Duration)
+        if ((CandleLast.OpenTime - signal.EventTime) > GlobalData.Settings.Bot.GlobalBuyRemoveTime * Interval.Duration)
         {
             ExtraText = "Ophouden na 10 candles";
             return true;
@@ -378,11 +381,12 @@ public class SignalSbmBaseOversold : SignalSbmBase
             return true;
         }
 
-        if (CandleLast.CandleData.MacdHistogram >= 0)
-        {
-            ExtraText = string.Format("De MACD.Hist is ondertussen groen {0:N8}", CandleLast.CandleData.MacdHistogram);
-            return true;
-        }
+        // Uitgezet omdat we vrij lang blijven wachten (zie Allow()
+        //if (CandleLast.CandleData.MacdHistogram >= 0)
+        //{
+        //    ExtraText = string.Format("De MACD.Hist is ondertussen groen {0:N8}", CandleLast.CandleData.MacdHistogram);
+        //    return true;
+        //}
 
         ExtraText = "";
         return false;

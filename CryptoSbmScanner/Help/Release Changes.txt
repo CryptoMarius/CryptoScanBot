@@ -3,9 +3,9 @@ Mis je iets in onderstaande bevindingen/todo's of toekomstige todo's, geef het A
 
 Bevindingen/Todo's:
 - Meldingen naar een syslog server sturen (statistiek)
-- Eem detectie maken die als de candlestream niet meer werkt deze opnieuw opstart (mag best wel een paar minuten duren)
+- Eem detectie maken die als de candlestream niet meer werkt deze opnieuw opstart
+  (dat mag best een paar minuten duren zolang het maar hersteld)
 - Indien de applicatie traag(?) afsluit wordt tijdens het afsluiten opnieuw begonnen met het activeren van de scanner (ophalen candles enzovoort)
-- Kunnen dubbelklikken op de US dollar index e.d. en dat je dan in Tradingview uitkomy bij de juist chart uitkomt.
 - De listbox met munten op links met een splitter kunnen verbergen / c.q. dichtklappen
 - Teksten kunnen vertalen (NL en EN lopen nu wel erg vaak door elkaar)
 - Zien hoeveel een munt gestegen of gedaald is na de initiele melding (dat vereist een ander grid).
@@ -46,6 +46,7 @@ TODO: HARDCODED API KEY's weghalen (ze kunner er niets mee, maar just in case)
 - In de Overbought van de SBM wordt geen rekening gehouden met de percentages tussen de MA lijnen
 
 xx-xx-2023 1.8.0
+- Kunnen dubbelklikken op de US dollar index e.d. en dat je dan in de (interne) Tradingview uitkomt bij de juist chart uitkomt.
 - De 1h, 4h en 24h barometer in de graph zetten zodat ze niet iedere 5 seconden worden bijgewerkt
 - Uitbreiding van basismunten (waaronder de TUSD enzovoort)
 - Naar aanleiding van de Binance storing op 24 maart de ontbrekende candles automatisch invullen

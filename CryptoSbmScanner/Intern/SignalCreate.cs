@@ -738,12 +738,12 @@ public class SignalCreate
         //    if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
         //        isSbmSignal = PrepareAndSendSignal(algorithm);
         //}
-        if (!isSbmSignal && GlobalData.Settings.Signal.AnalyseStrategy[(int)SignalStrategy.sbm5Oversold])
-        {
-            SignalBase algorithm = new SignalSbm5Oversold(Symbol, Interval, Candle);
-            if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
-                isSbmSignal = PrepareAndSendSignal(algorithm);
-        }
+        //if (!isSbmSignal && GlobalData.Settings.Signal.AnalyseStrategy[(int)SignalStrategy.sbm5Oversold])
+        //{
+        //    SignalBase algorithm = new SignalSbm5Oversold(Symbol, Interval, Candle);
+        //    if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
+        //        isSbmSignal = PrepareAndSendSignal(algorithm);
+        //}
 
         if (!isSbmSignal && GlobalData.Settings.Signal.AnalysisShowStobbOversold)
         {
@@ -1203,13 +1203,11 @@ public class SignalCreate
         cellStyleMacdLightGreen.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.LightGreen.Index;
 
 
-        int column = 0;
         int columns = ExcellHeaders(sheet, 0);
 
-        column = 0;
         int row = 0;
+        int column;
         CryptoCandle prev = null;
-        //for (int i = history.Count - 1; i >= 0; i--)
         for (int i = 0; i < history.Count; i++)
         {
             row++;
@@ -1303,44 +1301,44 @@ public class SignalCreate
 
                 if (candle.IsSbmConditionsOversold(true))
                 {
-                    cell = WriteCell(sheet, column++, row, "yes");
+                    WriteCell(sheet, column++, row, "yes");
                 }
                 else
                 {
-                    cell = WriteCell(sheet, column++, row, "no");
+                    WriteCell(sheet, column++, row, "no");
                 }
 
-                if (candle.IsSma200AndSma20OkayOversold(GlobalData.Settings.Signal.SbmMa200AndMa20Percentage, out string response))
-                {
-                    cell = WriteCell(sheet, column++, row, "yes");
-                    cell.CellStyle = cellStyleStringGreen;
-                }
-                else
-                {
-                    cell = WriteCell(sheet, column++, row, "no");
-                }
-
-                if (candle.IsSma200AndSma50OkayOversold(GlobalData.Settings.Signal.SbmMa200AndMa50Percentage, out response))
+                if (candle.IsSma200AndSma20OkayOversold(GlobalData.Settings.Signal.SbmMa200AndMa20Percentage, out string _))
                 {
                     cell = WriteCell(sheet, column++, row, "yes");
                     cell.CellStyle = cellStyleStringGreen;
                 }
                 else
                 {
-                    cell = WriteCell(sheet, column++, row, "no");
+                    WriteCell(sheet, column++, row, "no");
                 }
 
-                if (candle.IsSma50AndSma20OkayOversold(GlobalData.Settings.Signal.SbmMa50AndMa20Percentage, out response))
+                if (candle.IsSma200AndSma50OkayOversold(GlobalData.Settings.Signal.SbmMa200AndMa50Percentage, out _))
                 {
                     cell = WriteCell(sheet, column++, row, "yes");
                     cell.CellStyle = cellStyleStringGreen;
                 }
                 else
                 {
-                    cell = WriteCell(sheet, column++, row, "no");
+                    WriteCell(sheet, column++, row, "no");
                 }
 
-                cell = WriteCell(sheet, column++, row, candle.ExtraText);
+                if (candle.IsSma50AndSma20OkayOversold(GlobalData.Settings.Signal.SbmMa50AndMa20Percentage, out _))
+                {
+                    cell = WriteCell(sheet, column++, row, "yes");
+                    cell.CellStyle = cellStyleStringGreen;
+                }
+                else
+                {
+                    WriteCell(sheet, column++, row, "no");
+                }
+
+                WriteCell(sheet, column++, row, candle.ExtraText);
 
 
                 // overbodig?

@@ -5,8 +5,9 @@ namespace CryptoSbmScanner.TradingView;
 public class SymbolValue
 {
     public string Name { get; set; }
+    public string Ticker { get; set; }
     public string DisplayFormat { get; set; }
-    public DateTime LastCheck { get; set; }
+    public DateTime? LastCheck { get; set; }
     public decimal LastValue { get; set; } // For colors
 
     public decimal Lp { get; set; } // Close?
@@ -31,8 +32,10 @@ public class TradingViewSymbolInfo
     public async void Start(string tickerName, string displayName, string displayFormat, SymbolValue symbolValue, int startDelayMs)
     {
         await Task.Delay(startDelayMs);
+
         value = symbolValue;
         value.Name = displayName;
+        value.Ticker = tickerName;
         value.DisplayFormat = displayFormat;
         socket = new TradingViewSymbolWebSocket(tickerName);
         socket.DataFetched += OnValueFetched;

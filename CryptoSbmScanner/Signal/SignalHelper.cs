@@ -14,7 +14,7 @@ public class SignalHelper
             SignalStrategy.sbm2Oversold => new SignalSbm2Oversold(symbol, interval, candle),
             SignalStrategy.sbm3Oversold => new SignalSbm3Oversold(symbol, interval, candle),
             //SignalStrategy.sbm4Oversold => new SignalSbm4Oversold(symbol, interval, candle),
-            SignalStrategy.sbm5Oversold => new SignalSbm5Oversold(symbol, interval, candle),
+            //SignalStrategy.sbm5Oversold => new SignalSbm5Oversold(symbol, interval, candle),
 
             SignalStrategy.stobbOverbought => new SignalStobbOverbought(symbol, interval, candle),
             SignalStrategy.sbm1Overbought => new SignalSbm1Overbought(symbol, interval, candle),

@@ -133,7 +133,6 @@ public partial class FrmSettings : Form
         // (dat was weer een onaangename WinForms verrassing)
         tabExtra.Parent = null;
         tabExtra2.Parent = null;
-#else
         settings.Bot.Active = false;
 #endif
 

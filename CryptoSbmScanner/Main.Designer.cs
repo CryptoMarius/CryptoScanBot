@@ -59,14 +59,10 @@
             tabPageAltrady = new TabPage();
             webViewAltrady = new Microsoft.Web.WebView2.WinForms.WebView2();
             panelTop = new Panel();
-            listViewInformation = new ListViewDoubleBuffered();
             listViewSymbolPrices = new ListViewDoubleBuffered();
             labelBarometerDateValue = new Label();
             comboBoxBarometerInterval = new ComboBox();
             pictureBox1 = new PictureBox();
-            labelKLinesTickerCount = new Label();
-            labelAnalyseCount = new Label();
-            labelPriceTicker = new Label();
             comboBoxBarometerQuote = new ComboBox();
             panelClient1 = new Panel();
             timerBarometer = new System.Windows.Forms.Timer(components);
@@ -109,10 +105,10 @@
             // 
             panel4.Controls.Add(listBoxSymbols);
             panel4.Dock = DockStyle.Fill;
-            panel4.Location = new Point(0, 83);
+            panel4.Location = new Point(0, 93);
             panel4.Margin = new Padding(2);
             panel4.Name = "panel4";
-            panel4.Size = new Size(190, 658);
+            panel4.Size = new Size(190, 648);
             panel4.TabIndex = 2;
             // 
             // listBoxSymbols
@@ -124,7 +120,7 @@
             listBoxSymbols.Location = new Point(0, 0);
             listBoxSymbols.Margin = new Padding(2);
             listBoxSymbols.Name = "listBoxSymbols";
-            listBoxSymbols.Size = new Size(190, 658);
+            listBoxSymbols.Size = new Size(190, 648);
             listBoxSymbols.Sorted = true;
             listBoxSymbols.TabIndex = 0;
             // 
@@ -186,7 +182,7 @@
             panel3.Location = new Point(0, 0);
             panel3.Margin = new Padding(2);
             panel3.Name = "panel3";
-            panel3.Size = new Size(190, 83);
+            panel3.Size = new Size(190, 93);
             panel3.TabIndex = 1;
             // 
             // labelVersion
@@ -280,7 +276,7 @@
             // 
             // symbolFilter
             // 
-            symbolFilter.Location = new Point(13, 54);
+            symbolFilter.Location = new Point(11, 58);
             symbolFilter.Margin = new Padding(2);
             symbolFilter.Name = "symbolFilter";
             symbolFilter.Size = new Size(164, 23);
@@ -291,10 +287,10 @@
             // 
             panelClient.Controls.Add(tabControl);
             panelClient.Dock = DockStyle.Fill;
-            panelClient.Location = new Point(0, 84);
+            panelClient.Location = new Point(0, 93);
             panelClient.Margin = new Padding(2);
             panelClient.Name = "panelClient";
-            panelClient.Size = new Size(1542, 657);
+            panelClient.Size = new Size(1542, 648);
             panelClient.TabIndex = 13;
             // 
             // tabControl
@@ -308,7 +304,7 @@
             tabControl.Margin = new Padding(2);
             tabControl.Name = "tabControl";
             tabControl.SelectedIndex = 0;
-            tabControl.Size = new Size(1542, 657);
+            tabControl.Size = new Size(1542, 648);
             tabControl.TabIndex = 12;
             // 
             // tabPageSignals
@@ -318,7 +314,7 @@
             tabPageSignals.Margin = new Padding(4, 3, 4, 3);
             tabPageSignals.Name = "tabPageSignals";
             tabPageSignals.Padding = new Padding(4, 3, 4, 3);
-            tabPageSignals.Size = new Size(1534, 629);
+            tabPageSignals.Size = new Size(1534, 620);
             tabPageSignals.TabIndex = 4;
             tabPageSignals.Text = "Signals";
             tabPageSignals.UseVisualStyleBackColor = true;
@@ -331,7 +327,7 @@
             listViewSignals.Location = new Point(4, 3);
             listViewSignals.Margin = new Padding(4, 3, 4, 3);
             listViewSignals.Name = "listViewSignals";
-            listViewSignals.Size = new Size(1526, 623);
+            listViewSignals.Size = new Size(1526, 614);
             listViewSignals.TabIndex = 1;
             listViewSignals.UseCompatibleStateImageBehavior = false;
             listViewSignals.View = View.Details;
@@ -398,7 +394,7 @@
             tabPageBrowser.Margin = new Padding(4, 3, 4, 3);
             tabPageBrowser.Name = "tabPageBrowser";
             tabPageBrowser.Padding = new Padding(4, 3, 4, 3);
-            tabPageBrowser.Size = new Size(1534, 629);
+            tabPageBrowser.Size = new Size(1534, 620);
             tabPageBrowser.TabIndex = 5;
             tabPageBrowser.Text = "Tradingview";
             tabPageBrowser.UseVisualStyleBackColor = true;
@@ -412,7 +408,7 @@
             webViewTradingView.Location = new Point(4, 3);
             webViewTradingView.Margin = new Padding(4, 3, 4, 3);
             webViewTradingView.Name = "webViewTradingView";
-            webViewTradingView.Size = new Size(1526, 623);
+            webViewTradingView.Size = new Size(1526, 614);
             webViewTradingView.TabIndex = 0;
             webViewTradingView.ZoomFactor = 1D;
             // 
@@ -423,7 +419,7 @@
             tabPageLog.Margin = new Padding(2);
             tabPageLog.Name = "tabPageLog";
             tabPageLog.Padding = new Padding(2);
-            tabPageLog.Size = new Size(1534, 629);
+            tabPageLog.Size = new Size(1534, 620);
             tabPageLog.TabIndex = 1;
             tabPageLog.Text = "Log";
             tabPageLog.UseVisualStyleBackColor = true;
@@ -437,7 +433,7 @@
             TextBoxLog.Multiline = true;
             TextBoxLog.Name = "TextBoxLog";
             TextBoxLog.ScrollBars = ScrollBars.Both;
-            TextBoxLog.Size = new Size(1530, 625);
+            TextBoxLog.Size = new Size(1530, 616);
             TextBoxLog.TabIndex = 1;
             // 
             // tabPageAltrady
@@ -447,7 +443,7 @@
             tabPageAltrady.Margin = new Padding(4, 3, 4, 3);
             tabPageAltrady.Name = "tabPageAltrady";
             tabPageAltrady.Padding = new Padding(4, 3, 4, 3);
-            tabPageAltrady.Size = new Size(1534, 629);
+            tabPageAltrady.Size = new Size(1534, 620);
             tabPageAltrady.TabIndex = 6;
             tabPageAltrady.Text = "tabPage1";
             tabPageAltrady.UseVisualStyleBackColor = true;
@@ -461,43 +457,23 @@
             webViewAltrady.Location = new Point(4, 3);
             webViewAltrady.Margin = new Padding(4, 3, 4, 3);
             webViewAltrady.Name = "webViewAltrady";
-            webViewAltrady.Size = new Size(1526, 623);
+            webViewAltrady.Size = new Size(1526, 614);
             webViewAltrady.TabIndex = 1;
             webViewAltrady.ZoomFactor = 1D;
             // 
             // panelTop
             // 
-            panelTop.Controls.Add(listViewInformation);
             panelTop.Controls.Add(listViewSymbolPrices);
             panelTop.Controls.Add(labelBarometerDateValue);
             panelTop.Controls.Add(comboBoxBarometerInterval);
             panelTop.Controls.Add(pictureBox1);
-            panelTop.Controls.Add(labelKLinesTickerCount);
-            panelTop.Controls.Add(labelAnalyseCount);
-            panelTop.Controls.Add(labelPriceTicker);
             panelTop.Controls.Add(comboBoxBarometerQuote);
             panelTop.Dock = DockStyle.Top;
             panelTop.Location = new Point(0, 0);
             panelTop.Margin = new Padding(2);
             panelTop.Name = "panelTop";
-            panelTop.Size = new Size(1542, 84);
+            panelTop.Size = new Size(1542, 93);
             panelTop.TabIndex = 14;
-            // 
-            // listViewInformation
-            // 
-            listViewInformation.Activation = ItemActivation.OneClick;
-            listViewInformation.BackColor = SystemColors.Control;
-            listViewInformation.BorderStyle = BorderStyle.None;
-            listViewInformation.GridLines = true;
-            listViewInformation.Location = new Point(6, 6);
-            listViewInformation.Margin = new Padding(0);
-            listViewInformation.MultiSelect = false;
-            listViewInformation.Name = "listViewInformation";
-            listViewInformation.Scrollable = false;
-            listViewInformation.Size = new Size(257, 73);
-            listViewInformation.TabIndex = 76;
-            listViewInformation.UseCompatibleStateImageBehavior = false;
-            listViewInformation.View = View.Details;
             // 
             // listViewSymbolPrices
             // 
@@ -505,11 +481,11 @@
             listViewSymbolPrices.BackColor = SystemColors.Control;
             listViewSymbolPrices.BorderStyle = BorderStyle.None;
             listViewSymbolPrices.GridLines = true;
-            listViewSymbolPrices.Location = new Point(789, 0);
+            listViewSymbolPrices.Location = new Point(526, 0);
             listViewSymbolPrices.Margin = new Padding(4, 3, 4, 3);
             listViewSymbolPrices.Name = "listViewSymbolPrices";
             listViewSymbolPrices.Scrollable = false;
-            listViewSymbolPrices.Size = new Size(649, 84);
+            listViewSymbolPrices.Size = new Size(813, 93);
             listViewSymbolPrices.TabIndex = 71;
             listViewSymbolPrices.UseCompatibleStateImageBehavior = false;
             listViewSymbolPrices.View = View.Details;
@@ -517,7 +493,7 @@
             // labelBarometerDateValue
             // 
             labelBarometerDateValue.AutoSize = true;
-            labelBarometerDateValue.Location = new Point(269, 61);
+            labelBarometerDateValue.Location = new Point(8, 61);
             labelBarometerDateValue.Margin = new Padding(4, 0, 4, 0);
             labelBarometerDateValue.Name = "labelBarometerDateValue";
             labelBarometerDateValue.Size = new Size(62, 15);
@@ -528,7 +504,7 @@
             // 
             comboBoxBarometerInterval.DropDownStyle = ComboBoxStyle.DropDownList;
             comboBoxBarometerInterval.FormattingEnabled = true;
-            comboBoxBarometerInterval.Location = new Point(273, 31);
+            comboBoxBarometerInterval.Location = new Point(10, 31);
             comboBoxBarometerInterval.Margin = new Padding(2);
             comboBoxBarometerInterval.Name = "comboBoxBarometerInterval";
             comboBoxBarometerInterval.Size = new Size(79, 23);
@@ -537,48 +513,18 @@
             // pictureBox1
             // 
             pictureBox1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
-            pictureBox1.Location = new Point(358, 0);
+            pictureBox1.Location = new Point(95, 0);
             pictureBox1.Margin = new Padding(4, 3, 4, 3);
             pictureBox1.Name = "pictureBox1";
-            pictureBox1.Size = new Size(419, 82);
+            pictureBox1.Size = new Size(419, 93);
             pictureBox1.TabIndex = 67;
             pictureBox1.TabStop = false;
-            // 
-            // labelKLinesTickerCount
-            // 
-            labelKLinesTickerCount.AutoSize = true;
-            labelKLinesTickerCount.Location = new Point(1166, 61);
-            labelKLinesTickerCount.Margin = new Padding(4, 0, 4, 0);
-            labelKLinesTickerCount.Name = "labelKLinesTickerCount";
-            labelKLinesTickerCount.Size = new Size(101, 15);
-            labelKLinesTickerCount.TabIndex = 66;
-            labelKLinesTickerCount.Text = "1m candle stream";
-            // 
-            // labelAnalyseCount
-            // 
-            labelAnalyseCount.AutoSize = true;
-            labelAnalyseCount.Location = new Point(1166, 38);
-            labelAnalyseCount.Margin = new Padding(4, 0, 4, 0);
-            labelAnalyseCount.Name = "labelAnalyseCount";
-            labelAnalyseCount.Size = new Size(82, 15);
-            labelAnalyseCount.TabIndex = 60;
-            labelAnalyseCount.Text = "Analyse count";
-            // 
-            // labelPriceTicker
-            // 
-            labelPriceTicker.AutoSize = true;
-            labelPriceTicker.Location = new Point(1166, 13);
-            labelPriceTicker.Margin = new Padding(4, 0, 4, 0);
-            labelPriceTicker.Name = "labelPriceTicker";
-            labelPriceTicker.Size = new Size(99, 15);
-            labelPriceTicker.TabIndex = 59;
-            labelPriceTicker.Text = "Price ticker count";
             // 
             // comboBoxBarometerQuote
             // 
             comboBoxBarometerQuote.DropDownStyle = ComboBoxStyle.DropDownList;
             comboBoxBarometerQuote.FormattingEnabled = true;
-            comboBoxBarometerQuote.Location = new Point(273, 3);
+            comboBoxBarometerQuote.Location = new Point(10, 3);
             comboBoxBarometerQuote.Margin = new Padding(2);
             comboBoxBarometerQuote.Name = "comboBoxBarometerQuote";
             comboBoxBarometerQuote.Size = new Size(79, 23);
@@ -676,8 +622,6 @@
         private System.Windows.Forms.ToolStripMenuItem ToolStripMenuItemSettings;
         private System.Windows.Forms.ToolStripMenuItem ToolStripMenuItemRefresh;
         private System.Windows.Forms.ToolStripMenuItem clearMenusToolStripMenuItem;
-        private System.Windows.Forms.Label labelAnalyseCount;
-        private System.Windows.Forms.Label labelPriceTicker;
         private System.Windows.Forms.TabPage tabPageSignals;
         private System.Windows.Forms.Timer timerClearEvents;
         private ListViewDoubleBuffered listViewSignals;
@@ -689,7 +633,6 @@
         private System.Windows.Forms.ToolStripMenuItem listViewSignalsMenuItemActivateTradingViewInternal;
         private System.Windows.Forms.ToolStripMenuItem listViewSignalsMenuItemActivateTradingApps;
         private System.Windows.Forms.ToolStripMenuItem listViewSignalsMenuItemActivateTradingViewExternal;
-        private System.Windows.Forms.Label labelKLinesTickerCount;
         private System.Windows.Forms.ToolStripMenuItem listBoxSymbolsMenuItemActivateTradingviewInternal;
         private System.Windows.Forms.ToolStripMenuItem listBoxSymbolsMenuItemActivateTradingviewExternal;
         private System.Windows.Forms.ToolStripMenuItem listBoxSymbolsMenuItemActivateTradingApp;
@@ -709,7 +652,6 @@
         private CryptoSbmScanner.ListViewDoubleBuffered listViewSymbolPrices;
         private System.Windows.Forms.Timer timerCandles;
         private System.Windows.Forms.Label labelVersion;
-        private CryptoSbmScanner.ListViewDoubleBuffered listViewInformation;
         private System.Windows.Forms.ToolStripMenuItem ApplicationPlaySounds;
         private System.Windows.Forms.ToolStripMenuItem ApplicationCreateSignals;
         private System.Windows.Forms.Timer timerAddSignal;

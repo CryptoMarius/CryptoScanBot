@@ -106,11 +106,6 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
 
 
         InitEventView();
-        UpdateInfoAndbarometerValues();
-
-        //MetroStyleManager.Theme = newTheme;
-        //MetroStyleManager.Default.Theme = (MetroThemeStyle)MetroColorStyle.Magenta;
-
     }
 
 
@@ -198,20 +193,22 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
 
         listViewSignals.GridLines = true;
         listViewSignals.View = View.Details;
-
-        listViewInformation.GridLines = false;
-        listViewInformation.View = View.Details;
+        listViewSignals.FullRowSelect = true;
+        listViewSignals.HideSelection = true;
 
         listViewSymbolPrices.GridLines = false;
         listViewSymbolPrices.View = View.Details;
+        listViewSymbolPrices.FullRowSelect = true;
+        listViewSymbolPrices.HideSelection = true;
+
+#if !TRADEBOT
+        ApplicationTradingBot.Visible = false;
+        GlobalData.Settings.Bot.Active.Active = false;
+#endif
 
         ApplicationTradingBot.Checked = GlobalData.Settings.Bot.Active;
         ApplicationPlaySounds.Checked = GlobalData.Settings.Signal.SoundsActive;
         ApplicationCreateSignals.Checked = GlobalData.Settings.Signal.SignalsActive;
-
-#if !TRADEBOT
-        ApplicationTradingBot.Visible = false;
-#endif
 
         this.Refresh();
     }
@@ -495,7 +492,7 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
                 {
                     // hoe breed?
                     Rectangle rect = new(0, 0, 55, intHeight);
-                    SolidBrush solidBrush = new SolidBrush(panelTop.BackColor);
+                    SolidBrush solidBrush = new(panelTop.BackColor);
                     g.FillRectangle(solidBrush, rect);
                 }
 
@@ -504,8 +501,9 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
                     int y = 1;
                     int offset = 4;
                     int offsetValue = 20;
-                    Rectangle rect1 = new Rectangle(0, 0, intWidth, intHeight);
-                    Font drawFont1 = new Font("Microsoft Sans Serif", this.Font.Size);
+                    //Pen blackPen = new Pen(Color.Black, 1);
+                    Rectangle rect1 = new(0, 0, intWidth, intHeight);
+                    Font drawFont1 = new("Microsoft Sans Serif", this.Font.Size);
                     CryptoIntervalPeriod[] list = { CryptoIntervalPeriod.interval1h, CryptoIntervalPeriod.interval4h, CryptoIntervalPeriod.interval1d };
 
                     foreach (CryptoIntervalPeriod intervalPeriod in list)
@@ -518,8 +516,9 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
                             color = Color.Green;
 
                         //TextRenderer.DrawText(g, "1h", drawFont1, rect1, Color.Black, Color.Transparent, TextFormatFlags.Top);
-                        SolidBrush solidBrush = new SolidBrush(color);
+                        SolidBrush solidBrush = new(color);
                         g.FillEllipse(solidBrush, offset, y, 14, 14);
+                        //g.DrawEllipse(blackPen, offset, y, 14, 14);
                         rect1 = new Rectangle(offsetValue, y, intWidth, intHeight);
                         TextRenderer.DrawText(g, barometerData?.PriceBarometer?.ToString("N2"), drawFont1, rect1, color, Color.Transparent, TextFormatFlags.Top);
                         y += 19;
@@ -631,43 +630,18 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
     private readonly List<SymbolHist> symbolHistList = new(3);
 
 
-    private void ShowSymbolPrice(SymbolHist hist, ListViewItem item, Model.CryptoExchange exchange, CryptoQuoteData quoteData, string baseCoin, TradingView.SymbolValue tvValues)
+    private static void ShowSymbolPrice(SymbolHist hist, ListViewItem item, Model.CryptoExchange exchange,
+        CryptoQuoteData quoteData, string baseCoin, TradingView.SymbolValue tvValues, string caption, string valueText)
     {
         // Not a really charming way to display items, but voila, it works for now..
+        ListViewItem.ListViewSubItem subItem;
 
-        if (baseCoin == "FNG")
-        {
-            ListViewItem.ListViewSubItem subItem = item.SubItems[0];
-            subItem.Text = "Fear and Greed";
 
-            subItem = item.SubItems[1];
-            subItem.Text = FearAndGreedIndex;
-
-            subItem = item.SubItems[2];
-            subItem.Text = "";
-
-            subItem = item.SubItems[3];
-            subItem.Text = tvValues.Name;
-
-            decimal value = tvValues.Lp;
-            subItem = item.SubItems[4];
-            subItem.Text = value.ToString(tvValues.DisplayFormat);
-            if (value < tvValues.LastValue)
-                subItem.ForeColor = Color.Red;
-            else if (value > tvValues.LastValue)
-                subItem.ForeColor = Color.Green;
-            tvValues.LastValue = value;
-
-            return;
-        }
-
-        if (!exchange.SymbolListName.TryGetValue(baseCoin + quoteData.Name, out CryptoSymbol symbol))
-            exchange.SymbolListName.TryGetValue(baseCoin + "USDT", out symbol);
-
-        if (symbol != null)
+        // subitem 0, 1 en 2
+        if (exchange.SymbolListName.TryGetValue(baseCoin + quoteData.Name, out CryptoSymbol symbol) || exchange.SymbolListName.TryGetValue(baseCoin + "USDT", out symbol))
         {
             decimal value;
-            ListViewItem.ListViewSubItem subItem = item.SubItems[0];
+            subItem = item.SubItems[0];
             subItem.Text = symbol.Name;
 
 
@@ -704,36 +678,50 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
             else
                 subItem.Text = "";
 
-
-            subItem = item.SubItems[3];
-            subItem.Text = tvValues.Name;
-
-            value = tvValues.Lp;
-            subItem = item.SubItems[4];
-            subItem.Text = value.ToString(tvValues.DisplayFormat);
-            if (value < tvValues.LastValue)
-                subItem.ForeColor = Color.Red;
-            else if (value > tvValues.LastValue)
-                subItem.ForeColor = Color.Green;
-            tvValues.LastValue = value;
-
-
             hist.Symbol = symbol.Name;
             hist.PricePrev = symbol.LastPrice;
             hist.VolumePrev = (decimal)symbol.Volume;
         }
         else
         {
-            item.Text = "";
             item.SubItems[0].Text = "";
             item.SubItems[1].Text = "";
             item.SubItems[2].Text = "";
-            item.SubItems[3].Text = "";
 
             hist.Symbol = "";
             hist.PricePrev = 0m;
             hist.VolumePrev = 0m;
         }
+
+
+
+        // subitem 4 en 5
+        if (tvValues != null)
+        {
+            subItem = item.SubItems[4];
+            subItem.Text = tvValues.Name;
+            subItem.Tag = tvValues;
+
+            decimal value = tvValues.Lp;
+            subItem = item.SubItems[5];
+            subItem.Text = value.ToString(tvValues.DisplayFormat);
+            if (value < tvValues.LastValue)
+                subItem.ForeColor = Color.Red;
+            else if (value > tvValues.LastValue)
+                subItem.ForeColor = Color.Green;
+            tvValues.LastValue = value;
+        }
+        else
+        {
+            item.SubItems[4].Text = "";
+            item.SubItems[5].Text = "";
+        }
+
+
+        // subitem 7 en 8
+        item.SubItems[7].Text = caption;
+        item.SubItems[8].Text = valueText;
+
     }
 
 
@@ -786,10 +774,16 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
     {
         if (listViewSymbolPrices.SelectedItems.Count > 0)
         {
-            for (int index = 0; index < listViewSymbolPrices.SelectedItems.Count; index++)
-            {
-                ListViewItem item = listViewSymbolPrices.SelectedItems[index];
+            Point mousePos = listViewSymbolPrices.PointToClient(Control.MousePosition);
+            ListViewHitTestInfo hitTest = listViewSymbolPrices.HitTest(mousePos);
+            ListViewItem item = hitTest.Item;
+            if (item == null)
+                return;
 
+            int col = hitTest.Item.SubItems.IndexOf(hitTest.SubItem);
+
+            if (col < 4)
+            {
                 if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
                 {
                     if (exchange.SymbolListName.TryGetValue(item.Text, out CryptoSymbol symbol))
@@ -802,152 +796,24 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
                     }
                 }
             }
+            else if (col < 7)
+            {
+                if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1h, out CryptoInterval interval))
+                    return;
+
+                ListViewItem.ListViewSubItem subItem = item.SubItems[4];
+                TradingView.SymbolValue tvValues = (TradingView.SymbolValue)subItem.Tag;
+                if (tvValues == null)
+                    return;
+
+                string href = string.Format("https://www.tradingview.com/chart/?symbol={0}&interval=60", tvValues.Ticker);
+                Uri uri = new(href);
+                webViewTradingView.Source = uri;
+                tabControl.SelectedTab = tabPageBrowser;
+            }
+            else tabControl.SelectedTab = tabPageSignals;
         }
     }
-
-
-    private static void UpdateInfoAndbarometerValuesIntern(ListViewItem item, int? count)
-    //, CryptoQuoteData quoteData, CryptoIntervalPeriod cryptoIntervalPeriod
-    {
-        ListViewItem.ListViewSubItem subItem;
-
-        subItem = item.SubItems[1];
-        if (GlobalData.ApplicationStatus != ApplicationStatus.AppStatusRunning)
-            subItem.Text = "?";
-        else
-            subItem.Text = count?.ToString("N0");
-
-
-        //if (quoteData == null)
-        //{
-        //subItem = item.SubItems[3];
-        //subItem.BackColor = Color.White;
-        //subItem = item.SubItems[4];
-        //subItem.Text = "?";
-        //}
-        //else
-        //{
-        //    BarometerData barometerData = quoteData.BarometerList[(long)cryptoIntervalPeriod];
-        //    decimal? value = barometerData.PriceBarometer;
-        //    subItem = item.SubItems[3];
-        //    if (!value.HasValue)
-        //        subItem.BackColor = Color.White;
-        //    else if (value < 0.0M)
-        //        subItem.BackColor = Color.Red;
-        //    else
-        //        subItem.BackColor = Color.Green;
-
-        //    subItem = item.SubItems[4];
-        //    subItem.Text = value?.ToString("N2");
-        //    if (!value.HasValue)
-        //    {
-        //        subItem.Text = "?";
-        //        subItem.ForeColor = Color.Black;
-        //    }
-        //    else if (value < 0.0M)
-        //        subItem.ForeColor = Color.Red;
-        //    else
-        //        subItem.ForeColor = Color.Green;
-
-        //}
-
-    }
-
-    private void UpdateInfoAndbarometerValues()
-    {
-        // Tel het aantal ontvangen 1m candles (via alle uitstaande streams)
-        // Elke minuut komt er van elke munt een candle (indien er gehandeld is).
-        int CandlesKLinesCount = 0;
-        foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
-        {
-            for (int i = 0; i < quoteData.BinanceStream1mCandles.Count; i++)
-            {
-                BinanceStream1mCandles binanceStream1mCandles = quoteData.BinanceStream1mCandles[i];
-                int currentCount = binanceStream1mCandles.CandlesKLinesCount;
-                CandlesKLinesCount += currentCount;
-            }
-        }
-
-        listViewInformation.BeginUpdate();
-        try
-        {
-            if (listViewInformation.Columns.Count == 0)
-            {
-                listViewInformation.Columns.Add("Binance price ticker", -2, HorizontalAlignment.Left);
-                listViewInformation.Columns.Add("8.123.123", -2, HorizontalAlignment.Right);
-                //listViewInformation.Columns.Add("Int", -2, HorizontalAlignment.Right);
-                //listViewInformation.Columns.Add("12", -2, HorizontalAlignment.Right);
-                //listViewInformation.Columns.Add("Val", -2, HorizontalAlignment.Right);
-                listViewInformation.Columns.Add("", -2, HorizontalAlignment.Right); // filler
-
-                listViewInformation.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
-
-                ListViewItem item1 = new("Binance price ticker count", -1)
-                {
-                    UseItemStyleForSubItems = false
-                };
-                item1.SubItems.Add("?");
-                //item1.SubItems.Add("1H:");
-                //item1.SubItems.Add("");
-                //item1.SubItems.Add("");
-                listViewInformation.Items.Add(item1);
-
-                item1 = new("Binance 1m stream count", -1)
-                {
-                    UseItemStyleForSubItems = false
-                };
-                item1.SubItems.Add("?");
-                //item1.SubItems.Add("4H:");
-                //item1.SubItems.Add("");
-                //item1.SubItems.Add("");
-                listViewInformation.Items.Add(item1);
-
-                item1 = new("Scanner analyse count", -1)
-                {
-                    UseItemStyleForSubItems = false
-                };
-                item1.SubItems.Add("?");
-                //item1.SubItems.Add("1D:");
-                //item1.SubItems.Add("");
-                //item1.SubItems.Add("");
-                listViewInformation.Items.Add(item1);
-            }
-
-
-
-            //string baseCoin;
-            //Invoke((MethodInvoker)(() => baseCoin = comboBoxBarometerQuote.Text));
-            //baseCoin = comboBoxBarometerQuote.Text;
-            //GlobalData.Settings.QuoteCoins.TryGetValue(baseCoin, out CryptoQuoteData quoteData);
-
-            //int count;
-            //if (GlobalData.TaskBinanceStreamPriceTicker != null)
-            //    count = GlobalData.TaskBinanceStreamPriceTicker.tickerCount;
-            //else
-            //    count = 0;
-            UpdateInfoAndbarometerValuesIntern(listViewInformation.Items[0], GlobalData.TaskBinanceStreamPriceTicker?.tickerCount); //, quoteData, CryptoIntervalPeriod.interval1h
-            UpdateInfoAndbarometerValuesIntern(listViewInformation.Items[1], CandlesKLinesCount); //, quoteData, CryptoIntervalPeriod.interval4h
-            //if (GlobalData.ThreadCreateSignal != null)
-            //    count = GlobalData.ThreadCreateSignal.analyseCount;
-            //else
-            //    count = 0;
-            UpdateInfoAndbarometerValuesIntern(listViewInformation.Items[2], GlobalData.ThreadCreateSignal?.analyseCount); //quoteData, CryptoIntervalPeriod.interval1d
-
-
-            for (int i = 0; i <= listViewInformation.Columns.Count - 1; i++)
-            {
-                listViewInformation.Columns[i].Width = -2;
-            }
-        }
-        finally
-        {
-            listViewInformation.EndUpdate();
-        }
-
-    }
-
-    private string FearAndGreedIndex = "";
-    private DateTime? FearAndGreedIndexDate = null;
 
     private async void TimerBarometer_Tick(object sender, EventArgs e)
     {
@@ -968,7 +834,7 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
                 barometerLastMinute = DateTime.Now.Minute;
                 new Thread(BinanceBarometerAll).Start();
             }
-            UpdateInfoAndbarometerValues();
+            //UpdateInfoAndbarometerValues();
 
 
             //// De Fear and Greed index (elke 24 uur een nieuwe waarde)
@@ -989,20 +855,23 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
 
             //    }
             //}
+            // TODO: Nog even netjes verstoppen in een aparte thread/task ipv het hier op te halen
             try
             {
-                if ((FearAndGreedIndexDate == null) || (DateTime.UtcNow >= FearAndGreedIndexDate))
+                if (GlobalData.FearAndGreedIndex.LastCheck == null || DateTime.UtcNow >= GlobalData.FearAndGreedIndex.LastCheck)
                 {
                     var jsonData = await httpClient.GetFromJsonAsync<FGIndex>("https://api.alternative.me/fng/");
-                    FearAndGreedIndex = jsonData.Data[0].Value;
+                    string value = jsonData.Data[0].Value;
                     //FearAndGreedIndex = jsonData["data"][0]["value"].Value<string>();
-                    FearAndGreedIndexDate = DateTime.UtcNow.AddHours(1);
-
+                    GlobalData.FearAndGreedIndex.Name = "Fear and Greed index";
+                    GlobalData.FearAndGreedIndex.Lp = decimal.Parse(value);
+                    GlobalData.FearAndGreedIndex.LastCheck = DateTime.UtcNow.AddHours(1); // = Next check
                 }
             }
             catch
             {
-                FearAndGreedIndex = "Connection-Error";
+                //FearAndGreedIndex = "Connection-Error"; // jammer..
+                //GlobalData.FearAndGreedIndex.LastValue = decimal.Parse(FearAndGreedIndex);
             }
 
 
@@ -1015,46 +884,89 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
                 {
                     if (listViewSymbolPrices.Columns.Count == 0)
                     {
-                        listViewSymbolPrices.Columns.Add("Symbol", -2, HorizontalAlignment.Left);
-                        listViewSymbolPrices.Columns.Add("Price", -2, HorizontalAlignment.Right);
-                        listViewSymbolPrices.Columns.Add("Volume", -2, HorizontalAlignment.Right);
-                        listViewSymbolPrices.Columns.Add("Market", -2, HorizontalAlignment.Left);
-                        listViewSymbolPrices.Columns.Add("Value", -2, HorizontalAlignment.Right);
+                        listViewSymbolPrices.Columns.Add("", -2, HorizontalAlignment.Left); // Symbol
+                        listViewSymbolPrices.Columns.Add("", -2, HorizontalAlignment.Right); // Price
+                        listViewSymbolPrices.Columns.Add("", -2, HorizontalAlignment.Right); // Volume
+                        listViewSymbolPrices.Columns.Add("", -2, HorizontalAlignment.Left); // Space
+
+                        listViewSymbolPrices.Columns.Add("", -2, HorizontalAlignment.Left); // Market
+                        listViewSymbolPrices.Columns.Add("", -2, HorizontalAlignment.Right); // Value
+                        listViewSymbolPrices.Columns.Add("", -2, HorizontalAlignment.Left); // Space
+
+                        listViewSymbolPrices.Columns.Add("", -2, HorizontalAlignment.Left); // Caption
+                        listViewSymbolPrices.Columns.Add("", -2, HorizontalAlignment.Right); // Count
+                        listViewSymbolPrices.Columns.Add("", -2, HorizontalAlignment.Left); // Space
+
                         listViewSymbolPrices.Columns.Add("", -2, HorizontalAlignment.Right); // filler
 
                         listViewSymbolPrices.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
 
-                        for (int i = 0; i < 4; i++)
+                        // exact 4 items toevoegen
+                        for (int i = 0; i <= 4; i++)
                         {
                             ListViewItem item1 = new("", -1)
                             {
                                 UseItemStyleForSubItems = false
                             };
+                            // Coins
                             item1.SubItems.Add("");
+                            item1.SubItems.Add("");
+                            item1.SubItems.Add("");
+                            item1.SubItems.Add("");
+
+                            // Extra info
+                            item1.SubItems.Add("");
+                            item1.SubItems.Add("");
+                            item1.SubItems.Add("");
+
+                            // Binance en F&G
                             item1.SubItems.Add("");
                             item1.SubItems.Add("");
                             item1.SubItems.Add("");
                             item1.SubItems.Add("");
                             listViewSymbolPrices.Items.Add(item1);
-
                             symbolHistList.Add(new SymbolHist());
                         }
                     }
 
 
+                    // Tel het aantal ontvangen 1m candles (via alle uitstaande streams)
+                    // Elke minuut komt er van elke munt een candle (indien er gehandeld is).
+                    int candlesKLineCount = 0;
+                    foreach (CryptoQuoteData quoteData1 in GlobalData.Settings.QuoteCoins.Values)
+                    {
+                        for (int i = 0; i < quoteData1.BinanceStream1mCandles.Count; i++)
+                        {
+                            BinanceStream1mCandles binanceStream1mCandles = quoteData1.BinanceStream1mCandles[i];
+                            candlesKLineCount += binanceStream1mCandles.CandlesKLinesCount;
+                        }
+                    }
+
                     string baseCoin = "";
                     Invoke((MethodInvoker)(() => baseCoin = comboBoxBarometerQuote.Text));
                     if (GlobalData.Settings.QuoteCoins.TryGetValue(baseCoin, out CryptoQuoteData quoteData))
                     {
-                        ShowSymbolPrice(symbolHistList[0], listViewSymbolPrices.Items[0], exchange, quoteData, "BNB", GlobalData.TradingViewDollarIndex);
-                        ShowSymbolPrice(symbolHistList[1], listViewSymbolPrices.Items[1], exchange, quoteData, "ETH", GlobalData.TradingViewBitcoinDominance);
-                        ShowSymbolPrice(symbolHistList[2], listViewSymbolPrices.Items[2], exchange, quoteData, "BTC", GlobalData.TradingViewSpx500);
-                        ShowSymbolPrice(symbolHistList[3], listViewSymbolPrices.Items[3], exchange, quoteData, "FNG", GlobalData.TradingViewMarketCapTotal);
+                        string text = GlobalData.TaskBinanceStreamPriceTicker?.tickerCount.ToString("N0");
+                        ShowSymbolPrice(symbolHistList[0], listViewSymbolPrices.Items[0], exchange, quoteData, "BNB", GlobalData.TradingViewDollarIndex, "Binance price ticker count", text);
+
+                        text = candlesKLineCount.ToString("N0");
+                        ShowSymbolPrice(symbolHistList[1], listViewSymbolPrices.Items[1], exchange, quoteData, "ETH", GlobalData.TradingViewBitcoinDominance, "Binance 1m stream count", text);
+
+                        text = GlobalData.ThreadCreateSignal?.analyseCount.ToString("N0");
+                        ShowSymbolPrice(symbolHistList[2], listViewSymbolPrices.Items[2], exchange, quoteData, "BTC", GlobalData.TradingViewSpx500, "Scanner analyse count", text);
+
+                        text = createdSignalCount.ToString("N0");
+                        ShowSymbolPrice(symbolHistList[3], listViewSymbolPrices.Items[3], exchange, quoteData, "XRP", GlobalData.TradingViewMarketCapTotal, "Scanner signal count", text);
+
+                        ShowSymbolPrice(symbolHistList[4], listViewSymbolPrices.Items[4], exchange, quoteData, "ADA", GlobalData.FearAndGreedIndex, "", "");
                     }
 
                     for (int i = 0; i <= listViewSymbolPrices.Columns.Count - 1; i++)
                     {
-                        listViewSymbolPrices.Columns[i].Width = -2;
+                        if (i == 3 || i == 6 || i == 9)
+                            listViewSymbolPrices.Columns[i].Width = 25;
+                        else
+                            listViewSymbolPrices.Columns[i].Width = -2;
                     }
                 }
                 finally
