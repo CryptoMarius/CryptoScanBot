@@ -227,7 +227,7 @@ public class SignalSbmBaseOversold : SignalSbmBase
         // Er een candle onder de bb opent of sluit
         if (CandleLast.IsBelowBollingerBands(false))
         {
-            ExtraText = "beneden de bb.lower";
+            ExtraText = "Close beneden de bb.lower";
             signal.LastPrice = Symbol.LastPrice;
             return false;
         }
@@ -385,6 +385,12 @@ public class SignalSbmBaseOversold : SignalSbmBase
         //if (CandleLast.CandleData.MacdHistogram >= 0)
         //{
         //    ExtraText = string.Format("De MACD.Hist is ondertussen groen {0:N8}", CandleLast.CandleData.MacdHistogram);
+        //    return true;
+        //}
+
+        //if (CandleLast.CandleData.StochOscillator > 80)
+        //{
+        //    ExtraText = string.Format("Stoch.K {0:N8} ondertussen oversold {1:N0}", CandleLast.CandleData.StochOscillator, 80);
         //    return true;
         //}
 

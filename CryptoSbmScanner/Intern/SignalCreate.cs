@@ -181,6 +181,42 @@ public class SignalCreate
     }
 
 
+    private decimal CalculateMaxMovementInInterval(CryptoIntervalPeriod intervalPeriod, long candleCount)
+    {
+        // Op een iets hoger interval gaan we x candles naar achteren en meten de echte beweging
+        // (de 48% change is wat effectief overblijft, maar dat is duidelijk niet de echte beweging)
+        CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(intervalPeriod);
+        SortedList<long, CryptoCandle> candles = symbolInterval.CandleList;
+
+
+        decimal min = decimal.MinValue;
+        decimal max = decimal.MaxValue;
+
+        CryptoCandle candle = candles.Values.Last();
+        while (candleCount > 0)
+        {
+            if (candle.Open < min)
+                min = candle.Open;
+            if (candle.Close < min)
+                min = candle.Close;
+
+            if (candle.Open < max)
+                max = candle.Open;
+            if (candle.Close < max)
+                max = candle.Close;
+
+            if (!candles.TryGetValue(candle.OpenTime - symbolInterval.Interval.Duration, out candle))
+                return decimal.MaxValue;
+        }
+
+        decimal diff = max - min;
+        if (!min.Equals(0))
+            return 100.0m * (diff / min);
+        else 
+            return 0;
+    }
+
+
     private async void SendSignal(SignalBase algorithm, CryptoSignal signal, string eventText)
     {
         // Hebben we deze al eerder gemeld?
@@ -517,12 +553,27 @@ public class SignalCreate
 
         // de 24 change moet in dit interval zitten
         // Vraag: Kan deze niet beter naar het begin van de controles?
-        signal.Last24Hours = CalculateLastPeriodsInInterval(24 * 60 * 60);
-        if (!signal.Last24Hours.IsBetween(GlobalData.Settings.Signal.AnalysisMinChangePercentage, GlobalData.Settings.Signal.AnalysisMaxChangePercentage))
+        signal.Last24HoursChange = CalculateLastPeriodsInInterval(24 * 60 * 60);
+        //signal.Last48HoursChange = CalculateLastPeriodsInInterval(48 * 60 * 60);
+        signal.Last24HoursEffective = CalculateMaxMovementInInterval(CryptoIntervalPeriod.interval10m, 144);
+        //signal.Last48HoursEffective = CalculateMaxMovementInInterval(CryptoIntervalPeriod.interval10m, 288);
+
+        if (!signal.Last24HoursChange.IsBetween(GlobalData.Settings.Signal.AnalysisMinChangePercentage, GlobalData.Settings.Signal.AnalysisMaxChangePercentage))
         {
             if (GlobalData.Settings.Signal.LogAnalysisMinMaxChangePercentage)
             {
-                string text = string.Format("Analyse {0} 24 hour changed {1} not between {2} .. {3}", Symbol.Name, signal.Last24Hours.ToString0("N2"), GlobalData.Settings.Signal.AnalysisMinChangePercentage.ToString0(), GlobalData.Settings.Signal.AnalysisMaxChangePercentage.ToString0());
+                string text = string.Format("Analyse {0} 24h change {1} niet tussen {2} .. {3}", Symbol.Name, signal.Last24HoursChange.ToString("N2"), GlobalData.Settings.Signal.AnalysisMinChangePercentage.ToString(), GlobalData.Settings.Signal.AnalysisMaxChangePercentage.ToString());
+                GlobalData.AddTextToLogTab(text);
+            }
+            eventText += " invalid 24 hour";
+            signal.Mode = SignalMode.modeInfo2;
+        }
+
+        if (!signal.Last24HoursEffective.IsBetween(GlobalData.Settings.Signal.AnalysisMinChangePercentage, GlobalData.Settings.Signal.AnalysisMaxChangePercentage))
+        {
+            if (GlobalData.Settings.Signal.LogAnalysisMinMaxChangePercentage)
+            {
+                string text = string.Format("Analyse {0} 24h change (effectief) {1} niet tussen {2} .. {3}", Symbol.Name, signal.Last24HoursEffective.ToString("N2"), GlobalData.Settings.Signal.AnalysisMinChangePercentage.ToString(), GlobalData.Settings.Signal.AnalysisMaxChangePercentage.ToString());
                 GlobalData.AddTextToLogTab(text);
             }
             eventText += " invalid 24 hour";

@@ -51,7 +51,7 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
         string appName = assembly.Name.ToString();
         string appVersion = assembly.Version.ToString();
         labelVersion.Text = "Version " + appVersion;
-        this.Text = appName;
+        this.Text = appName + " " + appVersion;
 
 
         // Om vanuit achtergrond threads iets te kunnen loggen (kan charmanter?) 
@@ -798,9 +798,6 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
             }
             else if (col < 7)
             {
-                if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1h, out CryptoInterval interval))
-                    return;
-
                 ListViewItem.ListViewSubItem subItem = item.SubItems[4];
                 TradingView.SymbolValue tvValues = (TradingView.SymbolValue)subItem.Tag;
                 if (tvValues == null)
@@ -1056,7 +1053,7 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
 
     private void MainMenuClearAll_Click(object sender, EventArgs e)
     {
-        this.Text = "";
+        //this.Text = "";
         TextBoxLog.Clear();
         createdSignalCount = 0;
         ListViewSignalsMenuItemClearSignals_Click(null, null);
@@ -1212,7 +1209,7 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
             return;
 
         // Zet de laatste munt in de "caption" (en taskbar) van de applicatie bar (visuele controle of er meldingen zijn)
-        Invoke(new Action(() => { this.Text = signal.Symbol.Name + " " + createdSignalCount.ToString(); }));
+        //Invoke(new Action(() => { this.Text = signal.Symbol.Name + " " + createdSignalCount.ToString(); }));
 
 
         //Monitor.Enter(signalQueue);

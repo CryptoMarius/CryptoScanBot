@@ -46,7 +46,10 @@ public partial class FrmMain
         listViewSignals.Columns.Add("Volume", -2, HorizontalAlignment.Right);
         listViewSignals.Columns.Add("Trend", -2, HorizontalAlignment.Right);
         listViewSignals.Columns.Add("Trend%", -2, HorizontalAlignment.Right);
-        listViewSignals.Columns.Add("Last24", -2, HorizontalAlignment.Right);
+        listViewSignals.Columns.Add("Last24C", -2, HorizontalAlignment.Right);
+        listViewSignals.Columns.Add("Last24E", -2, HorizontalAlignment.Right);
+        //listViewSignals.Columns.Add("Last48C", -2, HorizontalAlignment.Right);
+        //listViewSignals.Columns.Add("Last48E", -2, HorizontalAlignment.Right);
         listViewSignals.Columns.Add("BB%", -2, HorizontalAlignment.Right);
         if (!GlobalData.Settings.Signal.HideTechnicalStuffSignals)
         {
@@ -174,24 +177,48 @@ public partial class FrmMain
                 break;
         }
 
-        if (signal.TrendPercentage < 0)
-            item1.SubItems.Add(signal.TrendPercentage.ToString("N2")).ForeColor = Color.Red;
+        double? value;
+
+        value = signal.TrendPercentage;
+        if (value < 0)
+            item1.SubItems.Add(value?.ToString("N2")).ForeColor = Color.Red;
         else
-            item1.SubItems.Add(signal.TrendPercentage.ToString("N2")).ForeColor = Color.Green;
+            item1.SubItems.Add(value?.ToString("N2")).ForeColor = Color.Green;
 
-        if (signal.Last24Hours < 0)
-            item1.SubItems.Add(signal.Last24Hours.ToString("N2")).ForeColor = Color.Red;
+
+        value = signal.Last24HoursChange;
+        if (signal.Last24HoursChange < 0)
+            item1.SubItems.Add(value?.ToString("N2")).ForeColor = Color.Red;
         else
-            item1.SubItems.Add(signal.Last24Hours.ToString("N2")).ForeColor = Color.Green;
+            item1.SubItems.Add(value?.ToString("N2")).ForeColor = Color.Green;
 
 
-        item1.SubItems.Add(signal.BollingerBandsPercentage?.ToString("N2"));
+        value = signal.Last24HoursEffective;
+        if (signal.Last24HoursEffective < 0)
+            item1.SubItems.Add(value?.ToString("N2")).ForeColor = Color.Red;
+        else
+            item1.SubItems.Add(value?.ToString("N2")).ForeColor = Color.Green;
+
+        //value = signal.Last48HoursChange;
+        //if (signal.Last48HoursChange < 0)
+        //    item1.SubItems.Add(value?.ToString("N2")).ForeColor = Color.Red;
+        //else
+        //    item1.SubItems.Add(value?.ToString("N2")).ForeColor = Color.Green;
+
+
+        //value = signal.Last48HoursEffective;
+        //if (signal.Last48HoursEffective < 0)
+        //    item1.SubItems.Add(value?.ToString("N2")).ForeColor = Color.Red;
+        //else
+        //    item1.SubItems.Add(value?.ToString("N2")).ForeColor = Color.Green;
+
+        value = signal.BollingerBandsPercentage;
+        item1.SubItems.Add(value?.ToString("N2"));
 
 
         if (!GlobalData.Settings.Signal.HideTechnicalStuffSignals)
         {
             item1.SubItems.Add(" ");
-            double? value;
 
 
             // Oversold/overbougt

@@ -45,8 +45,7 @@ public class SignalPriceCrossedSma20 : SignalBase
         if (CandleLast.CandleData.StochOscillator <= 70)
             return false;
 
-        CryptoCandle prevCandle;
-        if (!Candles.TryGetValue(CandleLast.OpenTime - Interval.Duration, out prevCandle))
+        if (!Candles.TryGetValue(CandleLast.OpenTime - Interval.Duration, out CryptoCandle prevCandle))
         {
             ExtraText = "geen prev candle! " + CandleLast.DateLocal.ToString();
             return false;
@@ -86,8 +85,7 @@ public class SignalPriceCrossedSma20 : SignalBase
         }
 
 
-        CryptoCandle CandlePrev1;
-        if (!Candles.TryGetValue(CandleLast.OpenTime - Interval.Duration, out CandlePrev1))
+        if (!Candles.TryGetValue(CandleLast.OpenTime - Interval.Duration, out CryptoCandle CandlePrev1))
         {
             ExtraText = "No prev1";
             return false;

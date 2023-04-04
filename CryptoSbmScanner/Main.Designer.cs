@@ -481,6 +481,7 @@
             listViewSymbolPrices.BackColor = SystemColors.Control;
             listViewSymbolPrices.BorderStyle = BorderStyle.None;
             listViewSymbolPrices.GridLines = true;
+            listViewSymbolPrices.HideSelection = true;
             listViewSymbolPrices.Location = new Point(526, 0);
             listViewSymbolPrices.Margin = new Padding(4, 3, 4, 3);
             listViewSymbolPrices.Name = "listViewSymbolPrices";

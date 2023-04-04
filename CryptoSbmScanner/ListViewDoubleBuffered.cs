@@ -179,7 +179,7 @@ public class ListViewColumnSorter : IComparer
                 6 => ObjectCompare.Compare(signalA.Price, signalB.Price),
                 7 => ObjectCompare.Compare(signalA.Volume, signalB.Volume),
                 9 => ObjectCompare.Compare(signalA.TrendPercentage, signalB.TrendPercentage),
-                10 => ObjectCompare.Compare(signalA.Last24Hours, signalB.Last24Hours),
+                10 => ObjectCompare.Compare(signalA.Last24HoursChange, signalB.Last24HoursChange),
                 11 => ObjectCompare.Compare(signalA.BollingerBandsPercentage, signalB.BollingerBandsPercentage),
                 13 => ObjectCompare.Compare(signalA.Rsi, signalB.Rsi),
                 14 => ObjectCompare.Compare(signalA.StochOscillator, signalB.StochOscillator),
