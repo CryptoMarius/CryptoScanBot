@@ -1,6 +1,5 @@
 ﻿using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
-using MathNet.Numerics.LinearAlgebra.Solvers;
 using System.Collections.Generic;
 
 namespace CryptoSbmScanner.Signal;
@@ -26,6 +25,7 @@ public static class SignalSbmBaseOversoldHelper
         if (candle.CandleData.Sma20 >= candle.CandleData.Sma50)
             return false;
 
+
         if (includePsarCheck)
         {
             if (candle.CandleData.PSar > candle.CandleData.Sma20)
@@ -35,6 +35,7 @@ public static class SignalSbmBaseOversoldHelper
             if ((decimal)candle.CandleData.PSar <= candle.Close)
                 return false;
         }
+
         return true;
     }
 
@@ -86,6 +87,25 @@ public static class SignalSbmBaseOversoldHelper
         response = "";
         return true;
     }
+
+    public static bool IsStochOversold(this CryptoCandle candle)
+    {
+        // Stochastic Oscillator: K en D (langzaam) moeten kleiner zijn dan 20% (oversold)
+        if (candle.CandleData.StochSignal > 20)
+            return false;
+        if (candle.CandleData.StochOscillator > 20)
+            return false;
+        return true;
+    }
+
+    public static bool IsRsiOversold(this CryptoCandle candle)
+    {
+        // Rsiastic Oscillator: K en D (langzaam) moeten kleiner zijn dan 20% (oversold)
+        if (candle.CandleData.Rsi > 30)
+            return false;
+        return true;
+    }
+
 }
 
 
@@ -113,10 +133,12 @@ public class SignalSbmBaseOversold : SignalSbmBase
     public bool IsMacdRecoveryOversold(int candleCount)
     {
         CryptoCandle last = CandleLast;
+
+        // Hoe positief wil je het hebben?
         if (last.CandleData.MacdHistogram > 0)
         {
             ExtraText = string.Format("De MACD.Hist is groen {0:N8}", last.CandleData.MacdHistogram);
-            return false;
+            return true; // Was voorheen false!
         }
 
         // Is er "herstel" ten opzichte van de vorige macd histogram candle?
@@ -129,12 +151,17 @@ public class SignalSbmBaseOversold : SignalSbmBase
 
             if (last.CandleData.MacdHistogram <= prev.CandleData.MacdHistogram || last.CandleData.MacdHistogram >= 0)
             {
-                // Vermeld ik de juiste kleur? 
+                // TODO: Vermeld ik wel de juiste kleur(en)? 
                 if (last.CandleData.MacdHistogram >= 0)
+                {
+                    // Hoe positief wil je het hebben?
                     ExtraText = string.Format("De MACD[{0:N0}].Hist is groen {1:N8} {2:N8}", iterator, prev.CandleData.MacdHistogram, last.CandleData.MacdHistogram);
+                }
                 else
+                {
                     ExtraText = string.Format("De MACD[{0:N0}].Hist is niet roze {1:N8} {2:N8}", iterator, prev.CandleData.MacdHistogram, last.CandleData.MacdHistogram);
-                return false;
+                    return false;
+                }
             }
 
             iterator--;
@@ -147,50 +174,50 @@ public class SignalSbmBaseOversold : SignalSbmBase
 
 
 
-    protected bool HadIncreasingVolume(out string reaction)
-    {
-        // Het gemiddelde volume uitrekenen, als de vorige candle ~4* die avg-volume heeft en 
-        // de volgende candle heeft een flink lagere volume dan is er grote kans op een correctie
+    //protected bool HadIncreasingVolume(out string reaction)
+    //{
+    //    // Het gemiddelde volume uitrekenen, als de vorige candle ~4* die avg-volume heeft en 
+    //    // de volgende candle heeft een flink lagere volume dan is er grote kans op een correctie
 
-        // Het probleem is alleen hoe we te lage volumes detecteren?
+    //    // Het probleem is alleen hoe we te lage volumes detecteren?
 
-        reaction = "";
-        decimal sumVolume = 0;
+    //    reaction = "";
+    //    decimal sumVolume = 0;
 
-        int count = 20;
-        for (int i = Candles.Count - 1; i > 0; i--)
-        {
-            CryptoCandle candle = Candles.Values[i];
-            sumVolume += candle.Volume;
-            count--;
-            if (count < 0)
-                break;
-        }
-        decimal avgVolume = sumVolume / 20;
+    //    int count = 20;
+    //    for (int i = Candles.Count - 1; i > 0; i--)
+    //    {
+    //        CryptoCandle candle = Candles.Values[i];
+    //        sumVolume += candle.Volume;
+    //        count--;
+    //        if (count < 0)
+    //            break;
+    //    }
+    //    decimal avgVolume = sumVolume / 20;
 
-        // De volume van die laatste x candles moet boven de 1% volume van de munt zitten
-        if (sumVolume < 0.01m * Symbol.Volume)
-        {
-            reaction = string.Format("Geen volume {0:N8} volume(20)={0:N8} < 0.01m*Symbol.Volume {1:N8}", sumVolume, 0.01m * Symbol.Volume);
-            return false;
-        }
+    //    // De volume van die laatste x candles moet boven de 1% volume van de munt zitten
+    //    if (sumVolume < 0.01m * Symbol.Volume)
+    //    {
+    //        reaction = string.Format("Geen volume {0:N8} volume(20)={0:N8} < 0.01m*Symbol.Volume {1:N8}", sumVolume, 0.01m * Symbol.Volume);
+    //        return false;
+    //    }
 
 
-        if (!GetPrevCandle(CandleLast, out CryptoCandle candlePrev))
-        {
-            reaction = ExtraText;
-            return false;
-        }
+    //    if (!GetPrevCandle(CandleLast, out CryptoCandle candlePrev))
+    //    {
+    //        reaction = ExtraText;
+    //        return false;
+    //    }
 
-        if (candlePrev.Volume > 3 * avgVolume && CandleLast.Volume < avgVolume && CandleLast.Volume < candlePrev.Volume) 
-        {
-            reaction = string.Format("Volume spike prev={0:N8} last={1:N8}", candlePrev.Volume, CandleLast.Volume);
-            return true;
-        }
+    //    if (candlePrev.Volume > 3 * avgVolume && CandleLast.Volume < avgVolume && CandleLast.Volume < candlePrev.Volume) 
+    //    {
+    //        reaction = string.Format("Volume spike prev={0:N8} last={1:N8}", candlePrev.Volume, CandleLast.Volume);
+    //        return true;
+    //    }
         
 
-        return false;
-    }
+    //    return false;
+    //}
 
 
     public override bool IsSignal()
@@ -222,74 +249,67 @@ public class SignalSbmBaseOversold : SignalSbmBase
 
     public override bool AllowStepIn(CryptoSignal signal)
     {
-        // Na de initiele melding hebben we 3 candles de tijd om in te stappen, maar alleen indien de MACD verbetering laat zien.
+        if (!GetPrevCandle(CandleLast, out CryptoCandle candlePrev))
+            return false;
 
-        // Er een candle onder de bb opent of sluit
+        // Er een candle onder de bb opent of sluit (eigenlijk overbodig icm macd)
         if (CandleLast.IsBelowBollingerBands(false))
         {
             ExtraText = "Close beneden de bb.lower";
-            signal.LastPrice = Symbol.LastPrice;
             return false;
         }
 
+
+        // ********************************************************************
+        // MACD
         if (!IsMacdRecoveryOversold(GlobalData.Settings.Signal.SbmCandlesForMacdRecovery))
         {
-            signal.LastPrice = Symbol.LastPrice;
+            // ExtraText is al ingevuld
             return false;
         }
 
-        //if (CandleLast.CandleData.Tema < CandleLast.CandleData.Sma8)
-        //{
-        //    ExtraText = string.Format("Tema onder de sma8 {0:N8} {1:N8}", CandleLast.CandleData.Tema, CandleLast.CandleData.Sma8);
-        //    return false;
-        //}
 
-        // Wacht tot de PSAR lager is dan de SMA - x(enkel voor bot)
-        //if ((decimal)CandleLast.CandleData.PSar > CandleLast.Close)
-        //{
-        //    double? value = CandleLast.CandleData.Sma20 - 0.125 * CandleLast.CandleData.BollingerBandsDeviation;
-        //    if (CandleLast.CandleData.PSar > value)
-        //    {
-        //        ExtraText = string.Format("PSAR not below sma20 - 0.125*StdDev {0:N8} {1:N8}", CandleLast.CandleData.Sma20, value);
-        //        return false;
-        //    }
-        //}
+        // ********************************************************************
+        // RSI
 
-        //if (!GetPrevCandle(CandleLast, out CryptoCandle candlePrev))
-        //    return false;
-
-        //// Is there any RSI recovery visible (a bit weak)
-        //if (CandleLast.CandleData.Rsi < candlePrev.CandleData.Rsi)
-        //{
-        //    ExtraText = string.Format("RSI not recovering {0:N8} {1:N8}", candlePrev.CandleData.Rsi, CandleLast.CandleData.Rsi);
-        //    return false;
-        //}
-
-
-        //double valueRsi = 20;
-        //if (CandleLast.CandleData.Rsi < valueRsi)
-        //{
-        //    ExtraText = string.Format("RSI not above limit {0:N8} < {1:N8}", CandleLast.CandleData.Rsi, valueRsi);
-        //    return false;
-        //}
-
-        // Koop als de close vlak bij de bb.lower is (c.q. niet te ver naar boven zit)
-        // Werkt goed!!! (toch even experimenteren) - maar negeert hierdoor ook veel signalen die wel bruikbaar waren
-        double? value = CandleLast.CandleData.BollingerBandsLowerBand + 0.25 * CandleLast.CandleData.BollingerBandsDeviation;
-        if (Symbol.LastPrice > (decimal)value)
+        // Is there any RSI recovery visible (a bit weak)
+        if (CandleLast.CandleData.Rsi < candlePrev.CandleData.Rsi)
         {
-            ExtraText = string.Format("Symbol.Lastprice {0:N8} > BB.lower + 0.25 * StdDev {1:N8}", Symbol.LastPrice, value);
-            signal.LastPrice = Symbol.LastPrice;
+            ExtraText = string.Format("RSI {0:N8} hersteld niet {1:N8}", candlePrev.CandleData.Rsi, CandleLast.CandleData.Rsi);
             return false;
         }
 
-        // Deze wacht op een gesloten candle
-        if (CandleLast.CandleData.SlopeRsi <= 0)
+
+        // ********************************************************************
+        // STOCH
+        // Stochastic: Omdat ik ze door elkaar haal
+        // Rood %D = signal, het gemiddelde van de laatste 3 %K waarden
+        // Blauw %K = Oscilator berekend over een lookback periode van 14 candles
+
+        // Met name de %K moet herstellen
+        if (CandleLast.CandleData.StochOscillator < candlePrev.CandleData.StochOscillator)
         {
-            ExtraText = string.Format("Slope RSI <= 0 {0:N8}", CandleLast.CandleData.SlopeRsi);
-            signal.LastPrice = Symbol.LastPrice;
+            ExtraText = string.Format("Stoch.K {0:N8} hersteld niet < {1:N8}", candlePrev.CandleData.StochOscillator, CandleLast.CandleData.StochOscillator);
             return false;
         }
+
+        double? minimumStoch = 16;
+        if (CandleLast.CandleData.StochOscillator < minimumStoch)
+        {
+            ExtraText = string.Format("Stoch.K {0:N8} niet boven de {1:N0}", candlePrev.CandleData.StochOscillator, minimumStoch);
+            return false;
+        }
+
+        // De %D en %K moeten elkaar gekruist hebben. Dus %K(snel/blauw) > %D(traag/rood)
+        if (CandleLast.CandleData.StochSignal > CandleLast.CandleData.StochOscillator)
+        {
+            ExtraText = string.Format("Stoch.%D {0:N8} heeft de %K {1:N8} niet gekruist", candlePrev.CandleData.StochSignal, candlePrev.CandleData.StochOscillator);
+            return false;
+        }
+
+
+        // ********************************************************************
+        // Extra
 
         // Profiteren van een nog lagere prijs?
         // Maar nu schiet ie door naar de 1e de beste groene macd candle?
@@ -297,77 +317,60 @@ public class SignalSbmBaseOversold : SignalSbmBase
         {
             if (Symbol.LastPrice != signal.LastPrice)
             {
-                ExtraText = string.Format("Symbol.LastPrice gaat nog verder naar beneden (ff wachten) {0:N8} {1:N8}", Symbol.LastPrice, signal.LastPrice);
+                ExtraText = string.Format("Symbol.LastPrice {0:N8} gaat verder naar beneden {1:N8}", Symbol.LastPrice, signal.LastPrice);
             }
             signal.LastPrice = Symbol.LastPrice;
             return false;
         }
+        signal.LastPrice = Symbol.LastPrice;
 
-
-        // Deze is wel redelijk streng
-        //if (!HadIncreasingVolume(out ExtraText))
-        //  return false;
-
-
-        //// Is there any STOCH.K recovery visible (a bit weak)
-        //if (CandleLast.CandleData.StochOscillator < candlePrev.CandleData.StochOscillator)
+        // Koop als de close vlak bij de bb.lower is (c.q. niet te ver naar boven zit)
+        // Dit werkt - maar hierdoor negeren we ook signalen die wel bruikbaar waren.
+        //double? value = CandleLast.CandleData.BollingerBandsLowerBand + 0.25 * CandleLast.CandleData.BollingerBandsDeviation;
+        //if (Symbol.LastPrice > (decimal)value)
         //{
-        //    ExtraText = string.Format("Stoch.K not recovering {0:N8} < {1:N8}", candlePrev.CandleData.StochOscillator, CandleLast.CandleData.StochOscillator);
-        //    return false;
-        //}
-        //// Is there any STOCH.D recovery visible (a bit weak)
-        //if (CandleLast.CandleData.StochSignal < candlePrev.CandleData.StochSignal)
-        //{
-        //    ExtraText = string.Format("Stoch.D not recovering {0:N8} < {1:N8}", candlePrev.CandleData.StochSignal, CandleLast.CandleData.StochSignal);
+        //    ExtraText = string.Format("Symbol.Lastprice {0:N8} > BB.lower + 0.25 * StdDev {1:N8}", Symbol.LastPrice, value);
+        //    signal.LastPrice = Symbol.LastPrice;
         //    return false;
         //}
 
-
-        //double valueStoch = 20;
-        //if (CandleLast.CandleData.StochOscillator < valueStoch)
-        //{
-        //    ExtraText = string.Format("Stoch.K not above limit {0:N8} < {1:N8}", candlePrev.CandleData.StochOscillator, valueStoch);
-        //    return false;
-        //}
-
-        //if (CandleLast.CandleData.StochSignal < valueStoch)
-        ////if ((CandleLast.CandleData.StochSignal < candlePrev.CandleData.StochSignal))
-        //{
-        //    ExtraText = string.Format("Stoch.D above limit {0:N8} < {1:N8}", candlePrev.CandleData.StochSignal, valueStoch);
-        //    return false;
-        //}
-
-        //ExtraText = "Alles lijkt goed";
         return true;
     }
 
 
     public override bool GiveUp(CryptoSignal signal)
     {
+        // De breedte van de bb is ten minste 1.5%
+        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.SbmBBMinPercentage, GlobalData.Settings.Signal.SbmBBMaxPercentage))
+        {
+            ExtraText = "bb.width te klein " + CandleLast.CandleData.BollingerBandsPercentage?.ToString("N2");
+            return true;
+        }
+
         //ExtraText = "";
 
-        // Als de prijs alweer boven de sma zit ophouden
-        //if (CandleLast.CandleData.Tema >= CandleLast.CandleData.Sma20)
-        //{
-        //    ExtraText = "Candle above SMA20";
-        //    return true;
-        //}
+        if (Math.Min(CandleLast.Open, CandleLast.Close) >= (decimal)CandleLast.CandleData.Sma20)
+        {
+            //reason = string.Format("{0} give up (pricewise.body > bb) {1}", text, dcaPrice.ToString0());
+            ExtraText = "give up (pricewise.body > bb)";
+            return true;
+        }
 
-        // Als de psar bovenin komt te staan
-        // (maar dan stap je nooit in, duh)
-        //if ((decimal)CandleLast.CandleData.PSar > CandleLast.Close)
-        //    return true;
+
+        if (CandleLast.CandleData.StochOscillator >= 80)
+        {
+            ExtraText = "give up(stoch.osc > 80)";
+            //AppendLine(string.Format("{0} give up (stoch.osc > 80) {1}", text, dcaPrice.ToString0());
+            return true;
+        }
 
 
         // Langer dan 60 candles willen we niet wachten (is 60 niet heel erg lang?)
         if ((CandleLast.OpenTime - signal.EventTime) > GlobalData.Settings.Bot.GlobalBuyRemoveTime * Interval.Duration)
         {
-            ExtraText = "Ophouden na 10 candles";
+            ExtraText = string.Format("Ophouden na 10 candles", GlobalData.Settings.Bot.GlobalBuyRemoveTime);
             return true;
         }
-
-        //if (!IsMacdRecoveryOversold(GlobalData.Settings.Signal.SbmCandlesForMacdRecovery))
-        //    return true;
 
         if (CandleLast.CandleData.PSar > CandleLast.CandleData.Sma20)
         {
@@ -375,28 +378,29 @@ public class SignalSbmBaseOversold : SignalSbmBase
             return true;
         }
 
-        if (Symbol.LastPrice > (decimal)CandleLast.CandleData.Sma20)
+        // Houdt nu te snel op? (maar te hoog instappen blijft altijd een risico)
+        //if (Symbol.LastPrice > (decimal)CandleLast.CandleData.Sma20)
+        //{
+        //    ExtraText = string.Format("De prijs staat boven de sma20 {0:N8}", Symbol.LastPrice);
+        //    return true;
+        //}
+
+        if (Symbol.LastPrice > (decimal)CandleLast.CandleData.BollingerBandsUpperBand)
         {
-            ExtraText = string.Format("De prijs staat boven de sma20 {0:N8}", Symbol.LastPrice);
+            ExtraText = string.Format("De prijs staat boven de bb.upper {0:N8}", Symbol.LastPrice);
             return true;
         }
 
-        // Uitgezet omdat we vrij lang blijven wachten (zie Allow()
-        //if (CandleLast.CandleData.MacdHistogram >= 0)
-        //{
-        //    ExtraText = string.Format("De MACD.Hist is ondertussen groen {0:N8}", CandleLast.CandleData.MacdHistogram);
-        //    return true;
-        //}
-
-        //if (CandleLast.CandleData.StochOscillator > 80)
-        //{
-        //    ExtraText = string.Format("Stoch.K {0:N8} ondertussen oversold {1:N0}", CandleLast.CandleData.StochOscillator, 80);
-        //    return true;
-        //}
+        // Als de barometer alsnog daalt dan stoppen
+        BarometerData barometerData = Symbol.QuoteData.BarometerList[(long)CryptoIntervalPeriod.interval1h];
+        if (barometerData.PriceBarometer <= GlobalData.Settings.Bot.Barometer01hBotMinimal)
+        {
+            ExtraText = string.Format("Barometer 1h {0} below {1}", barometerData.PriceBarometer?.ToString0("N2"), GlobalData.Settings.Bot.Barometer01hBotMinimal.ToString0("N2"));
+            return true;
+        }
 
         ExtraText = "";
         return false;
     }
 
 }
-

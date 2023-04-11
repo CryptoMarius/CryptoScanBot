@@ -22,7 +22,6 @@ public class SignalSbm2Oversold : SignalSbmBaseOversold
             // Dave bb.PercentB begint bij 0% op de onderste bb, de bovenste bb is 100%
             // Dat is eigenlijk precies andersom dan wat we in gedachten hebben
             // Onderstaande berekening doet het andersom, bovenste is 0% en onderste is 100%
-
             decimal value = 100m * (decimal)last.CandleData.BollingerBandsLowerBand / (decimal)last.Close;
             if (value >= percentage)
                 return true;

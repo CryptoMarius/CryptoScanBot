@@ -192,8 +192,8 @@ public partial class FrmSettings : Form
         // ------------------------------------------------------------------------------
         // Signals
         // ------------------------------------------------------------------------------
-        EditAnalysisMinChangePercentage.Value = settings.Signal.AnalysisMinChangePercentage;
-        EditAnalysisMaxChangePercentage.Value = settings.Signal.AnalysisMaxChangePercentage;
+        EditAnalysisMinChangePercentage.Value = (decimal)settings.Signal.AnalysisMinChangePercentage;
+        EditAnalysisMaxChangePercentage.Value = (decimal)settings.Signal.AnalysisMaxChangePercentage;
         EditLogAnalysisMinMaxChangePercentage.Checked = settings.Signal.LogAnalysisMinMaxChangePercentage;
 
         EditSymbolMustExistsDays.Value = settings.Signal.SymbolMustExistsDays;
@@ -224,8 +224,8 @@ public partial class FrmSettings : Form
         // ------------------------------------------------------------------------------
 
         // STOBB
-        EditStobbBBMinPercentage.Value = settings.Signal.StobbBBMinPercentage;
-        EditStobbBBMaxPercentage.Value = settings.Signal.StobbBBMaxPercentage;
+        EditStobbBBMinPercentage.Value = (decimal)settings.Signal.StobbBBMinPercentage;
+        EditStobbBBMaxPercentage.Value = (decimal)settings.Signal.StobbBBMaxPercentage;
         EditStobbUseLowHigh.Checked = settings.Signal.StobbUseLowHigh;
         EditPlaySoundStobbSignal.Checked = settings.Signal.PlaySoundStobbSignal;
         EditPlaySpeechStobbSignal.Checked = settings.Signal.PlaySpeechStobbSignal;
@@ -238,8 +238,8 @@ public partial class FrmSettings : Form
         panelColorStobb.BackColor = settings.Signal.ColorStobb;
 
         // SBM
-        EditSbmBBMinPercentage.Value = settings.Signal.SbmBBMinPercentage;
-        EditSbmBBMaxPercentage.Value = settings.Signal.SbmBBMaxPercentage;
+        EditSbmBBMinPercentage.Value = (decimal)settings.Signal.SbmBBMinPercentage;
+        EditSbmBBMaxPercentage.Value = (decimal)settings.Signal.SbmBBMaxPercentage;
         EditSbmUseLowHigh.Checked = settings.Signal.SbmUseLowHigh;
         EditPlaySoundSbmSignal.Checked = settings.Signal.PlaySoundSbmSignal;
         EditPlaySpeechSbmSignal.Checked = settings.Signal.PlaySpeechSbmSignal;
@@ -432,8 +432,8 @@ public partial class FrmSettings : Form
         // ------------------------------------------------------------------------------
         // Signals
         // ------------------------------------------------------------------------------
-        settings.Signal.AnalysisMinChangePercentage = EditAnalysisMinChangePercentage.Value;
-        settings.Signal.AnalysisMaxChangePercentage = EditAnalysisMaxChangePercentage.Value;
+        settings.Signal.AnalysisMinChangePercentage = (double)EditAnalysisMinChangePercentage.Value;
+        settings.Signal.AnalysisMaxChangePercentage = (double)EditAnalysisMaxChangePercentage.Value;
         settings.Signal.LogAnalysisMinMaxChangePercentage = EditLogAnalysisMinMaxChangePercentage.Checked;
 
         settings.Signal.Barometer1hMinimal = EditBarometer1hMinimal.Value;
@@ -467,8 +467,8 @@ public partial class FrmSettings : Form
         // ------------------------------------------------------------------------------
 
         // STOBB
-        settings.Signal.StobbBBMinPercentage = EditStobbBBMinPercentage.Value;
-        settings.Signal.StobbBBMaxPercentage = EditStobbBBMaxPercentage.Value;
+        settings.Signal.StobbBBMinPercentage = (double)EditStobbBBMinPercentage.Value;
+        settings.Signal.StobbBBMaxPercentage = (double)EditStobbBBMaxPercentage.Value;
         settings.Signal.PlaySoundStobbSignal = EditPlaySoundStobbSignal.Checked;
         settings.Signal.PlaySpeechStobbSignal = EditPlaySpeechStobbSignal.Checked;
         settings.Signal.AnalysisShowStobbOversold = EditAnalysisShowStobbOversold.Checked;
@@ -480,8 +480,8 @@ public partial class FrmSettings : Form
         settings.Signal.ColorStobb = panelColorStobb.BackColor;
 
         // SBM x
-        settings.Signal.SbmBBMinPercentage = EditSbmBBMinPercentage.Value;
-        settings.Signal.SbmBBMaxPercentage = EditSbmBBMaxPercentage.Value;
+        settings.Signal.SbmBBMinPercentage = (double)EditSbmBBMinPercentage.Value;
+        settings.Signal.SbmBBMaxPercentage = (double)EditSbmBBMaxPercentage.Value;
         settings.Signal.SbmUseLowHigh = EditStobbUseLowHigh.Checked;
 
         // SBM 1

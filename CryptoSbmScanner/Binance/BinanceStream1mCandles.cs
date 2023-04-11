@@ -116,6 +116,18 @@ public class BinanceStream1mCandles
                 _subscription.Exception += Exception;
                 _subscription.ConnectionLost += ConnectionLost;
                 _subscription.ConnectionRestored += ConnectionRestored;
+
+
+            //    // TODO: Put a CancellationToken in order to stop it gracefully
+            //    BinanceClient client = new();
+            //    var keepAliveTask = Task.Run(async () =>
+            //    {
+            //        while (true)
+            //        {
+            //            await client.SpotApi.Account.KeepAliveUserStreamAsync(subscriptionResult.Data.); //???
+            //            await Task.Delay(TimeSpan.FromMinutes(30));
+            //        }
+            //    });
             }
             else
             {

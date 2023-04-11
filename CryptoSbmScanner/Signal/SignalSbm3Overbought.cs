@@ -15,7 +15,6 @@ public class SignalSbm3Overbought : SignalSbmBaseOverbought
     }
 
 
-
     public bool HasBollingerBandsIncreased(int candleCount = 5, decimal percentage = 1.5m)
     {
         // Een waarde die plotseling ~2% hoger of lager ligt dan de vorige candle kan interressant 
@@ -61,29 +60,11 @@ public class SignalSbm3Overbought : SignalSbmBaseOverbought
 
     public override bool IsSignal()
     {
-        ExtraText = "";
-
-        // De breedte van de bb is ten minste 1.5%
-        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.SbmBBMinPercentage, GlobalData.Settings.Signal.SbmBBMaxPercentage))
-        {
-            ExtraText = "bb.width te klein " + CandleLast.CandleData.BollingerBandsPercentage?.ToString("N2");
-            return false;
-        }
-
-        if (!CandleLast.IsSbmConditionsOverbought(true))
-        {
-            ExtraText = "geen sbm condities";
-            return false;
-        }
-
-        if (!IsMacdRecoveryOverbought(GlobalData.Settings.Signal.SbmCandlesForMacdRecovery))
+        if (!base.IsSignal())
             return false;
 
         if (!HasBollingerBandsIncreased(GlobalData.Settings.Signal.Sbm3CandlesLookbackCount, GlobalData.Settings.Signal.Sbm3CandlesBbRecoveryPercentage))
             return false;
-
-        //if (CheckMaCrossings())
-        //    return false;
 
         return true;
     }

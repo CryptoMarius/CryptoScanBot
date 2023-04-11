@@ -101,6 +101,11 @@ static public class GlobalData
     static public SymbolValue TradingViewBitcoinDominance { get; set; } = new();
     static public SymbolValue TradingViewMarketCapTotal { get; set; } = new();
 
+    static public void InitializeGlobalData()
+    {
+        FearAndGreedIndex.Name = "Fear and Greed index";
+        FearAndGreedIndex.Url = "https://alternative.me/crypto/fear-and-greed-index/";
+    }
 
     static public void InitializeIntervalList()
     {

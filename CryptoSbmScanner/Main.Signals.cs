@@ -36,7 +36,7 @@ public partial class FrmMain
 
 
         // Create columns and subitems. Width of -2 indicates auto-size
-        listViewSignals.Columns.Add("Candle date", -2, HorizontalAlignment.Left);
+        listViewSignals.Columns.Add("Candle datum", -2, HorizontalAlignment.Left);
         listViewSignals.Columns.Add("Symbol", -2, HorizontalAlignment.Left);
         listViewSignals.Columns.Add("Interval", -2, HorizontalAlignment.Left);
         listViewSignals.Columns.Add("Mode", -2, HorizontalAlignment.Left);
@@ -46,8 +46,8 @@ public partial class FrmMain
         listViewSignals.Columns.Add("Volume", -2, HorizontalAlignment.Right);
         listViewSignals.Columns.Add("Trend", -2, HorizontalAlignment.Right);
         listViewSignals.Columns.Add("Trend%", -2, HorizontalAlignment.Right);
-        listViewSignals.Columns.Add("Last24C", -2, HorizontalAlignment.Right);
-        listViewSignals.Columns.Add("Last24E", -2, HorizontalAlignment.Right);
+        listViewSignals.Columns.Add("24h Change", -2, HorizontalAlignment.Right);
+        listViewSignals.Columns.Add("24h Beweging", -2, HorizontalAlignment.Right);
         //listViewSignals.Columns.Add("Last48C", -2, HorizontalAlignment.Right);
         //listViewSignals.Columns.Add("Last48E", -2, HorizontalAlignment.Right);
         listViewSignals.Columns.Add("BB%", -2, HorizontalAlignment.Right);

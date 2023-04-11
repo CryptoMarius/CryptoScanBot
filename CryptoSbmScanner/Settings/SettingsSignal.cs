@@ -31,15 +31,15 @@ public class SettingsSignal
     public bool LogMinimumTickPercentage { get; set; } = false;
 
     // de 24 en 48 uur change moet binnen dit interval zitten
-    public decimal AnalysisMinChangePercentage { get; set; } = -50;
-    public decimal AnalysisMaxChangePercentage { get; set; } = 50;
+    public double AnalysisMinChangePercentage { get; set; } = -50;
+    public double AnalysisMaxChangePercentage { get; set; } = 50;
     public bool LogAnalysisMinMaxChangePercentage { get; set; } = true;
 
 
     // STOBB signals
     // Het BB percentage kan via de user interface uit worden gezet (nomargin)
-    public decimal StobbBBMinPercentage { get; set; } = 1.50m;
-    public decimal StobbBBMaxPercentage { get; set; } = 5.0m;
+    public double StobbBBMinPercentage { get; set; } = 1.50;
+    public double StobbBBMaxPercentage { get; set; } = 5.0;
     public bool StobbUseLowHigh { get; set; } = false;
 
     [JsonConverter(typeof(Intern.ColorConverter))]
@@ -55,8 +55,8 @@ public class SettingsSignal
 
     // SBM1 signals
     // Het BB percentage kan via de user interface uit worden gezet (nomargin)
-    public decimal SbmBBMinPercentage { get; set; } = 1.50m;
-    public decimal SbmBBMaxPercentage { get; set; } = 100.0m;
+    public double SbmBBMinPercentage { get; set; } = 1.50;
+    public double SbmBBMaxPercentage { get; set; } = 100.0;
     public bool SbmUseLowHigh { get; set; } = false;
 
     [JsonConverter(typeof(Intern.ColorConverter))]

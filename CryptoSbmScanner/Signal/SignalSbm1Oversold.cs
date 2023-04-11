@@ -15,7 +15,6 @@ public class SignalSbm1Oversold : SignalSbmBaseOversold
     }
 
 
-
     public bool HadStobbInThelastXCandles(int candleCount)
     {
         // Is de prijs onlangs dicht bij de onderste bb geweest?

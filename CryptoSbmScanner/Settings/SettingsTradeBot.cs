@@ -63,6 +63,8 @@ public class SettingsTradeBot
     public decimal Barometer24hBotMinimal { get; set; } = -99m;
 
     public BuyPriceMethod BuyPriceMethod { get; set; } = BuyPriceMethod.BidPrice;
+
+
     // Alles is functioneel in de bot, echter NIET instappen (enkel melden dat het zou instappen)
     public bool DoNotEnterTrade { get; set; } = false;
 

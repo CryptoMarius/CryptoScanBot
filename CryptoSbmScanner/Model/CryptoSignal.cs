@@ -109,10 +109,10 @@ public class CryptoSignal
     }
 
 
-    public decimal Last24HoursChange { get; set; }
-    public decimal Last24HoursEffective { get; set; }
-    //public decimal Last48HoursChange { get; set; }
-    //public decimal Last48HoursEffective { get; set; }
+    public double Last24HoursChange { get; set; }
+    public double Last24HoursEffective { get; set; }
+    //public double Last48HoursChange { get; set; }
+    //public double Last48HoursEffective { get; set; }
 
     public string EventText { get; set; }
     public decimal Price { get; set; }

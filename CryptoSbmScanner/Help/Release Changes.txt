@@ -3,8 +3,6 @@ Mis je iets in onderstaande bevindingen/todo's of toekomstige todo's, geef het A
 
 Bevindingen/Todo's:
 - Meldingen naar een syslog server sturen (statistiek)
-- Eem detectie maken die als de candlestream niet meer werkt deze opnieuw opstart
-  (dat mag best een paar minuten duren zolang het maar hersteld)
 - Indien de applicatie traag(?) afsluit wordt tijdens het afsluiten opnieuw begonnen met het activeren van de scanner (ophalen candles enzovoort)
 - De listbox met munten op links met een splitter kunnen verbergen / c.q. dichtklappen
 - Teksten kunnen vertalen (NL en EN lopen nu wel erg vaak door elkaar)
@@ -45,7 +43,24 @@ TODO: HARDCODED API KEY's weghalen (ze kunner er niets mee, maar just in case)
 
 - In de Overbought van de SBM wordt geen rekening gehouden met de percentages tussen de MA lijnen
 
+TODO: Nadat je naar deze versie bent gegaan kan een oudere scanner niet meer worden opgestart
+(json problemen met de "General.WindowPosition.Location")
+
+TODO:
+- Ik laat de STOBB (icm met het SBM vinkje) nu ook de ma% afstand en kruising controleren?
+  Omdat het anders is moet dit wellicht even met een extra instelling?
+
+TODO:
+- Marco doet iets met een multi timeframe, op de 15m is het een positieve trend (via de ema)
+  En dan stap ie op een sbm 3m in, is dat iets wat realistisch is, rare combinatie)
+
+TODO:
+- Extra instellingen voor de 24 uur effectief maken!
+
 xx-xx-2023 1.8.0
+- Een detectie maken die als de candlestream niet meer werkt deze opnieuw opstart
+  (dat mag best een paar minuten duren zolang het maar hersteld)
+- Kunnen dubbelklikken op de fear and greed index (https://alternative.me/crypto/fear-and-greed-index/)
 - Kunnen dubbelklikken op de US dollar index e.d. en dat je dan in de (interne) Tradingview uitkomt bij de juist chart uitkomt.
 - De 1h, 4h en 24h barometer in de graph zetten zodat ze niet iedere 5 seconden worden bijgewerkt
 - Uitbreiding van basismunten (waaronder de TUSD enzovoort)

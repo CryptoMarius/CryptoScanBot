@@ -9,11 +9,14 @@ public static class Helper
         double degrees = (double)radians * (180 / Math.PI);
         return (decimal)degrees;
     }
+
+
     public static decimal ConvertDegreesToRadians(this decimal degrees)
     {
         double radians = (double)degrees * (Math.PI / 180);
         return (decimal)radians;
     }
+
 
     /// <summary>Remove trailing zeroes on the decimal.</summary>
     /// <param name="value">The value to normalize.</param>
@@ -22,13 +25,6 @@ public static class Helper
     public static decimal Normalize(this decimal value)
     {
         return value / 1.000000000000000000000000000000000m;
-    }
-
-
-    public static bool IsBetween<T>(this T item, T start, T end)
-    {
-        return Comparer<T>.Default.Compare(item, start) >= 0
-            && Comparer<T>.Default.Compare(item, end) <= 0;
     }
 
 
@@ -194,21 +190,18 @@ public static class Helper
     }
 
 
-
-
-    public static bool CheckBollingerBandsWidth(this CryptoCandle candle, decimal minValue, decimal maxValue)
+    public static bool CheckBollingerBandsWidth(this CryptoCandle candle, double minValue, double maxValue)
     {
-        decimal boundary = minValue;
-        if (boundary > 0 && (decimal)candle.CandleData.BollingerBandsPercentage <= boundary)
+        double boundary = minValue;
+        if (boundary > 0 && candle.CandleData.BollingerBandsPercentage <= boundary)
             return false;
 
         boundary = maxValue;
-        if (boundary > 0 && (decimal)candle.CandleData.BollingerBandsPercentage >= boundary)
+        if (boundary > 0 && candle.CandleData.BollingerBandsPercentage >= boundary)
             return false;
 
         return true;
     }
-
 
 
     public static bool IsBelowBollingerBands(this CryptoCandle candle, bool useLowHigh)
@@ -227,7 +220,6 @@ public static class Helper
     }
 
 
-
     public static bool IsAboveBollingerBands(this CryptoCandle candle, bool useLowHigh)
     {
         // Geopend of gesloten boven de bollinger band
@@ -244,92 +236,59 @@ public static class Helper
     }
 
 
-
-    public static bool IsStochOverbought(this CryptoCandle candle)
+    public static bool IsBetween<T>(this T item, T start, T end)
     {
-        if (candle.CandleData.StochSignal < 80)
-            return false;
-        if (candle.CandleData.StochOscillator < 80)
-            return false;
-        return true;
+        return Comparer<T>.Default.Compare(item, start) >= 0
+            && Comparer<T>.Default.Compare(item, end) <= 0;
     }
 
 
-
-    public static bool IsStochOversold(this CryptoCandle candle)
-    {
-        // Stochastic Oscillator: K en D (langzaam) moeten kleiner zijn dan 20% (oversold)
-        if (candle.CandleData.StochSignal > 20)
-            return false;
-        if (candle.CandleData.StochOscillator > 20)
-            return false;
-        return true;
-    }
-
-
-    public static bool IsRsiOverbought(this CryptoCandle candle)
-    {
-        if (candle.CandleData.Rsi < 70)
-            return false;
-        return true;
-    }
+    /// wordt gebruikt in de trading stuff, wordt later weer geactiveerd
+    //public static bool InsideBoundaries(this CryptoSymbol symbol, decimal? quantity, decimal? price, out string text)
+    //{
+    //    if (quantity.HasValue)
+    //    {
+    //        if (quantity < symbol.QuantityMinimum)
+    //        {
+    //            text = string.Format("ERROR minimum quantity {0} < {1}", quantity.ToString0("N6"), symbol.QuantityMinimum.ToString0());
+    //            return false;
+    //        }
+    //        if (quantity > symbol.QuantityMaximum)
+    //        {
+    //            text = string.Format("ERROR maximum quantity {0} > {1}", quantity.ToString0("N6"), symbol.QuantityMaximum.ToString0());
+    //            return false;
+    //        }
+    //    }
 
 
-
-    public static bool IsRsiOversold(this CryptoCandle candle)
-    {
-        // Rsiastic Oscillator: K en D (langzaam) moeten kleiner zijn dan 20% (oversold)
-        if (candle.CandleData.Rsi > 30)
-            return false;
-        return true;
-    }
-
-
-    public static bool InsideBoundaries(this CryptoSymbol symbol, decimal? quantity, decimal? price, out string text)
-    {
-        if (quantity.HasValue)
-        {
-            if (quantity < symbol.QuantityMinimum)
-            {
-                text = string.Format("ERROR minimum quantity {0} < {1}", quantity.ToString0("N6"), symbol.QuantityMinimum.ToString0());
-                return false;
-            }
-            if (quantity > symbol.QuantityMaximum)
-            {
-                text = string.Format("ERROR maximum quantity {0} > {1}", quantity.ToString0("N6"), symbol.QuantityMaximum.ToString0());
-                return false;
-            }
-        }
+    //    if (price.HasValue)
+    //    {
+    //        if (price < symbol.PriceMinimum)
+    //        {
+    //            text = string.Format("ERROR minimum price {0} < {1}", price.ToString0("N6"), symbol.PriceMinimum.ToString0());
+    //            return false;
+    //        }
+    //        if (price > symbol.PriceMaximum)
+    //        {
+    //            text = string.Format("ERROR maximum price {0} > {1}", price.ToString0("N6"), symbol.PriceMaximum.ToString0());
+    //            return false;
+    //        }
+    //    }
 
 
-        if (price.HasValue)
-        {
-            if (price < symbol.PriceMinimum)
-            {
-                text = string.Format("ERROR minimum price {0} < {1}", price.ToString0("N6"), symbol.PriceMinimum.ToString0());
-                return false;
-            }
-            if (price > symbol.PriceMaximum)
-            {
-                text = string.Format("ERROR maximum price {0} > {1}", price.ToString0("N6"), symbol.PriceMaximum.ToString0());
-                return false;
-            }
-        }
+    //    if (quantity.HasValue && price.HasValue)
+    //    {
+    //        // En product van de twee
+    //        if (price * quantity <= symbol.MinNotional)
+    //        {
+    //            //(buyPrice * buyQuantity).ToString0()
+    //            text = string.Format("ERROR minimal notation {0} * {1} <= {2}", quantity.ToString0("N6"), price.ToString0("N6"), symbol.MinNotional.ToString0());
+    //            return false;
+    //        }
+    //    }
 
-
-        if (quantity.HasValue && price.HasValue)
-        {
-            // En product van de twee
-            if (price * quantity <= symbol.MinNotional)
-            {
-                //(buyPrice * buyQuantity).ToString0()
-                text = string.Format("ERROR minimal notation {0} * {1} <= {2}", quantity.ToString0("N6"), price.ToString0("N6"), symbol.MinNotional.ToString0());
-                return false;
-            }
-        }
-
-        text = "";
-        return true;
-    }
+    //    text = "";
+    //    return true;
+    //}
 
 }

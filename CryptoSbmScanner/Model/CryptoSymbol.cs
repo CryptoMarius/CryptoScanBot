@@ -2,6 +2,11 @@
 
 namespace CryptoSbmScanner.Model;
 
+static public class Constants
+{
+    public const string SymbolNameBarometerPrice = "$BMP";
+}
+
 public class CryptoSymbol
 {
     public virtual CryptoExchange Exchange { get; set; }

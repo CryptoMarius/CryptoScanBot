@@ -24,7 +24,7 @@ public class SignalBase
     public SignalStrategy SignalStrategy;
     public CryptoCandle CandleLast = null;
     public string ExtraText = "";
-    public bool ReplaceSignal = false;
+    public bool ReplaceSignal = true;
 
     public SignalBase(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle)
     {

@@ -67,9 +67,7 @@
             panelClient1 = new Panel();
             timerBarometer = new System.Windows.Forms.Timer(components);
             timerClearEvents = new System.Windows.Forms.Timer(components);
-            timerSoundHeartBeat = new System.Windows.Forms.Timer(components);
             contextMenuStrip1 = new ContextMenuStrip(components);
-            timerCandles = new System.Windows.Forms.Timer(components);
             timerAddSignal = new System.Windows.Forms.Timer(components);
             panelLeft.SuspendLayout();
             panel4.SuspendLayout();
@@ -548,20 +546,10 @@
             timerBarometer.Interval = 5000;
             timerBarometer.Tick += TimerBarometer_Tick;
             // 
-            // timerSoundHeartBeat
-            // 
-            timerSoundHeartBeat.Interval = 600000;
-            timerSoundHeartBeat.Tick += TimerSoundHeartBeat_Tick;
-            // 
             // contextMenuStrip1
             // 
             contextMenuStrip1.Name = "contextMenuStrip1";
             contextMenuStrip1.Size = new Size(61, 4);
-            // 
-            // timerCandles
-            // 
-            timerCandles.Interval = 10000;
-            timerCandles.Tick += TimerCandles_Tick;
             // 
             // timerAddSignal
             // 
@@ -641,7 +629,6 @@
         private System.Windows.Forms.TabPage tabPageAltrady;
         private Microsoft.Web.WebView2.WinForms.WebView2 webViewAltrady;
         private System.Windows.Forms.ToolStripMenuItem applicationMenuItemAbout;
-        private System.Windows.Forms.Timer timerSoundHeartBeat;
         private System.Windows.Forms.ToolStripMenuItem listBoxSymbolsMenuItemShowTrendInformation;
         private System.Windows.Forms.ToolStripMenuItem listViewSignalsMenuItemShowTrendInformation;
         private System.Windows.Forms.ToolStripMenuItem listViewSignalsMenuItemCopySignal;
@@ -651,7 +638,6 @@
         private System.Windows.Forms.Label labelBarometerDateValue;
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
         private CryptoSbmScanner.ListViewDoubleBuffered listViewSymbolPrices;
-        private System.Windows.Forms.Timer timerCandles;
         private System.Windows.Forms.Label labelVersion;
         private System.Windows.Forms.ToolStripMenuItem ApplicationPlaySounds;
         private System.Windows.Forms.ToolStripMenuItem ApplicationCreateSignals;

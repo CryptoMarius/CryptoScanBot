@@ -24,6 +24,11 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
     private readonly ColorSchemeTest theme = new();
     private readonly HttpClient httpClient;
 
+    private System.Windows.Forms.Timer TimerGetCandles = new();
+    private System.Windows.Forms.Timer TimerSoundHeartBeat = new();
+    private System.Windows.Forms.Timer TimerRestartStreams = new();
+    private System.Windows.Forms.Timer TimerCheckDataStream = new();
+
     public class ColorSchemeTest
     {
         public Color Background { get; set; } = Color.Black;
@@ -41,6 +46,7 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
         public string Value { get; set; }
     }
 
+
     public FrmMain()
     {
         InitializeComponent();
@@ -54,15 +60,15 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
         this.Text = appName + " " + appVersion;
 
 
-        // Om vanuit achtergrond threads iets te kunnen loggen (kan charmanter?) 
+        // Om vanuit achtergrond threads iets te kunnen loggen of te doen
         GlobalData.PlaySound += new PlayMediaEvent(PlaySound);
         GlobalData.PlaySpeech += new PlayMediaEvent(PlaySpeech);
         GlobalData.LogToTelegram += new AddTextEvent(AddTextToTelegram);
         GlobalData.LogToLogTabEvent += new AddTextEvent(AddTextToLogTab);
         GlobalData.SetCandleTimerEnableEvent += new SetCandleTimerEnable(SetCandleTimerEnableHandler);
 
-        // Niet echt een text event, meer misbruik van dit event type (en luiigheid)
-        //GlobalData.AssetsHaveChangedEvent += new AddTextEvent(AssetsHaveChangedEvent);
+        // Niet echt een text event, meer misbruik van het event type
+        //GlobalData.AssetsHaveChangedEvent += new AddTextEvent(AssetsHaveChangedEvent); (todo)
         GlobalData.SymbolsHaveChangedEvent += new AddTextEvent(SymbolsHaveChangedEvent);
         GlobalData.ConnectionWasLostEvent += new AddTextEvent(ConnectionWasLostEvent);
         GlobalData.ConnectionWasRestoredEvent += new AddTextEvent(ConnectionWasRestoredEvent);
@@ -71,7 +77,7 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
         // Wat event handles zetten
         comboBoxBarometerQuote.SelectedIndexChanged += ShowBarometerStuff;
         comboBoxBarometerInterval.SelectedIndexChanged += ShowBarometerStuff;
-        // suffe Visual Studio houdt er niet van als jet het opsplitst in 3 partial forms (maakt het opnieuw aan)
+        // suffe Visual Studio houdt er niet van als je het opsplitst in 3 partial forms (maakt het soms opnieuw aan)
         listBoxSymbols.DoubleClick += new System.EventHandler(this.ListBoxSymbols_DoubleClick);
         listViewSignals.DoubleClick += new System.EventHandler(this.ListViewSignalsMenuItem_DoubleClick);
         listViewSymbolPrices.DoubleClick += new System.EventHandler(this.ListViewSymbolPrices_DoubleClick);
@@ -82,6 +88,7 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
         WindowLocationRestore();
         ApplySettings();
 
+        // Altrady tabblad verbergen, is enkel een browser om dat extra dialoog in externe browser te vermijden
         _webViewAltradyRef = webViewAltrady;
         tabControl.TabPages.Remove(tabPageAltrady);
 
@@ -91,8 +98,9 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
         options.SpotStreamsOptions.ReconnectInterval = TimeSpan.FromSeconds(15);
         BinanceSocketClient.SetDefaultOptions(options);
 
-        // De intervallen laden
-        GlobalData.InitializeIntervalList();
+
+        GlobalData.InitializeGlobalData();
+        GlobalData.InitializeIntervalList(); // De intervallen laden
         ResumeComputer(false);
 
 
@@ -169,14 +177,23 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
 
         ListboxSymbolsInitCaptions();
         ListViewSignalsInitCaptions();
-        if (GlobalData.Settings.Signal.SoundHeartBeatMinutes > 0)
-            timerSoundHeartBeat.Interval = GlobalData.Settings.Signal.SoundHeartBeatMinutes * 1000 * 60;
-        timerSoundHeartBeat.Enabled = GlobalData.Settings.Signal.SoundHeartBeatMinutes > 0;
 
-        // Interval voor het ophalen van de candles bijwerken
-        timerCandles.Enabled = false;
-        timerCandles.Interval = GlobalData.Settings.General.GetCandleInterval * 60 * 1000;
-        timerCandles.Enabled = timerCandles.Interval > 0;
+
+        InitTimerInterval(ref TimerSoundHeartBeat, GlobalData.Settings.Signal.SoundHeartBeatMinutes); // x minutes
+        TimerSoundHeartBeat.Tick += TimerSoundHeartBeat_Tick;
+
+        // Restart data stream's every day
+        InitTimerInterval(ref TimerRestartStreams, 24 * 60); // 24 hours
+        TimerRestartStreams.Tick += TimerRestartStreams_Tick;
+
+        // Check data stream's (om toch zeker te zijn van nieuwe candles)
+        InitTimerInterval(ref TimerCheckDataStream, 5); // 5 minutes
+        TimerCheckDataStream.Tick += TimerCheckDataStream_Tick;
+
+        // Interval voor het ophalen van de exchange info (delisted coins) + bijwerken candles 
+        InitTimerInterval(ref TimerGetCandles, GlobalData.Settings.General.GetCandleInterval);
+        TimerGetCandles.Tick += TimerCandles_Tick;
+
 
         // Theming
         if (GlobalData.Settings.General.BlackTheming)
@@ -214,10 +231,19 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
     }
 
 
+    private static void InitTimerInterval(ref System.Windows.Forms.Timer timer, int minutes)
+    {
+        timer.Enabled = false;
+        // stom ding verwacht > 0 (beetje vreemd, maar voila)
+        if (minutes > 0)
+            timer.Interval = minutes * 60 * 1000;
+        timer.Enabled = minutes > 0;
+    }
 
 
     private void OnPowerChange(object s, PowerModeChangedEventArgs e)
     {
+        GlobalData.AddTextToLogTab("Debug: OnPowerChange");
         switch (e.Mode)
         {
             case PowerModes.Resume:
@@ -234,6 +260,7 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
 
     private void ResumeComputer(bool sleepAwhile)
     {
+        GlobalData.AddTextToLogTab("Debug: ResumeComputer");
         GlobalData.ApplicationStatus = ApplicationStatus.AppStatusPrepare;
         GlobalData.ThreadCreateSignal = new ThreadCreateSignal(BinanceShowNotification);
 #if TRADEBOT
@@ -249,6 +276,7 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
 
     private void CloseCryptoScannerSession()
     {
+        GlobalData.AddTextToLogTab("Debug: CloseCryptoScannerSession");
         GlobalData.ApplicationStatus = ApplicationStatus.AppStatusExiting;
 
         // De socket streams
@@ -747,9 +775,9 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
             // (er komen een aantal reconnects, daarom circa 20 seconden)
             if ((components != null) && (!ProgramExit) && (IsHandleCreated))
             {
-                Invoke((MethodInvoker)(() => timerCandles.Enabled = false));
-                Invoke((MethodInvoker)(() => timerCandles.Interval = 20 * 1000));
-                Invoke((MethodInvoker)(() => timerCandles.Enabled = true));
+                Invoke((MethodInvoker)(() => TimerGetCandles.Enabled = false));
+                Invoke((MethodInvoker)(() => TimerGetCandles.Interval = 20 * 1000));
+                Invoke((MethodInvoker)(() => TimerGetCandles.Enabled = true));
             }
         }
     }
@@ -762,9 +790,9 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
             if ((components != null) && (!ProgramExit) && (IsHandleCreated))
             {
                 if (InvokeRequired)
-                    Invoke((MethodInvoker)(() => timerCandles.Enabled = value));
+                    Invoke((MethodInvoker)(() => TimerGetCandles.Enabled = value));
                 else
-                    timerCandles.Enabled = value;
+                    TimerGetCandles.Enabled = value;
             }
         }
     }
@@ -803,10 +831,20 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
                 if (tvValues == null)
                     return;
 
-                string href = string.Format("https://www.tradingview.com/chart/?symbol={0}&interval=60", tvValues.Ticker);
-                Uri uri = new(href);
-                webViewTradingView.Source = uri;
-                tabControl.SelectedTab = tabPageBrowser;
+                if (tvValues.Url != "")
+                {
+                    string href = tvValues.Url;
+                    Uri uri = new(href);
+                    webViewTradingView.Source = uri;
+                    tabControl.SelectedTab = tabPageBrowser;
+                }
+                else
+                {
+                    string href = string.Format("https://www.tradingview.com/chart/?symbol={0}&interval=60", tvValues.Ticker);
+                    Uri uri = new(href);
+                    webViewTradingView.Source = uri;
+                    tabControl.SelectedTab = tabPageBrowser;
+                }
             }
             else tabControl.SelectedTab = tabPageSignals;
         }
@@ -860,7 +898,6 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
                     var jsonData = await httpClient.GetFromJsonAsync<FGIndex>("https://api.alternative.me/fng/");
                     string value = jsonData.Data[0].Value;
                     //FearAndGreedIndex = jsonData["data"][0]["value"].Value<string>();
-                    GlobalData.FearAndGreedIndex.Name = "Fear and Greed index";
                     GlobalData.FearAndGreedIndex.Lp = decimal.Parse(value);
                     GlobalData.FearAndGreedIndex.LastCheck = DateTime.UtcNow.AddHours(1); // = Next check
                 }
@@ -944,13 +981,13 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
                     if (GlobalData.Settings.QuoteCoins.TryGetValue(baseCoin, out CryptoQuoteData quoteData))
                     {
                         string text = GlobalData.TaskBinanceStreamPriceTicker?.tickerCount.ToString("N0");
-                        ShowSymbolPrice(symbolHistList[0], listViewSymbolPrices.Items[0], exchange, quoteData, "BNB", GlobalData.TradingViewDollarIndex, "Binance price ticker count", text);
+                        ShowSymbolPrice(symbolHistList[0], listViewSymbolPrices.Items[0], exchange, quoteData, "BTC", GlobalData.TradingViewDollarIndex, "Binance price ticker count", text);
 
                         text = candlesKLineCount.ToString("N0");
-                        ShowSymbolPrice(symbolHistList[1], listViewSymbolPrices.Items[1], exchange, quoteData, "ETH", GlobalData.TradingViewBitcoinDominance, "Binance 1m stream count", text);
+                        ShowSymbolPrice(symbolHistList[1], listViewSymbolPrices.Items[1], exchange, quoteData, "BNB", GlobalData.TradingViewBitcoinDominance, "Binance 1m stream count", text);
 
                         text = GlobalData.ThreadCreateSignal?.analyseCount.ToString("N0");
-                        ShowSymbolPrice(symbolHistList[2], listViewSymbolPrices.Items[2], exchange, quoteData, "BTC", GlobalData.TradingViewSpx500, "Scanner analyse count", text);
+                        ShowSymbolPrice(symbolHistList[2], listViewSymbolPrices.Items[2], exchange, quoteData, "ETH", GlobalData.TradingViewSpx500, "Scanner analyse count", text);
 
                         text = createdSignalCount.ToString("N0");
                         ShowSymbolPrice(symbolHistList[3], listViewSymbolPrices.Items[3], exchange, quoteData, "XRP", GlobalData.TradingViewMarketCapTotal, "Scanner signal count", text);
@@ -1093,8 +1130,7 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
 
         ListViewSignalsInitColumns();
 
-        timerClearEvents.Interval = 60000; // iedere minuut
-        timerClearEvents.Enabled = true;
+        InitTimerInterval(ref timerClearEvents, 1);
         timerClearEvents.Tick += new System.EventHandler(this.TimerClearOldSignals_Tick);
     }
 
@@ -1506,6 +1542,7 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
 
     private void TimerCandles_Tick(object sender, EventArgs e)
     {
+        // Ophalen van exchange info en candles bijwerken
         if (GlobalData.ApplicationStatus == ApplicationStatus.AppStatusRunning)
         {
             // De reguliere verversing herstellen (igv een connection timeout)
@@ -1513,15 +1550,13 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
             {
                 // Plan een volgende verversing omdat er bv een connection timeout was.
                 // Dit kan een aantal berekeningen onderbroken hebben
-                Invoke((MethodInvoker)(() => timerCandles.Enabled = false));
-                Invoke((MethodInvoker)(() => timerCandles.Interval = GlobalData.Settings.General.GetCandleInterval * 60 * 1000));
-                Invoke((MethodInvoker)(() => timerCandles.Enabled = timerCandles.Interval > 0));
+                Invoke((MethodInvoker)(() => InitTimerInterval(ref TimerGetCandles, GlobalData.Settings.General.GetCandleInterval)));
             }
 
             Task.Run(async () => { await BinanceFetchCandles.ExecuteAsync(); }); // niet wachten tot deze klaar is
         }
         else
-            Invoke((MethodInvoker)(() => timerCandles.Enabled = false));
+            Invoke((MethodInvoker)(() => TimerGetCandles.Enabled = false));
     }
 
 
@@ -1677,4 +1712,43 @@ public partial class FrmMain : Form //MetroFramework.Forms.MetroForm //Form //Ma
 
     }
 
+    private void TimerRestartStreams_Tick(object sender, EventArgs e)
+    {
+        TimerRestartStreams.Enabled = false;
+        try
+        {
+            GlobalData.AddTextToLogTab("Restart data streams");
+
+            CloseCryptoScannerSession();
+            ResumeComputer(true);
+        }
+        finally
+        {
+            InitTimerInterval(ref TimerRestartStreams, 4 * 60); // reset interval (back to 4h)
+        }
+    }
+
+    int lastCandlesKLineCount = 0;
+
+    private void TimerCheckDataStream_Tick(object sender, EventArgs e)
+    {
+        int candlesKLineCount = 0;
+        foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
+        {
+            for (int i = 0; i < quoteData.BinanceStream1mCandles.Count; i++)
+            {
+                BinanceStream1mCandles binanceStream1mCandles = quoteData.BinanceStream1mCandles[i];
+                candlesKLineCount += binanceStream1mCandles.CandlesKLinesCount;
+            }
+        }
+
+        if (lastCandlesKLineCount != 0 && candlesKLineCount == lastCandlesKLineCount)
+        {
+            GlobalData.AddTextToLogTab("Debug: De 1m data stream is gestopt!");
+
+            // Schedule a rest of the streams
+            InitTimerInterval(ref TimerRestartStreams, 1);
+        }
+        lastCandlesKLineCount = candlesKLineCount;
+    }
 }

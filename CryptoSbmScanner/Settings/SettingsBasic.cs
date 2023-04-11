@@ -2,12 +2,6 @@
 
 namespace CryptoSbmScanner.Settings;
 
-static public class Constants
-{
-    public const string SymbolNameBarometerPrice = "$BMP";
-}
-
-
 
 //De instellingen die het analyse gedeelte nodig heeft
 [Serializable]

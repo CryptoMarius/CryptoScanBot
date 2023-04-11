@@ -159,60 +159,54 @@ public class SignalCreate
     }
 
 
-    private decimal CalculateLastPeriodsInInterval(long interval)
+    private double CalculateLastPeriodsInInterval(long interval)
     {
         //Dit moet via de standaard 1m candles omdat de lijst niet alle candles bevat
         //(dit om de berekeningen allemaal wat sneller te maken)
 
         CryptoCandle candle = Symbol.CandleList.Values.Last();
         long openTime = CandleTools.GetUnixTime(candle.Date, 60);
-        if (Symbol.CandleList.TryGetValue(openTime - interval, out CryptoCandle candlePrev))
-        {
-            decimal closeLast = candle.Close;
-            decimal closePrev = candlePrev.Close;
-            decimal diff = closeLast - closePrev;
+        if (!Symbol.CandleList.TryGetValue(openTime - interval, out CryptoCandle candlePrev))
+            candlePrev = Symbol.CandleList.Values.First(); // niet helemaal okay maar beter dan 0
 
-            if (!closePrev.Equals(0))
-                return 100.0m * (diff / closePrev);
-            else return 0;
+        double closeLast = (double)candle.Close;
+        double closePrev = (double)candlePrev.Close;
+        double diff =closeLast - closePrev;
 
-        }
+        if (!closePrev.Equals(0))
+            return 100.0 * (diff / closePrev);
         else return 0;
     }
 
 
-    private decimal CalculateMaxMovementInInterval(CryptoIntervalPeriod intervalPeriod, long candleCount)
+    private double CalculateMaxMovementInInterval(CryptoIntervalPeriod intervalPeriod, long candleCount)
     {
         // Op een iets hoger interval gaan we x candles naar achteren en meten de echte beweging
-        // (de 48% change is wat effectief overblijft, maar dat is duidelijk niet de echte beweging)
+        // (de 24% change is wat effectief overblijft, maar dat is duidelijk niet de echte beweging)
         CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(intervalPeriod);
         SortedList<long, CryptoCandle> candles = symbolInterval.CandleList;
 
 
-        decimal min = decimal.MinValue;
-        decimal max = decimal.MaxValue;
+        double min = double.MaxValue;
+        double max = double.MinValue;
 
         CryptoCandle candle = candles.Values.Last();
-        while (candleCount > 0)
+        while (candleCount-- > 0)
         {
-            if (candle.Open < min)
-                min = candle.Open;
-            if (candle.Close < min)
-                min = candle.Close;
+            if ((double)candle.Low < min)
+                min = (double)candle.Low;
 
-            if (candle.Open < max)
-                max = candle.Open;
-            if (candle.Close < max)
-                max = candle.Close;
+            if ((double)candle.High > max)
+                max = (double)candle.High;
 
             if (!candles.TryGetValue(candle.OpenTime - symbolInterval.Interval.Duration, out candle))
-                return decimal.MaxValue;
+                break; // we hebben maximaal 260 candles, minder dan de gewenste 2 dagen
         }
 
-        decimal diff = max - min;
+        double diff = max - min;
         if (!min.Equals(0))
-            return 100.0m * (diff / min);
-        else 
+            return 100.0 * (diff / min);
+        else
             return 0;
     }
 
@@ -554,9 +548,11 @@ public class SignalCreate
         // de 24 change moet in dit interval zitten
         // Vraag: Kan deze niet beter naar het begin van de controles?
         signal.Last24HoursChange = CalculateLastPeriodsInInterval(24 * 60 * 60);
+        signal.Last24HoursEffective = CalculateMaxMovementInInterval(CryptoIntervalPeriod.interval15m, 1 * 96);
+
+        // Question: We hebben slechts 260 candles, dus dit geeft niet exact het gewenste getal!
         //signal.Last48HoursChange = CalculateLastPeriodsInInterval(48 * 60 * 60);
-        signal.Last24HoursEffective = CalculateMaxMovementInInterval(CryptoIntervalPeriod.interval10m, 144);
-        //signal.Last48HoursEffective = CalculateMaxMovementInInterval(CryptoIntervalPeriod.interval10m, 288);
+        //signal.Last48HoursEffective = CalculateMaxMovementInInterval(CryptoIntervalPeriod.interval15m, 2 * 96);
 
         if (!signal.Last24HoursChange.IsBetween(GlobalData.Settings.Signal.AnalysisMinChangePercentage, GlobalData.Settings.Signal.AnalysisMaxChangePercentage))
         {
@@ -565,7 +561,7 @@ public class SignalCreate
                 string text = string.Format("Analyse {0} 24h change {1} niet tussen {2} .. {3}", Symbol.Name, signal.Last24HoursChange.ToString("N2"), GlobalData.Settings.Signal.AnalysisMinChangePercentage.ToString(), GlobalData.Settings.Signal.AnalysisMaxChangePercentage.ToString());
                 GlobalData.AddTextToLogTab(text);
             }
-            eventText += " invalid 24 hour";
+            eventText += " 24h verandering% te hoog";
             signal.Mode = SignalMode.modeInfo2;
         }
 
@@ -576,7 +572,7 @@ public class SignalCreate
                 string text = string.Format("Analyse {0} 24h change (effectief) {1} niet tussen {2} .. {3}", Symbol.Name, signal.Last24HoursEffective.ToString("N2"), GlobalData.Settings.Signal.AnalysisMinChangePercentage.ToString(), GlobalData.Settings.Signal.AnalysisMaxChangePercentage.ToString());
                 GlobalData.AddTextToLogTab(text);
             }
-            eventText += " invalid 24 hour";
+            eventText += " 24h effectief% te hoog";
             signal.Mode = SignalMode.modeInfo2;
         }
 
@@ -1009,6 +1005,8 @@ public class SignalCreate
 
         return true;
     }
+
+
 
     // Debug version
     public SignalBase AnalyseSymbolUsingStrategy(long candleOpenTime, SignalStrategy strategy)
