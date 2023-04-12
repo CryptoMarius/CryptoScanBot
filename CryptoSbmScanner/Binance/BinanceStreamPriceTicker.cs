@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Binance.Net.Clients;
+﻿using Binance.Net.Clients;
 using Binance.Net.Objects.Models.Spot.Socket;
 using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Sockets;
-using static CryptoSbmScanner.BinanceStream1mCandles;
+using System;
+using System.Threading.Tasks;
 
 namespace CryptoSbmScanner
 {
@@ -27,8 +23,7 @@ namespace CryptoSbmScanner
             //
             CallResult<UpdateSubscription> subscriptionResult = await socketClient.SpotStreams.SubscribeToAllTickerUpdatesAsync((data) =>
             {
-                CryptoExchange exchange = null;
-                if (GlobalData.ExchangeListName.TryGetValue("Binance", out exchange))
+                if (GlobalData.ExchangeListName.TryGetValue("Binance", out CryptoExchange exchange))
                 {
                     //GET /api/v3/ticker/24hr
                     //client.Spot.SubscribeToSymbolTickerUpdates("ETHBTC", (test) => result = test);
@@ -38,8 +33,7 @@ namespace CryptoSbmScanner
                     {
                         tickerCount++;
 
-                        CryptoSymbol symbol = null;
-                        if (exchange.SymbolListName.TryGetValue(tick.Symbol, out symbol))
+                        if (exchange.SymbolListName.TryGetValue(tick.Symbol, out CryptoSymbol symbol))
                         {
                             //Waarschijnlijk ALLEMAAL gebaseerd op de 24h prijs
                             symbol.OpenPrice = tick.OpenPrice;
@@ -67,10 +61,10 @@ namespace CryptoSbmScanner
                 _subscription.Exception += Exception;
                 _subscription.ConnectionLost += ConnectionLost;
                 _subscription.ConnectionRestored += ConnectionRestored;
-            }   
+            }
             else
             {
-                GlobalData.AddTextToLogTab("ERROR starting ticker stream " + subscriptionResult.Error.Message);
+                GlobalData.AddTextToLogTab("ERROR starting price ticker stream " + subscriptionResult.Error.Message);
 
             }
         }
@@ -80,7 +74,7 @@ namespace CryptoSbmScanner
             if (_subscription == null)
                 return; // Task.CompletedTask;
 
-            GlobalData.AddTextToLogTab("Stopping ticker stream");
+            GlobalData.AddTextToLogTab("Stopping price ticker stream");
 
             _subscription.Exception -= Exception;
             _subscription.ConnectionLost -= ConnectionLost;
@@ -93,7 +87,7 @@ namespace CryptoSbmScanner
 
         private void ConnectionLost()
         {
-            GlobalData.AddTextToLogTab("Binance ticker stream connection lost.");
+            GlobalData.AddTextToLogTab("Binance price ticker stream connection lost.");
         }
 
         private void ConnectionRestored(TimeSpan timeSpan)

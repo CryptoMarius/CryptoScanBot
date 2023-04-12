@@ -134,7 +134,7 @@ namespace CryptoSbmScanner
                 foreach (BinanceSpotKline kline in result.Data)
                 {
                     // Quoted = volume * price (expressed in usdt/eth/btc etc), base is coins
-                    CryptoCandle candle = CandleTools.HandleFinalCandleData(symbol, interval, kline.OpenTime, 
+                    CryptoCandle candle = CandleTools.HandleFinalCandleData(symbol, interval, kline.OpenTime,
                         kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.QuoteVolume);
 
                     // For the next GetCandles() session
@@ -187,40 +187,40 @@ namespace CryptoSbmScanner
 
             // Debug
             //foreach (CryptoInterval interval in GlobalData.IntervalList)
-              //  GlobalData.AddTextToLogTab("Fetching " + symbol.Name + " " + interval.Name + " " + fetchFrom[(int)interval.IntervalPeriod].ToLocalTime());
+            //  GlobalData.AddTextToLogTab("Fetching " + symbol.Name + " " + interval.Name + " " + fetchFrom[(int)interval.IntervalPeriod].ToLocalTime());
 
 
             // Correct the start date with what we already have
             foreach (CryptoInterval interval in GlobalData.IntervalList)
             {
-                CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-                
+
                 DateTime startFetchUnixDate = fetchFrom[(int)interval.IntervalPeriod];
                 long startFetchUnix = CandleTools.GetUnixTime(startFetchUnixDate, 60);  //debug
 
-                if ((symbolInterval.LastCandleSynchronized == null) || (startFetchUnix > symbolInterval.LastCandleSynchronized))
+                CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+                if (symbolInterval.LastCandleSynchronized == null || startFetchUnix > symbolInterval.LastCandleSynchronized)
                     symbolInterval.LastCandleSynchronized = startFetchUnix;
 
                 //DateTime LastCandleSynchronizedDate = CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized);  //debug
             }
 
 
-            foreach (CryptoInterval interval in GlobalData.IntervalList)
+            for (int i = 0; i < GlobalData.IntervalList.Count; i++)
             {
+                CryptoInterval interval = GlobalData.IntervalList[i];
                 CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
 
+                // Fetch the Binance candles
                 while (symbolInterval.LastCandleSynchronized < fetchEndUnix)
                 {
                     long lastDate = (long)symbolInterval.LastCandleSynchronized;
-                    DateTime symbolfetchCandleDebug = CandleTools.GetUnixDate(lastDate);  //debug
 
-                    DateTime debug = CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized);  //debug
                     if (symbolInterval.LastCandleSynchronized + interval.Duration > fetchEndUnix)
                         break;
 
-                    long candleCount = await GetCandlesForInterval(client, symbol, interval, symbolInterval);
                     // Nothing more? (we have coins stopping, beaware for endless loops)
-                    if ((symbolInterval.LastCandleSynchronized == lastDate) || (candleCount == 0))
+                    long candleCount = await GetCandlesForInterval(client, symbol, interval, symbolInterval);
+                    if (symbolInterval.LastCandleSynchronized == lastDate || candleCount == 0)
                         break;
                 }
 
@@ -312,8 +312,7 @@ namespace CryptoSbmScanner
         {
             GlobalData.AddTextToLogTab("Fetching historical candles");
 
-            CryptoExchange exchange = null;
-            if (GlobalData.ExchangeListName.TryGetValue("Binance", out exchange))
+            if (GlobalData.ExchangeListName.TryGetValue("Binance", out CryptoExchange exchange))
             {
                 try
                 {
@@ -335,10 +334,13 @@ namespace CryptoSbmScanner
                         Queue<CryptoSymbol> queue = new Queue<CryptoSymbol>();
                         foreach (var symbol in exchange.SymbolListName.Values)
                         {
-                            if (CandleTools.MatchingQuote(symbol) && (symbol.Status == 1) && (!symbol.IsBarometerSymbol()))
+                            if (!symbol.IsSpotTradingAllowed || symbol.Status == 0 || symbol.IsBarometerSymbol())
+                                continue;
+
+                            if (symbol.QuoteData.FetchCandles)
                             {
                                 //if (symbol.Name.Equals("LEVERBUSD"))
-                                    queue.Enqueue(symbol);
+                                queue.Enqueue(symbol);
                             }
                         }
 

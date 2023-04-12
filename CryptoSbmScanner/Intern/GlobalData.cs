@@ -46,9 +46,7 @@ namespace CryptoSbmScanner
     /// </summary>
     static public class GlobalData
     {
-        static public bool ShowExtraStuff { get; set; } = false;
-        
-        static public Settings Settings { get; set; } = new Settings();
+        static public SettingsBasic Settings { get; set; } = new SettingsBasic();
         static public ApplicationStatus ApplicationStatus { get; set; } = ApplicationStatus.AppStatusPrepare;
 
         // The nlogger stuff
@@ -96,11 +94,17 @@ namespace CryptoSbmScanner
 
 
         // On special request of a hardcore trader..
+        static public SymbolValue FearAndGreedIndex { get; set; } = new SymbolValue();
         static public SymbolValue TradingViewDollarIndex { get; set; } = new SymbolValue();
         static public SymbolValue TradingViewSpx500 { get; set; } = new SymbolValue();
         static public SymbolValue TradingViewBitcoinDominance { get; set; } = new SymbolValue();
         static public SymbolValue TradingViewMarketCapTotal { get; set; } = new SymbolValue();
 
+        static public void InitializeGlobalData()
+        {
+            FearAndGreedIndex.Name = "Fear and Greed index";
+            FearAndGreedIndex.Url = "https://alternative.me/crypto/fear-and-greed-index/";
+        }
 
         static public void InitializeIntervalList()
         {
@@ -136,9 +140,9 @@ namespace CryptoSbmScanner
             //}
 
             IntervalListPeriod.Clear();
-            foreach (CryptoInterval interval in GlobalData.IntervalList)
+            foreach (CryptoInterval interval in IntervalList)
             {
-                GlobalData.IntervalListPeriod.Add(interval.IntervalPeriod, interval);
+                IntervalListPeriod.Add(interval.IntervalPeriod, interval);
             }
 
         }
@@ -155,12 +159,11 @@ namespace CryptoSbmScanner
 
         static public CryptoQuoteData AddQuoteData(string quoteName)
         {
-            CryptoQuoteData quoteData;
-            if (!GlobalData.Settings.QuoteCoins.TryGetValue(quoteName, out quoteData))
+            if (!Settings.QuoteCoins.TryGetValue(quoteName, out CryptoQuoteData quoteData))
             {
                 quoteData = new CryptoQuoteData();
                 quoteData.Name = quoteName;
-                GlobalData.Settings.QuoteCoins.Add(quoteName, quoteData);
+                Settings.QuoteCoins.Add(quoteName, quoteData);
             }
             return quoteData;
         }
@@ -252,8 +255,6 @@ namespace CryptoSbmScanner
 
         static public void LoadSettings()
         {
-            ShowExtraStuff = System.IO.File.Exists(GlobalData.GetBaseDir() + "ShowExtraStuff");
-
             string filename = GlobalData.GetBaseDir() + "GlobalData.Settings2.json";
             if (System.IO.File.Exists(filename))
             {
@@ -265,7 +266,7 @@ namespace CryptoSbmScanner
                 //}
 
                 string text = File.ReadAllText(filename);
-                Settings = JsonConvert.DeserializeObject<Settings>(text);
+                Settings = JsonConvert.DeserializeObject<SettingsBasic>(text);
             }
             else
                 DefaultSettings();
@@ -281,7 +282,7 @@ namespace CryptoSbmScanner
 
                 Settings.Signal.AnalyseInterval = intervals;
             }
-                
+
 
             InitWhiteAndBlackListSettings();
         }
@@ -319,8 +320,6 @@ namespace CryptoSbmScanner
 
         static public void SaveSettings()
         {
-            GlobalData.ShowExtraStuff = System.IO.File.Exists(GlobalData.GetBaseDir() + "ShowExtraStuff");
-
             //Laad de gecachte (langere historie, minder overhad)
             string filename = GlobalData.GetBaseDir() + "GlobalData.Settings2.json";
 

@@ -62,8 +62,8 @@ namespace CryptoSbmScanner
                     }
                     exchange.ExchangeInfoLastTime = DateTime.UtcNow;
 
-                    
-                    
+
+
                     //using (SqlConnection databaseThread = new SqlConnection(GlobalData.ConnectionString))
                     {
                         //databaseThread.Close();
@@ -125,7 +125,10 @@ namespace CryptoSbmScanner
                                         //De te gebruiken precisie in prijzen
                                         symbol.BaseAssetPrecision = binanceSymbol.BaseAssetPrecision;
                                         symbol.QuoteAssetPrecision = binanceSymbol.QuoteAssetPrecision;
-                                        symbol.MinNotional = binanceSymbol.MinNotionalFilter.MinNotional;
+                                        if (binanceSymbol.MinNotionalFilter != null)
+                                            symbol.MinNotional = binanceSymbol.MinNotionalFilter.MinNotional;
+                                        else
+                                            symbol.MinNotional = 0;
 
                                         //Minimale en maximale amount voor een order (in base amount)
                                         symbol.QuantityMinimum = binanceSymbol.LotSizeFilter.MinQuantity;

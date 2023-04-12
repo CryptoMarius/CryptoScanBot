@@ -1,5 +1,6 @@
 ﻿using Microsoft.IdentityModel.Tokens;
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
@@ -9,19 +10,17 @@ namespace CryptoSbmScanner
     public partial class FrmSettings : Form
     {
 
-        private Settings settings;
+        private SettingsBasic settings;
+        private readonly List<SettingsBaseCoin> BaseCoinList = new List<SettingsBaseCoin>();
 
         public FrmSettings()
         {
             InitializeComponent();
 
-            tabExtra.Visible = GlobalData.ShowExtraStuff;
-
-
             toolTip1.SetToolTip(EditAnalysisShowStobbOverbought, "Dit type signaal is een dubbele indicatie dat een munt overbought is en die bestaat uit:" +
-                "\n-een candle die opent of sluit boven de bovenste bollingerband\n" +
-                "-zowel de %d als %k van de stochastic zijn boven de 80\n" +
-                "(dit kan een instapmoment zijn voor een short positie)");
+                    "\n-een candle die opent of sluit boven de bovenste bollingerband\n" +
+                    "-zowel de %d als %k van de stochastic zijn boven de 80\n" +
+                    "(dit kan een instapmoment zijn voor een short positie)");
             toolTip1.SetToolTip(EditAnalysisShowStobbOversold, "Dit type signaal is een dubbele indicatie dat een munt oversold is en bestaat uit:\n" +
                 "-een candle die opent of sluit onder de onderste bollingerbands\n" +
                 "-zowel de % d als % k van de stochastic zijn onder de 20\n" +
@@ -54,12 +53,6 @@ namespace CryptoSbmScanner
             buttonTestSpeech.Click += buttonTestSpeech_Click;
             buttonFontDialog.Click += buttonFontDialog_Click;
 
-            buttonColorBTC.Click += buttonColorBTC_Click;
-            buttonColorETH.Click += buttonColorETH_Click;
-            buttonColorBNB.Click += buttonColorBNB_Click;
-            buttonColorBUSD.Click += buttonColorBUSD_Click;
-            buttonColorUSDT.Click += buttonColorUSDT_Click;
-
             buttonColorStobb.Click += buttonColorStobb_Click;
             buttonColorSbm.Click += buttonColorSbm_Click;
             buttonColorJump.Click += buttonColorJump_Click;
@@ -69,7 +62,7 @@ namespace CryptoSbmScanner
             buttonSelectSoundSbmOverbought.Click += buttonSelectSoundSbmOverbought_Click;
             buttonSelectSoundSbmOversold.Click += buttonSelectSoundSbmOversold_Click;
             buttonSelectSoundCandleJumpUp.Click += buttonSelectSoundCandleJumpUp_Click;
-            buttonSelectSoundCandleJumpDown.Click += buttonSelectSoundCandleJumpDown_Click;
+            buttonSelectSoundCandleJumpDown.Click += ButtonSelectSoundCandleJumpDown_Click;
 
             buttonPlaySoundStobbOverbought.Click += buttonPlaySoundStobbOverbought_Click;
             buttonPlaySoundStobbOversold.Click += buttonPlaySoundStobbOversold_Click;
@@ -117,15 +110,34 @@ namespace CryptoSbmScanner
             buttonPlaySoundCandleJumpDown.Enabled = EditPlaySoundCandleJumpSignal.Checked;
         }
 
-        public void InitSettings(Settings settings)
+
+        public void InitSettings(SettingsBasic settings)
         {
             this.settings = settings;
 
-            if ((GlobalData.Settings.General.FontSize != this.Font.Size) || (GlobalData.Settings.General.FontName.Equals(this.Font.Name)))
+#if !TRADEBOT
+            // Oppassen: Een tabPage.Visible=x doet helemaal niets
+            // (dat was weer een onaangename WinForms verrassing)
+            tabExtra.Parent = null;
+#endif
+
+            if (GlobalData.Settings.General.FontSize != Font.Size || GlobalData.Settings.General.FontName.Equals(Font.Name))
             {
-                this.Font = new System.Drawing.Font(GlobalData.Settings.General.FontName, GlobalData.Settings.General.FontSize,
-                    System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+                Font = new Font(GlobalData.Settings.General.FontName, GlobalData.Settings.General.FontSize,
+                    FontStyle.Regular, GraphicsUnit.Point, 0);
             }
+
+
+            // Deze worden na de overgang naar .net 7 regelmatig gereset naar 0
+            // Benieuwd waarom dit gebeurd (het zijn er gelukkig niet zo veel)
+            //EditGlobalBuyVarying.Minimum = -0.5m;
+            EditBarometer1hMinimal.Minimum = -100;
+            //EditBarometer15mBotMinimal.Minimum = -100;
+            //EditBarometer30mBotMinimal.Minimum = -100;
+            //EditBarometer01hBotMinimal.Minimum = -100;
+            //EditBarometer04hBotMinimal.Minimum = -100;
+            //EditBarometer24hBotMinimal.Minimum = -100;
+            EditAnalysisMinChangePercentage.Minimum = -100;
 
             //EditGetCandleInterval.Value = settings.General.GetCandleInterval;
             // ------------------------------------------------------------------------------
@@ -146,13 +158,20 @@ namespace CryptoSbmScanner
             // Base coins
             // ------------------------------------------------------------------------------
 
-            SetQuoteCoin("BNB", EditFetchCandlesBNB, EditMinVolumeBNB, EditMinPriceBNB, EditCreateSignalsBNB, panelColorBNB);
-            SetQuoteCoin("BTC", EditFetchCandlesBTC, EditMinVolumeBTC, EditMinPriceBTC, EditCreateSignalsBTC, panelColorBTC);
-            SetQuoteCoin("BUSD", EditFetchCandlesBUSD, EditMinVolumeBUSD, EditMinPriceBUSD, EditCreateSignalsBUSD, panelColorBUSD);
-            SetQuoteCoin("ETH", EditFetchCandlesETH, EditMinVolumeETH, EditMinPriceETH, EditCreateSignalsETH, panelColorETH);
-            SetQuoteCoin("USDT", EditFetchCandlesUSDT, EditMinVolumeUSDT, EditMinPriceUSDT, EditCreateSignalsUSDT, panelColorUSDT);
-            SetQuoteCoin("EUR", EditFetchCandlesEUR, EditMinVolumeEUR, EditMinPriceEUR, EditCreateSignalsEUR, panelColorEUR);
+            int yPos = 50;
+            foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
+            {
+                if (quoteData.SymbolList.Count > 5)
+                    BaseCoinList.Add(new SettingsBaseCoin(quoteData, yPos += 26, tabBasismunten.Controls));
+                else
+                {
+                    quoteData.FetchCandles = false;
+                    quoteData.CreateSignals = false;
+                }
+            }
 
+            foreach (SettingsBaseCoin x in BaseCoinList)
+                x.SetControlValues();
 
             // ------------------------------------------------------------------------------
             // Signals
@@ -211,7 +230,7 @@ namespace CryptoSbmScanner
             panelColorJump.BackColor = settings.Signal.ColorJump;
 
 
-            
+
             EditAnalysisMinChangePercentage.Value = settings.Signal.AnalysisMinChangePercentage;
             EditAnalysisMaxChangePercentage.Value = settings.Signal.AnalysisMaxChangePercentage;
             EditLogAnalysisMinMaxChangePercentage.Checked = settings.Signal.LogAnalysisMinMaxChangePercentage;
@@ -221,7 +240,7 @@ namespace CryptoSbmScanner
 
             EditMinimumTickPercentage.Value = settings.Signal.MinimumTickPercentage;
             EditLogMinimumTickPercentage.Checked = settings.Signal.LogMinimumTickPercentage;
-       
+
             EditSbmMa200AndMa50Percentage.Value = settings.Signal.SbmMa200AndMa50Percentage;
             EditSbmMa50AndMa20Percentage.Value = settings.Signal.SbmMa50AndMa20Percentage;
             EditSbmMa200AndMa20Percentage.Value = settings.Signal.SbmMa200AndMa20Percentage;
@@ -267,39 +286,6 @@ namespace CryptoSbmScanner
         }
 
 
-        private void SetQuoteCoin(string quoteName, CheckBox fetchCandles, NumericUpDown minVolume, NumericUpDown minPrice, CheckBox createSignals, Panel panelColor)
-        {
-            CryptoQuoteData quote;
-            if (!settings.QuoteCoins.TryGetValue(quoteName, out quote))
-            {
-                quote = new CryptoQuoteData();
-                quote.Name = quoteName;
-                settings.QuoteCoins.Add(quote.Name, quote);
-            }
-            fetchCandles.Checked = quote.FetchCandles;
-            minVolume.Value = quote.MinimalVolume;
-            minPrice.Value = quote.MinimalPrice;
-            createSignals.Checked = quote.CreateSignals;
-            panelColor.BackColor = quote.DisplayColor;
-        }
-
-        private void GetQuoteCoin(string quoteName, CheckBox fetchCandles, NumericUpDown minVolume, NumericUpDown minPrice, CheckBox createSignals, Panel panelColor)
-        {
-            CryptoQuoteData quote;
-            if (!settings.QuoteCoins.TryGetValue(quoteName, out quote))
-            {
-                quote = new CryptoQuoteData();
-                quote.Name = quoteName;
-                settings.QuoteCoins.Add(quote.Name, quote);
-            }
-            quote.FetchCandles = fetchCandles.Checked;
-            quote.MinimalVolume = minVolume.Value;
-            quote.MinimalPrice = minPrice.Value;
-            quote.CreateSignals = createSignals.Checked;
-            quote.DisplayColor = panelColor.BackColor;
-        }
-
-
         private void buttonCancel_Click(object sender, EventArgs e)
         {
             DialogResult = DialogResult.Cancel;
@@ -327,12 +313,8 @@ namespace CryptoSbmScanner
             // ------------------------------------------------------------------------------
             // Base coins
             // ------------------------------------------------------------------------------
-            GetQuoteCoin("BNB", EditFetchCandlesBNB, EditMinVolumeBNB, EditMinPriceBNB, EditCreateSignalsBNB, panelColorBNB);
-            GetQuoteCoin("BTC", EditFetchCandlesBTC, EditMinVolumeBTC, EditMinPriceBTC, EditCreateSignalsBTC, panelColorBTC);
-            GetQuoteCoin("BUSD", EditFetchCandlesBUSD, EditMinVolumeBUSD, EditMinPriceBUSD, EditCreateSignalsBUSD, panelColorBUSD);
-            GetQuoteCoin("ETH", EditFetchCandlesETH, EditMinVolumeETH, EditMinPriceETH, EditCreateSignalsETH, panelColorETH);
-            GetQuoteCoin("USDT", EditFetchCandlesUSDT, EditMinVolumeUSDT, EditMinPriceUSDT, EditCreateSignalsUSDT, panelColorUSDT);
-            GetQuoteCoin("EUR", EditFetchCandlesEUR, EditMinVolumeEUR, EditMinPriceEUR, EditCreateSignalsEUR, panelColorEUR);
+            foreach (SettingsBaseCoin x in BaseCoinList)
+                x.GetControlValues();
 
             // ------------------------------------------------------------------------------
             // Signals
@@ -516,7 +498,7 @@ namespace CryptoSbmScanner
             browseForWavFile(ref EditSoundFileCandleJumpUp);
         }
 
-        private void buttonSelectSoundCandleJumpDown_Click(object sender, EventArgs e)
+        private void ButtonSelectSoundCandleJumpDown_Click(object sender, EventArgs e)
         {
             browseForWavFile(ref EditSoundFileCandleJumpDown);
         }
@@ -580,40 +562,10 @@ namespace CryptoSbmScanner
         {
             if (MessageBox.Show("Alle instellingen resetten?", "Attentie!", MessageBoxButtons.YesNo) == DialogResult.Yes)
             {
-                GlobalData.Settings = new Settings();
+                GlobalData.Settings = new SettingsBasic();
                 GlobalData.DefaultSettings();
                 InitSettings(GlobalData.Settings);
             }
-        }
-
-        private void buttonColorBTC_Click(object sender, EventArgs e)
-        {
-            PickColor(ref panelColorBTC);
-        }
-
-        private void buttonColorETH_Click(object sender, EventArgs e)
-        {
-            PickColor(ref panelColorETH);
-        }
-
-        private void buttonColorBNB_Click(object sender, EventArgs e)
-        {
-            PickColor(ref panelColorBNB);
-        }
-
-        private void buttonColorBUSD_Click(object sender, EventArgs e)
-        {
-            PickColor(ref panelColorBUSD);
-        }
-
-        private void buttonColorUSDT_Click(object sender, EventArgs e)
-        {
-            PickColor(ref panelColorUSDT);
-        }
-
-        private void buttonColorEUR_Click(object sender, EventArgs e)
-        {
-            PickColor(ref panelColorEUR);
         }
 
         private void buttonFontDialog_Click(object sender, EventArgs e)

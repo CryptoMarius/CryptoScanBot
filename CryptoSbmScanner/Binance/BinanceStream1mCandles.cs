@@ -1,4 +1,6 @@
-﻿using Binance.Net.Enums;
+﻿using Binance.Net.Clients;
+using Binance.Net.Enums;
+using Binance.Net.Objects.Models.Spot.Socket;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,8 +9,6 @@ using System.Threading.Tasks;
 using System.Threading;
 using CryptoExchange.Net.Sockets;
 using CryptoExchange.Net.Objects;
-using Binance.Net.Objects.Models.Spot.Socket;
-using Binance.Net.Clients;
 
 namespace CryptoSbmScanner
 {
@@ -53,8 +53,10 @@ namespace CryptoSbmScanner
                     try
                     {
                         // Verwerk de 1m candle in onze data
-                        candle = CandleTools.HandleFinalCandleData(symbol, GlobalData.IntervalList[0], temp.Data.OpenTime, 
+                        candle = CandleTools.HandleFinalCandleData(symbol, GlobalData.IntervalList[0], temp.Data.OpenTime,
                             temp.Data.OpenPrice, temp.Data.HighPrice, temp.Data.LowPrice, temp.Data.ClosePrice, temp.Data.QuoteVolume);
+                        if (!symbol.LastPrice.HasValue)
+                            symbol.LastPrice = temp.Data.ClosePrice;
 
                         // Herbereken de candles in andere intervallen
                         foreach (CryptoInterval interval in GlobalData.IntervalList)

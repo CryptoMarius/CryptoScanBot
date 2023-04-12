@@ -16,7 +16,7 @@ namespace CryptoSbmScanner
 
     //De instellingen die het analyse gedeelte nodig heeft
     [Serializable]
-    public class Settings
+    public class SettingsBasic
     {
         //Welke basis munten willen we gebruiken
         public SortedList<string, CryptoQuoteData> QuoteCoins { get; } = new SortedList<string, CryptoQuoteData>();
@@ -54,7 +54,7 @@ namespace CryptoSbmScanner
         /// <summary>
         /// De basis instellingen voor de Settings
         /// </summary>
-        public Settings()
+        public SettingsBasic()
         {
         }
 

@@ -11,7 +11,7 @@ namespace CryptoSbmScanner
     public partial class FrmMain
     {
 
-        private void listViewSignalsInitCaptions()
+        private void ListViewSignalsInitCaptions()
         {
             switch (GlobalData.Settings.General.TradingApp)
             {
@@ -26,10 +26,18 @@ namespace CryptoSbmScanner
             }
         }
 
-        private void listViewSignalsInitColumns()
+        private void ListViewSignalsInitColumns()
         {
+            ListViewColumnSorter listViewColumnSorter = new ListViewColumnSorter()
+            {
+                SortOrder = SortOrder.Descending
+            };
+            this.listViewSignals.ListViewItemSorter = listViewColumnSorter;
+            this.listViewSignals.ColumnClick += ListViewSignals_ColumnClick;
+            this.listViewSignals.SetSortIcon(listViewColumnSorter.SortColumn, listViewColumnSorter.Order);
+
             // Create columns and subitems. Width of -2 indicates auto-size
-            listViewSignals.Columns.Add("Candle date", -2, HorizontalAlignment.Left);
+            listViewSignals.Columns.Add("Candle datum", -2, HorizontalAlignment.Left);
             listViewSignals.Columns.Add("Symbol", -2, HorizontalAlignment.Left);
             listViewSignals.Columns.Add("Interval", -2, HorizontalAlignment.Left);
             listViewSignals.Columns.Add("Mode", -2, HorizontalAlignment.Left);
@@ -39,7 +47,7 @@ namespace CryptoSbmScanner
             listViewSignals.Columns.Add("Volume", -2, HorizontalAlignment.Right);
             listViewSignals.Columns.Add("Trend", -2, HorizontalAlignment.Right);
             listViewSignals.Columns.Add("Trend%", -2, HorizontalAlignment.Right);
-            listViewSignals.Columns.Add("Last24", -2, HorizontalAlignment.Right);
+            listViewSignals.Columns.Add("24h Change", -2, HorizontalAlignment.Right);
             listViewSignals.Columns.Add("BB%", -2, HorizontalAlignment.Right);
             if (!GlobalData.Settings.Signal.HideTechnicalStuffSignals)
             {
@@ -66,221 +74,245 @@ namespace CryptoSbmScanner
         }
 
 
-
-        private void listViewSignalsAddSignal(CryptoSignal signal)
+        private static ListViewItem AddSignalItem(CryptoSignal signal)
         {
-            listViewSignals.BeginUpdate();
-            try
+            ListViewItem.ListViewSubItem subItem;
+
+            string s = signal.OpenDate.ToLocalTime().ToString("yyyy-MM-dd HH:mm") + " - " + signal.OpenDate.AddSeconds(signal.Interval.Duration).ToLocalTime().ToString("HH:mm");
+            ListViewItem item1 = new ListViewItem(s, -1)
             {
-                ListViewItem.ListViewSubItem subItem;
-
-                string s = signal.OpenDate.ToLocalTime().ToString("yyyy-MM-dd HH:mm") + " - " + signal.OpenDate.AddSeconds(signal.Interval.Duration).ToLocalTime().ToString("HH:mm");
-                ListViewItem item1 = new ListViewItem(s, -1);
-                item1.UseItemStyleForSubItems = false;
-                item1.Tag = signal;
+                UseItemStyleForSubItems = false,
+                Tag = signal
+            };
 
 
-                s = signal.Symbol.Base + "/" + @signal.Symbol.Quote;
-                if (GlobalData.Settings.Signal.LogMinimumTickPercentage)
+            s = signal.Symbol.Base + "/" + @signal.Symbol.Quote;
+            if (GlobalData.Settings.Signal.LogMinimumTickPercentage)
+            {
+                decimal tickPercentage = 100 * signal.Symbol.PriceTickSize / signal.Price;
+                if (tickPercentage > GlobalData.Settings.Signal.MinimumTickPercentage)
                 {
-                    decimal tickPercentage = 100 * signal.Symbol.PriceTickSize / signal.Price;
-                    if (tickPercentage > GlobalData.Settings.Signal.MinimumTickPercentage)
-                    {
-                        s += " " + tickPercentage.ToString("N2");
-                        subItem = item1.SubItems.Add(s);
-                        subItem.ForeColor = Color.Red;
-                    }
-                    else subItem = item1.SubItems.Add(s);
+                    s += " " + tickPercentage.ToString("N2");
+                    subItem = item1.SubItems.Add(s);
+                    subItem.ForeColor = Color.Red;
                 }
                 else subItem = item1.SubItems.Add(s);
+            }
+            else subItem = item1.SubItems.Add(s);
 
-                Color displayColor = signal.Symbol.QuoteData.DisplayColor;
-                if (displayColor != Color.White)
-                    subItem.BackColor = displayColor;
-
-
-
-                item1.SubItems.Add(signal.Interval.Name);
+            Color displayColor = signal.Symbol.QuoteData.DisplayColor;
+            if (displayColor != Color.White)
+                subItem.BackColor = displayColor;
 
 
-                subItem = item1.SubItems.Add(signal.ModeText);
-                if (signal.Mode == SignalMode.modeLong)
-                    subItem.ForeColor = Color.Green;
-                else if (signal.Mode == SignalMode.modeShort)
-                    subItem.ForeColor = Color.Red;
+
+            item1.SubItems.Add(signal.Interval.Name);
 
 
-                subItem = item1.SubItems.Add(signal.StrategyText);
-                switch (signal.Strategy)
-                {
-                    case SignalStrategy.strategyCandlesJumpUp:
-                    case SignalStrategy.strategyCandlesJumpDown:
-                        if (GlobalData.Settings.Signal.ColorJump != Color.White)
-                            subItem.BackColor = GlobalData.Settings.Signal.ColorJump;
-                        break;
-
-                    case SignalStrategy.strategyStobbOverbought:
-                    case SignalStrategy.strategyStobbOversold:
-                        if (GlobalData.Settings.Signal.ColorStobb != Color.White)
-                            subItem.BackColor = GlobalData.Settings.Signal.ColorStobb;
-                        break;
-
-                    case SignalStrategy.strategySbm1Overbought:
-                    case SignalStrategy.strategySbm1Oversold:
-                    case SignalStrategy.strategySbm2Overbought:
-                    case SignalStrategy.strategySbm2Oversold:
-                    case SignalStrategy.strategySbm3Overbought:
-                    case SignalStrategy.strategySbm3Oversold:
-                        if (GlobalData.Settings.Signal.ColorSbm != Color.White)
-                            subItem.BackColor = GlobalData.Settings.Signal.ColorSbm;
-                        break;
-
-                    case SignalStrategy.strategyPriceCrossedMa20:
-                    case SignalStrategy.strategyPriceCrossedMa50:
-                        if (GlobalData.Settings.Signal.ColorJump != Color.White)
-                            subItem.BackColor = GlobalData.Settings.Signal.ColorJump;
-                        break;
-                }
+            subItem = item1.SubItems.Add(signal.ModeText);
+            if (signal.Mode == SignalMode.modeLong)
+                subItem.ForeColor = Color.Green;
+            else if (signal.Mode == SignalMode.modeShort)
+                subItem.ForeColor = Color.Red;
 
 
-                item1.SubItems.Add(signal.EventText);
-                item1.SubItems.Add(signal.Price.ToString(signal.Symbol.DisplayFormat));
-                item1.SubItems.Add(signal.Volume.ToString("N0"));
+            subItem = item1.SubItems.Add(signal.StrategyText);
+            switch (signal.Strategy)
+            {
+                case SignalStrategy.strategyCandlesJumpUp:
+                case SignalStrategy.strategyCandlesJumpDown:
+                    if (GlobalData.Settings.Signal.ColorJump != Color.White)
+                        subItem.BackColor = GlobalData.Settings.Signal.ColorJump;
+                    break;
 
-                switch (signal.TrendIndicator)
-                {
-                    case CryptoTrendIndicator.trendBullish:
-                        item1.SubItems.Add("Bullish");
-                        break;
-                    case CryptoTrendIndicator.trendBearish:
-                        item1.SubItems.Add("Bearisch");
-                        break;
-                    default:
-                        item1.SubItems.Add("Zijwaarts");
-                        break;
-                }
+                case SignalStrategy.strategyStobbOverbought:
+                case SignalStrategy.strategyStobbOversold:
+                    if (GlobalData.Settings.Signal.ColorStobb != Color.White)
+                        subItem.BackColor = GlobalData.Settings.Signal.ColorStobb;
+                    break;
 
-                if (signal.TrendPercentage < 0)
-                    item1.SubItems.Add(signal.TrendPercentage.ToString("N2")).ForeColor = Color.Red;
+                case SignalStrategy.strategySbm1Overbought:
+                case SignalStrategy.strategySbm1Oversold:
+                case SignalStrategy.strategySbm2Overbought:
+                case SignalStrategy.strategySbm2Oversold:
+                case SignalStrategy.strategySbm3Overbought:
+                case SignalStrategy.strategySbm3Oversold:
+                    if (GlobalData.Settings.Signal.ColorSbm != Color.White)
+                        subItem.BackColor = GlobalData.Settings.Signal.ColorSbm;
+                    break;
+
+                case SignalStrategy.strategyPriceCrossedMa20:
+                case SignalStrategy.strategyPriceCrossedMa50:
+                    if (GlobalData.Settings.Signal.ColorJump != Color.White)
+                        subItem.BackColor = GlobalData.Settings.Signal.ColorJump;
+                    break;
+            }
+
+
+            item1.SubItems.Add(signal.EventText);
+            item1.SubItems.Add(signal.Price.ToString(signal.Symbol.DisplayFormat));
+            item1.SubItems.Add(signal.Volume.ToString("N0"));
+
+            switch (signal.TrendIndicator)
+            {
+                case CryptoTrendIndicator.trendBullish:
+                    item1.SubItems.Add("Bullish");
+                    break;
+                case CryptoTrendIndicator.trendBearish:
+                    item1.SubItems.Add("Bearisch");
+                    break;
+                default:
+                    item1.SubItems.Add("Zijwaarts");
+                    break;
+            }
+
+            if (signal.TrendPercentage < 0)
+                item1.SubItems.Add(signal.TrendPercentage.ToString("N2")).ForeColor = Color.Red;
+            else
+                item1.SubItems.Add(signal.TrendPercentage.ToString("N2")).ForeColor = Color.Green;
+
+            if (signal.Last24Hours < 0)
+                item1.SubItems.Add(signal.Last24Hours.ToString("N2")).ForeColor = Color.Red;
+            else
+                item1.SubItems.Add(signal.Last24Hours.ToString("N2")).ForeColor = Color.Green;
+
+
+            item1.SubItems.Add(signal.BollingerBandsPercentage.ToString("N2"));
+
+
+            if (!GlobalData.Settings.Signal.HideTechnicalStuffSignals)
+            {
+                item1.SubItems.Add(" ");
+                float value;
+
+
+                // Oversold/overbougt
+                value = signal.Rsi; // 0..100
+                if (value < 30f)
+                    item1.SubItems.Add(value.ToString("N2")).ForeColor = Color.Red;
+                else if (value > 70f)
+                    item1.SubItems.Add(value.ToString("N2")).ForeColor = Color.Green;
                 else
-                    item1.SubItems.Add(signal.TrendPercentage.ToString("N2")).ForeColor = Color.Green;
+                    item1.SubItems.Add(value.ToString("N2"));
 
-                if (signal.Last24Hours < 0)
-                    item1.SubItems.Add(signal.Last24Hours.ToString("N2")).ForeColor = Color.Red;
+                // Oversold/overbougt
+                value = signal.StochOscillator;
+                if (value < 20f)
+                    item1.SubItems.Add(value.ToString("N2")).ForeColor = Color.Red;
+                else if (value > 80f)
+                    item1.SubItems.Add(value.ToString("N2")).ForeColor = Color.Green;
                 else
-                    item1.SubItems.Add(signal.Last24Hours.ToString("N2")).ForeColor = Color.Green;
+                    item1.SubItems.Add(value.ToString("N2"));
+
+                // Oversold/overbougt
+                value = signal.StochSignal;
+                if (value < 20f)
+                    item1.SubItems.Add(value.ToString("N2")).ForeColor = Color.Red;
+                else if (value > 80f)
+                    item1.SubItems.Add(value.ToString("N2")).ForeColor = Color.Green;
+                else
+                    item1.SubItems.Add(value.ToString("N2"));
 
 
-                item1.SubItems.Add(signal.BollingerBandsPercentage.ToString("N2"));
+                value = signal.Sma200;
+                item1.SubItems.Add(value.ToString(signal.Symbol.DisplayFormat));
 
-
-                if (!GlobalData.Settings.Signal.HideTechnicalStuffSignals)
-                {
-                    item1.SubItems.Add(" ");
-                    float value;
-
-
-                    // Oversold/overbougt
-                    value = signal.Rsi; // 0..100
-                    if (value < 30f)
-                        item1.SubItems.Add(value.ToString("N2")).ForeColor = Color.Red;
-                    else if (value > 70f)
-                        item1.SubItems.Add(value.ToString("N2")).ForeColor = Color.Green;
-                    else
-                        item1.SubItems.Add(value.ToString("N2"));
-
-                    // Oversold/overbougt
-                    value = signal.StochOscillator;
-                    if (value < 20f)
-                        item1.SubItems.Add(value.ToString("N2")).ForeColor = Color.Red;
-                    else if (value > 80f)
-                        item1.SubItems.Add(value.ToString("N2")).ForeColor = Color.Green;
-                    else
-                        item1.SubItems.Add(value.ToString("N2"));
-
-                    // Oversold/overbougt
-                    value = signal.StochSignal;
-                    if (value < 20f)
-                        item1.SubItems.Add(value.ToString("N2")).ForeColor = Color.Red;
-                    else if (value > 80f)
-                        item1.SubItems.Add(value.ToString("N2")).ForeColor = Color.Green;
-                    else
-                        item1.SubItems.Add(value.ToString("N2"));
-
-
-                    value = signal.Sma200;
+                value = signal.Sma50;
+                if (value < signal.Sma200)
+                    item1.SubItems.Add(value.ToString(signal.Symbol.DisplayFormat)).ForeColor = Color.Green;
+                else if (value > signal.Sma200)
+                    item1.SubItems.Add(value.ToString(signal.Symbol.DisplayFormat)).ForeColor = Color.Red;
+                else
                     item1.SubItems.Add(value.ToString(signal.Symbol.DisplayFormat));
 
-                    value = signal.Sma50;
-                    if (value < signal.Sma200)
-                        item1.SubItems.Add(value.ToString(signal.Symbol.DisplayFormat)).ForeColor = Color.Green;
-                    else if (value > signal.Sma200)
-                        item1.SubItems.Add(value.ToString(signal.Symbol.DisplayFormat)).ForeColor = Color.Red;
-                    else
-                        item1.SubItems.Add(value.ToString(signal.Symbol.DisplayFormat));
+                value = signal.Sma20;
+                if (value < signal.Sma50)
+                    item1.SubItems.Add(value.ToString(signal.Symbol.DisplayFormat)).ForeColor = Color.Green;
+                else if (value > signal.Sma50)
+                    item1.SubItems.Add(value.ToString(signal.Symbol.DisplayFormat)).ForeColor = Color.Red;
+                else
+                    item1.SubItems.Add(value.ToString(signal.Symbol.DisplayFormat));
 
-                    value = signal.Sma20;
-                    if (value < signal.Sma50)
-                        item1.SubItems.Add(value.ToString(signal.Symbol.DisplayFormat)).ForeColor = Color.Green;
-                    else if (value > signal.Sma50)
-                        item1.SubItems.Add(value.ToString(signal.Symbol.DisplayFormat)).ForeColor = Color.Red;
-                    else
-                        item1.SubItems.Add(value.ToString(signal.Symbol.DisplayFormat));
-
-                    // de psar zou je wel mogen "clampen"???
-                    value = signal.PSar; //.Clamp(signal.Symbol.PriceMinimum, signal.Symbol.PriceMaximum, signal.Symbol.PriceTickSize);
-                    if (value <= signal.Sma20)
-                        item1.SubItems.Add(value.ToString(signal.Symbol.DisplayFormat)).ForeColor = Color.Green;
-                    else if (value > signal.Sma20)
-                        item1.SubItems.Add(value.ToString(signal.Symbol.DisplayFormat)).ForeColor = Color.Red;
-                    else
-                        item1.SubItems.Add(value.ToString(signal.Symbol.DisplayFormat));
+                // de psar zou je wel mogen "clampen"???
+                value = signal.PSar; //.Clamp(signal.Symbol.PriceMinimum, signal.Symbol.PriceMaximum, signal.Symbol.PriceTickSize);
+                if (value <= signal.Sma20)
+                    item1.SubItems.Add(value.ToString(signal.Symbol.DisplayFormat)).ForeColor = Color.Green;
+                else if (value > signal.Sma20)
+                    item1.SubItems.Add(value.ToString(signal.Symbol.DisplayFormat)).ForeColor = Color.Red;
+                else
+                    item1.SubItems.Add(value.ToString(signal.Symbol.DisplayFormat));
 
 #if DEBUG
-                    value = signal.PSarDave; //.Clamp(signal.Symbol.PriceMinimum, signal.Symbol.PriceMaximum, signal.Symbol.PriceTickSize);
-                    if (value != signal.PSar)
-                        item1.SubItems.Add(value.ToString(signal.Symbol.DisplayFormat)).ForeColor = Color.Red;
-                    else
-                        item1.SubItems.Add(value.ToString(signal.Symbol.DisplayFormat));
+                value = signal.PSarDave; //.Clamp(signal.Symbol.PriceMinimum, signal.Symbol.PriceMaximum, signal.Symbol.PriceTickSize);
+                if (value != signal.PSar)
+                    item1.SubItems.Add(value.ToString(signal.Symbol.DisplayFormat)).ForeColor = Color.Red;
+                else
+                    item1.SubItems.Add(value.ToString(signal.Symbol.DisplayFormat));
 
-                    value = signal.PSarJason; //.Clamp(signal.Symbol.PriceMinimum, signal.Symbol.PriceMaximum, signal.Symbol.PriceTickSize);
-                    if (value != signal.PSar)
-                        item1.SubItems.Add(value.ToString(signal.Symbol.DisplayFormat)).ForeColor = Color.Red;
-                    else
-                        item1.SubItems.Add(value.ToString(signal.Symbol.DisplayFormat));
+                value = signal.PSarJason; //.Clamp(signal.Symbol.PriceMinimum, signal.Symbol.PriceMaximum, signal.Symbol.PriceTickSize);
+                if (value != signal.PSar)
+                    item1.SubItems.Add(value.ToString(signal.Symbol.DisplayFormat)).ForeColor = Color.Red;
+                else
+                    item1.SubItems.Add(value.ToString(signal.Symbol.DisplayFormat));
 
-                    value = signal.PSarTulip; //.Clamp(signal.Symbol.PriceMinimum, signal.Symbol.PriceMaximum, signal.Symbol.PriceTickSize);
-                    if (value != signal.PSar)
-                        item1.SubItems.Add(value.ToString(signal.Symbol.DisplayFormat)).ForeColor = Color.Red;
-                    else
-                        item1.SubItems.Add(value.ToString(signal.Symbol.DisplayFormat));
+                value = signal.PSarTulip; //.Clamp(signal.Symbol.PriceMinimum, signal.Symbol.PriceMaximum, signal.Symbol.PriceTickSize);
+                if (value != signal.PSar)
+                    item1.SubItems.Add(value.ToString(signal.Symbol.DisplayFormat)).ForeColor = Color.Red;
+                else
+                    item1.SubItems.Add(value.ToString(signal.Symbol.DisplayFormat));
 
 #endif
 
+            }
+            return item1;
+        }
+
+
+        private void ListViewSignalsAddSignalRange(List<CryptoSignal> signals)
+        {
+            listViewSignals.BeginUpdate();
+            timerClearEvents.Enabled = false;
+            try
+            {
+                // Wordt nu misschien te vaak gedaan, maar is relatief "goedkoop"
+                for (int index = listViewSignals.Items.Count - 1; index >= 0; index--)
+                {
+                    ListViewItem item = listViewSignals.Items[index];
+                    CryptoSignal signal = (CryptoSignal)item.Tag;
+                    DateTime expirationDate = signal.CloseDate.AddSeconds(GlobalData.Settings.Signal.RemoveSignalAfterxCandles * signal.Interval.Duration); // 15 candles further (display)
+                    if (expirationDate < DateTime.UtcNow)
+                        listViewSignals.Items.RemoveAt(index);
+                    else break;
+
                 }
 
-                // Add the items to the ListView.
-                if (listViewSignals.Items.Count > 0)
-                    listViewSignals.Items.Insert(0, item1);
-                else
-                    listViewSignals.Items.Add(item1);
+                List<ListViewItem> range = new List<ListViewItem>();
+                foreach (CryptoSignal signal in signals)
+                {
+                    ListViewItem item = AddSignalItem(signal);
+                    range.Add(item);
+                }
 
-                //listView1.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
+                listViewSignals.Items.AddRange(range.ToArray());
+
+                // Deze redelijk kostbaar? (alles moet gecontroleerd worden)
                 for (int i = 0; i <= listViewSignals.Columns.Count - 1; i++)
                 {
                     listViewSignals.Columns[i].Width = -2;
                 }
 
-                //Thread.Sleep(250);
+                //if (signals.Count > 1)
+                //    GlobalData.AddTextToLogTab(signals.Count + " signalen als een range toegevoegd");
             }
             finally
             {
-                    listViewSignals.EndUpdate();
+                listViewSignals.EndUpdate();
+                timerClearEvents.Enabled = true;
             }
         }
 
 
-        private void timerClearOldSignals_Tick(object sender, EventArgs e)
+        private void TimerClearOldSignals_Tick(object sender, EventArgs e)
         {
             if (listViewSignals.Items.Count > 0)
             {
@@ -314,13 +346,13 @@ namespace CryptoSbmScanner
         }
 
 
-        private void listViewSignalsMenuItemClearSignals_Click(object sender, EventArgs e)
+        private void ListViewSignalsMenuItemClearSignals_Click(object sender, EventArgs e)
         {
             listViewSignals.BeginUpdate();
             try
             {
                 listViewSignals.Clear();
-                listViewSignalsInitColumns();
+                ListViewSignalsInitColumns();
             }
             finally
             {
@@ -329,7 +361,7 @@ namespace CryptoSbmScanner
         }
 
 
-        private void listViewSignalsMenuItemActivateTradingApp_Click(object sender, EventArgs e)
+        private void ListViewSignalsMenuItemActivateTradingApp_Click(object sender, EventArgs e)
         {
             if (listViewSignals.SelectedItems.Count > 0)
             {
@@ -343,14 +375,14 @@ namespace CryptoSbmScanner
         }
 
 
-        private void listViewSignalsMenuItemActivateTradingApps_Click(object sender, EventArgs e)
+        private void ListViewSignalsMenuItemActivateTradingApps_Click(object sender, EventArgs e)
         {
-            listViewSignalsMenuItemActivateTradingApp_Click(sender, e);
-            listViewSignalsMenuItemActivateTradingViewInternal_Click(sender, e);
+            ListViewSignalsMenuItemActivateTradingApp_Click(sender, e);
+            ListViewSignalsMenuItemActivateTradingViewInternal_Click(sender, e);
         }
 
 
-        private void listViewSignalsMenuItemActivateTradingViewInternal_Click(object sender, EventArgs e)
+        private void ListViewSignalsMenuItemActivateTradingViewInternal_Click(object sender, EventArgs e)
         {
             if (listViewSignals.Items.Count > 0)
             {
@@ -366,7 +398,7 @@ namespace CryptoSbmScanner
         }
 
 
-        private void listViewSignalsMenuItemActivateTradingviewExternal_Click(object sender, EventArgs e)
+        private void ListViewSignalsMenuItemActivateTradingviewExternal_Click(object sender, EventArgs e)
         {
             if (listViewSignals.SelectedItems.Count > 0)
             {
@@ -382,21 +414,21 @@ namespace CryptoSbmScanner
         }
 
 
-        private void listViewSignalsMenuItem_DoubleClick(object sender, EventArgs e)
+        private void ListViewSignalsMenuItem_DoubleClick(object sender, EventArgs e)
         {
             switch (GlobalData.Settings.General.DoubleClickAction)
             {
                 case DoubleClickAction.activateTradingApp:
-                    listViewSignalsMenuItemActivateTradingApp_Click(sender, e);
+                    ListViewSignalsMenuItemActivateTradingApp_Click(sender, e);
                     break;
                 case DoubleClickAction.activateTradingAppAndTradingViewInternal:
-                    listViewSignalsMenuItemActivateTradingApps_Click(sender, e);
+                    ListViewSignalsMenuItemActivateTradingApps_Click(sender, e);
                     break;
                 case DoubleClickAction.activateTradingViewBrowerInternal:
-                    listViewSignalsMenuItemActivateTradingViewInternal_Click(sender, e);
+                    ListViewSignalsMenuItemActivateTradingViewInternal_Click(sender, e);
                     break;
                 case DoubleClickAction.activateTradingViewBrowerExternal:
-                    listViewSignalsMenuItemActivateTradingviewExternal_Click(sender, e);
+                    ListViewSignalsMenuItemActivateTradingviewExternal_Click(sender, e);
                     break;
             }
         }
@@ -412,11 +444,11 @@ namespace CryptoSbmScanner
                     CryptoSignal signal = (CryptoSignal)item.Tag;
 
                     ShowTrendInformation(signal.Symbol);
-                } 
+                }
             }
         }
 
-        private void listViewSignalsMenuItemCopySignal_Click(object sender, EventArgs e)
+        private void ListViewSignalsMenuItemCopySignal_Click(object sender, EventArgs e)
         {
             string text = "";
             if (listViewSignals.SelectedItems.Count > 0)
@@ -435,6 +467,37 @@ namespace CryptoSbmScanner
                 }
             }
             Clipboard.SetText(text, TextDataFormat.UnicodeText);
+        }
+
+        private void ListViewSignals_ColumnClick(object sender, ColumnClickEventArgs e)
+        {
+            ListViewColumnSorter listViewColumnSorter = (ListViewColumnSorter)listViewSignals.ListViewItemSorter;
+
+
+            // Determine if clicked column is already the column that is being sorted.
+            if (e.Column == listViewColumnSorter.SortColumn)
+            {
+                // Reverse the current sort direction for this column.
+                if (listViewColumnSorter.Order == SortOrder.Ascending)
+                {
+                    listViewColumnSorter.Order = SortOrder.Descending;
+                }
+                else
+                {
+                    listViewColumnSorter.Order = SortOrder.Ascending;
+                }
+            }
+            else
+            {
+                // Set the column number that is to be sorted; default to ascending.
+                listViewColumnSorter.SortColumn = e.Column;
+                listViewColumnSorter.Order = SortOrder.Ascending;
+            }
+
+            // Perform the sort with these new sort options.
+            this.listViewSignals.Sort();
+            this.listViewSignals.SetSortIcon(listViewColumnSorter.SortColumn, listViewColumnSorter.Order);
+
         }
     }
 }

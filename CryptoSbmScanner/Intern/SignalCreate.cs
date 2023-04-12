@@ -483,7 +483,7 @@ namespace CryptoSbmScanner
 
             string eventText = algorithm.ExtraText;
 
-            if (GlobalData.ShowExtraStuff)
+            if (false)
             {
                 int oversell = GetFluxIndcator(true);
                 if (oversell > 0)
@@ -657,7 +657,7 @@ namespace CryptoSbmScanner
         {
             //----------------------------------------------------------------
             // Experimentele zaken..
-            if (GlobalData.Settings.Signal.AnalysisPriceCrossingMa && GlobalData.ShowExtraStuff)
+            if (GlobalData.Settings.Signal.AnalysisPriceCrossingMa && false)
             {
                 SignalBase algorithm = new SignalPriceCrossedMa20(Symbol, Interval, candle);
                 if (algorithm.IndicatorsOkay() && algorithm.IsSignal())

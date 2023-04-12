@@ -318,6 +318,12 @@ namespace CryptoSbmScanner
                 }
 
 
+                await Task.Factory.StartNew(() => new TradingViewSymbolInfo().Start("TVC:DXY", "US Dollar Index", "N2", GlobalData.TradingViewDollarIndex, 10));
+                await Task.Factory.StartNew(() => new TradingViewSymbolInfo().Start("SP:SPX", "S&P 500", "N2", GlobalData.TradingViewSpx500, 10));
+                await Task.Factory.StartNew(() => new TradingViewSymbolInfo().Start("CRYPTOCAP:BTC.D", "BTC Dominance", "N2", GlobalData.TradingViewBitcoinDominance, 10));
+                await Task.Factory.StartNew(() => new TradingViewSymbolInfo().Start("CRYPTOCAP:TOTAL3", "Market Cap total", "N0", GlobalData.TradingViewMarketCapTotal, 10));
+
+
                 //************************************************************************************
                 // Om het volume per symbol en laatste prijs te achterhalen (weet geen betere manier)
                 //************************************************************************************
@@ -336,11 +342,6 @@ namespace CryptoSbmScanner
                 //Ze zijn er allemaal wel, deze is overbodig
                 //CalculateMissingCandles();
 
-
-                Task.Factory.StartNew(() => new TradingViewSymbolInfo().Start("TVC:DXY", "US Dollar Index", "N2", GlobalData.TradingViewDollarIndex, 10));
-                Task.Factory.StartNew(() => new TradingViewSymbolInfo().Start("SP:SPX", "S&P 500", "N2", GlobalData.TradingViewSpx500, 10));
-                Task.Factory.StartNew(() => new TradingViewSymbolInfo().Start("CRYPTOCAP:BTC.D", "BTC Dominance", "N2", GlobalData.TradingViewBitcoinDominance, 10));
-                Task.Factory.StartNew(() => new TradingViewSymbolInfo().Start("CRYPTOCAP:TOTAL3", "Market Cap total", "N0", GlobalData.TradingViewMarketCapTotal, 10));
 
 
                 //************************************************************************************

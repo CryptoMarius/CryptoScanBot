@@ -148,7 +148,7 @@ namespace CryptoSbmScanner
         }
 
 
-        private void listBoxSymbols_DoubleClick(object sender, EventArgs e)
+        private void ListBoxSymbols_DoubleClick(object sender, EventArgs e)
         {
             switch (GlobalData.Settings.General.DoubleClickAction)
             {

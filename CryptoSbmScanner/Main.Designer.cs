@@ -57,14 +57,10 @@
             this.tabPageAltrady = new System.Windows.Forms.TabPage();
             this.webViewAltrady = new Microsoft.Web.WebView2.WinForms.WebView2();
             this.panelTop = new System.Windows.Forms.Panel();
-            this.listViewInformation = new CryptoSbmScanner.ListViewDoubleBuffered();
             this.listViewSymbolPrices = new CryptoSbmScanner.ListViewDoubleBuffered();
             this.labelBarometerDateValue = new System.Windows.Forms.Label();
             this.comboBoxBarometerInterval = new System.Windows.Forms.ComboBox();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
-            this.labelKLinesTickerCount = new System.Windows.Forms.Label();
-            this.labelAnalyseCount = new System.Windows.Forms.Label();
-            this.labelPriceTicker = new System.Windows.Forms.Label();
             this.comboBoxBarometerQuote = new System.Windows.Forms.ComboBox();
             this.panelClient1 = new System.Windows.Forms.Panel();
             this.timerBarometer = new System.Windows.Forms.Timer(this.components);
@@ -72,6 +68,7 @@
             this.timerSoundHeartBeat = new System.Windows.Forms.Timer(this.components);
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.timerCandles = new System.Windows.Forms.Timer(this.components);
+            this.timerAddSignal = new System.Windows.Forms.Timer(this.components);
             this.panelLeft.SuspendLayout();
             this.panel4.SuspendLayout();
             this.listBoxSymbolsMenuStrip.SuspendLayout();
@@ -106,10 +103,10 @@
             // 
             this.panel4.Controls.Add(this.listBoxSymbols);
             this.panel4.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panel4.Location = new System.Drawing.Point(0, 72);
+            this.panel4.Location = new System.Drawing.Point(0, 93);
             this.panel4.Margin = new System.Windows.Forms.Padding(2);
             this.panel4.Name = "panel4";
-            this.panel4.Size = new System.Drawing.Size(163, 570);
+            this.panel4.Size = new System.Drawing.Size(163, 549);
             this.panel4.TabIndex = 2;
             // 
             // listBoxSymbols
@@ -120,7 +117,7 @@
             this.listBoxSymbols.Location = new System.Drawing.Point(0, 0);
             this.listBoxSymbols.Margin = new System.Windows.Forms.Padding(2);
             this.listBoxSymbols.Name = "listBoxSymbols";
-            this.listBoxSymbols.Size = new System.Drawing.Size(163, 570);
+            this.listBoxSymbols.Size = new System.Drawing.Size(163, 549);
             this.listBoxSymbols.Sorted = true;
             this.listBoxSymbols.TabIndex = 0;
             // 
@@ -188,7 +185,7 @@
             this.panel3.Location = new System.Drawing.Point(0, 0);
             this.panel3.Margin = new System.Windows.Forms.Padding(2);
             this.panel3.Name = "panel3";
-            this.panel3.Size = new System.Drawing.Size(163, 72);
+            this.panel3.Size = new System.Drawing.Size(163, 93);
             this.panel3.TabIndex = 1;
             // 
             // labelVersion
@@ -231,7 +228,7 @@
             this.ApplicationPlaySounds.Checked = true;
             this.ApplicationPlaySounds.CheckState = System.Windows.Forms.CheckState.Checked;
             this.ApplicationPlaySounds.Name = "ApplicationPlaySounds";
-            this.ApplicationPlaySounds.Size = new System.Drawing.Size(180, 22);
+            this.ApplicationPlaySounds.Size = new System.Drawing.Size(168, 22);
             this.ApplicationPlaySounds.Text = "Geluiden afspelen";
             this.ApplicationPlaySounds.Click += new System.EventHandler(this.ApplicationPlaySounds_Click);
             // 
@@ -240,37 +237,37 @@
             this.ApplicationCreateSignals.Checked = true;
             this.ApplicationCreateSignals.CheckState = System.Windows.Forms.CheckState.Checked;
             this.ApplicationCreateSignals.Name = "ApplicationCreateSignals";
-            this.ApplicationCreateSignals.Size = new System.Drawing.Size(180, 22);
+            this.ApplicationCreateSignals.Size = new System.Drawing.Size(168, 22);
             this.ApplicationCreateSignals.Text = "Signalen maken";
             this.ApplicationCreateSignals.Click += new System.EventHandler(this.ApplicationCreateSignals_Click);
             // 
             // ToolStripMenuItemSettings
             // 
             this.ToolStripMenuItemSettings.Name = "ToolStripMenuItemSettings";
-            this.ToolStripMenuItemSettings.Size = new System.Drawing.Size(180, 22);
+            this.ToolStripMenuItemSettings.Size = new System.Drawing.Size(168, 22);
             this.ToolStripMenuItemSettings.Text = "Instellingen";
             this.ToolStripMenuItemSettings.Click += new System.EventHandler(this.ToolStripMenuItemSettings_Click);
             // 
             // ToolStripMenuItemRefresh
             // 
             this.ToolStripMenuItemRefresh.Name = "ToolStripMenuItemRefresh";
-            this.ToolStripMenuItemRefresh.Size = new System.Drawing.Size(180, 22);
+            this.ToolStripMenuItemRefresh.Size = new System.Drawing.Size(168, 22);
             this.ToolStripMenuItemRefresh.Text = "Verversen";
             this.ToolStripMenuItemRefresh.Click += new System.EventHandler(this.ToolStripMenuItemRefresh_Click_1);
             // 
             // clearMenusToolStripMenuItem
             // 
             this.clearMenusToolStripMenuItem.Name = "clearMenusToolStripMenuItem";
-            this.clearMenusToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.clearMenusToolStripMenuItem.Size = new System.Drawing.Size(168, 22);
             this.clearMenusToolStripMenuItem.Text = "Clear";
-            this.clearMenusToolStripMenuItem.Click += new System.EventHandler(this.mainMenuClearAll_Click);
+            this.clearMenusToolStripMenuItem.Click += new System.EventHandler(this.MainMenuClearAll_Click);
             // 
             // applicationMenuItemAbout
             // 
             this.applicationMenuItemAbout.Name = "applicationMenuItemAbout";
-            this.applicationMenuItemAbout.Size = new System.Drawing.Size(180, 22);
+            this.applicationMenuItemAbout.Size = new System.Drawing.Size(168, 22);
             this.applicationMenuItemAbout.Text = "About";
-            this.applicationMenuItemAbout.Click += new System.EventHandler(this.applicationMenuItemAbout_Click);
+            this.applicationMenuItemAbout.Click += new System.EventHandler(this.ApplicationMenuItemAbout_Click);
             // 
             // symbolFilter
             // 
@@ -279,16 +276,16 @@
             this.symbolFilter.Name = "symbolFilter";
             this.symbolFilter.Size = new System.Drawing.Size(141, 20);
             this.symbolFilter.TabIndex = 0;
-            this.symbolFilter.KeyDown += new System.Windows.Forms.KeyEventHandler(this.symbolFilter_KeyDown);
+            this.symbolFilter.KeyDown += new System.Windows.Forms.KeyEventHandler(this.SymbolFilter_KeyDown);
             // 
             // panelClient
             // 
             this.panelClient.Controls.Add(this.tabControl);
             this.panelClient.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panelClient.Location = new System.Drawing.Point(0, 73);
+            this.panelClient.Location = new System.Drawing.Point(0, 93);
             this.panelClient.Margin = new System.Windows.Forms.Padding(2);
             this.panelClient.Name = "panelClient";
-            this.panelClient.Size = new System.Drawing.Size(1322, 569);
+            this.panelClient.Size = new System.Drawing.Size(1322, 549);
             this.panelClient.TabIndex = 13;
             // 
             // tabControl
@@ -302,7 +299,7 @@
             this.tabControl.Margin = new System.Windows.Forms.Padding(2);
             this.tabControl.Name = "tabControl";
             this.tabControl.SelectedIndex = 0;
-            this.tabControl.Size = new System.Drawing.Size(1322, 569);
+            this.tabControl.Size = new System.Drawing.Size(1322, 549);
             this.tabControl.TabIndex = 12;
             // 
             // tabPageSignals
@@ -311,7 +308,7 @@
             this.tabPageSignals.Location = new System.Drawing.Point(4, 22);
             this.tabPageSignals.Name = "tabPageSignals";
             this.tabPageSignals.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageSignals.Size = new System.Drawing.Size(1314, 543);
+            this.tabPageSignals.Size = new System.Drawing.Size(1314, 523);
             this.tabPageSignals.TabIndex = 4;
             this.tabPageSignals.Text = "Signals";
             this.tabPageSignals.UseVisualStyleBackColor = true;
@@ -324,7 +321,7 @@
             this.listViewSignals.HideSelection = false;
             this.listViewSignals.Location = new System.Drawing.Point(3, 3);
             this.listViewSignals.Name = "listViewSignals";
-            this.listViewSignals.Size = new System.Drawing.Size(1308, 537);
+            this.listViewSignals.Size = new System.Drawing.Size(1308, 517);
             this.listViewSignals.TabIndex = 1;
             this.listViewSignals.UseCompatibleStateImageBehavior = false;
             this.listViewSignals.View = System.Windows.Forms.View.Details;
@@ -347,28 +344,28 @@
             this.listViewSignalsMenuItemActivateTradingApp.Name = "listViewSignalsMenuItemActivateTradingApp";
             this.listViewSignalsMenuItemActivateTradingApp.Size = new System.Drawing.Size(214, 22);
             this.listViewSignalsMenuItemActivateTradingApp.Text = "Activate trading app";
-            this.listViewSignalsMenuItemActivateTradingApp.Click += new System.EventHandler(this.listViewSignalsMenuItemActivateTradingApp_Click);
+            this.listViewSignalsMenuItemActivateTradingApp.Click += new System.EventHandler(this.ListViewSignalsMenuItemActivateTradingApp_Click);
             // 
             // listViewSignalsMenuItemActivateTradingApps
             // 
             this.listViewSignalsMenuItemActivateTradingApps.Name = "listViewSignalsMenuItemActivateTradingApps";
             this.listViewSignalsMenuItemActivateTradingApps.Size = new System.Drawing.Size(214, 22);
             this.listViewSignalsMenuItemActivateTradingApps.Text = "Trading app + TradingView";
-            this.listViewSignalsMenuItemActivateTradingApps.Click += new System.EventHandler(this.listViewSignalsMenuItemActivateTradingApps_Click);
+            this.listViewSignalsMenuItemActivateTradingApps.Click += new System.EventHandler(this.ListViewSignalsMenuItemActivateTradingApps_Click);
             // 
             // listViewSignalsMenuItemActivateTradingViewInternal
             // 
             this.listViewSignalsMenuItemActivateTradingViewInternal.Name = "listViewSignalsMenuItemActivateTradingViewInternal";
             this.listViewSignalsMenuItemActivateTradingViewInternal.Size = new System.Drawing.Size(214, 22);
             this.listViewSignalsMenuItemActivateTradingViewInternal.Text = "TradingView browser";
-            this.listViewSignalsMenuItemActivateTradingViewInternal.Click += new System.EventHandler(this.listViewSignalsMenuItemActivateTradingViewInternal_Click);
+            this.listViewSignalsMenuItemActivateTradingViewInternal.Click += new System.EventHandler(this.ListViewSignalsMenuItemActivateTradingViewInternal_Click);
             // 
             // listViewSignalsMenuItemActivateTradingViewExternal
             // 
             this.listViewSignalsMenuItemActivateTradingViewExternal.Name = "listViewSignalsMenuItemActivateTradingViewExternal";
             this.listViewSignalsMenuItemActivateTradingViewExternal.Size = new System.Drawing.Size(214, 22);
             this.listViewSignalsMenuItemActivateTradingViewExternal.Text = "Tradingview extern";
-            this.listViewSignalsMenuItemActivateTradingViewExternal.Click += new System.EventHandler(this.listViewSignalsMenuItemActivateTradingviewExternal_Click);
+            this.listViewSignalsMenuItemActivateTradingViewExternal.Click += new System.EventHandler(this.ListViewSignalsMenuItemActivateTradingviewExternal_Click);
             // 
             // listViewSignalsMenuItemShowTrendInformation
             // 
@@ -382,14 +379,14 @@
             this.listViewSignalsMenuItemClearSignals.Name = "listViewSignalsMenuItemClearSignals";
             this.listViewSignalsMenuItemClearSignals.Size = new System.Drawing.Size(214, 22);
             this.listViewSignalsMenuItemClearSignals.Text = "Clear";
-            this.listViewSignalsMenuItemClearSignals.Click += new System.EventHandler(this.listViewSignalsMenuItemClearSignals_Click);
+            this.listViewSignalsMenuItemClearSignals.Click += new System.EventHandler(this.ListViewSignalsMenuItemClearSignals_Click);
             // 
             // listViewSignalsMenuItemCopySignal
             // 
             this.listViewSignalsMenuItemCopySignal.Name = "listViewSignalsMenuItemCopySignal";
             this.listViewSignalsMenuItemCopySignal.Size = new System.Drawing.Size(214, 22);
             this.listViewSignalsMenuItemCopySignal.Text = "Copy";
-            this.listViewSignalsMenuItemCopySignal.Click += new System.EventHandler(this.listViewSignalsMenuItemCopySignal_Click);
+            this.listViewSignalsMenuItemCopySignal.Click += new System.EventHandler(this.ListViewSignalsMenuItemCopySignal_Click);
             // 
             // tabPageBrowser
             // 
@@ -397,7 +394,7 @@
             this.tabPageBrowser.Location = new System.Drawing.Point(4, 22);
             this.tabPageBrowser.Name = "tabPageBrowser";
             this.tabPageBrowser.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageBrowser.Size = new System.Drawing.Size(1314, 543);
+            this.tabPageBrowser.Size = new System.Drawing.Size(1314, 523);
             this.tabPageBrowser.TabIndex = 5;
             this.tabPageBrowser.Text = "Tradingview";
             this.tabPageBrowser.UseVisualStyleBackColor = true;
@@ -410,7 +407,7 @@
             this.webViewTradingView.Dock = System.Windows.Forms.DockStyle.Fill;
             this.webViewTradingView.Location = new System.Drawing.Point(3, 3);
             this.webViewTradingView.Name = "webViewTradingView";
-            this.webViewTradingView.Size = new System.Drawing.Size(1308, 537);
+            this.webViewTradingView.Size = new System.Drawing.Size(1308, 517);
             this.webViewTradingView.TabIndex = 0;
             this.webViewTradingView.ZoomFactor = 1D;
             // 
@@ -421,7 +418,7 @@
             this.tabPageLog.Margin = new System.Windows.Forms.Padding(2);
             this.tabPageLog.Name = "tabPageLog";
             this.tabPageLog.Padding = new System.Windows.Forms.Padding(2);
-            this.tabPageLog.Size = new System.Drawing.Size(1314, 543);
+            this.tabPageLog.Size = new System.Drawing.Size(1314, 523);
             this.tabPageLog.TabIndex = 1;
             this.tabPageLog.Text = "Log";
             this.tabPageLog.UseVisualStyleBackColor = true;
@@ -435,7 +432,7 @@
             this.TextBoxLog.Multiline = true;
             this.TextBoxLog.Name = "TextBoxLog";
             this.TextBoxLog.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.TextBoxLog.Size = new System.Drawing.Size(1310, 539);
+            this.TextBoxLog.Size = new System.Drawing.Size(1310, 519);
             this.TextBoxLog.TabIndex = 1;
             // 
             // tabPageAltrady
@@ -444,7 +441,7 @@
             this.tabPageAltrady.Location = new System.Drawing.Point(4, 22);
             this.tabPageAltrady.Name = "tabPageAltrady";
             this.tabPageAltrady.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageAltrady.Size = new System.Drawing.Size(1314, 543);
+            this.tabPageAltrady.Size = new System.Drawing.Size(1314, 523);
             this.tabPageAltrady.TabIndex = 6;
             this.tabPageAltrady.Text = "tabPage1";
             this.tabPageAltrady.UseVisualStyleBackColor = true;
@@ -457,64 +454,42 @@
             this.webViewAltrady.Dock = System.Windows.Forms.DockStyle.Fill;
             this.webViewAltrady.Location = new System.Drawing.Point(3, 3);
             this.webViewAltrady.Name = "webViewAltrady";
-            this.webViewAltrady.Size = new System.Drawing.Size(1308, 537);
+            this.webViewAltrady.Size = new System.Drawing.Size(1308, 517);
             this.webViewAltrady.TabIndex = 1;
             this.webViewAltrady.ZoomFactor = 1D;
             // 
             // panelTop
             // 
-            this.panelTop.Controls.Add(this.listViewInformation);
             this.panelTop.Controls.Add(this.listViewSymbolPrices);
             this.panelTop.Controls.Add(this.labelBarometerDateValue);
             this.panelTop.Controls.Add(this.comboBoxBarometerInterval);
             this.panelTop.Controls.Add(this.pictureBox1);
-            this.panelTop.Controls.Add(this.labelKLinesTickerCount);
-            this.panelTop.Controls.Add(this.labelAnalyseCount);
-            this.panelTop.Controls.Add(this.labelPriceTicker);
             this.panelTop.Controls.Add(this.comboBoxBarometerQuote);
             this.panelTop.Dock = System.Windows.Forms.DockStyle.Top;
             this.panelTop.Location = new System.Drawing.Point(0, 0);
             this.panelTop.Margin = new System.Windows.Forms.Padding(2);
             this.panelTop.Name = "panelTop";
-            this.panelTop.Size = new System.Drawing.Size(1322, 73);
+            this.panelTop.Size = new System.Drawing.Size(1322, 93);
             this.panelTop.TabIndex = 14;
-            // 
-            // listViewInformation
-            // 
-            this.listViewInformation.Activation = System.Windows.Forms.ItemActivation.OneClick;
-            this.listViewInformation.BackColor = System.Drawing.SystemColors.Control;
-            this.listViewInformation.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.listViewInformation.GridLines = true;
-            this.listViewInformation.HideSelection = false;
-            this.listViewInformation.Location = new System.Drawing.Point(5, 5);
-            this.listViewInformation.Margin = new System.Windows.Forms.Padding(0);
-            this.listViewInformation.MultiSelect = false;
-            this.listViewInformation.Name = "listViewInformation";
-            this.listViewInformation.Scrollable = false;
-            this.listViewInformation.Size = new System.Drawing.Size(337, 63);
-            this.listViewInformation.TabIndex = 76;
-            this.listViewInformation.UseCompatibleStateImageBehavior = false;
-            this.listViewInformation.View = System.Windows.Forms.View.Details;
             // 
             // listViewSymbolPrices
             // 
             this.listViewSymbolPrices.Activation = System.Windows.Forms.ItemActivation.OneClick;
             this.listViewSymbolPrices.BackColor = System.Drawing.SystemColors.Control;
             this.listViewSymbolPrices.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.listViewSymbolPrices.GridLines = true;
-            this.listViewSymbolPrices.HideSelection = false;
-            this.listViewSymbolPrices.Location = new System.Drawing.Point(676, 0);
+            this.listViewSymbolPrices.Location = new System.Drawing.Point(526, 0);
+            this.listViewSymbolPrices.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.listViewSymbolPrices.Name = "listViewSymbolPrices";
             this.listViewSymbolPrices.Scrollable = false;
-            this.listViewSymbolPrices.Size = new System.Drawing.Size(556, 73);
-            this.listViewSymbolPrices.TabIndex = 71;
+            this.listViewSymbolPrices.Size = new System.Drawing.Size(813, 93);
+            this.listViewSymbolPrices.TabIndex = 76;
             this.listViewSymbolPrices.UseCompatibleStateImageBehavior = false;
             this.listViewSymbolPrices.View = System.Windows.Forms.View.Details;
             // 
             // labelBarometerDateValue
             // 
             this.labelBarometerDateValue.AutoSize = true;
-            this.labelBarometerDateValue.Location = new System.Drawing.Point(345, 53);
+            this.labelBarometerDateValue.Location = new System.Drawing.Point(3, 54);
             this.labelBarometerDateValue.Name = "labelBarometerDateValue";
             this.labelBarometerDateValue.Size = new System.Drawing.Size(55, 13);
             this.labelBarometerDateValue.TabIndex = 70;
@@ -524,7 +499,7 @@
             // 
             this.comboBoxBarometerInterval.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboBoxBarometerInterval.FormattingEnabled = true;
-            this.comboBoxBarometerInterval.Location = new System.Drawing.Point(348, 27);
+            this.comboBoxBarometerInterval.Location = new System.Drawing.Point(6, 28);
             this.comboBoxBarometerInterval.Margin = new System.Windows.Forms.Padding(2);
             this.comboBoxBarometerInterval.Name = "comboBoxBarometerInterval";
             this.comboBoxBarometerInterval.Size = new System.Drawing.Size(68, 21);
@@ -534,44 +509,17 @@
             // 
             this.pictureBox1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
-            this.pictureBox1.Location = new System.Drawing.Point(431, 0);
+            this.pictureBox1.Location = new System.Drawing.Point(95, 0);
             this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(235, 71);
+            this.pictureBox1.Size = new System.Drawing.Size(419, 93);
             this.pictureBox1.TabIndex = 67;
             this.pictureBox1.TabStop = false;
-            // 
-            // labelKLinesTickerCount
-            // 
-            this.labelKLinesTickerCount.AutoSize = true;
-            this.labelKLinesTickerCount.Location = new System.Drawing.Point(999, 53);
-            this.labelKLinesTickerCount.Name = "labelKLinesTickerCount";
-            this.labelKLinesTickerCount.Size = new System.Drawing.Size(90, 13);
-            this.labelKLinesTickerCount.TabIndex = 66;
-            this.labelKLinesTickerCount.Text = "1m candle stream";
-            // 
-            // labelAnalyseCount
-            // 
-            this.labelAnalyseCount.AutoSize = true;
-            this.labelAnalyseCount.Location = new System.Drawing.Point(999, 33);
-            this.labelAnalyseCount.Name = "labelAnalyseCount";
-            this.labelAnalyseCount.Size = new System.Drawing.Size(74, 13);
-            this.labelAnalyseCount.TabIndex = 60;
-            this.labelAnalyseCount.Text = "Analyse count";
-            // 
-            // labelPriceTicker
-            // 
-            this.labelPriceTicker.AutoSize = true;
-            this.labelPriceTicker.Location = new System.Drawing.Point(999, 11);
-            this.labelPriceTicker.Name = "labelPriceTicker";
-            this.labelPriceTicker.Size = new System.Drawing.Size(90, 13);
-            this.labelPriceTicker.TabIndex = 59;
-            this.labelPriceTicker.Text = "Price ticker count";
             // 
             // comboBoxBarometerQuote
             // 
             this.comboBoxBarometerQuote.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboBoxBarometerQuote.FormattingEnabled = true;
-            this.comboBoxBarometerQuote.Location = new System.Drawing.Point(348, 3);
+            this.comboBoxBarometerQuote.Location = new System.Drawing.Point(6, 4);
             this.comboBoxBarometerQuote.Margin = new System.Windows.Forms.Padding(2);
             this.comboBoxBarometerQuote.Name = "comboBoxBarometerQuote";
             this.comboBoxBarometerQuote.Size = new System.Drawing.Size(68, 21);
@@ -592,12 +540,12 @@
             // 
             this.timerBarometer.Enabled = true;
             this.timerBarometer.Interval = 5000;
-            this.timerBarometer.Tick += new System.EventHandler(this.timerBarometer_Tick);
+            this.timerBarometer.Tick += new System.EventHandler(this.TimerShowBarometer_Tick);
             // 
             // timerSoundHeartBeat
             // 
             this.timerSoundHeartBeat.Interval = 600000;
-            this.timerSoundHeartBeat.Tick += new System.EventHandler(this.timerSoundHeartBeat_Tick);
+            this.timerSoundHeartBeat.Tick += new System.EventHandler(this.TimerSoundHeartBeat_Tick);
             // 
             // contextMenuStrip1
             // 
@@ -607,7 +555,12 @@
             // timerCandles
             // 
             this.timerCandles.Interval = 10000;
-            this.timerCandles.Tick += new System.EventHandler(this.timerCandles_Tick);
+            this.timerCandles.Tick += new System.EventHandler(this.TimerCandles_Tick);
+            // 
+            // timerAddSignal
+            // 
+            this.timerAddSignal.Enabled = true;
+            this.timerAddSignal.Interval = 1250;
             // 
             // FrmMain
             // 
@@ -664,8 +617,6 @@
         private System.Windows.Forms.ToolStripMenuItem ToolStripMenuItemSettings;
         private System.Windows.Forms.ToolStripMenuItem ToolStripMenuItemRefresh;
         private System.Windows.Forms.ToolStripMenuItem clearMenusToolStripMenuItem;
-        private System.Windows.Forms.Label labelAnalyseCount;
-        private System.Windows.Forms.Label labelPriceTicker;
         private System.Windows.Forms.TabPage tabPageSignals;
         private System.Windows.Forms.Timer timerClearEvents;
         private ListViewDoubleBuffered listViewSignals;
@@ -677,7 +628,6 @@
         private System.Windows.Forms.ToolStripMenuItem listViewSignalsMenuItemActivateTradingViewInternal;
         private System.Windows.Forms.ToolStripMenuItem listViewSignalsMenuItemActivateTradingApps;
         private System.Windows.Forms.ToolStripMenuItem listViewSignalsMenuItemActivateTradingViewExternal;
-        private System.Windows.Forms.Label labelKLinesTickerCount;
         private System.Windows.Forms.ToolStripMenuItem listBoxSymbolsMenuItemActivateTradingviewInternal;
         private System.Windows.Forms.ToolStripMenuItem listBoxSymbolsMenuItemActivateTradingviewExternal;
         private System.Windows.Forms.ToolStripMenuItem listBoxSymbolsMenuItemActivateTradingApp;
@@ -694,12 +644,12 @@
         private System.Windows.Forms.ComboBox comboBoxBarometerInterval;
         private System.Windows.Forms.Label labelBarometerDateValue;
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
-        private CryptoSbmScanner.ListViewDoubleBuffered listViewSymbolPrices;
         private System.Windows.Forms.Timer timerCandles;
         private System.Windows.Forms.Label labelVersion;
-        private CryptoSbmScanner.ListViewDoubleBuffered listViewInformation;
+        private CryptoSbmScanner.ListViewDoubleBuffered listViewSymbolPrices;
         private System.Windows.Forms.ToolStripMenuItem ApplicationPlaySounds;
         private System.Windows.Forms.ToolStripMenuItem ApplicationCreateSignals;
+        private System.Windows.Forms.Timer timerAddSignal;
     }
 }
 
