@@ -81,7 +81,6 @@ static public class GlobalData
     static public event SetCandleTimerEnable SetCandleTimerEnableEvent;
 
     // Some running tasks/threads
-    //static public ThreadSaveCandles TaskSaveCandles { get; set; }
     static public ThreadCreateSignal ThreadCreateSignal { get; set; }
     //static public ThreadOrderHandler ThreadOrderHandler { get; set; }        
 #if TRADEBOT

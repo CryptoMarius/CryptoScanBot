@@ -65,7 +65,6 @@
             pictureBox1 = new PictureBox();
             comboBoxBarometerQuote = new ComboBox();
             panelClient1 = new Panel();
-            timerBarometer = new System.Windows.Forms.Timer(components);
             timerClearEvents = new System.Windows.Forms.Timer(components);
             contextMenuStrip1 = new ContextMenuStrip(components);
             timerAddSignal = new System.Windows.Forms.Timer(components);
@@ -540,12 +539,6 @@
             panelClient1.Size = new Size(1542, 741);
             panelClient1.TabIndex = 12;
             // 
-            // timerBarometer
-            // 
-            timerBarometer.Enabled = true;
-            timerBarometer.Interval = 5000;
-            timerBarometer.Tick += TimerBarometer_Tick;
-            // 
             // contextMenuStrip1
             // 
             contextMenuStrip1.Name = "contextMenuStrip1";
@@ -604,7 +597,6 @@
         private System.Windows.Forms.TextBox TextBoxLog;
         private System.Windows.Forms.ContextMenuStrip listBoxSymbolsMenuStrip;
         private System.Windows.Forms.TextBox symbolFilter;
-        private System.Windows.Forms.Timer timerBarometer;
         private System.Windows.Forms.ComboBox comboBoxBarometerQuote;
         private System.Windows.Forms.MenuStrip applicationMenuStrip;
         private System.Windows.Forms.ToolStripMenuItem MenuMain;

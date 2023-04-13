@@ -325,14 +325,14 @@ public class SignalSbmBaseOversold : SignalSbmBase
         signal.LastPrice = Symbol.LastPrice;
 
         // Koop als de close vlak bij de bb.lower is (c.q. niet te ver naar boven zit)
-        // Dit werkt - maar hierdoor negeren we ook signalen die wel bruikbaar waren.
-        //double? value = CandleLast.CandleData.BollingerBandsLowerBand + 0.25 * CandleLast.CandleData.BollingerBandsDeviation;
-        //if (Symbol.LastPrice > (decimal)value)
-        //{
-        //    ExtraText = string.Format("Symbol.Lastprice {0:N8} > BB.lower + 0.25 * StdDev {1:N8}", Symbol.LastPrice, value);
-        //    signal.LastPrice = Symbol.LastPrice;
-        //    return false;
-        //}
+        // Dit werkt - maar hierdoor negeren we signalen die wellicht bruikbaar waren!
+        double? value = CandleLast.CandleData.BollingerBandsLowerBand + 0.25 * CandleLast.CandleData.BollingerBandsDeviation;
+        if (Symbol.LastPrice > (decimal)value)
+        {
+            ExtraText = string.Format("Symbol.Lastprice {0:N8} > BB.lower + 0.25 * StdDev {1:N8}", Symbol.LastPrice, value);
+            signal.LastPrice = Symbol.LastPrice;
+            return false;
+        }
 
         return true;
     }

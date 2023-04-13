@@ -116,7 +116,11 @@ public class BinanceFetchSymbols
                                     //De te gebruiken precisie in prijzen
                                     symbol.BaseAssetPrecision = binanceSymbol.BaseAssetPrecision;
                                     symbol.QuoteAssetPrecision = binanceSymbol.QuoteAssetPrecision;
-                                    symbol.MinNotional = binanceSymbol.MinNotionalFilter.MinNotional;
+									// Tijdelijke fix voor Binance.net (kan waarschijnlijk weer weg)
+                                    if (binanceSymbol.MinNotionalFilter != null)
+                                        symbol.MinNotional = binanceSymbol.MinNotionalFilter.MinNotional;
+                                    else
+                                        symbol.MinNotional = 0;
 
                                     //Minimale en maximale amount voor een order (in base amount)
                                     symbol.QuantityMinimum = binanceSymbol.LotSizeFilter.MinQuantity;
@@ -152,9 +156,6 @@ public class BinanceFetchSymbols
                             //        GlobalData.AddSymbol(symbol);
                             //}
 
-                            // De (nieuwe)muntparen toevoegen aan de userinterface
-                            GlobalData.SymbolsHaveChanged("");
-
 
                             // De index lijsten opbouwen (een gedeelte van de ~1700 munten)
                             foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
@@ -177,6 +178,9 @@ public class BinanceFetchSymbols
                                     Monitor.Exit(quoteData.SymbolList);
                                 }
                             }
+
+                            // De (nieuwe)muntparen toevoegen aan de userinterface
+                            GlobalData.SymbolsHaveChanged("");
 
                         }
                         catch (Exception error)

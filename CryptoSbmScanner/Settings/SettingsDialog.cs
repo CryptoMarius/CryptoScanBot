@@ -162,10 +162,12 @@ public partial class FrmSettings : Form
         EditTradingApp.SelectedIndex = (int)settings.General.TradingApp;
         EditDoubleClickAction.SelectedIndex = (int)settings.General.DoubleClickAction;
         EditTrendCalculationMethod.SelectedIndex = (int)settings.General.TrendCalculationMethod;
-        EditSoundHeartBeatMinutes.Value = settings.Signal.SoundHeartBeatMinutes;
+        EditSoundHeartBeatMinutes.Value = settings.General.SoundHeartBeatMinutes;
+        EditGetCandleInterval.Value = settings.General.GetCandleInterval;
 
-        EditHideTechnicalStuffSignals.Checked = settings.Signal.HideTechnicalStuffSignals;
-        EditGlobalDataRemoveSignalAfterxCandles.Value = settings.Signal.RemoveSignalAfterxCandles;
+        EditShowFluxIndicator5m.Checked = settings.General.ShowFluxIndicator5m;
+        EditHideTechnicalStuffSignals.Checked = settings.General.HideTechnicalStuffSignals;
+        EditGlobalDataRemoveSignalAfterxCandles.Value = settings.General.RemoveSignalAfterxCandles;
 
         EditBarometer1hMinimal.Value = settings.Signal.Barometer1hMinimal;
         EditLogBarometerToLow.Checked = settings.Signal.LogBarometerToLow;
@@ -234,7 +236,8 @@ public partial class FrmSettings : Form
         EditSoundStobbOverbought.Text = settings.Signal.SoundStobbOverbought;
         EditSoundStobbOversold.Text = settings.Signal.SoundStobbOversold;
         EditStobIncludeRsi.Checked = settings.Signal.StobIncludeRsi;
-        EditStobIncludeSoftSbm.Checked = settings.Signal.StobIncludeSoftSbm;
+        EditStobIncludeSbmMaLines.Checked = settings.Signal.StobIncludeSoftSbm;
+        EditStobIncludeSbmPercAndCrossing.Checked = settings.Signal.StobIncludeSbmPercAndCrossing;
         panelColorStobb.BackColor = settings.Signal.ColorStobb;
 
         // SBM
@@ -385,7 +388,7 @@ public partial class FrmSettings : Form
         checkBoxUseBlackListOversold.Checked = settings.UseBlackListOversold;
         textBoxBlackListOversold.Text = string.Join(",", settings.BlackListOversold);
 
-        checkBoxUseWhiteListOversold.Checked = settings.UseWhiteListOversold;
+        EditUseWhiteListOversold.Checked = settings.UseWhiteListOversold;
         textBoxWhiteListOversold.Text = string.Join(",", settings.WhiteListOversold);
 
         checkBoxUseBlackListOverbought.Checked = settings.UseBlackListOverbought;
@@ -415,12 +418,14 @@ public partial class FrmSettings : Form
         settings.General.TradingApp = (TradingApp)EditTradingApp.SelectedIndex;
         settings.General.DoubleClickAction = (DoubleClickAction)EditDoubleClickAction.SelectedIndex;
         settings.General.TrendCalculationMethod = (TrendCalculationMethod)EditTrendCalculationMethod.SelectedIndex;
-        settings.Signal.SoundHeartBeatMinutes = (int)EditSoundHeartBeatMinutes.Value;
+        settings.General.SoundHeartBeatMinutes = (int)EditSoundHeartBeatMinutes.Value;
+        settings.General.GetCandleInterval = (int)EditGetCandleInterval.Value;
         settings.General.FontName = Font.Name;
         settings.General.FontSize = Font.Size;
 
-        settings.Signal.HideTechnicalStuffSignals = EditHideTechnicalStuffSignals.Checked;
-        settings.Signal.RemoveSignalAfterxCandles = (int)EditGlobalDataRemoveSignalAfterxCandles.Value;
+        settings.General.ShowFluxIndicator5m = EditShowFluxIndicator5m.Checked;
+        settings.General.HideTechnicalStuffSignals = EditHideTechnicalStuffSignals.Checked;
+        settings.General.RemoveSignalAfterxCandles = (int)EditGlobalDataRemoveSignalAfterxCandles.Value;
 
 
         // ------------------------------------------------------------------------------
@@ -476,7 +481,8 @@ public partial class FrmSettings : Form
         settings.Signal.SoundStobbOverbought = EditSoundStobbOverbought.Text;
         settings.Signal.SoundStobbOversold = EditSoundStobbOversold.Text;
         settings.Signal.StobIncludeRsi = EditStobIncludeRsi.Checked;
-        settings.Signal.StobIncludeSoftSbm = EditStobIncludeSoftSbm.Checked;
+        settings.Signal.StobIncludeSoftSbm = EditStobIncludeSbmMaLines.Checked;
+        settings.Signal.StobIncludeSbmPercAndCrossing = EditStobIncludeSbmPercAndCrossing.Checked;
         settings.Signal.ColorStobb = panelColorStobb.BackColor;
 
         // SBM x
@@ -557,7 +563,7 @@ public partial class FrmSettings : Form
         settings.BlackListOversold = blackText.Split(',').ToList();
         settings.BlackListOversold.Sort();
 
-        settings.UseWhiteListOversold = checkBoxUseWhiteListOversold.Checked;
+        settings.UseWhiteListOversold = EditUseWhiteListOversold.Checked;
         string whiteText = textBoxWhiteListOversold.Text.Replace(" ", "").Replace("\r\n", "");
         settings.WhiteListOversold = whiteText.Split(',').ToList();
         settings.WhiteListOversold.Sort();

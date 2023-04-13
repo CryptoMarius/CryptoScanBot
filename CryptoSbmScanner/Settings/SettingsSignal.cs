@@ -10,13 +10,7 @@ public class SettingsSignal
     public bool SoundsActive { get; set; } = true;
     public bool SignalsActive { get; set; } = true;
 
-    public int RemoveSignalAfterxCandles { get; set; } = 15;
-    public bool HideTechnicalStuffSignals { get; set; } = false;
-
     public bool ShowInvalidSignals { get; set; } = false;
-
-    public int SoundHeartBeatMinutes { get; set; } = 0;
-    public string SoundHeartBeat { get; set; } = "sound-heart-beat.wav";
 
     // Minimale 1h barometer om de meldingen te tonen (van - 1.5 tot hoger of iets dergelijks, en te hoog (>5) is eigenlijk ook niet goed)
     public decimal Barometer1hMinimal { get; set; } = -99m;
@@ -52,6 +46,7 @@ public class SettingsSignal
     public string SoundStobbOverbought { get; set; } = "sound-stobb-overbought.wav";
     public bool StobIncludeRsi { get; set; } = false;
     public bool StobIncludeSoftSbm { get; set; } = false;
+    public bool StobIncludeSbmPercAndCrossing { get; set; } = false;    
 
     // SBM1 signals
     // Het BB percentage kan via de user interface uit worden gezet (nomargin)

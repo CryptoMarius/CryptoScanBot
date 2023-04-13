@@ -30,7 +30,8 @@ public class CandleIndicatorData
 
     public double? MacdValue { get; set; }
     public double? MacdSignal { get; set; }
-    public double? MacdHistogram { get; set; }
+    public double? MacdHistogram { get; set; } // kan ook calculated worden (signal - value of andersom)
+    public double? MacdHistogram2 { get { return MacdSignal - MacdValue; } }
 
     /// <summary>
     /// Stoch Oscillator %K (blauw)
@@ -43,11 +44,11 @@ public class CandleIndicatorData
 
     public double? PSar { get; set; }
 
-#if DEBUG
+    //#if DEBUG
     //public double? PSarDave { get; set; }
     //public double? PSarJason { get; set; }
     //public double? PSarTulip { get; set; }
-#endif
+    //#endif
     public double? BollingerBandsUpperBand { get { return Sma20 + BollingerBandsDeviation; } }
     public double? BollingerBandsLowerBand { get { return Sma20 - BollingerBandsDeviation; } }
     public double? BollingerBandsPercentage { get; set; }
@@ -55,9 +56,7 @@ public class CandleIndicatorData
 
     //public KeltnerResult Keltner { get; set; }
 
-    // 200 voor SMA200, //135 voor de MACD 114; // 64; //30 is genoeg voor de laatste waarde in de StochRSI (28) en wat voor wat extra's 
-    // (Dave heeft het verhoogd naar 64, later voor de RSI nog eens naar de 114, en voor de Macd naar 135, SMA naar 200, balen!!)
-    // Voor de SMA lookback willen we 60 sma200's erin, dus 200 + 60 !!
+    // Voor de SMA lookback willen we 60 sma200's erin, dus 200 + 60
     private const int maxCandles = 260;
 
 
@@ -364,7 +363,5 @@ public class CandleIndicatorData
         }
         //DateTime symbolfetchCandleDebug = CandleTools.GetUnixDate(startFetchUnix);  //debug
         return startFetchUnix;
-
     }
-
 }

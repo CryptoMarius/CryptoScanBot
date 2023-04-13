@@ -7,9 +7,6 @@ namespace CryptoSbmScanner.Settings;
 [Serializable]
 public class SettingsBasic
 {
-    //Welke basis munten willen we gebruiken
-    public SortedList<string, CryptoQuoteData> QuoteCoins { get; set; } = new();
-
     /// <summary>
     ///  Standaard instellingen
     /// </summary>
@@ -32,24 +29,26 @@ public class SettingsBasic
     //public SettingsBalanceBot BalanceBot { get; set; } = new SettingsBalanceBot();
 
 
+    //Welke basis munten willen we gebruiken
+    public SortedList<string, CryptoQuoteData> QuoteCoins { get; set; } = new();
+
+
 
     // Als dit aan staat moet de symbol staat in de whitelist dan wordt het toegestaan
     public bool UseWhiteListOversold { get; set; } = false;
-    public List<string> WhiteListOversold = new();
+    public List<string> WhiteListOversold { get; set; } = new();
 
     // Als dit aan en de symbol staat in de blacklist dan wordt de symbol overgeslagen
     public bool UseBlackListOversold { get; set; } = false;
-    public List<string> BlackListOversold = new();
-
-
+    public List<string> BlackListOversold { get; set; } = new();
 
     // Als dit aan staat moet de symbol staat in de whitelist dan wordt het toegestaan
     public bool UseWhiteListOverbought { get; set; } = false;
-    public List<string> WhiteListOverbought = new();
+    public List<string> WhiteListOverbought { get; set; } = new();
 
     // Als dit aan en de symbol staat in de blacklist dan wordt de symbol overgeslagen
     public bool UseBlackListOverbought { get; set; } = false;
-    public List<string> BlackListOverbought = new();
+    public List<string> BlackListOverbought { get; set; } = new();
 
 
 

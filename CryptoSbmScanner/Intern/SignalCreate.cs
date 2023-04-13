@@ -171,7 +171,7 @@ public class SignalCreate
 
         double closeLast = (double)candle.Close;
         double closePrev = (double)candlePrev.Close;
-        double diff =closeLast - closePrev;
+        double diff = closeLast - closePrev;
 
         if (!closePrev.Equals(0))
             return 100.0 * (diff / closePrev);
@@ -362,87 +362,85 @@ public class SignalCreate
     //}
 
 
-//#if DEBUG
-//    /// <summary>
-//    /// Dit is gebaseerd op de "RSI Multi Length [LuxAlgo]"
-//    /// We gebruiken de oversell of overbuy indicator als extra tekst in de melding
-//    /// </summary>
-//    /// <param name="overSell">Retourneer de oversell of de overbuy tellertje</param>
-//    /// <returns></returns>
-//    private int GetFluxIndcator(bool overSell)
-//    {
-//        SortedList<long, CryptoCandle> candles = Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval5m).CandleList;
+    /// <summary>
+    /// Dit is gebaseerd op de "RSI Multi Length [LuxAlgo]"
+    /// We gebruiken de oversell of overbuy indicator als extra tekst in de melding
+    /// </summary>
+    /// <param name="overSell">Retourneer de oversell of de overbuy tellertje</param>
+    /// <returns></returns>
+    private int GetFluxIndcator(bool overSell)
+    {
+        SortedList<long, CryptoCandle> candles = Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval5m).CandleList;
 
-//        // Dat array van 10 (nu globaal)
-//        decimal[] num = new decimal[10];
-//        decimal[] den = new decimal[10];
-//        for (int j = 0; j < 10; j++)
-//        {
-//            num[j] = 0m;
-//            den[j] = 0m;
-//        }
+        // Dat array van 10 (nu globaal)
+        decimal[] num = new decimal[10];
+        decimal[] den = new decimal[10];
+        for (int j = 0; j < 10; j++)
+        {
+            num[j] = 0m;
+            den[j] = 0m;
+        }
 
-//        // Gefixeerde getallen
-//        int min = 10;
-//        int max = 20;
-//        int oversold = 30;
-//        int overbought = 70;
-//        //decimal N = max - min + 1;
+        // Gefixeerde getallen
+        int min = 10;
+        int max = 20;
+        int oversold = 30;
+        int overbought = 70;
+        //decimal N = max - min + 1;
 
-//        int overbuy = 0; // gebruiken we dit keer niet, maar laat maar staan
-//        int oversell = 0;
-//        CryptoCandle candlePrev;
-//        CryptoCandle candleLast = null;
+        int overbuy = 0; // gebruiken we dit keer niet, maar laat maar staan
+        int oversell = 0;
+        CryptoCandle candlePrev;
+        CryptoCandle candleLast = null;
 
-//        for (int j = candles.Count - 30; j < candles.Count; j++)
-//        {
-//            if (j < 1)
-//                continue;
-//            candlePrev = candleLast;
-//            candleLast = candles.Values[j];
-//            if (candlePrev == null)
-//                continue;
+        for (int j = candles.Count - 30; j < candles.Count; j++)
+        {
+            if (j < 1)
+                continue;
+            candlePrev = candleLast;
+            candleLast = candles.Values[j];
+            if (candlePrev == null)
+                continue;
 
-//            int k = 0;
-//            decimal avg = 0m;
-//            overbuy = 0;
-//            oversell = 0;
-//            decimal diff = candleLast.Close - candlePrev.Close;
+            int k = 0;
+            decimal avg = 0m;
+            overbuy = 0;
+            oversell = 0;
+            decimal diff = candleLast.Close - candlePrev.Close;
 
-//            for (int i = min; i < max; i++)
-//            {
-//                decimal alpha = 1 / (decimal)i;
+            for (int i = min; i < max; i++)
+            {
+                decimal alpha = 1 / (decimal)i;
 
-//                decimal num_rma = alpha * diff + (1m - alpha) * num[k];
-//                decimal den_rma = alpha * Math.Abs(diff) + (1m - alpha) * den[k];
+                decimal num_rma = alpha * diff + (1m - alpha) * num[k];
+                decimal den_rma = alpha * Math.Abs(diff) + (1m - alpha) * den[k];
 
-//                decimal rsi;
-//                if (den_rma == 0)
-//                    rsi = 50m;
-//                else
-//                    rsi = 50m * num_rma / den_rma + 50m;
+                decimal rsi;
+                if (den_rma == 0)
+                    rsi = 50m;
+                else
+                    rsi = 50m * num_rma / den_rma + 50m;
 
-//                avg += rsi;
+                avg += rsi;
 
-//                if (rsi > overbought)
-//                    overbuy++;
-//                if (rsi < oversold)
-//                    oversell++;
+                if (rsi > overbought)
+                    overbuy++;
+                if (rsi < oversold)
+                    oversell++;
 
 
-//                num[k] = num_rma;
-//                den[k] = den_rma;
-//                k++;
+                num[k] = num_rma;
+                den[k] = den_rma;
+                k++;
 
-//            }
-//        }
+            }
+        }
 
-//        if (overSell)
-//            return 10 * oversell;
-//        else
-//            return 10 * overbuy;
-//    }
-//#endif
+        if (overSell)
+            return 10 * oversell;
+        else
+            return 10 * overbuy;
+    }
 
     static public List<CryptoCandle> CalculateHistory(SortedList<long, CryptoCandle> candleSticks, int maxCandles)
     {
@@ -629,15 +627,14 @@ public class SignalCreate
         }
 
 
-#if DEBUG
         // Zoveel voegt dit ook weer niet toe
-        //if (GlobalData.ShowExtraStuff)
-        //{
-        //    int oversell = GetFluxIndcator(true);
-        //    if (oversell > 0)
-        //        eventText += " flux 5m=" + oversell.ToString();
-        //}
-#endif
+        if (GlobalData.Settings.General.ShowFluxIndicator5m)
+        {
+            int oversell = GetFluxIndcator(true);
+            //if (oversell > 0)
+            signal.FluxIndicator5m = oversell;
+            //eventText += " flux 5m=" + oversell.ToString();
+        }
 
         // Voor de SignalSlopesTurning* een variabele zetten of 
         // clearen zodat dit signaal niet om de x candles binnenkomt.
@@ -714,11 +711,11 @@ public class SignalCreate
         signal.PSar = candle.CandleData.PSar;
         signal.StochSignal = candle.CandleData.StochSignal;
         signal.StochOscillator = candle.CandleData.StochOscillator;
-#if DEBUG
+        //#if DEBUG
         //signal.PSarDave = candle.CandleData.PSarDave;
         //signal.PSarJason = candle.CandleData.PSarJason;
         //signal.PSarTulip = candle.CandleData.PSarTulip;
-#endif
+        //#endif
         //signal.Ema8 = candle.CandleData.Ema8;
         signal.Ema20 = candle.CandleData.Ema20;
         signal.Ema50 = candle.CandleData.Ema50;
@@ -1133,16 +1130,16 @@ public class SignalCreate
         WriteCell(sheet, column++, row, "Low");
         WriteCell(sheet, column++, row, "Close");
         WriteCell(sheet, column++, row, "Volume");
-                                   
+
         WriteCell(sheet, column++, row, "bb.lower");
         WriteCell(sheet, column++, row, "bb.upper");
         WriteCell(sheet, column++, row, "bb.perc");
-                                   
+
         WriteCell(sheet, column++, row, "Sma200");
         WriteCell(sheet, column++, row, "Sma50");
         WriteCell(sheet, column++, row, "Sma20");
         WriteCell(sheet, column++, row, "PSar");
-                                   
+
         WriteCell(sheet, column++, row, "macd.value");
         WriteCell(sheet, column++, row, "macd.signal");
         WriteCell(sheet, column++, row, "macd.hist");

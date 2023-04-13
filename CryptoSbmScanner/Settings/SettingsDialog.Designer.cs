@@ -38,6 +38,9 @@ partial class FrmSettings
         panel1 = new Panel();
         tabControl = new TabControl();
         tabAlgemeen = new TabPage();
+        EditShowFluxIndicator5m = new CheckBox();
+        label16 = new Label();
+        EditGetCandleInterval = new NumericUpDown();
         label40 = new Label();
         EditTrendCalculationMethod = new ComboBox();
         EditHideTechnicalStuffSignals = new CheckBox();
@@ -90,10 +93,11 @@ partial class FrmSettings
         EditAnalyseInterval2h = new CheckBox();
         EditAnalyseInterval4h = new CheckBox();
         tabSignalStobb = new TabPage();
+        EditStobIncludeSbmPercAndCrossing = new CheckBox();
         label30 = new Label();
         label28 = new Label();
         buttonColorStobb = new Button();
-        EditStobIncludeSoftSbm = new CheckBox();
+        EditStobIncludeSbmMaLines = new CheckBox();
         EditStobIncludeRsi = new CheckBox();
         buttonPlaySoundStobbOversold = new Button();
         buttonPlaySoundStobbOverbought = new Button();
@@ -186,7 +190,7 @@ partial class FrmSettings
         tabWhiteListOversold = new TabPage();
         textBoxWhiteListOversold = new TextBox();
         panel3 = new Panel();
-        checkBoxUseWhiteListOversold = new CheckBox();
+        EditUseWhiteListOversold = new CheckBox();
         tabBlackListOversold = new TabPage();
         textBoxBlackListOversold = new TextBox();
         panel4 = new Panel();
@@ -298,6 +302,7 @@ partial class FrmSettings
         panel1.SuspendLayout();
         tabControl.SuspendLayout();
         tabAlgemeen.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)EditGetCandleInterval).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditGlobalDataRemoveSignalAfterxCandles).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditSoundHeartBeatMinutes).BeginInit();
         tabBasismunten.SuspendLayout();
@@ -451,6 +456,9 @@ partial class FrmSettings
         // 
         // tabAlgemeen
         // 
+        tabAlgemeen.Controls.Add(EditShowFluxIndicator5m);
+        tabAlgemeen.Controls.Add(label16);
+        tabAlgemeen.Controls.Add(EditGetCandleInterval);
         tabAlgemeen.Controls.Add(label40);
         tabAlgemeen.Controls.Add(EditTrendCalculationMethod);
         tabAlgemeen.Controls.Add(EditHideTechnicalStuffSignals);
@@ -472,6 +480,37 @@ partial class FrmSettings
         tabAlgemeen.TabIndex = 6;
         tabAlgemeen.Text = "Algemeen";
         tabAlgemeen.UseVisualStyleBackColor = true;
+        // 
+        // EditShowFluxIndicator5m
+        // 
+        EditShowFluxIndicator5m.AutoSize = true;
+        EditShowFluxIndicator5m.Location = new Point(26, 241);
+        EditShowFluxIndicator5m.Margin = new Padding(4, 3, 4, 3);
+        EditShowFluxIndicator5m.Name = "EditShowFluxIndicator5m";
+        EditShowFluxIndicator5m.Size = new Size(159, 19);
+        EditShowFluxIndicator5m.TabIndex = 163;
+        EditShowFluxIndicator5m.Text = "Toon de FLUX 5m waarde";
+        EditShowFluxIndicator5m.UseVisualStyleBackColor = true;
+        // 
+        // label16
+        // 
+        label16.AutoSize = true;
+        label16.Location = new Point(26, 189);
+        label16.Margin = new Padding(4, 0, 4, 0);
+        label16.Name = "label16";
+        label16.Size = new Size(263, 15);
+        label16.TabIndex = 161;
+        label16.Text = "Iedere x minuten controleren op nieuwe munten";
+        // 
+        // EditGetCandleInterval
+        // 
+        EditGetCandleInterval.Location = new Point(323, 187);
+        EditGetCandleInterval.Margin = new Padding(4, 3, 4, 3);
+        EditGetCandleInterval.Maximum = new decimal(new int[] { 300, 0, 0, 0 });
+        EditGetCandleInterval.Name = "EditGetCandleInterval";
+        EditGetCandleInterval.Size = new Size(57, 23);
+        EditGetCandleInterval.TabIndex = 162;
+        EditGetCandleInterval.Value = new decimal(new int[] { 25, 0, 0, 0 });
         // 
         // label40
         // 
@@ -497,7 +536,7 @@ partial class FrmSettings
         // EditHideTechnicalStuffSignals
         // 
         EditHideTechnicalStuffSignals.AutoSize = true;
-        EditHideTechnicalStuffSignals.Location = new Point(29, 202);
+        EditHideTechnicalStuffSignals.Location = new Point(29, 216);
         EditHideTechnicalStuffSignals.Margin = new Padding(4, 3, 4, 3);
         EditHideTechnicalStuffSignals.Name = "EditHideTechnicalStuffSignals";
         EditHideTechnicalStuffSignals.Size = new Size(386, 19);
@@ -508,7 +547,7 @@ partial class FrmSettings
         // label6
         // 
         label6.AutoSize = true;
-        label6.Location = new Point(26, 162);
+        label6.Location = new Point(26, 164);
         label6.Margin = new Padding(4, 0, 4, 0);
         label6.Name = "label6";
         label6.Size = new Size(243, 15);
@@ -517,7 +556,7 @@ partial class FrmSettings
         // 
         // EditGlobalDataRemoveSignalAfterxCandles
         // 
-        EditGlobalDataRemoveSignalAfterxCandles.Location = new Point(323, 159);
+        EditGlobalDataRemoveSignalAfterxCandles.Location = new Point(323, 161);
         EditGlobalDataRemoveSignalAfterxCandles.Margin = new Padding(4, 3, 4, 3);
         EditGlobalDataRemoveSignalAfterxCandles.Maximum = new decimal(new int[] { 60, 0, 0, 0 });
         EditGlobalDataRemoveSignalAfterxCandles.Minimum = new decimal(new int[] { 2, 0, 0, 0 });
@@ -540,7 +579,7 @@ partial class FrmSettings
         // 
         // buttonFontDialog
         // 
-        buttonFontDialog.Location = new Point(31, 245);
+        buttonFontDialog.Location = new Point(29, 268);
         buttonFontDialog.Margin = new Padding(4, 3, 4, 3);
         buttonFontDialog.Name = "buttonFontDialog";
         buttonFontDialog.Size = new Size(139, 27);
@@ -1055,10 +1094,11 @@ partial class FrmSettings
         // 
         // tabSignalStobb
         // 
+        tabSignalStobb.Controls.Add(EditStobIncludeSbmPercAndCrossing);
         tabSignalStobb.Controls.Add(label30);
         tabSignalStobb.Controls.Add(label28);
         tabSignalStobb.Controls.Add(buttonColorStobb);
-        tabSignalStobb.Controls.Add(EditStobIncludeSoftSbm);
+        tabSignalStobb.Controls.Add(EditStobIncludeSbmMaLines);
         tabSignalStobb.Controls.Add(EditStobIncludeRsi);
         tabSignalStobb.Controls.Add(buttonPlaySoundStobbOversold);
         tabSignalStobb.Controls.Add(buttonPlaySoundStobbOverbought);
@@ -1083,6 +1123,17 @@ partial class FrmSettings
         tabSignalStobb.TabIndex = 1;
         tabSignalStobb.Text = "STOBB";
         tabSignalStobb.UseVisualStyleBackColor = true;
+        // 
+        // EditStobIncludeSbmPercAndCrossing
+        // 
+        EditStobIncludeSbmPercAndCrossing.AutoSize = true;
+        EditStobIncludeSbmPercAndCrossing.Location = new Point(19, 421);
+        EditStobIncludeSbmPercAndCrossing.Margin = new Padding(4, 3, 4, 3);
+        EditStobIncludeSbmPercAndCrossing.Name = "EditStobIncludeSbmPercAndCrossing";
+        EditStobIncludeSbmPercAndCrossing.Size = new Size(252, 19);
+        EditStobIncludeSbmPercAndCrossing.TabIndex = 120;
+        EditStobIncludeSbmPercAndCrossing.Text = "Met SBM condities percentages/kruisingen";
+        EditStobIncludeSbmPercAndCrossing.UseVisualStyleBackColor = true;
         // 
         // label30
         // 
@@ -1114,16 +1165,16 @@ partial class FrmSettings
         buttonColorStobb.Text = "Achtergrond";
         buttonColorStobb.UseVisualStyleBackColor = true;
         // 
-        // EditStobIncludeSoftSbm
+        // EditStobIncludeSbmMaLines
         // 
-        EditStobIncludeSoftSbm.AutoSize = true;
-        EditStobIncludeSoftSbm.Location = new Point(19, 396);
-        EditStobIncludeSoftSbm.Margin = new Padding(4, 3, 4, 3);
-        EditStobIncludeSoftSbm.Name = "EditStobIncludeSoftSbm";
-        EditStobIncludeSoftSbm.Size = new Size(214, 19);
-        EditStobIncludeSoftSbm.TabIndex = 114;
-        EditStobIncludeSoftSbm.Text = "With SBM conditions (without psar)";
-        EditStobIncludeSoftSbm.UseVisualStyleBackColor = true;
+        EditStobIncludeSbmMaLines.AutoSize = true;
+        EditStobIncludeSbmMaLines.Location = new Point(19, 396);
+        EditStobIncludeSbmMaLines.Margin = new Padding(4, 3, 4, 3);
+        EditStobIncludeSbmMaLines.Name = "EditStobIncludeSbmMaLines";
+        EditStobIncludeSbmMaLines.Size = new Size(181, 19);
+        EditStobIncludeSbmMaLines.TabIndex = 114;
+        EditStobIncludeSbmMaLines.Text = "Met SBM condities MA-lijnen";
+        EditStobIncludeSbmMaLines.UseVisualStyleBackColor = true;
         // 
         // EditStobIncludeRsi
         // 
@@ -2140,7 +2191,7 @@ partial class FrmSettings
         // 
         // panel3
         // 
-        panel3.Controls.Add(checkBoxUseWhiteListOversold);
+        panel3.Controls.Add(EditUseWhiteListOversold);
         panel3.Dock = DockStyle.Top;
         panel3.Location = new Point(4, 3);
         panel3.Margin = new Padding(4, 3, 4, 3);
@@ -2148,16 +2199,16 @@ partial class FrmSettings
         panel3.Size = new Size(1224, 57);
         panel3.TabIndex = 1;
         // 
-        // checkBoxUseWhiteListOversold
+        // EditUseWhiteListOversold
         // 
-        checkBoxUseWhiteListOversold.AutoSize = true;
-        checkBoxUseWhiteListOversold.Location = new Point(20, 14);
-        checkBoxUseWhiteListOversold.Margin = new Padding(4, 3, 4, 3);
-        checkBoxUseWhiteListOversold.Name = "checkBoxUseWhiteListOversold";
-        checkBoxUseWhiteListOversold.Size = new Size(268, 19);
-        checkBoxUseWhiteListOversold.TabIndex = 25;
-        checkBoxUseWhiteListOversold.Text = "Gebruik de whitelist voor de oversold signalen";
-        checkBoxUseWhiteListOversold.UseVisualStyleBackColor = true;
+        EditUseWhiteListOversold.AutoSize = true;
+        EditUseWhiteListOversold.Location = new Point(20, 14);
+        EditUseWhiteListOversold.Margin = new Padding(4, 3, 4, 3);
+        EditUseWhiteListOversold.Name = "EditUseWhiteListOversold";
+        EditUseWhiteListOversold.Size = new Size(268, 19);
+        EditUseWhiteListOversold.TabIndex = 25;
+        EditUseWhiteListOversold.Text = "Gebruik de whitelist voor de oversold signalen";
+        EditUseWhiteListOversold.UseVisualStyleBackColor = true;
         // 
         // tabBlackListOversold
         // 
@@ -3369,6 +3420,7 @@ partial class FrmSettings
         tabControl.ResumeLayout(false);
         tabAlgemeen.ResumeLayout(false);
         tabAlgemeen.PerformLayout();
+        ((System.ComponentModel.ISupportInitialize)EditGetCandleInterval).EndInit();
         ((System.ComponentModel.ISupportInitialize)EditGlobalDataRemoveSignalAfterxCandles).EndInit();
         ((System.ComponentModel.ISupportInitialize)EditSoundHeartBeatMinutes).EndInit();
         tabBasismunten.ResumeLayout(false);
@@ -3505,7 +3557,7 @@ partial class FrmSettings
     private System.Windows.Forms.CheckBox EditAnalyseInterval4h;
     private System.Windows.Forms.TabPage tabSignalStobb;
     private System.Windows.Forms.Button buttonColorStobb;
-    private System.Windows.Forms.CheckBox EditStobIncludeSoftSbm;
+    private System.Windows.Forms.CheckBox EditStobIncludeSbmMaLines;
     private System.Windows.Forms.CheckBox EditStobIncludeRsi;
     private System.Windows.Forms.Button buttonPlaySoundStobbOversold;
     private System.Windows.Forms.Button buttonPlaySoundStobbOverbought;
@@ -3587,7 +3639,7 @@ partial class FrmSettings
     private System.Windows.Forms.TabPage tabWhiteListOversold;
     private System.Windows.Forms.TextBox textBoxWhiteListOversold;
     private System.Windows.Forms.Panel panel3;
-    private System.Windows.Forms.CheckBox checkBoxUseWhiteListOversold;
+    private System.Windows.Forms.CheckBox EditUseWhiteListOversold;
     private System.Windows.Forms.TabPage tabBlackListOversold;
     private System.Windows.Forms.TextBox textBoxBlackListOversold;
     private System.Windows.Forms.Panel panel4;
@@ -3713,4 +3765,8 @@ partial class FrmSettings
     private Label label38;
     private Label label48;
     private Label label15;
+    private Label label16;
+    private NumericUpDown EditGetCandleInterval;
+    private CheckBox EditStobIncludeSbmPercAndCrossing;
+    private CheckBox EditShowFluxIndicator5m;
 }

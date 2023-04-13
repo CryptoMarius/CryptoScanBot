@@ -140,10 +140,11 @@ public class CryptoSignal
     public double? Rsi { get; set; }
     public double? SlopeRsi { get; set; }
 
+    public int FluxIndicator5m { get; set; }
     //#if DEBUG
-    //        public double? PSarDave { get; set; }
-    //        public double? PSarJason { get; set; }
-    //        public double? PSarTulip { get; set; }
+    //public double? PSarDave { get; set; }
+    //public double? PSarJason { get; set; }
+    //public double? PSarTulip { get; set; }
     //#endif        
 
     //public double? Ema8 { get; set; }

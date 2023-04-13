@@ -1,11 +1,141 @@
 ﻿using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Settings;
+using System.Collections;
 
 namespace CryptoSbmScanner;
 
+/// <summary>
+/// This class is an implementation of the 'IComparer' interface.
+/// </summary>
+public class ListViewColumnSorter : IComparer
+{
+    public int SortColumn { set; get; } = 0;
+    public SortOrder SortOrder = SortOrder.Descending;
+
+    private readonly CaseInsensitiveComparer ObjectCompare;
+
+    /// <summary>
+    /// Class constructor. Initializes various elements
+    /// </summary>
+    public ListViewColumnSorter()
+    {
+        // Initialize the CaseInsensitiveComparer object
+        ObjectCompare = new CaseInsensitiveComparer();
+    }
+
+    /// <summary>
+    /// This method is inherited from the IComparer interface. It compares the two objects passed using a case insensitive comparison.
+    /// </summary>
+    /// <param name="x">First object to be compared</param>
+    /// <param name="y">Second object to be compared</param>
+    /// <returns>The result of the comparison. "0" if equal, negative if 'x' is less than 'y' and positive if 'x' is greater than 'y'</returns>
+    public int Compare(object x, object y)
+    {
+        // uit de c# documentatie
+
+        // Cast the objects to be compared to ListViewItem objects
+        ListViewItem itemA = (ListViewItem)x;
+        CryptoSignal signalA = (CryptoSignal)itemA.Tag;
+
+        ListViewItem itemB = (ListViewItem)y;
+        CryptoSignal signalB = (CryptoSignal)itemB.Tag;
+
+        int compareResult = SortColumn switch
+        {
+            0 => ObjectCompare.Compare(signalA.CloseDate, signalB.CloseDate),
+            1 => ObjectCompare.Compare(signalA.Symbol.Name, signalB.Symbol.Name),
+            2 => ObjectCompare.Compare(signalA.Interval.IntervalPeriod, signalB.Interval.IntervalPeriod),
+            3 => ObjectCompare.Compare(signalA.ModeText, signalB.ModeText),
+            4 => ObjectCompare.Compare(signalA.StrategyText, signalB.StrategyText),
+            5 => ObjectCompare.Compare(signalA.EventText, signalB.EventText),
+            6 => ObjectCompare.Compare(signalA.Price, signalB.Price),
+            7 => ObjectCompare.Compare(signalA.Volume, signalB.Volume),
+            8 => ObjectCompare.Compare(signalA.TrendIndicator, signalB.TrendIndicator),
+            9 => ObjectCompare.Compare(signalA.TrendPercentage, signalB.TrendPercentage),
+            10 => ObjectCompare.Compare(signalA.Last24HoursChange, signalB.Last24HoursChange),
+            11 => ObjectCompare.Compare(signalA.Last24HoursEffective, signalB.Last24HoursEffective),
+            12 => ObjectCompare.Compare(signalA.BollingerBandsPercentage, signalB.BollingerBandsPercentage),
+            13 => ObjectCompare.Compare(signalA.Rsi, signalB.Rsi),
+            14 => ObjectCompare.Compare(signalA.StochOscillator, signalB.StochOscillator),
+            15 => ObjectCompare.Compare(signalA.StochSignal, signalB.StochSignal),
+            16 => ObjectCompare.Compare(signalA.Sma200, signalB.Sma200),
+            17 => ObjectCompare.Compare(signalA.Sma50, signalB.Sma50),
+            18 => ObjectCompare.Compare(signalA.Sma20, signalB.Sma20),
+            19 => ObjectCompare.Compare(signalA.PSar, signalB.PSar),
+            20 => ObjectCompare.Compare(signalA.FluxIndicator5m, signalB.FluxIndicator5m),
+            _ => 0
+        };
+
+        // Binnen dezelfde records toch een extra onderverdeling maken, anders is het nog steeds "random"
+        if (compareResult == 0)
+        {
+            compareResult = ObjectCompare.Compare(signalA.CloseDate, signalB.CloseDate);
+            if (compareResult == 0)
+            {
+                if (this.SortOrder == SortOrder.Ascending)
+                    compareResult = ObjectCompare.Compare(signalA.Symbol.Name, signalB.Symbol.Name);
+                else
+                    compareResult = ObjectCompare.Compare(signalB.Symbol.Name, signalA.Symbol.Name);
+            }
+            if (compareResult == 0)
+            {
+                if (this.SortOrder == SortOrder.Ascending)
+                    compareResult = ObjectCompare.Compare(signalA.Interval.IntervalPeriod, signalB.Interval.IntervalPeriod);
+                else
+                    compareResult = ObjectCompare.Compare(signalB.Interval.IntervalPeriod, signalA.Interval.IntervalPeriod);
+            }
+        }
+
+
+        // Calculate correct return value based on object comparison
+        if (SortOrder == SortOrder.Ascending)
+            return compareResult;
+        else if (SortOrder == SortOrder.Descending)
+            return (-compareResult);
+        else
+            return 0;
+    }
+
+    public void ClickedOnColumn(int column)
+    {
+        // Determine if clicked column is already the column that is being sorted.
+        if (column == SortColumn)
+        {
+            // Reverse the current sort direction for this column.
+            if (SortOrder == SortOrder.Ascending)
+                SortOrder = SortOrder.Descending;
+            else
+                SortOrder = SortOrder.Ascending;
+        }
+        else
+        {
+            // Set the column number that is to be sorted; default to ascending.
+            SortColumn = column;
+            SortOrder = SortOrder.Ascending;
+        }
+    }
+
+}
+
 public partial class FrmMain
 {
+    private void ListViewSignalsInitOnce()
+    {
+        ListViewColumnSorter listViewColumnSorter = new()
+        {
+            SortOrder = SortOrder.Descending
+        };
+
+        listViewSignals.GridLines = true;
+        listViewSignals.View = View.Details;
+        listViewSignals.FullRowSelect = true;
+        listViewSignals.HideSelection = true;
+
+        listViewSignals.ListViewItemSorter = listViewColumnSorter;
+        listViewSignals.ColumnClick += ListViewSignals_ColumnClick;
+        listViewSignals.SetSortIcon(listViewColumnSorter.SortColumn, listViewColumnSorter.SortOrder);
+    }
 
     private void ListViewSignalsInitCaptions()
     {
@@ -24,34 +154,21 @@ public partial class FrmMain
 
     private void ListViewSignalsInitColumns()
     {
-
-
-        ListViewColumnSorter listViewColumnSorter = new()
-        {
-            SortOrder = SortOrder.Descending
-        };
-        this.listViewSignals.ListViewItemSorter = listViewColumnSorter;
-        this.listViewSignals.ColumnClick += ListViewSignals_ColumnClick;
-        this.listViewSignals.SetSortIcon(listViewColumnSorter.SortColumn, listViewColumnSorter.Order);
-
-
         // Create columns and subitems. Width of -2 indicates auto-size
         listViewSignals.Columns.Add("Candle datum", -2, HorizontalAlignment.Left);
         listViewSignals.Columns.Add("Symbol", -2, HorizontalAlignment.Left);
         listViewSignals.Columns.Add("Interval", -2, HorizontalAlignment.Left);
         listViewSignals.Columns.Add("Mode", -2, HorizontalAlignment.Left);
+        listViewSignals.Columns.Add("Strategie", -2, HorizontalAlignment.Left);
         listViewSignals.Columns.Add("Text", -2, HorizontalAlignment.Left);
-        listViewSignals.Columns.Add("Event", -2, HorizontalAlignment.Left);
         listViewSignals.Columns.Add("Price", -2, HorizontalAlignment.Right);
         listViewSignals.Columns.Add("Volume", -2, HorizontalAlignment.Right);
         listViewSignals.Columns.Add("Trend", -2, HorizontalAlignment.Right);
         listViewSignals.Columns.Add("Trend%", -2, HorizontalAlignment.Right);
         listViewSignals.Columns.Add("24h Change", -2, HorizontalAlignment.Right);
         listViewSignals.Columns.Add("24h Beweging", -2, HorizontalAlignment.Right);
-        //listViewSignals.Columns.Add("Last48C", -2, HorizontalAlignment.Right);
-        //listViewSignals.Columns.Add("Last48E", -2, HorizontalAlignment.Right);
         listViewSignals.Columns.Add("BB%", -2, HorizontalAlignment.Right);
-        if (!GlobalData.Settings.Signal.HideTechnicalStuffSignals)
+        if (!GlobalData.Settings.General.HideTechnicalStuffSignals)
         {
             listViewSignals.Columns.Add("", 20, HorizontalAlignment.Right);
             listViewSignals.Columns.Add("RSI", -2, HorizontalAlignment.Right);
@@ -61,11 +178,7 @@ public partial class FrmMain
             listViewSignals.Columns.Add("Sma50", -2, HorizontalAlignment.Right);
             listViewSignals.Columns.Add("Sma20", -2, HorizontalAlignment.Right);
             listViewSignals.Columns.Add("PSar", -2, HorizontalAlignment.Right);
-#if DEBUG
-            //listViewSignals.Columns.Add("PSarDave", -2, HorizontalAlignment.Right);
-            //listViewSignals.Columns.Add("PSarJason", -2, HorizontalAlignment.Right);
-            //listViewSignals.Columns.Add("PSarTulip", -2, HorizontalAlignment.Right);
-#endif
+            listViewSignals.Columns.Add("Flux 5m", -2, HorizontalAlignment.Right);
         }
         listViewSignals.Columns.Add("", -2, HorizontalAlignment.Right); // filler
 
@@ -78,15 +191,13 @@ public partial class FrmMain
 
     private static ListViewItem AddSignalItem(CryptoSignal signal)
     {
-        ListViewItem.ListViewSubItem subItem;
-
         string s = signal.OpenDate.ToLocalTime().ToString("yyyy-MM-dd HH:mm") + " - " + signal.OpenDate.AddSeconds(signal.Interval.Duration).ToLocalTime().ToString("HH:mm");
         ListViewItem item1 = new(s, -1)
         {
-            UseItemStyleForSubItems = false,
-            Tag = signal
+            UseItemStyleForSubItems = false
         };
 
+        ListViewItem.ListViewSubItem subItem;
 
         s = signal.Symbol.Base + "/" + @signal.Symbol.Quote;
         if (GlobalData.Settings.Signal.LogMinimumTickPercentage)
@@ -216,7 +327,7 @@ public partial class FrmMain
         item1.SubItems.Add(value?.ToString("N2"));
 
 
-        if (!GlobalData.Settings.Signal.HideTechnicalStuffSignals)
+        if (!GlobalData.Settings.General.HideTechnicalStuffSignals)
         {
             item1.SubItems.Add(" ");
 
@@ -278,31 +389,14 @@ public partial class FrmMain
             else
                 item1.SubItems.Add(orgValue);
 
-#if DEBUG
-            //string newValue;
-
-            //value = signal.PSarDave; //.Clamp(signal.Symbol.PriceMinimum, signal.Symbol.PriceMaximum, signal.Symbol.PriceTickSize);
-            //newValue = value?.ToString(signal.Symbol.DisplayFormat);
-            //if (orgValue != newValue)
-            //    item1.SubItems.Add(newValue).ForeColor = Color.Red;
-            //else
-            //    item1.SubItems.Add(newValue);
-
-            //value = signal.PSarJason; //.Clamp(signal.Symbol.PriceMinimum, signal.Symbol.PriceMaximum, signal.Symbol.PriceTickSize);
-            //newValue = value?.ToString(signal.Symbol.DisplayFormat);
-            //if (orgValue != newValue)
-            //    item1.SubItems.Add(newValue).ForeColor = Color.Red;
-            //else
-            //    item1.SubItems.Add(newValue);
-
-            //value = signal.PSarTulip; //.Clamp(signal.Symbol.PriceMinimum, signal.Symbol.PriceMaximum, signal.Symbol.PriceTickSize);
-            //newValue = value?.ToString(signal.Symbol.DisplayFormat);
-            //if (orgValue != newValue)
-            //    item1.SubItems.Add(newValue).ForeColor = Color.Red;
-            //else
-            //    item1.SubItems.Add(newValue);
-#endif
-
+            if (GlobalData.Settings.General.ShowFluxIndicator5m)
+            {
+                value = signal.FluxIndicator5m;
+                if (value != 0)
+                    item1.SubItems.Add(value?.ToString("N0"));
+            }
+            else
+                item1.SubItems.Add("");
         }
         return item1;
     }
@@ -319,7 +413,7 @@ public partial class FrmMain
             {
                 ListViewItem item = listViewSignals.Items[index];
                 CryptoSignal signal = (CryptoSignal)item.Tag;
-                DateTime expirationDate = signal.CloseDate.AddSeconds(GlobalData.Settings.Signal.RemoveSignalAfterxCandles * signal.Interval.Duration); // 15 candles further (display)
+                DateTime expirationDate = signal.CloseDate.AddSeconds(GlobalData.Settings.General.RemoveSignalAfterxCandles * signal.Interval.Duration); // 15 candles further (display)
                 if (expirationDate < DateTime.UtcNow)
                     listViewSignals.Items.RemoveAt(index);
                 else break;
@@ -330,6 +424,7 @@ public partial class FrmMain
             foreach (CryptoSignal signal in signals)
             {
                 ListViewItem item = AddSignalItem(signal);
+                item.Tag = signal;
                 range.Add(item);
             }
 
@@ -352,34 +447,6 @@ public partial class FrmMain
     }
 
 
-    //private void ListViewSignalsAddSignal(CryptoSignal signal)
-    //{
-    //    listViewSignals.BeginUpdate();
-    //    try
-    //    {
-    //        ListViewItem item = AddSignalItem(signal);
-
-    //        // Add the items to the ListView.
-    //        if (listViewSignals.Items.Count > 0)
-    //            listViewSignals.Items.Insert(0, item);
-    //        else
-    //            listViewSignals.Items.Add(item);
-
-    //        //listView1.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
-    //        for (int i = 0; i <= listViewSignals.Columns.Count - 1; i++)
-    //        {
-    //            listViewSignals.Columns[i].Width = -2;
-    //        }
-
-    //        //Thread.Sleep(250);
-    //    }
-    //    finally
-    //    {
-    //        listViewSignals.EndUpdate();
-    //    }
-    //}
-
-
     private void TimerClearOldSignals_Tick(object sender, EventArgs e)
     {
         if (listViewSignals.Items.Count > 0)
@@ -392,7 +459,7 @@ public partial class FrmMain
                 {
                     ListViewItem item = listViewSignals.Items[index];
                     CryptoSignal signal = (CryptoSignal)item.Tag;
-                    DateTime expirationDate = signal.CloseDate.AddSeconds(GlobalData.Settings.Signal.RemoveSignalAfterxCandles * signal.Interval.Duration); // 15 candles further (display)
+                    DateTime expirationDate = signal.CloseDate.AddSeconds(GlobalData.Settings.General.RemoveSignalAfterxCandles * signal.Interval.Duration); // 15 candles further (display)
                     if (expirationDate < DateTime.UtcNow)
                     {
                         if (!startUpdating)
@@ -540,32 +607,10 @@ public partial class FrmMain
 
     private void ListViewSignals_ColumnClick(object sender, ColumnClickEventArgs e)
     {
-        ListViewColumnSorter listViewColumnSorter = (ListViewColumnSorter)listViewSignals.ListViewItemSorter;
-
-
-        // Determine if clicked column is already the column that is being sorted.
-        if (e.Column == listViewColumnSorter.SortColumn)
-        {
-            // Reverse the current sort direction for this column.
-            if (listViewColumnSorter.Order == SortOrder.Ascending)
-            {
-                listViewColumnSorter.Order = SortOrder.Descending;
-            }
-            else
-            {
-                listViewColumnSorter.Order = SortOrder.Ascending;
-            }
-        }
-        else
-        {
-            // Set the column number that is to be sorted; default to ascending.
-            listViewColumnSorter.SortColumn = e.Column;
-            listViewColumnSorter.Order = SortOrder.Ascending;
-        }
-
         // Perform the sort with these new sort options.
-        this.listViewSignals.Sort();
-        this.listViewSignals.SetSortIcon(listViewColumnSorter.SortColumn, listViewColumnSorter.Order);
-
+        ListViewColumnSorter listViewColumnSorter = (ListViewColumnSorter)listViewSignals.ListViewItemSorter;
+        listViewColumnSorter.ClickedOnColumn(e.Column);
+        listViewSignals.SetSortIcon(listViewColumnSorter.SortColumn, listViewColumnSorter.SortOrder);
+        listViewSignals.Sort();
     }
 }

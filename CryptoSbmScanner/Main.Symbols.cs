@@ -6,6 +6,14 @@ namespace CryptoSbmScanner;
 
 public partial class FrmMain
 {
+    private void ListViewSymbolsInitOnce()
+    {
+        listViewSymbolPrices.GridLines = false;
+        listViewSymbolPrices.View = View.Details;
+        listViewSymbolPrices.FullRowSelect = true;
+        listViewSymbolPrices.HideSelection = true;
+    }
+
     private void ListboxSymbolsInitCaptions()
     {
         switch (GlobalData.Settings.General.TradingApp)

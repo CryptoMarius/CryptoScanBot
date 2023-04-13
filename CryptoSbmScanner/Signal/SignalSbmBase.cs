@@ -103,9 +103,10 @@ public class SignalSbmBase : SignalBase
 #endif
                 }
             }
-#if DEBUG
-            else GlobalData.AddTextToLogTab(lastCandle.DateLocal.ToString() + " " + Symbol.Name + " " + Interval.Name + " ma200-50, geen candle! " + Candles.Count);
-#endif
+            //#if DEBUG
+            //Right, lastcandle is er niet, wat onaardig en onoplettend
+            //else GlobalData.AddTextToLogTab(lastCandle.DateLocal.ToString() + " " + Symbol.Name + " " + Interval.Name + " ma200-50, geen candle! " + Candles.Count);
+            //#endif
 
             candlesAgo++;
             candleCount--;
@@ -155,9 +156,10 @@ public class SignalSbmBase : SignalBase
 #endif
                 }
             }
-#if DEBUG
-            else GlobalData.AddTextToLogTab(lastCandle.DateLocal.ToString() + " " + Symbol.Name + " " + Interval.Name + " ma200-20, geen candle! " + Candles.Count);
-#endif
+//#if DEBUG
+//Right, lastcandle is er niet, wat onaardig en onoplettend
+            //else GlobalData.AddTextToLogTab(lastCandle.DateLocal.ToString() + " " + Symbol.Name + " " + Interval.Name + " ma200-20, geen candle! " + Candles.Count);
+//#endif
             candlesAgo++;
             candleCount--;
             prevCandle = lastCandle;
@@ -207,9 +209,10 @@ public class SignalSbmBase : SignalBase
 #endif
                 }
             }
-#if DEBUG
-            else GlobalData.AddTextToLogTab(lastCandle.DateLocal.ToString() + " " + Symbol.Name + " " + Interval.Name + " ma50-20, geen candle! " + Candles.Count);
-#endif
+            //#if DEBUG
+            //Right, lastcandle is er niet, wat onaardig en onoplettend
+            //else GlobalData.AddTextToLogTab(lastCandle.DateLocal.ToString() + " " + Symbol.Name + " " + Interval.Name + " ma50-20, geen candle! " + Candles.Count);
+            //#endif
 
             candlesAgo++;
             candleCount--;

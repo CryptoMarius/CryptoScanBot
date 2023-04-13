@@ -305,10 +305,10 @@ public class BinanceFetchCandles
                     GlobalData.AddTextToLogTab("");
                     GlobalData.AddTextToLogTab("Ophalen " + exchange.Name);
 
+                    // Bij het opstarten is deze (vanuit de LoadData) reeds uitgevoerd
                     if (GlobalData.ApplicationStatus != ApplicationStatus.AppStatusPrepare)
-                    {
-                        await Task.Run(BinanceFetchSymbols.ExecuteAsync); // NO await, this one has to be parallel
-                    }
+                        await Task.Run(BinanceFetchSymbols.ExecuteAsync);
+                    
                     GlobalData.AddTextToLogTab("Aantal symbols = " + exchange.SymbolListName.Values.Count.ToString());
 
 
@@ -346,11 +346,10 @@ public class BinanceFetchCandles
                 }
                 finally
                 {
-                    Semaphore.Release();
-
                     // Enabled analysing
-                    GlobalData.SetCandleTimerEnable(false);
-                    GlobalData.SetCandleTimerEnable(GlobalData.Settings.General.GetCandleInterval > 0);
+                    GlobalData.SetCandleTimerEnable(true);
+
+                    Semaphore.Release();
                 }
             }
             catch (Exception error)
@@ -359,10 +358,6 @@ public class BinanceFetchCandles
                 GlobalData.AddTextToLogTab("error get prices " + error.ToString() + "\r\n");
             }
         }
-
-        // Assume we now can run
-        GlobalData.ApplicationStatus = ApplicationStatus.AppStatusRunning;
-
     }
 
 

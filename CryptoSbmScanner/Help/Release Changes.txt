@@ -2,6 +2,13 @@ Mis je iets in onderstaande bevindingen/todo's of toekomstige todo's, geef het A
 
 
 Bevindingen/Todo's:
+- Comments kunnen toevoegen aan de munten die op de white- en black list staan.
+- De regeleinden van de white- en black list niet verwijderen (dat leest makkelijker)
+- NALV TUSD: De header labels ontbreken op dit moment
+- NALV TUSD: De plaatsing van controls gaat niet goed bij een afwijkend lettertype/grootte gebruikt
+- Het lettertype c.q. grotte van de barometer waardes in de grafiek zijn afwijkend
+- Via de groep coindelist een munt direct op de blacklist zetten voor zowel oversold als overbought
+- Meldingen naar een externe applicatie c.q. script sturen
 - Meldingen naar een syslog server sturen (statistiek)
 - Indien de applicatie traag(?) afsluit wordt tijdens het afsluiten opnieuw begonnen met het activeren van de scanner (ophalen candles enzovoort)
 - De listbox met munten op links met een splitter kunnen verbergen / c.q. dichtklappen
@@ -25,64 +32,80 @@ Bevindingen/Todo's:
 - Ondersteuning van andere exchanges (dat heeft momenteel niet mijn prioriteit)
   Gezien het geheugengebruik die de tool heeft is een combinatie van exchanges niet aan te raden.
 
-
 TODO:
   Is het nieuwe experiment met de SMA20 - Slope positive iets, of is dat ten dode opgeschreven
   (ik heb echt 1 mooie mogelijkheid gezien, maar je moet het maar net openen en opmerken)
   Ik denk niet dat deze aanpak geschikt is voor een bot?
   (ach, waarom niet, 1 extra conditie, de ema50 > sma50)
-
-TODO: De oversold en Overbought zijn "verschillend"
-  de GiveUp() en CanStepIn zijn soms niet geimplementeerd
-
-TODO: Wil ik de bot uitleveren in de volgende versie?
-  Dat is nog wel een dingetje om te introduceren en te documenteren?
+  De trend moet redelijk positief zijn om deze varianten te gebruiken
 
 TODO: HARDCODED API KEY's weghalen (ze kunner er niets mee, maar just in case)
   Alleen voor Papertrading dus big deal...
 
-- In de Overbought van de SBM wordt geen rekening gehouden met de percentages tussen de MA lijnen
-
-TODO: Nadat je naar deze versie bent gegaan kan een oudere scanner niet meer worden opgestart
-(json problemen met de "General.WindowPosition.Location")
-
 TODO:
-- Ik laat de STOBB (icm met het SBM vinkje) nu ook de ma% afstand en kruising controleren?
-  Omdat het anders is moet dit wellicht even met een extra instelling?
+  Nadat je naar deze versie bent gegaan kan een oudere scanner niet meer worden opgestart
+  (json problemen met de "General.WindowPosition.Location")
 
 TODO:
 - Marco doet iets met een multi timeframe, op de 15m is het een positieve trend (via de ema)
   En dan stap ie op een sbm 3m in, is dat iets wat realistisch is, rare combinatie)
 
 TODO:
-- Extra instellingen voor de 24 uur effectief maken!
+- Extra instellingen voor de "24 uur effectief" maken!
+  Dit is om de pump en dumps beter te detecteren
 
-xx-xx-2023 1.8.0
+TODO:
+- De JUMP heeft nu "last" van de "technische afkeuring", terwijl dat voor jumps helemaal niet relevant is
+  Hoe kan ik die flow verbeteren?
+
+
+xx-xx-2023 1.8.0 (gedeeltelijk ingehaald door de 1.7.2 vanwege de hotfix)
+- De sortering werkt niet goed, het lijkt zelfs een eenmalige sortering!
+- Instellingen verplaats van het signaal naar de "general" gedeelte (de instelling gaat hierdoor verloren)
+  (Heartbeat, verwijderen signalen na x min, verbergen technische gegevens)
+- Extra STOBB instelling waardoor nu ook de ma% afstand en kruising gecontroleerd kan worden
+- Het verversen van de Binance informatie configureerbaar maken (detectie nieuwe of delisted munten)
 - Een detectie maken die als de candlestream niet meer werkt deze opnieuw opstart
   (dat mag best een paar minuten duren zolang het maar hersteld)
-- Kunnen dubbelklikken op de fear and greed index (https://alternative.me/crypto/fear-and-greed-index/)
-- Kunnen dubbelklikken op de US dollar index e.d. en dat je dan in de (interne) Tradingview uitkomt bij de juist chart uitkomt.
+* Kunnen dubbelklikken op de fear and greed index (https://alternative.me/crypto/fear-and-greed-index/)
+* Kunnen dubbelklikken op de US dollar index e.d. en dat je dan in de (interne) Tradingview uitkomt bij de juist chart uitkomt.
 - De 1h, 4h en 24h barometer in de graph zetten zodat ze niet iedere 5 seconden worden bijgewerkt
-- Uitbreiding van basismunten (waaronder de TUSD enzovoort)
+* Uitbreiding van basismunten (waaronder de TUSD enzovoort)
 - Naar aanleiding van de Binance storing op 24 maart de ontbrekende candles automatisch invullen
 - Upgrade naar .net 7 (met dank aan Harmen Kooiker)
-- Sorteer indicatie op de kolom waarop gesorteerd wordt
+* Sorteer indicatie op de kolom waarop gesorteerd wordt
 - Bij het afsluiten kan de applicatie alsnog candles gaan ophalen doordat de timer nog loopt en de applicatie status niet gecontroleerd wordt
 - De logmeldingen werken van boven naar beneden (iemand stelde voor om het om te draaien)
   Niet opgelost: Dat laat ik achterwege want er zijn ook multiline teksten zoals trend details met meerdere regels (en het was bovendien geen groot issue)
 - Een typefoutje in een error-melding in de log. Ik had even internet uitstaan en toen kwam in de log deze melding: 
   "HttpRequestException - Er is een fout opgetreden bij het verzenden van het aanvraag" : het/de aanvraag.
   Niet opgelost: want waarschijnlijk zijn er andere vertaal zaken aanwezig die door de libraries (of Google?) krom zijn vertaald.
-- Op de naam van de kolom kunnen sorteren (2e sleutel is de eindtijd, 3e sleutel de symbol en de 4e is het interval).
+* Op de naam van de kolom kunnen sorteren (2e sleutel is de eindtijd, 3e sleutel de symbol en de 4e is het interval).
   Sorteren moet niet op basis van de tekst maar op basis van de waarde (indien relevant)
-- De signalen sorteren op candle-eindtijd, naam en dan interval (de default sortering).
-- Met de basismunt USDT actief wordt bij iedere herstart alsnog candles opgehaald, dit zijn dan de UP en de DOWN munten (die sluit ik normaliter uit, bij het ophalen van de candles kloppen de condities niet)
-- Bij veel signalen wordt de applicatie traag. De mutaties op de lijst met signalen lijkt de oorzaak te zijn
+* De signalen sorteren op candle-eindtijd, naam en dan interval (de default sortering).
+* Met de basismunt USDT actief wordt bij iedere herstart alsnog candles opgehaald (de UP en de DOWN munten).
+  (deze sluit ik normaliter uit, maar bij het ophalen van de candles kloppen de condities niet)
+* Bij veel signalen wordt de applicatie traag. De mutaties op de lijst met signalen lijkt de oorzaak te zijn
   (de signalen worden nu gecached en 1 seconde vertraging helpt al behoorlijk)
   NB: Dit was ook echt een ergernis voor mij, blij dat het opgelost is!
 - Aanpassingen trend, 2 nieuwe variaties, 1 op basis van cAlgo en een op basis van EMA.
   Het is een experiment om dit te verbeteren, maar echt veel beter is het niet geworden.
   Zie opmerking bij de TODO's "Validatie van de trenddetails" in het voorgaande stukje
+
+12-04-2023 1.7.2
+- Kunnen dubbelklikken op de fear and greed index (https://alternative.me/crypto/fear-and-greed-index/)
+- Kunnen dubbelklikken op de US dollar index e.d. en dat je dan in de (interne) Tradingview uitkomt bij de juist chart uitkomt.
+- Met de basismunt USDT actief wordt bij iedere herstart alsnog candles opgehaald (de UP en de DOWN munten).
+  (deze sluit ik normaliter uit, maar bij het ophalen van de candles kloppen de condities niet)
+- Op de naam van de kolom kunnen sorteren (2e sleutel is de eindtijd, 3e sleutel de symbol en de 4e is het interval).
+  Sorteren moet niet op basis van de tekst maar op basis van de waarde (indien relevant)
+- De signalen sorteren op candle-eindtijd, naam en dan interval (de default sortering).
+- Sorteer indicatie op de kolom waarop gesorteerd wordt
+- Uitbreiding van basismunten (waaronder de TUSD enzovoort)
+- Fix voor een Deserialize foutmelding op de exchangeinfo
+- Bij veel signalen wordt de applicatie traag. De mutaties op de lijst met signalen lijkt de oorzaak te zijn
+  (de signalen worden nu gecached en 1 seconde vertraging helpt al behoorlijk)
+  NB: Dit was ook echt een ergernis voor mij, blij dat het opgelost is!
 
 01-03-2023 1.7.1
 - Het geheel open source maken (https://github.com/CryptoMarius/CryptoSbmScanner)

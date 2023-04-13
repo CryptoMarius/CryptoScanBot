@@ -15,7 +15,7 @@ public class SignalSbm1Overbought : SignalSbmBaseOverbought
     }
 
 
-    public bool HadStobbInThelastXCandles(int candleCount = 10)
+    public bool HadStobbInThelastXCandles(int candleCount)
     {
         // Is de prijs onlangs dicht bij de onderste bb geweest?
         CryptoCandle last = CandleLast;
@@ -45,9 +45,6 @@ public class SignalSbm1Overbought : SignalSbmBaseOverbought
             ExtraText = "geen stob in de laatste x candles";
             return false;
         }
-
-        if (!IsMacdRecoveryOverbought(GlobalData.Settings.Signal.SbmCandlesForMacdRecovery))
-            return false;
 
         return true;
     }

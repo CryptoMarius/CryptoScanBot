@@ -3,7 +3,7 @@ using CryptoSbmScanner.Model;
 
 namespace CryptoSbmScanner.Signal;
 
-public class SignalStobbOverbought : SignalBase
+public class SignalStobbOverbought : SignalSbmBaseOversold
 {
     public SignalStobbOverbought(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
@@ -11,6 +11,7 @@ public class SignalStobbOverbought : SignalBase
         SignalMode = SignalMode.modeShort;
         SignalStrategy = SignalStrategy.stobbOverbought;
     }
+
 
     public override bool IndicatorsOkay(CryptoCandle candle)
     {
@@ -26,6 +27,50 @@ public class SignalStobbOverbought : SignalBase
         return true;
     }
 
+
+    public override string DisplayText()
+    {
+        return string.Format("stoch.oscillator={0:N8} stoch.signal={1:N8}",
+            CandleLast.CandleData.StochOscillator,
+            CandleLast.CandleData.StochSignal
+        );
+    }
+
+
+    public override bool AdditionalChecks(CryptoCandle candle, out string response)
+    {
+        if (GlobalData.Settings.Signal.StobIncludeSoftSbm)
+        {
+            if (!CandleLast.IsSbmConditionsOversold(false))
+            {
+                response = "geen sbm condities";
+                return false;
+            }
+        }
+
+        if (GlobalData.Settings.Signal.StobIncludeSbmPercAndCrossing)
+        {
+            if (!candle.IsSma200AndSma50OkayOverbought(GlobalData.Settings.Signal.SbmMa200AndMa50Percentage, out response))
+                return false;
+            if (!candle.IsSma200AndSma20OkayOverbought(GlobalData.Settings.Signal.SbmMa200AndMa20Percentage, out response))
+                return false;
+            if (!candle.IsSma50AndSma20OkayOverbought(GlobalData.Settings.Signal.SbmMa50AndMa20Percentage, out response))
+                return false;
+
+            if (!CheckMaCrossings(out response))
+                return false;
+        }
+        
+        if (GlobalData.Settings.Signal.StobIncludeRsi && !CandleLast.IsRsiOversold())
+        {
+            response = "rsi niet overbought";
+            return false;
+        }
+
+
+        response = "";
+        return true;
+    }
 
     public override bool IsSignal()
     {
@@ -52,17 +97,21 @@ public class SignalStobbOverbought : SignalBase
             return false;
         }
 
-        if (GlobalData.Settings.Signal.StobIncludeRsi && !CandleLast.IsRsiOverbought())
-        {
-            ExtraText = "rsi niet overbought";
-            return false;
-        }
 
-        if (GlobalData.Settings.Signal.StobIncludeSoftSbm && !CandleLast.IsSbmConditionsOverbought(false))
-        {
-            ExtraText = "geen soft sbm condities";
-            return false;
-        }
+        // TODO: Wellicht toch weer activeren?
+        // Platte candles of candles zonder volume
+        // EXTRA (anders krijg je toch vreemde momenten met platte candles)
+        //CryptoSignal Signal = new CryptoSignal();
+        //SignalCreate.CalculateAdditionalAlarmProperties(Signal, Candles.Values.ToList(), 30, CandleLast.OpenTime);
+        //if (GlobalData.Settings.Signal.CandlesWithZeroVolume > 0 && Signal.CandlesWithZeroVolume >= GlobalData.Settings.Signal.CandlesWithZeroVolume)
+        //    return false;
+        //if (GlobalData.Settings.Signal.CandlesWithFlatPrice > 0 && Signal.CandlesWithFlatPrice >= GlobalData.Settings.Signal.CandlesWithFlatPrice)
+        //    return false;
+        //if (GlobalData.Settings.Signal.AboveBollingerBandsSma > 0 && Signal.AboveBollingerBandsSma < GlobalData.Settings.Signal.AboveBollingerBandsSma)
+        //    return false;
+        //if (GlobalData.Settings.Signal.AboveBollingerBandsUpper > 0 && Signal.AboveBollingerBandsUpper < GlobalData.Settings.Signal.AboveBollingerBandsUpper)
+        //    return false;
+
 
         return true;
     }
@@ -77,8 +126,61 @@ public class SignalStobbOverbought : SignalBase
 
     public override bool GiveUp(CryptoSignal signal)
     {
+        // De breedte van de bb is ten minste 1.5%
+        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.StobbBBMinPercentage, GlobalData.Settings.Signal.StobbBBMaxPercentage))
+        {
+            ExtraText = "bb.width te klein " + CandleLast.CandleData.BollingerBandsPercentage?.ToString("N2");
+            return true;
+        }
+
+
+        if (Math.Min(CandleLast.Open, CandleLast.Close) <= (decimal)CandleLast.CandleData.Sma20)
+        {
+            //reason = string.Format("{0} give up (pricewise.body < bb) {1}", text, dcaPrice.ToString0());
+            ExtraText = "give up (pricewise.body > bb)";
+            return true;
+        }
+
+
+        if (CandleLast.CandleData.StochOscillator <= 20)
+        {
+            ExtraText = "give up(stoch.osc > 80)";
+            //AppendLine(string.Format("{0} give up (stoch.osc < 20) {1}", text, dcaPrice.ToString0());
+            return true;
+        }
+
+
+        // Langer dan x candles willen we niet wachten
+        if ((CandleLast.OpenTime - signal.EventTime) > GlobalData.Settings.Bot.GlobalBuyRemoveTime * Interval.Duration)
+        {
+            ExtraText = "Ophouden na 10 candles";
+            return true;
+        }
+
+        if (CandleLast.CandleData.PSar < CandleLast.CandleData.Sma20)
+        {
+            ExtraText = string.Format("De PSAR staat onder de sma20 {0:N8}", CandleLast.CandleData.PSar);
+            return true;
+        }
+
+        if (Symbol.LastPrice < (decimal)CandleLast.CandleData.Sma20)
+        {
+            ExtraText = string.Format("De prijs staat onder de sma20 {0:N8}", Symbol.LastPrice);
+            return true;
+        }
+
+
+        // Als de barometer alsnog daalt dan stoppen
+        BarometerData barometerData = Symbol.QuoteData.BarometerList[(long)CryptoIntervalPeriod.interval1h];
+        if (barometerData.PriceBarometer >= GlobalData.Settings.Bot.Barometer01hBotMinimal)
+        {
+            ExtraText = string.Format("Barometer 1h {0} below {1}", barometerData.PriceBarometer?.ToString0("N2"), GlobalData.Settings.Bot.Barometer01hBotMinimal.ToString0("N2"));
+            return true;
+        }
+
+        ExtraText = "";
         return false;
     }
 
-
 }
+

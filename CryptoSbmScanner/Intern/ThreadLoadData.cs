@@ -128,19 +128,21 @@ public class ThreadLoadData
         try
         {
             // Reset alles zodat we opnieuw een LoadData kunnen doen?
+            GlobalData.IntervalList.Clear();
             GlobalData.ExchangeListName.Clear();
-            GlobalData.InitializeIntervalList();
             GlobalData.SymbolBlackListOversold.Clear();
             GlobalData.SymbolWhiteListOversold.Clear();
             GlobalData.SymbolBlackListOverbought.Clear();
             GlobalData.SymbolWhiteListOverbought.Clear();
 
             {
+                GlobalData.InitializeIntervalList();
+
                 //************************************************************************************
                 //Informatie uit de database lezen
                 //************************************************************************************
                 GlobalData.InitExchanges();
-                //DataStore.LoadExchanges();
+                //DataStore.LoadExchanges(); overbodig
                 //DataStore.LoadSymbols(); overbodig
 
 
@@ -148,7 +150,7 @@ public class ThreadLoadData
                 // Alle symbols van de exchange halen en mergen met de ingelezen symbols.
                 // Via een event worden de muntparen in de userinterface gezet (dat duurt even)
                 //************************************************************************************
-                await Task.Run(async () => { await BinanceFetchSymbols.ExecuteAsync(); }); // Geen await, deze mag/MOET parallel
+                await Task.Run(async () => { await BinanceFetchSymbols.ExecuteAsync(); });
 
                 // Na het inlezen van de symbols de lijsten goed zetten
                 GlobalData.InitWhiteAndBlackListSettings();
@@ -299,6 +301,12 @@ public class ThreadLoadData
             }
 
 
+            await Task.Factory.StartNew(() => new TradingViewSymbolInfo().Start("TVC:DXY", "US Dollar Index", "N2", GlobalData.TradingViewDollarIndex, 10));
+            await Task.Factory.StartNew(() => new TradingViewSymbolInfo().Start("SP:SPX", "S&P 500", "N2", GlobalData.TradingViewSpx500, 10));
+            await Task.Factory.StartNew(() => new TradingViewSymbolInfo().Start("CRYPTOCAP:BTC.D", "BTC Dominance", "N2", GlobalData.TradingViewBitcoinDominance, 10));
+            await Task.Factory.StartNew(() => new TradingViewSymbolInfo().Start("CRYPTOCAP:TOTAL3", "Market Cap total", "N0", GlobalData.TradingViewMarketCapTotal, 10));
+
+
             //************************************************************************************
             // Om het volume per symbol en laatste prijs te achterhalen (weet geen betere manier)
             //************************************************************************************
@@ -316,11 +324,6 @@ public class ThreadLoadData
             //Ze zijn er allemaal wel, deze is overbodig
             //CalculateMissingCandles();
 
-
-            await Task.Factory.StartNew(() => new TradingViewSymbolInfo().Start("TVC:DXY", "US Dollar Index", "N2", GlobalData.TradingViewDollarIndex, 10));
-            await Task.Factory.StartNew(() => new TradingViewSymbolInfo().Start("SP:SPX", "S&P 500", "N2", GlobalData.TradingViewSpx500, 10));
-            await Task.Factory.StartNew(() => new TradingViewSymbolInfo().Start("CRYPTOCAP:BTC.D", "BTC Dominance", "N2", GlobalData.TradingViewBitcoinDominance, 10));
-            await Task.Factory.StartNew(() => new TradingViewSymbolInfo().Start("CRYPTOCAP:TOTAL3", "Market Cap total", "N0", GlobalData.TradingViewMarketCapTotal, 10));
 
 
             //************************************************************************************
@@ -364,6 +367,10 @@ public class ThreadLoadData
 
             // Dit is een enorme cpu drain, eventjes 3 * 250 * ~3 intervallen bijlangs
             //RecalculateLastXCandles(1);
+
+            // Assume we now can run
+            GlobalData.ApplicationStatus = ApplicationStatus.AppStatusRunning;
+
         }
         catch (Exception error)
         {

@@ -40,6 +40,13 @@ public class SettingsGeneral
 
     public int GetCandleInterval { get; set; } = 60;
 
+    public bool ShowFluxIndicator5m { get; set; } = false;
+    public int RemoveSignalAfterxCandles { get; set; } = 15;
+    public bool HideTechnicalStuffSignals { get; set; } = false;
+
+    public int SoundHeartBeatMinutes { get; set; } = 0;
+    public string SoundHeartBeat { get; set; } = "sound-heart-beat.wav";
+
     [JsonConverter(typeof(Intern.RectangleConverter))]
     public Rectangle WindowPosition { get; set; } = new Rectangle();
     public FormWindowState WindowState { get; set; } = FormWindowState.Normal;

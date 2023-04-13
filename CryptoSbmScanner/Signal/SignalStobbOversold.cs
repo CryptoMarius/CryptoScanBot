@@ -17,6 +17,7 @@ public class SignalStobbOversold : SignalSbmBaseOversold // inherit from sbm bec
     {
         if ((candle == null)
            || (candle.CandleData == null)
+           || (candle.CandleData.Sma20 == null)
            || (candle.CandleData.StochSignal == null)
            || (candle.CandleData.StochOscillator == null)
            || (candle.CandleData.BollingerBandsDeviation == null)
@@ -42,11 +43,13 @@ public class SignalStobbOversold : SignalSbmBaseOversold // inherit from sbm bec
         {
             if (!CandleLast.IsSbmConditionsOversold(false))
             {
-                response = "maar geen sbm condities";
+                response = "geen sbm condities";
                 return false;
             }
+        }
 
-            // TODO: Een instelling hiervoor maken!!
+        if (GlobalData.Settings.Signal.StobIncludeSbmPercAndCrossing)
+        {
             if (!candle.IsSma200AndSma50OkayOversold(GlobalData.Settings.Signal.SbmMa200AndMa50Percentage, out response))
                 return false;
             if (!candle.IsSma200AndSma20OkayOversold(GlobalData.Settings.Signal.SbmMa200AndMa20Percentage, out response))
@@ -57,10 +60,10 @@ public class SignalStobbOversold : SignalSbmBaseOversold // inherit from sbm bec
             if (!CheckMaCrossings(out response))
                 return false;
         }
-
+        
         if (GlobalData.Settings.Signal.StobIncludeRsi && !CandleLast.IsRsiOversold())
         {
-            ExtraText = "rsi niet oversold";
+            response = "rsi niet oversold";
             return false;
         }
 
@@ -327,6 +330,7 @@ public class SignalStobbOversold : SignalSbmBaseOversold // inherit from sbm bec
 
         return true;
     }
+
 
 
     public override bool GiveUp(CryptoSignal signal)
