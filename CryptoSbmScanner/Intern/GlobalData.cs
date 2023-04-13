@@ -227,35 +227,38 @@ static public class GlobalData
         AddExchange(exchange);
     }
 
+
+    static public void InitWhiteAndBlackListHelper(List<string> list, SortedList<string, bool> target, string caption)
+    {
+        // Het 1e woord is de symbol
+        char[] delimiterChars = { ' ', ',', '-', '.', ':', '\t' };
+
+        target.Clear();
+        foreach (string text in list)
+        {
+            string[] words = text.Split(delimiterChars);
+            if (words.Count() > 0)
+            {
+                string symbol = words[0].ToUpper();
+                if (!target.ContainsKey(symbol))
+                    target.Add(symbol, true);
+
+                if (ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
+                {
+                    if (!exchange.SymbolListName.ContainsKey(symbol))
+                        AddTextToLogTab(string.Format("FOUT {0} {1} bestaat niet", caption, symbol));
+                }
+            }
+        }
+    }
+
     static public void InitWhiteAndBlackListSettings()
     {
-        SymbolBlackListOversold.Clear();
-        foreach (string text in Settings.BlackListOversold)
-        {
-            if (!SymbolBlackListOversold.ContainsKey(text))
-                SymbolBlackListOversold.Add(text, true);
-        }
-        SymbolWhiteListOversold.Clear();
-        foreach (string text in Settings.WhiteListOversold)
-        {
-            if (!SymbolWhiteListOversold.ContainsKey(text))
-                SymbolWhiteListOversold.Add(text, true);
-        }
+        InitWhiteAndBlackListHelper(Settings.BlackListOversold, SymbolBlackListOversold, "BlackListOversold");
+        InitWhiteAndBlackListHelper(Settings.WhiteListOversold, SymbolWhiteListOversold, "WhiteListOversold");
 
-
-
-        SymbolBlackListOverbought.Clear();
-        foreach (string text in Settings.BlackListOverbought)
-        {
-            if (!SymbolBlackListOverbought.ContainsKey(text))
-                SymbolBlackListOverbought.Add(text, true);
-        }
-        SymbolWhiteListOverbought.Clear();
-        foreach (string text in Settings.WhiteListOverbought)
-        {
-            if (!SymbolWhiteListOverbought.ContainsKey(text))
-                SymbolWhiteListOverbought.Add(text, true);
-        }
+        InitWhiteAndBlackListHelper(Settings.BlackListOverbought, SymbolBlackListOverbought, "BlackListOverbought");
+        InitWhiteAndBlackListHelper(Settings.WhiteListOverbought, SymbolWhiteListOverbought, "WhiteListOverbought");
     }
 
     static public void LoadSettings()

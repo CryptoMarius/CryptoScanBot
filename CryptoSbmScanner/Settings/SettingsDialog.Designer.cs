@@ -190,18 +190,22 @@ partial class FrmSettings
         tabWhiteListOversold = new TabPage();
         textBoxWhiteListOversold = new TextBox();
         panel3 = new Panel();
-        EditUseWhiteListOversold = new CheckBox();
+        label55 = new Label();
+        checkBoxUseWhiteListOversold = new CheckBox();
         tabBlackListOversold = new TabPage();
         textBoxBlackListOversold = new TextBox();
         panel4 = new Panel();
+        label51 = new Label();
         checkBoxUseBlackListOversold = new CheckBox();
         tabWhiteListOverbought = new TabPage();
         textBoxWhiteListOverbought = new TextBox();
         panel5 = new Panel();
+        label29 = new Label();
         checkBoxUseWhiteListOverbought = new CheckBox();
         tabBlacklistOverbought = new TabPage();
         textBoxBlackListOverbought = new TextBox();
         panel6 = new Panel();
+        label49 = new Label();
         checkBoxUseBlackListOverbought = new CheckBox();
         tabExtra = new TabPage();
         EditBotSlopeEma20TurningPositive = new CheckBox();
@@ -2180,7 +2184,6 @@ partial class FrmSettings
         // 
         // textBoxWhiteListOversold
         // 
-        textBoxWhiteListOversold.CharacterCasing = CharacterCasing.Upper;
         textBoxWhiteListOversold.Dock = DockStyle.Fill;
         textBoxWhiteListOversold.Location = new Point(4, 60);
         textBoxWhiteListOversold.Margin = new Padding(4, 3, 4, 3);
@@ -2191,7 +2194,8 @@ partial class FrmSettings
         // 
         // panel3
         // 
-        panel3.Controls.Add(EditUseWhiteListOversold);
+        panel3.Controls.Add(label55);
+        panel3.Controls.Add(checkBoxUseWhiteListOversold);
         panel3.Dock = DockStyle.Top;
         panel3.Location = new Point(4, 3);
         panel3.Margin = new Padding(4, 3, 4, 3);
@@ -2199,16 +2203,26 @@ partial class FrmSettings
         panel3.Size = new Size(1224, 57);
         panel3.TabIndex = 1;
         // 
-        // EditUseWhiteListOversold
+        // label55
         // 
-        EditUseWhiteListOversold.AutoSize = true;
-        EditUseWhiteListOversold.Location = new Point(20, 14);
-        EditUseWhiteListOversold.Margin = new Padding(4, 3, 4, 3);
-        EditUseWhiteListOversold.Name = "EditUseWhiteListOversold";
-        EditUseWhiteListOversold.Size = new Size(268, 19);
-        EditUseWhiteListOversold.TabIndex = 25;
-        EditUseWhiteListOversold.Text = "Gebruik de whitelist voor de oversold signalen";
-        EditUseWhiteListOversold.UseVisualStyleBackColor = true;
+        label55.AutoSize = true;
+        label55.Location = new Point(20, 36);
+        label55.Margin = new Padding(4, 0, 4, 0);
+        label55.Name = "label55";
+        label55.Size = new Size(308, 15);
+        label55.TabIndex = 222;
+        label55.Text = "(1 munt per regel met een optionele opmerking erachter)";
+        // 
+        // checkBoxUseWhiteListOversold
+        // 
+        checkBoxUseWhiteListOversold.AutoSize = true;
+        checkBoxUseWhiteListOversold.Location = new Point(20, 14);
+        checkBoxUseWhiteListOversold.Margin = new Padding(4, 3, 4, 3);
+        checkBoxUseWhiteListOversold.Name = "checkBoxUseWhiteListOversold";
+        checkBoxUseWhiteListOversold.Size = new Size(268, 19);
+        checkBoxUseWhiteListOversold.TabIndex = 25;
+        checkBoxUseWhiteListOversold.Text = "Gebruik de whitelist voor de oversold signalen";
+        checkBoxUseWhiteListOversold.UseVisualStyleBackColor = true;
         // 
         // tabBlackListOversold
         // 
@@ -2225,7 +2239,6 @@ partial class FrmSettings
         // 
         // textBoxBlackListOversold
         // 
-        textBoxBlackListOversold.CharacterCasing = CharacterCasing.Upper;
         textBoxBlackListOversold.Dock = DockStyle.Fill;
         textBoxBlackListOversold.Location = new Point(4, 60);
         textBoxBlackListOversold.Margin = new Padding(4, 3, 4, 3);
@@ -2236,6 +2249,7 @@ partial class FrmSettings
         // 
         // panel4
         // 
+        panel4.Controls.Add(label51);
         panel4.Controls.Add(checkBoxUseBlackListOversold);
         panel4.Dock = DockStyle.Top;
         panel4.Location = new Point(4, 3);
@@ -2243,6 +2257,16 @@ partial class FrmSettings
         panel4.Name = "panel4";
         panel4.Size = new Size(1224, 57);
         panel4.TabIndex = 2;
+        // 
+        // label51
+        // 
+        label51.AutoSize = true;
+        label51.Location = new Point(20, 36);
+        label51.Margin = new Padding(4, 0, 4, 0);
+        label51.Name = "label51";
+        label51.Size = new Size(308, 15);
+        label51.TabIndex = 222;
+        label51.Text = "(1 munt per regel met een optionele opmerking erachter)";
         // 
         // checkBoxUseBlackListOversold
         // 
@@ -2270,7 +2294,6 @@ partial class FrmSettings
         // 
         // textBoxWhiteListOverbought
         // 
-        textBoxWhiteListOverbought.CharacterCasing = CharacterCasing.Upper;
         textBoxWhiteListOverbought.Dock = DockStyle.Fill;
         textBoxWhiteListOverbought.Location = new Point(4, 60);
         textBoxWhiteListOverbought.Margin = new Padding(4, 3, 4, 3);
@@ -2281,6 +2304,7 @@ partial class FrmSettings
         // 
         // panel5
         // 
+        panel5.Controls.Add(label29);
         panel5.Controls.Add(checkBoxUseWhiteListOverbought);
         panel5.Dock = DockStyle.Top;
         panel5.Location = new Point(4, 3);
@@ -2288,6 +2312,16 @@ partial class FrmSettings
         panel5.Name = "panel5";
         panel5.Size = new Size(1224, 57);
         panel5.TabIndex = 3;
+        // 
+        // label29
+        // 
+        label29.AutoSize = true;
+        label29.Location = new Point(20, 36);
+        label29.Margin = new Padding(4, 0, 4, 0);
+        label29.Name = "label29";
+        label29.Size = new Size(308, 15);
+        label29.TabIndex = 221;
+        label29.Text = "(1 munt per regel met een optionele opmerking erachter)";
         // 
         // checkBoxUseWhiteListOverbought
         // 
@@ -2315,7 +2349,6 @@ partial class FrmSettings
         // 
         // textBoxBlackListOverbought
         // 
-        textBoxBlackListOverbought.CharacterCasing = CharacterCasing.Upper;
         textBoxBlackListOverbought.Dock = DockStyle.Fill;
         textBoxBlackListOverbought.Location = new Point(4, 60);
         textBoxBlackListOverbought.Margin = new Padding(4, 3, 4, 3);
@@ -2326,6 +2359,7 @@ partial class FrmSettings
         // 
         // panel6
         // 
+        panel6.Controls.Add(label49);
         panel6.Controls.Add(checkBoxUseBlackListOverbought);
         panel6.Dock = DockStyle.Top;
         panel6.Location = new Point(4, 3);
@@ -2333,6 +2367,16 @@ partial class FrmSettings
         panel6.Name = "panel6";
         panel6.Size = new Size(1224, 57);
         panel6.TabIndex = 4;
+        // 
+        // label49
+        // 
+        label49.AutoSize = true;
+        label49.Location = new Point(20, 36);
+        label49.Margin = new Padding(4, 0, 4, 0);
+        label49.Name = "label49";
+        label49.Size = new Size(308, 15);
+        label49.TabIndex = 222;
+        label49.Text = "(1 munt per regel met een optionele opmerking erachter)";
         // 
         // checkBoxUseBlackListOverbought
         // 
@@ -3639,7 +3683,7 @@ partial class FrmSettings
     private System.Windows.Forms.TabPage tabWhiteListOversold;
     private System.Windows.Forms.TextBox textBoxWhiteListOversold;
     private System.Windows.Forms.Panel panel3;
-    private System.Windows.Forms.CheckBox EditUseWhiteListOversold;
+    private System.Windows.Forms.CheckBox checkBoxUseWhiteListOversold;
     private System.Windows.Forms.TabPage tabBlackListOversold;
     private System.Windows.Forms.TextBox textBoxBlackListOversold;
     private System.Windows.Forms.Panel panel4;
@@ -3769,4 +3813,8 @@ partial class FrmSettings
     private NumericUpDown EditGetCandleInterval;
     private CheckBox EditStobIncludeSbmPercAndCrossing;
     private CheckBox EditShowFluxIndicator5m;
+    private Label label29;
+    private Label label55;
+    private Label label51;
+    private Label label49;
 }

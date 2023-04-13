@@ -386,16 +386,21 @@ public partial class FrmSettings : Form
         // --------------------------------------------------------------------------------
 
         checkBoxUseBlackListOversold.Checked = settings.UseBlackListOversold;
-        textBoxBlackListOversold.Text = string.Join(",", settings.BlackListOversold);
+        textBoxBlackListOversold.Text = string.Join(Environment.NewLine, settings.BlackListOversold);
+        settings.BlackListOversold.Clear();
 
-        EditUseWhiteListOversold.Checked = settings.UseWhiteListOversold;
-        textBoxWhiteListOversold.Text = string.Join(",", settings.WhiteListOversold);
+        checkBoxUseWhiteListOversold.Checked = settings.UseWhiteListOversold;
+        textBoxWhiteListOversold.Text = string.Join(Environment.NewLine, settings.WhiteListOversold);
+        settings.WhiteListOversold.Clear();
+
 
         checkBoxUseBlackListOverbought.Checked = settings.UseBlackListOverbought;
-        textBoxBlackListOverbought.Text = string.Join(",", settings.BlackListOverbought);
+        textBoxBlackListOverbought.Text = string.Join(Environment.NewLine, settings.BlackListOverbought);
+        settings.BlackListOverbought.Clear();
 
         checkBoxUseWhiteListOverbought.Checked = settings.UseWhiteListOverbought;
-        textBoxWhiteListOverbought.Text = string.Join(",", settings.WhiteListOverbought);
+        textBoxWhiteListOverbought.Text = string.Join(Environment.NewLine, settings.WhiteListOverbought);
+        settings.WhiteListOverbought.Clear();
 
         SetGrayed(null, null);
     }
@@ -559,25 +564,20 @@ public partial class FrmSettings : Form
         // --------------------------------------------------------------------------------
 
         settings.UseBlackListOversold = checkBoxUseBlackListOversold.Checked;
-        string blackText = textBoxBlackListOversold.Text.Replace(" ", "").Replace("\r\n", "");
-        settings.BlackListOversold = blackText.Split(',').ToList();
-        settings.BlackListOversold.Sort();
+        settings.BlackListOversold = textBoxBlackListOversold.Text.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries).ToList();
+        settings.WhiteListOversold.Sort();
 
-        settings.UseWhiteListOversold = EditUseWhiteListOversold.Checked;
-        string whiteText = textBoxWhiteListOversold.Text.Replace(" ", "").Replace("\r\n", "");
-        settings.WhiteListOversold = whiteText.Split(',').ToList();
+        settings.UseWhiteListOversold = checkBoxUseWhiteListOversold.Checked;
+        settings.WhiteListOversold = textBoxWhiteListOversold.Text.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries).ToList();
         settings.WhiteListOversold.Sort();
 
         settings.UseBlackListOverbought = checkBoxUseBlackListOverbought.Checked;
-        blackText = textBoxBlackListOverbought.Text.Replace(" ", "").Replace("\r\n", "");
-        settings.BlackListOverbought = blackText.Split(',').ToList();
-        settings.BlackListOverbought.Sort();
-
-        settings.UseWhiteListOverbought = checkBoxUseWhiteListOverbought.Checked;
-        whiteText = textBoxWhiteListOverbought.Text.Replace(" ", "").Replace("\r\n", "");
-        settings.WhiteListOverbought = whiteText.Split(',').ToList();
+        settings.BlackListOverbought = textBoxBlackListOverbought.Text.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries).ToList();
         settings.WhiteListOverbought.Sort();
 
+        settings.UseWhiteListOverbought = checkBoxUseWhiteListOverbought.Checked;
+        settings.WhiteListOverbought = textBoxWhiteListOverbought.Text.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries).ToList();
+        settings.WhiteListOverbought.Sort();
 
         // --------------------------------------------------------------------------------
         // Extra

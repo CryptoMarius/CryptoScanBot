@@ -2,12 +2,10 @@ Mis je iets in onderstaande bevindingen/todo's of toekomstige todo's, geef het A
 
 
 Bevindingen/Todo's:
-- Comments kunnen toevoegen aan de munten die op de white- en black list staan.
-- De regeleinden van de white- en black list niet verwijderen (dat leest makkelijker)
 - NALV TUSD: De header labels ontbreken op dit moment
 - NALV TUSD: De plaatsing van controls gaat niet goed bij een afwijkend lettertype/grootte gebruikt
 - Het lettertype c.q. grotte van de barometer waardes in de grafiek zijn afwijkend
-- Via de groep coindelist een munt direct op de blacklist zetten voor zowel oversold als overbought
+- Via coindelist een munt direct op de blacklist zetten voor zowel oversold als overbought (optioneel)
 - Meldingen naar een externe applicatie c.q. script sturen
 - Meldingen naar een syslog server sturen (statistiek)
 - Indien de applicatie traag(?) afsluit wordt tijdens het afsluiten opnieuw begonnen met het activeren van de scanner (ophalen candles enzovoort)
@@ -60,6 +58,8 @@ TODO:
 
 
 xx-xx-2023 1.8.0 (gedeeltelijk ingehaald door de 1.7.2 vanwege de hotfix)
+- White- en black list: Comments kunnen toevoegen achter de munten "NEBLBUSD Vervalt per 01-04-2023"
+- White- en black list: Munten gewoon netjes onder elkaar zetten, dat leest stukken makkelijker.
 - De sortering werkt niet goed, het lijkt zelfs een eenmalige sortering!
 - Instellingen verplaats van het signaal naar de "general" gedeelte (de instelling gaat hierdoor verloren)
   (Heartbeat, verwijderen signalen na x min, verbergen technische gegevens)
