@@ -311,9 +311,9 @@ public partial class FrmSettings : Form
         EditSlopeEma20TurningPositive.Checked = settings.Signal.AnalyseStrategy[(int)SignalStrategy.slopeEma20TurningPositive];
         EditSlopeSma20TurningPositive.Checked = settings.Signal.AnalyseStrategy[(int)SignalStrategy.slopeSma20TurningPositive];
 
+        // ------------------------------------------------------------------------------
         // Trade Bot
-        EditBotActive.Checked = this.settings.Bot.Active;
-
+        // ------------------------------------------------------------------------------
         EditSlotsMaximalExchange.Value = settings.Bot.SlotsMaximalExchange;
         EditSlotsMaximalSymbol.Value = settings.Bot.SlotsMaximalSymbol;
         //EditSlotsMaximalQuote.Value = settings.Bot.SlotsMaximalQuote;
@@ -576,7 +576,7 @@ public partial class FrmSettings : Form
         settings.WhiteListOverbought.Sort();
 
         // --------------------------------------------------------------------------------
-        // Extra
+        // Trade bot
         // --------------------------------------------------------------------------------
 
         settings.Signal.AnalyseStrategy[(int)SignalStrategy.priceCrossedSma20] = EditAnalysisPriceCrossingSma20.Checked;
@@ -595,8 +595,6 @@ public partial class FrmSettings : Form
         settings.Signal.AnalyseStrategy[(int)SignalStrategy.slopeSma20TurningPositive] = EditSlopeSma20TurningPositive.Checked;
         FixStupidCheckboxes(settings);
 
-        // Trade bot
-        settings.Bot.Active = EditBotActive.Checked;
         settings.Bot.SlotsMaximalExchange = (int)EditSlotsMaximalExchange.Value;
         settings.Bot.SlotsMaximalSymbol = (int)EditSlotsMaximalSymbol.Value;
         //settings.Bot.SlotsMaximalQuote = (int)EditSlotsMaximalQuote.Value;

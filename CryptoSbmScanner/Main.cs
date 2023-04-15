@@ -218,6 +218,7 @@ public partial class FrmMain : Form
         // Interval voor het ophalen van de exchange info (delisted coins) + bijwerken candles 
         InitTimerInterval(ref TimerGetCandles, GlobalData.Settings.General.GetCandleInterval * 60);
 
+        GlobalData.InitWhiteAndBlackListSettings();
 
         // Theming
         if (GlobalData.Settings.General.BlackTheming)
@@ -375,7 +376,7 @@ public partial class FrmMain : Form
 
     private void AddTextToLogTab(string text, bool extraLineFeed = false)
     {
-        if ((components != null) && (!ProgramExit) && (IsHandleCreated))
+        //if ((components != null) && (!ProgramExit) && (IsHandleCreated)) gaat nu via een queue, wordt wel opgepakt
         {
             text = text.TrimEnd();
             GlobalData.Logger.Info(text);

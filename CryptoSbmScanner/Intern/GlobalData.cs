@@ -290,8 +290,6 @@ static public class GlobalData
 
             Settings.Signal.AnalyseInterval = intervals;
         }
-
-        InitWhiteAndBlackListSettings();
     }
 
     static public void DefaultSettings()

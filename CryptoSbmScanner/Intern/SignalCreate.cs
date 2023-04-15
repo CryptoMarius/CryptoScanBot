@@ -744,13 +744,23 @@ public class SignalCreate
         // Als de muntpaar op de zwarte lijst staat dit signaal overslagen
         // Indien blacklist: Staat de muntpaar op de blacklist -> ja = signaal negeren
         if (!BackTest && GlobalData.Settings.UseBlackListOversold && GlobalData.SymbolBlackListOversold.ContainsKey(Symbol.Name))
+        {
+            //if (GlobalData.Settings.Signal.LogMinimumTickPercentage)
+            // veel meldingen (maar dan weet ik of het werkt
+            //GlobalData.AddTextToLogTab(string.Format("Analyse {0} De munt is blacklisted", Symbol.Name));
             return;
+        }
 
         // Geen nieuwe signalen ivm whitelist
         // Als de muntpaar niet op de toegelaten lijst staat dit signaal overslagen
         // Indien whitelist: Staat de muntpaar op de whitelist -> nee = signaal negeren
         if (!BackTest && (GlobalData.Settings.UseWhiteListOversold && !GlobalData.SymbolWhiteListOversold.ContainsKey(Symbol.Name)))
+        {
+            //if (GlobalData.Settings.Signal.LogMinimumTickPercentage)
+            // veel meldingen (maar dan weet ik of het werkt
+            //GlobalData.AddTextToLogTab(string.Format("Analyse {0} De munt is niet whitelisted", Symbol.Name));
             return;
+        }
 
 
         // Oversold (SBM is an advanced version of STOBB)

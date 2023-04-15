@@ -242,7 +242,6 @@ partial class FrmSettings
         EditProfitPercentage = new NumericUpDown();
         label73 = new Label();
         EditGlobalBuyCooldownTime = new NumericUpDown();
-        EditBotActive = new CheckBox();
         label50 = new Label();
         EditSlotsMaximalExchange = new NumericUpDown();
         label52 = new Label();
@@ -2370,7 +2369,6 @@ partial class FrmSettings
         tabExtra.Controls.Add(EditProfitPercentage);
         tabExtra.Controls.Add(label73);
         tabExtra.Controls.Add(EditGlobalBuyCooldownTime);
-        tabExtra.Controls.Add(EditBotActive);
         tabExtra.Controls.Add(label50);
         tabExtra.Controls.Add(EditSlotsMaximalExchange);
         tabExtra.Controls.Add(label52);
@@ -2432,7 +2430,7 @@ partial class FrmSettings
         // EditBotSlopeEma20TurningPositive
         // 
         EditBotSlopeEma20TurningPositive.AutoSize = true;
-        EditBotSlopeEma20TurningPositive.Location = new Point(451, 315);
+        EditBotSlopeEma20TurningPositive.Location = new Point(428, 581);
         EditBotSlopeEma20TurningPositive.Margin = new Padding(4, 3, 4, 3);
         EditBotSlopeEma20TurningPositive.Name = "EditBotSlopeEma20TurningPositive";
         EditBotSlopeEma20TurningPositive.Size = new Size(154, 19);
@@ -2443,7 +2441,7 @@ partial class FrmSettings
         // EditBotSlopeSma20TurningPositive
         // 
         EditBotSlopeSma20TurningPositive.AutoSize = true;
-        EditBotSlopeSma20TurningPositive.Location = new Point(622, 317);
+        EditBotSlopeSma20TurningPositive.Location = new Point(599, 583);
         EditBotSlopeSma20TurningPositive.Margin = new Padding(4, 3, 4, 3);
         EditBotSlopeSma20TurningPositive.Name = "EditBotSlopeSma20TurningPositive";
         EditBotSlopeSma20TurningPositive.Size = new Size(153, 19);
@@ -2476,7 +2474,7 @@ partial class FrmSettings
         // EditBotSlopeEma50TurningNegative
         // 
         EditBotSlopeEma50TurningNegative.AutoSize = true;
-        EditBotSlopeEma50TurningNegative.Location = new Point(454, 261);
+        EditBotSlopeEma50TurningNegative.Location = new Point(431, 527);
         EditBotSlopeEma50TurningNegative.Margin = new Padding(4, 3, 4, 3);
         EditBotSlopeEma50TurningNegative.Name = "EditBotSlopeEma50TurningNegative";
         EditBotSlopeEma50TurningNegative.Size = new Size(158, 19);
@@ -2487,7 +2485,7 @@ partial class FrmSettings
         // EditBotSlopeEma50TurningPositive
         // 
         EditBotSlopeEma50TurningPositive.AutoSize = true;
-        EditBotSlopeEma50TurningPositive.Location = new Point(454, 234);
+        EditBotSlopeEma50TurningPositive.Location = new Point(431, 500);
         EditBotSlopeEma50TurningPositive.Margin = new Padding(4, 3, 4, 3);
         EditBotSlopeEma50TurningPositive.Name = "EditBotSlopeEma50TurningPositive";
         EditBotSlopeEma50TurningPositive.Size = new Size(154, 19);
@@ -2498,7 +2496,7 @@ partial class FrmSettings
         // EditBotSlopeSma50TurningNegative
         // 
         EditBotSlopeSma50TurningNegative.AutoSize = true;
-        EditBotSlopeSma50TurningNegative.Location = new Point(624, 260);
+        EditBotSlopeSma50TurningNegative.Location = new Point(601, 526);
         EditBotSlopeSma50TurningNegative.Margin = new Padding(4, 3, 4, 3);
         EditBotSlopeSma50TurningNegative.Name = "EditBotSlopeSma50TurningNegative";
         EditBotSlopeSma50TurningNegative.Size = new Size(157, 19);
@@ -2509,7 +2507,7 @@ partial class FrmSettings
         // EditBotSlopeSma50TurningPositive
         // 
         EditBotSlopeSma50TurningPositive.AutoSize = true;
-        EditBotSlopeSma50TurningPositive.Location = new Point(624, 237);
+        EditBotSlopeSma50TurningPositive.Location = new Point(601, 503);
         EditBotSlopeSma50TurningPositive.Margin = new Padding(4, 3, 4, 3);
         EditBotSlopeSma50TurningPositive.Name = "EditBotSlopeSma50TurningPositive";
         EditBotSlopeSma50TurningPositive.Size = new Size(153, 19);
@@ -2520,7 +2518,7 @@ partial class FrmSettings
         // EditBotPriceCrossingEma50
         // 
         EditBotPriceCrossingEma50.AutoSize = true;
-        EditBotPriceCrossingEma50.Location = new Point(454, 208);
+        EditBotPriceCrossingEma50.Location = new Point(431, 474);
         EditBotPriceCrossingEma50.Margin = new Padding(4, 3, 4, 3);
         EditBotPriceCrossingEma50.Name = "EditBotPriceCrossingEma50";
         EditBotPriceCrossingEma50.Size = new Size(138, 19);
@@ -2531,7 +2529,7 @@ partial class FrmSettings
         // EditBotPriceCrossingSma50
         // 
         EditBotPriceCrossingSma50.AutoSize = true;
-        EditBotPriceCrossingSma50.Location = new Point(622, 208);
+        EditBotPriceCrossingSma50.Location = new Point(599, 474);
         EditBotPriceCrossingSma50.Margin = new Padding(4, 3, 4, 3);
         EditBotPriceCrossingSma50.Name = "EditBotPriceCrossingSma50";
         EditBotPriceCrossingSma50.Size = new Size(133, 19);
@@ -2542,7 +2540,7 @@ partial class FrmSettings
         // EditBotPriceCrossingEma20
         // 
         EditBotPriceCrossingEma20.AutoSize = true;
-        EditBotPriceCrossingEma20.Location = new Point(454, 183);
+        EditBotPriceCrossingEma20.Location = new Point(431, 449);
         EditBotPriceCrossingEma20.Margin = new Padding(4, 3, 4, 3);
         EditBotPriceCrossingEma20.Name = "EditBotPriceCrossingEma20";
         EditBotPriceCrossingEma20.Size = new Size(138, 19);
@@ -2553,7 +2551,7 @@ partial class FrmSettings
         // EditBotBullishEngulfing
         // 
         EditBotBullishEngulfing.AutoSize = true;
-        EditBotBullishEngulfing.Location = new Point(528, 291);
+        EditBotBullishEngulfing.Location = new Point(505, 557);
         EditBotBullishEngulfing.Margin = new Padding(4, 3, 4, 3);
         EditBotBullishEngulfing.Name = "EditBotBullishEngulfing";
         EditBotBullishEngulfing.Size = new Size(156, 19);
@@ -2564,7 +2562,7 @@ partial class FrmSettings
         // EditBotPriceCrossingSma20
         // 
         EditBotPriceCrossingSma20.AutoSize = true;
-        EditBotPriceCrossingSma20.Location = new Point(622, 183);
+        EditBotPriceCrossingSma20.Location = new Point(599, 449);
         EditBotPriceCrossingSma20.Margin = new Padding(4, 3, 4, 3);
         EditBotPriceCrossingSma20.Name = "EditBotPriceCrossingSma20";
         EditBotPriceCrossingSma20.Size = new Size(133, 19);
@@ -2585,7 +2583,7 @@ partial class FrmSettings
         // checkBoxDoNotEnterTrade
         // 
         checkBoxDoNotEnterTrade.AutoSize = true;
-        checkBoxDoNotEnterTrade.Location = new Point(357, 17);
+        checkBoxDoNotEnterTrade.Location = new Point(-518, 682);
         checkBoxDoNotEnterTrade.Margin = new Padding(4, 3, 4, 3);
         checkBoxDoNotEnterTrade.Name = "checkBoxDoNotEnterTrade";
         checkBoxDoNotEnterTrade.Size = new Size(153, 19);
@@ -2596,7 +2594,7 @@ partial class FrmSettings
         // label64
         // 
         label64.AutoSize = true;
-        label64.Location = new Point(18, 538);
+        label64.Location = new Point(18, 503);
         label64.Margin = new Padding(4, 0, 4, 0);
         label64.Name = "label64";
         label64.Size = new Size(85, 15);
@@ -2608,7 +2606,7 @@ partial class FrmSettings
         EditOrderStrategy.DropDownStyle = ComboBoxStyle.DropDownList;
         EditOrderStrategy.FormattingEnabled = true;
         EditOrderStrategy.Items.AddRange(new object[] { "? Wat & hoe met de flow ?" });
-        EditOrderStrategy.Location = new Point(140, 538);
+        EditOrderStrategy.Location = new Point(140, 503);
         EditOrderStrategy.Margin = new Padding(4, 3, 4, 3);
         EditOrderStrategy.Name = "EditOrderStrategy";
         EditOrderStrategy.Size = new Size(140, 23);
@@ -2619,7 +2617,7 @@ partial class FrmSettings
         EditSellMethod.DropDownStyle = ComboBoxStyle.DropDownList;
         EditSellMethod.FormattingEnabled = true;
         EditSellMethod.Items.AddRange(new object[] { "Gefixeerde TP's", "Bollingerband.SMA", "Bollingerband.Upper" });
-        EditSellMethod.Location = new Point(140, 508);
+        EditSellMethod.Location = new Point(140, 473);
         EditSellMethod.Margin = new Padding(4, 3, 4, 3);
         EditSellMethod.Name = "EditSellMethod";
         EditSellMethod.Size = new Size(140, 23);
@@ -2628,7 +2626,7 @@ partial class FrmSettings
         // label62
         // 
         label62.AutoSize = true;
-        label62.Location = new Point(18, 483);
+        label62.Location = new Point(18, 448);
         label62.Margin = new Padding(4, 0, 4, 0);
         label62.Name = "label62";
         label62.Size = new Size(95, 15);
@@ -2640,7 +2638,7 @@ partial class FrmSettings
         EditBuyPriceMethod.DropDownStyle = ComboBoxStyle.DropDownList;
         EditBuyPriceMethod.FormattingEnabled = true;
         EditBuyPriceMethod.Items.AddRange(new object[] { "Bied prijs", "Vraag prijs", "Het gemiddelde van de bied en vraag prijs", "Sma20", "Onderste Bollingerband", "Market order" });
-        EditBuyPriceMethod.Location = new Point(141, 480);
+        EditBuyPriceMethod.Location = new Point(141, 445);
         EditBuyPriceMethod.Margin = new Padding(4, 3, 4, 3);
         EditBuyPriceMethod.Name = "EditBuyPriceMethod";
         EditBuyPriceMethod.Size = new Size(140, 23);
@@ -2649,7 +2647,7 @@ partial class FrmSettings
         // label36
         // 
         label36.AutoSize = true;
-        label36.Location = new Point(250, 245);
+        label36.Location = new Point(250, 210);
         label36.Margin = new Padding(4, 0, 4, 0);
         label36.Name = "label36";
         label36.Size = new Size(52, 15);
@@ -2659,7 +2657,7 @@ partial class FrmSettings
         // label60
         // 
         label60.AutoSize = true;
-        label60.Location = new Point(250, 271);
+        label60.Location = new Point(250, 236);
         label60.Margin = new Padding(4, 0, 4, 0);
         label60.Name = "label60";
         label60.Size = new Size(17, 15);
@@ -2669,7 +2667,7 @@ partial class FrmSettings
         // label63
         // 
         label63.AutoSize = true;
-        label63.Location = new Point(250, 302);
+        label63.Location = new Point(250, 267);
         label63.Margin = new Padding(4, 0, 4, 0);
         label63.Name = "label63";
         label63.Size = new Size(17, 15);
@@ -2679,7 +2677,7 @@ partial class FrmSettings
         // label65
         // 
         label65.AutoSize = true;
-        label65.Location = new Point(250, 421);
+        label65.Location = new Point(250, 386);
         label65.Margin = new Padding(4, 0, 4, 0);
         label65.Name = "label65";
         label65.Size = new Size(17, 15);
@@ -2689,7 +2687,7 @@ partial class FrmSettings
         // label66
         // 
         label66.AutoSize = true;
-        label66.Location = new Point(250, 390);
+        label66.Location = new Point(250, 355);
         label66.Margin = new Padding(4, 0, 4, 0);
         label66.Name = "label66";
         label66.Size = new Size(17, 15);
@@ -2698,7 +2696,7 @@ partial class FrmSettings
         // 
         // EditDcaCount
         // 
-        EditDcaCount.Location = new Point(140, 353);
+        EditDcaCount.Location = new Point(140, 318);
         EditDcaCount.Margin = new Padding(4, 3, 4, 3);
         EditDcaCount.Maximum = new decimal(new int[] { 10, 0, 0, 0 });
         EditDcaCount.Name = "EditDcaCount";
@@ -2709,7 +2707,7 @@ partial class FrmSettings
         // label67
         // 
         label67.AutoSize = true;
-        label67.Location = new Point(18, 355);
+        label67.Location = new Point(18, 320);
         label67.Margin = new Padding(4, 0, 4, 0);
         label67.Name = "label67";
         label67.Size = new Size(90, 15);
@@ -2719,7 +2717,7 @@ partial class FrmSettings
         // label68
         // 
         label68.AutoSize = true;
-        label68.Location = new Point(16, 329);
+        label68.Location = new Point(16, 294);
         label68.Margin = new Padding(4, 0, 4, 0);
         label68.Name = "label68";
         label68.Size = new Size(81, 15);
@@ -2729,7 +2727,7 @@ partial class FrmSettings
         // EditDcaFactor
         // 
         EditDcaFactor.DecimalPlaces = 2;
-        EditDcaFactor.Location = new Point(140, 327);
+        EditDcaFactor.Location = new Point(140, 292);
         EditDcaFactor.Margin = new Padding(4, 3, 4, 3);
         EditDcaFactor.Maximum = new decimal(new int[] { 10, 0, 0, 0 });
         EditDcaFactor.Name = "EditDcaFactor";
@@ -2740,7 +2738,7 @@ partial class FrmSettings
         // label69
         // 
         label69.AutoSize = true;
-        label69.Location = new Point(19, 302);
+        label69.Location = new Point(19, 267);
         label69.Margin = new Padding(4, 0, 4, 0);
         label69.Name = "label69";
         label69.Size = new Size(70, 15);
@@ -2750,7 +2748,7 @@ partial class FrmSettings
         // EditDcaPercentage
         // 
         EditDcaPercentage.DecimalPlaces = 2;
-        EditDcaPercentage.Location = new Point(140, 299);
+        EditDcaPercentage.Location = new Point(140, 264);
         EditDcaPercentage.Margin = new Padding(4, 3, 4, 3);
         EditDcaPercentage.Name = "EditDcaPercentage";
         EditDcaPercentage.Size = new Size(88, 23);
@@ -2760,7 +2758,7 @@ partial class FrmSettings
         // EditGlobalStopLimitPercentage
         // 
         EditGlobalStopLimitPercentage.DecimalPlaces = 2;
-        EditGlobalStopLimitPercentage.Location = new Point(140, 419);
+        EditGlobalStopLimitPercentage.Location = new Point(140, 384);
         EditGlobalStopLimitPercentage.Margin = new Padding(4, 3, 4, 3);
         EditGlobalStopLimitPercentage.Name = "EditGlobalStopLimitPercentage";
         EditGlobalStopLimitPercentage.Size = new Size(88, 23);
@@ -2770,7 +2768,7 @@ partial class FrmSettings
         // label70
         // 
         label70.AutoSize = true;
-        label70.Location = new Point(19, 421);
+        label70.Location = new Point(19, 386);
         label70.Margin = new Padding(4, 0, 4, 0);
         label70.Name = "label70";
         label70.Size = new Size(86, 15);
@@ -2780,7 +2778,7 @@ partial class FrmSettings
         // EditGlobalStopPercentage
         // 
         EditGlobalStopPercentage.DecimalPlaces = 2;
-        EditGlobalStopPercentage.Location = new Point(140, 390);
+        EditGlobalStopPercentage.Location = new Point(140, 355);
         EditGlobalStopPercentage.Margin = new Padding(4, 3, 4, 3);
         EditGlobalStopPercentage.Name = "EditGlobalStopPercentage";
         EditGlobalStopPercentage.Size = new Size(88, 23);
@@ -2790,7 +2788,7 @@ partial class FrmSettings
         // label71
         // 
         label71.AutoSize = true;
-        label71.Location = new Point(19, 392);
+        label71.Location = new Point(19, 357);
         label71.Margin = new Padding(4, 0, 4, 0);
         label71.Name = "label71";
         label71.Size = new Size(88, 15);
@@ -2800,7 +2798,7 @@ partial class FrmSettings
         // label72
         // 
         label72.AutoSize = true;
-        label72.Location = new Point(16, 271);
+        label72.Location = new Point(16, 236);
         label72.Margin = new Padding(4, 0, 4, 0);
         label72.Name = "label72";
         label72.Size = new Size(99, 15);
@@ -2810,7 +2808,7 @@ partial class FrmSettings
         // EditProfitPercentage
         // 
         EditProfitPercentage.DecimalPlaces = 2;
-        EditProfitPercentage.Location = new Point(140, 269);
+        EditProfitPercentage.Location = new Point(140, 234);
         EditProfitPercentage.Margin = new Padding(4, 3, 4, 3);
         EditProfitPercentage.Name = "EditProfitPercentage";
         EditProfitPercentage.Size = new Size(88, 23);
@@ -2820,7 +2818,7 @@ partial class FrmSettings
         // label73
         // 
         label73.AutoSize = true;
-        label73.Location = new Point(19, 243);
+        label73.Location = new Point(19, 208);
         label73.Margin = new Padding(4, 0, 4, 0);
         label73.Name = "label73";
         label73.Size = new Size(92, 15);
@@ -2829,28 +2827,17 @@ partial class FrmSettings
         // 
         // EditGlobalBuyCooldownTime
         // 
-        EditGlobalBuyCooldownTime.Location = new Point(140, 241);
+        EditGlobalBuyCooldownTime.Location = new Point(140, 206);
         EditGlobalBuyCooldownTime.Margin = new Padding(4, 3, 4, 3);
         EditGlobalBuyCooldownTime.Maximum = new decimal(new int[] { 276447231, 23283, 0, 0 });
         EditGlobalBuyCooldownTime.Name = "EditGlobalBuyCooldownTime";
         EditGlobalBuyCooldownTime.Size = new Size(88, 23);
         EditGlobalBuyCooldownTime.TabIndex = 196;
         // 
-        // EditBotActive
-        // 
-        EditBotActive.AutoSize = true;
-        EditBotActive.Location = new Point(16, 17);
-        EditBotActive.Margin = new Padding(4, 3, 4, 3);
-        EditBotActive.Name = "EditBotActive";
-        EditBotActive.Size = new Size(76, 19);
-        EditBotActive.TabIndex = 182;
-        EditBotActive.Text = "Bot actief";
-        EditBotActive.UseVisualStyleBackColor = true;
-        // 
         // label50
         // 
         label50.AutoSize = true;
-        label50.Location = new Point(16, 54);
+        label50.Location = new Point(16, 19);
         label50.Margin = new Padding(4, 0, 4, 0);
         label50.Name = "label50";
         label50.Size = new Size(85, 15);
@@ -2859,7 +2846,7 @@ partial class FrmSettings
         // 
         // EditSlotsMaximalExchange
         // 
-        EditSlotsMaximalExchange.Location = new Point(140, 52);
+        EditSlotsMaximalExchange.Location = new Point(140, 17);
         EditSlotsMaximalExchange.Margin = new Padding(4, 3, 4, 3);
         EditSlotsMaximalExchange.Name = "EditSlotsMaximalExchange";
         EditSlotsMaximalExchange.Size = new Size(88, 23);
@@ -2869,7 +2856,7 @@ partial class FrmSettings
         // label52
         // 
         label52.AutoSize = true;
-        label52.Location = new Point(16, 81);
+        label52.Location = new Point(16, 46);
         label52.Margin = new Padding(4, 0, 4, 0);
         label52.Name = "label52";
         label52.Size = new Size(74, 15);
@@ -2878,7 +2865,7 @@ partial class FrmSettings
         // 
         // EditSlotsMaximalSymbol
         // 
-        EditSlotsMaximalSymbol.Location = new Point(140, 78);
+        EditSlotsMaximalSymbol.Location = new Point(140, 43);
         EditSlotsMaximalSymbol.Margin = new Padding(4, 3, 4, 3);
         EditSlotsMaximalSymbol.Name = "EditSlotsMaximalSymbol";
         EditSlotsMaximalSymbol.Size = new Size(88, 23);
@@ -2889,7 +2876,7 @@ partial class FrmSettings
         // 
         label54.AutoSize = true;
         label54.Enabled = false;
-        label54.Location = new Point(16, 107);
+        label54.Location = new Point(16, 72);
         label54.Margin = new Padding(4, 0, 4, 0);
         label54.Name = "label54";
         label54.Size = new Size(67, 15);
@@ -2899,7 +2886,7 @@ partial class FrmSettings
         // EditSlotsMaximalQuote
         // 
         EditSlotsMaximalQuote.Enabled = false;
-        EditSlotsMaximalQuote.Location = new Point(140, 105);
+        EditSlotsMaximalQuote.Location = new Point(140, 70);
         EditSlotsMaximalQuote.Margin = new Padding(4, 3, 4, 3);
         EditSlotsMaximalQuote.Name = "EditSlotsMaximalQuote";
         EditSlotsMaximalQuote.Size = new Size(88, 23);
@@ -2909,7 +2896,7 @@ partial class FrmSettings
         // label56
         // 
         label56.AutoSize = true;
-        label56.Location = new Point(16, 134);
+        label56.Location = new Point(16, 99);
         label56.Margin = new Padding(4, 0, 4, 0);
         label56.Name = "label56";
         label56.Size = new Size(58, 15);
@@ -2918,7 +2905,7 @@ partial class FrmSettings
         // 
         // EditSlotsMaximalBase
         // 
-        EditSlotsMaximalBase.Location = new Point(140, 132);
+        EditSlotsMaximalBase.Location = new Point(140, 97);
         EditSlotsMaximalBase.Margin = new Padding(4, 3, 4, 3);
         EditSlotsMaximalBase.Name = "EditSlotsMaximalBase";
         EditSlotsMaximalBase.Size = new Size(88, 23);
@@ -2929,7 +2916,7 @@ partial class FrmSettings
         // 
         label57.AutoSize = true;
         label57.Enabled = false;
-        label57.Location = new Point(248, 107);
+        label57.Location = new Point(248, 72);
         label57.Margin = new Padding(4, 0, 4, 0);
         label57.Name = "label57";
         label57.Size = new Size(140, 15);
@@ -2939,7 +2926,7 @@ partial class FrmSettings
         // label58
         // 
         label58.AutoSize = true;
-        label58.Location = new Point(248, 134);
+        label58.Location = new Point(248, 99);
         label58.Margin = new Padding(4, 0, 4, 0);
         label58.Name = "label58";
         label58.Size = new Size(109, 15);
@@ -2949,7 +2936,7 @@ partial class FrmSettings
         // label59
         // 
         label59.AutoSize = true;
-        label59.Location = new Point(248, 78);
+        label59.Location = new Point(248, 43);
         label59.Margin = new Padding(4, 0, 4, 0);
         label59.Name = "label59";
         label59.Size = new Size(126, 15);
@@ -2959,7 +2946,7 @@ partial class FrmSettings
         // EditGlobalBuyVarying
         // 
         EditGlobalBuyVarying.DecimalPlaces = 2;
-        EditGlobalBuyVarying.Location = new Point(140, 180);
+        EditGlobalBuyVarying.Location = new Point(140, 145);
         EditGlobalBuyVarying.Margin = new Padding(4, 3, 4, 3);
         EditGlobalBuyVarying.Maximum = new decimal(new int[] { 5, 0, 0, 65536 });
         EditGlobalBuyVarying.Minimum = new decimal(new int[] { 5, 0, 0, -2147418112 });
@@ -2971,7 +2958,7 @@ partial class FrmSettings
         // label47
         // 
         label47.AutoSize = true;
-        label47.Location = new Point(18, 182);
+        label47.Location = new Point(18, 147);
         label47.Margin = new Padding(4, 0, 4, 0);
         label47.Name = "label47";
         label47.Size = new Size(97, 15);
@@ -2981,7 +2968,7 @@ partial class FrmSettings
         // label46
         // 
         label46.AutoSize = true;
-        label46.Location = new Point(19, 212);
+        label46.Location = new Point(19, 177);
         label46.Margin = new Padding(4, 0, 4, 0);
         label46.Name = "label46";
         label46.Size = new Size(77, 15);
@@ -2990,7 +2977,7 @@ partial class FrmSettings
         // 
         // EditGlobalBuyRemoveTime
         // 
-        EditGlobalBuyRemoveTime.Location = new Point(140, 210);
+        EditGlobalBuyRemoveTime.Location = new Point(140, 175);
         EditGlobalBuyRemoveTime.Margin = new Padding(4, 3, 4, 3);
         EditGlobalBuyRemoveTime.Maximum = new decimal(new int[] { 276447231, 23283, 0, 0 });
         EditGlobalBuyRemoveTime.Name = "EditGlobalBuyRemoveTime";
@@ -3000,7 +2987,7 @@ partial class FrmSettings
         // EditBarometer15mBotMinimal
         // 
         EditBarometer15mBotMinimal.DecimalPlaces = 2;
-        EditBarometer15mBotMinimal.Location = new Point(1059, 24);
+        EditBarometer15mBotMinimal.Location = new Point(522, 148);
         EditBarometer15mBotMinimal.Margin = new Padding(4, 3, 4, 3);
         EditBarometer15mBotMinimal.Name = "EditBarometer15mBotMinimal";
         EditBarometer15mBotMinimal.Size = new Size(88, 23);
@@ -3010,7 +2997,7 @@ partial class FrmSettings
         // label27
         // 
         label27.AutoSize = true;
-        label27.Location = new Point(936, 27);
+        label27.Location = new Point(399, 151);
         label27.Margin = new Padding(4, 0, 4, 0);
         label27.Name = "label27";
         label27.Size = new Size(88, 15);
@@ -3020,7 +3007,7 @@ partial class FrmSettings
         // EditBarometer24hBotMinimal
         // 
         EditBarometer24hBotMinimal.DecimalPlaces = 2;
-        EditBarometer24hBotMinimal.Location = new Point(1059, 132);
+        EditBarometer24hBotMinimal.Location = new Point(522, 256);
         EditBarometer24hBotMinimal.Margin = new Padding(4, 3, 4, 3);
         EditBarometer24hBotMinimal.Name = "EditBarometer24hBotMinimal";
         EditBarometer24hBotMinimal.Size = new Size(88, 23);
@@ -3030,7 +3017,7 @@ partial class FrmSettings
         // label42
         // 
         label42.AutoSize = true;
-        label42.Location = new Point(938, 134);
+        label42.Location = new Point(401, 258);
         label42.Margin = new Padding(4, 0, 4, 0);
         label42.Name = "label42";
         label42.Size = new Size(84, 15);
@@ -3040,7 +3027,7 @@ partial class FrmSettings
         // EditBarometer04hBotMinimal
         // 
         EditBarometer04hBotMinimal.DecimalPlaces = 2;
-        EditBarometer04hBotMinimal.Location = new Point(1059, 105);
+        EditBarometer04hBotMinimal.Location = new Point(522, 229);
         EditBarometer04hBotMinimal.Margin = new Padding(4, 3, 4, 3);
         EditBarometer04hBotMinimal.Name = "EditBarometer04hBotMinimal";
         EditBarometer04hBotMinimal.Size = new Size(88, 23);
@@ -3050,7 +3037,7 @@ partial class FrmSettings
         // label43
         // 
         label43.AutoSize = true;
-        label43.Location = new Point(938, 106);
+        label43.Location = new Point(401, 230);
         label43.Margin = new Padding(4, 0, 4, 0);
         label43.Name = "label43";
         label43.Size = new Size(78, 15);
@@ -3060,7 +3047,7 @@ partial class FrmSettings
         // EditBarometer01hBotMinimal
         // 
         EditBarometer01hBotMinimal.DecimalPlaces = 2;
-        EditBarometer01hBotMinimal.Location = new Point(1059, 77);
+        EditBarometer01hBotMinimal.Location = new Point(522, 201);
         EditBarometer01hBotMinimal.Margin = new Padding(4, 3, 4, 3);
         EditBarometer01hBotMinimal.Name = "EditBarometer01hBotMinimal";
         EditBarometer01hBotMinimal.Size = new Size(88, 23);
@@ -3070,7 +3057,7 @@ partial class FrmSettings
         // label44
         // 
         label44.AutoSize = true;
-        label44.Location = new Point(938, 52);
+        label44.Location = new Point(401, 176);
         label44.Margin = new Padding(4, 0, 4, 0);
         label44.Name = "label44";
         label44.Size = new Size(88, 15);
@@ -3080,7 +3067,7 @@ partial class FrmSettings
         // label45
         // 
         label45.AutoSize = true;
-        label45.Location = new Point(938, 80);
+        label45.Location = new Point(401, 204);
         label45.Margin = new Padding(4, 0, 4, 0);
         label45.Name = "label45";
         label45.Size = new Size(78, 15);
@@ -3090,7 +3077,7 @@ partial class FrmSettings
         // EditBarometer30mBotMinimal
         // 
         EditBarometer30mBotMinimal.DecimalPlaces = 2;
-        EditBarometer30mBotMinimal.Location = new Point(1059, 50);
+        EditBarometer30mBotMinimal.Location = new Point(522, 174);
         EditBarometer30mBotMinimal.Margin = new Padding(4, 3, 4, 3);
         EditBarometer30mBotMinimal.Name = "EditBarometer30mBotMinimal";
         EditBarometer30mBotMinimal.Size = new Size(88, 23);
@@ -3298,7 +3285,7 @@ partial class FrmSettings
         // EditAltradyWebhookActive
         // 
         EditAltradyWebhookActive.AutoSize = true;
-        EditAltradyWebhookActive.Location = new Point(357, 42);
+        EditAltradyWebhookActive.Location = new Point(19, 583);
         EditAltradyWebhookActive.Margin = new Padding(4, 3, 4, 3);
         EditAltradyWebhookActive.Name = "EditAltradyWebhookActive";
         EditAltradyWebhookActive.Size = new Size(154, 19);
@@ -3688,7 +3675,6 @@ partial class FrmSettings
     private System.Windows.Forms.Label label47;
     private System.Windows.Forms.Label label46;
     private System.Windows.Forms.NumericUpDown EditGlobalBuyRemoveTime;
-    private System.Windows.Forms.CheckBox EditBotActive;
     private System.Windows.Forms.Label label50;
     private System.Windows.Forms.NumericUpDown EditSlotsMaximalExchange;
     private System.Windows.Forms.Label label52;
