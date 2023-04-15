@@ -40,9 +40,9 @@ public class SettingsSignal
     public Color ColorStobb { get; set; } = Color.White;
     public bool PlaySoundStobbSignal { get; set; } = false;
     public bool PlaySpeechStobbSignal { get; set; } = false;
-    public bool AnalysisShowStobbOversold { get; set; } = true;
+    public bool AnalysisShowStobbOversold { get; set; } = true; // deprecated
     public string SoundStobbOversold { get; set; } = "sound-stobb-oversold.wav";
-    public bool AnalysisShowStobbOverbought { get; set; } = false;
+    public bool AnalysisShowStobbOverbought { get; set; } = false; // deprecated
     public string SoundStobbOverbought { get; set; } = "sound-stobb-overbought.wav";
     public bool StobIncludeRsi { get; set; } = false;
     public bool StobIncludeSoftSbm { get; set; } = false;
@@ -58,34 +58,29 @@ public class SettingsSignal
     public Color ColorSbm { get; set; } = Color.White;
     public bool PlaySoundSbmSignal { get; set; } = true;
     public bool PlaySpeechSbmSignal { get; set; } = true;
-    public bool AnalysisShowSbmOversold { get; set; } = true;
+    public bool AnalysisShowSbmOversold { get; set; } = true; // deprecated
     public string SoundSbmOversold { get; set; } = "sound-sbm-oversold.wav";
-    public bool AnalysisShowSbmOverbought { get; set; } = false;
+    public bool AnalysisShowSbmOverbought { get; set; } = false; // deprecated
     public string SoundSbmOverbought { get; set; } = "sound-sbm-overbought.wav";
     public int Sbm1CandlesLookbackCount { get; set; } = 1;
 
     // SBM2 signals
-    public bool AnalysisSbm2Oversold { get; set; } = false;
-    public bool AnalysisSbm2Overbought { get; set; } = false;
+    public bool AnalysisSbm2Oversold { get; set; } = false; // deprecated
+    public bool AnalysisSbm2Overbought { get; set; } = false; // deprecated
     public int Sbm2CandlesLookbackCount { get; set; } = 2;
     public decimal Sbm2UpperPartOfBbPercentage { get; set; } = 00.50m;
     public decimal Sbm2LowerPartOfBbPercentage { get; set; } = 99.50m;
 
     // SBM3 signals
-    public bool AnalysisSbm3Oversold { get; set; } = false;
-    public bool AnalysisSbm3Overbought { get; set; } = false;
+    public bool AnalysisSbm3Oversold { get; set; } = false; // deprecated
+    public bool AnalysisSbm3Overbought { get; set; } = false; // deprecated
     public int Sbm3CandlesLookbackCount { get; set; } = 8;
     public decimal Sbm3CandlesBbRecoveryPercentage { get; set; } = 225m;
 
     // SBM4 signals
-    //public bool AnalysisSbm4Oversold { get; set; } = false;
-    //public bool AnalysisSbm4Overbought { get; set; } = false;
     //public decimal Sbm4BbPercent { get; set; } = 1.5m;
     //public decimal Sbm4Percentage { get; set; } = 0.80m;
     //public int Sbm4CandlesLookback { get; set; } = 2;
-
-    // SBM5 signals
-    //public bool AnalysisSbm5Oversold { get; set; } = false;
 
     // SBM algemene instellingen recovery, percentages, crossing && lookback
     public int SbmCandlesForMacdRecovery { get; set; } = 2;

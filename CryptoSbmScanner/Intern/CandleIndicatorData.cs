@@ -210,7 +210,7 @@ public class CandleIndicatorData
         List<RsiResult> rsiList = (List<RsiResult>)history.GetRsi();
         List<MacdResult> macdList = (List<MacdResult>)history.GetMacd();
 
-        List<SlopeResult> slopeRsiList = (List<SlopeResult>)rsiList.GetSma(10).GetSlope(3);
+        List<SlopeResult> slopeRsiList = (List<SlopeResult>)rsiList.GetSma(10).GetSlope(5);
 
         // (volgens de telegram groepen op 14,3,1 ipv de standaard 14,3,3)
         List<StochResult> stochList = (List<StochResult>)history.GetStoch(14, 3, 1); // 18-11-22: omgedraaid naar 1, 3...

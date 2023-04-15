@@ -55,11 +55,6 @@ partial class FrmSettings
         label2 = new Label();
         EditTradingApp = new ComboBox();
         tabBasismunten = new TabPage();
-        label15 = new Label();
-        label24 = new Label();
-        label37 = new Label();
-        label38 = new Label();
-        label48 = new Label();
         label19 = new Label();
         tabPageSignals = new TabPage();
         EditShowInvalidSignals = new CheckBox();
@@ -531,7 +526,7 @@ partial class FrmSettings
         EditTrendCalculationMethod.DropDownStyle = ComboBoxStyle.DropDownList;
         EditTrendCalculationMethod.FormattingEnabled = true;
         EditTrendCalculationMethod.Items.AddRange(new object[] { "cAlgo#1 zigzag + interpretatie", "cAlgo#2 zigzag + interpretatie", "EMA 8 > EMA 20 " });
-        EditTrendCalculationMethod.Location = new Point(127, 102);
+        EditTrendCalculationMethod.Location = new Point(188, 102);
         EditTrendCalculationMethod.Margin = new Padding(4, 3, 4, 3);
         EditTrendCalculationMethod.Name = "EditTrendCalculationMethod";
         EditTrendCalculationMethod.Size = new Size(190, 23);
@@ -626,7 +621,7 @@ partial class FrmSettings
         EditDoubleClickAction.DropDownStyle = ComboBoxStyle.DropDownList;
         EditDoubleClickAction.FormattingEnabled = true;
         EditDoubleClickAction.Items.AddRange(new object[] { "Tradingapp", "Tradingapp + Tradingview intern", "Tradingview intern", "Tradingview extern" });
-        EditDoubleClickAction.Location = new Point(127, 70);
+        EditDoubleClickAction.Location = new Point(188, 70);
         EditDoubleClickAction.Margin = new Padding(4, 3, 4, 3);
         EditDoubleClickAction.Name = "EditDoubleClickAction";
         EditDoubleClickAction.Size = new Size(190, 23);
@@ -647,7 +642,7 @@ partial class FrmSettings
         EditTradingApp.DropDownStyle = ComboBoxStyle.DropDownList;
         EditTradingApp.FormattingEnabled = true;
         EditTradingApp.Items.AddRange(new object[] { "Altrady", "Altrady web", "Hypertrader" });
-        EditTradingApp.Location = new Point(127, 39);
+        EditTradingApp.Location = new Point(188, 39);
         EditTradingApp.Margin = new Padding(4, 3, 4, 3);
         EditTradingApp.Name = "EditTradingApp";
         EditTradingApp.Size = new Size(190, 23);
@@ -655,11 +650,6 @@ partial class FrmSettings
         // 
         // tabBasismunten
         // 
-        tabBasismunten.Controls.Add(label15);
-        tabBasismunten.Controls.Add(label24);
-        tabBasismunten.Controls.Add(label37);
-        tabBasismunten.Controls.Add(label38);
-        tabBasismunten.Controls.Add(label48);
         tabBasismunten.Controls.Add(label19);
         tabBasismunten.Location = new Point(4, 24);
         tabBasismunten.Margin = new Padding(4, 3, 4, 3);
@@ -669,56 +659,6 @@ partial class FrmSettings
         tabBasismunten.TabIndex = 0;
         tabBasismunten.Text = "Basismunten";
         tabBasismunten.UseVisualStyleBackColor = true;
-        // 
-        // label15
-        // 
-        label15.AutoSize = true;
-        label15.Location = new Point(477, 53);
-        label15.Margin = new Padding(4, 0, 4, 0);
-        label15.Name = "label15";
-        label15.Size = new Size(34, 15);
-        label15.TabIndex = 151;
-        label15.Text = "Kleur";
-        // 
-        // label24
-        // 
-        label24.AutoSize = true;
-        label24.Location = new Point(262, 53);
-        label24.Margin = new Padding(4, 0, 4, 0);
-        label24.Name = "label24";
-        label24.Size = new Size(56, 15);
-        label24.TabIndex = 150;
-        label24.Text = "Min. prijs";
-        // 
-        // label37
-        // 
-        label37.AutoSize = true;
-        label37.Location = new Point(408, 53);
-        label37.Margin = new Padding(4, 0, 4, 0);
-        label37.Name = "label37";
-        label37.Size = new Size(52, 15);
-        label37.TabIndex = 149;
-        label37.Text = "Signalen";
-        // 
-        // label38
-        // 
-        label38.AutoSize = true;
-        label38.Location = new Point(15, 53);
-        label38.Margin = new Padding(4, 0, 4, 0);
-        label38.Name = "label38";
-        label38.Size = new Size(81, 15);
-        label38.TabIndex = 148;
-        label38.Text = "Candles halen";
-        // 
-        // label48
-        // 
-        label48.AutoSize = true;
-        label48.Location = new Point(115, 53);
-        label48.Margin = new Padding(4, 0, 4, 0);
-        label48.Name = "label48";
-        label48.Size = new Size(74, 15);
-        label48.TabIndex = 147;
-        label48.Text = "Min. volume";
         // 
         // label19
         // 
@@ -1327,7 +1267,7 @@ partial class FrmSettings
         EditStobbBBMinPercentage.Location = new Point(140, 238);
         EditStobbBBMinPercentage.Margin = new Padding(4, 3, 4, 3);
         EditStobbBBMinPercentage.Name = "EditStobbBBMinPercentage";
-        EditStobbBBMinPercentage.Size = new Size(57, 23);
+        EditStobbBBMinPercentage.Size = new Size(65, 23);
         EditStobbBBMinPercentage.TabIndex = 43;
         toolTip1.SetToolTip(EditStobbBBMinPercentage, "Een BB heeft een bepaalde breedte, je kunt hier filteren waardoor op de minimale en maximale breedte kan worden gefilterd.");
         EditStobbBBMinPercentage.Value = new decimal(new int[] { 150, 0, 0, 131072 });
@@ -1338,7 +1278,7 @@ partial class FrmSettings
         EditStobbBBMaxPercentage.Location = new Point(225, 238);
         EditStobbBBMaxPercentage.Margin = new Padding(4, 3, 4, 3);
         EditStobbBBMaxPercentage.Name = "EditStobbBBMaxPercentage";
-        EditStobbBBMaxPercentage.Size = new Size(57, 23);
+        EditStobbBBMaxPercentage.Size = new Size(65, 23);
         EditStobbBBMaxPercentage.TabIndex = 44;
         toolTip1.SetToolTip(EditStobbBBMaxPercentage, "Een BB heeft een bepaalde breedte, je kunt hier filteren waardoor op de minimale en maximale breedte kan worden gefilterd.");
         EditStobbBBMaxPercentage.Value = new decimal(new int[] { 6, 0, 0, 0 });
@@ -1635,7 +1575,7 @@ partial class FrmSettings
         EditSbmBBMinPercentage.Location = new Point(133, 242);
         EditSbmBBMinPercentage.Margin = new Padding(4, 3, 4, 3);
         EditSbmBBMinPercentage.Name = "EditSbmBBMinPercentage";
-        EditSbmBBMinPercentage.Size = new Size(57, 23);
+        EditSbmBBMinPercentage.Size = new Size(65, 23);
         EditSbmBBMinPercentage.TabIndex = 114;
         toolTip1.SetToolTip(EditSbmBBMinPercentage, "Een BB heeft een bepaalde breedte, je kunt hier filteren waardoor op de minimale en maximale breedte kan worden gefilterd.");
         EditSbmBBMinPercentage.Value = new decimal(new int[] { 150, 0, 0, 131072 });
@@ -1646,7 +1586,7 @@ partial class FrmSettings
         EditSbmBBMaxPercentage.Location = new Point(218, 242);
         EditSbmBBMaxPercentage.Margin = new Padding(4, 3, 4, 3);
         EditSbmBBMaxPercentage.Name = "EditSbmBBMaxPercentage";
-        EditSbmBBMaxPercentage.Size = new Size(57, 23);
+        EditSbmBBMaxPercentage.Size = new Size(65, 23);
         EditSbmBBMaxPercentage.TabIndex = 115;
         toolTip1.SetToolTip(EditSbmBBMaxPercentage, "Een BB heeft een bepaalde breedte, je kunt hier filteren waardoor op de minimale en maximale breedte kan worden gefilterd.");
         EditSbmBBMaxPercentage.Value = new decimal(new int[] { 6, 0, 0, 0 });
@@ -3804,11 +3744,6 @@ partial class FrmSettings
     private System.Windows.Forms.CheckBox EditShowInvalidSignals;
     private TabPage tabExtra2;
     private TextBox textBox1;
-    private Label label24;
-    private Label label37;
-    private Label label38;
-    private Label label48;
-    private Label label15;
     private Label label16;
     private NumericUpDown EditGetCandleInterval;
     private CheckBox EditStobIncludeSbmPercAndCrossing;

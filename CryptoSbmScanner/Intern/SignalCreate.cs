@@ -563,16 +563,16 @@ public class SignalCreate
             signal.Mode = SignalMode.modeInfo2;
         }
 
-        if (!signal.Last24HoursEffective.IsBetween(GlobalData.Settings.Signal.AnalysisMinChangePercentage, GlobalData.Settings.Signal.AnalysisMaxChangePercentage))
-        {
-            if (GlobalData.Settings.Signal.LogAnalysisMinMaxChangePercentage)
-            {
-                string text = string.Format("Analyse {0} 24h change (effectief) {1} niet tussen {2} .. {3}", Symbol.Name, signal.Last24HoursEffective.ToString("N2"), GlobalData.Settings.Signal.AnalysisMinChangePercentage.ToString(), GlobalData.Settings.Signal.AnalysisMaxChangePercentage.ToString());
-                GlobalData.AddTextToLogTab(text);
-            }
-            eventText += " 24h effectief% te hoog";
-            signal.Mode = SignalMode.modeInfo2;
-        }
+        //if (!signal.Last24HoursEffective.IsBetween(GlobalData.Settings.Signal.AnalysisMinChangePercentage, GlobalData.Settings.Signal.AnalysisMaxChangePercentage))
+        //{
+        //    if (GlobalData.Settings.Signal.LogAnalysisMinMaxChangePercentage)
+        //    {
+        //        string text = string.Format("Analyse {0} 24h change (effectief) {1} niet tussen {2} .. {3}", Symbol.Name, signal.Last24HoursEffective.ToString("N2"), GlobalData.Settings.Signal.AnalysisMinChangePercentage.ToString(), GlobalData.Settings.Signal.AnalysisMaxChangePercentage.ToString());
+        //        GlobalData.AddTextToLogTab(text);
+        //    }
+        //    eventText += " 24h effectief% te hoog";
+        //    signal.Mode = SignalMode.modeInfo2;
+        //}
 
 
         // New coins have a lot of price changes

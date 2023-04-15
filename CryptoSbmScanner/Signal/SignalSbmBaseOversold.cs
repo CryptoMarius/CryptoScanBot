@@ -138,7 +138,7 @@ public class SignalSbmBaseOversold : SignalSbmBase
         if (last.CandleData.MacdHistogram > 0)
         {
             ExtraText = string.Format("De MACD.Hist is groen {0:N8}", last.CandleData.MacdHistogram);
-            return true; // Was voorheen false!
+            return false;
         }
 
         // Is er "herstel" ten opzichte van de vorige macd histogram candle?
@@ -252,13 +252,6 @@ public class SignalSbmBaseOversold : SignalSbmBase
         if (!GetPrevCandle(CandleLast, out CryptoCandle candlePrev))
             return false;
 
-        // Er een candle onder de bb opent of sluit (eigenlijk overbodig icm macd)
-        if (CandleLast.IsBelowBollingerBands(false))
-        {
-            ExtraText = "Close beneden de bb.lower";
-            return false;
-        }
-
 
         // ********************************************************************
         // MACD
@@ -311,18 +304,18 @@ public class SignalSbmBaseOversold : SignalSbmBase
         // ********************************************************************
         // Extra
 
-        // Profiteren van een nog lagere prijs?
-        // Maar nu schiet ie door naar de 1e de beste groene macd candle?
-        if (Symbol.LastPrice < signal.LastPrice)
-        {
-            if (Symbol.LastPrice != signal.LastPrice)
-            {
-                ExtraText = string.Format("Symbol.LastPrice {0:N8} gaat verder naar beneden {1:N8}", Symbol.LastPrice, signal.LastPrice);
-            }
-            signal.LastPrice = Symbol.LastPrice;
-            return false;
-        }
-        signal.LastPrice = Symbol.LastPrice;
+        //// Profiteren van een nog lagere prijs?
+        //// Maar nu schiet ie door naar de 1e de beste groene macd candle?
+        //if (Symbol.LastPrice < signal.LastPrice)
+        //{
+        //    if (Symbol.LastPrice != signal.LastPrice)
+        //    {
+        //        ExtraText = string.Format("Symbol.LastPrice {0:N8} gaat verder naar beneden {1:N8}", Symbol.LastPrice, signal.LastPrice);
+        //    }
+        //    signal.LastPrice = Symbol.LastPrice;
+        //    return false;
+        //}
+        //signal.LastPrice = Symbol.LastPrice;
 
         // Koop als de close vlak bij de bb.lower is (c.q. niet te ver naar boven zit)
         // Dit werkt - maar hierdoor negeren we signalen die wellicht bruikbaar waren!
@@ -347,19 +340,38 @@ public class SignalSbmBaseOversold : SignalSbmBase
             return true;
         }
 
-        //ExtraText = "";
+        // Er een candle onder de bb opent of sluit (eigenlijk overbodig icm macd)
+        if (CandleLast.Close < (decimal)CandleLast.CandleData.BollingerBandsLowerBand)
+        {
+            ExtraText = "Close beneden de bb.lower";
+            return false;
+        }
+
+        // Er een candle onder de bb opent of sluit (eigenlijk overbodig icm macd)
+        if (Symbol.LastPrice < (decimal)CandleLast.CandleData.BollingerBandsLowerBand)
+        {
+            ExtraText = "LastPrice beneden de bb.lower";
+            return false;
+        }
+
+        // Er een candle onder de bb opent of sluit (eigenlijk overbodig icm macd)
+        if (CandleLast.CandleData.SlopeRsi < 0)
+        {
+            ExtraText = "Slope RSI < 0";
+            return false;
+        }
 
         if (Math.Min(CandleLast.Open, CandleLast.Close) >= (decimal)CandleLast.CandleData.Sma20)
         {
             //reason = string.Format("{0} give up (pricewise.body > bb) {1}", text, dcaPrice.ToString0());
-            ExtraText = "give up (pricewise.body > bb)";
+            ExtraText = "give up (price > sma20)";
             return true;
         }
 
 
         if (CandleLast.CandleData.StochOscillator >= 80)
         {
-            ExtraText = "give up(stoch.osc > 80)";
+            ExtraText = "give up (stoch.osc > 80)";
             //AppendLine(string.Format("{0} give up (stoch.osc > 80) {1}", text, dcaPrice.ToString0());
             return true;
         }
@@ -368,7 +380,7 @@ public class SignalSbmBaseOversold : SignalSbmBase
         // Langer dan 60 candles willen we niet wachten (is 60 niet heel erg lang?)
         if ((CandleLast.OpenTime - signal.EventTime) > GlobalData.Settings.Bot.GlobalBuyRemoveTime * Interval.Duration)
         {
-            ExtraText = string.Format("Ophouden na 10 candles", GlobalData.Settings.Bot.GlobalBuyRemoveTime);
+            ExtraText = string.Format("Ophouden na {0} candles", GlobalData.Settings.Bot.GlobalBuyRemoveTime);
             return true;
         }
 

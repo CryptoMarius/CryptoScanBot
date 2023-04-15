@@ -136,13 +136,6 @@ public partial class FrmSettings : Form
         settings.Bot.Active = false;
 #endif
 
-        if (GlobalData.Settings.General.FontSize != Font.Size || GlobalData.Settings.General.FontName.Equals(Font.Name))
-        {
-            Font = new Font(GlobalData.Settings.General.FontName, GlobalData.Settings.General.FontSize,
-                FontStyle.Regular, GraphicsUnit.Point, 0);
-        }
-
-
         // Deze worden na de overgang naar .net 7 regelmatig gereset naar 0
         // Benieuwd waarom dit gebeurd (het zijn er gelukkig niet zo veel)
         EditGlobalBuyVarying.Minimum = -0.5m;
@@ -176,7 +169,7 @@ public partial class FrmSettings : Form
         // Base coins
         // ------------------------------------------------------------------------------
 
-        int yPos = 50;
+        int yPos = 40;
         foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
         {
             if (quoteData.SymbolList.Count > 5)
@@ -190,6 +183,7 @@ public partial class FrmSettings : Form
 
         foreach (SettingsBaseCoin x in BaseCoinList)
             x.SetControlValues();
+        BaseCoinList[0].AddHeaderLabels(40, tabBasismunten.Controls);
 
         // ------------------------------------------------------------------------------
         // Signals
@@ -387,20 +381,22 @@ public partial class FrmSettings : Form
 
         checkBoxUseBlackListOversold.Checked = settings.UseBlackListOversold;
         textBoxBlackListOversold.Text = string.Join(Environment.NewLine, settings.BlackListOversold);
-        settings.BlackListOversold.Clear();
 
         checkBoxUseWhiteListOversold.Checked = settings.UseWhiteListOversold;
         textBoxWhiteListOversold.Text = string.Join(Environment.NewLine, settings.WhiteListOversold);
-        settings.WhiteListOversold.Clear();
-
 
         checkBoxUseBlackListOverbought.Checked = settings.UseBlackListOverbought;
         textBoxBlackListOverbought.Text = string.Join(Environment.NewLine, settings.BlackListOverbought);
-        settings.BlackListOverbought.Clear();
 
         checkBoxUseWhiteListOverbought.Checked = settings.UseWhiteListOverbought;
         textBoxWhiteListOverbought.Text = string.Join(Environment.NewLine, settings.WhiteListOverbought);
-        settings.WhiteListOverbought.Clear();
+
+        // Pas op het einde zodat de dynamisch gegenereerde controls netjes meesizen
+        if (GlobalData.Settings.General.FontSize != Font.Size || GlobalData.Settings.General.FontName.Equals(Font.Name))
+        {
+            Font = new Font(GlobalData.Settings.General.FontName, GlobalData.Settings.General.FontSize,
+                FontStyle.Regular, GraphicsUnit.Point, 0);
+        }
 
         SetGrayed(null, null);
     }
