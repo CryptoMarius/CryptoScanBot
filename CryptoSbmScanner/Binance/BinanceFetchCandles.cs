@@ -23,6 +23,7 @@ public class BinanceFetchCandles
         var binanceInterval = interval.IntervalPeriod switch
         {
             CryptoIntervalPeriod.interval1m => KlineInterval.OneMinute,
+            CryptoIntervalPeriod.interval3m => KlineInterval.ThreeMinutes,
             CryptoIntervalPeriod.interval5m => KlineInterval.FiveMinutes,
             CryptoIntervalPeriod.interval15m => KlineInterval.FifteenMinutes,
             CryptoIntervalPeriod.interval30m => KlineInterval.ThirtyMinutes,
