@@ -3,8 +3,8 @@ Mis je iets in onderstaande bevindingen/todo's of toekomstige todo's, geef het A
 
 Bevindingen/Todo's:
 - Het lettertype c.q. grotte van de barometer waardes in de grafiek zijn afwijkend
-- Bij aanpassing van het lettertype loopt soms de labels over in de control waardoor tekst onleesbaar wordt
-- Bij aanpassing van het lettertype worden de scrollbars in bovenste listview getoond waardoor tekst onleesbaar wordt
+- Bij aanpassing van het lettertype lopen de labels over in de control waardoor tekst minder leesbaar wordt
+- Bij aanpassing van het lettertype worden de scrollbars in bovenste listview getoond waardoor onderste regel onleesbaar is
 - Via coindelist een munt direct op de blacklist zetten voor zowel oversold als overbought (optioneel)
 - Meldingen naar een externe applicatie c.q. script sturen
 - Meldingen naar een syslog server sturen (statistiek)
@@ -37,23 +37,23 @@ TODO:
   (ach, waarom niet, 1 extra conditie, de ema50 > sma50)
   De trend moet redelijk positief zijn om deze varianten te gebruiken
 
-TODO: HARDCODED API KEY's weghalen (ze kunner er niets mee, maar just in case)
-  Alleen voor Papertrading dus big deal...
+TODO: Hardcoded Altrady Webhook API KEY's weghalen (die staan niet op github, maar just in case)
+  Alleen bedoeld voor Papertrading op dit moment dus ook geen big deal.
 
 TODO:
   Nadat je naar deze versie bent gegaan kan een oudere scanner niet meer worden opgestart
   (json problemen met de "General.WindowPosition.Location")
 
 TODO:
-- Marco doet iets met een multi timeframe, op de 15m is het een positieve trend (via de ema)
-  En dan stap ie op een sbm 3m in, is dat iets wat realistisch is, rare combinatie)
+- Marco doet iets met een multi timeframe, als op de 15m er een positieve trend (via de ema beredeneert)
+  dan stap de trader in op een sbm 3m, is dat iets wat realistisch is? Uitzoeken via emulator
 
 TODO:
-- Extra instellingen voor de "24 uur effectief" maken!
-  Dit is om de pump en dumps beter te detecteren
+- Extra instellingen voor de "24 uur effectief" maken! Momenteel uitgeschakeled
+  Het is bedoeld om een pump en dumps beter te detecteren (en het zijn er meer dan ik dacht)
 
 TODO:
-- De JUMP heeft nu "last" van de "technische afkeuring", terwijl dat voor jumps helemaal niet relevant is
+- De JUMP heeft nu "last" van de "technische afkeuring", terwijl dat voor jumps niet relevant is.
   Hoe kan ik die flow verbeteren?
 
 
