@@ -31,14 +31,17 @@ public class CryptoQuoteData
     public Color DisplayColor { get; set; } = Color.White;
 
     [Computed]
+    [JsonIgnore]
     public List<BinanceStream1mCandles> BinanceStream1mCandles { get; set; } = new List<BinanceStream1mCandles>();
 
     // De laatst berekende barometer standen
     [Computed]
+    [JsonIgnore]
     public BarometerData[] BarometerList { get; } = new BarometerData[Enum.GetValues(typeof(CryptoIntervalPeriod)).Length];
 
     // Gecachte lijst met symbolen (de zoveelste), met name voor de barometer(s)
     [Computed]
+    [JsonIgnore]
     public List<CryptoSymbol> SymbolList { get; } = new List<CryptoSymbol>();
 
     public CryptoQuoteData()
