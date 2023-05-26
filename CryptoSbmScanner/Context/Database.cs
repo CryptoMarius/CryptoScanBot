@@ -237,6 +237,10 @@ public class CryptoDatabase : IDisposable
                 "ExchangeId INTEGER NOT NULL," +
                 "SymbolId INTEGER NOT NULL," +
                 "IntervalId INTEGER NULL," +
+
+                "BackTest INTEGER NULL," +
+                "IsInvalid INTEGER NULL," +
+
                 "EventTime bigint NOT NULL," +
                 "Mode INTEGER NOT NULL," +
                 "Price TEXT NOT NULL," +
@@ -263,14 +267,16 @@ public class CryptoDatabase : IDisposable
 
                 "StochSignal TEXT NULL," +
                 "StochOscillator TEXT NULL," +
-                "BollingerBandsLowerBand TEXT NULL," +
-                "BollingerBandsUpperBand TEXT NULL," +
+                //"BollingerBandsLowerBand TEXT NULL," +
+                //"BollingerBandsUpperBand TEXT NULL," +
+                "BollingerBandsDeviation TEXT NULL," +
                 "BollingerBandsPercentage TEXT NULL," +
 
-                "KeltnerLoweBand TEXT NULL," +
+                "KeltnerLowerBand TEXT NULL," +
                 "KeltnerUpperBand TEXT NULL," +
 
                 "Rsi TEXT NULL," +
+                "SlopeRsi TEXT NULL," +
                 "Psar TEXT NULL," +
                 "Psar2 TEXT NULL," +
 
