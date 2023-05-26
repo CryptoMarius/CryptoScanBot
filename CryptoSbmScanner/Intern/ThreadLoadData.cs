@@ -11,6 +11,8 @@ using CryptoSbmScanner.TradingView;
 using Dapper;
 using Dapper.Contrib.Extensions;
 
+using Microsoft.IdentityModel.Tokens;
+
 using System.Reflection;
 using System.Text;
 
@@ -590,8 +592,11 @@ public class ThreadLoadData
             //************************************************************************************
             // Nu we de achterstand ingehaald hebben kunnen/mogen we analyseren (signals maken)
             //************************************************************************************
-            GlobalData.AddTextToLogTab("Starting task for handling orders");
-            _ = Task.Run(async () => { await GlobalData.ThreadMonitorOrder.ExecuteAsync(); });
+            if (!GlobalData.Settings.ApiKey.IsNullOrEmpty())
+            {
+                GlobalData.AddTextToLogTab("Starting task for handling orders");
+                _ = Task.Run(async () => { await GlobalData.ThreadMonitorOrder.ExecuteAsync(); });
+            }
 
 
             //************************************************************************************
@@ -614,16 +619,22 @@ public class ThreadLoadData
             // Alle data van Binance monotoren
             // Deze methode werkt alleen op Binance
             //************************************************************************************
-            GlobalData.AddTextToLogTab("Starting task for monitoring events");
-            _ = Task.Run(async () => { await GlobalData.TaskBinanceStreamUserData.ExecuteAsync(); });
+            if (!GlobalData.Settings.ApiKey.IsNullOrEmpty())
+            {
+                GlobalData.AddTextToLogTab("Starting task for monitoring events");
+                _ = Task.Run(async () => { await GlobalData.TaskBinanceStreamUserData.ExecuteAsync(); });
+            }
 
 
             //************************************************************************************              
             // De assets van de exchange halen (overlappend met Binance monitoring om niets te missen)
             // Via een event worden de assets in de userinterface gezet (dat duurt even)
             //************************************************************************************
-            BinanceFetchAssets fetchAssets = new BinanceFetchAssets();
-            await Task.Run(async () => { await fetchAssets.Execute(); });
+            if (!GlobalData.Settings.ApiKey.IsNullOrEmpty())
+            {
+                BinanceFetchAssets fetchAssets = new BinanceFetchAssets();
+                await Task.Run(async () => { await fetchAssets.Execute(); });
+            }
 #endif
 
 
