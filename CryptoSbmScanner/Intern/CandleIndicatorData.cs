@@ -26,7 +26,7 @@ public class CandleIndicatorData
     public double? SlopeEma50 { get; set; }
 
     public double? Rsi { get; set; }
-    public double? SlopeRsi { get; set; }    
+    public double? SlopeRsi { get; set; }
 
     public double? MacdValue { get; set; }
     public double? MacdSignal { get; set; }
@@ -54,7 +54,8 @@ public class CandleIndicatorData
     public double? BollingerBandsPercentage { get; set; }
     public double? BollingerBandsDeviation { get; set; }
 
-    //public KeltnerResult Keltner { get; set; }
+    public double? KeltnerUpperBand { get; set; }
+    public double? KeltnerLowerBand { get; set; }
 
     // Voor de SMA lookback willen we 60 sma200's erin, dus 200 + 60
     private const int maxCandles = 260;
@@ -80,7 +81,7 @@ public class CandleIndicatorData
             SortedList<long, CryptoCandle> intervalCandles = symbolPeriod.CandleList;
             if (intervalCandles.Count < maxCandles)
             {
-                errorstr = string.Format("{0} {1} Not enough candles available count={2} requested={3}", symbol.Name, interval.Name, intervalCandles.Count, maxCandles);
+                errorstr = string.Format("{0} Not enough candles available for interval {1} count={2} requested={3}", symbol.Name, interval.Name, intervalCandles.Count, maxCandles);
                 return null;
             }
 
@@ -109,9 +110,10 @@ public class CandleIndicatorData
                 else
                 {
                     // De laatste candle is niet altijd aanwezig (een kwestie van timing?)
-                    if ((nextCandleOpenTime != candleLoop) && !first)
+                    if (nextCandleOpenTime != candleLoop && !first)
                     {
                         // In de hoop dat dit het automatisch zou kunnen fixen?
+                        symbolPeriod.IsChanged = true;
                         if (symbolPeriod.LastCandleSynchronized.Value > candleLoop - interval.Duration)
                             symbolPeriod.LastCandleSynchronized = candleLoop - interval.Duration;
                         GlobalData.AddTextToLogTab(symbol.Name + " " + interval.Name + " Missing candle information " + CandleTools.GetUnixDate(candleLoop).ToLocalTime());
@@ -129,7 +131,7 @@ public class CandleIndicatorData
             //Mhh, blijkbaar waren er gewoon niet goed candles
             if (candlesForHistory.Count < maxCandles)
             {
-                errorstr = string.Format("{0} {1} Not enough candles available count={2} requested={3}", symbol.Name, interval.Name, candlesForHistory.Count, maxCandles);
+                errorstr = string.Format("{0} Not enough candles available for interval {1} count={2} requested={3}", symbol.Name, interval.Name, candlesForHistory.Count, maxCandles);
                 return null;
             }
 
@@ -193,29 +195,29 @@ public class CandleIndicatorData
         List<EmaResult> emaList50 = (List<EmaResult>)history.GetEma(50);
         //List<EmaResult> emaList100 = (List<EmaResult>)history.GetEma(100);
         List<EmaResult> emaList200 = (List<EmaResult>)history.GetEma(200);
-        List<SlopeResult> slopeEma20List = (List<SlopeResult>)emaList20.GetSlope(5);
-        List<SlopeResult> slopeEma50List = (List<SlopeResult>)emaList50.GetSlope(5);
+        List<SlopeResult> slopeEma20List = (List<SlopeResult>)emaList20.GetSlope(3);
+        List<SlopeResult> slopeEma50List = (List<SlopeResult>)emaList50.GetSlope(3);
 
         //List<SmaResult> smaList8 = (List<SmaResult>)Indicator.GetSma(history, 8);
         List<SmaResult> smaList20 = (List<SmaResult>)Indicator.GetSma(history, 20);
         List<SmaResult> smaList50 = (List<SmaResult>)history.GetSma(50);
         //List<SmaResult> smaList100 = (List<SmaResult>)Indicator.GetSma(history, 100);
         List<SmaResult> smaList200 = (List<SmaResult>)history.GetSma(200);
-        List<SlopeResult> slopeSma20List = (List<SlopeResult>)smaList20.GetSlope(5);
-        List<SlopeResult> slopeSma50List = (List<SlopeResult>)smaList50.GetSlope(5);
+        List<SlopeResult> slopeSma20List = (List<SlopeResult>)smaList20.GetSlope(3);
+        List<SlopeResult> slopeSma50List = (List<SlopeResult>)smaList50.GetSlope(3);
 
-        //List<KeltnerResult> keltnerList = (List<KeltnerResult>)Indicator.GetKeltner(history, 20, 1);
+        // Berekend vanuit de EMA 20 en de upper en lowerband ontstaat uit 2x de ATR
+        List<KeltnerResult> keltnerList = (List<KeltnerResult>)Indicator.GetKeltner(history, 20, 1);
 
         //List<AtrResult> atrList = (List<AtrResult>)Indicator.GetAtr(history);
         List<RsiResult> rsiList = (List<RsiResult>)history.GetRsi();
         List<MacdResult> macdList = (List<MacdResult>)history.GetMacd();
 
-        List<SlopeResult> slopeRsiList = (List<SlopeResult>)rsiList.GetSma(10).GetSlope(5);
+        List<SlopeResult> slopeRsiList = (List<SlopeResult>)rsiList.GetSma(25).GetSlope(3);
 
         // (volgens de telegram groepen op 14,3,1 ipv de standaard 14,3,3)
         List<StochResult> stochList = (List<StochResult>)history.GetStoch(14, 3, 1); // 18-11-22: omgedraaid naar 1, 3...
 
-        //List<KeltnerResult> keltnerList = (List<KeltnerResult>)Indicator.GetKeltner(candleList, 20, 1);
 
 #if DEBUG
         //List<ParabolicSarResult> psarListDave = (List<ParabolicSarResult>)history.GetParabolicSar();
@@ -232,12 +234,12 @@ public class CandleIndicatorData
 
         int startIdx = 0;
         int endIdx = history.Count - 1;
-        int outNbElement; // aantal elementen in de array vanaf 0
+        //int outNbElement; // aantal elementen in de array vanaf 0
         TicTacTec.TA.Library.Core.RetCode retCode;
 
         double[] psarValues = new double[history.Count];
         retCode = TicTacTec.TA.Library.Core.Sar(startIdx, endIdx, inHigh, inLow, 0.02, 0.2,
-            out int outBegIdxPSar, out outNbElement, psarValues);
+            out int outBegIdxPSar, out int outNbElement, psarValues);
 
         //// We might do everything via ta-lib, but its a tricky library
         //// (for now we only use it for the correct psar values)
@@ -291,7 +293,7 @@ public class CandleIndicatorData
 
                 candleData.Rsi = rsiList[index].Rsi;
                 candleData.SlopeRsi = slopeRsiList[index].Slope;
-                
+
                 candleData.MacdValue = macdList[index].Macd;
                 candleData.MacdSignal = macdList[index].Signal;
                 candleData.MacdHistogram = macdList[index].Histogram;
@@ -311,8 +313,9 @@ public class CandleIndicatorData
                 //candleData.PSarJason = psarListJason[index].Sar;
                 //candleData.PSarTulip = psarListTulip[index].Sar;
 #endif
-                //candleData.Keltner = keltnerList[index];
-            }
+                candleData.KeltnerUpperBand = keltnerList[index].UpperBand;
+                candleData.KeltnerLowerBand = keltnerList[index].LowerBand;
+}
             catch (Exception error)
             {
                 // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.

@@ -6,12 +6,9 @@ namespace CryptoSbmScanner;
 
 public partial class FrmMain
 {
-    private void ListViewSymbolsInitOnce()
+    private void ListViewSymbolsConstructor()
     {
-        listViewSymbolPrices.GridLines = false;
-        listViewSymbolPrices.View = View.Details;
-        listViewSymbolPrices.FullRowSelect = true;
-        listViewSymbolPrices.HideSelection = true;
+        listBoxSymbols.DoubleClick += new System.EventHandler(ListBoxSymbols_DoubleClick);
     }
 
     private void ListboxSymbolsInitCaptions()
@@ -189,4 +186,69 @@ public partial class FrmMain
 
         Clipboard.SetText(symbol.Name, TextDataFormat.UnicodeText);
     }
+
+    private void ListBoxSymbolsMenuItemCreateSignal_Click(object sender, EventArgs e)
+    {
+        //    // Neem de door de gebruiker geselecteerde coin
+        //    string symbolName = listBoxSymbols.Text.ToString();
+        //    if (string.IsNullOrEmpty(symbolName))
+        //        return;
+
+        //    DateTime eventTimeStart = DateTime.UtcNow;
+
+        //    //todo: Multi exchange (nah)
+        //    CryptoExchange exchange = null;
+        //    if (GlobalData.ExchangeListName.TryGetValue("Binance", out exchange))
+        //    {
+        //        CryptoSymbol symbol = null;
+        //        if (exchange.SymbolListName.TryGetValue(symbolName, out symbol))
+        //        {
+        //            //Op het gekozen interval
+        //            CryptoInterval interval = (CryptoInterval)comboBoxInterval.SelectedItem;
+
+        //            SignalCreate algoritm = new SignalCreate(symbol, interval, null);
+
+        //            unix time = bi
+        //            algoritm.BinanceAnalyseSymbol(, true);
+        //            algoritm.CreateSignalg
+        //            CryptoSignal signal = algoritm.CreateSignal();
+        //        }
+        //    }
+    }
+
+    private async void SignalsNegerenToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+        // Neem de door de gebruiker geselecteerde coin
+        string symbolName = listBoxSymbols.Text.ToString();
+        if (string.IsNullOrEmpty(symbolName))
+            return;
+
+        if (GlobalData.ExchangeListName.TryGetValue("Binance", out CryptoSbmScanner.Model.CryptoExchange exchange))
+        {
+            if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol symbol))
+            {
+                await symbol.Exchange.PositionListSemaphore.WaitAsync();
+                try
+                {
+                    foreach (CryptoSymbolInterval cryptoSymbolInterval in symbol.IntervalPeriodList)
+                    {
+                        CryptoSignal signal = cryptoSymbolInterval.Signal;
+                        if (signal != null)
+                        {
+                            string lastPrice = symbol.LastPrice?.ToString(symbol.DisplayFormat);
+                            string text = "Monitor " + symbol.Name + " " + signal.Interval.Name + " signal from=" + signal.OpenDate.ToLocalTime() + " " + signal.Strategy.ToString() + " price=" + lastPrice;
+                            GlobalData.AddTextToLogTab(text + " cancelled (removed)");
+
+                            cryptoSymbolInterval.Signal = null;
+                        }
+                    }
+                }
+                finally
+                {
+                    symbol.Exchange.PositionListSemaphore.Release();
+                }
+            }
+        }
+    }
+
 }

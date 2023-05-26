@@ -205,7 +205,7 @@ public class SignalSbmBaseOverbought : SignalSbmBase
     //        reaction = string.Format("Volume spike prev={0:N8} last={1:N8}", candlePrev.Volume, CandleLast.Volume);
     //        return true;
     //    }
-        
+
 
     //    return false;
     //}
@@ -311,7 +311,7 @@ public class SignalSbmBaseOverbought : SignalSbmBase
             }
             return false;
         }
-        signal.LastPrice = Symbol.LastPrice;
+        signal.LastPrice = (decimal)Symbol.LastPrice;
 
         // Koop als de close vlak bij de bb.upper is (c.q. niet te ver naar boven zit)
         // Werkt goed!!! (toch even experimenteren) - maar negeert hierdoor ook veel signalen die wel bruikbaar waren
@@ -355,31 +355,18 @@ public class SignalSbmBaseOverbought : SignalSbmBase
 
 
         // Langer dan 60 candles willen we niet wachten (is 60 niet heel erg lang?)
-        if ((CandleLast.OpenTime - signal.EventTime) > GlobalData.Settings.Bot.GlobalBuyRemoveTime * Interval.Duration)
+        if ((CandleLast.OpenTime - signal.EventTime) > GlobalData.Settings.Trading.GlobalBuyRemoveTime * Interval.Duration)
         {
             ExtraText = "Ophouden na 10 candles";
             return true;
         }
 
-        if (CandleLast.CandleData.PSar < CandleLast.CandleData.Sma20)
-        {
-            ExtraText = string.Format("De PSAR staat onder de sma20 {0:N8}", CandleLast.CandleData.PSar);
-            return true;
-        }
-
-        if (Symbol.LastPrice < (decimal)CandleLast.CandleData.Sma20)
-        {
-            ExtraText = string.Format("De prijs staat onder de sma20 {0:N8}", Symbol.LastPrice);
-            return true;
-        }
-
-
         // Als de barometer alsnog daalt dan stoppen
-		// (MAAR - willen we voor short een anderere barometer check hanteren?)
+        // (MAAR - willen we voor short niet een andere barometer check hanteren?????)
         BarometerData barometerData = Symbol.QuoteData.BarometerList[(long)CryptoIntervalPeriod.interval1h];
-        if (barometerData.PriceBarometer <= GlobalData.Settings.Bot.Barometer01hBotMinimal)
+        if (barometerData.PriceBarometer <= GlobalData.Settings.Trading.Barometer01hBotMinimal)
         {
-            ExtraText = string.Format("Barometer 1h {0} below {1}", barometerData.PriceBarometer?.ToString0("N2"), GlobalData.Settings.Bot.Barometer01hBotMinimal.ToString0("N2"));
+            ExtraText = string.Format("Barometer 1h {0} below {1}", barometerData.PriceBarometer?.ToString0("N2"), GlobalData.Settings.Trading.Barometer01hBotMinimal.ToString0("N2"));
             return true;
         }
 

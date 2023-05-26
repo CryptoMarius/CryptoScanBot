@@ -4,14 +4,13 @@ using CryptoSbmScanner.Model;
 namespace CryptoSbmScanner.Signal;
 
 
-// De officiele SBM methode van Maurice Orsel
 
 public class SignalSbm1Overbought : SignalSbmBaseOverbought
 {
     public SignalSbm1Overbought(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        SignalMode = SignalMode.modeShort;
-        SignalStrategy = SignalStrategy.sbm1Overbought;
+        SignalMode = TradeDirection.Short;
+        SignalStrategy = SignalStrategy.Sbm1;
     }
 
 

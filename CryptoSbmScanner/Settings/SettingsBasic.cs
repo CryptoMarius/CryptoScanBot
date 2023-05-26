@@ -7,55 +7,63 @@ namespace CryptoSbmScanner.Settings;
 [Serializable]
 public class SettingsBasic
 {
+    public string ApiKey { get; set; } = "";
+    public string ApiSecret { get; set; } = "";
+
     /// <summary>
-    ///  Standaard instellingen
+    /// Standaard instellingen
     /// </summary>
     public SettingsGeneral General { get; set; } = new();
 
     /// <summary>
-    ///  Signal gerelateerde instellingen
+    /// Signal gerelateerde instellingen
     /// </summary>
     public SettingsSignal Signal { get; set; } = new();
 
     /// <summary>
-    ///  Bot gerelateerde instellingen
+    /// Trading gerelateerde instellingen
     /// </summary>
-    public SettingsTradeBot Bot { get; set; } = new();
+    public SettingsTrading Trading { get; set; } = new();
+
+    /// <summary>
+    /// Telegram gerelateerde instellingen
+    /// </summary>
+    public SettingsTelegram Telegram { get; set; } = new();
+
+    /// <summary>
+    /// Balanceer instellingen
+    /// </summary>
+    public SettingsBalanceBot BalanceBot { get; set; } = new();
 
 
     /// <summary>
-    ///  Balance Bot instellingen
+    /// Welke basis munten willen we gebruiken
     /// </summary>
-    //public SettingsBalanceBot BalanceBot { get; set; } = new SettingsBalanceBot();
-
-
-    //Welke basis munten willen we gebruiken
     public SortedList<string, CryptoQuoteData> QuoteCoins { get; set; } = new();
 
 
-
     // Als dit aan staat moet de symbol staat in de whitelist dan wordt het toegestaan
-    public bool UseWhiteListOversold { get; set; } = false;
+    //public bool UseWhiteListOversold { get; set; } = false;
     public List<string> WhiteListOversold { get; set; } = new();
 
     // Als dit aan en de symbol staat in de blacklist dan wordt de symbol overgeslagen
-    public bool UseBlackListOversold { get; set; } = false;
+    //public bool UseBlackListOversold { get; set; } = false;
     public List<string> BlackListOversold { get; set; } = new();
 
     // Als dit aan staat moet de symbol staat in de whitelist dan wordt het toegestaan
-    public bool UseWhiteListOverbought { get; set; } = false;
+    //public bool UseWhiteListOverbought { get; set; } = false;
     public List<string> WhiteListOverbought { get; set; } = new();
 
     // Als dit aan en de symbol staat in de blacklist dan wordt de symbol overgeslagen
-    public bool UseBlackListOverbought { get; set; } = false;
+    //public bool UseBlackListOverbought { get; set; } = false;
     public List<string> BlackListOverbought { get; set; } = new();
 
 
+    /// <summary>
+    /// Instellingen voor uitvoeren backtest
+    /// </summary>
+    public SettingsBackTest BackTest { get; set; } = new();
 
-    public string BackTestSymbol { get; set; } = "BTCUSDT";
-    public string BackTestInterval { get; set; } = "1M";
-    public DateTime BackTestTime { get; set; } = DateTime.Now;
-    public SignalStrategy BackTestAlgoritm { get; set; } = SignalStrategy.sbm1Oversold;
 
     /// <summary>
     /// De basis instellingen voor de Settings

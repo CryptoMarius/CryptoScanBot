@@ -16,7 +16,7 @@ public class BinanceApi
             //databaseThread.Open();
             try
             {
-                if (signal.Mode == SignalMode.modeLong)
+                if (signal.Mode == TradeDirection.Long)
                 {
                     string reaction = "";
 
@@ -43,20 +43,20 @@ public class BinanceApi
 
                     // Wat wordt de prijs? (hoe graag willen we in de trade?)
                     // Onderstaand moet door het (basis)algoritme geregeld worden en niet hier
-                    decimal? price = signal.Price;
-                    switch (GlobalData.Settings.Bot.BuyPriceMethod)
+                    decimal price = signal.Price;
+                    switch (GlobalData.Settings.Trading.BuyMethod)
                     {
                         case BuyPriceMethod.BidPrice:
                             if (signal.Symbol.BidPrice.HasValue)
-                                price = signal.Symbol.BidPrice;
+                                price = (decimal)signal.Symbol.BidPrice;
                             break;
                         case BuyPriceMethod.AskPrice:
                             if (signal.Symbol.AskPrice.HasValue)
-                                price = signal.Symbol.AskPrice;
+                                price = (decimal)signal.Symbol.AskPrice;
                             break;
                         case BuyPriceMethod.BidAndAskPriceAvg:
                             if (signal.Symbol.AskPrice.HasValue)
-                                price = (signal.Symbol.AskPrice + signal.Symbol.BidPrice) / 2;
+                                price = (decimal)(signal.Symbol.AskPrice + signal.Symbol.BidPrice) / 2;
                             break;
                         // TODO: maar voorlopig even afgesterd
                         //case BuyPriceMethod.Sma20: 
@@ -75,14 +75,14 @@ public class BinanceApi
                     }
 
 
-                    /*
+                    
                     // Plaats buy order
                     // Dit triggert een notificatie die technisch gezien eerder kan arriveren dan dat wij 
                     // de positie toevoegen, daarom locken we hier de posities voor het plaatsen van de buy.
-                    Monitor.Enter(Signal.Symbol.PositionList);
+                    Monitor.Enter(signal.Exchange.PositionList);
                     try
                     {
-                        (bool result, TradeParams tradeParams) result = await PositionMonitor.PlaceBuyOrder(null, 0, Signal.Symbol, price, "BUY", GlobalData.Settings.Bot.BuyPriceMethod == BuyPriceMethod.MarketOrder);
+                        (bool result, TradeParams tradeParams) result = await PositionMonitor.PlaceBuyOrder(null, 0, signal.Symbol, price, "BUY", GlobalData.Settings.Trading.BuyMethod == BuyPriceMethod.MarketOrder);
                         if (result.result)
                         {
                             //Een positie maken
@@ -90,14 +90,15 @@ public class BinanceApi
                             //if (Signal.Id > 0)
                             //    position.SignalId = Signal.Id;
                             position.CreateTime = result.tradeParams.CreateTime;
-                            position.Signal = Signal;
-                            position.Exchange = Signal.Exchange;
-                            //position.ExchangeId = Signal.ExchangeId;
-                            position.Symbol = Signal.Symbol;
-                            //position.SymbolId = Signal.SymbolId;
-                            position.Interval = Signal.Interval;
-                            //position.IntervalId = Signal.IntervalId;
-                            position.Status = PositionStatus.positionWaiting;
+                            position.Signal = signal;
+                            position.SignalId = signal.Id;
+                            position.Exchange = signal.Exchange;
+                            position.ExchangeId = signal.Exchange.Id;
+                            position.Symbol = signal.Symbol;
+                            position.SymbolId = signal.Symbol.Id;
+                            position.Interval = signal.Interval;
+                            position.IntervalId = signal.Interval.Id;
+                            position.Status = CryptoPositionStatus.positionWaiting;
                             position.BuyPrice = result.tradeParams.Price;
                             position.BuyAmount = result.tradeParams.QuoteQuantity; // voor het bepalen van het volgende aankoop bedrag (die in de settings kan wijzigen)
                             if (position.BuyAmount == 0)
@@ -109,16 +110,15 @@ public class BinanceApi
                             GlobalData.AddTextToLogTab(string.Format("Debug: positie toegevoegd {0}", position.Status.ToString()));
 
                             // Als vervanger van bovenstaande tzt
-                            CreatePositionStep(databaseThread, position, result.tradeParams, "BUY");
+//TODO?
+                            //CreatePositionStep(databaseThread, position, result.tradeParams, "BUY");
                         }
                     }
                     finally
                     {
-                        Monitor.Exit(Signal.Symbol.PositionList);
+                        Monitor.Exit(signal.Exchange.PositionList);
                     }
-                    return true;
-                    */
-                    return (false, "");
+                    return (true, "");
                 }
 
             }

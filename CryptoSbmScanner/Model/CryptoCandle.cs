@@ -1,25 +1,39 @@
 ﻿using CryptoSbmScanner.Intern;
+using Dapper.Contrib.Extensions;
 using Skender.Stock.Indicators;
 
 namespace CryptoSbmScanner.Model;
 
+#if DATABASE
+[Table("Candle")]
+#endif
 public class CryptoCandle : IQuote
 {
-    public long OpenTime { get; set; }
-    public DateTime Date { get { return CandleTools.GetUnixDate(OpenTime); } }
-    public DateTime DateLocal { get { return CandleTools.GetUnixDate(OpenTime).ToLocalTime(); } }
-
+#if DATABASE
+    [Key]
+    public int Id { get; set; }
+    public int ExchangeId { get; set; }
+    public int SymbolId { get; set; }
+    public int IntervalId { get; set; }
+#endif
+    public long OpenTime { get; set; } // een long is 128 bit, het zou in een uint kunnen (delen door 60)
     public decimal Open { get; set; }
     public decimal High { get; set; }
     public decimal Low { get; set; }
     public decimal Close { get; set; }
     public decimal Volume { get; set; }
 
-    public virtual CryptoSymbol Symbol { get; set; }
-    public virtual CryptoInterval Interval { get; set; }
+    [Computed]
+    public DateTime Date { get { return CandleTools.GetUnixDate(OpenTime); } }
+
+    [Computed]
+    public DateTime DateLocal { get { return CandleTools.GetUnixDate(OpenTime).ToLocalTime(); } }
+
+    [Computed]
     public CandleIndicatorData CandleData { get; set; }
 
-    public string ExtraText; // beetje quick en dirty
+    //[Computed]
+    //public string ExtraText { get; set; } // beetje quick en dirty voor een Excel export
 }
 
 //

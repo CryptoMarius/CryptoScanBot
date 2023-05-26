@@ -14,8 +14,7 @@ public class SymbolValue
 
     public decimal Lp { get; set; } // Close?
 
-    // Onderstaand is in deze tool noet nodig
-    // Wellicht willen we er later wat mee?
+    // Onderstaand is in deze tool niet nodig, wellicht willen we er in de toekomt nog wat mee?
 
     //public double Ch { get; set; }
     //public double Chp { get; set; }
@@ -30,19 +29,20 @@ public class SymbolValue
     //public string TimeZone { get; set; }
 }
 
+
 public class TradingViewSymbolInfo
 {
-    private SymbolValue value;
+    private SymbolValue SymbolValue;
     private TradingViewSymbolWebSocket socket;
 
-    public async void Start(string tickerName, string displayName, string displayFormat, SymbolValue symbolValue, int startDelayMs)
+    public async void StartAsync(string tickerName, string displayName, string displayFormat, SymbolValue symbolValue, int startDelayMs)
     {
         await Task.Delay(startDelayMs);
 
-        value = symbolValue;
-        value.Name = displayName;
-        value.Ticker = tickerName;
-        value.DisplayFormat = displayFormat;
+        SymbolValue = symbolValue;
+        SymbolValue.Name = displayName;
+        SymbolValue.Ticker = tickerName;
+        SymbolValue.DisplayFormat = displayFormat;
         socket = new TradingViewSymbolWebSocket(tickerName);
         socket.DataFetched += OnValueFetched;
         socket.ConnectWebSocketAndRequestSession().Wait();
@@ -101,7 +101,7 @@ public class TradingViewSymbolInfo
 
         if (flag > 0)
         {
-            value.LastCheck = DateTime.UtcNow;
+            SymbolValue.LastCheck = DateTime.UtcNow;
             //if (lastValue != value.Lp)
             //    ValueFetched?.Invoke(this, value);
             //_vm.ForecastVm.CalculateNewRates(_vm.TradingViewVm.Rates);
@@ -167,7 +167,7 @@ public class TradingViewSymbolInfo
     private int ApplyTickerCurrentValues(JsonDocument jDocument)
     {
         if (jDocument.RootElement.TryGetProperty("lp", out JsonElement lpValue) && lpValue.TryGetDecimal(out decimal lp))
-            value.Lp = lp;
+            SymbolValue.Lp = lp;
 
         //if (jDocument.RootElement.TryGetProperty("ch", out JsonElement chValue) && chValue.TryGetDouble(out double ch))
         //    value.Ch = ch;

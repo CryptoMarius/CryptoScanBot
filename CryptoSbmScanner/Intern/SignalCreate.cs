@@ -1,22 +1,11 @@
-﻿using CryptoSbmScanner.Model;
+﻿using CryptoSbmScanner.Context;
+using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Signal;
-using Microsoft.Office.Interop.Excel;
-
-using NPOI.HPSF;
-using NPOI.HSSF.UserModel;
-using NPOI.OpenXmlFormats.Wordprocessing;
-using NPOI.SS.Formula.Functions;
-using NPOI.SS.UserModel;
-using NPOI.SS.Util;
-using NPOI.XWPF.UserModel;
-using Renci.SshNet;
-using Skender.Stock.Indicators;
-using ICell = NPOI.SS.UserModel.ICell;
+using Dapper.Contrib.Extensions;
 
 namespace CryptoSbmScanner.Intern;
 
-
-public delegate void AnalyseAlgoritmAlarmEvent(CryptoSignal signal);
+public delegate void AnalyseEvent(CryptoSignal signal);
 
 
 public class SignalCreate
@@ -24,17 +13,17 @@ public class SignalCreate
     private bool BackTest { get; set; }
     private CryptoSymbol Symbol { get; set; }
     private CryptoInterval Interval { get; set; }
-    private AnalyseAlgoritmAlarmEvent AnalyseAlgoritmAlarmEvent { get; set; }
+    private AnalyseEvent AnalyseEvent { get; set; }
 
     private CryptoCandle Candle { get; set; }
-    private List<CryptoCandle> history = null;
+    public List<CryptoCandle> history = null;
 
-    public SignalCreate(CryptoSymbol symbol, CryptoInterval interval, bool backTest, AnalyseAlgoritmAlarmEvent analyseAlgoritmAlarmEvent)
+    public SignalCreate(CryptoSymbol symbol, CryptoInterval interval, bool backTest, AnalyseEvent analyseEvent)
     {
         Symbol = symbol;
         Interval = interval;
         BackTest = backTest;
-        AnalyseAlgoritmAlarmEvent = analyseAlgoritmAlarmEvent;
+        AnalyseEvent = analyseEvent;
     }
 
 
@@ -83,7 +72,7 @@ public class SignalCreate
             }
             else // een belachelijke value zodat het eruit valt
             {
-                GlobalData.AddTextToLogTab(string.Format("Analyse {0} {1} {2:N8} heeft geen candledata of geen BB?", CandleLast.Symbol.Name, CandleLast.DateLocal.ToString(), CandleLast.Close));
+                GlobalData.AddTextToLogTab(string.Format("Analyse {0} {1} {2:N8} heeft geen candledata of geen BB?", signal.Symbol.Name, CandleLast.DateLocal.ToString(), CandleLast.Close));
             }
 
             iterations++;
@@ -97,24 +86,79 @@ public class SignalCreate
     }
 
 
+    private bool CheckAdditionalAlarmProperties(CryptoSignal signal, out string reaction)
+    {
+        // --------------------------------------------------------------------------------
+        // Van de laatste 60 candles mogen er maximaal 16 geen volume hebben.
+        // (dit op aanranden van zowel Roelf als Helga). Er moet wat te "beleven" zijn
+        // --------------------------------------------------------------------------------
+        if (GlobalData.Settings.Signal.CandlesWithZeroVolumeCheck)
+        {
+            if ((GlobalData.Settings.Signal.CandlesWithZeroVolume > 0) && (signal.CandlesWithZeroVolume > GlobalData.Settings.Signal.CandlesWithZeroVolume))
+            {
+                reaction = string.Format("teveel candles zonder volume ({0} van 60 candles)", signal.CandlesWithZeroVolume);
+                return false;
+            }
+        }
+
+        // --------------------------------------------------------------------------------
+        // Van de laatste 60 candles mogen er slechts 18 plat zijn
+        // (dit op aanranden van zowel Roelf als Helga). Er moet wat te "beleven" zijn
+        // --------------------------------------------------------------------------------
+        if (GlobalData.Settings.Signal.CandlesWithFlatPriceCheck)
+        {
+            if ((GlobalData.Settings.Signal.CandlesWithFlatPrice > 0) && (signal.CandlesWithFlatPrice > GlobalData.Settings.Signal.CandlesWithFlatPrice))
+            {
+                reaction = string.Format("teveel platte candles ({0} van 60 candles)", signal.CandlesWithFlatPrice);
+                return false;
+            }
+        }
+
+
+        // Er moet een beetje beweging in de BB zitten (niet enkel op de onderste bb ofzo)
+        if (GlobalData.Settings.Signal.AboveBollingerBandsSmaCheck)
+        {
+            if ((GlobalData.Settings.Signal.AboveBollingerBandsSma > 0) && (signal.AboveBollingerBandsSma < GlobalData.Settings.Signal.AboveBollingerBandsSma))
+            {
+                reaction = string.Format("te weinig candles die boven de BB.Sma uitsteken ({0} van 60 candles)", signal.AboveBollingerBandsSma);
+                return false;
+            }
+        }
+
+
+        // Vervolg op voorgaande wens op beweging in de BB (met het liefst een aantal uitschieters)
+        if (GlobalData.Settings.Signal.AboveBollingerBandsUpperCheck)
+        {
+            if ((GlobalData.Settings.Signal.AboveBollingerBandsUpper > 0) && (signal.AboveBollingerBandsUpper < GlobalData.Settings.Signal.AboveBollingerBandsUpper))
+            {
+                reaction = string.Format("te weinig candles die boven de BB.Upper uitsteken ({0} van 60 candles)", signal.AboveBollingerBandsUpper);
+                return false;
+            }
+        }
+
+
+        reaction = "";
+        return true;
+    }
+
 
     private static void AnalyseNotificationClearOutOld()
     {
-        Monitor.Enter(GlobalData.AnalyseNotification);
+        Monitor.Enter(GlobalData.AnalyseNotificationList);
         try
         {
             //De notificaties kleiner maken
             long someTimeAgo = CandleTools.GetUnixTime(DateTime.UtcNow.AddHours(-2), 60);
-            for (int i = GlobalData.AnalyseNotification.Count - 1; i >= 0; i--)
+            for (int i = GlobalData.AnalyseNotificationList.Count - 1; i >= 0; i--)
             {
-                KeyValuePair<string, long> item2 = GlobalData.AnalyseNotification.ElementAt(i);
+                KeyValuePair<string, long> item2 = GlobalData.AnalyseNotificationList.ElementAt(i);
                 if (item2.Value < someTimeAgo)
-                    GlobalData.AnalyseNotification.Remove(item2.Key);
+                    GlobalData.AnalyseNotificationList.Remove(item2.Key);
             }
         }
         finally
         {
-            Monitor.Exit(GlobalData.AnalyseNotification);
+            Monitor.Exit(GlobalData.AnalyseNotificationList);
         }
     }
 
@@ -211,47 +255,51 @@ public class SignalCreate
     }
 
 
-    private async void SendSignal(SignalBase algorithm, CryptoSignal signal, string eventText)
+    private async void SendSignal(SignalCreateBase algorithm, CryptoSignal signal, string eventText)
     {
         // Hebben we deze al eerder gemeld?
         if (!signal.BackTest)
         {
             AnalyseNotificationClearOutOld();
 
-            string notification = signal.Symbol.Name + "-" + signal.Interval.Name + "-" + signal.Strategy.ToString() + "-" + signal.Candle.Date.ToLocalTime();
-            //GlobalData.AddTextToLogTab("debug "+ notification);
+            string notification = 
+                signal.Symbol.Name + "-" + 
+                signal.Interval.Name + "-" + 
+                signal.Strategy.ToString() + "-" + 
+                signal.Mode.ToString() + "-" + 
+                signal.Candle.Date.ToLocalTime();
 
-            Monitor.Enter(GlobalData.AnalyseNotification);
+            Monitor.Enter(GlobalData.AnalyseNotificationList);
             try
             {
-                if (GlobalData.AnalyseNotification.ContainsKey(notification))
+                if (GlobalData.AnalyseNotificationList.ContainsKey(notification))
                     return;
 
                 long openTime = CandleTools.GetUnixTime(signal.Candle.Date, 60);
-                GlobalData.AnalyseNotification.Add(notification, openTime);
+                GlobalData.AnalyseNotificationList.Add(notification, openTime);
             }
             finally
             {
-                Monitor.Exit(GlobalData.AnalyseNotification);
+                Monitor.Exit(GlobalData.AnalyseNotificationList);
             }
         }
 
 
-        CalculateTrendStuff(signal);
+        CalculateTrendStuff(signal); // CPU heavy
         signal.EventText = eventText.Trim();
 
         if (!signal.BackTest)
         {
             try
             {
-                // We gebruiken (nog) geen exit signalen, echter dat is best realistisch voor de toekomst
-                if (signal.Mode == SignalMode.modeLong) //|| (Alarm.Mode == SignalMode.modeSell) 
+                // We gebruiken (nog) geen exit signalen, echter dat zou best realistisch zijn voor de toekomst
+                if (!signal.IsInvalid && GlobalData.Settings.Trading.Active && signal.Mode == TradeDirection.Long) //|| (Alarm.Mode == SignalMode.modeSell) 
                 {
-                    if (GlobalData.Settings.Bot.TradeOnInterval[(int)signal.Interval.IntervalPeriod])
+                    if (TradingConfig.MonitorInterval.ContainsKey(signal.Interval.IntervalPeriod))
                     {
-                        if (GlobalData.Settings.Bot.TradeOnStrategy[(int)signal.Strategy])
+                        if (TradingConfig.Config[signal.Mode].MonitorStrategy.ContainsKey(signal.Strategy))
                         {
-                            await signal.Symbol.PositionListSemaphore.WaitAsync();
+                            await signal.Exchange.PositionListSemaphore.WaitAsync();
                             try
                             {
                                 // Bied het aan het monitorings systeem (indien aangevinkt)
@@ -268,27 +316,24 @@ public class SignalCreate
                             }
                             finally
                             {
-                                signal.Symbol.PositionListSemaphore.Release();
+                                signal.Exchange.PositionListSemaphore.Release();
                             }
                         }
                     }
                 }
 
+                // Signal naar database wegschrijven
+                using (CryptoDatabase databaseThread = new())
+                {
+                    databaseThread.Close();
+                    databaseThread.Open();
+                    using (var transaction = databaseThread.BeginTransaction())
+                    {
+                        databaseThread.Connection.Insert<CryptoSignal>(signal, transaction);
+                        transaction.Commit();
+                    }
+                }
 
-                //if (!signal.BackTest)
-                //{
-                //    // Altijd het event wegschrijven (dat kan nu inderdaad een duplicaat zijn)
-                //    using (SqlConnection databaseThread = new SqlConnection(GlobalData.ConnectionString))
-                //    {
-                //        databaseThread.Close();
-                //        databaseThread.Open();
-                //        using (var transaction = databaseThread.BeginTransaction())
-                //        {
-                //            databaseThread.Insert<CryptoSignal>(signal, transaction);
-                //            transaction.Commit();
-                //        }
-                //    }
-                //}
             }
             catch (Exception error)
             {
@@ -298,68 +343,9 @@ public class SignalCreate
             }
         }
 
-        AnalyseAlgoritmAlarmEvent(signal);
+        AnalyseEvent(signal);
         return;
     }
-
-
-    //private bool CheckAdditionalSignalProperties(CryptoSignal signal)
-    //{
-    //    // --------------------------------------------------------------------------------
-    //    // Van de laatste 60 candles mogen er maximaal 16 geen volume hebben.
-    //    // (dit op aanranden van zowel Roelf als Helga). Er moet wat te "beleven" zijn
-    //    // --------------------------------------------------------------------------------
-    //    if ((GlobalData.Settings.Signal.CandlesWithZeroVolume > 0) && (signal.CandlesWithZeroVolume > GlobalData.Settings.Signal.CandlesWithZeroVolume))
-    //    {
-    //        if (GlobalData.Settings.Signal.LogCandlesWithZeroVolume)
-    //        {
-    //            string text = string.Format("Analyse {0} {1} teveel candles zonder volume ({2} van 60 candles)", Symbol.Name, Interval.Name, signal.CandlesWithZeroVolume);
-    //            GlobalData.AddTextToLogTab(text);
-    //        }
-    //        return false;
-    //    }
-
-    //    // --------------------------------------------------------------------------------
-    //    // Van de laatste 60 candles mogen er slechts 18 plat zijn
-    //    // (dit op aanranden van zowel Roelf als Helga). Er moet wat te "beleven" zijn
-    //    // --------------------------------------------------------------------------------
-    //    if (GlobalData.Settings.Signal.CandlesWithFlatPrice > 0 && signal.CandlesWithFlatPrice > GlobalData.Settings.Signal.CandlesWithFlatPrice)
-    //    {
-    //        if (GlobalData.Settings.Signal.LogCandlesWithFlatPrice)
-    //        {
-    //            string text = string.Format("Analyse {0} {1} teveel platte candles ({2} van 60 candles)", Symbol.Name, Interval.Name, signal.CandlesWithFlatPrice);
-    //            GlobalData.AddTextToLogTab(text);
-    //        }
-    //        return false;
-    //    }
-
-
-    //    // Er moet een beetje beweging in de BB zitten (niet enkel op de onderste bb ofzo)
-    //    if (GlobalData.Settings.Signal.AboveBollingerBandsSma > 0 && signal.AboveBollingerBandsSma < GlobalData.Settings.Signal.AboveBollingerBandsSma)
-    //    {
-    //        if (GlobalData.Settings.Signal.LogAboveBollingerBandsSma)
-    //        {
-    //            string text = string.Format("Analyse {0} {1} te weinig candles die boven de BB.Sma uitsteken ({2} van 60 candles)", Symbol.Name, Interval.Name, signal.AboveBollingerBandsSma);
-    //            GlobalData.AddTextToLogTab(text);
-    //        }
-    //        return false;
-    //    }
-
-
-    //    // Vervolg op voorgaande wens op beweging in de BB (met het liefst een aantal uitschieters)
-    //    if (GlobalData.Settings.Signal.AboveBollingerBandsUpper > 0 && signal.AboveBollingerBandsUpper < GlobalData.Settings.Signal.AboveBollingerBandsUpper)
-    //    {
-    //        if (GlobalData.Settings.Signal.LogAboveBollingerBandsUpper)
-    //        {
-    //            string text = string.Format("Analyse {0} {1} te weinig candles die boven de BB.Upper uitsteken ({2} van 60 candles)", Symbol.Name, Interval.Name, signal.AboveBollingerBandsUpper);
-    //            GlobalData.AddTextToLogTab(text);
-    //        }
-    //        return false;
-    //    }
-
-
-    //    return true;
-    //}
 
 
     /// <summary>
@@ -368,9 +354,9 @@ public class SignalCreate
     /// </summary>
     /// <param name="overSell">Retourneer de oversell of de overbuy tellertje</param>
     /// <returns></returns>
-    private int GetFluxIndcator(bool overSell)
+    public static void GetFluxIndcator(CryptoSymbol symbol, out int fluxOverSold, out int fluxOverBought)
     {
-        SortedList<long, CryptoCandle> candles = Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval5m).CandleList;
+        SortedList<long, CryptoCandle> candles = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval5m).CandleList;
 
         // Dat array van 10 (nu globaal)
         decimal[] num = new decimal[10];
@@ -388,7 +374,7 @@ public class SignalCreate
         int overbought = 70;
         //decimal N = max - min + 1;
 
-        int overbuy = 0; // gebruiken we dit keer niet, maar laat maar staan
+        int overbuy = 0;
         int oversell = 0;
         CryptoCandle candlePrev;
         CryptoCandle candleLast = null;
@@ -436,10 +422,8 @@ public class SignalCreate
             }
         }
 
-        if (overSell)
-            return 10 * oversell;
-        else
-            return 10 * overbuy;
+        fluxOverSold = 10 * oversell;
+        fluxOverBought = 10 * overbuy;
     }
 
     static public List<CryptoCandle> CalculateHistory(SortedList<long, CryptoCandle> candleSticks, int maxCandles)
@@ -474,72 +458,43 @@ public class SignalCreate
     }
 
 
-    //public void DumpSymbol()
-    //{
-    //    //Ter debug van een hadnekig probleem met het tonen van de signal
-    //    var csv = new StringBuilder();
-    //    var newLine = string.Format("{0};{1};{2};{3};{4};{5};{6};{7}", "OpenTime", "IntervalId", "Open", "High", "Low", "Close", "Volume");
-    //    csv.AppendLine(newLine);
-
-    //    Monitor.Enter(history);
-    //    try
-    //    {
-    //        for (int i = 0; i < history.Count; i++)
-    //        {
-    //            CryptoCandle candle = history[i];
-
-    //            newLine = string.Format("{0};{1};{2};{3};{4};{5};{6}",
-    //            candle.Date.ToString(),
-    //            candle.IntervalId.ToString(),
-    //            candle.Open.ToString(),
-    //            candle.High.ToString(),
-    //            candle.Low.ToString(),
-    //            candle.Close.ToString(),
-    //            candle.Volume.ToString());
-
-    //            csv.AppendLine(newLine);
-    //        }
-    //    }
-    //    finally
-    //    {
-    //        Monitor.Exit(history);
-    //    }
-    //    string filename = System.IO.Path.GetDirectoryName((System.Reflection.Assembly.GetEntryAssembly().Location));
-    //    filename = filename + @"\data\" + Symbol.Exchange.Name + @"\Candles\" + Interval.Name + @"\";
-    //    System.IO.Directory.CreateDirectory(filename);
-    //    System.IO.File.WriteAllText(filename + Symbol.Name + "-" + Interval.Name + ".csv", csv.ToString());
-    //}
-
-
-    public bool PrepareAndSendSignal(SignalBase algorithm)
+    public bool PrepareAndSendSignal(SignalCreateBase algorithm)
     {
-        // Dit signaal mag niet meerdere keren gerapporteerd worden.
-        // Anders dubbele signalen met verschillende type algoritmes!
-        // Die isSbmSignal is dus echt noodzakelijk
         CryptoSignal signal = CreateSignal(Candle);
         signal.Mode = algorithm.SignalMode;
         signal.Strategy = algorithm.SignalStrategy;
-        signal.LastPrice = Symbol.LastPrice;
-
-
-        // Momenteel niet zichtbaar in de user interface, daarom uitgezet!
-        // Extra attributen erbij halen
-        //CalculateAdditionalSignalProperties(signal, history, 60);
-        //if (!CheckAdditionalSignalProperties(signal))
-        //{
-        //    eventText += " invalid attribs";
-        //    signal.Mode = SignalMode.modeInfo2;
-        //    
-        //}
+        signal.LastPrice = (decimal)Symbol.LastPrice;
 
         string eventText = algorithm.ExtraText;
 
-
-        // Extra controles toepassen en het signaal "afkeuren" (maar toch laten zien) - via de info flag
-        if (!algorithm.AdditionalChecks(Candle, out string response))
+        // Extra attributen erbij halen
+        CalculateAdditionalSignalProperties(signal, history, 60);
+        if (!CheckAdditionalAlarmProperties(signal, out string response))
         {
             eventText += " " + response;
-            signal.Mode = SignalMode.modeInfo2;
+            signal.IsInvalid = true;
+        }
+
+
+        // Extra controles toepassen en het signaal "afkeuren" (maar toch laten zien) - via de info flag
+        if (!algorithm.AdditionalChecks(Candle, out response))
+        {
+            eventText += " " + response;
+            signal.IsInvalid = true;
+        }
+
+        // Weer een extra controle, staat de symbol op de black of whitelist?
+        if (!BackTest && TradingConfig.Config[signal.Mode].InBlackList(Symbol.Name))
+        {
+            // Als de muntpaar op de black lijst staat dit signaal overslagen
+            eventText += " " + "staat op blacklist";
+            signal.IsInvalid = true;
+        }
+        else if (!BackTest && !TradingConfig.Config[signal.Mode].InWhiteList(Symbol.Name))
+        {
+            // Als de muntpaar niet op de white lijst staat dit signaal overslagen
+            eventText += " " + "niet in whitelist";
+            signal.IsInvalid = true;
         }
 
 
@@ -548,7 +503,7 @@ public class SignalCreate
         signal.Last24HoursChange = CalculateLastPeriodsInInterval(24 * 60 * 60);
         signal.Last24HoursEffective = CalculateMaxMovementInInterval(CryptoIntervalPeriod.interval15m, 1 * 96);
 
-        // Question: We hebben slechts 260 candles, dus dit geeft niet exact het gewenste getal!
+        // Question: We hebben slechts 260 candles, dit geeft dus het gewenste getal voor 48 uur (afgesterd)!
         //signal.Last48HoursChange = CalculateLastPeriodsInInterval(48 * 60 * 60);
         //signal.Last48HoursEffective = CalculateMaxMovementInInterval(CryptoIntervalPeriod.interval15m, 2 * 96);
 
@@ -560,19 +515,19 @@ public class SignalCreate
                 GlobalData.AddTextToLogTab(text);
             }
             eventText += " 24h verandering% te hoog";
-            signal.Mode = SignalMode.modeInfo2;
+            signal.IsInvalid = true;
         }
 
-        //if (!signal.Last24HoursEffective.IsBetween(GlobalData.Settings.Signal.AnalysisMinChangePercentage, GlobalData.Settings.Signal.AnalysisMaxChangePercentage))
-        //{
-        //    if (GlobalData.Settings.Signal.LogAnalysisMinMaxChangePercentage)
-        //    {
-        //        string text = string.Format("Analyse {0} 24h change (effectief) {1} niet tussen {2} .. {3}", Symbol.Name, signal.Last24HoursEffective.ToString("N2"), GlobalData.Settings.Signal.AnalysisMinChangePercentage.ToString(), GlobalData.Settings.Signal.AnalysisMaxChangePercentage.ToString());
-        //        GlobalData.AddTextToLogTab(text);
-        //    }
-        //    eventText += " 24h effectief% te hoog";
-        //    signal.Mode = SignalMode.modeInfo2;
-        //}
+        if (!signal.Last24HoursEffective.IsBetween(GlobalData.Settings.Signal.AnalysisMinEffectivePercentage, GlobalData.Settings.Signal.AnalysisMaxEffectivePercentage))
+        {
+            if (GlobalData.Settings.Signal.LogAnalysisMinMaxEffectivePercentage)
+            {
+                string text = string.Format("Analyse {0} 24h change (effectief) {1} niet tussen {2} .. {3}", Symbol.Name, signal.Last24HoursEffective.ToString("N2"), GlobalData.Settings.Signal.AnalysisMinEffectivePercentage.ToString(), GlobalData.Settings.Signal.AnalysisMaxEffectivePercentage.ToString());
+                GlobalData.AddTextToLogTab(text);
+            }
+            eventText += " 24h effectief% te hoog";
+            signal.IsInvalid = true;
+        }
 
 
         // New coins have a lot of price changes
@@ -582,7 +537,7 @@ public class SignalCreate
         {
             if (GlobalData.Settings.Signal.LogSymbolMustExistsDays)
             {
-                // TODO: dan het aantal dagen vermelden dat het bestaat
+                // Het aantal dagen vermelden dat het bestaat
                 string text = "";
                 if (candles1Day.Count > 0)
                 {
@@ -592,7 +547,7 @@ public class SignalCreate
                 GlobalData.AddTextToLogTab(string.Format("Analyse {0} te nieuw geen {1} dagen {2}", Symbol.Name, GlobalData.Settings.Signal.SymbolMustExistsDays, text));
             }
             eventText += " coin te nieuw";
-            signal.Mode = SignalMode.modeInfo2;
+            signal.IsInvalid = true;
         }
 
 
@@ -609,20 +564,20 @@ public class SignalCreate
             if (GlobalData.Settings.Signal.LogBarometerToLow)
                 GlobalData.AddTextToLogTab("Analyse Barometer te laag");
             eventText += " Barometer te laag";
-            signal.Mode = SignalMode.modeInfo2;
+            signal.IsInvalid = true;
         }
 
 
         if (!BackTest)
         {
-            decimal barcodePercentage = 100 * (Symbol.PriceTickSize) / (decimal)Symbol.LastPrice.Value;
+            decimal barcodePercentage = 100 * Symbol.PriceTickSize / (decimal)Symbol.LastPrice;
             if ((barcodePercentage > GlobalData.Settings.Signal.MinimumTickPercentage))
             {
                 // Er zijn nogal wat van die flut munten, laat de tekst maar achterwege
                 if (GlobalData.Settings.Signal.LogMinimumTickPercentage)
                     GlobalData.AddTextToLogTab(string.Format("Analyse {0} De tick size percentage is te hoog {1:N3}", Symbol.Name, barcodePercentage));
                 eventText += " tick perc to high";
-                signal.Mode = SignalMode.modeInfo2;
+                signal.IsInvalid = true;
             }
         }
 
@@ -630,50 +585,36 @@ public class SignalCreate
         // Zoveel voegt dit ook weer niet toe
         if (GlobalData.Settings.General.ShowFluxIndicator5m)
         {
-            int oversell = GetFluxIndcator(true);
-            //if (oversell > 0)
-            signal.FluxIndicator5m = oversell;
-            //eventText += " flux 5m=" + oversell.ToString();
+            GetFluxIndcator(Symbol, out int fluxOverSold, out int _);
+            signal.FluxIndicator5m = fluxOverSold;
         }
+
 
         // Voor de SignalSlopesTurning* een variabele zetten of 
         // clearen zodat dit signaal niet om de x candles binnenkomt.
+        // mhja, nog eens bedenken of we deze strategien willen publiseren....
         CryptoSymbolInterval SymbolInterval = Symbol.GetSymbolInterval(Interval.IntervalPeriod);
         switch (signal.Strategy)
         {
-            case SignalStrategy.stobbOversold:
-                if (signal.Mode == SignalMode.modeLong)
-                    SymbolInterval.LastStobbOrdSbmDate = DateTime.UtcNow;
-                break;
-            case SignalStrategy.stobbOverbought:
-                if (signal.Mode == SignalMode.modeShort)
-                    SymbolInterval.LastStobbOrdSbmDate = DateTime.UtcNow;
-                break;
-
-            case SignalStrategy.sbm1Oversold:
-            case SignalStrategy.sbm2Oversold:
-            case SignalStrategy.sbm3Oversold:
-            case SignalStrategy.sbm4Oversold:
-                if (signal.Mode == SignalMode.modeLong)
+            case SignalStrategy.Sbm1:
+            case SignalStrategy.Sbm2:
+            case SignalStrategy.Sbm3:
+            case SignalStrategy.Sbm4:
+            case SignalStrategy.Stobb:
+                if (signal.Mode == TradeDirection.Long)
                     SymbolInterval.LastStobbOrdSbmDate = DateTime.UtcNow;
                 break;
 
-            case SignalStrategy.sbm1Overbought:
-            case SignalStrategy.sbm2Overbought:
-            case SignalStrategy.sbm3Overbought:
-            case SignalStrategy.sbm4Overbought:
-                if (signal.Mode == SignalMode.modeShort)
-                    SymbolInterval.LastStobbOrdSbmDate = DateTime.UtcNow;
-                break;
-
-            case SignalStrategy.slopeSma50TurningNegative:
-            case SignalStrategy.slopeSma50TurningPositive:
+            case SignalStrategy.SlopeSma20:
+            case SignalStrategy.SlopeEma20:
+            case SignalStrategy.SlopeSma50:
+            case SignalStrategy.SlopeEma50:
                 SymbolInterval.LastStobbOrdSbmDate = null;
                 break;
         }
 
 
-        if ((!GlobalData.Settings.Signal.ShowInvalidSignals) && (signal.Mode == SignalMode.modeInfo2))
+        if (!GlobalData.Settings.Signal.ShowInvalidSignals && !signal.IsInvalid)
             return false;
 
         SendSignal(algorithm, signal, eventText);
@@ -689,17 +630,22 @@ public class SignalCreate
             Symbol = Symbol,
             Interval = Interval,
             Candle = candle,
+            ExchangeId = Symbol.ExchangeId,
+            SymbolId = Symbol.Id,
+            IntervalId = Interval.Id,
             BackTest = BackTest,
             Price = candle.Close,
             Volume = Symbol.Volume,
             EventTime = candle.OpenTime,
             OpenDate = CandleTools.GetUnixDate(candle.OpenTime),
-            Strategy = SignalStrategy.candlesJumpUp,  // gets modified later
-            Mode = SignalMode.modeInfo // gets modified later
+            Mode = TradeDirection.Long,  // gets modified later
+            Strategy = SignalStrategy.Jump,  // gets modified later
         };
 
         signal.CloseDate = signal.OpenDate.AddSeconds(Interval.Duration);
-        //signal.ExpirationDate = signal.CloseDate.AddSeconds(GlobalData.Settings.Signal.RemoveSignalAfterxCandles * Interval.Duration); // 15 candles further (display)
+#if DATABASE
+        signal.ExpirationDate = signal.CloseDate.AddSeconds(GlobalData.Settings.General.RemoveSignalAfterxCandles * Interval.Duration);
+#endif
 
         // Copy indicators values
         signal.BollingerBandsDeviation = candle.CandleData.BollingerBandsDeviation;
@@ -738,233 +684,23 @@ public class SignalCreate
     }
 
 
-    private void AnalyseSymbolOversold()
+    private bool ExecuteAlgorithm(AlgorithmDefinition strategyDefinition)
     {
-        // Geen nieuwe signalen ivm blacklist
-        // Als de muntpaar op de zwarte lijst staat dit signaal overslagen
-        // Indien blacklist: Staat de muntpaar op de blacklist -> ja = signaal negeren
-        if (!BackTest && GlobalData.Settings.UseBlackListOversold && GlobalData.SymbolBlackListOversold.ContainsKey(Symbol.Name))
+        SignalCreateBase algorithm = strategyDefinition.InstantiateAnalyzeLong(Symbol, Interval, Candle);
+        if (algorithm != null)
         {
-            //if (GlobalData.Settings.Signal.LogMinimumTickPercentage)
-            // veel meldingen (maar dan weet ik of het werkt
-            //GlobalData.AddTextToLogTab(string.Format("Analyse {0} De munt is blacklisted", Symbol.Name));
-            return;
-        }
-
-        // Geen nieuwe signalen ivm whitelist
-        // Als de muntpaar niet op de toegelaten lijst staat dit signaal overslagen
-        // Indien whitelist: Staat de muntpaar op de whitelist -> nee = signaal negeren
-        if (!BackTest && (GlobalData.Settings.UseWhiteListOversold && !GlobalData.SymbolWhiteListOversold.ContainsKey(Symbol.Name)))
-        {
-            //if (GlobalData.Settings.Signal.LogMinimumTickPercentage)
-            // veel meldingen (maar dan weet ik of het werkt
-            //GlobalData.AddTextToLogTab(string.Format("Analyse {0} De munt is niet whitelisted", Symbol.Name));
-            return;
-        }
-
-
-        // Oversold (SBM is an advanced version of STOBB)
-        bool isSbmSignal = false;
-
-        if (!isSbmSignal && GlobalData.Settings.Signal.AnalysisShowSbmOversold)
-        {
-            // De officiele SBM methode van Maurice
-            SignalBase algorithm = new SignalSbm1Oversold(Symbol, Interval, Candle);
             if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
-                isSbmSignal = PrepareAndSendSignal(algorithm);
+                return PrepareAndSendSignal(algorithm);
         }
-        if (!isSbmSignal && GlobalData.Settings.Signal.AnalysisSbm2Oversold)
-        {
-            SignalBase algorithm = new SignalSbm2Oversold(Symbol, Interval, Candle);
-            if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
-                isSbmSignal = PrepareAndSendSignal(algorithm);
-        }
-        if (!isSbmSignal && GlobalData.Settings.Signal.AnalysisSbm3Oversold)
-        {
-            // De SBM methode - BB.Width is > xx% veranderd
-            SignalBase algorithm = new SignalSbm3Oversold(Symbol, Interval, Candle);
-            if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
-                isSbmSignal = PrepareAndSendSignal(algorithm);
-        }
-        //if (!isSbmSignal && GlobalData.Settings.Signal.AnalyseStrategy[(int)SignalStrategy.sbm4Oversold])
-        //{
-        //    SignalBase algorithm = new SignalSbm4Oversold(Symbol, Interval, candle);
-        //    if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
-        //        isSbmSignal = PrepareAndSendSignal(algorithm);
-        //}
-        //if (!isSbmSignal && GlobalData.Settings.Signal.AnalyseStrategy[(int)SignalStrategy.sbm5Oversold])
-        //{
-        //    SignalBase algorithm = new SignalSbm5Oversold(Symbol, Interval, Candle);
-        //    if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
-        //        isSbmSignal = PrepareAndSendSignal(algorithm);
-        //}
-
-        if (!isSbmSignal && GlobalData.Settings.Signal.AnalysisShowStobbOversold)
-        {
-            // STOBB (is eigenlijk een "zwakke" variant van SBM)
-            SignalBase algorithm = new SignalStobbOversold(Symbol, Interval, Candle);
-            if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
-                PrepareAndSendSignal(algorithm);
-        }
+        return false;
     }
 
 
-    private void AnalyseSymbolOverbought()
-    {
-        //----------------------------------------------------------------
-        // Overbought (SBM is an advanced version of STOBB)
-        // TODO: De overbought varianten implementeren sbm2 & 3!
-        // Geen nieuwe signalen ivm blacklist
-        // Als de muntpaar op de zwarte lijst staat dit signaal overslagen
-        // Indien blacklist: Staat de muntpaar op de blacklist -> ja = signaal negeren
-        if (!BackTest && GlobalData.Settings.UseBlackListOverbought && GlobalData.SymbolBlackListOversold.ContainsKey(Symbol.Name))
-            return;
-
-        // Geen nieuwe signalen ivm whitelist
-        // Als de muntpaar niet op de toegelaten lijst staat dit signaal overslagen
-        // Indien whitelist: Staat de muntpaar op de whitelist -> nee = signaal negeren
-        if (!BackTest && GlobalData.Settings.UseWhiteListOverbought && !GlobalData.SymbolWhiteListOversold.ContainsKey(Symbol.Name))
-            return;
-
-        bool isSbmSignal = false;
-        if (GlobalData.Settings.Signal.AnalysisShowSbmOverbought)
-        {
-            SignalBase algorithm = new SignalSbm1Overbought(Symbol, Interval, Candle);
-            if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
-                isSbmSignal = PrepareAndSendSignal(algorithm);
-        }
-        if (!isSbmSignal && GlobalData.Settings.Signal.AnalysisSbm2Overbought)
-        {
-            SignalBase algorithm = new SignalSbm2Overbought(Symbol, Interval, Candle);
-            if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
-                PrepareAndSendSignal(algorithm);
-        }
-        if (!isSbmSignal && GlobalData.Settings.Signal.AnalysisSbm3Overbought)
-        {
-            SignalBase algorithm = new SignalSbm3Overbought(Symbol, Interval, Candle);
-            if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
-                PrepareAndSendSignal(algorithm);
-        }
-        //if (!isSbmSignal && GlobalData.Settings.Signal.AnalysisSbm4Overbought)
-        //{
-        //    SignalBase algorithm = new SignalSbm4Overbought(Symbol, Interval, Candle);
-        //    if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
-        //        PrepareAndSendSignal(algorithm);
-        //}
-
-        if (!isSbmSignal && GlobalData.Settings.Signal.AnalysisShowStobbOverbought)
-        {
-            SignalBase algorithm = new SignalStobbOverbought(Symbol, Interval, Candle);
-            if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
-                PrepareAndSendSignal(algorithm);
-        }
-    }
-
-
-    public void AnalyseSymbolJumps()
-    {
-        // Hmm, hier is geen Black en white list meer beschikbaar (nu enkel voor oversold en overbought)
-        // Nu is er weer behoefte aan een soort van globale black en white list (bah, lijkt op Zignally)
-
-        if (GlobalData.Settings.Signal.AnalysisShowCandleJumpUp)
-        {
-            SignalBase algorithm = new SignalCandleJumpUp(Symbol, Interval, Candle);
-            if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
-                PrepareAndSendSignal(algorithm);
-        }
-        if (GlobalData.Settings.Signal.AnalysisShowCandleJumpDown)
-        {
-            SignalBase algorithm = new SignalCandleJumpDown(Symbol, Interval, Candle);
-            if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
-                PrepareAndSendSignal(algorithm);
-        }
-    }
-
-#if TRADEBOT
-    public void AnalyseSymbolExperimental()
-    {
-        //----------------------------------------------------------------
-        // Experimentele zaken..
-        //if (GlobalData.Settings.Signal.BullishEngulfing)
-        //{
-        //    SignalBase algorithm = new SignalBullishEngulfing(Symbol, Interval, candle);
-        //    if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
-        //        PrepareAndSendSignal(algorithm);
-        //}
-
-
-        if (GlobalData.Settings.Signal.AnalyseStrategy[(int)SignalStrategy.priceCrossedSma20])
-        {
-            SignalBase algorithm = new SignalPriceCrossedSma20(Symbol, Interval, Candle);
-            if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
-                PrepareAndSendSignal(algorithm);
-        }
-
-        if (GlobalData.Settings.Signal.AnalyseStrategy[(int)SignalStrategy.priceCrossedSma50])
-        {
-            SignalBase algorithm = new SignalPriceCrossedSma50(Symbol, Interval, Candle);
-            if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
-                PrepareAndSendSignal(algorithm);
-        }
-
-
-        if (GlobalData.Settings.Signal.AnalyseStrategy[(int)SignalStrategy.priceCrossedEma20])
-        {
-            SignalBase algorithm = new SignalPriceCrossedEma20(Symbol, Interval, Candle);
-            if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
-                PrepareAndSendSignal(algorithm);
-        }
-
-        if (GlobalData.Settings.Signal.AnalyseStrategy[(int)SignalStrategy.priceCrossedEma50])
-        {
-            SignalBase algorithm = new SignalPriceCrossedEma50(Symbol, Interval, Candle);
-            if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
-                PrepareAndSendSignal(algorithm);
-        }
-
-
-        if (GlobalData.Settings.Signal.AnalyseStrategy[(int)SignalStrategy.slopeEma50TurningNegative])
-        {
-            SignalBase algorithm = new SignalSlopeEma50TurningNegative(Symbol, Interval, Candle);
-            if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
-                PrepareAndSendSignal(algorithm);
-        }
-        if (GlobalData.Settings.Signal.AnalyseStrategy[(int)SignalStrategy.slopeSma50TurningNegative])
-        {
-            SignalBase algorithm = new SignalSlopeSma50TurningNegative(Symbol, Interval, Candle);
-            if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
-                PrepareAndSendSignal(algorithm);
-        }
-
-        if (GlobalData.Settings.Signal.AnalyseStrategy[(int)SignalStrategy.slopeEma50TurningPositive])
-        {
-            SignalBase algorithm = new SignalSlopeEma50TurningPositive(Symbol, Interval, Candle);
-            if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
-                PrepareAndSendSignal(algorithm);
-        }
-        if (GlobalData.Settings.Signal.AnalyseStrategy[(int)SignalStrategy.slopeSma50TurningPositive])
-        {
-            SignalBase algorithm = new SignalSlopeSma50TurningPositive(Symbol, Interval, Candle);
-            if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
-                PrepareAndSendSignal(algorithm);
-        }
-
-
-        if (GlobalData.Settings.Signal.AnalyseStrategy[(int)SignalStrategy.slopeEma20TurningPositive])
-        {
-            SignalBase algorithm = new SignalSlopeEma20TurningPositive(Symbol, Interval, Candle);
-            if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
-                PrepareAndSendSignal(algorithm);
-        }
-        if (GlobalData.Settings.Signal.AnalyseStrategy[(int)SignalStrategy.slopeSma20TurningPositive])
-        {
-            SignalBase algorithm = new SignalSlopeSma20TurningPositive(Symbol, Interval, Candle);
-            if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
-                PrepareAndSendSignal(algorithm);
-        }
-    }
-#endif
-
+    /// <summary>
+    /// Zet de de laatste x candles op een rijtje en bereken de indicators
+    /// </summary>
+    /// <param name="candleOpenTime"></param>
+    /// <returns></returns>
     public bool Prepare(long candleOpenTime)
     {
         Candle = null;
@@ -972,6 +708,7 @@ public class SignalCreate
 
         if (!Symbol.LastPrice.HasValue)
         {
+            // Die wordt ingevuld in de BinanceStream1mCandles en BinanceStreamPriceTicker, dus zelden leeg
             GlobalData.AddTextToLogTab(string.Format("Analyse {0} Er is geen lastprice aanwezig", Symbol.Name));
             return false;
         }
@@ -1015,435 +752,79 @@ public class SignalCreate
 
 
 
-    // Debug version
-    public SignalBase AnalyseSymbolUsingStrategy(long candleOpenTime, SignalStrategy strategy)
+    public void AnalyzeSymbol(long candleOpenTime)
     {
-        SignalBase algorithm = null;
+        // Eenmalig de indicators klaarzetten
         if (Prepare(candleOpenTime))
         {
-            algorithm = SignalHelper.GetSignalAlgorithm(strategy, Symbol, Interval, Candle);
-            if (algorithm != null)
+            // notitie jump
+            // hier is geen Black en white list meer beschikbaar (die is nu enkel voor oversold en overbought)
+            // Nu is er weer behoefte aan een soort van globale black en white list (bah, lijkt op Zignally)
+            // todo black en white list toepassen voor de long (of willen we die in de failed?)
+
+            foreach (TradeDirection tradeDirection in Enum.GetValues(typeof(TradeDirection)))
             {
-                if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
-                    PrepareAndSendSignal(algorithm);
+                // TODO: Controle black en white list i.c.m. de ShowInvalidSignals
+                // later....
+                //if (!GlobalData.Settings.Signal.ShowInvalidSignals)
+                //{
+                //    // Dan kunnen we direct die handel hier afkappen..
+                //    // Weer een extra controle, staat de symbol op de black of whitelist?
+                //    if (!BackTest && TradingConfig.Config[tradeDirection].InBlackList(Symbol.Name))
+                //    {
+                //        // Als de muntpaar op de black lijst staat dit signaal overslagen
+                //        continue;
+                //    }
+                //    else if (!BackTest && !TradingConfig.Config[tradeDirection].InWhiteList(Symbol.Name))
+                //    {
+                //        // Als de muntpaar niet op de white lijst staat dit signaal overslagen
+                //        continue;
+                //    }
+                //}
+
+                // De sbm en stobb zijn afhankelijk van elkaar, vandaar de break
+                // Ze staan alfabetisch, sbm1, sbm2, sbm3, stobb dat gaat per ongeluk goed
+                foreach (AlgorithmDefinition strategyDefinition in TradingConfig.Config[tradeDirection].StrategySbmStob.Values)
+                {
+                    if (ExecuteAlgorithm(strategyDefinition))
+                        break;
+                }
+
+                // En de overige waaronder de jump enzovoort
+                foreach (AlgorithmDefinition strategyDefinition in TradingConfig.Config[tradeDirection].StrategyOthers.Values)
+                    ExecuteAlgorithm(strategyDefinition);
             }
-        }
-        return algorithm;
-    }
 
 
-    public void AnalyseSymbol(long candleOpenTime)
-    {
-        // We kunnen nog openstaande posities hebben en die vertrouwen erop dat de lastCandle.CandleData wordt berekend
-        // Anders wordt er NIET bijgekocht met DCA en dergelijke (dat zit eigenlijk niet zo goed in elkaar, workaround!)
-        //string response = "";
-
-        if (Prepare(candleOpenTime))
-        {
-
-            // Eenmalig de indicators klaarzetten
-            //CryptoCandle candle = history[^1];
-            //if (candle.CandleData == null || BackTest)
-            //    CandleIndicatorData.CalculateIndicators(history);
-
-            //----------------------------------------------------------------
-
-            // Oversold - STOBB en SBM (SBM is de advanced version van STOBB)
-            AnalyseSymbolOversold();
-
-            // Overbought - STOBB + SBM (SBM is de advanced version van STOBB)
-            AnalyseSymbolOverbought();
-
-            // Candle jumps
-            AnalyseSymbolJumps();
-
-
-#if TRADEBOT
-            // Experimenteel, kan wellicht weg
-            AnalyseSymbolExperimental();
-#endif
-
-            // TODO! Nog eens uitzoeken of het hierdoor makkelijker wordt
-            // prepare the overbought and oversold black and white list
-            // crap, de sbm1..x en de stob zijn overlappend, je wil ze niet alle x zien
-            // crap, we hebben een verschil in overbought en oversold i.c.m. met de white en blacklist
-            //foreach (SignalStrategy strategy in Enum.GetValues(typeof(SignalStrategy)))
+            //// todo black en white list toepassen voor de long (of willen we die in de failed?)
+            //// Oversold (sbm en stobb zijn afhankelijk van elkaar)
+            //// Ze staan alfabetisch, sbm1, sbm2, sbm3, stobb dus het gaat goed
+            //foreach (SignalCreateDefinition strategyDefinition in TradingConfig.Config[TradeDirection.Long].StrategySbmStob.Values)
             //{
-            // PROBLEEM, deze zitten in aparte properties en moeten gemigreerd worden
-            //    if (GlobalData.Settings.Signal.AnalyseStrategy[(int)strategy])
-            //    {
-            //        SignalBase algorithm = SignalHelper.GetSignalAlgorithm(strategy, Symbol, Interval, candle);
-            //        if (algorithm != null)
-            //        {
-            //            if (algorithm.SignalMode == SignalMode.modeLong)
-            //            {
-            //                // check black and white list oversold
-            //            }
-            //            if (algorithm.SignalMode == SignalMode.modeShort)
-            //            {
-            //                // check black and white list overbought
-            //            }
-            //            if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
-            //                PrepareAndSendSignal(algorithm);
-
-            //        }
-
-            //    }
+            //    if (ExecuteAlgorithm(strategyDefinition))
+            //        break;
             //}
+
+            //// todo black en white list toepassen voor de short (of willen we die in de failed?)
+            //// Overbought (sbm en stobb zijn afhankelijk van elkaar)
+            //// Ze staan alfabetisch, sbm1, sbm2, sbm3, stobb dus het gaat goed
+            //foreach (SignalCreateDefinition strategyDefinition in TradingConfig.Config[TradeDirection.Short].StrategySbmStob.Values)
+            //{
+            //    if (ExecuteAlgorithm(strategyDefinition))
+            //        break;
+            //}
+
+
+            //// notitie jump
+            //// hier is geen Black en white list meer beschikbaar (dis is nu enkel voor oversold en overbought)
+            //// Nu is er weer behoefte aan een soort van globale black en white list (bah, lijkt op Zignally)
+
+            //foreach (SignalCreateDefinition strategyDefinition in TradingConfig.Config[TradeDirection.Long].StrategyOthers.Values)
+            //    ExecuteAlgorithm(strategyDefinition);
+
+            //foreach (SignalCreateDefinition strategyDefinition in TradingConfig.Config[TradeDirection.Short].StrategyOthers.Values)
+            //    ExecuteAlgorithm(strategyDefinition);
+
         }
-    }
-
-
-    public static ICell WriteCell(ISheet sheet, int columnIndex, int rowIndex, string value)
-    {
-        var row = sheet.GetRow(rowIndex) ?? sheet.CreateRow(rowIndex);
-        var cell = row.GetCell(columnIndex) ?? row.CreateCell(columnIndex);
-
-        cell.SetCellValue(value);
-        return cell;
-    }
-
-    public static ICell WriteCell(ISheet sheet, int columnIndex, int rowIndex, double value)
-    {
-        var row = sheet.GetRow(rowIndex) ?? sheet.CreateRow(rowIndex);
-        var cell = row.GetCell(columnIndex) ?? row.CreateCell(columnIndex);
-
-        cell.SetCellValue(value);
-        return cell;
-    }
-
-    public static ICell WriteCell(ISheet sheet, int columnIndex, int rowIndex, DateTime value)
-    {
-        var row = sheet.GetRow(rowIndex) ?? sheet.CreateRow(rowIndex);
-        var cell = row.GetCell(columnIndex) ?? row.CreateCell(columnIndex);
-
-        cell.SetCellValue(value);
-        return cell;
-    }
-
-    public static ICell WriteStyle(ISheet sheet, int columnIndex, int rowIndex, ICellStyle style)
-    {
-        var row = sheet.GetRow(rowIndex) ?? sheet.CreateRow(rowIndex);
-        ICell cell = row.GetCell(columnIndex) ?? row.CreateCell(columnIndex);
-
-        cell.CellStyle = style;
-        return cell;
-    }
-
-    private static int ExcellHeaders(HSSFSheet sheet, int row)
-    {
-        int column = 0;
-        // Columns...
-        WriteCell(sheet, column++, row, "DateLocal");
-        WriteCell(sheet, column++, row, "Open");
-        WriteCell(sheet, column++, row, "High");
-        WriteCell(sheet, column++, row, "Low");
-        WriteCell(sheet, column++, row, "Close");
-        WriteCell(sheet, column++, row, "Volume");
-
-        WriteCell(sheet, column++, row, "bb.lower");
-        WriteCell(sheet, column++, row, "bb.upper");
-        WriteCell(sheet, column++, row, "bb.perc");
-
-        WriteCell(sheet, column++, row, "Sma200");
-        WriteCell(sheet, column++, row, "Sma50");
-        WriteCell(sheet, column++, row, "Sma20");
-        WriteCell(sheet, column++, row, "PSar");
-
-        WriteCell(sheet, column++, row, "macd.value");
-        WriteCell(sheet, column++, row, "macd.signal");
-        WriteCell(sheet, column++, row, "macd.hist");
-        WriteCell(sheet, column++, row, "SBM conditions");
-        WriteCell(sheet, column++, row, "200/20");
-        WriteCell(sheet, column++, row, "200/50");
-        WriteCell(sheet, column++, row, "50/20");
-        WriteCell(sheet, column++, row, "recovery text");
-
-        WriteCell(sheet, column++, row, "Rsi");
-        WriteCell(sheet, column++, row, "stoch.ocillator");
-        WriteCell(sheet, column++, row, "stoch.signal");
-
-        // wat kun je hiermee?     
-        WriteCell(sheet, column++, row, "Ema20");
-        WriteCell(sheet, column++, row, "Ema50");
-        WriteCell(sheet, column++, row, "Ema200");
-        return column;
-    }
-
-    public void ExportToExcell(SignalStrategy strategy)
-    {
-        // HSSF => Microsoft Excel(excel 97-2003)
-        // XSSF => Office Open XML Workbook(excel 2007)
-        HSSFWorkbook book = new();
-
-        //create a entry of DocumentSummaryInformation
-        DocumentSummaryInformation documentSummaryInformation = PropertySetFactory.CreateDocumentSummaryInformation();
-        documentSummaryInformation.Company = "Crypto Scanner";
-        book.DocumentSummaryInformation = documentSummaryInformation;
-
-        //create a entry of SummaryInformation
-        SummaryInformation summaryInformation = PropertySetFactory.CreateSummaryInformation();
-        summaryInformation.Subject = Symbol.Name;
-        book.SummaryInformation = summaryInformation;
-
-        IDataFormat format = book.CreateDataFormat();
-
-        HSSFSheet sheet = (HSSFSheet)book.CreateSheet("Sheet1");
-
-
-        ICellStyle cellStyleDate = book.CreateCellStyle();
-        cellStyleDate.DataFormat = format.GetFormat("dd-MM-yyyy HH:mm");
-        cellStyleDate.Alignment = NPOI.SS.UserModel.HorizontalAlignment.Left;
-
-        ICellStyle cellStyleStringGreen = book.CreateCellStyle();
-        cellStyleStringGreen.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.LightGreen.Index;
-        cellStyleStringGreen.FillPattern = FillPattern.SolidForeground;
-        cellStyleStringGreen.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.LightGreen.Index;
-
-        ICellStyle cellStyleDecimalNormal = book.CreateCellStyle();
-        cellStyleDecimalNormal.DataFormat = format.GetFormat("0.00000000");
-
-        ICellStyle cellStyleDecimalGreen = book.CreateCellStyle();
-        cellStyleDecimalGreen.DataFormat = format.GetFormat("0.00000000");
-        cellStyleDecimalGreen.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.LightGreen.Index;
-        cellStyleDecimalGreen.FillPattern = FillPattern.SolidForeground;
-        cellStyleDecimalGreen.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.LightGreen.Index;
-
-        ICellStyle cellStyleDecimalRed = book.CreateCellStyle();
-        cellStyleDecimalRed.DataFormat = format.GetFormat("0.00000000");
-        cellStyleDecimalRed.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.Red.Index;
-        cellStyleDecimalRed.FillPattern = FillPattern.SolidForeground;
-        cellStyleDecimalRed.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.Red.Index;
-
-
-        ICellStyle cellStylePercentageNormal = book.CreateCellStyle();
-        cellStylePercentageNormal.DataFormat = HSSFDataFormat.GetBuiltinFormat("0.00");
-
-        ICellStyle cellStylePercentageGreen = book.CreateCellStyle();
-        cellStylePercentageGreen.DataFormat = HSSFDataFormat.GetBuiltinFormat("0.00");
-        cellStylePercentageGreen.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.LightGreen.Index;
-        cellStylePercentageGreen.FillPattern = FillPattern.SolidForeground;
-        cellStylePercentageGreen.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.LightGreen.Index;
-
-
-        // macd.red
-        ICellStyle cellStyleMacdRed = book.CreateCellStyle();
-        cellStyleMacdRed.DataFormat = format.GetFormat("0.00000000");
-        cellStyleMacdRed.Alignment = NPOI.SS.UserModel.HorizontalAlignment.Right;
-        cellStyleMacdRed.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.Red.Index;
-        cellStyleMacdRed.FillPattern = FillPattern.SolidForeground;
-        cellStyleMacdRed.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.Lime.Index;
-
-        // macd.roze
-        ICellStyle cellStyleMacdLightRed = book.CreateCellStyle();
-        cellStyleMacdLightRed.DataFormat = format.GetFormat("0.00000000");
-        cellStyleMacdLightRed.Alignment = NPOI.SS.UserModel.HorizontalAlignment.Right;
-        cellStyleMacdLightRed.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.Rose.Index;
-        cellStyleMacdLightRed.FillPattern = FillPattern.SolidForeground;
-        cellStyleMacdLightRed.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.Rose.Index;
-
-        // macd.green
-        ICellStyle cellStyleMacdGreen = book.CreateCellStyle();
-        cellStyleMacdGreen.DataFormat = format.GetFormat("0.00000000");
-        cellStyleMacdGreen.Alignment = NPOI.SS.UserModel.HorizontalAlignment.Right;
-        cellStyleMacdGreen.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.Green.Index;
-        cellStyleMacdGreen.FillPattern = FillPattern.SolidForeground;
-        cellStyleMacdGreen.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.Green.Index;
-
-        // macd.ligh green
-        ICellStyle cellStyleMacdLightGreen = book.CreateCellStyle();
-        cellStyleMacdLightGreen.DataFormat = format.GetFormat("0.00000000");
-        cellStyleMacdLightGreen.Alignment = NPOI.SS.UserModel.HorizontalAlignment.Right;
-        cellStyleMacdLightGreen.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.LightGreen.Index;
-        cellStyleMacdLightGreen.FillPattern = FillPattern.SolidForeground;
-        cellStyleMacdLightGreen.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.LightGreen.Index;
-
-
-        int columns = ExcellHeaders(sheet, 0);
-
-        int row = 0;
-        int column;
-        CryptoCandle prev = null;
-        for (int i = 0; i < history.Count; i++)
-        {
-            row++;
-            column = 0;
-            CryptoCandle candle = history[i];
-
-            ICell cell;
-            cell = WriteCell(sheet, column++, row, candle.DateLocal);
-            cell.CellStyle = cellStyleDate;
-
-            cell = WriteCell(sheet, column++, row, (double)candle.Open);
-            cell.CellStyle = cellStyleDecimalNormal;
-
-            cell = WriteCell(sheet, column++, row, (double)candle.High);
-            cell.CellStyle = cellStyleDecimalNormal;
-
-            cell = WriteCell(sheet, column++, row, (double)candle.Low);
-            cell.CellStyle = cellStyleDecimalNormal;
-
-            cell = WriteCell(sheet, column++, row, (double)candle.Close);
-            cell.CellStyle = cellStyleDecimalNormal;
-
-            cell = WriteCell(sheet, column++, row, (double)candle.Volume);
-            cell.CellStyle = cellStyleDecimalNormal;
-
-
-            if (candle.CandleData != null)
-            {
-                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.BollingerBandsLowerBand);
-                cell.CellStyle = cellStyleDecimalNormal;
-                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.BollingerBandsUpperBand);
-                cell.CellStyle = cellStyleDecimalNormal;
-                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.BollingerBandsPercentage);
-                if (candle.CandleData.BollingerBandsPercentage >= 1.5)
-                    cell.CellStyle = cellStylePercentageGreen;
-                else
-                    cell.CellStyle = cellStylePercentageNormal;
-
-                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.Sma200);
-                cell.CellStyle = cellStyleDecimalNormal;
-                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.Sma50);
-                if (candle.CandleData.Sma200 >= candle.CandleData.Sma50)
-                    cell.CellStyle = cellStyleDecimalGreen;
-                else
-                    cell.CellStyle = cellStyleDecimalNormal;
-                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.Sma20);
-                if (candle.CandleData.Sma50 >= candle.CandleData.Sma20)
-                    cell.CellStyle = cellStyleDecimalGreen;
-                else
-                    cell.CellStyle = cellStyleDecimalNormal;
-                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.PSar);
-                if (candle.CandleData.Sma20 > candle.CandleData.PSar)
-                    cell.CellStyle = cellStyleDecimalGreen;
-                else
-                    cell.CellStyle = cellStyleDecimalNormal;
-
-                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.MacdValue);
-                cell.CellStyle = cellStyleDecimalNormal;
-
-                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.MacdSignal);
-                cell.CellStyle = cellStyleDecimalNormal;
-
-                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.MacdHistogram);
-                if (candle.CandleData.MacdHistogram >= 0)
-                {
-                    // above zero line = green
-                    if (prev == null || prev.CandleData == null)
-                        cell.CellStyle = cellStyleDecimalNormal;
-                    else
-                    {
-                        if (candle.CandleData.MacdHistogram >= prev.CandleData.MacdHistogram)
-                            cell.CellStyle = cellStyleDecimalGreen;
-                        else
-                            cell.CellStyle = cellStyleMacdLightGreen;
-                    }
-                }
-                else
-                {
-                    // below zero line = red
-                    if (prev == null || prev.CandleData == null)
-                        cell.CellStyle = cellStyleDecimalNormal;
-                    else
-                    {
-                        if (candle.CandleData.MacdHistogram <= prev.CandleData.MacdHistogram)
-                            cell.CellStyle = cellStyleMacdRed;
-                        else
-                            cell.CellStyle = cellStyleMacdLightRed;
-                    }
-                }
-
-
-                if (candle.IsSbmConditionsOversold(true))
-                {
-                    WriteCell(sheet, column++, row, "yes");
-                }
-                else
-                {
-                    WriteCell(sheet, column++, row, "no");
-                }
-
-                if (candle.IsSma200AndSma20OkayOversold(GlobalData.Settings.Signal.SbmMa200AndMa20Percentage, out string _))
-                {
-                    cell = WriteCell(sheet, column++, row, "yes");
-                    cell.CellStyle = cellStyleStringGreen;
-                }
-                else
-                {
-                    WriteCell(sheet, column++, row, "no");
-                }
-
-                if (candle.IsSma200AndSma50OkayOversold(GlobalData.Settings.Signal.SbmMa200AndMa50Percentage, out _))
-                {
-                    cell = WriteCell(sheet, column++, row, "yes");
-                    cell.CellStyle = cellStyleStringGreen;
-                }
-                else
-                {
-                    WriteCell(sheet, column++, row, "no");
-                }
-
-                if (candle.IsSma50AndSma20OkayOversold(GlobalData.Settings.Signal.SbmMa50AndMa20Percentage, out _))
-                {
-                    cell = WriteCell(sheet, column++, row, "yes");
-                    cell.CellStyle = cellStyleStringGreen;
-                }
-                else
-                {
-                    WriteCell(sheet, column++, row, "no");
-                }
-
-                WriteCell(sheet, column++, row, candle.ExtraText);
-
-
-                // overbodig?
-
-                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.Rsi);
-                if (candle.CandleData.Rsi > 30)
-                    cell.CellStyle = cellStyleDecimalGreen;
-                else
-                    cell.CellStyle = cellStyleDecimalNormal;
-                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.StochOscillator);
-                if (candle.CandleData.StochOscillator > 20)
-                    cell.CellStyle = cellStyleDecimalGreen;
-                else
-                    cell.CellStyle = cellStyleDecimalNormal;
-                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.StochSignal);
-                if (candle.CandleData.StochSignal > 20)
-                    cell.CellStyle = cellStyleDecimalGreen;
-                else
-                    cell.CellStyle = cellStyleDecimalNormal;
-
-                // wat kun je hiermee?
-                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.Ema20);
-                cell.CellStyle = cellStyleDecimalNormal;
-                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.Ema50);
-                cell.CellStyle = cellStyleDecimalNormal;
-                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.Ema200);
-                cell.CellStyle = cellStyleDecimalNormal;
-            }
-            prev = candle;
-        }
-
-        // wel makkelijk als ze ook onderin staan
-        ExcellHeaders(sheet, row + 1);
-
-        for (int i = 0; i < columns; i++)
-        {
-            sheet.AutoSizeColumn(i);
-            int width = sheet.GetColumnWidth(i);
-            sheet.SetColumnWidth(i, (int)(1.1 * width));
-        }
-
-
-        string text = SignalHelper.GetSignalAlgorithmText(strategy);
-        GlobalData.AddTextToLogTab(string.Format("Backtest {0} {1} ready", Symbol.Name, text));
-
-        string folder = GlobalData.GetBaseDir() + @"\BackTest\";
-        Directory.CreateDirectory(folder);
-        using var fs = new FileStream(folder + Symbol.Name + "-" + text + ".xls", FileMode.Create);
-
-        book.Write(fs);
     }
 }

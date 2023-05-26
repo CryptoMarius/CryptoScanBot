@@ -10,84 +10,6 @@ namespace CryptoSbmScanner.Intern;
 
 public class DataStore
 {
-
-    //public void LoadExchanges()
-    //{
-    //    // De exchange binance toevoegen (slechts 1 item tot dusver)
-    //    CryptoExchange exchange = new CryptoExchange();
-    //    exchange.Name = "Binance";
-
-    //    GlobalData.AddExchange(exchange);
-    //}
-
-    //public void LoadSymbols()
-    //{
-    //    string basedir = GlobalData.GetBaseDir();
-    //    foreach (CryptoExchange exchange in GlobalData.ExchangeListName.Values)
-    //    {
-    //        string filename = basedir + @"binance\Symbols.json";
-    //        if (File.Exists(filename))
-    //        {
-    //            List<CryptoSymbol> list = null;
-
-    //            try
-    //            {
-    //                using (FileStream readStream = new FileStream(filename, FileMode.Open))
-    //                {
-    //                    BinaryFormatter formatter = new BinaryFormatter();
-    //                    list = (List<CryptoSymbol>)formatter.Deserialize(readStream);
-    //                    readStream.Close();
-    //                }
-    //            }
-    //            catch (InvalidCastException) //error
-    //            {
-    //                // Een vorig formaat
-    //                File.Delete(filename);
-    //                //throw;
-    //            }
-
-    //            if (list != null)
-    //            {
-    //                foreach (CryptoSymbol symbol in list)
-    //                {
-    //                    // Oh, de deserialize roept de constructor niet aan
-    //                    if (symbol.IntervalPeriodList == null)
-    //                        symbol.InitializePeriods();
-
-    //                    symbol.Exchange = exchange;
-
-    //                    // Ga er van uit dat de symbol niet actief is
-    //                    if (symbol.IsBarometerSymbol())
-    //                        symbol.Status = 1;
-    //                    else
-    //                        symbol.Status = 0;
-    //                    GlobalData.AddSymbol(symbol);
-    //                }
-    //            }
-    //        }
-    //    }
-    //}
-
-
-    //public void SaveSymbols()
-    //{
-    //    string basedir = GlobalData.GetBaseDir();
-    //    foreach (CryptoSbmScanner.CryptoExchange exchange in GlobalData.ExchangeListName.Values)
-    //    {
-    //        string dirExchange = basedir + exchange.Name;
-    //        Directory.CreateDirectory(dirExchange);
-    //        string filename = dirExchange + @"\Symbols.json";
-
-    //        using (FileStream writeStream = new FileStream(filename, FileMode.Create))
-    //        {
-    //            BinaryFormatter formatter = new BinaryFormatter();
-    //            formatter.Serialize(writeStream, exchange.SymbolListName.Values.ToList());
-    //            writeStream.Close();
-    //        }
-    //    }
-    //}
-
-
     public static void LoadCandles()
     {
         // De candles uit de database lezen
@@ -116,7 +38,7 @@ public class DataStore
 
                 foreach (CryptoSymbolInterval symbolInterval in symbol.IntervalPeriodList)
                 {
-                    symbolInterval.TrendIndicator = CryptoTrendIndicator.trendSideways;
+                    symbolInterval.TrendIndicator = Model.CryptoTrendIndicator.trendSideways;
                     symbolInterval.LastCandleSynchronized = null;
                     symbolInterval.LastStobbOrdSbmDate = null;
                     symbolInterval.TrendInfoDate = null;
@@ -158,9 +80,13 @@ public class DataStore
                                 {
                                     CryptoCandle candle = new()
                                     {
-                                        Symbol = symbol,
-                                        Interval = symbolInterval.Interval,
-
+#if DATABASE
+                                        ExchangeId = Exchange.Id,
+                                        SymbolId = symbol.Id,
+                                        IntervalId = Interval.Id,
+#endif
+                                        //Symbol = symbol,
+                                        //Interval = symbolInterval.Interval,
                                         OpenTime = binaryReader.ReadInt64(),
                                         Open = binaryReader.ReadDecimal(),
                                         High = binaryReader.ReadDecimal(),

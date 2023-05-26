@@ -28,7 +28,7 @@
             listBoxSymbolsMenuItemShowTrendInformation = new ToolStripMenuItem();
             listBoxSymbolsMenuItemCopy = new ToolStripMenuItem();
             panel3 = new Panel();
-            labelVersion = new Label();
+            label1 = new Label();
             applicationMenuStrip = new MenuStrip();
             MenuMain = new ToolStripMenuItem();
             ApplicationPlaySounds = new ToolStripMenuItem();
@@ -41,9 +41,6 @@
             backtestToolStripMenuItem = new ToolStripMenuItem();
             symbolFilter = new TextBox();
             panelClient = new Panel();
-            tabControl = new TabControl();
-            tabPageSignals = new TabPage();
-            listViewSignals = new ListViewDoubleBuffered();
             listViewSignalsMenuStrip = new ContextMenuStrip(components);
             listViewSignalsMenuItemActivateTradingApp = new ToolStripMenuItem();
             listViewSignalsMenuItemActivateTradingApps = new ToolStripMenuItem();
@@ -52,39 +49,38 @@
             listViewSignalsMenuItemShowTrendInformation = new ToolStripMenuItem();
             listViewSignalsMenuItemClearSignals = new ToolStripMenuItem();
             listViewSignalsMenuItemCopySignal = new ToolStripMenuItem();
-            tabPageBrowser = new TabPage();
-            webViewTradingView = new Microsoft.Web.WebView2.WinForms.WebView2();
-            tabPageLog = new TabPage();
-            TextBoxLog = new TextBox();
-            tabPageAltrady = new TabPage();
-            webViewAltrady = new Microsoft.Web.WebView2.WinForms.WebView2();
             panelTop = new Panel();
-            listViewSymbolPrices = new ListViewDoubleBuffered();
             labelBarometerDateValue = new Label();
             comboBoxBarometerInterval = new ComboBox();
             pictureBox1 = new PictureBox();
             comboBoxBarometerQuote = new ComboBox();
             panelClient1 = new Panel();
-            timerClearEvents = new System.Windows.Forms.Timer(components);
             contextMenuStrip1 = new ContextMenuStrip(components);
-            timerAddSignal = new System.Windows.Forms.Timer(components);
+            tabPagePositions = new TabPage();
+            tabPageAltrady = new TabPage();
+            webViewAltrady = new Microsoft.Web.WebView2.WinForms.WebView2();
+            tabPageLog = new TabPage();
+            TextBoxLog = new TextBox();
+            tabPageBrowser = new TabPage();
+            webViewTradingView = new Microsoft.Web.WebView2.WinForms.WebView2();
+            tabPageSignals = new TabPage();
+            tabControl = new TabControl();
             panelLeft.SuspendLayout();
             panel4.SuspendLayout();
             listBoxSymbolsMenuStrip.SuspendLayout();
             panel3.SuspendLayout();
             applicationMenuStrip.SuspendLayout();
             panelClient.SuspendLayout();
-            tabControl.SuspendLayout();
-            tabPageSignals.SuspendLayout();
             listViewSignalsMenuStrip.SuspendLayout();
-            tabPageBrowser.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)webViewTradingView).BeginInit();
-            tabPageLog.SuspendLayout();
-            tabPageAltrady.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)webViewAltrady).BeginInit();
             panelTop.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             panelClient1.SuspendLayout();
+            tabPageAltrady.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)webViewAltrady).BeginInit();
+            tabPageLog.SuspendLayout();
+            tabPageBrowser.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)webViewTradingView).BeginInit();
+            tabControl.SuspendLayout();
             SuspendLayout();
             // 
             // panelLeft
@@ -172,7 +168,7 @@
             // 
             // panel3
             // 
-            panel3.Controls.Add(labelVersion);
+            panel3.Controls.Add(label1);
             panel3.Controls.Add(applicationMenuStrip);
             panel3.Controls.Add(symbolFilter);
             panel3.Dock = DockStyle.Top;
@@ -182,15 +178,15 @@
             panel3.Size = new Size(190, 93);
             panel3.TabIndex = 1;
             // 
-            // labelVersion
+            // label1
             // 
-            labelVersion.AutoSize = true;
-            labelVersion.Location = new Point(14, 31);
-            labelVersion.Margin = new Padding(4, 0, 4, 0);
-            labelVersion.Name = "labelVersion";
-            labelVersion.Size = new Size(109, 15);
-            labelVersion.TabIndex = 50;
-            labelVersion.Text = "CryptoScanner x.xx";
+            label1.AutoSize = true;
+            label1.Location = new Point(13, 44);
+            label1.Margin = new Padding(4, 0, 4, 0);
+            label1.Name = "label1";
+            label1.Size = new Size(36, 15);
+            label1.TabIndex = 71;
+            label1.Text = "Filter:";
             // 
             // applicationMenuStrip
             // 
@@ -273,7 +269,7 @@
             // 
             // symbolFilter
             // 
-            symbolFilter.Location = new Point(11, 58);
+            symbolFilter.Location = new Point(14, 61);
             symbolFilter.Margin = new Padding(2);
             symbolFilter.Name = "symbolFilter";
             symbolFilter.Size = new Size(164, 23);
@@ -289,45 +285,6 @@
             panelClient.Name = "panelClient";
             panelClient.Size = new Size(1542, 648);
             panelClient.TabIndex = 13;
-            // 
-            // tabControl
-            // 
-            tabControl.Controls.Add(tabPageSignals);
-            tabControl.Controls.Add(tabPageBrowser);
-            tabControl.Controls.Add(tabPageLog);
-            tabControl.Controls.Add(tabPageAltrady);
-            tabControl.Dock = DockStyle.Fill;
-            tabControl.Location = new Point(0, 0);
-            tabControl.Margin = new Padding(2);
-            tabControl.Name = "tabControl";
-            tabControl.SelectedIndex = 0;
-            tabControl.Size = new Size(1542, 648);
-            tabControl.TabIndex = 12;
-            // 
-            // tabPageSignals
-            // 
-            tabPageSignals.Controls.Add(listViewSignals);
-            tabPageSignals.Location = new Point(4, 24);
-            tabPageSignals.Margin = new Padding(4, 3, 4, 3);
-            tabPageSignals.Name = "tabPageSignals";
-            tabPageSignals.Padding = new Padding(4, 3, 4, 3);
-            tabPageSignals.Size = new Size(1534, 620);
-            tabPageSignals.TabIndex = 4;
-            tabPageSignals.Text = "Signals";
-            tabPageSignals.UseVisualStyleBackColor = true;
-            // 
-            // listViewSignals
-            // 
-            listViewSignals.BorderStyle = BorderStyle.None;
-            listViewSignals.ContextMenuStrip = listViewSignalsMenuStrip;
-            listViewSignals.Dock = DockStyle.Fill;
-            listViewSignals.Location = new Point(4, 3);
-            listViewSignals.Margin = new Padding(4, 3, 4, 3);
-            listViewSignals.Name = "listViewSignals";
-            listViewSignals.Size = new Size(1526, 614);
-            listViewSignals.TabIndex = 1;
-            listViewSignals.UseCompatibleStateImageBehavior = false;
-            listViewSignals.View = View.Details;
             // 
             // listViewSignalsMenuStrip
             // 
@@ -384,83 +341,8 @@
             listViewSignalsMenuItemCopySignal.Text = "Copy";
             listViewSignalsMenuItemCopySignal.Click += ListViewSignalsMenuItemCopySignal_Click;
             // 
-            // tabPageBrowser
-            // 
-            tabPageBrowser.Controls.Add(webViewTradingView);
-            tabPageBrowser.Location = new Point(4, 24);
-            tabPageBrowser.Margin = new Padding(4, 3, 4, 3);
-            tabPageBrowser.Name = "tabPageBrowser";
-            tabPageBrowser.Padding = new Padding(4, 3, 4, 3);
-            tabPageBrowser.Size = new Size(1534, 620);
-            tabPageBrowser.TabIndex = 5;
-            tabPageBrowser.Text = "Tradingview";
-            tabPageBrowser.UseVisualStyleBackColor = true;
-            // 
-            // webViewTradingView
-            // 
-            webViewTradingView.AllowExternalDrop = true;
-            webViewTradingView.CreationProperties = null;
-            webViewTradingView.DefaultBackgroundColor = Color.White;
-            webViewTradingView.Dock = DockStyle.Fill;
-            webViewTradingView.Location = new Point(4, 3);
-            webViewTradingView.Margin = new Padding(4, 3, 4, 3);
-            webViewTradingView.Name = "webViewTradingView";
-            webViewTradingView.Size = new Size(1526, 614);
-            webViewTradingView.TabIndex = 0;
-            webViewTradingView.ZoomFactor = 1D;
-            // 
-            // tabPageLog
-            // 
-            tabPageLog.Controls.Add(TextBoxLog);
-            tabPageLog.Location = new Point(4, 24);
-            tabPageLog.Margin = new Padding(2);
-            tabPageLog.Name = "tabPageLog";
-            tabPageLog.Padding = new Padding(2);
-            tabPageLog.Size = new Size(1534, 620);
-            tabPageLog.TabIndex = 1;
-            tabPageLog.Text = "Log";
-            tabPageLog.UseVisualStyleBackColor = true;
-            // 
-            // TextBoxLog
-            // 
-            TextBoxLog.BorderStyle = BorderStyle.None;
-            TextBoxLog.Dock = DockStyle.Fill;
-            TextBoxLog.Location = new Point(2, 2);
-            TextBoxLog.Margin = new Padding(2);
-            TextBoxLog.Multiline = true;
-            TextBoxLog.Name = "TextBoxLog";
-            TextBoxLog.ScrollBars = ScrollBars.Both;
-            TextBoxLog.Size = new Size(1530, 616);
-            TextBoxLog.TabIndex = 1;
-            // 
-            // tabPageAltrady
-            // 
-            tabPageAltrady.Controls.Add(webViewAltrady);
-            tabPageAltrady.Location = new Point(4, 24);
-            tabPageAltrady.Margin = new Padding(4, 3, 4, 3);
-            tabPageAltrady.Name = "tabPageAltrady";
-            tabPageAltrady.Padding = new Padding(4, 3, 4, 3);
-            tabPageAltrady.Size = new Size(1534, 620);
-            tabPageAltrady.TabIndex = 6;
-            tabPageAltrady.Text = "tabPage1";
-            tabPageAltrady.UseVisualStyleBackColor = true;
-            // 
-            // webViewAltrady
-            // 
-            webViewAltrady.AllowExternalDrop = true;
-            webViewAltrady.CreationProperties = null;
-            webViewAltrady.DefaultBackgroundColor = Color.White;
-            webViewAltrady.Dock = DockStyle.Fill;
-            webViewAltrady.Location = new Point(4, 3);
-            webViewAltrady.Margin = new Padding(4, 3, 4, 3);
-            webViewAltrady.Name = "webViewAltrady";
-            webViewAltrady.Size = new Size(1526, 614);
-            webViewAltrady.TabIndex = 1;
-            webViewAltrady.ZoomFactor = 1D;
-            // 
             // panelTop
             // 
-            panelTop.Controls.Add(listViewSymbolPrices);
             panelTop.Controls.Add(labelBarometerDateValue);
             panelTop.Controls.Add(comboBoxBarometerInterval);
             panelTop.Controls.Add(pictureBox1);
@@ -471,22 +353,6 @@
             panelTop.Name = "panelTop";
             panelTop.Size = new Size(1542, 93);
             panelTop.TabIndex = 14;
-            // 
-            // listViewSymbolPrices
-            // 
-            listViewSymbolPrices.Activation = ItemActivation.OneClick;
-            listViewSymbolPrices.BackColor = SystemColors.Control;
-            listViewSymbolPrices.BorderStyle = BorderStyle.None;
-            listViewSymbolPrices.GridLines = true;
-            listViewSymbolPrices.HideSelection = true;
-            listViewSymbolPrices.Location = new Point(526, 0);
-            listViewSymbolPrices.Margin = new Padding(4, 3, 4, 3);
-            listViewSymbolPrices.Name = "listViewSymbolPrices";
-            listViewSymbolPrices.Scrollable = false;
-            listViewSymbolPrices.Size = new Size(813, 93);
-            listViewSymbolPrices.TabIndex = 71;
-            listViewSymbolPrices.UseCompatibleStateImageBehavior = false;
-            listViewSymbolPrices.View = View.Details;
             // 
             // labelBarometerDateValue
             // 
@@ -544,11 +410,115 @@
             contextMenuStrip1.Name = "contextMenuStrip1";
             contextMenuStrip1.Size = new Size(61, 4);
             // 
-            // timerAddSignal
+            // tabPagePositions
             // 
-            timerAddSignal.Enabled = true;
-            timerAddSignal.Interval = 1250;
-            timerAddSignal.Tick += TimerAddSignal_Tick;
+            tabPagePositions.Location = new Point(4, 24);
+            tabPagePositions.Name = "tabPagePositions";
+            tabPagePositions.Padding = new Padding(3);
+            tabPagePositions.Size = new Size(1534, 620);
+            tabPagePositions.TabIndex = 7;
+            tabPagePositions.Text = "Positions";
+            tabPagePositions.UseVisualStyleBackColor = true;
+            // 
+            // tabPageAltrady
+            // 
+            tabPageAltrady.Controls.Add(webViewAltrady);
+            tabPageAltrady.Location = new Point(4, 24);
+            tabPageAltrady.Margin = new Padding(4, 3, 4, 3);
+            tabPageAltrady.Name = "tabPageAltrady";
+            tabPageAltrady.Padding = new Padding(4, 3, 4, 3);
+            tabPageAltrady.Size = new Size(1534, 620);
+            tabPageAltrady.TabIndex = 6;
+            tabPageAltrady.Text = "Altrady (dummy)";
+            tabPageAltrady.UseVisualStyleBackColor = true;
+            // 
+            // webViewAltrady
+            // 
+            webViewAltrady.AllowExternalDrop = true;
+            webViewAltrady.CreationProperties = null;
+            webViewAltrady.DefaultBackgroundColor = Color.White;
+            webViewAltrady.Dock = DockStyle.Fill;
+            webViewAltrady.Location = new Point(4, 3);
+            webViewAltrady.Margin = new Padding(4, 3, 4, 3);
+            webViewAltrady.Name = "webViewAltrady";
+            webViewAltrady.Size = new Size(1526, 614);
+            webViewAltrady.TabIndex = 1;
+            webViewAltrady.ZoomFactor = 1D;
+            // 
+            // tabPageLog
+            // 
+            tabPageLog.Controls.Add(TextBoxLog);
+            tabPageLog.Location = new Point(4, 24);
+            tabPageLog.Margin = new Padding(2);
+            tabPageLog.Name = "tabPageLog";
+            tabPageLog.Padding = new Padding(2);
+            tabPageLog.Size = new Size(1534, 620);
+            tabPageLog.TabIndex = 1;
+            tabPageLog.Text = "Log";
+            tabPageLog.UseVisualStyleBackColor = true;
+            // 
+            // TextBoxLog
+            // 
+            TextBoxLog.BorderStyle = BorderStyle.None;
+            TextBoxLog.Dock = DockStyle.Fill;
+            TextBoxLog.Location = new Point(2, 2);
+            TextBoxLog.Margin = new Padding(2);
+            TextBoxLog.Multiline = true;
+            TextBoxLog.Name = "TextBoxLog";
+            TextBoxLog.ScrollBars = ScrollBars.Both;
+            TextBoxLog.Size = new Size(1530, 616);
+            TextBoxLog.TabIndex = 1;
+            // 
+            // tabPageBrowser
+            // 
+            tabPageBrowser.Controls.Add(webViewTradingView);
+            tabPageBrowser.Location = new Point(4, 24);
+            tabPageBrowser.Margin = new Padding(4, 3, 4, 3);
+            tabPageBrowser.Name = "tabPageBrowser";
+            tabPageBrowser.Padding = new Padding(4, 3, 4, 3);
+            tabPageBrowser.Size = new Size(1534, 620);
+            tabPageBrowser.TabIndex = 5;
+            tabPageBrowser.Text = "Tradingview";
+            tabPageBrowser.UseVisualStyleBackColor = true;
+            // 
+            // webViewTradingView
+            // 
+            webViewTradingView.AllowExternalDrop = true;
+            webViewTradingView.CreationProperties = null;
+            webViewTradingView.DefaultBackgroundColor = Color.White;
+            webViewTradingView.Dock = DockStyle.Fill;
+            webViewTradingView.Location = new Point(4, 3);
+            webViewTradingView.Margin = new Padding(4, 3, 4, 3);
+            webViewTradingView.Name = "webViewTradingView";
+            webViewTradingView.Size = new Size(1526, 614);
+            webViewTradingView.TabIndex = 0;
+            webViewTradingView.ZoomFactor = 1D;
+            // 
+            // tabPageSignals
+            // 
+            tabPageSignals.Location = new Point(4, 24);
+            tabPageSignals.Margin = new Padding(4, 3, 4, 3);
+            tabPageSignals.Name = "tabPageSignals";
+            tabPageSignals.Padding = new Padding(4, 3, 4, 3);
+            tabPageSignals.Size = new Size(1534, 620);
+            tabPageSignals.TabIndex = 4;
+            tabPageSignals.Text = "Signals";
+            tabPageSignals.UseVisualStyleBackColor = true;
+            // 
+            // tabControl
+            // 
+            tabControl.Controls.Add(tabPageSignals);
+            tabControl.Controls.Add(tabPageBrowser);
+            tabControl.Controls.Add(tabPagePositions);
+            tabControl.Controls.Add(tabPageLog);
+            tabControl.Controls.Add(tabPageAltrady);
+            tabControl.Dock = DockStyle.Fill;
+            tabControl.Location = new Point(0, 0);
+            tabControl.Margin = new Padding(2);
+            tabControl.Name = "tabControl";
+            tabControl.SelectedIndex = 0;
+            tabControl.Size = new Size(1542, 648);
+            tabControl.TabIndex = 12;
             // 
             // FrmMain
             // 
@@ -568,74 +538,70 @@
             applicationMenuStrip.ResumeLayout(false);
             applicationMenuStrip.PerformLayout();
             panelClient.ResumeLayout(false);
-            tabControl.ResumeLayout(false);
-            tabPageSignals.ResumeLayout(false);
             listViewSignalsMenuStrip.ResumeLayout(false);
-            tabPageBrowser.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)webViewTradingView).EndInit();
-            tabPageLog.ResumeLayout(false);
-            tabPageLog.PerformLayout();
-            tabPageAltrady.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)webViewAltrady).EndInit();
             panelTop.ResumeLayout(false);
             panelTop.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
             panelClient1.ResumeLayout(false);
+            tabPageAltrady.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)webViewAltrady).EndInit();
+            tabPageLog.ResumeLayout(false);
+            tabPageLog.PerformLayout();
+            tabPageBrowser.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)webViewTradingView).EndInit();
+            tabControl.ResumeLayout(false);
             ResumeLayout(false);
         }
 
         #endregion
-        private System.Windows.Forms.Panel panelLeft;
-        private System.Windows.Forms.Panel panelClient;
-        private System.Windows.Forms.TabControl tabControl;
-        private System.Windows.Forms.ListBox listBoxSymbols;
-        private System.Windows.Forms.Panel panelTop;
-        private System.Windows.Forms.Panel panel3;
-        private System.Windows.Forms.Panel panel4;
-        private System.Windows.Forms.Panel panelClient1;
-        private System.Windows.Forms.TabPage tabPageLog;
-        private System.Windows.Forms.TextBox TextBoxLog;
-        private System.Windows.Forms.ContextMenuStrip listBoxSymbolsMenuStrip;
-        private System.Windows.Forms.TextBox symbolFilter;
-        private System.Windows.Forms.ComboBox comboBoxBarometerQuote;
-        private System.Windows.Forms.MenuStrip applicationMenuStrip;
-        private System.Windows.Forms.ToolStripMenuItem MenuMain;
-        private System.Windows.Forms.ToolStripMenuItem ToolStripMenuItemSettings;
-        private System.Windows.Forms.ToolStripMenuItem ToolStripMenuItemRefresh;
-        private System.Windows.Forms.ToolStripMenuItem clearMenusToolStripMenuItem;
-        private System.Windows.Forms.TabPage tabPageSignals;
-        private System.Windows.Forms.Timer timerClearEvents;
-        private ListViewDoubleBuffered listViewSignals;
-        private System.Windows.Forms.TabPage tabPageBrowser;
-        private Microsoft.Web.WebView2.WinForms.WebView2 webViewTradingView;
-        private System.Windows.Forms.ContextMenuStrip listViewSignalsMenuStrip;
-        private System.Windows.Forms.ToolStripMenuItem listViewSignalsMenuItemClearSignals;
-        private System.Windows.Forms.ToolStripMenuItem listViewSignalsMenuItemActivateTradingApp;
-        private System.Windows.Forms.ToolStripMenuItem listViewSignalsMenuItemActivateTradingViewInternal;
-        private System.Windows.Forms.ToolStripMenuItem listViewSignalsMenuItemActivateTradingApps;
-        private System.Windows.Forms.ToolStripMenuItem listViewSignalsMenuItemActivateTradingViewExternal;
-        private System.Windows.Forms.ToolStripMenuItem listBoxSymbolsMenuItemActivateTradingviewInternal;
-        private System.Windows.Forms.ToolStripMenuItem listBoxSymbolsMenuItemActivateTradingviewExternal;
-        private System.Windows.Forms.ToolStripMenuItem listBoxSymbolsMenuItemActivateTradingApp;
-        private System.Windows.Forms.ToolStripMenuItem listBoxSymbolsMenuItemActivateTradingApps;
-        private System.Windows.Forms.TabPage tabPageAltrady;
-        private Microsoft.Web.WebView2.WinForms.WebView2 webViewAltrady;
-        private System.Windows.Forms.ToolStripMenuItem applicationMenuItemAbout;
-        private System.Windows.Forms.ToolStripMenuItem listBoxSymbolsMenuItemShowTrendInformation;
-        private System.Windows.Forms.ToolStripMenuItem listViewSignalsMenuItemShowTrendInformation;
-        private System.Windows.Forms.ToolStripMenuItem listViewSignalsMenuItemCopySignal;
-        private System.Windows.Forms.ToolStripMenuItem listBoxSymbolsMenuItemCopy;
-        private System.Windows.Forms.PictureBox pictureBox1;
-        private System.Windows.Forms.ComboBox comboBoxBarometerInterval;
-        private System.Windows.Forms.Label labelBarometerDateValue;
-        private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
-        private CryptoSbmScanner.ListViewDoubleBuffered listViewSymbolPrices;
-        private System.Windows.Forms.Label labelVersion;
-        private System.Windows.Forms.ToolStripMenuItem ApplicationPlaySounds;
-        private System.Windows.Forms.ToolStripMenuItem ApplicationCreateSignals;
-        private System.Windows.Forms.Timer timerAddSignal;
+        private Panel panelLeft;
+        private Panel panelClient;
+        private ListBox listBoxSymbols;
+        private Panel panelTop;
+        private Panel panel3;
+        private Panel panel4;
+        private Panel panelClient1;
+        private ContextMenuStrip listBoxSymbolsMenuStrip;
+        private TextBox symbolFilter;
+        private ComboBox comboBoxBarometerQuote;
+        private MenuStrip applicationMenuStrip;
+        private ToolStripMenuItem MenuMain;
+        private ToolStripMenuItem ToolStripMenuItemSettings;
+        private ToolStripMenuItem ToolStripMenuItemRefresh;
+        private ToolStripMenuItem clearMenusToolStripMenuItem;
+        private ContextMenuStrip listViewSignalsMenuStrip;
+        private ToolStripMenuItem listViewSignalsMenuItemClearSignals;
+        private ToolStripMenuItem listViewSignalsMenuItemActivateTradingApp;
+        private ToolStripMenuItem listViewSignalsMenuItemActivateTradingViewInternal;
+        private ToolStripMenuItem listViewSignalsMenuItemActivateTradingApps;
+        private ToolStripMenuItem listViewSignalsMenuItemActivateTradingViewExternal;
+        private ToolStripMenuItem listBoxSymbolsMenuItemActivateTradingviewInternal;
+        private ToolStripMenuItem listBoxSymbolsMenuItemActivateTradingviewExternal;
+        private ToolStripMenuItem listBoxSymbolsMenuItemActivateTradingApp;
+        private ToolStripMenuItem listBoxSymbolsMenuItemActivateTradingApps;
+        private ToolStripMenuItem applicationMenuItemAbout;
+        private ToolStripMenuItem listBoxSymbolsMenuItemShowTrendInformation;
+        private ToolStripMenuItem listViewSignalsMenuItemShowTrendInformation;
+        private ToolStripMenuItem listViewSignalsMenuItemCopySignal;
+        private ToolStripMenuItem listBoxSymbolsMenuItemCopy;
+        private PictureBox pictureBox1;
+        private ComboBox comboBoxBarometerInterval;
+        private Label labelBarometerDateValue;
+        private ContextMenuStrip contextMenuStrip1;
+        private ToolStripMenuItem ApplicationPlaySounds;
+        private ToolStripMenuItem ApplicationCreateSignals;
         private ToolStripMenuItem backtestToolStripMenuItem;
         private ToolStripMenuItem ApplicationTradingBot;
+        private Label label1;
+        private TabControl tabControl;
+        private TabPage tabPageSignals;
+        private TabPage tabPageBrowser;
+        private Microsoft.Web.WebView2.WinForms.WebView2 webViewTradingView;
+        private TabPage tabPageLog;
+        private TextBox TextBoxLog;
+        private TabPage tabPageAltrady;
+        private Microsoft.Web.WebView2.WinForms.WebView2 webViewAltrady;
+        private TabPage tabPagePositions;
     }
 }
 

@@ -3,47 +3,46 @@ using CryptoSbmScanner.Model;
 
 namespace CryptoSbmScanner.Signal;
 
-public class SignalCandleJumpDown : SignalBase
+public class SignalCandleJumpDown : SignalCreateBase
 {
     public SignalCandleJumpDown(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        SignalMode = SignalMode.modeInfo;
-        SignalStrategy = SignalStrategy.candlesJumpDown;
+        SignalMode = TradeDirection.Long;
+        SignalStrategy = SignalStrategy.Jump;
     }
 
 
     public override bool IsSignal()
     {
-        ExtraText = "";
-
         // Een waarde die plotseling ~X% hoger of lager ligt dan de vorige candle
-        //if (CandleLast.Open > CandleLast.Close)
-        //{
-        //    decimal perc = Math.Abs(100m * ((CandleLast.Close / CandleLast.Open) - 1));
-        //    if (perc >= GlobalData.Settings.Signal.AnalysisCandleJumpPercentage)
-        //    {
-        //        ExtraText = perc.ToString("N2") + "%";
-        //        return true;
-        //    }
-        //}
 
+        ExtraText = "";
 
         // We gaan van rechts naar links
         int candleCount = GlobalData.Settings.Signal.JumpCandlesLookbackCount;
         if (candleCount > 0)
         {
-            decimal value = decimal.MinValue;
+            // Wat is het laagste en hoogste punt in de laatste x candles
+            long minDate = CandleLast.OpenTime;
+            decimal minValue = decimal.MaxValue;
+            long maxDate = CandleLast.OpenTime;
+            decimal maxValue = decimal.MinValue;
+
             CryptoCandle candle = CandleLast;
             while (candleCount > 0)
             {
-                if (GlobalData.Settings.Signal.JumpUseLowHighCalculation)
+                decimal value = candle.GetLowest(GlobalData.Settings.Signal.JumpUseLowHighCalculation);
+                if (value < minValue)
                 {
-                    value = Math.Max(value, candle.High);
+                    minValue = value;
+                    minDate = candle.OpenTime;
                 }
-                else
+
+                value = candle.GetHighest(GlobalData.Settings.Signal.JumpUseLowHighCalculation);
+                if (value > maxValue)
                 {
-                    value = Math.Max(value, candle.Open);
-                    value = Math.Max(value, candle.Close);
+                    maxValue = value;
+                    maxDate = candle.OpenTime;
                 }
 
                 // 1 candle verder naar links
@@ -53,14 +52,14 @@ public class SignalCandleJumpDown : SignalBase
                 candleCount--;
             }
 
-            //decimal last = Math.Min(CandleLast.Open, CandleLast.Close);
-            decimal last = CandleLast.Close;
-            if (value > last)
+
+            // Is het gedaald? (maar pas op, het kan alweer gestegen zijn)
+            if (minDate > maxDate)
             {
-                decimal perc = Math.Abs(100m * (last / value - 1));
+                decimal perc = 100m * (maxValue / minValue - 1);
                 if (perc >= GlobalData.Settings.Signal.AnalysisCandleJumpPercentage)
                 {
-                    ExtraText = perc.ToString("N2") + "%";
+                    ExtraText = "-" + perc.ToString("N2") + "%";
                     return true;
                 }
             }

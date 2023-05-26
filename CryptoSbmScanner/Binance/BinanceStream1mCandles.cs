@@ -49,14 +49,19 @@ public class BinanceStream1mCandles
                     // Process the single 1m candle
                     candle = CandleTools.HandleFinalCandleData(symbol, GlobalData.IntervalList[0], temp.Data.OpenTime,
                         temp.Data.OpenPrice, temp.Data.HighPrice, temp.Data.LowPrice, temp.Data.ClosePrice, temp.Data.QuoteVolume);
-                    if (!symbol.LastPrice.HasValue)
-						symbol.LastPrice = temp.Data.ClosePrice;
+#if DATABASE
+                    GlobalData.TaskSaveCandles.AddToQueue(candle);
+#endif
+					symbol.LastPrice = temp.Data.ClosePrice;
 
                     // Calculate the higher timeframes
                     foreach (CryptoInterval interval in GlobalData.IntervalList)
                     {
                         if (interval.ConstructFrom != null)
+                        {
+                            // Deze doen ook een call naar de TaskSaveCandles en doet de UpdateCandleFetched (wellicht overlappend?)
                             CandleTools.CalculateCandleForInterval(interval, interval.ConstructFrom, symbol, candle.OpenTime);
+                        }
 
                         CandleTools.UpdateCandleFetched(symbol, interval);
                     }
@@ -71,14 +76,7 @@ public class BinanceStream1mCandles
                 if (GlobalData.ApplicationStatus == ApplicationStatus.AppStatusRunning && candle != null)
                 {
                     // Aanbieden voor analyse
-                    GlobalData.ThreadCreateSignal.AddToQueue(candle);
-
-                    // Het signal monitoring aanroepen (In ieder geval aanroepen)?
-                    //if ((symbol.SignalList.Count + symbol.PositionList.Count) > 0)
-                    //    GlobalData.TaskMonitorSignal.AddToQueue(symbol);
-
-                    //if (GlobalData.Settings.BalanceBot.Active && (symbol.IsBalancing))
-                    //    GlobalData.ThreadBalanceSymbols.AddToQueue(symbol);
+                    GlobalData.ThreadMonitorCandle.AddToQueue(symbol, candle);
                 }
             }
         }

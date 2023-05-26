@@ -1,4 +1,11 @@
-﻿using CryptoSbmScanner.Model;
+﻿using System.Drawing;
+using System.Text;
+
+using Binance.Net.Enums;
+using Binance.Net.Objects.Models.Spot;
+using Binance.Net.Objects.Models.Spot.Socket;
+
+using CryptoSbmScanner.Model;
 
 namespace CryptoSbmScanner.Intern;
 
@@ -27,18 +34,34 @@ public static class Helper
         return value / 1.000000000000000000000000000000000m;
     }
 
+    public static decimal GetLowest(this CryptoCandle candle, bool useWicks)
+    {
+        if (useWicks)
+            return (candle.Low);
+        else
+            return Math.Min(candle.Open, candle.Close);
+    }
 
-    public static string OhlcText(this CryptoCandle candle, string fmt, bool includeSymbol = false, bool includeInterval = false, bool includeVolume = false)
+    public static decimal GetHighest(this CryptoCandle candle, bool useWicks)
+    {
+        if (useWicks)
+            return (candle.High);
+        else
+            return Math.Max(candle.Open, candle.Close);
+    }
+    
+    
+    public static string OhlcText(this CryptoCandle candle, CryptoSymbol symbol, CryptoInterval interval, string fmt, bool includeSymbol = false, bool includeInterval = false, bool includeVolume = false)
     {
         // Include the next time so it is clear what candle has focus (it saves a lot of questions)
         DateTime date = CandleTools.GetUnixDate(candle.OpenTime);
-        string s = date.ToLocalTime().ToString("yyyy-MM-dd HH:mm") + "-" + date.AddSeconds(candle.Interval.Duration).ToLocalTime().ToString("HH:mm");
+        string s = date.ToLocalTime().ToString("yyyy-MM-dd HH:mm") + "-" + date.AddSeconds(interval.Duration).ToLocalTime().ToString("HH:mm");
 
         if (includeSymbol)
-            s += " " + candle.Symbol.Name;
+            s += " " + symbol.Name;
 
         if (includeInterval)
-            s = s + " interval=" + candle.Interval.Name;
+            s = s + " interval=" + interval.Name;
 
         s = s + " open=" + candle.Open.ToString(fmt);
         s = s + " high=" + candle.High.ToString(fmt);
@@ -243,52 +266,298 @@ public static class Helper
     }
 
 
-    /// wordt gebruikt in de trading stuff, wordt later weer geactiveerd
-    //public static bool InsideBoundaries(this CryptoSymbol symbol, decimal? quantity, decimal? price, out string text)
-    //{
-    //    if (quantity.HasValue)
-    //    {
-    //        if (quantity < symbol.QuantityMinimum)
-    //        {
-    //            text = string.Format("ERROR minimum quantity {0} < {1}", quantity.ToString0("N6"), symbol.QuantityMinimum.ToString0());
-    //            return false;
-    //        }
-    //        if (quantity > symbol.QuantityMaximum)
-    //        {
-    //            text = string.Format("ERROR maximum quantity {0} > {1}", quantity.ToString0("N6"), symbol.QuantityMaximum.ToString0());
-    //            return false;
-    //        }
-    //    }
+
+    public static bool InsideBoundaries(this CryptoSymbol symbol, decimal? quantity, decimal? price, out string text)
+    {
+        if (quantity.HasValue)
+        {
+            if (quantity < symbol.QuantityMinimum)
+            {
+                text = string.Format("ERROR minimum quantity {0} < {1}", quantity.ToString0("N6"), symbol.QuantityMinimum.ToString0());
+                return false;
+            }
+            if (quantity > symbol.QuantityMaximum)
+            {
+                text = string.Format("ERROR maximum quantity {0} > {1}", quantity.ToString0("N6"), symbol.QuantityMaximum.ToString0());
+                return false;
+            }
+        }
 
 
-    //    if (price.HasValue)
-    //    {
-    //        if (price < symbol.PriceMinimum)
-    //        {
-    //            text = string.Format("ERROR minimum price {0} < {1}", price.ToString0("N6"), symbol.PriceMinimum.ToString0());
-    //            return false;
-    //        }
-    //        if (price > symbol.PriceMaximum)
-    //        {
-    //            text = string.Format("ERROR maximum price {0} > {1}", price.ToString0("N6"), symbol.PriceMaximum.ToString0());
-    //            return false;
-    //        }
-    //    }
+        if (price.HasValue)
+        {
+            if (price < symbol.PriceMinimum)
+            {
+                text = string.Format("ERROR minimum price {0} < {1}", price.ToString0("N6"), symbol.PriceMinimum.ToString0());
+                return false;
+            }
+            if (price > symbol.PriceMaximum)
+            {
+                text = string.Format("ERROR maximum price {0} > {1}", price.ToString0("N6"), symbol.PriceMaximum.ToString0());
+                return false;
+            }
+        }
 
 
-    //    if (quantity.HasValue && price.HasValue)
-    //    {
-    //        // En product van de twee
-    //        if (price * quantity <= symbol.MinNotional)
-    //        {
-    //            //(buyPrice * buyQuantity).ToString0()
-    //            text = string.Format("ERROR minimal notation {0} * {1} <= {2}", quantity.ToString0("N6"), price.ToString0("N6"), symbol.MinNotional.ToString0());
-    //            return false;
-    //        }
-    //    }
+        if (quantity.HasValue && price.HasValue)
+        {
+            // En product van de twee
+            if (price * quantity <= symbol.MinNotional)
+            {
+                //(buyPrice * buyQuantity).ToString0()
+                text = string.Format("ERROR minimal notation {0} * {1} <= {2}", quantity.ToString0("N6"), price.ToString0("N6"), symbol.MinNotional.ToString0());
+                return false;
+            }
+        }
 
-    //    text = "";
-    //    return true;
-    //}
+        text = "";
+        return true;
+    }
+
+
+    static public void PickupAssets(Model.CryptoExchange exchange, IEnumerable<BinanceBalance> balances)
+    {
+        exchange.AssetListSemaphore.Wait();
+        try
+        {
+            foreach (var assetInfo in balances)
+            {
+                if (assetInfo.Total > 0)
+                {
+                    CryptoAsset asset;
+                    if (!exchange.AssetList.TryGetValue(assetInfo.Asset, out asset))
+                    {
+                        asset = new CryptoAsset();
+                        asset.Quote = assetInfo.Asset;
+                        exchange.AssetList.Add(asset.Quote, asset);
+                    }
+                    asset.Free = assetInfo.Available;
+                    asset.Total = assetInfo.Total;
+                    asset.Locked = assetInfo.Locked;
+
+                    if (asset.Total == 0)
+                        exchange.AssetList.Remove(asset.Quote);
+                }
+            }
+        }
+        finally
+        {
+            exchange.AssetListSemaphore.Release();
+        }
+    }
+
+    static public void PickupAssets(Model.CryptoExchange exchange, IEnumerable<BinanceStreamBalance> balances)
+    {
+        exchange.AssetListSemaphore.Wait();
+        {
+            try
+            {
+                foreach (var assetInfo in balances)
+                {
+                    CryptoAsset asset;
+                    if (!exchange.AssetList.TryGetValue(assetInfo.Asset, out asset))
+                    {
+                        asset = new CryptoAsset();
+                        asset.Quote = assetInfo.Asset;
+                        exchange.AssetList.Add(asset.Quote, asset);
+                    }
+                    asset.Free = assetInfo.Available;
+                    asset.Total = assetInfo.Total;
+                    asset.Locked = assetInfo.Locked;
+
+                    if (asset.Total == 0)
+                        exchange.AssetList.Remove(asset.Quote);
+                }
+            }
+            finally
+            {
+                exchange.AssetListSemaphore.Release();
+            }
+        }
+    }
+
+
+    static public void PickupTrade(CryptoSymbol symbol, CryptoTrade trade, BinanceTrade item)
+    {
+        trade.Exchange = symbol.Exchange;
+        trade.ExchangeId = symbol.ExchangeId;
+        trade.Symbol = symbol;
+        trade.SymbolId = symbol.Id;
+
+        trade.TradeId = item.Id;
+        trade.OrderId = item.OrderId;
+        trade.OrderListId = (long)item.OrderListId;
+
+        trade.Price = item.Price;
+        trade.Quantity = item.Quantity;
+        trade.QuoteQuantity = item.Price * item.Quantity;
+        // enig debug werk, soms wordt het niet ingevuld!
+        if (item.QuoteQuantity == 0)
+            GlobalData.AddTextToLogTab(string.Format("{0} PickupTrade#1trade QuoteQuantity is 0 for order TradeId={1}!", symbol.Name, trade.TradeId));
+
+        trade.Commission = item.Fee;
+        trade.CommissionAsset = item.FeeAsset;
+
+        trade.TradeTime = item.Timestamp;
+
+        trade.IsBuyer = item.IsBuyer;
+        trade.IsMaker = item.IsMaker;
+        trade.IsBestMatch = item.IsBestMatch; // Kan weg
+    }
+
+
+    static public void PickupTrade(CryptoSymbol symbol, CryptoTrade trade, BinanceStreamOrderUpdate item)
+    {
+        trade.Exchange = symbol.Exchange;
+        trade.ExchangeId = symbol.ExchangeId;
+        trade.Symbol = symbol;
+        trade.SymbolId = symbol.Id;
+
+        trade.TradeId = item.TradeId;
+        trade.OrderId = item.Id;
+        trade.OrderListId = (long)item.OrderListId;
+
+        trade.Price = item.Price;
+        trade.Quantity = item.Quantity;
+        trade.QuoteQuantity = item.Price * item.Quantity;
+        // enig debug werk, soms wordt het niet ingevuld!
+        if (item.QuoteQuantity == 0)
+            GlobalData.AddTextToLogTab(string.Format("{0} PickupTrade#2stream QuoteQuantity is 0 for order TradeId={1}!", symbol.Name, trade.TradeId));
+
+        trade.Commission = item.Fee;
+        trade.CommissionAsset = item.FeeAsset;
+
+        trade.TradeTime = item.EventTime;
+
+        trade.IsBuyer = item.Side == OrderSide.Buy;
+        trade.IsMaker = item.BuyerIsMaker;
+        trade.IsBestMatch = true; // Kan weg
+    }
+
+
+    static public void ShowAssets(StringBuilder stringBuilder, out decimal valueUsdt, out decimal valueBtc)
+    {
+        valueBtc = 0;
+        valueUsdt = 0;
+
+        Model.CryptoExchange exchange = null;
+        if (GlobalData.ExchangeListName.TryGetValue("Binance", out exchange))
+        {
+            exchange.AssetListSemaphore.Wait();
+            {
+                try
+                {
+                    try
+                    {
+                        stringBuilder.AppendLine("Assets:");
+
+                        //AddTextToLogTab("Assets changed");
+                        foreach (CryptoAsset asset in exchange.AssetList.Values)
+                        {
+                            if (asset.Total.ToString0() == asset.Free.ToString0())
+                                stringBuilder.AppendLine(string.Format("{0} {1}", asset.Quote, asset.Total.ToString0()));
+                            else
+                                stringBuilder.AppendLine(string.Format("{0} {1} Free={2}", asset.Quote, asset.Total.ToString0(), asset.Free.ToString0()));
+
+
+                            CryptoSymbol symbol;
+                            if (asset.Quote == "USDT")
+                                valueUsdt += asset.Total;
+                            else if (exchange.SymbolListName.TryGetValue(asset.Quote + "USDT", out symbol))
+                            {
+                                if (symbol.LastPrice.HasValue)
+                                    valueUsdt += (decimal)symbol.LastPrice * asset.Total;
+                            }
+                            else if (exchange.SymbolListName.TryGetValue("USDT" + asset.Quote, out symbol))
+                            {
+                                if (symbol.LastPrice.HasValue)
+                                    valueUsdt += asset.Total / (decimal)symbol.LastPrice;
+                            }
+
+
+                            if (asset.Quote == "BTC")
+                                valueBtc += asset.Total;
+                            else if (exchange.SymbolListName.TryGetValue(asset.Quote + "BTC", out symbol))
+                            {
+                                if (symbol.LastPrice.HasValue)
+                                    valueBtc += (decimal)symbol.LastPrice * asset.Total;
+                            }
+                            else if (exchange.SymbolListName.TryGetValue("BTC" + asset.Quote, out symbol))
+                            {
+                                if (symbol.LastPrice.HasValue)
+                                    valueBtc += asset.Total / (decimal)symbol.LastPrice;
+                            }
+                        }
+                        stringBuilder.AppendLine(string.Format("Totaal USDT=${0} BTC=₿{1}", valueUsdt.ToString0("N2"), valueBtc.ToString0("N8")));
+                    }
+                    catch (Exception error)
+                    {
+                        stringBuilder.AppendLine(string.Format("ERROR assets " + error.ToString()));
+                        GlobalData.Logger.Error(error, "ERROR assets");
+                    }
+                    // Dat doet de aanroepende partij (telegram of knop Show wallets)
+                    //GlobalData.AddTextToLogTab(stringBuilder.ToString());
+                }
+                finally
+                {
+                    exchange.AssetListSemaphore.Release();
+                }
+            }
+        }
+    }
+
+
+    static public void ShowPosition(StringBuilder stringBuilder, CryptoPosition position)
+    {
+        int positionCount = 0;
+        //Dit is beredeneert vanuit de sellprice, dat zou eigenlijk de BE prijs moeten zijn (maar daar zijn wat problemen mee)!
+        decimal diffPrice = 0;
+        decimal diffPercentage = 0;
+        if ((position.Symbol.LastPrice.HasValue) && (position.SellPrice.HasValue))
+        {
+            diffPrice = (decimal)position.Symbol.LastPrice - (decimal)position.SellPrice;
+            diffPercentage = 100 * diffPrice / (decimal)position.SellPrice;
+        }
+
+        string s = string.Format("{0} position {1} {2}% {3}", position.Symbol.Name,
+            position.Invested.ToString0(), diffPercentage.ToString0("N2"), position.Status);
+        if (position.PaperTrade)
+            s += " (Paper)";
+        stringBuilder.AppendLine(s);
+        positionCount++;
+    }
+
+
+    static public void ShowPositions(StringBuilder stringBuilder)
+    {
+        int positionCount = 0;
+        if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
+        {
+            //// De muntparen toevoegen aan de userinterface
+            //foreach (var symbol in exchange.SymbolListName.Values)
+            //{
+            //    //De muntparen toevoegen aan de userinterface
+            //    foreach (CryptoPosition position in symbol.PositionList.Values)
+            //    {
+            //        ShowPosition(stringBuilder, position);
+            //        positionCount++;
+            //    }
+            //}
+
+
+            foreach (var positionList in exchange.PositionList.Values)
+            {
+                //De muntparen toevoegen aan de userinterface
+                foreach (CryptoPosition position in positionList.Values)
+                {
+                    ShowPosition(stringBuilder, position);
+                    positionCount++;
+                }
+            }
+        }
+
+        stringBuilder.AppendLine(string.Format("{0} posities", positionCount));
+    }
+
 
 }

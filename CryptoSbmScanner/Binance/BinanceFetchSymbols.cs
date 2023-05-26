@@ -1,30 +1,40 @@
-﻿using Binance.Net.Clients;
+﻿using System.Text.Encodings.Web;
+using System.Text.Json;
+
+using Binance.Net.Clients;
 using Binance.Net.Enums;
 using Binance.Net.Objects.Models.Spot;
 using CryptoExchange.Net.Objects;
+
+using CryptoSbmScanner.Context;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
+
+using Dapper.Contrib.Extensions;
 
 namespace CryptoSbmScanner.Binance;
 
 public class BinanceFetchSymbols
 {
-    //public void SaveInformation(BinanceExchangeInfo binanceExchangeInfo)
-    //{
-    //    //Laad de gecachte (langere historie, minder overhad)
-    //    string filename = GlobalData.GetBaseDir() + "Binance.Exchangeinfo.json";
+    public static void SaveInformation(BinanceExchangeInfo binanceExchangeInfo)
+    {
+        //Laad de gecachte (langere historie, minder overhad)
+        string filename = GlobalData.GetBaseDir();
+        filename += @"\Binance\";
+        Directory.CreateDirectory(filename);
+        filename += "Binance.Exchangeinfo.json";
 
-    //    //using (FileStream writeStream = new FileStream(filename, FileMode.Create))
-    //    //{
-    //    //    BinaryFormatter formatter = new BinaryFormatter();
-    //    //    formatter.Serialize(writeStream, GlobalData.Settings);
-    //    //    writeStream.Close();
-    //    //}
+        //using (FileStream writeStream = new FileStream(filename, FileMode.Create))
+        //{
+        //    BinaryFormatter formatter = new BinaryFormatter();
+        //    formatter.Serialize(writeStream, GlobalData.Settings);
+        //    writeStream.Close();
+        //}
 
-    //    string text = JsonConvert.SerializeObject(binanceExchangeInfo, Formatting.Indented);
-    //    //var accountFile = new FileInfo(filename);
-    //    File.WriteAllText(filename, text);
-    //}
+        string text = JsonSerializer.Serialize(binanceExchangeInfo, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
+        //var accountFile = new FileInfo(filename);
+        File.WriteAllText(filename, text);
+    }
 
     public static async Task ExecuteAsync()
     {
@@ -54,13 +64,13 @@ public class BinanceFetchSymbols
 
 
 
-                //using (SqlConnection databaseThread = new SqlConnection(GlobalData.ConnectionString))
+                using (CryptoDatabase database = new())
                 {
-                    //databaseThread.Close();
-                    //databaseThread.Open();
-                    //using (var transaction = databaseThread.BeginTransaction())
+                    database.Close();
+                    database.Open();
+                    using (var transaction = database.BeginTransaction())
                     {
-                        //List<CryptoSymbol> cache = new List<CryptoSymbol>();
+                        List<CryptoSymbol> cache = new();
                         try
                         {
                             foreach (var binanceSymbol in exchangeInfo.Data.Symbols)
@@ -100,15 +110,17 @@ public class BinanceFetchSymbols
                                     //Het is erg belangrijk om de delisted munten zo snel mogelijk te detecteren.
                                     //(ik heb wat slechte ervaringen met de Altrady bot die op paniek pieken handelt)
 
+                                    //Eventueel symbol toevoegen
                                     if (!exchange.SymbolListName.TryGetValue(binanceSymbol.Name, out CryptoSymbol symbol))
                                     {
-                                        symbol = new CryptoSymbol
+                                        symbol = new()
                                         {
                                             Exchange = exchange,
+                                            ExchangeId = exchange.Id,
                                             Name = binanceSymbol.Name,
                                             Base = binanceSymbol.BaseAsset,
                                             Quote = binanceSymbol.QuoteAsset,
-                                            Status = 1
+                                            Status = 1,
                                         };
                                     }
 
@@ -116,7 +128,7 @@ public class BinanceFetchSymbols
                                     //De te gebruiken precisie in prijzen
                                     symbol.BaseAssetPrecision = binanceSymbol.BaseAssetPrecision;
                                     symbol.QuoteAssetPrecision = binanceSymbol.QuoteAssetPrecision;
-									// Tijdelijke fix voor Binance.net (kan waarschijnlijk weer weg)
+                                    // Tijdelijke fix voor Binance.net (kan waarschijnlijk weer weg)
                                     if (binanceSymbol.MinNotionalFilter != null)
                                         symbol.MinNotional = binanceSymbol.MinNotionalFilter.MinNotional;
                                     else
@@ -140,24 +152,33 @@ public class BinanceFetchSymbols
                                     else
                                         symbol.Status = 0; //Zet de status door (PreTrading, PostTrading of Halt)
 
-                                    GlobalData.AddSymbol(symbol);
+                                    if (symbol.Id == 0)
+                                    {
+                                        database.Connection.Insert<CryptoSymbol>(symbol, transaction);
+                                        cache.Add(symbol);
+                                    }
+                                    else
+                                        database.Connection.Update<CryptoSymbol>(symbol, transaction);
                                 }
                             }
 
-                            //SaveInformation(exchangeInfo.Data);
+                            //database.BulkInsertSymbol(cache, transaction);
+                            transaction.Commit();
+
+                            SaveInformation(exchangeInfo.Data);
 
 
 
-
-                            // De assets toevoegen aan de lijst (als ze niet bestaan)
+                            // De nieuwe symbols toevoegen aan de lijst
                             // (omdat de symbols pas tijdens de BulkInsert een id krijgen)
-                            //foreach (CryptoSymbol symbol in cache)
-                            //{
-                            //        GlobalData.AddSymbol(symbol);
-                            //}
+                            foreach (CryptoSymbol symbol in cache)
+                            {
+                                GlobalData.AddSymbol(symbol);
+                            }
 
 
-                            // De index lijsten opbouwen (een gedeelte van de ~1700 munten)
+
+                            // De index lijsten opbouwen (een gedeelte van de ~2100 munten)
                             foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
                             {
                                 // Lock (zie onder andere de BarometerTools)
@@ -187,11 +208,11 @@ public class BinanceFetchSymbols
                         {
                             GlobalData.Logger.Error(error);
                             GlobalData.AddTextToLogTab(error.ToString());
-                            //transaction.Rollback();
+                            transaction.Rollback();
                             throw;
                         }
                     }
-                    //databaseThread.Close();
+                    database.Close();
                 }
             }
             catch (Exception error)

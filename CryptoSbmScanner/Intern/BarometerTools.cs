@@ -1,5 +1,6 @@
-﻿using CryptoSbmScanner.Model;
-using CryptoSbmScanner.Settings;
+﻿using CryptoSbmScanner.Context;
+using CryptoSbmScanner.Model;
+using Dapper.Contrib.Extensions;
 
 namespace CryptoSbmScanner.Intern;
 
@@ -16,25 +17,26 @@ public class BarometerTools
         {
             if (!exchange.SymbolListName.TryGetValue(baseName + quoteData.Name, out CryptoSymbol symbol))
             {
-                //using (SqlConnection databaseThread = new SqlConnection(GlobalData.ConnectionString))
+                using CryptoDatabase databaseThread = new();
+                databaseThread.Close();
+                databaseThread.Open();
+                using var transaction = databaseThread.BeginTransaction();
+                
+                symbol = new CryptoSymbol
                 {
-                    //databaseThread.Close();
-                    //databaseThread.Open();
+                    Base = baseName, //De "munt"
+                    Quote = quoteData.Name //USDT, BTC etc.
+                };
+                symbol.Name = symbol.Base + symbol.Quote;
+                symbol.Volume = 0;
+                symbol.Status = 1;
+                symbol.Exchange = exchange;
+                symbol.ExchangeId = exchange.Id;
 
-                    //using (SqlTransaction transaction = databaseThread.BeginTransaction())
-                    {
-                        symbol = new CryptoSymbol
-                        {
-                            Base = baseName, //De "munt"
-                            Quote = quoteData.Name //USDT, BTC etc.
-                        };
-                        symbol.Name = symbol.Base + symbol.Quote;
-                        symbol.Volume = 0;
-                        symbol.Status = 1;
-                        symbol.Exchange = exchange;
-                        GlobalData.AddSymbol(symbol);
-                    }
-                }
+                databaseThread.Connection.Insert<CryptoSymbol>(symbol, transaction);
+                GlobalData.AddSymbol(symbol);
+                transaction.Commit();
+                GlobalData.AddSymbol(symbol);
             }
             return symbol;
         }
@@ -102,6 +104,7 @@ public class BarometerTools
             else
                 periodStart = CandleTools.GetUnixTime(DateTime.UtcNow.AddDays(-2), 60);
 
+            symbolInterval.IsChanged = true;
             symbolInterval.LastCandleSynchronized = periodStart;
         }
         //DateTime periodStartDebug = CandleTools.GetUnixDate(periodStart);
@@ -124,9 +127,15 @@ public class BarometerTools
                 {
                     candle = new CryptoCandle
                     {
-                        Symbol = bmSymbol,
+#if DATABASE
+                        //Exchange = bmSymbol.Exchange,
+                        SymbolId = bmSymbol.Id,
+                        IntervalId = interval.Id,
+                        ExchangeId = bmSymbol.ExchangeId,
+#endif
+                        //Symbol = bmSymbol,
+                        //Interval = interval,
                         OpenTime = periodStart,
-                        Interval = interval
                     };
                     candles.Add(candle.OpenTime, candle);
                 }
@@ -152,9 +161,13 @@ public class BarometerTools
                 // Willen we dat hier wel bijwerken, zie ook opmerking hierboven
                 if (periodStart > symbolInterval.LastCandleSynchronized)
                 {
-                    //candleFetched.IsChanged = true;
+                    symbolInterval.IsChanged = true;
                     symbolInterval.LastCandleSynchronized = periodStart;
                 }
+#if DATABASE
+                // Experimenteel (de berekening van LastFetched gaat fout voor de barometers!)
+                GlobalData.TaskSaveCandles.AddToQueue(candle);
+#endif
             }
 
             // Naar de volgende 1m candle 
@@ -175,7 +188,7 @@ public class BarometerTools
                 (interval.IntervalPeriod == CryptoIntervalPeriod.interval30m) ||
                 (interval.IntervalPeriod == CryptoIntervalPeriod.interval1h) ||
                 (interval.IntervalPeriod == CryptoIntervalPeriod.interval4h) ||
-                (interval.IntervalPeriod == CryptoIntervalPeriod.interval1d))
+                (interval.IntervalPeriod >= CryptoIntervalPeriod.interval1d))
             {
                 //GlobalData.AddTextToLogTab("Calculating barometer chart " + bmSymbol.Name + " " + interval.Name);
                 CalculateBarometerInternal(symbol, interval, quoteData, calcBarometerMethod, pricebarometer);

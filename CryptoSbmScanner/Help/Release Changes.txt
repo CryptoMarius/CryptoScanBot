@@ -2,6 +2,16 @@ Mis je iets in onderstaande bevindingen/todo's of toekomstige todo's, geef het A
 
 
 Bevindingen/Todo's:
+- JUMP short en long zit momenteel niet goed in elkaar, ten eerste zou ik een -x% of +x% verwachten.
+  En ten tweede wordt de black- en white list hier nu ook op toegepast (verschil met eerdere oplossingen)
+- Nadat je naar deze versie bent gegaan kan een oudere scanner niet meer worden opgestart
+  (json problemen met de "General.WindowPosition.Location")
+  Een oplossing zou ook zijn om de opslag van de Color en positie geheel anders op te slagen
+- Marco doet iets met een multi timeframe, als op de 15m er een positieve trend (via de ema beredeneert)
+  dan stap de trader in op een sbm 3m, is dat iets wat realistisch is? Uitzoeken via emulator
+- Hardcoded Altrady Webhook API KEY's weghalen (die staan niet op github, maar just in case)
+  Alleen bedoeld voor Papertrading op dit moment dus ook geen big deal.
+- De tekst 1h, 4h en 1d wee toevoegen bij de barometer bolletjes (dan hoef ik het ook niet uit te leggen wat het is)
 - Het lettertype c.q. grotte van de barometer waardes in de grafiek zijn afwijkend
 - Bij aanpassing van het lettertype lopen de labels over in de control waardoor tekst minder leesbaar wordt
 - Bij aanpassing van het lettertype worden de scrollbars in bovenste listview getoond waardoor onderste regel onleesbaar is
@@ -13,6 +23,7 @@ Bevindingen/Todo's:
 - Teksten kunnen vertalen (NL en EN lopen nu wel erg vaak door elkaar)
 - Zien hoeveel een munt gestegen of gedaald is na de initiele melding (dat vereist een ander grid).
 - Een Telegram die de meldingen kan weergeven (dat is eigenlijk wat overkill, maar omdat het kan)
+  Een eerste aanzet zit er nu in, inclusief een beetje uitleg over hou je het maakt en configureert
 - Bij het opstarten de laatste X candles opnieuw berekenen (dat geeft helaas aardig wat overhead, moet optimaler, ook geluiden e.d.)
 - Experiment om een Mac versie te bouwen dmv MAUI XAML (een compleet nieuwe aanvliegroute van Microsoft)
   Maar ik verwacht een duizendtal nieuwe problemen met geluid, voice, storage, sockets, hibernate/sleep enzovoort)
@@ -31,35 +42,32 @@ Bevindingen/Todo's:
   Gezien het geheugengebruik die de tool heeft is een combinatie van exchanges niet aan te raden.
 
 TODO:
-  Is het nieuwe experiment met de SMA20 - Slope positive iets, of is dat ten dode opgeschreven
+  Is het nieuwe experiment met de SMA20 - positive ema slope e.d. iets of is dat ten dode opgeschreven
   (ik heb echt 1 mooie mogelijkheid gezien, maar je moet het maar net openen en opmerken)
   Ik denk niet dat deze aanpak geschikt is voor een bot?
   (ach, waarom niet, 1 extra conditie, de ema50 > sma50)
   De trend moet redelijk positief zijn om deze varianten te gebruiken
 
-TODO: Hardcoded Altrady Webhook API KEY's weghalen (die staan niet op github, maar just in case)
-  Alleen bedoeld voor Papertrading op dit moment dus ook geen big deal.
-
-TODO:
-  Nadat je naar deze versie bent gegaan kan een oudere scanner niet meer worden opgestart
-  (json problemen met de "General.WindowPosition.Location")
-
-TODO:
-- Marco doet iets met een multi timeframe, als op de 15m er een positieve trend (via de ema beredeneert)
-  dan stap de trader in op een sbm 3m, is dat iets wat realistisch is? Uitzoeken via emulator
-
-TODO:
-- Extra instellingen voor de "24 uur effectief" maken! Momenteel uitgeschakeled
-  Het is bedoeld om een pump en dumps beter te detecteren (en het zijn er meer dan ik dacht)
-
-TODO:
-- De JUMP heeft nu "last" van de "technische afkeuring", terwijl dat voor jumps niet relevant is.
-  Hoe kan ik die flow verbeteren?
-
-
-xx-xx-2023 1.8.0 (gedeeltelijk ingehaald door de 1.7.2 vanwege de hotfix)
+xx-xx-2023 1.8.0 (gedeeltelijk gedeeltelijk in de 1.7.2 vanwege een hotfix)
+- Aanpassingen om "dichter" bij een TradeBot te komen, daarom de introductie van een sqlite dataabse
+- Elke 8 uur wordt nu de candle data bewaard, als de applicatie of computer crashed dan hoeft er niet zoveel opgehaald worden
+  (in de veronderstelling dat de scanner soms dagen achter elkaar aan staat)
+- Elke 24 uur wordt nu de log-memo gecleared. Hoe meer tekst daarin zit des te "trager" het wordt en als het dagen loopt..
+  (in de veronderstelling dat de scanner soms dagen achter elkaar aan staat)
+- Controle op het maximaal aantal platte candles en het maximaal aantal candles zonder volume
+- Controle op de minimaal aantal bounces op de sma20 en bb.upper (beweegt de munt "veel")
+- De SBM2 instellingen zijn aangepast, er is nu 1 percentage die zowel voor de long als short geld
+  We rekenen nu het percentage ten opzichte van de bovenste of onderste bollingerband, default = 5%
+  Echter die 0.5% zit erg dicht bij de onderste band, een percentage van 2.5% geeft ook goed resultaat
+- Nieuwe kolom met daarin de "24 uur beweging" (tussen de absolute high en low van de afgelopen 24 uur)
+  Dit is bedoeld om meer inzicht te krijgen en om de pump en dumps beter te detecteren (munten die veel bewegen)
+- Een label filter  bij de textbox toevoegen, die zorgt nu blijkbaar voor verwarring (staat er "los" in, duidelijk maken!)
+- De fear and great index staat bij het opstarten er eerder dan de rest, het ziet er mooier uit alles tegelijk tevoorschijn komt
+- De actuele prijs stijging ten opzichte van de melding laten zien? (percentueel + kleur)
+- Een cooldown periode inlassen via regels waardoor het handelen gepauseerd wordt als een munt in een bepaald aantal candles een bepaalt percentage dropt.
 - NALV TUSD: De header labels ontbreken op dit moment
 - NALV TUSD: De plaatsing van controls gaat niet goed bij een afwijkend lettertype/grootte gebruikt
+- White- en black list: De vinkjes zijn verwijderd, als een lijst iets bevat worden ze gebruikt!
 - White- en black list: Comments kunnen toevoegen achter de munten "NEBLBUSD Vervalt per 01-04-2023"
 - White- en black list: Munten gewoon netjes onder elkaar zetten, dat leest stukken makkelijker.
 - De sortering werkt niet goed, het lijkt zelfs een eenmalige sortering!

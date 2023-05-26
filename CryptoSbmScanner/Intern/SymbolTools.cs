@@ -1,6 +1,5 @@
 ﻿using CryptoSbmScanner.Binance;
 using CryptoSbmScanner.Model;
-using Org.BouncyCastle.Utilities.Collections;
 
 namespace CryptoSbmScanner.Intern;
 
@@ -186,11 +185,11 @@ public class SymbolTools
     {
         //Als de muntpaar op de zwarte lijst staat dit signaal overslagen
         //Indien blacklist: Staat de muntpaar op de blacklist -> ja = signaal negeren
-        if (GlobalData.Settings.UseBlackListOversold)
+        //if (GlobalData.Settings.UseBlackListOversold)
         {
-            if (GlobalData.SymbolBlackListOversold.ContainsKey(symbol.Name))
+            if (TradingConfig.Config[TradeDirection.Long].InBlackList(symbol.Name))
             {
-                reaction = "Symbol is in the black list";
+                reaction = "Symbol zit in de black list";
                 return false;
             }
         }
@@ -204,11 +203,11 @@ public class SymbolTools
     {
         //Als de muntpaar niet op de toegelaten lijst staat dit signaal overslagen
         //Indien whitelist: Staat de muntpaar op de whitelist -> nee = signaal negeren
-        if (GlobalData.Settings.UseWhiteListOversold)
+        //if (GlobalData.Settings.UseWhiteListOversold)
         {
-            if (!GlobalData.SymbolWhiteListOversold.ContainsKey(symbol.Name))
+            if (!TradingConfig.Config[TradeDirection.Long].InWhiteList(symbol.Name))
             {
-                reaction = "Symbol is not in the white list";
+                reaction = "Symbol zit niet in de white list";
                 return false;
             }
         }
@@ -218,13 +217,18 @@ public class SymbolTools
     }
 
 
-    public bool CheckAvailableSlotsExchange(int slotLimit, out string reaction)
+    public bool CheckAvailableSlotsExchange(bool paperTrade, int slotLimit, out string reaction)
     {
-        //Zijn er slots beschikbaar op de exchange?
+        // Zijn er slots beschikbaar op de exchange?
+
         int slotsOccupied = 0;
-        foreach (CryptoSymbol symbol in Exchange.SymbolListName.Values)
+        foreach (var positionList in Exchange.PositionList.Values)
         {
-            slotsOccupied += symbol.PositionList.Count;
+            foreach (var position in positionList.Values)
+            {
+                if (position.PaperTrade == paperTrade)
+                    slotsOccupied++;
+            }
         }
 
         if (slotsOccupied >= slotLimit)
@@ -238,16 +242,16 @@ public class SymbolTools
     }
 
 
-    public bool CheckAvailableSlotsBase(int slotLimit, out string reaction)
+    public bool CheckAvailableSlotsBase(bool paperTrade, int slotLimit, out string reaction)
     {
-        //Zijn er slots beschikbaar op de basepair (quote)? 
+        // Zijn er slots beschikbaar op de base? 
 
         int slotsOccupied = 0;
-        foreach (CryptoSymbol symbol in Exchange.SymbolListName.Values)
+        if (Exchange.PositionList.TryGetValue(Symbol.Name, out var positionList))
         {
-            foreach (CryptoPosition position in symbol.PositionList)
+            foreach (CryptoPosition position in positionList.Values)
             {
-                if (position.Symbol.Base.Equals(Symbol.Base))
+                if (position.PaperTrade == paperTrade && position.Symbol.Base.Equals(Symbol.Base))
                     slotsOccupied++;
             }
         }
@@ -263,16 +267,16 @@ public class SymbolTools
     }
 
 
-    public bool CheckAvailableSlotsQuote(int slotLimit, out string reaction)
+    public bool CheckAvailableSlotsQuote(bool paperTrade, int slotLimit, out string reaction)
     {
-        //Zijn er slots beschikbaar op de basepair (quote)? 
+        //Zijn er slots beschikbaar op de quote? 
 
         int slotsOccupied = 0;
-        foreach (CryptoSymbol symbol in Exchange.SymbolListName.Values)
+        if (Exchange.PositionList.TryGetValue(Symbol.Name, out var positionList))
         {
-            foreach (CryptoPosition position in symbol.PositionList)
+            foreach (CryptoPosition position in positionList.Values)
             {
-                if (position.Symbol.Quote.Equals(Symbol.Quote))
+                if (position.PaperTrade == paperTrade && position.Symbol.Quote.Equals(Symbol.Quote))
                     slotsOccupied++;
             }
         }
@@ -288,11 +292,19 @@ public class SymbolTools
     }
 
 
-    public static bool CheckAvailableSlotsSymbol(int slotLimit, out string reaction)
+    public bool CheckAvailableSlotsSymbol(bool paperTrade, int slotLimit, out string reaction)
     {
-        //Zijn er slots beschikbaar op de munt?
+        // Zijn er slots beschikbaar op de munt?
 
-        int slotsOccupied = 0; // Signal.Symbol.PositionList.Count;
+        int slotsOccupied = 0;
+        if (Exchange.PositionList.TryGetValue(Symbol.Name, out var positionList))
+        {
+            foreach (CryptoPosition position in positionList.Values)
+            {
+                if (position.PaperTrade == paperTrade)
+                    slotsOccupied++;
+            }
+        }
 
         if (slotsOccupied >= slotLimit)
         {

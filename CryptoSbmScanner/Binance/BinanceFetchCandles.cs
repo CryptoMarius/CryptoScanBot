@@ -6,7 +6,6 @@ using Binance.Net.Objects.Models.Spot;
 using CryptoExchange.Net.Objects;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
-using System.Data;
 
 namespace CryptoSbmScanner.Binance;
 
@@ -97,6 +96,7 @@ public class BinanceFetchCandles
                     kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.QuoteVolume);
 
                 // For the next GetCandles() session
+                symbolInterval.IsChanged = true; // zie tevens setter (maar ach)
                 symbolInterval.LastCandleSynchronized = candle.OpenTime;
             }
 
@@ -198,8 +198,13 @@ public class BinanceFetchCandles
                         {
                             candle = new()
                             {
-                                Symbol = symbol,
-                                Interval = interval,
+#if DATABASE
+                                ExchangeId = Exchange.Id,
+                                SymbolId = symbol.Id,
+                                IntervalId = interval.Id,
+#endif
+                                //Symbol = symbol,
+                                //Interval = interval,
                                 OpenTime = unixTime,
                                 Open = stickOld.Close,
                                 High = stickOld.Close,
@@ -309,7 +314,7 @@ public class BinanceFetchCandles
                     // Bij het opstarten is deze (vanuit de LoadData) reeds uitgevoerd
                     if (GlobalData.ApplicationStatus != ApplicationStatus.AppStatusPrepare)
                         await Task.Run(BinanceFetchSymbols.ExecuteAsync);
-                    
+
                     GlobalData.AddTextToLogTab("Aantal symbols = " + exchange.SymbolListName.Values.Count.ToString());
 
 

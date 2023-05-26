@@ -1,4 +1,7 @@
-﻿using System.Text.Json.Serialization;
+﻿using CryptoSbmScanner.Model;
+using System.Drawing;
+using System.Text.Json.Serialization;
+using System.Windows.Forms;
 
 namespace CryptoSbmScanner.Settings;
 
@@ -24,12 +27,25 @@ public enum TrendCalculationMethod
     trendCalculationcViaEma
 }
 
-// TODO indelen in categorien
+[Serializable]
+public class IntervalAndStrategyConfig
+{
+    public List<string> Interval { get; set; } = new();
+    public Dictionary<TradeDirection, List<string>> Strategy { get; set; } = new();
+
+    public IntervalAndStrategyConfig()
+    {
+        Strategy.Add(TradeDirection.Long, new List<string>());
+        Strategy.Add(TradeDirection.Short, new List<string>());
+    }
+}
+
 [Serializable]
 public class SettingsGeneral
 {
     public bool BlackTheming { get; set; } = false;
     public TradingApp TradingApp { get; set; } = TradingApp.Altrady;
+    public bool SoundTradeNotification { get; set; }
     public string SelectedBarometerQuote { get; set; } = "BUSD";
     public string SelectedBarometerInterval { get; set; } = "1H";
 

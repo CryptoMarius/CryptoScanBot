@@ -1,34 +1,51 @@
 ﻿using Binance.Net.Clients;
 using Binance.Net.Objects;
+
 using CryptoSbmScanner.Binance;
+using CryptoSbmScanner.Context;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Settings;
 using CryptoSbmScanner.Signal;
 using CryptoSbmScanner.TradingView;
+
+using Dapper;
+using Dapper.Contrib.Extensions;
+
+using Microsoft.Data.Sqlite;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Win32;
+
 using System.Drawing.Drawing2D;
-using System.Net.Http.Json;
 using System.Reflection;
+using System.Reflection.Metadata;
+using System.Runtime.InteropServices;
 using System.Text;
+
 
 namespace CryptoSbmScanner;
 
 
 public partial class FrmMain : Form
 {
+
+    //Database die gebruikt wordt in de main thread
+    private CryptoDatabase databaseMain;
+
     private bool ProgramExit; // Mislukte manier om excepties bij afsluiten te voorkomen (todo)
     private int createdSignalCount; // Tellertje met het aantal meldingen (komt in de taakbalk c.q. applicatie titel)
     private readonly Microsoft.Web.WebView2.WinForms.WebView2 _webViewAltradyRef = null;
     private readonly ColorSchemeTest theme = new();
-    private readonly HttpClient httpClient;
-    
+
     private System.Windows.Forms.Timer TimerShowBarometer;
-    private System.Windows.Forms.Timer TimerGetCandles;
+    private System.Windows.Forms.Timer TimerGetExchangeInfo;
     private System.Windows.Forms.Timer TimerSoundHeartBeat;
     private System.Windows.Forms.Timer TimerRestartStreams;
     private System.Windows.Forms.Timer TimerCheckDataStream;
+    private System.Windows.Forms.Timer TimerAddSignal;
+    private System.Windows.Forms.Timer TimerClearMemo;
+    private System.Windows.Forms.Timer TimerSaveCandleData;
+
 
     public class ColorSchemeTest
     {
@@ -37,28 +54,16 @@ public partial class FrmMain : Form
     }
 
 
-    public class FGIndex
-    {
-        public FGIndexData[] Data { get; set; }
-    }
-
-    public class FGIndexData
-    {
-        public string Value { get; set; }
-    }
-
-
     public FrmMain()
     {
         InitializeComponent();
 
-        httpClient = new HttpClient();
-
         var assembly = Assembly.GetExecutingAssembly().GetName();
         string appName = assembly.Name.ToString();
         string appVersion = assembly.Version.ToString();
-        labelVersion.Text = "Version " + appVersion;
-        this.Text = appName + " " + appVersion;
+        while (appVersion.EndsWith(".0"))
+            appVersion = appVersion[0..^2];
+        Text = appName + " " + appVersion;
 
 
         // Om vanuit achtergrond threads iets te kunnen loggen of te doen
@@ -69,7 +74,7 @@ public partial class FrmMain : Form
         GlobalData.SetCandleTimerEnableEvent += new SetCandleTimerEnable(SetCandleTimerEnableHandler);
 
         // Niet echt een text event, meer misbruik van het event type
-        //GlobalData.AssetsHaveChangedEvent += new AddTextEvent(AssetsHaveChangedEvent); (todo)
+        GlobalData.AssetsHaveChangedEvent += new AddTextEvent(AssetsHaveChangedEvent);
         GlobalData.SymbolsHaveChangedEvent += new AddTextEvent(SymbolsHaveChangedEvent);
         GlobalData.ConnectionWasLostEvent += new AddTextEvent(ConnectionWasLostEvent);
         GlobalData.ConnectionWasRestoredEvent += new AddTextEvent(ConnectionWasRestoredEvent);
@@ -78,41 +83,39 @@ public partial class FrmMain : Form
         // Wat event handles zetten
         comboBoxBarometerQuote.SelectedIndexChanged += ShowBarometerStuff;
         comboBoxBarometerInterval.SelectedIndexChanged += ShowBarometerStuff;
-        // suffe Visual Studio houdt er niet van als je het opsplitst in 3 partial forms (maakt het soms opnieuw aan)
-        listBoxSymbols.DoubleClick += new System.EventHandler(this.ListBoxSymbols_DoubleClick);
-        listViewSignals.DoubleClick += new System.EventHandler(this.ListViewSignalsMenuItem_DoubleClick);
-        listViewSymbolPrices.DoubleClick += new System.EventHandler(this.ListViewSymbolPrices_DoubleClick);
 
 
-        TimerCheckDataStream = new();
-        TimerCheckDataStream.Enabled = false;
+        TimerCheckDataStream = new() { Enabled = false };
         TimerCheckDataStream.Tick += TimerCheckDataStream_Tick;
 
-        TimerRestartStreams = new();
-        TimerRestartStreams.Enabled = false;
+        TimerRestartStreams = new() { Enabled = false };
         TimerRestartStreams.Tick += TimerRestartStreams_Tick;
 
-        TimerSoundHeartBeat = new();
-        TimerSoundHeartBeat.Enabled = false;
+        TimerSoundHeartBeat = new() { Enabled = false };
         TimerSoundHeartBeat.Tick += TimerSoundHeartBeat_Tick;
 
-        TimerGetCandles = new();
-        TimerGetCandles.Enabled = false;
-        TimerGetCandles.Tick += TimerGetCandles_Tick;
+        TimerGetExchangeInfo = new() { Enabled = false };
+        TimerGetExchangeInfo.Tick += TimerGetCandles_Tick;
 
-        TimerShowBarometer = new();
-        TimerShowBarometer.Enabled = false;
+        TimerShowBarometer = new() { Enabled = false };
         TimerShowBarometer.Tick += TimerShowBarometer_Tick;
 
-//todo: Event zit er nu waarschijnlijk twee keer in
-        timerAddSignal.Tick += TimerAddSignal_Tick;
+        TimerAddSignal = new() { Enabled = false };
+        TimerAddSignal.Tick += TimerAddSignalsAndLog_Tick;
+
+        TimerClearMemo = new() { Enabled = false };
+        TimerClearMemo.Tick += TimerClearMemo_Tick;
+
+        TimerSaveCandleData = new() { Enabled = false };
+        TimerSaveCandleData.Tick += TimerSaveCandleData_Tick;
+
 
         // Instelling laden waaronder de API enzovoort
         GlobalData.LoadSettings();
-        ListViewSignalsInitOnce(); // naar een gedeelde constructor?
-        ListViewSymbolsInitOnce(); // naar een gedeelde constructor?
-        WindowLocationRestore();
-        ApplySettings();
+        ListViewSignalsConstructor(); // Partial class "constructor"
+        ListViewSymbolsConstructor(); // Partial class "constructor"
+        ListViewPositionsConstructor(); // Partial class "constructor"
+        ListViewInformationConstructor(); // Partial class "constructor"
 
         // Altrady tabblad verbergen, is enkel een browser om dat extra dialoog in externe browser te vermijden
         _webViewAltradyRef = webViewAltrady;
@@ -124,9 +127,27 @@ public partial class FrmMain : Form
         options.SpotStreamsOptions.ReconnectInterval = TimeSpan.FromSeconds(15);
         BinanceSocketClient.SetDefaultOptions(options);
 
+#if !DATABASE
+        //Dapper.SqlMapper.Settings.CommandTimeout = 180;
+        CryptoDatabase.BasePath = GlobalData.GetBaseDir();
+        new CryptoDatabase().CreateDatabase();
+#endif
 
-        GlobalData.InitializeGlobalData();
-        GlobalData.InitializeIntervalList(); // De intervallen laden
+
+        Dapper.SqlMapper.Settings.CommandTimeout = 180;
+        databaseMain = new();
+        databaseMain.Connection.Open();
+
+
+        // Basicly allemaal constanten
+        GlobalData.LoadExchanges();
+        GlobalData.LoadIntervals();
+
+
+
+        WindowLocationRestore();
+        ApplySettings();
+
         ResumeComputer(false);
 
 
@@ -137,18 +158,11 @@ public partial class FrmMain : Form
         };
 
         SystemEvents.PowerModeChanged += OnPowerChange;
-
-
-        InitEventView();
     }
 
 
     private void ApplySettings()
     {
-        // fix duplicate storage of bool's (need migration)
-        FrmSettings.FixStupidCheckboxes(GlobalData.Settings);
-
-
         comboBoxBarometerQuote.BeginUpdate();
         comboBoxBarometerInterval.BeginUpdate();
         try
@@ -205,6 +219,8 @@ public partial class FrmMain : Form
         ListViewSignalsInitCaptions();
 
 
+
+        InitTimerInterval(ref TimerAddSignal, 1.25); // 1.25 seconde
         InitTimerInterval(ref TimerShowBarometer, 5); // 5 seconds
 
         InitTimerInterval(ref TimerSoundHeartBeat, 60 * GlobalData.Settings.General.SoundHeartBeatMinutes); // x minutes
@@ -215,10 +231,17 @@ public partial class FrmMain : Form
         // Restart data stream's every day
         InitTimerInterval(ref TimerRestartStreams, 24 * 60 * 60); // 24 hours
 
-        // Interval voor het ophalen van de exchange info (delisted coins) + bijwerken candles 
-        InitTimerInterval(ref TimerGetCandles, GlobalData.Settings.General.GetCandleInterval * 60);
+        // Bewaar de candle data iedere
+        InitTimerInterval(ref TimerSaveCandleData, 8 * 60 * 60); // 8 hours
 
-        GlobalData.InitWhiteAndBlackListSettings();
+        // Maak de log leeg iedere 24 uur
+        InitTimerInterval(ref TimerClearMemo, 24 * 60 * 60); // 24 hours
+
+        // Interval voor het ophalen van de exchange info (delisted coins) + bijwerken candles 
+        InitTimerInterval(ref TimerGetExchangeInfo, GlobalData.Settings.General.GetCandleInterval * 60);
+
+        TradingConfig.IndexStrategyInternally();
+        TradingConfig.InitWhiteAndBlackListSettings();
 
         // Theming
         if (GlobalData.Settings.General.BlackTheming)
@@ -239,7 +262,7 @@ public partial class FrmMain : Form
         GlobalData.Settings.Bot.Active = false;
 #endif
 
-        ApplicationTradingBot.Checked = GlobalData.Settings.Bot.Active;
+        ApplicationTradingBot.Checked = GlobalData.Settings.Trading.Active;
         ApplicationPlaySounds.Checked = GlobalData.Settings.Signal.SoundsActive;
         ApplicationCreateSignals.Checked = GlobalData.Settings.Signal.SignalsActive;
 
@@ -247,13 +270,14 @@ public partial class FrmMain : Form
     }
 
 
-    private static void InitTimerInterval(ref System.Windows.Forms.Timer timer, int seconds)
+    private static void InitTimerInterval(ref System.Windows.Forms.Timer timer, double seconds)
     {
         timer.Enabled = false;
+        int msec = (int)(seconds * 1000);
         // stom ding verwacht > 0 (beetje vreemd, maar voila)
         if (seconds > 0)
-            timer.Interval = seconds * 1000;
-        timer.Enabled = seconds > 0;
+            timer.Interval = msec;
+        timer.Enabled = msec > 0;
     }
 
 
@@ -278,9 +302,18 @@ public partial class FrmMain : Form
     {
         GlobalData.AddTextToLogTab("Debug: ResumeComputer");
         GlobalData.ApplicationStatus = ApplicationStatus.AppStatusPrepare;
-        GlobalData.ThreadCreateSignal = new ThreadCreateSignal(BinanceShowNotification);
+
+        GlobalData.ThreadMonitorCandle = new ThreadMonitorCandle(SignalArrived);
 #if TRADEBOT
         GlobalData.TaskMonitorSignal = new ThreadMonitorSignal();
+        GlobalData.ThreadMonitorOrder = new ThreadMonitorOrder();
+        GlobalData.TaskBinanceStreamUserData = new BinanceStreamUserData();
+#endif
+#if BALANCING
+        GlobalData.ThreadBalanceSymbols = new ThreadBalanceSymbols();
+#endif
+#if DATABASE
+        GlobalData.TaskSaveCandles = new ThreadSaveCandles();
 #endif
 
         // Iets met netwerk verbindingen wat nog niet "up" is?
@@ -299,7 +332,7 @@ public partial class FrmMain : Form
         TimerCheckDataStream.Enabled = false;
         TimerRestartStreams.Enabled = false;
         TimerSoundHeartBeat.Enabled = false;
-        TimerGetCandles.Enabled = false;
+        TimerGetExchangeInfo.Enabled = false;
         TimerShowBarometer.Enabled = false;
 
 
@@ -307,9 +340,14 @@ public partial class FrmMain : Form
         GlobalData.TaskBinanceStreamPriceTicker?.StopAsync();
 
         // Threads (of tasks)
-        GlobalData.ThreadCreateSignal?.Stop();
+        GlobalData.ThreadMonitorCandle?.Stop();
 #if TRADEBOT
         GlobalData.TaskMonitorSignal?.Stop();
+        GlobalData.ThreadMonitorOrder?.Stop();
+        GlobalData.TaskBinanceStreamUserData?.StopAsync();
+#endif
+#if BALANCING
+        //GlobalData.ThreadBalanceSymbols?.Stop();
 #endif
 
         foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
@@ -320,13 +358,27 @@ public partial class FrmMain : Form
             }
             quoteData.BinanceStream1mCandles.Clear();
         }
+#if DATABASE
+        GlobalData.TaskSaveCandles.Stop();
+
+        // En vervolgens alsnog de niet werkte candles bewaren (een nadeel van de lazy write)
+        while (true)
+        {
+            List<CryptoCandle> list = GlobalData.TaskSaveCandles.GetSomeFromQueue();
+            if (list.Any())
+                GlobalData.TaskSaveCandles.SaveQueuedCandles(list);
+            else
+                break;
+        }
+#else
+        DataStore.SaveCandles();
+#endif
+
 
         WindowLocationSave();
         GlobalData.Settings.General.SelectedBarometerQuote = comboBoxBarometerQuote.Text;
         GlobalData.Settings.General.SelectedBarometerInterval = comboBoxBarometerInterval.Text;
         GlobalData.SaveSettings();
-
-        DataStore.SaveCandles();
     }
 
 
@@ -341,6 +393,8 @@ public partial class FrmMain : Form
                 _webViewAltradyRef.Dispose();
                 components.Dispose();
             }
+            // Dispose stuff here
+            databaseMain.Dispose();
         }
 
         base.Dispose(disposing);
@@ -370,7 +424,7 @@ public partial class FrmMain : Form
         if ((!ProgramExit) && (IsHandleCreated))
         {
             //return; //t'ding crasht en is niet fijn
-            //ThreadTelegramBot.SendMessage(text);
+            ThreadTelegramBot.SendMessage(text);
         }
     }
 
@@ -400,6 +454,34 @@ public partial class FrmMain : Form
         }
     }
 
+    /// <summary>
+    /// Dan is er in de achtergrond een verversing actie geweest, display bijwerken!
+    /// </summary>
+    private void AssetsHaveChangedEvent(string text, bool extraLineFeed = false)
+    {
+        if ((components != null) && (!ProgramExit) && (IsHandleCreated))
+        {
+            //decimal valueBtc, valueUsdt;
+            //StringBuilder stringBuilder = new StringBuilder();
+            //Helper.ShowAssets(stringBuilder, out valueUsdt, out valueBtc);
+
+            //// De totaal waarde van de assets tonen
+            //if (InvokeRequired)
+            //    Invoke((MethodInvoker)(() => labelAssetUSDT.Text = "$" + valueUsdt.ToString0("N2")));
+            //else
+            //    labelAssetUSDT.Text = "$" + valueUsdt.ToString0("N2");
+
+            //if (InvokeRequired)
+            //    Invoke((MethodInvoker)(() => labelAssetBTC.Text = "₿" + valueBtc.ToString0()));
+            //else
+            //    labelAssetBTC.Text = "₿" + valueBtc.ToString0();
+
+
+            //if (text == "")
+            //    return;
+            //GlobalData.AddTextToLogTab(stringBuilder.ToString());
+        }
+    }
 
 
     private void ToolStripMenuItemRefresh_Click_1(object sender, EventArgs e)
@@ -419,7 +501,7 @@ public partial class FrmMain : Form
 
         if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
         {
-            if ((quoteData != null) && (exchange.SymbolListName.TryGetValue(Constants.SymbolNameBarometerPrice + quoteData.Name, out CryptoSymbol symbol)))
+            if (quoteData != null && exchange.SymbolListName.TryGetValue(Constants.SymbolNameBarometerPrice + quoteData.Name, out CryptoSymbol symbol))
             {
                 CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
                 SortedList<long, CryptoCandle> candleList = symbolPeriod.CandleList;
@@ -607,6 +689,68 @@ public partial class FrmMain : Form
     }
 
 
+    private static void CheckNeedBotPause()
+    {
+        //if (!GlobalData.Settings.Bot.PauseTradingRules.Any())
+        //    return;
+
+        // Voor de emulator willen we naar een datum in het verleden, maar hoe doe je voor dit stukje code?
+        //long candleCloseTime = candle.OpenTime + 60;
+
+        if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
+        {
+            foreach (PauseTradingRule rule in GlobalData.Settings.Trading.PauseTradingRules)
+            {
+                if (exchange.SymbolListName.TryGetValue(rule.Symbol, out CryptoSymbol symbol))
+                {
+                    CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(rule.Interval);
+
+                    CryptoCandle candleLast = symbolInterval.CandleList.Values.Last();
+                    decimal low = Math.Min(candleLast.Low, (decimal)symbol.LastPrice);
+                    decimal high = Math.Max(candleLast.High, (decimal)symbol.LastPrice);
+
+                    long time = candleLast.OpenTime;
+                    int candleCount = rule.Candles - 1;
+                    while (candleCount-- > 0)
+                    {
+                        time -= symbolInterval.Interval.Duration;
+                        if (symbolInterval.CandleList.TryGetValue(time, out CryptoCandle candle))
+                        {
+                            low = Math.Min(low, candle.Low);
+                            high = Math.Max(high, candle.High);
+                        }
+                    }
+
+                    // todo: het percentage wordt echt niet negatief als je met de high en low werkt, duh
+
+                    double percentage = (double)(100m * ((high / low) - 1m));
+                    if (percentage >= rule.Percentage || percentage <= -rule.Percentage)
+                    {
+                        long pauseUntil = candleLast.OpenTime + rule.CoolDown * symbolInterval.Interval.Duration;
+                        DateTime pauseUntilDate = CandleTools.GetUnixDate(pauseUntil);
+                        //GlobalData.Settings.Bot.PauseTradingText = string.Format("{0} heeft {1:N2}% bewogen (gepauseerd tot {2}) - 1", rule.Symbol, percentage, pauseUntilDate.ToLocalTime());
+
+                        if (!GlobalData.Settings.Trading.PauseTradingUntil.HasValue || pauseUntilDate > GlobalData.Settings.Trading.PauseTradingUntil)
+                        {
+                            GlobalData.Settings.Trading.PauseTradingUntil = pauseUntilDate;
+                            GlobalData.Settings.Trading.PauseTradingText = string.Format("{0} heeft {1:N2}% bewogen (gepauseerd tot {2}) - 2", rule.Symbol, percentage, pauseUntilDate.ToLocalTime());
+                            GlobalData.AddTextToLogTab(GlobalData.Settings.Trading.PauseTradingText);
+                            GlobalData.AddTextToTelegram(GlobalData.Settings.Trading.PauseTradingText);
+                        }
+                    }
+                    else
+                    {
+                        //if (percentage > 0.5 || percentage < -0.5)
+                        //{
+                        //    GlobalData.AddTextToLogTab(string.Format("{0} heeft {1:N2}% bewogen", rule.Symbol, percentage));
+                        //    GlobalData.AddTextToTelegram(string.Format("{0} heeft {1:N2}% bewogen", rule.Symbol, percentage));
+                        //}
+                    }
+                }
+                else GlobalData.AddTextToLogTab("Pauze regel: symbol " + rule.Symbol + " bestaat niet");
+            }
+        }
+    }
 
     private void BinanceBarometerAll()
     {
@@ -615,46 +759,39 @@ public partial class FrmMain : Form
             if (GlobalData.ApplicationStatus != ApplicationStatus.AppStatusRunning)
                 return;
 
+            CheckNeedBotPause();
+
             // Bereken de laatste barometer waarden
             BarometerTools barometerTools = new();
             barometerTools.Execute();
 
             if (!GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
-            {
                 return;
-            }
 
-            {
-                string baseCoin = "";
-                Invoke((MethodInvoker)(() => baseCoin = comboBoxBarometerQuote.Text));
-                if (!GlobalData.Settings.QuoteCoins.TryGetValue(baseCoin, out CryptoQuoteData quoteData))
-                {
-                    return;
-                }
+            string baseCoin = "";
+            Invoke((MethodInvoker)(() => baseCoin = comboBoxBarometerQuote.Text));
+            if (!GlobalData.Settings.QuoteCoins.TryGetValue(baseCoin, out CryptoQuoteData quoteData))
+                return;
 
-                // Het grafiek gedeelte
-                // Toon de waarden van de geselecteerde basismunt
-                int baseIndex = 0;
-                CryptoIntervalPeriod intervalPeriod = CryptoIntervalPeriod.interval1h;
-                Invoke((MethodInvoker)(() => baseIndex = comboBoxBarometerInterval.SelectedIndex));
-                if (baseIndex == 0)
-                    intervalPeriod = CryptoIntervalPeriod.interval1h;
-                else if (baseIndex == 1)
-                    intervalPeriod = CryptoIntervalPeriod.interval4h;
-                else if (baseIndex == 2)
-                    intervalPeriod = CryptoIntervalPeriod.interval1d;
-                else
-                {
-                    return;
-                }
-                if (!GlobalData.IntervalListPeriod.TryGetValue(intervalPeriod, out CryptoInterval interval))
-                {
-                    return;
-                }
+            // Het grafiek gedeelte
+            // Toon de waarden van de geselecteerde basismunt
+            int baseIndex = 0;
+            Invoke((MethodInvoker)(() => baseIndex = comboBoxBarometerInterval.SelectedIndex));
 
-                BarometerData barometerData = quoteData.BarometerList[(int)intervalPeriod];
-                CreateBarometerBitmap(quoteData, interval);
-            }
+            CryptoIntervalPeriod intervalPeriod = CryptoIntervalPeriod.interval1h;
+            if (baseIndex == 0)
+                intervalPeriod = CryptoIntervalPeriod.interval1h;
+            else if (baseIndex == 1)
+                intervalPeriod = CryptoIntervalPeriod.interval4h;
+            else if (baseIndex == 2)
+                intervalPeriod = CryptoIntervalPeriod.interval1d;
+            else
+                return;
+            if (!GlobalData.IntervalListPeriod.TryGetValue(intervalPeriod, out CryptoInterval interval))
+                return;
+
+            BarometerData barometerData = quoteData.BarometerList[(int)intervalPeriod];
+            CreateBarometerBitmap(quoteData, interval);
         }
         catch (Exception error)
         {
@@ -798,8 +935,7 @@ public partial class FrmMain : Form
         {
             GlobalData.AddTextToLogTab("Debug: ConnectionWasRestoredEvent!");
             GlobalData.ApplicationStatus = ApplicationStatus.AppStatusRunning;
-            Invoke((MethodInvoker)(() => InitTimerInterval(ref TimerGetCandles, 20)));
-            //InitTimerInterval(ref TimerGetCandles, 20);
+            Invoke((MethodInvoker)(() => InitTimerInterval(ref TimerGetExchangeInfo, 20)));
         }
     }
 
@@ -811,222 +947,9 @@ public partial class FrmMain : Form
             if ((components != null) && (!ProgramExit) && (IsHandleCreated))
             {
                 if (value)
-                    Invoke((MethodInvoker)(() => InitTimerInterval(ref TimerGetCandles, GlobalData.Settings.General.GetCandleInterval * 60)));
+                    Invoke((MethodInvoker)(() => InitTimerInterval(ref TimerGetExchangeInfo, GlobalData.Settings.General.GetCandleInterval * 60)));
                 else
-                    Invoke((MethodInvoker)(() => InitTimerInterval(ref TimerGetCandles, 0))); // disable
-            }
-        }
-    }
-
-
-    private void ListViewSymbolPrices_DoubleClick(object sender, EventArgs e)
-    {
-        if (listViewSymbolPrices.SelectedItems.Count > 0)
-        {
-            Point mousePos = listViewSymbolPrices.PointToClient(Control.MousePosition);
-            ListViewHitTestInfo hitTest = listViewSymbolPrices.HitTest(mousePos);
-            ListViewItem item = hitTest.Item;
-            if (item == null)
-                return;
-
-            int col = hitTest.Item.SubItems.IndexOf(hitTest.SubItem);
-
-            if (col < 4)
-            {
-                if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
-                {
-                    if (exchange.SymbolListName.TryGetValue(item.Text, out CryptoSymbol symbol))
-                    {
-                        if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1m, out CryptoInterval interval))
-                            return;
-
-                        ActivateTradingApp(symbol, interval);
-                        return;
-                    }
-                }
-            }
-            else if (col < 7)
-            {
-                ListViewItem.ListViewSubItem subItem = item.SubItems[4];
-                TradingView.SymbolValue tvValues = (TradingView.SymbolValue)subItem.Tag;
-                if (tvValues == null)
-                    return;
-
-                if (tvValues.Url != "")
-                {
-                    string href = tvValues.Url;
-                    Uri uri = new(href);
-                    webViewTradingView.Source = uri;
-                    tabControl.SelectedTab = tabPageBrowser;
-                }
-                else
-                {
-                    string href = string.Format("https://www.tradingview.com/chart/?symbol={0}&interval=60", tvValues.Ticker);
-                    Uri uri = new(href);
-                    webViewTradingView.Source = uri;
-                    tabControl.SelectedTab = tabPageBrowser;
-                }
-            }
-            else tabControl.SelectedTab = tabPageSignals;
-        }
-    }
-
-    private async void TimerShowBarometer_Tick(object sender, EventArgs e)
-    {
-        if (GlobalData.ApplicationStatus != ApplicationStatus.AppStatusExiting)
-        {
-            // De prijzen van candles zijn pas na 20 a 30 seconden na iedere minuut bekend
-            // (er zit een vertraging het verkrijgen en verwerken van de candles)
-            // 25 seconden is vrij vrij ruim genomen, zou redelijk goed moeten zijn.
-            // Een andere methode zou zijn om het aantal symbols in de barometer te tellen 
-            // en indien voldoende deze als valide te beschouwen (ook een lastige aanpak)
-
-            // Dus we willen deze alleen uitrekenen indien het +/- 30 seconden is
-            // Voorkom dat het te vaak loopt (kost redelijk wat CPU i.c.m. volume)
-
-            if ((DateTime.Now.Second > 10) && (DateTime.Now.Minute != barometerLastMinute))
-            {
-                barometerLastMinute = DateTime.Now.Minute;
-                new Thread(BinanceBarometerAll).Start();
-            }
-            //UpdateInfoAndbarometerValues();
-
-
-            //// De Fear and Greed index (elke 24 uur een nieuwe waarde)
-            ///{
-            //           "name": "Fear and Greed Index",
-            //"data": [
-
-            //    {
-            //      "value": "53",
-            //		"value_classification": "Neutral",
-            //		"timestamp": "1674345600",
-            //		"time_until_update": "29260"
-
-            //    }
-            //    ],
-            //    "metadata": {
-            //    "error": null
-
-            //    }
-            //}
-            // TODO: Nog even netjes verstoppen in een aparte thread/task ipv het hier op te halen
-            try
-            {
-                if (GlobalData.FearAndGreedIndex.LastCheck == null || DateTime.UtcNow >= GlobalData.FearAndGreedIndex.LastCheck)
-                {
-                    var jsonData = await httpClient.GetFromJsonAsync<FGIndex>("https://api.alternative.me/fng/");
-                    string value = jsonData.Data[0].Value;
-                    //FearAndGreedIndex = jsonData["data"][0]["value"].Value<string>();
-                    GlobalData.FearAndGreedIndex.Lp = decimal.Parse(value);
-                    GlobalData.FearAndGreedIndex.LastCheck = DateTime.UtcNow.AddHours(1); // = Next check
-                }
-            }
-            catch
-            {
-                //FearAndGreedIndex = "Connection-Error"; // jammer..
-                //GlobalData.FearAndGreedIndex.LastValue = decimal.Parse(FearAndGreedIndex);
-            }
-
-
-
-            // Toon de prijzen en volume van een aantal symbols
-            if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
-            {
-                listViewSymbolPrices.BeginUpdate();
-                try
-                {
-                    if (listViewSymbolPrices.Columns.Count == 0)
-                    {
-                        listViewSymbolPrices.Columns.Add("", -2, HorizontalAlignment.Left); // Symbol
-                        listViewSymbolPrices.Columns.Add("", -2, HorizontalAlignment.Right); // Price
-                        listViewSymbolPrices.Columns.Add("", -2, HorizontalAlignment.Right); // Volume
-                        listViewSymbolPrices.Columns.Add("", -2, HorizontalAlignment.Left); // Space
-
-                        listViewSymbolPrices.Columns.Add("", -2, HorizontalAlignment.Left); // Market
-                        listViewSymbolPrices.Columns.Add("", -2, HorizontalAlignment.Right); // Value
-                        listViewSymbolPrices.Columns.Add("", -2, HorizontalAlignment.Left); // Space
-
-                        listViewSymbolPrices.Columns.Add("", -2, HorizontalAlignment.Left); // Caption
-                        listViewSymbolPrices.Columns.Add("", -2, HorizontalAlignment.Right); // Count
-                        listViewSymbolPrices.Columns.Add("", -2, HorizontalAlignment.Left); // Space
-
-                        listViewSymbolPrices.Columns.Add("", -2, HorizontalAlignment.Right); // filler
-
-                        listViewSymbolPrices.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
-
-                        // exact 4 items toevoegen
-                        for (int i = 0; i <= 4; i++)
-                        {
-                            ListViewItem item1 = new("", -1)
-                            {
-                                UseItemStyleForSubItems = false
-                            };
-                            // Coins
-                            item1.SubItems.Add("");
-                            item1.SubItems.Add("");
-                            item1.SubItems.Add("");
-                            item1.SubItems.Add("");
-
-                            // Extra info
-                            item1.SubItems.Add("");
-                            item1.SubItems.Add("");
-                            item1.SubItems.Add("");
-
-                            // Binance en F&G
-                            item1.SubItems.Add("");
-                            item1.SubItems.Add("");
-                            item1.SubItems.Add("");
-                            item1.SubItems.Add("");
-                            listViewSymbolPrices.Items.Add(item1);
-                            symbolHistList.Add(new SymbolHist());
-                        }
-                    }
-
-
-                    // Tel het aantal ontvangen 1m candles (via alle uitstaande streams)
-                    // Elke minuut komt er van elke munt een candle (indien er gehandeld is).
-                    int candlesKLineCount = 0;
-                    foreach (CryptoQuoteData quoteData1 in GlobalData.Settings.QuoteCoins.Values)
-                    {
-                        for (int i = 0; i < quoteData1.BinanceStream1mCandles.Count; i++)
-                        {
-                            BinanceStream1mCandles binanceStream1mCandles = quoteData1.BinanceStream1mCandles[i];
-                            candlesKLineCount += binanceStream1mCandles.CandlesKLinesCount;
-                        }
-                    }
-
-                    string baseCoin = "";
-                    Invoke((MethodInvoker)(() => baseCoin = comboBoxBarometerQuote.Text));
-                    if (GlobalData.Settings.QuoteCoins.TryGetValue(baseCoin, out CryptoQuoteData quoteData))
-                    {
-                        string text = GlobalData.TaskBinanceStreamPriceTicker?.tickerCount.ToString("N0");
-                        ShowSymbolPrice(symbolHistList[0], listViewSymbolPrices.Items[0], exchange, quoteData, "BTC", GlobalData.TradingViewDollarIndex, "Binance price ticker count", text);
-
-                        text = candlesKLineCount.ToString("N0");
-                        ShowSymbolPrice(symbolHistList[1], listViewSymbolPrices.Items[1], exchange, quoteData, "BNB", GlobalData.TradingViewBitcoinDominance, "Binance 1m stream count", text);
-
-                        text = GlobalData.ThreadCreateSignal?.analyseCount.ToString("N0");
-                        ShowSymbolPrice(symbolHistList[2], listViewSymbolPrices.Items[2], exchange, quoteData, "ETH", GlobalData.TradingViewSpx500, "Scanner analyse count", text);
-
-                        text = createdSignalCount.ToString("N0");
-                        ShowSymbolPrice(symbolHistList[3], listViewSymbolPrices.Items[3], exchange, quoteData, "XRP", GlobalData.TradingViewMarketCapTotal, "Scanner signal count", text);
-
-                        ShowSymbolPrice(symbolHistList[4], listViewSymbolPrices.Items[4], exchange, quoteData, "ADA", GlobalData.FearAndGreedIndex, "", "");
-                    }
-
-                    for (int i = 0; i <= listViewSymbolPrices.Columns.Count - 1; i++)
-                    {
-                        if (i == 3 || i == 6 || i == 9)
-                            listViewSymbolPrices.Columns[i].Width = 25;
-                        else
-                            listViewSymbolPrices.Columns[i].Width = -2;
-                    }
-                }
-                finally
-                {
-                    listViewSymbolPrices.EndUpdate();
-                }
+                    Invoke((MethodInvoker)(() => InitTimerInterval(ref TimerGetExchangeInfo, 0))); // disable
             }
         }
     }
@@ -1069,7 +992,7 @@ public partial class FrmMain : Form
     {
         // Dan wordt de basecoin en coordinaten etc. bewaard voor een volgende keer
         WindowLocationSave();
-        GlobalData.Settings.Bot.Active = ApplicationTradingBot.Checked;
+        GlobalData.Settings.Trading.Active = ApplicationTradingBot.Checked;
         GlobalData.Settings.Signal.SoundsActive = ApplicationPlaySounds.Checked;
         GlobalData.Settings.Signal.SignalsActive = ApplicationCreateSignals.Checked;
         GlobalData.Settings.General.SelectedBarometerQuote = comboBoxBarometerQuote.Text;
@@ -1115,7 +1038,8 @@ public partial class FrmMain : Form
         createdSignalCount = 0;
         ListViewSignalsMenuItemClearSignals_Click(null, null);
 
-        GlobalData.ThreadCreateSignal.analyseCount = 0;
+        GlobalData.ThreadMonitorCandle.analyseCount = 0;
+        GlobalData.TaskMonitorSignal.monitorCount = 0;
         GlobalData.TaskBinanceStreamPriceTicker.tickerCount = 0;
 
         foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
@@ -1129,37 +1053,12 @@ public partial class FrmMain : Form
     }
 
 
-    private void InitEventView()
-    {
-        // Allow the user to edit item text.
-        listViewSignals.LabelEdit = false;
-        // Allow the user to rearrange columns.
-        listViewSignals.AllowColumnReorder = false;
-        // Display check boxes.
-        listViewSignals.CheckBoxes = false;
-        // Select the item and subitems when selection is made.
-        listViewSignals.FullRowSelect = true;
-        // Display grid lines.
-        listViewSignals.GridLines = true;
-        // Sort the items in the list in ascending order.
-        //listView1.Sorting = SortOrder.None;
-        // Hippe blauwe underline (bah)
-        //listView1.HotTracking = true; // verstoord de kleuren en is onrustig
-        // Specify that each item appears on a separate line.
-        listViewSignals.View = View.Details; // Voor display van de subitems
-
-        ListViewSignalsInitColumns();
-
-        InitTimerInterval(ref timerClearEvents, 1 * 60);
-        timerClearEvents.Tick += new System.EventHandler(this.TimerClearOldSignals_Tick);
-    }
-
 
 
     private static void PlaySound(CryptoSignal signal, bool playSound, bool playSpeech, string soundName, ref long lastSound)
     {
         // Reduce the amount of sounds/speech
-        if (signal.EventTime > lastSound && signal.Mode != SignalMode.modeInfo2)
+        if (signal.EventTime > lastSound && !signal.IsInvalid)
         {
             //GlobalData.AddTextToLogTab(signal.Symbol.Name + " " + signal.StrategyText + " " + lastSound.ToString());
             if (playSound && (soundName != ""))
@@ -1185,7 +1084,7 @@ public partial class FrmMain : Form
     private readonly Queue<CryptoSignal> signalQueue = new();
 
 
-    private void TimerAddSignal_Tick(object sender, EventArgs e)
+    private void TimerAddSignalsAndLog_Tick(object sender, EventArgs e)
     {
         // Speed up adding signals
         if (signalQueue.Count > 0)
@@ -1243,6 +1142,13 @@ public partial class FrmMain : Form
                             Invoke((MethodInvoker)(() => TextBoxLog.AppendText(text)));
                         else
                             TextBoxLog.AppendText(text);
+
+                        // Dit lijkt niet te werken (zonder alles in zijn geheel te kopieeren, in te korten en terug te zetten)
+                        //while (TextBoxLog.Lines.Count() > 10000)
+                        //{
+                        //    TextBoxLog.Text = TextBoxLog.Text.Remove(0, TextBoxLog.GetLineLength(0));
+                        //}
+
                     }));
                 });
             }
@@ -1253,7 +1159,24 @@ public partial class FrmMain : Form
         }
     }
 
-    private void BinanceShowNotification(CryptoSignal signal)
+
+    private void TimerSaveCandleData_Tick(object sender, EventArgs e)
+    {
+#if !DATABASE
+        // Elke x uur wordt de candle data bewaard
+        DataStore.SaveCandles();
+#endif
+    }
+
+
+    private void TimerClearMemo_Tick(object sender, EventArgs e)
+    {
+        // Elke 24 uur wordt de memo gecleared
+        Invoke((MethodInvoker)(() => TextBoxLog.Clear()));
+    }
+
+
+    private void SignalArrived(CryptoSignal signal)
     {
         createdSignalCount++;
         string text = "signal: " + signal.Symbol.Name + " " + signal.Interval.Name + " " + signal.ModeText + " " + signal.StrategyText + " " + signal.EventText;
@@ -1283,50 +1206,49 @@ public partial class FrmMain : Form
         //    }));
         //});
 
-
-
         // Speech and/or sound
-        if (signal.Mode != SignalMode.modeInfo2) // disqualifield signals
+        if (!signal.IsInvalid)
         {
             switch (signal.Strategy)
             {
-                case SignalStrategy.candlesJumpUp:
-                    PlaySound(signal, GlobalData.Settings.Signal.PlaySoundCandleJumpSignal, GlobalData.Settings.Signal.PlaySpeechCandleJumpSignal,
-                        GlobalData.Settings.Signal.SoundCandleJumpUp, ref LastSignalSoundCandleJumpUp);
-                    break;
-                case SignalStrategy.candlesJumpDown:
-                    PlaySound(signal, GlobalData.Settings.Signal.PlaySoundCandleJumpSignal, GlobalData.Settings.Signal.PlaySpeechCandleJumpSignal,
-                        GlobalData.Settings.Signal.SoundCandleJumpDown, ref LastSignalSoundCandleJumpDown);
-                    break;
-
-                case SignalStrategy.stobbOversold:
-                    PlaySound(signal, GlobalData.Settings.Signal.PlaySoundStobbSignal, GlobalData.Settings.Signal.PlaySpeechStobbSignal,
-                        GlobalData.Settings.Signal.SoundStobbOversold, ref LastSignalSoundStobbOversold);
-                    break;
-                case SignalStrategy.stobbOverbought:
-                    PlaySound(signal, GlobalData.Settings.Signal.PlaySoundStobbSignal, GlobalData.Settings.Signal.PlaySpeechStobbSignal,
-                        GlobalData.Settings.Signal.SoundStobbOverbought, ref LastSignalSoundStobbOverbought);
+                case SignalStrategy.Jump:
+                    if (signal.Mode == TradeDirection.Long)
+                        PlaySound(signal, GlobalData.Settings.Signal.PlaySoundCandleJumpSignal, GlobalData.Settings.Signal.PlaySpeechCandleJumpSignal,
+                            GlobalData.Settings.Signal.SoundCandleJumpUp, ref LastSignalSoundCandleJumpUp);
+                    if (signal.Mode == TradeDirection.Short)
+                        PlaySound(signal, GlobalData.Settings.Signal.PlaySoundCandleJumpSignal, GlobalData.Settings.Signal.PlaySpeechCandleJumpSignal,
+                            GlobalData.Settings.Signal.SoundCandleJumpDown, ref LastSignalSoundCandleJumpDown);
                     break;
 
-                case SignalStrategy.sbm1Oversold:
-                case SignalStrategy.sbm2Oversold:
-                case SignalStrategy.sbm3Oversold:
-                case SignalStrategy.sbm4Oversold:
-                case SignalStrategy.sbm5Oversold:
-                    PlaySound(signal, GlobalData.Settings.Signal.PlaySoundSbmSignal, GlobalData.Settings.Signal.PlaySpeechSbmSignal,
+                case SignalStrategy.Stobb:
+                    if (signal.Mode == TradeDirection.Long)
+                        PlaySound(signal, GlobalData.Settings.Signal.PlaySoundStobbSignal, GlobalData.Settings.Signal.PlaySpeechStobbSignal,
+                            GlobalData.Settings.Signal.SoundStobbOversold, ref LastSignalSoundStobbOversold);
+                    if (signal.Mode == TradeDirection.Short)
+                        PlaySound(signal, GlobalData.Settings.Signal.PlaySoundStobbSignal, GlobalData.Settings.Signal.PlaySpeechStobbSignal,
+                            GlobalData.Settings.Signal.SoundStobbOverbought, ref LastSignalSoundStobbOverbought);
+                    break;
+
+                case SignalStrategy.Sbm1:
+                case SignalStrategy.Sbm2:
+                case SignalStrategy.Sbm3:
+                case SignalStrategy.Sbm4:
+                case SignalStrategy.Sbm5:
+                    if (signal.Mode == TradeDirection.Long)
+                        PlaySound(signal, GlobalData.Settings.Signal.PlaySoundSbmSignal, GlobalData.Settings.Signal.PlaySpeechSbmSignal,
                         GlobalData.Settings.Signal.SoundSbmOversold, ref LastSignalSoundSbmOversold);
-                    break;
-
-                case SignalStrategy.sbm1Overbought:
-                case SignalStrategy.sbm2Overbought:
-                case SignalStrategy.sbm3Overbought:
-                case SignalStrategy.sbm4Overbought:
-                case SignalStrategy.sbm5Overbought:
-
-                    PlaySound(signal, GlobalData.Settings.Signal.PlaySoundSbmSignal, GlobalData.Settings.Signal.PlaySpeechSbmSignal,
-                        GlobalData.Settings.Signal.SoundSbmOverbought, ref LastSignalSoundSbmOverbought);
+                    if (signal.Mode == TradeDirection.Short)
+                        PlaySound(signal, GlobalData.Settings.Signal.PlaySoundSbmSignal, GlobalData.Settings.Signal.PlaySpeechSbmSignal,
+                            GlobalData.Settings.Signal.SoundSbmOverbought, ref LastSignalSoundSbmOverbought);
                     break;
             }
+        }
+
+        if (!signal.IsInvalid && GlobalData.Settings.Telegram.SendSignalsToTelegram)
+        {
+            // Bedenk eens een mooie header.. 
+            // en een link naar Altrady/HyperTrade
+            // Heb als het goed is een stukje oude code liggen (maar waar)
         }
     }
 
@@ -1568,7 +1490,7 @@ public partial class FrmMain : Form
             {
                 // Plan een volgende verversing omdat er bv een connection timeout was.
                 // Dit kan een aantal berekeningen onderbroken hebben
-                Invoke((MethodInvoker)(() => InitTimerInterval(ref TimerGetCandles, GlobalData.Settings.General.GetCandleInterval * 60)));
+                Invoke((MethodInvoker)(() => InitTimerInterval(ref TimerGetExchangeInfo, GlobalData.Settings.General.GetCandleInterval * 60)));
             }
 
             Task.Run(async () => { await BinanceFetchCandles.ExecuteAsync(); }); // niet wachten tot deze klaar is
@@ -1639,13 +1561,15 @@ public partial class FrmMain : Form
     private void ApplicationTradingBot_Click(object sender, EventArgs e)
     {
         ApplicationTradingBot.Checked = !ApplicationTradingBot.Checked;
-        GlobalData.Settings.Bot.Active = ApplicationTradingBot.Checked;
+        GlobalData.Settings.Trading.Active = ApplicationTradingBot.Checked;
         GlobalData.SaveSettings();
     }
 
 
     private void BacktestToolStripMenuItem_Click(object sender, EventArgs e)
     {
+        /// TODO: Deze code min of meer verhuizen naar het dialoog en als een property de BackTest settings meegeven
+        /// Of een extra class om de backtest code in onder te brengen...
         try
         {
             AskSymbolDialog form = new()
@@ -1663,7 +1587,7 @@ public partial class FrmMain : Form
                 }
 
                 // Bestaat de coin? (uiteraard, net geladen)
-                if (!exchange.SymbolListName.TryGetValue(GlobalData.Settings.BackTestSymbol, out CryptoSymbol symbol))
+                if (!exchange.SymbolListName.TryGetValue(GlobalData.Settings.BackTest.BackTestSymbol, out CryptoSymbol symbol))
                 {
                     MessageBox.Show("Symbol bestaat niet");
                     return;
@@ -1673,7 +1597,7 @@ public partial class FrmMain : Form
                 //CryptoInterval interval = GlobalData.IntervalList => (Name == GlobalData.Settings.BackTestInterval); ???
                 foreach (CryptoInterval intervalX in GlobalData.IntervalList)
                 {
-                    if (intervalX.Name == GlobalData.Settings.BackTestInterval)
+                    if (intervalX.Name == GlobalData.Settings.BackTest.BackTestInterval)
                     {
                         interval = intervalX;
                         break;
@@ -1685,7 +1609,7 @@ public partial class FrmMain : Form
                     return;
                 }
 
-                long unix = CandleTools.GetUnixTime(GlobalData.Settings.BackTestTime, interval.Duration);
+                long unix = CandleTools.GetUnixTime(GlobalData.Settings.BackTest.BackTestTime, interval.Duration);
                 if (!symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList.TryGetValue(unix, out CryptoCandle candle))
                 {
                     MessageBox.Show("Candle bestaat niet");
@@ -1694,14 +1618,15 @@ public partial class FrmMain : Form
 
                 long einde = candle.OpenTime;
                 long start = einde - 2 * 60 * interval.Duration;
-                SignalCreate createSignal = new(symbol, interval, true, BinanceShowNotification);
+                SignalCreate createSignal = new(symbol, interval, true, SignalArrived);
                 while (start <= einde)
                 {
                     if (symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList.TryGetValue(start, out candle))
                     {
                         if (createSignal.Prepare(start))
                         {
-                            SignalBase algorithm = SignalHelper.GetSignalAlgorithm(GlobalData.Settings.BackTestAlgoritm, symbol, interval, candle);
+                            // todo, configuratie short/long
+                            SignalCreateBase algorithm = SignalHelper.GetSignalAlgorithm(TradeDirection.Long, GlobalData.Settings.BackTest.BackTestAlgoritm, symbol, interval, candle);
                             if (algorithm != null)
                             {
                                 if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
@@ -1709,15 +1634,15 @@ public partial class FrmMain : Form
                                     //createSignal.PrepareAndSendSignal(algorithm);
                                     algorithm.ExtraText = "Signal!";
                                 }
-                                candle.ExtraText = algorithm.ExtraText;
+                                //candle.ExtraText = algorithm.ExtraText;
                             }
                         }
                     }
                     start += interval.Duration;
                 }
 
-                //SignalBase algorithm = createSignal.AnalyseSymbolUsingStrategy(start, SignalStrategy.sbm1Oversold);
-                createSignal.ExportToExcell(GlobalData.Settings.BackTestAlgoritm);
+                BackTestExcel backTestExcel = new(symbol, createSignal.history);
+                backTestExcel.ExportToExcell(TradeDirection.Long, GlobalData.Settings.BackTest.BackTestAlgoritm);
             }
         }
         catch (Exception error)

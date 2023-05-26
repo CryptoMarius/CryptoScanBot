@@ -4,14 +4,13 @@ using CryptoSbmScanner.Model;
 namespace CryptoSbmScanner.Signal;
 
 
-// De SBM methode die Marco hanteerd (de candle jump variant)
 
 public class SignalSbm3Oversold : SignalSbmBaseOversold
 {
     public SignalSbm3Oversold(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        SignalMode = SignalMode.modeLong;
-        SignalStrategy = SignalStrategy.sbm3Oversold;
+        SignalMode = TradeDirection.Long;
+        SignalStrategy = SignalStrategy.Sbm3;
     }
 
 

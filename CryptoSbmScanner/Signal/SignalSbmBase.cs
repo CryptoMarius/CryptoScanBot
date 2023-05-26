@@ -3,7 +3,7 @@ using CryptoSbmScanner.Model;
 
 namespace CryptoSbmScanner.Signal;
 
-public class SignalSbmBase : SignalBase
+public class SignalSbmBase : SignalCreateBase
 {
     public SignalSbmBase(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
@@ -52,14 +52,15 @@ public class SignalSbmBase : SignalBase
     {
         decimal value = -999m;
 
-        return string.Format("ma200={0:N8} ma50={1:N8} ma20={2:N8} psar={3:N8} macd.h={4:N8} bm={5:N2} bb%={6:N2}",
+        return string.Format("ma200={0:N8} ma50={1:N8} ma20={2:N8} psar={3:N8} macd.h={4:N8} bm={5:N2} bb%={6:N2} rsi=={7:N2}",
             CandleLast.CandleData.Sma200,
             CandleLast.CandleData.Sma50,
             CandleLast.CandleData.Sma20,
             CandleLast.CandleData.PSar,
             CandleLast.CandleData.MacdHistogram,
             value,
-            CandleLast.CandleData.BollingerBandsPercentage
+            CandleLast.CandleData.BollingerBandsPercentage,
+            CandleLast.CandleData.Rsi
         );
     }
 
@@ -156,10 +157,10 @@ public class SignalSbmBase : SignalBase
 #endif
                 }
             }
-//#if DEBUG
-//Right, lastcandle is er niet, wat onaardig en onoplettend
+            //#if DEBUG
+            //Right, lastcandle is er niet, wat onaardig en onoplettend
             //else GlobalData.AddTextToLogTab(lastCandle.DateLocal.ToString() + " " + Symbol.Name + " " + Interval.Name + " ma200-20, geen candle! " + Candles.Count);
-//#endif
+            //#endif
             candlesAgo++;
             candleCount--;
             prevCandle = lastCandle;

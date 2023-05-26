@@ -3,11 +3,12 @@ using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Settings;
 using CryptoSbmScanner.Signal;
 using CryptoSbmScanner.Trading;
+using Skender.Stock.Indicators;
+
 using System.Collections.Concurrent;
 
 
 namespace CryptoSbmScanner.Intern;
-
 
 public class ThreadMonitorSignal
 {
@@ -34,8 +35,8 @@ public class ThreadMonitorSignal
         // Check positions (remove, dca, trace, etc)
         // ******************************************
 
-        // TODO: Reactivate
-        //if (symbol.PositionList.Any())
+        // TODO: Reactivate of weghalen?
+        //if (symbol.PositionCount > 0)
         //{
         //    PositionMonitor monitorAlgorithm = new PositionMonitor();
         //    await monitorAlgorithm.CheckOpenPositions(symbol);
@@ -47,8 +48,6 @@ public class ThreadMonitorSignal
         // ******************************************
 
 
-        // Is het signaal meer dan 30 minuten oud, weggooien!
-        // Waarom dat via de semaphore op Position wordt gelocked is vreemd....
         // **************************************************
         // Global checks like barometer, active bot etc..
         // **************************************************
@@ -56,7 +55,7 @@ public class ThreadMonitorSignal
 
         // Als de bot niet actief is dan ook geen monitoring (queue leegmaken)
         // Blijkbaar is de bot dan door de gebruiker uitgezet, verwijder de signalen
-        if (!GlobalData.Settings.Bot.Active)
+        if (!GlobalData.Settings.Trading.Active)
         {
             GlobalData.AddTextToLogTab("Monitor " + symbol.Name + " trade-bot deactivated (removed)");
             symbol.ClearSignals();
@@ -72,22 +71,30 @@ public class ThreadMonitorSignal
         }
 
         // Om te voorkomen dat we te snel achter elkaar in dezelfde munt stappen
-        if (symbol.LastTradeDate.HasValue && symbol.LastTradeDate > DateTime.UtcNow.AddMinutes(-GlobalData.Settings.Bot.GlobalBuyCooldownTime))
+        if (symbol.LastTradeDate.HasValue && symbol.LastTradeDate > DateTime.UtcNow.AddMinutes(-GlobalData.Settings.Trading.GlobalBuyCooldownTime))
         {
             GlobalData.AddTextToLogTab("Monitor " + symbol.Name + " is in cooldown (removed)");
             symbol.ClearSignals();
             return;
         }
 
+        // Als een munt snel is gedaald dan stoppen
+        if (GlobalData.Settings.Trading.PauseTradingUntil >= DateTime.UtcNow)
+        {
+            GlobalData.AddTextToLogTab(string.Format("De bot is gepauseerd omdat {0} (removed)", GlobalData.Settings.Trading.PauseTradingText));
+            symbol.ClearSignals();
+            return;
+        }
+
         // Is de barometer goed genoeg dat we willen traden?
-        if (!SymbolTools.CheckValidBarometer(symbol.QuoteData, CryptoIntervalPeriod.interval15m, GlobalData.Settings.Bot.Barometer15mBotMinimal, out string reaction) ||
-            (!SymbolTools.CheckValidBarometer(symbol.QuoteData, CryptoIntervalPeriod.interval30m, GlobalData.Settings.Bot.Barometer30mBotMinimal, out reaction)) ||
-            (!SymbolTools.CheckValidBarometer(symbol.QuoteData, CryptoIntervalPeriod.interval1h, GlobalData.Settings.Bot.Barometer01hBotMinimal, out reaction)) ||
-            (!SymbolTools.CheckValidBarometer(symbol.QuoteData, CryptoIntervalPeriod.interval4h, GlobalData.Settings.Bot.Barometer04hBotMinimal, out reaction)) ||
-            (!SymbolTools.CheckValidBarometer(symbol.QuoteData, CryptoIntervalPeriod.interval1d, GlobalData.Settings.Bot.Barometer24hBotMinimal, out reaction))
+        if (!SymbolTools.CheckValidBarometer(symbol.QuoteData, CryptoIntervalPeriod.interval15m, GlobalData.Settings.Trading.Barometer15mBotMinimal, out string reaction) ||
+            (!SymbolTools.CheckValidBarometer(symbol.QuoteData, CryptoIntervalPeriod.interval30m, GlobalData.Settings.Trading.Barometer30mBotMinimal, out reaction)) ||
+            (!SymbolTools.CheckValidBarometer(symbol.QuoteData, CryptoIntervalPeriod.interval1h, GlobalData.Settings.Trading.Barometer01hBotMinimal, out reaction)) ||
+            (!SymbolTools.CheckValidBarometer(symbol.QuoteData, CryptoIntervalPeriod.interval4h, GlobalData.Settings.Trading.Barometer04hBotMinimal, out reaction)) ||
+            (!SymbolTools.CheckValidBarometer(symbol.QuoteData, CryptoIntervalPeriod.interval1d, GlobalData.Settings.Trading.Barometer24hBotMinimal, out reaction))
             )
         {
-            if (GlobalData.Settings.Signal.LogBarometerToLow)
+            //if (GlobalData.Settings.Signal.LogBarometerToLow)
             {
                 GlobalData.AddTextToLogTab("Monitor " + symbol.Name + " " + reaction + " (removed)");
             }
@@ -163,6 +170,7 @@ public class ThreadMonitorSignal
         }
 
 
+        GlobalData.AddTextToLogTab("Monitor " + symbol.Name);
 
         // **************************************************
         // Per interval kan er een signaal aanwezig zijn
@@ -174,34 +182,42 @@ public class ThreadMonitorSignal
             CryptoSignal signal = symbolInterval.Signal;
             text = "Monitor " + signal.DisplayText + " price=" + lastPrice;
 
-            // we doen (momenteel) alleen long posities
-            if (signal.Mode != SignalMode.modeLong)
-            {
-                GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " only acception long signals (removed)");
-                symbolInterval.Signal = null;
-                continue;
-            }
-
-            // Willen we traden met deze strategy
-            if (!GlobalData.Settings.Bot.TradeOnStrategy[(int)signal.Strategy])
-            {
-                GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " not trading on this strategy (removed)");
-                symbolInterval.Signal = null;
-                continue;
-            }
-
             // Willen we traden op dit interval
-            if (!GlobalData.Settings.Bot.TradeOnInterval[(int)signal.Interval.IntervalPeriod])
+            if (!TradingConfig.MonitorInterval.ContainsKey(signal.Interval.IntervalPeriod))
             {
                 GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " not trading on this interval (removed)");
                 symbolInterval.Signal = null;
                 continue;
             }
 
+            // Willen we traden met deze strategy
+            if (!TradingConfig.Config[TradeDirection.Long].MonitorStrategy.ContainsKey(signal.Strategy))
+            {
+                GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " not trading on this strategy (removed)");
+                symbolInterval.Signal = null;
+                continue;
+            }
+
+            //??????????????????????????????????????????????? TODO!
+            // TODO: we doen (momenteel) alleen long posities
+            if (signal.Mode != TradeDirection.Long)
+            {
+                GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " only acception long signals (removed)");
+                symbolInterval.Signal = null;
+                continue;
+            }
+
+            // Er zijn (technisch) niet altijd candles aanwezig
+            if (!symbolInterval.CandleList.Any())
+            {
+                GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " no candles on this interval (removed)");
+                symbolInterval.Signal = null;
+                continue;
+            }
             CryptoCandle candle = symbolInterval.CandleList.Values.Last();
-            SignalBase algorithm = SignalHelper.GetSignalAlgorithm(signal.Strategy, signal.Symbol, signal.Interval, candle);
 
             // Bestaan het gekozen strategy wel, klinkt raar, maar is (op dit moment) niet altijd geimplementeerd
+            SignalCreateBase algorithm = SignalHelper.GetSignalAlgorithm(signal.Mode, signal.Strategy, signal.Symbol, signal.Interval, candle);
             if (algorithm == null)
             {
                 GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " unknown algorithm (removed)");
@@ -217,7 +233,7 @@ public class ThreadMonitorSignal
                 {
                     GlobalData.AddTextToLogTab(signal.DisplayText + " " + reaction + " (removed)");
                     symbolInterval.Signal = null;
-                    break;
+                    continue;
                 }
 
                 if (History.Count == 0)
@@ -225,7 +241,7 @@ public class ThreadMonitorSignal
                     reaction = "Geen candles";
                     GlobalData.AddTextToLogTab(signal.DisplayText + " " + reaction + " (removed)");
                     symbolInterval.Signal = null;
-                    break;
+                    continue;
                 }
 
                 CandleIndicatorData.CalculateIndicators(History);
@@ -264,46 +280,51 @@ public class ThreadMonitorSignal
             // hebben kunnen we wachten op een horizontale sma20 en die doet het ook verrassend goed
 
 
-            if (GlobalData.Settings.Bot.DoNotEnterTrade)
+            if (GlobalData.Settings.Trading.DoNotEnterTrade)
             {
-                symbolInterval.Signal = null;
                 GlobalData.AddTextToLogTab(text + " " + algorithm.ExtraText + " *** try BUY *** (papertrade) (removed)");
+                GlobalData.AddTextToTelegram(text + " " + algorithm.ExtraText + " *** try BUY *** (papertrade) (removed)");
+                symbolInterval.Signal = null;
                 continue;
             }
 
 
 
             // Webhook Altrady - testing via PaperTrading
-            if (GlobalData.Settings.Signal.AltradyWebhookActive)
+            if (GlobalData.Settings.Trading.TradeViaAltradyWebhook)
             {
                 GlobalData.AddTextToLogTab(text + " " + algorithm.ExtraText + " *** try BUY (altrady webhook) *** entering....");
-                AltradyWebhook.Execute1(signal);
+                GlobalData.AddTextToTelegram(text + " " + algorithm.ExtraText + " *** try BUY (altrady webhook) *** entering....");
+                AltradyWebhook.ExecuteBuy(signal);
+                symbolInterval.Signal = null;
                 continue;
             }
 
-
-            GlobalData.AddTextToLogTab(text + " " + algorithm.ExtraText + " *** try BUY (binance api) *** entering....");
-            //SignalMonitor signalMonitor = new(signal);
-            var x = await BinanceApi.DoOnSignal(signal);
-            if (!x.result)
-            {
-                GlobalData.AddTextToLogTab(text + " try buy failed, result= " + x.reaction);
-                // Voor de zekerheid het signaal direct weghalen (anders blijft het lang in 
-                // de queue en blokkeerd het meer recente signalen wat jammer zou zijn)
-                symbolInterval.Signal = null;
-                GlobalData.AddTextToLogTab(text + " " + algorithm.ExtraText + " BUY failed (removed)");
-                continue;
+            if (GlobalData.Settings.Trading.TradeViaBinance)
+            {                
+                GlobalData.AddTextToLogTab(text + " " + algorithm.ExtraText + " *** try BUY (binance api) *** entering....");
+                GlobalData.AddTextToTelegram(text + " " + algorithm.ExtraText + " *** try BUY (binance api) *** entering....");
+                //SignalMonitor signalMonitor = new(signal);
+                var x = await BinanceApi.DoOnSignal(signal);
+                if (!x.result)
+                {
+                    GlobalData.AddTextToLogTab(text + " try buy failed, result= " + x.reaction);
+                    GlobalData.AddTextToTelegram(text + " try buy failed, result= " + x.reaction);
+                    // Voor de zekerheid het signaal direct weghalen (anders blijft het lang in 
+                    // de queue en blokkeerd het meer recente signalen wat jammer zou zijn)
+                    GlobalData.AddTextToLogTab(text + " " + algorithm.ExtraText + " BUY failed (removed)");
+                    symbolInterval.Signal = null;
+                    continue;
+                }
             }
 
         }
+
     }
 
 
 
-    /// <summary>
-    /// Main handler
-    /// </summary>
-    public async void Execute()
+    public async Task ExecuteAsync()
     {
         try
         {
@@ -313,14 +334,14 @@ public class ThreadMonitorSignal
                 monitorCount++;
                 try
                 {
-                    await symbol.PositionListSemaphore.WaitAsync();
+                    await symbol.Exchange.PositionListSemaphore.WaitAsync();
                     try
                     {
                         ProcessSignalList(symbol);
                     }
                     finally
                     {
-                        symbol.PositionListSemaphore.Release();
+                        symbol.Exchange.PositionListSemaphore.Release();
                     }
                 }
                 catch (Exception error)
@@ -331,7 +352,7 @@ public class ThreadMonitorSignal
                 }
             }
         }
-        catch (Exception )
+        catch (Exception)
         {
             //ignore
         }
@@ -339,4 +360,3 @@ public class ThreadMonitorSignal
         GlobalData.AddTextToLogTab("\r\n" + "\r\n MONITOR THREAD EXIT");
     }
 }
-

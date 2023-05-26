@@ -1,4 +1,6 @@
-﻿using CryptoSbmScanner.Model;
+﻿using System.Text;
+
+using CryptoSbmScanner.Model;
 
 namespace CryptoSbmScanner.Intern;
 
@@ -55,8 +57,13 @@ public static class CandleTools
         {
             candle = new CryptoCandle
             {
-                Symbol = symbol,
-                Interval = interval
+#if DATABASE
+                ExchangeId = symbol.ExchangeId,
+                SymbolId = symbol.Id,
+	            IntervalId = interval.Id,
+#endif
+                //Symbol = symbol,
+                //Interval = interval
             };
             candles.Add(candleOpenUnix, candle);
         }
@@ -94,14 +101,19 @@ public static class CandleTools
         long candleOpenUnix = openTime - openTime % interval.Duration;
         //DateTime candleOpenDate = GetUnixDate(candleOpenUnix); //ter debug want een unix date is onleesbaar
 
-        //bool IsChanged = false;
+        bool IsChanged = false;
         if (!candles.TryGetValue(candleOpenUnix, out CryptoCandle candleNew))
         {
-            //IsChanged = true;
+            IsChanged = true;
             candleNew = new CryptoCandle()
             {
-                Symbol = symbol,
-                Interval = interval,
+#if DATABASE
+                ExchangeId = symbol.ExchangeId,
+                SymbolId = symbol.Id,
+                IntervalId = interval.Id,
+#endif
+                //Symbol = symbol,
+                //Interval = interval,
                 OpenTime = candleOpenUnix,
 
                 Open = -1,
@@ -110,7 +122,7 @@ public static class CandleTools
                 Close = -1
             };
         }
-
+        decimal LastVolume = candleNew.Volume;
         //Hier de volume op 0 zetten
         candleNew.Volume = 0;
 
@@ -141,21 +153,33 @@ public static class CandleTools
                 if (candleOpenUnixLoop == candleOpenUnix)
                 {
                     if (candleNew.Open != candle.Open)
+                    {
+                        IsChanged = true;
                         candleNew.Open = candle.Open;
+                    }
                 }
 
                 // De close bijwerken
                 if (candleCount == 0)
                 {
                     if (candleNew.Close != candle.Close)
+                    {
+                        IsChanged = true;
                         candleNew.Close = candle.Close;
+                    }
                 }
 
                 // High en low bijwerken
                 if (candle.High > candleNew.High)
+                {
+                    IsChanged = true;
                     candleNew.High = candle.High;
+                }
                 if (candle.Low < candleNew.Low)
+                {
+                    IsChanged = true;
                     candleNew.Low = candle.Low;
+                }
 
                 // Dat gaat  fout als niet de hele "periode" aangeboden wordt
                 candleNew.Volume += candle.Volume;
@@ -163,17 +187,42 @@ public static class CandleTools
             else break; // het lagere interval is niet compleet, stop maar!
 
             candleOpenUnixLoop += constructFrom.Duration;
+        }
+
+        if (LastVolume != candleNew.Volume)
+            IsChanged = true;
 
 
-            // Onvolledige candles willen we niet bewaren(dat geeft alleen problemen)
-            if (candleNew.Open != -1 && candleNew.Close != -1 && candleCount == 0)
+        // Onvolledige candles willen we niet bewaren(dat geeft alleen problemen)
+        if (candleNew.Open != -1 && candleNew.Close != -1 && candleCount == 0)
+        {
+#if DATABASE
+            if (candleNew.Id > 0)
+            {
+                //Optimalisatie: Vaak wordt een candle helemaal niet aangepast, valt bijvoorbeeld tussen eerdere high en lows.
+                //deze hoeft dan niet naar de database geschreven te worden wat zeer waarschijnlijk aardig wat tijd scheelt....
+                if (IsChanged)
+                {
+                    CandleTools.UpdateCandleFetched(symbol, interval);
+                    GlobalData.TaskSaveCandles.AddToQueue(candleNew);
+                }
+            }
+            else
             {
                 if (!candles.ContainsKey(candleNew.OpenTime))
                 {
                     candles.Add(candleNew.OpenTime, candleNew);
-                    UpdateCandleFetched(symbol, interval);
+                    CandleTools.UpdateCandleFetched(symbol, interval);
+                    GlobalData.TaskSaveCandles.AddToQueue(candleNew);
                 }
             }
+#else
+            if (!candles.ContainsKey(candleNew.OpenTime))
+            {
+                candles.Add(candleNew.OpenTime, candleNew);
+                UpdateCandleFetched(symbol, interval);
+            }
+#endif
         }
     }
 
@@ -200,12 +249,17 @@ public static class CandleTools
 
             while (nextCandleUnix < currentCandleUnix)
             {
-                if (!candles.TryGetValue(nextCandleUnix, out _))
+                if (!candles.ContainsKey(nextCandleUnix))
                 {
                     CryptoCandle stickNew = new()
                     {
-                        Symbol = stickOld.Symbol,
-                        Interval = interval,
+#if DATABASE
+                        ExchangeId = stickOld.ExchangeId,
+                        SymbolId = stickOld.SymbolId,
+                        IntervalId = interval.Id,
+#endif
+                        //Symbol = stickOld.Symbol,
+                        //Interval = interval,
                         OpenTime = nextCandleUnix,
                         Open = stickOld.Close,
                         Close = stickOld.Close,
@@ -245,6 +299,108 @@ public static class CandleTools
 
                 while (candles.ContainsKey((long)symbolInterval.LastCandleSynchronized))
                     symbolInterval.LastCandleSynchronized += interval.Duration;
+            }
+        }
+    }
+
+    static private void ExportSymbolsToExcel(Model.CryptoExchange exchange)
+    {
+        try
+        {
+            var csv = new StringBuilder();
+            var newLine = string.Format("{0};{1};{2}", "Exchange", "Symbol", "Volume");
+            csv.AppendLine(newLine);
+
+            for (int i = 0; i < exchange.SymbolListName.Values.Count; i++)
+            {
+                CryptoSymbol symbol = exchange.SymbolListName.Values[i];
+
+                newLine = string.Format("{0};{1};{2}",
+                symbol.Exchange.Name,
+                symbol.Name,
+                symbol.Volume.ToString());
+
+                csv.AppendLine(newLine);
+            }
+            string filename = GlobalData.GetBaseDir();
+            filename = filename + @"\data\" + exchange.Name + @"\";
+            System.IO.Directory.CreateDirectory(filename);
+            System.IO.File.WriteAllText(filename + "symbols.csv", csv.ToString());
+
+        }
+        catch (Exception error)
+        {
+            GlobalData.Logger.Error(error);
+            // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
+            //GlobalData.AddTextToLogTab(error.ToString());
+        }
+    }
+
+    static private void ExportToExcel(Model.CryptoExchange exchange, CryptoSymbol symbol, CryptoInterval interval, SortedList<long, CryptoCandle> candleList)
+    {
+        //Deze is op dit moment specifiek voor de TradeView aanpak gemaakt (datum er ff uitgehaald en vervangen met unix 1000's)
+        try
+
+        {
+            var csv = new StringBuilder();
+            var newLine = string.Format("{0},{1},{2},{3},{4},{5},{6}", "Timestamp", "Symbol", "Open", "High", "Low", "Close", "Volume");
+            csv.AppendLine(newLine);
+
+            Monitor.Enter(candleList);
+            try
+            {
+                for (int i = 0; i < candleList.Count; i++)
+                {
+                    CryptoCandle candle = candleList.Values[i];
+
+                    newLine = string.Format("{0}000,{1},{2},{3},{4},{5},{6}",
+                    candle.OpenTime.ToString(),
+                    //CandleTools.GetUnixDate(candle.OpenTime).ToString(),
+                    symbol.Name,
+                    //candle.Interval.ToString(),
+                    candle.Open.ToString(),
+                    candle.High.ToString(),
+                    candle.Low.ToString(),
+                    candle.Close.ToString(),
+                    //GetUnixDate(candle.CloseTime).ToString(),
+                    candle.Volume.ToString());
+                    //candle.Trades.ToString());
+
+                    csv.AppendLine(newLine);
+                }
+            }
+            finally
+            {
+                Monitor.Exit(candleList);
+            }
+            string filename = GlobalData.GetBaseDir();
+            filename = filename + @"\data\" + exchange.Name + @"\Candles\" + symbol.Name + @"\"; // + interval.Name + @"\";
+            System.IO.Directory.CreateDirectory(filename);
+            System.IO.File.WriteAllText(filename + symbol.Name + "-" + interval.Name + ".csv", csv.ToString());
+
+        }
+        catch (Exception error)
+        {
+            GlobalData.Logger.Error(error);
+            // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
+            //GlobalData.AddTextToLogTab(error.ToString());
+        }
+    }
+
+
+    static public void ExportToExcelAll()
+    {
+        foreach (Model.CryptoExchange exchange in GlobalData.ExchangeListName.Values)
+        {
+            ExportSymbolsToExcel(exchange);
+
+            foreach (var symbol in exchange.SymbolListName.Values)
+            {
+                foreach (CryptoInterval interval in GlobalData.IntervalList)
+                {
+                    CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
+                    ExportToExcel(exchange, symbol, interval, symbolPeriod.CandleList);
+                }
             }
         }
     }

@@ -8,7 +8,7 @@ namespace CryptoSbmScanner.Trading;
 public class AltradyWebhook
 {
 
-    public static void Execute(CryptoSignal signal, string botKey, string botSecret, decimal stoppLoss)
+    private static void Execute(CryptoSignal signal, string botKey, string botSecret, decimal stoppLoss)
     {
         HttpWebRequest httpWebRequest = (HttpWebRequest)WebRequest.Create("https://api.altrady.com/v2/signal_bot_positions");
         httpWebRequest.ContentType = "application/json";
@@ -31,15 +31,29 @@ public class AltradyWebhook
             request.side = "long";
             request.exchange = "binance";
             request.symbol = signal.Symbol.Name;
-            //request.signal_price = signal.Symbol.LastPrice - 2 * signal.Symbol.PriceTickSize;
+            // Afgesterd - 27-04-2023 10:12 (na verwarrende buy's die suggeren dat er veel te hoog gekocht werd! <papertrading sucks>)
+            // vervelende is dat de LastPrice kan varieeren, je zou nog steeds best hoog kunnen inkopen (niet de schuld van deze code)
+            //request.signal_price = signal.Symbol.LastPrice + (GlobalData.Settings.Bot.GlobalBuyVarying * signal.Symbol.LastPrice) / 100m;
 
+            // 27-04-2023 10:12 signal_price Aangezet na verwarrende entries
+            // 28-04-2023 10:12 signal_price afgesterd na aanpassing SBM2 berekening
+
+            CryptoSymbolInterval symbolPeriod = signal.Symbol.GetSymbolInterval(signal.Interval.IntervalPeriod);
+            CryptoCandle candleLast = symbolPeriod.CandleList.Values.Last();
+            //// We zetten de buy order op de candle.close
+            //decimal? value = candleLast.Close;
+            //// We zetten de buy order op de gemiddelde van de laatste candle
+            //decimal? value = (candleLast.Open + candleLast.Close) / 2m;
             //// We zetten de buy order op de bb, want daar zakt ie toch naar terug (nouja, vaak)
-            //CryptoSymbolInterval symbolPeriod = signal.Symbol.GetSymbolInterval(signal.Interval.IntervalPeriod);
-            //CryptoCandle candleLast = symbolPeriod.CandleList.Values.Last();
             //decimal? value = (decimal)candleLast.CandleData.BollingerBandsLowerBand + 2 * signal.Symbol.PriceTickSize;
             //if (signal.Symbol.LastPrice < (decimal)value)
-            //    value = signal.Symbol.LastPrice - 2m * signal.Symbol.PriceTickSize;
-            //request.signal_price = value;
+            //    value = signal.Symbol.LastPrice;
+            //request.signal_price = value - signal.Symbol.PriceTickSize;
+            // En zonder de last_price is het een marketorder?
+
+            // wellicht is eea afhankelijk van de markt stemming,
+            // bij een positieve stemming is een ~marketorder okay
+            // bij een negatieve stemming is de bb.lower een betere keuze
 
             //"take_profit": [
             //{
@@ -51,7 +65,7 @@ public class AltradyWebhook
             request.take_profit = take_ProfitList;
 
             dynamic take_Profit1 = new JObject();
-            take_Profit1.price_percentage = GlobalData.Settings.Bot.ProfitPercentage;
+            take_Profit1.price_percentage = GlobalData.Settings.Trading.ProfitPercentage;
             take_Profit1.position_percentage = 100;
             take_ProfitList.Add(take_Profit1);
 
@@ -84,7 +98,8 @@ public class AltradyWebhook
                 streamWriter.Write(json);
                 //GlobalData.AddTextToLogTab(json);
             }
-            GlobalData.AddTextToLogTab(signal.Symbol.Name + " " + signal.Interval.Name + " verzonden naar Altrady webhook");
+            //GlobalData.AddTextToLogTab(signal.Symbol.Name + " " + signal.Interval.Name + " verzonden naar Altrady webhook");
+            //GlobalData.AddTextToTelegram(signal.Symbol.Name + " " + signal.Interval.Name + " verzonden naar Altrady webhook");
             GlobalData.AddTextToLogTab(json);
 
 
@@ -114,9 +129,9 @@ public class AltradyWebhook
         }
 
     }
-    public static void Execute1(CryptoSignal signal)
+    public static void ExecuteBuy(CryptoSignal signal)
     {
-        if (signal.Symbol.LastTradeDate.HasValue && signal.Symbol.LastTradeDate > DateTime.UtcNow.AddMinutes(-GlobalData.Settings.Bot.GlobalBuyCooldownTime))
+        if (signal.Symbol.LastTradeDate.HasValue && signal.Symbol.LastTradeDate > DateTime.UtcNow.AddMinutes(-GlobalData.Settings.Trading.GlobalBuyCooldownTime))
         {
             GlobalData.AddTextToLogTab(signal.Symbol.Name + " " + signal.Interval.Name + " is in cooldown (geen positie)");
             return;
@@ -126,43 +141,31 @@ public class AltradyWebhook
         signal.Symbol.LastTradeDate = DateTime.UtcNow;
 
 
+        // Alleen SBM doet mee in de testronde
         switch (signal.Strategy)
         {
-            case SignalStrategy.stobbOversold:
-                // Alleen SBM doet mee in de testronde
-                break;
-            case SignalStrategy.sbm1Oversold:
-            case SignalStrategy.sbm2Oversold:
-            case SignalStrategy.sbm3Oversold:
-            case SignalStrategy.sbm4Oversold:
+            case SignalStrategy.Sbm1:
+            case SignalStrategy.Sbm2:
+            case SignalStrategy.Sbm3:
+            case SignalStrategy.Sbm4:
+            case SignalStrategy.Sbm5:
                 if (signal.Symbol.Quote.Equals("USDT"))
                 {
-				// ja, het is nog even hardcoded
-                    Execute(signal, "", "", 0.00m);
-                    Execute(signal, "", "", 0.75m);
-                    Execute(signal, "", "", 1.50m);
-                    Execute(signal, "", "", 2.50m);
+				    // ja, het is nog even hardcoded
+                    Execute(signal, "95315384-4bee-4e5d-8134-82d1ba372787", "a390f9b0-f32b-46b9-84b4-f0615240aca2", 02.50m);
+                    Execute(signal, "fbafb2eb-97ba-437e-9ea0-44c4e6eec7bb", "5d4c1ef7-4210-4273-804f-540522c48b27", 05.00m);
+                    Execute(signal, "a36a98f3-7968-4a5c-999d-79521fe68706", "dfdd1ecd-46f2-4ad4-9268-9c988b1afa95", 10.0m);
+                }
+                else 
+                if (signal.Symbol.Quote.Equals("BTC"))
+                {
+                    // ja, het is nog even hardcoded
+                    Execute(signal, "52128499-cee4-41c7-99fe-ab533b236629", "d8712b2e-d7db-4724-bcef-7f8c4bd99cf0", 10.00m);
                 }
                 break;
 
-            case SignalStrategy.bullishEngulfing:
-            case SignalStrategy.priceCrossedEma20:
-            case SignalStrategy.priceCrossedEma50:
-            case SignalStrategy.priceCrossedSma20:
-            case SignalStrategy.priceCrossedSma50:
-            case SignalStrategy.slopeEma50TurningNegative:
-            case SignalStrategy.slopeEma50TurningPositive:
-            case SignalStrategy.slopeSma50TurningNegative:
-            case SignalStrategy.slopeSma50TurningPositive:
-            case SignalStrategy.slopeEma20TurningPositive:
-            case SignalStrategy.slopeSma20TurningPositive:
-                // Een andere keer, hier is een positieve trend nodig en die dwingen we (nog) niet af
-				// ja, het is nog even hardcoded
-                //if (signal.Symbol.Quote.Equals("BTC"))
-                //    Execute(signal, "", "", 0.0m);
-                //if (signal.Symbol.Quote.Equals("USDT"))
-                //    Execute(signal, "", "", 0.0m);
-                break;
+                
+
         }
     }
 

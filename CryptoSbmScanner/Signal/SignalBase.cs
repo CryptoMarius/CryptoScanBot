@@ -11,7 +11,7 @@ namespace CryptoSbmScanner.Signal;
 // -Delaying: Een (optionele) delay
 // -TryStepIn: Na een OK van het algoritme om in te stappen
 
-public class SignalBase
+public class SignalCreateBase
 {
     protected Model.CryptoExchange Exchange;
     protected CryptoSymbol Symbol;
@@ -20,13 +20,13 @@ public class SignalBase
     protected CryptoQuoteData QuoteData;
     protected SortedList<long, CryptoCandle> Candles;
 
-    public SignalMode SignalMode;
+    public TradeDirection SignalMode;
     public SignalStrategy SignalStrategy;
     public CryptoCandle CandleLast = null;
     public string ExtraText = "";
     public bool ReplaceSignal = true;
 
-    public SignalBase(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle)
+    public SignalCreateBase(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle)
     {
         Symbol = symbol;
         Exchange = symbol.Exchange;
@@ -58,7 +58,7 @@ public class SignalBase
     }
 
 
-    public virtual string DisplayText() 
+    public virtual string DisplayText()
         => $"stoch={CandleLast.CandleData.StochOscillator.Value:N8} signal={CandleLast.CandleData.StochSignal.Value:N8}";
 
 
@@ -116,5 +116,20 @@ public class SignalBase
         return false;
     }
 
+
+    public bool BarometersOkay()
+    {
+        decimal value = 0.50m;
+        if (!SymbolTools.CheckValidBarometer(Symbol.QuoteData, CryptoIntervalPeriod.interval1h, value, out ExtraText))
+            return false;
+        
+        if (!SymbolTools.CheckValidBarometer(Symbol.QuoteData, CryptoIntervalPeriod.interval4h, value, out ExtraText))
+            return false;
+
+        if (!SymbolTools.CheckValidBarometer(Symbol.QuoteData, CryptoIntervalPeriod.interval1d, value, out ExtraText))
+            return false;
+
+        return true;
+    }
 
 }

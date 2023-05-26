@@ -1,7 +1,10 @@
 ﻿using CryptoSbmScanner.Binance;
 using CryptoSbmScanner.Intern;
+
+using System.Drawing;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
+using Dapper.Contrib.Extensions;
 
 namespace CryptoSbmScanner.Model;
 
@@ -27,18 +30,15 @@ public class CryptoQuoteData
     [JsonConverter(typeof(Intern.ColorConverter))]
     public Color DisplayColor { get; set; } = Color.White;
 
-    [JsonIgnore]
-    [IgnoreDataMember]
+    [Computed]
     public List<BinanceStream1mCandles> BinanceStream1mCandles { get; set; } = new List<BinanceStream1mCandles>();
 
     // De laatst berekende barometer standen
-    [JsonIgnore]
-    [IgnoreDataMember]
+    [Computed]
     public BarometerData[] BarometerList { get; } = new BarometerData[Enum.GetValues(typeof(CryptoIntervalPeriod)).Length];
 
     // Gecachte lijst met symbolen (de zoveelste), met name voor de barometer(s)
-    [JsonIgnore]
-    [IgnoreDataMember]
+    [Computed]
     public List<CryptoSymbol> SymbolList { get; } = new List<CryptoSymbol>();
 
     public CryptoQuoteData()

@@ -3,12 +3,12 @@ using CryptoSbmScanner.Model;
 
 namespace CryptoSbmScanner.Signal;
 
-public class SignalPriceCrossedEma50 : SignalBase
+public class SignalPriceCrossedEma50 : SignalCreateBase
 {
     public SignalPriceCrossedEma50(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        SignalMode = SignalMode.modeLong;
-        SignalStrategy = SignalStrategy.priceCrossedEma50;
+        SignalMode = TradeDirection.Long;
+        SignalStrategy = SignalStrategy.PriceCrossedEma50;
     }
 
     public override bool IndicatorsOkay(CryptoCandle candle)
@@ -45,8 +45,7 @@ public class SignalPriceCrossedEma50 : SignalBase
         if (CandleLast.CandleData.StochOscillator <= 70)
             return false;
 
-        CryptoCandle prevCandle;
-        if (!Candles.TryGetValue(CandleLast.OpenTime - Interval.Duration, out prevCandle))
+        if (!Candles.TryGetValue(CandleLast.OpenTime - Interval.Duration, out CryptoCandle prevCandle))
         {
             ExtraText = "geen prev candle! " + CandleLast.DateLocal.ToString();
             return false;
@@ -86,8 +85,7 @@ public class SignalPriceCrossedEma50 : SignalBase
         }
 
 
-        CryptoCandle CandlePrev1;
-        if (!Candles.TryGetValue(CandleLast.OpenTime - Interval.Duration, out CandlePrev1))
+        if (!Candles.TryGetValue(CandleLast.OpenTime - Interval.Duration, out CryptoCandle CandlePrev1))
         {
             ExtraText = "No prev1";
             return false;

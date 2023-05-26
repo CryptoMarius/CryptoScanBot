@@ -4,12 +4,12 @@ using CryptoSbmScanner.Model;
 namespace CryptoSbmScanner.Signal;
 
 
-public class SignalSlopeEma20TurningPositive : SignalBase
+public class SignalSlopeEma20TurningPositive : SignalCreateBase
 {
     public SignalSlopeEma20TurningPositive(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        SignalMode = SignalMode.modeLong;
-        SignalStrategy = SignalStrategy.slopeEma20TurningPositive;
+        SignalMode = TradeDirection.Long;
+        SignalStrategy = SignalStrategy.SlopeEma20;
     }
 
     public override bool IndicatorsOkay(CryptoCandle candle)
@@ -39,8 +39,7 @@ public class SignalSlopeEma20TurningPositive : SignalBase
         if (CandleLast.CandleData.Ema20 > CandleLast.CandleData.Ema50)
             return false;
 
-        CryptoCandle prevCandle;
-        if (!Candles.TryGetValue(CandleLast.OpenTime - Interval.Duration, out prevCandle))
+        if (!Candles.TryGetValue(CandleLast.OpenTime - Interval.Duration, out CryptoCandle prevCandle))
         {
             ExtraText = "geen prev candle! " + CandleLast.DateLocal.ToString();
             return false;
@@ -50,6 +49,12 @@ public class SignalSlopeEma20TurningPositive : SignalBase
 
         if (prevCandle.CandleData.SlopeEma20 > 0)
             return false;
+
+        if (!BarometersOkay())
+        {
+            ExtraText = "barometer te laag";
+            return false;
+        }
 
         return true;
     }
@@ -72,8 +77,7 @@ public class SignalSlopeEma20TurningPositive : SignalBase
             return false;
 
 
-        CryptoCandle candlePrev;
-        if (!Candles.TryGetValue(CandleLast.OpenTime - Interval.Duration, out candlePrev))
+        if (!Candles.TryGetValue(CandleLast.OpenTime - Interval.Duration, out CryptoCandle candlePrev))
         {
             ExtraText = "No prev1";
             return false;

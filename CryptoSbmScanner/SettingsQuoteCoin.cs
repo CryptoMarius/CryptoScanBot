@@ -5,10 +5,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CryptoSbmScanner.Settings;
+namespace CryptoSbmScanner;
 
 
-internal class SettingsBaseCoin
+internal class SettingsQuoteCoin : IDisposable
 {
     public CryptoQuoteData QuoteData;
 
@@ -29,8 +29,22 @@ internal class SettingsBaseCoin
     public NumericUpDown SlotsMaximal;
 #endif
 
+    public void Dispose()
+    {
+        if (FetchCandles != null) { FetchCandles.Dispose(); FetchCandles = null; }
+        if (MinVolume != null) { MinVolume.Dispose(); MinVolume = null; }
+        if (MinPrice != null) { MinPrice.Dispose(); MinPrice = null; }
+        if (CreateSignals != null) { CreateSignals.Dispose(); CreateSignals = null; }
+        if (PanelColor != null) { PanelColor.Dispose(); PanelColor = null; }
+        if (ButtonColor != null) { ButtonColor.Dispose(); ButtonColor = null; }
+#if TRADEBOT
+        if (BuyAmount != null) { BuyAmount.Dispose(); BuyAmount = null; }
+        if (BuyPercentage != null) { BuyPercentage.Dispose(); BuyPercentage = null; }
+        if (SlotsMaximal != null) { SlotsMaximal.Dispose(); SlotsMaximal = null; }
+#endif
+    }
 
-    public SettingsBaseCoin(CryptoQuoteData quoteData, int yPos, Control.ControlCollection controls)
+    public SettingsQuoteCoin(CryptoQuoteData quoteData, int yPos, Control.ControlCollection controls)
     {
         int xPos = 18;
         QuoteData = quoteData;
@@ -170,7 +184,7 @@ internal class SettingsBaseCoin
     {
         int correct = 3;
 
-        Label label = new() 
+        Label label = new()
         {
             AutoSize = true,
             Text = "Candles halen",
@@ -264,9 +278,9 @@ internal class SettingsBaseCoin
         BuyPercentage.Value = QuoteData.BuyPercentage;
         SlotsMaximal.Value = QuoteData.SlotsMaximal;
 #endif
-}
+    }
 
-public void GetControlValues()
+    public void GetControlValues()
     {
         QuoteData.FetchCandles = FetchCandles.Checked;
         QuoteData.MinimalVolume = MinVolume.Value;

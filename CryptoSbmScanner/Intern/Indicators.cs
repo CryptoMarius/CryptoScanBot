@@ -1,7 +1,7 @@
 ﻿using CryptoSbmScanner.Model;
 using Skender.Stock.Indicators;
 
-namespace CryptoSbmScanner;
+namespace CryptoSbmScanner.Intern;
 
 
 public class CryptoBbResult

@@ -3,12 +3,12 @@
 namespace CryptoSbmScanner.Signal;
 
 
-public class SignalSlopeSma50TurningNegative : SignalBase
+public class SignalSlopeSma50TurningNegative : SignalCreateBase
 {
     public SignalSlopeSma50TurningNegative(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        SignalMode = SignalMode.modeLong;
-        SignalStrategy = SignalStrategy.slopeSma50TurningNegative;
+        SignalMode = TradeDirection.Long;
+        SignalStrategy = SignalStrategy.SlopeSma20;
     }
 
     public override bool IndicatorsOkay(CryptoCandle candle)
@@ -44,6 +44,12 @@ public class SignalSlopeSma50TurningNegative : SignalBase
 
         if (prevCandle.CandleData.SlopeSma50 < 0)
             return false;
+
+        if (!BarometersOkay())
+        {
+            ExtraText = "barometer te laag";
+            return false;
+        }
 
         return true;
     }

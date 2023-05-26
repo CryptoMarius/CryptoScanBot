@@ -8,8 +8,8 @@ public class SignalStobbOverbought : SignalSbmBaseOversold
     public SignalStobbOverbought(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
         ReplaceSignal = true;
-        SignalMode = SignalMode.modeShort;
-        SignalStrategy = SignalStrategy.stobbOverbought;
+        SignalMode = TradeDirection.Short;
+        SignalStrategy = SignalStrategy.Stobb;
     }
 
 
@@ -60,7 +60,7 @@ public class SignalStobbOverbought : SignalSbmBaseOversold
             if (!CheckMaCrossings(out response))
                 return false;
         }
-        
+
         if (GlobalData.Settings.Signal.StobIncludeRsi && !CandleLast.IsRsiOversold())
         {
             response = "rsi niet overbought";
@@ -151,7 +151,7 @@ public class SignalStobbOverbought : SignalSbmBaseOversold
 
 
         // Langer dan x candles willen we niet wachten
-        if ((CandleLast.OpenTime - signal.EventTime) > GlobalData.Settings.Bot.GlobalBuyRemoveTime * Interval.Duration)
+        if ((CandleLast.OpenTime - signal.EventTime) > GlobalData.Settings.Trading.GlobalBuyRemoveTime * Interval.Duration)
         {
             ExtraText = "Ophouden na 10 candles";
             return true;
@@ -172,9 +172,9 @@ public class SignalStobbOverbought : SignalSbmBaseOversold
 
         // Als de barometer alsnog daalt dan stoppen
         BarometerData barometerData = Symbol.QuoteData.BarometerList[(long)CryptoIntervalPeriod.interval1h];
-        if (barometerData.PriceBarometer >= GlobalData.Settings.Bot.Barometer01hBotMinimal)
+        if (barometerData.PriceBarometer >= GlobalData.Settings.Trading.Barometer01hBotMinimal)
         {
-            ExtraText = string.Format("Barometer 1h {0} below {1}", barometerData.PriceBarometer?.ToString0("N2"), GlobalData.Settings.Bot.Barometer01hBotMinimal.ToString0("N2"));
+            ExtraText = string.Format("Barometer 1h {0} below {1}", barometerData.PriceBarometer?.ToString0("N2"), GlobalData.Settings.Trading.Barometer01hBotMinimal.ToString0("N2"));
             return true;
         }
 

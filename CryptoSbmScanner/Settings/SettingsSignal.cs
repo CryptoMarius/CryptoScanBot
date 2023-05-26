@@ -1,4 +1,5 @@
 ﻿using CryptoSbmScanner.Model;
+using System.Drawing;
 using System.Text.Json.Serialization;
 
 namespace CryptoSbmScanner.Settings;
@@ -24,11 +25,15 @@ public class SettingsSignal
     public decimal MinimumTickPercentage { get; set; } = 0.4m;
     public bool LogMinimumTickPercentage { get; set; } = false;
 
-    // de 24 en 48 uur change moet binnen dit interval zitten
-    public double AnalysisMinChangePercentage { get; set; } = -50;
-    public double AnalysisMaxChangePercentage { get; set; } = 50;
+    // de 24 change moet binnen dit interval zitten (niet presentatief)
+    public double AnalysisMinChangePercentage { get; set; } = -25;
+    public double AnalysisMaxChangePercentage { get; set; } = 25;
     public bool LogAnalysisMinMaxChangePercentage { get; set; } = true;
 
+    // de 24 effectief moet binnen dit interval zitten (de echte beweging)
+    public double AnalysisMinEffectivePercentage { get; set; } = -40;
+    public double AnalysisMaxEffectivePercentage { get; set; } = 40;
+    public bool LogAnalysisMinMaxEffectivePercentage { get; set; } = true;
 
     // STOBB signals
     // Het BB percentage kan via de user interface uit worden gezet (nomargin)
@@ -40,13 +45,11 @@ public class SettingsSignal
     public Color ColorStobb { get; set; } = Color.White;
     public bool PlaySoundStobbSignal { get; set; } = false;
     public bool PlaySpeechStobbSignal { get; set; } = false;
-    public bool AnalysisShowStobbOversold { get; set; } = true; // deprecated
     public string SoundStobbOversold { get; set; } = "sound-stobb-oversold.wav";
-    public bool AnalysisShowStobbOverbought { get; set; } = false; // deprecated
     public string SoundStobbOverbought { get; set; } = "sound-stobb-overbought.wav";
     public bool StobIncludeRsi { get; set; } = false;
     public bool StobIncludeSoftSbm { get; set; } = false;
-    public bool StobIncludeSbmPercAndCrossing { get; set; } = false;    
+    public bool StobIncludeSbmPercAndCrossing { get; set; } = false;
 
     // SBM1 signals
     // Het BB percentage kan via de user interface uit worden gezet (nomargin)
@@ -58,29 +61,18 @@ public class SettingsSignal
     public Color ColorSbm { get; set; } = Color.White;
     public bool PlaySoundSbmSignal { get; set; } = true;
     public bool PlaySpeechSbmSignal { get; set; } = true;
-    public bool AnalysisShowSbmOversold { get; set; } = true; // deprecated
     public string SoundSbmOversold { get; set; } = "sound-sbm-oversold.wav";
-    public bool AnalysisShowSbmOverbought { get; set; } = false; // deprecated
     public string SoundSbmOverbought { get; set; } = "sound-sbm-overbought.wav";
     public int Sbm1CandlesLookbackCount { get; set; } = 1;
 
     // SBM2 signals
-    public bool AnalysisSbm2Oversold { get; set; } = false; // deprecated
-    public bool AnalysisSbm2Overbought { get; set; } = false; // deprecated
     public int Sbm2CandlesLookbackCount { get; set; } = 2;
-    public decimal Sbm2UpperPartOfBbPercentage { get; set; } = 00.50m;
-    public decimal Sbm2LowerPartOfBbPercentage { get; set; } = 99.50m;
+    public decimal Sbm2BbPercentage { get; set; } = 5m;
+    public bool Sbm2UseLowHigh { get; set; } = false;
 
     // SBM3 signals
-    public bool AnalysisSbm3Oversold { get; set; } = false; // deprecated
-    public bool AnalysisSbm3Overbought { get; set; } = false; // deprecated
     public int Sbm3CandlesLookbackCount { get; set; } = 8;
     public decimal Sbm3CandlesBbRecoveryPercentage { get; set; } = 225m;
-
-    // SBM4 signals
-    //public decimal Sbm4BbPercent { get; set; } = 1.5m;
-    //public decimal Sbm4Percentage { get; set; } = 0.80m;
-    //public int Sbm4CandlesLookback { get; set; } = 2;
 
     // SBM algemene instellingen recovery, percentages, crossing && lookback
     public int SbmCandlesForMacdRecovery { get; set; } = 2;
@@ -102,11 +94,9 @@ public class SettingsSignal
     public Color ColorJump { get; set; } = Color.White;
     public bool PlaySoundCandleJumpSignal { get; set; } = false;
     public bool PlaySpeechCandleJumpSignal { get; set; } = false;
-    public bool AnalysisShowCandleJumpDown { get; set; } = false;
     public bool JumpUseLowHighCalculation { get; set; } = false;
     public int JumpCandlesLookbackCount { get; set; } = 1;
     public string SoundCandleJumpDown { get; set; } = "sound-jump-down.wav";
-    public bool AnalysisShowCandleJumpUp { get; set; } = false;
     public string SoundCandleJumpUp { get; set; } = "sound-jump-up.wav";
     public decimal AnalysisCandleJumpPercentage { get; set; } = 2.5m;
 
@@ -118,37 +108,34 @@ public class SettingsSignal
 
     // Fine tuning (later)
     public int AboveBollingerBandsSma { get; set; } = 0;
-    public bool LogAboveBollingerBandsSma { get; set; } = false;
+    public bool AboveBollingerBandsSmaCheck { get; set; } = false;
 
     // Fine tuning (later)
     public int AboveBollingerBandsUpper { get; set; } = 0;
-    public bool LogAboveBollingerBandsUpper { get; set; } = false;
+    public bool AboveBollingerBandsUpperCheck { get; set; } = false;
 
     // Fine tuning (later)
     // Candles zonder volume
     public int CandlesWithZeroVolume { get; set; } = 0;
-    public bool LogCandlesWithZeroVolume { get; set; } = false;
+    public bool CandlesWithZeroVolumeCheck { get; set; } = false;
 
     // Fine tuning (later)
     // De zogenaamde platte candles
     public int CandlesWithFlatPrice { get; set; } = 0;
-    public bool LogCandlesWithFlatPrice { get; set; } = false;
+    public bool CandlesWithFlatPriceCheck { get; set; } = false;
 
 
-    // Welke intervallen willen we analyseren?
-    public bool[] AnalyseInterval { get; set; } = new bool[Enum.GetNames(typeof(CryptoIntervalPeriod)).Length];
-    // Welke strategieën willen we analyseren?
-    public bool[] AnalyseStrategy { get; set; } = new bool[Enum.GetNames(typeof(SignalStrategy)).Length];
-
-    // For me..
-    public bool AltradyWebhookActive { get; set; } = false;
-
+    // Op welke intervallen en strategieën willen we analyseren?
+    public IntervalAndStrategyConfig Analyze { get; set; } = new ();
 
 
     public SettingsSignal()
     {
-        AnalyseInterval[(int)CryptoIntervalPeriod.interval1m] = true;
-        AnalyseInterval[(int)CryptoIntervalPeriod.interval2m] = true;
-        AnalyseInterval[(int)CryptoIntervalPeriod.interval3m] = true;
+        Analyze.Interval.Add("1m");
+        Analyze.Interval.Add("2m");
+
+        Analyze.Strategy[TradeDirection.Long].Add("sbm1");
+        Analyze.Strategy[TradeDirection.Long].Add("sbm2");
+        Analyze.Strategy[TradeDirection.Long].Add("sbm3");
     }
 }
