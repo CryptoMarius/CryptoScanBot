@@ -294,6 +294,9 @@ public class CryptoDatabase : IDisposable
                 "SlopeSma50 TEXT NULL," +
                 "SlopeSma20 TEXT NULL," +
 
+                "FluxIndicator5m TEXT NULL," +
+                
+
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)" +
                 "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)," +
                 "FOREIGN KEY(IntervalId) REFERENCES Interval(Id)" +

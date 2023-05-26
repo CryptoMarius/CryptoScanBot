@@ -1,9 +1,7 @@
 ﻿using Binance.Net.Clients;
 using Binance.Net.Objects.Models.Spot.Socket;
-
 using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Sockets;
-
 using CryptoSbmScanner.Intern;
 
 namespace CryptoSbmScanner.Binance;
