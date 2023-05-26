@@ -205,7 +205,8 @@ public class ThreadMonitorCandle
             // De 1m candle is final, neem de sluittijd van deze 1m candle
             long candleCloseTime = candle.OpenTime + 60;
 
-            foreach (CryptoInterval interval in TradingConfig.AnalyzeInterval.Values)
+            // Een extra ToList() zodat we een readonly setje hebben (en we de instellingen kunnen muteren)
+            foreach (CryptoInterval interval in TradingConfig.AnalyzeInterval.Values.ToList())
             {
                 // (0 % 180 = 0, 60 % 180 = 60, 120 % 180 = 120, 180 % 180 = 0)
                 if (candleCloseTime % interval.Duration == 0)
