@@ -38,6 +38,7 @@ partial class FrmSettings
         panel1 = new Panel();
         tabControl = new TabControl();
         tabAlgemeen = new TabPage();
+        EditSendSignalsToTelegram = new CheckBox();
         ButtonTestTelegram = new Button();
         label24 = new Label();
         EditTelegramChatId = new TextBox();
@@ -224,6 +225,7 @@ partial class FrmSettings
         panel6 = new Panel();
         label49 = new Label();
         tabExtra = new TabPage();
+        EditLockProfits = new CheckBox();
         EditTradeViaBinance = new CheckBox();
         label63 = new Label();
         EditSellMethod = new ComboBox();
@@ -321,7 +323,9 @@ partial class FrmSettings
         toolTip1 = new ToolTip(components);
         imageList1 = new ImageList(components);
         colorDialog1 = new ColorDialog();
-        EditSendSignalsToTelegram = new CheckBox();
+        EditDynamicTp = new CheckBox();
+        label65 = new Label();
+        EditDynamicTpPercentage = new NumericUpDown();
         panel2.SuspendLayout();
         panel1.SuspendLayout();
         tabControl.SuspendLayout();
@@ -394,6 +398,7 @@ partial class FrmSettings
         ((System.ComponentModel.ISupportInitialize)EditGlobalBuyVarying).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditGlobalBuyRemoveTime).BeginInit();
         tabExtra2.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)EditDynamicTpPercentage).BeginInit();
         SuspendLayout();
         // 
         // panel2
@@ -517,6 +522,17 @@ partial class FrmSettings
         tabAlgemeen.TabIndex = 6;
         tabAlgemeen.Text = "Algemeen";
         tabAlgemeen.UseVisualStyleBackColor = true;
+        // 
+        // EditSendSignalsToTelegram
+        // 
+        EditSendSignalsToTelegram.AutoSize = true;
+        EditSendSignalsToTelegram.Location = new Point(56, 463);
+        EditSendSignalsToTelegram.Margin = new Padding(4, 3, 4, 3);
+        EditSendSignalsToTelegram.Name = "EditSendSignalsToTelegram";
+        EditSendSignalsToTelegram.Size = new Size(190, 19);
+        EditSendSignalsToTelegram.TabIndex = 169;
+        EditSendSignalsToTelegram.Text = "Stuur meldingen naar telegram";
+        EditSendSignalsToTelegram.UseVisualStyleBackColor = true;
         // 
         // ButtonTestTelegram
         // 
@@ -2593,6 +2609,10 @@ partial class FrmSettings
         // 
         // tabExtra
         // 
+        tabExtra.Controls.Add(label65);
+        tabExtra.Controls.Add(EditDynamicTpPercentage);
+        tabExtra.Controls.Add(EditDynamicTp);
+        tabExtra.Controls.Add(EditLockProfits);
         tabExtra.Controls.Add(EditTradeViaBinance);
         tabExtra.Controls.Add(label63);
         tabExtra.Controls.Add(EditSellMethod);
@@ -2665,6 +2685,17 @@ partial class FrmSettings
         tabExtra.TabIndex = 11;
         tabExtra.Text = "Extra";
         tabExtra.UseVisualStyleBackColor = true;
+        // 
+        // EditLockProfits
+        // 
+        EditLockProfits.AutoSize = true;
+        EditLockProfits.Location = new Point(24, 513);
+        EditLockProfits.Margin = new Padding(4, 3, 4, 3);
+        EditLockProfits.Name = "EditLockProfits";
+        EditLockProfits.Size = new Size(88, 19);
+        EditLockProfits.TabIndex = 256;
+        EditLockProfits.Text = "Lock profits";
+        EditLockProfits.UseVisualStyleBackColor = true;
         // 
         // EditTradeViaBinance
         // 
@@ -2745,7 +2776,7 @@ partial class FrmSettings
         // 
         label36.AutoSize = true;
         label36.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
-        label36.Location = new Point(22, 554);
+        label36.Location = new Point(18, 597);
         label36.Margin = new Padding(4, 0, 4, 0);
         label36.Name = "label36";
         label36.Size = new Size(63, 15);
@@ -3424,7 +3455,7 @@ partial class FrmSettings
         // EditGlobalStopLimitPercentage
         // 
         EditGlobalStopLimitPercentage.DecimalPlaces = 2;
-        EditGlobalStopLimitPercentage.Location = new Point(144, 609);
+        EditGlobalStopLimitPercentage.Location = new Point(140, 652);
         EditGlobalStopLimitPercentage.Margin = new Padding(4, 3, 4, 3);
         EditGlobalStopLimitPercentage.Name = "EditGlobalStopLimitPercentage";
         EditGlobalStopLimitPercentage.Size = new Size(88, 23);
@@ -3434,7 +3465,7 @@ partial class FrmSettings
         // label70
         // 
         label70.AutoSize = true;
-        label70.Location = new Point(23, 611);
+        label70.Location = new Point(19, 654);
         label70.Margin = new Padding(4, 0, 4, 0);
         label70.Name = "label70";
         label70.Size = new Size(107, 15);
@@ -3444,7 +3475,7 @@ partial class FrmSettings
         // EditGlobalStopPercentage
         // 
         EditGlobalStopPercentage.DecimalPlaces = 2;
-        EditGlobalStopPercentage.Location = new Point(144, 580);
+        EditGlobalStopPercentage.Location = new Point(140, 623);
         EditGlobalStopPercentage.Margin = new Padding(4, 3, 4, 3);
         EditGlobalStopPercentage.Name = "EditGlobalStopPercentage";
         EditGlobalStopPercentage.Size = new Size(88, 23);
@@ -3454,7 +3485,7 @@ partial class FrmSettings
         // label71
         // 
         label71.AutoSize = true;
-        label71.Location = new Point(23, 582);
+        label71.Location = new Point(19, 625);
         label71.Margin = new Padding(4, 0, 4, 0);
         label71.Name = "label71";
         label71.Size = new Size(109, 15);
@@ -3689,16 +3720,36 @@ partial class FrmSettings
         imageList1.TransparentColor = Color.Transparent;
         imageList1.Images.SetKeyName(0, "volume.png");
         // 
-        // EditSendSignalsToTelegram
+        // EditDynamicTp
         // 
-        EditSendSignalsToTelegram.AutoSize = true;
-        EditSendSignalsToTelegram.Location = new Point(56, 463);
-        EditSendSignalsToTelegram.Margin = new Padding(4, 3, 4, 3);
-        EditSendSignalsToTelegram.Name = "EditSendSignalsToTelegram";
-        EditSendSignalsToTelegram.Size = new Size(190, 19);
-        EditSendSignalsToTelegram.TabIndex = 169;
-        EditSendSignalsToTelegram.Text = "Stuur meldingen naar telegram";
-        EditSendSignalsToTelegram.UseVisualStyleBackColor = true;
+        EditDynamicTp.AutoSize = true;
+        EditDynamicTp.Location = new Point(23, 538);
+        EditDynamicTp.Margin = new Padding(4, 3, 4, 3);
+        EditDynamicTp.Name = "EditDynamicTp";
+        EditDynamicTp.Size = new Size(107, 19);
+        EditDynamicTp.TabIndex = 257;
+        EditDynamicTp.Text = "Dynamische TP";
+        EditDynamicTp.UseVisualStyleBackColor = true;
+        // 
+        // label65
+        // 
+        label65.AutoSize = true;
+        label65.Location = new Point(21, 566);
+        label65.Margin = new Padding(4, 0, 4, 0);
+        label65.Name = "label65";
+        label65.Size = new Size(121, 15);
+        label65.TabIndex = 258;
+        label65.Text = "MA20 percentage (%)";
+        // 
+        // EditDynamicTpPercentage
+        // 
+        EditDynamicTpPercentage.DecimalPlaces = 2;
+        EditDynamicTpPercentage.Location = new Point(145, 564);
+        EditDynamicTpPercentage.Margin = new Padding(4, 3, 4, 3);
+        EditDynamicTpPercentage.Name = "EditDynamicTpPercentage";
+        EditDynamicTpPercentage.Size = new Size(88, 23);
+        EditDynamicTpPercentage.TabIndex = 259;
+        EditDynamicTpPercentage.Value = new decimal(new int[] { 75, 0, 0, 131072 });
         // 
         // FrmSettings
         // 
@@ -3803,6 +3854,7 @@ partial class FrmSettings
         ((System.ComponentModel.ISupportInitialize)EditGlobalBuyRemoveTime).EndInit();
         tabExtra2.ResumeLayout(false);
         tabExtra2.PerformLayout();
+        ((System.ComponentModel.ISupportInitialize)EditDynamicTpPercentage).EndInit();
         ResumeLayout(false);
     }
 
@@ -4099,4 +4151,8 @@ partial class FrmSettings
     private CheckBox EditLogAnalysisMinMaxEffectivePercentage;
     private CheckBox EditTradeViaBinance;
     private CheckBox EditSendSignalsToTelegram;
+    private CheckBox EditLockProfits;
+    private CheckBox EditDynamicTp;
+    private Label label65;
+    private NumericUpDown EditDynamicTpPercentage;
 }

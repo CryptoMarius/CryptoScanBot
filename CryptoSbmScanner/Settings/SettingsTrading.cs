@@ -81,7 +81,11 @@ public class SettingsTrading
     public decimal ProfitPercentage { get; set; } = 0.7m;
     // De manier waarop de order geplaatst wordt
     public BuyPriceMethod SellMethod { get; set; } = BuyPriceMethod.BidPrice;
-
+    // Zet een OCO zodra we in de winst zijn (kan het geen verlies trade meer worden, samen met tracing)
+    public bool LockProfits { get; set; } = false;
+    // Bepaal TP op basis van percentage van de MA20
+    public bool DynamicTp { get; set; } = false;
+    public decimal DynamicTpPercentage { get; set; } = 0.6m;
 
     //***************************
     // Stopp loss

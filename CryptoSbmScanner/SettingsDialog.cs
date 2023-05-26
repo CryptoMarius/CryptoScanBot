@@ -248,6 +248,7 @@ public partial class FrmSettings : Form
         EditBarometer04hBotMinimal.Minimum = -100;
         EditBarometer24hBotMinimal.Minimum = -100;
         EditAnalysisMinChangePercentage.Minimum = -100;
+        EditAnalysisMinEffectivePercentage.Minimum = -100;
 
         //EditSoundTradeNotification.Checked = settings.General.SoundTradeNotification;
 
@@ -439,6 +440,9 @@ public partial class FrmSettings : Form
         // take profit
         EditSellMethod.SelectedIndex = (int)settings.Trading.SellMethod;
         EditProfitPercentage.Value = settings.Trading.ProfitPercentage;
+        EditLockProfits.Checked = settings.Trading.LockProfits;
+        EditDynamicTp.Checked = settings.Trading.DynamicTp;
+        EditDynamicTpPercentage.Value = settings.Trading.DynamicTpPercentage;
 
         // Stop loss
         EditGlobalStopPercentage.Value = Math.Abs(settings.Trading.GlobalStopPercentage);
@@ -725,6 +729,9 @@ public partial class FrmSettings : Form
         // take profit
         settings.Trading.ProfitPercentage = EditProfitPercentage.Value;
         settings.Trading.SellMethod = (BuyPriceMethod)EditSellMethod.SelectedIndex;
+        settings.Trading.LockProfits = EditLockProfits.Checked;
+        settings.Trading.DynamicTp = EditDynamicTp.Checked;
+        settings.Trading.DynamicTpPercentage = EditDynamicTpPercentage.Value;
 
         // Stop loss
         settings.Trading.GlobalStopPercentage = EditGlobalStopPercentage.Value;
