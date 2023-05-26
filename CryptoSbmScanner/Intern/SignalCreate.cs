@@ -1,4 +1,6 @@
-﻿using CryptoSbmScanner.Context;
+﻿using CryptoExchange.Net.CommonObjects;
+
+using CryptoSbmScanner.Context;
 using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Signal;
 using Dapper.Contrib.Extensions;
@@ -199,7 +201,7 @@ public class SignalCreate
         float trendPercentage = 100 * (float)percentageSum / (float)maxPercentageSum;
         signal.TrendPercentage = trendPercentage;
         Symbol.TrendPercentage = trendPercentage;
-
+        Symbol.TrendInfoDate = CandleTools.GetUnixDate(signal.EventTime);
     }
 
 
