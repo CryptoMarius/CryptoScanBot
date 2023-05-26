@@ -35,6 +35,7 @@ public class CryptoSignal
 
     public bool BackTest { get; set; }
     public bool IsInvalid { get; set; }
+
     public long EventTime { get; set; }
     public DateTime OpenDate { get; set; }
 
@@ -78,7 +79,9 @@ public class CryptoSignal
 
     public string EventText { get; set; }
     public decimal Price { get; set; }
+    [Computed]
     public decimal? LastPrice { get; set; }
+    [Computed]
     public double? PriceDiff { get { return (double)(100 * ((Symbol.LastPrice / Price) - 1)); } }
     public decimal Volume { get; set; }
 
