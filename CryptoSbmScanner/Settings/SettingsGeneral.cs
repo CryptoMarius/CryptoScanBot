@@ -31,12 +31,12 @@ public enum TrendCalculationMethod
 public class IntervalAndStrategyConfig
 {
     public List<string> Interval { get; set; } = new();
-    public Dictionary<TradeDirection, List<string>> Strategy { get; set; } = new();
+    public Dictionary<CryptoTradeDirection, List<string>> Strategy { get; set; } = new();
 
     public IntervalAndStrategyConfig()
     {
-        Strategy.Add(TradeDirection.Long, new List<string>());
-        Strategy.Add(TradeDirection.Short, new List<string>());
+        Strategy.Add(CryptoTradeDirection.Long, new List<string>());
+        Strategy.Add(CryptoTradeDirection.Short, new List<string>());
     }
 }
 

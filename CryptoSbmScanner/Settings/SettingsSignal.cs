@@ -18,7 +18,7 @@ public class SettingsSignal
     public bool LogBarometerToLow { get; set; } = false;
 
     // Aantal dagen dat de munt moet bestaan
-    public decimal SymbolMustExistsDays { get; set; } = 15;
+    public int SymbolMustExistsDays { get; set; } = 15;
     public bool LogSymbolMustExistsDays { get; set; } = false;
 
     // Vermijden van "barcode" charts
@@ -50,6 +50,7 @@ public class SettingsSignal
     public bool StobIncludeRsi { get; set; } = false;
     public bool StobIncludeSoftSbm { get; set; } = false;
     public bool StobIncludeSbmPercAndCrossing { get; set; } = false;
+    public decimal StobMinimalTrend { get; set; } = -999m;
 
     // SBM1 signals
     // Het BB percentage kan via de user interface uit worden gezet (nomargin)
@@ -134,8 +135,8 @@ public class SettingsSignal
         Analyze.Interval.Add("1m");
         Analyze.Interval.Add("2m");
 
-        Analyze.Strategy[TradeDirection.Long].Add("sbm1");
-        Analyze.Strategy[TradeDirection.Long].Add("sbm2");
-        Analyze.Strategy[TradeDirection.Long].Add("sbm3");
+        Analyze.Strategy[CryptoTradeDirection.Long].Add("sbm1");
+        Analyze.Strategy[CryptoTradeDirection.Long].Add("sbm2");
+        Analyze.Strategy[CryptoTradeDirection.Long].Add("sbm3");
     }
 }

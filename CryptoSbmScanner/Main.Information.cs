@@ -132,13 +132,13 @@ public partial class FrmMain
                         text = candlesKLineCount.ToString("N0");
                         ShowSymbolPrice(symbolHistList[1], listViewInformation.Items[1], exchange, quoteData, "BNB", GlobalData.TradingViewBitcoinDominance, "Binance 1m stream count", text);
 
-                        text = GlobalData.ThreadMonitorCandle?.analyseCount.ToString("N0");
+                        text = PositionMonitor.AnalyseCount.ToString("N0");
                         ShowSymbolPrice(symbolHistList[2], listViewInformation.Items[2], exchange, quoteData, "ETH", GlobalData.TradingViewSpx500, "Scanner analyse count", text);
 
                         text = createdSignalCount.ToString("N0");
                         ShowSymbolPrice(symbolHistList[3], listViewInformation.Items[3], exchange, quoteData, "XRP", GlobalData.TradingViewMarketCapTotal, "Scanner signal count", text);
 
-#if DATABASE
+#if SQLDATABASE
                         text = GlobalData.TaskSaveCandles.QueueCount.ToString("N0");
                         ShowSymbolPrice(symbolHistList[4], listViewInformation.Items[4], exchange, quoteData, "ADA", GlobalData.FearAndGreedIndex, "Database Buffer", text);
 #else
@@ -196,20 +196,15 @@ public partial class FrmMain
                 if (tvValues == null)
                     return;
 
-                if (tvValues.Url != "")
-                {
-                    string href = tvValues.Url;
-                    Uri uri = new(href);
-                    webViewTradingView.Source = uri;
-                    tabControl.SelectedTab = tabPageBrowser;
-                }
+                string href;
+                if (tvValues.Ticker == null)
+                    href = tvValues.Url;
                 else
-                {
-                    string href = string.Format("https://www.tradingview.com/chart/?symbol={0}&interval=60", tvValues.Ticker);
-                    Uri uri = new(href);
-                    webViewTradingView.Source = uri;
-                    tabControl.SelectedTab = tabPageBrowser;
-                }
+                    href = string.Format("https://www.tradingview.com/chart/?symbol={0}&interval=60", tvValues.Ticker);
+
+                Uri uri = new(href);
+                webViewTradingView.Source = uri;
+                tabControl.SelectedTab = tabPageBrowser;
             }
             else tabControl.SelectedTab = tabPageSignals;
         }

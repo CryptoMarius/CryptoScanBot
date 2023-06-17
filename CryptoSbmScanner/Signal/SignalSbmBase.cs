@@ -50,15 +50,12 @@ public class SignalSbmBase : SignalCreateBase
 
     public override string DisplayText()
     {
-        decimal value = -999m;
-
-        return string.Format("ma200={0:N8} ma50={1:N8} ma20={2:N8} psar={3:N8} macd.h={4:N8} bm={5:N2} bb%={6:N2} rsi=={7:N2}",
+        return string.Format("ma200={0:N8} ma50={1:N8} ma20={2:N8} psar={3:N8} macd.h={4:N8} bb%={5:N2} rsi=={6:N2}",
             CandleLast.CandleData.Sma200,
             CandleLast.CandleData.Sma50,
             CandleLast.CandleData.Sma20,
             CandleLast.CandleData.PSar,
             CandleLast.CandleData.MacdHistogram,
-            value,
             CandleLast.CandleData.BollingerBandsPercentage,
             CandleLast.CandleData.Rsi
         );

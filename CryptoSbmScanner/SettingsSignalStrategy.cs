@@ -12,7 +12,7 @@ namespace CryptoSbmScanner;
 
 internal class SettingsSignalStrategy : IDisposable
 {
-    public TradeDirection Mode;
+    public CryptoTradeDirection Mode;
     public SignalStrategy Strategy;
 
     public Label LabelInfo;
@@ -37,7 +37,7 @@ internal class SettingsSignalStrategy : IDisposable
         if (Barometer1d != null) { Barometer1d.Dispose(); Barometer1d = null; }
     }
 
-    public SettingsSignalStrategy(TradeDirection mode, SignalStrategy strategy, int yPos, Control.ControlCollection controls)
+    public SettingsSignalStrategy(CryptoTradeDirection mode, SignalStrategy strategy, int yPos, Control.ControlCollection controls)
     {
         int xPos = 18;
         Mode = mode;

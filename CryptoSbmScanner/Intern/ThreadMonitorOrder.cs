@@ -7,8 +7,8 @@ namespace CryptoSbmScanner.Intern;
 
 public class ThreadMonitorOrder
 {
-    private BlockingCollection<BinanceStreamOrderUpdate> Queue = new BlockingCollection<BinanceStreamOrderUpdate>();
-    private CancellationTokenSource cancellationToken = new CancellationTokenSource();
+    private readonly CancellationTokenSource cancellationToken = new();
+    private readonly BlockingCollection<BinanceStreamOrderUpdate> Queue = new();
 
     public ThreadMonitorOrder()
     {
@@ -28,7 +28,7 @@ public class ThreadMonitorOrder
 
     public async Task ExecuteAsync()
     {
-        // Een aparte queue die orders afhandeld (met als achterliggede reden de juiste afhandel volgorde)
+        // Een aparte queue die orders afhandeld (met als achterliggende reden de juiste afhandel volgorde)
         foreach (BinanceStreamOrderUpdate data in Queue.GetConsumingEnumerable(cancellationToken.Token))
         {
             try
@@ -39,8 +39,8 @@ public class ThreadMonitorOrder
                 {
                     if (exchange.SymbolListName.TryGetValue(data.Symbol, out CryptoSymbol symbol))
                     {
-                        PositionMonitor monitorAlgorithm = new PositionMonitor();
-                        await monitorAlgorithm.HandleTrade(symbol, data, true);
+                        // Puzzel, welk trading account hoort erbij (als je meerdere hebt)
+                        await PositionMonitor.HandleTradeAsync(GlobalData.BinanceRealTradeAccount, symbol, data);
                     }
                 }
 
@@ -51,6 +51,7 @@ public class ThreadMonitorOrder
                 GlobalData.AddTextToLogTab("\r\n" + "\r\n" + data.Symbol + " error order handler thread\r\n" + error.ToString());
             }
         }
+        GlobalData.AddTextToLogTab("\r\n" + "\r\n MONITOR order THREAD EXIT");
     }
 }
 

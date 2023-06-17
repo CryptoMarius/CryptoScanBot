@@ -111,6 +111,8 @@ partial class FrmSettings
         EditAnalyzeInterval2h = new CheckBox();
         EditAnalyzeInterval4h = new CheckBox();
         tabSignalStobb = new TabPage();
+        label66 = new Label();
+        EditStobMinimalTrend = new NumericUpDown();
         label77 = new Label();
         label75 = new Label();
         EditStobIncludeSbmPercAndCrossing = new CheckBox();
@@ -225,6 +227,12 @@ partial class FrmSettings
         panel6 = new Panel();
         label49 = new Label();
         tabExtra = new TabPage();
+        label83 = new Label();
+        EditBuyStepInMethod = new ComboBox();
+        label82 = new Label();
+        EditDcaStepInMethod = new ComboBox();
+        label65 = new Label();
+        EditDynamicTpPercentage = new NumericUpDown();
         EditLockProfits = new CheckBox();
         EditTradeViaBinance = new CheckBox();
         label63 = new Label();
@@ -232,7 +240,7 @@ partial class FrmSettings
         EditDoNotEnterTrade = new CheckBox();
         EditTradeViaPaperTrading = new CheckBox();
         label60 = new Label();
-        EditDcaMethod = new ComboBox();
+        EditDcaOrderMethod = new ComboBox();
         label36 = new Label();
         label81 = new Label();
         label57 = new Label();
@@ -288,7 +296,7 @@ partial class FrmSettings
         EditBotPriceCrossingSma20 = new CheckBox();
         label74 = new Label();
         label62 = new Label();
-        EditBuyMethod = new ComboBox();
+        EditBuyOrderMethod = new ComboBox();
         EditDcaCount = new NumericUpDown();
         label67 = new Label();
         label68 = new Label();
@@ -323,9 +331,6 @@ partial class FrmSettings
         toolTip1 = new ToolTip(components);
         imageList1 = new ImageList(components);
         colorDialog1 = new ColorDialog();
-        EditDynamicTp = new CheckBox();
-        label65 = new Label();
-        EditDynamicTpPercentage = new NumericUpDown();
         panel2.SuspendLayout();
         panel1.SuspendLayout();
         tabControl.SuspendLayout();
@@ -348,6 +353,7 @@ partial class FrmSettings
         ((System.ComponentModel.ISupportInitialize)EditBarometer1hMinimal).BeginInit();
         groupBoxInterval.SuspendLayout();
         tabSignalStobb.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)EditStobMinimalTrend).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditStobbBBMinPercentage).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditStobbBBMaxPercentage).BeginInit();
         tabSignalSbm.SuspendLayout();
@@ -377,6 +383,7 @@ partial class FrmSettings
         tabBlacklistOverbought.SuspendLayout();
         panel6.SuspendLayout();
         tabExtra.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)EditDynamicTpPercentage).BeginInit();
         groupBoxSlots.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)EditSlotsMaximalExchange).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditSlotsMaximalSymbol).BeginInit();
@@ -398,7 +405,6 @@ partial class FrmSettings
         ((System.ComponentModel.ISupportInitialize)EditGlobalBuyVarying).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditGlobalBuyRemoveTime).BeginInit();
         tabExtra2.SuspendLayout();
-        ((System.ComponentModel.ISupportInitialize)EditDynamicTpPercentage).BeginInit();
         SuspendLayout();
         // 
         // panel2
@@ -1327,6 +1333,8 @@ partial class FrmSettings
         // 
         // tabSignalStobb
         // 
+        tabSignalStobb.Controls.Add(label66);
+        tabSignalStobb.Controls.Add(EditStobMinimalTrend);
         tabSignalStobb.Controls.Add(label77);
         tabSignalStobb.Controls.Add(label75);
         tabSignalStobb.Controls.Add(EditStobIncludeSbmPercAndCrossing);
@@ -1358,6 +1366,28 @@ partial class FrmSettings
         tabSignalStobb.TabIndex = 1;
         tabSignalStobb.Text = "STOBB";
         tabSignalStobb.UseVisualStyleBackColor = true;
+        // 
+        // label66
+        // 
+        label66.AutoSize = true;
+        label66.Location = new Point(19, 475);
+        label66.Margin = new Padding(4, 0, 4, 0);
+        label66.Name = "label66";
+        label66.Size = new Size(88, 15);
+        label66.TabIndex = 152;
+        label66.Text = "Minimale trend";
+        // 
+        // EditStobMinimalTrend
+        // 
+        EditStobMinimalTrend.DecimalPlaces = 2;
+        EditStobMinimalTrend.Location = new Point(140, 473);
+        EditStobMinimalTrend.Margin = new Padding(4, 3, 4, 3);
+        EditStobMinimalTrend.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
+        EditStobMinimalTrend.Minimum = new decimal(new int[] { 1000, 0, 0, int.MinValue });
+        EditStobMinimalTrend.Name = "EditStobMinimalTrend";
+        EditStobMinimalTrend.Size = new Size(65, 23);
+        EditStobMinimalTrend.TabIndex = 153;
+        EditStobMinimalTrend.Value = new decimal(new int[] { 150, 0, 0, 131072 });
         // 
         // label77
         // 
@@ -1921,9 +1951,9 @@ partial class FrmSettings
         label22.Location = new Point(612, 178);
         label22.Margin = new Padding(4, 0, 4, 0);
         label22.Name = "label22";
-        label22.Size = new Size(193, 13);
+        label22.Size = new Size(245, 13);
         label22.TabIndex = 112;
-        label22.Text = "Extra instellingen voor alle SBMx";
+        label22.Text = "Extra instellingen voor alle SBM methodes";
         // 
         // label4
         // 
@@ -2609,9 +2639,12 @@ partial class FrmSettings
         // 
         // tabExtra
         // 
+        tabExtra.Controls.Add(label83);
+        tabExtra.Controls.Add(EditBuyStepInMethod);
+        tabExtra.Controls.Add(label82);
+        tabExtra.Controls.Add(EditDcaStepInMethod);
         tabExtra.Controls.Add(label65);
         tabExtra.Controls.Add(EditDynamicTpPercentage);
-        tabExtra.Controls.Add(EditDynamicTp);
         tabExtra.Controls.Add(EditLockProfits);
         tabExtra.Controls.Add(EditTradeViaBinance);
         tabExtra.Controls.Add(label63);
@@ -2619,7 +2652,7 @@ partial class FrmSettings
         tabExtra.Controls.Add(EditDoNotEnterTrade);
         tabExtra.Controls.Add(EditTradeViaPaperTrading);
         tabExtra.Controls.Add(label60);
-        tabExtra.Controls.Add(EditDcaMethod);
+        tabExtra.Controls.Add(EditDcaOrderMethod);
         tabExtra.Controls.Add(label36);
         tabExtra.Controls.Add(label81);
         tabExtra.Controls.Add(label57);
@@ -2647,7 +2680,7 @@ partial class FrmSettings
         tabExtra.Controls.Add(EditBotPriceCrossingSma20);
         tabExtra.Controls.Add(label74);
         tabExtra.Controls.Add(label62);
-        tabExtra.Controls.Add(EditBuyMethod);
+        tabExtra.Controls.Add(EditBuyOrderMethod);
         tabExtra.Controls.Add(EditDcaCount);
         tabExtra.Controls.Add(label67);
         tabExtra.Controls.Add(label68);
@@ -2686,10 +2719,72 @@ partial class FrmSettings
         tabExtra.Text = "Extra";
         tabExtra.UseVisualStyleBackColor = true;
         // 
+        // label83
+        // 
+        label83.AutoSize = true;
+        label83.Location = new Point(17, 178);
+        label83.Margin = new Padding(4, 0, 4, 0);
+        label83.Name = "label83";
+        label83.Size = new Size(88, 15);
+        label83.TabIndex = 263;
+        label83.Text = "Instap moment";
+        // 
+        // EditBuyStepInMethod
+        // 
+        EditBuyStepInMethod.DropDownStyle = ComboBoxStyle.DropDownList;
+        EditBuyStepInMethod.FormattingEnabled = true;
+        EditBuyStepInMethod.Items.AddRange(new object[] { "Direct na het signaal", "Trace via de Keltner Channel en PSAR" });
+        EditBuyStepInMethod.Location = new Point(185, 170);
+        EditBuyStepInMethod.Margin = new Padding(4, 3, 4, 3);
+        EditBuyStepInMethod.Name = "EditBuyStepInMethod";
+        EditBuyStepInMethod.Size = new Size(140, 23);
+        EditBuyStepInMethod.TabIndex = 262;
+        // 
+        // label82
+        // 
+        label82.AutoSize = true;
+        label82.Location = new Point(17, 316);
+        label82.Margin = new Padding(4, 0, 4, 0);
+        label82.Name = "label82";
+        label82.Size = new Size(88, 15);
+        label82.TabIndex = 261;
+        label82.Text = "Instap moment";
+        // 
+        // EditDcaStepInMethod
+        // 
+        EditDcaStepInMethod.DropDownStyle = ComboBoxStyle.DropDownList;
+        EditDcaStepInMethod.FormattingEnabled = true;
+        EditDcaStepInMethod.Items.AddRange(new object[] { "Na een volgend signaal (SBM/STOBB)", "Gefixeerd op opgegeven percentage", "" });
+        EditDcaStepInMethod.Location = new Point(185, 308);
+        EditDcaStepInMethod.Margin = new Padding(4, 3, 4, 3);
+        EditDcaStepInMethod.Name = "EditDcaStepInMethod";
+        EditDcaStepInMethod.Size = new Size(140, 23);
+        EditDcaStepInMethod.TabIndex = 260;
+        // 
+        // label65
+        // 
+        label65.AutoSize = true;
+        label65.Location = new Point(17, 597);
+        label65.Margin = new Padding(4, 0, 4, 0);
+        label65.Name = "label65";
+        label65.Size = new Size(143, 15);
+        label65.TabIndex = 258;
+        label65.Text = "Percentage van MA20 (%)";
+        // 
+        // EditDynamicTpPercentage
+        // 
+        EditDynamicTpPercentage.DecimalPlaces = 2;
+        EditDynamicTpPercentage.Location = new Point(185, 595);
+        EditDynamicTpPercentage.Margin = new Padding(4, 3, 4, 3);
+        EditDynamicTpPercentage.Name = "EditDynamicTpPercentage";
+        EditDynamicTpPercentage.Size = new Size(88, 23);
+        EditDynamicTpPercentage.TabIndex = 259;
+        EditDynamicTpPercentage.Value = new decimal(new int[] { 75, 0, 0, 131072 });
+        // 
         // EditLockProfits
         // 
         EditLockProfits.AutoSize = true;
-        EditLockProfits.Location = new Point(24, 513);
+        EditLockProfits.Location = new Point(21, 568);
         EditLockProfits.Margin = new Padding(4, 3, 4, 3);
         EditLockProfits.Name = "EditLockProfits";
         EditLockProfits.Size = new Size(88, 19);
@@ -2711,7 +2806,7 @@ partial class FrmSettings
         // label63
         // 
         label63.AutoSize = true;
-        label63.Location = new Point(24, 487);
+        label63.Location = new Point(17, 515);
         label63.Margin = new Padding(4, 0, 4, 0);
         label63.Name = "label63";
         label63.Size = new Size(55, 15);
@@ -2722,8 +2817,8 @@ partial class FrmSettings
         // 
         EditSellMethod.DropDownStyle = ComboBoxStyle.DropDownList;
         EditSellMethod.FormattingEnabled = true;
-        EditSellMethod.Items.AddRange(new object[] { "Bied prijs", "Vraag prijs", "Het gemiddelde van de bied en vraag prijs", "Sma20", "Onderste Bollingerband", "Market order" });
-        EditSellMethod.Location = new Point(145, 484);
+        EditSellMethod.Items.AddRange(new object[] { "Limit order op vaste winst percentage", "Limit order op dynamisch percentage van de BB", "Trace via de Keltner Channel en PSAR" });
+        EditSellMethod.Location = new Point(185, 512);
         EditSellMethod.Margin = new Padding(4, 3, 4, 3);
         EditSellMethod.Name = "EditSellMethod";
         EditSellMethod.Size = new Size(140, 23);
@@ -2732,6 +2827,7 @@ partial class FrmSettings
         // EditDoNotEnterTrade
         // 
         EditDoNotEnterTrade.AutoSize = true;
+        EditDoNotEnterTrade.Enabled = false;
         EditDoNotEnterTrade.Location = new Point(912, 36);
         EditDoNotEnterTrade.Margin = new Padding(4, 3, 4, 3);
         EditDoNotEnterTrade.Name = "EditDoNotEnterTrade";
@@ -2754,29 +2850,29 @@ partial class FrmSettings
         // label60
         // 
         label60.AutoSize = true;
-        label60.Location = new Point(17, 389);
+        label60.Location = new Point(17, 340);
         label60.Margin = new Padding(4, 0, 4, 0);
         label60.Name = "label60";
-        label60.Size = new Size(55, 15);
+        label60.Size = new Size(86, 15);
         label60.TabIndex = 250;
-        label60.Text = "Methode";
+        label60.Text = "Koop methode";
         // 
-        // EditDcaMethod
+        // EditDcaOrderMethod
         // 
-        EditDcaMethod.DropDownStyle = ComboBoxStyle.DropDownList;
-        EditDcaMethod.FormattingEnabled = true;
-        EditDcaMethod.Items.AddRange(new object[] { "Bied prijs", "Vraag prijs", "Het gemiddelde van de bied en vraag prijs", "Sma20", "Onderste Bollingerband", "Market order" });
-        EditDcaMethod.Location = new Point(138, 386);
-        EditDcaMethod.Margin = new Padding(4, 3, 4, 3);
-        EditDcaMethod.Name = "EditDcaMethod";
-        EditDcaMethod.Size = new Size(140, 23);
-        EditDcaMethod.TabIndex = 249;
+        EditDcaOrderMethod.DropDownStyle = ComboBoxStyle.DropDownList;
+        EditDcaOrderMethod.FormattingEnabled = true;
+        EditDcaOrderMethod.Items.AddRange(new object[] { "Limit order", "Market order", "Bied prijs", "Vraag prijs", "Het gemiddelde van de bied en vraag prijs" });
+        EditDcaOrderMethod.Location = new Point(185, 336);
+        EditDcaOrderMethod.Margin = new Padding(4, 3, 4, 3);
+        EditDcaOrderMethod.Name = "EditDcaOrderMethod";
+        EditDcaOrderMethod.Size = new Size(140, 23);
+        EditDcaOrderMethod.TabIndex = 249;
         // 
         // label36
         // 
         label36.AutoSize = true;
         label36.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
-        label36.Location = new Point(18, 597);
+        label36.Location = new Point(17, 624);
         label36.Margin = new Padding(4, 0, 4, 0);
         label36.Name = "label36";
         label36.Size = new Size(63, 15);
@@ -2787,7 +2883,7 @@ partial class FrmSettings
         // 
         label81.AutoSize = true;
         label81.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
-        label81.Location = new Point(18, 435);
+        label81.Location = new Point(17, 492);
         label81.Margin = new Padding(4, 0, 4, 0);
         label81.Name = "label81";
         label81.Size = new Size(57, 15);
@@ -2798,7 +2894,7 @@ partial class FrmSettings
         // 
         label57.AutoSize = true;
         label57.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
-        label57.Location = new Point(16, 258);
+        label57.Location = new Point(17, 290);
         label57.Margin = new Padding(4, 0, 4, 0);
         label57.Name = "label57";
         label57.Size = new Size(52, 15);
@@ -2809,7 +2905,7 @@ partial class FrmSettings
         // 
         label54.AutoSize = true;
         label54.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
-        label54.Location = new Point(16, 154);
+        label54.Location = new Point(17, 154);
         label54.Margin = new Padding(4, 0, 4, 0);
         label54.Name = "label54";
         label54.Size = new Size(59, 15);
@@ -2820,12 +2916,12 @@ partial class FrmSettings
         // 
         label80.AutoSize = true;
         label80.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
-        label80.Location = new Point(428, 392);
+        label80.Location = new Point(428, 386);
         label80.Margin = new Padding(4, 0, 4, 0);
         label80.Name = "label80";
-        label80.Size = new Size(55, 15);
+        label80.Size = new Size(128, 15);
         label80.TabIndex = 240;
-        label80.Text = "Monitor:";
+        label80.Text = "Trade on signals from:";
         // 
         // groupBoxSlots
         // 
@@ -3060,7 +3156,7 @@ partial class FrmSettings
         groupBox1.Size = new Size(224, 218);
         groupBox1.TabIndex = 242;
         groupBox1.TabStop = false;
-        groupBox1.Text = "Interval";
+        groupBox1.Text = "Trade on interval";
         // 
         // EditMonitorInterval1h
         // 
@@ -3373,27 +3469,27 @@ partial class FrmSettings
         // label62
         // 
         label62.AutoSize = true;
-        label62.Location = new Point(17, 227);
+        label62.Location = new Point(17, 200);
         label62.Margin = new Padding(4, 0, 4, 0);
         label62.Name = "label62";
-        label62.Size = new Size(55, 15);
+        label62.Size = new Size(86, 15);
         label62.TabIndex = 214;
-        label62.Text = "Methode";
+        label62.Text = "Koop methode";
         // 
-        // EditBuyMethod
+        // EditBuyOrderMethod
         // 
-        EditBuyMethod.DropDownStyle = ComboBoxStyle.DropDownList;
-        EditBuyMethod.FormattingEnabled = true;
-        EditBuyMethod.Items.AddRange(new object[] { "Bied prijs", "Vraag prijs", "Het gemiddelde van de bied en vraag prijs", "Sma20", "Onderste Bollingerband", "Market order" });
-        EditBuyMethod.Location = new Point(138, 224);
-        EditBuyMethod.Margin = new Padding(4, 3, 4, 3);
-        EditBuyMethod.Name = "EditBuyMethod";
-        EditBuyMethod.Size = new Size(140, 23);
-        EditBuyMethod.TabIndex = 213;
+        EditBuyOrderMethod.DropDownStyle = ComboBoxStyle.DropDownList;
+        EditBuyOrderMethod.FormattingEnabled = true;
+        EditBuyOrderMethod.Items.AddRange(new object[] { "Limit order", "Market order", "Bied prijs", "Vraag prijs", "Het gemiddelde van de bied en vraag prijs" });
+        EditBuyOrderMethod.Location = new Point(185, 197);
+        EditBuyOrderMethod.Margin = new Padding(4, 3, 4, 3);
+        EditBuyOrderMethod.Name = "EditBuyOrderMethod";
+        EditBuyOrderMethod.Size = new Size(140, 23);
+        EditBuyOrderMethod.TabIndex = 213;
         // 
         // EditDcaCount
         // 
-        EditDcaCount.Location = new Point(140, 333);
+        EditDcaCount.Location = new Point(187, 419);
         EditDcaCount.Margin = new Padding(4, 3, 4, 3);
         EditDcaCount.Maximum = new decimal(new int[] { 10, 0, 0, 0 });
         EditDcaCount.Name = "EditDcaCount";
@@ -3404,7 +3500,7 @@ partial class FrmSettings
         // label67
         // 
         label67.AutoSize = true;
-        label67.Location = new Point(18, 335);
+        label67.Location = new Point(17, 421);
         label67.Margin = new Padding(4, 0, 4, 0);
         label67.Name = "label67";
         label67.Size = new Size(90, 15);
@@ -3414,7 +3510,7 @@ partial class FrmSettings
         // label68
         // 
         label68.AutoSize = true;
-        label68.Location = new Point(16, 309);
+        label68.Location = new Point(17, 395);
         label68.Margin = new Padding(4, 0, 4, 0);
         label68.Name = "label68";
         label68.Size = new Size(81, 15);
@@ -3424,7 +3520,7 @@ partial class FrmSettings
         // EditDcaFactor
         // 
         EditDcaFactor.DecimalPlaces = 2;
-        EditDcaFactor.Location = new Point(140, 307);
+        EditDcaFactor.Location = new Point(185, 394);
         EditDcaFactor.Margin = new Padding(4, 3, 4, 3);
         EditDcaFactor.Maximum = new decimal(new int[] { 10, 0, 0, 0 });
         EditDcaFactor.Name = "EditDcaFactor";
@@ -3435,7 +3531,7 @@ partial class FrmSettings
         // label69
         // 
         label69.AutoSize = true;
-        label69.Location = new Point(19, 282);
+        label69.Location = new Point(17, 368);
         label69.Margin = new Padding(4, 0, 4, 0);
         label69.Name = "label69";
         label69.Size = new Size(91, 15);
@@ -3445,7 +3541,7 @@ partial class FrmSettings
         // EditDcaPercentage
         // 
         EditDcaPercentage.DecimalPlaces = 2;
-        EditDcaPercentage.Location = new Point(140, 279);
+        EditDcaPercentage.Location = new Point(185, 365);
         EditDcaPercentage.Margin = new Padding(4, 3, 4, 3);
         EditDcaPercentage.Name = "EditDcaPercentage";
         EditDcaPercentage.Size = new Size(88, 23);
@@ -3455,7 +3551,7 @@ partial class FrmSettings
         // EditGlobalStopLimitPercentage
         // 
         EditGlobalStopLimitPercentage.DecimalPlaces = 2;
-        EditGlobalStopLimitPercentage.Location = new Point(140, 652);
+        EditGlobalStopLimitPercentage.Location = new Point(185, 679);
         EditGlobalStopLimitPercentage.Margin = new Padding(4, 3, 4, 3);
         EditGlobalStopLimitPercentage.Name = "EditGlobalStopLimitPercentage";
         EditGlobalStopLimitPercentage.Size = new Size(88, 23);
@@ -3465,7 +3561,7 @@ partial class FrmSettings
         // label70
         // 
         label70.AutoSize = true;
-        label70.Location = new Point(19, 654);
+        label70.Location = new Point(17, 681);
         label70.Margin = new Padding(4, 0, 4, 0);
         label70.Name = "label70";
         label70.Size = new Size(107, 15);
@@ -3475,7 +3571,7 @@ partial class FrmSettings
         // EditGlobalStopPercentage
         // 
         EditGlobalStopPercentage.DecimalPlaces = 2;
-        EditGlobalStopPercentage.Location = new Point(140, 623);
+        EditGlobalStopPercentage.Location = new Point(185, 650);
         EditGlobalStopPercentage.Margin = new Padding(4, 3, 4, 3);
         EditGlobalStopPercentage.Name = "EditGlobalStopPercentage";
         EditGlobalStopPercentage.Size = new Size(88, 23);
@@ -3485,7 +3581,7 @@ partial class FrmSettings
         // label71
         // 
         label71.AutoSize = true;
-        label71.Location = new Point(19, 625);
+        label71.Location = new Point(17, 652);
         label71.Margin = new Padding(4, 0, 4, 0);
         label71.Name = "label71";
         label71.Size = new Size(109, 15);
@@ -3495,7 +3591,7 @@ partial class FrmSettings
         // label72
         // 
         label72.AutoSize = true;
-        label72.Location = new Point(23, 459);
+        label72.Location = new Point(17, 542);
         label72.Margin = new Padding(4, 0, 4, 0);
         label72.Name = "label72";
         label72.Size = new Size(120, 15);
@@ -3505,7 +3601,7 @@ partial class FrmSettings
         // EditProfitPercentage
         // 
         EditProfitPercentage.DecimalPlaces = 2;
-        EditProfitPercentage.Location = new Point(147, 457);
+        EditProfitPercentage.Location = new Point(185, 540);
         EditProfitPercentage.Margin = new Padding(4, 3, 4, 3);
         EditProfitPercentage.Name = "EditProfitPercentage";
         EditProfitPercentage.Size = new Size(88, 23);
@@ -3515,7 +3611,7 @@ partial class FrmSettings
         // label73
         // 
         label73.AutoSize = true;
-        label73.Location = new Point(17, 362);
+        label73.Location = new Point(17, 448);
         label73.Margin = new Padding(4, 0, 4, 0);
         label73.Name = "label73";
         label73.Size = new Size(114, 15);
@@ -3524,7 +3620,7 @@ partial class FrmSettings
         // 
         // EditGlobalBuyCooldownTime
         // 
-        EditGlobalBuyCooldownTime.Location = new Point(138, 360);
+        EditGlobalBuyCooldownTime.Location = new Point(185, 446);
         EditGlobalBuyCooldownTime.Margin = new Padding(4, 3, 4, 3);
         EditGlobalBuyCooldownTime.Maximum = new decimal(new int[] { 276447231, 23283, 0, 0 });
         EditGlobalBuyCooldownTime.Name = "EditGlobalBuyCooldownTime";
@@ -3534,7 +3630,7 @@ partial class FrmSettings
         // EditGlobalBuyVarying
         // 
         EditGlobalBuyVarying.DecimalPlaces = 2;
-        EditGlobalBuyVarying.Location = new Point(139, 173);
+        EditGlobalBuyVarying.Location = new Point(185, 225);
         EditGlobalBuyVarying.Margin = new Padding(4, 3, 4, 3);
         EditGlobalBuyVarying.Maximum = new decimal(new int[] { 5, 0, 0, 65536 });
         EditGlobalBuyVarying.Minimum = new decimal(new int[] { 5, 0, 0, -2147418112 });
@@ -3546,7 +3642,7 @@ partial class FrmSettings
         // label47
         // 
         label47.AutoSize = true;
-        label47.Location = new Point(17, 175);
+        label47.Location = new Point(17, 227);
         label47.Margin = new Padding(4, 0, 4, 0);
         label47.Name = "label47";
         label47.Size = new Size(108, 15);
@@ -3556,7 +3652,7 @@ partial class FrmSettings
         // label46
         // 
         label46.AutoSize = true;
-        label46.Location = new Point(17, 199);
+        label46.Location = new Point(17, 251);
         label46.Margin = new Padding(4, 0, 4, 0);
         label46.Name = "label46";
         label46.Size = new Size(77, 15);
@@ -3565,7 +3661,7 @@ partial class FrmSettings
         // 
         // EditGlobalBuyRemoveTime
         // 
-        EditGlobalBuyRemoveTime.Location = new Point(138, 197);
+        EditGlobalBuyRemoveTime.Location = new Point(185, 249);
         EditGlobalBuyRemoveTime.Margin = new Padding(4, 3, 4, 3);
         EditGlobalBuyRemoveTime.Maximum = new decimal(new int[] { 276447231, 23283, 0, 0 });
         EditGlobalBuyRemoveTime.Name = "EditGlobalBuyRemoveTime";
@@ -3641,6 +3737,7 @@ partial class FrmSettings
         // EditTradeViaAltradyWebhook
         // 
         EditTradeViaAltradyWebhook.AutoSize = true;
+        EditTradeViaAltradyWebhook.Enabled = false;
         EditTradeViaAltradyWebhook.Location = new Point(912, 60);
         EditTradeViaAltradyWebhook.Margin = new Padding(4, 3, 4, 3);
         EditTradeViaAltradyWebhook.Name = "EditTradeViaAltradyWebhook";
@@ -3720,37 +3817,6 @@ partial class FrmSettings
         imageList1.TransparentColor = Color.Transparent;
         imageList1.Images.SetKeyName(0, "volume.png");
         // 
-        // EditDynamicTp
-        // 
-        EditDynamicTp.AutoSize = true;
-        EditDynamicTp.Location = new Point(23, 538);
-        EditDynamicTp.Margin = new Padding(4, 3, 4, 3);
-        EditDynamicTp.Name = "EditDynamicTp";
-        EditDynamicTp.Size = new Size(107, 19);
-        EditDynamicTp.TabIndex = 257;
-        EditDynamicTp.Text = "Dynamische TP";
-        EditDynamicTp.UseVisualStyleBackColor = true;
-        // 
-        // label65
-        // 
-        label65.AutoSize = true;
-        label65.Location = new Point(21, 566);
-        label65.Margin = new Padding(4, 0, 4, 0);
-        label65.Name = "label65";
-        label65.Size = new Size(121, 15);
-        label65.TabIndex = 258;
-        label65.Text = "MA20 percentage (%)";
-        // 
-        // EditDynamicTpPercentage
-        // 
-        EditDynamicTpPercentage.DecimalPlaces = 2;
-        EditDynamicTpPercentage.Location = new Point(145, 564);
-        EditDynamicTpPercentage.Margin = new Padding(4, 3, 4, 3);
-        EditDynamicTpPercentage.Name = "EditDynamicTpPercentage";
-        EditDynamicTpPercentage.Size = new Size(88, 23);
-        EditDynamicTpPercentage.TabIndex = 259;
-        EditDynamicTpPercentage.Value = new decimal(new int[] { 75, 0, 0, 131072 });
-        // 
         // FrmSettings
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
@@ -3789,6 +3855,7 @@ partial class FrmSettings
         groupBoxInterval.PerformLayout();
         tabSignalStobb.ResumeLayout(false);
         tabSignalStobb.PerformLayout();
+        ((System.ComponentModel.ISupportInitialize)EditStobMinimalTrend).EndInit();
         ((System.ComponentModel.ISupportInitialize)EditStobbBBMinPercentage).EndInit();
         ((System.ComponentModel.ISupportInitialize)EditStobbBBMaxPercentage).EndInit();
         tabSignalSbm.ResumeLayout(false);
@@ -3829,6 +3896,7 @@ partial class FrmSettings
         panel6.PerformLayout();
         tabExtra.ResumeLayout(false);
         tabExtra.PerformLayout();
+        ((System.ComponentModel.ISupportInitialize)EditDynamicTpPercentage).EndInit();
         groupBoxSlots.ResumeLayout(false);
         groupBoxSlots.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)EditSlotsMaximalExchange).EndInit();
@@ -3854,7 +3922,6 @@ partial class FrmSettings
         ((System.ComponentModel.ISupportInitialize)EditGlobalBuyRemoveTime).EndInit();
         tabExtra2.ResumeLayout(false);
         tabExtra2.PerformLayout();
-        ((System.ComponentModel.ISupportInitialize)EditDynamicTpPercentage).EndInit();
         ResumeLayout(false);
     }
 
@@ -4096,7 +4163,6 @@ partial class FrmSettings
     private CheckBox EditBotPriceCrossingSma20;
     private Label label74;
     private Label label62;
-    private ComboBox EditBuyMethod;
     private NumericUpDown EditDcaCount;
     private Label label67;
     private Label label68;
@@ -4140,7 +4206,6 @@ partial class FrmSettings
     private Label label59;
     private Label label36;
     private Label label60;
-    private ComboBox EditDcaMethod;
     private CheckBox EditDoNotEnterTrade;
     private CheckBox EditTradeViaPaperTrading;
     private Label label63;
@@ -4152,7 +4217,14 @@ partial class FrmSettings
     private CheckBox EditTradeViaBinance;
     private CheckBox EditSendSignalsToTelegram;
     private CheckBox EditLockProfits;
-    private CheckBox EditDynamicTp;
     private Label label65;
     private NumericUpDown EditDynamicTpPercentage;
+    private Label label66;
+    private NumericUpDown EditStobMinimalTrend;
+    private Label label82;
+    private Label label83;
+    private ComboBox EditBuyStepInMethod;
+    private ComboBox EditBuyOrderMethod;
+    private ComboBox EditDcaStepInMethod;
+    private ComboBox EditDcaOrderMethod;
 }

@@ -44,6 +44,9 @@ public class CryptoQuoteData
     [JsonIgnore]
     public List<CryptoSymbol> SymbolList { get; } = new List<CryptoSymbol>();
 
+    [Computed]
+    public string DisplayFormat { get; set; } = "N8";
+
     public CryptoQuoteData()
     {
         SymbolList = new List<CryptoSymbol>();

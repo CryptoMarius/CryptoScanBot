@@ -1,0 +1,57 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net7.0-windows10.0.19041.0</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>$(MSBuildProjectName)</AssemblyName>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DefineConstants>$(DefineConstants);TRADEBOT;SQLDATABASE</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>$(DefineConstants);TRADEBOT;SQLDATABASE</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="BackTest\BackTestData.cs" />
+    <Compile Remove="BackTest\BackTestEmulator.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Binance.Net" Version="8.5.1" />
+    <PackageReference Include="Bybit.Net" Version="2.0.4" />
+    <PackageReference Include="Dapper" Version="2.0.138" />
+    <PackageReference Include="Dapper.Bulk" Version="1.6.0" />
+    <PackageReference Include="Dapper.Contrib" Version="2.0.78" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.1" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="7.0.7" />
+    <PackageReference Include="Skender.Stock.Indicators" Version="2.4.10" />
+    <PackageReference Include="System.Net.Http" Version="4.3.4" />
+    <PackageReference Include="System.ServiceModel.Federation" Version="6.0.0" />
+    <PackageReference Include="Telegram.Bot" Version="19.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CryptoSbmScanner\CryptoSbmScanner.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="TestForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="TestForm.Designer.cs">
+      <DependentUpon>TestForm.cs</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="TestForm.resx">
+      <DependentUpon>TestForm.cs</DependentUpon>
+    </EmbeddedResource>
+  </ItemGroup>
+
+</Project>

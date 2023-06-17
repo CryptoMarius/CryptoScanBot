@@ -110,11 +110,11 @@ public class CandleIndicatorData
                 else
                 {
                     // De laatste candle is niet altijd aanwezig (een kwestie van timing?)
-                    if (nextCandleOpenTime != candleLoop && !first)
+                    if (nextCandleOpenTime != candleLoop && !first) //!BackTest && 
                     {
                         // In de hoop dat dit het automatisch zou kunnen fixen?
                         symbolPeriod.IsChanged = true;
-                        if (symbolPeriod.LastCandleSynchronized.Value > candleLoop - interval.Duration)
+                        if (symbolPeriod.LastCandleSynchronized > candleLoop - interval.Duration)
                             symbolPeriod.LastCandleSynchronized = candleLoop - interval.Duration;
                         GlobalData.AddTextToLogTab(symbol.Name + " " + interval.Name + " Missing candle information " + CandleTools.GetUnixDate(candleLoop).ToLocalTime());
                         GlobalData.ConnectionWasRestored(""); // A quick fix (dont like it)?
@@ -181,11 +181,11 @@ public class CandleIndicatorData
     /// <summary>
     /// Calculate all the indicators we want to have an fill in the last 60 candles
     /// </summary>
-    public static void CalculateIndicators(List<CryptoCandle> history, bool always = false)
+    public static void CalculateIndicators(List<CryptoCandle> history)
     {
         // Overslaan indien het gevuld is (meerdere aanroepen)
         CryptoCandle candle = history.Last();
-        if (!always && candle.CandleData != null)
+        if (!GlobalData.BackTest && candle.CandleData != null)
             return;
 
         //List<TemaResult> temaList = (List<TemaResult>)Indicator.GetTema(history, 5);

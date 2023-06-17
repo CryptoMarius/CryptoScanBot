@@ -16,21 +16,21 @@ namespace CryptoSbmScanner.Binance;
 public class BinanceFetchTrades
 {
     //Om meerdere updates te voorkomen (gebruiker die meerdere keren erop klikt)
-    static private SemaphoreSlim Semaphore = new SemaphoreSlim(1);
+    static private readonly SemaphoreSlim Semaphore = new(1);
     static public int tradeCount;
 
     /// <summary>
     /// Haal de trades van 1 symbol op
     /// </summary>
-    public static async Task<int> FetchTradesForSymbol(CryptoSymbol symbol)
+    public static async Task<int> FetchTradesForSymbol(CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
     {
-        using (BinanceClient client = new BinanceClient())
+        using (BinanceClient client = new())
         {
-            return await FetchTradesInternal(client, symbol);
+            return await FetchTradesInternal(client, tradeAccount, symbol);
         }
     }
 
-    private static async Task<int> FetchTradesInternal(BinanceClient client, CryptoSymbol symbol)
+    private static async Task<int> FetchTradesInternal(BinanceClient client, CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
     {
         int tradeCount = 0;
         try
@@ -38,13 +38,13 @@ public class BinanceFetchTrades
             // Haal de trades op van 1 symbol
 
             bool isChanged = false;
-            List<CryptoTrade> tradeCache = new List<CryptoTrade>();
+            List<CryptoTrade> tradeCache = new();
 
             //Verzin een begin datum
-            if (symbol.LastTradefetched == null)
+            if (symbol.LastTradeFetched == null)
             {
                 isChanged = true;
-                symbol.LastTradefetched = 0;
+                symbol.LastTradeFetched = DateTime.Today.AddMonths(-2);
             }
 
             while (true)
@@ -52,7 +52,7 @@ public class BinanceFetchTrades
                 // Weight verdubbelt omdat deze wel erg aggressief trades ophaalt
                 //BinanceWeights.WaitForFairBinanceWeight(5, "mytrades");
 
-                var result = await client.SpotApi.Trading.GetUserTradesAsync(symbol.Name, null, null, null, 1000, symbol.LastTradefetched + 1); //GetMyTradesAsync
+                var result = await client.SpotApi.Trading.GetUserTradesAsync(symbol.Name, null, symbol.LastTradeFetched, null, 1000);
                 if (!result.Success)
                 {
                     GlobalData.AddTextToLogTab("error getting mytrades " + result.Error);
@@ -81,15 +81,17 @@ public class BinanceFetchTrades
                         {
                             trade = new CryptoTrade();
                             Helper.PickupTrade(symbol, trade, item);
+                            trade.TradeAccount = tradeAccount;
+                            trade.TradeAccountId = tradeAccount.Id;
                             tradeCache.Add(trade);
 
                             GlobalData.AddTrade(trade);
 
                             //De fetch administratie bijwerken
-                            if (trade.TradeId > symbol.LastTradefetched)
+                            if (trade.TradeTime > symbol.LastTradeFetched)
                             {
                                 isChanged = true;
-                                symbol.LastTradefetched = trade.TradeId;
+                                symbol.LastTradeFetched = trade.TradeTime;
                             }
                         }
                     }
@@ -117,12 +119,15 @@ public class BinanceFetchTrades
                     {
                         using (var transaction = databaseThread.BeginTransaction())
                         {
-                            GlobalData.AddTextToLogTab("Trades " + symbol.Name + " " + tradeCache.Count().ToString());
-                            //databaseThread.BulkInsertTrades(symbol, tradeCache, transaction);
+                            GlobalData.AddTextToLogTab("Trades " + symbol.Name + " " + tradeCache.Count.ToString());
+#if SQLDATABASE
+                            databaseThread.BulkInsertTrades(symbol, tradeCache, transaction);
+#else
                             foreach (var x in tradeCache)
                             {
                                 databaseThread.Connection.Insert(symbol, transaction);
                             }
+#endif
 
                             tradeCount += tradeCache.Count;
 
@@ -152,14 +157,14 @@ public class BinanceFetchTrades
     }
 
 
-    private async Task<int> FetchTrades(Queue<CryptoSymbol> queue)
+    private static async Task<int> FetchTrades(Queue<CryptoSymbol> queue)
     {
         int tradeCount = 0;
         try
         {
             // We hergebruiken de client binnen deze thread, teveel connecties opnenen resulteerd in een foutmelding:
             // "An operation on a socket could not be performed because the system lacked sufficient buffer space or because a queue was full"
-            using (BinanceClient client = new BinanceClient())
+            using (BinanceClient client = new())
             {
                 while (true)
                 {
@@ -179,7 +184,7 @@ public class BinanceFetchTrades
                         Monitor.Exit(queue);
                     }
 
-                    tradeCount += await FetchTradesInternal(client, symbol);
+                    tradeCount += await FetchTradesInternal(client, GlobalData.BinanceRealTradeAccount, symbol);
                 }
             }
         }
@@ -191,7 +196,7 @@ public class BinanceFetchTrades
         return tradeCount;
     }
 
-    public async Task Execute()
+    public static async Task Execute()
     {
         if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
         {
@@ -206,7 +211,7 @@ public class BinanceFetchTrades
                 {
                     GlobalData.AddTextToLogTab("\r\n\r\n" + "Trades ophalen");
 
-                    Queue<CryptoSymbol> queue = new Queue<CryptoSymbol>();
+                    Queue<CryptoSymbol> queue = new();
                     foreach (var symbol in exchange.SymbolListName.Values)
                     {
                         //if (symbol.Quote.Equals(quoteData.Name) && (symbol.Status == 1) && (!symbol.IsBarometerSymbol()))
@@ -216,7 +221,7 @@ public class BinanceFetchTrades
                     }
 
                     // En dan door x tasks de queue leeg laten trekken
-                    List<Task> taskList = new List<Task>();
+                    List<Task> taskList = new();
                     while (taskList.Count < 3)
                     {
                         Task task = Task.Run(async () => { tradeCount += await FetchTrades(queue); });

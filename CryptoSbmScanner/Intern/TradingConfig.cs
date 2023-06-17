@@ -64,15 +64,15 @@ public static class TradingConfig
     static public SortedList<CryptoIntervalPeriod, CryptoInterval> MonitorInterval { get; } = new();
 
     // Black en white list en strategies..
-    static public Dictionary<TradeDirection, TradeConfiguration> Config { get; } = new();
+    static public Dictionary<CryptoTradeDirection, TradeConfiguration> Config { get; } = new();
 
     static public SortedList<SignalStrategy, AlgorithmDefinition> AlgorithmDefinitionIndex = new();
     static public List<AlgorithmDefinition> AlgorithmDefinitionList = SignalHelper.GetListOfAlgorithms();
 
     static TradingConfig()
     {
-        Config.Add(TradeDirection.Long, new TradeConfiguration());
-        Config.Add(TradeDirection.Short, new TradeConfiguration());
+        Config.Add(CryptoTradeDirection.Long, new TradeConfiguration());
+        Config.Add(CryptoTradeDirection.Short, new TradeConfiguration());
     }
 
     static public void IndexStrategyInternally()
@@ -94,18 +94,18 @@ public static class TradingConfig
         // (soms is het goed om rte refactoren en tot nieuwe ideen te komen, right..)
 
         AlgorithmDefinitionIndex.Clear();
-        Config[TradeDirection.Long].ClearStrategies();
-        Config[TradeDirection.Short].ClearStrategies();
+        Config[CryptoTradeDirection.Long].ClearStrategies();
+        Config[CryptoTradeDirection.Short].ClearStrategies();
 
         foreach (AlgorithmDefinition def in AlgorithmDefinitionList)
         {
             // just for getting the name..
             AlgorithmDefinitionIndex.Add(def.Strategy, def);
 
-            foreach (TradeDirection mode in Enum.GetValues(typeof(TradeDirection)))
+            foreach (CryptoTradeDirection mode in Enum.GetValues(typeof(CryptoTradeDirection)))
             {
                 bool hasClass;
-                if (mode == TradeDirection.Long)
+                if (mode == CryptoTradeDirection.Long)
                     hasClass = def.AnalyzeLongType != null;
                 else
                     hasClass = def.AnalyzeShortType != null;
@@ -161,11 +161,11 @@ public static class TradingConfig
 
     static public void InitWhiteAndBlackListSettings()
     {
-        InitWhiteAndBlackListHelper(GlobalData.Settings.BlackListOversold, Config[TradeDirection.Long].BlackList, "BlackList.Long");
-        InitWhiteAndBlackListHelper(GlobalData.Settings.WhiteListOversold, Config[TradeDirection.Long].WhiteList, "WhiteList.Long");
+        InitWhiteAndBlackListHelper(GlobalData.Settings.BlackListOversold, Config[CryptoTradeDirection.Long].BlackList, "BlackList.Long");
+        InitWhiteAndBlackListHelper(GlobalData.Settings.WhiteListOversold, Config[CryptoTradeDirection.Long].WhiteList, "WhiteList.Long");
 
-        InitWhiteAndBlackListHelper(GlobalData.Settings.BlackListOverbought, Config[TradeDirection.Short].BlackList, "BlackList.Short");
-        InitWhiteAndBlackListHelper(GlobalData.Settings.WhiteListOverbought, Config[TradeDirection.Short].WhiteList, "WhiteList.Short");
+        InitWhiteAndBlackListHelper(GlobalData.Settings.BlackListOverbought, Config[CryptoTradeDirection.Short].BlackList, "BlackList.Short");
+        InitWhiteAndBlackListHelper(GlobalData.Settings.WhiteListOverbought, Config[CryptoTradeDirection.Short].WhiteList, "WhiteList.Short");
     }
 
 

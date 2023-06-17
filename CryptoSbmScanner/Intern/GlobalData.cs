@@ -46,11 +46,11 @@ public class BarometerData
 }
 
 
-/// <summary>
-/// Some global variabeles
-/// </summary>
 static public class GlobalData
 {
+    // Emulator kan alleen de backTest zetten (anders gaan er onverwachte zaken naar de database enzo)
+    static public bool BackTest { get; set; }
+
     static public SettingsBasic Settings { get; set; } = new();
     static public ApplicationStatus ApplicationStatus { get; set; } = ApplicationStatus.AppStatusPrepare;
 
@@ -62,12 +62,12 @@ static public class GlobalData
     static public SortedList<CryptoIntervalPeriod, CryptoInterval> IntervalListPeriod { get; } = new();
 
 
-    /// Exchanges indexed on name
+    // Exchanges indexed on name
     static public SortedList<int, Model.CryptoExchange> ExchangeListId { get; } = new();
     static public SortedList<string, Model.CryptoExchange> ExchangeListName { get; } = new();
 
-    // To avoid duplicate signals
-    static public Dictionary<string, long> AnalyseNotificationList { get; } = new();
+    static public Queue<CryptoSignal> SignalQueue { get; } = new();
+    static public List<CryptoPosition> PositionsClosed { get; } = new();
 
     static public event PlayMediaEvent PlaySound;
     static public event PlayMediaEvent PlaySpeech;
@@ -77,19 +77,27 @@ static public class GlobalData
     // Events for refresing data
     static public event AddTextEvent AssetsHaveChangedEvent;
     static public event AddTextEvent SymbolsHaveChangedEvent;
+    static public event AddTextEvent PositionsHaveChangedEvent;
     static public event AddTextEvent ConnectionWasLostEvent;
     static public event AddTextEvent ConnectionWasRestoredEvent;
 
     static public event SetCandleTimerEnable SetCandleTimerEnableEvent;
 
+    public static AnalyseEvent SignalEvent { get; set; } = null;
+
+    static public SortedList<int, CryptoTradeAccount> TradeAccountList = new();
+    public static CryptoTradeAccount BinanceBackTestAccount = null;
+    public static CryptoTradeAccount BinanceRealTradeAccount = null;
+    public static CryptoTradeAccount BinancePaperTradeAccount = null;
+
+
     // Some running tasks/threads
-#if DATABASE
+#if SQLDATABASE
     static public ThreadSaveCandles TaskSaveCandles { get; set; }
 #endif
     static public ThreadMonitorCandle ThreadMonitorCandle { get; set; }
 #if TRADEBOT
     static public ThreadMonitorOrder ThreadMonitorOrder { get; set; }
-    static public ThreadMonitorSignal TaskMonitorSignal { get; set; }
 #endif
 #if BALANCING
     static public ThreadBalanceSymbols ThreadBalanceSymbols { get; set; }
@@ -114,14 +122,34 @@ static public class GlobalData
         ExchangeListId.Clear();
         ExchangeListName.Clear();
 
-
         using var databaseMain = new CryptoDatabase();
-
         foreach (Model.CryptoExchange exchange in databaseMain.Connection.GetAll<Model.CryptoExchange>())
         {
             AddExchange(exchange);
         }
     }
+
+    static public void LoadTradingAccounts()
+    {
+        // De accounts uit de database laden
+        TradeAccountList.Clear();
+
+        using var databaseMain = new CryptoDatabase();
+        foreach (CryptoTradeAccount tradeAccount in databaseMain.Connection.GetAll<CryptoTradeAccount>())
+        {
+            TradeAccountList.Add(tradeAccount.Id, tradeAccount);
+
+            // Er zijn 3 accounts altijd aanwezig
+            // TODO - enum introduceren vanwege vinkjes ellende, beh
+            if (tradeAccount.AccountType == CryptoTradeAccountType.BackTest)
+                GlobalData.BinanceBackTestAccount = tradeAccount;
+            if (tradeAccount.AccountType == CryptoTradeAccountType.PaperTrade)
+                GlobalData.BinancePaperTradeAccount = tradeAccount;
+            if (tradeAccount.AccountType == CryptoTradeAccountType.RealTrading)
+                GlobalData.BinanceRealTradeAccount = tradeAccount;
+        }
+    }
+
 
     static public void LoadIntervals()
     {
@@ -131,7 +159,6 @@ static public class GlobalData
         IntervalListPeriod.Clear();
 
         using var databaseMain = new CryptoDatabase();
-
         foreach (CryptoInterval interval in databaseMain.Connection.GetAll<CryptoInterval>())
         {
             IntervalList.Add(interval);
@@ -146,6 +173,9 @@ static public class GlobalData
             if (interval.ConstructFromId > 0)
                 interval.ConstructFrom = GlobalData.IntervalListId[(int)interval.ConstructFromId];
         }
+
+        // In MSSQL staan ze niet in dej uiste volgorde (vanwege het toevoegen van 2 intervallen)
+        IntervalList.Sort((x, y) => x.IntervalPeriod.CompareTo(y.IntervalPeriod));
     }
 
 
@@ -165,8 +195,15 @@ static public class GlobalData
         {
             quoteData = new CryptoQuoteData
             {
-                Name = quoteName
+                Name = quoteName,
+                DisplayFormat = "N8",
             };
+
+            if (quoteName.Equals("USDT"))
+                quoteData.DisplayFormat = "N2";
+            if (quoteName.Equals("BUSD"))
+                quoteData.DisplayFormat = "N2";
+
             Settings.QuoteCoins.Add(quoteName, quoteData);
         }
         return quoteData;
@@ -190,47 +227,16 @@ static public class GlobalData
 
             string s = symbol.PriceTickSize.ToString0();
             int numberOfDecimalPlaces = s.Length - 2;
-            symbol.DisplayFormat = "N" + numberOfDecimalPlaces.ToString();
+            symbol.PriceDisplayFormat = "N" + numberOfDecimalPlaces.ToString();
+
+            s = symbol.QuantityTickSize.ToString0();
+            numberOfDecimalPlaces = s.Length - 2;
+            symbol.QuantityDisplayFormat = "N" + numberOfDecimalPlaces.ToString();
+            if (symbol.QuantityTickSize == 1.0m)
+                symbol.QuantityDisplayFormat = "N8";
         }
     }
 
-
-    static public void AddPosition(CryptoPosition position)
-    {
-        if (ExchangeListId.TryGetValue(position.ExchangeId, out Model.CryptoExchange exchange))
-        {
-            position.Exchange = exchange;
-            if (exchange.SymbolListId.TryGetValue(position.SymbolId, out CryptoSymbol symbol))
-            {
-                position.Symbol = symbol;
-                if (GlobalData.IntervalListId.TryGetValue((int)position.IntervalId, out CryptoInterval interval))
-                    position.Interval = interval;
-
-                if (!exchange.PositionList.ContainsKey(symbol.Name))
-                    exchange.PositionList.Add(symbol.Name, new());
-
-                if (exchange.PositionList.TryGetValue(symbol.Name, out SortedList<int, CryptoPosition> positionList))
-                {
-                    if (!positionList.ContainsKey(position.Id))
-                        positionList.Add(position.Id, position);
-                }
-            }
-
-        }
-    }
-
-
-    static public void RemovePosition(CryptoPosition position)
-    {
-        if (position.Exchange.PositionList.TryGetValue(position.Symbol.Name, out var positionList))
-        {
-            if (positionList.ContainsKey(position.Id))
-                positionList.Remove(position.Id);
-            if (positionList.Count == 0)
-                position.Exchange.PositionList.Remove(position.Symbol.Name);
-        }
-
-    }
 
 
     //static public void AddOrder(Order order)
@@ -257,20 +263,25 @@ static public class GlobalData
 
     static public void AddTrade(CryptoTrade trade)
     {
-        if (ExchangeListId.TryGetValue(trade.ExchangeId, out Model.CryptoExchange exchange))
+        if (TradeAccountList.TryGetValue(trade.TradeAccountId, out CryptoTradeAccount tradeAccount))
         {
-            trade.Exchange = exchange;
+            trade.TradeAccount = tradeAccount;
 
-            if (exchange.SymbolListId.TryGetValue(trade.SymbolId, out CryptoSymbol symbol))
+            if (ExchangeListId.TryGetValue(trade.ExchangeId, out Model.CryptoExchange exchange))
             {
-                trade.Symbol = symbol;
+                trade.Exchange = exchange;
 
-                if (!symbol.TradeList.ContainsKey(trade.TradeId))
+                if (exchange.SymbolListId.TryGetValue(trade.SymbolId, out CryptoSymbol symbol))
                 {
-                    symbol.TradeList.Add(trade.TradeId, trade);
-                }
-            }
+                    trade.Symbol = symbol;
 
+                    if (!symbol.TradeList.ContainsKey(trade.TradeId))
+                    {
+                        symbol.TradeList.Add(trade.TradeId, trade);
+                    }
+                }
+
+            }
         }
     }
 
@@ -472,6 +483,11 @@ static public class GlobalData
     static public void SymbolsHaveChanged(string text)
     {
         SymbolsHaveChangedEvent(text);
+    }
+
+    static public void PositionsHaveChanged(string text)
+    {
+        PositionsHaveChangedEvent(text);
     }
 
     static public void ConnectionWasLost(string text)

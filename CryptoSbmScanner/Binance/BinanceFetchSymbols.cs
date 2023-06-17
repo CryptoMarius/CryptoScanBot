@@ -154,15 +154,18 @@ public class BinanceFetchSymbols
 
                                     if (symbol.Id == 0)
                                     {
+#if !SQLDATABASE
                                         database.Connection.Insert<CryptoSymbol>(symbol, transaction);
+#endif
                                         cache.Add(symbol);
                                     }
                                     else
                                         database.Connection.Update<CryptoSymbol>(symbol, transaction);
                                 }
                             }
-
-                            //database.BulkInsertSymbol(cache, transaction);
+#if SQLDATABASE
+                            database.BulkInsertSymbol(cache, transaction);
+#endif
                             transaction.Commit();
 
                             SaveInformation(exchangeInfo.Data);

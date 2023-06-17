@@ -7,7 +7,7 @@ public class SignalPriceCrossedSma20 : SignalCreateBase
 {
     public SignalPriceCrossedSma20(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        SignalMode = TradeDirection.Long;
+        SignalMode = CryptoTradeDirection.Long;
         SignalStrategy = SignalStrategy.PriceCrossedSma20;
     }
 
@@ -106,7 +106,7 @@ public class SignalPriceCrossedSma20 : SignalCreateBase
     {
         ExtraText = "";
         int value = 5;
-        //Langer dan 60 candles willen we niet wachten(is 60 niet heel erg lang ?)
+        // Langer dan x candles willen we niet wachten
         if ((CandleLast.OpenTime - signal.EventTime) / Interval.Duration > value)
         {
             ExtraText = "Ophouden na " + value.ToString() + " candles";

@@ -18,7 +18,7 @@ public class CryptoSymbolInterval
     [Computed]
     public bool IsChanged { get; set; }
 
-     // De laatste datum dat de candles aansluiten c.q. zijn gesynchroniseerd met de exchange
+    // De laatste datum dat de candles aansluiten c.q. zijn gesynchroniseerd met de exchange
     private long? _Date;
     public long? LastCandleSynchronized
 	{

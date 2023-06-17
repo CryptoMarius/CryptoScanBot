@@ -1,5 +1,4 @@
-﻿using CryptoSbmScanner.Binance;
-using CryptoSbmScanner.Model;
+﻿using CryptoSbmScanner.Model;
 
 namespace CryptoSbmScanner.Intern;
 
@@ -88,25 +87,20 @@ public class SymbolTools
     }
 
 
-    public static (bool result, decimal value) CheckPortFolio(CryptoSymbol symbol)
+    public static (bool result, decimal value) CheckPortFolio(CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
     {
         decimal assetQuantity = 0;
-
-        if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
+        tradeAccount.AssetListSemaphore.Wait();
+        try
         {
-            exchange.AssetListSemaphore.Wait();
-            try
-            {
-                if (exchange.AssetList.TryGetValue(symbol.Quote, out CryptoAsset asset))
-                {
-                    assetQuantity = asset.Free;
-                }
-            }
-            finally
-            {
-                exchange.AssetListSemaphore.Release();
-            }
+            if (tradeAccount.AssetList.TryGetValue(symbol.Quote, out CryptoAsset asset))
+                assetQuantity = asset.Free;
         }
+        finally
+        {
+            tradeAccount.AssetListSemaphore.Release();
+        }
+        
 
         if (assetQuantity == 0)
         {
@@ -118,37 +112,37 @@ public class SymbolTools
     }
 
 
-    public static async Task<bool> CheckDelistedCoin(CryptoSymbol symbol)
-    {
+    //public static async Task<bool> CheckDelistedCoin(CryptoSymbol symbol)
+    //{
 
-        // Vage comments:
-        // Probleem delisted coins: Ververs de informatie van de exchange (1x per x minuten ofzo)
-        // Extra: object locking zodat niet door meerdere threads tegelijk wordt gedaan
-        // NB: Dit geld voor zowel de BUY als SELL, want we kunnen niet handelen in delisted assets.
-        // Bij nader inzien denk ik dat de site delistedcoin (eh what?)
+    //    // Vage comments:
+    //    // Probleem delisted coins: Ververs de informatie van de exchange (1x per x minuten ofzo)
+    //    // Extra: object locking zodat niet door meerdere threads tegelijk wordt gedaan
+    //    // NB: Dit geld voor zowel de BUY als SELL, want we kunnen niet handelen in delisted assets.
+    //    // Bij nader inzien denk ik dat de site delistedcoin (eh what?)
 
-        // TODO:!!!!!
-        // Makkelijker om gewoon de exchange info met 1 munt aan te roepen!
-        // Dan kun je de status daarvan beoordelen (wat in principe hier de bedoeling is)
-        // https://binance-docs.github.io/apidocs/spot/en/#exchange-information
-        // https://api.binance.com/api/v3/exchangeInfo?symbol=BNBBTC
+    //    // TODO:!!!!!
+    //    // Makkelijker om gewoon de exchange info met 1 munt aan te roepen!
+    //    // Dan kun je de status daarvan beoordelen (wat in principe hier de bedoeling is)
+    //    // https://binance-docs.github.io/apidocs/spot/en/#exchange-information
+    //    // https://api.binance.com/api/v3/exchangeInfo?symbol=BNBBTC
 
-        TimeSpan span = DateTime.UtcNow.Subtract(symbol.Exchange.ExchangeInfoLastTime);
-        if (span.TotalMinutes >= 60)
-        {
-            await BinanceFetchSymbols.ExecuteAsync();
-        }
+    //    TimeSpan span = DateTime.UtcNow.Subtract(symbol.Exchange.ExchangeInfoLastTime);
+    //    if (span.TotalMinutes >= 60)
+    //    {
+    //        await BinanceFetchSymbols.ExecuteAsync();
+    //    }
 
-        // Indien delisted: Staat de muntpaar op de lijst van delisted munten->ja = signaal negeren
-        if (symbol.Status == 0)
-        {
-            //reaction = string.Format("Delisted coin {0}", Signal.Symbol.Name);
-            return false;
-        }
+    //    // Indien delisted: Staat de muntpaar op de lijst van delisted munten->ja = signaal negeren
+    //    if (symbol.Status == 0)
+    //    {
+    //        //reaction = string.Format("Delisted coin {0}", Signal.Symbol.Name);
+    //        return false;
+    //    }
 
-        //reaction = "";
-        return true;
-    }
+    //    //reaction = "";
+    //    return true;
+    //}
 
 
     public static bool CheckValidMinimalVolume(CryptoSymbol symbol, out string reaction)
@@ -181,17 +175,14 @@ public class SymbolTools
     }
 
 
-    public static bool CheckSymbolBlackListOversold(CryptoSymbol symbol, out string reaction)
+    public static bool CheckSymbolBlackListOversold(CryptoSymbol symbol, CryptoTradeDirection mode, out string reaction)
     {
         //Als de muntpaar op de zwarte lijst staat dit signaal overslagen
         //Indien blacklist: Staat de muntpaar op de blacklist -> ja = signaal negeren
-        //if (GlobalData.Settings.UseBlackListOversold)
+        if (TradingConfig.Config[mode].InBlackList(symbol.Name))
         {
-            if (TradingConfig.Config[TradeDirection.Long].InBlackList(symbol.Name))
-            {
-                reaction = "Symbol zit in de black list";
-                return false;
-            }
+            reaction = "Symbol zit in de black list";
+            return false;
         }
 
         reaction = "";
@@ -199,17 +190,14 @@ public class SymbolTools
     }
 
 
-    public static bool CheckSymbolWhiteListOversold(CryptoSymbol symbol, out string reaction)
+    public static bool CheckSymbolWhiteListOversold(CryptoSymbol symbol, CryptoTradeDirection mode, out string reaction)
     {
-        //Als de muntpaar niet op de toegelaten lijst staat dit signaal overslagen
-        //Indien whitelist: Staat de muntpaar op de whitelist -> nee = signaal negeren
-        //if (GlobalData.Settings.UseWhiteListOversold)
+        // Als de muntpaar niet op de toegelaten lijst staat dit signaal overslagen
+        // Indien whitelist: Staat de muntpaar op de whitelist -> nee = signaal negeren
+        if (!TradingConfig.Config[mode].InWhiteList(symbol.Name))
         {
-            if (!TradingConfig.Config[TradeDirection.Long].InWhiteList(symbol.Name))
-            {
-                reaction = "Symbol zit niet in de white list";
-                return false;
-            }
+            reaction = "Symbol zit niet in de white list";
+            return false;
         }
 
         reaction = "";
@@ -217,18 +205,32 @@ public class SymbolTools
     }
 
 
-    public bool CheckAvailableSlotsExchange(bool paperTrade, int slotLimit, out string reaction)
+    public static bool CheckMinimumTickPercentage(CryptoSymbol symbol, out string reaction)
+    {
+        // Munten waarvan de ticksize percentage groot is (barcode charts)
+
+        decimal barcodePercentage = 100 * (symbol.PriceTickSize) / (decimal)symbol.LastPrice.Value;
+        if (barcodePercentage > GlobalData.Settings.Signal.MinimumTickPercentage)
+        {
+            // Er zijn nogal wat van die flut munten, laat de tekst maar achterwege
+            reaction = string.Format("{0} Tick percentage te hoog {1:N3} (removed)", symbol.Name, barcodePercentage);
+            return false;
+        }
+
+        reaction = "";
+        return true;
+    }
+
+
+    public static bool CheckAvailableSlotsExchange(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, int slotLimit, out string reaction)
     {
         // Zijn er slots beschikbaar op de exchange?
 
         int slotsOccupied = 0;
-        foreach (var positionList in Exchange.PositionList.Values)
+        foreach (var positionList in tradeAccount.PositionList.Values)
         {
             foreach (var position in positionList.Values)
-            {
-                if (position.PaperTrade == paperTrade)
-                    slotsOccupied++;
-            }
+                slotsOccupied++;
         }
 
         if (slotsOccupied >= slotLimit)
@@ -242,16 +244,16 @@ public class SymbolTools
     }
 
 
-    public bool CheckAvailableSlotsBase(bool paperTrade, int slotLimit, out string reaction)
+    public static bool CheckAvailableSlotsBase(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, int slotLimit, out string reaction)
     {
         // Zijn er slots beschikbaar op de base? 
 
         int slotsOccupied = 0;
-        if (Exchange.PositionList.TryGetValue(Symbol.Name, out var positionList))
+        if (tradeAccount.PositionList.TryGetValue(symbol.Name, out var positionList))
         {
             foreach (CryptoPosition position in positionList.Values)
             {
-                if (position.PaperTrade == paperTrade && position.Symbol.Base.Equals(Symbol.Base))
+                if (position.Symbol.Base.Equals(symbol.Base))
                     slotsOccupied++;
             }
         }
@@ -267,16 +269,16 @@ public class SymbolTools
     }
 
 
-    public bool CheckAvailableSlotsQuote(bool paperTrade, int slotLimit, out string reaction)
+    public static bool CheckAvailableSlotsQuote(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, int slotLimit, out string reaction)
     {
         //Zijn er slots beschikbaar op de quote? 
 
         int slotsOccupied = 0;
-        if (Exchange.PositionList.TryGetValue(Symbol.Name, out var positionList))
+        if (tradeAccount.PositionList.TryGetValue(symbol.Name, out var positionList))
         {
             foreach (CryptoPosition position in positionList.Values)
             {
-                if (position.PaperTrade == paperTrade && position.Symbol.Quote.Equals(Symbol.Quote))
+                if (position.Symbol.Quote.Equals(symbol.Quote))
                     slotsOccupied++;
             }
         }
@@ -292,18 +294,15 @@ public class SymbolTools
     }
 
 
-    public bool CheckAvailableSlotsSymbol(bool paperTrade, int slotLimit, out string reaction)
+    public static bool CheckAvailableSlotsSymbol(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, int slotLimit, out string reaction)
     {
         // Zijn er slots beschikbaar op de munt?
 
         int slotsOccupied = 0;
-        if (Exchange.PositionList.TryGetValue(Symbol.Name, out var positionList))
+        if (tradeAccount.PositionList.TryGetValue(symbol.Name, out var positionList))
         {
             foreach (CryptoPosition position in positionList.Values)
-            {
-                if (position.PaperTrade == paperTrade)
-                    slotsOccupied++;
-            }
+                slotsOccupied++;
         }
 
         if (slotsOccupied >= slotLimit)
@@ -315,6 +314,26 @@ public class SymbolTools
         reaction = "";
         return true;
     }
+
+
+    public static bool CheckAvailableSlots(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, out string reaction)
+    {
+        if (!CheckAvailableSlotsExchange(tradeAccount, symbol, GlobalData.Settings.Trading.SlotsMaximalExchange, out reaction))
+            return false;
+
+        if (!CheckAvailableSlotsSymbol(tradeAccount, symbol, GlobalData.Settings.Trading.SlotsMaximalSymbol, out reaction))
+            return false;
+
+        if (!CheckAvailableSlotsBase(tradeAccount, symbol, GlobalData.Settings.Trading.SlotsMaximalBase, out reaction))
+            return false;
+
+        if (!CheckAvailableSlotsQuote(tradeAccount, symbol, symbol.QuoteData.SlotsMaximal, out reaction))
+            return false;
+
+        reaction = "";
+        return true;
+    }
+
 
     /// <summary>
     /// Te nieuwe coin (daar is over het algemeen weinig vertrouwen in)
@@ -351,25 +370,28 @@ public class SymbolTools
 
     public static bool CheckValidBarometer(CryptoQuoteData quoteData, CryptoIntervalPeriod intervalPeriod, decimal minValue, out string reaction)
     {
-        if (!GlobalData.IntervalListPeriod.TryGetValue(intervalPeriod, out CryptoInterval interval))
+        if (minValue > -99m)
         {
-            reaction = string.Format("Interval {0} bestaat niet", intervalPeriod.ToString());
-            return false;
-        }
+            if (!GlobalData.IntervalListPeriod.TryGetValue(intervalPeriod, out CryptoInterval interval))
+            {
+                reaction = string.Format("Interval {0} bestaat niet", intervalPeriod.ToString());
+                return false;
+            }
 
-        // We gaan ervan uit dat alles in 1x wordt berekend
-        BarometerData barometerData = quoteData.BarometerList[(long)intervalPeriod];
-        if (!barometerData.PriceBarometer.HasValue)
-        {
-            reaction = string.Format("Barometer {0} not calculated", interval.Name);
-            return false;
-        }
+            // We gaan ervan uit dat alles in 1x wordt berekend
+            BarometerData barometerData = quoteData.BarometerList[(long)intervalPeriod];
+            if (!barometerData.PriceBarometer.HasValue)
+            {
+                reaction = string.Format("Barometer {0} not calculated", interval.Name);
+                return false;
+            }
 
-        barometerData = quoteData.BarometerList[(long)intervalPeriod];
-        if (barometerData.PriceBarometer <= minValue)
-        {
-            reaction = string.Format("Barometer {0} is te laag {1} < {2}", interval.Name, barometerData.PriceBarometer?.ToString0("N2"), minValue.ToString0("N2"));
-            return false;
+            barometerData = quoteData.BarometerList[(long)intervalPeriod];
+            if (barometerData.PriceBarometer <= minValue)
+            {
+                reaction = string.Format("Barometer {0} is te laag {1} < {2}", interval.Name, barometerData.PriceBarometer?.ToString0("N2"), minValue.ToString0("N2"));
+                return false;
+            }
         }
 
         reaction = "";
@@ -377,10 +399,10 @@ public class SymbolTools
     }
 
 
-    public bool BarometerIndicators(CryptoInterval interval, long candleOpenTime, out string response, bool backTest)
+    public bool BarometerIndicators(CryptoInterval interval, long candleOpenTime, out string response)
     {
-        // TODO: Probleem: De barometer is afhankelijk van alle symbols en wordt 10 seconden NA het minuut berekend
-        // dat betekend dat de laatste candle dus nog niet aanwezig hoeft te zijn (en de candleOpenTime impliceert)
+        // TODO: Probleem: De barometer is afhankelijk van alle symbols en wordt x seconden NA het minuut berekend
+        // dat betekend dat de laatste candle (nog) niet aanwezig hoeft te zijn (en de candleOpenTime impliceert)
 
         if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
         {
@@ -403,7 +425,7 @@ public class SymbolTools
                         }
 
                         // Eenmalig de indicators klaarzetten
-                        CandleIndicatorData.CalculateIndicators(history, backTest);
+                        CandleIndicatorData.CalculateIndicators(history);
 
                     }
                 }

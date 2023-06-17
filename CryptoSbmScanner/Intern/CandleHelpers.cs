@@ -315,63 +315,61 @@ public static class Helper
     }
 
 
-    static public void PickupAssets(Model.CryptoExchange exchange, IEnumerable<BinanceBalance> balances)
+    static public void PickupAssets(CryptoTradeAccount tradeAccount, Model.CryptoExchange exchange, IEnumerable<BinanceBalance> balances)
     {
-        exchange.AssetListSemaphore.Wait();
+        tradeAccount.AssetListSemaphore.Wait();
         try
         {
             foreach (var assetInfo in balances)
             {
                 if (assetInfo.Total > 0)
                 {
-                    CryptoAsset asset;
-                    if (!exchange.AssetList.TryGetValue(assetInfo.Asset, out asset))
+                    if (!tradeAccount.AssetList.TryGetValue(assetInfo.Asset, out CryptoAsset asset))
                     {
                         asset = new CryptoAsset();
                         asset.Quote = assetInfo.Asset;
-                        exchange.AssetList.Add(asset.Quote, asset);
+                        tradeAccount.AssetList.Add(asset.Quote, asset);
                     }
                     asset.Free = assetInfo.Available;
                     asset.Total = assetInfo.Total;
                     asset.Locked = assetInfo.Locked;
 
                     if (asset.Total == 0)
-                        exchange.AssetList.Remove(asset.Quote);
+                        tradeAccount.AssetList.Remove(asset.Quote);
                 }
             }
         }
         finally
         {
-            exchange.AssetListSemaphore.Release();
+            tradeAccount.AssetListSemaphore.Release();
         }
     }
 
-    static public void PickupAssets(Model.CryptoExchange exchange, IEnumerable<BinanceStreamBalance> balances)
+    static public void PickupAssets(CryptoTradeAccount tradeAccount, Model.CryptoExchange exchange, IEnumerable<BinanceStreamBalance> balances)
     {
-        exchange.AssetListSemaphore.Wait();
+        tradeAccount.AssetListSemaphore.Wait();
         {
             try
             {
                 foreach (var assetInfo in balances)
                 {
-                    CryptoAsset asset;
-                    if (!exchange.AssetList.TryGetValue(assetInfo.Asset, out asset))
+                    if (!tradeAccount.AssetList.TryGetValue(assetInfo.Asset, out CryptoAsset asset))
                     {
                         asset = new CryptoAsset();
                         asset.Quote = assetInfo.Asset;
-                        exchange.AssetList.Add(asset.Quote, asset);
+                        tradeAccount.AssetList.Add(asset.Quote, asset);
                     }
                     asset.Free = assetInfo.Available;
                     asset.Total = assetInfo.Total;
                     asset.Locked = assetInfo.Locked;
 
                     if (asset.Total == 0)
-                        exchange.AssetList.Remove(asset.Quote);
+                        tradeAccount.AssetList.Remove(asset.Quote);
                 }
             }
             finally
             {
-                exchange.AssetListSemaphore.Release();
+                tradeAccount.AssetListSemaphore.Release();
             }
         }
     }
@@ -415,7 +413,7 @@ public static class Helper
 
         trade.TradeId = item.TradeId;
         trade.OrderId = item.Id;
-        trade.OrderListId = (long)item.OrderListId;
+        trade.OrderListId = item.OrderListId;
 
         trade.Price = item.Price;
         trade.Quantity = item.Quantity;
@@ -435,15 +433,14 @@ public static class Helper
     }
 
 
-    static public void ShowAssets(StringBuilder stringBuilder, out decimal valueUsdt, out decimal valueBtc)
+    static public void ShowAssets(CryptoTradeAccount tradeAccount, StringBuilder stringBuilder, out decimal valueUsdt, out decimal valueBtc)
     {
         valueBtc = 0;
         valueUsdt = 0;
 
-        Model.CryptoExchange exchange = null;
-        if (GlobalData.ExchangeListName.TryGetValue("Binance", out exchange))
+        if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
         {
-            exchange.AssetListSemaphore.Wait();
+            tradeAccount.AssetListSemaphore.Wait();
             {
                 try
                 {
@@ -452,7 +449,7 @@ public static class Helper
                         stringBuilder.AppendLine("Assets:");
 
                         //AddTextToLogTab("Assets changed");
-                        foreach (CryptoAsset asset in exchange.AssetList.Values)
+                        foreach (CryptoAsset asset in tradeAccount.AssetList.Values)
                         {
                             if (asset.Total.ToString0() == asset.Free.ToString0())
                                 stringBuilder.AppendLine(string.Format("{0} {1}", asset.Quote, asset.Total.ToString0()));
@@ -500,7 +497,7 @@ public static class Helper
                 }
                 finally
                 {
-                    exchange.AssetListSemaphore.Release();
+                    tradeAccount.AssetListSemaphore.Release();
                 }
             }
         }
@@ -509,55 +506,45 @@ public static class Helper
 
     static public void ShowPosition(StringBuilder stringBuilder, CryptoPosition position)
     {
-        int positionCount = 0;
+        //int positionCount = 0;
         //Dit is beredeneert vanuit de sellprice, dat zou eigenlijk de BE prijs moeten zijn (maar daar zijn wat problemen mee)!
-        decimal diffPrice = 0;
         decimal diffPercentage = 0;
         if ((position.Symbol.LastPrice.HasValue) && (position.SellPrice.HasValue))
         {
-            diffPrice = (decimal)position.Symbol.LastPrice - (decimal)position.SellPrice;
+            decimal diffPrice = (decimal)position.Symbol.LastPrice - (decimal)position.SellPrice;
             diffPercentage = 100 * diffPrice / (decimal)position.SellPrice;
         }
 
         string s = string.Format("{0} position {1} {2}% {3}", position.Symbol.Name,
             position.Invested.ToString0(), diffPercentage.ToString0("N2"), position.Status);
-        if (position.PaperTrade)
-            s += " (Paper)";
+        if (position.TradeAccount.AccountType == CryptoTradeAccountType.BackTest)
+            s += string.Format(" ({0})", position.TradeAccount.Name);
+        else if (position.TradeAccount.AccountType == CryptoTradeAccountType.PaperTrade)
+            s += string.Format(" ({0})", position.TradeAccount.Name);
         stringBuilder.AppendLine(s);
-        positionCount++;
+        //positionCount++;
     }
 
 
     static public void ShowPositions(StringBuilder stringBuilder)
     {
-        int positionCount = 0;
-        if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
+        foreach (var tradeAccount in GlobalData.TradeAccountList.Values)
         {
-            //// De muntparen toevoegen aan de userinterface
-            //foreach (var symbol in exchange.SymbolListName.Values)
-            //{
-            //    //De muntparen toevoegen aan de userinterface
-            //    foreach (CryptoPosition position in symbol.PositionList.Values)
-            //    {
-            //        ShowPosition(stringBuilder, position);
-            //        positionCount++;
-            //    }
-            //}
-
-
-            foreach (var positionList in exchange.PositionList.Values)
+            if (tradeAccount.PositionList.Any())
             {
-                //De muntparen toevoegen aan de userinterface
-                foreach (CryptoPosition position in positionList.Values)
+                int positionCount = 0;
+                stringBuilder.AppendLine(tradeAccount.Name);
+                foreach (var positionList in tradeAccount.PositionList.Values)
                 {
-                    ShowPosition(stringBuilder, position);
-                    positionCount++;
+                    //De muntparen toevoegen aan de userinterface
+                    foreach (CryptoPosition position in positionList.Values)
+                    {
+                        ShowPosition(stringBuilder, position);
+                        positionCount++;
+                    }
                 }
+                stringBuilder.AppendLine(string.Format("{0} posities", positionCount));
             }
         }
-
-        stringBuilder.AppendLine(string.Format("{0} posities", positionCount));
     }
-
-
 }

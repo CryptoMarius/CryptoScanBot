@@ -26,8 +26,7 @@ public class BinanceStreamPriceTicker
             if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
             {
                 //GET /api/v3/ticker/24hr
-                //client.Spot.SubscribeToSymbolTickerUpdates("ETHBTC", (test) => result = test);
-                //Die heeft dan een ask en een bid price
+                // client.Spot.SubscribeToSymbolTickerUpdates("ETHBTC", (test) => result = test);
 
                 foreach (BinanceStreamTick tick in data.Data.Cast<BinanceStreamTick>())
                 {
@@ -35,33 +34,20 @@ public class BinanceStreamPriceTicker
 
                     if (exchange.SymbolListName.TryGetValue(tick.Symbol, out CryptoSymbol symbol))
                     {
-                        //Waarschijnlijk ALLEMAAL gebaseerd op de 24h prijs
+                        // Waarschijnlijk ALLEMAAL gebaseerd op de 24h prijs
                         symbol.OpenPrice = tick.OpenPrice;
                         symbol.HighPrice = tick.HighPrice;
                         symbol.LowPrice = tick.LowPrice;
                         symbol.LastPrice = tick.LastPrice;
                         symbol.BidPrice = tick.BestBidPrice;
                         symbol.AskPrice = tick.BestAskPrice;
-                        //symbol.Volume = tick.BaseVolume; //=Quoted = het volume wat verhandeld is
-                        symbol.Volume = tick.QuoteVolume; //=Quoted = het volume * de prijs                                
+                        //symbol.Volume = tick.BaseVolume; //?
+                        symbol.Volume = tick.QuoteVolume; //= Quoted = het volume * de prijs                                
 
-                        // Aanbieden voor analyse (dit gebeurd zowel in de ticker als ProcessCandles)
-                        if (GlobalData.ApplicationStatus == ApplicationStatus.AppStatusRunning)
-                        {
-#if TRADEBOT
-                            // Het signal monitoring aanroepen (In ieder geval aanroepen)?
-                            //if ((symbol.SignalCount + symbol.PositionList.Count) > 0)
-                            //    GlobalData.TaskMonitorSignal.AddToQueue(symbol);
-#endif
 
-#if BALANCING
-                            if (GlobalData.Settings.BalanceBot.Active && (symbol.IsBalancing))
-                                GlobalData.ThreadBalanceSymbols.AddToQueue(symbol);
-#endif
-                        }
-                        // Hiermee kunnen we in principe een "toekomstige" candle opbouwen.
-                        // (maar de berekeningen verwachten dat niet en dan gaan er andere zaken fout)
-                        // Beslissingen maken op niet voltooide candles moet je altijd vermijden
+                        // Hiermee kunnen we een "toekomstige" candle opbouwen.
+                        // (maar de berekeningen verwachten dat niet en dan gaan er zaken fout)
+                        // Kortom: Beslissingen op basis van niet voltooide candles moet je vermijden.
                         //try
                         //{
                         //Monitor.Enter(symbol.CandleList);
@@ -106,7 +92,7 @@ public class BinanceStreamPriceTicker
     public async Task StopAsync()
     {
         if (_subscription == null)
-            return; // Task.CompletedTask;
+            return;
 
         GlobalData.AddTextToLogTab("Stopping price ticker stream");
 
@@ -116,7 +102,7 @@ public class BinanceStreamPriceTicker
 
         await socketClient.UnsubscribeAsync(_subscription);
 
-        return; // Task.CompletedTask;
+        return;
     }
 
     private void ConnectionLost()

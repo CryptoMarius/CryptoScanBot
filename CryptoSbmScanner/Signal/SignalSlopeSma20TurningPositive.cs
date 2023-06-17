@@ -8,7 +8,7 @@ public class SignalSlopeSma20TurningPositive : SignalCreateBase
 {
     public SignalSlopeSma20TurningPositive(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        SignalMode = TradeDirection.Long;
+        SignalMode = CryptoTradeDirection.Long;
         SignalStrategy = SignalStrategy.SlopeSma20;
     }
 

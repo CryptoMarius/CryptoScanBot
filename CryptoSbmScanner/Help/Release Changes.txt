@@ -2,6 +2,7 @@ Mis je iets in onderstaande bevindingen/todo's of toekomstige todo's, geef het A
 
 
 Bevindingen/Todo's:
+- Todo: voor iemand in de groep, emulator of meldingen even aanpassen zodat het bij een psar wissel instapt
 - JUMP short en long zit momenteel niet goed in elkaar, ten eerste zou ik een -x% of +x% verwachten.
   En ten tweede wordt de black- en white list hier nu ook op toegepast (verschil met eerdere oplossingen)
 - Nadat je naar deze versie bent gegaan kan een oudere scanner niet meer worden opgestart
@@ -22,7 +23,6 @@ Bevindingen/Todo's:
 - De listbox met munten op links met een splitter kunnen verbergen / c.q. dichtklappen
 - Teksten kunnen vertalen (NL en EN lopen nu wel erg vaak door elkaar)
 - Zien hoeveel een munt gestegen of gedaald is na de initiele melding (dat vereist een ander grid).
-- Een Telegram die de meldingen kan weergeven (dat is eigenlijk wat overkill, maar omdat het kan)
   Een eerste aanzet zit er nu in, inclusief een beetje uitleg over hou je het maakt en configureert
 - Bij het opstarten de laatste X candles opnieuw berekenen (dat geeft helaas aardig wat overhead, moet optimaler, ook geluiden e.d.)
 - Experiment om een Mac versie te bouwen dmv MAUI XAML (een compleet nieuwe aanvliegroute van Microsoft)
@@ -47,10 +47,15 @@ TODO:
   Ik denk niet dat deze aanpak geschikt is voor een bot?
   (ach, waarom niet, 1 extra conditie, de ema50 > sma50)
   De trend moet redelijk positief zijn om deze varianten te gebruiken
+- Een keuze maken om de extra stategien geheel te verbergen of geheel uit te faseren (ik kies voor verbergen, ifdefje?)
 
-xx-xx-2023 1.8.0 (gedeeltelijk gedeeltelijk in de 1.7.2 vanwege een hotfix)
+
+xx-xx-2023 1.8.0 (gedeeltelijk zit eze ook al in de 1.7.2 vanwege een hotfix)
+- Telegram die de meldingen (en trades) kan weergeven.
+- Database ondersteuning ingebouwd voor het bewaren van de signalen, posities e.d.
+- Trade mogelijkheden ingebouwd (waarschuwing, het is experimenteel en niet 100% uitgekristalliseerd/getest).
 - Aanpassingen om "dichter" bij een TradeBot te komen, daarom de introductie van een sqlite dataabse
-- Elke 8 uur wordt nu de candle data bewaard, als de applicatie of computer crashed dan hoeft er niet zoveel opgehaald worden
+- Elke 4 uur wordt nu de candle data bewaard, als de applicatie of computer crashed hoeft er minder opgehaald te worden
   (in de veronderstelling dat de scanner soms dagen achter elkaar aan staat)
 - Elke 24 uur wordt nu de log-memo gecleared. Hoe meer tekst daarin zit des te "trager" het wordt en als het dagen loopt..
   (in de veronderstelling dat de scanner soms dagen achter elkaar aan staat)

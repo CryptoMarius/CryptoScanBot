@@ -2,11 +2,14 @@
 
 namespace CryptoSbmScanner.Model;
 
-[Table("Trades")]
+[Table("Trade")]
 public class CryptoTrade
 {
     [Key]
     public int Id { get; set; }
+    public int TradeAccountId { get; set; }
+    [Computed]
+    public virtual CryptoTradeAccount TradeAccount { get; set; }
 
     public int ExchangeId { get; set; }
     [Computed]

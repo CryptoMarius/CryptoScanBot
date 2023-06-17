@@ -16,7 +16,7 @@ public partial class FrmMain
 
     private void ListViewSignalsConstructor()
     {
-        ListViewColumnSorter listViewColumnSorter = new()
+        ListViewColumnSorterSignal listViewColumnSorter = new()
         {
             SortOrder = SortOrder.Descending
         };
@@ -115,8 +115,8 @@ public partial class FrmMain
         ListViewItem.ListViewSubItem subItem;
 
         s = signal.Symbol.Base + "/" + @signal.Symbol.Quote;
-        if (GlobalData.Settings.Signal.LogMinimumTickPercentage)
-        {
+        //if (GlobalData.Settings.Signal.LogMinimumTickPercentage)
+        //{
             decimal tickPercentage = 100 * signal.Symbol.PriceTickSize / signal.Price;
             if (tickPercentage > GlobalData.Settings.Signal.MinimumTickPercentage)
             {
@@ -125,8 +125,8 @@ public partial class FrmMain
                 subItem.ForeColor = Color.Red;
             }
             else subItem = item1.SubItems.Add(s);
-        }
-        else subItem = item1.SubItems.Add(s);
+        //}
+        //else subItem = item1.SubItems.Add(s);
 
         Color displayColor = signal.Symbol.QuoteData.DisplayColor;
         if (displayColor != Color.White)
@@ -140,9 +140,9 @@ public partial class FrmMain
         subItem = item1.SubItems.Add(signal.ModeText);
         if (!signal.IsInvalid)
         {
-            if (signal.Mode == TradeDirection.Long)
+            if (signal.Mode == CryptoTradeDirection.Long)
                 subItem.ForeColor = Color.Green;
-            else if (signal.Mode == TradeDirection.Short)
+            else if (signal.Mode == CryptoTradeDirection.Short)
                 subItem.ForeColor = Color.Red;
         }
 
@@ -175,7 +175,7 @@ public partial class FrmMain
         }
 
         item1.SubItems.Add(signal.EventText);
-        item1.SubItems.Add(signal.Price.ToString(signal.Symbol.DisplayFormat));
+        item1.SubItems.Add(signal.Price.ToString(signal.Symbol.PriceDisplayFormat));
 
         //subItem = item1.SubItems.Add(signal.Symbol.LastPrice.ToString0(signal.Symbol.DisplayFormat));
         subItem = item1.SubItems.Add(signal.PriceDiff?.ToString("N2"));
@@ -276,27 +276,27 @@ public partial class FrmMain
 
 
             value = signal.Sma200;
-            item1.SubItems.Add(value?.ToString(signal.Symbol.DisplayFormat));
+            item1.SubItems.Add(value?.ToString(signal.Symbol.PriceDisplayFormat));
 
             value = signal.Sma50;
             if (value < signal.Sma200)
-                item1.SubItems.Add(value?.ToString(signal.Symbol.DisplayFormat)).ForeColor = Color.Green;
+                item1.SubItems.Add(value?.ToString(signal.Symbol.PriceDisplayFormat)).ForeColor = Color.Green;
             else if (value > signal.Sma200)
-                item1.SubItems.Add(value?.ToString(signal.Symbol.DisplayFormat)).ForeColor = Color.Red;
+                item1.SubItems.Add(value?.ToString(signal.Symbol.PriceDisplayFormat)).ForeColor = Color.Red;
             else
-                item1.SubItems.Add(value?.ToString(signal.Symbol.DisplayFormat));
+                item1.SubItems.Add(value?.ToString(signal.Symbol.PriceDisplayFormat));
 
             value = signal.Sma20;
             if (value < signal.Sma50)
-                item1.SubItems.Add(value?.ToString(signal.Symbol.DisplayFormat)).ForeColor = Color.Green;
+                item1.SubItems.Add(value?.ToString(signal.Symbol.PriceDisplayFormat)).ForeColor = Color.Green;
             else if (value > signal.Sma50)
-                item1.SubItems.Add(value?.ToString(signal.Symbol.DisplayFormat)).ForeColor = Color.Red;
+                item1.SubItems.Add(value?.ToString(signal.Symbol.PriceDisplayFormat)).ForeColor = Color.Red;
             else
-                item1.SubItems.Add(value?.ToString(signal.Symbol.DisplayFormat));
+                item1.SubItems.Add(value?.ToString(signal.Symbol.PriceDisplayFormat));
 
             // de psar zou je wel mogen "clampen"???
             value = signal.PSar; //.Clamp(signal.Symbol.PriceMinimum, signal.Symbol.PriceMaximum, signal.Symbol.PriceTickSize);
-            string orgValue = value?.ToString(signal.Symbol.DisplayFormat);
+            string orgValue = value?.ToString(signal.Symbol.PriceDisplayFormat);
             if (value <= signal.Sma20)
                 item1.SubItems.Add(orgValue).ForeColor = Color.Green;
             else if (value > signal.Sma20)
@@ -521,7 +521,7 @@ public partial class FrmMain
     private void ListViewSignals_ColumnClick(object sender, ColumnClickEventArgs e)
     {
         // Perform the sort with these new sort options.
-        ListViewColumnSorter listViewColumnSorter = (ListViewColumnSorter)listViewSignals.ListViewItemSorter;
+        ListViewColumnSorterSignal listViewColumnSorter = (ListViewColumnSorterSignal)listViewSignals.ListViewItemSorter;
         listViewColumnSorter.ClickedOnColumn(e.Column);
         listViewSignals.SetSortIcon(listViewColumnSorter.SortColumn, listViewColumnSorter.SortOrder);
         listViewSignals.Sort();

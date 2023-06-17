@@ -61,6 +61,9 @@ public class ThreadTelegramBot
     /// <param name="text"></param>
     async static public void SendMessage(string text)
     {
+        if (bot == null)
+            return;
+
         try
         {
             await bot.SendTextMessageAsync(GlobalData.Settings.Telegram.ChatId, text);
@@ -340,12 +343,6 @@ public class ThreadTelegramBot
         else
             stringbuilder.AppendLine("Trade bot is not active!");
 
-        // Balance bot advice status
-        if (GlobalData.Settings.Trading.DoNotEnterTrade)
-            stringbuilder.AppendLine("The bot is showing advice!");
-
-
-
         // Balance bot status
         if (GlobalData.Settings.BalanceBot.Active)
             stringbuilder.AppendLine("Balance bot is active!");
@@ -530,12 +527,10 @@ public class ThreadTelegramBot
                                         else if (command == "BAROMETER")
                                             ShowBarometer(arguments, stringBuilder);
                                         else if (command == "BALANCE")
-                                            stringBuilder.Append("TODO!");
-                                           // stringBuilder.Append(BalanceSymbolsAlgoritm.LastOverviewMessage);
+                                            stringBuilder.Append(BalanceSymbolsAlgoritm.LastOverviewMessage);
                                         else if (command == "ASSETS")
                                         {
-                                            decimal valueBtc, valueUsdt;
-                                            Helper.ShowAssets(stringBuilder, out valueUsdt, out valueBtc);
+                                            //Helper.ShowAssets(stringBuilder, out decimal valueUsdt, out decimal valueBtc);
                                         }
                                         else if (command == "TREND")
                                             ShowTrend(arguments, stringBuilder);
@@ -588,6 +583,7 @@ public class ThreadTelegramBot
             GlobalData.Logger.Error(error);
             GlobalData.AddTextToLogTab("\r\n" + "\r\n" + " error telegram thread(3)\r\n" + error.ToString());
         }
+        GlobalData.AddTextToLogTab("\r\n" + "\r\n TELEGRAM THREAD EXIT");
     }
 
 }

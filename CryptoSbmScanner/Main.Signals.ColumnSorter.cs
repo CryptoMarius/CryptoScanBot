@@ -6,7 +6,7 @@ namespace CryptoSbmScanner
     /// <summary>
     /// This class is an implementation of the 'IComparer' interface.
     /// </summary>
-    public class ListViewColumnSorter : IComparer
+    public class ListViewColumnSorterSignal : IComparer
     {
         public int SortColumn { set; get; } = 0;
         public SortOrder SortOrder = SortOrder.Descending;
@@ -16,7 +16,7 @@ namespace CryptoSbmScanner
         /// <summary>
         /// Class constructor. Initializes various elements
         /// </summary>
-        public ListViewColumnSorter()
+        public ListViewColumnSorterSignal()
         {
             // Initialize the CaseInsensitiveComparer object
             ObjectCompare = new CaseInsensitiveComparer();

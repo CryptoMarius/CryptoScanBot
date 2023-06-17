@@ -98,6 +98,9 @@ public class BinanceFetchCandles
                 // For the next GetCandles() session
                 symbolInterval.IsChanged = true; // zie tevens setter (maar ach)
                 symbolInterval.LastCandleSynchronized = candle.OpenTime;
+#if SQLDATABASE
+                GlobalData.TaskSaveCandles.AddToQueue(candle);
+#endif
             }
 
         }
@@ -198,8 +201,8 @@ public class BinanceFetchCandles
                         {
                             candle = new()
                             {
-#if DATABASE
-                                ExchangeId = Exchange.Id,
+#if SQLDATABASE
+                                ExchangeId = symbol.Exchange.Id,
                                 SymbolId = symbol.Id,
                                 IntervalId = interval.Id,
 #endif
@@ -225,8 +228,9 @@ public class BinanceFetchCandles
                 for (int j = i + 1; j < GlobalData.IntervalList.Count; j++)
                 {
                     CryptoInterval intervalCalc = GlobalData.IntervalList[j];
-                    if (intervalCalc.IntervalPeriod > interval.IntervalPeriod) // Alway's?
+                    if (intervalCalc.IntervalPeriod > interval.IntervalPeriod)
                     {
+                        // Naar het lagere tijd interval om de eerste en laatste candle te achterhalen
                         CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(intervalCalc.ConstructFrom.IntervalPeriod);
                         SortedList<long, CryptoCandle> candlesInterval = symbolPeriod.CandleList;
                         if (candlesInterval.Values.Any())
@@ -243,7 +247,6 @@ public class BinanceFetchCandles
                             long unixLoop = unixFirst;
                             while (unixLoop <= unixLast)
                             {
-                                //DateTime dateLoopDebug = CandleTools.GetUnixDate(unixLoop);
                                 CandleTools.CalculateCandleForInterval(intervalCalc, intervalCalc.ConstructFrom, symbol, unixLoop);
                                 unixLoop += intervalCalc.Duration;
                             }

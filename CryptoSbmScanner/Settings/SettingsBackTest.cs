@@ -8,7 +8,7 @@ public class SettingsBackTest
     public string BackTestSymbol { get; set; } = "BTCUSDT";
     public string BackTestInterval { get; set; } = "1M";
     public DateTime BackTestTime { get; set; } = DateTime.Now;
-    public TradeDirection BackTestMode{ get; set; } = TradeDirection.Long;
+    public CryptoTradeDirection BackTestMode{ get; set; } = CryptoTradeDirection.Long;
     public SignalStrategy BackTestAlgoritm { get; set; } = SignalStrategy.Sbm1;
 }
 

@@ -20,7 +20,7 @@ public class SignalCreateBase
     protected CryptoQuoteData QuoteData;
     protected SortedList<long, CryptoCandle> Candles;
 
-    public TradeDirection SignalMode;
+    public CryptoTradeDirection SignalMode;
     public SignalStrategy SignalStrategy;
     public CryptoCandle CandleLast = null;
     public string ExtraText = "";

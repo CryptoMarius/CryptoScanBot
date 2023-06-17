@@ -11,8 +11,6 @@ using CryptoSbmScanner.TradingView;
 using Dapper;
 using Dapper.Contrib.Extensions;
 
-using Microsoft.IdentityModel.Tokens;
-
 using System.Reflection;
 using System.Text;
 
@@ -21,6 +19,7 @@ namespace CryptoSbmScanner.Intern;
 public class ThreadLoadData
 {
 
+    // AUB laten staan voor het geval we deze later toch nodig hebben (waarschijnlijk voor de emulator)
     //private static void CalculateMissingCandles()
     //{
     //    //************************************************************************************
@@ -136,28 +135,28 @@ public class ThreadLoadData
     //}
 
 
-    private static async Task<WebCallResult<BinanceOrder>> OrderInfoAsync(CryptoSymbol symbol, long? orderId)
-    {
-        BinanceWeights.WaitForFairBinanceWeight(1);
+    //private static async Task<WebCallResult<BinanceOrder>> OrderInfoAsync(CryptoSymbol symbol, long? orderId)
+    //{
+    //    BinanceWeights.WaitForFairBinanceWeight(1);
 
-        // Plaats een sell order op Binance
-        if (orderId.HasValue)
-        {
-            using (var client = new BinanceClient())
-            {
-                WebCallResult<BinanceOrder> result = await client.SpotApi.Trading.GetOrderAsync(symbol.Name, orderId);
-                if (!result.Success)
-                {
-                    string text = string.Format("{0} ERROR getorder {1} {2}", symbol.Name, result.ResponseStatusCode, result.Error);
-                    GlobalData.AddTextToLogTab(text);
-                    GlobalData.AddTextToTelegram(text);
-                }
-                return result;
+    //    // Plaats een sell order op Binance
+    //    if (orderId.HasValue)
+    //    {
+    //        using (var client = new BinanceClient())
+    //        {
+    //            WebCallResult<BinanceOrder> result = await client.SpotApi.Trading.GetOrderAsync(symbol.Name, orderId);
+    //            if (!result.Success)
+    //            {
+    //                string text = string.Format("{0} ERROR getorder {1} {2}", symbol.Name, result.ResponseStatusCode, result.Error);
+    //                GlobalData.AddTextToLogTab(text);
+    //                GlobalData.AddTextToTelegram(text);
+    //            }
+    //            return result;
 
-            }
-        }
-        return null;
-    }
+    //        }
+    //    }
+    //    return null;
+    //}
 
 
     public static async Task ExecuteAsync()
@@ -174,7 +173,7 @@ public class ThreadLoadData
                 //************************************************************************************
 
                 ////Alle exchanges uit de database lezen (al gedaan in Main.cs)
-                //GlobalData.AddTextToLogTab("Reading exchange information from database");
+                //GlobalData.AddTextToLogTab("Reading exchange information");
                 //foreach (Model.CryptoExchange exchange in databaseThread.Connection.GetAll<Model.CryptoExchange>())
                 //{
                 //    GlobalData.AddExchange(exchange);
@@ -182,7 +181,7 @@ public class ThreadLoadData
 
 
                 // De symbols uit de database lezen 
-                GlobalData.AddTextToLogTab("Reading symbol information from database");
+                GlobalData.AddTextToLogTab("Reading symbol information");
                 foreach (CryptoSymbol symbol in databaseThread.Connection.GetAll<CryptoSymbol>())
                 {
                     // Ga er van uit dat de symbol niet actief is
@@ -194,98 +193,125 @@ public class ThreadLoadData
                 }
 
 
-#if DATABASE
+#if SQLDATABASE
                 // Alle CandleFetched items uit de database lezen
                 // En ja, hier is wat duplicaat code, verhuist naar de AddSymbol() 
-                GlobalData.AddTextToLogTab("Reading fetched information from database");
-                foreach (CryptoCandleFetched candleFetched in databaseThread.Connection.GetAll<CryptoCandleFetched>())
+                GlobalData.AddTextToLogTab("Reading fetched information");
+                foreach (var candleFetched in databaseThread.Connection.GetAll<CryptoSymbolInterval>())
                 {
-                    Model.CryptoExchange exchange = null;
-                    if (GlobalData.ExchangeListId.TryGetValue((int)candleFetched.ExchangeId, out exchange))
+                    if (GlobalData.ExchangeListId.TryGetValue((int)candleFetched.ExchangeId, out Model.CryptoExchange exchange))
                     {
-                        //candleFetched.Exchange = exchange;
                         candleFetched.ExchangeId = exchange.Id;
-
-                        CryptoSymbol symbol = null;
-                        if (exchange.SymbolListId.TryGetValue((int)candleFetched.SymbolId, out symbol))
+                        if (exchange.SymbolListId.TryGetValue((int)candleFetched.SymbolId, out CryptoSymbol symbol))
                         {
-                            //candleFetched.Symbol = symbol;
                             candleFetched.SymbolId = symbol.Id;
 
-                            // De aanwezige CandleFetched in het geheugen OVERSCHRIJVEN (dat is de clue hier)
-                            CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval((CryptoIntervalPeriod)candleFetched.IntervalPeriod);
-                            symbolPeriod.CandleFetched = candleFetched;
+                            // De aanwezige SymbolInterval in het geheugen OVERSCHRIJVEN (dat is de clue hier)
+                            CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(candleFetched.IntervalPeriod);
 
-                            candleFetched.Interval = symbolPeriod.Interval;
-                            candleFetched.IntervalId = symbolPeriod.Interval.Id;
+                            // Raar heen en weer gekopieer van data, dit kan optimaler...
+                            symbolInterval.Id = candleFetched.Id;
+                            symbolInterval.SymbolId = symbol.Id;
+                            symbolInterval.ExchangeId = exchange.Id;
+                            symbolInterval.TrendInfoDate = candleFetched.TrendInfoDate;
+                            symbolInterval.TrendIndicator = candleFetched.TrendIndicator;
+                            symbolInterval.LastCandleSynchronized = candleFetched.LastCandleSynchronized;
+                            symbolInterval.IsChanged = false;
                         }
+                    }
+                }
+#endif
+
+
+                // Een aantal signalen laden
+                // TODO - beperken tot de signalen die nog enigzins bruikbaar zijn??
+                GlobalData.AddTextToLogTab("Reading some signals");
+#if SQLDATABASE
+                string sql = "select top 50 * from signal order by id desc";
+#else
+                string sql = "select * from signal order by id desc limit 50";
+#endif
+                foreach (CryptoSignal signal in databaseThread.Connection.Query<CryptoSignal>(sql))
+                {
+                    if (GlobalData.ExchangeListId.TryGetValue(signal.ExchangeId, out Model.CryptoExchange exchange))
+                    {
+                        signal.Exchange = exchange;
+
+                        if (exchange.SymbolListId.TryGetValue(signal.SymbolId, out CryptoSymbol symbol))
+                        {
+                            signal.Symbol = symbol;
+
+                            if (GlobalData.IntervalListId.TryGetValue((int)signal.IntervalId, out CryptoInterval interval))
+                                signal.Interval = interval;
+
+                            GlobalData.SignalQueue.Enqueue(signal);
+                        }
+
                     }
                 }
 
 
-                //Alle symbols uit de database lezen 
-                GlobalData.AddTextToLogTab("Reading position information from database");
-                //foreach (Position position in databaseThread.MyConnection.GetAll<Position>())
-                //var position1 = databaseThread.MyConnection.Query<Position>("SELECT * FROM positions WHERE id=@id", new { id = 3 });
-                foreach (CryptoPosition position in databaseThread.Connection.Query<CryptoPosition>("select * from positions where closetime is null and status < 2"))
+                // Alle gesloten posities lezen 
+                // TODO - beperken tot de laatste 2 dagen? (en wat handigheden toevoegen wellicht)
+                GlobalData.AddTextToLogTab("Reading closed position");
+#if SQLDATABASE
+                sql = "select top 50 * from position where not closetime is null order by id desc";
+#else
+                sql = "select * from position where not closetime is null order by id desc limit 50";
+#endif
+                foreach (CryptoPosition position in databaseThread.Connection.Query<CryptoPosition>(sql))
+                    PositionTools.AddPositionClosed(position);
+
+
+                // Alle openstaande posities lezen 
+                GlobalData.AddTextToLogTab("Reading open position");
+                sql = "select * from position where closetime is null and status < 2";
+                foreach (CryptoPosition position in databaseThread.Connection.Query<CryptoPosition>(sql))
                 {
-                    GlobalData.AddPosition(position);
+                    if (!GlobalData.TradeAccountList.TryGetValue(position.TradeAccountId, out CryptoTradeAccount tradeAccount))
+                        throw new Exception("Geen trade account gevonden");
 
-                    //position.Profit = 0;
-                    //position.Invested = 0;
-                    //position.Percentage = 0;
+                    PositionTools.AddPosition(tradeAccount, position);
 
-                    // De steps inlezen en de status van de openstaande orders opvragen
-                    string sql = string.Format("select * from positionsteps where PositionId={0} order by Id", position.Id);
-                    foreach (CryptoPositionStep step in databaseThread.Connection.Query<CryptoPositionStep>(sql))
+                    // Alle informatie van de positie inlezen
+                    PositionTools.LoadPosition(databaseThread, position);
+
+                    // Controleer de openstaande orders, zijn ze ondertussen gevuld
+                    // Haal de trades van deze positie op vanaf de 1e order
+                    // TODO - Hoe doen we dit met papertrading (er is niets geregeld!)
+                    await PositionTools.LoadTradesfromDatabaseAndBinance(databaseThread, position);
+                    PositionTools.CalculatePositionViaTrades(databaseThread, position);
+
+                    foreach (CryptoPositionPart part in position.Parts.Values)
                     {
-                        // Index op openstaande orders bijwerken
-                        // (Is dat zinvol als de status fileld is?)
-                        position.Steps.Add(step.OrderId, step);
-                        if (step.Order2Id.HasValue)
-                            position.Steps.Add((long)step.Order2Id, step);
-
-                        // We gaan de steps bijwerken dmv de trades (of orders?)
-                        if (step.Status < OrderStatus.Filled)
+                        if (part.Invested > 0 && part.Quantity == 0)
                         {
-                            GlobalData.AddTextToLogTab(string.Format("{0} Query order {1}", position.Symbol.Name, step.OrderId));
-                            WebCallResult<BinanceOrder> orderInfo = await OrderInfoAsync(position.Symbol, step.OrderId);
-                            if (orderInfo.Success)
-                            {
-                                step.Status = orderInfo.Data.Status;
-                                step.QuantityFilled = orderInfo.Data.QuantityFilled;
-                                step.QuoteQuantityFilled = orderInfo.Data.QuoteQuantityFilled;
-                                if (step.Status >= OrderStatus.Filled)
-                                    step.CloseTime = orderInfo.Data.UpdateTime;
-
-                                databaseThread.Connection.Update(step);
-                            }
+                            part.Status = CryptoPositionStatus.Ready;
+                            GlobalData.AddTextToLogTab(string.Format("LoadData: Positie {0} Part {1} status aangepast naar {2}", position.Symbol.Name, part.Name, part.Status));
                         }
 
+                        if (part.Status == CryptoPositionStatus.Ready)
+                        {
+                            if (!part.CloseTime.HasValue)
+                                part.CloseTime = DateTime.UtcNow;
+                            databaseThread.Connection.Update(part);
+                        }
                     }
 
-                    // ====> TODO: Openstaande quantity vergelijken met wat we cash hebben staan, als cash 0 is dan de positie sluiten?
-                    // Blijft een lastige kwestie om te achterhalen of een order overgenomen is (alhoewel, dan heb je vreemde orderid's, hmmmm, das nog wel een goed idee denk ik)
-
-                    // Haal de trades van deze positie op vanaf de 1e order
-                    await TradeTools.RefreshTrades(databaseThread, position);
-                    TradeTools.CheckPosition(databaseThread, position);
-                    if (TradeTools.CalculateProfit(position) == 0)
+                    if (position.Invested > 0 && position.Quantity == 0)
                     {
-                        position.Status = CryptoPositionStatus.positionReady;
-                        GlobalData.AddTextToLogTab(string.Format("LoadData: {0} status aangepast naar positie.status={1}", position.Symbol.Name, position.Status));
+                        position.Status = CryptoPositionStatus.Ready;
+                        GlobalData.AddTextToLogTab(string.Format("LoadData: Positie {0} status aangepast naar {1}", position.Symbol.Name, position.Status));
                     }
 
-                    if (position.Status == CryptoPositionStatus.positionReady)
+                    if (position.Status == CryptoPositionStatus.Ready)
                     {
-                        GlobalData.RemovePosition(position);
+                        PositionTools.RemovePosition(tradeAccount, position);
                         if (!position.CloseTime.HasValue)
                             position.CloseTime = DateTime.UtcNow;
                         databaseThread.Connection.Update(position);
                     }
-
                 }
-#endif
 
 
 
@@ -304,7 +330,7 @@ public class ThreadLoadData
 
                 GlobalData.AddTextToLogTab("Reading candle information");
 
-#if DATABASE
+#if SQLDATABASE
                 //************************************************************************************
                 // De candles uit de database lezen
                 // Voor de 1m hebben we de laatste 2 dagen nodig (vanwege de berekening van de barometer)
@@ -364,7 +390,7 @@ public class ThreadLoadData
 
 
                     //builder.AppendLine(string.Format("(`opentime`>{0} and `interval`={1})", openUnixTime, (int)interval.IntervalPeriod));
-                    builder.AppendLine(string.Format("select * from candles with(index(IdxCandlesIntervalOpenTime)) where (intervalid={0} and opentime>={1}) -- {2} {3}",
+                    builder.AppendLine(string.Format("select * from candle with(index(IdxCandleIntervalOpenTime)) where (intervalid={0} and opentime>={1}) -- {2} {3}",
                         //symbolid=12 and (btcusdt)
                         interval.Id, openUnixTime, interval.Name, CandleTools.GetUnixDate(openUnixTime).ToLocalTime()));
                     //builder.AppendLine(string.Format("(interval={0} and date>='{1}')", (int)interval.IntervalPeriod, openUnixDate.ToString("yyyy-MM-dd HH:mm")));
@@ -401,10 +427,10 @@ public class ThreadLoadData
 
 
                 //************************************************************************************
-                // Vanaf dit moment worden candles (en candleperiod) bewaard 
-                // (want het herberekenen kan definitieve candles produceren)
+                // Vanaf dit moment worden de candles (en candleperiod) bewaard 
+                // (het herberekenen kan definitieve candles produceren)
                 //************************************************************************************
-#if DATABASE
+#if SQLDATABASE
                 GlobalData.AddTextToLogTab("Starting task for saving candles");
                 GlobalData.TaskSaveCandles = new ThreadSaveCandles();
                 // Geen await, deze mag/MOET parallel
@@ -431,13 +457,13 @@ public class ThreadLoadData
                             try
                             {
                                 // Van laag naar hoog zodat de hogere intervallen worden berekend
-                                foreach (CryptoSymbolInterval symbolPeriod in symbol.IntervalPeriodList)
+                                foreach (CryptoSymbolInterval symbolInterval in symbol.IntervalPeriodList)
                                 {
-                                    CryptoInterval interval = symbolPeriod.Interval;
+                                    CryptoInterval interval = symbolInterval.Interval;
                                     if (interval.ConstructFrom != null)
                                     {
                                         // Voeg een candle toe aan een hogere tijd interval (eventueel uit db laden)
-                                        var candlesInterval = symbolPeriod.CandleList;
+                                        var candlesInterval = symbolInterval.CandleList;
                                         if (candlesInterval.Values.Count > 0)
                                         {
                                             // Periode start
@@ -525,7 +551,7 @@ public class ThreadLoadData
                             // symbols aanbieden, daarom splitsen we het hier de lijst in twee stukken.
                             int splitCount = 200;
                             if (symbols.Count > splitCount)
-                                splitCount = symbols.Count / 2;
+                                splitCount = 1 + (symbols.Count / 2);
 
                             while (symbols.Count > 0)
                             {
@@ -585,33 +611,30 @@ public class ThreadLoadData
             // Nu we de achterstand ingehaald hebben kunnen/mogen we analyseren (signals maken)
             //************************************************************************************
             GlobalData.AddTextToLogTab("Starting task for creating signals");
-            _ = Task.Run(() => { GlobalData.ThreadMonitorCandle.Execute(); });
+            _ = Task.Run( () => { GlobalData.ThreadMonitorCandle.Execute(); });
 
 
 #if TRADEBOT
             //************************************************************************************
             // Nu we de achterstand ingehaald hebben kunnen/mogen we analyseren (signals maken)
             //************************************************************************************
-            if (!GlobalData.Settings.ApiKey.IsNullOrEmpty())
+            if (GlobalData.Settings.ApiKey != "")
             {
                 GlobalData.AddTextToLogTab("Starting task for handling orders");
                 _ = Task.Run(async () => { await GlobalData.ThreadMonitorOrder.ExecuteAsync(); });
             }
 
 
-            //************************************************************************************
-            // Nu we de achterstand ingehaald hebben kunnen/mogen we monitoren
-            //************************************************************************************
-            GlobalData.AddTextToLogTab("Starting task for monitor candles");
-            _ = Task.Run(async () => { await GlobalData.TaskMonitorSignal.ExecuteAsync(); });
-
-
 
 #if BALANCING
+            //************************************************************************************
             // Nu we de achterstand ingehaald hebben kunnen/mogen we balancen
             //************************************************************************************
-            GlobalData.AddTextToLogTab("Starting task for balancing assets");
-            _ = Task.Run(async () => { await GlobalData.ThreadBalanceSymbols.ExecuteAsync(); });
+            if (GlobalData.Settings.ApiKey != "")
+            {
+                GlobalData.AddTextToLogTab("Starting task for balancing assets");
+                _ = Task.Run(async () => { await GlobalData.ThreadBalanceSymbols.ExecuteAsync(); });
+            }
 #endif
 
 
@@ -619,7 +642,7 @@ public class ThreadLoadData
             // Alle data van Binance monotoren
             // Deze methode werkt alleen op Binance
             //************************************************************************************
-            if (!GlobalData.Settings.ApiKey.IsNullOrEmpty())
+            if (GlobalData.Settings.ApiKey != "")
             {
                 GlobalData.AddTextToLogTab("Starting task for monitoring events");
                 _ = Task.Run(async () => { await GlobalData.TaskBinanceStreamUserData.ExecuteAsync(); });
@@ -630,12 +653,15 @@ public class ThreadLoadData
             // De assets van de exchange halen (overlappend met Binance monitoring om niets te missen)
             // Via een event worden de assets in de userinterface gezet (dat duurt even)
             //************************************************************************************
-            if (!GlobalData.Settings.ApiKey.IsNullOrEmpty())
+            if (GlobalData.Settings.ApiKey != "")
             {
-                BinanceFetchAssets fetchAssets = new BinanceFetchAssets();
-                await Task.Run(async () => { await fetchAssets.Execute(); });
+                BinanceFetchAssets fetchAssets = new();
+                await Task.Run(async () => { await fetchAssets.Execute(GlobalData.BinanceRealTradeAccount); });
             }
 #endif
+
+            // toon de ingelezen posities
+            GlobalData.PositionsHaveChanged("");
 
 
             var assembly = Assembly.GetExecutingAssembly().GetName();
@@ -671,7 +697,4 @@ public class ThreadLoadData
             throw;
         }
     }
-
-
 }
-

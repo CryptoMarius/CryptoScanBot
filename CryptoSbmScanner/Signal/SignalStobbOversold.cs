@@ -8,7 +8,7 @@ public class SignalStobbOversold : SignalSbmBaseOversold // inherit from sbm bec
     public SignalStobbOversold(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
         //ReplaceSignal = true;
-        SignalMode = TradeDirection.Long;
+        SignalMode = CryptoTradeDirection.Long;
         SignalStrategy = SignalStrategy.Stobb;
     }
 
@@ -66,6 +66,13 @@ public class SignalStobbOversold : SignalSbmBaseOversold // inherit from sbm bec
             response = "rsi niet oversold";
             return false;
         }
+
+        
+        //if (GlobalData.Settings.Signal.StobMinimalTrend > -99 && ehh, ik heb hier helemaal geen trend?)
+        //{
+        //    response = "de trend is niet OK";
+        //    return false;
+        //}
 
 
         response = "";

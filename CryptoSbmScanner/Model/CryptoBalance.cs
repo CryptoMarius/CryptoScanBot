@@ -1,10 +1,8 @@
-﻿//using System.ComponentModel.DataAnnotations;
-//using System.ComponentModel.DataAnnotations.Schema;
-using Dapper.Contrib.Extensions;
+﻿using Dapper.Contrib.Extensions;
 
 namespace CryptoSbmScanner.Model;
 
-[Table("Balances")]
+[Table("Balance")]
 public class CryptoBalance
 {
     [Key]

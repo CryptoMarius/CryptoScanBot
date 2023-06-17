@@ -8,7 +8,7 @@ public class SignalStobbOverbought : SignalSbmBaseOversold
     public SignalStobbOverbought(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
         ReplaceSignal = true;
-        SignalMode = TradeDirection.Short;
+        SignalMode = CryptoTradeDirection.Short;
         SignalStrategy = SignalStrategy.Stobb;
     }
 
@@ -153,7 +153,7 @@ public class SignalStobbOverbought : SignalSbmBaseOversold
         // Langer dan x candles willen we niet wachten
         if ((CandleLast.OpenTime - signal.EventTime) > GlobalData.Settings.Trading.GlobalBuyRemoveTime * Interval.Duration)
         {
-            ExtraText = "Ophouden na 10 candles";
+            ExtraText = string.Format("Ophouden na {0} candles", GlobalData.Settings.Trading.GlobalBuyRemoveTime);
             return true;
         }
 

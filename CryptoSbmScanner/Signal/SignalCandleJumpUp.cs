@@ -7,7 +7,7 @@ public class SignalCandleJumpUp : SignalCreateBase
 {
     public SignalCandleJumpUp(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        SignalMode = TradeDirection.Short;
+        SignalMode = CryptoTradeDirection.Short;
         SignalStrategy = SignalStrategy.Jump;
     }
 

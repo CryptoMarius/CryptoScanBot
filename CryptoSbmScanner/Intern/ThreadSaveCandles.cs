@@ -12,7 +12,7 @@ namespace CryptoSbmScanner.Intern;
 
 public class ThreadSaveCandles
 {
-#if DATABASE
+#if SQLDATABASE
     public int QueueCount = 0;
     private List<CryptoCandle> Queue = new List<CryptoCandle>();
     private CancellationTokenSource cancellationToken = new CancellationTokenSource();
@@ -51,7 +51,7 @@ public class ThreadSaveCandles
                 // Lijstjes om info te cachen
                 List<CryptoCandle> candleCache = new List<CryptoCandle>();
                 SortedList<int?, CryptoSymbol> symbolList = new SortedList<int?, CryptoSymbol>();
-                SortedList<string, CryptoCandleFetched> candleFetchList = new SortedList<string, CryptoCandleFetched>();
+                SortedList<string, CryptoSymbolInterval> candleFetchList = new();
 
 
                 foreach (CryptoCandle candle in list)
@@ -62,18 +62,20 @@ public class ThreadSaveCandles
                         {
                             if (GlobalData.IntervalListId.TryGetValue(candle.IntervalId, out CryptoInterval interval))
                             {
-                                CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
+                                CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+                                // Aanvullen, want deze is niet altijd gevuld
+                                symbolInterval.SymbolId = symbol.Id;
+                                symbolInterval.ExchangeId = exchange.Id;
 
                                 if (candle.Id > 0)
                                     databaseThread.Connection.Update(candle, transaction);
                                 else candleCache.Add(candle);
 
-                                CryptoCandleFetched candleFetched = symbolPeriod.CandleFetched;
-                                if (candleFetched.IsChanged)
+                                if (symbolInterval.IsChanged)
                                 {
                                     string id = symbol.Name + "/" + interval.Name;
                                     if (!candleFetchList.ContainsKey(id))
-                                        candleFetchList.Add(id, candleFetched);
+                                        candleFetchList.Add(id, symbolInterval);
 
                                     // Af en toe ook de symbol bewaren
                                     if (!symbolList.ContainsKey(symbol.Id))
@@ -117,7 +119,7 @@ public class ThreadSaveCandles
                 // Pas op: Er is een grote waarschijnlijkheid dat de CandleFetched een datum van candles
                 // bevat die nog niet bewaard is (immers het aanbieden van candles gaat continue door)
                 // Dit zit eigenlijk niet goed in elkaar, en ik heb zo snel geen betere manier!
-                foreach (CryptoCandleFetched candleFetched in candleFetchList.Values)
+                foreach (var candleFetched in candleFetchList.Values)
                 {
                     //if (candleFetched.Symbol.Name.Equals("BTCUSDT"))
                     //GlobalData.AddTextToLogTab(string.Format("ThreadSave - Updated candlefetch {0} {1} {2}", candleFetched.Symbol.Name , candleFetched.Interval.Name, CandleTools.GetUnixDate(candleFetched.Date).ToLocalTime()));

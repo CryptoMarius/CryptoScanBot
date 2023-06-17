@@ -764,11 +764,11 @@ public class SignalSbmBaseOversold : SignalSbmBase
         // BB - buiten de grenzen
         // okay, ff wachten, er komt vast nog een melding
         // Er een candle onder de bb opent of sluit (eigenlijk overbodig icm macd)
-        if (CandleLast.Close < (decimal)CandleLast.CandleData.BollingerBandsLowerBand || Symbol.LastPrice < (decimal)CandleLast.CandleData.BollingerBandsLowerBand)
-        {
-            ExtraText = "Close of LastPrice beneden de bb.lower";
-            return true;
-        }
+        //if (CandleLast.Close < (decimal)CandleLast.CandleData.BollingerBandsLowerBand || Symbol.LastPrice < (decimal)CandleLast.CandleData.BollingerBandsLowerBand)
+        //{
+        //    ExtraText = "Close of LastPrice beneden de bb.lower";
+        //    return true;
+        //}
 
         if (CandleLast.Close > (decimal)CandleLast.CandleData.BollingerBandsUpperBand || Symbol.LastPrice > (decimal)CandleLast.CandleData.BollingerBandsUpperBand)
         {

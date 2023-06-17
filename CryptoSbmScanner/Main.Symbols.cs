@@ -94,9 +94,7 @@ public partial class FrmMain
         }
     }
 
-
-
-
+    
     private void ListBoxSymbolsMenuItemActivateTradingApp_Click(object sender, EventArgs e)
     {
         if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1m, out CryptoInterval interval))
@@ -216,7 +214,7 @@ public partial class FrmMain
         //    }
     }
 
-    private async void SignalsNegerenToolStripMenuItem_Click(object sender, EventArgs e)
+    private void SignalsNegerenToolStripMenuItem_Click(object sender, EventArgs e)
     {
         // Neem de door de gebruiker geselecteerde coin
         string symbolName = listBoxSymbols.Text.ToString();
@@ -227,25 +225,17 @@ public partial class FrmMain
         {
             if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol symbol))
             {
-                await symbol.Exchange.PositionListSemaphore.WaitAsync();
-                try
+                foreach (CryptoSymbolInterval cryptoSymbolInterval in symbol.IntervalPeriodList)
                 {
-                    foreach (CryptoSymbolInterval cryptoSymbolInterval in symbol.IntervalPeriodList)
+                    CryptoSignal signal = cryptoSymbolInterval.Signal;
+                    if (signal != null)
                     {
-                        CryptoSignal signal = cryptoSymbolInterval.Signal;
-                        if (signal != null)
-                        {
-                            string lastPrice = symbol.LastPrice?.ToString(symbol.DisplayFormat);
-                            string text = "Monitor " + symbol.Name + " " + signal.Interval.Name + " signal from=" + signal.OpenDate.ToLocalTime() + " " + signal.Strategy.ToString() + " price=" + lastPrice;
-                            GlobalData.AddTextToLogTab(text + " cancelled (removed)");
+                        string lastPrice = symbol.LastPrice?.ToString(symbol.PriceDisplayFormat);
+                        string text = "Monitor " + symbol.Name + " " + signal.Interval.Name + " signal from=" + signal.OpenDate.ToLocalTime() + " " + signal.Strategy.ToString() + " price=" + lastPrice;
+                        GlobalData.AddTextToLogTab(text + " cancelled (removed)");
 
-                            cryptoSymbolInterval.Signal = null;
-                        }
+                        cryptoSymbolInterval.Signal = null;
                     }
-                }
-                finally
-                {
-                    symbol.Exchange.PositionListSemaphore.Release();
                 }
             }
         }

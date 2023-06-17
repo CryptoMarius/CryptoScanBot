@@ -57,7 +57,7 @@ public static class CandleTools
         {
             candle = new CryptoCandle
             {
-#if DATABASE
+#if SQLDATABASE
                 ExchangeId = symbol.ExchangeId,
                 SymbolId = symbol.Id,
 	            IntervalId = interval.Id,
@@ -107,7 +107,7 @@ public static class CandleTools
             IsChanged = true;
             candleNew = new CryptoCandle()
             {
-#if DATABASE
+#if SQLDATABASE
                 ExchangeId = symbol.ExchangeId,
                 SymbolId = symbol.Id,
                 IntervalId = interval.Id,
@@ -196,7 +196,7 @@ public static class CandleTools
         // Onvolledige candles willen we niet bewaren(dat geeft alleen problemen)
         if (candleNew.Open != -1 && candleNew.Close != -1 && candleCount == 0)
         {
-#if DATABASE
+#if SQLDATABASE
             if (candleNew.Id > 0)
             {
                 //Optimalisatie: Vaak wordt een candle helemaal niet aangepast, valt bijvoorbeeld tussen eerdere high en lows.
@@ -253,7 +253,7 @@ public static class CandleTools
                 {
                     CryptoCandle stickNew = new()
                     {
-#if DATABASE
+#if SQLDATABASE
                         ExchangeId = stickOld.ExchangeId,
                         SymbolId = stickOld.SymbolId,
                         IntervalId = interval.Id,

@@ -48,9 +48,17 @@ public class TrendIndicatorZigZag3
 
     public CryptoTrendIndicator Calculate()
     {
+        // In de BackTest zijn niet alle intervallen in het geheugen aanwezig
         List<CryptoCandle> history = CalculateHistory(CandleList, 21);
+        if (history.Count < 21)
+            return CryptoTrendIndicator.trendSideways;
+
         List<EmaResult> emaList8 = (List<EmaResult>)history.GetEma(8);
         List<EmaResult> emaList21 = (List<EmaResult>)history.GetEma(21);
+
+        // Er zijn nu eenmaal munten die niet 21 dagen history hebben (logisch)
+        if (emaList8[^1].Ema == null || emaList21[^1].Ema == null)
+            return CryptoTrendIndicator.trendBearish;
 
         double ema8 = emaList8[^1].Ema.Value;
         double ema21 = emaList21[^1].Ema.Value;

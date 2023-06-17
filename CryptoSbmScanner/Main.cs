@@ -7,19 +7,12 @@ using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Settings;
 using CryptoSbmScanner.Signal;
-using CryptoSbmScanner.TradingView;
 
-using Dapper;
-using Dapper.Contrib.Extensions;
-
-using Microsoft.Data.Sqlite;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Win32;
 
 using System.Drawing.Drawing2D;
 using System.Reflection;
-using System.Reflection.Metadata;
-using System.Runtime.InteropServices;
 using System.Text;
 
 
@@ -30,7 +23,7 @@ public partial class FrmMain : Form
 {
 
     //Database die gebruikt wordt in de main thread
-    private CryptoDatabase databaseMain;
+    private readonly CryptoDatabase databaseMain;
 
     private bool ProgramExit; // Mislukte manier om excepties bij afsluiten te voorkomen (todo)
     private int createdSignalCount; // Tellertje met het aantal meldingen (komt in de taakbalk c.q. applicatie titel)
@@ -76,9 +69,11 @@ public partial class FrmMain : Form
         // Niet echt een text event, meer misbruik van het event type
         GlobalData.AssetsHaveChangedEvent += new AddTextEvent(AssetsHaveChangedEvent);
         GlobalData.SymbolsHaveChangedEvent += new AddTextEvent(SymbolsHaveChangedEvent);
+        GlobalData.PositionsHaveChangedEvent += new AddTextEvent(OpenPositionsHaveChangedEvent);
         GlobalData.ConnectionWasLostEvent += new AddTextEvent(ConnectionWasLostEvent);
         GlobalData.ConnectionWasRestoredEvent += new AddTextEvent(ConnectionWasRestoredEvent);
 
+        GlobalData.SignalEvent = SignalArrived;
 
         // Wat event handles zetten
         comboBoxBarometerQuote.SelectedIndexChanged += ShowBarometerStuff;
@@ -114,12 +109,14 @@ public partial class FrmMain : Form
         GlobalData.LoadSettings();
         ListViewSignalsConstructor(); // Partial class "constructor"
         ListViewSymbolsConstructor(); // Partial class "constructor"
-        ListViewPositionsConstructor(); // Partial class "constructor"
         ListViewInformationConstructor(); // Partial class "constructor"
+        ListViewPositionsOpenConstructor();
+        ListViewPositionsClosedConstructor();
 
         // Altrady tabblad verbergen, is enkel een browser om dat extra dialoog in externe browser te vermijden
         _webViewAltradyRef = webViewAltrady;
         tabControl.TabPages.Remove(tabPageAltrady);
+
 
         BinanceClient.SetDefaultOptions(new BinanceClientOptions() { });
         BinanceSocketClientOptions options = new();
@@ -127,10 +124,10 @@ public partial class FrmMain : Form
         options.SpotStreamsOptions.ReconnectInterval = TimeSpan.FromSeconds(15);
         BinanceSocketClient.SetDefaultOptions(options);
 
-#if !DATABASE
+#if !SQLDATABASE
         //Dapper.SqlMapper.Settings.CommandTimeout = 180;
         CryptoDatabase.BasePath = GlobalData.GetBaseDir();
-        new CryptoDatabase().CreateDatabase();
+        CryptoDatabase.CreateDatabase();
 #endif
 
 
@@ -142,6 +139,7 @@ public partial class FrmMain : Form
         // Basicly allemaal constanten
         GlobalData.LoadExchanges();
         GlobalData.LoadIntervals();
+        GlobalData.LoadTradingAccounts();
 
 
 
@@ -163,6 +161,16 @@ public partial class FrmMain : Form
 
     private void ApplySettings()
     {
+        //GlobalData.TradeAccountList.Clear();
+        // Een speciaal geval, enkel voor de backtest tool
+        //if (GlobalData.BackTest)
+        //    accounts.Add(GlobalData.BinanceBackTestAccount);
+        //if (GlobalData.Settings.Trading.TradeViaPaperTrading)
+        //    GlobalData.TradeAccountList.Add(GlobalData.BinancePaperTradeAccount.Id, GlobalData.BinancePaperTradeAccount);
+        //if (GlobalData.Settings.Trading.TradeViaExchange)
+        //    GlobalData.TradeAccountList.Add(GlobalData.BinanceRealTradeAccount.Id, GlobalData.BinanceRealTradeAccount);
+
+
         comboBoxBarometerQuote.BeginUpdate();
         comboBoxBarometerInterval.BeginUpdate();
         try
@@ -232,7 +240,7 @@ public partial class FrmMain : Form
         InitTimerInterval(ref TimerRestartStreams, 24 * 60 * 60); // 24 hours
 
         // Bewaar de candle data iedere
-        InitTimerInterval(ref TimerSaveCandleData, 8 * 60 * 60); // 8 hours
+        InitTimerInterval(ref TimerSaveCandleData, 4 * 60 * 60); // 4 hours
 
         // Maak de log leeg iedere 24 uur
         InitTimerInterval(ref TimerClearMemo, 24 * 60 * 60); // 24 hours
@@ -303,16 +311,15 @@ public partial class FrmMain : Form
         GlobalData.AddTextToLogTab("Debug: ResumeComputer");
         GlobalData.ApplicationStatus = ApplicationStatus.AppStatusPrepare;
 
-        GlobalData.ThreadMonitorCandle = new ThreadMonitorCandle(SignalArrived);
+        GlobalData.ThreadMonitorCandle = new ThreadMonitorCandle();
 #if TRADEBOT
-        GlobalData.TaskMonitorSignal = new ThreadMonitorSignal();
         GlobalData.ThreadMonitorOrder = new ThreadMonitorOrder();
         GlobalData.TaskBinanceStreamUserData = new BinanceStreamUserData();
 #endif
 #if BALANCING
         GlobalData.ThreadBalanceSymbols = new ThreadBalanceSymbols();
 #endif
-#if DATABASE
+#if SQLDATABASE
         GlobalData.TaskSaveCandles = new ThreadSaveCandles();
 #endif
 
@@ -342,7 +349,6 @@ public partial class FrmMain : Form
         // Threads (of tasks)
         GlobalData.ThreadMonitorCandle?.Stop();
 #if TRADEBOT
-        GlobalData.TaskMonitorSignal?.Stop();
         GlobalData.ThreadMonitorOrder?.Stop();
         GlobalData.TaskBinanceStreamUserData?.StopAsync();
 #endif
@@ -358,7 +364,7 @@ public partial class FrmMain : Form
             }
             quoteData.BinanceStream1mCandles.Clear();
         }
-#if DATABASE
+#if SQLDATABASE
         GlobalData.TaskSaveCandles.Stop();
 
         // En vervolgens alsnog de niet werkte candles bewaren (een nadeel van de lazy write)
@@ -838,7 +844,7 @@ public partial class FrmMain : Form
             if (symbol.LastPrice.HasValue)
             {
                 value = (decimal)symbol.LastPrice;
-                subItem.Text = value.ToString(symbol.DisplayFormat);
+                subItem.Text = value.ToString(symbol.PriceDisplayFormat);
                 subItem.ForeColor = Color.Black;
 
                 if (symbol.Name.Equals(hist.Symbol) && hist.PricePrev.HasValue)
@@ -1038,8 +1044,7 @@ public partial class FrmMain : Form
         createdSignalCount = 0;
         ListViewSignalsMenuItemClearSignals_Click(null, null);
 
-        GlobalData.ThreadMonitorCandle.analyseCount = 0;
-        GlobalData.TaskMonitorSignal.monitorCount = 0;
+        PositionMonitor.AnalyseCount = 0;
         GlobalData.TaskBinanceStreamPriceTicker.tickerCount = 0;
 
         foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
@@ -1081,22 +1086,21 @@ public partial class FrmMain : Form
 
 
     private readonly Queue<string> logQueue = new();
-    private readonly Queue<CryptoSignal> signalQueue = new();
 
 
     private void TimerAddSignalsAndLog_Tick(object sender, EventArgs e)
     {
         // Speed up adding signals
-        if (signalQueue.Count > 0)
+        if (GlobalData.SignalQueue.Count > 0)
         {
-            Monitor.Enter(signalQueue);
+            Monitor.Enter(GlobalData.SignalQueue);
             try
             {
                 List<CryptoSignal> signals = new();
 
-                while (signalQueue.Count > 0)
+                while (GlobalData.SignalQueue.Count > 0)
                 {
-                    CryptoSignal signal = signalQueue.Dequeue();
+                    CryptoSignal signal = GlobalData.SignalQueue.Dequeue();
                     if (signal != null)
                         signals.Add(signal);
                 }
@@ -1112,7 +1116,7 @@ public partial class FrmMain : Form
             }
             finally
             {
-                Monitor.Exit(signalQueue);
+                Monitor.Exit(GlobalData.SignalQueue);
             }
         }
 
@@ -1188,23 +1192,8 @@ public partial class FrmMain : Form
         // Zet de laatste munt in de "caption" (en taskbar) van de applicatie bar (visuele controle of er meldingen zijn)
         //Invoke(new Action(() => { this.Text = signal.Symbol.Name + " " + createdSignalCount.ToString(); }));
 
-
-        //Monitor.Enter(signalQueue);
-        try
-        {
-            signalQueue.Enqueue(signal);
-        }
-        finally
-        {
-            //Monitor.Exit(signalQueue);
-        }
-        //Task.Factory.StartNew(() =>
-        //{
-        //    Invoke(new Action(() =>
-        //    {
-        //        listViewSignalsAddSignal(signal);
-        //    }));
-        //});
+        if (!signal.IsInvalid || (signal.IsInvalid && GlobalData.Settings.Signal.ShowInvalidSignals))
+            GlobalData.SignalQueue.Enqueue(signal);
 
         // Speech and/or sound
         if (!signal.IsInvalid)
@@ -1212,19 +1201,19 @@ public partial class FrmMain : Form
             switch (signal.Strategy)
             {
                 case SignalStrategy.Jump:
-                    if (signal.Mode == TradeDirection.Long)
+                    if (signal.Mode == CryptoTradeDirection.Long)
                         PlaySound(signal, GlobalData.Settings.Signal.PlaySoundCandleJumpSignal, GlobalData.Settings.Signal.PlaySpeechCandleJumpSignal,
                             GlobalData.Settings.Signal.SoundCandleJumpUp, ref LastSignalSoundCandleJumpUp);
-                    if (signal.Mode == TradeDirection.Short)
+                    if (signal.Mode == CryptoTradeDirection.Short)
                         PlaySound(signal, GlobalData.Settings.Signal.PlaySoundCandleJumpSignal, GlobalData.Settings.Signal.PlaySpeechCandleJumpSignal,
                             GlobalData.Settings.Signal.SoundCandleJumpDown, ref LastSignalSoundCandleJumpDown);
                     break;
 
                 case SignalStrategy.Stobb:
-                    if (signal.Mode == TradeDirection.Long)
+                    if (signal.Mode == CryptoTradeDirection.Long)
                         PlaySound(signal, GlobalData.Settings.Signal.PlaySoundStobbSignal, GlobalData.Settings.Signal.PlaySpeechStobbSignal,
                             GlobalData.Settings.Signal.SoundStobbOversold, ref LastSignalSoundStobbOversold);
-                    if (signal.Mode == TradeDirection.Short)
+                    if (signal.Mode == CryptoTradeDirection.Short)
                         PlaySound(signal, GlobalData.Settings.Signal.PlaySoundStobbSignal, GlobalData.Settings.Signal.PlaySpeechStobbSignal,
                             GlobalData.Settings.Signal.SoundStobbOverbought, ref LastSignalSoundStobbOverbought);
                     break;
@@ -1234,21 +1223,23 @@ public partial class FrmMain : Form
                 case SignalStrategy.Sbm3:
                 case SignalStrategy.Sbm4:
                 case SignalStrategy.Sbm5:
-                    if (signal.Mode == TradeDirection.Long)
+                    if (signal.Mode == CryptoTradeDirection.Long)
                         PlaySound(signal, GlobalData.Settings.Signal.PlaySoundSbmSignal, GlobalData.Settings.Signal.PlaySpeechSbmSignal,
                         GlobalData.Settings.Signal.SoundSbmOversold, ref LastSignalSoundSbmOversold);
-                    if (signal.Mode == TradeDirection.Short)
+                    if (signal.Mode == CryptoTradeDirection.Short)
                         PlaySound(signal, GlobalData.Settings.Signal.PlaySoundSbmSignal, GlobalData.Settings.Signal.PlaySpeechSbmSignal,
                             GlobalData.Settings.Signal.SoundSbmOverbought, ref LastSignalSoundSbmOverbought);
                     break;
             }
-        }
 
-        if (!signal.IsInvalid && GlobalData.Settings.Telegram.SendSignalsToTelegram)
-        {
-            // Bedenk eens een mooie header.. 
-            // en een link naar Altrady/HyperTrade
-            // Heb als het goed is een stukje oude code liggen (maar waar)
+
+            if (GlobalData.Settings.Telegram.SendSignalsToTelegram)
+            {
+                // Bedenk eens een mooie header.. 
+                // en een link naar Altrady/HyperTrade
+                // Heb als het goed is een stukje oude code liggen (maar waar), voorlopig even plain en simple..
+                AddTextToTelegram(text);
+            }
         }
     }
 
@@ -1618,7 +1609,7 @@ public partial class FrmMain : Form
 
                 long einde = candle.OpenTime;
                 long start = einde - 2 * 60 * interval.Duration;
-                SignalCreate createSignal = new(symbol, interval, true, SignalArrived);
+                SignalCreate createSignal = new(symbol, interval);
                 while (start <= einde)
                 {
                     if (symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList.TryGetValue(start, out candle))
@@ -1626,7 +1617,7 @@ public partial class FrmMain : Form
                         if (createSignal.Prepare(start))
                         {
                             // todo, configuratie short/long
-                            SignalCreateBase algorithm = SignalHelper.GetSignalAlgorithm(TradeDirection.Long, GlobalData.Settings.BackTest.BackTestAlgoritm, symbol, interval, candle);
+                            SignalCreateBase algorithm = SignalHelper.GetSignalAlgorithm(CryptoTradeDirection.Long, GlobalData.Settings.BackTest.BackTestAlgoritm, symbol, interval, candle);
                             if (algorithm != null)
                             {
                                 if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
@@ -1642,7 +1633,7 @@ public partial class FrmMain : Form
                 }
 
                 BackTestExcel backTestExcel = new(symbol, createSignal.history);
-                backTestExcel.ExportToExcell(TradeDirection.Long, GlobalData.Settings.BackTest.BackTestAlgoritm);
+                backTestExcel.ExportToExcell(CryptoTradeDirection.Long, GlobalData.Settings.BackTest.BackTestAlgoritm);
             }
         }
         catch (Exception error)
@@ -1697,4 +1688,5 @@ public partial class FrmMain : Form
         }
         lastCandlesKLineCount = candlesKLineCount;
     }
+
 }

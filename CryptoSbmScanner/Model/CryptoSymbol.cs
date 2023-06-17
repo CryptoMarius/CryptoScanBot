@@ -40,6 +40,8 @@ public class CryptoSymbol
     //The tick size of the quantity. The quantity can not have more precision as this
     //and can only be incremented in steps of this.
     public decimal QuantityTickSize { get; set; }
+    [Computed]
+    public string QuantityDisplayFormat { get; set; } = "N8";
 
     //BinanceSymbolPriceFilter
     //The minimal price the order can be for
@@ -49,52 +51,55 @@ public class CryptoSymbol
     //The tick size of the price. The price can not have more precision as this and
     //can only be incremented in steps of this.
     public decimal PriceTickSize { get; set; }
+    [Computed]
+    public string PriceDisplayFormat { get; set; } = "N8";
 
     public bool IsSpotTradingAllowed { get; set; }
     public bool IsMarginTradingAllowed { get; set; }
 
-    //Gevuld door de MiniTicker, ALLEMAAL gebaseerd op de 24h prijs
-    [Computed]
-    public decimal? OpenPrice { get; set; }
-    [Computed]
-    public decimal? HighPrice { get; set; }
-    [Computed]
-    public decimal? LowPrice { get; set; }
-
-    //Laatste waarde volgens de miniticker
-    public decimal? LastPrice { get; set; }
-    [Computed]
-    //Laatste waarde volgens de miniticker
-    public decimal? BidPrice { get; set; }
-    [Computed]
-    //Laatste waarde volgens de miniticker
-    public decimal? AskPrice { get; set; }
-
     public decimal Volume { get; set; }
 
-    /// <summary>
-    /// Laatste order id die we hebben opgehaald
-    /// </summary>
-    public long? LastOrderfetched { get; set; }
+    // Gevuld door de Binance Ticker, ALLEMAAL gebaseerd op de 24h prijs
+    [Computed]
+    // Laatste waarde volgens de ticker
+    public decimal? OpenPrice { get; set; }
+    [Computed]
+    // Laatste waarde volgens de ticker
+    public decimal? HighPrice { get; set; }
+    [Computed]
+    // Laatste waarde volgens de ticker
+    public decimal? LowPrice { get; set; }
+
+
+    // Laatste waarde volgens de ticker
+    public decimal? LastPrice { get; set; }
+    [Computed]
+    // Laatste waarde volgens de ticker
+    public decimal? BidPrice { get; set; }
+    [Computed]
+    // Laatste waarde volgens de ticker
+    public decimal? AskPrice { get; set; }
+
+    
     /// <summary>
     /// Laatste trade id die we hebben opgehaald
+    /// Nu overbodig, vervangen door de LastTradeDate (fout, dat is de laatste geplaatste trade, iets anders als symchronisatie trades!)
     /// </summary>
-    public long? LastTradefetched { get; set; }
+    public DateTime? LastTradeFetched { get; set; }
 
     // De trend percentage (berekend uit de candlefetched.TrendIndicator)
     public float? TrendPercentage { get; set; }
     public DateTime? TrendInfoDate { get; set; }
 
-
-    [Computed]
+    // Voor ophalen van de trades (ipv LastTradefetched)
     public DateTime? LastTradeDate { get; set; }
 
-    [Computed]
+    //[Computed]
     //[JsonIgnore]
-    //[Jil.JilDirective(Ignore = true)]
-    public bool IsBalancing { get; set; }
+    //public bool IsBalancing { get; set; }
 
     [Computed]
+    // gegevens quote, display format, barometers etc
     public virtual CryptoQuoteData QuoteData { get; set; }
 
 
@@ -115,8 +120,13 @@ public class CryptoSymbol
     public SortedList<long, CryptoTrade> TradeList { get; } = new();
 
 
+    // Quick en dirty voor het testen van de performance van balanceren
+    // Waarom kies ik ervoor om het altijd quick en dirty te doen??????
     [Computed]
-    public string DisplayFormat { get; set; } = "N8";
+    public Decimal QuantityTest { get; set; }
+    [Computed]
+    public Decimal QuoteQuantityTest { get; set; }
+
 
     [Computed]
     public int SignalCount
@@ -133,17 +143,6 @@ public class CryptoSymbol
         }
     }
 
-    [Computed]
-    public int PositionCount
-    {
-        get
-        {
-            int count = 0;
-            if (Exchange.PositionList.TryGetValue(Name, out var positionList))
-                count += positionList.Count;
-            return count;
-        }
-    }
 
     public CryptoSymbol()
     //???
@@ -153,15 +152,16 @@ public class CryptoSymbol
         IntervalPeriodList = new();
         foreach (CryptoInterval interval in GlobalData.IntervalList)
         {
-            CryptoSymbolInterval symbolPeriod = new()
+            CryptoSymbolInterval symbolInterval = new()
             {
-                ExchangeId = this.ExchangeId,
-                SymbolId = this.Id,
+                // Dit is een constructor, exchange en symbol zijn er nog niet
+                //ExchangeId = this.ExchangeId,
+                //SymbolId = this.Id,
                 Interval = interval,
                 IntervalId = interval.Id,
                 IntervalPeriod = interval.IntervalPeriod,
             };
-            IntervalPeriodList.Add(symbolPeriod);
+            IntervalPeriodList.Add(symbolInterval);
         }
     }
 

@@ -49,10 +49,10 @@ public class BinanceStream1mCandles
                     // Process the single 1m candle
                     candle = CandleTools.HandleFinalCandleData(symbol, GlobalData.IntervalList[0], temp.Data.OpenTime,
                         temp.Data.OpenPrice, temp.Data.HighPrice, temp.Data.LowPrice, temp.Data.ClosePrice, temp.Data.QuoteVolume);
-#if DATABASE
+#if SQLDATABASE
                     GlobalData.TaskSaveCandles.AddToQueue(candle);
 #endif
-					symbol.LastPrice = temp.Data.ClosePrice;
+                    symbol.LastPrice = temp.Data.ClosePrice;
 
                     // Calculate the higher timeframes
                     foreach (CryptoInterval interval in GlobalData.IntervalList)

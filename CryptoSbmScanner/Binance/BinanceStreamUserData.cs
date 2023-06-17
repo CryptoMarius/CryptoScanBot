@@ -6,9 +6,6 @@ using CryptoSbmScanner.Intern;
 
 namespace CryptoSbmScanner.Binance;
 
-//Wil dit graag per quote opdelen, of in een aantal verschilende stream's zodat we de candles 
-//eerder krijgen (nu zit er nog wel eens een aardige delay van ~15 a 20 seconden in)
-
 public class BinanceStreamUserData
 {
     private BinanceSocketClient socketClient;
@@ -31,7 +28,7 @@ public class BinanceStreamUserData
 
     public async Task ExecuteAsync()
     {
-        using (var client = new BinanceClient())
+        using (BinanceClient client = new())
         {
             CallResult<string> userStreamResult = await client.SpotApi.Account.StartUserStreamAsync();
             if (!userStreamResult.Success)
@@ -46,7 +43,7 @@ public class BinanceStreamUserData
                 userStreamResult.Data,
                 OnOrderUpdate,
                 null,
-                onAccountPositionMessage,
+                OnAccountPositionMessage,
                 null
                 ).ConfigureAwait(false);
 
@@ -123,13 +120,13 @@ public class BinanceStreamUserData
     //    }
     //}
 
-    private void onAccountPositionMessage(DataEvent<BinanceStreamPositionsUpdate> data)
+    private void OnAccountPositionMessage(DataEvent<BinanceStreamPositionsUpdate> data)
     {
         try
         {
             if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
             {
-                Helper.PickupAssets(exchange, data.Data.Balances);
+                Helper.PickupAssets(GlobalData.BinanceRealTradeAccount, exchange, data.Data.Balances);
                 GlobalData.AssetsHaveChanged("");
             }
         }
@@ -141,7 +138,7 @@ public class BinanceStreamUserData
     }
 
 
-    //private void onAccountBalanceUpdate(BinanceStreamBalanceUpdate data)
+    //private void OnAccountBalanceUpdate(BinanceStreamBalanceUpdate data)
     //{
     //    // Dit rapporteert het verschil, deze staat (nu) niet aan..
     //    try

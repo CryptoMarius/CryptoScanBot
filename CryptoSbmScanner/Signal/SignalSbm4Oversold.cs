@@ -13,7 +13,7 @@ public class SignalSbm4Oversold : SignalSbmBaseOversold
 {
     public SignalSbm4Oversold(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        SignalMode = TradeDirection.Long;
+        SignalMode = CryptoTradeDirection.Long;
         SignalStrategy = SignalStrategy.Sbm4;
     }
 

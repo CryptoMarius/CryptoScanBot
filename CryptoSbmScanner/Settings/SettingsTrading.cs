@@ -3,15 +3,37 @@
 namespace CryptoSbmScanner.Settings;
 
 
-public enum BuyPriceMethod
+public enum CryptoBuyOrderMethod
 {
+    LimitOrder,
+    MarketOrder,
     BidPrice,
     AskPrice,
-    BidAndAskPriceAvg,
-    Sma20,
-    LowerBollingerband,
-    MarketOrder
+    BidAndAskPriceAvg
+    //TrailViaKcPsar
 }
+
+public enum CryptoBuyStepInMethod
+{
+    Immediately, // Direct instappen
+    TrailViaKcPsar // stop limit buy op de bovenste KC/PSAR
+}
+
+
+public enum CryptoDcaStepInMethod
+{
+    FixedPercentage, // De Zignally manier (bij elke dca verdubbeld de investering)
+    AfterNextSignal, // Stap op een volgende melding in (rekening houdende met cooldown en percentage)
+    TrailViaKcPsar // stop limit buy op de bovenste KC/PSAR
+}
+
+public enum CryptoSellMethod
+{
+    FixedPercentage, // Het opgegeven vaste percentage
+    DynamicPercentage, // Het percentage adhv BB breedte
+    TrailViaKcPsar // stop limit sell op de bovenste KC/PSAR
+}
+
 
 [Serializable]
 /// Controle hoe een munt zich gedraagt
@@ -56,8 +78,10 @@ public class SettingsTrading
 
     //***************************
     // Buy
-    // De manier waarop de order geplaatst wordt
-    public BuyPriceMethod BuyMethod { get; set; } = BuyPriceMethod.BidPrice;
+    // Wanneer wordt de order geplaatst
+    public CryptoBuyStepInMethod BuyStepInMethod { get; set; } = CryptoBuyStepInMethod.Immediately;
+    // De manier waarop de buy order geplaatst wordt
+    public CryptoBuyOrderMethod BuyOrderMethod { get; set; } = CryptoBuyOrderMethod.BidPrice;
     // Verwijder de order indien niet na zoveel minuten gevuld
     public int GlobalBuyRemoveTime { get; set; } = 15;
     //Het afwijkend percentage bij het kopen
@@ -65,13 +89,20 @@ public class SettingsTrading
 
     //***************************
     // Bijkopen (DCA)
+    // Wanneer plaatsen we de DCA?
+    public CryptoDcaStepInMethod DcaStepInMethod { get; set; } = CryptoDcaStepInMethod.FixedPercentage;
+    // De manier waarop de buy order geplaatst wordt
+    public CryptoBuyOrderMethod DcaOrderMethod { get; set; } = CryptoBuyOrderMethod.MarketOrder;
+    // Hoe vaak mogen we bijkopen
     public int DcaCount { get; set; } = 0; // niet bijkopen
     // Percentage bijkopen
     public decimal DcaPercentage { get; set; } = 2m;
     // Het DCA multifactor (normaal 1, meer bijkopen?)
-    public decimal DcaFactor { get; set; } = 1; // Het aantal DCA's (loopt snel op!)
-    // De manier waarop de order geplaatst wordt
-    public BuyPriceMethod DcaMethod { get; set; } = BuyPriceMethod.MarketOrder;
+    public decimal DcaFactor { get; set; } = 1; // Het bedrag met x DCA's loopt snel op!
+
+
+    
+
     // Tijd na een buy om niets te doen (om ladders te voorkomen)
     public int GlobalBuyCooldownTime { get; set; } = 15;
 
@@ -80,11 +111,9 @@ public class SettingsTrading
     // Het verkoop bedrag = buy bedrag * (100+profit / 100)
     public decimal ProfitPercentage { get; set; } = 0.7m;
     // De manier waarop de order geplaatst wordt
-    public BuyPriceMethod SellMethod { get; set; } = BuyPriceMethod.BidPrice;
+    public CryptoSellMethod SellMethod { get; set; } = CryptoSellMethod.FixedPercentage;
     // Zet een OCO zodra we in de winst zijn (kan het geen verlies trade meer worden, samen met tracing)
     public bool LockProfits { get; set; } = false;
-    // Bepaal TP op basis van percentage van de MA20
-    public bool DynamicTp { get; set; } = false;
     public decimal DynamicTpPercentage { get; set; } = 0.6m;
 
     //***************************
@@ -96,14 +125,10 @@ public class SettingsTrading
 
 
 
-    // Alles is functioneel in de bot, echter NIET instappen (enkel melden dat het zou instappen)
-    public bool DoNotEnterTrade { get; set; } = false;
     // Alles is functioneel in de bot, echter we simuleren of we aan het traden zijn
     public bool TradeViaPaperTrading { get; set; } = false;
-    // Trade via de webhook van Altrady (functioneel gehandicapt, ook diverse bugs)
-    public bool TradeViaAltradyWebhook { get; set; } = false;
     // Trade via Binance (instelling enkel omdat we nu keuze hebben)
-    public bool TradeViaBinance { get; set; } = false;
+    public bool TradeViaExchange { get; set; } = false;
 
     // Op welke intervallen en strategieën willen we traden?
     public IntervalAndStrategyConfig Monitor { get; set; } = new();
@@ -128,9 +153,9 @@ public class SettingsTrading
         Monitor.Interval.Add("1m");
         Monitor.Interval.Add("2m");
 
-        Monitor.Strategy[TradeDirection.Long].Add("sbm1");
-        Monitor.Strategy[TradeDirection.Long].Add("sbm2");
-        Monitor.Strategy[TradeDirection.Long].Add("sbm3");
+        Monitor.Strategy[CryptoTradeDirection.Long].Add("sbm1");
+        Monitor.Strategy[CryptoTradeDirection.Long].Add("sbm2");
+        Monitor.Strategy[CryptoTradeDirection.Long].Add("sbm3");
 
         PauseTradingRules.Add(new PauseTradingRule()
         {

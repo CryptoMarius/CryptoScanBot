@@ -2,9 +2,9 @@
 
 public enum CryptoPositionStatus
 {
-    positionWaiting, // 0
-    positionTrading, // 1
-    positionReady, // 2
-    positionTimeout, // 3
-    positionTakeOver // 4
+    Waiting, // 0
+    Trading, // 1
+    Ready, // 2
+    Timeout, // 3
+    TakeOver // 4
 }

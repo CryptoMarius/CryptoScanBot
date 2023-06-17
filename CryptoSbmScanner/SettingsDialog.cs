@@ -249,6 +249,7 @@ public partial class FrmSettings : Form
         EditBarometer24hBotMinimal.Minimum = -100;
         EditAnalysisMinChangePercentage.Minimum = -100;
         EditAnalysisMinEffectivePercentage.Minimum = -100;
+        EditStobMinimalTrend.Minimum = -1000;
 
         //EditSoundTradeNotification.Checked = settings.General.SoundTradeNotification;
 
@@ -320,9 +321,9 @@ public partial class FrmSettings : Form
         // ------------------------------------------------------------------------------
 
         foreach (var item in AnalyzeDefinitionIndexLong)
-            SetCheckBoxFrom(item.Key, item.Value, settings.Signal.Analyze.Strategy[TradeDirection.Long]);
+            SetCheckBoxFrom(item.Key, item.Value, settings.Signal.Analyze.Strategy[CryptoTradeDirection.Long]);
         foreach (var item in AnalyzeDefinitionIndexShort)
-            SetCheckBoxFrom(item.Key, item.Value, settings.Signal.Analyze.Strategy[TradeDirection.Short]);
+            SetCheckBoxFrom(item.Key, item.Value, settings.Signal.Analyze.Strategy[CryptoTradeDirection.Short]);
 
         // STOBB
         EditStobbBBMinPercentage.Value = (decimal)settings.Signal.StobbBBMinPercentage;
@@ -336,6 +337,7 @@ public partial class FrmSettings : Form
         EditStobIncludeSbmMaLines.Checked = settings.Signal.StobIncludeSoftSbm;
         EditStobIncludeSbmPercAndCrossing.Checked = settings.Signal.StobIncludeSbmPercAndCrossing;
         panelColorStobb.BackColor = settings.Signal.ColorStobb;
+        EditStobMinimalTrend.Value = settings.Signal.StobMinimalTrend;
 
         // SBM 1
         EditSbmBBMinPercentage.Value = (decimal)settings.Signal.SbmBBMinPercentage;
@@ -426,12 +428,14 @@ public partial class FrmSettings : Form
         EditBarometer24hBotMinimal.Value = settings.Trading.Barometer24hBotMinimal;
 
         // Buy
-        EditBuyMethod.SelectedIndex = (int)settings.Trading.BuyMethod;
+        EditBuyStepInMethod.SelectedIndex = (int)settings.Trading.BuyStepInMethod;
+        EditBuyOrderMethod.SelectedIndex = (int)settings.Trading.BuyOrderMethod;
         EditGlobalBuyRemoveTime.Value = settings.Trading.GlobalBuyRemoveTime;
         EditGlobalBuyVarying.Value = settings.Trading.GlobalBuyVarying;
 
         // DCA
-        EditDcaMethod.SelectedIndex = (int)settings.Trading.DcaMethod;
+        EditDcaStepInMethod.SelectedIndex = (int)settings.Trading.DcaStepInMethod;
+        EditDcaOrderMethod.SelectedIndex = (int)settings.Trading.DcaOrderMethod;
         EditDcaPercentage.Value = Math.Abs(settings.Trading.DcaPercentage);
         EditDcaFactor.Value = settings.Trading.DcaFactor;
         EditDcaCount.Value = settings.Trading.DcaCount;
@@ -441,7 +445,6 @@ public partial class FrmSettings : Form
         EditSellMethod.SelectedIndex = (int)settings.Trading.SellMethod;
         EditProfitPercentage.Value = settings.Trading.ProfitPercentage;
         EditLockProfits.Checked = settings.Trading.LockProfits;
-        EditDynamicTp.Checked = settings.Trading.DynamicTp;
         EditDynamicTpPercentage.Value = settings.Trading.DynamicTpPercentage;
 
         // Stop loss
@@ -453,16 +456,16 @@ public partial class FrmSettings : Form
             SetCheckBoxFrom(item.Key, item.Value, settings.Trading.Monitor.Interval);
 
         foreach (var item in MonitorStrategyLong)
-            SetCheckBoxFrom(item.Key, item.Value, settings.Trading.Monitor.Strategy[TradeDirection.Long]);
+            SetCheckBoxFrom(item.Key, item.Value, settings.Trading.Monitor.Strategy[CryptoTradeDirection.Long]);
         foreach (var item in MonitorStrategyShort)
-            SetCheckBoxFrom(item.Key, item.Value, settings.Trading.Monitor.Strategy[TradeDirection.Short]);
+            SetCheckBoxFrom(item.Key, item.Value, settings.Trading.Monitor.Strategy[CryptoTradeDirection.Short]);
 
 
         // Hoe gaan we traden
-        EditDoNotEnterTrade.Checked = settings.Trading.DoNotEnterTrade;
-        EditTradeViaBinance.Checked = settings.Trading.TradeViaBinance;
+        //EditDoNotEnterTrade.Checked = settings.Trading.DoNotEnterTrade;
+        EditTradeViaBinance.Checked = settings.Trading.TradeViaExchange;
         EditTradeViaPaperTrading.Checked = settings.Trading.TradeViaPaperTrading;
-        EditTradeViaAltradyWebhook.Checked = settings.Trading.TradeViaAltradyWebhook;
+        //EditTradeViaAltradyWebhook.Checked = settings.Trading.TradeViaAltradyWebhook;
 
 
         // --------------------------------------------------------------------------------
@@ -571,7 +574,7 @@ public partial class FrmSettings : Form
         settings.Signal.Barometer1hMinimal = EditBarometer1hMinimal.Value;
         settings.Signal.LogBarometerToLow = EditLogBarometerToLow.Checked;
 
-        settings.Signal.SymbolMustExistsDays = EditSymbolMustExistsDays.Value;
+        settings.Signal.SymbolMustExistsDays = (int)EditSymbolMustExistsDays.Value;
         settings.Signal.LogSymbolMustExistsDays = EditLogSymbolMustExistsDays.Checked;
 
         settings.Signal.MinimumTickPercentage = EditMinimumTickPercentage.Value;
@@ -598,6 +601,7 @@ public partial class FrmSettings : Form
         settings.Signal.StobIncludeSoftSbm = EditStobIncludeSbmMaLines.Checked;
         settings.Signal.StobIncludeSbmPercAndCrossing = EditStobIncludeSbmPercAndCrossing.Checked;
         settings.Signal.ColorStobb = panelColorStobb.BackColor;
+        settings.Signal.StobMinimalTrend = EditStobMinimalTrend.Value;
 
         // SBM x
         settings.Signal.SbmBBMinPercentage = (double)EditSbmBBMinPercentage.Value;
@@ -658,13 +662,13 @@ public partial class FrmSettings : Form
         settings.Signal.ColorJump = panelColorJump.BackColor;
 
 
-        settings.Signal.Analyze.Strategy[TradeDirection.Long].Clear();
+        settings.Signal.Analyze.Strategy[CryptoTradeDirection.Long].Clear();
         foreach (var item in AnalyzeDefinitionIndexLong)
-            GetValueFromCheckBox(item.Key, item.Value, settings.Signal.Analyze.Strategy[TradeDirection.Long]);
+            GetValueFromCheckBox(item.Key, item.Value, settings.Signal.Analyze.Strategy[CryptoTradeDirection.Long]);
 
-        settings.Signal.Analyze.Strategy[TradeDirection.Short].Clear();
+        settings.Signal.Analyze.Strategy[CryptoTradeDirection.Short].Clear();
         foreach (var item in AnalyzeDefinitionIndexShort)
-            GetValueFromCheckBox(item.Key, item.Value, settings.Signal.Analyze.Strategy[TradeDirection.Short]);
+            GetValueFromCheckBox(item.Key, item.Value, settings.Signal.Analyze.Strategy[CryptoTradeDirection.Short]);
 
 
         // --------------------------------------------------------------------------------
@@ -716,11 +720,14 @@ public partial class FrmSettings : Form
         settings.Trading.Barometer24hBotMinimal = EditBarometer24hBotMinimal.Value;
 
         // buy
-        settings.Trading.BuyMethod = (BuyPriceMethod)EditBuyMethod.SelectedIndex;
+        settings.Trading.BuyStepInMethod = (CryptoBuyStepInMethod)EditBuyStepInMethod.SelectedIndex;
+        settings.Trading.BuyOrderMethod = (CryptoBuyOrderMethod)EditBuyOrderMethod.SelectedIndex;
         settings.Trading.GlobalBuyRemoveTime = (int)EditGlobalBuyRemoveTime.Value;
         settings.Trading.GlobalBuyVarying = EditGlobalBuyVarying.Value;
 
         // dca
+        settings.Trading.DcaStepInMethod = (CryptoDcaStepInMethod)EditDcaStepInMethod.SelectedIndex;
+        settings.Trading.DcaOrderMethod = (CryptoBuyOrderMethod)EditDcaOrderMethod.SelectedIndex;
         settings.Trading.DcaPercentage = EditDcaPercentage.Value;
         settings.Trading.DcaFactor = EditDcaFactor.Value;
         settings.Trading.DcaCount = (int)EditDcaCount.Value;
@@ -728,9 +735,8 @@ public partial class FrmSettings : Form
 
         // take profit
         settings.Trading.ProfitPercentage = EditProfitPercentage.Value;
-        settings.Trading.SellMethod = (BuyPriceMethod)EditSellMethod.SelectedIndex;
+        settings.Trading.SellMethod = (CryptoSellMethod)EditSellMethod.SelectedIndex;
         settings.Trading.LockProfits = EditLockProfits.Checked;
-        settings.Trading.DynamicTp = EditDynamicTp.Checked;
         settings.Trading.DynamicTpPercentage = EditDynamicTpPercentage.Value;
 
         // Stop loss
@@ -743,19 +749,19 @@ public partial class FrmSettings : Form
         foreach (var item in MonitorInterval)
             GetValueFromCheckBox(item.Key, item.Value, settings.Trading.Monitor.Interval);
 
-        settings.Trading.Monitor.Strategy[TradeDirection.Long].Clear();
+        settings.Trading.Monitor.Strategy[CryptoTradeDirection.Long].Clear();
         foreach (var item in MonitorStrategyLong)
-            GetValueFromCheckBox(item.Key, item.Value, settings.Trading.Monitor.Strategy[TradeDirection.Long]);
+            GetValueFromCheckBox(item.Key, item.Value, settings.Trading.Monitor.Strategy[CryptoTradeDirection.Long]);
 
-        settings.Trading.Monitor.Strategy[TradeDirection.Short].Clear();
+        settings.Trading.Monitor.Strategy[CryptoTradeDirection.Short].Clear();
         foreach (var item in MonitorStrategyShort)
-            GetValueFromCheckBox(item.Key, item.Value, settings.Trading.Monitor.Strategy[TradeDirection.Short]);
+            GetValueFromCheckBox(item.Key, item.Value, settings.Trading.Monitor.Strategy[CryptoTradeDirection.Short]);
 
 
-        settings.Trading.DoNotEnterTrade = EditDoNotEnterTrade.Checked;
-        settings.Trading.TradeViaBinance = EditTradeViaBinance.Checked;
+        //settings.Trading.DoNotEnterTrade = EditDoNotEnterTrade.Checked;
+        settings.Trading.TradeViaExchange = EditTradeViaBinance.Checked;
         settings.Trading.TradeViaPaperTrading = EditTradeViaPaperTrading.Checked;
-        settings.Trading.TradeViaAltradyWebhook = EditTradeViaAltradyWebhook.Checked;
+        //settings.Trading.TradeViaAltradyWebhook = EditTradeViaAltradyWebhook.Checked;
 
 
         // ------------------------------------------------------------------------------

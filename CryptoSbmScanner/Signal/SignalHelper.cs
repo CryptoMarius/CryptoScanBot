@@ -31,13 +31,13 @@ public class AlgorithmDefinition
 
 public class SignalHelper
 {
-    public static SignalCreateBase GetSignalAlgorithm(TradeDirection mode, SignalStrategy strategy, CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle)
+    public static SignalCreateBase GetSignalAlgorithm(CryptoTradeDirection mode, SignalStrategy strategy, CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle)
     {
         if (TradingConfig.AlgorithmDefinitionIndex.TryGetValue(strategy, out AlgorithmDefinition definition))
         {
-            if (mode == TradeDirection.Long && definition.AnalyzeLongType != null)
+            if (mode == CryptoTradeDirection.Long && definition.AnalyzeLongType != null)
                 return definition.InstantiateAnalyzeLong(symbol, interval, candle);
-            if (mode == TradeDirection.Short && definition.AnalyzeShortType != null)
+            if (mode == CryptoTradeDirection.Short && definition.AnalyzeShortType != null)
                 return definition.InstantiateAnalyzeShort(symbol, interval, candle);
         }
         return null;

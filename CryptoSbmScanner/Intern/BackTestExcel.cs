@@ -111,7 +111,7 @@ public class BackTestExcel
         return column;
     }
 
-    public void ExportToExcell(TradeDirection mode, SignalStrategy strategy)
+    public void ExportToExcell(CryptoTradeDirection mode, SignalStrategy strategy)
     {
         // HSSF => Microsoft Excel(excel 97-2003)
         // XSSF => Office Open XML Workbook(excel 2007)

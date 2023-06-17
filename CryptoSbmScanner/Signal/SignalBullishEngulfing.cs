@@ -10,7 +10,7 @@ public class SignalBullishEngulfing : SignalCreateBase
     public SignalBullishEngulfing(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
         ReplaceSignal = false;
-        SignalMode = TradeDirection.Long;
+        SignalMode = CryptoTradeDirection.Long;
         SignalStrategy = SignalStrategy.BullishEngulfing;
     }
 

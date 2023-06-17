@@ -4,7 +4,7 @@ using Dapper.Contrib.Extensions;
 namespace CryptoSbmScanner.Model;
 
 
-public enum TradeDirection
+public enum CryptoTradeDirection
 {
     Long,
     Short
@@ -18,7 +18,7 @@ public class CryptoSignal
 
     public int ExchangeId { get; set; }
     [Computed]
-    public virtual Model.CryptoExchange Exchange { get; set; }
+    public virtual CryptoExchange Exchange { get; set; }
 
     public int SymbolId { get; set; }
     [Computed]
@@ -33,19 +33,25 @@ public class CryptoSignal
     public virtual CryptoCandle Candle { get; set; }
 
 
+    [Computed]
     public bool BackTest { get; set; }
+
+    // Melden en tevens bewaren
     public bool IsInvalid { get; set; }
 
+    /// <summary>
+    /// Bevat de candle.OpenTime (maar het signaal is pas bij CloseTime gedetecteerd)
+    /// </summary>
     public long EventTime { get; set; }
     public DateTime OpenDate { get; set; }
 
     // Einde van de candle (voor sorteren in web)
     public DateTime CloseDate { get; set; }
 
-    // Tot dit tijdstip is dit signaal ongeveer geldig (~15 candles)
-    //public DateTime ExpirationDate { get; set; }
+    // Tot dit tijdstip is dit signaal ongeveer geldig (~x candles, tegenwoordig instelbaar)
+    public DateTime ExpirationDate { get; set; }
 
-    public TradeDirection Mode { get; set; }
+    public CryptoTradeDirection Mode { get; set; }
 
     [Computed]
     public string ModeText
@@ -57,15 +63,15 @@ public class CryptoSignal
 
             return Mode switch
             {
-                TradeDirection.Long => "long",
-                TradeDirection.Short => "short",
+                CryptoTradeDirection.Long => "long",
+                CryptoTradeDirection.Short => "short",
                 _ => "?",
             };
         }
     }
 
     [Computed]
-    public string DisplayText { get { return Symbol.Name + " " + Interval.Name + " " + OpenDate.ToLocalTime() + " " + ModeText + " " + StrategyText; } }
+    public string DisplayText { get { return Symbol.Name + " " + Interval.Name + " signal=" + OpenDate.ToLocalTime() + " " + ModeText + " " + StrategyText; } }
 
     public SignalStrategy Strategy { get; set; }
     [Computed]

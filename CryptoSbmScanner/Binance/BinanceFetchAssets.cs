@@ -4,12 +4,13 @@ using Binance.Net.Objects.Models.Spot;
 using CryptoExchange.Net.Objects;
 
 using CryptoSbmScanner.Intern;
+using CryptoSbmScanner.Model;
 
 namespace CryptoSbmScanner.Binance;
 
 public class BinanceFetchAssets
 {
-    public async Task Execute()
+    public async Task Execute(CryptoTradeAccount tradeAccount)
     {
         //We onderteunen momenteel enkel de exchange "binance"
         Model.CryptoExchange exchange;
@@ -37,7 +38,7 @@ public class BinanceFetchAssets
 
                     try
                     {
-                        Helper.PickupAssets(exchange, accountInfo.Data.Balances);
+                        Helper.PickupAssets(tradeAccount, exchange, accountInfo.Data.Balances);
                         GlobalData.AssetsHaveChanged("");
                     }
                     catch (Exception error)

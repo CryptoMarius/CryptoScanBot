@@ -80,10 +80,10 @@ public class DataStore
                                 {
                                     CryptoCandle candle = new()
                                     {
-#if DATABASE
-                                        ExchangeId = Exchange.Id,
+#if SQLDATABASE
+                                        ExchangeId = symbol.Exchange.Id,
                                         SymbolId = symbol.Id,
-                                        IntervalId = Interval.Id,
+                                        IntervalId = symbolInterval.Interval.Id,
 #endif
                                         //Symbol = symbol,
                                         //Interval = symbolInterval.Interval,

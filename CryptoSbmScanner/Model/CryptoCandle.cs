@@ -4,12 +4,12 @@ using Skender.Stock.Indicators;
 
 namespace CryptoSbmScanner.Model;
 
-#if DATABASE
+#if SQLDATABASE
 [Table("Candle")]
 #endif
 public class CryptoCandle : IQuote
 {
-#if DATABASE
+#if SQLDATABASE
     [Key]
     public int Id { get; set; }
     public int ExchangeId { get; set; }
