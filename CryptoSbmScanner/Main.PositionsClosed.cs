@@ -45,7 +45,7 @@ public partial class FrmMain
         listViewPositionsClosed.FullRowSelect = true;
         listViewPositionsClosed.HideSelection = true;
         listViewPositionsClosed.BorderStyle = BorderStyle.None;
-        listViewPositionsClosed.ContextMenuStrip = contextMenuStripPositionsOpen;
+        listViewPositionsClosed.ContextMenuStrip = contextMenuStripPositionsClosed;
         listViewPositionsClosed.ListViewItemSorter = listViewColumnSorter;
         //listViewPositionsClosed.ColumnClick += ListViewSignals_ColumnClick;
         listViewPositionsClosed.SetSortIcon(listViewColumnSorter.SortColumn, listViewColumnSorter.SortOrder);
@@ -87,6 +87,7 @@ public partial class FrmMain
         listViewPositionsClosed.Columns.Add("Profit", -2, HorizontalAlignment.Right);
         listViewPositionsClosed.Columns.Add("Percentage", -2, HorizontalAlignment.Right);
 
+        listViewPositionsClosed.Columns.Add("Parts", -2, HorizontalAlignment.Right);
         listViewPositionsClosed.Columns.Add("BuyPrice", -2, HorizontalAlignment.Right);
         listViewPositionsClosed.Columns.Add("SellPrice", -2, HorizontalAlignment.Right);
 
@@ -135,20 +136,21 @@ public partial class FrmMain
         item1.SubItems.Add(position.Returned.ToString(position.Symbol.QuoteData.DisplayFormat));
         item1.SubItems.Add(position.Commission.ToString(position.Symbol.QuoteData.DisplayFormat));
 
-
+        // Profit bedrag
         subItem = item1.SubItems.Add(position.Profit.ToString(position.Symbol.QuoteData.DisplayFormat));
-        if (position.Profit > 0)
+        if (position.Percentage > 100)
             subItem.ForeColor = Color.Green;
-        else if (position.Profit < 0)
+        else if (position.Percentage < 100)
             subItem.ForeColor = Color.Red;
 
+        // Profit percentage
         subItem = item1.SubItems.Add(position.Percentage.ToString("N2"));
-        if (position.Percentage > 0)
+        if (position.Percentage > 100)
             subItem.ForeColor = Color.Green;
-        else
-            if (position.Percentage < 0)
+        else if (position.Percentage < 100)
             subItem.ForeColor = Color.Red;
 
+        item1.SubItems.Add(position.PartCount.ToString());
         item1.SubItems.Add(position.BuyPrice.ToString(position.Symbol.PriceDisplayFormat));
         item1.SubItems.Add(position.SellPrice?.ToString(position.Symbol.PriceDisplayFormat));
         return item1;
@@ -342,17 +344,17 @@ public partial class FrmMain
             // profit bedrag
             subItem = item.SubItems[11];
             subItem.Text = position.Profit.ToString(position.Symbol.QuoteData.DisplayFormat);
-            if (position.Profit > position.Invested)
+            if (position.Percentage > 100)
                 subItem.ForeColor = Color.Green;
-            else if (position.Profit < position.Invested)
+            else if (position.Percentage < 100)
                 subItem.ForeColor = Color.Red;
 
             // profit percentage
             subItem = item.SubItems[12];
             subItem.Text = position.Percentage.ToString("N2");
-            if (position.Profit > position.Invested)
+            if (position.Percentage > 100)
                 subItem.ForeColor = Color.Green;
-            else if (position.Profit < position.Invested)
+            else if (position.Percentage < 100)
                 subItem.ForeColor = Color.Red;
 
             listViewPositionsClosed.Invalidate();
@@ -360,40 +362,36 @@ public partial class FrmMain
 
     }
 
-    private void DebugDumpToolStripMenuItem_Click(object sender, EventArgs e)
+    private async void DebugDumpToolStripMenuItem_Click(object sender, EventArgs e)
     {
         if (listViewPositionsClosed.SelectedItems.Count > 0)
         {
-            //ListViewItem item = listViewPositionsClosed.SelectedItems[0];
-            //CryptoPosition position = (CryptoPosition)item.Tag;
+            ListViewItem item = listViewPositionsClosed.SelectedItems[0];
+            CryptoPosition position = (CryptoPosition)item.Tag;
 
-            //using (CryptoDatabase databaseThread = new())
-            //{
-            //    databaseThread.Open();
-            //    try
-            //    {
-            //        position.Steps.Clear();
-            //        string sql = string.Format("select * from positionstep where PositionId={0} order by Id", position.Id);
-            //        foreach (CryptoPositionStep step in databaseThread.Connection.Query<CryptoPositionStep>(sql))
-            //        {
-            //            if (step.OrderId.HasValue)
-            //                position.Orders.Add((long)step.OrderId, step);
-            //            if (step.Order2Id.HasValue)
-            //                position.Orders.Add((long)step.Order2Id, step);
-            //        }
+            // TODO:
+            // Opnieuw laden
+            // Verversen trades
+            // Opnieuw berekenen
+            // Dump
 
             //        await TradeTools.RefreshTrades(databaseThread, position);
+            using CryptoDatabase databaseThread = new();
+            databaseThread.Close();
+            databaseThread.Open();
 
+            //PositionTools.AddPosition(position.TradeAccount, position);
+            PositionTools.LoadPosition(databaseThread, position);
 
-            //        StringBuilder strings = new();
-            //        TradeTools.DumpPosition(position, strings);
-            //        GlobalData.AddTextToLogTab(strings.ToString());
-            //    }
-            //    finally
-            //    {
-            //        databaseThread.Close();
-            //    }
-            //}
+            // Controleer de openstaande orders, zijn ze ondertussen gevuld
+            // Haal de trades van deze positie op vanaf de 1e order
+            // TODO - Hoe doen we dit met papertrading (er is niets geregeld!)
+            await PositionTools.LoadTradesfromDatabaseAndBinance(databaseThread, position);
+            PositionTools.CalculatePositionViaTrades(databaseThread, position);
+
+            StringBuilder strings = new();
+            PositionTools.DumpPosition(position, strings);
+            GlobalData.AddTextToLogTab(strings.ToString());
         }
     }
 

@@ -142,7 +142,25 @@ public partial class FrmMain
                         text = GlobalData.TaskSaveCandles.QueueCount.ToString("N0");
                         ShowSymbolPrice(symbolHistList[4], listViewInformation.Items[4], exchange, quoteData, "ADA", GlobalData.FearAndGreedIndex, "Database Buffer", text);
 #else
-                        ShowSymbolPrice(symbolHistList[4], listViewInformation.Items[4], exchange, quoteData, "ADA", GlobalData.FearAndGreedIndex, "", "");
+                        if (GlobalData.Settings.Trading.Active)
+                        {
+                            int positionCount = 0; // hmm, in welk tradeAccount? Even quick en dirty
+                            foreach (var tradeAccount in GlobalData.TradeAccountList.Values)
+                            {
+                                if (tradeAccount.PositionList.Any())
+                                {
+                                    foreach (var positionList in tradeAccount.PositionList.Values)
+                                    {
+                                        //De muntparen toevoegen aan de userinterface
+                                        foreach (CryptoPosition position in positionList.Values)
+                                            positionCount++;
+                                    }
+                                }
+                            }
+                            ShowSymbolPrice(symbolHistList[4], listViewInformation.Items[4], exchange, quoteData, "ADA", GlobalData.FearAndGreedIndex, "Openstaande posities", positionCount.ToString());
+                        }
+                        else
+                            ShowSymbolPrice(symbolHistList[4], listViewInformation.Items[4], exchange, quoteData, "ADA", GlobalData.FearAndGreedIndex, "", "");
 #endif
                     }
 

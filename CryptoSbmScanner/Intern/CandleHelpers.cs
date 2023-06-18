@@ -400,12 +400,14 @@ public static class Helper
 
         trade.IsBuyer = item.IsBuyer;
         trade.IsMaker = item.IsMaker;
-        trade.IsBestMatch = item.IsBestMatch; // Kan weg
     }
 
 
-    static public void PickupTrade(CryptoSymbol symbol, CryptoTrade trade, BinanceStreamOrderUpdate item)
+    static public void PickupTrade(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoTrade trade, BinanceStreamOrderUpdate item)
     {
+        // zou ook via de positie kunnen, want een trade zit in de context van een positie (als je die kan vinden tenminste)
+        trade.TradeAccount = tradeAccount;
+        trade.TradeAccountId = tradeAccount.Id;
         trade.Exchange = symbol.Exchange;
         trade.ExchangeId = symbol.ExchangeId;
         trade.Symbol = symbol;
@@ -429,7 +431,6 @@ public static class Helper
 
         trade.IsBuyer = item.Side == OrderSide.Buy;
         trade.IsMaker = item.BuyerIsMaker;
-        trade.IsBestMatch = true; // Kan weg
     }
 
 

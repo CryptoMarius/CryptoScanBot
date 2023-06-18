@@ -125,9 +125,9 @@ public class BinanceApi
             result = await Buy(tradeAccount, symbol, quantity, price);
         if (result.result)
         {
-            string text2 = string.Format("{0} POSITION {1} ORDER PLACED price={2} quantity={3} quotequantity={4} type={5}", symbol.Name, dcaType,
-                result.tradeParams.Price.ToString0(), result.tradeParams.Quantity.ToString0(), result.tradeParams.QuoteQuantity.ToString0(),
-                result.tradeParams.OrderType.ToString());
+            string text2 = string.Format("{0} POSITION {1} ORDER {2} PLACED price={3} quantity={4} quotequantity={5} type={6}", symbol.Name, dcaType,
+                result.tradeParams.OrderId, result.tradeParams.Price.ToString0(), result.tradeParams.Quantity.ToString0(), 
+                result.tradeParams.QuoteQuantity.ToString0(), result.tradeParams.OrderType.ToString());
             GlobalData.AddTextToLogTab(text2, true);
             GlobalData.AddTextToTelegram(text2);
 
@@ -139,7 +139,7 @@ public class BinanceApi
 
     static public async Task<(bool result, TradeParams tradeParams)> Buy(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, decimal? quantity, decimal? price)
     {
-        if (tradeAccount.AccountType == CryptoTradeAccountType.BackTest || tradeAccount.AccountType == CryptoTradeAccountType.PaperTrade)
+        if (tradeAccount.AccountType != CryptoTradeAccountType.RealTrading)
         {
             TradeParams tradeParams = new();
             tradeParams.Side = CryptoTradeDirection.Long;
@@ -208,7 +208,7 @@ public class BinanceApi
 
     static public async Task<(bool result, TradeParams tradeParams)> Sell(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, decimal? quantity, decimal? price)
     {
-        if (tradeAccount.AccountType == CryptoTradeAccountType.BackTest || tradeAccount.AccountType == CryptoTradeAccountType.PaperTrade)
+        if (tradeAccount.AccountType != CryptoTradeAccountType.RealTrading)
         {
             TradeParams tradeParams = new();
             tradeParams.Side = CryptoTradeDirection.Short;
@@ -284,7 +284,7 @@ public class BinanceApi
 
     static public async Task<(bool result, TradeParams tradeParams)> SellOco(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, decimal quantity, decimal price, decimal stop, decimal limit)
     {
-        if (tradeAccount.AccountType == CryptoTradeAccountType.BackTest || tradeAccount.AccountType == CryptoTradeAccountType.PaperTrade)
+        if (tradeAccount.AccountType != CryptoTradeAccountType.RealTrading)
         {
             TradeParams tradeParams = new();
             tradeParams.Side = CryptoTradeDirection.Short;
@@ -410,7 +410,7 @@ public class BinanceApi
 
     public static async Task<WebCallResult<BinanceOrderBase>> Cancel(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoPosition position, long? orderId)
     {
-        if (tradeAccount.AccountType == CryptoTradeAccountType.BackTest || tradeAccount.AccountType == CryptoTradeAccountType.PaperTrade)
+        if (tradeAccount.AccountType != CryptoTradeAccountType.RealTrading)
         {
             //TradeParams tradeParams = new();
             //tradeParams.IsBuy = false;
@@ -449,52 +449,52 @@ public class BinanceApi
     }
 
 
-    public static async Task<(bool result, string reaction)> DoOnSignal(CryptoDatabase databaseThread, CryptoTradeAccount tradeAccount, CryptoPosition position, CryptoPositionPart part, DateTime createTime, decimal price)
-    {
-        // TODO - opheffen en code in PositionMonitor
+    //public static async Task<(bool result, string reaction)> DoOnSignal(CryptoDatabase databaseThread, CryptoTradeAccount tradeAccount, CryptoPosition position, CryptoPositionPart part, DateTime createTime, decimal price)
+    //{
+    //    // TODO - opheffen en code in PositionMonitor
 
-        if (part.Mode == CryptoTradeDirection.Long)
-        {
-            string reaction;
+    //    if (part.Mode == CryptoTradeDirection.Long)
+    //    {
+    //        //string reaction;
 
-            {
-                // Was reeds gecontroleerd bij positie nemen/uitbreiden
-                decimal assetQuantity;
-                if (tradeAccount.AccountType == CryptoTradeAccountType.RealTrading)
-                {
-                    // Is er een API key aanwezig (met de juiste opties)
-                    if (!SymbolTools.CheckValidApikey(out reaction))
-                        return (false, reaction);
+    //        //{
+    //        //    // Was reeds gecontroleerd bij positie nemen/uitbreiden
+    //        //    decimal assetQuantity;
+    //        //    if (tradeAccount.AccountType == CryptoTradeAccountType.RealTrading)
+    //        //    {
+    //        //        // Is er een API key aanwezig (met de juiste opties)
+    //        //        if (!SymbolTools.CheckValidApikey(out reaction))
+    //        //            return (false, reaction);
 
-                    // Hoeveel muntjes hebben we?
-                    var resultPortFolio = SymbolTools.CheckPortFolio(tradeAccount, part.Symbol);
-                    if (!resultPortFolio.result)
-                        return (false, reaction);
-                    assetQuantity = resultPortFolio.value;
-                }
-                else
-                    assetQuantity = 100000m; // genoeg.. (todo? assets voor papertrading?)
+    //        //        // Hoeveel muntjes hebben we?
+    //        //        var resultPortFolio = SymbolTools.CheckPortFolio(tradeAccount, part.Symbol);
+    //        //        if (!resultPortFolio.result)
+    //        //            return (false, reaction);
+    //        //        assetQuantity = resultPortFolio.value;
+    //        //    }
+    //        //    else
+    //        //        assetQuantity = 100000m; // genoeg.. (todo? assets voor papertrading?)
 
-                // Is er "geld" om de order te kunnen plaatsen?
-                // De Quantity is in Quote bedrag (bij BTCUSDT de USDT dollar)
-                if (!SymbolTools.CheckValidAmount(part.Symbol, assetQuantity, out decimal _, out reaction))
-                    return (false, reaction);
-            }
+    //        //    // Is er "geld" om de order te kunnen plaatsen?
+    //        //    // De Quantity is in Quote bedrag (bij BTCUSDT de USDT dollar)
+    //        //    if (!SymbolTools.CheckValidAmount(part.Symbol, assetQuantity, out decimal _, out reaction))
+    //        //        return (false, reaction);
+    //        //}
 
-            // Plaats buy order
-            // Dit triggert een notificatie die technisch gezien eerder kan arriveren dan dat wij 
-            // de positie toevoegen, daarom locken we hier de posities voor het plaatsen van de buy.
-            (bool result, TradeParams tradeParams) result = await PlaceBuyOrder(tradeAccount, null, 0, part.Symbol,
-                price, "BUY", createTime, GlobalData.Settings.Trading.BuyOrderMethod == CryptoBuyOrderMethod.MarketOrder);
-            if (result.result)
-            {
-                var step = PositionTools.CreatePositionStep(position, part, result.tradeParams, "BUY");
-                PositionTools.InsertPositionStep(databaseThread, position, step);
-                PositionTools.AddPositionPartStep(part, step);
-            }
-            return (true, "");
-        }
+    //        // Plaats buy order
+    //        // Dit triggert een notificatie die technisch gezien eerder kan arriveren dan dat wij 
+    //        // de positie toevoegen, daarom locken we hier de posities voor het plaatsen van de buy.
+    //        (bool result, TradeParams tradeParams) result = await PlaceBuyOrder(tradeAccount, null, 0, part.Symbol,
+    //            price, "BUY", createTime, GlobalData.Settings.Trading.BuyOrderMethod == CryptoBuyOrderMethod.MarketOrder);
+    //        if (result.result)
+    //        {
+    //            var step = PositionTools.CreatePositionStep(position, part, result.tradeParams, "BUY");
+    //            PositionTools.InsertPositionStep(databaseThread, position, step);
+    //            PositionTools.AddPositionPartStep(part, step);
+    //        }
+    //        return (true, "");
+    //    }
 
-        return (false, "");
-    }
+    //    return (false, "");
+    //}
 }

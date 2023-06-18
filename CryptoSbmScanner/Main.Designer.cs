@@ -65,10 +65,11 @@
             pictureBox1 = new PictureBox();
             comboBoxBarometerQuote = new ComboBox();
             panelClient1 = new Panel();
-            contextMenuStripPositionsOpen = new ContextMenuStrip(components);
-            herToolStripMenuItem = new ToolStripMenuItem();
+            contextMenuStripPositionsClosed = new ContextMenuStrip(components);
             contextMenuStripPositionsOpenRecalculate = new ToolStripMenuItem();
             debugDumpToolStripMenuItem = new ToolStripMenuItem();
+            contextMenuStripPositionsOpen = new ContextMenuStrip(components);
+            debugDumpToolStripMenuItem1 = new ToolStripMenuItem();
             panelLeft.SuspendLayout();
             panel4.SuspendLayout();
             listBoxSymbolsMenuStrip.SuspendLayout();
@@ -85,6 +86,7 @@
             panelTop.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             panelClient1.SuspendLayout();
+            contextMenuStripPositionsClosed.SuspendLayout();
             contextMenuStripPositionsOpen.SuspendLayout();
             SuspendLayout();
             // 
@@ -531,31 +533,38 @@
             panelClient1.Size = new Size(1542, 741);
             panelClient1.TabIndex = 12;
             // 
-            // contextMenuStripPositionsOpen
+            // contextMenuStripPositionsClosed
             // 
-            contextMenuStripPositionsOpen.Items.AddRange(new ToolStripItem[] { herToolStripMenuItem, contextMenuStripPositionsOpenRecalculate, debugDumpToolStripMenuItem });
-            contextMenuStripPositionsOpen.Name = "contextMenuStrip1";
-            contextMenuStripPositionsOpen.Size = new Size(181, 92);
-            // 
-            // herToolStripMenuItem
-            // 
-            herToolStripMenuItem.Name = "herToolStripMenuItem";
-            herToolStripMenuItem.Size = new Size(180, 22);
-            herToolStripMenuItem.Text = "Her";
+            contextMenuStripPositionsClosed.Items.AddRange(new ToolStripItem[] { contextMenuStripPositionsOpenRecalculate, debugDumpToolStripMenuItem });
+            contextMenuStripPositionsClosed.Name = "contextMenuStrip1";
+            contextMenuStripPositionsClosed.Size = new Size(149, 48);
             // 
             // contextMenuStripPositionsOpenRecalculate
             // 
             contextMenuStripPositionsOpenRecalculate.Name = "contextMenuStripPositionsOpenRecalculate";
-            contextMenuStripPositionsOpenRecalculate.Size = new Size(180, 22);
+            contextMenuStripPositionsOpenRecalculate.Size = new Size(148, 22);
             contextMenuStripPositionsOpenRecalculate.Text = "Herberekenen";
             contextMenuStripPositionsOpenRecalculate.Click += ContextMenuStripPositionsOpenRecalculate_Click;
             // 
             // debugDumpToolStripMenuItem
             // 
             debugDumpToolStripMenuItem.Name = "debugDumpToolStripMenuItem";
-            debugDumpToolStripMenuItem.Size = new Size(180, 22);
+            debugDumpToolStripMenuItem.Size = new Size(148, 22);
             debugDumpToolStripMenuItem.Text = "Debug-Dump";
             debugDumpToolStripMenuItem.Click += DebugDumpToolStripMenuItem_Click;
+            // 
+            // contextMenuStripPositionsOpen
+            // 
+            contextMenuStripPositionsOpen.Items.AddRange(new ToolStripItem[] { debugDumpToolStripMenuItem1 });
+            contextMenuStripPositionsOpen.Name = "contextMenuStripPositionsOpen";
+            contextMenuStripPositionsOpen.Size = new Size(181, 48);
+            // 
+            // debugDumpToolStripMenuItem1
+            // 
+            debugDumpToolStripMenuItem1.Name = "debugDumpToolStripMenuItem1";
+            debugDumpToolStripMenuItem1.Size = new Size(180, 22);
+            debugDumpToolStripMenuItem1.Text = "Debug-Dump";
+            debugDumpToolStripMenuItem1.Click += debugDumpToolStripMenuItem1_Click;
             // 
             // FrmMain
             // 
@@ -587,6 +596,7 @@
             panelTop.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
             panelClient1.ResumeLayout(false);
+            contextMenuStripPositionsClosed.ResumeLayout(false);
             contextMenuStripPositionsOpen.ResumeLayout(false);
             ResumeLayout(false);
         }
@@ -625,7 +635,7 @@
         private PictureBox pictureBox1;
         private ComboBox comboBoxBarometerInterval;
         private Label labelBarometerDateValue;
-        private ContextMenuStrip contextMenuStripPositionsOpen;
+        private ContextMenuStrip contextMenuStripPositionsClosed;
         private ToolStripMenuItem ApplicationPlaySounds;
         private ToolStripMenuItem ApplicationCreateSignals;
         private ToolStripMenuItem backtestToolStripMenuItem;
@@ -641,9 +651,10 @@
         private Microsoft.Web.WebView2.WinForms.WebView2 webViewAltrady;
         private TabPage tabPagePositionsOpen;
         private TabPage tabPagePositionsClosed;
-        private ToolStripMenuItem herToolStripMenuItem;
         private ToolStripMenuItem contextMenuStripPositionsOpenRecalculate;
         private ToolStripMenuItem debugDumpToolStripMenuItem;
+        private ContextMenuStrip contextMenuStripPositionsOpen;
+        private ToolStripMenuItem debugDumpToolStripMenuItem1;
     }
 }
 

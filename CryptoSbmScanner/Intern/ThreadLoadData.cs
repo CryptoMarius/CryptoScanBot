@@ -272,8 +272,6 @@ public class ThreadLoadData
                         throw new Exception("Geen trade account gevonden");
 
                     PositionTools.AddPosition(tradeAccount, position);
-
-                    // Alle informatie van de positie inlezen
                     PositionTools.LoadPosition(databaseThread, position);
 
                     // Controleer de openstaande orders, zijn ze ondertussen gevuld

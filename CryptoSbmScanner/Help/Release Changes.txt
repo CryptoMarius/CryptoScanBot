@@ -1,17 +1,36 @@
 Mis je iets in onderstaande bevindingen/todo's of toekomstige todo's, geef het AUB aan want dan is wat we besproken hebben ergens tussen wal en schip gevallen...
 
+ByBit
+- zijn er limiten voor bybit?
+- Nieuwe nuget packages doornemen
+- ophalen exchange informatie implementeren
+- ophalen klines implementeren
+- 1m candle stream implementeren
+- mini ticker stream implementeren
+- userdate stream implementeren
+- ophalen trades implementeren
+- ophalen assets implementeren
+- plaatsen van de diverse orders (oco/buy/sell/stop limit etc)
+
+
+TODO:
+- Todo: voor iemand in de groep, emulator of meldingen even aanpassen zodat het bij een psar wissel instapt
+- Is het nieuwe experiment met de SMA20 - positive ema slope e.d. iets of is dat ten dode opgeschreven
+  (ik heb echt 1 mooie mogelijkheid gezien, maar je moet het maar net openen en opmerken)
+  Ik denk niet dat deze aanpak geschikt is voor een bot?
+  (ach, waarom niet, 1 extra conditie, de ema50 > sma50)
+  De trend moet redelijk positief zijn om deze varianten te gebruiken
+- Een keuze maken om de extra stategien geheel te verbergen of geheel uit te faseren (ik kies voor verbergen, ifdefje?)
+- Voor STOBB de minimale trend controleren (is een nieuwe instelling, maar die doet nog niets)
 
 Bevindingen/Todo's:
-- Todo: voor iemand in de groep, emulator of meldingen even aanpassen zodat het bij een psar wissel instapt
 - JUMP short en long zit momenteel niet goed in elkaar, ten eerste zou ik een -x% of +x% verwachten.
   En ten tweede wordt de black- en white list hier nu ook op toegepast (verschil met eerdere oplossingen)
 - Nadat je naar deze versie bent gegaan kan een oudere scanner niet meer worden opgestart
   (json problemen met de "General.WindowPosition.Location")
   Een oplossing zou ook zijn om de opslag van de Color en positie geheel anders op te slagen
-- Marco doet iets met een multi timeframe, als op de 15m er een positieve trend (via de ema beredeneert)
-  dan stap de trader in op een sbm 3m, is dat iets wat realistisch is? Uitzoeken via emulator
-- Hardcoded Altrady Webhook API KEY's weghalen (die staan niet op github, maar just in case)
-  Alleen bedoeld voor Papertrading op dit moment dus ook geen big deal.
+- Er is wellicht iiets mogelijk met een multi timeframe, als op de 15m er een positieve trend (via de ema beredeneert)
+  dan mag de trading instappen op een sbm 3m, is dat iets wat realistisch is? Uitzoeken via emulator?
 - De tekst 1h, 4h en 1d wee toevoegen bij de barometer bolletjes (dan hoef ik het ook niet uit te leggen wat het is)
 - Het lettertype c.q. grotte van de barometer waardes in de grafiek zijn afwijkend
 - Bij aanpassing van het lettertype lopen de labels over in de control waardoor tekst minder leesbaar wordt
@@ -22,9 +41,7 @@ Bevindingen/Todo's:
 - Indien de applicatie traag(?) afsluit wordt tijdens het afsluiten opnieuw begonnen met het activeren van de scanner (ophalen candles enzovoort)
 - De listbox met munten op links met een splitter kunnen verbergen / c.q. dichtklappen
 - Teksten kunnen vertalen (NL en EN lopen nu wel erg vaak door elkaar)
-- Zien hoeveel een munt gestegen of gedaald is na de initiele melding (dat vereist een ander grid).
   Een eerste aanzet zit er nu in, inclusief een beetje uitleg over hou je het maakt en configureert
-- Bij het opstarten de laatste X candles opnieuw berekenen (dat geeft helaas aardig wat overhead, moet optimaler, ook geluiden e.d.)
 - Experiment om een Mac versie te bouwen dmv MAUI XAML (een compleet nieuwe aanvliegroute van Microsoft)
   Maar ik verwacht een duizendtal nieuwe problemen met geluid, voice, storage, sockets, hibernate/sleep enzovoort)
 - Visuele herkenning dat de scanner loopt (de getallen linksboven zeggen de mensen niet zoveel)
@@ -39,19 +56,20 @@ Bevindingen/Todo's:
 - Black theming  https://stackoverflow.com/questions/61145347/c-how-to-make-a-dark-mode-theme-in-windows-forms-separate-form-as-select-the <geen prio>
   Er is nu een slappe variant die iets met grijs doet (omdat anders de scrollbars en headers zo'n lelijk getoond worden), ik ben er niet tevreden over.
 - Ondersteuning van andere exchanges (dat heeft momenteel niet mijn prioriteit)
-  Gezien het geheugengebruik die de tool heeft is een combinatie van exchanges niet aan te raden.
+  Gezien het geheugengebruik die de tool heeft is een combinatie van exchanges niet aan te raden (dwz 1 exchange per applicatie).
+  Maar vanwege het feit dat Binance zich terugtrekt van de NL markt zal er waarschijnlijk een ByBit versie komen
 
-TODO:
-  Is het nieuwe experiment met de SMA20 - positive ema slope e.d. iets of is dat ten dode opgeschreven
-  (ik heb echt 1 mooie mogelijkheid gezien, maar je moet het maar net openen en opmerken)
-  Ik denk niet dat deze aanpak geschikt is voor een bot?
-  (ach, waarom niet, 1 extra conditie, de ema50 > sma50)
-  De trend moet redelijk positief zijn om deze varianten te gebruiken
-- Een keuze maken om de extra stategien geheel te verbergen of geheel uit te faseren (ik kies voor verbergen, ifdefje?)
 
 
 xx-xx-2023 1.8.0 (gedeeltelijk zit eze ook al in de 1.7.2 vanwege een hotfix)
+- Trailing sell ala Cryptocoiners met de Keltner Channel en PSAR (maar zoals zo vaak valt het effect trailen vaak tegen)
+- Wens: bij het opstarten de laatste X candles opnieuw berekenen, dat geeft echter zoveel (cpu) overhead dat ik het opzij gezet heb)
+  Daarnaast geeft het onverwachte problemen zoals duplicaat meldingen (vanwege introductie database)
+  Wie weet komt het ooit nog terug, maar voor nu opzij gezet
+- Zien hoeveel een munt gestegen of gedaald is na de initiele melding (zie kolom "Stijging").
 - Telegram die de meldingen (en trades) kan weergeven.
+- Instellingen voor Telegram in een aparte tab (documentatie nog uitbreiden.
+- De Altrady Webhook verwijderd (vanwege random fills niet presentatief)
 - Database ondersteuning ingebouwd voor het bewaren van de signalen, posities e.d.
 - Trade mogelijkheden ingebouwd (waarschuwing, het is experimenteel en niet 100% uitgekristalliseerd/getest).
 - Aanpassingen om "dichter" bij een TradeBot te komen, daarom de introductie van een sqlite dataabse

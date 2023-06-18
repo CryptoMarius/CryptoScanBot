@@ -120,34 +120,6 @@
   <metadata name="toolTip1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>17, 17</value>
   </metadata>
-  <data name="textBox1.Text" xml:space="preserve">
-    <value>Zelf een algoritme maken, voorstel voor zoiets?
-
-sbm generic:
-ma200 &gt; ma50
-ma50 &gt; ma20
-ma20 &gt;= psar
-percentage(ma200, ma50) &gt; 0.3
-percentage(ma200, ma20) &gt; 0.6
-percentage(ma50, ma20)&gt; 0.3
-InTheLastCandles(60) ma200 crossed ma50
-InTheLastCandles(30) ma50 crossed ma20
-
-sbm1: (stob in the last x candles)
-sbm2: candle.close &lt; bb.lower +x || candle.open &lt; bb.lower + x
-sbm3: bb.percentage die een bepaald percentage afneemt in de laatste x candles
-sbm4: tema &lt; sma20 - 0.75* StdDev || candle.close &lt; sma20 - 0.75* StdDev
-sbm5: percentage ma50 en ma20 die een bepaald percentage oploopt in de laatste x candles
-
-
-
-stob:
-candle.close &lt; bb.lower || candle.open &lt; bb.lower
-stosch.k &lt; 20 &amp;&amp; stosch.d &lt; 20</value>
-  </data>
-  <metadata name="toolTip1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>17, 17</value>
-  </metadata>
   <metadata name="imageList1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>114, 17</value>
   </metadata>
@@ -156,7 +128,7 @@ stosch.k &lt; 20 &amp;&amp; stosch.d &lt; 20</value>
         AAEAAAD/////AQAAAAAAAAAMAgAAAEZTeXN0ZW0uV2luZG93cy5Gb3JtcywgQ3VsdHVyZT1uZXV0cmFs
         LCBQdWJsaWNLZXlUb2tlbj1iNzdhNWM1NjE5MzRlMDg5BQEAAAAmU3lzdGVtLldpbmRvd3MuRm9ybXMu
         SW1hZ2VMaXN0U3RyZWFtZXIBAAAABERhdGEHAgIAAAAJAwAAAA8DAAAAAggAAAJNU0Z0AUkBTAMBAQAB
-        GAEDARgBAwEQAQABEAEABP8BCQEACP8BQgFNATYBBAYAATYBBAIAASgDAAFAAwABEAMAAQEBAAEIBgAB
+        IAEDASABAwEQAQABEAEABP8BCQEACP8BQgFNATYBBAYAATYBBAIAASgDAAFAAwABEAMAAQEBAAEIBgAB
         BBgAAYACAAGAAwACgAEAAYADAAGAAQABgAEAAoACAAPAAQABwAHcAcABAAHwAcoBpgEAATMFAAEzAQAB
         MwEAATMBAAIzAgADFgEAAxwBAAMiAQADKQEAA1UBAANNAQADQgEAAzkBAAGAAXwB/wEAAlAB/wEAAZMB
         AAHWAQAB/wHsAcwBAAHGAdYB7wEAAdYC5wEAAZABqQGtAgAB/wEzAwABZgMAAZkDAAHMAgABMwMAAjMC
@@ -194,6 +166,9 @@ stosch.k &lt; 20 &amp;&amp; stosch.d &lt; 20</value>
   </data>
   <metadata name="colorDialog1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>224, 17</value>
+  </metadata>
+  <metadata name="toolTip1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>17, 17</value>
   </metadata>
   <metadata name="$this.TrayHeight" type="System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>25</value>

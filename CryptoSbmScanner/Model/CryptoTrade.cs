@@ -27,11 +27,11 @@ public class CryptoTrade
     //Id of the order list this order belongs to
     public long OrderListId { get; set; }
 
-    public Decimal Price { get; set; }
-    public Decimal Quantity { get; set; }
-    public Decimal QuoteQuantity { get; set; }
+    public decimal Price { get; set; }
+    public decimal Quantity { get; set; }
+    public decimal QuoteQuantity { get; set; }
 
-    public Decimal Commission { get; set; }
+    public decimal Commission { get; set; }
     public string CommissionAsset { get; set; }
 
     public DateTime TradeTime { get; set; }
@@ -43,5 +43,4 @@ public class CryptoTrade
 
     public bool IsBuyer { get; set; }
     public bool IsMaker { get; set; }
-    public bool IsBestMatch { get; set; } //Deze mag weg, geen idee wat het is!
 }

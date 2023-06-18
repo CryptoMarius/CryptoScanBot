@@ -1689,4 +1689,5 @@ public partial class FrmMain : Form
         lastCandlesKLineCount = candlesKLineCount;
     }
 
+
 }

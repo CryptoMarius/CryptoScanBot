@@ -230,7 +230,7 @@ public class CryptoDatabase : IDisposable
                 "Price, Quantity, QuoteQuantity, " +
                 "Commission, CommissionAsset, " +
                 "TradeTime, " +
-                "IsBuyer, IsMaker, IsBestMatch)");
+                "IsBuyer, IsMaker)");
             stringBuilder.AppendLine("output inserted.id");
             stringBuilder.AppendLine("VALUES");
 
@@ -257,8 +257,7 @@ public class CryptoDatabase : IDisposable
                     trade.TradeTime.ToString("yyyyMMdd HH:mm:ss"),
 
                     Convert.ToInt32(trade.IsBuyer),
-                    Convert.ToInt32(trade.IsMaker),
-                    Convert.ToInt32(trade.IsBestMatch)
+                    Convert.ToInt32(trade.IsMaker)
                 ));
             }
 
@@ -784,6 +783,7 @@ public class CryptoDatabase : IDisposable
                 "Quantity TEXT NULL, " +
                 "BuyAmount TEXT NULL, " +
                 "SellPrice TEXT NULL, " +
+                "PartCount INTEGER NULL, " +
                 "Profit TEXT NULL, " +
                 "BreakEvenPrice TEXT NULL, " +
 
@@ -871,7 +871,7 @@ public class CryptoDatabase : IDisposable
                 // Vanwege Papertrading nullable
                 "OrderId TEXT NULL," +
                 "Order2Id TEXT NULL," +
-                "OrderListId TEXT NULL," +
+                //"OrderListId TEXT NULL," +
                 "Trailing INTEGER NULL," +
                 "FOREIGN KEY(PositionId) REFERENCES Position(Id)," +
                 "FOREIGN KEY(PositionPartId) REFERENCES PositionPart(Id)" +
@@ -936,6 +936,7 @@ public class CryptoDatabase : IDisposable
         {
             connection.Connection.Execute("CREATE TABLE [Trade] (" +
                 "Id integer primary key autoincrement not null, " +
+                "TradeTime TEXT NOT NULL," +
                 "TradeAccountId Integer NOT NULL," +
                 "ExchangeId Integer NOT NULL," +
                 "SymbolId Integer NOT NULL," +
@@ -947,10 +948,8 @@ public class CryptoDatabase : IDisposable
                 "QuoteQuantity TEXT NOT NULL," +
                 "Commission TEXT NOT NULL," +
                 "CommissionAsset TEXT NOT NULL," +
-                "TradeTime TEXT NOT NULL," +
                 "IsBuyer Integer NOT NULL," +
                 "IsMaker Integer NOT NULL," +
-                "IsBestMatch Integer NOT NULL," +
                 "FOREIGN KEY(TradeAccountId) REFERENCES TradeAccount(Id)," +
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +
                 "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)" +

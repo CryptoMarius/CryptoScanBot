@@ -93,9 +93,9 @@ public class CryptoPositionStep
     //{
     //    // Verdorie, de datum's missen nog.. ;-)
 
-    //    string s = string.Format("step#{0} order#{1} {2} ({3}) Price={4} StopPrice={5} StopLimitPrice={6} Quantity={7} QuantityFilled={8} QuoteQuantityFilled={9}", 
-    //        Id, OrderId, Mode, OrderType, 
-    //        Price.ToString(priceFormat), StopPrice?.ToString(priceFormat), StopLimitPrice?.ToString(priceFormat), 
+    //    string s = string.Format("step#{0} order#{1} {2} ({3}) Price={4} StopPrice={5} StopLimitPrice={6} Quantity={7} QuantityFilled={8} QuoteQuantityFilled={9}",
+    //        Id, OrderId, Mode, OrderType,
+    //        Price.ToString(priceFormat), StopPrice?.ToString(priceFormat), StopLimitPrice?.ToString(priceFormat),
     //        Quantity, QuantityFilled, QuoteQuantityFilled);
 
     //    //if (Trailing > CryptoTrailing.TrailNone)

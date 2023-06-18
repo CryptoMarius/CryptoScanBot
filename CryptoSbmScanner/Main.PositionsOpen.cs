@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using CryptoSbmScanner.Context;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Settings;
@@ -43,7 +44,7 @@ public partial class FrmMain
         listViewPositionsOpen.FullRowSelect = true;
         listViewPositionsOpen.HideSelection = true;
         listViewPositionsOpen.BorderStyle = BorderStyle.None;
-        //listViewPositionsOpen.ContextMenuStrip = listViewSignalsMenuStrip;
+        listViewPositionsOpen.ContextMenuStrip = contextMenuStripPositionsOpen;
         listViewPositionsOpen.ListViewItemSorter = listViewColumnSorter;
         //listViewPositionsOpen.ColumnClick += ListViewSignals_ColumnClick;
         listViewPositionsOpen.SetSortIcon(listViewColumnSorter.SortColumn, listViewColumnSorter.SortOrder);
@@ -84,6 +85,7 @@ public partial class FrmMain
         listViewPositionsOpen.Columns.Add("Net NPL", -2, HorizontalAlignment.Right);
         listViewPositionsOpen.Columns.Add("Percentage", -2, HorizontalAlignment.Right);
 
+        listViewPositionsOpen.Columns.Add("Parts", -2, HorizontalAlignment.Right);
         listViewPositionsOpen.Columns.Add("BuyPrice", -2, HorizontalAlignment.Right);
         listViewPositionsOpen.Columns.Add("SellPrice", -2, HorizontalAlignment.Right);
         listViewPositionsOpen.Columns.Add("", -2, HorizontalAlignment.Right); // filler
@@ -128,14 +130,15 @@ public partial class FrmMain
         item1.SubItems.Add(position.Returned.ToString(position.Symbol.QuoteData.DisplayFormat));
         item1.SubItems.Add(position.Commission.ToString(position.Symbol.QuoteData.DisplayFormat));
 
-        decimal profit = position.Quantity * (decimal)position.Symbol.LastPrice;
-        subItem = item1.SubItems.Add(profit.ToString(position.Symbol.QuoteData.DisplayFormat));
-        if (profit > position.Invested)
+        // profit bedrag
+        decimal NetPnl = position.Quantity * (decimal)position.Symbol.LastPrice;
+        subItem = item1.SubItems.Add(NetPnl.ToString(position.Symbol.QuoteData.DisplayFormat));
+        if (NetPnl > position.Invested)
             subItem.ForeColor = Color.Green;
-        else if (profit < position.Invested)
+        else if (NetPnl < position.Invested)
             subItem.ForeColor = Color.Red;
 
-        // Percentage
+        // profit percentage
         double priceDiff = 0;
         if (position.BreakEvenPrice != 0)
             priceDiff = (double)(100 * ((position.Symbol.LastPrice / position.BreakEvenPrice) - 1));
@@ -152,8 +155,12 @@ public partial class FrmMain
         //    if (position.Percentage < 0)
         //    subItem.ForeColor = Color.Red;
 
+        item1.SubItems.Add(position.PartCount.ToString());
         item1.SubItems.Add(position.BuyPrice.ToString(position.Symbol.PriceDisplayFormat));
-        item1.SubItems.Add(position.SellPrice?.ToString(position.Symbol.PriceDisplayFormat));
+        if (position.SellPrice.HasValue)
+            item1.SubItems.Add(position.SellPrice?.ToString(position.Symbol.PriceDisplayFormat));
+        else
+            item1.SubItems.Add("null");
     }
 
 
@@ -416,5 +423,32 @@ public partial class FrmMain
     //    //}
     //}
 
+    private async void debugDumpToolStripMenuItem1_Click(object sender, EventArgs e)
+    {
+        if (listViewPositionsOpen.SelectedItems.Count > 0)
+        {
+            ListViewItem item = listViewPositionsOpen.SelectedItems[0];
+            CryptoPosition position = (CryptoPosition)item.Tag;
+
+
+            using CryptoDatabase databaseThread = new();
+            databaseThread.Close();
+            databaseThread.Open();
+
+            //PositionTools.AddPosition(position.TradeAccount, position);
+            PositionTools.LoadPosition(databaseThread, position);
+
+            // Controleer de openstaande orders, zijn ze ondertussen gevuld
+            // Haal de trades van deze positie op vanaf de 1e order
+            // TODO - Hoe doen we dit met papertrading (er is niets geregeld!)
+            await PositionTools.LoadTradesfromDatabaseAndBinance(databaseThread, position);
+            PositionTools.CalculatePositionViaTrades(databaseThread, position);
+
+            StringBuilder strings = new();
+            PositionTools.DumpPosition(position, strings);
+            GlobalData.AddTextToLogTab(strings.ToString());
+        }
+
+    }
 }
 

@@ -83,11 +83,14 @@ public class CryptoPosition
     // Een experiment (die wellicht wegkan)
     public string Data { get; set; }
 
+    // Soort van Parts.Count (maar dan hoeft niet alles geladen te zijn)
+    public int PartCount { get; set; }
+
     [Computed]
     public SortedList<int, CryptoPositionPart> Parts { get; set; } = new();
 
     [Computed]
-    // Geindexeerde orders die uitstaan via de parts/steps
+    // Orders die uitstaan via de parts/steps
     public SortedList<long, CryptoPositionStep> Orders { get; set; } = new();
 
 
