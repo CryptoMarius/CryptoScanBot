@@ -1,4 +1,4 @@
-﻿using CryptoSbmScanner.Model;
+﻿using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Signal;
 using System;
 using System.Collections.Generic;
@@ -12,8 +12,8 @@ namespace CryptoSbmScanner;
 
 internal class SettingsSignalStrategy : IDisposable
 {
-    public CryptoTradeDirection Mode;
-    public SignalStrategy Strategy;
+    public CryptoOrderSide Mode;
+    public CryptoSignalStrategy Strategy;
 
     public Label LabelInfo;
     public CheckBox CheckboxLong;
@@ -37,7 +37,7 @@ internal class SettingsSignalStrategy : IDisposable
         if (Barometer1d != null) { Barometer1d.Dispose(); Barometer1d = null; }
     }
 
-    public SettingsSignalStrategy(CryptoTradeDirection mode, SignalStrategy strategy, int yPos, Control.ControlCollection controls)
+    public SettingsSignalStrategy(CryptoOrderSide mode, CryptoSignalStrategy strategy, int yPos, Control.ControlCollection controls)
     {
         int xPos = 18;
         Mode = mode;

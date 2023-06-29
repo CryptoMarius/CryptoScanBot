@@ -8,7 +8,7 @@ using CryptoSbmScanner.Model;
 
 using Dapper.Contrib.Extensions;
 
-namespace CryptoSbmScanner.Binance;
+namespace CryptoSbmScanner.Exchange.Binance;
 
 /// <summary>
 /// De Trades bij Binance ophalen
@@ -80,9 +80,7 @@ public class BinanceFetchTrades
                         if (!symbol.TradeList.TryGetValue(item.Id, out CryptoTrade trade))
                         {
                             trade = new CryptoTrade();
-                            Helper.PickupTrade(symbol, trade, item);
-                            trade.TradeAccount = tradeAccount;
-                            trade.TradeAccountId = tradeAccount.Id;
+                            BinanceApi.PickupTrade(tradeAccount, symbol, trade, item);
                             tradeCache.Add(trade);
 
                             GlobalData.AddTrade(trade);
@@ -132,7 +130,7 @@ public class BinanceFetchTrades
                             tradeCount += tradeCache.Count;
 
                             if (isChanged)
-                                databaseThread.Connection.Update<CryptoSymbol>(symbol, transaction);
+                                databaseThread.Connection.Update(symbol, transaction);
                             transaction.Commit();
                         }
                     }

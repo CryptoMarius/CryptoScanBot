@@ -1,4 +1,5 @@
-﻿using CryptoSbmScanner.Intern;
+﻿using CryptoSbmScanner.Enums;
+using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Settings;
 
@@ -15,12 +16,12 @@ public partial class FrmMain
     {
         switch (GlobalData.Settings.General.TradingApp)
         {
-            case TradingApp.Altrady:
-            case TradingApp.AltradyWeb:
+            case CryptoTradingApp.Altrady:
+            case CryptoTradingApp.AltradyWeb:
                 listBoxSymbolsMenuItemActivateTradingApp.Text = "Altrady";
                 listBoxSymbolsMenuItemActivateTradingApps.Text = "Altrady + TradingView";
                 break;
-            case TradingApp.Hypertrader:
+            case CryptoTradingApp.Hypertrader:
                 listBoxSymbolsMenuItemActivateTradingApp.Text = "Hypertrader";
                 listBoxSymbolsMenuItemActivateTradingApps.Text = "Hypertrader + TradingView";
                 break;
@@ -55,7 +56,7 @@ public partial class FrmMain
     /// </summary>
     private void SymbolsHaveChangedEvent(string text, bool extraLineFeed = false)
     {
-        if ((components != null) && (!ProgramExit) && (IsHandleCreated))
+        if (components != null && IsHandleCreated) //&& (!ProgramExit) 
         {
             if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
             {

@@ -1,10 +1,14 @@
 ﻿using Binance.Net.Clients;
+using Binance.Net.Enums;
 using Binance.Net.Objects.Models.Spot.Socket;
+
 using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Sockets;
-using CryptoSbmScanner.Intern;
 
-namespace CryptoSbmScanner.Binance;
+using CryptoSbmScanner.Intern;
+using CryptoSbmScanner.Model;
+
+namespace CryptoSbmScanner.Exchange.Binance;
 
 public class BinanceStreamUserData
 {
@@ -71,7 +75,34 @@ public class BinanceStreamUserData
     {
         try
         {
-            GlobalData.ThreadMonitorOrder.AddToQueue(data.Data);
+            // We zijn slechts geinteresseerd in 3 statussen (de andere zijn niet interessant voor de afhandeling van de order)
+            if (data.Data.Status == OrderStatus.Filled || 
+                data.Data.Status == OrderStatus.PartiallyFilled || 
+                data.Data.Status == OrderStatus.Canceled)
+            {
+                // Nieuwe thread opstarten en de data meegeven zodat er een sell wordt gedaan of administratie wordt bijgewerkt.
+                // Het triggeren van een stoploss of een DCA zal op een andere manier gedaan moeten worden (maar hoe en waar?)
+                if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
+                {
+                    if (exchange.SymbolListName.TryGetValue(data.Data.Symbol, out CryptoSymbol symbol))
+                    {
+                        // Converteer de data naar een (tijdelijke) trade
+                        CryptoTrade tradeTemp = new();
+                        BinanceApi.PickupTrade(GlobalData.BinanceRealTradeAccount, symbol, tradeTemp, data.Data);
+
+                        GlobalData.ThreadMonitorOrder.AddToQueue((
+                            symbol, 
+                            BinanceApi.LocalOrderType(data.Data.Type), 
+                            BinanceApi.LocalOrderSide(data.Data.Side), 
+                            BinanceApi.LocalOrderStatus(data.Data.Status), 
+                            tradeTemp));
+                    }
+                }
+            }
+
+            // Converteer de data naar een (tijdelijke) trade
+            //BinanceApi.PickupTrade(trade, data.Data);
+            //GlobalData.ThreadMonitorOrder.AddToQueue(data.Data);
         }
         catch (Exception error)
         {
@@ -126,7 +157,7 @@ public class BinanceStreamUserData
         {
             if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
             {
-                Helper.PickupAssets(GlobalData.BinanceRealTradeAccount, exchange, data.Data.Balances);
+                BinanceApi.PickupAssets(GlobalData.BinanceRealTradeAccount, data.Data.Balances);
                 GlobalData.AssetsHaveChanged("");
             }
         }

@@ -1,4 +1,5 @@
-﻿using CryptoSbmScanner.Model;
+﻿using CryptoSbmScanner.Enums;
+using CryptoSbmScanner.Model;
 using System.Text;
 
 namespace CryptoSbmScanner.Intern;
@@ -8,6 +9,7 @@ namespace CryptoSbmScanner.Intern;
 // </summary>
 
 
+#if !SQLDATABASE
 public class DataStore
 {
     public static void LoadCandles()
@@ -38,7 +40,7 @@ public class DataStore
 
                 foreach (CryptoSymbolInterval symbolInterval in symbol.IntervalPeriodList)
                 {
-                    symbolInterval.TrendIndicator = Model.CryptoTrendIndicator.trendSideways;
+                    symbolInterval.TrendIndicator = CryptoTrendIndicator.trendSideways;
                     symbolInterval.LastCandleSynchronized = null;
                     symbolInterval.LastStobbOrdSbmDate = null;
                     symbolInterval.TrendInfoDate = null;
@@ -202,4 +204,6 @@ public class DataStore
         GlobalData.AddTextToLogTab("Information saved");
     }
 
+
 }
+#endif

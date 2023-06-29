@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Signal;
 
@@ -22,8 +17,8 @@ public class TradeConfiguration // c.q. SignalMode, betere naam gewenst? Alles b
     public SortedList<string, AlgorithmDefinition> StrategyOthers { get; } = new();
 
     // Geindexeerd lijstjes met de actieve strategieën
-    public SortedList<SignalStrategy, AlgorithmDefinition> AnalyzeStrategy = new();
-    public SortedList<SignalStrategy, AlgorithmDefinition> MonitorStrategy = new();
+    public SortedList<CryptoSignalStrategy, AlgorithmDefinition> AnalyzeStrategy = new();
+    public SortedList<CryptoSignalStrategy, AlgorithmDefinition> MonitorStrategy = new();
 
     public bool InBlackList(string name)
     {
@@ -64,15 +59,15 @@ public static class TradingConfig
     static public SortedList<CryptoIntervalPeriod, CryptoInterval> MonitorInterval { get; } = new();
 
     // Black en white list en strategies..
-    static public Dictionary<CryptoTradeDirection, TradeConfiguration> Config { get; } = new();
+    static public Dictionary<CryptoOrderSide, TradeConfiguration> Config { get; } = new();
 
-    static public SortedList<SignalStrategy, AlgorithmDefinition> AlgorithmDefinitionIndex = new();
+    static public SortedList<CryptoSignalStrategy, AlgorithmDefinition> AlgorithmDefinitionIndex = new();
     static public List<AlgorithmDefinition> AlgorithmDefinitionList = SignalHelper.GetListOfAlgorithms();
 
     static TradingConfig()
     {
-        Config.Add(CryptoTradeDirection.Long, new TradeConfiguration());
-        Config.Add(CryptoTradeDirection.Short, new TradeConfiguration());
+        Config.Add(CryptoOrderSide.Buy, new TradeConfiguration());
+        Config.Add(CryptoOrderSide.Sell, new TradeConfiguration());
     }
 
     static public void IndexStrategyInternally()
@@ -94,18 +89,18 @@ public static class TradingConfig
         // (soms is het goed om rte refactoren en tot nieuwe ideen te komen, right..)
 
         AlgorithmDefinitionIndex.Clear();
-        Config[CryptoTradeDirection.Long].ClearStrategies();
-        Config[CryptoTradeDirection.Short].ClearStrategies();
+        Config[CryptoOrderSide.Buy].ClearStrategies();
+        Config[CryptoOrderSide.Sell].ClearStrategies();
 
         foreach (AlgorithmDefinition def in AlgorithmDefinitionList)
         {
             // just for getting the name..
             AlgorithmDefinitionIndex.Add(def.Strategy, def);
 
-            foreach (CryptoTradeDirection mode in Enum.GetValues(typeof(CryptoTradeDirection)))
+            foreach (CryptoOrderSide mode in Enum.GetValues(typeof(CryptoOrderSide)))
             {
                 bool hasClass;
-                if (mode == CryptoTradeDirection.Long)
+                if (mode == CryptoOrderSide.Buy)
                     hasClass = def.AnalyzeLongType != null;
                 else
                     hasClass = def.AnalyzeShortType != null;
@@ -120,7 +115,7 @@ public static class TradingConfig
 
                     if (GlobalData.Settings.Signal.Analyze.Strategy[mode].Contains(def.Name))
                     {
-                        if (def.Strategy >= SignalStrategy.Sbm1 && def.Strategy <= SignalStrategy.Stobb)
+                        if (def.Strategy >= CryptoSignalStrategy.Sbm1 && def.Strategy <= CryptoSignalStrategy.Stobb)
                             Config[mode].StrategySbmStob.Add(def.Name, def);
                         else
                             Config[mode].StrategyOthers.Add(def.Name, def);
@@ -151,7 +146,7 @@ public static class TradingConfig
                 {
                     if (!exchange.SymbolListName.ContainsKey(symbol))
                     {
-                        if (GlobalData.ApplicationStatus == ApplicationStatus.AppStatusRunning)
+                        if (GlobalData.ApplicationStatus == CryptoApplicationStatus.AppStatusRunning)
                             GlobalData.AddTextToLogTab(string.Format("FOUT {0} {1} bestaat niet", caption, symbol));
                     }
                 }
@@ -161,11 +156,11 @@ public static class TradingConfig
 
     static public void InitWhiteAndBlackListSettings()
     {
-        InitWhiteAndBlackListHelper(GlobalData.Settings.BlackListOversold, Config[CryptoTradeDirection.Long].BlackList, "BlackList.Long");
-        InitWhiteAndBlackListHelper(GlobalData.Settings.WhiteListOversold, Config[CryptoTradeDirection.Long].WhiteList, "WhiteList.Long");
+        InitWhiteAndBlackListHelper(GlobalData.Settings.BlackListOversold, Config[CryptoOrderSide.Buy].BlackList, "BlackList.Long");
+        InitWhiteAndBlackListHelper(GlobalData.Settings.WhiteListOversold, Config[CryptoOrderSide.Buy].WhiteList, "WhiteList.Long");
 
-        InitWhiteAndBlackListHelper(GlobalData.Settings.BlackListOverbought, Config[CryptoTradeDirection.Short].BlackList, "BlackList.Short");
-        InitWhiteAndBlackListHelper(GlobalData.Settings.WhiteListOverbought, Config[CryptoTradeDirection.Short].WhiteList, "WhiteList.Short");
+        InitWhiteAndBlackListHelper(GlobalData.Settings.BlackListOverbought, Config[CryptoOrderSide.Sell].BlackList, "BlackList.Short");
+        InitWhiteAndBlackListHelper(GlobalData.Settings.WhiteListOverbought, Config[CryptoOrderSide.Sell].WhiteList, "WhiteList.Short");
     }
 
 

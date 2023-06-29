@@ -1,4 +1,5 @@
 ﻿using CryptoSbmScanner.Context;
+using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Signal;
 using Dapper.Contrib.Extensions;
@@ -297,7 +298,7 @@ public class SignalCreate
                 signal.Symbol.Name + "-" +
                 signal.Interval.Name + "-" +
                 signal.Strategy.ToString() + "-" +
-                signal.Mode.ToString() + "-" +
+                signal.Side.ToString() + "-" +
                 signal.Candle.Date.ToLocalTime();
 
             Monitor.Enter(AnalyseNotificationList);
@@ -324,11 +325,11 @@ public class SignalCreate
         try
         {
             // We gebruiken (nog) geen exit signalen, echter dat zou best realistisch zijn voor de toekomst
-            if (!signal.IsInvalid && GlobalData.Settings.Trading.Active && signal.Mode == CryptoTradeDirection.Long) //|| (Alarm.Mode == SignalMode.modeSell) 
+            if (!signal.IsInvalid && GlobalData.Settings.Trading.Active && signal.Side == CryptoOrderSide.Buy) //|| (Alarm.Mode == SignalMode.modeSell) 
             {
                 if (TradingConfig.MonitorInterval.ContainsKey(signal.Interval.IntervalPeriod))
                 {
-                    if (TradingConfig.Config[signal.Mode].MonitorStrategy.ContainsKey(signal.Strategy))
+                    if (TradingConfig.Config[signal.Side].MonitorStrategy.ContainsKey(signal.Strategy))
                     {
                         // Bied het aan het monitorings systeem (indien aangevinkt)
                         // Intern willen we een nieuwer SBM signaal niet direct vervangen
@@ -487,7 +488,7 @@ public class SignalCreate
     public bool PrepareAndSendSignal(SignalCreateBase algorithm)
     {
         CryptoSignal signal = CreateSignal(Candle);
-        signal.Mode = algorithm.SignalMode;
+        signal.Side = algorithm.SignalMode;
         signal.Strategy = algorithm.SignalStrategy;
         signal.LastPrice = (decimal)Symbol.LastPrice;
 
@@ -514,13 +515,13 @@ public class SignalCreate
         }
 
         // Weer een extra controle, staat de symbol op de black of whitelist?
-        if (!signal.BackTest && TradingConfig.Config[signal.Mode].InBlackList(Symbol.Name))
+        if (!signal.BackTest && TradingConfig.Config[signal.Side].InBlackList(Symbol.Name))
         {
             // Als de muntpaar op de black lijst staat dit signaal overslagen
             eventText += " " + "staat op blacklist";
             signal.IsInvalid = true;
         }
-        else if (!signal.BackTest && !TradingConfig.Config[signal.Mode].InWhiteList(Symbol.Name))
+        else if (!signal.BackTest && !TradingConfig.Config[signal.Side].InWhiteList(Symbol.Name))
         {
             // Als de muntpaar niet op de white lijst staat dit signaal overslagen
             eventText += " " + "niet in whitelist";
@@ -630,19 +631,19 @@ public class SignalCreate
         CryptoSymbolInterval SymbolInterval = Symbol.GetSymbolInterval(Interval.IntervalPeriod);
         switch (signal.Strategy)
         {
-            case SignalStrategy.Sbm1:
-            case SignalStrategy.Sbm2:
-            case SignalStrategy.Sbm3:
-            case SignalStrategy.Sbm4:
-            case SignalStrategy.Stobb:
-                if (signal.Mode == CryptoTradeDirection.Long)
+            case CryptoSignalStrategy.Sbm1:
+            case CryptoSignalStrategy.Sbm2:
+            case CryptoSignalStrategy.Sbm3:
+            case CryptoSignalStrategy.Sbm4:
+            case CryptoSignalStrategy.Stobb:
+                if (signal.Side == CryptoOrderSide.Buy)
                     SymbolInterval.LastStobbOrdSbmDate = signal.OpenDate;
                 break;
 
-            case SignalStrategy.SlopeSma20:
-            case SignalStrategy.SlopeEma20:
-            case SignalStrategy.SlopeSma50:
-            case SignalStrategy.SlopeEma50:
+            case CryptoSignalStrategy.SlopeSma20:
+            case CryptoSignalStrategy.SlopeEma20:
+            case CryptoSignalStrategy.SlopeSma50:
+            case CryptoSignalStrategy.SlopeEma50:
                 SymbolInterval.LastStobbOrdSbmDate = null;
                 break;
         }
@@ -672,8 +673,8 @@ public class SignalCreate
             Volume = Symbol.Volume,
             EventTime = candle.OpenTime,
             OpenDate = CandleTools.GetUnixDate(candle.OpenTime),
-            Mode = CryptoTradeDirection.Long,  // gets modified later
-            Strategy = SignalStrategy.Jump,  // gets modified later
+            Side = CryptoOrderSide.Buy,  // gets modified later
+            Strategy = CryptoSignalStrategy.Jump,  // gets modified later
         };
 
         signal.CloseDate = signal.OpenDate.AddSeconds(Interval.Duration);
@@ -745,12 +746,18 @@ public class SignalCreate
             return false;
         }
 
+
         // Is het volume binnen de gestelde grenzen          
         if (!GlobalData.BackTest && !Symbol.CheckValidMinimalVolume(out response))
         {
-            if (GlobalData.Settings.Signal.LogMinimalVolume)
-                GlobalData.AddTextToLogTab("Analyse " + response);
-            return false;
+            // Signalen blijven maken als er een positie openstaat (en het volume afgenomen is)
+            bool hasPosition = GlobalData.Settings.Trading.Active && PositionTools.HasPosition(Symbol);
+            if (!hasPosition)
+            {
+                if (GlobalData.Settings.Signal.LogMinimalVolume)
+                    GlobalData.AddTextToLogTab("Analyse " + response);
+                return false;
+            }
         }
 
         // Is de prijs binnen de gestelde grenzen
@@ -797,7 +804,7 @@ public class SignalCreate
         // Eenmalig de indicators klaarzetten
         if (Prepare(candleOpenTime))
         {
-            foreach (CryptoTradeDirection tradeDirection in Enum.GetValues(typeof(CryptoTradeDirection)))
+            foreach (CryptoOrderSide tradeDirection in Enum.GetValues(typeof(CryptoOrderSide)))
             {
                 // Indien we ongeldige signalen laten zien moeten we deze controle overslagen.
                 // (verderop in het process wordt alsnog hierop gecontroleerd)

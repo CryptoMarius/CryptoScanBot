@@ -1,10 +1,10 @@
-﻿using CryptoSbmScanner.Binance;
+﻿using CryptoSbmScanner.Enums;
+using CryptoSbmScanner.Exchange.Binance;
 using CryptoSbmScanner.Intern;
 
-using System.Drawing;
-using System.Runtime.Serialization;
-using System.Text.Json.Serialization;
 using Dapper.Contrib.Extensions;
+
+using System.Text.Json.Serialization;
 
 namespace CryptoSbmScanner.Model;
 
@@ -30,6 +30,7 @@ public class CryptoQuoteData
     [JsonConverter(typeof(Intern.ColorConverter))]
     public Color DisplayColor { get; set; } = Color.White;
 
+    // TODO: Uitfaseren uit deze class en naar een specifiek Exchange-achtig object doorzetten???
     [Computed]
     [JsonIgnore]
     public List<BinanceStream1mCandles> BinanceStream1mCandles { get; set; } = new List<BinanceStream1mCandles>();

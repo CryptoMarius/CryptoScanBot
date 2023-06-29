@@ -1,4 +1,5 @@
-﻿using CryptoSbmScanner.Model;
+﻿using CryptoSbmScanner.Enums;
+using CryptoSbmScanner.Model;
 
 namespace CryptoSbmScanner.Intern;
 
@@ -175,7 +176,7 @@ public class SymbolTools
     }
 
 
-    public static bool CheckSymbolBlackListOversold(CryptoSymbol symbol, CryptoTradeDirection mode, out string reaction)
+    public static bool CheckSymbolBlackListOversold(CryptoSymbol symbol, CryptoOrderSide mode, out string reaction)
     {
         //Als de muntpaar op de zwarte lijst staat dit signaal overslagen
         //Indien blacklist: Staat de muntpaar op de blacklist -> ja = signaal negeren
@@ -190,7 +191,7 @@ public class SymbolTools
     }
 
 
-    public static bool CheckSymbolWhiteListOversold(CryptoSymbol symbol, CryptoTradeDirection mode, out string reaction)
+    public static bool CheckSymbolWhiteListOversold(CryptoSymbol symbol, CryptoOrderSide mode, out string reaction)
     {
         // Als de muntpaar niet op de toegelaten lijst staat dit signaal overslagen
         // Indien whitelist: Staat de muntpaar op de whitelist -> nee = signaal negeren

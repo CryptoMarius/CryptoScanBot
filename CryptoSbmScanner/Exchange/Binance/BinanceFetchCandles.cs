@@ -4,10 +4,11 @@ using Binance.Net.Enums;
 using Binance.Net.Interfaces;
 using Binance.Net.Objects.Models.Spot;
 using CryptoExchange.Net.Objects;
+using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 
-namespace CryptoSbmScanner.Binance;
+namespace CryptoSbmScanner.Exchange.Binance;
 
 /// <summary>
 /// Fetch the candles from Binance
@@ -315,7 +316,7 @@ public class BinanceFetchCandles
                     GlobalData.AddTextToLogTab("Ophalen " + exchange.Name);
 
                     // Bij het opstarten is deze (vanuit de LoadData) reeds uitgevoerd
-                    if (GlobalData.ApplicationStatus != ApplicationStatus.AppStatusPrepare)
+                    if (GlobalData.ApplicationStatus != CryptoApplicationStatus.AppStatusPrepare)
                         await Task.Run(BinanceFetchSymbols.ExecuteAsync);
 
                     GlobalData.AddTextToLogTab("Aantal symbols = " + exchange.SymbolListName.Values.Count.ToString());

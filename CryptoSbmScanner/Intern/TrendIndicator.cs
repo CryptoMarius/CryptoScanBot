@@ -1,4 +1,5 @@
-﻿using CryptoSbmScanner.Model;
+﻿using CryptoSbmScanner.Enums;
+using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Settings;
 using System.Text;
 
@@ -35,7 +36,7 @@ public class TrendIndicator
     /// </summary>
     public CryptoTrendIndicator CalculateTrend()
     {
-        if (GlobalData.Settings.General.TrendCalculationMethod == TrendCalculationMethod.trendCalculationViaAlgo1)
+        if (GlobalData.Settings.General.TrendCalculationMethod == CryptoTrendCalculationMethod.trendCalculationViaAlgo1)
         {
             // Methode 1 via een cAlgo ZigZag
 
@@ -66,7 +67,7 @@ public class TrendIndicator
             CryptoTrendIndicator trend = InterpretationZigZagValues(zigZagList);
             return trend;
         }
-        else if (GlobalData.Settings.General.TrendCalculationMethod == TrendCalculationMethod.trendCalculationViaAlgo2)
+        else if (GlobalData.Settings.General.TrendCalculationMethod == CryptoTrendCalculationMethod.trendCalculationViaAlgo2)
         {
             // Methode 2 via een cAlgo ZigZag (net iets anders)
 

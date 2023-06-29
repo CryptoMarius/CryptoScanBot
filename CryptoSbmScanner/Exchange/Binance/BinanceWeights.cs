@@ -1,6 +1,6 @@
 ﻿using CryptoSbmScanner.Intern;
 
-namespace CryptoSbmScanner.Binance;
+namespace CryptoSbmScanner.Exchange.Binance;
 
 class BinanceWeight
 {

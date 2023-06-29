@@ -1,4 +1,5 @@
-﻿using CryptoSbmScanner.Intern;
+﻿using CryptoSbmScanner.Enums;
+using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 
 namespace CryptoSbmScanner.Signal;
@@ -10,8 +11,8 @@ public class SignalBullishEngulfing : SignalCreateBase
     public SignalBullishEngulfing(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
         ReplaceSignal = false;
-        SignalMode = CryptoTradeDirection.Long;
-        SignalStrategy = SignalStrategy.BullishEngulfing;
+        SignalMode = CryptoOrderSide.Buy;
+        SignalStrategy = CryptoSignalStrategy.BullishEngulfing;
     }
 
     /// <summary>

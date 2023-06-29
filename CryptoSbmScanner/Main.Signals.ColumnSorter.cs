@@ -44,7 +44,7 @@ namespace CryptoSbmScanner
                 00 => ObjectCompare.Compare(signalA.CloseDate, signalB.CloseDate),
                 01 => ObjectCompare.Compare(signalA.Symbol.Name, signalB.Symbol.Name),
                 02 => ObjectCompare.Compare(signalA.Interval.IntervalPeriod, signalB.Interval.IntervalPeriod),
-                03 => ObjectCompare.Compare(signalA.ModeText, signalB.ModeText),
+                03 => ObjectCompare.Compare(signalA.SideText, signalB.SideText),
                 04 => ObjectCompare.Compare(signalA.StrategyText, signalB.StrategyText),
                 05 => ObjectCompare.Compare(signalA.EventText, signalB.EventText),
                 06 => ObjectCompare.Compare(signalA.Price, signalB.Price),

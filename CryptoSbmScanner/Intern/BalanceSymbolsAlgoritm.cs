@@ -1,17 +1,21 @@
 ﻿using System.Text;
 
-using CryptoSbmScanner.Binance;
 using CryptoSbmScanner.Context;
+using CryptoSbmScanner.Enums;
+using CryptoSbmScanner.Exchange;
+using CryptoSbmScanner.Exchange.Binance;
 using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Settings;
-using CryptoSbmScanner.Trading;
 
 using Dapper.Contrib.Extensions;
 
 
 namespace CryptoSbmScanner.Intern;
 
-// TODO: De Balancing bot heeft herontwerp en de nodige aandacht nodig!
+// TODO: Deze Balancing bot heeft een herontwerp en de nodige aandacht nodig!
+// In principe willen we (een soort van) mandjes of groepjes oid introduceren.
+// Ook zal er een extra API key bij moeten omdat het meestal vanaf een subaccount wordt gedaan
+// En de configuratie moet verbeterd worden (ehh, opgezet worden?)
 
 
 /// <summary>
@@ -25,7 +29,7 @@ public class BasketAsset
     public decimal Percentage { get; set; } // de te gebruiken verdeling
     public decimal Price { get; set; } // de actuele marktprijs 
 
-    // Verschill
+    // Verschil
     public decimal DiffQuantity { get; set; } // Verschill
     public decimal DiffPercentage { get; set; } // Verschill
     public decimal DiffQuoteQuantity { get; set; } // Verschill
@@ -256,7 +260,7 @@ public class BalanceSymbolsAlgoritm
     }
 
 
-    private async Task<bool> BalanceAsset(CryptoDatabase databaseThread, CryptoTradeAccount tradeAccount, BasketAsset basketAsset, decimal? price, decimal minimalBarometer, string side, int direction, StringBuilder newAdviceMessage)
+    private async Task<bool> BalanceAsset(CryptoDatabase databaseThread, CryptoTradeAccount tradeAccount, BasketAsset basketAsset, decimal price, decimal minimalBarometer, string side, int direction, StringBuilder newAdviceMessage)
     {
         // Barometer gebruiken we als vangnet als de BTC dropped (dat heeft niet altijd een positief effect)
         if (!ValidBarometer(basketAsset, minimalBarometer))
@@ -265,7 +269,7 @@ public class BalanceSymbolsAlgoritm
 
         decimal diffQuantity = Math.Abs(basketAsset.DiffQuantity);
 
-        price = price?.Clamp(basketAsset.Symbol.PriceMinimum, basketAsset.Symbol.PriceMaximum, basketAsset.Symbol.PriceTickSize);
+        price = price.Clamp(basketAsset.Symbol.PriceMinimum, basketAsset.Symbol.PriceMaximum, basketAsset.Symbol.PriceTickSize);
         diffQuantity = diffQuantity.Clamp(basketAsset.Symbol.QuantityMinimum, basketAsset.Symbol.QuantityMaximum, basketAsset.Symbol.QuantityTickSize);
 
         // Controleer de limiten van de berekende bedragen, Minimum bedrag
@@ -299,8 +303,6 @@ public class BalanceSymbolsAlgoritm
 
         // Ik heb slecht ervaringen met limit orders (denk aan tientallen niet gevulde orders die blijven staan!)
         // Met een marketorder betaal e in principe wel ietsjes meer fee dacht ik (ooit nog eens nagaan of dat zo is)
-        if (GlobalData.Settings.BalanceBot.UseMarketOrder)
-            price = null;
 
 
         if (Simulation)
@@ -327,7 +329,10 @@ public class BalanceSymbolsAlgoritm
             CryptoTrade trade = new();
             trade.TradeAccount = tradeAccount;
             trade.TradeAccountId = tradeAccount.Id;
-            trade.IsBuyer = (side == "buy");
+            if (side == "buy")
+                trade.Side = CryptoOrderSide.Buy;
+            else
+                trade.Side = CryptoOrderSide.Sell;
             trade.Quantity = diffQuantity;
             trade.Price = (decimal)basketAsset.Symbol.LastPrice;
             trade.QuoteQuantity = trade.Quantity * trade.Price;
@@ -363,33 +368,39 @@ public class BalanceSymbolsAlgoritm
         {
             BinanceWeights.WaitForFairBinanceWeight(1);
 
-            (bool result, TradeParams tradeParams) success;
-            if (side == "buy")
-                success = await BinanceApi.Buy(tradeAccount, basketAsset.Symbol, diffQuantity, price);
-            else
-                success = await BinanceApi.Sell(tradeAccount, basketAsset.Symbol, diffQuantity, price);
 
-            if (success.result)
+            CryptoOrderType orderType = CryptoOrderType.Limit;
+            if (GlobalData.Settings.BalanceBot.UseMarketOrder)
+                orderType = CryptoOrderType.Market;
+
+            (bool result, TradeParams tradeParams) result;
+            BinanceApi exchangeApi = new(tradeAccount, basketAsset.Symbol, DateTime.UtcNow);
+            if (side == "buy")
+                result = await exchangeApi.BuyOrSell(orderType, CryptoOrderSide.Buy,  diffQuantity, price, null, null);
+            else
+                result = await exchangeApi.BuyOrSell(orderType, CryptoOrderSide.Sell, diffQuantity, price, null, null);
+
+            if (result.result)
             {
                 TradeCount++;
                 string text = string.Format("Balancing {0} {1} price={2} amount={3} totaal={4} (${5:N2})",
-                    side, basketAsset.Symbol.Name, success.tradeParams.Price.ToString0(),
-                    success.tradeParams.Quantity.ToString0(), (success.tradeParams.Price * success.tradeParams.Quantity).ToString0(),
-                    GetUsdtValue(basketAsset.Symbol, Math.Abs(success.tradeParams.Quantity)));
+                    side, basketAsset.Symbol.Name, result.tradeParams.Price.ToString0(),
+                    result.tradeParams.Quantity.ToString0(), (result.tradeParams.Price * result.tradeParams.Quantity).ToString0(),
+                    GetUsdtValue(basketAsset.Symbol, Math.Abs(result.tradeParams.Quantity)));
                 GlobalData.AddTextToLogTab(text);
                 GlobalData.AddTextToTelegram(text);
 
                 CryptoBalance balance = new();
                 balance.EventTime = CurrentDate;
                 balance.Name = basketAsset.Symbol.Name;
-                balance.Price = success.tradeParams.Price;
-                balance.Quantity = -direction * success.tradeParams.Quantity; // direction is positief bij buy, negatief bij een sell
+                balance.Price = result.tradeParams.Price;
+                balance.Quantity = -direction * result.tradeParams.Quantity; // direction is positief bij buy, negatief bij een sell
                 balance.QuoteQuantity = balance.Price * balance.Quantity;
                 balance.UsdtValue = basketAsset.ValueUsdt;
 
                 // Voor een beter overzicht wat er in de coin zit (op dit moment)
                 balance.InvestedQuantity = basketAsset.Quantity + direction * diffQuantity; // direction is positief bij buy, negatief bij een sell
-                balance.InvestedValue = balance.InvestedQuantity * success.tradeParams.Price;
+                balance.InvestedValue = balance.InvestedQuantity * result.tradeParams.Price;
                 databaseThread.Connection.Insert<CryptoBalance>(balance);
             }
         }
@@ -508,12 +519,12 @@ public class BalanceSymbolsAlgoritm
 
                             if (basketAsset.DiffPercentage > GlobalData.Settings.BalanceBot.BuyThresholdPercentage) // kopen voor de bidPrice
                             {
-                                await BalanceAsset(databaseThread, tradeAccount, basketAsset, basketAsset.Symbol.BidPrice, GlobalData.Settings.BalanceBot.MinimalBuyBarometer, "buy", +1, newAdviceMessage);
+                                await BalanceAsset(databaseThread, tradeAccount, basketAsset, (decimal)basketAsset.Symbol.BidPrice, GlobalData.Settings.BalanceBot.MinimalBuyBarometer, "buy", +1, newAdviceMessage);
                                 //break;
                             }
                             else if (basketAsset.DiffPercentage < -GlobalData.Settings.BalanceBot.SellThresholdPercentage) // verkopen voor de askPrice
                             {
-                                await BalanceAsset(databaseThread, tradeAccount, basketAsset, basketAsset.Symbol.AskPrice, GlobalData.Settings.BalanceBot.MinimalSellBarometer, "sell", -1, newAdviceMessage);
+                                await BalanceAsset(databaseThread, tradeAccount, basketAsset, (decimal)basketAsset.Symbol.AskPrice, GlobalData.Settings.BalanceBot.MinimalSellBarometer, "sell", -1, newAdviceMessage);
                                 //break;
                             }
                         }

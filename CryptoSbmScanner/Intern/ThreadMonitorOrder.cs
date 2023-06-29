@@ -1,14 +1,16 @@
 ﻿using System.Collections.Concurrent;
-using Binance.Net.Objects.Models.Spot.Socket;
-using CryptoSbmScanner.Model;
 
+using CryptoSbmScanner.Enums;
+using CryptoSbmScanner.Model;
 
 namespace CryptoSbmScanner.Intern;
 
 public class ThreadMonitorOrder
 {
     private readonly CancellationTokenSource cancellationToken = new();
-    private readonly BlockingCollection<BinanceStreamOrderUpdate> Queue = new();
+    private readonly BlockingCollection<(CryptoSymbol symbol, CryptoOrderType ordertype, CryptoOrderSide side, CryptoOrderStatus status, CryptoTrade trade)> Queue = new();
+
+     
 
     public ThreadMonitorOrder()
     {
@@ -21,7 +23,7 @@ public class ThreadMonitorOrder
         GlobalData.AddTextToLogTab(string.Format("Stop order handler"));
     }
 
-    public void AddToQueue(BinanceStreamOrderUpdate data)
+    public void AddToQueue((CryptoSymbol symbol, CryptoOrderType orderType, CryptoOrderSide orderSide, CryptoOrderStatus orderStatus, CryptoTrade trade) data)
     {
         Queue.Add(data);
     }
@@ -29,26 +31,23 @@ public class ThreadMonitorOrder
     public async Task ExecuteAsync()
     {
         // Een aparte queue die orders afhandeld (met als achterliggende reden de juiste afhandel volgorde)
-        foreach (BinanceStreamOrderUpdate data in Queue.GetConsumingEnumerable(cancellationToken.Token))
+        foreach ((CryptoSymbol symbol, CryptoOrderType orderType, CryptoOrderSide orderSide, CryptoOrderStatus orderStatus, CryptoTrade trade) data in Queue.GetConsumingEnumerable(cancellationToken.Token))
         {
             try
             {
-                // Nieuwe thread opstarten en de data meegeven zodat er een sell wordt gedaan of administratie wordt bijgewerkt.
-                // Het triggeren van een stoploss of een DCA zal op een andere manier gedaan moeten worden (maar hoe en waar?)
-                if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
-                {
-                    if (exchange.SymbolListName.TryGetValue(data.Symbol, out CryptoSymbol symbol))
-                    {
-                        // Puzzel, welk trading account hoort erbij (als je meerdere hebt)
-                        await PositionMonitor.HandleTradeAsync(GlobalData.BinanceRealTradeAccount, symbol, data);
-                    }
-                }
-
+                // Dit is reeds gecontroleerd, overbodig
+                // Wij zijn slechts geinteresseerd in een paar statussen (de andere zijn niet interessant voor de afhandeling van de order) 
+                //if (data.orderStatus == CryptoOrderStatus.Filled || 
+                //    data.orderStatus == CryptoOrderStatus.PartiallyFilled || 
+                //    data.orderStatus == CryptoOrderStatus.Canceled)
+                //{
+                await PositionMonitor.HandleTradeAsync(data.symbol, data.orderType, data.orderSide, data.orderStatus, data.trade);
+                //}
             }
             catch (Exception error)
             {
                 GlobalData.Logger.Error(error);
-                GlobalData.AddTextToLogTab("\r\n" + "\r\n" + data.Symbol + " error order handler thread\r\n" + error.ToString());
+                GlobalData.AddTextToLogTab("\r\n" + "\r\n" + data.symbol.Name + " error order handler thread\r\n" + error.ToString());
             }
         }
         GlobalData.AddTextToLogTab("\r\n" + "\r\n MONITOR order THREAD EXIT");

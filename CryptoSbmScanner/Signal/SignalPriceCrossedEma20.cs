@@ -1,4 +1,5 @@
-﻿using CryptoSbmScanner.Intern;
+﻿using CryptoSbmScanner.Enums;
+using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 
 namespace CryptoSbmScanner.Signal;
@@ -7,8 +8,8 @@ public class SignalPriceCrossedEma20 : SignalCreateBase
 {
     public SignalPriceCrossedEma20(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        SignalMode = CryptoTradeDirection.Long;
-        SignalStrategy = SignalStrategy.PriceCrossedEma20;
+        SignalMode = CryptoOrderSide.Buy;
+        SignalStrategy = CryptoSignalStrategy.PriceCrossedEma20;
     }
 
     public override bool IndicatorsOkay(CryptoCandle candle)

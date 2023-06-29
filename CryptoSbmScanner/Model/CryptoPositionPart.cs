@@ -1,7 +1,4 @@
-﻿using System.Text;
-using Binance.Net.Enums;
-using CryptoSbmScanner.Intern;
-using CryptoSbmScanner.Signal;
+﻿using CryptoSbmScanner.Enums;
 
 using Dapper.Contrib.Extensions;
 
@@ -29,23 +26,12 @@ public class CryptoPositionPart
     [Computed]
     public virtual CryptoSymbol Symbol { get; set; }
 
-    public CryptoTradeDirection Mode { get; set; }
+    public CryptoOrderSide Side { get; set; }
     [Computed]
-    public string ModeText
-    {
-        get
-        {
-            return Mode switch
-            {
-                CryptoTradeDirection.Long => "long",
-                CryptoTradeDirection.Short => "short",
-                _ => "?",
-            };
-        }
-    }
+    public string SideText { get { return Side switch { CryptoOrderSide.Buy => "long", CryptoOrderSide.Sell => "short", _ => "?", }; } }
 
     [Computed]
-    public string DisplayText { get { return Symbol.Name + " " + Position.Interval.Name + " " + CreateTime.ToLocalTime() + " " + ModeText + " " + Position.StrategyText; } }
+    public string DisplayText { get { return Symbol.Name + " " + Position.Interval.Name + " " + CreateTime.ToLocalTime() + " " + SideText + " " + Position.StrategyText; } }
 
     public string Name { get; set; }
     public DateTime CreateTime { get; set; }

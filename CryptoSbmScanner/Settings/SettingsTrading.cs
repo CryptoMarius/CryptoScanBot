@@ -1,38 +1,6 @@
-﻿using CryptoSbmScanner.Model;
+﻿using CryptoSbmScanner.Enums;
 
 namespace CryptoSbmScanner.Settings;
-
-
-public enum CryptoBuyOrderMethod
-{
-    LimitOrder,
-    MarketOrder,
-    BidPrice,
-    AskPrice,
-    BidAndAskPriceAvg
-    //TrailViaKcPsar
-}
-
-public enum CryptoBuyStepInMethod
-{
-    Immediately, // Direct instappen
-    TrailViaKcPsar // stop limit buy op de bovenste KC/PSAR
-}
-
-
-public enum CryptoDcaStepInMethod
-{
-    FixedPercentage, // De Zignally manier (bij elke dca verdubbeld de investering)
-    AfterNextSignal, // Stap op een volgende melding in (rekening houdende met cooldown en percentage)
-    TrailViaKcPsar // stop limit buy op de bovenste KC/PSAR
-}
-
-public enum CryptoSellMethod
-{
-    FixedPercentage, // Het opgegeven vaste percentage
-    DynamicPercentage, // Het percentage adhv BB breedte
-    TrailViaKcPsar // stop limit sell op de bovenste KC/PSAR
-}
 
 
 [Serializable]
@@ -47,6 +15,7 @@ public class PauseTradingRule
     // de wachttijd gemeten in candles
     public int CoolDown { get; set; }
 }
+
 
 [Serializable]
 public class SettingsTrading
@@ -90,9 +59,10 @@ public class SettingsTrading
     //***************************
     // Bijkopen (DCA)
     // Wanneer plaatsen we de DCA?
-    public CryptoDcaStepInMethod DcaStepInMethod { get; set; } = CryptoDcaStepInMethod.FixedPercentage;
+    public CryptoBuyStepInMethod DcaStepInMethod { get; set; } = CryptoBuyStepInMethod.FixedPercentage;
     // De manier waarop de buy order geplaatst wordt
     public CryptoBuyOrderMethod DcaOrderMethod { get; set; } = CryptoBuyOrderMethod.MarketOrder;
+    //public bool DcaOrderMethod2 { get; set; } = CryptoBuyOrderMethod.MarketOrder;
     // Hoe vaak mogen we bijkopen
     public int DcaCount { get; set; } = 0; // niet bijkopen
     // Percentage bijkopen
@@ -153,9 +123,9 @@ public class SettingsTrading
         Monitor.Interval.Add("1m");
         Monitor.Interval.Add("2m");
 
-        Monitor.Strategy[CryptoTradeDirection.Long].Add("sbm1");
-        Monitor.Strategy[CryptoTradeDirection.Long].Add("sbm2");
-        Monitor.Strategy[CryptoTradeDirection.Long].Add("sbm3");
+        Monitor.Strategy[CryptoOrderSide.Buy].Add("sbm1");
+        Monitor.Strategy[CryptoOrderSide.Buy].Add("sbm2");
+        Monitor.Strategy[CryptoOrderSide.Buy].Add("sbm3");
 
         PauseTradingRules.Add(new PauseTradingRule()
         {

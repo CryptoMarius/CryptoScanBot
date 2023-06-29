@@ -1,10 +1,6 @@
-﻿using System.Drawing;
-using System.Text;
+﻿using System.Text;
 
-using Binance.Net.Enums;
-using Binance.Net.Objects.Models.Spot;
-using Binance.Net.Objects.Models.Spot.Socket;
-
+using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Model;
 
 namespace CryptoSbmScanner.Intern;
@@ -312,125 +308,6 @@ public static class Helper
 
         text = "";
         return true;
-    }
-
-
-    static public void PickupAssets(CryptoTradeAccount tradeAccount, Model.CryptoExchange exchange, IEnumerable<BinanceBalance> balances)
-    {
-        tradeAccount.AssetListSemaphore.Wait();
-        try
-        {
-            foreach (var assetInfo in balances)
-            {
-                if (assetInfo.Total > 0)
-                {
-                    if (!tradeAccount.AssetList.TryGetValue(assetInfo.Asset, out CryptoAsset asset))
-                    {
-                        asset = new CryptoAsset();
-                        asset.Quote = assetInfo.Asset;
-                        tradeAccount.AssetList.Add(asset.Quote, asset);
-                    }
-                    asset.Free = assetInfo.Available;
-                    asset.Total = assetInfo.Total;
-                    asset.Locked = assetInfo.Locked;
-
-                    if (asset.Total == 0)
-                        tradeAccount.AssetList.Remove(asset.Quote);
-                }
-            }
-        }
-        finally
-        {
-            tradeAccount.AssetListSemaphore.Release();
-        }
-    }
-
-    static public void PickupAssets(CryptoTradeAccount tradeAccount, Model.CryptoExchange exchange, IEnumerable<BinanceStreamBalance> balances)
-    {
-        tradeAccount.AssetListSemaphore.Wait();
-        {
-            try
-            {
-                foreach (var assetInfo in balances)
-                {
-                    if (!tradeAccount.AssetList.TryGetValue(assetInfo.Asset, out CryptoAsset asset))
-                    {
-                        asset = new CryptoAsset();
-                        asset.Quote = assetInfo.Asset;
-                        tradeAccount.AssetList.Add(asset.Quote, asset);
-                    }
-                    asset.Free = assetInfo.Available;
-                    asset.Total = assetInfo.Total;
-                    asset.Locked = assetInfo.Locked;
-
-                    if (asset.Total == 0)
-                        tradeAccount.AssetList.Remove(asset.Quote);
-                }
-            }
-            finally
-            {
-                tradeAccount.AssetListSemaphore.Release();
-            }
-        }
-    }
-
-
-    static public void PickupTrade(CryptoSymbol symbol, CryptoTrade trade, BinanceTrade item)
-    {
-        trade.Exchange = symbol.Exchange;
-        trade.ExchangeId = symbol.ExchangeId;
-        trade.Symbol = symbol;
-        trade.SymbolId = symbol.Id;
-
-        trade.TradeId = item.Id;
-        trade.OrderId = item.OrderId;
-        trade.OrderListId = (long)item.OrderListId;
-
-        trade.Price = item.Price;
-        trade.Quantity = item.Quantity;
-        trade.QuoteQuantity = item.Price * item.Quantity;
-        // enig debug werk, soms wordt het niet ingevuld!
-        if (item.QuoteQuantity == 0)
-            GlobalData.AddTextToLogTab(string.Format("{0} PickupTrade#1trade QuoteQuantity is 0 for order TradeId={1}!", symbol.Name, trade.TradeId));
-
-        trade.Commission = item.Fee;
-        trade.CommissionAsset = item.FeeAsset;
-
-        trade.TradeTime = item.Timestamp;
-
-        trade.IsBuyer = item.IsBuyer;
-        trade.IsMaker = item.IsMaker;
-    }
-
-
-    static public void PickupTrade(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoTrade trade, BinanceStreamOrderUpdate item)
-    {
-        // zou ook via de positie kunnen, want een trade zit in de context van een positie (als je die kan vinden tenminste)
-        trade.TradeAccount = tradeAccount;
-        trade.TradeAccountId = tradeAccount.Id;
-        trade.Exchange = symbol.Exchange;
-        trade.ExchangeId = symbol.ExchangeId;
-        trade.Symbol = symbol;
-        trade.SymbolId = symbol.Id;
-
-        trade.TradeId = item.TradeId;
-        trade.OrderId = item.Id;
-        trade.OrderListId = item.OrderListId;
-
-        trade.Price = item.Price;
-        trade.Quantity = item.Quantity;
-        trade.QuoteQuantity = item.Price * item.Quantity;
-        // enig debug werk, soms wordt het niet ingevuld!
-        if (item.QuoteQuantity == 0)
-            GlobalData.AddTextToLogTab(string.Format("{0} PickupTrade#2stream QuoteQuantity is 0 for order TradeId={1}!", symbol.Name, trade.TradeId));
-
-        trade.Commission = item.Fee;
-        trade.CommissionAsset = item.FeeAsset;
-
-        trade.TradeTime = item.EventTime;
-
-        trade.IsBuyer = item.Side == OrderSide.Buy;
-        trade.IsMaker = item.BuyerIsMaker;
     }
 
 

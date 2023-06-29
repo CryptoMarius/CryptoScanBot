@@ -1,8 +1,6 @@
-﻿using Binance.Net.Clients;
-using Binance.Net.Objects;
-
-using CryptoSbmScanner.Binance;
-using CryptoSbmScanner.Context;
+﻿using CryptoSbmScanner.Context;
+using CryptoSbmScanner.Enums;
+using CryptoSbmScanner.Exchange.Binance;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Settings;
@@ -15,17 +13,15 @@ using System.Drawing.Drawing2D;
 using System.Reflection;
 using System.Text;
 
-
 namespace CryptoSbmScanner;
-
 
 public partial class FrmMain : Form
 {
 
     //Database die gebruikt wordt in de main thread
-    private readonly CryptoDatabase databaseMain;
+    //private readonly CryptoDatabase databaseMain;
 
-    private bool ProgramExit; // Mislukte manier om excepties bij afsluiten te voorkomen (todo)
+    //private bool ProgramExit; // Mislukte manier om excepties bij afsluiten te voorkomen (todo), even aanzien of het effect heeft en dan verwijderen
     private int createdSignalCount; // Tellertje met het aantal meldingen (komt in de taakbalk c.q. applicatie titel)
     private readonly Microsoft.Web.WebView2.WinForms.WebView2 _webViewAltradyRef = null;
     private readonly ColorSchemeTest theme = new();
@@ -117,43 +113,40 @@ public partial class FrmMain : Form
         _webViewAltradyRef = webViewAltrady;
         tabControl.TabPages.Remove(tabPageAltrady);
 
+        // Experiment, alles beter dan helemaal niet geencrypt (via opensource is tevens een wassen neus)
+        //string x = Model.CryptoExchange.Encrypt("xxxx", false);
+        //string y = Model.CryptoExchange.Decrypt(x, false);
 
-        BinanceClient.SetDefaultOptions(new BinanceClientOptions() { });
-        BinanceSocketClientOptions options = new();
-        options.SpotStreamsOptions.AutoReconnect = true;
-        options.SpotStreamsOptions.ReconnectInterval = TimeSpan.FromSeconds(15);
-        BinanceSocketClient.SetDefaultOptions(options);
+        // TODO: Andere exchanges
+        BinanceApi.SetExchangeDefaults();
 
+        CryptoDatabase.SetDatabaseDefaults();
 #if !SQLDATABASE
-        //Dapper.SqlMapper.Settings.CommandTimeout = 180;
         CryptoDatabase.BasePath = GlobalData.GetBaseDir();
         CryptoDatabase.CreateDatabase();
 #endif
+        // ongebruikt
+        //databaseMain = new();
+        //databaseMain.Connection.Open();
 
 
-        Dapper.SqlMapper.Settings.CommandTimeout = 180;
-        databaseMain = new();
-        databaseMain.Connection.Open();
-
-
-        // Basicly allemaal constanten
         GlobalData.LoadExchanges();
         GlobalData.LoadIntervals();
-        GlobalData.LoadTradingAccounts();
-
+        GlobalData.LoadAccounts();
 
 
         WindowLocationRestore();
         ApplySettings();
 
+
         ResumeComputer(false);
 
 
-        AppDomain.CurrentDomain.ProcessExit += (sender, eventArgs) =>
-        {
-            GlobalData.AddTextToLogTab("Exiting!");
-            ProgramExit = true;
-        };
+        //AppDomain.CurrentDomain.ProcessExit += (sender, eventArgs) =>
+        //{
+        //    GlobalData.AddTextToLogTab("Exiting!");
+        //    ProgramExit = true;
+        //};
 
         SystemEvents.PowerModeChanged += OnPowerChange;
     }
@@ -161,16 +154,6 @@ public partial class FrmMain : Form
 
     private void ApplySettings()
     {
-        //GlobalData.TradeAccountList.Clear();
-        // Een speciaal geval, enkel voor de backtest tool
-        //if (GlobalData.BackTest)
-        //    accounts.Add(GlobalData.BinanceBackTestAccount);
-        //if (GlobalData.Settings.Trading.TradeViaPaperTrading)
-        //    GlobalData.TradeAccountList.Add(GlobalData.BinancePaperTradeAccount.Id, GlobalData.BinancePaperTradeAccount);
-        //if (GlobalData.Settings.Trading.TradeViaExchange)
-        //    GlobalData.TradeAccountList.Add(GlobalData.BinanceRealTradeAccount.Id, GlobalData.BinanceRealTradeAccount);
-
-
         comboBoxBarometerQuote.BeginUpdate();
         comboBoxBarometerInterval.BeginUpdate();
         try
@@ -309,7 +292,7 @@ public partial class FrmMain : Form
     private void ResumeComputer(bool sleepAwhile)
     {
         GlobalData.AddTextToLogTab("Debug: ResumeComputer");
-        GlobalData.ApplicationStatus = ApplicationStatus.AppStatusPrepare;
+        GlobalData.ApplicationStatus = CryptoApplicationStatus.AppStatusPrepare;
 
         GlobalData.ThreadMonitorCandle = new ThreadMonitorCandle();
 #if TRADEBOT
@@ -333,7 +316,7 @@ public partial class FrmMain : Form
     private void CloseCryptoScannerSession()
     {
         GlobalData.AddTextToLogTab("Debug: CloseCryptoScannerSession");
-        GlobalData.ApplicationStatus = ApplicationStatus.AppStatusExiting;
+        GlobalData.ApplicationStatus = CryptoApplicationStatus.AppStatusExiting;
 
         // pfft, kan er net zo goed een array van maken
         TimerCheckDataStream.Enabled = false;
@@ -379,7 +362,7 @@ public partial class FrmMain : Form
 #else
         DataStore.SaveCandles();
 #endif
-
+        ThreadTelegramBot.running = false;
 
         WindowLocationSave();
         GlobalData.Settings.General.SelectedBarometerQuote = comboBoxBarometerQuote.Text;
@@ -400,7 +383,7 @@ public partial class FrmMain : Form
                 components.Dispose();
             }
             // Dispose stuff here
-            databaseMain.Dispose();
+            //databaseMain.Dispose();
         }
 
         base.Dispose(disposing);
@@ -409,7 +392,7 @@ public partial class FrmMain : Form
 
     private void PlaySound(string text, bool test = false)
     {
-        if ((!ProgramExit) && (IsHandleCreated))
+        if (IsHandleCreated) //!ProgramExit && 
         {
             if (GlobalData.Settings.Signal.SoundsActive)
                 ThreadSoundPlayer.AddToQueue(text);
@@ -418,7 +401,7 @@ public partial class FrmMain : Form
 
     private void PlaySpeech(string text, bool test = false)
     {
-        if ((!ProgramExit) && (IsHandleCreated))
+        if (IsHandleCreated) //!ProgramExit && 
         {
             if (GlobalData.Settings.Signal.SoundsActive || test)
                 ThreadSpeechPlayer.AddToQueue(text);
@@ -427,7 +410,7 @@ public partial class FrmMain : Form
 
     private void AddTextToTelegram(string text, bool extraLineFeed = false)
     {
-        if ((!ProgramExit) && (IsHandleCreated))
+        if (IsHandleCreated) //!ProgramExit && 
         {
             //return; //t'ding crasht en is niet fijn
             ThreadTelegramBot.SendMessage(text);
@@ -465,7 +448,7 @@ public partial class FrmMain : Form
     /// </summary>
     private void AssetsHaveChangedEvent(string text, bool extraLineFeed = false)
     {
-        if ((components != null) && (!ProgramExit) && (IsHandleCreated))
+        if (components != null && IsHandleCreated) //!ProgramExit && 
         {
             //decimal valueBtc, valueUsdt;
             //StringBuilder stringBuilder = new StringBuilder();
@@ -762,7 +745,7 @@ public partial class FrmMain : Form
     {
         try
         {
-            if (GlobalData.ApplicationStatus != ApplicationStatus.AppStatusRunning)
+            if (GlobalData.ApplicationStatus != CryptoApplicationStatus.AppStatusRunning)
                 return;
 
             CheckNeedBotPause();
@@ -923,11 +906,11 @@ public partial class FrmMain : Form
     private void ConnectionWasLostEvent(string text, bool extraLineFeed = false)
     {
         // Onderdruk alle foutmeldingen totdat het hersteld is
-        if ((components != null) && (!ProgramExit) && (IsHandleCreated))
+        if (components != null && IsHandleCreated) //!ProgramExit && 
         {
             GlobalData.AddTextToLogTab("Debug: ConnectionWasLostEvent!");
             // anders krijgen we alleen maar fouten dat er geen candles zijn
-            GlobalData.ApplicationStatus = ApplicationStatus.AppStatusPrepare;
+            GlobalData.ApplicationStatus = CryptoApplicationStatus.AppStatusPrepare;
         }
     }
 
@@ -937,10 +920,10 @@ public partial class FrmMain : Form
         // Plan een verversing omdat er een connection timeout was.
         // Dit kan een aantal berekeningen onderbroken hebben
         // (er komen een aantal reconnects, daarom circa 20 seconden)
-        if ((components != null) && (!ProgramExit) && (IsHandleCreated))
+        if (components != null && IsHandleCreated) //!ProgramExit && 
         {
             GlobalData.AddTextToLogTab("Debug: ConnectionWasRestoredEvent!");
-            GlobalData.ApplicationStatus = ApplicationStatus.AppStatusRunning;
+            GlobalData.ApplicationStatus = CryptoApplicationStatus.AppStatusRunning;
             Invoke((MethodInvoker)(() => InitTimerInterval(ref TimerGetExchangeInfo, 20)));
         }
     }
@@ -950,7 +933,7 @@ public partial class FrmMain : Form
     {
         //if (GlobalData.ApplicationStatus == ApplicationStatus.AppStatusRunning)
         {
-            if ((components != null) && (!ProgramExit) && (IsHandleCreated))
+            if (components != null && IsHandleCreated) //&& (!ProgramExit) 
             {
                 if (value)
                     Invoke((MethodInvoker)(() => InitTimerInterval(ref TimerGetExchangeInfo, GlobalData.Settings.General.GetCandleInterval * 60)));
@@ -966,18 +949,18 @@ public partial class FrmMain : Form
         string href;
         switch (GlobalData.Settings.General.TradingApp)
         {
-            case TradingApp.Altrady:
+            case CryptoTradingApp.Altrady:
                 href = Altrady.GetRef(symbol, interval);
                 // Een poging om de externe browser te vermijden
                 Uri uri = new(href);
                 _webViewAltradyRef.Source = uri;
                 //System.Diagnostics.Process.Start(href);
                 break;
-            case TradingApp.AltradyWeb:
+            case CryptoTradingApp.AltradyWeb:
                 href = Altrady.GetRef(symbol, interval);
                 System.Diagnostics.Process.Start(href);
                 break;
-            case TradingApp.Hypertrader:
+            case CryptoTradingApp.Hypertrader:
                 href = HyperTrader.GetRef(symbol, interval);
                 System.Diagnostics.Process.Start(href);
                 break;
@@ -1166,7 +1149,7 @@ public partial class FrmMain : Form
 
     private void TimerSaveCandleData_Tick(object sender, EventArgs e)
     {
-#if !DATABASE
+#if !SQLDATABASE
         // Elke x uur wordt de candle data bewaard
         DataStore.SaveCandles();
 #endif
@@ -1183,7 +1166,7 @@ public partial class FrmMain : Form
     private void SignalArrived(CryptoSignal signal)
     {
         createdSignalCount++;
-        string text = "signal: " + signal.Symbol.Name + " " + signal.Interval.Name + " " + signal.ModeText + " " + signal.StrategyText + " " + signal.EventText;
+        string text = "signal: " + signal.Symbol.Name + " " + signal.Interval.Name + " " + signal.SideText + " " + signal.StrategyText + " " + signal.EventText;
         GlobalData.AddTextToLogTab(text);
 
         if (signal.BackTest)
@@ -1200,33 +1183,33 @@ public partial class FrmMain : Form
         {
             switch (signal.Strategy)
             {
-                case SignalStrategy.Jump:
-                    if (signal.Mode == CryptoTradeDirection.Long)
+                case CryptoSignalStrategy.Jump:
+                    if (signal.Side == CryptoOrderSide.Buy)
                         PlaySound(signal, GlobalData.Settings.Signal.PlaySoundCandleJumpSignal, GlobalData.Settings.Signal.PlaySpeechCandleJumpSignal,
                             GlobalData.Settings.Signal.SoundCandleJumpUp, ref LastSignalSoundCandleJumpUp);
-                    if (signal.Mode == CryptoTradeDirection.Short)
+                    if (signal.Side == CryptoOrderSide.Sell)
                         PlaySound(signal, GlobalData.Settings.Signal.PlaySoundCandleJumpSignal, GlobalData.Settings.Signal.PlaySpeechCandleJumpSignal,
                             GlobalData.Settings.Signal.SoundCandleJumpDown, ref LastSignalSoundCandleJumpDown);
                     break;
 
-                case SignalStrategy.Stobb:
-                    if (signal.Mode == CryptoTradeDirection.Long)
+                case CryptoSignalStrategy.Stobb:
+                    if (signal.Side == CryptoOrderSide.Buy)
                         PlaySound(signal, GlobalData.Settings.Signal.PlaySoundStobbSignal, GlobalData.Settings.Signal.PlaySpeechStobbSignal,
                             GlobalData.Settings.Signal.SoundStobbOversold, ref LastSignalSoundStobbOversold);
-                    if (signal.Mode == CryptoTradeDirection.Short)
+                    if (signal.Side == CryptoOrderSide.Sell)
                         PlaySound(signal, GlobalData.Settings.Signal.PlaySoundStobbSignal, GlobalData.Settings.Signal.PlaySpeechStobbSignal,
                             GlobalData.Settings.Signal.SoundStobbOverbought, ref LastSignalSoundStobbOverbought);
                     break;
 
-                case SignalStrategy.Sbm1:
-                case SignalStrategy.Sbm2:
-                case SignalStrategy.Sbm3:
-                case SignalStrategy.Sbm4:
-                case SignalStrategy.Sbm5:
-                    if (signal.Mode == CryptoTradeDirection.Long)
+                case CryptoSignalStrategy.Sbm1:
+                case CryptoSignalStrategy.Sbm2:
+                case CryptoSignalStrategy.Sbm3:
+                case CryptoSignalStrategy.Sbm4:
+                case CryptoSignalStrategy.Sbm5:
+                    if (signal.Side == CryptoOrderSide.Buy)
                         PlaySound(signal, GlobalData.Settings.Signal.PlaySoundSbmSignal, GlobalData.Settings.Signal.PlaySpeechSbmSignal,
                         GlobalData.Settings.Signal.SoundSbmOversold, ref LastSignalSoundSbmOversold);
-                    if (signal.Mode == CryptoTradeDirection.Short)
+                    if (signal.Side == CryptoOrderSide.Sell)
                         PlaySound(signal, GlobalData.Settings.Signal.PlaySoundSbmSignal, GlobalData.Settings.Signal.PlaySpeechSbmSignal,
                             GlobalData.Settings.Signal.SoundSbmOverbought, ref LastSignalSoundSbmOverbought);
                     break;
@@ -1477,7 +1460,7 @@ public partial class FrmMain : Form
         //if (GlobalData.ApplicationStatus == ApplicationStatus.AppStatusRunning)
         {
             // De reguliere verversing herstellen (igv een connection timeout)
-            if ((components != null) && (!ProgramExit) && (IsHandleCreated))
+            if (components != null && IsHandleCreated) //!ProgramExit) && 
             {
                 // Plan een volgende verversing omdat er bv een connection timeout was.
                 // Dit kan een aantal berekeningen onderbroken hebben
@@ -1617,7 +1600,7 @@ public partial class FrmMain : Form
                         if (createSignal.Prepare(start))
                         {
                             // todo, configuratie short/long
-                            SignalCreateBase algorithm = SignalHelper.GetSignalAlgorithm(CryptoTradeDirection.Long, GlobalData.Settings.BackTest.BackTestAlgoritm, symbol, interval, candle);
+                            SignalCreateBase algorithm = SignalHelper.GetSignalAlgorithm(CryptoOrderSide.Buy, GlobalData.Settings.BackTest.BackTestAlgoritm, symbol, interval, candle);
                             if (algorithm != null)
                             {
                                 if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
@@ -1633,7 +1616,7 @@ public partial class FrmMain : Form
                 }
 
                 BackTestExcel backTestExcel = new(symbol, createSignal.history);
-                backTestExcel.ExportToExcell(CryptoTradeDirection.Long, GlobalData.Settings.BackTest.BackTestAlgoritm);
+                backTestExcel.ExportToExcell(CryptoOrderSide.Buy, GlobalData.Settings.BackTest.BackTestAlgoritm);
             }
         }
         catch (Exception error)
@@ -1651,7 +1634,7 @@ public partial class FrmMain : Form
 
         TimerRestartStreams.Enabled = false;
         TimerCheckDataStream.Enabled = false;
-        GlobalData.ApplicationStatus = ApplicationStatus.AppStatusExiting;
+        GlobalData.ApplicationStatus = CryptoApplicationStatus.AppStatusExiting;
         try
         {
             CloseCryptoScannerSession();

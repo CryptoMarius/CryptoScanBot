@@ -1,4 +1,5 @@
-﻿using CryptoSbmScanner.Intern;
+﻿using CryptoSbmScanner.Enums;
+using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Settings;
 
@@ -54,11 +55,11 @@ public partial class FrmMain
     {
         switch (GlobalData.Settings.General.TradingApp)
         {
-            case TradingApp.Altrady:
+            case CryptoTradingApp.Altrady:
                 listViewSignalsMenuItemActivateTradingApp.Text = "Altrady";
                 listViewSignalsMenuItemActivateTradingApps.Text = "Altrady + TradingView";
                 break;
-            case TradingApp.Hypertrader:
+            case CryptoTradingApp.Hypertrader:
                 listViewSignalsMenuItemActivateTradingApp.Text = "Hypertrader";
                 listViewSignalsMenuItemActivateTradingApps.Text = "Hypertrader + TradingView";
                 break;
@@ -137,12 +138,12 @@ public partial class FrmMain
         item1.SubItems.Add(signal.Interval.Name);
 
 
-        subItem = item1.SubItems.Add(signal.ModeText);
+        subItem = item1.SubItems.Add(signal.SideText);
         if (!signal.IsInvalid)
         {
-            if (signal.Mode == CryptoTradeDirection.Long)
+            if (signal.Side == CryptoOrderSide.Buy)
                 subItem.ForeColor = Color.Green;
-            else if (signal.Mode == CryptoTradeDirection.Short)
+            else if (signal.Side == CryptoOrderSide.Sell)
                 subItem.ForeColor = Color.Red;
         }
 
@@ -152,21 +153,21 @@ public partial class FrmMain
         {
             switch (signal.Strategy)
             {
-                case SignalStrategy.Jump:
+                case CryptoSignalStrategy.Jump:
                     if (GlobalData.Settings.Signal.ColorJump != Color.White)
                         subItem.BackColor = GlobalData.Settings.Signal.ColorJump;
                     break;
 
-                case SignalStrategy.Stobb:
+                case CryptoSignalStrategy.Stobb:
                     if (GlobalData.Settings.Signal.ColorStobb != Color.White)
                         subItem.BackColor = GlobalData.Settings.Signal.ColorStobb;
                     break;
 
-                case SignalStrategy.Sbm1:
-                case SignalStrategy.Sbm2:
-                case SignalStrategy.Sbm3:
-                case SignalStrategy.Sbm4:
-                case SignalStrategy.Sbm5:
+                case CryptoSignalStrategy.Sbm1:
+                case CryptoSignalStrategy.Sbm2:
+                case CryptoSignalStrategy.Sbm3:
+                case CryptoSignalStrategy.Sbm4:
+                case CryptoSignalStrategy.Sbm5:
                     if (GlobalData.Settings.Signal.ColorSbm != Color.White)
                         subItem.BackColor = GlobalData.Settings.Signal.ColorSbm;
                     break;
@@ -188,10 +189,10 @@ public partial class FrmMain
 
         switch (signal.TrendIndicator)
         {
-            case Model.CryptoTrendIndicator.trendBullish:
+            case CryptoTrendIndicator.trendBullish:
                 item1.SubItems.Add("Bullish");
                 break;
-            case Model.CryptoTrendIndicator.trendBearish:
+            case CryptoTrendIndicator.trendBearish:
                 item1.SubItems.Add("Bearisch");
                 break;
             default:

@@ -1,4 +1,5 @@
-﻿using Dapper.Contrib.Extensions;
+﻿using CryptoSbmScanner.Enums;
+using Dapper.Contrib.Extensions;
 
 namespace CryptoSbmScanner.Model;
 

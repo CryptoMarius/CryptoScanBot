@@ -1,4 +1,5 @@
-﻿using CryptoSbmScanner.Intern;
+﻿using CryptoSbmScanner.Enums;
+using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 
 namespace CryptoSbmScanner.Signal;
@@ -9,7 +10,7 @@ namespace CryptoSbmScanner.Signal;
 public class AlgorithmDefinition
 {
     public string Name { get; set; }
-    public SignalStrategy Strategy { get; set; }
+    public CryptoSignalStrategy Strategy { get; set; }
     public Type AnalyzeLongType { get; set; }
     public Type AnalyzeShortType { get; set; }
 
@@ -31,19 +32,19 @@ public class AlgorithmDefinition
 
 public class SignalHelper
 {
-    public static SignalCreateBase GetSignalAlgorithm(CryptoTradeDirection mode, SignalStrategy strategy, CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle)
+    public static SignalCreateBase GetSignalAlgorithm(CryptoOrderSide mode, CryptoSignalStrategy strategy, CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle)
     {
         if (TradingConfig.AlgorithmDefinitionIndex.TryGetValue(strategy, out AlgorithmDefinition definition))
         {
-            if (mode == CryptoTradeDirection.Long && definition.AnalyzeLongType != null)
+            if (mode == CryptoOrderSide.Buy && definition.AnalyzeLongType != null)
                 return definition.InstantiateAnalyzeLong(symbol, interval, candle);
-            if (mode == CryptoTradeDirection.Short && definition.AnalyzeShortType != null)
+            if (mode == CryptoOrderSide.Sell && definition.AnalyzeShortType != null)
                 return definition.InstantiateAnalyzeShort(symbol, interval, candle);
         }
         return null;
     }
 
-    public static string GetSignalAlgorithmText(SignalStrategy strategy)
+    public static string GetSignalAlgorithmText(CryptoSignalStrategy strategy)
     {
         if (TradingConfig.AlgorithmDefinitionIndex.TryGetValue(strategy, out AlgorithmDefinition definition))
             return definition.Name;
@@ -60,7 +61,7 @@ public class SignalHelper
         list.Add(new AlgorithmDefinition()
         {
             Name = "jump",
-            Strategy = SignalStrategy.Jump,
+            Strategy = CryptoSignalStrategy.Jump,
             AnalyzeLongType = typeof(SignalCandleJumpDown),
             AnalyzeShortType = typeof(SignalCandleJumpUp),
         });
@@ -68,7 +69,7 @@ public class SignalHelper
         list.Add(new AlgorithmDefinition()
         {
             Name = "sbm1",
-            Strategy = SignalStrategy.Sbm1,
+            Strategy = CryptoSignalStrategy.Sbm1,
             AnalyzeLongType = typeof(SignalSbm1Oversold),
             AnalyzeShortType = typeof(SignalSbm1Overbought),
         });
@@ -76,7 +77,7 @@ public class SignalHelper
         list.Add(new AlgorithmDefinition()
         {
             Name = "sbm2",
-            Strategy = SignalStrategy.Sbm2,
+            Strategy = CryptoSignalStrategy.Sbm2,
             AnalyzeLongType = typeof(SignalSbm2Oversold),
             AnalyzeShortType = typeof(SignalSbm2Overbought),
         });
@@ -85,7 +86,7 @@ public class SignalHelper
         list.Add(new AlgorithmDefinition()
         {
             Name = "sbm3",
-            Strategy = SignalStrategy.Sbm3,
+            Strategy = CryptoSignalStrategy.Sbm3,
             AnalyzeLongType = typeof(SignalSbm3Oversold),
             AnalyzeShortType = typeof(SignalSbm3Overbought),
         });
@@ -93,7 +94,7 @@ public class SignalHelper
         list.Add(new AlgorithmDefinition()
         {
             Name = "sbm4",
-            Strategy = SignalStrategy.Sbm4,
+            Strategy = CryptoSignalStrategy.Sbm4,
             AnalyzeLongType = typeof(SignalSbm4Oversold),
             AnalyzeShortType = null,
         });
@@ -101,7 +102,7 @@ public class SignalHelper
         list.Add(new AlgorithmDefinition()
         {
             Name = "stobb",
-            Strategy = SignalStrategy.Stobb,
+            Strategy = CryptoSignalStrategy.Stobb,
             AnalyzeLongType = typeof(SignalStobbOversold),
             AnalyzeShortType = typeof(SignalStobbOverbought),
         });
@@ -111,35 +112,35 @@ public class SignalHelper
         list.Add(new AlgorithmDefinition()
         {
             Name = "close>ema20",
-            Strategy = SignalStrategy.PriceCrossedEma20,
+            Strategy = CryptoSignalStrategy.PriceCrossedEma20,
             AnalyzeLongType = typeof(SignalPriceCrossedEma20),
         });
 
         list.Add(new AlgorithmDefinition()
         {
             Name = "close>ema50",
-            Strategy = SignalStrategy.PriceCrossedEma50,
+            Strategy = CryptoSignalStrategy.PriceCrossedEma50,
             AnalyzeLongType = typeof(SignalPriceCrossedEma50),
         });
 
         list.Add(new AlgorithmDefinition()
         {
             Name = "close>sma20",
-            Strategy = SignalStrategy.PriceCrossedSma20,
+            Strategy = CryptoSignalStrategy.PriceCrossedSma20,
             AnalyzeLongType = typeof(SignalPriceCrossedSma20),
         });
 
         list.Add(new AlgorithmDefinition()
         {
             Name = "close>sma50",
-            Strategy = SignalStrategy.PriceCrossedSma50,
+            Strategy = CryptoSignalStrategy.PriceCrossedSma50,
             AnalyzeLongType = typeof(SignalPriceCrossedSma50),
         });
 
         list.Add(new AlgorithmDefinition()
         {
             Name = "sma 50 slope",
-            Strategy = SignalStrategy.SlopeSma50,
+            Strategy = CryptoSignalStrategy.SlopeSma50,
             AnalyzeLongType = typeof(SignalSlopeSma50TurningPositive),
             AnalyzeShortType = typeof(SignalSlopeSma50TurningNegative),
         });
@@ -148,7 +149,7 @@ public class SignalHelper
         list.Add(new AlgorithmDefinition()
         {
             Name = "ema 50 slope",
-            Strategy = SignalStrategy.SlopeEma50,
+            Strategy = CryptoSignalStrategy.SlopeEma50,
             AnalyzeLongType = typeof(SignalSlopeEma50TurningPositive),
             AnalyzeShortType = typeof(SignalSlopeEma50TurningNegative),
         });
@@ -157,28 +158,28 @@ public class SignalHelper
         list.Add(new AlgorithmDefinition()
         {
             Name = "ema 20 slope",
-            Strategy = SignalStrategy.SlopeEma20,
+            Strategy = CryptoSignalStrategy.SlopeEma20,
             AnalyzeLongType = typeof(SignalSlopeEma20TurningPositive),
         });
 
         list.Add(new AlgorithmDefinition()
         {
             Name = "sma 20 slope",
-            Strategy = SignalStrategy.SlopeSma20,
+            Strategy = CryptoSignalStrategy.SlopeSma20,
             AnalyzeLongType = typeof(SignalSlopeSma20TurningPositive),
         });
 
         list.Add(new AlgorithmDefinition()
         {
             Name = "flux",
-            Strategy = SignalStrategy.Flux,
+            Strategy = CryptoSignalStrategy.Flux,
             AnalyzeLongType = typeof(SignalFluxOversold),
         });
 
         list.Add(new AlgorithmDefinition()
         {
             Name = "Engulfing",
-            Strategy = SignalStrategy.BullishEngulfing,
+            Strategy = CryptoSignalStrategy.BullishEngulfing,
             AnalyzeLongType = typeof(SignalBullishEngulfing),
         });
 

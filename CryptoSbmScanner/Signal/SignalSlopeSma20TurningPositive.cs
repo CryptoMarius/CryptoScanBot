@@ -1,4 +1,5 @@
-﻿using CryptoSbmScanner.Intern;
+﻿using CryptoSbmScanner.Enums;
+using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 
 namespace CryptoSbmScanner.Signal;
@@ -8,8 +9,8 @@ public class SignalSlopeSma20TurningPositive : SignalCreateBase
 {
     public SignalSlopeSma20TurningPositive(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        SignalMode = CryptoTradeDirection.Long;
-        SignalStrategy = SignalStrategy.SlopeSma20;
+        SignalMode = CryptoOrderSide.Buy;
+        SignalStrategy = CryptoSignalStrategy.SlopeSma20;
     }
 
     public override bool IndicatorsOkay(CryptoCandle candle)

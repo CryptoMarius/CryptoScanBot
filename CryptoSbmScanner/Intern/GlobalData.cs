@@ -1,8 +1,8 @@
-﻿using CryptoSbmScanner.Binance;
-using CryptoSbmScanner.Context;
+﻿using CryptoSbmScanner.Context;
+using CryptoSbmScanner.Enums;
+using CryptoSbmScanner.Exchange.Binance;
 using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Settings;
-using CryptoSbmScanner.Signal;
 using CryptoSbmScanner.TradingView;
 
 using Dapper.Contrib.Extensions;
@@ -12,13 +12,6 @@ using System.Text.Json;
 
 namespace CryptoSbmScanner.Intern;
 
-
-public enum ApplicationStatus
-{
-    AppStatusPrepare,
-    AppStatusRunning,
-    AppStatusExiting
-}
 
 /// <summary>
 /// Om vanuit de threads tekst in het main scherm te zetten
@@ -52,7 +45,7 @@ static public class GlobalData
     static public bool BackTest { get; set; }
 
     static public SettingsBasic Settings { get; set; } = new();
-    static public ApplicationStatus ApplicationStatus { get; set; } = ApplicationStatus.AppStatusPrepare;
+    static public CryptoApplicationStatus ApplicationStatus { get; set; } = CryptoApplicationStatus.AppStatusPrepare;
 
     // The nlogger stuff
     static public NLog.Logger Logger { get; } = NLog.LogManager.GetCurrentClassLogger();
@@ -86,9 +79,9 @@ static public class GlobalData
     public static AnalyseEvent SignalEvent { get; set; } = null;
 
     static public SortedList<int, CryptoTradeAccount> TradeAccountList = new();
-    public static CryptoTradeAccount BinanceBackTestAccount = null;
-    public static CryptoTradeAccount BinanceRealTradeAccount = null;
-    public static CryptoTradeAccount BinancePaperTradeAccount = null;
+    static public CryptoTradeAccount BinanceBackTestAccount = null;
+    static public CryptoTradeAccount BinanceRealTradeAccount = null;
+    static public CryptoTradeAccount BinancePaperTradeAccount = null;
 
 
     // Some running tasks/threads
@@ -122,20 +115,20 @@ static public class GlobalData
         ExchangeListId.Clear();
         ExchangeListName.Clear();
 
-        using var databaseMain = new CryptoDatabase();
-        foreach (Model.CryptoExchange exchange in databaseMain.Connection.GetAll<Model.CryptoExchange>())
+        using var database = new CryptoDatabase();
+        foreach (Model.CryptoExchange exchange in database.Connection.GetAll<Model.CryptoExchange>())
         {
             AddExchange(exchange);
         }
     }
 
-    static public void LoadTradingAccounts()
+    static public void LoadAccounts()
     {
         // De accounts uit de database laden
         TradeAccountList.Clear();
 
-        using var databaseMain = new CryptoDatabase();
-        foreach (CryptoTradeAccount tradeAccount in databaseMain.Connection.GetAll<CryptoTradeAccount>())
+        using var database = new CryptoDatabase();
+        foreach (CryptoTradeAccount tradeAccount in database.Connection.GetAll<CryptoTradeAccount>())
         {
             TradeAccountList.Add(tradeAccount.Id, tradeAccount);
 
@@ -158,8 +151,8 @@ static public class GlobalData
         IntervalListId.Clear();
         IntervalListPeriod.Clear();
 
-        using var databaseMain = new CryptoDatabase();
-        foreach (CryptoInterval interval in databaseMain.Connection.GetAll<CryptoInterval>())
+        using var database = new CryptoDatabase();
+        foreach (CryptoInterval interval in database.Connection.GetAll<CryptoInterval>())
         {
             IntervalList.Add(interval);
             IntervalListId.Add(interval.Id, interval);
@@ -238,29 +231,6 @@ static public class GlobalData
     }
 
 
-
-    //static public void AddOrder(Order order)
-    //{
-    //    Exchange exchange = null;
-    //    if (ExchangeListId.TryGetValue(order.ExchangeId, out exchange))
-    //    {
-    //        order.Exchange = exchange;
-
-    //        Symbol symbol = null;
-    //        if (exchange.SymbolListId.TryGetValue(order.SymbolId, out symbol))
-    //        {
-    //            order.Symbol = symbol;
-
-    //            if (!symbol.OrderList.ContainsKey(order.Id))
-    //            {
-    //                symbol.OrderList.Add(order.Id, order);
-    //            }
-    //        }
-
-    //    }
-    //}
-
-
     static public void AddTrade(CryptoTrade trade)
     {
         if (TradeAccountList.TryGetValue(trade.TradeAccountId, out CryptoTradeAccount tradeAccount))
@@ -284,6 +254,7 @@ static public class GlobalData
             }
         }
     }
+
 
     static public void InitBarometerSymbols()
     {
@@ -335,37 +306,6 @@ static public class GlobalData
         }
         else
             DefaultSettings();
-
-
-        // Migratie (sorry, maar et die maar even handmatig lijkt me, misschien later?)
-        // Voor de strategy is het nog beroerder, dat type hebben we namelijk verwijderd ;-)
-        //if (Settings.Signal.AnalyzeInterval == "")
-        //{
-        //    // Migratie probleem van de 1.5 naar 1.6. Het array groter maken vanwege de extra intervallen
-        //    if (Settings.Signal.AnalyzeInterval.Length < Enum.GetNames(typeof(CryptoIntervalPeriod)).Length)
-        //    {
-        //        // De array's zijn door het toevoegen van een extra interval niet gelijk in lengte (ligt aan versie)
-        //        bool[] intervals = new bool[Enum.GetNames(typeof(CryptoIntervalPeriod)).Length];
-
-        //        for (int i = 0; i < Settings.Signal.AnalyseInterval.Length; i++)
-        //        {
-        //            intervals[i] = Settings.Signal.AnalyseInterval[i];
-        //            //Settings.Signal.AnalyseInterval[i] = false;
-        //        }
-
-
-        //        for (int i = 0; i < intervals.Length; i++)
-        //        {
-        //            if (intervals[i])
-        //            {
-        //                if (IntervalListPeriod.TryGetValue((CryptoIntervalPeriod)i, out CryptoInterval interval))
-        //                    Settings.Signal.AnalyzeInterval += ',' + interval.Name;
-        //            }
-        //        }
-        //    }
-        //}
-
-
     }
 
     static public void DefaultSettings()

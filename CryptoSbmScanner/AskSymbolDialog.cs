@@ -1,4 +1,5 @@
-﻿using CryptoSbmScanner.Intern;
+﻿using CryptoSbmScanner.Enums;
+using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Signal;
 using System;
@@ -52,7 +53,7 @@ namespace CryptoSbmScanner
             GlobalData.Settings.BackTest.BackTestInterval = EditInterval.Text.Trim();
             GlobalData.Settings.BackTest.BackTestTime = date.ToUniversalTime();
             //TODO long/short?
-            GlobalData.Settings.BackTest.BackTestAlgoritm = (SignalStrategy)EditAlgoritm.SelectedIndex;
+            GlobalData.Settings.BackTest.BackTestAlgoritm = (CryptoSignalStrategy)EditAlgoritm.SelectedIndex;
 
             DialogResult = DialogResult.OK;
         }

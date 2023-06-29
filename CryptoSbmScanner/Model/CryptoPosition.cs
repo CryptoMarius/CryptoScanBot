@@ -1,6 +1,4 @@
-﻿using System.Text;
-using Binance.Net.Enums;
-using CryptoSbmScanner.Intern;
+﻿using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Signal;
 
 using Dapper.Contrib.Extensions;
@@ -34,25 +32,14 @@ public class CryptoPosition
     [Computed]
     public virtual CryptoInterval Interval { get; set; }
 
-    public CryptoTradeDirection Mode { get; set; }
+    public CryptoOrderSide Side { get; set; }
     [Computed]
-    public string ModeText
-    {
-        get
-        {
-            return Mode switch
-            {
-                CryptoTradeDirection.Long => "long",
-                CryptoTradeDirection.Short => "short",
-                _ => "?",
-            };
-        }
-    }
+    public string SideText { get { return Side switch { CryptoOrderSide.Buy => "long", CryptoOrderSide.Sell => "short", _ => "?", }; } }
 
     [Computed]
-    public string DisplayText { get { return Symbol.Name + " " + Interval.Name + " " + CreateTime.ToLocalTime() + " " + ModeText + " " + StrategyText; } }
+    public string DisplayText { get { return Symbol.Name + " " + Interval.Name + " " + CreateTime.ToLocalTime() + " " + SideText + " " + StrategyText; } }
 
-    public SignalStrategy Strategy { get; set; }
+    public CryptoSignalStrategy Strategy { get; set; }
     [Computed]
     public string StrategyText { get { return SignalHelper.GetSignalAlgorithmText(Strategy); } }
 
@@ -73,8 +60,8 @@ public class CryptoPosition
     public decimal BreakEvenPrice { get; set; }
 
     // Slonzige gegevens, deze 3 mogen wat mij betreft weg, staat allemaal in de steps (ooit)
-    public decimal BuyPrice { get; set; } //(dat kan anders zijn dan die van het signaal) (kan eigenlijk weg, slechts ter debug)
-    public decimal BuyAmount { get; set; } // slecht gekozen, meer een soort van QuoteQuantity... // Vanwege problemen met het achteraf opzoeken hier opgenomen
+    public decimal? BuyPrice { get; set; } //(dat kan anders zijn dan die van het signaal) (kan eigenlijk weg, slechts ter debug)
+    public decimal? BuyAmount { get; set; } // slecht gekozen, meer een soort van QuoteQuantity... // Vanwege problemen met het achteraf opzoeken hier opgenomen
     public decimal? SellPrice { get; set; }
 
 
@@ -87,43 +74,12 @@ public class CryptoPosition
     public int PartCount { get; set; }
 
     [Computed]
+    public bool RepositionSell { get; set; }
+
+    [Computed]
     public SortedList<int, CryptoPositionPart> Parts { get; set; } = new();
 
     [Computed]
     // Orders die uitstaan via de parts/steps
     public SortedList<long, CryptoPositionStep> Orders { get; set; } = new();
-
-
-
-
-    public CryptoPositionStep CreateOrder(CryptoTradeDirection orderSide, CryptoOrderType orderType, decimal price, decimal quantity, decimal stopPrice)
-    {
-        CryptoPositionStep step = new();
-        step.Status = OrderStatus.New;
-
-        step.Name = "?";
-
-        step.Price = price;
-        step.Price = step.Price.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
-
-        step.Quantity = quantity;
-        step.Quantity = step.Quantity.Clamp(Symbol.QuantityMinimum, Symbol.QuantityMaximum, Symbol.QuantityTickSize);
-
-        // stoplimit 
-        if (stopPrice > 0)
-        {
-            step.StopPrice = stopPrice;
-            step.StopPrice = step.StopPrice?.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
-        }
-
-        // Nu (nog) computed!
-        step.Mode = orderSide;
-        step.OrderType = orderType;
-
-        //step.Id = orderId; // Vanwege emulator
-        //step.OrderId = orderId; // Vanwege emulator
-        //Steps.Add(step.Id, step);
-        return step;
-    }
-
 }

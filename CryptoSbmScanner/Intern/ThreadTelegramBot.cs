@@ -1,6 +1,7 @@
 ﻿using System.Text;
 
 using CryptoSbmScanner.Context;
+using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Model;
 
 using Dapper;
@@ -39,7 +40,9 @@ public class ThreadTelegramBot
 {
     //public Thread Thread;
     private static int offset;
+    public static bool running;
     private static TelegramBotClient bot;
+    private readonly CancellationTokenSource cancellationToken = new();
 
     //public ThreadTelegramBot()
     //{
@@ -54,6 +57,11 @@ public class ThreadTelegramBot
     //    };
     //}
 
+    public void Stop()
+    {
+        cancellationToken.Cancel();
+        GlobalData.AddTextToLogTab(string.Format("Stop telegram handler"));
+    }
 
     /// <summary>
     /// 
@@ -433,6 +441,8 @@ public class ThreadTelegramBot
 
     public static async Task ExecuteAsync()
     {
+        //return;
+
         System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
         //    // Extra parameters vanwege ambigious constructor (die ik niet geheel kon volgen)
         bot = new(GlobalData.Settings.Telegram.Token); //, "https://api.telegram.org/bot", "https://api.telegram.org/file/bot"
@@ -460,7 +470,9 @@ public class ThreadTelegramBot
             //    cancellationToken: cts.Token
             //);
 
-            while (true)
+            // Dat moet ook nog eens wat netter met een CT
+            running = true;
+            while (running) //!cancellationToken.IsCancellationRequested
             {
                 try
                 {

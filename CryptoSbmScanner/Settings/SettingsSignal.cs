@@ -1,14 +1,17 @@
-﻿using CryptoSbmScanner.Model;
-using System.Drawing;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
+
+using CryptoSbmScanner.Enums;
 
 namespace CryptoSbmScanner.Settings;
 
 [Serializable]
 public class SettingsSignal
 {
-    /// Is het signal algoritme actief
+    // Naar general wellicht? (want het geld voor alles)
     public bool SoundsActive { get; set; } = true;
+
+    /// Is het signal algoritme actief
+    // TODO rename naar Active
     public bool SignalsActive { get; set; } = true;
 
     public bool ShowInvalidSignals { get; set; } = false;
@@ -135,8 +138,8 @@ public class SettingsSignal
         Analyze.Interval.Add("1m");
         Analyze.Interval.Add("2m");
 
-        Analyze.Strategy[CryptoTradeDirection.Long].Add("sbm1");
-        Analyze.Strategy[CryptoTradeDirection.Long].Add("sbm2");
-        Analyze.Strategy[CryptoTradeDirection.Long].Add("sbm3");
+        Analyze.Strategy[CryptoOrderSide.Buy].Add("sbm1");
+        Analyze.Strategy[CryptoOrderSide.Buy].Add("sbm2");
+        Analyze.Strategy[CryptoOrderSide.Buy].Add("sbm3");
     }
 }

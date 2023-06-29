@@ -1,7 +1,6 @@
-﻿using CryptoSbmScanner.Intern;
+﻿using CryptoSbmScanner.Enums;
+using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
-using System.Collections.Generic;
-using System.Text;
 
 namespace CryptoSbmScanner.Signal;
 

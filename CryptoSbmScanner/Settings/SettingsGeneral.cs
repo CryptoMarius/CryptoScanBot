@@ -1,16 +1,10 @@
-﻿using CryptoSbmScanner.Model;
+﻿using CryptoSbmScanner.Enums;
+using CryptoSbmScanner.Model;
 using System.Drawing;
 using System.Text.Json.Serialization;
 using System.Windows.Forms;
 
 namespace CryptoSbmScanner.Settings;
-
-public enum TradingApp
-{
-    Altrady,
-    AltradyWeb,
-    Hypertrader
-}
 
 public enum DoubleClickAction
 {
@@ -20,23 +14,16 @@ public enum DoubleClickAction
     activateTradingViewBrowerExternal
 }
 
-public enum TrendCalculationMethod
-{
-    trendCalculationViaAlgo1,
-    trendCalculationViaAlgo2,
-    trendCalculationcViaEma
-}
-
 [Serializable]
 public class IntervalAndStrategyConfig
 {
     public List<string> Interval { get; set; } = new();
-    public Dictionary<CryptoTradeDirection, List<string>> Strategy { get; set; } = new();
+    public Dictionary<CryptoOrderSide, List<string>> Strategy { get; set; } = new();
 
     public IntervalAndStrategyConfig()
     {
-        Strategy.Add(CryptoTradeDirection.Long, new List<string>());
-        Strategy.Add(CryptoTradeDirection.Short, new List<string>());
+        Strategy.Add(CryptoOrderSide.Buy, new List<string>());
+        Strategy.Add(CryptoOrderSide.Sell, new List<string>());
     }
 }
 
@@ -44,7 +31,7 @@ public class IntervalAndStrategyConfig
 public class SettingsGeneral
 {
     public bool BlackTheming { get; set; } = false;
-    public TradingApp TradingApp { get; set; } = TradingApp.Altrady;
+    public CryptoTradingApp TradingApp { get; set; } = CryptoTradingApp.Altrady;
     public bool SoundTradeNotification { get; set; }
     public string SelectedBarometerQuote { get; set; } = "BUSD";
     public string SelectedBarometerInterval { get; set; } = "1H";
@@ -67,7 +54,7 @@ public class SettingsGeneral
     public Rectangle WindowPosition { get; set; } = new Rectangle();
     public FormWindowState WindowState { get; set; } = FormWindowState.Normal;
 
-    public TrendCalculationMethod TrendCalculationMethod { get; set; } = TrendCalculationMethod.trendCalculationViaAlgo1;
+    public CryptoTrendCalculationMethod TrendCalculationMethod { get; set; } = CryptoTrendCalculationMethod.trendCalculationViaAlgo1;
 
     public SettingsGeneral()
     {

@@ -1,4 +1,4 @@
-﻿namespace CryptoSbmScanner.Model;
+﻿namespace CryptoSbmScanner.Enums;
 
 public enum CryptoTrendIndicator
 {

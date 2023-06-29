@@ -5,7 +5,7 @@ using CryptoExchange.Net.Sockets;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 
-namespace CryptoSbmScanner.Binance;
+namespace CryptoSbmScanner.Exchange.Binance;
 
 public class BinanceStreamPriceTicker
 {

@@ -1,4 +1,5 @@
-﻿using CryptoSbmScanner.Intern;
+﻿using CryptoSbmScanner.Enums;
+using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 
 namespace CryptoSbmScanner.Signal;
@@ -20,8 +21,8 @@ public class SignalCreateBase
     protected CryptoQuoteData QuoteData;
     protected SortedList<long, CryptoCandle> Candles;
 
-    public CryptoTradeDirection SignalMode;
-    public SignalStrategy SignalStrategy;
+    public CryptoOrderSide SignalMode;
+    public CryptoSignalStrategy SignalStrategy;
     public CryptoCandle CandleLast = null;
     public string ExtraText = "";
     public bool ReplaceSignal = true;

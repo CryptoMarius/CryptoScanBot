@@ -2,7 +2,7 @@
 using System.Data.SqlClient;
 using System.Globalization;
 using System.Text;
-
+using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Model;
 using Dapper;
 using Dapper.Contrib.Extensions;
@@ -16,6 +16,12 @@ namespace CryptoSbmScanner.Context;
 
 public class CryptoDatabase : IDisposable
 {
+    public static void SetDatabaseDefaults()
+    {
+        Dapper.SqlMapper.Settings.CommandTimeout = 180;
+    }
+
+
 #if SQLDATABASE
     public static string ConnectionString { get; set; } = "Server=localhost; database=cryptobot2; UID=cryptobot; password=cryptobot; TrustServerCertificate=True";
     public SqlConnection Connection { get; set; }
@@ -226,7 +232,7 @@ public class CryptoDatabase : IDisposable
 
             StringBuilder stringBuilder = new();
             stringBuilder.AppendLine("INSERT INTO Trade (" +
-                "ExchangeId, SymbolId, TradeId,OrderId,OrderListId," +
+                "ExchangeId, SymbolId, TradeId,OrderId," + //OrderListId,
                 "Price, Quantity, QuoteQuantity, " +
                 "Commission, CommissionAsset, " +
                 "TradeTime, " +
@@ -241,12 +247,12 @@ public class CryptoDatabase : IDisposable
                 if (i > offset)
                     stringBuilder.AppendLine(",");
 
-                stringBuilder.AppendFormat(string.Format("({0},{1},{2},{3},{4},{5},{6},{7},{8},'{9}','{10}',{11},{12},{13})",
+                stringBuilder.AppendFormat(string.Format("({0},{1},{2},{3},{4},{5},{6},{7},'{8}','{9}',{10},{11})",
                     trade.Exchange.Id,
                     trade.Symbol.Id,
                     trade.TradeId.ToString(mySqlFormat),
                     trade.OrderId.ToString(mySqlFormat),
-                    trade.OrderListId.ToString(mySqlFormat),
+                    //trade.OrderListId.ToString(mySqlFormat),
 
                     trade.Price.ToString(mySqlFormat),
                     trade.Quantity.ToString(mySqlFormat),
@@ -256,8 +262,7 @@ public class CryptoDatabase : IDisposable
 
                     trade.TradeTime.ToString("yyyyMMdd HH:mm:ss"),
 
-                    Convert.ToInt32(trade.IsBuyer),
-                    Convert.ToInt32(trade.IsMaker)
+                    Convert.ToInt32(trade.Side)
                 ));
             }
 
@@ -692,7 +697,7 @@ public class CryptoDatabase : IDisposable
                 "IsInvalid INTEGER NULL," +
 
                 "EventTime bigint NOT NULL," +
-                "Mode INTEGER NOT NULL," +
+                "Side INTEGER NOT NULL," +
                 "Price TEXT NOT NULL," +
                 "EventText TEXT NULL," +
 
@@ -775,7 +780,7 @@ public class CryptoDatabase : IDisposable
                 "SymbolId Integer NOT NULL, " +
                 "IntervalId Integer NULL," +
                 "Status INTEGER NOT NULL, " +
-                "Mode INTEGER NOT NULL, " +
+                "Side INTEGER NOT NULL, " +
                 "Strategy INTEGER NOT NULL, " +
                 "data TEXT NULL," +
 
@@ -816,7 +821,7 @@ public class CryptoDatabase : IDisposable
                 "ExchangeId Integer NOT NULL," +
                 "SymbolId Integer NOT NULL, " +
 
-                "Mode INTEGER NOT NULL, " +
+                "Side INTEGER NOT NULL, " +
                 "Name TEXT NULL," +
                 "CreateTime TEXT NOT NULL, " +
                 "CloseTime TEXT NULL, " +
@@ -860,7 +865,7 @@ public class CryptoDatabase : IDisposable
                 "CloseTime TEXT NULL," +
                 "Name TEXT NOT NULL," +
                 "Status INTEGER NOT NULL," +
-                "Mode INTEGER NOT NULL," +
+                "Side INTEGER NOT NULL," +
                 "OrderType INTEGER NOT NULL," +
                 "Price TEXT NOT NULL," +
                 "StopPrice TEXT NULL," +
@@ -937,19 +942,26 @@ public class CryptoDatabase : IDisposable
             connection.Connection.Execute("CREATE TABLE [Trade] (" +
                 "Id integer primary key autoincrement not null, " +
                 "TradeTime TEXT NOT NULL," +
+                
                 "TradeAccountId Integer NOT NULL," +
                 "ExchangeId Integer NOT NULL," +
                 "SymbolId Integer NOT NULL," +
-                "TradeId TEXT NOT NULL," +
-                "OrderId TEXT NOT NULL," +
-                "OrderListId TEXT NULL," +
+
                 "Price TEXT NOT NULL," +
                 "Quantity TEXT NOT NULL," +
                 "QuoteQuantity TEXT NOT NULL," +
+                // TODO: Universele iets (omrekenen!)
                 "Commission TEXT NOT NULL," +
                 "CommissionAsset TEXT NOT NULL," +
-                "IsBuyer Integer NOT NULL," +
-                "IsMaker Integer NOT NULL," +
+
+                // Erg Binance specifiek?
+                "Side Integer NOT NULL," +
+                //"IsMaker Integer NOT NULL," + // ivm berekening fee (maar is al in de prijs verwerkt, wellicht om achteraf iets te beredeneren qua fee?)
+
+                "TradeId TEXT NOT NULL," +
+                "OrderId TEXT NOT NULL," +
+                //"OrderListId TEXT NULL," +
+                
                 "FOREIGN KEY(TradeAccountId) REFERENCES TradeAccount(Id)," +
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +
                 "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)" +

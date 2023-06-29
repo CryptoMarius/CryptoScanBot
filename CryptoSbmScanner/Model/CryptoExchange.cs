@@ -13,43 +13,23 @@ public class CryptoExchange
     public string Name { get; set; }
 
     [Computed]
-    //Datum dat de laatste keer de exchange informatie is opgehaald
+    // Datum dat de laatste keer de exchange informatie is opgehaald
     public DateTime ExchangeInfoLastTime { get; set; } = DateTime.MinValue;
 
 
-    // De basecoins geindexeerd op id en naam
-    // (Altrady doet dat dmv BINA:SymbolName)
+    // Coins indexed on id and name
+    // (Altrady BINA:SymbolName)
     [Computed]
     public SortedList<int, CryptoSymbol> SymbolListId { get; } = new();
     [Computed]
     public SortedList<string, CryptoSymbol> SymbolListName { get; } = new();
 
 
-    // Onderstaande 4 zijn specifiek voor een trading account
-    // Bijvoorbeeld Binance real trading of Binance Papertrading 1..4
-    // Het voorstel is om hier later een aparte class voor te maken
-    // (aanpassing andere classes: combineren met "tradingaccount")
-
-    //[Computed]
-    //public SemaphoreSlim AssetListSemaphore { get; set; } = new(1);
-    //[Computed]
-    //public SortedList<string, CryptoAsset> AssetList { get; } = new();
-
-    //// Alle openstaande posities per symbol + locking
-    //[Computed]
-    //public SemaphoreSlim PositionListSemaphore { get; set; } = new(1);
-    //[Computed]
-    //public SortedList<string, SortedList<int, CryptoPosition>> PositionList { get; } = new();
-
-
-
-
-
     [Computed]
     static private string Text { get { return "Yes, man is mortal, but that would be only half the trouble. The worst of it is that he's sometimes unexpectedly mortal—there's the trick!"; } }
 
     
-    private string Encrypt(string toEncrypt, bool useHashing)
+    public static string Encrypt(string toEncrypt, bool useHashing)
     {
         byte[] keyArray;
         byte[] toEncryptArray = UTF8Encoding.UTF8.GetBytes(toEncrypt);
@@ -96,7 +76,7 @@ public class CryptoExchange
     }
 
 
-    private string Decrypt(string cipherString, bool useHashing)
+    public static string Decrypt(string cipherString, bool useHashing)
     {
         if (string.IsNullOrEmpty(cipherString))
             return string.Empty;

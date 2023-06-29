@@ -1,7 +1,7 @@
-﻿using CryptoSbmScanner.Binance;
+﻿using CryptoSbmScanner.Enums;
+using CryptoSbmScanner.Exchange.Binance;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
-using System.Net.Http.Json;
 
 namespace CryptoSbmScanner;
 
@@ -28,7 +28,7 @@ public partial class FrmMain
             Location = new Point(526, 0),
             Size = new Size(1000, 93),
         };
-        listViewInformation.DoubleClick += new System.EventHandler(ListViewInformation_DoubleClick);
+        listViewInformation.DoubleClick += new EventHandler(ListViewInformation_DoubleClick);
 
         panelTop.Controls.Add(listViewInformation);
     }
@@ -36,7 +36,7 @@ public partial class FrmMain
 
     private void TimerShowBarometer_Tick(object sender, EventArgs e)
     {
-        if (GlobalData.ApplicationStatus != ApplicationStatus.AppStatusExiting)
+        if (GlobalData.ApplicationStatus != CryptoApplicationStatus.AppStatusExiting)
         {
             // De prijzen van candles zijn pas na 20 a 30 seconden na iedere minuut bekend
             // (er zit een vertraging het verkrijgen en verwerken van de candles)

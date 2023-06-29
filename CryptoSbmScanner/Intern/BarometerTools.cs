@@ -1,4 +1,5 @@
 ﻿using CryptoSbmScanner.Context;
+using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Model;
 using Dapper.Contrib.Extensions;
 

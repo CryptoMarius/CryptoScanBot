@@ -1,7 +1,4 @@
-﻿using System.Text;
-
-using CryptoExchange.Net.CommonObjects;
-
+﻿using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 
@@ -13,8 +10,8 @@ public class SignalFluxOversold : SignalSbmBaseOversold
 {
     public SignalFluxOversold(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        SignalMode = CryptoTradeDirection.Long;
-        SignalStrategy = SignalStrategy.Flux;
+        SignalMode = CryptoOrderSide.Buy;
+        SignalStrategy = CryptoSignalStrategy.Flux;
     }
 
     public override bool IsSignal()

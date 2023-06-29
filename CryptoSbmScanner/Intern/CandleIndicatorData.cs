@@ -1,4 +1,5 @@
-﻿using CryptoSbmScanner.Model;
+﻿using CryptoSbmScanner.Enums;
+using CryptoSbmScanner.Model;
 using Skender.Stock.Indicators;
 
 namespace CryptoSbmScanner.Intern;

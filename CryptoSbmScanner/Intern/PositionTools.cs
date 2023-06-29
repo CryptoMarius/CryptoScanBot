@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text;
 
-using Binance.Net.Enums;
-
-using CryptoSbmScanner.Binance;
 using CryptoSbmScanner.Context;
+using CryptoSbmScanner.Enums;
+using CryptoSbmScanner.Exchange;
+using CryptoSbmScanner.Exchange.Binance;
 using CryptoSbmScanner.Model;
 
 using Dapper;
@@ -81,8 +77,9 @@ public class PositionTools
     {
         foreach (CryptoPositionStep step in part.Steps.Values.ToList())
         {
-            if (step.Name.Equals(name) && step.Status != OrderStatus.Expired)
+            if (step.Name.Equals(name) && step.Status != CryptoOrderStatus.Expired)
             {
+                // Kan ook partial gevuld zijn, wat gebeurd er dan? ;-)
                 if (closed && step.CloseTime.HasValue)
                     return step;
                 else
@@ -93,7 +90,7 @@ public class PositionTools
         return null;
     }
 
-    public CryptoPosition CreatePosition(SignalStrategy strategy, CryptoSymbolInterval symbolInterval)
+    public CryptoPosition CreatePosition(CryptoSignalStrategy strategy, CryptoSymbolInterval symbolInterval)
     {
         CryptoPosition position = new(); // bewust niet in een init struct gezet (vanwege debuggen)
         position.TradeAccount = TradeAccount;
@@ -108,7 +105,7 @@ public class PositionTools
         position.IntervalId = symbolInterval.Interval.Id;
         position.Status = CryptoPositionStatus.Waiting;
         position.Strategy = strategy;
-        position.Mode = CryptoTradeDirection.Long;
+        position.Side = CryptoOrderSide.Buy;
         return position;
     }
 
@@ -122,9 +119,11 @@ public class PositionTools
         database.Connection.Update<CryptoPosition>(position);
     }
 
-    public CryptoPositionPart CreatePositionPart(CryptoPosition position)
+    public CryptoPositionPart CreatePositionPart(CryptoPosition position, string name, decimal buyPrice)
     {
         CryptoPositionPart part = new(); // bewust niet in een init struct gezet (vanwege debuggen)
+        part.Name = name;
+        part.BuyPrice = buyPrice;
         part.CreateTime = CurrentDate;
         part.PositionId = position.Id;
         part.Symbol = Symbol;
@@ -134,7 +133,7 @@ public class PositionTools
         //part.Interval = position.Interval;
         //part.IntervalId = position.Interval.Id;
         part.Status = CryptoPositionStatus.Waiting;
-        part.Mode = CryptoTradeDirection.Long;
+        part.Side = CryptoOrderSide.Buy;
         return part;
     }
 
@@ -147,15 +146,15 @@ public class PositionTools
         database.Connection.Update<CryptoPositionPart>(part);
     }
 
-    static public CryptoPositionStep CreatePositionStep(CryptoPosition position, CryptoPositionPart part, TradeParams tradeParams, string name)
+    static public CryptoPositionStep CreatePositionStep(CryptoPosition position, CryptoPositionPart part, TradeParams tradeParams, string name, CryptoTrailing trailing = CryptoTrailing.None)
     {
         CryptoPositionStep step = new(); // bewust niet in een init struct gezet (vanwege debuggen)
         step.PositionId = position.Id;
         step.PositionPartId = part.Id;
 
         step.Name = name;
-        step.Mode = tradeParams.Side;
-        step.Status = OrderStatus.New;
+        step.Side = tradeParams.Side;
+        step.Status = CryptoOrderStatus.New;
         step.OrderType = tradeParams.OrderType;
         step.CreateTime = tradeParams.CreateTime;
         
@@ -171,6 +170,7 @@ public class PositionTools
         step.Order2Id = tradeParams.Order2Id;
         //step.OrderListId = tradeParams.OrderListId; // onzin? maar ach (wat is/was het verhaal hierachter?)
 
+        step.Trailing = trailing;
         //Dit wordt bij een 1e trade gedaan (zie DoOnSignal), maar hoe hou je dat bij (want die routine wordt aangepast)
         //part.BuyPrice = result.tradeParams.Price;
         //part.BuyAmount = result.tradeParams.QuoteQuantity; // voor het bepalen van het volgende aankoop bedrag (die in de settings kan wijzigen)
@@ -272,10 +272,6 @@ public class PositionTools
             }
             if (positionList.Count == 0)
                 tradeAccount.PositionList.Remove(position.Symbol.Name);
-
-
-            if (!GlobalData.BackTest && GlobalData.ApplicationStatus == ApplicationStatus.AppStatusRunning)
-                GlobalData.PositionsHaveChanged("");
         }
     }
 
@@ -299,26 +295,26 @@ public class PositionTools
         position.Returned = 0;
         position.Commission = 0;
 
-        foreach (CryptoPositionPart part in position.Parts.Values)
+        foreach (CryptoPositionPart part in position.Parts.Values.ToList())
         {
             part.Quantity = 0;
             part.Invested = 0;
             part.Returned = 0;
             part.Commission = 0;
 
-            foreach (CryptoPositionStep step in part.Steps.Values)
+            foreach (CryptoPositionStep step in part.Steps.Values.ToList())
             {
-                if (step.Status == OrderStatus.Filled || step.Status == OrderStatus.PartiallyFilled)
+                if (step.Status == CryptoOrderStatus.Filled || step.Status == CryptoOrderStatus.PartiallyFilled)
                 {
-                    if (step.Mode == CryptoTradeDirection.Long)
+                    if (step.Side == CryptoOrderSide.Buy)
                     {
-                        part.Invested += step.QuoteQuantityFilled;
                         part.Quantity += step.Quantity;
+                        part.Invested += step.QuoteQuantityFilled;
                     }
-                    else if (step.Mode == CryptoTradeDirection.Short)
+                    else if (step.Side == CryptoOrderSide.Sell)
                     {
-                        part.Returned += step.QuoteQuantityFilled;
                         part.Quantity -= step.Quantity;
+                        part.Returned += step.QuoteQuantityFilled;
                     }
 
                     // TODO - De commission vanuit de TRADE (of step) overnemen (en rekening houden met CommisionAsset?)
@@ -331,7 +327,7 @@ public class PositionTools
                 //GlobalData.AddTextToLogTab(s);
             }
 
-            if (part.Invested > 0 && part.Status == CryptoPositionStatus.Waiting)
+            if (part.Invested != 0 && part.Status == CryptoPositionStatus.Waiting)
                 part.Status = CryptoPositionStatus.Trading;
 
             part.Profit = part.Returned - part.Invested - part.Commission;
@@ -343,9 +339,9 @@ public class PositionTools
             else
                 part.BreakEvenPrice = 0; // mhh. denk fout? Als we in een dca zitten is de part.BE 0
 
-            string t = string.Format("{0} CalculateProfit sell invested={1} profit={2} bought={3} sold={4} steps={5}",
-                position.Symbol.Name, part.Invested, part.Profit, part.Invested, part.Returned, part.Steps.Count);
-            GlobalData.AddTextToLogTab(t);
+            //string t = string.Format("{0} CalculateProfit sell invested={1} profit={2} bought={3} sold={4} steps={5}",
+            //    position.Symbol.Name, part.Invested, part.Profit, part.Invested, part.Returned, part.Steps.Count);
+            //GlobalData.AddTextToLogTab(t);
 
 
             position.Quantity += part.Quantity;
@@ -355,7 +351,7 @@ public class PositionTools
         }
 
 
-        if (position.Invested > 0 && position.Status == CryptoPositionStatus.Waiting)
+        if (position.Invested != 0 && position.Status == CryptoPositionStatus.Waiting)
             position.Status = CryptoPositionStatus.Trading;
 
         position.Profit = position.Returned - position.Invested - position.Commission;
@@ -372,6 +368,7 @@ public class PositionTools
 
 
 
+
     /// <summary>
     /// Na het opstarten is er behoefte om openstaande orders en trades te synchroniseren
     /// (dependency: de trades en steps moeten hiervoor ingelezen zijn)
@@ -383,21 +380,21 @@ public class PositionTools
 
 
         // Reset eerste de filled
-        foreach (CryptoPositionPart part in position.Parts.Values)
+        foreach (CryptoPositionPart part in position.Parts.Values.ToList())
         {
             // TODO: Commission vanuit de trades laten doorwerken in de part en de position
             // part.Commission = 0;
             // probleem met de gebruikte asset (quote of bnb?) Omrekenen, maar hoe?
 
-            foreach (CryptoPositionStep step in part.Steps.Values)
+            foreach (CryptoPositionStep step in part.Steps.Values.ToList())
             {
                 step.QuantityFilled = 0;
                 step.QuoteQuantityFilled = 0;
             }
         }
 
-        // De steps opbouwen vanuit de trades
-        foreach (CryptoTrade trade in position.Symbol.TradeList.Values)
+        // De filled quantity in de steps opnieuw opbouwen vanuit de trades
+        foreach (CryptoTrade trade in position.Symbol.TradeList.Values.ToList())
         {
             if (position.Orders.TryGetValue(trade.OrderId, out CryptoPositionStep step))
             {
@@ -409,13 +406,13 @@ public class PositionTools
                 if (step.QuantityFilled >= step.Quantity)
                 {
                     step.CloseTime = trade.TradeTime;
-                    if (step.Status < OrderStatus.Filled)
-                        step.Status = OrderStatus.Filled;
+                    if (step.Status < CryptoOrderStatus.Filled)
+                        step.Status = CryptoOrderStatus.Filled;
                 }
                 else if (step.QuantityFilled > 0)
                 {
-                    if (step.Status == OrderStatus.New)
-                        step.Status = OrderStatus.PartiallyFilled;
+                    if (step.Status == CryptoOrderStatus.New)
+                        step.Status = CryptoOrderStatus.PartiallyFilled;
                 }
             }
         }
@@ -426,13 +423,13 @@ public class PositionTools
 
         // De parts en steps bewaren
         int openOrders = 0;
-        foreach (CryptoPositionPart part in position.Parts.Values)
+        foreach (CryptoPositionPart part in position.Parts.Values.ToList())
         {
-            foreach (CryptoPositionStep step in part.Steps.Values)
+            foreach (CryptoPositionStep step in part.Steps.Values.ToList())
             {
                 database.Connection.Update<CryptoPositionStep>(step);
 
-                if (step.Status < OrderStatus.Filled)
+                if (step.Status < CryptoOrderStatus.Filled)
                     openOrders++;
             }
 
@@ -445,8 +442,11 @@ public class PositionTools
         if ((position.Quantity == 0) && (openOrders == 0) && (position.Status == CryptoPositionStatus.Trading))
         {
             position.CloseTime = DateTime.UtcNow; // TODO - Datum aanpassen voor emulator/backtest
-            position.Status = CryptoPositionStatus.Ready;
-            GlobalData.AddTextToLogTab(string.Format("TradeTools: Positie {0} status aangepast naar {1}", position.Symbol.Name, position.Status));
+            if (position.Status != CryptoPositionStatus.Ready)
+            {
+                position.Status = CryptoPositionStatus.Ready;
+                GlobalData.AddTextToLogTab(string.Format("TradeTools: Positie {0} status aangepast naar {1}", position.Symbol.Name, position.Status));
+            }
         }
 
         // De positie bewaren
@@ -456,28 +456,9 @@ public class PositionTools
     }
 
 
-    //public static void Dump(CryptoPosition position, StringBuilder strings)
-    //{
-    //    string s;
-    //    strings.AppendLine();
-    //    foreach (CryptoPositionPart part in position.Parts.Values)
-    //    {
-    //        foreach (CryptoPositionStep order in part.Steps.Values)
-    //        {
-    //            s = string.Format("{0,-18} Side={1,-10} Status={2,-8} price={3:N8} quantity={4:N8} OrderType={5}",
-    //                order.Name, order.Mode, order.Status, order.Price, order.Quantity, order.OrderType);
-    //            strings.AppendLine(s);
-    //        }
-    //    }
-
-    //    s = string.Format("BreakEven={0:N8} Total Quantity={1}", position.BreakEvenPrice, position.Quantity);
-    //    strings.AppendLine(s);
-    //    strings.AppendLine();
-    //}
-
     static public void DumpPosition(CryptoPosition position, StringBuilder strings)
     {
-        // Het is op deze manier niet echt leesbaar, Excel ding maken wellicht?
+        // Het is op niet echt super-leesbaar, Excel ding maken wellicht?
 
         strings.AppendLine("");
         strings.AppendLine("-------------------");
@@ -497,6 +478,12 @@ public class PositionTools
         strings.AppendLine("Profit:" + position.Profit.ToString(position.Symbol.QuoteData.DisplayFormat));
         strings.AppendLine("Percentage:" + position.Percentage.ToString("N2"));
 
+        // debug
+        strings.AppendLine("Quantity:" + position.Quantity.ToString());
+        strings.AppendLine("BuyPrice:" + position.BuyPrice.ToString());
+        strings.AppendLine("BuyAmount:" + position.BuyAmount.ToString());
+        strings.AppendLine("SellPrice:" + position.SellPrice.ToString());
+
         strings.AppendLine("");
         strings.AppendLine("-------------------");
         strings.AppendLine("Parts");
@@ -504,28 +491,33 @@ public class PositionTools
         foreach (CryptoPositionPart part in position.Parts.Values.ToList())
         {
             // TODO - informatie van de Part
-            strings.AppendLine("Part dump:");
+            strings.AppendLine("  Part dump:");
             strings.AppendLine("");
-            strings.AppendLine("Part Id:" + part.Id.ToString());
-            strings.AppendLine("Name:" + part.Name);
-            strings.AppendLine("Status:" + part.Status.ToString());
-            strings.AppendLine("OpenDate:" + part.CreateTime.ToLocalTime());
-            strings.AppendLine("CloseDate:" + part.CloseTime?.ToLocalTime());
-            strings.AppendLine("BreakEvenPrice:" + part.BreakEvenPrice.ToString());
+            strings.AppendLine("  Part Id:" + part.Id.ToString());
+            strings.AppendLine("  Name:" + part.Name);
+            strings.AppendLine("  Status:" + part.Status.ToString());
+            strings.AppendLine("  OpenDate:" + part.CreateTime.ToLocalTime());
+            strings.AppendLine("  CloseDate:" + part.CloseTime?.ToLocalTime());
+            strings.AppendLine("  BreakEvenPrice:" + part.BreakEvenPrice.ToString());
 
-            strings.AppendLine("Invested:" + part.Invested.ToString(position.Symbol.QuoteData.DisplayFormat));
-            strings.AppendLine("Commission:" + part.Commission.ToString(position.Symbol.QuoteData.DisplayFormat));
-            strings.AppendLine("Returned:" + part.Returned.ToString(position.Symbol.QuoteData.DisplayFormat));
-            strings.AppendLine("Profit:" + part.Profit.ToString(position.Symbol.QuoteData.DisplayFormat));
-            strings.AppendLine("Percentage:" + part.Percentage.ToString("N2"));
+            strings.AppendLine("  Invested:" + part.Invested.ToString(position.Symbol.QuoteData.DisplayFormat));
+            strings.AppendLine("  Commission:" + part.Commission.ToString(position.Symbol.QuoteData.DisplayFormat));
+            strings.AppendLine("  Returned:" + part.Returned.ToString(position.Symbol.QuoteData.DisplayFormat));
+            strings.AppendLine("  Profit:" + part.Profit.ToString(position.Symbol.QuoteData.DisplayFormat));
+            strings.AppendLine("  Percentage:" + part.Percentage.ToString("N2"));
 
+            // debug
+            strings.AppendLine("  Quantity:" + part.Quantity.ToString());
+            strings.AppendLine("  BuyPrice:" + part.BuyPrice.ToString());
+            strings.AppendLine("  BuyAmount:" + part.BuyAmount.ToString());
+            strings.AppendLine("  SellPrice:" + part.SellPrice.ToString());
 
-            strings.AppendLine("-------------------");
-            strings.AppendLine("Steps");
+            strings.AppendLine("  -------------------");
+            strings.AppendLine("  Steps");
             foreach (CryptoPositionStep step in part.Steps.Values.ToList())
             {
-                string s = string.Format("step#{0} {1} {2} order#{3} {4} ({5}) Price={6} StopPrice={7} StopLimitPrice={8} Quantity={9} QuantityFilled={10} QuoteQuantityFilled={11} close={12} {13}",
-                    step.Id, step.Name, step.CreateTime.ToLocalTime(), step.OrderId, step.Mode, step.OrderType,
+                string s = string.Format("    step#{0} {1} {2} order#{3} {4} ({5}) Price={6} StopPrice={7} StopLimitPrice={8} Quantity={9} QuantityFilled={10} QuoteQuantityFilled={11} close={12} {13}",
+                    step.Id, step.Name, step.CreateTime.ToLocalTime(), step.OrderId, step.Side, step.OrderType,
                     step.Price.ToString(position.Symbol.PriceDisplayFormat), step.StopPrice?.ToString(position.Symbol.PriceDisplayFormat), step.StopLimitPrice?.ToString(position.Symbol.PriceDisplayFormat),
                     step.Quantity, step.QuantityFilled, step.QuoteQuantityFilled, step.CloseTime?.ToLocalTime(), step.Status.ToString());
 
@@ -538,9 +530,10 @@ public class PositionTools
         strings.AppendLine("");
         strings.AppendLine("-------------------");
         strings.AppendLine("Trades");
-        foreach (CryptoTrade trade in position.Symbol.TradeList.Values)
+        foreach (CryptoTrade trade in position.Symbol.TradeList.Values.ToList())
         {
             strings.AppendLine("");
+            strings.AppendLine("Side:" + trade.Side);
             strings.AppendLine("Id:" + trade.Id.ToString());
             strings.AppendLine("TradeId:" + trade.TradeId.ToString());
             strings.AppendLine("OrderId:" + trade.OrderId.ToString());
@@ -556,7 +549,7 @@ public class PositionTools
     }
 
 
-    static public async Task LoadTradesfromDatabaseAndBinance(CryptoDatabase database, CryptoPosition position)
+    static public async Task LoadTradesfromDatabaseAndExchange(CryptoDatabase database, CryptoPosition position)
     {
         // Bij het laden zijn niet alle trades in het geheugen ingelezen, dus deze alsnog inladen (of verversen)
         // Probleem, er zitten msec in de position.CreateTime en niet in de Trade.TradeTime (pfft)
@@ -570,6 +563,7 @@ public class PositionTools
 
 
         // Daarna de "nieuwe" trades van deze coin ophalen en die toegevoegen aan dezelfde tradelist
+        // TODO: Afhankelijkheid uitfaseren of exchange-aware maken?
         if (position.TradeAccount.AccountType == CryptoTradeAccountType.RealTrading)
             await Task.Run(async () => { await BinanceFetchTrades.FetchTradesForSymbol(position.TradeAccount, position.Symbol); });
     }
@@ -577,17 +571,67 @@ public class PositionTools
 
     public static void LoadPosition(CryptoDatabase database, CryptoPosition position)
     {
+        // De parts
         string sql = string.Format("select * from positionpart where PositionId={0} order by Id", position.Id);
         foreach (CryptoPositionPart part in database.Connection.Query<CryptoPositionPart>(sql))
         {
             PositionTools.AddPositionPart(position, part);
+        }
 
-            // De steps inlezen en dan vervolgens de status van eventueel openstaande orders opvragen
-            sql = string.Format("select * from positionstep where PositionId={0} order by Id", position.Id);
-            foreach (CryptoPositionStep step in database.Connection.Query<CryptoPositionStep>(sql))
-            {
+        // De steps
+        sql = string.Format("select * from positionstep where PositionId={0} order by Id", position.Id);
+        foreach (CryptoPositionStep step in database.Connection.Query<CryptoPositionStep>(sql))
+        {
+            if (position.Parts.TryGetValue(step.PositionPartId, out CryptoPositionPart part))
                 PositionTools.AddPositionPartStep(part, step);
-            }
         }
     }
+
+
+    public static CryptoPosition HasPosition(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoSymbolInterval symbolInterval)
+    {
+        if (tradeAccount.PositionList.TryGetValue(symbol.Name, out var positionList))
+        {
+            foreach (var position in positionList.Values.ToList())
+            {
+                // Alleen voor long trades en het betrokken interval
+                if (position.Side != CryptoOrderSide.Buy || position.IntervalId != symbolInterval.IntervalId)
+                    continue;
+
+                return position;
+            }
+        }
+
+        return null;
+    }
+
+
+    public static CryptoPositionStep IsTrailingPosition(CryptoPosition position)
+    {
+        foreach (CryptoPositionPart part in position.Parts.Values.ToList())
+        {
+            foreach (CryptoPositionStep step in part.Steps.Values.ToList())
+            {
+                if (step.Status == CryptoOrderStatus.New && step.Trailing == CryptoTrailing.Trailing)
+                    return step;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Is er een positie open (dan wel signalen maken voor deze munt)
+    /// </summary>
+    public static bool HasPosition(CryptoSymbol symbol)
+    {
+        foreach (CryptoTradeAccount tradeAccount in GlobalData.TradeAccountList.Values.ToList())
+        {
+            if (tradeAccount.PositionList.TryGetValue(symbol.Name, out var _))
+                return true;
+        }
+
+        return false;
+    }
+
 }

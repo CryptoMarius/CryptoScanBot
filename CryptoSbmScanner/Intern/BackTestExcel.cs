@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 
 using CryptoExchange.Net.CommonObjects;
+
+using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Signal;
 
@@ -111,7 +113,7 @@ public class BackTestExcel
         return column;
     }
 
-    public void ExportToExcell(CryptoTradeDirection mode, SignalStrategy strategy)
+    public void ExportToExcell(CryptoOrderSide mode, CryptoSignalStrategy strategy)
     {
         // HSSF => Microsoft Excel(excel 97-2003)
         // XSSF => Office Open XML Workbook(excel 2007)

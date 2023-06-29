@@ -1,10 +1,6 @@
-﻿using Binance.Net.Clients;
-using Binance.Net.Enums;
-using Binance.Net.Objects.Models.Spot;
-using CryptoExchange.Net.Objects;
-
-using CryptoSbmScanner.Binance;
-using CryptoSbmScanner.Context;
+﻿using CryptoSbmScanner.Context;
+using CryptoSbmScanner.Enums;
+using CryptoSbmScanner.Exchange.Binance;
 using CryptoSbmScanner.Model;
 using CryptoSbmScanner.TradingView;
 
@@ -255,9 +251,9 @@ public class ThreadLoadData
                 // TODO - beperken tot de laatste 2 dagen? (en wat handigheden toevoegen wellicht)
                 GlobalData.AddTextToLogTab("Reading closed position");
 #if SQLDATABASE
-                sql = "select top 50 * from position where not closetime is null order by id desc";
+                sql = "select top 250 * from position where not closetime is null order by id desc";
 #else
-                sql = "select * from position where not closetime is null order by id desc limit 50";
+                sql = "select * from position where not closetime is null order by id desc limit 250";
 #endif
                 foreach (CryptoPosition position in databaseThread.Connection.Query<CryptoPosition>(sql))
                     PositionTools.AddPositionClosed(position);
@@ -277,12 +273,12 @@ public class ThreadLoadData
                     // Controleer de openstaande orders, zijn ze ondertussen gevuld
                     // Haal de trades van deze positie op vanaf de 1e order
                     // TODO - Hoe doen we dit met papertrading (er is niets geregeld!)
-                    await PositionTools.LoadTradesfromDatabaseAndBinance(databaseThread, position);
+                    await PositionTools.LoadTradesfromDatabaseAndExchange(databaseThread, position);
                     PositionTools.CalculatePositionViaTrades(databaseThread, position);
 
                     foreach (CryptoPositionPart part in position.Parts.Values)
                     {
-                        if (part.Invested > 0 && part.Quantity == 0)
+                        if (part.Invested > 0 && part.Quantity == 0 && part.Status != CryptoPositionStatus.Ready)
                         {
                             part.Status = CryptoPositionStatus.Ready;
                             GlobalData.AddTextToLogTab(string.Format("LoadData: Positie {0} Part {1} status aangepast naar {2}", position.Symbol.Name, part.Name, part.Status));
@@ -296,7 +292,7 @@ public class ThreadLoadData
                         }
                     }
 
-                    if (position.Invested > 0 && position.Quantity == 0)
+                    if (position.Invested > 0 && position.Quantity == 0 && position.Status != CryptoPositionStatus.Ready)
                     {
                         position.Status = CryptoPositionStatus.Ready;
                         GlobalData.AddTextToLogTab(string.Format("LoadData: Positie {0} status aangepast naar {1}", position.Symbol.Name, position.Status));
@@ -526,7 +522,7 @@ public class ThreadLoadData
             // De Telegram bot opstarten
             //************************************************************************************
             GlobalData.AddTextToLogTab("Starting Telegram bot");
-            var whateverx = Task.Run(async () => { await ThreadTelegramBot.ExecuteAsync(); }); // Geen await, forever long running
+            var whateverx = Task.Run(async () => { await ThreadTelegramBot.ExecuteAsync(); }); 
 
 
             //************************************************************************************
@@ -653,8 +649,7 @@ public class ThreadLoadData
             //************************************************************************************
             if (GlobalData.Settings.ApiKey != "")
             {
-                BinanceFetchAssets fetchAssets = new();
-                await Task.Run(async () => { await fetchAssets.Execute(GlobalData.BinanceRealTradeAccount); });
+                await Task.Run(async () => { await BinanceApi.FetchAssets(GlobalData.BinanceRealTradeAccount); });
             }
 #endif
 
@@ -685,7 +680,7 @@ public class ThreadLoadData
             //RecalculateLastXCandles(1);
 
             // Assume we now can run
-            GlobalData.ApplicationStatus = ApplicationStatus.AppStatusRunning;
+            GlobalData.ApplicationStatus = CryptoApplicationStatus.AppStatusRunning;
 
         }
         catch (Exception error)

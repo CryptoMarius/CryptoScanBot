@@ -1,4 +1,5 @@
-﻿using CryptoSbmScanner.Intern;
+﻿using CryptoSbmScanner.Enums;
+using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 
 namespace CryptoSbmScanner.Signal;
@@ -7,8 +8,8 @@ public class SignalSbm2Overbought : SignalSbmBaseOverbought
 {
     public SignalSbm2Overbought(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        SignalMode = CryptoTradeDirection.Short;
-        SignalStrategy = SignalStrategy.Sbm2;
+        SignalMode = CryptoOrderSide.Sell;
+        SignalStrategy = CryptoSignalStrategy.Sbm2;
     }
 
 

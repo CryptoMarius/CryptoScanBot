@@ -1,7 +1,7 @@
-﻿namespace CryptoSbmScanner.Model;
+﻿namespace CryptoSbmScanner.Enums;
 
 // Basis strategie en dan een long en een short variant hierop
-public enum SignalStrategy // CryptoStrategy
+public enum CryptoSignalStrategy // CryptoStrategy
 {
     Jump, // Alleen informatief?
 
@@ -15,11 +15,13 @@ public enum SignalStrategy // CryptoStrategy
     // Experimental
     PriceCrossedSma20,
     PriceCrossedSma50,
+
     PriceCrossedEma20,
     PriceCrossedEma50,
 
     SlopeSma50,
     SlopeSma20,
+
     SlopeEma20,
     SlopeEma50,
 

@@ -1,4 +1,5 @@
-﻿using CryptoSbmScanner.Intern;
+﻿using CryptoSbmScanner.Enums;
+using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Settings;
 using CryptoSbmScanner.Signal;
@@ -98,32 +99,32 @@ public partial class FrmSettings : Form
         AnalyzeInterval.Add(EditAnalyzeInterval1d, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1d]);
 
         // analyze long
-        AnalyzeDefinitionIndexLong.Add(EditAnalyzeCandleJumpUp, TradingConfig.AlgorithmDefinitionIndex[SignalStrategy.Jump]);
-        AnalyzeDefinitionIndexLong.Add(EditAnalyzeSbmOversold, TradingConfig.AlgorithmDefinitionIndex[SignalStrategy.Sbm1]);
-        AnalyzeDefinitionIndexLong.Add(EditAnalyzeSbm2Oversold, TradingConfig.AlgorithmDefinitionIndex[SignalStrategy.Sbm2]);
-        AnalyzeDefinitionIndexLong.Add(EditAnalyzeSbm3Oversold, TradingConfig.AlgorithmDefinitionIndex[SignalStrategy.Sbm3]);
-        AnalyzeDefinitionIndexLong.Add(EditAnalyzeSbm4Oversold, TradingConfig.AlgorithmDefinitionIndex[SignalStrategy.Sbm4]);
-        AnalyzeDefinitionIndexLong.Add(EditAnalyzeStobbOversold, TradingConfig.AlgorithmDefinitionIndex[SignalStrategy.Stobb]);
+        AnalyzeDefinitionIndexLong.Add(EditAnalyzeCandleJumpUp, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Jump]);
+        AnalyzeDefinitionIndexLong.Add(EditAnalyzeSbmOversold, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Sbm1]);
+        AnalyzeDefinitionIndexLong.Add(EditAnalyzeSbm2Oversold, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Sbm2]);
+        AnalyzeDefinitionIndexLong.Add(EditAnalyzeSbm3Oversold, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Sbm3]);
+        AnalyzeDefinitionIndexLong.Add(EditAnalyzeSbm4Oversold, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Sbm4]);
+        AnalyzeDefinitionIndexLong.Add(EditAnalyzeStobbOversold, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Stobb]);
 
-        AnalyzeDefinitionIndexLong.Add(EditAnalyzePriceCrossedSma20, TradingConfig.AlgorithmDefinitionIndex[SignalStrategy.PriceCrossedSma20]);
-        AnalyzeDefinitionIndexLong.Add(EditAnalyzePriceCrossedSma50, TradingConfig.AlgorithmDefinitionIndex[SignalStrategy.PriceCrossedSma50]);
-        AnalyzeDefinitionIndexLong.Add(EditAnalyzePriceCrossedEma20, TradingConfig.AlgorithmDefinitionIndex[SignalStrategy.PriceCrossedEma20]);
-        AnalyzeDefinitionIndexLong.Add(EditAnalyzePriceCrossedEma50, TradingConfig.AlgorithmDefinitionIndex[SignalStrategy.PriceCrossedEma50]);
+        AnalyzeDefinitionIndexLong.Add(EditAnalyzePriceCrossedSma20, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.PriceCrossedSma20]);
+        AnalyzeDefinitionIndexLong.Add(EditAnalyzePriceCrossedSma50, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.PriceCrossedSma50]);
+        AnalyzeDefinitionIndexLong.Add(EditAnalyzePriceCrossedEma20, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.PriceCrossedEma20]);
+        AnalyzeDefinitionIndexLong.Add(EditAnalyzePriceCrossedEma50, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.PriceCrossedEma50]);
 
-        AnalyzeDefinitionIndexLong.Add(EditAnalyzeSlopeEma20TurningPositive, TradingConfig.AlgorithmDefinitionIndex[SignalStrategy.SlopeEma20]);
-        AnalyzeDefinitionIndexLong.Add(EditAnalyzeSlopeEma50TurningPositive, TradingConfig.AlgorithmDefinitionIndex[SignalStrategy.SlopeEma50]);
-        AnalyzeDefinitionIndexLong.Add(EditAnalyzeSlopeSma20TurningPositive, TradingConfig.AlgorithmDefinitionIndex[SignalStrategy.SlopeSma20]);
-        AnalyzeDefinitionIndexLong.Add(EditAnalyzeSlopeSma50TurningPositive, TradingConfig.AlgorithmDefinitionIndex[SignalStrategy.SlopeSma50]);
+        AnalyzeDefinitionIndexLong.Add(EditAnalyzeSlopeEma20TurningPositive, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.SlopeEma20]);
+        AnalyzeDefinitionIndexLong.Add(EditAnalyzeSlopeEma50TurningPositive, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.SlopeEma50]);
+        AnalyzeDefinitionIndexLong.Add(EditAnalyzeSlopeSma20TurningPositive, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.SlopeSma20]);
+        AnalyzeDefinitionIndexLong.Add(EditAnalyzeSlopeSma50TurningPositive, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.SlopeSma50]);
 
-        AnalyzeDefinitionIndexLong.Add(EditAnalyzeFluxOversold, TradingConfig.AlgorithmDefinitionIndex[SignalStrategy.Flux]);
-        AnalyzeDefinitionIndexLong.Add(EditAnalyzeBullishEngulfing, TradingConfig.AlgorithmDefinitionIndex[SignalStrategy.BullishEngulfing]);
+        AnalyzeDefinitionIndexLong.Add(EditAnalyzeFluxOversold, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Flux]);
+        AnalyzeDefinitionIndexLong.Add(EditAnalyzeBullishEngulfing, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.BullishEngulfing]);
 
         // analyze short
-        AnalyzeDefinitionIndexShort.Add(EditAnalyzeCandleJumpDown, TradingConfig.AlgorithmDefinitionIndex[SignalStrategy.Jump]);
-        AnalyzeDefinitionIndexShort.Add(EditAnalyzeSbmOverbought, TradingConfig.AlgorithmDefinitionIndex[SignalStrategy.Sbm1]);
-        AnalyzeDefinitionIndexShort.Add(EditAnalyzeSbm2Overbought, TradingConfig.AlgorithmDefinitionIndex[SignalStrategy.Sbm2]);
-        AnalyzeDefinitionIndexShort.Add(EditAnalyzeSbm3Overbought, TradingConfig.AlgorithmDefinitionIndex[SignalStrategy.Sbm3]);
-        AnalyzeDefinitionIndexShort.Add(EditAnalyzeStobbOverbought, TradingConfig.AlgorithmDefinitionIndex[SignalStrategy.Stobb]);
+        AnalyzeDefinitionIndexShort.Add(EditAnalyzeCandleJumpDown, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Jump]);
+        AnalyzeDefinitionIndexShort.Add(EditAnalyzeSbmOverbought, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Sbm1]);
+        AnalyzeDefinitionIndexShort.Add(EditAnalyzeSbm2Overbought, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Sbm2]);
+        AnalyzeDefinitionIndexShort.Add(EditAnalyzeSbm3Overbought, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Sbm3]);
+        AnalyzeDefinitionIndexShort.Add(EditAnalyzeStobbOverbought, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Stobb]);
 
 
         // monitor interval
@@ -139,25 +140,25 @@ public partial class FrmSettings : Form
         MonitorInterval.Add(EditMonitorInterval4h, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval4h]);
 
         // monitor strategy long
-        MonitorStrategyLong.Add(EditMonitorSbm1, TradingConfig.AlgorithmDefinitionIndex[SignalStrategy.Sbm1]);
-        MonitorStrategyLong.Add(EditMonitorSbm2, TradingConfig.AlgorithmDefinitionIndex[SignalStrategy.Sbm2]);
-        MonitorStrategyLong.Add(EditMonitorSbm3, TradingConfig.AlgorithmDefinitionIndex[SignalStrategy.Sbm3]);
-        MonitorStrategyLong.Add(EditMonitorSbm4, TradingConfig.AlgorithmDefinitionIndex[SignalStrategy.Sbm4]);
-        MonitorStrategyLong.Add(EditMonitorStobb, TradingConfig.AlgorithmDefinitionIndex[SignalStrategy.Stobb]);
-        MonitorStrategyLong.Add(EditMonitorJump, TradingConfig.AlgorithmDefinitionIndex[SignalStrategy.Jump]);
+        MonitorStrategyLong.Add(EditMonitorSbm1, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Sbm1]);
+        MonitorStrategyLong.Add(EditMonitorSbm2, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Sbm2]);
+        MonitorStrategyLong.Add(EditMonitorSbm3, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Sbm3]);
+        MonitorStrategyLong.Add(EditMonitorSbm4, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Sbm4]);
+        MonitorStrategyLong.Add(EditMonitorStobb, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Stobb]);
+        MonitorStrategyLong.Add(EditMonitorJump, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Jump]);
 
-        MonitorStrategyLong.Add(EditBotPriceCrossingEma20, TradingConfig.AlgorithmDefinitionIndex[SignalStrategy.PriceCrossedEma20]);
-        MonitorStrategyLong.Add(EditBotPriceCrossingEma50, TradingConfig.AlgorithmDefinitionIndex[SignalStrategy.PriceCrossedEma50]);
-        MonitorStrategyLong.Add(EditBotPriceCrossingSma20, TradingConfig.AlgorithmDefinitionIndex[SignalStrategy.PriceCrossedSma20]);
-        MonitorStrategyLong.Add(EditBotPriceCrossingSma50, TradingConfig.AlgorithmDefinitionIndex[SignalStrategy.PriceCrossedSma50]);
+        MonitorStrategyLong.Add(EditBotPriceCrossingEma20, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.PriceCrossedEma20]);
+        MonitorStrategyLong.Add(EditBotPriceCrossingEma50, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.PriceCrossedEma50]);
+        MonitorStrategyLong.Add(EditBotPriceCrossingSma20, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.PriceCrossedSma20]);
+        MonitorStrategyLong.Add(EditBotPriceCrossingSma50, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.PriceCrossedSma50]);
 
-        MonitorStrategyLong.Add(EditBotSlopeEma20TurningPositive, TradingConfig.AlgorithmDefinitionIndex[SignalStrategy.SlopeEma20]);
-        MonitorStrategyLong.Add(EditBotSlopeEma50TurningPositive, TradingConfig.AlgorithmDefinitionIndex[SignalStrategy.SlopeEma50]);
-        MonitorStrategyLong.Add(EditBotSlopeSma20TurningPositive, TradingConfig.AlgorithmDefinitionIndex[SignalStrategy.SlopeSma20]);
-        MonitorStrategyLong.Add(EditBotSlopeSma50TurningPositive, TradingConfig.AlgorithmDefinitionIndex[SignalStrategy.SlopeSma50]);
+        MonitorStrategyLong.Add(EditBotSlopeEma20TurningPositive, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.SlopeEma20]);
+        MonitorStrategyLong.Add(EditBotSlopeEma50TurningPositive, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.SlopeEma50]);
+        MonitorStrategyLong.Add(EditBotSlopeSma20TurningPositive, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.SlopeSma20]);
+        MonitorStrategyLong.Add(EditBotSlopeSma50TurningPositive, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.SlopeSma50]);
 
-        MonitorStrategyLong.Add(EditMonitorFluxOversold, TradingConfig.AlgorithmDefinitionIndex[SignalStrategy.Flux]);
-        MonitorStrategyLong.Add(EditMonitorBullishEngulfing, TradingConfig.AlgorithmDefinitionIndex[SignalStrategy.BullishEngulfing]);
+        MonitorStrategyLong.Add(EditMonitorFluxOversold, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Flux]);
+        MonitorStrategyLong.Add(EditMonitorBullishEngulfing, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.BullishEngulfing]);
 
         // monitor strategy short
         // Geen?
@@ -321,9 +322,9 @@ public partial class FrmSettings : Form
         // ------------------------------------------------------------------------------
 
         foreach (var item in AnalyzeDefinitionIndexLong)
-            SetCheckBoxFrom(item.Key, item.Value, settings.Signal.Analyze.Strategy[CryptoTradeDirection.Long]);
+            SetCheckBoxFrom(item.Key, item.Value, settings.Signal.Analyze.Strategy[CryptoOrderSide.Buy]);
         foreach (var item in AnalyzeDefinitionIndexShort)
-            SetCheckBoxFrom(item.Key, item.Value, settings.Signal.Analyze.Strategy[CryptoTradeDirection.Short]);
+            SetCheckBoxFrom(item.Key, item.Value, settings.Signal.Analyze.Strategy[CryptoOrderSide.Sell]);
 
         // STOBB
         EditStobbBBMinPercentage.Value = (decimal)settings.Signal.StobbBBMinPercentage;
@@ -456,9 +457,9 @@ public partial class FrmSettings : Form
             SetCheckBoxFrom(item.Key, item.Value, settings.Trading.Monitor.Interval);
 
         foreach (var item in MonitorStrategyLong)
-            SetCheckBoxFrom(item.Key, item.Value, settings.Trading.Monitor.Strategy[CryptoTradeDirection.Long]);
+            SetCheckBoxFrom(item.Key, item.Value, settings.Trading.Monitor.Strategy[CryptoOrderSide.Buy]);
         foreach (var item in MonitorStrategyShort)
-            SetCheckBoxFrom(item.Key, item.Value, settings.Trading.Monitor.Strategy[CryptoTradeDirection.Short]);
+            SetCheckBoxFrom(item.Key, item.Value, settings.Trading.Monitor.Strategy[CryptoOrderSide.Sell]);
 
 
         // Hoe gaan we traden
@@ -534,9 +535,9 @@ public partial class FrmSettings : Form
         // General
         // ------------------------------------------------------------------------------
         settings.General.BlackTheming = EditBlackTheming.Checked;
-        settings.General.TradingApp = (TradingApp)EditTradingApp.SelectedIndex;
+        settings.General.TradingApp = (CryptoTradingApp)EditTradingApp.SelectedIndex;
         settings.General.DoubleClickAction = (DoubleClickAction)EditDoubleClickAction.SelectedIndex;
-        settings.General.TrendCalculationMethod = (TrendCalculationMethod)EditTrendCalculationMethod.SelectedIndex;
+        settings.General.TrendCalculationMethod = (CryptoTrendCalculationMethod)EditTrendCalculationMethod.SelectedIndex;
         settings.General.SoundHeartBeatMinutes = (int)EditSoundHeartBeatMinutes.Value;
         settings.General.GetCandleInterval = (int)EditGetCandleInterval.Value;
         settings.General.FontName = Font.Name;
@@ -662,13 +663,13 @@ public partial class FrmSettings : Form
         settings.Signal.ColorJump = panelColorJump.BackColor;
 
 
-        settings.Signal.Analyze.Strategy[CryptoTradeDirection.Long].Clear();
+        settings.Signal.Analyze.Strategy[CryptoOrderSide.Buy].Clear();
         foreach (var item in AnalyzeDefinitionIndexLong)
-            GetValueFromCheckBox(item.Key, item.Value, settings.Signal.Analyze.Strategy[CryptoTradeDirection.Long]);
+            GetValueFromCheckBox(item.Key, item.Value, settings.Signal.Analyze.Strategy[CryptoOrderSide.Buy]);
 
-        settings.Signal.Analyze.Strategy[CryptoTradeDirection.Short].Clear();
+        settings.Signal.Analyze.Strategy[CryptoOrderSide.Sell].Clear();
         foreach (var item in AnalyzeDefinitionIndexShort)
-            GetValueFromCheckBox(item.Key, item.Value, settings.Signal.Analyze.Strategy[CryptoTradeDirection.Short]);
+            GetValueFromCheckBox(item.Key, item.Value, settings.Signal.Analyze.Strategy[CryptoOrderSide.Sell]);
 
 
         // --------------------------------------------------------------------------------
@@ -726,7 +727,7 @@ public partial class FrmSettings : Form
         settings.Trading.GlobalBuyVarying = EditGlobalBuyVarying.Value;
 
         // dca
-        settings.Trading.DcaStepInMethod = (CryptoDcaStepInMethod)EditDcaStepInMethod.SelectedIndex;
+        settings.Trading.DcaStepInMethod = (CryptoBuyStepInMethod)EditDcaStepInMethod.SelectedIndex;
         settings.Trading.DcaOrderMethod = (CryptoBuyOrderMethod)EditDcaOrderMethod.SelectedIndex;
         settings.Trading.DcaPercentage = EditDcaPercentage.Value;
         settings.Trading.DcaFactor = EditDcaFactor.Value;
@@ -749,13 +750,13 @@ public partial class FrmSettings : Form
         foreach (var item in MonitorInterval)
             GetValueFromCheckBox(item.Key, item.Value, settings.Trading.Monitor.Interval);
 
-        settings.Trading.Monitor.Strategy[CryptoTradeDirection.Long].Clear();
+        settings.Trading.Monitor.Strategy[CryptoOrderSide.Buy].Clear();
         foreach (var item in MonitorStrategyLong)
-            GetValueFromCheckBox(item.Key, item.Value, settings.Trading.Monitor.Strategy[CryptoTradeDirection.Long]);
+            GetValueFromCheckBox(item.Key, item.Value, settings.Trading.Monitor.Strategy[CryptoOrderSide.Buy]);
 
-        settings.Trading.Monitor.Strategy[CryptoTradeDirection.Short].Clear();
+        settings.Trading.Monitor.Strategy[CryptoOrderSide.Sell].Clear();
         foreach (var item in MonitorStrategyShort)
-            GetValueFromCheckBox(item.Key, item.Value, settings.Trading.Monitor.Strategy[CryptoTradeDirection.Short]);
+            GetValueFromCheckBox(item.Key, item.Value, settings.Trading.Monitor.Strategy[CryptoOrderSide.Sell]);
 
 
         //settings.Trading.DoNotEnterTrade = EditDoNotEnterTrade.Checked;

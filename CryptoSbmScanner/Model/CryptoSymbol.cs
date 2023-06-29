@@ -1,4 +1,5 @@
-﻿using CryptoSbmScanner.Intern;
+﻿using CryptoSbmScanner.Enums;
+using CryptoSbmScanner.Intern;
 using Dapper.Contrib.Extensions;
 
 namespace CryptoSbmScanner.Model;
@@ -82,8 +83,7 @@ public class CryptoSymbol
 
     
     /// <summary>
-    /// Laatste trade id die we hebben opgehaald
-    /// Nu overbodig, vervangen door de LastTradeDate (fout, dat is de laatste geplaatste trade, iets anders als symchronisatie trades!)
+    /// Voor het ophalen van de trades bij Binance
     /// </summary>
     public DateTime? LastTradeFetched { get; set; }
 
@@ -91,7 +91,9 @@ public class CryptoSymbol
     public float? TrendPercentage { get; set; }
     public DateTime? TrendInfoDate { get; set; }
 
-    // Voor ophalen van de trades (ipv LastTradefetched)
+    /// <summary>
+    /// Datum dat we de laatste keer hebben gekocht
+    /// </summary>
     public DateTime? LastTradeDate { get; set; }
 
     //[Computed]
@@ -104,7 +106,7 @@ public class CryptoSymbol
 
 
     [Computed]
-    // Interval related data like candles, candlefetched etc.
+    // Interval related data like candles, last candle fetched, trend information etc.
     public List<CryptoSymbolInterval> IntervalPeriodList { get; set; } = new();
 
     [Computed]

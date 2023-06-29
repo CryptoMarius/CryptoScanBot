@@ -3,10 +3,12 @@ using Binance.Net.Enums;
 using Binance.Net.Objects.Models.Spot.Socket;
 using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Sockets;
+
+using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 
-namespace CryptoSbmScanner.Binance;
+namespace CryptoSbmScanner.Exchange.Binance;
 
 /// <summary>
 /// Monitoren van 1m candles (die gepushed worden door Binance)
@@ -73,7 +75,7 @@ public class BinanceStream1mCandles
 
 
                 // Aanbieden voor analyse (dit gebeurd zowel in de ticker als ProcessCandles)
-                if (GlobalData.ApplicationStatus == ApplicationStatus.AppStatusRunning && candle != null)
+                if (GlobalData.ApplicationStatus == CryptoApplicationStatus.AppStatusRunning && candle != null)
                 {
                     // Aanbieden voor analyse
                     GlobalData.ThreadMonitorCandle.AddToQueue(symbol, candle);
@@ -116,16 +118,16 @@ public class BinanceStream1mCandles
                 _subscription.ConnectionRestored += ConnectionRestored;
 
 
-            //    // TODO: Put a CancellationToken in order to stop it gracefully
-            //    BinanceClient client = new();
-            //    var keepAliveTask = Task.Run(async () =>
-            //    {
-            //        while (true)
-            //        {
-            //            await client.SpotApi.Account.KeepAliveUserStreamAsync(subscriptionResult.Data.); //???
-            //            await Task.Delay(TimeSpan.FromMinutes(30));
-            //        }
-            //    });
+                //    // TODO: Put a CancellationToken in order to stop it gracefully
+                //    BinanceClient client = new();
+                //    var keepAliveTask = Task.Run(async () =>
+                //    {
+                //        while (true)
+                //        {
+                //            await client.SpotApi.Account.KeepAliveUserStreamAsync(subscriptionResult.Data.); //???
+                //            await Task.Delay(TimeSpan.FromMinutes(30));
+                //        }
+                //    });
             }
             else
             {

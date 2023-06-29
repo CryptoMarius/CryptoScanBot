@@ -1,14 +1,9 @@
-﻿using CryptoSbmScanner.Signal;
+﻿using CryptoSbmScanner.Enums;
+using CryptoSbmScanner.Signal;
 using Dapper.Contrib.Extensions;
 
 namespace CryptoSbmScanner.Model;
 
-
-public enum CryptoTradeDirection
-{
-    Long,
-    Short
-}
 
 [Table("Signal")]
 public class CryptoSignal
@@ -51,29 +46,29 @@ public class CryptoSignal
     // Tot dit tijdstip is dit signaal ongeveer geldig (~x candles, tegenwoordig instelbaar)
     public DateTime ExpirationDate { get; set; }
 
-    public CryptoTradeDirection Mode { get; set; }
+    public CryptoOrderSide Side { get; set; }
 
     [Computed]
-    public string ModeText
+    public string SideText
     {
         get
         {
             if (IsInvalid)
                 return "info";
 
-            return Mode switch
+            return Side switch
             {
-                CryptoTradeDirection.Long => "long",
-                CryptoTradeDirection.Short => "short",
+                CryptoOrderSide.Buy => "long",
+                CryptoOrderSide.Sell => "short",
                 _ => "?",
             };
         }
     }
 
     [Computed]
-    public string DisplayText { get { return Symbol.Name + " " + Interval.Name + " signal=" + OpenDate.ToLocalTime() + " " + ModeText + " " + StrategyText; } }
+    public string DisplayText { get { return Symbol.Name + " " + Interval.Name + " signal=" + OpenDate.ToLocalTime() + " " + SideText + " " + StrategyText; } }
 
-    public SignalStrategy Strategy { get; set; }
+    public CryptoSignalStrategy Strategy { get; set; }
     [Computed]
     public string StrategyText { get { return SignalHelper.GetSignalAlgorithmText(Strategy); } }
 

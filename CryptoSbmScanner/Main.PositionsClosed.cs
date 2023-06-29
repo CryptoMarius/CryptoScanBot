@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using CryptoSbmScanner.Context;
+using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Settings;
@@ -90,6 +91,7 @@ public partial class FrmMain
         listViewPositionsClosed.Columns.Add("Parts", -2, HorizontalAlignment.Right);
         listViewPositionsClosed.Columns.Add("BuyPrice", -2, HorizontalAlignment.Right);
         listViewPositionsClosed.Columns.Add("SellPrice", -2, HorizontalAlignment.Right);
+        listViewPositionsClosed.Columns.Add("Quantity", -2, HorizontalAlignment.Right);
 
         listViewPositionsClosed.Columns.Add("", -2, HorizontalAlignment.Right); // filler
 
@@ -118,10 +120,10 @@ public partial class FrmMain
         item1.SubItems.Add(position.Interval.Name);
         item1.SubItems.Add(position.StrategyText);
 
-        subItem = item1.SubItems.Add(position.ModeText);
-        if (position.Mode == CryptoTradeDirection.Long)
+        subItem = item1.SubItems.Add(position.SideText);
+        if (position.Side == CryptoOrderSide.Buy)
             subItem.ForeColor = Color.Green;
-        else if (position.Mode == CryptoTradeDirection.Short)
+        else if (position.Side == CryptoOrderSide.Sell)
             subItem.ForeColor = Color.Red;
 
         subItem = item1.SubItems.Add(position.Status.ToString());
@@ -151,15 +153,16 @@ public partial class FrmMain
             subItem.ForeColor = Color.Red;
 
         item1.SubItems.Add(position.PartCount.ToString());
-        item1.SubItems.Add(position.BuyPrice.ToString(position.Symbol.PriceDisplayFormat));
+        item1.SubItems.Add(position.BuyPrice?.ToString(position.Symbol.PriceDisplayFormat));
         item1.SubItems.Add(position.SellPrice?.ToString(position.Symbol.PriceDisplayFormat));
+        item1.SubItems.Add(position.Quantity.ToString(position.Symbol.QuantityDisplayFormat));
         return item1;
     }
 
 
     private void ClosedPositionsHaveChangedEvent(string text, bool extraLineFeed = false)
     {
-        if ((components != null) && (!ProgramExit) && (IsHandleCreated))
+        if (components != null && IsHandleCreated) // && (!ProgramExit) && 
         {
             // Gesloten posities
             Task.Factory.StartNew(() =>
@@ -337,6 +340,9 @@ public partial class FrmMain
             ListViewItem item = listViewPositionsClosed.SelectedItems[0];
             CryptoPosition position = (CryptoPosition)item.Tag;
 
+            using CryptoDatabase databaseMain = new();
+            databaseMain.Connection.Open();
+
             PositionTools.CalculatePositionViaTrades(databaseMain, position);
 
             ListViewItem.ListViewSubItem subItem;
@@ -386,8 +392,9 @@ public partial class FrmMain
             // Controleer de openstaande orders, zijn ze ondertussen gevuld
             // Haal de trades van deze positie op vanaf de 1e order
             // TODO - Hoe doen we dit met papertrading (er is niets geregeld!)
-            await PositionTools.LoadTradesfromDatabaseAndBinance(databaseThread, position);
+            await PositionTools.LoadTradesfromDatabaseAndExchange(databaseThread, position);
             PositionTools.CalculatePositionViaTrades(databaseThread, position);
+            FillItem(position, item);
 
             StringBuilder strings = new();
             PositionTools.DumpPosition(position, strings);

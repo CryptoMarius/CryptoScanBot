@@ -12,11 +12,11 @@ using CryptoSbmScanner.Model;
 
 using Dapper.Contrib.Extensions;
 
-namespace CryptoSbmScanner.Binance;
+namespace CryptoSbmScanner.Exchange.Binance;
 
 public class BinanceFetchSymbols
 {
-    public static void SaveInformation(BinanceExchangeInfo binanceExchangeInfo)
+    private static void SaveInformation(BinanceExchangeInfo binanceExchangeInfo)
     {
         //Laad de gecachte (langere historie, minder overhad)
         string filename = GlobalData.GetBaseDir();
@@ -155,12 +155,12 @@ public class BinanceFetchSymbols
                                     if (symbol.Id == 0)
                                     {
 #if !SQLDATABASE
-                                        database.Connection.Insert<CryptoSymbol>(symbol, transaction);
+                                        database.Connection.Insert(symbol, transaction);
 #endif
                                         cache.Add(symbol);
                                     }
                                     else
-                                        database.Connection.Update<CryptoSymbol>(symbol, transaction);
+                                        database.Connection.Update(symbol, transaction);
                                 }
                             }
 #if SQLDATABASE
