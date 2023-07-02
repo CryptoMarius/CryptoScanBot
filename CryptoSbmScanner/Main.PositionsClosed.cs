@@ -71,6 +71,7 @@ public partial class FrmMain
         listViewPositionsClosed.Columns.Add("Datum", -2, HorizontalAlignment.Left);
         listViewPositionsClosed.Columns.Add("Closed", -2, HorizontalAlignment.Left);
         listViewPositionsClosed.Columns.Add("Account", -2, HorizontalAlignment.Left);
+        listViewPositionsClosed.Columns.Add("Exchange", -2, HorizontalAlignment.Left);
         listViewPositionsClosed.Columns.Add("Symbol", -2, HorizontalAlignment.Left);
         listViewPositionsClosed.Columns.Add("Interval", -2, HorizontalAlignment.Left);
         listViewPositionsClosed.Columns.Add("Strategie", -2, HorizontalAlignment.Left);
@@ -103,19 +104,16 @@ public partial class FrmMain
     }
 
 
-
-    private static ListViewItem AddClosedPosition(CryptoPosition position)
+    private static void FillItemClosed(CryptoPosition position, ListViewItem item1)
     {
-        string s = position.CreateTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm");
-        ListViewItem item1 = new(s, -1)
-        {
-            UseItemStyleForSubItems = false
-        };
-
         ListViewItem.ListViewSubItem subItem;
+        item1.SubItems.Clear();
+
+        item1.Text = position.CreateTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm");
         item1.SubItems.Add(position.CloseTime?.ToLocalTime().ToString("yyyy-MM-dd HH:mm"));
 
         item1.SubItems.Add(position.TradeAccount.Name);
+        item1.SubItems.Add(position.Symbol.Exchange.Name);
         item1.SubItems.Add(position.Symbol.Name);
         item1.SubItems.Add(position.Interval.Name);
         item1.SubItems.Add(position.StrategyText);
@@ -156,7 +154,17 @@ public partial class FrmMain
         item1.SubItems.Add(position.BuyPrice?.ToString(position.Symbol.PriceDisplayFormat));
         item1.SubItems.Add(position.SellPrice?.ToString(position.Symbol.PriceDisplayFormat));
         item1.SubItems.Add(position.Quantity.ToString(position.Symbol.QuantityDisplayFormat));
-        return item1;
+    }
+
+    private static ListViewItem AddClosedPosition(CryptoPosition position)
+    {
+        ListViewItem item = new("", -1)
+        {
+            UseItemStyleForSubItems = false
+        };
+        FillItemClosed(position, item);
+
+        return item;
     }
 
 
@@ -263,7 +271,7 @@ public partial class FrmMain
     //    //    return;
     //    //}
 
-    //    //if (GlobalData.ExchangeListName.TryGetValue("Binance", out CryptoSbmScanner.Model.CryptoExchange exchange))
+    //    //if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out CryptoSbmScanner.Model.CryptoExchange exchange))
     //    //{
     //    //    // Bestaat de coin? (uiteraard, net geladen)
     //    //    if (!exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol symbol))
@@ -304,7 +312,7 @@ public partial class FrmMain
     //    //    GlobalData.AddTextToLogTab("");
 
     //    //    // nu iets duidelijker
-    //    //    if (GlobalData.ExchangeListName.TryGetValue("Binance", out CryptoSbmScanner.Model.CryptoExchange exchange))
+    //    //    if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out CryptoSbmScanner.Model.CryptoExchange exchange))
     //    //    {
     //    //        foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
     //    //        {
@@ -333,37 +341,21 @@ public partial class FrmMain
     //    //}
     //}
 
-    private void ContextMenuStripPositionsOpenRecalculate_Click(object sender, EventArgs e)
+    private async void ContextMenuStripPositionsOpenRecalculate_Click(object sender, EventArgs e)
     {
         if (listViewPositionsClosed.SelectedItems.Count > 0)
         {
             ListViewItem item = listViewPositionsClosed.SelectedItems[0];
             CryptoPosition position = (CryptoPosition)item.Tag;
 
-            using CryptoDatabase databaseMain = new();
-            databaseMain.Connection.Open();
+            using CryptoDatabase databaseThread = new();
+            databaseThread.Connection.Open();
 
-            PositionTools.CalculatePositionViaTrades(databaseMain, position);
-
-            ListViewItem.ListViewSubItem subItem;
-
-            // profit bedrag
-            subItem = item.SubItems[11];
-            subItem.Text = position.Profit.ToString(position.Symbol.QuoteData.DisplayFormat);
-            if (position.Percentage > 100)
-                subItem.ForeColor = Color.Green;
-            else if (position.Percentage < 100)
-                subItem.ForeColor = Color.Red;
-
-            // profit percentage
-            subItem = item.SubItems[12];
-            subItem.Text = position.Percentage.ToString("N2");
-            if (position.Percentage > 100)
-                subItem.ForeColor = Color.Green;
-            else if (position.Percentage < 100)
-                subItem.ForeColor = Color.Red;
-
-            listViewPositionsClosed.Invalidate();
+            // Controleer de orders, en herbereken het geheel
+            PositionTools.LoadPosition(databaseThread, position);
+            await PositionTools.LoadTradesfromDatabaseAndExchange(databaseThread, position);
+            PositionTools.CalculatePositionResultsViaTrades(databaseThread, position);
+            FillItemClosed(position, item);
         }
 
     }
@@ -375,26 +367,14 @@ public partial class FrmMain
             ListViewItem item = listViewPositionsClosed.SelectedItems[0];
             CryptoPosition position = (CryptoPosition)item.Tag;
 
-            // TODO:
-            // Opnieuw laden
-            // Verversen trades
-            // Opnieuw berekenen
-            // Dump
-
-            //        await TradeTools.RefreshTrades(databaseThread, position);
             using CryptoDatabase databaseThread = new();
-            databaseThread.Close();
             databaseThread.Open();
 
-            //PositionTools.AddPosition(position.TradeAccount, position);
+            // Controleer de orders, en herbereken het geheel
             PositionTools.LoadPosition(databaseThread, position);
-
-            // Controleer de openstaande orders, zijn ze ondertussen gevuld
-            // Haal de trades van deze positie op vanaf de 1e order
-            // TODO - Hoe doen we dit met papertrading (er is niets geregeld!)
             await PositionTools.LoadTradesfromDatabaseAndExchange(databaseThread, position);
-            PositionTools.CalculatePositionViaTrades(databaseThread, position);
-            FillItem(position, item);
+            PositionTools.CalculatePositionResultsViaTrades(databaseThread, position);
+            FillItemClosed(position, item);
 
             StringBuilder strings = new();
             PositionTools.DumpPosition(position, strings);

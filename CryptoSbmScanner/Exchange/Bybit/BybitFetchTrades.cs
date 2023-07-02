@@ -1,6 +1,5 @@
-﻿using Binance.Net;
-using Binance.Net.Clients;
-using Binance.Net.Objects.Models.Spot;
+﻿using Bybit.Net.Clients;
+using Bybit.Net.Objects.Models.Spot;
 
 using CryptoSbmScanner.Context;
 using CryptoSbmScanner.Intern;
@@ -8,12 +7,12 @@ using CryptoSbmScanner.Model;
 
 using Dapper.Contrib.Extensions;
 
-namespace CryptoSbmScanner.Exchange.Binance;
+namespace CryptoSbmScanner.Exchange.Bybit;
 
 /// <summary>
 /// De Trades bij Binance ophalen
 /// </summary>
-public class BinanceFetchTrades
+public class BybitFetchTrades
 {
     //Om meerdere updates te voorkomen (gebruiker die meerdere keren erop klikt)
     static private readonly SemaphoreSlim Semaphore = new(1);
@@ -24,13 +23,13 @@ public class BinanceFetchTrades
     /// </summary>
     public static async Task<int> FetchTradesForSymbol(CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
     {
-        using (BinanceClient client = new())
+        using (BybitClient client = new())
         {
             return await FetchTradesInternal(client, tradeAccount, symbol);
         }
     }
 
-    private static async Task<int> FetchTradesInternal(BinanceClient client, CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
+    private static async Task<int> FetchTradesInternal(BybitClient client, CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
     {
         int tradeCount = 0;
         try
@@ -51,36 +50,40 @@ public class BinanceFetchTrades
             {
                 // Weight verdubbelt omdat deze wel erg aggressief trades ophaalt
                 //BinanceWeights.WaitForFairBinanceWeight(5, "mytrades");
+                BybitWeights.WaitForFairWeight(1); // *5x ivm API weight waarschuwingen
 
-                var result = await client.SpotApi.Trading.GetUserTradesAsync(symbol.Name, null, symbol.LastTradeFetched, null, 1000);
+                // CRAP, bybit doet het door middel van ID's ;-) symbol.LastTradeFetched
+                // TODO: Aanpassen van het systeem? (kan Binance dat ook?)
+                var result = await client.SpotApiV3.Trading.GetUserTradesAsync(symbol.Name, 1, null, 1000);
                 if (!result.Success)
                 {
                     GlobalData.AddTextToLogTab("error getting mytrades " + result.Error);
                 }
 
                 // Als we over het randje gaan qua API verzoeken even inhouden
-                int? weight = result.ResponseHeaders.UsedWeight();
-                if (weight > 700)
-                {
-                    GlobalData.AddTextToLogTab(string.Format("Binance delay needed for weight: {0}", weight));
-                    if (weight > 800)
-                        await Task.Delay(10000);
-                    if (weight > 900)
-                        await Task.Delay(10000);
-                    if (weight > 1000)
-                        await Task.Delay(15000);
-                    if (weight > 1100)
-                        await Task.Delay(15000);
-                }
+                // TODO uitzoeken hoe dit werkt voro bybit
+                //int? weight = result.ResponseHeaders.UsedWeight();
+                //if (weight > 700)
+                //{
+                //    GlobalData.AddTextToLogTab(string.Format("Binance delay needed for weight: {0}", weight));
+                //    if (weight > 800)
+                //        await Task.Delay(10000);
+                //    if (weight > 900)
+                //        await Task.Delay(10000);
+                //    if (weight > 1000)
+                //        await Task.Delay(15000);
+                //    if (weight > 1100)
+                //        await Task.Delay(15000);
+                //}
 
                 if (result.Data != null)
                 {
-                    foreach (BinanceTrade item in result.Data)
+                    foreach (BybitSpotUserTradeV3 item in result.Data)
                     {
                         if (!symbol.TradeList.TryGetValue(item.Id, out CryptoTrade trade))
                         {
                             trade = new CryptoTrade();
-                            BinanceApi.PickupTrade(tradeAccount, symbol, trade, item);
+                            BybitApi.PickupTrade(tradeAccount, symbol, trade, item);
                             tradeCache.Add(trade);
 
                             GlobalData.AddTrade(trade);
@@ -162,7 +165,7 @@ public class BinanceFetchTrades
         {
             // We hergebruiken de client binnen deze thread, teveel connecties opnenen resulteerd in een foutmelding:
             // "An operation on a socket could not be performed because the system lacked sufficient buffer space or because a queue was full"
-            using (BinanceClient client = new())
+            using (BybitClient client = new())
             {
                 while (true)
                 {

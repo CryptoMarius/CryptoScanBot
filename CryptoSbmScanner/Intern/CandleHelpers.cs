@@ -131,6 +131,9 @@ public static class Helper
     /// <returns>Clamped value</returns>
     public static decimal Clamp(this decimal value, decimal minValue, decimal maxValue, decimal? stepSize)
     {
+        // TODO: Binance heeft alles netjes ingevuld, maar Bybit heeft geen min- of maxPrice!
+        // Deze moeten dus nullable worden en moeten hieronder gecontroleerd worden
+
         if (minValue < 0)
             throw new ArgumentOutOfRangeException(nameof(minValue));
         else if (maxValue < 0)
@@ -295,16 +298,16 @@ public static class Helper
         }
 
 
-        if (quantity.HasValue && price.HasValue)
-        {
-            // En product van de twee
-            if (price * quantity <= symbol.MinNotional)
-            {
-                //(buyPrice * buyQuantity).ToString0()
-                text = string.Format("ERROR minimal notation {0} * {1} <= {2}", quantity.ToString0("N6"), price.ToString0("N6"), symbol.MinNotional.ToString0());
-                return false;
-            }
-        }
+        //if (quantity.HasValue && price.HasValue)
+        //{
+        //    // En product van de twee
+        //    if (price * quantity <= symbol.MinNotional)
+        //    {
+        //        //(buyPrice * buyQuantity).ToString0()
+        //        text = string.Format("ERROR minimal notation {0} * {1} <= {2}", quantity.ToString0("N6"), price.ToString0("N6"), symbol.MinNotional.ToString0());
+        //        return false;
+        //    }
+        //}
 
         text = "";
         return true;
@@ -316,7 +319,7 @@ public static class Helper
         valueBtc = 0;
         valueUsdt = 0;
 
-        if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
         {
             tradeAccount.AssetListSemaphore.Wait();
             {

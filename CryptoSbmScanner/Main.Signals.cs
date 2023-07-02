@@ -7,6 +7,8 @@ namespace CryptoSbmScanner;
 
 public partial class FrmMain
 {
+    private int columnForText = 6;
+    private int columnForPriceDiff = 8;
     private ListViewDoubleBuffered listViewSignals;
     private System.Windows.Forms.Timer TimerClearEvents;
 
@@ -70,6 +72,7 @@ public partial class FrmMain
     {
         // Create columns and subitems. Width of -2 indicates auto-size
         listViewSignals.Columns.Add("Candle datum", -2, HorizontalAlignment.Left);
+        listViewSignals.Columns.Add("Exchange", -2, HorizontalAlignment.Left);
         listViewSignals.Columns.Add("Symbol", -2, HorizontalAlignment.Left);
         listViewSignals.Columns.Add("Interval", -2, HorizontalAlignment.Left);
         listViewSignals.Columns.Add("Mode", -2, HorizontalAlignment.Left);
@@ -99,7 +102,7 @@ public partial class FrmMain
 
         for (int i = 0; i <= listViewSignals.Columns.Count - 1; i++)
         {
-            if (i != 5)
+            if (i != columnForText)
                 listViewSignals.Columns[i].Width = -2;
         }
     }
@@ -114,6 +117,8 @@ public partial class FrmMain
         };
 
         ListViewItem.ListViewSubItem subItem;
+
+        item1.SubItems.Add(signal.Exchange.Name);
 
         s = signal.Symbol.Base + "/" + @signal.Symbol.Quote;
         //if (GlobalData.Settings.Signal.LogMinimumTickPercentage)
@@ -336,7 +341,7 @@ public partial class FrmMain
             // Deze redelijk kostbaar? (alles moet gecontroleerd worden)
             for (int i = 0; i <= listViewSignals.Columns.Count - 1; i++)
             {
-                if (i != 5) // text
+                if (i != columnForText) // text
                     listViewSignals.Columns[i].Width = -2;
             }
 
@@ -376,7 +381,7 @@ public partial class FrmMain
                     }
                     else
                     {
-                        subItem = item.SubItems[7];
+                        subItem = item.SubItems[columnForPriceDiff];
                         //subItem.Text = signal.Symbol.LastPrice.ToString0(signal.Symbol.DisplayFormat);
                         subItem.Text = signal.PriceDiff?.ToString("N2");
                         if (signal.Symbol.LastPrice > signal.Price)

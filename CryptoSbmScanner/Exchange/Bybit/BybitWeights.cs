@@ -1,13 +1,20 @@
 ﻿using CryptoSbmScanner.Intern;
 
-namespace CryptoSbmScanner.Exchange.Binance;
+namespace CryptoSbmScanner.Exchange.Bybit;
 
-class BinanceWeight
+class ByBitWeight
 {
     public long Time { get; set; }
     public long Weight { get; set; }
 
 }
+/*
+- zijn er limiten voor bybit? Ja, dat heet rate limits
+  https://bybit-exchange.github.io/docs-legacy/futuresV2/inverse/#t-ratelimits
+  het is gebaseerd op het aantal verzoeken per seconde wat je naar ByBit stuurt
+  Je krijgt deze informatie ook terug zo te zien, eens zien wat het is
+  (het sluit redelijk aan bij wat we voor Binance doen <met weights>)
+*/
 
 /// <summary>
 /// Deze class verzorgt een vertraging als je teveel aanvragen doet (via de weight van de actie)
@@ -15,10 +22,10 @@ class BinanceWeight
 /// Hi, I've added the response headers to the WebCallResult object. I also added a helper method to quickly retrieve the used weight header:
 /// var weight = client.GetAllOrders("ETHBTC").ResponseHeaders.UsedWeight(); (obviously you should check for errors)
 /// </summary>
-public static class BinanceWeights
+public static class BybitWeights
 {
     static public long CurrentWeight { get; set; }
-    static private List<BinanceWeight> List { get; } = new List<BinanceWeight>();
+    static private List<ByBitWeight> List { get; } = new List<ByBitWeight>();
 
     static public void WaitForFairWeight(long newWeight)
     {
@@ -26,7 +33,8 @@ public static class BinanceWeights
         Monitor.Enter(List);
         try
         {
-            // Officiele limiet = 1,200 request weight per minute
+            // https://bybit-exchange.github.io/docs/v5/rate-limit
+            // Officiele limiet = 120 requests per second for 5 consecutive seconds
 
             // De registraties ouder dan 1 minuut verwijderen
             while (true)
@@ -35,12 +43,12 @@ public static class BinanceWeights
                 DateTimeOffset dateTimeOffset = DateTime.UtcNow;
                 long unix = dateTimeOffset.ToUnixTimeSeconds();
 
-                // Een tijdstip 60 seconden geleden
-                long removeBeforeDate = unix - 60;
+                // Een tijdstip 20 seconden geleden (ook reeds ruim genomen)
+                long removeBeforeDate = unix - 20;
 
                 while (List.Count > 0)
                 {
-                    BinanceWeight item = List[0];
+                    ByBitWeight item = List[0];
                     if (item.Time <= removeBeforeDate)
                     {
                         CurrentWeight -= item.Weight;
@@ -49,11 +57,11 @@ public static class BinanceWeights
                     else break;
                 }
 
-                // De officiele limiet is 1200. maar daar zit ik regelmatig boven, daarom drastisch terug gezet naar 600
-                // (er draaien ook diverse taken en socket streams die de nodige weight gebruiken, dus lager is veiliger)
-                if (CurrentWeight > 600)
+                // Het is nu een beetje gokken, 120*5 = 600 calls, met 300 per 20 sec blijven we daar RUIM onder lijkt me
+                // Maar het is ook niet plezierig om gebanned te worden, dus begin maar ietwat voorzichtig lijkt me..
+                if (CurrentWeight > 300)
                 {
-                    GlobalData.AddTextToLogTab(string.Format("Binance delay needed for weight: {0} for action ({1})", CurrentWeight, newWeight));
+                    GlobalData.AddTextToLogTab(string.Format("Bybit delay needed for weight: {0} for action ({1})", CurrentWeight, newWeight));
                     Thread.Sleep(2500);
                 }
                 else
@@ -61,7 +69,7 @@ public static class BinanceWeights
                     CurrentWeight += newWeight;
 
                     // En een nieuwe registratie toevoegen
-                    BinanceWeight item = new();
+                    ByBitWeight item = new();
                     DateTimeOffset dateTimeOffset2 = DateTime.UtcNow;
                     item.Time = dateTimeOffset2.ToUnixTimeSeconds();
                     item.Weight = newWeight;

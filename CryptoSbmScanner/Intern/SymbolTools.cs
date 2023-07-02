@@ -131,7 +131,7 @@ public class SymbolTools
     //    TimeSpan span = DateTime.UtcNow.Subtract(symbol.Exchange.ExchangeInfoLastTime);
     //    if (span.TotalMinutes >= 60)
     //    {
-    //        await BinanceFetchSymbols.ExecuteAsync();
+    //        await ExchangeClass.FetchSymbols();
     //    }
 
     //    // Indien delisted: Staat de muntpaar op de lijst van delisted munten->ja = signaal negeren
@@ -405,7 +405,7 @@ public class SymbolTools
         // TODO: Probleem: De barometer is afhankelijk van alle symbols en wordt x seconden NA het minuut berekend
         // dat betekend dat de laatste candle (nog) niet aanwezig hoeft te zijn (en de candleOpenTime impliceert)
 
-        if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
         {
             if (exchange.SymbolListName.TryGetValue(Constants.SymbolNameBarometerPrice, out CryptoSymbol symbol))
             {

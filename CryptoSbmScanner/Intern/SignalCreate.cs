@@ -649,7 +649,7 @@ public class SignalCreate
         }
 
 
-        if (!GlobalData.Settings.Signal.ShowInvalidSignals && signal.IsInvalid)
+        if (!GlobalData.Settings.General.ShowInvalidSignals && signal.IsInvalid)
             return false;
 
         SendSignal(algorithm, signal, eventText);
@@ -809,7 +809,7 @@ public class SignalCreate
                 // Indien we ongeldige signalen laten zien moeten we deze controle overslagen.
                 // (verderop in het process wordt alsnog hierop gecontroleerd)
 
-                //if (!GlobalData.Settings.Signal.ShowInvalidSignals && !BackTest)
+                //if (!GlobalData.Settings.General.ShowInvalidSignals && !BackTest)
                 //{
                 //    // Dan kunnen we direct die handel hier afkappen..
                 //    // Weer een extra controle, staat de symbol op de black of whitelist?

@@ -36,7 +36,7 @@ public partial class FrmMain
         if (string.IsNullOrEmpty(symbolName))
             return null;
 
-        if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
         {
             // Bestaat de coin? (uiteraard, net geladen)
             if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol symbol))
@@ -58,7 +58,7 @@ public partial class FrmMain
     {
         if (components != null && IsHandleCreated) //&& (!ProgramExit) 
         {
-            if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
+            if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
             {
                 string filter = "";
                 symbolFilter.Invoke((MethodInvoker)(() => filter = symbolFilter.Text.ToUpper()));
@@ -197,7 +197,7 @@ public partial class FrmMain
 
         //    //todo: Multi exchange (nah)
         //    CryptoExchange exchange = null;
-        //    if (GlobalData.ExchangeListName.TryGetValue("Binance", out exchange))
+        //    if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out exchange))
         //    {
         //        CryptoSymbol symbol = null;
         //        if (exchange.SymbolListName.TryGetValue(symbolName, out symbol))
@@ -222,7 +222,7 @@ public partial class FrmMain
         if (string.IsNullOrEmpty(symbolName))
             return;
 
-        if (GlobalData.ExchangeListName.TryGetValue("Binance", out CryptoSbmScanner.Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out CryptoSbmScanner.Model.CryptoExchange exchange))
         {
             if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol symbol))
             {

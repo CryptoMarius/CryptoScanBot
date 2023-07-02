@@ -63,6 +63,11 @@ public class BinanceApi
     private Model.CryptoExchange Exchange { get; set; }
 
 
+    // Binance stuff
+    static private BinanceStreamUserData TaskBinanceStreamUserData { get; set; }
+    static private BinanceStreamPriceTicker TaskBinanceStreamPriceTicker { get; set; }
+
+
     // Converteer de orderstatus van Exchange naar "intern"
     public static CryptoOrderType LocalOrderType(SpotOrderType orderType)
     {
@@ -213,9 +218,9 @@ public class BinanceApi
 
             // todo, deze tekst ook verderop plaatsen!
             string text2 = string.Format("{0} POSITION {1} {2} ORDER #{3} PLACED price={4} stop={5} quantity={6} quotequantity={7}",
-                Symbol.Name, orderSide, 
+                Symbol.Name, orderSide,
                 tradeParams.OrderType.ToString(),
-                tradeParams.OrderId, 
+                tradeParams.OrderId,
                 tradeParams.Price.ToString0(),
                 tradeParams.StopPrice?.ToString0(),
                 tradeParams.Quantity.ToString0(),
@@ -525,13 +530,13 @@ public class BinanceApi
     public static async Task FetchAssets(CryptoTradeAccount tradeAccount)
     {
         // We onderteunen momenteel enkel de exchange "binance"
-        //if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
+        //if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
         {
             try
             {
                 GlobalData.AddTextToLogTab("Reading asset information from Binance");
 
-                BinanceWeights.WaitForFairBinanceWeight(1);
+                BinanceWeights.WaitForFairWeight(1);
 
                 using (var client = new BinanceClient())
                 {
@@ -570,4 +575,111 @@ public class BinanceApi
         }
     }
 
+    public static void StartUserDataStream()
+    {
+        TaskBinanceStreamUserData = new BinanceStreamUserData();
+        var _ = Task.Run(async () => { await TaskBinanceStreamUserData.ExecuteAsync(); });
+    }
+    public static async Task StopUserDataStream()
+    {
+        if (TaskBinanceStreamUserData != null)
+            await TaskBinanceStreamUserData?.StopAsync();
+    }
+    public static void ResetUserDataStream()
+    {
+        // niets, hmm
+    }
+
+
+    public static void StartPriceTicker()
+    {
+        TaskBinanceStreamPriceTicker = new BinanceStreamPriceTicker();
+        var _ = Task.Run(async () => { await TaskBinanceStreamPriceTicker.ExecuteAsync(); });
+    }
+    public static async Task StopPriceTicker()
+    {
+        if (TaskBinanceStreamPriceTicker != null)
+            await TaskBinanceStreamPriceTicker?.StopAsync();
+    }
+    public static void ResetPriceTickerStream()
+    {
+        if (TaskBinanceStreamPriceTicker != null)
+            TaskBinanceStreamPriceTicker.tickerCount = 0;
+    }
+    public static int CountPriceTickerStream()
+    {
+        if (TaskBinanceStreamPriceTicker == null)
+            return 0;
+        else
+            return TaskBinanceStreamPriceTicker.tickerCount;
+    }
+
+
+    // TODO: Uitfaseren uit deze class en naar een specifiek Exchange-achtig object doorzetten???
+    public static List<BinanceStream1mCandles> ExchangeStream1mCandles { get; set; } = new List<BinanceStream1mCandles>();
+
+    public static async Task Start1mCandleStream()
+    {
+        // Deze methode werkt alleen op Binance
+        //if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+        {
+            foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
+            {
+                if (quoteData.FetchCandles && quoteData.SymbolList.Count > 0)
+                {
+                    List<CryptoSymbol> symbols = quoteData.SymbolList.ToList();
+
+                    // We krijgen soms timeouts van Binance (eigenlijk de library) omdat we teveel 
+                    // symbols aanbieden, daarom splitsen we het hier de lijst in twee stukken.
+                    int splitCount = 200;
+                    if (symbols.Count > splitCount)
+                        splitCount = 1 + (symbols.Count / 2);
+
+                    while (symbols.Count > 0)
+                    {
+                        BinanceStream1mCandles BinanceStream1mCandles = new(quoteData);
+
+                        // Met de volle mep reageert Binance niet snel genoeg (timeout errors enzovoort)
+                        // Dit is een quick fix na de update van Binance.Net van 7 -> 8
+                        while (symbols.Count > 0)
+                        {
+                            CryptoSymbol symbol = symbols[0];
+                            symbols.Remove(symbol);
+
+                            BinanceStream1mCandles.symbols.Add(symbol.Name);
+
+                            // Ergens een lijn trekken? 
+                            if (BinanceStream1mCandles.symbols.Count >= splitCount)
+                                break;
+                        }
+
+                        // opvullen tot circa 150 coins?
+                        ExchangeStream1mCandles.Add(BinanceStream1mCandles);
+                        await BinanceStream1mCandles.StartAsync(); // bewust geen await
+                    }
+                }
+            }
+        }
+    }
+    public static async Task Stop1mCandleStream()
+    {
+        foreach (BinanceStream1mCandles exchangeStream1mCandles in ExchangeStream1mCandles)
+            await exchangeStream1mCandles?.StopAsync();
+        ExchangeStream1mCandles.Clear();
+    }
+    public static void Reset1mCandleStream()
+    {
+        foreach (var exchangeStream1mCandles in ExchangeStream1mCandles)
+            exchangeStream1mCandles.CandlesKLinesCount = 0;
+    }
+    public static int Count1mCandleStream()
+    {
+        // Tel het aantal ontvangen 1m candles (via alle uitstaande streams)
+        // Elke minuut komt er van elke munt een candle (indien er gehandeld is).
+        int candlesKLineCount = 0;
+        foreach (var exchangeStream1mCandles in ExchangeStream1mCandles)
+            candlesKLineCount += exchangeStream1mCandles.CandlesKLinesCount;
+        return candlesKLineCount;
+    }
+    
 }

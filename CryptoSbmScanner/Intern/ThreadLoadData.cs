@@ -1,6 +1,6 @@
 ﻿using CryptoSbmScanner.Context;
 using CryptoSbmScanner.Enums;
-using CryptoSbmScanner.Exchange.Binance;
+using CryptoSbmScanner.Exchange;
 using CryptoSbmScanner.Model;
 using CryptoSbmScanner.TradingView;
 
@@ -274,7 +274,7 @@ public class ThreadLoadData
                     // Haal de trades van deze positie op vanaf de 1e order
                     // TODO - Hoe doen we dit met papertrading (er is niets geregeld!)
                     await PositionTools.LoadTradesfromDatabaseAndExchange(databaseThread, position);
-                    PositionTools.CalculatePositionViaTrades(databaseThread, position);
+                    PositionTools.CalculatePositionResultsViaTrades(databaseThread, position);
 
                     foreach (CryptoPositionPart part in position.Parts.Values)
                     {
@@ -313,7 +313,8 @@ public class ThreadLoadData
                 // Alle symbols van de exchange halen en mergen met de ingelezen symbols.
                 // Via een event worden de muntparen in de userinterface gezet (dat duurt even)
                 //************************************************************************************
-                await Task.Run(async () => { await BinanceFetchSymbols.ExecuteAsync(); });
+                await ExchangeClass.FetchSymbols();
+                //Task.Run(async () => { await BinanceFetchSymbols.ExecuteAsync(); });
 
                 // Na het inlezen van de symbols de lijsten goed zetten
                 TradingConfig.InitWhiteAndBlackListSettings();
@@ -384,9 +385,9 @@ public class ThreadLoadData
 
 
                     //builder.AppendLine(string.Format("(`opentime`>{0} and `interval`={1})", openUnixTime, (int)interval.IntervalPeriod));
-                    builder.AppendLine(string.Format("select * from candle with(index(IdxCandleIntervalOpenTime)) where (intervalid={0} and opentime>={1}) -- {2} {3}",
+                    builder.AppendLine(string.Format("select * from candle with(index(IdxCandleIntervalOpenTime)) where (exchangeid={0} and intervalid={1} and opentime>={2}) -- {2} {3}",
                         //symbolid=12 and (btcusdt)
-                        interval.Id, openUnixTime, interval.Name, CandleTools.GetUnixDate(openUnixTime).ToLocalTime()));
+                        GlobalData.Settings.General.ExchangeId, interval.Id, openUnixTime, interval.Name, CandleTools.GetUnixDate(openUnixTime).ToLocalTime()));
                     //builder.AppendLine(string.Format("(interval={0} and date>='{1}')", (int)interval.IntervalPeriod, openUnixDate.ToString("yyyy-MM-dd HH:mm")));
                     // ter debug (controle timing)
                     GlobalData.AddTextToLogTab("Interval " + interval.Name + " " + builder.ToString());
@@ -522,7 +523,7 @@ public class ThreadLoadData
             // De Telegram bot opstarten
             //************************************************************************************
             GlobalData.AddTextToLogTab("Starting Telegram bot");
-            var whateverx = Task.Run(async () => { await ThreadTelegramBot.ExecuteAsync(); }); 
+            var whateverx = Task.Run(async () => { await ThreadTelegramBot.ExecuteAsync(); });
 
 
             //************************************************************************************
@@ -531,48 +532,7 @@ public class ThreadLoadData
             // (Dit moet overlappen met "achterstand bijwerken" want anders ontstaan er gaten)
             // BUG/Probleem! na nieuwe munt of instellingen wordt dit niet opnieuw gedaan (herstart nodig)
             //************************************************************************************
-            {
-                // Deze methode werkt alleen op Binance
-                if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
-                {
-                    foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
-                    {
-                        if (quoteData.FetchCandles && quoteData.SymbolList.Count > 0)
-                        {
-                            List<CryptoSymbol> symbols = quoteData.SymbolList.ToList();
-
-                            // We krijgen soms timeouts van Binance (eigenlijk de library) omdat we teveel 
-                            // symbols aanbieden, daarom splitsen we het hier de lijst in twee stukken.
-                            int splitCount = 200;
-                            if (symbols.Count > splitCount)
-                                splitCount = 1 + (symbols.Count / 2);
-
-                            while (symbols.Count > 0)
-                            {
-                                BinanceStream1mCandles BinanceStream1mCandles = new(quoteData);
-
-                                // Met de volle mep reageert Binance niet snel genoeg (timeout errors enzovoort)
-                                // Dit is een quick fix na de update van Binance.Net van 7 -> 8
-                                while (symbols.Count > 0)
-                                {
-                                    CryptoSymbol symbol = symbols[0];
-                                    symbols.Remove(symbol);
-
-                                    BinanceStream1mCandles.symbols.Add(symbol.Name);
-
-                                    // Ergens een lijn trekken? 
-                                    if (BinanceStream1mCandles.symbols.Count >= splitCount)
-                                        break;
-                                }
-
-                                // opvullen tot circa 150 coins?
-                                quoteData.BinanceStream1mCandles.Add(BinanceStream1mCandles);
-                                await BinanceStream1mCandles.StartAsync(); // bewust geen await
-                            }
-                        }
-                    }
-                }
-            }
+            await ExchangeClass.Start1mCandleStream();
 
 
             await Task.Factory.StartNew(() => new TradingViewSymbolInfo().StartAsync("TVC:DXY", "US Dollar Index", "N2", GlobalData.TradingViewDollarIndex, 10));
@@ -585,16 +545,15 @@ public class ThreadLoadData
             //************************************************************************************
             // Om het volume per symbol en laatste prijs te achterhalen (weet geen betere manier)
             //************************************************************************************
-            // Deze methode werkt alleen op Binance
-            GlobalData.TaskBinanceStreamPriceTicker = new BinanceStreamPriceTicker();
-            var _ = Task.Run(async () => { await GlobalData.TaskBinanceStreamPriceTicker.ExecuteAsync(); });
+            ExchangeClass.StartPriceTickerStream();
+            //GlobalData.TaskBinanceStreamPriceTicker = new BinanceStreamPriceTicker();
+            //var _ = Task.Run(async () => { await GlobalData.TaskBinanceStreamPriceTicker.ExecuteAsync(); });
 
 
             //************************************************************************************
             // De (ontbrekende) candles downloaden (en de achterstand inhalen, blocking!)
             //************************************************************************************
-            // Deze methode werkt alleen op Binance
-            await Task.Run(async () => { await BinanceFetchCandles.ExecuteAsync(); }); // wachten tot deze klaar is
+            await ExchangeClass.FetchCandles();
 
             //Ze zijn er allemaal wel, deze is overbodig
             //CalculateMissingCandles();
@@ -639,7 +598,7 @@ public class ThreadLoadData
             if (GlobalData.Settings.ApiKey != "")
             {
                 GlobalData.AddTextToLogTab("Starting task for monitoring events");
-                _ = Task.Run(async () => { await GlobalData.TaskBinanceStreamUserData.ExecuteAsync(); });
+                ExchangeClass.StartUserDataStream();
             }
 
 
@@ -648,9 +607,7 @@ public class ThreadLoadData
             // Via een event worden de assets in de userinterface gezet (dat duurt even)
             //************************************************************************************
             if (GlobalData.Settings.ApiKey != "")
-            {
-                await Task.Run(async () => { await BinanceApi.FetchAssets(GlobalData.BinanceRealTradeAccount); });
-            }
+                await ExchangeClass.FetchAssets(GlobalData.ExchangeRealTradeAccount);
 #endif
 
             // toon de ingelezen posities

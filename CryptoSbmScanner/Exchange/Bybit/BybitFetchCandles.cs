@@ -1,19 +1,20 @@
-﻿using Binance.Net;
-using Binance.Net.Clients;
-using Binance.Net.Enums;
-using Binance.Net.Interfaces;
-using Binance.Net.Objects.Models.Spot;
-using CryptoExchange.Net.Objects;
+﻿using System.Text.Encodings.Web;
+using System.Text.Json;
+
+using Bybit.Net.Clients;
+using Bybit.Net.Enums;
+using Bybit.Net.Objects.Models.V5;
+
 using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 
-namespace CryptoSbmScanner.Exchange.Binance;
+namespace CryptoSbmScanner.Exchange.Bybit;
 
 /// <summary>
 /// Fetch the candles from Binance
 /// </summary>
-public class BinanceFetchCandles
+public class BybitFetchCandles
 {
     // Prevent multiple sessions
     private static readonly SemaphoreSlim Semaphore = new(1);
@@ -28,14 +29,11 @@ public class BinanceFetchCandles
             CryptoIntervalPeriod.interval15m => KlineInterval.FifteenMinutes,
             CryptoIntervalPeriod.interval30m => KlineInterval.ThirtyMinutes,
             CryptoIntervalPeriod.interval1h => KlineInterval.OneHour,
-            CryptoIntervalPeriod.interval2h => KlineInterval.TwoHour,
-            CryptoIntervalPeriod.interval4h => KlineInterval.FourHour,
-            CryptoIntervalPeriod.interval6h => KlineInterval.SixHour,
-            CryptoIntervalPeriod.interval12h => KlineInterval.TwelveHour,
+            CryptoIntervalPeriod.interval2h => KlineInterval.TwoHours,
+            CryptoIntervalPeriod.interval4h => KlineInterval.FourHours,
+            CryptoIntervalPeriod.interval6h => KlineInterval.SixHours,
+            CryptoIntervalPeriod.interval12h => KlineInterval.TwelveHours,
             CryptoIntervalPeriod.interval1d => KlineInterval.OneDay,
-            //case CryptoIntervalPeriod.interval3d:
-            //  binanceInterval = KlineInterval.ThreeDay;
-            //break;
             //case IntervalPeriod.interval1w:
             //    binanceInterval = KlineInterval.OneWeek;
             //    break;
@@ -44,16 +42,37 @@ public class BinanceFetchCandles
         return binanceInterval;
     }
 
-    private static async Task<long> GetCandlesForInterval(BinanceClient client, CryptoSymbol symbol, CryptoInterval interval, CryptoSymbolInterval symbolInterval)
+    //private static void SaveInformation(CryptoSymbol symbol, IEnumerable<BybitKline> data)
+    //{
+    //    //Laad de gecachte (langere historie, minder overhad)
+    //    string filename = GlobalData.GetBaseDir();
+    //    filename += @"\bybit\";
+    //    Directory.CreateDirectory(filename);
+    //    filename += symbol.Name + "candles.json";
+
+    //    //using (FileStream writeStream = new FileStream(filename, FileMode.Create))
+    //    //{
+    //    //    BinaryFormatter formatter = new BinaryFormatter();
+    //    //    formatter.Serialize(writeStream, GlobalData.Settings);
+    //    //    writeStream.Close();
+    //    //}
+
+    //    string text = JsonSerializer.Serialize(data, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
+    //    //var accountFile = new FileInfo(filename);
+    //    File.WriteAllText(filename, text);
+    //}
+
+    private static async Task<long> GetCandlesForInterval(BybitClient client, CryptoSymbol symbol, CryptoInterval interval, CryptoSymbolInterval symbolInterval)
     {
         KlineInterval binanceInterval = GetExchangeInterval(interval);
         if (binanceInterval >= KlineInterval.OneMonth)
             return 0;
 
-        //BinanceWeights.WaitForFairBinanceWeight(5, "klines"); // *5x ivm API weight waarschuwingen
+        BybitWeights.WaitForFairWeight(1); // *5x ivm API weight waarschuwingen
 
         // The maximum is 1000 candles
-        WebCallResult<IEnumerable<IBinanceKline>> result = await client.SpotApi.ExchangeData.GetKlinesAsync(symbol.Name, binanceInterval, CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized), null, 1000);
+        var result = await client.V5Api.ExchangeData.GetKlinesAsync(Category.Spot, symbol.Name, binanceInterval, 
+            CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized), null, 1000);
         if (!result.Success)
         {
             // Might do something better than this
@@ -62,22 +81,23 @@ public class BinanceFetchCandles
         }
 
         // Be carefull not going over boundaries (we stop early at 700..800 while the limit is actually 1200)
-        int? weight = result.ResponseHeaders.UsedWeight();
-        if (weight > 700)
-        {
-            GlobalData.AddTextToLogTab(string.Format("Binance delay needed for weight: {0}", weight));
-            if (weight > 800)
-                await Task.Delay(10000);
-            if (weight > 900)
-                await Task.Delay(10000);
-            if (weight > 1000)
-                await Task.Delay(15000);
-            if (weight > 1100)
-                await Task.Delay(15000);
-        }
+        //TODO: Wat voor een systeem gebruikt Bybit eigenlijk?
+        //int? weight = result.ResponseHeaders.UsedWeight();
+        //if (weight > 700)
+        //{
+        //    GlobalData.AddTextToLogTab(string.Format("Binance delay needed for weight: {0}", weight));
+        //    if (weight > 800)
+        //        await Task.Delay(10000);
+        //    if (weight > 900)
+        //        await Task.Delay(10000);
+        //    if (weight > 1000)
+        //        await Task.Delay(15000);
+        //    if (weight > 1100)
+        //        await Task.Delay(15000);
+        //}
 
         // Might have problems with no internet etc.
-        if (result == null || result.Data == null || !result.Data.Any())
+        if (result == null || result.Data == null || !result.Data.List.Any())
         {
             GlobalData.AddTextToLogTab(string.Format("{0} {1} ophalen vanaf {2} geen candles ontvangen", symbol.Name, interval.Name, CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized).ToString()));
             return 0;
@@ -90,10 +110,10 @@ public class BinanceFetchCandles
         try
         {
             // Combine the candles, caulutaing the ones from other interval's
-            foreach (BinanceSpotKline kline in result.Data.Cast<BinanceSpotKline>())
+            foreach (BybitKline kline in result.Data.List)
             {
                 // Quoted = volume * price (expressed in usdt/eth/btc etc), base is coins
-                CryptoCandle candle = CandleTools.HandleFinalCandleData(symbol, interval, kline.OpenTime,
+                CryptoCandle candle = CandleTools.HandleFinalCandleData(symbol, interval, kline.StartTime,
                     kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.QuoteVolume);
 
                 // For the next GetCandles() session
@@ -104,6 +124,7 @@ public class BinanceFetchCandles
 #endif
             }
 
+            //SaveInformation(symbol, result.Data.List);
         }
         finally
         {
@@ -114,12 +135,12 @@ public class BinanceFetchCandles
         CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
         SortedList<long, CryptoCandle> candles = symbolPeriod.CandleList;
         string s = symbol.Name + " " + interval.Name + " ophalen vanaf " + CandleTools.GetUnixDate(startFetchDate).ToLocalTime() + " UTC tot " + CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized).ToLocalTime() + " UTC";
-        GlobalData.AddTextToLogTab(s + " opgehaald: " + result.Data.Count() + " totaal: " + candles.Count.ToString());
-        return result.Data.Count();
+        GlobalData.AddTextToLogTab(s + " opgehaald: " + result.Data.List.Count() + " totaal: " + candles.Count.ToString());
+        return result.Data.List.Count();
     }
 
 
-    private static async Task FetchCandlesInternal(BinanceClient client, CryptoSymbol symbol, long fetchEndUnix)
+    private static async Task FetchCandlesInternal(BybitClient client, CryptoSymbol symbol, long fetchEndUnix)
     {
         DateTime[] fetchFrom = new DateTime[Enum.GetNames(typeof(CryptoIntervalPeriod)).Length];
 
@@ -270,7 +291,7 @@ public class BinanceFetchCandles
         {
             // Reuse the socket in this thread, because:
             // "An operation on a socket could not be performed because the system lacked sufficient buffer space or because a queue was full"
-            using BinanceClient client = new();
+            using BybitClient client = new();
 
             while (true)
             {
@@ -317,7 +338,7 @@ public class BinanceFetchCandles
 
                     // Bij het opstarten is deze (vanuit de LoadData) reeds uitgevoerd
                     if (GlobalData.ApplicationStatus != CryptoApplicationStatus.AppStatusPrepare)
-                        await ExchangeClass.FetchSymbols();
+                        await Task.Run(BybitFetchSymbols.ExecuteAsync);
 
                     GlobalData.AddTextToLogTab("Aantal symbols = " + exchange.SymbolListName.Values.Count.ToString());
 

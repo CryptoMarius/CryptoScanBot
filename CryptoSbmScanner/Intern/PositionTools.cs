@@ -3,7 +3,6 @@
 using CryptoSbmScanner.Context;
 using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Exchange;
-using CryptoSbmScanner.Exchange.Binance;
 using CryptoSbmScanner.Model;
 
 using Dapper;
@@ -373,7 +372,7 @@ public class PositionTools
     /// Na het opstarten is er behoefte om openstaande orders en trades te synchroniseren
     /// (dependency: de trades en steps moeten hiervoor ingelezen zijn)
     /// </summary>
-    static public void CalculatePositionViaTrades(CryptoDatabase database, CryptoPosition position)
+    static public void CalculatePositionResultsViaTrades(CryptoDatabase database, CryptoPosition position)
     {
         if (position.Parts.Count == 0)
             GlobalData.AddTextToLogTab(string.Format("CalculatePositionViaTrades - er zijn geen parts! {0}", position.Symbol.Name));
@@ -466,7 +465,10 @@ public class PositionTools
         strings.AppendLine("");
         strings.AppendLine("Position Id:" + position.Id.ToString());
         strings.AppendLine("Account:" + position.TradeAccount.Name);
+        strings.AppendLine("Exchange:" + position.Symbol.Exchange.Name);
         strings.AppendLine("Name:" + position.Symbol.Name);
+        strings.AppendLine("Strategie:" + position.StrategyText);
+        strings.AppendLine("Interval:" + position.Interval.Name);
         strings.AppendLine("Status:" + position.Status.ToString());
         strings.AppendLine("OpenDate:" + position.CreateTime.ToLocalTime());
         strings.AppendLine("CloseDate:" + position.CloseTime?.ToLocalTime());
@@ -565,7 +567,7 @@ public class PositionTools
         // Daarna de "nieuwe" trades van deze coin ophalen en die toegevoegen aan dezelfde tradelist
         // TODO: Afhankelijkheid uitfaseren of exchange-aware maken?
         if (position.TradeAccount.AccountType == CryptoTradeAccountType.RealTrading)
-            await Task.Run(async () => { await BinanceFetchTrades.FetchTradesForSymbol(position.TradeAccount, position.Symbol); });
+            await ExchangeClass.FetchTradesForSymbol(position.TradeAccount, position.Symbol);
     }
 
 

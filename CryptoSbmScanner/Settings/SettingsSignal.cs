@@ -14,8 +14,6 @@ public class SettingsSignal
     // TODO rename naar Active
     public bool SignalsActive { get; set; } = true;
 
-    public bool ShowInvalidSignals { get; set; } = false;
-
     // Minimale 1h barometer om de meldingen te tonen (van - 1.5 tot hoger of iets dergelijks, en te hoog (>5) is eigenlijk ook niet goed)
     public decimal Barometer1hMinimal { get; set; } = -99m;
     public bool LogBarometerToLow { get; set; } = false;

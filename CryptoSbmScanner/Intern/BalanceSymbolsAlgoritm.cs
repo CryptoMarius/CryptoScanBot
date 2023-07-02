@@ -3,7 +3,7 @@
 using CryptoSbmScanner.Context;
 using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Exchange;
-using CryptoSbmScanner.Exchange.Binance;
+using CryptoSbmScanner.Exchange.Binance; // later
 using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Settings;
 
@@ -366,7 +366,7 @@ public class BalanceSymbolsAlgoritm
         }
         else
         {
-            BinanceWeights.WaitForFairBinanceWeight(1);
+            BinanceWeights.WaitForFairWeight(1);
 
 
             CryptoOrderType orderType = CryptoOrderType.Limit;
@@ -596,7 +596,7 @@ public class BalanceSymbolsAlgoritm
         {
             if (GlobalData.Settings.BalanceBot.CoinList.Any())
             {
-                if (!GlobalData.ExchangeListName.TryGetValue("Binance", out Exchange))
+                if (!GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Exchange))
                     throw new Exception("Exchange Binance niet aanwezig");
 
                 // De te balanceren munten

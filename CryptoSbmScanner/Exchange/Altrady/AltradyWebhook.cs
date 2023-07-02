@@ -1,12 +1,13 @@
-﻿using CryptoSbmScanner.Intern;
-using CryptoSbmScanner.Model;
-using Newtonsoft.Json.Linq;
-using System.Net;
+﻿//using CryptoSbmScanner.Intern;
+//using CryptoSbmScanner.Model;
+//using Newtonsoft.Json.Linq;
+//using System.Net;
 
 namespace CryptoSbmScanner.Exchange.Altrady;
 
-// De Altrady web interface is qua paperTesting afgekeurd, deze vult willekeurig orders met als gevolg een vertekend beeld van de trades
-// (het gebeurd wellicht niet vaak, maar te vaak om zomaar te negeren)
+// De Altrady webhook is qua paperTesting afgekeurd, het vult netjes DCA orders op -10% 
+// en sluit dan de order met winst met als gevolg een totaal vertekend beeld op het traden.
+// (bijkopen gebeurd al niet vaak, bug wellicht nog zeldzamer, maar zeker te vaak om te negeren)
 
 //public class AltradyWebhook
 //{

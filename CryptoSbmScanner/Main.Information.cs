@@ -1,5 +1,5 @@
 ﻿using CryptoSbmScanner.Enums;
-using CryptoSbmScanner.Exchange.Binance;
+using CryptoSbmScanner.Exchange;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 
@@ -57,7 +57,7 @@ public partial class FrmMain
 
 
             // Toon de prijzen en volume van een aantal symbols
-            if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
+            if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
             {
                 listViewInformation.BeginUpdate();
                 try
@@ -112,24 +112,15 @@ public partial class FrmMain
 
                     // Tel het aantal ontvangen 1m candles (via alle uitstaande streams)
                     // Elke minuut komt er van elke munt een candle (indien er gehandeld is).
-                    int candlesKLineCount = 0;
-                    foreach (CryptoQuoteData quoteData1 in GlobalData.Settings.QuoteCoins.Values)
-                    {
-                        for (int i = 0; i < quoteData1.BinanceStream1mCandles.Count; i++)
-                        {
-                            BinanceStream1mCandles binanceStream1mCandles = quoteData1.BinanceStream1mCandles[i];
-                            candlesKLineCount += binanceStream1mCandles.CandlesKLinesCount;
-                        }
-                    }
 
                     string baseCoin = "";
                     Invoke((MethodInvoker)(() => baseCoin = comboBoxBarometerQuote.Text));
                     if (GlobalData.Settings.QuoteCoins.TryGetValue(baseCoin, out CryptoQuoteData quoteData))
                     {
-                        string text = GlobalData.TaskBinanceStreamPriceTicker?.tickerCount.ToString("N0");
+                        string text = ExchangeClass.CountPriceTickerStream().ToString("N0");
                         ShowSymbolPrice(symbolHistList[0], listViewInformation.Items[0], exchange, quoteData, "BTC", GlobalData.TradingViewDollarIndex, "Binance price ticker count", text);
 
-                        text = candlesKLineCount.ToString("N0");
+                        text = ExchangeClass.Count1mCandleStream().ToString("N0");
                         ShowSymbolPrice(symbolHistList[1], listViewInformation.Items[1], exchange, quoteData, "BNB", GlobalData.TradingViewBitcoinDominance, "Binance 1m stream count", text);
 
                         text = PositionMonitor.AnalyseCount.ToString("N0");
@@ -195,7 +186,7 @@ public partial class FrmMain
 
             if (col < 4)
             {
-                if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
+                if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
                 {
                     if (exchange.SymbolListName.TryGetValue(item.Text, out CryptoSymbol symbol))
                     {

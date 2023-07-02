@@ -24,14 +24,19 @@ public class CryptoSymbol
     public string Quote { get; set; } //De basismunt (BTC, ETH, USDT, BUSD enzovoort)
     public int Status { get; set; } //0 voor inactief, 1 voor actief
 
+    // Ongebruikt, weg ermee
     //The precision of the quote asset (maar voor wat dan?)
-    public int QuoteAssetPrecision { get; set; }
-    //The precision of the base asset
-    public int BaseAssetPrecision { get; set; }
+    //public int QuoteAssetPrecision { get; set; }
 
+    // Ongebruikt, weg ermee
+    //The precision of the base asset
+    //public int BaseAssetPrecision { get; set; }
+
+    // Ongebruikt, weg ermee
     //BinanceSymbolMinNotionalFilter
     //The minimal total size of an order (calculated by Price * Quantity).
-    public decimal MinNotional { get; set; }
+    // Deze is voor bybit niet aanwezig en bij Binance slechts voor ~20 gevuld, weg ermee!
+    //public decimal MinNotional { get; set; }
 
     //BinanceSymbolLotSizeFilter;
     //The minimal quantity of an order
@@ -61,15 +66,15 @@ public class CryptoSymbol
     public decimal Volume { get; set; }
 
     // Gevuld door de Binance Ticker, ALLEMAAL gebaseerd op de 24h prijs
-    [Computed]
+    //[Computed]
     // Laatste waarde volgens de ticker
-    public decimal? OpenPrice { get; set; }
-    [Computed]
+    //public decimal? OpenPrice { get; set; }
+    //[Computed]
     // Laatste waarde volgens de ticker
-    public decimal? HighPrice { get; set; }
-    [Computed]
+    //public decimal? HighPrice { get; set; }
+    //[Computed]
     // Laatste waarde volgens de ticker
-    public decimal? LowPrice { get; set; }
+    //public decimal? LowPrice { get; set; }
 
 
     // Laatste waarde volgens de ticker

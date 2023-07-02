@@ -1,19 +1,33 @@
 Mis je iets in onderstaande bevindingen/todo's of toekomstige todo's, geef het AUB aan want dan is wat we besproken hebben ergens tussen wal en schip gevallen...
 
 ByBit
-- zijn er limiten voor bybit?
+- zijn er limiten voor bybit? Ja, dat heet rate limits
+  https://bybit-exchange.github.io/docs-legacy/futuresV2/inverse/#t-ratelimits
+  het is gebaseerd op het aantal verzoeken per seconde wat je naar ByBit stuurt
+  Je krijgt deze informatie ook terug zo te zien, eens zien wat het is
+  (het sluit redelijk aan bij wat we voor Binance doen <met weights>)
 - Nieuwe nuget packages doornemen
+  <het is anders, duh>
 - ophalen exchange informatie implementeren
+  Dat beperkt zich tot het ophalen van de Symbol informatie (zo heet het ook)
+  Stukken duidelijker dan Binance!
 - ophalen klines implementeren
+  Easy, moet geen probleem zijn
 - 1m candle stream implementeren
+  Hier wordt het lastiger...
 - mini ticker stream implementeren
-- userdate stream implementeren
-- ophalen trades implementeren
-- ophalen assets implementeren
-- plaatsen van de diverse orders (oco/buy/sell/stop limit etc)
+  Hier wordt het lastiger...
+- Trading: userdate stream implementeren
+- Trading: ophalen trades implementeren
+- Trading: ophalen assets implementeren
+- Trading: plaatsen van de diverse orders (oco/buy/sell/stop limit etc)
 
 
 TODO:
+- Alle "Binance" specifieke zaken controleren (het loopt al zo lang hardcoded)
+- Een dashboard introduceren, totaal aantal signalen afgelopen dag/week, indeling per categorie, short/long
+  Totaal geinvesteerd, returned, gemiddelde profit, de uitschieters (max), de tegenvallers (min).
+  Ik weet zeker dat bepaalde mensen hier wel wat leuke toevoegingen voor hebben ;-)
 - Todo: voor iemand in de groep, emulator of meldingen even aanpassen zodat het bij een psar wissel instapt
 - Is het nieuwe experiment met de SMA20 - positive ema slope e.d. iets of is dat ten dode opgeschreven
   (ik heb echt 1 mooie mogelijkheid gezien, maar je moet het maar net openen en opmerken)
@@ -24,12 +38,11 @@ TODO:
 - Voor STOBB de minimale trend controleren (is een nieuwe instelling, maar die doet nog niets)
 
 Bevindingen/Todo's:
-- JUMP short en long zit momenteel niet goed in elkaar, ten eerste zou ik een -x% of +x% verwachten.
-  En ten tweede wordt de black- en white list hier nu ook op toegepast (verschil met eerdere oplossingen)
 - Nadat je naar deze versie bent gegaan kan een oudere scanner niet meer worden opgestart
   (json problemen met de "General.WindowPosition.Location")
   Een oplossing zou ook zijn om de opslag van de Color en positie geheel anders op te slagen
-- Er is wellicht iiets mogelijk met een multi timeframe, als op de 15m er een positieve trend (via de ema beredeneert)
+  Het is zoals het is op dit moment.
+- Er is wellicht iets mogelijk met een multi timeframe, als op de 15m er een positieve trend (via de ema beredeneert)
   dan mag de trading instappen op een sbm 3m, is dat iets wat realistisch is? Uitzoeken via emulator?
 - De tekst 1h, 4h en 1d wee toevoegen bij de barometer bolletjes (dan hoef ik het ook niet uit te leggen wat het is)
 - Het lettertype c.q. grotte van de barometer waardes in de grafiek zijn afwijkend
@@ -62,6 +75,8 @@ Bevindingen/Todo's:
 
 
 xx-xx-2023 1.8.0 (gedeeltelijk zit eze ook al in de 1.7.2 vanwege een hotfix)
+- De "(slonzige naam) "GlobalData.Settings2.json is nu vervangen door de naam "Settings.json"
+- Via de startup parameter "-f FolderName" kun je aangeven in welke folder (van de APPDATA) de data wordt bewaard (voor meerdere sessies)
 - Trailing sell ala Cryptocoiners met de Keltner Channel en PSAR (maar zoals zo vaak valt het effect trailen vaak tegen)
 - Wens: bij het opstarten de laatste X candles opnieuw berekenen, dat geeft echter zoveel (cpu) overhead dat ik het opzij gezet heb)
   Daarnaast geeft het onverwachte problemen zoals duplicaat meldingen (vanwege introductie database)

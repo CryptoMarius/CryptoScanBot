@@ -243,7 +243,7 @@ public class ThreadTelegramBot
         stringbuilder.AppendLine(string.Format("Trend {0}", symbolstr));
 
 
-        if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
         {
             if (exchange.SymbolListName.TryGetValue(symbolstr, out CryptoSymbol symbol))
             {
@@ -392,7 +392,7 @@ public class ThreadTelegramBot
             value = "BNBUSDT,BTCUSDT,ETHUSDT,PAXGUSDT";
         parameters = value.Split(',');
 
-        if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
         {
             foreach (string symbolName in parameters)
             {
@@ -441,7 +441,8 @@ public class ThreadTelegramBot
 
     public static async Task ExecuteAsync()
     {
-        //return;
+        // Bij het testen staat vaak de scanner aan, daatom bij sql telegram ff uit
+#if !SQLDATABASE
 
         System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
         //    // Extra parameters vanwege ambigious constructor (die ik niet geheel kon volgen)
@@ -596,6 +597,7 @@ public class ThreadTelegramBot
             GlobalData.AddTextToLogTab("\r\n" + "\r\n" + " error telegram thread(3)\r\n" + error.ToString());
         }
         GlobalData.AddTextToLogTab("\r\n" + "\r\n TELEGRAM THREAD EXIT");
+#endif
     }
 
 }

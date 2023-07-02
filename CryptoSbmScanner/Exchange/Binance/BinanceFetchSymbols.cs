@@ -16,13 +16,13 @@ namespace CryptoSbmScanner.Exchange.Binance;
 
 public class BinanceFetchSymbols
 {
-    private static void SaveInformation(BinanceExchangeInfo binanceExchangeInfo)
+    private static void SaveInformation(BinanceExchangeInfo exchangeInfo)
     {
         //Laad de gecachte (langere historie, minder overhad)
         string filename = GlobalData.GetBaseDir();
         filename += @"\Binance\";
         Directory.CreateDirectory(filename);
-        filename += "Binance.Exchangeinfo.json";
+        filename += "symbols.json";
 
         //using (FileStream writeStream = new FileStream(filename, FileMode.Create))
         //{
@@ -31,19 +31,19 @@ public class BinanceFetchSymbols
         //    writeStream.Close();
         //}
 
-        string text = JsonSerializer.Serialize(binanceExchangeInfo, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
+        string text = JsonSerializer.Serialize(exchangeInfo, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
         //var accountFile = new FileInfo(filename);
         File.WriteAllText(filename, text);
     }
 
     public static async Task ExecuteAsync()
     {
-        if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
         {
             try
             {
                 GlobalData.AddTextToLogTab("Reading symbol information from Binance");
-                BinanceWeights.WaitForFairBinanceWeight(1);
+                BinanceWeights.WaitForFairWeight(1);
 
                 WebCallResult<BinanceExchangeInfo> exchangeInfo = null;
                 using (var client = new BinanceClient())
@@ -126,13 +126,13 @@ public class BinanceFetchSymbols
 
                                     //Tijdelijk alles overnemen (vanwege into nieuwe velden)
                                     //De te gebruiken precisie in prijzen
-                                    symbol.BaseAssetPrecision = binanceSymbol.BaseAssetPrecision;
-                                    symbol.QuoteAssetPrecision = binanceSymbol.QuoteAssetPrecision;
+                                    //symbol.BaseAssetPrecision = binanceSymbol.BaseAssetPrecision;
+                                    //symbol.QuoteAssetPrecision = binanceSymbol.QuoteAssetPrecision;
                                     // Tijdelijke fix voor Binance.net (kan waarschijnlijk weer weg)
-                                    if (binanceSymbol.MinNotionalFilter != null)
-                                        symbol.MinNotional = binanceSymbol.MinNotionalFilter.MinNotional;
-                                    else
-                                        symbol.MinNotional = 0;
+                                    //if (binanceSymbol.MinNotionalFilter != null)
+                                    //    symbol.MinNotional = binanceSymbol.MinNotionalFilter.MinNotional;
+                                    //else
+                                    //    symbol.MinNotional = 0;
 
                                     //Minimale en maximale amount voor een order (in base amount)
                                     symbol.QuantityMinimum = binanceSymbol.LotSizeFilter.MinQuantity;

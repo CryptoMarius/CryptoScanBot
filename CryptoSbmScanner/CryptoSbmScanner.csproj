@@ -56,9 +56,6 @@
     <None Update="Help\Release Changes.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="nlog.config">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Update="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -103,6 +100,7 @@
     </PackageReference>
     <PackageReference Include="BouncyCastle.Cryptography" Version="2.2.1" />
     <PackageReference Include="Bybit.Net" Version="2.0.4" />
+    <PackageReference Include="CommandLineParser" Version="2.9.1" />
     <PackageReference Include="Cryptowatcher.TA-LIb-Core" Version="1.0.0" />
     <PackageReference Include="Dapper" Version="2.0.143" />
     <PackageReference Include="Dapper.Contrib" Version="2.0.78" />

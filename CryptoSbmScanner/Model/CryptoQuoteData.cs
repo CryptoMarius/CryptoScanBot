@@ -1,5 +1,4 @@
 ﻿using CryptoSbmScanner.Enums;
-using CryptoSbmScanner.Exchange.Binance;
 using CryptoSbmScanner.Intern;
 
 using Dapper.Contrib.Extensions;
@@ -29,11 +28,6 @@ public class CryptoQuoteData
 
     [JsonConverter(typeof(Intern.ColorConverter))]
     public Color DisplayColor { get; set; } = Color.White;
-
-    // TODO: Uitfaseren uit deze class en naar een specifiek Exchange-achtig object doorzetten???
-    [Computed]
-    [JsonIgnore]
-    public List<BinanceStream1mCandles> BinanceStream1mCandles { get; set; } = new List<BinanceStream1mCandles>();
 
     // De laatst berekende barometer standen
     [Computed]

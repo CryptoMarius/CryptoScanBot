@@ -1,6 +1,5 @@
 ﻿using CryptoSbmScanner.Context;
 using CryptoSbmScanner.Enums;
-using CryptoSbmScanner.Exchange.Binance;
 using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Settings;
 using CryptoSbmScanner.TradingView;
@@ -74,14 +73,16 @@ static public class GlobalData
     static public event AddTextEvent ConnectionWasLostEvent;
     static public event AddTextEvent ConnectionWasRestoredEvent;
 
+    // Ophalen van historische candles duurt lang, dus niet halverwege nog 1 starten (en nog 1 en...)
     static public event SetCandleTimerEnable SetCandleTimerEnableEvent;
 
-    public static AnalyseEvent SignalEvent { get; set; } = null;
+    public static AnalyseEvent SignalEvent { get; set; }
 
+    // TODO: Deze rare accounts proberen te verbergen (indien mogelijk)
     static public SortedList<int, CryptoTradeAccount> TradeAccountList = new();
-    static public CryptoTradeAccount BinanceBackTestAccount = null;
-    static public CryptoTradeAccount BinanceRealTradeAccount = null;
-    static public CryptoTradeAccount BinancePaperTradeAccount = null;
+    static public CryptoTradeAccount ExchangeBackTestAccount { get; set; }
+    static public CryptoTradeAccount ExchangeRealTradeAccount { get; set; }
+    static public CryptoTradeAccount ExchangePaperTradeAccount { get; set; }
 
 
     // Some running tasks/threads
@@ -97,8 +98,8 @@ static public class GlobalData
 #endif
 
     // Binance stuff
-    static public BinanceStreamUserData TaskBinanceStreamUserData { get; set; }
-    static public BinanceStreamPriceTicker TaskBinanceStreamPriceTicker { get; set; }
+    //static public BinanceStreamUserData TaskBinanceStreamUserData { get; set; }
+    //static public BinanceStreamPriceTicker TaskBinanceStreamPriceTicker { get; set; }
 
 
     // On special request of a hardcore trader..
@@ -135,11 +136,11 @@ static public class GlobalData
             // Er zijn 3 accounts altijd aanwezig
             // TODO - enum introduceren vanwege vinkjes ellende, beh
             if (tradeAccount.AccountType == CryptoTradeAccountType.BackTest)
-                GlobalData.BinanceBackTestAccount = tradeAccount;
+                GlobalData.ExchangeBackTestAccount = tradeAccount;
             if (tradeAccount.AccountType == CryptoTradeAccountType.PaperTrade)
-                GlobalData.BinancePaperTradeAccount = tradeAccount;
+                GlobalData.ExchangePaperTradeAccount = tradeAccount;
             if (tradeAccount.AccountType == CryptoTradeAccountType.RealTrading)
-                GlobalData.BinanceRealTradeAccount = tradeAccount;
+                GlobalData.ExchangeRealTradeAccount = tradeAccount;
         }
     }
 
@@ -259,7 +260,7 @@ static public class GlobalData
     static public void InitBarometerSymbols()
     {
         // TODO: Deze routine is een discrepantie tussen de scanner en trader!
-        if (ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
+        if (ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
         {
             foreach (CryptoQuoteData quoteData in Settings.QuoteCoins.Values)
             {
@@ -292,7 +293,7 @@ static public class GlobalData
 
     static public void LoadSettings()
     {
-        string filename = GetBaseDir() + "GlobalData.Settings2.json";
+        string filename = GetBaseDir() + "settings.json";
         if (File.Exists(filename))
         {
             //using (FileStream readStream = new FileStream(filename, FileMode.Open))
@@ -305,7 +306,26 @@ static public class GlobalData
             Settings = JsonSerializer.Deserialize<SettingsBasic>(text);
         }
         else
-            DefaultSettings();
+        {
+            // Oude naam = "GlobalData.Settings2.json"
+            // Toch de instellingen proberen over te nemen
+            string oldSettings = GetBaseDir() + "GlobalData.Settings2.json";
+            if (File.Exists(oldSettings))
+            {
+                try
+                {
+                    string text = File.ReadAllText(oldSettings);
+                    Settings = JsonSerializer.Deserialize<SettingsBasic>(text);
+                }
+                catch (Exception error)
+                {
+                    Logger.Error(error);
+                    AddTextToLogTab("Error playing music " + error.ToString(), false);
+                }
+            }
+            else 
+                DefaultSettings();
+        }
     }
 
     static public void DefaultSettings()
@@ -350,7 +370,7 @@ static public class GlobalData
         //Laad de gecachte (langere historie, minder overhad)
         string filename = GetBaseDir();
         Directory.CreateDirectory(filename);
-        filename += "GlobalData.Settings2.json";
+        filename += "settings.json";
 
         //using (FileStream writeStream = new FileStream(filename, FileMode.Create))
         //{
@@ -447,18 +467,30 @@ static public class GlobalData
 
     static bool IsInitialized = false;
 
+
     static public string GetBaseDir()
     {
-        string folder = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        string specificFolder = Path.Combine(folder, "CryptoScanner");
+        if (ApplicationParams.Options == null)
+        {
+            string[] args = Environment.GetCommandLineArgs();
+            ApplicationParams.Options = CommandLine.Parser.Default.ParseArguments<ApplicationParams>(args).Value;
+        }
+
+        string folder = ApplicationParams.Options.InputFile;
+        if (folder == "")
+            folder = "CryptoScanner";
+
+        string baseFolder = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        folder = Path.Combine(baseFolder, folder);
+
 
         if (!IsInitialized)
         {
             IsInitialized = true;
-            Directory.CreateDirectory(specificFolder);
+            Directory.CreateDirectory(folder);
         }
 
-        return specificFolder + @"\";
+        return folder + @"\";
     }
 
     static public void DebugOnlySymbol(string name)
@@ -489,4 +521,61 @@ static public class GlobalData
         SymbolsHaveChangedEvent("");
     }
 
+
+    static public void InitializeNlog()
+    {
+        // nlog is lastig te beinvloeden, dus dan maar via code
+
+        /*
+        <targets>
+            <target name="default" xsi:type="File" 
+                fileName="${specialfolder:folder=ApplicationData}/CryptoScanner/CryptoScanner.log" 
+                archiveFileName="${specialfolder:folder=ApplicationData}/CryptoScanner/CryptoScanner.{#}.log" 
+                archiveEvery="Day" archiveNumbering="Rolling" 
+                maxArchiveFiles="7" />
+            <target name="errors" xsi:type="File" 
+                fileName="${specialfolder:folder=ApplicationData}/CryptoScanner/CryptoScanner-errors.log" 
+                archiveFileName="${specialfolder:folder=ApplicationData}/CryptoScanner/CryptoScanner-errors.{#}.log" 
+                archiveEvery="Day" 
+                archiveNumbering="Rolling" 
+                maxArchiveFiles="7" />
+        </targets>
+
+		<logger name="*" writeTo="default" />
+		<logger name="*" minlevel="Error" writeTo="errors" />
+        */
+
+        // Create configuration object 
+        var config = new NLog.Config.LoggingConfiguration();
+
+        // Create targets and add them to the configuration 
+        var fileTarget = new NLog.Targets.FileTarget();
+        fileTarget.Name = "default";
+        fileTarget.ArchiveDateFormat = "yyyy-MM-dd";
+        fileTarget.ArchiveEvery = NLog.Targets.FileArchivePeriod.Day;
+        //fileTarget.EnableArchiveFileCompression = true;
+        fileTarget.MaxArchiveDays = 15;
+        fileTarget.FileName = GlobalData.GetBaseDir() + "CryptoScanner ${date:format=yyyy-MM-dd} .log";
+        //fileTarget.Layout = "Exception Type: ${exception:format=Type}${newline}Target Site:  ${event-context:TargetSite }${newline}Message: ${message}";
+        config.AddTarget("file", fileTarget);
+
+        var rule = new NLog.Config.LoggingRule("*", NLog.LogLevel.Info, fileTarget);
+        config.LoggingRules.Add(rule);
+
+        fileTarget = new NLog.Targets.FileTarget();
+        fileTarget.Name = "errors";
+        fileTarget.ArchiveDateFormat = "yyyy-MM-dd";
+        fileTarget.ArchiveEvery = NLog.Targets.FileArchivePeriod.Day;
+        fileTarget.MaxArchiveDays = 30;
+        //fileTarget.EnableArchiveFileCompression = true;
+        fileTarget.FileName = GlobalData.GetBaseDir() + "CryptoScanner ${date:format=yyyy-MM-dd}-Errors.log";
+        //fileTarget.Layout = "Exception Type: ${exception:format=Type}${newline}Target Site:  ${event-context:TargetSite }${newline}Message: ${message}";
+        config.AddTarget("file", fileTarget);
+
+        rule = new NLog.Config.LoggingRule("*", NLog.LogLevel.Error, fileTarget);
+        config.LoggingRules.Add(rule);
+
+
+        NLog.LogManager.Configuration = config;
+    }
 }

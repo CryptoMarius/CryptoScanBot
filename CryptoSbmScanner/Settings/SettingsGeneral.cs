@@ -1,5 +1,8 @@
 ﻿using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Model;
+
+using Dapper.Contrib.Extensions;
+
 using System.Drawing;
 using System.Text.Json.Serialization;
 using System.Windows.Forms;
@@ -30,6 +33,15 @@ public class IntervalAndStrategyConfig
 [Serializable]
 public class SettingsGeneral
 {
+    // Welke exchange
+    public string ExchangeName { get; set; } = "Binance";
+    [Computed]
+    public int ExchangeId { get; set; } = 1;
+    [Computed]
+    [JsonIgnore]
+    public virtual Model.CryptoExchange Exchange { get; set; }
+
+
     public bool BlackTheming { get; set; } = false;
     public CryptoTradingApp TradingApp { get; set; } = CryptoTradingApp.Altrady;
     public bool SoundTradeNotification { get; set; }
@@ -43,6 +55,7 @@ public class SettingsGeneral
 
     public int GetCandleInterval { get; set; } = 60;
 
+    public bool ShowInvalidSignals { get; set; } = false;
     public bool ShowFluxIndicator5m { get; set; } = false;
     public int RemoveSignalAfterxCandles { get; set; } = 15;
     public bool HideTechnicalStuffSignals { get; set; } = false;

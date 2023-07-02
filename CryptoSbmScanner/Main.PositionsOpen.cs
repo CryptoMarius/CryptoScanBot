@@ -63,15 +63,16 @@ public partial class FrmMain
         // Create columns and subitems. Width of -2 indicates auto-size
         listViewPositionsOpen.Columns.Add("Datum", -2, HorizontalAlignment.Left);
         listViewPositionsOpen.Columns.Add("Account", -2, HorizontalAlignment.Left);
+        listViewPositionsOpen.Columns.Add("Exchange", -2, HorizontalAlignment.Left);
         listViewPositionsOpen.Columns.Add("Symbol", -2, HorizontalAlignment.Left);
         listViewPositionsOpen.Columns.Add("Interval", -2, HorizontalAlignment.Left);
         listViewPositionsOpen.Columns.Add("Strategie", -2, HorizontalAlignment.Left);
         listViewPositionsOpen.Columns.Add("Mode", -2, HorizontalAlignment.Left);
         listViewPositionsOpen.Columns.Add("Status", -2, HorizontalAlignment.Left);
 
-        listViewPositionsOpen.Columns.Add("Quantity", -2, HorizontalAlignment.Right);
         //listViewPositionsOpen.Columns.Add("Price", -2, HorizontalAlignment.Right);
         listViewPositionsOpen.Columns.Add("BreakEven", -2, HorizontalAlignment.Right);
+        listViewPositionsOpen.Columns.Add("Quantity", -2, HorizontalAlignment.Right);
         //listViewPositionsOpen.Columns.Add("Stijging", -2, HorizontalAlignment.Right);
 
         listViewPositionsOpen.Columns.Add("Invested", -2, HorizontalAlignment.Right);
@@ -84,7 +85,6 @@ public partial class FrmMain
         listViewPositionsOpen.Columns.Add("Parts", -2, HorizontalAlignment.Right);
         listViewPositionsOpen.Columns.Add("BuyPrice", -2, HorizontalAlignment.Right);
         listViewPositionsOpen.Columns.Add("SellPrice", -2, HorizontalAlignment.Right);
-        listViewPositionsOpen.Columns.Add("Quantity", -2, HorizontalAlignment.Right);
         listViewPositionsOpen.Columns.Add("LastPrice", -2, HorizontalAlignment.Right);
         listViewPositionsOpen.Columns.Add("", -2, HorizontalAlignment.Right); // filler
 
@@ -96,7 +96,7 @@ public partial class FrmMain
     }
 
 
-    private static void FillItem(CryptoPosition position, ListViewItem item1)
+    private static void FillItemOpen(CryptoPosition position, ListViewItem item1)
     {
         ListViewItem.ListViewSubItem subItem;
         item1.SubItems.Clear();
@@ -104,6 +104,7 @@ public partial class FrmMain
         item1.Text = position.CreateTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm");
 
         item1.SubItems.Add(position.TradeAccount.Name);
+        item1.SubItems.Add(position.Symbol.Exchange.Name);
         item1.SubItems.Add(position.Symbol.Name);
         item1.SubItems.Add(position.Interval.Name);
         item1.SubItems.Add(position.StrategyText);
@@ -118,11 +119,11 @@ public partial class FrmMain
         if (position.Status == CryptoPositionStatus.Waiting)
             subItem.ForeColor = Color.Red;
 
-        item1.SubItems.Add(position.Quantity.ToString(position.Symbol.QuantityDisplayFormat));
         if (position.Status == CryptoPositionStatus.Waiting)
             item1.SubItems.Add(position.BuyPrice?.ToString(position.Symbol.PriceDisplayFormat));
         else
             item1.SubItems.Add(position.BreakEvenPrice.ToString(position.Symbol.PriceDisplayFormat));
+        item1.SubItems.Add(position.Quantity.ToString0(position.Symbol.QuantityDisplayFormat));
 
         item1.SubItems.Add(position.Invested.ToString(position.Symbol.QuoteData.DisplayFormat));
         item1.SubItems.Add(position.Returned.ToString(position.Symbol.QuoteData.DisplayFormat));
@@ -160,7 +161,6 @@ public partial class FrmMain
             item1.SubItems.Add(position.SellPrice?.ToString(position.Symbol.PriceDisplayFormat));
         else
             item1.SubItems.Add("null");
-        item1.SubItems.Add(position.Quantity.ToString(position.Symbol.QuantityDisplayFormat));
         item1.SubItems.Add(position.Symbol.LastPrice?.ToString(position.Symbol.PriceDisplayFormat));
     }
 
@@ -171,7 +171,7 @@ public partial class FrmMain
         {
             UseItemStyleForSubItems = false
         };
-        FillItem(position, item1);
+        FillItemOpen(position, item1);
         return item1;
     }
 
@@ -181,7 +181,7 @@ public partial class FrmMain
         if (components != null && IsHandleCreated) //!ProgramExit && 
         {
             List<CryptoPosition> list = new();
-            if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
+            if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
             {
                 foreach (var tradingAccount in GlobalData.TradeAccountList.Values)
                 {
@@ -287,7 +287,7 @@ public partial class FrmMain
                     {
                         startedUpdating = true;
 
-                        FillItem(position, item);
+                        FillItemOpen(position, item);
 
                         //// Status
                         //subItem = item.SubItems[4];
@@ -354,7 +354,7 @@ public partial class FrmMain
     //    //    return;
     //    //}
 
-    //    //if (GlobalData.ExchangeListName.TryGetValue("Binance", out CryptoSbmScanner.Model.CryptoExchange exchange))
+    //    //if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out CryptoSbmScanner.Model.CryptoExchange exchange))
     //    //{
     //    //    // Bestaat de coin? (uiteraard, net geladen)
     //    //    if (!exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol symbol))
@@ -395,7 +395,7 @@ public partial class FrmMain
     //    //    GlobalData.AddTextToLogTab("");
 
     //    //    // nu iets duidelijker
-    //    //    if (GlobalData.ExchangeListName.TryGetValue("Binance", out CryptoSbmScanner.Model.CryptoExchange exchange))
+    //    //    if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out CryptoSbmScanner.Model.CryptoExchange exchange))
     //    //    {
     //    //        foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
     //    //        {
@@ -431,20 +431,14 @@ public partial class FrmMain
             ListViewItem item = listViewPositionsOpen.SelectedItems[0];
             CryptoPosition position = (CryptoPosition)item.Tag;
 
-
             using CryptoDatabase databaseThread = new();
-            databaseThread.Close();
             databaseThread.Open();
 
-            //PositionTools.AddPosition(position.TradeAccount, position);
+            // Controleer de orders, en herbereken het geheel
             PositionTools.LoadPosition(databaseThread, position);
-
-            // Controleer de openstaande orders, zijn ze ondertussen gevuld
-            // Haal de trades van deze positie op vanaf de 1e order
-            // TODO - Hoe doen we dit met papertrading (er is niets geregeld!)
             await PositionTools.LoadTradesfromDatabaseAndExchange(databaseThread, position);
-            PositionTools.CalculatePositionViaTrades(databaseThread, position);
-            FillItem(position, item);
+            PositionTools.CalculatePositionResultsViaTrades(databaseThread, position);
+            FillItemOpen(position, item);
 
             StringBuilder strings = new();
             PositionTools.DumpPosition(position, strings);

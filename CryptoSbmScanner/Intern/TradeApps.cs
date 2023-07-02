@@ -16,7 +16,12 @@ public class Altrady
 
     static public string GetRef(CryptoSymbol symbol, CryptoInterval interval)
     {
-        string href = string.Format("https://app.altrady.com/d/BINA_{0}_{1}:{2}", symbol.Quote,
+        string href;
+        if (symbol.ExchangeId == 1)
+            href = string.Format("https://app.altrady.com/d/BINA_{0}_{1}:{2}", symbol.Quote,
+                symbol.Base, AltradyInterval[(int)interval.IntervalPeriod]);
+        else
+            href = string.Format("https://app.altrady.com/d/BYBI_{0}_{1}:{2}", symbol.Quote,
             symbol.Base, AltradyInterval[(int)interval.IntervalPeriod]);
         return href;
     }
@@ -38,8 +43,13 @@ public class HyperTrader
         //altrady://market/BINA_BUSD_LOKA:2
 
         //http://www.ccscanner.nl/hypertrader/?e=binance&a=lto&b=usdt&i=60
-        var href = string.Format("hypertrader://binance/{0}-{1}/{2}", symbol.Base, symbol.Quote,
-            HypertraderInterval[(int)interval.IntervalPeriod]);
+        string href;
+        if (symbol.ExchangeId == 1)
+            href = string.Format("hypertrader://binance/{0}-{1}/{2}", symbol.Base, symbol.Quote,
+                HypertraderInterval[(int)interval.IntervalPeriod]);
+        else
+            href = string.Format("hypertrader://bybit/{0}-{1}/{2}", symbol.Base, symbol.Quote,
+                HypertraderInterval[(int)interval.IntervalPeriod]);
         return href.ToLower();
     }
 }
@@ -59,8 +69,13 @@ public class TradingView
         ///https://www.tradingview.com/chart/?symbol=BINANCE:BETABTC&interval=1
         //altrady://market/BINA_BUSD_LOKA:2
 
-        string href = string.Format("https://www.tradingview.com/chart/?symbol=BINANCE:{0}&interval={1}", symbol.Name,
-            TradingViewInterval[(int)interval.IntervalPeriod]);
+        string href;
+        if (symbol.ExchangeId == 1)
+            href = string.Format("https://www.tradingview.com/chart/?symbol=BINANCE:{0}&interval={1}", symbol.Name,
+                TradingViewInterval[(int)interval.IntervalPeriod]);
+        else
+            href = string.Format("https://www.tradingview.com/chart/?symbol=BYBIT:{0}&interval={1}", symbol.Name,
+                TradingViewInterval[(int)interval.IntervalPeriod]);
         return href;
     }
 }

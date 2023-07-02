@@ -3,6 +3,7 @@ using System.Data.SqlClient;
 using System.Globalization;
 using System.Text;
 using CryptoSbmScanner.Enums;
+using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 using Dapper;
 using Dapper.Contrib.Extensions;
@@ -19,6 +20,11 @@ public class CryptoDatabase : IDisposable
     public static void SetDatabaseDefaults()
     {
         Dapper.SqlMapper.Settings.CommandTimeout = 180;
+
+#if !SQLDATABASE
+        CryptoDatabase.BasePath = GlobalData.GetBaseDir();
+        CryptoDatabase.CreateDatabase();
+#endif
     }
 
 
@@ -70,7 +76,7 @@ public class CryptoDatabase : IDisposable
                 if (i > offset)
                     stringBuilder.AppendLine(",");
 
-                stringBuilder.AppendFormat(string.Format("({0},'{1}','{2}','{3}',{4},{5}, {6},{7},{8}, {9},{10},{11}, {12},{13},{14}, {15},{16})",
+                stringBuilder.AppendFormat(string.Format("({0},'{1}','{2}','{3}',{4},{5}, {6},{7},{8}, {9},{11},{11}, {12},{13})",
                     symbol.Exchange.Id,
                     symbol.Name,
                     symbol.Base,
@@ -78,9 +84,9 @@ public class CryptoDatabase : IDisposable
                     symbol.Status.ToString(myFormat),
                     symbol.Volume.ToString(myFormat),
 
-                    symbol.QuoteAssetPrecision.ToString(myFormat),
-                    symbol.BaseAssetPrecision.ToString(myFormat),
-                    symbol.MinNotional.ToString(myFormat),
+                    //symbol.QuoteAssetPrecision.ToString(myFormat),
+                    //symbol.BaseAssetPrecision.ToString(myFormat),
+                    //symbol.MinNotional.ToString(myFormat),
 
                     symbol.QuantityMinimum.ToString(myFormat),
                     symbol.QuantityMaximum.ToString(myFormat),
@@ -541,16 +547,14 @@ public class CryptoDatabase : IDisposable
             connection.Connection.Execute("CREATE INDEX ExchangeName ON Exchange(Name)");
 
 
-            // De exchanges moeten aanwezig zijn na initialisatie
+            // De ondersteunde exchanges toevoegen
             using var transaction = connection.Connection.BeginTransaction();
-            Model.CryptoExchange exchange = new()
-            {
-                Name = "Binance"
-            };
+            Model.CryptoExchange exchange = new() { Name = "Binance" };
+            connection.Connection.Insert(exchange, transaction);
+
+            exchange = new() { Name = "Bybit" };
             connection.Connection.Insert(exchange, transaction);
             transaction.Commit();
-
-            //GlobalData.AddExchange(exchange);
         }
     }
 
@@ -616,15 +620,20 @@ public class CryptoDatabase : IDisposable
                 "Quote TEXT NOT NULL," +
                 "Status INTEGER NOT NULL," +
                 "Volume TEXT NULL," +
-                "BaseAssetPrecision integer NULL," +
-                "QuoteAssetPrecision integer NULL," +
-                "MinNotional TEXT NULL," +
+
+                // vervallen, niet altijd gevuld en daarom onbetrouwbaar
+                //"BaseAssetPrecision integer NULL," +
+                //"QuoteAssetPrecision integer NULL," +
+                //"MinNotional TEXT NULL," +
+
                 "PriceMinimum TEXT NULL," +
                 "PriceMaximum TEXT NULL," +
                 "PriceTickSize TEXT NULL," +
+
                 "QuantityMinimum TEXT NULL," +
                 "QuantityMaximum TEXT NULL," +
                 "QuantityTickSize TEXT NULL," +
+
                 "LastTradefetched TEXT NULL," +
                 "IsSpotTradingAllowed INTEGER NULL," +
                 "IsMarginTradingAllowed INTEGER NULL," +
@@ -784,7 +793,7 @@ public class CryptoDatabase : IDisposable
                 "Strategy INTEGER NOT NULL, " +
                 "data TEXT NULL," +
 
-                "BuyPrice TEXT NOT NULL, " +
+                "BuyPrice TEXT NULL, " +
                 "Quantity TEXT NULL, " +
                 "BuyAmount TEXT NULL, " +
                 "SellPrice TEXT NULL, " +

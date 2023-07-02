@@ -22,6 +22,12 @@ public partial class FrmSettings : Form
     private readonly Dictionary<Control, AlgorithmDefinition> MonitorStrategyLong = new();
     private readonly Dictionary<Control, AlgorithmDefinition> MonitorStrategyShort = new();
 
+    private readonly SortedList<string, CryptoBuyStepInMethod> BuyStepInMethod = new();
+    private readonly SortedList<string, CryptoBuyStepInMethod> DcaStepInMethod = new();
+    private readonly SortedList<string, CryptoBuyOrderMethod> BuyOrderMethod = new();
+    private readonly SortedList<string, CryptoSellMethod> SellMethod = new();
+
+
     public FrmSettings()
     {
         InitializeComponent();
@@ -163,7 +169,31 @@ public partial class FrmSettings : Form
         // monitor strategy short
         // Geen?
         MonitorStrategyShort.Clear();
+
+
+        // BUY
+        BuyStepInMethod.Add("Direct na het signaal", CryptoBuyStepInMethod.Immediately);
+        //BuyStepInMethod.Add("Trace via de Keltner Channel en PSAR", CryptoBuyStepInMethod.TrailViaKcPsar);
+
+        // DCA
+        DcaStepInMethod.Add("Direct na het signaal", CryptoBuyStepInMethod.Immediately);
+        DcaStepInMethod.Add("Op het opgegeven percentage", CryptoBuyStepInMethod.FixedPercentage);
+        DcaStepInMethod.Add("Na het volgende signaal(sbm/ stobb)", CryptoBuyStepInMethod.AfterNextSignal);
+        DcaStepInMethod.Add("Trace via de Keltner Channel en PSAR", CryptoBuyStepInMethod.TrailViaKcPsar);
+
+        // SELL
+        SellMethod.Add("Limit order op een vaste winst percentage", CryptoSellMethod.FixedPercentage);
+        SellMethod.Add("Limit order op dynamisch percentage van de BB", CryptoSellMethod.DynamicPercentage);
+        SellMethod.Add("Trace via de Keltner Channel en PSAR", CryptoSellMethod.TrailViaKcPsar);
+
+        // BUY/DCA - Manier van kopen
+        BuyOrderMethod.Add("Market order", CryptoBuyOrderMethod.MarketOrder);
+        BuyOrderMethod.Add("Signaal prijs (limit order)", CryptoBuyOrderMethod.SignalPrice);
+        BuyOrderMethod.Add("Bied prijs (limit order)", CryptoBuyOrderMethod.BidPrice);
+        BuyOrderMethod.Add("Vraag prijs (limit order)", CryptoBuyOrderMethod.AskPrice);
+        BuyOrderMethod.Add("Gemiddelde van bied en vraag prijs (limit order)", CryptoBuyOrderMethod.BidAndAskPriceAvg);
     }
+
 
     private static void SetCheckBoxFrom(Control control, object obj, List<string> text)
     {
@@ -257,6 +287,11 @@ public partial class FrmSettings : Form
         // ------------------------------------------------------------------------------
         // General
         // ------------------------------------------------------------------------------
+        EditExchange.DataSource = new BindingSource(GlobalData.ExchangeListName, null);
+        EditExchange.DisplayMember = "Key";
+        EditExchange.ValueMember = "Value";
+        EditExchange.SelectedValue = settings.General.Exchange;
+
         EditBlackTheming.Checked = settings.General.BlackTheming;
         EditTradingApp.SelectedIndex = (int)settings.General.TradingApp;
         EditDoubleClickAction.SelectedIndex = (int)settings.General.DoubleClickAction;
@@ -264,6 +299,7 @@ public partial class FrmSettings : Form
         EditSoundHeartBeatMinutes.Value = settings.General.SoundHeartBeatMinutes;
         EditGetCandleInterval.Value = settings.General.GetCandleInterval;
 
+        EditShowInvalidSignals.Checked = settings.General.ShowInvalidSignals;
         EditShowFluxIndicator5m.Checked = settings.General.ShowFluxIndicator5m;
         EditHideTechnicalStuffSignals.Checked = settings.General.HideTechnicalStuffSignals;
         EditGlobalDataRemoveSignalAfterxCandles.Value = settings.General.RemoveSignalAfterxCandles;
@@ -280,7 +316,7 @@ public partial class FrmSettings : Form
         int yPos = 40;
         foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
         {
-            if (quoteData.SymbolList.Count > 5)
+            if (quoteData.SymbolList.Count > 5 || quoteData.Name.Equals("BTC") || quoteData.Name.Equals("USDT"))
                 BaseCoinList.Add(new SettingsQuoteCoin(quoteData, yPos += 26, tabBasismunten.Controls));
             else
             {
@@ -312,7 +348,6 @@ public partial class FrmSettings : Form
 
         EditMinimumTickPercentage.Value = settings.Signal.MinimumTickPercentage;
         EditLogMinimumTickPercentage.Checked = settings.Signal.LogMinimumTickPercentage;
-        EditShowInvalidSignals.Checked = settings.Signal.ShowInvalidSignals;
 
         foreach (var item in AnalyzeInterval)
             SetCheckBoxFrom(item.Key, item.Value, settings.Signal.Analyze.Interval);
@@ -429,7 +464,14 @@ public partial class FrmSettings : Form
         EditBarometer24hBotMinimal.Value = settings.Trading.Barometer24hBotMinimal;
 
         // Buy
-        EditBuyStepInMethod.SelectedIndex = (int)settings.Trading.BuyStepInMethod;
+        EditBuyStepInMethod.DataSource = new BindingSource(BuyStepInMethod, null);
+        EditBuyStepInMethod.DisplayMember = "Key";
+        EditBuyStepInMethod.ValueMember = "Value";
+        //EditExchange.SelectedText = settings.General.ExchangeName;
+        EditBuyStepInMethod.SelectedValue = settings.Trading.BuyStepInMethod;
+
+        //BuyStepInMethod?
+        //EditBuyStepInMethod.SelectedIndex = (int)settings.Trading.BuyStepInMethod;
         EditBuyOrderMethod.SelectedIndex = (int)settings.Trading.BuyOrderMethod;
         EditGlobalBuyRemoveTime.Value = settings.Trading.GlobalBuyRemoveTime;
         EditGlobalBuyVarying.Value = settings.Trading.GlobalBuyVarying;
@@ -466,6 +508,7 @@ public partial class FrmSettings : Form
         //EditDoNotEnterTrade.Checked = settings.Trading.DoNotEnterTrade;
         EditTradeViaBinance.Checked = settings.Trading.TradeViaExchange;
         EditTradeViaPaperTrading.Checked = settings.Trading.TradeViaPaperTrading;
+        EditOpenNewPositions.Checked = settings.Trading.OpenNewPositions;
         //EditTradeViaAltradyWebhook.Checked = settings.Trading.TradeViaAltradyWebhook;
 
 
@@ -534,6 +577,9 @@ public partial class FrmSettings : Form
         // ------------------------------------------------------------------------------
         // General
         // ------------------------------------------------------------------------------
+        settings.General.Exchange = (Model.CryptoExchange)EditExchange.SelectedValue;
+        settings.General.ExchangeId = settings.General.Exchange.Id;
+        settings.General.ExchangeName = settings.General.Exchange.Name;
         settings.General.BlackTheming = EditBlackTheming.Checked;
         settings.General.TradingApp = (CryptoTradingApp)EditTradingApp.SelectedIndex;
         settings.General.DoubleClickAction = (DoubleClickAction)EditDoubleClickAction.SelectedIndex;
@@ -543,6 +589,7 @@ public partial class FrmSettings : Form
         settings.General.FontName = Font.Name;
         settings.General.FontSize = Font.Size;
 
+        settings.General.ShowInvalidSignals = EditShowInvalidSignals.Checked;
         settings.General.ShowFluxIndicator5m = EditShowFluxIndicator5m.Checked;
         settings.General.HideTechnicalStuffSignals = EditHideTechnicalStuffSignals.Checked;
         settings.General.RemoveSignalAfterxCandles = (int)EditGlobalDataRemoveSignalAfterxCandles.Value;
@@ -580,7 +627,6 @@ public partial class FrmSettings : Form
 
         settings.Signal.MinimumTickPercentage = EditMinimumTickPercentage.Value;
         settings.Signal.LogMinimumTickPercentage = EditLogMinimumTickPercentage.Checked;
-        settings.Signal.ShowInvalidSignals = EditShowInvalidSignals.Checked;
 
         settings.Signal.Analyze.Interval.Clear();
         foreach (var item in AnalyzeInterval)
@@ -721,7 +767,8 @@ public partial class FrmSettings : Form
         settings.Trading.Barometer24hBotMinimal = EditBarometer24hBotMinimal.Value;
 
         // buy
-        settings.Trading.BuyStepInMethod = (CryptoBuyStepInMethod)EditBuyStepInMethod.SelectedIndex;
+        settings.Trading.BuyStepInMethod = (CryptoBuyStepInMethod)EditBuyStepInMethod.SelectedValue;
+        //settings.Trading.BuyStepInMethod = (CryptoBuyStepInMethod)EditBuyStepInMethod.SelectedIndex;
         settings.Trading.BuyOrderMethod = (CryptoBuyOrderMethod)EditBuyOrderMethod.SelectedIndex;
         settings.Trading.GlobalBuyRemoveTime = (int)EditGlobalBuyRemoveTime.Value;
         settings.Trading.GlobalBuyVarying = EditGlobalBuyVarying.Value;
@@ -762,6 +809,7 @@ public partial class FrmSettings : Form
         //settings.Trading.DoNotEnterTrade = EditDoNotEnterTrade.Checked;
         settings.Trading.TradeViaExchange = EditTradeViaBinance.Checked;
         settings.Trading.TradeViaPaperTrading = EditTradeViaPaperTrading.Checked;
+        settings.Trading.OpenNewPositions = EditOpenNewPositions.Checked;
         //settings.Trading.TradeViaAltradyWebhook = EditTradeViaAltradyWebhook.Checked;
 
 

@@ -142,7 +142,7 @@ public static class TradingConfig
                 if (!target.ContainsKey(symbol))
                     target.Add(symbol, true);
 
-                if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
+                if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
                 {
                     if (!exchange.SymbolListName.ContainsKey(symbol))
                     {

@@ -22,6 +22,7 @@ public class SettingsTrading
 {
     // Is de BOT actief
     public bool Active { get; set; } = false;
+    public bool OpenNewPositions { get; set; } = true;
 
     //***************************
     // Slots

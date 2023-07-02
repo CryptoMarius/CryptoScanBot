@@ -105,15 +105,19 @@ public class DataStore
                         }
                         readStream.Close();
                     }
-                    catch (InvalidCastException) //error
+                    catch (InvalidCastException error)
                     {
                         // Een vorig formaat
                         File.Delete(filename);
+                        GlobalData.Logger.Error(error);
+                        GlobalData.AddTextToLogTab(error.ToString() + "\r\n");
                         //throw;
                     }
-                    catch (Exception) //error
+                    catch (Exception error)
                     {
                         GlobalData.AddTextToLogTab("Problem " + symbol.Name);
+                        GlobalData.Logger.Error(error);
+                        GlobalData.AddTextToLogTab(error.ToString() + "\r\n");
                         // Een vorig formaat
                         File.Delete(filename);
                         //throw;

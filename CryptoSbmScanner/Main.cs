@@ -1,6 +1,6 @@
 ﻿using CryptoSbmScanner.Context;
 using CryptoSbmScanner.Enums;
-using CryptoSbmScanner.Exchange.Binance;
+using CryptoSbmScanner.Exchange;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Settings;
@@ -8,6 +8,10 @@ using CryptoSbmScanner.Signal;
 
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Win32;
+
+using NLog;
+using NLog.Config;
+using NLog.Targets;
 
 using System.Drawing.Drawing2D;
 using System.Reflection;
@@ -17,11 +21,6 @@ namespace CryptoSbmScanner;
 
 public partial class FrmMain : Form
 {
-
-    //Database die gebruikt wordt in de main thread
-    //private readonly CryptoDatabase databaseMain;
-
-    //private bool ProgramExit; // Mislukte manier om excepties bij afsluiten te voorkomen (todo), even aanzien of het effect heeft en dan verwijderen
     private int createdSignalCount; // Tellertje met het aantal meldingen (komt in de taakbalk c.q. applicatie titel)
     private readonly Microsoft.Web.WebView2.WinForms.WebView2 _webViewAltradyRef = null;
     private readonly ColorSchemeTest theme = new();
@@ -71,6 +70,7 @@ public partial class FrmMain : Form
 
         GlobalData.SignalEvent = SignalArrived;
 
+
         // Wat event handles zetten
         comboBoxBarometerQuote.SelectedIndexChanged += ShowBarometerStuff;
         comboBoxBarometerInterval.SelectedIndexChanged += ShowBarometerStuff;
@@ -117,17 +117,9 @@ public partial class FrmMain : Form
         //string x = Model.CryptoExchange.Encrypt("xxxx", false);
         //string y = Model.CryptoExchange.Decrypt(x, false);
 
-        // TODO: Andere exchanges
-        BinanceApi.SetExchangeDefaults();
-
+        ExchangeClass.SetExchangeDefaults();
         CryptoDatabase.SetDatabaseDefaults();
-#if !SQLDATABASE
-        CryptoDatabase.BasePath = GlobalData.GetBaseDir();
-        CryptoDatabase.CreateDatabase();
-#endif
-        // ongebruikt
-        //databaseMain = new();
-        //databaseMain.Connection.Open();
+
 
 
         GlobalData.LoadExchanges();
@@ -141,19 +133,23 @@ public partial class FrmMain : Form
 
         ResumeComputer(false);
 
-
-        //AppDomain.CurrentDomain.ProcessExit += (sender, eventArgs) =>
-        //{
-        //    GlobalData.AddTextToLogTab("Exiting!");
-        //    ProgramExit = true;
-        //};
-
         SystemEvents.PowerModeChanged += OnPowerChange;
     }
 
 
     private void ApplySettings()
     {
+        // De exchange overnemen die is ingesteld (vanuit dialoog wordt reeds gedaan, bij laden)
+        if (GlobalData.Settings.General.Exchange == null)
+        {
+            if (GlobalData.ExchangeListId.TryGetValue(GlobalData.Settings.General.ExchangeId, out var exchange))
+            {
+                GlobalData.Settings.General.Exchange = exchange;
+                GlobalData.Settings.General.ExchangeId = exchange.Id;
+                GlobalData.Settings.General.ExchangeName = exchange.Name;
+            }
+        }
+
         comboBoxBarometerQuote.BeginUpdate();
         comboBoxBarometerInterval.BeginUpdate();
         try
@@ -297,7 +293,11 @@ public partial class FrmMain : Form
         GlobalData.ThreadMonitorCandle = new ThreadMonitorCandle();
 #if TRADEBOT
         GlobalData.ThreadMonitorOrder = new ThreadMonitorOrder();
-        GlobalData.TaskBinanceStreamUserData = new BinanceStreamUserData();
+        if (GlobalData.Settings.ApiKey != "")
+        {
+            GlobalData.AddTextToLogTab("Starting task for monitoring events");
+            ExchangeClass.StartUserDataStream();
+        }
 #endif
 #if BALANCING
         GlobalData.ThreadBalanceSymbols = new ThreadBalanceSymbols();
@@ -324,29 +324,24 @@ public partial class FrmMain : Form
         TimerSoundHeartBeat.Enabled = false;
         TimerGetExchangeInfo.Enabled = false;
         TimerShowBarometer.Enabled = false;
+        ThreadTelegramBot.running = false;
 
 
         // De socket streams
-        GlobalData.TaskBinanceStreamPriceTicker?.StopAsync();
+        //GlobalData.TaskBinanceStreamPriceTicker?.StopAsync();
+        _ = ExchangeClass.StopPriceTickerStream();
 
         // Threads (of tasks)
         GlobalData.ThreadMonitorCandle?.Stop();
 #if TRADEBOT
         GlobalData.ThreadMonitorOrder?.Stop();
-        GlobalData.TaskBinanceStreamUserData?.StopAsync();
+        _ = ExchangeClass.StopUserDataStream();
 #endif
 #if BALANCING
         //GlobalData.ThreadBalanceSymbols?.Stop();
 #endif
 
-        foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
-        {
-            foreach (BinanceStream1mCandles binanceStream1mCandles in quoteData.BinanceStream1mCandles)
-            {
-                binanceStream1mCandles?.StopAsync();
-            }
-            quoteData.BinanceStream1mCandles.Clear();
-        }
+        _ = ExchangeClass.Stop1mCandleStream();
 #if SQLDATABASE
         GlobalData.TaskSaveCandles.Stop();
 
@@ -362,7 +357,6 @@ public partial class FrmMain : Form
 #else
         DataStore.SaveCandles();
 #endif
-        ThreadTelegramBot.running = false;
 
         WindowLocationSave();
         GlobalData.Settings.General.SelectedBarometerQuote = comboBoxBarometerQuote.Text;
@@ -392,7 +386,7 @@ public partial class FrmMain : Form
 
     private void PlaySound(string text, bool test = false)
     {
-        if (IsHandleCreated) //!ProgramExit && 
+        if (IsHandleCreated)
         {
             if (GlobalData.Settings.Signal.SoundsActive)
                 ThreadSoundPlayer.AddToQueue(text);
@@ -401,7 +395,7 @@ public partial class FrmMain : Form
 
     private void PlaySpeech(string text, bool test = false)
     {
-        if (IsHandleCreated) //!ProgramExit && 
+        if (IsHandleCreated)
         {
             if (GlobalData.Settings.Signal.SoundsActive || test)
                 ThreadSpeechPlayer.AddToQueue(text);
@@ -410,7 +404,7 @@ public partial class FrmMain : Form
 
     private void AddTextToTelegram(string text, bool extraLineFeed = false)
     {
-        if (IsHandleCreated) //!ProgramExit && 
+        if (IsHandleCreated)
         {
             //return; //t'ding crasht en is niet fijn
             ThreadTelegramBot.SendMessage(text);
@@ -419,7 +413,7 @@ public partial class FrmMain : Form
 
     private void AddTextToLogTab(string text, bool extraLineFeed = false)
     {
-        //if ((components != null) && (!ProgramExit) && (IsHandleCreated)) gaat nu via een queue, wordt wel opgepakt
+        //if ((components != null) && (IsHandleCreated)) gaat nu via een queue, wordt wel opgepakt
         {
             text = text.TrimEnd();
             GlobalData.Logger.Info(text);
@@ -448,7 +442,7 @@ public partial class FrmMain : Form
     /// </summary>
     private void AssetsHaveChangedEvent(string text, bool extraLineFeed = false)
     {
-        if (components != null && IsHandleCreated) //!ProgramExit && 
+        if (components != null && IsHandleCreated)
         {
             //decimal valueBtc, valueUsdt;
             //StringBuilder stringBuilder = new StringBuilder();
@@ -475,7 +469,7 @@ public partial class FrmMain : Form
 
     private void ToolStripMenuItemRefresh_Click_1(object sender, EventArgs e)
     {
-        Task.Run(async () => { await BinanceFetchCandles.ExecuteAsync(); }); // niet wachten tot deze klaar is
+        _ = ExchangeClass.FetchCandles(); // niet wachten tot deze klaar is
     }
 
 
@@ -488,7 +482,7 @@ public partial class FrmMain : Form
         int intWidth = pictureBox1.Width;
         int intHeight = pictureBox1.Height;
 
-        if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
         {
             if (quoteData != null && exchange.SymbolListName.TryGetValue(Constants.SymbolNameBarometerPrice + quoteData.Name, out CryptoSymbol symbol))
             {
@@ -686,7 +680,7 @@ public partial class FrmMain : Form
         // Voor de emulator willen we naar een datum in het verleden, maar hoe doe je voor dit stukje code?
         //long candleCloseTime = candle.OpenTime + 60;
 
-        if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
         {
             foreach (PauseTradingRule rule in GlobalData.Settings.Trading.PauseTradingRules)
             {
@@ -754,7 +748,7 @@ public partial class FrmMain : Form
             BarometerTools barometerTools = new();
             barometerTools.Execute();
 
-            if (!GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
+            if (!GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
                 return;
 
             string baseCoin = "";
@@ -906,7 +900,7 @@ public partial class FrmMain : Form
     private void ConnectionWasLostEvent(string text, bool extraLineFeed = false)
     {
         // Onderdruk alle foutmeldingen totdat het hersteld is
-        if (components != null && IsHandleCreated) //!ProgramExit && 
+        if (components != null && IsHandleCreated)
         {
             GlobalData.AddTextToLogTab("Debug: ConnectionWasLostEvent!");
             // anders krijgen we alleen maar fouten dat er geen candles zijn
@@ -920,7 +914,7 @@ public partial class FrmMain : Form
         // Plan een verversing omdat er een connection timeout was.
         // Dit kan een aantal berekeningen onderbroken hebben
         // (er komen een aantal reconnects, daarom circa 20 seconden)
-        if (components != null && IsHandleCreated) //!ProgramExit && 
+        if (components != null && IsHandleCreated)
         {
             GlobalData.AddTextToLogTab("Debug: ConnectionWasRestoredEvent!");
             GlobalData.ApplicationStatus = CryptoApplicationStatus.AppStatusRunning;
@@ -933,7 +927,7 @@ public partial class FrmMain : Form
     {
         //if (GlobalData.ApplicationStatus == ApplicationStatus.AppStatusRunning)
         {
-            if (components != null && IsHandleCreated) //&& (!ProgramExit) 
+            if (components != null && IsHandleCreated)
             {
                 if (value)
                     Invoke((MethodInvoker)(() => InitTimerInterval(ref TimerGetExchangeInfo, GlobalData.Settings.General.GetCandleInterval * 60)));
@@ -977,8 +971,21 @@ public partial class FrmMain : Form
     }
 
 
+    private void GetReloadRelatedSettings(out int activeExchange, out string activeQuoteData)
+    {
+        activeExchange = GlobalData.Settings.General.ExchangeId;
+        activeQuoteData = "";
+        foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
+        {
+            if (quoteData.FetchCandles)
+                activeQuoteData += "," + quoteData.Name;
+        }
+    }
+
     private void ToolStripMenuItemSettings_Click(object sender, EventArgs e)
     {
+        GetReloadRelatedSettings(out int activeExchange, out string activeQuotes);
+
         // Dan wordt de basecoin en coordinaten etc. bewaard voor een volgende keer
         WindowLocationSave();
         GlobalData.Settings.Trading.Active = ApplicationTradingBot.Checked;
@@ -994,11 +1001,24 @@ public partial class FrmMain : Form
             };
             ChangeTheme(theme, form);
             form.InitSettings(GlobalData.Settings);
-            if (form.ShowDialog() == DialogResult.OK)
+            if (form.ShowDialog() != DialogResult.OK)
+                return;
+
+
+            GlobalData.SaveSettings();
+            ApplySettings();
+
+
+            // Detectie of we hebben gewisseld van Exchange (reload) of QuoteData (reload)
+            GetReloadRelatedSettings(out int activeExchange2, out string activeQuotes2);
+            bool reload = (activeExchange != activeExchange2 || activeQuotes != activeQuotes2);
+            if (reload)
             {
-                GlobalData.SaveSettings();
-                ApplySettings();
+                GlobalData.AddTextToLogTab("Debug: De exchange of QuoteData is aangepast (reload stream)!");
+                // Schedule a rest of the streams
+                InitTimerInterval(ref TimerRestartStreams, 1 * 5);
             }
+
         }
         catch (Exception error)
         {
@@ -1028,16 +1048,8 @@ public partial class FrmMain : Form
         ListViewSignalsMenuItemClearSignals_Click(null, null);
 
         PositionMonitor.AnalyseCount = 0;
-        GlobalData.TaskBinanceStreamPriceTicker.tickerCount = 0;
-
-        foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
-        {
-            for (int i = 0; i < quoteData.BinanceStream1mCandles.Count; i++)
-            {
-                BinanceStream1mCandles binanceStream1mCandles = quoteData.BinanceStream1mCandles[i];
-                binanceStream1mCandles.CandlesKLinesCount = 0;
-            }
-        }
+        ExchangeClass.Reset1mCandleStream();
+        ExchangeClass.ResetPriceTickerStream();
     }
 
 
@@ -1175,7 +1187,7 @@ public partial class FrmMain : Form
         // Zet de laatste munt in de "caption" (en taskbar) van de applicatie bar (visuele controle of er meldingen zijn)
         //Invoke(new Action(() => { this.Text = signal.Symbol.Name + " " + createdSignalCount.ToString(); }));
 
-        if (!signal.IsInvalid || (signal.IsInvalid && GlobalData.Settings.Signal.ShowInvalidSignals))
+        if (!signal.IsInvalid || (signal.IsInvalid && GlobalData.Settings.General.ShowInvalidSignals))
             GlobalData.SignalQueue.Enqueue(signal);
 
         // Speech and/or sound
@@ -1228,20 +1240,20 @@ public partial class FrmMain : Form
 
 
 
-    private async Task ActivateTradingViewBrowser(string symbolname = "BTCBUSD")
+    private async Task ActivateTradingViewBrowser(string symbolname = "BTCUSDT")
     {
+        // https://stackoverflow.com/questions/63404822/how-to-disable-cors-in-wpf-webview2
+        var userPath = GlobalData.GetBaseDir();
+        var webView2Environment = await CoreWebView2Environment.CreateAsync(null, userPath);
+        await webViewTradingView.EnsureCoreWebView2Async(webView2Environment);
+
         if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1m, out CryptoInterval interval))
             return;
 
-        if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
         {
             if (exchange.SymbolListName.TryGetValue(symbolname, out CryptoSymbol symbol))
             {
-                // https://stackoverflow.com/questions/63404822/how-to-disable-cors-in-wpf-webview2
-                var userPath = GlobalData.GetBaseDir();
-                var webView2Environment = await CoreWebView2Environment.CreateAsync(null, userPath);
-                await webViewTradingView.EnsureCoreWebView2Async(webView2Environment);
-
                 var href = Intern.TradingView.GetRef(symbol, interval);
                 Uri uri = new(href);
                 webViewTradingView.Source = uri;
@@ -1460,14 +1472,13 @@ public partial class FrmMain : Form
         //if (GlobalData.ApplicationStatus == ApplicationStatus.AppStatusRunning)
         {
             // De reguliere verversing herstellen (igv een connection timeout)
-            if (components != null && IsHandleCreated) //!ProgramExit) && 
+            if (components != null && IsHandleCreated)
             {
                 // Plan een volgende verversing omdat er bv een connection timeout was.
                 // Dit kan een aantal berekeningen onderbroken hebben
                 Invoke((MethodInvoker)(() => InitTimerInterval(ref TimerGetExchangeInfo, GlobalData.Settings.General.GetCandleInterval * 60)));
             }
-
-            Task.Run(async () => { await BinanceFetchCandles.ExecuteAsync(); }); // niet wachten tot deze klaar is
+            _ = ExchangeClass.FetchCandles(); // niet wachten tot deze klaar is
         }
     }
 
@@ -1554,7 +1565,7 @@ public partial class FrmMain : Form
             {
                 GlobalData.SaveSettings();
 
-                if (!GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
+                if (!GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
                 {
                     MessageBox.Show("Exchange bestaat niet");
                     return;
@@ -1652,16 +1663,7 @@ public partial class FrmMain : Form
 
     private void TimerCheckDataStream_Tick(object sender, EventArgs e)
     {
-        int candlesKLineCount = 0;
-        foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
-        {
-            for (int i = 0; i < quoteData.BinanceStream1mCandles.Count; i++)
-            {
-                BinanceStream1mCandles binanceStream1mCandles = quoteData.BinanceStream1mCandles[i];
-                candlesKLineCount += binanceStream1mCandles.CandlesKLinesCount;
-            }
-        }
-
+        int candlesKLineCount = ExchangeClass.Count1mCandleStream();
         if (lastCandlesKLineCount != 0 && candlesKLineCount == lastCandlesKLineCount)
         {
             GlobalData.AddTextToLogTab("Debug: De 1m data stream is gestopt!");
