@@ -4,7 +4,7 @@ using CryptoSbmScanner.Model;
 
 namespace CryptoSbmScanner.Signal;
 
-
+#if EXTRASTRATEGIES
 public class SignalSlopeSma50TurningPositive : SignalCreateBase
 {
     public SignalSlopeSma50TurningPositive(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
@@ -139,3 +139,4 @@ public class SignalSlopeSma50TurningPositive : SignalCreateBase
 
 
 }
+#endif

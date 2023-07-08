@@ -130,7 +130,11 @@ public class SignalSbm4Oversold : SignalSbmBaseOversold
             {
             SignalCreate.GetFluxIndcator(Symbol, out int fluxOverSold, out int _);
             if (fluxOverSold == 100)
-                return true;
+            {
+                // Er recovery is via de macd
+                if (IsMacdRecoveryOversold(GlobalData.Settings.Signal.SbmCandlesForMacdRecovery))
+                    return true;
+            }
         }
 
         return false;

@@ -101,13 +101,20 @@ public class SignalHelper
 
         list.Add(new AlgorithmDefinition()
         {
+            Name = "flux",
+            Strategy = CryptoSignalStrategy.Flux,
+            AnalyzeLongType = typeof(SignalFluxOversold),
+        });
+
+        list.Add(new AlgorithmDefinition()
+        {
             Name = "stobb",
             Strategy = CryptoSignalStrategy.Stobb,
             AnalyzeLongType = typeof(SignalStobbOversold),
             AnalyzeShortType = typeof(SignalStobbOverbought),
         });
 
-#if TRADEBOT
+#if EXTRASTRATEGIES
         // Experimenteel (kan wellicht weg)
         list.Add(new AlgorithmDefinition()
         {
@@ -167,13 +174,6 @@ public class SignalHelper
             Name = "sma 20 slope",
             Strategy = CryptoSignalStrategy.SlopeSma20,
             AnalyzeLongType = typeof(SignalSlopeSma20TurningPositive),
-        });
-
-        list.Add(new AlgorithmDefinition()
-        {
-            Name = "flux",
-            Strategy = CryptoSignalStrategy.Flux,
-            AnalyzeLongType = typeof(SignalFluxOversold),
         });
 
         list.Add(new AlgorithmDefinition()
