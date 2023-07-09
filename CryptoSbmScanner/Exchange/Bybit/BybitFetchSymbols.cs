@@ -15,38 +15,23 @@ namespace CryptoSbmScanner.Exchange.Bybit;
 
 public class BybitFetchSymbols
 {
-    private static void SaveInformation(IEnumerable<BybitSpotSymbol> exchangeInfo)
-    {
-        //Laad de gecachte (langere historie, minder overhad)
-        string filename = GlobalData.GetBaseDir();
-        filename += @"\Bybit\";
-        Directory.CreateDirectory(filename);
-        filename += "symbols.json";
-
-        //using (FileStream writeStream = new FileStream(filename, FileMode.Create))
-        //{
-        //    BinaryFormatter formatter = new BinaryFormatter();
-        //    formatter.Serialize(writeStream, GlobalData.Settings);
-        //    writeStream.Close();
-        //}
-
-        string text = JsonSerializer.Serialize(exchangeInfo, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
-        //var accountFile = new FileInfo(filename);
-        File.WriteAllText(filename, text);
-    }
 
     public static async Task ExecuteAsync()
     {
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue("Bybit", out Model.CryptoExchange exchange))
         {
             try
             {
                 GlobalData.AddTextToLogTab("Reading symbol information from ByBit");
                 BybitWeights.WaitForFairWeight(1);
 
+                using CryptoDatabase database = new();
+                database.Open();
+
                 //WebCallResult<BybitSpotResponse> exchangeInfo = null;
                 using var client = new BybitClient();
                 var exchangeInfo = await client.V5Api.ExchangeData.GetSpotSymbolsAsync();
+                //var exchangeInfo = await client.V5Api.ExchangeData.GetLinearInverseSymbolsAsync(Category.Spot);
 
                 // Zo af en toe komt er geen data of is de Data niet gezet.
                 // De verbindingen naar extern kunnen (tijdelijk) geblokkeerd zijn
@@ -57,12 +42,9 @@ public class BybitFetchSymbols
                 if (exchangeInfo.Data == null)
                     throw new ExchangeException("Geen exchange data ontvangen (2)");
                 
-                exchange.ExchangeInfoLastTime = DateTime.UtcNow;
 
 
 
-                using CryptoDatabase database = new();
-                database.Open();
                 using (var transaction = database.BeginTransaction())
                 {
                     List<CryptoSymbol> cache = new();
@@ -164,7 +146,18 @@ public class BybitFetchSymbols
 #endif
                         transaction.Commit();
 
-                        SaveInformation(exchangeInfo.Data.List);
+
+                        // Bewaren voor debug werkzaamheden
+                        {
+                            string filename = GlobalData.GetBaseDir();
+                            filename += @"\Bybit\";
+                            Directory.CreateDirectory(filename);
+                            filename += "symbols.json";
+
+                            string text = JsonSerializer.Serialize(exchangeInfo, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
+                            //var accountFile = new FileInfo(filename);
+                            File.WriteAllText(filename, text);
+                        }
 
 
 
@@ -175,33 +168,6 @@ public class BybitFetchSymbols
                             GlobalData.AddSymbol(symbol);
                         }
 
-
-
-                        // De index lijsten opbouwen (een gedeelte van de ~2100 munten)
-                        foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
-                        {
-                            // Lock (zie onder andere de BarometerTools)
-                            Monitor.Enter(quoteData.SymbolList);
-                            try
-                            {
-                                quoteData.SymbolList.Clear();
-                                foreach (var symbol in exchange.SymbolListName.Values)
-                                {
-                                    if (symbol.Quote.Equals(quoteData.Name) && symbol.Status == 1 && !symbol.IsBarometerSymbol())
-                                    {
-                                        quoteData.SymbolList.Add(symbol);
-                                    }
-                                }
-                            }
-                            finally
-                            {
-                                Monitor.Exit(quoteData.SymbolList);
-                            }
-                        }
-
-                        // De (nieuwe)muntparen toevoegen aan de userinterface
-                        GlobalData.SymbolsHaveChanged("");
-
                     }
                     catch (Exception error)
                     {
@@ -211,7 +177,9 @@ public class BybitFetchSymbols
                         throw;
                     }
                 }
-                database.Close();
+
+                exchange.LastTimeFetched = DateTime.UtcNow;
+                database.Connection.Update(exchange);
 
             }
             catch (Exception error)

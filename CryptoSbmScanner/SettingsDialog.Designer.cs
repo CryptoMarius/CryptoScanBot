@@ -213,14 +213,14 @@ partial class FrmSettings
         EditAnalyzeCandleJumpUp = new CheckBox();
         EditAnalyzeCandleJumpDown = new CheckBox();
         EditAnalysisCandleJumpPercentage = new NumericUpDown();
-        tabTrading = new TabPage();
+        tabPageTrading = new TabPage();
+        EditOpenNewPositions = new CheckBox();
         label83 = new Label();
         EditBuyStepInMethod = new ComboBox();
         label82 = new Label();
         EditDcaStepInMethod = new ComboBox();
         label65 = new Label();
         EditDynamicTpPercentage = new NumericUpDown();
-        EditLockProfits = new CheckBox();
         EditTradeViaBinance = new CheckBox();
         label63 = new Label();
         EditSellMethod = new ComboBox();
@@ -267,7 +267,7 @@ partial class FrmSettings
         EditMonitorBullishEngulfing = new CheckBox();
         EditAnalyzeBullishEngulfing = new CheckBox();
         EditAnalyzeFluxOversold = new CheckBox();
-        EditMonitorFluxOversold = new CheckBox();
+        EditMonitorFlux = new CheckBox();
         EditAnalyzeSbm4Oversold = new CheckBox();
         EditMonitorSbm4 = new CheckBox();
         EditBotSlopeEma20TurningPositive = new CheckBox();
@@ -330,7 +330,6 @@ partial class FrmSettings
         toolTip1 = new ToolTip(components);
         imageList1 = new ImageList(components);
         colorDialog1 = new ColorDialog();
-        EditOpenNewPositions = new CheckBox();
         panel2.SuspendLayout();
         panel1.SuspendLayout();
         tabControl.SuspendLayout();
@@ -375,7 +374,7 @@ partial class FrmSettings
         tabSignalJump.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)EditJumpCandlesLookbackCount).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditAnalysisCandleJumpPercentage).BeginInit();
-        tabTrading.SuspendLayout();
+        tabPageTrading.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)EditDynamicTpPercentage).BeginInit();
         groupBoxSlots.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)EditSlotsMaximalExchange).BeginInit();
@@ -483,7 +482,7 @@ partial class FrmSettings
         tabControl.Controls.Add(tabSignalStobb);
         tabControl.Controls.Add(tabSignalSbm);
         tabControl.Controls.Add(tabSignalJump);
-        tabControl.Controls.Add(tabTrading);
+        tabControl.Controls.Add(tabPageTrading);
         tabControl.Controls.Add(tabWhiteListOversold);
         tabControl.Controls.Add(tabBlackListOversold);
         tabControl.Controls.Add(tabWhiteListOverbought);
@@ -2497,86 +2496,96 @@ partial class FrmSettings
         EditAnalysisCandleJumpPercentage.Size = new Size(56, 23);
         EditAnalysisCandleJumpPercentage.TabIndex = 117;
         // 
-        // tabTrading
+        // tabPageTrading
         // 
-        tabTrading.Controls.Add(EditOpenNewPositions);
-        tabTrading.Controls.Add(label83);
-        tabTrading.Controls.Add(EditBuyStepInMethod);
-        tabTrading.Controls.Add(label82);
-        tabTrading.Controls.Add(EditDcaStepInMethod);
-        tabTrading.Controls.Add(label65);
-        tabTrading.Controls.Add(EditDynamicTpPercentage);
-        tabTrading.Controls.Add(EditLockProfits);
-        tabTrading.Controls.Add(EditTradeViaBinance);
-        tabTrading.Controls.Add(label63);
-        tabTrading.Controls.Add(EditSellMethod);
-        tabTrading.Controls.Add(EditTradeViaPaperTrading);
-        tabTrading.Controls.Add(label60);
-        tabTrading.Controls.Add(EditDcaOrderMethod);
-        tabTrading.Controls.Add(label36);
-        tabTrading.Controls.Add(label81);
-        tabTrading.Controls.Add(label57);
-        tabTrading.Controls.Add(label54);
-        tabTrading.Controls.Add(label80);
-        tabTrading.Controls.Add(groupBoxSlots);
-        tabTrading.Controls.Add(groupBox2);
-        tabTrading.Controls.Add(groupBox1);
-        tabTrading.Controls.Add(EditMonitorJump);
-        tabTrading.Controls.Add(EditMonitorBullishEngulfing);
-        tabTrading.Controls.Add(EditAnalyzeBullishEngulfing);
-        tabTrading.Controls.Add(EditAnalyzeFluxOversold);
-        tabTrading.Controls.Add(EditMonitorFluxOversold);
-        tabTrading.Controls.Add(EditAnalyzeSbm4Oversold);
-        tabTrading.Controls.Add(EditMonitorSbm4);
-        tabTrading.Controls.Add(EditBotSlopeEma20TurningPositive);
-        tabTrading.Controls.Add(EditBotSlopeSma20TurningPositive);
-        tabTrading.Controls.Add(EditAnalyzeSlopeEma20TurningPositive);
-        tabTrading.Controls.Add(EditAnalyzeSlopeSma20TurningPositive);
-        tabTrading.Controls.Add(EditBotSlopeEma50TurningPositive);
-        tabTrading.Controls.Add(EditBotSlopeSma50TurningPositive);
-        tabTrading.Controls.Add(EditBotPriceCrossingEma50);
-        tabTrading.Controls.Add(EditBotPriceCrossingSma50);
-        tabTrading.Controls.Add(EditBotPriceCrossingEma20);
-        tabTrading.Controls.Add(EditBotPriceCrossingSma20);
-        tabTrading.Controls.Add(label74);
-        tabTrading.Controls.Add(label62);
-        tabTrading.Controls.Add(EditBuyOrderMethod);
-        tabTrading.Controls.Add(EditDcaCount);
-        tabTrading.Controls.Add(label67);
-        tabTrading.Controls.Add(label68);
-        tabTrading.Controls.Add(EditDcaFactor);
-        tabTrading.Controls.Add(label69);
-        tabTrading.Controls.Add(EditDcaPercentage);
-        tabTrading.Controls.Add(EditGlobalStopLimitPercentage);
-        tabTrading.Controls.Add(label70);
-        tabTrading.Controls.Add(EditGlobalStopPercentage);
-        tabTrading.Controls.Add(label71);
-        tabTrading.Controls.Add(label72);
-        tabTrading.Controls.Add(EditProfitPercentage);
-        tabTrading.Controls.Add(label73);
-        tabTrading.Controls.Add(EditGlobalBuyCooldownTime);
-        tabTrading.Controls.Add(EditGlobalBuyVarying);
-        tabTrading.Controls.Add(label47);
-        tabTrading.Controls.Add(label46);
-        tabTrading.Controls.Add(EditGlobalBuyRemoveTime);
-        tabTrading.Controls.Add(EditAnalyzeSlopeEma50TurningPositive);
-        tabTrading.Controls.Add(EditMonitorStobb);
-        tabTrading.Controls.Add(EditMonitorSbm1);
-        tabTrading.Controls.Add(EditMonitorSbm2);
-        tabTrading.Controls.Add(EditMonitorSbm3);
-        tabTrading.Controls.Add(EditAnalyzeSlopeSma50TurningPositive);
-        tabTrading.Controls.Add(EditAnalyzePriceCrossedEma50);
-        tabTrading.Controls.Add(EditAnalyzePriceCrossedSma50);
-        tabTrading.Controls.Add(EditAnalyzePriceCrossedEma20);
-        tabTrading.Controls.Add(EditAnalyzePriceCrossedSma20);
-        tabTrading.Location = new Point(4, 24);
-        tabTrading.Margin = new Padding(4, 3, 4, 3);
-        tabTrading.Name = "tabTrading";
-        tabTrading.Padding = new Padding(4, 3, 4, 3);
-        tabTrading.Size = new Size(1232, 780);
-        tabTrading.TabIndex = 11;
-        tabTrading.Text = "Trading";
-        tabTrading.UseVisualStyleBackColor = true;
+        tabPageTrading.Controls.Add(EditOpenNewPositions);
+        tabPageTrading.Controls.Add(label83);
+        tabPageTrading.Controls.Add(EditBuyStepInMethod);
+        tabPageTrading.Controls.Add(label82);
+        tabPageTrading.Controls.Add(EditDcaStepInMethod);
+        tabPageTrading.Controls.Add(label65);
+        tabPageTrading.Controls.Add(EditDynamicTpPercentage);
+        tabPageTrading.Controls.Add(EditTradeViaBinance);
+        tabPageTrading.Controls.Add(label63);
+        tabPageTrading.Controls.Add(EditSellMethod);
+        tabPageTrading.Controls.Add(EditTradeViaPaperTrading);
+        tabPageTrading.Controls.Add(label60);
+        tabPageTrading.Controls.Add(EditDcaOrderMethod);
+        tabPageTrading.Controls.Add(label36);
+        tabPageTrading.Controls.Add(label81);
+        tabPageTrading.Controls.Add(label57);
+        tabPageTrading.Controls.Add(label54);
+        tabPageTrading.Controls.Add(label80);
+        tabPageTrading.Controls.Add(groupBoxSlots);
+        tabPageTrading.Controls.Add(groupBox2);
+        tabPageTrading.Controls.Add(groupBox1);
+        tabPageTrading.Controls.Add(EditMonitorJump);
+        tabPageTrading.Controls.Add(EditMonitorBullishEngulfing);
+        tabPageTrading.Controls.Add(EditAnalyzeBullishEngulfing);
+        tabPageTrading.Controls.Add(EditAnalyzeFluxOversold);
+        tabPageTrading.Controls.Add(EditMonitorFlux);
+        tabPageTrading.Controls.Add(EditAnalyzeSbm4Oversold);
+        tabPageTrading.Controls.Add(EditMonitorSbm4);
+        tabPageTrading.Controls.Add(EditBotSlopeEma20TurningPositive);
+        tabPageTrading.Controls.Add(EditBotSlopeSma20TurningPositive);
+        tabPageTrading.Controls.Add(EditAnalyzeSlopeEma20TurningPositive);
+        tabPageTrading.Controls.Add(EditAnalyzeSlopeSma20TurningPositive);
+        tabPageTrading.Controls.Add(EditBotSlopeEma50TurningPositive);
+        tabPageTrading.Controls.Add(EditBotSlopeSma50TurningPositive);
+        tabPageTrading.Controls.Add(EditBotPriceCrossingEma50);
+        tabPageTrading.Controls.Add(EditBotPriceCrossingSma50);
+        tabPageTrading.Controls.Add(EditBotPriceCrossingEma20);
+        tabPageTrading.Controls.Add(EditBotPriceCrossingSma20);
+        tabPageTrading.Controls.Add(label74);
+        tabPageTrading.Controls.Add(label62);
+        tabPageTrading.Controls.Add(EditBuyOrderMethod);
+        tabPageTrading.Controls.Add(EditDcaCount);
+        tabPageTrading.Controls.Add(label67);
+        tabPageTrading.Controls.Add(label68);
+        tabPageTrading.Controls.Add(EditDcaFactor);
+        tabPageTrading.Controls.Add(label69);
+        tabPageTrading.Controls.Add(EditDcaPercentage);
+        tabPageTrading.Controls.Add(EditGlobalStopLimitPercentage);
+        tabPageTrading.Controls.Add(label70);
+        tabPageTrading.Controls.Add(EditGlobalStopPercentage);
+        tabPageTrading.Controls.Add(label71);
+        tabPageTrading.Controls.Add(label72);
+        tabPageTrading.Controls.Add(EditProfitPercentage);
+        tabPageTrading.Controls.Add(label73);
+        tabPageTrading.Controls.Add(EditGlobalBuyCooldownTime);
+        tabPageTrading.Controls.Add(EditGlobalBuyVarying);
+        tabPageTrading.Controls.Add(label47);
+        tabPageTrading.Controls.Add(label46);
+        tabPageTrading.Controls.Add(EditGlobalBuyRemoveTime);
+        tabPageTrading.Controls.Add(EditAnalyzeSlopeEma50TurningPositive);
+        tabPageTrading.Controls.Add(EditMonitorStobb);
+        tabPageTrading.Controls.Add(EditMonitorSbm1);
+        tabPageTrading.Controls.Add(EditMonitorSbm2);
+        tabPageTrading.Controls.Add(EditMonitorSbm3);
+        tabPageTrading.Controls.Add(EditAnalyzeSlopeSma50TurningPositive);
+        tabPageTrading.Controls.Add(EditAnalyzePriceCrossedEma50);
+        tabPageTrading.Controls.Add(EditAnalyzePriceCrossedSma50);
+        tabPageTrading.Controls.Add(EditAnalyzePriceCrossedEma20);
+        tabPageTrading.Controls.Add(EditAnalyzePriceCrossedSma20);
+        tabPageTrading.Location = new Point(4, 24);
+        tabPageTrading.Margin = new Padding(4, 3, 4, 3);
+        tabPageTrading.Name = "tabPageTrading";
+        tabPageTrading.Padding = new Padding(4, 3, 4, 3);
+        tabPageTrading.Size = new Size(1232, 780);
+        tabPageTrading.TabIndex = 11;
+        tabPageTrading.Text = "Trading";
+        tabPageTrading.UseVisualStyleBackColor = true;
+        // 
+        // EditOpenNewPositions
+        // 
+        EditOpenNewPositions.AutoSize = true;
+        EditOpenNewPositions.Location = new Point(908, 69);
+        EditOpenNewPositions.Margin = new Padding(4, 3, 4, 3);
+        EditOpenNewPositions.Name = "EditOpenNewPositions";
+        EditOpenNewPositions.Size = new Size(159, 19);
+        EditOpenNewPositions.TabIndex = 264;
+        EditOpenNewPositions.Text = "Nieuwe posities innemen";
+        EditOpenNewPositions.UseVisualStyleBackColor = true;
         // 
         // label83
         // 
@@ -2592,7 +2601,6 @@ partial class FrmSettings
         // 
         EditBuyStepInMethod.DropDownStyle = ComboBoxStyle.DropDownList;
         EditBuyStepInMethod.FormattingEnabled = true;
-        EditBuyStepInMethod.Items.AddRange(new object[] { "Direct na het signaal", "Op het opgegeven percentage", "Na het volgende signaal (sbm/stobb)", "Trace via de Keltner Channel en PSAR" });
         EditBuyStepInMethod.Location = new Point(185, 170);
         EditBuyStepInMethod.Margin = new Padding(4, 3, 4, 3);
         EditBuyStepInMethod.Name = "EditBuyStepInMethod";
@@ -2613,7 +2621,6 @@ partial class FrmSettings
         // 
         EditDcaStepInMethod.DropDownStyle = ComboBoxStyle.DropDownList;
         EditDcaStepInMethod.FormattingEnabled = true;
-        EditDcaStepInMethod.Items.AddRange(new object[] { "Direct na het signaal", "Op het opgegeven percentage", "Na het volgende signaal (sbm/stobb)", "Trace via de Keltner Channel en PSAR" });
         EditDcaStepInMethod.Location = new Point(185, 308);
         EditDcaStepInMethod.Margin = new Padding(4, 3, 4, 3);
         EditDcaStepInMethod.Name = "EditDcaStepInMethod";
@@ -2623,7 +2630,7 @@ partial class FrmSettings
         // label65
         // 
         label65.AutoSize = true;
-        label65.Location = new Point(17, 597);
+        label65.Location = new Point(17, 571);
         label65.Margin = new Padding(4, 0, 4, 0);
         label65.Name = "label65";
         label65.Size = new Size(143, 15);
@@ -2633,23 +2640,12 @@ partial class FrmSettings
         // EditDynamicTpPercentage
         // 
         EditDynamicTpPercentage.DecimalPlaces = 2;
-        EditDynamicTpPercentage.Location = new Point(185, 595);
+        EditDynamicTpPercentage.Location = new Point(185, 569);
         EditDynamicTpPercentage.Margin = new Padding(4, 3, 4, 3);
         EditDynamicTpPercentage.Name = "EditDynamicTpPercentage";
         EditDynamicTpPercentage.Size = new Size(88, 23);
         EditDynamicTpPercentage.TabIndex = 259;
         EditDynamicTpPercentage.Value = new decimal(new int[] { 75, 0, 0, 131072 });
-        // 
-        // EditLockProfits
-        // 
-        EditLockProfits.AutoSize = true;
-        EditLockProfits.Location = new Point(21, 568);
-        EditLockProfits.Margin = new Padding(4, 3, 4, 3);
-        EditLockProfits.Name = "EditLockProfits";
-        EditLockProfits.Size = new Size(88, 19);
-        EditLockProfits.TabIndex = 256;
-        EditLockProfits.Text = "Lock profits";
-        EditLockProfits.UseVisualStyleBackColor = true;
         // 
         // EditTradeViaBinance
         // 
@@ -2676,7 +2672,6 @@ partial class FrmSettings
         // 
         EditSellMethod.DropDownStyle = ComboBoxStyle.DropDownList;
         EditSellMethod.FormattingEnabled = true;
-        EditSellMethod.Items.AddRange(new object[] { "Limit order op een vaste winst percentage", "Limit order op dynamisch percentage van de BB", "Trace via de Keltner Channel en PSAR" });
         EditSellMethod.Location = new Point(185, 512);
         EditSellMethod.Margin = new Padding(4, 3, 4, 3);
         EditSellMethod.Name = "EditSellMethod";
@@ -2708,7 +2703,6 @@ partial class FrmSettings
         // 
         EditDcaOrderMethod.DropDownStyle = ComboBoxStyle.DropDownList;
         EditDcaOrderMethod.FormattingEnabled = true;
-        EditDcaOrderMethod.Items.AddRange(new object[] { "Limit order", "Market order", "Bied prijs", "Vraag prijs", "Het gemiddelde van de bied en vraag prijs" });
         EditDcaOrderMethod.Location = new Point(185, 336);
         EditDcaOrderMethod.Margin = new Padding(4, 3, 4, 3);
         EditDcaOrderMethod.Name = "EditDcaOrderMethod";
@@ -2719,7 +2713,7 @@ partial class FrmSettings
         // 
         label36.AutoSize = true;
         label36.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
-        label36.Location = new Point(17, 624);
+        label36.Location = new Point(17, 613);
         label36.Margin = new Padding(4, 0, 4, 0);
         label36.Name = "label36";
         label36.Size = new Size(63, 15);
@@ -3159,20 +3153,22 @@ partial class FrmSettings
         EditAnalyzeFluxOversold.Text = "Monitor flux Oversold";
         EditAnalyzeFluxOversold.UseVisualStyleBackColor = true;
         // 
-        // EditMonitorFluxOversold
+        // EditMonitorFlux
         // 
-        EditMonitorFluxOversold.AutoSize = true;
-        EditMonitorFluxOversold.Location = new Point(1054, 419);
-        EditMonitorFluxOversold.Margin = new Padding(4, 3, 4, 3);
-        EditMonitorFluxOversold.Name = "EditMonitorFluxOversold";
-        EditMonitorFluxOversold.Size = new Size(138, 19);
-        EditMonitorFluxOversold.TabIndex = 236;
-        EditMonitorFluxOversold.Text = "Analyze flux oversold";
-        EditMonitorFluxOversold.UseVisualStyleBackColor = true;
+        EditMonitorFlux.AutoSize = true;
+        EditMonitorFlux.Enabled = false;
+        EditMonitorFlux.Location = new Point(1054, 419);
+        EditMonitorFlux.Margin = new Padding(4, 3, 4, 3);
+        EditMonitorFlux.Name = "EditMonitorFlux";
+        EditMonitorFlux.Size = new Size(138, 19);
+        EditMonitorFlux.TabIndex = 236;
+        EditMonitorFlux.Text = "Analyze flux oversold";
+        EditMonitorFlux.UseVisualStyleBackColor = true;
         // 
         // EditAnalyzeSbm4Oversold
         // 
         EditAnalyzeSbm4Oversold.AutoSize = true;
+        EditAnalyzeSbm4Oversold.Enabled = false;
         EditAnalyzeSbm4Oversold.Location = new Point(867, 419);
         EditAnalyzeSbm4Oversold.Margin = new Padding(4, 3, 4, 3);
         EditAnalyzeSbm4Oversold.Name = "EditAnalyzeSbm4Oversold";
@@ -3305,6 +3301,7 @@ partial class FrmSettings
         // label74
         // 
         label74.AutoSize = true;
+        label74.Enabled = false;
         label74.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
         label74.Location = new Point(868, 386);
         label74.Margin = new Padding(4, 0, 4, 0);
@@ -3327,7 +3324,6 @@ partial class FrmSettings
         // 
         EditBuyOrderMethod.DropDownStyle = ComboBoxStyle.DropDownList;
         EditBuyOrderMethod.FormattingEnabled = true;
-        EditBuyOrderMethod.Items.AddRange(new object[] { "Limit order", "Market order", "Bied prijs", "Vraag prijs", "Het gemiddelde van de bied en vraag prijs" });
         EditBuyOrderMethod.Location = new Point(185, 197);
         EditBuyOrderMethod.Margin = new Padding(4, 3, 4, 3);
         EditBuyOrderMethod.Name = "EditBuyOrderMethod";
@@ -3398,7 +3394,7 @@ partial class FrmSettings
         // EditGlobalStopLimitPercentage
         // 
         EditGlobalStopLimitPercentage.DecimalPlaces = 2;
-        EditGlobalStopLimitPercentage.Location = new Point(185, 679);
+        EditGlobalStopLimitPercentage.Location = new Point(185, 668);
         EditGlobalStopLimitPercentage.Margin = new Padding(4, 3, 4, 3);
         EditGlobalStopLimitPercentage.Name = "EditGlobalStopLimitPercentage";
         EditGlobalStopLimitPercentage.Size = new Size(88, 23);
@@ -3408,7 +3404,7 @@ partial class FrmSettings
         // label70
         // 
         label70.AutoSize = true;
-        label70.Location = new Point(17, 681);
+        label70.Location = new Point(17, 670);
         label70.Margin = new Padding(4, 0, 4, 0);
         label70.Name = "label70";
         label70.Size = new Size(107, 15);
@@ -3418,7 +3414,7 @@ partial class FrmSettings
         // EditGlobalStopPercentage
         // 
         EditGlobalStopPercentage.DecimalPlaces = 2;
-        EditGlobalStopPercentage.Location = new Point(185, 650);
+        EditGlobalStopPercentage.Location = new Point(185, 639);
         EditGlobalStopPercentage.Margin = new Padding(4, 3, 4, 3);
         EditGlobalStopPercentage.Name = "EditGlobalStopPercentage";
         EditGlobalStopPercentage.Size = new Size(88, 23);
@@ -3428,7 +3424,7 @@ partial class FrmSettings
         // label71
         // 
         label71.AutoSize = true;
-        label71.Location = new Point(17, 652);
+        label71.Location = new Point(17, 641);
         label71.Margin = new Padding(4, 0, 4, 0);
         label71.Name = "label71";
         label71.Size = new Size(109, 15);
@@ -3805,17 +3801,6 @@ partial class FrmSettings
         imageList1.TransparentColor = Color.Transparent;
         imageList1.Images.SetKeyName(0, "volume.png");
         // 
-        // EditOpenNewPositions
-        // 
-        EditOpenNewPositions.AutoSize = true;
-        EditOpenNewPositions.Location = new Point(908, 69);
-        EditOpenNewPositions.Margin = new Padding(4, 3, 4, 3);
-        EditOpenNewPositions.Name = "EditOpenNewPositions";
-        EditOpenNewPositions.Size = new Size(109, 19);
-        EditOpenNewPositions.TabIndex = 264;
-        EditOpenNewPositions.Text = "Binance trading";
-        EditOpenNewPositions.UseVisualStyleBackColor = true;
-        // 
         // FrmSettings
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
@@ -3879,8 +3864,8 @@ partial class FrmSettings
         tabSignalJump.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)EditJumpCandlesLookbackCount).EndInit();
         ((System.ComponentModel.ISupportInitialize)EditAnalysisCandleJumpPercentage).EndInit();
-        tabTrading.ResumeLayout(false);
-        tabTrading.PerformLayout();
+        tabPageTrading.ResumeLayout(false);
+        tabPageTrading.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)EditDynamicTpPercentage).EndInit();
         groupBoxSlots.ResumeLayout(false);
         groupBoxSlots.PerformLayout();
@@ -4124,14 +4109,13 @@ partial class FrmSettings
     private TextBox textBoxBlackListOverbought;
     private Panel panel6;
     private Label label49;
-    private TabPage tabTrading;
+    private TabPage tabPageTrading;
     private Label label83;
     private ComboBox EditBuyStepInMethod;
     private Label label82;
     private ComboBox EditDcaStepInMethod;
     private Label label65;
     private NumericUpDown EditDynamicTpPercentage;
-    private CheckBox EditLockProfits;
     private CheckBox EditTradeViaBinance;
     private Label label63;
     private ComboBox EditSellMethod;
@@ -4178,7 +4162,7 @@ partial class FrmSettings
     private CheckBox EditMonitorBullishEngulfing;
     private CheckBox EditAnalyzeBullishEngulfing;
     private CheckBox EditAnalyzeFluxOversold;
-    private CheckBox EditMonitorFluxOversold;
+    private CheckBox EditMonitorFlux;
     private CheckBox EditAnalyzeSbm4Oversold;
     private CheckBox EditMonitorSbm4;
     private CheckBox EditBotSlopeEma20TurningPositive;

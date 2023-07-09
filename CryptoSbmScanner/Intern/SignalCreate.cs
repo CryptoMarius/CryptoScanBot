@@ -349,15 +349,12 @@ public class SignalCreate
             // Signal naar database wegschrijven (niet noodzakelijk, we doen er achteraf niets mee)
             if (!signal.BackTest)
             {
-                using (CryptoDatabase databaseThread = new())
+                using CryptoDatabase databaseThread = new();
+                databaseThread.Open();
+                using (var transaction = databaseThread.BeginTransaction())
                 {
-                    databaseThread.Close();
-                    databaseThread.Open();
-                    using (var transaction = databaseThread.BeginTransaction())
-                    {
-                        databaseThread.Connection.Insert<CryptoSignal>(signal, transaction);
-                        transaction.Commit();
-                    }
+                    databaseThread.Connection.Insert<CryptoSignal>(signal, transaction);
+                    transaction.Commit();
                 }
             }
 
@@ -717,9 +714,14 @@ public class SignalCreate
     }
 
 
-    private bool ExecuteAlgorithm(AlgorithmDefinition strategyDefinition)
+    private bool ExecuteAlgorithm(CryptoOrderSide side, AlgorithmDefinition strategyDefinition)
     {
-        SignalCreateBase algorithm = strategyDefinition.InstantiateAnalyzeLong(Symbol, Interval, Candle);
+        SignalCreateBase algorithm;
+        if (side == CryptoOrderSide.Buy)
+            algorithm = strategyDefinition.InstantiateAnalyzeLong(Symbol, Interval, Candle);
+        else
+            algorithm = strategyDefinition.InstantiateAnalyzeShort(Symbol, Interval, Candle);
+
         if (algorithm != null)
         {
             if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
@@ -750,6 +752,8 @@ public class SignalCreate
         // Is het volume binnen de gestelde grenzen          
         if (!GlobalData.BackTest && !Symbol.CheckValidMinimalVolume(out response))
         {
+#if TRADEBOT
+
             // Signalen blijven maken als er een positie openstaat (en het volume afgenomen is)
             bool hasPosition = GlobalData.Settings.Trading.Active && PositionTools.HasPosition(Symbol);
             if (!hasPosition)
@@ -758,6 +762,11 @@ public class SignalCreate
                     GlobalData.AddTextToLogTab("Analyse " + response);
                 return false;
             }
+#else
+            if (GlobalData.Settings.Signal.LogMinimalVolume)
+                GlobalData.AddTextToLogTab("Analyse " + response);
+            return false;
+#endif
         }
 
         // Is de prijs binnen de gestelde grenzen
@@ -804,15 +813,17 @@ public class SignalCreate
         // Eenmalig de indicators klaarzetten
         if (Prepare(candleOpenTime))
         {
-            foreach (CryptoOrderSide tradeDirection in Enum.GetValues(typeof(CryptoOrderSide)))
+            foreach (CryptoOrderSide side in Enum.GetValues(typeof(CryptoOrderSide)))
             {
+                // TODO: opnieuw activeren en controleren of het idee klopt:
+
                 // Indien we ongeldige signalen laten zien moeten we deze controle overslagen.
                 // (verderop in het process wordt alsnog hierop gecontroleerd)
 
                 //if (!GlobalData.Settings.General.ShowInvalidSignals && !BackTest)
                 //{
-                //    // Dan kunnen we direct die handel hier afkappen..
-                //    // Weer een extra controle, staat de symbol op de black of whitelist?
+                // Dan kunnen we direct de controles hier afkappen (scheelt wat cpu)
+                // Weer een extra controle, staat de symbol op de black of whitelist?
                 //    if (TradingConfig.Config[tradeDirection].InBlackList(Symbol.Name))
                 //    {
                 //        // Als de muntpaar op de black lijst staat dit signaal overslagen
@@ -825,17 +836,18 @@ public class SignalCreate
                 //    }
                 //}
 
+
                 // SBM en stobb zijn afhankelijk van elkaar, vandaar de break
                 // Ze staan alfabetisch, sbm1, sbm2, sbm3, stobb dat gaat per ongeluk goed
-                foreach (AlgorithmDefinition strategyDefinition in TradingConfig.Config[tradeDirection].StrategySbmStob.Values)
+                foreach (AlgorithmDefinition strategyDefinition in TradingConfig.Config[side].StrategySbmStob.Values)
                 {
-                    if (ExecuteAlgorithm(strategyDefinition))
+                    if (ExecuteAlgorithm(side, strategyDefinition))
                         break;
                 }
 
                 // En de overige waaronder de jump
-                foreach (AlgorithmDefinition strategyDefinition in TradingConfig.Config[tradeDirection].StrategyOthers.Values)
-                    ExecuteAlgorithm(strategyDefinition);
+                foreach (AlgorithmDefinition strategyDefinition in TradingConfig.Config[side].StrategyOthers.Values)
+                    ExecuteAlgorithm(side, strategyDefinition);
             }
 
         }

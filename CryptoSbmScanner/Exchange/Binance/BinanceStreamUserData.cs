@@ -10,6 +10,7 @@ using CryptoSbmScanner.Model;
 
 namespace CryptoSbmScanner.Exchange.Binance;
 
+#if TRADEBOT
 public class BinanceStreamUserData
 {
     private BinanceSocketClient socketClient;
@@ -32,7 +33,7 @@ public class BinanceStreamUserData
 
     public async Task ExecuteAsync()
     {
-        using (BinanceClient client = new())
+        using BinanceClient client = new();
         {
             CallResult<string> userStreamResult = await client.SpotApi.Account.StartUserStreamAsync();
             if (!userStreamResult.Success)
@@ -73,6 +74,7 @@ public class BinanceStreamUserData
 
     private void OnOrderUpdate(DataEvent<BinanceStreamOrderUpdate> data) //DataEvent<BinanceStreamOrderUpdate> data
     {
+#if TRADEBOT
         try
         {
             // We zijn slechts geinteresseerd in 3 statussen (de andere zijn niet interessant voor de afhandeling van de order)
@@ -82,7 +84,7 @@ public class BinanceStreamUserData
             {
                 // Nieuwe thread opstarten en de data meegeven zodat er een sell wordt gedaan of administratie wordt bijgewerkt.
                 // Het triggeren van een stoploss of een DCA zal op een andere manier gedaan moeten worden (maar hoe en waar?)
-                if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+                if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
                 {
                     if (exchange.SymbolListName.TryGetValue(data.Data.Symbol, out CryptoSymbol symbol))
                     {
@@ -109,6 +111,7 @@ public class BinanceStreamUserData
             GlobalData.Logger.Error(error);
             GlobalData.AddTextToLogTab("ERROR: OrderUpdate " + error.ToString());
         }
+#endif
     }
 
     //private void onOcoOrderUpdateMessage(BinanceStreamOrderList data)
@@ -116,7 +119,7 @@ public class BinanceStreamUserData
     //    try
     //    {
     //        Exchange exchange;
-    //        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out exchange))
+    //        if (GlobalData.ExchangeListName.TryGetValue("Binance", out exchange))
     //        {
     //            Symbol symbol;
     //            if (exchange.SymbolListName.TryGetValue(data.Symbol, out symbol))
@@ -139,7 +142,7 @@ public class BinanceStreamUserData
     //    try                                
     //    {
     //        Exchange exchange = null;
-    //        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out exchange))
+    //        if (GlobalData.ExchangeListName.TryGetValue("Binance", out exchange))
     //        {
     //            BinanceTools.PickupAssets(exchange, data.Balances);
     //            GlobalData.AssetsHaveChanged("");
@@ -155,7 +158,7 @@ public class BinanceStreamUserData
     {
         try
         {
-            if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+            if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
             {
                 BinanceApi.PickupAssets(GlobalData.ExchangeRealTradeAccount, data.Data.Balances);
                 GlobalData.AssetsHaveChanged("");
@@ -201,3 +204,4 @@ public class BinanceStreamUserData
 }
 
 
+#endif

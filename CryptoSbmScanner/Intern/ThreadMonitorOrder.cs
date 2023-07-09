@@ -5,6 +5,7 @@ using CryptoSbmScanner.Model;
 
 namespace CryptoSbmScanner.Intern;
 
+#if TRADEBOT
 public class ThreadMonitorOrder
 {
     private readonly CancellationTokenSource cancellationToken = new();
@@ -53,4 +54,4 @@ public class ThreadMonitorOrder
         GlobalData.AddTextToLogTab("\r\n" + "\r\n MONITOR order THREAD EXIT");
     }
 }
-
+#endif

@@ -1,59 +1,46 @@
 Mis je iets in onderstaande bevindingen/todo's of toekomstige todo's, geef het AUB aan want dan is wat we besproken hebben ergens tussen wal en schip gevallen...
 
-ByBit
-- zijn er limiten voor bybit? Ja, dat heet rate limits
-  https://bybit-exchange.github.io/docs-legacy/futuresV2/inverse/#t-ratelimits
-  het is gebaseerd op het aantal verzoeken per seconde wat je naar ByBit stuurt
-  Je krijgt deze informatie ook terug zo te zien, eens zien wat het is
-  (het sluit redelijk aan bij wat we voor Binance doen <met weights>)
-- Nieuwe nuget packages doornemen
-  <het is anders, duh>
-- ophalen exchange informatie implementeren
-  Dat beperkt zich tot het ophalen van de Symbol informatie (zo heet het ook)
-  Stukken duidelijker dan Binance!
-- ophalen klines implementeren
-  Easy, moet geen probleem zijn
-- 1m candle stream implementeren
-  Hier wordt het lastiger...
-- mini ticker stream implementeren
-  Hier wordt het lastiger...
-- Trading: userdate stream implementeren
-- Trading: ophalen trades implementeren
-- Trading: ophalen assets implementeren
-- Trading: plaatsen van de diverse orders (oco/buy/sell/stop limit etc)
+
+ByBit scanner en trader perikelen
+- ByBit - Scanner - mini ticker stream implementeren (de huidige werkt niet bepaald 100%) - (priceticker is niet echt nodig voor de scanner)
+  Wellicht laten vervallen van LastPrice/BidPrice/BestPrice en die op te halen via call)
+- ByBit - Trading: userdate stream implementeren (detectie van een trade)
+- ByBit - Trading: ophalen trades implementeren
+- ByBit - Trading: ophalen assets implementeren
+- ByBit - Trading: plaatsen van de orders (oco/buy/sell/stoplimit etc) - De OCO zou nog een uitdaging kunnen zijn, Binance specifiek?
 
 
 TODO:
-- Alle "Binance" specifieke zaken controleren (het loopt al zo lang hardcoded)
+- TODOOOOOO: Waarom werkt de whitelist niet (compbtc), lijkt in zijn geheel niet te werken?
+- TODOOOOOO: Waarom bevat de bybit symbol info helemaal geen volume? (dat had de vorige wel dacht ik)
+- Wil ik nog iets met de opstartparameter "-e bybit"?
+- Ondersteuning van andere exchanges (eerst Bybit, daarna volgt Kucoin)
+- Trading - uitleggen papertrading bot (achterliggende gedachtes uitleggen)
+- Trading - uitleggen wat de open en gesloten posities precies zijn (per kolom)
+- Todo: voor iemand in de groep, emulator of meldingen even aanpassen zodat het bij een psar wissel instapt - is er nog niet van gekomen, sorry!
+- Voor STOBB de minimale trend controleren voro de CC manier (dit is een nieuwe instelling, maar die wordt nog niet ingezet op dit moment)
 - Een dashboard introduceren, totaal aantal signalen afgelopen dag/week, indeling per categorie, short/long
   Totaal geinvesteerd, returned, gemiddelde profit, de uitschieters (max), de tegenvallers (min).
   Ik weet zeker dat bepaalde mensen hier wel wat leuke toevoegingen voor hebben ;-)
-- Todo: voor iemand in de groep, emulator of meldingen even aanpassen zodat het bij een psar wissel instapt
-- Is het nieuwe experiment met de SMA20 - positive ema slope e.d. iets of is dat ten dode opgeschreven
+- Verwijderen of verbergen van de SMA20 - positive ema slope e.d. iets of is dat ten dode opgeschreven
   (ik heb echt 1 mooie mogelijkheid gezien, maar je moet het maar net openen en opmerken)
   Ik denk niet dat deze aanpak geschikt is voor een bot?
   (ach, waarom niet, 1 extra conditie, de ema50 > sma50)
   De trend moet redelijk positief zijn om deze varianten te gebruiken
 - Een keuze maken om de extra stategien geheel te verbergen of geheel uit te faseren (ik kies voor verbergen, ifdefje?)
-- Voor STOBB de minimale trend controleren (is een nieuwe instelling, maar die doet nog niets)
+
 
 Bevindingen/Todo's:
-- Nadat je naar deze versie bent gegaan kan een oudere scanner niet meer worden opgestart
-  (json problemen met de "General.WindowPosition.Location")
-  Een oplossing zou ook zijn om de opslag van de Color en positie geheel anders op te slagen
-  Het is zoals het is op dit moment.
-- Er is wellicht iets mogelijk met een multi timeframe, als op de 15m er een positieve trend (via de ema beredeneert)
-  dan mag de trading instappen op een sbm 3m, is dat iets wat realistisch is? Uitzoeken via emulator?
-- De tekst 1h, 4h en 1d wee toevoegen bij de barometer bolletjes (dan hoef ik het ook niet uit te leggen wat het is)
+- De tekst 1h, 4h en 1d toevoegen bij de barometer bolletjes (dan hoef ik niet uit te leggen wat het betekend)
 - Het lettertype c.q. grotte van de barometer waardes in de grafiek zijn afwijkend
 - Bij aanpassing van het lettertype lopen de labels over in de control waardoor tekst minder leesbaar wordt
-- Bij aanpassing van het lettertype worden de scrollbars in bovenste listview getoond waardoor onderste regel onleesbaar is
-- Via coindelist een munt direct op de blacklist zetten voor zowel oversold als overbought (optioneel)
-- Meldingen naar een externe applicatie c.q. script sturen
-- Meldingen naar een syslog server sturen (statistiek)
-- Indien de applicatie traag(?) afsluit wordt tijdens het afsluiten opnieuw begonnen met het activeren van de scanner (ophalen candles enzovoort)
-- De listbox met munten op links met een splitter kunnen verbergen / c.q. dichtklappen
-- Teksten kunnen vertalen (NL en EN lopen nu wel erg vaak door elkaar)
+- Bij aanpassing van het lettertype worden de scrollbars in bovenste listview getoond waardoor de onderste regel niet leesbaar is
+- Via coindelist een munt direct op de blacklist zetten voor zowel oversold als overbought (optioneel) - 1e poging lukt niet
+- Meldingen naar een externe applicatie c.q. script sturen - event of dropbox inbouwen
+- Meldingen naar een syslog server sturen (statistiek) - de signalen worden nu wel opgeslagen in de signal tabel
+- Indien de applicatie traag(?) afsluit wordt tijdens het afsluiten opnieuw begonnen met het activeren van de scanner (ophalen candles enzovoort) - nog niet kunnen herproduceren!
+- De listbox met munten op links met een splitter kunnen verbergen / c.q. dichtklappen - geen prioriteit
+- Teksten kunnen vertalen (de NL en EN lopen nu vaak door elkaar, tenenkrommend, maar ach)
   Een eerste aanzet zit er nu in, inclusief een beetje uitleg over hou je het maakt en configureert
 - Experiment om een Mac versie te bouwen dmv MAUI XAML (een compleet nieuwe aanvliegroute van Microsoft)
   Maar ik verwacht een duizendtal nieuwe problemen met geluid, voice, storage, sockets, hibernate/sleep enzovoort)
@@ -68,24 +55,39 @@ Bevindingen/Todo's:
 - Het symbol overzicht uitbreiden met volume, prijs e.d. Kunnen filteren op volume etc.
 - Black theming  https://stackoverflow.com/questions/61145347/c-how-to-make-a-dark-mode-theme-in-windows-forms-separate-form-as-select-the <geen prio>
   Er is nu een slappe variant die iets met grijs doet (omdat anders de scrollbars en headers zo'n lelijk getoond worden), ik ben er niet tevreden over.
-- Ondersteuning van andere exchanges (dat heeft momenteel niet mijn prioriteit)
-  Gezien het geheugengebruik die de tool heeft is een combinatie van exchanges niet aan te raden (dwz 1 exchange per applicatie).
-  Maar vanwege het feit dat Binance zich terugtrekt van de NL markt zal er waarschijnlijk een ByBit versie komen
 
 
 
-xx-xx-2023 1.8.0 (gedeeltelijk zit eze ook al in de 1.7.2 vanwege een hotfix)
-- De "(slonzige naam) "GlobalData.Settings2.json is nu vervangen door de naam "Settings.json"
+
+xx-xx-2023 1.8.0 (een gedeeltelijk hiervan zit al in de 1.7.2 vanwege een hotfix)
+- De captions van Binance rechtsboven vervangen door de juiste exchange naam
+- Ondersteuning van andere exchanges (dat heeft na het vertrek van Binance uit NL een nieuwe impuls heeft gekregen in de vorm van Bybit)
+  Ondersteuning van andere exchanges volgt later (Bybit futures/Kucoin)
+- Nieuwe methode om de ticker en de 1m stream opnieuw te starten als je wijzigingen maakt in het quote rijtje (BTC/USDT/BUSD/*).
+  Tegelijk kan hier de detectie van wijzigingen in de gekozen exchange op meeliften.
+- De laatste keer dat de symbols zijn opgehaald wordt nu bewaard in de database, deze informatie wordt ~1x per uur ververst 
+  zodat de juiste volumes worden opgehaald. Dit scheelt aanzienlijk in snelheid bij het opnieuw opstarten van de scanner.
+- Bybit Scanner - 1m candle stream informatie implementeren (per 10 symbolen, pfft)
+- Bybit Scanner - historische klines informatie (candle informatie) ophalen
+- Bybit Scanner - de exchange informatie (symbol informatie) ophalen
+- Bybit Scanner - De limieten (rate limits) van bybit ondersteunen
+  het is gebaseerd op het aantal verzoeken per seconde wat je naar ByBit stuurt
+  https://bybit-exchange.github.io/docs-legacy/futuresV2/inverse/#t-ratelimits
+- Probleem: Nadat je naar deze versie bent gegaan kan een oudere scanner niet meer worden opgestart
+  (json problemen met de "General.WindowPosition.Location" en zo zijn er nog een paar problemen)
+  Opgelost door een nieuwe configuratie bestand te maken en geheel te breken met het verleden
+- De (slordige naam) "GlobalData.Settings2.json is vervangen door de naam "Settings.json"
 - Via de startup parameter "-f FolderName" kun je aangeven in welke folder (van de APPDATA) de data wordt bewaard (voor meerdere sessies)
 - Trailing sell ala Cryptocoiners met de Keltner Channel en PSAR (maar zoals zo vaak valt het effect trailen vaak tegen)
-- Wens: bij het opstarten de laatste X candles opnieuw berekenen, dat geeft echter zoveel (cpu) overhead dat ik het opzij gezet heb)
+- Papertrading ingebouwd om de eerste beginselen van een bot te testen/controleren
+- Wens: bij het opstarten de laatste X candles opnieuw berekenen, dat gaf echter zoveel (cpu) overhead dat ik het niet ga ondersteunen)
   Daarnaast geeft het onverwachte problemen zoals duplicaat meldingen (vanwege introductie database)
   Wie weet komt het ooit nog terug, maar voor nu opzij gezet
 - Zien hoeveel een munt gestegen of gedaald is na de initiele melding (zie kolom "Stijging").
 - Telegram die de meldingen (en trades) kan weergeven.
 - Instellingen voor Telegram in een aparte tab (documentatie nog uitbreiden.
 - De Altrady Webhook verwijderd (vanwege random fills niet presentatief)
-- Database ondersteuning ingebouwd voor het bewaren van de signalen, posities e.d.
+- Database ondersteuning ingebouwd voor het bewaren van de symbols, signalen, posities e.d. (sqlite database)
 - Trade mogelijkheden ingebouwd (waarschuwing, het is experimenteel en niet 100% uitgekristalliseerd/getest).
 - Aanpassingen om "dichter" bij een TradeBot te komen, daarom de introductie van een sqlite dataabse
 - Elke 4 uur wordt nu de candle data bewaard, als de applicatie of computer crashed hoeft er minder opgehaald te worden

@@ -42,37 +42,18 @@ public class BybitFetchCandles
         return binanceInterval;
     }
 
-    //private static void SaveInformation(CryptoSymbol symbol, IEnumerable<BybitKline> data)
-    //{
-    //    //Laad de gecachte (langere historie, minder overhad)
-    //    string filename = GlobalData.GetBaseDir();
-    //    filename += @"\bybit\";
-    //    Directory.CreateDirectory(filename);
-    //    filename += symbol.Name + "candles.json";
-
-    //    //using (FileStream writeStream = new FileStream(filename, FileMode.Create))
-    //    //{
-    //    //    BinaryFormatter formatter = new BinaryFormatter();
-    //    //    formatter.Serialize(writeStream, GlobalData.Settings);
-    //    //    writeStream.Close();
-    //    //}
-
-    //    string text = JsonSerializer.Serialize(data, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
-    //    //var accountFile = new FileInfo(filename);
-    //    File.WriteAllText(filename, text);
-    //}
-
     private static async Task<long> GetCandlesForInterval(BybitClient client, CryptoSymbol symbol, CryptoInterval interval, CryptoSymbolInterval symbolInterval)
     {
-        KlineInterval binanceInterval = GetExchangeInterval(interval);
-        if (binanceInterval >= KlineInterval.OneMonth)
+        KlineInterval exchangeInterval = GetExchangeInterval(interval);
+        if (exchangeInterval >= KlineInterval.OneMonth)
             return 0;
 
         BybitWeights.WaitForFairWeight(1); // *5x ivm API weight waarschuwingen
 
-        // The maximum is 1000 candles
-        var result = await client.V5Api.ExchangeData.GetKlinesAsync(Category.Spot, symbol.Name, binanceInterval, 
-            CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized), null, 1000);
+        // The maximum is 200 candles
+        // En (verrassing) de volgorde van de candles is van nieuw naar oud! 
+        DateTime dateStart = CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized);
+        var result = await client.V5Api.ExchangeData.GetKlinesAsync(Category.Spot, symbol.Name, exchangeInterval, dateStart, null, 1000);
         if (!result.Success)
         {
             // Might do something better than this
@@ -109,19 +90,36 @@ public class BybitFetchCandles
         Monitor.Enter(symbol.CandleList);
         try
         {
-            // Combine the candles, caulutaing the ones from other interval's
+            long last = long.MinValue;
+            // Combine candles, calculating other interval's
             foreach (BybitKline kline in result.Data.List)
             {
                 // Quoted = volume * price (expressed in usdt/eth/btc etc), base is coins
                 CryptoCandle candle = CandleTools.HandleFinalCandleData(symbol, interval, kline.StartTime,
                     kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.QuoteVolume);
 
-                // For the next GetCandles() session
-                symbolInterval.IsChanged = true; // zie tevens setter (maar ach)
-                symbolInterval.LastCandleSynchronized = candle.OpenTime;
+                //GlobalData.AddTextToLogTab("Debug: Fetched candle " + symbol.Name + " " + interval.Name + " " + candle.DateLocal);
+
+                // Pas op: Candle volgorde is niet gegarandeerd (zeker bybit niet), onthoud de jongste candle 
+                // Voor de volgende GetCandlesForInterval() sessie
+                //symbolInterval.IsChanged = true; // zie tevens setter (maar ach)
+                //symbolInterval.LastCandleSynchronized = candle.OpenTime;
+
+                // Onthoud de laatste aangeleverde candle, t/m die datum is alles binnen gehaald
+                if (candle.OpenTime > last)
+                    last = candle.OpenTime;
 #if SQLDATABASE
                 GlobalData.TaskSaveCandles.AddToQueue(candle);
 #endif
+            }
+
+            // Voor de volgende GetCandlesForInterval() sessie
+            if (last > long.MinValue)
+            {
+                symbolInterval.IsChanged = true; // zie tevens setter (maar ach)
+                symbolInterval.LastCandleSynchronized = last;
+                // Alternatief (maar als er gaten in de candles zijn geeft dit problemen, endless loops)
+                //CandleTools.UpdateCandleFetched(symbol, interval);
             }
 
             //SaveInformation(symbol, result.Data.List);
@@ -196,6 +194,9 @@ public class BybitFetchCandles
             while (symbolInterval.LastCandleSynchronized < fetchEndUnix)
             {
                 long lastDate = (long)symbolInterval.LastCandleSynchronized;
+                //DateTime dateStart = CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized);
+                //GlobalData.AddTextToLogTab("Debug: Fetching " + symbol.Name + " " + interval.Name + " " + dateStart.ToLocalTime());
+
 
                 if (symbolInterval.LastCandleSynchronized + interval.Duration > fetchEndUnix)
                     break;
@@ -310,7 +311,9 @@ public class BybitFetchCandles
                     Monitor.Exit(queue);
                 }
 
-                await FetchCandlesInternal(client, symbol, fetchEndUnix);
+                // Er is niet geswicthed van exchange (omdat het ophalen zo lang duurt)
+                if (symbol.ExchangeId == GlobalData.Settings.General.ExchangeId)
+                    await FetchCandlesInternal(client, symbol, fetchEndUnix);
             }
         }
         catch (Exception error)
@@ -325,7 +328,7 @@ public class BybitFetchCandles
     {
         GlobalData.AddTextToLogTab("Fetching historical candles");
 
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue("Bybit", out Model.CryptoExchange exchange))
         {
             try
             {
@@ -351,7 +354,7 @@ public class BybitFetchCandles
 
                         if (symbol.QuoteData.FetchCandles)
                         {
-                            //if (symbol.Name.Equals("LEVERBUSD"))
+                            //if (symbol.Name.Equals("BTCUSDT") || symbol.Name.Equals("ETHUSDT") || symbol.Name.Equals("ADABTC") || symbol.Name.Equals("LEVERBTC"))
                             queue.Enqueue(symbol);
                         }
                     }

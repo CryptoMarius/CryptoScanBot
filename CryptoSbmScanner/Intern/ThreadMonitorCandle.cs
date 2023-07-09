@@ -39,7 +39,7 @@ public class ThreadMonitorCandle
                 try
                 {
                     PositionMonitor positionMonitor = new(symbol, candle);
-                    await positionMonitor.NewCandleArrived();
+                    await positionMonitor.NewCandleArrivedAsync();
                 }
                 finally
                 {

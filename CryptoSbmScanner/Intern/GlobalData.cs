@@ -70,8 +70,6 @@ static public class GlobalData
     static public event AddTextEvent AssetsHaveChangedEvent;
     static public event AddTextEvent SymbolsHaveChangedEvent;
     static public event AddTextEvent PositionsHaveChangedEvent;
-    static public event AddTextEvent ConnectionWasLostEvent;
-    static public event AddTextEvent ConnectionWasRestoredEvent;
 
     // Ophalen van historische candles duurt lang, dus niet halverwege nog 1 starten (en nog 1 en...)
     static public event SetCandleTimerEnable SetCandleTimerEnableEvent;
@@ -133,14 +131,27 @@ static public class GlobalData
         {
             TradeAccountList.Add(tradeAccount.Id, tradeAccount);
 
-            // Er zijn 3 accounts altijd aanwezig
-            // TODO - enum introduceren vanwege vinkjes ellende, beh
-            if (tradeAccount.AccountType == CryptoTradeAccountType.BackTest)
-                GlobalData.ExchangeBackTestAccount = tradeAccount;
-            if (tradeAccount.AccountType == CryptoTradeAccountType.PaperTrade)
-                GlobalData.ExchangePaperTradeAccount = tradeAccount;
-            if (tradeAccount.AccountType == CryptoTradeAccountType.RealTrading)
-                GlobalData.ExchangeRealTradeAccount = tradeAccount;
+            if (ExchangeListId.TryGetValue(tradeAccount.ExchangeId, out var exchange))
+                tradeAccount.Exchange = exchange;
+        }
+
+        SetTradingAccounts();
+    }
+
+    public static void SetTradingAccounts()
+    {
+        foreach (CryptoTradeAccount tradeAccount in GlobalData.TradeAccountList.Values)
+        {
+            // Er zijn 3 accounts per exchange aanwezig (of dat een goede keuze is vraag ik me af)
+            if (tradeAccount.ExchangeId == GlobalData.Settings.General.ExchangeId)
+            {
+                if (tradeAccount.TradeAccountType == CryptoTradeAccountType.BackTest)
+                    GlobalData.ExchangeBackTestAccount = tradeAccount;
+                if (tradeAccount.TradeAccountType == CryptoTradeAccountType.PaperTrade)
+                    GlobalData.ExchangePaperTradeAccount = tradeAccount;
+                if (tradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading)
+                    GlobalData.ExchangeRealTradeAccount = tradeAccount;
+            }
         }
     }
 
@@ -205,6 +216,9 @@ static public class GlobalData
 
     static public void AddSymbol(CryptoSymbol symbol)
     {
+        //if (symbol.Name.Equals("BTCUSDT") || symbol.Name.Equals("ETHUSDT") || symbol.Name.Equals("$BMPUSDT")
+        //  || symbol.Name.Equals("ADABTC") || symbol.Name.Equals("COMPBTC") || symbol.Name.Equals("$BMPBTC"))
+
         if (ExchangeListId.TryGetValue(symbol.ExchangeId, out Model.CryptoExchange exchange))
         {
             symbol.Exchange = exchange;
@@ -257,9 +271,11 @@ static public class GlobalData
     }
 
 
-    static public void InitBarometerSymbols()
+    static public void InitBarometerSymbols(CryptoDatabase database)
     {
         // TODO: Deze routine is een discrepantie tussen de scanner en trader!
+        // De BarometerTools bevat een vergelijkbare routine, enkel de timing verschilt?
+
         if (ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
         {
             foreach (CryptoQuoteData quoteData in Settings.QuoteCoins.Values)
@@ -279,10 +295,10 @@ static public class GlobalData
                         };
                         symbol.Name = symbol.Base + symbol.Quote;
 
-                        //using var connection = Database.CreateConnection();
-                        //using var transaction = connection.BeginTransaction();
-                        //connection.Insert(symbol, transaction);
-                        //transaction.Commit();
+                        using var transaction = database.Connection.BeginTransaction();
+                        database.Connection.Insert(symbol, transaction);
+                        transaction.Commit();
+
                         AddSymbol(symbol);
                     }
                 }
@@ -450,16 +466,6 @@ static public class GlobalData
         PositionsHaveChangedEvent(text);
     }
 
-    static public void ConnectionWasLost(string text)
-    {
-        ConnectionWasLostEvent?.Invoke(text);
-    }
-
-    static public void ConnectionWasRestored(string text)
-    {
-        ConnectionWasRestoredEvent?.Invoke(text);
-    }
-
     static public void SetCandleTimerEnable(bool value)
     {
         SetCandleTimerEnableEvent(value);
@@ -577,5 +583,27 @@ static public class GlobalData
 
 
         NLog.LogManager.Configuration = config;
+    }
+
+    public static void DumpSessionInformation()
+    {
+        foreach (Model.CryptoExchange exchange in GlobalData.ExchangeListName.Values.ToList())
+        {
+            int candleCount = 0;
+            foreach (Model.CryptoSymbol symbol in exchange.SymbolListName.Values.ToList())
+            {
+                foreach (Model.CryptoSymbolInterval symbolInterval in symbol.IntervalPeriodList.ToList())
+                {
+                    candleCount += symbolInterval.CandleList.Count;
+                    if (symbolInterval.CandleList.Count > 0)
+                        AddTextToLogTab(string.Format("{0} {1} {2} candlecount={3}", exchange.Name, symbol.Name, symbolInterval.Interval.Name, symbolInterval.CandleList.Count), false);
+
+                }
+            }
+
+            AddTextToLogTab(string.Format("{0} symbolcount={1} candlecount={2}", exchange.Name, exchange.SymbolListName.Count, candleCount), false);
+        }
+
+
     }
 }

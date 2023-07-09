@@ -38,7 +38,7 @@ public class BinanceStream1mCandles
 
         CandlesKLinesCount++;
 
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
         {
             if (exchange.SymbolListName.TryGetValue(temp.Symbol, out CryptoSymbol symbol))
             {
@@ -153,13 +153,13 @@ public class BinanceStream1mCandles
     private void ConnectionLost()
     {
         GlobalData.AddTextToLogTab(string.Format("Binance {0} 1m candle stream connection lost.", quote));
-        GlobalData.ConnectionWasLost("");
+        ScannerSession.ConnectionWasLost("");
     }
 
     private void ConnectionRestored(TimeSpan timeSpan)
     {
         GlobalData.AddTextToLogTab(string.Format("Binance {0} 1m candle stream connection restored.", quote));
-        GlobalData.ConnectionWasRestored("");
+        ScannerSession.ConnectionWasRestored("");
     }
 
     private void Exception(Exception ex)

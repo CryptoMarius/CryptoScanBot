@@ -1,4 +1,5 @@
 ﻿using Bybit.Net.Clients;
+using Bybit.Net.Enums;
 using Bybit.Net.Objects.Models.Spot;
 
 using CryptoSbmScanner.Context;
@@ -9,6 +10,7 @@ using Dapper.Contrib.Extensions;
 
 namespace CryptoSbmScanner.Exchange.Bybit;
 
+#if TRADEBOT
 /// <summary>
 /// De Trades bij Binance ophalen
 /// </summary>
@@ -23,10 +25,8 @@ public class BybitFetchTrades
     /// </summary>
     public static async Task<int> FetchTradesForSymbol(CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
     {
-        using (BybitClient client = new())
-        {
-            return await FetchTradesInternal(client, tradeAccount, symbol);
-        }
+        using BybitClient client = new();
+        return await FetchTradesInternal(client, tradeAccount, symbol);
     }
 
     private static async Task<int> FetchTradesInternal(BybitClient client, CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
@@ -54,7 +54,8 @@ public class BybitFetchTrades
 
                 // CRAP, bybit doet het door middel van ID's ;-) symbol.LastTradeFetched
                 // TODO: Aanpassen van het systeem? (kan Binance dat ook?)
-                var result = await client.SpotApiV3.Trading.GetUserTradesAsync(symbol.Name, 1, null, 1000);
+                //var result = await client.SpotApiV3.Trading.GetUserTradesAsync(symbol.Name, 1, null, 1000);
+                var result = await client.V5Api.Trading.GetUserTradesAsync(Category.Spot, symbol.Name, null, null, null, symbol.LastTradeFetched, null, null, 1000);
                 if (!result.Success)
                 {
                     GlobalData.AddTextToLogTab("error getting mytrades " + result.Error);
@@ -78,9 +79,9 @@ public class BybitFetchTrades
 
                 if (result.Data != null)
                 {
-                    foreach (BybitSpotUserTradeV3 item in result.Data)
+                    foreach (var item in result.Data.List)
                     {
-                        if (!symbol.TradeList.TryGetValue(item.Id, out CryptoTrade trade))
+                        if (!symbol.TradeList.TryGetValue(long.Parse(item.OrderId), out CryptoTrade trade))
                         {
                             trade = new CryptoTrade();
                             BybitApi.PickupTrade(tradeAccount, symbol, trade, item);
@@ -98,7 +99,7 @@ public class BybitFetchTrades
                     }
 
                     //We hebben een volledige aantal trades meegekregen, nog eens proberen
-                    if (result.Data.Count() < 1000)
+                    if (result.Data.List.Count() < 1000)
                         break;
                 }
             }
@@ -107,7 +108,7 @@ public class BybitFetchTrades
 
             // Verwerk de trades
 
-            using (CryptoDatabase databaseThread = new())
+            using CryptoDatabase databaseThread = new();
             {
                 // Extra close vanwege transactie problemen (hergebuik van connecties wellicht?)
                 databaseThread.Close();
@@ -199,7 +200,7 @@ public class BybitFetchTrades
 
     public static async Task Execute()
     {
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue("Bybit", out Model.CryptoExchange exchange))
         {
             try
             {
@@ -250,3 +251,4 @@ public class BybitFetchTrades
     }
 }
 
+#endif

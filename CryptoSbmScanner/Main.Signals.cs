@@ -10,7 +10,7 @@ public partial class FrmMain
     private int columnForText = 6;
     private int columnForPriceDiff = 8;
     private ListViewDoubleBuffered listViewSignals;
-    private System.Windows.Forms.Timer TimerClearEvents;
+    private System.Timers.Timer TimerClearEvents;
 
     //public void Dispose()
     //{
@@ -42,12 +42,12 @@ public partial class FrmMain
         listViewSignals.ListViewItemSorter = listViewColumnSorter;
         listViewSignals.ColumnClick += ListViewSignals_ColumnClick;
         listViewSignals.SetSortIcon(listViewColumnSorter.SortColumn, listViewColumnSorter.SortOrder);
-        listViewSignals.DoubleClick += new System.EventHandler(ListViewSignalsMenuItem_DoubleClick);
+        listViewSignals.DoubleClick += ListViewSignalsMenuItem_DoubleClick;
         tabPageSignals.Controls.Add(listViewSignals);
 
         TimerClearEvents = new();
-        InitTimerInterval(ref TimerClearEvents, 1 * 60);
-        TimerClearEvents.Tick += new System.EventHandler(TimerClearOldSignals_Tick);
+        TimerClearEvents.InitTimerInterval(1 * 60);
+        TimerClearEvents.Elapsed += TimerClearOldSignals_Tick;
 
         ListViewSignalsInitColumns();
     }

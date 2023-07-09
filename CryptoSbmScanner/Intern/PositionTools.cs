@@ -30,14 +30,15 @@ public class PositionTools
     }
 
 
+#if TRADEBOT
     public static bool ValidTradeAccount(CryptoTradeAccount tradeAccount)
     {
         // Niet echt super, enumeratie oid hiervoor in het leven roepen, werkt verder wel
-        if (tradeAccount.AccountType == CryptoTradeAccountType.BackTest && GlobalData.BackTest)
+        if (tradeAccount.TradeAccountType == CryptoTradeAccountType.BackTest && GlobalData.BackTest)
             return true;
-        if (tradeAccount.AccountType == CryptoTradeAccountType.RealTrading && GlobalData.Settings.Trading.TradeViaExchange)
+        if (tradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading && GlobalData.Settings.Trading.TradeViaExchange)
             return true;
-        if (tradeAccount.AccountType == CryptoTradeAccountType.PaperTrade && GlobalData.Settings.Trading.TradeViaPaperTrading)
+        if (tradeAccount.TradeAccountType == CryptoTradeAccountType.PaperTrade && GlobalData.Settings.Trading.TradeViaPaperTrading)
             return true;
 
         return false;
@@ -183,7 +184,7 @@ public class PositionTools
         database.Connection.Insert<CryptoPositionStep>(step);
 
         // Genereer een fictieve order ID voor papertrading
-        if (position.TradeAccount.AccountType != CryptoTradeAccountType.RealTrading && step.OrderId == 0)
+        if (position.TradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading && step.OrderId == 0)
         {
             step.OrderId = step.Id;
             database.Connection.Update<CryptoPositionStep>(step);
@@ -405,7 +406,7 @@ public class PositionTools
                 if (step.QuantityFilled >= step.Quantity)
                 {
                     step.CloseTime = trade.TradeTime;
-                    if (step.Status < CryptoOrderStatus.Filled)
+                    if (step.Status < CryptoOrderStatus.Filled || step.Status == CryptoOrderStatus.Expired)
                         step.Status = CryptoOrderStatus.Filled;
                 }
                 else if (step.QuantityFilled > 0)
@@ -458,6 +459,10 @@ public class PositionTools
     static public void DumpPosition(CryptoPosition position, StringBuilder strings)
     {
         // Het is op niet echt super-leesbaar, Excel ding maken wellicht?
+        // Zie BackTestExcel.cs, daar wordt een mooi rapportje gemaakt!!
+        // Het kan regel georienteerd onder elkaar en de kolommen komen overeen lijkt me.
+        // Nog eens een voorbeeld excel ding van maken, kan volgens mij erg mooi zijn.
+        // (en in ieder geval begrijpbaarder en overzichtelijker dan onderstaande <g>)
 
         strings.AppendLine("");
         strings.AppendLine("-------------------");
@@ -471,7 +476,8 @@ public class PositionTools
         strings.AppendLine("Interval:" + position.Interval.Name);
         strings.AppendLine("Status:" + position.Status.ToString());
         strings.AppendLine("OpenDate:" + position.CreateTime.ToLocalTime());
-        strings.AppendLine("CloseDate:" + position.CloseTime?.ToLocalTime());
+        if (position.CloseTime.HasValue)
+            strings.AppendLine("CloseDate:" + position.CloseTime?.ToLocalTime());
         strings.AppendLine("BreakEvenPrice:" + position.BreakEvenPrice.ToString());
 
         strings.AppendLine("Invested:" + position.Invested.ToString(position.Symbol.QuoteData.DisplayFormat));
@@ -566,7 +572,7 @@ public class PositionTools
 
         // Daarna de "nieuwe" trades van deze coin ophalen en die toegevoegen aan dezelfde tradelist
         // TODO: Afhankelijkheid uitfaseren of exchange-aware maken?
-        if (position.TradeAccount.AccountType == CryptoTradeAccountType.RealTrading)
+        if (position.TradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading)
             await ExchangeClass.FetchTradesForSymbol(position.TradeAccount, position.Symbol);
     }
 
@@ -590,14 +596,15 @@ public class PositionTools
     }
 
 
-    public static CryptoPosition HasPosition(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoSymbolInterval symbolInterval)
+    public static CryptoPosition HasPosition(CryptoTradeAccount tradeAccount, CryptoSymbol symbol) //, CryptoSymbolInterval symbolInterval
     {
         if (tradeAccount.PositionList.TryGetValue(symbol.Name, out var positionList))
         {
             foreach (var position in positionList.Values.ToList())
             {
-                // Alleen voor long trades en het betrokken interval
-                if (position.Side != CryptoOrderSide.Buy || position.IntervalId != symbolInterval.IntervalId)
+                // Alleen voor long trades en het betrokken interval (wat is de redenatie hierachter?)
+                // Een gelijk interval is niet handig, je wilt een bijkoop doen en interval is niet relevant.
+                if (position.Side != CryptoOrderSide.Buy) // || position.IntervalId != symbolInterval.IntervalId
                     continue;
 
                 return position;
@@ -635,5 +642,6 @@ public class PositionTools
 
         return false;
     }
+#endif
 
 }

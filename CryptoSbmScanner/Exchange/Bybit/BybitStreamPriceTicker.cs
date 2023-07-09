@@ -25,7 +25,7 @@ public class BybitStreamPriceTicker
         socketClient = new();
         //CallResult<UpdateSubscription> subscriptionResult2 = await socketClient.V5SpotStreams.SubscribeToTickerUpdatesAsync(symbols, data =>
         //{
-        //    if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+        //    if (GlobalData.ExchangeListName.TryGetValue("Bybit", out Model.CryptoExchange exchange))
         //    {
         //        var tick = data.Data;
         //        //foreach (var tick in data.Data)
@@ -75,7 +75,7 @@ public class BybitStreamPriceTicker
 
         CallResult<UpdateSubscription> subscriptionResult = await socketClient.V5LinearStreams.SubscribeToTickerUpdatesAsync(symbols, data =>
         {
-            if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+            if (GlobalData.ExchangeListName.TryGetValue("Bybit", out Model.CryptoExchange exchange))
             {
                 //GET /api/v3/ticker/24hr
                 // client.Spot.SubscribeToSymbolTickerUpdates("ETHBTC", (test) => result = test);

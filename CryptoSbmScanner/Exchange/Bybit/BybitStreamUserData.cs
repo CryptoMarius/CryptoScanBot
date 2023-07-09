@@ -7,11 +7,11 @@ using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 
 namespace CryptoSbmScanner.Exchange.Bybit;
-
+#if TRADEBOT
 public class BybitStreamUserData
 {
-    private BybitSocketClient socketClient;
-    private UpdateSubscription _subscription;
+    private readonly BybitSocketClient socketClient;
+    private readonly UpdateSubscription _subscription;
 
     public async Task StopAsync()
     {
@@ -28,9 +28,11 @@ public class BybitStreamUserData
         return; // Task.CompletedTask;
     }
 
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
     public async Task ExecuteAsync()
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
     {
-        using (BybitClient client = new())
+        using BybitClient client = new();
         {
             //CallResult<string> userStreamResult = await client.V5Api.Account.StartUserStreamAsync();
             //if (!userStreamResult.Success)
@@ -81,7 +83,7 @@ public class BybitStreamUserData
     //        {
     //            // Nieuwe thread opstarten en de data meegeven zodat er een sell wordt gedaan of administratie wordt bijgewerkt.
     //            // Het triggeren van een stoploss of een DCA zal op een andere manier gedaan moeten worden (maar hoe en waar?)
-    //            if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+    //            if (GlobalData.ExchangeListName.TryGetValue("Bybit", out Model.CryptoExchange exchange))
     //            {
     //                if (exchange.SymbolListName.TryGetValue(data.Data.Symbol, out CryptoSymbol symbol))
     //                {
@@ -115,7 +117,7 @@ public class BybitStreamUserData
     //    try
     //    {
     //        Exchange exchange;
-    //        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out exchange))
+    //        if (GlobalData.ExchangeListName.TryGetValue("Bybit", out exchange))
     //        {
     //            Symbol symbol;
     //            if (exchange.SymbolListName.TryGetValue(data.Symbol, out symbol))
@@ -138,7 +140,7 @@ public class BybitStreamUserData
     //    try                                
     //    {
     //        Exchange exchange = null;
-    //        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out exchange))
+    //        if (GlobalData.ExchangeListName.TryGetValue("Bybit", out exchange))
     //        {
     //            BinanceTools.PickupAssets(exchange, data.Balances);
     //            GlobalData.AssetsHaveChanged("");
@@ -155,7 +157,7 @@ public class BybitStreamUserData
     //{
     //    try
     //    {
-    //        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+    //        if (GlobalData.ExchangeListName.TryGetValue("Bybit", out Model.CryptoExchange exchange))
     //        {
     //            BinanceApi.PickupAssets(GlobalData.ExchangeRealTradeAccount, data.Data.Balances);
     //            GlobalData.AssetsHaveChanged("");
@@ -200,4 +202,4 @@ public class BybitStreamUserData
     }
 }
 
-
+#endif

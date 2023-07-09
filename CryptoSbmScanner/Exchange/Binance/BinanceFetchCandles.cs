@@ -33,9 +33,6 @@ public class BinanceFetchCandles
             CryptoIntervalPeriod.interval6h => KlineInterval.SixHour,
             CryptoIntervalPeriod.interval12h => KlineInterval.TwelveHour,
             CryptoIntervalPeriod.interval1d => KlineInterval.OneDay,
-            //case CryptoIntervalPeriod.interval3d:
-            //  binanceInterval = KlineInterval.ThreeDay;
-            //break;
             //case IntervalPeriod.interval1w:
             //    binanceInterval = KlineInterval.OneWeek;
             //    break;
@@ -46,14 +43,14 @@ public class BinanceFetchCandles
 
     private static async Task<long> GetCandlesForInterval(BinanceClient client, CryptoSymbol symbol, CryptoInterval interval, CryptoSymbolInterval symbolInterval)
     {
-        KlineInterval binanceInterval = GetExchangeInterval(interval);
-        if (binanceInterval >= KlineInterval.OneMonth)
+        KlineInterval exchangeInterval = GetExchangeInterval(interval);
+        if (exchangeInterval >= KlineInterval.OneMonth)
             return 0;
 
         //BinanceWeights.WaitForFairBinanceWeight(5, "klines"); // *5x ivm API weight waarschuwingen
 
         // The maximum is 1000 candles
-        WebCallResult<IEnumerable<IBinanceKline>> result = await client.SpotApi.ExchangeData.GetKlinesAsync(symbol.Name, binanceInterval, CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized), null, 1000);
+        WebCallResult<IEnumerable<IBinanceKline>> result = await client.SpotApi.ExchangeData.GetKlinesAsync(symbol.Name, exchangeInterval, CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized), null, 1000);
         if (!result.Success)
         {
             // Might do something better than this
@@ -89,21 +86,39 @@ public class BinanceFetchCandles
         Monitor.Enter(symbol.CandleList);
         try
         {
-            // Combine the candles, caulutaing the ones from other interval's
+            long last = long.MinValue;
+            // Combine candles, calculating other interval's
             foreach (BinanceSpotKline kline in result.Data.Cast<BinanceSpotKline>())
             {
                 // Quoted = volume * price (expressed in usdt/eth/btc etc), base is coins
                 CryptoCandle candle = CandleTools.HandleFinalCandleData(symbol, interval, kline.OpenTime,
                     kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.QuoteVolume);
 
-                // For the next GetCandles() session
-                symbolInterval.IsChanged = true; // zie tevens setter (maar ach)
-                symbolInterval.LastCandleSynchronized = candle.OpenTime;
+                //GlobalData.AddTextToLogTab("Debug: Fetched candle " + symbol.Name + " " + interval.Name + " " + candle.DateLocal);
+
+                // Pas op: Candle volgorde is niet gegarandeerd (zeker bybit niet), onthoud de jongste candle 
+                // Voor de volgende GetCandlesForInterval() sessie
+                //symbolInterval.IsChanged = true; // zie tevens setter (maar ach)
+                //symbolInterval.LastCandleSynchronized = candle.OpenTime;
+
+                // Onthoud de laatste aangeleverde candle, t/m die datum is alles binnen gehaald
+                if (candle.OpenTime > last)
+                    last = candle.OpenTime;
 #if SQLDATABASE
                 GlobalData.TaskSaveCandles.AddToQueue(candle);
 #endif
             }
 
+            // Voor de volgende GetCandlesForInterval() sessie
+            if (last > long.MinValue)
+            {
+                symbolInterval.IsChanged = true; // zie tevens setter (maar ach)
+                symbolInterval.LastCandleSynchronized = last;
+                // Alternatief (maar als er gaten in de candles zijn geeft dit problemen, endless loops)
+                //CandleTools.UpdateCandleFetched(symbol, interval);
+            }
+
+            //SaveInformation(symbol, result.Data.List);
         }
         finally
         {
@@ -175,6 +190,9 @@ public class BinanceFetchCandles
             while (symbolInterval.LastCandleSynchronized < fetchEndUnix)
             {
                 long lastDate = (long)symbolInterval.LastCandleSynchronized;
+                //DateTime dateStart = CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized);
+                //GlobalData.AddTextToLogTab("Debug: Fetching " + symbol.Name + " " + interval.Name + " " + dateStart.ToLocalTime());
+
 
                 if (symbolInterval.LastCandleSynchronized + interval.Duration > fetchEndUnix)
                     break;
@@ -289,7 +307,9 @@ public class BinanceFetchCandles
                     Monitor.Exit(queue);
                 }
 
-                await FetchCandlesInternal(client, symbol, fetchEndUnix);
+                // Er is niet geswicthed van exchange (omdat het ophalen zo lang duurt)
+                if (symbol.ExchangeId == GlobalData.Settings.General.ExchangeId)
+                    await FetchCandlesInternal(client, symbol, fetchEndUnix);
             }
         }
         catch (Exception error)
@@ -304,7 +324,7 @@ public class BinanceFetchCandles
     {
         GlobalData.AddTextToLogTab("Fetching historical candles");
 
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
         {
             try
             {
@@ -330,7 +350,7 @@ public class BinanceFetchCandles
 
                         if (symbol.QuoteData.FetchCandles)
                         {
-                            //if (symbol.Name.Equals("LEVERBUSD"))
+                            //if (symbol.Name.Equals("BTCUSDT") || symbol.Name.Equals("ETHUSDT") || symbol.Name.Equals("ADABTC") || symbol.Name.Equals("LEVERBTC"))
                             queue.Enqueue(symbol);
                         }
                     }

@@ -155,18 +155,49 @@ public class ThreadLoadData
     //}
 
 
-    public static async Task ExecuteAsync()
+    public static void IndexQuoteDataSymbols(Model.CryptoExchange exchange)
+    {
+        // De index lijsten opbouwen (een gedeelte van de ~2100 munten)
+        foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
+        {
+            // Lock (zie onder andere de BarometerTools)
+            Monitor.Enter(quoteData.SymbolList);
+            try
+            {
+                quoteData.SymbolList.Clear();
+                foreach (var symbol in exchange.SymbolListName.Values)
+                {
+                    if (symbol.Quote.Equals(quoteData.Name) && symbol.Status == 1 && !symbol.IsBarometerSymbol())
+                    {
+                        quoteData.SymbolList.Add(symbol);
+                    }
+                }
+            }
+            finally
+            {
+                Monitor.Exit(quoteData.SymbolList);
+            }
+        }
+
+        // De (nieuwe)muntparen toevoegen aan de userinterface
+        GlobalData.SymbolsHaveChanged("");
+    }
+
+
+
+    public static async Task ExecuteAsync(bool afterRestart)
     {
         try
         {
-            using (CryptoDatabase databaseThread = new())
-            {
-                databaseThread.Close();
-                databaseThread.Open();
+            using CryptoDatabase databaseThread = new();
+            databaseThread.Open();
 
-                //************************************************************************************
-                //Informatie uit de database lezen
-                //************************************************************************************
+            //************************************************************************************
+            // Informatie uit de database lezen
+            //************************************************************************************
+
+            if (GlobalData.ExchangeListId.TryGetValue(GlobalData.Settings.General.ExchangeId, out Model.CryptoExchange exchange))
+            {
 
                 ////Alle exchanges uit de database lezen (al gedaan in Main.cs)
                 //GlobalData.AddTextToLogTab("Reading exchange information");
@@ -178,13 +209,15 @@ public class ThreadLoadData
 
                 // De symbols uit de database lezen 
                 GlobalData.AddTextToLogTab("Reading symbol information");
-                foreach (CryptoSymbol symbol in databaseThread.Connection.GetAll<CryptoSymbol>())
+                string sql = string.Format("select * from symbol where exchangeid={0}", exchange.Id);
+                foreach (CryptoSymbol symbol in databaseThread.Connection.Query<CryptoSymbol>(sql))
                 {
-                    // Ga er van uit dat de symbol niet actief is
-                    if (symbol.IsBarometerSymbol())
-                        symbol.Status = 1;
-                    else
-                        symbol.Status = 0;
+                    //// Ga er van uit dat de symbol niet actief is
+                    //// (we cachen het nu in een tabel, dus niet doen
+                    //if (symbol.IsBarometerSymbol())
+                    //    symbol.Status = 1;
+                    ////else
+                    ////    symbol.Status = 0;
                     GlobalData.AddSymbol(symbol);
                 }
 
@@ -193,43 +226,41 @@ public class ThreadLoadData
                 // Alle CandleFetched items uit de database lezen
                 // En ja, hier is wat duplicaat code, verhuist naar de AddSymbol() 
                 GlobalData.AddTextToLogTab("Reading fetched information");
-                foreach (var candleFetched in databaseThread.Connection.GetAll<CryptoSymbolInterval>())
+                sql = string.Format("select * from symbolinterval where exchangeid={0}", exchange.Id);
+                foreach (var candleFetched in databaseThread.Connection.Query<CryptoSymbolInterval>(sql))
                 {
-                    if (GlobalData.ExchangeListId.TryGetValue((int)candleFetched.ExchangeId, out Model.CryptoExchange exchange))
+                    candleFetched.ExchangeId = exchange.Id;
+                    if (exchange.SymbolListId.TryGetValue((int)candleFetched.SymbolId, out CryptoSymbol symbol))
                     {
-                        candleFetched.ExchangeId = exchange.Id;
-                        if (exchange.SymbolListId.TryGetValue((int)candleFetched.SymbolId, out CryptoSymbol symbol))
-                        {
-                            candleFetched.SymbolId = symbol.Id;
+                        candleFetched.SymbolId = symbol.Id;
 
-                            // De aanwezige SymbolInterval in het geheugen OVERSCHRIJVEN (dat is de clue hier)
-                            CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(candleFetched.IntervalPeriod);
+                        // De aanwezige SymbolInterval in het geheugen OVERSCHRIJVEN (dat is de clue hier)
+                        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(candleFetched.IntervalPeriod);
 
-                            // Raar heen en weer gekopieer van data, dit kan optimaler...
-                            symbolInterval.Id = candleFetched.Id;
-                            symbolInterval.SymbolId = symbol.Id;
-                            symbolInterval.ExchangeId = exchange.Id;
-                            symbolInterval.TrendInfoDate = candleFetched.TrendInfoDate;
-                            symbolInterval.TrendIndicator = candleFetched.TrendIndicator;
-                            symbolInterval.LastCandleSynchronized = candleFetched.LastCandleSynchronized;
-                            symbolInterval.IsChanged = false;
-                        }
+                        // Raar heen en weer gekopieer van data, dit kan optimaler...
+                        symbolInterval.Id = candleFetched.Id;
+                        symbolInterval.SymbolId = symbol.Id;
+                        symbolInterval.ExchangeId = exchange.Id;
+                        symbolInterval.TrendInfoDate = candleFetched.TrendInfoDate;
+                        symbolInterval.TrendIndicator = candleFetched.TrendIndicator;
+                        symbolInterval.LastCandleSynchronized = candleFetched.LastCandleSynchronized;
+                        symbolInterval.IsChanged = false;
                     }
                 }
 #endif
 
-
-                // Een aantal signalen laden
-                // TODO - beperken tot de signalen die nog enigzins bruikbaar zijn??
-                GlobalData.AddTextToLogTab("Reading some signals");
-#if SQLDATABASE
-                string sql = "select top 50 * from signal order by id desc";
-#else
-                string sql = "select * from signal order by id desc limit 50";
-#endif
-                foreach (CryptoSignal signal in databaseThread.Connection.Query<CryptoSignal>(sql))
+                // Anders staan ze er na een restart dubbel in
+                if (!afterRestart)
                 {
-                    if (GlobalData.ExchangeListId.TryGetValue(signal.ExchangeId, out Model.CryptoExchange exchange))
+                    // Een aantal signalen laden
+                    // TODO - beperken tot de signalen die nog enigzins bruikbaar zijn??
+                    GlobalData.AddTextToLogTab("Reading some signals");
+#if SQLDATABASE
+                    sql = string.Format("select top 50 * from signal where exchangeid={0} order by id desc", exchange.Id);
+#else
+                    sql = string.Format("select * from signal where exchangeid={0} order by id desc limit 50", exchange.Id);
+#endif
+                    foreach (CryptoSignal signal in databaseThread.Connection.Query<CryptoSignal>(sql))
                     {
                         signal.Exchange = exchange;
 
@@ -246,7 +277,7 @@ public class ThreadLoadData
                     }
                 }
 
-
+#if TRADEBOT
                 // Alle gesloten posities lezen 
                 // TODO - beperken tot de laatste 2 dagen? (en wat handigheden toevoegen wellicht)
                 GlobalData.AddTextToLogTab("Reading closed position");
@@ -306,6 +337,7 @@ public class ThreadLoadData
                         databaseThread.Connection.Update(position);
                     }
                 }
+#endif
 
 
 
@@ -313,13 +345,15 @@ public class ThreadLoadData
                 // Alle symbols van de exchange halen en mergen met de ingelezen symbols.
                 // Via een event worden de muntparen in de userinterface gezet (dat duurt even)
                 //************************************************************************************
-                await ExchangeClass.FetchSymbols();
-                //Task.Run(async () => { await BinanceFetchSymbols.ExecuteAsync(); });
+                if (!exchange.LastTimeFetched.HasValue || exchange.LastTimeFetched?.AddHours(1) < DateTime.UtcNow)
+                    await ExchangeClass.FetchSymbols();
+                IndexQuoteDataSymbols(exchange);
 
                 // Na het inlezen van de symbols de lijsten goed zetten
                 TradingConfig.InitWhiteAndBlackListSettings();
+
                 // De (interne) barometer symbols toevoegen
-                GlobalData.InitBarometerSymbols();
+                GlobalData.InitBarometerSymbols(databaseThread);
 
 
 
@@ -395,21 +429,18 @@ public class ThreadLoadData
                     // Voeg de candle toe aan de lijst verrijkt met meta data over interval, symbol en exchange
                     foreach (CryptoCandle candle in databaseThread.Connection.Query<CryptoCandle>(builder.ToString()))
                     {
-                        if (GlobalData.ExchangeListId.TryGetValue(candle.ExchangeId, out Model.CryptoExchange exchange))
+                        if (exchange.SymbolListId.TryGetValue(candle.SymbolId, out CryptoSymbol symbol))
                         {
-                            if (exchange.SymbolListId.TryGetValue(candle.SymbolId, out CryptoSymbol symbol))
+                            CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
+                            SortedList<long, CryptoCandle> candles = symbolPeriod.CandleList;
+
+                            candle.IntervalId = symbolPeriod.Interval.Id;
+
+                            if (!candles.ContainsKey(candle.OpenTime))
                             {
-                                CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
-                                SortedList<long, CryptoCandle> candles = symbolPeriod.CandleList;
-
-                                candle.IntervalId = symbolPeriod.Interval.Id;
-
-                                if (!candles.ContainsKey(candle.OpenTime))
-                                {
-                                    candles.Add(candle.OpenTime, candle);
-                                    aantaltotaal++;
-                                    aantal++;
-                                }
+                                candles.Add(candle.OpenTime, candle);
+                                aantaltotaal++;
+                                aantal++;
                             }
                         }
                     }
@@ -436,135 +467,125 @@ public class ThreadLoadData
                 // Alle intervallen herberekenen (het is een bulk hercalculatie voor de laatste in het geheugen gelezen candles)
                 // In theorie is dit allemaal reeds in de database opgeslagen, maar baat het niet dan schaad het niet
                 //************************************************************************************
-                foreach (Model.CryptoExchange exchange in GlobalData.ExchangeListName.Values)
+                GlobalData.AddTextToLogTab("Calculating candle intervals for " + exchange.Name + " (" + exchange.SymbolListName.Count.ToString() + " symbols)");
+                foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
                 {
-                    //break; //Laat maar even... (HEEL waarschijnlijk een verschil in UTC bij de omzetactie)
+                    // De "barometer" munten overslagen AUB, die hebben slechts 3 intervallen (beetje quick en dirty allemaal)
+                    if (symbol.IsBarometerSymbol())
+                        continue;
 
-                    GlobalData.AddTextToLogTab("Calculating candle intervals for " + exchange.Name + " (" + exchange.SymbolListName.Count.ToString() + " symbols)");
-                    foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
+                    if (symbol.CandleList.Any())
                     {
-                        // De "barometer" munten overslagen AUB, die hebben slechts 3 intervallen (beetje quick en dirty allemaal)
-                        if (symbol.IsBarometerSymbol())
-                            continue;
-
-                        if (symbol.CandleList.Any())
+                        try
                         {
-                            try
+                            // Van laag naar hoog zodat de hogere intervallen worden berekend
+                            foreach (CryptoSymbolInterval symbolInterval in symbol.IntervalPeriodList)
                             {
-                                // Van laag naar hoog zodat de hogere intervallen worden berekend
-                                foreach (CryptoSymbolInterval symbolInterval in symbol.IntervalPeriodList)
+                                CryptoInterval interval = symbolInterval.Interval;
+                                if (interval.ConstructFrom != null)
                                 {
-                                    CryptoInterval interval = symbolInterval.Interval;
-                                    if (interval.ConstructFrom != null)
+                                    // Voeg een candle toe aan een hogere tijd interval (eventueel uit db laden)
+                                    var candlesInterval = symbolInterval.CandleList;
+                                    if (candlesInterval.Values.Count > 0)
                                     {
-                                        // Voeg een candle toe aan een hogere tijd interval (eventueel uit db laden)
-                                        var candlesInterval = symbolInterval.CandleList;
-                                        if (candlesInterval.Values.Count > 0)
+                                        // Periode start
+                                        long unixFirst = candlesInterval.Values.First().OpenTime;
+                                        unixFirst -= unixFirst % interval.Duration;
+                                        DateTime dateFirst = CandleTools.GetUnixDate(unixFirst);
+
+                                        // Periode einde
+                                        long unixLast = candlesInterval.Values.Last().OpenTime;
+                                        unixLast -= unixLast % interval.Duration;
+                                        DateTime dateLast = CandleTools.GetUnixDate(unixLast);
+
+
+                                        // TODO: Het aantal variabelen verminderen
+                                        long unixLoop = unixFirst;
+                                        DateTime dateLoop = CandleTools.GetUnixDate(unixLoop);
+
+                                        // Herbereken deze periode opnieuw uit het onderliggende interval
+                                        while (unixLoop <= unixLast)
                                         {
-                                            // Periode start
-                                            long unixFirst = candlesInterval.Values.First().OpenTime;
-                                            unixFirst -= unixFirst % interval.Duration;
-                                            DateTime dateFirst = CandleTools.GetUnixDate(unixFirst);
+                                            CandleTools.CalculateCandleForInterval(interval, interval.ConstructFrom, symbol, unixLoop);
 
-                                            // Periode einde
-                                            long unixLast = candlesInterval.Values.Last().OpenTime;
-                                            unixLast -= unixLast % interval.Duration;
-                                            DateTime dateLast = CandleTools.GetUnixDate(unixLast);
-
-
-                                            // TODO: Het aantal variabelen verminderen
-                                            long unixLoop = unixFirst;
-                                            DateTime dateLoop = CandleTools.GetUnixDate(unixLoop);
-
-                                            // Herbereken deze periode opnieuw uit het onderliggende interval
-                                            while (unixLoop <= unixLast)
-                                            {
-                                                CandleTools.CalculateCandleForInterval(interval, interval.ConstructFrom, symbol, unixLoop);
-
-                                                unixLoop += interval.Duration;
-                                                dateLoop = CandleTools.GetUnixDate(unixLoop); //ter debug want een unix date is onleesbaar
-                                            }
+                                            unixLoop += interval.Duration;
+                                            dateLoop = CandleTools.GetUnixDate(unixLoop); //ter debug want een unix date is onleesbaar
                                         }
                                     }
-
-                                    // De laatste datum bijwerken (zodat we minder candles hoeven op te halen)
-                                    CandleTools.UpdateCandleFetched(symbol, interval); // alleen relevant voor 1m
                                 }
-                            }
-                            catch (Exception error)
-                            {
-                                GlobalData.Logger.Error(error);
-                                GlobalData.AddTextToLogTab(error.ToString());
-                                throw;
-                            }
 
+                                // De laatste datum bijwerken (zodat we minder candles hoeven op te halen)
+                                CandleTools.UpdateCandleFetched(symbol, interval); // alleen relevant voor 1m
+                            }
                         }
+                        catch (Exception error)
+                        {
+                            GlobalData.Logger.Error(error);
+                            GlobalData.AddTextToLogTab(error.ToString());
+                            throw;
+                        }
+
                     }
                 }
+
 
 
                 int aantalTotaal = 0;
-                foreach (Model.CryptoExchange exchange in GlobalData.ExchangeListName.Values)
+                foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
                 {
-                    foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
+                    foreach (CryptoSymbolInterval symbolPeriod in symbol.IntervalPeriodList)
                     {
-                        foreach (CryptoSymbolInterval symbolPeriod in symbol.IntervalPeriodList)
-                        {
-                            aantalTotaal += symbolPeriod.CandleList.Count;
-                        }
+                        aantalTotaal += symbolPeriod.CandleList.Count;
                     }
-                    if (aantalTotaal > 0)
-                        GlobalData.AddTextToLogTab("Total amount of candles in memory " + aantalTotaal.ToString("N0") + " candles");
                 }
-            }
-
-
-            //************************************************************************************
-            // De Telegram bot opstarten
-            //************************************************************************************
-            GlobalData.AddTextToLogTab("Starting Telegram bot");
-            var whateverx = Task.Run(async () => { await ThreadTelegramBot.ExecuteAsync(); });
-
-
-            //************************************************************************************
-            // Vanaf dit moment worden de 1m candles bijgewerkt 
-            // Vanaf dit moment worden de aangeboden 1m candles in ons systeem verwerkt
-            // (Dit moet overlappen met "achterstand bijwerken" want anders ontstaan er gaten)
-            // BUG/Probleem! na nieuwe munt of instellingen wordt dit niet opnieuw gedaan (herstart nodig)
-            //************************************************************************************
-            await ExchangeClass.Start1mCandleStream();
-
-
-            await Task.Factory.StartNew(() => new TradingViewSymbolInfo().StartAsync("TVC:DXY", "US Dollar Index", "N2", GlobalData.TradingViewDollarIndex, 10));
-            await Task.Factory.StartNew(() => new TradingViewSymbolInfo().StartAsync("SP:SPX", "S&P 500", "N2", GlobalData.TradingViewSpx500, 10));
-            await Task.Factory.StartNew(() => new TradingViewSymbolInfo().StartAsync("CRYPTOCAP:BTC.D", "BTC Dominance", "N2", GlobalData.TradingViewBitcoinDominance, 10));
-            await Task.Factory.StartNew(() => new TradingViewSymbolInfo().StartAsync("CRYPTOCAP:TOTAL3", "Market Cap total", "N0", GlobalData.TradingViewMarketCapTotal, 10));
-            await Task.Factory.StartNew(() => new FearAndGreatSymbolInfo().StartAsync("https://alternative.me/crypto/fear-and-greed-index/", "Fear and Greed index", "N2", GlobalData.FearAndGreedIndex, 10));
-
-
-            //************************************************************************************
-            // Om het volume per symbol en laatste prijs te achterhalen (weet geen betere manier)
-            //************************************************************************************
-            ExchangeClass.StartPriceTickerStream();
-            //GlobalData.TaskBinanceStreamPriceTicker = new BinanceStreamPriceTicker();
-            //var _ = Task.Run(async () => { await GlobalData.TaskBinanceStreamPriceTicker.ExecuteAsync(); });
-
-
-            //************************************************************************************
-            // De (ontbrekende) candles downloaden (en de achterstand inhalen, blocking!)
-            //************************************************************************************
-            await ExchangeClass.FetchCandles();
-
-            //Ze zijn er allemaal wel, deze is overbodig
-            //CalculateMissingCandles();
+                if (aantalTotaal > 0)
+                    GlobalData.AddTextToLogTab("Total amount of candles in memory " + aantalTotaal.ToString("N0") + " candles");
 
 
 
-            //************************************************************************************
-            // Nu we de achterstand ingehaald hebben kunnen/mogen we analyseren (signals maken)
-            //************************************************************************************
-            GlobalData.AddTextToLogTab("Starting task for creating signals");
-            _ = Task.Run( () => { GlobalData.ThreadMonitorCandle.Execute(); });
+                //************************************************************************************
+                // De Telegram bot opstarten
+                //************************************************************************************
+                GlobalData.AddTextToLogTab("Starting Telegram bot");
+                var whateverx = Task.Run(async () => { await ThreadTelegramBot.ExecuteAsync(); });
+
+
+                //************************************************************************************
+                // Diverse informatie tickers
+                //************************************************************************************
+                await Task.Factory.StartNew(() => new TradingViewSymbolInfo().StartAsync("TVC:DXY", "US Dollar Index", "N2", GlobalData.TradingViewDollarIndex, 10));
+                await Task.Factory.StartNew(() => new TradingViewSymbolInfo().StartAsync("SP:SPX", "S&P 500", "N2", GlobalData.TradingViewSpx500, 10));
+                await Task.Factory.StartNew(() => new TradingViewSymbolInfo().StartAsync("CRYPTOCAP:BTC.D", "BTC Dominance", "N2", GlobalData.TradingViewBitcoinDominance, 10));
+                await Task.Factory.StartNew(() => new TradingViewSymbolInfo().StartAsync("CRYPTOCAP:TOTAL3", "Market Cap total", "N0", GlobalData.TradingViewMarketCapTotal, 10));
+                await Task.Factory.StartNew(() => new FearAndGreatSymbolInfo().StartAsync("https://alternative.me/crypto/fear-and-greed-index/", "Fear and Greed index", "N2", GlobalData.FearAndGreedIndex, 10));
+
+
+                //************************************************************************************
+                // Vanaf dit moment worden de 1m candles bijgewerkt 
+                // Vanaf dit moment worden de aangeboden 1m candles in ons systeem verwerkt
+                // (Dit moet overlappen met "achterstand bijwerken" want anders ontstaan er gaten)
+                // BUG/Probleem! na nieuwe munt of instellingen wordt dit niet opnieuw gedaan (herstart nodig)
+                //************************************************************************************
+                await ExchangeClass.Start1mCandleAsync();
+
+                //************************************************************************************
+                // Om het volume per symbol en laatste prijs te achterhalen (weet geen betere manier)
+                //************************************************************************************
+                await ExchangeClass.StartPriceTickerAsync();
+
+                //************************************************************************************
+                // De (ontbrekende) candles downloaden (en de achterstand inhalen, blocking!)
+                //************************************************************************************
+                await ExchangeClass.FetchCandlesAsync();
+
+                //Ze zijn er wel, deze is eigenlijk overbodig geworden (zit alleen zoveel werk in!)
+                //CalculateMissingCandles();
+
+                //************************************************************************************
+                // Nu we de achterstand ingehaald hebben kunnen/mogen we analyseren (signals maken)
+                //************************************************************************************
+                GlobalData.AddTextToLogTab("Starting task for creating signals");
+                _ = Task.Run(() => { GlobalData.ThreadMonitorCandle.Execute(); });
 
 
 #if TRADEBOT
@@ -610,35 +631,38 @@ public class ThreadLoadData
                 await ExchangeClass.FetchAssets(GlobalData.ExchangeRealTradeAccount);
 #endif
 
-            // toon de ingelezen posities
-            GlobalData.PositionsHaveChanged("");
+                // toon de ingelezen posities
+                GlobalData.PositionsHaveChanged("");
 
 
-            var assembly = Assembly.GetExecutingAssembly().GetName();
-            string appName = assembly.Name.ToString();
-            string appVersion = assembly.Version.ToString();
-            while (appVersion.EndsWith(".0"))
-                appVersion = appVersion[0..^2];
-            GlobalData.AddTextToLogTab(appName + " " + appVersion + " ready", true);
-            GlobalData.AddTextToTelegram(appName + " " + appVersion + " ready");
+                var assembly = Assembly.GetExecutingAssembly().GetName();
+                string appName = assembly.Name.ToString();
+                string appVersion = assembly.Version.ToString();
+                while (appVersion.EndsWith(".0"))
+                    appVersion = appVersion[0..^2];
+                GlobalData.AddTextToLogTab(appName + " " + appVersion + " ready", true);
+                GlobalData.AddTextToTelegram(appName + " " + appVersion + " ready");
+                GlobalData.AddTextToTelegram("");
 
-            // Heb me dag lopen af te vragen waarom er geen signalen kwamen, iets met white&black, right
-            //if (GlobalData.Settings.UseWhiteListOversold)
-            //    GlobalData.AddTextToLogTab("Oversold whitelist activated!");
-            //if (GlobalData.Settings.UseBlackListOversold)
-            //    GlobalData.AddTextToLogTab("Oversold blacklist activated!");
+                // Heb me dag lopen af te vragen waarom er geen signalen kwamen, iets met white&black, right
+                //if (GlobalData.Settings.UseWhiteListOversold)
+                //    GlobalData.AddTextToLogTab("Oversold whitelist activated!");
+                //if (GlobalData.Settings.UseBlackListOversold)
+                //    GlobalData.AddTextToLogTab("Oversold blacklist activated!");
 
-            //if (GlobalData.Settings.UseWhiteListOverbought)
-            //    GlobalData.AddTextToLogTab("Overbought whitelist activated!");
-            //if (GlobalData.Settings.UseBlackListOverbought)
-            //    GlobalData.AddTextToLogTab("Overbought blacklist activated!");
+                //if (GlobalData.Settings.UseWhiteListOverbought)
+                //    GlobalData.AddTextToLogTab("Overbought whitelist activated!");
+                //if (GlobalData.Settings.UseBlackListOverbought)
+                //    GlobalData.AddTextToLogTab("Overbought blacklist activated!");
 
-            // Dit is een enorme cpu drain, eventjes 3 * 250 * ~3 intervallen bijlangs
-            //RecalculateLastXCandles(1);
+                // Dit is een enorme cpu drain, eventjes 3 * 250 * ~3 intervallen bijlangs
+                //RecalculateLastXCandles(1);
 
-            // Assume we now can run
-            GlobalData.ApplicationStatus = CryptoApplicationStatus.AppStatusRunning;
-
+                // Assume we now can run
+                GlobalData.ApplicationStatus = CryptoApplicationStatus.AppStatusRunning;
+                //GlobalData.DumpSessionInformation();
+                ScannerSession.SetTimerDefaults();
+            }
         }
         catch (Exception error)
         {

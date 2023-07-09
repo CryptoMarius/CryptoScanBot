@@ -441,6 +441,8 @@ public class ThreadTelegramBot
 
     public static async Task ExecuteAsync()
     {
+        return;
+
         // Bij het testen staat vaak de scanner aan, daatom bij sql telegram ff uit
 #if !SQLDATABASE
 

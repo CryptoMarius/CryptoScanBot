@@ -3,11 +3,14 @@
 //using Newtonsoft.Json.Linq;
 //using System.Net;
 
+// Opmerking:
+// De Altrady webhook is qua paperTesting totaal afgekeurd, het vult DCA orders op -10% en 
+// sluit dan de order met winst met als gevolg een totaal vertekend beeld onstaat van 
+// het traden. (Vraag: hoe vaak is het eerder fout gegaan?, niet iets om te negeren)
+// Zo kun je maandenlang positief papertraden terwijl de werkelijkheid totaal anders is
+
 namespace CryptoSbmScanner.Exchange.Altrady;
 
-// De Altrady webhook is qua paperTesting afgekeurd, het vult netjes DCA orders op -10% 
-// en sluit dan de order met winst met als gevolg een totaal vertekend beeld op het traden.
-// (bijkopen gebeurd al niet vaak, bug wellicht nog zeldzamer, maar zeker te vaak om te negeren)
 
 //public class AltradyWebhook
 //{

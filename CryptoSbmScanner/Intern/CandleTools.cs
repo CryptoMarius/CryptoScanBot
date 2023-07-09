@@ -101,7 +101,9 @@ public static class CandleTools
         long candleOpenUnix = openTime - openTime % interval.Duration;
         //DateTime candleOpenDate = GetUnixDate(candleOpenUnix); //ter debug want een unix date is onleesbaar
 
-        bool IsChanged = false;
+#pragma warning disable CS0219 // Variable is assigned but its value is never used
+        bool IsChanged = false; // nodig  voor SQL database
+#pragma warning restore CS0219 // Variable is assigned but its value is never used
         if (!candles.TryGetValue(candleOpenUnix, out CryptoCandle candleNew))
         {
             IsChanged = true;
@@ -200,7 +202,7 @@ public static class CandleTools
             if (candleNew.Id > 0)
             {
                 //Optimalisatie: Vaak wordt een candle helemaal niet aangepast, valt bijvoorbeeld tussen eerdere high en lows.
-                //deze hoeft dan niet naar de database geschreven te worden wat zeer waarschijnlijk aardig wat tijd scheelt....
+                //deze hoeft dan niet naar de database geschreven te worden wat zeer waarschijnlijk een beetje tijd scheelt....
                 if (IsChanged)
                 {
                     CandleTools.UpdateCandleFetched(symbol, interval);

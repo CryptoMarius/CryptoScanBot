@@ -544,14 +544,14 @@
             contextMenuStripPositionsOpenRecalculate.Name = "contextMenuStripPositionsOpenRecalculate";
             contextMenuStripPositionsOpenRecalculate.Size = new Size(148, 22);
             contextMenuStripPositionsOpenRecalculate.Text = "Herberekenen";
-            contextMenuStripPositionsOpenRecalculate.Click += ContextMenuStripPositionsOpenRecalculate_Click;
+            contextMenuStripPositionsOpenRecalculate.Click += ContextMenuStripPositionsOpenRecalculateAsync_Click;
             // 
             // debugDumpToolStripMenuItem
             // 
             debugDumpToolStripMenuItem.Name = "debugDumpToolStripMenuItem";
             debugDumpToolStripMenuItem.Size = new Size(148, 22);
             debugDumpToolStripMenuItem.Text = "Debug-Dump";
-            debugDumpToolStripMenuItem.Click += DebugDumpToolStripMenuItem_Click;
+            debugDumpToolStripMenuItem.Click += DebugDumpToolStripMenuItemAsync_Click;
             // 
             // contextMenuStripPositionsOpen
             // 
@@ -564,7 +564,7 @@
             debugDumpToolStripMenuItem1.Name = "debugDumpToolStripMenuItem1";
             debugDumpToolStripMenuItem1.Size = new Size(180, 22);
             debugDumpToolStripMenuItem1.Text = "Debug-Dump";
-            debugDumpToolStripMenuItem1.Click += debugDumpToolStripMenuItem1_Click;
+            debugDumpToolStripMenuItem1.Click += debugDumpToolStripMenuItem1Async_Click;
             // 
             // FrmMain
             // 

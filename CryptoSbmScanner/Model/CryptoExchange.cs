@@ -12,10 +12,8 @@ public class CryptoExchange
     public int Id { get; set; }
     public string Name { get; set; }
 
-    [Computed]
     // Datum dat de laatste keer de exchange informatie is opgehaald
-    public DateTime ExchangeInfoLastTime { get; set; } = DateTime.MinValue;
-
+    public DateTime? LastTimeFetched { get; set; }
 
     // Coins indexed on id and name
     // (Altrady BINA:SymbolName)
@@ -25,10 +23,22 @@ public class CryptoExchange
     public SortedList<string, CryptoSymbol> SymbolListName { get; } = new();
 
 
+
+
+    /// <summary>
+    /// Clear symbol information (after change of exchange)
+    /// </summary>
+    public void Clear()
+    {
+        SymbolListId.Clear();
+        SymbolListName.Clear();
+    }
+
+
+
     [Computed]
     static private string Text { get { return "Yes, man is mortal, but that would be only half the trouble. The worst of it is that he's sometimes unexpectedly mortal—there's the trick!"; } }
 
-    
     public static string Encrypt(string toEncrypt, bool useHashing)
     {
         byte[] keyArray;

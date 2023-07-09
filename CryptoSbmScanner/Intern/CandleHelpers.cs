@@ -398,9 +398,9 @@ public static class Helper
 
         string s = string.Format("{0} position {1} {2}% {3}", position.Symbol.Name,
             position.Invested.ToString0(), diffPercentage.ToString0("N2"), position.Status);
-        if (position.TradeAccount.AccountType == CryptoTradeAccountType.BackTest)
+        if (position.TradeAccount.TradeAccountType == CryptoTradeAccountType.BackTest)
             s += string.Format(" ({0})", position.TradeAccount.Name);
-        else if (position.TradeAccount.AccountType == CryptoTradeAccountType.PaperTrade)
+        else if (position.TradeAccount.TradeAccountType == CryptoTradeAccountType.PaperTrade)
             s += string.Format(" ({0})", position.TradeAccount.Name);
         stringBuilder.AppendLine(s);
         //positionCount++;

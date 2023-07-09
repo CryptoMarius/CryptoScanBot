@@ -25,20 +25,20 @@ public class BarometerTools
                 
                 symbol = new CryptoSymbol
                 {
+                    Exchange = exchange,
+                    ExchangeId = exchange.Id,
                     Base = baseName, //De "munt"
-                    Quote = quoteData.Name //USDT, BTC etc.
+                    Quote = quoteData.Name, //USDT, BTC etc.
+                    Volume = 0,
                 };
                 symbol.Name = symbol.Base + symbol.Quote;
-                symbol.Volume = 0;
-                symbol.Status = 1;
-                symbol.Exchange = exchange;
-                symbol.ExchangeId = exchange.Id;
 
                 databaseThread.Connection.Insert<CryptoSymbol>(symbol, transaction);
-                GlobalData.AddSymbol(symbol);
                 transaction.Commit();
+
                 GlobalData.AddSymbol(symbol);
             }
+            symbol.Status = 1;
             return symbol;
         }
         return null;

@@ -22,12 +22,9 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DefineConstants>$(DefineConstants);TRADEBOT</DefineConstants>
-  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' " />
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
-    <DefineConstants>$(DefineConstants);TRADEBOT</DefineConstants>
   </PropertyGroup>
   <PropertyGroup />
   <PropertyGroup>
@@ -158,6 +155,7 @@
     <PackageReference Include="Microsoft.Web.WebView2">
       <Version>1.0.1823.32</Version>
     </PackageReference>
+    <PackageReference Include="Nito.AsyncEx.Context" Version="5.1.2" />
     <PackageReference Include="NLog">
       <Version>5.2.0</Version>
     </PackageReference>
@@ -229,6 +227,7 @@
     <ApplicationManifest>Properties\app.manifest</ApplicationManifest>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <PlatformTarget>AnyCPU</PlatformTarget>
+    <BaseOutputPath></BaseOutputPath>
   </PropertyGroup>
   <Target Name="AfterCompile">
     <Exec Command="echo Release@@Win32&#xD;&#xA;if &quot;$(ConfigurationName)&quot; == &quot;Release&quot; (if &quot;$(PlatformName)&quot; == &quot;Win32&quot; (&quot;$(ProjectDir)_Obfuscar\Obfuscar.Console.exe&quot; &quot;$(ProjectDir)_Obfuscar\obfuscar_Release_Win32.xml&quot;&#xD;&#xA;xcopy /e /v &quot;$(ProjectDir)obj\Win32\Release\\Out\&quot; &quot;$(ProjectDir)obj\Win32\Release\&quot; /Y))" />

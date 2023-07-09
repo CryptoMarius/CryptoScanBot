@@ -1,6 +1,4 @@
-﻿using System.Text;
-
-using CryptoSbmScanner.Context;
+﻿using CryptoSbmScanner.Context;
 using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
@@ -43,12 +41,13 @@ public partial class FrmMain
         listViewPositionsOpen.ListViewItemSorter = listViewColumnSorter;
         //listViewPositionsOpen.ColumnClick += ListViewSignals_ColumnClick;
         listViewPositionsOpen.SetSortIcon(listViewColumnSorter.SortColumn, listViewColumnSorter.SortOrder);
-        listViewPositionsOpen.DoubleClick += new System.EventHandler(ListViewPositionOpen_MenuItem_DoubleClick);
+        listViewPositionsOpen.DoubleClick += ListViewPositionOpen_MenuItem_DoubleClick;
         tabPagePositionsOpen.Controls.Add(listViewPositionsOpen);
 
         TimerRefreshSomething = new();
-        InitTimerInterval(ref TimerRefreshSomething, 20); // 20 seconden
-        TimerRefreshSomething.Tick += new System.EventHandler(TimerRefreshSomething_Tick);
+        TimerRefreshSomething.Interval = 20000; // 20 seconden
+        TimerRefreshSomething.Tick += TimerRefreshSomething_Tick;
+		TimerRefreshSomething.Enabled = true;
 
         ListViewPositionsOpenInitColumns();
     }
@@ -125,7 +124,10 @@ public partial class FrmMain
             item1.SubItems.Add(position.BreakEvenPrice.ToString(position.Symbol.PriceDisplayFormat));
         item1.SubItems.Add(position.Quantity.ToString0(position.Symbol.QuantityDisplayFormat));
 
-        item1.SubItems.Add(position.Invested.ToString(position.Symbol.QuoteData.DisplayFormat));
+        subItem = item1.SubItems.Add(position.Invested.ToString(position.Symbol.QuoteData.DisplayFormat));
+        if (position.Invested - position.Returned > 7 * position.Symbol.QuoteData.BuyAmount) // een indicatie (beetje willekeurig)
+            subItem.ForeColor = Color.Red;
+
         item1.SubItems.Add(position.Returned.ToString(position.Symbol.QuoteData.DisplayFormat));
         item1.SubItems.Add((position.Invested - position.Returned).ToString(position.Symbol.QuoteData.DisplayFormat));
         item1.SubItems.Add(position.Commission.ToString(position.Symbol.QuoteData.DisplayFormat));
@@ -424,8 +426,12 @@ public partial class FrmMain
     //    //}
     //}
 
-    private async void debugDumpToolStripMenuItem1_Click(object sender, EventArgs e)
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+    private async void debugDumpToolStripMenuItem1Async_Click(object sender, EventArgs e)
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
     {
+#if TRADEBOT
+
         if (listViewPositionsOpen.SelectedItems.Count > 0)
         {
             ListViewItem item = listViewPositionsOpen.SelectedItems[0];
@@ -444,7 +450,7 @@ public partial class FrmMain
             PositionTools.DumpPosition(position, strings);
             GlobalData.AddTextToLogTab(strings.ToString());
         }
-
+#endif
     }
 }
 

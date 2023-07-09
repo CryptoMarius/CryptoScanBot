@@ -11,7 +11,14 @@ public class CryptoTradeAccount
     public int Id { get; set; }
     public string Name { get; set; }
     public string Short { get; set; }
-    public CryptoTradeAccountType AccountType { get; set; }
+
+    public int ExchangeId { get; set; }
+    [Computed]
+    public virtual CryptoExchange Exchange { get; set; }
+
+    public CryptoExchangeType ExchangeType { get; set; }
+    public CryptoAccountType AccountType { get; set; }
+    public CryptoTradeAccountType TradeAccountType { get; set; }
 
     // Instellingen:
     // Eventueel aangepaste instellingen per accountType voor bijvoorbeeld backtest project?
@@ -35,4 +42,16 @@ public class CryptoTradeAccount
     public SemaphoreSlim PositionListSemaphore { get; set; } = new(1);
     [Computed]
     public SortedList<string, SortedList<int, CryptoPosition>> PositionList { get; } = new();
+
+
+    /// <summary>
+    /// Clear symbol information (after change of exchange)
+    /// </summary>
+    public void Clear()
+    {
+        AssetList.Clear();
+        TradeList.Clear();
+        PositionList.Clear();
+    }
+
 }

@@ -466,7 +466,7 @@ public class BalanceSymbolsAlgoritm
     /// </summary>
     private async Task BalanceBasket(CryptoTradeAccount tradeAccount)
     {
-        using (CryptoDatabase databaseThread = new())
+        using CryptoDatabase databaseThread = new();
         {
             databaseThread.Close();
             databaseThread.Open();

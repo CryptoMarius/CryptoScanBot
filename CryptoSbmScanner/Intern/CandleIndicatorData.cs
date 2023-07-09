@@ -118,7 +118,7 @@ public class CandleIndicatorData
                         if (symbolPeriod.LastCandleSynchronized > candleLoop - interval.Duration)
                             symbolPeriod.LastCandleSynchronized = candleLoop - interval.Duration;
                         GlobalData.AddTextToLogTab(symbol.Name + " " + interval.Name + " Missing candle information " + CandleTools.GetUnixDate(candleLoop).ToLocalTime());
-                        GlobalData.ConnectionWasRestored(""); // A quick fix (dont like it)?
+                        ScannerSession.ConnectionWasRestored(""); // A quick fix (dont like it)?
                     }
                 }
                 candleLoop -= interval.Duration;

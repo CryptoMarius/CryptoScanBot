@@ -10,6 +10,7 @@ using Dapper.Contrib.Extensions;
 
 namespace CryptoSbmScanner.Exchange.Binance;
 
+#if TRADEBOT
 /// <summary>
 /// De Trades bij Binance ophalen
 /// </summary>
@@ -24,10 +25,8 @@ public class BinanceFetchTrades
     /// </summary>
     public static async Task<int> FetchTradesForSymbol(CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
     {
-        using (BinanceClient client = new())
-        {
-            return await FetchTradesInternal(client, tradeAccount, symbol);
-        }
+        using BinanceClient client = new();
+        return await FetchTradesInternal(client, tradeAccount, symbol);
     }
 
     private static async Task<int> FetchTradesInternal(BinanceClient client, CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
@@ -102,9 +101,9 @@ public class BinanceFetchTrades
 
 
 
-            // Verwerk de trades
+            // Bewaar de trades
 
-            using (CryptoDatabase databaseThread = new())
+            using CryptoDatabase databaseThread = new();
             {
                 // Extra close vanwege transactie problemen (hergebuik van connecties wellicht?)
                 databaseThread.Close();
@@ -121,9 +120,9 @@ public class BinanceFetchTrades
 #if SQLDATABASE
                             databaseThread.BulkInsertTrades(symbol, tradeCache, transaction);
 #else
-                            foreach (var x in tradeCache)
+                            foreach (var trade in tradeCache)
                             {
-                                databaseThread.Connection.Insert(symbol, transaction);
+                                databaseThread.Connection.Insert(trade, transaction);
                             }
 #endif
 
@@ -162,7 +161,7 @@ public class BinanceFetchTrades
         {
             // We hergebruiken de client binnen deze thread, teveel connecties opnenen resulteerd in een foutmelding:
             // "An operation on a socket could not be performed because the system lacked sufficient buffer space or because a queue was full"
-            using (BinanceClient client = new())
+            using BinanceClient client = new();
             {
                 while (true)
                 {
@@ -196,7 +195,7 @@ public class BinanceFetchTrades
 
     public static async Task Execute()
     {
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
         {
             try
             {
@@ -247,3 +246,4 @@ public class BinanceFetchTrades
     }
 }
 
+#endif

@@ -97,10 +97,10 @@ public static class TradingConfig
             // just for getting the name..
             AlgorithmDefinitionIndex.Add(def.Strategy, def);
 
-            foreach (CryptoOrderSide mode in Enum.GetValues(typeof(CryptoOrderSide)))
+            foreach (CryptoOrderSide side in Enum.GetValues(typeof(CryptoOrderSide)))
             {
                 bool hasClass;
-                if (mode == CryptoOrderSide.Buy)
+                if (side == CryptoOrderSide.Buy)
                     hasClass = def.AnalyzeLongType != null;
                 else
                     hasClass = def.AnalyzeShortType != null;
@@ -108,17 +108,17 @@ public static class TradingConfig
 
                 if (hasClass)
                 {
-                    if (GlobalData.Settings.Signal.Analyze.Strategy[mode].Contains(def.Name))
-                        Config[mode].AnalyzeStrategy.Add(def.Strategy, def);
-                    if (GlobalData.Settings.Trading.Monitor.Strategy[mode].Contains(def.Name))
-                        Config[mode].MonitorStrategy.Add(def.Strategy, def);
+                    if (GlobalData.Settings.Signal.Analyze.Strategy[side].Contains(def.Name))
+                        Config[side].AnalyzeStrategy.Add(def.Strategy, def);
+                    if (GlobalData.Settings.Trading.Monitor.Strategy[side].Contains(def.Name))
+                        Config[side].MonitorStrategy.Add(def.Strategy, def);
 
-                    if (GlobalData.Settings.Signal.Analyze.Strategy[mode].Contains(def.Name))
+                    if (GlobalData.Settings.Signal.Analyze.Strategy[side].Contains(def.Name))
                     {
                         if (def.Strategy >= CryptoSignalStrategy.Sbm1 && def.Strategy <= CryptoSignalStrategy.Stobb)
-                            Config[mode].StrategySbmStob.Add(def.Name, def);
+                            Config[side].StrategySbmStob.Add(def.Name, def);
                         else
-                            Config[mode].StrategyOthers.Add(def.Name, def);
+                            Config[side].StrategyOthers.Add(def.Name, def);
                     }
 
                 }

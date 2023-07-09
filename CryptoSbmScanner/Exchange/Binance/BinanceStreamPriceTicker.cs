@@ -23,17 +23,17 @@ public class BinanceStreamPriceTicker
         //
         CallResult<UpdateSubscription> subscriptionResult = await socketClient.SpotStreams.SubscribeToAllTickerUpdatesAsync((data) =>
         {
-            if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+            if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
             {
                 //GET /api/v3/ticker/24hr
                 // client.Spot.SubscribeToSymbolTickerUpdates("ETHBTC", (test) => result = test);
 
                 foreach (BinanceStreamTick tick in data.Data.Cast<BinanceStreamTick>())
                 {
-                    tickerCount++;
-
                     if (exchange.SymbolListName.TryGetValue(tick.Symbol, out CryptoSymbol symbol))
                     {
+                        tickerCount++;
+
                         // Waarschijnlijk ALLEMAAL gebaseerd op de 24h prijs
                         //symbol.OpenPrice = tick.OpenPrice;
                         //symbol.HighPrice = tick.HighPrice;

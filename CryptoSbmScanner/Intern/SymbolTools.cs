@@ -128,7 +128,7 @@ public class SymbolTools
     //    // https://binance-docs.github.io/apidocs/spot/en/#exchange-information
     //    // https://api.binance.com/api/v3/exchangeInfo?symbol=BNBBTC
 
-    //    TimeSpan span = DateTime.UtcNow.Subtract(symbol.Exchange.ExchangeInfoLastTime);
+    //    TimeSpan span = DateTime.UtcNow.Subtract(symbol.Exchange.LastTimeFetched);
     //    if (span.TotalMinutes >= 60)
     //    {
     //        await ExchangeClass.FetchSymbols();

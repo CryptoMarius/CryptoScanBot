@@ -17,11 +17,11 @@ public class DataStore
         // De candles uit de database lezen
         // Voor de 1m hebben we de laatste 2 dagen nodig (vanwege de berekening van de barometer)
         // In het algemeen is een minimum van 2 dagen OF 215 candles nodig (indicators)
-        GlobalData.AddTextToLogTab("Loading information (please wait!)");
+        GlobalData.AddTextToLogTab("Loading candle information (please wait!)");
 
         //int aantaltotaal = 0;
         string basedir = GlobalData.GetBaseDir();
-        foreach (Model.CryptoExchange exchange in GlobalData.ExchangeListName.Values)
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
         {
             string dirExchange = basedir + exchange.Name.ToLower() + @"\";
 
@@ -97,7 +97,7 @@ public class DataStore
                                         Volume = binaryReader.ReadDecimal()
                                     };
 
-                                    symbolInterval.CandleList.Add(candle.OpenTime, candle);
+                                    symbolInterval.CandleList.TryAdd(candle.OpenTime, candle);
 
                                     candleCount--;
                                 }
@@ -126,13 +126,13 @@ public class DataStore
                 }
             }
         }
-        GlobalData.AddTextToLogTab("Information loaded");
+        //GlobalData.AddTextToLogTab("Information loaded");
     }
 
 
     public static void SaveCandles()
     {
-        GlobalData.AddTextToLogTab("Saving information (please wait!)");
+        GlobalData.AddTextToLogTab("Saving candle information (please wait!)");
 
         string basedir = GlobalData.GetBaseDir();
         foreach (Model.CryptoExchange exchange in GlobalData.ExchangeListName.Values)
@@ -205,7 +205,7 @@ public class DataStore
             }
         }
 
-        GlobalData.AddTextToLogTab("Information saved");
+        //GlobalData.AddTextToLogTab("Information saved");
     }
 
 

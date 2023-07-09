@@ -34,7 +34,12 @@ public partial class FrmMain
     }
 
 
-    private void TimerShowBarometer_Tick(object sender, EventArgs e)
+    private void TimerShowInformation_Tick(object sender, EventArgs e)
+    {
+        Invoke((MethodInvoker)(() => TimerShowInformationInternal()));
+    }
+    
+    private void TimerShowInformationInternal()
     {
         if (GlobalData.ApplicationStatus != CryptoApplicationStatus.AppStatusExiting)
         {
@@ -55,6 +60,7 @@ public partial class FrmMain
             //UpdateInfoAndbarometerValues();
 
 
+            //GlobalData.AddTextToLogTab("Debug: Refresh information " + GlobalData.Settings.General.ExchangeName);
 
             // Toon de prijzen en volume van een aantal symbols
             if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
@@ -117,11 +123,12 @@ public partial class FrmMain
                     Invoke((MethodInvoker)(() => baseCoin = comboBoxBarometerQuote.Text));
                     if (GlobalData.Settings.QuoteCoins.TryGetValue(baseCoin, out CryptoQuoteData quoteData))
                     {
-                        string text = ExchangeClass.CountPriceTickerStream().ToString("N0");
-                        ShowSymbolPrice(symbolHistList[0], listViewInformation.Items[0], exchange, quoteData, "BTC", GlobalData.TradingViewDollarIndex, "Binance price ticker count", text);
+                        string e = GlobalData.Settings.General.ExchangeName;
+                        string text = ExchangeClass.CountPriceTicker().ToString("N0");
+                        ShowSymbolPrice(symbolHistList[0], listViewInformation.Items[0], exchange, quoteData, "BTC", GlobalData.TradingViewDollarIndex, e + " price ticker count", text);
 
-                        text = ExchangeClass.Count1mCandleStream().ToString("N0");
-                        ShowSymbolPrice(symbolHistList[1], listViewInformation.Items[1], exchange, quoteData, "BNB", GlobalData.TradingViewBitcoinDominance, "Binance 1m stream count", text);
+                        text = ExchangeClass.Count1mCandle().ToString("N0");
+                        ShowSymbolPrice(symbolHistList[1], listViewInformation.Items[1], exchange, quoteData, "BNB", GlobalData.TradingViewBitcoinDominance, e + " 1m stream count", text);
 
                         text = PositionMonitor.AnalyseCount.ToString("N0");
                         ShowSymbolPrice(symbolHistList[2], listViewInformation.Items[2], exchange, quoteData, "ETH", GlobalData.TradingViewSpx500, "Scanner analyse count", text);

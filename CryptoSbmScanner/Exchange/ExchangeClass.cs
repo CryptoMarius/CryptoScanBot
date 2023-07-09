@@ -3,6 +3,11 @@ using CryptoSbmScanner.Exchange.Bybit;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 
+
+// Hier valt nog wel het een en ander te optimaliseren
+// Voorstel introductie inheritance
+// (heeft nog even tijd)
+
 namespace CryptoSbmScanner.Exchange;
 
 /*
@@ -55,7 +60,7 @@ public static class ExchangeClass
     }
 
 
-    public static async Task FetchCandles()
+    public static async Task FetchCandlesAsync()
     {
         if (GlobalData.Settings.General.ExchangeId == 1)
             await Task.Run(async () => { await BinanceFetchCandles.ExecuteAsync(); });
@@ -65,69 +70,69 @@ public static class ExchangeClass
     }
 
 
-    public static void StartPriceTickerStream()
+    public static async Task StartPriceTickerAsync()
     {
         // De (uitgebreide) price ticker voor laatste prijs, bied prijs, vraag prijs, volume enzovoort
         if (GlobalData.Settings.General.ExchangeId == 1)
-            BinanceApi.StartPriceTicker();
+            await BinanceApi.StartPriceTickerAsync();
         else
-            BybitApi.StartPriceTicker();
+            await BybitApi.StartPriceTickerAsync();
     }
-    public static async Task StopPriceTickerStream()
+    public static async Task StopPriceTicker()
     {
         if (GlobalData.Settings.General.ExchangeId == 1)
-            await BinanceApi.StopPriceTicker();
+            await BinanceApi.StopPriceTickerAsync();
         else
-            await BybitApi.StopPriceTicker();
+            await BybitApi.StopPriceTickerAsync();
     }
-    public static void ResetPriceTickerStream()
+    public static void ResetPriceTicker()
     {
         // De (uitgebreide) price ticker voor laatste prijs, bied prijs, vraag prijs, volume enzovoort
         if (GlobalData.Settings.General.ExchangeId == 1)
-            BinanceApi.ResetPriceTickerStream();
+            BinanceApi.ResetPriceTicker();
         else
-            BybitApi.ResetPriceTickerStream();
+            BybitApi.ResetPriceTicker();
     }
-    public static int CountPriceTickerStream()
+    public static int CountPriceTicker()
     {
         if (GlobalData.Settings.General.ExchangeId == 1)
-            return BinanceApi.CountPriceTickerStream();
+            return BinanceApi.CountPriceTicker();
         else
-            return BybitApi.CountPriceTickerStream();
+            return BybitApi.CountPriceTicker();
     }
 
 
-    public static async Task Start1mCandleStream()
+    public static async Task Start1mCandleAsync()
     {
         if (GlobalData.Settings.General.ExchangeId == 1)
-            await BinanceApi.Start1mCandleStream();
+            await BinanceApi.Start1mCandleAsync();
         else
-            await BybitApi.Start1mCandleStream();
+            await BybitApi.Start1mCandleAsync();
     }
-    public static async Task Stop1mCandleStream()
+    public static async Task Stop1mCandleAsync()
     {
         if (GlobalData.Settings.General.ExchangeId == 1)
-            await BinanceApi.Stop1mCandleStream();
+            await BinanceApi.Stop1mCandleAsync();
         else
-            await BybitApi.Stop1mCandleStream();
+            await BybitApi.Stop1mCandleAsync();
     }
-    public static void Reset1mCandleStream()
+    public static void Reset1mCandle()
     {
         if (GlobalData.Settings.General.ExchangeId == 1)
-            BinanceApi.Reset1mCandleStream();
+            BinanceApi.Reset1mCandle();
         else
-            BybitApi.Reset1mCandleStream();
+            BybitApi.Reset1mCandle();
     }
-    public static int Count1mCandleStream()
+    public static int Count1mCandle()
     {
         if (GlobalData.Settings.General.ExchangeId == 1)
-            return BinanceApi.Count1mCandleStream();
+            return BinanceApi.Count1mCandle();
         else
-            return BybitApi.Count1mCandleStream();
+            return BybitApi.Count1mCandle();
     }
 
 
-
+#if TRADEBOT
     public static void StartUserDataStream()
     {
         if (GlobalData.Settings.General.ExchangeId == 1)
@@ -151,6 +156,7 @@ public static class ExchangeClass
     }
 
 
+
     public static async Task FetchAssets(CryptoTradeAccount tradeAccount)
     {
         if (GlobalData.Settings.General.ExchangeId == 1)
@@ -166,4 +172,5 @@ public static class ExchangeClass
         else
             await Task.Run(async () => { await BybitFetchTrades.FetchTradesForSymbol(tradeAccount, symbol); });
     }
+#endif
 }

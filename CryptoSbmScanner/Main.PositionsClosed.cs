@@ -1,18 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using CryptoSbmScanner.Context;
+﻿using CryptoSbmScanner.Context;
 using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Settings;
-
-using Dapper;
-
-using NPOI.SS.Formula.Functions;
 
 namespace CryptoSbmScanner;
 
@@ -50,12 +40,12 @@ public partial class FrmMain
         listViewPositionsClosed.ListViewItemSorter = listViewColumnSorter;
         //listViewPositionsClosed.ColumnClick += ListViewSignals_ColumnClick;
         listViewPositionsClosed.SetSortIcon(listViewColumnSorter.SortColumn, listViewColumnSorter.SortOrder);
-        listViewPositionsClosed.DoubleClick += new System.EventHandler(ListViewPositionClosed_MenuItem_DoubleClick);
+        listViewPositionsClosed.DoubleClick += ListViewPositionClosed_MenuItem_DoubleClick;
         tabPagePositionsClosed.Controls.Add(listViewPositionsClosed);
 
         //TimerClearEvents = new();
         //InitTimerInterval(ref TimerClearEvents, 1 * 60);
-        //TimerClearEvents.Tick += new System.EventHandler(TimerClearOldSignals_Tick);
+        //TimerClearEvents.Tick += TimerClearOldSignals_Tick;
 
         ListViewPositionsClosedInitColumns();
     }
@@ -341,12 +331,16 @@ public partial class FrmMain
     //    //}
     //}
 
-    private async void ContextMenuStripPositionsOpenRecalculate_Click(object sender, EventArgs e)
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+    private async void ContextMenuStripPositionsOpenRecalculateAsync_Click(object sender, EventArgs e)
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
     {
         if (listViewPositionsClosed.SelectedItems.Count > 0)
         {
             ListViewItem item = listViewPositionsClosed.SelectedItems[0];
             CryptoPosition position = (CryptoPosition)item.Tag;
+
+#if TRADEBOT
 
             using CryptoDatabase databaseThread = new();
             databaseThread.Connection.Open();
@@ -356,16 +350,21 @@ public partial class FrmMain
             await PositionTools.LoadTradesfromDatabaseAndExchange(databaseThread, position);
             PositionTools.CalculatePositionResultsViaTrades(databaseThread, position);
             FillItemClosed(position, item);
+#endif
         }
 
     }
 
-    private async void DebugDumpToolStripMenuItem_Click(object sender, EventArgs e)
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+    private async void DebugDumpToolStripMenuItemAsync_Click(object sender, EventArgs e)
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
     {
         if (listViewPositionsClosed.SelectedItems.Count > 0)
         {
             ListViewItem item = listViewPositionsClosed.SelectedItems[0];
             CryptoPosition position = (CryptoPosition)item.Tag;
+
+#if TRADEBOT
 
             using CryptoDatabase databaseThread = new();
             databaseThread.Open();
@@ -379,6 +378,7 @@ public partial class FrmMain
             StringBuilder strings = new();
             PositionTools.DumpPosition(position, strings);
             GlobalData.AddTextToLogTab(strings.ToString());
+#endif
         }
     }
 

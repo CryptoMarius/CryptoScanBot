@@ -22,10 +22,14 @@ public partial class FrmSettings : Form
     private readonly Dictionary<Control, AlgorithmDefinition> MonitorStrategyLong = new();
     private readonly Dictionary<Control, AlgorithmDefinition> MonitorStrategyShort = new();
 
+    public Model.CryptoExchange NewExchange { get; set; }
+
+#if TRADEBOT
     private readonly SortedList<string, CryptoBuyStepInMethod> BuyStepInMethod = new();
     private readonly SortedList<string, CryptoBuyStepInMethod> DcaStepInMethod = new();
     private readonly SortedList<string, CryptoBuyOrderMethod> BuyOrderMethod = new();
     private readonly SortedList<string, CryptoSellMethod> SellMethod = new();
+#endif
 
 
     public FrmSettings()
@@ -105,13 +109,15 @@ public partial class FrmSettings : Form
         AnalyzeInterval.Add(EditAnalyzeInterval1d, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1d]);
 
         // analyze long
-        AnalyzeDefinitionIndexLong.Add(EditAnalyzeCandleJumpUp, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Jump]);
         AnalyzeDefinitionIndexLong.Add(EditAnalyzeSbmOversold, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Sbm1]);
         AnalyzeDefinitionIndexLong.Add(EditAnalyzeSbm2Oversold, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Sbm2]);
         AnalyzeDefinitionIndexLong.Add(EditAnalyzeSbm3Oversold, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Sbm3]);
         AnalyzeDefinitionIndexLong.Add(EditAnalyzeSbm4Oversold, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Sbm4]);
         AnalyzeDefinitionIndexLong.Add(EditAnalyzeStobbOversold, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Stobb]);
+        AnalyzeDefinitionIndexLong.Add(EditAnalyzeFluxOversold, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Flux]);
+        AnalyzeDefinitionIndexLong.Add(EditAnalyzeCandleJumpUp, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Jump]);
 
+#if EXTRASTRATEGIES
         AnalyzeDefinitionIndexLong.Add(EditAnalyzePriceCrossedSma20, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.PriceCrossedSma20]);
         AnalyzeDefinitionIndexLong.Add(EditAnalyzePriceCrossedSma50, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.PriceCrossedSma50]);
         AnalyzeDefinitionIndexLong.Add(EditAnalyzePriceCrossedEma20, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.PriceCrossedEma20]);
@@ -122,8 +128,9 @@ public partial class FrmSettings : Form
         AnalyzeDefinitionIndexLong.Add(EditAnalyzeSlopeSma20TurningPositive, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.SlopeSma20]);
         AnalyzeDefinitionIndexLong.Add(EditAnalyzeSlopeSma50TurningPositive, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.SlopeSma50]);
 
-        AnalyzeDefinitionIndexLong.Add(EditAnalyzeFluxOversold, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Flux]);
         AnalyzeDefinitionIndexLong.Add(EditAnalyzeBullishEngulfing, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.BullishEngulfing]);
+#endif
+
 
         // analyze short
         AnalyzeDefinitionIndexShort.Add(EditAnalyzeCandleJumpDown, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Jump]);
@@ -151,8 +158,10 @@ public partial class FrmSettings : Form
         MonitorStrategyLong.Add(EditMonitorSbm3, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Sbm3]);
         MonitorStrategyLong.Add(EditMonitorSbm4, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Sbm4]);
         MonitorStrategyLong.Add(EditMonitorStobb, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Stobb]);
+        MonitorStrategyLong.Add(EditMonitorFlux, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Flux]);
         MonitorStrategyLong.Add(EditMonitorJump, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Jump]);
 
+#if EXTRASTRATEGIES
         MonitorStrategyLong.Add(EditBotPriceCrossingEma20, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.PriceCrossedEma20]);
         MonitorStrategyLong.Add(EditBotPriceCrossingEma50, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.PriceCrossedEma50]);
         MonitorStrategyLong.Add(EditBotPriceCrossingSma20, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.PriceCrossedSma20]);
@@ -163,20 +172,22 @@ public partial class FrmSettings : Form
         MonitorStrategyLong.Add(EditBotSlopeSma20TurningPositive, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.SlopeSma20]);
         MonitorStrategyLong.Add(EditBotSlopeSma50TurningPositive, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.SlopeSma50]);
 
-        MonitorStrategyLong.Add(EditMonitorFluxOversold, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Flux]);
         MonitorStrategyLong.Add(EditMonitorBullishEngulfing, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.BullishEngulfing]);
+#endif
 
         // monitor strategy short
         // Geen?
         MonitorStrategyShort.Clear();
 
 
+#if TRADEBOT
+
         // BUY
         BuyStepInMethod.Add("Direct na het signaal", CryptoBuyStepInMethod.Immediately);
         //BuyStepInMethod.Add("Trace via de Keltner Channel en PSAR", CryptoBuyStepInMethod.TrailViaKcPsar);
 
         // DCA
-        DcaStepInMethod.Add("Direct na het signaal", CryptoBuyStepInMethod.Immediately);
+        //DcaStepInMethod.Add("Direct na het signaal", CryptoBuyStepInMethod.Immediately);
         DcaStepInMethod.Add("Op het opgegeven percentage", CryptoBuyStepInMethod.FixedPercentage);
         DcaStepInMethod.Add("Na het volgende signaal(sbm/ stobb)", CryptoBuyStepInMethod.AfterNextSignal);
         DcaStepInMethod.Add("Trace via de Keltner Channel en PSAR", CryptoBuyStepInMethod.TrailViaKcPsar);
@@ -192,6 +203,7 @@ public partial class FrmSettings : Form
         BuyOrderMethod.Add("Bied prijs (limit order)", CryptoBuyOrderMethod.BidPrice);
         BuyOrderMethod.Add("Vraag prijs (limit order)", CryptoBuyOrderMethod.AskPrice);
         BuyOrderMethod.Add("Gemiddelde van bied en vraag prijs (limit order)", CryptoBuyOrderMethod.BidAndAskPriceAvg);
+#endif
     }
 
 
@@ -262,11 +274,10 @@ public partial class FrmSettings : Form
         this.settings = settings;
 
 #if !TRADEBOT
-        // Oppassen: Een tabPage.Visible=x doet helemaal niets
-        // (dat was weer een onaangename WinForms verrassing)
-        tabExtra.Parent = null;
-        tabExtra2.Parent = null;
-        settings.Bot.Active = false;
+        // Oppassen: Een tabPage.Visible=false doet niets
+        tabPageTrading.Parent = null;
+        settings.Trading.Active = false;
+        tabControl.TabPages.Remove(tabPageTrading);
 #endif
 
         // Deze worden na de overgang naar .net 7 regelmatig gereset naar 0
@@ -450,6 +461,7 @@ public partial class FrmSettings : Form
         // ------------------------------------------------------------------------------
         // Trading
         // ------------------------------------------------------------------------------
+#if TRADEBOT
 
         // slots
         EditSlotsMaximalExchange.Value = settings.Trading.SlotsMaximalExchange;
@@ -467,27 +479,34 @@ public partial class FrmSettings : Form
         EditBuyStepInMethod.DataSource = new BindingSource(BuyStepInMethod, null);
         EditBuyStepInMethod.DisplayMember = "Key";
         EditBuyStepInMethod.ValueMember = "Value";
-        //EditExchange.SelectedText = settings.General.ExchangeName;
         EditBuyStepInMethod.SelectedValue = settings.Trading.BuyStepInMethod;
-
-        //BuyStepInMethod?
-        //EditBuyStepInMethod.SelectedIndex = (int)settings.Trading.BuyStepInMethod;
-        EditBuyOrderMethod.SelectedIndex = (int)settings.Trading.BuyOrderMethod;
+        EditBuyOrderMethod.DataSource = new BindingSource(BuyOrderMethod, null); // DCA opties zijn gelijk aan de BUY variant
+        EditBuyOrderMethod.DisplayMember = "Key";
+        EditBuyOrderMethod.ValueMember = "Value";
+        EditBuyOrderMethod.SelectedValue = settings.Trading.BuyOrderMethod;
         EditGlobalBuyRemoveTime.Value = settings.Trading.GlobalBuyRemoveTime;
         EditGlobalBuyVarying.Value = settings.Trading.GlobalBuyVarying;
 
-        // DCA
-        EditDcaStepInMethod.SelectedIndex = (int)settings.Trading.DcaStepInMethod;
-        EditDcaOrderMethod.SelectedIndex = (int)settings.Trading.DcaOrderMethod;
+        // dca
+        EditDcaStepInMethod.DataSource = new BindingSource(DcaStepInMethod, null);
+        EditDcaStepInMethod.DisplayMember = "Key";
+        EditDcaStepInMethod.ValueMember = "Value";
+        EditDcaStepInMethod.SelectedValue = settings.Trading.DcaStepInMethod;
+        EditDcaOrderMethod.DataSource = new BindingSource(BuyOrderMethod, null); // DCA opties zijn gelijk aan de BUY variant
+        EditDcaOrderMethod.DisplayMember = "Key";
+        EditDcaOrderMethod.ValueMember = "Value";
+        EditDcaOrderMethod.SelectedValue = settings.Trading.DcaOrderMethod;
         EditDcaPercentage.Value = Math.Abs(settings.Trading.DcaPercentage);
         EditDcaFactor.Value = settings.Trading.DcaFactor;
         EditDcaCount.Value = settings.Trading.DcaCount;
         EditGlobalBuyCooldownTime.Value = settings.Trading.GlobalBuyCooldownTime;
 
-        // take profit
-        EditSellMethod.SelectedIndex = (int)settings.Trading.SellMethod;
+        // sell
+        EditSellMethod.DataSource = new BindingSource(SellMethod, null);
+        EditSellMethod.DisplayMember = "Key";
+        EditSellMethod.ValueMember = "Value";
+        EditSellMethod.SelectedValue = settings.Trading.SellMethod;
         EditProfitPercentage.Value = settings.Trading.ProfitPercentage;
-        EditLockProfits.Checked = settings.Trading.LockProfits;
         EditDynamicTpPercentage.Value = settings.Trading.DynamicTpPercentage;
 
         // Stop loss
@@ -511,18 +530,8 @@ public partial class FrmSettings : Form
         EditOpenNewPositions.Checked = settings.Trading.OpenNewPositions;
         //EditTradeViaAltradyWebhook.Checked = settings.Trading.TradeViaAltradyWebhook;
 
-
         // --------------------------------------------------------------------------------
-        // Black & White list
-        // --------------------------------------------------------------------------------
-        textBoxBlackListOversold.Text = string.Join(Environment.NewLine, settings.BlackListOversold);
-        textBoxWhiteListOversold.Text = string.Join(Environment.NewLine, settings.WhiteListOversold);
-        textBoxBlackListOverbought.Text = string.Join(Environment.NewLine, settings.BlackListOverbought);
-        textBoxWhiteListOverbought.Text = string.Join(Environment.NewLine, settings.WhiteListOverbought);
-
-
-        // --------------------------------------------------------------------------------
-        // Trade bot
+        // Trade bot experiment
         // --------------------------------------------------------------------------------
 
         //yPos = 40;
@@ -536,11 +545,22 @@ public partial class FrmSettings : Form
         //foreach (SettingsSignalStrategy x in SignalUIList)
         //    x.SetControlValues();
         //SignalUIList[0].AddHeaderLabels(40, tabExtra2.Controls);
+#endif
+
+        // --------------------------------------------------------------------------------
+        // Black & White list
+        // --------------------------------------------------------------------------------
+        textBoxBlackListOversold.Text = string.Join(Environment.NewLine, settings.BlackListOversold);
+        textBoxWhiteListOversold.Text = string.Join(Environment.NewLine, settings.WhiteListOversold);
+        textBoxBlackListOverbought.Text = string.Join(Environment.NewLine, settings.BlackListOverbought);
+        textBoxWhiteListOverbought.Text = string.Join(Environment.NewLine, settings.WhiteListOverbought);
+
 
 
         // ------------------------------------------------------------------------------
         // Balance bot
         // ------------------------------------------------------------------------------
+#if BALANCING
         //EditBlanceBotActive.Checked = settings.BalanceBot.Active;
         //numericStartAmount.Value = settings.BalanceBot.StartAmount;
         //EditShowAdviceOnly.Checked = settings.BalanceBot.ShowAdviceOnly;
@@ -549,7 +569,7 @@ public partial class FrmSettings : Form
         //EditMinimalSellBarometer.Value = settings.BalanceBot.MinimalSellBarometer;
         //EditBuyBalanceThreshold.Value = settings.BalanceBot.BuyThresholdPercentage;
         //EditSellBalanceThreshold.Value = settings.BalanceBot.SellThresholdPercentage;
-
+#endif
 
         // --------------------------------------------------------------------------------
         // Font (pas op het einde zodat de dynamisch gegenereerde controls netjes meesizen)
@@ -577,9 +597,12 @@ public partial class FrmSettings : Form
         // ------------------------------------------------------------------------------
         // General
         // ------------------------------------------------------------------------------
-        settings.General.Exchange = (Model.CryptoExchange)EditExchange.SelectedValue;
-        settings.General.ExchangeId = settings.General.Exchange.Id;
-        settings.General.ExchangeName = settings.General.Exchange.Name;
+
+        NewExchange = (Model.CryptoExchange)EditExchange.SelectedValue;
+        // Niet direct zetten, eerst moet alles uitgezet worden
+        //settings.General.Exchange = (Model.CryptoExchange)EditExchange.SelectedValue;
+        //settings.General.ExchangeId = settings.General.Exchange.Id;
+        //settings.General.ExchangeName = settings.General.Exchange.Name;
         settings.General.BlackTheming = EditBlackTheming.Checked;
         settings.General.TradingApp = (CryptoTradingApp)EditTradingApp.SelectedIndex;
         settings.General.DoubleClickAction = (DoubleClickAction)EditDoubleClickAction.SelectedIndex;
@@ -753,6 +776,7 @@ public partial class FrmSettings : Form
         // --------------------------------------------------------------------------------
         // Trade bot
         // --------------------------------------------------------------------------------
+#if TRADEBOT
 
         // slots
         settings.Trading.SlotsMaximalExchange = (int)EditSlotsMaximalExchange.Value;
@@ -768,23 +792,21 @@ public partial class FrmSettings : Form
 
         // buy
         settings.Trading.BuyStepInMethod = (CryptoBuyStepInMethod)EditBuyStepInMethod.SelectedValue;
-        //settings.Trading.BuyStepInMethod = (CryptoBuyStepInMethod)EditBuyStepInMethod.SelectedIndex;
-        settings.Trading.BuyOrderMethod = (CryptoBuyOrderMethod)EditBuyOrderMethod.SelectedIndex;
+        settings.Trading.BuyOrderMethod = (CryptoBuyOrderMethod)EditBuyOrderMethod.SelectedValue;
         settings.Trading.GlobalBuyRemoveTime = (int)EditGlobalBuyRemoveTime.Value;
         settings.Trading.GlobalBuyVarying = EditGlobalBuyVarying.Value;
 
         // dca
-        settings.Trading.DcaStepInMethod = (CryptoBuyStepInMethod)EditDcaStepInMethod.SelectedIndex;
-        settings.Trading.DcaOrderMethod = (CryptoBuyOrderMethod)EditDcaOrderMethod.SelectedIndex;
+        settings.Trading.DcaStepInMethod = (CryptoBuyStepInMethod)EditDcaStepInMethod.SelectedValue;
+        settings.Trading.DcaOrderMethod = (CryptoBuyOrderMethod)EditDcaOrderMethod.SelectedValue;
         settings.Trading.DcaPercentage = EditDcaPercentage.Value;
         settings.Trading.DcaFactor = EditDcaFactor.Value;
         settings.Trading.DcaCount = (int)EditDcaCount.Value;
         settings.Trading.GlobalBuyCooldownTime = (int)EditGlobalBuyCooldownTime.Value;
 
-        // take profit
+        // sell
+        settings.Trading.SellMethod = (CryptoSellMethod)EditSellMethod.SelectedValue;
         settings.Trading.ProfitPercentage = EditProfitPercentage.Value;
-        settings.Trading.SellMethod = (CryptoSellMethod)EditSellMethod.SelectedIndex;
-        settings.Trading.LockProfits = EditLockProfits.Checked;
         settings.Trading.DynamicTpPercentage = EditDynamicTpPercentage.Value;
 
         // Stop loss
@@ -806,16 +828,16 @@ public partial class FrmSettings : Form
             GetValueFromCheckBox(item.Key, item.Value, settings.Trading.Monitor.Strategy[CryptoOrderSide.Sell]);
 
 
-        //settings.Trading.DoNotEnterTrade = EditDoNotEnterTrade.Checked;
         settings.Trading.TradeViaExchange = EditTradeViaBinance.Checked;
         settings.Trading.TradeViaPaperTrading = EditTradeViaPaperTrading.Checked;
         settings.Trading.OpenNewPositions = EditOpenNewPositions.Checked;
         //settings.Trading.TradeViaAltradyWebhook = EditTradeViaAltradyWebhook.Checked;
-
+#endif
 
         // ------------------------------------------------------------------------------
         // Balance bot
         // ------------------------------------------------------------------------------
+#if BALANCING
         //settings.BalanceBot.Active = EditBlanceBotActive.Checked;
         //settings.BalanceBot.StartAmount = numericStartAmount.Value;
         //settings.BalanceBot.IntervalPeriod = (int)EditIntervalPeriod.Value;
@@ -824,11 +846,12 @@ public partial class FrmSettings : Form
         //settings.BalanceBot.MinimalSellBarometer = EditMinimalSellBarometer.Value;
         //settings.BalanceBot.BuyThresholdPercentage = EditBuyBalanceThreshold.Value;
         //settings.BalanceBot.SellThresholdPercentage = EditSellBalanceThreshold.Value;
+#endif
 
         DialogResult = DialogResult.OK;
     }
 
-    private void ButtonTestSpeech_Click(object sender, EventArgs e) => GlobalData.PlaySomeSpeech("Found a signal for BTC/BUSD interval 1m (it is going to the moon)", true);
+    private void ButtonTestSpeech_Click(object sender, EventArgs e) => GlobalData.PlaySomeSpeech("Found a signal for BTCUSDT interval 1m (it is going to the moon)", true);
 
     private static void BrowseForWavFile(ref TextBox textBox)
     {

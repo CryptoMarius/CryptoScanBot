@@ -56,7 +56,7 @@ public partial class FrmMain
     /// </summary>
     private void SymbolsHaveChangedEvent(string text, bool extraLineFeed = false)
     {
-        if (components != null && IsHandleCreated) //&& (!ProgramExit) 
+        if (components != null && IsHandleCreated)
         {
             if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
             {

@@ -9,6 +9,8 @@ using CryptoSbmScanner.Signal;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Win32;
 
+using Nito.AsyncEx;
+
 using NLog;
 using NLog.Config;
 using NLog.Targets;
@@ -24,16 +26,6 @@ public partial class FrmMain : Form
     private int createdSignalCount; // Tellertje met het aantal meldingen (komt in de taakbalk c.q. applicatie titel)
     private readonly Microsoft.Web.WebView2.WinForms.WebView2 _webViewAltradyRef = null;
     private readonly ColorSchemeTest theme = new();
-
-    private System.Windows.Forms.Timer TimerShowBarometer;
-    private System.Windows.Forms.Timer TimerGetExchangeInfo;
-    private System.Windows.Forms.Timer TimerSoundHeartBeat;
-    private System.Windows.Forms.Timer TimerRestartStreams;
-    private System.Windows.Forms.Timer TimerCheckDataStream;
-    private System.Windows.Forms.Timer TimerAddSignal;
-    private System.Windows.Forms.Timer TimerClearMemo;
-    private System.Windows.Forms.Timer TimerSaveCandleData;
-
 
     public class ColorSchemeTest
     {
@@ -59,14 +51,11 @@ public partial class FrmMain : Form
         GlobalData.PlaySpeech += new PlayMediaEvent(PlaySpeech);
         GlobalData.LogToTelegram += new AddTextEvent(AddTextToTelegram);
         GlobalData.LogToLogTabEvent += new AddTextEvent(AddTextToLogTab);
-        GlobalData.SetCandleTimerEnableEvent += new SetCandleTimerEnable(SetCandleTimerEnableHandler);
 
         // Niet echt een text event, meer misbruik van het event type
         GlobalData.AssetsHaveChangedEvent += new AddTextEvent(AssetsHaveChangedEvent);
         GlobalData.SymbolsHaveChangedEvent += new AddTextEvent(SymbolsHaveChangedEvent);
         GlobalData.PositionsHaveChangedEvent += new AddTextEvent(OpenPositionsHaveChangedEvent);
-        GlobalData.ConnectionWasLostEvent += new AddTextEvent(ConnectionWasLostEvent);
-        GlobalData.ConnectionWasRestoredEvent += new AddTextEvent(ConnectionWasRestoredEvent);
 
         GlobalData.SignalEvent = SignalArrived;
 
@@ -75,34 +64,17 @@ public partial class FrmMain : Form
         comboBoxBarometerQuote.SelectedIndexChanged += ShowBarometerStuff;
         comboBoxBarometerInterval.SelectedIndexChanged += ShowBarometerStuff;
 
-
-        TimerCheckDataStream = new() { Enabled = false };
-        TimerCheckDataStream.Tick += TimerCheckDataStream_Tick;
-
-        TimerRestartStreams = new() { Enabled = false };
-        TimerRestartStreams.Tick += TimerRestartStreams_Tick;
-
-        TimerSoundHeartBeat = new() { Enabled = false };
-        TimerSoundHeartBeat.Tick += TimerSoundHeartBeat_Tick;
-
-        TimerGetExchangeInfo = new() { Enabled = false };
-        TimerGetExchangeInfo.Tick += TimerGetCandles_Tick;
-
-        TimerShowBarometer = new() { Enabled = false };
-        TimerShowBarometer.Tick += TimerShowBarometer_Tick;
-
-        TimerAddSignal = new() { Enabled = false };
-        TimerAddSignal.Tick += TimerAddSignalsAndLog_Tick;
-
-        TimerClearMemo = new() { Enabled = false };
-        TimerClearMemo.Tick += TimerClearMemo_Tick;
-
-        TimerSaveCandleData = new() { Enabled = false };
-        TimerSaveCandleData.Tick += TimerSaveCandleData_Tick;
+        // Events inregelen
+        ScannerSession.TimerClearMemo.Elapsed += TimerClearMemo_Tick;
+        ScannerSession.TimerAddSignal.Elapsed += TimerAddSignalsAndLog_Tick;
+        ScannerSession.TimerSoundHeartBeat.Elapsed += TimerSoundHeartBeat_Tick;
+        ScannerSession.TimerShowInformation.Elapsed += TimerShowInformation_Tick;
 
 
         // Instelling laden waaronder de API enzovoort
         GlobalData.LoadSettings();
+
+
         ListViewSignalsConstructor(); // Partial class "constructor"
         ListViewSymbolsConstructor(); // Partial class "constructor"
         ListViewInformationConstructor(); // Partial class "constructor"
@@ -112,6 +84,14 @@ public partial class FrmMain : Form
         // Altrady tabblad verbergen, is enkel een browser om dat extra dialoog in externe browser te vermijden
         _webViewAltradyRef = webViewAltrady;
         tabControl.TabPages.Remove(tabPageAltrady);
+
+#if !TRADEBOT
+        ApplicationTradingBot.Visible = false;
+        backtestToolStripMenuItem.Visible = false;
+        GlobalData.Settings.Trading.Active = false;
+        tabControl.TabPages.Remove(tabPagePositionsClosed);
+        tabControl.TabPages.Remove(tabPagePositionsOpen);
+#endif
 
         // Experiment, alles beter dan helemaal niet geencrypt (via opensource is tevens een wassen neus)
         //string x = Model.CryptoExchange.Encrypt("xxxx", false);
@@ -131,7 +111,7 @@ public partial class FrmMain : Form
         ApplySettings();
 
 
-        ResumeComputer(false);
+        ScannerSession.Start(false);
 
         SystemEvents.PowerModeChanged += OnPowerChange;
     }
@@ -139,7 +119,7 @@ public partial class FrmMain : Form
 
     private void ApplySettings()
     {
-        // De exchange overnemen die is ingesteld (vanuit dialoog wordt reeds gedaan, bij laden)
+        // De exchange overnemen die is ingesteld (vanuit dialoog wordt het wel gedaan, bij laden)
         if (GlobalData.Settings.General.Exchange == null)
         {
             if (GlobalData.ExchangeListId.TryGetValue(GlobalData.Settings.General.ExchangeId, out var exchange))
@@ -150,6 +130,10 @@ public partial class FrmMain : Form
             }
         }
 
+        // Het juiste trading coount in de globale variabelen zetten
+        GlobalData.SetTradingAccounts();
+
+        // De comboboxen bijwerken
         comboBoxBarometerQuote.BeginUpdate();
         comboBoxBarometerInterval.BeginUpdate();
         try
@@ -206,29 +190,11 @@ public partial class FrmMain : Form
         ListViewSignalsInitCaptions();
 
 
-
-        InitTimerInterval(ref TimerAddSignal, 1.25); // 1.25 seconde
-        InitTimerInterval(ref TimerShowBarometer, 5); // 5 seconds
-
-        InitTimerInterval(ref TimerSoundHeartBeat, 60 * GlobalData.Settings.General.SoundHeartBeatMinutes); // x minutes
-
-        // Check data stream's (om toch zeker te zijn van nieuwe candles)
-        InitTimerInterval(ref TimerCheckDataStream, 5 * 60); // 5 minutes
-
-        // Restart data stream's every day
-        InitTimerInterval(ref TimerRestartStreams, 24 * 60 * 60); // 24 hours
-
-        // Bewaar de candle data iedere
-        InitTimerInterval(ref TimerSaveCandleData, 4 * 60 * 60); // 4 hours
-
-        // Maak de log leeg iedere 24 uur
-        InitTimerInterval(ref TimerClearMemo, 24 * 60 * 60); // 24 hours
-
-        // Interval voor het ophalen van de exchange info (delisted coins) + bijwerken candles 
-        InitTimerInterval(ref TimerGetExchangeInfo, GlobalData.Settings.General.GetCandleInterval * 60);
-
         TradingConfig.IndexStrategyInternally();
         TradingConfig.InitWhiteAndBlackListSettings();
+
+        // De timertjes goed zetten
+        ScannerSession.SetTimerDefaults();
 
         // Theming
         if (GlobalData.Settings.General.BlackTheming)
@@ -244,27 +210,12 @@ public partial class FrmMain : Form
         ChangeTheme(theme, this);
 
 
-#if !TRADEBOT
-        ApplicationTradingBot.Visible = false;
-        GlobalData.Settings.Bot.Active = false;
-#endif
-
         ApplicationTradingBot.Checked = GlobalData.Settings.Trading.Active;
         ApplicationPlaySounds.Checked = GlobalData.Settings.Signal.SoundsActive;
         ApplicationCreateSignals.Checked = GlobalData.Settings.Signal.SignalsActive;
 
         this.Refresh();
-    }
-
-
-    private static void InitTimerInterval(ref System.Windows.Forms.Timer timer, double seconds)
-    {
-        timer.Enabled = false;
-        int msec = (int)(seconds * 1000);
-        // stom ding verwacht > 0 (beetje vreemd, maar voila)
-        if (seconds > 0)
-            timer.Interval = msec;
-        timer.Enabled = msec > 0;
+        //GlobalData.DumpSessionInformation();
     }
 
 
@@ -275,93 +226,16 @@ public partial class FrmMain : Form
         {
             case PowerModes.Resume:
                 GlobalData.AddTextToLogTab("PowerModes.Resume");
-                ResumeComputer(true);
+                ScannerSession.Start(true);
+                //AsyncContext.Run(ScannerSession.Start(true));
                 break;
             case PowerModes.Suspend:
                 GlobalData.AddTextToLogTab("PowerModes.Suspend");
-                CloseCryptoScannerSession();
+                this.SaveWindowLocation(false);
+                //Task.Run(async () => { await ScannerSession.Stop(); }).Wait();
+                AsyncContext.Run(ScannerSession.Stop);
                 break;
         }
-    }
-
-
-    private void ResumeComputer(bool sleepAwhile)
-    {
-        GlobalData.AddTextToLogTab("Debug: ResumeComputer");
-        GlobalData.ApplicationStatus = CryptoApplicationStatus.AppStatusPrepare;
-
-        GlobalData.ThreadMonitorCandle = new ThreadMonitorCandle();
-#if TRADEBOT
-        GlobalData.ThreadMonitorOrder = new ThreadMonitorOrder();
-        if (GlobalData.Settings.ApiKey != "")
-        {
-            GlobalData.AddTextToLogTab("Starting task for monitoring events");
-            ExchangeClass.StartUserDataStream();
-        }
-#endif
-#if BALANCING
-        GlobalData.ThreadBalanceSymbols = new ThreadBalanceSymbols();
-#endif
-#if SQLDATABASE
-        GlobalData.TaskSaveCandles = new ThreadSaveCandles();
-#endif
-
-        // Iets met netwerk verbindingen wat nog niet "up" is?
-        if (sleepAwhile)
-            Thread.Sleep(5000);
-
-        Task.Run(async () => { await ThreadLoadData.ExecuteAsync(); });
-    }
-
-    private void CloseCryptoScannerSession()
-    {
-        GlobalData.AddTextToLogTab("Debug: CloseCryptoScannerSession");
-        GlobalData.ApplicationStatus = CryptoApplicationStatus.AppStatusExiting;
-
-        // pfft, kan er net zo goed een array van maken
-        TimerCheckDataStream.Enabled = false;
-        TimerRestartStreams.Enabled = false;
-        TimerSoundHeartBeat.Enabled = false;
-        TimerGetExchangeInfo.Enabled = false;
-        TimerShowBarometer.Enabled = false;
-        ThreadTelegramBot.running = false;
-
-
-        // De socket streams
-        //GlobalData.TaskBinanceStreamPriceTicker?.StopAsync();
-        _ = ExchangeClass.StopPriceTickerStream();
-
-        // Threads (of tasks)
-        GlobalData.ThreadMonitorCandle?.Stop();
-#if TRADEBOT
-        GlobalData.ThreadMonitorOrder?.Stop();
-        _ = ExchangeClass.StopUserDataStream();
-#endif
-#if BALANCING
-        //GlobalData.ThreadBalanceSymbols?.Stop();
-#endif
-
-        _ = ExchangeClass.Stop1mCandleStream();
-#if SQLDATABASE
-        GlobalData.TaskSaveCandles.Stop();
-
-        // En vervolgens alsnog de niet werkte candles bewaren (een nadeel van de lazy write)
-        while (true)
-        {
-            List<CryptoCandle> list = GlobalData.TaskSaveCandles.GetSomeFromQueue();
-            if (list.Any())
-                GlobalData.TaskSaveCandles.SaveQueuedCandles(list);
-            else
-                break;
-        }
-#else
-        DataStore.SaveCandles();
-#endif
-
-        WindowLocationSave();
-        GlobalData.Settings.General.SelectedBarometerQuote = comboBoxBarometerQuote.Text;
-        GlobalData.Settings.General.SelectedBarometerInterval = comboBoxBarometerInterval.Text;
-        GlobalData.SaveSettings();
     }
 
 
@@ -369,15 +243,15 @@ public partial class FrmMain : Form
     {
         if (disposing)
         {
-            CloseCryptoScannerSession();
+            this.SaveWindowLocation(false);
+            //Task.Run(async () => { await ScannerSession.Stop(); }).Wait();
+            AsyncContext.Run(ScannerSession.Stop);
 
             if (components != null)
             {
                 _webViewAltradyRef.Dispose();
                 components.Dispose();
             }
-            // Dispose stuff here
-            //databaseMain.Dispose();
         }
 
         base.Dispose(disposing);
@@ -406,7 +280,7 @@ public partial class FrmMain : Form
     {
         if (IsHandleCreated)
         {
-            //return; //t'ding crasht en is niet fijn
+            // Het ding crasht wel eens (meestal netwerk of timing problemen)
             ThreadTelegramBot.SendMessage(text);
         }
     }
@@ -434,6 +308,14 @@ public partial class FrmMain : Form
             if (extraLineFeed)
                 text += "\r\n";
             logQueue.Enqueue(text);
+
+            //// even rechstreeks
+            //text = text.TrimEnd() + "\r\n";
+            //if (InvokeRequired)
+            //    Invoke((MethodInvoker)(() => TextBoxLog.AppendText(text)));
+            //else
+            //    TextBoxLog.AppendText(text);
+
         }
     }
 
@@ -469,7 +351,7 @@ public partial class FrmMain : Form
 
     private void ToolStripMenuItemRefresh_Click_1(object sender, EventArgs e)
     {
-        _ = ExchangeClass.FetchCandles(); // niet wachten tot deze klaar is
+        _ = ExchangeClass.FetchCandlesAsync(); // niet wachten tot deze klaar is
     }
 
 
@@ -662,6 +544,7 @@ public partial class FrmMain : Form
             }
             else
             {
+                // TODO: Een kruis door de bitmap zetten zodat we iets zien (het is nu een lege bitmap)
 
                 Image bmp = new Bitmap(intWidth, intHeight);
                 Graphics g = Graphics.FromImage(bmp);
@@ -672,6 +555,7 @@ public partial class FrmMain : Form
     }
 
 
+#if TRADINGBOT
     private static void CheckNeedBotPause()
     {
         //if (!GlobalData.Settings.Bot.PauseTradingRules.Any())
@@ -687,53 +571,57 @@ public partial class FrmMain : Form
                 if (exchange.SymbolListName.TryGetValue(rule.Symbol, out CryptoSymbol symbol))
                 {
                     CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(rule.Interval);
-
-                    CryptoCandle candleLast = symbolInterval.CandleList.Values.Last();
-                    decimal low = Math.Min(candleLast.Low, (decimal)symbol.LastPrice);
-                    decimal high = Math.Max(candleLast.High, (decimal)symbol.LastPrice);
-
-                    long time = candleLast.OpenTime;
-                    int candleCount = rule.Candles - 1;
-                    while (candleCount-- > 0)
+                    if (symbolInterval.CandleList.Any())
                     {
-                        time -= symbolInterval.Interval.Duration;
-                        if (symbolInterval.CandleList.TryGetValue(time, out CryptoCandle candle))
+
+                        CryptoCandle candleLast = symbolInterval.CandleList.Values.Last();
+                        decimal low = Math.Min(candleLast.Low, (decimal)symbol.LastPrice);
+                        decimal high = Math.Max(candleLast.High, (decimal)symbol.LastPrice);
+
+                        long time = candleLast.OpenTime;
+                        int candleCount = rule.Candles - 1;
+                        while (candleCount-- > 0)
                         {
-                            low = Math.Min(low, candle.Low);
-                            high = Math.Max(high, candle.High);
+                            time -= symbolInterval.Interval.Duration;
+                            if (symbolInterval.CandleList.TryGetValue(time, out CryptoCandle candle))
+                            {
+                                low = Math.Min(low, candle.Low);
+                                high = Math.Max(high, candle.High);
+                            }
                         }
-                    }
 
-                    // todo: het percentage wordt echt niet negatief als je met de high en low werkt, duh
+                        // todo: het percentage wordt echt niet negatief als je met de high en low werkt, duh
 
-                    double percentage = (double)(100m * ((high / low) - 1m));
-                    if (percentage >= rule.Percentage || percentage <= -rule.Percentage)
-                    {
-                        long pauseUntil = candleLast.OpenTime + rule.CoolDown * symbolInterval.Interval.Duration;
-                        DateTime pauseUntilDate = CandleTools.GetUnixDate(pauseUntil);
-                        //GlobalData.Settings.Bot.PauseTradingText = string.Format("{0} heeft {1:N2}% bewogen (gepauseerd tot {2}) - 1", rule.Symbol, percentage, pauseUntilDate.ToLocalTime());
-
-                        if (!GlobalData.Settings.Trading.PauseTradingUntil.HasValue || pauseUntilDate > GlobalData.Settings.Trading.PauseTradingUntil)
+                        double percentage = (double)(100m * ((high / low) - 1m));
+                        if (percentage >= rule.Percentage || percentage <= -rule.Percentage)
                         {
-                            GlobalData.Settings.Trading.PauseTradingUntil = pauseUntilDate;
-                            GlobalData.Settings.Trading.PauseTradingText = string.Format("{0} heeft {1:N2}% bewogen (gepauseerd tot {2}) - 2", rule.Symbol, percentage, pauseUntilDate.ToLocalTime());
-                            GlobalData.AddTextToLogTab(GlobalData.Settings.Trading.PauseTradingText);
-                            GlobalData.AddTextToTelegram(GlobalData.Settings.Trading.PauseTradingText);
+                            long pauseUntil = candleLast.OpenTime + rule.CoolDown * symbolInterval.Interval.Duration;
+                            DateTime pauseUntilDate = CandleTools.GetUnixDate(pauseUntil);
+                            //GlobalData.Settings.Bot.PauseTradingText = string.Format("{0} heeft {1:N2}% bewogen (gepauseerd tot {2}) - 1", rule.Symbol, percentage, pauseUntilDate.ToLocalTime());
+
+                            if (!GlobalData.Settings.Trading.PauseTradingUntil.HasValue || pauseUntilDate > GlobalData.Settings.Trading.PauseTradingUntil)
+                            {
+                                GlobalData.Settings.Trading.PauseTradingUntil = pauseUntilDate;
+                                GlobalData.Settings.Trading.PauseTradingText = string.Format("{0} heeft {1:N2}% bewogen (gepauseerd tot {2}) - 2", rule.Symbol, percentage, pauseUntilDate.ToLocalTime());
+                                GlobalData.AddTextToLogTab(GlobalData.Settings.Trading.PauseTradingText);
+                                GlobalData.AddTextToTelegram(GlobalData.Settings.Trading.PauseTradingText);
+                            }
                         }
-                    }
-                    else
-                    {
-                        //if (percentage > 0.5 || percentage < -0.5)
-                        //{
-                        //    GlobalData.AddTextToLogTab(string.Format("{0} heeft {1:N2}% bewogen", rule.Symbol, percentage));
-                        //    GlobalData.AddTextToTelegram(string.Format("{0} heeft {1:N2}% bewogen", rule.Symbol, percentage));
-                        //}
+                        else
+                        {
+                            //if (percentage > 0.5 || percentage < -0.5)
+                            //{
+                            //    GlobalData.AddTextToLogTab(string.Format("{0} heeft {1:N2}% bewogen", rule.Symbol, percentage));
+                            //    GlobalData.AddTextToTelegram(string.Format("{0} heeft {1:N2}% bewogen", rule.Symbol, percentage));
+                            //}
+                        }
                     }
                 }
                 else GlobalData.AddTextToLogTab("Pauze regel: symbol " + rule.Symbol + " bestaat niet");
             }
         }
     }
+#endif
 
     private void BinanceBarometerAll()
     {
@@ -742,7 +630,10 @@ public partial class FrmMain : Form
             if (GlobalData.ApplicationStatus != CryptoApplicationStatus.AppStatusRunning)
                 return;
 
-            CheckNeedBotPause();
+#if TRADINGBOT
+            if (GlobalData.Settings.Trading.Active)
+                CheckNeedBotPause();
+#endif
 
             // Bereken de laatste barometer waarden
             BarometerTools barometerTools = new();
@@ -897,47 +788,6 @@ public partial class FrmMain : Form
     }
 
 
-    private void ConnectionWasLostEvent(string text, bool extraLineFeed = false)
-    {
-        // Onderdruk alle foutmeldingen totdat het hersteld is
-        if (components != null && IsHandleCreated)
-        {
-            GlobalData.AddTextToLogTab("Debug: ConnectionWasLostEvent!");
-            // anders krijgen we alleen maar fouten dat er geen candles zijn
-            GlobalData.ApplicationStatus = CryptoApplicationStatus.AppStatusPrepare;
-        }
-    }
-
-
-    private void ConnectionWasRestoredEvent(string text, bool extraLineFeed = false)
-    {
-        // Plan een verversing omdat er een connection timeout was.
-        // Dit kan een aantal berekeningen onderbroken hebben
-        // (er komen een aantal reconnects, daarom circa 20 seconden)
-        if (components != null && IsHandleCreated)
-        {
-            GlobalData.AddTextToLogTab("Debug: ConnectionWasRestoredEvent!");
-            GlobalData.ApplicationStatus = CryptoApplicationStatus.AppStatusRunning;
-            Invoke((MethodInvoker)(() => InitTimerInterval(ref TimerGetExchangeInfo, 20)));
-        }
-    }
-
-
-    private void SetCandleTimerEnableHandler(bool value)
-    {
-        //if (GlobalData.ApplicationStatus == ApplicationStatus.AppStatusRunning)
-        {
-            if (components != null && IsHandleCreated)
-            {
-                if (value)
-                    Invoke((MethodInvoker)(() => InitTimerInterval(ref TimerGetExchangeInfo, GlobalData.Settings.General.GetCandleInterval * 60)));
-                else
-                    Invoke((MethodInvoker)(() => InitTimerInterval(ref TimerGetExchangeInfo, 0))); // disable
-            }
-        }
-    }
-
-
     private void ActivateTradingApp(CryptoSymbol symbol, CryptoInterval interval)
     {
         string href;
@@ -971,9 +821,8 @@ public partial class FrmMain : Form
     }
 
 
-    private void GetReloadRelatedSettings(out int activeExchange, out string activeQuoteData)
+    private void GetReloadRelatedSettings(out string activeQuoteData)
     {
-        activeExchange = GlobalData.Settings.General.ExchangeId;
         activeQuoteData = "";
         foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
         {
@@ -984,10 +833,11 @@ public partial class FrmMain : Form
 
     private void ToolStripMenuItemSettings_Click(object sender, EventArgs e)
     {
-        GetReloadRelatedSettings(out int activeExchange, out string activeQuotes);
+        GetReloadRelatedSettings(out string activeQuotes);
+        Model.CryptoExchange oldExchange = GlobalData.Settings.General.Exchange;
 
         // Dan wordt de basecoin en coordinaten etc. bewaard voor een volgende keer
-        WindowLocationSave();
+        this.SaveWindowLocation(false);
         GlobalData.Settings.Trading.Active = ApplicationTradingBot.Checked;
         GlobalData.Settings.Signal.SoundsActive = ApplicationPlaySounds.Checked;
         GlobalData.Settings.Signal.SignalsActive = ApplicationCreateSignals.Checked;
@@ -995,30 +845,65 @@ public partial class FrmMain : Form
         GlobalData.Settings.General.SelectedBarometerInterval = comboBoxBarometerInterval.Text;
         try
         {
-            FrmSettings form = new()
+            FrmSettings dialog = new()
             {
                 StartPosition = FormStartPosition.CenterParent
             };
-            ChangeTheme(theme, form);
-            form.InitSettings(GlobalData.Settings);
-            if (form.ShowDialog() != DialogResult.OK)
+            ChangeTheme(theme, dialog);
+            dialog.InitSettings(GlobalData.Settings);
+            if (dialog.ShowDialog() != DialogResult.OK)
                 return;
 
-
             GlobalData.SaveSettings();
-            ApplySettings();
-
+            GetReloadRelatedSettings(out string activeQuotes2);
 
             // Detectie of we hebben gewisseld van Exchange (reload) of QuoteData (reload)
-            GetReloadRelatedSettings(out int activeExchange2, out string activeQuotes2);
-            bool reload = (activeExchange != activeExchange2 || activeQuotes != activeQuotes2);
-            if (reload)
+            bool reloadQuoteChange = activeQuotes != activeQuotes2;
+            bool reloadExchangeChange = dialog.NewExchange.Id != GlobalData.Settings.General.ExchangeId;
+            if (reloadQuoteChange || reloadExchangeChange)
             {
-                GlobalData.AddTextToLogTab("Debug: De exchange of QuoteData is aangepast (reload stream)!");
-                // Schedule a rest of the streams
-                InitTimerInterval(ref TimerRestartStreams, 1 * 5);
-            }
+                GlobalData.AddTextToLogTab("");
+                if (reloadExchangeChange)
+                    GlobalData.AddTextToLogTab("Debug: De exchange is aangepast (reload)!");
+                else if (reloadQuoteChange)
+                    GlobalData.AddTextToLogTab("Debug: De lijst met quote's is aangepast (reload)!");
+                //await ScannerSession.Stop();
+                //var task = Task.Run(async () => await ScannerSession.Stop());
+                //var result = task.WaitAndUnwrapException();
+                AsyncContext.Run(ScannerSession.Stop);
 
+                GlobalData.Settings.General.Exchange = dialog.NewExchange;
+                GlobalData.Settings.General.ExchangeId = dialog.NewExchange.Id;
+                GlobalData.Settings.General.ExchangeName = dialog.NewExchange.Name;
+                GlobalData.SaveSettings();
+
+                // Standaard timers e.d.
+                ApplySettings();
+
+                if (reloadExchangeChange)
+                {
+                    // De inactieve exchange deactiveren (geheugen vrijgeven)
+                    // overbodig, zou via de symbollist moeten clearen
+                    //foreach (CryptoSymbol symbol in oldExchange.SymbolListName.Values.ToList())
+                    //{
+                    //    foreach (CryptoSymbolInterval symbolInterval in symbol.IntervalPeriodList.Values.ToList())
+                    //    {
+                    //        symbolInterval.c
+                    //    }
+                    //}
+                    // Exchange: Symbols clearen
+                    oldExchange.Clear();
+
+                    // TradingAccount: Posities en Assets clearen!
+                    foreach (CryptoTradeAccount ta in GlobalData.TradeAccountList.Values)
+                        ta.Clear();
+
+                }
+
+                // Schedule een reload of data
+                ScannerSession.ScheduleRefresh();
+            }
+            else ApplySettings();
         }
         catch (Exception error)
         {
@@ -1048,8 +933,8 @@ public partial class FrmMain : Form
         ListViewSignalsMenuItemClearSignals_Click(null, null);
 
         PositionMonitor.AnalyseCount = 0;
-        ExchangeClass.Reset1mCandleStream();
-        ExchangeClass.ResetPriceTickerStream();
+        ExchangeClass.Reset1mCandle();
+        ExchangeClass.ResetPriceTicker();
     }
 
 
@@ -1156,15 +1041,6 @@ public partial class FrmMain : Form
                 Monitor.Exit(logQueue);
             }
         }
-    }
-
-
-    private void TimerSaveCandleData_Tick(object sender, EventArgs e)
-    {
-#if !SQLDATABASE
-        // Elke x uur wordt de candle data bewaard
-        DataStore.SaveCandles();
-#endif
     }
 
 
@@ -1466,36 +1342,6 @@ public partial class FrmMain : Form
         File.WriteAllText(filename, log.ToString());
     }
 
-    private void TimerGetCandles_Tick(object sender, EventArgs e)
-    {
-        // Ophalen van exchange info en candles bijwerken
-        //if (GlobalData.ApplicationStatus == ApplicationStatus.AppStatusRunning)
-        {
-            // De reguliere verversing herstellen (igv een connection timeout)
-            if (components != null && IsHandleCreated)
-            {
-                // Plan een volgende verversing omdat er bv een connection timeout was.
-                // Dit kan een aantal berekeningen onderbroken hebben
-                Invoke((MethodInvoker)(() => InitTimerInterval(ref TimerGetExchangeInfo, GlobalData.Settings.General.GetCandleInterval * 60)));
-            }
-            _ = ExchangeClass.FetchCandles(); // niet wachten tot deze klaar is
-        }
-    }
-
-
-
-    public void WindowLocationSave()
-    {
-        GlobalData.Settings.General.WindowPosition = DesktopBounds;
-
-        // only save the WindowState if Normal or Maximized
-        GlobalData.Settings.General.WindowState = WindowState switch
-        {
-            FormWindowState.Normal or FormWindowState.Maximized => WindowState,
-            _ => FormWindowState.Normal,
-        };
-    }
-
     public void WindowLocationRestore()
     {
         // this is the default
@@ -1553,8 +1399,14 @@ public partial class FrmMain : Form
 
     private void BacktestToolStripMenuItem_Click(object sender, EventArgs e)
     {
-        /// TODO: Deze code min of meer verhuizen naar het dialoog en als een property de BackTest settings meegeven
+        /// TODO: Deze code verhuizen naar het dialoog of een subclass en 
+        /// als een property de BackTest settings meegeven
         /// Of een extra class om de backtest code in onder te brengen...
+        /// In ieder geval niet zoals onderstaand, allemaal quick en dirty
+        /// (en waarschijnlijk werkt het niets eens meer! was een experiment)
+        /// Probleem is ook dat in de app de meldingen van de accounts door 
+        /// elkaar gaan lopen (extra tabsheet met resultaten lijkt me)?
+
         try
         {
             AskSymbolDialog form = new()
@@ -1638,41 +1490,6 @@ public partial class FrmMain : Form
 
     }
 
-    private void TimerRestartStreams_Tick(object sender, EventArgs e)
-    {
-        GlobalData.AddTextToLogTab("");
-        GlobalData.AddTextToLogTab("Restart data streams", true);
-
-        TimerRestartStreams.Enabled = false;
-        TimerCheckDataStream.Enabled = false;
-        GlobalData.ApplicationStatus = CryptoApplicationStatus.AppStatusExiting;
-        try
-        {
-            CloseCryptoScannerSession();
-            ResumeComputer(true);
-        }
-        finally
-        {
-            lastCandlesKLineCount = 0;
-            InitTimerInterval(ref TimerCheckDataStream, 5 * 60); // reset interval (back to 5m)
-            InitTimerInterval(ref TimerRestartStreams, 4 * 60 * 60); // reset interval (back to 4h)
-        }
-    }
-
-    int lastCandlesKLineCount = 0;
-
-    private void TimerCheckDataStream_Tick(object sender, EventArgs e)
-    {
-        int candlesKLineCount = ExchangeClass.Count1mCandleStream();
-        if (lastCandlesKLineCount != 0 && candlesKLineCount == lastCandlesKLineCount)
-        {
-            GlobalData.AddTextToLogTab("Debug: De 1m data stream is gestopt!");
-
-            // Schedule a rest of the streams
-            InitTimerInterval(ref TimerRestartStreams, 1 * 60);
-        }
-        lastCandlesKLineCount = candlesKLineCount;
-    }
 
 
 }
