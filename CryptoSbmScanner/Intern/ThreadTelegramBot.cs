@@ -71,8 +71,9 @@ public class ThreadTelegramBot
     /// <param name="text"></param>
     async static public void SendMessage(string text)
     {
-        if (bot == null || text == "")
+        if (bot == null || text == "" || GlobalData.Settings.Telegram.ChatId == "")
             return;
+
 
         try
         {
@@ -90,7 +91,7 @@ public class ThreadTelegramBot
 
     async static public void SendSignal(CryptoSignal signal)
     {
-        if (bot == null || signal == null)
+        if (bot == null || signal == null || GlobalData.Settings.Telegram.ChatId == "")
             return;
 
         try
@@ -112,13 +113,14 @@ public class ThreadTelegramBot
 
             StringBuilder builder = new();
             builder.Append(signal.Symbol.Name + " " + signal.Interval.Name + " ");
-            builder.Append(CandleTools.GetUnixDate(signal.Candle.OpenTime).ToLocalTime().ToString("dd-MMM HH:mm"));
+            builder.Append(CandleTools.GetUnixDate(signal.Candle.OpenTime).ToLocalTime().ToString("dd MMM HH:mm"));
             builder.Append(" " + signal.StrategyText + "");
-            //builder.Append(" " + signal.SideText + "");
-            if (signal.Side == CryptoOrderSide.Buy)
-                builder.Append("<p style=\"color:#00FF00\">long</p>");
-            else
-                builder.Append("<p style=\"color:#FF0000\">short</p>");
+            builder.Append(" " + signal.SideText + "");
+            // Jammer, unsupported tag in message
+            //if (signal.Side == CryptoOrderSide.Buy)
+            //    builder.Append("<p style=\"color:#00FF00\">long</p>");
+            //else
+            //    builder.Append("<p style=\"color:#FF0000\">short</p>");
             builder.Append($" <a href=\"{href}\">{text}</a>");
             builder.AppendLine();
 
@@ -128,7 +130,7 @@ public class ThreadTelegramBot
             builder.Append(" close " + signal.Candle.Close.ToString0());
             builder.AppendLine();
 
-            builder.Append("Volume 24h" + signal.Symbol.Volume.ToString("N0"));
+            builder.Append("Volume 24h: " + signal.Symbol.Volume.ToString("N0"));
             if (signal.CandlesWithZeroVolume > 0)
                 builder.Append(", candles with volume " + signal.CandlesWithZeroVolume.ToString());
             builder.AppendLine();

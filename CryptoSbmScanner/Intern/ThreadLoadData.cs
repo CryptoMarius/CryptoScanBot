@@ -539,8 +539,11 @@ public class ThreadLoadData
                 //************************************************************************************
                 // De Telegram bot opstarten
                 //************************************************************************************
-                GlobalData.AddTextToLogTab("Starting Telegram bot");
-                var whateverx = Task.Run(async () => { await ThreadTelegramBot.ExecuteAsync(); });
+                if (GlobalData.Settings.Telegram.Token != "")
+                {
+                    GlobalData.AddTextToLogTab("Starting Telegram bot");
+                    var whateverx = Task.Run(async () => { await ThreadTelegramBot.ExecuteAsync(); });
+                }
 
 
                 //************************************************************************************
