@@ -23,7 +23,8 @@ namespace CryptoSbmScanner;
 
 public partial class FrmMain : Form
 {
-    private bool ExtraWebViewInitialized;
+    private bool WebViewAltradyInitialized;
+    private bool WebViewTradingViewInitialized;
     private int createdSignalCount; // Tellertje met het aantal meldingen (komt in de taakbalk c.q. applicatie titel)
     private readonly Microsoft.Web.WebView2.WinForms.WebView2 _webViewAltradyRef = null;
     private readonly ColorSchemeTest theme = new();
@@ -84,7 +85,7 @@ public partial class FrmMain : Form
 
         // Altrady tabblad verbergen, is enkel een browser om dat extra dialoog in externe browser te vermijden
         _webViewAltradyRef = webViewAltrady;
-        //tabControl.TabPages.Remove(tabPageAltrady);
+        tabControl.TabPages.Remove(tabPageAltrady);
 
 #if !TRADEBOT
         ApplicationTradingBot.Visible = false;
@@ -807,22 +808,24 @@ public partial class FrmMain : Form
 
     }
 
-    private async Task InitializeAltradyWebbrowser()
+    private async Task InitializeAltradyWebbrowser(Microsoft.Web.WebView2.WinForms.WebView2 webView2)
     {
         // https://stackoverflow.com/questions/63404822/how-to-disable-cors-in-wpf-webview2
-        if (!ExtraWebViewInitialized)
-        {
-            ExtraWebViewInitialized = true;
 
-            var userPath = GlobalData.GetBaseDir();
-            var webView2Environment = await CoreWebView2Environment.CreateAsync(null, userPath);
-            await _webViewAltradyRef.EnsureCoreWebView2Async(webView2Environment);
-        }
+        var userPath = GlobalData.GetBaseDir();
+        //var webView2Environment = await CoreWebView2Environment.CreateAsync(null, userPath);
+        //await _webViewAltradyRef.EnsureCoreWebView2Async(webView2Environment);
+        CoreWebView2Environment cwv2Environment = await CoreWebView2Environment.CreateAsync(null, userPath, new CoreWebView2EnvironmentOptions());
+        await webView2.EnsureCoreWebView2Async(cwv2Environment);
     }
 
     private async void ActivateTradingApp(CryptoSymbol symbol, CryptoInterval interval)
     {
-        await InitializeAltradyWebbrowser();
+        if (!WebViewAltradyInitialized)
+        {
+            WebViewAltradyInitialized = true;
+            await InitializeAltradyWebbrowser(_webViewAltradyRef);
+        }
 
         string href;
         switch (GlobalData.Settings.General.TradingApp)
@@ -1161,7 +1164,11 @@ public partial class FrmMain : Form
 
     private async Task ActivateTradingViewBrowser(string symbolname = "BTCUSDT")
     {
-        await InitializeAltradyWebbrowser();
+        if (!WebViewTradingViewInitialized)
+        {
+            WebViewTradingViewInitialized = true;
+            await InitializeAltradyWebbrowser(webViewTradingView);
+        }
 
         if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1m, out CryptoInterval interval))
             return;
