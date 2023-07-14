@@ -1,6 +1,6 @@
 ﻿using System.Text;
 using CryptoExchange.Net.CommonObjects;
-
+using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Signal;
@@ -15,7 +15,7 @@ public class BackTest
 
 
 
-    private readonly Model.CryptoExchange Exchange;
+    //private readonly Model.CryptoExchange Exchange;
     private readonly CryptoSymbol Symbol;
     //private readonly CryptoBackConfig Config;
     
@@ -35,7 +35,7 @@ public class BackTest
     public BackTest(CryptoSymbol symbol, CryptoInterval interval1m, CryptoInterval interval, CryptoBackConfig config)
     {
         Symbol = symbol;
-        Exchange = symbol.Exchange;
+        //Exchange = symbol.Exchange;
         Interval = interval;
         Interval1m = interval1m;
         //Config = config;
@@ -712,7 +712,7 @@ public class BackTest
             try
             {
                 // Voro de zekerheid..
-                Exchange.PositionList.Clear();
+                //Exchange.PositionList.Clear();
                 SymbolInterval.Signal = null;
                 GlobalData.Settings.Trading.PauseTradingUntil = null;
 
@@ -736,7 +736,7 @@ public class BackTest
                     if (--warmUptime <= 0)
                     {
                         // barometer initialiseren
-                        if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchangeX))
+                        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchangeX))
                         {
                             if (exchangeX.SymbolListName.TryGetValue("$BMP" + Symbol.Quote, out CryptoSymbol symbolX))
                             {
@@ -778,8 +778,8 @@ public class BackTest
                         Symbol.LastPrice = candle.Close;
                         //await HandleCandle(emulator, cryptoBackTest, candle);
 
-                        PositionMonitor x = new(Symbol, candle);
-                        await x.NewCandleArrived();
+                        PositionMonitor positionMonitor = new(Symbol, candle);
+                        await positionMonitor.NewCandleArrivedAsync();
                     }
                 }
 

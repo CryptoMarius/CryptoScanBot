@@ -1,4 +1,4 @@
-﻿using CryptoSbmScanner.Model;
+﻿using CryptoSbmScanner.Enums;
 
 namespace CryptoSbmScanner.BackTest;
 

@@ -1,10 +1,8 @@
 ﻿using System.Drawing.Drawing2D;
 using System.IO.Compression;
 using System.Net;
-using System.Security.Cryptography.Pkcs;
 using System.Speech.Synthesis;
 using System.Text;
-using System.Windows.Forms;
 
 using Binance.Net.Clients;
 using Binance.Net.Enums;
@@ -12,7 +10,6 @@ using Binance.Net.Objects;
 using Binance.Net.Objects.Models;
 using Binance.Net.Objects.Models.Spot;
 
-using CryptoExchange.Net.CommonObjects;
 using CryptoExchange.Net.Objects;
 
 using CryptoSbmScanner.BackTest;
@@ -35,11 +32,6 @@ using NPOI.SS.Formula.Functions;
 
 using Skender.Stock.Indicators;
 
-//using Telegram.Bot;
-//using Telegram.Bot.Args;
-//using Telegram.Bot.Types;
-//using Telegram.Bot.Types.Enums;
-
 using NPOI.HPSF;
 using NPOI.SS.UserModel;
 using Microsoft.Identity.Client;
@@ -49,6 +41,10 @@ using System;
 using Humanizer;
 using System.Security.Cryptography.Xml;
 using System.Transactions;
+using CryptoExchange.Net.Authentication;
+using CryptoSbmScanner.Enums;
+using CryptoSbmScanner.Exchange;
+using CryptoSbmScanner.Exchange.Binance;
 //using static System.ComponentModel.Design.ObjectSelectorEditor;
 
 namespace CryptoSbmScanner;
@@ -69,7 +65,7 @@ public partial class TestForm : Form
         Poison = 8     // 000100
     }
 
-    private bool ProgramExit; // = false; //Mislukte manier om excepties bij afsluiten te voorkomen (todo)
+    //private bool ProgramExit; // = false; //Mislukte manier om excepties bij afsluiten te voorkomen (todo)
 
     //AttackTypeSet a = AttackTypeSet.Melee | AttackTypeSet.Poison;
     //a = AttackTypeSet.Poison;
@@ -108,10 +104,10 @@ public partial class TestForm : Form
 
         tabControl.SelectedTab = tabPageLog;
 
-        AppDomain.CurrentDomain.ProcessExit += (sender, eventArgs) =>
-        {
-            ProgramExit = true;
-        };
+        //AppDomain.CurrentDomain.ProcessExit += (sender, eventArgs) =>
+        //{
+        //    ProgramExit = true;
+        //};
 
         //Om vanuit achtergrond threads iets te kunnen loggen (kan charmanter?)
         GlobalData.LogToTelegram += new AddTextEvent(AddTextToTelegram);
@@ -123,12 +119,12 @@ public partial class TestForm : Form
         //string APIKEY = "?";
         //string APISECRET = "?";
 
-        BinanceClient.SetDefaultOptions(new BinanceClientOptions() { });
-        BinanceSocketClientOptions options = new();
+        //BinanceRestClient.SetDefaultOptions(new BinanceClientOptions() { });
+        //BinanceSocketClientOptions options = new();
         //options.ApiCredentials = new BinanceApiCredentials(APIKEY, APISECRET);
-        options.SpotStreamsOptions.AutoReconnect = true;
-        options.SpotStreamsOptions.ReconnectInterval = TimeSpan.FromSeconds(15);
-        BinanceSocketClient.SetDefaultOptions(options);
+        //options.SpotStreamsOptions.AutoReconnect = true;
+        //options.SpotStreamsOptions.ReconnectInterval = TimeSpan.FromSeconds(15);
+        //BinanceSocketClient.SetDefaultOptions(options);
 
         //BinanceClient.SetDefaultOptions(new BinanceClientOptions()
         //{
@@ -153,7 +149,7 @@ public partial class TestForm : Form
         // Basicly allemaal constanten
         GlobalData.LoadExchanges();
         GlobalData.LoadIntervals();
-        GlobalData.LoadTradingAccounts();
+        GlobalData.LoadAccounts();
 
 
         //Alle symbols uit de database lezen 
@@ -201,7 +197,11 @@ public partial class TestForm : Form
         //SymbolValue marketcapTotal = new SymbolValue();
         //marketcapTotal.Name = "Maerketcap total";
         //Task.Factory.StartNew(() => new TradingViewSymbolInfo().Start("CRYPTOCAP:TOTAL3", marketcapTotal, 10));
+
     }
+
+
+
 
     //private void ChangeTheme(ColorSchemeTest theme, Control.ControlCollection container)
     //{
@@ -260,28 +260,27 @@ public partial class TestForm : Form
             SortedList<long, CryptoCandle> candles = symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList;
             if (candles.Count == 0)
             {
-                using (CryptoDatabase database = new())
+                using CryptoDatabase database = new();
+                database.Open();
+
+                long startTime = CandleTools.GetUnixTime(dateCandleStart, 60);
+                long eindeTime = CandleTools.GetUnixTime(dateCandleEinde, 60);
+                GlobalData.AddTextToLogTab(string.Format("{0} {1} Candles lezen", symbol.Name, interval.Name));
+
+                StringBuilder builder = new();
+                builder.AppendLine("select *");
+                builder.AppendLine("from candle WITH (NOLOCK)");
+                builder.AppendLine(string.Format("where IntervalId={0}", interval.Id));
+                builder.AppendLine(string.Format("and SymbolId='{0}'", symbol.Id));
+                builder.AppendLine(string.Format("and OpenTime >= {0}", startTime));
+                builder.AppendLine(string.Format("and OpenTime <= {0}", eindeTime));
+
+                foreach (CryptoCandle candle in database.Connection.Query<CryptoCandle>(builder.ToString()))
                 {
-                    database.Open();
-
-                    long startTime = CandleTools.GetUnixTime(dateCandleStart, 60);
-                    long eindeTime = CandleTools.GetUnixTime(dateCandleEinde, 60);
-                    GlobalData.AddTextToLogTab(string.Format("{0} {1} Candles lezen", symbol.Name, interval.Name));
-
-                    StringBuilder builder = new();
-                    builder.AppendLine("select *");
-                    builder.AppendLine("from candle WITH (NOLOCK)");
-                    builder.AppendLine(string.Format("where IntervalId={0}", interval.Id));
-                    builder.AppendLine(string.Format("and SymbolId='{0}'", symbol.Id));
-                    builder.AppendLine(string.Format("and OpenTime >= {0}", startTime));
-                    builder.AppendLine(string.Format("and OpenTime <= {0}", eindeTime));
-
-                    foreach (CryptoCandle candle in database.Connection.Query<CryptoCandle>(builder.ToString()))
-                    {
-                        if (!candles.ContainsKey(candle.OpenTime))
-                            candles.Add(candle.OpenTime, candle);
-                    }
+                    if (!candles.ContainsKey(candle.OpenTime))
+                        candles.Add(candle.OpenTime, candle);
                 }
+
             }
             return candles;
         }
@@ -294,9 +293,9 @@ public partial class TestForm : Form
 
     private void AddTextToTelegram(string text, bool extraLineFeed = false)
     {
-        if ((!ProgramExit) && (IsHandleCreated))
+        if (IsHandleCreated)
         {
-            //return; //t'ding crasht en is niet fijn
+            // Het ding crasht wel eens (meestal netwerk of timing problemen)
             ThreadTelegramBot.SendMessage(text);
         }
     }
@@ -304,7 +303,7 @@ public partial class TestForm : Form
 
     private void AddTextToLogTab(string text, bool extraLineFeed = false)
     {
-        if ((!ProgramExit) && (IsHandleCreated))
+        if (IsHandleCreated)
         {
             text = text.TrimEnd();
             GlobalData.Logger.Info(text);
@@ -508,12 +507,12 @@ public partial class TestForm : Form
             item1.SubItems.Add(signal.Interval.Name);
 
             item1.SubItems.Add("buy");
-            if (signal.Mode == CryptoTradeDirection.Long)
-                item1.SubItems.Add(signal.Mode.ToString()).ForeColor = Color.Green;
-            else if (signal.Mode == CryptoTradeDirection.Short)
-                item1.SubItems.Add(signal.Mode.ToString()).ForeColor = Color.Red;
+            if (signal.Side == CryptoOrderSide.Buy)
+                item1.SubItems.Add(signal.Side.ToString()).ForeColor = Color.Green;
+            else if (signal.Side == CryptoOrderSide.Sell)
+                item1.SubItems.Add(signal.Side.ToString()).ForeColor = Color.Red;
             else
-                item1.SubItems.Add(signal.Mode.ToString());
+                item1.SubItems.Add(signal.Side.ToString());
 
             item1.SubItems.Add(signal.StrategyText);
             item1.SubItems.Add(signal.EventText);
@@ -631,7 +630,7 @@ public partial class TestForm : Form
 
     private async void Button2_Click(object sender, EventArgs e)
     {
-        if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
         {
             if (exchange.SymbolListName.TryGetValue("BNBUSDT", out CryptoSymbol symbol))
             {
@@ -656,7 +655,7 @@ public partial class TestForm : Form
 
                 // Plaats de buy order op Binance 
                 WebCallResult<BinanceOrderOcoList> result;
-                using (var client = new BinanceClient())
+                using var client = new BinanceRestClient();
                 {
 
                     result = await client.SpotApi.Trading.PlaceOcoOrderAsync(symbol.Name, OrderSide.Sell, quantity, price: price, stopPrice, stopLimitPrice, stopLimitTimeInForce: TimeInForce.GoodTillCanceled);
@@ -696,20 +695,17 @@ public partial class TestForm : Form
         decimal sumProfit = 0;
         decimal sumCount = 0;
 
+        using CryptoDatabase databaseThread = new();
+        databaseThread.Open();
 
-        using (CryptoDatabase databaseThread = new())
+        foreach (CryptoPosition position in databaseThread.Connection.Query<CryptoPosition>("select * from positions " +
+            "where CreateTime >= @fromDate and status=2", new { fromDate = DateTime.Today }))
         {
-            databaseThread.Open();
-
-            foreach (CryptoPosition position in databaseThread.Connection.Query<CryptoPosition>("select * from positions " +
-                "where CreateTime >= @fromDate and status=2", new { fromDate = DateTime.Today }))
-            {
-                sumCount++;
-                sumProfit += position.Profit;
-                sumInvested += position.Invested;
-            }
-            GlobalData.AddTextToLogTab(string.Format("Invested {0:N2}, profits {1:N2}, {2:N2}%", sumInvested, sumProfit, 100 * sumProfit / sumCount));
+            sumCount++;
+            sumProfit += position.Profit;
+            sumInvested += position.Invested;
         }
+        GlobalData.AddTextToLogTab(string.Format("Invested {0:N2}, profits {1:N2}, {2:N2}%", sumInvested, sumProfit, 100 * sumProfit / sumCount));
     }
 
 
@@ -843,60 +839,58 @@ public partial class TestForm : Form
                     //    quaote volume
                     //    base volume?
 
-                    using (CryptoDatabase databaseThread = new())
+                    using CryptoDatabase databaseThread = new();
+                    databaseThread.Connection.Open();
+                    List<CryptoCandle> candleCache = new();
+
+                    using (var transaction = databaseThread.Connection.BeginTransaction())
                     {
-                        databaseThread.Connection.Close();
-                        databaseThread.Connection.Open();
-                        List<CryptoCandle> candleCache = new();
-
-                        using (var transaction = databaseThread.Connection.BeginTransaction())
+                        using (StreamReader reader = System.IO.File.OpenText(downLoadFolder + name + ".csv"))
                         {
-                            using (StreamReader reader = System.IO.File.OpenText(downLoadFolder + name + ".csv"))
+                            string line;
+                            while ((line = reader.ReadLine()) != null)
                             {
-                                string line;
-                                while ((line = reader.ReadLine()) != null)
+                                line = line.Trim();
+                                if (line != "")
                                 {
-                                    line = line.Trim();
-                                    if (line != "")
-                                    {
-                                        CryptoCandle candleTmp = new();
-                                        string[] items = line.Split(',');
-                                        candleTmp.OpenTime = long.Parse(items[0]) / 1000;
-                                        candleTmp.Open = decimal.Parse(items[1]);
-                                        candleTmp.High = decimal.Parse(items[2]);
-                                        candleTmp.Low = decimal.Parse(items[3]);
-                                        candleTmp.Close = decimal.Parse(items[4]);
-                                        candleTmp.Volume = decimal.Parse(items[7]);
-                                        //6=closetime
-                                        //7=Quote asset volume (wellicht deze?)
-                                        //SaveCandle?
+                                    CryptoCandle candleTmp = new();
+                                    string[] items = line.Split(',');
+                                    candleTmp.OpenTime = long.Parse(items[0]) / 1000;
+                                    candleTmp.Open = decimal.Parse(items[1]);
+                                    candleTmp.High = decimal.Parse(items[2]);
+                                    candleTmp.Low = decimal.Parse(items[3]);
+                                    candleTmp.Close = decimal.Parse(items[4]);
+                                    candleTmp.Volume = decimal.Parse(items[7]);
+                                    //6=closetime
+                                    //7=Quote asset volume (wellicht deze?)
+                                    //SaveCandle?
 
-                                        // Vul het aan met andere attributen
-                                        CryptoCandle candle = CandleTools.HandleFinalCandleData(symbol, interval, candleTmp.Date,
-                                            candleTmp.Open, candleTmp.High, candleTmp.Low, candleTmp.Close, candleTmp.Volume);
-                                        candleCache.Add(candle);
-                                    }
-
-                                    if (candleCache.Count > 500)
-                                    {
-                                        databaseThread.BulkInsertCandles(candleCache, transaction);
-                                        candleCache.Clear();
-                                    }
-                                    //static public void BulkInsertCandles(this SqlConnection MyConnection, List<CryptoCandle> cache, SqlTransaction transaction)
+                                    // Vul het aan met andere attributen
+                                    CryptoCandle candle = CandleTools.HandleFinalCandleData(symbol, interval, candleTmp.Date,
+                                        candleTmp.Open, candleTmp.High, candleTmp.Low, candleTmp.Close, candleTmp.Volume);
+                                    candleCache.Add(candle);
                                 }
-                            }
-                            System.IO.File.Delete(downLoadFolder + name + ".csv");
-                            System.IO.File.Delete(downLoadFolder + name + ".zip");
 
-                            if (candleCache.Any())
-                            {
-                                databaseThread.BulkInsertCandles(candleCache, transaction);
-                                candleCache.Clear();
+                                if (candleCache.Count > 500)
+                                {
+                                    databaseThread.BulkInsertCandles(candleCache, transaction);
+                                    candleCache.Clear();
+                                }
+                                //static public void BulkInsertCandles(this SqlConnection MyConnection, List<CryptoCandle> cache, SqlTransaction transaction)
                             }
-
-                            transaction.Commit();
                         }
+                        System.IO.File.Delete(downLoadFolder + name + ".csv");
+                        System.IO.File.Delete(downLoadFolder + name + ".zip");
+
+                        if (candleCache.Any())
+                        {
+                            databaseThread.BulkInsertCandles(candleCache, transaction);
+                            candleCache.Clear();
+                        }
+
+                        transaction.Commit();
                     }
+
                 }
             }
         }
@@ -1031,37 +1025,57 @@ public partial class TestForm : Form
         if (!GlobalData.IntervalListPeriod.TryGetValue(config.IntervalPeriod, out CryptoInterval interval))
             return;
 
+        SignalCreate.AnalyseNotificationList.Clear();
+        GlobalData.ExchangeBackTestAccount.PositionList.Clear();
 
         GlobalData.BackTest = true;
+        GlobalData.Settings.Trading.TradeViaExchange = false;
+        GlobalData.Settings.Trading.TradeViaPaperTrading = false;
         GlobalData.Settings.Trading.Barometer15mBotMinimal = -99m;
         GlobalData.Settings.Trading.Barometer30mBotMinimal = -99m;
 
         // Pittige configuratie geworden zie ik ;-)
+        GlobalData.Settings.Signal.SignalsActive = true;
         GlobalData.Settings.Signal.Analyze.Interval.Clear();
         GlobalData.Settings.Signal.Analyze.Interval.Add(interval.Name);
 
-        GlobalData.Settings.Signal.Analyze.Strategy[CryptoTradeDirection.Long].Clear();
-        GlobalData.Settings.Signal.Analyze.Strategy[CryptoTradeDirection.Short].Clear();
+        GlobalData.Settings.Signal.Analyze.Strategy[CryptoOrderSide.Buy].Clear();
+        GlobalData.Settings.Signal.Analyze.Strategy[CryptoOrderSide.Sell].Clear();
         //GlobalData.Settings.Signal.Analyze.Strategy[TradeDirection.Long].Add("sbm1");
         //GlobalData.Settings.Signal.Analyze.Strategy[TradeDirection.Long].Add("sbm2");
         //GlobalData.Settings.Signal.Analyze.Strategy[TradeDirection.Long].Add("sbm3");
-        GlobalData.Settings.Signal.Analyze.Strategy[CryptoTradeDirection.Long].Add(algorithm);
+        GlobalData.Settings.Signal.Analyze.Strategy[CryptoOrderSide.Buy].Add(algorithm);
 
 
+        GlobalData.Settings.Trading.Active = true;
         GlobalData.Settings.Trading.Monitor.Interval.Clear();
         GlobalData.Settings.Trading.Monitor.Interval.Add(interval.Name);
 
-        GlobalData.Settings.Trading.Monitor.Strategy[CryptoTradeDirection.Long].Clear();
-        GlobalData.Settings.Trading.Monitor.Strategy[CryptoTradeDirection.Short].Clear();
+        GlobalData.Settings.Trading.Monitor.Strategy[CryptoOrderSide.Buy].Clear();
+        GlobalData.Settings.Trading.Monitor.Strategy[CryptoOrderSide.Sell].Clear();
         //GlobalData.Settings.Trading.Monitor.Strategy[TradeDirection.Long].Add("sbm1");
         //GlobalData.Settings.Trading.Monitor.Strategy[TradeDirection.Long].Add("sbm2");
         //GlobalData.Settings.Trading.Monitor.Strategy[TradeDirection.Long].Add("sbm3");
-        GlobalData.Settings.Trading.Monitor.Strategy[CryptoTradeDirection.Long].Add(algorithm);
+        GlobalData.Settings.Trading.Monitor.Strategy[CryptoOrderSide.Buy].Add(algorithm);
 
         TradingConfig.IndexStrategyInternally();
         TradingConfig.InitWhiteAndBlackListSettings();
 
 
+        // BUY
+        GlobalData.Settings.Trading.BuyStepInMethod = CryptoBuyStepInMethod.Immediately;
+        GlobalData.Settings.Trading.GlobalBuyCooldownTime = 20;
+        GlobalData.Settings.Trading.BuyOrderMethod = CryptoBuyOrderMethod.MarketOrder;
+
+        // DCA
+        GlobalData.Settings.Trading.DcaPercentage = 3m;
+        GlobalData.Settings.Trading.DcaOrderMethod = CryptoBuyOrderMethod.MarketOrder;
+        GlobalData.Settings.Trading.DcaStepInMethod = CryptoBuyStepInMethod.TrailViaKcPsar;
+
+        // TP
+        GlobalData.Settings.Trading.ProfitPercentage = 1.5m;
+        GlobalData.Settings.Trading.DynamicTpPercentage = 0.75m;
+        GlobalData.Settings.Trading.SellMethod = CryptoSellMethod.TrailViaKcPsar;
 
         StringBuilder samenvatting = new();
         //for (int macdCandles = 2; macdCandles <= 2; macdCandles++)
@@ -1088,7 +1102,7 @@ public partial class TestForm : Form
                 Results.ShowHeader(header, false);
                 GlobalData.AddTextToLogTab(header.ToString());
 
-                if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
+                if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
                 {
                     string baseFolder = GlobalData.GetBaseDir();
                     baseFolder += @"\backtest\" + exchange.Name + @"\" + strategy.ToString() + @"\";
@@ -1162,7 +1176,7 @@ public partial class TestForm : Form
                                 {
                                     // We hergebruiken de client binnen deze thread, teveel connecties opnenen resulteerd in een foutmelding:
                                     // "An operation on a socket could not be performed because the system lacked sufficient buffer space or because a queue was full"
-                                    using (BinanceClient client = new())
+                                    using BinanceRestClient client = new();
                                     {
                                         while (true)
                                         {
@@ -1182,6 +1196,7 @@ public partial class TestForm : Form
                                                 Monitor.Exit(queue);
                                             }
 
+                                            symbol.TradeList.Clear();
                                             BackTest(algorithm, symbol, interval, config, baseFolder);
                                         }
                                     }
@@ -1273,7 +1288,7 @@ public partial class TestForm : Form
 
     private void Button6_Click(object sender, EventArgs e)
     {
-        if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
         {
             if (exchange.SymbolListName.TryGetValue("ALCXBTC", out CryptoSymbol symbol))
             {
@@ -1370,7 +1385,7 @@ public partial class TestForm : Form
         GlobalData.AddTextToLogTab("");
         List<VolatiteitStat> a = new();
 
-        if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
         {
             //CryptoSymbol symbol;
             foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
@@ -1568,7 +1583,7 @@ public partial class TestForm : Form
         //trend.assignvaluecolor( if pos == -1 then color.red else if pos == 1 then color.green else color.blue);
 
 
-        if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
         {
 
             if (exchange.SymbolListName.TryGetValue("NEBLBUSD", out CryptoSymbol symbol))
@@ -1645,7 +1660,7 @@ public partial class TestForm : Form
                         //?ehh? voorgaande atr, eigenlijk geen idee wat hier precies staat!
                         //Zou dat een wma van de laatste atr zijn? (anders weet ik het ook niet hoor)
                         List<AtrResult> atrList = (List<AtrResult>)viewPort.GetAtr(length);
-                        data.AvgTr = (decimal)atrList[atrList.Count - 1].Atr.Value;
+                        data.AvgTr = (decimal)atrList[^1].Atr.Value;
 
 
                         // De voorgaande  waarden dus? bah
@@ -1814,7 +1829,7 @@ public partial class TestForm : Form
         //GlobalData.Settings.Signal.AnalysisShowCandleJumpUp = false;
 
 
-        if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
         {
             if (exchange.SymbolListName.TryGetValue("WANBTC", out CryptoSymbol symbol))
             {
@@ -1931,7 +1946,7 @@ public partial class TestForm : Form
         int intWidth = pictureBox1.Width;
         int intHeight = pictureBox1.Height;
 
-        if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
         {
             if ((quoteData != null) && (exchange.SymbolListName.TryGetValue(Model.Constants.SymbolNameBarometerPrice + quoteData.Name, out CryptoSymbol symbol)))
             {
@@ -2170,7 +2185,7 @@ public partial class TestForm : Form
         //GlobalData.Settings.Signal.AnalysisShowCandleJumpUp = false;
 
 
-        if (GlobalData.ExchangeListName.TryGetValue("Binance", out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
         {
             if (exchange.SymbolListName.TryGetValue(Model.Constants.SymbolNameBarometerPrice + "BUSD", out CryptoSymbol symbol)) //"BTCBUSD"
             {
@@ -2324,7 +2339,7 @@ public partial class TestForm : Form
 
         Task.Run(async () => 
         {
-            using (SpeechSynthesizer synthesizer = new())
+            using SpeechSynthesizer synthesizer = new();
             {
                 // to change VoiceGender and VoiceAge check out those links below
                 synthesizer.SelectVoiceByHints(VoiceGender.Male, VoiceAge.Adult);
@@ -2482,98 +2497,7 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
             default: return null;                  // let WTelegramClient decide the default config
         }
     }
-    public async void BlaBla()
-    {
-        try
-        {
-            //using var client = new WTelegram.Client(Config);
-            //var myself = await client.LoginUserIfNeeded();
-            //Console.WriteLine($"We are logged-in as {myself} (id {myself.id})");
 
-
-            //int offset = 0;
-            //TelegramBotClient bot;
-
-            //System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
-
-            //bot = new(GlobalData.Settings.Telegram.Token); //, "https://api.telegram.org/bot", "https://api.telegram.org/file/bot"
-            //try
-            //{
-            //    //SendMessage("Started telegram bot!");
-
-            //    var me = await bot.GetMeAsync();
-            //    //GlobalData.AddTextToLogTab($"Hello, World! I am user {me.Id} and my name is {me.FirstName}.");
-
-            //    using CancellationTokenSource cts = new();
-
-
-            //    while (true)
-            //    {
-            //        try
-            //        {
-            //            bot.StartReceiving(UpdateType.ChannelPost, UpdateType.EditedChannelPost);
-            //            //bot.OnUpdate += Bot_OnUpdate;
-
-
-            //            Update[] updates = await bot.GetUpdatesAsync(offset);
-
-            //            foreach (Update update in updates)
-            //            {
-            //                if (update.Message == null)
-            //                    continue;
-            //                //teleGramCount++;
-            //                offset = update.Id + 1;
-            //                try
-            //                {
-            //                    switch (update.Message.Type)
-            //                    {
-            //                        case MessageType.Text:
-            //                            {
-            //                                StringBuilder stringBuilder = new();
-            //                                var arguments = update.Message.Text.ToUpper();
-
-            //                                //string s = stringBuilder.ToString();
-            //                                //if (s != "")
-            //                                  //  await bot.SendTextMessageAsync(update.Message.Chat.Id, s);
-            //                            }
-            //                            break;
-            //                    }
-
-
-            //                }
-            //                catch (Exception error)
-            //                {
-            //                    // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
-            //                    GlobalData.Logger.Error(error);
-            //                    GlobalData.AddTextToLogTab("\r\n" + "\r\n" + " error telegram thread(1)\r\n" + error.ToString());
-
-            //                }
-
-            //            }
-            //        }
-            //        catch (Exception error)
-            //        {
-            //            // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
-            //            GlobalData.Logger.Error(error);
-            //            GlobalData.AddTextToLogTab("\r\n" + "\r\n" + " error telegram thread(2)\r\n" + error.ToString());
-
-            //        }
-            //        await Task.Delay(250);
-            //    }
-        }
-        catch (Exception error)
-        {
-            // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
-            GlobalData.Logger.Error(error);
-            GlobalData.AddTextToLogTab("\r\n" + "\r\n" + " error telegram thread(3)\r\n" + error.ToString());
-        }
-    }
-
-    private void Button1_Click(object sender, EventArgs e)
-    {
-        BlaBla();
-    }
 
 
 }
-
