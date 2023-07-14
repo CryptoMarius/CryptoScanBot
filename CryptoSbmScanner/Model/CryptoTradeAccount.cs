@@ -16,7 +16,6 @@ public class CryptoTradeAccount
     [Computed]
     public virtual CryptoExchange Exchange { get; set; }
 
-    public CryptoExchangeType ExchangeType { get; set; }
     public CryptoAccountType AccountType { get; set; }
     public CryptoTradeAccountType TradeAccountType { get; set; }
 

@@ -92,11 +92,9 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Binance.Net">
-      <Version>8.5.1</Version>
-    </PackageReference>
+    <PackageReference Include="Binance.Net" Version="9.0.2" />
     <PackageReference Include="BouncyCastle.Cryptography" Version="2.2.1" />
-    <PackageReference Include="Bybit.Net" Version="2.0.4" />
+    <PackageReference Include="Bybit.Net" Version="3.0.0" />
     <PackageReference Include="CommandLineParser" Version="2.9.1" />
     <PackageReference Include="Cryptowatcher.TA-LIb-Core" Version="1.0.0" />
     <PackageReference Include="Dapper" Version="2.0.143" />
@@ -105,7 +103,7 @@
       <Version>3.1.0</Version>
     </PackageReference>
     <PackageReference Include="Google.Protobuf">
-      <Version>3.23.3</Version>
+      <Version>3.23.4</Version>
     </PackageReference>
     <PackageReference Include="Humanizer.Core">
       <Version>2.14.1</Version>
@@ -113,6 +111,7 @@
     <PackageReference Include="K4os.Compression.LZ4.Streams">
       <Version>1.3.5</Version>
     </PackageReference>
+    <PackageReference Include="Kucoin.Net" Version="5.0.0" />
     <PackageReference Include="MathNet.Filtering">
       <Version>0.7.0</Version>
     </PackageReference>
@@ -157,7 +156,7 @@
     </PackageReference>
     <PackageReference Include="Nito.AsyncEx.Context" Version="5.1.2" />
     <PackageReference Include="NLog">
-      <Version>5.2.0</Version>
+      <Version>5.2.2</Version>
     </PackageReference>
     <PackageReference Include="NPOI" Version="2.6.0" />
     <PackageReference Include="SimpleInjector">

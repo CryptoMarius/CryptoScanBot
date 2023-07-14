@@ -44,7 +44,7 @@ static public class GlobalData
     static public bool BackTest { get; set; }
 
     static public SettingsBasic Settings { get; set; } = new();
-    static public CryptoApplicationStatus ApplicationStatus { get; set; } = CryptoApplicationStatus.AppStatusPrepare;
+    static public CryptoApplicationStatus ApplicationStatus { get; set; } = CryptoApplicationStatus.Initializing;
 
     // The nlogger stuff
     static public NLog.Logger Logger { get; } = NLog.LogManager.GetCurrentClassLogger();
@@ -94,11 +94,6 @@ static public class GlobalData
 #if BALANCING
     static public ThreadBalanceSymbols ThreadBalanceSymbols { get; set; }
 #endif
-
-    // Binance stuff
-    //static public BinanceStreamUserData TaskBinanceStreamUserData { get; set; }
-    //static public BinanceStreamPriceTicker TaskBinanceStreamPriceTicker { get; set; }
-
 
     // On special request of a hardcore trader..
     static public SymbolValue FearAndGreedIndex { get; set; } = new();
@@ -476,27 +471,22 @@ static public class GlobalData
 
     static public string GetBaseDir()
     {
-        if (ApplicationParams.Options == null)
-        {
-            string[] args = Environment.GetCommandLineArgs();
-            ApplicationParams.Options = CommandLine.Parser.Default.ParseArguments<ApplicationParams>(args).Value;
-        }
-
-        string folder = ApplicationParams.Options.InputFile;
-        if (folder == "")
-            folder = "CryptoScanner";
+        ApplicationParams.InitApplicationOptions();
+        string appDataFolder = ApplicationParams.Options.AppDataFolder;
+        if (appDataFolder == null | appDataFolder == "")
+            appDataFolder = "CryptoScanner";
 
         string baseFolder = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        folder = Path.Combine(baseFolder, folder);
+        appDataFolder = Path.Combine(baseFolder, appDataFolder);
 
 
         if (!IsInitialized)
         {
             IsInitialized = true;
-            Directory.CreateDirectory(folder);
+            Directory.CreateDirectory(appDataFolder);
         }
 
-        return folder + @"\";
+        return appDataFolder + @"\";
     }
 
     static public void DebugOnlySymbol(string name)
@@ -556,27 +546,27 @@ static public class GlobalData
 
         // Create targets and add them to the configuration 
         var fileTarget = new NLog.Targets.FileTarget();
+        config.AddTarget("file", fileTarget);
         fileTarget.Name = "default";
         fileTarget.ArchiveDateFormat = "yyyy-MM-dd";
         fileTarget.ArchiveEvery = NLog.Targets.FileArchivePeriod.Day;
         //fileTarget.EnableArchiveFileCompression = true;
         fileTarget.MaxArchiveDays = 15;
-        fileTarget.FileName = GlobalData.GetBaseDir() + "CryptoScanner ${date:format=yyyy-MM-dd} .log";
+        fileTarget.FileName = GetBaseDir() + "CryptoScanner ${date:format=yyyy-MM-dd}.log";
         //fileTarget.Layout = "Exception Type: ${exception:format=Type}${newline}Target Site:  ${event-context:TargetSite }${newline}Message: ${message}";
-        config.AddTarget("file", fileTarget);
 
         var rule = new NLog.Config.LoggingRule("*", NLog.LogLevel.Info, fileTarget);
         config.LoggingRules.Add(rule);
 
         fileTarget = new NLog.Targets.FileTarget();
+        config.AddTarget("file", fileTarget);
         fileTarget.Name = "errors";
         fileTarget.ArchiveDateFormat = "yyyy-MM-dd";
         fileTarget.ArchiveEvery = NLog.Targets.FileArchivePeriod.Day;
         fileTarget.MaxArchiveDays = 30;
         //fileTarget.EnableArchiveFileCompression = true;
-        fileTarget.FileName = GlobalData.GetBaseDir() + "CryptoScanner ${date:format=yyyy-MM-dd}-Errors.log";
+        fileTarget.FileName = GetBaseDir() + "CryptoScanner ${date:format=yyyy-MM-dd}-Errors.log";
         //fileTarget.Layout = "Exception Type: ${exception:format=Type}${newline}Target Site:  ${event-context:TargetSite }${newline}Message: ${message}";
-        config.AddTarget("file", fileTarget);
 
         rule = new NLog.Config.LoggingRule("*", NLog.LogLevel.Error, fileTarget);
         config.LoggingRules.Add(rule);

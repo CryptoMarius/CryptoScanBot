@@ -2,7 +2,7 @@
 
 public enum CryptoApplicationStatus
 {
-    AppStatusPrepare,
-    AppStatusRunning,
-    AppStatusExiting
+    Initializing,
+    Running,
+    Disposing
 }

@@ -512,13 +512,13 @@ public class SignalCreate
         }
 
         // Weer een extra controle, staat de symbol op de black of whitelist?
-        if (!signal.BackTest && TradingConfig.Config[signal.Side].InBlackList(Symbol.Name))
+        if (!signal.BackTest && TradingConfig.Config[signal.Side].InBlackList(Symbol.Name) == MatchBlackAndWhiteList.Present)
         {
             // Als de muntpaar op de black lijst staat dit signaal overslagen
             eventText += " " + "staat op blacklist";
             signal.IsInvalid = true;
         }
-        else if (!signal.BackTest && !TradingConfig.Config[signal.Side].InWhiteList(Symbol.Name))
+        else if (!signal.BackTest && TradingConfig.Config[signal.Side].InWhiteList(Symbol.Name) == MatchBlackAndWhiteList.Missing)
         {
             // Als de muntpaar niet op de white lijst staat dit signaal overslagen
             eventText += " " + "niet in whitelist";

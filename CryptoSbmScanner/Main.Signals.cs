@@ -1,4 +1,5 @@
 ﻿using CryptoSbmScanner.Enums;
+using CryptoSbmScanner.Exchange;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Settings;
@@ -7,10 +8,10 @@ namespace CryptoSbmScanner;
 
 public partial class FrmMain
 {
-    private int columnForText = 6;
-    private int columnForPriceDiff = 8;
+    private readonly int columnForText = 6;
+    private readonly int columnForPriceDiff = 8;
     private ListViewDoubleBuffered listViewSignals;
-    private System.Timers.Timer TimerClearEvents;
+    private System.Windows.Forms.Timer TimerClearEvents;
 
     //public void Dispose()
     //{
@@ -28,7 +29,7 @@ public partial class FrmMain
         listViewSignals = new()
         {
             CheckBoxes = false
-    };
+        };
         listViewSignals.CheckBoxes = false;
         listViewSignals.AllowColumnReorder = false;
         listViewSignals.Dock = DockStyle.Fill;
@@ -45,9 +46,12 @@ public partial class FrmMain
         listViewSignals.DoubleClick += ListViewSignalsMenuItem_DoubleClick;
         tabPageSignals.Controls.Add(listViewSignals);
 
-        TimerClearEvents = new();
-        TimerClearEvents.InitTimerInterval(1 * 60);
-        TimerClearEvents.Elapsed += TimerClearOldSignals_Tick;
+        TimerClearEvents = new()
+        {
+            Interval = 1 * 60 * 1000,
+        };
+        TimerClearEvents.Enabled = true;
+        TimerClearEvents.Tick += TimerClearOldSignals_Tick;
 
         ListViewSignalsInitColumns();
     }
@@ -107,30 +111,34 @@ public partial class FrmMain
         }
     }
 
-
-    private static ListViewItem AddSignalItem(CryptoSignal signal)
+    private static void FillSignalItem(CryptoSignal signal, ListViewItem item1)
     {
-        string s = signal.OpenDate.ToLocalTime().ToString("yyyy-MM-dd HH:mm") + " - " + signal.OpenDate.AddSeconds(signal.Interval.Duration).ToLocalTime().ToString("HH:mm");
-        ListViewItem item1 = new(s, -1)
-        {
-            UseItemStyleForSubItems = false
-        };
+        // Omdat het item via een range wordt toegevoegd is deze niet beschikbaar
+        //int index = 
+        //listViewSignals.Items.IndexOf(item1);
+
+        //if (item1.Index % 2 == 0)
+        //    item1.BackColor = Color.LightGray;
+
+        item1.SubItems.Clear();
+        item1.Text = signal.OpenDate.ToLocalTime().ToString("yyyy-MM-dd HH:mm") + " - " + signal.OpenDate.AddSeconds(signal.Interval.Duration).ToLocalTime().ToString("HH:mm");
 
         ListViewItem.ListViewSubItem subItem;
 
         item1.SubItems.Add(signal.Exchange.Name);
 
-        s = signal.Symbol.Base + "/" + @signal.Symbol.Quote;
+
+        string s = signal.Symbol.Base + "/" + @signal.Symbol.Quote;
         //if (GlobalData.Settings.Signal.LogMinimumTickPercentage)
         //{
-            decimal tickPercentage = 100 * signal.Symbol.PriceTickSize / signal.Price;
-            if (tickPercentage > GlobalData.Settings.Signal.MinimumTickPercentage)
-            {
-                s += " " + tickPercentage.ToString("N2");
-                subItem = item1.SubItems.Add(s);
-                subItem.ForeColor = Color.Red;
-            }
-            else subItem = item1.SubItems.Add(s);
+        decimal tickPercentage = 100 * signal.Symbol.PriceTickSize / signal.Price;
+        if (tickPercentage > GlobalData.Settings.Signal.MinimumTickPercentage)
+        {
+            s += " " + tickPercentage.ToString("N2");
+            subItem = item1.SubItems.Add(s);
+            subItem.ForeColor = Color.Red;
+        }
+        else subItem = item1.SubItems.Add(s);
         //}
         //else subItem = item1.SubItems.Add(s);
 
@@ -227,7 +235,7 @@ public partial class FrmMain
         //else
         //    item1.SubItems.Add(value?.ToString("N2")).ForeColor = Color.Green;
         //if (signal.Last24HoursEffective > 25)
-          //  item1.SubItems.Add(value?.ToString("N2")).ForeColor = Color.Red;
+        //  item1.SubItems.Add(value?.ToString("N2")).ForeColor = Color.Red;
         //else
         item1.SubItems.Add(value?.ToString("N2"));
 
@@ -318,8 +326,19 @@ public partial class FrmMain
             }
             else
                 item1.SubItems.Add("");
-        }
-        return item1;
+
+                    }
+    }
+
+    private static ListViewItem AddSignalItem(CryptoSignal signal)
+    {
+        ListViewItem item = new("", -1)
+        {
+            UseItemStyleForSubItems = false
+        };
+        FillSignalItem(signal, item);
+
+        return item;
     }
 
 
@@ -444,7 +463,7 @@ public partial class FrmMain
             ListViewItem item = listViewSignals.SelectedItems[0];
             CryptoSignal signal = (CryptoSignal)item.Tag;
 
-            string href = Intern.TradingView.GetRef(signal.Symbol, signal.Interval);
+            string href = ExchangeHelper.GetTradingViewRef(signal.Symbol, signal.Interval);
             Uri uri = new(href);
             webViewTradingView.Source = uri;
 
@@ -461,7 +480,7 @@ public partial class FrmMain
             {
                 ListViewItem item = listViewSignals.SelectedItems[index];
                 CryptoSignal signal = (CryptoSignal)item.Tag;
-                string href = Intern.TradingView.GetRef(signal.Symbol, signal.Interval);
+                string href = ExchangeHelper.GetTradingViewRef(signal.Symbol, signal.Interval);
                 System.Diagnostics.Process.Start(href);
 
             }

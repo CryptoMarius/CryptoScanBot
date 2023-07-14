@@ -118,6 +118,10 @@ public class PositionMonitor
 
         using CryptoDatabase databaseThread = new();
         {
+            databaseThread.Close();
+            databaseThread.Open();
+
+
             /* ExecutionType: New = 0, Canceled = 1, Replaced = 2, Rejected = 3, Trade = 4, Expired = 5 */
             /* OrderStatus:  New = 0, PartiallyFilled = 1, Filled = 2, Canceled = 3, PendingCancel = 4, Rejected = 5, Expired = 6, Insurance = 7, Adl = 8 */
             string msgInfo = string.Format("{0} side={1} type={2} status={3} order={4} trade={5} price={6} quantity={7} QuoteQuantity={8}", 
@@ -141,9 +145,6 @@ public class PositionMonitor
                     GlobalData.PlaySomeMusic("Tradedash - Notification.wav");
             }
 
-
-            databaseThread.Close();
-            databaseThread.Open();
 
             CryptoPosition position = null;
             CryptoPositionPart part = null;
@@ -189,7 +190,7 @@ public class PositionMonitor
                     position = databaseThread.Connection.Get<CryptoPosition>(step.PositionId);
                     PositionTools.AddPosition(data.TradeAccount, position);
                     PositionTools.LoadPosition(databaseThread, position);
-                    if (!GlobalData.BackTest && GlobalData.ApplicationStatus == CryptoApplicationStatus.AppStatusRunning)
+                    if (!GlobalData.BackTest && GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
                         GlobalData.PositionsHaveChanged("");
 
                     // De positie terugzetten naar trading (wordt verderop toch opnieuw doorgerekend)
@@ -206,7 +207,7 @@ public class PositionMonitor
 
                     // Wel de trades van deze symbol bijwerken (voor de statistiek)
                     if (orderStatus == CryptoOrderStatus.Filled || orderStatus == CryptoOrderStatus.PartiallyFilled)
-                        await ExchangeClass.FetchTradesForSymbol(data.TradeAccount, symbol);
+                        await ExchangeHelper.FetchTradesAsync(data.TradeAccount, symbol);
 
                     s = string.Format("handletrade#4 {0} geen step gevonden. Statistiek bijwerken (exit)", msgInfo);
                     GlobalData.AddTextToLogTab(s);
@@ -343,7 +344,7 @@ public class PositionMonitor
                                     stepX.CloseTime = data.TradeTime;
                                     stepX.Status = CryptoOrderStatus.Expired;
                                     PositionTools.SavePositionStep(databaseThread, position, stepX);
-                                    await BinanceApi.Cancel(data.TradeAccount, symbol, position, stepX.OrderId);
+                                    await Api.Cancel(data.TradeAccount, symbol, stepX.OrderId);
                                 }
                             }
                         }
@@ -695,9 +696,9 @@ public class PositionMonitor
                             CryptoPosition position = PositionTools.HasPosition(tradeAccount, Symbol); //, symbolInterval
                             if (position == null)
                             {
-                                if (!GlobalData.Settings.Trading.OpenNewPositions)
+                                if (GlobalData.Settings.Trading.DisableNewPositions)
                                 {
-                                    reaction = "openen van nieuwe posities is niet toegestaan";
+                                    reaction = "openen van nieuwe posities niet toegestaan";
                                     GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
                                     Symbol.ClearSignals();
                                     return;
@@ -727,7 +728,7 @@ public class PositionMonitor
                                 // In de veronderstelling dat dit allemaal lukt
                                 Symbol.LastTradeDate = LastCandle1mCloseTimeDate;
 
-                                if (!GlobalData.BackTest && GlobalData.ApplicationStatus == CryptoApplicationStatus.AppStatusRunning)
+                                if (!GlobalData.BackTest && GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
                                     GlobalData.PositionsHaveChanged("");
                             }
                             else
@@ -1113,7 +1114,7 @@ public class PositionMonitor
                     position.BuyPrice = null;
                     PositionTools.SavePosition(databaseThread, position);
                 }
-                await BinanceApi.Cancel(position.TradeAccount, Symbol, position, step.OrderId);
+                await Api.Cancel(position.TradeAccount, Symbol, step.OrderId);
                 step.Status = CryptoOrderStatus.Expired;
                 step.CloseTime = LastCandle1mCloseTimeDate;
                 PositionTools.SavePositionStep(databaseThread, position, step);
@@ -1148,8 +1149,10 @@ public class PositionMonitor
                     quantity = quantity.Clamp(Symbol.QuantityMinimum, Symbol.QuantityMaximum, Symbol.QuantityTickSize);
 
 
-                    BinanceApi exchangeApi = new(position.TradeAccount, position.Symbol, LastCandle1mCloseTimeDate);
-                    (bool result, TradeParams tradeParams) result = await exchangeApi.BuyOrSell(orderType, CryptoOrderSide.Buy, quantity, price, null, null);
+                    Api exchangeApi = new();
+                    (bool result, TradeParams tradeParams) result = await exchangeApi.BuyOrSell(
+                        position.TradeAccount, position.Symbol, LastCandle1mCloseTimeDate,
+                        orderType, CryptoOrderSide.Buy, quantity, price, null, null);
                     if (result.result)
                     {
                         if (part.Name.Equals("BUY"))
@@ -1180,8 +1183,10 @@ public class PositionMonitor
                     decimal quantity = quoteAmount / (decimal)stop;
                     quantity = quantity.Clamp(Symbol.QuantityMinimum, Symbol.QuantityMaximum, Symbol.QuantityTickSize);
 
-                    BinanceApi exchangeApi = new(position.TradeAccount, position.Symbol, LastCandle1mCloseTimeDate);
-                    (bool result, TradeParams tradeParams) result = await exchangeApi.BuyOrSell(CryptoOrderType.StopLimit, CryptoOrderSide.Buy, 
+                    Api exchangeApi = new();
+                    (bool result, TradeParams tradeParams) result = await exchangeApi.BuyOrSell(
+                        position.TradeAccount, position.Symbol, LastCandle1mCloseTimeDate, 
+                        CryptoOrderType.StopLimit, CryptoOrderSide.Buy, 
                         quantity, price, stop, null);
                     if (result.result)
                     {
@@ -1214,7 +1219,7 @@ public class PositionMonitor
                     //GlobalData.AddTextToLogTab(t2);
 
                     // Annuleer de vorige buy order
-                    await BinanceApi.Cancel(position.TradeAccount, Symbol, position, step.OrderId);
+                    await Api.Cancel(position.TradeAccount, Symbol, step.OrderId);
                     step.Status = CryptoOrderStatus.Expired;
                     step.CloseTime = LastCandle1mCloseTimeDate;
                     PositionTools.SavePositionStep(databaseThread, position, step);
@@ -1229,8 +1234,10 @@ public class PositionMonitor
                     quantity = quantity.Clamp(Symbol.QuantityMinimum, Symbol.QuantityMaximum, Symbol.QuantityTickSize);
 
                     // Plaats nieuwe buy order (lagere)
-                    BinanceApi exchangeApi = new(position.TradeAccount, position.Symbol, LastCandle1mCloseTimeDate);
-                    (bool result, TradeParams tradeParams) result = await exchangeApi.BuyOrSell(CryptoOrderType.StopLimit, CryptoOrderSide.Buy,
+                    Api exchangeApi = new();
+                    (bool result, TradeParams tradeParams) result = await exchangeApi.BuyOrSell(
+                        position.TradeAccount, position.Symbol, LastCandle1mCloseTimeDate,
+                        CryptoOrderType.StopLimit, CryptoOrderSide.Buy,
                         quantity, price, stop, null);
                     if (result.result)
                     {
@@ -1328,8 +1335,10 @@ public class PositionMonitor
                 sellQuantity = sellQuantity.Clamp(Symbol.QuantityMinimum, Symbol.QuantityMaximum, Symbol.QuantityTickSize);
 
                 (bool result, TradeParams tradeParams) sellResult;
-                BinanceApi exchangeApi = new(position.TradeAccount, position.Symbol, LastCandle1mCloseTimeDate);
-                sellResult = await exchangeApi.BuyOrSell(CryptoOrderType.Limit, CryptoOrderSide.Sell, sellQuantity, sellPrice, null, null);
+                Api exchangeApi = new();
+                sellResult = await exchangeApi.BuyOrSell(
+                    position.TradeAccount, position.Symbol, LastCandle1mCloseTimeDate,
+                    CryptoOrderType.Limit, CryptoOrderSide.Sell, sellQuantity, sellPrice, null, null);
 
                 // TODO: Wat als het plaatsen van de order fout gaat? (hoe vangen we de fout op en hoe herstellen we dat? Binance is een bitch af en toe!)
                 if (sellResult.result)
@@ -1414,17 +1423,19 @@ public class PositionMonitor
                     // Een extra controle op de low (anders wordt ie direct gevuld)
                     if (step.Status == CryptoOrderStatus.New && step.Side == CryptoOrderSide.Sell && candleInterval.Low > sellStop && (step.StopPrice == null || sellStop > step.StopPrice))
                     {
-                        await BinanceApi.Cancel(position.TradeAccount, Symbol, position, step.OrderId);
+                        await Api.Cancel(position.TradeAccount, Symbol, step.OrderId);
                         step.Status = CryptoOrderStatus.Expired;
                         step.CloseTime = LastCandle1mCloseTimeDate;
                         PositionTools.SavePositionStep(databaseThread, position, step);
 
                         // Afhankelijk van de invoer stop of stoplimit een OCO of standaard sell plaatsen.
                         // TODO: Wat als het plaatsen van de order fout gaat? (hoe vangen we de fout op en hoe herstellen we dat? Binance is een bitch af en toe!)
-                        BinanceApi exchangeApi = new(position.TradeAccount, position.Symbol, LastCandle1mCloseTimeDate);
+                        Api exchangeApi = new();
                         //(bool result, TradeParams tradeParams) sellResult = await exchangeApi.SellOco(CryptoOrderType.Oco, CryptoOrderSide.Short, 
                         //    step.Quantity, sellPrice, sellStop, sellLimit);
-                        (bool result, TradeParams tradeParams) sellResult = await exchangeApi.BuyOrSell(CryptoOrderType.Oco, CryptoOrderSide.Sell,
+                        (bool result, TradeParams tradeParams) sellResult = await exchangeApi.BuyOrSell(
+                            position.TradeAccount, position.Symbol, LastCandle1mCloseTimeDate,
+                            CryptoOrderType.Oco, CryptoOrderSide.Sell,
                             step.Quantity, sellPrice, sellStop, sellLimit, "LOCK PROFIT");
                         if (sellResult.result)
                         {
@@ -1470,7 +1481,7 @@ public class PositionMonitor
                     {
                         if (step.CreateTime.AddMinutes(GlobalData.Settings.Trading.GlobalBuyRemoveTime) < LastCandle1mCloseTimeDate)
                         {
-                            await BinanceApi.Cancel(tradeAccount, Symbol, position, step.OrderId);
+                            await Api.Cancel(tradeAccount, Symbol, step.OrderId);
                             step.Status = CryptoOrderStatus.Expired;
                             step.CloseTime = LastCandle1mCloseTimeDate;
                             PositionTools.SavePositionStep(databaseThread, position, step);
@@ -1510,7 +1521,7 @@ public class PositionMonitor
                     if (repostionAllSellOrders && !step.Name.Equals("SELL"))
                         continue;
 
-                    await BinanceApi.Cancel(tradeAccount, Symbol, position, step.OrderId);
+                    await Api.Cancel(tradeAccount, Symbol, step.OrderId);
                     step.Status = CryptoOrderStatus.Expired;
                     step.CloseTime = LastCandle1mCloseTimeDate;
                     PositionTools.SavePositionStep(databaseThread, position, step);
@@ -1608,7 +1619,7 @@ public class PositionMonitor
         if (position.CloseTime.HasValue)
         {
             PositionTools.RemovePosition(tradeAccount, position);
-            if (!GlobalData.BackTest && GlobalData.ApplicationStatus == CryptoApplicationStatus.AppStatusRunning)
+            if (!GlobalData.BackTest && GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
                 GlobalData.PositionsHaveChanged("");
             return;
         }
@@ -1751,7 +1762,7 @@ public class PositionMonitor
             //#endif
 
 
-            // Simulate Binance Trade indien openstaande orders gevuld zijn
+            // Simulate Trade indien openstaande orders gevuld zijn
             if (GlobalData.BackTest)
                 await PaperTradingCheckOrders(GlobalData.ExchangeBackTestAccount, false);
             if (GlobalData.Settings.Trading.TradeViaPaperTrading)
@@ -1776,7 +1787,7 @@ public class PositionMonitor
                 }
             }
 
-            // Simuleer een Binance Trade om eventuele (net gemaakte) market orders te vullen
+            // Simuleer een Trade om eventuele (net gemaakte) market orders te vullen
             // (het zou nog mooier zijn als we deze even in een lijst verzamelen, maar voila)
             if (GlobalData.BackTest)
                 await PaperTradingCheckOrders(GlobalData.ExchangeBackTestAccount, true);

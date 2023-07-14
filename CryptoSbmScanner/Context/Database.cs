@@ -554,7 +554,10 @@ public class CryptoDatabase : IDisposable
             Model.CryptoExchange exchange = new() { Name = "Binance" };
             connection.Connection.Insert(exchange, transaction);
 
-            exchange = new() { Name = "Bybit" };
+            exchange = new() { Name = "Bybit Spot" };
+            connection.Connection.Insert(exchange, transaction);
+
+            exchange = new() { Name = "Bybit Futures" };
             connection.Connection.Insert(exchange, transaction);
 
             exchange = new() { Name = "Kucoin" };
@@ -575,7 +578,6 @@ public class CryptoDatabase : IDisposable
                 "Name TEXT not NULL," +
                 "Short TEXT not NULL," +
                 "ExchangeId INTEGER NOT NULL," +
-                "ExchangeType INTEGER not NULL," +
                 "AccountType INTEGER not NULL," +
                 "TradeAccountType Integer not NULL" +
             ")");
@@ -591,7 +593,6 @@ public class CryptoDatabase : IDisposable
                 Name = "Binance trading",
                 Short = "Trading",
                 ExchangeId = 1,
-                ExchangeType = CryptoExchangeType.Binance,
                 AccountType = CryptoAccountType.Spot,
                 TradeAccountType = CryptoTradeAccountType.RealTrading,
             };
@@ -602,7 +603,6 @@ public class CryptoDatabase : IDisposable
                 Name = "Binance paper",
                 Short = "Pater",
                 ExchangeId = 1,
-                ExchangeType = CryptoExchangeType.Binance,
                 AccountType = CryptoAccountType.Spot,
                 TradeAccountType = CryptoTradeAccountType.PaperTrade,
             };
@@ -613,7 +613,6 @@ public class CryptoDatabase : IDisposable
                 Name = "Binance backtest",
                 Short = "Backtest",
                 ExchangeId = 1,
-                ExchangeType = CryptoExchangeType.Binance,
                 AccountType = CryptoAccountType.Spot,
                 TradeAccountType = CryptoTradeAccountType.BackTest,
             };
@@ -623,10 +622,9 @@ public class CryptoDatabase : IDisposable
 
             tradeAccount = new()
             {
-                Name = "Bybit trading",
+                Name = "Bybit Spot trading",
                 Short = "Trading",
                 ExchangeId = 1,
-                ExchangeType = CryptoExchangeType.Bybit,
                 AccountType = CryptoAccountType.Spot,
                 TradeAccountType = CryptoTradeAccountType.RealTrading,
             };
@@ -634,10 +632,9 @@ public class CryptoDatabase : IDisposable
 
             tradeAccount = new()
             {
-                Name = "Bybit paper",
+                Name = "Bybit Spot paper",
                 Short = "Pater",
                 ExchangeId = 1,
-                ExchangeType = CryptoExchangeType.Bybit,
                 AccountType = CryptoAccountType.Spot,
                 TradeAccountType = CryptoTradeAccountType.PaperTrade,
             };
@@ -645,10 +642,40 @@ public class CryptoDatabase : IDisposable
 
             tradeAccount = new()
             {
-                Name = "Bybit backtest",
+                Name = "Bybit Spot backtest",
                 Short = "Backtest",
                 ExchangeId = 1,
-                ExchangeType = CryptoExchangeType.Bybit,
+                AccountType = CryptoAccountType.Spot,
+                TradeAccountType = CryptoTradeAccountType.BackTest,
+            };
+            connection.Connection.Insert(tradeAccount, transaction);
+
+
+            tradeAccount = new()
+            {
+                Name = "Bybit Futures trading",
+                Short = "Trading",
+                ExchangeId = 1,
+                AccountType = CryptoAccountType.Spot,
+                TradeAccountType = CryptoTradeAccountType.RealTrading,
+            };
+            connection.Connection.Insert(tradeAccount, transaction);
+
+            tradeAccount = new()
+            {
+                Name = "Bybit Futures paper",
+                Short = "Pater",
+                ExchangeId = 1,
+                AccountType = CryptoAccountType.Spot,
+                TradeAccountType = CryptoTradeAccountType.PaperTrade,
+            };
+            connection.Connection.Insert(tradeAccount, transaction);
+
+            tradeAccount = new()
+            {
+                Name = "Bybit Futures backtest",
+                Short = "Backtest",
+                ExchangeId = 1,
                 AccountType = CryptoAccountType.Spot,
                 TradeAccountType = CryptoTradeAccountType.BackTest,
             };
@@ -661,7 +688,6 @@ public class CryptoDatabase : IDisposable
                 Name = "Kucoin trading",
                 Short = "Trading",
                 ExchangeId = 1,
-                ExchangeType = CryptoExchangeType.Kucoin,
                 AccountType = CryptoAccountType.Spot,
                 TradeAccountType = CryptoTradeAccountType.RealTrading,
             };
@@ -672,7 +698,6 @@ public class CryptoDatabase : IDisposable
                 Name = "Kucoin paper",
                 Short = "Pater",
                 ExchangeId = 1,
-                ExchangeType = CryptoExchangeType.Kucoin,
                 AccountType = CryptoAccountType.Spot,
                 TradeAccountType = CryptoTradeAccountType.PaperTrade,
             };
@@ -683,7 +708,6 @@ public class CryptoDatabase : IDisposable
                 Name = "Kucoin backtest",
                 Short = "Backtest",
                 ExchangeId = 1,
-                ExchangeType = CryptoExchangeType.Kucoin,
                 AccountType = CryptoAccountType.Spot,
                 TradeAccountType = CryptoTradeAccountType.BackTest,
             };

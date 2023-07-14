@@ -196,31 +196,19 @@ public class ThreadLoadData
             // Informatie uit de database lezen
             //************************************************************************************
 
+            // De symbols uit de database lezen (ook van andere exchanges)
+            // Dat doen we om de symbol van voorgaande signalen en/of posities te laten zien
+            GlobalData.AddTextToLogTab("Reading symbol information");
+            //string sql = $"select * from symbol where exchangeid={exchange.Id}";
+            string sql = "select * from symbol";
+            foreach (CryptoSymbol symbol in databaseThread.Connection.Query<CryptoSymbol>(sql))
+                GlobalData.AddSymbol(symbol);
+
+
+            // TODO: controleren of we de info van de juiste exchange halen (of juist bewust multi exchyange laten zien)
+
             if (GlobalData.ExchangeListId.TryGetValue(GlobalData.Settings.General.ExchangeId, out Model.CryptoExchange exchange))
             {
-
-                ////Alle exchanges uit de database lezen (al gedaan in Main.cs)
-                //GlobalData.AddTextToLogTab("Reading exchange information");
-                //foreach (Model.CryptoExchange exchange in databaseThread.Connection.GetAll<Model.CryptoExchange>())
-                //{
-                //    GlobalData.AddExchange(exchange);
-                //}
-
-
-                // De symbols uit de database lezen 
-                GlobalData.AddTextToLogTab("Reading symbol information");
-                string sql = string.Format("select * from symbol where exchangeid={0}", exchange.Id);
-                foreach (CryptoSymbol symbol in databaseThread.Connection.Query<CryptoSymbol>(sql))
-                {
-                    //// Ga er van uit dat de symbol niet actief is
-                    //// (we cachen het nu in een tabel, dus niet doen
-                    //if (symbol.IsBarometerSymbol())
-                    //    symbol.Status = 1;
-                    ////else
-                    ////    symbol.Status = 0;
-                    GlobalData.AddSymbol(symbol);
-                }
-
 
 #if SQLDATABASE
                 // Alle CandleFetched items uit de database lezen
@@ -256,22 +244,27 @@ public class ThreadLoadData
                     // TODO - beperken tot de signalen die nog enigzins bruikbaar zijn??
                     GlobalData.AddTextToLogTab("Reading some signals");
 #if SQLDATABASE
-                    sql = string.Format("select top 50 * from signal where exchangeid={0} order by id desc", exchange.Id);
+                    sql = "select top 50 * from signal order by id desc";
+                    //sql = string.Format("select top 50 * from signal where exchangeid={0} order by id desc", exchange.Id);
 #else
-                    sql = string.Format("select * from signal where exchangeid={0} order by id desc limit 50", exchange.Id);
+                    sql = "select * from signal order by id desc limit 50";
+                    //sql = string.Format("select * from signal where exchangeid={0} order by id desc limit 50", exchange.Id);
 #endif
                     foreach (CryptoSignal signal in databaseThread.Connection.Query<CryptoSignal>(sql))
                     {
-                        signal.Exchange = exchange;
-
-                        if (exchange.SymbolListId.TryGetValue(signal.SymbolId, out CryptoSymbol symbol))
+                        if (GlobalData.ExchangeListId.TryGetValue(signal.ExchangeId, out Model.CryptoExchange exchange2))
                         {
-                            signal.Symbol = symbol;
+                            signal.Exchange = exchange2;
 
-                            if (GlobalData.IntervalListId.TryGetValue((int)signal.IntervalId, out CryptoInterval interval))
-                                signal.Interval = interval;
+                            if (exchange2.SymbolListId.TryGetValue(signal.SymbolId, out CryptoSymbol symbol))
+                            {
+                                signal.Symbol = symbol;
 
-                            GlobalData.SignalQueue.Enqueue(signal);
+                                if (GlobalData.IntervalListId.TryGetValue((int)signal.IntervalId, out CryptoInterval interval))
+                                    signal.Interval = interval;
+
+                                GlobalData.SignalQueue.Enqueue(signal);
+                            }
                         }
 
                     }
@@ -346,7 +339,7 @@ public class ThreadLoadData
                 // Via een event worden de muntparen in de userinterface gezet (dat duurt even)
                 //************************************************************************************
                 if (!exchange.LastTimeFetched.HasValue || exchange.LastTimeFetched?.AddHours(1) < DateTime.UtcNow)
-                    await ExchangeClass.FetchSymbols();
+                    await ExchangeHelper.FetchSymbols();
                 IndexQuoteDataSymbols(exchange);
 
                 // Na het inlezen van de symbols de lijsten goed zetten
@@ -566,17 +559,17 @@ public class ThreadLoadData
                 // (Dit moet overlappen met "achterstand bijwerken" want anders ontstaan er gaten)
                 // BUG/Probleem! na nieuwe munt of instellingen wordt dit niet opnieuw gedaan (herstart nodig)
                 //************************************************************************************
-                await ExchangeClass.Start1mCandleAsync();
+                await ExchangeHelper.KLineTicker.Start();
 
                 //************************************************************************************
                 // Om het volume per symbol en laatste prijs te achterhalen (weet geen betere manier)
                 //************************************************************************************
-                await ExchangeClass.StartPriceTickerAsync();
+                await ExchangeHelper.PriceTicker.Start();
 
                 //************************************************************************************
                 // De (ontbrekende) candles downloaden (en de achterstand inhalen, blocking!)
                 //************************************************************************************
-                await ExchangeClass.FetchCandlesAsync();
+                await ExchangeHelper.FetchCandlesAsync();
 
                 //Ze zijn er wel, deze is eigenlijk overbodig geworden (zit alleen zoveel werk in!)
                 //CalculateMissingCandles();
@@ -589,46 +582,42 @@ public class ThreadLoadData
 
 
 #if TRADEBOT
-            //************************************************************************************
-            // Nu we de achterstand ingehaald hebben kunnen/mogen we analyseren (signals maken)
-            //************************************************************************************
-            if (GlobalData.Settings.ApiKey != "")
-            {
-                GlobalData.AddTextToLogTab("Starting task for handling orders");
-                _ = Task.Run(async () => { await GlobalData.ThreadMonitorOrder.ExecuteAsync(); });
-            }
+                //************************************************************************************
+                // Nu we de achterstand ingehaald hebben kunnen/mogen we analyseren (signals maken)
+                //************************************************************************************
+                if (GlobalData.Settings.ApiKey != "")
+                {
+                    GlobalData.AddTextToLogTab("Starting task for handling orders");
+                    _ = Task.Run(async () => { await GlobalData.ThreadMonitorOrder.ExecuteAsync(); });
+                }
 
 
 
 #if BALANCING
-            //************************************************************************************
-            // Nu we de achterstand ingehaald hebben kunnen/mogen we balancen
-            //************************************************************************************
-            if (GlobalData.Settings.ApiKey != "")
-            {
-                GlobalData.AddTextToLogTab("Starting task for balancing assets");
-                _ = Task.Run(async () => { await GlobalData.ThreadBalanceSymbols.ExecuteAsync(); });
-            }
+                //************************************************************************************
+                // Nu we de achterstand ingehaald hebben kunnen/mogen we balancen
+                //************************************************************************************
+                if (GlobalData.Settings.ApiKey != "")
+                {
+                    GlobalData.AddTextToLogTab("Starting task for balancing assets");
+                    _ = Task.Run(async () => { await GlobalData.ThreadBalanceSymbols.ExecuteAsync(); });
+                }
 #endif
 
 
-            //************************************************************************************
-            // Alle data van Binance monotoren
-            // Deze methode werkt alleen op Binance
-            //************************************************************************************
-            if (GlobalData.Settings.ApiKey != "")
-            {
-                GlobalData.AddTextToLogTab("Starting task for monitoring events");
-                ExchangeClass.StartUserDataStream();
-            }
+                //************************************************************************************
+                // Alle data van de exchange monitoren
+                //************************************************************************************
+                if (GlobalData.Settings.ApiKey != "")
+                    _ = ExchangeHelper.UserData.Start();
 
 
-            //************************************************************************************              
-            // De assets van de exchange halen (overlappend met Binance monitoring om niets te missen)
-            // Via een event worden de assets in de userinterface gezet (dat duurt even)
-            //************************************************************************************
-            if (GlobalData.Settings.ApiKey != "")
-                await ExchangeClass.FetchAssets(GlobalData.ExchangeRealTradeAccount);
+                //************************************************************************************              
+                // De assets van de exchange halen (overlappend met exchange monitoring om niets te missen)
+                // Via een event worden de assets in de userinterface gezet (dat duurt even)
+                //************************************************************************************
+                if (GlobalData.Settings.ApiKey != "")
+                    await ExchangeHelper.FetchAssetsAsync(GlobalData.ExchangeRealTradeAccount);
 #endif
 
                 // toon de ingelezen posities
@@ -659,7 +648,7 @@ public class ThreadLoadData
                 //RecalculateLastXCandles(1);
 
                 // Assume we now can run
-                GlobalData.ApplicationStatus = CryptoApplicationStatus.AppStatusRunning;
+                GlobalData.ApplicationStatus = CryptoApplicationStatus.Running;
                 //GlobalData.DumpSessionInformation();
                 ScannerSession.SetTimerDefaults();
             }

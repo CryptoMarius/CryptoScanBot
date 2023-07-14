@@ -83,7 +83,7 @@ public class CryptoSignal
     [Computed]
     public decimal? LastPrice { get; set; }
     [Computed]
-    public double? PriceDiff { get { return (double)(100 * ((Symbol.LastPrice / Price) - 1)); } }
+    public double? PriceDiff { get { if (Symbol.LastPrice.HasValue) return (double)(100 * ((Symbol.LastPrice / Price) - 1)); else return 0; } }
     public decimal Volume { get; set; }
 
     //[Computed]

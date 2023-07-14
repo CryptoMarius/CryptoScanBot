@@ -40,9 +40,9 @@ static class Program
         //Application.Exit();
     }
 
-    static void OnThreadException(object sender, ThreadExceptionEventArgs t)
+    static void OnThreadException(object sender, ThreadExceptionEventArgs eventArgs)
     {
-        GlobalData.Logger.Error(t.Exception, "Global Thread Exception");
+        GlobalData.Logger.Error(eventArgs.Exception, "Global Thread Exception");
         //MessageBox.Show("UIThreadException!!!!","UIThreadException!!!!", MessageBoxButtons.AbortRetryIgnore, MessageBoxIcon.Stop);
         //Application.Exit();
     }

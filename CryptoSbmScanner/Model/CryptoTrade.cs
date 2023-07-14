@@ -35,18 +35,5 @@ public class CryptoTrade
     public long TradeId { get; set; }
     public long OrderId { get; set; }
 
-    // Summary:
-    //Id of the order list this order belongs to
-    //public long OrderListId { get; set; }
-
-
-    //[Computed]
-    //public CryptoOrderType Type { get; set; }
-    //[Computed]
-    //public CryptoOrderSide Side { get; set; }
-
     public CryptoOrderSide Side { get; set; }
-
-    // Binance specifiek? (
-    //public bool IsMaker { get; set; }
 }

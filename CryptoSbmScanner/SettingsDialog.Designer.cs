@@ -214,7 +214,8 @@ partial class FrmSettings
         EditAnalyzeCandleJumpDown = new CheckBox();
         EditAnalysisCandleJumpPercentage = new NumericUpDown();
         tabPageTrading = new TabPage();
-        EditOpenNewPositions = new CheckBox();
+        EditSoundTradeNotification = new CheckBox();
+        EditDisableNewPositions = new CheckBox();
         label83 = new Label();
         EditBuyStepInMethod = new ComboBox();
         label82 = new Label();
@@ -231,7 +232,6 @@ partial class FrmSettings
         label81 = new Label();
         label57 = new Label();
         label54 = new Label();
-        label80 = new Label();
         groupBoxSlots = new GroupBox();
         label50 = new Label();
         EditSlotsMaximalExchange = new NumericUpDown();
@@ -239,8 +239,6 @@ partial class FrmSettings
         EditSlotsMaximalSymbol = new NumericUpDown();
         label56 = new Label();
         EditSlotsMaximalBase = new NumericUpDown();
-        label58 = new Label();
-        label59 = new Label();
         groupBox2 = new GroupBox();
         EditBarometer15mBotMinimal = new NumericUpDown();
         label27 = new Label();
@@ -263,24 +261,6 @@ partial class FrmSettings
         EditMonitorInterval10m = new CheckBox();
         EditMonitorInterval15m = new CheckBox();
         EditMonitorInterval30m = new CheckBox();
-        EditMonitorJump = new CheckBox();
-        EditMonitorBullishEngulfing = new CheckBox();
-        EditAnalyzeBullishEngulfing = new CheckBox();
-        EditAnalyzeFluxOversold = new CheckBox();
-        EditMonitorFlux = new CheckBox();
-        EditAnalyzeSbm4Oversold = new CheckBox();
-        EditMonitorSbm4 = new CheckBox();
-        EditBotSlopeEma20TurningPositive = new CheckBox();
-        EditBotSlopeSma20TurningPositive = new CheckBox();
-        EditAnalyzeSlopeEma20TurningPositive = new CheckBox();
-        EditAnalyzeSlopeSma20TurningPositive = new CheckBox();
-        EditBotSlopeEma50TurningPositive = new CheckBox();
-        EditBotSlopeSma50TurningPositive = new CheckBox();
-        EditBotPriceCrossingEma50 = new CheckBox();
-        EditBotPriceCrossingSma50 = new CheckBox();
-        EditBotPriceCrossingEma20 = new CheckBox();
-        EditBotPriceCrossingSma20 = new CheckBox();
-        label74 = new Label();
         label62 = new Label();
         EditBuyOrderMethod = new ComboBox();
         EditDcaCount = new NumericUpDown();
@@ -301,16 +281,6 @@ partial class FrmSettings
         label47 = new Label();
         label46 = new Label();
         EditGlobalBuyRemoveTime = new NumericUpDown();
-        EditAnalyzeSlopeEma50TurningPositive = new CheckBox();
-        EditMonitorStobb = new CheckBox();
-        EditMonitorSbm1 = new CheckBox();
-        EditMonitorSbm2 = new CheckBox();
-        EditMonitorSbm3 = new CheckBox();
-        EditAnalyzeSlopeSma50TurningPositive = new CheckBox();
-        EditAnalyzePriceCrossedEma50 = new CheckBox();
-        EditAnalyzePriceCrossedSma50 = new CheckBox();
-        EditAnalyzePriceCrossedEma20 = new CheckBox();
-        EditAnalyzePriceCrossedSma20 = new CheckBox();
         tabWhiteListOversold = new TabPage();
         textBoxWhiteListOversold = new TextBox();
         panel3 = new Panel();
@@ -718,7 +688,7 @@ partial class FrmSettings
         // 
         EditTradingApp.DropDownStyle = ComboBoxStyle.DropDownList;
         EditTradingApp.FormattingEnabled = true;
-        EditTradingApp.Items.AddRange(new object[] { "Altrady", "Altrady web", "Hypertrader" });
+        EditTradingApp.Items.AddRange(new object[] { "Altrady", "Hypertrader" });
         EditTradingApp.Location = new Point(188, 63);
         EditTradingApp.Margin = new Padding(4, 3, 4, 3);
         EditTradingApp.Name = "EditTradingApp";
@@ -2498,7 +2468,8 @@ partial class FrmSettings
         // 
         // tabPageTrading
         // 
-        tabPageTrading.Controls.Add(EditOpenNewPositions);
+        tabPageTrading.Controls.Add(EditSoundTradeNotification);
+        tabPageTrading.Controls.Add(EditDisableNewPositions);
         tabPageTrading.Controls.Add(label83);
         tabPageTrading.Controls.Add(EditBuyStepInMethod);
         tabPageTrading.Controls.Add(label82);
@@ -2515,28 +2486,9 @@ partial class FrmSettings
         tabPageTrading.Controls.Add(label81);
         tabPageTrading.Controls.Add(label57);
         tabPageTrading.Controls.Add(label54);
-        tabPageTrading.Controls.Add(label80);
         tabPageTrading.Controls.Add(groupBoxSlots);
         tabPageTrading.Controls.Add(groupBox2);
         tabPageTrading.Controls.Add(groupBox1);
-        tabPageTrading.Controls.Add(EditMonitorJump);
-        tabPageTrading.Controls.Add(EditMonitorBullishEngulfing);
-        tabPageTrading.Controls.Add(EditAnalyzeBullishEngulfing);
-        tabPageTrading.Controls.Add(EditAnalyzeFluxOversold);
-        tabPageTrading.Controls.Add(EditMonitorFlux);
-        tabPageTrading.Controls.Add(EditAnalyzeSbm4Oversold);
-        tabPageTrading.Controls.Add(EditMonitorSbm4);
-        tabPageTrading.Controls.Add(EditBotSlopeEma20TurningPositive);
-        tabPageTrading.Controls.Add(EditBotSlopeSma20TurningPositive);
-        tabPageTrading.Controls.Add(EditAnalyzeSlopeEma20TurningPositive);
-        tabPageTrading.Controls.Add(EditAnalyzeSlopeSma20TurningPositive);
-        tabPageTrading.Controls.Add(EditBotSlopeEma50TurningPositive);
-        tabPageTrading.Controls.Add(EditBotSlopeSma50TurningPositive);
-        tabPageTrading.Controls.Add(EditBotPriceCrossingEma50);
-        tabPageTrading.Controls.Add(EditBotPriceCrossingSma50);
-        tabPageTrading.Controls.Add(EditBotPriceCrossingEma20);
-        tabPageTrading.Controls.Add(EditBotPriceCrossingSma20);
-        tabPageTrading.Controls.Add(label74);
         tabPageTrading.Controls.Add(label62);
         tabPageTrading.Controls.Add(EditBuyOrderMethod);
         tabPageTrading.Controls.Add(EditDcaCount);
@@ -2557,16 +2509,6 @@ partial class FrmSettings
         tabPageTrading.Controls.Add(label47);
         tabPageTrading.Controls.Add(label46);
         tabPageTrading.Controls.Add(EditGlobalBuyRemoveTime);
-        tabPageTrading.Controls.Add(EditAnalyzeSlopeEma50TurningPositive);
-        tabPageTrading.Controls.Add(EditMonitorStobb);
-        tabPageTrading.Controls.Add(EditMonitorSbm1);
-        tabPageTrading.Controls.Add(EditMonitorSbm2);
-        tabPageTrading.Controls.Add(EditMonitorSbm3);
-        tabPageTrading.Controls.Add(EditAnalyzeSlopeSma50TurningPositive);
-        tabPageTrading.Controls.Add(EditAnalyzePriceCrossedEma50);
-        tabPageTrading.Controls.Add(EditAnalyzePriceCrossedSma50);
-        tabPageTrading.Controls.Add(EditAnalyzePriceCrossedEma20);
-        tabPageTrading.Controls.Add(EditAnalyzePriceCrossedSma20);
         tabPageTrading.Location = new Point(4, 24);
         tabPageTrading.Margin = new Padding(4, 3, 4, 3);
         tabPageTrading.Name = "tabPageTrading";
@@ -2576,16 +2518,27 @@ partial class FrmSettings
         tabPageTrading.Text = "Trading";
         tabPageTrading.UseVisualStyleBackColor = true;
         // 
-        // EditOpenNewPositions
+        // EditSoundTradeNotification
         // 
-        EditOpenNewPositions.AutoSize = true;
-        EditOpenNewPositions.Location = new Point(908, 69);
-        EditOpenNewPositions.Margin = new Padding(4, 3, 4, 3);
-        EditOpenNewPositions.Name = "EditOpenNewPositions";
-        EditOpenNewPositions.Size = new Size(159, 19);
-        EditOpenNewPositions.TabIndex = 264;
-        EditOpenNewPositions.Text = "Nieuwe posities innemen";
-        EditOpenNewPositions.UseVisualStyleBackColor = true;
+        EditSoundTradeNotification.AutoSize = true;
+        EditSoundTradeNotification.Location = new Point(23, 91);
+        EditSoundTradeNotification.Margin = new Padding(4, 3, 4, 3);
+        EditSoundTradeNotification.Name = "EditSoundTradeNotification";
+        EditSoundTradeNotification.Size = new Size(186, 19);
+        EditSoundTradeNotification.TabIndex = 265;
+        EditSoundTradeNotification.Text = "Geluid voor een trade afspelen";
+        EditSoundTradeNotification.UseVisualStyleBackColor = true;
+        // 
+        // EditDisableNewPositions
+        // 
+        EditDisableNewPositions.AutoSize = true;
+        EditDisableNewPositions.Location = new Point(23, 66);
+        EditDisableNewPositions.Margin = new Padding(4, 3, 4, 3);
+        EditDisableNewPositions.Name = "EditDisableNewPositions";
+        EditDisableNewPositions.Size = new Size(187, 19);
+        EditDisableNewPositions.TabIndex = 264;
+        EditDisableNewPositions.Text = "Geen nieuwe posities innemen";
+        EditDisableNewPositions.UseVisualStyleBackColor = true;
         // 
         // label83
         // 
@@ -2650,7 +2603,7 @@ partial class FrmSettings
         // EditTradeViaBinance
         // 
         EditTradeViaBinance.AutoSize = true;
-        EditTradeViaBinance.Location = new Point(908, 47);
+        EditTradeViaBinance.Location = new Point(23, 41);
         EditTradeViaBinance.Margin = new Padding(4, 3, 4, 3);
         EditTradeViaBinance.Name = "EditTradeViaBinance";
         EditTradeViaBinance.Size = new Size(109, 19);
@@ -2681,7 +2634,7 @@ partial class FrmSettings
         // EditTradeViaPaperTrading
         // 
         EditTradeViaPaperTrading.AutoSize = true;
-        EditTradeViaPaperTrading.Location = new Point(908, 25);
+        EditTradeViaPaperTrading.Location = new Point(23, 19);
         EditTradeViaPaperTrading.Margin = new Padding(4, 3, 4, 3);
         EditTradeViaPaperTrading.Name = "EditTradeViaPaperTrading";
         EditTradeViaPaperTrading.Size = new Size(97, 19);
@@ -2753,17 +2706,6 @@ partial class FrmSettings
         label54.TabIndex = 245;
         label54.Text = "Aankoop:";
         // 
-        // label80
-        // 
-        label80.AutoSize = true;
-        label80.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
-        label80.Location = new Point(428, 386);
-        label80.Margin = new Padding(4, 0, 4, 0);
-        label80.Name = "label80";
-        label80.Size = new Size(128, 15);
-        label80.TabIndex = 240;
-        label80.Text = "Trade on signals from:";
-        // 
         // groupBoxSlots
         // 
         groupBoxSlots.Controls.Add(label50);
@@ -2772,12 +2714,10 @@ partial class FrmSettings
         groupBoxSlots.Controls.Add(EditSlotsMaximalSymbol);
         groupBoxSlots.Controls.Add(label56);
         groupBoxSlots.Controls.Add(EditSlotsMaximalBase);
-        groupBoxSlots.Controls.Add(label58);
-        groupBoxSlots.Controls.Add(label59);
         groupBoxSlots.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
-        groupBoxSlots.Location = new Point(16, 14);
+        groupBoxSlots.Location = new Point(395, 459);
         groupBoxSlots.Name = "groupBoxSlots";
-        groupBoxSlots.Size = new Size(373, 116);
+        groupBoxSlots.Size = new Size(234, 116);
         groupBoxSlots.TabIndex = 244;
         groupBoxSlots.TabStop = false;
         groupBoxSlots.Text = "Slot limits";
@@ -2838,26 +2778,6 @@ partial class FrmSettings
         EditSlotsMaximalBase.Size = new Size(88, 23);
         EditSlotsMaximalBase.TabIndex = 199;
         EditSlotsMaximalBase.Value = new decimal(new int[] { 25, 0, 0, 0 });
-        // 
-        // label58
-        // 
-        label58.AutoSize = true;
-        label58.Location = new Point(237, 80);
-        label58.Margin = new Padding(4, 0, 4, 0);
-        label58.Name = "label58";
-        label58.Size = new Size(109, 15);
-        label58.TabIndex = 200;
-        label58.Text = "ADA, AVA, XRP enz.";
-        // 
-        // label59
-        // 
-        label59.AutoSize = true;
-        label59.Location = new Point(237, 50);
-        label59.Margin = new Padding(4, 0, 4, 0);
-        label59.Name = "label59";
-        label59.Size = new Size(126, 15);
-        label59.TabIndex = 201;
-        label59.Text = "XRPBTC, ADAUSDT etc.";
         // 
         // groupBox2
         // 
@@ -2990,11 +2910,11 @@ partial class FrmSettings
         groupBox1.Controls.Add(EditMonitorInterval10m);
         groupBox1.Controls.Add(EditMonitorInterval15m);
         groupBox1.Controls.Add(EditMonitorInterval30m);
-        groupBox1.Location = new Point(636, 14);
+        groupBox1.Location = new Point(395, 218);
         groupBox1.Margin = new Padding(4, 3, 4, 3);
         groupBox1.Name = "groupBox1";
         groupBox1.Padding = new Padding(4, 3, 4, 3);
-        groupBox1.Size = new Size(224, 218);
+        groupBox1.Size = new Size(234, 218);
         groupBox1.TabIndex = 242;
         groupBox1.TabStop = false;
         groupBox1.Text = "Trade on interval";
@@ -3108,207 +3028,6 @@ partial class FrmSettings
         EditMonitorInterval30m.TabIndex = 149;
         EditMonitorInterval30m.Text = "30 min";
         EditMonitorInterval30m.UseVisualStyleBackColor = true;
-        // 
-        // EditMonitorJump
-        // 
-        EditMonitorJump.AutoSize = true;
-        EditMonitorJump.Location = new Point(601, 578);
-        EditMonitorJump.Margin = new Padding(4, 3, 4, 3);
-        EditMonitorJump.Name = "EditMonitorJump";
-        EditMonitorJump.Size = new Size(56, 19);
-        EditMonitorJump.TabIndex = 241;
-        EditMonitorJump.Text = "JUMP";
-        EditMonitorJump.UseVisualStyleBackColor = true;
-        // 
-        // EditMonitorBullishEngulfing
-        // 
-        EditMonitorBullishEngulfing.AutoSize = true;
-        EditMonitorBullishEngulfing.Location = new Point(431, 553);
-        EditMonitorBullishEngulfing.Margin = new Padding(4, 3, 4, 3);
-        EditMonitorBullishEngulfing.Name = "EditMonitorBullishEngulfing";
-        EditMonitorBullishEngulfing.Size = new Size(154, 19);
-        EditMonitorBullishEngulfing.TabIndex = 239;
-        EditMonitorBullishEngulfing.Text = "De ema20 wordt positief";
-        EditMonitorBullishEngulfing.UseVisualStyleBackColor = true;
-        // 
-        // EditAnalyzeBullishEngulfing
-        // 
-        EditAnalyzeBullishEngulfing.AutoSize = true;
-        EditAnalyzeBullishEngulfing.Location = new Point(867, 547);
-        EditAnalyzeBullishEngulfing.Margin = new Padding(4, 3, 4, 3);
-        EditAnalyzeBullishEngulfing.Name = "EditAnalyzeBullishEngulfing";
-        EditAnalyzeBullishEngulfing.Size = new Size(154, 19);
-        EditAnalyzeBullishEngulfing.TabIndex = 238;
-        EditAnalyzeBullishEngulfing.Text = "De ema20 wordt positief";
-        EditAnalyzeBullishEngulfing.UseVisualStyleBackColor = true;
-        // 
-        // EditAnalyzeFluxOversold
-        // 
-        EditAnalyzeFluxOversold.AutoSize = true;
-        EditAnalyzeFluxOversold.Location = new Point(599, 419);
-        EditAnalyzeFluxOversold.Margin = new Padding(4, 3, 4, 3);
-        EditAnalyzeFluxOversold.Name = "EditAnalyzeFluxOversold";
-        EditAnalyzeFluxOversold.Size = new Size(142, 19);
-        EditAnalyzeFluxOversold.TabIndex = 237;
-        EditAnalyzeFluxOversold.Text = "Monitor flux Oversold";
-        EditAnalyzeFluxOversold.UseVisualStyleBackColor = true;
-        // 
-        // EditMonitorFlux
-        // 
-        EditMonitorFlux.AutoSize = true;
-        EditMonitorFlux.Enabled = false;
-        EditMonitorFlux.Location = new Point(1054, 419);
-        EditMonitorFlux.Margin = new Padding(4, 3, 4, 3);
-        EditMonitorFlux.Name = "EditMonitorFlux";
-        EditMonitorFlux.Size = new Size(138, 19);
-        EditMonitorFlux.TabIndex = 236;
-        EditMonitorFlux.Text = "Analyze flux oversold";
-        EditMonitorFlux.UseVisualStyleBackColor = true;
-        // 
-        // EditAnalyzeSbm4Oversold
-        // 
-        EditAnalyzeSbm4Oversold.AutoSize = true;
-        EditAnalyzeSbm4Oversold.Enabled = false;
-        EditAnalyzeSbm4Oversold.Location = new Point(867, 419);
-        EditAnalyzeSbm4Oversold.Margin = new Padding(4, 3, 4, 3);
-        EditAnalyzeSbm4Oversold.Name = "EditAnalyzeSbm4Oversold";
-        EditAnalyzeSbm4Oversold.Size = new Size(148, 19);
-        EditAnalyzeSbm4Oversold.TabIndex = 235;
-        EditAnalyzeSbm4Oversold.Text = "Analyze SBM4 oversold";
-        EditAnalyzeSbm4Oversold.UseVisualStyleBackColor = true;
-        // 
-        // EditMonitorSbm4
-        // 
-        EditMonitorSbm4.AutoSize = true;
-        EditMonitorSbm4.Location = new Point(431, 419);
-        EditMonitorSbm4.Margin = new Padding(4, 3, 4, 3);
-        EditMonitorSbm4.Name = "EditMonitorSbm4";
-        EditMonitorSbm4.Size = new Size(150, 19);
-        EditMonitorSbm4.TabIndex = 234;
-        EditMonitorSbm4.Text = "Monitor SBM4 oversold";
-        EditMonitorSbm4.UseVisualStyleBackColor = true;
-        // 
-        // EditBotSlopeEma20TurningPositive
-        // 
-        EditBotSlopeEma20TurningPositive.AutoSize = true;
-        EditBotSlopeEma20TurningPositive.Location = new Point(431, 528);
-        EditBotSlopeEma20TurningPositive.Margin = new Padding(4, 3, 4, 3);
-        EditBotSlopeEma20TurningPositive.Name = "EditBotSlopeEma20TurningPositive";
-        EditBotSlopeEma20TurningPositive.Size = new Size(154, 19);
-        EditBotSlopeEma20TurningPositive.TabIndex = 233;
-        EditBotSlopeEma20TurningPositive.Text = "De ema20 wordt positief";
-        EditBotSlopeEma20TurningPositive.UseVisualStyleBackColor = true;
-        // 
-        // EditBotSlopeSma20TurningPositive
-        // 
-        EditBotSlopeSma20TurningPositive.AutoSize = true;
-        EditBotSlopeSma20TurningPositive.Location = new Point(601, 528);
-        EditBotSlopeSma20TurningPositive.Margin = new Padding(4, 3, 4, 3);
-        EditBotSlopeSma20TurningPositive.Name = "EditBotSlopeSma20TurningPositive";
-        EditBotSlopeSma20TurningPositive.Size = new Size(153, 19);
-        EditBotSlopeSma20TurningPositive.TabIndex = 232;
-        EditBotSlopeSma20TurningPositive.Text = "De sma20 wordt positief";
-        EditBotSlopeSma20TurningPositive.UseVisualStyleBackColor = true;
-        // 
-        // EditAnalyzeSlopeEma20TurningPositive
-        // 
-        EditAnalyzeSlopeEma20TurningPositive.AutoSize = true;
-        EditAnalyzeSlopeEma20TurningPositive.Location = new Point(868, 522);
-        EditAnalyzeSlopeEma20TurningPositive.Margin = new Padding(4, 3, 4, 3);
-        EditAnalyzeSlopeEma20TurningPositive.Name = "EditAnalyzeSlopeEma20TurningPositive";
-        EditAnalyzeSlopeEma20TurningPositive.Size = new Size(154, 19);
-        EditAnalyzeSlopeEma20TurningPositive.TabIndex = 231;
-        EditAnalyzeSlopeEma20TurningPositive.Text = "De ema20 wordt positief";
-        EditAnalyzeSlopeEma20TurningPositive.UseVisualStyleBackColor = true;
-        // 
-        // EditAnalyzeSlopeSma20TurningPositive
-        // 
-        EditAnalyzeSlopeSma20TurningPositive.AutoSize = true;
-        EditAnalyzeSlopeSma20TurningPositive.Location = new Point(1054, 522);
-        EditAnalyzeSlopeSma20TurningPositive.Margin = new Padding(4, 3, 4, 3);
-        EditAnalyzeSlopeSma20TurningPositive.Name = "EditAnalyzeSlopeSma20TurningPositive";
-        EditAnalyzeSlopeSma20TurningPositive.Size = new Size(153, 19);
-        EditAnalyzeSlopeSma20TurningPositive.TabIndex = 230;
-        EditAnalyzeSlopeSma20TurningPositive.Text = "De sma20 wordt positief";
-        EditAnalyzeSlopeSma20TurningPositive.UseVisualStyleBackColor = true;
-        // 
-        // EditBotSlopeEma50TurningPositive
-        // 
-        EditBotSlopeEma50TurningPositive.AutoSize = true;
-        EditBotSlopeEma50TurningPositive.Location = new Point(431, 500);
-        EditBotSlopeEma50TurningPositive.Margin = new Padding(4, 3, 4, 3);
-        EditBotSlopeEma50TurningPositive.Name = "EditBotSlopeEma50TurningPositive";
-        EditBotSlopeEma50TurningPositive.Size = new Size(154, 19);
-        EditBotSlopeEma50TurningPositive.TabIndex = 228;
-        EditBotSlopeEma50TurningPositive.Text = "De ema50 wordt positief";
-        EditBotSlopeEma50TurningPositive.UseVisualStyleBackColor = true;
-        // 
-        // EditBotSlopeSma50TurningPositive
-        // 
-        EditBotSlopeSma50TurningPositive.AutoSize = true;
-        EditBotSlopeSma50TurningPositive.Location = new Point(601, 503);
-        EditBotSlopeSma50TurningPositive.Margin = new Padding(4, 3, 4, 3);
-        EditBotSlopeSma50TurningPositive.Name = "EditBotSlopeSma50TurningPositive";
-        EditBotSlopeSma50TurningPositive.Size = new Size(153, 19);
-        EditBotSlopeSma50TurningPositive.TabIndex = 226;
-        EditBotSlopeSma50TurningPositive.Text = "De sma50 wordt positief";
-        EditBotSlopeSma50TurningPositive.UseVisualStyleBackColor = true;
-        // 
-        // EditBotPriceCrossingEma50
-        // 
-        EditBotPriceCrossingEma50.AutoSize = true;
-        EditBotPriceCrossingEma50.Location = new Point(431, 474);
-        EditBotPriceCrossingEma50.Margin = new Padding(4, 3, 4, 3);
-        EditBotPriceCrossingEma50.Name = "EditBotPriceCrossingEma50";
-        EditBotPriceCrossingEma50.Size = new Size(138, 19);
-        EditBotPriceCrossingEma50.TabIndex = 225;
-        EditBotPriceCrossingEma50.Text = "Price kruist de ema50";
-        EditBotPriceCrossingEma50.UseVisualStyleBackColor = true;
-        // 
-        // EditBotPriceCrossingSma50
-        // 
-        EditBotPriceCrossingSma50.AutoSize = true;
-        EditBotPriceCrossingSma50.Location = new Point(599, 474);
-        EditBotPriceCrossingSma50.Margin = new Padding(4, 3, 4, 3);
-        EditBotPriceCrossingSma50.Name = "EditBotPriceCrossingSma50";
-        EditBotPriceCrossingSma50.Size = new Size(133, 19);
-        EditBotPriceCrossingSma50.TabIndex = 224;
-        EditBotPriceCrossingSma50.Text = "Prijs kruist de sma50";
-        EditBotPriceCrossingSma50.UseVisualStyleBackColor = true;
-        // 
-        // EditBotPriceCrossingEma20
-        // 
-        EditBotPriceCrossingEma20.AutoSize = true;
-        EditBotPriceCrossingEma20.Location = new Point(431, 449);
-        EditBotPriceCrossingEma20.Margin = new Padding(4, 3, 4, 3);
-        EditBotPriceCrossingEma20.Name = "EditBotPriceCrossingEma20";
-        EditBotPriceCrossingEma20.Size = new Size(138, 19);
-        EditBotPriceCrossingEma20.TabIndex = 223;
-        EditBotPriceCrossingEma20.Text = "Price kruist de ema20";
-        EditBotPriceCrossingEma20.UseVisualStyleBackColor = true;
-        // 
-        // EditBotPriceCrossingSma20
-        // 
-        EditBotPriceCrossingSma20.AutoSize = true;
-        EditBotPriceCrossingSma20.Location = new Point(599, 449);
-        EditBotPriceCrossingSma20.Margin = new Padding(4, 3, 4, 3);
-        EditBotPriceCrossingSma20.Name = "EditBotPriceCrossingSma20";
-        EditBotPriceCrossingSma20.Size = new Size(133, 19);
-        EditBotPriceCrossingSma20.TabIndex = 221;
-        EditBotPriceCrossingSma20.Text = "Prijs kruist de sma20";
-        EditBotPriceCrossingSma20.UseVisualStyleBackColor = true;
-        // 
-        // label74
-        // 
-        label74.AutoSize = true;
-        label74.Enabled = false;
-        label74.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
-        label74.Location = new Point(868, 386);
-        label74.Margin = new Padding(4, 0, 4, 0);
-        label74.Name = "label74";
-        label74.Size = new Size(248, 15);
-        label74.TabIndex = 220;
-        label74.Text = "Analyze (aanvullend op de andere drie tabs)";
         // 
         // label62
         // 
@@ -3511,116 +3230,6 @@ partial class FrmSettings
         EditGlobalBuyRemoveTime.Size = new Size(88, 23);
         EditGlobalBuyRemoveTime.TabIndex = 175;
         EditGlobalBuyRemoveTime.Value = new decimal(new int[] { 5, 0, 0, 0 });
-        // 
-        // EditAnalyzeSlopeEma50TurningPositive
-        // 
-        EditAnalyzeSlopeEma50TurningPositive.AutoSize = true;
-        EditAnalyzeSlopeEma50TurningPositive.Location = new Point(868, 497);
-        EditAnalyzeSlopeEma50TurningPositive.Margin = new Padding(4, 3, 4, 3);
-        EditAnalyzeSlopeEma50TurningPositive.Name = "EditAnalyzeSlopeEma50TurningPositive";
-        EditAnalyzeSlopeEma50TurningPositive.Size = new Size(154, 19);
-        EditAnalyzeSlopeEma50TurningPositive.TabIndex = 161;
-        EditAnalyzeSlopeEma50TurningPositive.Text = "De ema50 wordt positief";
-        EditAnalyzeSlopeEma50TurningPositive.UseVisualStyleBackColor = true;
-        // 
-        // EditMonitorStobb
-        // 
-        EditMonitorStobb.AutoSize = true;
-        EditMonitorStobb.Location = new Point(599, 603);
-        EditMonitorStobb.Margin = new Padding(4, 3, 4, 3);
-        EditMonitorStobb.Name = "EditMonitorStobb";
-        EditMonitorStobb.Size = new Size(60, 19);
-        EditMonitorStobb.TabIndex = 159;
-        EditMonitorStobb.Text = "STOBB";
-        EditMonitorStobb.UseVisualStyleBackColor = true;
-        // 
-        // EditMonitorSbm1
-        // 
-        EditMonitorSbm1.AutoSize = true;
-        EditMonitorSbm1.Location = new Point(429, 578);
-        EditMonitorSbm1.Margin = new Padding(4, 3, 4, 3);
-        EditMonitorSbm1.Name = "EditMonitorSbm1";
-        EditMonitorSbm1.Size = new Size(56, 19);
-        EditMonitorSbm1.TabIndex = 156;
-        EditMonitorSbm1.Text = "SBM1";
-        EditMonitorSbm1.UseVisualStyleBackColor = true;
-        // 
-        // EditMonitorSbm2
-        // 
-        EditMonitorSbm2.AutoSize = true;
-        EditMonitorSbm2.Location = new Point(428, 603);
-        EditMonitorSbm2.Margin = new Padding(4, 3, 4, 3);
-        EditMonitorSbm2.Name = "EditMonitorSbm2";
-        EditMonitorSbm2.Size = new Size(56, 19);
-        EditMonitorSbm2.TabIndex = 157;
-        EditMonitorSbm2.Text = "SBM2";
-        EditMonitorSbm2.UseVisualStyleBackColor = true;
-        // 
-        // EditMonitorSbm3
-        // 
-        EditMonitorSbm3.AutoSize = true;
-        EditMonitorSbm3.Location = new Point(428, 628);
-        EditMonitorSbm3.Margin = new Padding(4, 3, 4, 3);
-        EditMonitorSbm3.Name = "EditMonitorSbm3";
-        EditMonitorSbm3.Size = new Size(56, 19);
-        EditMonitorSbm3.TabIndex = 158;
-        EditMonitorSbm3.Text = "SBM3";
-        EditMonitorSbm3.UseVisualStyleBackColor = true;
-        // 
-        // EditAnalyzeSlopeSma50TurningPositive
-        // 
-        EditAnalyzeSlopeSma50TurningPositive.AutoSize = true;
-        EditAnalyzeSlopeSma50TurningPositive.Location = new Point(1054, 497);
-        EditAnalyzeSlopeSma50TurningPositive.Margin = new Padding(4, 3, 4, 3);
-        EditAnalyzeSlopeSma50TurningPositive.Name = "EditAnalyzeSlopeSma50TurningPositive";
-        EditAnalyzeSlopeSma50TurningPositive.Size = new Size(153, 19);
-        EditAnalyzeSlopeSma50TurningPositive.TabIndex = 125;
-        EditAnalyzeSlopeSma50TurningPositive.Text = "De sma50 wordt positief";
-        EditAnalyzeSlopeSma50TurningPositive.UseVisualStyleBackColor = true;
-        // 
-        // EditAnalyzePriceCrossedEma50
-        // 
-        EditAnalyzePriceCrossedEma50.AutoSize = true;
-        EditAnalyzePriceCrossedEma50.Location = new Point(868, 471);
-        EditAnalyzePriceCrossedEma50.Margin = new Padding(4, 3, 4, 3);
-        EditAnalyzePriceCrossedEma50.Name = "EditAnalyzePriceCrossedEma50";
-        EditAnalyzePriceCrossedEma50.Size = new Size(138, 19);
-        EditAnalyzePriceCrossedEma50.TabIndex = 123;
-        EditAnalyzePriceCrossedEma50.Text = "Price kruist de ema50";
-        EditAnalyzePriceCrossedEma50.UseVisualStyleBackColor = true;
-        // 
-        // EditAnalyzePriceCrossedSma50
-        // 
-        EditAnalyzePriceCrossedSma50.AutoSize = true;
-        EditAnalyzePriceCrossedSma50.Location = new Point(1054, 471);
-        EditAnalyzePriceCrossedSma50.Margin = new Padding(4, 3, 4, 3);
-        EditAnalyzePriceCrossedSma50.Name = "EditAnalyzePriceCrossedSma50";
-        EditAnalyzePriceCrossedSma50.Size = new Size(133, 19);
-        EditAnalyzePriceCrossedSma50.TabIndex = 122;
-        EditAnalyzePriceCrossedSma50.Text = "Prijs kruist de sma50";
-        EditAnalyzePriceCrossedSma50.UseVisualStyleBackColor = true;
-        // 
-        // EditAnalyzePriceCrossedEma20
-        // 
-        EditAnalyzePriceCrossedEma20.AutoSize = true;
-        EditAnalyzePriceCrossedEma20.Location = new Point(867, 444);
-        EditAnalyzePriceCrossedEma20.Margin = new Padding(4, 3, 4, 3);
-        EditAnalyzePriceCrossedEma20.Name = "EditAnalyzePriceCrossedEma20";
-        EditAnalyzePriceCrossedEma20.Size = new Size(138, 19);
-        EditAnalyzePriceCrossedEma20.TabIndex = 121;
-        EditAnalyzePriceCrossedEma20.Text = "Price kruist de ema20";
-        EditAnalyzePriceCrossedEma20.UseVisualStyleBackColor = true;
-        // 
-        // EditAnalyzePriceCrossedSma20
-        // 
-        EditAnalyzePriceCrossedSma20.AutoSize = true;
-        EditAnalyzePriceCrossedSma20.Location = new Point(1054, 444);
-        EditAnalyzePriceCrossedSma20.Margin = new Padding(4, 3, 4, 3);
-        EditAnalyzePriceCrossedSma20.Name = "EditAnalyzePriceCrossedSma20";
-        EditAnalyzePriceCrossedSma20.Size = new Size(133, 19);
-        EditAnalyzePriceCrossedSma20.TabIndex = 94;
-        EditAnalyzePriceCrossedSma20.Text = "Prijs kruist de sma20";
-        EditAnalyzePriceCrossedSma20.UseVisualStyleBackColor = true;
         // 
         // tabWhiteListOversold
         // 
@@ -4126,7 +3735,6 @@ partial class FrmSettings
     private Label label81;
     private Label label57;
     private Label label54;
-    private Label label80;
     private GroupBox groupBoxSlots;
     private Label label50;
     private NumericUpDown EditSlotsMaximalExchange;
@@ -4134,8 +3742,6 @@ partial class FrmSettings
     private NumericUpDown EditSlotsMaximalSymbol;
     private Label label56;
     private NumericUpDown EditSlotsMaximalBase;
-    private Label label58;
-    private Label label59;
     private GroupBox groupBox2;
     private NumericUpDown EditBarometer15mBotMinimal;
     private Label label27;
@@ -4158,24 +3764,6 @@ partial class FrmSettings
     private CheckBox EditMonitorInterval10m;
     private CheckBox EditMonitorInterval15m;
     private CheckBox EditMonitorInterval30m;
-    private CheckBox EditMonitorJump;
-    private CheckBox EditMonitorBullishEngulfing;
-    private CheckBox EditAnalyzeBullishEngulfing;
-    private CheckBox EditAnalyzeFluxOversold;
-    private CheckBox EditMonitorFlux;
-    private CheckBox EditAnalyzeSbm4Oversold;
-    private CheckBox EditMonitorSbm4;
-    private CheckBox EditBotSlopeEma20TurningPositive;
-    private CheckBox EditBotSlopeSma20TurningPositive;
-    private CheckBox EditAnalyzeSlopeEma20TurningPositive;
-    private CheckBox EditAnalyzeSlopeSma20TurningPositive;
-    private CheckBox EditBotSlopeEma50TurningPositive;
-    private CheckBox EditBotSlopeSma50TurningPositive;
-    private CheckBox EditBotPriceCrossingEma50;
-    private CheckBox EditBotPriceCrossingSma50;
-    private CheckBox EditBotPriceCrossingEma20;
-    private CheckBox EditBotPriceCrossingSma20;
-    private Label label74;
     private Label label62;
     private ComboBox EditBuyOrderMethod;
     private NumericUpDown EditDcaCount;
@@ -4196,18 +3784,9 @@ partial class FrmSettings
     private Label label47;
     private Label label46;
     private NumericUpDown EditGlobalBuyRemoveTime;
-    private CheckBox EditAnalyzeSlopeEma50TurningPositive;
-    private CheckBox EditMonitorStobb;
-    private CheckBox EditMonitorSbm1;
-    private CheckBox EditMonitorSbm2;
-    private CheckBox EditMonitorSbm3;
-    private CheckBox EditAnalyzeSlopeSma50TurningPositive;
-    private CheckBox EditAnalyzePriceCrossedEma50;
-    private CheckBox EditAnalyzePriceCrossedSma50;
-    private CheckBox EditAnalyzePriceCrossedEma20;
-    private CheckBox EditAnalyzePriceCrossedSma20;
     private Label label84;
     private ComboBox EditExchange;
     private CheckBox EditShowInvalidSignals;
-    private CheckBox EditOpenNewPositions;
+    private CheckBox EditDisableNewPositions;
+    private CheckBox EditSoundTradeNotification;
 }

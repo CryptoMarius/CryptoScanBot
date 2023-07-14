@@ -4,6 +4,7 @@ using CryptoSbmScanner.Model;
 
 namespace CryptoSbmScanner.Intern;
 
+#if BALANCING
 public class ThreadBalanceSymbols
 {
     private DateTime LastRunDate = DateTime.Now;
@@ -59,3 +60,4 @@ public class ThreadBalanceSymbols
         }
     }
 }
+#endif

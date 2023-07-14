@@ -131,7 +131,7 @@ public static class Helper
     /// <returns>Clamped value</returns>
     public static decimal Clamp(this decimal value, decimal minValue, decimal maxValue, decimal? stepSize)
     {
-        // TODO: Binance heeft alles netjes ingevuld, maar Bybit heeft geen min- of maxPrice!
+        // TODO: Bybit heeft geen min- of maxPrice!?
         // Deze moeten dus nullable worden en moeten hieronder gecontroleerd worden
 
         if (minValue < 0)
@@ -396,12 +396,14 @@ public static class Helper
             diffPercentage = 100 * diffPrice / (decimal)position.SellPrice;
         }
 
-        string s = string.Format("{0} position {1} {2}% {3}", position.Symbol.Name,
+        string s = string.Format("{0} position {1} {2}% {3}", position.Symbol.Name, position.PartCount,
             position.Invested.ToString0(), diffPercentage.ToString0("N2"), position.Status);
         if (position.TradeAccount.TradeAccountType == CryptoTradeAccountType.BackTest)
             s += string.Format(" ({0})", position.TradeAccount.Name);
         else if (position.TradeAccount.TradeAccountType == CryptoTradeAccountType.PaperTrade)
             s += string.Format(" ({0})", position.TradeAccount.Name);
+        if (position.PartCount > 1)
+            s += string.Format(" ({0})", position.PartCount);
         stringBuilder.AppendLine(s);
         //positionCount++;
     }
@@ -409,6 +411,7 @@ public static class Helper
 
     static public void ShowPositions(StringBuilder stringBuilder)
     {
+        int positionTotal = 0;
         foreach (var tradeAccount in GlobalData.TradeAccountList.Values)
         {
             if (tradeAccount.PositionList.Any())
@@ -422,10 +425,13 @@ public static class Helper
                     {
                         ShowPosition(stringBuilder, position);
                         positionCount++;
+                        positionTotal++;
                     }
                 }
                 stringBuilder.AppendLine(string.Format("{0} posities", positionCount));
             }
         }
+        if (positionTotal == 0)
+            stringBuilder.AppendLine("no posities");
     }
 }

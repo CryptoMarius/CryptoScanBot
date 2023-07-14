@@ -180,7 +180,7 @@ public class SymbolTools
     {
         //Als de muntpaar op de zwarte lijst staat dit signaal overslagen
         //Indien blacklist: Staat de muntpaar op de blacklist -> ja = signaal negeren
-        if (TradingConfig.Config[mode].InBlackList(symbol.Name))
+        if (TradingConfig.Config[mode].InBlackList(symbol.Name) == MatchBlackAndWhiteList.Present)
         {
             reaction = "Symbol zit in de black list";
             return false;
@@ -195,7 +195,7 @@ public class SymbolTools
     {
         // Als de muntpaar niet op de toegelaten lijst staat dit signaal overslagen
         // Indien whitelist: Staat de muntpaar op de whitelist -> nee = signaal negeren
-        if (!TradingConfig.Config[mode].InWhiteList(symbol.Name))
+        if (TradingConfig.Config[mode].InWhiteList(symbol.Name) == MatchBlackAndWhiteList.Missing)
         {
             reaction = "Symbol zit niet in de white list";
             return false;
@@ -223,15 +223,14 @@ public class SymbolTools
     }
 
 
-    public static bool CheckAvailableSlotsExchange(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, int slotLimit, out string reaction)
+    public static bool CheckAvailableSlotsExchange(CryptoTradeAccount tradeAccount, int slotLimit, out string reaction)
     {
         // Zijn er slots beschikbaar op de exchange?
 
         int slotsOccupied = 0;
         foreach (var positionList in tradeAccount.PositionList.Values)
         {
-            foreach (var position in positionList.Values)
-                slotsOccupied++;
+            slotsOccupied += positionList.Count;
         }
 
         if (slotsOccupied >= slotLimit)
@@ -319,7 +318,7 @@ public class SymbolTools
 
     public static bool CheckAvailableSlots(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, out string reaction)
     {
-        if (!CheckAvailableSlotsExchange(tradeAccount, symbol, GlobalData.Settings.Trading.SlotsMaximalExchange, out reaction))
+        if (!CheckAvailableSlotsExchange(tradeAccount, GlobalData.Settings.Trading.SlotsMaximalExchange, out reaction))
             return false;
 
         if (!CheckAvailableSlotsSymbol(tradeAccount, symbol, GlobalData.Settings.Trading.SlotsMaximalSymbol, out reaction))

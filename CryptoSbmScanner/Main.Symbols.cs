@@ -1,4 +1,5 @@
 ﻿using CryptoSbmScanner.Enums;
+using CryptoSbmScanner.Exchange;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Settings;
@@ -17,7 +18,6 @@ public partial class FrmMain
         switch (GlobalData.Settings.General.TradingApp)
         {
             case CryptoTradingApp.Altrady:
-            case CryptoTradingApp.AltradyWeb:
                 listBoxSymbolsMenuItemActivateTradingApp.Text = "Altrady";
                 listBoxSymbolsMenuItemActivateTradingApps.Text = "Altrady + TradingView";
                 break;
@@ -124,7 +124,7 @@ public partial class FrmMain
         if (symbol == null)
             return;
 
-        var href = Intern.TradingView.GetRef(symbol, interval);
+        var href = ExchangeHelper.GetTradingViewRef(symbol, interval);
         Uri uri = new(href);
         webViewTradingView.Source = uri;
         tabControl.SelectedTab = tabPageBrowser;
@@ -140,7 +140,7 @@ public partial class FrmMain
         if (symbol == null)
             return;
 
-        var href = Intern.TradingView.GetRef(symbol, interval);
+        var href = ExchangeHelper.GetTradingViewRef(symbol, interval);
         System.Diagnostics.Process.Start(href);
     }
 

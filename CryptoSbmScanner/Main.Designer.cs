@@ -42,6 +42,7 @@
             symbolFilter = new TextBox();
             panelClient = new Panel();
             tabControl = new TabControl();
+            tabPageDashBoard = new TabPage();
             tabPageSignals = new TabPage();
             tabPageBrowser = new TabPage();
             webViewTradingView = new Microsoft.Web.WebView2.WinForms.WebView2();
@@ -70,6 +71,7 @@
             debugDumpToolStripMenuItem = new ToolStripMenuItem();
             contextMenuStripPositionsOpen = new ContextMenuStrip(components);
             debugDumpToolStripMenuItem1 = new ToolStripMenuItem();
+            dashBoardControl1 = new DashBoardControl();
             panelLeft.SuspendLayout();
             panel4.SuspendLayout();
             listBoxSymbolsMenuStrip.SuspendLayout();
@@ -77,6 +79,7 @@
             applicationMenuStrip.SuspendLayout();
             panelClient.SuspendLayout();
             tabControl.SuspendLayout();
+            tabPageDashBoard.SuspendLayout();
             tabPageBrowser.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)webViewTradingView).BeginInit();
             tabPageLog.SuspendLayout();
@@ -295,6 +298,7 @@
             // 
             // tabControl
             // 
+            tabControl.Controls.Add(tabPageDashBoard);
             tabControl.Controls.Add(tabPageSignals);
             tabControl.Controls.Add(tabPageBrowser);
             tabControl.Controls.Add(tabPagePositionsOpen);
@@ -308,6 +312,17 @@
             tabControl.SelectedIndex = 0;
             tabControl.Size = new Size(1542, 648);
             tabControl.TabIndex = 12;
+            // 
+            // tabPageDashBoard
+            // 
+            tabPageDashBoard.Controls.Add(dashBoardControl1);
+            tabPageDashBoard.Location = new Point(4, 24);
+            tabPageDashBoard.Name = "tabPageDashBoard";
+            tabPageDashBoard.Padding = new Padding(3);
+            tabPageDashBoard.Size = new Size(1534, 620);
+            tabPageDashBoard.TabIndex = 9;
+            tabPageDashBoard.Text = "Dashboard";
+            tabPageDashBoard.UseVisualStyleBackColor = true;
             // 
             // tabPageSignals
             // 
@@ -557,14 +572,22 @@
             // 
             contextMenuStripPositionsOpen.Items.AddRange(new ToolStripItem[] { debugDumpToolStripMenuItem1 });
             contextMenuStripPositionsOpen.Name = "contextMenuStripPositionsOpen";
-            contextMenuStripPositionsOpen.Size = new Size(181, 48);
+            contextMenuStripPositionsOpen.Size = new Size(148, 26);
             // 
             // debugDumpToolStripMenuItem1
             // 
             debugDumpToolStripMenuItem1.Name = "debugDumpToolStripMenuItem1";
-            debugDumpToolStripMenuItem1.Size = new Size(180, 22);
+            debugDumpToolStripMenuItem1.Size = new Size(147, 22);
             debugDumpToolStripMenuItem1.Text = "Debug-Dump";
             debugDumpToolStripMenuItem1.Click += debugDumpToolStripMenuItem1Async_Click;
+            // 
+            // dashBoardControl1
+            // 
+            dashBoardControl1.Dock = DockStyle.Fill;
+            dashBoardControl1.Location = new Point(3, 3);
+            dashBoardControl1.Name = "dashBoardControl1";
+            dashBoardControl1.Size = new Size(1528, 614);
+            dashBoardControl1.TabIndex = 0;
             // 
             // FrmMain
             // 
@@ -585,6 +608,7 @@
             applicationMenuStrip.PerformLayout();
             panelClient.ResumeLayout(false);
             tabControl.ResumeLayout(false);
+            tabPageDashBoard.ResumeLayout(false);
             tabPageBrowser.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)webViewTradingView).EndInit();
             tabPageLog.ResumeLayout(false);
@@ -655,6 +679,8 @@
         private ToolStripMenuItem debugDumpToolStripMenuItem;
         private ContextMenuStrip contextMenuStripPositionsOpen;
         private ToolStripMenuItem debugDumpToolStripMenuItem1;
+        private TabPage tabPageDashBoard;
+        private DashBoardControl dashBoardControl1;
     }
 }
 

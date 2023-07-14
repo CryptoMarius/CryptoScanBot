@@ -4,6 +4,12 @@ using CryptoSbmScanner.Signal;
 
 namespace CryptoSbmScanner.Intern;
 
+public enum MatchBlackAndWhiteList
+{
+    Empty,
+    Present,
+    Missing
+}
 
 public class TradeConfiguration // c.q. SignalMode, betere naam gewenst? Alles beter dan continue de oversold en overbought te moeten toevoegen
 {
@@ -20,24 +26,27 @@ public class TradeConfiguration // c.q. SignalMode, betere naam gewenst? Alles b
     public SortedList<CryptoSignalStrategy, AlgorithmDefinition> AnalyzeStrategy = new();
     public SortedList<CryptoSignalStrategy, AlgorithmDefinition> MonitorStrategy = new();
 
-    public bool InBlackList(string name)
+
+    public MatchBlackAndWhiteList InBlackList(string name)
     {
-        if (BlackList.Any())
-        {
-            if (BlackList.ContainsKey(name))
-                return true;
-        }
-        return false;
+        if (!BlackList.Any())
+            return MatchBlackAndWhiteList.Empty;
+
+        if (BlackList.ContainsKey(name))
+            return MatchBlackAndWhiteList.Present;
+        else
+            return MatchBlackAndWhiteList.Missing;
     }
 
-    public bool InWhiteList(string name)
+    public MatchBlackAndWhiteList InWhiteList(string name)
     {
-        if (WhiteList.Any())
-        {
-            if (WhiteList.ContainsKey(name))
-                return false;
-        }
-        return true;
+        if (!BlackList.Any())
+            return MatchBlackAndWhiteList.Empty;
+
+        if (WhiteList.ContainsKey(name))
+            return MatchBlackAndWhiteList.Present;
+        else
+            return MatchBlackAndWhiteList.Missing;
     }
 
     public void ClearStrategies()
@@ -146,7 +155,7 @@ public static class TradingConfig
                 {
                     if (!exchange.SymbolListName.ContainsKey(symbol))
                     {
-                        if (GlobalData.ApplicationStatus == CryptoApplicationStatus.AppStatusRunning)
+                        if (GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
                             GlobalData.AddTextToLogTab(string.Format("FOUT {0} {1} bestaat niet", caption, symbol));
                     }
                 }

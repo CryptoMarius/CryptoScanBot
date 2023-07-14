@@ -35,7 +35,6 @@ public class CryptoPositionStep
 
     public long? OrderId { get; set; } // Vanwege papertrading moet deze nullable zijn
     public long? Order2Id { get; set; } // Eventuele limit order
-    //public long? OrderListId { get; set; } // overbodig, geen idee wat Binance daarmee bedoeld
 
     // Emulator
     //[Computed]

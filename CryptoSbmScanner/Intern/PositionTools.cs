@@ -12,6 +12,7 @@ namespace CryptoSbmScanner.Intern;
 
 public class PositionTools
 {
+#if TRADEBOT
     private DateTime CurrentDate { get; set; }
     private CryptoTradeAccount TradeAccount { get; set; }
     private CryptoSymbol Symbol { get; set; }
@@ -30,7 +31,6 @@ public class PositionTools
     }
 
 
-#if TRADEBOT
     public static bool ValidTradeAccount(CryptoTradeAccount tradeAccount)
     {
         // Niet echt super, enumeratie oid hiervoor in het leven roepen, werkt verder wel
@@ -573,7 +573,7 @@ public class PositionTools
         // Daarna de "nieuwe" trades van deze coin ophalen en die toegevoegen aan dezelfde tradelist
         // TODO: Afhankelijkheid uitfaseren of exchange-aware maken?
         if (position.TradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading)
-            await ExchangeClass.FetchTradesForSymbol(position.TradeAccount, position.Symbol);
+            await ExchangeHelper.FetchTradesAsync(position.TradeAccount, position.Symbol);
     }
 
 
@@ -583,7 +583,7 @@ public class PositionTools
         string sql = string.Format("select * from positionpart where PositionId={0} order by Id", position.Id);
         foreach (CryptoPositionPart part in database.Connection.Query<CryptoPositionPart>(sql))
         {
-            PositionTools.AddPositionPart(position, part);
+            AddPositionPart(position, part);
         }
 
         // De steps
@@ -591,7 +591,7 @@ public class PositionTools
         foreach (CryptoPositionStep step in database.Connection.Query<CryptoPositionStep>(sql))
         {
             if (position.Parts.TryGetValue(step.PositionPartId, out CryptoPositionPart part))
-                PositionTools.AddPositionPartStep(part, step);
+                AddPositionPartStep(part, step);
         }
     }
 

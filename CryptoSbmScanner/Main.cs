@@ -23,6 +23,7 @@ namespace CryptoSbmScanner;
 
 public partial class FrmMain : Form
 {
+    private bool ExtraWebViewInitialized;
     private int createdSignalCount; // Tellertje met het aantal meldingen (komt in de taakbalk c.q. applicatie titel)
     private readonly Microsoft.Web.WebView2.WinForms.WebView2 _webViewAltradyRef = null;
     private readonly ColorSchemeTest theme = new();
@@ -83,12 +84,13 @@ public partial class FrmMain : Form
 
         // Altrady tabblad verbergen, is enkel een browser om dat extra dialoog in externe browser te vermijden
         _webViewAltradyRef = webViewAltrady;
-        tabControl.TabPages.Remove(tabPageAltrady);
+        //tabControl.TabPages.Remove(tabPageAltrady);
 
 #if !TRADEBOT
         ApplicationTradingBot.Visible = false;
         backtestToolStripMenuItem.Visible = false;
         GlobalData.Settings.Trading.Active = false;
+        tabControl.TabPages.Remove(tabPageDashBoard);
         tabControl.TabPages.Remove(tabPagePositionsClosed);
         tabControl.TabPages.Remove(tabPagePositionsOpen);
 #endif
@@ -97,15 +99,32 @@ public partial class FrmMain : Form
         //string x = Model.CryptoExchange.Encrypt("xxxx", false);
         //string y = Model.CryptoExchange.Decrypt(x, false);
 
-        ExchangeClass.SetExchangeDefaults();
         CryptoDatabase.SetDatabaseDefaults();
-
-
 
         GlobalData.LoadExchanges();
         GlobalData.LoadIntervals();
         GlobalData.LoadAccounts();
 
+        // Is er via de command line aangegeven dat we default een andere exchange willen?
+        {
+            ApplicationParams.InitApplicationOptions();
+
+            string exchangeName = ApplicationParams.Options.ExchangeName;
+            if (exchangeName != null)
+            {
+                // De default exchange is Binance (maar of dat tegenwoordig een goede keuze is)
+                if (exchangeName == "")
+                    exchangeName = "Binance";
+                if (GlobalData.ExchangeListName.TryGetValue(exchangeName, out var exchange))
+                {
+                    GlobalData.Settings.General.Exchange = exchange;
+                    GlobalData.Settings.General.ExchangeId = exchange.Id;
+                    GlobalData.Settings.General.ExchangeName = exchange.Name;
+                }
+                else throw new Exception(string.Format("Exchange {0} bestaat niet", exchangeName));
+            }
+        }
+        ExchangeHelper.ExchangeDefaults();
 
         WindowLocationRestore();
         ApplySettings();
@@ -249,6 +268,7 @@ public partial class FrmMain : Form
 
             if (components != null)
             {
+                GlobalData.ApplicationStatus = CryptoApplicationStatus.Disposing;
                 _webViewAltradyRef.Dispose();
                 components.Dispose();
             }
@@ -351,7 +371,7 @@ public partial class FrmMain : Form
 
     private void ToolStripMenuItemRefresh_Click_1(object sender, EventArgs e)
     {
-        _ = ExchangeClass.FetchCandlesAsync(); // niet wachten tot deze klaar is
+        _ = ExchangeHelper.FetchCandlesAsync(); // niet wachten tot deze klaar is
     }
 
 
@@ -627,7 +647,7 @@ public partial class FrmMain : Form
     {
         try
         {
-            if (GlobalData.ApplicationStatus != CryptoApplicationStatus.AppStatusRunning)
+            if (GlobalData.ApplicationStatus != CryptoApplicationStatus.Running)
                 return;
 
 #if TRADINGBOT
@@ -787,26 +807,38 @@ public partial class FrmMain : Form
 
     }
 
-
-    private void ActivateTradingApp(CryptoSymbol symbol, CryptoInterval interval)
+    private async Task InitializeAltradyWebbrowser()
     {
+        // https://stackoverflow.com/questions/63404822/how-to-disable-cors-in-wpf-webview2
+        if (!ExtraWebViewInitialized)
+        {
+            ExtraWebViewInitialized = true;
+
+            var userPath = GlobalData.GetBaseDir();
+            var webView2Environment = await CoreWebView2Environment.CreateAsync(null, userPath);
+            await _webViewAltradyRef.EnsureCoreWebView2Async(webView2Environment);
+        }
+    }
+
+    private async void ActivateTradingApp(CryptoSymbol symbol, CryptoInterval interval)
+    {
+        await InitializeAltradyWebbrowser();
+
         string href;
         switch (GlobalData.Settings.General.TradingApp)
         {
             case CryptoTradingApp.Altrady:
-                href = Altrady.GetRef(symbol, interval);
+                href = ExchangeHelper.GetAltradyRef(symbol, interval);
                 // Een poging om de externe browser te vermijden
                 Uri uri = new(href);
                 _webViewAltradyRef.Source = uri;
                 //System.Diagnostics.Process.Start(href);
                 break;
-            case CryptoTradingApp.AltradyWeb:
-                href = Altrady.GetRef(symbol, interval);
-                System.Diagnostics.Process.Start(href);
-                break;
             case CryptoTradingApp.Hypertrader:
-                href = HyperTrader.GetRef(symbol, interval);
-                System.Diagnostics.Process.Start(href);
+                href = ExchangeHelper.GetHyperTraderRef(symbol, interval, false);
+                System.Diagnostics.Process.Start("explorer.exe " + href);
+                //uri = new(href);
+                //_webViewAltradyRef.Source = uri;
                 break;
         }
     }
@@ -821,7 +853,7 @@ public partial class FrmMain : Form
     }
 
 
-    private void GetReloadRelatedSettings(out string activeQuoteData)
+    private static void GetReloadRelatedSettings(out string activeQuoteData)
     {
         activeQuoteData = "";
         foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
@@ -830,6 +862,7 @@ public partial class FrmMain : Form
                 activeQuoteData += "," + quoteData.Name;
         }
     }
+
 
     private void ToolStripMenuItemSettings_Click(object sender, EventArgs e)
     {
@@ -882,6 +915,14 @@ public partial class FrmMain : Form
 
                 if (reloadExchangeChange)
                 {
+                    // Wachten tot de ThreadLoadData klaar is (dit is weer erg quick en dirty!
+                    // Dat gaat problemen geven, na een ScannerSession.Stop() is deze Initializing
+                    //while (GlobalData.ApplicationStatus == CryptoApplicationStatus.Initializing)
+                    //{
+                    //    Thread.Sleep(250);
+                    //}
+
+
                     // De inactieve exchange deactiveren (geheugen vrijgeven)
                     // overbodig, zou via de symbollist moeten clearen
                     //foreach (CryptoSymbol symbol in oldExchange.SymbolListName.Values.ToList())
@@ -897,8 +938,9 @@ public partial class FrmMain : Form
                     // TradingAccount: Posities en Assets clearen!
                     foreach (CryptoTradeAccount ta in GlobalData.TradeAccountList.Values)
                         ta.Clear();
-
                 }
+
+                ExchangeHelper.ExchangeDefaults();
 
                 // Schedule een reload of data
                 ScannerSession.ScheduleRefresh();
@@ -933,11 +975,9 @@ public partial class FrmMain : Form
         ListViewSignalsMenuItemClearSignals_Click(null, null);
 
         PositionMonitor.AnalyseCount = 0;
-        ExchangeClass.Reset1mCandle();
-        ExchangeClass.ResetPriceTicker();
+        ExchangeHelper.KLineTicker.Reset();
+        ExchangeHelper.PriceTicker.Reset();
     }
-
-
 
 
     private static void PlaySound(CryptoSignal signal, bool playSound, bool playSpeech, string soundName, ref long lastSound)
@@ -971,7 +1011,7 @@ public partial class FrmMain : Form
     private void TimerAddSignalsAndLog_Tick(object sender, EventArgs e)
     {
         // Speed up adding signals
-        if (GlobalData.SignalQueue.Count > 0)
+        if (GlobalData.SignalQueue.Count > 0 && !IsDisposed && GlobalData.ApplicationStatus != CryptoApplicationStatus.Disposing)
         {
             Monitor.Enter(GlobalData.SignalQueue);
             try
@@ -985,14 +1025,20 @@ public partial class FrmMain : Form
                         signals.Add(signal);
                 }
 
-                // verwerken..
-                Task.Factory.StartNew(() =>
+                if (signals.Any())
                 {
-                    Invoke(new Action(() =>
+                    // verwerken..
+                    Task.Factory.StartNew(() =>
                     {
-                        ListViewSignalsAddSignalRange(signals);
-                    }));
-                });
+                        Invoke(new Action(() =>
+                        {
+                            if (!this.IsDisposed && GlobalData.ApplicationStatus != CryptoApplicationStatus.Disposing)
+                            {
+                                ListViewSignalsAddSignalRange(signals);
+                            }
+                        }));
+                    });
+                }
             }
             finally
             {
@@ -1002,7 +1048,7 @@ public partial class FrmMain : Form
 
 
         // Speed up adding text
-        if (logQueue.Count > 0)
+        if (logQueue.Count > 0 && !IsDisposed && GlobalData.ApplicationStatus != CryptoApplicationStatus.Disposing)
         {
             Monitor.Enter(logQueue);
             try
@@ -1010,7 +1056,7 @@ public partial class FrmMain : Form
                 List<CryptoSignal> signals = new();
                 StringBuilder stringBuilder = new();
 
-                while (logQueue.Count > 0)
+                while (logQueue.Count > 0 && !IsDisposed && GlobalData.ApplicationStatus != CryptoApplicationStatus.Disposing)
                 {
                     string text = logQueue.Dequeue();
                     stringBuilder.AppendLine(text);
@@ -1022,10 +1068,13 @@ public partial class FrmMain : Form
                     Invoke(new Action(() =>
                     {
                         string text = stringBuilder.ToString().TrimEnd() + "\r\n";
-                        if (InvokeRequired)
-                            Invoke((MethodInvoker)(() => TextBoxLog.AppendText(text)));
-                        else
-                            TextBoxLog.AppendText(text);
+                        if (!this.IsDisposed && GlobalData.ApplicationStatus != CryptoApplicationStatus.Disposing)
+                        {
+                            if (InvokeRequired)
+                                Invoke((MethodInvoker)(() => TextBoxLog.AppendText(text)));
+                            else
+                                TextBoxLog.AppendText(text);
+                        }
 
                         // Dit lijkt niet te werken (zonder alles in zijn geheel te kopieeren, in te korten en terug te zetten)
                         //while (TextBoxLog.Lines.Count() > 10000)
@@ -1105,23 +1154,14 @@ public partial class FrmMain : Form
 
 
             if (GlobalData.Settings.Telegram.SendSignalsToTelegram)
-            {
-                // Bedenk eens een mooie header.. 
-                // en een link naar Altrady/HyperTrade
-                // Heb als het goed is een stukje oude code liggen (maar waar), voorlopig even plain en simple..
-                AddTextToTelegram(text);
-            }
+                ThreadTelegramBot.SendSignal(signal);
         }
     }
 
 
-
     private async Task ActivateTradingViewBrowser(string symbolname = "BTCUSDT")
     {
-        // https://stackoverflow.com/questions/63404822/how-to-disable-cors-in-wpf-webview2
-        var userPath = GlobalData.GetBaseDir();
-        var webView2Environment = await CoreWebView2Environment.CreateAsync(null, userPath);
-        await webViewTradingView.EnsureCoreWebView2Async(webView2Environment);
+        await InitializeAltradyWebbrowser();
 
         if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1m, out CryptoInterval interval))
             return;
@@ -1130,7 +1170,7 @@ public partial class FrmMain : Form
         {
             if (exchange.SymbolListName.TryGetValue(symbolname, out CryptoSymbol symbol))
             {
-                var href = Intern.TradingView.GetRef(symbol, interval);
+                var href = ExchangeHelper.GetTradingViewRef(symbol, interval);
                 Uri uri = new(href);
                 webViewTradingView.Source = uri;
             }

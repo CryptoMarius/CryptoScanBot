@@ -12,6 +12,7 @@ using Dapper.Contrib.Extensions;
 
 namespace CryptoSbmScanner.Intern;
 
+#if BALANCING
 // TODO: Deze Balancing bot heeft een herontwerp en de nodige aandacht nodig!
 // In principe willen we (een soort van) mandjes of groepjes oid introduceren.
 // Ook zal er een extra API key bij moeten omdat het meestal vanaf een subaccount wordt gedaan
@@ -415,7 +416,7 @@ public class BalanceSymbolsAlgoritm
     //    if (Simulation)
     //        return true;
 
-    //    BinanceWeights.WaitForFairBinanceWeight(5, "Binance account info");
+    //    BinanceWeights.WaitForFairBinanceWeight(5, $"{Api.ExchangeName} account info");
     //    using (var client = new BinanceClient())
     //    {
     //        // Eigenlijk hebben we die assets al (via de trades, maar ook via de balance items)
@@ -597,7 +598,7 @@ public class BalanceSymbolsAlgoritm
             if (GlobalData.Settings.BalanceBot.CoinList.Any())
             {
                 if (!GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Exchange))
-                    throw new Exception("Exchange Binance niet aanwezig");
+                    throw new Exception($"Exchange {Api.ExchangeName} niet aanwezig");
 
                 // De te balanceren munten
                 foreach (BalanceSymbol balanceSymbol in GlobalData.Settings.BalanceBot.CoinList)
@@ -658,3 +659,4 @@ public class BalanceSymbolsAlgoritm
 
 
 }
+#endif

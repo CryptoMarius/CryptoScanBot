@@ -4,7 +4,7 @@ using CryptoSbmScanner.Exchange;
 namespace CryptoSbmScanner.Intern;
 
 
-// Een nieuwe opzet, maar het moet nog beter opgezet worden (iets met hobby en tijdgebrek).
+// Een betere opzet (maar het moet nog beter)
 
 
 public static class ScannerSession
@@ -12,13 +12,14 @@ public static class ScannerSession
     // Om te voorkomen dat we de signalen 2x inlezen
     private static bool IsStarted { get; set; } = false;
 
+    // Er zit verschil in de threading aanpak tussen deze timers (wat is dat nu weer?)
 
     // Timertje voor het doorgeven van de signalen en de log teksten in de memo
     public static readonly System.Timers.Timer TimerAddSignal = new() { Enabled = false };
     // Timertje voor de barometer grafiek
     public static readonly System.Timers.Timer TimerShowInformation = new() { Enabled = false };
     // Timertje voor afspelen van heartbeat signaal (zodat bluetooth speaker wakker blijft)
-    public static readonly System.Timers.Timer TimerSoundHeartBeat = new() { Enabled = false };
+    public static readonly System.Timers.Timer TimerSoundHeartBeat = new () { Enabled = false };
     // Iedere zoveel uren de memo clearen (anders wordt het geheel traag)
     public static readonly System.Timers.Timer TimerClearMemo = new() { Enabled = false };
 
@@ -57,16 +58,13 @@ public static class ScannerSession
     public static void Start(bool sleepAwhile)
     {
         GlobalData.AddTextToLogTab("Debug: ResumeScannerSession");
-        GlobalData.ApplicationStatus = CryptoApplicationStatus.AppStatusPrepare;
+        GlobalData.ApplicationStatus = CryptoApplicationStatus.Initializing;
 
         GlobalData.ThreadMonitorCandle = new ThreadMonitorCandle();
 #if TRADEBOT
         GlobalData.ThreadMonitorOrder = new ThreadMonitorOrder();
         if (GlobalData.Settings.ApiKey != "")
-        {
-            GlobalData.AddTextToLogTab("Starting task for monitoring events");
-            ExchangeClass.StartUserDataStream();
-        }
+            _ = ExchangeHelper.UserData.Start();
 #endif
 #if BALANCING
         GlobalData.ThreadBalanceSymbols = new ThreadBalanceSymbols();
@@ -79,7 +77,8 @@ public static class ScannerSession
         if (sleepAwhile)
             Thread.Sleep(5000);
 
-        Task.Run(async () => { await ThreadLoadData.ExecuteAsync(IsStarted); });
+        bool IsStartedCopy = IsStarted;
+        Task.Run(async () => { await ThreadLoadData.ExecuteAsync(IsStartedCopy); });
         IsStarted = true;
     }
 
@@ -87,8 +86,9 @@ public static class ScannerSession
     public static async Task Stop()
     {
         //Task.Run(async () => { await ScannerSession.Stop(); }).Wait();
-        GlobalData.AddTextToLogTab("Debug: CloseScannerSession");
-        GlobalData.ApplicationStatus = CryptoApplicationStatus.AppStatusExiting;
+        GlobalData.AddTextToLogTab("Debug: Stop ScannerSession");
+        //GlobalData.ApplicationStatus = CryptoApplicationStatus.AppStatusExiting;
+        GlobalData.ApplicationStatus = CryptoApplicationStatus.Initializing;
 
         // pfft, kan er net zo goed een array van maken
         TimerCheckDataStream.Enabled = false;
@@ -101,7 +101,8 @@ public static class ScannerSession
 
 #if TRADEBOT
         GlobalData.ThreadMonitorOrder?.Stop();
-        await ExchangeClass.StopUserDataStream();
+        if (ExchangeHelper.UserData != null)
+            await ExchangeHelper.UserData?.Stop();
 #endif
 #if BALANCING
         //GlobalData.ThreadBalanceSymbols?.Stop();
@@ -109,8 +110,10 @@ public static class ScannerSession
 
         // streams Threads (of tasks)
         GlobalData.ThreadMonitorCandle?.Stop();
-        _ = ExchangeClass.StopPriceTicker();
-        await ExchangeClass.Stop1mCandleAsync();
+        if (ExchangeHelper.PriceTicker != null)
+            await ExchangeHelper.PriceTicker?.Stop();
+        if (ExchangeHelper.KLineTicker != null)
+            await ExchangeHelper.KLineTicker?.Stop();
 #if SQLDATABASE
         GlobalData.TaskSaveCandles.Stop();
 
@@ -146,7 +149,7 @@ public static class ScannerSession
     public static void SetTimerDefaults()
     {
         TimerAddSignal.InitTimerInterval(1.25); // 1.25 seconde
-        TimerShowInformation.InitTimerInterval(10); // 10 seconds
+        TimerShowInformation.InitTimerInterval(5); // 5 seconds
 
         TimerSoundHeartBeat.InitTimerInterval(60 * GlobalData.Settings.General.SoundHeartBeatMinutes); // x minutes
 
@@ -180,12 +183,13 @@ public static class ScannerSession
 
         TimerRestartStreams.Enabled = false;
         TimerCheckDataStream.Enabled = false;
-        GlobalData.ApplicationStatus = CryptoApplicationStatus.AppStatusExiting;
+        //GlobalData.ApplicationStatus = CryptoApplicationStatus.AppStatusExiting;
+        //GlobalData.ApplicationStatus = CryptoApplicationStatus.Initializing;
         //try
         //{
-            //CloseScannerSession().Wait();
-            Task.Run(async () => { await Stop(); }).Wait();
-            Start(true);
+        //CloseScannerSession().Wait();
+        Task.Run(async () => { await Stop(); }).Wait();
+        Start(true);
         //}
         //finally
         //{
@@ -199,15 +203,15 @@ public static class ScannerSession
 
     private static void TimerCheckDataStream_Tick(object sender, EventArgs e)
     {
-        int candlesKLineCount = ExchangeClass.Count1mCandle();
-        if (lastCandlesKLineCount != 0 && candlesKLineCount == lastCandlesKLineCount)
+        int tickerCount = ExchangeHelper.KLineTicker.Count();
+        if (lastCandlesKLineCount != 0 && tickerCount == lastCandlesKLineCount)
         {
             GlobalData.AddTextToLogTab("Debug: De 1m data stream is gestopt!");
 
             // Schedule a rest of the streams
             TimerRestartStreams.InitTimerInterval(1 * 60);
         }
-        lastCandlesKLineCount = candlesKLineCount;
+        lastCandlesKLineCount = tickerCount;
     }
 
     static public void ConnectionWasLost(string text)
@@ -222,7 +226,7 @@ public static class ScannerSession
         {
             GlobalData.AddTextToLogTab("Debug: ConnectionWasLostEvent!");
             // anders krijgen we alleen maar fouten dat er geen candles zijn
-            GlobalData.ApplicationStatus = CryptoApplicationStatus.AppStatusPrepare;
+            GlobalData.ApplicationStatus = CryptoApplicationStatus.Initializing;
         }
     }
 
@@ -240,7 +244,7 @@ public static class ScannerSession
         //if (components != null && IsHandleCreated)
         {
             GlobalData.AddTextToLogTab("Debug: ConnectionWasRestoredEvent!");
-            GlobalData.ApplicationStatus = CryptoApplicationStatus.AppStatusRunning;
+            GlobalData.ApplicationStatus = CryptoApplicationStatus.Running;
             //Invoke((MethodInvoker)(() => InitTimerInterval(ref TimerGetExchangeInfo, 20)));
             TimerGetExchangeInfo.InitTimerInterval(20);
         }
@@ -276,7 +280,7 @@ public static class ScannerSession
                 //Invoke((MethodInvoker)(() => InitTimerInterval(ref TimerGetExchangeInfo, GlobalData.Settings.General.GetCandleInterval * 60)));
             }
             TimerGetExchangeInfo.InitTimerInterval(GlobalData.Settings.General.GetCandleInterval * 60);
-            _ = ExchangeClass.FetchCandlesAsync(); // niet wachten tot deze klaar is
+            _ = ExchangeHelper.FetchCandlesAsync(); // niet wachten tot deze klaar is
         }
     }
 

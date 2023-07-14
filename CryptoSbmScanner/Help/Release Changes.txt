@@ -1,36 +1,47 @@
 Mis je iets in onderstaande bevindingen/todo's of toekomstige todo's, geef het AUB aan want dan is wat we besproken hebben ergens tussen wal en schip gevallen...
 
+TODO exchanges
+- ByBit Spot - URL voor activeren in Altrady, Hypertrader en Tradingview!
+- ByBit Spot - Trading: userdate stream implementeren (detectie van trade)
+- ByBit Spot - Trading: ophalen trades implementeren
+- ByBit Spot - Trading: ophalen assets implementeren
+- ByBit Spot - Trading: plaatsen van de orders (oco/buy/sell/stoplimit etc) - De OCO zou Binance specifiek kunnen zijn?
+- ByBit Futures - Trading: userdate stream implementeren (detectie van trade)
+- ByBit Futures - Uitzoeken wat dit inhoud en of we de bestaande bybit stuff kunnen hergebruiken
+- ByBit Futures - Indirect ook de vraag of we geautomatiseerd short kunnen gaan (met leverage=1)
+- ByBit Futures - URL voor activeren in Altrady, Hypertrader en Tradingview!
 
-ByBit scanner en trader perikelen
-- ByBit - Scanner - mini ticker stream implementeren (de huidige werkt niet bepaald 100%) - (priceticker is niet echt nodig voor de scanner)
-  Wellicht laten vervallen van LastPrice/BidPrice/BestPrice en die op te halen via call)
-- ByBit - Trading: userdate stream implementeren (detectie van een trade)
-- ByBit - Trading: ophalen trades implementeren
-- ByBit - Trading: ophalen assets implementeren
-- ByBit - Trading: plaatsen van de orders (oco/buy/sell/stoplimit etc) - De OCO zou nog een uitdaging kunnen zijn, Binance specifiek?
+Uitgesteld (de api is traag en teleurstellend)
+- Kukoin Spot - URL voor activeren in Altrady, Hypertrader en Tradingview
+- Kukoin Spot - Scanner: de exchange informatie (symbol informatie) ophalen
+- Kukoin Spot - Scanner: 1m candle stream informatie implementeren
+- Kukoin Spot - Scanner: historische klines informatie (candle informatie) ophalen
+- Kukoin Spot - Scanner: price ticker implementeren
+- Kukoin Spot - Scanner: limieten (rate limits) ondersteunen
+- Kukoin Spot - Trading: userdate stream implementeren (detectie van een trade)
+- Kukoin Spot - Trading: ophalen trades implementeren
+- Kukoin Spot - Trading: ophalen assets implementeren
+- Kukoin Spot - Trading: plaatsen van de orders (oco/buy/sell/stoplimit etc) - De OCO zou Binance specifiek kunnen zijn?
 
 
-TODO:
-- TODOOOOOO: Waarom werkt de whitelist niet (compbtc), lijkt in zijn geheel niet te werken?
-- TODOOOOOO: Waarom bevat de bybit symbol info helemaal geen volume? (dat had de vorige wel dacht ik)
-- Wil ik nog iets met de opstartparameter "-e bybit"?
-- Ondersteuning van andere exchanges (eerst Bybit, daarna volgt Kucoin)
+TODO voor de release:
+- Code voor activeren symbol in Hypertrader en Bybit enzovoort (naar de exchange code)
+hypertrader://bybit/avax-usdt/3
+http://www.ccscanner.nl/hypertrader/?e=bybits&a=BTC&b=USDT&i=1
+
+- Ondersteuning van andere exchanges (eerst Bybit Spot, daarna Bybit futures en daarna Kucoin)
+- Uitzoeken wat die N-1 betekend (met name voro de prijs, wat is het, hoe voorkom je het)
+- Telegram - uitleggen hoe je dit precies moet configureren (stappenplan)
 - Trading - uitleggen papertrading bot (achterliggende gedachtes uitleggen)
 - Trading - uitleggen wat de open en gesloten posities precies zijn (per kolom)
-- Todo: voor iemand in de groep, emulator of meldingen even aanpassen zodat het bij een psar wissel instapt - is er nog niet van gekomen, sorry!
-- Voor STOBB de minimale trend controleren voro de CC manier (dit is een nieuwe instelling, maar die wordt nog niet ingezet op dit moment)
-- Een dashboard introduceren, totaal aantal signalen afgelopen dag/week, indeling per categorie, short/long
-  Totaal geinvesteerd, returned, gemiddelde profit, de uitschieters (max), de tegenvallers (min).
-  Ik weet zeker dat bepaalde mensen hier wel wat leuke toevoegingen voor hebben ;-)
-- Verwijderen of verbergen van de SMA20 - positive ema slope e.d. iets of is dat ten dode opgeschreven
-  (ik heb echt 1 mooie mogelijkheid gezien, maar je moet het maar net openen en opmerken)
-  Ik denk niet dat deze aanpak geschikt is voor een bot?
-  (ach, waarom niet, 1 extra conditie, de ema50 > sma50)
-  De trend moet redelijk positief zijn om deze varianten te gebruiken
-- Een keuze maken om de extra stategien geheel te verbergen of geheel uit te faseren (ik kies voor verbergen, ifdefje?)
+- Voor STOBB de minimale trend controleren voor de CC manier (dit is een nieuwe instelling, maar die wordt nog niet ingezet op dit moment)
 
 
-Bevindingen/Todo's:
+Openstaande punten/bevindingen/todo's:
+- Trading: Uitzoeken voor iemand in de groep, de backtest emulator aanpassen zodat het (pas) bij een psar wissel instapt - is er nog niet van gekomen, sorry!
+- Scanner/Trader: Een dashboard introduceren, totaal aantal signalen afgelopen dag/week, indeling per categorie, short/long
+  Trading: Totaal geinvesteerd, returned, gemiddelde profit, de uitschieters (max), de tegenvallers (min).
+  Diverse grafieken (zoals Altrady) en anders weet ik zeker dat bepaalde mensen hier wel toevoegingen voor hebben ;-)
 - De tekst 1h, 4h en 1d toevoegen bij de barometer bolletjes (dan hoef ik niet uit te leggen wat het betekend)
 - Het lettertype c.q. grotte van de barometer waardes in de grafiek zijn afwijkend
 - Bij aanpassing van het lettertype lopen de labels over in de control waardoor tekst minder leesbaar wordt
@@ -46,6 +57,7 @@ Bevindingen/Todo's:
   Maar ik verwacht een duizendtal nieuwe problemen met geluid, voice, storage, sockets, hibernate/sleep enzovoort)
 - Visuele herkenning dat de scanner loopt (de getallen linksboven zeggen de mensen niet zoveel)
   (ik heb hier eigenlijk geen alternatief voor, als iemand goede ideen heet laat het me weten aub)
+  Misschien dat de introductie van een dashboard hier nog iets in kan betekenen t.z.t.
 - Het font van de menuitem (en popup?) wordt niet aangepast (indien een ander lettertype of grootte wordt gekozen)
 - Validatie van de trenddetails voor de CC 2.0 methode (de trend is gerealiseerd, maar de validatie van de trend en % moet nog) 
   De trend berekening is gebaseerd op de P&T en de analyse daarvan, maar deze kan nog niet helemaal okay zijn (ook lastig te bewijzen).
@@ -59,7 +71,17 @@ Bevindingen/Todo's:
 
 
 
-xx-xx-2023 1.8.0 (een gedeeltelijk hiervan zit al in de 1.7.2 vanwege een hotfix)
+xx-xx-2023 1.8.0 (een gedeeltelijk hiervan zit al in de 1.7.2 vanwege de laatste hotfix <*>)
+- Scanner: Telegram meer details toevoegen en inclusief een link naar de exchange
+- De extra stategien (allemaal interne experimenten niet geschikt voor publicatie) verbergen in de release (via een ifdefje)
+- Via een opstartparameter kun je de juiste exchange activeren (let op de quotes en casing!)
+  CryptoSbmScanner.exe -e Binance
+  CryptoSbmScanner.exe -e "Bybit Spot"
+  CryptoSbmScanner.exe -e "Bybit Futures"
+  CryptoSbmScanner.exe -e Kucoin
+- Het Volume van Bybit staat in BASE volume in plaats van QUOTE volume!
+- Bugfix Bybit 1m kline ticker (symbol wordt geprefixed door het interval, rare jongens)
+- De white en blacklist functionaliteit aangepast, de whitelist werkte helemaal niet zo te zien
 - De captions van Binance rechtsboven vervangen door de juiste exchange naam
 - Ondersteuning van andere exchanges (dat heeft na het vertrek van Binance uit NL een nieuwe impuls heeft gekregen in de vorm van Bybit)
   Ondersteuning van andere exchanges volgt later (Bybit futures/Kucoin)
@@ -69,6 +91,7 @@ xx-xx-2023 1.8.0 (een gedeeltelijk hiervan zit al in de 1.7.2 vanwege een hotfix
   zodat de juiste volumes worden opgehaald. Dit scheelt aanzienlijk in snelheid bij het opnieuw opstarten van de scanner.
 - Bybit Scanner - 1m candle stream informatie implementeren (per 10 symbolen, pfft)
 - Bybit Scanner - historische klines informatie (candle informatie) ophalen
+- ByBit Scanner - price ticker implementeren (Volume en LastPrice)
 - Bybit Scanner - de exchange informatie (symbol informatie) ophalen
 - Bybit Scanner - De limieten (rate limits) van bybit ondersteunen
   het is gebaseerd op het aantal verzoeken per seconde wat je naar ByBit stuurt
@@ -101,6 +124,7 @@ xx-xx-2023 1.8.0 (een gedeeltelijk hiervan zit al in de 1.7.2 vanwege een hotfix
   Echter die 0.5% zit erg dicht bij de onderste band, een percentage van 2.5% geeft ook goed resultaat
 - Nieuwe kolom met daarin de "24 uur beweging" (tussen de absolute high en low van de afgelopen 24 uur)
   Dit is bedoeld om meer inzicht te krijgen en om de pump en dumps beter te detecteren (munten die veel bewegen)
+  Dit omdat het 24 uur percentage de lading (c.q. die beweging) niet laat zien.
 - Een label filter  bij de textbox toevoegen, die zorgt nu blijkbaar voor verwarring (staat er "los" in, duidelijk maken!)
 - De fear and great index staat bij het opstarten er eerder dan de rest, het ziet er mooier uit alles tegelijk tevoorschijn komt
 - De actuele prijs stijging ten opzichte van de melding laten zien? (percentueel + kleur)

@@ -22,7 +22,7 @@ public class SettingsTrading
 {
     // Is de BOT actief
     public bool Active { get; set; } = false;
-    public bool OpenNewPositions { get; set; } = true;
+    public bool DisableNewPositions { get; set; } = false;
 
     //***************************
     // Slots
@@ -98,7 +98,7 @@ public class SettingsTrading
 
     // Alles is functioneel in de bot, echter we simuleren of we aan het traden zijn
     public bool TradeViaPaperTrading { get; set; } = false;
-    // Trade via Binance (instelling enkel omdat we nu keuze hebben)
+    // Trade via exchange (instelling enkel omdat we nu keuze hebben)
     public bool TradeViaExchange { get; set; } = false;
 
     // Op welke intervallen en strategieën willen we traden?

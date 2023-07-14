@@ -1,4 +1,6 @@
-﻿using CryptoSbmScanner.Context;
+﻿using System.Text;
+
+using CryptoSbmScanner.Context;
 using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
@@ -96,6 +98,10 @@ public partial class FrmMain
 
     private static void FillItemClosed(CryptoPosition position, ListViewItem item1)
     {
+        // Omdat het item via een range wordt toegevoegd is deze niet beschikbaar
+        //if (item1.Index % 2 == 0)
+        //    item1.BackColor = Color.LightGray;
+
         ListViewItem.ListViewSubItem subItem;
         item1.SubItems.Clear();
 
@@ -209,8 +215,6 @@ public partial class FrmMain
     {
         if (listViewPositionsClosed.SelectedItems.Count > 0)
         {
-            //for (int index = 0; index < listViewPositionsClosed.SelectedItems.Count; index++)
-            //{
             ListViewItem item = listViewPositionsClosed.SelectedItems[0];
             CryptoPosition position = (CryptoPosition)item.Tag;
 
@@ -349,7 +353,7 @@ public partial class FrmMain
             PositionTools.LoadPosition(databaseThread, position);
             await PositionTools.LoadTradesfromDatabaseAndExchange(databaseThread, position);
             PositionTools.CalculatePositionResultsViaTrades(databaseThread, position);
-            FillItemClosed(position, item);
+            FillItemClosed(position, item, 0);
 #endif
         }
 
@@ -373,7 +377,7 @@ public partial class FrmMain
             PositionTools.LoadPosition(databaseThread, position);
             await PositionTools.LoadTradesfromDatabaseAndExchange(databaseThread, position);
             PositionTools.CalculatePositionResultsViaTrades(databaseThread, position);
-            FillItemClosed(position, item);
+            FillItemClosed(position, item, 0);
 
             StringBuilder strings = new();
             PositionTools.DumpPosition(position, strings);

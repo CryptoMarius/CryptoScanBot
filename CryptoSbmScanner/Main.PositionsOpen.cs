@@ -1,4 +1,6 @@
-﻿using CryptoSbmScanner.Context;
+﻿using System.Text;
+
+using CryptoSbmScanner.Context;
 using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
@@ -44,8 +46,10 @@ public partial class FrmMain
         listViewPositionsOpen.DoubleClick += ListViewPositionOpen_MenuItem_DoubleClick;
         tabPagePositionsOpen.Controls.Add(listViewPositionsOpen);
 
-        TimerRefreshSomething = new();
-        TimerRefreshSomething.Interval = 20000; // 20 seconden
+        TimerRefreshSomething = new()
+        {
+            Interval = 20 * 1000 // 20 seconden
+        };
         TimerRefreshSomething.Tick += TimerRefreshSomething_Tick;
 		TimerRefreshSomething.Enabled = true;
 
@@ -97,6 +101,10 @@ public partial class FrmMain
 
     private static void FillItemOpen(CryptoPosition position, ListViewItem item1)
     {
+        // Omdat het item via een range wordt toegevoegd is deze niet beschikbaar
+        //if (index % 2 == 0)
+        //    item1.BackColor = Color.LightGray;
+
         ListViewItem.ListViewSubItem subItem;
         item1.SubItems.Clear();
 

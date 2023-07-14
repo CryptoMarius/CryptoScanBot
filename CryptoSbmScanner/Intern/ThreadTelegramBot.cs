@@ -2,6 +2,7 @@
 
 using CryptoSbmScanner.Context;
 using CryptoSbmScanner.Enums;
+using CryptoSbmScanner.Exchange;
 using CryptoSbmScanner.Model;
 
 using Dapper;
@@ -9,6 +10,7 @@ using Dapper;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace CryptoSbmScanner.Intern;
 
@@ -69,7 +71,7 @@ public class ThreadTelegramBot
     /// <param name="text"></param>
     async static public void SendMessage(string text)
     {
-        if (bot == null)
+        if (bot == null || text == "")
             return;
 
         try
@@ -85,6 +87,75 @@ public class ThreadTelegramBot
     }
 
 
+
+    async static public void SendSignal(CryptoSignal signal)
+    {
+        if (bot == null || signal == null)
+            return;
+
+        try
+        {
+            string text = "";
+            string href = "";
+            switch (GlobalData.Settings.General.TradingApp)
+            {
+                case CryptoTradingApp.Altrady:
+                    text = "Altrady";
+                    href = ExchangeHelper.GetAltradyRef(signal.Symbol, signal.Interval);
+                    break;
+                case CryptoTradingApp.Hypertrader:
+                    text = "Hypertrader";
+                    href = ExchangeHelper.GetHyperTraderRef(signal.Symbol, signal.Interval, true);
+                    break;
+            }
+
+
+            StringBuilder builder = new();
+            builder.Append(signal.Symbol.Name + " " + signal.Interval.Name + " ");
+            builder.Append(CandleTools.GetUnixDate(signal.Candle.OpenTime).ToLocalTime().ToString("dd-MMM HH:mm"));
+            builder.Append(" " + signal.StrategyText + "");
+            //builder.Append(" " + signal.SideText + "");
+            if (signal.Side == CryptoOrderSide.Buy)
+                builder.Append("<p style=\"color:#00FF00\">long</p>");
+            else
+                builder.Append("<p style=\"color:#FF0000\">short</p>");
+            builder.Append($" <a href=\"{href}\">{text}</a>");
+            builder.AppendLine();
+
+            builder.Append("Candle: open " + signal.Candle.Open.ToString0());
+            builder.Append(" high " + signal.Candle.High.ToString0());
+            builder.Append(" low " + signal.Candle.Low.ToString0());
+            builder.Append(" close " + signal.Candle.Close.ToString0());
+            builder.AppendLine();
+
+            builder.Append("Volume 24h" + signal.Symbol.Volume.ToString("N0"));
+            if (signal.CandlesWithZeroVolume > 0)
+                builder.Append(", candles with volume " + signal.CandlesWithZeroVolume.ToString());
+            builder.AppendLine();
+
+            builder.Append("Stoch: " + signal.StochOscillator?.ToString("N2"));
+            builder.Append(" Signal " + signal.StochSignal?.ToString("N2"));
+            builder.Append(" RSI " + signal.Rsi?.ToString("N2"));
+            builder.AppendLine();
+
+            builder.Append("BB: " + signal.BollingerBandsPercentage?.ToString("N2") + "%");
+            builder.Append(" low " + signal.BollingerBandsLowerBand?.ToString("N6"));
+            builder.Append(" high " + signal.BollingerBandsUpperBand?.ToString("N6"));
+            builder.AppendLine();
+
+
+            //await bot.SendDocumentAsync(
+            await bot.SendTextMessageAsync(GlobalData.Settings.Telegram.ChatId, builder.ToString(), parseMode: ParseMode.Html,
+                disableWebPagePreview: true);
+
+        }
+        catch (Exception error)
+        {
+            // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
+            GlobalData.Logger.Error(error);
+            GlobalData.AddTextToLogTab("\r\n" + "\r\n" + " error telegram thread(1)\r\n" + error.ToString());
+        }
+    }
 
     private static void StartBot(string arguments, StringBuilder stringbuilder)
     {
@@ -313,7 +384,7 @@ public class ThreadTelegramBot
         }
     }
 
-    private static void ShowProfits(string arguments, StringBuilder stringbuilder)
+    private static void ShowProfits(StringBuilder stringbuilder)
     {
         decimal sumInvested = 0;
         decimal sumProfit = 0;
@@ -415,10 +486,12 @@ public class ThreadTelegramBot
     {
         stringBuilder.AppendLine("status        show status bots");
 
+#if TRADEBOT
         stringBuilder.AppendLine("start         start trade bot");
         stringBuilder.AppendLine("stop          stop trade bot");
         stringBuilder.AppendLine("positions     show positions trade bot");
         stringBuilder.AppendLine("profits       show profits trade bot (today)");
+#endif
 #if BALANCING
         stringBuilder.AppendLine("balancestart  start balancing bot");
         stringBuilder.AppendLine("balancestop   stop balancing bot");
@@ -432,8 +505,9 @@ public class ThreadTelegramBot
 
         stringBuilder.AppendLine("value         show value BTC,BNB and ETH");
         stringBuilder.AppendLine("barometer     show barometer BTC/BNB/USDT");
-        stringBuilder.AppendLine("assets        show asset overview");
-
+#if TRADEBOT
+stringBuilder.AppendLine("assets        show asset overview");
+#endif
         stringBuilder.AppendLine("chatid        ChatId configuratie");
         stringBuilder.AppendLine("help          this stuff");
     }
@@ -441,7 +515,7 @@ public class ThreadTelegramBot
 
     public static async Task ExecuteAsync()
     {
-        return;
+        //return;
 
         // Bij het testen staat vaak de scanner aan, daatom bij sql telegram ff uit
 #if !SQLDATABASE
@@ -516,37 +590,44 @@ public class ThreadTelegramBot
                                             ShowStatus(command, stringBuilder);
                                         else if (command == "VALUE")
                                             ShowCoins(command, stringBuilder);
+#if TRADEBOT
                                         else if (command == "POSITIONS")
                                             Helper.ShowPositions(stringBuilder);
                                         else if (command == "PROFITS")
-                                            ShowProfits(arguments, stringBuilder);
-
+                                            ShowProfits(stringBuilder);
+#endif
                                         else if (command == "START")
                                             StartBot(arguments, stringBuilder);
                                         else if (command == "SIGNALSTART")
                                             StartBot("command signals", stringBuilder);
+#if TRADEBOT
                                         else if (command == "ADVICESTARTS")
                                             StopBot("command advice", stringBuilder);
                                         else if (command == "BALANCESTART")
                                             StartBot("command balancing", stringBuilder);
-
+#endif
                                         else if (command == "STOP")
                                             StopBot(arguments, stringBuilder);
                                         else if (command == "SIGNALSTOP")
                                             StopBot("command signals", stringBuilder);
+#if TRADEBOT
                                         else if (command == "ADVICESTOP")
                                             StopBot("command advice", stringBuilder);
                                         else if (command == "BALANCESTOP")
                                             StopBot("command balancing", stringBuilder);
-
+#endif
                                         else if (command == "BAROMETER")
                                             ShowBarometer(arguments, stringBuilder);
+#if BALANCING
                                         else if (command == "BALANCE")
                                             stringBuilder.Append(BalanceSymbolsAlgoritm.LastOverviewMessage);
+#endif
+#if TRADEBOT
                                         else if (command == "ASSETS")
                                         {
                                             //Helper.ShowAssets(stringBuilder, out decimal valueUsdt, out decimal valueBtc);
                                         }
+#endif
                                         else if (command == "TREND")
                                             ShowTrend(arguments, stringBuilder);
                                         else if (command == "HELP")
@@ -598,8 +679,8 @@ public class ThreadTelegramBot
             GlobalData.Logger.Error(error);
             GlobalData.AddTextToLogTab("\r\n" + "\r\n" + " error telegram thread(3)\r\n" + error.ToString());
         }
-        GlobalData.AddTextToLogTab("\r\n" + "\r\n TELEGRAM THREAD EXIT");
+       // GlobalData.AddTextToLogTab("\r\n" + "\r\n TELEGRAM THREAD EXIT");
 #endif
-    }
+                                    }
 
-}
+                            }
