@@ -77,9 +77,10 @@ public partial class FrmMain : Form
         GlobalData.LoadSettings();
 
 
-        ListViewSignalsConstructor(); // Partial class "constructor"
-        ListViewSymbolsConstructor(); // Partial class "constructor"
-        ListViewInformationConstructor(); // Partial class "constructor"
+        // Partial class "constructors"
+        ListViewSignalsConstructor();
+        ListViewSymbolsConstructor();
+        ListViewInformationConstructor();
         ListViewPositionsOpenConstructor();
         ListViewPositionsClosedConstructor();
 
@@ -92,13 +93,10 @@ public partial class FrmMain : Form
         backtestToolStripMenuItem.Visible = false;
         GlobalData.Settings.Trading.Active = false;
         tabControl.TabPages.Remove(tabPageDashBoard);
-        tabControl.TabPages.Remove(tabPagePositionsClosed);
         tabControl.TabPages.Remove(tabPagePositionsOpen);
+        tabControl.TabPages.Remove(tabPagePositionsClosed);
 #endif
 
-        // Experiment, alles beter dan helemaal niet geencrypt (via opensource is tevens een wassen neus)
-        //string x = Model.CryptoExchange.Encrypt("xxxx", false);
-        //string y = Model.CryptoExchange.Decrypt(x, false);
 
         CryptoDatabase.SetDatabaseDefaults();
 
@@ -830,17 +828,14 @@ public partial class FrmMain : Form
         switch (GlobalData.Settings.General.TradingApp)
         {
             case CryptoTradingApp.Altrady:
+                // Een poging om de externe browser (en het extra dialoog) te vermijden
                 href = ExchangeHelper.GetAltradyRef(symbol, interval);
-                // Een poging om de externe browser te vermijden
                 Uri uri = new(href);
                 _webViewAltradyRef.Source = uri;
-                //System.Diagnostics.Process.Start(href);
                 break;
             case CryptoTradingApp.Hypertrader:
                 href = ExchangeHelper.GetHyperTraderRef(symbol, interval, false);
-                System.Diagnostics.Process.Start("explorer.exe " + href);
-                //uri = new(href);
-                //_webViewAltradyRef.Source = uri;
+                System.Diagnostics.Process.Start(href);
                 break;
         }
     }
@@ -889,6 +884,9 @@ public partial class FrmMain : Form
             if (dialog.ShowDialog() != DialogResult.OK)
                 return;
 
+            // Deze instelling terugzetten naar de "default" indien het overeenkomt
+            if (GlobalData.Settings.General.ActivateExchange == dialog.NewExchange.Id)
+                GlobalData.Settings.General.ActivateExchange = 0;
             GlobalData.SaveSettings();
             GetReloadRelatedSettings(out string activeQuotes2);
 
@@ -902,14 +900,14 @@ public partial class FrmMain : Form
                     GlobalData.AddTextToLogTab("De exchange is aangepast (reload)!");
                 else if (reloadQuoteChange)
                     GlobalData.AddTextToLogTab("De lijst met quote's is aangepast (reload)!");
-                //await ScannerSession.Stop();
-                //var task = Task.Run(async () => await ScannerSession.Stop());
-                //var result = task.WaitAndUnwrapException();
                 AsyncContext.Run(ScannerSession.Stop);
 
                 GlobalData.Settings.General.Exchange = dialog.NewExchange;
                 GlobalData.Settings.General.ExchangeId = dialog.NewExchange.Id;
                 GlobalData.Settings.General.ExchangeName = dialog.NewExchange.Name;
+                // Deze instelling terugzetten naar de "default" indien het overeenkomt
+                if (GlobalData.Settings.General.ActivateExchange == dialog.NewExchange.Id)
+                    GlobalData.Settings.General.ActivateExchange = 0;
                 GlobalData.SaveSettings();
 
                 // Standaard timers e.d.
@@ -917,23 +915,6 @@ public partial class FrmMain : Form
 
                 if (reloadExchangeChange)
                 {
-                    // Wachten tot de ThreadLoadData klaar is (dit is weer erg quick en dirty!
-                    // Dat gaat problemen geven, na een ScannerSession.Stop() is deze Initializing
-                    //while (GlobalData.ApplicationStatus == CryptoApplicationStatus.Initializing)
-                    //{
-                    //    Thread.Sleep(250);
-                    //}
-
-
-                    // De inactieve exchange deactiveren (geheugen vrijgeven)
-                    // overbodig, zou via de symbollist moeten clearen
-                    //foreach (CryptoSymbol symbol in oldExchange.SymbolListName.Values.ToList())
-                    //{
-                    //    foreach (CryptoSymbolInterval symbolInterval in symbol.IntervalPeriodList.Values.ToList())
-                    //    {
-                    //        symbolInterval.c
-                    //    }
-                    //}
                     // Exchange: Symbols clearen
                     oldExchange.Clear();
 
@@ -1445,13 +1426,10 @@ public partial class FrmMain : Form
 
     private void BacktestToolStripMenuItem_Click(object sender, EventArgs e)
     {
-        /// TODO: Deze code verhuizen naar het dialoog of een subclass en 
-        /// als een property de BackTest settings meegeven
-        /// Of een extra class om de backtest code in onder te brengen...
-        /// In ieder geval niet zoals onderstaand, allemaal quick en dirty
-        /// (en waarschijnlijk werkt het niets eens meer! was een experiment)
-        /// Probleem is ook dat in de app de meldingen van de accounts door 
-        /// elkaar gaan lopen (extra tabsheet met resultaten lijkt me)?
+        /// TODO: Deze code verhuizen naar aparte class of het dialoog zelf?
+        /// Probleem: Door recente aanpassingen lopen de meldingen en accounts 
+        /// allemaal door elkaar (misschien een extra tabsheet met de resultaten?)
+        /// (waarschijnlijk werkt het niets eens meer! was tijdelijk experiment)
 
         try
         {
