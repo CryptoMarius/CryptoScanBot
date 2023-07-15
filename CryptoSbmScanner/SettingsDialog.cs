@@ -263,7 +263,8 @@ public partial class FrmSettings : Form
         EditBarometer04hBotMinimal.Minimum = -100;
         EditBarometer24hBotMinimal.Minimum = -100;
         EditAnalysisMinChangePercentage.Minimum = -100;
-        EditAnalysisMinEffectivePercentage.Minimum = -100;
+        EditAnalysisMinEffectivePercentage.Minimum = -1000;
+        EditAnalysisMaxEffectivePercentage.Maximum = +1000;
         EditStobMinimalTrend.Minimum = -1000;
 
         // ------------------------------------------------------------------------------
