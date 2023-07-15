@@ -59,7 +59,13 @@ public class ExchangeHelper
     {
         string[] AltradyInterval = new[] { "1", "2", "3", "5", "10", "15", "30", "60", "120", "240", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1" };
 
-        string code = GetApiInstance().GetAltradyCode();
+        ExchangeBase exchangeBase;
+        if (GlobalData.Settings.General.ActivateExchange > 0)
+            exchangeBase = GetExchangeInstance(GlobalData.Settings.General.ActivateExchange);
+        else
+            exchangeBase = GetApiInstance();
+
+        string code = exchangeBase.GetAltradyCode();
         string href = string.Format("https://app.altrady.com/d/{0}_{1}_{2}:{3}", 
             code, symbol.Quote, symbol.Base, AltradyInterval[(int)interval.IntervalPeriod]);
         return href;
@@ -69,8 +75,14 @@ public class ExchangeHelper
     {
         string[] HypertraderInterval = new[] { "1", "2", "3", "5", "10", "15", "30", "60", "120", "240", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1" };
 
+        ExchangeBase exchangeBase;
+        if (GlobalData.Settings.General.ActivateExchange > 0)
+            exchangeBase = GetExchangeInstance(GlobalData.Settings.General.ActivateExchange);
+        else
+            exchangeBase = GetApiInstance();
+
         string href;
-        string code = GetApiInstance().GetHyperTraderCode();
+        string code = exchangeBase.GetHyperTraderCode();
         if (htmlVersion)
             href = string.Format("http://www.ccscanner.nl/hypertrader/?e={0}&a={1}&b={2}&i={3}",
                 code, symbol.Base, symbol.Quote, HypertraderInterval[(int)interval.IntervalPeriod]);
@@ -85,7 +97,13 @@ public class ExchangeHelper
     {
         string[] TradingViewInterval = new[] { "1", "2", "3", "5", "10", "15", "30", "60", "120", "240", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1" };
 
-        string code = GetApiInstance().GetTradingViewCode();
+        ExchangeBase exchangeBase;
+        if (GlobalData.Settings.General.ActivateExchange > 0)
+            exchangeBase = GetExchangeInstance(GlobalData.Settings.General.ActivateExchange);
+        else
+            exchangeBase = GetApiInstance();
+
+        string code = exchangeBase.GetTradingViewCode();
         string href = string.Format("https://www.tradingview.com/chart/?symbol={0}:{1}&interval={2}",
             code, symbol.Name, TradingViewInterval[(int)interval.IntervalPeriod]);
         return href;

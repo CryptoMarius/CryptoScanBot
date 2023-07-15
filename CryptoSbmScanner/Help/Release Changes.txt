@@ -1,18 +1,33 @@
 Mis je iets in onderstaande bevindingen/todo's of toekomstige todo's, geef het AUB aan want dan is wat we besproken hebben ergens tussen wal en schip gevallen...
 
-TODO exchanges
+
+Ik heb het hieronder over traden/trading. Deze module komt op een later tijdstip beschikbaar, want vanwege het vertrek van Binance 
+moet het aangepast worden zodat het op een andere exchange ook werkt en door het wegvallen van de OCO en stoplimit orders zijn een 
+probleem. Deze module (in de vorm van wat instellingen, dashboard en openstaande en gesloten posities) komt later gratis beschikbaar.
+
+
+TODO na de release:
+- De documentatie bijwerken
+- Telegram - uitleggen hoe je dit precies moet configureren (stappenplan)
+- Trading - uitleggen papertrading bot (achterliggende gedachtes uitleggen)
+- Trading - uitleggen wat de open en gesloten posities precies zijn (per kolom)
+
+TODO voor de release:
+- Kukoin Spot - URL voor activeren in Altrady, Hypertrader en Tradingview
 - ByBit Spot - URL voor activeren in Altrady, Hypertrader en Tradingview!
+- Code voor activeren symbol in Hypertrader en Bybit enzovoort (naar de exchange code)
+  hypertrader://bybit/avax-usdt/3
+  http://www.ccscanner.nl/hypertrader/?e=bybits&a=BTC&b=USDT&i=1
+
+TODO exchanges
 - ByBit Spot - Trading: userdate stream implementeren (detectie van trade)
 - ByBit Spot - Trading: ophalen trades implementeren
 - ByBit Spot - Trading: ophalen assets implementeren
 - ByBit Spot - Trading: plaatsen van de orders (oco/buy/sell/stoplimit etc) - De OCO zou Binance specifiek kunnen zijn?
 - ByBit Futures - Trading: userdate stream implementeren (detectie van trade)
-- ByBit Futures - Uitzoeken wat dit inhoud en of we de bestaande bybit stuff kunnen hergebruiken
-- ByBit Futures - Indirect ook de vraag of we geautomatiseerd short kunnen gaan (met leverage=1)
-- ByBit Futures - URL voor activeren in Altrady, Hypertrader en Tradingview!
+- ByBit Futures - Kunnen we geautomatiseerd long/short gaan (met leverage=1)
 
-Uitgesteld (de api is traag en teleurstellend)
-- Kukoin Spot - URL voor activeren in Altrady, Hypertrader en Tradingview
+De ondersteuning van de Kucoin exchange is uitgesteld (want de price- en klineticker geven heftige problemen)
 - Kukoin Spot - Scanner: de exchange informatie (symbol informatie) ophalen
 - Kukoin Spot - Scanner: 1m candle stream informatie implementeren
 - Kukoin Spot - Scanner: historische klines informatie (candle informatie) ophalen
@@ -24,20 +39,18 @@ Uitgesteld (de api is traag en teleurstellend)
 - Kukoin Spot - Trading: plaatsen van de orders (oco/buy/sell/stoplimit etc) - De OCO zou Binance specifiek kunnen zijn?
 
 
-TODO voor de release:
-- Code voor activeren symbol in Hypertrader en Bybit enzovoort (naar de exchange code)
-hypertrader://bybit/avax-usdt/3
-http://www.ccscanner.nl/hypertrader/?e=bybits&a=BTC&b=USDT&i=1
+--------------------------  Altrady app |  Altrady web  | Hypertrader app | Hypertrader web
+Binance                       okay      |     okay      |   werkt niet?   |   okay via cc         HT blijft ook hangen met 100% cpu sessies
+Bybit future                  okay      |     okay      |   werkt niet?   |   okay via cc         HT blijft ook hangen met 100% cpu sessies
+Bybit spot                    okay      |     okay      |                 |
+Kucoin                                  |               |                 |
 
-- Ondersteuning van andere exchanges (eerst Bybit Spot, daarna Bybit futures en daarna Kucoin)
-- Uitzoeken wat die N-1 betekend (met name voro de prijs, wat is het, hoe voorkom je het)
-- Telegram - uitleggen hoe je dit precies moet configureren (stappenplan)
-- Trading - uitleggen papertrading bot (achterliggende gedachtes uitleggen)
-- Trading - uitleggen wat de open en gesloten posities precies zijn (per kolom)
-- Voor STOBB de minimale trend controleren voor de CC manier (dit is een nieuwe instelling, maar die wordt nog niet ingezet op dit moment)
 
 
 Openstaande punten/bevindingen/todo's:
+- Uitzoeken wat de N-1 betekend (met name voor de prijs, wat is het probleem, hoe voorkom je het)
+- De oneven regels in de grids een lichtgrijs achtergrond kleurtje geven
+- Trading: De STOBB heeft nu een minimale trend maar dat is een probleem bij het doen van een short positie
 - Trading: Uitzoeken voor iemand in de groep, de backtest emulator aanpassen zodat het (pas) bij een psar wissel instapt - is er nog niet van gekomen, sorry!
 - Scanner/Trader: Een dashboard introduceren, totaal aantal signalen afgelopen dag/week, indeling per categorie, short/long
   Trading: Totaal geinvesteerd, returned, gemiddelde profit, de uitschieters (max), de tegenvallers (min).
@@ -71,7 +84,12 @@ Openstaande punten/bevindingen/todo's:
 
 
 
-xx-xx-2023 1.8.0 (een gedeeltelijk hiervan zit al in de 1.7.2 vanwege de laatste hotfix <*>)
+15-07-2023 1.8.0 (een gedeeltelijk hiervan zit al in de 1.7.2 vanwege de laatste hotfix <*>)
+- Ondersteuning Bybit Spot
+- Ondersteuning Bybit Futures
+- Een extra instelling waarmee je kan aangeven welke Exchange je wilt openen. De bedoeling hiervan is dat er meldingen genereerd worden op bijvoorbeeld
+  Binance maar dat je dan via een dubbelklik naar de munt gaat op een andere exchange (bijvoorbeeld Kucoin). Er is wel een blacklist nodig om het 
+  verschil in de ondersteunde munten van Binance en Kucoin glad te poetsen zodat je geen meldingen krijgt van munten die niet bestaan op Kucoin.
 - Scanner: Telegram meer details toevoegen en inclusief een link naar de exchange
 - De extra stategien (allemaal interne experimenten niet geschikt voor publicatie) verbergen in de release (via een ifdefje)
 - Via een opstartparameter kun je de juiste exchange activeren (let op de quotes en casing!)
@@ -79,6 +97,7 @@ xx-xx-2023 1.8.0 (een gedeeltelijk hiervan zit al in de 1.7.2 vanwege de laatste
   CryptoSbmScanner.exe -e "Bybit Spot"
   CryptoSbmScanner.exe -e "Bybit Futures"
   CryptoSbmScanner.exe -e Kucoin
+- Voor STOBB de minimale trend controleren voor de CC manier (een nieuwe instelling) (direct een probleem bij short posities)
 - Het Volume van Bybit staat in BASE volume in plaats van QUOTE volume!
 - Bugfix Bybit 1m kline ticker (symbol wordt geprefixed door het interval, rare jongens)
 - De white en blacklist functionaliteit aangepast, de whitelist werkte helemaal niet zo te zien

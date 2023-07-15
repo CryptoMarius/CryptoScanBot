@@ -277,6 +277,7 @@ public partial class FrmSettings : Form
 
         EditBlackTheming.Checked = settings.General.BlackTheming;
         EditTradingApp.SelectedIndex = (int)settings.General.TradingApp;
+        EditActivateExchange.SelectedIndex = (int)settings.General.ActivateExchange;
         EditDoubleClickAction.SelectedIndex = (int)settings.General.DoubleClickAction;
         EditTrendCalculationMethod.SelectedIndex = (int)settings.General.TrendCalculationMethod;
         EditSoundHeartBeatMinutes.Value = settings.General.SoundHeartBeatMinutes;
@@ -549,6 +550,7 @@ public partial class FrmSettings : Form
         //settings.General.ExchangeName = settings.General.Exchange.Name;
         settings.General.BlackTheming = EditBlackTheming.Checked;
         settings.General.TradingApp = (CryptoTradingApp)EditTradingApp.SelectedIndex;
+        settings.General.ActivateExchange = EditActivateExchange.SelectedIndex;
         settings.General.DoubleClickAction = (DoubleClickAction)EditDoubleClickAction.SelectedIndex;
         settings.General.TrendCalculationMethod = (CryptoTrendCalculationMethod)EditTrendCalculationMethod.SelectedIndex;
         settings.General.SoundHeartBeatMinutes = (int)EditSoundHeartBeatMinutes.Value;

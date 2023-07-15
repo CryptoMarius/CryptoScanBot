@@ -579,7 +579,7 @@
             debugDumpToolStripMenuItem1.Name = "debugDumpToolStripMenuItem1";
             debugDumpToolStripMenuItem1.Size = new Size(147, 22);
             debugDumpToolStripMenuItem1.Text = "Debug-Dump";
-            debugDumpToolStripMenuItem1.Click += debugDumpToolStripMenuItem1Async_Click;
+            debugDumpToolStripMenuItem1.Click += DebugDumpToolStripMenuItem1Async_Click;
             // 
             // dashBoardControl1
             // 

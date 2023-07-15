@@ -44,6 +44,7 @@ public class SettingsGeneral
 
     public bool BlackTheming { get; set; } = false;
     public CryptoTradingApp TradingApp { get; set; } = CryptoTradingApp.Altrady;
+    public int ActivateExchange { get; set; } = 0;
     public bool SoundTradeNotification { get; set; }
     public string SelectedBarometerQuote { get; set; } = "BUSD";
     public string SelectedBarometerInterval { get; set; } = "1H";

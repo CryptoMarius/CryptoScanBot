@@ -215,7 +215,7 @@ public partial class FrmMain
             });
 
 
-            ClosedPositionsHaveChangedEvent(text);
+            ClosedPositionsHaveChangedEvent();
         }
     }
 
@@ -435,7 +435,7 @@ public partial class FrmMain
     //}
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-    private async void debugDumpToolStripMenuItem1Async_Click(object sender, EventArgs e)
+    private async void DebugDumpToolStripMenuItem1Async_Click(object sender, EventArgs e)
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
     {
 #if TRADEBOT

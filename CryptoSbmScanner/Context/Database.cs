@@ -550,6 +550,7 @@ public class CryptoDatabase : IDisposable
 
 
             // De ondersteunde exchanges toevoegen
+            // NB: In de code wordt aannames van de ID gedaan dus gaarne niet knutselen met volgorde
             using var transaction = connection.Connection.BeginTransaction();
             Model.CryptoExchange exchange = new() { Name = "Binance" };
             connection.Connection.Insert(exchange, transaction);
@@ -560,6 +561,7 @@ public class CryptoDatabase : IDisposable
             exchange = new() { Name = "Bybit Futures" };
             connection.Connection.Insert(exchange, transaction);
 
+            // Kucoin wordt verderop in het proces verwijderd (totdat we de exchange onder de knie hebben)
             exchange = new() { Name = "Kucoin" };
             connection.Connection.Insert(exchange, transaction);
             transaction.Commit();

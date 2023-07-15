@@ -164,7 +164,7 @@ public partial class FrmMain
     }
 
 
-    private void ClosedPositionsHaveChangedEvent(string text, bool extraLineFeed = false)
+    private void ClosedPositionsHaveChangedEvent()
     {
         if (components != null && IsHandleCreated) // && (!ProgramExit) && 
         {

@@ -48,9 +48,9 @@ public partial class FrmMain
 
         TimerClearEvents = new()
         {
+            Enabled = true,
             Interval = 1 * 60 * 1000,
         };
-        TimerClearEvents.Enabled = true;
         TimerClearEvents.Tick += TimerClearOldSignals_Tick;
 
         ListViewSignalsInitColumns();

@@ -18,8 +18,9 @@ public class SignalCreate
     public List<CryptoCandle> history = null;
 
     // To avoid duplicate signals
-    static private DateTime? AnalyseNotificationClean { get; set;  } = null;
-    static public Dictionary<string, long> AnalyseNotificationList { get; } = new();
+    //static private DateTime? AnalyseNotificationClean { get; set;  } = null;
+    // Lijkt overbodig te zijn tegenwoordig?
+    //static public Dictionary<string, long> AnalyseNotificationList { get; } = new();
 
     public SignalCreate(CryptoSymbol symbol, CryptoInterval interval)
     {
@@ -87,7 +88,7 @@ public class SignalCreate
     }
 
 
-    private bool CheckAdditionalAlarmProperties(CryptoSignal signal, out string reaction)
+    private static bool CheckAdditionalAlarmProperties(CryptoSignal signal, out string reaction)
     {
         // --------------------------------------------------------------------------------
         // Van de laatste 60 candles mogen er maximaal 16 geen volume hebben.
@@ -143,32 +144,32 @@ public class SignalCreate
     }
 
 
-    private static void AnalyseNotificationClearOutOld()
-    {
-        // 1x in de 15 minuten de notificatie lijst cleanen is wel genoeg
-        if (AnalyseNotificationClean == null || AnalyseNotificationClean < DateTime.UtcNow)
-        {
-            // Next clean date
-            AnalyseNotificationClean = DateTime.UtcNow.AddMinutes(15);
+    //private static void AnalyseNotificationClearOutOld()
+    //{
+    //    // 1x in de 15 minuten de notificatie lijst cleanen is wel genoeg
+    //    if (AnalyseNotificationClean == null || AnalyseNotificationClean < DateTime.UtcNow)
+    //    {
+    //        // Next clean date
+    //        AnalyseNotificationClean = DateTime.UtcNow.AddMinutes(15);
 
-            Monitor.Enter(AnalyseNotificationList);
-            try
-            {
-                // De lijst kleiner maken
-                long someTimeAgo = CandleTools.GetUnixTime(DateTime.UtcNow.AddHours(-2), 60);
-                for (int i = AnalyseNotificationList.Count - 1; i >= 0; i--)
-                {
-                    KeyValuePair<string, long> item2 = AnalyseNotificationList.ElementAt(i);
-                    if (item2.Value < someTimeAgo)
-                        AnalyseNotificationList.Remove(item2.Key);
-                }
-            }
-            finally
-            {
-                Monitor.Exit(AnalyseNotificationList);
-            }
-        }
-    }
+    //        Monitor.Enter(AnalyseNotificationList);
+    //        try
+    //        {
+    //            // De lijst kleiner maken
+    //            long someTimeAgo = CandleTools.GetUnixTime(DateTime.UtcNow.AddHours(-2), 60);
+    //            for (int i = AnalyseNotificationList.Count - 1; i >= 0; i--)
+    //            {
+    //                KeyValuePair<string, long> item2 = AnalyseNotificationList.ElementAt(i);
+    //                if (item2.Value < someTimeAgo)
+    //                    AnalyseNotificationList.Remove(item2.Key);
+    //            }
+    //        }
+    //        finally
+    //        {
+    //            Monitor.Exit(AnalyseNotificationList);
+    //        }
+    //    }
+    //}
 
 
     void CalculateTrendStuff(CryptoSignal signal)
@@ -284,91 +285,6 @@ public class SignalCreate
             return 100.0 * (diff / min);
         else
             return 0;
-    }
-
-
-    private void SendSignal(SignalCreateBase algorithm, CryptoSignal signal, string eventText)
-    {
-        // Hebben we deze al eerder gemeld?
-        if (!signal.BackTest)
-        {
-            AnalyseNotificationClearOutOld();
-
-            string notification =
-                signal.Symbol.Name + "-" +
-                signal.Interval.Name + "-" +
-                signal.Strategy.ToString() + "-" +
-                signal.Side.ToString() + "-" +
-                signal.Candle.Date.ToLocalTime();
-
-            Monitor.Enter(AnalyseNotificationList);
-            try
-            {
-                if (AnalyseNotificationList.ContainsKey(notification))
-                    return;
-
-                AnalyseNotificationList.Add(notification, signal.EventTime);
-            }
-            finally
-            {
-                Monitor.Exit(AnalyseNotificationList);
-            }
-        }
-
-
-        CalculateTrendStuff(signal); // CPU heavy
-        signal.EventText = eventText.Trim();
-
-        // die willen we nu juist  (zal wel weer andere problemen geven)
-        //if (!signal.BackTest)
-        //{
-        try
-        {
-            // We gebruiken (nog) geen exit signalen, echter dat zou best realistisch zijn voor de toekomst
-            if (!signal.IsInvalid && GlobalData.Settings.Trading.Active && signal.Side == CryptoOrderSide.Buy) //|| (Alarm.Mode == SignalMode.modeSell) 
-            {
-                if (TradingConfig.MonitorInterval.ContainsKey(signal.Interval.IntervalPeriod))
-                {
-                    if (TradingConfig.Config[signal.Side].MonitorStrategy.ContainsKey(signal.Strategy))
-                    {
-                        // Bied het aan het monitorings systeem (indien aangevinkt)
-                        // Intern willen we een nieuwer SBM signaal niet direct vervangen
-                        // (anders krijgen we continue nieuwe signalen en is de instap weg)
-                        // Bij STOBB wil je echt alleen het laatste signaal gebruiken..
-
-                        CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(Interval.IntervalPeriod);
-                        if (symbolInterval.Signal == null || symbolInterval.Signal?.EventTime != signal.EventTime)
-                        {
-                            if (symbolInterval.Signal == null || algorithm.ReplaceSignal)
-                                symbolInterval.Signal = signal;
-                        }
-                    }
-                }
-            }
-
-            // Signal naar database wegschrijven (niet noodzakelijk, we doen er achteraf niets mee)
-            if (!signal.BackTest)
-            {
-                using CryptoDatabase databaseThread = new();
-                databaseThread.Open();
-                using (var transaction = databaseThread.BeginTransaction())
-                {
-                    databaseThread.Connection.Insert<CryptoSignal>(signal, transaction);
-                    transaction.Commit();
-                }
-            }
-
-        }
-        catch (Exception error)
-        {
-            GlobalData.Logger.Error(error);
-            GlobalData.AddTextToLogTab("");
-            GlobalData.AddTextToLogTab(error.ToString(), true);
-        }
-        //}
-
-        GlobalData.SignalEvent?.Invoke(signal);
-        return;
     }
 
 
@@ -504,7 +420,7 @@ public class SignalCreate
         }
 
 
-        // Extra controles toepassen en het signaal "afkeuren" (maar toch laten zien) - via de info flag
+        // Extra controles toepassen en het signaal "afkeuren" (maar toch laten zien)
         if (!algorithm.AdditionalChecks(Candle, out response))
         {
             eventText += " " + response;
@@ -613,43 +529,138 @@ public class SignalCreate
             }
         }
 
-
-        // Zoveel voegt dit ook weer niet toe
-        if (GlobalData.Settings.General.ShowFluxIndicator5m)
-        {
-            GetFluxIndcator(Symbol, out int fluxOverSold, out int _);
-            signal.FluxIndicator5m = fluxOverSold;
-        }
-
-
-        // Voor de SignalSlopesTurning* een variabele zetten of 
-        // clearen zodat dit signaal niet om de x candles binnenkomt.
-        // mhja, nog eens bedenken of we deze strategien willen publiseren....
-        CryptoSymbolInterval SymbolInterval = Symbol.GetSymbolInterval(Interval.IntervalPeriod);
-        switch (signal.Strategy)
-        {
-            case CryptoSignalStrategy.Sbm1:
-            case CryptoSignalStrategy.Sbm2:
-            case CryptoSignalStrategy.Sbm3:
-            case CryptoSignalStrategy.Sbm4:
-            case CryptoSignalStrategy.Stobb:
-                if (signal.Side == CryptoOrderSide.Buy)
-                    SymbolInterval.LastStobbOrdSbmDate = signal.OpenDate;
-                break;
-
-            case CryptoSignalStrategy.SlopeSma20:
-            case CryptoSignalStrategy.SlopeEma20:
-            case CryptoSignalStrategy.SlopeSma50:
-            case CryptoSignalStrategy.SlopeEma50:
-                SymbolInterval.LastStobbOrdSbmDate = null;
-                break;
-        }
-
-
         if (!GlobalData.Settings.General.ShowInvalidSignals && signal.IsInvalid)
             return false;
 
-        SendSignal(algorithm, signal, eventText);
+
+
+        // Iets wat ik wel eens gebruikt als ik trade
+        if (GlobalData.Settings.General.ShowFluxIndicator5m)
+        {
+            GetFluxIndcator(Symbol, out int fluxOverSold, out int fluxOverBought);
+            if (signal.Side == CryptoOrderSide.Buy)
+                signal.FluxIndicator5m = fluxOverSold;
+            else
+                signal.FluxIndicator5m = fluxOverBought;
+        }
+
+
+#if TRADEBOT
+        // Nog eens nagaan wat we hiermee willen, nu gebeurd er niets mee
+        //// Voor de SignalSlopesTurning* een variabele zetten of 
+        //// clearen zodat dit signaal niet om de x candles binnenkomt.
+        //// mhja, nog eens bedenken of we deze strategien willen publiseren....
+        //CryptoSymbolInterval SymbolInterval = Symbol.GetSymbolInterval(Interval.IntervalPeriod);
+        //switch (signal.Strategy)
+        //{
+        //    case CryptoSignalStrategy.Sbm1:
+        //    case CryptoSignalStrategy.Sbm2:
+        //    case CryptoSignalStrategy.Sbm3:
+        //    case CryptoSignalStrategy.Sbm4:
+        //    case CryptoSignalStrategy.Stobb:
+        //        if (signal.Side == CryptoOrderSide.Buy)
+        //            SymbolInterval.LastStobbOrdSbmDate = signal.OpenDate;
+        //        break;
+
+        //    case CryptoSignalStrategy.SlopeSma20:
+        //    case CryptoSignalStrategy.SlopeEma20:
+        //    case CryptoSignalStrategy.SlopeSma50:
+        //    case CryptoSignalStrategy.SlopeEma50:
+        //        SymbolInterval.LastStobbOrdSbmDate = null;
+        //        break;
+        //}
+#endif
+
+
+        // Lijkt overbodig te zijn tegenwoordig?
+        //// Hebben we deze al eerder gemeld?
+        //if (!signal.BackTest)
+        //{
+        //    AnalyseNotificationClearOutOld();
+
+        //    string notification =
+        //        signal.Symbol.Name + "-" +
+        //        signal.Interval.Name + "-" +
+        //        signal.Strategy.ToString() + "-" +
+        //        signal.Side.ToString() + "-" +
+        //        signal.Candle.Date.ToLocalTime();
+
+        //    Monitor.Enter(AnalyseNotificationList);
+        //    try
+        //    {
+        //        if (AnalyseNotificationList.ContainsKey(notification))
+        //        {
+        //            // Is deze nog nodig?
+        //            GlobalData.AddTextToLogTab("Duplicaat melding settings " + notification);
+        //            return false;
+        //        }
+
+        //        AnalyseNotificationList.Add(notification, signal.EventTime);
+        //    }
+        //    finally
+        //    {
+        //        Monitor.Exit(AnalyseNotificationList);
+        //    }
+        //}
+
+
+        // Bereken de trend, dat is tamelijk CPU heavy en daarom staat deze controle op het einde
+        CalculateTrendStuff(signal); 
+        signal.EventText = eventText.Trim();
+
+        // Extra controles toepassen en het signaal "afkeuren" (maar toch laten zien)
+        if ((decimal)signal.TrendPercentage < GlobalData.Settings.Signal.StobMinimalTrend)
+        {
+            eventText += " trend < minimale gewenste trend";
+            signal.IsInvalid = true;
+        }
+        if (!GlobalData.Settings.General.ShowInvalidSignals && signal.IsInvalid)
+            return false;
+
+
+        try
+        {
+            // Bied het aan het monitorings systeem (indien aangevinkt) 
+            // (lagere intervallen hebben hogere prioriteit - via EventTime, klopt dat?)
+            // We gebruiken (nog) geen exit signalen, echter dat zou best realistisch zijn voor de toekomst
+            if (!signal.IsInvalid && GlobalData.Settings.Trading.Active && signal.Side == CryptoOrderSide.Buy) //|| (signal.Side == CryptoOrderSide.Sell) 
+            {
+                if (TradingConfig.MonitorInterval.ContainsKey(signal.Interval.IntervalPeriod))
+                {
+                    if (TradingConfig.Config[signal.Side].MonitorStrategy.ContainsKey(signal.Strategy))
+                    {
+                        CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(Interval.IntervalPeriod);
+                        if (symbolInterval.Signal == null || symbolInterval.Signal?.EventTime != signal.EventTime)
+                        {
+                            if (symbolInterval.Signal == null || algorithm.ReplaceSignal)
+                                symbolInterval.Signal = signal;
+                        }
+                    }
+                }
+            }
+
+            // Signal naar database wegschrijven (niet echt noodzakelijk, we doen er later niets mee)
+            if (!signal.BackTest)
+            {
+                using CryptoDatabase databaseThread = new();
+                databaseThread.Open();
+                using var transaction = databaseThread.BeginTransaction();
+                {
+                    databaseThread.Connection.Insert<CryptoSignal>(signal, transaction);
+                    transaction.Commit();
+                }
+            }
+
+            GlobalData.SignalEvent?.Invoke(signal);
+        }
+        catch (Exception error)
+        {
+            GlobalData.Logger.Error(error);
+            GlobalData.AddTextToLogTab("");
+            GlobalData.AddTextToLogTab(error.ToString(), true);
+            return false;
+        }
+
         return true;
     }
 

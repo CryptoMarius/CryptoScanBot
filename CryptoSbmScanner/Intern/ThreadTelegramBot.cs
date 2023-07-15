@@ -386,6 +386,7 @@ public class ThreadTelegramBot
         }
     }
 
+#if TRADEBOT
     private static void ShowProfits(StringBuilder stringbuilder)
     {
         decimal sumInvested = 0;
@@ -411,7 +412,7 @@ public class ThreadTelegramBot
             stringbuilder.AppendLine(string.Format("Invested {0:N2}, profits {1:N2}, {2:N2}%", sumInvested, sumProfit, percentage));
         }
     }
-
+#endif
 
     private static void ShowStatus(string arguments, StringBuilder stringbuilder)
     {
