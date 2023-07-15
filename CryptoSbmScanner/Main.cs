@@ -924,6 +924,7 @@ public partial class FrmMain : Form
                 }
 
                 ExchangeHelper.ExchangeDefaults();
+                ScannerSession. Reset();
 
                 // Schedule een reload of data
                 ScannerSession.ScheduleRefresh();
@@ -955,7 +956,7 @@ public partial class FrmMain : Form
         //this.Text = "";
         TextBoxLog.Clear();
         createdSignalCount = 0;
-        ListViewSignalsMenuItemClearSignals_Click(null, null);
+        //ListViewSignalsMenuItemClearSignals_Click(null, null);
 
         PositionMonitor.AnalyseCount = 0;
         ExchangeHelper.KLineTicker.Reset();
