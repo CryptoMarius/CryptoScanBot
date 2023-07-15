@@ -241,16 +241,15 @@ public partial class FrmMain : Form
 
     private void OnPowerChange(object s, PowerModeChangedEventArgs e)
     {
-        GlobalData.AddTextToLogTab("Debug: OnPowerChange");
         switch (e.Mode)
         {
             case PowerModes.Resume:
-                GlobalData.AddTextToLogTab("PowerModes.Resume");
+                GlobalData.AddTextToLogTab("PowerMode - Resume");
                 ScannerSession.Start(true);
                 //AsyncContext.Run(ScannerSession.Start(true));
                 break;
             case PowerModes.Suspend:
-                GlobalData.AddTextToLogTab("PowerModes.Suspend");
+                GlobalData.AddTextToLogTab("PowerMode - Suspend");
                 this.SaveWindowLocation(false);
                 //Task.Run(async () => { await ScannerSession.Stop(); }).Wait();
                 AsyncContext.Run(ScannerSession.Stop);
@@ -900,9 +899,9 @@ public partial class FrmMain : Form
             {
                 GlobalData.AddTextToLogTab("");
                 if (reloadExchangeChange)
-                    GlobalData.AddTextToLogTab("Debug: De exchange is aangepast (reload)!");
+                    GlobalData.AddTextToLogTab("De exchange is aangepast (reload)!");
                 else if (reloadQuoteChange)
-                    GlobalData.AddTextToLogTab("Debug: De lijst met quote's is aangepast (reload)!");
+                    GlobalData.AddTextToLogTab("De lijst met quote's is aangepast (reload)!");
                 //await ScannerSession.Stop();
                 //var task = Task.Run(async () => await ScannerSession.Stop());
                 //var result = task.WaitAndUnwrapException();
