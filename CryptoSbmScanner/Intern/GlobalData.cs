@@ -181,6 +181,10 @@ static public class GlobalData
 
     static public void AddExchange(Model.CryptoExchange exchange)
     {
+        // Deze exchange kan nog niet ondersteund worden (vanwege price- en klineticker)
+        if (exchange.Name.Equals("Kucoin"))
+            return;
+
         if (!ExchangeListName.ContainsKey(exchange.Name))
         {
             ExchangeListId.Add(exchange.Id, exchange);
