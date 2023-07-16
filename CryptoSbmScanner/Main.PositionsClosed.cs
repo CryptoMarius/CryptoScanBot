@@ -353,7 +353,7 @@ public partial class FrmMain
             PositionTools.LoadPosition(databaseThread, position);
             await PositionTools.LoadTradesfromDatabaseAndExchange(databaseThread, position);
             PositionTools.CalculatePositionResultsViaTrades(databaseThread, position);
-            FillItemClosed(position, item, 0);
+            FillItemClosed(position, item);
 #endif
         }
 
@@ -377,7 +377,7 @@ public partial class FrmMain
             PositionTools.LoadPosition(databaseThread, position);
             await PositionTools.LoadTradesfromDatabaseAndExchange(databaseThread, position);
             PositionTools.CalculatePositionResultsViaTrades(databaseThread, position);
-            FillItemClosed(position, item, 0);
+            FillItemClosed(position, item);
 
             StringBuilder strings = new();
             PositionTools.DumpPosition(position, strings);

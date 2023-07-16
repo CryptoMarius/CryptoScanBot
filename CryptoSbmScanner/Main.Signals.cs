@@ -115,8 +115,6 @@ public partial class FrmMain
     {
         item1.SubItems.Clear();
 
-        if (signal.ItemIndex % 1 > 0)
-            item1.BackColor = Color.LightGray;
         
         item1.Text = signal.OpenDate.ToLocalTime().ToString("yyyy-MM-dd HH:mm") + " - " + signal.OpenDate.AddSeconds(signal.Interval.Duration).ToLocalTime().ToString("HH:mm");
 
@@ -324,7 +322,7 @@ public partial class FrmMain
             else
                 item1.SubItems.Add("");
 
-                    }
+        }
     }
 
     private static ListViewItem AddSignalItem(CryptoSignal signal)
@@ -353,6 +351,12 @@ public partial class FrmMain
             }
 
             listViewSignals.Items.AddRange(range.ToArray());
+
+            foreach (ListViewItem item in listViewSignals.Items)
+            {
+                CryptoSignal signal = (CryptoSignal)item.Tag;
+                SetBackGroundColorsSignals(item, signal);
+            }
 
             // Deze redelijk kostbaar? (alles moet gecontroleerd worden)
             for (int i = 0; i <= listViewSignals.Columns.Count - 1; i++)
@@ -385,7 +389,6 @@ public partial class FrmMain
                 {
                     ListViewItem item = listViewSignals.Items[index];
                     CryptoSignal signal = (CryptoSignal)item.Tag;
-                    signal.ItemIndex = index;
 
                     DateTime expirationDate = signal.CloseDate.AddSeconds(GlobalData.Settings.General.RemoveSignalAfterxCandles * signal.Interval.Duration); // 15 candles further (display)
                     if (expirationDate < DateTime.UtcNow)
@@ -542,12 +545,57 @@ public partial class FrmMain
         Clipboard.SetText(text, TextDataFormat.UnicodeText);
     }
 
+    /// <summary>
+    /// Roulerend de regels een iets andere achtergrond kleur geven
+    /// </summary>
+    private void SetBackGroundColorsSignals(ListViewItem item, CryptoSignal signal)
+    {
+        // https://www.color-hex.com/color/d3d3d3
+
+        signal.ItemIndex = listViewSignals.Items.IndexOf(item);
+
+        Color veryLightGray = Color.FromArgb(0xf1, 0xf1, 0xf1);
+
+        if (signal.ItemIndex % 2 == 0)
+        {
+            if (item.BackColor == Color.White)
+                item.BackColor = veryLightGray;
+        }
+        else if (item.BackColor == veryLightGray)
+            item.BackColor = Color.White;
+
+        foreach (ListViewItem.ListViewSubItem subItem in item.SubItems)
+        {
+            if (signal.ItemIndex % 2 == 0)
+            {
+                if (subItem.BackColor == Color.White)
+                    subItem.BackColor = veryLightGray;
+            }
+            else if (subItem.BackColor == veryLightGray)
+                subItem.BackColor = Color.White;
+        }
+    }
+
     private void ListViewSignals_ColumnClick(object sender, ColumnClickEventArgs e)
     {
-        // Perform the sort with these new sort options.
-        ListViewColumnSorterSignal listViewColumnSorter = (ListViewColumnSorterSignal)listViewSignals.ListViewItemSorter;
-        listViewColumnSorter.ClickedOnColumn(e.Column);
-        listViewSignals.SetSortIcon(listViewColumnSorter.SortColumn, listViewColumnSorter.SortOrder);
-        listViewSignals.Sort();
+        listViewSignals.BeginUpdate();
+        try
+        {
+            // Perform the sort with these new sort options.
+            ListViewColumnSorterSignal listViewColumnSorter = (ListViewColumnSorterSignal)listViewSignals.ListViewItemSorter;
+            listViewColumnSorter.ClickedOnColumn(e.Column);
+            listViewSignals.SetSortIcon(listViewColumnSorter.SortColumn, listViewColumnSorter.SortOrder);
+            listViewSignals.Sort();
+
+            foreach (ListViewItem item in listViewSignals.Items)
+            {
+                CryptoSignal signal = (CryptoSignal)item.Tag;
+                SetBackGroundColorsSignals(item, signal);
+            }
+        }
+        finally
+        {
+            listViewSignals.EndUpdate();
+        }
     }
 }

@@ -1,7 +1,6 @@
 Mis je iets in onderstaande bevindingen/todo's of toekomstige todo's, geef het AUB aan want dan is wat we besproken hebben ergens tussen wal en schip gevallen...
 
 Openstaande punten/bevindingen/todo's:
-- De oneven regels in de grids een lichtgrijs achtergrond kleurtje geven
 - Trading: De STOBB heeft nu een minimale trend maar dat is een probleem bij het doen van een short positie
 - Trading: Uitzoeken voor iemand in de groep, de backtest emulator aanpassen zodat het (pas) bij een psar wissel instapt - is er nog niet van gekomen, sorry!
 - Scanner/Trader: Een dashboard introduceren, totaal aantal signalen afgelopen dag/week, indeling per categorie, short/long
@@ -57,6 +56,10 @@ De ondersteuning van de Kucoin exchange is uitgesteld (want de price- en klineti
 - Kukoin Spot - Scanner: kline ticker implementeren
 - Kukoin Spot - Scanner: price ticker implementeren
 - Kukoin Spot - Scanner: limieten (rate limits) ondersteunen
+
+xx-07-2023 1.8.1
+- De oneven regels in de grids een lichtgrijze achtergrond kleurtje geven
+
 
 16-07-2023 1.8.0 (een gedeeltelijk hiervan zit al in de 1.7.2 vanwege de laatste hotfix <*>)
 - Ondersteuning Bybit Spot
