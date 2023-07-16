@@ -58,21 +58,6 @@ public class Api : ExchangeBase
         await FetchCandles.ExecuteAsync();
     }
 
-    public override string GetAltradyCode()
-    {
-        return "BYBIF";
-    }
-
-    public override string GetHyperTraderCode()
-    {
-        return "bybit";
-    }
-
-    public override string GetTradingViewCode()
-    {
-        return "BYBIT";
-    }
-
 #if TRADEBOT
     //// Converteer de orderstatus van Exchange naar "intern"
     //public static CryptoOrderType LocalOrderType(SpotOrderType orderType)

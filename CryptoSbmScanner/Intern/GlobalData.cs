@@ -232,12 +232,28 @@ static public class GlobalData
             symbol.QuoteData = AddQuoteData(symbol.Quote);
 
 
+            // Niet de ideale wereld
+            int numberOfDecimalPlaces;
             string s = symbol.PriceTickSize.ToString0();
-            int numberOfDecimalPlaces = s.Length - 2;
+            int x = s.IndexOf('.');
+            if (x > 0)
+            {
+                s = s[(x + 1)..];
+                numberOfDecimalPlaces = s.Length;
+            }
+            else numberOfDecimalPlaces = 0;
             symbol.PriceDisplayFormat = "N" + numberOfDecimalPlaces.ToString();
 
+
+
             s = symbol.QuantityTickSize.ToString0();
-            numberOfDecimalPlaces = s.Length - 2;
+            x = s.IndexOf('.');
+            if (x > 0)
+            {
+                s = s[(x + 1)..];
+                numberOfDecimalPlaces = s.Length;
+            }
+            else numberOfDecimalPlaces = 0;
             symbol.QuantityDisplayFormat = "N" + numberOfDecimalPlaces.ToString();
             if (symbol.QuantityTickSize == 1.0m)
                 symbol.QuantityDisplayFormat = "N8";

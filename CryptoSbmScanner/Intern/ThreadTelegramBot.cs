@@ -97,17 +97,20 @@ public class ThreadTelegramBot
         try
         {
             string text = "";
-            string href = "";
+            (string Url, bool Execute) refInfo;
             switch (GlobalData.Settings.General.TradingApp)
             {
                 case CryptoTradingApp.Altrady:
                     text = "Altrady";
-                    href = ExchangeHelper.GetAltradyRef(signal.Symbol, signal.Interval);
+                    refInfo = ExchangeHelper.GetExternalRef(CryptoExternalUrlApp.Altrady, true, signal.Symbol, signal.Interval);
                     break;
                 case CryptoTradingApp.Hypertrader:
                     text = "Hypertrader";
-                    href = ExchangeHelper.GetHyperTraderRef(signal.Symbol, signal.Interval, true);
+                    refInfo = ExchangeHelper.GetExternalRef(CryptoExternalUrlApp.Hypertrader, true, signal.Symbol, signal.Interval);
                     break;
+                default:
+                    return;
+
             }
 
 
@@ -121,7 +124,7 @@ public class ThreadTelegramBot
             //    builder.Append("<p style=\"color:#00FF00\">long</p>");
             //else
             //    builder.Append("<p style=\"color:#FF0000\">short</p>");
-            builder.Append($" <a href=\"{href}\">{text}</a>");
+            builder.Append($" <a href=\"{refInfo.Url}\">{text}</a>");
             builder.AppendLine();
 
             builder.Append("Candle: open " + signal.Candle.Open.ToString0());

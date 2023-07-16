@@ -48,6 +48,7 @@ public partial class FrmMain : Form
         Text = appName + " " + appVersion;
 
 
+
         // Om vanuit achtergrond threads iets te kunnen loggen of te doen
         GlobalData.PlaySound += new PlayMediaEvent(PlaySound);
         GlobalData.PlaySpeech += new PlayMediaEvent(PlaySpeech);
@@ -805,7 +806,7 @@ public partial class FrmMain : Form
 
     }
 
-    private async Task InitializeAltradyWebbrowser(Microsoft.Web.WebView2.WinForms.WebView2 webView2)
+    private static async Task InitializeAltradyWebbrowser(Microsoft.Web.WebView2.WinForms.WebView2 webView2)
     {
         // https://stackoverflow.com/questions/63404822/how-to-disable-cors-in-wpf-webview2
 
@@ -824,20 +825,23 @@ public partial class FrmMain : Form
             await InitializeAltradyWebbrowser(_webViewAltradyRef);
         }
 
-        string href;
+        (string Url, bool Execute) refInfo;
         switch (GlobalData.Settings.General.TradingApp)
         {
             case CryptoTradingApp.Altrady:
-                // Een poging om de externe browser (en het extra dialoog) te vermijden
-                href = ExchangeHelper.GetAltradyRef(symbol, interval);
-                Uri uri = new(href);
-                _webViewAltradyRef.Source = uri;
+                refInfo = ExchangeHelper.GetExternalRef(CryptoExternalUrlApp.Altrady, false, symbol, interval);
                 break;
             case CryptoTradingApp.Hypertrader:
-                href = ExchangeHelper.GetHyperTraderRef(symbol, interval, false);
-                System.Diagnostics.Process.Start(href);
+                refInfo = ExchangeHelper.GetExternalRef(CryptoExternalUrlApp.Hypertrader, false, symbol, interval);
                 break;
+            default:
+                return;
         }
+
+        if (refInfo.Execute)
+            System.Diagnostics.Process.Start(refInfo.Url);
+        else
+            _webViewAltradyRef.Source = new(refInfo.Url);
     }
 
 
@@ -905,9 +909,6 @@ public partial class FrmMain : Form
                 GlobalData.Settings.General.Exchange = dialog.NewExchange;
                 GlobalData.Settings.General.ExchangeId = dialog.NewExchange.Id;
                 GlobalData.Settings.General.ExchangeName = dialog.NewExchange.Name;
-                // Deze instelling terugzetten naar de "default" indien het overeenkomt
-                if (GlobalData.Settings.General.ActivateExchange == dialog.NewExchange.Id)
-                    GlobalData.Settings.General.ActivateExchange = 0;
                 GlobalData.SaveSettings();
 
                 // Standaard timers e.d.
@@ -924,8 +925,7 @@ public partial class FrmMain : Form
                 }
 
                 ExchangeHelper.ExchangeDefaults();
-                ScannerSession. Reset();
-
+                MainMenuClearAll_Click(null, null);
                 // Schedule een reload of data
                 ScannerSession.ScheduleRefresh();
             }
@@ -1158,9 +1158,11 @@ public partial class FrmMain : Form
         {
             if (exchange.SymbolListName.TryGetValue(symbolname, out CryptoSymbol symbol))
             {
-                var href = ExchangeHelper.GetTradingViewRef(symbol, interval);
-                Uri uri = new(href);
-                webViewTradingView.Source = uri;
+                (string Url, bool Execute) refInfo;
+#pragma warning disable IDE0042 // Deconstruct variable declaration
+                refInfo = ExchangeHelper.GetExternalRef(CryptoExternalUrlApp.TradingView, false, symbol, interval);
+#pragma warning restore IDE0042 // Deconstruct variable declaration
+                webViewTradingView.Source = new(refInfo.Url);
             }
         }
     }
@@ -1514,7 +1516,6 @@ public partial class FrmMain : Form
         }
 
     }
-
 
 
 }

@@ -139,4 +139,7 @@ public class CryptoSignal
     public int CandlesWithFlatPrice { get; set; } // De zogenaamde platte candles
     public int AboveBollingerBandsSma { get; set; } // Aantal candles die boven de BB.Sma uitkomen
     public int AboveBollingerBandsUpper { get; set; } // Aantal candles die boven de BB.Upper uitkomen
+
+    [Computed]
+    public int ItemIndex { get; set; }
 }

@@ -148,7 +148,7 @@ public class FetchTrades
         {
             // We hergebruiken de client binnen deze thread, teveel connecties opnenen resulteerd in een foutmelding:
             // "An operation on a socket could not be performed because the system lacked sufficient buffer space or because a queue was full"
-            using (BybitRestClient client = new())
+            using BybitRestClient client = new();
             {
                 while (true)
                 {

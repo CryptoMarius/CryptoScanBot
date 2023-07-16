@@ -43,6 +43,7 @@
             panelClient = new Panel();
             tabControl = new TabControl();
             tabPageDashBoard = new TabPage();
+            dashBoardControl1 = new DashBoardControl();
             tabPageSignals = new TabPage();
             tabPageBrowser = new TabPage();
             webViewTradingView = new Microsoft.Web.WebView2.WinForms.WebView2();
@@ -58,7 +59,6 @@
             listViewSignalsMenuItemActivateTradingViewInternal = new ToolStripMenuItem();
             listViewSignalsMenuItemActivateTradingViewExternal = new ToolStripMenuItem();
             listViewSignalsMenuItemShowTrendInformation = new ToolStripMenuItem();
-            listViewSignalsMenuItemClearSignals = new ToolStripMenuItem();
             listViewSignalsMenuItemCopySignal = new ToolStripMenuItem();
             panelTop = new Panel();
             labelBarometerDateValue = new Label();
@@ -71,7 +71,6 @@
             debugDumpToolStripMenuItem = new ToolStripMenuItem();
             contextMenuStripPositionsOpen = new ContextMenuStrip(components);
             debugDumpToolStripMenuItem1 = new ToolStripMenuItem();
-            dashBoardControl1 = new DashBoardControl();
             panelLeft.SuspendLayout();
             panel4.SuspendLayout();
             listBoxSymbolsMenuStrip.SuspendLayout();
@@ -324,6 +323,14 @@
             tabPageDashBoard.Text = "Dashboard";
             tabPageDashBoard.UseVisualStyleBackColor = true;
             // 
+            // dashBoardControl1
+            // 
+            dashBoardControl1.Dock = DockStyle.Fill;
+            dashBoardControl1.Location = new Point(3, 3);
+            dashBoardControl1.Name = "dashBoardControl1";
+            dashBoardControl1.Size = new Size(1528, 614);
+            dashBoardControl1.TabIndex = 0;
+            // 
             // tabPageSignals
             // 
             tabPageSignals.Location = new Point(4, 24);
@@ -431,9 +438,9 @@
             // 
             // listViewSignalsMenuStrip
             // 
-            listViewSignalsMenuStrip.Items.AddRange(new ToolStripItem[] { listViewSignalsMenuItemActivateTradingApp, listViewSignalsMenuItemActivateTradingApps, listViewSignalsMenuItemActivateTradingViewInternal, listViewSignalsMenuItemActivateTradingViewExternal, listViewSignalsMenuItemShowTrendInformation, listViewSignalsMenuItemClearSignals, listViewSignalsMenuItemCopySignal });
+            listViewSignalsMenuStrip.Items.AddRange(new ToolStripItem[] { listViewSignalsMenuItemActivateTradingApp, listViewSignalsMenuItemActivateTradingApps, listViewSignalsMenuItemActivateTradingViewInternal, listViewSignalsMenuItemActivateTradingViewExternal, listViewSignalsMenuItemShowTrendInformation, listViewSignalsMenuItemCopySignal });
             listViewSignalsMenuStrip.Name = "contextMenuStripSignals";
-            listViewSignalsMenuStrip.Size = new Size(215, 158);
+            listViewSignalsMenuStrip.Size = new Size(215, 136);
             // 
             // listViewSignalsMenuItemActivateTradingApp
             // 
@@ -469,13 +476,6 @@
             listViewSignalsMenuItemShowTrendInformation.Size = new Size(214, 22);
             listViewSignalsMenuItemShowTrendInformation.Text = "Trend informatie";
             listViewSignalsMenuItemShowTrendInformation.Click += MenuSignalsShowTrendInformation_Click;
-            // 
-            // listViewSignalsMenuItemClearSignals
-            // 
-            listViewSignalsMenuItemClearSignals.Name = "listViewSignalsMenuItemClearSignals";
-            listViewSignalsMenuItemClearSignals.Size = new Size(214, 22);
-            listViewSignalsMenuItemClearSignals.Text = "Clear";
-            listViewSignalsMenuItemClearSignals.Click += ListViewSignalsMenuItemClearSignals_Click;
             // 
             // listViewSignalsMenuItemCopySignal
             // 
@@ -552,19 +552,19 @@
             // 
             contextMenuStripPositionsClosed.Items.AddRange(new ToolStripItem[] { contextMenuStripPositionsOpenRecalculate, debugDumpToolStripMenuItem });
             contextMenuStripPositionsClosed.Name = "contextMenuStrip1";
-            contextMenuStripPositionsClosed.Size = new Size(149, 48);
+            contextMenuStripPositionsClosed.Size = new Size(181, 70);
             // 
             // contextMenuStripPositionsOpenRecalculate
             // 
             contextMenuStripPositionsOpenRecalculate.Name = "contextMenuStripPositionsOpenRecalculate";
-            contextMenuStripPositionsOpenRecalculate.Size = new Size(148, 22);
+            contextMenuStripPositionsOpenRecalculate.Size = new Size(180, 22);
             contextMenuStripPositionsOpenRecalculate.Text = "Herberekenen";
             contextMenuStripPositionsOpenRecalculate.Click += ContextMenuStripPositionsOpenRecalculateAsync_Click;
             // 
             // debugDumpToolStripMenuItem
             // 
             debugDumpToolStripMenuItem.Name = "debugDumpToolStripMenuItem";
-            debugDumpToolStripMenuItem.Size = new Size(148, 22);
+            debugDumpToolStripMenuItem.Size = new Size(180, 22);
             debugDumpToolStripMenuItem.Text = "Debug-Dump";
             debugDumpToolStripMenuItem.Click += DebugDumpToolStripMenuItemAsync_Click;
             // 
@@ -580,14 +580,6 @@
             debugDumpToolStripMenuItem1.Size = new Size(147, 22);
             debugDumpToolStripMenuItem1.Text = "Debug-Dump";
             debugDumpToolStripMenuItem1.Click += DebugDumpToolStripMenuItem1Async_Click;
-            // 
-            // dashBoardControl1
-            // 
-            dashBoardControl1.Dock = DockStyle.Fill;
-            dashBoardControl1.Location = new Point(3, 3);
-            dashBoardControl1.Name = "dashBoardControl1";
-            dashBoardControl1.Size = new Size(1528, 614);
-            dashBoardControl1.TabIndex = 0;
             // 
             // FrmMain
             // 
@@ -642,7 +634,6 @@
         private ToolStripMenuItem ToolStripMenuItemRefresh;
         private ToolStripMenuItem clearMenusToolStripMenuItem;
         private ContextMenuStrip listViewSignalsMenuStrip;
-        private ToolStripMenuItem listViewSignalsMenuItemClearSignals;
         private ToolStripMenuItem listViewSignalsMenuItemActivateTradingApp;
         private ToolStripMenuItem listViewSignalsMenuItemActivateTradingViewInternal;
         private ToolStripMenuItem listViewSignalsMenuItemActivateTradingApps;

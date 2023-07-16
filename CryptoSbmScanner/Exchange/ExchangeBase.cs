@@ -16,8 +16,4 @@ public abstract class ExchangeBase
     public abstract Task FetchTradesAsync(CryptoTradeAccount tradeAccount, CryptoSymbol symbol);
 #endif
 
-    // De specifieke code voor de exchange teruggeven
-    public abstract string GetAltradyCode();
-    public abstract string GetHyperTraderCode();
-    public abstract string GetTradingViewCode();
 }

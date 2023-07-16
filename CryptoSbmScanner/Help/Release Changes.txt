@@ -1,9 +1,10 @@
 Mis je iets in onderstaande bevindingen/todo's of toekomstige todo's, geef het AUB aan want dan is wat we besproken hebben ergens tussen wal en schip gevallen...
 
 
-Ik heb het hieronder over traden/trading. Deze module komt op een later tijdstip beschikbaar, want vanwege het vertrek van Binance 
-moet het aangepast worden zodat het op een andere exchange ook werkt en door het wegvallen van de OCO en stoplimit orders zijn een 
-probleem. Deze module (in de vorm van wat instellingen, dashboard en openstaande en gesloten posities) komt later gratis beschikbaar.
+Ik heb het hieronder over traden/trading. Deze module komt op een later tijdstip beschikbaar. Vanwege het vertrek van Binance 
+moet het eerst aangepast worden zodat het op een andere exchange ook werkt en door het wegvallen van de OCO en de stoplimit 
+orders is dat een probleem. Deze module (in de vorm van wat instellingen, dashboard en openstaande en gesloten posities) 
+komt later (gratis) beschikbaar.
 
 
 TODO na de release:
@@ -12,20 +13,13 @@ TODO na de release:
 - Trading - uitleggen papertrading bot (achterliggende gedachtes uitleggen)
 - Trading - uitleggen wat de open en gesloten posities precies zijn (per kolom)
 
-TODO voor de release:
-- Kukoin Spot - URL voor activeren in Altrady, Hypertrader en Tradingview
-- ByBit Spot - URL voor activeren in Altrady, Hypertrader en Tradingview!
-- Code voor activeren symbol in Hypertrader en Bybit enzovoort (naar de exchange code)
-  hypertrader://bybit/avax-usdt/3
-  http://www.ccscanner.nl/hypertrader/?e=bybits&a=BTC&b=USDT&i=1
-
 TODO exchanges
 - ByBit Spot - Trading: userdate stream implementeren (detectie van trade)
 - ByBit Spot - Trading: ophalen trades implementeren
 - ByBit Spot - Trading: ophalen assets implementeren
-- ByBit Spot - Trading: plaatsen van de orders (oco/buy/sell/stoplimit etc) - De OCO zou Binance specifiek kunnen zijn?
+- ByBit Spot - Trading: plaatsen van de orders (oco/buy/sell/stoplimit etc) - De OCO is Binance specifiek, vervanger?
 - ByBit Futures - Trading: userdate stream implementeren (detectie van trade)
-- ByBit Futures - Kunnen we geautomatiseerd long/short gaan (met leverage=1)
+- ByBit Futures - Trading: Kunnen we geautomatiseerd long/short gaan (met leverage=1)
 
 De ondersteuning van de Kucoin exchange is uitgesteld (want de price- en klineticker geven heftige problemen)
 - Kukoin Spot - Scanner: de exchange informatie (symbol informatie) ophalen
@@ -39,16 +33,8 @@ De ondersteuning van de Kucoin exchange is uitgesteld (want de price- en klineti
 - Kukoin Spot - Trading: plaatsen van de orders (oco/buy/sell/stoplimit etc) - De OCO zou Binance specifiek kunnen zijn?
 
 
---------------------------  Altrady app |  Altrady web  | Hypertrader app | Hypertrader web
-Binance                       okay      |     okay      |   werkt niet?   |   okay via cc         HT blijft ook hangen met 100% cpu sessies
-Bybit future                  okay      |     okay      |   werkt niet?   |   okay via cc         HT blijft ook hangen met 100% cpu sessies
-Bybit spot                    okay      |     okay      |                 |
-Kucoin                                  |               |                 |
-
-
-
 Openstaande punten/bevindingen/todo's:
-- Uitzoeken wat de N-1 betekend (met name voor de prijs, wat is het probleem, hoe voorkom je het)
+- ByBit Spot - URL voor activeren Bybit spot in Altrady, Hypertrader en Tradingview
 - De oneven regels in de grids een lichtgrijs achtergrond kleurtje geven
 - Trading: De STOBB heeft nu een minimale trend maar dat is een probleem bij het doen van een short positie
 - Trading: Uitzoeken voor iemand in de groep, de backtest emulator aanpassen zodat het (pas) bij een psar wissel instapt - is er nog niet van gekomen, sorry!

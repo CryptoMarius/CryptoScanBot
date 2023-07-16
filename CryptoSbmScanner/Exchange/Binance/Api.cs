@@ -147,21 +147,6 @@ public class Api : ExchangeBase
         await FetchCandles.ExecuteAsync();
     }
 
-    public override string GetAltradyCode()
-    {
-        return "BINA";
-    }
-
-    public override string GetHyperTraderCode()
-    {
-        return "binance";
-    }
-
-    public override string GetTradingViewCode()
-    {
-        return "BINANCE";
-    }
-
 #if TRADEBOT
 
     // Converteer de orderstatus van Exchange naar "intern"

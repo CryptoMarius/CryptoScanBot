@@ -113,14 +113,11 @@ public partial class FrmMain
 
     private static void FillSignalItem(CryptoSignal signal, ListViewItem item1)
     {
-        // Omdat het item via een range wordt toegevoegd is deze niet beschikbaar
-        //int index = 
-        //listViewSignals.Items.IndexOf(item1);
-
-        //if (item1.Index % 2 == 0)
-        //    item1.BackColor = Color.LightGray;
-
         item1.SubItems.Clear();
+
+        if (signal.ItemIndex % 1 > 0)
+            item1.BackColor = Color.LightGray;
+        
         item1.Text = signal.OpenDate.ToLocalTime().ToString("yyyy-MM-dd HH:mm") + " - " + signal.OpenDate.AddSeconds(signal.Interval.Duration).ToLocalTime().ToString("HH:mm");
 
         ListViewItem.ListViewSubItem subItem;
@@ -388,6 +385,8 @@ public partial class FrmMain
                 {
                     ListViewItem item = listViewSignals.Items[index];
                     CryptoSignal signal = (CryptoSignal)item.Tag;
+                    signal.ItemIndex = index;
+
                     DateTime expirationDate = signal.CloseDate.AddSeconds(GlobalData.Settings.General.RemoveSignalAfterxCandles * signal.Interval.Duration); // 15 candles further (display)
                     if (expirationDate < DateTime.UtcNow)
                     {
@@ -420,19 +419,19 @@ public partial class FrmMain
     }
 
 
-    private void ListViewSignalsMenuItemClearSignals_Click(object sender, EventArgs e)
-    {
-        listViewSignals.BeginUpdate();
-        try
-        {
-            listViewSignals.Clear();
-            ListViewSignalsInitColumns();
-        }
-        finally
-        {
-            listViewSignals.EndUpdate();
-        }
-    }
+    //private void ListViewSignalsMenuItemClearSignals_Click(object sender, EventArgs e)
+    //{
+    //    listViewSignals.BeginUpdate();
+    //    try
+    //    {
+    //        listViewSignals.Clear();
+    //        ListViewSignalsInitColumns();
+    //    }
+    //    finally
+    //    {
+    //        listViewSignals.EndUpdate();
+    //    }
+    //}
 
 
     private void ListViewSignalsMenuItemActivateTradingApp_Click(object sender, EventArgs e)
@@ -463,9 +462,9 @@ public partial class FrmMain
             ListViewItem item = listViewSignals.SelectedItems[0];
             CryptoSignal signal = (CryptoSignal)item.Tag;
 
-            string href = ExchangeHelper.GetTradingViewRef(signal.Symbol, signal.Interval);
-            Uri uri = new(href);
-            webViewTradingView.Source = uri;
+            (string Url, bool Execute) refInfo;
+            refInfo = ExchangeHelper.GetExternalRef(CryptoExternalUrlApp.TradingView, false, signal.Symbol, signal.Interval);
+            webViewTradingView.Source = new(refInfo.Url);
 
             tabControl.SelectedTab = tabPageBrowser;
         }
@@ -480,9 +479,9 @@ public partial class FrmMain
             {
                 ListViewItem item = listViewSignals.SelectedItems[index];
                 CryptoSignal signal = (CryptoSignal)item.Tag;
-                string href = ExchangeHelper.GetTradingViewRef(signal.Symbol, signal.Interval);
-                System.Diagnostics.Process.Start(href);
-
+                (string Url, bool Execute) refInfo;
+                refInfo = ExchangeHelper.GetExternalRef(CryptoExternalUrlApp.TradingView, false, signal.Symbol, signal.Interval);
+                System.Diagnostics.Process.Start(refInfo.Url);
             }
         }
     }

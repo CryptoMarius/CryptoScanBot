@@ -124,9 +124,9 @@ public partial class FrmMain
         if (symbol == null)
             return;
 
-        var href = ExchangeHelper.GetTradingViewRef(symbol, interval);
-        Uri uri = new(href);
-        webViewTradingView.Source = uri;
+        (string Url, bool Execute) refInfo;
+        refInfo = ExchangeHelper.GetExternalRef(CryptoExternalUrlApp.TradingView, false, symbol, interval);
+        webViewTradingView.Source = new(refInfo.Url);
         tabControl.SelectedTab = tabPageBrowser;
     }
 
@@ -140,8 +140,10 @@ public partial class FrmMain
         if (symbol == null)
             return;
 
-        var href = ExchangeHelper.GetTradingViewRef(symbol, interval);
-        System.Diagnostics.Process.Start(href);
+        (string Url, bool Execute) refInfo;
+        refInfo = ExchangeHelper.GetExternalRef(CryptoExternalUrlApp.TradingView, false, symbol, interval);
+        webViewTradingView.Source = new(refInfo.Url);
+        System.Diagnostics.Process.Start(refInfo.Url);
     }
 
 

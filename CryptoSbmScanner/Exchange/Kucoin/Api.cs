@@ -55,21 +55,6 @@ public class Api: ExchangeBase
         await FetchCandles.ExecuteAsync();
     }
 
-    public override string GetAltradyCode()
-    {
-        return "KUCN";
-    }
-
-    public override string GetHyperTraderCode()
-    {
-        return "kucoin";
-    }
-
-    public override string GetTradingViewCode()
-    {
-        return "KUCOIN";
-    }
-
 #if TRADEBOT
     //// Converteer de orderstatus van Exchange naar "intern"
     //public static CryptoOrderType LocalOrderType(SpotOrderType orderType)

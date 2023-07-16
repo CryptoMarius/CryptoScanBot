@@ -37,6 +37,11 @@ public class SettingsBasic
 
 
     /// <summary>
+    /// De url's van de exchanges en/of tradingapps
+    /// </summary>
+    public SortedList<string, CryptoExternalUrls> ExternalUrls { get; set; } = new();
+
+    /// <summary>
     /// Welke basis munten willen we gebruiken
     /// </summary>
     public SortedList<string, CryptoQuoteData> QuoteCoins { get; set; } = new();
@@ -70,6 +75,90 @@ public class SettingsBasic
     /// </summary>
     public SettingsBasic()
     {
+        if (ExternalUrls.Count == 0)
+        {
+            ExternalUrls.Add("Binance",
+                new()
+                {
+                    Altrady = new()
+                    {
+                        Execute = false,
+                        Url = "https://app.altrady.com/d/BINA_{quote}_{base}:{interval}",
+                    },
+                    HyperTrader = new()
+                    {
+                        Execute = true,
+                        Url = "hypertrader://binance/{base}-{quote}/{interval}",
+                        Telegram = "http://www.ccscanner.nl/hypertrader/?e=binance&a={base}&b={quote}&i={interval}",
+                    },
+                    TradingView = new()
+                    {
+                        Execute = false,
+                        Url = "https://www.tradingview.com/chart/?symbol=BINANCE:{base}{quote}&interval={interval}"
+                    }
+                }
+            );
+
+            ExternalUrls.Add("Bybit Futures",
+                new()
+                {
+                    Altrady = new()
+                    {
+                        Url = "https://app.altrady.com/d/BYBIF_{quote}_{base}:{interval}",
+                    },
+                    HyperTrader = new()
+                    {
+                        Execute = true,
+                        Url = "hypertrader://binance/{base}-{quote}/{interval}",
+                        Telegram = "http://www.ccscanner.nl/hypertrader/?e=bybit&a={base}&b={quote}&i={interval}",
+                    },
+                    TradingView = new()
+                    {
+                        Url = "https://www.tradingview.com/chart/?symbol=BYBIT:{base}{quote}&interval={interval}",
+                    }
+                }
+            );
+
+            ExternalUrls.Add("Bybit Spot",
+                new()
+                {
+                    Altrady = new()
+                    {
+                        Url = "https://app.altrady.com/d/BYBI_{quote}_{base}:{interval}",
+                    },
+                    HyperTrader = new()
+                    {
+                        Execute = true,
+                        Url = "hypertrader://binance/{base}-{quote}/{interval}",
+                        Telegram = "http://www.ccscanner.nl/hypertrader/?e=bybit&a={base}&b={quote}&i={interval}",
+                    },
+                    TradingView = new()
+                    {
+                        Url = "https://www.tradingview.com/chart/?symbol=BYBIT:{base}{quote}&interval={interval}",
+                    },
+                }
+            );
+
+            ExternalUrls.Add("Kucoin",
+                new()
+                {
+                    Altrady = new()
+                    {
+                        Url = "https://app.altrady.com/d/KUCN_{quote}_{base}:{interval}",
+                    },
+                    HyperTrader = new()
+                    {
+                        Execute = true,
+                        Url = "hypertrader://binance/{base}-{quote}/{interval}",
+                        Telegram = "http://www.ccscanner.nl/hypertrader/?e=kucoin&a={base}&b={quote}&i={interval}",
+                    },
+                    TradingView = new()
+                    {
+                        Url = "https://www.tradingview.com/chart/?symbol=KUCOIN:{base}{quote}&interval={interval}",
+                    }
+                }
+            );
+        }
     }
 
 }
