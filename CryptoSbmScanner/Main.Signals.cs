@@ -481,7 +481,7 @@ public partial class FrmMain
                 CryptoSignal signal = (CryptoSignal)item.Tag;
                 (string Url, bool Execute) refInfo;
                 refInfo = ExchangeHelper.GetExternalRef(CryptoExternalUrlApp.TradingView, false, signal.Symbol, signal.Interval);
-                System.Diagnostics.Process.Start(refInfo.Url);
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(refInfo.Url) { UseShellExecute = true });
             }
         }
     }

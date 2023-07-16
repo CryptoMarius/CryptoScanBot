@@ -143,7 +143,8 @@ public partial class FrmMain
         (string Url, bool Execute) refInfo;
         refInfo = ExchangeHelper.GetExternalRef(CryptoExternalUrlApp.TradingView, false, symbol, interval);
         webViewTradingView.Source = new(refInfo.Url);
-        System.Diagnostics.Process.Start(refInfo.Url);
+        //System.Diagnostics.Process.Start(refInfo.Url);
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(refInfo.Url) { UseShellExecute = true });
     }
 
 

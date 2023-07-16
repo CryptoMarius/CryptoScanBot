@@ -839,7 +839,7 @@ public partial class FrmMain : Form
         }
 
         if (refInfo.Execute)
-            System.Diagnostics.Process.Start(refInfo.Url);
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(refInfo.Url) { UseShellExecute = true });
         else
             _webViewAltradyRef.Source = new(refInfo.Url);
     }
