@@ -125,7 +125,7 @@ public partial class FrmMain
             return;
 
         (string Url, bool Execute) refInfo;
-        refInfo = ExchangeHelper.GetExternalRef(CryptoExternalUrlApp.TradingView, false, symbol, interval);
+        refInfo = ExchangeHelper.GetExternalRef(CryptoTradingApp.TradingView, false, symbol, interval);
         webViewTradingView.Source = new(refInfo.Url);
         tabControl.SelectedTab = tabPageBrowser;
     }
@@ -141,7 +141,7 @@ public partial class FrmMain
             return;
 
         (string Url, bool Execute) refInfo;
-        refInfo = ExchangeHelper.GetExternalRef(CryptoExternalUrlApp.TradingView, false, symbol, interval);
+        refInfo = ExchangeHelper.GetExternalRef(CryptoTradingApp.TradingView, false, symbol, interval);
         webViewTradingView.Source = new(refInfo.Url);
         //System.Diagnostics.Process.Start(refInfo.Url);
         System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(refInfo.Url) { UseShellExecute = true });

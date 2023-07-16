@@ -1,40 +1,6 @@
 Mis je iets in onderstaande bevindingen/todo's of toekomstige todo's, geef het AUB aan want dan is wat we besproken hebben ergens tussen wal en schip gevallen...
 
-
-Ik heb het hieronder over traden/trading. Deze module komt op een later tijdstip beschikbaar. Vanwege het vertrek van Binance 
-moet het eerst aangepast worden zodat het op een andere exchange ook werkt en door het wegvallen van de OCO en de stoplimit 
-orders is dat een probleem. Deze module (in de vorm van wat instellingen, dashboard en openstaande en gesloten posities) 
-komt later (gratis) beschikbaar.
-
-
-TODO na de release:
-- De documentatie bijwerken
-- Telegram - uitleggen hoe je dit precies moet configureren (stappenplan)
-- Trading - uitleggen papertrading bot (achterliggende gedachtes uitleggen)
-- Trading - uitleggen wat de open en gesloten posities precies zijn (per kolom)
-
-TODO exchanges
-- ByBit Spot - Trading: userdate stream implementeren (detectie van trade)
-- ByBit Spot - Trading: ophalen trades implementeren
-- ByBit Spot - Trading: ophalen assets implementeren
-- ByBit Spot - Trading: plaatsen van de orders (oco/buy/sell/stoplimit etc) - De OCO is Binance specifiek, vervanger?
-- ByBit Futures - Trading: userdate stream implementeren (detectie van trade)
-- ByBit Futures - Trading: Kunnen we geautomatiseerd long/short gaan (met leverage=1)
-
-De ondersteuning van de Kucoin exchange is uitgesteld (want de price- en klineticker geven heftige problemen)
-- Kukoin Spot - Scanner: de exchange informatie (symbol informatie) ophalen
-- Kukoin Spot - Scanner: 1m candle stream informatie implementeren
-- Kukoin Spot - Scanner: historische klines informatie (candle informatie) ophalen
-- Kukoin Spot - Scanner: price ticker implementeren
-- Kukoin Spot - Scanner: limieten (rate limits) ondersteunen
-- Kukoin Spot - Trading: userdate stream implementeren (detectie van een trade)
-- Kukoin Spot - Trading: ophalen trades implementeren
-- Kukoin Spot - Trading: ophalen assets implementeren
-- Kukoin Spot - Trading: plaatsen van de orders (oco/buy/sell/stoplimit etc) - De OCO zou Binance specifiek kunnen zijn?
-
-
 Openstaande punten/bevindingen/todo's:
-- ByBit Spot - URL voor activeren Bybit spot in Altrady, Hypertrader en Tradingview
 - De oneven regels in de grids een lichtgrijs achtergrond kleurtje geven
 - Trading: De STOBB heeft nu een minimale trend maar dat is een probleem bij het doen van een short positie
 - Trading: Uitzoeken voor iemand in de groep, de backtest emulator aanpassen zodat het (pas) bij een psar wissel instapt - is er nog niet van gekomen, sorry!
@@ -68,9 +34,37 @@ Openstaande punten/bevindingen/todo's:
   Er is nu een slappe variant die iets met grijs doet (omdat anders de scrollbars en headers zo'n lelijk getoond worden), ik ben er niet tevreden over.
 
 
+Ik heb het hieronder over traden/trading. De trading module komt op een later tijdstip beschikbaar. Vanwege het vertrek van
+Binance moet het eerst aangepast worden zodat het op een andere exchange ook werkt en door het wegvallen van de OCO en de
+stoplimit orders is dat een probleem. Deze module (in de vorm van wat instellingen, dashboard en openstaande en gesloten
+posities) komt later (gratis) beschikbaar. Als je ideen hebt voor vervangen OCO/Stop limit, shoot (to inform)!
 
+TODO na de release:
+- De documentatie bijwerken
+- Telegram - uitleggen hoe je dit precies moet configureren (stappenplan)
+- Trading - uitleggen papertrading bot (achterliggende gedachtes uitleggen)
+- Trading - uitleggen wat de open en gesloten posities precies zijn (per kolom)
+- ByBit Spot - URL voor activeren Bybit Spot in Altrady, Hypertrader en Tradingview (via de settings.json)
 
-15-07-2023 1.8.0 (een gedeeltelijk hiervan zit al in de 1.7.2 vanwege de laatste hotfix <*>)
+TODO exchanges
+- ByBit Spot - Trading: userdate stream implementeren (detectie van trade)
+- ByBit Spot - Trading: ophalen trades implementeren
+- ByBit Spot - Trading: ophalen assets implementeren
+- ByBit Spot - Trading: plaatsen van de orders (oco/buy/sell/stoplimit etc) - De OCO is Binance specifiek, vervanger?
+- ByBit Futures - Trading: userdate stream implementeren (detectie van trade)
+- ByBit Futures - Trading: Kunnen we geautomatiseerd long/short gaan (met leverage=1)
+
+De ondersteuning van de Kucoin exchange is uitgesteld (want de price- en klineticker geven heftige problemen)
+- Kukoin Spot - Scanner: 1m candle stream informatie implementeren
+- Kukoin Spot - Scanner: historische klines informatie (candle informatie) ophalen
+- Kukoin Spot - Scanner: price ticker implementeren
+- Kukoin Spot - Scanner: limieten (rate limits) ondersteunen
+- Kukoin Spot - Trading: userdate stream implementeren (detectie van een trade)
+- Kukoin Spot - Trading: ophalen trades implementeren
+- Kukoin Spot - Trading: ophalen assets implementeren
+- Kukoin Spot - Trading: plaatsen van de orders (oco/buy/sell/stoplimit etc) - De OCO zou Binance specifiek kunnen zijn?
+
+16-07-2023 1.8.0 (een gedeeltelijk hiervan zit al in de 1.7.2 vanwege de laatste hotfix <*>)
 - Ondersteuning Bybit Spot
 - Ondersteuning Bybit Futures
 - Een extra instelling waarmee je kan aangeven welke Exchange je wilt openen. De bedoeling hiervan is dat er meldingen genereerd worden op bijvoorbeeld
@@ -78,7 +72,7 @@ Openstaande punten/bevindingen/todo's:
   verschil in de ondersteunde munten van Binance en Kucoin glad te poetsen zodat je geen meldingen krijgt van munten die niet bestaan op Kucoin.
 - Scanner: Telegram meer details toevoegen en inclusief een link naar de exchange
 - De extra stategien (allemaal interne experimenten niet geschikt voor publicatie) verbergen in de release (via een ifdefje)
-- Via een opstartparameter kun je de juiste exchange activeren (let op de quotes en casing!)
+- Via een opstartparameter kun je de juiste exchange activeren (let op de quotes en gebruik van hoofdletters!)
   CryptoSbmScanner.exe -e Binance
   CryptoSbmScanner.exe -e "Bybit Spot"
   CryptoSbmScanner.exe -e "Bybit Futures"
@@ -94,11 +88,13 @@ Openstaande punten/bevindingen/todo's:
   Tegelijk kan hier de detectie van wijzigingen in de gekozen exchange op meeliften.
 - De laatste keer dat de symbols zijn opgehaald wordt nu bewaard in de database, deze informatie wordt ~1x per uur ververst 
   zodat de juiste volumes worden opgehaald. Dit scheelt aanzienlijk in snelheid bij het opnieuw opstarten van de scanner.
-- Bybit Scanner - 1m candle stream informatie implementeren (per 10 symbolen, pfft)
-- Bybit Scanner - historische klines informatie (candle informatie) ophalen
-- ByBit Scanner - price ticker implementeren (Volume en LastPrice)
-- Bybit Scanner - de exchange informatie (symbol informatie) ophalen
-- Bybit Scanner - De limieten (rate limits) van bybit ondersteunen
+- Kukoin Spot - Scanner: de exchange informatie (symbol informatie) ophalen
+- Kukoin Spot - Scanner: de exchange informatie (symbol informatie) ophalen
+- Bybit - Scanner - 1m candle stream informatie implementeren (per 10 symbolen, pfft)
+- Bybit - Scanner - historische klines informatie (candle informatie) ophalen
+- ByBit - Scanner - price ticker implementeren (Volume en LastPrice)
+- Bybit - Scanner - de exchange informatie (symbol informatie) ophalen
+- Bybit - Scanner - De limieten (rate limits) van bybit ondersteunen
   het is gebaseerd op het aantal verzoeken per seconde wat je naar ByBit stuurt
   https://bybit-exchange.github.io/docs-legacy/futuresV2/inverse/#t-ratelimits
 - Probleem: Nadat je naar deze versie bent gegaan kan een oudere scanner niet meer worden opgestart

@@ -829,10 +829,10 @@ public partial class FrmMain : Form
         switch (GlobalData.Settings.General.TradingApp)
         {
             case CryptoTradingApp.Altrady:
-                refInfo = ExchangeHelper.GetExternalRef(CryptoExternalUrlApp.Altrady, false, symbol, interval);
+                refInfo = ExchangeHelper.GetExternalRef(CryptoTradingApp.Altrady, false, symbol, interval);
                 break;
             case CryptoTradingApp.Hypertrader:
-                refInfo = ExchangeHelper.GetExternalRef(CryptoExternalUrlApp.Hypertrader, false, symbol, interval);
+                refInfo = ExchangeHelper.GetExternalRef(CryptoTradingApp.Hypertrader, false, symbol, interval);
                 break;
             default:
                 return;
@@ -1160,7 +1160,7 @@ public partial class FrmMain : Form
             {
                 (string Url, bool Execute) refInfo;
 #pragma warning disable IDE0042 // Deconstruct variable declaration
-                refInfo = ExchangeHelper.GetExternalRef(CryptoExternalUrlApp.TradingView, false, symbol, interval);
+                refInfo = ExchangeHelper.GetExternalRef(CryptoTradingApp.TradingView, false, symbol, interval);
 #pragma warning restore IDE0042 // Deconstruct variable declaration
                 webViewTradingView.Source = new(refInfo.Url);
             }

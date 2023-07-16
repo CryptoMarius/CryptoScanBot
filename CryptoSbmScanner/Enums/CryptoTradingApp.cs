@@ -3,5 +3,6 @@
 public enum CryptoTradingApp
 {
     Altrady,
-    Hypertrader
+    Hypertrader,
+    TradingView
 }

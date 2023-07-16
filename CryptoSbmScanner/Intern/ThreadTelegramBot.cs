@@ -102,11 +102,11 @@ public class ThreadTelegramBot
             {
                 case CryptoTradingApp.Altrady:
                     text = "Altrady";
-                    refInfo = ExchangeHelper.GetExternalRef(CryptoExternalUrlApp.Altrady, true, signal.Symbol, signal.Interval);
+                    refInfo = ExchangeHelper.GetExternalRef(CryptoTradingApp.Altrady, true, signal.Symbol, signal.Interval);
                     break;
                 case CryptoTradingApp.Hypertrader:
                     text = "Hypertrader";
-                    refInfo = ExchangeHelper.GetExternalRef(CryptoExternalUrlApp.Hypertrader, true, signal.Symbol, signal.Interval);
+                    refInfo = ExchangeHelper.GetExternalRef(CryptoTradingApp.Hypertrader, true, signal.Symbol, signal.Interval);
                     break;
                 default:
                     return;

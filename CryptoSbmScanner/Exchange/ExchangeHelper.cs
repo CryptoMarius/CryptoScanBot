@@ -58,7 +58,7 @@ public class ExchangeHelper
     ///https://app.muunship.com/chart/BN-BETABTC?l=5&resolution=1
     ///https://www.tradingview.com/chart/?symbol=BINANCE:BETABTC&interval=1
 
-    public static (string Url, bool Execute) GetExternalRef(CryptoExternalUrlApp externalApp, bool telegram, CryptoSymbol symbol, CryptoInterval interval)
+    public static (string Url, bool Execute) GetExternalRef(CryptoTradingApp externalApp, bool telegram, CryptoSymbol symbol, CryptoInterval interval)
     {
         Model.CryptoExchange exchange = symbol.Exchange;
         if (GlobalData.Settings.General.ActivateExchange > 0)
@@ -72,9 +72,9 @@ public class ExchangeHelper
 
             CryptoExternalUrl externalUrl = externalApp switch
             {
-                CryptoExternalUrlApp.Altrady => externalUrls.Altrady,
-                CryptoExternalUrlApp.Hypertrader => externalUrls.HyperTrader,
-                CryptoExternalUrlApp.TradingView => externalUrls.TradingView,
+                CryptoTradingApp.Altrady => externalUrls.Altrady,
+                CryptoTradingApp.Hypertrader => externalUrls.HyperTrader,
+                CryptoTradingApp.TradingView => externalUrls.TradingView,
                 _ => null
             };
 
@@ -82,7 +82,7 @@ public class ExchangeHelper
             string intervalCode = ((int)(interval.Duration / 60)).ToString();
             bool executeApp = externalUrl.Execute;
             string urlTemplate = externalUrl.Url;
-            if (telegram && externalUrl.Telegram != "")
+            if (telegram && externalUrl.Telegram != null && externalUrl.Telegram != "")
                 urlTemplate = externalUrl.Telegram;
             urlTemplate = urlTemplate.Replace("{name}", symbol.Name);
             urlTemplate = urlTemplate.Replace("{base}", symbol.Base);
