@@ -52,17 +52,11 @@ TODO exchanges
 - ByBit Spot - Trading: ophalen assets implementeren
 - ByBit Spot - Trading: plaatsen van de orders (oco/buy/sell/stoplimit etc) - De OCO is Binance specifiek, vervanger?
 - ByBit Futures - Trading: userdate stream implementeren (detectie van trade)
-- ByBit Futures - Trading: Kunnen we geautomatiseerd long/short gaan (met leverage=1)
 
 De ondersteuning van de Kucoin exchange is uitgesteld (want de price- en klineticker geven heftige problemen)
-- Kukoin Spot - Scanner: 1m candle stream informatie implementeren
-- Kukoin Spot - Scanner: historische klines informatie (candle informatie) ophalen
+- Kukoin Spot - Scanner: kline ticker implementeren
 - Kukoin Spot - Scanner: price ticker implementeren
 - Kukoin Spot - Scanner: limieten (rate limits) ondersteunen
-- Kukoin Spot - Trading: userdate stream implementeren (detectie van een trade)
-- Kukoin Spot - Trading: ophalen trades implementeren
-- Kukoin Spot - Trading: ophalen assets implementeren
-- Kukoin Spot - Trading: plaatsen van de orders (oco/buy/sell/stoplimit etc) - De OCO zou Binance specifiek kunnen zijn?
 
 16-07-2023 1.8.0 (een gedeeltelijk hiervan zit al in de 1.7.2 vanwege de laatste hotfix <*>)
 - Ondersteuning Bybit Spot
@@ -89,7 +83,7 @@ De ondersteuning van de Kucoin exchange is uitgesteld (want de price- en klineti
 - De laatste keer dat de symbols zijn opgehaald wordt nu bewaard in de database, deze informatie wordt ~1x per uur ververst 
   zodat de juiste volumes worden opgehaald. Dit scheelt aanzienlijk in snelheid bij het opnieuw opstarten van de scanner.
 - Kukoin Spot - Scanner: de exchange informatie (symbol informatie) ophalen
-- Kukoin Spot - Scanner: de exchange informatie (symbol informatie) ophalen
+- Kukoin Spot - Scanner: historische klines informatie (candle informatie) ophalen
 - Bybit - Scanner - 1m candle stream informatie implementeren (per 10 symbolen, pfft)
 - Bybit - Scanner - historische klines informatie (candle informatie) ophalen
 - ByBit - Scanner - price ticker implementeren (Volume en LastPrice)
