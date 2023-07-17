@@ -129,8 +129,8 @@ public class SettingsBasic
                     HyperTrader = new()
                     {
                         Execute = true,
-                        Url = "hypertrader://binance/{base}-{quote}/{interval}",
-                        Telegram = "http://www.ccscanner.nl/hypertrader/?e=bybit&a={base}&b={quote}&i={interval}",
+                        Url = "hypertrader://bybit-spot/{base}-{quote}/{interval}",
+                        Telegram = "http://www.ccscanner.nl/hypertrader/?e=bybit-spot&a={base}&b={quote}&i={interval}",
                     },
                     TradingView = new()
                     {
