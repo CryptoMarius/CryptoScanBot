@@ -275,7 +275,7 @@ public static class Helper
                 text = string.Format("ERROR minimum quantity {0} < {1}", quantity.ToString0("N6"), symbol.QuantityMinimum.ToString0());
                 return false;
             }
-            if (quantity > symbol.QuantityMaximum)
+            if (symbol.QuantityMaximum > 0 && quantity > symbol.QuantityMaximum)
             {
                 text = string.Format("ERROR maximum quantity {0} > {1}", quantity.ToString0("N6"), symbol.QuantityMaximum.ToString0());
                 return false;
@@ -290,7 +290,7 @@ public static class Helper
                 text = string.Format("ERROR minimum price {0} < {1}", price.ToString0("N6"), symbol.PriceMinimum.ToString0());
                 return false;
             }
-            if (price > symbol.PriceMaximum)
+            if (symbol.PriceMaximum > 0 && price > symbol.PriceMaximum)
             {
                 text = string.Format("ERROR maximum price {0} > {1}", price.ToString0("N6"), symbol.PriceMaximum.ToString0());
                 return false;

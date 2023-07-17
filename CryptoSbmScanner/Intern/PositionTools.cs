@@ -31,16 +31,20 @@ public class PositionTools
     }
 
 
-    public static bool ValidTradeAccount(CryptoTradeAccount tradeAccount)
+    public static bool ValidTradeAccount(CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
     {
-        // Niet echt super, enumeratie oid hiervoor in het leven roepen, werkt verder wel
-        if (tradeAccount.TradeAccountType == CryptoTradeAccountType.BackTest && GlobalData.BackTest)
-            return true;
-        if (tradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading && GlobalData.Settings.Trading.TradeViaExchange)
-            return true;
-        if (tradeAccount.TradeAccountType == CryptoTradeAccountType.PaperTrade && GlobalData.Settings.Trading.TradeViaPaperTrading)
-            return true;
-
+        // De exchanges moet uiteraard matchen
+        if (symbol.ExchangeId == GlobalData.Settings.General.ExchangeId
+            && tradeAccount.ExchangeId == GlobalData.Settings.General.ExchangeId) 
+        {
+            // Niet echt super, enumeratie oid hiervoor in het leven roepen, werkt verder wel
+            if (tradeAccount.TradeAccountType == CryptoTradeAccountType.BackTest && GlobalData.BackTest)
+                return true;
+            if (tradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading && GlobalData.Settings.Trading.TradeViaExchange)
+                return true;
+            if (tradeAccount.TradeAccountType == CryptoTradeAccountType.PaperTrade && GlobalData.Settings.Trading.TradeViaPaperTrading)
+                return true;
+        }
         return false;
     }
 

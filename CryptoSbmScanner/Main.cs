@@ -1517,5 +1517,11 @@ public partial class FrmMain : Form
 
     }
 
-
+    private void tabControl_Click(object sender, EventArgs e)
+    {
+        foreach (var x in tabControl.TabPages)
+        {
+//            x.Font.
+        }
+    }
 }

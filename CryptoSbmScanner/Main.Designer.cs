@@ -297,6 +297,7 @@
             // 
             // tabControl
             // 
+            tabControl.Appearance = TabAppearance.FlatButtons;
             tabControl.Controls.Add(tabPageDashBoard);
             tabControl.Controls.Add(tabPageSignals);
             tabControl.Controls.Add(tabPageBrowser);
@@ -311,14 +312,16 @@
             tabControl.SelectedIndex = 0;
             tabControl.Size = new Size(1542, 648);
             tabControl.TabIndex = 12;
+            tabControl.Click += tabControl_Click;
             // 
             // tabPageDashBoard
             // 
             tabPageDashBoard.Controls.Add(dashBoardControl1);
-            tabPageDashBoard.Location = new Point(4, 24);
+            tabPageDashBoard.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            tabPageDashBoard.Location = new Point(4, 27);
             tabPageDashBoard.Name = "tabPageDashBoard";
             tabPageDashBoard.Padding = new Padding(3);
-            tabPageDashBoard.Size = new Size(1534, 620);
+            tabPageDashBoard.Size = new Size(1534, 617);
             tabPageDashBoard.TabIndex = 9;
             tabPageDashBoard.Text = "Dashboard";
             tabPageDashBoard.UseVisualStyleBackColor = true;
@@ -328,16 +331,16 @@
             dashBoardControl1.Dock = DockStyle.Fill;
             dashBoardControl1.Location = new Point(3, 3);
             dashBoardControl1.Name = "dashBoardControl1";
-            dashBoardControl1.Size = new Size(1528, 614);
+            dashBoardControl1.Size = new Size(1528, 611);
             dashBoardControl1.TabIndex = 0;
             // 
             // tabPageSignals
             // 
-            tabPageSignals.Location = new Point(4, 24);
+            tabPageSignals.Location = new Point(4, 27);
             tabPageSignals.Margin = new Padding(4, 3, 4, 3);
             tabPageSignals.Name = "tabPageSignals";
             tabPageSignals.Padding = new Padding(4, 3, 4, 3);
-            tabPageSignals.Size = new Size(1534, 620);
+            tabPageSignals.Size = new Size(1534, 617);
             tabPageSignals.TabIndex = 4;
             tabPageSignals.Text = "Signals";
             tabPageSignals.UseVisualStyleBackColor = true;
@@ -345,11 +348,11 @@
             // tabPageBrowser
             // 
             tabPageBrowser.Controls.Add(webViewTradingView);
-            tabPageBrowser.Location = new Point(4, 24);
+            tabPageBrowser.Location = new Point(4, 27);
             tabPageBrowser.Margin = new Padding(4, 3, 4, 3);
             tabPageBrowser.Name = "tabPageBrowser";
             tabPageBrowser.Padding = new Padding(4, 3, 4, 3);
-            tabPageBrowser.Size = new Size(1534, 620);
+            tabPageBrowser.Size = new Size(1534, 617);
             tabPageBrowser.TabIndex = 5;
             tabPageBrowser.Text = "Tradingview";
             tabPageBrowser.UseVisualStyleBackColor = true;
@@ -363,26 +366,26 @@
             webViewTradingView.Location = new Point(4, 3);
             webViewTradingView.Margin = new Padding(4, 3, 4, 3);
             webViewTradingView.Name = "webViewTradingView";
-            webViewTradingView.Size = new Size(1526, 614);
+            webViewTradingView.Size = new Size(1526, 611);
             webViewTradingView.TabIndex = 0;
             webViewTradingView.ZoomFactor = 1D;
             // 
             // tabPagePositionsOpen
             // 
-            tabPagePositionsOpen.Location = new Point(4, 24);
+            tabPagePositionsOpen.Location = new Point(4, 27);
             tabPagePositionsOpen.Name = "tabPagePositionsOpen";
             tabPagePositionsOpen.Padding = new Padding(3);
-            tabPagePositionsOpen.Size = new Size(1534, 620);
+            tabPagePositionsOpen.Size = new Size(1534, 617);
             tabPagePositionsOpen.TabIndex = 7;
             tabPagePositionsOpen.Text = "Open positions";
             tabPagePositionsOpen.UseVisualStyleBackColor = true;
             // 
             // tabPagePositionsClosed
             // 
-            tabPagePositionsClosed.Location = new Point(4, 24);
+            tabPagePositionsClosed.Location = new Point(4, 27);
             tabPagePositionsClosed.Name = "tabPagePositionsClosed";
             tabPagePositionsClosed.Padding = new Padding(3);
-            tabPagePositionsClosed.Size = new Size(1534, 620);
+            tabPagePositionsClosed.Size = new Size(1534, 617);
             tabPagePositionsClosed.TabIndex = 8;
             tabPagePositionsClosed.Text = "Closed positions";
             tabPagePositionsClosed.UseVisualStyleBackColor = true;
@@ -390,11 +393,11 @@
             // tabPageLog
             // 
             tabPageLog.Controls.Add(TextBoxLog);
-            tabPageLog.Location = new Point(4, 24);
+            tabPageLog.Location = new Point(4, 27);
             tabPageLog.Margin = new Padding(2);
             tabPageLog.Name = "tabPageLog";
             tabPageLog.Padding = new Padding(2);
-            tabPageLog.Size = new Size(1534, 620);
+            tabPageLog.Size = new Size(1534, 617);
             tabPageLog.TabIndex = 1;
             tabPageLog.Text = "Log";
             tabPageLog.UseVisualStyleBackColor = true;
@@ -408,17 +411,17 @@
             TextBoxLog.Multiline = true;
             TextBoxLog.Name = "TextBoxLog";
             TextBoxLog.ScrollBars = ScrollBars.Both;
-            TextBoxLog.Size = new Size(1530, 616);
+            TextBoxLog.Size = new Size(1530, 613);
             TextBoxLog.TabIndex = 1;
             // 
             // tabPageAltrady
             // 
             tabPageAltrady.Controls.Add(webViewAltrady);
-            tabPageAltrady.Location = new Point(4, 24);
+            tabPageAltrady.Location = new Point(4, 27);
             tabPageAltrady.Margin = new Padding(4, 3, 4, 3);
             tabPageAltrady.Name = "tabPageAltrady";
             tabPageAltrady.Padding = new Padding(4, 3, 4, 3);
-            tabPageAltrady.Size = new Size(1534, 620);
+            tabPageAltrady.Size = new Size(1534, 617);
             tabPageAltrady.TabIndex = 6;
             tabPageAltrady.Text = "Altrady (dummy)";
             tabPageAltrady.UseVisualStyleBackColor = true;
@@ -432,7 +435,7 @@
             webViewAltrady.Location = new Point(4, 3);
             webViewAltrady.Margin = new Padding(4, 3, 4, 3);
             webViewAltrady.Name = "webViewAltrady";
-            webViewAltrady.Size = new Size(1526, 614);
+            webViewAltrady.Size = new Size(1526, 611);
             webViewAltrady.TabIndex = 1;
             webViewAltrady.ZoomFactor = 1D;
             // 
@@ -552,19 +555,19 @@
             // 
             contextMenuStripPositionsClosed.Items.AddRange(new ToolStripItem[] { contextMenuStripPositionsOpenRecalculate, debugDumpToolStripMenuItem });
             contextMenuStripPositionsClosed.Name = "contextMenuStrip1";
-            contextMenuStripPositionsClosed.Size = new Size(181, 70);
+            contextMenuStripPositionsClosed.Size = new Size(149, 48);
             // 
             // contextMenuStripPositionsOpenRecalculate
             // 
             contextMenuStripPositionsOpenRecalculate.Name = "contextMenuStripPositionsOpenRecalculate";
-            contextMenuStripPositionsOpenRecalculate.Size = new Size(180, 22);
+            contextMenuStripPositionsOpenRecalculate.Size = new Size(148, 22);
             contextMenuStripPositionsOpenRecalculate.Text = "Herberekenen";
             contextMenuStripPositionsOpenRecalculate.Click += ContextMenuStripPositionsOpenRecalculateAsync_Click;
             // 
             // debugDumpToolStripMenuItem
             // 
             debugDumpToolStripMenuItem.Name = "debugDumpToolStripMenuItem";
-            debugDumpToolStripMenuItem.Size = new Size(180, 22);
+            debugDumpToolStripMenuItem.Size = new Size(148, 22);
             debugDumpToolStripMenuItem.Text = "Debug-Dump";
             debugDumpToolStripMenuItem.Click += DebugDumpToolStripMenuItemAsync_Click;
             // 

@@ -110,15 +110,13 @@ public class FetchSymbols
                                 //Minimale en maximale amount voor een order (in base amount)
                                 symbol.QuantityMinimum = symbolData.LotSizeFilter.MinOrderQuantity;
                                 symbol.QuantityMaximum = symbolData.LotSizeFilter.MaxOrderQuantity;
-                                // Dit klopt niet, deze heeft wederom effect op de Clamp routine!
-                                symbol.QuantityTickSize = symbolData.LotSizeFilter.MinOrderQuantity;
+                                symbol.QuantityTickSize = symbolData.LotSizeFilter.QuantityStep;
 
                                 // De minimale en maximale prijs voor een order (in base price)
                                 // In de definities is wel een minPrice en maxprice aanwezig, maar die is niet gevuld
                                 // (dat heeft consequenties voro de werking van de Clamp die wel waarden verwacht)
-                                //symbol.PriceMinimum = niet aanwezig! binanceSymbol.PriceFilter.min;
-                                //symbol.PriceMaximum = niet aanwezig! binanceSymbol.LotSizeFilter.MaxOrderValue;
-
+                                symbol.PriceMinimum = symbolData.PriceFilter.MinPrice;
+                                symbol.PriceMaximum = symbolData.PriceFilter.MaxPrice;
                                 symbol.PriceTickSize = symbolData.PriceFilter.TickSize; // ? binanceSymbol.PriceFilter.TickSize;
 
                                 symbol.IsSpotTradingAllowed = true; // binanceSymbol.IsSpotTradingAllowed;

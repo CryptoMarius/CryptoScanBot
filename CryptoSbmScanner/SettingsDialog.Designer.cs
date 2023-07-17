@@ -447,6 +447,7 @@ partial class FrmSettings
         // 
         // tabControl
         // 
+        tabControl.Appearance = TabAppearance.FlatButtons;
         tabControl.Controls.Add(tabAlgemeen);
         tabControl.Controls.Add(tabTelegram);
         tabControl.Controls.Add(tabBasismunten);
@@ -490,11 +491,11 @@ partial class FrmSettings
         tabAlgemeen.Controls.Add(EditDoubleClickAction);
         tabAlgemeen.Controls.Add(label2);
         tabAlgemeen.Controls.Add(EditTradingApp);
-        tabAlgemeen.Location = new Point(4, 24);
+        tabAlgemeen.Location = new Point(4, 27);
         tabAlgemeen.Margin = new Padding(4, 3, 4, 3);
         tabAlgemeen.Name = "tabAlgemeen";
         tabAlgemeen.Padding = new Padding(4, 3, 4, 3);
-        tabAlgemeen.Size = new Size(1232, 780);
+        tabAlgemeen.Size = new Size(1232, 777);
         tabAlgemeen.TabIndex = 6;
         tabAlgemeen.Text = "Algemeen";
         tabAlgemeen.UseVisualStyleBackColor = true;
@@ -728,10 +729,10 @@ partial class FrmSettings
         tabTelegram.Controls.Add(EditTelegramChatId);
         tabTelegram.Controls.Add(EditTelegramToken);
         tabTelegram.Controls.Add(label15);
-        tabTelegram.Location = new Point(4, 24);
+        tabTelegram.Location = new Point(4, 27);
         tabTelegram.Name = "tabTelegram";
         tabTelegram.Padding = new Padding(3);
-        tabTelegram.Size = new Size(1232, 780);
+        tabTelegram.Size = new Size(1232, 777);
         tabTelegram.TabIndex = 12;
         tabTelegram.Text = "Telegram";
         tabTelegram.UseVisualStyleBackColor = true;
@@ -795,11 +796,11 @@ partial class FrmSettings
         // tabBasismunten
         // 
         tabBasismunten.Controls.Add(label19);
-        tabBasismunten.Location = new Point(4, 24);
+        tabBasismunten.Location = new Point(4, 27);
         tabBasismunten.Margin = new Padding(4, 3, 4, 3);
         tabBasismunten.Name = "tabBasismunten";
         tabBasismunten.Padding = new Padding(4, 3, 4, 3);
-        tabBasismunten.Size = new Size(1232, 780);
+        tabBasismunten.Size = new Size(1232, 777);
         tabBasismunten.TabIndex = 0;
         tabBasismunten.Text = "Basismunten";
         tabBasismunten.UseVisualStyleBackColor = true;
@@ -848,11 +849,11 @@ partial class FrmSettings
         tabPageSignals.Controls.Add(EditBarometer1hMinimal);
         tabPageSignals.Controls.Add(EditLogAnalysisMinMaxChangePercentage);
         tabPageSignals.Controls.Add(groupBoxInterval);
-        tabPageSignals.Location = new Point(4, 24);
+        tabPageSignals.Location = new Point(4, 27);
         tabPageSignals.Margin = new Padding(4, 3, 4, 3);
         tabPageSignals.Name = "tabPageSignals";
         tabPageSignals.Padding = new Padding(4, 3, 4, 3);
-        tabPageSignals.Size = new Size(1232, 780);
+        tabPageSignals.Size = new Size(1232, 777);
         tabPageSignals.TabIndex = 10;
         tabPageSignals.Text = "Signalen";
         tabPageSignals.UseVisualStyleBackColor = true;
@@ -1384,11 +1385,11 @@ partial class FrmSettings
         tabSignalStobb.Controls.Add(label1);
         tabSignalStobb.Controls.Add(EditStobbBBMinPercentage);
         tabSignalStobb.Controls.Add(EditStobbBBMaxPercentage);
-        tabSignalStobb.Location = new Point(4, 24);
+        tabSignalStobb.Location = new Point(4, 27);
         tabSignalStobb.Margin = new Padding(4, 3, 4, 3);
         tabSignalStobb.Name = "tabSignalStobb";
         tabSignalStobb.Padding = new Padding(4, 3, 4, 3);
-        tabSignalStobb.Size = new Size(1232, 780);
+        tabSignalStobb.Size = new Size(1232, 777);
         tabSignalStobb.TabIndex = 1;
         tabSignalStobb.Text = "STOBB";
         tabSignalStobb.UseVisualStyleBackColor = true;
@@ -1705,11 +1706,11 @@ partial class FrmSettings
         tabSignalSbm.Controls.Add(EditSbm2CandlesLookbackCount);
         tabSignalSbm.Controls.Add(EditAnalyzeSbm3Oversold);
         tabSignalSbm.Controls.Add(EditAnalyzeSbm2Oversold);
-        tabSignalSbm.Location = new Point(4, 24);
+        tabSignalSbm.Location = new Point(4, 27);
         tabSignalSbm.Margin = new Padding(4, 3, 4, 3);
         tabSignalSbm.Name = "tabSignalSbm";
         tabSignalSbm.Padding = new Padding(4, 3, 4, 3);
-        tabSignalSbm.Size = new Size(1232, 780);
+        tabSignalSbm.Size = new Size(1232, 777);
         tabSignalSbm.TabIndex = 5;
         tabSignalSbm.Text = "SBM";
         tabSignalSbm.UseVisualStyleBackColor = true;
@@ -2270,11 +2271,11 @@ partial class FrmSettings
         tabSignalJump.Controls.Add(EditAnalyzeCandleJumpUp);
         tabSignalJump.Controls.Add(EditAnalyzeCandleJumpDown);
         tabSignalJump.Controls.Add(EditAnalysisCandleJumpPercentage);
-        tabSignalJump.Location = new Point(4, 24);
+        tabSignalJump.Location = new Point(4, 27);
         tabSignalJump.Margin = new Padding(4, 3, 4, 3);
         tabSignalJump.Name = "tabSignalJump";
         tabSignalJump.Padding = new Padding(4, 3, 4, 3);
-        tabSignalJump.Size = new Size(1232, 780);
+        tabSignalJump.Size = new Size(1232, 777);
         tabSignalJump.TabIndex = 9;
         tabSignalJump.Text = "JUMP";
         tabSignalJump.UseVisualStyleBackColor = true;
@@ -2534,11 +2535,11 @@ partial class FrmSettings
         tabPageTrading.Controls.Add(label47);
         tabPageTrading.Controls.Add(label46);
         tabPageTrading.Controls.Add(EditGlobalBuyRemoveTime);
-        tabPageTrading.Location = new Point(4, 24);
+        tabPageTrading.Location = new Point(4, 27);
         tabPageTrading.Margin = new Padding(4, 3, 4, 3);
         tabPageTrading.Name = "tabPageTrading";
         tabPageTrading.Padding = new Padding(4, 3, 4, 3);
-        tabPageTrading.Size = new Size(1232, 780);
+        tabPageTrading.Size = new Size(1232, 777);
         tabPageTrading.TabIndex = 11;
         tabPageTrading.Text = "Trading";
         tabPageTrading.UseVisualStyleBackColor = true;
@@ -3260,11 +3261,11 @@ partial class FrmSettings
         // 
         tabWhiteListOversold.Controls.Add(textBoxWhiteListOversold);
         tabWhiteListOversold.Controls.Add(panel3);
-        tabWhiteListOversold.Location = new Point(4, 24);
+        tabWhiteListOversold.Location = new Point(4, 27);
         tabWhiteListOversold.Margin = new Padding(4, 3, 4, 3);
         tabWhiteListOversold.Name = "tabWhiteListOversold";
         tabWhiteListOversold.Padding = new Padding(4, 3, 4, 3);
-        tabWhiteListOversold.Size = new Size(1232, 780);
+        tabWhiteListOversold.Size = new Size(1232, 777);
         tabWhiteListOversold.TabIndex = 3;
         tabWhiteListOversold.Text = "WhiteList long";
         tabWhiteListOversold.UseVisualStyleBackColor = true;
@@ -3276,7 +3277,7 @@ partial class FrmSettings
         textBoxWhiteListOversold.Margin = new Padding(4, 3, 4, 3);
         textBoxWhiteListOversold.Multiline = true;
         textBoxWhiteListOversold.Name = "textBoxWhiteListOversold";
-        textBoxWhiteListOversold.Size = new Size(1224, 717);
+        textBoxWhiteListOversold.Size = new Size(1224, 714);
         textBoxWhiteListOversold.TabIndex = 0;
         // 
         // panel3
@@ -3303,11 +3304,11 @@ partial class FrmSettings
         // 
         tabBlackListOversold.Controls.Add(textBoxBlackListOversold);
         tabBlackListOversold.Controls.Add(panel4);
-        tabBlackListOversold.Location = new Point(4, 24);
+        tabBlackListOversold.Location = new Point(4, 27);
         tabBlackListOversold.Margin = new Padding(4, 3, 4, 3);
         tabBlackListOversold.Name = "tabBlackListOversold";
         tabBlackListOversold.Padding = new Padding(4, 3, 4, 3);
-        tabBlackListOversold.Size = new Size(1232, 780);
+        tabBlackListOversold.Size = new Size(1232, 777);
         tabBlackListOversold.TabIndex = 4;
         tabBlackListOversold.Text = "Blacklist long";
         tabBlackListOversold.UseVisualStyleBackColor = true;
@@ -3319,7 +3320,7 @@ partial class FrmSettings
         textBoxBlackListOversold.Margin = new Padding(4, 3, 4, 3);
         textBoxBlackListOversold.Multiline = true;
         textBoxBlackListOversold.Name = "textBoxBlackListOversold";
-        textBoxBlackListOversold.Size = new Size(1224, 717);
+        textBoxBlackListOversold.Size = new Size(1224, 714);
         textBoxBlackListOversold.TabIndex = 1;
         // 
         // panel4
@@ -3346,11 +3347,11 @@ partial class FrmSettings
         // 
         tabWhiteListOverbought.Controls.Add(textBoxWhiteListOverbought);
         tabWhiteListOverbought.Controls.Add(panel5);
-        tabWhiteListOverbought.Location = new Point(4, 24);
+        tabWhiteListOverbought.Location = new Point(4, 27);
         tabWhiteListOverbought.Margin = new Padding(4, 3, 4, 3);
         tabWhiteListOverbought.Name = "tabWhiteListOverbought";
         tabWhiteListOverbought.Padding = new Padding(4, 3, 4, 3);
-        tabWhiteListOverbought.Size = new Size(1232, 780);
+        tabWhiteListOverbought.Size = new Size(1232, 777);
         tabWhiteListOverbought.TabIndex = 7;
         tabWhiteListOverbought.Text = "Whitelist short";
         tabWhiteListOverbought.UseVisualStyleBackColor = true;
@@ -3362,7 +3363,7 @@ partial class FrmSettings
         textBoxWhiteListOverbought.Margin = new Padding(4, 3, 4, 3);
         textBoxWhiteListOverbought.Multiline = true;
         textBoxWhiteListOverbought.Name = "textBoxWhiteListOverbought";
-        textBoxWhiteListOverbought.Size = new Size(1224, 717);
+        textBoxWhiteListOverbought.Size = new Size(1224, 714);
         textBoxWhiteListOverbought.TabIndex = 2;
         // 
         // panel5
@@ -3389,11 +3390,11 @@ partial class FrmSettings
         // 
         tabBlacklistOverbought.Controls.Add(textBoxBlackListOverbought);
         tabBlacklistOverbought.Controls.Add(panel6);
-        tabBlacklistOverbought.Location = new Point(4, 24);
+        tabBlacklistOverbought.Location = new Point(4, 27);
         tabBlacklistOverbought.Margin = new Padding(4, 3, 4, 3);
         tabBlacklistOverbought.Name = "tabBlacklistOverbought";
         tabBlacklistOverbought.Padding = new Padding(4, 3, 4, 3);
-        tabBlacklistOverbought.Size = new Size(1232, 780);
+        tabBlacklistOverbought.Size = new Size(1232, 777);
         tabBlacklistOverbought.TabIndex = 8;
         tabBlacklistOverbought.Text = "Blacklist short";
         tabBlacklistOverbought.UseVisualStyleBackColor = true;
@@ -3405,7 +3406,7 @@ partial class FrmSettings
         textBoxBlackListOverbought.Margin = new Padding(4, 3, 4, 3);
         textBoxBlackListOverbought.Multiline = true;
         textBoxBlackListOverbought.Name = "textBoxBlackListOverbought";
-        textBoxBlackListOverbought.Size = new Size(1224, 717);
+        textBoxBlackListOverbought.Size = new Size(1224, 714);
         textBoxBlackListOverbought.TabIndex = 3;
         // 
         // panel6

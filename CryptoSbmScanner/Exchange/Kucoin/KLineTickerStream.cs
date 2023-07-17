@@ -95,12 +95,12 @@ public class KLineTickerStream
     }
 
 
-    public async Task StartAsync()
+    public async Task StartAsync(KucoinSocketClient socketClient)
     {
         if (symbols.Count > 0)
         {
             string symbolNames = string.Join(',', symbols);
-            socketClient = new KucoinSocketClient();
+            //socketClient = new KucoinSocketClient();
             var subscriptionResult = await socketClient.SpotApi.SubscribeToKlineUpdatesAsync(symbolNames,
                 KlineInterval.OneMinute, data =>
             {

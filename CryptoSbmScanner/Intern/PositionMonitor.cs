@@ -646,7 +646,11 @@ public class PositionMonitor
 
                 foreach (CryptoTradeAccount tradeAccount in GlobalData.TradeAccountList.Values.ToList())
                 {
-                    if (!PositionTools.ValidTradeAccount(tradeAccount))
+                    if (!PositionTools.ValidTradeAccount(tradeAccount, Symbol))
+                        continue;
+
+                    // Ter debug 2 keer achter elkaar, waarom wordt er een positie gemaakt?
+                    if (!PositionTools.ValidTradeAccount(tradeAccount, Symbol))
                         continue;
 
                     using CryptoDatabase databaseThread = new();
@@ -1648,7 +1652,7 @@ public class PositionMonitor
                 // Controleer DCA's
                 if (position.Quantity > 0 && part.Name.Equals("DCA"))
                 {
-                    await HandleBuyPart(databaseThread, position, part, symbolInterval, candleInterval, CryptoBuyStepInMethod.TrailViaKcPsar, //GlobalData.Settings.Trading.DcaStepInMethod,
+                    await HandleBuyPart(databaseThread, position, part, symbolInterval, candleInterval, GlobalData.Settings.Trading.DcaStepInMethod, //CryptoBuyStepInMethod.TrailViaKcPsar, //
                         GlobalData.Settings.Trading.DcaOrderMethod, pauseBecauseOfTradingRules, pauseBecauseOfBarometer);
                 }
 
@@ -1776,7 +1780,7 @@ public class PositionMonitor
             foreach (CryptoTradeAccount tradeAccount in GlobalData.TradeAccountList.Values.ToList())
             {
                 // Aan de hand van de instellingen accounts uitsluiten
-                if (!PositionTools.ValidTradeAccount(tradeAccount))
+                if (!PositionTools.ValidTradeAccount(tradeAccount, Symbol))
                     continue;
 
                 // Check the positions

@@ -35,6 +35,7 @@ public class Api: ExchangeBase
         {
             options.AutoReconnect = true;
             options.ReconnectInterval = TimeSpan.FromSeconds(15);
+            options.SocketSubscriptionsCombineTarget = 20;
             // type mismatch?
             //if (GlobalData.Settings.ApiKey != "")
             //    options.ApiCredentials = new ApiCredentials(GlobalData.Settings.ApiKey, GlobalData.Settings.ApiSecret);

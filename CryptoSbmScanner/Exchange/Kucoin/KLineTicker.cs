@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 
+using Kucoin.Net.Clients;
+
 namespace CryptoSbmScanner.Exchange.Kucoin;
 
 internal class KLineTicker : KLineTickerBase
@@ -20,6 +22,7 @@ internal class KLineTicker : KLineTickerBase
         {
             int count = 0;
             List<Task> taskList = new();
+            KucoinSocketClient socketClient = new();
             foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
             {
                 if (quoteData.FetchCandles && quoteData.SymbolList.Count > 0)
@@ -52,24 +55,12 @@ internal class KLineTicker : KLineTickerBase
                             if (ticker.symbols.Count >= 1)
                                 break;
                         }
-                        Task task = Task.Run(async () => { await ticker.StartAsync(); });
+                        Task task = Task.Run(async () => { await ticker.StartAsync(socketClient); });
                         taskList.Add(task);
 
                         //if (taskList.Count > 25)
                         //    break;
                     }
-
-                    //KLineTickerStream ticker = new(quoteData);
-                    //TickerList.Add(ticker);
-                    //ticker.symbols.Add("BTCUSDT");
-                    //Task task = Task.Run(async () => { await ticker.StartAsync(); });
-                    //taskList.Add(task);
-
-                    //ticker = new(quoteData);
-                    //TickerList.Add(ticker);
-                    //ticker.symbols.Add("ETHUSDT");
-                    //task = Task.Run(async () => { await ticker.StartAsync(); });
-                    //taskList.Add(task);
                 }
             }
 

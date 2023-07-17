@@ -16,4 +16,9 @@ public partial class DashBoardControl : UserControl
     {
         InitializeComponent();
     }
+
+
+    // Charts:
+    // https://stackoverflow.com/questions/10622674/chart-creating-dynamically-in-net-c-sharp
+    // https://stackoverflow.com/questions/335061/add-dynamic-charts-using-asp-net-chart-control-c-sharp
 }
