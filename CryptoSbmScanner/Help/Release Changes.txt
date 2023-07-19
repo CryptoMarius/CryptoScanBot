@@ -59,9 +59,9 @@ De ondersteuning van de Kucoin exchange is uitgesteld (want de price- en klineti
 - Kukoin Spot - Scanner: limieten (rate limits) ondersteunen
 
 
-xx-07-2023 1.8.1
+xx-07-2023 1.8.2
+- De tabs in de instellingen en hoofdscherm zijn iets duidelijker gemaakt
 - De oneven regels in de grids een lichtgrijze achtergrond kleurtje geven
-
 
 16-07-2023 1.8.0 (een gedeeltelijk hiervan zit al in de 1.7.2 vanwege de laatste hotfix <*>)
 - Ondersteuning Bybit Spot

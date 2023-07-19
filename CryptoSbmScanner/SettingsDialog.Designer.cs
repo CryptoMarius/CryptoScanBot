@@ -3077,6 +3077,8 @@ partial class FrmSettings
         // 
         // EditDcaCount
         // 
+        EditDcaCount.Enabled = false;
+        EditDcaCount.Font = new Font("Segoe UI", 9F, FontStyle.Strikeout, GraphicsUnit.Point);
         EditDcaCount.Location = new Point(187, 419);
         EditDcaCount.Margin = new Padding(4, 3, 4, 3);
         EditDcaCount.Maximum = new decimal(new int[] { 10, 0, 0, 0 });
@@ -3088,6 +3090,7 @@ partial class FrmSettings
         // label67
         // 
         label67.AutoSize = true;
+        label67.Font = new Font("Segoe UI", 9F, FontStyle.Strikeout, GraphicsUnit.Point);
         label67.Location = new Point(17, 421);
         label67.Margin = new Padding(4, 0, 4, 0);
         label67.Name = "label67";

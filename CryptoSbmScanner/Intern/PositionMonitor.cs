@@ -1132,7 +1132,11 @@ public class PositionMonitor
             // Plaats een buy order (of stop-limit buy order voor trailing)
             if (step == null && part.Quantity == 0)
             {
-                if (stepInMethod == CryptoBuyStepInMethod.Immediately || stepInMethod == CryptoBuyStepInMethod.AfterNextSignal)
+                
+                if (stepInMethod != CryptoBuyStepInMethod.TrailViaKcPsar)
+                    //stepInMethod == CryptoBuyStepInMethod.Immediately || 
+                    //stepInMethod == CryptoBuyStepInMethod.AfterNextSignal || 
+                    //stepInMethod == CryptoBuyStepInMethod.FixedPercentage)
                 {
                     // Dit triggert een notificatie die technisch gezien eerder kan arriveren dan dat wij 
                     // de positie toevoegen, daarom locken we hier de posities voor het plaatsen van de buy.
@@ -1207,6 +1211,8 @@ public class PositionMonitor
             }
             else if (step != null && part.Quantity == 0 && stepInMethod == CryptoBuyStepInMethod.TrailViaKcPsar && step.Trailing == CryptoTrailing.Trailing)
             {
+                // Hier maken we gebruik van een stoplimit order 
+
                 // De Xe trailing limit buy order
                 // TODO - een stop limit order kunnen plaatsen (nog niet eerder gedaan blijkbaar)
                 decimal price = Math.Max((decimal)candleInterval.CandleData.KeltnerUpperBand, (decimal)candleInterval.CandleData.PSar) + Symbol.PriceTickSize;
@@ -1551,13 +1557,17 @@ public class PositionMonitor
             if (position.Status != CryptoPositionStatus.Trading)
                 return;
 
-            // Leuk bedacht, maar verre van correct, een DCA wordt dus nooit opnieuw geplaatst, maar altijd x% onder 
-            // de laatste. In dit systeem kan de DCA vaker op hetzelfde % staan (zolang de koers zich maar hersteld)
-            // (maar ik heb zo snel nog geen wiskundige oplossing hiervoor, wellicht price boven de laatste afgesloten DCA?)
+            // Een DCA wordt altijd x% onder de laatste geplaatst. In dit systeem kan de DCA vaker op hetzelfde % staan
+            // (zolang de koers zich maar hersteld) (maar ik heb zo snel nog geen wiskundige oplossing hiervoor, wellicht
+            // price boven de laatste afgesloten DCA?)
+            // (was deze opmerking nog wel relevant?)
 
             CryptoPositionStep step = null;
             foreach (CryptoPositionPart partX in position.Parts.Values.ToList())
             {
+                //if (partX.Name.Equals("DCA") && partX.CloseTime.HasValue)
+                //    continue;
+
                 foreach (CryptoPositionStep stepX in partX.Steps.Values.ToList())
                 {
                     if (stepX.Status != CryptoOrderStatus.Expired && stepX.Trailing != CryptoTrailing.Trailing && stepX.Name.Equals("BUY"))
@@ -1571,7 +1581,9 @@ public class PositionMonitor
                 }
             }
 
-            if (step != null && step.CloseTime.HasValue && step.CreateTime.AddMinutes(GlobalData.Settings.Trading.GlobalBuyCooldownTime) < LastCandle1mCloseTimeDate)
+            // Tenminste de cooldown tijd na de laatste buy: Plaats dan een limit buy order op het opgegeven percentage!
+
+            if (step != null && step.CloseTime.HasValue && step.CloseTime?.AddMinutes(GlobalData.Settings.Trading.GlobalBuyCooldownTime) < LastCandle1mCloseTimeDate)
             {
                 decimal price = step.Price - (GlobalData.Settings.Trading.DcaPercentage * step.Price / 100m);
                 if (position.Symbol.LastPrice < price)
@@ -1631,7 +1643,7 @@ public class PositionMonitor
 
         if (Prepare(position, out CryptoSymbolInterval symbolInterval, out CryptoCandle candleInterval, out bool pauseBecauseOfTradingRules, out bool pauseBecauseOfBarometer))
         {
-            // Moeten we een extra DCA plaatsen? (weggevallen functionaliteit geloof ik)
+            // Pauzeren door de regels of de barometer
             if (!(pauseBecauseOfTradingRules || pauseBecauseOfBarometer))
                 CheckAddDca(tradeAccount, databaseThread, position);
 
