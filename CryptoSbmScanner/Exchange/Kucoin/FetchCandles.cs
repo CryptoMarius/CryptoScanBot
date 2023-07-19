@@ -48,12 +48,17 @@ public class FetchCandles
         //KucoinWeights.WaitForFairWeight(1); // *5x ivm API weight waarschuwingen
 
         // Er is blijkbaar geen maximum volgens de docs?
-        // En (verrassing) de volgorde van de candles is van nieuw naar oud! 
         DateTime dateStart = CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized);
         while (true)
         {
-            string symbolName = symbol.Base + '-' + symbol.Quote;
-            var result = await client.SpotApi.ExchangeData.GetKlinesAsync(symbolName, exchangeInterval, dateStart, null);
+            long dateNow = CandleTools.GetUnixTime(DateTime.UtcNow, 0);
+            if (symbolInterval.LastCandleSynchronized + symbolInterval.Interval.Duration > dateNow)
+            {
+                // Dan is het tamelijk onzin om iets op te halen, de candle is dan nog niet klaar
+                dateNow = dateNow;
+            }
+
+            var result = await client.SpotApi.ExchangeData.GetKlinesAsync(symbol.Base + '-' + symbol.Quote, exchangeInterval, dateStart, null);
             if (!result.Success)
             {
                 // We doen het gewoon nog een keer
@@ -69,6 +74,19 @@ public class FetchCandles
                 GlobalData.AddTextToLogTab(string.Format("{0} {1} error getting klines {2}", symbol.Name, interval.Name, result.Error));
                 return 0;
             }
+
+            //if (!result.Data.Any())
+            //{
+            //    retryCount--;
+            //    GlobalData.AddTextToLogTab(string.Format("{0} {1} ophalen vanaf {2} geen candles ontvangen", symbol.Name, interval.Name, CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized).ToString()));
+            //    if (retryCount < 0)
+            //        return 0;
+            //    else
+            //    {
+            //        Thread.Sleep(10000);
+            //        continue;
+            //    }
+            //}
 
 
 

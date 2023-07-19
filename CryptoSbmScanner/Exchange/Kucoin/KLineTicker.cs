@@ -52,6 +52,7 @@ internal class KLineTicker : KLineTickerBase
                             symbols.Remove(symbol);
                             count++;
 
+                            // Really, 1? Succes qua opstarten
                             if (ticker.symbols.Count >= 1)
                                 break;
                         }

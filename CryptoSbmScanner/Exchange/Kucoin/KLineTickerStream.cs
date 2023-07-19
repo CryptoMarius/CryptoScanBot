@@ -18,6 +18,8 @@ namespace CryptoSbmScanner.Exchange.Kucoin;
 /// </summary>
 public class KLineTickerStream
 {
+    //KucoinKline klinePrev;
+    //long klinePrevOpenTime = 0;
 
     public string quote;
     public int TickerCount = 0;
@@ -99,23 +101,33 @@ public class KLineTickerStream
     {
         if (symbols.Count > 0)
         {
+            KucoinKline klinePrev;
+            long klinePrevOpenTime = 0; // Unix time, OpenTime module 60
+
             string symbolNames = string.Join(',', symbols);
-            //socketClient = new KucoinSocketClient();
+            //socketClient = new KucoinSocketClient(); wel of niet (geeft problemen bij de Close()?)
             var subscriptionResult = await socketClient.SpotApi.SubscribeToKlineUpdatesAsync(symbolNames,
                 KlineInterval.OneMinute, data =>
             {
-                //if (data.Data.Confirm)
+                KucoinKline kline = data.Data.Candles;
+                long klineOpenTime = CandleTools.GetUnixTime(kline.OpenTime, 60);
+
+                if (klinePrevOpenTime == 0)
                 {
-                    //Er zit tot ongeveer 8 a 10 seconden vertraging tot hier, dat moet ansich genoeg zijn
-                    //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} added for processing", data.Data.OpenTime.ToLocalTime(), data.Symbol));
-
-                    KucoinKline kline = data.Data.Candles;
-                    {
-                        //if (kline.Confirm) // Het is een definitieve candle (niet eentje in opbouw)
-                            Task.Run(() => { ProcessCandle(data.Topic, kline); });
-                    }
-
+                    klinePrev = kline;
+                    klinePrevOpenTime = CandleTools.GetUnixTime(kline.OpenTime, 60);
                 }
+
+
+                // Het is een definitieve candle (niet eentje in opbouw)
+                // We gaan ervan uit dat de laatste aangeboden info klopt..
+                if (klineOpenTime - klinePrevOpenTime >= 60)
+                {
+                    klinePrev = kline;
+                    long klinePrevOpenTime = klineOpenTime;
+                    Task.Run(() => { ProcessCandle(data.Topic, kline); });
+                }
+
             });
             // .ConfigureAwait(false);
 
@@ -161,8 +173,15 @@ public class KLineTickerStream
         _subscription.Exception -= Exception;
         _subscription.ConnectionLost -= ConnectionLost;
         _subscription.ConnectionRestored -= ConnectionRestored;
-
-        await socketClient?.UnsubscribeAsync(_subscription);
+        try
+        {
+            // Null pointers? TODO: Nazoeken!
+            await socketClient?.UnsubscribeAsync(_subscription);
+        }
+        catch
+        {
+            // dont care
+        }
 
         return; // Task.CompletedTask;
     }
