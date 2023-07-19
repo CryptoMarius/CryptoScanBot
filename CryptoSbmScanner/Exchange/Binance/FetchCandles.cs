@@ -17,6 +17,7 @@ namespace CryptoSbmScanner.Exchange.Binance;
 /// </summary>
 public class FetchCandles
 {
+    // Prevent multiple sessions
     private static readonly SemaphoreSlim Semaphore = new(1);
 
     private static KlineInterval GetExchangeInterval(CryptoInterval interval)
@@ -146,7 +147,7 @@ public class FetchCandles
             fetchFrom[(int)interval.IntervalPeriod] = utcNow;
 
         // Determine the (maximum) startdate (without knowing what we already have)
-        // If exchange does not have this interval than make the lower timeframe
+        // If the exchange does not have this interval than make the lower timeframe
         // a bit bigger so we can calculate the candles ourselves
         foreach (CryptoInterval interval in GlobalData.IntervalList)
         {

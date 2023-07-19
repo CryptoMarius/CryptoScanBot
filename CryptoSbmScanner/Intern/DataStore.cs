@@ -188,7 +188,7 @@ public class DataStore
                             }
                             binaryWriter.Write(symbolInterval.CandleList.Count);
 
-                            foreach (CryptoCandle candle in symbolInterval.CandleList.Values)
+                            foreach (CryptoCandle candle in symbolInterval.CandleList.Values.ToList())
                             {
                                 binaryWriter.Write(candle.OpenTime);
                                 binaryWriter.Write(candle.Open);

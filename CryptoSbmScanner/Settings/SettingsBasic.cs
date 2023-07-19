@@ -114,6 +114,7 @@ public class SettingsBasic
                     },
                     TradingView = new()
                     {
+                        // Deze of die van SPOT is niet goed, ook handiger om het in een aparte file te zetten
                         Url = "https://www.tradingview.com/chart/?symbol=BYBIT:{base}{quote}&interval={interval}",
                     }
                 }
@@ -134,6 +135,7 @@ public class SettingsBasic
                     },
                     TradingView = new()
                     {
+                        // Deze of die van FUTURE is niet goed, ook handiger om het in een aparte file te zetten
                         Url = "https://www.tradingview.com/chart/?symbol=BYBIT:{base}{quote}&interval={interval}",
                     },
                 }

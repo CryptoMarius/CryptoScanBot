@@ -888,9 +888,6 @@ public partial class FrmMain : Form
             if (dialog.ShowDialog() != DialogResult.OK)
                 return;
 
-            // Deze instelling terugzetten naar de "default" indien het overeenkomt
-            if (GlobalData.Settings.General.ActivateExchange == dialog.NewExchange.Id)
-                GlobalData.Settings.General.ActivateExchange = 0;
             GlobalData.SaveSettings();
             GetReloadRelatedSettings(out string activeQuotes2);
 
