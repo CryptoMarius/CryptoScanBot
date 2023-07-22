@@ -4,7 +4,7 @@ using CryptoSbmScanner.Model;
 
 namespace CryptoSbmScanner.Signal;
 
-public class SignalStobbOverbought : SignalSbmBaseOversold
+public class SignalStobbOverbought : SignalSbmBaseOverbought
 {
     public SignalStobbOverbought(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
@@ -40,15 +40,17 @@ public class SignalStobbOverbought : SignalSbmBaseOversold
 
     public override bool AdditionalChecks(CryptoCandle candle, out string response)
     {
+        // Controle op de ma-lijnen
         if (GlobalData.Settings.Signal.StobIncludeSoftSbm)
         {
-            if (!CandleLast.IsSbmConditionsOversold(false))
+            if (!IsSbmConditionsOverbought(CandleLast, false))
             {
                 response = "geen sbm condities";
                 return false;
             }
         }
 
+        // Controle op de ma-kruisingen
         if (GlobalData.Settings.Signal.StobIncludeSbmPercAndCrossing)
         {
             if (!candle.IsSma200AndSma50OkayOverbought(GlobalData.Settings.Signal.SbmMa200AndMa50Percentage, out response))
@@ -62,6 +64,7 @@ public class SignalStobbOverbought : SignalSbmBaseOversold
                 return false;
         }
 
+        // Controle op de RSI
         if (GlobalData.Settings.Signal.StobIncludeRsi && !CandleLast.IsRsiOversold())
         {
             response = "rsi niet overbought";
@@ -117,71 +120,6 @@ public class SignalStobbOverbought : SignalSbmBaseOversold
         return true;
     }
 
-
-    public override bool AllowStepIn(CryptoSignal signal)
-    {
-        return true;
-    }
-
-
-
-    public override bool GiveUp(CryptoSignal signal)
-    {
-        // De breedte van de bb is ten minste 1.5%
-        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.StobbBBMinPercentage, GlobalData.Settings.Signal.StobbBBMaxPercentage))
-        {
-            ExtraText = "bb.width te klein " + CandleLast.CandleData.BollingerBandsPercentage?.ToString("N2");
-            return true;
-        }
-
-
-        if (Math.Min(CandleLast.Open, CandleLast.Close) <= (decimal)CandleLast.CandleData.Sma20)
-        {
-            //reason = string.Format("{0} give up (pricewise.body < bb) {1}", text, dcaPrice.ToString0());
-            ExtraText = "give up (pricewise.body > bb)";
-            return true;
-        }
-
-
-        if (CandleLast.CandleData.StochOscillator <= 20)
-        {
-            ExtraText = "give up(stoch.osc > 80)";
-            //AppendLine(string.Format("{0} give up (stoch.osc < 20) {1}", text, dcaPrice.ToString0());
-            return true;
-        }
-
-
-        // Langer dan x candles willen we niet wachten
-        if ((CandleLast.OpenTime - signal.EventTime) > GlobalData.Settings.Trading.GlobalBuyRemoveTime * Interval.Duration)
-        {
-            ExtraText = string.Format("Ophouden na {0} candles", GlobalData.Settings.Trading.GlobalBuyRemoveTime);
-            return true;
-        }
-
-        if (CandleLast.CandleData.PSar < CandleLast.CandleData.Sma20)
-        {
-            ExtraText = string.Format("De PSAR staat onder de sma20 {0:N8}", CandleLast.CandleData.PSar);
-            return true;
-        }
-
-        if (Symbol.LastPrice < (decimal)CandleLast.CandleData.Sma20)
-        {
-            ExtraText = string.Format("De prijs staat onder de sma20 {0:N8}", Symbol.LastPrice);
-            return true;
-        }
-
-
-        // Als de barometer alsnog daalt dan stoppen
-        BarometerData barometerData = Symbol.QuoteData.BarometerList[(long)CryptoIntervalPeriod.interval1h];
-        if (barometerData.PriceBarometer >= GlobalData.Settings.Trading.Barometer01hBotMinimal)
-        {
-            ExtraText = string.Format("Barometer 1h {0} below {1}", barometerData.PriceBarometer?.ToString0("N2"), GlobalData.Settings.Trading.Barometer01hBotMinimal.ToString0("N2"));
-            return true;
-        }
-
-        ExtraText = "";
-        return false;
-    }
 
 }
 
