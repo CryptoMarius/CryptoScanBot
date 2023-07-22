@@ -115,7 +115,7 @@ public partial class FrmMain
     {
         item1.SubItems.Clear();
 
-        
+
         item1.Text = signal.OpenDate.ToLocalTime().ToString("yyyy-MM-dd HH:mm") + " - " + signal.OpenDate.AddSeconds(signal.Interval.Duration).ToLocalTime().ToString("HH:mm");
 
         ListViewItem.ListViewSubItem subItem;
@@ -351,12 +351,7 @@ public partial class FrmMain
             }
 
             listViewSignals.Items.AddRange(range.ToArray());
-
-            foreach (ListViewItem item in listViewSignals.Items)
-            {
-                CryptoSignal signal = (CryptoSignal)item.Tag;
-                SetBackGroundColorsSignals(item, signal);
-            }
+            SetBackGroundColorsSignals();
 
             // Deze redelijk kostbaar? (alles moet gecontroleerd worden)
             for (int i = 0; i <= listViewSignals.Columns.Count - 1; i++)
@@ -548,7 +543,7 @@ public partial class FrmMain
     /// <summary>
     /// Roulerend de regels een iets andere achtergrond kleur geven
     /// </summary>
-    private void SetBackGroundColorsSignals(ListViewItem item, CryptoSignal signal)
+    private void SetBackGroundColorsSignal(ListViewItem item, CryptoSignal signal)
     {
         // https://www.color-hex.com/color/d3d3d3
 
@@ -576,6 +571,23 @@ public partial class FrmMain
         }
     }
 
+    private void SetBackGroundColorsSignals()
+    {
+        listViewSignals.BeginUpdate();
+        try
+        {
+            foreach (ListViewItem item in listViewSignals.Items)
+            {
+                CryptoSignal signal = (CryptoSignal)item.Tag;
+                SetBackGroundColorsSignal(item, signal);
+            }
+        }
+        finally
+        {
+            listViewSignals.EndUpdate();
+        }
+    }
+
     private void ListViewSignals_ColumnClick(object sender, ColumnClickEventArgs e)
     {
         listViewSignals.BeginUpdate();
@@ -587,11 +599,7 @@ public partial class FrmMain
             listViewSignals.SetSortIcon(listViewColumnSorter.SortColumn, listViewColumnSorter.SortOrder);
             listViewSignals.Sort();
 
-            foreach (ListViewItem item in listViewSignals.Items)
-            {
-                CryptoSignal signal = (CryptoSignal)item.Tag;
-                SetBackGroundColorsSignals(item, signal);
-            }
+            SetBackGroundColorsSignals();
         }
         finally
         {
