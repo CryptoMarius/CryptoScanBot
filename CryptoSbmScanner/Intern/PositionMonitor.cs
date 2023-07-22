@@ -875,7 +875,7 @@ public class PositionMonitor
             //QuantityFilled = step.Quantity,
             QuoteQuantity = step.Quantity * price, // wat is nu wat?
             //QuoteQuantityFilled = step.Quantity * price, // wat is nu wat?
-            Commission = step.Quantity * step.Price * 0.1m / 100, // met BNB korting=0.075 (zonder kickback, anders was het 0.065?)
+            Commission = step.Quantity * step.Price * 0.1m / 100m, // met BNB korting=0.075 (zonder kickback, anders was het 0.065?)
             CommissionAsset = position.Symbol.Quote,
 
             Side = step.Side,
@@ -1174,10 +1174,9 @@ public class PositionMonitor
                 }
                 else if (stepInMethod == CryptoBuyStepInMethod.TrailViaKcPsar)
                 {
-                    // De 1e trailing limit buy order
-                    // TODO - een stop limit order kunnen plaatsen (nog niet eerder gedaan blijkbaar)
                     decimal? stop = Math.Max((decimal)candleInterval.CandleData.KeltnerUpperBand, (decimal)candleInterval.CandleData.PSar) + Symbol.PriceTickSize;
                     stop = stop?.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
+                   
                     decimal price = 1.015m * (decimal)stop; // ergens erboven
                     price = price.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
 
@@ -1217,8 +1216,9 @@ public class PositionMonitor
                 decimal price = Math.Max((decimal)candleInterval.CandleData.KeltnerUpperBand, (decimal)candleInterval.CandleData.PSar) + Symbol.PriceTickSize;
                 if (price < step.StopPrice) // of was het de StopPrice? Grrrrr
                 {
-                    decimal? stop = Math.Max((decimal)candleInterval.CandleData.KeltnerUpperBand, (decimal)candleInterval.CandleData.PSar) + Symbol.PriceTickSize;
+                    decimal? stop = price;
                     stop = stop?.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
+                    
                     price = 1.015m * (decimal)stop; // ergens erboven
                     price = price.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
 
@@ -1462,49 +1462,35 @@ public class PositionMonitor
 
                 // Controle - Trailing buy? SELL.C (via een instelling graag!)
                 // Dat loop momenteel niet zo erg goed, de SL wordt erg vaak geraakt (is wat je mag verwachten natuurlijk)
+                
+                // 21-07-2021 : omgebouwd naar een STOPLIMIT order (maar is/was dat verstandig?)
+                
 
-                decimal x = Math.Min((decimal)candleInterval.CandleData.KeltnerLowerBand, (decimal)candleInterval.CandleData.PSar) - 2 * Symbol.PriceTickSize;
-                if (x >= part.BreakEvenPrice) //|| (GlobalData.Settings.Trading.LockProfits && Math.Min(candleInterval.Open, candleInterval.Close) >= part.BreakEvenPrice)
+                decimal stop = Math.Min((decimal)candleInterval.CandleData.KeltnerLowerBand, (decimal)candleInterval.CandleData.PSar) - Symbol.PriceTickSize;
+                if (stop >= part.BreakEvenPrice) //|| (GlobalData.Settings.Trading.LockProfits && Math.Min(candleInterval.Open, candleInterval.Close) >= part.BreakEvenPrice)
                 {
-                    // Met lockprofits wil je (in de winst hebben gestaan) in de winst blijven, ook al is het maar een beetje..
-                    //if (GlobalData.Settings.Trading.LockProfits && Math.Min(candleInterval.Open, candleInterval.Close) > x && x < part.BreakEvenPrice)
-                    //    x = Math.Min(candleInterval.Open, candleInterval.Close) - 2 * Symbol.PriceTickSize;
-
-                    // 1.5% hoger, dat moet genoeg speelruimte zijn? (en met een spike zijn we waarschijnlijk ook tevreden)
-                    // Het blijft wel een dingetje waar je dan de sell price op zit, later nog eens naar kijken lijkt me.
-                    //decimal sellPrice = x + (1.5m * x / 100); //x + (2m * x / 100);
-                    decimal sellPrice = (decimal)candleInterval.CandleData.BollingerBandsUpperBand - 1 * Symbol.PriceTickSize;
-                    sellPrice = sellPrice.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
-                    if (Symbol.LastPrice.HasValue && Symbol.LastPrice > sellPrice)
-                    {
-                        decimal oldPrice = sellPrice;
-                        sellPrice = (decimal)Symbol.LastPrice + 1 * Symbol.PriceTickSize;
-                        GlobalData.AddTextToLogTab("SELL correction: " + Symbol.Name + " " + oldPrice.ToString("N6") + " to " + sellPrice.ToString0());
-                    }
-
-                    // Dat is dan de minimale waarde van KC en PSAR
-                    decimal sellStop = x;
-                    sellStop = sellStop.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
-
-                    // Limit prijs x% lager (die kan op 0 staan als je initieel geen SL gebruikt)
-                    decimal sellLimit = sellStop - (sellStop * (1.5m / 100));
-                    sellLimit = sellLimit.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
-
-
-                    // Als de prijs reeds boven de KC.High zit hoger gaan zitten!
+                    // Als de prijs (ver) boven de KC.High zit dan nemen we de middelste KC als stop!
                     if (Math.Min(candleInterval.Open, candleInterval.Close) > (decimal)candleInterval.CandleData.KeltnerUpperBand)
                     {
-                        sellStop = ((decimal)candleInterval.CandleData.KeltnerLowerBand + (decimal)candleInterval.CandleData.KeltnerUpperBand ) / 2;
-                        sellStop = sellStop.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
-
-                        sellLimit = sellStop - (sellStop * (1.5m / 100));
-                        sellLimit = sellLimit.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
+                        decimal oldPrice = stop;
+                        stop = ((decimal)candleInterval.CandleData.KeltnerLowerBand + (decimal)candleInterval.CandleData.KeltnerUpperBand ) / 2;
+                        GlobalData.AddTextToLogTab("SELL correction2: " + Symbol.Name + " sellStop-> " + oldPrice.ToString("N6") + " to " + stop.ToString0());
                     }
+                    stop = stop.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
 
 
+                    // price moet lager, 1.5% moet genoeg zijn.
+                    decimal price = 0.085m * stop; // ergens eronder
+                    price = price.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
+                    //if (Symbol.LastPrice.HasValue && Symbol.LastPrice > price)
+                    //{
+                    //    decimal oldPrice = price;
+                    //    price = (decimal)Symbol.LastPrice + 2 * Symbol.PriceTickSize;
+                    //    GlobalData.AddTextToLogTab("SELL correction1: " + Symbol.Name + " " + oldPrice.ToString("N6") + " to " + price.ToString0());
+                    //}
 
                     // Een extra controle op de low (anders wordt ie direct gevuld)
-                    if (step.Status == CryptoOrderStatus.New && step.Side == CryptoOrderSide.Sell && candleInterval.Low > sellStop && (step.StopPrice == null || sellStop > step.StopPrice))
+                    if (step.Status == CryptoOrderStatus.New && step.Side == CryptoOrderSide.Sell && candleInterval.Low > stop && (step.StopPrice == null || stop > step.StopPrice))
                     {
                         await Api.Cancel(position.TradeAccount, Symbol, step.OrderId);
                         step.Status = CryptoOrderStatus.Expired;
@@ -1518,12 +1504,12 @@ public class PositionMonitor
                         //    step.Quantity, sellPrice, sellStop, sellLimit);
                         (bool result, TradeParams tradeParams) sellResult = await exchangeApi.BuyOrSell(
                             position.TradeAccount, position.Symbol, LastCandle1mCloseTimeDate,
-                            CryptoOrderType.Oco, CryptoOrderSide.Sell,
-                            step.Quantity, sellPrice, sellStop, sellLimit, "LOCK PROFIT");
+                            CryptoOrderType.StopLimit, CryptoOrderSide.Sell,
+                            step.Quantity, price, stop, null, "LOCK PROFIT"); // Was een OCO met een sellLimit
                         if (sellResult.result)
                         {
                             // Administratie van de nieuwe sell bewaren (iets met tonen van de posities)
-                            part.SellPrice = sellPrice;
+                            part.SellPrice = price;
                             if (!position.SellPrice.HasValue)
                             {
                                 position.SellPrice = part.SellPrice; // (kan eigenlijk weg, slechts ter debug en tracering, voila)
