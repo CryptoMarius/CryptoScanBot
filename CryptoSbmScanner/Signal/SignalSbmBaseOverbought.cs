@@ -9,7 +9,7 @@ public static class SignalSbmBaseOverboughtHelper
 {
     public static bool IsSbmConditionsOverbought(this CryptoCandle candle, bool includePsarCheck = true)
     {
-        // Optimalisatie, zou naar de SignalSbmBaseOverbought kunnen (maar laten staan vanwege oversold)
+        // Optimalisatie, zou naar de SignalSbmBaseOverbought kunnen (maar laten staan vanwege overbought)
 
         // Overbought (denk groen-geel-rood) - short
         // psar

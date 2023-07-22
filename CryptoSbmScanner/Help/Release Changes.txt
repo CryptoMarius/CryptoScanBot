@@ -60,7 +60,7 @@ De ondersteuning van de Kucoin exchange is uitgesteld (want de price- en klineti
 
 
 xx-07-2023 1.8.2
-- Er zijn minder short meldingen dan voorheen want in de stobb overbought werdt een controle op oversold gedaan (foutje!)
+- Er zijn minder short meldingen dan voorheen want in de stobb overbought werdt een controle op oversold gedaan (op zowel de ma lijnen als de rsi, foutje!)
 - De tabs in de instellingen en hoofdscherm zijn iets duidelijker gemaakt
 - De oneven regels in de grids een lichtgrijze achtergrond kleurtje geven
 - Correcties in de hypertrader links naar bybit-spot en bybit futures (met dank aan Marco)

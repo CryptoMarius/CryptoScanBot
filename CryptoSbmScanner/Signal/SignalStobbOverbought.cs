@@ -65,7 +65,7 @@ public class SignalStobbOverbought : SignalSbmBaseOverbought
         }
 
         // Controle op de RSI
-        if (GlobalData.Settings.Signal.StobIncludeRsi && !CandleLast.IsRsiOversold())
+        if (GlobalData.Settings.Signal.StobIncludeRsi && !CandleLast.IsRsiOverbought())
         {
             response = "rsi niet overbought";
             return false;
@@ -94,7 +94,7 @@ public class SignalStobbOverbought : SignalSbmBaseOverbought
             return false;
         }
 
-        // Sprake van een oversold situatie (beide moeten onder de 20 zitten)
+        // Sprake van een overbought situatie (beide moeten onder de 20 zitten)
         if (!CandleLast.IsStochOverbought())
         {
             ExtraText = "stoch niet overbought";

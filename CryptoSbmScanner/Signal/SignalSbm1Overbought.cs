@@ -21,7 +21,7 @@ public class SignalSbm1Overbought : SignalSbmBaseOverbought
         CryptoCandle last = CandleLast;
         while (candleCount > 0)
         {
-            // Er een candle onder de bb opent of sluit & een oversold situatie (beide moeten onder de 20 zitten)
+            // Er een candle onder de bb opent of sluit & een overbought situatie (beide moeten onder de 20 zitten)
             if ((last.IsAboveBollingerBands(GlobalData.Settings.Signal.SbmUseLowHigh)) && (last.IsStochOverbought()))
                 return true;
 
