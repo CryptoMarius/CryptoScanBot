@@ -32,7 +32,6 @@ internal class PriceTicker : PriceTickerBase
                         PriceTickerStream ticker = new();
                         TickerList.Add(ticker);
 
-                        // Op deze exchange is er een limiet van 10 symbols, dus opknippen in (veel) stukjes
                         while (symbols.Count > 0)
                         {
                             CryptoSymbol symbol = symbols[0];
@@ -58,7 +57,7 @@ internal class PriceTicker : PriceTickerBase
 
             if (taskList.Any())
             {
-                //await Task.WhenAll(taskList);
+                await Task.WhenAll(taskList);
                 GlobalData.AddTextToLogTab($"{Api.ExchangeName} started price ticker stream for {count} symbols");
             }
         }
