@@ -43,7 +43,7 @@ public class SignalStobbOverbought : SignalSbmBaseOverbought
         // Controle op de ma-lijnen
         if (GlobalData.Settings.Signal.StobIncludeSoftSbm)
         {
-            if (!IsSbmConditionsOverbought(CandleLast, false))
+            if (!CandleLast.IsSbmConditionsOverbought(false))
             {
                 response = "geen sbm condities";
                 return false;
