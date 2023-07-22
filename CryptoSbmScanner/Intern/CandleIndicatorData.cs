@@ -68,12 +68,20 @@ public class CandleIndicatorData
     /// </summary>
     /// <param name="symbol"></param>
     /// <param name="interval"></param>
-    /// <param name="nextCandleOpenTime"></param>
+    /// <param name="firstCandleOpenTime"></param>
     /// <param name="errorstr"></param>
     /// <returns></returns>
-    static public List<CryptoCandle> CalculateCandles(CryptoSymbol symbol, CryptoInterval interval, long nextCandleOpenTime, out string errorstr)
+    static public List<CryptoCandle> CalculateCandles(CryptoSymbol symbol, CryptoInterval interval, long firstCandleOpenTime, out string errorstr)
     {
+        // Een kleine selectie van candles overnemen voor het uitrekenen van de indicators
+        // De firstCandleOpenTime is de eerste candle die we in de selectie moeten zetten.
+
+        // Geen verandering als het goed is (is allemaal al afgerond, maar kan geen kwaad
+        long candleLoop = firstCandleOpenTime - (firstCandleOpenTime % interval.Duration);
+        // DateTime candleLoopDebug = CandleTools.GetUnixDate(candleLoop); //debug
+
         SortedList<long, CryptoCandle> candlesForHistory = new();
+
 
         Monitor.Enter(symbol.CandleList);
         try
@@ -86,17 +94,10 @@ public class CandleIndicatorData
                 return null;
             }
 
+            bool first = true;
             CryptoCandle firstCandle = intervalCandles.Values.First();
             long firstTime = firstCandle.OpenTime;
 
-            bool first = true;
-
-            // Een kleine selectie van candles overnemen.
-            // Mijn vermoeden is we de 1e keer geen candle hebben (omdat we de tijd van de volgende candle krijgen)
-            // MAAR, vanuit een backtest is deze candle er wel, dus hier moet ik waarschijnlijk iets aan doen....
-            // Probleem, als er niet genoeg candles zijn krijgen we een endless loop! ;-)
-            long candleLoop = nextCandleOpenTime - (nextCandleOpenTime % interval.Duration); //Geen verandering als het goed is
-                                                                                             //DateTime candleLoopDebug = CandleTools.GetUnixDate(candleLoop); //debug
             while (candlesForHistory.Count < maxCandles)
             {
                 if (intervalCandles.TryGetValue(candleLoop, out CryptoCandle candle))
@@ -111,7 +112,7 @@ public class CandleIndicatorData
                 else
                 {
                     // De laatste candle is niet altijd aanwezig (een kwestie van timing?)
-                    if (nextCandleOpenTime != candleLoop && !first) //!BackTest && 
+                    if (firstCandleOpenTime != candleLoop && !first) //!BackTest && 
                     {
                         // In de hoop dat dit het automatisch zou kunnen fixen?
                         symbolPeriod.IsChanged = true;
@@ -138,7 +139,7 @@ public class CandleIndicatorData
 
             // Fill in missing candles (repeating the last candle.close) up to nextCandleOpenTime
             // We assume nothing has happened in that period (flat candles with no orders)
-            CandleTools.AddMissingSticks(candlesForHistory, nextCandleOpenTime, interval);
+            CandleTools.AddMissingSticks(candlesForHistory, firstCandleOpenTime, interval);
         }
         finally
         {
