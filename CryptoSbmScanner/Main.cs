@@ -100,10 +100,8 @@ public partial class FrmMain : Form
 
 
         CryptoDatabase.SetDatabaseDefaults();
-
         GlobalData.LoadExchanges();
         GlobalData.LoadIntervals();
-        GlobalData.LoadAccounts();
 
         // Is er via de command line aangegeven dat we default een andere exchange willen?
         {
@@ -125,6 +123,7 @@ public partial class FrmMain : Form
             }
         }
         ExchangeHelper.ExchangeDefaults();
+        GlobalData.LoadAccounts();
 
         WindowLocationRestore();
         ApplySettings();
