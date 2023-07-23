@@ -1,6 +1,8 @@
 Mis je iets in onderstaande bevindingen/todo's of toekomstige todo's, geef het AUB aan want dan is wat we besproken hebben ergens tussen wal en schip gevallen...
 
 Openstaande punten/bevindingen/todo's:
+- Bybit Futures, melden van de FundingRate en FundingInterval (maar wat is het precies?)
+- Het normale logbestand bevat op het einde een .0, waar komt deze vandaag, doet nlog een archive ofzo?
 - Trading: Ondanks een limit op de BASE worden er meerdere posities op dezelfde base geopend.
 - Trading: De STOBB heeft nu een minimale trend maar dat is conflicteerd uiteraard bij een short positie (extra instelling?)
 - Trading: Uitzoeken voor iemand in de groep, de backtest emulator aanpassen zodat het (pas) bij een psar wissel instapt - is er nog niet van gekomen, sorry!
