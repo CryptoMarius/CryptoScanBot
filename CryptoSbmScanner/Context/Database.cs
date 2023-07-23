@@ -17,6 +17,9 @@ namespace CryptoSbmScanner.Context;
 
 public class CryptoDatabase : IDisposable
 {
+    // De huidige database versie (zoals in de code is gedefinieerd)
+    private static int CurrentVersion = 1;
+
     public static void SetDatabaseDefaults()
     {
         Dapper.SqlMapper.Settings.CommandTimeout = 180;
@@ -636,7 +639,7 @@ public class CryptoDatabase : IDisposable
             {
                 Name = "Bybit Spot paper",
                 Short = "Pater",
-                ExchangeId = 1,
+                ExchangeId = 2,
                 AccountType = CryptoAccountType.Spot,
                 TradeAccountType = CryptoTradeAccountType.PaperTrade,
             };
@@ -646,7 +649,7 @@ public class CryptoDatabase : IDisposable
             {
                 Name = "Bybit Spot backtest",
                 Short = "Backtest",
-                ExchangeId = 1,
+                ExchangeId = 2,
                 AccountType = CryptoAccountType.Spot,
                 TradeAccountType = CryptoTradeAccountType.BackTest,
             };
@@ -657,7 +660,7 @@ public class CryptoDatabase : IDisposable
             {
                 Name = "Bybit Futures trading",
                 Short = "Trading",
-                ExchangeId = 1,
+                ExchangeId = 3,
                 AccountType = CryptoAccountType.Spot,
                 TradeAccountType = CryptoTradeAccountType.RealTrading,
             };
@@ -667,7 +670,7 @@ public class CryptoDatabase : IDisposable
             {
                 Name = "Bybit Futures paper",
                 Short = "Pater",
-                ExchangeId = 1,
+                ExchangeId = 3,
                 AccountType = CryptoAccountType.Spot,
                 TradeAccountType = CryptoTradeAccountType.PaperTrade,
             };
@@ -677,7 +680,7 @@ public class CryptoDatabase : IDisposable
             {
                 Name = "Bybit Futures backtest",
                 Short = "Backtest",
-                ExchangeId = 1,
+                ExchangeId = 3,
                 AccountType = CryptoAccountType.Spot,
                 TradeAccountType = CryptoTradeAccountType.BackTest,
             };
@@ -689,7 +692,7 @@ public class CryptoDatabase : IDisposable
             {
                 Name = "Kucoin trading",
                 Short = "Trading",
-                ExchangeId = 1,
+                ExchangeId = 4,
                 AccountType = CryptoAccountType.Spot,
                 TradeAccountType = CryptoTradeAccountType.RealTrading,
             };
@@ -699,7 +702,7 @@ public class CryptoDatabase : IDisposable
             {
                 Name = "Kucoin paper",
                 Short = "Pater",
-                ExchangeId = 1,
+                ExchangeId = 4,
                 AccountType = CryptoAccountType.Spot,
                 TradeAccountType = CryptoTradeAccountType.PaperTrade,
             };
@@ -709,7 +712,7 @@ public class CryptoDatabase : IDisposable
             {
                 Name = "Kucoin backtest",
                 Short = "Backtest",
-                ExchangeId = 1,
+                ExchangeId = 4,
                 AccountType = CryptoAccountType.Spot,
                 TradeAccountType = CryptoTradeAccountType.BackTest,
             };
@@ -1123,7 +1126,7 @@ public class CryptoDatabase : IDisposable
         CreateTableExchange(connection); // (met een hardcoded lijst, voorlopig prima)
 
         CreateTableSymbol(connection);
-        //CreateTableSymbolInterval(connection);
+        //CreateTableSymbolInterval(connection); -- opgeslagen in files, prima zo
         CreateTableSignal(connection);
 
         CreateTableTradeAccount(connection);
@@ -1131,12 +1134,16 @@ public class CryptoDatabase : IDisposable
         CreateTablePositionPart(connection);
         CreateTablePositionStep(connection);
         
-        //CreateTableOrder(connection);
+        //CreateTableOrder(connection); -- vervallen
         CreateTableTrade(connection);
 
-        //CreateTableAsset(connection);
-        //CreateTableBalancing(connection);
+        //CreateTableAsset(connection); -- todo ooit
+        //CreateTableBalancing(connection); -- todo ooit
         CreateTableVersion(connection);
+
+
+        // Indien noodzakelijk database upgraden 
+        Migration.Execute(connection, CurrentVersion);
     }
 
 }
