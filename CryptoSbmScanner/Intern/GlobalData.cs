@@ -43,6 +43,8 @@ static public class GlobalData
     static public bool BackTest { get; set; }
     static public CryptoApplicationStatus ApplicationStatus { get; set; } = CryptoApplicationStatus.Initializing;
 
+    static public int createdSignalCount = 0; // Tellertje met het aantal meldingen (komt in de taakbalk c.q. applicatie titel)
+
     /// <summary>
     /// Alle instellingen van de scanenr/trader
     /// </summary>
@@ -659,25 +661,23 @@ static public class GlobalData
         NLog.LogManager.Configuration = config;
     }
 
-    public static void DumpSessionInformation()
-    {
-        foreach (Model.CryptoExchange exchange in GlobalData.ExchangeListName.Values.ToList())
-        {
-            int candleCount = 0;
-            foreach (Model.CryptoSymbol symbol in exchange.SymbolListName.Values.ToList())
-            {
-                foreach (Model.CryptoSymbolInterval symbolInterval in symbol.IntervalPeriodList.ToList())
-                {
-                    candleCount += symbolInterval.CandleList.Count;
-                    if (symbolInterval.CandleList.Count > 0)
-                        AddTextToLogTab(string.Format("{0} {1} {2} candlecount={3}", exchange.Name, symbol.Name, symbolInterval.Interval.Name, symbolInterval.CandleList.Count), false);
+    //public static void DumpSessionInformation()
+    //{
+    //    foreach (Model.CryptoExchange exchange in GlobalData.ExchangeListName.Values.ToList())
+    //    {
+    //        int candleCount = 0;
+    //        foreach (Model.CryptoSymbol symbol in exchange.SymbolListName.Values.ToList())
+    //        {
+    //            foreach (Model.CryptoSymbolInterval symbolInterval in symbol.IntervalPeriodList.ToList())
+    //            {
+    //                candleCount += symbolInterval.CandleList.Count;
+    //                if (symbolInterval.CandleList.Count > 0)
+    //                    AddTextToLogTab(string.Format("{0} {1} {2} candlecount={3}", exchange.Name, symbol.Name, symbolInterval.Interval.Name, symbolInterval.CandleList.Count), false);
 
-                }
-            }
+    //            }
+    //        }
 
-            AddTextToLogTab(string.Format("{0} symbolcount={1} candlecount={2}", exchange.Name, exchange.SymbolListName.Count, candleCount), false);
-        }
-
-
-    }
+    //        AddTextToLogTab(string.Format("{0} symbolcount={1} candlecount={2}", exchange.Name, exchange.SymbolListName.Count, candleCount), false);
+    //    }
+    //}
 }
