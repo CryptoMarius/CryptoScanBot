@@ -427,16 +427,18 @@ public class SignalCreate
             signal.IsInvalid = true;
         }
 
-        // Weer een extra controle, staat de symbol op de black of whitelist?
+        // Extra controles, staat de symbol op de blacklist?
         if (!signal.BackTest && TradingConfig.Config[signal.Side].InBlackList(Symbol.Name) == MatchBlackAndWhiteList.Present)
         {
-            // Als de muntpaar op de black lijst staat dit signaal overslagen
+            // Als de muntpaar op de black lijst staat dan dit signaal overslagen
             eventText += " " + "staat op blacklist";
             signal.IsInvalid = true;
         }
-        else if (!signal.BackTest && TradingConfig.Config[signal.Side].InWhiteList(Symbol.Name) == MatchBlackAndWhiteList.Missing)
+
+        // Extra controles, staat de symbol op de whitelist?
+        if (!signal.BackTest && TradingConfig.Config[signal.Side].InWhiteList(Symbol.Name) == MatchBlackAndWhiteList.NotPresent)
         {
-            // Als de muntpaar niet op de white lijst staat dit signaal overslagen
+            // Als de muntpaar niet in de white lijst staat dan dit signaal overslagen
             eventText += " " + "niet in whitelist";
             signal.IsInvalid = true;
         }

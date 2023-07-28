@@ -8,7 +8,7 @@ public enum MatchBlackAndWhiteList
 {
     Empty,
     Present,
-    Missing
+    NotPresent
 }
 
 public class TradeConfiguration // c.q. SignalMode, betere naam gewenst? Alles beter dan continue de oversold en overbought te moeten toevoegen
@@ -35,18 +35,18 @@ public class TradeConfiguration // c.q. SignalMode, betere naam gewenst? Alles b
         if (BlackList.ContainsKey(name))
             return MatchBlackAndWhiteList.Present;
         else
-            return MatchBlackAndWhiteList.Missing;
+            return MatchBlackAndWhiteList.NotPresent;
     }
 
     public MatchBlackAndWhiteList InWhiteList(string name)
     {
-        if (!BlackList.Any())
+        if (!WhiteList.Any())
             return MatchBlackAndWhiteList.Empty;
 
         if (WhiteList.ContainsKey(name))
             return MatchBlackAndWhiteList.Present;
         else
-            return MatchBlackAndWhiteList.Missing;
+            return MatchBlackAndWhiteList.NotPresent;
     }
 
     public void ClearStrategies()
