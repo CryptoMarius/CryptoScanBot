@@ -18,7 +18,7 @@ namespace CryptoSbmScanner.Context;
 public class CryptoDatabase : IDisposable
 {
     // De huidige database versie (zoals in de code is gedefinieerd)
-    private static int CurrentVersion = 1;
+    private readonly static int CurrentVersion = 2;
 
     public static void SetDatabaseDefaults()
     {
@@ -757,6 +757,11 @@ public class CryptoDatabase : IDisposable
                 "TrendInfoDate TEXT NULL," +
                 "TrendPercentage TEXT NULL," +
                 "LastTradeDate TEXT NULL," +
+
+                // Bybit Futures, ondersteunen van de FundingRate en FundingInterval
+                "FundingRate TEXT NULL," +
+                "FundingInterval TEXT NULL, " +
+
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)" +
             ")");
             connection.Connection.Execute("CREATE INDEX IdxSymbolId ON Symbol(Id)");
@@ -982,6 +987,7 @@ public class CryptoDatabase : IDisposable
                 "StopPrice TEXT NULL," +
                 "StopLimitPrice TEXT NULL," +
                 "Quantity TEXT NOT NULL," +
+                "Commission NOT NULL," +
                 "QuantityFilled TEXT NOT NULL," +
                 "QuoteQuantityFilled TEXT NOT NULL," +
                 // Vanwege Papertrading nullable
