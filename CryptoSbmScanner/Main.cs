@@ -520,7 +520,7 @@ public partial class FrmMain : Form
                     int offsetValue = 20;
                     //Pen blackPen = new Pen(Color.Black, 1);
                     Rectangle rect1 = new(0, 0, intWidth, intHeight);
-                    Font drawFont1 = new("Microsoft Sans Serif", this.Font.Size);
+                    Font drawFont1 = new(this.Font.Name, this.Font.Size);
                     CryptoIntervalPeriod[] list = { CryptoIntervalPeriod.interval1h, CryptoIntervalPeriod.interval4h, CryptoIntervalPeriod.interval1d };
 
                     foreach (CryptoIntervalPeriod intervalPeriod in list)
@@ -550,7 +550,7 @@ public partial class FrmMain : Form
                     Rectangle rect = new(6, 0, intWidth, intHeight - 8);
                     string text = CandleTools.GetUnixDate((long)candle.OpenTime + 60).ToLocalTime().ToString("HH:mm");
 
-                    Font drawFont = new("Microsoft Sans Serif", this.Font.Size);
+                    Font drawFont = new(this.Font.Name, this.Font.Size);
                     TextRenderer.DrawText(g, text, drawFont, rect, Color.Black, Color.Transparent, TextFormatFlags.Bottom);
 
                 }

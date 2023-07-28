@@ -66,8 +66,10 @@ De ondersteuning van de Kucoin exchange is uitgesteld (want de price- en klineti
 
 xx-07-2023 1.8.2
 - Typo bearisch -> bearish
+- Aanpassing lettertype, het standaard lettertype in .net 7 is blijkbaar "Segoe UI; 9pt" geworden ipv "Microsoft Sans Serif 8.25p"
+  De applicatie ziet er hierdoro anders uit en het kan wellicht het probleem met de gemelde lettertypes oplossen (geen garanties)
 - Vanuit de settings via een verkenner openen de data-folder openen, dat scheelt het eea aan uitleg en support (voor mij ook sneller).
-- De RMK optie 
+- De RMK optie in de signalen om zowel de 
 - Een munt kunnen openen in op de exchange zelf (dus niet de app, niet TV, maar de website van de exchange zelf)
   Omdat dit enigzins dubbelzinnig is met de optie dubbelklik is die komen te vervallen
 - De configuratie opgesplitst in een Settings.json en een Weblinks.json, het bevat de te gebruiken url's en apps

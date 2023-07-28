@@ -109,10 +109,10 @@
             // 
             panel4.Controls.Add(listBoxSymbols);
             panel4.Dock = DockStyle.Fill;
-            panel4.Location = new Point(0, 93);
+            panel4.Location = new Point(0, 100);
             panel4.Margin = new Padding(2);
             panel4.Name = "panel4";
-            panel4.Size = new Size(190, 648);
+            panel4.Size = new Size(190, 641);
             panel4.TabIndex = 2;
             // 
             // listBoxSymbols
@@ -124,7 +124,7 @@
             listBoxSymbols.Location = new Point(0, 0);
             listBoxSymbols.Margin = new Padding(2);
             listBoxSymbols.Name = "listBoxSymbols";
-            listBoxSymbols.Size = new Size(190, 648);
+            listBoxSymbols.Size = new Size(190, 641);
             listBoxSymbols.Sorted = true;
             listBoxSymbols.TabIndex = 0;
             // 
@@ -186,7 +186,7 @@
             panel3.Location = new Point(0, 0);
             panel3.Margin = new Padding(2);
             panel3.Name = "panel3";
-            panel3.Size = new Size(190, 93);
+            panel3.Size = new Size(190, 100);
             panel3.TabIndex = 1;
             // 
             // label1
@@ -291,10 +291,10 @@
             // 
             panelClient.Controls.Add(tabControl);
             panelClient.Dock = DockStyle.Fill;
-            panelClient.Location = new Point(0, 93);
+            panelClient.Location = new Point(0, 100);
             panelClient.Margin = new Padding(2);
             panelClient.Name = "panelClient";
-            panelClient.Size = new Size(1542, 648);
+            panelClient.Size = new Size(1542, 641);
             panelClient.TabIndex = 13;
             // 
             // tabControl
@@ -312,7 +312,7 @@
             tabControl.Margin = new Padding(2);
             tabControl.Name = "tabControl";
             tabControl.SelectedIndex = 0;
-            tabControl.Size = new Size(1542, 648);
+            tabControl.Size = new Size(1542, 641);
             tabControl.TabIndex = 12;
             // 
             // tabPageDashBoard
@@ -322,7 +322,7 @@
             tabPageDashBoard.Location = new Point(4, 27);
             tabPageDashBoard.Name = "tabPageDashBoard";
             tabPageDashBoard.Padding = new Padding(3);
-            tabPageDashBoard.Size = new Size(1534, 617);
+            tabPageDashBoard.Size = new Size(1534, 610);
             tabPageDashBoard.TabIndex = 9;
             tabPageDashBoard.Text = "Dashboard";
             tabPageDashBoard.UseVisualStyleBackColor = true;
@@ -332,7 +332,7 @@
             dashBoardControl1.Dock = DockStyle.Fill;
             dashBoardControl1.Location = new Point(3, 3);
             dashBoardControl1.Name = "dashBoardControl1";
-            dashBoardControl1.Size = new Size(1528, 611);
+            dashBoardControl1.Size = new Size(1528, 604);
             dashBoardControl1.TabIndex = 0;
             // 
             // tabPageSignals
@@ -498,7 +498,7 @@
             panelTop.Location = new Point(0, 0);
             panelTop.Margin = new Padding(2);
             panelTop.Name = "panelTop";
-            panelTop.Size = new Size(1542, 93);
+            panelTop.Size = new Size(1542, 100);
             panelTop.TabIndex = 14;
             // 
             // labelBarometerDateValue
@@ -527,7 +527,7 @@
             pictureBox1.Location = new Point(95, 0);
             pictureBox1.Margin = new Padding(4, 3, 4, 3);
             pictureBox1.Name = "pictureBox1";
-            pictureBox1.Size = new Size(419, 93);
+            pictureBox1.Size = new Size(419, 100);
             pictureBox1.TabIndex = 67;
             pictureBox1.TabStop = false;
             // 

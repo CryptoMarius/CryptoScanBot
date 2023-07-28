@@ -599,7 +599,7 @@ partial class FrmSettings
         label40.Name = "label40";
         label40.Size = new Size(97, 15);
         label40.TabIndex = 160;
-        label40.Text = "Trend calculation";
+        label40.Text = "Trend berekening";
         // 
         // EditTrendCalculationMethod
         // 
@@ -700,7 +700,7 @@ partial class FrmSettings
         // 
         EditTradingApp.DropDownStyle = ComboBoxStyle.DropDownList;
         EditTradingApp.FormattingEnabled = true;
-        EditTradingApp.Items.AddRange(new object[] { "Altrady", "Hypertrader", "TradingView", "Via de exchange zelf" });
+        EditTradingApp.Items.AddRange(new object[] { "Altrady", "Hypertrader", "TradingView", "Via de exchange" });
         EditTradingApp.Location = new Point(189, 92);
         EditTradingApp.Margin = new Padding(4, 3, 4, 3);
         EditTradingApp.Name = "EditTradingApp";
@@ -1417,7 +1417,6 @@ partial class FrmSettings
         // label77
         // 
         label77.AutoSize = true;
-        label77.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Bold, GraphicsUnit.Point);
         label77.Location = new Point(19, 221);
         label77.Margin = new Padding(4, 0, 4, 0);
         label77.Name = "label77";
@@ -1428,7 +1427,6 @@ partial class FrmSettings
         // label75
         // 
         label75.AutoSize = true;
-        label75.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Bold, GraphicsUnit.Point);
         label75.Location = new Point(19, 316);
         label75.Margin = new Padding(4, 0, 4, 0);
         label75.Name = "label75";
@@ -1727,7 +1725,6 @@ partial class FrmSettings
         // label21
         // 
         label21.AutoSize = true;
-        label21.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Bold, GraphicsUnit.Point);
         label21.Location = new Point(19, 487);
         label21.Margin = new Padding(4, 0, 4, 0);
         label21.Name = "label21";
@@ -1738,7 +1735,6 @@ partial class FrmSettings
         // label20
         // 
         label20.AutoSize = true;
-        label20.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Bold, GraphicsUnit.Point);
         label20.Location = new Point(19, 316);
         label20.Margin = new Padding(4, 0, 4, 0);
         label20.Name = "label20";
@@ -1749,7 +1745,6 @@ partial class FrmSettings
         // label9
         // 
         label9.AutoSize = true;
-        label9.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Bold, GraphicsUnit.Point);
         label9.Location = new Point(19, 178);
         label9.Margin = new Padding(4, 0, 4, 0);
         label9.Name = "label9";
@@ -1972,7 +1967,6 @@ partial class FrmSettings
         // label22
         // 
         label22.AutoSize = true;
-        label22.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Bold, GraphicsUnit.Point);
         label22.Location = new Point(612, 178);
         label22.Margin = new Padding(4, 0, 4, 0);
         label22.Name = "label22";
@@ -2281,7 +2275,6 @@ partial class FrmSettings
         // label78
         // 
         label78.AutoSize = true;
-        label78.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Bold, GraphicsUnit.Point);
         label78.Location = new Point(21, 246);
         label78.Margin = new Padding(4, 0, 4, 0);
         label78.Name = "label78";
@@ -2292,7 +2285,6 @@ partial class FrmSettings
         // label76
         // 
         label76.AutoSize = true;
-        label76.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Bold, GraphicsUnit.Point);
         label76.Location = new Point(23, 349);
         label76.Margin = new Padding(4, 0, 4, 0);
         label76.Name = "label76";

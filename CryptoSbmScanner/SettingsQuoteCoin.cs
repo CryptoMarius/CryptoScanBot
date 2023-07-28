@@ -53,7 +53,7 @@ internal class SettingsQuoteCoin : IDisposable
             Text = quoteData.Name,
             UseVisualStyleBackColor = true
         };
-        xPos += FetchCandles.Size.Width + 30;
+        xPos += FetchCandles.Size.Width + 50;
         controls.Add(FetchCandles);
 
         CreateSignals = new()
@@ -63,7 +63,7 @@ internal class SettingsQuoteCoin : IDisposable
             Size = new Size(15, 23),
             UseVisualStyleBackColor = true
         };
-        xPos += CreateSignals.Size.Width + 30;
+        xPos += CreateSignals.Size.Width + 50;
         controls.Add(CreateSignals);
 
         // Minimum Volume
