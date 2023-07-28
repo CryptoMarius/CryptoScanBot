@@ -12,6 +12,7 @@ namespace CryptoSbmScanner.Exchange.Kucoin;
 
 public class PriceTickerStream
 {
+//    private static int tickerIndex = 0;
     public int TickerCount = 0; //Tellertje om te laten zien dat de stream doorloopt (anders geen candle uupdates)
     private KucoinSocketClient socketClient;
     private UpdateSubscription _subscription;
@@ -63,6 +64,15 @@ public class PriceTickerStream
                         //    File.WriteAllText(filename, text);
                         //}
 
+//#if KUCOINDEBUG
+//                        //Debug
+//                        tickerIndex++;
+//                        long unix = CandleTools.GetUnixTime(tick.Timestamp, 60);
+//                        string filename = GlobalData.GetBaseDir() + $@"\Kucoin\Price-{data.Topic}-1m-{unix}-#{tickerIndex}.json";
+//                        string text = System.Text.Json.JsonSerializer.Serialize(tick, new System.Text.Json.JsonSerializerOptions {
+//                            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true});
+//                        File.WriteAllText(filename, text);
+//#endif
                     }
                 }
 

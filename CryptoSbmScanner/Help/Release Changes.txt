@@ -1,6 +1,9 @@
 Mis je iets in onderstaande bevindingen/todo's of toekomstige todo's, geef het AUB aan want dan is wat we besproken hebben ergens tussen wal en schip gevallen...
 
-Openstaande punten/bevindingen/todo's:
+Nog openstaande punten/bevindingen/todo's/enzovoort:
+- Gerapporteerd, lettertype problemen, het was helaas een melding en er is geen duidelijke oorzaak of uitleg voor het probleem.
+  (daarom was er ook niets om om te kunnen lossen, ik wil daar nog verder op in gaan, maar ben er niet aan toe gekomen)
+- De trend berekening laat andere cijfers zien dan de 1.7.2, (of gebruik ik de verkeerde?)
 - Bybit Futures, melden van de FundingRate en FundingInterval (maar wat is het precies?)
 - Het normale logbestand bevat op het einde een .0, waar komt deze vandaag, doet nlog een archive ofzo?
 - Trading: Ondanks een limit op de BASE worden er meerdere posities op dezelfde base geopend.
@@ -62,7 +65,19 @@ De ondersteuning van de Kucoin exchange is uitgesteld (want de price- en klineti
 
 
 xx-07-2023 1.8.2
-- Er zijn minder short meldingen dan voorheen want in de stobb overbought werdt een controle op oversold gedaan (op zowel de ma lijnen als de rsi, foutje!)
+- Typo bearisch -> bearish
+- Vanuit de settings via een verkenner openen de data-folder openen, dat scheelt het eea aan uitleg en support (voor mij ook sneller).
+- De RMK optie 
+- Een munt kunnen openen in op de exchange zelf (dus niet de app, niet TV, maar de website van de exchange zelf)
+  Omdat dit enigzins dubbelzinnig is met de optie dubbelklik is die komen te vervallen
+- De configuratie opgesplitst in een Settings.json en een Weblinks.json, het bevat de te gebruiken url's en apps
+  Op deze manier kunnen we de gebruikte referenties delen en via Telegram laten bijwerken
+  (er zijn nog een paar url's die niet goed zijn)
+- Een knop voor het (her)starten van Telegram toegevoegd.
+- De knop voor het testen van de Telegram api/key werkte niet 
+- Als een computer geen speech kan afspelen crasht de applicatie (deze fout opvangen, loggen en doorgaan). Virtuele machine zonder audio mogelijkheden?
+- Als iets wordt toegevoegd aan de blacklist komen er geen enkele meldingen meer (een typo in de controle van de whitelist).
+- Er zijn minder short meldingen dan voorheen want in de stobb overbought werdt een controle op oversold gedaan (op zowel de ma lijnen als de rsi)
 - De tabs in de instellingen en hoofdscherm zijn iets duidelijker gemaakt
 - De oneven regels in de grids een lichtgrijze achtergrond kleurtje geven
 - Correcties in de hypertrader links naar bybit-spot en bybit futures (met dank aan Marco)

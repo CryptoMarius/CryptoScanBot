@@ -15,17 +15,8 @@ public partial class FrmMain
 
     private void ListboxSymbolsInitCaptions()
     {
-        switch (GlobalData.Settings.General.TradingApp)
-        {
-            case CryptoTradingApp.Altrady:
-                listBoxSymbolsMenuItemActivateTradingApp.Text = "Altrady";
-                listBoxSymbolsMenuItemActivateTradingApps.Text = "Altrady + TradingView";
-                break;
-            case CryptoTradingApp.Hypertrader:
-                listBoxSymbolsMenuItemActivateTradingApp.Text = "Hypertrader";
-                listBoxSymbolsMenuItemActivateTradingApps.Text = "Hypertrader + TradingView";
-                break;
-        }
+        string text = GlobalData.ExternalUrls.GetTradingAppName(GlobalData.Settings.General.TradingApp, GlobalData.Settings.General.ExchangeName);
+        listBoxSymbolsMenuItemActivateTradingApp.Text = text;
     }
 
 
@@ -48,6 +39,15 @@ public partial class FrmMain
             }
         }
         return null;
+    }
+
+
+    private void SymbolFilter_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.KeyCode == Keys.Enter)
+        {
+            SymbolsHaveChangedEvent("");
+        }
     }
 
 
@@ -89,7 +89,7 @@ public partial class FrmMain
 
             if (webViewTradingView.Source == null)
             {
-                Invoke((MethodInvoker)(async () => await ActivateTradingViewBrowser()));
+                Invoke((MethodInvoker)(() => ActivateTradingViewBrowser()));
             }
 
         }
@@ -105,15 +105,9 @@ public partial class FrmMain
         if (symbol == null)
             return;
 
-        ActivateTradingApp(symbol, interval);
+        ActivateExternalTradingApp(GlobalData.Settings.General.TradingApp, symbol, interval);
     }
 
-
-    private void ListBoxSymbolsMenuItemActivateTradingApps_Click(object sender, EventArgs e)
-    {
-        ListBoxSymbolsMenuItemActivateTradingApp_Click(sender, e);
-        ListBoxSymbolsMenuItemActivateTradingviewInternal_Click(sender, e);
-    }
 
     private void ListBoxSymbolsMenuItemActivateTradingviewInternal_Click(object sender, EventArgs e)
     {
@@ -124,10 +118,7 @@ public partial class FrmMain
         if (symbol == null)
             return;
 
-        (string Url, bool Execute) refInfo;
-        refInfo = ExchangeHelper.GetExternalRef(CryptoTradingApp.TradingView, false, symbol, interval);
-        webViewTradingView.Source = new(refInfo.Url);
-        tabControl.SelectedTab = tabPageBrowser;
+        ActivateInternalTradingApp(CryptoTradingApp.TradingView, symbol, interval);
     }
 
 
@@ -140,32 +131,13 @@ public partial class FrmMain
         if (symbol == null)
             return;
 
-        (string Url, bool Execute) refInfo;
-        refInfo = ExchangeHelper.GetExternalRef(CryptoTradingApp.TradingView, false, symbol, interval);
-        webViewTradingView.Source = new(refInfo.Url);
-        //System.Diagnostics.Process.Start(refInfo.Url);
-        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(refInfo.Url) { UseShellExecute = true });
+        ActivateExternalTradingApp(CryptoTradingApp.TradingView, symbol, interval);
     }
 
 
     private void ListBoxSymbols_DoubleClick(object sender, EventArgs e)
     {
-        switch (GlobalData.Settings.General.DoubleClickAction)
-        {
-            case DoubleClickAction.activateTradingApp:
-                ListBoxSymbolsMenuItemActivateTradingApp_Click(sender, e);
-                break;
-            case DoubleClickAction.activateTradingAppAndTradingViewInternal:
-                ListBoxSymbolsMenuItemActivateTradingApps_Click(sender, e);
-                break;
-            case DoubleClickAction.activateTradingViewBrowerInternal:
-                ListBoxSymbolsMenuItemActivateTradingviewInternal_Click(sender, e);
-                break;
-            case DoubleClickAction.activateTradingViewBrowerExternal:
-                ListBoxSymbolsMenuItemActivateTradingviewExternal_Click(sender, e);
-                break;
-        }
-
+        ListBoxSymbolsMenuItemActivateTradingApp_Click(sender, e);
     }
 
     private void MenuSymbolsShowTrendInformation_Click(object sender, EventArgs e)
@@ -187,6 +159,19 @@ public partial class FrmMain
             return;
 
         Clipboard.SetText(symbol.Name, TextDataFormat.UnicodeText);
+    }
+
+    private void ListBoxSymbolsMenuItemCandleDump_Click(object sender, EventArgs e)
+    {
+        // Show trend information
+        CryptoSymbol symbol = GetSymbolFromListBox();
+        if (symbol == null)
+            return;
+
+        Task.Run(() => {
+            string filename = CandleDumpDebug.ExportToExcell(symbol);
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(filename) { UseShellExecute = true });
+        });
     }
 
     private void ListBoxSymbolsMenuItemCreateSignal_Click(object sender, EventArgs e)

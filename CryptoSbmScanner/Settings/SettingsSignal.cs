@@ -69,7 +69,7 @@ public class SettingsSignal
 
     // SBM2 signals
     public int Sbm2CandlesLookbackCount { get; set; } = 2;
-    public decimal Sbm2BbPercentage { get; set; } = 5m;
+    public decimal Sbm2BbPercentage { get; set; } = 2.5m;
     public bool Sbm2UseLowHigh { get; set; } = false;
 
     // SBM3 signals

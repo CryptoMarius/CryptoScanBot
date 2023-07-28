@@ -20,7 +20,9 @@ public class KLineTickerStream
 {
     //KucoinKline klinePrev;
     //long klinePrevOpenTime = 0;
-
+#if KUCOINDEBUG
+    private static int tickerIndex = 0;
+#endif
     public string quote;
     public int TickerCount = 0;
     private KucoinSocketClient socketClient;
@@ -121,12 +123,27 @@ public class KLineTickerStream
 
                 // Het is een definitieve candle (niet eentje in opbouw)
                 // We gaan ervan uit dat de laatste aangeboden info klopt..
+                bool final = false;
                 if (klineOpenTime - klinePrevOpenTime >= 60)
                 {
+                    final = true;
                     klinePrev = kline;
-                    long klinePrevOpenTime = klineOpenTime;
+                    klinePrevOpenTime = klineOpenTime;
                     Task.Run(() => { ProcessCandle(data.Topic, kline); });
                 }
+
+#if KUCOINDEBUG
+                //Debug
+                tickerIndex++;
+                long unix = CandleTools.GetUnixTime(kline.OpenTime, 60);
+                string filename = GlobalData.GetBaseDir() + $@"\Kucoin\Kline-{data.Topic}-1m-{unix}-#{tickerIndex}-{final}.json";
+                string text = System.Text.Json.JsonSerializer.Serialize(kline, new System.Text.Json.JsonSerializerOptions
+                {
+                    Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+                    WriteIndented = true
+                });
+                File.WriteAllText(filename, text);
+#endif
 
             });
             // .ConfigureAwait(false);
@@ -167,6 +184,8 @@ public class KLineTickerStream
     {
         if (_subscription == null)
             return; // Task.CompletedTask;
+        if (socketClient == null)
+            return; // Task.CompletedTask;
 
         //GlobalData.AddTextToLogTab("Bybit {quote} 1m stopping candle stream");
 
@@ -175,6 +194,7 @@ public class KLineTickerStream
         _subscription.ConnectionRestored -= ConnectionRestored;
         try
         {
+            //socketClient.CurrentSubscriptions?
             // Null pointers? TODO: Nazoeken!
             await socketClient?.UnsubscribeAsync(_subscription);
         }

@@ -875,6 +875,7 @@ public class PositionMonitor
             //QuantityFilled = step.Quantity,
             QuoteQuantity = step.Quantity * price, // wat is nu wat?
             //QuoteQuantityFilled = step.Quantity * price, // wat is nu wat?
+            //part.Commission += (0.075m / 100) * step.QuoteQuantityFilled;
             Commission = step.Quantity * step.Price * 0.1m / 100m, // met BNB korting=0.075 (zonder kickback, anders was het 0.065?)
             CommissionAsset = position.Symbol.Quote,
 
@@ -1342,7 +1343,7 @@ public class PositionMonitor
                 decimal breakEven = part.BreakEvenPrice;
 
                 // Als de actuele prijs ondertussen substantieel hoger dan winst proberen te nemen (jojo)
-                decimal x = breakEven + breakEven * (1 / 100m); // Voorlopig even hardcoded 1%.... (vanwege ontbreken OCO en stop order )
+                decimal x = breakEven + breakEven * (1.5m / 100m); // Voorlopig even hardcoded 1%.... (vanwege ontbreken OCO en stop order )
                 if (position.Symbol.LastPrice < x)
                     return;
 
@@ -1359,7 +1360,7 @@ public class PositionMonitor
                 GlobalData.AddTextToTelegram(text2);
 
 
-                // En zet de nieuwe sell order vlak boven de beknde prijs
+                // En zet de nieuwe sell order vlak boven de bekende prijs met (helaas) een limit order (had liever een OCO gehad)
                 decimal sellPrice = x + Symbol.PriceTickSize;
                 if (position.Symbol.LastPrice > sellPrice)
                     sellPrice = (decimal)(position.Symbol.LastPrice + Symbol.PriceTickSize);
@@ -1860,14 +1861,14 @@ public class PositionMonitor
             foreach (CryptoTradeAccount tradeAccount in GlobalData.TradeAccountList.Values.ToList())
             {
                 // Aan de hand van de instellingen accounts uitsluiten
-                if (!PositionTools.ValidTradeAccount(tradeAccount, Symbol))
-                    continue;
-
-                // Check the positions
-                if (tradeAccount.PositionList.TryGetValue(Symbol.Name, out var positionList))
+                if (PositionTools.ValidTradeAccount(tradeAccount, Symbol))
                 {
-                    foreach (CryptoPosition position in positionList.Values.ToList())
-                        await HandlePosition(tradeAccount, databaseThread, position, false);
+                    // Check the positions
+                    if (tradeAccount.PositionList.TryGetValue(Symbol.Name, out var positionList))
+                    {
+                        foreach (CryptoPosition position in positionList.Values.ToList())
+                            await HandlePosition(tradeAccount, databaseThread, position, false);
+                    }
                 }
             }
 

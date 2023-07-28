@@ -24,7 +24,7 @@ namespace CryptoSbmScanner.Intern;
 // 1: Choose a name for your bot: <BotName>
 // 2: Choose a username for your bot: <BotName>Bot
 //
-// Copy the Token (6105320626:AAFGrpm2gmBhD7Oi0AnM2sQjTooG-zerX2g)
+// Copy the Token (4105020626:AAFGrpm2gmBhX7Oi5AnM2sQjTooG-zerX2g)
 // Paste it into the "Telegram Token" field of the Scanner telegram settings 
 
 // Go the suggested Chat BotFather created
@@ -36,48 +36,83 @@ namespace CryptoSbmScanner.Intern;
 // Lots of other commands available
 //
 
-
-
-public class ThreadTelegramBot
+public static class ThreadTelegramBot
 {
-    //public Thread Thread;
+    public static string Token { get; set; }
+    public static string ChatId { get; set; }
+    private static ThreadTelegramBotInstance bot;
+
+    public static async Task Start(string token, string chatId)
+    {
+        // herstart?
+        if (bot != null)
+            Stop();
+
+        GlobalData.AddTextToLogTab(string.Format("Start telegram handler"));
+        Token = token;
+        ChatId = chatId;
+
+        bot = new();
+        await bot.ExecuteAsync(token);
+    }
+
+    public static void Stop()
+    {
+        if (bot != null)
+        {
+            GlobalData.AddTextToLogTab(string.Format("Stop telegram handler"));
+            bot.Stop();
+        }
+    }
+
+    public static async void SendMessage(string text)
+    {
+        if (bot == null || text == "" || ChatId == "")
+            return;
+        await bot.SendMessage(text);
+    }
+
+
+
+    async static public void SendSignal(CryptoSignal signal)
+    {
+        if (bot == null || signal == null || ThreadTelegramBot.ChatId == "")
+            return;
+        await bot.SendSignal(signal);
+    }
+}
+
+
+
+public class ThreadTelegramBotInstance
+{
     private static int offset;
-    public static bool running;
-    private static TelegramBotClient bot;
-    private readonly CancellationTokenSource cancellationToken = new();
+    private TelegramBotClient bot;
+    public CancellationTokenSource cancellationToken = new();
 
-    //public ThreadTelegramBot()
-    //{
-    //    System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
-    //    // Extra parameters vanwege ambigious constructor (die ik niet geheel kon volgen)
-    //    bot = new TelegramBotClient(BotToken, "https://api.telegram.org/bot", "https://api.telegram.org/file/bot");
+    //public static string Token { get; set; }
+    //public static string ChatId { get; set; }
 
-    //    Thread = new(Execute)
-    //    {
-    //        Name = "ThreadTelegramBot",
-    //        IsBackground = true
-    //    };
-    //}
 
     public void Stop()
     {
         cancellationToken.Cancel();
-        GlobalData.AddTextToLogTab(string.Format("Stop telegram handler"));
     }
+
 
     /// <summary>
     /// 
     /// </summary>
     /// <param name="text"></param>
-    async static public void SendMessage(string text)
+    public async Task SendMessage(string text)
     {
-        if (bot == null || text == "" || GlobalData.Settings.Telegram.ChatId == "")
+        if (bot == null || text == "" || ThreadTelegramBot.ChatId == "")
             return;
 
 
         try
         {
-            await bot.SendTextMessageAsync(GlobalData.Settings.Telegram.ChatId, text);
+            await bot.SendTextMessageAsync(ThreadTelegramBot.ChatId, text);
         }
         catch (Exception error)
         {
@@ -89,30 +124,15 @@ public class ThreadTelegramBot
 
 
 
-    async static public void SendSignal(CryptoSignal signal)
+    public async Task SendSignal(CryptoSignal signal)
     {
-        if (bot == null || signal == null || GlobalData.Settings.Telegram.ChatId == "")
+        if (bot == null || signal == null || ThreadTelegramBot.ChatId == "")
             return;
 
         try
         {
-            string text = "";
-            (string Url, bool Execute) refInfo;
-            switch (GlobalData.Settings.General.TradingApp)
-            {
-                case CryptoTradingApp.Altrady:
-                    text = "Altrady";
-                    refInfo = ExchangeHelper.GetExternalRef(CryptoTradingApp.Altrady, true, signal.Symbol, signal.Interval);
-                    break;
-                case CryptoTradingApp.Hypertrader:
-                    text = "Hypertrader";
-                    refInfo = ExchangeHelper.GetExternalRef(CryptoTradingApp.Hypertrader, true, signal.Symbol, signal.Interval);
-                    break;
-                default:
-                    return;
-
-            }
-
+            string text = GlobalData.ExternalUrls.GetTradingAppName(GlobalData.Settings.General.TradingApp, signal.Exchange.Name);
+            (string Url, CryptoExternalUrlType Execute) refInfo = GlobalData.ExternalUrls.GetExternalRef(GlobalData.Settings.General.TradingApp, true, signal.Symbol, signal.Interval);
 
             StringBuilder builder = new();
             builder.Append(signal.Symbol.Name + " " + signal.Interval.Name + " ");
@@ -124,7 +144,8 @@ public class ThreadTelegramBot
             //    builder.Append("<p style=\"color:#00FF00\">long</p>");
             //else
             //    builder.Append("<p style=\"color:#FF0000\">short</p>");
-            builder.Append($" <a href=\"{refInfo.Url}\">{text}</a>");
+            if (refInfo.Url != "")
+                builder.Append($" <a href=\"{refInfo.Url}\">{text}</a>");
             builder.AppendLine();
 
             builder.Append("Candle: open " + signal.Candle.Open.ToString0());
@@ -149,8 +170,7 @@ public class ThreadTelegramBot
             builder.AppendLine();
 
 
-            //await bot.SendDocumentAsync(
-            await bot.SendTextMessageAsync(GlobalData.Settings.Telegram.ChatId, builder.ToString(), parseMode: ParseMode.Html,
+            await bot.SendTextMessageAsync(ThreadTelegramBot.ChatId, builder.ToString(), parseMode: ParseMode.Html,
                 disableWebPagePreview: true);
 
         }
@@ -519,16 +539,17 @@ stringBuilder.AppendLine("assets        show asset overview");
     }
 
 
-    public static async Task ExecuteAsync()
+    public async Task ExecuteAsync(string token)
     {
-        //return;
+        if (token == "")
+            return;
 
-        // Bij het testen staat vaak de scanner aan, daatom bij sql telegram ff uit
+            // Bij het testen staat vaak de scanner aan, daatom bij sql telegram ff uit
 #if !SQLDATABASE
 
         System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
         //    // Extra parameters vanwege ambigious constructor (die ik niet geheel kon volgen)
-        bot = new(GlobalData.Settings.Telegram.Token); //, "https://api.telegram.org/bot", "https://api.telegram.org/file/bot"
+        bot = new(token); //, "https://api.telegram.org/bot", "https://api.telegram.org/file/bot"
         try
         {
             //SendMessage("Started telegram bot!");
@@ -538,7 +559,6 @@ stringBuilder.AppendLine("assets        show asset overview");
             //return; //t'ding crasht en is niet fijn
 
 
-            using CancellationTokenSource cts = new();
 
             //// StartReceiving does not block the caller thread. Receiving is done on the ThreadPool.
             //ReceiverOptions receiverOptions = new()
@@ -554,8 +574,7 @@ stringBuilder.AppendLine("assets        show asset overview");
             //);
 
             // Dat moet ook nog eens wat netter met een CT
-            running = true;
-            while (running) //!cancellationToken.IsCancellationRequested
+            while (!cancellationToken.IsCancellationRequested)
             {
                 try
                 {
@@ -685,7 +704,7 @@ stringBuilder.AppendLine("assets        show asset overview");
             GlobalData.Logger.Error(error);
             GlobalData.AddTextToLogTab("\r\n" + "\r\n" + " error telegram thread(3)\r\n" + error.ToString());
         }
-       // GlobalData.AddTextToLogTab("\r\n" + "\r\n TELEGRAM THREAD EXIT");
+        GlobalData.AddTextToLogTab("\r\n" + "\r\n TELEGRAM THREAD EXIT " + token);
 #endif
                                     }
 

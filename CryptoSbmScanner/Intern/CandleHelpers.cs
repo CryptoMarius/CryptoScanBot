@@ -387,21 +387,21 @@ public static class Helper
 
     static public void ShowPosition(StringBuilder stringBuilder, CryptoPosition position)
     {
-        //int positionCount = 0;
-        //Dit is beredeneert vanuit de sellprice, dat zou eigenlijk de BE prijs moeten zijn (maar daar zijn wat problemen mee)!
         decimal diffPercentage = 0;
-        if ((position.Symbol.LastPrice.HasValue) && (position.SellPrice.HasValue))
+        decimal investedInTrades = position.Invested - position.Returned - position.Commission;
+        if (position.Symbol.LastPrice.HasValue && position.SellPrice.HasValue)
         {
-            decimal diffPrice = (decimal)position.Symbol.LastPrice - (decimal)position.SellPrice;
-            diffPercentage = 100 * diffPrice / (decimal)position.SellPrice;
+            decimal currentValue = position.Quantity * (decimal)position.Symbol.LastPrice - position.Commission;
+            diffPercentage = (100 * (currentValue / investedInTrades)) - 100;
         }
 
-        string s = string.Format("{0} position {1} {2}% {3}", position.Symbol.Name, position.PartCount,
-            position.Invested.ToString0(), diffPercentage.ToString0("N2"), position.Status);
-        if (position.TradeAccount.TradeAccountType == CryptoTradeAccountType.BackTest)
-            s += string.Format(" ({0})", position.TradeAccount.Name);
-        else if (position.TradeAccount.TradeAccountType == CryptoTradeAccountType.PaperTrade)
-            s += string.Format(" ({0})", position.TradeAccount.Name);
+
+        string s = string.Format("{0} {1}  {2}%", position.Symbol.Name,
+            investedInTrades.ToString("N2"), diffPercentage.ToString0("N2"));
+        //if (position.TradeAccount.TradeAccountType == CryptoTradeAccountType.BackTest)
+        //    s += string.Format(" ({0})", position.TradeAccount.Name);
+        //else if (position.TradeAccount.TradeAccountType == CryptoTradeAccountType.PaperTrade)
+        //    s += string.Format(" ({0})", position.TradeAccount.Name);
         if (position.PartCount > 1)
             s += string.Format(" ({0})", position.PartCount);
         stringBuilder.AppendLine(s);

@@ -22,11 +22,11 @@
             listBoxSymbols = new ListBox();
             listBoxSymbolsMenuStrip = new ContextMenuStrip(components);
             listBoxSymbolsMenuItemActivateTradingApp = new ToolStripMenuItem();
-            listBoxSymbolsMenuItemActivateTradingApps = new ToolStripMenuItem();
             listBoxSymbolsMenuItemActivateTradingviewInternal = new ToolStripMenuItem();
             listBoxSymbolsMenuItemActivateTradingviewExternal = new ToolStripMenuItem();
             listBoxSymbolsMenuItemShowTrendInformation = new ToolStripMenuItem();
             listBoxSymbolsMenuItemCopy = new ToolStripMenuItem();
+            listBoxSymbolsMenuItemCandleDump = new ToolStripMenuItem();
             panel3 = new Panel();
             label1 = new Label();
             applicationMenuStrip = new MenuStrip();
@@ -51,15 +51,15 @@
             tabPagePositionsClosed = new TabPage();
             tabPageLog = new TabPage();
             TextBoxLog = new TextBox();
-            tabPageAltrady = new TabPage();
-            webViewAltrady = new Microsoft.Web.WebView2.WinForms.WebView2();
+            tabPagewebViewDummy = new TabPage();
+            webViewDummy = new Microsoft.Web.WebView2.WinForms.WebView2();
             listViewSignalsMenuStrip = new ContextMenuStrip(components);
             listViewSignalsMenuItemActivateTradingApp = new ToolStripMenuItem();
-            listViewSignalsMenuItemActivateTradingApps = new ToolStripMenuItem();
             listViewSignalsMenuItemActivateTradingViewInternal = new ToolStripMenuItem();
             listViewSignalsMenuItemActivateTradingViewExternal = new ToolStripMenuItem();
             listViewSignalsMenuItemShowTrendInformation = new ToolStripMenuItem();
             listViewSignalsMenuItemCopySignal = new ToolStripMenuItem();
+            listViewSignalsMenuItemCandleDump = new ToolStripMenuItem();
             panelTop = new Panel();
             labelBarometerDateValue = new Label();
             comboBoxBarometerInterval = new ComboBox();
@@ -69,8 +69,10 @@
             contextMenuStripPositionsClosed = new ContextMenuStrip(components);
             contextMenuStripPositionsOpenRecalculate = new ToolStripMenuItem();
             debugDumpToolStripMenuItem = new ToolStripMenuItem();
+            debugDumpExcelToolStripMenuItem = new ToolStripMenuItem();
             contextMenuStripPositionsOpen = new ContextMenuStrip(components);
             debugDumpToolStripMenuItem1 = new ToolStripMenuItem();
+            debugDumpExcelToolStripMenuItem1 = new ToolStripMenuItem();
             panelLeft.SuspendLayout();
             panel4.SuspendLayout();
             listBoxSymbolsMenuStrip.SuspendLayout();
@@ -82,8 +84,8 @@
             tabPageBrowser.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)webViewTradingView).BeginInit();
             tabPageLog.SuspendLayout();
-            tabPageAltrady.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)webViewAltrady).BeginInit();
+            tabPagewebViewDummy.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)webViewDummy).BeginInit();
             listViewSignalsMenuStrip.SuspendLayout();
             panelTop.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
@@ -129,51 +131,51 @@
             // listBoxSymbolsMenuStrip
             // 
             listBoxSymbolsMenuStrip.ImageScalingSize = new Size(20, 20);
-            listBoxSymbolsMenuStrip.Items.AddRange(new ToolStripItem[] { listBoxSymbolsMenuItemActivateTradingApp, listBoxSymbolsMenuItemActivateTradingApps, listBoxSymbolsMenuItemActivateTradingviewInternal, listBoxSymbolsMenuItemActivateTradingviewExternal, listBoxSymbolsMenuItemShowTrendInformation, listBoxSymbolsMenuItemCopy });
+            listBoxSymbolsMenuStrip.Items.AddRange(new ToolStripItem[] { listBoxSymbolsMenuItemActivateTradingApp, listBoxSymbolsMenuItemActivateTradingviewInternal, listBoxSymbolsMenuItemActivateTradingviewExternal, listBoxSymbolsMenuItemShowTrendInformation, listBoxSymbolsMenuItemCopy, listBoxSymbolsMenuItemCandleDump });
             listBoxSymbolsMenuStrip.Name = "contextMenuStrip1";
-            listBoxSymbolsMenuStrip.Size = new Size(215, 136);
+            listBoxSymbolsMenuStrip.Size = new Size(183, 136);
             // 
             // listBoxSymbolsMenuItemActivateTradingApp
             // 
             listBoxSymbolsMenuItemActivateTradingApp.Name = "listBoxSymbolsMenuItemActivateTradingApp";
-            listBoxSymbolsMenuItemActivateTradingApp.Size = new Size(214, 22);
+            listBoxSymbolsMenuItemActivateTradingApp.Size = new Size(182, 22);
             listBoxSymbolsMenuItemActivateTradingApp.Text = "Activate trading app";
             listBoxSymbolsMenuItemActivateTradingApp.Click += ListBoxSymbolsMenuItemActivateTradingApp_Click;
-            // 
-            // listBoxSymbolsMenuItemActivateTradingApps
-            // 
-            listBoxSymbolsMenuItemActivateTradingApps.Name = "listBoxSymbolsMenuItemActivateTradingApps";
-            listBoxSymbolsMenuItemActivateTradingApps.Size = new Size(214, 22);
-            listBoxSymbolsMenuItemActivateTradingApps.Text = "Trading app + TradingView";
-            listBoxSymbolsMenuItemActivateTradingApps.Click += ListBoxSymbolsMenuItemActivateTradingApps_Click;
             // 
             // listBoxSymbolsMenuItemActivateTradingviewInternal
             // 
             listBoxSymbolsMenuItemActivateTradingviewInternal.Name = "listBoxSymbolsMenuItemActivateTradingviewInternal";
-            listBoxSymbolsMenuItemActivateTradingviewInternal.Size = new Size(214, 22);
+            listBoxSymbolsMenuItemActivateTradingviewInternal.Size = new Size(182, 22);
             listBoxSymbolsMenuItemActivateTradingviewInternal.Text = "Tradingview browser";
             listBoxSymbolsMenuItemActivateTradingviewInternal.Click += ListBoxSymbolsMenuItemActivateTradingviewInternal_Click;
             // 
             // listBoxSymbolsMenuItemActivateTradingviewExternal
             // 
             listBoxSymbolsMenuItemActivateTradingviewExternal.Name = "listBoxSymbolsMenuItemActivateTradingviewExternal";
-            listBoxSymbolsMenuItemActivateTradingviewExternal.Size = new Size(214, 22);
+            listBoxSymbolsMenuItemActivateTradingviewExternal.Size = new Size(182, 22);
             listBoxSymbolsMenuItemActivateTradingviewExternal.Text = "Tradingview external";
             listBoxSymbolsMenuItemActivateTradingviewExternal.Click += ListBoxSymbolsMenuItemActivateTradingviewExternal_Click;
             // 
             // listBoxSymbolsMenuItemShowTrendInformation
             // 
             listBoxSymbolsMenuItemShowTrendInformation.Name = "listBoxSymbolsMenuItemShowTrendInformation";
-            listBoxSymbolsMenuItemShowTrendInformation.Size = new Size(214, 22);
+            listBoxSymbolsMenuItemShowTrendInformation.Size = new Size(182, 22);
             listBoxSymbolsMenuItemShowTrendInformation.Text = "Trend informatie";
             listBoxSymbolsMenuItemShowTrendInformation.Click += MenuSymbolsShowTrendInformation_Click;
             // 
             // listBoxSymbolsMenuItemCopy
             // 
             listBoxSymbolsMenuItemCopy.Name = "listBoxSymbolsMenuItemCopy";
-            listBoxSymbolsMenuItemCopy.Size = new Size(214, 22);
+            listBoxSymbolsMenuItemCopy.Size = new Size(182, 22);
             listBoxSymbolsMenuItemCopy.Text = "Copy";
             listBoxSymbolsMenuItemCopy.Click += ListBoxSymbolsMenuItemCopy_Click;
+            // 
+            // listBoxSymbolsMenuItemCandleDump
+            // 
+            listBoxSymbolsMenuItemCandleDump.Name = "listBoxSymbolsMenuItemCandleDump";
+            listBoxSymbolsMenuItemCandleDump.Size = new Size(182, 22);
+            listBoxSymbolsMenuItemCandleDump.Text = "Candle dump";
+            listBoxSymbolsMenuItemCandleDump.Click += ListBoxSymbolsMenuItemCandleDump_Click;
             // 
             // panel3
             // 
@@ -304,7 +306,7 @@
             tabControl.Controls.Add(tabPagePositionsOpen);
             tabControl.Controls.Add(tabPagePositionsClosed);
             tabControl.Controls.Add(tabPageLog);
-            tabControl.Controls.Add(tabPageAltrady);
+            tabControl.Controls.Add(tabPagewebViewDummy);
             tabControl.Dock = DockStyle.Fill;
             tabControl.Location = new Point(0, 0);
             tabControl.Margin = new Padding(2);
@@ -312,7 +314,6 @@
             tabControl.SelectedIndex = 0;
             tabControl.Size = new Size(1542, 648);
             tabControl.TabIndex = 12;
-            tabControl.Click += tabControl_Click;
             // 
             // tabPageDashBoard
             // 
@@ -414,78 +415,78 @@
             TextBoxLog.Size = new Size(1530, 613);
             TextBoxLog.TabIndex = 1;
             // 
-            // tabPageAltrady
+            // tabPagewebViewDummy
             // 
-            tabPageAltrady.Controls.Add(webViewAltrady);
-            tabPageAltrady.Location = new Point(4, 27);
-            tabPageAltrady.Margin = new Padding(4, 3, 4, 3);
-            tabPageAltrady.Name = "tabPageAltrady";
-            tabPageAltrady.Padding = new Padding(4, 3, 4, 3);
-            tabPageAltrady.Size = new Size(1534, 617);
-            tabPageAltrady.TabIndex = 6;
-            tabPageAltrady.Text = "Altrady (dummy)";
-            tabPageAltrady.UseVisualStyleBackColor = true;
+            tabPagewebViewDummy.Controls.Add(webViewDummy);
+            tabPagewebViewDummy.Location = new Point(4, 27);
+            tabPagewebViewDummy.Margin = new Padding(4, 3, 4, 3);
+            tabPagewebViewDummy.Name = "tabPagewebViewDummy";
+            tabPagewebViewDummy.Padding = new Padding(4, 3, 4, 3);
+            tabPagewebViewDummy.Size = new Size(1534, 617);
+            tabPagewebViewDummy.TabIndex = 6;
+            tabPagewebViewDummy.Text = "WebView (dummy)";
+            tabPagewebViewDummy.UseVisualStyleBackColor = true;
             // 
-            // webViewAltrady
+            // webViewDummy
             // 
-            webViewAltrady.AllowExternalDrop = true;
-            webViewAltrady.CreationProperties = null;
-            webViewAltrady.DefaultBackgroundColor = Color.White;
-            webViewAltrady.Dock = DockStyle.Fill;
-            webViewAltrady.Location = new Point(4, 3);
-            webViewAltrady.Margin = new Padding(4, 3, 4, 3);
-            webViewAltrady.Name = "webViewAltrady";
-            webViewAltrady.Size = new Size(1526, 611);
-            webViewAltrady.TabIndex = 1;
-            webViewAltrady.ZoomFactor = 1D;
+            webViewDummy.AllowExternalDrop = true;
+            webViewDummy.CreationProperties = null;
+            webViewDummy.DefaultBackgroundColor = Color.White;
+            webViewDummy.Dock = DockStyle.Fill;
+            webViewDummy.Location = new Point(4, 3);
+            webViewDummy.Margin = new Padding(4, 3, 4, 3);
+            webViewDummy.Name = "webViewDummy";
+            webViewDummy.Size = new Size(1526, 611);
+            webViewDummy.TabIndex = 1;
+            webViewDummy.ZoomFactor = 1D;
             // 
             // listViewSignalsMenuStrip
             // 
-            listViewSignalsMenuStrip.Items.AddRange(new ToolStripItem[] { listViewSignalsMenuItemActivateTradingApp, listViewSignalsMenuItemActivateTradingApps, listViewSignalsMenuItemActivateTradingViewInternal, listViewSignalsMenuItemActivateTradingViewExternal, listViewSignalsMenuItemShowTrendInformation, listViewSignalsMenuItemCopySignal });
+            listViewSignalsMenuStrip.Items.AddRange(new ToolStripItem[] { listViewSignalsMenuItemActivateTradingApp, listViewSignalsMenuItemActivateTradingViewInternal, listViewSignalsMenuItemActivateTradingViewExternal, listViewSignalsMenuItemShowTrendInformation, listViewSignalsMenuItemCopySignal, listViewSignalsMenuItemCandleDump });
             listViewSignalsMenuStrip.Name = "contextMenuStripSignals";
-            listViewSignalsMenuStrip.Size = new Size(215, 136);
+            listViewSignalsMenuStrip.Size = new Size(184, 136);
             // 
             // listViewSignalsMenuItemActivateTradingApp
             // 
             listViewSignalsMenuItemActivateTradingApp.Name = "listViewSignalsMenuItemActivateTradingApp";
-            listViewSignalsMenuItemActivateTradingApp.Size = new Size(214, 22);
+            listViewSignalsMenuItemActivateTradingApp.Size = new Size(183, 22);
             listViewSignalsMenuItemActivateTradingApp.Text = "Activate trading app";
             listViewSignalsMenuItemActivateTradingApp.Click += ListViewSignalsMenuItemActivateTradingApp_Click;
-            // 
-            // listViewSignalsMenuItemActivateTradingApps
-            // 
-            listViewSignalsMenuItemActivateTradingApps.Name = "listViewSignalsMenuItemActivateTradingApps";
-            listViewSignalsMenuItemActivateTradingApps.Size = new Size(214, 22);
-            listViewSignalsMenuItemActivateTradingApps.Text = "Trading app + TradingView";
-            listViewSignalsMenuItemActivateTradingApps.Click += ListViewSignalsMenuItemActivateTradingApps_Click;
             // 
             // listViewSignalsMenuItemActivateTradingViewInternal
             // 
             listViewSignalsMenuItemActivateTradingViewInternal.Name = "listViewSignalsMenuItemActivateTradingViewInternal";
-            listViewSignalsMenuItemActivateTradingViewInternal.Size = new Size(214, 22);
+            listViewSignalsMenuItemActivateTradingViewInternal.Size = new Size(183, 22);
             listViewSignalsMenuItemActivateTradingViewInternal.Text = "TradingView browser";
             listViewSignalsMenuItemActivateTradingViewInternal.Click += ListViewSignalsMenuItemActivateTradingViewInternal_Click;
             // 
             // listViewSignalsMenuItemActivateTradingViewExternal
             // 
             listViewSignalsMenuItemActivateTradingViewExternal.Name = "listViewSignalsMenuItemActivateTradingViewExternal";
-            listViewSignalsMenuItemActivateTradingViewExternal.Size = new Size(214, 22);
+            listViewSignalsMenuItemActivateTradingViewExternal.Size = new Size(183, 22);
             listViewSignalsMenuItemActivateTradingViewExternal.Text = "Tradingview extern";
             listViewSignalsMenuItemActivateTradingViewExternal.Click += ListViewSignalsMenuItemActivateTradingviewExternal_Click;
             // 
             // listViewSignalsMenuItemShowTrendInformation
             // 
             listViewSignalsMenuItemShowTrendInformation.Name = "listViewSignalsMenuItemShowTrendInformation";
-            listViewSignalsMenuItemShowTrendInformation.Size = new Size(214, 22);
+            listViewSignalsMenuItemShowTrendInformation.Size = new Size(183, 22);
             listViewSignalsMenuItemShowTrendInformation.Text = "Trend informatie";
             listViewSignalsMenuItemShowTrendInformation.Click += MenuSignalsShowTrendInformation_Click;
             // 
             // listViewSignalsMenuItemCopySignal
             // 
             listViewSignalsMenuItemCopySignal.Name = "listViewSignalsMenuItemCopySignal";
-            listViewSignalsMenuItemCopySignal.Size = new Size(214, 22);
+            listViewSignalsMenuItemCopySignal.Size = new Size(183, 22);
             listViewSignalsMenuItemCopySignal.Text = "Copy";
             listViewSignalsMenuItemCopySignal.Click += ListViewSignalsMenuItemCopySignal_Click;
+            // 
+            // listViewSignalsMenuItemCandleDump
+            // 
+            listViewSignalsMenuItemCandleDump.Name = "listViewSignalsMenuItemCandleDump";
+            listViewSignalsMenuItemCandleDump.Size = new Size(183, 22);
+            listViewSignalsMenuItemCandleDump.Text = "Candle Debug";
+            listViewSignalsMenuItemCandleDump.Click += ListViewSignalsMenuItemCandleDump_Click;
             // 
             // panelTop
             // 
@@ -553,36 +554,50 @@
             // 
             // contextMenuStripPositionsClosed
             // 
-            contextMenuStripPositionsClosed.Items.AddRange(new ToolStripItem[] { contextMenuStripPositionsOpenRecalculate, debugDumpToolStripMenuItem });
+            contextMenuStripPositionsClosed.Items.AddRange(new ToolStripItem[] { contextMenuStripPositionsOpenRecalculate, debugDumpToolStripMenuItem, debugDumpExcelToolStripMenuItem });
             contextMenuStripPositionsClosed.Name = "contextMenuStrip1";
-            contextMenuStripPositionsClosed.Size = new Size(149, 48);
+            contextMenuStripPositionsClosed.Size = new Size(175, 70);
             // 
             // contextMenuStripPositionsOpenRecalculate
             // 
             contextMenuStripPositionsOpenRecalculate.Name = "contextMenuStripPositionsOpenRecalculate";
-            contextMenuStripPositionsOpenRecalculate.Size = new Size(148, 22);
+            contextMenuStripPositionsOpenRecalculate.Size = new Size(174, 22);
             contextMenuStripPositionsOpenRecalculate.Text = "Herberekenen";
             contextMenuStripPositionsOpenRecalculate.Click += ContextMenuStripPositionsOpenRecalculateAsync_Click;
             // 
             // debugDumpToolStripMenuItem
             // 
             debugDumpToolStripMenuItem.Name = "debugDumpToolStripMenuItem";
-            debugDumpToolStripMenuItem.Size = new Size(148, 22);
-            debugDumpToolStripMenuItem.Text = "Debug-Dump";
-            debugDumpToolStripMenuItem.Click += DebugDumpToolStripMenuItemAsync_Click;
+            debugDumpToolStripMenuItem.Size = new Size(174, 22);
+            debugDumpToolStripMenuItem.Text = "Debug dump tekst";
+            debugDumpToolStripMenuItem.Click += DebugPositionDumpTextToolStripMenuItemAsync_Click;
+            // 
+            // debugDumpExcelToolStripMenuItem
+            // 
+            debugDumpExcelToolStripMenuItem.Name = "debugDumpExcelToolStripMenuItem";
+            debugDumpExcelToolStripMenuItem.Size = new Size(174, 22);
+            debugDumpExcelToolStripMenuItem.Text = "Debug dump Excel";
+            debugDumpExcelToolStripMenuItem.Click += DebugPositionClosedDumpExcelToolStripMenuItemAsync_Click;
             // 
             // contextMenuStripPositionsOpen
             // 
-            contextMenuStripPositionsOpen.Items.AddRange(new ToolStripItem[] { debugDumpToolStripMenuItem1 });
+            contextMenuStripPositionsOpen.Items.AddRange(new ToolStripItem[] { debugDumpToolStripMenuItem1, debugDumpExcelToolStripMenuItem1 });
             contextMenuStripPositionsOpen.Name = "contextMenuStripPositionsOpen";
-            contextMenuStripPositionsOpen.Size = new Size(148, 26);
+            contextMenuStripPositionsOpen.Size = new Size(175, 48);
             // 
             // debugDumpToolStripMenuItem1
             // 
             debugDumpToolStripMenuItem1.Name = "debugDumpToolStripMenuItem1";
-            debugDumpToolStripMenuItem1.Size = new Size(147, 22);
-            debugDumpToolStripMenuItem1.Text = "Debug-Dump";
-            debugDumpToolStripMenuItem1.Click += DebugDumpToolStripMenuItem1Async_Click;
+            debugDumpToolStripMenuItem1.Size = new Size(174, 22);
+            debugDumpToolStripMenuItem1.Text = "Debug dump tekst";
+            debugDumpToolStripMenuItem1.Click += DebugCandleDumpToolStripMenuItem1Async_Click;
+            // 
+            // debugDumpExcelToolStripMenuItem1
+            // 
+            debugDumpExcelToolStripMenuItem1.Name = "debugDumpExcelToolStripMenuItem1";
+            debugDumpExcelToolStripMenuItem1.Size = new Size(174, 22);
+            debugDumpExcelToolStripMenuItem1.Text = "Debug dump Excel";
+            debugDumpExcelToolStripMenuItem1.Click += DebugPositionOpenDumpExcelToolStripMenuItemAsync_Click;
             // 
             // FrmMain
             // 
@@ -608,8 +623,8 @@
             ((System.ComponentModel.ISupportInitialize)webViewTradingView).EndInit();
             tabPageLog.ResumeLayout(false);
             tabPageLog.PerformLayout();
-            tabPageAltrady.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)webViewAltrady).EndInit();
+            tabPagewebViewDummy.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)webViewDummy).EndInit();
             listViewSignalsMenuStrip.ResumeLayout(false);
             panelTop.ResumeLayout(false);
             panelTop.PerformLayout();
@@ -639,12 +654,10 @@
         private ContextMenuStrip listViewSignalsMenuStrip;
         private ToolStripMenuItem listViewSignalsMenuItemActivateTradingApp;
         private ToolStripMenuItem listViewSignalsMenuItemActivateTradingViewInternal;
-        private ToolStripMenuItem listViewSignalsMenuItemActivateTradingApps;
         private ToolStripMenuItem listViewSignalsMenuItemActivateTradingViewExternal;
         private ToolStripMenuItem listBoxSymbolsMenuItemActivateTradingviewInternal;
         private ToolStripMenuItem listBoxSymbolsMenuItemActivateTradingviewExternal;
         private ToolStripMenuItem listBoxSymbolsMenuItemActivateTradingApp;
-        private ToolStripMenuItem listBoxSymbolsMenuItemActivateTradingApps;
         private ToolStripMenuItem applicationMenuItemAbout;
         private ToolStripMenuItem listBoxSymbolsMenuItemShowTrendInformation;
         private ToolStripMenuItem listViewSignalsMenuItemShowTrendInformation;
@@ -665,8 +678,8 @@
         private Microsoft.Web.WebView2.WinForms.WebView2 webViewTradingView;
         private TabPage tabPageLog;
         private TextBox TextBoxLog;
-        private TabPage tabPageAltrady;
-        private Microsoft.Web.WebView2.WinForms.WebView2 webViewAltrady;
+        private TabPage tabPagewebViewDummy;
+        private Microsoft.Web.WebView2.WinForms.WebView2 webViewDummy;
         private TabPage tabPagePositionsOpen;
         private TabPage tabPagePositionsClosed;
         private ToolStripMenuItem contextMenuStripPositionsOpenRecalculate;
@@ -675,6 +688,10 @@
         private ToolStripMenuItem debugDumpToolStripMenuItem1;
         private TabPage tabPageDashBoard;
         private DashBoardControl dashBoardControl1;
+        private ToolStripMenuItem listBoxSymbolsMenuItemCandleDump;
+        private ToolStripMenuItem listViewSignalsMenuItemCandleDump;
+        private ToolStripMenuItem debugDumpExcelToolStripMenuItem;
+        private ToolStripMenuItem debugDumpExcelToolStripMenuItem1;
     }
 }
 

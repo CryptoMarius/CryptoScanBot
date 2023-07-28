@@ -9,6 +9,10 @@ internal class PriceTicker : PriceTickerBase
 
     public override async Task Start()
     {
+        // De Kucoin price ticker is een CPU killer, uitgezet, dan maar op een andere manier
+
+        return;
+
         GlobalData.AddTextToLogTab($"{Api.ExchangeName} starting price ticker");
         if (GlobalData.ExchangeListName.TryGetValue(Api.ExchangeName, out Model.CryptoExchange exchange))
         {

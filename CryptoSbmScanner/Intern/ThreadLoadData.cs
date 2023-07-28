@@ -179,6 +179,14 @@ public class ThreadLoadData
             }
         }
 
+        // Verwijder de quotes die geen symbols bevatten
+        foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values.ToList())
+        {
+            if (quoteData.SymbolList.Count == 0 && !quoteData.FetchCandles && !quoteData.CreateSignals)
+                GlobalData.Settings.QuoteCoins.Remove(quoteData.Name);
+
+        }
+
         // De (nieuwe)muntparen toevoegen aan de userinterface
         GlobalData.SymbolsHaveChanged("");
     }
@@ -541,8 +549,7 @@ public class ThreadLoadData
                 //************************************************************************************
                 if (GlobalData.Settings.Telegram.Token != "")
                 {
-                    GlobalData.AddTextToLogTab("Starting Telegram bot");
-                    var whateverx = Task.Run(async () => { await ThreadTelegramBot.ExecuteAsync(); });
+                    var whateverx = Task.Run(async () => { await ThreadTelegramBot.Start(GlobalData.Settings.Telegram.Token, GlobalData.Settings.Telegram.ChatId); });
                 }
 
 

@@ -1,0 +1,90 @@
+{
+  "Binance": {
+    "Altrady": {
+      "Execute": 0,
+      "Url": "https://app.altrady.com/d/BINA_{quote}_{base}:{interval}",
+      "Telegram": null
+    },
+    "HyperTrader": {
+      "Execute": 1,
+      "Url": "hypertrader://binance/{base}-{quote}/{interval}",
+      "Telegram": "http://www.ccscanner.nl/hypertrader/?e=binance&a={base}&b={quote}&i={interval}"
+    },
+    "TradingView": {
+      "Execute": 1,
+      "Url": "https://www.tradingview.com/chart/?symbol=BINANCE:{base}{quote}&interval={interval}",
+      "Telegram": null
+    },
+    "ExchangeUrl": {
+      "Execute": 1,
+      "Url": "https://www.binance.com/en/trade/{base}_{quote}?_from=markets&type=spot",
+      "Telegram": null
+    }
+  },
+  "Bybit Futures": {
+    "Altrady": {
+      "Execute": 0,
+      "Url": "https://app.altrady.com/d/BYBIF_{quote}_{base}:{interval}",
+      "Telegram": null
+    },
+    "HyperTrader": {
+      "Execute": 1,
+      "Url": "hypertrader://binance/{base}-{quote}/{interval}",
+      "Telegram": "http://www.ccscanner.nl/hypertrader/?e=bybit&a={base}&b={quote}&i={interval}"
+    },
+    "TradingView": {
+      "Execute": 1,
+      "Url": "https://www.tradingview.com/chart/?symbol=BYBIT:{base}{quote}&interval={interval}",
+      "Telegram": null
+    },
+    "ExchangeUrl": {
+      "Execute": 1,
+      "Url": "https://www.bybit.com/trade/{quote}/{base}{quote}",
+      "Telegram": null
+    }
+  },
+  "Bybit Spot": {
+    "Altrady": {
+      "Execute": 0,
+      "Url": "https://app.altrady.com/d/BYBI_{quote}_{base}:{interval}",
+      "Telegram": null
+    },
+    "HyperTrader": {
+      "Execute": 1,
+      "Url": "hypertrader://bybit-spot/{base}-{quote}/{interval}",
+      "Telegram": "http://www.ccscanner.nl/hypertrader/?e=bybit-spot&a={base}&b={quote}&i={interval}"
+    },
+    "TradingView": {
+      "Execute": 1,
+      "Url": "https://www.tradingview.com/chart/?symbol=BYBIT:{base}{quote}&interval={interval}",
+      "Telegram": null
+    },
+    "ExchangeUrl": {
+      "Execute": 1,
+      "Url": "https://www.bybit.com/trade/{quote}/{base}{quote}",
+      "Telegram": null
+    }
+  },
+  "Kucoin": {
+    "Altrady": {
+      "Execute": 0,
+      "Url": "https://app.altrady.com/d/KUCN_{quote}_{base}:{interval}",
+      "Telegram": null
+    },
+    "HyperTrader": {
+      "Execute": 1,
+      "Url": "hypertrader://binance/{base}-{quote}/{interval}",
+      "Telegram": "http://www.ccscanner.nl/hypertrader/?e=kucoin&a={base}&b={quote}&i={interval}"
+    },
+    "TradingView": {
+      "Execute": 1,
+      "Url": "https://www.tradingview.com/chart/?symbol=KUCOIN:{base}{quote}&interval={interval}",
+      "Telegram": null
+    },
+    "ExchangeUrl": {
+      "Execute": 1,
+      "Url": "https://www.kucoin.com/trade/{quote}/{base}{quote}",
+      "Telegram": null
+    }
+  }
+}

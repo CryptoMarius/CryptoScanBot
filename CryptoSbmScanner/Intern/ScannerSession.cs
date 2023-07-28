@@ -96,7 +96,7 @@ public static class ScannerSession
         TimerSoundHeartBeat.Enabled = false;
         TimerGetExchangeInfo.Enabled = false;
         TimerShowInformation.Enabled = false;
-        ThreadTelegramBot.running = false;
+        ThreadTelegramBot.Stop();
 
 
 #if TRADEBOT

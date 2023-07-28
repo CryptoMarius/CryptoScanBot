@@ -195,7 +195,7 @@ public class SymbolTools
     {
         // Als de muntpaar niet op de toegelaten lijst staat dit signaal overslagen
         // Indien whitelist: Staat de muntpaar op de whitelist -> nee = signaal negeren
-        if (TradingConfig.Config[mode].InWhiteList(symbol.Name) == MatchBlackAndWhiteList.Missing)
+        if (TradingConfig.Config[mode].InWhiteList(symbol.Name) == MatchBlackAndWhiteList.NotPresent)
         {
             reaction = "Symbol zit niet in de white list";
             return false;

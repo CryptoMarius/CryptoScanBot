@@ -8,6 +8,29 @@ using CryptoSbmScanner.Settings;
 
 namespace CryptoSbmScanner;
 
+// refactoring om alle listviews hiervan af te leiden
+//public class CryptoListView: ListViewDoubleBuffered
+//{
+//    public virtual void ComponentConstructor()
+//    {
+//        CheckBoxes = false;
+//        AllowColumnReorder = false;
+//        Dock = DockStyle.Fill;
+//        Location = new Point(4, 3);
+//        GridLines = true;
+//        View = View.Details;
+//        FullRowSelect = true;
+//        HideSelection = true;
+//        BorderStyle = BorderStyle.None;
+//    }
+
+//    public virtual void InitColumns()
+//    {
+//        Columns.Clear();
+//    }
+//}
+
+
 public partial class FrmMain
 {
     private ListViewDoubleBuffered listViewPositionsClosed;
@@ -21,6 +44,8 @@ public partial class FrmMain
     {
         ListViewColumnSorterPosition listViewColumnSorter = new()
         {
+            SortColumn = 2,
+            ClosedPositions = true,
             SortOrder = SortOrder.Descending
         };
 
@@ -40,7 +65,7 @@ public partial class FrmMain
         listViewPositionsClosed.BorderStyle = BorderStyle.None;
         listViewPositionsClosed.ContextMenuStrip = contextMenuStripPositionsClosed;
         listViewPositionsClosed.ListViewItemSorter = listViewColumnSorter;
-        //listViewPositionsClosed.ColumnClick += ListViewSignals_ColumnClick;
+        listViewPositionsClosed.ColumnClick += ListViewSignals_ColumnClick;
         listViewPositionsClosed.SetSortIcon(listViewColumnSorter.SortColumn, listViewColumnSorter.SortOrder);
         listViewPositionsClosed.DoubleClick += ListViewPositionClosed_MenuItem_DoubleClick;
         tabPagePositionsClosed.Controls.Add(listViewPositionsClosed);
@@ -60,6 +85,7 @@ public partial class FrmMain
         // TODO: Positie kolommen kiezen..
 
         // Create columns and subitems. Width of -2 indicates auto-size
+        listViewPositionsClosed.Columns.Add("ID", -2, HorizontalAlignment.Left);
         listViewPositionsClosed.Columns.Add("Datum", -2, HorizontalAlignment.Left);
         listViewPositionsClosed.Columns.Add("Closed", -2, HorizontalAlignment.Left);
         listViewPositionsClosed.Columns.Add("Account", -2, HorizontalAlignment.Left);
@@ -90,7 +116,7 @@ public partial class FrmMain
 
         for (int i = 0; i <= listViewPositionsClosed.Columns.Count - 1; i++)
         {
-            if (i != 5)
+            //if (i != 5)
                 listViewPositionsClosed.Columns[i].Width = -2;
         }
     }
@@ -105,9 +131,9 @@ public partial class FrmMain
         ListViewItem.ListViewSubItem subItem;
         item1.SubItems.Clear();
 
-        item1.Text = position.CreateTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm");
+        item1.Text = position.Id.ToString();
+        item1.SubItems.Add(position.CreateTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm"));
         item1.SubItems.Add(position.CloseTime?.ToLocalTime().ToString("yyyy-MM-dd HH:mm"));
-
         item1.SubItems.Add(position.TradeAccount.Name);
         item1.SubItems.Add(position.Symbol.Exchange.Name);
         item1.SubItems.Add(position.Symbol.Name);
@@ -169,8 +195,7 @@ public partial class FrmMain
         if (components != null && IsHandleCreated) // && (!ProgramExit) && 
         {
             // Gesloten posities
-            Task.Factory.StartNew(() =>
-            {
+            Task.Run(() => {
                 Invoke(new Action(() =>
                 {
                     ListViewPositionsClosedAddPositions(GlobalData.PositionsClosed);
@@ -217,38 +242,9 @@ public partial class FrmMain
         {
             ListViewItem item = listViewPositionsClosed.SelectedItems[0];
             CryptoPosition position = (CryptoPosition)item.Tag;
-
-            switch (GlobalData.Settings.General.DoubleClickAction)
-            {
-                case DoubleClickAction.activateTradingApp:
-                    ActivateTradingApp(position.Symbol, position.Interval);
-                    break;
-                case DoubleClickAction.activateTradingAppAndTradingViewInternal:
-                    //ListViewSignalsMenuItemActivateTradingApps_Click(sender, e);
-                    break;
-                case DoubleClickAction.activateTradingViewBrowerInternal:
-                    //ListViewSignalsMenuItemActivateTradingViewInternal_Click(sender, e);
-                    break;
-                case DoubleClickAction.activateTradingViewBrowerExternal:
-                    //ListViewSignalsMenuItemActivateTradingviewExternal_Click(sender, e);
-                    break;
-            }
-            //}
+            ActivateExternalTradingApp(GlobalData.Settings.General.TradingApp, position.Symbol, position.Interval);
         }
     }
-
-    //private void ListBoxSymbolsMenuItemPositionCalculate_Click(object sender, EventArgs e)
-    //{
-    //    if (listViewPositionsClosed.SelectedItems.Count > 0)
-    //    {
-    //        ListViewItem item = listViewPositionsClosed.SelectedItems[0];
-    //        CryptoPosition position = (CryptoPosition)item.Tag;
-
-    //        // todo: Geschikt maken voor paperTrading!
-    //        //TradeTools.CheckPosition(databaseMain, position);
-    //    }
-    //}
-
 
     ///// <summary>
     ///// Alle posities van deze munt sluiten
@@ -360,7 +356,7 @@ public partial class FrmMain
     }
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-    private async void DebugDumpToolStripMenuItemAsync_Click(object sender, EventArgs e)
+    private async void DebugPositionDumpTextToolStripMenuItemAsync_Click(object sender, EventArgs e)
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
     {
         if (listViewPositionsClosed.SelectedItems.Count > 0)
@@ -386,5 +382,28 @@ public partial class FrmMain
         }
     }
 
+    private void DebugPositionClosedDumpExcelToolStripMenuItemAsync_Click(object sender, EventArgs e)
+    {
+        if (listViewPositionsClosed.SelectedItems.Count > 0)
+        {
+            for (int index = 0; index < listViewPositionsClosed.SelectedItems.Count; index++)
+            {
+                ListViewItem item = listViewPositionsClosed.SelectedItems[index];
+                CryptoPosition position = (CryptoPosition)item.Tag;
+
+                using CryptoDatabase databaseThread = new();
+                databaseThread.Open();
+                PositionTools.LoadPosition(databaseThread, position);
+
+                Task.Run(() => {
+                    Invoke(new Action(() =>
+                    {
+                        string filename = new PositionDumpDebug().ExportToExcell(position);
+                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(filename) { UseShellExecute = true });
+                    }));
+                });
+            }
+        }
+    }
 }
 

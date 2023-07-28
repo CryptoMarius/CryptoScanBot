@@ -26,7 +26,7 @@ public partial class FrmMain : Form
     private bool WebViewAltradyInitialized;
     private bool WebViewTradingViewInitialized;
     private int createdSignalCount; // Tellertje met het aantal meldingen (komt in de taakbalk c.q. applicatie titel)
-    private readonly Microsoft.Web.WebView2.WinForms.WebView2 _webViewAltradyRef = null;
+    private readonly Microsoft.Web.WebView2.WinForms.WebView2 _webViewDummy = null;
     private readonly ColorSchemeTest theme = new();
 
     public class ColorSchemeTest
@@ -86,8 +86,8 @@ public partial class FrmMain : Form
         ListViewPositionsClosedConstructor();
 
         // Altrady tabblad verbergen, is enkel een browser om dat extra dialoog in externe browser te vermijden
-        _webViewAltradyRef = webViewAltrady;
-        tabControl.TabPages.Remove(tabPageAltrady);
+        _webViewDummy = webViewDummy;
+        tabControl.TabPages.Remove(tabPagewebViewDummy);
 
 #if !TRADEBOT
         ApplicationTradingBot.Visible = false;
@@ -267,7 +267,7 @@ public partial class FrmMain : Form
             if (components != null)
             {
                 GlobalData.ApplicationStatus = CryptoApplicationStatus.Disposing;
-                _webViewAltradyRef.Dispose();
+                _webViewDummy.Dispose();
                 components.Dispose();
             }
         }
@@ -805,53 +805,81 @@ public partial class FrmMain : Form
 
     }
 
-    private static async Task InitializeAltradyWebbrowser(Microsoft.Web.WebView2.WinForms.WebView2 webView2)
+    private static async Task InitializeWebView(Microsoft.Web.WebView2.WinForms.WebView2 webView2)
     {
         // https://stackoverflow.com/questions/63404822/how-to-disable-cors-in-wpf-webview2
-
         var userPath = GlobalData.GetBaseDir();
-        //var webView2Environment = await CoreWebView2Environment.CreateAsync(null, userPath);
-        //await _webViewAltradyRef.EnsureCoreWebView2Async(webView2Environment);
         CoreWebView2Environment cwv2Environment = await CoreWebView2Environment.CreateAsync(null, userPath, new CoreWebView2EnvironmentOptions());
         await webView2.EnsureCoreWebView2Async(cwv2Environment);
     }
 
-    private async void ActivateTradingApp(CryptoSymbol symbol, CryptoInterval interval)
+
+    private async Task InitializeWebViewAltrady()
     {
         if (!WebViewAltradyInitialized)
         {
             WebViewAltradyInitialized = true;
-            await InitializeAltradyWebbrowser(_webViewAltradyRef);
+            await InitializeWebView(_webViewDummy);
         }
-
-        (string Url, bool Execute) refInfo;
-        switch (GlobalData.Settings.General.TradingApp)
-        {
-            case CryptoTradingApp.Altrady:
-                refInfo = ExchangeHelper.GetExternalRef(CryptoTradingApp.Altrady, false, symbol, interval);
-                break;
-            case CryptoTradingApp.Hypertrader:
-                refInfo = ExchangeHelper.GetExternalRef(CryptoTradingApp.Hypertrader, false, symbol, interval);
-                break;
-            default:
-                return;
-        }
-
-        if (refInfo.Execute)
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(refInfo.Url) { UseShellExecute = true });
-        else
-            _webViewAltradyRef.Source = new(refInfo.Url);
     }
 
 
-    private void SymbolFilter_KeyDown(object sender, KeyEventArgs e)
+    private async Task InitializeWebViewTradingView()
     {
-        if (e.KeyCode == Keys.Enter)
+        if (!WebViewTradingViewInitialized)
         {
-            SymbolsHaveChangedEvent("");
+            WebViewTradingViewInitialized = true;
+            await InitializeWebView(webViewTradingView);
         }
     }
 
+
+    private async void ActivateExternalTradingApp(CryptoTradingApp externalTradingApp, CryptoSymbol symbol, CryptoInterval interval)
+    {
+        // Activeer de externe applicatie (soms gebruik makend van de dummy browser)
+
+        (string Url, CryptoExternalUrlType Execute) refInfo = GlobalData.ExternalUrls.GetExternalRef(externalTradingApp, false, symbol, interval);
+        if (refInfo.Url != "")
+        {
+            if (refInfo.Execute == CryptoExternalUrlType.Internal)
+            {
+                await InitializeWebViewAltrady();
+                _webViewDummy.Source = new(refInfo.Url);
+            }
+            else
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(refInfo.Url) { UseShellExecute = true });
+            }
+        }
+    }
+
+
+    private async void ActivateInternalTradingApp(CryptoTradingApp externalTradingApp, CryptoSymbol symbol, CryptoInterval interval, bool activateTab = true)
+    {
+        // Activeer de interne Tradingview Browser op het zoveelste tabblad
+
+        (string Url, CryptoExternalUrlType Execute) refInfo = GlobalData.ExternalUrls.GetExternalRef(externalTradingApp, false, symbol, interval);
+        if (refInfo.Url != "")
+        {
+            await InitializeWebViewTradingView();
+
+            webViewTradingView.Source = new(refInfo.Url);
+            if (activateTab)
+                tabControl.SelectedTab = tabPageBrowser;
+        }
+    }
+
+    private void ActivateTradingViewBrowser(string symbolname = "BTCUSDT")
+    {
+        if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1m, out CryptoInterval interval))
+            return;
+
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+        {
+            if (exchange.SymbolListName.TryGetValue(symbolname, out CryptoSymbol symbol))
+                ActivateInternalTradingApp(CryptoTradingApp.TradingView, symbol, interval, false);
+        }
+    }
 
     private static void GetReloadRelatedSettings(out string activeQuoteData)
     {
@@ -864,8 +892,10 @@ public partial class FrmMain : Form
     }
 
 
-    private void ToolStripMenuItemSettings_Click(object sender, EventArgs e)
+    private async void ToolStripMenuItemSettings_Click(object sender, EventArgs e)
     {
+        SettingsBasic oldSettings = GlobalData.Settings;
+
         GetReloadRelatedSettings(out string activeQuotes);
         Model.CryptoExchange oldExchange = GlobalData.Settings.General.Exchange;
 
@@ -919,6 +949,11 @@ public partial class FrmMain : Form
                     foreach (CryptoTradeAccount ta in GlobalData.TradeAccountList.Values)
                         ta.Clear();
                 }
+
+                // Optioneel een herstart van de Telegram bot
+                if (GlobalData.Settings.Telegram.Token != ThreadTelegramBot.Token)
+                    await ThreadTelegramBot.Start(GlobalData.Settings.Telegram.Token, GlobalData.Settings.Telegram.ChatId);
+                ThreadTelegramBot.ChatId = GlobalData.Settings.Telegram.ChatId;
 
                 ExchangeHelper.ExchangeDefaults();
                 MainMenuClearAll_Click(null, null);
@@ -1008,7 +1043,7 @@ public partial class FrmMain : Form
                 if (signals.Any())
                 {
                     // verwerken..
-                    Task.Factory.StartNew(() =>
+                    Task.Run(() =>
                     {
                         Invoke(new Action(() =>
                         {
@@ -1043,7 +1078,7 @@ public partial class FrmMain : Form
                 }
 
                 // verwerken..
-                Task.Factory.StartNew(() =>
+                Task.Run(() =>
                 {
                     Invoke(new Action(() =>
                     {
@@ -1055,13 +1090,6 @@ public partial class FrmMain : Form
                             else
                                 TextBoxLog.AppendText(text);
                         }
-
-                        // Dit lijkt niet te werken (zonder alles in zijn geheel te kopieeren, in te korten en terug te zetten)
-                        //while (TextBoxLog.Lines.Count() > 10000)
-                        //{
-                        //    TextBoxLog.Text = TextBoxLog.Text.Remove(0, TextBoxLog.GetLineLength(0));
-                        //}
-
                     }));
                 });
             }
@@ -1139,29 +1167,6 @@ public partial class FrmMain : Form
     }
 
 
-    private async Task ActivateTradingViewBrowser(string symbolname = "BTCUSDT")
-    {
-        if (!WebViewTradingViewInitialized)
-        {
-            WebViewTradingViewInitialized = true;
-            await InitializeAltradyWebbrowser(webViewTradingView);
-        }
-
-        if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1m, out CryptoInterval interval))
-            return;
-
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
-        {
-            if (exchange.SymbolListName.TryGetValue(symbolname, out CryptoSymbol symbol))
-            {
-                (string Url, bool Execute) refInfo;
-#pragma warning disable IDE0042 // Deconstruct variable declaration
-                refInfo = ExchangeHelper.GetExternalRef(CryptoTradingApp.TradingView, false, symbol, interval);
-#pragma warning restore IDE0042 // Deconstruct variable declaration
-                webViewTradingView.Source = new(refInfo.Url);
-            }
-        }
-    }
 
     //private void ChangeTheme(ColorSchemeTest theme, Control.ControlCollection container)
     //{
@@ -1513,11 +1518,5 @@ public partial class FrmMain : Form
 
     }
 
-    private void tabControl_Click(object sender, EventArgs e)
-    {
-        foreach (var x in tabControl.TabPages)
-        {
-//            x.Font.
-        }
-    }
+
 }

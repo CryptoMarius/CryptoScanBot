@@ -59,17 +59,8 @@ public partial class FrmMain
 
     private void ListViewSignalsInitCaptions()
     {
-        switch (GlobalData.Settings.General.TradingApp)
-        {
-            case CryptoTradingApp.Altrady:
-                listViewSignalsMenuItemActivateTradingApp.Text = "Altrady";
-                listViewSignalsMenuItemActivateTradingApps.Text = "Altrady + TradingView";
-                break;
-            case CryptoTradingApp.Hypertrader:
-                listViewSignalsMenuItemActivateTradingApp.Text = "Hypertrader";
-                listViewSignalsMenuItemActivateTradingApps.Text = "Hypertrader + TradingView";
-                break;
-        }
+        string text = GlobalData.ExternalUrls.GetTradingAppName(GlobalData.Settings.General.TradingApp, GlobalData.Settings.General.ExchangeName);
+        listViewSignalsMenuItemActivateTradingApp.Text = text;
     }
 
     private void ListViewSignalsInitColumns()
@@ -81,7 +72,7 @@ public partial class FrmMain
         listViewSignals.Columns.Add("Interval", -2, HorizontalAlignment.Left);
         listViewSignals.Columns.Add("Mode", -2, HorizontalAlignment.Left);
         listViewSignals.Columns.Add("Strategie", -2, HorizontalAlignment.Left);
-        listViewSignals.Columns.Add("Text", 250, HorizontalAlignment.Left);
+        listViewSignals.Columns.Add("Text", 125, HorizontalAlignment.Left);
         listViewSignals.Columns.Add("Price", -2, HorizontalAlignment.Right);
         listViewSignals.Columns.Add("Stijging", -2, HorizontalAlignment.Right);
         listViewSignals.Columns.Add("Volume", -2, HorizontalAlignment.Right);
@@ -201,7 +192,7 @@ public partial class FrmMain
                 item1.SubItems.Add("Bullish");
                 break;
             case CryptoTrendIndicator.trendBearish:
-                item1.SubItems.Add("Bearisch");
+                item1.SubItems.Add("Bearish");
                 break;
             default:
                 item1.SubItems.Add("Zijwaarts");
@@ -416,22 +407,6 @@ public partial class FrmMain
         }
     }
 
-
-    //private void ListViewSignalsMenuItemClearSignals_Click(object sender, EventArgs e)
-    //{
-    //    listViewSignals.BeginUpdate();
-    //    try
-    //    {
-    //        listViewSignals.Clear();
-    //        ListViewSignalsInitColumns();
-    //    }
-    //    finally
-    //    {
-    //        listViewSignals.EndUpdate();
-    //    }
-    //}
-
-
     private void ListViewSignalsMenuItemActivateTradingApp_Click(object sender, EventArgs e)
     {
         if (listViewSignals.SelectedItems.Count > 0)
@@ -440,18 +415,10 @@ public partial class FrmMain
             {
                 ListViewItem item = listViewSignals.SelectedItems[index];
                 CryptoSignal signal = (CryptoSignal)item.Tag;
-                ActivateTradingApp(signal.Symbol, signal.Interval);
+                ActivateExternalTradingApp(GlobalData.Settings.General.TradingApp, signal.Symbol, signal.Interval);
             }
         }
     }
-
-
-    private void ListViewSignalsMenuItemActivateTradingApps_Click(object sender, EventArgs e)
-    {
-        ListViewSignalsMenuItemActivateTradingApp_Click(sender, e);
-        ListViewSignalsMenuItemActivateTradingViewInternal_Click(sender, e);
-    }
-
 
     private void ListViewSignalsMenuItemActivateTradingViewInternal_Click(object sender, EventArgs e)
     {
@@ -459,15 +426,9 @@ public partial class FrmMain
         {
             ListViewItem item = listViewSignals.SelectedItems[0];
             CryptoSignal signal = (CryptoSignal)item.Tag;
-
-            (string Url, bool Execute) refInfo;
-            refInfo = ExchangeHelper.GetExternalRef(CryptoTradingApp.TradingView, false, signal.Symbol, signal.Interval);
-            webViewTradingView.Source = new(refInfo.Url);
-
-            tabControl.SelectedTab = tabPageBrowser;
+            ActivateInternalTradingApp(CryptoTradingApp.TradingView, signal.Symbol, signal.Interval);
         }
     }
-
 
     private void ListViewSignalsMenuItemActivateTradingviewExternal_Click(object sender, EventArgs e)
     {
@@ -477,31 +438,14 @@ public partial class FrmMain
             {
                 ListViewItem item = listViewSignals.SelectedItems[index];
                 CryptoSignal signal = (CryptoSignal)item.Tag;
-                (string Url, bool Execute) refInfo;
-                refInfo = ExchangeHelper.GetExternalRef(CryptoTradingApp.TradingView, false, signal.Symbol, signal.Interval);
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(refInfo.Url) { UseShellExecute = true });
+                ActivateExternalTradingApp(CryptoTradingApp.TradingView, signal.Symbol, signal.Interval);
             }
         }
     }
 
-
     private void ListViewSignalsMenuItem_DoubleClick(object sender, EventArgs e)
     {
-        switch (GlobalData.Settings.General.DoubleClickAction)
-        {
-            case DoubleClickAction.activateTradingApp:
-                ListViewSignalsMenuItemActivateTradingApp_Click(sender, e);
-                break;
-            case DoubleClickAction.activateTradingAppAndTradingViewInternal:
-                ListViewSignalsMenuItemActivateTradingApps_Click(sender, e);
-                break;
-            case DoubleClickAction.activateTradingViewBrowerInternal:
-                ListViewSignalsMenuItemActivateTradingViewInternal_Click(sender, e);
-                break;
-            case DoubleClickAction.activateTradingViewBrowerExternal:
-                ListViewSignalsMenuItemActivateTradingviewExternal_Click(sender, e);
-                break;
-        }
+        ListViewSignalsMenuItemActivateTradingApp_Click(sender, e);
     }
 
     private void MenuSignalsShowTrendInformation_Click(object sender, EventArgs e)
@@ -538,6 +482,23 @@ public partial class FrmMain
             }
         }
         Clipboard.SetText(text, TextDataFormat.UnicodeText);
+    }
+
+    private void ListViewSignalsMenuItemCandleDump_Click(object sender, EventArgs e)
+    {
+        if (listViewSignals.SelectedItems.Count > 0)
+        {
+            for (int index = 0; index < listViewSignals.SelectedItems.Count; index++)
+            {
+                ListViewItem item = listViewSignals.SelectedItems[index];
+                CryptoSignal signal = (CryptoSignal)item.Tag;
+
+                Task.Run(() => {
+                    string filename = CandleDumpDebug.ExportToExcell(signal.Symbol);
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(filename) { UseShellExecute = true });
+                });
+            }
+        }
     }
 
     /// <summary>
@@ -606,4 +567,5 @@ public partial class FrmMain
             listViewSignals.EndUpdate();
         }
     }
+
 }

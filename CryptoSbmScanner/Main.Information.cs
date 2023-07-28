@@ -206,7 +206,7 @@ public partial class FrmMain
                         if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1m, out CryptoInterval interval))
                             return;
 
-                        ActivateTradingApp(symbol, interval);
+                        ActivateExternalTradingApp(GlobalData.Settings.General.TradingApp, symbol, interval);
                         return;
                     }
                 }

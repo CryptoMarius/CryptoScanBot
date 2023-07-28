@@ -314,17 +314,16 @@ public class PositionTools
                     {
                         part.Quantity += step.Quantity;
                         part.Invested += step.QuoteQuantityFilled;
+                        if (includeFee)
+                            part.Commission += step.Commission;
                     }
                     else if (step.Side == CryptoOrderSide.Sell)
                     {
                         part.Quantity -= step.Quantity;
                         part.Returned += step.QuoteQuantityFilled;
+                        if (includeFee)
+                            part.Commission += step.Commission;
                     }
-
-                    // TODO - De commission vanuit de TRADE (of step) overnemen (en rekening houden met CommisionAsset?)
-                    // Maar dit is op zich ook een redelijk inschatting van de fee (ligt ook aan referral en kickback)
-                    if (includeFee)
-                        part.Commission += (0.075m / 100) * step.QuoteQuantityFilled;
                 }
                 //string s = string.Format("{0} CalculateProfit bought position={1} part={2} name={3} step={4} {5} price={6} stopprice={7} quantityfilled={8} QuoteQuantityFilled={9}",
                 //   position.Symbol.Name, position.Id, part.Id, part.Name, step.Id, step.Name, step.Price, step.StopPrice, step.QuantityFilled, step.QuoteQuantityFilled);
@@ -392,6 +391,7 @@ public class PositionTools
 
             foreach (CryptoPositionStep step in part.Steps.Values.ToList())
             {
+                step.Commission = 0;
                 step.QuantityFilled = 0;
                 step.QuoteQuantityFilled = 0;
             }
@@ -402,6 +402,7 @@ public class PositionTools
         {
             if (position.Orders.TryGetValue(trade.OrderId, out CryptoPositionStep step))
             {
+                step.Commission += trade.Commission; // probleem, het asset (BUSD enzovoort)
                 step.QuantityFilled += trade.Quantity;
                 step.QuoteQuantityFilled += trade.QuoteQuantity;
 

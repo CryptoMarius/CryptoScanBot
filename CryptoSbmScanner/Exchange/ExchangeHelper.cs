@@ -50,50 +50,6 @@ public class ExchangeHelper
         await GetApiInstance().FetchCandlesAsync();
     }
 
-    //altrady://market/BINA_BUSD_LOKA:2
-    //http://www.ccscanner.nl/hypertrader/?e=binance&a=lto&b=usdt&i=60
-    ///hypertrader://binance/BETA-BTC/5
-    ///https://app.altrady.com/d/BINA_BTC_BETA:1
-    ///https://app.altrady.com/d/BINA_BTC_USDT:2
-    ///https://app.muunship.com/chart/BN-BETABTC?l=5&resolution=1
-    ///https://www.tradingview.com/chart/?symbol=BINANCE:BETABTC&interval=1
-
-    public static (string Url, bool Execute) GetExternalRef(CryptoTradingApp externalApp, bool telegram, CryptoSymbol symbol, CryptoInterval interval)
-    {
-        Model.CryptoExchange exchange = symbol.Exchange;
-        if (GlobalData.Settings.General.ActivateExchange > 0)
-        {
-            if (!GlobalData.ExchangeListId.TryGetValue(GlobalData.Settings.General.ActivateExchange, out exchange))
-                return ("", false);
-        }
-
-        if (GlobalData.Settings.ExternalUrls.TryGetValue(exchange.Name, out CryptoExternalUrls externalUrls))
-        {
-
-            CryptoExternalUrl externalUrl = externalApp switch
-            {
-                CryptoTradingApp.Altrady => externalUrls.Altrady,
-                CryptoTradingApp.Hypertrader => externalUrls.HyperTrader,
-                CryptoTradingApp.TradingView => externalUrls.TradingView,
-                _ => null
-            };
-
-
-            string intervalCode = ((int)(interval.Duration / 60)).ToString();
-            bool executeApp = externalUrl.Execute;
-            string urlTemplate = externalUrl.Url;
-            if (telegram && externalUrl.Telegram != null && externalUrl.Telegram != "")
-                urlTemplate = externalUrl.Telegram;
-            urlTemplate = urlTemplate.Replace("{name}", symbol.Name);
-            urlTemplate = urlTemplate.Replace("{base}", symbol.Base);
-            urlTemplate = urlTemplate.Replace("{quote}", symbol.Quote);
-            urlTemplate = urlTemplate.Replace("{interval}", intervalCode);
-            return (urlTemplate, executeApp);
-        }
-
-        return ("", false);
-    }
-
 #if TRADEBOT
     public static async Task FetchAssetsAsync(CryptoTradeAccount tradeAccount)
     {

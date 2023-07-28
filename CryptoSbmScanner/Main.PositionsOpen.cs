@@ -22,6 +22,8 @@ public partial class FrmMain
     {
         ListViewColumnSorterPosition listViewColumnSorter = new()
         {
+            SortColumn = 1,
+            ClosedPositions = false,
             SortOrder = SortOrder.Descending
         };
 
@@ -61,9 +63,8 @@ public partial class FrmMain
 
     private void ListViewPositionsOpenInitColumns()
     {
-        // TODO: Positie kolommen kiezen..
-
         // Create columns and subitems. Width of -2 indicates auto-size
+        listViewPositionsOpen.Columns.Add("ID", -2, HorizontalAlignment.Left);
         listViewPositionsOpen.Columns.Add("Datum", -2, HorizontalAlignment.Left);
         listViewPositionsOpen.Columns.Add("Account", -2, HorizontalAlignment.Left);
         listViewPositionsOpen.Columns.Add("Exchange", -2, HorizontalAlignment.Left);
@@ -93,7 +94,7 @@ public partial class FrmMain
 
         for (int i = 0; i <= listViewPositionsOpen.Columns.Count - 1; i++)
         {
-            if (i != 5)
+            //if (i != 5)
                 listViewPositionsOpen.Columns[i].Width = -2;
         }
     }
@@ -108,8 +109,8 @@ public partial class FrmMain
         ListViewItem.ListViewSubItem subItem;
         item1.SubItems.Clear();
 
-        item1.Text = position.CreateTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm");
-
+        item1.Text = position.Id.ToString();
+        item1.SubItems.Add(position.CreateTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm"));
         item1.SubItems.Add(position.TradeAccount.Name);
         item1.SubItems.Add(position.Symbol.Exchange.Name);
         item1.SubItems.Add(position.Symbol.Name);
@@ -141,7 +142,7 @@ public partial class FrmMain
         item1.SubItems.Add(position.Commission.ToString(position.Symbol.QuoteData.DisplayFormat));
 
         // profit bedrag
-        decimal NetPnl = position.Quantity * (decimal)position.Symbol.LastPrice;
+        decimal NetPnl = position.MarketValue;
         subItem = item1.SubItems.Add(NetPnl.ToString(position.Symbol.QuoteData.DisplayFormat));
         if (NetPnl > position.Invested)
             subItem.ForeColor = Color.Green;
@@ -149,9 +150,7 @@ public partial class FrmMain
             subItem.ForeColor = Color.Red;
 
         // profit percentage
-        double priceDiff = 0;
-        if (position.BreakEvenPrice != 0)
-            priceDiff = (double)(100 * ((position.Symbol.LastPrice / position.BreakEvenPrice) - 1));
+        decimal priceDiff = position.MarketValuePercentage;
         subItem = item1.SubItems.Add(priceDiff.ToString("N2"));
         if (priceDiff > 0)
             subItem.ForeColor = Color.Green;
@@ -206,8 +205,7 @@ public partial class FrmMain
                 }
             }
             // Openstaande posities
-            Task.Factory.StartNew(() =>
-            {
+            Task.Run(() => {
                 Invoke(new Action(() =>
                 {
                     ListViewPositionsOpenAddPositions(list);
@@ -255,27 +253,9 @@ public partial class FrmMain
     {
         if (listViewPositionsOpen.SelectedItems.Count > 0)
         {
-            //for (int index = 0; index < listViewPositionsOpen.SelectedItems.Count; index++)
-            //{
             ListViewItem item = listViewPositionsOpen.SelectedItems[0];
             CryptoPosition position = (CryptoPosition)item.Tag;
-
-            switch (GlobalData.Settings.General.DoubleClickAction)
-            {
-                case DoubleClickAction.activateTradingApp:
-                    ActivateTradingApp(position.Symbol, position.Interval);
-                    break;
-                case DoubleClickAction.activateTradingAppAndTradingViewInternal:
-                    //ListViewSignalsMenuItemActivateTradingApps_Click(sender, e);
-                    break;
-                case DoubleClickAction.activateTradingViewBrowerInternal:
-                    //ListViewSignalsMenuItemActivateTradingViewInternal_Click(sender, e);
-                    break;
-                case DoubleClickAction.activateTradingViewBrowerExternal:
-                    //ListViewSignalsMenuItemActivateTradingviewExternal_Click(sender, e);
-                    break;
-            }
-            //}
+            ActivateExternalTradingApp(GlobalData.Settings.General.TradingApp, position.Symbol, position.Interval);
         }
     }
 
@@ -305,7 +285,7 @@ public partial class FrmMain
 
                         //// profit bedrag
                         //subItem = item.SubItems[10];
-                        //decimal profit = position.Quantity * (decimal)position.Symbol.LastPrice;
+                        //decimal profit = position.MarketValue;
                         //subItem.Text = profit.ToString(position.Symbol.QuoteData.DisplayFormat);
                         //if (profit > position.Invested)
                         //    subItem.ForeColor = Color.Green;
@@ -435,7 +415,7 @@ public partial class FrmMain
     //}
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-    private async void DebugDumpToolStripMenuItem1Async_Click(object sender, EventArgs e)
+    private async void DebugCandleDumpToolStripMenuItem1Async_Click(object sender, EventArgs e)
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
     {
 #if TRADEBOT
@@ -460,5 +440,27 @@ public partial class FrmMain
         }
 #endif
     }
+
+    private void DebugPositionOpenDumpExcelToolStripMenuItemAsync_Click(object sender, EventArgs e)
+    {
+        if (listViewPositionsOpen.SelectedItems.Count > 0)
+        {
+            for (int index = 0; index < listViewPositionsOpen.SelectedItems.Count; index++)
+            {
+                ListViewItem item = listViewPositionsOpen.SelectedItems[index];
+                CryptoPosition position = (CryptoPosition)item.Tag;
+
+                Task.Run(() => {
+                    Invoke(new Action(() =>
+                    {
+                        string filename = new PositionDumpDebug().ExportToExcell(position);
+                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(filename) { UseShellExecute = true });
+                    }));
+                });
+
+            }
+        }
+    }
+
 }
 

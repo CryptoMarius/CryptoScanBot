@@ -59,6 +59,21 @@ public class CryptoPosition
     public decimal Quantity { get; set; }
     public decimal BreakEvenPrice { get; set; }
 
+    [Computed]
+    public decimal MarketValue { get { return Quantity * (decimal)Symbol.LastPrice; } }
+
+    [Computed]
+    public decimal MarketValuePercentage
+    {
+        get
+        {
+            decimal priceDiff = 0;
+            if (BreakEvenPrice != 0)
+                priceDiff = (decimal)(100 * ((Symbol.LastPrice / BreakEvenPrice) - 1));
+            return priceDiff;
+        }
+    }
+
     // Slonzige gegevens, deze 3 mogen wat mij betreft weg, staat allemaal in de steps (ooit)
     public decimal? BuyPrice { get; set; } //(dat kan anders zijn dan die van het signaal) (kan eigenlijk weg, slechts ter debug)
     public decimal? BuyAmount { get; set; } // slecht gekozen, meer een soort van QuoteQuantity... // Vanwege problemen met het achteraf opzoeken hier opgenomen

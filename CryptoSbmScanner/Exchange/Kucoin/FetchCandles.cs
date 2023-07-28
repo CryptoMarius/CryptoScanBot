@@ -12,6 +12,9 @@ namespace CryptoSbmScanner.Exchange.Kucoin;
 /// </summary>
 public class FetchCandles
 {
+#if KUCOINDEBUG
+    private static int tickerIndex = 0;
+#endif
     // Prevent multiple sessions
     private static readonly SemaphoreSlim Semaphore = new(1);
 
@@ -52,11 +55,11 @@ public class FetchCandles
         while (true)
         {
             long dateNow = CandleTools.GetUnixTime(DateTime.UtcNow, 0);
-            if (symbolInterval.LastCandleSynchronized + symbolInterval.Interval.Duration > dateNow)
-            {
-                // Dan is het tamelijk onzin om iets op te halen, de candle is dan nog niet klaar
-                dateNow = dateNow;
-            }
+            //if (symbolInterval.LastCandleSynchronized + symbolInterval.Interval.Duration > dateNow)
+            //{
+            //    // Dan is het tamelijk onzin om iets op te halen, de candle is dan nog niet klaar
+            //    dateNow = dateNow;
+            //}
 
             var result = await client.SpotApi.ExchangeData.GetKlinesAsync(symbol.Base + '-' + symbol.Quote, exchangeInterval, dateStart, null);
             if (!result.Success)
@@ -135,7 +138,15 @@ public class FetchCandles
                     //CandleTools.UpdateCandleFetched(symbol, interval);
                 }
 
-                //SaveInformation(symbol, result.Data.List);
+#if KUCOINDEBUG
+                //Debug
+                tickerIndex++;
+                long unix = CandleTools.GetUnixTime(DateTime.UtcNow, 0);
+                string filename = GlobalData.GetBaseDir() + $@"\Kucoin\Candles-{symbol.Name}-{interval.Name}-{unix}-#{tickerIndex}.json";
+                string text = System.Text.Json.JsonSerializer.Serialize(result, new System.Text.Json.JsonSerializerOptions {
+                    Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true});
+                File.WriteAllText(filename, text);
+#endif
             }
             finally
             {

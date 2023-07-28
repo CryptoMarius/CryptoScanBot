@@ -36,13 +36,16 @@ public class CryptoPositionStep
     public long? OrderId { get; set; } // Vanwege papertrading moet deze nullable zijn
     public long? Order2Id { get; set; } // Eventuele limit order
 
+    [Computed]
+    public decimal Commission { get; set; }
+
     // Emulator
     //[Computed]
     // De instap waarde, bij het trailen wordt de value en lockingmethod gebruikt 
     // om de nieuw quantity te beredeneren adhv de prijs. 
     //public decimal QuoteQuantityInitial { get; set; }
 
-    
+
     // Emulator
     //[Computed]
     // De instap waarde, bij het trailen wordt de value en lockingmethod gebruikt 
