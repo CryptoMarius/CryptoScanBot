@@ -384,6 +384,7 @@ public partial class FrmMain
 
     private void DebugPositionClosedDumpExcelToolStripMenuItemAsync_Click(object sender, EventArgs e)
     {
+#if TRADEBOT
         if (listViewPositionsClosed.SelectedItems.Count > 0)
         {
             for (int index = 0; index < listViewPositionsClosed.SelectedItems.Count; index++)
@@ -404,6 +405,7 @@ public partial class FrmMain
                 });
             }
         }
+#endif
     }
 }
 
