@@ -62,7 +62,7 @@ public partial class FrmSettings : Form
         toolTip1.SetToolTip(EditAnalysisCandleJumpPercentage, "Percentage dat de munt naar boven of beneden moet bewegen");
 
 
-        // Stupid designer removes events (after moving, sick of it...)
+        // VS-Designer removes events (after cut/paste)
         EditPlaySoundSbmSignal.Click += SetGrayed;
         EditPlaySoundStobbSignal.Click += SetGrayed;
         EditPlaySoundCandleJumpSignal.Click += SetGrayed;
@@ -70,7 +70,7 @@ public partial class FrmSettings : Form
         buttonReset.Click += ButtonReset_Click;
         buttonTestSpeech.Click += ButtonTestSpeech_Click;
         buttonFontDialog.Click += ButtonFontDialog_Click;
-
+        buttonGotoAppDataFolder.Click += ButtonGotoAppDataFolder_Click;
 
         buttonColorStobb.Click += ButtonColorStobb_Click;
         buttonColorSbm.Click += ButtonColorSbm_Click;
@@ -278,7 +278,6 @@ public partial class FrmSettings : Form
         EditBlackTheming.Checked = settings.General.BlackTheming;
         EditTradingApp.SelectedIndex = (int)settings.General.TradingApp;
         EditActivateExchange.SelectedIndex = (int)settings.General.ActivateExchange;
-        EditDoubleClickAction.SelectedIndex = (int)settings.General.DoubleClickAction;
         EditTrendCalculationMethod.SelectedIndex = (int)settings.General.TrendCalculationMethod;
         EditSoundHeartBeatMinutes.Value = settings.General.SoundHeartBeatMinutes;
         EditGetCandleInterval.Value = settings.General.GetCandleInterval;
@@ -551,7 +550,6 @@ public partial class FrmSettings : Form
         settings.General.BlackTheming = EditBlackTheming.Checked;
         settings.General.TradingApp = (CryptoTradingApp)EditTradingApp.SelectedIndex;
         settings.General.ActivateExchange = EditActivateExchange.SelectedIndex;
-        settings.General.DoubleClickAction = (DoubleClickAction)EditDoubleClickAction.SelectedIndex;
         settings.General.TrendCalculationMethod = (CryptoTrendCalculationMethod)EditTrendCalculationMethod.SelectedIndex;
         settings.General.SoundHeartBeatMinutes = (int)EditSoundHeartBeatMinutes.Value;
         settings.General.GetCandleInterval = (int)EditGetCandleInterval.Value;
@@ -892,7 +890,18 @@ public partial class FrmSettings : Form
 
     private void ButtonTestTelegram_Click(object sender, EventArgs e)
     {
-        GlobalData.AddTextToTelegram(string.Format("{0} dit is een test Token='{1}' ChatId='{2}'",
-            DateTime.Now.ToString(), GlobalData.Settings.Telegram.Token, GlobalData.Settings.Telegram.ChatId));
+        ThreadTelegramBot.ChatId = EditTelegramChatId.Text;
+        GlobalData.AddTextToTelegram("Dit is een test bericht van de CryptoScanner");
+    }
+
+    private async void ButtonTelegramStart_Click(object sender, EventArgs e)
+    {
+        await ThreadTelegramBot.Start(EditTelegramToken.Text, EditTelegramChatId.Text);
+    }
+
+    private void ButtonGotoAppDataFolder_Click(object sender, EventArgs e)
+    {
+        string folder = GlobalData.GetBaseDir();
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(folder) { UseShellExecute = true });
     }
 }

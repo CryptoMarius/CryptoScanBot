@@ -9,14 +9,6 @@ using System.Windows.Forms;
 
 namespace CryptoSbmScanner.Settings;
 
-public enum DoubleClickAction
-{
-    activateTradingApp,
-    activateTradingAppAndTradingViewInternal,
-    activateTradingViewBrowerInternal,
-    activateTradingViewBrowerExternal
-}
-
 [Serializable]
 public class IntervalAndStrategyConfig
 {
@@ -46,13 +38,11 @@ public class SettingsGeneral
     public CryptoTradingApp TradingApp { get; set; } = CryptoTradingApp.Altrady;
     public int ActivateExchange { get; set; } = 0;
     public bool SoundTradeNotification { get; set; }
-    public string SelectedBarometerQuote { get; set; } = "BUSD";
+    public string SelectedBarometerQuote { get; set; } = "USDT";
     public string SelectedBarometerInterval { get; set; } = "1H";
 
-    public string FontName { get; set; } = "Microsoft Sans Serif";
-    public float FontSize { get; set; } = 8.25f;
-
-    public DoubleClickAction DoubleClickAction { get; set; } = DoubleClickAction.activateTradingApp;
+    public string FontName { get; set; } = "Segoe UI";
+    public float FontSize { get; set; } = 9f;
 
     public int GetCandleInterval { get; set; } = 60;
 
