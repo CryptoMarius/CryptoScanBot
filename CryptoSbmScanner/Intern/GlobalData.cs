@@ -14,7 +14,6 @@ namespace CryptoSbmScanner.Intern;
 
 /// <summary>
 /// Om vanuit de threads tekst in het main scherm te zetten
-/// TODO Betere logger te gebruiken, maar dit werkt (voorlopig)
 /// </summary>
 public delegate void AddTextEvent(string text, bool extraLineFeed = false);
 
@@ -42,9 +41,17 @@ static public class GlobalData
 {
     // Emulator kan alleen de backTest zetten (anders gaan er onverwachte zaken naar de database enzo)
     static public bool BackTest { get; set; }
-
-    static public SettingsBasic Settings { get; set; } = new();
     static public CryptoApplicationStatus ApplicationStatus { get; set; } = CryptoApplicationStatus.Initializing;
+
+    /// <summary>
+    /// Alle instellingen van de scanenr/trader
+    /// </summary>
+    static public SettingsBasic Settings { get; set; } = new();
+
+    /// <summary>
+    /// De url's van de exchanges en/of tradingapps
+    /// </summary>
+    static public CryptoExternalUrlList ExternalUrls { get; set; } = new();
 
     // The nlogger stuff
     static public NLog.Logger Logger { get; } = NLog.LogManager.GetCurrentClassLogger();
@@ -52,7 +59,6 @@ static public class GlobalData
     static public List<CryptoInterval> IntervalList { get; } = new();
     static public SortedList<int, CryptoInterval> IntervalListId { get; } = new();
     static public SortedList<CryptoIntervalPeriod, CryptoInterval> IntervalListPeriod { get; } = new();
-
 
     // Exchanges indexed on name
     static public SortedList<int, Model.CryptoExchange> ExchangeListId { get; } = new();
@@ -215,8 +221,22 @@ static public class GlobalData
 
     static public void AddSymbol(CryptoSymbol symbol)
     {
-        //if (symbol.Name.Equals("BTCUSDT") || symbol.Name.Equals("ETHUSDT") || symbol.Name.Equals("$BMPUSDT")
-        //  || symbol.Name.Equals("ADABTC") || symbol.Name.Equals("COMPBTC") || symbol.Name.Equals("$BMPBTC"))
+#if KUCOINDEBUG
+        // Testje met gelimiteerd aantal symbols
+        if (
+            //symbol.Name.Equals("BTCUSDT") ||
+            //symbol.Name.Equals("AAVE3SUSDT") ||
+            //symbol.Name.Equals("DASHUSDT") ||
+            
+            symbol.Name.Equals("$BMPUSDT") ||
+          //symbol.Name.Equals("ETHUSDT") ||
+          //symbol.Name.Equals("ADABTC") ||
+          //symbol.Name.Equals("COMPBTC") ||
+          //symbol.Name.Equals("VEGAUSDT") ||
+          symbol.Name.Equals("UNICUSDT") ||
+          symbol.Name.Equals("$BMPBTC")
+          )
+#endif
 
         if (ExchangeListId.TryGetValue(symbol.ExchangeId, out Model.CryptoExchange exchange))
         {
@@ -321,42 +341,86 @@ static public class GlobalData
         }
     }
 
+    static public void LoadBaseSettings()
+    {
+        try
+        {
+            string filename = GetBaseDir() + "settings.json";
+            if (File.Exists(filename))
+            {
+                //using (FileStream readStream = new FileStream(filename, FileMode.Open))
+                //{
+                //    BinaryFormatter formatter = new BinaryFormatter();
+                //    GlobalData.Settings = (Settings)formatter.Deserialize(readStream);
+                //    readStream.Close();
+                //}
+                string text = File.ReadAllText(filename);
+                Settings = JsonSerializer.Deserialize<SettingsBasic>(text);
+            }
+            else
+            {
+                // Oude naam = "GlobalData.Settings2.json"
+                // Toch de instellingen proberen over te nemen
+                string oldSettings = GetBaseDir() + "GlobalData.Settings2.json";
+                if (File.Exists(oldSettings))
+                {
+                    try
+                    {
+                        string text = File.ReadAllText(oldSettings);
+                        Settings = JsonSerializer.Deserialize<SettingsBasic>(text);
+                    }
+                    catch (Exception error)
+                    {
+                        Logger.Error(error);
+                        AddTextToLogTab("Error playing music " + error.ToString(), false);
+                    }
+                }
+                else
+                    DefaultSettings();
+            }
+        }
+        catch (Exception error)
+        {
+            Logger.Error(error);
+            AddTextToLogTab("Error loading Weblinks.json " + error.ToString(), false);
+        }
+    }
+
+    static public void LoadLinkSettings()
+    {
+        try
+        {
+            string filename = GetBaseDir() + "Weblinks.json";
+            if (File.Exists(filename))
+            {
+                string text = File.ReadAllText(filename);
+                ExternalUrls = JsonSerializer.Deserialize<CryptoExternalUrlList>(text);
+            }
+            else
+            {
+                if (ExternalUrls.Count == 0)
+                    ExternalUrls.InitializeUrls();
+
+                // het bestand in ieder geval aanmaken (updates moeten achteraf gepushed worden)
+                string text = JsonSerializer.Serialize(ExternalUrls, new JsonSerializerOptions
+                {
+                    Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+                    WriteIndented = true
+                });
+                File.WriteAllText(filename, text);
+            }
+        }
+        catch (Exception error)
+        {
+            Logger.Error(error);
+            AddTextToLogTab("Error loading Weblinks.json " + error.ToString(), false);
+        }
+    }
 
     static public void LoadSettings()
     {
-        string filename = GetBaseDir() + "settings.json";
-        if (File.Exists(filename))
-        {
-            //using (FileStream readStream = new FileStream(filename, FileMode.Open))
-            //{
-            //    BinaryFormatter formatter = new BinaryFormatter();
-            //    GlobalData.Settings = (Settings)formatter.Deserialize(readStream);
-            //    readStream.Close();
-            //}
-            string text = File.ReadAllText(filename);
-            Settings = JsonSerializer.Deserialize<SettingsBasic>(text);
-        }
-        else
-        {
-            // Oude naam = "GlobalData.Settings2.json"
-            // Toch de instellingen proberen over te nemen
-            string oldSettings = GetBaseDir() + "GlobalData.Settings2.json";
-            if (File.Exists(oldSettings))
-            {
-                try
-                {
-                    string text = File.ReadAllText(oldSettings);
-                    Settings = JsonSerializer.Deserialize<SettingsBasic>(text);
-                }
-                catch (Exception error)
-                {
-                    Logger.Error(error);
-                    AddTextToLogTab("Error playing music " + error.ToString(), false);
-                }
-            }
-            else 
-                DefaultSettings();
-        }
+        LoadBaseSettings();
+        LoadLinkSettings();
     }
 
     static public void DefaultSettings()
@@ -367,8 +431,8 @@ static public class GlobalData
             CryptoQuoteData quote = new()
             {
                 Name = "BUSD",
-                FetchCandles = true,
-                CreateSignals = true,
+                FetchCandles = false,
+                CreateSignals = false,
                 MinimalVolume = 6500000,
                 MinimalPrice = 0.00000001m
             };
@@ -377,8 +441,8 @@ static public class GlobalData
             quote = new CryptoQuoteData
             {
                 Name = "USDT",
-                FetchCandles = false,
-                CreateSignals = false,
+                FetchCandles = true,
+                CreateSignals = true,
                 MinimalVolume = 6500000,
                 MinimalPrice = 0.00000001m
             };
