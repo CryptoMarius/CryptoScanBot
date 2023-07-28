@@ -3,6 +3,8 @@ using System.Windows.Forms.DataVisualization.Charting;
 
 using CryptoSbmScanner.Context;
 using CryptoSbmScanner.Enums;
+using CryptoSbmScanner.Intern;
+using CryptoSbmScanner.Model;
 
 using Dapper;
 
@@ -52,19 +54,21 @@ public partial class DashBoardControl : UserControl
     }
 
 
+    private readonly int Gap = 10;
     private readonly int OffsetX = 25;
-    private readonly int OffsetY = 200;
-    private readonly int GraphWidth = 500;
-    private readonly int GraphHeight = 300;
+    private readonly int OffsetY = 220;
+    private readonly int GraphWidth = 600;
+    private readonly int GraphHeight = 250;
 
     private QueryPositionData OpenData = new();
-    private List<QueryTradeData> QueryTradeDataList = new();
-    private List<QueryPositionData> QueryPositionDataList = new();
+    private readonly List<QueryTradeData> QueryTradeDataList = new();
+    private readonly List<QueryPositionData> QueryPositionDataList = new();
 
     private Chart ChartPositionsPerDay;
     private Chart ChartProfitsPerDay;
     private Chart ChartProfitPercentagePerDay;
     private Chart ChartInvestedReturnedPerDay;
+    private Chart ChartDoorlooptijden;
 
 
     public DashBoardControl()
@@ -98,6 +102,7 @@ public partial class DashBoardControl : UserControl
         using CryptoDatabase databaseThread = new();
         databaseThread.Open();
 
+        // TODO: Vandaag toevoegen
         // Experiment #1 is een chart met per datum het aantal gesloten posities
         // De 1e kolom is het aantal nog openstaande posities, die moeten we nog ergens onderbrengen
         QueryPositionDataList.Clear();
@@ -129,6 +134,7 @@ public partial class DashBoardControl : UserControl
         using CryptoDatabase databaseThread = new();
         databaseThread.Open();
 
+        // TODO: Vandaag toevoegen
         QueryTradeDataList.Clear();
         foreach (QueryTradeData data in databaseThread.Connection.Query<QueryTradeData>(builder.ToString()))
         {
@@ -400,6 +406,80 @@ public partial class DashBoardControl : UserControl
         ChartInvestedReturnedPerDay.Invalidate();
     }
 
+    private void DoChartDoorlooptijden(int x, int y)
+    {
+        // TODO: Iets met het meten van doorlooptijden, maar hoe doe ik dat?
+        // Want de doorlooptijd kan een week of zelfs weken zijn (als btc dropped)
+        // De bestaande data meet het in minuten (is dat wel handig?)
+        
+        // Is er wel genoeg ruimte op het scherm
+
+        // Gewoon eerst even een graph met daarin:
+        // - Minimale tradetijd
+        // - Gemiddelde tradetijd
+        // - Maximale tradetijd
+        if (ChartDoorlooptijden == null)
+        {
+            ChartDoorlooptijden  = CreateChart("Minimale, maximale en gemiddelde doorlooptijden per????????", x, y);
+            Controls.Add(ChartDoorlooptijden);
+
+            ChartArea chartArea = CreateChartArea("N2");
+            ChartDoorlooptijden.ChartAreas.Add(chartArea);
+
+            ChartDoorlooptijden.Legends.Clear();
+            //chart1.Legends.Add(legend1);
+            var legend1 = ChartDoorlooptijden.Legends.Add("legenda");
+            legend1.BackColor = Color.Black;
+            legend1.ForeColor = Color.White;
+        }
+        ChartDoorlooptijden.Series.Clear();
+
+        var series1 = new Series
+        {
+            Name = "Minimaal",
+            Color = Color.Red,
+            IsVisibleInLegend = true,
+            IsXValueIndexed = true,
+            //ChartType = SeriesChartType.Bar
+            ChartType = SeriesChartType.Line,
+        };
+        ChartDoorlooptijden.Series.Add(series1);
+
+        var series2 = new Series
+        {
+            Name = "Gemiddeld",
+            Color = Color.Orange,
+            IsVisibleInLegend = true,
+            IsXValueIndexed = true,
+            //ChartType = SeriesChartType.Bar
+            ChartType = SeriesChartType.Line,
+        };
+        ChartDoorlooptijden.Series.Add(series2);
+
+        var series3 = new Series
+        {
+            Name = "Maximaal",
+            Color = Color.Green,
+            IsVisibleInLegend = true,
+            IsXValueIndexed = true,
+            //ChartType = SeriesChartType.Bar
+            ChartType = SeriesChartType.Line,
+        };
+        ChartDoorlooptijden.Series.Add(series3);
+
+
+        foreach (QueryPositionData data in QueryPositionDataList)
+        {
+            if (data.CloseTime.Date > new DateTime(2000, 01, 01))
+            {
+                series1.Points.AddXY(data.CloseTime.Date, data.MinMin);
+                series2.Points.AddXY(data.CloseTime.Date, data.AvgMin);
+                series3.Points.AddXY(data.CloseTime.Date, data.MaxMin);
+            }
+        }
+        ChartDoorlooptijden.Invalidate();
+    }
+
     private void CreateChart()
     {
         // Diverse statistieken van de posities per dag (via position tabel)
@@ -409,24 +489,60 @@ public partial class DashBoardControl : UserControl
         GetQueryTradeData();
 
         DoChartPositionsPerDay(OffsetX, OffsetY);
-        DoChartProfitPercentagePerDay(OffsetX + GraphWidth + 25, OffsetY);
+        DoChartProfitPercentagePerDay(OffsetX + GraphWidth + Gap, OffsetY);
 
-        DoChartProfitsPerDay(OffsetX, OffsetY + GraphHeight + 25);
-        DoChartInvestedReturnedPerDay(OffsetX + GraphWidth + 25, OffsetY + GraphHeight + 25);
+        DoChartProfitsPerDay(OffsetX, OffsetY + GraphHeight + Gap);
+        DoChartInvestedReturnedPerDay(OffsetX + GraphWidth + Gap, OffsetY + GraphHeight + Gap);
+
+        DoChartDoorlooptijden(OffsetX, OffsetY + 2 * GraphHeight + 2 * Gap);
+        // todo: Gemiddelde profit per dag (net zoals de percentage maar dan met geld)
+        // todo: Toelichting van de gemiddelde doorlooptijd (wat op de x en y as?)
+
 
         // En de lopende posities
         labelPositions.Text = OpenData.Positions.ToString();
         labelInvested.Text = OpenData.Invested.ToString();
         labelReturned.Text = OpenData.Returned.ToString();
         labelCommission.Text = OpenData.Commission.ToString();
-        labelNettoPnlValue.Text = (OpenData.Invested - OpenData.Returned - OpenData.Commission).ToString();
-            //OpenData.TotalProfit.ToString();
 
+        decimal investedInTrades = OpenData.Invested - OpenData.Returned - OpenData.Commission;
+        labelNettoPnlValue.Text = investedInTrades.ToString();
+
+
+        // Als je de openstaande posities zou verkopen, wat krijg je dan terug?
+        decimal currentValue = 0;
+        foreach (CryptoTradeAccount tradeAccount in GlobalData.TradeAccountList.Values)
+        {
+            foreach (var positionList in tradeAccount.PositionList.Values)
+            {
+                // De muntparen toevoegen aan de userinterface
+                foreach (CryptoPosition position in positionList.Values)
+                {
+                    if (position.ExchangeId == GlobalData.Settings.General.ExchangeId)
+                        currentValue += position.Quantity * (decimal)position.Symbol.LastPrice - position.Commission;
+                }
+            }
+        }
+        labelNettoPnlValue2.Text = currentValue.ToString();
+
+        labelNettoPnlValue3.Text = (currentValue - investedInTrades).ToString();
+        if (investedInTrades > 0)
+            labelNettoPnlValue4.Text = ((100 * (currentValue / investedInTrades)) - 100).ToString("N2") + " %";
+        else
+            labelNettoPnlValue4.Text = "? %";
         return;
     }
 
-    private void button1_Click(object sender, EventArgs e)
+    private void Button1_Click(object sender, EventArgs e)
     {
-        CreateChart();
+        try
+        {
+            CreateChart();
+        }
+        catch (Exception error)
+        {
+            GlobalData.Logger.Error(error);
+            GlobalData.AddTextToLogTab(error.ToString() + "\r\n");
+        }
     }
 }
