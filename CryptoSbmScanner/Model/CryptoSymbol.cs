@@ -65,6 +65,15 @@ public class CryptoSymbol
 
     public decimal Volume { get; set; }
 
+
+    // Bybit Futures, ondersteunen van de FundingRate en FundingInterval
+    // Wat het inhoud weet ik nog niet (toegevoegde waarde, voor trading is er waarschijnlijk wel)
+    // https://bybit-exchange.github.io/docs/v5/market/history-fund-rate
+    public decimal FundingRate { get; set; }
+    public decimal FundingInterval { get; set; }
+
+    
+
     // Gevuld door de Binance Ticker, ALLEMAAL gebaseerd op de 24h prijs
     //[Computed]
     // Laatste waarde volgens de ticker
