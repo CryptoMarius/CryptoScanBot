@@ -105,68 +105,6 @@ public class Api : ExchangeBase
     }
 
 
-    //// TODO: Een StopLimit order ondersteunen!
-    ///// <summary>
-    ///// Bereken de te kopen aantal muntjes tegen de opgegeven prijs en plaats dan een buy opdracht
-    ///// Optionele prijs (default = symbol.LastPrice)
-    ///// Optionele Quantity (default = Symbol.QuoteData.BuyAmount / price)
-    ///// </summary>
-    //public async Task<(bool result, TradeParams tradeParams)> PlaceBuyOrder(CryptoOrderType orderType, decimal? quantity, decimal? price)
-    //{
-    //    // Zelfs met een MarketOrder moet je een prijs hebben omdat we een bepaalde quantity willen kopen (c.q. willen opgeven)
-
-
-    //    // prijs perikelen
-    //    if (!price.HasValue)
-    //        price = (decimal)Symbol.LastPrice;
-
-    //    if (Symbol.LastPrice.HasValue && Symbol.LastPrice < price)
-    //    {
-    //        decimal oldPrice = (decimal)price;
-    //        price = (decimal)Symbol.LastPrice;
-    //        GlobalData.AddTextToLogTab("BUY correction: " + Symbol.Name + " " + oldPrice.ToString("N6") + " to " + price.ToString0());
-    //    }
-    //    // De aankoop prijs verlagen (niet direct laten kopen?)
-    //    if (GlobalData.Settings.Trading.GlobalBuyVarying != 0.0m)
-    //    {
-    //        decimal oldPrice = (decimal)price;
-    //        price += price * (GlobalData.Settings.Trading.GlobalBuyVarying / 100);
-    //        GlobalData.AddTextToLogTab("BUY percentage: " + Symbol.Name + " " + oldPrice.ToString("N6") + " to " + price.ToString0());
-    //    }
-    //    price = price?.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
-
-
-
-    //    // quantity perikelen
-    //    if (!quantity.HasValue)
-    //        quantity = Symbol.QuoteData.BuyAmount / price;
-    //    quantity = quantity?.Clamp(Symbol.QuantityMinimum, Symbol.QuantityMaximum, Symbol.QuantityTickSize);
-
-
-
-    //    // Controleer de limiten van de berekende bedragen, Minimum bedrag
-    //    if (!Symbol.InsideBoundaries(quantity, price, out string text))
-    //    {
-    //        GlobalData.AddTextToLogTab(string.Format("{0} {1} (debug={2} {3})", Symbol.Name, text, price, quantity));
-    //        return (false, null);
-    //    }
-
-    //    // Plaats de buy order
-    //    (bool result, TradeParams tradeParams) result = await BuyOrSell(orderType, CryptoOrderSide.Long, (decimal)quantity, (decimal)price, null, null);
-    //    if (result.result)
-    //    {
-    //        //string text2 = string.Format("{0} POSITION {1} ORDER {2} PLACED price={3} quantity={4} quotequantity={5} type={6}", Symbol.Name, "BUY",
-    //        //    result.tradeParams.OrderId, result.tradeParams.Price.ToString0(), result.tradeParams.Quantity.ToString0(), 
-    //        //    result.tradeParams.QuoteQuantity.ToString0(), result.tradeParams.OrderType.ToString());
-    //        //GlobalData.AddTextToLogTab(text2, true);
-    //        //GlobalData.AddTextToTelegram(text2);
-    //        return result;
-    //    }
-    //    else return (false, null);
-    //}
-
-
-
     public async Task<(bool result, TradeParams tradeParams)> BuyOrSell(
         CryptoTradeAccount tradeAccount, CryptoSymbol symbol, DateTime currentDate,
         CryptoOrderType orderType, CryptoOrderSide orderSide,
@@ -283,21 +221,24 @@ public class Api : ExchangeBase
                 if (orderSide == CryptoOrderSide.Buy)
                 {
                     if (orderType == CryptoOrderType.Market)
-                        result = await client.V5Api.Trading.PlaceOrderAsync(Category.Linear, symbol.Name, OrderSide.Buy, NewOrderType.Market, quantity);
-                    // Ehhh? nog eens oefenen op het testnet denk ik...
+                        result = await client.V5Api.Trading.PlaceOrderAsync(Category.Linear, symbol.Name, OrderSide.Buy, NewOrderType.Market, 
+                            quantity, isLeverage: false);
                     else
                     if (orderType == CryptoOrderType.StopLimit)
                         throw new Exception("Stop limit not supported? <uitzoeken>");
                     //result = await client.V5Api.Trading.PlaceOrderAsync(Symbol.Name, OrderSide.Buy, NewOrderType.Limit, quantity, price: price, timeInForce: TimeInForce.GoodTillCanceled);
                     else
-                        result = await client.V5Api.Trading.PlaceOrderAsync(Category.Linear, symbol.Name, OrderSide.Buy, NewOrderType.Limit, quantity, price: price, timeInForce: TimeInForce.GoodTillCanceled);
+                        result = await client.V5Api.Trading.PlaceOrderAsync(Category.Linear, symbol.Name, OrderSide.Buy, NewOrderType.Limit, 
+                            quantity, price: price, timeInForce: TimeInForce.GoodTillCanceled, isLeverage: false);
                 }
                 else
                 {
                     if (orderType == CryptoOrderType.Market)
-                        result = await client.V5Api.Trading.PlaceOrderAsync(Category.Linear, symbol.Name, OrderSide.Sell, NewOrderType.Market, quantity);
+                        result = await client.V5Api.Trading.PlaceOrderAsync(Category.Linear, symbol.Name, OrderSide.Sell, NewOrderType.Market, 
+                            quantity, isLeverage: false);
                     else
-                        result = await client.V5Api.Trading.PlaceOrderAsync(Category.Linear, symbol.Name, OrderSide.Sell, NewOrderType.Limit, quantity, price: price, timeInForce: TimeInForce.GoodTillCanceled);
+                        result = await client.V5Api.Trading.PlaceOrderAsync(Category.Linear, symbol.Name, OrderSide.Sell, NewOrderType.Limit, 
+                            quantity, price: price, timeInForce: TimeInForce.GoodTillCanceled, isLeverage: false);
                 }
 
                 if (!result.Success)

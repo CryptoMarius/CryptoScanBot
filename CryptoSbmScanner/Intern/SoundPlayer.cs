@@ -34,23 +34,32 @@ static public class ThreadSoundPlayer
     /// </summary>
     private static void SoundThreadExecute()
     {
-        // https://stackoverflow.com/questions/22208258/how-to-play-sounds-asynchronuously-but-themselves-in-a-queue
-        using System.Media.SoundPlayer soundPlayer = new();
-        foreach (string text in soundQueue.GetConsumingEnumerable(soundCancelToken.Token))
+        try
         {
-            string fileName;
-            if (Path.GetDirectoryName(text) != "")
-                fileName = text;
-            else
-                fileName = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location) + @"\Sounds\" + text;
-
-            if (File.Exists(fileName))
+            // https://stackoverflow.com/questions/22208258/how-to-play-sounds-asynchronuously-but-themselves-in-a-queue
+            using System.Media.SoundPlayer soundPlayer = new();
+            foreach (string text in soundQueue.GetConsumingEnumerable(soundCancelToken.Token))
             {
-                // http://msdn.microsoft.com/en-us/library/system.media.soundplayer.playsync.aspx
-                soundPlayer.SoundLocation = fileName;
-                //Here the outside thread waits for the following play to end before continuing.
-                soundPlayer.PlaySync();
+                string fileName;
+                if (Path.GetDirectoryName(text) != "")
+                    fileName = text;
+                else
+                    fileName = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location) + @"\Sounds\" + text;
+
+                if (File.Exists(fileName))
+                {
+                    // http://msdn.microsoft.com/en-us/library/system.media.soundplayer.playsync.aspx
+                    soundPlayer.SoundLocation = fileName;
+                    //Here the outside thread waits for the following play to end before continuing.
+                    soundPlayer.PlaySync();
+                }
             }
+        }
+        catch (Exception error)
+        {
+            GlobalData.Logger.Error(error);
+            GlobalData.AddTextToLogTab("");
+            GlobalData.AddTextToLogTab(error.ToString(), true);
         }
     }
 }

@@ -1,6 +1,8 @@
 ﻿using System.Collections.Concurrent;
 using System.Speech.Synthesis;
 
+using Humanizer;
+
 namespace CryptoSbmScanner.Intern;
 
 static public class ThreadSpeechPlayer
@@ -35,15 +37,24 @@ static public class ThreadSpeechPlayer
     /// </summary>
     public static void SpeechThreadExecute()
     {
-        using SpeechSynthesizer synthesizer = new();
-        // to change VoiceGender and VoiceAge check out those links below
-        synthesizer.SelectVoiceByHints(VoiceGender.Male, VoiceAge.Adult);
-        synthesizer.Volume = 100;  // (0 - 100)
-        synthesizer.Rate = 0;     // (-10 - 10)
-
-        foreach (string text in speechQueue.GetConsumingEnumerable(speechCancelToken.Token))
+        try
         {
-            synthesizer.Speak(text);
+            using SpeechSynthesizer synthesizer = new();
+            // to change VoiceGender and VoiceAge check out those links below
+            synthesizer.SelectVoiceByHints(VoiceGender.Male, VoiceAge.Adult);
+            synthesizer.Volume = 100;  // (0 - 100)
+            synthesizer.Rate = 0;     // (-10 - 10)
+
+            foreach (string text in speechQueue.GetConsumingEnumerable(speechCancelToken.Token))
+            {
+                synthesizer.Speak(text);
+            }
+        }
+        catch (Exception error)
+        {
+            GlobalData.Logger.Error(error);
+            GlobalData.AddTextToLogTab("");
+            GlobalData.AddTextToLogTab(error.ToString(), true);
         }
     }
 }
