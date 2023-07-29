@@ -953,8 +953,8 @@ public class CryptoDatabase : IDisposable
                 "BreakEvenPrice TEXT NULL, " +
 
                 "BuyPrice TEXT NOT NULL, " +
-                "BuyAmount TEXT NULL, " +
-                "SellPrice TEXT NULL, " +
+                "BuyAmount TEXT NULL, " + // kan verwijderd worden
+                "SellPrice TEXT NULL, " + // kan verwijderd worden
 
                 "FOREIGN KEY(PositionId) REFERENCES Position(Id)," +
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +

@@ -46,6 +46,9 @@ public class Migration
                 using var transaction = database.BeginTransaction();
                 // do the updates..
 
+                //Part - "BuyAmount TEXT NULL, " + // kan verwijderd worden
+
+
                 // update version
                 //version.Version += 1;
                 database.Connection.Update(version, transaction);
