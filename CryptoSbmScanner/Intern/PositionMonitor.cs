@@ -1655,11 +1655,35 @@ public class PositionMonitor
             // (dit heeft voordelen want dan hoef je niet te weten in welke DCA-index je zit)
             // TODO: Dat zou (CC2 technisch) ook een percentage van de BB kunnen zijn als 3e optie. - welke candle voor de bb%?
 
+            CryptoPositionStep step = null;
+
+
+            // Is er een openstaande DCA (met een openstaande buy step)? Zoja, exit
+            // (blijft ietwat onduidelijk, de specificaties verder uitwerken)
+            foreach (CryptoPositionPart partX in position.Parts.Values.ToList())
+            {
+                //if (!partX.CloseTime.HasValue)
+                {
+                    foreach (CryptoPositionStep stepX in partX.Steps.Values.ToList())
+                    {
+                        if (stepX.Name.Equals("BUY") && stepX.Status != CryptoOrderStatus.Expired && stepX.Trailing != CryptoTrailing.Trailing)
+                        {
+                            step = stepX;
+                        }
+                    }
+                }
+            }
+            if (step == null)
+                return;
+
+            //*************************************************************************
+
+
             // Dan zou onderstaande conditie snel(altijd) waar zijn, uitsluiten
             if (GlobalData.Settings.Trading.DcaPercentage <= 0)
                 return;
 
-            CryptoPositionStep step = LowestBuyPartObject(position);
+            step = LowestBuyPartObject(position);
             if (step == null)
                 return;
             decimal percentage = 100m * (step.Price - LastCandle1m.Close) / step.Price;
