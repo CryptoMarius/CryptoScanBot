@@ -1,5 +1,6 @@
 ﻿using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Exchange;
+using CryptoSbmScanner.Model;
 
 namespace CryptoSbmScanner.Intern;
 

@@ -162,6 +162,7 @@ public class PositionDumpDebug
         // Er zijn 2 rijen met headers
         int columns = ExcellHeaders(sheet, 0);
 
+        ICell cell;
         int row = 1;
         foreach (CryptoPositionPart part in position.Parts.Values.ToList())
         {
@@ -180,7 +181,6 @@ public class PositionDumpDebug
                 else
                     column = 6;
 
-                ICell cell;
                 cell = WriteCell(sheet, column++, row, (DateTime)step.CloseTime);
                 cell.CellStyle = cellStyleDate;
 
@@ -205,6 +205,13 @@ public class PositionDumpDebug
                 sheet.SetColumnWidth(i, (int)(1.1 * width));
             }
         }
+
+
+        ++row;
+        ++row;
+        int x = 5;
+        cell = WriteCell(sheet, x++, row, (double)position.BreakEvenPrice);
+        cell.CellStyle = cellStyleDecimalNormal;
 
 
         GlobalData.AddTextToLogTab($"Position Debug dump {position.Symbol.Name} {position.Id}");

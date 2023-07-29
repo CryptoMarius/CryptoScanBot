@@ -89,7 +89,7 @@ public partial class FrmMain
 
             if (webViewTradingView.Source == null)
             {
-                Invoke((MethodInvoker)(() => ActivateTradingViewBrowser()));
+                Invoke((MethodInvoker)(() => LinkTools.ActivateTradingViewBrowser()));
             }
 
         }
@@ -105,7 +105,7 @@ public partial class FrmMain
         if (symbol == null)
             return;
 
-        ActivateExternalTradingApp(GlobalData.Settings.General.TradingApp, symbol, interval);
+        LinkTools.ActivateExternalTradingApp(GlobalData.Settings.General.TradingApp, symbol, interval);
     }
 
 
@@ -118,7 +118,7 @@ public partial class FrmMain
         if (symbol == null)
             return;
 
-        ActivateInternalTradingApp(CryptoTradingApp.TradingView, symbol, interval);
+        LinkTools.ActivateInternalTradingApp(CryptoTradingApp.TradingView, symbol, interval);
     }
 
 
@@ -131,7 +131,7 @@ public partial class FrmMain
         if (symbol == null)
             return;
 
-        ActivateExternalTradingApp(CryptoTradingApp.TradingView, symbol, interval);
+        LinkTools.ActivateExternalTradingApp(CryptoTradingApp.TradingView, symbol, interval);
     }
 
 

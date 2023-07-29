@@ -1,8 +1,6 @@
 ﻿using CryptoSbmScanner.Enums;
-using CryptoSbmScanner.Exchange;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
-using CryptoSbmScanner.Settings;
 
 namespace CryptoSbmScanner;
 
@@ -415,7 +413,7 @@ public partial class FrmMain
             {
                 ListViewItem item = listViewSignals.SelectedItems[index];
                 CryptoSignal signal = (CryptoSignal)item.Tag;
-                ActivateExternalTradingApp(GlobalData.Settings.General.TradingApp, signal.Symbol, signal.Interval);
+                LinkTools.ActivateExternalTradingApp(GlobalData.Settings.General.TradingApp, signal.Symbol, signal.Interval);
             }
         }
     }
@@ -426,7 +424,7 @@ public partial class FrmMain
         {
             ListViewItem item = listViewSignals.SelectedItems[0];
             CryptoSignal signal = (CryptoSignal)item.Tag;
-            ActivateInternalTradingApp(CryptoTradingApp.TradingView, signal.Symbol, signal.Interval);
+            LinkTools.ActivateInternalTradingApp(CryptoTradingApp.TradingView, signal.Symbol, signal.Interval);
         }
     }
 
@@ -438,7 +436,7 @@ public partial class FrmMain
             {
                 ListViewItem item = listViewSignals.SelectedItems[index];
                 CryptoSignal signal = (CryptoSignal)item.Tag;
-                ActivateExternalTradingApp(CryptoTradingApp.TradingView, signal.Symbol, signal.Interval);
+                LinkTools.ActivateExternalTradingApp(CryptoTradingApp.TradingView, signal.Symbol, signal.Interval);
             }
         }
     }

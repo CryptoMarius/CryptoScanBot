@@ -75,13 +75,13 @@ public class PositionTools
     }
 
     /// <summary>
-    /// Retourneer de openstaande step met naam=x
+    /// Retourneer de openstaande "order" met naam=x
     /// </summary>
     public static CryptoPositionStep FindPositionPartStep(CryptoPositionPart part, string name, bool closed)
     {
         foreach (CryptoPositionStep step in part.Steps.Values.ToList())
         {
-            if (step.Name.Equals(name) && step.Status != CryptoOrderStatus.Expired)
+            if (step.Name.Equals(name) && step.Status != CryptoOrderStatus.Expired && step.Status != CryptoOrderStatus.Canceled)
             {
                 // Kan ook partial gevuld zijn, wat gebeurd er dan? ;-)
                 if (closed && step.CloseTime.HasValue)

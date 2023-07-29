@@ -12,8 +12,6 @@ Nog openstaande punten/bevindingen/todo's/enzovoort:
 - Scanner/Trader: Een dashboard introduceren, totaal aantal signalen afgelopen dag/week, indeling per categorie, short/long
   Trading: Totaal geinvesteerd, returned, gemiddelde profit, de uitschieters (max), de tegenvallers (min).
   Diverse grafieken (zoals Altrady) en anders weet ik zeker dat bepaalde mensen hier wel toevoegingen voor hebben ;-)
-- De tekst 1h, 4h en 1d toevoegen bij de barometer bolletjes (dan hoef ik niet uit te leggen wat het betekend)
-- Het lettertype c.q. grotte van de barometer waardes in de grafiek zijn afwijkend
 - Bij aanpassing van het lettertype lopen de labels over in de control waardoor tekst minder leesbaar wordt
 - Bij aanpassing van het lettertype worden de scrollbars in bovenste listview getoond waardoor de onderste regel niet leesbaar is
 - Via coindelist een munt direct op de blacklist zetten voor zowel oversold als overbought (optioneel) - 1e poging lukt niet
@@ -65,9 +63,15 @@ De ondersteuning van de Kucoin exchange is uitgesteld (want de price- en klineti
 
 
 xx-07-2023 1.8.2
+- De tekst 1h, 4h en 1d toevoegen bij de barometer bolletjes (dan hoef ik niet meer uit te leggen wat het betekend)
+- De tijd en de cijfers in de barometer graph links boven zijn door het aanpassen van het lettertype slecht leesbaar geworden.
+  En er kwam vervelend genoeg in de informatie rechtsboven een verticale scrollbar bij die niet weg te krijgen was.
+  Daarom is de listview die de informatie toonde nu vervangen met ouderwetse labels (heb het idee dat het iets meer CPU kost?)
 - Typo bearisch -> bearish
+- Bybit Futures, FundingRate en FundingInterval aan de database toegevoegd (maar ter info, ik doe er nog niets mee)
 - Aanpassing lettertype, het standaard lettertype in .net 7 is blijkbaar "Segoe UI; 9pt" geworden ipv "Microsoft Sans Serif 8.25p"
-  De applicatie ziet er hierdoro anders uit en het kan wellicht het probleem met de gemelde lettertypes oplossen (geen garanties)
+  De applicatie ziet er hierdoor anders uit en het kan wellicht het probleem met de gemelde lettertypes oplossen (geen garanties)
+  NB: Het heeft geen zin om tegen het Microsoft systeem te werken door een ander lettertype te gebruiken dan voorgesteld.
 - Vanuit de settings via een verkenner openen de data-folder openen, dat scheelt het eea aan uitleg en support (voor mij ook sneller).
 - De RMK optie in de signalen om zowel de 
 - Een munt kunnen openen in op de exchange zelf (dus niet de app, niet TV, maar de website van de exchange zelf)
@@ -90,6 +94,7 @@ xx-07-2023 1.8.2
 - Een extra instelling waarmee je kan aangeven welke Exchange je wilt openen. De bedoeling hiervan is dat er meldingen genereerd worden op bijvoorbeeld
   Binance maar dat je dan via een dubbelklik naar de munt gaat op een andere exchange (bijvoorbeeld Kucoin). Er is wel een blacklist nodig om het 
   verschil in de ondersteunde munten van Binance en Kucoin glad te poetsen zodat je geen meldingen krijgt van munten die niet bestaan op Kucoin.
+- Omdat de uitlijning van de barometer labels ten opzichte van de barometer bolletjes niet meer lukt (scaling) zijn deze nu aan de bovenkant gezet.
 - Scanner: Telegram meer details toevoegen en inclusief een link naar de exchange
 - De extra stategien (allemaal interne experimenten niet geschikt voor publicatie) verbergen in de release (via een ifdefje)
 - Via een opstartparameter kun je de juiste exchange activeren (let op de quotes en gebruik van hoofdletters!)

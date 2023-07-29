@@ -3,7 +3,7 @@
 public enum CryptoTrailing
 {
     None,
-    Trailing,
-    Reserved // gereserveerde DCA order
+    Trailing
+    //Reserved // gereserveerde DCA order
 }
 

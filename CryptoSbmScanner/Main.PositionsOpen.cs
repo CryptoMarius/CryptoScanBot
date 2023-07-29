@@ -255,7 +255,7 @@ public partial class FrmMain
         {
             ListViewItem item = listViewPositionsOpen.SelectedItems[0];
             CryptoPosition position = (CryptoPosition)item.Tag;
-            ActivateExternalTradingApp(GlobalData.Settings.General.TradingApp, position.Symbol, position.Interval);
+            LinkTools.ActivateExternalTradingApp(GlobalData.Settings.General.TradingApp, position.Symbol, position.Interval);
         }
     }
 
