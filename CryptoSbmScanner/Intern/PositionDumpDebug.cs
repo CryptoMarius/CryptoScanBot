@@ -58,7 +58,7 @@ public class PositionDumpDebug
         WriteCell(sheet, column++, row, "Quantity");
         WriteCell(sheet, column++, row, "Price");
         WriteCell(sheet, column++, row, "Value");
-        WriteCell(sheet, column++, row, "Fee");
+        WriteCell(sheet, column++, row, "Commission");
 
         column++;
 
@@ -66,7 +66,7 @@ public class PositionDumpDebug
         WriteCell(sheet, column++, row, "Quantity");
         WriteCell(sheet, column++, row, "Price");
         WriteCell(sheet, column++, row, "Value");
-        WriteCell(sheet, column++, row, "Fee");
+        WriteCell(sheet, column++, row, "Commission");
 
         return column;
     }
