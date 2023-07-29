@@ -356,8 +356,8 @@ public partial class DashBoardInformation : UserControl
 
                 // Barometer met daarin de 3 cirkels ter indicatie
                 {
-                    int y = 4;
-                    int offset = (int)(intWidth / 2) - 15;
+                    //int y = 4;
+                    //int offset = (int)(intWidth / 2) - 15;
                     //int offsetValue = 20;
                     //Pen blackPen = new Pen(Color.Black, 1);
                     //Rectangle rect1 = new(0, 0, intWidth, intHeight);
@@ -375,13 +375,13 @@ public partial class DashBoardInformation : UserControl
                             color = Color.Green;
 
                         //TextRenderer.DrawText(g, "1h", drawFont1, rect1, Color.Black, Color.Transparent, TextFormatFlags.Top);
-                        SolidBrush solidBrush = new(color);
-                        g.FillEllipse(solidBrush, offset, y, 14, 14);
-                        //g.DrawEllipse(blackPen, offset, y, 14, 14);
+                        //SolidBrush solidBrush = new(color);
+                        //g.FillEllipse(solidBrush, offset, y, 14, 14);
+                        
                         //rect1 = new Rectangle(offsetValue, y, intWidth, intHeight);
                         //TextRenderer.DrawText(g, barometerData?.PriceBarometer?.ToString("N2"), drawFont1, rect1, color, Color.Transparent, TextFormatFlags.Top);
                         //y += 19;
-                        offset += 19;
+                        //offset += 19;
 
                         string text = barometerData?.PriceBarometer?.ToString("N2");
                         if (intervalPeriod == CryptoIntervalPeriod.interval1h)
