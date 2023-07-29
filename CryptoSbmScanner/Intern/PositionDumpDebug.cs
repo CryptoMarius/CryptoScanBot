@@ -48,13 +48,14 @@ public class PositionDumpDebug
     private static int ExcellHeaders(HSSFSheet sheet, int row)
     {
         WriteCell(sheet, 0, row, "BUY");
-        WriteCell(sheet, 6, row, "SELL");
+        WriteCell(sheet, 7, row, "SELL");
         row++;
 
         int column = 0;
 
         // Columns...
         WriteCell(sheet, column++, row, "Date");
+        WriteCell(sheet, column++, row, "Status");
         WriteCell(sheet, column++, row, "Quantity");
         WriteCell(sheet, column++, row, "Price");
         WriteCell(sheet, column++, row, "Value");
@@ -63,6 +64,7 @@ public class PositionDumpDebug
         column++;
 
         WriteCell(sheet, column++, row, "Date");
+        WriteCell(sheet, column++, row, "Status");
         WriteCell(sheet, column++, row, "Quantity");
         WriteCell(sheet, column++, row, "Price");
         WriteCell(sheet, column++, row, "Value");
@@ -179,16 +181,20 @@ public class PositionDumpDebug
                     column = 0;
                 }
                 else
-                    column = 6;
+                    column = 7;
 
-                cell = WriteCell(sheet, column++, row, (DateTime)step.CloseTime);
+                cell = WriteCell(sheet, column++, row, (DateTime)step.CloseTime?.ToLocalTime());
                 cell.CellStyle = cellStyleDate;
+
+                cell = WriteCell(sheet, column++, row, step.Status.ToString());
+                //cell.CellStyle = cellStyleDecimalNormal;
 
                 cell = WriteCell(sheet, column++, row, (double)step.Quantity);
                 cell.CellStyle = cellStyleDecimalNormal;
 
                 // wat is de werkelijke prijs (stopprice of normale price)?
-                cell = WriteCell(sheet, column++, row, (double)step.Price);
+                // Gekozen om dit ter plekke uit te rekenen (is tevens beter met market orders die over meerdere trades gaan)
+                cell = WriteCell(sheet, column++, row, (double)step.QuoteQuantityFilled / (double)step.Quantity);
                 cell.CellStyle = cellStyleDecimalNormal;
 
                 cell = WriteCell(sheet, column++, row, (double)step.QuoteQuantityFilled);
@@ -209,7 +215,7 @@ public class PositionDumpDebug
 
         ++row;
         ++row;
-        int x = 5;
+        int x = 6;
         cell = WriteCell(sheet, x++, row, (double)position.BreakEvenPrice);
         cell.CellStyle = cellStyleDecimalNormal;
 
