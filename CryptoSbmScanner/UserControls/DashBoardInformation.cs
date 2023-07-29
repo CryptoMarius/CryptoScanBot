@@ -134,10 +134,10 @@ public partial class DashBoardInformation : UserControl
             x.SymbolName.Click += ListViewInformation_DoubleClick;
             x.SymbolPrice.Text = "";
             x.SymbolPrice.BackColor = Color.Transparent;
-            x.SymbolName.Click += ListViewInformation_DoubleClick;
+            x.SymbolPrice.Click += ListViewInformation_DoubleClick;
             x.SymbolVolume.Text = "";
             x.SymbolVolume.BackColor = Color.Transparent;
-            x.SymbolName.Click += ListViewInformation_DoubleClick;
+            x.SymbolVolume.Click += ListViewInformation_DoubleClick;
 
             x.Symbol2Name.Text = "";
             x.Symbol2Name.BackColor = Color.Transparent;
