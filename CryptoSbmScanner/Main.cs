@@ -6,16 +6,10 @@ using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Settings;
 using CryptoSbmScanner.Signal;
 
-using Microsoft.Web.WebView2.Core;
 using Microsoft.Win32;
 
 using Nito.AsyncEx;
 
-using NLog;
-using NLog.Config;
-using NLog.Targets;
-
-using System.Drawing.Drawing2D;
 using System.Reflection;
 using System.Text;
 
@@ -23,10 +17,6 @@ namespace CryptoSbmScanner;
 
 public partial class FrmMain : Form
 {
-    private bool WebViewAltradyInitialized;
-    private bool WebViewTradingViewInitialized;
-    private int createdSignalCount; // Tellertje met het aantal meldingen (komt in de taakbalk c.q. applicatie titel)
-    private readonly Microsoft.Web.WebView2.WinForms.WebView2 _webViewDummy = null;
     private readonly ColorSchemeTest theme = new();
 
     public class ColorSchemeTest
@@ -62,31 +52,30 @@ public partial class FrmMain : Form
 
         GlobalData.SignalEvent = SignalArrived;
 
-
-        // Wat event handles zetten
-        comboBoxBarometerQuote.SelectedIndexChanged += ShowBarometerStuff;
-        comboBoxBarometerInterval.SelectedIndexChanged += ShowBarometerStuff;
-
         // Events inregelen
         ScannerSession.TimerClearMemo.Elapsed += TimerClearMemo_Tick;
         ScannerSession.TimerAddSignal.Elapsed += TimerAddSignalsAndLog_Tick;
         ScannerSession.TimerSoundHeartBeat.Elapsed += TimerSoundHeartBeat_Tick;
-        ScannerSession.TimerShowInformation.Elapsed += TimerShowInformation_Tick;
+        //ScannerSession.TimerShowInformation.Elapsed += TimerShowInformation_Tick;
+        ScannerSession.TimerShowInformation.Elapsed += dashBoardInformation1.TimerShowInformation_Tick;
 
 
         // Instelling laden waaronder de API enzovoort
         GlobalData.LoadSettings();
 
-
         // Partial class "constructors"
         ListViewSignalsConstructor();
         ListViewSymbolsConstructor();
-        ListViewInformationConstructor();
         ListViewPositionsOpenConstructor();
         ListViewPositionsClosedConstructor();
 
-        // Altrady tabblad verbergen, is enkel een browser om dat extra dialoog in externe browser te vermijden
-        _webViewDummy = webViewDummy;
+        // Dummy browser tabblad verbergen, is enkel een browser om dat extra dialoog in externe browser te vermijden
+        // (onderstaande aanpak verdient aandacht, deze zit niet fijn in elkaar met de tabPage && focus zetten)
+        LinkTools.tabControl = tabControl;
+        LinkTools.tabPageBrowser = tabPageBrowser;
+        LinkTools._webViewDummy = webViewDummy;
+        LinkTools.webViewTradingView = webViewTradingView;
+        //_webViewDummy = webViewDummy; // kan weg?
         tabControl.TabPages.Remove(tabPagewebViewDummy);
 
 #if !TRADEBOT
@@ -151,50 +140,8 @@ public partial class FrmMain : Form
         // Het juiste trading coount in de globale variabelen zetten
         GlobalData.SetTradingAccounts();
 
-        // De comboboxen bijwerken
-        comboBoxBarometerQuote.BeginUpdate();
-        comboBoxBarometerInterval.BeginUpdate();
-        try
-        {
-            comboBoxBarometerQuote.SelectedIndexChanged -= ShowBarometerStuff;
-            comboBoxBarometerInterval.SelectedIndexChanged -= ShowBarometerStuff;
-
-            // Enkel de actieve quotes erin zetten (default=busd)
-            comboBoxBarometerQuote.Items.Clear();
-            foreach (CryptoQuoteData cryptoQuoteData in GlobalData.Settings.QuoteCoins.Values)
-            {
-                if (cryptoQuoteData.FetchCandles)
-                    comboBoxBarometerQuote.Items.Add(cryptoQuoteData.Name);
-            }
-            if (comboBoxBarometerQuote.Items.Count == 0)
-                comboBoxBarometerQuote.Items.Add("BUSD");
-
-            comboBoxBarometerQuote.SelectedIndex = comboBoxBarometerQuote.Items.IndexOf(GlobalData.Settings.General.SelectedBarometerQuote);
-            //comboBoxBarometerQuote.Text = GlobalData.Settings.General.SelectedBarometerQuote;
-            if (comboBoxBarometerQuote.SelectedIndex < 0)
-                comboBoxBarometerQuote.SelectedIndex = 0;
-
-
-            // De intervallen in de combox zetten (default=1h)
-            comboBoxBarometerInterval.Items.Clear();
-            comboBoxBarometerInterval.Items.Add("1H");
-            comboBoxBarometerInterval.Items.Add("4H");
-            comboBoxBarometerInterval.Items.Add("1D");
-
-            comboBoxBarometerInterval.SelectedIndex = comboBoxBarometerInterval.Items.IndexOf(GlobalData.Settings.General.SelectedBarometerInterval);
-            //comboBoxBarometerInterval.Text = GlobalData.Settings.General.SelectedBarometerInterval;
-            if (comboBoxBarometerInterval.SelectedIndex < 0)
-                comboBoxBarometerInterval.SelectedIndex = 0;
-        }
-        finally
-        {
-            comboBoxBarometerQuote.SelectedIndexChanged += ShowBarometerStuff;
-            comboBoxBarometerInterval.SelectedIndexChanged += ShowBarometerStuff;
-
-            comboBoxBarometerInterval.EndUpdate();
-            comboBoxBarometerQuote.EndUpdate();
-        }
-
+        // Eventueel de nieuwe quotes zetten enz.
+        dashBoardInformation1.InitializeBarometer();
 
         if ((GlobalData.Settings.General.FontSize != this.Font.Size) || (GlobalData.Settings.General.FontName.Equals(this.Font.Name)))
         {
@@ -261,13 +208,12 @@ public partial class FrmMain : Form
         if (disposing)
         {
             this.SaveWindowLocation(false);
-            //Task.Run(async () => { await ScannerSession.Stop(); }).Wait();
             AsyncContext.Run(ScannerSession.Stop);
 
             if (components != null)
             {
                 GlobalData.ApplicationStatus = CryptoApplicationStatus.Disposing;
-                _webViewDummy.Dispose();
+                LinkTools._webViewDummy.Dispose(); // dirty
                 components.Dispose();
             }
         }
@@ -374,203 +320,6 @@ public partial class FrmMain : Form
 
 
 
-    private void CreateBarometerBitmap(CryptoQuoteData quoteData, CryptoInterval interval)
-    {
-        float blocks = 6;
-
-        // pixel dimensies van het plaatje
-        int intWidth = pictureBox1.Width;
-        int intHeight = pictureBox1.Height;
-
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
-        {
-            if (quoteData != null && exchange.SymbolListName.TryGetValue(Constants.SymbolNameBarometerPrice + quoteData.Name, out CryptoSymbol symbol))
-            {
-                CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
-                SortedList<long, CryptoCandle> candleList = symbolPeriod.CandleList;
-
-                // determine range of data
-                long loX = long.MaxValue;
-                long hiX = long.MinValue;
-                float loY = float.MaxValue;
-                float hiY = float.MinValue;
-                int candleCount = (int)(blocks * 60);
-                for (int i = candleList.Values.Count - 1; i >= 0; i--)
-                {
-                    CryptoCandle candle = candleList.Values[i];
-                    if (loX > candle.OpenTime)
-                        loX = candle.OpenTime;
-                    if (hiX < candle.OpenTime)
-                        hiX = candle.OpenTime;
-
-                    if (loY > (float)candle.Close)
-                        loY = (float)candle.Close;
-                    if (hiY < (float)candle.Close)
-                        hiY = (float)candle.Close;
-                    if (candleCount-- < 0)
-                        break;
-                }
-                if (loX == long.MaxValue)
-                    return;
-
-
-                // ranges x and y
-                float screenX = hiX - loX; // unix time
-                float screenY = hiY - loY; // barometer, something like -5 .. +5
-                if (screenY < 5)
-                    screenY = 5f; // from -2 to +2
-                if (hiY > 0.5 * screenY)
-                    screenY = +2 * hiY;
-                if (loY < -0.5 * screenY)
-                    screenY = -2 * loY;
-
-
-
-                // factor to keep points within picture
-                float scaleX = intWidth / screenX;
-                float scaleY = intHeight / screenY;
-
-                // ofset to first point
-                float offsetX = 0; // start in the left of the picture
-                float offsetY = scaleY * 0.5f * screenY; // center of picture
-
-                // flix y (specific for winform - what a crap)
-                scaleY = -1 * scaleY;
-
-                Image bmp = new Bitmap(intWidth, intHeight);
-                Graphics g = Graphics.FromImage(bmp);
-
-                g.SmoothingMode = SmoothingMode.AntiAlias;
-                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
-                g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
-
-                // horizontal lines (1% per line)
-                for (int y = -3; y <= 3; y++)
-                {
-                    PointF p1 = new(0, offsetY + scaleY * y);
-                    PointF p2 = new(intWidth, offsetY + scaleY * y);
-                    if (y == 0)
-                        g.DrawLine(Pens.Red, p1, p2);
-                    else
-                        g.DrawLine(Pens.Gray, p1, p2);
-                }
-
-                // vertical lines (show hours)
-                //Pen pen = new Pen(Color.Gray, 0.5F);
-                long intervalTime = 60 * 60;
-                long lastX = hiX - (hiX % intervalTime);
-                while (lastX > loX)
-                {
-                    //DateTime ehh = CandleTools.GetUnixDate(lastX);
-                    //GlobalData.AddTextToLogTab(ehh.ToLocalTime() + " " + lastX.ToString() + " intervaltime=" + intervalTime.ToString());
-
-                    PointF p1 = new(0, 0)
-                    {
-                        X = offsetX + scaleX * (float)(lastX - loX)
-                    };
-                    PointF p2 = new(0, intHeight)
-                    {
-                        X = offsetX + scaleX * (float)(lastX - loX)
-                    };
-                    g.DrawLine(Pens.Gray, p1, p2);
-                    lastX -= intervalTime;
-                }
-
-
-                bool init = false;
-                PointF point1 = new(0, 0);
-                PointF point2 = new(0, 0);
-                candleCount = (int)(blocks * 60);
-                for (int i = candleList.Values.Count - 1; i >= 0; i--)
-                {
-                    CryptoCandle candle = candleList.Values[i];
-
-                    point2.X = offsetX + scaleX * (float)(candle.OpenTime - loX);
-                    point2.Y = offsetY + scaleY * ((float)candle.Close);
-                    //GlobalData.AddTextToLogTab(candle.OhlcText(symbol.DisplayFormat) + " " + point2.X.ToString("N8") + " " + point2.Y.ToString("N8"));
-
-                    if (init)
-                    {
-                        if (candle.Close < 0)
-                            g.DrawLine(Pens.Red, point1, point2);
-                        else
-                            g.DrawLine(Pens.DarkGreen, point1, point2);
-                    }
-
-                    point1 = point2;
-                    init = true;
-                    if (candleCount-- < 0)
-                        break;
-                }
-
-
-                // Maak de linkerkant ff grijs en zet het stuff erover heen
-                {
-                    // hoe breed?
-                    Rectangle rect = new(0, 0, 55, intHeight);
-                    SolidBrush solidBrush = new(panelTop.BackColor);
-                    g.FillRectangle(solidBrush, rect);
-                }
-
-                // Barometer met 3 cirkels zoals Altrady
-                {
-                    int y = 1;
-                    int offset = 4;
-                    int offsetValue = 20;
-                    //Pen blackPen = new Pen(Color.Black, 1);
-                    Rectangle rect1 = new(0, 0, intWidth, intHeight);
-                    Font drawFont1 = new(this.Font.Name, this.Font.Size);
-                    CryptoIntervalPeriod[] list = { CryptoIntervalPeriod.interval1h, CryptoIntervalPeriod.interval4h, CryptoIntervalPeriod.interval1d };
-
-                    foreach (CryptoIntervalPeriod intervalPeriod in list)
-                    {
-                        Color color;
-                        BarometerData barometerData = quoteData.BarometerList[(int)intervalPeriod];
-                        if (barometerData?.PriceBarometer < 0)
-                            color = Color.Red;
-                        else
-                            color = Color.Green;
-
-                        //TextRenderer.DrawText(g, "1h", drawFont1, rect1, Color.Black, Color.Transparent, TextFormatFlags.Top);
-                        SolidBrush solidBrush = new(color);
-                        g.FillEllipse(solidBrush, offset, y, 14, 14);
-                        //g.DrawEllipse(blackPen, offset, y, 14, 14);
-                        rect1 = new Rectangle(offsetValue, y, intWidth, intHeight);
-                        TextRenderer.DrawText(g, barometerData?.PriceBarometer?.ToString("N2"), drawFont1, rect1, color, Color.Transparent, TextFormatFlags.Top);
-                        y += 19;
-                    }
-
-                }
-
-                // Barometer tijd
-                if (candleList.Values.Count > 0)
-                {
-                    CryptoCandle candle = candleList.Values[candleList.Values.Count - 1];
-                    Rectangle rect = new(6, 0, intWidth, intHeight - 8);
-                    string text = CandleTools.GetUnixDate((long)candle.OpenTime + 60).ToLocalTime().ToString("HH:mm");
-
-                    Font drawFont = new(this.Font.Name, this.Font.Size);
-                    TextRenderer.DrawText(g, text, drawFont, rect, Color.Black, Color.Transparent, TextFormatFlags.Bottom);
-
-                }
-
-
-
-                //bmp.Save(@"e:\test.bmp");
-                Invoke((MethodInvoker)(() => { pictureBox1.Image = bmp; pictureBox1.Refresh(); }));
-            }
-            else
-            {
-                // TODO: Een kruis door de bitmap zetten zodat we iets zien (het is nu een lege bitmap)
-
-                Image bmp = new Bitmap(intWidth, intHeight);
-                Graphics g = Graphics.FromImage(bmp);
-
-                Invoke((MethodInvoker)(() => { pictureBox1.Image = bmp; pictureBox1.Refresh(); }));
-            }
-        }
-    }
 
 
 #if TRADINGBOT
@@ -641,246 +390,6 @@ public partial class FrmMain : Form
     }
 #endif
 
-    private void BinanceBarometerAll()
-    {
-        try
-        {
-            if (GlobalData.ApplicationStatus != CryptoApplicationStatus.Running)
-                return;
-
-#if TRADINGBOT
-            if (GlobalData.Settings.Trading.Active)
-                CheckNeedBotPause();
-#endif
-
-            // Bereken de laatste barometer waarden
-            BarometerTools barometerTools = new();
-            barometerTools.Execute();
-
-            if (!GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
-                return;
-
-            string baseCoin = "";
-            Invoke((MethodInvoker)(() => baseCoin = comboBoxBarometerQuote.Text));
-            if (!GlobalData.Settings.QuoteCoins.TryGetValue(baseCoin, out CryptoQuoteData quoteData))
-                return;
-
-            // Het grafiek gedeelte
-            // Toon de waarden van de geselecteerde basismunt
-            int baseIndex = 0;
-            Invoke((MethodInvoker)(() => baseIndex = comboBoxBarometerInterval.SelectedIndex));
-
-            CryptoIntervalPeriod intervalPeriod = CryptoIntervalPeriod.interval1h;
-            if (baseIndex == 0)
-                intervalPeriod = CryptoIntervalPeriod.interval1h;
-            else if (baseIndex == 1)
-                intervalPeriod = CryptoIntervalPeriod.interval4h;
-            else if (baseIndex == 2)
-                intervalPeriod = CryptoIntervalPeriod.interval1d;
-            else
-                return;
-            if (!GlobalData.IntervalListPeriod.TryGetValue(intervalPeriod, out CryptoInterval interval))
-                return;
-
-            BarometerData barometerData = quoteData.BarometerList[(int)intervalPeriod];
-            CreateBarometerBitmap(quoteData, interval);
-        }
-        catch (Exception error)
-        {
-            GlobalData.Logger.Error(error);
-            GlobalData.AddTextToLogTab(error.ToString() + "\r\n");
-        }
-    }
-
-    private void ShowBarometerStuff(object sender, EventArgs e)
-    {
-        // Dan wordt de basecoin bewaard voor een volgende keer
-        GlobalData.Settings.General.SelectedBarometerQuote = comboBoxBarometerQuote.Text;
-        GlobalData.Settings.General.SelectedBarometerInterval = comboBoxBarometerInterval.Text;
-        new Thread(BinanceBarometerAll).Start();
-    }
-
-    static int barometerLastMinute = 0;
-
-    private class SymbolHist
-    {
-        public string Symbol = "";
-        public decimal? PricePrev = 0m;
-        public decimal VolumePrev = 0m;
-    }
-    private readonly List<SymbolHist> symbolHistList = new(3);
-
-
-    private static void ShowSymbolPrice(SymbolHist hist, ListViewItem item, Model.CryptoExchange exchange,
-        CryptoQuoteData quoteData, string baseCoin, TradingView.SymbolValue tvValues, string caption, string valueText)
-    {
-        // Not a really charming way to display items, but voila, it works for now..
-        ListViewItem.ListViewSubItem subItem;
-
-
-        // subitem 0, 1 en 2
-        if (exchange.SymbolListName.TryGetValue(baseCoin + quoteData.Name, out CryptoSymbol symbol) || exchange.SymbolListName.TryGetValue(baseCoin + "USDT", out symbol))
-        {
-            decimal value;
-            subItem = item.SubItems[0];
-            subItem.Text = symbol.Name;
-
-
-            subItem = item.SubItems[1];
-            if (symbol.LastPrice.HasValue)
-            {
-                value = (decimal)symbol.LastPrice;
-                subItem.Text = value.ToString(symbol.PriceDisplayFormat);
-                subItem.ForeColor = Color.Black;
-
-                if (symbol.Name.Equals(hist.Symbol) && hist.PricePrev.HasValue)
-                {
-                    if (value < hist.PricePrev)
-                        subItem.ForeColor = Color.Red;
-                    else if (value > hist.PricePrev)
-                        subItem.ForeColor = Color.Green;
-                }
-            }
-            else
-                subItem.Text = "";
-
-
-            subItem = item.SubItems[2];
-            value = (decimal)symbol.Volume;
-            subItem.Text = value.ToString("N0");
-            subItem.ForeColor = Color.Black;
-            if (symbol.Name.Equals(hist.Symbol))
-            {
-                if (value < hist.VolumePrev)
-                    subItem.ForeColor = Color.Red;
-                else if (value > hist.VolumePrev)
-                    subItem.ForeColor = Color.Green;
-            }
-            else
-                subItem.Text = "";
-
-            hist.Symbol = symbol.Name;
-            hist.PricePrev = symbol.LastPrice;
-            hist.VolumePrev = (decimal)symbol.Volume;
-        }
-        else
-        {
-            item.SubItems[0].Text = "";
-            item.SubItems[1].Text = "";
-            item.SubItems[2].Text = "";
-
-            hist.Symbol = "";
-            hist.PricePrev = 0m;
-            hist.VolumePrev = 0m;
-        }
-
-
-
-        // subitem 4 en 5
-        if (tvValues != null)
-        {
-            subItem = item.SubItems[4];
-            subItem.Text = tvValues.Name;
-            subItem.Tag = tvValues;
-
-            decimal value = tvValues.Lp;
-            subItem = item.SubItems[5];
-            subItem.Text = value.ToString(tvValues.DisplayFormat);
-            if (value < tvValues.LastValue)
-                subItem.ForeColor = Color.Red;
-            else if (value > tvValues.LastValue)
-                subItem.ForeColor = Color.Green;
-            tvValues.LastValue = value;
-        }
-        else
-        {
-            item.SubItems[4].Text = "";
-            item.SubItems[5].Text = "";
-        }
-
-
-        // subitem 7 en 8
-        item.SubItems[7].Text = caption;
-        item.SubItems[8].Text = valueText;
-
-    }
-
-    private static async Task InitializeWebView(Microsoft.Web.WebView2.WinForms.WebView2 webView2)
-    {
-        // https://stackoverflow.com/questions/63404822/how-to-disable-cors-in-wpf-webview2
-        var userPath = GlobalData.GetBaseDir();
-        CoreWebView2Environment cwv2Environment = await CoreWebView2Environment.CreateAsync(null, userPath, new CoreWebView2EnvironmentOptions());
-        await webView2.EnsureCoreWebView2Async(cwv2Environment);
-    }
-
-
-    private async Task InitializeWebViewAltrady()
-    {
-        if (!WebViewAltradyInitialized)
-        {
-            WebViewAltradyInitialized = true;
-            await InitializeWebView(_webViewDummy);
-        }
-    }
-
-
-    private async Task InitializeWebViewTradingView()
-    {
-        if (!WebViewTradingViewInitialized)
-        {
-            WebViewTradingViewInitialized = true;
-            await InitializeWebView(webViewTradingView);
-        }
-    }
-
-
-    private async void ActivateExternalTradingApp(CryptoTradingApp externalTradingApp, CryptoSymbol symbol, CryptoInterval interval)
-    {
-        // Activeer de externe applicatie (soms gebruik makend van de dummy browser)
-
-        (string Url, CryptoExternalUrlType Execute) refInfo = GlobalData.ExternalUrls.GetExternalRef(externalTradingApp, false, symbol, interval);
-        if (refInfo.Url != "")
-        {
-            if (refInfo.Execute == CryptoExternalUrlType.Internal)
-            {
-                await InitializeWebViewAltrady();
-                _webViewDummy.Source = new(refInfo.Url);
-            }
-            else
-            {
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(refInfo.Url) { UseShellExecute = true });
-            }
-        }
-    }
-
-
-    private async void ActivateInternalTradingApp(CryptoTradingApp externalTradingApp, CryptoSymbol symbol, CryptoInterval interval, bool activateTab = true)
-    {
-        // Activeer de interne Tradingview Browser op het zoveelste tabblad
-
-        (string Url, CryptoExternalUrlType Execute) refInfo = GlobalData.ExternalUrls.GetExternalRef(externalTradingApp, false, symbol, interval);
-        if (refInfo.Url != "")
-        {
-            await InitializeWebViewTradingView();
-
-            webViewTradingView.Source = new(refInfo.Url);
-            if (activateTab)
-                tabControl.SelectedTab = tabPageBrowser;
-        }
-    }
-
-    private void ActivateTradingViewBrowser(string symbolname = "BTCUSDT")
-    {
-        if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1m, out CryptoInterval interval))
-            return;
-
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
-        {
-            if (exchange.SymbolListName.TryGetValue(symbolname, out CryptoSymbol symbol))
-                ActivateInternalTradingApp(CryptoTradingApp.TradingView, symbol, interval, false);
-        }
-    }
-
     private static void GetReloadRelatedSettings(out string activeQuoteData)
     {
         activeQuoteData = "";
@@ -904,8 +413,7 @@ public partial class FrmMain : Form
         GlobalData.Settings.Trading.Active = ApplicationTradingBot.Checked;
         GlobalData.Settings.Signal.SoundsActive = ApplicationPlaySounds.Checked;
         GlobalData.Settings.Signal.SignalsActive = ApplicationCreateSignals.Checked;
-        GlobalData.Settings.General.SelectedBarometerQuote = comboBoxBarometerQuote.Text;
-        GlobalData.Settings.General.SelectedBarometerInterval = comboBoxBarometerInterval.Text;
+        dashBoardInformation1.PickupBarometerProperties();
         try
         {
             FrmSettings dialog = new()
@@ -969,25 +477,24 @@ public partial class FrmMain : Form
         }
     }
 
-    private class DuplicateKeyComparer<TKey> : IComparer<TKey> where TKey : IComparable
-    {
-        public int Compare(TKey x, TKey y)
-        {
-            int result = x.CompareTo(y);
+    //private class DuplicateKeyComparer<TKey> : IComparer<TKey> where TKey : IComparable
+    //{
+    //    public int Compare(TKey x, TKey y)
+    //    {
+    //        int result = x.CompareTo(y);
 
-            if (result == 0)
-                return 1;   // Handle equality as beeing greater
-            else
-                return result;
-        }
-    }
+    //        if (result == 0)
+    //            return 1;   // Handle equality as beeing greater
+    //        else
+    //            return result;
+    //    }
+    //}
 
     private void MainMenuClearAll_Click(object sender, EventArgs e)
     {
         //this.Text = "";
         TextBoxLog.Clear();
-        createdSignalCount = 0;
-        //ListViewSignalsMenuItemClearSignals_Click(null, null);
+        GlobalData.createdSignalCount = 0;
 
         PositionMonitor.AnalyseCount = 0;
         ExchangeHelper.KLineTicker.Reset();
@@ -1043,7 +550,7 @@ public partial class FrmMain : Form
                 if (signals.Any())
                 {
                     // verwerken..
-                    Task.Run(() =>
+                    Task.Factory.StartNew(() =>
                     {
                         Invoke(new Action(() =>
                         {
@@ -1078,7 +585,7 @@ public partial class FrmMain : Form
                 }
 
                 // verwerken..
-                Task.Run(() =>
+                Task.Factory.StartNew(() =>
                 {
                     Invoke(new Action(() =>
                     {
@@ -1110,7 +617,7 @@ public partial class FrmMain : Form
 
     private void SignalArrived(CryptoSignal signal)
     {
-        createdSignalCount++;
+        GlobalData.createdSignalCount++;
         string text = "signal: " + signal.Symbol.Name + " " + signal.Interval.Name + " " + signal.SideText + " " + signal.StrategyText + " " + signal.EventText;
         GlobalData.AddTextToLogTab(text);
 
@@ -1517,6 +1024,5 @@ public partial class FrmMain : Form
         }
 
     }
-
 
 }

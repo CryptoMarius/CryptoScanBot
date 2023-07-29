@@ -60,12 +60,8 @@
             listViewSignalsMenuItemShowTrendInformation = new ToolStripMenuItem();
             listViewSignalsMenuItemCopySignal = new ToolStripMenuItem();
             listViewSignalsMenuItemCandleDump = new ToolStripMenuItem();
-            panelTop = new Panel();
-            labelBarometerDateValue = new Label();
-            comboBoxBarometerInterval = new ComboBox();
-            pictureBox1 = new PictureBox();
-            comboBoxBarometerQuote = new ComboBox();
             panelClient1 = new Panel();
+            dashBoardInformation1 = new TradingView.DashBoardInformation();
             contextMenuStripPositionsClosed = new ContextMenuStrip(components);
             contextMenuStripPositionsOpenRecalculate = new ToolStripMenuItem();
             debugDumpToolStripMenuItem = new ToolStripMenuItem();
@@ -87,8 +83,6 @@
             tabPagewebViewDummy.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)webViewDummy).BeginInit();
             listViewSignalsMenuStrip.SuspendLayout();
-            panelTop.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             panelClient1.SuspendLayout();
             contextMenuStripPositionsClosed.SuspendLayout();
             contextMenuStripPositionsOpen.SuspendLayout();
@@ -109,10 +103,10 @@
             // 
             panel4.Controls.Add(listBoxSymbols);
             panel4.Dock = DockStyle.Fill;
-            panel4.Location = new Point(0, 100);
+            panel4.Location = new Point(0, 103);
             panel4.Margin = new Padding(2);
             panel4.Name = "panel4";
-            panel4.Size = new Size(190, 641);
+            panel4.Size = new Size(190, 638);
             panel4.TabIndex = 2;
             // 
             // listBoxSymbols
@@ -124,7 +118,7 @@
             listBoxSymbols.Location = new Point(0, 0);
             listBoxSymbols.Margin = new Padding(2);
             listBoxSymbols.Name = "listBoxSymbols";
-            listBoxSymbols.Size = new Size(190, 641);
+            listBoxSymbols.Size = new Size(190, 638);
             listBoxSymbols.Sorted = true;
             listBoxSymbols.TabIndex = 0;
             // 
@@ -186,7 +180,7 @@
             panel3.Location = new Point(0, 0);
             panel3.Margin = new Padding(2);
             panel3.Name = "panel3";
-            panel3.Size = new Size(190, 100);
+            panel3.Size = new Size(190, 103);
             panel3.TabIndex = 1;
             // 
             // label1
@@ -291,10 +285,10 @@
             // 
             panelClient.Controls.Add(tabControl);
             panelClient.Dock = DockStyle.Fill;
-            panelClient.Location = new Point(0, 100);
+            panelClient.Location = new Point(0, 103);
             panelClient.Margin = new Padding(2);
             panelClient.Name = "panelClient";
-            panelClient.Size = new Size(1542, 641);
+            panelClient.Size = new Size(1542, 638);
             panelClient.TabIndex = 13;
             // 
             // tabControl
@@ -312,7 +306,7 @@
             tabControl.Margin = new Padding(2);
             tabControl.Name = "tabControl";
             tabControl.SelectedIndex = 0;
-            tabControl.Size = new Size(1542, 641);
+            tabControl.Size = new Size(1542, 638);
             tabControl.TabIndex = 12;
             // 
             // tabPageDashBoard
@@ -322,7 +316,7 @@
             tabPageDashBoard.Location = new Point(4, 27);
             tabPageDashBoard.Name = "tabPageDashBoard";
             tabPageDashBoard.Padding = new Padding(3);
-            tabPageDashBoard.Size = new Size(1534, 610);
+            tabPageDashBoard.Size = new Size(1534, 607);
             tabPageDashBoard.TabIndex = 9;
             tabPageDashBoard.Text = "Dashboard";
             tabPageDashBoard.UseVisualStyleBackColor = true;
@@ -332,7 +326,7 @@
             dashBoardControl1.Dock = DockStyle.Fill;
             dashBoardControl1.Location = new Point(3, 3);
             dashBoardControl1.Name = "dashBoardControl1";
-            dashBoardControl1.Size = new Size(1528, 604);
+            dashBoardControl1.Size = new Size(1528, 601);
             dashBoardControl1.TabIndex = 0;
             // 
             // tabPageSignals
@@ -341,7 +335,7 @@
             tabPageSignals.Margin = new Padding(4, 3, 4, 3);
             tabPageSignals.Name = "tabPageSignals";
             tabPageSignals.Padding = new Padding(4, 3, 4, 3);
-            tabPageSignals.Size = new Size(1534, 617);
+            tabPageSignals.Size = new Size(1534, 600);
             tabPageSignals.TabIndex = 4;
             tabPageSignals.Text = "Signals";
             tabPageSignals.UseVisualStyleBackColor = true;
@@ -353,7 +347,7 @@
             tabPageBrowser.Margin = new Padding(4, 3, 4, 3);
             tabPageBrowser.Name = "tabPageBrowser";
             tabPageBrowser.Padding = new Padding(4, 3, 4, 3);
-            tabPageBrowser.Size = new Size(1534, 617);
+            tabPageBrowser.Size = new Size(1534, 600);
             tabPageBrowser.TabIndex = 5;
             tabPageBrowser.Text = "Tradingview";
             tabPageBrowser.UseVisualStyleBackColor = true;
@@ -367,7 +361,7 @@
             webViewTradingView.Location = new Point(4, 3);
             webViewTradingView.Margin = new Padding(4, 3, 4, 3);
             webViewTradingView.Name = "webViewTradingView";
-            webViewTradingView.Size = new Size(1526, 611);
+            webViewTradingView.Size = new Size(1526, 594);
             webViewTradingView.TabIndex = 0;
             webViewTradingView.ZoomFactor = 1D;
             // 
@@ -376,7 +370,7 @@
             tabPagePositionsOpen.Location = new Point(4, 27);
             tabPagePositionsOpen.Name = "tabPagePositionsOpen";
             tabPagePositionsOpen.Padding = new Padding(3);
-            tabPagePositionsOpen.Size = new Size(1534, 617);
+            tabPagePositionsOpen.Size = new Size(1534, 600);
             tabPagePositionsOpen.TabIndex = 7;
             tabPagePositionsOpen.Text = "Open positions";
             tabPagePositionsOpen.UseVisualStyleBackColor = true;
@@ -386,7 +380,7 @@
             tabPagePositionsClosed.Location = new Point(4, 27);
             tabPagePositionsClosed.Name = "tabPagePositionsClosed";
             tabPagePositionsClosed.Padding = new Padding(3);
-            tabPagePositionsClosed.Size = new Size(1534, 617);
+            tabPagePositionsClosed.Size = new Size(1534, 600);
             tabPagePositionsClosed.TabIndex = 8;
             tabPagePositionsClosed.Text = "Closed positions";
             tabPagePositionsClosed.UseVisualStyleBackColor = true;
@@ -398,7 +392,7 @@
             tabPageLog.Margin = new Padding(2);
             tabPageLog.Name = "tabPageLog";
             tabPageLog.Padding = new Padding(2);
-            tabPageLog.Size = new Size(1534, 617);
+            tabPageLog.Size = new Size(1534, 600);
             tabPageLog.TabIndex = 1;
             tabPageLog.Text = "Log";
             tabPageLog.UseVisualStyleBackColor = true;
@@ -412,7 +406,7 @@
             TextBoxLog.Multiline = true;
             TextBoxLog.Name = "TextBoxLog";
             TextBoxLog.ScrollBars = ScrollBars.Both;
-            TextBoxLog.Size = new Size(1530, 613);
+            TextBoxLog.Size = new Size(1530, 596);
             TextBoxLog.TabIndex = 1;
             // 
             // tabPagewebViewDummy
@@ -422,7 +416,7 @@
             tabPagewebViewDummy.Margin = new Padding(4, 3, 4, 3);
             tabPagewebViewDummy.Name = "tabPagewebViewDummy";
             tabPagewebViewDummy.Padding = new Padding(4, 3, 4, 3);
-            tabPagewebViewDummy.Size = new Size(1534, 617);
+            tabPagewebViewDummy.Size = new Size(1534, 600);
             tabPagewebViewDummy.TabIndex = 6;
             tabPagewebViewDummy.Text = "WebView (dummy)";
             tabPagewebViewDummy.UseVisualStyleBackColor = true;
@@ -436,7 +430,7 @@
             webViewDummy.Location = new Point(4, 3);
             webViewDummy.Margin = new Padding(4, 3, 4, 3);
             webViewDummy.Name = "webViewDummy";
-            webViewDummy.Size = new Size(1526, 611);
+            webViewDummy.Size = new Size(1526, 594);
             webViewDummy.TabIndex = 1;
             webViewDummy.ZoomFactor = 1D;
             // 
@@ -488,69 +482,24 @@
             listViewSignalsMenuItemCandleDump.Text = "Candle Debug";
             listViewSignalsMenuItemCandleDump.Click += ListViewSignalsMenuItemCandleDump_Click;
             // 
-            // panelTop
-            // 
-            panelTop.Controls.Add(labelBarometerDateValue);
-            panelTop.Controls.Add(comboBoxBarometerInterval);
-            panelTop.Controls.Add(pictureBox1);
-            panelTop.Controls.Add(comboBoxBarometerQuote);
-            panelTop.Dock = DockStyle.Top;
-            panelTop.Location = new Point(0, 0);
-            panelTop.Margin = new Padding(2);
-            panelTop.Name = "panelTop";
-            panelTop.Size = new Size(1542, 100);
-            panelTop.TabIndex = 14;
-            // 
-            // labelBarometerDateValue
-            // 
-            labelBarometerDateValue.AutoSize = true;
-            labelBarometerDateValue.Location = new Point(8, 61);
-            labelBarometerDateValue.Margin = new Padding(4, 0, 4, 0);
-            labelBarometerDateValue.Name = "labelBarometerDateValue";
-            labelBarometerDateValue.Size = new Size(62, 15);
-            labelBarometerDateValue.TabIndex = 70;
-            labelBarometerDateValue.Text = "Barometer";
-            // 
-            // comboBoxBarometerInterval
-            // 
-            comboBoxBarometerInterval.DropDownStyle = ComboBoxStyle.DropDownList;
-            comboBoxBarometerInterval.FormattingEnabled = true;
-            comboBoxBarometerInterval.Location = new Point(10, 31);
-            comboBoxBarometerInterval.Margin = new Padding(2);
-            comboBoxBarometerInterval.Name = "comboBoxBarometerInterval";
-            comboBoxBarometerInterval.Size = new Size(79, 23);
-            comboBoxBarometerInterval.TabIndex = 69;
-            // 
-            // pictureBox1
-            // 
-            pictureBox1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
-            pictureBox1.Location = new Point(95, 0);
-            pictureBox1.Margin = new Padding(4, 3, 4, 3);
-            pictureBox1.Name = "pictureBox1";
-            pictureBox1.Size = new Size(419, 100);
-            pictureBox1.TabIndex = 67;
-            pictureBox1.TabStop = false;
-            // 
-            // comboBoxBarometerQuote
-            // 
-            comboBoxBarometerQuote.DropDownStyle = ComboBoxStyle.DropDownList;
-            comboBoxBarometerQuote.FormattingEnabled = true;
-            comboBoxBarometerQuote.Location = new Point(10, 3);
-            comboBoxBarometerQuote.Margin = new Padding(2);
-            comboBoxBarometerQuote.Name = "comboBoxBarometerQuote";
-            comboBoxBarometerQuote.Size = new Size(79, 23);
-            comboBoxBarometerQuote.TabIndex = 41;
-            // 
             // panelClient1
             // 
             panelClient1.Controls.Add(panelClient);
-            panelClient1.Controls.Add(panelTop);
+            panelClient1.Controls.Add(dashBoardInformation1);
             panelClient1.Dock = DockStyle.Fill;
             panelClient1.Location = new Point(190, 0);
             panelClient1.Margin = new Padding(2);
             panelClient1.Name = "panelClient1";
             panelClient1.Size = new Size(1542, 741);
             panelClient1.TabIndex = 12;
+            // 
+            // dashBoardInformation1
+            // 
+            dashBoardInformation1.Dock = DockStyle.Top;
+            dashBoardInformation1.Location = new Point(0, 0);
+            dashBoardInformation1.Name = "dashBoardInformation1";
+            dashBoardInformation1.Size = new Size(1542, 103);
+            dashBoardInformation1.TabIndex = 15;
             // 
             // contextMenuStripPositionsClosed
             // 
@@ -626,9 +575,6 @@
             tabPagewebViewDummy.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)webViewDummy).EndInit();
             listViewSignalsMenuStrip.ResumeLayout(false);
-            panelTop.ResumeLayout(false);
-            panelTop.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
             panelClient1.ResumeLayout(false);
             contextMenuStripPositionsClosed.ResumeLayout(false);
             contextMenuStripPositionsOpen.ResumeLayout(false);
@@ -639,13 +585,11 @@
         private Panel panelLeft;
         private Panel panelClient;
         private ListBox listBoxSymbols;
-        private Panel panelTop;
         private Panel panel3;
         private Panel panel4;
         private Panel panelClient1;
         private ContextMenuStrip listBoxSymbolsMenuStrip;
         private TextBox symbolFilter;
-        private ComboBox comboBoxBarometerQuote;
         private MenuStrip applicationMenuStrip;
         private ToolStripMenuItem MenuMain;
         private ToolStripMenuItem ToolStripMenuItemSettings;
@@ -663,9 +607,6 @@
         private ToolStripMenuItem listViewSignalsMenuItemShowTrendInformation;
         private ToolStripMenuItem listViewSignalsMenuItemCopySignal;
         private ToolStripMenuItem listBoxSymbolsMenuItemCopy;
-        private PictureBox pictureBox1;
-        private ComboBox comboBoxBarometerInterval;
-        private Label labelBarometerDateValue;
         private ContextMenuStrip contextMenuStripPositionsClosed;
         private ToolStripMenuItem ApplicationPlaySounds;
         private ToolStripMenuItem ApplicationCreateSignals;
@@ -692,6 +633,7 @@
         private ToolStripMenuItem listViewSignalsMenuItemCandleDump;
         private ToolStripMenuItem debugDumpExcelToolStripMenuItem;
         private ToolStripMenuItem debugDumpExcelToolStripMenuItem1;
+        private TradingView.DashBoardInformation dashBoardInformation1;
     }
 }
 
