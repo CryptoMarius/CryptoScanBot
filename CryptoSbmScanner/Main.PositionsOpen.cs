@@ -133,20 +133,21 @@ public partial class FrmMain
             item1.SubItems.Add(position.BreakEvenPrice.ToString(position.Symbol.PriceDisplayFormat));
         item1.SubItems.Add(position.Quantity.ToString0(position.Symbol.QuantityDisplayFormat));
 
-        subItem = item1.SubItems.Add(position.Invested.ToString(position.Symbol.QuoteData.DisplayFormat));
+        item1.SubItems.Add(position.Invested.ToString(position.Symbol.QuoteData.DisplayFormat));
+
+        item1.SubItems.Add(position.Returned.ToString(position.Symbol.QuoteData.DisplayFormat));
+        subItem = item1.SubItems.Add((position.Invested - position.Returned).ToString(position.Symbol.QuoteData.DisplayFormat));
         if (position.Invested - position.Returned > 7 * position.Symbol.QuoteData.BuyAmount) // een indicatie (beetje willekeurig)
             subItem.ForeColor = Color.Red;
 
-        item1.SubItems.Add(position.Returned.ToString(position.Symbol.QuoteData.DisplayFormat));
-        item1.SubItems.Add((position.Invested - position.Returned).ToString(position.Symbol.QuoteData.DisplayFormat));
         item1.SubItems.Add(position.Commission.ToString(position.Symbol.QuoteData.DisplayFormat));
 
         // profit bedrag
         decimal NetPnl = position.MarketValue;
         subItem = item1.SubItems.Add(NetPnl.ToString(position.Symbol.QuoteData.DisplayFormat));
-        if (NetPnl > position.Invested)
+        if (NetPnl > position.Invested - position.Returned - position.Commission)
             subItem.ForeColor = Color.Green;
-        else if (NetPnl < position.Invested)
+        else if (NetPnl < position.Invested - position.Returned - position.Commission)
             subItem.ForeColor = Color.Red;
 
         // profit percentage
