@@ -150,7 +150,8 @@ public class PositionTools
         database.Connection.Update<CryptoPositionPart>(part);
     }
 
-    static public CryptoPositionStep CreatePositionStep(CryptoPosition position, CryptoPositionPart part, TradeParams tradeParams, string name, CryptoTrailing trailing = CryptoTrailing.None)
+    static public CryptoPositionStep CreatePositionStep(CryptoPosition position, CryptoPositionPart part, 
+        TradeParams tradeParams, string name, CryptoTrailing trailing = CryptoTrailing.None)
     {
         CryptoPositionStep step = new(); // bewust niet in een init struct gezet (vanwege debuggen)
         step.PositionId = position.Id;
@@ -521,9 +522,9 @@ public class PositionTools
 
             // debug
             strings.AppendLine("  Quantity:" + part.Quantity.ToString());
-            strings.AppendLine("  BuyPrice:" + part.BuyPrice.ToString());
-            strings.AppendLine("  BuyAmount:" + part.BuyAmount.ToString());
-            strings.AppendLine("  SellPrice:" + part.SellPrice.ToString());
+            strings.AppendLine("  BuyPrice:" + part.BuyPrice.ToString()); // van het signaal indien instappen via signaal
+            //strings.AppendLine("  BuyAmount:" + part.BuyAmount.ToString());
+            //strings.AppendLine("  SellPrice:" + part.SellPrice.ToString());
 
             strings.AppendLine("  -------------------");
             strings.AppendLine("  Steps");
