@@ -1152,7 +1152,7 @@ public class PositionMonitor
         }
         else
         {
-            // TODO, napluizen, er is teveel duplicaat code
+            // TODO, napluizen, er is wel wat duplicaat code (maar voorlopig is dit wellicht duidelijker)
 
 
             // Plaats een buy order (of stop-limit buy order voor trailing)
@@ -1401,7 +1401,7 @@ public class PositionMonitor
                 if (sellResult.result)
                 {
                     // Administratie van de nieuwe sell bewaren (iets met tonen van de posities)
-                    part.SellPrice = sellPrice;
+                    //part.SellPrice = sellPrice;
 
                     if (part.Name.Equals("BUY"))
                     {
@@ -1451,7 +1451,7 @@ public class PositionMonitor
                 if (sellResult.result)
                 {
                     // Administratie van de nieuwe sell bewaren (iets met tonen van de posities)
-                    part.SellPrice = sellPrice;
+                    //part.SellPrice = sellPrice;
 
                     if (part.Name.Equals("BUY"))
                     {
@@ -1459,17 +1459,6 @@ public class PositionMonitor
                         PositionTools.SavePosition(databaseThread, position);
                     }
 
-                    //if (!position.SellPrice.HasValue)
-                    //{
-                    //    position.SellPrice = part.SellPrice; // (kan eigenlijk weg, slechts ter debug en tracering, voila)
-                    //    PositionTools.SavePosition(databaseThread, position);
-                    //}
-
-                    // Er zijn veel referenties naar datum's (met name in de backtest/papertrading)
-                    //DateTime currentDate = CandleTools.GetUnixDate(candle.OpenTime + symbolInterval.Interval.Duration);
-                    //PositionTools positionTools = new(tradeAccount, symbol, symbolInterval, currentDate);
-
-                    // Als vervanger van bovenstaande tzt (maar willen we die ook als een afzonderlijke step? Het zou ansich kunnen)
                     var sellStep = PositionTools.CreatePositionStep(position, part, sellResult.tradeParams, "SELL");
                     PositionTools.InsertPositionStep(databaseThread, position, sellStep);
                     PositionTools.AddPositionPartStep(part, sellStep);
@@ -1535,10 +1524,10 @@ public class PositionMonitor
                         if (sellResult.result)
                         {
                             // Administratie van de nieuwe sell bewaren (iets met tonen van de posities)
-                            part.SellPrice = price;
+                            //part.SellPrice = price;
                             if (!position.SellPrice.HasValue)
                             {
-                                position.SellPrice = part.SellPrice; // (kan eigenlijk weg, slechts ter debug en tracering, voila)
+                                position.SellPrice = price; // part.SellPrice; // (kan eigenlijk weg, slechts ter debug en tracering, voila)
                                 PositionTools.SavePosition(databaseThread, position);
                             }
 
@@ -1649,41 +1638,18 @@ public class PositionMonitor
         // Moeten we een DCA plaatsen (op een percentage, of starten we een trace)
         // Beide DCA's hebben als uitgangspunt het percentage en de cooldowntijd.
 
-        if (GlobalData.Settings.Trading.DcaStepInMethod == CryptoBuyStepInMethod.FixedPercentage || GlobalData.Settings.Trading.DcaStepInMethod == CryptoBuyStepInMethod.TrailViaKcPsar)
+        if (GlobalData.Settings.Trading.DcaStepInMethod == CryptoBuyStepInMethod.FixedPercentage
+            || GlobalData.Settings.Trading.DcaStepInMethod == CryptoBuyStepInMethod.TrailViaKcPsar)
         {
             // Het percentage moet in ieder geval x% onder de vorige buy opdracht zitten
             // (dit heeft voordelen want dan hoef je niet te weten in welke DCA-index je zit)
             // TODO: Dat zou (CC2 technisch) ook een percentage van de BB kunnen zijn als 3e optie. - welke candle voor de bb%?
 
-            CryptoPositionStep step = null;
-
-
-            // Is er een openstaande DCA (met een openstaande buy step)? Zoja, exit
-            // (blijft ietwat onduidelijk, de specificaties verder uitwerken)
-            foreach (CryptoPositionPart partX in position.Parts.Values.ToList())
-            {
-                //if (!partX.CloseTime.HasValue)
-                {
-                    foreach (CryptoPositionStep stepX in partX.Steps.Values.ToList())
-                    {
-                        if (stepX.Name.Equals("BUY") && stepX.Status != CryptoOrderStatus.Expired && stepX.Trailing != CryptoTrailing.Trailing)
-                        {
-                            step = stepX;
-                        }
-                    }
-                }
-            }
-            if (step == null)
-                return;
-
-            //*************************************************************************
-
-
             // Dan zou onderstaande conditie snel(altijd) waar zijn, uitsluiten
             if (GlobalData.Settings.Trading.DcaPercentage <= 0)
                 return;
 
-            step = LowestBuyPartObject(position);
+            CryptoPositionStep step = LowestBuyPartObject(position);
             if (step == null)
                 return;
             decimal percentage = 100m * (step.Price - LastCandle1m.Close) / step.Price;
@@ -1695,41 +1661,43 @@ public class PositionMonitor
                 return;
 
 
-
-            if (GlobalData.Settings.Trading.DcaStepInMethod == CryptoBuyStepInMethod.FixedPercentage)
+            //*************************************************************************
+            // Is er al een openstaande DCA?
+            // Percentage -> Controleer of er een DCA is die een openstaande buy limit order heeft
+            foreach (CryptoPositionPart partX in position.Parts.Values.ToList())
             {
-                decimal price = step.Price - (GlobalData.Settings.Trading.DcaPercentage * step.Price / 100m);
-                if (position.Symbol.LastPrice < price)
-                    price = (decimal)position.Symbol.LastPrice - position.Symbol.PriceTickSize;
-                GlobalData.AddTextToLogTab(position.Symbol.Name + " DCA bijplaatsen op " + price.ToString0(position.Symbol.PriceDisplayFormat) + " (debug)");
+                if (partX.Name.Equals("DCA") && !partX.CloseTime.HasValue)
+                {
+                    foreach (CryptoPositionStep stepX in partX.Steps.Values.ToList())
+                    {
+                        if (stepX.Name.Equals("BUY") && stepX.Status == CryptoOrderStatus.New)
+                        {
+                            // We zijn aan het trailen, dus openen we geen nieuwe DCA
+                            if (stepX.Trailing == CryptoTrailing.None && stepX.OrderType == CryptoOrderType.Limit)
+                                return;
 
-                // De positie uitbreiden nalv een nieuw signaal (de xe bijkoop wordt altijd een aparte DCA)
-                // Verderop doen we wat met deze stap en zetten we de echte buy of step)
-                position.PartCount += 1;
-                PositionTools.SavePosition(databaseThread, position);
-                PositionTools positionTools = new(tradeAccount, Symbol, LastCandle1mCloseTimeDate);
-                CryptoPositionPart part = positionTools.CreatePositionPart(position, "DCA", price); // voorlopige buyprice
-                PositionTools.InsertPositionPart(databaseThread, part);
-                PositionTools.AddPositionPart(position, part);
+                            // Er staan een buy order klaar, dus openen we geen nieuwe DCA
+                            if (stepX.Trailing == CryptoTrailing.Trailing && stepX.OrderType == CryptoOrderType.StopLimit)
+                                return;
+                        }
+                    }
+                }
             }
-            else if (GlobalData.Settings.Trading.DcaStepInMethod == CryptoBuyStepInMethod.TrailViaKcPsar)
-            {
-                // duplicaat code, ik had eigenlijk andere code verwacht?
 
-                decimal price = step.Price - (GlobalData.Settings.Trading.DcaPercentage * step.Price / 100m);
-                if (position.Symbol.LastPrice < price)
-                    price = (decimal)position.Symbol.LastPrice - position.Symbol.PriceTickSize;
-                GlobalData.AddTextToLogTab(position.Symbol.Name + " DCA bijplaatsen op " + price.ToString0(position.Symbol.PriceDisplayFormat) + " (debug)");
+            // DCA percentage prijs (voor de trailing wordt dit een prijs die toch geoverruled wordt)
+            decimal price = step.Price - (GlobalData.Settings.Trading.DcaPercentage * step.Price / 100m);
+            if (position.Symbol.LastPrice < price)
+                price = (decimal)position.Symbol.LastPrice - position.Symbol.PriceTickSize;
+            GlobalData.AddTextToLogTab(position.Symbol.Name + " DCA bijplaatsen op " + price.ToString0(position.Symbol.PriceDisplayFormat) + " (debug)");
 
-                // De positie uitbreiden nalv een nieuw signaal (de xe bijkoop wordt altijd een aparte DCA)
-                // Verderop doen we wat met deze stap en zetten we de echte buy of step)
-                position.PartCount += 1;
-                PositionTools.SavePosition(databaseThread, position);
-                PositionTools positionTools = new(tradeAccount, Symbol, LastCandle1mCloseTimeDate);
-                CryptoPositionPart part = positionTools.CreatePositionPart(position, "DCA", price); // voorlopige buyprice
-                PositionTools.InsertPositionPart(databaseThread, part);
-                PositionTools.AddPositionPart(position, part);
-            }
+            // De positie uitbreiden nalv een nieuw signaal (de xe bijkoop wordt altijd een aparte DCA)
+            // Verderop doen we wat met deze stap en zetten we de echte buy of step)
+            position.PartCount += 1;
+            PositionTools.SavePosition(databaseThread, position);
+            PositionTools positionTools = new(tradeAccount, Symbol, LastCandle1mCloseTimeDate);
+            CryptoPositionPart part = positionTools.CreatePositionPart(position, "DCA", price); // voorlopige buyprice
+            PositionTools.InsertPositionPart(databaseThread, part);
+            PositionTools.AddPositionPart(position, part);
         }
     }
 
