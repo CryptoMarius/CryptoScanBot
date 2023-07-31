@@ -80,7 +80,7 @@ public class SettingsTrading
     //***************************
     // Sell
     // Het verkoop bedrag = buy bedrag * (100+profit / 100)
-    public decimal ProfitPercentage { get; set; } = 0.7m;
+    public decimal ProfitPercentage { get; set; } = 1m;
     // De manier waarop de order geplaatst wordt
     public CryptoSellMethod SellMethod { get; set; } = CryptoSellMethod.FixedPercentage;
     // Zet een OCO zodra we in de winst zijn (kan het geen verlies trade meer worden, samen met tracing)
@@ -89,8 +89,8 @@ public class SettingsTrading
 
     //***************************
     // Stopp loss
-    public decimal GlobalStopPercentage { get; set; } = 4m;
-    public decimal GlobalStopLimitPercentage { get; set; } = 5m;
+    public decimal GlobalStopPercentage { get; set; } = 0m;
+    public decimal GlobalStopLimitPercentage { get; set; } = 0m;
 
 
 
