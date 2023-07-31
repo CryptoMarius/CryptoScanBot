@@ -51,7 +51,7 @@ public class CryptoPositionPart
 
     
     // Buy gegevens
-    public decimal BuyPrice { get; set; } //(dat kan anders zijn dan die van het signaal)
+    public decimal BuyPrice { get; set; } // initiele prijs van het signaal naar het kan ook anders zijn dan die van het signaal (trailing/market enzovoort)
     //public decimal BuyAmount { get; set; } // slecht gekozen, meer een soort van QuoteQuantity, vanwege problemen met het achteraf opzoeken hier opgenomen
     //public decimal? SellPrice { get; set; }
 

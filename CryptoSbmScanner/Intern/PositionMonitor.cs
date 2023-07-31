@@ -1193,7 +1193,7 @@ public class PositionMonitor
                             position.BuyPrice = result.tradeParams.Price;
                             PositionTools.SavePosition(databaseThread, position);
                         }
-                        step = PositionTools.CreatePositionStep(position, part, result.tradeParams, "BUY", CryptoTrailing.Trailing);
+                        step = PositionTools.CreatePositionStep(position, part, result.tradeParams, "BUY");
                         PositionTools.InsertPositionStep(databaseThread, position, step);
                         PositionTools.AddPositionPartStep(part, step);
                     }
@@ -1215,6 +1215,7 @@ public class PositionMonitor
                     decimal quantity = quoteAmount / (decimal)stop;
                     quantity = quantity.Clamp(Symbol.QuantityMinimum, Symbol.QuantityMaximum, Symbol.QuantityTickSize);
 
+                    // Plaats nieuwe buy order (lagere)
                     Api exchangeApi = new();
                     (bool result, TradeParams tradeParams) result = await exchangeApi.BuyOrSell(
                         position.TradeAccount, position.Symbol, LastCandle1mCloseTimeDate,
@@ -1248,11 +1249,6 @@ public class PositionMonitor
                     price = 1.015m * (decimal)stop; // ergens erboven
                     price = price.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
 
-
-                    //string t2 = string.Format("{0} POSITION part {1} {2} ORDER {3} herpositionering stop limit buy trail {4} {5}", 
-                    //    Symbol.Name, part.Id, part.Name, step.OrderId, price, CryptoOrderType.StopLimit);
-                    //GlobalData.AddTextToLogTab(t2);
-
                     // Annuleer de vorige buy order
                     await Api.Cancel(position.TradeAccount, Symbol, step.OrderId);
                     step.Status = CryptoOrderStatus.Expired;
@@ -1265,7 +1261,7 @@ public class PositionMonitor
                         quoteAmount = Symbol.QuoteData.BuyAmount;
                     else
                         quoteAmount = (position.Invested - position.Returned) * GlobalData.Settings.Trading.DcaFactor;
-                    decimal quantity = quoteAmount / price;
+                    decimal quantity = quoteAmount / (decimal)stop;
                     quantity = quantity.Clamp(Symbol.QuantityMinimum, Symbol.QuantityMaximum, Symbol.QuantityTickSize);
 
                     // Plaats nieuwe buy order (lagere)
@@ -1462,12 +1458,6 @@ public class PositionMonitor
                     var sellStep = PositionTools.CreatePositionStep(position, part, sellResult.tradeParams, "SELL");
                     PositionTools.InsertPositionStep(databaseThread, position, sellStep);
                     PositionTools.AddPositionPartStep(part, sellStep);
-
-                    //string info = string.Format("{0} POSITION SELL ORDER {1} PLACED price={2} quantity={3} quotequantity={4} type={5}", Symbol.Name,
-                    //    sellStep.OrderId, sellStep.Price, sellStep.Quantity, sellStep.Price * sellStep.Quantity,
-                    //    sellResult.tradeParams.OrderType.ToString());
-                    //GlobalData.AddTextToLogTab(info);
-                    //GlobalData.AddTextToTelegram(info);
                 }
             }
 
@@ -1489,7 +1479,7 @@ public class PositionMonitor
                     {
                         decimal oldPrice = stop;
                         stop = ((decimal)candleInterval.CandleData.KeltnerLowerBand + (decimal)candleInterval.CandleData.KeltnerUpperBand ) / 2;
-                        GlobalData.AddTextToLogTab("SELL correction2: " + Symbol.Name + " sellStop-> " + oldPrice.ToString("N6") + " to " + stop.ToString0());
+                        GlobalData.AddTextToLogTab("SELL correction KC.upper " + Symbol.Name + " sellStop-> " + oldPrice.ToString("N6") + " to " + stop.ToString0());
                     }
                     stop = stop.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
 
@@ -1535,12 +1525,6 @@ public class PositionMonitor
                             var sellStep = PositionTools.CreatePositionStep(position, part, sellResult.tradeParams, "SELL", CryptoTrailing.Trailing);
                             PositionTools.InsertPositionStep(databaseThread, position, sellStep);
                             PositionTools.AddPositionPartStep(part, sellStep);
-
-                            //string textx = string.Format("{0} POSITION SELL ORDER {1} LOCK PROFIT price={2} stopprice={3} stoplimit={4} quantity={5} quotequantity={6} type={7}",
-                            //    Symbol.Name, sellStep.OrderId, sellStep.Price, sellStep.StopPrice, sellStep.StopLimitPrice, sellStep.Quantity, sellStep.Price * sellStep.Quantity,
-                            //    sellResult.tradeParams.OrderType.ToString());
-                            //GlobalData.AddTextToLogTab(textx);
-                            //GlobalData.AddTextToTelegram(textx);
                         }
                     }
 

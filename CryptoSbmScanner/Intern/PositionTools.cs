@@ -522,7 +522,7 @@ public class PositionTools
 
             // debug
             strings.AppendLine("  Quantity:" + part.Quantity.ToString());
-            strings.AppendLine("  BuyPrice:" + part.BuyPrice.ToString()); // van het signaal indien instappen via signaal
+            strings.AppendLine("  (signal) BuyPrice:" + part.BuyPrice.ToString()); // van het signaal indien instappen via signaal, kan afwijken
             //strings.AppendLine("  BuyAmount:" + part.BuyAmount.ToString());
             //strings.AppendLine("  SellPrice:" + part.SellPrice.ToString());
 

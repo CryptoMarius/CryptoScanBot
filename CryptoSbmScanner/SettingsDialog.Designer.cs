@@ -597,7 +597,7 @@ partial class FrmSettings
         label40.Location = new Point(22, 124);
         label40.Margin = new Padding(4, 0, 4, 0);
         label40.Name = "label40";
-        label40.Size = new Size(97, 15);
+        label40.Size = new Size(98, 15);
         label40.TabIndex = 160;
         label40.Text = "Trend berekening";
         // 
@@ -1420,7 +1420,7 @@ partial class FrmSettings
         label77.Location = new Point(19, 221);
         label77.Margin = new Padding(4, 0, 4, 0);
         label77.Name = "label77";
-        label77.Size = new Size(48, 13);
+        label77.Size = new Size(41, 15);
         label77.TabIndex = 151;
         label77.Text = "STOBB";
         // 
@@ -1430,7 +1430,7 @@ partial class FrmSettings
         label75.Location = new Point(19, 316);
         label75.Margin = new Padding(4, 0, 4, 0);
         label75.Name = "label75";
-        label75.Size = new Size(72, 13);
+        label75.Size = new Size(68, 15);
         label75.TabIndex = 121;
         label75.Text = "Instellingen";
         // 
@@ -1728,7 +1728,7 @@ partial class FrmSettings
         label21.Location = new Point(19, 487);
         label21.Margin = new Padding(4, 0, 4, 0);
         label21.Name = "label21";
-        label21.Size = new Size(40, 13);
+        label21.Size = new Size(37, 15);
         label21.TabIndex = 151;
         label21.Text = "SBM3";
         // 
@@ -1738,7 +1738,7 @@ partial class FrmSettings
         label20.Location = new Point(19, 316);
         label20.Margin = new Padding(4, 0, 4, 0);
         label20.Name = "label20";
-        label20.Size = new Size(40, 13);
+        label20.Size = new Size(37, 15);
         label20.TabIndex = 150;
         label20.Text = "SBM2";
         // 
@@ -1748,7 +1748,7 @@ partial class FrmSettings
         label9.Location = new Point(19, 178);
         label9.Margin = new Padding(4, 0, 4, 0);
         label9.Name = "label9";
-        label9.Size = new Size(40, 13);
+        label9.Size = new Size(37, 15);
         label9.TabIndex = 149;
         label9.Text = "SBM1";
         // 
@@ -1970,7 +1970,7 @@ partial class FrmSettings
         label22.Location = new Point(612, 178);
         label22.Margin = new Padding(4, 0, 4, 0);
         label22.Name = "label22";
-        label22.Size = new Size(245, 13);
+        label22.Size = new Size(228, 15);
         label22.TabIndex = 112;
         label22.Text = "Extra instellingen voor alle SBM methodes";
         // 
@@ -2278,7 +2278,7 @@ partial class FrmSettings
         label78.Location = new Point(21, 246);
         label78.Margin = new Padding(4, 0, 4, 0);
         label78.Name = "label78";
-        label78.Size = new Size(40, 13);
+        label78.Size = new Size(37, 15);
         label78.TabIndex = 151;
         label78.Text = "JUMP";
         // 
@@ -2288,7 +2288,7 @@ partial class FrmSettings
         label76.Location = new Point(23, 349);
         label76.Margin = new Padding(4, 0, 4, 0);
         label76.Name = "label76";
-        label76.Size = new Size(72, 13);
+        label76.Size = new Size(68, 15);
         label76.TabIndex = 138;
         label76.Text = "Instellingen";
         // 
@@ -2599,6 +2599,7 @@ partial class FrmSettings
         // label65
         // 
         label65.AutoSize = true;
+        label65.Font = new Font("Segoe UI", 9F, FontStyle.Strikeout, GraphicsUnit.Point);
         label65.Location = new Point(17, 571);
         label65.Margin = new Padding(4, 0, 4, 0);
         label65.Name = "label65";
@@ -2609,6 +2610,8 @@ partial class FrmSettings
         // EditDynamicTpPercentage
         // 
         EditDynamicTpPercentage.DecimalPlaces = 2;
+        EditDynamicTpPercentage.Enabled = false;
+        EditDynamicTpPercentage.Font = new Font("Segoe UI", 9F, FontStyle.Strikeout, GraphicsUnit.Point);
         EditDynamicTpPercentage.Location = new Point(185, 569);
         EditDynamicTpPercentage.Margin = new Padding(4, 3, 4, 3);
         EditDynamicTpPercentage.Name = "EditDynamicTpPercentage";
@@ -3137,7 +3140,6 @@ partial class FrmSettings
         EditGlobalStopLimitPercentage.Name = "EditGlobalStopLimitPercentage";
         EditGlobalStopLimitPercentage.Size = new Size(88, 23);
         EditGlobalStopLimitPercentage.TabIndex = 200;
-        EditGlobalStopLimitPercentage.Value = new decimal(new int[] { 5, 0, 0, 0 });
         // 
         // label70
         // 
@@ -3157,7 +3159,6 @@ partial class FrmSettings
         EditGlobalStopPercentage.Name = "EditGlobalStopPercentage";
         EditGlobalStopPercentage.Size = new Size(88, 23);
         EditGlobalStopPercentage.TabIndex = 198;
-        EditGlobalStopPercentage.Value = new decimal(new int[] { 4, 0, 0, 0 });
         // 
         // label71
         // 

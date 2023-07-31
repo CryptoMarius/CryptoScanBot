@@ -243,6 +243,7 @@ public static class ScannerSession
         // Dit kan een aantal berekeningen onderbroken hebben
         // (er komen een aantal reconnects, daarom circa 20 seconden)
         //if (components != null && IsHandleCreated)
+        if (!TimerGetExchangeInfo.Enabled) // anders krijg je 100 van die dingen achter elkaar
         {
             GlobalData.AddTextToLogTab("Debug: ConnectionWasRestoredEvent!");
             GlobalData.ApplicationStatus = CryptoApplicationStatus.Running;

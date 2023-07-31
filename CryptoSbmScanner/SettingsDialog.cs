@@ -167,7 +167,7 @@ public partial class FrmSettings : Form
 
         // SELL
         SellMethod.Add("Limit order op een vaste winst percentage", CryptoSellMethod.FixedPercentage);
-        SellMethod.Add("Limit order op dynamisch percentage van de BB", CryptoSellMethod.DynamicPercentage);
+        //SellMethod.Add("Limit order op dynamisch percentage van de BB", CryptoSellMethod.DynamicPercentage);
         SellMethod.Add("Trace via de Keltner Channel en PSAR", CryptoSellMethod.TrailViaKcPsar);
 
         // BUY/DCA - Manier van kopen
