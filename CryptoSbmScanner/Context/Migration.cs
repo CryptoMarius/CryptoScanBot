@@ -46,8 +46,13 @@ public class Migration
                 using var transaction = database.BeginTransaction();
                 // do the updates..
 
-                //Part - "BuyAmount TEXT NULL, " + // kan verwijderd worden
+                //alter table PositionPart drop column BuyAmount
+                //alter table PositionPart rename column BuyPrice TO SignalPrice;
+                //alter table PositionPart drop column Sellprice
 
+                database.Connection.Execute("alter table PositionPart drop column BuyAmount", transaction);
+                database.Connection.Execute("alter table PositionPart drop column Sellprice", transaction);
+                database.Connection.Execute("alter table PositionPart rename column BuyPrice TO SignalPrice", transaction);
 
                 // update version
                 //version.Version += 1;
