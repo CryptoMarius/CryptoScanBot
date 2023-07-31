@@ -43,7 +43,7 @@ public partial class FrmMain
         listViewPositionsOpen.BorderStyle = BorderStyle.None;
         listViewPositionsOpen.ContextMenuStrip = contextMenuStripPositionsOpen;
         listViewPositionsOpen.ListViewItemSorter = listViewColumnSorter;
-        //listViewPositionsOpen.ColumnClick += ListViewSignals_ColumnClick;
+        listViewPositionsOpen.ColumnClick += ListViewPositionsOpenColumnClick;
         listViewPositionsOpen.SetSortIcon(listViewColumnSorter.SortColumn, listViewColumnSorter.SortOrder);
         listViewPositionsOpen.DoubleClick += ListViewPositionOpen_MenuItem_DoubleClick;
         tabPagePositionsOpen.Controls.Add(listViewPositionsOpen);
@@ -59,7 +59,22 @@ public partial class FrmMain
     }
 
 
-
+    private void ListViewPositionsOpenColumnClick(object sender, ColumnClickEventArgs e)
+    {
+        listViewPositionsOpen.BeginUpdate();
+        try
+        {
+            // Perform the sort with these new sort options.
+            ListViewColumnSorterPosition listViewColumnSorter = (ListViewColumnSorterPosition)listViewPositionsOpen.ListViewItemSorter;
+            listViewColumnSorter.ClickedOnColumn(e.Column);
+            listViewPositionsOpen.SetSortIcon(listViewColumnSorter.SortColumn, listViewColumnSorter.SortOrder);
+            listViewPositionsOpen.Sort();
+        }
+        finally
+        {
+            listViewPositionsOpen.EndUpdate();
+        }
+    }
 
     private void ListViewPositionsOpenInitColumns()
     {
@@ -142,8 +157,8 @@ public partial class FrmMain
 
         item1.SubItems.Add(position.Commission.ToString(position.Symbol.QuoteData.DisplayFormat));
 
-        // profit bedrag
-        decimal NetPnl = position.MarketValue;
+        // Netto NPL (het bedrag wat je krijgt als je nu zou verkopen)
+        decimal NetPnl = position.MarketValue - position.Commission;
         subItem = item1.SubItems.Add(NetPnl.ToString(position.Symbol.QuoteData.DisplayFormat));
         if (NetPnl > position.Invested - position.Returned - position.Commission)
             subItem.ForeColor = Color.Green;

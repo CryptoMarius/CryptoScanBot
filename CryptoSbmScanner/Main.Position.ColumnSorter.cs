@@ -169,7 +169,7 @@ namespace CryptoSbmScanner
 
                 if (compareResult == 0)
                 {
-                    if (this.SortOrder == SortOrder.Ascending)
+                    if (SortOrder == SortOrder.Ascending)
                         compareResult = ObjectCompare.Compare(positionA.Symbol.Name, positionB.Symbol.Name);
                     else
                         compareResult = ObjectCompare.Compare(positionB.Symbol.Name, positionA.Symbol.Name);
@@ -177,7 +177,7 @@ namespace CryptoSbmScanner
 
                 if (compareResult == 0)
                 {
-                    if (this.SortOrder == SortOrder.Ascending)
+                    if (SortOrder == SortOrder.Ascending)
                         compareResult = ObjectCompare.Compare(positionA.Interval.IntervalPeriod, positionB.Interval.IntervalPeriod);
                     else
                         compareResult = ObjectCompare.Compare(positionB.Interval.IntervalPeriod, positionA.Interval.IntervalPeriod);

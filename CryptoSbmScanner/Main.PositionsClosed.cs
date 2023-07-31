@@ -65,7 +65,7 @@ public partial class FrmMain
         listViewPositionsClosed.BorderStyle = BorderStyle.None;
         listViewPositionsClosed.ContextMenuStrip = contextMenuStripPositionsClosed;
         listViewPositionsClosed.ListViewItemSorter = listViewColumnSorter;
-        listViewPositionsClosed.ColumnClick += ListViewSignals_ColumnClick;
+        listViewPositionsClosed.ColumnClick += ListViewPositionsClosedColumnClick;
         listViewPositionsClosed.SetSortIcon(listViewColumnSorter.SortColumn, listViewColumnSorter.SortOrder);
         listViewPositionsClosed.DoubleClick += ListViewPositionClosed_MenuItem_DoubleClick;
         tabPagePositionsClosed.Controls.Add(listViewPositionsClosed);
@@ -77,6 +77,22 @@ public partial class FrmMain
         ListViewPositionsClosedInitColumns();
     }
 
+    private void ListViewPositionsClosedColumnClick(object sender, ColumnClickEventArgs e)
+    {
+        listViewPositionsClosed.BeginUpdate();
+        try
+        {
+            // Perform the sort with these new sort options.
+            ListViewColumnSorterPosition listViewColumnSorter = (ListViewColumnSorterPosition)listViewPositionsClosed.ListViewItemSorter;
+            listViewColumnSorter.ClickedOnColumn(e.Column);
+            listViewPositionsClosed.SetSortIcon(listViewColumnSorter.SortColumn, listViewColumnSorter.SortOrder);
+            listViewPositionsClosed.Sort();
+        }
+        finally
+        {
+            listViewPositionsClosed.EndUpdate();
+        }
+    }
 
 
 
