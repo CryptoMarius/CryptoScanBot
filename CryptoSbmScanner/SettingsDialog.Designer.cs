@@ -65,7 +65,6 @@ partial class FrmSettings
         EditTelegramToken = new TextBox();
         label15 = new Label();
         tabBasismunten = new TabPage();
-        label19 = new Label();
         tabPageSignals = new TabPage();
         label64 = new Label();
         EditAnalysisMinEffectivePercentage = new NumericUpDown();
@@ -308,7 +307,6 @@ partial class FrmSettings
         ((System.ComponentModel.ISupportInitialize)EditGlobalDataRemoveSignalAfterxCandles).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditSoundHeartBeatMinutes).BeginInit();
         tabTelegram.SuspendLayout();
-        tabBasismunten.SuspendLayout();
         tabPageSignals.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)EditAnalysisMinEffectivePercentage).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditAnalysisMaxEffectivePercentage).BeginInit();
@@ -767,7 +765,6 @@ partial class FrmSettings
         // 
         // tabBasismunten
         // 
-        tabBasismunten.Controls.Add(label19);
         tabBasismunten.Location = new Point(4, 27);
         tabBasismunten.Margin = new Padding(4, 3, 4, 3);
         tabBasismunten.Name = "tabBasismunten";
@@ -776,16 +773,6 @@ partial class FrmSettings
         tabBasismunten.TabIndex = 0;
         tabBasismunten.Text = "Basismunten";
         tabBasismunten.UseVisualStyleBackColor = true;
-        // 
-        // label19
-        // 
-        label19.AutoSize = true;
-        label19.Location = new Point(16, 12);
-        label19.Margin = new Padding(4, 0, 4, 0);
-        label19.Name = "label19";
-        label19.Size = new Size(473, 15);
-        label19.TabIndex = 146;
-        label19.Text = "Attentie: Wijzigingen in de kolom \"Candles halen\"vereisen een herstart van de applicatie!";
         // 
         // tabPageSignals
         // 
@@ -3425,8 +3412,6 @@ partial class FrmSettings
         ((System.ComponentModel.ISupportInitialize)EditSoundHeartBeatMinutes).EndInit();
         tabTelegram.ResumeLayout(false);
         tabTelegram.PerformLayout();
-        tabBasismunten.ResumeLayout(false);
-        tabBasismunten.PerformLayout();
         tabPageSignals.ResumeLayout(false);
         tabPageSignals.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)EditAnalysisMinEffectivePercentage).EndInit();
