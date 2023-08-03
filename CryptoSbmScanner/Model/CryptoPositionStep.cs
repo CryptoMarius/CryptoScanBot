@@ -28,6 +28,7 @@ public class CryptoPositionStep
     public decimal Price { get; set; } // Tevens de LimitPrice indien het een OCO is
     public decimal? StopPrice { get; set; }
     public decimal? StopLimitPrice { get; set; }
+    // Ik heb een soort van AvgPrice nodig (bij meerdere trades igv market of stoplimit orders)
 
     public decimal Quantity { get; set; }
     public decimal QuantityFilled { get; set; }
@@ -68,7 +69,7 @@ public class CryptoPositionStep
 
 
     [Computed]
-    public bool TradeHandled { get; set; } // Bug bestreiding: vanwege dubbele afhandeling - TODO: Opsporen en deze verwijderen, gaat het via db wel goed?
+    public bool TradeHandled { get; set; } // Bug bestrijding: vanwege dubbele afhandeling - TODO: Opsporen en deze verwijderen, gaat het via db wel goed?
 
     //public string DisplayText(string priceFormat)
     //{

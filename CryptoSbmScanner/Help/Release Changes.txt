@@ -3,7 +3,6 @@ Mis je iets in onderstaande bevindingen/todo's of toekomstige todo's, geef het A
 Nog openstaande punten/bevindingen/todo's/enzovoort:
 - Gerapporteerd, lettertype problemen, het was helaas een melding en er is geen duidelijke oorzaak of uitleg voor het probleem.
   (daarom was er ook niets om om te kunnen lossen, ik wil daar nog verder op in gaan, maar ben er niet aan toe gekomen)
-- De trend berekening laat andere cijfers zien dan de 1.7.2, (of gebruik ik de verkeerde?)
 - Bybit Futures, melden van de FundingRate en FundingInterval (maar wat is het precies?)
 - Het normale logbestand bevat op het einde een .0, waar komt deze vandaag, doet nlog een archive ofzo?
 - Trading: Ondanks een limit op de BASE worden er meerdere posities op dezelfde base geopend.
@@ -63,6 +62,8 @@ De ondersteuning van de Kucoin exchange is uitgesteld (want de price- en klineti
 
 
 xx-07-2023 1.8.2
+- De kolommen van de signalen kunnen met de rechtermuisknop menu onzichtbaar worden gemaakt
+- De sorteer indicator van de signalen (en posities) wordt nu correct getoond.
 - De tekst 1h, 4h en 1d toevoegen bij de barometer waardes.
   De barometer bolletjes verwijderen (dan hoef ik niet meer uit te leggen wat het betekend)
 - De tijd en de cijfers in de barometer graph links boven zijn door het aanpassen van het lettertype slecht leesbaar geworden.

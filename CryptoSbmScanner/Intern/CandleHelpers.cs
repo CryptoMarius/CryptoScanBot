@@ -388,10 +388,10 @@ public static class Helper
     static public void ShowPosition(StringBuilder stringBuilder, CryptoPosition position)
     {
         decimal diffPercentage = 0;
-        decimal investedInTrades = position.Invested - position.Returned - position.Commission;
+        decimal investedInTrades = position.Invested - position.Returned; // - position.Commission;
         if (position.Symbol.LastPrice.HasValue && position.SellPrice.HasValue)
         {
-            decimal currentValue = position.Quantity * (decimal)position.Symbol.LastPrice - position.Commission;
+            decimal currentValue = (position.Quantity * (decimal)position.Symbol.LastPrice) - position.Commission;
             diffPercentage = (100 * (currentValue / investedInTrades)) - 100;
         }
 

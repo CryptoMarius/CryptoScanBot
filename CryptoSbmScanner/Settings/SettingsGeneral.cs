@@ -47,9 +47,7 @@ public class SettingsGeneral
     public int GetCandleInterval { get; set; } = 60;
 
     public bool ShowInvalidSignals { get; set; } = false;
-    public bool ShowFluxIndicator5m { get; set; } = false;
     public int RemoveSignalAfterxCandles { get; set; } = 15;
-    public bool HideTechnicalStuffSignals { get; set; } = false;
 
     public int SoundHeartBeatMinutes { get; set; } = 0;
     public string SoundHeartBeat { get; set; } = "sound-heart-beat.wav";
