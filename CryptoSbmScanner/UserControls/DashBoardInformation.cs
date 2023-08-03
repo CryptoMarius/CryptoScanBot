@@ -4,6 +4,7 @@ using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Exchange;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
+using CryptoSbmScanner.Settings;
 
 namespace CryptoSbmScanner.TradingView;
 
@@ -421,6 +422,68 @@ public partial class DashBoardInformation : UserControl
         }
     }
 
+#if TRADEBOT
+    private static void CheckNeedBotPause()
+    {
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+        {
+            foreach (PauseTradingRule rule in GlobalData.Settings.Trading.PauseTradingRules)
+            {
+                if (exchange.SymbolListName.TryGetValue(rule.Symbol, out CryptoSymbol symbol))
+                {
+                    CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(rule.Interval);
+                    if (symbolInterval.CandleList.Any())
+                    {
+
+                        CryptoCandle candleLast = symbolInterval.CandleList.Values.Last();
+                        decimal low = Math.Min(candleLast.Low, (decimal)symbol.LastPrice);
+                        decimal high = Math.Max(candleLast.High, (decimal)symbol.LastPrice);
+
+                        long time = candleLast.OpenTime;
+                        int candleCount = rule.Candles - 1;
+                        while (candleCount-- > 0)
+                        {
+                            time -= symbolInterval.Interval.Duration;
+                            if (symbolInterval.CandleList.TryGetValue(time, out CryptoCandle candle))
+                            {
+                                low = Math.Min(low, candle.Low);
+                                high = Math.Max(high, candle.High);
+                            }
+                        }
+
+                        // todo: het percentage wordt echt niet negatief als je met de high en low werkt, duh
+
+                        double percentage = (double)(100m * ((high / low) - 1m));
+                        if (percentage >= rule.Percentage || percentage <= -rule.Percentage)
+                        {
+                            long pauseUntil = candleLast.OpenTime + rule.CoolDown * symbolInterval.Interval.Duration;
+                            DateTime pauseUntilDate = CandleTools.GetUnixDate(pauseUntil);
+                            //GlobalData.Settings.Bot.PauseTradingText = string.Format("{0} heeft {1:N2}% bewogen (gepauseerd tot {2}) - 1", rule.Symbol, percentage, pauseUntilDate.ToLocalTime());
+
+                            if (!GlobalData.Settings.Trading.PauseTradingUntil.HasValue || pauseUntilDate > GlobalData.Settings.Trading.PauseTradingUntil)
+                            {
+                                GlobalData.Settings.Trading.PauseTradingUntil = pauseUntilDate;
+                                GlobalData.Settings.Trading.PauseTradingText = string.Format("{0} heeft {1:N2}% bewogen (gepauseerd tot {2}) - 2", rule.Symbol, percentage, pauseUntilDate.ToLocalTime());
+                                GlobalData.AddTextToLogTab(GlobalData.Settings.Trading.PauseTradingText);
+                                GlobalData.AddTextToTelegram(GlobalData.Settings.Trading.PauseTradingText);
+                            }
+                        }
+                        else
+                        {
+                            //if (percentage > 0.5 || percentage < -0.5)
+                            //{
+                            //    GlobalData.AddTextToLogTab(string.Format("{0} heeft {1:N2}% bewogen", rule.Symbol, percentage));
+                            //    GlobalData.AddTextToTelegram(string.Format("{0} heeft {1:N2}% bewogen", rule.Symbol, percentage));
+                            //}
+                        }
+                    }
+                }
+                else GlobalData.AddTextToLogTab("Pauze regel: symbol " + rule.Symbol + " bestaat niet");
+            }
+        }
+    }
+#endif
+
 
     public void BinanceBarometerAll()
     {
@@ -429,7 +492,7 @@ public partial class DashBoardInformation : UserControl
             if (GlobalData.ApplicationStatus != CryptoApplicationStatus.Running)
                 return;
 
-#if TRADINGBOT
+#if TRADEBOT
             if (GlobalData.Settings.Trading.Active)
                 CheckNeedBotPause();
 #endif
