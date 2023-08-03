@@ -1,4 +1,4 @@
-Crypto SBM Scanner for Binance.
+Crypto SBM Scanner for Binance, Bybit Spot en ByBit Futures.
 
 The Crypto scanner was initially only intended to generate oversold signals on the Binance exchange (because someone said something about DYOR and you shouldn't say that to a programmer). In the meantime, the application has been turned over a number of times, split, reassembled the best points, improved, simplified and recently adapted for the generation of SBM signals.
 
