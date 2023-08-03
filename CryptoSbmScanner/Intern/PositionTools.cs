@@ -313,14 +313,14 @@ public class PositionTools
                 {
                     if (step.Side == CryptoOrderSide.Buy)
                     {
-                        part.Quantity += step.Quantity;
+                        part.Quantity += step.QuantityFilled;
                         part.Invested += step.QuoteQuantityFilled;
                         if (includeFee)
                             part.Commission += step.Commission;
                     }
                     else if (step.Side == CryptoOrderSide.Sell)
                     {
-                        part.Quantity -= step.Quantity;
+                        part.Quantity -= step.QuantityFilled;
                         part.Returned += step.QuoteQuantityFilled;
                         if (includeFee)
                             part.Commission += step.Commission;
@@ -459,107 +459,6 @@ public class PositionTools
         database.Connection.Update<CryptoPosition>(position);
 
         return;
-    }
-
-
-    static public void DumpPosition(CryptoPosition position, StringBuilder strings)
-    {
-        // Het is op niet echt super-leesbaar, Excel ding maken wellicht?
-        // Zie BackTestExcel.cs, daar wordt een mooi rapportje gemaakt!!
-        // Het kan regel georienteerd onder elkaar en de kolommen komen overeen lijkt me.
-        // Nog eens een voorbeeld excel ding van maken, kan volgens mij erg mooi zijn.
-        // (en in ieder geval begrijpbaarder en overzichtelijker dan onderstaande <g>)
-
-        strings.AppendLine("");
-        strings.AppendLine("-------------------");
-        strings.AppendLine("Position dump:");
-        strings.AppendLine("");
-        strings.AppendLine("Position Id:" + position.Id.ToString());
-        strings.AppendLine("Account:" + position.TradeAccount.Name);
-        strings.AppendLine("Exchange:" + position.Symbol.Exchange.Name);
-        strings.AppendLine("Name:" + position.Symbol.Name);
-        strings.AppendLine("Strategie:" + position.StrategyText);
-        strings.AppendLine("Interval:" + position.Interval.Name);
-        strings.AppendLine("Status:" + position.Status.ToString());
-        strings.AppendLine("OpenDate:" + position.CreateTime.ToLocalTime());
-        if (position.CloseTime.HasValue)
-            strings.AppendLine("CloseDate:" + position.CloseTime?.ToLocalTime());
-        strings.AppendLine("BreakEvenPrice:" + position.BreakEvenPrice.ToString());
-
-        strings.AppendLine("Invested:" + position.Invested.ToString(position.Symbol.QuoteData.DisplayFormat));
-        strings.AppendLine("Commission:" + position.Commission.ToString(position.Symbol.QuoteData.DisplayFormat));
-        strings.AppendLine("Returned:" + position.Returned.ToString(position.Symbol.QuoteData.DisplayFormat));
-        strings.AppendLine("Profit:" + position.Profit.ToString(position.Symbol.QuoteData.DisplayFormat));
-        strings.AppendLine("Percentage:" + position.Percentage.ToString("N2"));
-
-        // debug
-        strings.AppendLine("Quantity:" + position.Quantity.ToString());
-        strings.AppendLine("BuyPrice:" + position.BuyPrice.ToString());
-        strings.AppendLine("BuyAmount:" + position.BuyAmount.ToString());
-        strings.AppendLine("SellPrice:" + position.SellPrice.ToString());
-
-        strings.AppendLine("");
-        strings.AppendLine("-------------------");
-        strings.AppendLine("Parts");
-
-        foreach (CryptoPositionPart part in position.Parts.Values.ToList())
-        {
-            // TODO - informatie van de Part
-            strings.AppendLine("  Part dump:");
-            strings.AppendLine("");
-            strings.AppendLine("  Part Id:" + part.Id.ToString());
-            strings.AppendLine("  Name:" + part.Name);
-            strings.AppendLine("  Status:" + part.Status.ToString());
-            strings.AppendLine("  OpenDate:" + part.CreateTime.ToLocalTime());
-            strings.AppendLine("  CloseDate:" + part.CloseTime?.ToLocalTime());
-            strings.AppendLine("  BreakEvenPrice:" + part.BreakEvenPrice.ToString());
-
-            strings.AppendLine("  Invested:" + part.Invested.ToString(position.Symbol.QuoteData.DisplayFormat));
-            strings.AppendLine("  Commission:" + part.Commission.ToString(position.Symbol.QuoteData.DisplayFormat));
-            strings.AppendLine("  Returned:" + part.Returned.ToString(position.Symbol.QuoteData.DisplayFormat));
-            strings.AppendLine("  Profit:" + part.Profit.ToString(position.Symbol.QuoteData.DisplayFormat));
-            strings.AppendLine("  Percentage:" + part.Percentage.ToString("N2"));
-
-            // debug
-            strings.AppendLine("  Quantity:" + part.Quantity.ToString());
-            strings.AppendLine("  (signal) BuyPrice:" + part.BuyPrice.ToString()); // van het signaal indien instappen via signaal, kan afwijken
-            //strings.AppendLine("  BuyAmount:" + part.BuyAmount.ToString());
-            //strings.AppendLine("  SellPrice:" + part.SellPrice.ToString());
-
-            strings.AppendLine("  -------------------");
-            strings.AppendLine("  Steps");
-            foreach (CryptoPositionStep step in part.Steps.Values.ToList())
-            {
-                string s = string.Format("    step#{0} {1} {2} order#{3} {4} ({5}) Price={6} StopPrice={7} StopLimitPrice={8} Quantity={9} QuantityFilled={10} QuoteQuantityFilled={11} close={12} {13}",
-                    step.Id, step.Name, step.CreateTime.ToLocalTime(), step.OrderId, step.Side, step.OrderType,
-                    step.Price.ToString(position.Symbol.PriceDisplayFormat), step.StopPrice?.ToString(position.Symbol.PriceDisplayFormat), step.StopLimitPrice?.ToString(position.Symbol.PriceDisplayFormat),
-                    step.Quantity, step.QuantityFilled, step.QuoteQuantityFilled, step.CloseTime?.ToLocalTime(), step.Status.ToString());
-
-                //if (Trailing > CryptoTrailing.TrailNone)
-                //    s += string.Format(" Trailing={0} @={1}", Trailing, TrailActivatePrice?.ToString(format));
-                strings.AppendLine(s);
-            }
-        }
-
-        strings.AppendLine("");
-        strings.AppendLine("-------------------");
-        strings.AppendLine("Trades");
-        foreach (CryptoTrade trade in position.Symbol.TradeList.Values.ToList())
-        {
-            strings.AppendLine("");
-            strings.AppendLine("Side:" + trade.Side);
-            strings.AppendLine("Id:" + trade.Id.ToString());
-            strings.AppendLine("TradeId:" + trade.TradeId.ToString());
-            strings.AppendLine("OrderId:" + trade.OrderId.ToString());
-            strings.AppendLine("OpenDate:" + trade.TradeTime.ToLocalTime());
-
-            strings.AppendLine("Price:" + trade.Price.ToString(position.Symbol.PriceDisplayFormat));
-            strings.AppendLine("Quantity:" + trade.Quantity.ToString(position.Symbol.QuantityDisplayFormat));
-            strings.AppendLine("QuoteQuantity:" + trade.QuoteQuantity.ToString(position.Symbol.QuantityDisplayFormat));
-
-            strings.AppendLine("Commission:" + trade.Commission.ToString(position.Symbol.QuantityDisplayFormat));
-            strings.AppendLine("CommissionAsset:" + trade.CommissionAsset);
-        }
     }
 
 

@@ -537,14 +537,11 @@ public class SignalCreate
 
 
         // Iets wat ik wel eens gebruikt als ik trade
-        if (GlobalData.Settings.General.ShowFluxIndicator5m)
-        {
-            GetFluxIndcator(Symbol, out int fluxOverSold, out int fluxOverBought);
-            if (signal.Side == CryptoOrderSide.Buy)
-                signal.FluxIndicator5m = fluxOverSold;
-            else
-                signal.FluxIndicator5m = fluxOverBought;
-        }
+        GetFluxIndcator(Symbol, out int fluxOverSold, out int fluxOverBought);
+        if (signal.Side == CryptoOrderSide.Buy)
+            signal.FluxIndicator5m = fluxOverSold;
+        else
+            signal.FluxIndicator5m = fluxOverBought;
 
 
 #if TRADEBOT

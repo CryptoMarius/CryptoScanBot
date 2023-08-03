@@ -98,7 +98,7 @@ public class PositionMonitor
         CryptoOrderType orderType,
         CryptoOrderSide orderSide,
         CryptoOrderStatus orderStatus,
-        CryptoTrade data // is een tijdelijke trade voor de interne datatransfer
+        CryptoTrade data // een tijdelijke trade voor de interne datatransfer
         )
     {
         // Vanwege deadlock problemen afgesterd, uitzoeken! Via papertrading zal er nooit een probleem
@@ -858,10 +858,11 @@ public class PositionMonitor
     }
 
 
-    private async Task CreateBinanceStreamOrderUpdate(CryptoPosition position, CryptoPositionStep step, decimal price)
+    private async Task CreatePaperTradeObject(CryptoPosition position, CryptoPositionStep step, decimal price)
     {
-        //, OrderSide.Buy
-        // BUG bestreiding (omdat ik niet weet waar het probleem zit even dmv de TradeHandled)
+        // Deze routine wordt bij begin en einde van de NewCandleArrivedAsync() aangeroepen.
+        // Heb geprobeert om het via de position.Symbol.TradeList te doen, maar dat werkt niet.
+        // Wat is hier aan de hand?
 
         // De trade wordt/werd dubbel aangemaakt (en dus statistiek van slag), dus om 
         // aan te geven dat deze step afgehandeld is (maar zou overbodig moeten zijn)
@@ -872,18 +873,21 @@ public class PositionMonitor
             return;
 
         // Zet als afgehandeld
-        // De trade wordt/werd dubbel aangemaakt (en dus statistiek van slag), dus om 
+        // De trade wordt/werd dubbel aangemaakt (dus statistiek en BE van slag), om 
         // aan te geven dat deze step afgehandeld is (maar zou overbodig moeten zijn)
         // Zou wellicht alleen een probleem van de papertrading methodiek kunnen zijn?
         step.TradeHandled = true;
 
 
-        using CryptoDatabase databaseThread = new();
-        databaseThread.Open();
+        // OPMERKING: Dat werkt enkel omdat papertrading dezelfde orderid en tradeid gebruikt (zie insert/update)
+        // Opmerking2: Dit lijkt echter helemaal geen effect te hebben, deze oplossing werkt niet, waarom?
+        //if (step.OrderId.HasValue && position.Symbol.TradeList.ContainsKey((long)step.OrderId))
+        //    return;
+        //if (step.Order2Id.HasValue && position.Symbol.TradeList.ContainsKey((long)step.Order2Id))
+        //    return;
 
 
-        // Datum van sluiten candle en een beetje extra
-        //DateTime now = LastCandle1mCloseTimeDate.AddSeconds(2);
+
         CryptoTrade trade = new()
         {
             TradeAccount = position.TradeAccount,
@@ -893,22 +897,27 @@ public class PositionMonitor
             Symbol = position.Symbol,
             SymbolId = position.SymbolId,
 
-            //Status = CryptoOrderStatus.Filled,
-            TradeTime = LastCandle1mCloseTimeDate.AddSeconds(2),
+            //OrderStatus = CryptoOrderStatus.Filled, onbekend
+            TradeTime = LastCandle1mCloseTimeDate.AddSeconds(2), // Datum van sluiten candle en een beetje extra
             Price = price, // prijs bijwerken voor berekening break-even (is eigenlijk niet okay, 2e veld introduceren?)
             Quantity = step.Quantity,
             //QuantityFilled = step.Quantity,
-            QuoteQuantity = step.Quantity * price, // wat is nu wat?
-            //QuoteQuantityFilled = step.Quantity * price, // wat is nu wat?
-            //part.Commission += (0.075m / 100) * step.QuoteQuantityFilled;
-            Commission = step.Quantity * step.Price * 0.1m / 100m, // met BNB korting=0.075 (zonder kickback, anders was het 0.065?)
+            QuoteQuantity = step.Quantity * price, // (via de meegegeven prijs)
+
+            Commission = step.Quantity * price * 0.1m / 100m, // full commission, met BNB korting=0.075 (zonder kickback, anders was het 0.065?)
             CommissionAsset = position.Symbol.Quote,
 
+            //OrderId = (int)step.OrderId, // TODO: Dit gaat niet goed indien OCO en de stop is geraakt (Order2Id!)
+            //TradeId = step.Id, // Een fake trade ID (als er maar een getal in zit), kan niet, indien meerdere trades per order (iets om te testen bij papertrade)
             Side = step.Side,
         };
+        // TODO: Dit gaat niet goed als van een OCO de stop wordt geraakt (Order2Id), price is wel okay overigens
         if (step.OrderId.HasValue)
             trade.OrderId = (int)step.OrderId;
 
+
+        using CryptoDatabase databaseThread = new();
+        databaseThread.Open();
 
         // bewaar de gemaakte trade
         databaseThread.Connection.Insert<CryptoTrade>(trade);
@@ -949,14 +958,14 @@ public class PositionMonitor
                             if (step.Side == CryptoOrderSide.Buy)
                             {
                                 if (step.OrderType == CryptoOrderType.Market) // is dit wel de juiste candle? ....  && step.CreateTime == candle.Date
-                                    await CreateBinanceStreamOrderUpdate(position, step, LastCandle1m.Close);
+                                    await CreatePaperTradeObject(position, step, LastCandle1m.Close);
                                 if (step.StopPrice.HasValue)
                                 {
                                     if (LastCandle1m.High > step.StopPrice)
-                                        await CreateBinanceStreamOrderUpdate(position, step, (decimal)step.StopPrice);
+                                        await CreatePaperTradeObject(position, step, (decimal)step.StopPrice);
                                 }
                                 else if (LastCandle1m.Low < step.Price)
-                                    await CreateBinanceStreamOrderUpdate(position, step, step.Price);
+                                    await CreatePaperTradeObject(position, step, step.Price);
 
                                 // Het lijkt erop dat de StopLimit order anders werkt? (aldus de emulator????)
                                 // Ik stel voor om dat te controleren (invoeren API) en dan de json bekijken!
@@ -971,14 +980,14 @@ public class PositionMonitor
                             else if (step.Side == CryptoOrderSide.Sell)
                             {
                                 if (step.OrderType == CryptoOrderType.Market)  // is dit wel de juiste candle? ....  && step.CreateTime == candle.Date
-                                    await CreateBinanceStreamOrderUpdate(position, step, LastCandle1m.Close);
+                                    await CreatePaperTradeObject(position, step, LastCandle1m.Close);
                                 else if (step.StopPrice.HasValue)
                                 {
                                     if (LastCandle1m.Low < step.StopPrice)
-                                        await CreateBinanceStreamOrderUpdate(position, step, (decimal)step.StopPrice);
+                                        await CreatePaperTradeObject(position, step, (decimal)step.StopPrice);
                                 }
                                 else if (LastCandle1m.High > step.Price)
-                                    await CreateBinanceStreamOrderUpdate(position, step, step.Price);
+                                    await CreatePaperTradeObject(position, step, step.Price);
 
                             }
                         }
@@ -1203,7 +1212,7 @@ public class PositionMonitor
                     decimal? stop = Math.Max((decimal)candleInterval.CandleData.KeltnerUpperBand, (decimal)candleInterval.CandleData.PSar) + Symbol.PriceTickSize;
                     stop = stop?.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
                    
-                    decimal price = 1.015m * (decimal)stop; // ergens erboven
+                    decimal price = (decimal)stop + ((decimal)stop * 1.5m / 100); // ergens erboven
                     price = price.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
 
                     // quantity perikelen (en we verdubbelen de inzet zoals destijds in Zignally!)
@@ -1239,14 +1248,13 @@ public class PositionMonitor
                 // Hier maken we gebruik van een stoplimit order 
 
                 // De Xe trailing limit buy order
-                // TODO - een stop limit order kunnen plaatsen (nog niet eerder gedaan blijkbaar)
-                decimal price = Math.Max((decimal)candleInterval.CandleData.KeltnerUpperBand, (decimal)candleInterval.CandleData.PSar) + Symbol.PriceTickSize;
-                if (price < step.StopPrice) // of was het de StopPrice? Grrrrr
+                decimal x = Math.Max((decimal)candleInterval.CandleData.KeltnerUpperBand, (decimal)candleInterval.CandleData.PSar) + Symbol.PriceTickSize;
+                if (x < step.StopPrice) // of was het de StopPrice? Grrrrr
                 {
-                    decimal? stop = price;
+                    decimal? stop = x;
                     stop = stop?.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
                     
-                    price = 1.015m * (decimal)stop; // ergens erboven
+                    decimal price = (decimal)stop + ((decimal)stop * 1.5m / 100); // ergens erboven
                     price = price.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
 
                     // Annuleer de vorige buy order
@@ -1469,23 +1477,33 @@ public class PositionMonitor
                 // Dat loop momenteel niet zo erg goed, de SL wordt erg vaak geraakt (is wat je mag verwachten natuurlijk)
                 
                 // 21-07-2021 : omgebouwd naar een STOPLIMIT order (maar is/was dat verstandig?)
-                
 
-                decimal stop = Math.Min((decimal)candleInterval.CandleData.KeltnerLowerBand, (decimal)candleInterval.CandleData.PSar) - Symbol.PriceTickSize;
-                if (stop >= part.BreakEvenPrice) //|| (GlobalData.Settings.Trading.LockProfits && Math.Min(candleInterval.Open, candleInterval.Close) >= part.BreakEvenPrice)
+                // TODO: De prijs gaat ook weer mee naar beneden vanwege de KC.Upper gedoe, dat is onhandig
+
+                decimal x = Math.Min((decimal)candleInterval.CandleData.KeltnerLowerBand, (decimal)candleInterval.CandleData.PSar) - Symbol.PriceTickSize;
+                if (x > part.BreakEvenPrice) //|| (GlobalData.Settings.Trading.LockProfits && Math.Min(candleInterval.Open, candleInterval.Close) >= part.BreakEvenPrice)
                 {
-                    // Als de prijs (ver) boven de KC.High zit dan nemen we de middelste KC als stop!
-                    if (Math.Min(candleInterval.Open, candleInterval.Close) > (decimal)candleInterval.CandleData.KeltnerUpperBand)
+                    decimal stop = x;
+
+                    // Als de prijs (ver) boven de KC.High zit dan nemen we de middelste/bovenste KC als stop!
+                    // Dat is goed voor de winst, maar waarschijnlijk niet de beste manier voor het trailen?
+                    if (candleInterval.Low > (decimal)candleInterval.CandleData.KeltnerUpperBand - Symbol.PriceTickSize)
                     {
-                        decimal oldPrice = stop;
-                        stop = ((decimal)candleInterval.CandleData.KeltnerLowerBand + (decimal)candleInterval.CandleData.KeltnerUpperBand ) / 2;
-                        GlobalData.AddTextToLogTab("SELL correction KC.upper " + Symbol.Name + " sellStop-> " + oldPrice.ToString("N6") + " to " + stop.ToString0());
+                        // fuck it, gewoon er bovenop?
+                        x = (decimal)candleInterval.CandleData.KeltnerUpperBand - Symbol.PriceTickSize;
+                        //x = ((decimal)candleInterval.CandleData.KeltnerLowerBand + (decimal)candleInterval.CandleData.KeltnerUpperBand ) / 2;
+                        if (x > stop)
+                        {
+                            decimal oldPrice = stop;
+                            stop = x;
+                            GlobalData.AddTextToLogTab("SELL correction KC.upper " + Symbol.Name + " sellStop-> " + oldPrice.ToString("N6") + " to " + stop.ToString0());
+                        }
                     }
                     stop = stop.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
 
 
                     // price moet lager, 1.5% moet genoeg zijn.
-                    decimal price = 0.085m * stop; // ergens eronder
+                    decimal price = stop - (stop * 1.5m/100); // ergens eronder
                     price = price.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
                     //if (Symbol.LastPrice.HasValue && Symbol.LastPrice > price)
                     //{
