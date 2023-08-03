@@ -661,7 +661,7 @@ public class CryptoDatabase : IDisposable
                 Name = "Bybit Futures trading",
                 Short = "Trading",
                 ExchangeId = 3,
-                AccountType = CryptoAccountType.Spot,
+                AccountType = CryptoAccountType.Futures,
                 TradeAccountType = CryptoTradeAccountType.RealTrading,
             };
             connection.Connection.Insert(tradeAccount, transaction);
@@ -671,7 +671,7 @@ public class CryptoDatabase : IDisposable
                 Name = "Bybit Futures paper",
                 Short = "Pater",
                 ExchangeId = 3,
-                AccountType = CryptoAccountType.Spot,
+                AccountType = CryptoAccountType.Futures,
                 TradeAccountType = CryptoTradeAccountType.PaperTrade,
             };
             connection.Connection.Insert(tradeAccount, transaction);
@@ -681,7 +681,7 @@ public class CryptoDatabase : IDisposable
                 Name = "Bybit Futures backtest",
                 Short = "Backtest",
                 ExchangeId = 3,
-                AccountType = CryptoAccountType.Spot,
+                AccountType = CryptoAccountType.Futures,
                 TradeAccountType = CryptoTradeAccountType.BackTest,
             };
             connection.Connection.Insert(tradeAccount, transaction);
@@ -1150,6 +1150,13 @@ public class CryptoDatabase : IDisposable
 
         // Indien noodzakelijk database upgraden 
         Migration.Execute(connection, CurrentVersion);
+
+
+        using (var command = connection.Connection.CreateCommand())
+        {
+            command.CommandText = "vacuum;";
+            command.ExecuteNonQuery();
+        }
     }
 
 }

@@ -54,6 +54,9 @@ public class Migration
                 database.Connection.Execute("alter table PositionPart drop column Sellprice", transaction);
                 database.Connection.Execute("alter table PositionPart rename column BuyPrice TO SignalPrice", transaction);
 
+                // De accounttype voor Futures is niet goed ingevuld, deze staan allemaal op spot (verkeerde initialisatie)
+                database.Connection.Execute("update TradeAccount set AccountType=1 where name like '%Futures%'", transaction);
+
                 // update version
                 //version.Version += 1;
                 database.Connection.Update(version, transaction);
