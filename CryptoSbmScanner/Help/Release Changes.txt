@@ -75,7 +75,6 @@ xx-07-2023 1.8.2
   De applicatie ziet er hierdoor anders uit en het kan wellicht het probleem met de gemelde lettertypes oplossen (geen garanties)
   NB: Het heeft geen zin om tegen het Microsoft systeem te werken door een ander lettertype te gebruiken dan voorgesteld.
 - Vanuit de settings via een verkenner openen de data-folder openen, dat scheelt het eea aan uitleg en support (voor mij ook sneller).
-- De RMK optie in de signalen om zowel de 
 - Een munt kunnen openen in op de exchange zelf (dus niet de app, niet TV, maar de website van de exchange zelf)
   Omdat dit enigzins dubbelzinnig is met de optie dubbelklik is die komen te vervallen
 - De configuratie opgesplitst in een Settings.json en een Weblinks.json, het bevat de te gebruiken url's en apps
