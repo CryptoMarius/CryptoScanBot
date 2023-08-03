@@ -58,4 +58,6 @@ public class SettingsBasic
     /// </summary>
     public SettingsBackTest BackTest { get; set; } = new();
 
+
+    public List<string> HiddenSignalColumns { get; set; } = new();
 }

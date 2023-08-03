@@ -6,42 +6,29 @@ namespace CryptoSbmScanner;
 
 public partial class FrmMain
 {
-    private readonly int columnForText = 6;
     private readonly int columnForPriceDiff = 8;
-    private ListViewDoubleBuffered listViewSignals;
+    private ListViewHeaderContext listViewSignals;
     private System.Windows.Forms.Timer TimerClearEvents;
 
-    //public void Dispose()
-    //{
-    //    if (TimerClearEvents != null) { TimerClearEvents.Dispose(); TimerClearEvents = null; }
-    //}
 
     private void ListViewSignalsConstructor()
     {
-        ListViewColumnSorterSignal listViewColumnSorter = new()
-        {
-            SortOrder = SortOrder.Descending
-        };
+        //ListViewColumnSorterSignal listViewColumnSorter = new();
 
         // ruzie (component of events raken weg), dan maar dynamisch
         listViewSignals = new()
         {
-            CheckBoxes = false
+            Dock = DockStyle.Fill,
+            Location = new Point(4, 3),
+            ListViewItemSorter = new ListViewColumnSorterSignal(),
         };
-        listViewSignals.CheckBoxes = false;
-        listViewSignals.AllowColumnReorder = false;
-        listViewSignals.Dock = DockStyle.Fill;
-        listViewSignals.Location = new Point(4, 3);
-        listViewSignals.GridLines = true;
-        listViewSignals.View = View.Details;
-        listViewSignals.FullRowSelect = true;
-        listViewSignals.HideSelection = true;
-        listViewSignals.BorderStyle = BorderStyle.None;
-        listViewSignals.ContextMenuStrip = listViewSignalsMenuStrip;
-        listViewSignals.ListViewItemSorter = listViewColumnSorter;
         listViewSignals.ColumnClick += ListViewSignals_ColumnClick;
-        listViewSignals.SetSortIcon(listViewColumnSorter.SortColumn, listViewColumnSorter.SortOrder);
         listViewSignals.DoubleClick += ListViewSignalsMenuItem_DoubleClick;
+
+        listViewSignals.ContextMenuStrip = listViewSignalsMenuStrip;
+        listViewSignals.HeaderContextMenuStrip = listViewIgnalsColumns;
+
+
         tabPageSignals.Controls.Add(listViewSignals);
 
         TimerClearEvents = new()
@@ -52,8 +39,80 @@ public partial class FrmMain
         TimerClearEvents.Tick += TimerClearOldSignals_Tick;
 
         ListViewSignalsInitColumns();
+
+        listViewIgnalsColumns.Items.Clear();
+        foreach (ColumnHeader columnHeader in listViewSignals.Columns)
+        {
+            if (columnHeader.Text != "")
+            {
+                //x.Width = 0;
+                //hide: LVW.Columns.Item(0).Width = 0
+                //show again: LVW.Columns.Item(0).AutoResize(ColumnHeaderAutoResizeStyle.ColumnContent)
+                //Alleen een dictionary nodig voor de opslag?
+
+                ToolStripMenuItem item = new()
+                {
+                    Tag = columnHeader,
+                    Text = columnHeader.Text,
+                    Size = new Size(100, 22),
+                    CheckState = CheckState.Unchecked,
+                    Checked = !GlobalData.Settings.HiddenSignalColumns.Contains(columnHeader.Text),
+                };
+                item.Click += CheckColumn;
+                listViewIgnalsColumns.Items.Add(item);
+            }
+        }
     }
 
+    private void CheckColumn(object sender, EventArgs e)
+    {
+        if (sender is ToolStripMenuItem item)
+        {
+            item.Checked = !item.Checked;
+            if (item.Checked)
+                GlobalData.Settings.HiddenSignalColumns.Remove(item.Text);
+            else
+                GlobalData.Settings.HiddenSignalColumns.Add(item.Text);
+            GlobalData.SaveSettings();
+
+
+            listViewSignals.BeginUpdate();
+            try
+            {
+                if (item.Tag is ColumnHeader columnHeader)
+                {
+                    if (item.Checked)
+                    {
+                        //listViewSignals.AutoResizeColumn(columnHeader.Index, ColumnHeaderAutoResizeStyle.HeaderSize);
+                        listViewSignals.AutoResizeColumn(columnHeader.Index, ColumnHeaderAutoResizeStyle.ColumnContent);
+                    }
+                }
+                ResizeColumns();
+            }
+            finally
+            {
+                listViewSignals.EndUpdate();
+            }
+        }
+    }
+
+    private void ResizeColumns()
+    {
+        for (int i = 0; i <= listViewSignals.Columns.Count - 1; i++)
+        {
+            ColumnHeader columnHeader = listViewSignals.Columns[i];
+            if (GlobalData.Settings.HiddenSignalColumns.Contains(columnHeader.Text))
+                columnHeader.Width = 0;
+            else
+            {
+                //if (i != columnForText)
+                {
+                    if (columnHeader.Width != 0)
+                        columnHeader.Width = -2;
+                }
+            }
+        }
+    }
 
     private void ListViewSignalsInitCaptions()
     {
@@ -79,26 +138,25 @@ public partial class FrmMain
         listViewSignals.Columns.Add("24h Change", -2, HorizontalAlignment.Right);
         listViewSignals.Columns.Add("24h Beweging", -2, HorizontalAlignment.Right);
         listViewSignals.Columns.Add("BB%", -2, HorizontalAlignment.Right);
-        if (!GlobalData.Settings.General.HideTechnicalStuffSignals)
-        {
-            listViewSignals.Columns.Add("", 20, HorizontalAlignment.Right);
-            listViewSignals.Columns.Add("RSI", -2, HorizontalAlignment.Right);
-            listViewSignals.Columns.Add("Stoch", -2, HorizontalAlignment.Right);
-            listViewSignals.Columns.Add("Signal", -2, HorizontalAlignment.Right);
-            listViewSignals.Columns.Add("Sma200", -2, HorizontalAlignment.Right);
-            listViewSignals.Columns.Add("Sma50", -2, HorizontalAlignment.Right);
-            listViewSignals.Columns.Add("Sma20", -2, HorizontalAlignment.Right);
-            listViewSignals.Columns.Add("PSar", -2, HorizontalAlignment.Right);
-            listViewSignals.Columns.Add("Flux 5m", -2, HorizontalAlignment.Right);
-        }
+        listViewSignals.Columns.Add("", 20, HorizontalAlignment.Right);
+        listViewSignals.Columns.Add("RSI", -2, HorizontalAlignment.Right);
+        listViewSignals.Columns.Add("Stoch", -2, HorizontalAlignment.Right);
+        listViewSignals.Columns.Add("Signal", -2, HorizontalAlignment.Right);
+        listViewSignals.Columns.Add("Sma200", -2, HorizontalAlignment.Right);
+        listViewSignals.Columns.Add("Sma50", -2, HorizontalAlignment.Right);
+        listViewSignals.Columns.Add("Sma20", -2, HorizontalAlignment.Right);
+        listViewSignals.Columns.Add("PSar", -2, HorizontalAlignment.Right);
+        listViewSignals.Columns.Add("Flux 5m", -2, HorizontalAlignment.Right);
         listViewSignals.Columns.Add("", -2, HorizontalAlignment.Right); // filler
 
-        for (int i = 0; i <= listViewSignals.Columns.Count - 1; i++)
-        {
-            if (i != columnForText)
-                listViewSignals.Columns[i].Width = -2;
-        }
+        listViewSignals.SetSortIcon(
+              ((ListViewColumnSorterSignal)listViewSignals.ListViewItemSorter).SortColumn,
+              ((ListViewColumnSorterSignal)listViewSignals.ListViewItemSorter).SortOrder);
+
+        ResizeColumns();
     }
+
+
 
     private static void FillSignalItem(CryptoSignal signal, ListViewItem item1)
     {
@@ -240,78 +298,69 @@ public partial class FrmMain
         item1.SubItems.Add(value?.ToString("N2"));
 
 
-        if (!GlobalData.Settings.General.HideTechnicalStuffSignals)
-        {
-            item1.SubItems.Add(" ");
+        item1.SubItems.Add(" ");
 
 
-            // Oversold/overbougt
-            value = signal.Rsi; // 0..100
-            if (value < 30f)
-                item1.SubItems.Add(value?.ToString("N2")).ForeColor = Color.Red;
-            else if (value > 70f)
-                item1.SubItems.Add(value?.ToString("N2")).ForeColor = Color.Green;
-            else
-                item1.SubItems.Add(value?.ToString("N2"));
+        // Oversold/overbougt
+        value = signal.Rsi; // 0..100
+        if (value < 30f)
+            item1.SubItems.Add(value?.ToString("N2")).ForeColor = Color.Red;
+        else if (value > 70f)
+            item1.SubItems.Add(value?.ToString("N2")).ForeColor = Color.Green;
+        else
+            item1.SubItems.Add(value?.ToString("N2"));
 
-            // Oversold/overbougt
-            value = signal.StochOscillator;
-            if (value < 20f)
-                item1.SubItems.Add(value?.ToString("N2")).ForeColor = Color.Red;
-            else if (value > 80f)
-                item1.SubItems.Add(value?.ToString("N2")).ForeColor = Color.Green;
-            else
-                item1.SubItems.Add(value?.ToString("N2"));
+        // Oversold/overbougt
+        value = signal.StochOscillator;
+        if (value < 20f)
+            item1.SubItems.Add(value?.ToString("N2")).ForeColor = Color.Red;
+        else if (value > 80f)
+            item1.SubItems.Add(value?.ToString("N2")).ForeColor = Color.Green;
+        else
+            item1.SubItems.Add(value?.ToString("N2"));
 
-            // Oversold/overbougt
-            value = signal.StochSignal;
-            if (value < 20f)
-                item1.SubItems.Add(value?.ToString("N2")).ForeColor = Color.Red;
-            else if (value > 80f)
-                item1.SubItems.Add(value?.ToString("N2")).ForeColor = Color.Green;
-            else
-                item1.SubItems.Add(value?.ToString("N2"));
+        // Oversold/overbougt
+        value = signal.StochSignal;
+        if (value < 20f)
+            item1.SubItems.Add(value?.ToString("N2")).ForeColor = Color.Red;
+        else if (value > 80f)
+            item1.SubItems.Add(value?.ToString("N2")).ForeColor = Color.Green;
+        else
+            item1.SubItems.Add(value?.ToString("N2"));
 
 
-            value = signal.Sma200;
+        value = signal.Sma200;
+        item1.SubItems.Add(value?.ToString(signal.Symbol.PriceDisplayFormat));
+
+        value = signal.Sma50;
+        if (value < signal.Sma200)
+            item1.SubItems.Add(value?.ToString(signal.Symbol.PriceDisplayFormat)).ForeColor = Color.Green;
+        else if (value > signal.Sma200)
+            item1.SubItems.Add(value?.ToString(signal.Symbol.PriceDisplayFormat)).ForeColor = Color.Red;
+        else
             item1.SubItems.Add(value?.ToString(signal.Symbol.PriceDisplayFormat));
 
-            value = signal.Sma50;
-            if (value < signal.Sma200)
-                item1.SubItems.Add(value?.ToString(signal.Symbol.PriceDisplayFormat)).ForeColor = Color.Green;
-            else if (value > signal.Sma200)
-                item1.SubItems.Add(value?.ToString(signal.Symbol.PriceDisplayFormat)).ForeColor = Color.Red;
-            else
-                item1.SubItems.Add(value?.ToString(signal.Symbol.PriceDisplayFormat));
+        value = signal.Sma20;
+        if (value < signal.Sma50)
+            item1.SubItems.Add(value?.ToString(signal.Symbol.PriceDisplayFormat)).ForeColor = Color.Green;
+        else if (value > signal.Sma50)
+            item1.SubItems.Add(value?.ToString(signal.Symbol.PriceDisplayFormat)).ForeColor = Color.Red;
+        else
+            item1.SubItems.Add(value?.ToString(signal.Symbol.PriceDisplayFormat));
 
-            value = signal.Sma20;
-            if (value < signal.Sma50)
-                item1.SubItems.Add(value?.ToString(signal.Symbol.PriceDisplayFormat)).ForeColor = Color.Green;
-            else if (value > signal.Sma50)
-                item1.SubItems.Add(value?.ToString(signal.Symbol.PriceDisplayFormat)).ForeColor = Color.Red;
-            else
-                item1.SubItems.Add(value?.ToString(signal.Symbol.PriceDisplayFormat));
+        // de psar zou je wel mogen "clampen"???
+        value = signal.PSar; //.Clamp(signal.Symbol.PriceMinimum, signal.Symbol.PriceMaximum, signal.Symbol.PriceTickSize);
+        string orgValue = value?.ToString(signal.Symbol.PriceDisplayFormat);
+        if (value <= signal.Sma20)
+            item1.SubItems.Add(orgValue).ForeColor = Color.Green;
+        else if (value > signal.Sma20)
+            item1.SubItems.Add(orgValue).ForeColor = Color.Red;
+        else
+            item1.SubItems.Add(orgValue);
 
-            // de psar zou je wel mogen "clampen"???
-            value = signal.PSar; //.Clamp(signal.Symbol.PriceMinimum, signal.Symbol.PriceMaximum, signal.Symbol.PriceTickSize);
-            string orgValue = value?.ToString(signal.Symbol.PriceDisplayFormat);
-            if (value <= signal.Sma20)
-                item1.SubItems.Add(orgValue).ForeColor = Color.Green;
-            else if (value > signal.Sma20)
-                item1.SubItems.Add(orgValue).ForeColor = Color.Red;
-            else
-                item1.SubItems.Add(orgValue);
-
-            if (GlobalData.Settings.General.ShowFluxIndicator5m)
-            {
-                value = signal.FluxIndicator5m;
-                if (value != 0)
-                    item1.SubItems.Add(value?.ToString("N0"));
-            }
-            else
-                item1.SubItems.Add("");
-
-        }
+        value = signal.FluxIndicator5m;
+        if (value != 0)
+            item1.SubItems.Add(value?.ToString("N0"));
     }
 
     private static ListViewItem AddSignalItem(CryptoSignal signal)
@@ -343,11 +392,7 @@ public partial class FrmMain
             SetBackGroundColorsSignals();
 
             // Deze redelijk kostbaar? (alles moet gecontroleerd worden)
-            for (int i = 0; i <= listViewSignals.Columns.Count - 1; i++)
-            {
-                if (i != columnForText) // text
-                    listViewSignals.Columns[i].Width = -2;
-            }
+            ResizeColumns();
 
             //if (signals.Count > 1)
             //    GlobalData.AddTextToLogTab(signals.Count + " signalen als een range toegevoegd");
@@ -491,10 +536,7 @@ public partial class FrmMain
                 ListViewItem item = listViewSignals.SelectedItems[index];
                 CryptoSignal signal = (CryptoSignal)item.Tag;
 
-                Task.Run(() => {
-                    string filename = CandleDumpDebug.ExportToExcell(signal.Symbol);
-                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(filename) { UseShellExecute = true });
-                });
+                Task.Run(() => { new Excel.ExcelCandleDump().ExportToExcell(signal.Symbol); });
             }
         }
     }

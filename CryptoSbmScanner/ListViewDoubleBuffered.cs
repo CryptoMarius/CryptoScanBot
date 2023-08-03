@@ -11,15 +11,25 @@ public class ListViewDoubleBuffered : ListView
     private const int UIS_SET = 1;
     private const int UISF_HIDEFOCUS = 0x1;
 
+
     public ListViewDoubleBuffered()
     {
         DoubleBuffered = true;
         View = View.Details;
-        FullRowSelect = false;
+        FullRowSelect = true;
+        GridLines = true;
+        HideSelection = true;
+        CheckBoxes = false;
+        AllowColumnReorder = false;
+        BorderStyle = BorderStyle.None;
+
+
+        OwnerDraw = true; // This will help the OnDrawColumnHeader be called.
 
         // removes the ugly dotted line around focused item
         SendMessage(this.Handle, WM_CHANGEUISTATE, MakeLong(UIS_SET, UISF_HIDEFOCUS), 0);
     }
+
 
     private static int MakeLong(int wLow, int wHigh)
     {
@@ -124,5 +134,6 @@ public class ListViewDoubleBuffered : ListView
             SendMessageLVCOLUMN(columnHeader, HDM_SETITEM, columnPtr, ref lvColumn);
         }
     }
+
 }
 

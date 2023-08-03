@@ -4,71 +4,36 @@ using CryptoSbmScanner.Context;
 using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
-using CryptoSbmScanner.Settings;
 
 namespace CryptoSbmScanner;
-
-// refactoring om alle listviews hiervan af te leiden
-//public class CryptoListView: ListViewDoubleBuffered
-//{
-//    public virtual void ComponentConstructor()
-//    {
-//        CheckBoxes = false;
-//        AllowColumnReorder = false;
-//        Dock = DockStyle.Fill;
-//        Location = new Point(4, 3);
-//        GridLines = true;
-//        View = View.Details;
-//        FullRowSelect = true;
-//        HideSelection = true;
-//        BorderStyle = BorderStyle.None;
-//    }
-
-//    public virtual void InitColumns()
-//    {
-//        Columns.Clear();
-//    }
-//}
 
 
 public partial class FrmMain
 {
-    private ListViewDoubleBuffered listViewPositionsClosed;
+    private ListViewHeaderContext listViewPositionsClosed;
     
-    //public void Dispose()
-    //{
-    //    if (TimerClearEvents != null) { TimerClearEvents.Dispose(); TimerClearEvents = null; }
-    //}
-
     private void ListViewPositionsClosedConstructor()
     {
-        ListViewColumnSorterPosition listViewColumnSorter = new()
-        {
-            SortColumn = 2,
-            ClosedPositions = true,
-            SortOrder = SortOrder.Descending
-        };
+        
 
         // ruzie (component of events raken weg), dan maar dynamisch
         listViewPositionsClosed = new()
         {
-            CheckBoxes = false
+            Dock = DockStyle.Fill,
+            Location = new Point(4, 3)
         };
-        listViewPositionsClosed.CheckBoxes = false;
-        listViewPositionsClosed.AllowColumnReorder = false;
-        listViewPositionsClosed.Dock = DockStyle.Fill;
-        listViewPositionsClosed.Location = new Point(4, 3);
-        listViewPositionsClosed.GridLines = true;
-        listViewPositionsClosed.View = View.Details;
-        listViewPositionsClosed.FullRowSelect = true;
-        listViewPositionsClosed.HideSelection = true;
-        listViewPositionsClosed.BorderStyle = BorderStyle.None;
-        listViewPositionsClosed.ContextMenuStrip = contextMenuStripPositionsClosed;
-        listViewPositionsClosed.ListViewItemSorter = listViewColumnSorter;
         listViewPositionsClosed.ColumnClick += ListViewPositionsClosedColumnClick;
-        listViewPositionsClosed.SetSortIcon(listViewColumnSorter.SortColumn, listViewColumnSorter.SortOrder);
         listViewPositionsClosed.DoubleClick += ListViewPositionClosed_MenuItem_DoubleClick;
         tabPagePositionsClosed.Controls.Add(listViewPositionsClosed);
+
+        listViewPositionsClosed.ContextMenuStrip = contextMenuStripPositionsClosed;
+
+        listViewPositionsClosed.ListViewItemSorter = new ListViewColumnSorterPosition()
+        {
+            SortColumn = 2,
+            ClosedPositions = true,
+            SortOrder = SortOrder.Descending
+        }; ;
 
         //TimerClearEvents = new();
         //InitTimerInterval(ref TimerClearEvents, 1 * 60);
@@ -126,9 +91,12 @@ public partial class FrmMain
         listViewPositionsClosed.Columns.Add("Parts", -2, HorizontalAlignment.Right);
         listViewPositionsClosed.Columns.Add("BuyPrice", -2, HorizontalAlignment.Right);
         listViewPositionsClosed.Columns.Add("SellPrice", -2, HorizontalAlignment.Right);
-        listViewPositionsClosed.Columns.Add("Quantity", -2, HorizontalAlignment.Right);
 
         listViewPositionsClosed.Columns.Add("", -2, HorizontalAlignment.Right); // filler
+
+        listViewPositionsClosed.SetSortIcon(
+              ((ListViewColumnSorterPosition)listViewPositionsClosed.ListViewItemSorter).SortColumn,
+              ((ListViewColumnSorterPosition)listViewPositionsClosed.ListViewItemSorter).SortOrder);
 
         for (int i = 0; i <= listViewPositionsClosed.Columns.Count - 1; i++)
         {
@@ -371,34 +339,7 @@ public partial class FrmMain
 
     }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-    private async void DebugPositionDumpTextToolStripMenuItemAsync_Click(object sender, EventArgs e)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
-    {
-        if (listViewPositionsClosed.SelectedItems.Count > 0)
-        {
-            ListViewItem item = listViewPositionsClosed.SelectedItems[0];
-            CryptoPosition position = (CryptoPosition)item.Tag;
-
-#if TRADEBOT
-
-            using CryptoDatabase databaseThread = new();
-            databaseThread.Open();
-
-            // Controleer de orders, en herbereken het geheel
-            PositionTools.LoadPosition(databaseThread, position);
-            await PositionTools.LoadTradesfromDatabaseAndExchange(databaseThread, position);
-            PositionTools.CalculatePositionResultsViaTrades(databaseThread, position);
-            FillItemClosed(position, item);
-
-            StringBuilder strings = new();
-            PositionTools.DumpPosition(position, strings);
-            GlobalData.AddTextToLogTab(strings.ToString());
-#endif
-        }
-    }
-
-    private void DebugPositionClosedDumpExcelToolStripMenuItemAsync_Click(object sender, EventArgs e)
+    private async void DebugPositionClosedDumpExcelToolStripMenuItemAsync_Click(object sender, EventArgs e)
     {
 #if TRADEBOT
         if (listViewPositionsClosed.SelectedItems.Count > 0)
@@ -412,13 +353,11 @@ public partial class FrmMain
                 databaseThread.Open();
                 PositionTools.LoadPosition(databaseThread, position);
 
-                Task.Run(() => {
-                    Invoke(new Action(() =>
-                    {
-                        string filename = new PositionDumpDebug().ExportToExcell(position);
-                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(filename) { UseShellExecute = true });
-                    }));
-                });
+                await PositionTools.LoadTradesfromDatabaseAndExchange(databaseThread, position);
+                PositionTools.CalculatePositionResultsViaTrades(databaseThread, position);
+
+                //Task.Run(() => { Invoke(new Action(() => { new PositionDumpDebug().ExportToExcell(position); })); });
+                _ = Task.Run(() => { new Excel.ExcelPositionDump().ExportToExcell(position); });
             }
         }
 #endif

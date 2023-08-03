@@ -4,49 +4,35 @@ using CryptoSbmScanner.Context;
 using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
-using CryptoSbmScanner.Settings;
 
 namespace CryptoSbmScanner;
 
 public partial class FrmMain
 {
-    private ListViewDoubleBuffered listViewPositionsOpen;
+    private ListViewHeaderContext listViewPositionsOpen;
     private System.Windows.Forms.Timer TimerRefreshSomething;
 
-    //public void Dispose()
-    //{
-    //    if (TimerClearEvents != null) { TimerClearEvents.Dispose(); TimerClearEvents = null; }
-    //}
 
     private void ListViewPositionsOpenConstructor()
     {
-        ListViewColumnSorterPosition listViewColumnSorter = new()
+        // ruzie (component of events raken weg), dan maar dynamisch
+        listViewPositionsOpen = new()
+        {
+            Dock = DockStyle.Fill,
+            Location = new Point(4, 3)
+        };
+        listViewPositionsOpen.ColumnClick += ListViewPositionsOpenColumnClick;
+        listViewPositionsOpen.DoubleClick += ListViewPositionOpen_MenuItem_DoubleClick;
+        tabPagePositionsOpen.Controls.Add(listViewPositionsOpen);
+
+        listViewPositionsOpen.ListViewItemSorter = new ListViewColumnSorterPosition()
         {
             SortColumn = 1,
             ClosedPositions = false,
             SortOrder = SortOrder.Descending
         };
 
-        // ruzie (component of events raken weg), dan maar dynamisch
-        listViewPositionsOpen = new()
-        {
-            CheckBoxes = false
-        };
-        listViewPositionsOpen.CheckBoxes = false;
-        listViewPositionsOpen.AllowColumnReorder = false;
-        listViewPositionsOpen.Dock = DockStyle.Fill;
-        listViewPositionsOpen.Location = new Point(4, 3);
-        listViewPositionsOpen.GridLines = true;
-        listViewPositionsOpen.View = View.Details;
-        listViewPositionsOpen.FullRowSelect = true;
-        listViewPositionsOpen.HideSelection = true;
-        listViewPositionsOpen.BorderStyle = BorderStyle.None;
         listViewPositionsOpen.ContextMenuStrip = contextMenuStripPositionsOpen;
-        listViewPositionsOpen.ListViewItemSorter = listViewColumnSorter;
-        listViewPositionsOpen.ColumnClick += ListViewPositionsOpenColumnClick;
-        listViewPositionsOpen.SetSortIcon(listViewColumnSorter.SortColumn, listViewColumnSorter.SortOrder);
-        listViewPositionsOpen.DoubleClick += ListViewPositionOpen_MenuItem_DoubleClick;
-        tabPagePositionsOpen.Controls.Add(listViewPositionsOpen);
 
         TimerRefreshSomething = new()
         {
@@ -106,6 +92,10 @@ public partial class FrmMain
         listViewPositionsOpen.Columns.Add("SellPrice", -2, HorizontalAlignment.Right);
         listViewPositionsOpen.Columns.Add("LastPrice", -2, HorizontalAlignment.Right);
         listViewPositionsOpen.Columns.Add("", -2, HorizontalAlignment.Right); // filler
+
+        listViewPositionsOpen.SetSortIcon(
+              ((ListViewColumnSorterPosition)listViewPositionsOpen.ListViewItemSorter).SortColumn, 
+              ((ListViewColumnSorterPosition)listViewPositionsOpen.ListViewItemSorter).SortOrder);
 
         for (int i = 0; i <= listViewPositionsOpen.Columns.Count - 1; i++)
         {
@@ -430,33 +420,6 @@ public partial class FrmMain
     //    //}
     //}
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-    private async void DebugCandleDumpToolStripMenuItem1Async_Click(object sender, EventArgs e)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
-    {
-#if TRADEBOT
-
-        if (listViewPositionsOpen.SelectedItems.Count > 0)
-        {
-            ListViewItem item = listViewPositionsOpen.SelectedItems[0];
-            CryptoPosition position = (CryptoPosition)item.Tag;
-
-            using CryptoDatabase databaseThread = new();
-            databaseThread.Open();
-
-            // Controleer de orders, en herbereken het geheel
-            PositionTools.LoadPosition(databaseThread, position);
-            await PositionTools.LoadTradesfromDatabaseAndExchange(databaseThread, position);
-            PositionTools.CalculatePositionResultsViaTrades(databaseThread, position);
-            FillItemOpen(position, item);
-
-            StringBuilder strings = new();
-            PositionTools.DumpPosition(position, strings);
-            GlobalData.AddTextToLogTab(strings.ToString());
-        }
-#endif
-    }
-
     private void DebugPositionOpenDumpExcelToolStripMenuItemAsync_Click(object sender, EventArgs e)
     {
         if (listViewPositionsOpen.SelectedItems.Count > 0)
@@ -466,14 +429,13 @@ public partial class FrmMain
                 ListViewItem item = listViewPositionsOpen.SelectedItems[index];
                 CryptoPosition position = (CryptoPosition)item.Tag;
 
-                Task.Run(() => {
-                    Invoke(new Action(() =>
-                    {
-                        string filename = new PositionDumpDebug().ExportToExcell(position);
-                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(filename) { UseShellExecute = true });
-                    }));
-                });
+                // Deze is al geladen (niet verstandig om dit te doen)
+                //using CryptoDatabase databaseThread = new();
+                //databaseThread.Open();
+                ///PositionTools.LoadPosition(databaseThread, position);
 
+                //Task.Run(() => { Invoke(new Action(() => { new PositionDumpDebug().ExportToExcell(position); })); });
+                _ = Task.Run(() => { new Excel.ExcelPositionDump().ExportToExcell(position); });
             }
         }
     }

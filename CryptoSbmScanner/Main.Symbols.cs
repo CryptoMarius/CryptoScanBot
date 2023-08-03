@@ -168,10 +168,7 @@ public partial class FrmMain
         if (symbol == null)
             return;
 
-        Task.Run(() => {
-            string filename = CandleDumpDebug.ExportToExcell(symbol);
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(filename) { UseShellExecute = true });
-        });
+        Task.Run(() => { new Excel.ExcelCandleDump().ExportToExcell(symbol); });
     }
 
     private void ListBoxSymbolsMenuItemCreateSignal_Click(object sender, EventArgs e)

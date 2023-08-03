@@ -1,38 +1,11 @@
 ﻿using CryptoSbmScanner.Model;
-using System.Collections;
 
 namespace CryptoSbmScanner
 {
-    /// <summary>
-    /// This class is an implementation of the 'IComparer' interface.
-    /// </summary>
-    public class ListViewColumnSorterSignal : IComparer
+    public class ListViewColumnSorterSignal : ListViewColumnSorter
     {
-        public int SortColumn { set; get; } = 0;
-        public SortOrder SortOrder = SortOrder.Descending;
-
-        private readonly CaseInsensitiveComparer ObjectCompare;
-
-        /// <summary>
-        /// Class constructor. Initializes various elements
-        /// </summary>
-        public ListViewColumnSorterSignal()
+        public override int Compare(object x, object y)
         {
-            // Initialize the CaseInsensitiveComparer object
-            ObjectCompare = new CaseInsensitiveComparer();
-        }
-
-        /// <summary>
-        /// This method is inherited from the IComparer interface. It compares the two objects passed using a case insensitive comparison.
-        /// </summary>
-        /// <param name="x">First object to be compared</param>
-        /// <param name="y">Second object to be compared</param>
-        /// <returns>The result of the comparison. "0" if equal, negative if 'x' is less than 'y' and positive if 'x' is greater than 'y'</returns>
-        public int Compare(object x, object y)
-        {
-            // uit de c# documentatie
-
-            // Cast the objects to be compared to ListViewItem objects
             ListViewItem itemA = (ListViewItem)x;
             CryptoSignal signalA = (CryptoSignal)itemA.Tag;
 
@@ -66,20 +39,20 @@ namespace CryptoSbmScanner
                 _ => 0
             };
 
-            // Binnen dezelfde records toch een extra onderverdeling maken, anders is het nog steeds "random"
+            // Extra defaults (maar waarom omgedraaid?)
             if (compareResult == 0)
             {
                 compareResult = ObjectCompare.Compare(signalA.CloseDate, signalB.CloseDate);
                 if (compareResult == 0)
                 {
-                    if (this.SortOrder == SortOrder.Ascending)
+                    if (SortOrder == SortOrder.Ascending)
                         compareResult = ObjectCompare.Compare(signalA.Symbol.Name, signalB.Symbol.Name);
                     else
                         compareResult = ObjectCompare.Compare(signalB.Symbol.Name, signalA.Symbol.Name);
                 }
                 if (compareResult == 0)
                 {
-                    if (this.SortOrder == SortOrder.Ascending)
+                    if (SortOrder == SortOrder.Ascending)
                         compareResult = ObjectCompare.Compare(signalA.Interval.IntervalPeriod, signalB.Interval.IntervalPeriod);
                     else
                         compareResult = ObjectCompare.Compare(signalB.Interval.IntervalPeriod, signalA.Interval.IntervalPeriod);
@@ -95,27 +68,6 @@ namespace CryptoSbmScanner
             else
                 return 0;
         }
-
-        public void ClickedOnColumn(int column)
-        {
-            // Determine if clicked column is already the column that is being sorted.
-            if (column == SortColumn)
-            {
-                // Reverse the current sort direction for this column.
-                if (SortOrder == SortOrder.Ascending)
-                    SortOrder = SortOrder.Descending;
-                else
-                    SortOrder = SortOrder.Ascending;
-            }
-            else
-            {
-                // Set the column number that is to be sorted; default to ascending.
-                SortColumn = column;
-                SortOrder = SortOrder.Ascending;
-            }
-        }
-
     }
-
 
 }

@@ -3,37 +3,12 @@ using System.Collections;
 
 namespace CryptoSbmScanner
 {
-    /// <summary>
-    /// This class is an implementation of the 'IComparer' interface.
-    /// </summary>
-    public class ListViewColumnSorterPosition : IComparer
+    public class ListViewColumnSorterPosition : ListViewColumnSorter
     {
         public bool ClosedPositions = false;
-        public int SortColumn { set; get; } = 0;
-        public SortOrder SortOrder = SortOrder.Descending;
 
-        private readonly CaseInsensitiveComparer ObjectCompare;
-
-        /// <summary>
-        /// Class constructor. Initializes various elements
-        /// </summary>
-        public ListViewColumnSorterPosition()
+        public override int Compare(object x, object y)
         {
-            // Initialize the CaseInsensitiveComparer object
-            ObjectCompare = new CaseInsensitiveComparer();
-        }
-
-        /// <summary>
-        /// This method is inherited from the IComparer interface. It compares the two objects passed using a case insensitive comparison.
-        /// </summary>
-        /// <param name="x">First object to be compared</param>
-        /// <param name="y">Second object to be compared</param>
-        /// <returns>The result of the comparison. "0" if equal, negative if 'x' is less than 'y' and positive if 'x' is greater than 'y'</returns>
-        public int Compare(object x, object y)
-        {
-            // uit de c# documentatie
-
-            // Cast the objects to be compared to ListViewItem objects
             ListViewItem itemA = (ListViewItem)x;
             CryptoPosition positionA = (CryptoPosition)itemA.Tag;
 
@@ -41,33 +16,10 @@ namespace CryptoSbmScanner
             CryptoPosition positionB = (CryptoPosition)itemB.Tag;
 
             int compareResult = 0;
-
             try
             {
                 if (ClosedPositions)
                 {
-                    //listViewPositionsClosed.Columns.Add("Datum", -2, HorizontalAlignment.Left);
-                    //listViewPositionsClosed.Columns.Add("Closed", -2, HorizontalAlignment.Left);
-                    //listViewPositionsClosed.Columns.Add("Account", -2, HorizontalAlignment.Left);
-                    //listViewPositionsClosed.Columns.Add("Exchange", -2, HorizontalAlignment.Left);
-                    //listViewPositionsClosed.Columns.Add("Symbol", -2, HorizontalAlignment.Left);
-                    //listViewPositionsClosed.Columns.Add("Interval", -2, HorizontalAlignment.Left);
-                    //listViewPositionsClosed.Columns.Add("Strategie", -2, HorizontalAlignment.Left);
-                    //listViewPositionsClosed.Columns.Add("Mode", -2, HorizontalAlignment.Left);
-                    //listViewPositionsClosed.Columns.Add("Status", -2, HorizontalAlignment.Left);
-
-                    //listViewPositionsClosed.Columns.Add("Invested", -2, HorizontalAlignment.Right);
-                    //listViewPositionsClosed.Columns.Add("Returned", -2, HorizontalAlignment.Right);
-                    //listViewPositionsClosed.Columns.Add("Commission", -2, HorizontalAlignment.Right);
-
-                    //listViewPositionsClosed.Columns.Add("Profit", -2, HorizontalAlignment.Right);
-                    //listViewPositionsClosed.Columns.Add("Percentage", -2, HorizontalAlignment.Right);
-
-                    //listViewPositionsClosed.Columns.Add("Parts", -2, HorizontalAlignment.Right);
-                    //listViewPositionsClosed.Columns.Add("BuyPrice", -2, HorizontalAlignment.Right);
-                    //listViewPositionsClosed.Columns.Add("SellPrice", -2, HorizontalAlignment.Right);
-                    //listViewPositionsClosed.Columns.Add("Quantity", -2, HorizontalAlignment.Right);
-
                     compareResult = SortColumn switch
                     {
                         00 => ObjectCompare.Compare(positionA.Id, positionB.Id),
@@ -91,35 +43,11 @@ namespace CryptoSbmScanner
                         15 => ObjectCompare.Compare(positionA.PartCount, positionB.PartCount),
                         16 => ObjectCompare.Compare(positionA.BuyPrice, positionB.BuyPrice),
                         17 => ObjectCompare.Compare(positionA.SellPrice, positionB.SellPrice),
-                        18 => ObjectCompare.Compare(positionA.Quantity, positionB.Quantity),
                         _ => 0
                     };
                 }
                 else
                 {
-                    //listViewPositionsOpen.Columns.Add("Datum", -2, HorizontalAlignment.Left);
-                    //listViewPositionsOpen.Columns.Add("Account", -2, HorizontalAlignment.Left);
-                    //listViewPositionsOpen.Columns.Add("Exchange", -2, HorizontalAlignment.Left);
-                    //listViewPositionsOpen.Columns.Add("Symbol", -2, HorizontalAlignment.Left);
-                    //listViewPositionsOpen.Columns.Add("Interval", -2, HorizontalAlignment.Left);
-                    //listViewPositionsOpen.Columns.Add("Strategie", -2, HorizontalAlignment.Left);
-                    //listViewPositionsOpen.Columns.Add("Mode", -2, HorizontalAlignment.Left);
-                    //listViewPositionsOpen.Columns.Add("Status", -2, HorizontalAlignment.Left);
-
-                    //listViewPositionsOpen.Columns.Add("BreakEven", -2, HorizontalAlignment.Right);
-                    //listViewPositionsOpen.Columns.Add("Quantity", -2, HorizontalAlignment.Right);
-
-                    //listViewPositionsOpen.Columns.Add("Invested", -2, HorizontalAlignment.Right);
-                    //listViewPositionsOpen.Columns.Add("Returned", -2, HorizontalAlignment.Right);
-                    //listViewPositionsOpen.Columns.Add("Open", -2, HorizontalAlignment.Right);
-                    //listViewPositionsOpen.Columns.Add("Commission", -2, HorizontalAlignment.Right);
-                    //listViewPositionsOpen.Columns.Add("Net NPL", -2, HorizontalAlignment.Right);
-                    //listViewPositionsOpen.Columns.Add("Percentage", -2, HorizontalAlignment.Right);
-
-                    //listViewPositionsOpen.Columns.Add("Parts", -2, HorizontalAlignment.Right);
-                    //listViewPositionsOpen.Columns.Add("BuyPrice", -2, HorizontalAlignment.Right);
-                    //listViewPositionsOpen.Columns.Add("SellPrice", -2, HorizontalAlignment.Right);
-                    //listViewPositionsOpen.Columns.Add("LastPrice", -2, HorizontalAlignment.Right);                
                     compareResult = SortColumn switch
                     {
                         00 => ObjectCompare.Compare(positionA.Id, positionB.Id),
@@ -140,15 +68,13 @@ namespace CryptoSbmScanner
                         13 => ObjectCompare.Compare(positionA.Invested - positionA.Returned, positionB.Invested - positionB.Returned),
                         14 => ObjectCompare.Compare(positionA.Commission, positionB.Commission),
 
-                        15 => ObjectCompare.Compare(positionA.Profit, positionB.Profit),
-                        16 => ObjectCompare.Compare(positionA.Percentage, positionB.Percentage),
-                        17 => ObjectCompare.Compare(positionA.MarketValue, positionB.MarketValue),
-                        18 => ObjectCompare.Compare(positionA.MarketValuePercentage, positionB.MarketValuePercentage),
+                        15 => ObjectCompare.Compare(positionA.MarketValue, positionB.MarketValue),
+                        16 => ObjectCompare.Compare(positionA.MarketValuePercentage, positionB.MarketValuePercentage),
 
-                        19 => ObjectCompare.Compare(positionA.PartCount, positionB.PartCount),
-                        20 => ObjectCompare.Compare(positionA.BuyPrice, positionB.BuyPrice),
-                        21 => ObjectCompare.Compare(positionA.SellPrice, positionB.SellPrice),
-                        22 => ObjectCompare.Compare(positionA.Symbol.LastPrice, positionB.Symbol.LastPrice),
+                        17 => ObjectCompare.Compare(positionA.PartCount, positionB.PartCount),
+                        18 => ObjectCompare.Compare(positionA.BuyPrice, positionB.BuyPrice),
+                        19 => ObjectCompare.Compare(positionA.SellPrice, positionB.SellPrice),
+                        20 => ObjectCompare.Compare(positionA.Symbol.LastPrice, positionB.Symbol.LastPrice),
                         _ => 0
                     };
                 }
@@ -194,26 +120,6 @@ namespace CryptoSbmScanner
                 return 0;
         }
 
-        public void ClickedOnColumn(int column)
-        {
-            // Determine if clicked column is already the column that is being sorted.
-            if (column == SortColumn)
-            {
-                // Reverse the current sort direction for this column.
-                if (SortOrder == SortOrder.Ascending)
-                    SortOrder = SortOrder.Descending;
-                else
-                    SortOrder = SortOrder.Ascending;
-            }
-            else
-            {
-                // Set the column number that is to be sorted; default to ascending.
-                SortColumn = column;
-                SortOrder = SortOrder.Ascending;
-            }
-        }
-
     }
-
 
 }
