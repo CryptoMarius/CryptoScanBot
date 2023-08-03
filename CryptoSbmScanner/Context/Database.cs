@@ -1152,11 +1152,12 @@ public class CryptoDatabase : IDisposable
         Migration.Execute(connection, CurrentVersion);
 
 
-        using (var command = connection.Connection.CreateCommand())
-        {
-            command.CommandText = "vacuum;";
-            command.ExecuteNonQuery();
-        }
+    //    using (var command = connection.Connection.CreateCommand())
+    //    {
+    //        command.CommandText = "vacuum;";
+    //        command.ExecuteNonQuery();
+    //    }
+    //
     }
 
 }
