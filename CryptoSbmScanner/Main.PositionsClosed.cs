@@ -159,7 +159,6 @@ public partial class FrmMain
         item1.SubItems.Add(position.PartCount.ToString());
         item1.SubItems.Add(position.BuyPrice?.ToString(position.Symbol.PriceDisplayFormat));
         item1.SubItems.Add(position.SellPrice?.ToString(position.Symbol.PriceDisplayFormat));
-        item1.SubItems.Add(position.Quantity.ToString(position.Symbol.QuantityDisplayFormat));
     }
 
     private static ListViewItem AddClosedPosition(CryptoPosition position)
