@@ -44,12 +44,10 @@ partial class FrmSettings
         EditShowInvalidSignals = new CheckBox();
         label84 = new Label();
         EditExchange = new ComboBox();
-        EditShowFluxIndicator5m = new CheckBox();
         label16 = new Label();
         EditGetCandleInterval = new NumericUpDown();
         label40 = new Label();
         EditTrendCalculationMethod = new ComboBox();
-        EditHideTechnicalStuffSignals = new CheckBox();
         label6 = new Label();
         EditGlobalDataRemoveSignalAfterxCandles = new NumericUpDown();
         EditBlackTheming = new CheckBox();
@@ -485,12 +483,10 @@ partial class FrmSettings
         tabAlgemeen.Controls.Add(EditShowInvalidSignals);
         tabAlgemeen.Controls.Add(label84);
         tabAlgemeen.Controls.Add(EditExchange);
-        tabAlgemeen.Controls.Add(EditShowFluxIndicator5m);
         tabAlgemeen.Controls.Add(label16);
         tabAlgemeen.Controls.Add(EditGetCandleInterval);
         tabAlgemeen.Controls.Add(label40);
         tabAlgemeen.Controls.Add(EditTrendCalculationMethod);
-        tabAlgemeen.Controls.Add(EditHideTechnicalStuffSignals);
         tabAlgemeen.Controls.Add(label6);
         tabAlgemeen.Controls.Add(EditGlobalDataRemoveSignalAfterxCandles);
         tabAlgemeen.Controls.Add(EditBlackTheming);
@@ -532,7 +528,7 @@ partial class FrmSettings
         // EditShowInvalidSignals
         // 
         EditShowInvalidSignals.AutoSize = true;
-        EditShowInvalidSignals.Location = new Point(29, 285);
+        EditShowInvalidSignals.Location = new Point(29, 246);
         EditShowInvalidSignals.Margin = new Padding(4, 3, 4, 3);
         EditShowInvalidSignals.Name = "EditShowInvalidSignals";
         EditShowInvalidSignals.Size = new Size(175, 19);
@@ -559,17 +555,6 @@ partial class FrmSettings
         EditExchange.Name = "EditExchange";
         EditExchange.Size = new Size(190, 23);
         EditExchange.TabIndex = 164;
-        // 
-        // EditShowFluxIndicator5m
-        // 
-        EditShowFluxIndicator5m.AutoSize = true;
-        EditShowFluxIndicator5m.Location = new Point(29, 260);
-        EditShowFluxIndicator5m.Margin = new Padding(4, 3, 4, 3);
-        EditShowFluxIndicator5m.Name = "EditShowFluxIndicator5m";
-        EditShowFluxIndicator5m.Size = new Size(159, 19);
-        EditShowFluxIndicator5m.TabIndex = 163;
-        EditShowFluxIndicator5m.Text = "Toon de FLUX 5m waarde";
-        EditShowFluxIndicator5m.UseVisualStyleBackColor = true;
         // 
         // label16
         // 
@@ -612,17 +597,6 @@ partial class FrmSettings
         EditTrendCalculationMethod.Size = new Size(190, 23);
         EditTrendCalculationMethod.TabIndex = 159;
         // 
-        // EditHideTechnicalStuffSignals
-        // 
-        EditHideTechnicalStuffSignals.AutoSize = true;
-        EditHideTechnicalStuffSignals.Location = new Point(29, 235);
-        EditHideTechnicalStuffSignals.Margin = new Padding(4, 3, 4, 3);
-        EditHideTechnicalStuffSignals.Name = "EditHideTechnicalStuffSignals";
-        EditHideTechnicalStuffSignals.Size = new Size(386, 19);
-        EditHideTechnicalStuffSignals.TabIndex = 158;
-        EditHideTechnicalStuffSignals.Text = "Verberg de technische informatie in het overzicht (de RSI, ma's, psar)";
-        EditHideTechnicalStuffSignals.UseVisualStyleBackColor = true;
-        // 
         // label6
         // 
         label6.AutoSize = true;
@@ -648,7 +622,7 @@ partial class FrmSettings
         // EditBlackTheming
         // 
         EditBlackTheming.AutoSize = true;
-        EditBlackTheming.Location = new Point(31, 355);
+        EditBlackTheming.Location = new Point(29, 326);
         EditBlackTheming.Margin = new Padding(4, 3, 4, 3);
         EditBlackTheming.Name = "EditBlackTheming";
         EditBlackTheming.Size = new Size(84, 19);
@@ -658,7 +632,7 @@ partial class FrmSettings
         // 
         // buttonFontDialog
         // 
-        buttonFontDialog.Location = new Point(29, 322);
+        buttonFontDialog.Location = new Point(29, 281);
         buttonFontDialog.Margin = new Padding(4, 3, 4, 3);
         buttonFontDialog.Name = "buttonFontDialog";
         buttonFontDialog.Size = new Size(139, 27);
@@ -3550,12 +3524,10 @@ partial class FrmSettings
     private ColorDialog colorDialog1;
     private TabControl tabControl;
     private TabPage tabAlgemeen;
-    private CheckBox EditShowFluxIndicator5m;
     private Label label16;
     private NumericUpDown EditGetCandleInterval;
     private Label label40;
     private ComboBox EditTrendCalculationMethod;
-    private CheckBox EditHideTechnicalStuffSignals;
     private Label label6;
     private NumericUpDown EditGlobalDataRemoveSignalAfterxCandles;
     private CheckBox EditBlackTheming;
