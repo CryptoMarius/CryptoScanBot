@@ -468,7 +468,7 @@ public class CryptoDatabase : IDisposable
             using var transaction = connection.Connection.BeginTransaction();
             CryptoVersion databaseVersion = new()
             {
-                Version = 1,
+                Version = CurrentVersion,
             };
             connection.Connection.Insert(databaseVersion, transaction);
             transaction.Commit();
