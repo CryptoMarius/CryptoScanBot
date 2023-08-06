@@ -285,6 +285,27 @@ internal class SettingsStrategy : IDisposable
             Location = new Point(CheckboxMonitorBuy.Location.X - correct, yPos),
         };
         controls.Add(label);
+
+
+
+        GroupBox groupboxHorizontal = new()
+        {
+            AutoSize = false,
+            Text = "",
+            Location = new Point(675, yPos + 2 * CheckboxAnalyzeBuy.Size.Height),
+            Size = new Size(300, 3),
+        };
+        controls.Add(groupboxHorizontal);
+
+
+        GroupBox groupboxVertical = new()
+        {
+            AutoSize = false,
+            Text = "",
+            Location = new Point(CheckboxMonitorBuy.Location.X - 4 * correct, yPos - correct),
+            Size = new Size(1, 12 * CheckboxAnalyzeBuy.Size.Height),
+        };
+        controls.Add(groupboxVertical);
     }
 
     public void SetControlValues()

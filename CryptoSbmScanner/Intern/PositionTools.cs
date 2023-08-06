@@ -407,6 +407,8 @@ public class PositionTools
                 step.QuantityFilled += trade.Quantity;
                 step.QuoteQuantityFilled += trade.QuoteQuantity;
 
+                step.AvgPrice = step.QuantityFilled / step.QuoteQuantityFilled;
+
                 // Vanuit nieuwe trades moeten we de status wel bijwerken (opstarten applicatie)
                 // Maar overschrijf de status alleen indien het absoluut zeker is..
                 if (step.QuantityFilled >= step.Quantity)

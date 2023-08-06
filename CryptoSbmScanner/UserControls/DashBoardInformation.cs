@@ -23,7 +23,6 @@ public partial class DashBoardInformation : UserControl
 
         public Label InfoName { get; set; }
         public Label InfoValue { get; set; }
-
     }
 
     private class SymbolHist

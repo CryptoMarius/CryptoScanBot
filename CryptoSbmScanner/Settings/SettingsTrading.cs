@@ -134,7 +134,7 @@ public class SettingsTrading
             Percentage = 1.5,
             Candles = 5,
             Interval = CryptoIntervalPeriod.interval2m,
-            CoolDown = 5,
+            CoolDown = 10,
         });
 
         PauseTradingRules.Add(new PauseTradingRule()
@@ -143,7 +143,7 @@ public class SettingsTrading
             Percentage = 2.5,
             Candles = 5,
             Interval = CryptoIntervalPeriod.interval5m,
-            CoolDown = 4,
+            CoolDown = 8,
         });
     }
 

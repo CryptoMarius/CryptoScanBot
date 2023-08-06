@@ -495,32 +495,32 @@ public class PositionMonitor
     }
 
 
-    private static decimal LowestBuyPart(CryptoPosition position)
-    {
-        // De laagste buy price van een openstaande part retourneren
+    //private static decimal LowestBuyPart(CryptoPosition position)
+    //{
+    //    // De laagste buy price van een openstaande part retourneren
 
-        decimal lastBuyPrice = decimal.MaxValue;
-        foreach (CryptoPositionPart partX in position.Parts.Values.ToList())
-        {
-            // Afgesloten DCA parts sluiten we uit (zodat we meerdere jojo's kunnen uitvoeren)
-            if (!partX.CloseTime.HasValue)
-            {
-                foreach (CryptoPositionStep stepX in partX.Steps.Values.ToList())
-                {
-                    // Voor de zekerheid enkel de Status=Filled erbij (onzeker wat er exact gebeurd met een cancel en het kan geen kwaad)
-                    if (stepX.Side == CryptoOrderSide.Buy && stepX.CloseTime.HasValue && stepX.Status == CryptoOrderStatus.Filled)
-                    {
-                        if (stepX.Price < lastBuyPrice)
-                            lastBuyPrice = stepX.Price;
-                    }
-                }
-            }
-        }
-        return lastBuyPrice;
-    }
+    //    decimal lastBuyPrice = decimal.MaxValue;
+    //    foreach (CryptoPositionPart partX in position.Parts.Values.ToList())
+    //    {
+    //        // Afgesloten DCA parts sluiten we uit (zodat we meerdere jojo's kunnen uitvoeren)
+    //        if (!partX.CloseTime.HasValue)
+    //        {
+    //            foreach (CryptoPositionStep stepX in partX.Steps.Values.ToList())
+    //            {
+    //                // Voor de zekerheid enkel de Status=Filled erbij (onzeker wat er exact gebeurd met een cancel en het kan geen kwaad)
+    //                if (stepX.Side == CryptoOrderSide.Buy && stepX.CloseTime.HasValue && stepX.Status == CryptoOrderStatus.Filled)
+    //                {
+    //                    if (stepX.Price < lastBuyPrice)
+    //                        lastBuyPrice = stepX.Price;
+    //                }
+    //            }
+    //        }
+    //    }
+    //    return lastBuyPrice;
+    //}
 
 
-    private static CryptoPositionStep LowestBuyPartObject(CryptoPosition position)
+    private static CryptoPositionStep LowestClosedBuyStep(CryptoPosition position)
     {
         // Retourneer de buy order van een niet afgesloten part (de laagste)
         // =Zelfde als bovenstaande, maar dan met een object ipv price
@@ -763,35 +763,46 @@ public class PositionMonitor
                             }
                             else
                             {
+                                //FixedPercentage, // De Zignally manier (bij elke dca verdubbeld de investering)
+                                //AfterNextSignal, // Stap op een volgende melding in (rekening houdende met cooldown en percentage)
+                                //TrailViaKcPsar // stop limit buy op de bovenste KC/PSAR
+
+
                                 // Een bijkoop zonder buy is onmogelijk
-                                decimal lastBuyPrice = LowestBuyPart(position);
-                                if (lastBuyPrice == decimal.MaxValue)
+                                CryptoPositionStep step = LowestClosedBuyStep(position);
+                                if (step == null)
                                 {
                                     GlobalData.AddTextToLogTab(text + " Geen eerste BUY price gevonden (removed)");
                                     Symbol.ClearSignals();
                                     return;
                                 }
+                                // Average prijs vanwege gespreide market of stoplimit order
+                                decimal lastBuyPrice = step.QuoteQuantityFilled / step.Quantity; 
                                 decimal percentage = 100m * (lastBuyPrice - signal.Price) / lastBuyPrice;
 
-                                //FixedPercentage, // De Zignally manier (bij elke dca verdubbeld de investering)
-                                //AfterNextSignal, // Stap op een volgende melding in (rekening houdende met cooldown en percentage)
-                                //TrailViaKcPsar // stop limit buy op de bovenste KC/PSAR
 
-                                // het percentage geld voro alle mogelijkheden
-                                //if (GlobalData.Settings.Trading.DcaStepInMethod == CryptoBuyStepInMethod.AfterNextSignal)
-
+                                // het percentage geld voor alle mogelijkheden
+                                // Het percentage moet in ieder geval x% onder de vorige buy opdracht zitten
+                                // (en dit heeft voordelen want dan hoef je niet te weten in welke DCA-index je zit!)
+                                // TODO: Dat zou (CC2 technisch) ook een percentage van de BB kunnen zijn als 3e optie.
+                                if (percentage < GlobalData.Settings.Trading.DcaPercentage)
                                 {
-                                    // Het percentage moet in ieder geval x% onder de vorige buy opdracht zitten
-                                    // (en dit heeft voordelen want dan hoef je niet te weten in welke DCA-index je zit!)
-                                    // TODO: Dat zou (CC2 technisch) ook een percentage van de BB kunnen zijn als 3e optie.
-
-                                    if (percentage < GlobalData.Settings.Trading.DcaPercentage)
-                                    {
-                                        GlobalData.AddTextToLogTab(text + " het is nog te vroeg voor een bijkoop (signal) " + percentage.ToString0("N2") + " (removed)");
-                                        Symbol.ClearSignals();
-                                        return;
-                                    }
+                                    GlobalData.AddTextToLogTab(text + $" het is nog te vroeg voor een bijkoop (signal) vanwege precentage {percentage.ToString0("N2")} (removed)");
+                                    Symbol.ClearSignals();
+                                    return;
                                 }
+
+
+                                // Er moet in ieder geval cooldown tijd verstreken zijn ten opzichte van de vorige buy opdracht
+                                // Nu is dit de laagste gesloten buy order, maar is dat ook automatisch de laatste? (denk het wel)
+                                // De datum moet de laatste activiteit zijn die in deze positie heeft plaatsgevonden qua steps (close of creatie)
+                                if (step.CloseTime?.AddMinutes(GlobalData.Settings.Trading.GlobalBuyCooldownTime) > LastCandle1mCloseTimeDate)
+                                {
+                                    GlobalData.AddTextToLogTab(text + " het is nog te vroeg voor een bijkoop (signal) vanwege cooldown (removed)");
+                                    Symbol.ClearSignals();
+                                    return;
+                                }
+
 
                                 if (PositionTools.IsTrailingPosition(position) != null)
                                 {
@@ -800,30 +811,6 @@ public class PositionMonitor
                                     return;
                                 }
 
-
-                                //if (GlobalData.Settings.Trading.DcaStepInMethod == CryptoDcaStepInMethod.FixedPercentage)
-                                //{
-                                //    // De eerste dca-bijkoop orders zou al geplaatst kunnen zijn
-                                //    // (de 2e dca enzovoort ook al, maar dat gaat te ver lijkt me)
-                                //    if (percentage < GlobalData.Settings.Trading.DcaPercentage)
-                                //    {
-                                //        GlobalData.AddTextToLogTab(text + " het is nog te vroeg voor een bijkoop (fixed) " + percentage.ToString0("N2") + " (removed)");
-                                //        Symbol.ClearSignals();
-                                //        return;
-                                //    }
-                                //}
-
-                                //if (GlobalData.Settings.Trading.DcaStepInMethod == CryptoDcaStepInMethod.TrailViaKcPsar)
-                                //{
-                                //    // De eerste dca-bijkoop orders zou al geplaatst kunnen zijn
-                                //    // (de 2e dca enzovoort ook al, maar dat gaat te ver lijkt me)
-                                //    if (percentage < GlobalData.Settings.Trading.DcaPercentage)
-                                //    {
-                                //        GlobalData.AddTextToLogTab(text + " het is nog te vroeg voor een bijkoop (trail)" + percentage.ToString0("N2") + " (removed)");
-                                //        Symbol.ClearSignals();
-                                //        return;
-                                //    }
-                                //}
 
                                 // Maar in ieder geval alleen bijkopen als we ONDER de break-even prijs zitten
                                 if (signal.Price < position.BreakEvenPrice)
@@ -870,7 +857,10 @@ public class PositionMonitor
         //if (position.Symbol.TradeList.ContainsKey((long)step.OrderId))
         //     return;
         if (step.TradeHandled)
+        {
+            GlobalData.AddTextToLogTab(Symbol.Name + " DEBUG step.TradeHandled is nog steeds relevant!");
             return;
+        }
 
         // Zet als afgehandeld
         // De trade wordt/werd dubbel aangemaakt (dus statistiek en BE van slag), om 
@@ -949,7 +939,7 @@ public class PositionMonitor
 
                     foreach (CryptoPositionStep step in part.Steps.Values.ToList())
                     {
-                        if (step.Status == CryptoOrderStatus.New) // && !step.TradeHandled
+                        if (step.Status == CryptoOrderStatus.New)
                         {
                             if (onlyMarketOrders && step.OrderType != CryptoOrderType.Market)
                                 continue;
@@ -1205,6 +1195,10 @@ public class PositionMonitor
                         step = PositionTools.CreatePositionStep(position, part, result.tradeParams, "BUY");
                         PositionTools.InsertPositionStep(databaseThread, position, step);
                         PositionTools.AddPositionPartStep(part, step);
+
+                        // Een eventuele market order direct laten vullen
+                        if (position.TradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading && step.OrderType == CryptoOrderType.Market)
+                            await CreatePaperTradeObject(position, step, LastCandle1m.Close);
                     }
                 }
                 else if (stepInMethod == CryptoBuyStepInMethod.TrailViaKcPsar)
@@ -1651,7 +1645,7 @@ public class PositionMonitor
             if (GlobalData.Settings.Trading.DcaPercentage <= 0)
                 return;
 
-            CryptoPositionStep step = LowestBuyPartObject(position);
+            CryptoPositionStep step = LowestClosedBuyStep(position);
             if (step == null)
                 return;
             decimal percentage = 100m * (step.Price - LastCandle1m.Close) / step.Price;
@@ -1909,10 +1903,10 @@ public class PositionMonitor
 
             // Simuleer een Trade om eventuele (net gemaakte) market orders te vullen
             // (het zou nog mooier zijn als we deze even in een lijst verzamelen, maar voila)
-            if (GlobalData.BackTest)
-                await PaperTradingCheckOrders(GlobalData.ExchangeBackTestAccount, true);
-            if (GlobalData.Settings.Trading.TradeViaPaperTrading)
-                await PaperTradingCheckOrders(GlobalData.ExchangePaperTradeAccount, true);
+//            if (GlobalData.BackTest)
+//                await PaperTradingCheckOrders(GlobalData.ExchangeBackTestAccount, true);
+//            if (GlobalData.Settings.Trading.TradeViaPaperTrading)
+//                await PaperTradingCheckOrders(GlobalData.ExchangePaperTradeAccount, true);
 #endif
 
 

@@ -44,21 +44,27 @@ public class Migration
             if (CurrentVersion > version.Version && version.Version == 2)
             {
                 using var transaction = database.BeginTransaction();
-                // do the updates..
 
-                //alter table PositionPart drop column BuyAmount
-                //alter table PositionPart rename column BuyPrice TO SignalPrice;
-                //alter table PositionPart drop column Sellprice
-
-                database.Connection.Execute("alter table PositionPart drop column BuyAmount", transaction);
-                database.Connection.Execute("alter table PositionPart drop column Sellprice", transaction);
-                database.Connection.Execute("alter table PositionPart rename column BuyPrice TO SignalPrice", transaction);
 
                 // De accounttype voor Futures is niet goed ingevuld, deze staan allemaal op spot (verkeerde initialisatie)
                 database.Connection.Execute("update TradeAccount set AccountType=1 where name like '%Futures%'", transaction);
 
+                // Ongebruikte kolommen
+                database.Connection.Execute("alter table PositionPart drop column BuyAmount", transaction);
+                database.Connection.Execute("alter table PositionPart drop column Sellprice", transaction);
+
+                // Duidelijke naam geven
+                database.Connection.Execute("alter table PositionPart rename column BuyPrice TO SignalPrice", transaction);
+
+                // De reden van aankoop (c.q. methode van aankoop)
+                database.Connection.Execute("alter table PositionPart add StepInMethod Integer", transaction);
+
+                // De gemiddelde prijs dat het gekocht of verkocht is (meerdere trades ivm market of stoplimit)
+                database.Connection.Execute("alter table PositionStep add AvgPrice TEXT", transaction);
+
+
                 // update version
-                //version.Version += 1;
+                version.Version += 1;
                 database.Connection.Update(version, transaction);
                 transaction.Commit();
             }

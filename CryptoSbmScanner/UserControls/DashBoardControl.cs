@@ -61,6 +61,7 @@ public partial class DashBoardControl : UserControl
     private readonly int GraphHeight = 250;
 
     private QueryPositionData OpenData = new();
+    private QueryPositionData ClosedData = new();
     private readonly List<QueryTradeData> QueryTradeDataList = new();
     private readonly List<QueryPositionData> QueryPositionDataList = new();
 
@@ -76,6 +77,66 @@ public partial class DashBoardControl : UserControl
         InitializeComponent();
     }
 
+
+    private List<QueryPositionData> GetQueryInvestedData()
+    {
+        // dit is de query die per dag het een en ander aan info ophaalt
+        StringBuilder builder = new();
+        builder.AppendLine("select date(positionStep.CloseTime) as CloseTime, symbol.quote, sum(positionStep.QuoteQuantityFilled) as Invested");
+        builder.AppendLine("from PositionStep");
+        builder.AppendLine("inner join position on Position.Id = positionStep.PositionId");
+        builder.AppendLine("inner join symbol on Position.symbolid = symbol.id");
+        builder.AppendLine("where PositionStep.status in (1, 2) and PositionStep.Side = 0");
+        builder.AppendLine("group by date(PositionStep.CloseTime), PositionStep.Status, symbol.quote");
+        builder.AppendLine("order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote");
+
+        using CryptoDatabase databaseThread = new();
+        databaseThread.Open();
+
+        List<QueryPositionData> list = new();
+        foreach (QueryPositionData data in databaseThread.Connection.Query<QueryPositionData>(builder.ToString()))
+        {
+            if (data.CloseTime.Date > new DateTime(2000, 01, 01))
+                list.Add(data);
+        }
+        return list;
+    }
+
+    private List<QueryPositionData> GetQueryReturnedData()
+    {
+        // dit is de query die per dag het een en ander aan info ophaalt
+        StringBuilder builder = new();
+        builder.AppendLine("select date(positionStep.CloseTime) as CloseTime, symbol.quote, sum(positionStep.QuoteQuantityFilled) as Returned");
+        builder.AppendLine("from PositionStep");
+        builder.AppendLine("inner join position on Position.Id = positionStep.PositionId");
+        builder.AppendLine("inner join symbol on Position.symbolid = symbol.id");
+        builder.AppendLine("where PositionStep.status in (1, 2) and PositionStep.Side = 1");
+        builder.AppendLine("group by date(PositionStep.CloseTime), PositionStep.Status, symbol.quote");
+        builder.AppendLine("order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote");
+
+        using CryptoDatabase databaseThread = new();
+        databaseThread.Open();
+
+        List<QueryPositionData> list = new();
+        foreach (QueryPositionData data in databaseThread.Connection.Query<QueryPositionData>(builder.ToString()))
+        {
+            if (data.CloseTime.Date > new DateTime(2000, 01, 01))
+                list.Add(data);
+        }
+        return list;
+    }
+
+    /*
+select date(positionStep.CloseTime), symbol.quote, sum(positionStep.QuoteQuantityFilled) as Invested
+from PositionStep
+inner join position on Position.Id = positionStep.PositionId
+inner join symbol on Position.symbolid = symbol.id
+where PositionStep.status in (1, 2) and PositionStep.Side = 0
+group by date(PositionStep.CloseTime), PositionStep.Status, symbol.quote
+order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
+
+    
+    */
     private void GetQueryTradeData()
     {
         // dit is de query die per dag het een en ander aan info ophaalt
@@ -105,11 +166,20 @@ public partial class DashBoardControl : UserControl
         // TODO: Vandaag toevoegen
         // Experiment #1 is een chart met per datum het aantal gesloten posities
         // De 1e kolom is het aantal nog openstaande posities, die moeten we nog ergens onderbrengen
+        ClosedData = new();
         QueryPositionDataList.Clear();
         foreach (QueryPositionData data in databaseThread.Connection.Query<QueryPositionData>(builder.ToString()))
         {
             if (data.CloseTime.Date > new DateTime(2000, 01, 01))
+            {
                 QueryPositionDataList.Add(data);
+
+                ClosedData.Positions += data.Positions;
+                ClosedData.Invested += data.Invested;
+                ClosedData.Returned += data.Returned;
+                ClosedData.Commission += data.Commission;
+                // enzovoort..
+            }
             else
                 OpenData = data; // het restant
         }
@@ -354,7 +424,7 @@ public partial class DashBoardControl : UserControl
     {
         if (ChartInvestedReturnedPerDay == null)
         {
-            ChartInvestedReturnedPerDay = CreateChart("Geinvesteerde en geretourneede bedragen per dag", x, y);
+            ChartInvestedReturnedPerDay = CreateChart("Geinvesteerde en geretourneerde bedragen per dag", x, y);
             Controls.Add(ChartInvestedReturnedPerDay);
 
             ChartArea chartArea = CreateChartArea("N2");
@@ -380,6 +450,13 @@ public partial class DashBoardControl : UserControl
         };
         ChartInvestedReturnedPerDay.Series.Add(series1);
 
+        var list = GetQueryInvestedData();
+        foreach (var data in list)
+        {
+            if (data.CloseTime.Date > new DateTime(2000, 01, 01))
+                series1.Points.AddXY(data.CloseTime.Date, data.Invested);
+        }
+
         var series2 = new Series
         {
             Name = "Geretourneerd",
@@ -391,17 +468,24 @@ public partial class DashBoardControl : UserControl
         };
         ChartInvestedReturnedPerDay.Series.Add(series2);
 
-
-        foreach (QueryTradeData data in QueryTradeDataList)
+        list = GetQueryReturnedData();
+        foreach (var data in list)
         {
-            if (data.TradeTime.Date > new DateTime(2000, 01, 01))
-            {
-                if (data.Side == CryptoOrderSide.Buy)
-                    series1.Points.AddXY(data.TradeTime.Date, data.Value);
-                else
-                    series2.Points.AddXY(data.TradeTime.Date, data.Value);
-            }
+            if (data.CloseTime.Date > new DateTime(2000, 01, 01))
+                series2.Points.AddXY(data.CloseTime.Date, data.Returned);
         }
+
+
+        //foreach (QueryTradeData data in QueryTradeDataList)
+        //{
+        //    if (data.TradeTime.Date > new DateTime(2000, 01, 01))
+        //    {
+        //        if (data.Side == CryptoOrderSide.Buy)
+        //            series1.Points.AddXY(data.TradeTime.Date, data.Value);
+        //        else
+        //            series2.Points.AddXY(data.TradeTime.Date, data.Value);
+        //    }
+        //}
 
         ChartInvestedReturnedPerDay.Invalidate();
     }
@@ -411,7 +495,7 @@ public partial class DashBoardControl : UserControl
         // TODO: Iets met het meten van doorlooptijden, maar hoe doe ik dat?
         // Want de doorlooptijd kan een week of zelfs weken zijn (als btc dropped)
         // De bestaande data meet het in minuten (is dat wel handig?)
-        
+
         // Is er wel genoeg ruimte op het scherm
 
         // Gewoon eerst even een graph met daarin:
@@ -420,7 +504,7 @@ public partial class DashBoardControl : UserControl
         // - Maximale tradetijd
         if (ChartDoorlooptijden == null)
         {
-            ChartDoorlooptijden  = CreateChart("Minimale, maximale en gemiddelde doorlooptijden per????????", x, y);
+            ChartDoorlooptijden = CreateChart("Minimale, maximale en gemiddelde doorlooptijden per????????", x, y);
             Controls.Add(ChartDoorlooptijden);
 
             ChartArea chartArea = CreateChartArea("N2");
@@ -482,6 +566,7 @@ public partial class DashBoardControl : UserControl
 
     private void CreateChart()
     {
+        string quoteDataDisplayString = "N2";
         // Diverse statistieken van de posities per dag (via position tabel)
         // +Investeringen en returnments per dag (via trade tabel)
 
@@ -501,12 +586,12 @@ public partial class DashBoardControl : UserControl
 
         // En de lopende posities
         labelPositions.Text = OpenData.Positions.ToString();
-        labelInvested.Text = OpenData.Invested.ToString();
-        labelReturned.Text = OpenData.Returned.ToString();
-        labelCommission.Text = OpenData.Commission.ToString();
+        labelInvested.Text = OpenData.Invested.ToString(quoteDataDisplayString);
+        labelReturned.Text = OpenData.Returned.ToString(quoteDataDisplayString);
+        labelCommission.Text = OpenData.Commission.ToString(quoteDataDisplayString);
 
         decimal investedInTrades = OpenData.Invested - OpenData.Returned - OpenData.Commission;
-        labelNettoPnlValue.Text = investedInTrades.ToString();
+        labelNettoPnlValue.Text = investedInTrades.ToString(quoteDataDisplayString);
 
 
         // Als je de openstaande posities zou verkopen, wat krijg je dan terug?
@@ -523,13 +608,35 @@ public partial class DashBoardControl : UserControl
                 }
             }
         }
-        labelNettoPnlValue2.Text = currentValue.ToString();
+        labelNettoPnlValue2.Text = currentValue.ToString(quoteDataDisplayString);
 
-        labelNettoPnlValue3.Text = (currentValue - investedInTrades).ToString();
+        labelNettoPnlValue3.Text = (currentValue - investedInTrades).ToString(quoteDataDisplayString);
         if (investedInTrades > 0)
-            labelNettoPnlValue4.Text = ((100 * (currentValue / investedInTrades)) - 100).ToString("N2") + " %";
+            labelNettoPnlValue4.Text = ((100 * (currentValue / investedInTrades)) - 100).ToString("N2");
         else
             labelNettoPnlValue4.Text = "? %";
+
+
+
+
+
+        // En de gesloten posities
+        label16.Text = ClosedData.Positions.ToString();
+        label21.Text = ClosedData.Invested.ToString(quoteDataDisplayString);
+        label18.Text = ClosedData.Returned.ToString(quoteDataDisplayString);
+        label19.Text = ClosedData.Commission.ToString(quoteDataDisplayString);
+
+        currentValue = ClosedData.Returned - ClosedData.Invested - ClosedData.Commission;
+        label20.Text = currentValue.ToString(quoteDataDisplayString);
+        //label14.Text = currentValue.ToString(quoteDataDisplayString);
+        label12.Text = currentValue.ToString(quoteDataDisplayString);
+
+
+        if (ClosedData.Invested > 0)
+            label3.Text = ((100 * (currentValue / ClosedData.Invested))).ToString("N2");
+        else
+            label3.Text = "";
+
         return;
     }
 
