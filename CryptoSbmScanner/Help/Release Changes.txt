@@ -61,7 +61,13 @@ De ondersteuning van de Kucoin exchange is uitgesteld (want de price- en klineti
 - Kukoin Spot - Scanner: limieten (rate limits) ondersteunen
 
 
-xx-07-2023 1.8.2
+xx-08-2023 1.8.3
+- De documentatie voor een groot deel bijgewerkt
+- Het initiele lettertype in het dialoog komt niet overeen met de voorheen gekozen lettertype
+  (het letterype wordt standaard op "Microsoft Sans Serif; 8pt" gezet terwijl de default "Segoe UI; 9pt" gebruikt wordt
+
+
+03-08-2023 1.8.2
 - De kolommen van de signalen kunnen met de rechtermuisknop menu onzichtbaar worden gemaakt
 - De sorteer indicator van de signalen (en posities) wordt nu correct getoond.
 - De tekst 1h, 4h en 1d toevoegen bij de barometer waardes.
@@ -102,7 +108,6 @@ xx-07-2023 1.8.2
   CryptoSbmScanner.exe -e Binance
   CryptoSbmScanner.exe -e "Bybit Spot"
   CryptoSbmScanner.exe -e "Bybit Futures"
-  CryptoSbmScanner.exe -e Kucoin
 - Voor STOBB de minimale trend controleren voor de CC manier (een nieuwe instelling) (direct een probleem bij short posities)
 - Het Volume van Bybit staat in BASE volume in plaats van QUOTE volume!
 - Bugfix Bybit 1m kline ticker (symbol wordt geprefixed door het interval, rare jongens)
