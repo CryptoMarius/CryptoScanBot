@@ -94,7 +94,7 @@ public partial class FrmSettings : Form
         // Deze moeten op het formulier komen te staan (om de edits te kunnen refereren/chainen)
         int yPos = 50;
         foreach (var signalDefinition in TradingConfig.AlgorithmDefinitionIndex.Values)
-            SettingsStrategyList.Add(signalDefinition.Strategy, new SettingsStrategy(CryptoOrderSide.Buy, signalDefinition, 675, yPos += 26, tabPageTrading.Controls));
+            SettingsStrategyList.Add(signalDefinition.Strategy, new SettingsStrategy(CryptoOrderSide.Buy, signalDefinition, 675, yPos += 30, tabPageTrading.Controls));
         SettingsStrategyList.Values[0].AddHeaderLabelsMain(30, tabPageTrading.Controls);
         SettingsStrategyList.Values[0].AddHeaderLabels(50, tabPageTrading.Controls);
 
@@ -203,6 +203,7 @@ public partial class FrmSettings : Form
                 text.Add(definition.Name);
         }
     }
+
 
     private void SetGrayed(object sender, EventArgs e)
     {
@@ -875,7 +876,7 @@ public partial class FrmSettings : Form
     {
         FontDialog dialog = new()
         {
-            Font = Font
+            Font = this.Font
         };
         if (dialog.ShowDialog() == DialogResult.OK)
         {
@@ -900,4 +901,5 @@ public partial class FrmSettings : Form
         string folder = GlobalData.GetBaseDir();
         System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(folder) { UseShellExecute = true });
     }
+
 }

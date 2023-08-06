@@ -143,12 +143,13 @@ public partial class FrmMain : Form
         // Eventueel de nieuwe quotes zetten enz.
         dashBoardInformation1.InitializeBarometer();
 
-        if ((GlobalData.Settings.General.FontSize != this.Font.Size) || (GlobalData.Settings.General.FontName.Equals(this.Font.Name)))
+        if ((GlobalData.Settings.General.FontSize != Font.Size) || (GlobalData.Settings.General.FontName.Equals(Font.Name)))
         {
-            this.Font = new System.Drawing.Font(GlobalData.Settings.General.FontName, GlobalData.Settings.General.FontSize,
+            Font = new System.Drawing.Font(GlobalData.Settings.General.FontName, GlobalData.Settings.General.FontSize,
                 System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 
             //this.applicationMenuStrip.Font.Size = GlobalData.Settings.General.FontSize;
+            dashBoardControl1.Font = Font;
         }
 
         ListboxSymbolsInitCaptions();

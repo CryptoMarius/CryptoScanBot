@@ -2534,7 +2534,7 @@ partial class FrmSettings
         EditBuyStepInMethod.Location = new Point(185, 170);
         EditBuyStepInMethod.Margin = new Padding(4, 3, 4, 3);
         EditBuyStepInMethod.Name = "EditBuyStepInMethod";
-        EditBuyStepInMethod.Size = new Size(170, 23);
+        EditBuyStepInMethod.Size = new Size(200, 23);
         EditBuyStepInMethod.TabIndex = 262;
         // 
         // label82
@@ -2554,7 +2554,7 @@ partial class FrmSettings
         EditDcaStepInMethod.Location = new Point(185, 308);
         EditDcaStepInMethod.Margin = new Padding(4, 3, 4, 3);
         EditDcaStepInMethod.Name = "EditDcaStepInMethod";
-        EditDcaStepInMethod.Size = new Size(170, 23);
+        EditDcaStepInMethod.Size = new Size(200, 23);
         EditDcaStepInMethod.TabIndex = 260;
         // 
         // label65
@@ -2608,7 +2608,7 @@ partial class FrmSettings
         EditSellMethod.Location = new Point(185, 512);
         EditSellMethod.Margin = new Padding(4, 3, 4, 3);
         EditSellMethod.Name = "EditSellMethod";
-        EditSellMethod.Size = new Size(170, 23);
+        EditSellMethod.Size = new Size(200, 23);
         EditSellMethod.TabIndex = 253;
         // 
         // EditTradeViaPaperTrading
@@ -2639,7 +2639,7 @@ partial class FrmSettings
         EditDcaOrderMethod.Location = new Point(185, 336);
         EditDcaOrderMethod.Margin = new Padding(4, 3, 4, 3);
         EditDcaOrderMethod.Name = "EditDcaOrderMethod";
-        EditDcaOrderMethod.Size = new Size(170, 23);
+        EditDcaOrderMethod.Size = new Size(200, 23);
         EditDcaOrderMethod.TabIndex = 249;
         // 
         // label36
@@ -3026,7 +3026,7 @@ partial class FrmSettings
         EditBuyOrderMethod.Location = new Point(185, 197);
         EditBuyOrderMethod.Margin = new Padding(4, 3, 4, 3);
         EditBuyOrderMethod.Name = "EditBuyOrderMethod";
-        EditBuyOrderMethod.Size = new Size(170, 23);
+        EditBuyOrderMethod.Size = new Size(200, 23);
         EditBuyOrderMethod.TabIndex = 213;
         // 
         // EditDcaCount
@@ -3529,7 +3529,6 @@ partial class FrmSettings
     private TextBox EditTelegramToken;
     private Label label15;
     private TabPage tabBasismunten;
-    private Label label19;
     private TabPage tabPageSignals;
     private Label label64;
     private NumericUpDown EditAnalysisMinEffectivePercentage;
