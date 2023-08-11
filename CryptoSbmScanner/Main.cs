@@ -56,7 +56,6 @@ public partial class FrmMain : Form
         ScannerSession.TimerClearMemo.Elapsed += TimerClearMemo_Tick;
         ScannerSession.TimerAddSignal.Elapsed += TimerAddSignalsAndLog_Tick;
         ScannerSession.TimerSoundHeartBeat.Elapsed += TimerSoundHeartBeat_Tick;
-        //ScannerSession.TimerShowInformation.Elapsed += TimerShowInformation_Tick;
         ScannerSession.TimerShowInformation.Elapsed += dashBoardInformation1.TimerShowInformation_Tick;
 
 
@@ -179,6 +178,10 @@ public partial class FrmMain : Form
         ApplicationTradingBot.Checked = GlobalData.Settings.Trading.Active;
         ApplicationPlaySounds.Checked = GlobalData.Settings.Signal.SoundsActive;
         ApplicationCreateSignals.Checked = GlobalData.Settings.Signal.SignalsActive;
+
+        panelLeft.Visible = !GlobalData.Settings.General.HideSymbolsOnTheLeft;
+        //panelLeftTop.Visible = !GlobalData.Settings.General.HideSymbolsOnTheLeft;
+        //listBoxSymbols.Visible = !GlobalData.Settings.General.HideSymbolsOnTheLeft;
 
         this.Refresh();
         //GlobalData.DumpSessionInformation();

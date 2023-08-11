@@ -27,7 +27,7 @@
             listBoxSymbolsMenuItemShowTrendInformation = new ToolStripMenuItem();
             listBoxSymbolsMenuItemCopy = new ToolStripMenuItem();
             listBoxSymbolsMenuItemCandleDump = new ToolStripMenuItem();
-            panel3 = new Panel();
+            panelLeftTop = new Panel();
             label1 = new Label();
             applicationMenuStrip = new MenuStrip();
             MenuMain = new ToolStripMenuItem();
@@ -73,7 +73,7 @@
             panelLeft.SuspendLayout();
             panel4.SuspendLayout();
             listBoxSymbolsMenuStrip.SuspendLayout();
-            panel3.SuspendLayout();
+            panelLeftTop.SuspendLayout();
             applicationMenuStrip.SuspendLayout();
             panelClient.SuspendLayout();
             tabControl.SuspendLayout();
@@ -93,7 +93,7 @@
             // panelLeft
             // 
             panelLeft.Controls.Add(panel4);
-            panelLeft.Controls.Add(panel3);
+            panelLeft.Controls.Add(panelLeftTop);
             panelLeft.Dock = DockStyle.Left;
             panelLeft.Location = new Point(0, 0);
             panelLeft.Margin = new Padding(2);
@@ -173,17 +173,17 @@
             listBoxSymbolsMenuItemCandleDump.Text = "Candle dump";
             listBoxSymbolsMenuItemCandleDump.Click += ListBoxSymbolsMenuItemCandleDump_Click;
             // 
-            // panel3
+            // panelLeftTop
             // 
-            panel3.Controls.Add(label1);
-            panel3.Controls.Add(applicationMenuStrip);
-            panel3.Controls.Add(symbolFilter);
-            panel3.Dock = DockStyle.Top;
-            panel3.Location = new Point(0, 0);
-            panel3.Margin = new Padding(2);
-            panel3.Name = "panel3";
-            panel3.Size = new Size(190, 103);
-            panel3.TabIndex = 1;
+            panelLeftTop.Controls.Add(label1);
+            panelLeftTop.Controls.Add(applicationMenuStrip);
+            panelLeftTop.Controls.Add(symbolFilter);
+            panelLeftTop.Dock = DockStyle.Top;
+            panelLeftTop.Location = new Point(0, 0);
+            panelLeftTop.Margin = new Padding(2);
+            panelLeftTop.Name = "panelLeftTop";
+            panelLeftTop.Size = new Size(190, 103);
+            panelLeftTop.TabIndex = 1;
             // 
             // label1
             // 
@@ -507,19 +507,19 @@
             // 
             contextMenuStripPositionsClosed.Items.AddRange(new ToolStripItem[] { contextMenuStripPositionsOpenRecalculate, debugDumpExcelToolStripMenuItem });
             contextMenuStripPositionsClosed.Name = "contextMenuStrip1";
-            contextMenuStripPositionsClosed.Size = new Size(181, 70);
+            contextMenuStripPositionsClosed.Size = new Size(175, 48);
             // 
             // contextMenuStripPositionsOpenRecalculate
             // 
             contextMenuStripPositionsOpenRecalculate.Name = "contextMenuStripPositionsOpenRecalculate";
-            contextMenuStripPositionsOpenRecalculate.Size = new Size(180, 22);
+            contextMenuStripPositionsOpenRecalculate.Size = new Size(174, 22);
             contextMenuStripPositionsOpenRecalculate.Text = "Herberekenen";
             contextMenuStripPositionsOpenRecalculate.Click += ContextMenuStripPositionsOpenRecalculateAsync_Click;
             // 
             // debugDumpExcelToolStripMenuItem
             // 
             debugDumpExcelToolStripMenuItem.Name = "debugDumpExcelToolStripMenuItem";
-            debugDumpExcelToolStripMenuItem.Size = new Size(180, 22);
+            debugDumpExcelToolStripMenuItem.Size = new Size(174, 22);
             debugDumpExcelToolStripMenuItem.Text = "Debug dump Excel";
             debugDumpExcelToolStripMenuItem.Click += DebugPositionClosedDumpExcelToolStripMenuItemAsync_Click;
             // 
@@ -567,8 +567,8 @@
             panelLeft.ResumeLayout(false);
             panel4.ResumeLayout(false);
             listBoxSymbolsMenuStrip.ResumeLayout(false);
-            panel3.ResumeLayout(false);
-            panel3.PerformLayout();
+            panelLeftTop.ResumeLayout(false);
+            panelLeftTop.PerformLayout();
             applicationMenuStrip.ResumeLayout(false);
             applicationMenuStrip.PerformLayout();
             panelClient.ResumeLayout(false);
@@ -592,7 +592,7 @@
         private Panel panelLeft;
         private Panel panelClient;
         private ListBox listBoxSymbols;
-        private Panel panel3;
+        private Panel panelLeftTop;
         private Panel panel4;
         private Panel panelClient1;
         private ContextMenuStrip listBoxSymbolsMenuStrip;
