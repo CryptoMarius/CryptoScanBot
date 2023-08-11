@@ -48,14 +48,12 @@ public class CryptoPositionPart
 
     public decimal Quantity { get; set; }
     public decimal BreakEvenPrice { get; set; }
-
     
     // Buy gegevens
-    public decimal BuyPrice { get; set; } // initiele prijs van het signaal (data overdracht)
+    public decimal SignalPrice { get; set; } // initiele prijs van het signaal (data overdracht)
 
-    [Computed]
     public CryptoBuyStepInMethod StepInMethod  { get; set; } // De reden van bijkoop
-
+    public CryptoBuyStepInMethod StepOutMethod { get; set; } // De reden van verkoop
 
     [Computed]
     public SortedList<int, CryptoPositionStep> Steps { get; set; } = new();

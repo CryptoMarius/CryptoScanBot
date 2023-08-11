@@ -58,6 +58,9 @@ public class Migration
 
                 // De reden van aankoop (c.q. methode van aankoop)
                 database.Connection.Execute("alter table PositionPart add StepInMethod Integer", transaction);
+                // De reden van verkoop (c.q. methode van verkoop)
+                database.Connection.Execute("alter table PositionPart add StepOutMethod Integer", transaction);
+                
 
                 // De gemiddelde prijs dat het gekocht of verkocht is (meerdere trades ivm market of stoplimit)
                 database.Connection.Execute("alter table PositionStep add AvgPrice TEXT", transaction);

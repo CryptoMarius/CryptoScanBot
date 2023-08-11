@@ -5,7 +5,8 @@ using Dapper.Contrib.Extensions;
 namespace CryptoSbmScanner.Model;
 
 /// <summary>
-/// Een step is een geplaatste order en onderdeel van een positiestap
+/// Een step is een geplaatste buy of sell order en het is onderdeel van een positiestap (een zogenaamde groep van orders)
+/// De exchanges afhandeling van een order en het lokaal verwijderen van een order kruisen elkaar wel eens (daarom wordt alles bewaard)
 /// </summary>
 [Table("PositionStep")]
 public class CryptoPositionStep
@@ -19,10 +20,8 @@ public class CryptoPositionStep
     public DateTime CreateTime { get; set; }
     public DateTime? CloseTime { get; set; }
 
-    public CryptoOrderStatus Status { get; set; } // New, Filled, PartiallFilled
-    // TODO: Renamen naar Side?
     public CryptoOrderSide Side { get; set; } // (buy of sell)
-    // TODO: Renamen naar Type?
+    public CryptoOrderStatus Status { get; set; } // New, Filled, PartiallFilled
     public CryptoOrderType OrderType { get; set; } // (limit, stop limit, oco enz)
 
     public decimal Price { get; set; } // Tevens de LimitPrice indien het een OCO is
@@ -37,20 +36,12 @@ public class CryptoPositionStep
     public long? OrderId { get; set; } // Vanwege papertrading moet deze nullable zijn
     public long? Order2Id { get; set; } // Eventuele limit order
 
-    [Computed]
-    public decimal Commission { get; set; }
-
-    // De gemiddelde prijs dat het gekocht of verkocht is (meerdere trades ivm market of stoplimit)
-    [Computed]
-    public decimal AvgPrice { get; set; } 
-
-    // Emulator
+    // Of we aan het trailen zijn (de order iedere keer een beetje verzetten)
     public CryptoTrailing Trailing { get; set; }
 
-
-    // Bug bestrijding: vanwege dubbele afhandeling - TODO: Opsporen en deze verwijderen, gaat het via db wel goed?
-    // We handelen de market order nu direct af, dus wellicht is het nu ook opgelost? (weet ik niet zeker, testen)
-    [Computed]
-    public bool TradeHandled { get; set; } 
+    // De definitieve gemiddelde prijs over de onderliggende trades (meerdere trades ivm market of stoplimit)
+    public decimal AvgPrice { get; set; }
+    // De definitieve commissie van alle onderliggende trades (meerdere trades ivm market of stoplimit)
+    public decimal Commission { get; set; }
 
 }

@@ -18,7 +18,7 @@ namespace CryptoSbmScanner.Context;
 public class CryptoDatabase : IDisposable
 {
     // De huidige database versie (zoals in de code is gedefinieerd)
-    private readonly static int CurrentVersion = 2;
+    private readonly static int CurrentVersion = 3;
 
     public static void SetDatabaseDefaults()
     {
@@ -952,9 +952,9 @@ public class CryptoDatabase : IDisposable
                 "Quantity TEXT NULL, " +
                 "BreakEvenPrice TEXT NULL, " +
 
-                "BuyPrice TEXT NOT NULL, " +
-                "BuyAmount TEXT NULL, " + // kan verwijderd worden
-                "SellPrice TEXT NULL, " + // kan verwijderd worden
+                "SignalPrice TEXT NOT NULL, " + // was BuyPrice
+                //"BuyAmount TEXT NULL, " + // kan verwijderd worden
+                //"SellPrice TEXT NULL, " + // kan verwijderd worden
 
                 "FOREIGN KEY(PositionId) REFERENCES Position(Id)," +
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +
@@ -993,7 +993,11 @@ public class CryptoDatabase : IDisposable
                 // Vanwege Papertrading nullable
                 "OrderId TEXT NULL," +
                 "Order2Id TEXT NULL," +
-                //"OrderListId TEXT NULL," +
+                //"OrderListId TEXT NULL," + // Binance OCO, extra lijst? (nooit gebruikt)
+                "AvgPrice TEXT NULL," +
+                "Commission TEXT NULL," +
+                "StepInMethod INTEGER NULL," +
+                "StepOutMethod INTEGER NULL," +
                 "Trailing INTEGER NULL," +
                 "FOREIGN KEY(PositionId) REFERENCES Position(Id)," +
                 "FOREIGN KEY(PositionPartId) REFERENCES PositionPart(Id)" +
