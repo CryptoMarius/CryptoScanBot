@@ -165,6 +165,7 @@ public class ExcelPositionDump : ExcelBase
             ++row;
             {
                 cell = WriteCell(sheet, 0, row, part.Id);
+                cell = WriteCell(sheet, 1, row, part.Name);
                 cell = WriteCell(sheet, 2, row, part.Side.ToString());
                 cell = WriteCell(sheet, 3, row, (DateTime)part.CreateTime.ToLocalTime());
                 cell.CellStyle = CellStyleDate;
