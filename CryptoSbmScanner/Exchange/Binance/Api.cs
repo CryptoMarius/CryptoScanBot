@@ -84,21 +84,19 @@ public class Api : ExchangeBase
 {
     public static readonly string ExchangeName = "Binance";
 
+
     public Api() : base()
     {
     }
 
     public override void ExchangeDefaults()
     {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} defaults");
+        GlobalData.AddTextToLogTab($"{ExchangeName} defaults");
+
         // Default opties voor deze exchange
         //
 
-        ExchangeHelper.PriceTicker = new PriceTicker();
-        ExchangeHelper.KLineTicker = new KLineTicker();
-#if TRADEBOT
-        ExchangeHelper.UserData = new UserData();
-#endif
+
 
         //BinanceRestClient.SetDefaultOptions(options => { 
         //    options.ApiCredentials = new ApiCredentials(apiKey, apiSecret); 
@@ -122,13 +120,13 @@ public class Api : ExchangeBase
                 options.ApiCredentials = new ApiCredentials(GlobalData.Settings.ApiKey, GlobalData.Settings.ApiSecret);
         });
 
-        {
+        //{
             //BinanceSocketClientOptions options = new();
             //if (GlobalData.Settings.ApiKey != "")
             //    options.ApiCredentials = new BinanceApiCredentials(GlobalData.Settings.ApiKey, GlobalData.Settings.ApiSecret);
             //options.SpotStreamsOptions.AutoReconnect = true;
             //options.SpotStreamsOptions.ReconnectInterval = TimeSpan.FromSeconds(15);
-        }
+        //}
         BinanceSocketClient.SetDefaultOptions(options =>
         {
             options.AutoReconnect = true;
@@ -136,6 +134,12 @@ public class Api : ExchangeBase
             if (GlobalData.Settings.ApiKey != "")
                 options.ApiCredentials = new ApiCredentials(GlobalData.Settings.ApiKey, GlobalData.Settings.ApiSecret);
         });
+
+        ExchangeHelper.PriceTicker = new PriceTicker();
+        ExchangeHelper.KLineTicker = new KLineTicker();
+#if TRADEBOT
+        ExchangeHelper.UserData = new UserData();
+#endif
     }
 
     public async override Task FetchSymbolsAsync()
@@ -195,37 +199,6 @@ public class Api : ExchangeBase
         return localOrderStatus;
     }
 
-    private void DumpOrder(CryptoSymbol symbol, TradeParams tradeParams, string extraText)
-    {
-        string text2 = string.Format("{0} POSITION {1} {2} ORDER #{3} {4} PLACED price={5} stop={6} quantity={7} quotequantity={8}",
-            symbol.Name, tradeParams.Side,
-            tradeParams.OrderType.ToString(),
-            tradeParams.OrderId,
-            extraText,
-            tradeParams.Price.ToString0(),
-            tradeParams.StopPrice?.ToString0(),
-            tradeParams.Quantity.ToString0(),
-            tradeParams.QuoteQuantity.ToString0());
-        GlobalData.AddTextToLogTab(text2);
-        GlobalData.AddTextToTelegram(text2);
-    }
-
-    private void DumpError(CryptoSymbol symbol, CryptoOrderType orderType, CryptoOrderSide orderSide,
-        decimal quantity, decimal price, decimal? stop, decimal? limit, string extraText,
-        string responseStatusCode, string error)
-    {
-        string text = string.Format("{0} ERROR {1} {2} order {3} {4} {5}\r\n", symbol.Name, orderType, orderSide, responseStatusCode, error, extraText);
-        text += string.Format("quantity={0}\r\n", quantity.ToString0());
-        text += string.Format("price={0}\r\n", price.ToString0());
-        if (stop.HasValue)
-            text += string.Format("stop={0}\r\n", stop?.ToString0());
-        if (limit.HasValue)
-            text += string.Format("limit={0}\r\n", limit?.ToString0());
-        //text += string.Format("lastprice={0}\r\n", Symbol.LastPrice?.ToString0());
-        //text += string.Format("trades={0}\r\n", Symbol.TradeList.Count);
-        GlobalData.AddTextToLogTab(text);
-        GlobalData.AddTextToTelegram(text);
-    }
 
     public async Task<(bool result, TradeParams tradeParams)> BuyOrSell(
         CryptoTradeAccount tradeAccount, CryptoSymbol symbol, DateTime currentDate,
@@ -254,8 +227,11 @@ public class Api : ExchangeBase
             LimitPrice = limit, // OCO - the lowest price that the trader is willing to accept
             Quantity = quantity,
             QuoteQuantity = price * quantity,
-            //tradeParams.OrderId = 0;
+            OrderId = 0,
         };
+        if (orderType == CryptoOrderType.StopLimit)
+            tradeParams.QuoteQuantity = (decimal)tradeParams.StopPrice * tradeParams.Quantity;
+
 
         if (tradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
         {
@@ -320,8 +296,11 @@ public class Api : ExchangeBase
             {
                 DumpError(symbol, orderType, orderSide, quantity, price, stop, limit, extraText,
                     result.ResponseStatusCode.ToString(), result.Error.ToString());
-            } 
-            else if (result.Data != null)
+            }
+
+            //TODO: Dit is raar, alsof dit de exacte data is voor een MarketOrder..
+            // (=> dan komt er natuurlijk wel een trade die de werkelijkheid bevat)
+            if (result.Success && result.Data != null)
             {
                 // Vraag: waarom zijn de price en quantity niet gevuld in de result bij een StopLimit? 
                 tradeParams.CreateTime = result.Data.CreateTime;
@@ -329,6 +308,7 @@ public class Api : ExchangeBase
                 DumpOrder(symbol, tradeParams, extraText);
                 return (true, tradeParams);
             }
+            else return (false, null);
         }
 
         return (false, tradeParams);
