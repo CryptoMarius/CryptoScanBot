@@ -299,6 +299,7 @@ partial class FrmSettings
         toolTip1 = new ToolTip(components);
         imageList1 = new ImageList(components);
         colorDialog1 = new ColorDialog();
+        EditHideSymbolsOnTheLeft = new CheckBox();
         panel2.SuspendLayout();
         panel1.SuspendLayout();
         tabControl.SuspendLayout();
@@ -476,6 +477,7 @@ partial class FrmSettings
         // 
         // tabAlgemeen
         // 
+        tabAlgemeen.Controls.Add(EditHideSymbolsOnTheLeft);
         tabAlgemeen.Controls.Add(label58);
         tabAlgemeen.Controls.Add(EditActivateExchange);
         tabAlgemeen.Controls.Add(EditShowInvalidSignals);
@@ -526,7 +528,7 @@ partial class FrmSettings
         // EditShowInvalidSignals
         // 
         EditShowInvalidSignals.AutoSize = true;
-        EditShowInvalidSignals.Location = new Point(29, 246);
+        EditShowInvalidSignals.Location = new Point(29, 241);
         EditShowInvalidSignals.Margin = new Padding(4, 3, 4, 3);
         EditShowInvalidSignals.Name = "EditShowInvalidSignals";
         EditShowInvalidSignals.Size = new Size(175, 19);
@@ -630,7 +632,7 @@ partial class FrmSettings
         // 
         // buttonFontDialog
         // 
-        buttonFontDialog.Location = new Point(29, 281);
+        buttonFontDialog.Location = new Point(29, 293);
         buttonFontDialog.Margin = new Padding(4, 3, 4, 3);
         buttonFontDialog.Name = "buttonFontDialog";
         buttonFontDialog.Size = new Size(139, 27);
@@ -3391,6 +3393,17 @@ partial class FrmSettings
         imageList1.TransparentColor = Color.Transparent;
         imageList1.Images.SetKeyName(0, "volume.png");
         // 
+        // EditHideSymbolsOnTheLeft
+        // 
+        EditHideSymbolsOnTheLeft.AutoSize = true;
+        EditHideSymbolsOnTheLeft.Location = new Point(29, 268);
+        EditHideSymbolsOnTheLeft.Margin = new Padding(4, 3, 4, 3);
+        EditHideSymbolsOnTheLeft.Name = "EditHideSymbolsOnTheLeft";
+        EditHideSymbolsOnTheLeft.Size = new Size(182, 19);
+        EditHideSymbolsOnTheLeft.TabIndex = 190;
+        EditHideSymbolsOnTheLeft.Text = "Verberg de lijst met symbolen";
+        EditHideSymbolsOnTheLeft.UseVisualStyleBackColor = true;
+        // 
         // FrmSettings
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
@@ -3767,4 +3780,5 @@ partial class FrmSettings
     private ComboBox EditActivateExchange;
     private Button buttonTelegramStart;
     private Button buttonGotoAppDataFolder;
+    private CheckBox EditHideSymbolsOnTheLeft;
 }

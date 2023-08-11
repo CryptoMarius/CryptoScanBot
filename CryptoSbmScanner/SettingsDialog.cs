@@ -284,6 +284,7 @@ public partial class FrmSettings : Form
         EditGetCandleInterval.Value = settings.General.GetCandleInterval;
 
         EditShowInvalidSignals.Checked = settings.General.ShowInvalidSignals;
+        EditHideSymbolsOnTheLeft.Checked = settings.General.HideSymbolsOnTheLeft;
         EditGlobalDataRemoveSignalAfterxCandles.Value = settings.General.RemoveSignalAfterxCandles;
 
         EditTelegramToken.Text = settings.Telegram.Token;
@@ -556,6 +557,7 @@ public partial class FrmSettings : Form
         settings.General.FontSize = Font.Size;
 
         settings.General.ShowInvalidSignals = EditShowInvalidSignals.Checked;
+        settings.General.HideSymbolsOnTheLeft = EditHideSymbolsOnTheLeft.Checked;
         settings.General.RemoveSignalAfterxCandles = (int)EditGlobalDataRemoveSignalAfterxCandles.Value;
 
 
