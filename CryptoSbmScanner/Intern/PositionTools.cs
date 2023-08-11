@@ -123,11 +123,11 @@ public class PositionTools
         database.Connection.Update<CryptoPosition>(position);
     }
 
-    public CryptoPositionPart CreatePositionPart(CryptoPosition position, string name, decimal buyPrice)
+    public CryptoPositionPart CreatePositionPart(CryptoPosition position, string name, decimal signalPrice)
     {
         CryptoPositionPart part = new(); // bewust niet in een init struct gezet (vanwege debuggen)
         part.Name = name;
-        part.BuyPrice = buyPrice;
+        part.SignalPrice = signalPrice;
         part.CreateTime = CurrentDate;
         part.PositionId = position.Id;
         part.Symbol = Symbol;
@@ -407,7 +407,7 @@ public class PositionTools
                 step.QuantityFilled += trade.Quantity;
                 step.QuoteQuantityFilled += trade.QuoteQuantity;
 
-                step.AvgPrice = step.QuantityFilled / step.QuoteQuantityFilled;
+                step.AvgPrice = step.QuoteQuantityFilled / step.QuantityFilled;
 
                 // Vanuit nieuwe trades moeten we de status wel bijwerken (opstarten applicatie)
                 // Maar overschrijf de status alleen indien het absoluut zeker is..
@@ -521,20 +521,6 @@ public class PositionTools
         return null;
     }
 
-
-    public static CryptoPositionStep IsTrailingPosition(CryptoPosition position)
-    {
-        foreach (CryptoPositionPart part in position.Parts.Values.ToList())
-        {
-            foreach (CryptoPositionStep step in part.Steps.Values.ToList())
-            {
-                if (step.Status == CryptoOrderStatus.New && step.Trailing == CryptoTrailing.Trailing)
-                    return step;
-            }
-        }
-
-        return null;
-    }
 
     /// <summary>
     /// Is er een positie open (dan wel signalen maken voor deze munt)

@@ -36,7 +36,7 @@ public class ListViewColumnSorter : IComparer
         {
             // Set the column number that is to be sorted; default to ascending.
             SortColumn = column;
-            SortOrder = SortOrder.Ascending;
+            SortOrder = SortOrder.Descending;
         }
     }
 }
