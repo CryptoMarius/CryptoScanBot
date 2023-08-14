@@ -153,7 +153,6 @@ public partial class FrmMain
 
     private void ListBoxSymbolsMenuItemCopy_Click(object sender, EventArgs e)
     {
-        // Show trend information
         CryptoSymbol symbol = GetSymbolFromListBox();
         if (symbol == null)
             return;
@@ -170,6 +169,13 @@ public partial class FrmMain
 
         Task.Run(() => { new Excel.ExcelCandleDump().ExportToExcell(symbol); });
     }
+
+
+    private void symbolsDumpToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+        Task.Run(() => { new Excel.ExcelExchangeDump().ExportToExcell(GlobalData.Settings.General.Exchange); });
+    }
+
 
     private void ListBoxSymbolsMenuItemCreateSignal_Click(object sender, EventArgs e)
     {

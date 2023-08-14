@@ -27,6 +27,7 @@
             listBoxSymbolsMenuItemShowTrendInformation = new ToolStripMenuItem();
             listBoxSymbolsMenuItemCopy = new ToolStripMenuItem();
             listBoxSymbolsMenuItemCandleDump = new ToolStripMenuItem();
+            symbolsDumpToolStripMenuItem = new ToolStripMenuItem();
             panelLeftTop = new Panel();
             label1 = new Label();
             applicationMenuStrip = new MenuStrip();
@@ -127,9 +128,9 @@
             // listBoxSymbolsMenuStrip
             // 
             listBoxSymbolsMenuStrip.ImageScalingSize = new Size(20, 20);
-            listBoxSymbolsMenuStrip.Items.AddRange(new ToolStripItem[] { listBoxSymbolsMenuItemActivateTradingApp, listBoxSymbolsMenuItemActivateTradingviewInternal, listBoxSymbolsMenuItemActivateTradingviewExternal, listBoxSymbolsMenuItemShowTrendInformation, listBoxSymbolsMenuItemCopy, listBoxSymbolsMenuItemCandleDump });
+            listBoxSymbolsMenuStrip.Items.AddRange(new ToolStripItem[] { listBoxSymbolsMenuItemActivateTradingApp, listBoxSymbolsMenuItemActivateTradingviewInternal, listBoxSymbolsMenuItemActivateTradingviewExternal, listBoxSymbolsMenuItemShowTrendInformation, listBoxSymbolsMenuItemCopy, listBoxSymbolsMenuItemCandleDump, symbolsDumpToolStripMenuItem });
             listBoxSymbolsMenuStrip.Name = "contextMenuStrip1";
-            listBoxSymbolsMenuStrip.Size = new Size(183, 136);
+            listBoxSymbolsMenuStrip.Size = new Size(183, 180);
             // 
             // listBoxSymbolsMenuItemActivateTradingApp
             // 
@@ -172,6 +173,13 @@
             listBoxSymbolsMenuItemCandleDump.Size = new Size(182, 22);
             listBoxSymbolsMenuItemCandleDump.Text = "Candle dump";
             listBoxSymbolsMenuItemCandleDump.Click += ListBoxSymbolsMenuItemCandleDump_Click;
+            // 
+            // symbolsDumpToolStripMenuItem
+            // 
+            symbolsDumpToolStripMenuItem.Name = "symbolsDumpToolStripMenuItem";
+            symbolsDumpToolStripMenuItem.Size = new Size(182, 22);
+            symbolsDumpToolStripMenuItem.Text = "Symbols dump";
+            symbolsDumpToolStripMenuItem.Click += symbolsDumpToolStripMenuItem_Click;
             // 
             // panelLeftTop
             // 
@@ -642,6 +650,7 @@
         private ContextMenuStrip listViewIgnalsColumns;
         private ToolStripMenuItem testToolStripMenuItem;
         private ToolStripMenuItem test2ToolStripMenuItem;
+        private ToolStripMenuItem symbolsDumpToolStripMenuItem;
     }
 }
 

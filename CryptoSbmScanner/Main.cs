@@ -118,7 +118,7 @@ public partial class FrmMain : Form
 
 
         ScannerSession.Start(false);
-
+        dashBoardControl1.InitializeStuff();
         SystemEvents.PowerModeChanged += OnPowerChange;
     }
 
