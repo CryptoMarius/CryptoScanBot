@@ -44,7 +44,8 @@ public static class CandleTools
     /// Verwerk een definitieve 1m candle 
     /// Uitgangspunt hierbij is dat de data ingelezen is en we niet naar de database hoeven
     /// </summary>
-    static public CryptoCandle HandleFinalCandleData(CryptoSymbol symbol, CryptoInterval interval, DateTime openTime, decimal open, decimal high, decimal low, decimal close, decimal volume)
+    static public CryptoCandle HandleFinalCandleData(CryptoSymbol symbol, CryptoInterval interval, 
+        DateTime openTime, decimal open, decimal high, decimal low, decimal close, decimal volume, bool isDuplicated)
     {
         CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
         SortedList<long, CryptoCandle> candles = symbolPeriod.CandleList;
@@ -75,6 +76,7 @@ public static class CandleTools
         candle.Low = low;
         candle.Close = close;
         candle.Volume = volume;
+        candle.IsDuplicated = isDuplicated;
 
         return candle;
     }
@@ -299,7 +301,7 @@ public static class CandleTools
                     symbolInterval.LastCandleSynchronized -= symbolInterval.LastCandleSynchronized % interval.Duration;
                 }
 
-                while (candles.ContainsKey((long)symbolInterval.LastCandleSynchronized))
+                while (candles.TryGetValue((long)symbolInterval.LastCandleSynchronized, out CryptoCandle candle) && !candle.IsDuplicated)
                     symbolInterval.LastCandleSynchronized += interval.Duration;
             }
         }

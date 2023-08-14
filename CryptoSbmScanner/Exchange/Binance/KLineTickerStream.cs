@@ -52,7 +52,7 @@ public class KLineTickerStream
 
                     // Process the single 1m candle
                     candle = CandleTools.HandleFinalCandleData(symbol, GlobalData.IntervalList[0], temp.Data.OpenTime,
-                        temp.Data.OpenPrice, temp.Data.HighPrice, temp.Data.LowPrice, temp.Data.ClosePrice, temp.Data.QuoteVolume);
+                        temp.Data.OpenPrice, temp.Data.HighPrice, temp.Data.LowPrice, temp.Data.ClosePrice, temp.Data.QuoteVolume, false);
 #if SQLDATABASE
                     GlobalData.TaskSaveCandles.AddToQueue(candle);
 #endif
@@ -89,7 +89,8 @@ public class KLineTickerStream
         if (symbols.Count > 0)
         {
             socketClient = new BinanceSocketClient();
-            CallResult<UpdateSubscription> subscriptionResult = await socketClient.SpotApi.ExchangeData.SubscribeToKlineUpdatesAsync(symbols, KlineInterval.OneMinute, (data) =>
+            CallResult<UpdateSubscription> subscriptionResult = await socketClient.SpotApi.ExchangeData.SubscribeToKlineUpdatesAsync(
+                symbols, KlineInterval.OneMinute, (data) =>
             {
                 if (data.Data.Data.Final)
                 {
@@ -146,19 +147,19 @@ public class KLineTickerStream
 
     private void ConnectionLost()
     {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} {quote} 1m candle stream connection lost.");
+        GlobalData.AddTextToLogTab($"{Api.ExchangeName} {quote} 1m candle ticker connection lost.");
         ScannerSession.ConnectionWasLost("");
     }
 
     private void ConnectionRestored(TimeSpan timeSpan)
     {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} {quote} 1m candle stream connection restored.");
+        GlobalData.AddTextToLogTab($"{Api.ExchangeName} {quote} 1m candle ticker connection restored.");
         ScannerSession.ConnectionWasRestored("");
     }
 
     private void Exception(Exception ex)
     {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} 1m candle stream connection error {ex.Message} | Stack trace: {ex.StackTrace}");
+        GlobalData.AddTextToLogTab($"{Api.ExchangeName} 1m candle ticker connection error {ex.Message} | Stack trace: {ex.StackTrace}");
     }
 
 }

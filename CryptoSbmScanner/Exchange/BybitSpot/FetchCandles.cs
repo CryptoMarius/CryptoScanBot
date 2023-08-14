@@ -77,7 +77,7 @@ public class FetchCandles
             {
                 // Quoted = volume * price (expressed in usdt/eth/btc etc), base is coins
                 CryptoCandle candle = CandleTools.HandleFinalCandleData(symbol, interval, kline.StartTime,
-                    kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.QuoteVolume);
+                    kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.QuoteVolume, false);
 
                 //GlobalData.AddTextToLogTab("Debug: Fetched candle " + symbol.Name + " " + interval.Name + " " + candle.DateLocal);
 
@@ -128,7 +128,7 @@ public class FetchCandles
             fetchFrom[(int)interval.IntervalPeriod] = utcNow;
 
         // Determine the (maximum) startdate (without knowing what we already have)
-        // If exchange does not have this interval than make the lower timeframe
+        // If the exchange does not have this interval than make the lower timeframe
         // a bit bigger so we can calculate the candles ourselves
         foreach (CryptoInterval interval in GlobalData.IntervalList)
         {
@@ -307,8 +307,6 @@ public class FetchCandles
 
     public static async Task ExecuteAsync()
     {
-        //GlobalData.AddTextToLogTab("Fetching historical candles");
-
         if (GlobalData.ExchangeListName.TryGetValue(Api.ExchangeName, out Model.CryptoExchange exchange))
         {
             GlobalData.AddTextToLogTab("");

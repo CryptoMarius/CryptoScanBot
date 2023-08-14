@@ -47,7 +47,8 @@ public static class Helper
     }
     
     
-    public static string OhlcText(this CryptoCandle candle, CryptoSymbol symbol, CryptoInterval interval, string fmt, bool includeSymbol = false, bool includeInterval = false, bool includeVolume = false)
+    public static string OhlcText(this CryptoCandle candle, CryptoSymbol symbol, CryptoInterval interval, 
+        string fmt, bool includeSymbol = false, bool includeInterval = false, bool includeVolume = false)
     {
         // Include the next time so it is clear what candle has focus (it saves a lot of questions)
         DateTime date = CandleTools.GetUnixDate(candle.OpenTime);

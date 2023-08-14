@@ -13,16 +13,18 @@ public abstract class ExchangeBase
     public abstract void ExchangeDefaults();
     public abstract Task FetchSymbolsAsync();
     public abstract Task FetchCandlesAsync();
+
+
 #if TRADEBOT
     public abstract Task FetchAssetsAsync(CryptoTradeAccount tradeAccount);
     public abstract Task FetchTradesAsync(CryptoTradeAccount tradeAccount, CryptoSymbol symbol);
 
 
 
-    internal void DumpOrder(CryptoSymbol symbol, TradeParams tradeParams, string extraText)
+    public static void DumpOrder(CryptoSymbol symbol, TradeParams tradeParams, string extraText)
     {
-        string text2 = string.Format("{0} POSITION {1} {2} ORDER #{3} {4} PLACED price={5} stop={6} quantity={7} quotequantity={8}",
-            symbol.Name, tradeParams.Side,
+        string text = string.Format("{0} POSITION {1} {2} ORDER #{3} {4} PLACED price={5} stop={6} quantity={7} quotequantity={8}",
+            symbol.Name, tradeParams.OrderSide,
             tradeParams.OrderType.ToString(),
             tradeParams.OrderId,
             extraText,
@@ -30,21 +32,20 @@ public abstract class ExchangeBase
             tradeParams.StopPrice?.ToString0(),
             tradeParams.Quantity.ToString0(),
             tradeParams.QuoteQuantity.ToString0());
-        GlobalData.AddTextToLogTab(text2);
-        GlobalData.AddTextToTelegram(text2);
+        GlobalData.AddTextToLogTab(text);
+        GlobalData.AddTextToTelegram(text);
     }
 
-    internal void DumpError(CryptoSymbol symbol, CryptoOrderType orderType, CryptoOrderSide orderSide,
-        decimal quantity, decimal price, decimal? stop, decimal? limit, string extraText,
-        string responseStatusCode, string error)
+    public static void DumpError(CryptoSymbol symbol, TradeParams tradeParams, string extraText)
     {
-        string text = string.Format("{0} ERROR {1} {2} order {3} {4} {5}\r\n", symbol.Name, orderType, orderSide, responseStatusCode, error, extraText);
-        text += string.Format("quantity={0}\r\n", quantity.ToString0());
-        text += string.Format("price={0}\r\n", price.ToString0());
-        if (stop.HasValue)
-            text += string.Format("stop={0}\r\n", stop?.ToString0());
-        if (limit.HasValue)
-            text += string.Format("limit={0}\r\n", limit?.ToString0());
+        string text = string.Format("{0} ERROR {1} {2} order {3} {4} {5}\r\n", symbol.Name, tradeParams.OrderType, 
+            tradeParams.OrderSide, tradeParams.ResponseStatusCode, tradeParams.Error, extraText);
+        text += string.Format("quantity={0}\r\n", tradeParams.Quantity.ToString0());
+        text += string.Format("price={0}\r\n", tradeParams.Price.ToString0());
+        if (tradeParams.StopPrice.HasValue)
+            text += string.Format("stop={0}\r\n", tradeParams.StopPrice?.ToString0());
+        if (tradeParams.LimitPrice.HasValue)
+            text += string.Format("limit={0}\r\n", tradeParams.LimitPrice?.ToString0());
         //text += string.Format("lastprice={0}\r\n", Symbol.LastPrice?.ToString0());
         //text += string.Format("trades={0}\r\n", Symbol.TradeList.Count);
         GlobalData.AddTextToLogTab(text);

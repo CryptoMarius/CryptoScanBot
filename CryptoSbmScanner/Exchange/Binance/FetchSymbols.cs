@@ -44,6 +44,9 @@ public class FetchSymbols
                         throw new ExchangeException("Geen exchange data ontvangen");
                 }
 
+                // Om achteraf de niet aangeboden munten te deactiveren
+                SortedList<string, CryptoSymbol> activeSymbols = new();
+
 
                 using (var transaction = database.BeginTransaction())
                 {
@@ -52,97 +55,112 @@ public class FetchSymbols
                     {
                         foreach (var symbolData in exchangeInfo.Data.Symbols)
                         {
-                            //string coin = MatchingSymbol(item.Name);
-                            //if (coin != "")
+                            ////
+                            //// Summary:
+                            ////     Status of a symbol
+                            //    public enum SymbolStatus
+                            //    {
+                            //        //
+                            //        // Summary:
+                            //        //     Not trading yet
+                            //        PreTrading = 0,
+                            //        //
+                            //        // Summary:
+                            //        //     Trading
+                            //        Trading = 1,
+                            //        //
+                            //        // Summary:
+                            //        //     No longer trading
+                            //        PostTrading = 2,
+                            //        //
+                            //        // Summary:
+                            //        //     Not trading
+                            //        EndOfDay = 3,
+                            //        //
+                            //        // Summary:
+                            //        //     Halted
+                            //        Halt = 4,
+                            //        AuctionMatch = 5,
+                            //        Break = 6
+                            //    }
+
+                            //Het is erg belangrijk om de delisted munten zo snel mogelijk te detecteren.
+                            //(ik heb wat slechte ervaringen met de Altrady bot die op paniek pieken handelt)
+
+                            //Eventueel symbol toevoegen
+                            if (!exchange.SymbolListName.TryGetValue(symbolData.Name, out CryptoSymbol symbol))
                             {
-                                ////
-                                //// Summary:
-                                ////     Status of a symbol
-                                //    public enum SymbolStatus
-                                //    {
-                                //        //
-                                //        // Summary:
-                                //        //     Not trading yet
-                                //        PreTrading = 0,
-                                //        //
-                                //        // Summary:
-                                //        //     Trading
-                                //        Trading = 1,
-                                //        //
-                                //        // Summary:
-                                //        //     No longer trading
-                                //        PostTrading = 2,
-                                //        //
-                                //        // Summary:
-                                //        //     Not trading
-                                //        EndOfDay = 3,
-                                //        //
-                                //        // Summary:
-                                //        //     Halted
-                                //        Halt = 4,
-                                //        AuctionMatch = 5,
-                                //        Break = 6
-                                //    }
-
-                                //Het is erg belangrijk om de delisted munten zo snel mogelijk te detecteren.
-                                //(ik heb wat slechte ervaringen met de Altrady bot die op paniek pieken handelt)
-
-                                //Eventueel symbol toevoegen
-                                if (!exchange.SymbolListName.TryGetValue(symbolData.Name, out CryptoSymbol symbol))
+                                symbol = new()
                                 {
-                                    symbol = new()
-                                    {
-                                        Exchange = exchange,
-                                        ExchangeId = exchange.Id,
-                                        Name = symbolData.Name,
-                                        Base = symbolData.BaseAsset,
-                                        Quote = symbolData.QuoteAsset,
-                                        Status = 1,
-                                    };
-                                }
-
-                                //Tijdelijk alles overnemen (vanwege into nieuwe velden)
-                                //De te gebruiken precisie in prijzen
-                                //symbol.BaseAssetPrecision = binanceSymbol.BaseAssetPrecision;
-                                //symbol.QuoteAssetPrecision = binanceSymbol.QuoteAssetPrecision;
-                                // Tijdelijke fix voor Binance.net (kan waarschijnlijk weer weg)
-                                //if (binanceSymbol.MinNotionalFilter != null)
-                                //    symbol.MinNotional = binanceSymbol.MinNotionalFilter.MinNotional;
-                                //else
-                                //    symbol.MinNotional = 0;
-
-                                //Minimale en maximale amount voor een order (in base amount)
-                                symbol.QuantityMinimum = symbolData.LotSizeFilter.MinQuantity;
-                                symbol.QuantityMaximum = symbolData.LotSizeFilter.MaxQuantity;
-                                symbol.QuantityTickSize = symbolData.LotSizeFilter.StepSize;
-
-                                //Minimale en maximale prijs voor een order (in base price)
-                                symbol.PriceMinimum = symbolData.PriceFilter.MinPrice;
-                                symbol.PriceMaximum = symbolData.PriceFilter.MaxPrice;
-                                symbol.PriceTickSize = symbolData.PriceFilter.TickSize;
-
-                                symbol.IsSpotTradingAllowed = symbolData.IsSpotTradingAllowed;
-                                symbol.IsMarginTradingAllowed = symbolData.IsMarginTradingAllowed;
-
-                                if (symbolData.Status == SymbolStatus.Trading | symbolData.Status == SymbolStatus.EndOfDay)
-                                    symbol.Status = 1;
-                                else
-                                    symbol.Status = 0; //Zet de status door (PreTrading, PostTrading of Halt)
-
-                                if (symbol.Id == 0)
-                                {
-#if !SQLDATABASE
-                                    database.Connection.Insert(symbol, transaction);
-#endif
-                                    cache.Add(symbol);
-                                }
-                                else
-                                    database.Connection.Update(symbol, transaction);
+                                    Exchange = exchange,
+                                    ExchangeId = exchange.Id,
+                                    Name = symbolData.Name,
+                                    Base = symbolData.BaseAsset,
+                                    Quote = symbolData.QuoteAsset,
+                                    Status = 1,
+                                };
                             }
+
+                            //Tijdelijk alles overnemen (vanwege into nieuwe velden)
+                            //De te gebruiken precisie in prijzen
+                            //symbol.BaseAssetPrecision = binanceSymbol.BaseAssetPrecision;
+                            //symbol.QuoteAssetPrecision = binanceSymbol.QuoteAssetPrecision;
+                            // Tijdelijke fix voor Binance.net (kan waarschijnlijk weer weg)
+                            //if (binanceSymbol.MinNotionalFilter != null)
+                            //    symbol.MinNotional = binanceSymbol.MinNotionalFilter.MinNotional;
+                            //else
+                            //    symbol.MinNotional = 0;
+
+                            //Minimale en maximale amount voor een order (in base amount)
+                            symbol.QuantityMinimum = symbolData.LotSizeFilter.MinQuantity;
+                            symbol.QuantityMaximum = symbolData.LotSizeFilter.MaxQuantity;
+                            symbol.QuantityTickSize = symbolData.LotSizeFilter.StepSize;
+
+                            //Minimale en maximale prijs voor een order (in base price)
+                            symbol.PriceMinimum = symbolData.PriceFilter.MinPrice;
+                            symbol.PriceMaximum = symbolData.PriceFilter.MaxPrice;
+                            symbol.PriceTickSize = symbolData.PriceFilter.TickSize;
+
+                            symbol.IsSpotTradingAllowed = symbolData.IsSpotTradingAllowed;
+                            symbol.IsMarginTradingAllowed = symbolData.IsMarginTradingAllowed;
+
+                            if (symbolData.Status == SymbolStatus.Trading | symbolData.Status == SymbolStatus.EndOfDay)
+                                symbol.Status = 1;
+                            else
+                                symbol.Status = 0; //Zet de status door (PreTrading, PostTrading of Halt)
+
+                            if (symbol.Id == 0)
+                            {
+#if !SQLDATABASE
+                                database.Connection.Insert(symbol, transaction);
+#endif
+                                cache.Add(symbol);
+                            }
+                            else
+                                database.Connection.Update(symbol, transaction);
+
+                            activeSymbols.Add(symbol.Name, symbol);
+
                         }
 #if SQLDATABASE
                             database.BulkInsertSymbol(cache, transaction);
 #endif
+
+                        // Deactiveer de munten die niet meer voorkomen
+                        int deactivated = 0;
+                        foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
+                        {
+                            if (!activeSymbols.ContainsKey(symbol.Name))
+                            {
+                                deactivated++;
+                                symbol.Status = 0;
+                                database.Connection.Update(symbol, transaction);
+                            }
+                        }
+                        if (deactivated > 0)
+                            GlobalData.AddTextToLogTab($"{deactivated} munten gedeactiveerd");
+
+
                         transaction.Commit();
 
 

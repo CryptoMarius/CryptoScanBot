@@ -158,7 +158,7 @@ public class PositionTools
         step.PositionPartId = part.Id;
 
         step.Name = name;
-        step.Side = tradeParams.Side;
+        step.Side = tradeParams.OrderSide;
         step.Status = CryptoOrderStatus.New;
         step.OrderType = tradeParams.OrderType;
         step.CreateTime = tradeParams.CreateTime;

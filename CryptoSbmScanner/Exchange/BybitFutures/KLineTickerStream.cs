@@ -15,18 +15,13 @@ namespace CryptoSbmScanner.Exchange.BybitFutures;
 /// <summary>
 /// Monitoren van 1m candles (die gepushed worden door Binance)
 /// </summary>
-public class KLineTickerStream
+public class KLineTickerStream : KLineTickerItem
 {
-
-    public string quote;
-    public int TickerCount = 0;
     private BybitSocketClient socketClient;
     private UpdateSubscription _subscription;
-    public List<string> symbols = new();
 
-    public KLineTickerStream(CryptoQuoteData quoteData)
+    public KLineTickerStream(CryptoQuoteData quoteData) : base(quoteData)
     {
-        quote = quoteData.Name;
     }
 
     private void ProcessCandle(string topic, BybitKlineUpdate kline)
@@ -58,7 +53,7 @@ public class KLineTickerStream
 
                     // Process the single 1m candle
                     candle = CandleTools.HandleFinalCandleData(symbol, GlobalData.IntervalList[0], kline.StartTime,
-                        kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.Volume);
+                        kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.Volume, false);
 #if SQLDATABASE
                     GlobalData.TaskSaveCandles.AddToQueue(candle);
 #endif
@@ -90,8 +85,10 @@ public class KLineTickerStream
     }
 
 
-    public async Task StartAsync()
+    public override async Task StartAsync()
     {
+        ConnectionLostCount = 0;
+
         if (symbols.Count > 0)
         {
             socketClient = new BybitSocketClient();
@@ -138,44 +135,41 @@ public class KLineTickerStream
             }
             else
             {
-                GlobalData.AddTextToLogTab($"{Api.ExchangeName} {quote} 1m ERROR starting candle stream {subscriptionResult.Error.Message}");
-                GlobalData.AddTextToLogTab($"{Api.ExchangeName} {quote} 1m ERROR starting candle stream {string.Join(',', symbols)}");
+                GlobalData.AddTextToLogTab($"{Api.ExchangeName} {QuoteDataName} 1m ERROR starting candle stream {subscriptionResult.Error.Message}");
+                GlobalData.AddTextToLogTab($"{Api.ExchangeName} {QuoteDataName} 1m ERROR starting candle stream {string.Join(',', symbols)}");
                 
             }
         }
     }
 
-    public async Task StopAsync()
+    public override async Task StopAsync()
     {
-        if (_subscription == null)
+        if (_subscription != null)
             return; // Task.CompletedTask;
-
-        //GlobalData.AddTextToLogTab($"{Api.ExchangeName} {quote} 1m stopping candle stream");
 
         _subscription.Exception -= Exception;
         _subscription.ConnectionLost -= ConnectionLost;
         _subscription.ConnectionRestored -= ConnectionRestored;
 
         await socketClient?.UnsubscribeAsync(_subscription);
-
-        return; // Task.CompletedTask;
     }
 
     private void ConnectionLost()
     {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} {quote} 1m candle stream connection lost.");
+        ConnectionLostCount++;
+        GlobalData.AddTextToLogTab($"{Api.ExchangeName} {QuoteDataName} 1m candle ticker connection lost.");
         ScannerSession.ConnectionWasLost("");
     }
 
     private void ConnectionRestored(TimeSpan timeSpan)
     {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} {quote} 1m candle stream connection restored.");
+        GlobalData.AddTextToLogTab($"{Api.ExchangeName} {QuoteDataName} 1m candle ticker connection restored.");
         ScannerSession.ConnectionWasRestored("");
     }
 
     private void Exception(Exception ex)
     {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} 1m candle stream connection error {ex.Message} | Stack trace: {ex.StackTrace}");
+        GlobalData.AddTextToLogTab($"{Api.ExchangeName} 1m candle ticker connection error {ex.Message} | Stack trace: {ex.StackTrace}");
     }
 
 }

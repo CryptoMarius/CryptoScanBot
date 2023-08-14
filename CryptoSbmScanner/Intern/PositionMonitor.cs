@@ -37,6 +37,65 @@ public class PositionMonitor
     }
 
 #if TRADEBOT
+    /// <summary>
+    /// Controle van alle posities na het opnieuw opstarten
+    /// </summary>
+    static public async Task CheckPositionsAfterRestart(CryptoTradeAccount tradeAccount)
+    {
+        // Positions - Parts - Steps 1 voor 1 bij langs om te zien of de prijs ooit boven of beneden de prijs is geweest
+
+        if (tradeAccount.PositionList.Any())
+        {
+            foreach (var positionList in tradeAccount.PositionList.Values.ToList())
+            {
+                foreach (var position in positionList.Values.ToList())
+                {
+                    //SortedList<DateTime, CryptoPositionStep> indexList = new();
+
+                    //// Verzamel de open steps
+                    //foreach (var part in position.Parts.Values.ToList())
+                    //{
+                    //    if (!part.CloseTime.HasValue)
+                    //    {
+                    //        foreach (var step in part.Steps.Values.ToList())
+                    //        {
+                    //            if (step.Status == CryptoOrderStatus.New)
+                    //                indexList.TryAdd(step.CreateTime, step);
+                    //        }
+                    //    }
+                    //}
+
+
+                    //// controleer vanaf de openstaande step, en het kan vast veel optimaler
+                    //// als we de hogere intervallen inzetten (of een combinatie indien nodig)
+                    //// (dat kost mij zelf teveel rekenkracht, zoveel posities staan niet open)
+                    //foreach (var step in indexList.Values)
+                    //{
+                    //    long from = CandleTools.GetUnixTime(step.CreateTime, 60) + 60;
+                    //    long limit = CandleTools.GetUnixTime(DateTime.UtcNow, 60);
+                    //    while (from < limit)
+                    //    {
+                    //        // Eventueel missende candles hebben op deze manier geen impact
+                    //        if (position.Symbol.CandleList.TryGetValue(from, out CryptoCandle candle))
+                    //        {
+                    //            PositionMonitor p = new(position.Symbol, candle);
+                    //            await p.PaperTradingCheckOrders(tradeAccount);
+                    //        }
+                    //        from += 60;
+                    //    }
+
+                    //    // hmmm.. de PaperTradingCheckOrders controleert ze wel allemaal (er is alleen een start tijd nodig)
+                    //    break;
+                    //}
+
+                }
+            }
+        }
+    }
+
+
+
+
     static public void PickupTrade(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoTrade trade, //BinanceStreamOrderUpdate item)
         CryptoOrderType orderType,
         CryptoOrderSide orderSide,
@@ -339,8 +398,12 @@ public class PositionMonitor
                                     stepX.CloseTime = data.TradeTime;
                                     stepX.Status = CryptoOrderStatus.Expired;
                                     PositionTools.SavePositionStep(databaseThread, position, stepX);
-                                    await Api.Cancel(data.TradeAccount, symbol, stepX.OrderId);
+                                    var result = await Api.Cancel(data.TradeAccount, symbol, stepX);
                                     //CancelOrder(databaseThread, data.TradeAccount, symbol, partX, stepX); oeps, is static
+                                    if (result.success)
+                                        Api.DumpOrder(symbol, result.tradeParams, "cancelled");
+                                    else
+                                        Api.DumpError(symbol, result.tradeParams, "cancelling");
                                 }
                             }
                         }
@@ -891,7 +954,7 @@ public class PositionMonitor
     }
 
 
-    private async Task PaperTradingCheckOrders(CryptoTradeAccount tradeAccount) //, bool onlyMarketOrders
+    private async Task PaperTradingCheckOrders(CryptoTradeAccount tradeAccount)
     {
         // Is er iets gekocht of verkocht?
         // Zoja dan de HandleTrade aanroepen.
@@ -1082,10 +1145,15 @@ public class PositionMonitor
         }
 
         // Annuleer de vorige buy order
-        await Api.Cancel(position.TradeAccount, Symbol, step.OrderId);
+        var result = await Api.Cancel(position.TradeAccount, Symbol, step);
         step.Status = CryptoOrderStatus.Expired;
         step.CloseTime = LastCandle1mCloseTimeDate;
         PositionTools.SavePositionStep(databaseThread, position, step);
+
+        if (result.success)
+            Api.DumpOrder(position.Symbol, result.tradeParams, "cancelled");
+        else
+            Api.DumpError(position.Symbol, result.tradeParams, "cancelling");
     }
 
 
@@ -1266,10 +1334,13 @@ public class PositionMonitor
                 PositionTools.InsertPositionStep(databaseThread, position, step);
                 PositionTools.AddPositionPartStep(part, step);
 
+                Api.DumpOrder(position.Symbol, result.tradeParams, "placing");
+
                 // Een eventuele market order direct laten vullen
                 if (position.TradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading && step.OrderType == CryptoOrderType.Market)
                     await CreatePaperTradeObject(position, step, LastCandle1m.Close);
             }
+            else Api.DumpError(position.Symbol, result.tradeParams, "placing");
         }
     }
 
@@ -1357,27 +1428,27 @@ public class PositionMonitor
                 decimal sellQuantity = part.Quantity;
                 sellQuantity = sellQuantity.Clamp(Symbol.QuantityMinimum, Symbol.QuantityMaximum, Symbol.QuantityTickSize);
 
-                (bool result, TradeParams tradeParams) sellResult;
+                (bool result, TradeParams tradeParams) result;
                 Api exchangeApi = new();
-                sellResult = await exchangeApi.BuyOrSell(
+                result = await exchangeApi.BuyOrSell(
                     position.TradeAccount, position.Symbol, LastCandle1mCloseTimeDate,
                     CryptoOrderType.Limit, CryptoOrderSide.Sell, sellQuantity, sellPrice, null, null);
 
-                if (sellResult.result)
+                if (result.result)
                 {
-                    // Administratie van de nieuwe sell bewaren (iets met tonen van de posities)
-                    //part.SellPrice = sellPrice;
-
                     if (part.Name.Equals("BUY"))
                     {
-                        position.SellPrice = sellResult.tradeParams.Price;
+                        position.SellPrice = result.tradeParams.Price;
                         PositionTools.SavePosition(databaseThread, position);
                     }
                     // Als vervanger van bovenstaande tzt (maar willen we die ook als een afzonderlijke step? Het zou ansich kunnen)
-                    var sellStep = PositionTools.CreatePositionStep(position, part, sellResult.tradeParams, "SELL");
+                    var sellStep = PositionTools.CreatePositionStep(position, part, result.tradeParams, "SELL");
                     PositionTools.InsertPositionStep(databaseThread, position, sellStep);
                     PositionTools.AddPositionPartStep(part, sellStep);
+                    
+                    Api.DumpOrder(position.Symbol, result.tradeParams, "placing");
                 }
+                else Api.DumpError(position.Symbol, result.tradeParams, "placing");
             }
         }
     }
@@ -1504,11 +1575,11 @@ public class PositionMonitor
                         Api exchangeApi = new();
                         //(bool result, TradeParams tradeParams) sellResult = await exchangeApi.SellOco(CryptoOrderType.Oco, CryptoOrderSide.Short, 
                         //    step.Quantity, sellPrice, sellStop, sellLimit);
-                        (bool result, TradeParams tradeParams) sellResult = await exchangeApi.BuyOrSell(
+                        (bool result, TradeParams tradeParams) result = await exchangeApi.BuyOrSell(
                             position.TradeAccount, position.Symbol, LastCandle1mCloseTimeDate,
                             CryptoOrderType.StopLimit, CryptoOrderSide.Sell,
-                            step.Quantity, price, stop, null, "LOCK PROFIT"); // Was een OCO met een sellLimit
-                        if (sellResult.result)
+                            step.Quantity, price, stop, null); // Was een OCO met een sellLimit
+                        if (result.result)
                         {
                             // Administratie van de nieuwe sell bewaren (iets met tonen van de posities)
                             //part.SellPrice = price;
@@ -1519,10 +1590,13 @@ public class PositionMonitor
                             }
 
                             // Als vervanger van bovenstaande tzt (maar willen we die ook als een afzonderlijke step? Het zou ansich kunnen)
-                            var sellStep = PositionTools.CreatePositionStep(position, part, sellResult.tradeParams, "SELL", CryptoTrailing.Trailing);
+                            var sellStep = PositionTools.CreatePositionStep(position, part, result.tradeParams, "SELL", CryptoTrailing.Trailing);
                             PositionTools.InsertPositionStep(databaseThread, position, sellStep);
                             PositionTools.AddPositionPartStep(part, sellStep);
+
+                            Api.DumpOrder(position.Symbol, result.tradeParams, "locking");
                         }
+                        else Api.DumpError(position.Symbol, result.tradeParams, "locking");
                     }
 
                 }

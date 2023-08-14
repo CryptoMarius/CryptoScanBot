@@ -200,16 +200,11 @@ public class Api : ExchangeBase
     }
 
 
-    public async Task<(bool result, TradeParams tradeParams)> BuyOrSell(
+    public async Task<(bool success, TradeParams tradeParams)> BuyOrSell(
         CryptoTradeAccount tradeAccount, CryptoSymbol symbol, DateTime currentDate,
         CryptoOrderType orderType, CryptoOrderSide orderSide,
-        decimal quantity, decimal price, decimal? stop, decimal? limit, string extraText = "")
+        decimal quantity, decimal price, decimal? stop, decimal? limit)
     {
-        // Bij nader inzien is het gebruik van de TradeParams ovebodig, enkel de datums 
-        // en de order id's die terugkomen zijn van belang, de trades vallen later...
-        // Het kan dus best versimpeld worden (maar of het nu zoveel uitmaakt <nee>?)
-
-
         // Controleer de limiten van de maximum en minimum bedrag en de quantity
         if (!symbol.InsideBoundaries(quantity, price, out string text))
         {
@@ -220,24 +215,19 @@ public class Api : ExchangeBase
         TradeParams tradeParams = new()
         {
             CreateTime = currentDate,
-            Side = orderSide,
+            OrderSide = orderSide,
             OrderType = orderType,
             Price = price, // the sell part (can also be a buy)
             StopPrice = stop, // OCO - the price at which the limit order to sell is activated
             LimitPrice = limit, // OCO - the lowest price that the trader is willing to accept
             Quantity = quantity,
             QuoteQuantity = price * quantity,
-            OrderId = 0,
+            //OrderId = 0,
         };
         if (orderType == CryptoOrderType.StopLimit)
             tradeParams.QuoteQuantity = (decimal)tradeParams.StopPrice * tradeParams.Quantity;
-
-
         if (tradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
-        {
-            DumpOrder(symbol, tradeParams, extraText);
             return (true, tradeParams);
-        }
 
 
         OrderSide side;
@@ -247,120 +237,133 @@ public class Api : ExchangeBase
             side = OrderSide.Sell;
 
 
-        // Plaats een order op Binance
+        // Plaats een order op de exchange *ze lijken op elkaar, maar het is net elke keer anders)
         //BinanceWeights.WaitForFairBinanceWeight(1); flauwekul voor die ene tick (geen herhaling toch?)
         using BinanceRestClient client = new();
 
-        // Een OCO is ietjes afwijkend ten opzichte van de standaard
-        if (orderType == CryptoOrderType.Oco)
+        switch (orderType)
         {
-            WebCallResult<BinanceOrderOcoList> result;
-            result = await client.SpotApi.Trading.PlaceOcoOrderAsync(symbol.Name, side,
-                quantity, price: price, (decimal)stop, limit, stopLimitTimeInForce: TimeInForce.GoodTillCanceled);
+            case CryptoOrderType.Market:
+                { 
+                    WebCallResult<BinancePlacedOrder> result;
+                    result = await client.SpotApi.Trading.PlaceOrderAsync(symbol.Name, side,
+                        SpotOrderType.Market, quantity);
+                    if (!result.Success)
+                    {
+                        tradeParams.Error = result.Error;
+                        tradeParams.ResponseStatusCode = result.ResponseStatusCode;
+                    }
+                    if (result.Success && result.Data != null)
+                    {
+                        tradeParams.CreateTime = result.Data.CreateTime;
+                        tradeParams.OrderId = result.Data.Id;
+                    }
+                    return (result.Success, tradeParams);
+                }
+            case CryptoOrderType.Limit:
+                {
+                    WebCallResult<BinancePlacedOrder> result;
+                    result = await client.SpotApi.Trading.PlaceOrderAsync(symbol.Name, side,
+                        SpotOrderType.Limit, quantity, price: price, timeInForce: TimeInForce.GoodTillCanceled);
+                    if (!result.Success)
+                    {
+                        tradeParams.Error = result.Error;
+                        tradeParams.ResponseStatusCode = result.ResponseStatusCode;
+                    }
+                    if (result.Success && result.Data != null)
+                    {
+                        tradeParams.CreateTime = result.Data.CreateTime;
+                        tradeParams.OrderId = result.Data.Id;
+                    }
+                    return (result.Success, tradeParams);
+                }
+            case CryptoOrderType.StopLimit:
+                {
+                    WebCallResult<BinancePlacedOrder> result;
+                    result = await client.SpotApi.Trading.PlaceOrderAsync(symbol.Name, side,
+                        SpotOrderType.StopLossLimit, quantity, price: price, stopPrice: stop, timeInForce: TimeInForce.GoodTillCanceled);
+                    if (!result.Success)
+                    {
+                        tradeParams.Error = result.Error;
+                        tradeParams.ResponseStatusCode = result.ResponseStatusCode;
+                    }
+                    if (result.Success && result.Data != null)
+                    {
+                        tradeParams.CreateTime = result.Data.CreateTime;
+                        tradeParams.OrderId = result.Data.Id;
+                    }
+                    return (result.Success, tradeParams);
+                }
+            case CryptoOrderType.Oco:
+                {
+                    WebCallResult<BinanceOrderOcoList> result;
+                    result = await client.SpotApi.Trading.PlaceOcoOrderAsync(symbol.Name, side,
+                        quantity, price: price, (decimal)stop, limit, stopLimitTimeInForce: TimeInForce.GoodTillCanceled);
 
-            if (!result.Success)
-            {
-                DumpError(symbol, orderType, orderSide, quantity, price, stop, limit, extraText,
-                    result.ResponseStatusCode.ToString(), result.Error.ToString());
-            }
-            else if (result.Data != null)
-            {
-                // https://github.com/binance/binance-spot-api-docs/blob/master/rest-api.md
-                // De 1e order is de stop loss (te herkennen aan de "type": "STOP_LOSS")
-                // De 2e order is de normale sell (te herkennen aan de "type": "LIMIT_MAKER")
-                // De ene order heeft een price/stopprice, de andere enkel een price (combi)
-                BinancePlacedOcoOrder order1 = result.Data.OrderReports.First();
-                BinancePlacedOcoOrder order2 = result.Data.OrderReports.Last();
-                tradeParams.CreateTime = result.Data.TransactionTime; // order1.CreateTime;
-                tradeParams.OrderId = order1.Id;
-                tradeParams.Order2Id = order2.Id; // Een 2e ordernummer (welke eigenlijk?)
-                return (true, tradeParams);
-            }
+                    if (!result.Success)
+                    {
+                        tradeParams.Error = result.Error;
+                        tradeParams.ResponseStatusCode = result.ResponseStatusCode;
+                    }
+                    if (result.Success && result.Data != null)
+                    {
+                        // https://github.com/binance/binance-spot-api-docs/blob/master/rest-api.md
+                        // De 1e order is de stop loss (te herkennen aan de "type": "STOP_LOSS")
+                        // De 2e order is de normale sell (te herkennen aan de "type": "LIMIT_MAKER")
+                        // De ene order heeft een price/stopprice, de andere enkel een price (combi)
+                        BinancePlacedOcoOrder order1 = result.Data.OrderReports.First();
+                        BinancePlacedOcoOrder order2 = result.Data.OrderReports.Last();
+                        tradeParams.CreateTime = result.Data.TransactionTime; // order1.CreateTime;
+                        tradeParams.OrderId = order1.Id;
+                        tradeParams.Order2Id = order2.Id; // Een 2e ordernummer (welke eigenlijk?)
+                    }
+                    return (result.Success, tradeParams);
+                }
+            default:
+                throw new Exception("${orderType} not supported");
         }
-        else
-        {
-            // Elk ordertype heeft andere opties, uitschrijven is het duidelijkste
-
-            WebCallResult<BinancePlacedOrder> result;
-            if (orderType == CryptoOrderType.Market)
-                result = await client.SpotApi.Trading.PlaceOrderAsync(symbol.Name, side,
-                    SpotOrderType.Market, quantity);
-            else if (orderType == CryptoOrderType.StopLimit)
-                result = await client.SpotApi.Trading.PlaceOrderAsync(symbol.Name, side,
-                    SpotOrderType.StopLossLimit, quantity, price: price, stopPrice: stop, timeInForce: TimeInForce.GoodTillCanceled);
-            else
-                result = await client.SpotApi.Trading.PlaceOrderAsync(symbol.Name, side,
-                    SpotOrderType.Limit, quantity, price: price, timeInForce: TimeInForce.GoodTillCanceled);
-
-            if (!result.Success)
-            {
-                DumpError(symbol, orderType, orderSide, quantity, price, stop, limit, extraText,
-                    result.ResponseStatusCode.ToString(), result.Error.ToString());
-            }
-
-            //TODO: Dit is raar, alsof dit de exacte data is voor een MarketOrder..
-            // (=> dan komt er natuurlijk wel een trade die de werkelijkheid bevat)
-            if (result.Success && result.Data != null)
-            {
-                // Vraag: waarom zijn de price en quantity niet gevuld in de result bij een StopLimit? 
-                tradeParams.CreateTime = result.Data.CreateTime;
-                tradeParams.OrderId = result.Data.Id;
-                DumpOrder(symbol, tradeParams, extraText);
-                return (true, tradeParams);
-            }
-            else return (false, null);
-        }
-
-        return (false, tradeParams);
     }
 
 
-    public static async Task<WebCallResult<BinanceOrderBase>> Cancel(CryptoTradeAccount tradeAccount,
-        CryptoSymbol symbol, long? orderId)
+    public static async Task<(bool success, TradeParams tradeParams)> Cancel(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoPositionStep step)
     {
+        // Order gegevens overnemen (voor een eventuele error dump)
+        TradeParams tradeParams = new()
+        {
+            CreateTime = step.CreateTime,
+            OrderSide = step.Side,
+            OrderType = step.OrderType,
+            Price = step.Price, // the sell part (can also be a buy)
+            StopPrice = step.StopPrice, // OCO - the price at which the limit order to sell is activated
+            LimitPrice = step.StopLimitPrice, // OCO - the lowest price that the trader is willing to accept
+            Quantity = step.Quantity,
+            QuoteQuantity = step.Price * step.Quantity,
+            OrderId = step.OrderId,
+            Order2Id = step.Order2Id,
+        };
+        // Eigenlijk niet nodig
+        if (step.OrderType == CryptoOrderType.StopLimit)
+            tradeParams.QuoteQuantity = (decimal)tradeParams.StopPrice * tradeParams.Quantity;
+
         if (tradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
+            return (true, tradeParams);
+
+
+        // Annuleer de order 
+        if (step.OrderId.HasValue)
         {
-            //TradeParams tradeParams = new();
-            //tradeParams.CreateTime = CurrentDate;
-            //tradeParams.IsBuy = false;
-            //tradeParams.OrderId = 0; // result.Data.Id;
-            //tradeParams.StopPrice = stop; // order2.StopPrice;
-            //tradeParams.LimitPrice = limit; // order2.  Hey, waarom is deze er niet?
-            //if (price == null)
-            //    tradeParams.Price = (decimal)symbol.LastPrice;
-            //else
-            //    tradeParams.Price = (decimal)price;
-            //tradeParams.Quantity = (decimal)quantity;
-            //tradeParams.QuoteQuantity = tradeParams.Price * tradeParams.Quantity;
-            //return (true, tradeParams);
-
-            // todo, deze tekst ook verderop plaatsen!
-            //string text2 = string.Format("{0} POSITION {1} {2} ORDER #{3} CANCEL price={4} stop={5} quantity={6} quotequantity={7}",
-            //    symbol.Name, 
-            //    orderId);
-            //GlobalData.AddTextToLogTab(text2);
-            //GlobalData.AddTextToTelegram(text2);
-
-            return null; // what?
-        }
-
-        // BinanceWeights.WaitForFairBinanceWeight(1); flauwekul
-
-        // Annuleer een order 
-        if (orderId.HasValue)
-        {
+            // BinanceWeights.WaitForFairBinanceWeight(1);
             using var client = new BinanceRestClient();
-            WebCallResult<BinanceOrderBase> result = await client.SpotApi.Trading.CancelOrderAsync(symbol.Name, orderId);
+            var result = await client.SpotApi.Trading.CancelOrderAsync(symbol.Name, step.OrderId);
             if (!result.Success)
             {
-                string text = string.Format("{0} ERROR cancel order {1} {2}", symbol.Name, result.ResponseStatusCode, result.Error);
-                GlobalData.AddTextToLogTab(text);
-                GlobalData.AddTextToTelegram(text);
+                tradeParams.Error = result.Error;
+                tradeParams.ResponseStatusCode = result.ResponseStatusCode;
             }
-            return result;
-
+            return (true, tradeParams);
         }
-        return null;
+
+        return (false, tradeParams);
     }
 
     static public void PickupAssets(CryptoTradeAccount tradeAccount, IEnumerable<BinanceBalance> balances)

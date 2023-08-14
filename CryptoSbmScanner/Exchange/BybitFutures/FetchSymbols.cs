@@ -40,8 +40,11 @@ public class FetchSymbols
                     GlobalData.AddTextToLogTab("error getting exchangeinfo " + exchangeInfo.Error + "\r\n");
                 if (exchangeInfo.Data == null)
                     throw new ExchangeException("Geen exchange data ontvangen (2)");
-                
 
+
+
+                // Om achteraf de niet aangeboden munten te deactiveren
+                SortedList<string, CryptoSymbol> activeSymbols = new();
 
 
                 using (var transaction = database.BeginTransaction())
@@ -136,11 +139,27 @@ public class FetchSymbols
                                 }
                                 else
                                     database.Connection.Update(symbol, transaction);
+                                activeSymbols.Add(symbol.Name, symbol);
                             }
                         }
 #if SQLDATABASE
                         database.BulkInsertSymbol(cache, transaction);
 #endif
+
+                        // Deactiveer de munten die niet meer voorkomen
+                        int deactivated = 0;
+                        foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
+                        {
+                            if (!activeSymbols.ContainsKey(symbol.Name))
+                            {
+                                deactivated++;
+                                symbol.Status = 0;
+                                database.Connection.Update(symbol, transaction);
+                            }
+                        }
+                        if (deactivated > 0)
+                            GlobalData.AddTextToLogTab($"{deactivated} munten gedeactiveerd");
+
                         transaction.Commit();
 
 

@@ -58,7 +58,7 @@ public class KLineTickerStream
 
                     // Process the single 1m candle
                     candle = CandleTools.HandleFinalCandleData(symbol, GlobalData.IntervalList[0], kline.StartTime,
-                        kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.Volume);
+                        kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.Volume, false);
 #if SQLDATABASE
                     GlobalData.TaskSaveCandles.AddToQueue(candle);
 #endif
@@ -163,19 +163,19 @@ public class KLineTickerStream
 
     private void ConnectionLost()
     {
-        GlobalData.AddTextToLogTab(string.Format("Bybit {0} 1m candle stream connection lost.", quote));
+        GlobalData.AddTextToLogTab(string.Format("Bybit {0} 1m candle ticker connection lost.", quote));
         ScannerSession.ConnectionWasLost("");
     }
 
     private void ConnectionRestored(TimeSpan timeSpan)
     {
-        GlobalData.AddTextToLogTab(string.Format("Bybit {0} 1m candle stream connection restored.", quote));
+        GlobalData.AddTextToLogTab(string.Format("Bybit {0} 1m candle ticker connection restored.", quote));
         ScannerSession.ConnectionWasRestored("");
     }
 
     private void Exception(Exception ex)
     {
-        GlobalData.AddTextToLogTab($"Bybit 1m candle stream connection error {ex.Message} | Stack trace: {ex.StackTrace}");
+        GlobalData.AddTextToLogTab($"Bybit 1m candle ticker connection error {ex.Message} | Stack trace: {ex.StackTrace}");
     }
 
 }

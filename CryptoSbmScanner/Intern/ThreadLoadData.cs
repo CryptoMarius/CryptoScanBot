@@ -657,6 +657,15 @@ public class ThreadLoadData
                 // Dit is een enorme cpu drain, eventjes 3 * 250 * ~3 intervallen bijlangs
                 //RecalculateLastXCandles(1);
 
+
+                if (!afterRestart)
+                {
+                    if (GlobalData.BackTest)
+                        await PositionMonitor.CheckPositionsAfterRestart(GlobalData.ExchangeBackTestAccount);
+                    if (GlobalData.Settings.Trading.TradeViaPaperTrading)
+                        await PositionMonitor.CheckPositionsAfterRestart(GlobalData.ExchangePaperTradeAccount);
+                }
+
                 // Assume we now can run
                 GlobalData.ApplicationStatus = CryptoApplicationStatus.Running;
                 //GlobalData.DumpSessionInformation();

@@ -60,7 +60,7 @@ internal class KLineTicker : KLineTickerBase
             if (taskList.Any())
             {
                 await Task.WhenAll(taskList);
-                GlobalData.AddTextToLogTab($"{Api.ExchangeName} started kline ticker stream for {count} symbols");
+                GlobalData.AddTextToLogTab($"{Api.ExchangeName} started kline ticker for {count} symbols");
             }
         }
     }
@@ -68,7 +68,7 @@ internal class KLineTicker : KLineTickerBase
 
     public override async Task Stop()
     {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} stopping kline ticker stream");
+        GlobalData.AddTextToLogTab($"{Api.ExchangeName} stopping kline ticker");
         List<Task> taskList = new();
         foreach (var ticker in TickerList)
         {
@@ -94,6 +94,38 @@ internal class KLineTicker : KLineTickerBase
         foreach (var ticker in TickerList)
             TickerCount += ticker.TickerCount;
         return TickerCount;
+    }
+
+    public override async Task CheckKlineTickers()
+    {
+        List<KLineTickerStream> tickers = new();
+        foreach (var ticker in TickerList)
+        {
+            if (ticker.ConnectionLostCount > 0)
+                tickers.Add(ticker);
+        }
+
+        if (tickers.Any())
+        {
+            GlobalData.AddTextToLogTab($"{Api.ExchangeName} restart {tickers.Count} tickers");
+
+            Task task;
+            List<Task> stopTickers = new();
+            foreach (var ticker in tickers)
+            {
+                task = Task.Run(async () => { await ticker.StopAsync(); });
+                stopTickers.Add(task);
+            }
+            await Task.WhenAll(stopTickers);
+
+            List<Task> startTickers = new();
+            foreach (var ticker in tickers)
+            {
+                task = Task.Run(async () => { await ticker.StartAsync(); });
+                startTickers.Add(task);
+            }
+            await Task.WhenAll(startTickers);
+        }
     }
 
 }

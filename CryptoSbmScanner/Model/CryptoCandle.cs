@@ -32,6 +32,10 @@ public class CryptoCandle : IQuote
     [Computed]
     public CandleIndicatorData CandleData { get; set; }
 
+    // Even een hulpje bij het uitzoeken van Kucoin
+    [Computed]
+    public bool IsDuplicated { get; set; }
+
     //[Computed]
     //public string ExtraText { get; set; } // beetje quick en dirty voor een Excel export
 }

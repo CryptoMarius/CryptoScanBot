@@ -39,6 +39,7 @@ partial class FrmSettings
         panel1 = new Panel();
         tabControl = new TabControl();
         tabAlgemeen = new TabPage();
+        EditHideSymbolsOnTheLeft = new CheckBox();
         label58 = new Label();
         EditActivateExchange = new ComboBox();
         EditShowInvalidSignals = new CheckBox();
@@ -299,7 +300,6 @@ partial class FrmSettings
         toolTip1 = new ToolTip(components);
         imageList1 = new ImageList(components);
         colorDialog1 = new ColorDialog();
-        EditHideSymbolsOnTheLeft = new CheckBox();
         panel2.SuspendLayout();
         panel1.SuspendLayout();
         tabControl.SuspendLayout();
@@ -503,6 +503,17 @@ partial class FrmSettings
         tabAlgemeen.TabIndex = 6;
         tabAlgemeen.Text = "Algemeen";
         tabAlgemeen.UseVisualStyleBackColor = true;
+        // 
+        // EditHideSymbolsOnTheLeft
+        // 
+        EditHideSymbolsOnTheLeft.AutoSize = true;
+        EditHideSymbolsOnTheLeft.Location = new Point(29, 268);
+        EditHideSymbolsOnTheLeft.Margin = new Padding(4, 3, 4, 3);
+        EditHideSymbolsOnTheLeft.Name = "EditHideSymbolsOnTheLeft";
+        EditHideSymbolsOnTheLeft.Size = new Size(182, 19);
+        EditHideSymbolsOnTheLeft.TabIndex = 190;
+        EditHideSymbolsOnTheLeft.Text = "Verberg de lijst met symbolen";
+        EditHideSymbolsOnTheLeft.UseVisualStyleBackColor = true;
         // 
         // label58
         // 
@@ -2588,9 +2599,9 @@ partial class FrmSettings
         EditTradeViaBinance.Location = new Point(23, 41);
         EditTradeViaBinance.Margin = new Padding(4, 3, 4, 3);
         EditTradeViaBinance.Name = "EditTradeViaBinance";
-        EditTradeViaBinance.Size = new Size(109, 19);
+        EditTradeViaBinance.Size = new Size(148, 19);
         EditTradeViaBinance.TabIndex = 255;
-        EditTradeViaBinance.Text = "Binance trading";
+        EditTradeViaBinance.Text = "Traden op de exchange";
         EditTradeViaBinance.UseVisualStyleBackColor = true;
         // 
         // label63
@@ -3392,17 +3403,6 @@ partial class FrmSettings
         imageList1.ImageStream = (ImageListStreamer)resources.GetObject("imageList1.ImageStream");
         imageList1.TransparentColor = Color.Transparent;
         imageList1.Images.SetKeyName(0, "volume.png");
-        // 
-        // EditHideSymbolsOnTheLeft
-        // 
-        EditHideSymbolsOnTheLeft.AutoSize = true;
-        EditHideSymbolsOnTheLeft.Location = new Point(29, 268);
-        EditHideSymbolsOnTheLeft.Margin = new Padding(4, 3, 4, 3);
-        EditHideSymbolsOnTheLeft.Name = "EditHideSymbolsOnTheLeft";
-        EditHideSymbolsOnTheLeft.Size = new Size(182, 19);
-        EditHideSymbolsOnTheLeft.TabIndex = 190;
-        EditHideSymbolsOnTheLeft.Text = "Verberg de lijst met symbolen";
-        EditHideSymbolsOnTheLeft.UseVisualStyleBackColor = true;
         // 
         // FrmSettings
         // 

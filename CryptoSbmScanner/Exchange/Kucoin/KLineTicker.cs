@@ -47,14 +47,15 @@ internal class KLineTicker : KLineTickerBase
                         while (symbols.Count > 0)
                         {
                             CryptoSymbol symbol = symbols[0];
-                            ticker.symbols.Add(symbol.Base + "-" + symbol.Quote);
+                            ticker.Symbol = symbol;
+                            //ticker.symbols.Add(symbol.Base + "-" + symbol.Quote);
                             //ticker.SymbolName = symbol.Name;
                             symbols.Remove(symbol);
                             count++;
 
                             // Really, 1? Succes qua opstarten
-                            if (ticker.symbols.Count >= 1)
-                                break;
+                            //if (ticker.symbols.Count >= 1)
+                            break;
                         }
                         Task task = Task.Run(async () => { await ticker.StartAsync(socketClient); });
                         taskList.Add(task);

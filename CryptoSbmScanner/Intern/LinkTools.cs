@@ -53,13 +53,16 @@ public static class LinkTools
         (string Url, CryptoExternalUrlType Execute) refInfo = GlobalData.ExternalUrls.GetExternalRef(externalTradingApp, false, symbol, interval);
         if (refInfo.Url != "")
         {
+
             if (refInfo.Execute == CryptoExternalUrlType.Internal)
             {
+                GlobalData.AddTextToLogTab($"Linktools activate external app (via internal browser) {refInfo.Url}");
                 await InitializeWebViewDummy();
                 _webViewDummy.Source = new(refInfo.Url);
             }
             else
             {
+                GlobalData.AddTextToLogTab($"Linktools activate external app (via execute command) {refInfo.Url}");
                 System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(refInfo.Url) { UseShellExecute = true });
             }
         }

@@ -24,18 +24,17 @@ internal class UserData : UserDataBase
         TaskBinanceStreamUserData = null;
     }
 
+    //public override void Reset()
+    //{
+    //    // empty
+    //}
 
-    public override void Reset()
-    {
-        // empty
-    }
 
-
-    public override int Count()
-    {
-        // empty
-        return 0;
-    }
+    //public override int Count()
+    //{
+    //    // empty
+    //    return 0;
+    //}
 
 }
 #endif

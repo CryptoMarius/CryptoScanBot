@@ -269,7 +269,7 @@ public static class ScannerSession
     }
 
 
-    static private void TimerGetCandles_Tick(object sender, EventArgs e)
+    static private async void TimerGetCandles_Tick(object sender, EventArgs e)
     {
         // Ophalen van exchange info en candles bijwerken
         //if (GlobalData.ApplicationStatus == ApplicationStatus.AppStatusRunning)
@@ -282,6 +282,7 @@ public static class ScannerSession
                 //Invoke((MethodInvoker)(() => InitTimerInterval(ref TimerGetExchangeInfo, GlobalData.Settings.General.GetCandleInterval * 60)));
             }
             TimerGetExchangeInfo.InitTimerInterval(GlobalData.Settings.General.GetCandleInterval * 60);
+            await ExchangeHelper.KLineTicker.CheckKlineTickers(); // herstarten van ticker indien errors
             _ = ExchangeHelper.FetchCandlesAsync(); // niet wachten tot deze klaar is
         }
     }
