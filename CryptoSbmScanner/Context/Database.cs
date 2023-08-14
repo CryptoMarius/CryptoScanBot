@@ -995,7 +995,6 @@ public class CryptoDatabase : IDisposable
                 "Order2Id TEXT NULL," +
                 //"OrderListId TEXT NULL," + // Binance OCO, extra lijst? (nooit gebruikt)
                 "AvgPrice TEXT NULL," +
-                "Commission TEXT NULL," +
                 "StepInMethod INTEGER NULL," +
                 "StepOutMethod INTEGER NULL," +
                 "Trailing INTEGER NULL," +
