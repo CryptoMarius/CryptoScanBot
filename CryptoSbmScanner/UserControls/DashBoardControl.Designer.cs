@@ -63,6 +63,7 @@ partial class DashBoardControl
         label26 = new Label();
         label14 = new Label();
         label15 = new Label();
+        EditQuote = new ComboBox();
         SuspendLayout();
         // 
         // button1
@@ -381,10 +382,20 @@ partial class DashBoardControl
         label15.Text = "%";
         label15.TextAlign = ContentAlignment.MiddleLeft;
         // 
+        // EditQuote
+        // 
+        EditQuote.DropDownStyle = ComboBoxStyle.DropDownList;
+        EditQuote.FormattingEnabled = true;
+        EditQuote.Location = new Point(410, 1);
+        EditQuote.Name = "EditQuote";
+        EditQuote.Size = new Size(121, 23);
+        EditQuote.TabIndex = 40;
+        // 
         // DashBoardControl
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
+        Controls.Add(EditQuote);
         Controls.Add(label15);
         Controls.Add(label14);
         Controls.Add(label26);
@@ -463,4 +474,5 @@ partial class DashBoardControl
     private Label label26;
     private Label label14;
     private Label label15;
+    private ComboBox EditQuote;
 }

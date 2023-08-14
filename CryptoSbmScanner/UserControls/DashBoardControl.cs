@@ -17,6 +17,8 @@ namespace CryptoSbmScanner;
 
 public partial class DashBoardControl : UserControl
 {
+    CryptoQuoteData QuoteData = null;
+
     public class QueryPositionData
     {
         public DateTime CloseTime { get; set; }
@@ -75,6 +77,41 @@ public partial class DashBoardControl : UserControl
     public DashBoardControl()
     {
         InitializeComponent();
+        EditQuote.Sorted = true;
+    }
+
+    public void InitializeStuff()
+    {
+        GetQueryQuoteData();
+        Button1_Click(null, null);
+    }
+
+
+    private void GetQueryQuoteData()
+    {
+        StringBuilder builder = new();
+        builder.AppendLine("select symbol.quote, count(symbol.quote)");
+        builder.AppendLine("from PositionStep");
+        builder.AppendLine("inner join position on Position.Id = positionStep.PositionId");
+        builder.AppendLine("inner join symbol on Position.symbolid = symbol.id");
+        builder.AppendLine("where PositionStep.status in (1, 2)");
+        builder.AppendLine("group by symbol.quote");
+        builder.AppendLine("order by count(symbol.quote) desc");
+
+        using CryptoDatabase databaseThread = new();
+        databaseThread.Open();
+
+        foreach (QueryTradeData data in databaseThread.Connection.Query<QueryTradeData>(builder.ToString()))
+        {
+            if (EditQuote.Items.IndexOf(data.Quote) < 0)
+                EditQuote.Items.Add(data.Quote);
+        }
+
+        if (EditQuote.Items.Count == 0)
+            EditQuote.Items.Add("USDT");
+
+        if (EditQuote.Items.Count > 0 && EditQuote.SelectedIndex < 0)
+            EditQuote.SelectedIndex = 0;
     }
 
 
@@ -87,6 +124,7 @@ public partial class DashBoardControl : UserControl
         builder.AppendLine("inner join position on Position.Id = positionStep.PositionId");
         builder.AppendLine("inner join symbol on Position.symbolid = symbol.id");
         builder.AppendLine("where PositionStep.status in (1, 2) and PositionStep.Side = 0");
+        builder.AppendLine($"and symbol.quote = '{QuoteData.Name}'");
         builder.AppendLine("group by date(PositionStep.CloseTime), PositionStep.Status, symbol.quote");
         builder.AppendLine("order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote");
 
@@ -111,6 +149,7 @@ public partial class DashBoardControl : UserControl
         builder.AppendLine("inner join position on Position.Id = positionStep.PositionId");
         builder.AppendLine("inner join symbol on Position.symbolid = symbol.id");
         builder.AppendLine("where PositionStep.status in (1, 2) and PositionStep.Side = 1");
+        builder.AppendLine($"and symbol.quote = '{QuoteData.Name}'");
         builder.AppendLine("group by date(PositionStep.CloseTime), PositionStep.Status, symbol.quote");
         builder.AppendLine("order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote");
 
@@ -156,7 +195,7 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
         builder.AppendLine("from position");
         builder.AppendLine("inner join symbol on position.symbolid = symbol.id");
         builder.AppendLine("--where position.status = 2");
-        builder.AppendLine("where symbol.quote = 'USDT'");
+        builder.AppendLine($"where symbol.quote = '{QuoteData.Name}'");
         builder.AppendLine("group by date(position.CloseTime), position.Status, symbol.quote");
         builder.AppendLine("order by date(position.CloseTime) asc, position.Status, symbol.quote");
 
@@ -166,6 +205,7 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
         // TODO: Vandaag toevoegen
         // Experiment #1 is een chart met per datum het aantal gesloten posities
         // De 1e kolom is het aantal nog openstaande posities, die moeten we nog ergens onderbrengen
+        OpenData = new();
         ClosedData = new();
         QueryPositionDataList.Clear();
         foreach (QueryPositionData data in databaseThread.Connection.Query<QueryPositionData>(builder.ToString()))
@@ -181,7 +221,14 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
                 // enzovoort..
             }
             else
+            {
                 OpenData = data; // het restant
+                // verschil vanwege meerdere quotes
+                //OpenData.Positions += data.Positions;
+                //OpenData.Invested += data.Invested;
+                //OpenData.Returned += data.Returned;
+                //OpenData.Commission += data.Commission;
+            }
         }
     }
 
@@ -197,7 +244,7 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
         builder.AppendLine("  sum(trade.QuoteQuantity) as Value");
         builder.AppendLine("from trade");
         builder.AppendLine("inner join symbol on trade.symbolid = symbol.id");
-        builder.AppendLine("where symbol.quote = 'USDT'");
+        builder.AppendLine($"where symbol.quote = '{QuoteData.Name}'");
         builder.AppendLine("group by date(trade.TradeTime), trade.Side,symbol.quote");
         builder.AppendLine("order by date(trade.TradeTime) asc, trade.Side,symbol.quote");
 
@@ -450,13 +497,6 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
         };
         ChartInvestedReturnedPerDay.Series.Add(series1);
 
-        var list = GetQueryInvestedData();
-        foreach (var data in list)
-        {
-            if (data.CloseTime.Date > new DateTime(2000, 01, 01))
-                series1.Points.AddXY(data.CloseTime.Date, data.Invested);
-        }
-
         var series2 = new Series
         {
             Name = "Geretourneerd",
@@ -468,24 +508,32 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
         };
         ChartInvestedReturnedPerDay.Series.Add(series2);
 
+
+        // Combineer, anders is er verschillende aantal x punten..
+        SortedList<DateTime, QueryPositionData> bla = new();
+
+        var list = GetQueryInvestedData();
+        foreach (var data in list)
+            bla.Add(data.CloseTime.Date, data);
         list = GetQueryReturnedData();
         foreach (var data in list)
         {
-            if (data.CloseTime.Date > new DateTime(2000, 01, 01))
-                series2.Points.AddXY(data.CloseTime.Date, data.Returned);
+            if (bla.TryGetValue(data.CloseTime.Date, out var foundData))
+                foundData.Returned = data.Returned;
+            else
+                bla.Add(data.CloseTime.Date, data);
         }
 
 
-        //foreach (QueryTradeData data in QueryTradeDataList)
-        //{
-        //    if (data.TradeTime.Date > new DateTime(2000, 01, 01))
-        //    {
-        //        if (data.Side == CryptoOrderSide.Buy)
-        //            series1.Points.AddXY(data.TradeTime.Date, data.Value);
-        //        else
-        //            series2.Points.AddXY(data.TradeTime.Date, data.Value);
-        //    }
-        //}
+        // En toevoegen
+        foreach (var data in bla.Values)
+        {
+            if (data.CloseTime.Date > new DateTime(2000, 01, 01))
+            {
+                series1.Points.AddXY(data.CloseTime.Date, data.Invested);
+                series2.Points.AddXY(data.CloseTime.Date, data.Returned);
+            }
+        }
 
         ChartInvestedReturnedPerDay.Invalidate();
     }
@@ -564,25 +612,9 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
         ChartDoorlooptijden.Invalidate();
     }
 
-    private void CreateChart()
+    private void DoAdditionalData()
     {
         string quoteDataDisplayString = "N2";
-        // Diverse statistieken van de posities per dag (via position tabel)
-        // +Investeringen en returnments per dag (via trade tabel)
-
-        GetQueryPositionData();
-        GetQueryTradeData();
-
-        DoChartPositionsPerDay(OffsetX, OffsetY);
-        DoChartProfitPercentagePerDay(OffsetX + GraphWidth + Gap, OffsetY);
-
-        DoChartProfitsPerDay(OffsetX, OffsetY + GraphHeight + Gap);
-        DoChartInvestedReturnedPerDay(OffsetX + GraphWidth + Gap, OffsetY + GraphHeight + Gap);
-
-        DoChartDoorlooptijden(OffsetX, OffsetY + 2 * GraphHeight + 2 * Gap);
-        // todo: Gemiddelde profit per dag (net zoals de percentage maar dan met geld)
-        // todo: Toelichting van de gemiddelde doorlooptijd (wat op de x en y as?)
-
 
         // En de lopende posities
         labelPositions.Text = OpenData.Positions.ToString();
@@ -636,8 +668,37 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
             label3.Text = ((100 * (currentValue / ClosedData.Invested))).ToString("N2");
         else
             label3.Text = "";
+    }
 
-        return;
+    private void CreateChart()
+    {
+        // Diverse statistieken van de posities per dag (via position tabel)
+        // +Investeringen en returnments per dag (via trade tabel)
+        GetQueryQuoteData();
+
+
+        string quoteName = EditQuote.Text;
+        if (quoteName == "")
+            quoteName = "USDT";
+        if (!GlobalData.Settings.QuoteCoins.TryGetValue(quoteName, out QuoteData))
+            return;
+
+        GetQueryPositionData();
+        GetQueryTradeData();
+
+        DoChartPositionsPerDay(OffsetX, OffsetY);
+        DoChartProfitPercentagePerDay(OffsetX + GraphWidth + Gap, OffsetY);
+
+        DoChartProfitsPerDay(OffsetX, OffsetY + GraphHeight + Gap);
+        DoChartInvestedReturnedPerDay(OffsetX + GraphWidth + Gap, OffsetY + GraphHeight + Gap);
+
+        DoChartDoorlooptijden(OffsetX, OffsetY + 2 * GraphHeight + 2 * Gap);
+        // todo: Gemiddelde profit per dag (net zoals de percentage maar dan met geld)
+        // todo: Toelichting van de gemiddelde doorlooptijd (wat op de x en y as?)
+
+
+        // NB: De eerste keer staan er vreemde getallen, dit omdat de lastPrice onbekend is
+        DoAdditionalData();
     }
 
     private void Button1_Click(object sender, EventArgs e)
