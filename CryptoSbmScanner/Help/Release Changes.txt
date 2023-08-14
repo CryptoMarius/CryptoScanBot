@@ -42,8 +42,7 @@ stoplimit orders is dat een probleem. Deze module (in de vorm van wat instelling
 posities) komt later (gratis) beschikbaar. Als je ideen hebt voor vervangen OCO/Stop limit, shoot (to inform)!
 
 TODO na de release:
-- De documentatie bijwerken
-- Telegram - uitleggen hoe je dit precies moet configureren (stappenplan)
+Documentatie (er is wel een stukje van de trading toegelicht, maar lang niet alles:
 - Trading - uitleggen papertrading bot (achterliggende gedachtes uitleggen)
 - Trading - uitleggen wat de open en gesloten posities precies zijn (per kolom)
 - ByBit Spot - URL voor activeren Bybit Spot in Altrady, Hypertrader en Tradingview (via de settings.json)
@@ -62,10 +61,14 @@ De ondersteuning van de Kucoin exchange is uitgesteld (want de price- en klineti
 
 
 xx-08-2023 1.8.3
-- De documentatie voor een groot deel bijgewerkt
+- Caption "Binance Trading (naast de papertrading))
+- Munten blijven de rest van hun leven actief, ook als ze niet worden genoemd in de lijst van symbolen enzovoort (alle 4 exchanges!)
+- De sortering van de signalen klopt niet (er is namelijk een kolom exchange toegevoegd, maar de sortering is niet aangepast)
+- Documentatie in zijn geheel bijgewerkt waaronder aanpassing .net framework
+- Een extra instelling waarmee je de munten aan de linkerkant kan verbergen
 - Het initiele lettertype in het dialoog komt niet overeen met de voorheen gekozen lettertype
   (het letterype wordt standaard op "Microsoft Sans Serif; 8pt" gezet terwijl de default "Segoe UI; 9pt" gebruikt wordt
-
+- De afhankelijkheid naar een ASP .net package verwijderd. Hierdoor wordt bij een verse installatie wel de juiste .net package geinstalleerd.
 
 03-08-2023 1.8.2
 - De kolommen van de signalen kunnen met de rechtermuisknop menu onzichtbaar worden gemaakt
