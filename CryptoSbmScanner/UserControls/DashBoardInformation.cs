@@ -215,7 +215,7 @@ public partial class DashBoardInformation : UserControl
     }
 
 
-    public void CreateBarometerBitmap(CryptoQuoteData quoteData, CryptoInterval interval)
+    public void CreateBarometerBitmap(Model.CryptoExchange exchange, CryptoQuoteData quoteData, CryptoInterval interval)
     {
         float blocks = 6;
 
@@ -223,203 +223,201 @@ public partial class DashBoardInformation : UserControl
         int intWidth = pictureBox1.Width;
         int intHeight = pictureBox1.Height;
 
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+        if (quoteData != null && exchange.SymbolListName.TryGetValue(Constants.SymbolNameBarometerPrice + quoteData.Name, out CryptoSymbol symbol))
         {
-            if (quoteData != null && exchange.SymbolListName.TryGetValue(Constants.SymbolNameBarometerPrice + quoteData.Name, out CryptoSymbol symbol))
+            CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
+            SortedList<long, CryptoCandle> candleList = symbolPeriod.CandleList;
+
+            // determine range of data
+            long loX = long.MaxValue;
+            long hiX = long.MinValue;
+            float loY = float.MaxValue;
+            float hiY = float.MinValue;
+            int candleCount = (int)(blocks * 60);
+            for (int i = candleList.Values.Count - 1; i >= 0; i--)
             {
-                CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
-                SortedList<long, CryptoCandle> candleList = symbolPeriod.CandleList;
+                CryptoCandle candle = candleList.Values[i];
+                if (loX > candle.OpenTime)
+                    loX = candle.OpenTime;
+                if (hiX < candle.OpenTime)
+                    hiX = candle.OpenTime;
 
-                // determine range of data
-                long loX = long.MaxValue;
-                long hiX = long.MinValue;
-                float loY = float.MaxValue;
-                float hiY = float.MinValue;
-                int candleCount = (int)(blocks * 60);
-                for (int i = candleList.Values.Count - 1; i >= 0; i--)
-                {
-                    CryptoCandle candle = candleList.Values[i];
-                    if (loX > candle.OpenTime)
-                        loX = candle.OpenTime;
-                    if (hiX < candle.OpenTime)
-                        hiX = candle.OpenTime;
-
-                    if (loY > (float)candle.Close)
-                        loY = (float)candle.Close;
-                    if (hiY < (float)candle.Close)
-                        hiY = (float)candle.Close;
-                    if (candleCount-- < 0)
-                        break;
-                }
-                if (loX == long.MaxValue)
-                    return;
+                if (loY > (float)candle.Close)
+                    loY = (float)candle.Close;
+                if (hiY < (float)candle.Close)
+                    hiY = (float)candle.Close;
+                if (candleCount-- < 0)
+                    break;
+            }
+            if (loX == long.MaxValue)
+                return;
 
 
-                // ranges x and y
-                float screenX = hiX - loX; // unix time
-                float screenY = hiY - loY; // barometer, something like -5 .. +5
-                if (screenY < 5)
-                    screenY = 5f; // from -2 to +2
-                if (hiY > 0.5 * screenY)
-                    screenY = +2 * hiY;
-                if (loY < -0.5 * screenY)
-                    screenY = -2 * loY;
+            // ranges x and y
+            float screenX = hiX - loX; // unix time
+            float screenY = hiY - loY; // barometer, something like -5 .. +5
+            if (screenY < 5)
+                screenY = 5f; // from -2 to +2
+            if (hiY > 0.5 * screenY)
+                screenY = +2 * hiY;
+            if (loY < -0.5 * screenY)
+                screenY = -2 * loY;
 
 
 
-                // factor to keep points within picture
-                float scaleX = intWidth / screenX;
-                float scaleY = intHeight / screenY;
+            // factor to keep points within picture
+            float scaleX = intWidth / screenX;
+            float scaleY = intHeight / screenY;
 
-                // ofset to first point
-                float offsetX = 0; // start in the left of the picture
-                float offsetY = scaleY * 0.5f * screenY; // center of picture
+            // ofset to first point
+            float offsetX = 0; // start in the left of the picture
+            float offsetY = scaleY * 0.5f * screenY; // center of picture
 
-                // flix y (specific for winform - what a crap)
-                scaleY = -1 * scaleY;
+            // flix y (specific for winform - what a crap)
+            scaleY = -1 * scaleY;
 
-                Image bmp = new Bitmap(intWidth, intHeight);
-                Graphics g = Graphics.FromImage(bmp);
+            Image bmp = new Bitmap(intWidth, intHeight);
+            Graphics g = Graphics.FromImage(bmp);
 
-                g.SmoothingMode = SmoothingMode.AntiAlias;
-                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
-                g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
 
-                // horizontal lines (1% per line)
-                for (int y = -3; y <= 3; y++)
-                {
-                    PointF p1 = new(0, offsetY + scaleY * y);
-                    PointF p2 = new(intWidth, offsetY + scaleY * y);
-                    if (y == 0)
-                        g.DrawLine(Pens.Red, p1, p2);
-                    else
-                        g.DrawLine(Pens.Gray, p1, p2);
-                }
-
-                // vertical lines (show hours)
-                //Pen pen = new Pen(Color.Gray, 0.5F);
-                long intervalTime = 60 * 60;
-                long lastX = hiX - (hiX % intervalTime);
-                while (lastX > loX)
-                {
-                    //DateTime ehh = CandleTools.GetUnixDate(lastX);
-                    //GlobalData.AddTextToLogTab(ehh.ToLocalTime() + " " + lastX.ToString() + " intervaltime=" + intervalTime.ToString());
-
-                    PointF p1 = new(0, 0)
-                    {
-                        X = offsetX + scaleX * (float)(lastX - loX)
-                    };
-                    PointF p2 = new(0, intHeight)
-                    {
-                        X = offsetX + scaleX * (float)(lastX - loX)
-                    };
+            // horizontal lines (1% per line)
+            for (int y = -3; y <= 3; y++)
+            {
+                PointF p1 = new(0, offsetY + scaleY * y);
+                PointF p2 = new(intWidth, offsetY + scaleY * y);
+                if (y == 0)
+                    g.DrawLine(Pens.Red, p1, p2);
+                else
                     g.DrawLine(Pens.Gray, p1, p2);
-                    lastX -= intervalTime;
-                }
-
-
-                bool init = false;
-                PointF point1 = new(0, 0);
-                PointF point2 = new(0, 0);
-                candleCount = (int)(blocks * 60);
-                for (int i = candleList.Values.Count - 1; i >= 0; i--)
-                {
-                    CryptoCandle candle = candleList.Values[i];
-
-                    point2.X = offsetX + scaleX * (float)(candle.OpenTime - loX);
-                    point2.Y = offsetY + scaleY * ((float)candle.Close);
-                    //GlobalData.AddTextToLogTab(candle.OhlcText(symbol.DisplayFormat) + " " + point2.X.ToString("N8") + " " + point2.Y.ToString("N8"));
-
-                    if (init)
-                    {
-                        if (candle.Close < 0)
-                            g.DrawLine(Pens.Red, point1, point2);
-                        else
-                            g.DrawLine(Pens.DarkGreen, point1, point2);
-                    }
-
-                    point1 = point2;
-                    init = true;
-                    if (candleCount-- < 0)
-                        break;
-                }
-
-
-                // Maak de linkerkant ff grijs en zet het stuff erover heen
-                {
-                    // hoe breed?
-                    Rectangle rect = new(0, 0, 25, intHeight);
-                    SolidBrush solidBrush = new(this.BackColor);
-                    g.FillRectangle(solidBrush, rect);
-                }
-
-                // Barometer met daarin de 3 cirkels ter indicatie
-                {
-                    //int y = 4;
-                    //int offset = (int)(intWidth / 2) - 15;
-                    //int offsetValue = 20;
-                    //Pen blackPen = new Pen(Color.Black, 1);
-                    //Rectangle rect1 = new(0, 0, intWidth, intHeight);
-                    //Font drawFont1 = new(this.Font.Name, this.Font.Size);s
-                    CryptoIntervalPeriod[] list = { CryptoIntervalPeriod.interval1h, CryptoIntervalPeriod.interval4h, CryptoIntervalPeriod.interval1d };
-
-                    foreach (CryptoIntervalPeriod intervalPeriod in list)
-                    {
-
-                        Color color;
-                        BarometerData barometerData = quoteData.BarometerList[(int)intervalPeriod];
-                        if (barometerData?.PriceBarometer < 0)
-                            color = Color.Red;
-                        else
-                            color = Color.Green;
-
-                        //TextRenderer.DrawText(g, "1h", drawFont1, rect1, Color.Black, Color.Transparent, TextFormatFlags.Top);
-                        //SolidBrush solidBrush = new(color);
-                        //g.FillEllipse(solidBrush, offset, y, 14, 14);
-                        
-                        //rect1 = new Rectangle(offsetValue, y, intWidth, intHeight);
-                        //TextRenderer.DrawText(g, barometerData?.PriceBarometer?.ToString("N2"), drawFont1, rect1, color, Color.Transparent, TextFormatFlags.Top);
-                        //y += 19;
-                        //offset += 19;
-
-                        string text = barometerData?.PriceBarometer?.ToString("N2");
-                        if (intervalPeriod == CryptoIntervalPeriod.interval1h)
-                            Invoke((MethodInvoker)(() => { labelBm1h.Text = text + " 1h"; labelBm1h.ForeColor = color; }));
-                        else if (intervalPeriod == CryptoIntervalPeriod.interval4h)
-                            Invoke((MethodInvoker)(() => { labelBm4h.Text = text + " 4h"; labelBm4h.ForeColor = color; }));
-                        else if (intervalPeriod == CryptoIntervalPeriod.interval1d)
-                            Invoke((MethodInvoker)(() => { labelBm1d.Text = text + " 1d"; labelBm1d.ForeColor = color; }));
-                    }
-
-                }
-
-                // Barometer tijd
-                if (candleList.Values.Count > 0)
-                {
-                    CryptoCandle candle = candleList.Values[candleList.Values.Count - 1];
-                    //Rectangle rect = new(6, 0, intWidth, intHeight - 8);
-                    string text = CandleTools.GetUnixDate((long)candle.OpenTime + 60).ToLocalTime().ToString("HH:mm");
-
-                    //Font drawFont = new(this.Font.Name, this.Font.Size);
-                    //TextRenderer.DrawText(g, text, drawFont, rect, Color.Black, Color.Transparent, TextFormatFlags.Bottom);
-                    Invoke((MethodInvoker)(() => { labelBmTime.Text = text; }));
-                }
-
-                //bmp.Save(@"e:\test.bmp");
-                Invoke((MethodInvoker)(() => { pictureBox1.Image = bmp; pictureBox1.Refresh(); }));
             }
-            else
+
+            // vertical lines (show hours)
+            //Pen pen = new Pen(Color.Gray, 0.5F);
+            long intervalTime = 60 * 60;
+            long lastX = hiX - (hiX % intervalTime);
+            while (lastX > loX)
             {
-                // TODO: Een kruis door de bitmap zetten zodat we iets zien (het is nu een lege bitmap)
+                //DateTime ehh = CandleTools.GetUnixDate(lastX);
+                //GlobalData.AddTextToLogTab(ehh.ToLocalTime() + " " + lastX.ToString() + " intervaltime=" + intervalTime.ToString());
 
-                Image bmp = new Bitmap(intWidth, intHeight);
-                Graphics g = Graphics.FromImage(bmp);
-
-                Invoke((MethodInvoker)(() => { pictureBox1.Image = bmp; pictureBox1.Refresh(); }));
+                PointF p1 = new(0, 0)
+                {
+                    X = offsetX + scaleX * (float)(lastX - loX)
+                };
+                PointF p2 = new(0, intHeight)
+                {
+                    X = offsetX + scaleX * (float)(lastX - loX)
+                };
+                g.DrawLine(Pens.Gray, p1, p2);
+                lastX -= intervalTime;
             }
+
+
+            bool init = false;
+            PointF point1 = new(0, 0);
+            PointF point2 = new(0, 0);
+            candleCount = (int)(blocks * 60);
+            for (int i = candleList.Values.Count - 1; i >= 0; i--)
+            {
+                CryptoCandle candle = candleList.Values[i];
+
+                point2.X = offsetX + scaleX * (float)(candle.OpenTime - loX);
+                point2.Y = offsetY + scaleY * ((float)candle.Close);
+                //GlobalData.AddTextToLogTab(candle.OhlcText(symbol.DisplayFormat) + " " + point2.X.ToString("N8") + " " + point2.Y.ToString("N8"));
+
+                if (init)
+                {
+                    if (candle.Close < 0)
+                        g.DrawLine(Pens.Red, point1, point2);
+                    else
+                        g.DrawLine(Pens.DarkGreen, point1, point2);
+                }
+
+                point1 = point2;
+                init = true;
+                if (candleCount-- < 0)
+                    break;
+            }
+
+
+            // Maak de linkerkant ff grijs en zet het stuff erover heen
+            {
+                // hoe breed?
+                Rectangle rect = new(0, 0, 25, intHeight);
+                SolidBrush solidBrush = new(this.BackColor);
+                g.FillRectangle(solidBrush, rect);
+            }
+
+            // Barometer met daarin de 3 cirkels ter indicatie
+            {
+                //int y = 4;
+                //int offset = (int)(intWidth / 2) - 15;
+                //int offsetValue = 20;
+                //Pen blackPen = new Pen(Color.Black, 1);
+                //Rectangle rect1 = new(0, 0, intWidth, intHeight);
+                //Font drawFont1 = new(this.Font.Name, this.Font.Size);s
+                CryptoIntervalPeriod[] list = { CryptoIntervalPeriod.interval1h, CryptoIntervalPeriod.interval4h, CryptoIntervalPeriod.interval1d };
+
+                foreach (CryptoIntervalPeriod intervalPeriod in list)
+                {
+
+                    Color color;
+                    BarometerData barometerData = quoteData.BarometerList[(int)intervalPeriod];
+                    if (barometerData?.PriceBarometer < 0)
+                        color = Color.Red;
+                    else
+                        color = Color.Green;
+
+                    //TextRenderer.DrawText(g, "1h", drawFont1, rect1, Color.Black, Color.Transparent, TextFormatFlags.Top);
+                    //SolidBrush solidBrush = new(color);
+                    //g.FillEllipse(solidBrush, offset, y, 14, 14);
+
+                    //rect1 = new Rectangle(offsetValue, y, intWidth, intHeight);
+                    //TextRenderer.DrawText(g, barometerData?.PriceBarometer?.ToString("N2"), drawFont1, rect1, color, Color.Transparent, TextFormatFlags.Top);
+                    //y += 19;
+                    //offset += 19;
+
+                    string text = barometerData?.PriceBarometer?.ToString("N2");
+                    if (intervalPeriod == CryptoIntervalPeriod.interval1h)
+                        Invoke((MethodInvoker)(() => { labelBm1h.Text = text + " 1h"; labelBm1h.ForeColor = color; }));
+                    else if (intervalPeriod == CryptoIntervalPeriod.interval4h)
+                        Invoke((MethodInvoker)(() => { labelBm4h.Text = text + " 4h"; labelBm4h.ForeColor = color; }));
+                    else if (intervalPeriod == CryptoIntervalPeriod.interval1d)
+                        Invoke((MethodInvoker)(() => { labelBm1d.Text = text + " 1d"; labelBm1d.ForeColor = color; }));
+                }
+
+            }
+
+            // Barometer tijd
+            if (candleList.Values.Count > 0)
+            {
+                CryptoCandle candle = candleList.Values[candleList.Values.Count - 1];
+                //Rectangle rect = new(6, 0, intWidth, intHeight - 8);
+                string text = CandleTools.GetUnixDate((long)candle.OpenTime + 60).ToLocalTime().ToString("HH:mm");
+
+                //Font drawFont = new(this.Font.Name, this.Font.Size);
+                //TextRenderer.DrawText(g, text, drawFont, rect, Color.Black, Color.Transparent, TextFormatFlags.Bottom);
+                Invoke((MethodInvoker)(() => { labelBmTime.Text = text; }));
+            }
+
+            //bmp.Save(@"e:\test.bmp");
+            Invoke((MethodInvoker)(() => { pictureBox1.Image = bmp; pictureBox1.Refresh(); }));
+        }
+        else
+        {
+            // TODO: Een kruis door de bitmap zetten zodat we iets zien (het is nu een lege bitmap)
+
+            Image bmp = new Bitmap(intWidth, intHeight);
+            Graphics g = Graphics.FromImage(bmp);
+
+            Invoke((MethodInvoker)(() => { pictureBox1.Image = bmp; pictureBox1.Refresh(); }));
         }
     }
+
 
 #if TRADEBOT
     private static void CheckNeedBotPause()
@@ -526,7 +524,7 @@ public partial class DashBoardInformation : UserControl
                 return;
 
             BarometerData barometerData = quoteData.BarometerList[(int)intervalPeriod];
-            CreateBarometerBitmap(quoteData, interval);
+            CreateBarometerBitmap(exchange, quoteData, interval);
         }
         catch (Exception error)
         {
@@ -534,7 +532,9 @@ public partial class DashBoardInformation : UserControl
             GlobalData.AddTextToLogTab(error.ToString() + "\r\n");
         }
     }
-    private void ShowBarometerStuff(object sender, EventArgs e)
+
+
+    public void ShowBarometerStuff(object sender, EventArgs e)
     {
         // Dan wordt de basecoin bewaard voor een volgende keer
         GlobalData.Settings.General.SelectedBarometerQuote = EditBarometerQuote.Text;
@@ -760,6 +760,9 @@ public partial class DashBoardInformation : UserControl
 
     public void TimerShowInformation_Tick(object sender, EventArgs e)
     {
-        Invoke((MethodInvoker)(() => TimerShowInformationInternal()));
+        if (IsHandleCreated)
+        {
+            Invoke((MethodInvoker)(() => TimerShowInformationInternal()));
+        }
     }
 }
