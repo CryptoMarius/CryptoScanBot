@@ -53,11 +53,15 @@ public class ExchangeHelper
 #if TRADEBOT
     public static async Task FetchAssetsAsync(CryptoTradeAccount tradeAccount)
     {
+        if (tradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
+            return; // Task.CompletedTask;
         await GetApiInstance().FetchAssetsAsync(tradeAccount);
     }
 
     public static async Task FetchTradesAsync(CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
     {
+        if (tradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
+            return; // Task.CompletedTask;
         await GetApiInstance().FetchTradesAsync(tradeAccount, symbol);
     }
 #endif
