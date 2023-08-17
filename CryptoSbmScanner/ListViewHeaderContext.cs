@@ -35,19 +35,22 @@ internal class ListViewHeaderContext : ListViewDoubleBuffered
     protected override void WndProc(ref Message m)
     {
         bool handled = false;
-        if (m.Msg == 0x7b)//WM_CONTEXTMENU
+        if (m.Msg == 0x7b) //WM_CONTEXTMENU
         {
-            int lp = m.LParam.ToInt32();
-            int x = ((lp << 16) >> 16);
-            int y = lp >> 16;
-            foreach (KeyValuePair<int, Rectangle> p in columnRectangles)
+            if (HeaderContextMenuStrip != null)
             {
-                if (p.Value.Contains(new Point(x, y)))
+                int lp = m.LParam.ToInt32();
+                int x = ((lp << 16) >> 16);
+                int y = lp >> 16;
+                foreach (KeyValuePair<int, Rectangle> p in columnRectangles)
                 {
-                    //MessageBox.Show(Columns[p.Key].Text); <-- Try this to test if you want.
-                    HeaderContextMenuStrip.Show(Control.MousePosition);
-                    handled = true;
-                    break;
+                    if (p.Value.Contains(new Point(x, y)))
+                    {
+                        //MessageBox.Show(Columns[p.Key].Text); <-- Try this to test if you want.
+                        HeaderContextMenuStrip.Show(Control.MousePosition);
+                        handled = true;
+                        break;
+                    }
                 }
             }
         }
