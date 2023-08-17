@@ -215,6 +215,8 @@ public partial class FrmMain
         {
             listViewPositionsClosed.EndUpdate();
         }
+
+        dashBoardControl1.InitializeStuff();
     }
 
 
