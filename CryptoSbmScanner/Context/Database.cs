@@ -11,6 +11,87 @@ using Microsoft.Data.Sqlite;
 
 namespace CryptoSbmScanner.Context;
 
+// Dapper slaat de kind van een datum niet op waardoor de UTC van slag is
+
+// from https://stackoverflow.com/questions/12510299/get-datetime-as-utc-with-dapper
+
+public class DateTimeHandler : SqlMapper.TypeHandler<DateTime>
+{
+    private static readonly DateTime unixOrigin = new DateTime(1970, 1, 1, 0, 0, 0, 0);
+
+
+    public override void SetValue(IDbDataParameter parameter, DateTime value)
+    {
+        parameter.Value = value;
+    }
+
+    //public override DateTime Parse(object value)
+    //{
+    //    return DateTime.SpecifyKind((DateTime)value, DateTimeKind.Utc);
+    //}
+
+    public override DateTime Parse(object value)
+    {
+        if (!TryGetDateTime(value, out DateTime storedDateValue))
+        {
+            throw new InvalidOperationException($"Unable to parse value {value} as DateTimeOffset");
+        }
+
+        return DateTime.SpecifyKind(storedDateValue, DateTimeKind.Utc);
+    }
+
+    private bool TryGetDateTime(object value, out DateTime dateTimeValue)
+    {
+        dateTimeValue = default;
+        if (value is DateTime d)
+        {
+            dateTimeValue = d;
+            return true;
+        }
+
+        if (value is string v)
+        {
+            dateTimeValue = DateTime.Parse(v);
+            return true;
+        }
+
+        if (long.TryParse(value?.ToString() ?? string.Empty, out long l))
+        {
+            dateTimeValue = unixOrigin.AddSeconds(l);
+            return true;
+        }
+
+        if (float.TryParse(value?.ToString() ?? string.Empty, out float f))
+        {
+            throw new InvalidOperationException("Unsupported Sqlite datetime type, REAL.");
+        }
+
+        return false;
+    }
+}
+
+// From https://learn.microsoft.com/en-us/dotnet/standard/data/sqlite/dapper-limitations
+
+abstract class SqliteTypeHandler<T> : SqlMapper.TypeHandler<T>
+{
+    // Parameters are converted by Microsoft.Data.Sqlite
+    public override void SetValue(IDbDataParameter parameter, T value) => parameter.Value = value;
+}
+
+class DateTimeOffsetHandler : SqliteTypeHandler<DateTimeOffset>
+{
+    public override DateTimeOffset Parse(object value) => DateTimeOffset.Parse((string)value);
+}
+
+class GuidHandler : SqliteTypeHandler<Guid>
+{
+    public override Guid Parse(object value) => Guid.Parse((string)value);
+}
+
+class TimeSpanHandler : SqliteTypeHandler<TimeSpan>
+{
+    public override TimeSpan Parse(object value) => TimeSpan.Parse((string)value);
+}
 
 // SqlConnection is sealed, dus dan maar via een compositie
 // De SqliteConnection is niet sealed (die gebruiken we ook)
@@ -474,6 +555,20 @@ public class CryptoDatabase : IDisposable
             transaction.Commit();
         }
     }
+
+    private static void CreateTableSequence(CryptoDatabase connection)
+    {
+        string tableName = connection.Connection.Query<string>("SELECT name FROM sqlite_master WHERE type='table' AND name = 'Sequence';").FirstOrDefault();
+        if (string.IsNullOrEmpty(tableName))
+        {
+            connection.Connection.Execute("CREATE TABLE [Sequence] (" +
+                "Id integer primary key autoincrement not null, " +
+                "Name TEXT NOT NULL" +
+            ")");
+
+       }
+    }
+
 
     private static void CreateTableInterval(CryptoDatabase connection)
     {
@@ -1127,9 +1222,20 @@ public class CryptoDatabase : IDisposable
     public static void CreateDatabase()
     {
         // Sqlite gaat afwijkend met datatypes om, zie https://learn.microsoft.com/en-us/dotnet/standard/data/sqlite/types
+        //SqlMapper.RemoveTypeMap(typeof(DateTimeOffset));
+        //SqlMapper.AddTypeHandler(new DateTimeHandler());
+
+        SqlMapper.RemoveTypeMap(typeof(DateTimeHandler));
+        SqlMapper.AddTypeHandler(new DateTimeHandler());
+
+        SqlMapper.AddTypeHandler(new DateTimeOffsetHandler());
+        SqlMapper.AddTypeHandler(new GuidHandler());
+        SqlMapper.AddTypeHandler(new TimeSpanHandler());
 
         using var connection = new CryptoDatabase();
         connection.Open();
+
+        //connection.Connection.ForceDateTimesToUtc = true;
 
         CreateTableInterval(connection); // (met een hardcoded lijst, voorlopig prima)
         CreateTableExchange(connection); // (met een hardcoded lijst, voorlopig prima)
@@ -1148,7 +1254,8 @@ public class CryptoDatabase : IDisposable
 
         //CreateTableAsset(connection); -- todo ooit
         //CreateTableBalancing(connection); -- todo ooit
-        CreateTableVersion(connection);
+        CreateTableSequence(connection); // Fake-ID's tbv orders en trades
+        CreateTableVersion(connection); // Administratie database & migraties
 
 
         // Indien noodzakelijk database upgraden 
