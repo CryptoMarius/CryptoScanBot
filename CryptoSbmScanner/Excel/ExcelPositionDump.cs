@@ -206,10 +206,14 @@ public class ExcelPositionDump : ExcelBase
                     //row = sellRow;
                 }
 
-                OrderList.TryAdd((long)step.OrderId, false);
+                if (step.OrderId.HasValue)
+                    OrderList.TryAdd((long)step.OrderId, false);
 
                 cell = WriteCell(sheet, column++, row, step.Id);
-                cell = WriteCell(sheet, column++, row, (long)step.OrderId);
+                if (step.OrderId.HasValue)
+                    cell = WriteCell(sheet, column++, row, (long)step.OrderId);
+                else
+                    cell = WriteCell(sheet, column++, row, "?");
                 cell = WriteCell(sheet, column++, row, step.Side.ToString());
                 //cell.CellStyle = cellStyleDecimalNormal;
 
