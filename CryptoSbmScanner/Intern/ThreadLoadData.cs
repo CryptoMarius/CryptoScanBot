@@ -569,7 +569,7 @@ public class ThreadLoadData
                 // (Dit moet overlappen met "achterstand bijwerken" want anders ontstaan er gaten)
                 // BUG/Probleem! na nieuwe munt of instellingen wordt dit niet opnieuw gedaan (herstart nodig)
                 //************************************************************************************
-                await ExchangeHelper.KLineTicker.Start();
+                await ExchangeHelper.KLineTicker.StartAsync();
 
                 //************************************************************************************
                 // Om het volume per symbol en laatste prijs te achterhalen (weet geen betere manier)
@@ -670,6 +670,9 @@ public class ThreadLoadData
                 GlobalData.ApplicationStatus = CryptoApplicationStatus.Running;
                 //GlobalData.DumpSessionInformation();
                 ScannerSession.SetTimerDefaults();
+
+                GlobalData.ApplicationHasStarted?.Invoke("");
+
             }
         }
         catch (Exception error)
