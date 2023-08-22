@@ -102,7 +102,7 @@ public static class Helper
     /// <param name="value"></param>
     /// <param name="fmt"></param>
     /// <returns></returns>
-    public static string ToString0(this decimal value, string fmt = "N8")
+    public static string ToString0(this decimal value, string fmt = "N15")
     {
         string text = value.ToString(fmt); //Get the stock string
 
