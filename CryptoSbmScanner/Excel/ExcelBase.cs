@@ -150,9 +150,9 @@ public class ExcelBase
 
     public void StartExcell(string title, string symbolName, string exchangeName)
     {
-        GlobalData.AddTextToLogTab($"Debug dump {title} {symbolName} ready");
+        GlobalData.AddTextToLogTab($"Information dump {title} {symbolName}");
 
-        string folder = GlobalData.GetBaseDir() + $@"\{exchangeName}\Debug\";
+        string folder = GlobalData.GetBaseDir() + $@"\{exchangeName}\Excel\";
         Directory.CreateDirectory(folder);
 
         string filename = folder + symbolName + " " + title + ".xls";

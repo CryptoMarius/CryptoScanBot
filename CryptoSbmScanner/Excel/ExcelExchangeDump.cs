@@ -106,7 +106,7 @@ public class ExcelExchangeDump : ExcelBase
 
             DumpSymbols();
 
-            StartExcell("Symbols", Exchange.Name, "");
+            StartExcell("Symbols", Exchange.Name, Exchange.Name);
 
         }
         catch (Exception error)
