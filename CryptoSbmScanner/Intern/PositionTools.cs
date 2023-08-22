@@ -100,6 +100,7 @@ public class PositionTools
         position.TradeAccount = TradeAccount;
         position.TradeAccountId = TradeAccount.Id;
         position.CreateTime = CurrentDate;
+        position.UpdateTime = CurrentDate;
         position.Data = Symbol.Name; // ach ja, werd toch niet gebruikt
         position.Symbol = Symbol;
         position.SymbolId = Symbol.Id;
@@ -138,6 +139,8 @@ public class PositionTools
         //part.IntervalId = position.Interval.Id;
         part.Status = CryptoPositionStatus.Waiting;
         part.Side = CryptoOrderSide.Buy;
+
+        position.UpdateTime = part.CreateTime;
         return part;
     }
 
@@ -181,6 +184,8 @@ public class PositionTools
         //part.BuyAmount = result.tradeParams.QuoteQuantity; // voor het bepalen van het volgende aankoop bedrag (die in de settings kan wijzigen)
         //if (part.BuyAmount == 0)
         //    part.BuyAmount = result.tradeParams.Price * result.tradeParams.Quantity;
+
+        position.UpdateTime = step.CreateTime;
         return step;
     }
 
@@ -189,15 +194,23 @@ public class PositionTools
         database.Connection.Insert<CryptoPositionStep>(step);
 
         // Genereer een fictieve order ID voor papertrading
-        if (position.TradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading && step.OrderId == 0)
+        if (position.TradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading && !step.OrderId.HasValue)
         {
             step.OrderId = step.Id;
             database.Connection.Update<CryptoPositionStep>(step);
         }
     }
+
     static public void SavePositionStep(CryptoDatabase database, CryptoPosition position, CryptoPositionStep step)
     {
         database.Connection.Update<CryptoPositionStep>(step);
+
+        // Genereer een fictieve order ID voor papertrading
+        if (position.TradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading && !step.OrderId.HasValue)
+        {
+            step.OrderId = step.Id;
+            database.Connection.Update<CryptoPositionStep>(step);
+        }
     }
 
     public static void AddPosition(CryptoTradeAccount tradeAccount, CryptoPosition position)
