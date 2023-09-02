@@ -63,14 +63,17 @@ public class BarometerTools
             CryptoSymbol symbol = quoteData.SymbolList[i];
             if (symbol.CandleList.TryGetValue(unixCandlePrev, out CryptoCandle candlePrev) && symbol.CandleList.TryGetValue(unixCandleLast, out CryptoCandle candleLast))
             {
-                decimal perc;
-                decimal diff = candleLast.Close - candlePrev.Close;
-                if (!candlePrev.Close.Equals(0))
-                    perc = 100m * (diff / candlePrev.Close);
-                else perc = 0;
+                if (candlePrev != null && candleLast != null) // Er worden in kucoin null candles toegevoegd?
+                {
+                    decimal perc;
+                    decimal diff = candleLast.Close - candlePrev.Close;
+                    if (!candlePrev.Close.Equals(0))
+                        perc = 100m * (diff / candlePrev.Close);
+                    else perc = 0;
 
-                sumPerc += perc;
-                coinsMatching++;
+                    sumPerc += perc;
+                    coinsMatching++;
+                }
             }
         }
 
