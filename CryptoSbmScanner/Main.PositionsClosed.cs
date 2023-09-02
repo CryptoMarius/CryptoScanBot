@@ -1,6 +1,4 @@
-﻿using System.Text;
-
-using CryptoSbmScanner.Context;
+﻿using CryptoSbmScanner.Context;
 using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;

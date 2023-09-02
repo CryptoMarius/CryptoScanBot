@@ -71,6 +71,7 @@ partial class DashBoardInformation
         labelBmTime = new Label();
         labelBm1h = new Label();
         pictureBox1 = new PictureBox();
+        labelAppicationStatus = new Label();
         ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
         SuspendLayout();
         // 
@@ -468,10 +469,21 @@ partial class DashBoardInformation
         pictureBox1.TabIndex = 127;
         pictureBox1.TabStop = false;
         // 
+        // labelAppicationStatus
+        // 
+        labelAppicationStatus.AutoSize = true;
+        labelAppicationStatus.Location = new Point(35, 84);
+        labelAppicationStatus.Margin = new Padding(4, 0, 4, 0);
+        labelAppicationStatus.Name = "labelAppicationStatus";
+        labelAppicationStatus.Size = new Size(62, 15);
+        labelAppicationStatus.TabIndex = 128;
+        labelAppicationStatus.Text = "Barometer";
+        // 
         // DashBoardInformation
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
+        Controls.Add(labelAppicationStatus);
         Controls.Add(pictureBox1);
         Controls.Add(labelBm4h);
         Controls.Add(labelBm1d);
@@ -566,4 +578,5 @@ partial class DashBoardInformation
     private Label labelBmTime;
     private Label labelBm1h;
     private PictureBox pictureBox1;
+    private Label labelAppicationStatus;
 }

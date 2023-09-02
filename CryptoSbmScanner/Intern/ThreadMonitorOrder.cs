@@ -21,7 +21,7 @@ public class ThreadMonitorOrder
     {
         cancellationToken.Cancel();
 
-        GlobalData.AddTextToLogTab(string.Format("Stop order handler"));
+        GlobalData.AddTextToLogTab("Stop order handler");
     }
 
     public void AddToQueue((CryptoSymbol symbol, CryptoOrderType orderType, CryptoOrderSide orderSide, CryptoOrderStatus orderStatus, CryptoTrade trade) data)
@@ -36,19 +36,12 @@ public class ThreadMonitorOrder
         {
             try
             {
-                // Dit is reeds gecontroleerd, overbodig
-                // Wij zijn slechts geinteresseerd in een paar statussen (de andere zijn niet interessant voor de afhandeling van de order) 
-                //if (data.orderStatus == CryptoOrderStatus.Filled || 
-                //    data.orderStatus == CryptoOrderStatus.PartiallyFilled || 
-                //    data.orderStatus == CryptoOrderStatus.Canceled)
-                //{
-                await PositionMonitor.HandleTradeAsync(data.symbol, data.orderType, data.orderSide, data.orderStatus, data.trade);
-                //}
+                await TradeHandler.HandleTradeAsync(data.symbol, data.orderType, data.orderSide, data.orderStatus, data.trade);
             }
             catch (Exception error)
             {
                 GlobalData.Logger.Error(error);
-                GlobalData.AddTextToLogTab("\r\n" + "\r\n" + data.symbol.Name + " error order handler thread\r\n" + error.ToString());
+                GlobalData.AddTextToLogTab($"{data.symbol.Name} ERROR order handler thread {error.Message}");
             }
         }
         GlobalData.AddTextToLogTab("\r\n" + "\r\n MONITOR order THREAD EXIT");

@@ -28,7 +28,7 @@ partial class DashBoardControl
     /// </summary>
     private void InitializeComponent()
     {
-        button1 = new Button();
+        buttonRefresh = new Button();
         label1 = new Label();
         label2 = new Label();
         label5 = new Label();
@@ -66,15 +66,14 @@ partial class DashBoardControl
         EditQuote = new ComboBox();
         SuspendLayout();
         // 
-        // button1
+        // buttonRefresh
         // 
-        button1.Location = new Point(537, 0);
-        button1.Name = "button1";
-        button1.Size = new Size(75, 23);
-        button1.TabIndex = 0;
-        button1.Text = "Ververs";
-        button1.UseVisualStyleBackColor = true;
-        button1.Click += Button1_Click;
+        buttonRefresh.Location = new Point(537, 0);
+        buttonRefresh.Name = "buttonRefresh";
+        buttonRefresh.Size = new Size(75, 23);
+        buttonRefresh.TabIndex = 0;
+        buttonRefresh.Text = "Ververs";
+        buttonRefresh.UseVisualStyleBackColor = true;
         // 
         // label1
         // 
@@ -430,7 +429,7 @@ partial class DashBoardControl
         Controls.Add(label5);
         Controls.Add(label2);
         Controls.Add(label1);
-        Controls.Add(button1);
+        Controls.Add(buttonRefresh);
         Name = "DashBoardControl";
         Size = new Size(615, 403);
         ResumeLayout(false);
@@ -439,7 +438,6 @@ partial class DashBoardControl
 
     #endregion
 
-    private Button button1;
     private Label label1;
     private Label label2;
     private Label label5;
@@ -475,4 +473,5 @@ partial class DashBoardControl
     private Label label14;
     private Label label15;
     private ComboBox EditQuote;
+    private Button buttonRefresh;
 }

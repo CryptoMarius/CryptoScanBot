@@ -11,11 +11,11 @@ public static class LinkTools
     private static bool WebViewDummyInitialized;
     private static bool WebViewTradingViewInitialized;
 
-    public static TabControl tabControl;
-    public static TabPage tabPageBrowser;
+    public static TabControl TabControl;
+    public static TabPage TabPageBrowser;
 
-    public static Microsoft.Web.WebView2.WinForms.WebView2 _webViewDummy;
-    public static Microsoft.Web.WebView2.WinForms.WebView2 webViewTradingView;
+    public static Microsoft.Web.WebView2.WinForms.WebView2 WebViewDummy;
+    public static Microsoft.Web.WebView2.WinForms.WebView2 WebViewTradingView;
 
 
     private static async Task InitializeWebView(Microsoft.Web.WebView2.WinForms.WebView2 webView2)
@@ -31,7 +31,7 @@ public static class LinkTools
         if (!WebViewDummyInitialized)
         {
             WebViewDummyInitialized = true;
-            await InitializeWebView(_webViewDummy);
+            await InitializeWebView(WebViewDummy);
         }
     }
 
@@ -41,7 +41,7 @@ public static class LinkTools
         if (!WebViewTradingViewInitialized)
         {
             WebViewTradingViewInitialized = true;
-            await InitializeWebView(webViewTradingView);
+            await InitializeWebView(WebViewTradingView);
         }
     }
 
@@ -58,7 +58,7 @@ public static class LinkTools
             {
                 GlobalData.AddTextToLogTab($"Linktools activate external app (via internal browser) {refInfo.Url}");
                 await InitializeWebViewDummy();
-                _webViewDummy.Source = new(refInfo.Url);
+                WebViewDummy.Source = new(refInfo.Url);
             }
             else
             {
@@ -78,9 +78,9 @@ public static class LinkTools
         {
             await InitializeWebViewTradingView();
 
-            webViewTradingView.Source = new(refInfo.Url);
+            WebViewTradingView.Source = new(refInfo.Url);
             if (activateTab)
-                tabControl.SelectedTab = tabPageBrowser;
+                TabControl.SelectedTab = TabPageBrowser;
         }
     }
 

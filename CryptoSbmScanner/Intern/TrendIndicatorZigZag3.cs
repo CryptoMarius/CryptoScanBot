@@ -21,9 +21,9 @@ public class TrendIndicatorZigZag3
         //Transporteer de candles naar de Stock list
         //Jammer dat we met tussen-array's moeten werken
         List<CryptoCandle> history = new();
-        Monitor.Enter(candleSticks);
-        try
-        {
+        //Monitor.Enter(candleSticks);
+        //try
+        //{
             //Vanwege performance nemen we een gedeelte van de candles
             for (int i = candleSticks.Values.Count - 1; i >= 0; i--)
             {
@@ -39,11 +39,11 @@ public class TrendIndicatorZigZag3
                 if (maxCandles == 0)
                     break;
             }
-        }
-        finally
-        {
-            Monitor.Exit(candleSticks);
-        }
+        //}
+        //finally
+        //{
+        //    Monitor.Exit(candleSticks);
+        //}
         return history;
     }
 

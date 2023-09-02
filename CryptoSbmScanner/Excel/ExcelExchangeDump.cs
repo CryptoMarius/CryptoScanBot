@@ -96,6 +96,21 @@ public class ExcelExchangeDump : ExcelBase
         AutoSize(sheet, columns);
     }
 
+
+    private void DumpInformation()
+    {
+        HSSFSheet sheet = (HSSFSheet)Book.CreateSheet("Information");
+
+        WriteCell(sheet, 0, 1, "Exchange");
+        WriteCell(sheet, 0, 2, "Aantal symbols");
+
+        WriteCell(sheet, 1, 1, Exchange.Name);
+        WriteCell(sheet, 1, 2, Exchange.SymbolListName.Count);
+
+        AutoSize(sheet, 6);
+    }
+
+
     public void ExportToExcell(Model.CryptoExchange exchange)
     {
         Exchange = exchange;
@@ -104,6 +119,7 @@ public class ExcelExchangeDump : ExcelBase
             CreateBook(Exchange.Name);
             CreateFormats();
 
+            DumpInformation();
             DumpSymbols();
 
             StartExcell("Symbols", Exchange.Name, Exchange.Name);

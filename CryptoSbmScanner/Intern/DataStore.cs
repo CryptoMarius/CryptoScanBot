@@ -68,6 +68,7 @@ public class DataStore
                                 if (symbolInterval.LastCandleSynchronized == 0)
                                     symbolInterval.LastCandleSynchronized = null;
 
+
                                 if (version >= 2)
                                 {
                                     long lastStobbOrdSbmDate = binaryReader.ReadInt64();
@@ -76,6 +77,8 @@ public class DataStore
                                     else
                                         symbolInterval.LastStobbOrdSbmDate = CandleTools.GetUnixDate(lastStobbOrdSbmDate);
                                 }
+
+                                long startFetchUnix = CandleIndicatorData.GetCandleFetchStart(symbol, symbolInterval.Interval, DateTime.UtcNow);
 
                                 int candleCount = binaryReader.ReadInt32();
                                 while (candleCount > 0)
@@ -97,7 +100,8 @@ public class DataStore
                                         Volume = binaryReader.ReadDecimal()
                                     };
 
-                                    symbolInterval.CandleList.TryAdd(candle.OpenTime, candle);
+                                    if (candle.OpenTime >= startFetchUnix)
+                                        symbolInterval.CandleList.TryAdd(candle.OpenTime, candle);
 
                                     candleCount--;
                                 }
@@ -135,12 +139,14 @@ public class DataStore
         GlobalData.AddTextToLogTab("Saving candle information (please wait!)");
 
         string basedir = GlobalData.GetBaseDir();
-        foreach (Model.CryptoExchange exchange in GlobalData.ExchangeListName.Values)
+        foreach (Model.CryptoExchange exchange in GlobalData.ExchangeListName.Values.ToList())
         {
             string dirExchange = basedir + exchange.Name.ToLower() + @"\";
 
-            foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
+            for (int i = 0; i < exchange.SymbolListName.Count; i++)
+            //foreach (CryptoSymbol symbol in exchange.SymbolListName.Values.ToList())
             {
+                CryptoSymbol symbol = exchange.SymbolListName.Values[i];
                 string dirSymbol = dirExchange + symbol.Quote.ToLower() + @"\";
 
                 // Verwijder het bestand indien niet relevant of niet actief
@@ -188,8 +194,9 @@ public class DataStore
                             }
                             binaryWriter.Write(symbolInterval.CandleList.Count);
 
-                            foreach (CryptoCandle candle in symbolInterval.CandleList.Values.ToList())
+                            for (int j = 0 ; j < symbolInterval.CandleList.Count; j++)
                             {
+                                CryptoCandle candle = symbolInterval.CandleList.Values[j];
                                 binaryWriter.Write(candle.OpenTime);
                                 binaryWriter.Write(candle.Open);
                                 binaryWriter.Write(candle.High);

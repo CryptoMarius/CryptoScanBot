@@ -17,6 +17,11 @@ public class SignalCreate
     private CryptoCandle Candle { get; set; }
     public List<CryptoCandle> history = null;
 
+#if TRADEBOT
+    bool hasOpenPosistion = false;
+    bool hasOpenPosistionCalculated = false;
+#endif
+
     // To avoid duplicate signals
     //static private DateTime? AnalyseNotificationClean { get; set;  } = null;
     // Lijkt overbodig te zijn tegenwoordig?
@@ -28,6 +33,20 @@ public class SignalCreate
         Interval = interval;
     }
 
+    private bool HasOpenPosition()
+    {
+        // Signalen blijven maken als er een positie openstaat (en het volume e.d. sterk afgenomen is)
+#if TRADEBOT
+        if (!hasOpenPosistionCalculated)
+        {
+            hasOpenPosistionCalculated = true;
+            hasOpenPosistion = GlobalData.Settings.Trading.Active && PositionTools.HasPosition(Symbol);
+        }
+        return hasOpenPosistion;
+#else
+        return false;
+#endif
+    }
 
     public static void CalculateAdditionalSignalProperties(CryptoSignal signal, List<CryptoCandle> history, int candleCount, long unixFrom = 0)
     {
@@ -366,40 +385,43 @@ public class SignalCreate
         fluxOverBought = 10 * overbuy;
     }
 
-    static public List<CryptoCandle> CalculateHistory(SortedList<long, CryptoCandle> candleSticks, int maxCandles)
-    {
-        //Transporteer de candles naar de Stock list
-        //Jammer dat we met tussen-array's moeten werken
-        List<CryptoCandle> history = new();
-        Monitor.Enter(candleSticks);
-        try
-        {
-            //Vanwege performance nemen we een gedeelte van de candles
-            for (int i = candleSticks.Values.Count - 1; i >= 0; i--)
-            {
-                CryptoCandle candle = candleSticks.Values[i];
+    //static public List<CryptoCandle> CalculateHistory(SortedList<long, CryptoCandle> candleSticks, int maxCandles)
+    //{
+    //    //Transporteer de candles naar de Stock list
+    //    //Jammer dat we met tussen-array's moeten werken
+    //    List<CryptoCandle> history = new();
+    //    Monitor.Enter(candleSticks);
+    //    try
+    //    {
+    //        //Vanwege performance nemen we een gedeelte van de candles
+    //        for (int i = candleSticks.Values.Count - 1; i >= 0; i--)
+    //        {
+    //            CryptoCandle candle = candleSticks.Values[i];
 
-                //In omgekeerde volgorde in de lijst zetten
-                if (history.Count == 0)
-                    history.Add(candle);
-                else
-                    history.Insert(0, candle);
+    //            //In omgekeerde volgorde in de lijst zetten
+    //            if (history.Count == 0)
+    //                history.Add(candle);
+    //            else
+    //                history.Insert(0, candle);
 
-                maxCandles--;
-                if (maxCandles == 0)
-                    break;
-            }
-        }
-        finally
-        {
-            Monitor.Exit(candleSticks);
-        }
-        return history;
-    }
+    //            maxCandles--;
+    //            if (maxCandles == 0)
+    //                break;
+    //        }
+    //    }
+    //    finally
+    //    {
+    //        Monitor.Exit(candleSticks);
+    //    }
+    //    return history;
+    //}
 
 
     public bool PrepareAndSendSignal(SignalCreateBase algorithm)
     {
+        if (Symbol.Name.Equals("LITUSDT"))
+            GlobalData.AddTextToLogTab("DEBUG NewCandleArrivedAsync(): " + Symbol.Name);
+
         CryptoSignal signal = CreateSignal(Candle);
         signal.Side = algorithm.SignalMode;
         signal.Strategy = algorithm.SignalStrategy;
@@ -412,7 +434,7 @@ public class SignalCreate
         if (!GlobalData.BackTest)
         {
             CalculateAdditionalSignalProperties(signal, history, 60);
-            if (!CheckAdditionalAlarmProperties(signal, out response))
+            if (!HasOpenPosition() && !CheckAdditionalAlarmProperties(signal, out response))
             {
                 eventText += " " + response;
                 signal.IsInvalid = true;
@@ -428,7 +450,7 @@ public class SignalCreate
         }
 
         // Extra controles, staat de symbol op de blacklist?
-        if (!signal.BackTest && TradingConfig.Config[signal.Side].InBlackList(Symbol.Name) == MatchBlackAndWhiteList.Present)
+        if (!HasOpenPosition() && !signal.BackTest && TradingConfig.Config[signal.Side].InBlackList(Symbol.Name) == MatchBlackAndWhiteList.Present)
         {
             // Als de muntpaar op de black lijst staat dan dit signaal overslagen
             eventText += " " + "staat op blacklist";
@@ -436,7 +458,7 @@ public class SignalCreate
         }
 
         // Extra controles, staat de symbol op de whitelist?
-        if (!signal.BackTest && TradingConfig.Config[signal.Side].InWhiteList(Symbol.Name) == MatchBlackAndWhiteList.NotPresent)
+        if (!HasOpenPosition() && !signal.BackTest && TradingConfig.Config[signal.Side].InWhiteList(Symbol.Name) == MatchBlackAndWhiteList.NotPresent)
         {
             // Als de muntpaar niet in de white lijst staat dan dit signaal overslagen
             eventText += " " + "niet in whitelist";
@@ -453,7 +475,7 @@ public class SignalCreate
         //signal.Last48HoursChange = CalculateLastPeriodsInInterval(48 * 60 * 60);
         //signal.Last48HoursEffective = CalculateMaxMovementInInterval(CryptoIntervalPeriod.interval15m, 2 * 96);
 
-        if (!signal.Last24HoursChange.IsBetween(GlobalData.Settings.Signal.AnalysisMinChangePercentage, GlobalData.Settings.Signal.AnalysisMaxChangePercentage))
+        if (!HasOpenPosition() && !signal.Last24HoursChange.IsBetween(GlobalData.Settings.Signal.AnalysisMinChangePercentage, GlobalData.Settings.Signal.AnalysisMaxChangePercentage))
         {
             if (GlobalData.Settings.Signal.LogAnalysisMinMaxChangePercentage)
             {
@@ -464,7 +486,7 @@ public class SignalCreate
             signal.IsInvalid = true;
         }
 
-        if (!signal.Last24HoursEffective.IsBetween(GlobalData.Settings.Signal.AnalysisMinEffectivePercentage, GlobalData.Settings.Signal.AnalysisMaxEffectivePercentage))
+        if (!HasOpenPosition() && !signal.Last24HoursEffective.IsBetween(GlobalData.Settings.Signal.AnalysisMinEffectivePercentage, GlobalData.Settings.Signal.AnalysisMaxEffectivePercentage))
         {
             if (GlobalData.Settings.Signal.LogAnalysisMinMaxEffectivePercentage)
             {
@@ -479,7 +501,7 @@ public class SignalCreate
         // New coins have a lot of price changes
         // Are there x day's of candles avaliable on the day interval
         // Bij het backtesten wordt slechts een gelimiteerd aantal candles ingelezen, dus daarom uitgeschakeld)
-        if (!GlobalData.BackTest)
+        if (!HasOpenPosition() && !GlobalData.BackTest)
         {
             var candles1Day = Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1d).CandleList;
             if (candles1Day.Count < GlobalData.Settings.Signal.SymbolMustExistsDays)
@@ -501,7 +523,7 @@ public class SignalCreate
         }
 
 
-        // Laat maar als het handelsklimaat cq barometer niet zo goed is.
+        // Check low barometer
         decimal? Barometer1h = -99m;
         if (GlobalData.Settings.QuoteCoins.TryGetValue(Symbol.Quote, out CryptoQuoteData quoteData))
         {
@@ -518,10 +540,11 @@ public class SignalCreate
         }
 
 
-        if (!signal.BackTest)
+        // Check "Barcode" charts
+        if (!HasOpenPosition() && !signal.BackTest)
         {
             decimal barcodePercentage = 100 * Symbol.PriceTickSize / (decimal)Symbol.LastPrice;
-            if ((barcodePercentage > GlobalData.Settings.Signal.MinimumTickPercentage))
+            if (barcodePercentage > GlobalData.Settings.Signal.MinimumTickPercentage)
             {
                 // Er zijn nogal wat van die flut munten, laat de tekst maar achterwege
                 if (GlobalData.Settings.Signal.LogMinimumTickPercentage)
@@ -544,34 +567,7 @@ public class SignalCreate
             signal.FluxIndicator5m = fluxOverBought;
 
 
-#if TRADEBOT
-        // Nog eens nagaan wat we hiermee willen, nu gebeurd er niets mee
-        //// Voor de SignalSlopesTurning* een variabele zetten of 
-        //// clearen zodat dit signaal niet om de x candles binnenkomt.
-        //// mhja, nog eens bedenken of we deze strategien willen publiseren....
-        //CryptoSymbolInterval SymbolInterval = Symbol.GetSymbolInterval(Interval.IntervalPeriod);
-        //switch (signal.Strategy)
-        //{
-        //    case CryptoSignalStrategy.Sbm1:
-        //    case CryptoSignalStrategy.Sbm2:
-        //    case CryptoSignalStrategy.Sbm3:
-        //    case CryptoSignalStrategy.Sbm4:
-        //    case CryptoSignalStrategy.Stobb:
-        //        if (signal.Side == CryptoOrderSide.Buy)
-        //            SymbolInterval.LastStobbOrdSbmDate = signal.OpenDate;
-        //        break;
-
-        //    case CryptoSignalStrategy.SlopeSma20:
-        //    case CryptoSignalStrategy.SlopeEma20:
-        //    case CryptoSignalStrategy.SlopeSma50:
-        //    case CryptoSignalStrategy.SlopeEma50:
-        //        SymbolInterval.LastStobbOrdSbmDate = null;
-        //        break;
-        //}
-#endif
-
-
-        // Lijkt overbodig te zijn tegenwoordig?
+        // Dit lijkt overbodig te zijn tegenwoordig?
         //// Hebben we deze al eerder gemeld?
         //if (!signal.BackTest)
         //{
@@ -608,7 +604,7 @@ public class SignalCreate
         signal.EventText = eventText.Trim();
 
         // Extra controles toepassen en het signaal "afkeuren" (maar toch laten zien)
-        if ((decimal)signal.TrendPercentage < GlobalData.Settings.Signal.StobMinimalTrend)
+        if (!HasOpenPosition() && (decimal)signal.TrendPercentage < GlobalData.Settings.Signal.StobMinimalTrend)
         {
             eventText += " trend < minimale gewenste trend";
             signal.IsInvalid = true;
@@ -650,7 +646,7 @@ public class SignalCreate
                 }
             }
 
-            GlobalData.SignalEvent?.Invoke(signal);
+            GlobalData.AnalyzeSignalCreated?.Invoke(signal);
         }
         catch (Exception error)
         {
@@ -760,27 +756,15 @@ public class SignalCreate
 
 
         // Is het volume binnen de gestelde grenzen          
-        if (!GlobalData.BackTest && !Symbol.CheckValidMinimalVolume(out response))
+        if (!HasOpenPosition() && !GlobalData.BackTest && !Symbol.CheckValidMinimalVolume(out response))
         {
-#if TRADEBOT
-
-            // Signalen blijven maken als er een positie openstaat (en het volume afgenomen is)
-            bool hasPosition = GlobalData.Settings.Trading.Active && PositionTools.HasPosition(Symbol);
-            if (!hasPosition)
-            {
-                if (GlobalData.Settings.Signal.LogMinimalVolume)
-                    GlobalData.AddTextToLogTab("Analyse " + response);
-                return false;
-            }
-#else
             if (GlobalData.Settings.Signal.LogMinimalVolume)
                 GlobalData.AddTextToLogTab("Analyse " + response);
             return false;
-#endif
         }
 
         // Is de prijs binnen de gestelde grenzen
-        if (!GlobalData.BackTest && !Symbol.CheckValidMinimalPrice(out response))
+        if (!HasOpenPosition() && !GlobalData.BackTest && !Symbol.CheckValidMinimalPrice(out response))
         {
             if (GlobalData.Settings.Signal.LogMinimalPrice)
                 GlobalData.AddTextToLogTab("Analyse " + response);

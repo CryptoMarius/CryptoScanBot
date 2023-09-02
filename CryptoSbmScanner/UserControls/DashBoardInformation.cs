@@ -640,6 +640,11 @@ public partial class DashBoardInformation : UserControl
     {
         // this.BeginUpdate(); die bestaat niet helaas
 
+        if (GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
+            labelAppicationStatus.Text = "";
+        else
+            labelAppicationStatus.Text = GlobalData.ApplicationStatus.ToString();
+
         //if (GlobalData.ApplicationStatus != CryptoApplicationStatus.AppStatusExiting)
         {
             // De prijzen van candles zijn pas na 20 a 30 seconden na iedere minuut bekend
@@ -747,8 +752,8 @@ public partial class DashBoardInformation : UserControl
                         href = string.Format("https://www.tradingview.com/chart/?symbol={0}&interval=60", tvValues.Ticker);
 
                     Uri uri = new(href);
-                    LinkTools.webViewTradingView.Source = uri;
-                    LinkTools.tabControl.SelectedTab = LinkTools.tabPageBrowser;
+                    LinkTools.WebViewTradingView.Source = uri;
+                    LinkTools.TabControl.SelectedTab = LinkTools.TabPageBrowser;
                 }
 
                 //if (x.InfoName == target || x.InfoValue == target)

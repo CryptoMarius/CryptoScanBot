@@ -10,7 +10,18 @@ public class ExcelBase
 {
     public HSSFWorkbook Book { get; set; }
     public ICellStyle CellStyleDate { get; set; }
+
+    public ICellStyle CellStyleStringGreen { get; set; }
+    public ICellStyle CellStyleStringRed { get; set; }
+
     public ICellStyle CellStyleDecimalNormal { get; set; }
+    public ICellStyle CellStyleDecimalGreen { get; set; }
+    public ICellStyle CellStyleDecimalRed { get; set; }
+
+    public ICellStyle CellStylePercentageNormal { get; set; }
+    public ICellStyle CellStylePercentageGreen { get; set; }
+    public ICellStyle CellStylePercentageRed { get; set; }
+
 
     public void CreateBook(string subject)
     {
@@ -38,36 +49,47 @@ public class ExcelBase
         CellStyleDate.DataFormat = format.GetFormat("dd-MM-yyyy HH:mm");
         CellStyleDate.Alignment = NPOI.SS.UserModel.HorizontalAlignment.Left;
 
-        //ICellStyle cellStyleStringGreen = book.CreateCellStyle();
-        //cellStyleStringGreen.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.LightGreen.Index;
-        //cellStyleStringGreen.FillPattern = FillPattern.SolidForeground;
-        //cellStyleStringGreen.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.LightGreen.Index;
+        CellStyleStringGreen = Book.CreateCellStyle();
+        CellStyleStringGreen.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.LightGreen.Index;
+        CellStyleStringGreen.FillPattern = FillPattern.SolidForeground;
+        CellStyleStringGreen.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.LightGreen.Index;
+
+        CellStyleStringRed = Book.CreateCellStyle();
+        CellStyleStringRed.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.Red.Index;
+        CellStyleStringRed.FillPattern = FillPattern.SolidForeground;
+        CellStyleStringRed.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.Red.Index;
+
 
         CellStyleDecimalNormal = Book.CreateCellStyle();
         CellStyleDecimalNormal.DataFormat = format.GetFormat("0.00000000");
 
-        //ICellStyle cellStyleDecimalGreen = book.CreateCellStyle();
-        //cellStyleDecimalGreen.DataFormat = format.GetFormat("0.00000000");
-        //cellStyleDecimalGreen.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.LightGreen.Index;
-        //cellStyleDecimalGreen.FillPattern = FillPattern.SolidForeground;
-        //cellStyleDecimalGreen.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.LightGreen.Index;
+        CellStyleDecimalGreen = Book.CreateCellStyle();
+        CellStyleDecimalGreen.DataFormat = format.GetFormat("0.00000000");
+        CellStyleDecimalGreen.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.LightGreen.Index;
+        CellStyleDecimalGreen.FillPattern = FillPattern.SolidForeground;
+        CellStyleDecimalGreen.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.LightGreen.Index;
 
-        //ICellStyle cellStyleDecimalRed = book.CreateCellStyle();
-        //cellStyleDecimalRed.DataFormat = format.GetFormat("0.00000000");
-        //cellStyleDecimalRed.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.Red.Index;
-        //cellStyleDecimalRed.FillPattern = FillPattern.SolidForeground;
-        //cellStyleDecimalRed.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.Red.Index;
+        CellStyleDecimalRed = Book.CreateCellStyle();
+        CellStyleDecimalRed.DataFormat = format.GetFormat("0.00000000");
+        CellStyleDecimalRed.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.Red.Index;
+        CellStyleDecimalRed.FillPattern = FillPattern.SolidForeground;
+        CellStyleDecimalRed.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.Red.Index;
 
 
-        //ICellStyle cellStylePercentageNormal = book.CreateCellStyle();
-        //cellStylePercentageNormal.DataFormat = HSSFDataFormat.GetBuiltinFormat("0.00");
+        CellStylePercentageNormal = Book.CreateCellStyle();
+        CellStylePercentageNormal.DataFormat = HSSFDataFormat.GetBuiltinFormat("0.00");
 
-        //ICellStyle cellStylePercentageGreen = book.CreateCellStyle();
-        //cellStylePercentageGreen.DataFormat = HSSFDataFormat.GetBuiltinFormat("0.00");
-        //cellStylePercentageGreen.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.LightGreen.Index;
-        //cellStylePercentageGreen.FillPattern = FillPattern.SolidForeground;
-        //cellStylePercentageGreen.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.LightGreen.Index;
+        CellStylePercentageGreen = Book.CreateCellStyle();
+        CellStylePercentageGreen.DataFormat = HSSFDataFormat.GetBuiltinFormat("0.00");
+        CellStylePercentageGreen.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.LightGreen.Index;
+        CellStylePercentageGreen.FillPattern = FillPattern.SolidForeground;
+        CellStylePercentageGreen.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.LightGreen.Index;
 
+        CellStylePercentageRed = Book.CreateCellStyle();
+        CellStylePercentageRed.DataFormat = HSSFDataFormat.GetBuiltinFormat("0.00");
+        CellStylePercentageRed.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.LightGreen.Index;
+        CellStylePercentageRed.FillPattern = FillPattern.SolidForeground;
+        CellStylePercentageRed.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.LightGreen.Index;
 
         //// macd.red
         //ICellStyle cellStyleMacdRed = book.CreateCellStyle();

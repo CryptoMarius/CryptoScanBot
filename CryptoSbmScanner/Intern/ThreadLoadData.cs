@@ -204,15 +204,6 @@ public class ThreadLoadData
             // Informatie uit de database lezen
             //************************************************************************************
 
-            // De symbols uit de database lezen (ook van andere exchanges)
-            // Dat doen we om de symbol van voorgaande signalen en/of posities te laten zien
-            GlobalData.AddTextToLogTab("Reading symbol information");
-            //string sql = $"select * from symbol where exchangeid={exchange.Id}";
-            string sql = "select * from symbol";
-            foreach (CryptoSymbol symbol in databaseThread.Connection.Query<CryptoSymbol>(sql))
-                GlobalData.AddSymbol(symbol);
-
-
             // TODO: controleren of we de info van de juiste exchange halen (of juist bewust multi exchyange laten zien)
 
             if (GlobalData.ExchangeListId.TryGetValue(GlobalData.Settings.General.ExchangeId, out Model.CryptoExchange exchange))
@@ -245,101 +236,6 @@ public class ThreadLoadData
                 }
 #endif
 
-                // Anders staan ze er na een restart dubbel in
-                if (!afterRestart)
-                {
-                    // Een aantal signalen laden
-                    // TODO - beperken tot de signalen die nog enigzins bruikbaar zijn??
-                    GlobalData.AddTextToLogTab("Reading some signals");
-#if SQLDATABASE
-                    sql = "select top 50 * from signal order by id desc";
-                    //sql = string.Format("select top 50 * from signal where exchangeid={0} order by id desc", exchange.Id);
-#else
-                    sql = "select * from signal order by id desc limit 50";
-                    //sql = string.Format("select * from signal where exchangeid={0} order by id desc limit 50", exchange.Id);
-#endif
-                    foreach (CryptoSignal signal in databaseThread.Connection.Query<CryptoSignal>(sql))
-                    {
-                        if (GlobalData.ExchangeListId.TryGetValue(signal.ExchangeId, out Model.CryptoExchange exchange2))
-                        {
-                            signal.Exchange = exchange2;
-
-                            if (exchange2.SymbolListId.TryGetValue(signal.SymbolId, out CryptoSymbol symbol))
-                            {
-                                signal.Symbol = symbol;
-
-                                if (GlobalData.IntervalListId.TryGetValue((int)signal.IntervalId, out CryptoInterval interval))
-                                    signal.Interval = interval;
-
-                                GlobalData.SignalQueue.Enqueue(signal);
-                            }
-                        }
-
-                    }
-                }
-
-#if TRADEBOT
-                // Alle gesloten posities lezen 
-                // TODO - beperken tot de laatste 2 dagen? (en wat handigheden toevoegen wellicht)
-                GlobalData.AddTextToLogTab("Reading closed position");
-#if SQLDATABASE
-                sql = "select top 250 * from position where not closetime is null order by id desc";
-#else
-                sql = "select * from position where not closetime is null order by id desc limit 250";
-#endif
-                foreach (CryptoPosition position in databaseThread.Connection.Query<CryptoPosition>(sql))
-                    PositionTools.AddPositionClosed(position);
-
-
-                // Alle openstaande posities lezen 
-                GlobalData.AddTextToLogTab("Reading open position");
-                sql = "select * from position where closetime is null and status < 2";
-                foreach (CryptoPosition position in databaseThread.Connection.Query<CryptoPosition>(sql))
-                {
-                    if (!GlobalData.TradeAccountList.TryGetValue(position.TradeAccountId, out CryptoTradeAccount tradeAccount))
-                        throw new Exception("Geen trade account gevonden");
-
-                    PositionTools.AddPosition(tradeAccount, position);
-                    PositionTools.LoadPosition(databaseThread, position);
-
-                    // Controleer de openstaande orders, zijn ze ondertussen gevuld
-                    // Haal de trades van deze positie op vanaf de 1e order
-                    // TODO - Hoe doen we dit met papertrading (er is niets geregeld!)
-                    await PositionTools.LoadTradesfromDatabaseAndExchange(databaseThread, position);
-                    PositionTools.CalculatePositionResultsViaTrades(databaseThread, position);
-
-                    foreach (CryptoPositionPart part in position.Parts.Values)
-                    {
-                        if (part.Invested > 0 && part.Quantity == 0 && part.Status != CryptoPositionStatus.Ready)
-                        {
-                            part.Status = CryptoPositionStatus.Ready;
-                            GlobalData.AddTextToLogTab(string.Format("LoadData: Positie {0} Part {1} status aangepast naar {2}", position.Symbol.Name, part.Name, part.Status));
-                        }
-
-                        if (part.Status == CryptoPositionStatus.Ready)
-                        {
-                            if (!part.CloseTime.HasValue)
-                                part.CloseTime = DateTime.UtcNow;
-                            databaseThread.Connection.Update(part);
-                        }
-                    }
-
-                    if (position.Invested > 0 && position.Quantity == 0 && position.Status != CryptoPositionStatus.Ready)
-                    {
-                        position.Status = CryptoPositionStatus.Ready;
-                        GlobalData.AddTextToLogTab(string.Format("LoadData: Positie {0} status aangepast naar {1}", position.Symbol.Name, position.Status));
-                    }
-
-                    if (position.Status == CryptoPositionStatus.Ready)
-                    {
-                        PositionTools.RemovePosition(tradeAccount, position);
-                        if (!position.CloseTime.HasValue)
-                            position.CloseTime = DateTime.UtcNow;
-                        databaseThread.Connection.Update(position);
-                    }
-                }
-#endif
-
 
 
                 //************************************************************************************
@@ -347,7 +243,7 @@ public class ThreadLoadData
                 // Via een event worden de muntparen in de userinterface gezet (dat duurt even)
                 //************************************************************************************
                 if (!exchange.LastTimeFetched.HasValue || exchange.LastTimeFetched?.AddHours(1) < DateTime.UtcNow)
-                    await ExchangeHelper.FetchSymbols();
+                    await ExchangeHelper.FetchSymbolsAsync();
                 IndexQuoteDataSymbols(exchange);
 
                 // Na het inlezen van de symbols de lijsten goed zetten
@@ -464,70 +360,77 @@ public class ThreadLoadData
                 var whateverX = Task.Run(() => { GlobalData.TaskSaveCandles.Execute(); });
 #endif
 
-                //************************************************************************************
-                // Alle intervallen herberekenen (het is een bulk hercalculatie voor de laatste in het geheugen gelezen candles)
-                // In theorie is dit allemaal reeds in de database opgeslagen, maar baat het niet dan schaad het niet
-                //************************************************************************************
-                GlobalData.AddTextToLogTab("Calculating candle intervals for " + exchange.Name + " (" + exchange.SymbolListName.Count.ToString() + " symbols)");
-                foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
-                {
-                    // De "barometer" munten overslagen AUB, die hebben slechts 3 intervallen (beetje quick en dirty allemaal)
-                    if (symbol.IsBarometerSymbol())
-                        continue;
+                ////************************************************************************************
+                //// Alle intervallen herberekenen (het is een bulk hercalculatie voor de laatste in het geheugen gelezen candles)
+                //// In theorie is dit allemaal reeds in de database opgeslagen, maar baat het niet dan schaad het niet
+                ////************************************************************************************
+                //GlobalData.AddTextToLogTab("Calculating candle intervals for " + exchange.Name + " (" + exchange.SymbolListName.Count.ToString() + " symbols)");
+                //foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
+                //{
+                //    // De "barometer" munten overslagen AUB, die hebben slechts 3 intervallen (beetje quick en dirty allemaal)
+                //    if (symbol.IsBarometerSymbol())
+                //        continue;
 
-                    if (symbol.CandleList.Any())
-                    {
-                        try
-                        {
-                            // Van laag naar hoog zodat de hogere intervallen worden berekend
-                            foreach (CryptoSymbolInterval symbolInterval in symbol.IntervalPeriodList)
-                            {
-                                CryptoInterval interval = symbolInterval.Interval;
-                                if (interval.ConstructFrom != null)
-                                {
-                                    // Voeg een candle toe aan een hogere tijd interval (eventueel uit db laden)
-                                    var candlesInterval = symbolInterval.CandleList;
-                                    if (candlesInterval.Values.Count > 0)
-                                    {
-                                        // Periode start
-                                        long unixFirst = candlesInterval.Values.First().OpenTime;
-                                        unixFirst -= unixFirst % interval.Duration;
-                                        DateTime dateFirst = CandleTools.GetUnixDate(unixFirst);
+                //    if (symbol.CandleList.Any())
+                //    {
+                //        try
+                //        {
+                //            // Van laag naar hoog zodat de hogere intervallen worden berekend
+                //            foreach (CryptoSymbolInterval symbolInterval in symbol.IntervalPeriodList)
+                //            {
+                //                CryptoInterval interval = symbolInterval.Interval;
+                //                if (interval.ConstructFrom != null)
+                //                {
+                //                    // Voeg een candle toe aan een hogere tijd interval (eventueel uit db laden)
+                //                    var candlesInterval = symbolInterval.CandleList;
+                //                    if (candlesInterval.Values.Count > 0)
+                //                    {
+                //                        // Periode start
+                //                        long unixFirst = candlesInterval.Values.First().OpenTime;
+                //                        unixFirst -= unixFirst % interval.Duration;
+                //                        DateTime dateFirst = CandleTools.GetUnixDate(unixFirst);
 
-                                        // Periode einde
-                                        long unixLast = candlesInterval.Values.Last().OpenTime;
-                                        unixLast -= unixLast % interval.Duration;
-                                        DateTime dateLast = CandleTools.GetUnixDate(unixLast);
+                //                        // Periode einde
+                //                        long unixLast = candlesInterval.Values.Last().OpenTime;
+                //                        unixLast -= unixLast % interval.Duration;
+                //                        DateTime dateLast = CandleTools.GetUnixDate(unixLast);
 
 
-                                        // TODO: Het aantal variabelen verminderen
-                                        long unixLoop = unixFirst;
-                                        DateTime dateLoop = CandleTools.GetUnixDate(unixLoop);
+                //                        // TODO: Het aantal variabelen verminderen
+                //                        long unixLoop = unixFirst;
+                //                        DateTime dateLoop = CandleTools.GetUnixDate(unixLoop);
 
-                                        // Herbereken deze periode opnieuw uit het onderliggende interval
-                                        while (unixLoop <= unixLast)
-                                        {
-                                            CandleTools.CalculateCandleForInterval(interval, interval.ConstructFrom, symbol, unixLoop);
+                //                        //long candle1mOpenTime = candle.OpenTime;
+                //                        //long candle1mCloseTime = candle1mOpenTime + 60;
+                //                        //foreach (CryptoInterval interval in GlobalData.IntervalList)
+                //                        //{
+                //                        //    if (interval.ConstructFrom != null && candle1mCloseTime % interval.Duration == 0)
 
-                                            unixLoop += interval.Duration;
-                                            dateLoop = CandleTools.GetUnixDate(unixLoop); //ter debug want een unix date is onleesbaar
-                                        }
-                                    }
-                                }
+                //                        // Herbereken deze periode opnieuw uit het onderliggende interval
+                //                        while (unixLoop <= unixLast)
+                //                        {
+                //                            if (unixLoop % interval.Duration == 0)
+                //                                CandleTools.CalculateCandleForInterval(interval, interval.ConstructFrom, symbol, unixLoop);
 
-                                // De laatste datum bijwerken (zodat we minder candles hoeven op te halen)
-                                CandleTools.UpdateCandleFetched(symbol, interval); // alleen relevant voor 1m
-                            }
-                        }
-                        catch (Exception error)
-                        {
-                            GlobalData.Logger.Error(error);
-                            GlobalData.AddTextToLogTab(error.ToString());
-                            throw;
-                        }
+                //                            unixLoop += interval.Duration;
+                //                            dateLoop = CandleTools.GetUnixDate(unixLoop); //ter debug want een unix date is onleesbaar
+                //                        }
+                //                    }
+                //                }
 
-                    }
-                }
+                //                // De laatste datum bijwerken (zodat we minder candles hoeven op te halen)
+                //                CandleTools.UpdateCandleFetched(symbol, interval); // alleen relevant voor 1m
+                //            }
+                //        }
+                //        catch (Exception error)
+                //        {
+                //            GlobalData.Logger.Error(error);
+                //            GlobalData.AddTextToLogTab(error.ToString());
+                //            throw;
+                //        }
+
+                //    }
+                //}
 
 
 
@@ -601,6 +504,9 @@ public class ThreadLoadData
                     _ = Task.Run(async () => { await GlobalData.ThreadMonitorOrder.ExecuteAsync(); });
                 }
 
+                
+                await GlobalData.CheckOpenPositions();
+
 
 
 #if BALANCING
@@ -660,10 +566,12 @@ public class ThreadLoadData
 
                 if (!afterRestart)
                 {
+#if TRADEBOT
                     if (GlobalData.BackTest)
-                        await PositionMonitor.CheckPositionsAfterRestart(GlobalData.ExchangeBackTestAccount);
+                        await PaperTrading.CheckPositionsAfterRestart(GlobalData.ExchangeBackTestAccount);
                     if (GlobalData.Settings.Trading.TradeViaPaperTrading)
-                        await PositionMonitor.CheckPositionsAfterRestart(GlobalData.ExchangePaperTradeAccount);
+                        await PaperTrading.CheckPositionsAfterRestart(GlobalData.ExchangePaperTradeAccount);
+#endif
                 }
 
                 // Assume we now can run

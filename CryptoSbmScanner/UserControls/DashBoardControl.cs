@@ -83,7 +83,9 @@ public partial class DashBoardControl : UserControl
     public void InitializeStuff()
     {
         GetQueryQuoteData();
-        Button1_Click(null, null);
+        buttonRefresh.Click += RefreshInformation;
+        EditQuote.SelectedIndexChanged += RefreshInformation;
+        RefreshInformation(null, null);
     }
 
 
@@ -264,7 +266,7 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
 
     private Chart CreateChart(string title, int x, int y)
     {
-        Chart chart = new Chart();
+        Chart chart = new();
         //chart.Title = "Title of the Chart";
         //chart.DisplayTitle = true;
         //chart.TabIndex = 0;
@@ -281,9 +283,11 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
 
     private static ChartArea CreateChartArea(string axisYFormat)
     {
-        ChartArea chartArea = new();
-        //chartArea1.Name = "ChartAreaName";
-        chartArea.BackColor = Color.Black;
+        ChartArea chartArea = new()
+        {
+            //Name = "ChartAreaName";
+            BackColor = Color.Black
+        };
 
         chartArea.AxisX.LabelStyle.Format = "dd";
         chartArea.AxisX.LineColor = Color.Gray;
@@ -622,6 +626,7 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
         labelReturned.Text = OpenData.Returned.ToString(quoteDataDisplayString);
         labelCommission.Text = OpenData.Commission.ToString(quoteDataDisplayString);
 
+        // Commision moet apart bij de winst berekening en niet hier
         decimal investedInTrades = OpenData.Invested - OpenData.Returned - OpenData.Commission;
         labelNettoPnlValue.Text = investedInTrades.ToString(quoteDataDisplayString);
 
@@ -701,7 +706,7 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
         DoAdditionalData();
     }
 
-    private void Button1_Click(object sender, EventArgs e)
+    private void RefreshInformation(object sender, EventArgs e)
     {
         try
         {

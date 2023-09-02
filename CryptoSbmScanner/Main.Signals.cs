@@ -138,7 +138,7 @@ public partial class FrmMain
         listViewSignals.Columns.Add("24h Change", -2, HorizontalAlignment.Right);
         listViewSignals.Columns.Add("24h Beweging", -2, HorizontalAlignment.Right);
         listViewSignals.Columns.Add("BB%", -2, HorizontalAlignment.Right);
-        listViewSignals.Columns.Add("", 20, HorizontalAlignment.Right);
+        //listViewSignals.Columns.Add("", 20, HorizontalAlignment.Right);
         listViewSignals.Columns.Add("RSI", -2, HorizontalAlignment.Right);
         listViewSignals.Columns.Add("Stoch", -2, HorizontalAlignment.Right);
         listViewSignals.Columns.Add("Signal", -2, HorizontalAlignment.Right);
@@ -298,7 +298,7 @@ public partial class FrmMain
         item1.SubItems.Add(value?.ToString("N2"));
 
 
-        item1.SubItems.Add(" ");
+        //item1.SubItems.Add(" ");
 
 
         // Oversold/overbougt
@@ -419,7 +419,7 @@ public partial class FrmMain
                     ListViewItem item = listViewSignals.Items[index];
                     CryptoSignal signal = (CryptoSignal)item.Tag;
 
-                    DateTime expirationDate = signal.CloseDate.AddSeconds(GlobalData.Settings.General.RemoveSignalAfterxCandles * signal.Interval.Duration); // 15 candles further (display)
+                    DateTime expirationDate = signal.CloseDate.AddSeconds(GlobalData.Settings.General.RemoveSignalAfterxCandles * signal.Interval.Duration);
                     if (expirationDate < DateTime.UtcNow)
                     {
                         if (!startedUpdating)

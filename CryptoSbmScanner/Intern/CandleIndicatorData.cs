@@ -63,93 +63,116 @@ public class CandleIndicatorData
 
 
     /// <summary>
-    /// Make a list of candles up to nextCandleOpenTime with at least 260 candles.
+    /// Make a list of candles up to firstCandleOpenTime with at least 260 candles.
     /// (target: ma200 for the last 60 minutes, but also the other indicators)
     /// </summary>
-    /// <param name="symbol"></param>
-    /// <param name="interval"></param>
-    /// <param name="firstCandleOpenTime"></param>
-    /// <param name="errorstr"></param>
-    /// <returns></returns>
     static public List<CryptoCandle> CalculateCandles(CryptoSymbol symbol, CryptoInterval interval, long firstCandleOpenTime, out string errorstr)
     {
+        CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
+        SortedList<long, CryptoCandle> intervalCandles = symbolPeriod.CandleList;
+        if (intervalCandles.Count < maxCandles)
+        {
+            errorstr = $"{symbol.Name} Not enough candles available for interval {interval.Name} count={intervalCandles.Count} requested={maxCandles}";
+            return null;
+        }
+
+
         // Een kleine selectie van candles overnemen voor het uitrekenen van de indicators
         // De firstCandleOpenTime is de eerste candle die we in de selectie moeten zetten.
-
-        // Geen verandering als het goed is (is allemaal al afgerond, maar kan geen kwaad
-        long candleLoop = firstCandleOpenTime - (firstCandleOpenTime % interval.Duration);
-        // DateTime candleLoopDebug = CandleTools.GetUnixDate(candleLoop); //debug
-
-        SortedList<long, CryptoCandle> candlesForHistory = new();
+        List<CryptoCandle> candlesForHistory = new();
 
 
-        Monitor.Enter(symbol.CandleList);
-        try
+        //Monitor.Enter(symbol.CandleList);
+        //try
+        //{
+        // Geen verandering als het goed is (is reeds afgerond als het goed is)
+        long candleEndTime = firstCandleOpenTime - (firstCandleOpenTime % interval.Duration);
+        long candleStartTime = candleEndTime - (maxCandles - 1) * interval.Duration;
+
+        CryptoCandle candleLast = null;
+        long candleLoop = candleStartTime;
+        while (candleLoop <= candleEndTime)
         {
-            CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
-            SortedList<long, CryptoCandle> intervalCandles = symbolPeriod.CandleList;
-            if (intervalCandles.Count < maxCandles)
+#if DEBUG
+            DateTime candleLoopDate = CandleTools.GetUnixDate(candleLoop);
+#endif
+            if (intervalCandles.TryGetValue(candleLoop, out CryptoCandle candle))
             {
-                errorstr = string.Format("{0} Not enough candles available for interval {1} count={2} requested={3}", symbol.Name, interval.Name, intervalCandles.Count, maxCandles);
-                return null;
+                //if (!candlesForHistory.ContainsKey(candle.OpenTime))
+                candlesForHistory.Add(candle);
+                //else
+                //    // Hoe kun je hier een duplicate key op krijgen? Dan zou de inhoud van de candles lijst corrupt moeten zijn?
+                //    // dwz, de candle.opentime en de key[x] zijn dan niet synchroon (kan dat? uberhaupt)
+                //    GlobalData.AddTextToLogTab(symbol.Name + " " + interval.Name + " Duplicate candle information " + CandleTools.GetUnixDate(candle.OpenTime).ToLocalTime());
             }
-
-            bool first = true;
-            CryptoCandle firstCandle = intervalCandles.Values.First();
-            long firstTime = firstCandle.OpenTime;
-
-            while (candlesForHistory.Count < maxCandles)
+            else
             {
-                if (intervalCandles.TryGetValue(candleLoop, out CryptoCandle candle))
+                //// De laatste candle is niet altijd aanwezig (wellicht een kwestie van timing, maar ik ben hier onzeker over...)
+                //if (firstCandleOpenTime != candleLoop) // && candleLoop != candleEndTime
+                //{
+                //    // In de hoop dat dit het automatisch zou kunnen fixen?
+                //    //symbolPeriod.IsChanged = true;
+                //    //if (symbolPeriod.LastCandleSynchronized > candleLoop - interval.Duration)
+                //    //    symbolPeriod.LastCandleSynchronized = candleLoop - interval.Duration;
+                //    GlobalData.AddTextToLogTab(symbol.Name + " " + interval.Name + " Missing candle information " + CandleTools.GetUnixDate(candleLoop).ToLocalTime());
+                //    //ScannerSession.ConnectionWasRestored(""); // A quick fix (dont like it)?
+                //}
+
+                // Genereer dan maar een dummy candle
+                if (candleLast != null)
                 {
-                    if (!candlesForHistory.ContainsKey(candle.OpenTime))
-                        candlesForHistory.Add(candle.OpenTime, candle);
-                    else
-                        // Hoe kun je hier een duplicate key op krijgen? Dan zou de inhoud van de candles lijst corrupt moeten zijn?
-                        // dwz, de candle.opentime en de key[x] zijn dan niet synchroon (kan dat? uberhaupt)
-                        GlobalData.AddTextToLogTab(symbol.Name + " " + interval.Name + " Duplicate candle information " + CandleTools.GetUnixDate(candle.OpenTime).ToLocalTime());
-                }
-                else
-                {
-                    // De laatste candle is niet altijd aanwezig (een kwestie van timing?)
-                    if (firstCandleOpenTime != candleLoop && !first) //!BackTest && 
-                    {
-                        // In de hoop dat dit het automatisch zou kunnen fixen?
-                        symbolPeriod.IsChanged = true;
-                        if (symbolPeriod.LastCandleSynchronized > candleLoop - interval.Duration)
-                            symbolPeriod.LastCandleSynchronized = candleLoop - interval.Duration;
-                        GlobalData.AddTextToLogTab(symbol.Name + " " + interval.Name + " Missing candle information " + CandleTools.GetUnixDate(candleLoop).ToLocalTime());
-                        ScannerSession.ConnectionWasRestored(""); // A quick fix (dont like it)?
-                    }
-                }
-                candleLoop -= interval.Duration;
-                //candleLoopDebug = CandleTools.GetUnixDate(candleLoop);
+                    candle = new();
+                    candle.OpenTime = candleLoop;
+                    candle.Open = candleLast.Close;
+                    candle.Low = candleLast.Close;
+                    candle.High = candleLast.Close;
+                    candle.Close = candleLast.Close;
+                    candle.Volume = 0;
+                    candle.IsDuplicated = true;
 
-                if (candleLoop < firstTime)
-                    break;
-                first = false;
+                    candlesForHistory.Add(candle);
+                }
+                //GlobalData.AddTextToLogTab(symbol.Name + " " + interval.Name + " Missing candle information (recreated) " + CandleTools.GetUnixDate(candleLoop).ToLocalTime());
             }
 
-            //Mhh, blijkbaar waren er gewoon niet goed candles
-            if (candlesForHistory.Count < maxCandles)
-            {
-                errorstr = string.Format("{0} Not enough candles available for interval {1} count={2} requested={3}", symbol.Name, interval.Name, candlesForHistory.Count, maxCandles);
-                return null;
-            }
-
-            // Fill in missing candles (repeating the last candle.close) up to nextCandleOpenTime
-            // We assume nothing has happened in that period (flat candles with no orders)
-            CandleTools.AddMissingSticks(candlesForHistory, firstCandleOpenTime, interval);
+            candleLoop += interval.Duration;
+            candleLast = candle;
         }
-        finally
+
+
+        // Mhh, blijkbaar waren er gewoon niet goed candles
+        // Kan ook omdat de exchange geen volume had voor die candle
+        // (nu wellicht overbodig doordat we hieboven dummy candles in de history erbij zetten)
+
+
+        if (candlesForHistory.Count < maxCandles)
         {
-            Monitor.Exit(symbol.CandleList);
+            errorstr = $"{symbol.Name} Not enough candles available for interval {interval.Name} count={candlesForHistory.Count} requested={maxCandles}";
+            if (candlesForHistory.Any())
+            {
+                CryptoCandle x = candlesForHistory.Last();
+                errorstr += " last in history = " + x.DateLocal.ToString();
+
+                x = intervalCandles.Values.Last();
+                errorstr += " last in candlelist = " + x.DateLocal.ToString();
+            }
+
+            return null;
         }
+
+        // Fill in missing candles (repeating the last candle.close) up to nextCandleOpenTime
+        // We assume nothing has happened in that period (flat candles with no orders)
+        //CandleTools.AddMissingSticks(candlesForHistory, firstCandleOpenTime, interval);
+        //}
+        //finally
+        //{
+        //    Monitor.Exit(symbol.CandleList);
+        //}
 
         // Convert the list to a input kind the stupid indicators are using
         errorstr = "";
-        List<CryptoCandle> history = candlesForHistory.Values.ToList();
-        return history;
+        //List<CryptoCandle> history = candlesForHistory.Values.ToList();
+        return candlesForHistory;
     }
 
 
@@ -334,10 +357,11 @@ public class CandleIndicatorData
     }
 
     // Extended with 1 day + 9 hours because of the 24 hour market climate (or barometer).  (we show ~6 hours of that in the display)
-    private static long InitialCandleCountFetch = 24 * 60 * 60 + 9 * 60 * 60;
+    private static long InitialCandleCountFetch = (24 + 7) * 60 * 60;
 
     public static void SetInitialCandleCountFetch(long value)
     {
+        // Ter debug uitgezet
         InitialCandleCountFetch = value;
     }
 
@@ -359,8 +383,8 @@ public class CandleIndicatorData
             if (interval.IntervalPeriod == CryptoIntervalPeriod.interval1m)
                 startFetchUnix = CandleTools.GetUnixTime(utcNow, 60) - InitialCandleCountFetch;
             else
-                // de 0 was eerst een 10 en bedoeld om meldingen met terugwerkende kracht te berekenen bij de start
-                startFetchUnix = CandleTools.GetUnixTime(utcNow, 60) - (0 + maxCandles) * interval.Duration;
+                // de 0 was eerst een 10 (en later 49) en bedoeld om meldingen met terugwerkende kracht te berekenen bij de start
+                startFetchUnix = CandleTools.GetUnixTime(utcNow, 60) - (49 + maxCandles) * interval.Duration;
             startFetchUnix -= startFetchUnix % interval.Duration;
 
             // Lets extend that with 1 extra candle just in case...

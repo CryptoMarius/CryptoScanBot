@@ -15,7 +15,7 @@ namespace CryptoSbmScanner
             ListViewItem itemB = (ListViewItem)y;
             CryptoPosition positionB = (CryptoPosition)itemB.Tag;
 
-            int compareResult = 0;
+            int compareResult;
             try
             {
                 if (ClosedPositions)
@@ -39,7 +39,6 @@ namespace CryptoSbmScanner
 
                         13 => ObjectCompare.Compare(positionA.Profit, positionB.Profit),
                         14 => ObjectCompare.Compare(positionA.Percentage, positionB.Percentage),
-
                         15 => ObjectCompare.Compare(positionA.PartCount, positionB.PartCount),
                         16 => ObjectCompare.Compare(positionA.BuyPrice, positionB.BuyPrice),
                         17 => ObjectCompare.Compare(positionA.SellPrice, positionB.SellPrice),
@@ -52,29 +51,28 @@ namespace CryptoSbmScanner
                     {
                         00 => ObjectCompare.Compare(positionA.Id, positionB.Id),
                         01 => ObjectCompare.Compare(positionA.CreateTime, positionB.CreateTime),
-                        02 => ObjectCompare.Compare(positionA.TradeAccount.Name, positionB.TradeAccount.Name),
-                        03 => ObjectCompare.Compare(positionA.Exchange.Name, positionB.Exchange.Name),
-                        04 => ObjectCompare.Compare(positionA.Symbol.Name, positionB.Symbol.Name),
-                        05 => ObjectCompare.Compare(positionA.Interval.IntervalPeriod, positionB.Interval.IntervalPeriod),
-                        06 => ObjectCompare.Compare(positionA.StrategyText, positionB.StrategyText),
-                        07 => ObjectCompare.Compare(positionA.SideText, positionB.SideText),
-                        08 => ObjectCompare.Compare(positionA.Status, positionB.Status),
+                        02 => ObjectCompare.Compare(positionA.UpdateTime, positionB.UpdateTime),
+                        03 => ObjectCompare.Compare(positionA.TradeAccount.Name, positionB.TradeAccount.Name),
+                        04 => ObjectCompare.Compare(positionA.Exchange.Name, positionB.Exchange.Name),
+                        05 => ObjectCompare.Compare(positionA.Symbol.Name, positionB.Symbol.Name),
+                        06 => ObjectCompare.Compare(positionA.Interval.IntervalPeriod, positionB.Interval.IntervalPeriod),
+                        07 => ObjectCompare.Compare(positionA.StrategyText, positionB.StrategyText),
+                        08 => ObjectCompare.Compare(positionA.SideText, positionB.SideText),
+                        09 => ObjectCompare.Compare(positionA.Status, positionB.Status),
 
-                        09 => ObjectCompare.Compare(positionA.BreakEvenPrice, positionB.BreakEvenPrice),
-                        10 => ObjectCompare.Compare(positionA.Quantity, positionB.Quantity),
+                        10 => ObjectCompare.Compare(positionA.Invested, positionB.Invested),
+                        11 => ObjectCompare.Compare(positionA.Returned, positionB.Returned),
+                        12 => ObjectCompare.Compare(positionA.Commission, positionB.Commission),
 
-                        11 => ObjectCompare.Compare(positionA.Invested, positionB.Invested),
-                        12 => ObjectCompare.Compare(positionA.Returned, positionB.Returned),
-                        13 => ObjectCompare.Compare(positionA.Invested - positionA.Returned, positionB.Invested - positionB.Returned),
-                        14 => ObjectCompare.Compare(positionA.Commission, positionB.Commission),
+                        13 => ObjectCompare.Compare(positionA.BreakEvenPrice, positionB.BreakEvenPrice),
+                        14 => ObjectCompare.Compare(positionA.Quantity, positionB.Quantity),
+                        15 => ObjectCompare.Compare(positionA.Invested - positionA.Returned, positionB.Invested - positionB.Returned),
+                        16 => ObjectCompare.Compare(positionA.MarketValue, positionB.MarketValue),
+                        17 => ObjectCompare.Compare(positionA.MarketValuePercentage, positionB.MarketValuePercentage),
 
-                        15 => ObjectCompare.Compare(positionA.MarketValue, positionB.MarketValue),
-                        16 => ObjectCompare.Compare(positionA.MarketValuePercentage, positionB.MarketValuePercentage),
-
-                        17 => ObjectCompare.Compare(positionA.PartCount, positionB.PartCount),
-                        18 => ObjectCompare.Compare(positionA.BuyPrice, positionB.BuyPrice),
-                        19 => ObjectCompare.Compare(positionA.SellPrice, positionB.SellPrice),
-                        20 => ObjectCompare.Compare(positionA.Symbol.LastPrice, positionB.Symbol.LastPrice),
+                        18 => ObjectCompare.Compare(positionA.PartCount, positionB.PartCount),
+                        19 => ObjectCompare.Compare(positionA.BuyPrice, positionB.BuyPrice),
+                        20 => ObjectCompare.Compare(positionA.SellPrice, positionB.SellPrice),
                         _ => 0
                     };
                 }

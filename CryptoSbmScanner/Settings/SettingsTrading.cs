@@ -24,6 +24,8 @@ public class SettingsTrading
     public bool Active { get; set; } = false;
     public bool DisableNewPositions { get; set; } = false;
 
+    public bool LogCanceledOrders { get; set; } = true;
+
     //***************************
     // Slots
     //Maximaal aantal slots op de exchange

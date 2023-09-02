@@ -114,7 +114,7 @@ public partial class TestForm : Form
         GlobalData.LogToLogTabEvent += new AddTextEvent(AddTextToLogTab);
 
         GlobalData.ThreadMonitorCandle = new ThreadMonitorCandle();
-        GlobalData.SignalEvent = BinanceShowNotification;
+        GlobalData.AnalyzeSignalCreated = BinanceShowNotification;
 
         //string APIKEY = "?";
         //string APISECRET = "?";

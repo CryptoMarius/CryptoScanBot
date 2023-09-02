@@ -15,22 +15,24 @@ public class CryptoPosition
     [Key]
     public int Id { get; set; }
     public DateTime CreateTime { get; set; }
+    public DateTime? UpdateTime { get; set; }
+    public DateTime? CloseTime { get; set; }
 
     public int TradeAccountId { get; set; }
     [Computed]
-    public virtual CryptoTradeAccount TradeAccount { get; set; }
+    public CryptoTradeAccount TradeAccount { get; set; }
 
     public int ExchangeId { get; set; }
     [Computed]
-    public virtual CryptoExchange Exchange { get; set; }
+    public CryptoExchange Exchange { get; set; }
 
     public int SymbolId { get; set; }
     [Computed]
-    public virtual CryptoSymbol Symbol { get; set; }
+    public CryptoSymbol Symbol { get; set; }
 
     public int? IntervalId { get; set; }
     [Computed]
-    public virtual CryptoInterval Interval { get; set; }
+    public CryptoInterval Interval { get; set; }
 
     public CryptoOrderSide Side { get; set; }
     [Computed]
@@ -80,16 +82,13 @@ public class CryptoPosition
     public decimal? SellPrice { get; set; }
 
 
-    public DateTime? CloseTime { get; set; }
-
     // Een experiment (die wellicht wegkan)
     public string Data { get; set; }
 
     // Soort van Parts.Count (maar dan hoeft niet alles geladen te zijn)
     public int PartCount { get; set; }
 
-    [Computed]
-    public bool RepositionSell { get; set; }
+    public bool Reposition { get; set; }
 
     [Computed]
     public SortedList<int, CryptoPositionPart> Parts { get; set; } = new();

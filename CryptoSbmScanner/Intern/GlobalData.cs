@@ -4,6 +4,7 @@ using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Settings;
 using CryptoSbmScanner.TradingView;
 
+using Dapper;
 using Dapper.Contrib.Extensions;
 
 using System.Text.Encodings.Web;
@@ -41,6 +42,7 @@ static public class GlobalData
 {
     // Emulator kan alleen de backTest zetten (anders gaan er onverwachte zaken naar de database enzo)
     static public bool BackTest { get; set; }
+
     static public CryptoApplicationStatus ApplicationStatus { get; set; } = CryptoApplicationStatus.Initializing;
 
     static public int createdSignalCount = 0; // Tellertje met het aantal meldingen (komt in de taakbalk c.q. applicatie titel)
@@ -78,11 +80,12 @@ static public class GlobalData
     static public event AddTextEvent AssetsHaveChangedEvent;
     static public event AddTextEvent SymbolsHaveChangedEvent;
     static public event AddTextEvent PositionsHaveChangedEvent;
+    static public AddTextEvent ApplicationHasStarted { get; set; }
 
     // Ophalen van historische candles duurt lang, dus niet halverwege nog 1 starten (en nog 1 en...)
     static public event SetCandleTimerEnable SetCandleTimerEnableEvent;
 
-    public static AnalyseEvent SignalEvent { get; set; }
+    static public AnalyseEvent AnalyzeSignalCreated { get; set; }
 
     // TODO: Deze rare accounts proberen te verbergen (indien mogelijk)
     static public SortedList<int, CryptoTradeAccount> TradeAccountList = new();
@@ -113,6 +116,8 @@ static public class GlobalData
 
     static public void LoadExchanges()
     {
+        GlobalData.AddTextToLogTab("Reading exchange information");
+
         // De exchanges uit de database laden
         ExchangeListId.Clear();
         ExchangeListName.Clear();
@@ -126,16 +131,19 @@ static public class GlobalData
 
     static public void LoadAccounts()
     {
+        GlobalData.AddTextToLogTab("Reading account information");
+
         // De accounts uit de database laden
         TradeAccountList.Clear();
 
         using var database = new CryptoDatabase();
         foreach (CryptoTradeAccount tradeAccount in database.Connection.GetAll<CryptoTradeAccount>())
         {
-            TradeAccountList.Add(tradeAccount.Id, tradeAccount);
-
             if (ExchangeListId.TryGetValue(tradeAccount.ExchangeId, out var exchange))
+            {
+                TradeAccountList.Add(tradeAccount.Id, tradeAccount);
                 tradeAccount.Exchange = exchange;
+            }
         }
 
         SetTradingAccounts();
@@ -161,6 +169,8 @@ static public class GlobalData
 
     static public void LoadIntervals()
     {
+        GlobalData.AddTextToLogTab("Reading interval information");
+
         // De intervallen uit de database laden
         IntervalList.Clear();
         IntervalListId.Clear();
@@ -186,12 +196,146 @@ static public class GlobalData
         IntervalList.Sort((x, y) => x.IntervalPeriod.CompareTo(y.IntervalPeriod));
     }
 
+    static public void LoadSymbols()
+    {
+        // De symbols uit de database lezen (ook van andere exchanges)
+        // Dat doen we om de symbol van voorgaande signalen en/of posities te laten zien
+        GlobalData.AddTextToLogTab("Reading symbol information");
+        //string sql = $"select * from symbol where exchangeid={exchange.Id}";
+        string sql = "select * from symbol";
+
+        using var database = new CryptoDatabase();
+        foreach (CryptoSymbol symbol in database.Connection.Query<CryptoSymbol>(sql))
+            GlobalData.AddSymbol(symbol);
+    }
+
+    static public void LoadSignals()
+    {
+        // Een aantal signalen laden
+        // TODO - beperken tot de signalen die nog enigzins bruikbaar zijn??
+        GlobalData.AddTextToLogTab("Reading some signals");
+//#if SQLDATABASE
+//        string sql = "select top 50 * from signal order by id desc";
+//        //sql = string.Format("select top 50 * from signal where exchangeid={0} order by id desc", exchange.Id);
+//#else
+//        string sql = "select * from signal order by id desc limit 50";
+//        //sql = string.Format("select * from signal where exchangeid={0} order by id desc limit 50", exchange.Id);
+//#endif
+        string sql = "select * from signal where ExpirationDate >= @FromDate order by OpenDate";
+
+        using var database = new CryptoDatabase();
+        foreach (CryptoSignal signal in database.Connection.Query<CryptoSignal>(sql, new { FromDate = DateTime.UtcNow}))
+        {
+            if (GlobalData.ExchangeListId.TryGetValue(signal.ExchangeId, out Model.CryptoExchange exchange2))
+            {
+                signal.Exchange = exchange2;
+
+                if (exchange2.SymbolListId.TryGetValue(signal.SymbolId, out CryptoSymbol symbol))
+                {
+                    signal.Symbol = symbol;
+
+                    if (GlobalData.IntervalListId.TryGetValue((int) signal.IntervalId, out CryptoInterval interval))
+                        signal.Interval = interval;
+
+                    GlobalData.SignalQueue.Enqueue(signal);
+                }
+            }
+        }
+    }
+
+
+#if TRADEBOT
+    static public void LoadClosedPositions()
+    {
+        // Alle gesloten posities lezen 
+        // TODO - beperken tot de laatste 2 dagen? (en wat handigheden toevoegen wellicht)
+        GlobalData.AddTextToLogTab("Reading closed position");
+#if SQLDATABASE
+        string sql = "select top 250 * from position where not closetime is null order by id desc";
+#else
+        string sql = "select * from position where not closetime is null order by id desc limit 250";
+#endif
+        using var database = new CryptoDatabase();
+        foreach (CryptoPosition position in database.Connection.Query<CryptoPosition>(sql))
+            PositionTools.AddPositionClosed(position);
+    }
+
+    static public void LoadOpenPositions()
+    {
+        // Alle openstaande posities lezen 
+        GlobalData.AddTextToLogTab("Reading open position");
+
+        using var database = new CryptoDatabase();
+        string sql = "select * from position where closetime is null and status < 2";
+        foreach (CryptoPosition position in database.Connection.Query<CryptoPosition>(sql))
+        {
+            if (!GlobalData.TradeAccountList.TryGetValue(position.TradeAccountId, out CryptoTradeAccount tradeAccount))
+                throw new Exception("Geen trade account gevonden");
+
+            PositionTools.AddPosition(tradeAccount, position);
+            PositionTools.LoadPosition(database, position);
+        }
+    }
+
+    static async public Task CheckOpenPositions()
+    {
+        // Alle openstaande posities lezen 
+        GlobalData.AddTextToLogTab("Checking open position");
+
+        using var database = new CryptoDatabase();
+        foreach (CryptoTradeAccount tradeAccount in GlobalData.TradeAccountList.Values.ToList())
+        {
+            //foreach (CryptoPosition position in tradeAccount.PositionList.Values.ToList())
+            foreach (var positionList in tradeAccount.PositionList.Values.ToList())
+            {
+                foreach (var position in positionList.Values.ToList())
+                {
+                    // Controleer de openstaande orders, zijn ze ondertussen gevuld
+                    // Haal de trades van deze positie op vanaf de 1e order
+                    // TODO - Hoe doen we dit met papertrading (er is niets geregeld!)
+                    await PositionTools.LoadTradesfromDatabaseAndExchange(database, position);
+                    PositionTools.CalculatePositionResultsViaTrades(database, position);
+
+                    foreach (CryptoPositionPart part in position.Parts.Values)
+                    {
+                        if (part.Invested > 0 && part.Quantity == 0 && part.Status != CryptoPositionStatus.Ready)
+                        {
+                            part.Status = CryptoPositionStatus.Ready;
+                            GlobalData.AddTextToLogTab(string.Format("LoadData: Positie {0} Part {1} status aangepast naar {2}", position.Symbol.Name, part.Name, part.Status));
+                        }
+
+                        if (part.Status == CryptoPositionStatus.Ready)
+                        {
+                            if (!part.CloseTime.HasValue)
+                                part.CloseTime = DateTime.UtcNow;
+                            database.Connection.Update(part);
+                        }
+                    }
+
+                    if (position.Invested > 0 && position.Quantity == 0 && position.Status != CryptoPositionStatus.Ready)
+                    {
+                        position.Status = CryptoPositionStatus.Ready;
+                        GlobalData.AddTextToLogTab(string.Format("LoadData: Positie {0} status aangepast naar {1}", position.Symbol.Name, position.Status));
+                    }
+
+                    if (position.Status == CryptoPositionStatus.Ready)
+                    {
+                        PositionTools.RemovePosition(position.TradeAccount, position);
+                        if (!position.CloseTime.HasValue)
+                            position.CloseTime = DateTime.UtcNow;
+                        database.Connection.Update(position);
+                    }
+                }
+            }
+        }
+    }
+#endif
 
     static public void AddExchange(Model.CryptoExchange exchange)
     {
-        // Deze exchange kan nog niet ondersteund worden (vanwege price- en klineticker)
-        //if (exchange.Name.Equals("Kucoin"))
-        //    return;
+        // Deze exchange kan nog niet ondersteund worden (experimenteel)
+        if (exchange.Name.Equals("Kraken"))
+            return;
 
         if (!ExchangeListName.ContainsKey(exchange.Name))
         {
@@ -223,19 +367,25 @@ static public class GlobalData
 
     static public void AddSymbol(CryptoSymbol symbol)
     {
-#if KUCOINDEBUG
+#if LIMITSYMBOLS
         // Testje met gelimiteerd aantal symbols
         if (
-            //symbol.Name.Equals("BTCUSDT") ||
-            //symbol.Name.Equals("AAVE3SUSDT") ||
-            //symbol.Name.Equals("DASHUSDT") ||
-            
-            symbol.Name.Equals("$BMPUSDT") ||
+            symbol.Name.Equals("BTCUSDT") ||
+          //  symbol.Name.Equals("BNBUSDT") ||
           //symbol.Name.Equals("ETHUSDT") ||
+          //symbol.Name.Equals("XRPUSDT") ||
+          //symbol.Name.Equals("ADAUSDT") ||
+          //  symbol.Name.Equals("AAVE3SUSDT") ||
+          //  symbol.Name.Equals("DASHUSDT") ||
+          symbol.Name.Equals("AKROUSDT") ||
+          symbol.Name.Equals("COMPUSDT") ||
+
+
+          symbol.Name.Equals("$BMPUSDT") ||
           //symbol.Name.Equals("ADABTC") ||
           //symbol.Name.Equals("COMPBTC") ||
           //symbol.Name.Equals("VEGAUSDT") ||
-          symbol.Name.Equals("UNICUSDT") ||
+          //symbol.Name.Equals("UNICUSDT") ||
           symbol.Name.Equals("$BMPBTC")
           )
 #endif
@@ -265,6 +415,8 @@ static public class GlobalData
             }
             else numberOfDecimalPlaces = 0;
             symbol.PriceDisplayFormat = "N" + numberOfDecimalPlaces.ToString();
+            //if (symbol.PriceDisplayFormat == "N0")
+            //    symbol.PriceDisplayFormat = "N8";
 
 
 
@@ -277,8 +429,8 @@ static public class GlobalData
             }
             else numberOfDecimalPlaces = 0;
             symbol.QuantityDisplayFormat = "N" + numberOfDecimalPlaces.ToString();
-            if (symbol.QuantityTickSize == 1.0m)
-                symbol.QuantityDisplayFormat = "N8";
+            //if (symbol.QuantityTickSize == 1.0m)
+            //    symbol.QuantityDisplayFormat = "N8";
         }
     }
 
@@ -636,8 +788,8 @@ static public class GlobalData
         fileTarget.Name = "default";
         fileTarget.ArchiveDateFormat = "yyyy-MM-dd";
         fileTarget.ArchiveEvery = NLog.Targets.FileArchivePeriod.Day;
-        //fileTarget.EnableArchiveFileCompression = true;
-        fileTarget.MaxArchiveDays = 15;
+        fileTarget.EnableArchiveFileCompression = false;
+        fileTarget.MaxArchiveDays = 10;
         fileTarget.FileName = GetBaseDir() + "CryptoScanner ${date:format=yyyy-MM-dd}.log";
         //fileTarget.Layout = "Exception Type: ${exception:format=Type}${newline}Target Site:  ${event-context:TargetSite }${newline}Message: ${message}";
 
@@ -649,8 +801,8 @@ static public class GlobalData
         fileTarget.Name = "errors";
         fileTarget.ArchiveDateFormat = "yyyy-MM-dd";
         fileTarget.ArchiveEvery = NLog.Targets.FileArchivePeriod.Day;
-        fileTarget.MaxArchiveDays = 30;
-        //fileTarget.EnableArchiveFileCompression = true;
+        fileTarget.MaxArchiveDays = 10;
+        fileTarget.EnableArchiveFileCompression = false;
         fileTarget.FileName = GetBaseDir() + "CryptoScanner ${date:format=yyyy-MM-dd}-Errors.log";
         //fileTarget.Layout = "Exception Type: ${exception:format=Type}${newline}Target Site:  ${event-context:TargetSite }${newline}Message: ${message}";
 
@@ -659,6 +811,10 @@ static public class GlobalData
 
 
         NLog.LogManager.Configuration = config;
+
+        Logger.Info("");
+        Logger.Info("");
+        Logger.Info("****************************************************");
     }
 
     //public static void DumpSessionInformation()

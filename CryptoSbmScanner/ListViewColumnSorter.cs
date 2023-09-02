@@ -9,12 +9,6 @@ public class ListViewColumnSorter : IComparer
 
     internal CaseInsensitiveComparer ObjectCompare = new();
 
-    //public ListViewColumnSorter()
-    //{
-    //    // Initialize the CaseInsensitiveComparer object
-    //    //ObjectCompare = new CaseInsensitiveComparer();
-    //}
-
     public virtual int Compare(object x, object y)
     {
         return 0;
@@ -26,7 +20,7 @@ public class ListViewColumnSorter : IComparer
         // Determine if clicked column is already the column that is being sorted.
         if (column == SortColumn)
         {
-            // Reverse the current sort direction for this column.
+            // Reverse the current sort direction
             if (SortOrder == SortOrder.Ascending)
                 SortOrder = SortOrder.Descending;
             else
@@ -34,9 +28,9 @@ public class ListViewColumnSorter : IComparer
         }
         else
         {
-            // Set the column number that is to be sorted; default to ascending.
+            // Set the column number that is to be sorted
             SortColumn = column;
-            SortOrder = SortOrder.Descending;
+            SortOrder = SortOrder.Ascending;
         }
     }
 }

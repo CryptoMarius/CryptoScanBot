@@ -1,4 +1,5 @@
-﻿using CryptoSbmScanner.Enums;
+﻿using CryptoSbmScanner.Context;
+using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 
@@ -8,112 +9,10 @@ using NPOI.SS.UserModel;
 
 namespace CryptoSbmScanner.Excel;
 
-/*
-    static public void DumpPosition(CryptoPosition position, StringBuilder strings)
-    {
-        // Het is op niet echt super-leesbaar, Excel ding maken wellicht?
-        // Zie BackTestExcel.cs, daar wordt een mooi rapportje gemaakt!!
-        // Het kan regel georienteerd onder elkaar en de kolommen komen overeen lijkt me.
-        // Nog eens een voorbeeld excel ding van maken, kan volgens mij erg mooi zijn.
-        // (en in ieder geval begrijpbaarder en overzichtelijker dan onderstaande <g>)
-
-        strings.AppendLine("");
-        strings.AppendLine("-------------------");
-        strings.AppendLine("Position dump:");
-        strings.AppendLine("");
-        strings.AppendLine("Position Id:" + position.Id.ToString());
-        strings.AppendLine("Account:" + position.TradeAccount.Name);
-        strings.AppendLine("Exchange:" + position.Symbol.Exchange.Name);
-        strings.AppendLine("Name:" + position.Symbol.Name);
-        strings.AppendLine("Strategie:" + position.StrategyText);
-        strings.AppendLine("Interval:" + position.Interval.Name);
-        strings.AppendLine("Status:" + position.Status.ToString());
-        strings.AppendLine("OpenDate:" + position.CreateTime.ToLocalTime());
-        if (position.CloseTime.HasValue)
-            strings.AppendLine("CloseDate:" + position.CloseTime?.ToLocalTime());
-        strings.AppendLine("BreakEvenPrice:" + position.BreakEvenPrice.ToString());
-
-        strings.AppendLine("Invested:" + position.Invested.ToString(position.Symbol.QuoteData.DisplayFormat));
-        strings.AppendLine("Commission:" + position.Commission.ToString(position.Symbol.QuoteData.DisplayFormat));
-        strings.AppendLine("Returned:" + position.Returned.ToString(position.Symbol.QuoteData.DisplayFormat));
-        strings.AppendLine("Profit:" + position.Profit.ToString(position.Symbol.QuoteData.DisplayFormat));
-        strings.AppendLine("Percentage:" + position.Percentage.ToString("N2"));
-
-        // debug
-        strings.AppendLine("Quantity:" + position.Quantity.ToString());
-        strings.AppendLine("BuyPrice:" + position.BuyPrice.ToString());
-        strings.AppendLine("BuyAmount:" + position.BuyAmount.ToString());
-        strings.AppendLine("SellPrice:" + position.SellPrice.ToString());
-
-        strings.AppendLine("");
-        strings.AppendLine("-------------------");
-        strings.AppendLine("Parts");
-
-        foreach (CryptoPositionPart part in position.Parts.Values.ToList())
-        {
-            // TODO - informatie van de Part
-            strings.AppendLine("  Part dump:");
-            strings.AppendLine("");
-            strings.AppendLine("  Part Id:" + part.Id.ToString());
-            strings.AppendLine("  Name:" + part.Name);
-            strings.AppendLine("  Status:" + part.Status.ToString());
-            strings.AppendLine("  OpenDate:" + part.CreateTime.ToLocalTime());
-            strings.AppendLine("  CloseDate:" + part.CloseTime?.ToLocalTime());
-            strings.AppendLine("  BreakEvenPrice:" + part.BreakEvenPrice.ToString());
-
-            strings.AppendLine("  Invested:" + part.Invested.ToString(position.Symbol.QuoteData.DisplayFormat));
-            strings.AppendLine("  Commission:" + part.Commission.ToString(position.Symbol.QuoteData.DisplayFormat));
-            strings.AppendLine("  Returned:" + part.Returned.ToString(position.Symbol.QuoteData.DisplayFormat));
-            strings.AppendLine("  Profit:" + part.Profit.ToString(position.Symbol.QuoteData.DisplayFormat));
-            strings.AppendLine("  Percentage:" + part.Percentage.ToString("N2"));
-
-            // debug
-            strings.AppendLine("  Quantity:" + part.Quantity.ToString());
-            strings.AppendLine("  (signal) BuyPrice:" + part.BuyPrice.ToString()); // van het signaal indien instappen via signaal, kan afwijken
-            //strings.AppendLine("  BuyAmount:" + part.BuyAmount.ToString());
-            //strings.AppendLine("  SellPrice:" + part.SellPrice.ToString());
-
-            strings.AppendLine("  -------------------");
-            strings.AppendLine("  Steps");
-            foreach (CryptoPositionStep step in part.Steps.Values.ToList())
-            {
-                string s = string.Format("    step#{0} {1} {2} order#{3} {4} ({5}) Price={6} StopPrice={7} StopLimitPrice={8} Quantity={9} QuantityFilled={10} QuoteQuantityFilled={11} close={12} {13}",
-                    step.Id, step.Name, step.CreateTime.ToLocalTime(), step.OrderId, step.Side, step.OrderType,
-                    step.Price.ToString(position.Symbol.PriceDisplayFormat), step.StopPrice?.ToString(position.Symbol.PriceDisplayFormat), step.StopLimitPrice?.ToString(position.Symbol.PriceDisplayFormat),
-                    step.Quantity, step.QuantityFilled, step.QuoteQuantityFilled, step.CloseTime?.ToLocalTime(), step.Status.ToString());
-
-                //if (Trailing > CryptoTrailing.TrailNone)
-                //    s += string.Format(" Trailing={0} @={1}", Trailing, TrailActivatePrice?.ToString(format));
-                strings.AppendLine(s);
-            }
-        }
-
-        strings.AppendLine("");
-        strings.AppendLine("-------------------");
-        strings.AppendLine("Trades");
-        foreach (CryptoTrade trade in position.Symbol.TradeList.Values.ToList())
-        {
-            strings.AppendLine("");
-            strings.AppendLine("Side:" + trade.Side);
-            strings.AppendLine("Id:" + trade.Id.ToString());
-            strings.AppendLine("TradeId:" + trade.TradeId.ToString());
-            strings.AppendLine("OrderId:" + trade.OrderId.ToString());
-            strings.AppendLine("OpenDate:" + trade.TradeTime.ToLocalTime());
-
-            strings.AppendLine("Price:" + trade.Price.ToString(position.Symbol.PriceDisplayFormat));
-            strings.AppendLine("Quantity:" + trade.Quantity.ToString(position.Symbol.QuantityDisplayFormat));
-            strings.AppendLine("QuoteQuantity:" + trade.QuoteQuantity.ToString(position.Symbol.QuantityDisplayFormat));
-
-            strings.AppendLine("Commission:" + trade.Commission.ToString(position.Symbol.QuantityDisplayFormat));
-            strings.AppendLine("CommissionAsset:" + trade.CommissionAsset);
-        }
-    }
-*/
-
 public class ExcelPositionDump : ExcelBase
 {
     CryptoPosition Position;
-    Dictionary<long, bool> OrderList = new();
+    readonly Dictionary<long, bool> OrderList = new();
 
     public void DumpParts()
     {
@@ -142,21 +41,21 @@ public class ExcelPositionDump : ExcelBase
             WriteCell(sheet, columns++, row, "Value");
             WriteCell(sheet, columns++, row, "Commission");
 
-            columns++;
+            //columns++;
 
-            WriteCell(sheet, columns++, row, "Id");
-            WriteCell(sheet, columns++, row, "Order");
-            WriteCell(sheet, columns++, row, "Side");
-            WriteCell(sheet, columns++, row, "Create");
-            WriteCell(sheet, columns++, row, "Close");
-            WriteCell(sheet, columns++, row, "Type");
-            WriteCell(sheet, columns++, row, "Status");
-            WriteCell(sheet, columns++, row, "Trailing");
-            WriteCell(sheet, columns++, row, "Quantity");
-            WriteCell(sheet, columns++, row, "Price");
-            WriteCell(sheet, columns++, row, "StopLimit");
-            WriteCell(sheet, columns++, row, "Value");
-            WriteCell(sheet, columns++, row, "Commission");
+            //WriteCell(sheet, columns++, row, "Id");
+            //WriteCell(sheet, columns++, row, "Order");
+            //WriteCell(sheet, columns++, row, "Side");
+            //WriteCell(sheet, columns++, row, "Create");
+            //WriteCell(sheet, columns++, row, "Close");
+            //WriteCell(sheet, columns++, row, "Type");
+            //WriteCell(sheet, columns++, row, "Status");
+            //WriteCell(sheet, columns++, row, "Trailing");
+            //WriteCell(sheet, columns++, row, "Quantity");
+            //WriteCell(sheet, columns++, row, "Price");
+            //WriteCell(sheet, columns++, row, "StopLimit");
+            //WriteCell(sheet, columns++, row, "Value");
+            //WriteCell(sheet, columns++, row, "Commission");
         }
 
         ICell cell;
@@ -178,8 +77,11 @@ public class ExcelPositionDump : ExcelBase
 
                 cell = WriteCell(sheet, 6, row, part.Status.ToString());
 
-                cell = WriteCell(sheet, 8, row, (double)part.Quantity);
-                cell.CellStyle = CellStyleDecimalNormal;
+                if (part.Quantity != 0)
+                {
+                    cell = WriteCell(sheet, 8, row, (double)part.Quantity);
+                    cell.CellStyle = CellStyleDecimalNormal;
+                }
 
                 cell = WriteCell(sheet, 12, row, (double)part.Commission);
                 cell.CellStyle = CellStyleDecimalNormal;
@@ -192,19 +94,16 @@ public class ExcelPositionDump : ExcelBase
                 //if (step.Status == CryptoOrderStatus.Expired || step.Status == CryptoOrderStatus.Canceled || !step.CloseTime.HasValue)
                 //    continue;
 
-                int column;
-                if (step.Side == CryptoOrderSide.Buy)
-                {
-                    //buyRow++;
-                    column = 0;
-                    //row = buyRow;
-                }
-                else
-                {
-                    //sellRow++;
-                    column = 14;
-                    //row = sellRow;
-                }
+                int column = 0;
+                //if (step.Side == CryptoOrderSide.Buy)
+                //{
+                //    column = 0;
+                //}
+                //else
+                //{
+                //    //column = 14;
+                //    column = 0;
+                //}
 
                 if (step.OrderId.HasValue)
                     OrderList.TryAdd((long)step.OrderId, false);
@@ -214,8 +113,13 @@ public class ExcelPositionDump : ExcelBase
                     cell = WriteCell(sheet, column++, row, (long)step.OrderId);
                 else
                     cell = WriteCell(sheet, column++, row, "?");
+
                 cell = WriteCell(sheet, column++, row, step.Side.ToString());
-                //cell.CellStyle = cellStyleDecimalNormal;
+                if (step.Side == CryptoOrderSide.Buy)
+                    cell.CellStyle = CellStyleStringGreen;
+                else
+                    cell.CellStyle = CellStyleStringRed;
+
 
                 cell = WriteCell(sheet, column++, row, step.CreateTime.ToLocalTime());
                 cell.CellStyle = CellStyleDate;
@@ -252,12 +156,44 @@ public class ExcelPositionDump : ExcelBase
                 }
                 else column++;
 
-                cell = WriteCell(sheet, column++, row, (double)step.QuoteQuantityFilled);
-                cell.CellStyle = CellStyleDecimalNormal;
+                if (step.QuoteQuantityFilled == 0)
+                {
+                    if (step.StopPrice.HasValue)
+                        cell = WriteCell(sheet, column++, row, (double)step.Quantity * (double)step.StopPrice);
+                    else
+                        cell = WriteCell(sheet, column++, row, (double)step.Quantity * (double)step.Price);
+                    cell.CellStyle = CellStyleDecimalNormal;
+                }
+                else
+                {
+                    cell = WriteCell(sheet, column++, row, (double)step.QuoteQuantityFilled);
+                    cell.CellStyle = CellStyleDecimalNormal;
+                }
 
-                cell = WriteCell(sheet, column++, row, (double)step.Commission);
-                cell.CellStyle = CellStyleDecimalNormal;
+                if (step.Commission != 0)
+                {
+                    cell = WriteCell(sheet, column++, row, (double)step.Commission);
+                    cell.CellStyle = CellStyleDecimalNormal;
+                }
+                else column++;
             }
+
+
+            if (part.CloseTime.HasValue)
+            {
+                cell = WriteCell(sheet, 13, row, (double)part.Profit);
+                if (part.Profit >= 0)
+                    cell.CellStyle = CellStyleDecimalGreen;
+                else
+                    cell.CellStyle = CellStyleDecimalRed;
+
+                cell = WriteCell(sheet, 14, row, (double)part.Percentage);
+                if (part.Profit >= 0)
+                    cell.CellStyle = CellStylePercentageGreen;
+                else
+                    cell.CellStyle = CellStylePercentageRed;
+            }
+
             //row = Math.Max(buyRow, sellRow);
             ++row;
             ++row;
@@ -265,10 +201,32 @@ public class ExcelPositionDump : ExcelBase
 
         ++row;
         ++row;
-        int x = 13;
+
+        int x = 15;
+        WriteCell(sheet, x++, row, "BE");
         cell = WriteCell(sheet, x++, row, (double)Position.BreakEvenPrice);
         cell.CellStyle = CellStyleDecimalNormal;
 
+        ++row;
+        ++row;
+
+        if (Position.CloseTime.HasValue)
+        {
+            cell = WriteCell(sheet, 13, row, (double)Position.Profit);
+            if (Position.Profit >= 0)
+                cell.CellStyle = CellStyleStringGreen;
+            else
+                cell.CellStyle = CellStyleStringRed;
+
+            cell = WriteCell(sheet, 14, row, (double)Position.Percentage);
+            if (Position.Percentage >= 100)
+                cell.CellStyle = CellStyleStringGreen;
+            else
+                cell.CellStyle = CellStyleStringRed;
+        }
+
+
+        columns = 17;
         AutoSize(sheet, columns);
     }
 
@@ -287,8 +245,10 @@ public class ExcelPositionDump : ExcelBase
         WriteCell(sheet, columns++, row, "QuoteQuantity");
         WriteCell(sheet, columns++, row, "Commission");
         WriteCell(sheet, columns++, row, "BreakEven");
+        WriteCell(sheet, columns++, row, "Percentage");
 
         decimal be;
+        decimal firstValue = 0;
         decimal totalValue = 0;
         decimal totalQuantity = 0;
         decimal totalCommission = 0;
@@ -335,6 +295,14 @@ public class ExcelPositionDump : ExcelBase
                 if (totalQuantity != 0)
                     be = (totalValue - totalCommission) / totalQuantity;
                 cell = WriteCell(sheet, column++, row, (double)be);
+                cell.CellStyle = CellStyleDecimalNormal;
+
+
+                // Percentage
+                if (firstValue == 0)
+                    firstValue = be;
+                decimal perc = (100 * be / firstValue) - 100;
+                cell = WriteCell(sheet, column++, row, (double)perc);
                 cell.CellStyle = CellStyleDecimalNormal;
             }
         }
@@ -400,6 +368,100 @@ public class ExcelPositionDump : ExcelBase
         AutoSize(sheet, columns);
     }
 
+    private void DumpInformation()
+    {
+        HSSFSheet sheet = (HSSFSheet)Book.CreateSheet("Information");
+
+        int row = 0;
+        int column = 0;
+        WriteCell(sheet, row, column++, "Positie");
+        WriteCell(sheet, row, column++, "Exchange");
+        WriteCell(sheet, row, column++, "Symbol");
+        WriteCell(sheet, row, column++, "Geinvesteeerd");
+        WriteCell(sheet, row, column++, "Geretourneerd");
+        WriteCell(sheet, row, column++, "Nu geinvesteerd");
+        WriteCell(sheet, row, column++, "Totale commissie");
+        WriteCell(sheet, row, column++, "Markt waarde");
+        WriteCell(sheet, row, column++, "Markt percentage");
+
+        row++;
+        column = 0;
+        decimal investedInTrades = Position.Invested - Position.Returned - Position.Commission;
+        WriteCell(sheet, row, column++, Position.Id);
+        WriteCell(sheet, row, column++, Position.Exchange.Name);
+        WriteCell(sheet, row, column++, Position.Symbol.Name);
+        WriteCell(sheet, row, column++, (double)Position.Invested);
+        WriteCell(sheet, row, column++, (double)Position.Returned);
+        WriteCell(sheet, row, column++, (double)investedInTrades);
+        WriteCell(sheet, row, column++, (double)(Position.Commission ));
+        WriteCell(sheet, row, column++, (double)Position.MarketValue);
+        WriteCell(sheet, row, column++, (double)Position.MarketValuePercentage);
+
+        AutoSize(sheet, 6);
+    }
+
+
+    private void DumpSignals()
+    {
+        HSSFSheet sheet = (HSSFSheet)Book.CreateSheet("Signals");
+
+        int row = 0;
+
+        // Headers
+        int columns = 0;
+
+        WriteCell(sheet, columns++, row, "Id");
+        WriteCell(sheet, columns++, row, "Order");
+        WriteCell(sheet, columns++, row, "Side");
+        WriteCell(sheet, columns++, row, "Create");
+        WriteCell(sheet, columns++, row, "Close");
+        WriteCell(sheet, columns++, row, "Type");
+        WriteCell(sheet, columns++, row, "Status");
+        WriteCell(sheet, columns++, row, "Trailing");
+        WriteCell(sheet, columns++, row, "Quantity");
+        WriteCell(sheet, columns++, row, "Price");
+        WriteCell(sheet, columns++, row, "StopLimit");
+        WriteCell(sheet, columns++, row, "Value");
+        WriteCell(sheet, columns++, row, "Commission");
+
+
+        row++;
+        WriteCell(sheet, 0, row, "TODO");
+
+        //        // De signalen laden
+        //#if SQLDATABASE
+        //        string sql = "select top 50 * from signal order by id desc";
+        //        //sql = string.Format("select top 50 * from signal where exchangeid={0} order by id desc", exchange.Id);
+        //#else
+        //        string sql = "select * from signal order by id desc limit 50";
+        //        //sql = string.Format("select * from signal where exchangeid={0} order by id desc limit 50", exchange.Id);
+        //#endif
+        //        using var database = new CryptoDatabase();
+
+        //        foreach (CryptoPosition position in databaseThread.Connection.Query<CryptoPosition>("select * from position " +
+        //            "where CreateTime >= @fromDate and status=2", new { fromDate = DateTime.Today }))
+
+        //            foreach (CryptoSignal signal in database.Connection.Query<CryptoSignal>(sql))
+        //        {
+        //            ?
+
+        //            if (GlobalData.ExchangeListId.TryGetValue(signal.ExchangeId, out Model.CryptoExchange exchange2))
+        //            {
+        //                signal.Exchange = exchange2;
+
+        //                if (exchange2.SymbolListId.TryGetValue(signal.SymbolId, out CryptoSymbol symbol))
+        //                {
+        //                    signal.Symbol = symbol;
+
+        //                    if (GlobalData.IntervalListId.TryGetValue((int)signal.IntervalId, out CryptoInterval interval))
+        //                        signal.Interval = interval;
+
+        //                    GlobalData.SignalQueue.Enqueue(signal);
+        //                }
+        //            }
+        //        }
+    }
+
     public void ExportToExcell(CryptoPosition position)
     {
         Position = position;
@@ -407,9 +469,13 @@ public class ExcelPositionDump : ExcelBase
         {
             CreateBook(Position.Symbol.Name);
             CreateFormats();
+
+            DumpInformation();
             DumpParts();
-            DumpTrades();
             DumpBreakEven();
+            DumpTrades();
+            DumpSignals();
+
             StartExcell("Position", Position.Symbol.Name, Position.Exchange.Name);
         }
         catch (Exception error)

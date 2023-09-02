@@ -43,7 +43,7 @@ public class CryptoSignal
     // Einde van de candle (voor sorteren in web)
     public DateTime CloseDate { get; set; }
 
-    // Tot dit tijdstip is dit signaal ongeveer geldig (~x candles, tegenwoordig instelbaar)
+    // Tot dit tijdstip is het signaal geldig (nodig voor de query)
     public DateTime ExpirationDate { get; set; }
 
     public CryptoOrderSide Side { get; set; }

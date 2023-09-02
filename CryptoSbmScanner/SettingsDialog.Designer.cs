@@ -300,6 +300,7 @@ partial class FrmSettings
         toolTip1 = new ToolTip(components);
         imageList1 = new ImageList(components);
         colorDialog1 = new ColorDialog();
+        EditLogCanceledOrders = new CheckBox();
         panel2.SuspendLayout();
         panel1.SuspendLayout();
         tabControl.SuspendLayout();
@@ -2458,6 +2459,7 @@ partial class FrmSettings
         // 
         // tabPageTrading
         // 
+        tabPageTrading.Controls.Add(EditLogCanceledOrders);
         tabPageTrading.Controls.Add(EditSoundTradeNotification);
         tabPageTrading.Controls.Add(EditDisableNewPositions);
         tabPageTrading.Controls.Add(label83);
@@ -3404,6 +3406,17 @@ partial class FrmSettings
         imageList1.TransparentColor = Color.Transparent;
         imageList1.Images.SetKeyName(0, "volume.png");
         // 
+        // EditLogCanceledOrders
+        // 
+        EditLogCanceledOrders.AutoSize = true;
+        EditLogCanceledOrders.Location = new Point(402, 600);
+        EditLogCanceledOrders.Margin = new Padding(4, 3, 4, 3);
+        EditLogCanceledOrders.Name = "EditLogCanceledOrders";
+        EditLogCanceledOrders.Size = new Size(157, 19);
+        EditLogCanceledOrders.TabIndex = 266;
+        EditLogCanceledOrders.Text = "Log geannuleerde orders";
+        EditLogCanceledOrders.UseVisualStyleBackColor = true;
+        // 
         // FrmSettings
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
@@ -3781,4 +3794,5 @@ partial class FrmSettings
     private Button buttonTelegramStart;
     private Button buttonGotoAppDataFolder;
     private CheckBox EditHideSymbolsOnTheLeft;
+    private CheckBox EditLogCanceledOrders;
 }

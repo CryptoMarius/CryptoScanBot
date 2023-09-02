@@ -58,8 +58,9 @@ public class BarometerTools
         decimal sumPerc = 0;
         int coinsMatching = 0;
         // De prijs en/of volume sommeren over alle munten
-        foreach (var symbol in quoteData.SymbolList)
+        for (int i = 0; i < quoteData.SymbolList.Count; i++) // een foreach variant met een ToList() kost extra cpu
         {
+            CryptoSymbol symbol = quoteData.SymbolList[i];
             if (symbol.CandleList.TryGetValue(unixCandlePrev, out CryptoCandle candlePrev) && symbol.CandleList.TryGetValue(unixCandleLast, out CryptoCandle candleLast))
             {
                 decimal perc;
@@ -207,9 +208,9 @@ public class BarometerTools
         {
             if (quoteData.FetchCandles)
             {
-                Monitor.Enter(quoteData.SymbolList);
-                try
-                {
+                //Monitor.Enter(quoteData.SymbolList);
+                //try
+                //{
                     //GlobalData.AddTextToLogTab(string.Format("Calculating barometer charts start for {0}", quoteData.Name));
 
                     // Controleer of de prijs barometer symbol bestaat en berekenen
@@ -217,15 +218,15 @@ public class BarometerTools
                     CryptoSymbol symbol = CheckSymbolPrecence(Constants.SymbolNameBarometerPrice, quoteData);
                     if (symbol != null)
                     {
-                        Monitor.Enter(symbol.CandleList);
-                        try
-                        {
+                        //Monitor.Enter(symbol.CandleList);
+                        //try
+                        //{
                             CalculateBarometerIntervals(symbol, quoteData, CalculatePriceBarometer, true);
-                        }
-                        finally
-                        {
-                            Monitor.Exit(symbol.CandleList);
-                        }
+                        //}
+                        //finally
+                        //{
+                        //    Monitor.Exit(symbol.CandleList);
+                        //}
                     }
 
                     // Ik weet niet wat ik met de volume barometer kan (of moet aanvangen, laat maar achterwege)
@@ -244,16 +245,16 @@ public class BarometerTools
                     //        Monitor.Exit(symbol.CandleList);
                     //    }
                     //}
-                }
-                finally
-                {
-                    Monitor.Exit(quoteData.SymbolList);
-                }
+                //}
+                //finally
+                //{
+                //    Monitor.Exit(quoteData.SymbolList);
+                //}
             }
         }
 
         // Nu de barometer uitgerekend is mag het aantal 1m candles naar beneden
-        CandleIndicatorData.SetInitialCandleCountFetch(24 * 60 * 60 + 1 * 60);
+        CandleIndicatorData.SetInitialCandleCountFetch(24 * 60 * 60 + 10 * 60); // 10 extra, maar dat is een quick en dirty fix voor iets anders
     }
 
 

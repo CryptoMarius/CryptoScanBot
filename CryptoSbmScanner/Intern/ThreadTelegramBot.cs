@@ -417,23 +417,20 @@ public class ThreadTelegramBotInstance
         decimal sumCount = 0;
         decimal percentage = 0;
 
-        using (CryptoDatabase databaseThread = new())
+        using CryptoDatabase databaseThread = new();
+        databaseThread.Open();
+
+        foreach (CryptoPosition position in databaseThread.Connection.Query<CryptoPosition>("select * from position " +
+            "where CreateTime >= @fromDate and status=2", new { fromDate = DateTime.Today }))
         {
-            databaseThread.Close();
-            databaseThread.Open();
-
-            foreach (CryptoPosition position in databaseThread.Connection.Query<CryptoPosition>("select * from position " +
-                "where CreateTime >= @fromDate and status=2", new { fromDate = DateTime.Today }))
-            {
-                sumCount++;
-                sumProfit += position.Profit;
-                sumInvested += position.Invested;
-            }
-            if (sumInvested > 0)
-                percentage = 100 * sumProfit / sumInvested;
-
-            stringbuilder.AppendLine(string.Format("Invested {0:N2}, profits {1:N2}, {2:N2}%", sumInvested, sumProfit, percentage));
+            sumCount++;
+            sumProfit += position.Profit;
+            sumInvested += position.Invested;
         }
+        if (sumInvested > 0)
+            percentage = 100 * sumProfit / sumInvested;
+
+        stringbuilder.AppendLine(string.Format("Invested {0:N2}, profits {1:N2}, {2:N2}%", sumInvested, sumProfit, percentage));
     }
 #endif
 
@@ -682,8 +679,8 @@ stringBuilder.AppendLine("assets        show asset overview");
                         {
                             // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
                             GlobalData.Logger.Error(error);
-                            GlobalData.AddTextToLogTab("\r\n" + "\r\n" + " error telegram thread(1)\r\n" + error.ToString());
-
+                            //GlobalData.AddTextToLogTab("\r\n" + "\r\n" + " error telegram thread(1)\r\n" + error.ToString());
+                            Thread.Sleep(2500);
                         }
 
                     }
@@ -692,8 +689,7 @@ stringBuilder.AppendLine("assets        show asset overview");
                 {
                     // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
                     GlobalData.Logger.Error(error);
-                    GlobalData.AddTextToLogTab("\r\n" + "\r\n" + " error telegram thread(2)\r\n" + error.ToString());
-
+                    GlobalData.AddTextToLogTab($"ERROR telegram thread {error.Message}");
                 }
                 await Task.Delay(250);
             }
@@ -702,7 +698,7 @@ stringBuilder.AppendLine("assets        show asset overview");
         {
             // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
             GlobalData.Logger.Error(error);
-            GlobalData.AddTextToLogTab("\r\n" + "\r\n" + " error telegram thread(3)\r\n" + error.ToString());
+            GlobalData.AddTextToLogTab($"ERROR telegram thread {error.Message}");
         }
         GlobalData.AddTextToLogTab("\r\n" + "\r\n TELEGRAM THREAD EXIT " + token);
 #endif

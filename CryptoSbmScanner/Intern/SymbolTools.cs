@@ -113,39 +113,6 @@ public class SymbolTools
     }
 
 
-    //public static async Task<bool> CheckDelistedCoin(CryptoSymbol symbol)
-    //{
-
-    //    // Vage comments:
-    //    // Probleem delisted coins: Ververs de informatie van de exchange (1x per x minuten ofzo)
-    //    // Extra: object locking zodat niet door meerdere threads tegelijk wordt gedaan
-    //    // NB: Dit geld voor zowel de BUY als SELL, want we kunnen niet handelen in delisted assets.
-    //    // Bij nader inzien denk ik dat de site delistedcoin (eh what?)
-
-    //    // TODO:!!!!!
-    //    // Makkelijker om gewoon de exchange info met 1 munt aan te roepen!
-    //    // Dan kun je de status daarvan beoordelen (wat in principe hier de bedoeling is)
-    //    // https://binance-docs.github.io/apidocs/spot/en/#exchange-information
-    //    // https://api.binance.com/api/v3/exchangeInfo?symbol=BNBBTC
-
-    //    TimeSpan span = DateTime.UtcNow.Subtract(symbol.Exchange.LastTimeFetched);
-    //    if (span.TotalMinutes >= 60)
-    //    {
-    //        await ExchangeClass.FetchSymbols();
-    //    }
-
-    //    // Indien delisted: Staat de muntpaar op de lijst van delisted munten->ja = signaal negeren
-    //    if (symbol.Status == 0)
-    //    {
-    //        //reaction = string.Format("Delisted coin {0}", Signal.Symbol.Name);
-    //        return false;
-    //    }
-
-    //    //reaction = "";
-    //    return true;
-    //}
-
-
     public static bool CheckValidMinimalVolume(CryptoSymbol symbol, out string reaction)
     {
         //Indien volume regels : Voldoende volume -> nee = signaal negeren

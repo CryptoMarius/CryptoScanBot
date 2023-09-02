@@ -208,7 +208,7 @@ public class PositionTools
         // Genereer een fictieve order ID voor papertrading
         if (position.TradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading && !step.OrderId.HasValue)
         {
-            step.OrderId = step.Id;
+            step.OrderId = database.CreateNewUniqueId(); //step.Id;
             database.Connection.Update<CryptoPositionStep>(step);
         }
     }
@@ -297,7 +297,7 @@ public class PositionTools
     /// <summary>
     /// De break-even prijs berekenen vanuit de parts en steps
     /// </summary>
-    public static void CalculateProfitAndBeakEvenPrice(CryptoPosition position, bool includeFee = true)
+    public static void CalculateProfitAndBreakEvenPrice(CryptoPosition position, bool includeFee = true)
     {
         //https://dappgrid.com/binance-fees-explained-fee-calculation/
         // You should first divide your order size(total) by 100 and then multiply it by your fee rate which 
@@ -352,7 +352,9 @@ public class PositionTools
             if (part.Invested != 0m)
                 part.Percentage = 100m * (part.Returned - part.Commission) / part.Invested;
             if (part.Quantity > 0)
-                part.BreakEvenPrice = (part.Invested - part.Returned + part.Commission) / part.Quantity;
+                // We gaan er hierbij vanuit dat we de volledige mep ook nog moeten verkopen, dus 2x de fee berekenen
+                // Dit is min of meer een quick fix, weet momenteel even geen betere oplossing (en het werkt)
+                part.BreakEvenPrice = (part.Invested - part.Returned + 2 * part.Commission) / part.Quantity;
             else
                 part.BreakEvenPrice = 0; // mhh. denk fout? Als we in een dca zitten is de part.BE 0
 
@@ -395,6 +397,7 @@ public class PositionTools
         if (position.Parts.Count == 0)
             GlobalData.AddTextToLogTab(string.Format("CalculatePositionViaTrades - er zijn geen parts! {0}", position.Symbol.Name));
 
+        bool isChanged = false;
 
         // Reset eerste de filled
         foreach (CryptoPositionPart part in position.Parts.Values.ToList())
@@ -426,20 +429,30 @@ public class PositionTools
                 // Maar overschrijf de status alleen indien het absoluut zeker is..
                 if (step.QuantityFilled >= step.Quantity)
                 {
+                    if (step.CloseTime != trade.TradeTime)
+                        isChanged = true;
                     step.CloseTime = trade.TradeTime;
                     if (step.Status < CryptoOrderStatus.Filled || step.Status == CryptoOrderStatus.Expired)
+                    {
+                        if (step.Status != CryptoOrderStatus.Filled)
+                            isChanged = true;
                         step.Status = CryptoOrderStatus.Filled;
+                    }
                 }
                 else if (step.QuantityFilled > 0)
                 {
                     if (step.Status == CryptoOrderStatus.New)
+                    {
+                        if (step.Status != CryptoOrderStatus.PartiallyFilled)
+                            isChanged = true;
                         step.Status = CryptoOrderStatus.PartiallyFilled;
+                    }
                 }
             }
         }
 
         // De positie doorrekenen (parts/steps)
-        CalculateProfitAndBeakEvenPrice(position);
+        CalculateProfitAndBreakEvenPrice(position);
 
 
         // De parts en steps bewaren
@@ -448,21 +461,18 @@ public class PositionTools
         {
             foreach (CryptoPositionStep step in part.Steps.Values.ToList())
             {
-                database.Connection.Update<CryptoPositionStep>(step);
-
                 if (step.Status < CryptoOrderStatus.Filled)
                     openOrders++;
             }
-
-            database.Connection.Update<CryptoPositionPart>(part);
         }
 
 
 
         // Als alles verkocht is de positie alsnog sluiten
-        if ((position.Quantity == 0) && (openOrders == 0) && (position.Status == CryptoPositionStatus.Trading))
+        if (position.Quantity == 0 && openOrders == 0 && position.Status == CryptoPositionStatus.Trading)
         {
-            position.CloseTime = DateTime.UtcNow; // TODO - Datum aanpassen voor emulator/backtest
+            isChanged = true;
+            position.CloseTime = DateTime.UtcNow;
             if (position.Status != CryptoPositionStatus.Ready)
             {
                 position.Status = CryptoPositionStatus.Ready;
@@ -471,7 +481,17 @@ public class PositionTools
         }
 
         // De positie bewaren
-        database.Connection.Update<CryptoPosition>(position);
+        // (dit kost tijd, dus extra isChanged stuff)
+        if (isChanged)
+        {
+            foreach (CryptoPositionPart part in position.Parts.Values.ToList())
+            {
+                foreach (CryptoPositionStep step in part.Steps.Values.ToList())
+                    database.Connection.Update<CryptoPositionStep>(step);
+                database.Connection.Update<CryptoPositionPart>(part);
+            }
+            database.Connection.Update<CryptoPosition>(position);
+        }
 
         return;
     }

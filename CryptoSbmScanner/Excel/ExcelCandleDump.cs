@@ -1,6 +1,8 @@
 ﻿using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 
+using Humanizer;
+
 using NPOI.HPSF;
 using NPOI.HSSF.UserModel;
 using NPOI.SS.UserModel;
@@ -13,37 +15,82 @@ public class ExcelCandleDump : ExcelBase
     CryptoSymbol Symbol;
 
 
-    private static int OHLCHeaders(HSSFSheet sheet, int row)
+    private void DumpInformation()
     {
-        int column = 0;
+        // Overzichts van de aanwezige candles
+        HSSFSheet sheet = (HSSFSheet)Book.CreateSheet("Information");
+        ICell cell;
 
-        // Columns...
-        WriteCell(sheet, column++, row, "Date");
-        WriteCell(sheet, column++, row, "Open");
-        WriteCell(sheet, column++, row, "High");
-        WriteCell(sheet, column++, row, "Low");
-        WriteCell(sheet, column++, row, "Close");
-        WriteCell(sheet, column++, row, "Volume");
+        int row = 0;
+        WriteCell(sheet, 0, row, "Created");
+        cell = WriteCell(sheet, 1, row, DateTime.Now);
+        cell.CellStyle = CellStyleDate;
+        row++;
+        row++;
 
-        return column;
+        // Interval overview
+        int columns = 0;
+        WriteCell(sheet, columns++, row, "Exchange");
+        WriteCell(sheet, columns++, row, "Symbol");
+        WriteCell(sheet, columns++, row, "Interval");
+        WriteCell(sheet, columns++, row, "Count");
+        WriteCell(sheet, columns++, row, "First");
+        WriteCell(sheet, columns++, row, "Last");
+
+        foreach (CryptoSymbolInterval symbolInterval in Symbol.IntervalPeriodList.ToList())
+        {
+            row++;
+            int column = 0;
+
+            WriteCell(sheet, column++, row, Symbol.Exchange.Name);
+            WriteCell(sheet, column++, row, Symbol.Name);
+            WriteCell(sheet, column++, row, symbolInterval.Interval.Name);
+            WriteCell(sheet, column++, row, (double)symbolInterval.CandleList.Count);
+
+            if (symbolInterval.CandleList.Any())
+            {
+                cell = WriteCell(sheet, column++, row, symbolInterval.CandleList.Values.First().DateLocal);
+                cell.CellStyle = CellStyleDate;
+
+                cell = WriteCell(sheet, column++, row, symbolInterval.CandleList.Values.Last().DateLocal);
+                cell.CellStyle = CellStyleDate;
+            }
+        }
+
+        AutoSize(sheet, columns);
     }
 
 
     private void DumpInterval(CryptoSymbolInterval symbolInterval)
     {
         HSSFSheet sheet = (HSSFSheet)Book.CreateSheet(symbolInterval.Interval.Name);
+        ICell cell;
 
         int row = 0;
-        int column;
-        int columns = OHLCHeaders(sheet, 0);
+
+        // Columns...
+        int columns = 0;
+        WriteCell(sheet, columns++, row, "UnixTime");
+        WriteCell(sheet, columns++, row, "OpenTime");
+        WriteCell(sheet, columns++, row, "CloseTime");
+        WriteCell(sheet, columns++, row, "Open");
+        WriteCell(sheet, columns++, row, "High");
+        WriteCell(sheet, columns++, row, "Low");
+        WriteCell(sheet, columns++, row, "Close");
+        WriteCell(sheet, columns++, row, "Volume");
+        WriteCell(sheet, columns++, row, "Duplicated");
 
         foreach (CryptoCandle candle in symbolInterval.CandleList.Values.ToList())
         {
             row++;
-            column = 0;
+            int column = 0;
 
-            ICell cell;
+            cell = WriteCell(sheet, column++, row, candle.OpenTime);
+            
             cell = WriteCell(sheet, column++, row, candle.DateLocal);
+            cell.CellStyle = CellStyleDate;
+
+            cell = WriteCell(sheet, column++, row, candle.DateLocal.AddSeconds(symbolInterval.Interval.Duration));
             cell.CellStyle = CellStyleDate;
 
             cell = WriteCell(sheet, column++, row, (double)candle.Open);
@@ -60,6 +107,8 @@ public class ExcelCandleDump : ExcelBase
 
             cell = WriteCell(sheet, column++, row, (double)candle.Volume);
             cell.CellStyle = CellStyleDecimalNormal;
+
+            WriteCell(sheet, column++, row, candle.IsDuplicated.ToString());
         }
 
         AutoSize(sheet, columns);
@@ -73,11 +122,12 @@ public class ExcelCandleDump : ExcelBase
             CreateBook(Symbol.Name);
             CreateFormats();
 
+            DumpInformation();
+
             foreach (CryptoSymbolInterval symbolInterval in symbol.IntervalPeriodList.ToList())
                 DumpInterval(symbolInterval);
 
             StartExcell("Candles", Symbol.Name, Symbol.Exchange.Name);
-
         }
         catch (Exception error)
         {

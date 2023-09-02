@@ -1,7 +1,4 @@
-﻿using System.Text;
-
-using CryptoSbmScanner.Context;
-using CryptoSbmScanner.Enums;
+﻿using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 
@@ -67,6 +64,7 @@ public partial class FrmMain
         // Create columns and subitems. Width of -2 indicates auto-size
         listViewPositionsOpen.Columns.Add("ID", -2, HorizontalAlignment.Left);
         listViewPositionsOpen.Columns.Add("Datum", -2, HorizontalAlignment.Left);
+        listViewPositionsOpen.Columns.Add("Update", -2, HorizontalAlignment.Left);
         listViewPositionsOpen.Columns.Add("Account", -2, HorizontalAlignment.Left);
         listViewPositionsOpen.Columns.Add("Exchange", -2, HorizontalAlignment.Left);
         listViewPositionsOpen.Columns.Add("Symbol", -2, HorizontalAlignment.Left);
@@ -75,22 +73,21 @@ public partial class FrmMain
         listViewPositionsOpen.Columns.Add("Mode", -2, HorizontalAlignment.Left);
         listViewPositionsOpen.Columns.Add("Status", -2, HorizontalAlignment.Left);
 
-        //listViewPositionsOpen.Columns.Add("Price", -2, HorizontalAlignment.Right);
-        listViewPositionsOpen.Columns.Add("BreakEven", -2, HorizontalAlignment.Right);
-        listViewPositionsOpen.Columns.Add("Quantity", -2, HorizontalAlignment.Right);
-        //listViewPositionsOpen.Columns.Add("Stijging", -2, HorizontalAlignment.Right);
-
         listViewPositionsOpen.Columns.Add("Invested", -2, HorizontalAlignment.Right);
         listViewPositionsOpen.Columns.Add("Returned", -2, HorizontalAlignment.Right);
-        listViewPositionsOpen.Columns.Add("Open", -2, HorizontalAlignment.Right);
         listViewPositionsOpen.Columns.Add("Commission", -2, HorizontalAlignment.Right);
+
+        listViewPositionsOpen.Columns.Add("BreakEven", -2, HorizontalAlignment.Right);
+        listViewPositionsOpen.Columns.Add("Quantity", -2, HorizontalAlignment.Right);
+
+        listViewPositionsOpen.Columns.Add("Open", -2, HorizontalAlignment.Right);
         listViewPositionsOpen.Columns.Add("Net NPL", -2, HorizontalAlignment.Right);
         listViewPositionsOpen.Columns.Add("Percentage", -2, HorizontalAlignment.Right);
 
         listViewPositionsOpen.Columns.Add("Parts", -2, HorizontalAlignment.Right);
         listViewPositionsOpen.Columns.Add("BuyPrice", -2, HorizontalAlignment.Right);
         listViewPositionsOpen.Columns.Add("SellPrice", -2, HorizontalAlignment.Right);
-        listViewPositionsOpen.Columns.Add("LastPrice", -2, HorizontalAlignment.Right);
+        //listViewPositionsOpen.Columns.Add("LastPrice", -2, HorizontalAlignment.Right);
         listViewPositionsOpen.Columns.Add("", -2, HorizontalAlignment.Right); // filler
 
         listViewPositionsOpen.SetSortIcon(
@@ -116,6 +113,7 @@ public partial class FrmMain
 
         item1.Text = position.Id.ToString();
         item1.SubItems.Add(position.CreateTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm"));
+        item1.SubItems.Add(position.UpdateTime?.ToLocalTime().ToString("yyyy-MM-dd HH:mm"));
         item1.SubItems.Add(position.TradeAccount.Name);
         item1.SubItems.Add(position.Symbol.Exchange.Name);
         item1.SubItems.Add(position.Symbol.Name);
@@ -132,20 +130,20 @@ public partial class FrmMain
         if (position.Status == CryptoPositionStatus.Waiting)
             subItem.ForeColor = Color.Red;
 
+        item1.SubItems.Add(position.Invested.ToString(position.Symbol.QuoteData.DisplayFormat));
+        item1.SubItems.Add(position.Returned.ToString(position.Symbol.QuoteData.DisplayFormat));
+        item1.SubItems.Add(position.Commission.ToString(position.Symbol.QuoteData.DisplayFormat));
+
+
         if (position.Status == CryptoPositionStatus.Waiting)
             item1.SubItems.Add(position.BuyPrice?.ToString(position.Symbol.PriceDisplayFormat));
         else
             item1.SubItems.Add(position.BreakEvenPrice.ToString(position.Symbol.PriceDisplayFormat));
         item1.SubItems.Add(position.Quantity.ToString0(position.Symbol.QuantityDisplayFormat));
 
-        item1.SubItems.Add(position.Invested.ToString(position.Symbol.QuoteData.DisplayFormat));
-
-        item1.SubItems.Add(position.Returned.ToString(position.Symbol.QuoteData.DisplayFormat));
         subItem = item1.SubItems.Add((position.Invested - position.Returned).ToString(position.Symbol.QuoteData.DisplayFormat));
         if (position.Invested - position.Returned > 7 * position.Symbol.QuoteData.BuyAmount) // een indicatie (beetje willekeurig)
             subItem.ForeColor = Color.Red;
-
-        item1.SubItems.Add(position.Commission.ToString(position.Symbol.QuoteData.DisplayFormat));
 
         // Netto NPL (het bedrag wat je krijgt als je nu zou verkopen)
         decimal NetPnl = position.MarketValue - position.Commission;
@@ -176,7 +174,7 @@ public partial class FrmMain
             item1.SubItems.Add(position.SellPrice?.ToString(position.Symbol.PriceDisplayFormat));
         else
             item1.SubItems.Add("null");
-        item1.SubItems.Add(position.Symbol.LastPrice?.ToString(position.Symbol.PriceDisplayFormat));
+        //item1.SubItems.Add(position.Symbol.LastPrice?.ToString(position.Symbol.PriceDisplayFormat));
     }
 
 

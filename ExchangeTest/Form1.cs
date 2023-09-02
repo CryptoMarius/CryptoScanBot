@@ -205,7 +205,7 @@ public partial class Form1 : Form
                     {
                         // Quoted = volume * price (expressed in usdt/eth/btc etc), base is coins
                         CryptoCandle candle = CandleTools.HandleFinalCandleData(symbol, interval, kline.OpenTime,
-                            kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.QuoteVolume);
+                            kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.QuoteVolume, false);
                     }
 
                     CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
@@ -220,7 +220,7 @@ public partial class Form1 : Form
 
 
             KucoinSocketClient socketClient = new();
-            CryptoSbmScanner.Exchange.Kucoin.KLineTickerStream ticker = new(symbol.QuoteData);
+            CryptoSbmScanner.Exchange.Kucoin.KLineTickerItem ticker = new(symbol.QuoteData);
             ticker.Symbol = symbol;
             Task task = Task.Run(async () => { await ticker.StartAsync(socketClient); });
 

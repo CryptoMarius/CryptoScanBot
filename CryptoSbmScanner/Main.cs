@@ -30,15 +30,6 @@ public partial class FrmMain : Form
     {
         InitializeComponent();
 
-        var assembly = Assembly.GetExecutingAssembly().GetName();
-        string appName = assembly.Name.ToString();
-        string appVersion = assembly.Version.ToString();
-        while (appVersion.EndsWith(".0"))
-            appVersion = appVersion[0..^2];
-        Text = appName + " " + appVersion;
-
-
-
         // Om vanuit achtergrond threads iets te kunnen loggen of te doen
         GlobalData.PlaySound += new PlayMediaEvent(PlaySound);
         GlobalData.PlaySpeech += new PlayMediaEvent(PlaySpeech);
@@ -50,7 +41,8 @@ public partial class FrmMain : Form
         GlobalData.SymbolsHaveChangedEvent += new AddTextEvent(SymbolsHaveChangedEvent);
         GlobalData.PositionsHaveChangedEvent += new AddTextEvent(OpenPositionsHaveChangedEvent);
 
-        GlobalData.SignalEvent = SignalArrived;
+        GlobalData.AnalyzeSignalCreated = AnalyzeSignalCreated;
+        GlobalData.ApplicationHasStarted += new AddTextEvent(ApplicationHasStarted);
 
         // Events inregelen
         ScannerSession.TimerClearMemo.Elapsed += TimerClearMemo_Tick;
@@ -68,13 +60,11 @@ public partial class FrmMain : Form
         ListViewPositionsOpenConstructor();
         ListViewPositionsClosedConstructor();
 
-        // Dummy browser tabblad verbergen, is enkel een browser om dat extra dialoog in externe browser te vermijden
-        // (onderstaande aanpak verdient aandacht, deze zit niet fijn in elkaar met de tabPage && focus zetten)
-        LinkTools.tabControl = tabControl;
-        LinkTools.tabPageBrowser = tabPageBrowser;
-        LinkTools._webViewDummy = webViewDummy;
-        LinkTools.webViewTradingView = webViewTradingView;
-        //_webViewDummy = webViewDummy; // kan weg?
+        // Dummy browser verbergen, is een browser om het extra confirmatie dialoog in externe browser te vermijden
+        LinkTools.TabControl = tabControl;
+        LinkTools.TabPageBrowser = tabPageBrowser;
+        LinkTools.WebViewDummy = webViewDummy;
+        LinkTools.WebViewTradingView = webViewTradingView;
         tabControl.TabPages.Remove(tabPagewebViewDummy);
 
 #if !TRADEBOT
@@ -98,7 +88,7 @@ public partial class FrmMain : Form
             string exchangeName = ApplicationParams.Options.ExchangeName;
             if (exchangeName != null)
             {
-                // De default exchange is Binance (maar of dat tegenwoordig een goede keuze is)
+                // De default exchange is Binance (geen goede keuze in NL op dit moment)
                 if (exchangeName == "")
                     exchangeName = "Binance";
                 if (GlobalData.ExchangeListName.TryGetValue(exchangeName, out var exchange))
@@ -110,16 +100,38 @@ public partial class FrmMain : Form
                 else throw new Exception(string.Format("Exchange {0} bestaat niet", exchangeName));
             }
         }
+
+        // Na het selecteren van een account
         ExchangeHelper.ExchangeDefaults();
         GlobalData.LoadAccounts();
 
         WindowLocationRestore();
         ApplySettings();
 
+        GlobalData.LoadSymbols();
+        GlobalData.SymbolsHaveChanged("");
+        GlobalData.LoadSignals();
+#if TRADEBOT
+        GlobalData.LoadOpenPositions();
+        OpenPositionsHaveChangedEvent("");
+        GlobalData.LoadClosedPositions();
+        ClosedPositionsHaveChangedEvent();
+#endif
 
         ScannerSession.Start(false);
-        dashBoardControl1.InitializeStuff();
+        //dashBoardControl1.InitializeStuff();
         SystemEvents.PowerModeChanged += OnPowerChange;
+    }
+
+
+    private void ShowApplicationVersion()
+    {
+        var assembly = Assembly.GetExecutingAssembly().GetName();
+        string appName = assembly.Name.ToString();
+        string appVersion = assembly.Version.ToString();
+        while (appVersion.EndsWith(".0"))
+            appVersion = appVersion[0..^2];
+        Text = $"{appName} {GlobalData.Settings.General.ExchangeName} {appVersion}";
     }
 
 
@@ -183,7 +195,8 @@ public partial class FrmMain : Form
         //panelLeftTop.Visible = !GlobalData.Settings.General.HideSymbolsOnTheLeft;
         //listBoxSymbols.Visible = !GlobalData.Settings.General.HideSymbolsOnTheLeft;
 
-        this.Refresh();
+        ShowApplicationVersion();
+        Refresh(); // Redraw
         //GlobalData.DumpSessionInformation();
     }
 
@@ -217,7 +230,7 @@ public partial class FrmMain : Form
             if (components != null)
             {
                 GlobalData.ApplicationStatus = CryptoApplicationStatus.Disposing;
-                LinkTools._webViewDummy.Dispose(); // dirty
+                LinkTools.WebViewDummy.Dispose(); // dirty
                 components.Dispose();
             }
         }
@@ -319,7 +332,19 @@ public partial class FrmMain : Form
 
     private void ToolStripMenuItemRefresh_Click_1(object sender, EventArgs e)
     {
-        _ = ExchangeHelper.FetchCandlesAsync(); // niet wachten tot deze klaar is
+        // Testje!!! (forceren)
+        //GlobalData.ApplicationStatus = CryptoApplicationStatus.Initializing;
+        //foreach (var ticker in ExchangeHelper.KLineTicker.TickerList)
+        //{
+        //    ticker.ConnectionLostCount = 1;
+        //}
+
+        Task.Run(async () =>
+        {
+            await ExchangeHelper.FetchSymbolsAsync(); // niet wachten tot deze klaar is
+            await ExchangeHelper.KLineTicker.CheckKlineTickers(); // herstarten van ticker indien errors
+            await ExchangeHelper.FetchCandlesAsync(); // niet wachten tot deze klaar is
+        });
     }
 
 
@@ -390,6 +415,9 @@ public partial class FrmMain : Form
                     foreach (CryptoTradeAccount ta in GlobalData.TradeAccountList.Values)
                         ta.Clear();
                 }
+
+                // Bij wijzigingen aantal signalen)
+                //signal.ExpirationDate = signal.CloseDate.AddSeconds(GlobalData.Settings.General.RemoveSignalAfterxCandles * Interval.Duration);
 
                 // Optioneel een herstart van de Telegram bot
                 if (GlobalData.Settings.Telegram.Token != ThreadTelegramBot.Token)
@@ -487,7 +515,7 @@ public partial class FrmMain : Form
                     {
                         Invoke(new Action(() =>
                         {
-                            if (!this.IsDisposed && GlobalData.ApplicationStatus != CryptoApplicationStatus.Disposing)
+                            if (!IsDisposed && GlobalData.ApplicationStatus != CryptoApplicationStatus.Disposing)
                             {
                                 ListViewSignalsAddSignalRange(signals);
                             }
@@ -523,7 +551,7 @@ public partial class FrmMain : Form
                     Invoke(new Action(() =>
                     {
                         string text = stringBuilder.ToString().TrimEnd() + "\r\n";
-                        if (!this.IsDisposed && GlobalData.ApplicationStatus != CryptoApplicationStatus.Disposing)
+                        if (!this.IsDisposed && GlobalData.ApplicationStatus != CryptoApplicationStatus.Disposing && IsHandleCreated)
                         {
                             if (InvokeRequired)
                                 Invoke((MethodInvoker)(() => TextBoxLog.AppendText(text)));
@@ -548,10 +576,10 @@ public partial class FrmMain : Form
     }
 
 
-    private void SignalArrived(CryptoSignal signal)
+    private void AnalyzeSignalCreated(CryptoSignal signal)
     {
         GlobalData.createdSignalCount++;
-        string text = "signal: " + signal.Symbol.Name + " " + signal.Interval.Name + " " + signal.SideText + " " + signal.StrategyText + " " + signal.EventText;
+        string text = "Analyze signal " + signal.Symbol.Name + " " + signal.Interval.Name + " " + signal.SideText + " " + signal.StrategyText + " " + signal.EventText;
         GlobalData.AddTextToLogTab(text);
 
         if (signal.BackTest)
@@ -958,4 +986,15 @@ public partial class FrmMain : Form
 
     }
 
+
+    private void ApplicationHasStarted(string text, bool extraLineFeed = false)
+    {
+        GlobalData.SymbolsHaveChanged("");
+        // De barometer een zetje geven...
+        Invoke((MethodInvoker)(() => dashBoardInformation1.ShowBarometerStuff(null, null)));
+    }
+
+    private void testToolStripMenuItem1_Click(object sender, EventArgs e)
+    {
+    }
 }

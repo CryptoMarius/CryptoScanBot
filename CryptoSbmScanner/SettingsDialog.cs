@@ -485,6 +485,9 @@ public partial class FrmSettings : Form
         EditDisableNewPositions.Checked = settings.Trading.DisableNewPositions;
         EditSoundTradeNotification.Checked = settings.General.SoundTradeNotification;
 
+        // Logging
+        EditLogCanceledOrders.Checked = settings.Trading.LogCanceledOrders;
+
         // --------------------------------------------------------------------------------
         // Trade bot experiment
         // --------------------------------------------------------------------------------
@@ -759,6 +762,9 @@ public partial class FrmSettings : Form
         settings.Trading.TradeViaPaperTrading = EditTradeViaPaperTrading.Checked;
         settings.Trading.DisableNewPositions = EditDisableNewPositions.Checked;
         settings.General.SoundTradeNotification = EditSoundTradeNotification.Checked;
+
+        // Logging
+        settings.Trading.LogCanceledOrders = EditLogCanceledOrders.Checked;
 
 
 #endif

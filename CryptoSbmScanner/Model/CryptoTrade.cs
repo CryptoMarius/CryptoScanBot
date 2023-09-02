@@ -14,19 +14,19 @@ public class CryptoTrade
 
     public int TradeAccountId { get; set; }
     [Computed]
-    public virtual CryptoTradeAccount TradeAccount { get; set; }
+    public CryptoTradeAccount TradeAccount { get; set; }
 
     public int ExchangeId { get; set; }
     [Computed]
-    public virtual CryptoExchange Exchange { get; set; }
+    public CryptoExchange Exchange { get; set; }
 
     public int SymbolId { get; set; }
     [Computed]
-    public virtual CryptoSymbol Symbol { get; set; }
+    public CryptoSymbol Symbol { get; set; }
 
     public decimal Price { get; set; }
-    public decimal Quantity { get; set; }
-    public decimal QuoteQuantity { get; set; }
+    public decimal Quantity { get; set; } // De gevulde quantity
+    public decimal QuoteQuantity { get; set; } // Filled quantity * price
     
 
     public decimal Commission { get; set; }
