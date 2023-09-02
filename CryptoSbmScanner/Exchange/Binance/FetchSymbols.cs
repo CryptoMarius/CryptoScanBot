@@ -143,7 +143,7 @@ public class FetchSymbols
 
                         }
 #if SQLDATABASE
-                            database.BulkInsertSymbol(cache, transaction);
+                        database.BulkInsertSymbol(cache, transaction);
 #endif
 
                         // Deactiveer de munten die niet meer voorkomen

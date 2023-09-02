@@ -2,6 +2,7 @@
 using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Signal;
+using CryptoSbmScanner.Trader;
 using Dapper.Contrib.Extensions;
 
 namespace CryptoSbmScanner.Intern;

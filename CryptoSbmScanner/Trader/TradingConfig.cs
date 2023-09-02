@@ -1,8 +1,9 @@
 ﻿using CryptoSbmScanner.Enums;
+using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Signal;
 
-namespace CryptoSbmScanner.Intern;
+namespace CryptoSbmScanner.Trader;
 
 public enum MatchBlackAndWhiteList
 {

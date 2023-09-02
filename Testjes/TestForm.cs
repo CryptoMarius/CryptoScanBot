@@ -45,6 +45,7 @@ using CryptoExchange.Net.Authentication;
 using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Exchange;
 using CryptoSbmScanner.Exchange.Binance;
+using CryptoSbmScanner.Trader;
 //using static System.ComponentModel.Design.ObjectSelectorEditor;
 
 namespace CryptoSbmScanner;

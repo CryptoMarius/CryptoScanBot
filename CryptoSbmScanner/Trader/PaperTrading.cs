@@ -6,8 +6,9 @@ using CryptoSbmScanner.Model;
 using Dapper;
 using Dapper.Contrib.Extensions;
 
-namespace CryptoSbmScanner.Intern;
+namespace CryptoSbmScanner.Trader;
 
+#if TRADEBOT
 public class PaperTrading
 {
     // TODO: Verder doorvoeren zodat de PositionMonitor kleiner wordt.
@@ -112,3 +113,4 @@ public class PaperTrading
 
     }
 }
+#endif

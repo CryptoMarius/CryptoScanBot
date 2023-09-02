@@ -6,8 +6,9 @@ using CryptoSbmScanner.Model;
 using Dapper;
 using Dapper.Contrib.Extensions;
 
-namespace CryptoSbmScanner.Intern;
+namespace CryptoSbmScanner.Trader;
 
+#if TRADEBOT
 static public class TradeHandler
 {
     /// <summary>
@@ -325,5 +326,5 @@ static public class TradeHandler
             return;
         }
     }
-
 }
+#endif

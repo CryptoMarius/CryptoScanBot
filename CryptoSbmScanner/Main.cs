@@ -5,7 +5,7 @@ using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Settings;
 using CryptoSbmScanner.Signal;
-
+using CryptoSbmScanner.Trader;
 using Microsoft.Win32;
 
 using Nito.AsyncEx;

@@ -4,7 +4,7 @@ using CryptoSbmScanner.Exchange;
 using CryptoSbmScanner.Exchange.Binance; // trading...
 using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Signal;
-
+using CryptoSbmScanner.Trader;
 using Dapper;
 using Dapper.Contrib.Extensions;
 

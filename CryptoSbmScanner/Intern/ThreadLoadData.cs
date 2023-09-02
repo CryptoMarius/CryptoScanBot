@@ -2,6 +2,7 @@
 using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Exchange;
 using CryptoSbmScanner.Model;
+using CryptoSbmScanner.Trader;
 using CryptoSbmScanner.TradingView;
 
 using Dapper;

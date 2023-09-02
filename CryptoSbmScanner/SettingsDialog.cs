@@ -5,6 +5,7 @@ using CryptoSbmScanner.Settings;
 using CryptoSbmScanner.Signal;
 using System.Drawing;
 using Microsoft.IdentityModel.Tokens;
+using CryptoSbmScanner.Trader;
 
 namespace CryptoSbmScanner;
 

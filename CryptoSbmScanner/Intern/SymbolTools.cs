@@ -1,5 +1,6 @@
 ﻿using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Model;
+using CryptoSbmScanner.Trader;
 
 namespace CryptoSbmScanner.Intern;
 
