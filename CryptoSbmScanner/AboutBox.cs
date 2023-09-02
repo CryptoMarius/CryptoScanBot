@@ -1,4 +1,7 @@
 ﻿using System.Reflection;
+using System.Text;
+
+using CryptoSbmScanner.Intern;
 
 namespace CryptoSbmScanner;
 
@@ -7,12 +10,19 @@ partial class AboutBox : Form
     public AboutBox()
     {
         InitializeComponent();
-        this.Text = string.Format("About {0}", AssemblyTitle);
-        this.labelProductName.Text = AssemblyProduct;
-        this.labelVersion.Text = string.Format("Version {0}", AssemblyVersion);
-        this.labelCopyright.Text = AssemblyCopyright;
-        this.labelCompanyName.Text = AssemblyCompany;
-        this.textBoxDescription.Text = AssemblyDescription;
+        Text = $"About {AssemblyTitle}";
+        labelProductName.Text = AssemblyProduct;
+        labelVersion.Text = $"Version {AssemblyVersion}";
+        labelCopyright.Text = AssemblyCopyright;
+        labelCompanyName.Text = AssemblyCompany;
+
+        StringBuilder builder = new();
+        builder.AppendLine(AssemblyDescription);
+        builder.AppendLine("for");
+        builder.AppendLine("");
+        foreach (Model.CryptoExchange exchange in GlobalData.ExchangeListName.Values)
+            builder.AppendLine($"-{exchange.Name}");
+        textBoxDescription.Text = builder.ToString();
     }
 
     #region Assembly Attribute Accessors
