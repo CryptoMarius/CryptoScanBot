@@ -6,6 +6,7 @@ using Bybit.Net.Objects.Models.V5;
 using CryptoExchange.Net.Authentication;
 using CryptoExchange.Net.Objects;
 
+using CryptoSbmScanner.Context;
 using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
@@ -18,7 +19,7 @@ public class Api : ExchangeBase
 #if TRADEBOT
     static private UserDataStream TaskBybitStreamUserData { get; set; }
 #endif
-    public static List<KLineTickerStream> TickerList { get; set; } = new();
+    public static List<KLineTickerItem> TickerList { get; set; } = new();
 
 
     public Api() : base() //, CryptoSymbol symbol, DateTime currentDate
@@ -107,7 +108,7 @@ public class Api : ExchangeBase
     }
 
 
-    public async Task<(bool result, TradeParams tradeParams)> BuyOrSell(
+    public async Task<(bool result, TradeParams tradeParams)> BuyOrSell(CryptoDatabase database,
         CryptoTradeAccount tradeAccount, CryptoSymbol symbol, DateTime currentDate,
         CryptoOrderType orderType, CryptoOrderSide orderSide,
         decimal quantity, decimal price, decimal? stop, decimal? limit)
@@ -134,7 +135,10 @@ public class Api : ExchangeBase
         if (orderType == CryptoOrderType.StopLimit)
             tradeParams.QuoteQuantity = (decimal)tradeParams.StopPrice * tradeParams.Quantity;
         if (tradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
+        {
+            tradeParams.OrderId = database.CreateNewUniqueId();
             return (true, tradeParams);
+        }
 
 
         OrderSide side;

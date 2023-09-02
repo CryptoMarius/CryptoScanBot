@@ -1,4 +1,4 @@
-﻿namespace CryptoSbmScanner.Exchange.BybitFutures;
+﻿namespace CryptoSbmScanner.Exchange.Kraken;
 
 internal class KLineTicker : KLineTickerBase
 {

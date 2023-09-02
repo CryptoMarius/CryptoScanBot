@@ -5,11 +5,11 @@ namespace CryptoSbmScanner.Exchange.BybitSpot;
 
 internal class PriceTicker : PriceTickerBase
 {
-    static private List<PriceTickerStream> TickerList { get; set; } = new();
+    static private List<PriceTickerItem> TickerList { get; set; } = new();
 
     public override async Task Start()
     {
-        GlobalData.AddTextToLogTab("Bybit starting price ticker");
+        GlobalData.AddTextToLogTab($"{Api.ExchangeName} starting price ticker");
         if (GlobalData.ExchangeListName.TryGetValue(Api.ExchangeName, out Model.CryptoExchange exchange))
         {
             int count = 0;
@@ -29,7 +29,7 @@ internal class PriceTicker : PriceTickerBase
                     //raar..
                     while (symbols.Count > 0)
                     {
-                        PriceTickerStream ticker = new();
+                        PriceTickerItem ticker = new();
                         TickerList.Add(ticker);
 
                         // Op deze exchange is er een limiet van 10 symbols, dus opknippen in (veel) stukjes
@@ -59,7 +59,7 @@ internal class PriceTicker : PriceTickerBase
             if (taskList.Any())
             {
                 await Task.WhenAll(taskList);
-                GlobalData.AddTextToLogTab(string.Format("Bybit started price ticker stream for {0} symbols", count));
+                GlobalData.AddTextToLogTab($"{Api.ExchangeName} started price ticker stream for {count} symbols");
             }
         }
     }
@@ -68,7 +68,7 @@ internal class PriceTicker : PriceTickerBase
 
     public override async Task Stop()
     {
-        GlobalData.AddTextToLogTab("Bybit stopping price ticker");
+        GlobalData.AddTextToLogTab($"{Api.ExchangeName} stopping price ticker");
         List<Task> taskList = new();
         foreach (var ticker in TickerList)
         {

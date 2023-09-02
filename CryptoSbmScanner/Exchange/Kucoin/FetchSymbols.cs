@@ -201,7 +201,7 @@ public class FetchSymbols
                         int deactivated = 0;
                         foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
                         {
-                            if (!activeSymbols.ContainsKey(symbol.Name))
+                            if (symbol.Status == 1 && !activeSymbols.ContainsKey(symbol.Name))
                             {
                                 deactivated++;
                                 symbol.Status = 0;
@@ -211,6 +211,15 @@ public class FetchSymbols
                         if (deactivated > 0)
                             GlobalData.AddTextToLogTab($"{deactivated} munten gedeactiveerd");
 
+
+
+
+                        // De nieuwe symbols toevoegen aan de lijst
+                        // (omdat de symbols pas tijdens de BulkInsert een id krijgen)
+                        foreach (CryptoSymbol symbol in cache)
+                        {
+                            GlobalData.AddSymbol(symbol);
+                        }
 
 
 
@@ -227,15 +236,8 @@ public class FetchSymbols
                                 }
                             }
                         }
+
                         transaction.Commit();
-
-                        // De nieuwe symbols toevoegen aan de lijst
-                        // (omdat de symbols pas tijdens de BulkInsert een id krijgen)
-                        foreach (CryptoSymbol symbol in cache)
-                        {
-                            GlobalData.AddSymbol(symbol);
-                        }
-
                     }
                     catch (Exception error)
                     {

@@ -9,6 +9,7 @@ using Binance.Net.Objects.Models.Spot.Socket;
 using CryptoExchange.Net.Authentication;
 using CryptoExchange.Net.Objects;
 
+using CryptoSbmScanner.Context;
 using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
@@ -200,7 +201,7 @@ public class Api : ExchangeBase
     }
 
 
-    public async Task<(bool success, TradeParams tradeParams)> BuyOrSell(
+    public async Task<(bool success, TradeParams tradeParams)> BuyOrSell(CryptoDatabase database,
         CryptoTradeAccount tradeAccount, CryptoSymbol symbol, DateTime currentDate,
         CryptoOrderType orderType, CryptoOrderSide orderSide,
         decimal quantity, decimal price, decimal? stop, decimal? limit)
@@ -227,7 +228,10 @@ public class Api : ExchangeBase
         if (orderType == CryptoOrderType.StopLimit)
             tradeParams.QuoteQuantity = (decimal)tradeParams.StopPrice * tradeParams.Quantity;
         if (tradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
+        {
+            tradeParams.OrderId = database.CreateNewUniqueId();
             return (true, tradeParams);
+        }
 
 
         OrderSide side;

@@ -1,6 +1,6 @@
-﻿using CryptoExchange.Net.Authentication;
-using CryptoExchange.Net.Objects;
+﻿using CryptoExchange.Net.Objects;
 
+using CryptoSbmScanner.Context;
 using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
@@ -8,6 +8,10 @@ using CryptoSbmScanner.Model;
 using Kucoin.Net.Clients;
 using Kucoin.Net.Enums;
 using Kucoin.Net.Objects.Models.Spot;
+
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Console;
 
 namespace CryptoSbmScanner.Exchange.Kucoin;
 
@@ -23,6 +27,19 @@ public class Api: ExchangeBase
     public override void ExchangeDefaults()
     {
         GlobalData.AddTextToLogTab($"{Api.ExchangeName} defaults");
+
+        // Ik begrijp hier niet zoveel van.....
+        //var logFactory = new LoggerFactory();
+        //logFactory.AddProvider(new ConsoleLoggerProvider());
+        //var binanceClient = new KucoinRestClient(new HttpClient(), logFactory, options => { });
+
+        //var KucoinRestClient = new KucoinRestClient(null, factory, opts =>
+        //{
+        //    // set options
+        //});
+
+
+
         // Default opties voor deze exchange
         KucoinRestClient.SetDefaultOptions(options =>
         {
@@ -107,7 +124,7 @@ public class Api: ExchangeBase
         return localOrderStatus;
     }
 
-    public async Task<(bool result, TradeParams tradeParams)> BuyOrSell(
+    public async Task<(bool result, TradeParams tradeParams)> BuyOrSell(CryptoDatabase database,
         CryptoTradeAccount tradeAccount, CryptoSymbol symbol, DateTime currentDate,
         CryptoOrderType orderType, CryptoOrderSide orderSide,
         decimal quantity, decimal price, decimal? stop, decimal? limit)
@@ -134,7 +151,10 @@ public class Api: ExchangeBase
         if (orderType == CryptoOrderType.StopLimit)
             tradeParams.QuoteQuantity = (decimal)tradeParams.StopPrice * tradeParams.Quantity;
         if (tradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
+        {
+            tradeParams.OrderId = database.CreateNewUniqueId();
             return (true, tradeParams);
+        }
 
 
         OrderSide side;

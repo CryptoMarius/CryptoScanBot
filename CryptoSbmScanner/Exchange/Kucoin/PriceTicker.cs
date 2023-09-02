@@ -5,7 +5,7 @@ namespace CryptoSbmScanner.Exchange.Kucoin;
 
 internal class PriceTicker : PriceTickerBase
 {
-    static private List<PriceTickerStream> TickerList { get; set; } = new();
+    static private List<PriceTickerItem> TickerList { get; set; } = new();
 
     public override async Task Start()
     {
@@ -33,7 +33,7 @@ internal class PriceTicker : PriceTickerBase
                     //raar..
                     while (symbols.Count > 0)
                     {
-                        PriceTickerStream ticker = new();
+                        PriceTickerItem ticker = new();
                         TickerList.Add(ticker);
 
                         while (symbols.Count > 0)

@@ -7,7 +7,7 @@ using CryptoSbmScanner.Model;
 
 namespace CryptoSbmScanner.Exchange.Binance;
 
-public class PriceTickerStream
+public class PriceTickerItem
 {
     public int TickerCount = 0; //Tellertje om te laten zien dat de stream doorloopt (anders geen candle uupdates)
     private BinanceSocketClient socketClient;
@@ -102,8 +102,7 @@ public class PriceTickerStream
         _subscription.ConnectionRestored -= ConnectionRestored;
 
         await socketClient.UnsubscribeAsync(_subscription);
-
-        return;
+        _subscription = null;
     }
 
     private void ConnectionLost()

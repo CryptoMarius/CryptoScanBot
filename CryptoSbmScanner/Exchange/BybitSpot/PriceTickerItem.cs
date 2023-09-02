@@ -1,28 +1,30 @@
 ﻿using System.Text.Encodings.Web;
 using System.Text.Json;
 
+using Bybit.Net.Clients;
+using Bybit.Net.Enums;
+using Bybit.Net.Objects.Models.V5;
+
 using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Sockets;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 
-using Kucoin.Net.Clients;
+namespace CryptoSbmScanner.Exchange.BybitSpot;
 
-namespace CryptoSbmScanner.Exchange.Kucoin;
-
-public class PriceTickerStream
+public class PriceTickerItem
 {
-//    private static int tickerIndex = 0;
     public int TickerCount = 0; //Tellertje om te laten zien dat de stream doorloopt (anders geen candle uupdates)
-    private KucoinSocketClient socketClient;
+    private BybitSocketClient socketClient;
     private UpdateSubscription _subscription;
     public List<string> Symbols = new();
 
     public async Task StartAsync()
     {
-        //GlobalData.AddTextToLogTab("Bybit Starting price ticker stream");
+        //bool first = true;
+        //GlobalData.AddTextToLogTab($"{Api.ExchangeName} Starting price ticker stream");
         socketClient = new();
-        CallResult<UpdateSubscription> subscriptionResult = await socketClient.SpotApi.SubscribeToAllTickerUpdatesAsync(data =>
+        CallResult<UpdateSubscription> subscriptionResult = await socketClient.V5SpotApi.SubscribeToTickerUpdatesAsync(Symbols, data =>
         {
             if (GlobalData.ExchangeListName.TryGetValue(Api.ExchangeName, out Model.CryptoExchange exchange))
             {
@@ -31,26 +33,45 @@ public class PriceTickerStream
 
                 var tick = data.Data;
                 {
-                    string symbolName = tick.Symbol.Replace("-", "");
-                    if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol symbol))
+                    if (exchange.SymbolListName.TryGetValue(tick.Symbol, out CryptoSymbol symbol))
                     {
                         TickerCount++;
                         // Waarschijnlijk ALLEMAAL gebaseerd op de 24h prijs
                         //symbol.OpenPrice = tick.OpenPrice;
                         //symbol.HighPrice = tick.HighPrice;
                         //symbol.LowPrice = tick.LowPrice;
-                        if (tick.LastPrice.HasValue)
-                            symbol.LastPrice = tick.LastPrice;
-                        if (tick.BestBidPrice.HasValue)
-                            symbol.BidPrice = tick.BestBidPrice;
-                        if (tick.BestAskPrice.HasValue)
-                            symbol.AskPrice = tick.BestAskPrice;
+                        //if (tick.LastPrice.HasValue)
+                        symbol.LastPrice = tick.LastPrice;
+                        //if (tick.BestBidPrice.HasValue)
+                        //    symbol.BidPrice = tick.BestBidPrice;
+                        //if (tick.BestAskPrice.HasValue)
+                        //    symbol.AskPrice = tick.BestAskPrice;
                         //symbol.Volume = tick.BaseVolume; //?
-                        if (tick.LastQuantity.HasValue)
-                            symbol.Volume = (decimal)tick.LastQuantity; //= Quoted = het volume * de prijs                                
-                                                                        //symbol.Volume = tick.Volume24h; //= Base = het volume * de prijs                                
+                        //if (tick.Volume24h.HasValue)
+                        symbol.Volume = tick.Turnover24h; //= Quoted = het volume * de prijs                                
+                                                          //symbol.Volume = tick.Volume24h; //= Base = het volume * de prijs                                
 
-                        //bool first = true;
+
+                        // Hiermee kunnen we een "toekomstige" candle opbouwen.
+                        // (maar de berekeningen verwachten dat niet en dan gaan er zaken fout)
+                        // Kortom: Beslissingen op basis van niet voltooide candles moet je vermijden.
+                        //try
+                        //{
+                        //Monitor.Enter(symbol.CandleList);
+                        //try
+                        //{
+                        //    //symbol.HandleExchangeMiniTick(GlobalData.Settings, symbol, tick);
+                        //}
+                        //catch (Exception error)
+                        //{
+                        //    GlobalData.AddTextToLogTab(error.ToString());
+                        //}
+                        //}
+                        //finally
+                        //{
+                        //    Monitor.Exit(symbol.CandleList);
+                        //}
+
                         //Bewaren voor debug werkzaamheden
                         //if (first && tick.Symbol == "BTCUSDT")
                         //{
@@ -64,15 +85,6 @@ public class PriceTickerStream
                         //    File.WriteAllText(filename, text);
                         //}
 
-//#if KUCOINDEBUG
-//                        //Debug
-//                        tickerIndex++;
-//                        long unix = CandleTools.GetUnixTime(tick.Timestamp, 60);
-//                        string filename = GlobalData.GetBaseDir() + $@"\Kucoin\Price-{data.Topic}-1m-{unix}-#{tickerIndex}.json";
-//                        string text = System.Text.Json.JsonSerializer.Serialize(tick, new System.Text.Json.JsonSerializerOptions {
-//                            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true});
-//                        File.WriteAllText(filename, text);
-//#endif
                     }
                 }
 
@@ -90,12 +102,12 @@ public class PriceTickerStream
             _subscription.Exception += Exception;
             _subscription.ConnectionLost += ConnectionLost;
             _subscription.ConnectionRestored += ConnectionRestored;
-            //GlobalData.AddTextToLogTab(string.Format("Bybit started price ticker stream for {0} symbols", Symbols.Count));
+            //GlobalData.AddTextToLogTab($"{Api.ExchangeName} started price ticker stream for {Symbols.Count} symbols");
         }
         else
         {
-            GlobalData.AddTextToLogTab($"ERROR {Api.ExchangeName}  starting price ticker stream " + subscriptionResult.Error.Message);
-            GlobalData.AddTextToLogTab($"ERROR {Api.ExchangeName}  starting price ticker stream " + String.Join(',', Symbols));
+            GlobalData.AddTextToLogTab($"ERROR {Api.ExchangeName} starting price ticker stream " + subscriptionResult.Error.Message);
+            GlobalData.AddTextToLogTab($"ERROR {Api.ExchangeName} starting price ticker stream " + String.Join(',', Symbols));
 
         }
     }
@@ -105,15 +117,12 @@ public class PriceTickerStream
         if (_subscription == null)
             return;
 
-        //GlobalData.AddTextToLogTab($"{Api.ExchangeName} stopping price ticker stream");
-
         _subscription.Exception -= Exception;
         _subscription.ConnectionLost -= ConnectionLost;
         _subscription.ConnectionRestored -= ConnectionRestored;
 
         await socketClient.UnsubscribeAsync(_subscription);
-
-        return;
+        _subscription = null;
     }
 
     private void ConnectionLost()

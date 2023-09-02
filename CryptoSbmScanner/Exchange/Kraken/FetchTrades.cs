@@ -1,6 +1,4 @@
-﻿using Bybit.Net.Clients;
-using Bybit.Net.Enums;
-using Bybit.Net.Objects.Models.Spot;
+﻿using CryptoExchange.Net.Objects;
 
 using CryptoSbmScanner.Context;
 using CryptoSbmScanner.Intern;
@@ -8,7 +6,10 @@ using CryptoSbmScanner.Model;
 
 using Dapper.Contrib.Extensions;
 
-namespace CryptoSbmScanner.Exchange.BybitSpot;
+using Kraken.Net.Clients;
+using Kraken.Net.Objects.Models;
+
+namespace CryptoSbmScanner.Exchange.Kraken;
 
 #if TRADEBOT
 /// <summary>
@@ -16,20 +17,19 @@ namespace CryptoSbmScanner.Exchange.BybitSpot;
 /// </summary>
 public class FetchTrades
 {
-    //Om meerdere updates te voorkomen (gebruiker die meerdere keren erop klikt)
     static private readonly SemaphoreSlim Semaphore = new(1);
     static public int tradeCount;
 
     /// <summary>
     /// Haal de trades van 1 symbol op
     /// </summary>
-    public static async Task<int> FetchTradesAsync(CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
+    public static async Task<int> FetchTradesForSymbol(CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
     {
-        using BybitRestClient client = new();
+        using KrakenRestClient client = new();
         return await FetchTradesInternal(client, tradeAccount, symbol);
     }
 
-    private static async Task<int> FetchTradesInternal(BybitRestClient client, CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
+    private static async Task<int> FetchTradesInternal(KrakenRestClient client, CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
     {
         int tradeCount = 0;
         try
@@ -53,8 +53,9 @@ public class FetchTrades
                 LimitRates.WaitForFairWeight(1); // *5x ivm API weight waarschuwingen
 
                 // CRAP, bybit doet het door middel van ID's ;-) symbol.LastTradeFetched
-                //var result = await client.SpotApiV3.Trading.GetUserTradesAsync(symbol.Name, 1, null, 1000);
-                var result = await client.V5Api.Trading.GetUserTradesAsync(Category.Spot, symbol.Name, null, null, null, symbol.LastTradeFetched, null, null, 1000);
+                // Wederom een uitdaging!
+                WebCallResult<KrakenUserTradesPage> result = null;
+                //var result = await client.SpotApi.Trading.GetUserTradesAsync(symbol.Name, null, null, null, symbol.LastTradeFetched, null, null, 1000);
                 if (!result.Success)
                 {
                     GlobalData.AddTextToLogTab("error getting mytrades " + result.Error);
@@ -63,7 +64,7 @@ public class FetchTrades
 
                 if (result.Data != null)
                 {
-                    foreach (var item in result.Data.List)
+                    foreach (var item in result.Data.Trades.Values)
                     {
                         if (!symbol.TradeList.TryGetValue(long.Parse(item.OrderId), out CryptoTrade trade))
                         {
@@ -83,7 +84,7 @@ public class FetchTrades
                     }
 
                     //We hebben een volledige aantal trades meegekregen, nog eens proberen
-                    if (result.Data.List.Count() < 1000)
+                    if (result.Data.Trades.Count() < 1000)
                         break;
                 }
             }
@@ -150,7 +151,7 @@ public class FetchTrades
         {
             // We hergebruiken de client binnen deze thread, teveel connecties opnenen resulteerd in een foutmelding:
             // "An operation on a socket could not be performed because the system lacked sufficient buffer space or because a queue was full"
-            using BybitRestClient client = new();
+            using KrakenRestClient client = new();
             {
                 while (true)
                 {

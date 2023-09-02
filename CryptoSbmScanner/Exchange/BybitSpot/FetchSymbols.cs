@@ -31,7 +31,6 @@ public class FetchSymbols
                 //WebCallResult<BybitSpotResponse> exchangeInfo = null;
                 using var client = new BybitRestClient();
                 var exchangeInfo = await client.V5Api.ExchangeData.GetSpotSymbolsAsync();
-                //var exchangeInfo = await client.V5Api.ExchangeData.GetLinearInverseSymbolsAsync(Category.Spot);
 
                 // Zo af en toe komt er geen data of is de Data niet gezet.
                 // De verbindingen naar extern kunnen (tijdelijk) geblokkeerd zijn
@@ -115,6 +114,7 @@ public class FetchSymbols
                                 symbol.QuantityMaximum = symbolData.LotSizeFilter.MaxOrderQuantity;
                                 // Dit klopt niet, deze heeft wederom effect op de Clamp routine!
                                 symbol.QuantityTickSize = symbolData.LotSizeFilter.MinOrderQuantity;
+                                //symbol.QuantityTickSize = symbolData.LotSizeFilter.QuantityStep;
 
                                 // De minimale en maximale prijs voor een order (in base price)
                                 // In de definities is wel een minPrice en maxprice aanwezig, maar die is niet gevuld
@@ -151,7 +151,7 @@ public class FetchSymbols
                         int deactivated = 0;
                         foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
                         {
-                            if (!activeSymbols.ContainsKey(symbol.Name))
+                            if (symbol.Status == 1 && !activeSymbols.ContainsKey(symbol.Name))
                             {
                                 deactivated++;
                                 symbol.Status = 0;

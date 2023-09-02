@@ -1,17 +1,15 @@
 ﻿using System.Text.Encodings.Web;
 using System.Text.Json;
 
-using Bybit.Net.Clients;
-using Bybit.Net.Enums;
-using Bybit.Net.Objects.Models.V5;
-
 using CryptoSbmScanner.Context;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 
 using Dapper.Contrib.Extensions;
 
-namespace CryptoSbmScanner.Exchange.BybitFutures;
+using Kraken.Net.Clients;
+
+namespace CryptoSbmScanner.Exchange.Kraken;
 
 public class FetchSymbols
 {
@@ -29,8 +27,8 @@ public class FetchSymbols
                 database.Open();
 
                 //WebCallResult<BybitSpotResponse> exchangeInfo = null;
-                using var client = new BybitRestClient();
-                var exchangeInfo = await client.V5Api.ExchangeData.GetLinearInverseSymbolsAsync(Category.Linear);
+                using var client = new KrakenRestClient();
+                var exchangeInfo = await client.SpotApi.ExchangeData.GetSymbolsAsync();
 
                 // Zo af en toe komt er geen data of is de Data niet gezet.
                 // De verbindingen naar extern kunnen (tijdelijk) geblokkeerd zijn
@@ -51,48 +49,23 @@ public class FetchSymbols
                     List<CryptoSymbol> cache = new();
                     try
                     {
-                        //BybitSpotSymbol
-                        //WebCallResult<BybitResponse<BybitSpotSymbol>> x;
-                        foreach (var symbolData in exchangeInfo.Data.List)
+                        foreach (var symbolData in exchangeInfo.Data.Values)
                         {
                             //if (coin != "")
                             {
-                                //Het is erg belangrijk om de delisted munten zo snel mogelijk te detecteren.
-                                //(ik heb wat slechte ervaringen met de Altrady bot die op paniek pieken handelt)
-
-                                // https://api.bybit.com/v5/market/instruments-info?category=spot
+                                string name = symbolData.AlternateName; // symbolData.BaseAsset + symbolData.QuoteAsset;
                                 /*
-                                  "Data": {
-                                    "List": [
-                                      {
-                                        "Name": "BTCUSDT",
-                                        "BaseAsset": "BTC",
-                                        "QuoteAsset": "USDT",
-                                        "Status": 1,
-                                        "MarginTading": 0,
-                                        "Innovation": false,
-                                        "LotSizeFilter": {
-                                          "BasePrecision": 0.000001,
-                                          "QuotePrecision": 0.00000001,
-                                          "MinOrderQuantity": 0.000048,
-                                          "MaxOrderQuantity": 71.73956243,
-                                          "MinOrderValue": 1,
-                                          "MaxOrderValue": 2000000
-                                        },
-                                        "PriceFilter": {
-                                          "TickSize": 0.01
-                                        }
-                                      },
-                                enzovoort..
+                                    enzovoort..
                                 */
+
                                 //Eventueel symbol toevoegen
-                                if (!exchange.SymbolListName.TryGetValue(symbolData.Name, out CryptoSymbol symbol))
+                                if (!exchange.SymbolListName.TryGetValue(name, out CryptoSymbol symbol))
                                 {
                                     symbol = new()
                                     {
                                         Exchange = exchange,
                                         ExchangeId = exchange.Id,
-                                        Name = symbolData.Name,
+                                        Name = name,
                                         Base = symbolData.BaseAsset,
                                         Quote = symbolData.QuoteAsset,
                                         Status = 1,
@@ -107,27 +80,27 @@ public class FetchSymbols
                                 //symbol.QuoteAssetPrecision = binanceSymbol.LotSizeFilter.QuotePrecision.ToString().Length - 2;
                                 //if (symbol.QuoteAssetPrecision <= 0)
                                 //    symbol.QuoteAssetPrecision = 8;
-                                //symbol.MinNotional = binanceSymbol.MinNotional; // ????
+                                //symbol.MinNotional = symbolData.MinNotional; // ????
 
                                 //Minimale en maximale amount voor een order (in base amount)
-                                symbol.QuantityMinimum = symbolData.LotSizeFilter.MinOrderQuantity;
-                                symbol.QuantityMaximum = symbolData.LotSizeFilter.MaxOrderQuantity;
-                                symbol.QuantityTickSize = symbolData.LotSizeFilter.QuantityStep;
+                                //symbol.QuantityMinimum = symbolData.LotSizeFilter.MinOrderQuantity;
+                                //symbol.QuantityMaximum = symbolData.LotSizeFilter.MaxOrderQuantity;
+                                //symbol.QuantityTickSize = symbolData.LotSizeFilter.QuantityStep;
 
                                 // De minimale en maximale prijs voor een order (in base price)
                                 // In de definities is wel een minPrice en maxprice aanwezig, maar die is niet gevuld
                                 // (dat heeft consequenties voro de werking van de Clamp die wel waarden verwacht)
-                                symbol.PriceMinimum = symbolData.PriceFilter.MinPrice;
-                                symbol.PriceMaximum = symbolData.PriceFilter.MaxPrice;
-                                symbol.PriceTickSize = symbolData.PriceFilter.TickSize; // ? binanceSymbol.PriceFilter.TickSize;
+                                //symbol.PriceMinimum = symbolData.PriceFilter.MinPrice;
+                                //symbol.PriceMaximum = symbolData.PriceFilter.MaxPrice;
+                                symbol.PriceTickSize = (decimal)symbolData.TickSize; // ? binanceSymbol.PriceFilter.TickSize;
 
                                 symbol.IsSpotTradingAllowed = true; // binanceSymbol.IsSpotTradingAllowed;
                                 symbol.IsMarginTradingAllowed = false; // binanceSymbol.MarginTading; ???
 
-                                if (symbolData.Status == SymbolStatus.Trading)
+                                //if (symbolData.Status == )
                                     symbol.Status = 1;
-                                else
-                                    symbol.Status = 0; //Zet de status door (PreTrading, PostTrading of Halt)
+                                //else
+                                  //  symbol.Status = 0; //Zet de status door (PreTrading, PostTrading of Halt)
 
                                 if (symbol.Id == 0)
                                 {

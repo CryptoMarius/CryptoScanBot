@@ -51,6 +51,7 @@ public class FetchCandles
             return 0;
 
         //BinanceWeights.WaitForFairBinanceWeight(5, "klines"); // *5x ivm API weight waarschuwingen
+        string prefix = $"{Api.ExchangeName} {symbol.Name} {interval.Name}";
 
         // The maximum is 1000 candles
         DateTime dateStart = CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized);
@@ -58,7 +59,7 @@ public class FetchCandles
         if (!result.Success)
         {
             // Might do something better than this
-            GlobalData.AddTextToLogTab(string.Format("{0} {1} error getting klines {2}", symbol.Name, interval.Name, result.Error));
+            GlobalData.AddTextToLogTab($"{prefix} error getting klines {result.Error}");
             return 0;
         }
 
@@ -66,7 +67,7 @@ public class FetchCandles
         int? weight = result.ResponseHeaders.UsedWeight();
         if (weight > 700)
         {
-            GlobalData.AddTextToLogTab($"{Api.ExchangeName} delay needed for weight: {weight} (because of rate limits)");
+            GlobalData.AddTextToLogTab($"{prefix} delay needed for weight: {weight} (because of rate limits)");
             if (weight > 800)
                 await Task.Delay(10000);
             if (weight > 900)
@@ -80,15 +81,17 @@ public class FetchCandles
         // Might have problems with no internet etc.
         if (result == null || result.Data == null || !result.Data.Any())
         {
-            GlobalData.AddTextToLogTab(string.Format("{0} {1} ophalen vanaf {2} geen candles ontvangen", symbol.Name, interval.Name, CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized).ToString()));
+            GlobalData.AddTextToLogTab($"{prefix} ophalen vanaf {CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized)} geen candles ontvangen");
             return 0;
         }
 
         // Remember
         long startFetchDate = (long)symbolInterval.LastCandleSynchronized;
 
+#if USELOCKS
         Monitor.Enter(symbol.CandleList);
-        try
+#endif
+       try
         {
             long last = long.MinValue;
             // Combine candles, calculating other interval's
@@ -126,7 +129,9 @@ public class FetchCandles
         }
         finally
         {
+#if USELOCKS
             Monitor.Exit(symbol.CandleList);
+#endif
         }
 
 
@@ -207,12 +212,12 @@ public class FetchCandles
                     break;
             }
 
+#if USELOCKS
             Monitor.Enter(symbol.CandleList);
+#endif
             try
             {
-                // Fill missing candles (the only place we know fore it can be done)
-                // We hebben de candles opgevraagd van x tot y, dat betekend dat we alle candles hebben,
-                // eventueel ontbrekende candles in deze reeks mogen we opvullen met een "zero" candle
+                // Fill missing candles (at only place we know it can be done safely)
                 if (symbolInterval.CandleList.Any())
                 {
                     CryptoCandle stickOld = symbolInterval.CandleList.Values.First();
@@ -246,42 +251,43 @@ public class FetchCandles
                     }
                 }
 
-                // Calculate higher interval candles from the lower interval (if available)
-                // (this does calculate some additional interval's but how to exclude, do i care?)
+                // Calculate higher interval candles
                 for (int j = i + 1; j < GlobalData.IntervalList.Count; j++)
                 {
-                    CryptoInterval intervalCalc = GlobalData.IntervalList[j];
-                    if (intervalCalc.IntervalPeriod > interval.IntervalPeriod)
+                    CryptoInterval intervalHigherTimeFrame = GlobalData.IntervalList[j];
+                    CryptoInterval intervalLowerTimeFrame = intervalHigherTimeFrame.ConstructFrom;
+                    
+                    CryptoSymbolInterval periodLowerTimeFrame = symbol.GetSymbolInterval(intervalLowerTimeFrame.IntervalPeriod);
+                    SortedList<long, CryptoCandle> candlesLowerTimeFrame = periodLowerTimeFrame.CandleList;
+
+                    if (candlesLowerTimeFrame.Values.Any())
                     {
-                        // Naar het lagere tijd interval om de eerste en laatste candle te achterhalen
-                        CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(intervalCalc.ConstructFrom.IntervalPeriod);
-                        SortedList<long, CryptoCandle> candlesInterval = symbolPeriod.CandleList;
-                        if (candlesInterval.Values.Any())
+                        long candleHigherTimeFrameStart = candlesLowerTimeFrame.Values.First().OpenTime;
+                        candleHigherTimeFrameStart -= candleHigherTimeFrameStart % intervalHigherTimeFrame.Duration;
+                        DateTime candleHigherTimeFrameStartDate = CandleTools.GetUnixDate(candleHigherTimeFrameStart);
+
+                        long candleHigherTimeFrameEinde = candlesLowerTimeFrame.Values.Last().OpenTime;
+                        candleHigherTimeFrameEinde -= candleHigherTimeFrameEinde % intervalHigherTimeFrame.Duration;
+                        DateTime candleHigherTimeFrameEindeDate = CandleTools.GetUnixDate(candleHigherTimeFrameEinde);
+
+                        // Bulk calculation
+                        while (candleHigherTimeFrameStart <= candleHigherTimeFrameEinde)
                         {
-                            long unixFirst = candlesInterval.Values.First().OpenTime;
-                            unixFirst -= unixFirst % intervalCalc.Duration; // too much?
-                            //DateTime dateFirstDebug = CandleTools.GetUnixDate(unixFirst);
-
-                            long unixLast = candlesInterval.Values.Last().OpenTime;
-                            unixLast -= unixLast % intervalCalc.Duration; // too much? ++ ?
-                            //DateTime dateLastDebug = CandleTools.GetUnixDate(unixLast);
-
-                            // Bulk calculation (shared code with the 1m stream)
-                            long unixLoop = unixFirst;
-                            while (unixLoop <= unixLast)
-                            {
-                                CandleTools.CalculateCandleForInterval(intervalCalc, intervalCalc.ConstructFrom, symbol, unixLoop);
-                                unixLoop += intervalCalc.Duration;
-                            }
-                            CandleTools.UpdateCandleFetched(symbol, intervalCalc);
+                            // Die laatste parameter is de closetime van een candle
+                            candleHigherTimeFrameStart += intervalHigherTimeFrame.Duration;
+                            CandleTools.CalculateCandleForInterval(intervalHigherTimeFrame, intervalLowerTimeFrame, symbol, candleHigherTimeFrameStart);
                         }
+                        
+                        CandleTools.UpdateCandleFetched(symbol, intervalHigherTimeFrame);
                     }
                 }
 
             }
             finally
             {
+#if USELOCKS
                 Monitor.Exit(symbol.CandleList);
+#endif
             }
         }
     }
@@ -326,6 +332,8 @@ public class FetchCandles
 
     public static async Task ExecuteAsync()
     {
+        //GlobalData.AddTextToLogTab("Fetching historical candles");
+
         if (GlobalData.ExchangeListName.TryGetValue(Api.ExchangeName, out Model.CryptoExchange exchange))
         {
             GlobalData.AddTextToLogTab("");

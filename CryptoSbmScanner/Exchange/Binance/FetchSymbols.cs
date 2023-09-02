@@ -32,7 +32,6 @@ public class FetchSymbols
                 var client = new BinanceRestClient();
                 {
                     exchangeInfo = await client.SpotApi.ExchangeData.GetExchangeInfoAsync();
-
                     if (!exchangeInfo.Success)
                     {
                         GlobalData.AddTextToLogTab("error getting exchangeinfo " + exchangeInfo.Error + "\r\n");
@@ -44,7 +43,8 @@ public class FetchSymbols
                         throw new ExchangeException("Geen exchange data ontvangen");
                 }
 
-                // Om achteraf de niet aangeboden munten te deactiveren
+                // Om achteraf de niet gedeactiveerde munten te melden en te deactiveren
+                List<string> reportSymbols = new();
                 SortedList<string, CryptoSymbol> activeSymbols = new();
 
 
@@ -147,18 +147,24 @@ public class FetchSymbols
 #endif
 
                         // Deactiveer de munten die niet meer voorkomen
-                        int deactivated = 0;
                         foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
                         {
-                            if (!activeSymbols.ContainsKey(symbol.Name))
+                            if (symbol.Status == 1 && !activeSymbols.ContainsKey(symbol.Name))
                             {
-                                deactivated++;
-                                symbol.Status = 0;
-                                database.Connection.Update(symbol, transaction);
+                                if (symbol.Status != 0)
+                                {
+                                    symbol.Status = 0;
+                                    database.Connection.Update(symbol, transaction);
+
+                                    reportSymbols.Add(symbol.Name);
+                                }
                             }
                         }
-                        if (deactivated > 0)
-                            GlobalData.AddTextToLogTab($"{deactivated} munten gedeactiveerd");
+                        if (reportSymbols.Any())
+                        {
+                            var symbols = string.Join(',', reportSymbols.ToArray());
+                            GlobalData.AddTextToLogTab($"{reportSymbols.Count} munten gedeactiveerd {symbols}");
+                        }
 
 
                         transaction.Commit();

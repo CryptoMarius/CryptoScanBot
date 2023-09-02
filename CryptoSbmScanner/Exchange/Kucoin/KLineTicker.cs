@@ -1,83 +1,90 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using CryptoSbmScanner.Intern;
+﻿using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 
 using Kucoin.Net.Clients;
 
 namespace CryptoSbmScanner.Exchange.Kucoin;
 
+// Deze class afwijkend tov de base
+
 internal class KLineTicker : KLineTickerBase
 {
-    public static List<KLineTickerStream> TickerList { get; set; } = new();
+    public static new List<KLineTickerItem> TickerList { get; set; } = new();
 
-    public override async Task Start()
+    public KLineTicker() : base(Api.ExchangeName, 1, typeof(KLineTickerItem))
     {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} starting kline ticker streams (slow)");
-        //if (GlobalData.ExchangeListName.TryGetValue(ExchangeName, out Model.CryptoExchange _))
+    }
+
+    public override async Task StartAsync()
+    {
+        GlobalData.AddTextToLogTab($"{Api.ExchangeName} starting kline tickers (slow)");
+
+        int totalSymbols = 0;
+        int tickersCreated = 0;
+        List<Task> taskList = new();
+        KucoinSocketClient socketClient = new();
+        foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
         {
-            int count = 0;
-            List<Task> taskList = new();
-            KucoinSocketClient socketClient = new();
-            foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
+            if (quoteData.FetchCandles && quoteData.SymbolList.Count > 0)
             {
-                if (quoteData.FetchCandles && quoteData.SymbolList.Count > 0)
+                List<CryptoSymbol> symbols = quoteData.SymbolList.ToList();
+                totalSymbols += symbols.Count;
+
+                // Limiteer de munten enigzins (heeft wellicht impact op de barometer)
+                foreach (var s in symbols.ToList())
                 {
-                    List<CryptoSymbol> symbols = quoteData.SymbolList.ToList();
+                    if (s.QuoteData.MinimalVolume > 0 && s.Volume < 0.1m * s.QuoteData.MinimalVolume)
+                        symbols.Remove(s);
+                }
 
-                    // TODO: Wellicht versnellen door een lijst van taken voor te bereiden (zie Task.WhenAll)
+                // TODO: Wellicht versnellen door een lijst van taken voor te bereiden (zie Task.WhenAll)
 
-                    //// We krijgen soms timeouts (eigenlijk de library) omdat we teveel 
-                    //// symbols aanbieden, daarom splitsen we het hier de lijst in twee stukken.
-                    //int splitCount = 200;
-                    //if (symbols.Count > splitCount)
-                    //    splitCount = 1 + (symbols.Count / 2);
+                //// We krijgen soms timeouts (eigenlijk de library) omdat we teveel 
+                //// symbols aanbieden, daarom splitsen we het hier de lijst in twee stukken.
+                //int splitCount = 200;
+                //if (symbols.Count > splitCount)
+                //    splitCount = 1 + (symbols.Count / 2);
 
+                while (symbols.Count > 0)
+                {
+                    KLineTickerItem ticker = new(quoteData);
+                    TickerList.Add(ticker);
+
+                    // Op deze exchange is er een limiet van 1 symbols, dus opknippen in (veel) stukjes
+                    // Absurd, interface is niet echt fijn, maar dit werkt ook hoor!
                     while (symbols.Count > 0)
                     {
-                        KLineTickerStream ticker = new(quoteData);
-                        TickerList.Add(ticker);
+                        CryptoSymbol symbol = symbols[0];
+                        ticker.Symbol = symbol;
+                        //ticker.symbols.Add(symbol.Base + "-" + symbol.Quote);
+                        //ticker.SymbolName = symbol.Name;
+                        symbols.Remove(symbol);
+                        tickersCreated++;
 
-                        // Op deze exchange is er een limiet van 1 symbols, dus opknippen in (veel) stukjes
-                        // Absurd, interface is niet echt fijn, maar dit werkt ook hoor!
-                        while (symbols.Count > 0)
-                        {
-                            CryptoSymbol symbol = symbols[0];
-                            ticker.Symbol = symbol;
-                            //ticker.symbols.Add(symbol.Base + "-" + symbol.Quote);
-                            //ticker.SymbolName = symbol.Name;
-                            symbols.Remove(symbol);
-                            count++;
-
-                            // Really, 1? Succes qua opstarten
-                            //if (ticker.symbols.Count >= 1)
-                            break;
-                        }
-                        Task task = Task.Run(async () => { await ticker.StartAsync(socketClient); });
-                        taskList.Add(task);
-
-                        //if (taskList.Count > 25)
-                        //    break;
+                        // Really, 1? Succes qua opstarten
+                        //if (ticker.symbols.Count >= 1)
+                        break;
                     }
+                    Task task = Task.Run(async () => { await ticker.StartAsync(socketClient); });
+                    taskList.Add(task);
+
+                    //if (taskList.Count > 25)
+                    //    break;
                 }
             }
+        }
 
-            if (taskList.Any())
-            {
-                await Task.WhenAll(taskList);
-                GlobalData.AddTextToLogTab($"{Api.ExchangeName} started kline ticker stream for {count} symbols");
-            }
+        if (taskList.Any())
+        {
+            await Task.WhenAll(taskList);
+            GlobalData.AddTextToLogTab($"{Api.ExchangeName} started kline ticker voor {tickersCreated} van de {totalSymbols} symbols");
         }
     }
 
 
-    public override async Task Stop()
+    public override async Task StopAsync()
     {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} stopping kline ticker stream");
+        GlobalData.AddTextToLogTab($"{Api.ExchangeName} stopping kline ticker");
         List<Task> taskList = new();
         foreach (var ticker in TickerList)
         {

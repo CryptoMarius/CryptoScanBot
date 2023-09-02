@@ -1,16 +1,16 @@
-﻿using Bybit.Net.Clients;
-
-using CryptoExchange.Net.Objects;
+﻿using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Sockets;
 
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 
-namespace CryptoSbmScanner.Exchange.BybitSpot;
+using Kraken.Net.Clients;
+
+namespace CryptoSbmScanner.Exchange.Kraken;
 #if TRADEBOT
 public class UserDataStream
 {
-    private readonly BybitSocketClient socketClient;
+    private readonly KrakenSocketClient socketClient;
     private readonly UpdateSubscription _subscription;
 
     public async Task StopAsync()
@@ -24,7 +24,7 @@ public class UserDataStream
         _subscription.ConnectionLost -= ConnectionLost;
         _subscription.ConnectionRestored -= ConnectionRestored;
 
-        await socketClient.UnsubscribeAllAsync();
+        await socketClient.SpotApi.UnsubscribeAllAsync();
         return; // Task.CompletedTask;
     }
 
@@ -32,7 +32,7 @@ public class UserDataStream
     public async Task ExecuteAsync()
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
     {
-        using BybitRestClient client = new();
+        using KrakenRestClient client = new();
         {
             //CallResult<string> userStreamResult = await client.V5Api.Account.StartUserStreamAsync();
             //if (!userStreamResult.Success)

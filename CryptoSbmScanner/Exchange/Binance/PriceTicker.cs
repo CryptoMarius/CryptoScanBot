@@ -4,12 +4,12 @@ namespace CryptoSbmScanner.Exchange.Binance;
 
 internal class PriceTicker: PriceTickerBase
 {
-    private List<PriceTickerStream> TickerList { get; set; } = new();
+    private List<PriceTickerItem> TickerList { get; set; } = new();
 
     public override async Task Start()
     {
         GlobalData.AddTextToLogTab($"{Api.ExchangeName} starting price ticker");
-        PriceTickerStream ticker = new();
+        PriceTickerItem ticker = new();
         TickerList.Add(ticker);
         await ticker.ExecuteAsync();
     }

@@ -200,4 +200,5 @@ public class UserDataStream
         GlobalData.AddTextToLogTab($"{Api.ExchangeName} price ticker connection error {ex.Message} | Stack trace: {ex.StackTrace}");
     }
 }
+
 #endif

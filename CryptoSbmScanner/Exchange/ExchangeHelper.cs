@@ -26,6 +26,8 @@ public class ExchangeHelper
             return new BybitFutures.Api();
         else if (exchangeId == 4)
             return new Kucoin.Api();
+        else if (exchangeId == 5)
+            return new Kraken.Api();
         else
             throw new Exception("Niet ondersteunde exchange");
     }
@@ -40,7 +42,7 @@ public class ExchangeHelper
         GetApiInstance().ExchangeDefaults();
     }
 
-    public static async Task FetchSymbols()
+    public static async Task FetchSymbolsAsync()
     {
         await GetApiInstance().FetchSymbolsAsync();
     }

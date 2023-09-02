@@ -13,21 +13,16 @@ namespace CryptoSbmScanner.Exchange.Binance;
 /// <summary>
 /// Monitoren van 1m candles (die gepushed worden door Binance)
 /// </summary>
-public class KLineTickerStream
+public class KLineTickerItem : KLineTickerItemBase
 {
-
-    public string quote;
     private BinanceSocketClient socketClient;
     private UpdateSubscription _subscription;
-    public List<string> symbols = new();
-    public int TickerCount = 0;
 
-    public KLineTickerStream(CryptoQuoteData quoteData)
+    public KLineTickerItem(string apiExchangeName, CryptoQuoteData quoteData) : base(apiExchangeName, quoteData)
     {
-        quote = quoteData.Name;
     }
 
-    private void ProcessCandle(BinanceStreamKlineData temp)
+    private void ProcessCandle(BinanceStreamKlineData kline)
     {
         // Aantekeningen
         // De Base volume is the volume in terms of the first currency pair.
@@ -38,59 +33,27 @@ public class KLineTickerStream
 
         if (GlobalData.ExchangeListName.TryGetValue(Api.ExchangeName, out Model.CryptoExchange exchange))
         {
-            if (exchange.SymbolListName.TryGetValue(temp.Symbol, out CryptoSymbol symbol))
+            if (exchange.SymbolListName.TryGetValue(kline.Symbol, out CryptoSymbol symbol))
             {
                 TickerCount++;
                 //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", temp.Symbol, temp.Data.OpenTime.ToLocalTime()));
+                Process1mCandle(symbol, kline.Data.OpenTime, kline.Data.OpenPrice, kline.Data.HighPrice, kline.Data.LowPrice, kline.Data.ClosePrice, kline.Data.Volume);
 
-                CryptoCandle candle = null;
-                Monitor.Enter(symbol.CandleList);
-                try
-                {
-                    // Dit is de laatste bekende prijs (de priceticker vult aan)
-                    symbol.LastPrice = temp.Data.ClosePrice;
-
-                    // Process the single 1m candle
-                    candle = CandleTools.HandleFinalCandleData(symbol, GlobalData.IntervalList[0], temp.Data.OpenTime,
-                        temp.Data.OpenPrice, temp.Data.HighPrice, temp.Data.LowPrice, temp.Data.ClosePrice, temp.Data.QuoteVolume, false);
-#if SQLDATABASE
-                    GlobalData.TaskSaveCandles.AddToQueue(candle);
-#endif
-
-                    // Calculate the higher timeframes
-                    foreach (CryptoInterval interval in GlobalData.IntervalList)
-                    {
-                        // Deze doen een call naar de TaskSaveCandles en doet de UpdateCandleFetched (wellicht overlappend?)
-                        if (interval.ConstructFrom != null)
-                            CandleTools.CalculateCandleForInterval(interval, interval.ConstructFrom, symbol, candle.OpenTime);
-                        CandleTools.UpdateCandleFetched(symbol, interval);
-                    }
-                }
-                finally
-                {
-                    Monitor.Exit(symbol.CandleList);
-                }
-
-
-                // Aanbieden voor analyse (dit gebeurd zowel in de ticker als ProcessCandles)
-                if (GlobalData.ApplicationStatus == CryptoApplicationStatus.Running && candle != null)
-                {
-                    // Aanbieden voor analyse
-                    GlobalData.ThreadMonitorCandle.AddToQueue(symbol, candle);
-                }
             }
         }
 
     }
 
 
-    public async Task StartAsync()
+    public override async Task StartAsync()
     {
-        if (symbols.Count > 0)
+        ConnectionLostCount = 0;
+
+        if (Symbols.Count > 0)
         {
             socketClient = new BinanceSocketClient();
             CallResult<UpdateSubscription> subscriptionResult = await socketClient.SpotApi.ExchangeData.SubscribeToKlineUpdatesAsync(
-                symbols, KlineInterval.OneMinute, (data) =>
+                Symbols, KlineInterval.OneMinute, (data) =>
             {
                 if (data.Data.Data.Final)
                 {
@@ -124,42 +87,43 @@ public class KLineTickerStream
             }
             else
             {
-                GlobalData.AddTextToLogTab($"{Api.ExchangeName} {quote} 1m ERROR starting candle stream {subscriptionResult.Error.Message}");
+                GlobalData.AddTextToLogTab($"{Api.ExchangeName} {QuoteData.Name} 1m ERROR starting candle stream {subscriptionResult.Error.Message}");
             }
         }
     }
 
-    public async Task StopAsync()
+    public override async Task StopAsync()
     {
         if (_subscription == null)
-            return; // Task.CompletedTask;
-
-        //GlobalData.AddTextToLogTab($"{Api.ExchangeName} {quote} 1m stopping candle stream");
+            return;
 
         _subscription.Exception -= Exception;
         _subscription.ConnectionLost -= ConnectionLost;
         _subscription.ConnectionRestored -= ConnectionRestored;
 
         await socketClient?.UnsubscribeAsync(_subscription);
+        _subscription = null;
 
-        return; // Task.CompletedTask;
+        socketClient?.Dispose();
+        socketClient = null;
     }
 
     private void ConnectionLost()
     {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} {quote} 1m candle ticker connection lost.");
+        ConnectionLostCount++;
+        GlobalData.AddTextToLogTab($"{Api.ExchangeName} {QuoteData.Name} 1m kline ticker connection lost.");
         ScannerSession.ConnectionWasLost("");
     }
 
     private void ConnectionRestored(TimeSpan timeSpan)
     {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} {quote} 1m candle ticker connection restored.");
+        GlobalData.AddTextToLogTab($"{Api.ExchangeName} {QuoteData.Name} 1m kline ticker connection restored.");
         ScannerSession.ConnectionWasRestored("");
     }
 
     private void Exception(Exception ex)
     {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} 1m candle ticker connection error {ex.Message} | Stack trace: {ex.StackTrace}");
+        GlobalData.AddTextToLogTab($"{Api.ExchangeName} 1m kline ticker connection error {ex.Message} | Stack trace: {ex.StackTrace}");
     }
 
 }
