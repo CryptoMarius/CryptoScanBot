@@ -1,13 +1,14 @@
-Mis je iets in onderstaande bevindingen/todo's of toekomstige todo's, geef het AUB aan want dan is wat we besproken hebben ergens tussen wal en schip gevallen...
+Mis je iets in onderstaande bevindingen/todo's of toekomstige todo's, geef het AUB aan!
+Groot kans dat datgene we besproken hebben dan ergens tussen wal en schip is beland.
+Openstaande punten/bevindingen/todo's/enzovoort:
 
-Nog openstaande punten/bevindingen/todo's/enzovoort:
+Scanner:
+- Bij wijzigen van het aantal te tonen signalen (via aantal candles) de expirationdate opnieuw herberekenen
+- Het aantal nieuwe munten tonen die op de exchange zijn geintroduceerd (het veschil vanwege nieuwe of vervallen munten)
 - Gerapporteerd, lettertype problemen, het was helaas een melding en er is geen duidelijke oorzaak of uitleg voor het probleem.
   (daarom was er ook niets om om te kunnen lossen, ik wil daar nog verder op in gaan, maar ben er niet aan toe gekomen)
 - Bybit Futures, melden van de FundingRate en FundingInterval (maar wat is het precies?)
-- Het normale logbestand bevat op het einde een .0, waar komt deze vandaag, doet nlog een archive ofzo?
-- Trading: Ondanks een limit op de BASE worden er meerdere posities op dezelfde base geopend.
-- Trading: De STOBB heeft nu een minimale trend maar dat is conflicteerd uiteraard bij een short positie (extra instelling?)
-- Trading: Uitzoeken voor iemand in de groep, de backtest emulator aanpassen zodat het (pas) bij een psar wissel instapt - is er nog niet van gekomen, sorry!
+- Het normale logbestand bevat op het einde een .0, waar komt deze vandaag? Doet NLog alsnog een archive ofzo? Een zooi in die hoek?
 - Scanner/Trader: Een dashboard introduceren, totaal aantal signalen afgelopen dag/week, indeling per categorie, short/long
   Trading: Totaal geinvesteerd, returned, gemiddelde profit, de uitschieters (max), de tegenvallers (min).
   Diverse grafieken (zoals Altrady) en anders weet ik zeker dat bepaalde mensen hier wel toevoegingen voor hebben ;-)
@@ -35,40 +36,61 @@ Nog openstaande punten/bevindingen/todo's/enzovoort:
 - Black theming  https://stackoverflow.com/questions/61145347/c-how-to-make-a-dark-mode-theme-in-windows-forms-separate-form-as-select-the <geen prio>
   Er is nu een slappe variant die iets met grijs doet (omdat anders de scrollbars en headers zo'n lelijk getoond worden), ik ben er niet tevreden over.
 
+Ik heb het hieronder over trading. De trading module komt op een later tijdstip beschikbaar. Vanwege het vertrek van Binance moet
+het eerst linkes en rechts (zwaar) aangepast worden zodat het op een andere exchanges ook werkt en door het wegvallen van de OCO 
+en de stoplimit orders is dat even een probleem. Deze module (in de vorm van wat instellingen, dashboard en openstaande en gesloten
+posities) komt later (gratis) beschikbaar. Als je ideen hebt voor het vervangen van de OCO/Stop limit informeer me dan AUB..
+De introductie van de FundingRate/FundingInterval heeft gevolgen voor de trading module (onverwachte bijkomende kosten).
 
-Ik heb het hieronder over traden/trading. De trading module komt op een later tijdstip beschikbaar. Vanwege het vertrek van
-Binance moet het eerst aangepast worden zodat het op een andere exchange ook werkt en door het wegvallen van de OCO en de
-stoplimit orders is dat een probleem. Deze module (in de vorm van wat instellingen, dashboard en openstaande en gesloten
-posities) komt later (gratis) beschikbaar. Als je ideen hebt voor vervangen OCO/Stop limit, shoot (to inform)!
+Trading:
+- Trading - Ondanks een limit op de BASE worden er (ooit) meerdere posities op dezelfde base munt geopend.
+- Trading - De STOBB heeft nu een minimale trend maar dat is conflicteerd uiteraard bij een short positie (extra instelling noodzakelijk?)
+- Trading - Uitzoeken voor iemand in de groep, de backtest emulator aanpassen zodat het (pas) bij een psar wissel instapt - is er nog niet van gekomen, sorry!
+- Trading - Bij een aanpassing van het bijkoop percentage (en op vaste percentage zetten) wordt er meerdere keren bijgekocht! ( blij dat het slechts papertrading is!)
+            (de huidige test (van circa 40+ dagen) is hierdoor geen goede test meer, hierdoor is namelijk per abuis 1800 dollar geinvesteerd (papertrading))
+- Trading - Charts - dagen waarin niets gebeurd (ja dat gebeurd helaas ook) worden niet getoond op de x-as
+- Trading - Buy Trail gebruikt de verkeerde quantity, naar mate de prijs daalt zou de quantity groter moeten worden (is nu een constante)
+- Trading - Wellicht dat een BackTest meer inzicht geeft in eventuele problemen? (database locked)
+- Trading - Er worden geen signalen gemaakt voor symbols met posities (low volume, low price, flat candles enzovoort) - maar dan gebeurd er helemaal niets! (weken lang)!
+- Trading - De info dump van de positie, bij de value staat vaak een 0, graag invullen via stop*q of price*q indien mogelijk
+- Trading - De info dump van de positie, de sell aan de linkerkant zetten (kleurtje wellicht?) zodat je niet zover naar rechts hoeft te scrollen)
+- Trading - Bij het opstarten van de scanner zijn de open en gesloten posities niet direct zichtbaar (geeft je iets te doen). Pas na ophalen candles wordt het getoond, jammer!
+- Trading - Bij het opstarten van de scanner wordt rechtsboven het aantal openstaande posities getoond, die wijkt af van het werkelijke aantal (ietwat verwarrend waar deze gegevens vandaan komen)
+- Trading - Als een positie langer dan (bv) 2 week open is de positie op ongeveer de BE sluiten (een vrij slot voor andere munten werkt beter) Je ziet ze even boven de BE en daarna terug naar -10%, dat is jammer
+- Trading - De dashboard statistieken hooudt geen rekening met UTC (heeft nu 2 uur verschil met als gevolg een vertekend beeld <als je de verkoop momenten kent>) Hoe kun je via SQL hier rekening mee houden?
+- Trading - De buy timeout werkt via minuten in plaats van candles, dat is dus wellicht lastig traden op de hogere intervallen!!!? (zie CancelOrdersIfClosedOrTimeoutOrOther)
+- Trading - De commissie wordt niet correct in de BE berekening meegenomen, pas achteraf wordt de laatste commissie erbij berekend waardoor de winst 0.1% lager uitvalt (niet heel erg)
+- Trading - Als iets gekocht of verkocht is dan wordt pas in de volgende 1m candle daar actie op ondernomen, dat is voor papertrading en reallive traden hetzelfde ben ik bang
+- Trading - Bij een buy trail het percentage laten zien ten opzichte van de eerste poging (dan leeft het iets meer)
+- Trading - Documentatie uitleggen papertrading bot (achterliggende gedachtes uitleggen)
+- Trading - Documentatie uitleggen wat de open en gesloten posities precies zijn (per kolom)
+- Trading - Documentatie (er is wel een stukje van de trading toegelicht, maar lang niet alles
+Voor alle Exchanges (behalve Binance):
+- Trading - userdate stream implementeren (detectie van trade)
+- Trading - ophalen trades implementeren
+- Trading - ophalen assets implementeren
+- Trading - plaatsen van de orders (oco/buy/sell/stoplimit etc) - De OCO is Binance specifiek, vervanger?
+- Trading - price ticker implementeren (in Kucoin geeft dit teveel cpu overhead en is om die reden nu niet aangezet)
 
-TODO na de release:
-Documentatie (er is wel een stukje van de trading toegelicht, maar lang niet alles:
-- Trading - uitleggen papertrading bot (achterliggende gedachtes uitleggen)
-- Trading - uitleggen wat de open en gesloten posities precies zijn (per kolom)
-- ByBit Spot - URL voor activeren Bybit Spot in Altrady, Hypertrader en Tradingview (via de settings.json)
 
-TODO exchanges
-- ByBit Spot - Trading: userdate stream implementeren (detectie van trade)
-- ByBit Spot - Trading: ophalen trades implementeren
-- ByBit Spot - Trading: ophalen assets implementeren
-- ByBit Spot - Trading: plaatsen van de orders (oco/buy/sell/stoplimit etc) - De OCO is Binance specifiek, vervanger?
-- ByBit Futures - Trading: userdate stream implementeren (detectie van trade)
-
-De ondersteuning van de Kucoin exchange is uitgesteld (want de price- en klineticker geven heftige problemen)
-- Kukoin Spot - Scanner: kline ticker implementeren
-- Kukoin Spot - Scanner: price ticker implementeren
-- Kukoin Spot - Scanner: limieten (rate limits) ondersteunen
-
-
-xx-08-2023 1.8.3
-- Caption "Binance Trading (naast de papertrading))
-- Munten blijven de rest van hun leven actief, ook als ze niet worden genoemd in de lijst van symbolen enzovoort (alle 4 exchanges!)
-- De sortering van de signalen klopt niet (er is namelijk een kolom exchange toegevoegd, maar de sortering is niet aangepast)
+02-09-2023 1.8.3
+- Scanner - Excel overzicht met informatie van de symbols van de exchange
+- Scanner - Excel overzicht met informatie van de candles (van alle intervallen) van die munt (Kucoin debug)
+- Scanner - Kukoin Spot limieten (rate limits) ondersteunen
+- Scanner - Kukoin Spot kline ticker implementeren (en opvullen van niet gerapporteerde candles)
+- Scanner - De barometer grafiek wordt na het kiezen van een andere basismunt niet direct getoond.
+- Scanner - Munten blijven de rest van hun leven actief, ook als ze niet worden genoemd in de lijst van symbolen enzovoort (alle 4 exchanges!)
+- Scanner -Signalen - De sortering van de signalen klopt niet (er is namelijk een kolom exchange toegevoegd, maar de sortering is niet aangepast)
+- Scanner -Signalen - Het aantal getoonde signalen klopt niet, enkel lage intervallen worden getoond, de hogere intervallen zijn weggefilterd (de expirationdate herintroduceren)
+- Scanner - Een betere manier om de kline ticker te herstellen in het geval van (internet of exchange) storingen
 - Documentatie in zijn geheel bijgewerkt waaronder aanpassing .net framework
 - Een extra instelling waarmee je de munten aan de linkerkant kan verbergen
 - Het initiele lettertype in het dialoog komt niet overeen met de voorheen gekozen lettertype
   (het letterype wordt standaard op "Microsoft Sans Serif; 8pt" gezet terwijl de default "Segoe UI; 9pt" gebruikt wordt
-- De afhankelijkheid naar een ASP .net package verwijderd. Hierdoor wordt bij een verse installatie wel de juiste .net package geinstalleerd.
+- De afhankelijkheid naar een ASP .net package verwijderd. Hierdoor wordt bij een nieuwe installatie de juiste .net package geinstalleerd.
+- Trading - De barometer grafiek direct na het opstarten tonen (het duurde nogal lang voordat deze getoond werd)
+- Trading - Caption "Binance Trading (naast de papertrading))
+- Trading - Excel overzicht met informatie over een positie, de parts, de gemaakte trades, de BE berekening enzovoort
 
 03-08-2023 1.8.2
 - De kolommen van de signalen kunnen met de rechtermuisknop menu onzichtbaar worden gemaakt
