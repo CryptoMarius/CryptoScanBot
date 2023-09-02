@@ -5,6 +5,10 @@ namespace CryptoSbmScanner.Context;
 
 public class Migration
 {
+    // De huidige database versie (zoals in de code is gedefinieerd)
+    public readonly static int CurrentDatabaseVersion = 5;
+
+
     public static void Execute(CryptoDatabase database, int CurrentVersion)
     {
         CryptoVersion version = database.Connection.GetAll<CryptoVersion>().FirstOrDefault();
@@ -12,6 +16,7 @@ public class Migration
         if (CurrentVersion > version.Version)
         {
 
+            //***********************************************************
             if (CurrentVersion > version.Version && version.Version == 1)
             {
                 using var transaction = database.BeginTransaction();
@@ -41,6 +46,9 @@ public class Migration
                 transaction.Commit();
             }
 
+
+
+            //***********************************************************
             if (CurrentVersion > version.Version && version.Version == 2)
             {
                 using var transaction = database.BeginTransaction();
@@ -65,6 +73,22 @@ public class Migration
                 // De gemiddelde prijs dat het gekocht of verkocht is (meerdere trades ivm market of stoplimit)
                 database.Connection.Execute("alter table PositionStep add AvgPrice TEXT", transaction);
 
+                // update version
+                version.Version += 1;
+                database.Connection.Update(version, transaction);
+                transaction.Commit();
+            }
+
+
+
+            //***********************************************************
+            if (CurrentVersion > version.Version && version.Version == 3)
+            {
+                using var transaction = database.BeginTransaction();
+
+                // De laatste mutatie datum van een positie ("leeft" de positie?)
+                database.Connection.Execute("alter table Position add UpdateTime TEXT", transaction);
+                database.Connection.Execute("alter table Position add Reposition Integer", transaction);
 
                 // update version
                 version.Version += 1;
@@ -72,6 +96,22 @@ public class Migration
                 transaction.Commit();
             }
 
+
+            //***********************************************************
+            if (CurrentVersion > version.Version && version.Version == 4)
+            {
+                using var transaction = database.BeginTransaction();
+
+                database.Connection.Execute("insert into exchange(Name) values('Kraken')", transaction);
+                database.Connection.Execute("insert into TradeAccount(Short, Name, AccountType, TradeAccountType, ExchangeId) values('Trading', 'Kraken trading', 0, 2, 5);", transaction);
+                database.Connection.Execute("insert into TradeAccount(Short, Name, AccountType, TradeAccountType, ExchangeId) values('Paper', 'Kraken paper', 0, 1, 5);", transaction);
+                database.Connection.Execute("insert into TradeAccount(Short, Name, AccountType, TradeAccountType, ExchangeId) values('Backtest', 'Kraken backtest', 0, 0, 5);", transaction);
+                
+                // update version
+                version.Version += 1;
+                database.Connection.Update(version, transaction);
+                transaction.Commit();
+            }
         }
     }
 

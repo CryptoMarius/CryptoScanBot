@@ -17,7 +17,7 @@ namespace CryptoSbmScanner.Context;
 
 public class DateTimeHandler : SqlMapper.TypeHandler<DateTime>
 {
-    private static readonly DateTime unixOrigin = new DateTime(1970, 1, 1, 0, 0, 0, 0);
+    private static readonly DateTime unixOrigin = new(1970, 1, 1, 0, 0, 0, 0);
 
 
     public override void SetValue(IDbDataParameter parameter, DateTime value)
@@ -40,7 +40,7 @@ public class DateTimeHandler : SqlMapper.TypeHandler<DateTime>
         return DateTime.SpecifyKind(storedDateValue, DateTimeKind.Utc);
     }
 
-    private bool TryGetDateTime(object value, out DateTime dateTimeValue)
+    private static bool TryGetDateTime(object value, out DateTime dateTimeValue)
     {
         dateTimeValue = default;
         if (value is DateTime d)
@@ -61,7 +61,7 @@ public class DateTimeHandler : SqlMapper.TypeHandler<DateTime>
             return true;
         }
 
-        if (float.TryParse(value?.ToString() ?? string.Empty, out float f))
+        if (float.TryParse(value?.ToString() ?? string.Empty, out float _))
         {
             throw new InvalidOperationException("Unsupported Sqlite datetime type, REAL.");
         }
@@ -98,9 +98,6 @@ class TimeSpanHandler : SqliteTypeHandler<TimeSpan>
 
 public class CryptoDatabase : IDisposable
 {
-    // De huidige database versie (zoals in de code is gedefinieerd)
-    private readonly static int CurrentVersion = 3;
-
     public static void SetDatabaseDefaults()
     {
         Dapper.SqlMapper.Settings.CommandTimeout = 180;
@@ -549,7 +546,7 @@ public class CryptoDatabase : IDisposable
             using var transaction = connection.Connection.BeginTransaction();
             CryptoVersion databaseVersion = new()
             {
-                Version = CurrentVersion,
+                Version = Migration.CurrentDatabaseVersion,
             };
             connection.Connection.Insert(databaseVersion, transaction);
             transaction.Commit();
@@ -659,9 +656,13 @@ public class CryptoDatabase : IDisposable
             exchange = new() { Name = "Bybit Futures" };
             connection.Connection.Insert(exchange, transaction);
 
-            // Kucoin wordt verderop in het proces verwijderd (totdat we de exchange onder de knie hebben)
             exchange = new() { Name = "Kucoin" };
             connection.Connection.Insert(exchange, transaction);
+
+            // v5
+            exchange = new() { Name = "Kraken" };
+            connection.Connection.Insert(exchange, transaction);
+
             transaction.Commit();
         }
     }
@@ -782,7 +783,7 @@ public class CryptoDatabase : IDisposable
             connection.Connection.Insert(tradeAccount, transaction);
 
 
-
+            // Kucoin
             tradeAccount = new()
             {
                 Name = "Kucoin trading",
@@ -812,6 +813,40 @@ public class CryptoDatabase : IDisposable
                 TradeAccountType = CryptoTradeAccountType.BackTest,
             };
             connection.Connection.Insert(tradeAccount, transaction);
+
+
+            // Kraken
+            tradeAccount = new()
+            {
+                Name = "Kraken trading",
+                Short = "Trading",
+                ExchangeId = 5,
+                AccountType = CryptoAccountType.Spot,
+                TradeAccountType = CryptoTradeAccountType.RealTrading,
+            };
+            connection.Connection.Insert(tradeAccount, transaction);
+
+            tradeAccount = new()
+            {
+                Name = "Kraken paper",
+                Short = "Pater",
+                ExchangeId = 5,
+                AccountType = CryptoAccountType.Spot,
+                TradeAccountType = CryptoTradeAccountType.PaperTrade,
+            };
+            connection.Connection.Insert(tradeAccount, transaction);
+
+            tradeAccount = new()
+            {
+                Name = "Kraken backtest",
+                Short = "Backtest",
+                ExchangeId = 5,
+                AccountType = CryptoAccountType.Spot,
+                TradeAccountType = CryptoTradeAccountType.BackTest,
+            };
+            connection.Connection.Insert(tradeAccount, transaction);
+
+
             transaction.Commit();
         }
     }
@@ -985,6 +1020,7 @@ public class CryptoDatabase : IDisposable
                 "TradeAccountId integer, " +
                 
                 "CreateTime TEXT NOT NULL, " +
+                "UpdateTime TEXT NOT NULL, " +
                 "CloseTime TEXT NULL, " +
 
                 "ExchangeId Integer NOT NULL," +
@@ -1007,6 +1043,8 @@ public class CryptoDatabase : IDisposable
                 "Commission TEXTNULL, " +
                 "Returned TEXT NULL, " +
                 "Percentage TEXT NULL, " +
+                "Reposition Integer, " +
+
                 "FOREIGN KEY(TradeAccountId) REFERENCES TradeAccount(Id)," +
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +
                 "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)," +
@@ -1219,6 +1257,23 @@ public class CryptoDatabase : IDisposable
     //    //}
     //}
 
+    public int CreateNewUniqueId()
+    {
+        //using CryptoDatabase database = new();
+        //database.Open();
+        using var transaction = Connection.BeginTransaction();
+        {
+            CryptoSequence sequence = new()
+            {
+                Name = "Whatever"
+            };
+            Connection.Insert<CryptoSequence>(sequence, transaction);
+            Connection.Delete<CryptoSequence>(sequence, transaction);
+            transaction.Commit();
+            return sequence.Id;
+        }
+    }
+
     public static void CreateDatabase()
     {
         // Sqlite gaat afwijkend met datatypes om, zie https://learn.microsoft.com/en-us/dotnet/standard/data/sqlite/types
@@ -1234,6 +1289,8 @@ public class CryptoDatabase : IDisposable
 
         using var connection = new CryptoDatabase();
         connection.Open();
+
+        //connection.Connection.ServerVersion
 
         //connection.Connection.ForceDateTimesToUtc = true;
 
@@ -1259,7 +1316,7 @@ public class CryptoDatabase : IDisposable
 
 
         // Indien noodzakelijk database upgraden 
-        Migration.Execute(connection, CurrentVersion);
+        Migration.Execute(connection, Migration.CurrentDatabaseVersion);
 
 
     //    using (var command = connection.Connection.CreateCommand())
