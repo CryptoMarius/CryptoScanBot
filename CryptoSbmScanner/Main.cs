@@ -6,6 +6,7 @@ using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Settings;
 using CryptoSbmScanner.Signal;
 using CryptoSbmScanner.Trader;
+
 using Microsoft.Win32;
 
 using Nito.AsyncEx;
@@ -994,7 +995,5 @@ public partial class FrmMain : Form
         Invoke((MethodInvoker)(() => dashBoardInformation1.ShowBarometerStuff(null, null)));
     }
 
-    private void testToolStripMenuItem1_Click(object sender, EventArgs e)
-    {
-    }
+
 }
