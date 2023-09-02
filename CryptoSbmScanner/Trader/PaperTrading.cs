@@ -1,6 +1,7 @@
 ﻿using CryptoSbmScanner.Context;
 using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Exchange;
+using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 
 using Dapper;
