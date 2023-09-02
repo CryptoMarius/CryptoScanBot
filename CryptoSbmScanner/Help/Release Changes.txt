@@ -3,8 +3,7 @@ Groot kans dat datgene we besproken hebben dan ergens tussen wal en schip is bel
 Openstaande punten/bevindingen/todo's/enzovoort:
 
 Scanner:
-- Bij wijzigen van het aantal te tonen signalen (via aantal candles) de expirationdate opnieuw herberekenen
-- Het aantal nieuwe munten tonen die op de exchange zijn geintroduceerd (het veschil vanwege nieuwe of vervallen munten)
+- Het aantal nieuwe munten tonen die op de exchange zijn geintroduceerd (verschil tonen vanwege nieuwe of vervallen munten <kan ook een hele lijst zijn?>)
 - Gerapporteerd, lettertype problemen, het was helaas een melding en er is geen duidelijke oorzaak of uitleg voor het probleem.
   (daarom was er ook niets om om te kunnen lossen, ik wil daar nog verder op in gaan, maar ben er niet aan toe gekomen)
 - Bybit Futures, melden van de FundingRate en FundingInterval (maar wat is het precies?)
