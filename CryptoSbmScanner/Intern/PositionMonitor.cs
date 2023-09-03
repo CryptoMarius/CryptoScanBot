@@ -1236,6 +1236,11 @@ public class PositionMonitor : IDisposable
                                 Api.Dump(position.Symbol, cancelled, cancelParams, "annuleren vanwege een buy of sell");
                         }
 
+                        // Instellingen gewijzigd? (nog eventjes niet)
+                        //if (step.Status == CryptoOrderStatus.New && step.Name.Equals("SELL") && part.StepOutMethod != )
+                        //{
+                        //}
+
                     }
                 }
             }
@@ -1318,14 +1323,14 @@ public class PositionMonitor : IDisposable
                     if (position.Quantity > 0)
                     {
                         await HandleSellPart(position, part, candleInterval);
-                    }
 
 
-                    // Kunnen we een part afsluiten met meer dan x% winst (de zogenaamde jojo)
-                    // Wel uitsluiten voor trailing want anders lopen er 2 methodes door elkaar.
-                    if (position.Quantity > 0 && part.StepOutMethod != CryptoBuyStepInMethod.TrailViaKcPsar)
-                    {
-                        await HandleCheckProfitableSellPart(position, part);
+                        // Kunnen we een part afsluiten met meer dan x% winst (de zogenaamde jojo)
+                        // Wel uitsluiten voor trailing want anders lopen er 2 methodes door elkaar.
+                        if (part.StepOutMethod != CryptoBuyStepInMethod.TrailViaKcPsar)
+                        {
+                            await HandleCheckProfitableSellPart(position, part);
+                        }
                     }
                 }
             }
@@ -1363,8 +1368,9 @@ public class PositionMonitor : IDisposable
 #endif
 
 
-    public void CreateSignals()
+    public bool CreateSignals()
     {
+        int createdSignals = 0;
         //GlobalData.Logger.Info($"CreateSignals(start):" + LastCandle1m.OhlcText(Symbol, GlobalData.IntervalList[0], Symbol.PriceDisplayFormat, true, false, true));
         if (GlobalData.Settings.Signal.SignalsActive && Symbol.QuoteData.CreateSignals)
         {
@@ -1379,6 +1385,8 @@ public class PositionMonitor : IDisposable
                     // We geven als tijd het begin van de "laatste" candle (van dat interval)
                     SignalCreate createSignal = new(Symbol, interval);
                     createSignal.AnalyzeSymbol(LastCandle1mCloseTime - interval.Duration);
+                    if (createSignal.CreatedSignal)
+                        createdSignals++;
 
                     // Teller voor op het beeldscherm zodat je ziet dat deze thread iets doet en actief blijft.
                     // TODO: MultiTread aware maken ..
@@ -1387,6 +1395,8 @@ public class PositionMonitor : IDisposable
             }
         }
         //GlobalData.Logger.Info($"CreateSignals(stop):" + LastCandle1m.OhlcText(Symbol, GlobalData.IntervalList[0], Symbol.PriceDisplayFormat, true, false, true));
+
+        return createdSignals > 0;
     }
 
 
@@ -1468,10 +1478,10 @@ public class PositionMonitor : IDisposable
 
             // Create signals per interval
             //GlobalData.Logger.Info($"analyze.CreateSignals({Symbol.Name})");
-            CreateSignals();
+            bool hasCreatedAsignal = CreateSignals();
 
-            if (Symbol.Name.Equals("C98USDT"))
-                Symbol = Symbol;
+            //if (Symbol.Name.Equals("C98USDT"))
+            //    Symbol = Symbol;
 
 
 #if TRADEBOT
@@ -1500,7 +1510,7 @@ public class PositionMonitor : IDisposable
 
             // Open or extend a position
             //GlobalData.Logger.Info($"analyze.CreateOrExtendPositionViaSignal({Symbol.Name})");
-            if (Symbol.SignalCount > 0)
+            if (hasCreatedAsignal)
                 CreateOrExtendPositionViaSignal();
 
             // Per (actief) trade account de posities controleren

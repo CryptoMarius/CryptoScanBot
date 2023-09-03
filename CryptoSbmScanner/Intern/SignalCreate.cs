@@ -18,6 +18,8 @@ public class SignalCreate
     private CryptoCandle Candle { get; set; }
     public List<CryptoCandle> history = null;
 
+    public bool CreatedSignal = false;
+
 #if TRADEBOT
     bool hasOpenPosistion = false;
     bool hasOpenPosistionCalculated = false;
@@ -629,7 +631,10 @@ public class SignalCreate
                         if (symbolInterval.Signal == null || symbolInterval.Signal?.EventTime != signal.EventTime)
                         {
                             if (symbolInterval.Signal == null || algorithm.ReplaceSignal)
+                            {
                                 symbolInterval.Signal = signal;
+                                CreatedSignal = true;
+                            }
                         }
                     }
                 }
@@ -847,4 +852,5 @@ public class SignalCreate
 
         }
     }
+
 }
