@@ -90,6 +90,7 @@ static public class GlobalData
 
     // TODO: Deze rare accounts proberen te verbergen (indien mogelijk)
     static public SortedList<int, CryptoTradeAccount> TradeAccountList = new();
+    static public SortedList<int, CryptoTradeAccount> ActiveTradeAccountList = new();
     static public CryptoTradeAccount ExchangeBackTestAccount { get; set; }
     static public CryptoTradeAccount ExchangeRealTradeAccount { get; set; }
     static public CryptoTradeAccount ExchangePaperTradeAccount { get; set; }
@@ -117,7 +118,7 @@ static public class GlobalData
 
     static public void LoadExchanges()
     {
-        GlobalData.AddTextToLogTab("Reading exchange information");
+        AddTextToLogTab("Reading exchange information");
 
         // De exchanges uit de database laden
         ExchangeListId.Clear();
@@ -132,7 +133,7 @@ static public class GlobalData
 
     static public void LoadAccounts()
     {
-        GlobalData.AddTextToLogTab("Reading account information");
+        AddTextToLogTab("Reading account information");
 
         // De accounts uit de database laden
         TradeAccountList.Clear();
@@ -152,17 +153,22 @@ static public class GlobalData
 
     public static void SetTradingAccounts()
     {
-        foreach (CryptoTradeAccount tradeAccount in GlobalData.TradeAccountList.Values)
+        ActiveTradeAccountList.Clear();
+        foreach (CryptoTradeAccount tradeAccount in TradeAccountList.Values)
         {
             // Er zijn 3 accounts per exchange aanwezig (of dat een goede keuze is vraag ik me af)
-            if (tradeAccount.ExchangeId == GlobalData.Settings.General.ExchangeId)
+            if (tradeAccount.ExchangeId == Settings.General.ExchangeId)
             {
                 if (tradeAccount.TradeAccountType == CryptoTradeAccountType.BackTest)
-                    GlobalData.ExchangeBackTestAccount = tradeAccount;
+                    ExchangeBackTestAccount = tradeAccount;
                 if (tradeAccount.TradeAccountType == CryptoTradeAccountType.PaperTrade)
-                    GlobalData.ExchangePaperTradeAccount = tradeAccount;
+                    ExchangePaperTradeAccount = tradeAccount;
                 if (tradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading)
-                    GlobalData.ExchangeRealTradeAccount = tradeAccount;
+                    ExchangeRealTradeAccount = tradeAccount;
+
+                // Niet echt super, enumeratie oid hiervoor in het leven roepen, werkt verder wel
+                if (BackTest || Settings.Trading.TradeViaExchange || Settings.Trading.TradeViaPaperTrading)
+                    ActiveTradeAccountList.Add(tradeAccount.Id, tradeAccount);
             }
         }
     }
@@ -170,7 +176,7 @@ static public class GlobalData
 
     static public void LoadIntervals()
     {
-        GlobalData.AddTextToLogTab("Reading interval information");
+        AddTextToLogTab("Reading interval information");
 
         // De intervallen uit de database laden
         IntervalList.Clear();
@@ -187,10 +193,10 @@ static public class GlobalData
 
 
         // De ContructFrom object koppelen
-        foreach (CryptoInterval interval in GlobalData.IntervalList)
+        foreach (CryptoInterval interval in IntervalList)
         {
             if (interval.ConstructFromId > 0)
-                interval.ConstructFrom = GlobalData.IntervalListId[(int)interval.ConstructFromId];
+                interval.ConstructFrom = IntervalListId[(int)interval.ConstructFromId];
         }
 
         // In MSSQL staan ze niet in dej uiste volgorde (vanwege het toevoegen van 2 intervallen)
@@ -201,33 +207,33 @@ static public class GlobalData
     {
         // De symbols uit de database lezen (ook van andere exchanges)
         // Dat doen we om de symbol van voorgaande signalen en/of posities te laten zien
-        GlobalData.AddTextToLogTab("Reading symbol information");
+        AddTextToLogTab("Reading symbol information");
         //string sql = $"select * from symbol where exchangeid={exchange.Id}";
         string sql = "select * from symbol";
 
         using var database = new CryptoDatabase();
         foreach (CryptoSymbol symbol in database.Connection.Query<CryptoSymbol>(sql))
-            GlobalData.AddSymbol(symbol);
+            AddSymbol(symbol);
     }
 
     static public void LoadSignals()
     {
         // Een aantal signalen laden
         // TODO - beperken tot de signalen die nog enigzins bruikbaar zijn??
-        GlobalData.AddTextToLogTab("Reading some signals");
-//#if SQLDATABASE
-//        string sql = "select top 50 * from signal order by id desc";
-//        //sql = string.Format("select top 50 * from signal where exchangeid={0} order by id desc", exchange.Id);
-//#else
-//        string sql = "select * from signal order by id desc limit 50";
-//        //sql = string.Format("select * from signal where exchangeid={0} order by id desc limit 50", exchange.Id);
-//#endif
+        AddTextToLogTab("Reading some signals");
+        //#if SQLDATABASE
+        //        string sql = "select top 50 * from signal order by id desc";
+        //        //sql = string.Format("select top 50 * from signal where exchangeid={0} order by id desc", exchange.Id);
+        //#else
+        //        string sql = "select * from signal order by id desc limit 50";
+        //        //sql = string.Format("select * from signal where exchangeid={0} order by id desc limit 50", exchange.Id);
+        //#endif
         string sql = "select * from signal where ExpirationDate >= @FromDate order by OpenDate";
 
         using var database = new CryptoDatabase();
-        foreach (CryptoSignal signal in database.Connection.Query<CryptoSignal>(sql, new { FromDate = DateTime.UtcNow}))
+        foreach (CryptoSignal signal in database.Connection.Query<CryptoSignal>(sql, new { FromDate = DateTime.UtcNow }))
         {
-            if (GlobalData.ExchangeListId.TryGetValue(signal.ExchangeId, out Model.CryptoExchange exchange2))
+            if (ExchangeListId.TryGetValue(signal.ExchangeId, out Model.CryptoExchange exchange2))
             {
                 signal.Exchange = exchange2;
 
@@ -235,10 +241,10 @@ static public class GlobalData
                 {
                     signal.Symbol = symbol;
 
-                    if (GlobalData.IntervalListId.TryGetValue((int) signal.IntervalId, out CryptoInterval interval))
+                    if (IntervalListId.TryGetValue((int)signal.IntervalId, out CryptoInterval interval))
                         signal.Interval = interval;
 
-                    GlobalData.SignalQueue.Enqueue(signal);
+                    SignalQueue.Enqueue(signal);
                 }
             }
         }
@@ -250,7 +256,7 @@ static public class GlobalData
     {
         // Alle gesloten posities lezen 
         // TODO - beperken tot de laatste 2 dagen? (en wat handigheden toevoegen wellicht)
-        GlobalData.AddTextToLogTab("Reading closed position");
+        AddTextToLogTab("Reading closed position");
 #if SQLDATABASE
         string sql = "select top 250 * from position where not closetime is null order by id desc";
 #else
@@ -264,13 +270,13 @@ static public class GlobalData
     static public void LoadOpenPositions()
     {
         // Alle openstaande posities lezen 
-        GlobalData.AddTextToLogTab("Reading open position");
+        AddTextToLogTab("Reading open position");
 
         using var database = new CryptoDatabase();
         string sql = "select * from position where closetime is null and status < 2";
         foreach (CryptoPosition position in database.Connection.Query<CryptoPosition>(sql))
         {
-            if (!GlobalData.TradeAccountList.TryGetValue(position.TradeAccountId, out CryptoTradeAccount tradeAccount))
+            if (!TradeAccountList.TryGetValue(position.TradeAccountId, out CryptoTradeAccount tradeAccount))
                 throw new Exception("Geen trade account gevonden");
 
             PositionTools.AddPosition(tradeAccount, position);
@@ -281,10 +287,10 @@ static public class GlobalData
     static async public Task CheckOpenPositions()
     {
         // Alle openstaande posities lezen 
-        GlobalData.AddTextToLogTab("Checking open position");
+        AddTextToLogTab("Checking open position");
 
         using var database = new CryptoDatabase();
-        foreach (CryptoTradeAccount tradeAccount in GlobalData.TradeAccountList.Values.ToList())
+        foreach (CryptoTradeAccount tradeAccount in TradeAccountList.Values.ToList())
         {
             //foreach (CryptoPosition position in tradeAccount.PositionList.Values.ToList())
             foreach (var positionList in tradeAccount.PositionList.Values.ToList())
@@ -302,7 +308,7 @@ static public class GlobalData
                         if (part.Invested > 0 && part.Quantity == 0 && part.Status != CryptoPositionStatus.Ready)
                         {
                             part.Status = CryptoPositionStatus.Ready;
-                            GlobalData.AddTextToLogTab(string.Format("LoadData: Positie {0} Part {1} status aangepast naar {2}", position.Symbol.Name, part.Name, part.Status));
+                            AddTextToLogTab(string.Format("LoadData: Positie {0} Part {1} status aangepast naar {2}", position.Symbol.Name, part.Name, part.Status));
                         }
 
                         if (part.Status == CryptoPositionStatus.Ready)
@@ -316,7 +322,7 @@ static public class GlobalData
                     if (position.Invested > 0 && position.Quantity == 0 && position.Status != CryptoPositionStatus.Ready)
                     {
                         position.Status = CryptoPositionStatus.Ready;
-                        GlobalData.AddTextToLogTab(string.Format("LoadData: Positie {0} status aangepast naar {1}", position.Symbol.Name, position.Status));
+                        AddTextToLogTab(string.Format("LoadData: Positie {0} status aangepast naar {1}", position.Symbol.Name, position.Status));
                     }
 
                     if (position.Status == CryptoPositionStatus.Ready)
@@ -468,7 +474,7 @@ static public class GlobalData
         // TODO: Deze routine is een discrepantie tussen de scanner en trader!
         // De BarometerTools bevat een vergelijkbare routine, enkel de timing verschilt?
 
-        if (ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+        if (ExchangeListName.TryGetValue(Settings.General.ExchangeName, out Model.CryptoExchange exchange))
         {
             foreach (CryptoQuoteData quoteData in Settings.QuoteCoins.Values)
             {
@@ -508,7 +514,7 @@ static public class GlobalData
                 //using (FileStream readStream = new FileStream(filename, FileMode.Open))
                 //{
                 //    BinaryFormatter formatter = new BinaryFormatter();
-                //    GlobalData.Settings = (Settings)formatter.Deserialize(readStream);
+                //    Settings = (Settings)formatter.Deserialize(readStream);
                 //    readStream.Close();
                 //}
                 string text = File.ReadAllText(filename);
@@ -733,7 +739,7 @@ static public class GlobalData
     static public void DebugOnlySymbol(string name)
     {
         // Reduceren naar enkel de BTCUSDT voor traceren van problemen
-        Model.CryptoExchange exchangex = GlobalData.ExchangeListId.Values[0];
+        Model.CryptoExchange exchangex = ExchangeListId.Values[0];
         for (int i = exchangex.SymbolListId.Values.Count - 1; i >= 0; i--)
         {
             CryptoSymbol symbol = exchangex.SymbolListId.Values[i];
@@ -822,7 +828,7 @@ static public class GlobalData
 
     //public static void DumpSessionInformation()
     //{
-    //    foreach (Model.CryptoExchange exchange in GlobalData.ExchangeListName.Values.ToList())
+    //    foreach (Model.CryptoExchange exchange in ExchangeListName.Values.ToList())
     //    {
     //        int candleCount = 0;
     //        foreach (Model.CryptoSymbol symbol in exchange.SymbolListName.Values.ToList())

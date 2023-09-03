@@ -403,7 +403,7 @@ public class PositionMonitor : IDisposable
                 // (kan aangeroepen worden op meerdere TF's)
                 //******************************************
 
-                foreach (CryptoTradeAccount tradeAccount in GlobalData.TradeAccountList.Values.ToList())
+                foreach (CryptoTradeAccount tradeAccount in GlobalData.ActiveTradeAccountList.Values.ToList())
                 {
                     if (!PositionTools.ValidTradeAccount(tradeAccount, Symbol))
                         continue;
@@ -1504,7 +1504,7 @@ public class PositionMonitor : IDisposable
                 CreateOrExtendPositionViaSignal();
 
             // Per (actief) trade account de posities controleren
-            foreach (CryptoTradeAccount tradeAccount in GlobalData.TradeAccountList.Values.ToList())
+            foreach (CryptoTradeAccount tradeAccount in GlobalData.ActiveTradeAccountList.Values.ToList())
             {
                 // Aan de hand van de instellingen accounts uitsluiten
                 if (PositionTools.ValidTradeAccount(tradeAccount, Symbol))
