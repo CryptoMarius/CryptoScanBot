@@ -17,48 +17,27 @@ public class ExcelPositionDump : ExcelBase
     public void DumpParts()
     {
         HSSFSheet sheet = (HSSFSheet)Book.CreateSheet("Parts");
+        ICell cell;
 
         // Er zijn 2 rijen met headers
         int row = 0;
-        //WriteCell(sheet, 00, row, "BUY");
-        //WriteCell(sheet, 11, row, "SELL");
-        //row++;
 
         // Headers
         int columns = 0;
-        {
-            WriteCell(sheet, columns++, row, "Id");
-            WriteCell(sheet, columns++, row, "Order");
-            WriteCell(sheet, columns++, row, "Side");
-            WriteCell(sheet, columns++, row, "Create");
-            WriteCell(sheet, columns++, row, "Close");
-            WriteCell(sheet, columns++, row, "Type");
-            WriteCell(sheet, columns++, row, "Status");
-            WriteCell(sheet, columns++, row, "Trailing");
-            WriteCell(sheet, columns++, row, "Quantity");
-            WriteCell(sheet, columns++, row, "Price");
-            WriteCell(sheet, columns++, row, "StopLimit");
-            WriteCell(sheet, columns++, row, "Value");
-            WriteCell(sheet, columns++, row, "Commission");
+        WriteCell(sheet, columns++, row, "Id");
+        WriteCell(sheet, columns++, row, "Order");
+        WriteCell(sheet, columns++, row, "Side");
+        WriteCell(sheet, columns++, row, "Create");
+        WriteCell(sheet, columns++, row, "Close");
+        WriteCell(sheet, columns++, row, "Type");
+        WriteCell(sheet, columns++, row, "Status");
+        WriteCell(sheet, columns++, row, "Trailing");
+        WriteCell(sheet, columns++, row, "Quantity");
+        WriteCell(sheet, columns++, row, "Price");
+        WriteCell(sheet, columns++, row, "StopLimit");
+        WriteCell(sheet, columns++, row, "Value");
+        WriteCell(sheet, columns++, row, "Commission");
 
-            //columns++;
-
-            //WriteCell(sheet, columns++, row, "Id");
-            //WriteCell(sheet, columns++, row, "Order");
-            //WriteCell(sheet, columns++, row, "Side");
-            //WriteCell(sheet, columns++, row, "Create");
-            //WriteCell(sheet, columns++, row, "Close");
-            //WriteCell(sheet, columns++, row, "Type");
-            //WriteCell(sheet, columns++, row, "Status");
-            //WriteCell(sheet, columns++, row, "Trailing");
-            //WriteCell(sheet, columns++, row, "Quantity");
-            //WriteCell(sheet, columns++, row, "Price");
-            //WriteCell(sheet, columns++, row, "StopLimit");
-            //WriteCell(sheet, columns++, row, "Value");
-            //WriteCell(sheet, columns++, row, "Commission");
-        }
-
-        ICell cell;
         foreach (CryptoPositionPart part in Position.Parts.Values.ToList())
         {
             ++row;
