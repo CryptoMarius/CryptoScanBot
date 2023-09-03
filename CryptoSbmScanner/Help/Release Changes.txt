@@ -72,6 +72,9 @@ Voor alle Exchanges (behalve Binance):
 - Trading - price ticker implementeren (in Kucoin geeft dit teveel cpu overhead en is om die reden nu niet aangezet)
 
 
+03-09-2023 1.8.4
+- Bij gebruik van een NL decimal seperator (,) worden de prijzen van de symbols in de display en signalen afgekapt.
+
 02-09-2023 1.8.3
 - Scanner - Excel overzicht met informatie van de symbols van de exchange
 - Scanner - Excel overzicht met informatie van de candles (van alle intervallen) van die munt (Kucoin debug)

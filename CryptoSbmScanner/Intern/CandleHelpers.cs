@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Globalization;
+using System.Text;
 
 using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Model;
@@ -79,18 +80,18 @@ public static class Helper
     {
         // Een alternatief hievoor is de Normalize() functie herboven
         // (maar dat zal qua performance niet veel uitmaken denk ik)
-
         string text = value.HasValue ? ((decimal)value).ToString(fmt) : "0"; //Get the stock string
 
         //If there is a decimal point present
-        if (text.Contains('.'))
+        string seperator = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
+        if (text.Contains(seperator))
         {
             //Remove all trailing zeros
             text = text.TrimEnd('0');
 
             //If all we are left with is a decimal point
-            if (text.EndsWith(".")) //then remove it
-                text = text.TrimEnd('.');
+            if (text.EndsWith(seperator)) //then remove it
+                text = text.TrimEnd(seperator[0]);
         }
 
         return text;
@@ -107,14 +108,15 @@ public static class Helper
         string text = value.ToString(fmt); //Get the stock string
 
         //If there is a decimal point present
-        if (text.Contains('.'))
+        string seperator = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
+        if (text.Contains(seperator))
         {
             //Remove all trailing zeros
             text = text.TrimEnd('0');
 
             //If all we are left with is a decimal point
-            if (text.EndsWith(".")) //then remove it
-                text = text.TrimEnd('.');
+            if (text.EndsWith(seperator)) //then remove it
+                text = text.TrimEnd(seperator[0]);
         }
 
         return text;

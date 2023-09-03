@@ -7,6 +7,7 @@ using CryptoSbmScanner.TradingView;
 using Dapper;
 using Dapper.Contrib.Extensions;
 
+using System.Globalization;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 
@@ -404,10 +405,12 @@ static public class GlobalData
             symbol.QuoteData = AddQuoteData(symbol.Quote);
 
 
+            string seperator = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
+
             // Niet de ideale wereld
             int numberOfDecimalPlaces;
             string s = symbol.PriceTickSize.ToString0();
-            int x = s.IndexOf('.');
+            int x = s.IndexOf(seperator);
             if (x > 0)
             {
                 s = s[(x + 1)..];
@@ -421,7 +424,7 @@ static public class GlobalData
 
 
             s = symbol.QuantityTickSize.ToString0();
-            x = s.IndexOf('.');
+            x = s.IndexOf(seperator);
             if (x > 0)
             {
                 s = s[(x + 1)..];
