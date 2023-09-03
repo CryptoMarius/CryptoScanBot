@@ -102,7 +102,6 @@ namespace CryptoSbmScanner
             button1.TabIndex = 14;
             button1.Text = "Telegram";
             button1.UseVisualStyleBackColor = true;
-            button1.Click += Button1_Click;
             // 
             // button6
             // 

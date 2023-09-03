@@ -868,7 +868,7 @@ public partial class TestForm : Form
 
                                     // Vul het aan met andere attributen
                                     CryptoCandle candle = CandleTools.HandleFinalCandleData(symbol, interval, candleTmp.Date,
-                                        candleTmp.Open, candleTmp.High, candleTmp.Low, candleTmp.Close, candleTmp.Volume);
+                                        candleTmp.Open, candleTmp.High, candleTmp.Low, candleTmp.Close, candleTmp.Volume, False);
                                     candleCache.Add(candle);
                                 }
 

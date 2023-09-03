@@ -23,7 +23,7 @@ public class SettingsSignal
     public bool LogSymbolMustExistsDays { get; set; } = false;
 
     // Vermijden van "barcode" charts
-    public decimal MinimumTickPercentage { get; set; } = 0.4m;
+    public decimal MinimumTickPercentage { get; set; } = 0.25m;
     public bool LogMinimumTickPercentage { get; set; } = false;
 
     // de 24 change moet binnen dit interval zitten (niet presentatief)
@@ -79,16 +79,16 @@ public class SettingsSignal
     // SBM algemene instellingen recovery, percentages, crossing && lookback
     public int SbmCandlesForMacdRecovery { get; set; } = 2;
 
-    public decimal SbmMa200AndMa50Percentage { get; set; } = 0.3m;
-    public decimal SbmMa50AndMa20Percentage { get; set; } = 0.3m;
-    public decimal SbmMa200AndMa20Percentage { get; set; } = 0.7m;
+    public decimal SbmMa200AndMa50Percentage { get; set; } = 0.25m;
+    public decimal SbmMa50AndMa20Percentage { get; set; } = 0.25m;
+    public decimal SbmMa200AndMa20Percentage { get; set; } = 0.50m;
 
     public bool SbmMa200AndMa50Crossing { get; set; } = true;
-    public int SbmMa200AndMa50Lookback { get; set; } = 20;
+    public int SbmMa200AndMa50Lookback { get; set; } = 30;
     public bool SbmMa50AndMa20Crossing { get; set; } = true;
     public int SbmMa50AndMa20Lookback { get; set; } = 10;
     public bool SbmMa200AndMa20Crossing { get; set; } = true;
-    public int SbmMa200AndMa20Lookback { get; set; } = 20;
+    public int SbmMa200AndMa20Lookback { get; set; } = 15;
 
 
     // JUMP
@@ -97,10 +97,10 @@ public class SettingsSignal
     public bool PlaySoundCandleJumpSignal { get; set; } = false;
     public bool PlaySpeechCandleJumpSignal { get; set; } = false;
     public bool JumpUseLowHighCalculation { get; set; } = false;
-    public int JumpCandlesLookbackCount { get; set; } = 1;
+    public int JumpCandlesLookbackCount { get; set; } = 5;
     public string SoundCandleJumpDown { get; set; } = "sound-jump-down.wav";
     public string SoundCandleJumpUp { get; set; } = "sound-jump-up.wav";
-    public decimal AnalysisCandleJumpPercentage { get; set; } = 2.5m;
+    public decimal AnalysisCandleJumpPercentage { get; set; } = 4m;
 
 
     // Logging

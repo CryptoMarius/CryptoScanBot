@@ -953,7 +953,7 @@ public class PositionMonitor : IDisposable
 
                 // Als de actuele prijs ondertussen substantieel hoger dan winst proberen te nemen (jojo)
                 // Dit verstoord eigenlijk de trailing sell, maar het is maar even zo...
-                decimal x = breakEven + breakEven * (1.25m / 100m); // Voorlopig even hardcoded 1%.... (vanwege ontbreken OCO en stop order )
+                decimal x = breakEven + breakEven * (0.75m / 100m); // Voorlopig even hardcoded (vanwege ontbreken OCO en stop order )
                 if (position.Symbol.LastPrice < x)
                     return;
 
@@ -1470,14 +1470,17 @@ public class PositionMonitor : IDisposable
             //GlobalData.Logger.Info($"analyze.CreateSignals({Symbol.Name})");
             CreateSignals();
 
+            if (Symbol.Name.Equals("C98USDT"))
+                Symbol = Symbol;
+
 
 #if TRADEBOT
-            // Idee1: Zet de echte (gemiddelde) price in de step indien deze gevuld is (het is nu namelijk
-            // onduidelijk voor welke prijs het exact verkocht is = lastig met meerdere trades igv market)
-            // Idee2: Zet de buyPrice en de echte (gemiddelde)sellPrice in de part indien deze gevuld zijn ()
-            // Probleem: De migratie van de oude naar een nieuwe situatie (als je het al zou uitvoeren)
+                // Idee1: Zet de echte (gemiddelde) price in de step indien deze gevuld is (het is nu namelijk
+                // onduidelijk voor welke prijs het exact verkocht is = lastig met meerdere trades igv market)
+                // Idee2: Zet de buyPrice en de echte (gemiddelde)sellPrice in de part indien deze gevuld zijn ()
+                // Probleem: De migratie van de oude naar een nieuwe situatie (als je het al zou uitvoeren)
 
-            //GlobalData.Logger.Info($"analyze.Database({Symbol.Name})");
+                //GlobalData.Logger.Info($"analyze.Database({Symbol.Name})");
             Database.Open();
 
 

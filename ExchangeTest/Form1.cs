@@ -23,15 +23,18 @@ using Kucoin.Net.Clients;
 using Kucoin.Net.Enums;
 using Kucoin.Net.Objects.Models.Spot;
 
-using System;
-using System.Text;
-using Microsoft.Extensions.DependencyInjection;
-using Binance.Net;
-using Microsoft.Extensions.Logging;
 using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Context;
+using CryptoExchange.Net.Objects;
+using Binance.Net.Objects.Models.Spot;
+using CryptoExchange.Net;
+using Microsoft.Extensions.Logging;
+using ExchangeTest.Mexc;
+using CryptoExchange.Net.Interfaces;
+using MexcDotNet;
+using System.Text;
 
 namespace ExchangeTest;
 
@@ -82,9 +85,11 @@ public partial class Form1 : Form
         InitializeComponent();
 
         GlobalData.ApplicationStatus = CryptoApplicationStatus.Running;
+        GlobalData.LogToLogTabEvent += new AddTextEvent(AddTextToLogTab);
         //BinanceTestAsync();
         //ByBitTestAsync();
-        KucoinTest();
+        //KucoinTest();
+        MexcTest();
     }
 
     private void AddTextToLogTab(string text, bool extraLineFeed = false)
@@ -95,7 +100,7 @@ public partial class Form1 : Form
             GlobalData.Logger.Info(text);
 
             if (text != "")
-              text = DateTime.Now.ToLocalTime() + " " + text;
+                text = DateTime.Now.ToLocalTime() + " " + text;
             if (extraLineFeed)
                 text += "\r\n\r\n";
             else
@@ -110,14 +115,90 @@ public partial class Form1 : Form
         }
     }
 
+    private static string baseUrl = "https://api.mexc.com";
+    private static string apiKey = "";
+    private static string apiSecret = "";
+
+    private async Task<string> SendAsync(HttpClient httpClient, string requestUri, HttpMethod httpMethod, object content = null)
+    {
+        Console.WriteLine(requestUri);
+        using (var request = new HttpRequestMessage(httpMethod, baseUrl + requestUri))
+        {
+            request.Headers.Add("X-MEXC-APIKEY", apiKey);
+
+            if (content is not null)
+            {
+                //request.Content = new StringContent(JsonConvert.SerializeObject(content), Encoding.UTF8, "application/json");
+                string text = System.Text.Json.JsonSerializer.Serialize(content, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
+                //File.WriteAllText(filename, text);
+                request.Content = new StringContent(text);
+                //request.Content = new StringContent(JsonConvert.SerializeObject(content), Encoding.UTF8, "application/json");
+            }
+
+            HttpResponseMessage response = await httpClient.SendAsync(request);
+
+            using (HttpContent responseContent = response.Content)
+            {
+                string jsonString = await responseContent.ReadAsStringAsync();
+
+                return jsonString;
+            }
+        }
+    }
+
+    private async Task MexcTest()
+    {
+        try
+        {
+            CryptoDatabase.SetDatabaseDefaults();
+            GlobalData.LoadExchanges();
+            GlobalData.LoadIntervals();
+            GlobalData.LoadAccounts();
+
+            string text;
+            string apiKey = "your apikey";
+            string apiSecret = "your secret";
+            string BaseUrl = "https://api.mexc.com";
+
+            HttpClient httpClient = new HttpClient();
+            //MexcService service = new(apiKey, apiSecret, BaseUrl, httpClient);
+
+
+            text = await SendAsync(httpClient, "/api/v3/exchangeInfo?symbol=BTCUSDT", HttpMethod.Get);
+            GlobalData.AddTextToLogTab(text);
+
+            text = await SendAsync(httpClient, "/api/v3/exchangeInfo?symbols=BTCUSDT,ETHUSDT", HttpMethod.Get);
+            GlobalData.AddTextToLogTab(text);
+
+            text = await SendAsync(httpClient, "/api/v3/exchangeInfo", HttpMethod.Get);
+            GlobalData.AddTextToLogTab(text);
+
+
+            ///// Exchange Information
+            //using (var response = service.SendPublicAsync("/api/v3/exchangeInfo", HttpMethod.Get, new Dictionary<string, object> {{"symbol", "BTCUSDT"}}))
+            //{
+            //    string text = await response;
+            //    GlobalData.AddTextToLogTab(text);
+            //};
+
+            //using (var response = service.SendPublicAsync("/api/v3/exchangeInfo", HttpMethod.Get, new Dictionary<string, object> { }))
+            //{
+            //    string text = await response;
+            //    //GlobalData.AddTextToLogTab(text);
+            //};
+        }
+        catch (Exception error)
+        {
+            GlobalData.Logger.Error(error);
+            GlobalData.AddTextToLogTab("error back testing " + error.ToString()); // symbol.Text + " " + 
+        }
+    }
 
     private async Task KucoinTest()
     {
         //int TickerCount = 0;
         try
         {
-            GlobalData.LogToLogTabEvent += new AddTextEvent(AddTextToLogTab);
-
             // De symbol naam wordt anders gecodeerd zie ik..? streepjes in de naamgeving van de symbol (zucht)
 
             // https://api.kucoin.com/api/v1/market/stats?symbol=BTC-USDT

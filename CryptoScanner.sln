@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoSbmTestjes", "Testjes
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExchangeTest", "ExchangeTest\ExchangeTest.csproj", "{070613CA-3477-4639-B9F7-C0B7A7965324}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoSbmScannerTests", "CryptoSbmScannerTests\CryptoSbmScannerTests.csproj", "{8F058349-A032-4590-9401-CEEC25BE7415}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoSbmScannerTests", "CryptoSbmScannerTests\CryptoSbmScannerTests.csproj", "{8F058349-A032-4590-9401-CEEC25BE7415}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
