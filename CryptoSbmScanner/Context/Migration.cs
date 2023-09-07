@@ -6,7 +6,7 @@ namespace CryptoSbmScanner.Context;
 public class Migration
 {
     // De huidige database versie (zoals in de code is gedefinieerd)
-    public readonly static int CurrentDatabaseVersion = 5;
+    public readonly static int CurrentDatabaseVersion = 6;
 
 
     public static void Execute(CryptoDatabase database, int CurrentVersion)
@@ -112,6 +112,29 @@ public class Migration
                 database.Connection.Update(version, transaction);
                 transaction.Commit();
             }
+
+
+            //***********************************************************
+            if (CurrentVersion > version.Version && version.Version == 5)
+            {
+                using var transaction = database.BeginTransaction();
+
+                // Op wat voor signaal doen we de aan- of bijkoop
+                database.Connection.Execute("alter table PositionPart add Strategy Integer;", transaction);
+
+                // Welk interval had de BUY of DCA? (buy trailen in het juiste interval)
+                database.Connection.Execute("alter table PositionPart add IntervalId Integer;", transaction);
+                // Je kunt achteraf niet een contraint toevoegen, dan moet de hele tabel opnieuw gemaakt worden, pfft..
+                //database.Connection.Execute("alter table PositionPart add constraint fkPositionPartInterval foreign key(IntervalId) references Interval(id);", transaction);
+
+                database.Connection.Execute("CREATE INDEX IdxPositionPartIntervalId ON PositionPart(IntervalId)");
+
+                // update version
+                version.Version += 1;
+                database.Connection.Update(version, transaction);
+                transaction.Commit();
+            }
+
         }
     }
 

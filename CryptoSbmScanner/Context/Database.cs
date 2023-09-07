@@ -1069,6 +1069,8 @@ public class CryptoDatabase : IDisposable
                 "PositionId Integer NOT NULL," +
                 "ExchangeId Integer NOT NULL," +
                 "SymbolId Integer NOT NULL, " +
+                "IntervalId Integer NOT NULL, " +
+                "Strategy TEXT NOT NULL, " +
 
                 "Side INTEGER NOT NULL, " +
                 "Name TEXT NULL," +
@@ -1086,16 +1088,18 @@ public class CryptoDatabase : IDisposable
                 "BreakEvenPrice TEXT NULL, " +
 
                 "SignalPrice TEXT NOT NULL, " + // was BuyPrice
-                //"BuyAmount TEXT NULL, " + // kan verwijderd worden
-                //"SellPrice TEXT NULL, " + // kan verwijderd worden
+                "StepInMethod INTEGER NULL," +
+                "StepOutMethod INTEGER NULL," +
 
                 "FOREIGN KEY(PositionId) REFERENCES Position(Id)," +
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +
-                "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)" +
+                "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)," +
+                "FOREIGN KEY(IntervalId) REFERENCES Interval(Id)" +
             ")");
             connection.Connection.Execute("CREATE INDEX IdxPositionPartId ON PositionPart(Id)");
             connection.Connection.Execute("CREATE INDEX IdxPositionPartExchangeId ON PositionPart(ExchangeId)");
             connection.Connection.Execute("CREATE INDEX IdxPositionPartSymbolId ON PositionPart(SymbolId)");
+            connection.Connection.Execute("CREATE INDEX IdxPositionPartIntervalId ON PositionPart(IntervalId)");
             connection.Connection.Execute("CREATE INDEX IdxPositionPartCreateTime ON PositionPart(CreateTime)");
             connection.Connection.Execute("CREATE INDEX IdxPositionPartCloseTime ON PositionPart(CloseTime)");
         }
@@ -1126,10 +1130,7 @@ public class CryptoDatabase : IDisposable
                 // Vanwege Papertrading nullable
                 "OrderId TEXT NULL," +
                 "Order2Id TEXT NULL," +
-                //"OrderListId TEXT NULL," + // Binance OCO, extra lijst? (nooit gebruikt)
                 "AvgPrice TEXT NULL," +
-                "StepInMethod INTEGER NULL," +
-                "StepOutMethod INTEGER NULL," +
                 "Trailing INTEGER NULL," +
                 "FOREIGN KEY(PositionId) REFERENCES Position(Id)," +
                 "FOREIGN KEY(PositionPartId) REFERENCES PositionPart(Id)" +
