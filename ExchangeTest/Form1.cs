@@ -1,11 +1,11 @@
 using System.Text.Encodings.Web;
 using System.Text.Json;
 
-//using Bybit.Net.Clients;
-//using Bybit.Net.Enums;
-//using Bybit.Net.Objects;
-//using Bybit.Net.Objects.Models.V5;
-//using Bybit.Net.Objects.Models.Socket;
+using Bybit.Net.Clients;
+using Bybit.Net.Enums;
+using Bybit.Net.Objects;
+using Bybit.Net.Objects.Models.V5;
+using Bybit.Net.Objects.Models.Socket;
 
 //using Binance.Net.Clients;
 //using Binance.Net.Enums;
@@ -28,13 +28,9 @@ using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Context;
 using CryptoExchange.Net.Objects;
-using Binance.Net.Objects.Models.Spot;
-using CryptoExchange.Net;
+
 using Microsoft.Extensions.Logging;
-using ExchangeTest.Mexc;
-using CryptoExchange.Net.Interfaces;
-using MexcDotNet;
-using System.Text;
+using CryptoExchange.Net.Authentication;
 
 namespace ExchangeTest;
 
@@ -77,19 +73,25 @@ public partial class Form1 : Form
     //}
 
     //private static int first = 1;
-
     //public object BinanceClient { get; private set; }
+    CryptoDatabase Database;
 
     public Form1()
     {
         InitializeComponent();
 
-        GlobalData.ApplicationStatus = CryptoApplicationStatus.Running;
         GlobalData.LogToLogTabEvent += new AddTextEvent(AddTextToLogTab);
+        CryptoDatabase.SetDatabaseDefaults();
+        GlobalData.LoadExchanges();
+        GlobalData.LoadIntervals();
+        GlobalData.LoadAccounts();
+        Database = new();
+
+        GlobalData.ApplicationStatus = CryptoApplicationStatus.Running;
         //BinanceTestAsync();
-        //ByBitTestAsync();
+        ByBitTestAsync();
         //KucoinTest();
-        MexcTest();
+        //MexcTest();
     }
 
     private void AddTextToLogTab(string text, bool extraLineFeed = false)
@@ -116,45 +118,38 @@ public partial class Form1 : Form
     }
 
     private static string baseUrl = "https://api.mexc.com";
-    private static string apiKey = "";
-    private static string apiSecret = "";
 
-    private async Task<string> SendAsync(HttpClient httpClient, string requestUri, HttpMethod httpMethod, object content = null)
-    {
-        Console.WriteLine(requestUri);
-        using (var request = new HttpRequestMessage(httpMethod, baseUrl + requestUri))
-        {
-            request.Headers.Add("X-MEXC-APIKEY", apiKey);
+    //private async Task<string> SendAsync(HttpClient httpClient, string requestUri, HttpMethod httpMethod, object content = null)
+    //{
+    //    Console.WriteLine(requestUri);
+    //    using (var request = new HttpRequestMessage(httpMethod, baseUrl + requestUri))
+    //    {
+    //        request.Headers.Add("X-MEXC-APIKEY", apiKey);
 
-            if (content is not null)
-            {
-                //request.Content = new StringContent(JsonConvert.SerializeObject(content), Encoding.UTF8, "application/json");
-                string text = System.Text.Json.JsonSerializer.Serialize(content, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
-                //File.WriteAllText(filename, text);
-                request.Content = new StringContent(text);
-                //request.Content = new StringContent(JsonConvert.SerializeObject(content), Encoding.UTF8, "application/json");
-            }
+    //        if (content is not null)
+    //        {
+    //            //request.Content = new StringContent(JsonConvert.SerializeObject(content), Encoding.UTF8, "application/json");
+    //            string text = System.Text.Json.JsonSerializer.Serialize(content, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
+    //            //File.WriteAllText(filename, text);
+    //            request.Content = new StringContent(text);
+    //            //request.Content = new StringContent(JsonConvert.SerializeObject(content), Encoding.UTF8, "application/json");
+    //        }
 
-            HttpResponseMessage response = await httpClient.SendAsync(request);
+    //        HttpResponseMessage response = await httpClient.SendAsync(request);
 
-            using (HttpContent responseContent = response.Content)
-            {
-                string jsonString = await responseContent.ReadAsStringAsync();
+    //        using (HttpContent responseContent = response.Content)
+    //        {
+    //            string jsonString = await responseContent.ReadAsStringAsync();
 
-                return jsonString;
-            }
-        }
-    }
+    //            return jsonString;
+    //        }
+    //    }
+    //}
 
     private async Task MexcTest()
     {
         try
         {
-            CryptoDatabase.SetDatabaseDefaults();
-            GlobalData.LoadExchanges();
-            GlobalData.LoadIntervals();
-            GlobalData.LoadAccounts();
-
             string text;
             string apiKey = "your apikey";
             string apiSecret = "your secret";
@@ -164,14 +159,14 @@ public partial class Form1 : Form
             //MexcService service = new(apiKey, apiSecret, BaseUrl, httpClient);
 
 
-            text = await SendAsync(httpClient, "/api/v3/exchangeInfo?symbol=BTCUSDT", HttpMethod.Get);
-            GlobalData.AddTextToLogTab(text);
+            //text = await SendAsync(httpClient, "/api/v3/exchangeInfo?symbol=BTCUSDT", HttpMethod.Get);
+            //GlobalData.AddTextToLogTab(text);
 
-            text = await SendAsync(httpClient, "/api/v3/exchangeInfo?symbols=BTCUSDT,ETHUSDT", HttpMethod.Get);
-            GlobalData.AddTextToLogTab(text);
+            //text = await SendAsync(httpClient, "/api/v3/exchangeInfo?symbols=BTCUSDT,ETHUSDT", HttpMethod.Get);
+            //GlobalData.AddTextToLogTab(text);
 
-            text = await SendAsync(httpClient, "/api/v3/exchangeInfo", HttpMethod.Get);
-            GlobalData.AddTextToLogTab(text);
+            //text = await SendAsync(httpClient, "/api/v3/exchangeInfo", HttpMethod.Get);
+            //GlobalData.AddTextToLogTab(text);
 
 
             ///// Exchange Information
@@ -194,6 +189,8 @@ public partial class Form1 : Form
         }
     }
 
+
+    /*
     private async Task KucoinTest()
     {
         //int TickerCount = 0;
@@ -217,11 +214,6 @@ public partial class Form1 : Form
             // https://api.kucoin.com/api/v1/market/allTickers
 
             // OSMO-USDT is zo'n  flat coin, er komt soms meerdere uren geen kline
-
-            CryptoDatabase.SetDatabaseDefaults();
-            GlobalData.LoadExchanges();
-            GlobalData.LoadIntervals();
-            GlobalData.LoadAccounts();
 
             CryptoSbmScanner.Exchange.Kucoin.Api api = new();
 
@@ -481,33 +473,34 @@ public partial class Form1 : Form
             GlobalData.AddTextToLogTab("error back testing " + error.ToString()); // symbol.Text + " " + 
         }
     }
+    */
 
-//    void SaveCandleAndUpdateHigherTimeFrames(CryptoSymbol symbol, CryptoCandle candle)
-//    {
-//#if SQLDATABASE
-//        GlobalData.TaskSaveCandles.AddToQueue(lastCandle);
-//#endif
+    //    void SaveCandleAndUpdateHigherTimeFrames(CryptoSymbol symbol, CryptoCandle candle)
+    //    {
+    //#if SQLDATABASE
+    //        GlobalData.TaskSaveCandles.AddToQueue(lastCandle);
+    //#endif
 
-//        // Calculate the higher timeframes
-//        foreach (CryptoInterval interval in GlobalData.IntervalList)
-//        {
-//            // Deze doen een call naar de TaskSaveCandles en doet de UpdateCandleFetched (wellicht overlappend?)
-//            if (interval.ConstructFrom != null)
-//                CandleTools.CalculateCandleForInterval(interval, interval.ConstructFrom, symbol, candle.OpenTime);
+    //        // Calculate the higher timeframes
+    //        foreach (CryptoInterval interval in GlobalData.IntervalList)
+    //        {
+    //            // Deze doen een call naar de TaskSaveCandles en doet de UpdateCandleFetched (wellicht overlappend?)
+    //            if (interval.ConstructFrom != null)
+    //                CandleTools.CalculateCandleForInterval(interval, interval.ConstructFrom, symbol, candle.OpenTime);
 
-//            // Het risico is dat als de ticker uitvalt dat de candles nooit hersteld worden, willen we dat?
-//            CandleTools.UpdateCandleFetched(symbol, interval);
-//        }
-//    }
+    //            // Het risico is dat als de ticker uitvalt dat de candles nooit hersteld worden, willen we dat?
+    //            CandleTools.UpdateCandleFetched(symbol, interval);
+    //        }
+    //    }
 
 
-//    static double GetInterval()
-//    {
-//        // bewust 5 seconden en een beetje layer zodat we zeker weten dat de kline er is
-//        // (anders zou deze 60 seconden later alsnog verwerkt worden, maar dat is te laat)
-//        DateTime now = DateTime.Now;
-//        return 5050 + ((60 - now.Second) * 1000 - now.Millisecond);
-//    }
+    //    static double GetInterval()
+    //    {
+    //        // bewust 5 seconden en een beetje layer zodat we zeker weten dat de kline er is
+    //        // (anders zou deze 60 seconden later alsnog verwerkt worden, maar dat is te laat)
+    //        DateTime now = DateTime.Now;
+    //        return 5050 + ((60 - now.Second) * 1000 - now.Millisecond);
+    //    }
 
     //void t_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
     //{
@@ -521,217 +514,269 @@ public partial class Form1 : Form
     //    }
     //}
 
-    //private async Task ByBitTestAsync()
-    //{
-    //    try
-    //    {
-    //        //    // Problemen met de opties, met name de AutoTimestamp en Reconnect wil ik hebben
+    private async Task ByBitTestAsync()
+    {
+        try
+        {
+            // Problemen met de opties, met name de AutoTimestamp en Reconnect wil ik hebben
+            string text;
+
+            //IServiceCollection serviceCollection = new ServiceCollection();
+            //serviceCollection.AddBinance()
+            //    .AddLogging(options =>
+            //    {
+            //        options.SetMinimumLevel(LogLevel.Trace);
+            //        options.AddProvider(new TraceLoggerProvider());
+            //    });
+
+            //BybitRestOptions x = new();
+            //x.ApiCredentials = new ApiCredentials("", "");
+            //x.AutoTimestamp = true;
+            //x.SpotOptions.AutoTimestamp = true;
+
+            //BybitRestClient bybitClient = new();
+
+            //var client = new BybitRestClient(options =>
+            //{
+            //    //options.ApiCredentials = new ApiCredentials(apiKey, apiSecret);
+            //    //LogLevel = LogLevel.Trace;
+            //    //RequestTimeout = TimeSpan.FromSeconds(60),
+            //    //InverseFuturesApiOptions = new RestApiClientOptions
+            //    //{
+            //    //    //ApiCredentials = new ApiCredentials("", ""),
+            //    //    AutoTimestamp = false
+            //    //}
+            //});
+
+            ////client.RateLimitingBehaviour = RateLimitingBehaviour.Wait;
+
+            //new BybitRestClient(options =>
+            //{
+            //    options.AutoTimestamp = true;
+            //    //options.RateLimitingBehaviour = RateLimitingBehaviour.Wait;
+            //    //options.ApiCredentials = new ApiCredentials(apiKey, apiSecret);
+
+            //    options.SpotOptions.AutoTimestamp = true;
+            //    //options.SpotOptions.RateLimiters = new();
+            //    // Alleen voor Binance zie ik iets met limits
+            //    //options.SpotOptions.RateLimiters. AddTotalRateLimit(50, TimeSpan.FromSeconds(10));
+            //    // override options just for the InverseFuturesOptions api
+            //    //options.SpotOptions.ApiCredentials = new ApiCredentials("API-KEY", "API-SECRET");
+            //    //options.SpotOptions.RequestTimeout = TimeSpan.FromSeconds(60);
+            //});
+
+            ////new RateLimiter().AddTotalRateLimit(50, TimeSpan.FromSeconds(10));
+
+            ////await bybitClient.SpotApiV3.CommonSpotClient.
 
 
-    //        //string text;
+            ////Experiment (geen volume):
+            //var spotApiV3SymbolData = await client.SpotApiV3.ExchangeData.GetSymbolsAsync();
+            //text = JsonSerializer.Serialize(spotApiV3SymbolData.Data, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
+            //File.WriteAllText("E:\\ByBit\\spotApiV3SymbolData.json", text);
 
-    //        IServiceCollection serviceCollection = new ServiceCollection();
-    //        serviceCollection.AddBinance()
-    //            .AddLogging(options =>
-    //            {
-    //                options.SetMinimumLevel(LogLevel.Trace);
-    //                options.AddProvider(new TraceLoggerProvider());
-    //            });
+            ////Experiment (geen volume):
+            //var usdPerpetualApiSymbolData = await client.UsdPerpetualApi.ExchangeData.GetSymbolsAsync();
+            //text = JsonSerializer.Serialize(usdPerpetualApiSymbolData.Data, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
+            //File.WriteAllText("E:\\ByBit\\usdPerpetualApiSymbolData.json", text);
 
-    //        //BybitRestOptions x = new();
-    //        //x.ApiCredentials = new ApiCredentials("", "");
-    //        //x.AutoTimestamp = true;
-    //        //x.SpotOptions.AutoTimestamp = true;
+            ////Experiment (geen volume):
+            //var inversePerpetualApi = await client.InversePerpetualApi.ExchangeData.GetSymbolsAsync();
+            //text = JsonSerializer.Serialize(inversePerpetualApi.Data, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
+            //File.WriteAllText("E:\\ByBit\\inversePerpetualApi.json", text);
 
-    //        //BybitRestClient bybitClient = new();
-
-    //        var client = new BybitRestClient(options =>
-    //        {
-    //            //ApiCredentials = new ApiCredentials("", ""),
-    //            //LogLevel = LogLevel.Trace,
-    //            //RequestTimeout = TimeSpan.FromSeconds(60),
-    //            //InverseFuturesApiOptions = new RestApiClientOptions
-    //            //{
-    //            //    //ApiCredentials = new ApiCredentials("", ""),
-    //            //    AutoTimestamp = false
-    //            //}
-    //        });
-
-    //        //client.RateLimitingBehaviour = RateLimitingBehaviour.Wait;
-
-    //        new BybitRestClient(options =>
-    //        {
-    //            options.AutoTimestamp = true;
-    //            //options.RateLimitingBehaviour = RateLimitingBehaviour.Wait;
-    //            //options.ApiCredentials = new ApiCredentials("API-KEY", "API-SECRET");
-
-    //            options.SpotOptions.AutoTimestamp = true;
-    //            //options.SpotOptions.RateLimiters = new();
-    //            // Alleen voor Binance zie ik iets met limits
-    //            //options.SpotOptions.RateLimiters. AddTotalRateLimit(50, TimeSpan.FromSeconds(10));
-    //            // override options just for the InverseFuturesOptions api
-    //            //options.SpotOptions.ApiCredentials = new ApiCredentials("API-KEY", "API-SECRET");
-    //            //options.SpotOptions.RequestTimeout = TimeSpan.FromSeconds(60);
-    //        });
-
-    //        //new RateLimiter().AddTotalRateLimit(50, TimeSpan.FromSeconds(10));
-
-    //        //await bybitClient.SpotApiV3.CommonSpotClient.
+            ////Experiment (geen volume):
+            //var inverseFuturesApi = await client.InverseFuturesApi.ExchangeData.GetSymbolsAsync();
+            //text = JsonSerializer.Serialize(inverseFuturesApi.Data, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
+            //File.WriteAllText("E:\\ByBit\\inverseFuturesApi.json", text);
 
 
-    //        //////Experiment (geen volume):
-    //        ////var spotApiV3SymbolData = await client.SpotApiV3.ExchangeData.GetSymbolsAsync();
-    //        ////text = JsonSerializer.Serialize(spotApiV3SymbolData.Data, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
-    //        ////File.WriteAllText("E:\\ByBit\\spotApiV3SymbolData.json", text);
+            CryptoSymbol symbol = new()
+            {
+                Status = 1,
+                Name = "BTCUSDT",
+                Base = "BTC",
+                Quote = "USDT",
+                PriceTickSize = 0.01000000m,
+                PriceMinimum = 0.01000000m,
+                PriceMaximum = 1000000m,
 
-    //        //////Experiment (geen volume):
-    //        ////var usdPerpetualApiSymbolData = await client.UsdPerpetualApi.ExchangeData.GetSymbolsAsync();
-    //        ////text = JsonSerializer.Serialize(usdPerpetualApiSymbolData.Data, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
-    //        ////File.WriteAllText("E:\\ByBit\\usdPerpetualApiSymbolData.json", text);
+                QuantityTickSize = 0.00001000m,
+                QuantityMinimum = 0.00001000m,
+                QuantityMaximum = 9000.00000000m
+            };
+            /*
+      {
+        "Name": "BTCUSDT",
+        "BaseAsset": "BTC",
+        "QuoteAsset": "USDT",
+        "Status": 1,
+        "MarginTrading": 1,
+        "Innovation": false,
+        "LotSizeFilter": {
+          "BasePrecision": 0.000001,
+          "QuotePrecision": 0.00000001,
+          "MinOrderQuantity": 0.000048,
+          "MaxOrderQuantity": 71.73956243,
+          "MinOrderValue": 1,
+          "MaxOrderValue": 2000000
+        },
+        "PriceFilter": {
+          "TickSize": 0.01
+        }
+      },             
+            */
 
-    //        //////Experiment (geen volume):
-    //        ////var inversePerpetualApi = await client.InversePerpetualApi.ExchangeData.GetSymbolsAsync();
-    //        ////text = JsonSerializer.Serialize(inversePerpetualApi.Data, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
-    //        ////File.WriteAllText("E:\\ByBit\\inversePerpetualApi.json", text);
+            GlobalData.Settings.ApiKey = "";
+            GlobalData.Settings.ApiSecret = "";
 
-    //        //////Experiment (geen volume):
-    //        ////var inverseFuturesApi = await client.InverseFuturesApi.ExchangeData.GetSymbolsAsync();
-    //        ////text = JsonSerializer.Serialize(inverseFuturesApi.Data, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
-    //        ////File.WriteAllText("E:\\ByBit\\inverseFuturesApi.json", text);
+            var api = new CryptoSbmScanner.Exchange.BybitSpot.Api();
+            api.ExchangeDefaults();
 
+            // Werkt zoals ik het verwacht! een buy order van ongeveer 1.6 dollar
+            //var (result, tradeParams) = await api.BuyOrSell(Database, GlobalData.ExchangeRealTradeAccount, symbol, DateTime.Now, 
+            //    CryptoOrderType.Limit, CryptoOrderSide.Buy, 0.000048m, 22000m, null, null);
 
+            var (result, tradeParams) = await api.BuyOrSell(Database, GlobalData.ExchangeRealTradeAccount, symbol, DateTime.Now,
+                CryptoOrderType.Market, CryptoOrderSide.Buy, 0.000048m, 25000m, null, null);
 
+            GlobalData.AddTextToLogTab($"{symbol.Name} {result} {tradeParams.Error}");
 
-    //        ////todo: GetLinearInverseSymbolsAsync, category.sport
-    //        //var symbolData = await client.V5Api.ExchangeData.GetSpotSymbolsAsync();
-    //        //text = JsonSerializer.Serialize(symbolData.Data, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
-    //        //File.WriteAllText("E:\\ByBit\\SymbolV5Spot.json", text);
-
-    //        //// 'Invalid category; should be Linear or Inverse'
-    //        ////var v5spotSymbols = await client.V5Api.ExchangeData.GetLinearInverseSymbolsAsync(Category.Spot);
-    //        ////text = JsonSerializer.Serialize(v5spotSymbols, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
-    //        ////File.WriteAllText("E:\\ByBit\\symbolV5Spot.json", text);
-
-    //        //var v5InverseSymbols = await client.V5Api.ExchangeData.GetLinearInverseSymbolsAsync(Category.Inverse);
-    //        //text = JsonSerializer.Serialize(v5InverseSymbols.Data, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
-    //        //File.WriteAllText("E:\\ByBit\\symbolV5Inverse.json", text);
-
-    //        ////'Invalid category; should be Linear or Inverse'
-    //        ////var v5OptionSymbols = await client.V5Api.ExchangeData.GetLinearInverseSymbolsAsync(Category.Option);
-    //        ////text = JsonSerializer.Serialize(v5OptionSymbols, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
-    //        ////File.WriteAllText("E:\\ByBit\\symbolV5Option.json", text);
-
-    //        //var v5LinearSymbols = await client.V5Api.ExchangeData.GetLinearInverseSymbolsAsync(Category.Linear);
-    //        //text = JsonSerializer.Serialize(v5LinearSymbols.Data, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
-    //        //File.WriteAllText("E:\\ByBit\\symbolV5Linear.json", text);
-
-    //        //// Crap, dat is 200 candles per keer, dat duurt EINDELOOS!
-    //        //DateTime dateStart = DateTime.Now.AddDays(-3);
-    //        //var kLineData = await client.V5Api.ExchangeData.GetKlinesAsync(Category.Spot, "BTCUSDT", Bybit.Net.Enums.KlineInterval.FiveMinutes, dateStart, null, 1000);
-    //        //text = JsonSerializer.Serialize(kLineData, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
-    //        //File.WriteAllText("E:\\ByBit\\kLineData.json", text);
-
-
-    //        //// Experiment (hier komt de volume wel mee, maar het is wel een extra call tov Binance):
-    //        ////https://api-testnet.bybit.com/v5/market/tickers?category=spot&symbol=BTCUSDT
-    //        //var v5SpotTickersAsync = await client.V5Api.ExchangeData.GetSpotTickersAsync();
-    //        //text = JsonSerializer.Serialize(v5SpotTickersAsync.Data, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
-    //        //File.WriteAllText("E:\\ByBit\\v5SpotTickersAsync.json", text);
-
-
-    //        //var v5LinearInverseTickers = await client.V5Api.ExchangeData.GetLinearInverseTickersAsync(Category.Inverse);
-    //        //text = JsonSerializer.Serialize(v5LinearInverseTickers.Data, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
-    //        //File.WriteAllText("E:\\ByBit\\v5LinearInverseTickers.json", text);
-
-
-    //        ////var v5OptionTickers = await client.V5Api.ExchangeData.GetOptionTickersAsync();
-    //        ////text = JsonSerializer.Serialize(v5OptionTickers.Data, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
-    //        ////File.WriteAllText("E:\\ByBit\\v5OptionTickers.json", text);
-
-
-    //        List<string> symbols = new();
-    //        symbols.Add("ETHBTC");
-    //        symbols.Add("BTCUSDT");
-    //        symbols.Add("ETHUSDT");
-    //        symbols.Add("ADAUSDT");
-    //        symbols.Add("XRPUSDT");
-    //        symbols.Add("PENDLEUSDT");
-    //        symbols.Add("XRPUSDT");
-    //        symbols.Add("EOSUSDT");
-    //        symbols.Add("XRPBTC");
-    //        symbols.Add("DOTUSDT");
-
-    //        //symbols.Add("XLMUSDT");
-    //        //symbols.Add("LTCUSDT");
-    //        //symbols.Add("DATABTC");
-    //        //symbols.Add("KNCBTC");
+            //2023-09-06 16:48:22 BTCUSDT False 170140: Order value exceeded lower limit. (2*0.000048m)
+            //2023-09-06 16:49:00 BTCUSDT False 170140: Order value exceeded lower limit. (1*0.000048m)
 
 
 
-    //        // En dan door x tasks de queue leeg laten trekken
-    //        List<Task> taskList = new();
-    //        while (taskList.Count < 10)
-    //        {
-    //            Task task = Task.Run(async () => 
-    //            {
-    //                BybitSocketClient socketClient = new();
-    //                CallResult<UpdateSubscription> subscriptionResult2 = await socketClient.V5SpotApi.SubscribeToTickerUpdatesAsync(symbols, data =>
-    //                {
-    //                    //if (GlobalData.ExchangeListName.TryGetValue(Api.ExchangeName, out Model.CryptoExchange exchange))
-    //                    //{
-    //                    var tick = data.Data;
-    //                    //foreach (var tick in data.Data)
-    //                    //{
-    //                    //tickerCount++;
+            ////todo: GetLinearInverseSymbolsAsync, category.sport
+            //var symbolData = await client.V5Api.ExchangeData.GetSpotSymbolsAsync();
+            //text = JsonSerializer.Serialize(symbolData.Data, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
+            //File.WriteAllText("E:\\ByBit\\SymbolV5Spot.json", text);
 
-    //                    //if (exchange.SymbolListName.TryGetValue(data.Topic, out CryptoSymbol symbol))
-    //                    //{
-    //                    // Waarschijnlijk ALLEMAAL gebaseerd op de 24h prijs
-    //                    //symbol.OpenPrice = tick.OpenPrice;
-    //                    //symbol.HighPrice = tick.HighPrice24h;
-    //                    //symbol.LowPrice = tick.LowPrice24h;
-    //                    //symbol.LastPrice = tick.LastPrice;
-    //                    //symbol.BidPrice = tick.BestBidPrice;
-    //                    //symbol.AskPrice = tick.BestAskPrice;
-    //                    //symbol.Volume = tick.BaseVolume; //?
-    //                    //symbol.Volume = tick.Volume24h; //= Quoted = het volume * de prijs                                
+            //// 'Invalid category; should be Linear or Inverse'
+            ////var v5spotSymbols = await client.V5Api.ExchangeData.GetLinearInverseSymbolsAsync(Category.Spot);
+            ////text = JsonSerializer.Serialize(v5spotSymbols, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
+            ////File.WriteAllText("E:\\ByBit\\symbolV5Spot.json", text);
 
-    //                    //Invoke((MethodInvoker)(() => textBox1.AppendText(data.Topic +
-    //                    //    " lastprice=" + tick.LastPrice.ToString() + ", " +
-    //                    //    //                    " nidprice=" + tick.bes.ToString() + ", " +
-    //                    //    " volume24h=" + tick.Volume24h.ToString()
+            //var v5InverseSymbols = await client.V5Api.ExchangeData.GetLinearInverseSymbolsAsync(Category.Inverse);
+            //text = JsonSerializer.Serialize(v5InverseSymbols.Data, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
+            //File.WriteAllText("E:\\ByBit\\symbolV5Inverse.json", text);
 
-    //                    //    + "\r\n")));
-    //                    //}
-    //                    //}
+            ////'Invalid category; should be Linear or Inverse'
+            ////var v5OptionSymbols = await client.V5Api.ExchangeData.GetLinearInverseSymbolsAsync(Category.Option);
+            ////text = JsonSerializer.Serialize(v5OptionSymbols, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
+            ////File.WriteAllText("E:\\ByBit\\symbolV5Option.json", text);
+
+            //var v5LinearSymbols = await client.V5Api.ExchangeData.GetLinearInverseSymbolsAsync(Category.Linear);
+            //text = JsonSerializer.Serialize(v5LinearSymbols.Data, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
+            //File.WriteAllText("E:\\ByBit\\symbolV5Linear.json", text);
+
+            //// Crap, dat is 200 candles per keer, dat duurt EINDELOOS!
+            //DateTime dateStart = DateTime.Now.AddDays(-3);
+            //var kLineData = await client.V5Api.ExchangeData.GetKlinesAsync(Category.Spot, "BTCUSDT", Bybit.Net.Enums.KlineInterval.FiveMinutes, dateStart, null, 1000);
+            //text = JsonSerializer.Serialize(kLineData, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
+            //File.WriteAllText("E:\\ByBit\\kLineData.json", text);
 
 
-    //                    //}
-    //                });
-    //                if (subscriptionResult2.Success)
-    //                {
-    //                    //Invoke((MethodInvoker)(() => textBox1.AppendText("Succes! \r\n")));
-    //                }
-    //                else
-    //                    Invoke((MethodInvoker)(() => textBox1.AppendText(subscriptionResult2.Error?.Message + "\r\n")));
-
-    //            });
-    //            taskList.Add(task);
-    //        }
-    //        Task t = Task.WhenAll(taskList);
-    //        t.Wait();
+            //// Experiment (hier komt de volume wel mee, maar het is wel een extra call tov Binance):
+            ////https://api-testnet.bybit.com/v5/market/tickers?category=spot&symbol=BTCUSDT
+            //var v5SpotTickersAsync = await client.V5Api.ExchangeData.GetSpotTickersAsync();
+            //text = JsonSerializer.Serialize(v5SpotTickersAsync.Data, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
+            //File.WriteAllText("E:\\ByBit\\v5SpotTickersAsync.json", text);
 
 
-    //    }
+            //var v5LinearInverseTickers = await client.V5Api.ExchangeData.GetLinearInverseTickersAsync(Category.Inverse);
+            //text = JsonSerializer.Serialize(v5LinearInverseTickers.Data, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
+            //File.WriteAllText("E:\\ByBit\\v5LinearInverseTickers.json", text);
 
-    //    catch (Exception error)
-    //    {
-    //        Invoke((MethodInvoker)(() => textBox1.AppendText(error.Message + "\r\n")));
-    //        throw;
-    //    }
 
-    //    Invoke((MethodInvoker)(() => textBox1.AppendText("ready" + "\r\n")));
-    //}
+            ////var v5OptionTickers = await client.V5Api.ExchangeData.GetOptionTickersAsync();
+            ////text = JsonSerializer.Serialize(v5OptionTickers.Data, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
+            ////File.WriteAllText("E:\\ByBit\\v5OptionTickers.json", text);
+
+
+            List<string> symbols = new();
+            symbols.Add("ETHBTC");
+            symbols.Add("BTCUSDT");
+            symbols.Add("ETHUSDT");
+            symbols.Add("ADAUSDT");
+            symbols.Add("XRPUSDT");
+            symbols.Add("PENDLEUSDT");
+            symbols.Add("XRPUSDT");
+            symbols.Add("EOSUSDT");
+            symbols.Add("XRPBTC");
+            symbols.Add("DOTUSDT");
+
+            //symbols.Add("XLMUSDT");
+            //symbols.Add("LTCUSDT");
+            //symbols.Add("DATABTC");
+            //symbols.Add("KNCBTC");
+
+
+
+            //// En dan door x tasks de queue leeg laten trekken
+            //List<Task> taskList = new();
+            //while (taskList.Count < 10)
+            //{
+            //    Task task = Task.Run(async () =>
+            //    {
+            //        BybitSocketClient socketClient = new();
+            //        CallResult<UpdateSubscription> subscriptionResult2 = await socketClient.V5SpotApi.SubscribeToTickerUpdatesAsync(symbols, data =>
+            //        {
+            //            //if (GlobalData.ExchangeListName.TryGetValue(Api.ExchangeName, out Model.CryptoExchange exchange))
+            //            //{
+            //            var tick = data.Data;
+            //            //foreach (var tick in data.Data)
+            //            //{
+            //            //tickerCount++;
+
+            //            //if (exchange.SymbolListName.TryGetValue(data.Topic, out CryptoSymbol symbol))
+            //            //{
+            //            // Waarschijnlijk ALLEMAAL gebaseerd op de 24h prijs
+            //            //symbol.OpenPrice = tick.OpenPrice;
+            //            //symbol.HighPrice = tick.HighPrice24h;
+            //            //symbol.LowPrice = tick.LowPrice24h;
+            //            //symbol.LastPrice = tick.LastPrice;
+            //            //symbol.BidPrice = tick.BestBidPrice;
+            //            //symbol.AskPrice = tick.BestAskPrice;
+            //            //symbol.Volume = tick.BaseVolume; //?
+            //            //symbol.Volume = tick.Volume24h; //= Quoted = het volume * de prijs                                
+
+            //            //Invoke((MethodInvoker)(() => textBox1.AppendText(data.Topic +
+            //            //    " lastprice=" + tick.LastPrice.ToString() + ", " +
+            //            //    //                    " nidprice=" + tick.bes.ToString() + ", " +
+            //            //    " volume24h=" + tick.Volume24h.ToString()
+
+            //            //    + "\r\n")));
+            //            //}
+            //            //}
+
+
+            //            //}
+            //        });
+            //        if (subscriptionResult2.Success)
+            //        {
+            //            //Invoke((MethodInvoker)(() => textBox1.AppendText("Succes! \r\n")));
+            //        }
+            //        else
+            //            Invoke((MethodInvoker)(() => textBox1.AppendText(subscriptionResult2.Error?.Message + "\r\n")));
+
+            //    });
+            //    taskList.Add(task);
+            //}
+            //Task t = Task.WhenAll(taskList);
+            //t.Wait();
+
+
+        }
+
+        catch (Exception error)
+        {
+            Invoke((MethodInvoker)(() => textBox1.AppendText(error.Message + "\r\n")));
+            throw;
+        }
+
+        Invoke((MethodInvoker)(() => textBox1.AppendText("ready" + "\r\n")));
+    }
 
 
 

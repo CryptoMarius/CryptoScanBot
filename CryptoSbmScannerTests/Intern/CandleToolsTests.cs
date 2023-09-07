@@ -30,6 +30,7 @@ public class CandleToolsTests
 
     private void SetupIntervals()
     {
+        GlobalData.IntervalList.Clear();
         GlobalData.IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval1m, "1m", 1 * 60, null)); //1
         GlobalData.IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval2m, "2m", 2 * 60, GlobalData.IntervalList[0])); //1
         GlobalData.IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval3m, "3m", 3 * 60, GlobalData.IntervalList[0])); //2
@@ -46,6 +47,7 @@ public class CandleToolsTests
         GlobalData.IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval12h, "12h", 12 * 60 * 60, GlobalData.IntervalList[10])); //13
         GlobalData.IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval1d, "1d", 1 * 24 * 60 * 60, GlobalData.IntervalList[11])); //14
     }
+
     private void AddTextToLogTab(string text, bool extraLineFeed = false)
     {
         text = text.TrimEnd();
@@ -62,12 +64,10 @@ public class CandleToolsTests
     [TestMethod()]
     public void CalculateCandleForIntervalTest()
     {
-        // Description
-        // Test voor toevoegen en mergen van candles (de happy flow)
+        // Description: toevoegen en mergen van candles (de happy flow)
 
 
         // arrange
-
         SetupIntervals();
         GlobalData.LogToLogTabEvent += new AddTextEvent(AddTextToLogTab);
         CryptoSymbol symbol = CreateTestSymbol();
@@ -125,4 +125,5 @@ public class CandleToolsTests
             }
         }
     }
+
 }
