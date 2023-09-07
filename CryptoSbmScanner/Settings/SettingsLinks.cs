@@ -63,7 +63,7 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
                 HyperTrader = new()
                 {
                     Execute = CryptoExternalUrlType.External,
-                    Url = "hypertrader://binance/{base}-{quote}/{interval}",
+                    Url = "hypertrader://bybitf/{base}-{quote}/{interval}",
                     Telegram = "http://www.ccscanner.nl/hypertrader/?e=bybit&a={base}&b={quote}&i={interval}",
                 },
                 TradingView = new()
@@ -119,7 +119,7 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
                 HyperTrader = new()
                 {
                     Execute = CryptoExternalUrlType.External,
-                    Url = "hypertrader://binance/{base}-{quote}/{interval}",
+                    Url = "hypertrader://kucoin/{base}-{quote}/{interval}",
                     Telegram = "http://www.ccscanner.nl/hypertrader/?e=kucoin&a={base}&b={quote}&i={interval}",
                 },
                 TradingView = new()
