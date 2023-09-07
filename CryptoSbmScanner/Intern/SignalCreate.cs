@@ -431,7 +431,10 @@ public class SignalCreate
         signal.LastPrice = (decimal)Symbol.LastPrice;
 
         string response;
-        string eventText = algorithm.ExtraText;
+        List<string> eventText = new();
+        if (algorithm.ExtraText != "")
+            eventText.Add(algorithm.ExtraText);
+
 
         // Extra attributen erbij halen (dat lukt niet bij een backtest vanwege het ontbreken van een "history list")
         if (!GlobalData.BackTest)
@@ -439,7 +442,7 @@ public class SignalCreate
             CalculateAdditionalSignalProperties(signal, history, 60);
             if (!HasOpenPosition() && !CheckAdditionalAlarmProperties(signal, out response))
             {
-                eventText += " " + response;
+                eventText.Add(response);
                 signal.IsInvalid = true;
             }
         }
@@ -448,7 +451,7 @@ public class SignalCreate
         // Extra controles toepassen en het signaal "afkeuren" (maar toch laten zien)
         if (!algorithm.AdditionalChecks(Candle, out response))
         {
-            eventText += " " + response;
+            eventText.Add(response);
             signal.IsInvalid = true;
         }
 
@@ -456,7 +459,7 @@ public class SignalCreate
         if (!HasOpenPosition() && !signal.BackTest && TradingConfig.Config[signal.Side].InBlackList(Symbol.Name) == MatchBlackAndWhiteList.Present)
         {
             // Als de muntpaar op de black lijst staat dan dit signaal overslagen
-            eventText += " " + "staat op blacklist";
+            eventText.Add("staat op blacklist");
             signal.IsInvalid = true;
         }
 
@@ -464,7 +467,7 @@ public class SignalCreate
         if (!HasOpenPosition() && !signal.BackTest && TradingConfig.Config[signal.Side].InWhiteList(Symbol.Name) == MatchBlackAndWhiteList.NotPresent)
         {
             // Als de muntpaar niet in de white lijst staat dan dit signaal overslagen
-            eventText += " " + "niet in whitelist";
+            eventText.Add("niet in whitelist");
             signal.IsInvalid = true;
         }
 
@@ -485,7 +488,7 @@ public class SignalCreate
                 string text = string.Format("Analyse {0} 24h change {1} niet tussen {2} .. {3}", Symbol.Name, signal.Last24HoursChange.ToString("N2"), GlobalData.Settings.Signal.AnalysisMinChangePercentage.ToString(), GlobalData.Settings.Signal.AnalysisMaxChangePercentage.ToString());
                 GlobalData.AddTextToLogTab(text);
             }
-            eventText += " 24h verandering% te hoog";
+            eventText.Add("24h verandering% te hoog");
             signal.IsInvalid = true;
         }
 
@@ -496,7 +499,7 @@ public class SignalCreate
                 string text = string.Format("Analyse {0} 24h change (effectief) {1} niet tussen {2} .. {3}", Symbol.Name, signal.Last24HoursEffective.ToString("N2"), GlobalData.Settings.Signal.AnalysisMinEffectivePercentage.ToString(), GlobalData.Settings.Signal.AnalysisMaxEffectivePercentage.ToString());
                 GlobalData.AddTextToLogTab(text);
             }
-            eventText += " 24h effectief% te hoog";
+            eventText.Add("24h effectief% te hoog");
             signal.IsInvalid = true;
         }
 
@@ -520,7 +523,7 @@ public class SignalCreate
                     }
                     GlobalData.AddTextToLogTab(string.Format("Analyse {0} te nieuw geen {1} dagen {2}", Symbol.Name, GlobalData.Settings.Signal.SymbolMustExistsDays, text));
                 }
-                eventText += " coin te nieuw";
+                eventText.Add("coin te nieuw");
                 signal.IsInvalid = true;
             }
         }
@@ -538,7 +541,7 @@ public class SignalCreate
             // Log iets, maar dat wordt wel veel
             if (GlobalData.Settings.Signal.LogBarometerToLow)
                 GlobalData.AddTextToLogTab("Analyse Barometer te laag");
-            eventText += " Barometer te laag";
+            eventText.Add("barometer te laag");
             signal.IsInvalid = true;
         }
 
@@ -552,7 +555,7 @@ public class SignalCreate
                 // Er zijn nogal wat van die flut munten, laat de tekst maar achterwege
                 if (GlobalData.Settings.Signal.LogMinimumTickPercentage)
                     GlobalData.AddTextToLogTab(string.Format("Analyse {0} De tick size percentage is te hoog {1:N3}", Symbol.Name, barcodePercentage));
-                eventText += " tick perc to high";
+                eventText.Add("tick perc to high");
                 signal.IsInvalid = true;
             }
         }
@@ -604,18 +607,18 @@ public class SignalCreate
 
         // Bereken de trend, dat is tamelijk CPU heavy en daarom staat deze controle op het einde
         CalculateTrendStuff(signal); 
-        signal.EventText = eventText.Trim();
 
         // Extra controles toepassen en het signaal "afkeuren" (maar toch laten zien)
-        if (!HasOpenPosition() && (decimal)signal.TrendPercentage < GlobalData.Settings.Signal.StobMinimalTrend)
+        if (!HasOpenPosition() && signal.Strategy == CryptoSignalStrategy.Stobb && (decimal)signal.TrendPercentage < GlobalData.Settings.Signal.StobMinimalTrend)
         {
-            eventText += " trend < minimale gewenste trend";
+            eventText.Add("de trend% is te laag");
             signal.IsInvalid = true;
         }
         if (!GlobalData.Settings.General.ShowInvalidSignals && signal.IsInvalid)
             return false;
 
 
+        signal.EventText = string.Join(", ", eventText);
         try
         {
             // Bied het aan het monitorings systeem (indien aangevinkt) 

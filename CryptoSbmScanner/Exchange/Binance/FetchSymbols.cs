@@ -149,7 +149,7 @@ public class FetchSymbols
                         // Deactiveer de munten die niet meer voorkomen
                         foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
                         {
-                            if (symbol.Status == 1 && !activeSymbols.ContainsKey(symbol.Name))
+                            if (symbol.Status == 1 && !symbol.IsBarometerSymbol() && !activeSymbols.ContainsKey(symbol.Name))
                             {
                                 if (symbol.Status != 0)
                                 {

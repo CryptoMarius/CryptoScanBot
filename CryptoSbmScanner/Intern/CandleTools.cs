@@ -117,6 +117,7 @@ public static class CandleTools
 #endif
 
 
+        // Maak alvast een candle (wordt later pas toegevoegd indien okay)
 #pragma warning disable CS0219 // Variable is assigned but its value is never used
         bool IsChanged = false; // nodig  voor SQL database
 #pragma warning restore CS0219 // Variable is assigned but its value is never used

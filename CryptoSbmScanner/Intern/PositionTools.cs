@@ -523,6 +523,8 @@ public class PositionTools
         string sql = string.Format("select * from positionpart where PositionId={0} order by Id", position.Id);
         foreach (CryptoPositionPart part in database.Connection.Query<CryptoPositionPart>(sql))
         {
+            if (part.IntervalId.HasValue && GlobalData.IntervalListId.TryGetValue((int)position.IntervalId, out CryptoInterval interval))
+               part.Interval = interval;
             AddPositionPart(position, part);
         }
 

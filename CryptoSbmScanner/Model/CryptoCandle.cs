@@ -32,7 +32,7 @@ public class CryptoCandle : IQuote
     [Computed]
     public CandleIndicatorData CandleData { get; set; }
 
-    // Even een hulpje bij het uitzoeken van Kucoin
+    // Candles die on the fly zijn aangemaakt (niet confirmed) vanwege Kucoin
     [Computed]
     public bool IsDuplicated { get; set; }
 

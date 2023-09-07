@@ -12,9 +12,6 @@ namespace CryptoSbmScanner.Trader;
 #if TRADEBOT
 public class PaperTrading
 {
-    // TODO: Verder doorvoeren zodat de PositionMonitor kleiner wordt.
-
-
     public static async Task CreatePaperTradeObject(CryptoDatabase Database, CryptoPosition position, CryptoPositionStep step, decimal price, DateTime LastCandle1mCloseTimeDate)
     {
         // Als een surrogaat van de exchange...
@@ -59,7 +56,7 @@ public class PaperTrading
     /// <summary>
     /// Controle van alle posities na het opnieuw opstarten
     /// </summary>
-    static public async Task CheckPositionsAfterRestart(CryptoTradeAccount tradeAccount)
+    public static async Task CheckPositionsAfterRestart(CryptoTradeAccount tradeAccount)
     {
         // Positions - Parts - Steps 1 voor 1 bij langs om te zien of de prijs ooit boven of beneden de prijs is geweest
 
@@ -100,8 +97,7 @@ public class PaperTrading
                             // Eventueel missende candles hebben op deze manier geen impact
                             if (position.Symbol.CandleList.TryGetValue(from, out CryptoCandle candle))
                             {
-                                PositionMonitor positionMonitor = new(position.Symbol, candle);
-                                await positionMonitor.PaperTradingCheckStep(position, step);
+                                await PaperTradingCheckStep(database, position, step, candle);
                             }
                             from += 60;
                         }
@@ -112,6 +108,65 @@ public class PaperTrading
             }
         }
 
+    }
+
+
+    public static async Task PaperTradingCheckStep(CryptoDatabase database, CryptoPosition position, CryptoPositionStep step, CryptoCandle lastCandle1m)
+    {
+        if (step.Status == CryptoOrderStatus.New)
+        {
+            if (step.Side == CryptoOrderSide.Buy)
+            {
+                if (step.OrderType == CryptoOrderType.Market) // is reeds afgehandeld
+                    await CreatePaperTradeObject(database, position, step, lastCandle1m.Close, lastCandle1m.Date.AddMinutes(1));
+                if (step.StopPrice.HasValue)
+                {
+                    if (lastCandle1m.High > step.StopPrice)
+                        await CreatePaperTradeObject(database, position, step, (decimal)step.StopPrice, lastCandle1m.Date.AddMinutes(1));
+                }
+                else if (lastCandle1m.Low < step.Price)
+                    await CreatePaperTradeObject(database, position, step, step.Price, lastCandle1m.Date.AddMinutes(1));
+            }
+            else if (step.Side == CryptoOrderSide.Sell)
+            {
+                if (step.OrderType == CryptoOrderType.Market)  // is reeds afgehandeld
+                    await CreatePaperTradeObject(database, position, step, lastCandle1m.Close, lastCandle1m.Date.AddMinutes(1));
+                else if (step.StopPrice.HasValue)
+                {
+                    if (lastCandle1m.Low < step.StopPrice)
+                        await CreatePaperTradeObject(database, position, step, (decimal)step.StopPrice, lastCandle1m.Date.AddMinutes(1));
+                }
+                else if (lastCandle1m.High > step.Price)
+                    await CreatePaperTradeObject(database, position, step, step.Price, lastCandle1m.Date.AddMinutes(1));
+
+            }
+        }
+    }
+
+
+    public static async Task PaperTradingCheckOrders(CryptoDatabase database, CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoCandle lastCandle1m)
+    {
+        // Is er iets gekocht of verkocht?
+        // Zoja dan de HandleTrade aanroepen.
+
+        if (tradeAccount.PositionList.TryGetValue(symbol.Name, out var positionList))
+        {
+            foreach (CryptoPosition position in positionList.Values.ToList())
+            {
+                foreach (CryptoPositionPart part in position.Parts.Values.ToList())
+                {
+                    // reeds afgesloten
+                    if (part.CloseTime.HasValue)
+                        continue;
+
+                    foreach (CryptoPositionStep step in part.Steps.Values.ToList())
+                    {
+                        await PaperTradingCheckStep(database, position, step, lastCandle1m);
+                    }
+
+                }
+            }
+        }
     }
 }
 #endif

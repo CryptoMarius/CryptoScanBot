@@ -15,6 +15,7 @@ namespace CryptoSbmScanner.Exchange.BybitSpot;
 
 public class Api : ExchangeBase
 {
+    private static readonly Category Category = Category.Spot;
     public static readonly string ExchangeName = "Bybit Spot";
 #if TRADEBOT
     static private UserDataStream TaskBybitStreamUserData { get; set; }
@@ -22,7 +23,7 @@ public class Api : ExchangeBase
     public static List<KLineTickerItem> TickerList { get; set; } = new();
 
 
-    public Api(): base() //, CryptoSymbol symbol, DateTime currentDate
+    public Api() : base()
     {
     }
 
@@ -125,7 +126,7 @@ public class Api : ExchangeBase
             CreateTime = currentDate,
             OrderSide = orderSide,
             OrderType = orderType,
-            Price = price, // the sell part (can also be a buy)
+            Price = price,
             StopPrice = stop, // OCO - the price at which the limit order to sell is activated
             LimitPrice = limit, // OCO - the lowest price that the trader is willing to accept
             Quantity = quantity,
@@ -149,16 +150,18 @@ public class Api : ExchangeBase
 
 
         // Plaats een order op de exchange *ze lijken op elkaar, maar het is net elke keer anders)
-        //BinanceWeights.WaitForFairBinanceWeight(1); flauwekul
         using BybitRestClient client = new();
+        //BinanceWeights.WaitForFairBinanceWeight(1); flauwekul voor die ene tick (geen herhaling toch?)
 
         WebCallResult<BybitOrderId> result;
         switch (orderType)
         {
             case CryptoOrderType.Market:
                 {
-                    result = await client.V5Api.Trading.PlaceOrderAsync(Category.Linear, symbol.Name, side,
-                    NewOrderType.Market, quantity, isLeverage: false);
+                    // JA, price * quantity omdat dat blijkbaar zo moet, zie voorbeeld (onderin)
+                    // https://bybit-exchange.github.io/docs/v5/order/create-order
+                    result = await client.V5Api.Trading.PlaceOrderAsync(Category, symbol.Name, side,
+                        NewOrderType.Market, price * quantity, timeInForce: TimeInForce.GoodTillCanceled, isLeverage: false);
                     if (!result.Success)
                     {
                         tradeParams.Error = result.Error;
@@ -173,7 +176,7 @@ public class Api : ExchangeBase
                 }
             case CryptoOrderType.Limit:
                 {
-                    result = await client.V5Api.Trading.PlaceOrderAsync(Category.Linear, symbol.Name, side,
+                    result = await client.V5Api.Trading.PlaceOrderAsync(Category, symbol.Name, side,
                     NewOrderType.Limit, quantity, price: price, timeInForce: TimeInForce.GoodTillCanceled, isLeverage: false);
                     if (!result.Success)
                     {
@@ -190,7 +193,7 @@ public class Api : ExchangeBase
             case CryptoOrderType.StopLimit:
                 {
                     // wordt het nu wel of niet ondersteund? Het zou ook een extra optie van de limit kunnen (zie wel een tp)
-                    //result = await client.V5Api.Trading.PlaceOrderAsync(Category.Linear, symbol.Name, side, NewOrderType.Market,
+                    //result = await client.V5Api.Trading.PlaceOrderAsync(Category, symbol.Name, side, NewOrderType.Market,
                     //    quantity, price: price, timeInForce: TimeInForce.GoodTillCanceled, isLeverage: false);
                     throw new Exception("${orderType} not supported");
                 }
@@ -226,7 +229,7 @@ public class Api : ExchangeBase
 
     public static async Task<(bool succes, TradeParams tradeParams)> Cancel(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoPositionStep step)
     {
-        // Order gegevens overnemen (voor een eventuele error dump)
+        // Order gegevens overnemen (enkel voor een eventuele error dump)
         TradeParams tradeParams = new()
         {
             CreateTime = step.CreateTime,
@@ -251,9 +254,9 @@ public class Api : ExchangeBase
         // Annuleer de order 
         if (step.OrderId.HasValue)
         {
-            // BinanceWeights.WaitForFairBinanceWeight(1);
+            // BinanceWeights.WaitForFairBinanceWeight(1); flauwekul
             using var client = new BybitRestClient();
-            var result = await client.V5Api.Trading.CancelOrderAsync(Category.Spot, symbol.Name, step.OrderId.ToString());
+            var result = await client.V5Api.Trading.CancelOrderAsync(Category, symbol.Name, step.OrderId.ToString());
             if (!result.Success)
             {
                 tradeParams.Error = result.Error;
@@ -367,7 +370,7 @@ public class Api : ExchangeBase
 
     public async override Task FetchAssetsAsync(CryptoTradeAccount tradeAccount)
     {
-        //if (GlobalData.ExchangeListName.TryGetValue(Api.ExchangeName, out Model.CryptoExchange exchange))
+        //if (GlobalData.ExchangeListName.TryGetValue(ExchangeName, out Model.CryptoExchange exchange))
         {
             try
             {
@@ -377,7 +380,7 @@ public class Api : ExchangeBase
 
                 using var client = new BybitRestClient();
                 {
-                   var accountInfo = await client.V5Api.Account.GetAssetInfoAsync();
+                    var accountInfo = await client.V5Api.Account.GetAssetInfoAsync();
 
                     if (!accountInfo.Success)
                     {

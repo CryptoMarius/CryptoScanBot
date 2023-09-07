@@ -136,28 +136,28 @@ public class CryptoSymbol
     public SortedList<long, CryptoTrade> TradeList { get; } = new();
 
 
-    // Quick en dirty voor het testen van de performance van balanceren
-    // Waarom kies ik ervoor om het altijd quick en dirty te doen??????
-    [Computed]
-    public Decimal QuantityTest { get; set; }
-    [Computed]
-    public Decimal QuoteQuantityTest { get; set; }
+    //// Quick en dirty voor het testen van de performance van balanceren
+    //// Waarom kies ik ervoor om het altijd quick en dirty te doen??????
+    //[Computed]
+    //public Decimal QuantityTest { get; set; }
+    //[Computed]
+    //public Decimal QuoteQuantityTest { get; set; }
 
 
-    [Computed]
-    public int SignalCount
-    {
-        get
-        {
-            int count = 0;
-            foreach (CryptoSymbolInterval symbolInterval in IntervalPeriodList)
-            {
-                if (symbolInterval.Signal != null)
-                    count++;
-            }
-            return count;
-        }
-    }
+    //[Computed]
+    //public int SignalCount
+    //{
+    //    get
+    //    {
+    //        int count = 0;
+    //        foreach (CryptoSymbolInterval symbolInterval in IntervalPeriodList)
+    //        {
+    //            if (symbolInterval.Signal != null)
+    //                count++;
+    //        }
+    //        return count;
+    //    }
+    //}
 
 
     public CryptoSymbol()

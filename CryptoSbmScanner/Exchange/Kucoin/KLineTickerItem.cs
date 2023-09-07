@@ -41,7 +41,7 @@ public class KLineTickerItem
     {
         _socketClient = socketClient;
         string symbolName = Symbol.Base + "-" + Symbol.Quote;
-        SortedList<long, CryptoCandle> klineList = new();
+        SortedList<long, CryptoCandle> klineListTemp = new();
 
         if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1m, out CryptoInterval interval))
             throw new Exception("Geen intervallen?");
@@ -69,11 +69,11 @@ public class KLineTickerItem
                         // (via de cache omdat de candle in opbouw is)
                         // (bij veel updates is dit stukje cpu-intensief?)
                         long candleOpenUnix = CandleTools.GetUnixTime(kline.OpenTime, 60);
-                        if (!klineList.TryGetValue(candleOpenUnix, out CryptoCandle candle))
+                        if (!klineListTemp.TryGetValue(candleOpenUnix, out CryptoCandle candle))
                         {
                             //TickerCount++;
                             candle = new();
-                            klineList.TryAdd(candleOpenUnix, candle);
+                            klineListTemp.TryAdd(candleOpenUnix, candle);
                         }
                         candle.IsDuplicated = false;
                         candle.OpenTime = candleOpenUnix;
@@ -111,8 +111,7 @@ public class KLineTickerItem
         }
         else
         {
-            GlobalData.AddTextToLogTab($"{Api.ExchangeName} {QuoteData.Name} 1m ERROR starting candle stream {subscriptionResult.Error.Message}");
-            GlobalData.AddTextToLogTab($"{Api.ExchangeName} {QuoteData.Name} 1m ERROR starting candle stream {Symbol.Name}");
+            GlobalData.AddTextToLogTab($"{Api.ExchangeName} {QuoteData.Name} 1m ERROR starting candle stream {Symbol.Name} {subscriptionResult.Error.Message}");
         }
 
 
@@ -149,7 +148,7 @@ public class KLineTickerItem
                         {
                             // Als deze al aanwezig dmv een ticker update niet dupliceren
                             long nextCandleUnix = lastCandle.OpenTime + interval.Duration;
-                            if (klineList.TryGetValue(nextCandleUnix, out CryptoCandle nextCandle))
+                            if (klineListTemp.TryGetValue(nextCandleUnix, out CryptoCandle nextCandle))
                                 break;
 
                             // Dupliceer de laatste candle als deze niet voorkomt (zogenaamde "flat" candle)
@@ -157,7 +156,7 @@ public class KLineTickerItem
                             if (!symbolPeriod.CandleList.TryGetValue(nextCandleUnix, out nextCandle))
                             {
                                 nextCandle = new();
-                                klineList.Add(nextCandleUnix, nextCandle);
+                                klineListTemp.Add(nextCandleUnix, nextCandle);
                                 nextCandle.IsDuplicated = true;
                                 nextCandle.OpenTime = nextCandleUnix;
                                 nextCandle.Open = lastCandle.Close;
@@ -173,11 +172,11 @@ public class KLineTickerItem
 
 
                     // De data van de ticker updates en duplicatie verwerken
-                    foreach (CryptoCandle candle in klineList.Values.ToList())
+                    foreach (CryptoCandle candle in klineListTemp.Values.ToList())
                     {
                         if (candle.OpenTime <= expectedCandlesUpto)
                         {
-                            klineList.Remove(candle.OpenTime);
+                            klineListTemp.Remove(candle.OpenTime);
 
                             //Process1mCandle(Symbol, candle.Date, candle.Open, candle.High, candle.Low, candle.Close, candle.Volume);
                             CandleTools.HandleFinalCandleData(Symbol, interval, candle.Date, candle.Open, candle.High, candle.Low, candle.Close, candle.Volume, candle.IsDuplicated);

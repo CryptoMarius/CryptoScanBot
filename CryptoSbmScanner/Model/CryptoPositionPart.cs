@@ -1,4 +1,5 @@
 ﻿using CryptoSbmScanner.Enums;
+using CryptoSbmScanner.Signal;
 
 using Dapper.Contrib.Extensions;
 
@@ -26,12 +27,20 @@ public class CryptoPositionPart
     [Computed]
     public virtual CryptoSymbol Symbol { get; set; }
 
+    public int? IntervalId { get; set; }
+    [Computed]
+    public CryptoInterval Interval { get; set; }
+
     public CryptoOrderSide Side { get; set; }
     [Computed]
     public string SideText { get { return Side switch { CryptoOrderSide.Buy => "long", CryptoOrderSide.Sell => "short", _ => "?", }; } }
 
     [Computed]
-    public string DisplayText { get { return Symbol.Name + " " + Position.Interval.Name + " " + CreateTime.ToLocalTime() + " " + SideText + " " + Position.StrategyText; } }
+    public string DisplayText { get { return Symbol.Name + " " + Position.Interval.Name + " " + CreateTime.ToLocalTime() + " " + SideText + " " + StrategyText; }}
+
+    public CryptoSignalStrategy Strategy { get; set; }
+    [Computed]
+    public string StrategyText { get { return Strategy.ToString(); } } //SignalHelper.GetSignalAlgorithmText(Strategy);
 
     public string Name { get; set; }
     public DateTime CreateTime { get; set; }

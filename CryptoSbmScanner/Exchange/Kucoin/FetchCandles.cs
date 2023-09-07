@@ -257,7 +257,6 @@ public class FetchCandles
                 }
 
                 // Calculate higher interval candles from the lower interval (if available)
-                // (this does calculate some additional interval's but how to exclude, do i care?)
                 for (int j = i + 1; j < GlobalData.IntervalList.Count; j++)
                 {
                     CryptoInterval intervalCalc = GlobalData.IntervalList[j];
@@ -265,14 +264,14 @@ public class FetchCandles
                     {
                         // Naar het lagere tijd interval om de eerste en laatste candle te achterhalen
                         CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(intervalCalc.ConstructFrom.IntervalPeriod);
-                        SortedList<long, CryptoCandle> candlesInterval = symbolPeriod.CandleList;
-                        if (candlesInterval.Values.Any())
+                        SortedList<long, CryptoCandle> candlesLowerInterval = symbolPeriod.CandleList;
+                        if (candlesLowerInterval.Values.Any())
                         {
-                            long unixFirst = candlesInterval.Values.First().OpenTime;
+                            long unixFirst = candlesLowerInterval.Values.First().OpenTime;
                             unixFirst -= unixFirst % intervalCalc.Duration; // too much?
                             //DateTime dateFirstDebug = CandleTools.GetUnixDate(unixFirst);
 
-                            long unixLast = candlesInterval.Values.Last().OpenTime;
+                            long unixLast = candlesLowerInterval.Values.Last().OpenTime;
                             unixLast -= unixLast % intervalCalc.Duration; // too much? ++ ?
                             //DateTime dateLastDebug = CandleTools.GetUnixDate(unixLast);
 

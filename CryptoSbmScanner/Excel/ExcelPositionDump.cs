@@ -45,7 +45,7 @@ public class ExcelPositionDump : ExcelBase
                 cell = WriteCell(sheet, 0, row, part.Id);
                 cell = WriteCell(sheet, 1, row, part.Name);
                 cell = WriteCell(sheet, 2, row, part.Side.ToString());
-                cell = WriteCell(sheet, 3, row, (DateTime)part.CreateTime.ToLocalTime());
+                cell = WriteCell(sheet, 3, row, part.CreateTime.ToLocalTime());
                 cell.CellStyle = CellStyleDate;
 
                 if (part.CloseTime.HasValue)
@@ -64,6 +64,16 @@ public class ExcelPositionDump : ExcelBase
 
                 cell = WriteCell(sheet, 12, row, (double)part.Commission);
                 cell.CellStyle = CellStyleDecimalNormal;
+
+
+                if (part.Interval != null)
+                    cell = WriteCell(sheet, 13, row, part.Interval.Name);
+                else
+                    cell = WriteCell(sheet, 13, row, Position.Interval.Name);
+
+                // default.. ;-)
+                if (part.Strategy != CryptoSignalStrategy.Jump)
+                    cell = WriteCell(sheet, 14, row, part.StrategyText);
             }
 
             foreach (CryptoPositionStep step in part.Steps.Values.ToList())
@@ -449,11 +459,11 @@ public class ExcelPositionDump : ExcelBase
             CreateBook(Position.Symbol.Name);
             CreateFormats();
 
-            DumpInformation();
             DumpParts();
             DumpBreakEven();
             DumpTrades();
             DumpSignals();
+            DumpInformation();
 
             StartExcell("Position", Position.Symbol.Name, Position.Exchange.Name);
         }

@@ -15,6 +15,7 @@ namespace CryptoSbmScanner.Exchange.BybitFutures;
 
 public class Api : ExchangeBase
 {
+    private static readonly Category Category = Category.Linear;
     public static readonly string ExchangeName = "Bybit Futures";
 #if TRADEBOT
     static private UserDataStream TaskBybitStreamUserData { get; set; }
@@ -22,7 +23,7 @@ public class Api : ExchangeBase
     public static List<KLineTickerItem> TickerList { get; set; } = new();
 
 
-    public Api() : base() //, CryptoSymbol symbol, DateTime currentDate
+    public Api() : base()
     {
     }
 
@@ -108,6 +109,16 @@ public class Api : ExchangeBase
     }
 
 
+    public async Task DoSwitchCrossIsolatedMarginAsync(BybitRestClient client, CryptoSymbol symbol)
+    {
+        //await client.V5Api.Account.SetLeverageAsync(Category, symbol.Name, 1, 1);
+        //await client.V5Api.Account.SetMarginModeAsync(Category, symbol.Name, TradeMode.Isolated);
+        TradeMode tradeMode = (TradeMode)GlobalData.Settings.Trading.Margin; // toevallig dezelfde volgorde
+        await client.V5Api.Account.SwitchCrossIsolatedMarginAsync(Category, symbol.Name,
+            tradeMode, GlobalData.Settings.Trading.Leverage, GlobalData.Settings.Trading.Leverage);
+    }
+
+
     public async Task<(bool result, TradeParams tradeParams)> BuyOrSell(CryptoDatabase database,
         CryptoTradeAccount tradeAccount, CryptoSymbol symbol, DateTime currentDate,
         CryptoOrderType orderType, CryptoOrderSide orderSide,
@@ -157,8 +168,10 @@ public class Api : ExchangeBase
         {
             case CryptoOrderType.Market:
                 {
-                    result = await client.V5Api.Trading.PlaceOrderAsync(Category.Linear, symbol.Name, side,
-                        NewOrderType.Market, quantity, isLeverage: false);
+                    // JA, price * quantity omdat dat blijkbaar zo moet, zie voorbeeld (onderin)
+                    // https://bybit-exchange.github.io/docs/v5/order/create-order
+                    result = await client.V5Api.Trading.PlaceOrderAsync(Category, symbol.Name, side,
+                        NewOrderType.Market, price * quantity, timeInForce: TimeInForce.GoodTillCanceled, isLeverage: false);
                     if (!result.Success)
                     {
                         tradeParams.Error = result.Error;
@@ -173,7 +186,9 @@ public class Api : ExchangeBase
                 }
             case CryptoOrderType.Limit:
                 {
-                    result = await client.V5Api.Trading.PlaceOrderAsync(Category.Linear, symbol.Name, side,
+                    await DoSwitchCrossIsolatedMarginAsync(client, symbol);
+
+                    result = await client.V5Api.Trading.PlaceOrderAsync(Category, symbol.Name, side,
                     NewOrderType.Limit, quantity, price: price, timeInForce: TimeInForce.GoodTillCanceled, isLeverage: false);
                     if (!result.Success)
                     {
@@ -189,13 +204,15 @@ public class Api : ExchangeBase
                 }
             case CryptoOrderType.StopLimit:
                 {
+                    await DoSwitchCrossIsolatedMarginAsync(client, symbol);
                     // wordt het nu wel of niet ondersteund? Het zou ook een extra optie van de limit kunnen (zie wel een tp)
-                    //result = await client.V5Api.Trading.PlaceOrderAsync(Category.Linear, symbol.Name, side, NewOrderType.Market,
+                    //result = await client.V5Api.Trading.PlaceOrderAsync(Category, symbol.Name, side, NewOrderType.Market,
                     //    quantity, price: price, timeInForce: TimeInForce.GoodTillCanceled, isLeverage: false);
                     throw new Exception("${orderType} not supported");
                 }
             case CryptoOrderType.Oco:
                 {
+                    await DoSwitchCrossIsolatedMarginAsync(client, symbol);
                     // Een OCO is afwijkend ten opzichte van een standaard buy or sell
                     //    Bij Binance was een OCO totaal afwijkend ten opzichte van een standaard buy or sell
                     //    het had ook andere parameters en results
@@ -253,7 +270,7 @@ public class Api : ExchangeBase
         {
             // BinanceWeights.WaitForFairBinanceWeight(1); flauwekul
             using var client = new BybitRestClient();
-            var result = await client.V5Api.Trading.CancelOrderAsync(Category.Linear, symbol.Name, step.OrderId.ToString());
+            var result = await client.V5Api.Trading.CancelOrderAsync(Category, symbol.Name, step.OrderId.ToString());
             if (!result.Success)
             {
                 tradeParams.Error = result.Error;
@@ -265,34 +282,34 @@ public class Api : ExchangeBase
         return (false, tradeParams);
     }
 
-        static public void PickupAssets(CryptoTradeAccount tradeAccount, IEnumerable<BybitUserAssetInfo> balances)
+    static public void PickupAssets(CryptoTradeAccount tradeAccount, IEnumerable<BybitUserAssetInfo> balances)
+    {
+        tradeAccount.AssetListSemaphore.Wait();
+        try
         {
-            tradeAccount.AssetListSemaphore.Wait();
-            try
+            foreach (var assetInfo in balances)
             {
-                foreach (var assetInfo in balances)
+                // TODO, verder uitzoeken (lijkt de verkeerde info te zijn)
+                if (assetInfo.QuantityRemaining > 0)
                 {
-                    // TODO, verder uitzoeken (lijkt de verkeerde info te zijn)
-                    if (assetInfo.QuantityRemaining > 0)
-                    {
-                        //if (!tradeAccount.AssetList.TryGetValue(assetInfo.Asset, out CryptoAsset asset))
-                        //{
-                        //    asset = new CryptoAsset();
-                        //    asset.Quote = assetInfo.Asset;
-                        //    tradeAccount.AssetList.Add(asset.Quote, asset);
-                        //}
-                        //asset.Free = assetInfo.Available;
-                        //asset.Total = assetInfo.Total;
-                        //asset.Locked = assetInfo.Locked;
+                    //if (!tradeAccount.AssetList.TryGetValue(assetInfo.Asset, out CryptoAsset asset))
+                    //{
+                    //    asset = new CryptoAsset();
+                    //    asset.Quote = assetInfo.Asset;
+                    //    tradeAccount.AssetList.Add(asset.Quote, asset);
+                    //}
+                    //asset.Free = assetInfo.Available;
+                    //asset.Total = assetInfo.Total;
+                    //asset.Locked = assetInfo.Locked;
 
-                        //if (asset.Total == 0)
-                        //    tradeAccount.AssetList.Remove(asset.Quote);
-                    }
+                    //if (asset.Total == 0)
+                    //    tradeAccount.AssetList.Remove(asset.Quote);
                 }
             }
-            finally
-            {
-                tradeAccount.AssetListSemaphore.Release();
+        }
+        finally
+        {
+            tradeAccount.AssetListSemaphore.Release();
         }
     }
 
@@ -418,12 +435,14 @@ public class Api : ExchangeBase
         TaskBybitStreamUserData = new UserDataStream();
         var _ = Task.Run(async () => { await TaskBybitStreamUserData.ExecuteAsync(); });
     }
+
     public static async Task StopUserDataStream()
     {
         if (TaskBybitStreamUserData != null)
             await TaskBybitStreamUserData?.StopAsync();
         TaskBybitStreamUserData = null;
     }
+
     public static void ResetUserDataStream()
     {
         // niets, hmm

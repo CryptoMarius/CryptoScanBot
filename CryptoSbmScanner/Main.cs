@@ -31,6 +31,15 @@ public partial class FrmMain : Form
     {
         InitializeComponent();
 
+
+        //decimal price = 8.478m;
+        //price = price.Clamp(0.00100000m, 100000m, 0.00100000m);
+        //decimal quantity = 11.7m;
+        //quantity = quantity.Clamp(0.00100000m, 100000m, 0.00100000m);
+
+        //decimal x = 100 / 8.478m;
+        //x = x.Clamp(0.00100000m, 100000m, 0.00100000m);
+
         // Om vanuit achtergrond threads iets te kunnen loggen of te doen
         GlobalData.PlaySound += new PlayMediaEvent(PlaySound);
         GlobalData.PlaySpeech += new PlayMediaEvent(PlaySpeech);
