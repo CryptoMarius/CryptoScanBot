@@ -442,13 +442,13 @@ partial class DashBoardInformation
         // 
         // labelBmTime
         // 
-        labelBmTime.Location = new Point(102, 64);
+        labelBmTime.Location = new Point(92, 64);
         labelBmTime.Margin = new Padding(4, 0, 4, 0);
         labelBmTime.Name = "labelBmTime";
-        labelBmTime.Size = new Size(35, 15);
+        labelBmTime.Size = new Size(50, 15);
         labelBmTime.TabIndex = 124;
         labelBmTime.Text = "time";
-        labelBmTime.TextAlign = ContentAlignment.MiddleRight;
+        labelBmTime.TextAlign = ContentAlignment.MiddleCenter;
         // 
         // labelBm1h
         // 
