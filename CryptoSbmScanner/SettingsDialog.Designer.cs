@@ -214,6 +214,11 @@ partial class FrmSettings
         EditAnalyzeCandleJumpDown = new CheckBox();
         EditAnalysisCandleJumpPercentage = new NumericUpDown();
         tabPageTrading = new TabPage();
+        label19 = new Label();
+        EditMargin = new ComboBox();
+        label23 = new Label();
+        EditLeverage = new NumericUpDown();
+        EditLogCanceledOrders = new CheckBox();
         EditSoundTradeNotification = new CheckBox();
         EditDisableNewPositions = new CheckBox();
         label83 = new Label();
@@ -300,7 +305,6 @@ partial class FrmSettings
         toolTip1 = new ToolTip(components);
         imageList1 = new ImageList(components);
         colorDialog1 = new ColorDialog();
-        EditLogCanceledOrders = new CheckBox();
         panel2.SuspendLayout();
         panel1.SuspendLayout();
         tabControl.SuspendLayout();
@@ -345,6 +349,7 @@ partial class FrmSettings
         ((System.ComponentModel.ISupportInitialize)EditJumpCandlesLookbackCount).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditAnalysisCandleJumpPercentage).BeginInit();
         tabPageTrading.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)EditLeverage).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditDynamicTpPercentage).BeginInit();
         groupBoxSlots.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)EditSlotsMaximalExchange).BeginInit();
@@ -2459,6 +2464,10 @@ partial class FrmSettings
         // 
         // tabPageTrading
         // 
+        tabPageTrading.Controls.Add(label19);
+        tabPageTrading.Controls.Add(EditMargin);
+        tabPageTrading.Controls.Add(label23);
+        tabPageTrading.Controls.Add(EditLeverage);
         tabPageTrading.Controls.Add(EditLogCanceledOrders);
         tabPageTrading.Controls.Add(EditSoundTradeNotification);
         tabPageTrading.Controls.Add(EditDisableNewPositions);
@@ -2509,6 +2518,58 @@ partial class FrmSettings
         tabPageTrading.TabIndex = 11;
         tabPageTrading.Text = "Trading";
         tabPageTrading.UseVisualStyleBackColor = true;
+        // 
+        // label19
+        // 
+        label19.AutoSize = true;
+        label19.Location = new Point(400, 637);
+        label19.Margin = new Padding(4, 0, 4, 0);
+        label19.Name = "label19";
+        label19.Size = new Size(45, 15);
+        label19.TabIndex = 270;
+        label19.Text = "Margin";
+        // 
+        // EditMargin
+        // 
+        EditMargin.DropDownStyle = ComboBoxStyle.DropDownList;
+        EditMargin.FormattingEnabled = true;
+        EditMargin.Items.AddRange(new object[] { "Cross", "Isolated" });
+        EditMargin.Location = new Point(525, 633);
+        EditMargin.Margin = new Padding(4, 3, 4, 3);
+        EditMargin.Name = "EditMargin";
+        EditMargin.Size = new Size(131, 23);
+        EditMargin.TabIndex = 269;
+        // 
+        // label23
+        // 
+        label23.AutoSize = true;
+        label23.Location = new Point(400, 665);
+        label23.Margin = new Padding(4, 0, 4, 0);
+        label23.Name = "label23";
+        label23.Size = new Size(54, 15);
+        label23.TabIndex = 268;
+        label23.Text = "Leverage";
+        // 
+        // EditLeverage
+        // 
+        EditLeverage.DecimalPlaces = 2;
+        EditLeverage.Location = new Point(524, 662);
+        EditLeverage.Margin = new Padding(4, 3, 4, 3);
+        EditLeverage.Name = "EditLeverage";
+        EditLeverage.Size = new Size(88, 23);
+        EditLeverage.TabIndex = 267;
+        EditLeverage.Value = new decimal(new int[] { 1, 0, 0, 0 });
+        // 
+        // EditLogCanceledOrders
+        // 
+        EditLogCanceledOrders.AutoSize = true;
+        EditLogCanceledOrders.Location = new Point(402, 600);
+        EditLogCanceledOrders.Margin = new Padding(4, 3, 4, 3);
+        EditLogCanceledOrders.Name = "EditLogCanceledOrders";
+        EditLogCanceledOrders.Size = new Size(157, 19);
+        EditLogCanceledOrders.TabIndex = 266;
+        EditLogCanceledOrders.Text = "Log geannuleerde orders";
+        EditLogCanceledOrders.UseVisualStyleBackColor = true;
         // 
         // EditSoundTradeNotification
         // 
@@ -3406,17 +3467,6 @@ partial class FrmSettings
         imageList1.TransparentColor = Color.Transparent;
         imageList1.Images.SetKeyName(0, "volume.png");
         // 
-        // EditLogCanceledOrders
-        // 
-        EditLogCanceledOrders.AutoSize = true;
-        EditLogCanceledOrders.Location = new Point(402, 600);
-        EditLogCanceledOrders.Margin = new Padding(4, 3, 4, 3);
-        EditLogCanceledOrders.Name = "EditLogCanceledOrders";
-        EditLogCanceledOrders.Size = new Size(157, 19);
-        EditLogCanceledOrders.TabIndex = 266;
-        EditLogCanceledOrders.Text = "Log geannuleerde orders";
-        EditLogCanceledOrders.UseVisualStyleBackColor = true;
-        // 
         // FrmSettings
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
@@ -3480,6 +3530,7 @@ partial class FrmSettings
         ((System.ComponentModel.ISupportInitialize)EditAnalysisCandleJumpPercentage).EndInit();
         tabPageTrading.ResumeLayout(false);
         tabPageTrading.PerformLayout();
+        ((System.ComponentModel.ISupportInitialize)EditLeverage).EndInit();
         ((System.ComponentModel.ISupportInitialize)EditDynamicTpPercentage).EndInit();
         groupBoxSlots.ResumeLayout(false);
         groupBoxSlots.PerformLayout();
@@ -3795,4 +3846,8 @@ partial class FrmSettings
     private Button buttonGotoAppDataFolder;
     private CheckBox EditHideSymbolsOnTheLeft;
     private CheckBox EditLogCanceledOrders;
+    private Label label19;
+    private ComboBox EditMargin;
+    private Label label23;
+    private NumericUpDown EditLeverage;
 }

@@ -22,9 +22,20 @@ public class SettingsTrading
 {
     // Is de BOT actief
     public bool Active { get; set; } = false;
+
+
+    //***************************
+    // Account - Positie gerelateerd
+    // Alles is functioneel in de bot, echter we simuleren of we aan het traden zijn
+    public bool TradeViaPaperTrading { get; set; } = false;
+    // Trade via exchange (instelling enkel omdat we nu keuze hebben)
+    public bool TradeViaExchange { get; set; } = false;
+    // Geen nieuwe posities openen (wel bijkopen voor openstaande posities)
     public bool DisableNewPositions { get; set; } = false;
 
+    // =Overkill in de logging
     public bool LogCanceledOrders { get; set; } = true;
+
 
     //***************************
     // Slots
@@ -95,13 +106,12 @@ public class SettingsTrading
     public decimal GlobalStopLimitPercentage { get; set; } = 0m;
 
 
-
-
-
-    // Alles is functioneel in de bot, echter we simuleren of we aan het traden zijn
-    public bool TradeViaPaperTrading { get; set; } = false;
-    // Trade via exchange (instelling enkel omdat we nu keuze hebben)
-    public bool TradeViaExchange { get; set; } = false;
+    //***************************
+    // Perpetual / Futures
+    // De buy en sell leverage (die zijn in alle gevallen gelijk)
+    public decimal Leverage{ get; set; } = 1m;
+    // Cross/Isolated Margin
+    public int Margin { get; set; } = 0;
 
     // Op welke intervallen en strategieën willen we traden?
     public IntervalAndStrategyConfig Monitor { get; set; } = new();

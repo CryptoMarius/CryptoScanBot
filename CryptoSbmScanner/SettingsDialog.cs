@@ -489,6 +489,11 @@ public partial class FrmSettings : Form
         // Logging
         EditLogCanceledOrders.Checked = settings.Trading.LogCanceledOrders;
 
+
+
+        EditLeverage.Value = settings.Trading.Leverage;
+        EditMargin.SelectedIndex = settings.Trading.Margin;
+
         // --------------------------------------------------------------------------------
         // Trade bot experiment
         // --------------------------------------------------------------------------------
@@ -767,6 +772,8 @@ public partial class FrmSettings : Form
         // Logging
         settings.Trading.LogCanceledOrders = EditLogCanceledOrders.Checked;
 
+        settings.Trading.Leverage = EditLeverage.Value;
+        settings.Trading.Margin = EditMargin.SelectedIndex;
 
 #endif
 
