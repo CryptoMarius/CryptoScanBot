@@ -88,9 +88,7 @@ public class FetchCandles
         // Remember
         long startFetchDate = (long)symbolInterval.LastCandleSynchronized;
 
-#if USELOCKS
         Monitor.Enter(symbol.CandleList);
-#endif
        try
         {
             long last = long.MinValue;
@@ -129,9 +127,7 @@ public class FetchCandles
         }
         finally
         {
-#if USELOCKS
             Monitor.Exit(symbol.CandleList);
-#endif
         }
 
 
@@ -212,9 +208,7 @@ public class FetchCandles
                     break;
             }
 
-#if USELOCKS
             Monitor.Enter(symbol.CandleList);
-#endif
             try
             {
                 // Fill missing candles (at only place we know it can be done safely)
@@ -285,9 +279,7 @@ public class FetchCandles
             }
             finally
             {
-#if USELOCKS
                 Monitor.Exit(symbol.CandleList);
-#endif
             }
         }
     }

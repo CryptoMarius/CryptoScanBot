@@ -592,9 +592,7 @@ public class PositionMonitor : IDisposable
 
 
         // Die indicator berekening had ik niet verwacht (cooldown?)
-#if USELOCKS
         Monitor.Enter(position.Symbol.CandleList);
-#endif
         try
         {
             // Niet zomaar een laatste candle nemen in verband met Backtesting
@@ -622,9 +620,7 @@ public class PositionMonitor : IDisposable
         }
         finally
         {
-#if USELOCKS
             Monitor.Exit(position.Symbol.CandleList);
-#endif
         }
 
 
@@ -1309,15 +1305,19 @@ public class PositionMonitor : IDisposable
                     }
                 }
 
-                // Kunnen we afsluiten met winst?
-                if (position.Quantity > 0)
+
+                if (GlobalData.Settings.Trading.LockProfits)
                 {
-                    if (position.CreateTime.AddDays(-20) < DateTime.UtcNow)
-                        await HandleCheckProfitableSellPart(position, part, 0.25m);
-                    else if (position.CreateTime.AddDays(-10) < DateTime.UtcNow)
-                        await HandleCheckProfitableSellPart(position, part, 0.50m);
-                    else
-                        await HandleCheckProfitableSellPart(position, part, GlobalData.Settings.Trading.ProfitPercentage);
+                    // Kunnen we afsluiten met winst?
+                    if (position.Quantity > 0)
+                    {
+                        if (position.CreateTime.AddDays(-20) < DateTime.UtcNow)
+                            await HandleCheckProfitableSellPart(position, part, 0.25m);
+                        else if (position.CreateTime.AddDays(-10) < DateTime.UtcNow)
+                            await HandleCheckProfitableSellPart(position, part, 0.50m);
+                        else
+                            await HandleCheckProfitableSellPart(position, part, GlobalData.Settings.Trading.ProfitPercentage);
+                    }
                 }
 
             }
@@ -1400,9 +1400,7 @@ public class PositionMonitor : IDisposable
         {
             if (LastCandle1mCloseTime % interval.Duration == 0)
             {
-#if USELOCKS
                 Monitor.Enter(Symbol.CandleList);
-#endif
                 try
                 {
                     // Remove old indicator data
@@ -1439,9 +1437,7 @@ public class PositionMonitor : IDisposable
                 }
                 finally
                 {
-#if USELOCKS
                     Monitor.Exit(Symbol.CandleList);
-#endif
                 }
             }
         }

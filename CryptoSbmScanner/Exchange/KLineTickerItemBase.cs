@@ -25,9 +25,7 @@ public abstract class KLineTickerItemBase
 
     private protected void Process1mCandle(CryptoSymbol symbol, DateTime openTime, decimal open, decimal high, decimal low, decimal close, decimal volume)
     {
-#if USELOCKS
         Monitor.Enter(symbol.CandleList);
-#endif
         try
         {
             // Laatste bekende prijs (priceticker vult aan)
@@ -68,9 +66,7 @@ public abstract class KLineTickerItemBase
         }
         finally
         {
-#if USELOCKS
             Monitor.Exit(symbol.CandleList);
-#endif
         }
     }
 }

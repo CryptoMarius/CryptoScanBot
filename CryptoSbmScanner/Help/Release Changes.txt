@@ -72,6 +72,14 @@ Voor alle Exchanges (behalve Binance):
 - Trading - price ticker implementeren (in Kucoin geeft dit teveel cpu overhead en is om die reden nu niet aangezet)
 
 
+
+xx-xx-2023 1.8.?
+- Trading - Bybit Spot - Testen van een marketorder
+- Trading - Bybit Spot - Testen van een limitorder
+- Trading - Bybit Futures - Testen van een marketorder
+- Trading - Bybit Futures - Testen van een limitorder
+
+
 07-09-2023 1.8.5
 - Bij het activeren van de Kucoin exchange wordt de Binance exchange geactiveerd (het weblinks.json bevat een foutje)
 - De tekstuele reden van afkeuring is nu een comma seperated lijst (wordt getoond als de tekst van de signal)

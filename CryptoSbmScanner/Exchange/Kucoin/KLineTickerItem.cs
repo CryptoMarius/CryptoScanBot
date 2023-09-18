@@ -60,9 +60,7 @@ public class KLineTickerItem
 //TickerCount++;
 //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", topic, kline.Timestamp.ToLocalTime()));
 
-#if USELOCKS
                     Monitor.Enter(Symbol.CandleList);
-#endif
                     try
                     {
                         // Toevoegen aan de lokale cache en/of aanvullen
@@ -91,9 +89,7 @@ public class KLineTickerItem
                     }
                     finally
                     {
-#if USELOCKS
                         Monitor.Exit(Symbol.CandleList);
-#endif
                     }
                 });
             });
@@ -135,9 +131,7 @@ public class KLineTickerItem
 
                 // locking.. nog eens nagaan of dat echt noodzakelijk is hier.
                 // in principe kun je hier geen "collision" hebben met threads?
-#if USELOCKS
                 Monitor.Enter(Symbol.CandleList);
-#endif
                 try
                 {
                     // De niet aanwezige candles dupliceren (pas als de candles zijn opgehaald)
@@ -221,9 +215,7 @@ public class KLineTickerItem
                 }
                 finally
                 {
-#if USELOCKS
                     Monitor.Exit(Symbol.CandleList);
-#endif
                 }
 
                 if (sender is System.Timers.Timer t)
