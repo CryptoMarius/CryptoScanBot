@@ -60,6 +60,14 @@ public class SettingsTrading
 
 
     //***************************
+    // Instap condities
+    public bool CheckIncreasingRsi { get; set; } = false;
+    public bool CheckIncreasingMacd { get; set; } = false;    
+    public bool CheckIncreasingStoch { get; set; } = false;
+
+
+
+    //***************************
     // Buy
     // Wanneer wordt de order geplaatst
     public CryptoBuyStepInMethod BuyStepInMethod { get; set; } = CryptoBuyStepInMethod.Immediately;

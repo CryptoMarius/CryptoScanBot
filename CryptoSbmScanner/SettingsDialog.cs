@@ -438,6 +438,12 @@ public partial class FrmSettings : Form
         EditBarometer04hBotMinimal.Value = settings.Trading.Barometer04hBotMinimal;
         EditBarometer24hBotMinimal.Value = settings.Trading.Barometer24hBotMinimal;
 
+        // Instap
+        EditCheckIncreasingRsi.Checked = settings.Trading.CheckIncreasingRsi;
+        EditCheckIncreasingMacd.Checked = settings.Trading.CheckIncreasingMacd;
+        EditCheckIncreasingStoch.Checked = settings.Trading.CheckIncreasingStoch;
+
+
         // Buy
         EditBuyStepInMethod.DataSource = new BindingSource(BuyStepInMethod, null);
         EditBuyStepInMethod.DisplayMember = "Key";
@@ -471,6 +477,7 @@ public partial class FrmSettings : Form
         EditSellMethod.SelectedValue = settings.Trading.SellMethod;
         EditProfitPercentage.Value = settings.Trading.ProfitPercentage;
         EditDynamicTpPercentage.Value = settings.Trading.DynamicTpPercentage;
+        EditLockProfits.Checked = settings.Trading.LockProfits;
 
         // Stop loss
         EditGlobalStopPercentage.Value = Math.Abs(settings.Trading.GlobalStopPercentage);
@@ -730,6 +737,11 @@ public partial class FrmSettings : Form
         settings.Trading.Barometer04hBotMinimal = EditBarometer04hBotMinimal.Value;
         settings.Trading.Barometer24hBotMinimal = EditBarometer24hBotMinimal.Value;
 
+        // Instap
+        settings.Trading.CheckIncreasingRsi = EditCheckIncreasingRsi.Checked;
+        settings.Trading.CheckIncreasingMacd = EditCheckIncreasingMacd.Checked;
+        settings.Trading.CheckIncreasingStoch = EditCheckIncreasingStoch.Checked;
+
         // buy
         settings.Trading.BuyStepInMethod = (CryptoBuyStepInMethod)EditBuyStepInMethod.SelectedValue;
         settings.Trading.BuyOrderMethod = (CryptoBuyOrderMethod)EditBuyOrderMethod.SelectedValue;
@@ -748,6 +760,7 @@ public partial class FrmSettings : Form
         settings.Trading.SellMethod = (CryptoSellMethod)EditSellMethod.SelectedValue;
         settings.Trading.ProfitPercentage = EditProfitPercentage.Value;
         settings.Trading.DynamicTpPercentage = EditDynamicTpPercentage.Value;
+        settings.Trading.LockProfits = EditLockProfits.Checked;
 
         // Stop loss
         settings.Trading.GlobalStopPercentage = EditGlobalStopPercentage.Value;

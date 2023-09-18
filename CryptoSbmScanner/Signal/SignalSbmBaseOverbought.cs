@@ -254,48 +254,56 @@ public class SignalSbmBaseOverbought : SignalSbmBase
 
         // ********************************************************************
         // MACD
-        if (!IsMacdRecoveryOverbought(GlobalData.Settings.Signal.SbmCandlesForMacdRecovery))
+        if (GlobalData.Settings.Trading.CheckIncreasingMacd)
         {
-            return false;
+            if (!IsMacdRecoveryOverbought(GlobalData.Settings.Signal.SbmCandlesForMacdRecovery))
+            {
+                return false;
+            }
         }
 
 
         // ********************************************************************
         // RSI
-
-        // Is there any RSI recovery visible (a bit weak)
-        if ((CandleLast.CandleData.Rsi > candlePrev.CandleData.Rsi))
+        if (GlobalData.Settings.Trading.CheckIncreasingRsi)
         {
-            ExtraText = string.Format("RSI not recovering {0:N8} {1:N8}", candlePrev.CandleData.Rsi, CandleLast.CandleData.Rsi);
-            return false;
-        }
+            // Is there any RSI recovery visible (a bit weak)
+            if ((CandleLast.CandleData.Rsi > candlePrev.CandleData.Rsi))
+            {
+                ExtraText = string.Format("RSI not recovering {0:N8} {1:N8}", candlePrev.CandleData.Rsi, CandleLast.CandleData.Rsi);
+                return false;
+            }
 
+        }
 
         // ********************************************************************
         // STOCH
         // Stochastic: Omdat ik ze door elkaar haal
         // Rood %D = signal, het gemiddelde van de laatste 3 %K waarden
         // Blauw %K = Oscilator berekend over een lookback periode van 14 candles
-
-        // Met name de %K moet herstellen
-        if (CandleLast.CandleData.StochOscillator > candlePrev.CandleData.StochOscillator)
+        if (GlobalData.Settings.Trading.CheckIncreasingStoch)
         {
-            ExtraText = string.Format("Stoch.K {0:N8} hersteld niet > {1:N8}", candlePrev.CandleData.StochOscillator, CandleLast.CandleData.StochOscillator);
-            return false;
-        }
 
-        double? minimumStoch = 84;
-        if (CandleLast.CandleData.StochOscillator > minimumStoch)
-        {
-            ExtraText = string.Format("Stoch.K {0:N8} niet onder de {1:N0}", candlePrev.CandleData.StochOscillator, minimumStoch);
-            return false;
-        }
+            // Met name de %K moet herstellen
+            if (CandleLast.CandleData.StochOscillator > candlePrev.CandleData.StochOscillator)
+            {
+                ExtraText = string.Format("Stoch.K {0:N8} hersteld niet > {1:N8}", candlePrev.CandleData.StochOscillator, CandleLast.CandleData.StochOscillator);
+                return false;
+            }
 
-        // De %D en %K moeten elkaar gekruist hebben. Dus %K(snel/blauw) > %D(traag/rood)
-        if (CandleLast.CandleData.StochSignal < CandleLast.CandleData.StochOscillator)
-        {
-            ExtraText = string.Format("Stoch.%D {0:N8} heeft de %K {1:N8} niet gekruist", candlePrev.CandleData.StochSignal, candlePrev.CandleData.StochOscillator);
-            return false;
+            double? minimumStoch = 84;
+            if (CandleLast.CandleData.StochOscillator > minimumStoch)
+            {
+                ExtraText = string.Format("Stoch.K {0:N8} niet onder de {1:N0}", candlePrev.CandleData.StochOscillator, minimumStoch);
+                return false;
+            }
+
+            // De %D en %K moeten elkaar gekruist hebben. Dus %K(snel/blauw) > %D(traag/rood)
+            if (CandleLast.CandleData.StochSignal < CandleLast.CandleData.StochOscillator)
+            {
+                ExtraText = string.Format("Stoch.%D {0:N8} heeft de %K {1:N8} niet gekruist", candlePrev.CandleData.StochSignal, candlePrev.CandleData.StochOscillator);
+                return false;
+            }
         }
 
 

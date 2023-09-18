@@ -214,6 +214,10 @@ partial class FrmSettings
         EditAnalyzeCandleJumpDown = new CheckBox();
         EditAnalysisCandleJumpPercentage = new NumericUpDown();
         tabPageTrading = new TabPage();
+        EditCheckIncreasingMacd = new CheckBox();
+        EditCheckIncreasingStoch = new CheckBox();
+        EditCheckIncreasingRsi = new CheckBox();
+        label59 = new Label();
         label19 = new Label();
         EditMargin = new ComboBox();
         label23 = new Label();
@@ -305,6 +309,7 @@ partial class FrmSettings
         toolTip1 = new ToolTip(components);
         imageList1 = new ImageList(components);
         colorDialog1 = new ColorDialog();
+        EditLockProfits = new CheckBox();
         panel2.SuspendLayout();
         panel1.SuspendLayout();
         tabControl.SuspendLayout();
@@ -2464,6 +2469,11 @@ partial class FrmSettings
         // 
         // tabPageTrading
         // 
+        tabPageTrading.Controls.Add(EditLockProfits);
+        tabPageTrading.Controls.Add(EditCheckIncreasingMacd);
+        tabPageTrading.Controls.Add(EditCheckIncreasingStoch);
+        tabPageTrading.Controls.Add(EditCheckIncreasingRsi);
+        tabPageTrading.Controls.Add(label59);
         tabPageTrading.Controls.Add(label19);
         tabPageTrading.Controls.Add(EditMargin);
         tabPageTrading.Controls.Add(label23);
@@ -2518,6 +2528,50 @@ partial class FrmSettings
         tabPageTrading.TabIndex = 11;
         tabPageTrading.Text = "Trading";
         tabPageTrading.UseVisualStyleBackColor = true;
+        // 
+        // EditCheckIncreasingMacd
+        // 
+        EditCheckIncreasingMacd.AutoSize = true;
+        EditCheckIncreasingMacd.Location = new Point(983, 423);
+        EditCheckIncreasingMacd.Margin = new Padding(4, 3, 4, 3);
+        EditCheckIncreasingMacd.Name = "EditCheckIncreasingMacd";
+        EditCheckIncreasingMacd.Size = new Size(184, 19);
+        EditCheckIncreasingMacd.TabIndex = 274;
+        EditCheckIncreasingMacd.Text = "MACD moet oplopen/aflopen";
+        EditCheckIncreasingMacd.UseVisualStyleBackColor = true;
+        // 
+        // EditCheckIncreasingStoch
+        // 
+        EditCheckIncreasingStoch.AutoSize = true;
+        EditCheckIncreasingStoch.Location = new Point(983, 446);
+        EditCheckIncreasingStoch.Margin = new Padding(4, 3, 4, 3);
+        EditCheckIncreasingStoch.Name = "EditCheckIncreasingStoch";
+        EditCheckIncreasingStoch.Size = new Size(199, 19);
+        EditCheckIncreasingStoch.TabIndex = 273;
+        EditCheckIncreasingStoch.Text = "Stoch moet in niemandsland zijn";
+        EditCheckIncreasingStoch.UseVisualStyleBackColor = true;
+        // 
+        // EditCheckIncreasingRsi
+        // 
+        EditCheckIncreasingRsi.AutoSize = true;
+        EditCheckIncreasingRsi.Location = new Point(983, 402);
+        EditCheckIncreasingRsi.Margin = new Padding(4, 3, 4, 3);
+        EditCheckIncreasingRsi.Name = "EditCheckIncreasingRsi";
+        EditCheckIncreasingRsi.Size = new Size(165, 19);
+        EditCheckIncreasingRsi.TabIndex = 272;
+        EditCheckIncreasingRsi.Text = "RSI moet oplopen/aflopen";
+        EditCheckIncreasingRsi.UseVisualStyleBackColor = true;
+        // 
+        // label59
+        // 
+        label59.AutoSize = true;
+        label59.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
+        label59.Location = new Point(983, 380);
+        label59.Margin = new Padding(4, 0, 4, 0);
+        label59.Name = "label59";
+        label59.Size = new Size(44, 15);
+        label59.TabIndex = 271;
+        label59.Text = "Instap:";
         // 
         // label19
         // 
@@ -2574,7 +2628,7 @@ partial class FrmSettings
         // EditSoundTradeNotification
         // 
         EditSoundTradeNotification.AutoSize = true;
-        EditSoundTradeNotification.Location = new Point(23, 91);
+        EditSoundTradeNotification.Location = new Point(23, 86);
         EditSoundTradeNotification.Margin = new Padding(4, 3, 4, 3);
         EditSoundTradeNotification.Name = "EditSoundTradeNotification";
         EditSoundTradeNotification.Size = new Size(186, 19);
@@ -2585,7 +2639,7 @@ partial class FrmSettings
         // EditDisableNewPositions
         // 
         EditDisableNewPositions.AutoSize = true;
-        EditDisableNewPositions.Location = new Point(23, 66);
+        EditDisableNewPositions.Location = new Point(23, 61);
         EditDisableNewPositions.Margin = new Padding(4, 3, 4, 3);
         EditDisableNewPositions.Name = "EditDisableNewPositions";
         EditDisableNewPositions.Size = new Size(187, 19);
@@ -2659,7 +2713,7 @@ partial class FrmSettings
         // EditTradeViaBinance
         // 
         EditTradeViaBinance.AutoSize = true;
-        EditTradeViaBinance.Location = new Point(23, 41);
+        EditTradeViaBinance.Location = new Point(23, 36);
         EditTradeViaBinance.Margin = new Padding(4, 3, 4, 3);
         EditTradeViaBinance.Name = "EditTradeViaBinance";
         EditTradeViaBinance.Size = new Size(148, 19);
@@ -2690,7 +2744,7 @@ partial class FrmSettings
         // EditTradeViaPaperTrading
         // 
         EditTradeViaPaperTrading.AutoSize = true;
-        EditTradeViaPaperTrading.Location = new Point(23, 19);
+        EditTradeViaPaperTrading.Location = new Point(23, 14);
         EditTradeViaPaperTrading.Margin = new Padding(4, 3, 4, 3);
         EditTradeViaPaperTrading.Name = "EditTradeViaPaperTrading";
         EditTradeViaPaperTrading.Size = new Size(97, 19);
@@ -2722,7 +2776,7 @@ partial class FrmSettings
         // 
         label36.AutoSize = true;
         label36.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
-        label36.Location = new Point(17, 613);
+        label36.Location = new Point(17, 628);
         label36.Margin = new Padding(4, 0, 4, 0);
         label36.Name = "label36";
         label36.Size = new Size(63, 15);
@@ -2771,7 +2825,7 @@ partial class FrmSettings
         groupBoxSlots.Controls.Add(label56);
         groupBoxSlots.Controls.Add(EditSlotsMaximalBase);
         groupBoxSlots.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
-        groupBoxSlots.Location = new Point(395, 459);
+        groupBoxSlots.Location = new Point(395, 421);
         groupBoxSlots.Name = "groupBoxSlots";
         groupBoxSlots.Size = new Size(234, 116);
         groupBoxSlots.TabIndex = 244;
@@ -2849,7 +2903,7 @@ partial class FrmSettings
         groupBox2.Controls.Add(EditBarometer30mBotMinimal);
         groupBox2.Location = new Point(395, 14);
         groupBox2.Name = "groupBox2";
-        groupBox2.Size = new Size(234, 186);
+        groupBox2.Size = new Size(234, 168);
         groupBox2.TabIndex = 243;
         groupBox2.TabStop = false;
         groupBox2.Text = "Barometer";
@@ -2966,7 +3020,7 @@ partial class FrmSettings
         groupBox1.Controls.Add(EditMonitorInterval10m);
         groupBox1.Controls.Add(EditMonitorInterval15m);
         groupBox1.Controls.Add(EditMonitorInterval30m);
-        groupBox1.Location = new Point(395, 218);
+        groupBox1.Location = new Point(395, 192);
         groupBox1.Margin = new Padding(4, 3, 4, 3);
         groupBox1.Name = "groupBox1";
         groupBox1.Padding = new Padding(4, 3, 4, 3);
@@ -3172,7 +3226,8 @@ partial class FrmSettings
         // EditGlobalStopLimitPercentage
         // 
         EditGlobalStopLimitPercentage.DecimalPlaces = 2;
-        EditGlobalStopLimitPercentage.Location = new Point(185, 668);
+        EditGlobalStopLimitPercentage.Font = new Font("Segoe UI", 9F, FontStyle.Strikeout, GraphicsUnit.Point);
+        EditGlobalStopLimitPercentage.Location = new Point(185, 683);
         EditGlobalStopLimitPercentage.Margin = new Padding(4, 3, 4, 3);
         EditGlobalStopLimitPercentage.Name = "EditGlobalStopLimitPercentage";
         EditGlobalStopLimitPercentage.Size = new Size(88, 23);
@@ -3181,7 +3236,8 @@ partial class FrmSettings
         // label70
         // 
         label70.AutoSize = true;
-        label70.Location = new Point(17, 670);
+        label70.Font = new Font("Segoe UI", 9F, FontStyle.Strikeout, GraphicsUnit.Point);
+        label70.Location = new Point(17, 685);
         label70.Margin = new Padding(4, 0, 4, 0);
         label70.Name = "label70";
         label70.Size = new Size(107, 15);
@@ -3191,7 +3247,8 @@ partial class FrmSettings
         // EditGlobalStopPercentage
         // 
         EditGlobalStopPercentage.DecimalPlaces = 2;
-        EditGlobalStopPercentage.Location = new Point(185, 639);
+        EditGlobalStopPercentage.Font = new Font("Segoe UI", 9F, FontStyle.Strikeout, GraphicsUnit.Point);
+        EditGlobalStopPercentage.Location = new Point(185, 654);
         EditGlobalStopPercentage.Margin = new Padding(4, 3, 4, 3);
         EditGlobalStopPercentage.Name = "EditGlobalStopPercentage";
         EditGlobalStopPercentage.Size = new Size(88, 23);
@@ -3200,7 +3257,8 @@ partial class FrmSettings
         // label71
         // 
         label71.AutoSize = true;
-        label71.Location = new Point(17, 641);
+        label71.Font = new Font("Segoe UI", 9F, FontStyle.Strikeout, GraphicsUnit.Point);
+        label71.Location = new Point(17, 656);
         label71.Margin = new Padding(4, 0, 4, 0);
         label71.Name = "label71";
         label71.Size = new Size(109, 15);
@@ -3466,6 +3524,17 @@ partial class FrmSettings
         imageList1.ImageStream = (ImageListStreamer)resources.GetObject("imageList1.ImageStream");
         imageList1.TransparentColor = Color.Transparent;
         imageList1.Images.SetKeyName(0, "volume.png");
+        // 
+        // EditLockProfits
+        // 
+        EditLockProfits.AutoSize = true;
+        EditLockProfits.Location = new Point(17, 593);
+        EditLockProfits.Margin = new Padding(4, 3, 4, 3);
+        EditLockProfits.Name = "EditLockProfits";
+        EditLockProfits.Size = new Size(88, 19);
+        EditLockProfits.TabIndex = 275;
+        EditLockProfits.Text = "Lock profits";
+        EditLockProfits.UseVisualStyleBackColor = true;
         // 
         // FrmSettings
         // 
@@ -3850,4 +3919,9 @@ partial class FrmSettings
     private ComboBox EditMargin;
     private Label label23;
     private NumericUpDown EditLeverage;
+    private Label label59;
+    private CheckBox EditCheckIncreasingMacd;
+    private CheckBox EditCheckIncreasingStoch;
+    private CheckBox EditCheckIncreasingRsi;
+    private CheckBox EditLockProfits;
 }
