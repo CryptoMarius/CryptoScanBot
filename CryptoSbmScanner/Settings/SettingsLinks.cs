@@ -63,12 +63,11 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
                 HyperTrader = new()
                 {
                     Execute = CryptoExternalUrlType.External,
-                    Url = "hypertrader://bybitf/{base}-{quote}/{interval}",
+                    Url = "hypertrader://bybit/{base}-{quote}/{interval}",
                     Telegram = "http://www.ccscanner.nl/hypertrader/?e=bybit&a={base}&b={quote}&i={interval}",
                 },
                 TradingView = new()
                 {
-                    // Deze of die van FUTURE is niet goed
                     Execute = CryptoExternalUrlType.External,
                     Url = "https://www.tradingview.com/chart/?symbol=BYBIT:{base}{quote}&interval={interval}", // Niet correct!
                 },
