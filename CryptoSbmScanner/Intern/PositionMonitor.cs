@@ -15,7 +15,7 @@ public class PositionMonitor : IDisposable
     // Tellertje die getoond wordt in applicatie (indicatie van aantal meldingen)
     public static int AnalyseCount = 0;
 
-    public static string DebugSymbol = "C98USDT";
+    //public static string DebugSymbol = "C98USDT";
     public CryptoSymbol Symbol { get; set; }
     public Model.CryptoExchange Exchange { get; set; }
 
@@ -953,13 +953,9 @@ public class PositionMonitor : IDisposable
         }
     }
 
-    private async Task PlaceFirstSellOrder(CryptoPosition position, CryptoPositionPart part)
+
+    private decimal CalculateSellPrice(CryptoPosition position)
     {
-        // TODO, is er genoeg Quantity van de symbol om het te kunnen verkopen? (min-quantity en notation)
-        // (nog niet opgemerkt in reallive trading, maar dit gaat zeker een keer gebeuren in de toekomst!)
-
-        //decimal sellPrice = CalculateSellPrice(position, part, candleInterval);
-
         // We nemen hiervoor de BreakEvenPrice van de gehele positie en de sell price ligt standaard X% hoger
         decimal breakEven = position.BreakEvenPrice;
         decimal sellPrice = breakEven + (breakEven * (GlobalData.Settings.Trading.ProfitPercentage / 100));
@@ -970,6 +966,26 @@ public class PositionMonitor : IDisposable
             GlobalData.AddTextToLogTab($"{Symbol.Name} SELL correction: {oldPrice:N6} to {sellPrice.ToString0()}");
         }
         sellPrice = sellPrice.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
+        return sellPrice;
+    }
+
+
+    private async Task PlaceFirstSellOrder(CryptoPosition position, CryptoPositionPart part, string extraText)
+    {
+        // TODO, is er genoeg Quantity van de symbol om het te kunnen verkopen? (min-quantity en notation)
+        // (nog niet opgemerkt in reallive trading, maar dit gaat zeker een keer gebeuren in de toekomst!)
+
+        //// We nemen hiervoor de BreakEvenPrice van de gehele positie en de sell price ligt standaard X% hoger
+        //decimal breakEven = position.BreakEvenPrice;
+        //decimal sellPrice = breakEven + (breakEven * (GlobalData.Settings.Trading.ProfitPercentage / 100));
+        //if (Symbol.LastPrice.HasValue && Symbol.LastPrice > sellPrice)
+        //{
+        //    decimal oldPrice = sellPrice;
+        //    sellPrice = (decimal)Symbol.LastPrice + Symbol.PriceTickSize;
+        //    GlobalData.AddTextToLogTab($"{Symbol.Name} SELL correction: {oldPrice:N6} to {sellPrice.ToString0()}");
+        //}
+        //sellPrice = sellPrice.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
+        decimal sellPrice = CalculateSellPrice(position);
 
 
 
@@ -1001,6 +1017,8 @@ public class PositionMonitor : IDisposable
             part.StepOutMethod = CryptoBuyStepInMethod.FixedPercentage;
             PositionTools.SavePositionPart(Database, part);
             PositionTools.SavePosition(Database, position);
+
+            Api.Dump(position.Symbol, sellResult.result, sellResult.tradeParams, extraText);
         }
     }
 
@@ -1016,12 +1034,12 @@ public class PositionMonitor : IDisposable
             step = PositionTools.FindPositionPartStep(part, "SELL", false);
             if (step == null && part.Quantity > 0)
             {
-                await PlaceFirstSellOrder(position, part);
+                await PlaceFirstSellOrder(position, part, "placing");
             }
             else if (step != null && part.Quantity > 0 && part.BreakEvenPrice > 0 && GlobalData.Settings.Trading.SellMethod == CryptoSellMethod.TrailViaKcPsar)
             {
-                if (Symbol.Name.Equals(DebugSymbol))
-                    Symbol = Symbol;
+                //if (Symbol.Name.Equals(DebugSymbol))
+                //    Symbol = Symbol;
                 bool doIt = false;
 
                 // Als de actuele prijs ondertussen substantieel hoger dan winst proberen te nemen (jojo)
@@ -1269,8 +1287,8 @@ public class PositionMonitor : IDisposable
         if (!(pauseBecauseOfTradingRules || pauseBecauseOfBarometer))
             CheckAddDcaFixedPercentage(tradeAccount, position);
 
-        if (Symbol.Name.Equals(DebugSymbol))
-            Symbol = Symbol;
+        //if (Symbol.Name.Equals(DebugSymbol))
+        //    Symbol = Symbol;
 
         // Itereer alle openstaande parts
         foreach (CryptoPositionPart part in position.Parts.Values.ToList())
@@ -1278,8 +1296,8 @@ public class PositionMonitor : IDisposable
             // voor de niet afgesloten parts...
             if (!part.CloseTime.HasValue)
             {
-                if (Symbol.Name.Equals(DebugSymbol))
-                    Symbol = Symbol;
+                //if (Symbol.Name.Equals(DebugSymbol))
+                //    Symbol = Symbol;
 
                 // De prepare controleert of we een geldige candle in het interval (van de part of positie) hebben!
                 if (Prepare(position, part, out CryptoCandle candleInterval))
@@ -1341,7 +1359,25 @@ public class PositionMonitor : IDisposable
                         step = PositionTools.FindPositionPartStep(part, "SELL", false);
                         if (step == null)
                         {
-                            await PlaceFirstSellOrder(position, part);
+                            await PlaceFirstSellOrder(position, part, "placing");
+                        }
+                        else
+                        {
+                            // Als we het verkoop percentages aangepast hebben is het wel prettig dat de order aangepast wordt)
+                            if (part.StepOutMethod == CryptoBuyStepInMethod.FixedPercentage)
+                            {
+                                decimal sellPrice = CalculateSellPrice(position);
+                                if (step.Price != sellPrice)
+                                {
+                                    var (cancelled, tradeParams) = await CancelOrder(position, part, step);
+                                    if (GlobalData.Settings.Trading.LogCanceledOrders)
+                                    {
+                                        string text3 = "annuleren vanwege aanpassing percentage";
+                                        Api.Dump(position.Symbol, cancelled, tradeParams, text3);
+                                    }
+                                    await PlaceFirstSellOrder(position, part, "modifying");
+                                }
+                            }
                         }
                     }
                 }
