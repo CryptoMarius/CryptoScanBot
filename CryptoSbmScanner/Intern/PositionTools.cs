@@ -297,7 +297,7 @@ public class PositionTools
     /// <summary>
     /// De break-even prijs berekenen vanuit de parts en steps
     /// </summary>
-    public static void CalculateProfitAndBreakEvenPrice(CryptoPosition position, bool includeFee = true)
+    public static void CalculateProfitAndBreakEvenPrice(CryptoPosition position)
     {
         //https://dappgrid.com/binance-fees-explained-fee-calculation/
         // You should first divide your order size(total) by 100 and then multiply it by your fee rate which 
@@ -326,17 +326,15 @@ public class PositionTools
                 {
                     if (step.Side == CryptoOrderSide.Buy)
                     {
+                        part.Commission += step.Commission;
                         part.Quantity += step.QuantityFilled;
                         part.Invested += step.QuoteQuantityFilled;
-                        if (includeFee)
-                            part.Commission += step.Commission;
                     }
                     else if (step.Side == CryptoOrderSide.Sell)
                     {
+                        part.Commission += step.Commission;
                         part.Quantity -= step.QuantityFilled;
                         part.Returned += step.QuoteQuantityFilled;
-                        if (includeFee)
-                            part.Commission += step.Commission;
                     }
                 }
                 //string s = string.Format("{0} CalculateProfit bought position={1} part={2} name={3} step={4} {5} price={6} stopprice={7} quantityfilled={8} QuoteQuantityFilled={9}",
@@ -345,16 +343,20 @@ public class PositionTools
             }
 
             if (part.Invested != 0 && part.Status == CryptoPositionStatus.Waiting)
+            {
                 part.Status = CryptoPositionStatus.Trading;
+
+                // Rekening houden met de kosten van de nog te verkopen coins
+                // NB: klopt niet helemaal als een order gedeeltelijk gevuld is!
+                part.Commission *= 2;
+            }
 
             part.Profit = part.Returned - part.Invested - part.Commission;
             part.Percentage = 0m;
             if (part.Invested != 0m)
                 part.Percentage = 100m * (part.Returned - part.Commission) / part.Invested;
             if (part.Quantity > 0)
-                // We gaan er hierbij vanuit dat we de volledige mep ook nog moeten verkopen, dus 2x de fee berekenen
-                // Dit is min of meer een quick fix, weet momenteel even geen betere oplossing (en het werkt)
-                part.BreakEvenPrice = (part.Invested - part.Returned + 2 * part.Commission) / part.Quantity;
+                part.BreakEvenPrice = (part.Invested + part.Commission - part.Returned) / part.Quantity;
             else
                 part.BreakEvenPrice = 0; // mhh. denk fout? Als we in een dca zitten is de part.BE 0
 
