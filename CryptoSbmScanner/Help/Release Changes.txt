@@ -64,6 +64,11 @@ Trading:
 - Trading - Documentatie uitleggen papertrading bot (achterliggende gedachtes uitleggen)
 - Trading - Documentatie uitleggen wat de open en gesloten posities precies zijn (per kolom)
 - Trading - Documentatie (er is wel een stukje van de trading toegelicht, maar lang niet alles
+- Trading - Bybit Spot - Testen van een stop-limit order
+- Trading - Bybit Futures - Testen van een marketorder
+- Trading - Bybit Futures - Testen van een limitorder
+- Trading - Bybit Futures - Testen van een stop-limit order
+- Trading - Naar de trading app gaan na het dubbelklikken op een open of gesloten positie
 Voor alle Exchanges (behalve Binance):
 - Trading - userdate stream implementeren (detectie van trade)
 - Trading - ophalen trades implementeren
@@ -72,16 +77,8 @@ Voor alle Exchanges (behalve Binance):
 - Trading - price ticker implementeren (in Kucoin geeft dit teveel cpu overhead en is om die reden nu niet aangezet)
 
 
-
-xx-xx-2023 1.8.?
-- Trading - Bybit Spot - Testen van een stop-limit order
-- Trading - Bybit Futures - Testen van een marketorder
-- Trading - Bybit Futures - Testen van een limitorder
-- Trading - Bybit Futures - Testen van een stop-limit order
-- Trading - Naar de trading app gaan na het dubbelklikken op een open of gesloten positie
-
-
-xx-09-2023 1.8.6
+23-09-2023 1.8.6
+- Trading - Openstaande sell opdrachten afkomstig van een fixed percentage aanpassen na een mutatie van het verkoop percentage
 - Trading - Toevoegen scrollbars aan tabsheet grafieken
 - Trading - Bybit Spot - Testen van een limitorder
 - Trading - Bybit Spot - Testen van een marketorder
@@ -89,7 +86,6 @@ xx-09-2023 1.8.6
 - Trading - Instelling instap voor toepassen oplopende/aflopende MACD
 - Trading - Instelling instap voor toepassen oplopende/aflopende Stoch
 - Trading - Instelling uitstap locking toepassen zodra je in de winst zit
-
 
 07-09-2023 1.8.5
 - Bij het activeren van de Kucoin exchange wordt de Binance exchange geactiveerd (het weblinks.json bevat een foutje)
