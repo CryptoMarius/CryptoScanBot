@@ -29,7 +29,7 @@
     },
     "HyperTrader": {
       "Execute": 1,
-      "Url": "hypertrader://binance/{base}-{quote}/{interval}",
+      "Url": "hypertrader://bybit/{base}-{quote}/{interval}",
       "Telegram": "http://www.ccscanner.nl/hypertrader/?e=bybit&a={base}&b={quote}&i={interval}"
     },
     "TradingView": {
@@ -73,7 +73,7 @@
     },
     "HyperTrader": {
       "Execute": 1,
-      "Url": "hypertrader://binance/{base}-{quote}/{interval}",
+      "Url": "hypertrader://kucoin/{base}-{quote}/{interval}",
       "Telegram": "http://www.ccscanner.nl/hypertrader/?e=kucoin&a={base}&b={quote}&i={interval}"
     },
     "TradingView": {
