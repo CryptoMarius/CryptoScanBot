@@ -323,7 +323,7 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
         if (ChartPositionsPerDay == null)
         {
             ChartPositionsPerDay = CreateChart("Aantal gesloten posities per dag", x, y);
-            Controls.Add(ChartPositionsPerDay);
+            flowLayoutPanel1.Controls.Add(ChartPositionsPerDay);
 
             ChartArea chartArea = CreateChartArea("N0");
             ChartPositionsPerDay.ChartAreas.Add(chartArea);
@@ -367,7 +367,7 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
         if (ChartProfitsPerDay == null)
         {
             ChartProfitsPerDay = CreateChart("Behaalde winst bedrag per dag", x, y);
-            Controls.Add(ChartProfitsPerDay);
+            flowLayoutPanel1.Controls.Add(ChartProfitsPerDay);
 
             ChartArea chartArea = CreateChartArea("N2");
             ChartProfitsPerDay.ChartAreas.Add(chartArea);
@@ -408,7 +408,7 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
         if (ChartProfitPercentagePerDay == null)
         {
             ChartProfitPercentagePerDay = CreateChart("Minimale, maximale en gemiddelde winst percentage per dag", x, y);
-            Controls.Add(ChartProfitPercentagePerDay);
+            flowLayoutPanel1.Controls.Add(ChartProfitPercentagePerDay);
 
             ChartArea chartArea = CreateChartArea("N2");
             ChartProfitPercentagePerDay.ChartAreas.Add(chartArea);
@@ -476,7 +476,7 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
         if (ChartInvestedReturnedPerDay == null)
         {
             ChartInvestedReturnedPerDay = CreateChart("Geinvesteerde en geretourneerde bedragen per dag", x, y);
-            Controls.Add(ChartInvestedReturnedPerDay);
+            flowLayoutPanel1.Controls.Add(ChartInvestedReturnedPerDay);
 
             ChartArea chartArea = CreateChartArea("N2");
             ChartInvestedReturnedPerDay.ChartAreas.Add(chartArea);
@@ -557,7 +557,7 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
         if (ChartDoorlooptijden == null)
         {
             ChartDoorlooptijden = CreateChart("Minimale, maximale en gemiddelde doorlooptijden per????????", x, y);
-            Controls.Add(ChartDoorlooptijden);
+            flowLayoutPanel1.Controls.Add(ChartDoorlooptijden);
 
             ChartArea chartArea = CreateChartArea("N2");
             ChartDoorlooptijden.ChartAreas.Add(chartArea);
