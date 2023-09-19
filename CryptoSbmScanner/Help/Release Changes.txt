@@ -74,10 +74,21 @@ Voor alle Exchanges (behalve Binance):
 
 
 xx-xx-2023 1.8.?
-- Trading - Bybit Spot - Testen van een marketorder
-- Trading - Bybit Spot - Testen van een limitorder
+- Trading - Bybit Spot - Testen van een stop-limit order
 - Trading - Bybit Futures - Testen van een marketorder
 - Trading - Bybit Futures - Testen van een limitorder
+- Trading - Bybit Futures - Testen van een stop-limit order
+- Trading - Naar de trading app gaan na het dubbelklikken op een open of gesloten positie
+
+
+xx-09-2023 1.8.6
+- Trading - Toevoegen scrollbars aan tabsheet grafieken
+- Trading - Bybit Spot - Testen van een limitorder
+- Trading - Bybit Spot - Testen van een marketorder
+- Trading - Instelling instap voor toepassen oplopende/aflopende RSI
+- Trading - Instelling instap voor toepassen oplopende/aflopende MACD
+- Trading - Instelling instap voor toepassen oplopende/aflopende Stoch
+- Trading - Instelling uitstap locking toepassen zodra je in de winst zit
 
 
 07-09-2023 1.8.5
