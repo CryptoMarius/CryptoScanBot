@@ -201,7 +201,7 @@ public class FetchSymbols
                         int deactivated = 0;
                         foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
                         {
-                            if (symbol.Status == 1 && !activeSymbols.ContainsKey(symbol.Name))
+                            if (symbol.Status == 1 && !symbol.IsBarometerSymbol() && !activeSymbols.ContainsKey(symbol.Name))
                             {
                                 deactivated++;
                                 symbol.Status = 0;
