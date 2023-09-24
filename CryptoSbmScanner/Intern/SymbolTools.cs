@@ -27,6 +27,7 @@ public class SymbolTools
 
     public static bool CheckValidApikey(out string reaction)
     {
+        reaction = "";
         //TODO: Configuratie en security
 
         //1-Controleer of er wel een API key aanwezig is
@@ -48,13 +49,12 @@ public class SymbolTools
         //    LogWriters = new List<TextWriter> { Console.Out }
         //});
 
-        //if (false)
-        //{
-        //    Signal.Reaction = "No API key available";
-        //    return false;
-        //}
+        if (GlobalData.Settings.ApiKey == "" || GlobalData.Settings.ApiSecret == "")
+        {
+            reaction = "No API credentials available";
+            return false;
+        }
 
-        reaction = "";
         return true;
     }
 
@@ -76,8 +76,6 @@ public class SymbolTools
         }
 
 
-        //Nog uit te zoeken!
-        //04-01-2021 07:32:08 monitor FILBTC 2m 04-01-2021 07:28:00 cp=0.00068  try buy failed, result= Not enough cash available 0.00000070 < 0.00010020000
         if (assetAmount < amount)
         {
             reaction = string.Format("Not enough cash available {0} < {1}", assetAmount, amount);

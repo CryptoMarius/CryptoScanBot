@@ -1025,7 +1025,7 @@ public class CryptoDatabase : IDisposable
 
                 "ExchangeId Integer NOT NULL," +
                 "SymbolId Integer NOT NULL, " +
-                "IntervalId Integer NULL," +
+                "IntervalId Integer NOT NULL," +
                 "Status INTEGER NOT NULL, " +
                 "Side INTEGER NOT NULL, " +
                 "Strategy INTEGER NOT NULL, " +
@@ -1260,8 +1260,10 @@ public class CryptoDatabase : IDisposable
 
     public int CreateNewUniqueId()
     {
-        //using CryptoDatabase database = new();
-        //database.Open();
+        // SQL server
+        // Create Sequence UniqueSequenceId as int start with 1 increment by 1
+        // SELECT NEXT VALUE FOR UniqueSequenceId AS Id
+
         using var transaction = Connection.BeginTransaction();
         {
             CryptoSequence sequence = new()

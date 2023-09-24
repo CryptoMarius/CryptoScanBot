@@ -212,8 +212,6 @@ public class FetchSymbols
                             GlobalData.AddTextToLogTab($"{deactivated} munten gedeactiveerd");
 
 
-
-
                         // De nieuwe symbols toevoegen aan de lijst
                         // (omdat de symbols pas tijdens de BulkInsert een id krijgen)
                         foreach (CryptoSymbol symbol in cache)

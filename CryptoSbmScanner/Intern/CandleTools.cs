@@ -129,7 +129,7 @@ public static class CandleTools
 #if SQLDATABASE
                 ExchangeId = symbol.ExchangeId,
                 SymbolId = symbol.Id,
-                IntervalId = interval.Id,
+                IntervalId = higherInterval.Id,
 #endif
                 OpenTime = candleHigherTimeFrameOpenTime,
                 Open = -1,
@@ -209,16 +209,16 @@ public static class CandleTools
                 //deze hoeft dan niet naar de database geschreven te worden wat zeer waarschijnlijk een beetje tijd scheelt....
                 if (IsChanged)
                 {
-                    CandleTools.UpdateCandleFetched(symbol, interval);
+                    CandleTools.UpdateCandleFetched(symbol, higherInterval);
                     GlobalData.TaskSaveCandles.AddToQueue(candleNew);
                 }
             }
             else
             {
-                if (!candles.ContainsKey(candleNew.OpenTime))
+                if (!candlesHigherTimeFrame.ContainsKey(candleNew.OpenTime))
                 {
-                    candles.Add(candleNew.OpenTime, candleNew);
-                    CandleTools.UpdateCandleFetched(symbol, interval);
+                    candlesHigherTimeFrame.Add(candleNew.OpenTime, candleNew);
+                    CandleTools.UpdateCandleFetched(symbol, higherInterval);
                     GlobalData.TaskSaveCandles.AddToQueue(candleNew);
                 }
             }

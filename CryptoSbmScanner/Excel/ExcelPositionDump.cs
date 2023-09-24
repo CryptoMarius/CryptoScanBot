@@ -168,7 +168,7 @@ public class ExcelPositionDump : ExcelBase
             }
 
 
-            if (part.CloseTime.HasValue)
+            if (part.CloseTime.HasValue && part.Status == CryptoPositionStatus.Ready)
             {
                 cell = WriteCell(sheet, 13, row, (double)part.Profit);
                 if (part.Profit >= 0)

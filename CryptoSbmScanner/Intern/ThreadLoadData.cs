@@ -214,7 +214,7 @@ public class ThreadLoadData
                 // Alle CandleFetched items uit de database lezen
                 // En ja, hier is wat duplicaat code, verhuist naar de AddSymbol() 
                 GlobalData.AddTextToLogTab("Reading fetched information");
-                sql = string.Format("select * from symbolinterval where exchangeid={0}", exchange.Id);
+                string sql = string.Format("select * from symbolinterval where exchangeid={0}", exchange.Id);
                 foreach (var candleFetched in databaseThread.Connection.Query<CryptoSymbolInterval>(sql))
                 {
                     candleFetched.ExchangeId = exchange.Id;

@@ -3,7 +3,7 @@
 namespace CryptoSbmScanner;
 
 // Define a class to receive parsed values
-class ApplicationParams
+public class ApplicationParams
 {
 
     [Option('f', "folder", Required = false, HelpText = "De te gebruiken folder in de APPDATA")]
