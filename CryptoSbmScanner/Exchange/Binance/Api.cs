@@ -218,7 +218,7 @@ public class Api : ExchangeBase
             CreateTime = currentDate,
             OrderSide = orderSide,
             OrderType = orderType,
-            Price = price, // the sell part (can also be a buy)
+            Price = price,
             StopPrice = stop, // OCO - the price at which the limit order to sell is activated
             LimitPrice = limit, // OCO - the lowest price that the trader is willing to accept
             Quantity = quantity,

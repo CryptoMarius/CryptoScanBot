@@ -29,10 +29,10 @@ public abstract class ExchangeBase
     {
         StringBuilder builder = new();
         builder.Append(symbol.Name);
-        builder.Append($" {tradeParams.OrderSide}");
         if (extraText != "")
             builder.Append($" {extraText}");
-        //builder.Append($"{symbol.Name} Position {tradeParams.OrderSide}");
+        builder.Append($" {tradeParams.OrderSide}");
+        builder.Append($" {tradeParams.OrderType}");
         builder.Append($" order #{tradeParams.OrderId}");
         builder.Append($" price={tradeParams.Price.ToString0()}");
         if (tradeParams.StopPrice.HasValue)

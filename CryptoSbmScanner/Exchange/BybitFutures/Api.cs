@@ -160,8 +160,8 @@ public class Api : ExchangeBase
 
 
         // Plaats een order op de exchange *ze lijken op elkaar, maar het is net elke keer anders)
-        using BybitRestClient client = new();
         //BinanceWeights.WaitForFairBinanceWeight(1); flauwekul voor die ene tick (geen herhaling toch?)
+        using BybitRestClient client = new();
 
         WebCallResult<BybitOrderId> result;
         switch (orderType)

@@ -148,8 +148,8 @@ public class Api : ExchangeBase
 
 
         // Plaats een order op de exchange *ze lijken op elkaar, maar het is net elke keer anders)
-        using KrakenRestClient client = new();
         //BinanceWeights.WaitForFairBinanceWeight(1); flauwekul voor die ene tick (geen herhaling toch?)
+        using KrakenRestClient client = new();
 
         WebCallResult<KrakenPlacedOrder> result;
         switch (orderType)

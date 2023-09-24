@@ -124,6 +124,7 @@ public class Api: ExchangeBase
         return localOrderStatus;
     }
 
+
     public async Task<(bool result, TradeParams tradeParams)> BuyOrSell(CryptoDatabase database,
         CryptoTradeAccount tradeAccount, CryptoSymbol symbol, DateTime currentDate,
         CryptoOrderType orderType, CryptoOrderSide orderSide,
@@ -165,8 +166,8 @@ public class Api: ExchangeBase
 
 
         // Plaats een order op de exchange *ze lijken op elkaar, maar het is net elke keer anders)
-        using KucoinRestClient client = new();
         //BinanceWeights.WaitForFairBinanceWeight(1); flauwekul voor die ene tick (geen herhaling toch?)
+        using KucoinRestClient client = new();
 
         WebCallResult<KucoinNewOrder> result;
         switch (orderType)
