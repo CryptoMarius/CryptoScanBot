@@ -135,6 +135,9 @@ public class Migration
                 transaction.Commit();
             }
 
+
+            // TODO: Wellicht de fee van exchange administreren, 0.01% voor limt orders
+            // en 0.015 voor market orders of iets dergelijks (iets met maker en taker)
         }
     }
 

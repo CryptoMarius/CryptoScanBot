@@ -1128,8 +1128,8 @@ public class CryptoDatabase : IDisposable
                 "QuantityFilled TEXT NOT NULL," +
                 "QuoteQuantityFilled TEXT NOT NULL," +
                 // Vanwege Papertrading nullable
-                "OrderId TEXT NULL," +
-                "Order2Id TEXT NULL," +
+                "OrderId TEXT NOT NULL," +
+                "Order2Id TEXT NULL," + // OCO Binance
                 "AvgPrice TEXT NULL," +
                 "Trailing INTEGER NULL," +
                 "FOREIGN KEY(PositionId) REFERENCES Position(Id)," +
