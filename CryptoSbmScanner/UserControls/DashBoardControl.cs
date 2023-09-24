@@ -97,6 +97,7 @@ public partial class DashBoardControl : UserControl
         builder.AppendLine("inner join position on Position.Id = positionStep.PositionId");
         builder.AppendLine("inner join symbol on Position.symbolid = symbol.id");
         builder.AppendLine("where PositionStep.status in (1, 2)");
+        builder.AppendLine("and position.Invested > 0");
         builder.AppendLine("group by symbol.quote");
         builder.AppendLine("order by count(symbol.quote) desc");
 
@@ -126,6 +127,7 @@ public partial class DashBoardControl : UserControl
         builder.AppendLine("inner join position on Position.Id = positionStep.PositionId");
         builder.AppendLine("inner join symbol on Position.symbolid = symbol.id");
         builder.AppendLine("where PositionStep.status in (1, 2) and PositionStep.Side = 0");
+        builder.AppendLine("and position.Invested > 0");
         builder.AppendLine($"and symbol.quote = '{QuoteData.Name}'");
         builder.AppendLine("group by date(PositionStep.CloseTime), PositionStep.Status, symbol.quote");
         builder.AppendLine("order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote");
@@ -151,6 +153,7 @@ public partial class DashBoardControl : UserControl
         builder.AppendLine("inner join position on Position.Id = positionStep.PositionId");
         builder.AppendLine("inner join symbol on Position.symbolid = symbol.id");
         builder.AppendLine("where PositionStep.status in (1, 2) and PositionStep.Side = 1");
+        builder.AppendLine("and position.Invested > 0");
         builder.AppendLine($"and symbol.quote = '{QuoteData.Name}'");
         builder.AppendLine("group by date(PositionStep.CloseTime), PositionStep.Status, symbol.quote");
         builder.AppendLine("order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote");
@@ -190,14 +193,15 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
         builder.AppendLine("sum(position.Returned) as Returned,");
         builder.AppendLine("sum(position.Commission) as Commission,");
         builder.AppendLine("sum(position.Profit) as TotalProfit,  --= sum(position.Returned - position.Invested - position.Commission) as Open,");
-        builder.AppendLine("--100 * sum(position.Profit) / sum(position.Invested) as Average");
+        //builder.AppendLine("--100 * sum(position.Profit) / sum(position.Invested) as Average");
         builder.AppendLine("round(min(round(position.percentage, 2)), 2) as MinPerc,");
         builder.AppendLine("round(avg(round(position.percentage, 2)), 2) as AvgPerc,");
         builder.AppendLine("round(max(round(position.percentage, 2)), 2) as MaxPerc");
         builder.AppendLine("from position");
         builder.AppendLine("inner join symbol on position.symbolid = symbol.id");
-        builder.AppendLine("--where position.status = 2");
+        //builder.AppendLine("--where position.status = 2");
         builder.AppendLine($"where symbol.quote = '{QuoteData.Name}'");
+        builder.AppendLine("and position.Invested > 0");
         builder.AppendLine("group by date(position.CloseTime), position.Status, symbol.quote");
         builder.AppendLine("order by date(position.CloseTime) asc, position.Status, symbol.quote");
 
@@ -463,7 +467,11 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
         {
             if (data.CloseTime.Date > new DateTime(2000, 01, 01))
             {
-                series1.Points.AddXY(data.CloseTime.Date, data.MinPerc - 100);
+                if (data.MinPerc > 0)
+                    series1.Points.AddXY(data.CloseTime.Date, data.MinPerc - 100);
+                else
+                    series1.Points.AddXY(data.CloseTime.Date, 0);
+
                 series2.Points.AddXY(data.CloseTime.Date, data.AvgPerc - 100);
                 series3.Points.AddXY(data.CloseTime.Date, data.MaxPerc - 100);
             }
@@ -708,6 +716,7 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
 
     private void RefreshInformation(object sender, EventArgs e)
     {
+#if !SQLDATABASE
         try
         {
             CreateChart();
@@ -717,5 +726,6 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
             GlobalData.Logger.Error(error);
             GlobalData.AddTextToLogTab(error.ToString() + "\r\n");
         }
+#endif
     }
 }
