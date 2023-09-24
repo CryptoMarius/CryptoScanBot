@@ -172,7 +172,7 @@ static public class GlobalData
             }
         }
     }
-
+    
 
     static public void LoadIntervals()
     {
@@ -384,8 +384,8 @@ static public class GlobalData
           //symbol.Name.Equals("ADAUSDT") ||
           //  symbol.Name.Equals("AAVE3SUSDT") ||
           //  symbol.Name.Equals("DASHUSDT") ||
-          symbol.Name.Equals("AKROUSDT") ||
-          symbol.Name.Equals("COMPUSDT") ||
+          symbol.Name.Equals("WLDUSDT") ||
+          symbol.Name.Equals("STORJUSDT") ||
 
 
           symbol.Name.Equals("$BMPUSDT") ||
