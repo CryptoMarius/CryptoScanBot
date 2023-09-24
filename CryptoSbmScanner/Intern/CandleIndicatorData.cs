@@ -393,4 +393,35 @@ public class CandleIndicatorData
         //DateTime symbolfetchCandleDebug = CandleTools.GetUnixDate(startFetchUnix);  //debug
         return startFetchUnix;
     }
+
+
+    public static bool PrepareIndicators(CryptoSymbol symbol, CryptoSymbolInterval symbolInterval, CryptoCandle candle, out string reaction)
+    {
+        if (candle.CandleData == null)
+        {
+            // De 1m candle is nu definitief, doe een herberekening van de relevante intervallen
+            List<CryptoCandle> History = CalculateCandles(symbol, symbolInterval.Interval, candle.OpenTime, out reaction);
+            if (History == null)
+            {
+                //GlobalData.AddTextToLogTab(signal.DisplayText + " " + reaction + " (removed)");
+                //symbolInterval.Signal = null;
+                return false;
+            }
+
+            if (History.Count == 0)
+            {
+                reaction = "Geen candles";
+                //GlobalData.AddTextToLogTab(signal.DisplayText + " " + reaction + " (removed)");
+                //symbolInterval.Signal = null;
+                //reaction = 
+                return false;
+            }
+
+            CalculateIndicators(History);
+        }
+
+        reaction = "";
+        return true;
+    }
+
 }
