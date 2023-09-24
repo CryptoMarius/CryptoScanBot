@@ -4,10 +4,9 @@ using CryptoSbmScanner.Model;
 
 namespace CryptoSbmScanner.Signal;
 
+#if EXTRASTRATEGIES
 public class SignalBullishEngulfing : SignalCreateBase
 {
-
-
     public SignalBullishEngulfing(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
         ReplaceSignal = false;
@@ -116,10 +115,7 @@ public class SignalBullishEngulfing : SignalCreateBase
     }
 
 
-    public override bool AllowStepIn(CryptoSignal signal)
-    {
-        return true;
-    }
+    public override bool AllowStepIn(CryptoSignal signal) => false;
 
 
     public override bool GiveUp(CryptoSignal signal)
@@ -137,4 +133,4 @@ public class SignalBullishEngulfing : SignalCreateBase
     }
 
 }
-
+#endif

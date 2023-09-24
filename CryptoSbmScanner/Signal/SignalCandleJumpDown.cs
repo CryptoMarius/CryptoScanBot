@@ -68,4 +68,6 @@ public class SignalCandleJumpDown : SignalCreateBase
 
         return false;
     }
+
+    public override bool AllowStepIn(CryptoSignal signal) => false;
 }
