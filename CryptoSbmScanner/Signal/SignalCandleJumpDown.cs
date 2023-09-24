@@ -8,7 +8,7 @@ public class SignalCandleJumpDown : SignalCreateBase
 {
     public SignalCandleJumpDown(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        SignalMode = CryptoOrderSide.Buy;
+        SignalMode = CryptoOrderSide.Sell;
         SignalStrategy = CryptoSignalStrategy.Jump;
     }
 
