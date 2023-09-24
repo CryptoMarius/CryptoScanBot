@@ -163,7 +163,8 @@ static public class TradeHandler
                     part.Status = CryptoPositionStatus.TakeOver;
                     //if (oldStatus != part.Status)
                     //    GlobalData.AddTextToLogTab($"{symbol.Name} Debug: positie part status van {oldStatus} naar {part.Status}");
-                    PositionTools.SavePositionPart(databaseThread, part);
+                    //PositionTools.SavePositionPart(databaseThread, part);
+                    databaseThread.Connection.Update<CryptoPositionPart>(part);
 
                     s = string.Format("handletrade#7 {0} positie part cancelled, user takeover? part.status={1}", msgInfo, part.Status);
                     GlobalData.AddTextToLogTab(s);
@@ -180,7 +181,7 @@ static public class TradeHandler
                     position.Status = CryptoPositionStatus.TakeOver;
                     //if (oldStatus != position.Status)
                     //    GlobalData.AddTextToLogTab($"{symbol.Name} Debug: positie part status van {oldStatus} naar {part.Status}");
-                    PositionTools.SavePosition(databaseThread, position);
+                    databaseThread.Connection.Update<CryptoPosition>(position);
 
                     s = string.Format("handletrade#7 {0} positie cancelled, user takeover? position.status={1}", msgInfo, position.Status);
                     GlobalData.AddTextToLogTab(s);
@@ -209,7 +210,8 @@ static public class TradeHandler
                 part.Status = CryptoPositionStatus.Ready;
                 //if (oldStatus != part.Status && position.Quantity > 0) // geen 2 meldingen achter elkaar (van de part status en dan de totale positie)
                 //    GlobalData.AddTextToLogTab($"{symbol.Name} Debug: Part status van {oldStatus} naar {part.Status}");
-                PositionTools.SavePositionPart(databaseThread, part);
+                //PositionTools.SavePositionPart(databaseThread, part);
+                databaseThread.Connection.Update<CryptoPositionPart>(part);
 
 
 
@@ -224,7 +226,7 @@ static public class TradeHandler
                     position.CloseTime = data.TradeTime;
                     //oldStatus = position.Status;
                     position.Status = CryptoPositionStatus.Ready;
-                    PositionTools.SavePosition(databaseThread, position);
+                    databaseThread.Connection.Update<CryptoPosition>(position);
                     //if (oldStatus != position.Status)
                     //    GlobalData.AddTextToLogTab($"Debug: position status van {oldStatus} naar {position.Status}");
 
@@ -255,7 +257,7 @@ static public class TradeHandler
                     //    }
                     //}
                     // In de veronderstelling dat dit allemaal lukt
-                    position.Symbol.LastTradeDate = DateTime.UtcNow;
+                    position.Symbol.LastTradeDate = position.CloseTime;
                     databaseThread.Connection.Update<CryptoSymbol>(position.Symbol);
                 }
 
@@ -277,7 +279,7 @@ static public class TradeHandler
                 //await positionMonitor.HandlePosition(tradeAccount, databaseThread, position, true);
 
                 position.Reposition = true;
-                PositionTools.SavePosition(databaseThread, position);
+                databaseThread.Connection.Update<CryptoPosition>(position);
 
                 //s = "";
                 if (position.Status == CryptoPositionStatus.Ready)
@@ -321,7 +323,7 @@ static public class TradeHandler
                 GlobalData.AddTextToTelegram(s);
 
                 position.Reposition = true;
-                PositionTools.SavePosition(databaseThread, position);
+                databaseThread.Connection.Update<CryptoPosition>(position);
                 return;
             }
 
