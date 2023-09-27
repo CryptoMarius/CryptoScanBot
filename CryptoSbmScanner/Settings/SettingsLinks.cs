@@ -69,7 +69,7 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
                 TradingView = new()
                 {
                     Execute = CryptoExternalUrlType.External,
-                    Url = "https://www.tradingview.com/chart/?symbol=BYBIT:{base}{quote}&interval={interval}", // Niet correct!
+                    Url = "https://www.tradingview.com/chart/?symbol=BYBIT:{base}{quote}.P&interval={interval}",
                 },
                 ExchangeUrl = new()
                 {
@@ -95,9 +95,8 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
                 },
                 TradingView = new()
                 {
-                    // Deze of die van FUTURE is niet goed
                     Execute = CryptoExternalUrlType.External,
-                    Url = "https://www.tradingview.com/chart/?symbol=BYBIT:{base}{quote}&interval={interval}", // Niet correct!
+                    Url = "https://www.tradingview.com/chart/?symbol=BYBIT:{base}{quote}&interval={interval}",
                 },
                 ExchangeUrl = new()
                 {
@@ -130,7 +129,7 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
                 {
                     // Geen idee
                     Execute = CryptoExternalUrlType.External,
-                    Url = "https://www.kucoin.com/trade/{quote}/{base}{quote}", // Niet correct
+                    Url = "https://www.kucoin.com/trade/{quote}/{base}{quote}",
                 }
             }
         );
