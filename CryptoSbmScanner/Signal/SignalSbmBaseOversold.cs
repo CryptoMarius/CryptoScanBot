@@ -1,6 +1,7 @@
 ﻿using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
+using CryptoSbmScanner.Trader;
 
 namespace CryptoSbmScanner.Signal;
 
@@ -137,7 +138,7 @@ public class SignalSbmBaseOversold : SignalSbmBase
         // Hoe positief wil je het hebben?
         if (last.CandleData.MacdHistogram > 0)
         {
-            ExtraText = string.Format("De MACD.Hist is groen {0:N8}", last.CandleData.MacdHistogram);
+            //ExtraText = string.Format("De MACD.Hist is groen {0:N8}", last.CandleData.MacdHistogram);
             return true; // niet echt een juiste controle
         }
 
@@ -155,11 +156,11 @@ public class SignalSbmBaseOversold : SignalSbmBase
                 if (last.CandleData.MacdHistogram >= 0)
                 {
                     // Hoe positief wil je het hebben?
-                    ExtraText = string.Format("De MACD[{0:N0}].Hist is groen {1:N8} {2:N8}", iterator, prev.CandleData.MacdHistogram, last.CandleData.MacdHistogram);
+                    //ExtraText = string.Format("De MACD[{0:N0}].Hist is groen {1:N8} {2:N8}", iterator, prev.CandleData.MacdHistogram, last.CandleData.MacdHistogram);
                 }
                 else
                 {
-                    ExtraText = string.Format("De MACD[{0:N0}].Hist is niet roze {1:N8} {2:N8}", iterator, prev.CandleData.MacdHistogram, last.CandleData.MacdHistogram);
+                    //ExtraText = string.Format("De MACD[{0:N0}].Hist is niet roze {1:N8} {2:N8}", iterator, prev.CandleData.MacdHistogram, last.CandleData.MacdHistogram);
                     return false;
                 }
             }
@@ -438,14 +439,6 @@ public class SignalSbmBaseOversold : SignalSbmBase
 
     public override bool GiveUp(CryptoSignal signal)
     {
-        // ********************************************************************
-        // Als BTC snel gedaald is dan stoppen
-        if (GlobalData.Settings.Trading.PauseTradingUntil >= CandleLast.Date)
-        {
-            ExtraText = string.Format("De bot is gepauseerd omdat {0}", GlobalData.Settings.Trading.PauseTradingText);
-            return true;
-        }
-
         // ********************************************************************
         // Instaptijd verstreken (oneindig wachten is geen optie)
         if ((CandleLast.OpenTime - signal.EventTime) > GlobalData.Settings.Trading.GlobalBuyRemoveTime * Interval.Duration)

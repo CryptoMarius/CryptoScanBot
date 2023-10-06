@@ -115,9 +115,6 @@ public class SignalBullishEngulfing : SignalCreateBase
     }
 
 
-    public override bool AllowStepIn(CryptoSignal signal) => false;
-
-
     public override bool GiveUp(CryptoSignal signal)
     {
         //return true;

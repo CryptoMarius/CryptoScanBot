@@ -183,8 +183,12 @@ public class SignalHelper
             AnalyzeLongType = typeof(SignalBullishEngulfing),
         });
 
-        
-
+        list.Add(new AlgorithmDefinition()
+        {
+            Name = "Kumo Breakout",
+            Strategy = CryptoSignalStrategy.IchimokuKumoBreakout,
+            AnalyzeLongType = typeof(IchimokuKumoBreakout),
+        });
 #endif
         return list;
     }
