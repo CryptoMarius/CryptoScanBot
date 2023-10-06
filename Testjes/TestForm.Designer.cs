@@ -33,13 +33,9 @@ namespace CryptoSbmScanner
         {
             components = new System.ComponentModel.Container();
             panel1 = new Panel();
-            button1 = new Button();
-            button6 = new Button();
             ButtonVolatiteit = new Button();
             comboBox1 = new ComboBox();
             ButtonBackTest = new Button();
-            PriceAction = new Button();
-            button3 = new Button();
             ButtonBitmap = new Button();
             tabControl = new TabControl();
             tabPageLog = new TabPage();
@@ -79,13 +75,9 @@ namespace CryptoSbmScanner
             // 
             // panel1
             // 
-            panel1.Controls.Add(button1);
-            panel1.Controls.Add(button6);
             panel1.Controls.Add(ButtonVolatiteit);
             panel1.Controls.Add(comboBox1);
             panel1.Controls.Add(ButtonBackTest);
-            panel1.Controls.Add(PriceAction);
-            panel1.Controls.Add(button3);
             panel1.Controls.Add(ButtonBitmap);
             panel1.Dock = DockStyle.Top;
             panel1.Location = new Point(0, 0);
@@ -93,25 +85,6 @@ namespace CryptoSbmScanner
             panel1.Name = "panel1";
             panel1.Size = new Size(1423, 59);
             panel1.TabIndex = 10;
-            // 
-            // button1
-            // 
-            button1.Location = new Point(956, 19);
-            button1.Name = "button1";
-            button1.Size = new Size(75, 23);
-            button1.TabIndex = 14;
-            button1.Text = "Telegram";
-            button1.UseVisualStyleBackColor = true;
-            // 
-            // button6
-            // 
-            button6.Location = new Point(736, 18);
-            button6.Margin = new Padding(4, 3, 4, 3);
-            button6.Name = "button6";
-            button6.Size = new Size(88, 27);
-            button6.TabIndex = 13;
-            button6.Text = "Trend test";
-            button6.UseVisualStyleBackColor = true;
             // 
             // ButtonVolatiteit
             // 
@@ -143,27 +116,6 @@ namespace CryptoSbmScanner
             ButtonBackTest.Text = "Backtest";
             ButtonBackTest.UseVisualStyleBackColor = true;
             ButtonBackTest.Click += ButtonBackTest_Click;
-            // 
-            // PriceAction
-            // 
-            PriceAction.Location = new Point(391, 16);
-            PriceAction.Margin = new Padding(4, 3, 4, 3);
-            PriceAction.Name = "PriceAction";
-            PriceAction.Size = new Size(88, 27);
-            PriceAction.TabIndex = 9;
-            PriceAction.Text = "ZigZag test";
-            PriceAction.UseVisualStyleBackColor = true;
-            PriceAction.Click += PriceAction_Click;
-            // 
-            // button3
-            // 
-            button3.Location = new Point(202, 16);
-            button3.Margin = new Padding(4, 3, 4, 3);
-            button3.Name = "button3";
-            button3.Size = new Size(88, 27);
-            button3.TabIndex = 7;
-            button3.Text = "Signal.Create";
-            button3.UseVisualStyleBackColor = true;
             // 
             // ButtonBitmap
             // 
@@ -392,41 +344,37 @@ namespace CryptoSbmScanner
 
         #endregion
 
-        private System.Windows.Forms.Panel panel1;
-        private System.Windows.Forms.Button button3;
-        private System.Windows.Forms.Button ButtonBitmap;
-        private System.Windows.Forms.TabControl tabControl;
-        private System.Windows.Forms.TabPage tabPageLog;
-        private System.Windows.Forms.TextBox textBox1;
-        private System.Windows.Forms.TabPage tabPageSignals;
-        private System.Windows.Forms.TabPage tabPageBitmap;
-        private System.Windows.Forms.Button PriceAction;
-        private System.Windows.Forms.Button ButtonBackTest;
-        private System.Windows.Forms.ComboBox comboBox1;
-        private System.Windows.Forms.Button ButtonVolatiteit;
-        private System.Windows.Forms.Button button6;
-        private System.Windows.Forms.TabPage tabPage3;
-        private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
-        private System.Windows.Forms.ToolStripMenuItem testToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem1;
-        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem2;
-        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem3;
-        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem4;
-        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem5;
-        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem6;
-        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem7;
-        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem8;
-        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem9;
-        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem10;
+        private Panel panel1;
+        private Button ButtonBitmap;
+        private TabControl tabControl;
+        private TabPage tabPageLog;
+        private TextBox textBox1;
+        private TabPage tabPageSignals;
+        private TabPage tabPageBitmap;
+        private Button ButtonBackTest;
+        private ComboBox comboBox1;
+        private Button ButtonVolatiteit;
+        private TabPage tabPage3;
+        private ContextMenuStrip contextMenuStrip1;
+        private ToolStripMenuItem testToolStripMenuItem;
+        private ToolStripMenuItem toolStripMenuItem1;
+        private ToolStripMenuItem toolStripMenuItem2;
+        private ToolStripMenuItem toolStripMenuItem3;
+        private ToolStripMenuItem toolStripMenuItem4;
+        private ToolStripMenuItem toolStripMenuItem5;
+        private ToolStripMenuItem toolStripMenuItem6;
+        private ToolStripMenuItem toolStripMenuItem7;
+        private ToolStripMenuItem toolStripMenuItem8;
+        private ToolStripMenuItem toolStripMenuItem9;
+        private ToolStripMenuItem toolStripMenuItem10;
         private System.Windows.Forms.Timer timerClearEvents;
-        private System.Windows.Forms.ContextMenuStrip contextMenuStripSignals;
-        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItemClear;
-        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItemAltrady;
-        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItemTradingView;
-        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItemHypertrader;
+        private ContextMenuStrip contextMenuStripSignals;
+        private ToolStripMenuItem toolStripMenuItemClear;
+        private ToolStripMenuItem toolStripMenuItemAltrady;
+        private ToolStripMenuItem toolStripMenuItemTradingView;
+        private ToolStripMenuItem toolStripMenuItemHypertrader;
         private ListView listView1;
         private PictureBox pictureBox1;
-        private Button button1;
     }
 }
 

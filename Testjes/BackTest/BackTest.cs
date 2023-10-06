@@ -50,7 +50,7 @@ public class BackTest
     }
 
 
-
+     
     /// <summary>
     /// Geheugen teruggeven (anders blijft het ook maar hangen)
     /// </summary>
@@ -778,7 +778,7 @@ public class BackTest
                         Symbol.LastPrice = candle.Close;
                         //await HandleCandle(emulator, cryptoBackTest, candle);
 
-                        PositionMonitor positionMonitor = new(Symbol, candle);
+                        using PositionMonitor positionMonitor = new(Symbol, candle);
                         await positionMonitor.NewCandleArrivedAsync();
                     }
                 }

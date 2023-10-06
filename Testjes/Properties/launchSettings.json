@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "CryptoSbmTestjes": {
+      "commandName": "Project",
+      "commandLineArgs": "-e \"Bybit Futures\" -f CryptoScanner.Bybit.Futures.Sql"
+    }
+  }
+}
