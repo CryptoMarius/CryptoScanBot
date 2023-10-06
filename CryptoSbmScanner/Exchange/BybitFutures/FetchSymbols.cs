@@ -22,6 +22,9 @@ public class FetchSymbols
         {
             try
             {
+                // todo: https://api.bybit.com/v5/market/funding/history?category=linear&symbol=BTC&limit=100
+
+
                 GlobalData.AddTextToLogTab($"Reading symbol information from {Api.ExchangeName}");
                 LimitRates.WaitForFairWeight(1);
 
@@ -98,6 +101,9 @@ public class FetchSymbols
                                         Status = 1,
                                     };
                                 }
+
+                                
+                                symbol.FundingInterval = symbolData.FundingInterval; 
 
                                 //Tijdelijk alles overnemen (vanwege into nieuwe velden)
                                 //De te gebruiken precisie in prijzen

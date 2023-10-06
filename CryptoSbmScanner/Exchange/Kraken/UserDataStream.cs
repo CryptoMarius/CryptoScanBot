@@ -1,16 +1,14 @@
 ﻿using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Sockets;
-
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
-
 using Kraken.Net.Clients;
 
 namespace CryptoSbmScanner.Exchange.Kraken;
 #if TRADEBOT
 public class UserDataStream
 {
-    private readonly KrakenSocketClient socketClient;
+    private KrakenSocketClient socketClient;
     private readonly UpdateSubscription _subscription;
 
     public async Task StopAsync()
@@ -34,7 +32,7 @@ public class UserDataStream
     {
         using KrakenRestClient client = new();
         {
-            //CallResult<string> userStreamResult = await client.V5Api.Account.StartUserStreamAsync();
+            //CallResult<string> userStreamResult = await client.SpotApi.Account.StartUserStreamAsync();
             //if (!userStreamResult.Success)
             //{
             //    GlobalData.AddTextToLogTab($"{Api.ExchangeName} Error starting user stream: " + userStreamResult.Error.Message);
@@ -43,7 +41,7 @@ public class UserDataStream
 
 
             //socketClient = new();
-            //var subscriptionResult = await socketClient.V5SpotStreams.SubscribeToTradeUpdatesAsync(
+            //var subscriptionResult = await socketClient.FuturesApi.SubscribeToTradesUpdatesAsync(
             //    userStreamResult.Data,
             //    OnOrderUpdate,
             //    null,

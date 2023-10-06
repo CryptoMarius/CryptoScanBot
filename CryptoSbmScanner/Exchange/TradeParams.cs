@@ -6,7 +6,7 @@ public class TradeParams
 {
     public CryptoOrderSide OrderSide { get; set; }
     public CryptoOrderType OrderType { get; set; }
-    public long? OrderId { get; set; }
+    public string OrderId { get; set; }
     public decimal Price { get; set; }
     public decimal Quantity { get; set; }
     public decimal QuoteQuantity { get; set; }
@@ -15,7 +15,7 @@ public class TradeParams
     // OCO of StopLimit gerelateerd
     public decimal? StopPrice { get; set; }
     public decimal? LimitPrice { get; set; }
-    public long? Order2Id { get; set; }
+    public string Order2Id { get; set; }
 
     // if error
     public System.Net.HttpStatusCode? ResponseStatusCode { get; set; }

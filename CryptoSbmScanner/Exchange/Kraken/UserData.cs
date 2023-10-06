@@ -1,10 +1,11 @@
 ﻿using CryptoSbmScanner.Intern;
 
-namespace CryptoSbmScanner.Exchange.Binance;
+namespace CryptoSbmScanner.Exchange.Kraken;
 
 #if TRADEBOT
 internal class UserData : UserDataBase
 {
+    //private List<PriceTickerStream> TickerList { get; set; } = new();
     static private UserDataStream TaskStreamUserData { get; set; }
 
     public override async Task Start()

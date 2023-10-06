@@ -1,6 +1,5 @@
 ﻿using Bybit.Net.Clients;
 using Bybit.Net.Enums;
-using Bybit.Net.Objects.Models.Spot;
 using Bybit.Net.Objects.Models.V5;
 
 using CryptoExchange.Net.Authentication;
@@ -15,9 +14,9 @@ namespace CryptoSbmScanner.Exchange.BybitSpot;
 
 public class Api : ExchangeBase
 {
-    private static readonly Category Category = Category.Spot;
     public static readonly string ExchangeName = "Bybit Spot";
 #if TRADEBOT
+    private static readonly Category Category = Category.Spot;
     static private UserDataStream TaskBybitStreamUserData { get; set; }
 #endif
     public static List<KLineTickerItem> TickerList { get; set; } = new();
@@ -34,21 +33,22 @@ public class Api : ExchangeBase
         // Default opties voor deze exchange
         BybitRestClient.SetDefaultOptions(options =>
         {
-            if (GlobalData.Settings.ApiKey != "")
-                options.ApiCredentials = new ApiCredentials(GlobalData.Settings.ApiKey, GlobalData.Settings.ApiSecret);
+            if (GlobalData.Settings.Trading.ApiKey != "")
+                options.ApiCredentials = new ApiCredentials(GlobalData.Settings.Trading.ApiKey, GlobalData.Settings.Trading.ApiSecret);
         });
 
         BybitSocketClient.SetDefaultOptions(options =>
         {
             options.AutoReconnect = true;
             options.ReconnectInterval = TimeSpan.FromSeconds(15);
-            if (GlobalData.Settings.ApiKey != "")
-                options.ApiCredentials = new ApiCredentials(GlobalData.Settings.ApiKey, GlobalData.Settings.ApiSecret);
+            if (GlobalData.Settings.Trading.ApiKey != "")
+                options.ApiCredentials = new ApiCredentials(GlobalData.Settings.Trading.ApiKey, GlobalData.Settings.Trading.ApiSecret);
         });
 
         ExchangeHelper.PriceTicker = new PriceTicker();
         ExchangeHelper.KLineTicker = new KLineTicker();
 #if TRADEBOT
+        // DEBUG CPU belasting
         //ExchangeHelper.UserData = new UserData();
 #endif
     }
@@ -170,7 +170,7 @@ public class Api : ExchangeBase
                     if (result.Success && result.Data != null)
                     {
                         tradeParams.CreateTime = currentDate;
-                        tradeParams.OrderId = long.Parse(result.Data.OrderId);
+                        tradeParams.OrderId = result.Data.OrderId;
                     }
                     return (result.Success, tradeParams);
                 }
@@ -186,7 +186,7 @@ public class Api : ExchangeBase
                     if (result.Success && result.Data != null)
                     {
                         tradeParams.CreateTime = currentDate;
-                        tradeParams.OrderId = long.Parse(result.Data.OrderId);
+                        tradeParams.OrderId = result.Data.OrderId;
                     }
                     return (result.Success, tradeParams);
                 }
@@ -252,7 +252,7 @@ public class Api : ExchangeBase
 
 
         // Annuleer de order 
-        if (step.OrderId.HasValue)
+        if (step.OrderId != "")
         {
             // BinanceWeights.WaitForFairBinanceWeight(1); flauwekul
             using var client = new BybitRestClient();
@@ -308,8 +308,8 @@ public class Api : ExchangeBase
         trade.Symbol = symbol;
         trade.SymbolId = symbol.Id;
 
-        trade.TradeId = long.Parse(item.TradeId);
-        trade.OrderId = long.Parse(item.OrderId);
+        trade.TradeId = item.TradeId;
+        trade.OrderId = item.OrderId;
         //trade.OrderListId = (long)item.OrderListId;
 
         trade.Price = item.Price;

@@ -1,10 +1,4 @@
-﻿using System.Text.Encodings.Web;
-using System.Text.Json;
-
-using Bybit.Net.Clients;
-using Bybit.Net.Enums;
-using Bybit.Net.Objects.Models.V5;
-
+﻿using Bybit.Net.Clients;
 using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Sockets;
 using CryptoSbmScanner.Intern;
@@ -49,8 +43,12 @@ public class PriceTickerItem
                         //symbol.Volume = tick.BaseVolume; //?
                         if (tick.Turnover24h.HasValue)
                             symbol.Volume = (decimal)tick.Turnover24h; //= Quoted = het volume * de prijs                                
-                                                          //symbol.Volume = tick.Volume24h; //= Base = het volume * de prijs                                
+                                                                       //symbol.Volume = tick.Volume24h; //= Base = het volume * de prijs                                
 
+                        if (tick.FundingRate.HasValue)
+                            symbol.FundingRate = (decimal)tick.FundingRate;
+
+                        //"nextFundingTime": "1673280000000",
 
                         // Hiermee kunnen we een "toekomstige" candle opbouwen.
                         // (maar de berekeningen verwachten dat niet en dan gaan er zaken fout)

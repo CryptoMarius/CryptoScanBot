@@ -184,7 +184,7 @@ public class Api: ExchangeBase
                     if (result.Success && result.Data != null)
                     {
                         tradeParams.CreateTime = currentDate;
-                        tradeParams.OrderId = long.Parse(result.Data.Id);
+                        tradeParams.OrderId = result.Data.Id;
                     }
                     return (result.Success, tradeParams);
                 }
@@ -200,7 +200,7 @@ public class Api: ExchangeBase
                     if (result.Success && result.Data != null)
                     {
                         tradeParams.CreateTime = currentDate;
-                        tradeParams.OrderId = long.Parse(result.Data.Id);
+                        tradeParams.OrderId = result.Data.Id;
                     }
                     return (result.Success, tradeParams);
                 }

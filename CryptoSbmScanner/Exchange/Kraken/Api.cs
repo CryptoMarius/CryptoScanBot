@@ -32,16 +32,16 @@ public class Api : ExchangeBase
         // Default opties voor deze exchange
         KrakenRestClient.SetDefaultOptions(options =>
         {
-            if (GlobalData.Settings.ApiKey != "")
-                options.ApiCredentials = new ApiCredentials(GlobalData.Settings.ApiKey, GlobalData.Settings.ApiSecret);
+            if (GlobalData.Settings.Trading.ApiKey != "")
+                options.ApiCredentials = new ApiCredentials(GlobalData.Settings.Trading.ApiKey, GlobalData.Settings.Trading.ApiSecret);
         });
 
         KrakenSocketClient.SetDefaultOptions(options =>
         {
             options.AutoReconnect = true;
             options.ReconnectInterval = TimeSpan.FromSeconds(15);
-            if (GlobalData.Settings.ApiKey != "")
-                options.ApiCredentials = new ApiCredentials(GlobalData.Settings.ApiKey, GlobalData.Settings.ApiSecret);
+            if (GlobalData.Settings.Trading.ApiKey != "")
+                options.ApiCredentials = new ApiCredentials(GlobalData.Settings.Trading.ApiKey, GlobalData.Settings.Trading.ApiSecret);
         });
 
         ExchangeHelper.PriceTicker = new PriceTicker();
@@ -166,7 +166,7 @@ public class Api : ExchangeBase
                     if (result.Success && result.Data != null)
                     {
                         tradeParams.CreateTime = currentDate;
-                        tradeParams.OrderId = 12345; // long.Parse(result.Data.OrderIds); dat wordt een conversie!
+                        tradeParams.OrderId = "12345"; // long.Parse(result.Data.OrderIds); dat wordt een conversie!
                     }
                     return (result.Success, tradeParams);
                 }
@@ -182,7 +182,7 @@ public class Api : ExchangeBase
                     if (result.Success && result.Data != null)
                     {
                         tradeParams.CreateTime = currentDate;
-                        tradeParams.OrderId = 12345; // long.Parse(result.Data.OrderIds); dat wordt een conversie!
+                        tradeParams.OrderId = "12345"; // long.Parse(result.Data.OrderIds); dat wordt een conversie!
                     }
                     return (result.Success, tradeParams);
                 }
@@ -248,7 +248,7 @@ public class Api : ExchangeBase
 
 
         // Annuleer de order 
-        if (step.OrderId.HasValue)
+        if (step.OrderId != "")
         {
             // BinanceWeights.WaitForFairBinanceWeight(1); flauwekul
             using var client = new KrakenRestClient();
@@ -305,7 +305,7 @@ public class Api : ExchangeBase
         trade.SymbolId = symbol.Id;
 
         //trade.TradeId = long.Parse(item.TradeId); // todo, dat is waarschijnlijk conversie voor nodig
-        trade.OrderId = long.Parse(item.OrderId);
+        trade.OrderId = item.OrderId;
         //trade.OrderListId = (long)item.OrderListId;
 
         trade.Price = item.Price;

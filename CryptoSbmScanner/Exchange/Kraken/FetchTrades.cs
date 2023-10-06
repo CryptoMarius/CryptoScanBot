@@ -66,7 +66,7 @@ public class FetchTrades
                 {
                     foreach (var item in result.Data.Trades.Values)
                     {
-                        if (!symbol.TradeList.TryGetValue(long.Parse(item.OrderId), out CryptoTrade trade))
+                        if (!symbol.TradeList.TryGetValue(item.OrderId, out CryptoTrade trade))
                         {
                             trade = new CryptoTrade();
                             Api.PickupTrade(tradeAccount, symbol, trade, item);
@@ -84,7 +84,7 @@ public class FetchTrades
                     }
 
                     //We hebben een volledige aantal trades meegekregen, nog eens proberen
-                    if (result.Data.Trades.Count() < 1000)
+                    if (result.Data.Trades.Count < 1000)
                         break;
                 }
             }
@@ -104,24 +104,24 @@ public class FetchTrades
                     Monitor.Enter(symbol.TradeList);
                     try
                     {
-                        using (var transaction = databaseThread.BeginTransaction())
-                        {
-                            GlobalData.AddTextToLogTab("Trades " + symbol.Name + " " + tradeCache.Count.ToString());
+                        var transaction = databaseThread.BeginTransaction();
+                        
+                        GlobalData.AddTextToLogTab("Trades " + symbol.Name + " " + tradeCache.Count.ToString());
 #if SQLDATABASE
-                            databaseThread.BulkInsertTrades(symbol, tradeCache, transaction);
+                        databaseThread.BulkInsertTrades(symbol, tradeCache, transaction);
 #else
-                            foreach (var x in tradeCache)
-                            {
-                                databaseThread.Connection.Insert(symbol, transaction);
-                            }
+                        foreach (var x in tradeCache)
+                        {
+                            databaseThread.Connection.Insert(symbol, transaction);
+                        }
 #endif
 
-                            tradeCount += tradeCache.Count;
+                        tradeCount += tradeCache.Count;
 
-                            if (isChanged)
-                                databaseThread.Connection.Update(symbol, transaction);
-                            transaction.Commit();
-                        }
+                        if (isChanged)
+                            databaseThread.Connection.Update(symbol, transaction);
+                        transaction.Commit();
+                        
                     }
                     finally
                     {

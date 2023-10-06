@@ -117,8 +117,8 @@ public class Api : ExchangeBase
         //BinanceClient.SetDefaultOptions(options);
         BinanceRestClient.SetDefaultOptions(options =>
         {
-            if (GlobalData.Settings.ApiKey != "")
-                options.ApiCredentials = new ApiCredentials(GlobalData.Settings.ApiKey, GlobalData.Settings.ApiSecret);
+            if (GlobalData.Settings.Trading.ApiKey != "")
+                options.ApiCredentials = new ApiCredentials(GlobalData.Settings.Trading.ApiKey, GlobalData.Settings.Trading.ApiSecret);
         });
 
         //{
@@ -132,8 +132,8 @@ public class Api : ExchangeBase
         {
             options.AutoReconnect = true;
             options.ReconnectInterval = TimeSpan.FromSeconds(15);
-            if (GlobalData.Settings.ApiKey != "")
-                options.ApiCredentials = new ApiCredentials(GlobalData.Settings.ApiKey, GlobalData.Settings.ApiSecret);
+            if (GlobalData.Settings.Trading.ApiKey != "")
+                options.ApiCredentials = new ApiCredentials(GlobalData.Settings.Trading.ApiKey, GlobalData.Settings.Trading.ApiSecret);
         });
 
         ExchangeHelper.PriceTicker = new PriceTicker();
@@ -260,7 +260,7 @@ public class Api : ExchangeBase
                     if (result.Success && result.Data != null)
                     {
                         tradeParams.CreateTime = result.Data.CreateTime;
-                        tradeParams.OrderId = result.Data.Id;
+                        tradeParams.OrderId = result.Data.Id.ToString();
                     }
                     return (result.Success, tradeParams);
                 }
@@ -277,7 +277,7 @@ public class Api : ExchangeBase
                     if (result.Success && result.Data != null)
                     {
                         tradeParams.CreateTime = result.Data.CreateTime;
-                        tradeParams.OrderId = result.Data.Id;
+                        tradeParams.OrderId = result.Data.Id.ToString();
                     }
                     return (result.Success, tradeParams);
                 }
@@ -294,7 +294,7 @@ public class Api : ExchangeBase
                     if (result.Success && result.Data != null)
                     {
                         tradeParams.CreateTime = result.Data.CreateTime;
-                        tradeParams.OrderId = result.Data.Id;
+                        tradeParams.OrderId = result.Data.Id.ToString();
                     }
                     return (result.Success, tradeParams);
                 }
@@ -318,8 +318,8 @@ public class Api : ExchangeBase
                         BinancePlacedOcoOrder order1 = result.Data.OrderReports.First();
                         BinancePlacedOcoOrder order2 = result.Data.OrderReports.Last();
                         tradeParams.CreateTime = result.Data.TransactionTime; // order1.CreateTime;
-                        tradeParams.OrderId = order1.Id;
-                        tradeParams.Order2Id = order2.Id; // Een 2e ordernummer (welke eigenlijk?)
+                        tradeParams.OrderId = order1.Id.ToString();
+                        tradeParams.Order2Id = order2.Id.ToString(); // Een 2e ordernummer (welke eigenlijk?)
                     }
                     return (result.Success, tradeParams);
                 }
@@ -354,11 +354,11 @@ public class Api : ExchangeBase
 
 
         // Annuleer de order 
-        if (step.OrderId.HasValue)
+        if (step.OrderId != "")
         {
             // BinanceWeights.WaitForFairBinanceWeight(1);
             using var client = new BinanceRestClient();
-            var result = await client.SpotApi.Trading.CancelOrderAsync(symbol.Name, step.OrderId);
+            var result = await client.SpotApi.Trading.CancelOrderAsync(symbol.Name, long.Parse(step.OrderId));
             if (!result.Success)
             {
                 tradeParams.Error = result.Error;
@@ -443,8 +443,8 @@ public class Api : ExchangeBase
         trade.Symbol = symbol;
         trade.SymbolId = symbol.Id;
 
-        trade.TradeId = item.Id;
-        trade.OrderId = item.OrderId;
+        trade.TradeId = item.Id.ToString();
+        trade.OrderId = item.OrderId.ToString();
         //trade.OrderListId = (long)item.OrderListId;
 
         trade.Price = item.Price;
@@ -475,8 +475,8 @@ public class Api : ExchangeBase
         trade.Symbol = symbol;
         trade.SymbolId = symbol.Id;
 
-        trade.TradeId = item.TradeId;
-        trade.OrderId = item.Id;
+        trade.TradeId = item.TradeId.ToString();
+        trade.OrderId = item.Id.ToString();
         //trade.OrderListId = item.OrderListId;
 
         trade.Price = item.Price;

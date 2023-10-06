@@ -76,7 +76,7 @@ public class BinanceFetchTrades
                 {
                     foreach (BinanceTrade item in result.Data)
                     {
-                        if (!symbol.TradeList.TryGetValue(item.Id, out CryptoTrade trade))
+                        if (!symbol.TradeList.TryGetValue(item.Id.ToString(), out CryptoTrade trade))
                         {
                             trade = new CryptoTrade();
                             Api.PickupTrade(tradeAccount, symbol, trade, item);

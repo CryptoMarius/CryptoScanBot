@@ -9,7 +9,7 @@ internal class PriceTicker : PriceTickerBase
 
     public override async Task Start()
     {
-        // De Kucoin price ticker is een CPU killer, uitgezet, dan maar op een andere manier
+        // De Kucoin price ticker is een echte CPU killer, uitgezet, dan maar op een andere manier (of niet)
 
         return;
 

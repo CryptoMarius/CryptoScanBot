@@ -1,8 +1,9 @@
 ﻿using Bybit.Net.Clients;
+using Bybit.Net.Enums;
+using Bybit.Net.Objects.Models.Socket;
 
 using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Sockets;
-
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 
@@ -10,8 +11,8 @@ namespace CryptoSbmScanner.Exchange.BybitFutures;
 #if TRADEBOT
 public class UserDataStream
 {
-    private readonly BybitSocketClient socketClient;
-    private readonly UpdateSubscription _subscription;
+    private BybitSocketClient socketClient;
+    private UpdateSubscription _subscription;
 
     public async Task StopAsync()
     {
@@ -28,89 +29,75 @@ public class UserDataStream
         return; // Task.CompletedTask;
     }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
     public async Task ExecuteAsync()
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
     {
-        using BybitRestClient client = new();
+        socketClient = new();
+
+        var subscriptionResult = await socketClient.UsdPerpetualApi.SubscribeToOrderUpdatesAsync(
+            OnOrderUpdate).ConfigureAwait(false);
+
+        // Subscribe to network-related stuff
+        if (subscriptionResult.Success)
         {
-            //CallResult<string> userStreamResult = await client.V5Api.Account.StartUserStreamAsync();
-            //if (!userStreamResult.Success)
-            //{
-            //    GlobalData.AddTextToLogTab($"{Api.ExchangeName} Error starting user stream: " + userStreamResult.Error.Message);
-            //    return;
-            //}
+            _subscription = subscriptionResult.Data;
 
-
-            //socketClient = new();
-            //var subscriptionResult = await socketClient.V5SpotStreams.SubscribeToTradeUpdatesAsync(
-            //    userStreamResult.Data,
-            //    OnOrderUpdate,
-            //    null,
-            //    OnAccountPositionMessage,
-            //    null
-            //    ).ConfigureAwait(false);
-
-            //// Subscribe to network-related stuff
-            //if (userStreamResult.Success)
-            //{
-            //    _subscription = subscriptionResult.Data;
-
-            //    // Events
-            //    _subscription.Exception += Exception;
-            //    _subscription.ConnectionLost += ConnectionLost;
-            //    _subscription.ConnectionRestored += ConnectionRestored;
-            //    return;
-            //}
-            //else
-            //{
-            //    GlobalData.AddTextToLogTab($"{Api.ExchangeName} Error subscribing to spot.userstream " + subscriptionResult.Error.Message);
-            //    return;
-            //}
+            // Events
+            _subscription.Exception += Exception;
+            _subscription.ConnectionLost += ConnectionLost;
+            _subscription.ConnectionRestored += ConnectionRestored;
+            return;
         }
-
+        else
+        {
+            GlobalData.AddTextToLogTab($"{Api.ExchangeName} Error subscribing to userstream " + subscriptionResult.Error.Message);
+            return;
+        }
     }
 
-    // afgesterd:
-    //private void OnOrderUpdate(DataEvent<BinanceStreamOrderUpdate> data) //DataEvent<BinanceStreamOrderUpdate> data
-    //{
-    //    try
-    //    {
-    //        // We zijn slechts geinteresseerd in 3 statussen (de andere zijn niet interessant voor de afhandeling van de order)
-    //        if (data.Data.Status == OrderStatus.Filled || 
-    //            data.Data.Status == OrderStatus.PartiallyFilled || 
-    //            data.Data.Status == OrderStatus.Canceled)
-    //        {
-    //            // Nieuwe thread opstarten en de data meegeven zodat er een sell wordt gedaan of administratie wordt bijgewerkt.
-    //            // Het triggeren van een stoploss of een DCA zal op een andere manier gedaan moeten worden (maar hoe en waar?)
-    //            if (GlobalData.ExchangeListName.TryGetValue(Api.ExchangeName, out Model.CryptoExchange exchange))
-    //            {
-    //                if (exchange.SymbolListName.TryGetValue(data.Data.Symbol, out CryptoSymbol symbol))
-    //                {
-    //                    // Converteer de data naar een (tijdelijke) trade
-    //                    CryptoTrade tradeTemp = new();
-    //                    BybitApi.PickupTrade(GlobalData.ExchangeRealTradeAccount, symbol, tradeTemp, data.Data);
 
-    //                    GlobalData.ThreadMonitorOrder.AddToQueue((
-    //                        symbol,
-    //                        BybitApi.LocalOrderType(data.Data.Type),
-    //                        BybitApi.LocalOrderSide(data.Data.Side),
-    //                        BybitApi.LocalOrderStatus(data.Data.Status), 
-    //                        tradeTemp));
-    //                }
-    //            }
-    //        }
+    private void OnOrderUpdate(DataEvent<IEnumerable<BybitUsdPerpetualOrderUpdate>> dataList)
+    {
+        try
+        {
+            foreach (var data in dataList.Data)
+            {
 
-    //        // Converteer de data naar een (tijdelijke) trade
-    //        //BinanceApi.PickupTrade(trade, data.Data);
-    //        //GlobalData.ThreadMonitorOrder.AddToQueue(data.Data);
-    //    }
-    //    catch (Exception error)
-    //    {
-    //        GlobalData.Logger.Error(error);
-    //        GlobalData.AddTextToLogTab($"{Api.ExchangeName} ERROR: OrderUpdate " + error.ToString());
-    //    }
-    //}
+                // We zijn slechts geinteresseerd in 3 statussen (de andere zijn niet interessant voor de afhandeling van de order)
+                if (data.Status == OrderStatus.Filled ||
+                    data.Status == OrderStatus.PartiallyFilled ||
+                    data.Status == OrderStatus.Canceled)
+                {
+                    // Nieuwe thread opstarten en de data meegeven zodat er een sell wordt gedaan of administratie wordt bijgewerkt.
+                    // Het triggeren van een stoploss of een DCA zal op een andere manier gedaan moeten worden (maar hoe en waar?)
+                    if (GlobalData.ExchangeListName.TryGetValue(Api.ExchangeName, out Model.CryptoExchange exchange))
+                    {
+                        if (exchange.SymbolListName.TryGetValue(data.Symbol, out CryptoSymbol symbol))
+                        {
+                            // Converteer de data naar een (tijdelijke) trade
+                            //CryptoTrade tradeTemp = new();
+                            //BybitApi.PickupTrade(GlobalData.ExchangeRealTradeAccount, symbol, tradeTemp, data);
+
+                //            GlobalData.ThreadMonitorOrder.AddToQueue((
+                //                symbol,
+                //                BybitApi.LocalOrderType(data.Data.Type),
+                //                BybitApi.LocalOrderSide(data.Data.Side),
+                //                BybitApi.LocalOrderStatus(data.Data.Status),
+                //                tradeTemp));
+                        }
+                    }
+                }
+
+                // Converteer de data naar een (tijdelijke) trade
+                //BinanceApi.PickupTrade(trade, data.Data);
+                //GlobalData.ThreadMonitorOrder.AddToQueue(data.Data);
+            }
+        }
+        catch (Exception error)
+        {
+            GlobalData.Logger.Error(error);
+            GlobalData.AddTextToLogTab($"{Api.ExchangeName} ERROR: OrderUpdate " + error.ToString());
+        }
+    }
 
     //private void onOcoOrderUpdateMessage(BinanceStreamOrderList data)
     //{
