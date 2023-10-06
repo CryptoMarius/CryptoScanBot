@@ -6,9 +6,9 @@ namespace CryptoSbmScanner;
 
 public partial class FrmMain
 {
+    private int columnForPriceDiff = -1;
     private ContextMenuStrip ListViewSignalsColumns;
     private ContextMenuStrip ListViewSignalsMenuStrip;
-    private readonly int columnForPriceDiff = 8;
     private ListViewHeaderContext listViewSignals;
     private System.Windows.Forms.Timer TimerClearEvents;
 
@@ -185,6 +185,7 @@ public partial class FrmMain
         listViewSignals.Columns.Add("Strategie", -2, HorizontalAlignment.Left);
         listViewSignals.Columns.Add("Text", 125, HorizontalAlignment.Left);
         listViewSignals.Columns.Add("Price", -2, HorizontalAlignment.Right);
+        columnForPriceDiff = listViewSignals.Items.Count;
         listViewSignals.Columns.Add("Stijging", -2, HorizontalAlignment.Right);
         listViewSignals.Columns.Add("Volume", -2, HorizontalAlignment.Right);
         listViewSignals.Columns.Add("Trend", -2, HorizontalAlignment.Right);
@@ -192,7 +193,6 @@ public partial class FrmMain
         listViewSignals.Columns.Add("24h Change", -2, HorizontalAlignment.Right);
         listViewSignals.Columns.Add("24h Beweging", -2, HorizontalAlignment.Right);
         listViewSignals.Columns.Add("BB%", -2, HorizontalAlignment.Right);
-        //listViewSignals.Columns.Add("", 20, HorizontalAlignment.Right);
         listViewSignals.Columns.Add("RSI", -2, HorizontalAlignment.Right);
         listViewSignals.Columns.Add("Stoch", -2, HorizontalAlignment.Right);
         listViewSignals.Columns.Add("Signal", -2, HorizontalAlignment.Right);
