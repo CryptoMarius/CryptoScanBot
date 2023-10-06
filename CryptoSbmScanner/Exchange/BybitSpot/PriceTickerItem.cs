@@ -41,15 +41,16 @@ public class PriceTickerItem
                         //symbol.HighPrice = tick.HighPrice;
                         //symbol.LowPrice = tick.LowPrice;
                         //if (tick.LastPrice.HasValue)
-                        symbol.LastPrice = tick.LastPrice;
+                        symbol.LastPrice = (decimal)tick.LastPrice;
                         //if (tick.BestBidPrice.HasValue)
-                        //    symbol.BidPrice = tick.BestBidPrice;
+                        //symbol.BidPrice = tick.BestBidPrice;
                         //if (tick.BestAskPrice.HasValue)
                         //    symbol.AskPrice = tick.BestAskPrice;
                         //symbol.Volume = tick.BaseVolume; //?
-                        //if (tick.Volume24h.HasValue)
-                        symbol.Volume = tick.Turnover24h; //= Quoted = het volume * de prijs                                
-                                                          //symbol.Volume = tick.Volume24h; //= Base = het volume * de prijs                                
+                        //if (tick.Turnover24h.HasValue)
+                        symbol.Volume = (decimal)tick.Turnover24h; //= Quoted = het volume * de prijs
+                        
+                        //symbol.Volume = tick.Volume24h; //= Base = het volume * de prijs                                
 
 
                         // Hiermee kunnen we een "toekomstige" candle opbouwen.

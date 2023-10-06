@@ -23,7 +23,7 @@ public class FetchTrades
     /// <summary>
     /// Haal de trades van 1 symbol op
     /// </summary>
-    public static async Task<int> FetchTradesAsync(CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
+    public static async Task<int> FetchTradesForSymbolAsync(CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
     {
         using BybitRestClient client = new();
         return await FetchTradesInternal(client, tradeAccount, symbol);
@@ -53,7 +53,6 @@ public class FetchTrades
                 LimitRates.WaitForFairWeight(1); // *5x ivm API weight waarschuwingen
 
                 // CRAP, bybit doet het door middel van ID's ;-) symbol.LastTradeFetched
-                //var result = await client.SpotApiV3.Trading.GetUserTradesAsync(symbol.Name, 1, null, 1000);
                 var result = await client.V5Api.Trading.GetUserTradesAsync(Category.Spot, symbol.Name, null, null, null, symbol.LastTradeFetched, null, null, 1000);
                 if (!result.Success)
                 {
@@ -91,45 +90,47 @@ public class FetchTrades
 
 
             // Verwerk de trades
-
-            using CryptoDatabase databaseThread = new();
+            if (tradeAccount.Id > 0) // debug
             {
-                // Extra close vanwege transactie problemen (hergebuik van connecties wellicht?)
-                databaseThread.Close();
-                databaseThread.Open();
-                try
+                using CryptoDatabase databaseThread = new();
                 {
-                    //GlobalData.AddTextToLogTab(symbol.Name);
-                    Monitor.Enter(symbol.TradeList);
+                    // Extra close vanwege transactie problemen (hergebuik van connecties wellicht?)
+                    databaseThread.Close();
+                    databaseThread.Open();
                     try
                     {
-                        using (var transaction = databaseThread.BeginTransaction())
+                        //GlobalData.AddTextToLogTab(symbol.Name);
+                        Monitor.Enter(symbol.TradeList);
+                        try
                         {
-                            GlobalData.AddTextToLogTab("Trades " + symbol.Name + " " + tradeCache.Count.ToString());
-#if SQLDATABASE
-                            databaseThread.BulkInsertTrades(symbol, tradeCache, transaction);
-#else
-                            foreach (var x in tradeCache)
+                            using (var transaction = databaseThread.BeginTransaction())
                             {
-                                databaseThread.Connection.Insert(symbol, transaction);
-                            }
+                                GlobalData.AddTextToLogTab("Trades " + symbol.Name + " " + tradeCache.Count.ToString());
+#if SQLDATABASE
+                                databaseThread.BulkInsertTrades(symbol, tradeCache, transaction);
+#else
+                                foreach (var trade in tradeCache)
+                                {
+                                    databaseThread.Connection.Insert(trade, transaction);
+                                }
 #endif
 
-                            tradeCount += tradeCache.Count;
+                                tradeCount += tradeCache.Count;
 
-                            if (isChanged)
-                                databaseThread.Connection.Update(symbol, transaction);
-                            transaction.Commit();
+                                if (isChanged)
+                                    databaseThread.Connection.Update(symbol, transaction);
+                                transaction.Commit();
+                            }
+                        }
+                        finally
+                        {
+                            Monitor.Exit(symbol.TradeList);
                         }
                     }
                     finally
                     {
-                        Monitor.Exit(symbol.TradeList);
+                        databaseThread.Close();
                     }
-                }
-                finally
-                {
-                    databaseThread.Close();
                 }
             }
         }

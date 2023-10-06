@@ -22,7 +22,7 @@ public abstract class ExchangeBase
 
 #if TRADEBOT
     public abstract Task FetchAssetsAsync(CryptoTradeAccount tradeAccount);
-    public abstract Task FetchTradesAsync(CryptoTradeAccount tradeAccount, CryptoSymbol symbol);
+    public abstract Task FetchTradesForSymbolAsync(CryptoTradeAccount tradeAccount, CryptoSymbol symbol);
 
 
     private static string DumpOrder(CryptoSymbol symbol, TradeParams tradeParams, string extraText)

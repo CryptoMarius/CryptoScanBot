@@ -99,7 +99,6 @@ public class KLineTickerItem : KLineTickerItemBase
             {
                 GlobalData.AddTextToLogTab($"{Api.ExchangeName} {QuoteData.Name} 1m ERROR starting kline ticker {subscriptionResult.Error.Message}");
                 GlobalData.AddTextToLogTab($"{Api.ExchangeName} {QuoteData.Name} 1m ERROR starting kline ticker {string.Join(',', Symbols)}");
-                
             }
         }
     }

@@ -11,7 +11,7 @@ internal class ByBitWeight
 /*
 - zijn er limiten voor bybit? Ja, dat heet rate limits
   https://bybit-exchange.github.io/docs-legacy/futuresV2/inverse/#t-ratelimits
-  het is gebaseerd op het aantal verzoeken per seconde wat je naar ByBit stuurt
+  het is gebaseerd op het aantal verzoeken per seconde wat je naar exchange stuurt
   Je krijgt deze informatie ook terug zo te zien, eens zien wat het is
 */
 
@@ -60,7 +60,7 @@ public static class LimitRates
                 // Maar het is ook niet plezierig om gebanned te worden, dus begin maar ietwat voorzichtig lijkt me..
                 if (CurrentWeight > 300)
                 {
-                    GlobalData.AddTextToLogTab(string.Format("Bybit delay needed for weight: {0} (because of rate limits)", CurrentWeight));
+                    GlobalData.AddTextToLogTab($"{Api.ExchangeName} delay needed for weight: {CurrentWeight} (because of rate limits)");
                     Thread.Sleep(2500);
                 }
                 else

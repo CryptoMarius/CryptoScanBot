@@ -64,7 +64,7 @@ public class ExchangeHelper
     {
         if (tradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
             return; // Task.CompletedTask;
-        await GetApiInstance().FetchTradesAsync(tradeAccount, symbol);
+        await GetApiInstance().FetchTradesForSymbolAsync(tradeAccount, symbol);
     }
 #endif
 

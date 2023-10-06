@@ -49,8 +49,7 @@ public class Api : ExchangeBase
         ExchangeHelper.PriceTicker = new PriceTicker();
         ExchangeHelper.KLineTicker = new KLineTicker();
 #if TRADEBOT
-        // DEBUG CPU belasting
-        //ExchangeHelper.UserData = new UserData();
+        ExchangeHelper.UserData = new UserData();
 #endif
     }
 
@@ -64,20 +63,19 @@ public class Api : ExchangeBase
     }
 
 #if TRADEBOT
-    //// Converteer de orderstatus van Exchange naar "intern"
-    //public static CryptoOrderType LocalOrderType(SpotOrderType orderType)
-    //{
-    //    CryptoOrderType localOrderType = orderType switch
-    //    {
-    //        SpotOrderType.Market => CryptoOrderType.Market,
-    //        SpotOrderType.Limit => CryptoOrderType.Limit,
-    //        SpotOrderType.StopLoss => CryptoOrderType.StopLimit,
-    //        SpotOrderType.StopLossLimit => CryptoOrderType.Oco,
-    //        _ => throw new Exception("Niet ondersteunde ordertype"),
-    //    };
+    // Converteer de orderstatus van Exchange naar "intern"
+    public static CryptoOrderType LocalOrderType(OrderType orderType)
+    {
+        CryptoOrderType localOrderType = orderType switch
+        {
+            OrderType.Market => CryptoOrderType.Market,
+            OrderType.Limit => CryptoOrderType.Limit,
+            OrderType.LimitMaker => CryptoOrderType.StopLimit, /// ????????????????????????????????????????????????
+            _ => throw new Exception("Niet ondersteunde ordertype"),
+        };
 
-    //    return localOrderType;
-    //}
+        return localOrderType;
+    }
 
     // Converteer de orderstatus van Exchange naar "intern"
     public static CryptoOrderSide LocalOrderSide(OrderSide orderSide)
@@ -283,28 +281,28 @@ public class Api : ExchangeBase
         return (false, tradeParams);
     }
 
-    static public void PickupAssets(CryptoTradeAccount tradeAccount, IEnumerable<BybitUserAssetInfo> balances)
+    static public void PickupAssets(CryptoTradeAccount tradeAccount, BybitAllAssetBalances balances)
     {
         tradeAccount.AssetListSemaphore.Wait();
         try
         {
-            foreach (var assetInfo in balances)
+            foreach (var assetInfo in balances.Balances)
             {
                 // TODO, verder uitzoeken (lijkt de verkeerde info te zijn)
-                if (assetInfo.QuantityRemaining > 0)
+                //if (assetInfo.QuantityRemaining > 0)
                 {
-                    //if (!tradeAccount.AssetList.TryGetValue(assetInfo.Asset, out CryptoAsset asset))
-                    //{
-                    //    asset = new CryptoAsset();
-                    //    asset.Quote = assetInfo.Asset;
-                    //    tradeAccount.AssetList.Add(asset.Quote, asset);
-                    //}
-                    //asset.Free = assetInfo.Available;
-                    //asset.Total = assetInfo.Total;
-                    //asset.Locked = assetInfo.Locked;
+                    if (!tradeAccount.AssetList.TryGetValue(assetInfo.Asset, out CryptoAsset asset))
+                    {
+                        asset = new CryptoAsset();
+                        asset.Quote = assetInfo.Asset;
+                        tradeAccount.AssetList.Add(asset.Quote, asset);
+                    }
+                    asset.Total = (decimal)assetInfo.WalletBalance;
+                    asset.Locked = (decimal)assetInfo.WalletBalance - (decimal)assetInfo.TransferBalance;
+                    asset.Free = asset.Total - asset.Locked;
 
-                    //if (asset.Total == 0)
-                    //    tradeAccount.AssetList.Remove(asset.Quote);
+                    if (asset.Total == 0)
+                        tradeAccount.AssetList.Remove(asset.Quote);
                 }
             }
         }
@@ -334,15 +332,11 @@ public class Api : ExchangeBase
         //if (item.QuoteQuantity == 0)
         //    GlobalData.AddTextToLogTab(string.Format("{0} PickupTrade#1trade QuoteQuantity is 0 for order TradeId={1}!", symbol.Name, trade.TradeId));
 
+        trade.TradeTime = item.Timestamp;
+        trade.Side = LocalOrderSide(item.Side);
+
         trade.Commission = item.Fee;
         trade.CommissionAsset = symbol.Quote; // item.FeeAsset;?
-
-        trade.TradeTime = item.Timestamp;
-
-        if (item.Side == OrderSide.Buy)
-            trade.Side = CryptoOrderSide.Buy;
-        else
-            trade.Side = CryptoOrderSide.Sell;
     }
 
 
@@ -367,21 +361,17 @@ public class Api : ExchangeBase
         //if (item.QuoteQuantity == 0)
         //    GlobalData.AddTextToLogTab(string.Format("{0} PickupTrade#2stream QuoteQuantity is 0 for order TradeId={1}!", symbol.Name, trade.TradeId));
 
+        trade.TradeTime = item.Timestamp;
+        trade.Side = LocalOrderSide(item.Side);
+
         trade.Commission = item.Fee;
         trade.CommissionAsset = symbol.Quote; // item.FeeAsset; ??????
-
-        trade.TradeTime = item.Timestamp;
-
-        if (item.Side == OrderSide.Buy)
-            trade.Side = CryptoOrderSide.Buy;
-        else
-            trade.Side = CryptoOrderSide.Sell;
     }
 
 
-    public override async Task FetchTradesAsync(CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
+    public override async Task FetchTradesForSymbolAsync(CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
     {
-        await FetchTrades.FetchTradesForSymbol(tradeAccount, symbol);
+        await FetchTrades.FetchTradesForSymbolAsync(tradeAccount, symbol);
     }
 
     public async override Task FetchAssetsAsync(CryptoTradeAccount tradeAccount)
@@ -396,8 +386,7 @@ public class Api : ExchangeBase
 
                 using var client = new BybitRestClient();
                 {
-                    var accountInfo = await client.V5Api.Account.GetAssetInfoAsync();
-
+                    var accountInfo = await client.V5Api.Account.GetAllAssetBalancesAsync(AccountType.Contract);
                     if (!accountInfo.Success)
                     {
                         GlobalData.AddTextToLogTab("error getting accountinfo " + accountInfo.Error);
@@ -410,7 +399,7 @@ public class Api : ExchangeBase
 
                     try
                     {
-                        PickupAssets(tradeAccount, accountInfo.Data.Assets);
+                        PickupAssets(tradeAccount, accountInfo.Data);
                         GlobalData.AssetsHaveChanged("");
                     }
                     catch (Exception error)
