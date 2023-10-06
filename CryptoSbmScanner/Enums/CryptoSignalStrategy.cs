@@ -27,4 +27,5 @@ public enum CryptoSignalStrategy // CryptoStrategy
 
     Flux,
     BullishEngulfing,
+    IchimokuKumoBreakout,
 }
