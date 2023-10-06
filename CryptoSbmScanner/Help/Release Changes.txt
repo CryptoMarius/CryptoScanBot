@@ -3,6 +3,7 @@ Groot kans dat datgene we besproken hebben dan ergens tussen wal en schip is bel
 Openstaande punten/bevindingen/todo's/enzovoort:
 
 Scanner:
+- Bij kleine beeldschermen zijn de instellingen niet in zijn geheel zichtbaar (de OK en Cancel knop vallen onder andere weg)
 - Het aantal nieuwe munten tonen die op de exchange zijn geintroduceerd (verschil tonen vanwege nieuwe of vervallen munten <kan ook een hele lijst zijn?>)
 - Gerapporteerd, lettertype problemen, het was helaas een melding en er is geen duidelijke oorzaak of uitleg voor het probleem.
   (daarom was er ook niets om om te kunnen lossen, ik wil daar nog verder op in gaan, maar ben er niet aan toe gekomen)
@@ -22,6 +23,7 @@ Scanner:
   Een eerste aanzet zit er nu in, inclusief een beetje uitleg over hou je het maakt en configureert
 - Experiment om een Mac versie te bouwen dmv MAUI XAML (een compleet nieuwe aanvliegroute van Microsoft)
   Maar ik verwacht een duizendtal nieuwe problemen met geluid, voice, storage, sockets, hibernate/sleep enzovoort)
+  (ondertussen is er een VM met een Mac
 - Visuele herkenning dat de scanner loopt (de getallen linksboven zeggen de mensen niet zoveel)
   (ik heb hier eigenlijk geen alternatief voor, als iemand goede ideen heet laat het me weten aub)
   Misschien dat de introductie van een dashboard hier nog iets in kan betekenen t.z.t.
@@ -35,6 +37,7 @@ Scanner:
 - Black theming  https://stackoverflow.com/questions/61145347/c-how-to-make-a-dark-mode-theme-in-windows-forms-separate-form-as-select-the <geen prio>
   Er is nu een slappe variant die iets met grijs doet (omdat anders de scrollbars en headers zo'n lelijk getoond worden), ik ben er niet tevreden over.
 
+
 Ik heb het hieronder over trading. De trading module komt op een later tijdstip beschikbaar. Vanwege het vertrek van Binance moet
 het eerst linkes en rechts (zwaar) aangepast worden zodat het op een andere exchanges ook werkt en door het wegvallen van de OCO 
 en de stoplimit orders is dat even een probleem. Deze module (in de vorm van wat instellingen, dashboard en openstaande en gesloten
@@ -42,23 +45,18 @@ posities) komt later (gratis) beschikbaar. Als je ideen hebt voor het vervangen 
 De introductie van de FundingRate/FundingInterval heeft gevolgen voor de trading module (onverwachte bijkomende kosten).
 
 Trading:
-- Trading - Ondanks een limit op de BASE worden er (ooit) meerdere posities op dezelfde base munt geopend.
-- Trading - De STOBB heeft nu een minimale trend maar dat is conflicteerd uiteraard bij een short positie (extra instelling noodzakelijk?)
+- Trading - De STOBB heeft nu een minimale trend maar dat conflicteerd straks bij een short positie (extra instelling noodzakelijk?)
+- Trading - Een aparte tool maken voor een backtest, candles ophalen voor BTC (tradingregels), de intervallen 1m en emulator interval.
+            Echter de barometer werkt op deze manier niet (omdat niet alle munten geladen zijn...)
 - Trading - Uitzoeken voor iemand in de groep, de backtest emulator aanpassen zodat het (pas) bij een psar wissel instapt - is er nog niet van gekomen, sorry!
 - Trading - Bij een aanpassing van het bijkoop percentage (en op vaste percentage zetten) wordt er meerdere keren bijgekocht! ( blij dat het slechts papertrading is!)
             (de huidige test (van circa 40+ dagen) is hierdoor geen goede test meer, hierdoor is namelijk per abuis 1800 dollar geinvesteerd (papertrading))
 - Trading - Charts - dagen waarin niets gebeurd (ja dat gebeurd helaas ook) worden niet getoond op de x-as
 - Trading - Buy Trail gebruikt de verkeerde quantity, naar mate de prijs daalt zou de quantity groter moeten worden (is nu een constante)
-- Trading - Wellicht dat een BackTest meer inzicht geeft in eventuele problemen? (database locked)
-- Trading - Er worden geen signalen gemaakt voor symbols met posities (low volume, low price, flat candles enzovoort) - maar dan gebeurd er helemaal niets! (weken lang)!
-- Trading - De info dump van de positie, bij de value staat vaak een 0, graag invullen via stop*q of price*q indien mogelijk
-- Trading - De info dump van de positie, de sell aan de linkerkant zetten (kleurtje wellicht?) zodat je niet zover naar rechts hoeft te scrollen)
+- Trading - Bij het opstarten van de scanner wordt rechtsboven het aantal openstaande posities getoond, die wijkt af van het werkelijke aantal (vreemd!)
 - Trading - Bij het opstarten van de scanner zijn de open en gesloten posities niet direct zichtbaar (geeft je iets te doen). Pas na ophalen candles wordt het getoond, jammer!
-- Trading - Bij het opstarten van de scanner wordt rechtsboven het aantal openstaande posities getoond, die wijkt af van het werkelijke aantal (ietwat verwarrend waar deze gegevens vandaan komen)
 - Trading - Als een positie langer dan (bv) 2 week open is de positie op ongeveer de BE sluiten (een vrij slot voor andere munten werkt beter) Je ziet ze even boven de BE en daarna terug naar -10%, dat is jammer
-- Trading - De dashboard statistieken hooudt geen rekening met UTC (heeft nu 2 uur verschil met als gevolg een vertekend beeld <als je de verkoop momenten kent>) Hoe kun je via SQL hier rekening mee houden?
-- Trading - De buy timeout werkt via minuten in plaats van candles, dat is dus wellicht lastig traden op de hogere intervallen!!!? (zie CancelOrdersIfClosedOrTimeoutOrOther)
-- Trading - De commissie wordt niet correct in de BE berekening meegenomen, pas achteraf wordt de laatste commissie erbij berekend waardoor de winst 0.1% lager uitvalt (niet heel erg)
+- Trading - De dashboard statistieken houdt geen rekening met UTC (heeft nu 2 uur verschil met als gevolg een vertekend beeld <als je de verkoop momenten kent>) Hoe kun je via SQL hier rekening mee houden?
 - Trading - Als iets gekocht of verkocht is dan wordt pas in de volgende 1m candle daar actie op ondernomen, dat is voor papertrading en reallive traden hetzelfde ben ik bang
 - Trading - Bij een buy trail het percentage laten zien ten opzichte van de eerste poging (dan leeft het iets meer)
 - Trading - Documentatie uitleggen papertrading bot (achterliggende gedachtes uitleggen)
@@ -77,6 +75,33 @@ Voor alle Exchanges (behalve Binance):
 - Trading - price ticker implementeren (in Kucoin geeft dit teveel cpu overhead en is om die reden nu niet aangezet)
 
 
+xx-xx-2023 1.8.7
+Het lijkt alsof de CPU belasting drastisch is toegenomen (ondanks uitzetten verversing) - Windows Update perikelen, want daarna was het okay?
+
+- Trading - Een geannuleerde buy order (door lage barometer of tradingrules) wordt later herplaatst maar met de oude prijs. Controle op de laatste prijs ingebouwd.
+- Trading - Statistiek, de x en y-as van de grafieken worden niet bijgewerkt waardoor het juiste aantal trades en winst niet zichtbaar zijn (punten liggen buiten de chart als het ware, herstart nodig)
+- Trading - Open en gesloten posities - extra kolom met daarin de doorlooptijd van de trade
+- Trading - Open en gesloten posities - Dubbelklik naar de tradingapp, of rmk voor trading view etc
+- Trading - Refactoring trading mechanisme (de focus meer op gefixeerde bijkoop en winst percentages leggen in plaats van trailing <komt later>)
+- Trading - Sell-orders worden achteraf aangepast naar een lagere prijs. Het verschil zit in de commissie van de nog niet gevulde sell orders.
+- Trading - De commissie wordt niet correct in de BE berekening meegenomen, pas achteraf wordt de laatste commissie erbij berekend waardoor de winst 0.1% lager uitvalt
+- Trading - De trade direction omgewisseld in de signal-up en signal-down signalen
+- Trading - Het is nu mogelijk om op de signalen van de signal-up en signal-down kan traden (geen idee of dat OK werkt of kan werken!)
+- Trading - Statistiek, sinds de introductie van een timeout is het aantal geloten posities van slag (deze worden alsnog meegeteld)
+- Trading - Statistiek, sinds de introductie van een timeout is de grafiek van de winst percentages van slag (er wordt een -100% geregistreerd)
+- Trading - 1 van de buy timeout controles werkt via minuten in plaats van candles, dat zou dus heel lastig traden zijn op de hogere intervallen.
+- Trading - De trader werd per abuis gepauseerd vanwege de trading rules. Dit vanwege een niet geinitialiseerde Symbol.LastPrice (die niet in de berekening thuishoorde)
+- Trading - Interne refactoring van orderId en tradeId van integer/long naar string's
+- Trading - De fundingrate toegevoegd aan de open posities
+- Scanner - Refactoring van alle RMK (RechterMuisKnop) opties
+- Scanner - Op verzoek de up- of down trend tonen voor de 1h, 4h en 12h.
+- Scanner - De fundingrate toegevoegd aan de signalen
+- Scanner - De fundingRate ophalen voor de Bybit Futures de exchange (via de kline ticker)
+- Scanner - Herintroductie van locking waardoor een bepaalde foutmelding niet kan optreden en de scanner netjes door blijft lopen (heel lastig te controleren)
+- Scanner - De tradingview URL voor Bybit Futures is gecorrigeerd. {base}{quote}.P
+- Scanner - De window coordinaten/breedte wordt niet correct hersteld (na aanpassing volgorde event)
+
+
 23-09-2023 1.8.6
 - Trading - Openstaande sell opdrachten afkomstig van een fixed percentage aanpassen na een mutatie van het verkoop percentage
 - Trading - Toevoegen scrollbars aan tabsheet grafieken
@@ -86,6 +111,10 @@ Voor alle Exchanges (behalve Binance):
 - Trading - Instelling instap voor toepassen oplopende/aflopende MACD
 - Trading - Instelling instap voor toepassen oplopende/aflopende Stoch
 - Trading - Instelling uitstap locking toepassen zodra je in de winst zit
+- Trading - De info dump van de positie, bij de value staat vaak een 0, graag invullen via stop*q of price*q indien mogelijk
+- Trading - De info dump van de positie, de sell aan de linkerkant zetten (kleurtje wellicht?) zodat je niet zover naar rechts hoeft te scrollen)
+- Trading - Er worden geen signalen gemaakt voor symbols met posities (low volume, low price, flat candles enzovoort) - maar dan gebeurd er helemaal niets! (weken lang)!
+
 
 07-09-2023 1.8.5
 - Bij het activeren van de Kucoin exchange wordt de Binance exchange geactiveerd (het weblinks.json bevat een foutje)
@@ -94,8 +123,10 @@ Voor alle Exchanges (behalve Binance):
 - De minimale stobpercentage werd voor alle signalen toegepast (is exclusief voor stobb bedoeld)
 - Minor, de label met de barometer tijd wordt nu gecentreerd in plaats van rechts (ziet er beter uit)
 
+
 03-09-2023 1.8.4
 - Bij gebruik van een NL decimal seperator (,) worden de prijzen van de symbols in de display en signalen afgekapt.
+
 
 02-09-2023 1.8.3
 - Scanner - Excel overzicht met informatie van de symbols van de exchange
@@ -115,6 +146,7 @@ Voor alle Exchanges (behalve Binance):
 - Trading - De barometer grafiek direct na het opstarten tonen (het duurde nogal lang voordat deze getoond werd)
 - Trading - Caption "Binance Trading (naast de papertrading))
 - Trading - Excel overzicht met informatie over een positie, de parts, de gemaakte trades, de BE berekening enzovoort
+
 
 03-08-2023 1.8.2
 - De kolommen van de signalen kunnen met de rechtermuisknop menu onzichtbaar worden gemaakt
@@ -143,6 +175,7 @@ Voor alle Exchanges (behalve Binance):
 - De tabs in de instellingen en hoofdscherm zijn iets duidelijker gemaakt
 - De oneven regels in de grids een lichtgrijze achtergrond kleurtje geven
 - Correcties in de hypertrader links naar bybit-spot en bybit futures (met dank aan Marco)
+
 
 16-07-2023 1.8.0 (een gedeeltelijk hiervan zit al in de 1.7.2 vanwege de laatste hotfix <*>)
 - Ondersteuning Bybit Spot
@@ -247,6 +280,7 @@ Voor alle Exchanges (behalve Binance):
   Het is een experiment om dit te verbeteren, maar echt veel beter is het niet geworden.
   Zie opmerking bij de TODO's "Validatie van de trenddetails" in het voorgaande stukje
 
+
 12-04-2023 1.7.2
 - Kunnen dubbelklikken op de fear and greed index (https://alternative.me/crypto/fear-and-greed-index/)
 - Kunnen dubbelklikken op de US dollar index e.d. en dat je dan in de (interne) Tradingview uitkomt bij de juist chart uitkomt.
@@ -262,11 +296,13 @@ Voor alle Exchanges (behalve Binance):
   (de signalen worden nu gecached en 1 seconde vertraging helpt al behoorlijk)
   NB: Dit was ook echt een ergernis voor mij, blij dat het opgelost is!
 
+
 01-03-2023 1.7.1
 - Het geheel open source maken (https://github.com/CryptoMarius/CryptoSbmScanner)
 - Een verkeerde tooltip op de SBM oversold en overbought vinkje
 - De laatste Obfuscation restanten verwijderd (toch een stukje versleuteld!)
   En er zijn vast virus scanners die problemen met die restant hebben.
+
 
 26-02-2023 1.7
 - De instellingen opgesplitst (intervallen, STOBB/SBM/JUMP)
@@ -300,10 +336,12 @@ Voor alle Exchanges (behalve Binance):
 - De jump up/down wordt op basis van de voorgaande candle berekend (en niet de laatste candle)
 - De barometer 1h, 4h en 24h resizen niet netjes na het kiezen van een ander lettertype/grootte
 
+
 28-01-2023 1.61
 - Via dubbelklik op de prijzen rechtstreeks naar de trading application
 - Er worden geen meldingen meer gemaakt voor alle intervallen boven de 1 minuten
 - Op verzoek staan de waarden van de 1h, de 4h en de 1d weer op het hoofdscherm (via een grid dit keer)
+
 
 27-01-2023 1.6
 - De overgang van de 1.5 de 1.6 gaat niet oevral even goed dus iedereen moet de instellingen echt even controleren!
@@ -342,6 +380,7 @@ Voor alle Exchanges (behalve Binance):
 - De kolom laatste 48h is vervallen (dan hoeven we niet 48 uur aan candles in het geheugen te hebben)
 - Bij het afspelen van de geluiden voor SBM wordt de stobb geluiden gebruikt.
 
+
 08-01-2023 1.5
 - Optie om zelf te kiezen uit geluiden (zonder dat je ze zelf in de map moet zetten)
 - De stobb melding kan optioneel uitgebreid worden met een extra RSI oversold (of overbought) controle
@@ -371,6 +410,7 @@ Voor alle Exchanges (behalve Binance):
 - Afwijkend waarden voor de BB% percentage (en daarom ook kans kans op verkeerde signalen), formule Percentage=100 * (UpperBand / LowerBand) -1
 - Trenddetails zodat de CC 2.0 methode er ook op werkt (dit is gerealiseerd maar de trend en % is nog niet gevalideerd!)
 
+
 23-12-2023 1.4
 - De documentatie moet in pdf (met wat plaatjes)
 - Een verborgen browser gebruiken om Altrady op te starten
@@ -381,13 +421,16 @@ Voor alle Exchanges (behalve Binance):
 - Er worden geen (broncode) obfuscators meer gebruikt, de virus scanners zouden nu allemaal braaf moeten zijn
 - Het browser tab alvast vullen met BTCBUSD bij het opstarten om er zo voor te zorgen dat deze het direct doet (geen witte pagina).
 
+
 21-12-2022 1.3
 - Ik zag een nullable error in de log voorbij komen (een psar object was niet berekend)
+
 
 21-12-2022 1.2
 - Alle serializable classes moeten wel worden uitgesloten van obfuscatie.
 - Een andere c# obfuscator ingezet (een trial van .NET Reactor v6.9 waardoor deze applicatie 14 dagen kan draaien)
 - De applicatie word helaas als een false positive verwijderd door MS Defender (op zoek naar andere obfuscator)
+
 
 21-12-2022 1.1
 - Object CandleFetched verwijderd.
@@ -395,6 +438,7 @@ Voor alle Exchanges (behalve Binance):
 - Opslag voor candle aangepast binance\quote\base.
 - Opslag folder C:\Users\YourName\AppData\Roaming\CryptoScanner
 - Het geselecteerde barometer symbool wordt nu bewaard
+
 
 03-12-2022
 - Hypertrader werd niet op de juiste manier geactiveerd
