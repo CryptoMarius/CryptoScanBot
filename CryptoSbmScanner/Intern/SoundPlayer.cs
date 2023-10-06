@@ -34,6 +34,8 @@ static public class ThreadSoundPlayer
     /// </summary>
     private static void SoundThreadExecute()
     {
+        string lastFile = "";
+        DateTime last = DateTime.Now;
         try
         {
             // https://stackoverflow.com/questions/22208258/how-to-play-sounds-asynchronuously-but-themselves-in-a-queue
@@ -45,6 +47,13 @@ static public class ThreadSoundPlayer
                     fileName = text;
                 else
                     fileName = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location) + @"\Sounds\" + text;
+
+                // Als we binnen x seconden hetzelfde bestand afspelen negeren we het (anders een eindeloze reeks met pingeltjes)
+                if (lastFile == fileName && (DateTime.Now - last).TotalSeconds < 5)
+                    continue;
+                
+                last = DateTime.Now;
+                lastFile = fileName;
 
                 if (File.Exists(fileName))
                 {
