@@ -46,55 +46,50 @@ public static class LinkTools
     }
 
 
-    public static async void ActivateExternalTradingApp(CryptoTradingApp externalTradingApp, CryptoSymbol symbol, CryptoInterval interval)
+    public static async void ActivateTradingApp(CryptoTradingApp externalTradingApp, CryptoSymbol symbol, CryptoInterval interval, CryptoExternalUrlType viaTradingBrowser, bool activateTab = true)
     {
-        // Activeer de externe applicatie (soms gebruik makend van de dummy browser)
+        // Activeer de applicatie (soms gebruik makend van de dummy browser)
 
-        (string Url, CryptoExternalUrlType Execute) refInfo = GlobalData.ExternalUrls.GetExternalRef(externalTradingApp, false, symbol, interval);
-        if (refInfo.Url != "")
+        (string Url, CryptoExternalUrlType Execute) = GlobalData.ExternalUrls.GetExternalRef(externalTradingApp, false, symbol, interval);
+        if (Url != "")
         {
-
-            if (refInfo.Execute == CryptoExternalUrlType.Internal)
+            if (viaTradingBrowser == CryptoExternalUrlType.Internal)
             {
-                GlobalData.AddTextToLogTab($"Linktools activate external app (via internal browser) {refInfo.Url}");
-                await InitializeWebViewDummy();
-                WebViewDummy.Source = new(refInfo.Url);
+                await InitializeWebViewTradingView();
+
+                WebViewTradingView.Source = new(Url);
+                if (activateTab)
+                    TabControl.SelectedTab = TabPageBrowser;
             }
             else
             {
-                GlobalData.AddTextToLogTab($"Linktools activate external app (via execute command) {refInfo.Url}");
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(refInfo.Url) { UseShellExecute = true });
+                if (Execute == CryptoExternalUrlType.Internal)
+                {
+                    //GlobalData.AddTextToLogTab($"Linktools activate external app (via internal browser) {Url}");
+                    await InitializeWebViewDummy();
+                    WebViewDummy.Source = new(Url);
+                }
+                else
+                {
+                    //GlobalData.AddTextToLogTab($"Linktools activate external app (via execute command) {Url}");
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(Url) { UseShellExecute = true });
+                }
             }
         }
     }
 
-
-    public static async void ActivateInternalTradingApp(CryptoTradingApp externalTradingApp, CryptoSymbol symbol, CryptoInterval interval, bool activateTab = true)
+    public static void ActivateInternalTradingApp(CryptoTradingApp externalTradingApp, CryptoSymbol symbol, CryptoInterval interval, bool activateTab = true)
     {
         // Activeer de interne Tradingview Browser op het zoveelste tabblad
-
-        (string Url, CryptoExternalUrlType Execute) refInfo = GlobalData.ExternalUrls.GetExternalRef(externalTradingApp, false, symbol, interval);
-        if (refInfo.Url != "")
-        {
-            await InitializeWebViewTradingView();
-
-            WebViewTradingView.Source = new(refInfo.Url);
-            if (activateTab)
-                TabControl.SelectedTab = TabPageBrowser;
-        }
+        ActivateTradingApp(externalTradingApp, symbol, interval, CryptoExternalUrlType.Internal, activateTab);
     }
 
 
-    public static void ActivateTradingViewBrowser(string symbolname = "BTCUSDT")
+    public static void ActivateExternalTradingApp(CryptoTradingApp externalTradingApp, CryptoSymbol symbol, CryptoInterval interval)
     {
-        if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1m, out CryptoInterval interval))
-            return;
-
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
-        {
-            if (exchange.SymbolListName.TryGetValue(symbolname, out CryptoSymbol symbol))
-                ActivateInternalTradingApp(CryptoTradingApp.TradingView, symbol, interval, false);
-        }
+        // Activeer de externe applicatie (soms gebruik makend van de dummy browser)
+        ActivateTradingApp(externalTradingApp, symbol, interval, CryptoExternalUrlType.External);
     }
+
 
 }
