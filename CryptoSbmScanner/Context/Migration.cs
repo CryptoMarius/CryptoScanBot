@@ -136,8 +136,11 @@ public class Migration
             }
 
 
+
             // TODO: Wellicht de fee van exchange administreren, 0.01% voor limt orders
             // en 0.015 voor market orders of iets dergelijks (iets met maker en taker)
+            // +Exchange.FreeRate en deze vullen voor alle exchanges
+            // -Part.Status kan verwijderd worden + de laatste code (verplicht veld)
         }
     }
 

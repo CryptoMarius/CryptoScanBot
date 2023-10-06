@@ -1258,7 +1258,7 @@ public class CryptoDatabase : IDisposable
     //    //}
     //}
 
-    public int CreateNewUniqueId()
+    public string CreateNewUniqueId()
     {
         // SQL server
         // Create Sequence UniqueSequenceId as int start with 1 increment by 1
@@ -1273,7 +1273,7 @@ public class CryptoDatabase : IDisposable
             Connection.Insert<CryptoSequence>(sequence, transaction);
             Connection.Delete<CryptoSequence>(sequence, transaction);
             transaction.Commit();
-            return sequence.Id;
+            return sequence.Id.ToString();
         }
     }
 
