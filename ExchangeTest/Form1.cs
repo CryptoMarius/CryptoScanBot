@@ -591,12 +591,55 @@ public partial class Form1 : Form
             //File.WriteAllText("E:\\ByBit\\inverseFuturesApi.json", text);
 
 
+            GlobalData.Settings.General.ExchangeId = 4;
+            GlobalData.Settings.General.ExchangeId = 4;
+
+            CryptoTradeAccount account = new();
+            account.Name = "Fictief";
+            GlobalData.TradeAccountList.TryAdd(account.Id, account);
+
+            /*
+              {
+                "Name": "BTCUSDT",
+                "BaseAsset": "BTC",
+                "QuoteAsset": "USDT",
+                "Status": 1,
+                "MarginTrading": 1,
+                "Innovation": false,
+                "LotSizeFilter": {
+                  "BasePrecision": 0.000001,
+                  "QuotePrecision": 0.00000001,
+                  "MinOrderQuantity": 0.000048,
+                  "MaxOrderQuantity": 71.73956243,
+                  "MinOrderValue": 1,
+                  "MaxOrderValue": 2000000
+                },
+                "PriceFilter": {
+                  "TickSize": 0.01
+                }
+              },             
+            */
+
+            GlobalData.Settings.Trading.ApiKey = "";
+            GlobalData.Settings.Trading.ApiSecret = "";
+            
+
+            var api = new CryptoSbmScanner.Exchange.BybitSpot.Api();
+            api.ExchangeDefaults();
+
+            if (!GlobalData.ExchangeListName.TryGetValue("Bybit Spot", out CryptoSbmScanner.Model.CryptoExchange exchange))
+                return;
+
+
             CryptoSymbol symbol = new()
             {
+                Id = -1,
                 Status = 1,
                 Name = "BTCUSDT",
                 Base = "BTC",
                 Quote = "USDT",
+                Exchange = exchange,
+                ExchangeId = exchange.Id,
                 PriceTickSize = 0.01000000m,
                 PriceMinimum = 0.01000000m,
                 PriceMaximum = 1000000m,
@@ -605,42 +648,17 @@ public partial class Form1 : Form
                 QuantityMinimum = 0.00001000m,
                 QuantityMaximum = 9000.00000000m
             };
-            /*
-      {
-        "Name": "BTCUSDT",
-        "BaseAsset": "BTC",
-        "QuoteAsset": "USDT",
-        "Status": 1,
-        "MarginTrading": 1,
-        "Innovation": false,
-        "LotSizeFilter": {
-          "BasePrecision": 0.000001,
-          "QuotePrecision": 0.00000001,
-          "MinOrderQuantity": 0.000048,
-          "MaxOrderQuantity": 71.73956243,
-          "MinOrderValue": 1,
-          "MaxOrderValue": 2000000
-        },
-        "PriceFilter": {
-          "TickSize": 0.01
-        }
-      },             
-            */
-
-            GlobalData.Settings.ApiKey = "";
-            GlobalData.Settings.ApiSecret = "";
-
-            var api = new CryptoSbmScanner.Exchange.BybitSpot.Api();
-            api.ExchangeDefaults();
+            GlobalData.AddSymbol(symbol);
+            
 
             // Werkt zoals ik het verwacht! een buy order van ongeveer 1.6 dollar
             //var (result, tradeParams) = await api.BuyOrSell(Database, GlobalData.ExchangeRealTradeAccount, symbol, DateTime.Now, 
             //    CryptoOrderType.Limit, CryptoOrderSide.Buy, 0.000048m, 22000m, null, null);
 
-            var (result, tradeParams) = await api.BuyOrSell(Database, GlobalData.ExchangeRealTradeAccount, symbol, DateTime.Now,
-                CryptoOrderType.Market, CryptoOrderSide.Buy, 0.000048m, 25000m, null, null);
+            //var (result, tradeParams) = await api.BuyOrSell(Database, GlobalData.ExchangeRealTradeAccount, symbol, DateTime.Now,
+            //    CryptoOrderType.Limit, CryptoOrderSide.Buy, 0.000048m, 25000m, null, null);
 
-            GlobalData.AddTextToLogTab($"{symbol.Name} {result} {tradeParams.Error}");
+            //GlobalData.AddTextToLogTab($"{symbol.Name} {result} {tradeParams.Error}");
 
             //2023-09-06 16:48:22 BTCUSDT False 170140: Order value exceeded lower limit. (2*0.000048m)
             //2023-09-06 16:49:00 BTCUSDT False 170140: Order value exceeded lower limit. (1*0.000048m)
@@ -767,6 +785,22 @@ public partial class Form1 : Form
             //t.Wait();
 
 
+            GlobalData.AddTextToLogTab($"Balance: {account.Name}");
+            await api.FetchAssetsAsync(account);
+
+            foreach (var asset in account.AssetList.Values)
+            {
+                GlobalData.AddTextToLogTab($"Quote={asset.Quote} Total={asset.Total} Free={asset.Free} Locked={asset.Locked}");
+            }
+
+            GlobalData.AddTextToLogTab("");
+            GlobalData.AddTextToLogTab($"Trades: {symbol.Name}");
+            await api.FetchTradesForSymbolAsync(account, symbol);
+
+            foreach (var trade in symbol.TradeList.Values)
+            {
+                GlobalData.AddTextToLogTab($"Quote={trade.Symbol.Name} price={trade.Price} Quantity={trade.Quantity} Value={trade.QuoteQuantity}");
+            }
         }
 
         catch (Exception error)
