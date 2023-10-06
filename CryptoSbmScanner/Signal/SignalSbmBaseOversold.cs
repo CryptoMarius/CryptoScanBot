@@ -440,6 +440,14 @@ public class SignalSbmBaseOversold : SignalSbmBase
     public override bool GiveUp(CryptoSignal signal)
     {
         // ********************************************************************
+        // Als BTC snel gedaald is dan stoppen
+        if (GlobalData.PauseTrading.Until >= CandleLast.Date)
+        {
+            ExtraText = string.Format("De bot is gepauseerd omdat {0}", GlobalData.PauseTrading.Text);
+            return true;
+        }
+
+        // ********************************************************************
         // Instaptijd verstreken (oneindig wachten is geen optie)
         if ((CandleLast.OpenTime - signal.EventTime) > GlobalData.Settings.Trading.GlobalBuyRemoveTime * Interval.Duration)
         {

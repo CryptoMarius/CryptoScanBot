@@ -98,6 +98,7 @@ public partial class DashBoardControl : UserControl
         builder.AppendLine("inner join symbol on Position.symbolid = symbol.id");
         builder.AppendLine("where PositionStep.status in (1, 2)");
         builder.AppendLine("and position.Invested > 0");
+        builder.AppendLine("and position.Status in (0,1,2,3)");
         builder.AppendLine("group by symbol.quote");
         builder.AppendLine("order by count(symbol.quote) desc");
 
@@ -128,6 +129,7 @@ public partial class DashBoardControl : UserControl
         builder.AppendLine("inner join symbol on Position.symbolid = symbol.id");
         builder.AppendLine("where PositionStep.status in (1, 2) and PositionStep.Side = 0");
         builder.AppendLine("and position.Invested > 0");
+        builder.AppendLine("and position.Status in (1,2)");
         builder.AppendLine($"and symbol.quote = '{QuoteData.Name}'");
         builder.AppendLine("group by date(PositionStep.CloseTime), PositionStep.Status, symbol.quote");
         builder.AppendLine("order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote");
@@ -154,6 +156,7 @@ public partial class DashBoardControl : UserControl
         builder.AppendLine("inner join symbol on Position.symbolid = symbol.id");
         builder.AppendLine("where PositionStep.status in (1, 2) and PositionStep.Side = 1");
         builder.AppendLine("and position.Invested > 0");
+        builder.AppendLine("and position.Status in (1,2)");
         builder.AppendLine($"and symbol.quote = '{QuoteData.Name}'");
         builder.AppendLine("group by date(PositionStep.CloseTime), PositionStep.Status, symbol.quote");
         builder.AppendLine("order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote");
@@ -202,6 +205,7 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
         //builder.AppendLine("--where position.status = 2");
         builder.AppendLine($"where symbol.quote = '{QuoteData.Name}'");
         builder.AppendLine("and position.Invested > 0");
+        builder.AppendLine("and position.Status in (1,2)");
         builder.AppendLine("group by date(position.CloseTime), position.Status, symbol.quote");
         builder.AppendLine("order by date(position.CloseTime) asc, position.Status, symbol.quote");
 
@@ -290,7 +294,8 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
         ChartArea chartArea = new()
         {
             //Name = "ChartAreaName";
-            BackColor = Color.Black
+            BackColor = Color.Black,
+            
         };
 
         chartArea.AxisX.LabelStyle.Format = "dd";
@@ -329,16 +334,17 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
             ChartPositionsPerDay = CreateChart("Aantal gesloten posities per dag", x, y);
             flowLayoutPanel1.Controls.Add(ChartPositionsPerDay);
 
-            ChartArea chartArea = CreateChartArea("N0");
-            ChartPositionsPerDay.ChartAreas.Add(chartArea);
-
-
             //chart1.Legends.Clear();
             //chart1.Legends.Add(legend1);
             //Legend legend1 = chart1.Legends.Add("legenda");
             //legend1.BackColor = Color.Black;
             //legend1.ForeColor = Color.White;
         }
+
+        ChartPositionsPerDay.ChartAreas.Clear();
+        ChartArea chartArea = CreateChartArea("N0");
+        ChartPositionsPerDay.ChartAreas.Add(chartArea);
+
 
         ChartPositionsPerDay.Series.Clear();
         var series1 = new Series
@@ -355,14 +361,20 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
 
         // Experiment #1 is een chart met per datum het aantal gesloten posities
         // De 1e kolom is het aantal nog openstaande posities, die moeten we nog ergens onderbrengen
+        //int max = 0;
         foreach (QueryPositionData data in QueryPositionDataList)
         {
             if (data.CloseTime.Date > new DateTime(2000, 01, 01))
+            {
+                //if (data.Positions > max)
+                //    max = data.Positions;
                 series1.Points.AddXY(data.CloseTime.Date, data.Positions);
+            }
 
             //DataPoint dataPoint = new DataPoint() { AxisLabel = "series", YValues = new double[] { dataPoint } };
             //series1.Points.Add(dataPoint);
         }
+        //ChartPositionsPerDay.ChartAreas[0].AxisY.Maximum = max + 1;
         ChartPositionsPerDay.Invalidate();
     }
 
@@ -373,15 +385,16 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
             ChartProfitsPerDay = CreateChart("Behaalde winst bedrag per dag", x, y);
             flowLayoutPanel1.Controls.Add(ChartProfitsPerDay);
 
-            ChartArea chartArea = CreateChartArea("N2");
-            ChartProfitsPerDay.ChartAreas.Add(chartArea);
-
             //chart1.Legends.Clear();
             //chart1.Legends.Add(legend1);
             //Legend legend1 = chart1.Legends.Add("legenda");
             //legend1.BackColor = Color.Black;
             //legend1.ForeColor = Color.White;
         }
+        ChartProfitsPerDay.ChartAreas.Clear();
+        ChartArea chartArea = CreateChartArea("N2");
+        ChartProfitsPerDay.ChartAreas.Add(chartArea);
+
         ChartProfitsPerDay.Series.Clear();
 
 
@@ -414,10 +427,6 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
             ChartProfitPercentagePerDay = CreateChart("Minimale, maximale en gemiddelde winst percentage per dag", x, y);
             flowLayoutPanel1.Controls.Add(ChartProfitPercentagePerDay);
 
-            ChartArea chartArea = CreateChartArea("N2");
-            ChartProfitPercentagePerDay.ChartAreas.Add(chartArea);
-
-
             ChartProfitPercentagePerDay.Legends.Clear();
             //chart1.Legends.Add(legend1);
             Legend legend1 = ChartProfitPercentagePerDay.Legends.Add("legenda");
@@ -425,6 +434,11 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
             legend1.ForeColor = Color.White;
 
         }
+
+        ChartProfitPercentagePerDay.ChartAreas.Clear();
+        ChartArea chartArea = CreateChartArea("N2");
+        ChartProfitPercentagePerDay.ChartAreas.Add(chartArea);
+
         ChartProfitPercentagePerDay.Series.Clear();
 
 
@@ -486,15 +500,17 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
             ChartInvestedReturnedPerDay = CreateChart("Geinvesteerde en geretourneerde bedragen per dag", x, y);
             flowLayoutPanel1.Controls.Add(ChartInvestedReturnedPerDay);
 
-            ChartArea chartArea = CreateChartArea("N2");
-            ChartInvestedReturnedPerDay.ChartAreas.Add(chartArea);
-
             ChartInvestedReturnedPerDay.Legends.Clear();
             //chart1.Legends.Add(legend1);
             var legend1 = ChartInvestedReturnedPerDay.Legends.Add("legenda");
             legend1.BackColor = Color.Black;
             legend1.ForeColor = Color.White;
         }
+
+        ChartInvestedReturnedPerDay.ChartAreas.Clear();
+        ChartArea chartArea = CreateChartArea("N2");
+        ChartInvestedReturnedPerDay.ChartAreas.Add(chartArea);
+
         ChartInvestedReturnedPerDay.Series.Clear();
 
 
@@ -567,15 +583,17 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
             ChartDoorlooptijden = CreateChart("Minimale, maximale en gemiddelde doorlooptijden per????????", x, y);
             flowLayoutPanel1.Controls.Add(ChartDoorlooptijden);
 
-            ChartArea chartArea = CreateChartArea("N2");
-            ChartDoorlooptijden.ChartAreas.Add(chartArea);
-
             ChartDoorlooptijden.Legends.Clear();
             //chart1.Legends.Add(legend1);
             var legend1 = ChartDoorlooptijden.Legends.Add("legenda");
             legend1.BackColor = Color.Black;
             legend1.ForeColor = Color.White;
         }
+
+        ChartDoorlooptijden.ChartAreas.Clear();
+        ChartArea chartArea = CreateChartArea("N2");
+        ChartDoorlooptijden.ChartAreas.Add(chartArea);
+
         ChartDoorlooptijden.Series.Clear();
 
         var series1 = new Series
@@ -659,7 +677,7 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
         if (investedInTrades > 0)
             labelNettoPnlValue4.Text = ((100 * (currentValue / investedInTrades)) - 100).ToString("N2");
         else
-            labelNettoPnlValue4.Text = "? %";
+            labelNettoPnlValue4.Text = "0.00";
 
 
 
@@ -719,6 +737,8 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
 #if !SQLDATABASE
         try
         {
+            // DEBUG CPU belasting
+            //GlobalData.AddTextToLogTab("Charts.RefreshInformation");
             CreateChart();
         }
         catch (Exception error)

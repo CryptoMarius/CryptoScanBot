@@ -1,9 +1,8 @@
-﻿using System.Text;
-
-using CryptoSbmScanner.Context;
+﻿using CryptoSbmScanner.Context;
 using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Exchange;
 using CryptoSbmScanner.Model;
+using CryptoSbmScanner.Trader;
 
 using Dapper;
 using Dapper.Contrib.Extensions;
@@ -16,17 +15,13 @@ public class PositionTools
     private DateTime CurrentDate { get; set; }
     private CryptoTradeAccount TradeAccount { get; set; }
     private CryptoSymbol Symbol { get; set; }
-    //private Model.CryptoExchange Exchange { get; set; }
-    //private CryptoSymbolInterval SymbolInterval { get; set; }
-
+    
 
     public PositionTools(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, DateTime currentDate)
     {
         TradeAccount = tradeAccount;
 
-        //Exchange = symbol.Exchange;
         Symbol = symbol;
-        //SymbolInterval = symbolInterval;
         CurrentDate = currentDate;
     }
 
@@ -51,15 +46,15 @@ public class PositionTools
     /// <summary>
     /// Retourneer de part met name=x
     /// </summary>
-    public static CryptoPositionPart FindPositionPart(CryptoPosition position, string name)
-    {
-        foreach (CryptoPositionPart part in position.Parts.Values.ToList())
-        {
-            if (part.Name.Equals(name))
-                return part;
-        }
-        return null;
-    }
+    //public static CryptoPositionPart FindPositionPart(CryptoPosition position, string name)
+    //{
+    //    foreach (CryptoPositionPart part in position.Parts.Values.ToList())
+    //    {
+    //        if (part.Name.Equals(name))
+    //            return part;
+    //    }
+    //    return null;
+    //}
 
     /// <summary>
     /// Retourneer de part met id=x
@@ -81,9 +76,10 @@ public class PositionTools
     {
         foreach (CryptoPositionStep step in part.Steps.Values.ToList())
         {
-            if (step.Name.Equals(name) && step.Status != CryptoOrderStatus.Expired && step.Status != CryptoOrderStatus.Canceled)
+            // Alle geannuleerde orders overslagen
+            if (step.Name.Equals(name) && step.Status < CryptoOrderStatus.Canceled)
             {
-                // Kan ook partial gevuld zijn, wat gebeurd er dan? ;-)
+                // Kan ook partial gevuld zijn, wat gebeurd er dan? (-> extra dca, is okay)
                 if (closed && step.CloseTime.HasValue)
                     return step;
                 else
@@ -94,123 +90,84 @@ public class PositionTools
         return null;
     }
 
+
+    public static CryptoPositionStep GetLowestClosedBuy(CryptoPosition position)
+    {
+        // Retourneer de buy order van een niet afgesloten part (de laagste)
+        CryptoPositionStep step = null;
+        foreach (CryptoPositionPart part in position.Parts.Values.ToList())
+        {
+            // Afgesloten DCA parts sluiten we uit (omdat we zogenaamde jojo's uitvoeren)
+            if (part.CloseTime == null)
+            {
+                foreach (CryptoPositionStep stepX in part.Steps.Values.ToList())
+                {
+                    // Voor de zekerheid enkel de Status=Filled erbij (onzeker wat er exact gebeurd met een cancel en het kan geen kwaad)
+                    if (stepX.Side == CryptoOrderSide.Buy && stepX.CloseTime.HasValue && stepX.Status == CryptoOrderStatus.Filled)
+                    {
+                        if (step == null || stepX.Price < step.Price)
+                            step = stepX;
+                    }
+                }
+            }
+        }
+        return step;
+    }
+
+
     public CryptoPosition CreatePosition(CryptoSignalStrategy strategy, CryptoSymbolInterval symbolInterval)
     {
-        CryptoPosition position = new(); // bewust niet in een init struct gezet (vanwege debuggen)
-        position.TradeAccount = TradeAccount;
-        position.TradeAccountId = TradeAccount.Id;
-        position.CreateTime = CurrentDate;
-        position.UpdateTime = CurrentDate;
-        position.Data = Symbol.Name; // ach ja, werd toch niet gebruikt
-        position.Symbol = Symbol;
-        position.SymbolId = Symbol.Id;
-        position.Exchange = Symbol.Exchange;
-        position.ExchangeId = Symbol.ExchangeId;
-        position.Interval = symbolInterval.Interval;
-        position.IntervalId = symbolInterval.Interval.Id;
-        position.Status = CryptoPositionStatus.Waiting;
-        position.Strategy = strategy;
-        position.Side = CryptoOrderSide.Buy;
+        CryptoPosition position = new()
+        {
+            TradeAccount = TradeAccount,
+            TradeAccountId = TradeAccount.Id,
+            CreateTime = CurrentDate,
+            UpdateTime = CurrentDate,
+            Data = Symbol.Name, // mag vervallen (maar ach)
+            Symbol = Symbol,
+            SymbolId = Symbol.Id,
+            Exchange = Symbol.Exchange,
+            ExchangeId = Symbol.ExchangeId,
+            Interval = symbolInterval.Interval,
+            IntervalId = symbolInterval.Interval.Id,
+            Status = CryptoPositionStatus.Waiting,
+            Strategy = strategy,
+            Side = CryptoOrderSide.Buy
+        };
         return position;
     }
 
-    static public void InsertPosition(CryptoDatabase database, CryptoPosition position)
-    {
-        database.Connection.Insert<CryptoPosition>(position);
-    }
-
-    static public void SavePosition(CryptoDatabase database, CryptoPosition position)
-    {
-        database.Connection.Update<CryptoPosition>(position);
-    }
-
-    public CryptoPositionPart CreatePositionPart(CryptoPosition position, string name, decimal signalPrice)
-    {
-        CryptoPositionPart part = new(); // bewust niet in een init struct gezet (vanwege debuggen)
-        part.Name = name;
-        part.SignalPrice = signalPrice;
-        part.CreateTime = CurrentDate;
-        part.PositionId = position.Id;
-        part.Symbol = Symbol;
-        part.SymbolId = Symbol.Id;
-        part.Exchange = Symbol.Exchange;
-        part.ExchangeId = Symbol.ExchangeId;
-        //part.Interval = position.Interval;
-        //part.IntervalId = position.Interval.Id;
-        part.Status = CryptoPositionStatus.Waiting;
-        part.Side = CryptoOrderSide.Buy;
-
-        position.UpdateTime = part.CreateTime;
-        return part;
-    }
-
-    static public void InsertPositionPart(CryptoDatabase database, CryptoPositionPart part)
-    {
-        database.Connection.Insert<CryptoPositionPart>(part);
-    }
-    static public void SavePositionPart(CryptoDatabase database, CryptoPositionPart part)
-    {
-        database.Connection.Update<CryptoPositionPart>(part);
-    }
 
     static public CryptoPositionStep CreatePositionStep(CryptoPosition position, CryptoPositionPart part, 
         TradeParams tradeParams, string name, CryptoTrailing trailing = CryptoTrailing.None)
     {
-        CryptoPositionStep step = new(); // bewust niet in een init struct gezet (vanwege debuggen)
-        step.PositionId = position.Id;
-        step.PositionPartId = part.Id;
+        CryptoPositionStep step = new()
+        {
+            PositionId = position.Id,
+            PositionPartId = part.Id,
 
-        step.Name = name;
-        step.Side = tradeParams.OrderSide;
-        step.Status = CryptoOrderStatus.New;
-        step.OrderType = tradeParams.OrderType;
-        step.CreateTime = tradeParams.CreateTime;
-        
-        step.Price = tradeParams.Price;
-        step.StopPrice = tradeParams.StopPrice;
-        step.StopLimitPrice = tradeParams.LimitPrice;
+            Name = name,
+            Side = tradeParams.OrderSide,
+            Status = CryptoOrderStatus.New,
+            OrderType = tradeParams.OrderType,
+            CreateTime = tradeParams.CreateTime,
 
-        step.Quantity = tradeParams.Quantity;
-        step.QuantityFilled = 0;
-        step.QuoteQuantityFilled = 0;
+            Price = tradeParams.Price,
+            StopPrice = tradeParams.StopPrice,
+            StopLimitPrice = tradeParams.LimitPrice,
 
-        step.OrderId = tradeParams.OrderId;
-        step.Order2Id = tradeParams.Order2Id;
-        //step.OrderListId = tradeParams.OrderListId; // onzin? maar ach (wat is/was het verhaal hierachter?)
+            Quantity = tradeParams.Quantity,
+            QuantityFilled = 0,
+            QuoteQuantityFilled = 0,
 
-        step.Trailing = trailing;
-        //Dit wordt bij een 1e trade gedaan (zie DoOnSignal), maar hoe hou je dat bij (want die routine wordt aangepast)
-        //part.BuyPrice = result.tradeParams.Price;
-        //part.BuyAmount = result.tradeParams.QuoteQuantity; // voor het bepalen van het volgende aankoop bedrag (die in de settings kan wijzigen)
-        //if (part.BuyAmount == 0)
-        //    part.BuyAmount = result.tradeParams.Price * result.tradeParams.Quantity;
+            OrderId = tradeParams.OrderId,
+            Order2Id = tradeParams.Order2Id,
+
+            Trailing = trailing
+        };
 
         position.UpdateTime = step.CreateTime;
         return step;
-    }
-
-    static public void InsertPositionStep(CryptoDatabase database, CryptoPosition position, CryptoPositionStep step)
-    {
-        database.Connection.Insert<CryptoPositionStep>(step);
-
-        // Genereer een fictieve order ID voor papertrading
-        if (position.TradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading && !step.OrderId.HasValue)
-        {
-            step.OrderId = step.Id;
-            database.Connection.Update<CryptoPositionStep>(step);
-        }
-    }
-
-    static public void SavePositionStep(CryptoDatabase database, CryptoPosition position, CryptoPositionStep step)
-    {
-        database.Connection.Update<CryptoPositionStep>(step);
-
-        // Genereer een fictieve order ID voor papertrading
-        if (position.TradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading && !step.OrderId.HasValue)
-        {
-            step.OrderId = database.CreateNewUniqueId(); //step.Id;
-            database.Connection.Update<CryptoPositionStep>(step);
-        }
     }
 
     public static void AddPosition(CryptoTradeAccount tradeAccount, CryptoPosition position)
@@ -247,10 +204,10 @@ public class PositionTools
         part.Steps.TryAdd(step.Id, step);
 
         // OrderId index aanvullen
-        if (step.OrderId.HasValue)
-            part.Position.Orders.TryAdd((long)step.OrderId, step);
-        if (step.Order2Id.HasValue) 
-            part.Position.Orders.TryAdd((long)step.Order2Id, step);
+        if (step.OrderId != null && step.OrderId != "")
+            part.Position.Orders.TryAdd(step.OrderId, step);
+        if (step.Order2Id != null && step.Order2Id != "") 
+            part.Position.Orders.TryAdd(step.Order2Id, step);
     }
 
 
@@ -320,6 +277,7 @@ public class PositionTools
             part.Returned = 0;
             part.Commission = 0;
 
+            int sellCount = 0;
             foreach (CryptoPositionStep step in part.Steps.Values.ToList())
             {
                 if (step.Status == CryptoOrderStatus.Filled || step.Status == CryptoOrderStatus.PartiallyFilled)
@@ -332,6 +290,7 @@ public class PositionTools
                     }
                     else if (step.Side == CryptoOrderSide.Sell)
                     {
+                        sellCount++;
                         part.Commission += step.Commission;
                         part.Quantity -= step.QuantityFilled;
                         part.Returned += step.QuoteQuantityFilled;
@@ -342,14 +301,11 @@ public class PositionTools
                 //GlobalData.AddTextToLogTab(s);
             }
 
-            if (part.Invested != 0 && part.Status == CryptoPositionStatus.Waiting)
-            {
-                part.Status = CryptoPositionStatus.Trading;
-
-                // Rekening houden met de kosten van de nog te verkopen coins
-                // NB: klopt niet helemaal als een order gedeeltelijk gevuld is!
+            // Rekening houden met de toekomstige kosten van de sell orders.
+            // NB: Dit klopt niet 100% als een order gedeeltelijk gevuld wordt!
+            if (sellCount == 0 && !part.CloseTime.HasValue)
                 part.Commission *= 2;
-            }
+
 
             part.Profit = part.Returned - part.Invested - part.Commission;
             part.Percentage = 0m;
@@ -434,6 +390,7 @@ public class PositionTools
                     if (step.CloseTime != trade.TradeTime)
                         isChanged = true;
                     step.CloseTime = trade.TradeTime;
+                    // Die Expired begrijp ik niet, waarom? (het lijkt een soort van correctie te zijn)
                     if (step.Status < CryptoOrderStatus.Filled || step.Status == CryptoOrderStatus.Expired)
                     {
                         if (step.Status != CryptoOrderStatus.Filled)
@@ -471,19 +428,22 @@ public class PositionTools
 
 
         // Als alles verkocht is de positie alsnog sluiten
-        if (position.Quantity == 0 && openOrders == 0 && position.Status == CryptoPositionStatus.Trading)
+        // Of inden alle orders geannuleerd zijn alsnog sluitne (timeout's)
+        if (position.Status == CryptoPositionStatus.Trading || position.Status == CryptoPositionStatus.Waiting)
         {
-            isChanged = true;
-            position.CloseTime = DateTime.UtcNow;
-            if (position.Status != CryptoPositionStatus.Ready)
+            if (position.Quantity == 0 && openOrders == 0)
             {
-                position.Status = CryptoPositionStatus.Ready;
+                isChanged = true;
+                position.CloseTime = DateTime.UtcNow;
+                if (position.Invested > 0)
+                    position.Status = CryptoPositionStatus.Ready;
+                else
+                    position.Status = CryptoPositionStatus.Timeout;
                 GlobalData.AddTextToLogTab(string.Format("TradeTools: Positie {0} status aangepast naar {1}", position.Symbol.Name, position.Status));
             }
         }
 
-        // De positie bewaren
-        // (dit kost tijd, dus extra isChanged stuff)
+        // De positie bewaren (dit kost nogal wat tijd, dus extra isChanged stuff)
         if (isChanged)
         {
             foreach (CryptoPositionPart part in position.Parts.Values.ToList())
@@ -505,8 +465,6 @@ public class PositionTools
         // Probleem, er zitten msec in de position.CreateTime en niet in de Trade.TradeTime (pfft)
         // string sql = string.Format("select * from trades where ExchangeId={0} and SymbolId={1} and TradeTime >='{2}' order by TradeId",
         // position.ExchangeId, position.SymbolId, position.CreateTime.ToString("yyyy-MM-dd HH:mm:ss"));
-        //position.Symbol.TradeList.Clear(); // geen locking, gevaarlijk? alleen toevoegen is veiliger
-        //DateTime fromDate = position.CreateTime;
         string sql = "select * from trade where SymbolId=@symbolId and TradeTime >= @fromDate order by TradeTime";
         foreach (CryptoTrade trade in database.Connection.Query<CryptoTrade>(sql, new { symbolId = position.SymbolId, fromDate = position.CreateTime }))
             GlobalData.AddTrade(trade);
@@ -572,6 +530,138 @@ public class PositionTools
 
         return false;
     }
+
+
+    /// <summary>
+    /// Controles die noodzakelijk zijn voor een eerste koop
+    /// </summary>
+    public static bool ValidFirstBuyConditions(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoCandle lastCandle1m, out string reaction)
+    {
+        //// Is de barometer goed genoeg dat we willen traden?
+        //if (!SymbolTools.CheckValidBarometer(symbol.QuoteData, CryptoIntervalPeriod.interval15m, GlobalData.Settings.Trading.Barometer15mBotMinimal, out reaction) ||
+        //(!SymbolTools.CheckValidBarometer(symbol.QuoteData, CryptoIntervalPeriod.interval30m, GlobalData.Settings.Trading.Barometer30mBotMinimal, out reaction)) ||
+        //(!SymbolTools.CheckValidBarometer(symbol.QuoteData, CryptoIntervalPeriod.interval1h, GlobalData.Settings.Trading.Barometer01hBotMinimal, out reaction)) ||
+        //(!SymbolTools.CheckValidBarometer(symbol.QuoteData, CryptoIntervalPeriod.interval4h, GlobalData.Settings.Trading.Barometer04hBotMinimal, out reaction)) ||
+        //(!SymbolTools.CheckValidBarometer(symbol.QuoteData, CryptoIntervalPeriod.interval1d, GlobalData.Settings.Trading.Barometer24hBotMinimal, out reaction)))
+        //    return false;
+
+        if (!TradingRules.CheckBarometerValues(symbol, lastCandle1m))
+        {
+            reaction = symbol.QuoteData.PauseTrading.Text;
+            return false;
+        }
+
+
+        // Staat op de whitelist (kan leeg zijn)
+        if (!SymbolTools.CheckSymbolWhiteListOversold(symbol, CryptoOrderSide.Buy, out reaction))
+            return false;
+
+
+        // Staat niet in de blacklist
+        if (!SymbolTools.CheckSymbolBlackListOversold(symbol, CryptoOrderSide.Buy, out reaction))
+            return false;
+
+
+        // Heeft de munt genoeg 24h volume
+        if (!SymbolTools.CheckValidMinimalVolume(symbol, out reaction))
+            return false;
+
+
+        // Heeft de munt een redelijke prijs
+        if (!SymbolTools.CheckValidMinimalPrice(symbol, out reaction))
+            return false;
+
+
+        // Is de munt te nieuw? (hebben we vertrouwen in nieuwe munten?)
+        if (!SymbolTools.CheckNewCoin(symbol, out reaction))
+            return false;
+
+
+        // Munten waarvan de ticksize percentage nogal groot is (barcode charts)
+        if (!SymbolTools.CheckMinimumTickPercentage(symbol, out reaction))
+            return false;
+
+        if (!SymbolTools.CheckAvailableSlots(tradeAccount, symbol, out reaction))
+            return false;
+
+
+        return true;
+    }
+
+
+    public static bool CheckTradingAndSymbolConditions(CryptoSymbol symbol, CryptoCandle lastCandle1m, out string reaction)
+    {
+        // Als de bot niet actief is dan ook geen monitoring (queue leegmaken)
+        // Blijkbaar is de bot dan door de gebruiker uitgezet, verwijder de signalen
+        if (!GlobalData.Settings.Trading.Active)
+        {
+            reaction = "trade-bot deactivated";
+            return false;
+        }
+
+        // we doen (momenteel) alleen long posities
+        if (!symbol.LastPrice.HasValue)
+        {
+            reaction = "symbol price null";
+            return false;
+        }
+
+        // Om te voorkomen dat we te snel achter elkaar in dezelfde munt stappen
+        if (symbol.LastTradeDate.HasValue && symbol.LastTradeDate?.AddMinutes(GlobalData.Settings.Trading.GlobalBuyCooldownTime) > lastCandle1m.Date) // DateTime.UtcNow
+        {
+            reaction = "is in cooldown";
+            return false;
+        }
+
+        // Als een munt snel is gedaald dan stoppen
+        if (TradingRules.CheckTradingRules(lastCandle1m))
+        {
+            reaction = string.Format(" de bot is gepauseerd omdat {0}", GlobalData.PauseTrading.Text);
+            return false;
+        }
+
+        reaction = "";
+        return true;
+    }
+
+
+    public bool CheckAvaliableAssets(CryptoTradeAccount tradeAccount, out decimal assetQuantity, out string reaction)
+    {
+        reaction = "";
+        assetQuantity = 0;
+        if (!PositionTools.ValidTradeAccount(tradeAccount, Symbol))
+            return false;
+
+        if (tradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading)
+        {
+            var (result, value) = SymbolTools.CheckPortFolio(tradeAccount, Symbol);
+            if (!result)
+                return false;
+            assetQuantity = value;
+        }
+        else
+            assetQuantity = 1000000m; // ruim genoeg voor backtest of papertrading (todo)
+
+        return true;
+    }
+
+
+    public bool CheckExchangeApiKeys(CryptoTradeAccount tradeAccount, out string reaction)
+    {
+        reaction = "";
+        if (!PositionTools.ValidTradeAccount(tradeAccount, Symbol))
+            return false;
+
+        if (tradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading)
+        {
+            // Is er een API key aanwezig (met de juiste opties)
+            if (!SymbolTools.CheckValidApikey(out reaction))
+                return false;
+        }
+
+        return true;
+    }
+
 #endif
 
 }

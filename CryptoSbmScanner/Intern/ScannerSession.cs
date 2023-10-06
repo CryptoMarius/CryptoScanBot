@@ -64,7 +64,7 @@ public static class ScannerSession
         GlobalData.ThreadMonitorCandle = new ThreadMonitorCandle();
 #if TRADEBOT
         GlobalData.ThreadMonitorOrder = new ThreadMonitorOrder();
-        if (GlobalData.Settings.ApiKey != "")
+        if (GlobalData.Settings.Trading.ApiKey != "")
             _ = ExchangeHelper.UserData.Start();
 #endif
 #if BALANCING

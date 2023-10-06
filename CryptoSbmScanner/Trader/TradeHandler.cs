@@ -146,7 +146,7 @@ static public class TradeHandler
             if (orderStatus == CryptoOrderStatus.Canceled)
             {
                 // Hebben wij de order geannuleerd? (we gebruiken tenslotte ook een cancel order om orders weg te halen)
-                if (part.Status == CryptoPositionStatus.TakeOver || part.Status == CryptoPositionStatus.Timeout || step.Status == CryptoOrderStatus.Expired)
+                if (step.Status == CryptoOrderStatus.Expired) //part.Status == CryptoPositionStatus.TakeOver || part.Status == CryptoPositionStatus.Timeout || 
                 {
                     // Wij, anders was de status van de step niet op expired gezet of de part op timeout gezet
                 }
@@ -159,14 +159,9 @@ static public class TradeHandler
                     part.Commission = 0;
                     part.Percentage = 0;
                     part.CloseTime = data.TradeTime;
-                    //CryptoPositionStatus? oldStatus = part.Status;
-                    part.Status = CryptoPositionStatus.TakeOver;
-                    //if (oldStatus != part.Status)
-                    //    GlobalData.AddTextToLogTab($"{symbol.Name} Debug: positie part status van {oldStatus} naar {part.Status}");
-                    //PositionTools.SavePositionPart(databaseThread, part);
                     databaseThread.Connection.Update<CryptoPositionPart>(part);
 
-                    s = string.Format("handletrade#7 {0} positie part cancelled, user takeover? part.status={1}", msgInfo, part.Status);
+                    s = string.Format("handletrade#7 {0} positie part cancelled, user takeover?", msgInfo);
                     GlobalData.AddTextToLogTab(s);
                     GlobalData.AddTextToTelegram(s);
 
@@ -177,10 +172,7 @@ static public class TradeHandler
                     position.Commission = 0;
                     position.Percentage = 0;
                     position.CloseTime = data.TradeTime;
-                    //oldStatus = position.Status;
                     position.Status = CryptoPositionStatus.TakeOver;
-                    //if (oldStatus != position.Status)
-                    //    GlobalData.AddTextToLogTab($"{symbol.Name} Debug: positie part status van {oldStatus} naar {part.Status}");
                     databaseThread.Connection.Update<CryptoPosition>(position);
 
                     s = string.Format("handletrade#7 {0} positie cancelled, user takeover? position.status={1}", msgInfo, position.Status);
@@ -206,14 +198,7 @@ static public class TradeHandler
                 //GlobalData.AddTextToTelegram(s);
 
                 part.CloseTime = data.TradeTime;
-                //CryptoPositionStatus? oldStatus = part.Status;
-                part.Status = CryptoPositionStatus.Ready;
-                //if (oldStatus != part.Status && position.Quantity > 0) // geen 2 meldingen achter elkaar (van de part status en dan de totale positie)
-                //    GlobalData.AddTextToLogTab($"{symbol.Name} Debug: Part status van {oldStatus} naar {part.Status}");
-                //PositionTools.SavePositionPart(databaseThread, part);
                 databaseThread.Connection.Update<CryptoPositionPart>(part);
-
-
 
                 // Sluit de positie indien afgerond
                 if (position.Quantity == 0)
@@ -225,67 +210,29 @@ static public class TradeHandler
 
                     position.CloseTime = data.TradeTime;
                     //oldStatus = position.Status;
-                    position.Status = CryptoPositionStatus.Ready;
+                    if (position.Invested > 0)
+                        position.Status = CryptoPositionStatus.Ready;
+                    else
+                        position.Status = CryptoPositionStatus.Timeout;
+
                     databaseThread.Connection.Update<CryptoPosition>(position);
                     //if (oldStatus != position.Status)
                     //    GlobalData.AddTextToLogTab($"Debug: position status van {oldStatus} naar {position.Status}");
 
-                    // Annuleer alle openstaande dca orders
-                    // DIT IS NIET GOED (Want in Papertrading MEERDERE DCA'S DIE TEGELIJK VERKOCHT WORDEN!)
-                    // stel dat de prijs sterk gedaald is dan zijn er X DCA's, en als alleen die laatste verkocht wordt als JoJo dan is dit niet goed
-                    //foreach (CryptoPositionPart partX in position.Parts.Values.ToList())
-                    //{
-                    //    if (partX.Quantity == 0)
-                    //    {
-                    //        partX.CloseTime = data.TradeTime;
-                    //        partX.Status = CryptoPositionStatus.Ready;
-                    //        PositionTools.SavePositionPart(databaseThread, partX);
-
-                    //        foreach (CryptoPositionStep stepX in partX.Steps.Values.ToList())
-                    //        {
-                    //            // Annuleer de openstaande orders indien gevuld (voor alle DCA's)
-                    //            if (stepX.Side == CryptoOrderSide.Buy && (stepX.Status == CryptoOrderStatus.New))
-                    //            {
-                    //                stepX.CloseTime = data.TradeTime;
-                    //                stepX.Status = CryptoOrderStatus.Expired;
-                    //                PositionTools.SavePositionStep(databaseThread, position, stepX);
-                    //                var (cancelled, cancelParams) = await Api.Cancel(data.TradeAccount, symbol, stepX);
-                    //                //CancelOrder(databaseThread, data.TradeAccount, symbol, partX, stepX); oeps, is static
-                    //                Api.Dump(symbol, cancelled, cancelParams, "annuleer alle dca's");
-                    //            }
-                    //        }
-                    //    }
-                    //}
                     // In de veronderstelling dat dit allemaal lukt
                     position.Symbol.LastTradeDate = position.CloseTime;
                     databaseThread.Connection.Update<CryptoSymbol>(position.Symbol);
                 }
 
-
-                // Experiment: Dit achterwege laten, dit wordt nu via de 1m candle wel opgepakt (duurt wat langer)
-                // De gedachte is hierbij dat als we meerdere OCO"S of sell's op hetzelfde tijdstip ontvangen dat
-                // we niet alle sell's opnieuw gaan (her) plaatsen vanwege een gewijzigde BE (beetje te knullig)
-                // Wellicht willen we dit sneller doen en na circa 5 seconden alsnog iets willen doen (1m is lang)
-
-                // Het idee is om de monitoring aan te roepen voor het plaatsen van een sell e.d.
-                // Probleem: Hoe kom je vanuit hier naar de laatste candle?
-                // TODO - controleren of dit wel de juiste candle is.
-                //CryptoCandle candle1m = null;
-                //long candleOpenTimeInterval = CandleTools.GetUnixTime(data.EventTime, 60);
-                //if (!symbol.CandleList.TryGetValue(candleOpenTimeInterval, out candle1m))
-                //    symbol.CandleList.TryGetValue(candleOpenTimeInterval - 60, out candle1m);
-                //PositionMonitor positionMonitor = new(position.Symbol, candle1m);
-                //GlobalData.AddTextToLogTab(position.Symbol.Name + " Debug: positionMonitor.HandlePosition met herplaatsing sells");
-                //await positionMonitor.HandlePosition(tradeAccount, databaseThread, position, true);
-
                 position.Reposition = true;
                 databaseThread.Connection.Update<CryptoPosition>(position);
 
                 //s = "";
-                if (position.Status == CryptoPositionStatus.Ready)
+                if (position.Status == CryptoPositionStatus.Timeout)
+                    s = $"handletrade {msgInfo} position timeout ({position.Percentage:N2}%)";
+                else if (position.Status == CryptoPositionStatus.Ready )
                     s = $"handletrade {msgInfo} position ready ({position.Percentage:N2}%)";
                 else
-                    //if (part.Status == CryptoPositionStatus.Ready)
                     s = $"handletrade {msgInfo} part sold ({part.Percentage:N2}%)";
                 GlobalData.AddTextToLogTab(s);
                 GlobalData.AddTextToTelegram(s);
@@ -297,8 +244,8 @@ static public class TradeHandler
 
                 // Is er een openstaande positie (via de openstaande posities in het geheugen)
                 // NB: Dit gedeelte kan wat mij betreft vervallen (omdat de query ook gedaan wordt)
-                if (position.TradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading)
-                {
+                //if (position.TradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading)
+                //{
                     // Lukt dat wel? Wat is de 1m candle enzovoort?
 
                     //await tradeAccount.PositionListSemaphore.WaitAsync();
@@ -310,7 +257,7 @@ static public class TradeHandler
                     //{
                     //    //tradeAccount.PositionListSemaphore.Release();
                     //}
-                }
+                //}
 
                 return;
             }

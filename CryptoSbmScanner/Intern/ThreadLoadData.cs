@@ -460,11 +460,11 @@ public class ThreadLoadData
                 //************************************************************************************
                 // Diverse informatie tickers
                 //************************************************************************************
-                await Task.Factory.StartNew(() => new TradingViewSymbolInfo().StartAsync("TVC:DXY", "US Dollar Index", "N2", GlobalData.TradingViewDollarIndex, 10));
-                await Task.Factory.StartNew(() => new TradingViewSymbolInfo().StartAsync("SP:SPX", "S&P 500", "N2", GlobalData.TradingViewSpx500, 10));
-                await Task.Factory.StartNew(() => new TradingViewSymbolInfo().StartAsync("CRYPTOCAP:BTC.D", "BTC Dominance", "N2", GlobalData.TradingViewBitcoinDominance, 10));
-                await Task.Factory.StartNew(() => new TradingViewSymbolInfo().StartAsync("CRYPTOCAP:TOTAL3", "Market Cap total", "N0", GlobalData.TradingViewMarketCapTotal, 10));
-                await Task.Factory.StartNew(() => new FearAndGreatSymbolInfo().StartAsync("https://alternative.me/crypto/fear-and-greed-index/", "Fear and Greed index", "N2", GlobalData.FearAndGreedIndex, 10));
+                await Task.Factory.StartNew(() => new TradingViewSymbolInfo().StartAsync("TVC:DXY", "US Dollar Index", "N2", GlobalData.TradingViewDollarIndex, 100));
+                await Task.Factory.StartNew(() => new TradingViewSymbolInfo().StartAsync("SP:SPX", "S&P 500", "N2", GlobalData.TradingViewSpx500, 100));
+                await Task.Factory.StartNew(() => new TradingViewSymbolInfo().StartAsync("CRYPTOCAP:BTC.D", "BTC Dominance", "N2", GlobalData.TradingViewBitcoinDominance, 100));
+                await Task.Factory.StartNew(() => new TradingViewSymbolInfo().StartAsync("CRYPTOCAP:TOTAL3", "Market Cap total", "N0", GlobalData.TradingViewMarketCapTotal, 100));
+                await Task.Factory.StartNew(() => new FearAndGreatSymbolInfo().StartAsync("https://alternative.me/crypto/fear-and-greed-index/", "Fear and Greed index", "N2", GlobalData.FearAndGreedIndex, 100));
 
 
                 //************************************************************************************
@@ -499,14 +499,14 @@ public class ThreadLoadData
                 //************************************************************************************
                 // Nu we de achterstand ingehaald hebben kunnen/mogen we analyseren (signals maken)
                 //************************************************************************************
-                if (GlobalData.Settings.ApiKey != "")
+                if (GlobalData.Settings.Trading.ApiKey != "")
                 {
                     GlobalData.AddTextToLogTab("Starting task for handling orders");
                     _ = Task.Run(async () => { await GlobalData.ThreadMonitorOrder.ExecuteAsync(); });
                 }
 
                 
-                await GlobalData.CheckOpenPositions();
+                await TradeTools.CheckOpenPositions();
 
 
 
@@ -525,7 +525,7 @@ public class ThreadLoadData
                 //************************************************************************************
                 // Alle data van de exchange monitoren
                 //************************************************************************************
-                if (GlobalData.Settings.ApiKey != "")
+                if (GlobalData.Settings.Trading.ApiKey != "")
                     _ = ExchangeHelper.UserData.Start();
 
 
@@ -533,12 +533,14 @@ public class ThreadLoadData
                 // De assets van de exchange halen (overlappend met exchange monitoring om niets te missen)
                 // Via een event worden de assets in de userinterface gezet (dat duurt even)
                 //************************************************************************************
-                if (GlobalData.Settings.ApiKey != "")
+                if (GlobalData.Settings.Trading.ApiKey != "")
                     await ExchangeHelper.FetchAssetsAsync(GlobalData.ExchangeRealTradeAccount);
-#endif
+
 
                 // toon de ingelezen posities
                 GlobalData.PositionsHaveChanged("");
+#endif
+
 
 
                 var assembly = Assembly.GetExecutingAssembly().GetName();

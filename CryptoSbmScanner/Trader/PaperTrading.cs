@@ -25,11 +25,9 @@ public class PaperTrading
             Symbol = position.Symbol,
             SymbolId = position.SymbolId,
 
-            //OrderStatus = CryptoOrderStatus.Filled, onbekend
             TradeTime = LastCandle1mCloseTimeDate.AddSeconds(2), // Datum van sluiten candle en een beetje extra
             Price = price, // prijs bijwerken voor berekening break-even (is eigenlijk niet okay, 2e veld introduceren?)
             Quantity = step.Quantity,
-            //QuantityFilled = step.Quantity,
             QuoteQuantity = step.Quantity * price, // (via de meegegeven prijs)
 
             Commission = step.Quantity * price * 0.1m / 100m, // full commission, met BNB korting=0.075 (zonder kickback, anders was het 0.065?)
@@ -39,8 +37,8 @@ public class PaperTrading
             Side = step.Side,
         };
         // TODO: Dit gaat niet goed als van een OCO de stop wordt geraakt (Order2Id), price is wel okay overigens
-        if (step.OrderId.HasValue)
-            trade.OrderId = (int)step.OrderId;
+        if (step.OrderId != "")
+            trade.OrderId = step.OrderId;
 
 
         // bewaar de gemaakte trade

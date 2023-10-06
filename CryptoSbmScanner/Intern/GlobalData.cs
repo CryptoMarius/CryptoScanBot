@@ -49,9 +49,11 @@ static public class GlobalData
     static public int createdSignalCount = 0; // Tellertje met het aantal meldingen (komt in de taakbalk c.q. applicatie titel)
 
     /// <summary>
-    /// Alle instellingen van de scanenr/trader
+    /// Alle instellingen van de scanner/trader
     /// </summary>
     static public SettingsBasic Settings { get; set; } = new();
+
+    static public PauseRule PauseTrading { get; set; } = new();
 
     /// <summary>
     /// De url's van de exchanges en/of tradingapps
@@ -78,9 +80,11 @@ static public class GlobalData
     static public event AddTextEvent LogToLogTabEvent;
 
     // Events for refresing data
-    static public event AddTextEvent AssetsHaveChangedEvent;
     static public event AddTextEvent SymbolsHaveChangedEvent;
+#if TRADEBOT
+    static public event AddTextEvent AssetsHaveChangedEvent;
     static public event AddTextEvent PositionsHaveChangedEvent;
+#endif
     static public AddTextEvent ApplicationHasStarted { get; set; }
 
     // Ophalen van historische candles duurt lang, dus niet halverwege nog 1 starten (en nog 1 en...)
@@ -250,93 +254,6 @@ static public class GlobalData
         }
     }
 
-
-#if TRADEBOT
-    static public void LoadClosedPositions()
-    {
-        // Alle gesloten posities lezen 
-        // TODO - beperken tot de laatste 2 dagen? (en wat handigheden toevoegen wellicht)
-        AddTextToLogTab("Reading closed position");
-#if SQLDATABASE
-        string sql = "select top 250 * from position where not closetime is null order by id desc";
-#else
-        string sql = "select * from position where not closetime is null order by id desc limit 250";
-#endif
-        using var database = new CryptoDatabase();
-        foreach (CryptoPosition position in database.Connection.Query<CryptoPosition>(sql))
-            PositionTools.AddPositionClosed(position);
-    }
-
-    static public void LoadOpenPositions()
-    {
-        // Alle openstaande posities lezen 
-        AddTextToLogTab("Reading open position");
-
-        using var database = new CryptoDatabase();
-        string sql = "select * from position where closetime is null and status < 2";
-        foreach (CryptoPosition position in database.Connection.Query<CryptoPosition>(sql))
-        {
-            if (!TradeAccountList.TryGetValue(position.TradeAccountId, out CryptoTradeAccount tradeAccount))
-                throw new Exception("Geen trade account gevonden");
-
-            PositionTools.AddPosition(tradeAccount, position);
-            PositionTools.LoadPosition(database, position);
-        }
-    }
-
-    static async public Task CheckOpenPositions()
-    {
-        // Alle openstaande posities lezen 
-        AddTextToLogTab("Checking open position");
-
-        using var database = new CryptoDatabase();
-        foreach (CryptoTradeAccount tradeAccount in TradeAccountList.Values.ToList())
-        {
-            //foreach (CryptoPosition position in tradeAccount.PositionList.Values.ToList())
-            foreach (var positionList in tradeAccount.PositionList.Values.ToList())
-            {
-                foreach (var position in positionList.Values.ToList())
-                {
-                    // Controleer de openstaande orders, zijn ze ondertussen gevuld
-                    // Haal de trades van deze positie op vanaf de 1e order
-                    // TODO - Hoe doen we dit met papertrading (er is niets geregeld!)
-                    await PositionTools.LoadTradesfromDatabaseAndExchange(database, position);
-                    PositionTools.CalculatePositionResultsViaTrades(database, position);
-
-                    foreach (CryptoPositionPart part in position.Parts.Values)
-                    {
-                        if (part.Invested > 0 && part.Quantity == 0 && part.Status != CryptoPositionStatus.Ready)
-                        {
-                            part.Status = CryptoPositionStatus.Ready;
-                            AddTextToLogTab(string.Format("LoadData: Positie {0} Part {1} status aangepast naar {2}", position.Symbol.Name, part.Name, part.Status));
-                        }
-
-                        if (part.Status == CryptoPositionStatus.Ready)
-                        {
-                            if (!part.CloseTime.HasValue)
-                                part.CloseTime = DateTime.UtcNow;
-                            database.Connection.Update(part);
-                        }
-                    }
-
-                    if (position.Invested > 0 && position.Quantity == 0 && position.Status != CryptoPositionStatus.Ready)
-                    {
-                        position.Status = CryptoPositionStatus.Ready;
-                        AddTextToLogTab(string.Format("LoadData: Positie {0} status aangepast naar {1}", position.Symbol.Name, position.Status));
-                    }
-
-                    if (position.Status == CryptoPositionStatus.Ready)
-                    {
-                        PositionTools.RemovePosition(position.TradeAccount, position);
-                        if (!position.CloseTime.HasValue)
-                            position.CloseTime = DateTime.UtcNow;
-                        database.Connection.Update(position);
-                    }
-                }
-            }
-        }
-    }
-#endif
 
     static public void AddExchange(Model.CryptoExchange exchange)
     {
@@ -693,20 +610,23 @@ static public class GlobalData
     }
 
 
-    static public void AssetsHaveChanged(string text)
-    {
-        AssetsHaveChangedEvent(text);
-    }
-
     static public void SymbolsHaveChanged(string text)
     {
         SymbolsHaveChangedEvent(text);
+    }
+
+#if TRADEBOT
+
+    static public void AssetsHaveChanged(string text)
+    {
+        AssetsHaveChangedEvent(text);
     }
 
     static public void PositionsHaveChanged(string text)
     {
         PositionsHaveChangedEvent(text);
     }
+#endif
 
     static public void SetCandleTimerEnable(bool value)
     {

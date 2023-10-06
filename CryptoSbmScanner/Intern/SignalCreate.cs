@@ -271,6 +271,8 @@ public class SignalCreate
 
     private double CalculateMaxMovementInInterval(long startTime, CryptoIntervalPeriod intervalPeriod, long candleCount)
     {
+        return 0;
+
         // Op een iets hoger interval gaan we x candles naar achteren en meten de echte beweging
         // (de 24% change is wat effectief overblijft, maar dat is duidelijk niet de echte beweging)
         CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(intervalPeriod);
@@ -472,15 +474,8 @@ public class SignalCreate
         }
 
 
-        // de 24 change moet in dit interval zitten
-        // Vraag: Kan deze niet beter naar het begin van de controles?
+        // de 24 change moet in een bepaald interval zitten
         signal.Last24HoursChange = CalculateLastPeriodsInInterval(signal, 24 * 60 * 60);
-        signal.Last24HoursEffective = CalculateMaxMovementInInterval(signal.EventTime, CryptoIntervalPeriod.interval15m, 1 * 96);
-
-        // Question: We hebben slechts 260 candles, dit geeft dus het gewenste getal voor 48 uur (afgesterd)!
-        //signal.Last48HoursChange = CalculateLastPeriodsInInterval(48 * 60 * 60);
-        //signal.Last48HoursEffective = CalculateMaxMovementInInterval(CryptoIntervalPeriod.interval15m, 2 * 96);
-
         if (!HasOpenPosition() && !signal.Last24HoursChange.IsBetween(GlobalData.Settings.Signal.AnalysisMinChangePercentage, GlobalData.Settings.Signal.AnalysisMaxChangePercentage))
         {
             if (GlobalData.Settings.Signal.LogAnalysisMinMaxChangePercentage)
@@ -492,6 +487,8 @@ public class SignalCreate
             signal.IsInvalid = true;
         }
 
+        // de 1 * 1d effectief moet in een bepaald interval zitten
+        signal.Last24HoursEffective = CalculateMaxMovementInInterval(signal.EventTime, CryptoIntervalPeriod.interval15m, 1 * 96); // 1 * 24 / 15 = 96
         if (!HasOpenPosition() && !signal.Last24HoursEffective.IsBetween(GlobalData.Settings.Signal.AnalysisMinEffectivePercentage, GlobalData.Settings.Signal.AnalysisMaxEffectivePercentage))
         {
             if (GlobalData.Settings.Signal.LogAnalysisMinMaxEffectivePercentage)
@@ -502,6 +499,21 @@ public class SignalCreate
             eventText.Add("24h effectief% te hoog");
             signal.IsInvalid = true;
         }
+
+        // de 10 * 1d effectief moet in een bepaald interval zitten
+        signal.Last10DaysEffective = CalculateMaxMovementInInterval(signal.EventTime, CryptoIntervalPeriod.interval6h, 1 * 40); // 10 * 24 / 6 = 40
+        if (!HasOpenPosition() && !signal.Last10DaysEffective.IsBetween(GlobalData.Settings.Signal.AnalysisMinEffective10DaysPercentage, GlobalData.Settings.Signal.AnalysisMaxEffective10DaysPercentage))
+        {
+            if (GlobalData.Settings.Signal.LogAnalysisMinMaxEffective10DaysPercentage)
+            {
+                string text = string.Format("Analyse {0} 24h change (effectief) {1} niet tussen {2} .. {3}", Symbol.Name, signal.Last10DaysEffective.ToString("N2"), GlobalData.Settings.Signal.AnalysisMinEffective10DaysPercentage.ToString(), GlobalData.Settings.Signal.AnalysisMaxEffective10DaysPercentage.ToString());
+                GlobalData.AddTextToLogTab(text);
+            }
+            eventText.Add("10d effectief% te hoog");
+            signal.IsInvalid = true;
+        }
+
+
 
 
         // New coins have a lot of price changes

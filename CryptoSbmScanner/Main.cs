@@ -31,14 +31,9 @@ public partial class FrmMain : Form
     {
         InitializeComponent();
 
-
-        //decimal price = 8.478m;
-        //price = price.Clamp(0.00100000m, 100000m, 0.00100000m);
-        //decimal quantity = 11.7m;
-        //quantity = quantity.Clamp(0.00100000m, 100000m, 0.00100000m);
-
-        //decimal x = 100 / 8.478m;
-        //x = x.Clamp(0.00100000m, 100000m, 0.00100000m);
+        SystemEvents.PowerModeChanged += OnPowerChange;
+        FormClosing += FrmMain_FormClosing;
+        Load += FrmMain_Load;
 
         // Om vanuit achtergrond threads iets te kunnen loggen of te doen
         GlobalData.PlaySound += new PlayMediaEvent(PlaySound);
@@ -47,9 +42,11 @@ public partial class FrmMain : Form
         GlobalData.LogToLogTabEvent += new AddTextEvent(AddTextToLogTab);
 
         // Niet echt een text event, meer misbruik van het event type
-        GlobalData.AssetsHaveChangedEvent += new AddTextEvent(AssetsHaveChangedEvent);
         GlobalData.SymbolsHaveChangedEvent += new AddTextEvent(SymbolsHaveChangedEvent);
+#if TRADEBOT
+        GlobalData.AssetsHaveChangedEvent += new AddTextEvent(AssetsHaveChangedEvent);
         GlobalData.PositionsHaveChangedEvent += new AddTextEvent(OpenPositionsHaveChangedEvent);
+#endif
 
         GlobalData.AnalyzeSignalCreated = AnalyzeSignalCreated;
         GlobalData.ApplicationHasStarted += new AddTextEvent(ApplicationHasStarted);
@@ -67,8 +64,10 @@ public partial class FrmMain : Form
         // Partial class "constructors"
         ListViewSignalsConstructor();
         ListViewSymbolsConstructor();
+#if TRADEBOT
         ListViewPositionsOpenConstructor();
         ListViewPositionsClosedConstructor();
+#endif
 
         // Dummy browser verbergen, is een browser om het extra confirmatie dialoog in externe browser te vermijden
         LinkTools.TabControl = tabControl;
@@ -110,27 +109,35 @@ public partial class FrmMain : Form
                 else throw new Exception(string.Format("Exchange {0} bestaat niet", exchangeName));
             }
         }
+    }
 
-        // Na het selecteren van een account
+
+    private void FrmMain_FormClosing(object sender, FormClosingEventArgs e)
+    {
+        // Save Window coordinates and screen
+        ApplicationTools.SaveWindowLocation(this);
+
+    }
+
+    private void FrmMain_Load(object sender, EventArgs e)
+    {
         ExchangeHelper.ExchangeDefaults();
         GlobalData.LoadAccounts();
 
-        WindowLocationRestore();
         ApplySettings();
 
         GlobalData.LoadSymbols();
         GlobalData.SymbolsHaveChanged("");
         GlobalData.LoadSignals();
 #if TRADEBOT
-        GlobalData.LoadOpenPositions();
+        TradeTools.LoadOpenPositions();
         OpenPositionsHaveChangedEvent("");
-        GlobalData.LoadClosedPositions();
+        TradeTools.LoadClosedPositions();
         ClosedPositionsHaveChangedEvent();
 #endif
 
+        ApplicationTools.WindowLocationRestore(this);
         ScannerSession.Start(false);
-        //dashBoardControl1.InitializeStuff();
-        SystemEvents.PowerModeChanged += OnPowerChange;
     }
 
 
@@ -141,7 +148,8 @@ public partial class FrmMain : Form
         string appVersion = assembly.Version.ToString();
         while (appVersion.EndsWith(".0"))
             appVersion = appVersion[0..^2];
-        Text = $"{appName} {GlobalData.Settings.General.ExchangeName} {appVersion}";
+        string text = $"{appName} {GlobalData.Settings.General.ExchangeName} {appVersion}" + " " + GlobalData.Settings.General.ExtraCaption;
+        Text = text.Trim();
     }
 
 
@@ -175,6 +183,10 @@ public partial class FrmMain : Form
 
         ListboxSymbolsInitCaptions();
         ListViewSignalsInitCaptions();
+#if TRADEBOT
+        ListViewPositionsOpenInitCaptions();
+        ListViewPositionsClosedInitCaptions();
+#endif
 
 
         TradingConfig.IndexStrategyInternally();
@@ -202,12 +214,9 @@ public partial class FrmMain : Form
         ApplicationCreateSignals.Checked = GlobalData.Settings.Signal.SignalsActive;
 
         panelLeft.Visible = !GlobalData.Settings.General.HideSymbolsOnTheLeft;
-        //panelLeftTop.Visible = !GlobalData.Settings.General.HideSymbolsOnTheLeft;
-        //listBoxSymbols.Visible = !GlobalData.Settings.General.HideSymbolsOnTheLeft;
 
         ShowApplicationVersion();
         Refresh(); // Redraw
-        //GlobalData.DumpSessionInformation();
     }
 
 
@@ -218,12 +227,9 @@ public partial class FrmMain : Form
             case PowerModes.Resume:
                 GlobalData.AddTextToLogTab("PowerMode - Resume");
                 ScannerSession.Start(true);
-                //AsyncContext.Run(ScannerSession.Start(true));
                 break;
             case PowerModes.Suspend:
                 GlobalData.AddTextToLogTab("PowerMode - Suspend");
-                this.SaveWindowLocation(false);
-                //Task.Run(async () => { await ScannerSession.Stop(); }).Wait();
                 AsyncContext.Run(ScannerSession.Stop);
                 break;
         }
@@ -234,7 +240,9 @@ public partial class FrmMain : Form
     {
         if (disposing)
         {
-            this.SaveWindowLocation(false);
+            ApplicationTools.SaveWindowLocation(this);
+            GlobalData.SaveSettings();
+
             AsyncContext.Run(ScannerSession.Stop);
 
             if (components != null)
@@ -315,28 +323,28 @@ public partial class FrmMain : Form
     /// </summary>
     private void AssetsHaveChangedEvent(string text, bool extraLineFeed = false)
     {
-        if (components != null && IsHandleCreated)
-        {
-            //decimal valueBtc, valueUsdt;
-            //StringBuilder stringBuilder = new StringBuilder();
-            //Helper.ShowAssets(stringBuilder, out valueUsdt, out valueBtc);
+        //if (components != null && IsHandleCreated)
+        //{
+        //decimal valueBtc, valueUsdt;
+        //StringBuilder stringBuilder = new StringBuilder();
+        //Helper.ShowAssets(stringBuilder, out valueUsdt, out valueBtc);
 
-            //// De totaal waarde van de assets tonen
-            //if (InvokeRequired)
-            //    Invoke((MethodInvoker)(() => labelAssetUSDT.Text = "$" + valueUsdt.ToString0("N2")));
-            //else
-            //    labelAssetUSDT.Text = "$" + valueUsdt.ToString0("N2");
+        //// De totaal waarde van de assets tonen
+        //if (InvokeRequired)
+        //    Invoke((MethodInvoker)(() => labelAssetUSDT.Text = "$" + valueUsdt.ToString0("N2")));
+        //else
+        //    labelAssetUSDT.Text = "$" + valueUsdt.ToString0("N2");
 
-            //if (InvokeRequired)
-            //    Invoke((MethodInvoker)(() => labelAssetBTC.Text = "₿" + valueBtc.ToString0()));
-            //else
-            //    labelAssetBTC.Text = "₿" + valueBtc.ToString0();
+        //if (InvokeRequired)
+        //    Invoke((MethodInvoker)(() => labelAssetBTC.Text = "₿" + valueBtc.ToString0()));
+        //else
+        //    labelAssetBTC.Text = "₿" + valueBtc.ToString0();
 
 
-            //if (text == "")
-            //    return;
-            //GlobalData.AddTextToLogTab(stringBuilder.ToString());
-        }
+        //if (text == "")
+        //    return;
+        //GlobalData.AddTextToLogTab(stringBuilder.ToString());
+        //}
     }
 
 
@@ -377,7 +385,7 @@ public partial class FrmMain : Form
         Model.CryptoExchange oldExchange = GlobalData.Settings.General.Exchange;
 
         // Dan wordt de basecoin en coordinaten etc. bewaard voor een volgende keer
-        this.SaveWindowLocation(false);
+        ApplicationTools.SaveWindowLocation(this);
         GlobalData.Settings.Trading.Active = ApplicationTradingBot.Checked;
         GlobalData.Settings.Signal.SoundsActive = ApplicationPlaySounds.Checked;
         GlobalData.Settings.Signal.SignalsActive = ApplicationCreateSignals.Checked;
@@ -503,6 +511,9 @@ public partial class FrmMain : Form
 
     private void TimerAddSignalsAndLog_Tick(object sender, EventArgs e)
     {
+        //if (components == null)
+        //    return;
+
         // Speed up adding signals
         if (GlobalData.SignalQueue.Count > 0 && !IsDisposed && GlobalData.ApplicationStatus != CryptoApplicationStatus.Disposing)
         {
@@ -851,39 +862,6 @@ public partial class FrmMain : Form
         File.WriteAllText(filename, log.ToString());
     }
 
-    public void WindowLocationRestore()
-    {
-        // this is the default
-        WindowState = FormWindowState.Normal;
-        StartPosition = FormStartPosition.WindowsDefaultBounds;
-
-        // check if the saved bounds are nonzero and visible on any screen
-        if (GlobalData.Settings.General.WindowPosition != Rectangle.Empty && IsVisibleOnAnyScreen(GlobalData.Settings.General.WindowPosition))
-        {
-            // first set the bounds
-            StartPosition = FormStartPosition.Manual;
-            DesktopBounds = GlobalData.Settings.General.WindowPosition;
-
-            // afterwards set the window state to the saved value (which could be Maximized)
-            WindowState = GlobalData.Settings.General.WindowState;
-        }
-        else
-        {
-            // this resets the upper left corner of the window to windows standards
-            StartPosition = FormStartPosition.WindowsDefaultLocation;
-
-            // we can still apply the saved size
-            // msorens: added gatekeeper, otherwise first time appears as just a title bar!
-            if (GlobalData.Settings.General.WindowPosition != Rectangle.Empty)
-            {
-                Size = GlobalData.Settings.General.WindowPosition.Size;
-            }
-        }
-    }
-
-    private static bool IsVisibleOnAnyScreen(Rectangle rect)
-      => Screen.AllScreens.Any(screen => screen.WorkingArea.IntersectsWith(rect));
-
     private void ApplicationCreateSignals_Click(object sender, EventArgs e)
     {
         ApplicationCreateSignals.Checked = !ApplicationCreateSignals.Checked;
@@ -1003,6 +981,5 @@ public partial class FrmMain : Form
         // De barometer een zetje geven...
         Invoke((MethodInvoker)(() => dashBoardInformation1.ShowBarometerStuff(null, null)));
     }
-
 
 }
