@@ -10,7 +10,7 @@ using NPOI.SS.UserModel;
 
 namespace CryptoSbmScanner.Excel;
 
-public class ExcelCandleDump : ExcelBase
+public class ExcelSymbolDump : ExcelBase
 {
     CryptoSymbol Symbol;
 
@@ -114,7 +114,7 @@ public class ExcelCandleDump : ExcelBase
         AutoSize(sheet, columns);
     }
 
-    public void ExportToExcell(CryptoSymbol symbol)
+    public void ExportToExcel(CryptoSymbol symbol)
     {
         Symbol = symbol;
         try

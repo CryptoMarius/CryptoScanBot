@@ -111,7 +111,7 @@ public class ExcelExchangeDump : ExcelBase
     }
 
 
-    public void ExportToExcell(Model.CryptoExchange exchange)
+    public void ExportToExcel(Model.CryptoExchange exchange)
     {
         Exchange = exchange;
         try

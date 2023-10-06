@@ -12,7 +12,7 @@ namespace CryptoSbmScanner.Excel;
 public class ExcelPositionDump : ExcelBase
 {
     CryptoPosition Position;
-    readonly Dictionary<long, bool> OrderList = new();
+    readonly Dictionary<string, bool> OrderList = new();
 
     public void DumpParts()
     {
@@ -54,7 +54,7 @@ public class ExcelPositionDump : ExcelBase
                     cell.CellStyle = CellStyleDate;
                 }
 
-                cell = WriteCell(sheet, 6, row, part.Status.ToString());
+                //cell = WriteCell(sheet, 6, row, part.Status.ToString());
 
                 if (part.Quantity != 0)
                 {
@@ -72,8 +72,8 @@ public class ExcelPositionDump : ExcelBase
                     cell = WriteCell(sheet, 13, row, Position.Interval.Name);
 
                 // default.. ;-)
-                if (part.Strategy != CryptoSignalStrategy.Jump)
-                    cell = WriteCell(sheet, 14, row, part.StrategyText);
+                //if (part.Strategy != CryptoSignalStrategy.Jump)
+                cell = WriteCell(sheet, 14, row, part.StrategyText);
             }
 
             foreach (CryptoPositionStep step in part.Steps.Values.ToList())
@@ -94,12 +94,12 @@ public class ExcelPositionDump : ExcelBase
                 //    column = 0;
                 //}
 
-                if (step.OrderId.HasValue)
-                    OrderList.TryAdd((long)step.OrderId, false);
+                if (step.OrderId != "")
+                    OrderList.TryAdd(step.OrderId, false);
 
                 cell = WriteCell(sheet, column++, row, step.Id);
-                if (step.OrderId.HasValue)
-                    cell = WriteCell(sheet, column++, row, (long)step.OrderId);
+                if (step.OrderId != "")
+                    cell = WriteCell(sheet, column++, row, step.OrderId);
                 else
                     cell = WriteCell(sheet, column++, row, "?");
 
@@ -168,7 +168,7 @@ public class ExcelPositionDump : ExcelBase
             }
 
 
-            if (part.CloseTime.HasValue && part.Status == CryptoPositionStatus.Ready)
+            if (part.CloseTime.HasValue) // && part.Status == CryptoPositionStatus.Ready
             {
                 cell = WriteCell(sheet, 13, row, (double)part.Profit);
                 if (part.Profit >= 0)
@@ -194,6 +194,12 @@ public class ExcelPositionDump : ExcelBase
         int x = 15;
         WriteCell(sheet, x++, row, "BE");
         cell = WriteCell(sheet, x++, row, (double)Position.BreakEvenPrice);
+        cell.CellStyle = CellStyleDecimalNormal;
+
+        x = 15;
+        ++row;
+        WriteCell(sheet, x++, row, "LP");
+        cell = WriteCell(sheet, x++, row, (double)Position.Symbol.LastPrice);
         cell.CellStyle = CellStyleDecimalNormal;
 
         ++row;
@@ -246,7 +252,7 @@ public class ExcelPositionDump : ExcelBase
             foreach (CryptoPositionStep step in part.Steps.Values.ToList())
             {
                 // Geannuleerde order of openstaande orders overslagen
-                if (step.Status == CryptoOrderStatus.Expired || step.Status == CryptoOrderStatus.Canceled || !step.CloseTime.HasValue)
+                if (step.Status >= CryptoOrderStatus.Canceled || !step.CloseTime.HasValue)
                     continue;
 
                 ++row;
@@ -383,8 +389,8 @@ public class ExcelPositionDump : ExcelBase
         WriteCell(sheet, row, column++, (double)Position.Returned);
         WriteCell(sheet, row, column++, (double)investedInTrades);
         WriteCell(sheet, row, column++, (double)(Position.Commission ));
-        WriteCell(sheet, row, column++, (double)Position.MarketValue);
-        WriteCell(sheet, row, column++, (double)Position.MarketValuePercentage);
+        WriteCell(sheet, row, column++, (double)Position.MarketValue());
+        WriteCell(sheet, row, column++, (double)Position.MarketValuePercentage());
 
         AutoSize(sheet, 6);
     }
@@ -451,7 +457,7 @@ public class ExcelPositionDump : ExcelBase
         //        }
     }
 
-    public void ExportToExcell(CryptoPosition position)
+    public void ExportToExcel(CryptoPosition position)
     {
         Position = position;
         try
