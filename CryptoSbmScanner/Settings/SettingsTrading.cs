@@ -23,6 +23,11 @@ public class SettingsTrading
     // Is de BOT actief
     public bool Active { get; set; } = false;
 
+    // TODO: Iedere exchange heeft 0 of meer key/secret's
+    // (ze moeten ook nog ff versleuteld worden lijkt me)
+    public string ApiKey { get; set; } = "";
+    public string ApiSecret { get; set; } = "";
+
 
     //***************************
     // Account - Positie gerelateerd
@@ -70,7 +75,7 @@ public class SettingsTrading
     //***************************
     // Buy
     // Wanneer wordt de order geplaatst
-    public CryptoBuyStepInMethod BuyStepInMethod { get; set; } = CryptoBuyStepInMethod.Immediately;
+    public CryptoStepInMethod BuyStepInMethod { get; set; } = CryptoStepInMethod.AfterNextSignal;
     // De manier waarop de buy order geplaatst wordt
     public CryptoBuyOrderMethod BuyOrderMethod { get; set; } = CryptoBuyOrderMethod.BidPrice;
     // Verwijder de order indien niet na zoveel minuten gevuld
@@ -81,9 +86,9 @@ public class SettingsTrading
     //***************************
     // Bijkopen (DCA)
     // Wanneer plaatsen we de DCA?
-    public CryptoBuyStepInMethod DcaStepInMethod { get; set; } = CryptoBuyStepInMethod.FixedPercentage;
+    public CryptoStepInMethod DcaStepInMethod { get; set; } = CryptoStepInMethod.FixedPercentage;
     // De manier waarop de buy order geplaatst wordt
-    public CryptoBuyOrderMethod DcaOrderMethod { get; set; } = CryptoBuyOrderMethod.MarketOrder;
+    public CryptoBuyOrderMethod DcaOrderMethod { get; set; } = CryptoBuyOrderMethod.SignalPrice;
     //public bool DcaOrderMethod2 { get; set; } = CryptoBuyOrderMethod.MarketOrder;
     // Hoe vaak mogen we bijkopen
     public int DcaCount { get; set; } = 0; // niet bijkopen
@@ -106,7 +111,6 @@ public class SettingsTrading
     public CryptoSellMethod SellMethod { get; set; } = CryptoSellMethod.FixedPercentage;
     // Zet een OCO zodra we in de winst zijn (kan het geen verlies trade meer worden, samen met tracing)
     public bool LockProfits { get; set; } = false;
-    public decimal DynamicTpPercentage { get; set; } = 0.6m;
 
     //***************************
     // Stopp loss
@@ -125,11 +129,6 @@ public class SettingsTrading
     public IntervalAndStrategyConfig Monitor { get; set; } = new();
 
 
-
-    //***************************
-    // Pauseren van trading als een of meerdere munten (sterk) bewegen
-    public string PauseTradingText { get; set; }
-    public DateTime? PauseTradingUntil { get; set; }
     public List<PauseTradingRule> PauseTradingRules { get; set; } = new();
 
 

@@ -6,6 +6,7 @@ using CryptoSbmScanner.Signal;
 using System.Drawing;
 using Microsoft.IdentityModel.Tokens;
 using CryptoSbmScanner.Trader;
+using CryptoSbmScanner.SettingsDialog;
 
 namespace CryptoSbmScanner;
 
@@ -24,8 +25,8 @@ public partial class FrmSettings : Form
     public Model.CryptoExchange NewExchange { get; set; }
 
 #if TRADEBOT
-    private readonly SortedList<string, CryptoBuyStepInMethod> BuyStepInMethod = new();
-    private readonly SortedList<string, CryptoBuyStepInMethod> DcaStepInMethod = new();
+    private readonly SortedList<string, CryptoStepInMethod> BuyStepInMethod = new();
+    private readonly SortedList<string, CryptoStepInMethod> DcaStepInMethod = new();
     private readonly SortedList<string, CryptoBuyOrderMethod> BuyOrderMethod = new();
     private readonly SortedList<string, CryptoSellMethod> SellMethod = new();
 #endif
@@ -93,11 +94,11 @@ public partial class FrmSettings : Form
 
 
         // Deze moeten op het formulier komen te staan (om de edits te kunnen refereren/chainen)
-        int yPos = 50;
+        int yPos = 40;
         foreach (var signalDefinition in TradingConfig.AlgorithmDefinitionIndex.Values)
-            SettingsStrategyList.Add(signalDefinition.Strategy, new SettingsStrategy(CryptoOrderSide.Buy, signalDefinition, 675, yPos += 30, tabPageTrading.Controls));
-        SettingsStrategyList.Values[0].AddHeaderLabelsMain(30, tabPageTrading.Controls);
-        SettingsStrategyList.Values[0].AddHeaderLabels(50, tabPageTrading.Controls);
+            SettingsStrategyList.Add(signalDefinition.Strategy, new SettingsStrategy(CryptoOrderSide.Buy, signalDefinition, 910, yPos += 30, tabPageTrading.Controls));
+        SettingsStrategyList.Values[0].AddHeaderLabelsMain(20, tabPageTrading.Controls);
+        SettingsStrategyList.Values[0].AddHeaderLabels(40, tabPageTrading.Controls);
 
         // analyze interval
         AnalyzeInterval.Add(EditAnalyzeInterval1m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1m]);
@@ -157,14 +158,14 @@ public partial class FrmSettings : Form
 #if TRADEBOT
 
         // BUY
-        BuyStepInMethod.Add("Direct na het signaal", CryptoBuyStepInMethod.Immediately);
+        BuyStepInMethod.Add("Na een signaal", CryptoStepInMethod.AfterNextSignal);
         //BuyStepInMethod.Add("Trace via de Keltner Channel en PSAR", CryptoBuyStepInMethod.TrailViaKcPsar);
 
         // DCA
         //DcaStepInMethod.Add("Direct na het signaal", CryptoBuyStepInMethod.Immediately);
-        DcaStepInMethod.Add("Op het opgegeven percentage", CryptoBuyStepInMethod.FixedPercentage);
-        DcaStepInMethod.Add("Na het volgende signaal(sbm/ stobb)", CryptoBuyStepInMethod.AfterNextSignal);
-        DcaStepInMethod.Add("Trace via de Keltner Channel en PSAR", CryptoBuyStepInMethod.TrailViaKcPsar);
+        DcaStepInMethod.Add("Op het opgegeven percentage", CryptoStepInMethod.FixedPercentage);
+        DcaStepInMethod.Add("Na een signaal (sbm/stobb/enz)", CryptoStepInMethod.AfterNextSignal);
+        DcaStepInMethod.Add("Trace via de Keltner Channel en PSAR", CryptoStepInMethod.TrailViaKcPsar);
 
         // SELL
         SellMethod.Add("Limit order op een vaste winst percentage", CryptoSellMethod.FixedPercentage);
@@ -173,10 +174,10 @@ public partial class FrmSettings : Form
 
         // BUY/DCA - Manier van kopen
         BuyOrderMethod.Add("Market order", CryptoBuyOrderMethod.MarketOrder);
-        BuyOrderMethod.Add("Signaal prijs (limit order)", CryptoBuyOrderMethod.SignalPrice);
-        BuyOrderMethod.Add("Bied prijs (limit order)", CryptoBuyOrderMethod.BidPrice);
-        BuyOrderMethod.Add("Vraag prijs (limit order)", CryptoBuyOrderMethod.AskPrice);
-        BuyOrderMethod.Add("Gemiddelde van bied en vraag prijs (limit order)", CryptoBuyOrderMethod.BidAndAskPriceAvg);
+        BuyOrderMethod.Add("Limit order signaal prijs", CryptoBuyOrderMethod.SignalPrice);
+        BuyOrderMethod.Add("Limit order op bied prijs", CryptoBuyOrderMethod.BidPrice);
+        BuyOrderMethod.Add("Limit order op vraag prijs", CryptoBuyOrderMethod.AskPrice);
+        BuyOrderMethod.Add("Limit order op gemiddelde van bied en vraag prijs", CryptoBuyOrderMethod.BidAndAskPriceAvg);
 #endif
     }
 
@@ -267,11 +268,17 @@ public partial class FrmSettings : Form
         EditAnalysisMinChangePercentage.Minimum = -100;
         EditAnalysisMinEffectivePercentage.Minimum = -1000;
         EditAnalysisMaxEffectivePercentage.Maximum = +1000;
+        EditAnalysisMinEffective10DaysPercentage.Minimum = -1000;
+        EditAnalysisMaxEffective10DaysPercentage.Maximum = +1000;
         EditStobMinimalTrend.Minimum = -1000;
+
+        
 
         // ------------------------------------------------------------------------------
         // General
         // ------------------------------------------------------------------------------
+        EditExtraCaption.Text = settings.General.ExtraCaption;
+
         EditExchange.DataSource = new BindingSource(GlobalData.ExchangeListName, null);
         EditExchange.DisplayMember = "Key";
         EditExchange.ValueMember = "Value";
@@ -323,6 +330,10 @@ public partial class FrmSettings : Form
         EditAnalysisMinEffectivePercentage.Value = (decimal)settings.Signal.AnalysisMinEffectivePercentage;
         EditAnalysisMaxEffectivePercentage.Value = (decimal)settings.Signal.AnalysisMaxEffectivePercentage;
         EditLogAnalysisMinMaxEffectivePercentage.Checked = settings.Signal.LogAnalysisMinMaxEffectivePercentage;
+
+        EditAnalysisMinEffective10DaysPercentage.Value = (decimal)settings.Signal.AnalysisMinEffective10DaysPercentage;
+        EditAnalysisMaxEffective10DaysPercentage.Value = (decimal)settings.Signal.AnalysisMaxEffective10DaysPercentage;
+        EditLogAnalysisMinMaxEffective10DaysPercentage.Checked = settings.Signal.LogAnalysisMinMaxEffective10DaysPercentage;
 
         EditBarometer1hMinimal.Value = settings.Signal.Barometer1hMinimal;
         EditLogBarometerToLow.Checked = settings.Signal.LogBarometerToLow;
@@ -426,6 +437,19 @@ public partial class FrmSettings : Form
         // ------------------------------------------------------------------------------
 #if TRADEBOT
 
+        // Hoe gaan we traden
+        EditTradeViaExchange.Checked = settings.Trading.TradeViaExchange;
+        EditTradeViaPaperTrading.Checked = settings.Trading.TradeViaPaperTrading;
+        EditDisableNewPositions.Checked = settings.Trading.DisableNewPositions;
+        EditSoundTradeNotification.Checked = settings.General.SoundTradeNotification;
+
+        // Logging
+        EditLogCanceledOrders.Checked = settings.Trading.LogCanceledOrders;
+
+        // api
+        EditApiKey.Text = settings.Trading.ApiKey;
+        EditApiSecret.Text = settings.Trading.ApiSecret;
+
         // slots
         EditSlotsMaximalExchange.Value = settings.Trading.SlotsMaximalExchange;
         EditSlotsMaximalSymbol.Value = settings.Trading.SlotsMaximalSymbol;
@@ -476,7 +500,6 @@ public partial class FrmSettings : Form
         EditSellMethod.ValueMember = "Value";
         EditSellMethod.SelectedValue = settings.Trading.SellMethod;
         EditProfitPercentage.Value = settings.Trading.ProfitPercentage;
-        EditDynamicTpPercentage.Value = settings.Trading.DynamicTpPercentage;
         EditLockProfits.Checked = settings.Trading.LockProfits;
 
         // Stop loss
@@ -487,14 +510,6 @@ public partial class FrmSettings : Form
         foreach (var item in MonitorInterval)
             SetCheckBoxFrom(item.Key, item.Value, settings.Trading.Monitor.Interval);
 
-        // Hoe gaan we traden
-        EditTradeViaBinance.Checked = settings.Trading.TradeViaExchange;
-        EditTradeViaPaperTrading.Checked = settings.Trading.TradeViaPaperTrading;
-        EditDisableNewPositions.Checked = settings.Trading.DisableNewPositions;
-        EditSoundTradeNotification.Checked = settings.General.SoundTradeNotification;
-
-        // Logging
-        EditLogCanceledOrders.Checked = settings.Trading.LogCanceledOrders;
 
 
 
@@ -557,7 +572,7 @@ public partial class FrmSettings : Form
         // ------------------------------------------------------------------------------
         // General
         // ------------------------------------------------------------------------------
-
+        settings.General.ExtraCaption = EditExtraCaption.Text;
         NewExchange = (Model.CryptoExchange)EditExchange.SelectedValue;
         // Niet direct zetten, eerst moet alles uitgezet worden
         //settings.General.Exchange = (Model.CryptoExchange)EditExchange.SelectedValue;
@@ -600,6 +615,10 @@ public partial class FrmSettings : Form
         settings.Signal.AnalysisMinEffectivePercentage = (double)EditAnalysisMinEffectivePercentage.Value;
         settings.Signal.AnalysisMaxEffectivePercentage = (double)EditAnalysisMaxEffectivePercentage.Value;
         settings.Signal.LogAnalysisMinMaxEffectivePercentage = EditLogAnalysisMinMaxEffectivePercentage.Checked;
+
+        settings.Signal.AnalysisMinEffective10DaysPercentage = (double)EditAnalysisMinEffective10DaysPercentage.Value;
+        settings.Signal.AnalysisMaxEffective10DaysPercentage = (double)EditAnalysisMaxEffective10DaysPercentage.Value;
+        settings.Signal.LogAnalysisMinMaxEffective10DaysPercentage = EditLogAnalysisMinMaxEffective10DaysPercentage.Checked;
 
         settings.Signal.Barometer1hMinimal = EditBarometer1hMinimal.Value;
         settings.Signal.LogBarometerToLow = EditLogBarometerToLow.Checked;
@@ -725,6 +744,18 @@ public partial class FrmSettings : Form
         // --------------------------------------------------------------------------------
 #if TRADEBOT
 
+        settings.Trading.TradeViaExchange = EditTradeViaExchange.Checked;
+        settings.Trading.TradeViaPaperTrading = EditTradeViaPaperTrading.Checked;
+        settings.Trading.DisableNewPositions = EditDisableNewPositions.Checked;
+        settings.General.SoundTradeNotification = EditSoundTradeNotification.Checked;
+
+        // Logging
+        settings.Trading.LogCanceledOrders = EditLogCanceledOrders.Checked;
+
+        // api
+        settings.Trading.ApiKey = EditApiKey.Text;
+        settings.Trading.ApiSecret = EditApiSecret.Text;
+
         // slots
         settings.Trading.SlotsMaximalExchange = (int)EditSlotsMaximalExchange.Value;
         settings.Trading.SlotsMaximalSymbol = (int)EditSlotsMaximalSymbol.Value;
@@ -743,13 +774,13 @@ public partial class FrmSettings : Form
         settings.Trading.CheckIncreasingStoch = EditCheckIncreasingStoch.Checked;
 
         // buy
-        settings.Trading.BuyStepInMethod = (CryptoBuyStepInMethod)EditBuyStepInMethod.SelectedValue;
+        settings.Trading.BuyStepInMethod = (CryptoStepInMethod)EditBuyStepInMethod.SelectedValue;
         settings.Trading.BuyOrderMethod = (CryptoBuyOrderMethod)EditBuyOrderMethod.SelectedValue;
         settings.Trading.GlobalBuyRemoveTime = (int)EditGlobalBuyRemoveTime.Value;
         settings.Trading.GlobalBuyVarying = EditGlobalBuyVarying.Value;
 
         // dca
-        settings.Trading.DcaStepInMethod = (CryptoBuyStepInMethod)EditDcaStepInMethod.SelectedValue;
+        settings.Trading.DcaStepInMethod = (CryptoStepInMethod)EditDcaStepInMethod.SelectedValue;
         settings.Trading.DcaOrderMethod = (CryptoBuyOrderMethod)EditDcaOrderMethod.SelectedValue;
         settings.Trading.DcaPercentage = EditDcaPercentage.Value;
         settings.Trading.DcaFactor = EditDcaFactor.Value;
@@ -759,7 +790,6 @@ public partial class FrmSettings : Form
         // sell
         settings.Trading.SellMethod = (CryptoSellMethod)EditSellMethod.SelectedValue;
         settings.Trading.ProfitPercentage = EditProfitPercentage.Value;
-        settings.Trading.DynamicTpPercentage = EditDynamicTpPercentage.Value;
         settings.Trading.LockProfits = EditLockProfits.Checked;
 
         // Stop loss
@@ -776,14 +806,6 @@ public partial class FrmSettings : Form
         foreach (var strategy in SettingsStrategyList.Values)
             strategy.GetControlValues();
 
-
-        settings.Trading.TradeViaExchange = EditTradeViaBinance.Checked;
-        settings.Trading.TradeViaPaperTrading = EditTradeViaPaperTrading.Checked;
-        settings.Trading.DisableNewPositions = EditDisableNewPositions.Checked;
-        settings.General.SoundTradeNotification = EditSoundTradeNotification.Checked;
-
-        // Logging
-        settings.Trading.LogCanceledOrders = EditLogCanceledOrders.Checked;
 
         settings.Trading.Leverage = EditLeverage.Value;
         settings.Trading.Margin = EditMargin.SelectedIndex;

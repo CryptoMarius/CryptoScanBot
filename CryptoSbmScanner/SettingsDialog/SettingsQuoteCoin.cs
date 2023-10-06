@@ -1,6 +1,6 @@
 ﻿using CryptoSbmScanner.Model;
 
-namespace CryptoSbmScanner;
+namespace CryptoSbmScanner.SettingsDialog;
 
 
 internal class SettingsQuoteCoin : IDisposable

@@ -1,15 +1,12 @@
-﻿using CryptoSbmScanner.Model;
+﻿using System.Xml.Serialization;
+
+using CryptoSbmScanner.Model;
 
 namespace CryptoSbmScanner.Settings;
 
 [Serializable]
 public class SettingsBasic
 {
-    // TODO: Iedere exchange heeft 0 of meer key/secret's
-    // (ze moeten ook nog ff versleuteld worden lijkt me)
-    public string ApiKey { get; set; } = "";
-    public string ApiSecret { get; set; } = "";
-
     /// <summary>
     /// Standaard instellingen
     /// </summary>
@@ -57,7 +54,6 @@ public class SettingsBasic
     /// Instellingen voor het uitvoeren backtest (work in progres)
     /// </summary>
     public SettingsBackTest BackTest { get; set; } = new();
-
 
     public List<string> HiddenSignalColumns { get; set; } = new();
 }

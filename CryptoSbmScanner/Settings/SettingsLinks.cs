@@ -137,25 +137,14 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
 
     public string GetTradingAppName(CryptoTradingApp tradingApp, string exchangeName)
     {
-        string text = "";
-        switch (tradingApp)
+        string text = tradingApp switch
         {
-            case CryptoTradingApp.Altrady:
-                text = "Altrady";
-                break;
-            case CryptoTradingApp.Hypertrader:
-                text = "Hypertrader";
-                break;
-            case CryptoTradingApp.TradingView:
-                text = "TradingView";
-                break;
-            case CryptoTradingApp.ExchangeUrl:
-                text = exchangeName;
-                break;
-            default:
-                text = "";
-                break;
-        }
+            CryptoTradingApp.Altrady => "Altrady",
+            CryptoTradingApp.Hypertrader => "Hypertrader",
+            CryptoTradingApp.TradingView => "TradingView",
+            CryptoTradingApp.ExchangeUrl => exchangeName,
+            _ => "",
+        };
         return text;
     }
 

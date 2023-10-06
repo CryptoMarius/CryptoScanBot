@@ -1,14 +1,9 @@
 ﻿using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Signal;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Windows.Devices.Sensors;
+using CryptoSbmScanner.Trader;
 
-namespace CryptoSbmScanner;
+namespace CryptoSbmScanner.SettingsDialog;
 
 
 internal class SettingsStrategy : IDisposable
@@ -292,7 +287,7 @@ internal class SettingsStrategy : IDisposable
         {
             AutoSize = false,
             Text = "",
-            Location = new Point(675, yPos + 2 * CheckboxAnalyzeBuy.Size.Height),
+            Location = new Point(LabelInfo.Location.X, yPos + 2 * CheckboxAnalyzeBuy.Size.Height),
             Size = new Size(300, 3),
         };
         controls.Add(groupboxHorizontal);
@@ -303,7 +298,7 @@ internal class SettingsStrategy : IDisposable
             AutoSize = false,
             Text = "",
             Location = new Point(CheckboxMonitorBuy.Location.X - 4 * correct, yPos - correct),
-            Size = new Size(1, 12 * CheckboxAnalyzeBuy.Size.Height),
+            Size = new Size(1, TradingConfig.AlgorithmDefinitionIndex.Count * 30 + 60), // CheckboxAnalyzeBuy.Size.Height
         };
         controls.Add(groupboxVertical);
     }
@@ -321,7 +316,7 @@ internal class SettingsStrategy : IDisposable
         // De meeste staan al op andere tabsheets, hier dus disablen (anders dubbel in de interface)
         CheckboxAnalyzeBuy.Enabled = enableStrategy && Algorithm.AnalyzeLongType != null;
         CheckboxAnalyzeSell.Enabled = enableStrategy && Algorithm.AnalyzeShortType != null;
-        
+
         CheckboxMonitorBuy.Enabled = Algorithm.AnalyzeLongType != null;
         CheckboxMonitorSell.Enabled = Algorithm.AnalyzeShortType != null;
 
@@ -364,7 +359,7 @@ internal class SettingsStrategy : IDisposable
         //#endif
     }
 
-    private void CheckBox1_CheckedChanged(Object sender, EventArgs e)
+    private void CheckBox1_CheckedChanged(object sender, EventArgs e)
     {
         //MessageBox.Show("You are in the CheckBox.CheckedChanged event.");
         if (sender is CheckBox checkBox1 && checkBox1.Tag is CheckBox checkBox2)

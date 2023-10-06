@@ -25,6 +25,8 @@ public class IntervalAndStrategyConfig
 [Serializable]
 public class SettingsGeneral
 {
+    public string ExtraCaption { get; set; } = "";
+
     // Welke exchange
     public string ExchangeName { get; set; } = "Binance";
     [Computed]

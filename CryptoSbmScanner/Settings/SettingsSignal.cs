@@ -36,6 +36,11 @@ public class SettingsSignal
     public double AnalysisMaxEffectivePercentage { get; set; } = 40;
     public bool LogAnalysisMinMaxEffectivePercentage { get; set; } = true;
 
+    // de 10 dagen effectief moet binnen dit interval zitten (de echte beweging)
+    public double AnalysisMinEffective10DaysPercentage { get; set; } = -75;
+    public double AnalysisMaxEffective10DaysPercentage { get; set; } = 75;
+    public bool LogAnalysisMinMaxEffective10DaysPercentage { get; set; } = true;
+
     // STOBB signals
     // Het BB percentage kan via de user interface uit worden gezet (nomargin)
     public double StobbBBMinPercentage { get; set; } = 1.50;
