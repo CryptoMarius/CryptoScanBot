@@ -612,19 +612,19 @@ static public class GlobalData
 
     static public void SymbolsHaveChanged(string text)
     {
-        SymbolsHaveChangedEvent(text);
+        SymbolsHaveChangedEvent?.Invoke(text);
     }
 
 #if TRADEBOT
 
     static public void AssetsHaveChanged(string text)
     {
-        AssetsHaveChangedEvent(text);
+        AssetsHaveChangedEvent?.Invoke(text);
     }
 
     static public void PositionsHaveChanged(string text)
     {
-        PositionsHaveChangedEvent(text);
+        PositionsHaveChangedEvent?.Invoke(text);
     }
 #endif
 

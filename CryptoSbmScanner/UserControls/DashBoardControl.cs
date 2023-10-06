@@ -737,7 +737,6 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
 #if !SQLDATABASE
         try
         {
-            // DEBUG CPU belasting
             //GlobalData.AddTextToLogTab("Charts.RefreshInformation");
             CreateChart();
         }
