@@ -33,8 +33,8 @@ public class CryptoPositionStep
     public decimal QuantityFilled { get; set; }
     public decimal QuoteQuantityFilled { get; set; }
 
-    public long? OrderId { get; set; } // Vanwege papertrading moet deze nullable zijn
-    public long? Order2Id { get; set; } // Eventuele limit order
+    public string OrderId { get; set; } // Vanwege papertrading moet deze nullable zijn
+    public string Order2Id { get; set; } // Eventuele limit order
 
     // Of we aan het trailen zijn (de order iedere keer een beetje verzetten)
     public CryptoTrailing Trailing { get; set; }

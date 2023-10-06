@@ -47,7 +47,7 @@ public class CryptoPositionPart
     public DateTime? CloseTime { get; set; }
 
     // Globale status van de positie (new, closed, wellicht andere enum?)
-    public CryptoPositionStatus? Status { get; set; }
+    public CryptoPositionStatus? Status { get; set; } // --> Kan verwijderd worden na database wijziging
 
     public decimal Invested { get; set; }
     public decimal Returned { get; set; }
@@ -61,8 +61,13 @@ public class CryptoPositionPart
     // Buy gegevens
     public decimal SignalPrice { get; set; } // initiele prijs van het signaal (data overdracht)
 
-    public CryptoBuyStepInMethod StepInMethod  { get; set; } // De reden van bijkoop
-    public CryptoBuyStepInMethod StepOutMethod { get; set; } // De reden van verkoop
+    public CryptoStepInMethod StepInMethod  { get; set; } // De reden van bijkoop
+    public CryptoStepInMethod StepOutMethod { get; set; } // De reden van verkoop
+
+    // Eigenlijk zijn er maar 2 steps in een deelpositie die van belang zijn?
+    // Helaas dat gaat niet 100% op, want die kunnen verdeeld zijn in meerdere orders
+    // De buy (probleem, 50% buy op de bid prijs en 50% op de ask prijs)
+    // De sell (probleem, hoe doe je dat als je meerdere TP's gebruikt?)
 
     [Computed]
     public SortedList<int, CryptoPositionStep> Steps { get; set; } = new();

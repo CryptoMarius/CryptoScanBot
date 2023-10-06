@@ -70,6 +70,7 @@ public class CryptoSymbol
     // Wat het inhoud weet ik niet maar toegevoegde waarde is er voor het traden wel.
     // https://bybit-exchange.github.io/docs/v5/market/history-fund-rate
     public decimal FundingRate { get; set; }
+    // (minute)
     public decimal FundingInterval { get; set; }
 
     
@@ -133,7 +134,7 @@ public class CryptoSymbol
     //public SortedList<long, Order> OrderList { get; } = new SortedList<long, Order>();
 
     [Computed]
-    public SortedList<long, CryptoTrade> TradeList { get; } = new();
+    public SortedList<string, CryptoTrade> TradeList { get; } = new();
 
 
     //// Quick en dirty voor het testen van de performance van balanceren

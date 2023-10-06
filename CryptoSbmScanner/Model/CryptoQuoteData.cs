@@ -42,6 +42,9 @@ public class CryptoQuoteData
     [Computed]
     public string DisplayFormat { get; set; } = "N8";
 
+    [Computed]
+    public PauseRule PauseTrading { get; set; } = new();
+
     public CryptoQuoteData()
     {
         SymbolList = new List<CryptoSymbol>();

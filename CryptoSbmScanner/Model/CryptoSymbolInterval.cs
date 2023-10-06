@@ -42,5 +42,5 @@ public class CryptoSymbolInterval
 
     // De candles voor dit interval
     [Computed]
-    public SortedList<long, CryptoCandle> CandleList { get; set; } = new SortedList<long, CryptoCandle>();
+    public SortedList<long, CryptoCandle> CandleList { get; set; } = new();
 }

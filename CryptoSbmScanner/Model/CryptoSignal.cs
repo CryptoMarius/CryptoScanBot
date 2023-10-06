@@ -75,8 +75,8 @@ public class CryptoSignal
 
     public double Last24HoursChange { get; set; }
     public double Last24HoursEffective { get; set; }
-    //public double Last48HoursChange { get; set; }
-    //public double Last48HoursEffective { get; set; }
+    [Computed]
+    public double Last10DaysEffective { get; set; }
 
     public string EventText { get; set; }
     public decimal Price { get; set; }
@@ -85,9 +85,6 @@ public class CryptoSignal
     [Computed]
     public double? PriceDiff { get { if (Symbol.LastPrice.HasValue) return (double)(100 * ((Symbol.LastPrice / Price) - 1)); else return 0; } }
     public decimal Volume { get; set; }
-
-    //[Computed]
-    //public string Reaction { get; set; }
 
     public float TrendPercentage { get; set; }
     public CryptoTrendIndicator TrendIndicator { get; set; }

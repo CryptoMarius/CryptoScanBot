@@ -32,8 +32,8 @@ public class CryptoTrade
     public decimal Commission { get; set; }
     public string CommissionAsset { get; set; }
 
-    public long TradeId { get; set; }
-    public long OrderId { get; set; }
+    public string TradeId { get; set; }
+    public string OrderId { get; set; }
 
     public CryptoOrderSide Side { get; set; }
 }
