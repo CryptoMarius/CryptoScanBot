@@ -59,7 +59,7 @@ public class TrendIndicatorZigZag3
 
         // Er zijn nu eenmaal munten die niet 21 dagen history hebben (logisch)
         if (emaList8[^1].Ema == null || emaList21[^1].Ema == null)
-            return CryptoTrendIndicator.trendBearish;
+            return CryptoTrendIndicator.trendSideways;
 
         double ema8 = emaList8[^1].Ema.Value;
         double ema21 = emaList21[^1].Ema.Value;
