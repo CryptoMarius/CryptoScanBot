@@ -271,8 +271,6 @@ public class SignalCreate
 
     private double CalculateMaxMovementInInterval(long startTime, CryptoIntervalPeriod intervalPeriod, long candleCount)
     {
-        return 0;
-
         // Op een iets hoger interval gaan we x candles naar achteren en meten de echte beweging
         // (de 24% change is wat effectief overblijft, maar dat is duidelijk niet de echte beweging)
         CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(intervalPeriod);
