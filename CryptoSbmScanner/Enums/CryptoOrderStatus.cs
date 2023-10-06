@@ -6,6 +6,15 @@ public enum CryptoOrderStatus
     New,
     PartiallyFilled,
     Filled,
+    // Alles hierna is een verklaring waarom de order geannuleerd is
     Canceled,
-    Expired
+    Expired,
+    Timeout,
+    BarameterToLow,
+    TradingRules,
+    PositionClosed,
+    ChangedSettings,
+    ChangedBreakEven,
+    JoJoSell,
+    TrailingChange,
 }
