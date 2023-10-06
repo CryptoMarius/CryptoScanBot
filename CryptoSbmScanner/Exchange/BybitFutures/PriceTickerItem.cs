@@ -42,8 +42,9 @@ public class PriceTickerItem
                         //    symbol.AskPrice = tick.BestAskPrice;
                         //symbol.Volume = tick.BaseVolume; //?
                         if (tick.Turnover24h.HasValue)
-                            symbol.Volume = (decimal)tick.Turnover24h; //= Quoted = het volume * de prijs                                
-                                                                       //symbol.Volume = tick.Volume24h; //= Base = het volume * de prijs                                
+                            symbol.Volume = (decimal)tick.Turnover24h; //= Quoted = het volume * de prijs
+                        
+                        //symbol.Volume = tick.Volume24h; //= Base = het volume * de prijs                                
 
                         if (tick.FundingRate.HasValue)
                             symbol.FundingRate = (decimal)tick.FundingRate;
