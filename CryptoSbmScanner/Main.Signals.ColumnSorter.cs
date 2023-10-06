@@ -37,6 +37,7 @@ namespace CryptoSbmScanner
                 20 => ObjectCompare.Compare(signalA.Sma20, signalB.Sma20),
                 21 => ObjectCompare.Compare(signalA.PSar, signalB.PSar),
                 22 => ObjectCompare.Compare(signalA.FluxIndicator5m, signalB.FluxIndicator5m),
+                23 => ObjectCompare.Compare(signalA.Symbol.FundingRate, signalB.Symbol.FundingRate),
                 _ => 0
             };
 

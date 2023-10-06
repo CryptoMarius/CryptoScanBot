@@ -1,17 +1,64 @@
-﻿using CryptoSbmScanner.Enums;
+﻿using CryptoSbmScanner.Context;
+using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 
 namespace CryptoSbmScanner;
 
+#if TRADEBOT
 public partial class FrmMain
 {
+    private ContextMenuStrip ContextMenuStripPositionsOpen;
     private ListViewHeaderContext listViewPositionsOpen;
     private System.Windows.Forms.Timer TimerRefreshSomething;
+
+    // Commands
+    private ToolStripMenuItem CommandPositionsOpenExcelDump;
+    private ToolStripMenuItem CommandPositionsOpenRecalculate;
+    private ToolStripMenuItem CommandPositionsOpenActivateTradingApp;
+    private ToolStripMenuItem CommandPositionsOpenActivateTradingViewInternal;
+    private ToolStripMenuItem CommandPositionsOpenActivateTradingViewExternal;
 
 
     private void ListViewPositionsOpenConstructor()
     {
+        ContextMenuStripPositionsOpen = new ContextMenuStrip();
+
+        // Commands
+        CommandPositionsOpenActivateTradingApp = new ToolStripMenuItem();
+        CommandPositionsOpenActivateTradingApp.Text = "Activate trading app";
+        CommandPositionsOpenActivateTradingApp.Tag = Command.ActivateTradingApp;
+        CommandPositionsOpenActivateTradingApp.Click += Commands.ExecuteCommandCommandViaTag;
+        ContextMenuStripPositionsOpen.Items.Insert(0, CommandPositionsOpenActivateTradingApp);
+
+        CommandPositionsOpenActivateTradingViewInternal = new ToolStripMenuItem();
+        CommandPositionsOpenActivateTradingViewInternal.Text = "TradingView browser";
+        CommandPositionsOpenActivateTradingViewInternal.Tag = Command.ActivateTradingviewIntern;
+        CommandPositionsOpenActivateTradingViewInternal.Click += Commands.ExecuteCommandCommandViaTag;
+        ContextMenuStripPositionsOpen.Items.Add(CommandPositionsOpenActivateTradingViewInternal);
+
+        CommandPositionsOpenActivateTradingViewExternal = new ToolStripMenuItem();
+        CommandPositionsOpenActivateTradingViewExternal.Text = "TradingView extern";
+        CommandPositionsOpenActivateTradingViewExternal.Tag = Command.ActivateTradingviewExtern;
+        CommandPositionsOpenActivateTradingViewExternal.Click += Commands.ExecuteCommandCommandViaTag;
+        ContextMenuStripPositionsOpen.Items.Add(CommandPositionsOpenActivateTradingViewExternal);
+
+        ContextMenuStripPositionsOpen.Items.Add(new ToolStripSeparator());
+
+        CommandPositionsOpenRecalculate = new ToolStripMenuItem();
+        CommandPositionsOpenRecalculate.Text = "Herberekenen";
+        CommandPositionsOpenRecalculate.Click += CommandPositionsOpenRecalculateExecute;
+        ContextMenuStripPositionsOpen.Items.Add(CommandPositionsOpenRecalculate);
+
+        CommandPositionsOpenExcelDump = new ToolStripMenuItem();
+        CommandPositionsOpenExcelDump.Text = "Positie informatie (Excel)";
+        //CommandPositionsOpenExcelDump.Click += CommandPositionsOpenExcelDumpExecute;
+        CommandPositionsOpenExcelDump.Tag = Command.ExcelPositionInformation;
+        CommandPositionsOpenExcelDump.Click += Commands.ExecuteCommandCommandViaTag;
+        ContextMenuStripPositionsOpen.Items.Add(CommandPositionsOpenExcelDump);
+
+
+
         // ruzie (component of events raken weg), dan maar dynamisch
         listViewPositionsOpen = new()
         {
@@ -19,7 +66,10 @@ public partial class FrmMain
             Location = new Point(4, 3)
         };
         listViewPositionsOpen.ColumnClick += ListViewPositionsOpenColumnClick;
-        listViewPositionsOpen.DoubleClick += ListViewPositionOpen_MenuItem_DoubleClick;
+        //listViewPositionsOpen.DoubleClick += CommandPositionsOpenActivateTradingAppExecute;
+        listViewPositionsOpen.Tag = Command.ActivateTradingApp;
+        listViewPositionsOpen.DoubleClick += Commands.ExecuteCommandCommandViaTag;
+
         tabPagePositionsOpen.Controls.Add(listViewPositionsOpen);
 
         listViewPositionsOpen.ListViewItemSorter = new ListViewColumnSorterPosition()
@@ -29,7 +79,7 @@ public partial class FrmMain
             SortOrder = SortOrder.Descending
         };
 
-        listViewPositionsOpen.ContextMenuStrip = contextMenuStripPositionsOpen;
+        listViewPositionsOpen.ContextMenuStrip = ContextMenuStripPositionsOpen;
 
         TimerRefreshSomething = new()
         {
@@ -40,7 +90,6 @@ public partial class FrmMain
 
         ListViewPositionsOpenInitColumns();
     }
-
 
     private void ListViewPositionsOpenColumnClick(object sender, ColumnClickEventArgs e)
     {
@@ -65,6 +114,7 @@ public partial class FrmMain
         listViewPositionsOpen.Columns.Add("ID", -2, HorizontalAlignment.Left);
         listViewPositionsOpen.Columns.Add("Datum", -2, HorizontalAlignment.Left);
         listViewPositionsOpen.Columns.Add("Update", -2, HorizontalAlignment.Left);
+        listViewPositionsOpen.Columns.Add("Duration", -2, HorizontalAlignment.Right);
         listViewPositionsOpen.Columns.Add("Account", -2, HorizontalAlignment.Left);
         listViewPositionsOpen.Columns.Add("Exchange", -2, HorizontalAlignment.Left);
         listViewPositionsOpen.Columns.Add("Symbol", -2, HorizontalAlignment.Left);
@@ -87,6 +137,7 @@ public partial class FrmMain
         listViewPositionsOpen.Columns.Add("Parts", -2, HorizontalAlignment.Right);
         listViewPositionsOpen.Columns.Add("BuyPrice", -2, HorizontalAlignment.Right);
         listViewPositionsOpen.Columns.Add("SellPrice", -2, HorizontalAlignment.Right);
+        listViewPositionsOpen.Columns.Add("FundingRate", -2, HorizontalAlignment.Right);
         //listViewPositionsOpen.Columns.Add("LastPrice", -2, HorizontalAlignment.Right);
         listViewPositionsOpen.Columns.Add("", -2, HorizontalAlignment.Right); // filler
 
@@ -114,6 +165,7 @@ public partial class FrmMain
         item1.Text = position.Id.ToString();
         item1.SubItems.Add(position.CreateTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm"));
         item1.SubItems.Add(position.UpdateTime?.ToLocalTime().ToString("yyyy-MM-dd HH:mm"));
+        item1.SubItems.Add(position.DurationText());
         item1.SubItems.Add(position.TradeAccount.Name);
         item1.SubItems.Add(position.Symbol.Exchange.Name);
         item1.SubItems.Add(position.Symbol.Name);
@@ -146,15 +198,16 @@ public partial class FrmMain
             subItem.ForeColor = Color.Red;
 
         // Netto NPL (het bedrag wat je krijgt als je nu zou verkopen)
-        decimal NetPnl = position.MarketValue - position.Commission;
+        decimal NetPnl = position.MarketValue() - position.Commission;
+        decimal priceDiff = position.MarketValuePercentage();
+
         subItem = item1.SubItems.Add(NetPnl.ToString(position.Symbol.QuoteData.DisplayFormat));
-        if (NetPnl > position.Invested - position.Returned - position.Commission)
+        if (priceDiff > 0)  //if (NetPnl > position.Invested - position.Returned - position.Commission)
             subItem.ForeColor = Color.Green;
-        else if (NetPnl < position.Invested - position.Returned - position.Commission)
+        else if (priceDiff < 0) //else if (NetPnl < position.Invested - position.Returned - position.Commission)
             subItem.ForeColor = Color.Red;
 
         // profit percentage
-        decimal priceDiff = position.MarketValuePercentage;
         subItem = item1.SubItems.Add(priceDiff.ToString("N2"));
         if (priceDiff > 0)
             subItem.ForeColor = Color.Green;
@@ -174,6 +227,18 @@ public partial class FrmMain
             item1.SubItems.Add(position.SellPrice?.ToString(position.Symbol.PriceDisplayFormat));
         else
             item1.SubItems.Add("null");
+
+        if (position.Symbol.FundingRate != 0.0m)
+        {
+            subItem = item1.SubItems.Add(position.Symbol.FundingRate.ToString());
+            if (position.Symbol.FundingRate > 0)
+                subItem.ForeColor = Color.Green;
+            else if (position.Symbol.FundingRate < 0)
+                subItem.ForeColor = Color.Red;
+        }
+        else
+            item1.SubItems.Add("");
+
         //item1.SubItems.Add(position.Symbol.LastPrice?.ToString(position.Symbol.PriceDisplayFormat));
     }
 
@@ -191,7 +256,7 @@ public partial class FrmMain
 
     private void OpenPositionsHaveChangedEvent(string text, bool extraLineFeed = false)
     {
-        if (components != null && IsHandleCreated) //!ProgramExit && 
+        if (IsHandleCreated) //!ProgramExit &&  components != null && 
         {
             List<CryptoPosition> list = new();
             if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
@@ -248,18 +313,6 @@ public partial class FrmMain
         finally
         {
             listViewPositionsOpen.EndUpdate();
-        }
-    }
-
-
-
-    private void ListViewPositionOpen_MenuItem_DoubleClick(object sender, EventArgs e)
-    {
-        if (listViewPositionsOpen.SelectedItems.Count > 0)
-        {
-            ListViewItem item = listViewPositionsOpen.SelectedItems[0];
-            CryptoPosition position = (CryptoPosition)item.Tag;
-            LinkTools.ActivateExternalTradingApp(GlobalData.Settings.General.TradingApp, position.Symbol, position.Interval);
         }
     }
 
@@ -379,64 +432,32 @@ public partial class FrmMain
     //    //}
     //}
 
-    //private void PositionsToolStripMenuItem_Click(object sender, EventArgs e)
-    //{
-    //    //try
-    //    //{
-    //    //    //StringBuilder stringBuilder = new StringBuilder();
-    //    //    //BinanceTools.ShowPositions(stringBuilder);
-    //    //    //GlobalData.AddTextToLogTab(stringBuilder.ToString());
-    //    //    GlobalData.AddTextToLogTab("");
 
-    //    //    // nu iets duidelijker
-    //    //    if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out CryptoSbmScanner.Model.CryptoExchange exchange))
-    //    //    {
-    //    //        foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
-    //    //        {
-    //    //            symbol.Exchange.PositionListSemaphore.Wait();
-    //    //            try
-    //    //            {
-    //    //                foreach (CryptoPosition position in symbol.PositionList.Values)
-    //    //                {
-    //    //                    StringBuilder stringBuilder = new StringBuilder();
-    //    //                    Helper.ShowPosition(stringBuilder, position);
-    //    //                    GlobalData.AddTextToLogTab(stringBuilder.ToString());
-    //    //                }
-    //    //            }
-    //    //            finally
-    //    //            {
-    //    //                symbol.Exchange.PositionListSemaphore.Release();
-    //    //            }
-    //    //        }
-    //    //    }
+    private void ListViewPositionsOpenInitCaptions()
+    {
+        string text = GlobalData.ExternalUrls.GetTradingAppName(GlobalData.Settings.General.TradingApp, GlobalData.Settings.General.ExchangeName);
+        CommandPositionsOpenActivateTradingApp.Text = text;
+    }
 
-    //    //}
-    //    //catch (Exception error)
-    //    //{
-    //    //    GlobalData.Logger.Error(error);
-    //    //    GlobalData.AddTextToLogTab("ERROR postion display " + error.ToString());
-    //    //}
-    //}
-
-    private void DebugPositionOpenDumpExcelToolStripMenuItemAsync_Click(object sender, EventArgs e)
+    private async void CommandPositionsOpenRecalculateExecute(object sender, EventArgs e)
     {
         if (listViewPositionsOpen.SelectedItems.Count > 0)
         {
-            for (int index = 0; index < listViewPositionsOpen.SelectedItems.Count; index++)
-            {
-                ListViewItem item = listViewPositionsOpen.SelectedItems[index];
-                CryptoPosition position = (CryptoPosition)item.Tag;
+            ListViewItem item = listViewPositionsOpen.SelectedItems[0];
+            CryptoPosition position = (CryptoPosition)item.Tag;
 
-                // Deze is al geladen (niet verstandig om dit te doen)
-                //using CryptoDatabase databaseThread = new();
-                //databaseThread.Open();
-                ///PositionTools.LoadPosition(databaseThread, position);
+            using CryptoDatabase databaseThread = new();
+            databaseThread.Connection.Open();
 
-                //Task.Run(() => { Invoke(new Action(() => { new PositionDumpDebug().ExportToExcell(position); })); });
-                _ = Task.Run(() => { new Excel.ExcelPositionDump().ExportToExcell(position); });
-            }
+            // Controleer de orders, en herbereken het geheel
+            PositionTools.LoadPosition(databaseThread, position);
+            await PositionTools.LoadTradesfromDatabaseAndExchange(databaseThread, position);
+            PositionTools.CalculatePositionResultsViaTrades(databaseThread, position);
+            FillItemOpen(position, item);
         }
+
     }
 
 }
+#endif
 

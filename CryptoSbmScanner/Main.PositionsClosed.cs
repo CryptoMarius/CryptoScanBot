@@ -5,14 +5,56 @@ using CryptoSbmScanner.Model;
 
 namespace CryptoSbmScanner;
 
+#if TRADEBOT
 
 public partial class FrmMain
 {
+    private ContextMenuStrip ContextMenuStripPositionsClosed;
     private ListViewHeaderContext listViewPositionsClosed;
-    
+
+    // Commands
+    private ToolStripMenuItem CommandPositionsClosedExcelDump;
+    private ToolStripMenuItem CommandPositionsClosedRecalculate;
+    private ToolStripMenuItem CommandActivateTradingAppPositionsClosed;
+    private ToolStripMenuItem CommandPositionsClosedActivateTradingViewInternal;
+    private ToolStripMenuItem CommandPositionsClosedActivateTradingViewExternal;
+
     private void ListViewPositionsClosedConstructor()
     {
-        
+        ContextMenuStripPositionsClosed = new ContextMenuStrip();
+
+        // Commands
+        CommandActivateTradingAppPositionsClosed = new ToolStripMenuItem();
+        CommandActivateTradingAppPositionsClosed.Text = "Activate trading app";
+        CommandActivateTradingAppPositionsClosed.Tag = Command.ActivateTradingApp;
+        CommandActivateTradingAppPositionsClosed.Click += Commands.ExecuteCommandCommandViaTag;
+        ContextMenuStripPositionsClosed.Items.Add(CommandActivateTradingAppPositionsClosed);
+
+        CommandPositionsClosedActivateTradingViewInternal = new ToolStripMenuItem();
+        CommandPositionsClosedActivateTradingViewInternal.Text = "TradingView browser";
+        CommandPositionsClosedActivateTradingViewInternal.Tag = Command.ActivateTradingviewIntern;
+        CommandPositionsClosedActivateTradingViewInternal.Click += Commands.ExecuteCommandCommandViaTag;
+        ContextMenuStripPositionsClosed.Items.Add(CommandPositionsClosedActivateTradingViewInternal);
+
+        CommandPositionsClosedActivateTradingViewExternal = new ToolStripMenuItem();
+        CommandPositionsClosedActivateTradingViewExternal.Text = "TradingView extern";
+        CommandPositionsClosedActivateTradingViewExternal.Tag = Command.ActivateTradingviewExtern;
+        CommandPositionsClosedActivateTradingViewExternal.Click += Commands.ExecuteCommandCommandViaTag;
+        ContextMenuStripPositionsClosed.Items.Add(CommandPositionsClosedActivateTradingViewExternal);
+
+        ContextMenuStripPositionsClosed.Items.Add(new ToolStripSeparator());
+
+        CommandPositionsClosedRecalculate = new ToolStripMenuItem();
+        CommandPositionsClosedRecalculate.Text = "Herberekenen";
+        CommandPositionsClosedRecalculate.Click += CommandPositionsClosedRecalculateExecute;
+        ContextMenuStripPositionsClosed.Items.Add(CommandPositionsClosedRecalculate);
+
+        CommandPositionsClosedExcelDump = new ToolStripMenuItem();
+        CommandPositionsClosedExcelDump.Text = "Positie informatie (Excel)";
+        CommandPositionsClosedExcelDump.Tag = Command.ExcelPositionInformation;
+        CommandPositionsClosedExcelDump.Click += Commands.ExecuteCommandCommandViaTag;
+        ContextMenuStripPositionsClosed.Items.Add(CommandPositionsClosedExcelDump);
+
 
         // ruzie (component of events raken weg), dan maar dynamisch
         listViewPositionsClosed = new()
@@ -21,10 +63,13 @@ public partial class FrmMain
             Location = new Point(4, 3)
         };
         listViewPositionsClosed.ColumnClick += ListViewPositionsClosedColumnClick;
-        listViewPositionsClosed.DoubleClick += ListViewPositionClosed_MenuItem_DoubleClick;
+
+        listViewPositionsClosed.Tag = Command.ActivateTradingApp;
+        listViewPositionsClosed.DoubleClick += Commands.ExecuteCommandCommandViaTag;
+        //listViewPositionsClosed.DoubleClick += CommandActivateTradingAppPositionsClosedExecute;
         tabPagePositionsClosed.Controls.Add(listViewPositionsClosed);
 
-        listViewPositionsClosed.ContextMenuStrip = contextMenuStripPositionsClosed;
+        listViewPositionsClosed.ContextMenuStrip = ContextMenuStripPositionsClosed;
 
         listViewPositionsClosed.ListViewItemSorter = new ListViewColumnSorterPosition()
         {
@@ -67,6 +112,7 @@ public partial class FrmMain
         listViewPositionsClosed.Columns.Add("ID", -2, HorizontalAlignment.Left);
         listViewPositionsClosed.Columns.Add("Datum", -2, HorizontalAlignment.Left);
         listViewPositionsClosed.Columns.Add("Closed", -2, HorizontalAlignment.Left);
+        listViewPositionsClosed.Columns.Add("Duration", -2, HorizontalAlignment.Right);
         listViewPositionsClosed.Columns.Add("Account", -2, HorizontalAlignment.Left);
         listViewPositionsClosed.Columns.Add("Exchange", -2, HorizontalAlignment.Left);
         listViewPositionsClosed.Columns.Add("Symbol", -2, HorizontalAlignment.Left);
@@ -116,6 +162,7 @@ public partial class FrmMain
         item1.Text = position.Id.ToString();
         item1.SubItems.Add(position.CreateTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm"));
         item1.SubItems.Add(position.CloseTime?.ToLocalTime().ToString("yyyy-MM-dd HH:mm"));
+        item1.SubItems.Add(position.DurationText());
         item1.SubItems.Add(position.TradeAccount.Name);
         item1.SubItems.Add(position.Symbol.Exchange.Name);
         item1.SubItems.Add(position.Symbol.Name);
@@ -173,7 +220,7 @@ public partial class FrmMain
 
     private void ClosedPositionsHaveChangedEvent()
     {
-        if (components != null && IsHandleCreated) // && (!ProgramExit) && 
+        if (IsHandleCreated) // && (!ProgramExit) &&  components != null && 
         {
             // Gesloten posities
             Task.Run(() => {
@@ -218,112 +265,18 @@ public partial class FrmMain
     }
 
 
-
-    private void ListViewPositionClosed_MenuItem_DoubleClick(object sender, EventArgs e)
+    private void ListViewPositionsClosedInitCaptions()
     {
-        if (listViewPositionsClosed.SelectedItems.Count > 0)
-        {
-            ListViewItem item = listViewPositionsClosed.SelectedItems[0];
-            CryptoPosition position = (CryptoPosition)item.Tag;
-            LinkTools.ActivateExternalTradingApp(GlobalData.Settings.General.TradingApp, position.Symbol, position.Interval);
-        }
+        string text = GlobalData.ExternalUrls.GetTradingAppName(GlobalData.Settings.General.TradingApp, GlobalData.Settings.General.ExchangeName);
+        CommandActivateTradingAppPositionsClosed.Text = text;
     }
 
-    ///// <summary>
-    ///// Alle posities van deze munt sluiten
-    ///// </summary>
-    ///// <param name="sender"></param>
-    ///// <param name="e"></param>
-    //private void ListBoxSymbolsMenuItemPositieClose_Click(object sender, EventArgs e)
-    //{
-    //    //// Neem de door de gebruiker geselecteerde coin
-    //    //string symbolName = listBoxSymbols.Text.ToString();
-    //    //if (string.IsNullOrEmpty(symbolName))
-    //    //{
-    //    //    GlobalData.AddTextToLogTab("Er is geen symbol gekozen");
-    //    //    return;
-    //    //}
-
-    //    //if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out CryptoSbmScanner.Model.CryptoExchange exchange))
-    //    //{
-    //    //    // Bestaat de coin? (uiteraard, net geladen)
-    //    //    if (!exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol symbol))
-    //    //    {
-    //    //        GlobalData.AddTextToLogTab("Symbol niet gevonden (niet geladen?)");
-    //    //        return;
-    //    //    }
-
-    //    //    symbol.Exchange.PositionListSemaphore.Wait();
-    //    //    try
-    //    //    {
-    //    //        foreach (CryptoPosition position in symbol.PositionList.Values)
-    //    //        {
-    //    //            position.Profit = 0;
-    //    //            position.Invested = 0;
-    //    //            position.Percentage = 0;
-    //    //            position.CloseTime = DateTime.UtcNow;
-    //    //            position.Status = CryptoPositionStatus.positionTakeOver;
-    //    //            databaseMain.Connection.Update<CryptoPosition>(position);
-    //    //        }
-
-    //    //        symbol.PositionList.Clear();
-    //    //    }
-    //    //    finally
-    //    //    {
-    //    //        symbol.Exchange.PositionListSemaphore.Release();
-    //    //    }
-    //    //}
-    //}
-
-    //private void PositionsToolStripMenuItem_Click(object sender, EventArgs e)
-    //{
-    //    //try
-    //    //{
-    //    //    //StringBuilder stringBuilder = new StringBuilder();
-    //    //    //BinanceTools.ShowPositions(stringBuilder);
-    //    //    //GlobalData.AddTextToLogTab(stringBuilder.ToString());
-    //    //    GlobalData.AddTextToLogTab("");
-
-    //    //    // nu iets duidelijker
-    //    //    if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out CryptoSbmScanner.Model.CryptoExchange exchange))
-    //    //    {
-    //    //        foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
-    //    //        {
-    //    //            symbol.Exchange.PositionListSemaphore.Wait();
-    //    //            try
-    //    //            {
-    //    //                foreach (CryptoPosition position in symbol.PositionList.Values)
-    //    //                {
-    //    //                    StringBuilder stringBuilder = new StringBuilder();
-    //    //                    Helper.ShowPosition(stringBuilder, position);
-    //    //                    GlobalData.AddTextToLogTab(stringBuilder.ToString());
-    //    //                }
-    //    //            }
-    //    //            finally
-    //    //            {
-    //    //                symbol.Exchange.PositionListSemaphore.Release();
-    //    //            }
-    //    //        }
-    //    //    }
-
-    //    //}
-    //    //catch (Exception error)
-    //    //{
-    //    //    GlobalData.Logger.Error(error);
-    //    //    GlobalData.AddTextToLogTab("ERROR postion display " + error.ToString());
-    //    //}
-    //}
-
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-    private async void ContextMenuStripPositionsOpenRecalculateAsync_Click(object sender, EventArgs e)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+    private async void CommandPositionsClosedRecalculateExecute(object sender, EventArgs e)
     {
         if (listViewPositionsClosed.SelectedItems.Count > 0)
         {
             ListViewItem item = listViewPositionsClosed.SelectedItems[0];
             CryptoPosition position = (CryptoPosition)item.Tag;
-
-#if TRADEBOT
 
             using CryptoDatabase databaseThread = new();
             databaseThread.Connection.Open();
@@ -333,33 +286,10 @@ public partial class FrmMain
             await PositionTools.LoadTradesfromDatabaseAndExchange(databaseThread, position);
             PositionTools.CalculatePositionResultsViaTrades(databaseThread, position);
             FillItemClosed(position, item);
-#endif
         }
 
     }
 
-    private async void DebugPositionClosedDumpExcelToolStripMenuItemAsync_Click(object sender, EventArgs e)
-    {
-#if TRADEBOT
-        if (listViewPositionsClosed.SelectedItems.Count > 0)
-        {
-            for (int index = 0; index < listViewPositionsClosed.SelectedItems.Count; index++)
-            {
-                ListViewItem item = listViewPositionsClosed.SelectedItems[index];
-                CryptoPosition position = (CryptoPosition)item.Tag;
-
-                using CryptoDatabase databaseThread = new();
-                databaseThread.Open();
-                PositionTools.LoadPosition(databaseThread, position);
-
-                await PositionTools.LoadTradesfromDatabaseAndExchange(databaseThread, position);
-                PositionTools.CalculatePositionResultsViaTrades(databaseThread, position);
-
-                //Task.Run(() => { Invoke(new Action(() => { new PositionDumpDebug().ExportToExcell(position); })); });
-                _ = Task.Run(() => { new Excel.ExcelPositionDump().ExportToExcell(position); });
-            }
-        }
-#endif
-    }
 }
+#endif
 

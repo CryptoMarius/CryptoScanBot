@@ -6,13 +6,63 @@ namespace CryptoSbmScanner;
 
 public partial class FrmMain
 {
+    private ContextMenuStrip ListViewSignalsColumns;
+    private ContextMenuStrip ListViewSignalsMenuStrip;
     private readonly int columnForPriceDiff = 8;
     private ListViewHeaderContext listViewSignals;
     private System.Windows.Forms.Timer TimerClearEvents;
 
+    private ToolStripMenuItem CommandSignalsActivateTradingApp;
+    private ToolStripMenuItem CommandSignalsActivateTradingViewInternal;
+    private ToolStripMenuItem CommandSignalsActivateTradingViewExternal;
+    private ToolStripMenuItem CommandSignalTrendInformation;
+    private ToolStripMenuItem CommandSignalCopyInformation;
+    private ToolStripMenuItem CommandSignalSymbolInformationExcelDump;
+
 
     private void ListViewSignalsConstructor()
     {
+        ListViewSignalsColumns = new ContextMenuStrip();
+        ListViewSignalsMenuStrip = new ContextMenuStrip();
+
+        CommandSignalsActivateTradingApp = new ToolStripMenuItem();
+        CommandSignalsActivateTradingApp.Text = "Activate trading app";
+        CommandSignalsActivateTradingApp.Tag = Command.ActivateTradingApp;
+        CommandSignalsActivateTradingApp.Click += Commands.ExecuteCommandCommandViaTag;
+        ListViewSignalsMenuStrip.Items.Add(CommandSignalsActivateTradingApp);
+
+        CommandSignalsActivateTradingViewInternal = new ToolStripMenuItem();
+        CommandSignalsActivateTradingViewInternal.Text = "TradingView browser";
+        CommandSignalsActivateTradingViewInternal.Tag = Command.ActivateTradingviewIntern;
+        CommandSignalsActivateTradingViewInternal.Click += Commands.ExecuteCommandCommandViaTag;
+        ListViewSignalsMenuStrip.Items.Add(CommandSignalsActivateTradingViewInternal);
+
+        CommandSignalsActivateTradingViewExternal = new ToolStripMenuItem();
+        CommandSignalsActivateTradingViewExternal.Text = "TradingView extern";
+        CommandSignalsActivateTradingViewExternal.Tag = Command.ActivateTradingviewExtern;
+        CommandSignalsActivateTradingViewExternal.Click += Commands.ExecuteCommandCommandViaTag;
+        ListViewSignalsMenuStrip.Items.Add(CommandSignalsActivateTradingViewExternal);
+
+        ListViewSignalsMenuStrip.Items.Add(new ToolStripSeparator());
+
+        CommandSignalCopyInformation = new ToolStripMenuItem();
+        CommandSignalCopyInformation.Text = "Kopiëer informatie";
+        CommandSignalCopyInformation.Click += CommandSignalCopyInformationExecute;
+        ListViewSignalsMenuStrip.Items.Add(CommandSignalCopyInformation);
+
+        CommandSignalTrendInformation = new ToolStripMenuItem();
+        CommandSignalTrendInformation.Text = "Trend informatie (zie log)";
+        CommandSignalTrendInformation.Tag = Command.ShowTrendInformation;
+        CommandSignalTrendInformation.Click += Commands.ExecuteCommandCommandViaTag;
+        ListViewSignalsMenuStrip.Items.Add(CommandSignalTrendInformation);
+
+        CommandSignalSymbolInformationExcelDump = new ToolStripMenuItem();
+        CommandSignalSymbolInformationExcelDump.Text = "Symbol informatie (Excel)";
+        CommandSignalSymbolInformationExcelDump.Tag = Command.ExcelSymbolInformation;
+        CommandSignalSymbolInformationExcelDump.Click += Commands.ExecuteCommandCommandViaTag;
+        ListViewSignalsMenuStrip.Items.Add(CommandSignalSymbolInformationExcelDump);
+
+
         //ListViewColumnSorterSignal listViewColumnSorter = new();
 
         // ruzie (component of events raken weg), dan maar dynamisch
@@ -23,10 +73,13 @@ public partial class FrmMain
             ListViewItemSorter = new ListViewColumnSorterSignal(),
         };
         listViewSignals.ColumnClick += ListViewSignals_ColumnClick;
-        listViewSignals.DoubleClick += ListViewSignalsMenuItem_DoubleClick;
 
-        listViewSignals.ContextMenuStrip = listViewSignalsMenuStrip;
-        listViewSignals.HeaderContextMenuStrip = listViewIgnalsColumns;
+        listViewSignals.Tag = Command.ActivateTradingApp;
+        listViewSignals.DoubleClick += Commands.ExecuteCommandCommandViaTag;
+        //listViewSignals.DoubleClick += CommandSignalsActivateTradingAppExecute;
+
+        listViewSignals.ContextMenuStrip = ListViewSignalsMenuStrip;
+        listViewSignals.HeaderContextMenuStrip = ListViewSignalsColumns;
 
 
         tabPageSignals.Controls.Add(listViewSignals);
@@ -40,7 +93,7 @@ public partial class FrmMain
 
         ListViewSignalsInitColumns();
 
-        listViewIgnalsColumns.Items.Clear();
+        ListViewSignalsColumns.Items.Clear();
         foreach (ColumnHeader columnHeader in listViewSignals.Columns)
         {
             if (columnHeader.Text != "")
@@ -59,10 +112,17 @@ public partial class FrmMain
                     Checked = !GlobalData.Settings.HiddenSignalColumns.Contains(columnHeader.Text),
                 };
                 item.Click += CheckColumn;
-                listViewIgnalsColumns.Items.Add(item);
+                ListViewSignalsColumns.Items.Add(item);
             }
         }
     }
+
+    private void ListViewSignalsInitCaptions()
+    {
+        string text = GlobalData.ExternalUrls.GetTradingAppName(GlobalData.Settings.General.TradingApp, GlobalData.Settings.General.ExchangeName);
+        CommandSignalsActivateTradingApp.Text = text;
+    }
+
 
     private void CheckColumn(object sender, EventArgs e)
     {
@@ -114,12 +174,6 @@ public partial class FrmMain
         }
     }
 
-    private void ListViewSignalsInitCaptions()
-    {
-        string text = GlobalData.ExternalUrls.GetTradingAppName(GlobalData.Settings.General.TradingApp, GlobalData.Settings.General.ExchangeName);
-        listViewSignalsMenuItemActivateTradingApp.Text = text;
-    }
-
     private void ListViewSignalsInitColumns()
     {
         // Create columns and subitems. Width of -2 indicates auto-size
@@ -147,6 +201,13 @@ public partial class FrmMain
         listViewSignals.Columns.Add("Sma20", -2, HorizontalAlignment.Right);
         listViewSignals.Columns.Add("PSar", -2, HorizontalAlignment.Right);
         listViewSignals.Columns.Add("Flux 5m", -2, HorizontalAlignment.Right);
+        listViewSignals.Columns.Add("FundingRate", -2, HorizontalAlignment.Right);
+
+
+        listViewSignals.Columns.Add("1h", -2, HorizontalAlignment.Left);
+        listViewSignals.Columns.Add("4h", -2, HorizontalAlignment.Left);
+        listViewSignals.Columns.Add("12h", -2, HorizontalAlignment.Left);
+
         listViewSignals.Columns.Add("", -2, HorizontalAlignment.Right); // filler
 
         listViewSignals.SetSortIcon(
@@ -361,6 +422,69 @@ public partial class FrmMain
         value = signal.FluxIndicator5m;
         if (value != 0)
             item1.SubItems.Add(value?.ToString("N0"));
+        else
+            item1.SubItems.Add("");
+
+        if (signal.Symbol.FundingRate != 0.0m)
+        {
+            subItem = item1.SubItems.Add(signal.Symbol.FundingRate.ToString());
+            if (signal.Symbol.FundingRate > 0)
+                subItem.ForeColor = Color.Green;
+            else if (signal.Symbol.FundingRate < 0)
+                subItem.ForeColor = Color.Red;
+        }
+        else
+            item1.SubItems.Add("");
+
+
+        // Voor Eric (experiment)
+        var trend = signal.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1h).TrendIndicator;
+        switch (trend)
+        {
+            case CryptoTrendIndicator.trendBullish:
+                subItem = item1.SubItems.Add("Up");
+                subItem.ForeColor = Color.Green;
+                break;
+            case CryptoTrendIndicator.trendBearish:
+                subItem = item1.SubItems.Add("Down");
+                subItem.ForeColor = Color.Red;
+                break;
+            default:
+                item1.SubItems.Add("None");
+                break;
+        }
+
+        trend = signal.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval4h).TrendIndicator;
+        switch (trend)
+        {
+            case CryptoTrendIndicator.trendBullish:
+                subItem = item1.SubItems.Add("Up");
+                subItem.ForeColor = Color.Green;
+                break;
+            case CryptoTrendIndicator.trendBearish:
+                subItem = item1.SubItems.Add("Down");
+                subItem.ForeColor = Color.Red;
+                break;
+            default:
+                item1.SubItems.Add("None");
+                break;
+        }
+
+        trend = signal.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval12h).TrendIndicator;
+        switch (trend)
+        {
+            case CryptoTrendIndicator.trendBullish:
+                subItem = item1.SubItems.Add("Up");
+                subItem.ForeColor = Color.Green;
+                break;
+            case CryptoTrendIndicator.trendBearish:
+                subItem = item1.SubItems.Add("Down");
+                subItem.ForeColor = Color.Red;
+                break;
+            default:
+                item1.SubItems.Add("None");
+                break;
+        }
     }
 
     private static ListViewItem AddSignalItem(CryptoSignal signal)
@@ -450,63 +574,7 @@ public partial class FrmMain
         }
     }
 
-    private void ListViewSignalsMenuItemActivateTradingApp_Click(object sender, EventArgs e)
-    {
-        if (listViewSignals.SelectedItems.Count > 0)
-        {
-            for (int index = 0; index < listViewSignals.SelectedItems.Count; index++)
-            {
-                ListViewItem item = listViewSignals.SelectedItems[index];
-                CryptoSignal signal = (CryptoSignal)item.Tag;
-                LinkTools.ActivateExternalTradingApp(GlobalData.Settings.General.TradingApp, signal.Symbol, signal.Interval);
-            }
-        }
-    }
-
-    private void ListViewSignalsMenuItemActivateTradingViewInternal_Click(object sender, EventArgs e)
-    {
-        if (listViewSignals.Items.Count > 0)
-        {
-            ListViewItem item = listViewSignals.SelectedItems[0];
-            CryptoSignal signal = (CryptoSignal)item.Tag;
-            LinkTools.ActivateInternalTradingApp(CryptoTradingApp.TradingView, signal.Symbol, signal.Interval);
-        }
-    }
-
-    private void ListViewSignalsMenuItemActivateTradingviewExternal_Click(object sender, EventArgs e)
-    {
-        if (listViewSignals.SelectedItems.Count > 0)
-        {
-            for (int index = 0; index < listViewSignals.SelectedItems.Count; index++)
-            {
-                ListViewItem item = listViewSignals.SelectedItems[index];
-                CryptoSignal signal = (CryptoSignal)item.Tag;
-                LinkTools.ActivateExternalTradingApp(CryptoTradingApp.TradingView, signal.Symbol, signal.Interval);
-            }
-        }
-    }
-
-    private void ListViewSignalsMenuItem_DoubleClick(object sender, EventArgs e)
-    {
-        ListViewSignalsMenuItemActivateTradingApp_Click(sender, e);
-    }
-
-    private void MenuSignalsShowTrendInformation_Click(object sender, EventArgs e)
-    {
-        // Show trend information
-        if (listViewSignals.SelectedItems.Count > 0)
-        {
-            for (int index = 0; index < listViewSignals.SelectedItems.Count; index++)
-            {
-                ListViewItem item = listViewSignals.SelectedItems[index];
-                CryptoSignal signal = (CryptoSignal)item.Tag;
-
-                ShowTrendInformation(signal.Symbol);
-            }
-        }
-    }
-
-    private void ListViewSignalsMenuItemCopySignal_Click(object sender, EventArgs e)
+    private void CommandSignalCopyInformationExecute(object sender, EventArgs e)
     {
         string text = "";
         if (listViewSignals.SelectedItems.Count > 0)
@@ -525,20 +593,6 @@ public partial class FrmMain
             }
         }
         Clipboard.SetText(text, TextDataFormat.UnicodeText);
-    }
-
-    private void ListViewSignalsMenuItemCandleDump_Click(object sender, EventArgs e)
-    {
-        if (listViewSignals.SelectedItems.Count > 0)
-        {
-            for (int index = 0; index < listViewSignals.SelectedItems.Count; index++)
-            {
-                ListViewItem item = listViewSignals.SelectedItems[index];
-                CryptoSignal signal = (CryptoSignal)item.Tag;
-
-                Task.Run(() => { new Excel.ExcelCandleDump().ExportToExcell(signal.Symbol); });
-            }
-        }
     }
 
     /// <summary>
