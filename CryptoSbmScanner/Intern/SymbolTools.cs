@@ -49,7 +49,7 @@ public class SymbolTools
         //    LogWriters = new List<TextWriter> { Console.Out }
         //});
 
-        if (GlobalData.Settings.ApiKey == "" || GlobalData.Settings.ApiSecret == "")
+        if (GlobalData.Settings.Trading.ApiKey == "" || GlobalData.Settings.Trading.ApiSecret == "")
         {
             reaction = "No API credentials available";
             return false;
