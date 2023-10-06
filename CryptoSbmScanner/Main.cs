@@ -286,36 +286,34 @@ public partial class FrmMain : Form
 
     private void AddTextToLogTab(string text, bool extraLineFeed = false)
     {
-        //if ((components != null) && (IsHandleCreated)) gaat nu via een queue, wordt wel opgepakt
-        {
-            text = text.TrimEnd();
-            GlobalData.Logger.Info(text);
+        // Via queue want afzonderlijk regels toevoegen kost relatief veel tijd
 
-            if (text != "")
-                text = DateTime.Now.ToLocalTime() + " " + text;
-            //if (extraLineFeed)
-            //    text += "\r\n\r\n";
-            //else
-            //    text += "\r\n";
+        text = text.TrimEnd();
+        GlobalData.Logger.Info(text);
 
-            //if (InvokeRequired)
-            //    Invoke((MethodInvoker)(() => TextBoxLog.AppendText(text)));
-            //else
-            //    TextBoxLog.AppendText(text);
+        if (text != "")
+            text = DateTime.Now.ToLocalTime() + " " + text;
+        //if (extraLineFeed)
+        //    text += "\r\n\r\n";
+        //else
+        //    text += "\r\n";
 
-            //testen!
-            if (extraLineFeed)
-                text += "\r\n";
-            logQueue.Enqueue(text);
+        //if (InvokeRequired)
+        //    Invoke((MethodInvoker)(() => TextBoxLog.AppendText(text)));
+        //else
+        //    TextBoxLog.AppendText(text);
 
-            //// even rechstreeks
-            //text = text.TrimEnd() + "\r\n";
-            //if (InvokeRequired)
-            //    Invoke((MethodInvoker)(() => TextBoxLog.AppendText(text)));
-            //else
-            //    TextBoxLog.AppendText(text);
+        //testen!
+        if (extraLineFeed)
+            text += "\r\n";
+        logQueue.Enqueue(text);
 
-        }
+        //// even rechstreeks
+        //text = text.TrimEnd() + "\r\n";
+        //if (InvokeRequired)
+        //    Invoke((MethodInvoker)(() => TextBoxLog.AppendText(text)));
+        //else
+        //    TextBoxLog.AppendText(text);
     }
 
     /// <summary>
@@ -323,6 +321,7 @@ public partial class FrmMain : Form
     /// </summary>
     private void AssetsHaveChangedEvent(string text, bool extraLineFeed = false)
     {
+        // TODO: Activeren!
         //if (components != null && IsHandleCreated)
         //{
         //decimal valueBtc, valueUsdt;
@@ -350,13 +349,6 @@ public partial class FrmMain : Form
 
     private void ToolStripMenuItemRefresh_Click_1(object sender, EventArgs e)
     {
-        // Testje!!! (forceren)
-        //GlobalData.ApplicationStatus = CryptoApplicationStatus.Initializing;
-        //foreach (var ticker in ExchangeHelper.KLineTicker.TickerList)
-        //{
-        //    ticker.ConnectionLostCount = 1;
-        //}
-
         Task.Run(async () =>
         {
             await ExchangeHelper.FetchSymbolsAsync(); // niet wachten tot deze klaar is
@@ -459,7 +451,6 @@ public partial class FrmMain : Form
 
     private void MainMenuClearAll_Click(object sender, EventArgs e)
     {
-        //this.Text = "";
         TextBoxLog.Clear();
         GlobalData.createdSignalCount = 0;
 
