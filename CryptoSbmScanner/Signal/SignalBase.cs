@@ -49,7 +49,9 @@ public class SignalCreateBase
     /// Is het een signaal?
     /// </summary>
     public virtual bool IsSignal()
-        => false;
+    {
+        return false;
+    }
 
 
     public virtual bool AdditionalChecks(CryptoCandle candle, out string response)
@@ -60,7 +62,9 @@ public class SignalCreateBase
 
 
     public virtual string DisplayText()
-        => $"stoch={CandleLast.CandleData.StochOscillator.Value:N8} signal={CandleLast.CandleData.StochSignal.Value:N8}";
+    {
+        return $"stoch={CandleLast.CandleData.StochOscillator.Value:N8} signal={CandleLast.CandleData.StochSignal.Value:N8}";
+    }
 
 
     /// <summary>
@@ -76,7 +80,10 @@ public class SignalCreateBase
     /// <summary>
     /// Extra controles nadat we het accepteren
     /// </summary>
-    public virtual bool AllowStepIn(CryptoSignal signal) => false;
+    public virtual bool AllowStepIn(CryptoSignal signal)
+    {
+        return true;
+    }
 
 
     public bool GetPrevCandle(CryptoCandle oldCandle, out CryptoCandle newCandle)
