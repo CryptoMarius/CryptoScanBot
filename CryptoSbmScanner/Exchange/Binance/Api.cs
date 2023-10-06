@@ -498,7 +498,7 @@ public class Api : ExchangeBase
     }
 
 
-    public override async Task FetchTradesAsync(CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
+    public override async Task FetchTradesForSymbolAsync(CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
     {
         await BinanceFetchTrades.FetchTradesForSymbol(tradeAccount, symbol);
     }
