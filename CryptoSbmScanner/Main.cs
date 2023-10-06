@@ -456,18 +456,6 @@ public partial class FrmMain : Form
         }
     }
 
-    //private class DuplicateKeyComparer<TKey> : IComparer<TKey> where TKey : IComparable
-    //{
-    //    public int Compare(TKey x, TKey y)
-    //    {
-    //        int result = x.CompareTo(y);
-
-    //        if (result == 0)
-    //            return 1;   // Handle equality as beeing greater
-    //        else
-    //            return result;
-    //    }
-    //}
 
     private void MainMenuClearAll_Click(object sender, EventArgs e)
     {
@@ -799,68 +787,6 @@ public partial class FrmMain : Form
 
     private void TimerSoundHeartBeat_Tick(object sender, EventArgs e)
       => GlobalData.PlaySomeMusic("sound-heartbeat.wav");
-
-
-    private static void ShowTrendInformation(CryptoSymbol symbol)
-    {
-        StringBuilder log = new();
-        log.AppendLine("Trend " + symbol.Name);
-
-        GlobalData.AddTextToLogTab("");
-        GlobalData.AddTextToLogTab("Trend " + symbol.Name);
-
-        long percentageSum = 0;
-        long maxPercentageSum = 0;
-        foreach (CryptoInterval interval in GlobalData.IntervalList)
-        {
-            log.AppendLine("");
-            log.AppendLine("----");
-            log.AppendLine("Interval " + interval.Name);
-
-            // Wat is het maximale som (voor de eindberekening)
-            maxPercentageSum += interval.Duration;
-
-            TrendIndicator trendIndicatorClass = new(symbol, interval)
-            {
-                Log = log
-            };
-            CryptoTrendIndicator trendIndicator = trendIndicatorClass.CalculateTrend();
-            if (trendIndicator == CryptoTrendIndicator.trendBullish)
-                percentageSum += interval.Duration;
-            else if (trendIndicator == CryptoTrendIndicator.trendBearish)
-                percentageSum -= interval.Duration;
-
-
-            // Ahh, dat gaat niet naar een tabel (zoals ik eerst dacht)
-            //CryptoSymbolInterval symbolInterval = signal.Symbol.GetSymbolInterval(interval.IntervalPeriod);
-            //symbolInterval.TrendIndicator = trendIndicator;
-            //symbolInterval.TrendInfoDate = DateTime.UtcNow;
-
-            string s = "";
-            if (trendIndicator == CryptoTrendIndicator.trendBullish)
-                s = string.Format("{0} {1}, trend=bullish", symbol.Name, interval.IntervalPeriod);
-            else if (trendIndicator == CryptoTrendIndicator.trendBearish)
-                s = string.Format("{0} {1}, trend=bearish", symbol.Name, interval.IntervalPeriod);
-            else
-                s = string.Format("{0} {1}, trend=sideway's", symbol.Name, interval.IntervalPeriod);
-            GlobalData.AddTextToLogTab(s);
-            log.AppendLine(s);
-        }
-
-        if (maxPercentageSum > 0)
-        {
-            decimal trendPercentage = 100 * (decimal)percentageSum / (decimal)maxPercentageSum;
-            string t = string.Format("{0} {1:N2}", symbol.Name, trendPercentage);
-            GlobalData.AddTextToLogTab(t);
-            log.AppendLine(t);
-        }
-
-
-
-        //Laad de gecachte (langere historie, minder overhad)
-        string filename = GlobalData.GetBaseDir() + "Trend information.txt";
-        File.WriteAllText(filename, log.ToString());
-    }
 
     private void ApplicationCreateSignals_Click(object sender, EventArgs e)
     {
