@@ -62,7 +62,7 @@ Trading:
 - Trading - Documentatie uitleggen papertrading bot (achterliggende gedachtes uitleggen)
 - Trading - Documentatie uitleggen wat de open en gesloten posities precies zijn (per kolom)
 - Trading - Documentatie (er is wel een stukje van de trading toegelicht, maar lang niet alles
-- Trading - Bybit Spot - Testen van een stop-limit order
+- Trading - Bybit Spot - Testen van een stop-limit order (maar die bestaat niet dacht ik)
 - Trading - Bybit Futures - Testen van een marketorder
 - Trading - Bybit Futures - Testen van een limitorder
 - Trading - Bybit Futures - Testen van een stop-limit order
@@ -70,13 +70,13 @@ Trading:
 Voor alle Exchanges (behalve Binance):
 - Trading - userdate stream implementeren (detectie van trade)
 - Trading - ophalen trades implementeren
-- Trading - ophalen assets implementeren
 - Trading - plaatsen van de orders (oco/buy/sell/stoplimit etc) - De OCO is Binance specifiek, vervanger?
 - Trading - price ticker implementeren (in Kucoin geeft dit teveel cpu overhead en is om die reden nu niet aangezet)
+TODO: Error control DoSwitchCrossIsolatedMarginAsync()
 
 
 xx-xx-2023 1.8.7
-Het lijkt alsof de CPU belasting drastisch is toegenomen (ondanks uitzetten verversing) - Windows Update perikelen, want daarna was het okay?
+Het lijkt alsof de CPU belasting is toegenomen (ondanks uitzetten verversing) - Wellicht windows Update perikelen, want daarna was het beter? Kan ook door de interne Edge veroorzaakt worden?
 
 - Trading - Een geannuleerde buy order (door lage barometer of tradingrules) wordt later herplaatst maar met de oude prijs. Controle op de laatste prijs ingebouwd.
 - Trading - Statistiek, de x en y-as van de grafieken worden niet bijgewerkt waardoor het juiste aantal trades en winst niet zichtbaar zijn (punten liggen buiten de chart als het ware, herstart nodig)
@@ -93,6 +93,10 @@ Het lijkt alsof de CPU belasting drastisch is toegenomen (ondanks uitzetten verv
 - Trading - De trader werd per abuis gepauseerd vanwege de trading rules. Dit vanwege een niet geinitialiseerde Symbol.LastPrice (die niet in de berekening thuishoorde)
 - Trading - Interne refactoring van orderId en tradeId van integer/long naar string's
 - Trading - De fundingrate toegevoegd aan de open posities
+- Trading - Bybit Futures - ophalen trades implementeren
+- Trading - Bybit Spot - ophalen trades implementeren
+- Trading - Bybit Futures - ophalen assets implementeren
+- Trading - Bybit Spot - ophalen assets implementeren
 - Scanner - Refactoring van alle RMK (RechterMuisKnop) opties
 - Scanner - Op verzoek de up- of down trend tonen voor de 1h, 4h en 12h.
 - Scanner - De fundingrate toegevoegd aan de signalen

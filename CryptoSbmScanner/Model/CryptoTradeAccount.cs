@@ -31,14 +31,14 @@ public class CryptoTradeAccount
     public SortedList<string, CryptoAsset> AssetList { get; } = new();
 
     // Trades + locking
-    [Computed]
-    public SemaphoreSlim TradeListSemaphore { get; set; } = new(1);
+    //[Computed]
+    //public SemaphoreSlim TradeListSemaphore { get; set; } = new(1);
     [Computed]
     public SortedList<string, SortedList<int, CryptoTrade>> TradeList { get; set; } = new();
 
     // Posities + locking
-    [Computed]
-    public SemaphoreSlim PositionListSemaphore { get; set; } = new(1);
+    //[Computed]
+    //public SemaphoreSlim PositionListSemaphore { get; set; } = new(1);
     [Computed]
     public SortedList<string, SortedList<int, CryptoPosition>> PositionList { get; } = new();
 

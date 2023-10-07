@@ -348,6 +348,7 @@ public class BalanceSymbolsAlgoritm
             {
                 asset = new CryptoAsset();
                 asset.Quote = basketAsset.Symbol.Base;
+                asset.TradeAccountId = tradeAccount.Id;
                 tradeAccount.AssetList.Add(asset.Quote, asset);
             }
             asset.Free = basketAsset.Quantity;
@@ -358,6 +359,7 @@ public class BalanceSymbolsAlgoritm
             {
                 asset = new CryptoAsset();
                 asset.Quote = BasketMain.Symbol.Base;
+                asset.TradeAccountId = tradeAccount.Id;
                 tradeAccount.AssetList.Add(asset.Quote, asset);
             }
             asset.Free = BasketMain.Quantity;

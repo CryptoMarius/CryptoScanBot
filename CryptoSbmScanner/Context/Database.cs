@@ -141,8 +141,8 @@ public class CryptoDatabase : IDisposable
 
             StringBuilder stringBuilder = new();
             stringBuilder.AppendLine("insert into symbol");
-            stringBuilder.AppendLine("([ExchangeId], [Name], [Base], [Quote], [Status], [Volume], " +
-                //"[QuoteAssetPrecision], [BaseAssetPrecision],[MinNotional], " +
+            stringBuilder.AppendLine("([ExchangeId], [Name], [Base], [Quote], [Status], [Volume]," +
+                //"[QuoteAssetPrecision], [BaseAssetPrecision],[MinNotional]," +
                 "[QuantityMinimum], [QuantityMaximum], [QuantityTickSize]," +
                 "[PriceMinimum],[PriceMaximum],[PriceTickSize]," +
                 "[IsSpotTradingAllowed],[IsMarginTradingAllowed])");
@@ -320,9 +320,9 @@ public class CryptoDatabase : IDisposable
             StringBuilder stringBuilder = new();
             stringBuilder.AppendLine("INSERT INTO Trade (" +
                 "ExchangeId, SymbolId, TradeId,OrderId," + //OrderListId,
-                "Price, Quantity, QuoteQuantity, " +
-                "Commission, CommissionAsset, " +
-                "TradeTime, " +
+                "Price, Quantity, QuoteQuantity," +
+                "Commission, CommissionAsset," +
+                "TradeTime," +
                 "IsBuyer, IsMaker)");
             stringBuilder.AppendLine("output inserted.id");
             stringBuilder.AppendLine("VALUES");
@@ -403,7 +403,7 @@ public class CryptoDatabase : IDisposable
     //            lastRecord = cache.Count;
 
     //        StringBuilder stringBuilder = new();
-    //        stringBuilder.AppendLine("INSERT INTO Order (ExchangeId, SymbolId, CreateTime, " +
+    //        stringBuilder.AppendLine("INSERT INTO Order (ExchangeId, SymbolId, CreateTime," +
     //            "IcebergQuantity, StopPrice, Side, Type,TimeInForce,Status," +
     //            "QuoteQuantity,QuoteQuantityFilled,QuantityFilled,Quantity,Price," +
     //            "OriginalClientOrderId,OrderListId,ClientOrderId,OrderId,UpdateTime,IsWorking" +
@@ -419,7 +419,7 @@ public class CryptoDatabase : IDisposable
     //                stringBuilder.AppendLine(",");
 
 
-    //            stringBuilder.AppendFormat(string.Format("({0},{1},'{2}', " +
+    //            stringBuilder.AppendFormat(string.Format("({0},{1},'{2}'," +
     //                " {3},{4},{5},{6},{7},{8}," +
     //                "{9},{10},{11},{12},{13}," +
     //                "'{14}',{15},'{16}',{17},'{18}',{19}" +
@@ -532,13 +532,19 @@ public class CryptoDatabase : IDisposable
         Connection.Close();
     }
 
+    private static bool ExistsTable(CryptoDatabase connection, string tableName)
+    {
+        string sql = $"SELECT name FROM sqlite_master WHERE type='table' AND name = 'tableName';";
+        return string.IsNullOrEmpty(connection.Connection.Query<string>(sql).FirstOrDefault());
+    }
+
+
     private static void CreateTableVersion(CryptoDatabase connection)
     {
-        string tableName = connection.Connection.Query<string>("SELECT name FROM sqlite_master WHERE type='table' AND name = 'Version';").FirstOrDefault();
-        if (string.IsNullOrEmpty(tableName))
+        if (!ExistsTable(connection, "Version"))
         {
             connection.Connection.Execute("CREATE TABLE [Version] (" +
-                "Id integer primary key autoincrement not null, " +
+                "Id integer primary key autoincrement not null," +
                 "Version INTEGER NOT NULL" +
             ")");
 
@@ -555,11 +561,10 @@ public class CryptoDatabase : IDisposable
 
     private static void CreateTableSequence(CryptoDatabase connection)
     {
-        string tableName = connection.Connection.Query<string>("SELECT name FROM sqlite_master WHERE type='table' AND name = 'Sequence';").FirstOrDefault();
-        if (string.IsNullOrEmpty(tableName))
+        if (!ExistsTable(connection, "Sequence"))
         {
             connection.Connection.Execute("CREATE TABLE [Sequence] (" +
-                "Id integer primary key autoincrement not null, " +
+                "Id integer primary key autoincrement not null," +
                 "Name TEXT NOT NULL" +
             ")");
 
@@ -569,11 +574,10 @@ public class CryptoDatabase : IDisposable
 
     private static void CreateTableInterval(CryptoDatabase connection)
     {
-        string tableName = connection.Connection.Query<string>("SELECT name FROM sqlite_master WHERE type='table' AND name = 'Interval';").FirstOrDefault();
-        if (string.IsNullOrEmpty(tableName))
+        if (!ExistsTable(connection, "Interval"))
         {
             connection.Connection.Execute("CREATE TABLE [Interval] (" +
-                "Id integer primary key autoincrement not null, " +
+                "Id integer primary key autoincrement not null," +
                 "IntervalPeriod INTEGER NOT NULL," +
                 "Name TEXT NOT NULL," +
                 "Duration INTEGER NOT NULL," +
@@ -630,13 +634,10 @@ public class CryptoDatabase : IDisposable
 
     private static void CreateTableExchange(CryptoDatabase connection)
     {
-        // ****************************************************
-        // Exchange (voorlopig alleen Binance, daar is nu alels op afgestemd)
-        string tableName = connection.Connection.Query<string>("SELECT name FROM sqlite_master WHERE type='table' AND name = 'Exchange';").FirstOrDefault();
-        if (string.IsNullOrEmpty(tableName))
+        if (!ExistsTable(connection, "Exchange"))
         {
             connection.Connection.Execute("CREATE TABLE [Exchange] (" +
-                 "Id integer primary key autoincrement not null, " +
+                 "Id integer primary key autoincrement not null," +
                 "LastTimeFetched TEXT NULL," +                 
                  "Name TEXT not NULL" +
             ")");
@@ -669,13 +670,10 @@ public class CryptoDatabase : IDisposable
 
     private static void CreateTableTradeAccount(CryptoDatabase connection)
     {
-        // ****************************************************
-        // Exchange (voorlopig alleen Binance, daar is nu alels op afgestemd)
-        string tableName = connection.Connection.Query<string>("SELECT name FROM sqlite_master WHERE type='table' AND name = 'TradeAccount';").FirstOrDefault();
-        if (string.IsNullOrEmpty(tableName))
+        if (!ExistsTable(connection, "TradeAccount"))
         {
             connection.Connection.Execute("CREATE TABLE [TradeAccount] (" +
-                "Id integer primary key autoincrement not null, " +
+                "Id integer primary key autoincrement not null," +
                 "Name TEXT not NULL," +
                 "Short TEXT not NULL," +
                 "ExchangeId INTEGER NOT NULL," +
@@ -853,14 +851,11 @@ public class CryptoDatabase : IDisposable
 
     private static void CreateTableSymbol(CryptoDatabase connection)
     {
-        // ****************************************************
-        // Symbol (wat muntjes van Binance met aardig wat attributen)
-        string tableName = connection.Connection.Query<string>("SELECT name FROM sqlite_master WHERE type='table' AND name = 'Symbol';").FirstOrDefault();
-        if (string.IsNullOrEmpty(tableName))
+        if (!ExistsTable(connection, "Symbol"))
         {
             connection.Connection.Execute("CREATE TABLE [Symbol] (" +
-                "Id INTEGER primary key autoincrement not null, " +
-                "ExchangeId INTEGER NOT NULL, " +
+                "Id INTEGER primary key autoincrement not null," +
+                "ExchangeId INTEGER NOT NULL," +
                 "Name TEXT NOT NULL," +
                 "Base TEXT NOT NULL," +
                 "Quote TEXT NOT NULL," +
@@ -890,7 +885,7 @@ public class CryptoDatabase : IDisposable
 
                 // Bybit Futures, ondersteunen van de FundingRate en FundingInterval
                 "FundingRate TEXT NULL," +
-                "FundingInterval TEXT NULL, " +
+                "FundingInterval TEXT NULL," +
 
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)" +
             ")");
@@ -904,16 +899,14 @@ public class CryptoDatabase : IDisposable
 
     //private static void CreateTableSymbolInterval(CryptoDatabase connection)
     //{
-    //    // ****************************************************
     //    // SymbolInterval (administratie, maar overlapt met de bestanden, via bestand is beter denk ik, rest is overkill)
-    //    string tableName = connection.Connection.Query<string>("SELECT name FROM sqlite_master WHERE type='table' AND name = 'SymbolInterval';").FirstOrDefault();
-    //    if (string.IsNullOrEmpty(tableName))
+    //    if (!ExistsTable(connection, "SymbolInterval"))
     //    {
     //        connection.Connection.Execute("CREATE TABLE [SymbolInterval] (" +
-    //            "Id INTEGER primary key autoincrement not null, " +
-    //            "ExchangeId INTEGER NOT NULL, " +
-    //            "SymbolId INTEGER NOT NULL, " +
-    //            "IntervalId INTEGER NOT NULL, " +
+    //            "Id INTEGER primary key autoincrement not null," +
+    //            "ExchangeId INTEGER NOT NULL," +
+    //            "SymbolId INTEGER NOT NULL," +
+    //            "IntervalId INTEGER NOT NULL," +
     //            "TrendInfoDate TEXT NULL," +
     //            "TrendIndicator Integer NULL," +
     //            "LastCandleSynchronized TEXT NULL," + // overlapt
@@ -931,11 +924,10 @@ public class CryptoDatabase : IDisposable
 
     private static void CreateTableSignal(CryptoDatabase connection)
     {
-        string tableName = connection.Connection.Query<string>("SELECT name FROM sqlite_master WHERE type='table' AND name = 'Signal';").FirstOrDefault();
-        if (string.IsNullOrEmpty(tableName))
+        if (!ExistsTable(connection, "Signal"))
         {
             connection.Connection.Execute("CREATE TABLE [Signal] (" +
-                "Id integer primary key autoincrement not null, " +
+                "Id integer primary key autoincrement not null," +
                 "ExchangeId INTEGER NOT NULL," +
                 "SymbolId INTEGER NOT NULL," +
                 "IntervalId INTEGER NULL," +
@@ -1012,38 +1004,37 @@ public class CryptoDatabase : IDisposable
 
     private static void CreateTablePosition(CryptoDatabase connection)
     {
-        string tableName = connection.Connection.Query<string>("SELECT name FROM sqlite_master WHERE type='table' AND name = 'Position';").FirstOrDefault();
-        if (string.IsNullOrEmpty(tableName))
+        if (!ExistsTable(connection, "Position"))
         {
             connection.Connection.Execute("CREATE TABLE [Position] (" +
-                "Id integer primary key autoincrement not null, " +
-                "TradeAccountId integer, " +
+                "Id integer primary key autoincrement not null," +
+                "TradeAccountId integer," +
                 
-                "CreateTime TEXT NOT NULL, " +
-                "UpdateTime TEXT NOT NULL, " +
-                "CloseTime TEXT NULL, " +
+                "CreateTime TEXT NOT NULL," +
+                "UpdateTime TEXT NOT NULL," +
+                "CloseTime TEXT NULL," +
 
                 "ExchangeId Integer NOT NULL," +
-                "SymbolId Integer NOT NULL, " +
+                "SymbolId Integer NOT NULL," +
                 "IntervalId Integer NOT NULL," +
-                "Status INTEGER NOT NULL, " +
-                "Side INTEGER NOT NULL, " +
-                "Strategy INTEGER NOT NULL, " +
+                "Status INTEGER NOT NULL," +
+                "Side INTEGER NOT NULL," +
+                "Strategy INTEGER NOT NULL," +
                 "data TEXT NULL," +
 
-                "BuyPrice TEXT NULL, " +
-                "Quantity TEXT NULL, " +
-                "BuyAmount TEXT NULL, " +
-                "SellPrice TEXT NULL, " +
-                "PartCount INTEGER NULL, " +
-                "Profit TEXT NULL, " +
-                "BreakEvenPrice TEXT NULL, " +
+                "BuyPrice TEXT NULL," +
+                "Quantity TEXT NULL," +
+                "BuyAmount TEXT NULL," +
+                "SellPrice TEXT NULL," +
+                "PartCount INTEGER NULL," +
+                "Profit TEXT NULL," +
+                "BreakEvenPrice TEXT NULL," +
 
-                "Invested TEXT NULL, " +
-                "Commission TEXTNULL, " +
-                "Returned TEXT NULL, " +
-                "Percentage TEXT NULL, " +
-                "Reposition Integer, " +
+                "Invested TEXT NULL," +
+                "Commission TEXTNULL," +
+                "Returned TEXT NULL," +
+                "Percentage TEXT NULL," +
+                "Reposition Integer," +
 
                 "FOREIGN KEY(TradeAccountId) REFERENCES TradeAccount(Id)," +
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +
@@ -1061,33 +1052,32 @@ public class CryptoDatabase : IDisposable
 
     private static void CreateTablePositionPart(CryptoDatabase connection)
     {
-        string tableName = connection.Connection.Query<string>("SELECT name FROM sqlite_master WHERE type='table' AND name = 'PositionPart';").FirstOrDefault();
-        if (string.IsNullOrEmpty(tableName))
+        if (!ExistsTable(connection, "PositionPart"))
         {
             connection.Connection.Execute("CREATE TABLE [PositionPart] (" +
-                "Id integer primary key autoincrement not null, " +
+                "Id integer primary key autoincrement not null," +
                 "PositionId Integer NOT NULL," +
                 "ExchangeId Integer NOT NULL," +
-                "SymbolId Integer NOT NULL, " +
-                "IntervalId Integer NOT NULL, " +
-                "Strategy TEXT NOT NULL, " +
+                "SymbolId Integer NOT NULL," +
+                "IntervalId Integer NOT NULL," +
+                "Strategy TEXT NOT NULL," +
 
-                "Side INTEGER NOT NULL, " +
+                "Side INTEGER NOT NULL," +
                 "Name TEXT NULL," +
-                "CreateTime TEXT NOT NULL, " +
-                "CloseTime TEXT NULL, " +
-                "Status INTEGER NOT NULL, " +
+                "CreateTime TEXT NOT NULL," +
+                "CloseTime TEXT NULL," +
+                "Status INTEGER NOT NULL," +
 
-                "Invested TEXT NULL, " +
-                "Commission TEXTNULL, " +
-                "Returned TEXT NULL, " +
-                "Profit TEXT NULL, " +
-                "Percentage TEXT NULL, " +
+                "Invested TEXT NULL," +
+                "Commission TEXTNULL," +
+                "Returned TEXT NULL," +
+                "Profit TEXT NULL," +
+                "Percentage TEXT NULL," +
 
-                "Quantity TEXT NULL, " +
-                "BreakEvenPrice TEXT NULL, " +
+                "Quantity TEXT NULL," +
+                "BreakEvenPrice TEXT NULL," +
 
-                "SignalPrice TEXT NOT NULL, " + // was BuyPrice
+                "SignalPrice TEXT NOT NULL," + // was BuyPrice
                 "StepInMethod INTEGER NULL," +
                 "StepOutMethod INTEGER NULL," +
 
@@ -1107,11 +1097,10 @@ public class CryptoDatabase : IDisposable
 
     private static void CreateTablePositionStep(CryptoDatabase connection)
     {
-        string tableName = connection.Connection.Query<string>("SELECT name FROM sqlite_master WHERE type='table' AND name = 'PositionStep';").FirstOrDefault();
-        if (string.IsNullOrEmpty(tableName))
+        if (!ExistsTable(connection, "PositionStep"))
         {
             connection.Connection.Execute("CREATE TABLE [PositionStep] (" +
-                "Id integer primary key autoincrement not null, " +
+                "Id integer primary key autoincrement not null," +
                 "PositionId integer NOT NULL," +
                 "PositionPartId integer NOT NULL," +
                 "CreateTime TEXT NOT NULL," +
@@ -1149,11 +1138,10 @@ public class CryptoDatabase : IDisposable
     // Order (de order zoals Binance geplaatst heeft <kan geannuleerd zijn>)
     // Besloten dat momenteel alleen trades van belang zijn
 
-    //string tableName = Connection.Query<string>("SELECT name FROM sqlite_master WHERE type='table' AND name = 'Order';").FirstOrDefault();
-    //if (string.IsNullOrEmpty(tableName))
+    //if (!ExistsTable(connection, "Order"))
     //{
     //    Connection.Execute("CREATE TABLE [Order] (" +
-    //        "Id integer primary key autoincrement not null, " +
+    //        "Id integer primary key autoincrement not null," +
     //        "ExchangeId integer NOT NULL," +
     //        "SymbolId integer NOT NULL," +
     //        "CreateTime TEXT NOT NULL," +
@@ -1187,14 +1175,10 @@ public class CryptoDatabase : IDisposable
 
     private static void CreateTableTrade(CryptoDatabase connection)
     {
-        // ****************************************************
-        // Trade (de trade zoals Binance die uitgevoerd heeft)
-
-        string tableName = connection.Connection.Query<string>("SELECT name FROM sqlite_master WHERE type='table' AND name = 'Trade';").FirstOrDefault();
-        if (string.IsNullOrEmpty(tableName))
+        if (!ExistsTable(connection, "Trade"))
         {
             connection.Connection.Execute("CREATE TABLE [Trade] (" +
-                "Id integer primary key autoincrement not null, " +
+                "Id integer primary key autoincrement not null," +
                 "TradeTime TEXT NOT NULL," +
                 
                 "TradeAccountId Integer NOT NULL," +
@@ -1229,15 +1213,34 @@ public class CryptoDatabase : IDisposable
 
     }
 
+    private static void CreateTableAsset(CryptoDatabase connection)
+    {
+        if (!ExistsTable(connection, "Asset"))
+        {
+            connection.Connection.Execute("CREATE TABLE [Asset] (" +
+                "Id integer primary key autoincrement not null," +
+                "TradeAccountId integer," +
+
+                "Quote TEXT NOT NULL," +
+                "Total TEXT NOT NULL," +
+                "Free TEXT NOT NULL," +
+                "Locked TEXT NOT NULL," +
+
+                "FOREIGN KEY(TradeAccountId) REFERENCES TradeAccount(Id)" +
+            ")");
+            connection.Connection.Execute("CREATE INDEX IdxAssetId ON Asset(Id)");
+            connection.Connection.Execute("CREATE INDEX IdxAssetTradeAccountId ON Asset(TradeAccountId)");
+        }
+    }
+
+
     //private static void CreateTableBalancing(CryptoDatabase connection)
     //{
-    //    //// ****************************************************
     //    //// Balance (echt? weet niet waarom we dit op deze manier opslaan, balanceren doe je binnen groep, die mis ik, een oude versie wellicht?)
-    //    //string tableName = connection.Connection.Query<string>("SELECT name FROM sqlite_master WHERE type='table' AND name = 'Balance';").FirstOrDefault();
-    //    //if (string.IsNullOrEmpty(tableName))
+    //    if (!ExistsTable(connection, "Balance"))
     //    //{
     //    //    connection.Connection.Execute("CREATE TABLE [Balance] (" +
-    //    //        "Id integer primary key autoincrement not null, " +
+    //    //        "Id integer primary key autoincrement not null," +
     //    //        "ExchangeId Integer NOT NULL," +
     //    //        "SymbolId Integer NOT NULL," +
     //    //        "EventTime TEXT NOT NULL," +
@@ -1308,11 +1311,11 @@ public class CryptoDatabase : IDisposable
         CreateTablePosition(connection);
         CreateTablePositionPart(connection);
         CreateTablePositionStep(connection);
-        
+
         //CreateTableOrder(connection); -- vervallen
         CreateTableTrade(connection);
+        CreateTableAsset(connection);
 
-        //CreateTableAsset(connection); -- todo ooit
         //CreateTableBalancing(connection); -- todo ooit
         CreateTableSequence(connection); // Fake-ID's tbv orders en trades
         CreateTableVersion(connection); // Administratie database & migraties
@@ -1322,12 +1325,12 @@ public class CryptoDatabase : IDisposable
         Migration.Execute(connection, Migration.CurrentDatabaseVersion);
 
 
-    //    using (var command = connection.Connection.CreateCommand())
-    //    {
-    //        command.CommandText = "vacuum;";
-    //        command.ExecuteNonQuery();
-    //    }
-    //
+        using (var command = connection.Connection.CreateCommand())
+        {
+            command.CommandText = "vacuum;";
+            command.ExecuteNonQuery();
+        }
+
     }
 
 }

@@ -225,6 +225,69 @@ public class Api: ExchangeBase
         }
     }
 
+    //static public void PickupAssets(CryptoTradeAccount tradeAccount, Dictionary<string, Kucoin> balances)
+    //{
+    //    tradeAccount.AssetListSemaphore.Wait();
+    //    try
+    //    {
+    //        using CryptoDatabase databaseThread = new();
+    //        databaseThread.Open();
+
+    //        using var transaction = databaseThread.BeginTransaction();
+    //        try
+    //        {
+    //            foreach (var assetInfo in balances.Values)
+    //            {
+    //                if (assetInfo.Available > 0)
+    //                {
+    //                    if (!tradeAccount.AssetList.TryGetValue(assetInfo.Asset, out CryptoAsset asset))
+    //                    {
+    //                        asset = new CryptoAsset()
+    //                        {
+    //                            Quote = assetInfo.Asset,
+    //                            TradeAccountId = tradeAccount.Id,
+    //                        };
+    //                        tradeAccount.AssetList.Add(asset.Quote, asset);
+    //                    }
+    //                    asset.Free = assetInfo.Available;
+    //                    asset.Locked = assetInfo.Locked;
+    //                    asset.Total = assetInfo.Total;
+
+    //                    if (asset.Id == 0)
+    //                        databaseThread.Connection.Insert(asset, transaction);
+    //                    else
+    //                        databaseThread.Connection.Update(asset, transaction);
+    //                }
+    //            }
+
+    //            // remove assets with total=0
+    //            foreach (var asset in tradeAccount.AssetList.Values.ToList())
+    //            {
+    //                if (asset.Total == 0)
+    //                {
+    //                    databaseThread.Connection.Delete(asset, transaction);
+    //                    tradeAccount.AssetList.Remove(asset.Quote);
+    //                }
+    //            }
+
+    //            transaction.Commit();
+    //        }
+    //        catch (Exception error)
+    //        {
+    //            GlobalData.Logger.Error(error);
+    //            GlobalData.AddTextToLogTab(error.ToString());
+    //            // Als er ooit een rolback plaatsvindt is de database en objects in het geheugen niet meer in sync..
+    //            transaction.Rollback();
+    //            throw;
+    //        }
+    //    }
+    //    finally
+    //    {
+    //        tradeAccount.AssetListSemaphore.Release();
+    //    }
+    //}
+
+
     public override async Task FetchTradesForSymbolAsync(CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
     {
         //await BinanceFetchTrades.FetchTradesForSymbol(tradeAccount, symbol);
@@ -233,51 +296,51 @@ public class Api: ExchangeBase
 
     public async override Task FetchAssetsAsync(CryptoTradeAccount tradeAccount)
     {
-        //    //if (GlobalData.ExchangeListName.TryGetValue(ExchangeName, out Model.CryptoExchange exchange))
-        //    {
-        //        try
-        //        {
-        //            GlobalData.AddTextToLogTab("Reading asset information from Bybit");
+        //if (GlobalData.ExchangeListName.TryGetValue(ExchangeName, out Model.CryptoExchange exchange))
+        {
+            try
+            {
+                GlobalData.AddTextToLogTab($"Reading asset information from {Api.ExchangeName} TODO!!!!");
 
-        //            BybitWeights.WaitForFairWeight(1);
+                //BybitWeights.WaitForFairWeight(1);
 
-        //            using var client = new KucoinRestClient();
-        //            {
-        //                //https://openapi-sandbox.kucoin.com/api/v1/accounts
+                using var client = new KucoinRestClient();
+                {
+                    //https://openapi-sandbox.kucoin.com/api/v1/accounts
 
-        //                var accountInfo = await client.SpotApi.Account.GetAccountAsync();
+                    //var accountInfo = await client.SpotApi.Account.get();
 
-        //                if (!accountInfo.Success)
-        //                {
-        //                    GlobalData.AddTextToLogTab("error getting accountinfo " + accountInfo.Error);
-        //                }
+                    //if (!accountInfo.Success)
+                    //{
+                    //    GlobalData.AddTextToLogTab("error getting accountinfo " + accountInfo.Error);
+                    //}
 
-        //                //Zo af en toe komt er geen data of is de Data niet gezet.
-        //                //De verbindingen naar extern kunnen (tijdelijk) geblokkeerd zijn
-        //                if (accountInfo == null | accountInfo.Data == null)
-        //                    throw new ExchangeException("Geen account data ontvangen");
+                    ////Zo af en toe komt er geen data of is de Data niet gezet.
+                    ////De verbindingen naar extern kunnen (tijdelijk) geblokkeerd zijn
+                    //if (accountInfo == null | accountInfo.Data == null)
+                    //    throw new ExchangeException("Geen account data ontvangen");
 
-        //                try
-        //                {
-        //                    PickupAssets(tradeAccount, accountInfo.Data.Assets);
-        //                    GlobalData.AssetsHaveChanged("");
-        //                }
-        //                catch (Exception error)
-        //                {
-        //                    GlobalData.Logger.Error(error);
-        //                    GlobalData.AddTextToLogTab(error.ToString());
-        //                    throw;
-        //                }
-        //            }
-        //        }
-        //        catch (Exception error)
-        //        {
-        //            GlobalData.Logger.Error(error);
-        //            GlobalData.AddTextToLogTab(error.ToString());
-        //            GlobalData.AddTextToLogTab("");
-        //        }
+                    //try
+                    //{
+                    //    //PickupAssets(tradeAccount, accountInfo.Data.Assets);
+                    //    GlobalData.AssetsHaveChanged("");
+                    //}
+                    //catch (Exception error)
+                    //{
+                    //    GlobalData.Logger.Error(error);
+                    //    GlobalData.AddTextToLogTab(error.ToString());
+                    //    throw;
+                    //}
+                }
+            }
+            catch (Exception error)
+            {
+                GlobalData.Logger.Error(error);
+                GlobalData.AddTextToLogTab(error.ToString());
+                GlobalData.AddTextToLogTab("");
+            }
 
-        //    }
+        }
     }
 
 #endif

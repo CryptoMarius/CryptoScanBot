@@ -10,6 +10,8 @@ using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 
+using Dapper.Contrib.Extensions;
+
 namespace CryptoSbmScanner.Exchange.BybitSpot;
 
 public class Api : ExchangeBase
@@ -271,24 +273,53 @@ public class Api : ExchangeBase
         tradeAccount.AssetListSemaphore.Wait();
         try
         {
-            foreach (var assetInfo in balances.Balances)
-            {
-                // TODO, verder uitzoeken (lijkt de verkeerde info te zijn)
-                //if (assetInfo.QuantityRemaining > 0)
-                {
-                    if (!tradeAccount.AssetList.TryGetValue(assetInfo.Asset, out CryptoAsset asset))
-                    {
-                        asset = new CryptoAsset();
-                        asset.Quote = assetInfo.Asset;
-                        tradeAccount.AssetList.Add(asset.Quote, asset);
-                    }
-                    asset.Total = (decimal)assetInfo.WalletBalance;
-                    asset.Locked = (decimal)assetInfo.WalletBalance - (decimal)assetInfo.TransferBalance;
-                    asset.Free = asset.Total - asset.Locked;
+            using CryptoDatabase databaseThread = new();
+            databaseThread.Open();
 
-                    if (asset.Total == 0)
-                        tradeAccount.AssetList.Remove(asset.Quote);
+            using var transaction = databaseThread.BeginTransaction();
+            try
+            {
+                foreach (var assetInfo in balances.Balances)
+                {
+                    if (assetInfo.WalletBalance > 0)
+                    {
+                        if (!tradeAccount.AssetList.TryGetValue(assetInfo.Asset, out CryptoAsset asset))
+                        {
+                            asset = new CryptoAsset();
+                            asset.Quote = assetInfo.Asset;
+                            asset.TradeAccountId = tradeAccount.Id;
+                            tradeAccount.AssetList.Add(asset.Quote, asset);
+                        }
+                        asset.Total = (decimal)assetInfo.WalletBalance;
+                        asset.Locked = (decimal)assetInfo.WalletBalance - (decimal)assetInfo.TransferBalance;
+                        asset.Free = asset.Total - asset.Locked;
+
+                        if (asset.Id == 0)
+                            databaseThread.Connection.Insert(asset, transaction);
+                        else
+                            databaseThread.Connection.Update(asset, transaction);
+                    }
                 }
+
+                // remove assets with total=0
+                foreach (var asset in tradeAccount.AssetList.Values.ToList())
+                {
+                    if (asset.Total == 0)
+                    {
+                        databaseThread.Connection.Delete(asset, transaction);
+                        tradeAccount.AssetList.Remove(asset.Quote);
+                    }
+                }
+
+                transaction.Commit();
+            }
+            catch (Exception error)
+            {
+                GlobalData.Logger.Error(error);
+                GlobalData.AddTextToLogTab(error.ToString());
+                // Als er ooit een rolback plaatsvindt is de database en objects in het geheugen niet meer in sync..
+                transaction.Rollback();
+                throw;
             }
         }
         finally

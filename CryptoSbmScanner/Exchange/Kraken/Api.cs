@@ -6,6 +6,8 @@ using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 
+using Dapper.Contrib.Extensions;
+
 using Kraken.Net.Clients;
 using Kraken.Net.Enums;
 using Kraken.Net.Objects.Models;
@@ -264,34 +266,65 @@ public class Api : ExchangeBase
         return (false, tradeParams);
     }
 
-        static public void PickupAssets(CryptoTradeAccount tradeAccount, Dictionary<string, KrakenBalanceAvailable> balances)
+    static public void PickupAssets(CryptoTradeAccount tradeAccount, Dictionary<string, KrakenBalanceAvailable> balances)
+    {
+        tradeAccount.AssetListSemaphore.Wait();
+        try
         {
-            tradeAccount.AssetListSemaphore.Wait();
+            using CryptoDatabase databaseThread = new();
+            databaseThread.Open();
+
+            using var transaction = databaseThread.BeginTransaction();
             try
             {
                 foreach (var assetInfo in balances.Values)
                 {
-                    // TODO, verder uitzoeken (lijkt de verkeerde info te zijn)
                     if (assetInfo.Available > 0)
                     {
-                        //if (!tradeAccount.AssetList.TryGetValue(assetInfo.Asset, out CryptoAsset asset))
-                        //{
-                        //    asset = new CryptoAsset();
-                        //    asset.Quote = assetInfo.Asset;
-                        //    tradeAccount.AssetList.Add(asset.Quote, asset);
-                        //}
-                        //asset.Free = assetInfo.Available;
-                        //asset.Total = assetInfo.Total;
-                        //asset.Locked = assetInfo.Locked;
+                        if (!tradeAccount.AssetList.TryGetValue(assetInfo.Asset, out CryptoAsset asset))
+                        {
+                            asset = new CryptoAsset()
+                            {
+                                Quote = assetInfo.Asset,
+                                TradeAccountId = tradeAccount.Id,
+                            };
+                            tradeAccount.AssetList.Add(asset.Quote, asset);
+                        }
+                        asset.Free = assetInfo.Available;
+                        asset.Locked = assetInfo.Locked;
+                        asset.Total = assetInfo.Total;
 
-                        //if (asset.Total == 0)
-                        //    tradeAccount.AssetList.Remove(asset.Quote);
+                        if (asset.Id == 0)
+                            databaseThread.Connection.Insert(asset, transaction);
+                        else
+                            databaseThread.Connection.Update(asset, transaction);
                     }
                 }
+
+                // remove assets with total=0
+                foreach (var asset in tradeAccount.AssetList.Values.ToList())
+                {
+                    if (asset.Total == 0)
+                    {
+                        databaseThread.Connection.Delete(asset, transaction);
+                        tradeAccount.AssetList.Remove(asset.Quote);
+                    }
+                }
+
+                transaction.Commit();
             }
-            finally
+            catch (Exception error)
             {
-                tradeAccount.AssetListSemaphore.Release();
+                GlobalData.Logger.Error(error);
+                GlobalData.AddTextToLogTab(error.ToString());
+                // Als er ooit een rolback plaatsvindt is de database en objects in het geheugen niet meer in sync..
+                transaction.Rollback();
+                throw;
+            }
+        }
+        finally
+        {
+            tradeAccount.AssetListSemaphore.Release();
         }
     }
 
@@ -304,7 +337,7 @@ public class Api : ExchangeBase
         trade.Symbol = symbol;
         trade.SymbolId = symbol.Id;
 
-        //trade.TradeId = long.Parse(item.TradeId); // todo, dat is waarschijnlijk conversie voor nodig
+        trade.TradeId = item.Id;
         trade.OrderId = item.OrderId;
         //trade.OrderListId = (long)item.OrderListId;
 
@@ -319,11 +352,7 @@ public class Api : ExchangeBase
         trade.CommissionAsset = symbol.Quote; // item.FeeAsset;?
 
         trade.TradeTime = item.Timestamp;
-
-        if (item.Side == OrderSide.Buy)
-            trade.Side = CryptoOrderSide.Buy;
-        else
-            trade.Side = CryptoOrderSide.Sell;
+        trade.Side = LocalOrderSide(item.Side);
     }
 
 
@@ -336,7 +365,8 @@ public class Api : ExchangeBase
     //    trade.Symbol = symbol;
     //    trade.SymbolId = symbol.Id;
 
-    //    trade.TradeId = item.TradeId;
+    //    //TODO: Uitzoeken!!!!
+    //    //trade.TradeId = item.TradeId; Ehhhh????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
     //    trade.OrderId = item.Id;
     //    //trade.OrderListId = item.OrderListId;
 
@@ -347,21 +377,17 @@ public class Api : ExchangeBase
     //    //if (item.QuoteQuantity == 0)
     //    //    GlobalData.AddTextToLogTab(string.Format("{0} PickupTrade#2stream QuoteQuantity is 0 for order TradeId={1}!", symbol.Name, trade.TradeId));
 
+    //    trade.TradeTime = item.Timestamp;
+    //    trade.Side = LocalOrderSide(item.Side);
+
     //    trade.Commission = item.Fee;
-    //    trade.CommissionAsset = item.FeeAsset;
-
-    //    trade.TradeTime = item.EventTime;
-
-    //    if (item.Side == OrderSide.Buy)
-    //        trade.Side = CryptoOrderSide.Buy;
-    //    else
-    //        trade.Side = CryptoOrderSide.Sell;
+    //    trade.CommissionAsset = symbol.Quote; // item.FeeAsset; ??????
     //}
 
 
     public override async Task FetchTradesForSymbolAsync(CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
     {
-        await FetchTrades.FetchTradesForSymbol(tradeAccount, symbol);
+        await FetchTrades.FetchTradesForSymbolAsync(tradeAccount, symbol);
     }
 
     public async override Task FetchAssetsAsync(CryptoTradeAccount tradeAccount)
@@ -377,7 +403,6 @@ public class Api : ExchangeBase
                 using var client = new KrakenRestClient();
                 {
                     var accountInfo = await client.SpotApi.Account.GetAvailableBalancesAsync();
-
                     if (!accountInfo.Success)
                     {
                         GlobalData.AddTextToLogTab("error getting accountinfo " + accountInfo.Error);
@@ -417,12 +442,14 @@ public class Api : ExchangeBase
         TaskBybitStreamUserData = new UserDataStream();
         var _ = Task.Run(async () => { await TaskBybitStreamUserData.ExecuteAsync(); });
     }
+
     public static async Task StopUserDataStream()
     {
         if (TaskBybitStreamUserData != null)
             await TaskBybitStreamUserData?.StopAsync();
         TaskBybitStreamUserData = null;
     }
+
     public static void ResetUserDataStream()
     {
         // niets, hmm

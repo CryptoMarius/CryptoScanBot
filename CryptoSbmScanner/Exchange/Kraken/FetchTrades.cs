@@ -23,7 +23,7 @@ public class FetchTrades
     /// <summary>
     /// Haal de trades van 1 symbol op
     /// </summary>
-    public static async Task<int> FetchTradesForSymbol(CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
+    public static async Task<int> FetchTradesForSymbolAsync(CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
     {
         using KrakenRestClient client = new();
         return await FetchTradesInternal(client, tradeAccount, symbol);

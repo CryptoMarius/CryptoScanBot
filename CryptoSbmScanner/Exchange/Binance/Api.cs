@@ -14,6 +14,8 @@ using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 
+using Dapper.Contrib.Extensions;
+
 namespace CryptoSbmScanner.Exchange.Binance;
 
 
@@ -375,25 +377,55 @@ public class Api : ExchangeBase
         tradeAccount.AssetListSemaphore.Wait();
         try
         {
-            foreach (var assetInfo in balances)
-            {
-                if (assetInfo.Total > 0)
-                {
-                    if (!tradeAccount.AssetList.TryGetValue(assetInfo.Asset, out CryptoAsset asset))
-                    {
-                        asset = new CryptoAsset()
-                        {
-                            Quote = assetInfo.Asset,
-                        };
-                        tradeAccount.AssetList.Add(asset.Quote, asset);
-                    }
-                    asset.Free = assetInfo.Available;
-                    asset.Total = assetInfo.Total;
-                    asset.Locked = assetInfo.Locked;
+            using CryptoDatabase databaseThread = new();
+            databaseThread.Open();
 
-                    if (asset.Total == 0)
-                        tradeAccount.AssetList.Remove(asset.Quote);
+            using var transaction = databaseThread.BeginTransaction();
+            try
+            {
+                foreach (var assetInfo in balances)
+                {
+                    if (assetInfo.Total > 0)
+                    {
+                        if (!tradeAccount.AssetList.TryGetValue(assetInfo.Asset, out CryptoAsset asset))
+                        {
+                            asset = new CryptoAsset()
+                            {
+                                Quote = assetInfo.Asset,
+                                TradeAccountId = tradeAccount.Id,
+                            };
+                            tradeAccount.AssetList.Add(asset.Quote, asset);
+                        }
+                        asset.Free = assetInfo.Available;
+                        asset.Locked = assetInfo.Locked;
+                        asset.Total = assetInfo.Total;
+
+                        if (asset.Id == 0)
+                            databaseThread.Connection.Insert(asset, transaction);
+                        else
+                            databaseThread.Connection.Update(asset, transaction);
+                    }
                 }
+
+                // remove assets with total=0
+                foreach (var asset in tradeAccount.AssetList.Values.ToList())
+                {
+                    if (asset.Total == 0)
+                    {
+                        databaseThread.Connection.Delete(asset, transaction);
+                        tradeAccount.AssetList.Remove(asset.Quote);
+                    }
+                }
+
+                transaction.Commit();
+            }
+            catch (Exception error)
+            {
+                GlobalData.Logger.Error(error);
+                GlobalData.AddTextToLogTab(error.ToString());
+                // Als er ooit een rolback plaatsvindt is de database en objects in het geheugen niet meer in sync..
+                transaction.Rollback();
+                throw;
             }
         }
         finally
@@ -421,10 +453,19 @@ public class Api : ExchangeBase
                     asset.Free = assetInfo.Available;
                     asset.Total = assetInfo.Total;
                     asset.Locked = assetInfo.Locked;
-
-                    if (asset.Total == 0)
-                        tradeAccount.AssetList.Remove(asset.Quote);
                 }
+
+                // remove assets with total=0
+                foreach (var asset in tradeAccount.AssetList.Values.ToList())
+                {
+                    if (asset.Total == 0)
+                    {
+                        //TODO: Save in database?
+
+                        tradeAccount.AssetList.Remove(asset.Quote);
+                    }
+                }
+
             }
             finally
             {
@@ -508,7 +549,7 @@ public class Api : ExchangeBase
         {
             try
             {
-                GlobalData.AddTextToLogTab("Reading asset information from Binance");
+                GlobalData.AddTextToLogTab($"Reading asset information from {Api.ExchangeName}");
 
                 LimitRates.WaitForFairWeight(1);
 
