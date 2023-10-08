@@ -12,6 +12,8 @@ public class CryptoExchange
     // Datum dat de laatste keer de exchange informatie is opgehaald
     public DateTime? LastTimeFetched { get; set; }
 
+    public decimal? FeeRate { get; set; }
+
     // Coins indexed on id and name
     [Computed]
     public SortedList<int, CryptoSymbol> SymbolListId { get; } = new();

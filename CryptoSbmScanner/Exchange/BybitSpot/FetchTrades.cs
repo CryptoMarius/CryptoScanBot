@@ -57,6 +57,7 @@ public class FetchTrades
                 if (!result.Success)
                 {
                     GlobalData.AddTextToLogTab("error getting mytrades " + result.Error);
+                    break;
                 }
 
 
@@ -90,12 +91,10 @@ public class FetchTrades
 
 
             // Verwerk de trades
-            if (tradeAccount.Id > 0) // debug
+            if (tradeAccount.Id > 0 && tradeCache.Count > 0)
             {
                 using CryptoDatabase databaseThread = new();
                 {
-                    // Extra close vanwege transactie problemen (hergebuik van connecties wellicht?)
-                    databaseThread.Close();
                     databaseThread.Open();
                     try
                     {

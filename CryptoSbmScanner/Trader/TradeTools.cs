@@ -2,12 +2,35 @@
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 using Dapper;
+using Dapper.Contrib.Extensions;
 
 namespace CryptoSbmScanner.Trader;
 
 #if TRADEBOT
 public class TradeTools
 {
+    static public void LoadAssets()
+    {
+        GlobalData.AddTextToLogTab("Reading asset information");
+
+        // ALLE assets laden
+        foreach (var account in GlobalData.TradeAccountList.Values.ToList())
+        {
+            account.AssetList.Clear();
+        }
+
+
+        using var database = new CryptoDatabase();
+        foreach (CryptoAsset asset in database.Connection.GetAll<CryptoAsset>())
+        {
+            if (GlobalData.TradeAccountList.TryGetValue(asset.TradeAccountId, out var account))
+            {
+                account.AssetList.Add(asset.Name, asset);
+            }
+        }
+       
+    }
+
 
     static public void LoadClosedPositions()
     {

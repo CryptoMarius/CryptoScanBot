@@ -1,6 +1,5 @@
 ﻿using CryptoSbmScanner.Context;
 using CryptoSbmScanner.Enums;
-using CryptoSbmScanner.Exchange;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 
@@ -15,12 +14,18 @@ public class PaperTrading
     public static async Task CreatePaperTradeObject(CryptoDatabase Database, CryptoPosition position, CryptoPositionStep step, decimal price, DateTime LastCandle1mCloseTimeDate)
     {
         // Als een surrogaat van de exchange...
+        var symbol = position.Symbol;
+
+        // full commission = 0.1, met BNB korting=0.075 (zonder kickback, anders was het 0.065?)
+        decimal feeRate = 0.1m;
+        if (position.Exchange.FeeRate.HasValue)
+            feeRate = (decimal)position.Exchange.FeeRate;
 
         CryptoTrade trade = new()
         {
             TradeAccount = position.TradeAccount,
             TradeAccountId = position.TradeAccountId,
-            Exchange = position.Symbol.Exchange,
+            Exchange = symbol.Exchange,
             ExchangeId = position.ExchangeId,
             Symbol = position.Symbol,
             SymbolId = position.SymbolId,
@@ -30,8 +35,8 @@ public class PaperTrading
             Quantity = step.Quantity,
             QuoteQuantity = step.Quantity * price, // (via de meegegeven prijs)
 
-            Commission = step.Quantity * price * 0.1m / 100m, // full commission, met BNB korting=0.075 (zonder kickback, anders was het 0.065?)
-            CommissionAsset = position.Symbol.Quote,
+            Commission = step.Quantity * price * feeRate / 100m, // commission, zou ook per quote of munt kunnen?
+            CommissionAsset = symbol.Quote,
 
             TradeId = Database.CreateNewUniqueId(), // Een fake trade ID (als er maar een getal in zit)
             Side = step.Side,
@@ -42,13 +47,23 @@ public class PaperTrading
 
 
         // bewaar de gemaakte trade
-        using CryptoDatabase databaseThread = new();
-        databaseThread.Open();
-        databaseThread.Connection.Insert<CryptoTrade>(trade);
-        GlobalData.AddTrade(trade);
+        using CryptoDatabase database = new();
+        database.Open();
+
+        using (var transaction = database.BeginTransaction())
+        {
+            database.Connection.Insert<CryptoTrade>(trade, transaction);
+            GlobalData.AddTrade(trade);
+            transaction.Commit();
+        }
 
         await TradeHandler.HandleTradeAsync(position.Symbol, step.OrderType, step.Side, CryptoOrderStatus.Filled, trade);
+
+        PaperAssets.Change(position.TradeAccount, position.Symbol, trade.Side, CryptoOrderStatus.Filled, trade.Quantity, trade.QuoteQuantity);
     }
+
+
+
 
 
     /// <summary>

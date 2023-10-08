@@ -1,11 +1,8 @@
 ﻿using System.Text;
-
 using CryptoSbmScanner.Context;
 using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
-
-using Dapper.Contrib.Extensions;
 
 namespace CryptoSbmScanner.Exchange;
 
@@ -23,7 +20,12 @@ public abstract class ExchangeBase
 #if TRADEBOT
     public abstract Task FetchAssetsAsync(CryptoTradeAccount tradeAccount);
     public abstract Task FetchTradesForSymbolAsync(CryptoTradeAccount tradeAccount, CryptoSymbol symbol);
+    public abstract Task<(bool succes, TradeParams tradeParams)> Cancel(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoPositionStep step);
 
+    public abstract Task<(bool result, TradeParams tradeParams)> BuyOrSell(CryptoDatabase database, 
+        CryptoTradeAccount tradeAccount, CryptoSymbol symbol, DateTime currentDate,
+        CryptoOrderType orderType, CryptoOrderSide orderSide,
+        decimal quantity, decimal price, decimal? stop, decimal? limit);
 
     private static string DumpOrder(CryptoSymbol symbol, TradeParams tradeParams, string extraText)
     {

@@ -532,16 +532,16 @@ public class CryptoDatabase : IDisposable
         Connection.Close();
     }
 
-    private static bool ExistsTable(CryptoDatabase connection, string tableName)
+    private static bool MissingTable(CryptoDatabase connection, string tableName)
     {
-        string sql = $"SELECT name FROM sqlite_master WHERE type='table' AND name = 'tableName';";
+        string sql = $"SELECT name FROM sqlite_master WHERE type='table' AND name = '{tableName}';";
         return string.IsNullOrEmpty(connection.Connection.Query<string>(sql).FirstOrDefault());
     }
 
 
     private static void CreateTableVersion(CryptoDatabase connection)
     {
-        if (!ExistsTable(connection, "Version"))
+        if (MissingTable(connection, "Version"))
         {
             connection.Connection.Execute("CREATE TABLE [Version] (" +
                 "Id integer primary key autoincrement not null," +
@@ -561,7 +561,7 @@ public class CryptoDatabase : IDisposable
 
     private static void CreateTableSequence(CryptoDatabase connection)
     {
-        if (!ExistsTable(connection, "Sequence"))
+        if (MissingTable(connection, "Sequence"))
         {
             connection.Connection.Execute("CREATE TABLE [Sequence] (" +
                 "Id integer primary key autoincrement not null," +
@@ -574,7 +574,7 @@ public class CryptoDatabase : IDisposable
 
     private static void CreateTableInterval(CryptoDatabase connection)
     {
-        if (!ExistsTable(connection, "Interval"))
+        if (MissingTable(connection, "Interval"))
         {
             connection.Connection.Execute("CREATE TABLE [Interval] (" +
                 "Id integer primary key autoincrement not null," +
@@ -634,11 +634,12 @@ public class CryptoDatabase : IDisposable
 
     private static void CreateTableExchange(CryptoDatabase connection)
     {
-        if (!ExistsTable(connection, "Exchange"))
+        if (MissingTable(connection, "Exchange"))
         {
             connection.Connection.Execute("CREATE TABLE [Exchange] (" +
                  "Id integer primary key autoincrement not null," +
-                "LastTimeFetched TEXT NULL," +                 
+                "LastTimeFetched TEXT NULL," +
+                "LastTimeFetched FeeRate TEXT," +
                  "Name TEXT not NULL" +
             ")");
             connection.Connection.Execute("CREATE INDEX IdxExchangeId ON Exchange(Id)");
@@ -651,17 +652,16 @@ public class CryptoDatabase : IDisposable
             Model.CryptoExchange exchange = new() { Name = "Binance" };
             connection.Connection.Insert(exchange, transaction);
 
-            exchange = new() { Name = "Bybit Spot" };
+            exchange = new() { Name = "Bybit Spot", FeeRate =0.01m};
             connection.Connection.Insert(exchange, transaction);
 
-            exchange = new() { Name = "Bybit Futures" };
+            exchange = new() { Name = "Bybit Futures", FeeRate = 0.01m };
             connection.Connection.Insert(exchange, transaction);
 
-            exchange = new() { Name = "Kucoin" };
+            exchange = new() { Name = "Kucoin", FeeRate = 0.01m };
             connection.Connection.Insert(exchange, transaction);
 
-            // v5
-            exchange = new() { Name = "Kraken" };
+            exchange = new() { Name = "Kraken", FeeRate = 0.01m };
             connection.Connection.Insert(exchange, transaction);
 
             transaction.Commit();
@@ -670,7 +670,7 @@ public class CryptoDatabase : IDisposable
 
     private static void CreateTableTradeAccount(CryptoDatabase connection)
     {
-        if (!ExistsTable(connection, "TradeAccount"))
+        if (MissingTable(connection, "TradeAccount"))
         {
             connection.Connection.Execute("CREATE TABLE [TradeAccount] (" +
                 "Id integer primary key autoincrement not null," +
@@ -851,7 +851,7 @@ public class CryptoDatabase : IDisposable
 
     private static void CreateTableSymbol(CryptoDatabase connection)
     {
-        if (!ExistsTable(connection, "Symbol"))
+        if (MissingTable(connection, "Symbol"))
         {
             connection.Connection.Execute("CREATE TABLE [Symbol] (" +
                 "Id INTEGER primary key autoincrement not null," +
@@ -900,7 +900,7 @@ public class CryptoDatabase : IDisposable
     //private static void CreateTableSymbolInterval(CryptoDatabase connection)
     //{
     //    // SymbolInterval (administratie, maar overlapt met de bestanden, via bestand is beter denk ik, rest is overkill)
-    //    if (!ExistsTable(connection, "SymbolInterval"))
+    //    if (MissingTable(connection, "SymbolInterval"))
     //    {
     //        connection.Connection.Execute("CREATE TABLE [SymbolInterval] (" +
     //            "Id INTEGER primary key autoincrement not null," +
@@ -924,7 +924,7 @@ public class CryptoDatabase : IDisposable
 
     private static void CreateTableSignal(CryptoDatabase connection)
     {
-        if (!ExistsTable(connection, "Signal"))
+        if (MissingTable(connection, "Signal"))
         {
             connection.Connection.Execute("CREATE TABLE [Signal] (" +
                 "Id integer primary key autoincrement not null," +
@@ -1004,7 +1004,7 @@ public class CryptoDatabase : IDisposable
 
     private static void CreateTablePosition(CryptoDatabase connection)
     {
-        if (!ExistsTable(connection, "Position"))
+        if (MissingTable(connection, "Position"))
         {
             connection.Connection.Execute("CREATE TABLE [Position] (" +
                 "Id integer primary key autoincrement not null," +
@@ -1052,7 +1052,7 @@ public class CryptoDatabase : IDisposable
 
     private static void CreateTablePositionPart(CryptoDatabase connection)
     {
-        if (!ExistsTable(connection, "PositionPart"))
+        if (MissingTable(connection, "PositionPart"))
         {
             connection.Connection.Execute("CREATE TABLE [PositionPart] (" +
                 "Id integer primary key autoincrement not null," +
@@ -1066,7 +1066,7 @@ public class CryptoDatabase : IDisposable
                 "Name TEXT NULL," +
                 "CreateTime TEXT NOT NULL," +
                 "CloseTime TEXT NULL," +
-                "Status INTEGER NOT NULL," +
+                //"Status INTEGER NOT NULL," + Miet relevant, controle op CloseTime werkt ook
 
                 "Invested TEXT NULL," +
                 "Commission TEXTNULL," +
@@ -1097,7 +1097,7 @@ public class CryptoDatabase : IDisposable
 
     private static void CreateTablePositionStep(CryptoDatabase connection)
     {
-        if (!ExistsTable(connection, "PositionStep"))
+        if (MissingTable(connection, "PositionStep"))
         {
             connection.Connection.Execute("CREATE TABLE [PositionStep] (" +
                 "Id integer primary key autoincrement not null," +
@@ -1105,7 +1105,7 @@ public class CryptoDatabase : IDisposable
                 "PositionPartId integer NOT NULL," +
                 "CreateTime TEXT NOT NULL," +
                 "CloseTime TEXT NULL," +
-                "Name TEXT NOT NULL," +
+                //"Name TEXT NOT NULL," + =Hetzelfde als de side
                 "Status INTEGER NOT NULL," +
                 "Side INTEGER NOT NULL," +
                 "OrderType INTEGER NOT NULL," +
@@ -1138,7 +1138,7 @@ public class CryptoDatabase : IDisposable
     // Order (de order zoals Binance geplaatst heeft <kan geannuleerd zijn>)
     // Besloten dat momenteel alleen trades van belang zijn
 
-    //if (!ExistsTable(connection, "Order"))
+    //if (MissingTable(connection, "Order"))
     //{
     //    Connection.Execute("CREATE TABLE [Order] (" +
     //        "Id integer primary key autoincrement not null," +
@@ -1175,7 +1175,7 @@ public class CryptoDatabase : IDisposable
 
     private static void CreateTableTrade(CryptoDatabase connection)
     {
-        if (!ExistsTable(connection, "Trade"))
+        if (MissingTable(connection, "Trade"))
         {
             connection.Connection.Execute("CREATE TABLE [Trade] (" +
                 "Id integer primary key autoincrement not null," +
@@ -1215,13 +1215,13 @@ public class CryptoDatabase : IDisposable
 
     private static void CreateTableAsset(CryptoDatabase connection)
     {
-        if (!ExistsTable(connection, "Asset"))
+        if (MissingTable(connection, "Asset"))
         {
             connection.Connection.Execute("CREATE TABLE [Asset] (" +
                 "Id integer primary key autoincrement not null," +
                 "TradeAccountId integer," +
 
-                "Quote TEXT NOT NULL," +
+                "Name TEXT NOT NULL," +
                 "Total TEXT NOT NULL," +
                 "Free TEXT NOT NULL," +
                 "Locked TEXT NOT NULL," +
@@ -1237,7 +1237,7 @@ public class CryptoDatabase : IDisposable
     //private static void CreateTableBalancing(CryptoDatabase connection)
     //{
     //    //// Balance (echt? weet niet waarom we dit op deze manier opslaan, balanceren doe je binnen groep, die mis ik, een oude versie wellicht?)
-    //    if (!ExistsTable(connection, "Balance"))
+    //    if (MissingTable(connection, "Balance"))
     //    //{
     //    //    connection.Connection.Execute("CREATE TABLE [Balance] (" +
     //    //        "Id integer primary key autoincrement not null," +

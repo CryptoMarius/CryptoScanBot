@@ -1,11 +1,11 @@
-using System.Text.Encodings.Web;
-using System.Text.Json;
+//using System.Text.Encodings.Web;
+//using System.Text.Json;
 
-using Bybit.Net.Clients;
-using Bybit.Net.Enums;
-using Bybit.Net.Objects;
-using Bybit.Net.Objects.Models.V5;
-using Bybit.Net.Objects.Models.Socket;
+//using Bybit.Net.Clients;
+//using Bybit.Net.Enums;
+//using Bybit.Net.Objects;
+//using Bybit.Net.Objects.Models.V5;
+//using Bybit.Net.Objects.Models.Socket;
 
 //using Binance.Net.Clients;
 //using Binance.Net.Enums;
@@ -19,18 +19,17 @@ using Bybit.Net.Objects.Models.Socket;
 //using CryptoExchange.Net.Sockets;
 //using CryptoExchange.Net.Authentication;
 
-using Kucoin.Net.Clients;
-using Kucoin.Net.Enums;
-using Kucoin.Net.Objects.Models.Spot;
+//using Kucoin.Net.Clients;
+//using Kucoin.Net.Enums;
+//using Kucoin.Net.Objects.Models.Spot;
 
-using CryptoSbmScanner.Model;
-using CryptoSbmScanner.Intern;
-using CryptoSbmScanner.Enums;
+using CryptoSbmScanner;
 using CryptoSbmScanner.Context;
-using CryptoExchange.Net.Objects;
-
-using Microsoft.Extensions.Logging;
-using CryptoExchange.Net.Authentication;
+using CryptoSbmScanner.Enums;
+using CryptoSbmScanner.Exchange;
+using CryptoSbmScanner.Intern;
+using CryptoSbmScanner.Model;
+using CryptoSbmScanner.Trader;
 
 namespace ExchangeTest;
 
@@ -74,20 +73,57 @@ public partial class Form1 : Form
 
     //private static int first = 1;
     //public object BinanceClient { get; private set; }
-    CryptoDatabase Database;
+    //CryptoDatabase Database;
+    ExchangeBase ExchangeApi;
 
     public Form1()
     {
         InitializeComponent();
 
+       
         GlobalData.LogToLogTabEvent += new AddTextEvent(AddTextToLogTab);
+
         CryptoDatabase.SetDatabaseDefaults();
         GlobalData.LoadExchanges();
         GlobalData.LoadIntervals();
-        GlobalData.LoadAccounts();
-        Database = new();
 
+        // Is er via de command line aangegeven dat we default een andere exchange willen?
+        {
+            ApplicationParams.InitApplicationOptions();
+
+            string exchangeName = ApplicationParams.Options.ExchangeName;
+            if (exchangeName != null)
+            {
+                // De default exchange is Binance (geen goede keuze in NL op dit moment)
+                if (exchangeName == "")
+                    exchangeName = "Binance";
+                if (GlobalData.ExchangeListName.TryGetValue(exchangeName, out var exchange))
+                {
+                    GlobalData.Settings.General.Exchange = exchange;
+                    GlobalData.Settings.General.ExchangeId = exchange.Id;
+                    GlobalData.Settings.General.ExchangeName = exchange.Name;
+                }
+                else throw new Exception(string.Format("Exchange {0} bestaat niet", exchangeName));
+            }
+        }
+
+
+        GlobalData.LoadAccounts();
+        GlobalData.LoadSymbols();
+        ExchangeHelper.ExchangeDefaults();
         GlobalData.ApplicationStatus = CryptoApplicationStatus.Running;
+
+        //Database = new();
+        ExchangeApi = ExchangeHelper.GetExchangeInstance(GlobalData.Settings.General.ExchangeId);
+
+        GlobalData.Settings.Trading.ApiKey = "";
+        GlobalData.Settings.Trading.ApiSecret = "";
+
+        //GlobalData.Settings.General.Exchange = exchange;
+        //GlobalData.Settings.General.ExchangeId = exchange.Id;
+        //GlobalData.Settings.General.ExchangeName = exchange.Name;
+
+
         //BinanceTestAsync();
         ByBitTestAsync();
         //KucoinTest();
@@ -117,7 +153,7 @@ public partial class Form1 : Form
         }
     }
 
-    private static string baseUrl = "https://api.mexc.com";
+    //private static string baseUrl = "https://api.mexc.com";
 
     //private async Task<string> SendAsync(HttpClient httpClient, string requestUri, HttpMethod httpMethod, object content = null)
     //{
@@ -150,10 +186,10 @@ public partial class Form1 : Form
     {
         try
         {
-            string text;
-            string apiKey = "your apikey";
-            string apiSecret = "your secret";
-            string BaseUrl = "https://api.mexc.com";
+            //string text;
+            //string apiKey = "your apikey";
+            //string apiSecret = "your secret";
+            //string BaseUrl = "https://api.mexc.com";
 
             HttpClient httpClient = new HttpClient();
             //MexcService service = new(apiKey, apiSecret, BaseUrl, httpClient);
@@ -519,7 +555,7 @@ public partial class Form1 : Form
         try
         {
             // Problemen met de opties, met name de AutoTimestamp en Reconnect wil ik hebben
-            string text;
+            //string text;
 
             //IServiceCollection serviceCollection = new ServiceCollection();
             //serviceCollection.AddBinance()
@@ -591,12 +627,12 @@ public partial class Form1 : Form
             //File.WriteAllText("E:\\ByBit\\inverseFuturesApi.json", text);
 
 
-            GlobalData.Settings.General.ExchangeId = 4;
-            GlobalData.Settings.General.ExchangeId = 4;
+            //GlobalData.Settings.General.ExchangeId = 4;
+            //GlobalData.Settings.General.ExchangeId = 4;
 
-            CryptoTradeAccount account = new();
-            account.Name = "Fictief";
-            GlobalData.TradeAccountList.TryAdd(account.Id, account);
+            //CryptoTradeAccount account = new();
+            //account.Name = "Fictief";
+            //GlobalData.TradeAccountList.TryAdd(account.Id, account);
 
             /*
               {
@@ -620,36 +656,33 @@ public partial class Form1 : Form
               },             
             */
 
-            GlobalData.Settings.Trading.ApiKey = "";
-            GlobalData.Settings.Trading.ApiSecret = "";
-            
 
-            var api = new CryptoSbmScanner.Exchange.BybitSpot.Api();
-            api.ExchangeDefaults();
+            CryptoTradeAccount account = GlobalData.ExchangePaperTradeAccount;
 
-            if (!GlobalData.ExchangeListName.TryGetValue("Bybit Spot", out CryptoSbmScanner.Model.CryptoExchange exchange))
+            CryptoSbmScanner.Model.CryptoExchange exchange = GlobalData.Settings.General.Exchange;
+
+            if (!exchange.SymbolListName.TryGetValue("BTCUSDT", out CryptoSymbol symbol))
                 return;
+            //CryptoSymbol symbol = new()
+            //{
+            //    Id = -1,
+            //    Status = 1,
+            //    Name = "BTCUSDT",
+            //    Base = "BTC",
+            //    Quote = "USDT",
+            //    Exchange = exchange,
+            //    ExchangeId = exchange.Id,
+            //    PriceTickSize = 0.01000000m,
+            //    PriceMinimum = 0.01000000m,
+            //    PriceMaximum = 1000000m,
+
+            //    QuantityTickSize = 0.00001000m,
+            //    QuantityMinimum = 0.00001000m,
+            //    QuantityMaximum = 9000.00000000m
+            //};
+            //GlobalData.AddSymbol(symbol);
 
 
-            CryptoSymbol symbol = new()
-            {
-                Id = -1,
-                Status = 1,
-                Name = "BTCUSDT",
-                Base = "BTC",
-                Quote = "USDT",
-                Exchange = exchange,
-                ExchangeId = exchange.Id,
-                PriceTickSize = 0.01000000m,
-                PriceMinimum = 0.01000000m,
-                PriceMaximum = 1000000m,
-
-                QuantityTickSize = 0.00001000m,
-                QuantityMinimum = 0.00001000m,
-                QuantityMaximum = 9000.00000000m
-            };
-            GlobalData.AddSymbol(symbol);
-            
 
             // Werkt zoals ik het verwacht! een buy order van ongeveer 1.6 dollar
             //var (result, tradeParams) = await api.BuyOrSell(Database, GlobalData.ExchangeRealTradeAccount, symbol, DateTime.Now, 
@@ -712,17 +745,17 @@ public partial class Form1 : Form
             ////File.WriteAllText("E:\\ByBit\\v5OptionTickers.json", text);
 
 
-            List<string> symbols = new();
-            symbols.Add("ETHBTC");
-            symbols.Add("BTCUSDT");
-            symbols.Add("ETHUSDT");
-            symbols.Add("ADAUSDT");
-            symbols.Add("XRPUSDT");
-            symbols.Add("PENDLEUSDT");
-            symbols.Add("XRPUSDT");
-            symbols.Add("EOSUSDT");
-            symbols.Add("XRPBTC");
-            symbols.Add("DOTUSDT");
+            //List<string> symbols = new();
+            //symbols.Add("ETHBTC");
+            //symbols.Add("BTCUSDT");
+            //symbols.Add("ETHUSDT");
+            //symbols.Add("ADAUSDT");
+            //symbols.Add("XRPUSDT");
+            //symbols.Add("PENDLEUSDT");
+            //symbols.Add("XRPUSDT");
+            //symbols.Add("EOSUSDT");
+            //symbols.Add("XRPBTC");
+            //symbols.Add("DOTUSDT");
 
             //symbols.Add("XLMUSDT");
             //symbols.Add("LTCUSDT");
@@ -785,17 +818,55 @@ public partial class Form1 : Form
             //t.Wait();
 
 
+            // BTC asset
+            if (!account.AssetList.TryGetValue("BTC", out CryptoAsset assetBtc))
+            {
+                assetBtc = new CryptoAsset()
+                {
+                    Name = "BTC",
+                    TradeAccountId = account.Id,
+                };
+                account.AssetList.Add(assetBtc.Name, assetBtc);
+            }
+            assetBtc.Total = 10;
+
+            // USDT asset
+            if (!account.AssetList.TryGetValue("USDT", out CryptoAsset assetUsdt))
+            {
+                assetUsdt = new CryptoAsset()
+                {
+                    Name = "USDT",
+                    TradeAccountId = account.Id,
+                };
+                account.AssetList.Add(assetUsdt.Name, assetUsdt);
+            }
+            assetUsdt.Total = 100000;
+
+
+            // Initieel
+            PaperAssets.Change(account, symbol, CryptoOrderSide.Buy, CryptoOrderStatus.New, 1, 10);
+            // Wordt gevuld
+            PaperAssets.Change(account, symbol, CryptoOrderSide.Buy, CryptoOrderStatus.Filled, 1, 10);
+
+            // Initieel
+            PaperAssets.Change(account, symbol, CryptoOrderSide.Sell, CryptoOrderStatus.New, 1, 10);
+            // Wordt gevuld
+            PaperAssets.Change(account, symbol, CryptoOrderSide.Sell, CryptoOrderStatus.Filled, 1, 10.05m);
+
+
+
             GlobalData.AddTextToLogTab($"Balance: {account.Name}");
-            await api.FetchAssetsAsync(account);
+            await ExchangeApi.FetchAssetsAsync(account);
 
             foreach (var asset in account.AssetList.Values)
             {
-                GlobalData.AddTextToLogTab($"Quote={asset.Quote} Total={asset.Total} Free={asset.Free} Locked={asset.Locked}");
+                GlobalData.AddTextToLogTab($"Quote={asset.Name} Total={asset.Total} Free={asset.Free} Locked={asset.Locked}");
             }
+
 
             GlobalData.AddTextToLogTab("");
             GlobalData.AddTextToLogTab($"Trades: {symbol.Name}");
-            await api.FetchTradesForSymbolAsync(account, symbol);
+            await ExchangeApi.FetchTradesForSymbolAsync(account, symbol);
 
             foreach (var trade in symbol.TradeList.Values)
             {

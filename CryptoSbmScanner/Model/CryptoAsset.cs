@@ -11,7 +11,7 @@ public class CryptoAsset
     public int TradeAccountId { get; set; }
 
     // De basismunt (BTC, ETH, USDT, BUSD enzovoort)
-    public string Quote { get; set; }
+    public string Name { get; set; }
 
     public decimal Total { get; set; }
     public decimal Free { get; set; }

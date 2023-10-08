@@ -77,6 +77,7 @@ TODO: Error control DoSwitchCrossIsolatedMarginAsync()
 
 xx-xx-2023 1.8.7
 Het lijkt alsof de CPU belasting is toegenomen (ondanks uitzetten verversing) - Wellicht windows Update perikelen, want daarna was het beter? Kan ook door de interne Edge veroorzaakt worden?
+- Trading - Een start gemaakt met asset management voor papertrading.....
 
 - Trading - Een geannuleerde buy order (door lage barometer of tradingrules) wordt later herplaatst maar met de oude prijs. Controle op de laatste prijs ingebouwd.
 - Trading - Statistiek, de x en y-as van de grafieken worden niet bijgewerkt waardoor het juiste aantal trades en winst niet zichtbaar zijn (punten liggen buiten de chart als het ware, herstart nodig)

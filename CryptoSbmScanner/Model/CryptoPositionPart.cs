@@ -46,9 +46,6 @@ public class CryptoPositionPart
     public DateTime CreateTime { get; set; }
     public DateTime? CloseTime { get; set; }
 
-    // Globale status van de positie (new, closed, wellicht andere enum?)
-    public CryptoPositionStatus? Status { get; set; } // --> Kan verwijderd worden na database wijziging
-
     public decimal Invested { get; set; }
     public decimal Returned { get; set; }
     public decimal Commission { get; set; }

@@ -6,7 +6,7 @@ namespace CryptoSbmScanner;
 
 public partial class FrmMain
 {
-    private int columnForPriceDiff = -1;
+    private static int columnForPriceDiff;
     private ContextMenuStrip ListViewSignalsColumns;
     private ContextMenuStrip ListViewSignalsMenuStrip;
     private ListViewHeaderContext listViewSignals;
@@ -185,7 +185,7 @@ public partial class FrmMain
         listViewSignals.Columns.Add("Strategie", -2, HorizontalAlignment.Left);
         listViewSignals.Columns.Add("Text", 125, HorizontalAlignment.Left);
         listViewSignals.Columns.Add("Price", -2, HorizontalAlignment.Right);
-        columnForPriceDiff = listViewSignals.Items.Count;
+        columnForPriceDiff = listViewSignals.Columns.Count;
         listViewSignals.Columns.Add("Stijging", -2, HorizontalAlignment.Right);
         listViewSignals.Columns.Add("Volume", -2, HorizontalAlignment.Right);
         listViewSignals.Columns.Add("Trend", -2, HorizontalAlignment.Right);

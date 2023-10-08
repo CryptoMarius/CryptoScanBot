@@ -336,34 +336,34 @@ public static class Helper
                         foreach (CryptoAsset asset in tradeAccount.AssetList.Values)
                         {
                             if (asset.Total.ToString0() == asset.Free.ToString0())
-                                stringBuilder.AppendLine(string.Format("{0} {1}", asset.Quote, asset.Total.ToString0()));
+                                stringBuilder.AppendLine(string.Format("{0} {1}", asset.Name, asset.Total.ToString0()));
                             else
-                                stringBuilder.AppendLine(string.Format("{0} {1} Free={2}", asset.Quote, asset.Total.ToString0(), asset.Free.ToString0()));
+                                stringBuilder.AppendLine(string.Format("{0} {1} Free={2}", asset.Name, asset.Total.ToString0(), asset.Free.ToString0()));
 
 
                             CryptoSymbol symbol;
-                            if (asset.Quote == "USDT")
+                            if (asset.Name == "USDT")
                                 valueUsdt += asset.Total;
-                            else if (exchange.SymbolListName.TryGetValue(asset.Quote + "USDT", out symbol))
+                            else if (exchange.SymbolListName.TryGetValue(asset.Name + "USDT", out symbol))
                             {
                                 if (symbol.LastPrice.HasValue)
                                     valueUsdt += (decimal)symbol.LastPrice * asset.Total;
                             }
-                            else if (exchange.SymbolListName.TryGetValue("USDT" + asset.Quote, out symbol))
+                            else if (exchange.SymbolListName.TryGetValue("USDT" + asset.Name, out symbol))
                             {
                                 if (symbol.LastPrice.HasValue)
                                     valueUsdt += asset.Total / (decimal)symbol.LastPrice;
                             }
 
 
-                            if (asset.Quote == "BTC")
+                            if (asset.Name == "BTC")
                                 valueBtc += asset.Total;
-                            else if (exchange.SymbolListName.TryGetValue(asset.Quote + "BTC", out symbol))
+                            else if (exchange.SymbolListName.TryGetValue(asset.Name + "BTC", out symbol))
                             {
                                 if (symbol.LastPrice.HasValue)
                                     valueBtc += (decimal)symbol.LastPrice * asset.Total;
                             }
-                            else if (exchange.SymbolListName.TryGetValue("BTC" + asset.Quote, out symbol))
+                            else if (exchange.SymbolListName.TryGetValue("BTC" + asset.Name, out symbol))
                             {
                                 if (symbol.LastPrice.HasValue)
                                     valueBtc += asset.Total / (decimal)symbol.LastPrice;

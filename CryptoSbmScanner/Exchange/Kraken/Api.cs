@@ -57,6 +57,7 @@ public class Api : ExchangeBase
     {
         await FetchSymbols.ExecuteAsync();
     }
+
     public async override Task FetchCandlesAsync()
     {
         await FetchCandles.ExecuteAsync();
@@ -109,7 +110,7 @@ public class Api : ExchangeBase
     }
 
 
-    public async Task<(bool result, TradeParams tradeParams)> BuyOrSell(CryptoDatabase database,
+    public override async Task<(bool result, TradeParams tradeParams)> BuyOrSell(CryptoDatabase database,
         CryptoTradeAccount tradeAccount, CryptoSymbol symbol, DateTime currentDate,
         CryptoOrderType orderType, CryptoOrderSide orderSide,
         decimal quantity, decimal price, decimal? stop, decimal? limit)
@@ -225,7 +226,7 @@ public class Api : ExchangeBase
     }
 
 
-    public static async Task<(bool succes, TradeParams tradeParams)> Cancel(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoPositionStep step)
+    public override async Task<(bool succes, TradeParams tradeParams)> Cancel(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoPositionStep step)
     {
         // Order gegevens overnemen (enkel voor een eventuele error dump)
         TradeParams tradeParams = new()
@@ -285,10 +286,10 @@ public class Api : ExchangeBase
                         {
                             asset = new CryptoAsset()
                             {
-                                Quote = assetInfo.Asset,
+                                Name = assetInfo.Asset,
                                 TradeAccountId = tradeAccount.Id,
                             };
-                            tradeAccount.AssetList.Add(asset.Quote, asset);
+                            tradeAccount.AssetList.Add(asset.Name, asset);
                         }
                         asset.Free = assetInfo.Available;
                         asset.Locked = assetInfo.Locked;
@@ -307,7 +308,7 @@ public class Api : ExchangeBase
                     if (asset.Total == 0)
                     {
                         databaseThread.Connection.Delete(asset, transaction);
-                        tradeAccount.AssetList.Remove(asset.Quote);
+                        tradeAccount.AssetList.Remove(asset.Name);
                     }
                 }
 

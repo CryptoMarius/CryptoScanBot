@@ -96,7 +96,7 @@ static public class TradeHandler
                     if (orderStatus == CryptoOrderStatus.Filled || orderStatus == CryptoOrderStatus.PartiallyFilled)
                         position.Status = CryptoPositionStatus.Trading;
 
-                    s = string.Format("handletrade#3 {0} step hersteld, name={1} id={2} positie.status={3} (database)", msgInfo, step.Name, step.Id, position.Status);
+                    s = string.Format("handletrade#3 {0} step hersteld, name={1} id={2} positie.status={3} (database)", msgInfo, step.Side, step.Id, position.Status);
                     GlobalData.AddTextToLogTab(s);
                 }
                 else

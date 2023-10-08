@@ -1,9 +1,12 @@
-﻿using CryptoExchange.Net.Objects;
+﻿using CryptoExchange.Net.Authentication;
+using CryptoExchange.Net.Objects;
 
 using CryptoSbmScanner.Context;
 using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
+
+using Dapper.Contrib.Extensions;
 
 using Kucoin.Net.Clients;
 using Kucoin.Net.Enums;
@@ -124,7 +127,7 @@ public class Api: ExchangeBase
     }
 
 
-    public async Task<(bool result, TradeParams tradeParams)> BuyOrSell(CryptoDatabase database,
+    public override async Task<(bool result, TradeParams tradeParams)> BuyOrSell(CryptoDatabase database,
         CryptoTradeAccount tradeAccount, CryptoSymbol symbol, DateTime currentDate,
         CryptoOrderType orderType, CryptoOrderSide orderSide,
         decimal quantity, decimal price, decimal? stop, decimal? limit)
@@ -224,6 +227,48 @@ public class Api: ExchangeBase
         }
     }
 
+    public override async Task<(bool succes, TradeParams tradeParams)> Cancel(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoPositionStep step)
+    {
+        // Order gegevens overnemen (enkel voor een eventuele error dump)
+        TradeParams tradeParams = new()
+        {
+            CreateTime = step.CreateTime,
+            OrderSide = step.Side,
+            OrderType = step.OrderType,
+            Price = step.Price, // the sell part (can also be a buy)
+            StopPrice = step.StopPrice, // OCO - the price at which the limit order to sell is activated
+            LimitPrice = step.StopLimitPrice, // OCO - the lowest price that the trader is willing to accept
+            Quantity = step.Quantity,
+            QuoteQuantity = step.Price * step.Quantity,
+            OrderId = step.OrderId,
+            Order2Id = step.Order2Id,
+        };
+        // Eigenlijk niet nodig
+        if (step.OrderType == CryptoOrderType.StopLimit)
+            tradeParams.QuoteQuantity = (decimal)tradeParams.StopPrice * tradeParams.Quantity;
+
+        if (tradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
+            return (true, tradeParams);
+
+
+        // Annuleer de order 
+        if (step.OrderId != "")
+        {
+            // BinanceWeights.WaitForFairBinanceWeight(1); flauwekul
+            using var client = new KucoinRestClient();
+            var result = await client.SpotApi.Trading.CancelOrderAsync(step.OrderId);
+            if (!result.Success)
+            {
+                tradeParams.Error = result.Error;
+                tradeParams.ResponseStatusCode = result.ResponseStatusCode;
+            }
+            return (true, tradeParams);
+        }
+
+        return (false, tradeParams);
+    }
+
+
     //static public void PickupAssets(CryptoTradeAccount tradeAccount, Dictionary<string, Kucoin> balances)
     //{
     //    tradeAccount.AssetListSemaphore.Wait();
@@ -289,7 +334,7 @@ public class Api: ExchangeBase
 
     public override async Task FetchTradesForSymbolAsync(CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
     {
-        //await BinanceFetchTrades.FetchTradesForSymbol(tradeAccount, symbol);
+        //await KucoinFetchTrades.FetchTradesForSymbol(tradeAccount, symbol);
     }
 
 

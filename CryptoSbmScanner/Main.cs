@@ -130,6 +130,7 @@ public partial class FrmMain : Form
         GlobalData.SymbolsHaveChanged("");
         GlobalData.LoadSignals();
 #if TRADEBOT
+        TradeTools.LoadAssets();
         TradeTools.LoadOpenPositions();
         OpenPositionsHaveChangedEvent("");
         TradeTools.LoadClosedPositions();

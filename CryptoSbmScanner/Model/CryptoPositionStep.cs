@@ -16,7 +16,6 @@ public class CryptoPositionStep
     public int PositionId { get; set; }
     public int PositionPartId { get; set; }
 
-    public string Name { get; set; }
     public DateTime CreateTime { get; set; }
     public DateTime? CloseTime { get; set; }
 

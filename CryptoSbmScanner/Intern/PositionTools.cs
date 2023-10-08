@@ -72,12 +72,12 @@ public class PositionTools
     /// <summary>
     /// Retourneer de openstaande "order" met naam=x
     /// </summary>
-    public static CryptoPositionStep FindPositionPartStep(CryptoPositionPart part, string name, bool closed)
+    public static CryptoPositionStep FindPositionPartStep(CryptoPositionPart part, CryptoOrderSide side, bool closed)
     {
         foreach (CryptoPositionStep step in part.Steps.Values.ToList())
         {
             // Alle geannuleerde orders overslagen
-            if (step.Name.Equals(name) && step.Status < CryptoOrderStatus.Canceled)
+            if (step.Side == side && step.Status < CryptoOrderStatus.Canceled)
             {
                 // Kan ook partial gevuld zijn, wat gebeurd er dan? (-> extra dca, is okay)
                 if (closed && step.CloseTime.HasValue)
@@ -146,7 +146,6 @@ public class PositionTools
             PositionId = position.Id,
             PositionPartId = part.Id,
 
-            Name = name,
             Side = tradeParams.OrderSide,
             Status = CryptoOrderStatus.New,
             OrderType = tradeParams.OrderType,

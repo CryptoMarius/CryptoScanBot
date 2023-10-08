@@ -6,7 +6,7 @@ namespace CryptoSbmScanner.Context;
 public class Migration
 {
     // De huidige database versie (zoals in de code is gedefinieerd)
-    public readonly static int CurrentDatabaseVersion = 6;
+    public readonly static int CurrentDatabaseVersion = 7;
 
 
     public static void Execute(CryptoDatabase database, int CurrentVersion)
@@ -136,13 +136,29 @@ public class Migration
             }
 
 
+            //***********************************************************
+            if (CurrentVersion > version.Version && version.Version == 6)
+            {
+                using var transaction = database.BeginTransaction();
 
-            // TODO: Wellicht de fee van exchange administreren, 0.01% voor limt orders
-            // en 0.015 voor market orders of iets dergelijks (iets met maker en taker)
-            // +Exchange.FreeRate en deze vullen voor alle exchanges
-            // -Part.Status kan verwijderd worden + de laatste code (verplicht veld)
+                // +Introductie van een Exchange.FeeRate en deze vullen voor alle exchanges (de default fee voor een exchange)
+                //  0.01% voor limt orders en 0.015 voor market orders of iets dergelijks (iets met maker en taker)
+                database.Connection.Execute("alter table Exchange add FeeRate TEXT", transaction);
+                database.Connection.Execute("update Exchange set FeeRate=0.001", transaction);
+
+                // -Verwijderen van de Part.Status + de laatste code (verplicht veld)
+                database.Connection.Execute("alter table PositionPart drop column Status", transaction);
+
+                // -Verwijderen van de Step.Name, dit is een alias voor de Side
+                database.Connection.Execute("alter table PositionStep drop column Name", transaction);
+
+                // update version
+                version.Version += 1;
+                database.Connection.Update(version, transaction);
+                transaction.Commit();
+            }
+
         }
     }
-
 
 }
