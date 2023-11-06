@@ -43,9 +43,8 @@ public class Api: ExchangeBase
         // Default opties voor deze exchange
         KucoinRestClient.SetDefaultOptions(options =>
         {
-            // type mismatch?
-            //if (GlobalData.Settings.ApiKey != "")
-            //    options.ApiCredentials = new ApiCredentials(GlobalData.Settings.ApiKey, GlobalData.Settings.ApiSecret);
+            if (GlobalData.Settings.Trading.ApiKey != "")
+                options.ApiCredentials = new KucoinApiCredentials(GlobalData.Settings.Trading.ApiKey, GlobalData.Settings.Trading.ApiSecret, GlobalData.Settings.Trading.ApiPassPhrase);
         });
 
         KucoinSocketClient.SetDefaultOptions(options =>
@@ -53,9 +52,9 @@ public class Api: ExchangeBase
             options.AutoReconnect = true;
             options.ReconnectInterval = TimeSpan.FromSeconds(15);
             options.SocketSubscriptionsCombineTarget = 20;
-            // type mismatch?
-            //if (GlobalData.Settings.ApiKey != "")
-            //    options.ApiCredentials = new ApiCredentials(GlobalData.Settings.ApiKey, GlobalData.Settings.ApiSecret);
+
+            if (GlobalData.Settings.Trading.ApiKey != "")
+                options.ApiCredentials = new KucoinApiCredentials(GlobalData.Settings.Trading.ApiKey, GlobalData.Settings.Trading.ApiSecret, GlobalData.Settings.Trading.ApiPassPhrase);
         });
 
         ExchangeHelper.PriceTicker = new PriceTicker();
