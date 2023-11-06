@@ -66,7 +66,7 @@ public class FetchTrades
                 {
                     foreach (var item in result.Data.Trades.Values)
                     {
-                        if (!symbol.TradeList.TryGetValue(item.OrderId, out CryptoTrade trade))
+                        if (!symbol.TradeList.TryGetValue(item.Id, out CryptoTrade trade))
                         {
                             trade = new CryptoTrade();
                             Api.PickupTrade(tradeAccount, symbol, trade, item);

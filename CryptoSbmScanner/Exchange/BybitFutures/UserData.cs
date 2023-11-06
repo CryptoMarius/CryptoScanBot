@@ -10,6 +10,10 @@ internal class UserData : UserDataBase
 
     public override async Task Start()
     {
+        // Is al gestart?
+        if (TaskStreamUserData != null)
+            return;
+
         GlobalData.AddTextToLogTab($"{Api.ExchangeName} starting userdata stream");
         TaskStreamUserData = new UserDataStream();
         await Task.Run(async () => { await TaskStreamUserData.ExecuteAsync(); });

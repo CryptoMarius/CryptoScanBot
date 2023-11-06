@@ -126,6 +126,7 @@ public class PriceTickerItem
 
     private void ConnectionLost()
     {
+        //ConnectionLostCount++;
         GlobalData.AddTextToLogTab($"{Api.ExchangeName} price ticker stream connection lost.");
     }
 

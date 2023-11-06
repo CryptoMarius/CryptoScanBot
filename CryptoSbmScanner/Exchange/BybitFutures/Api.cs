@@ -110,13 +110,27 @@ public class Api : ExchangeBase
     }
 
 
-    public async Task DoSwitchCrossIsolatedMarginAsync(BybitRestClient client, CryptoSymbol symbol)
+    public async Task<bool> DoSwitchCrossIsolatedMarginAsync(BybitRestClient client, CryptoSymbol symbol)
     {
         //await client.V5Api.Account.SetLeverageAsync(Category, symbol.Name, 1, 1);
         //await client.V5Api.Account.SetMarginModeAsync(Category, symbol.Name, TradeMode.Isolated);
-        TradeMode tradeMode = (TradeMode)GlobalData.Settings.Trading.Margin; // toevallig dezelfde volgorde
-        await client.V5Api.Account.SwitchCrossIsolatedMarginAsync(Category, symbol.Name,
+        Bybit.Net.Enums.TradeMode tradeMode = (Bybit.Net.Enums.TradeMode)GlobalData.Settings.Trading.CrossOrIsolated; // toevallig dezelfde volgorde
+        GlobalData.AddTextToLogTab($"{symbol.Name} Setting CrossOrIsolated={tradeMode} leverage={GlobalData.Settings.Trading.Leverage}");
+
+        var result = await client.V5Api.Account.SwitchCrossIsolatedMarginAsync(Category, symbol.Name,
             tradeMode, GlobalData.Settings.Trading.Leverage, GlobalData.Settings.Trading.Leverage);
+        if (!result.Success)
+        {
+            // Aanpassing zonder dat er daadwerkelijk iets aangepast is
+            // 110026: Cross / isolated margin mode is not modified
+            if (result.Error.Code == 110026)
+                return true; // {110026: Cross/isolated margin mode is not modified }
+            if (result.Error.Code == 110027)
+                return true; // {110027	Margin is not modified }
+
+            GlobalData.AddTextToLogTab($"{symbol.Name} ERROR setting CrossOrIsolated={tradeMode} en leverage={GlobalData.Settings.Trading.Leverage} {result.Error}");
+        }
+        return result.Success;
     }
 
 
@@ -163,6 +177,9 @@ public class Api : ExchangeBase
         // Plaats een order op de exchange *ze lijken op elkaar, maar het is net elke keer anders)
         //BinanceWeights.WaitForFairBinanceWeight(1); flauwekul voor die ene tick (geen herhaling toch?)
         using BybitRestClient client = new();
+        if (!await DoSwitchCrossIsolatedMarginAsync(client, symbol))
+            return (false, null);
+
 
         WebCallResult<BybitOrderId> result;
         switch (orderType)
@@ -172,7 +189,7 @@ public class Api : ExchangeBase
                     // JA, price * quantity omdat dat blijkbaar zo moet, zie voorbeeld (onderin)
                     // https://bybit-exchange.github.io/docs/v5/order/create-order
                     result = await client.V5Api.Trading.PlaceOrderAsync(Category, symbol.Name, side,
-                        NewOrderType.Market, price * quantity, timeInForce: TimeInForce.GoodTillCanceled, isLeverage: false);
+                        NewOrderType.Market, quantity: quantity, price: null, timeInForce: TimeInForce.GoodTillCanceled, isLeverage: false);
                     if (!result.Success)
                     {
                         tradeParams.Error = result.Error;
@@ -187,10 +204,13 @@ public class Api : ExchangeBase
                 }
             case CryptoOrderType.Limit:
                 {
-                    await DoSwitchCrossIsolatedMarginAsync(client, symbol);
+                    // Even tijdelijk (kan ook alleen maar op deze plek als je weet dat we ALLEEN long gaan!)
+                    bool reduce = false;
+                    if (orderSide == CryptoOrderSide.Sell)
+                        reduce = true;
 
                     result = await client.V5Api.Trading.PlaceOrderAsync(Category, symbol.Name, side,
-                    NewOrderType.Limit, quantity, price: price, timeInForce: TimeInForce.GoodTillCanceled, isLeverage: false);
+                        NewOrderType.Limit, quantity: quantity, price: price, timeInForce: TimeInForce.GoodTillCanceled, isLeverage: false, reduceOnly: reduce);
                     if (!result.Success)
                     {
                         tradeParams.Error = result.Error;
@@ -205,7 +225,6 @@ public class Api : ExchangeBase
                 }
             case CryptoOrderType.StopLimit:
                 {
-                    await DoSwitchCrossIsolatedMarginAsync(client, symbol);
                     // wordt het nu wel of niet ondersteund? Het zou ook een extra optie van de limit kunnen (zie wel een tp)
                     //result = await client.V5Api.Trading.PlaceOrderAsync(Category, symbol.Name, side, NewOrderType.Market,
                     //    quantity, price: price, timeInForce: TimeInForce.GoodTillCanceled, isLeverage: false);
@@ -213,7 +232,6 @@ public class Api : ExchangeBase
                 }
             case CryptoOrderType.Oco:
                 {
-                    await DoSwitchCrossIsolatedMarginAsync(client, symbol);
                     // Een OCO is afwijkend ten opzichte van een standaard buy or sell
                     //    Bij Binance was een OCO totaal afwijkend ten opzichte van een standaard buy or sell
                     //    het had ook andere parameters en results
@@ -393,7 +411,12 @@ public class Api : ExchangeBase
         //if (item.QuoteQuantity == 0)
         //    GlobalData.AddTextToLogTab(string.Format("{0} PickupTrade#2stream QuoteQuantity is 0 for order TradeId={1}!", symbol.Name, trade.TradeId));
 
-        trade.TradeTime = item.Timestamp;
+        // Verwarrend want deze moet toch altijd gevuld zijn?
+        if (item.UpdateTime.HasValue)
+            trade.TradeTime = item.UpdateTime.Value; // Timestamp;
+        else
+            trade.TradeTime = item.Timestamp;
+
         trade.Side = LocalOrderSide(item.Side);
 
         trade.Commission = item.Fee;

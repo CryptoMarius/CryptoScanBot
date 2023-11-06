@@ -1,4 +1,7 @@
-﻿using Bybit.Net.Clients;
+﻿using System.Text.Encodings.Web;
+using System.Text.Json;
+
+using Bybit.Net.Clients;
 using Bybit.Net.Enums;
 using Bybit.Net.Objects.Models.Socket;
 
@@ -61,6 +64,10 @@ public class UserDataStream
         {
             foreach (var data in dataList.Data)
             {
+                // We krijgen duplicaat json berichten binnen (even een quick & dirty fix)
+                string text = JsonSerializer.Serialize(data, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = false }).Trim();
+                GlobalData.AddTextToLogTab(string.Format("{0} OnOrderUpdate#1 TradeId={1} {2} quantity={3} price={4} text={5}", data.Symbol, data.Id, data.Status.ToString(), data.Quantity, data.Price, text));
+
 
                 // We zijn slechts geinteresseerd in 3 statussen (de andere zijn niet interessant voor de afhandeling van de order)
                 if (data.Status == OrderStatus.Filled ||
@@ -74,15 +81,16 @@ public class UserDataStream
                         if (exchange.SymbolListName.TryGetValue(data.Symbol, out CryptoSymbol symbol))
                         {
                             // Converteer de data naar een (tijdelijke) trade
-                            //CryptoTrade tradeTemp = new();
-                            //BybitApi.PickupTrade(GlobalData.ExchangeRealTradeAccount, symbol, tradeTemp, data);
+                            CryptoTrade trade = new();
+                            Api.PickupTrade(GlobalData.ExchangeRealTradeAccount, symbol, trade, data);
+                            GlobalData.AddTextToLogTab(string.Format("{0} OnOrderUpdate#2 TradeId={1} {2} quantity={3} price={4} (addtoqueue)", symbol.Name, trade.TradeId, data.Status.ToString(), trade.Quantity, trade.Price));
 
-                //            GlobalData.ThreadMonitorOrder.AddToQueue((
-                //                symbol,
-                //                BybitApi.LocalOrderType(data.Data.Type),
-                //                BybitApi.LocalOrderSide(data.Data.Side),
-                //                BybitApi.LocalOrderStatus(data.Data.Status),
-                //                tradeTemp));
+                            GlobalData.ThreadMonitorOrder.AddToQueue((
+                                symbol,
+                                Api.LocalOrderType(data.Type),
+                                Api.LocalOrderSide(data.Side),
+                                Api.LocalOrderStatus((OrderStatus)data.Status),
+                                trade));
                         }
                     }
                 }
@@ -175,17 +183,18 @@ public class UserDataStream
 
     private void ConnectionLost()
     {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} price ticker connection lost.");
+        //ConnectionLostCount++;
+        GlobalData.AddTextToLogTab($"{Api.ExchangeName} user ticker connection lost.");
     }
 
     private void ConnectionRestored(TimeSpan timeSpan)
     {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} price ticker connection restored.");
+        GlobalData.AddTextToLogTab($"{Api.ExchangeName} user ticker connection restored.");
     }
 
     private void Exception(Exception ex)
     {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} price ticker connection error {ex.Message} | Stack trace: {ex.StackTrace}");
+        GlobalData.AddTextToLogTab($"{Api.ExchangeName} user ticker connection error {ex.Message} | Stack trace: {ex.StackTrace}");
     }
 }
 
