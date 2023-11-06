@@ -149,7 +149,7 @@
             ApplicationPlaySounds.Checked = true;
             ApplicationPlaySounds.CheckState = CheckState.Checked;
             ApplicationPlaySounds.Name = "ApplicationPlaySounds";
-            ApplicationPlaySounds.Size = new Size(168, 22);
+            ApplicationPlaySounds.Size = new Size(180, 22);
             ApplicationPlaySounds.Text = "Geluiden afspelen";
             ApplicationPlaySounds.Click += ApplicationPlaySounds_Click;
             // 
@@ -158,49 +158,49 @@
             ApplicationCreateSignals.Checked = true;
             ApplicationCreateSignals.CheckState = CheckState.Checked;
             ApplicationCreateSignals.Name = "ApplicationCreateSignals";
-            ApplicationCreateSignals.Size = new Size(168, 22);
+            ApplicationCreateSignals.Size = new Size(180, 22);
             ApplicationCreateSignals.Text = "Signalen maken";
             ApplicationCreateSignals.Click += ApplicationCreateSignals_Click;
             // 
             // ApplicationTradingBot
             // 
             ApplicationTradingBot.Name = "ApplicationTradingBot";
-            ApplicationTradingBot.Size = new Size(168, 22);
+            ApplicationTradingBot.Size = new Size(180, 22);
             ApplicationTradingBot.Text = "Trading bot actief";
             ApplicationTradingBot.Click += ApplicationTradingBot_Click;
             // 
             // ToolStripMenuItemSettings
             // 
             ToolStripMenuItemSettings.Name = "ToolStripMenuItemSettings";
-            ToolStripMenuItemSettings.Size = new Size(168, 22);
+            ToolStripMenuItemSettings.Size = new Size(180, 22);
             ToolStripMenuItemSettings.Text = "Instellingen";
             ToolStripMenuItemSettings.Click += ToolStripMenuItemSettings_Click;
             // 
             // ToolStripMenuItemRefresh
             // 
             ToolStripMenuItemRefresh.Name = "ToolStripMenuItemRefresh";
-            ToolStripMenuItemRefresh.Size = new Size(168, 22);
+            ToolStripMenuItemRefresh.Size = new Size(180, 22);
             ToolStripMenuItemRefresh.Text = "Verversen";
             ToolStripMenuItemRefresh.Click += ToolStripMenuItemRefresh_Click_1;
             // 
             // clearMenusToolStripMenuItem
             // 
             clearMenusToolStripMenuItem.Name = "clearMenusToolStripMenuItem";
-            clearMenusToolStripMenuItem.Size = new Size(168, 22);
+            clearMenusToolStripMenuItem.Size = new Size(180, 22);
             clearMenusToolStripMenuItem.Text = "Clear";
             clearMenusToolStripMenuItem.Click += MainMenuClearAll_Click;
             // 
             // applicationMenuItemAbout
             // 
             applicationMenuItemAbout.Name = "applicationMenuItemAbout";
-            applicationMenuItemAbout.Size = new Size(168, 22);
+            applicationMenuItemAbout.Size = new Size(180, 22);
             applicationMenuItemAbout.Text = "About";
             applicationMenuItemAbout.Click += ApplicationMenuItemAbout_Click;
             // 
             // backtestToolStripMenuItem
             // 
             backtestToolStripMenuItem.Name = "backtestToolStripMenuItem";
-            backtestToolStripMenuItem.Size = new Size(168, 22);
+            backtestToolStripMenuItem.Size = new Size(180, 22);
             backtestToolStripMenuItem.Text = "Backtest";
             backtestToolStripMenuItem.Click += BacktestToolStripMenuItem_Click;
             // 
@@ -440,6 +440,7 @@
         private TabPage tabPageDashBoard;
         private DashBoardControl dashBoardControl1;
         private TradingView.DashBoardInformation dashBoardInformation1;
+        private ToolStripMenuItem testToolStripMenuItem;
     }
 }
 

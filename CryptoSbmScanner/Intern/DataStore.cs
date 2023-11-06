@@ -42,7 +42,6 @@ public class DataStore
                 {
                     symbolInterval.TrendIndicator = CryptoTrendIndicator.trendSideways;
                     symbolInterval.LastCandleSynchronized = null;
-                    symbolInterval.LastStobbOrdSbmDate = null;
                     symbolInterval.TrendInfoDate = null;
                 }
 
@@ -67,16 +66,6 @@ public class DataStore
                                 symbolInterval.LastCandleSynchronized = binaryReader.ReadInt64();
                                 if (symbolInterval.LastCandleSynchronized == 0)
                                     symbolInterval.LastCandleSynchronized = null;
-
-
-                                if (version >= 2)
-                                {
-                                    long lastStobbOrdSbmDate = binaryReader.ReadInt64();
-                                    if (lastStobbOrdSbmDate == 0)
-                                        symbolInterval.LastStobbOrdSbmDate = null;
-                                    else
-                                        symbolInterval.LastStobbOrdSbmDate = CandleTools.GetUnixDate(lastStobbOrdSbmDate);
-                                }
 
                                 long startFetchUnix = CandleIndicatorData.GetCandleFetchStart(symbol, symbolInterval.Interval, DateTime.UtcNow);
 
@@ -185,13 +174,6 @@ public class DataStore
                             else
                                 binaryWriter.Write((long)0); // int64
 
-                            if (version >= 2)
-                            {
-                                long lastStobbOrdSbmDate = 0;
-                                if (symbolInterval.LastStobbOrdSbmDate.HasValue)
-                                    lastStobbOrdSbmDate = CandleTools.GetUnixTime((DateTime)symbolInterval.LastStobbOrdSbmDate, 60);
-                                binaryWriter.Write((long)lastStobbOrdSbmDate); // int64
-                            }
                             binaryWriter.Write(symbolInterval.CandleList.Count);
 
                             for (int j = 0 ; j < symbolInterval.CandleList.Count; j++)

@@ -61,8 +61,18 @@ public class SettingsGeneral
 
     public CryptoTrendCalculationMethod TrendCalculationMethod { get; set; } = CryptoTrendCalculationMethod.trendCalculationViaAlgo1;
 
+
+    // RSI instelbare oversold /overbought (op verzoek)
+    public double RsiValueOversold { get; set; } = 30;
+    public double RsiValueOverbought { get; set; } = 70;
+
+    // STOCH instelbare oversold /overbought (op verzoek)
+    public double StochValueOversold { get; set; } = 20;
+    public double StochValueOverbought { get; set; } = 80;
+
     public SettingsGeneral()
     {
     }
+
 }
 

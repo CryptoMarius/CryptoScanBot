@@ -638,9 +638,9 @@ public class CryptoDatabase : IDisposable
         {
             connection.Connection.Execute("CREATE TABLE [Exchange] (" +
                  "Id integer primary key autoincrement not null," +
-                "LastTimeFetched TEXT NULL," +
-                "LastTimeFetched FeeRate TEXT," +
-                 "Name TEXT not NULL" +
+                 "LastTimeFetched TEXT NULL," +
+                 "Name TEXT not NULL," +
+                 "FeeRate TEXT" +
             ")");
             connection.Connection.Execute("CREATE INDEX IdxExchangeId ON Exchange(Id)");
             connection.Connection.Execute("CREATE INDEX IdxExchangeName ON Exchange(Name)");
@@ -652,16 +652,16 @@ public class CryptoDatabase : IDisposable
             Model.CryptoExchange exchange = new() { Name = "Binance" };
             connection.Connection.Insert(exchange, transaction);
 
-            exchange = new() { Name = "Bybit Spot", FeeRate =0.01m};
+            exchange = new() { Name = "Bybit Spot", FeeRate =0.1m};
             connection.Connection.Insert(exchange, transaction);
 
-            exchange = new() { Name = "Bybit Futures", FeeRate = 0.01m };
+            exchange = new() { Name = "Bybit Futures", FeeRate = 0.1m };
             connection.Connection.Insert(exchange, transaction);
 
-            exchange = new() { Name = "Kucoin", FeeRate = 0.01m };
+            exchange = new() { Name = "Kucoin", FeeRate = 0.1m };
             connection.Connection.Insert(exchange, transaction);
 
-            exchange = new() { Name = "Kraken", FeeRate = 0.01m };
+            exchange = new() { Name = "Kraken", FeeRate = 0.1m };
             connection.Connection.Insert(exchange, transaction);
 
             transaction.Commit();

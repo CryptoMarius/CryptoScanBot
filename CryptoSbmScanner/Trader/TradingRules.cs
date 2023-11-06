@@ -84,92 +84,70 @@ public static class TradingRules
         // alias
         var pause = GlobalData.PauseTrading;
 
-        // Ongeveer iedere minuut berekenen
-        if (pause.Until >= lastCandle1m.Date)
-            return true;
 
-
-        if (!pause.Calculated.HasValue || pause.Calculated < lastCandle1m.Date)
+        // Ongeveer iedere minuut c.q. candle berekenen
+        DateTime lastCandle1mCloseTime = CandleTools.GetUnixDate(lastCandle1m.OpenTime + 60);
+        if (!pause.Calculated.HasValue || pause.Calculated < lastCandle1mCloseTime)
         {
             pause.Text = "";
-            pause.Calculated = lastCandle1m.Date;
+            pause.Calculated = lastCandle1mCloseTime;
 
             //GlobalData.AddTextToLogTab("CheckTradingRules()");
             CalculateTradingRules(lastCandle1m);
 
             if (pause.Text != "")
-                return true;
+                return false;
         }
 
-        return false;
+        // Is gepauseerd
+        if (pause.Until >= lastCandle1mCloseTime)
+            return false;
+
+        return true;
     }
 
 
-
-    private static void CalculateBarometerValues(CryptoSymbol symbol, CryptoCandle lastCandle1m)
+    /// Controleer de barometer(s)
+    public static bool CheckBarometerValues(CryptoSymbol symbol, CryptoCandle lastCandle1m, out string reaction)
     {
         // alias
         var pause = symbol.QuoteData.PauseTrading;
 
-        if (!SymbolTools.CheckValidBarometer(symbol.QuoteData, CryptoIntervalPeriod.interval15m, GlobalData.Settings.Trading.Barometer15mBotMinimal, out string reaction) ||
-        (!SymbolTools.CheckValidBarometer(symbol.QuoteData, CryptoIntervalPeriod.interval30m, GlobalData.Settings.Trading.Barometer30mBotMinimal, out reaction)) ||
-        (!SymbolTools.CheckValidBarometer(symbol.QuoteData, CryptoIntervalPeriod.interval1h, GlobalData.Settings.Trading.Barometer01hBotMinimal, out reaction)) ||
-        (!SymbolTools.CheckValidBarometer(symbol.QuoteData, CryptoIntervalPeriod.interval4h, GlobalData.Settings.Trading.Barometer04hBotMinimal, out reaction)) ||
-        (!SymbolTools.CheckValidBarometer(symbol.QuoteData, CryptoIntervalPeriod.interval1d, GlobalData.Settings.Trading.Barometer24hBotMinimal, out reaction)))
-        {
-            pause.Text = reaction;
-        }
-
-        //decimal? barometerValue = symbol.QuoteData.BarometerList[(long)CryptoIntervalPeriod.interval15m].PriceBarometer;
-        //if (barometerValue.HasValue && (barometerValue <= GlobalData.Settings.Trading.Barometer15mBotMinimal))
-        //    pause.Text = string.Format("Monitor {0} position (barometer {1} negatief {2} ) REMOVE start", symbol.Name, barometerValue, GlobalData.Settings.Trading.Barometer15mBotMinimal);
-
-        //barometerValue = symbol.QuoteData.BarometerList[(long)CryptoIntervalPeriod.interval30m].PriceBarometer;
-        //if (barometerValue.HasValue && (barometerValue <= GlobalData.Settings.Trading.Barometer30mBotMinimal))
-        //    pause.Text = string.Format("Monitor {0} position (barometer {1} negatief {2} ) REMOVE start", symbol.Name, barometerValue, GlobalData.Settings.Trading.Barometer30mBotMinimal);
-
-        //barometerValue = symbol.QuoteData.BarometerList[(long)CryptoIntervalPeriod.interval1h].PriceBarometer;
-        //if (barometerValue.HasValue && (barometerValue <= GlobalData.Settings.Trading.Barometer01hBotMinimal))
-        //    pause.Text = string.Format("Monitor {0} position (barometer {1} negatief {2} ) REMOVE start", symbol.Name, barometerValue, GlobalData.Settings.Trading.Barometer01hBotMinimal);
-
-        //barometerValue = symbol.QuoteData.BarometerList[(long)CryptoIntervalPeriod.interval4h].PriceBarometer;
-        //if (barometerValue.HasValue && (barometerValue <= GlobalData.Settings.Trading.Barometer04hBotMinimal))
-        //    pause.Text = string.Format("Monitor {0} position (barometer {1} negatief {2} ) REMOVE start", symbol.Name, barometerValue, GlobalData.Settings.Trading.Barometer04hBotMinimal);
-
-        //barometerValue = symbol.QuoteData.BarometerList[(long)CryptoIntervalPeriod.interval1d].PriceBarometer;
-        //if (barometerValue.HasValue && (barometerValue <= GlobalData.Settings.Trading.Barometer24hBotMinimal))
-        //    pause.Text = string.Format("Monitor {0} position (barometer {1} negatief {2} ) REMOVE start", symbol.Name, barometerValue, GlobalData.Settings.Trading.Barometer24hBotMinimal);
-    }
-
-
-    public static bool CheckBarometerValues(CryptoSymbol symbol, CryptoCandle lastCandle1m)
-    {
-        // Controleer de barometer(s)
-
-        // alias
-        var pause = symbol.QuoteData.PauseTrading;
-
-        // Ongeveer iedere minuut berekenen
-        if (pause.Until >= lastCandle1m.Date)
-            return true;
-
-        if (!pause.Calculated.HasValue || pause.Calculated < lastCandle1m.Date)
+        // Ongeveer iedere minuut c.q. candle berekenen
+        DateTime lastCandle1mCloseTime = CandleTools.GetUnixDate(lastCandle1m.OpenTime + 60);
+        if (!pause.Calculated.HasValue || pause.Calculated < lastCandle1mCloseTime)
         {
             // Als de barometer gedaald is onder de limieten dan "stoppen"
             pause.Text = "";
-            pause.Calculated = lastCandle1m.Date;
+            pause.Calculated = lastCandle1mCloseTime;
 
             //GlobalData.AddTextToLogTab($"{symbol.QuoteData.Name} CheckBarometerValues()");
-            CalculateBarometerValues(symbol, lastCandle1m);
+            if (!SymbolTools.CheckValidBarometer(symbol.QuoteData, CryptoIntervalPeriod.interval15m, GlobalData.Settings.Trading.Barometer15mBotMinimal, out reaction) ||
+            (!SymbolTools.CheckValidBarometer(symbol.QuoteData, CryptoIntervalPeriod.interval30m, GlobalData.Settings.Trading.Barometer30mBotMinimal, out reaction)) ||
+            (!SymbolTools.CheckValidBarometer(symbol.QuoteData, CryptoIntervalPeriod.interval1h, GlobalData.Settings.Trading.Barometer01hBotMinimal, out reaction)) ||
+            (!SymbolTools.CheckValidBarometer(symbol.QuoteData, CryptoIntervalPeriod.interval4h, GlobalData.Settings.Trading.Barometer04hBotMinimal, out reaction)) ||
+            (!SymbolTools.CheckValidBarometer(symbol.QuoteData, CryptoIntervalPeriod.interval1d, GlobalData.Settings.Trading.Barometer24hBotMinimal, out reaction)))
+                pause.Text = reaction;
 
             if (pause.Text != "")
             {
-                pause.Until = lastCandle1m.Date.AddMinutes(5);
-                return true;
+                pause.Until = lastCandle1mCloseTime.AddMinutes(5);
+                reaction = symbol.QuoteData.PauseTrading.Text;
+                return false;
             }
         }
 
-        return false;
+        // Is al gepauseerd
+        if (pause.Until >= lastCandle1mCloseTime)
+        {
+            reaction = symbol.QuoteData.PauseTrading.Text;
+            if (reaction == "")
+                reaction = "Barometer low?";
+            return false;
+        }
+
+        reaction = "";
+        return true;
     }
 
 }

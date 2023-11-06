@@ -426,10 +426,10 @@ public partial class DashBoardInformation : UserControl
             if (GlobalData.ApplicationStatus != CryptoApplicationStatus.Running)
                 return;
 
-//#if TRADEBOT
-//            if (GlobalData.Settings.Trading.Active)
-//                TradingRules.CheckNeedBotPause();
-//#endif
+            //#if TRADEBOT
+            //            if (GlobalData.Settings.Trading.Active)
+            //                TradingRules.CheckNeedBotPause();
+            //#endif
 
             // Bereken de laatste barometer waarden
             BarometerTools barometerTools = new();
@@ -614,12 +614,12 @@ public partial class DashBoardInformation : UserControl
                     if (ExchangeHelper.PriceTicker != null)
                     {
                         text = ExchangeHelper.PriceTicker.Count().ToString("N0");
-                        ShowSymbolPrice(SymbolHistList[0], InformationRowList[0], exchange, quoteData, "BTC", e + " price ticker count", text);
+                        ShowSymbolPrice(SymbolHistList[0], InformationRowList[0], exchange, quoteData, "BTC", "Price ticker count", text);
                     }
                     if (ExchangeHelper.KLineTicker != null)
                     {
                         text = ExchangeHelper.KLineTicker.Count().ToString("N0");
-                        ShowSymbolPrice(SymbolHistList[1], InformationRowList[1], exchange, quoteData, "BNB", e + " 1m stream count", text);
+                        ShowSymbolPrice(SymbolHistList[1], InformationRowList[1], exchange, quoteData, "BNB", "Kline ticker count", text);
                     }
 
                     text = PositionMonitor.AnalyseCount.ToString("N0");

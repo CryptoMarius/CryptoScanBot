@@ -37,9 +37,6 @@ public class CryptoSymbolInterval
     [Computed]
     public CryptoSignal Signal { get; set; }
 
-    [Computed]
-    public DateTime? LastStobbOrdSbmDate { get; set; }
-
     // De candles voor dit interval
     [Computed]
     public SortedList<long, CryptoCandle> CandleList { get; set; } = new();

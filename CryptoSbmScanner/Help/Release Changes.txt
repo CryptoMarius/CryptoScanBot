@@ -23,7 +23,7 @@ Scanner:
   Een eerste aanzet zit er nu in, inclusief een beetje uitleg over hou je het maakt en configureert
 - Experiment om een Mac versie te bouwen dmv MAUI XAML (een compleet nieuwe aanvliegroute van Microsoft)
   Maar ik verwacht een duizendtal nieuwe problemen met geluid, voice, storage, sockets, hibernate/sleep enzovoort)
-  (ondertussen is er een VM met een Mac
+  (ondertussen is er een VM met een Mac installatie, Mac is geheel nieuw voor mij, dat gaat even duren)
 - Visuele herkenning dat de scanner loopt (de getallen linksboven zeggen de mensen niet zoveel)
   (ik heb hier eigenlijk geen alternatief voor, als iemand goede ideen heet laat het me weten aub)
   Misschien dat de introductie van een dashboard hier nog iets in kan betekenen t.z.t.
@@ -37,6 +37,25 @@ Scanner:
 - Black theming  https://stackoverflow.com/questions/61145347/c-how-to-make-a-dark-mode-theme-in-windows-forms-separate-form-as-select-the <geen prio>
   Er is nu een slappe variant die iets met grijs doet (omdat anders de scrollbars en headers zo'n lelijk getoond worden), ik ben er niet tevreden over.
 
+- Scanner: Rob van Es, [2023-10-27 13:58]
+Hoi Marius, ik maak regelmatig gebruik van de stobb signalen icm de RSI oversold/overbought functie. Merk met de bullish dagen dat de rsi30 dan net aangetikt worden.
+Ik zou graag experimenteren met een iets hogere rsi. Vraag van mijn kant is zou je deze instelbaar kunnen maken? Zodat ik deze dan bv op 32 of iets hoger kan zetten
+
+Rob van Es, [2023-10-27 13:59]
+Net NIET aangetikt bedoel ik...
+
+Marius, [2023-10-27 14:05]
+Het was "tamelijk" positief de afgelopen dagen
+
+Ik denk dat ik er dan een setje van maak voro zowel RSI als STOCH, dan kan iedereen zijn eigen grenswaarden daarin zetten indien gewenst. In een oude bot had ik de STOCH vaak op 25 staan
+
+RSI - oversold(def=30), overbought(def=70)
+Stoch -oversold(def=20), overbought(def=80)
+
+Dus dan komen er 4 waarden bij ergens in de algemene instellingen of iets dergelijks (nog een goed plekje zoeken)
+
+
+
 
 Ik heb het hieronder over trading. De trading module komt op een later tijdstip beschikbaar. Vanwege het vertrek van Binance moet
 het eerst linkes en rechts (zwaar) aangepast worden zodat het op een andere exchanges ook werkt en door het wegvallen van de OCO 
@@ -45,6 +64,8 @@ posities) komt later (gratis) beschikbaar. Als je ideen hebt voor het vervangen 
 De introductie van de FundingRate/FundingInterval heeft gevolgen voor de trading module (onverwachte bijkomende kosten).
 
 Trading:
+- Trading - Toevoegen van een handmatig gestarte positie (begindatum en munt)
+- Trading - Verwijderen van een positie (handmatig overnemen van een positie)
 - Trading - De STOBB heeft nu een minimale trend maar dat conflicteerd straks bij een short positie (extra instelling noodzakelijk?)
 - Trading - Een aparte tool maken voor een backtest, candles ophalen voor BTC (tradingregels), de intervallen 1m en emulator interval.
             Echter de barometer werkt op deze manier niet (omdat niet alle munten geladen zijn...)
@@ -76,10 +97,17 @@ TODO: Error control DoSwitchCrossIsolatedMarginAsync()
 
 
 xx-xx-2023 1.8.7
-Het lijkt alsof de CPU belasting is toegenomen (ondanks uitzetten verversing) - Wellicht windows Update perikelen, want daarna was het beter? Kan ook door de interne Edge veroorzaakt worden?
-- Trading - Een start gemaakt met asset management voor papertrading.....
+- Scanner - De CPU belasting is toegenomen - het ligt niet aan de trader of de verversing van de grids, maar waar ligt het dan wel aan?
+- Trading - TODO: Controles op asset management voor het zetten van een buy/sell (is nog niet correct heb ik gezien) - niet OK, testcase maken!
+- Trading - Asset management voor papertrading.
 
+- Trading - Als de userdata ticker een trade niet heeft gedetecteerd dan wordt de positie niet correct geopend of gesloten en blijft de positie hangen (voorlopig even een quick fix)
+
+- Trading - Na het annuleren van de orders vanwege tradingrules wordt de buy even later toch weer geplaatst
+- Trading - API calls worden nu goed doorgezet naar de juiste exchange (wellicht wel handig)
 - Trading - Een geannuleerde buy order (door lage barometer of tradingrules) wordt later herplaatst maar met de oude prijs. Controle op de laatste prijs ingebouwd.
+- Trading - Statistiek, bij de virtuele opbrengst werd ook de USDT waarde opgeteld.
+- Trading - Statistiek, de BTC display format was niet juist, gebruikte altijd een N2 wat prima is voor USDT maar niet voor BTC
 - Trading - Statistiek, de x en y-as van de grafieken worden niet bijgewerkt waardoor het juiste aantal trades en winst niet zichtbaar zijn (punten liggen buiten de chart als het ware, herstart nodig)
 - Trading - Open en gesloten posities - extra kolom met daarin de doorlooptijd van de trade
 - Trading - Open en gesloten posities - Dubbelklik naar de tradingapp, of rmk voor trading view etc
@@ -98,6 +126,9 @@ Het lijkt alsof de CPU belasting is toegenomen (ondanks uitzetten verversing) - 
 - Trading - Bybit Spot - ophalen trades implementeren
 - Trading - Bybit Futures - ophalen assets implementeren
 - Trading - Bybit Spot - ophalen assets implementeren
+- Telegram - Het commando assets implementeren
+- Scanner - Op verzoek de grenswaarden voor RSI overbought en oversold instelbaar gemaakt
+- Scanner - Op verzoek de grenswaarden voor STOCH overbought en oversold instelbaar gemaakt
 - Scanner - Refactoring van alle RMK (RechterMuisKnop) opties
 - Scanner - Op verzoek de up- of down trend tonen voor de 1h, 4h en 12h.
 - Scanner - De fundingrate toegevoegd aan de signalen
@@ -105,6 +136,7 @@ Het lijkt alsof de CPU belasting is toegenomen (ondanks uitzetten verversing) - 
 - Scanner - Herintroductie van locking waardoor een bepaalde foutmelding niet kan optreden en de scanner netjes door blijft lopen (heel lastig te controleren)
 - Scanner - De tradingview URL voor Bybit Futures is gecorrigeerd. {base}{quote}.P
 - Scanner - De window coordinaten/breedte wordt niet correct hersteld (na aanpassing volgorde event)
+- Scanner - Bij een negatieve barometer wordt de toevoeging 1h/4h/1d soms niet getoond (niet genoeg ruimte)
 
 
 23-09-2023 1.8.6

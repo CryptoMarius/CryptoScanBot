@@ -71,6 +71,8 @@ static public class GlobalData
     static public SortedList<int, Model.CryptoExchange> ExchangeListId { get; } = new();
     static public SortedList<string, Model.CryptoExchange> ExchangeListName { get; } = new();
 
+    // Probleem, de signallist wordt nooit opgeruimd!
+    static public List<CryptoSignal> SignalList = new();
     static public Queue<CryptoSignal> SignalQueue { get; } = new();
     static public List<CryptoPosition> PositionsClosed { get; } = new();
 
@@ -248,12 +250,36 @@ static public class GlobalData
                     if (IntervalListId.TryGetValue((int)signal.IntervalId, out CryptoInterval interval))
                         signal.Interval = interval;
 
+                    SignalList.Add(signal);
                     SignalQueue.Enqueue(signal);
                 }
             }
         }
     }
 
+
+    static public bool IsStobSignalAvailableInTheLast(CryptoOrderSide side, DateTime boundary)
+    {
+        // Zoek een signaal die mogelijk een LL heeft geleverd
+
+        for (int i = SignalList.Count - 1; i >= 0; i--)
+        {
+            CryptoSignal signal = SignalList[i];
+
+            if (signal.OpenDate < boundary)
+                break;
+
+            if (signal.Strategy == CryptoSignalStrategy.Stobb || signal.Strategy == CryptoSignalStrategy.Sbm1 ||
+                signal.Strategy == CryptoSignalStrategy.Sbm2 || signal.Strategy == CryptoSignalStrategy.Sbm3 ||
+                signal.Strategy == CryptoSignalStrategy.Sbm4 || signal.Strategy == CryptoSignalStrategy.Sbm5)
+                return true;
+
+            if (signal.Side == side)
+                return true;
+        }
+
+        return false;
+    }
 
     static public void AddExchange(Model.CryptoExchange exchange)
     {

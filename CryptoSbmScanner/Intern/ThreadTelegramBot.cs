@@ -529,7 +529,7 @@ public class ThreadTelegramBotInstance
         stringBuilder.AppendLine("value         show value BTC,BNB and ETH");
         stringBuilder.AppendLine("barometer     show barometer BTC/BNB/USDT");
 #if TRADEBOT
-stringBuilder.AppendLine("assets        show asset overview");
+        stringBuilder.AppendLine("assets        show asset overview");
 #endif
         stringBuilder.AppendLine("chatid        ChatId configuratie");
         stringBuilder.AppendLine("help          this stuff");
@@ -647,7 +647,7 @@ stringBuilder.AppendLine("assets        show asset overview");
 #if TRADEBOT
                                         else if (command == "ASSETS")
                                         {
-                                            //Helper.ShowAssets(stringBuilder, out decimal valueUsdt, out decimal valueBtc);
+                                            Helper.ShowAssets(GlobalData.ExchangeRealTradeAccount, stringBuilder, out decimal valueUsdt, out decimal valueBtc);
                                         }
 #endif
                                         else if (command == "TREND")

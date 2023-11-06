@@ -371,16 +371,25 @@ public class PositionTools
             }
         }
 
+
+        List<CryptoTrade> tradelist = position.Symbol.TradeList.Values.ToList();
+        tradelist.Sort((x, y) => x.TradeTime.CompareTo(y.TradeTime));
+
         // De filled quantity in de steps opnieuw opbouwen vanuit de trades
-        foreach (CryptoTrade trade in position.Symbol.TradeList.Values.ToList())
+        foreach (CryptoTrade trade in tradelist)
         {
             if (position.Orders.TryGetValue(trade.OrderId, out CryptoPositionStep step))
             {
                 step.Commission += trade.Commission; // probleem, het asset (BUSD enzovoort)
                 step.QuantityFilled += trade.Quantity;
                 step.QuoteQuantityFilled += trade.QuoteQuantity;
-
                 step.AvgPrice = step.QuoteQuantityFilled / step.QuantityFilled;
+
+                // Als er 1 (of meerdere trades zijn) dan zitten we in de trade (de user ticker valt wel eens stil)
+                // Eventuele handmatige correctie geven daarna problemen (we moegen niet handmatig corrigeren!)
+                // (Dit geeft te denken aan de problemen als we straks een lopende order gaan opnemen als een positie)
+                if (position.Status == CryptoPositionStatus.Waiting)
+                    position.Status = CryptoPositionStatus.Trading;
 
                 // Vanuit nieuwe trades moeten we de status wel bijwerken (opstarten applicatie)
                 // Maar overschrijf de status alleen indien het absoluut zeker is..
@@ -389,7 +398,8 @@ public class PositionTools
                     if (step.CloseTime != trade.TradeTime)
                         isChanged = true;
                     step.CloseTime = trade.TradeTime;
-                    // Die Expired begrijp ik niet, waarom? (het lijkt een soort van correctie te zijn)
+
+                    // de expired begrijp ik niet (lijkt een soort van correctie te zijn)?
                     if (step.Status < CryptoOrderStatus.Filled || step.Status == CryptoOrderStatus.Expired)
                     {
                         if (step.Status != CryptoOrderStatus.Filled)
@@ -427,10 +437,11 @@ public class PositionTools
 
 
         // Als alles verkocht is de positie alsnog sluiten
-        // Of inden alle orders geannuleerd zijn alsnog sluitne (timeout's)
-        if (position.Status == CryptoPositionStatus.Trading || position.Status == CryptoPositionStatus.Waiting)
+        // Of inden alle orders geannuleerd zijn alsnog sluiten (timeout's) --> onduidelijk, waiting lijkt me niet meer relevant?
+        if (position.Status == CryptoPositionStatus.Trading) //|| position.Status == CryptoPositionStatus.Waiting
         {
-            if (position.Quantity == 0 && openOrders == 0)
+            // We hebben niets over en er is geinvesteerd (niet enkel openstaande orders)
+            if (position.Quantity == 0 && position.Invested != 0)
             {
                 isChanged = true;
                 position.CloseTime = DateTime.UtcNow;
@@ -544,11 +555,8 @@ public class PositionTools
         //(!SymbolTools.CheckValidBarometer(symbol.QuoteData, CryptoIntervalPeriod.interval1d, GlobalData.Settings.Trading.Barometer24hBotMinimal, out reaction)))
         //    return false;
 
-        if (!TradingRules.CheckBarometerValues(symbol, lastCandle1m))
-        {
-            reaction = symbol.QuoteData.PauseTrading.Text;
+        if (!TradingRules.CheckBarometerValues(symbol, lastCandle1m, out reaction))
             return false;
-        }
 
 
         // Staat op de whitelist (kan leeg zijn)
@@ -583,7 +591,42 @@ public class PositionTools
         if (!SymbolTools.CheckAvailableSlots(tradeAccount, symbol, out reaction))
             return false;
 
+        return true;
+    }
 
+
+    /// <summary>
+    /// Zijn de 1h, 4h en 12h trend UP (alleen long op dit moment)
+    /// </summary>
+    public static bool ValidTrendConditions(CryptoSignal signal, out string reaction)
+    {
+        // Voor Eric (experiment)
+        if (GlobalData.Settings.Trading.WhenThreeTrendsOkay)
+        {
+            List<CryptoIntervalPeriod> checkList = new();
+            checkList.Add(CryptoIntervalPeriod.interval1h);
+            checkList.Add(CryptoIntervalPeriod.interval4h);
+            checkList.Add(CryptoIntervalPeriod.interval12h);
+
+            foreach (var intervalPeriod in checkList)
+            {
+                var symbolPeriod = signal.Symbol.GetSymbolInterval(intervalPeriod);
+                switch (symbolPeriod.TrendIndicator)
+                {
+                    case CryptoTrendIndicator.trendBullish:
+                        // OKAY (we supporten alleen long op dit moment)
+                        break;
+                    case CryptoTrendIndicator.trendBearish:
+                        reaction = $"{symbolPeriod.Interval.Name} niet in uptrend";
+                        return false;
+                    default:
+                        reaction = $"{symbolPeriod.Interval.Name} niet in uptrend";
+                        return false;
+                }
+            }
+        }
+
+        reaction = "";
         return true;
     }
 
@@ -613,7 +656,7 @@ public class PositionTools
         }
 
         // Als een munt snel is gedaald dan stoppen
-        if (TradingRules.CheckTradingRules(lastCandle1m))
+        if (!TradingRules.CheckTradingRules(lastCandle1m))
         {
             reaction = string.Format(" de bot is gepauseerd omdat {0}", GlobalData.PauseTrading.Text);
             return false;

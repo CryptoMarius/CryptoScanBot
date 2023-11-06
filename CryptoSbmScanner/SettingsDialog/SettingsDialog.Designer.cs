@@ -69,6 +69,10 @@ partial class FrmSettings
         label15 = new Label();
         tabBasismunten = new TabPage();
         tabPageSignals = new TabPage();
+        label86 = new Label();
+        EditAnalysisMinEffective10DaysPercentage = new NumericUpDown();
+        EditAnalysisMaxEffective10DaysPercentage = new NumericUpDown();
+        EditLogAnalysisMinMaxEffective10DaysPercentage = new CheckBox();
         label64 = new Label();
         EditAnalysisMinEffectivePercentage = new NumericUpDown();
         EditAnalysisMaxEffectivePercentage = new NumericUpDown();
@@ -216,6 +220,7 @@ partial class FrmSettings
         EditAnalyzeCandleJumpDown = new CheckBox();
         EditAnalysisCandleJumpPercentage = new NumericUpDown();
         tabPageTrading = new TabPage();
+        EditWhenThreeTrendsOkay = new CheckBox();
         label85 = new Label();
         EditApiSecret = new TextBox();
         label80 = new Label();
@@ -227,7 +232,7 @@ partial class FrmSettings
         EditCheckIncreasingRsi = new CheckBox();
         label59 = new Label();
         label19 = new Label();
-        EditMargin = new ComboBox();
+        EditCrossOrIsolated = new ComboBox();
         label23 = new Label();
         EditLeverage = new NumericUpDown();
         EditLogCanceledOrders = new CheckBox();
@@ -315,10 +320,16 @@ partial class FrmSettings
         toolTip1 = new ToolTip(components);
         imageList1 = new ImageList(components);
         colorDialog1 = new ColorDialog();
-        label86 = new Label();
-        EditAnalysisMinEffective10DaysPercentage = new NumericUpDown();
-        EditAnalysisMaxEffective10DaysPercentage = new NumericUpDown();
-        EditLogAnalysisMinMaxEffective10DaysPercentage = new CheckBox();
+        groupBoxRsi = new GroupBox();
+        EditRsiValueOversold = new NumericUpDown();
+        label87 = new Label();
+        label90 = new Label();
+        EditRsiValueOverbought = new NumericUpDown();
+        groupBoxStoch = new GroupBox();
+        EditStochValueOversold = new NumericUpDown();
+        label88 = new Label();
+        label89 = new Label();
+        EditStochValueOverbought = new NumericUpDown();
         panel2.SuspendLayout();
         panel1.SuspendLayout();
         tabControl.SuspendLayout();
@@ -328,6 +339,8 @@ partial class FrmSettings
         ((System.ComponentModel.ISupportInitialize)EditSoundHeartBeatMinutes).BeginInit();
         tabTelegram.SuspendLayout();
         tabPageSignals.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)EditAnalysisMinEffective10DaysPercentage).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)EditAnalysisMaxEffective10DaysPercentage).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditAnalysisMinEffectivePercentage).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditAnalysisMaxEffectivePercentage).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditCandlesWithZeroVolume).BeginInit();
@@ -392,8 +405,12 @@ partial class FrmSettings
         panel5.SuspendLayout();
         tabBlacklistOverbought.SuspendLayout();
         panel6.SuspendLayout();
-        ((System.ComponentModel.ISupportInitialize)EditAnalysisMinEffective10DaysPercentage).BeginInit();
-        ((System.ComponentModel.ISupportInitialize)EditAnalysisMaxEffective10DaysPercentage).BeginInit();
+        groupBoxRsi.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)EditRsiValueOversold).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)EditRsiValueOverbought).BeginInit();
+        groupBoxStoch.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)EditStochValueOversold).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)EditStochValueOverbought).BeginInit();
         SuspendLayout();
         // 
         // panel2
@@ -498,6 +515,8 @@ partial class FrmSettings
         // 
         // tabAlgemeen
         // 
+        tabAlgemeen.Controls.Add(groupBoxStoch);
+        tabAlgemeen.Controls.Add(groupBoxRsi);
         tabAlgemeen.Controls.Add(EditExtraCaption);
         tabAlgemeen.Controls.Add(label74);
         tabAlgemeen.Controls.Add(EditHideSymbolsOnTheLeft);
@@ -876,6 +895,48 @@ partial class FrmSettings
         tabPageSignals.TabIndex = 10;
         tabPageSignals.Text = "Signalen";
         tabPageSignals.UseVisualStyleBackColor = true;
+        // 
+        // label86
+        // 
+        label86.AutoSize = true;
+        label86.Location = new Point(291, 113);
+        label86.Margin = new Padding(4, 0, 4, 0);
+        label86.Name = "label86";
+        label86.Size = new Size(101, 15);
+        label86.TabIndex = 244;
+        label86.Text = "10 dagen effectief";
+        // 
+        // EditAnalysisMinEffective10DaysPercentage
+        // 
+        EditAnalysisMinEffective10DaysPercentage.Location = new Point(423, 111);
+        EditAnalysisMinEffective10DaysPercentage.Margin = new Padding(4, 3, 4, 3);
+        EditAnalysisMinEffective10DaysPercentage.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
+        EditAnalysisMinEffective10DaysPercentage.Name = "EditAnalysisMinEffective10DaysPercentage";
+        EditAnalysisMinEffective10DaysPercentage.Size = new Size(57, 23);
+        EditAnalysisMinEffective10DaysPercentage.TabIndex = 245;
+        toolTip1.SetToolTip(EditAnalysisMinEffective10DaysPercentage, "Kunnen filteren op de 24 uur volume percentage.");
+        // 
+        // EditAnalysisMaxEffective10DaysPercentage
+        // 
+        EditAnalysisMaxEffective10DaysPercentage.Location = new Point(487, 111);
+        EditAnalysisMaxEffective10DaysPercentage.Margin = new Padding(4, 3, 4, 3);
+        EditAnalysisMaxEffective10DaysPercentage.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
+        EditAnalysisMaxEffective10DaysPercentage.Name = "EditAnalysisMaxEffective10DaysPercentage";
+        EditAnalysisMaxEffective10DaysPercentage.Size = new Size(57, 23);
+        EditAnalysisMaxEffective10DaysPercentage.TabIndex = 246;
+        toolTip1.SetToolTip(EditAnalysisMaxEffective10DaysPercentage, "Kunnen filteren op de 24 uur volume percentage.");
+        EditAnalysisMaxEffective10DaysPercentage.Value = new decimal(new int[] { 25, 0, 0, 0 });
+        // 
+        // EditLogAnalysisMinMaxEffective10DaysPercentage
+        // 
+        EditLogAnalysisMinMaxEffective10DaysPercentage.AutoSize = true;
+        EditLogAnalysisMinMaxEffective10DaysPercentage.Location = new Point(572, 112);
+        EditLogAnalysisMinMaxEffective10DaysPercentage.Margin = new Padding(4, 3, 4, 3);
+        EditLogAnalysisMinMaxEffective10DaysPercentage.Name = "EditLogAnalysisMinMaxEffective10DaysPercentage";
+        EditLogAnalysisMinMaxEffective10DaysPercentage.Size = new Size(203, 19);
+        EditLogAnalysisMinMaxEffective10DaysPercentage.TabIndex = 247;
+        EditLogAnalysisMinMaxEffective10DaysPercentage.Text = "Log waarden buiten deze grenzen";
+        EditLogAnalysisMinMaxEffective10DaysPercentage.UseVisualStyleBackColor = true;
         // 
         // label64
         // 
@@ -2505,6 +2566,7 @@ partial class FrmSettings
         // 
         // tabPageTrading
         // 
+        tabPageTrading.Controls.Add(EditWhenThreeTrendsOkay);
         tabPageTrading.Controls.Add(label85);
         tabPageTrading.Controls.Add(EditApiSecret);
         tabPageTrading.Controls.Add(label80);
@@ -2516,7 +2578,7 @@ partial class FrmSettings
         tabPageTrading.Controls.Add(EditCheckIncreasingRsi);
         tabPageTrading.Controls.Add(label59);
         tabPageTrading.Controls.Add(label19);
-        tabPageTrading.Controls.Add(EditMargin);
+        tabPageTrading.Controls.Add(EditCrossOrIsolated);
         tabPageTrading.Controls.Add(label23);
         tabPageTrading.Controls.Add(EditLeverage);
         tabPageTrading.Controls.Add(EditLogCanceledOrders);
@@ -2567,6 +2629,17 @@ partial class FrmSettings
         tabPageTrading.TabIndex = 11;
         tabPageTrading.Text = "Trading";
         tabPageTrading.UseVisualStyleBackColor = true;
+        // 
+        // EditWhenThreeTrendsOkay
+        // 
+        EditWhenThreeTrendsOkay.AutoSize = true;
+        EditWhenThreeTrendsOkay.Location = new Point(514, 102);
+        EditWhenThreeTrendsOkay.Margin = new Padding(4, 3, 4, 3);
+        EditWhenThreeTrendsOkay.Name = "EditWhenThreeTrendsOkay";
+        EditWhenThreeTrendsOkay.Size = new Size(184, 19);
+        EditWhenThreeTrendsOkay.TabIndex = 281;
+        EditWhenThreeTrendsOkay.Text = "De 1h, 4h en 12h trend OK zijn";
+        EditWhenThreeTrendsOkay.UseVisualStyleBackColor = true;
         // 
         // label85
         // 
@@ -2620,7 +2693,7 @@ partial class FrmSettings
         // EditLockProfits
         // 
         EditLockProfits.AutoSize = true;
-        EditLockProfits.Location = new Point(514, 481);
+        EditLockProfits.Location = new Point(514, 506);
         EditLockProfits.Margin = new Padding(4, 3, 4, 3);
         EditLockProfits.Name = "EditLockProfits";
         EditLockProfits.Size = new Size(88, 19);
@@ -2642,7 +2715,7 @@ partial class FrmSettings
         // EditCheckIncreasingStoch
         // 
         EditCheckIncreasingStoch.AutoSize = true;
-        EditCheckIncreasingStoch.Location = new Point(514, 81);
+        EditCheckIncreasingStoch.Location = new Point(514, 79);
         EditCheckIncreasingStoch.Margin = new Padding(4, 3, 4, 3);
         EditCheckIncreasingStoch.Name = "EditCheckIncreasingStoch";
         EditCheckIncreasingStoch.Size = new Size(199, 19);
@@ -2684,14 +2757,14 @@ partial class FrmSettings
         // 
         // EditMargin
         // 
-        EditMargin.DropDownStyle = ComboBoxStyle.DropDownList;
-        EditMargin.FormattingEnabled = true;
-        EditMargin.Items.AddRange(new object[] { "Cross", "Isolated" });
-        EditMargin.Location = new Point(389, 276);
-        EditMargin.Margin = new Padding(4, 3, 4, 3);
-        EditMargin.Name = "EditMargin";
-        EditMargin.Size = new Size(87, 23);
-        EditMargin.TabIndex = 269;
+        EditCrossOrIsolated.DropDownStyle = ComboBoxStyle.DropDownList;
+        EditCrossOrIsolated.FormattingEnabled = true;
+        EditCrossOrIsolated.Items.AddRange(new object[] { "Cross", "Isolated" });
+        EditCrossOrIsolated.Location = new Point(389, 276);
+        EditCrossOrIsolated.Margin = new Padding(4, 3, 4, 3);
+        EditCrossOrIsolated.Name = "EditMargin";
+        EditCrossOrIsolated.Size = new Size(87, 23);
+        EditCrossOrIsolated.TabIndex = 269;
         // 
         // label23
         // 
@@ -2749,7 +2822,7 @@ partial class FrmSettings
         // label83
         // 
         label83.AutoSize = true;
-        label83.Location = new Point(514, 138);
+        label83.Location = new Point(514, 163);
         label83.Margin = new Padding(4, 0, 4, 0);
         label83.Name = "label83";
         label83.Size = new Size(88, 15);
@@ -2760,7 +2833,7 @@ partial class FrmSettings
         // 
         EditBuyStepInMethod.DropDownStyle = ComboBoxStyle.DropDownList;
         EditBuyStepInMethod.FormattingEnabled = true;
-        EditBuyStepInMethod.Location = new Point(682, 130);
+        EditBuyStepInMethod.Location = new Point(682, 155);
         EditBuyStepInMethod.Margin = new Padding(4, 3, 4, 3);
         EditBuyStepInMethod.Name = "EditBuyStepInMethod";
         EditBuyStepInMethod.Size = new Size(200, 23);
@@ -2769,7 +2842,7 @@ partial class FrmSettings
         // label82
         // 
         label82.AutoSize = true;
-        label82.Location = new Point(514, 245);
+        label82.Location = new Point(514, 270);
         label82.Margin = new Padding(4, 0, 4, 0);
         label82.Name = "label82";
         label82.Size = new Size(88, 15);
@@ -2780,7 +2853,7 @@ partial class FrmSettings
         // 
         EditDcaStepInMethod.DropDownStyle = ComboBoxStyle.DropDownList;
         EditDcaStepInMethod.FormattingEnabled = true;
-        EditDcaStepInMethod.Location = new Point(682, 237);
+        EditDcaStepInMethod.Location = new Point(682, 262);
         EditDcaStepInMethod.Margin = new Padding(4, 3, 4, 3);
         EditDcaStepInMethod.Name = "EditDcaStepInMethod";
         EditDcaStepInMethod.Size = new Size(200, 23);
@@ -2800,7 +2873,7 @@ partial class FrmSettings
         // label63
         // 
         label63.AutoSize = true;
-        label63.Location = new Point(514, 425);
+        label63.Location = new Point(514, 450);
         label63.Margin = new Padding(4, 0, 4, 0);
         label63.Name = "label63";
         label63.Size = new Size(55, 15);
@@ -2811,7 +2884,7 @@ partial class FrmSettings
         // 
         EditSellMethod.DropDownStyle = ComboBoxStyle.DropDownList;
         EditSellMethod.FormattingEnabled = true;
-        EditSellMethod.Location = new Point(682, 422);
+        EditSellMethod.Location = new Point(682, 447);
         EditSellMethod.Margin = new Padding(4, 3, 4, 3);
         EditSellMethod.Name = "EditSellMethod";
         EditSellMethod.Size = new Size(200, 23);
@@ -2831,7 +2904,7 @@ partial class FrmSettings
         // label60
         // 
         label60.AutoSize = true;
-        label60.Location = new Point(514, 269);
+        label60.Location = new Point(514, 294);
         label60.Margin = new Padding(4, 0, 4, 0);
         label60.Name = "label60";
         label60.Size = new Size(86, 15);
@@ -2842,7 +2915,7 @@ partial class FrmSettings
         // 
         EditDcaOrderMethod.DropDownStyle = ComboBoxStyle.DropDownList;
         EditDcaOrderMethod.FormattingEnabled = true;
-        EditDcaOrderMethod.Location = new Point(682, 265);
+        EditDcaOrderMethod.Location = new Point(682, 290);
         EditDcaOrderMethod.Margin = new Padding(4, 3, 4, 3);
         EditDcaOrderMethod.Name = "EditDcaOrderMethod";
         EditDcaOrderMethod.Size = new Size(200, 23);
@@ -2852,7 +2925,7 @@ partial class FrmSettings
         // 
         label36.AutoSize = true;
         label36.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
-        label36.Location = new Point(514, 513);
+        label36.Location = new Point(514, 538);
         label36.Margin = new Padding(4, 0, 4, 0);
         label36.Name = "label36";
         label36.Size = new Size(63, 15);
@@ -2863,7 +2936,7 @@ partial class FrmSettings
         // 
         label81.AutoSize = true;
         label81.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
-        label81.Location = new Point(514, 402);
+        label81.Location = new Point(514, 427);
         label81.Margin = new Padding(4, 0, 4, 0);
         label81.Name = "label81";
         label81.Size = new Size(57, 15);
@@ -2874,7 +2947,7 @@ partial class FrmSettings
         // 
         label57.AutoSize = true;
         label57.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
-        label57.Location = new Point(514, 219);
+        label57.Location = new Point(514, 244);
         label57.Margin = new Padding(4, 0, 4, 0);
         label57.Name = "label57";
         label57.Size = new Size(52, 15);
@@ -2885,7 +2958,7 @@ partial class FrmSettings
         // 
         label54.AutoSize = true;
         label54.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
-        label54.Location = new Point(514, 114);
+        label54.Location = new Point(514, 139);
         label54.Margin = new Padding(4, 0, 4, 0);
         label54.Name = "label54";
         label54.Size = new Size(59, 15);
@@ -3218,7 +3291,7 @@ partial class FrmSettings
         // label62
         // 
         label62.AutoSize = true;
-        label62.Location = new Point(514, 160);
+        label62.Location = new Point(514, 185);
         label62.Margin = new Padding(4, 0, 4, 0);
         label62.Name = "label62";
         label62.Size = new Size(86, 15);
@@ -3229,7 +3302,7 @@ partial class FrmSettings
         // 
         EditBuyOrderMethod.DropDownStyle = ComboBoxStyle.DropDownList;
         EditBuyOrderMethod.FormattingEnabled = true;
-        EditBuyOrderMethod.Location = new Point(682, 157);
+        EditBuyOrderMethod.Location = new Point(682, 182);
         EditBuyOrderMethod.Margin = new Padding(4, 3, 4, 3);
         EditBuyOrderMethod.Name = "EditBuyOrderMethod";
         EditBuyOrderMethod.Size = new Size(200, 23);
@@ -3239,7 +3312,7 @@ partial class FrmSettings
         // 
         EditDcaCount.Enabled = false;
         EditDcaCount.Font = new Font("Segoe UI", 9F, FontStyle.Strikeout, GraphicsUnit.Point);
-        EditDcaCount.Location = new Point(684, 345);
+        EditDcaCount.Location = new Point(684, 370);
         EditDcaCount.Margin = new Padding(4, 3, 4, 3);
         EditDcaCount.Maximum = new decimal(new int[] { 10, 0, 0, 0 });
         EditDcaCount.Name = "EditDcaCount";
@@ -3251,7 +3324,7 @@ partial class FrmSettings
         // 
         label67.AutoSize = true;
         label67.Font = new Font("Segoe UI", 9F, FontStyle.Strikeout, GraphicsUnit.Point);
-        label67.Location = new Point(514, 347);
+        label67.Location = new Point(514, 372);
         label67.Margin = new Padding(4, 0, 4, 0);
         label67.Name = "label67";
         label67.Size = new Size(90, 15);
@@ -3261,7 +3334,7 @@ partial class FrmSettings
         // label68
         // 
         label68.AutoSize = true;
-        label68.Location = new Point(514, 321);
+        label68.Location = new Point(514, 346);
         label68.Margin = new Padding(4, 0, 4, 0);
         label68.Name = "label68";
         label68.Size = new Size(81, 15);
@@ -3271,7 +3344,7 @@ partial class FrmSettings
         // EditDcaFactor
         // 
         EditDcaFactor.DecimalPlaces = 2;
-        EditDcaFactor.Location = new Point(682, 320);
+        EditDcaFactor.Location = new Point(682, 345);
         EditDcaFactor.Margin = new Padding(4, 3, 4, 3);
         EditDcaFactor.Maximum = new decimal(new int[] { 10, 0, 0, 0 });
         EditDcaFactor.Name = "EditDcaFactor";
@@ -3282,7 +3355,7 @@ partial class FrmSettings
         // label69
         // 
         label69.AutoSize = true;
-        label69.Location = new Point(514, 296);
+        label69.Location = new Point(514, 321);
         label69.Margin = new Padding(4, 0, 4, 0);
         label69.Name = "label69";
         label69.Size = new Size(91, 15);
@@ -3292,7 +3365,7 @@ partial class FrmSettings
         // EditDcaPercentage
         // 
         EditDcaPercentage.DecimalPlaces = 2;
-        EditDcaPercentage.Location = new Point(682, 293);
+        EditDcaPercentage.Location = new Point(682, 318);
         EditDcaPercentage.Margin = new Padding(4, 3, 4, 3);
         EditDcaPercentage.Name = "EditDcaPercentage";
         EditDcaPercentage.Size = new Size(88, 23);
@@ -3303,7 +3376,7 @@ partial class FrmSettings
         // 
         EditGlobalStopLimitPercentage.DecimalPlaces = 2;
         EditGlobalStopLimitPercentage.Font = new Font("Segoe UI", 9F, FontStyle.Strikeout, GraphicsUnit.Point);
-        EditGlobalStopLimitPercentage.Location = new Point(682, 566);
+        EditGlobalStopLimitPercentage.Location = new Point(682, 591);
         EditGlobalStopLimitPercentage.Margin = new Padding(4, 3, 4, 3);
         EditGlobalStopLimitPercentage.Name = "EditGlobalStopLimitPercentage";
         EditGlobalStopLimitPercentage.Size = new Size(88, 23);
@@ -3313,7 +3386,7 @@ partial class FrmSettings
         // 
         label70.AutoSize = true;
         label70.Font = new Font("Segoe UI", 9F, FontStyle.Strikeout, GraphicsUnit.Point);
-        label70.Location = new Point(514, 568);
+        label70.Location = new Point(514, 593);
         label70.Margin = new Padding(4, 0, 4, 0);
         label70.Name = "label70";
         label70.Size = new Size(107, 15);
@@ -3324,7 +3397,7 @@ partial class FrmSettings
         // 
         EditGlobalStopPercentage.DecimalPlaces = 2;
         EditGlobalStopPercentage.Font = new Font("Segoe UI", 9F, FontStyle.Strikeout, GraphicsUnit.Point);
-        EditGlobalStopPercentage.Location = new Point(682, 539);
+        EditGlobalStopPercentage.Location = new Point(682, 564);
         EditGlobalStopPercentage.Margin = new Padding(4, 3, 4, 3);
         EditGlobalStopPercentage.Name = "EditGlobalStopPercentage";
         EditGlobalStopPercentage.Size = new Size(88, 23);
@@ -3334,7 +3407,7 @@ partial class FrmSettings
         // 
         label71.AutoSize = true;
         label71.Font = new Font("Segoe UI", 9F, FontStyle.Strikeout, GraphicsUnit.Point);
-        label71.Location = new Point(514, 541);
+        label71.Location = new Point(514, 566);
         label71.Margin = new Padding(4, 0, 4, 0);
         label71.Name = "label71";
         label71.Size = new Size(109, 15);
@@ -3344,7 +3417,7 @@ partial class FrmSettings
         // label72
         // 
         label72.AutoSize = true;
-        label72.Location = new Point(514, 452);
+        label72.Location = new Point(514, 477);
         label72.Margin = new Padding(4, 0, 4, 0);
         label72.Name = "label72";
         label72.Size = new Size(120, 15);
@@ -3354,7 +3427,7 @@ partial class FrmSettings
         // EditProfitPercentage
         // 
         EditProfitPercentage.DecimalPlaces = 2;
-        EditProfitPercentage.Location = new Point(682, 450);
+        EditProfitPercentage.Location = new Point(682, 475);
         EditProfitPercentage.Margin = new Padding(4, 3, 4, 3);
         EditProfitPercentage.Name = "EditProfitPercentage";
         EditProfitPercentage.Size = new Size(88, 23);
@@ -3364,7 +3437,7 @@ partial class FrmSettings
         // label73
         // 
         label73.AutoSize = true;
-        label73.Location = new Point(514, 374);
+        label73.Location = new Point(514, 399);
         label73.Margin = new Padding(4, 0, 4, 0);
         label73.Name = "label73";
         label73.Size = new Size(114, 15);
@@ -3373,7 +3446,7 @@ partial class FrmSettings
         // 
         // EditGlobalBuyCooldownTime
         // 
-        EditGlobalBuyCooldownTime.Location = new Point(684, 372);
+        EditGlobalBuyCooldownTime.Location = new Point(684, 397);
         EditGlobalBuyCooldownTime.Margin = new Padding(4, 3, 4, 3);
         EditGlobalBuyCooldownTime.Maximum = new decimal(new int[] { 276447231, 23283, 0, 0 });
         EditGlobalBuyCooldownTime.Name = "EditGlobalBuyCooldownTime";
@@ -3405,7 +3478,7 @@ partial class FrmSettings
         // label46
         // 
         label46.AutoSize = true;
-        label46.Location = new Point(514, 187);
+        label46.Location = new Point(514, 212);
         label46.Margin = new Padding(4, 0, 4, 0);
         label46.Name = "label46";
         label46.Size = new Size(77, 15);
@@ -3414,7 +3487,7 @@ partial class FrmSettings
         // 
         // EditGlobalBuyRemoveTime
         // 
-        EditGlobalBuyRemoveTime.Location = new Point(682, 185);
+        EditGlobalBuyRemoveTime.Location = new Point(682, 210);
         EditGlobalBuyRemoveTime.Margin = new Padding(4, 3, 4, 3);
         EditGlobalBuyRemoveTime.Maximum = new decimal(new int[] { 276447231, 23283, 0, 0 });
         EditGlobalBuyRemoveTime.Name = "EditGlobalBuyRemoveTime";
@@ -3601,47 +3674,111 @@ partial class FrmSettings
         imageList1.TransparentColor = Color.Transparent;
         imageList1.Images.SetKeyName(0, "volume.png");
         // 
-        // label86
+        // groupBoxRsi
         // 
-        label86.AutoSize = true;
-        label86.Location = new Point(291, 113);
-        label86.Margin = new Padding(4, 0, 4, 0);
-        label86.Name = "label86";
-        label86.Size = new Size(101, 15);
-        label86.TabIndex = 244;
-        label86.Text = "10 dagen effectief";
+        groupBoxRsi.Controls.Add(EditRsiValueOversold);
+        groupBoxRsi.Controls.Add(label87);
+        groupBoxRsi.Controls.Add(label90);
+        groupBoxRsi.Controls.Add(EditRsiValueOverbought);
+        groupBoxRsi.Location = new Point(418, 34);
+        groupBoxRsi.Name = "groupBoxRsi";
+        groupBoxRsi.Size = new Size(234, 96);
+        groupBoxRsi.TabIndex = 244;
+        groupBoxRsi.TabStop = false;
+        groupBoxRsi.Text = "RSI";
         // 
-        // EditAnalysisMinEffective10DaysPercentage
+        // EditRsiValueOversold
         // 
-        EditAnalysisMinEffective10DaysPercentage.Location = new Point(423, 111);
-        EditAnalysisMinEffective10DaysPercentage.Margin = new Padding(4, 3, 4, 3);
-        EditAnalysisMinEffective10DaysPercentage.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
-        EditAnalysisMinEffective10DaysPercentage.Name = "EditAnalysisMinEffective10DaysPercentage";
-        EditAnalysisMinEffective10DaysPercentage.Size = new Size(57, 23);
-        EditAnalysisMinEffective10DaysPercentage.TabIndex = 245;
-        toolTip1.SetToolTip(EditAnalysisMinEffective10DaysPercentage, "Kunnen filteren op de 24 uur volume percentage.");
+        EditRsiValueOversold.DecimalPlaces = 2;
+        EditRsiValueOversold.Location = new Point(130, 30);
+        EditRsiValueOversold.Margin = new Padding(4, 3, 4, 3);
+        EditRsiValueOversold.Name = "EditRsiValueOversold";
+        EditRsiValueOversold.Size = new Size(88, 23);
+        EditRsiValueOversold.TabIndex = 175;
+        EditRsiValueOversold.Value = new decimal(new int[] { 25, 0, 0, 0 });
         // 
-        // EditAnalysisMaxEffective10DaysPercentage
+        // label87
         // 
-        EditAnalysisMaxEffective10DaysPercentage.Location = new Point(487, 111);
-        EditAnalysisMaxEffective10DaysPercentage.Margin = new Padding(4, 3, 4, 3);
-        EditAnalysisMaxEffective10DaysPercentage.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
-        EditAnalysisMaxEffective10DaysPercentage.Name = "EditAnalysisMaxEffective10DaysPercentage";
-        EditAnalysisMaxEffective10DaysPercentage.Size = new Size(57, 23);
-        EditAnalysisMaxEffective10DaysPercentage.TabIndex = 246;
-        toolTip1.SetToolTip(EditAnalysisMaxEffective10DaysPercentage, "Kunnen filteren op de 24 uur volume percentage.");
-        EditAnalysisMaxEffective10DaysPercentage.Value = new decimal(new int[] { 25, 0, 0, 0 });
+        label87.AutoSize = true;
+        label87.Location = new Point(7, 33);
+        label87.Margin = new Padding(4, 0, 4, 0);
+        label87.Name = "label87";
+        label87.Size = new Size(54, 15);
+        label87.TabIndex = 173;
+        label87.Text = "Oversold";
         // 
-        // EditLogAnalysisMinMaxEffective10DaysPercentage
+        // label90
         // 
-        EditLogAnalysisMinMaxEffective10DaysPercentage.AutoSize = true;
-        EditLogAnalysisMinMaxEffective10DaysPercentage.Location = new Point(572, 112);
-        EditLogAnalysisMinMaxEffective10DaysPercentage.Margin = new Padding(4, 3, 4, 3);
-        EditLogAnalysisMinMaxEffective10DaysPercentage.Name = "EditLogAnalysisMinMaxEffective10DaysPercentage";
-        EditLogAnalysisMinMaxEffective10DaysPercentage.Size = new Size(203, 19);
-        EditLogAnalysisMinMaxEffective10DaysPercentage.TabIndex = 247;
-        EditLogAnalysisMinMaxEffective10DaysPercentage.Text = "Log waarden buiten deze grenzen";
-        EditLogAnalysisMinMaxEffective10DaysPercentage.UseVisualStyleBackColor = true;
+        label90.AutoSize = true;
+        label90.Location = new Point(9, 58);
+        label90.Margin = new Padding(4, 0, 4, 0);
+        label90.Name = "label90";
+        label90.Size = new Size(71, 15);
+        label90.TabIndex = 174;
+        label90.Text = "Overbought";
+        // 
+        // EditRsiValueOverbought
+        // 
+        EditRsiValueOverbought.DecimalPlaces = 2;
+        EditRsiValueOverbought.Location = new Point(130, 56);
+        EditRsiValueOverbought.Margin = new Padding(4, 3, 4, 3);
+        EditRsiValueOverbought.Name = "EditRsiValueOverbought";
+        EditRsiValueOverbought.Size = new Size(88, 23);
+        EditRsiValueOverbought.TabIndex = 176;
+        EditRsiValueOverbought.Value = new decimal(new int[] { 25, 0, 0, 0 });
+        // 
+        // groupBoxStoch
+        // 
+        groupBoxStoch.Controls.Add(EditStochValueOversold);
+        groupBoxStoch.Controls.Add(label88);
+        groupBoxStoch.Controls.Add(label89);
+        groupBoxStoch.Controls.Add(EditStochValueOverbought);
+        groupBoxStoch.Location = new Point(418, 137);
+        groupBoxStoch.Name = "groupBoxStoch";
+        groupBoxStoch.Size = new Size(234, 96);
+        groupBoxStoch.TabIndex = 245;
+        groupBoxStoch.TabStop = false;
+        groupBoxStoch.Text = "Stochastic";
+        // 
+        // EditStochValueOversold
+        // 
+        EditStochValueOversold.DecimalPlaces = 2;
+        EditStochValueOversold.Location = new Point(130, 30);
+        EditStochValueOversold.Margin = new Padding(4, 3, 4, 3);
+        EditStochValueOversold.Name = "EditStochValueOversold";
+        EditStochValueOversold.Size = new Size(88, 23);
+        EditStochValueOversold.TabIndex = 175;
+        EditStochValueOversold.Value = new decimal(new int[] { 25, 0, 0, 0 });
+        // 
+        // label88
+        // 
+        label88.AutoSize = true;
+        label88.Location = new Point(7, 33);
+        label88.Margin = new Padding(4, 0, 4, 0);
+        label88.Name = "label88";
+        label88.Size = new Size(54, 15);
+        label88.TabIndex = 173;
+        label88.Text = "Oversold";
+        // 
+        // label89
+        // 
+        label89.AutoSize = true;
+        label89.Location = new Point(9, 58);
+        label89.Margin = new Padding(4, 0, 4, 0);
+        label89.Name = "label89";
+        label89.Size = new Size(71, 15);
+        label89.TabIndex = 174;
+        label89.Text = "Overbought";
+        // 
+        // EditStochValueOverbought
+        // 
+        EditStochValueOverbought.DecimalPlaces = 2;
+        EditStochValueOverbought.Location = new Point(130, 56);
+        EditStochValueOverbought.Margin = new Padding(4, 3, 4, 3);
+        EditStochValueOverbought.Name = "EditStochValueOverbought";
+        EditStochValueOverbought.Size = new Size(88, 23);
+        EditStochValueOverbought.TabIndex = 176;
+        EditStochValueOverbought.Value = new decimal(new int[] { 25, 0, 0, 0 });
         // 
         // FrmSettings
         // 
@@ -3666,6 +3803,8 @@ partial class FrmSettings
         tabTelegram.PerformLayout();
         tabPageSignals.ResumeLayout(false);
         tabPageSignals.PerformLayout();
+        ((System.ComponentModel.ISupportInitialize)EditAnalysisMinEffective10DaysPercentage).EndInit();
+        ((System.ComponentModel.ISupportInitialize)EditAnalysisMaxEffective10DaysPercentage).EndInit();
         ((System.ComponentModel.ISupportInitialize)EditAnalysisMinEffectivePercentage).EndInit();
         ((System.ComponentModel.ISupportInitialize)EditAnalysisMaxEffectivePercentage).EndInit();
         ((System.ComponentModel.ISupportInitialize)EditCandlesWithZeroVolume).EndInit();
@@ -3746,8 +3885,14 @@ partial class FrmSettings
         tabBlacklistOverbought.PerformLayout();
         panel6.ResumeLayout(false);
         panel6.PerformLayout();
-        ((System.ComponentModel.ISupportInitialize)EditAnalysisMinEffective10DaysPercentage).EndInit();
-        ((System.ComponentModel.ISupportInitialize)EditAnalysisMaxEffective10DaysPercentage).EndInit();
+        groupBoxRsi.ResumeLayout(false);
+        groupBoxRsi.PerformLayout();
+        ((System.ComponentModel.ISupportInitialize)EditRsiValueOversold).EndInit();
+        ((System.ComponentModel.ISupportInitialize)EditRsiValueOverbought).EndInit();
+        groupBoxStoch.ResumeLayout(false);
+        groupBoxStoch.PerformLayout();
+        ((System.ComponentModel.ISupportInitialize)EditStochValueOversold).EndInit();
+        ((System.ComponentModel.ISupportInitialize)EditStochValueOverbought).EndInit();
         ResumeLayout(false);
     }
 
@@ -3976,7 +4121,7 @@ partial class FrmSettings
     private CheckBox EditHideSymbolsOnTheLeft;
     private CheckBox EditLogCanceledOrders;
     private Label label19;
-    private ComboBox EditMargin;
+    private ComboBox EditCrossOrIsolated;
     private Label label23;
     private NumericUpDown EditLeverage;
     private Label label59;
@@ -4041,4 +4186,15 @@ partial class FrmSettings
     private NumericUpDown EditAnalysisMinEffective10DaysPercentage;
     private NumericUpDown EditAnalysisMaxEffective10DaysPercentage;
     private CheckBox EditLogAnalysisMinMaxEffective10DaysPercentage;
+    private CheckBox EditWhenThreeTrendsOkay;
+    private GroupBox groupBoxStoch;
+    private NumericUpDown EditStochValueOversold;
+    private Label label88;
+    private Label label89;
+    private NumericUpDown EditStochValueOverbought;
+    private GroupBox groupBoxRsi;
+    private NumericUpDown EditRsiValueOversold;
+    private Label label87;
+    private Label label90;
+    private NumericUpDown EditRsiValueOverbought;
 }

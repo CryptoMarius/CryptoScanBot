@@ -45,7 +45,7 @@ public partial class FrmMain : Form
         GlobalData.SymbolsHaveChangedEvent += new AddTextEvent(SymbolsHaveChangedEvent);
 #if TRADEBOT
         GlobalData.AssetsHaveChangedEvent += new AddTextEvent(AssetsHaveChangedEvent);
-        GlobalData.PositionsHaveChangedEvent += new AddTextEvent(OpenPositionsHaveChangedEvent);
+        GlobalData.PositionsHaveChangedEvent += new AddTextEvent(PositionsHaveChangedEvent);
 #endif
 
         GlobalData.AnalyzeSignalCreated = AnalyzeSignalCreated;
@@ -132,9 +132,9 @@ public partial class FrmMain : Form
 #if TRADEBOT
         TradeTools.LoadAssets();
         TradeTools.LoadOpenPositions();
-        OpenPositionsHaveChangedEvent("");
         TradeTools.LoadClosedPositions();
         ClosedPositionsHaveChangedEvent();
+        PositionsHaveChangedEvent("");
 #endif
 
         ApplicationTools.WindowLocationRestore(this);
@@ -590,7 +590,10 @@ public partial class FrmMain : Form
         //Invoke(new Action(() => { this.Text = signal.Symbol.Name + " " + createdSignalCount.ToString(); }));
 
         if (!signal.IsInvalid || (signal.IsInvalid && GlobalData.Settings.General.ShowInvalidSignals))
+        {
+            GlobalData.SignalList.Add(signal);
             GlobalData.SignalQueue.Enqueue(signal);
+        }
 
         // Speech and/or sound
         if (!signal.IsInvalid)
@@ -896,8 +899,14 @@ public partial class FrmMain : Form
     private void ApplicationHasStarted(string text, bool extraLineFeed = false)
     {
         GlobalData.SymbolsHaveChanged("");
+
         // De barometer een zetje geven...
         Invoke((MethodInvoker)(() => dashBoardInformation1.ShowBarometerStuff(null, null)));
+
+#if TRADEBOT
+        // Toon de ingelezen posities
+        GlobalData.PositionsHaveChanged("");
+#endif
     }
 
 }

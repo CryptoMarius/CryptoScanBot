@@ -86,16 +86,18 @@ public class CryptoPosition
 
 public static class CryptoPositionHelper
 {
-
     public static decimal MarketValue(this CryptoPosition position)
     {
-        return position.Quantity * (decimal)position.Symbol.LastPrice; // met of zonder commission?
+        if (!position.Symbol.LastPrice.HasValue)
+            return 0m;
+        else
+            return position.Quantity * position.Symbol.LastPrice.Value; // met of zonder commission?
     }
 
     public static decimal MarketValuePercentage(this CryptoPosition position)
     {
         decimal priceDiff = 0;
-        if (position.BreakEvenPrice != 0)
+        if (position.BreakEvenPrice != 0 && position.Symbol.LastPrice.HasValue)
             priceDiff = (decimal)(100 * ((position.Symbol.LastPrice / position.BreakEvenPrice) - 1));
         return priceDiff;
     }

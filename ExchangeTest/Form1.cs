@@ -661,7 +661,7 @@ public partial class Form1 : Form
 
             CryptoSbmScanner.Model.CryptoExchange exchange = GlobalData.Settings.General.Exchange;
 
-            if (!exchange.SymbolListName.TryGetValue("BTCUSDT", out CryptoSymbol symbol))
+            if (!exchange.SymbolListName.TryGetValue("IDUSDT", out CryptoSymbol symbol))
                 return;
             //CryptoSymbol symbol = new()
             //{
@@ -685,8 +685,9 @@ public partial class Form1 : Form
 
 
             // Werkt zoals ik het verwacht! een buy order van ongeveer 1.6 dollar
-            //var (result, tradeParams) = await api.BuyOrSell(Database, GlobalData.ExchangeRealTradeAccount, symbol, DateTime.Now, 
-            //    CryptoOrderType.Limit, CryptoOrderSide.Buy, 0.000048m, 22000m, null, null);
+            //var exchangeApi = ExchangeHelper.GetExchangeInstance(GlobalData.Settings.General.ExchangeId);
+            //var (result, tradeParams) = await exchangeApi.BuyOrSell(null, GlobalData.ExchangeRealTradeAccount, symbol, DateTime.Now, 
+            //    CryptoOrderType.Limit, CryptoOrderSide.Buy, 52, 0.2276m, null, null);
 
             //var (result, tradeParams) = await api.BuyOrSell(Database, GlobalData.ExchangeRealTradeAccount, symbol, DateTime.Now,
             //    CryptoOrderType.Limit, CryptoOrderSide.Buy, 0.000048m, 25000m, null, null);
@@ -816,6 +817,11 @@ public partial class Form1 : Form
             //}
             //Task t = Task.WhenAll(taskList);
             //t.Wait();
+
+            // Werkt zoals ik het verwacht! een buy order van ongeveer 1.6 dollar
+            var exchangeApi = ExchangeHelper.GetExchangeInstance(GlobalData.Settings.General.ExchangeId);
+            var (result, tradeParams) = await exchangeApi.BuyOrSell(null, GlobalData.ExchangeRealTradeAccount, symbol, DateTime.Now, 
+                CryptoOrderType.Limit, CryptoOrderSide.Buy, 52, 0.2276m, null, null);
 
 
             // BTC asset

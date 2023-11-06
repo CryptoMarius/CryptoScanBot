@@ -31,17 +31,20 @@ static public class TradeHandler
             string s;
             string msgInfo = $"{symbol.Name} side={orderSide} type={orderType} status={orderStatus} order={data.OrderId} " +
                 $"trade={data.TradeId} price={data.Price.ToString0()} quantity={data.Quantity.ToString0()} value={data.QuoteQuantity.ToString0()}";
-            //string s = string.Format("handletrade#1 {0}", msgInfo);
-            //if (data.TradeAccount.TradeAccountType == CryptoTradeAccountType.BackTest)
-            //    s += string.Format(" ({0})", data.TradeAccount.Name);
-            //else if (data.TradeAccount.TradeAccountType == CryptoTradeAccountType.PaperTrade)
-            //    s += string.Format(" ({0})", data.TradeAccount.Name);
-            //// Teveel logging vermijden (zo'n trailing order veroorzaakt ook een cancel)
-            //if (orderStatus != CryptoOrderStatus.Canceled)
-            //    GlobalData.AddTextToLogTab(s);
+            
+            // Extra logging ingeschakeld
+            s = string.Format("handletrade#1 {0}", msgInfo);
+            if (data.TradeAccount.TradeAccountType == CryptoTradeAccountType.BackTest)
+                s += string.Format(" ({0})", data.TradeAccount.Name);
+            else if (data.TradeAccount.TradeAccountType == CryptoTradeAccountType.PaperTrade)
+                s += string.Format(" ({0})", data.TradeAccount.Name);
+            // Teveel logging vermijden (zo'n trailing order veroorzaakt ook een cancel)
+            if (orderStatus != CryptoOrderStatus.Canceled)
+                GlobalData.AddTextToLogTab(s);
 
 
-            // Heerlijk, de oude TradeDash pling is terug ;-)
+
+            // De oude TradeDash pling....
             if (orderStatus == CryptoOrderStatus.Filled || orderStatus == CryptoOrderStatus.PartiallyFilled)
             {
                 if (GlobalData.Settings.General.SoundTradeNotification)
@@ -62,11 +65,11 @@ static public class TradeHandler
                     if (posTemp.Orders.TryGetValue(data.OrderId, out step))
                     {
                         position = posTemp;
-                        //s = string.Format("handletrade#2 {0} positie gevonden, name={1} id={2} positie.status={3} (memory)",
-                        //    msgInfo, step.Name, step.Id, position.Status);
+                        s = string.Format("handletrade#2 {0} positie gevonden, name={1} id={2} positie.status={3} (memory)",
+                            msgInfo, step.Side, step.Id, position.Status);
                         // Teveel logging vermijden (zo'n trailing order veroorzaakt ook een cancel)
-                        //if (orderStatus != CryptoOrderStatus.Canceled)
-                        //GlobalData.AddTextToLogTab(s);
+                        if (orderStatus != CryptoOrderStatus.Canceled)
+                           GlobalData.AddTextToLogTab(s);
                         break;
                     }
                 }
@@ -80,13 +83,25 @@ static public class TradeHandler
             // *********************************************************************
             if (position == null)
             {
-                // Controleer via de database of we de positie kunnen vinden
-                string sql = string.Format("select * from positionstep where OrderId={0} or Order2Id={1}", data.OrderId, data.OrderId);
-                step = databaseThread.Connection.QueryFirstOrDefault<CryptoPositionStep>(sql);
+                // Controleer via de database of we de positie kunnen vinden (opnieuw inladen van de positie)
+                string sql = string.Format("select * from positionstep where OrderId=@OrderId or Order2Id=@OrderId");
+                step = databaseThread.Connection.QueryFirstOrDefault<CryptoPositionStep>(sql, new { data.OrderId });
                 if (step != null && step.Id > 0)
                 {
                     // De positie en child objects alsnog uit de database laden
                     position = databaseThread.Connection.Get<CryptoPosition>(step.PositionId);
+
+                    // Na het sluiten van de positie annuleren we tevens de (optionele) openstaande DCA order.
+                    // Deze code veroorzaakt nu een reload van de positie en dat is niet echt nodig.
+                    if (orderStatus == CryptoOrderStatus.Canceled && position.CloseTime.HasValue)
+                    {
+                        s = string.Format("handletrade#3.1 {0} step gevonden, name={1} id={2} positie.status={3} (cancel + positie gesloten)", msgInfo, step.Side, step.Id, position.Status);
+                        GlobalData.AddTextToLogTab(s);
+                        return;
+                    }
+
+
+                    // De positie en child objects alsnog uit de database laden
                     PositionTools.AddPosition(data.TradeAccount, position);
                     PositionTools.LoadPosition(databaseThread, position);
                     if (!GlobalData.BackTest && GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
@@ -96,7 +111,7 @@ static public class TradeHandler
                     if (orderStatus == CryptoOrderStatus.Filled || orderStatus == CryptoOrderStatus.PartiallyFilled)
                         position.Status = CryptoPositionStatus.Trading;
 
-                    s = string.Format("handletrade#3 {0} step hersteld, name={1} id={2} positie.status={3} (database)", msgInfo, step.Side, step.Id, position.Status);
+                    s = string.Format("handletrade#3.2 {0} step hersteld, name={1} id={2} positie.status={3} (database)", msgInfo, step.Side, step.Id, position.Status);
                     GlobalData.AddTextToLogTab(s);
                 }
                 else
@@ -124,10 +139,10 @@ static public class TradeHandler
             if (part == null)
                 throw new Exception("Probleem met het vinden van een part");
 
-            //s = string.Format("handletrade#5 {0} step gevonden, name={1} id={2} positie.status={3}", msgInfo, step.Name, step.Id, position.Status);
+            s = string.Format("handletrade#5 {0} step gevonden, name={1} id={2} positie.status={3}", msgInfo, step.Side, step.Id, position.Status);
             // Teveel logging vermijden (zo'n trailing order veroorzaakt ook een cancel)
-            //if (orderStatus != CryptoOrderStatus.Canceled)
-            //    GlobalData.AddTextToLogTab(s);
+            if (orderStatus != CryptoOrderStatus.Canceled)
+                GlobalData.AddTextToLogTab(s);
 
 
             // *********************************************************************
@@ -146,7 +161,14 @@ static public class TradeHandler
             if (orderStatus == CryptoOrderStatus.Canceled)
             {
                 // Hebben wij de order geannuleerd? (we gebruiken tenslotte ook een cancel order om orders weg te halen)
-                if (step.Status == CryptoOrderStatus.Expired) //part.Status == CryptoPositionStatus.TakeOver || part.Status == CryptoPositionStatus.Timeout || 
+                if (step.CancelInProgress)
+                {
+                    // Wij 
+                    // Probleem is dat de step.Status pas na het annulren wordt gezet en bewaard, dus een 
+                    // cancel via de user stream kan (te) snel gaan, nu wel eem soort van dubbele administratie
+                }
+                else 
+                if (step.Status > CryptoOrderStatus.Canceled) //part.Status == CryptoPositionStatus.TakeOver || part.Status == CryptoPositionStatus.Timeout || 
                 {
                     // Wij, anders was de status van de step niet op expired gezet of de part op timeout gezet
                 }
@@ -172,6 +194,9 @@ static public class TradeHandler
                     position.Commission = 0;
                     position.Percentage = 0;
                     position.CloseTime = data.TradeTime;
+                    if (!position.CloseTime.HasValue)
+                        position.CloseTime = DateTime.UtcNow;
+
                     position.Status = CryptoPositionStatus.TakeOver;
                     databaseThread.Connection.Update<CryptoPosition>(position);
 
@@ -193,8 +218,8 @@ static public class TradeHandler
                 //decimal perc = 0;
                 //if (part.BreakEvenPrice > 0)
                 //    perc = (decimal)(100 * ((step.AvgPrice / part.BreakEvenPrice) - 1));
-                //s = $"handletrade {msgInfo} part sold ({part.Percentage:N2}%)";
-                //GlobalData.AddTextToLogTab(s);
+                s = $"handletrade {msgInfo} part sold ({part.Percentage:N2}%)";
+                GlobalData.AddTextToLogTab(s);
                 //GlobalData.AddTextToTelegram(s);
 
                 part.CloseTime = data.TradeTime;
@@ -204,8 +229,8 @@ static public class TradeHandler
                 if (position.Quantity == 0)
                 {
                     // We zijn uit deze trade, alles verkocht
-                    //s = $"handletrade#8 {msgInfo} positie ready {position.Percentage:N2}";
-                    //GlobalData.AddTextToLogTab(s);
+                    s = $"handletrade#8 {msgInfo} positie ready {position.Percentage:N2}";
+                    GlobalData.AddTextToLogTab(s);
                     //GlobalData.AddTextToTelegram(s);
 
                     position.CloseTime = data.TradeTime;

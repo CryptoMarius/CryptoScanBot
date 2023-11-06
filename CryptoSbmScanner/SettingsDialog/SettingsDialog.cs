@@ -272,7 +272,7 @@ public partial class FrmSettings : Form
         EditAnalysisMaxEffective10DaysPercentage.Maximum = +1000;
         EditStobMinimalTrend.Minimum = -1000;
 
-        
+
 
         // ------------------------------------------------------------------------------
         // General
@@ -295,6 +295,16 @@ public partial class FrmSettings : Form
         EditHideSymbolsOnTheLeft.Checked = settings.General.HideSymbolsOnTheLeft;
         EditGlobalDataRemoveSignalAfterxCandles.Value = settings.General.RemoveSignalAfterxCandles;
 
+        // Grenswaarden voor oversold en overbought
+        EditRsiValueOversold.Value = (decimal)settings.General.RsiValueOversold;
+        EditRsiValueOverbought.Value = (decimal)settings.General.RsiValueOverbought;
+        EditStochValueOversold.Value = (decimal)settings.General.StochValueOversold;
+        EditStochValueOverbought.Value = (decimal)settings.General.StochValueOverbought;
+
+
+        // ------------------------------------------------------------------------------
+        // Telegram
+        // ------------------------------------------------------------------------------
         EditTelegramToken.Text = settings.Telegram.Token;
         EditTelegramChatId.Text = settings.Telegram.ChatId;
         EditSendSignalsToTelegram.Checked = settings.Telegram.SendSignalsToTelegram;
@@ -466,6 +476,7 @@ public partial class FrmSettings : Form
         EditCheckIncreasingRsi.Checked = settings.Trading.CheckIncreasingRsi;
         EditCheckIncreasingMacd.Checked = settings.Trading.CheckIncreasingMacd;
         EditCheckIncreasingStoch.Checked = settings.Trading.CheckIncreasingStoch;
+        EditWhenThreeTrendsOkay.Checked = settings.Trading.WhenThreeTrendsOkay;
 
 
         // Buy
@@ -514,7 +525,7 @@ public partial class FrmSettings : Form
 
 
         EditLeverage.Value = settings.Trading.Leverage;
-        EditMargin.SelectedIndex = settings.Trading.Margin;
+        EditCrossOrIsolated.SelectedIndex = settings.Trading.CrossOrIsolated;
 
         // --------------------------------------------------------------------------------
         // Trade bot experiment
@@ -591,7 +602,15 @@ public partial class FrmSettings : Form
         settings.General.HideSymbolsOnTheLeft = EditHideSymbolsOnTheLeft.Checked;
         settings.General.RemoveSignalAfterxCandles = (int)EditGlobalDataRemoveSignalAfterxCandles.Value;
 
+        // Grenswaarden voor oversold en overbought
+        settings.General.RsiValueOversold = (double)EditRsiValueOversold.Value;
+        settings.General.RsiValueOverbought = (double)EditRsiValueOverbought.Value;
+        settings.General.StochValueOversold = (double)EditStochValueOversold.Value ;
+        settings.General.StochValueOverbought = (double)EditStochValueOverbought.Value;
 
+        // ------------------------------------------------------------------------------
+        // Telegram
+        // ------------------------------------------------------------------------------
         settings.Telegram.Token = EditTelegramToken.Text.Trim();
         settings.Telegram.ChatId = EditTelegramChatId.Text.Trim();
         settings.Telegram.SendSignalsToTelegram = EditSendSignalsToTelegram.Checked;
@@ -772,6 +791,7 @@ public partial class FrmSettings : Form
         settings.Trading.CheckIncreasingRsi = EditCheckIncreasingRsi.Checked;
         settings.Trading.CheckIncreasingMacd = EditCheckIncreasingMacd.Checked;
         settings.Trading.CheckIncreasingStoch = EditCheckIncreasingStoch.Checked;
+        settings.Trading.WhenThreeTrendsOkay = EditWhenThreeTrendsOkay.Checked;
 
         // buy
         settings.Trading.BuyStepInMethod = (CryptoStepInMethod)EditBuyStepInMethod.SelectedValue;
@@ -808,7 +828,7 @@ public partial class FrmSettings : Form
 
 
         settings.Trading.Leverage = EditLeverage.Value;
-        settings.Trading.Margin = EditMargin.SelectedIndex;
+        settings.Trading.CrossOrIsolated = EditCrossOrIsolated.SelectedIndex;
 
 #endif
 

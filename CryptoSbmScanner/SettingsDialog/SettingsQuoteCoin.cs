@@ -127,14 +127,15 @@ internal class SettingsQuoteCoin : IDisposable
         SlotsMaximal = new()
         {
             DecimalPlaces = 0,
-            Increment = new decimal(new int[] { 1, 0, 0, 393216 }),
+            //Increment = new decimal(new int[] { 1, 0, 0, 393216 }),
             Location = new Point(xPos, yPos),
-            Maximum = new decimal(new int[] { 276447231, 23283, 0, 0 }),
+            //Maximum = new decimal(new int[] { 276447231, 23283, 0, 0 }),
             Size = new Size(60, 23),
             ThousandsSeparator = true,
-            Minimum = 0,
+            Minimum = 0m,
             //DecimalPlaces = 0,
-            //Maximum = 100,
+            Maximum = 1000m,
+            Increment = 1m,
         };
         xPos += SlotsMaximal.Size.Width + 10;
         controls.Add(SlotsMaximal);

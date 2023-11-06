@@ -254,7 +254,7 @@ public partial class FrmMain
     }
 
 
-    private void OpenPositionsHaveChangedEvent(string text, bool extraLineFeed = false)
+    private void PositionsHaveChangedEvent(string text, bool extraLineFeed = false)
     {
         if (IsHandleCreated) //!ProgramExit &&  components != null && 
         {
@@ -273,16 +273,34 @@ public partial class FrmMain
                     }
                 }
             }
-            // Openstaande posities
+
+            // Alel positie gerelateerde zaken verversen
             Task.Run(() => {
                 Invoke(new Action(() =>
                 {
                     ListViewPositionsOpenAddPositions(list);
+                    ClosedPositionsHaveChangedEvent();
+                    dashBoardControl1.RefreshInformation(null, null);
                 }));
             });
 
 
-            ClosedPositionsHaveChangedEvent();
+            //// Gesloten posities
+            //Task.Run(() => {
+            //    Invoke(new Action(() =>
+            //    {
+            //        ClosedPositionsHaveChangedEvent();
+            //    }));
+            //});
+
+
+            //// Statistiek
+            //Task.Run(() => {
+            //    Invoke(new Action(() =>
+            //    {
+            //        dashBoardControl1.RefreshInformation(null, null);
+            //    }));
+            //});
         }
     }
 

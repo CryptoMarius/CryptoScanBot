@@ -1,6 +1,7 @@
 ﻿using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Exchange;
 using CryptoSbmScanner.Model;
+using CryptoSbmScanner.Trader;
 
 namespace CryptoSbmScanner.Intern;
 
@@ -34,7 +35,9 @@ public static class ScannerSession
     // Vervolg van check, herstel actie in de vorm van exchangeinfo + achterstand candles inhalen
     private static readonly System.Timers.Timer TimerRestartStreams = new() { Enabled = false };
 
-    
+    // Voor het geval de user ticker het laat afwaten controleren we de posities ook 1x per uur
+    private static readonly System.Timers.Timer TimerCheckPositions = new() { Enabled = false };
+
 
     // Exchange events
     private static AddTextEvent ConnectionWasLostEvent { get; set; }
@@ -43,6 +46,7 @@ public static class ScannerSession
 
     static ScannerSession()
     {
+        TimerCheckPositions.Elapsed += TimerCheckPositions_Tick;
         TimerCheckDataStream.Elapsed += TimerCheckDataStream_Tick;
         TimerRestartStreams.Elapsed += TimerRestartStreams_Tick;
 
@@ -92,6 +96,7 @@ public static class ScannerSession
         GlobalData.ApplicationStatus = CryptoApplicationStatus.Initializing;
 
         // pfft, kan er net zo goed een array van maken
+        TimerCheckPositions.Enabled = false;
         TimerCheckDataStream.Enabled = false;
         TimerRestartStreams.Enabled = false;
         TimerSoundHeartBeat.Enabled = false;
@@ -167,6 +172,9 @@ public static class ScannerSession
         // Maak de log leeg iedere 24 uur
         TimerClearMemo.InitTimerInterval(24 * 60 * 60); // 24 hours
 
+        // Controleer de posities (fix probleem user ticker)
+        TimerCheckPositions.InitTimerInterval(1 * 60 * 60); // 1 hours
+
         // Interval voor het ophalen van de exchange info (delisted coins) + bijwerken candles 
         TimerGetExchangeInfoAndCandles.InitTimerInterval(GlobalData.Settings.General.GetCandleInterval * 60);
     }
@@ -197,6 +205,23 @@ public static class ScannerSession
             //TimerCheckDataStream.InitTimerInterval(5 * 60); // reset interval (back to 5m)
             //TimerRestartStreams.InitTimerInterval(4 * 60 * 60); // reset interval (back to 4h)
         //}
+    }
+
+    
+    private static async void TimerCheckPositions_Tick(object sender, EventArgs e)
+    {
+#if TRADEBOT
+        if (TimerCheckPositions.Enabled)
+        {
+            await TradeTools.CheckOpenPositions();
+        }
+
+        // Daarnaast gaarne een controle op de user ticker en een herstart van de user ticker indien deze oproblemen heeft gehad
+        //if (ExchangeHelper.UserData.NeedsRestart())
+        //{
+        //    //?
+        //}
+#endif
     }
 
     private static void TimerCheckDataStream_Tick(object sender, EventArgs e)

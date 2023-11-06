@@ -537,8 +537,8 @@ public class ThreadLoadData
                     await ExchangeHelper.FetchAssetsAsync(GlobalData.ExchangeRealTradeAccount);
 
 
-                // toon de ingelezen posities
-                GlobalData.PositionsHaveChanged("");
+                // Toon de ingelezen posities
+                //GlobalData.PositionsHaveChanged("");
 #endif
 
 

@@ -92,7 +92,7 @@ partial class DashBoardInformation
         EditBarometerInterval.Location = new Point(6, 34);
         EditBarometerInterval.Margin = new Padding(2);
         EditBarometerInterval.Name = "EditBarometerInterval";
-        EditBarometerInterval.Size = new Size(79, 23);
+        EditBarometerInterval.Size = new Size(70, 23);
         EditBarometerInterval.TabIndex = 73;
         // 
         // EditBarometerQuote
@@ -102,7 +102,7 @@ partial class DashBoardInformation
         EditBarometerQuote.Location = new Point(6, 6);
         EditBarometerQuote.Margin = new Padding(2);
         EditBarometerQuote.Name = "EditBarometerQuote";
-        EditBarometerQuote.Size = new Size(79, 23);
+        EditBarometerQuote.Size = new Size(70, 23);
         EditBarometerQuote.TabIndex = 71;
         // 
         // labelSymbol1Name
@@ -422,20 +422,20 @@ partial class DashBoardInformation
         // 
         // labelBm4h
         // 
-        labelBm4h.Location = new Point(92, 24);
+        labelBm4h.Location = new Point(82, 24);
         labelBm4h.Margin = new Padding(4, 0, 4, 0);
         labelBm4h.Name = "labelBm4h";
-        labelBm4h.Size = new Size(50, 15);
+        labelBm4h.Size = new Size(60, 15);
         labelBm4h.TabIndex = 126;
         labelBm4h.Text = "4h";
         labelBm4h.TextAlign = ContentAlignment.MiddleRight;
         // 
         // labelBm1d
         // 
-        labelBm1d.Location = new Point(92, 44);
+        labelBm1d.Location = new Point(82, 44);
         labelBm1d.Margin = new Padding(4, 0, 4, 0);
         labelBm1d.Name = "labelBm1d";
-        labelBm1d.Size = new Size(50, 15);
+        labelBm1d.Size = new Size(60, 15);
         labelBm1d.TabIndex = 125;
         labelBm1d.Text = "1d";
         labelBm1d.TextAlign = ContentAlignment.MiddleRight;
@@ -452,10 +452,10 @@ partial class DashBoardInformation
         // 
         // labelBm1h
         // 
-        labelBm1h.Location = new Point(92, 4);
+        labelBm1h.Location = new Point(82, 4);
         labelBm1h.Margin = new Padding(4, 0, 4, 0);
         labelBm1h.Name = "labelBm1h";
-        labelBm1h.Size = new Size(50, 15);
+        labelBm1h.Size = new Size(60, 15);
         labelBm1h.TabIndex = 123;
         labelBm1h.Text = "1h";
         labelBm1h.TextAlign = ContentAlignment.MiddleRight;

@@ -78,16 +78,9 @@ public partial class DashBoardControl : UserControl
     {
         InitializeComponent();
         EditQuote.Sorted = true;
-    }
-
-    public void InitializeStuff()
-    {
-        GetQueryQuoteData();
         buttonRefresh.Click += RefreshInformation;
         EditQuote.SelectedIndexChanged += RefreshInformation;
-        RefreshInformation(null, null);
     }
-
 
     private void GetQueryQuoteData()
     {
@@ -105,6 +98,9 @@ public partial class DashBoardControl : UserControl
         using CryptoDatabase databaseThread = new();
         databaseThread.Open();
 
+        // Het event even weghalen (anders dubbele verversing bij startup)
+        EditQuote.SelectedIndexChanged -= RefreshInformation;
+
         foreach (QueryTradeData data in databaseThread.Connection.Query<QueryTradeData>(builder.ToString()))
         {
             if (EditQuote.Items.IndexOf(data.Quote) < 0)
@@ -116,6 +112,8 @@ public partial class DashBoardControl : UserControl
 
         if (EditQuote.Items.Count > 0 && EditQuote.SelectedIndex < 0)
             EditQuote.SelectedIndex = 0;
+
+        EditQuote.SelectedIndexChanged += RefreshInformation;
     }
 
 
@@ -189,9 +187,9 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
         // dit is de query die per dag het een en ander aan info ophaalt
         StringBuilder builder = new();
         builder.AppendLine("select date(position.CloseTime) as CloseTime, symbol.quote, position.Status, count(position.id) as Positions,");
-        builder.AppendLine("round(MIN(ROUND((JULIANDAY(position.CloseTime) - JULIANDAY(position.CreateTime)) * 86400 / 60)), 2) AS MinMin, -- in minutes");
-        builder.AppendLine("round(AVG(ROUND((JULIANDAY(position.CloseTime) - JULIANDAY(position.CreateTime)) * 86400 / 60)), 2) AS AvgMin, -- in minutes");
-        builder.AppendLine("round(MAX(ROUND((JULIANDAY(position.CloseTime) - JULIANDAY(position.CreateTime)) * 86400 / 60)), 2) AS MaxMin, -- in minutes");
+        builder.AppendLine("round(MIN(ROUND((JULIANDAY(position.CloseTime) - JULIANDAY(position.CreateTime)) * 86400 / 3600)), 2) AS MinMin, -- in uren");
+        builder.AppendLine("round(AVG(ROUND((JULIANDAY(position.CloseTime) - JULIANDAY(position.CreateTime)) * 86400 / 3600)), 2) AS AvgMin, -- in uren");
+        builder.AppendLine("round(MAX(ROUND((JULIANDAY(position.CloseTime) - JULIANDAY(position.CreateTime)) * 86400 / 3600)), 2) AS MaxMin, -- in uren");
         builder.AppendLine("sum(position.Invested) as Invested,");
         builder.AppendLine("sum(position.Returned) as Returned,");
         builder.AppendLine("sum(position.Commission) as Commission,");
@@ -295,7 +293,7 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
         {
             //Name = "ChartAreaName";
             BackColor = Color.Black,
-            
+
         };
 
         chartArea.AxisX.LabelStyle.Format = "dd";
@@ -362,10 +360,15 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
         // Experiment #1 is een chart met per datum het aantal gesloten posities
         // De 1e kolom is het aantal nog openstaande posities, die moeten we nog ergens onderbrengen
         //int max = 0;
+
+        // Als de tradebot stil heeft gestaan willen we graag punten tussenvoegen met (date,value=0)
+        //DateTime? lastDate = null;
         foreach (QueryPositionData data in QueryPositionDataList)
         {
             if (data.CloseTime.Date > new DateTime(2000, 01, 01))
             {
+                //if (!lastDate.HasValue || data.CloseTime.Date < lastDate)
+                //    lastDate = data.CloseTime.Date;
                 //if (data.Positions > max)
                 //    max = data.Positions;
                 series1.Points.AddXY(data.CloseTime.Date, data.Positions);
@@ -580,7 +583,7 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
         // - Maximale tradetijd
         if (ChartDoorlooptijden == null)
         {
-            ChartDoorlooptijden = CreateChart("Minimale, maximale en gemiddelde doorlooptijden per????????", x, y);
+            ChartDoorlooptijden = CreateChart("Minimale, maximale en gemiddelde doorlooptijden in uren", x, y);
             flowLayoutPanel1.Controls.Add(ChartDoorlooptijden);
 
             ChartDoorlooptijden.Legends.Clear();
@@ -591,7 +594,7 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
         }
 
         ChartDoorlooptijden.ChartAreas.Clear();
-        ChartArea chartArea = CreateChartArea("N2");
+        ChartArea chartArea = CreateChartArea("N1");
         ChartDoorlooptijden.ChartAreas.Add(chartArea);
 
         ChartDoorlooptijden.Series.Clear();
@@ -644,7 +647,7 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
 
     private void DoAdditionalData()
     {
-        string quoteDataDisplayString = "N2";
+        string quoteDataDisplayString = QuoteData.DisplayFormat;
 
         // En de lopende posities
         labelPositions.Text = OpenData.Positions.ToString();
@@ -666,7 +669,7 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
                 // De muntparen toevoegen aan de userinterface
                 foreach (CryptoPosition position in positionList.Values)
                 {
-                    if (position.ExchangeId == GlobalData.Settings.General.ExchangeId)
+                    if (position.ExchangeId == GlobalData.Settings.General.ExchangeId && position.Symbol.Quote.Equals(QuoteData.Name))
                         currentValue += position.Quantity * (decimal)position.Symbol.LastPrice - position.Commission;
                 }
             }
@@ -678,9 +681,6 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
             labelNettoPnlValue4.Text = ((100 * (currentValue / investedInTrades)) - 100).ToString("N2");
         else
             labelNettoPnlValue4.Text = "0.00";
-
-
-
 
 
         // En de gesloten posities
@@ -732,19 +732,36 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
         DoAdditionalData();
     }
 
-    private void RefreshInformation(object sender, EventArgs e)
+    public void RefreshInformation(object sender, EventArgs e)
     {
 #if !SQLDATABASE
-        try
+        // Dit heeft geen nut.. Zandloper is beter
+        //if (Monitor.TryEnter(this))
+        //{
+        //System.Windows.Forms.Cursor oldCursor = this.Cursor;
+        //this.Cursor = Cursors.WaitCursor;
+        if (GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
         {
-            //GlobalData.AddTextToLogTab("Charts.RefreshInformation");
-            CreateChart();
+            //try
+            //{
+            try
+            {
+                //GlobalData.AddTextToLogTab("Charts.RefreshInformation");
+                CreateChart();
+            }
+            catch (Exception error)
+            {
+                GlobalData.Logger.Error(error);
+                GlobalData.AddTextToLogTab(error.ToString() + "\r\n");
+            }
+            //}
+            //finally
+            //{
+            //    //Monitor.Exit(this);
+            //    //this.Cursor = oldCursor;
+            //}
         }
-        catch (Exception error)
-        {
-            GlobalData.Logger.Error(error);
-            GlobalData.AddTextToLogTab(error.ToString() + "\r\n");
-        }
+        //}
 #endif
     }
 }

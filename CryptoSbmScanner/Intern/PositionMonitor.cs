@@ -354,6 +354,16 @@ public class PositionMonitor : IDisposable
                             return;
                         }
 
+
+                        // Voor Eric (experiment met de 1h, 4h en 12h)
+                        if (!PositionTools.ValidTrendConditions(signal, out reaction))
+                        {
+                            GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
+                            Symbol.ClearSignals();
+                            return;
+                        }
+
+
                         // Zo laat mogelijk controleren vanwege extra calls naar de exchange
                         if (!CheckApiAndAssets(tradeAccount, out reaction))
                         {
@@ -537,6 +547,9 @@ public class PositionMonitor : IDisposable
         position.UpdateTime = LastCandle1mCloseTimeDate;
         Database.Connection.Update<CryptoPosition>(position);
 
+        // Aankondiging dat we deze order gaan annuleren (de tradehandler weet dan dat wij het waren en het niet de user was via de exchange)
+        step.CancelInProgress = true;
+
         // Annuleer de vorige buy order
         var exchangeApi = ExchangeHelper.GetExchangeInstance(GlobalData.Settings.General.ExchangeId);
         var result = await exchangeApi.Cancel(position.TradeAccount, Symbol, step);
@@ -713,7 +726,7 @@ public class PositionMonitor : IDisposable
             case CryptoStepInMethod.FixedPercentage:
                 // Afspraak= niet bijplaatsen indien de BM te laag is (anders jojo=weghalen+bijplaatsen)
                 orderType = CryptoOrderType.Limit;
-                if (step == null && part.Quantity == 0 && !PauseBecauseOfBarometer)
+                if (step == null && part.Quantity == 0) // && !PauseBecauseOfBarometer
                     actionPrice = CalculateBuyOrDcaPrice(position, part, orderMethod, part.SignalPrice);
                 break;
             case CryptoStepInMethod.TrailViaKcPsar:
@@ -1067,13 +1080,15 @@ public class PositionMonitor : IDisposable
 
 
                         // Verwijderen de buy vanwege een te lage barometer, pauseer stand of timeout (behalve trailing of reserved dca)
-                        else if (PauseBecauseOfBarometer)
-                        {
-                            timeOut = true;
-                            closePart = false;
-                            newStatus = CryptoOrderStatus.BarameterToLow;
-                            cancelText = "annuleren vanwege lage barometer";
-                        }
+                        // (je wordt gek van dat weghalen en het opnieuw plaatsen van de orders)
+                        // (en je mist zo ook een heleboel goede kansen, dus weg ermee!)
+                        //else if (PauseBecauseOfBarometer)
+                        //{
+                        //    timeOut = true;
+                        //    closePart = false;
+                        //    newStatus = CryptoOrderStatus.BarameterToLow;
+                        //    cancelText = "annuleren vanwege lage barometer";
+                        //}
 
                         // Als de instellingen veranderd zijn de lopende order annuleren
                         else if (part.Name.Equals("BUY") & part.StepInMethod != GlobalData.Settings.Trading.BuyStepInMethod)
@@ -1175,13 +1190,16 @@ public class PositionMonitor : IDisposable
                 // De prepare controleert of we een geldige candle in het interval (van de part of positie) hebben!
                 if (Prepare(position, part, out CryptoCandle candleInterval))
                 {
-                    // Controleer de BUY
-                    if (part.Name.Equals("BUY"))
-                        await HandleBuyPart(position, part, candleInterval, GlobalData.Settings.Trading.BuyStepInMethod, GlobalData.Settings.Trading.BuyOrderMethod);
+                    if (!PauseBecauseOfTradingRules)
+                    {
+                        // Controleer de BUY
+                        if (part.Name.Equals("BUY"))
+                            await HandleBuyPart(position, part, candleInterval, GlobalData.Settings.Trading.BuyStepInMethod, GlobalData.Settings.Trading.BuyOrderMethod);
 
-                    // Controleer de DCA
-                    if (position.Quantity > 0 && part.Name.Equals("DCA"))
-                        await HandleBuyPart(position, part, candleInterval, GlobalData.Settings.Trading.DcaStepInMethod, GlobalData.Settings.Trading.DcaOrderMethod);
+                        // Controleer de DCA
+                        if (position.Quantity > 0 && part.Name.Equals("DCA"))
+                            await HandleBuyPart(position, part, candleInterval, GlobalData.Settings.Trading.DcaStepInMethod, GlobalData.Settings.Trading.DcaOrderMethod);
+                    }
 
                     // Controleer de SELL (indien we gekocht hebben)
                     if (position.Quantity > 0)
@@ -1379,8 +1397,8 @@ public class PositionMonitor : IDisposable
 
 
             // Pauzeren vanwege de trading regels of te lage barometer
-            PauseBecauseOfTradingRules = TradingRules.CheckTradingRules(LastCandle1m);
-            PauseBecauseOfBarometer = TradingRules.CheckBarometerValues(Symbol, LastCandle1m);
+            PauseBecauseOfTradingRules = !TradingRules.CheckTradingRules(LastCandle1m);
+            PauseBecauseOfBarometer = !TradingRules.CheckBarometerValues(Symbol, LastCandle1m, out string _);
             
             // Open or extend a position
             // Vraag, willen we wel DCA's als de barometer of trading rules een probleem zijn?
@@ -1404,7 +1422,7 @@ public class PositionMonitor : IDisposable
                             if (!position.CloseTime.HasValue)
                             {
                                 // Pauzeren vanwege de trading regels of te lage barometer
-                                if (!(PauseBecauseOfTradingRules || PauseBecauseOfBarometer))
+                                if (!(PauseBecauseOfTradingRules )) // || PauseBecauseOfBarometer
                                     CheckAddDcaFixedPercentage(position);
 
                                 // Plaats of modificeer de buy of sell orders + optionele LockProfits

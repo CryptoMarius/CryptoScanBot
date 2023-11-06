@@ -14,7 +14,7 @@ public class TradeTools
         GlobalData.AddTextToLogTab("Reading asset information");
 
         // ALLE assets laden
-        foreach (var account in GlobalData.TradeAccountList.Values.ToList())
+        foreach (var account in GlobalData.ActiveTradeAccountList.Values.ToList())
         {
             account.AssetList.Clear();
         }
@@ -23,9 +23,9 @@ public class TradeTools
         using var database = new CryptoDatabase();
         foreach (CryptoAsset asset in database.Connection.GetAll<CryptoAsset>())
         {
-            if (GlobalData.TradeAccountList.TryGetValue(asset.TradeAccountId, out var account))
+            if (GlobalData.ActiveTradeAccountList.TryGetValue(asset.TradeAccountId, out var account))
             {
-                account.AssetList.Add(asset.Name, asset);
+                account.AssetList.TryAdd(asset.Name, asset);
             }
         }
        
@@ -67,7 +67,7 @@ public class TradeTools
     static async public Task CheckOpenPositions()
     {
         // Alle openstaande posities lezen 
-        GlobalData.AddTextToLogTab("Checking open position");
+        GlobalData.AddTextToLogTab("Checking open positions");
 
         using var database = new CryptoDatabase();
         foreach (CryptoTradeAccount tradeAccount in GlobalData.TradeAccountList.Values.ToList())

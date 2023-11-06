@@ -71,6 +71,7 @@ public class SettingsTrading
     public bool CheckIncreasingMacd { get; set; } = false;    
     public bool CheckIncreasingStoch { get; set; } = false;
 
+    public bool WhenThreeTrendsOkay { get; set; } = false;
 
 
     //***************************
@@ -123,8 +124,8 @@ public class SettingsTrading
     // Perpetual / Futures
     // De buy en sell leverage (die zijn in alle gevallen gelijk)
     public decimal Leverage{ get; set; } = 1m;
-    // Cross/Isolated Margin
-    public int Margin { get; set; } = 0;
+    // Cross Of Isolated Margin trading
+    public int CrossOrIsolated { get; set; } = 1; 
 
     // Op welke intervallen en strategieën willen we traden?
     public IntervalAndStrategyConfig Monitor { get; set; } = new();

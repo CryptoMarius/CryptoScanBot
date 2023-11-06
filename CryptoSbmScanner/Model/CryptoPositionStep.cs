@@ -43,4 +43,6 @@ public class CryptoPositionStep
     // De definitieve commissie van alle onderliggende trades (meerdere trades ivm market of stoplimit)
     public decimal Commission { get; set; }
 
+    [Computed]
+    public bool CancelInProgress { get; set; }
 }

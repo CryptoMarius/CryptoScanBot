@@ -239,7 +239,7 @@ public partial class FrmMain
         try
         {
             List<ListViewItem> range = new();
-            foreach (CryptoPosition position in list)
+            foreach (CryptoPosition position in list.ToList())
             {
                 ListViewItem item = AddClosedPosition(position);
                 item.Tag = position;
@@ -260,8 +260,6 @@ public partial class FrmMain
         {
             listViewPositionsClosed.EndUpdate();
         }
-
-        dashBoardControl1.InitializeStuff();
     }
 
 
