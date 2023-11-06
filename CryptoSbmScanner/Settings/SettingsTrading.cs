@@ -27,6 +27,7 @@ public class SettingsTrading
     // (ze moeten ook nog ff versleuteld worden lijkt me)
     public string ApiKey { get; set; } = "";
     public string ApiSecret { get; set; } = "";
+    public string ApiPassPhrase { get; set; } = "";
 
 
     //***************************
