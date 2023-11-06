@@ -21,7 +21,7 @@ public class SignalCreateBase
     protected CryptoQuoteData QuoteData;
     protected SortedList<long, CryptoCandle> Candles;
 
-    public CryptoOrderSide SignalMode;
+    public CryptoOrderSide SignalSide;
     public CryptoSignalStrategy SignalStrategy;
     public CryptoCandle CandleLast = null;
     public string ExtraText = "";

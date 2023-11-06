@@ -91,9 +91,9 @@ public static class SignalSbmBaseOverboughtHelper
 
     public static bool IsStochOverbought(this CryptoCandle candle)
     {
-        if (candle.CandleData.StochSignal < 80)
+        if (candle.CandleData.StochSignal < GlobalData.Settings.General.StochValueOverbought)
             return false;
-        if (candle.CandleData.StochOscillator < 80)
+        if (candle.CandleData.StochOscillator < GlobalData.Settings.General.StochValueOverbought)
             return false;
         return true;
     }
@@ -101,7 +101,7 @@ public static class SignalSbmBaseOverboughtHelper
 
     public static bool IsRsiOverbought(this CryptoCandle candle)
     {
-        if (candle.CandleData.Rsi < 70)
+        if (candle.CandleData.Rsi < GlobalData.Settings.General.RsiValueOverbought)
             return false;
         return true;
     }
@@ -355,9 +355,9 @@ public class SignalSbmBaseOverbought : SignalSbmBase
         }
 
 
-        if (CandleLast.CandleData.StochOscillator <= 20)
+        if (CandleLast.CandleData.StochOscillator <= GlobalData.Settings.General.StochValueOverbought)
         {
-            ExtraText = "give up(stoch.osc > 20)";
+            ExtraText = $"give up(stoch.osc > {GlobalData.Settings.General.StochValueOverbought})";
             //AppendLine(string.Format("{0} give up (stoch.osc > 20) {1}", text, dcaPrice.ToString0());
             return true;
         }

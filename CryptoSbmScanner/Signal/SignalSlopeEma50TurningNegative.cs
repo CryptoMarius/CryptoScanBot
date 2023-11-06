@@ -8,7 +8,7 @@ public class SignalSlopeEma50TurningNegative : SignalCreateBase
 {
     public SignalSlopeEma50TurningNegative(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        SignalMode = CryptoOrderSide.Buy;
+        SignalSide = CryptoOrderSide.Buy;
         SignalStrategy = CryptoSignalStrategy.SlopeEma50;
     }
 

@@ -9,7 +9,7 @@ public class SignalStobbOversold : SignalSbmBaseOversold // inherit from sbm bec
     public SignalStobbOversold(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
         //ReplaceSignal = true;
-        SignalMode = CryptoOrderSide.Buy;
+        SignalSide = CryptoOrderSide.Buy;
         SignalStrategy = CryptoSignalStrategy.Stobb;
     }
 

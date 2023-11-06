@@ -9,7 +9,7 @@ public class SignalSlopeSma20TurningPositive : SignalCreateBase
 {
     public SignalSlopeSma20TurningPositive(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        SignalMode = CryptoOrderSide.Buy;
+        SignalSide = CryptoOrderSide.Buy;
         SignalStrategy = CryptoSignalStrategy.SlopeSma20;
     }
 
@@ -30,9 +30,6 @@ public class SignalSlopeSma20TurningPositive : SignalCreateBase
     public override bool IsSignal()
     {
         ExtraText = "";
-
-        if (SymbolInterval.LastStobbOrdSbmDate == null)
-            return false;
 
         if (CandleLast.CandleData.SlopeSma20 < 0)
             return false;
@@ -57,6 +54,13 @@ public class SignalSlopeSma20TurningPositive : SignalCreateBase
             return false;
         }
 
+        // Is er een mogelijke LL in de voorgaande 60 candles?
+        DateTime boundary = CandleLast.Date.AddSeconds(Interval.Duration * 60);
+        if (!GlobalData.IsStobSignalAvailableInTheLast(CryptoOrderSide.Buy, boundary))
+        {
+            ExtraText = "Geen voorgaande STOB of SBM";
+            return false;
+        }
         return true;
     }
 

@@ -92,17 +92,16 @@ public static class SignalSbmBaseOversoldHelper
     public static bool IsStochOversold(this CryptoCandle candle)
     {
         // Stochastic Oscillator: K en D (langzaam) moeten kleiner zijn dan 20% (oversold)
-        if (candle.CandleData.StochSignal > 20)
+        if (candle.CandleData.StochSignal > GlobalData.Settings.General.StochValueOversold)
             return false;
-        if (candle.CandleData.StochOscillator > 20)
+        if (candle.CandleData.StochOscillator > GlobalData.Settings.General.StochValueOversold)
             return false;
         return true;
     }
 
     public static bool IsRsiOversold(this CryptoCandle candle)
     {
-        // Rsiastic Oscillator: K en D (langzaam) moeten kleiner zijn dan 20% (oversold)
-        if (candle.CandleData.Rsi > 30)
+        if (candle.CandleData.Rsi > GlobalData.Settings.General.RsiValueOversold)
             return false;
         return true;
     }
@@ -353,9 +352,9 @@ public class SignalSbmBaseOversold : SignalSbmBase
         // RSI
         if (GlobalData.Settings.Trading.CheckIncreasingRsi)
         {
-            if (CandleLast.CandleData.Rsi < 20) // was 25
+            if (CandleLast.CandleData.Rsi < GlobalData.Settings.General.RsiValueOversold) // was 25 
             {
-                ExtraText = string.Format("RSI {0:N8} niet boven de 20", CandleLast.CandleData.Rsi);
+                ExtraText = $"RSI {CandleLast.CandleData.Rsi:N8} niet boven de {GlobalData.Settings.General.RsiValueOversold}";
                 return false;
             }
 
@@ -439,13 +438,13 @@ public class SignalSbmBaseOversold : SignalSbmBase
 
     public override bool GiveUp(CryptoSignal signal)
     {
-        // ********************************************************************
-        // Als BTC snel gedaald is dan stoppen
-        if (GlobalData.PauseTrading.Until >= CandleLast.Date)
-        {
-            ExtraText = string.Format("De bot is gepauseerd omdat {0}", GlobalData.PauseTrading.Text);
-            return true;
-        }
+        //// ********************************************************************
+        //// Als BTC snel gedaald is dan stoppen (NB: houdt geen rekening met closedate!)
+        //if (GlobalData.PauseTrading.Until >= CandleLast.Date)
+        //{
+        //    ExtraText = string.Format("De bot is gepauseerd omdat {0}", GlobalData.PauseTrading.Text);
+        //    return true;
+        //}
 
         // ********************************************************************
         // Instaptijd verstreken (oneindig wachten is geen optie)
