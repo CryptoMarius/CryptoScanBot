@@ -85,7 +85,7 @@ public class TrendIndicatorZigZag1
     //    }
     //}
 
-    private Func<CryptoCandle, decimal> _highValue = candle => candle.High;
+    private Func<CryptoCandle, decimal> _highValue = candle => Math.Max(candle.Open, candle.Close); // candle.High;
     /// <summary>
     /// The converter, returning from the candle a price for search of maximum.
     /// </summary>
@@ -99,7 +99,7 @@ public class TrendIndicatorZigZag1
         }
     }
 
-    private Func<CryptoCandle, decimal> _lowValue = candle => candle.Low;
+    private Func<CryptoCandle, decimal> _lowValue = candle => Math.Min(candle.Open, candle.Close); // candle.Low;
     /// <summary>
     /// The converter, returning from the candle a price for search of minimum.
     /// </summary>

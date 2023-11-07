@@ -127,6 +127,7 @@ xx-xx-2023 1.8.7
 - Trading - Bybit Futures - ophalen assets implementeren
 - Trading - Bybit Spot - ophalen assets implementeren
 - Telegram - Het commando assets implementeren
+- Scanner - De huidige trendberekening is nu gebaseerd op de low's en high's van de candles, dit moet de open en close zijn
 - Scanner - Op verzoek de grenswaarden voor RSI overbought en oversold instelbaar gemaakt
 - Scanner - Op verzoek de grenswaarden voor STOCH overbought en oversold instelbaar gemaakt
 - Scanner - Refactoring van alle RMK (RechterMuisKnop) opties

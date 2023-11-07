@@ -33,7 +33,7 @@ public class TrendIndicatorZigZag2
     private double _currentLow;
     private double _currentHigh;
 
-    public bool UseOpenClose = false;
+    public bool UseOpenClose = true;
     public List<double> _lowZigZags;
     public List<double> _highZigZags;
     public List<CryptoCandle> CandleList;

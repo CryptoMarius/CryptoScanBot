@@ -10,6 +10,7 @@ using Dapper.Contrib.Extensions;
 
 using Kucoin.Net.Clients;
 using Kucoin.Net.Enums;
+using Kucoin.Net.Objects;
 using Kucoin.Net.Objects.Models.Spot;
 
 using Microsoft.Extensions.DependencyInjection;
