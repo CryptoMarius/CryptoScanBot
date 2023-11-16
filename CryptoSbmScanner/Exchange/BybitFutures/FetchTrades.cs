@@ -37,6 +37,7 @@ public class FetchTrades
             // Haal de trades op van 1 symbol
 
             bool isChanged = false;
+            DateTime? startTime;
             List<CryptoTrade> tradeCache = new();
 
             //Verzin een begin datum
@@ -45,15 +46,21 @@ public class FetchTrades
                 isChanged = true;
                 symbol.LastTradeFetched = DateTime.Today.AddMonths(-2);
             }
+            // Bybit doet het alleen in blokken van 7 dagen
+            startTime = symbol.LastTradeFetched;
 
-            while (true)
+            while (startTime < DateTime.UtcNow)
             {
                 // Weight verdubbelt omdat deze wel erg aggressief trades ophaalt
                 //BinanceWeights.WaitForFairBinanceWeight(5, "mytrades");
                 LimitRates.WaitForFairWeight(1); // *5x ivm API weight waarschuwingen
 
-                // CRAP, bybit doet het door middel van ID's ;-) symbol.LastTradeFetched
-                var result = await client.V5Api.Trading.GetUserTradesAsync(Category.Linear, symbol.Name, null, null, null, symbol.LastTradeFetched, null, null, 1000);
+                //var result = await client.V5Api.Trading.GetUserTradesAsync(Category.Linear, symbol.Name, null, null, null,
+                //    symbol.LastTradeFetched, null, null, limit = 1000);
+
+                // If only startTime is passed, return range between startTime and startTime+7days!!
+
+                var result = await client.V5Api.Trading.GetUserTradesAsync(Category.Linear, symbol.Name, startTime: startTime, limit: 1000);
                 if (!result.Success)
                 {
                     GlobalData.AddTextToLogTab("error getting mytrades " + result.Error);
@@ -82,9 +89,16 @@ public class FetchTrades
                     }
 
                     //We hebben een volledige aantal trades meegekregen, nog eens proberen
-                    if (result.Data.List.Count() < 1000)
+                    if (!result.Success)
                         break;
                 }
+
+                if (startTime > symbol.LastTradeFetched)
+                {
+                    isChanged = true;
+                    symbol.LastTradeFetched = startTime;
+                }
+                startTime = startTime?.AddDays(7);
             }
 
 
