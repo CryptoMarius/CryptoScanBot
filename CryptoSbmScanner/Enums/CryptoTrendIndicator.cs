@@ -2,7 +2,7 @@
 
 public enum CryptoTrendIndicator
 {
-    trendSideways,
-    trendBullish,
-    trendBearish
+    trendSideways = 0,
+    trendBullish = 1,
+    trendBearish = 2
 }
