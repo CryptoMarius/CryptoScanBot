@@ -189,7 +189,7 @@ public partial class FrmMain
 
 
         if (position.Status == CryptoPositionStatus.Waiting)
-            item1.SubItems.Add(position.BuyPrice?.ToString(position.Symbol.PriceDisplayFormat));
+            item1.SubItems.Add(position.EntryPrice?.ToString(position.Symbol.PriceDisplayFormat));
         else
             item1.SubItems.Add(position.BreakEvenPrice.ToString(position.Symbol.PriceDisplayFormat));
         item1.SubItems.Add(position.Quantity.ToString0(position.Symbol.QuantityDisplayFormat));
@@ -223,9 +223,9 @@ public partial class FrmMain
         //    subItem.ForeColor = Color.Red;
 
         item1.SubItems.Add(position.PartCount.ToString());
-        item1.SubItems.Add(position.BuyPrice?.ToString(position.Symbol.PriceDisplayFormat));
-        if (position.SellPrice.HasValue)
-            item1.SubItems.Add(position.SellPrice?.ToString(position.Symbol.PriceDisplayFormat));
+        item1.SubItems.Add(position.EntryPrice?.ToString(position.Symbol.PriceDisplayFormat));
+        if (position.ProfitPrice.HasValue)
+            item1.SubItems.Add(position.ProfitPrice?.ToString(position.Symbol.PriceDisplayFormat));
         else
             item1.SubItems.Add("null");
 

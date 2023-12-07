@@ -560,7 +560,7 @@ public class PositionMonitor : IDisposable
         // waarom eigenlijk, wat wil ik nu met die buy en sell price? (debuggen, maar verder?)
         if (step.Side == CryptoOrderSide.Buy && part.Name.Equals("BUY"))
         {
-            position.BuyPrice = null;
+            position.EntryPrice = null;
         }
         position.UpdateTime = LastCandle1mCloseTimeDate;
         Database.Connection.Update<CryptoPosition>(position);
@@ -670,6 +670,7 @@ public class PositionMonitor : IDisposable
         {
             decimal oldPrice = price;
             price = (decimal)Symbol.LastPrice + Symbol.PriceTickSize;
+            // Deze tekst wordt nu soms spontaan gemeld terwijl er verder geen actie is (TODO)
             GlobalData.AddTextToLogTab($"{Symbol.Name} SELL correction: {oldPrice:N6} to {price.ToString0()}");
         }
 
@@ -703,7 +704,7 @@ public class PositionMonitor : IDisposable
             //part.SellPrice = sellPrice;
 
             if (part.Name.Equals("BUY"))
-                position.SellPrice = result.tradeParams.Price;
+                position.ProfitPrice = result.tradeParams.Price;
             var step = PositionTools.CreatePositionStep(position, part, result.tradeParams);
             Database.Connection.Insert<CryptoPositionStep>(step);
             PositionTools.AddPositionPartStep(part, step);
@@ -864,7 +865,7 @@ public class PositionMonitor : IDisposable
             {
                 part.StepInMethod = stepInMethod;
                 if (part.PartNumber == 0)
-                    position.BuyPrice = result.tradeParams.Price; // EntryPrice
+                    position.EntryPrice = result.tradeParams.Price; // EntryPrice
                 step = PositionTools.CreatePositionStep(position, part, result.tradeParams, trailing);
                 Database.Connection.Insert<CryptoPositionStep>(step);
                 PositionTools.AddPositionPartStep(part, step);
@@ -1003,8 +1004,8 @@ public class PositionMonitor : IDisposable
                     if (success)
                     {
                         // Administratie van de nieuwe sell bewaren (iets met tonen van de posities)
-                        if (!position.SellPrice.HasValue)
-                            position.SellPrice = price; // part.SellPrice; // (kan eigenlijk weg, slechts ter debug en tracering, voila)
+                        if (!position.ProfitPrice.HasValue)
+                            position.ProfitPrice = price; // part.SellPrice; // (kan eigenlijk weg, slechts ter debug en tracering, voila)
                         // Als vervanger van bovenstaande tzt (maar willen we die ook als een afzonderlijke step? Het zou ansich kunnen)
                         var sellStep = PositionTools.CreatePositionStep(position, part, tradeParams, CryptoTrailing.Trailing);
                         Database.Connection.Insert<CryptoPositionStep>(sellStep);
@@ -1304,7 +1305,7 @@ public class PositionMonitor : IDisposable
 
 
 
-        // Is er wel een initiele SELL order aanwezig? zoniet dan dit alsnog doen!
+        // Is er wel een initiele TP order aanwezig? zoniet dan dit alsnog doen!
         // (buiten de Prepare loop gehaald die intern een controle op het interval doet)
         // Dus nu wordt de sell order vrijwel direct geplaatst (na een 1m candle)
         foreach (CryptoPositionPart part in position.Parts.Values.ToList())
@@ -1313,7 +1314,8 @@ public class PositionMonitor : IDisposable
             if (!part.CloseTime.HasValue)
             {
                 CryptoPositionStep step = PositionTools.FindPositionPartStep(part, CryptoOrderSide.Buy, true);
-                if (step != null && (step.Status == CryptoOrderStatus.Filled || step.Status == CryptoOrderStatus.PartiallyFilled))
+                if (step != null && step.Status == CryptoOrderStatus.Filled)
+                //if (step != null && (step.Status == CryptoOrderStatus.Filled /*|| step.Status == CryptoOrderStatus.PartiallyFilled*/)) -- problemen, quick fix voor nu, order laten staan
                 {
                     if (position.Quantity > 0) // voldoende saldo om de sell te plaatsen
                     {

@@ -203,8 +203,8 @@ public partial class FrmMain
             subItem.ForeColor = Color.Red;
 
         item1.SubItems.Add(position.PartCount.ToString());
-        item1.SubItems.Add(position.BuyPrice?.ToString(position.Symbol.PriceDisplayFormat));
-        item1.SubItems.Add(position.SellPrice?.ToString(position.Symbol.PriceDisplayFormat));
+        item1.SubItems.Add(position.EntryPrice?.ToString(position.Symbol.PriceDisplayFormat));
+        item1.SubItems.Add(position.ProfitPrice?.ToString(position.Symbol.PriceDisplayFormat));
     }
 
     private static ListViewItem AddClosedPosition(CryptoPosition position)

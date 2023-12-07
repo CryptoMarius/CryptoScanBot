@@ -363,10 +363,7 @@ public class PositionTools
             var symbolPeriod = signal.Symbol.GetSymbolInterval(entry.Key);
             if (symbolPeriod.TrendIndicator != entry.Value)
             {
-                if (mode == CryptoTradeSide.Long)
-                    reaction = $"{symbolPeriod.Interval.Name} niet in uptrend";
-                else
-                    reaction = $"{symbolPeriod.Interval.Name} niet in downtrend";
+                reaction = $"{symbolPeriod.Interval.Name} niet gelijk aan {entry.Value}";
                 return false;
             }
         }

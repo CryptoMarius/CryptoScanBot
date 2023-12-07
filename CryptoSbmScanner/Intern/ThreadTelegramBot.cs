@@ -356,17 +356,17 @@ public class ThreadTelegramBotInstance
                     CryptoTrendIndicator trendIndicator = trendIndicatorClass.CalculateTrend();
 
                     string s;
-                    if (trendIndicator == CryptoTrendIndicator.trendBullish)
+                    if (trendIndicator == CryptoTrendIndicator.Bullish)
                         s = "trend=bullish";
-                    else if (trendIndicator == CryptoTrendIndicator.trendBearish)
+                    else if (trendIndicator == CryptoTrendIndicator.Bearish)
                         s = "trend=bearish";
                     else
                         s = "trend=sideway's?";
                     stringbuilder.AppendLine(string.Format("{0} {1:N2}", interval.Name, s));
 
-                    if (trendIndicator == CryptoTrendIndicator.trendBullish)
+                    if (trendIndicator == CryptoTrendIndicator.Bullish)
                         percentageSum += (int)intervalPeriod * iterator;
-                    else if (trendIndicator == CryptoTrendIndicator.trendBearish)
+                    else if (trendIndicator == CryptoTrendIndicator.Bearish)
                         percentageSum -= (int)intervalPeriod * iterator;
 
                     // Wat is het maximale som (voor de eindberekening)

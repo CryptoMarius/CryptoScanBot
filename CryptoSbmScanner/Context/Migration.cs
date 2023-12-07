@@ -6,7 +6,7 @@ namespace CryptoSbmScanner.Context;
 public class Migration
 {
     // De huidige database versie (zoals in de code is gedefinieerd)
-    public readonly static int CurrentDatabaseVersion = 8;
+    public readonly static int CurrentDatabaseVersion = 9;
 
 
     public static void Execute(CryptoDatabase database, int CurrentVersion)
@@ -194,11 +194,6 @@ public class Migration
                 // -Een ongebruikte kolom
                 database.Connection.Execute("alter table Position drop column BuyAmount", transaction);
 
-                // -Verwijderen van de Part.Name, vervangen door de PartNumber
-                // TODO: Moet nog doorgevoerd worden?
-                database.Connection.Execute("alter table PositionPart drop column Name", transaction);
-
-
                 // ? of verwijder ik de buy en sell price helemaal?
 
                 // Vervangt de buyprice (naamgeving ivm long/short)
@@ -218,6 +213,9 @@ public class Migration
             }
 
 
+            // -Verwijderen van de Part.Name, vervangen door de PartNumber
+            // TODO: Moet nog doorgevoerd worden?
+            //database.Connection.Execute("alter table PositionPart drop column Name", transaction);
         }
     }
 

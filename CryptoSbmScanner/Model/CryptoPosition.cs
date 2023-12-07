@@ -44,10 +44,6 @@ public class CryptoPosition
     [Computed]
     public string StrategyText { get { return SignalHelper.GetSignalAlgorithmText(Strategy); } }
 
-    // Om in de database de bron te kunnen zien
-    //public bool BackTest { get; set; } = false;    
-    //public bool PaperTrade { get; set; } = false;
-
     // Globale status van de positie (new, closed, wellicht andere enum?)
     public CryptoPositionStatus? Status { get; set; }
 
@@ -60,15 +56,9 @@ public class CryptoPosition
     public decimal Quantity { get; set; }
     public decimal BreakEvenPrice { get; set; }
 
-    // Slonzige gegevens, deze 3 mogen wat mij betreft weg, staat allemaal in de steps (ooit)
-    public decimal? BuyPrice { get; set; } //(dat kan anders zijn dan die van het signaal) (kan eigenlijk weg, slechts ter debug)
-    public decimal? SellPrice { get; set; }
-
-    [Computed]
+    // Statistiek voor debug/display (niet noodzakelijk)
     public decimal? EntryPrice { get; set; }
-    [Computed]
     public decimal? ProfitPrice { get; set; }
-
 
 
     // Een experiment (die wegkan, maar we zetten er nu even de naam van de munt in)
@@ -77,6 +67,7 @@ public class CryptoPosition
     // Soort van Parts.Count (maar dan hoeft niet alles geladen te zijn)
     public int PartCount { get; set; }
 
+    // Zou computed kunnen, maar voor de zekerheid in de database
     public bool Reposition { get; set; }
 
     [Computed]

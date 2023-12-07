@@ -40,7 +40,7 @@ public class DataStore
 
                 foreach (CryptoSymbolInterval symbolInterval in symbol.IntervalPeriodList)
                 {
-                    symbolInterval.TrendIndicator = CryptoTrendIndicator.trendSideways;
+                    symbolInterval.TrendIndicator = CryptoTrendIndicator.Sideways;
                     symbolInterval.LastCandleSynchronized = null;
                     symbolInterval.TrendInfoDate = null;
                 }

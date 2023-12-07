@@ -1022,9 +1022,9 @@ public class CryptoDatabase : IDisposable
                 "Strategy INTEGER NOT NULL," +
                 "data TEXT NULL," +
 
-                "BuyPrice TEXT NULL," + // EntryPrice
+                "EntryPrice TEXT NULL," +
                 "Quantity TEXT NULL," +
-                "SellPrice TEXT NULL," + // wordt ProfitPrice
+                "ProfitPrice TEXT NULL," +
                 "PartCount INTEGER NULL," +
                 "Profit TEXT NULL," +
                 "BreakEvenPrice TEXT NULL," +

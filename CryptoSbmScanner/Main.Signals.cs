@@ -311,10 +311,10 @@ public partial class FrmMain
 
         switch (signal.TrendIndicator)
         {
-            case CryptoTrendIndicator.trendBullish:
+            case CryptoTrendIndicator.Bullish:
                 item1.SubItems.Add("Bullish");
                 break;
-            case CryptoTrendIndicator.trendBearish:
+            case CryptoTrendIndicator.Bearish:
                 item1.SubItems.Add("Bearish");
                 break;
             default:
@@ -446,11 +446,11 @@ public partial class FrmMain
         // Op verzoek (een experiment)
         switch (signal.Trend1h)
         {
-            case CryptoTrendIndicator.trendBullish:
+            case CryptoTrendIndicator.Bullish:
                 subItem = item1.SubItems.Add("Up");
                 subItem.ForeColor = Color.Green;
                 break;
-            case CryptoTrendIndicator.trendBearish:
+            case CryptoTrendIndicator.Bearish:
                 subItem = item1.SubItems.Add("Down");
                 subItem.ForeColor = Color.Red;
                 break;
@@ -461,11 +461,11 @@ public partial class FrmMain
 
         switch (signal.Trend4h)
         {
-            case CryptoTrendIndicator.trendBullish:
+            case CryptoTrendIndicator.Bullish:
                 subItem = item1.SubItems.Add("Up");
                 subItem.ForeColor = Color.Green;
                 break;
-            case CryptoTrendIndicator.trendBearish:
+            case CryptoTrendIndicator.Bearish:
                 subItem = item1.SubItems.Add("Down");
                 subItem.ForeColor = Color.Red;
                 break;
@@ -476,11 +476,11 @@ public partial class FrmMain
 
         switch (signal.Trend12h)
         {
-            case CryptoTrendIndicator.trendBullish:
+            case CryptoTrendIndicator.Bullish:
                 subItem = item1.SubItems.Add("Up");
                 subItem.ForeColor = Color.Green;
                 break;
-            case CryptoTrendIndicator.trendBearish:
+            case CryptoTrendIndicator.Bearish:
                 subItem = item1.SubItems.Add("Down");
                 subItem.ForeColor = Color.Red;
                 break;

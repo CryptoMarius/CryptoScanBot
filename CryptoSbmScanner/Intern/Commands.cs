@@ -119,9 +119,9 @@ public class Commands
                 Log = log
             };
             CryptoTrendIndicator trendIndicator = trendIndicatorClass.CalculateTrend();
-            if (trendIndicator == CryptoTrendIndicator.trendBullish)
+            if (trendIndicator == CryptoTrendIndicator.Bullish)
                 percentageSum += interval.Duration;
-            else if (trendIndicator == CryptoTrendIndicator.trendBearish)
+            else if (trendIndicator == CryptoTrendIndicator.Bearish)
                 percentageSum -= interval.Duration;
 
 
@@ -131,9 +131,9 @@ public class Commands
             //symbolInterval.TrendInfoDate = DateTime.UtcNow;
 
             string s = "";
-            if (trendIndicator == CryptoTrendIndicator.trendBullish)
+            if (trendIndicator == CryptoTrendIndicator.Bullish)
                 s = string.Format("{0} {1}, trend=bullish", symbol.Name, interval.IntervalPeriod);
-            else if (trendIndicator == CryptoTrendIndicator.trendBearish)
+            else if (trendIndicator == CryptoTrendIndicator.Bearish)
                 s = string.Format("{0} {1}, trend=bearish", symbol.Name, interval.IntervalPeriod);
             else
                 s = string.Format("{0} {1}, trend=sideway's", symbol.Name, interval.IntervalPeriod);

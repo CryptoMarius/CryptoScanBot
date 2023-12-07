@@ -392,7 +392,7 @@ public static class Helper
     {
         decimal diffPercentage = 0;
         decimal investedInTrades = position.Invested - position.Returned; // - position.Commission;
-        if (position.Symbol.LastPrice.HasValue && position.SellPrice.HasValue)
+        if (position.Symbol.LastPrice.HasValue && position.ProfitPrice.HasValue)
         {
             decimal currentValue = (position.Quantity * (decimal)position.Symbol.LastPrice) - position.Commission;
             diffPercentage = (100 * (currentValue / investedInTrades)) - 100;

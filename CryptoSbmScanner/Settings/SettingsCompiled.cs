@@ -66,9 +66,9 @@ public class SettingsCompiled
             if (GlobalData.Settings.Trading.Long.Trend.Contains(interval.Name))
             {
                 if (side == CryptoTradeSide.Long)
-                    Trend.Add(interval.IntervalPeriod, CryptoTrendIndicator.trendBullish);
+                    Trend.Add(interval.IntervalPeriod, CryptoTrendIndicator.Bullish);
                 if (side == CryptoTradeSide.Short)
-                    Trend.Add(interval.IntervalPeriod, CryptoTrendIndicator.trendBearish);
+                    Trend.Add(interval.IntervalPeriod, CryptoTrendIndicator.Bearish);
             }
 
             // Barometer (ranged)

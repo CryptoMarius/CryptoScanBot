@@ -41,8 +41,8 @@ namespace CryptoSbmScanner
                         14 => ObjectCompare.Compare(positionA.Profit, positionB.Profit),
                         15 => ObjectCompare.Compare(positionA.Percentage, positionB.Percentage),
                         16 => ObjectCompare.Compare(positionA.PartCount, positionB.PartCount),
-                        17 => ObjectCompare.Compare(positionA.BuyPrice, positionB.BuyPrice),
-                        18 => ObjectCompare.Compare(positionA.SellPrice, positionB.SellPrice),
+                        17 => ObjectCompare.Compare(positionA.EntryPrice, positionB.EntryPrice),
+                        18 => ObjectCompare.Compare(positionA.ProfitPrice, positionB.ProfitPrice),
                         19 => ObjectCompare.Compare(positionA.Symbol.FundingRate, positionB.Symbol.FundingRate),
                         _ => 0
                     };
@@ -74,8 +74,8 @@ namespace CryptoSbmScanner
                         18 => ObjectCompare.Compare(positionA.MarketValuePercentage(), positionB.MarketValuePercentage()),
 
                         19 => ObjectCompare.Compare(positionA.PartCount, positionB.PartCount),
-                        20 => ObjectCompare.Compare(positionA.BuyPrice, positionB.BuyPrice),
-                        21 => ObjectCompare.Compare(positionA.SellPrice, positionB.SellPrice),
+                        20 => ObjectCompare.Compare(positionA.EntryPrice, positionB.EntryPrice),
+                        21 => ObjectCompare.Compare(positionA.ProfitPrice, positionB.ProfitPrice),
                         _ => 0
                     };
                 }

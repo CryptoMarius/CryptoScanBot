@@ -217,9 +217,9 @@ public class SignalCreate
 
                 CryptoTrendIndicator trendIndicator;
                 trendIndicator = trendIndicatorClass.CalculateTrend();
-                if (trendIndicator == CryptoTrendIndicator.trendBullish)
+                if (trendIndicator == CryptoTrendIndicator.Bullish)
                     percentageSum += interval.Duration;
-                else if (trendIndicator == CryptoTrendIndicator.trendBearish)
+                else if (trendIndicator == CryptoTrendIndicator.Bearish)
                     percentageSum -= interval.Duration;
 
                 if (intervalPeriod == signal.Interval.IntervalPeriod)

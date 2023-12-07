@@ -51,7 +51,7 @@ public class TrendIndicator
             // gebruiken we toch de sideway's om aan te geven dat het niet berekend kon worden.
             // Bij nieuwe munten, Flatliners (ethusdt) en andere gedrochten is het dus sideway's!
             //Signal.Reaction = string.Format("not enough quotes for {0} trend", interval.Name);
-            return CryptoTrendIndicator.trendSideways;
+            return CryptoTrendIndicator.Sideways;
         }
 
         TrendIndicatorZigZag1 zigZagTest = new();
@@ -134,7 +134,7 @@ public class TrendIndicator
             Log.AppendLine("ZigZag interpretation:");
         }
 
-        CryptoTrendIndicator trend = CryptoTrendIndicator.trendSideways;
+        CryptoTrendIndicator trend = CryptoTrendIndicator.Sideways;
 
         // Zijn er meer dan 1 punt?, zoniet laat dan maar, want dan is er niets uit te extraheren
         if (zigZagList.Count < 2)
@@ -149,13 +149,13 @@ public class TrendIndicator
         {
             lastLow = zigZagList[0].Value;
             lastHigh = zigZagList[1].Value;
-            trend = CryptoTrendIndicator.trendBullish;
+            trend = CryptoTrendIndicator.Bullish;
         }
         else
         {
             lastLow = zigZagList[1].Value;
             lastHigh = zigZagList[0].Value;
-            trend = CryptoTrendIndicator.trendBearish;
+            trend = CryptoTrendIndicator.Bearish;
         }
 
 
@@ -178,12 +178,12 @@ public class TrendIndicator
             // Check Values
             switch (trend)
             {
-                case CryptoTrendIndicator.trendBearish:
+                case CryptoTrendIndicator.Bearish:
                     if (zigZagResult.Value > value)
                         count++;
                     else count = 0;
                     break;
-                case CryptoTrendIndicator.trendBullish:
+                case CryptoTrendIndicator.Bullish:
                     if (zigZagResult.Value <= value)
                         count++;
                     else count = 0;
@@ -205,10 +205,10 @@ public class TrendIndicator
             if (count > 1)
             {
                 count = 0;
-                if (trend == CryptoTrendIndicator.trendBearish)
-                    trend = CryptoTrendIndicator.trendBullish;
-                else if (trend == CryptoTrendIndicator.trendBullish)
-                    trend = CryptoTrendIndicator.trendBearish;
+                if (trend == CryptoTrendIndicator.Bearish)
+                    trend = CryptoTrendIndicator.Bullish;
+                else if (trend == CryptoTrendIndicator.Bullish)
+                    trend = CryptoTrendIndicator.Bearish;
 
                 Log?.AppendLine("The trend switched");
 
@@ -244,9 +244,9 @@ public class TrendIndicator
         if (ShowTrend)
         {
             string s;
-            if (trend == CryptoTrendIndicator.trendBullish)
+            if (trend == CryptoTrendIndicator.Bullish)
                 s = string.Format("{0} {1}, candles={2}, count={3}, trend=bullish", Symbol.Name, Interval.Name, Candles.Count, count);
-            else if (trend == CryptoTrendIndicator.trendBearish)
+            else if (trend == CryptoTrendIndicator.Bearish)
                 s = string.Format("{0} {1}, candles={2}, count={3}, trend=bearish", Symbol.Name, Interval.Name, Candles.Count, count);
             else
                 s = string.Format("{0} {1}, candles={2}, count={3}, trend=sideway's?", Symbol.Name, Interval.Name, Candles.Count, count);

@@ -372,9 +372,9 @@ public partial class TestForm : Form
 
 
         s = "";
-        if (signal.TrendIndicator == CryptoTrendIndicator.trendBullish)
+        if (signal.TrendIndicator == CryptoTrendIndicator.Bullish)
             s = "interval trend=bullish";
-        else if (signal.TrendIndicator == CryptoTrendIndicator.trendBearish)
+        else if (signal.TrendIndicator == CryptoTrendIndicator.Bearish)
             s = "interval trend=bearish";
         else
             s = " interval trend=sideway's?";
@@ -842,9 +842,9 @@ public partial class TestForm : Form
                     TrendIndicator trendIndicatorClass = new(symbol, interval);
                     CryptoTrendIndicator trendIndicator = trendIndicatorClass.CalculateTrend();
 
-                    if (trendIndicator == CryptoTrendIndicator.trendBullish)
+                    if (trendIndicator == CryptoTrendIndicator.Bullish)
                         percentageSum += (int)intervalPeriod * iterator;
-                    else if (trendIndicator == CryptoTrendIndicator.trendBearish)
+                    else if (trendIndicator == CryptoTrendIndicator.Bearish)
                         percentageSum -= (int)intervalPeriod * iterator;
 
                     // Wat is het maximale som (voor de eindberekening)
@@ -871,9 +871,9 @@ public partial class TestForm : Form
 
                     // De trend van dit interval
                     string s;
-                    if (symbolInterval.TrendIndicator == CryptoTrendIndicator.trendBullish)
+                    if (symbolInterval.TrendIndicator == CryptoTrendIndicator.Bullish)
                         s = "trend=bullish";
-                    else if (symbolInterval.TrendIndicator == CryptoTrendIndicator.trendBearish)
+                    else if (symbolInterval.TrendIndicator == CryptoTrendIndicator.Bearish)
                         s = "trend=bearish";
                     else
                         s = "trend=sideway's?";
