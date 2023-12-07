@@ -24,7 +24,7 @@ namespace CryptoSbmScanner
                 EditInterval.SelectedIndex = 0;
 
             EditAlgoritm.Items.Clear();
-            foreach (AlgorithmDefinition definition in TradingConfig.AlgorithmDefinitionList)
+            foreach (AlgorithmDefinition definition in SignalHelper.AlgorithmDefinitionList)
                 EditAlgoritm.Items.Add(definition.Name);
             //foreach (SignalLongStrategy strategy in Enum.GetValues(typeof(SignalLongStrategy)))
                 //EditAlgoritm.Items.Add(SignalHelper.GetSignalAlgorithmText(strategy));

@@ -42,7 +42,7 @@ public class CryptoBackConfig
     // flow - select
     public bool ReleaseCandles = false;
     public string SymbolFilter = "LDO";
-    public string QuoteMarket = "BUSD";
+    public string QuoteMarket = "USDT";
     public CryptoIntervalPeriod IntervalPeriod = CryptoIntervalPeriod.interval1m;
     public DateTime DateStart = DateTime.SpecifyKind(new DateTime(2021, 12, 01, 0, 0, 0), DateTimeKind.Utc);
     public DateTime DateEinde = DateTime.SpecifyKind(new DateTime(2022, 02, 01, 0, 0, 0), DateTimeKind.Utc);

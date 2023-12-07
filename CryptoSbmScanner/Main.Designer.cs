@@ -440,7 +440,6 @@
         private TabPage tabPageDashBoard;
         private DashBoardControl dashBoardControl1;
         private TradingView.DashBoardInformation dashBoardInformation1;
-        private ToolStripMenuItem testToolStripMenuItem;
     }
 }
 

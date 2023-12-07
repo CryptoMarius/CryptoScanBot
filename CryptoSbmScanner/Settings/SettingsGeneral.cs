@@ -10,19 +10,6 @@ using System.Windows.Forms;
 namespace CryptoSbmScanner.Settings;
 
 [Serializable]
-public class IntervalAndStrategyConfig
-{
-    public List<string> Interval { get; set; } = new();
-    public Dictionary<CryptoOrderSide, List<string>> Strategy { get; set; } = new();
-
-    public IntervalAndStrategyConfig()
-    {
-        Strategy.Add(CryptoOrderSide.Buy, new List<string>());
-        Strategy.Add(CryptoOrderSide.Sell, new List<string>());
-    }
-}
-
-[Serializable]
 public class SettingsGeneral
 {
     public string ExtraCaption { get; set; } = "";
@@ -43,8 +30,8 @@ public class SettingsGeneral
     public string SelectedBarometerQuote { get; set; } = "USDT";
     public string SelectedBarometerInterval { get; set; } = "1H";
 
-    public string FontName { get; set; } = "Segoe UI";
-    public float FontSize { get; set; } = 9f;
+    public string FontNameNew { get; set; } = "Segoe UI";
+    public float FontSizeNew { get; set; } = 9f;
 
     public int GetCandleInterval { get; set; } = 60;
 
@@ -59,9 +46,6 @@ public class SettingsGeneral
     public Rectangle WindowPosition { get; set; } = new Rectangle();
     public FormWindowState WindowState { get; set; } = FormWindowState.Normal;
 
-    public CryptoTrendCalculationMethod TrendCalculationMethod { get; set; } = CryptoTrendCalculationMethod.trendCalculationViaAlgo1;
-
-
     // RSI instelbare oversold /overbought (op verzoek)
     public double RsiValueOversold { get; set; } = 30;
     public double RsiValueOverbought { get; set; } = 70;
@@ -69,10 +53,6 @@ public class SettingsGeneral
     // STOCH instelbare oversold /overbought (op verzoek)
     public double StochValueOversold { get; set; } = 20;
     public double StochValueOverbought { get; set; } = 80;
-
-    public SettingsGeneral()
-    {
-    }
 
 }
 

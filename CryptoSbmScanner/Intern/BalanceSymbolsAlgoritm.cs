@@ -24,7 +24,7 @@ namespace CryptoSbmScanner.Intern;
 /// </summary>
 public class BasketAsset
 {
-    public string Base { get; set; } //De basismunt (BTC, ETH, USDT, BUSD enzovoort), enkel voor de rapportage in de Dump()
+    public string Base { get; set; } //De basismunt (BTC, ETH, USDT enzovoort), enkel voor de rapportage in de Dump()
     public string Quote { get; set; } // Het 2e item Base/Quote
     public CryptoSymbol Symbol { get; set; } // Referentie naar de te kopen of verkopen symbol (behalve de USDT inleg)
     public decimal Percentage { get; set; } // de te gebruiken verdeling
@@ -49,7 +49,7 @@ public class BasketAsset
 
 public class BalanceSymbolsAlgoritm
 {
-    private static readonly string useUsdQuote = "BUSD";
+    private static readonly string useUsdQuote = "ETH";
 
     // Het te gebruiken basismunt en interval in deze backtest
     //private IntervalPeriod TestInterval = IntervalPeriod.interval1h;
@@ -474,7 +474,7 @@ public class BalanceSymbolsAlgoritm
             databaseThread.Close();
             databaseThread.Open();
 
-            // De MainBasket staat op dit moment UIT (hardcoded USDT of BUSD)
+            // De MainBasket staat op dit moment UIT (hardcoded USDT of ETH)
             if (DetermineBasketMainValue(databaseThread))
             {
                 //if (RefreshExchangeInfo())

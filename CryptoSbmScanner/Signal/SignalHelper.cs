@@ -1,6 +1,5 @@
 ﻿using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Model;
-using CryptoSbmScanner.Trader;
 
 namespace CryptoSbmScanner.Signal;
 
@@ -23,42 +22,21 @@ public class AlgorithmDefinition
     {
         return (SignalCreateBase)Activator.CreateInstance(AnalyzeShortType, new object[] { symbol, interval, candle });
     }
-
-    //public SignalAcceptBase InstantiateSignalAccept(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle)
-    //{
-    //    return (SignalAcceptBase)Activator.CreateInstance(SignalAcceptType, new object[] { symbol, interval, candle });
-    //}
 }
 
-public class SignalHelper
+
+public static class SignalHelper
 {
-    public static SignalCreateBase GetSignalAlgorithm(CryptoOrderSide mode, CryptoSignalStrategy strategy, CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle)
-    {
-        if (TradingConfig.AlgorithmDefinitionIndex.TryGetValue(strategy, out AlgorithmDefinition definition))
-        {
-            if (mode == CryptoOrderSide.Buy && definition.AnalyzeLongType != null)
-                return definition.InstantiateAnalyzeLong(symbol, interval, candle);
-            if (mode == CryptoOrderSide.Sell && definition.AnalyzeShortType != null)
-                return definition.InstantiateAnalyzeShort(symbol, interval, candle);
-        }
-        return null;
-    }
-
-    public static string GetSignalAlgorithmText(CryptoSignalStrategy strategy)
-    {
-        if (TradingConfig.AlgorithmDefinitionIndex.TryGetValue(strategy, out AlgorithmDefinition definition))
-            return definition.Name;
-        return "";
-    }
-
-    ///
     /// Een lijst met alle mogelijke strategieën (en attributen)
-    /// 
-    public static List<AlgorithmDefinition> GetListOfAlgorithms()
-    {
-        List<AlgorithmDefinition> list = new();
+    static public readonly List<AlgorithmDefinition> AlgorithmDefinitionList = new();
 
-        list.Add(new AlgorithmDefinition()
+    // Alle beschikbare strategieën, nu geindexeerd
+    static public readonly SortedList<CryptoSignalStrategy, AlgorithmDefinition> AlgorithmDefinitionIndex = new();
+
+
+    static SignalHelper()
+    {
+        AlgorithmDefinitionList.Add(new AlgorithmDefinition()
         {
             Name = "jump",
             Strategy = CryptoSignalStrategy.Jump,
@@ -66,7 +44,7 @@ public class SignalHelper
             AnalyzeShortType = typeof(SignalCandleJumpUp),
         });
 
-        list.Add(new AlgorithmDefinition()
+        AlgorithmDefinitionList.Add(new AlgorithmDefinition()
         {
             Name = "sbm1",
             Strategy = CryptoSignalStrategy.Sbm1,
@@ -74,7 +52,7 @@ public class SignalHelper
             AnalyzeShortType = typeof(SignalSbm1Overbought),
         });
 
-        list.Add(new AlgorithmDefinition()
+        AlgorithmDefinitionList.Add(new AlgorithmDefinition()
         {
             Name = "sbm2",
             Strategy = CryptoSignalStrategy.Sbm2,
@@ -83,7 +61,7 @@ public class SignalHelper
         });
 
 
-        list.Add(new AlgorithmDefinition()
+        AlgorithmDefinitionList.Add(new AlgorithmDefinition()
         {
             Name = "sbm3",
             Strategy = CryptoSignalStrategy.Sbm3,
@@ -91,7 +69,8 @@ public class SignalHelper
             AnalyzeShortType = typeof(SignalSbm3Overbought),
         });
 
-        list.Add(new AlgorithmDefinition()
+#if EXTRASTRATEGIES
+        AlgorithmDefinitionList.Add(new AlgorithmDefinition()
         {
             Name = "sbm4",
             Strategy = CryptoSignalStrategy.Sbm4,
@@ -99,14 +78,15 @@ public class SignalHelper
             AnalyzeShortType = null,
         });
 
-        list.Add(new AlgorithmDefinition()
+        AlgorithmDefinitionList.Add(new AlgorithmDefinition()
         {
             Name = "flux",
             Strategy = CryptoSignalStrategy.Flux,
             AnalyzeLongType = typeof(SignalFluxOversold),
         });
+#endif
 
-        list.Add(new AlgorithmDefinition()
+        AlgorithmDefinitionList.Add(new AlgorithmDefinition()
         {
             Name = "stobb",
             Strategy = CryptoSignalStrategy.Stobb,
@@ -115,82 +95,106 @@ public class SignalHelper
         });
 
 #if EXTRASTRATEGIES
-        // Experimenteel (kan wellicht weg)
-        list.Add(new AlgorithmDefinition()
-        {
-            Name = "close>ema20",
-            Strategy = CryptoSignalStrategy.PriceCrossedEma20,
-            AnalyzeLongType = typeof(SignalPriceCrossedEma20),
-        });
+        //// Experimenteel (kan wellicht weg)
+        //AlgorithmDefinitionList.Add(new AlgorithmDefinition()
+        //{
+        //    Name = "close>ema20",
+        //    Strategy = CryptoSignalStrategy.PriceCrossedEma20,
+        //    AnalyzeLongType = typeof(SignalPriceCrossedEma20),
+        //});
 
-        list.Add(new AlgorithmDefinition()
-        {
-            Name = "close>ema50",
-            Strategy = CryptoSignalStrategy.PriceCrossedEma50,
-            AnalyzeLongType = typeof(SignalPriceCrossedEma50),
-        });
+        //AlgorithmDefinitionList.Add(new AlgorithmDefinition()
+        //{
+        //    Name = "close>ema50",
+        //    Strategy = CryptoSignalStrategy.PriceCrossedEma50,
+        //    AnalyzeLongType = typeof(SignalPriceCrossedEma50),
+        //});
 
-        list.Add(new AlgorithmDefinition()
-        {
-            Name = "close>sma20",
-            Strategy = CryptoSignalStrategy.PriceCrossedSma20,
-            AnalyzeLongType = typeof(SignalPriceCrossedSma20),
-        });
+        //AlgorithmDefinitionList.Add(new AlgorithmDefinition()
+        //{
+        //    Name = "close>sma20",
+        //    Strategy = CryptoSignalStrategy.PriceCrossedSma20,
+        //    AnalyzeLongType = typeof(SignalPriceCrossedSma20),
+        //});
 
-        list.Add(new AlgorithmDefinition()
-        {
-            Name = "close>sma50",
-            Strategy = CryptoSignalStrategy.PriceCrossedSma50,
-            AnalyzeLongType = typeof(SignalPriceCrossedSma50),
-        });
+        //AlgorithmDefinitionList.Add(new AlgorithmDefinition()
+        //{
+        //    Name = "close>sma50",
+        //    Strategy = CryptoSignalStrategy.PriceCrossedSma50,
+        //    AnalyzeLongType = typeof(SignalPriceCrossedSma50),
+        //});
 
-        list.Add(new AlgorithmDefinition()
-        {
-            Name = "sma 50 slope",
-            Strategy = CryptoSignalStrategy.SlopeSma50,
-            AnalyzeLongType = typeof(SignalSlopeSma50TurningPositive),
-            AnalyzeShortType = typeof(SignalSlopeSma50TurningNegative),
-        });
-
-
-        list.Add(new AlgorithmDefinition()
-        {
-            Name = "ema 50 slope",
-            Strategy = CryptoSignalStrategy.SlopeEma50,
-            AnalyzeLongType = typeof(SignalSlopeEma50TurningPositive),
-            AnalyzeShortType = typeof(SignalSlopeEma50TurningNegative),
-        });
+        //AlgorithmDefinitionList.Add(new AlgorithmDefinition()
+        //{
+        //    Name = "sma 50 slope",
+        //    Strategy = CryptoSignalStrategy.SlopeSma50,
+        //    AnalyzeLongType = typeof(SignalSlopeSma50TurningPositive),
+        //    AnalyzeShortType = typeof(SignalSlopeSma50TurningNegative),
+        //});
 
 
-        list.Add(new AlgorithmDefinition()
-        {
-            Name = "ema 20 slope",
-            Strategy = CryptoSignalStrategy.SlopeEma20,
-            AnalyzeLongType = typeof(SignalSlopeEma20TurningPositive),
-        });
+        //AlgorithmDefinitionList.Add(new AlgorithmDefinition()
+        //{
+        //    Name = "ema 50 slope",
+        //    Strategy = CryptoSignalStrategy.SlopeEma50,
+        //    AnalyzeLongType = typeof(SignalSlopeEma50TurningPositive),
+        //    AnalyzeShortType = typeof(SignalSlopeEma50TurningNegative),
+        //});
 
-        list.Add(new AlgorithmDefinition()
-        {
-            Name = "sma 20 slope",
-            Strategy = CryptoSignalStrategy.SlopeSma20,
-            AnalyzeLongType = typeof(SignalSlopeSma20TurningPositive),
-        });
 
-        list.Add(new AlgorithmDefinition()
+        //AlgorithmDefinitionList.Add(new AlgorithmDefinition()
+        //{
+        //    Name = "ema 20 slope",
+        //    Strategy = CryptoSignalStrategy.SlopeEma20,
+        //    AnalyzeLongType = typeof(SignalSlopeEma20TurningPositive),
+        //});
+
+        //AlgorithmDefinitionList.Add(new AlgorithmDefinition()
+        //{
+        //    Name = "sma 20 slope",
+        //    Strategy = CryptoSignalStrategy.SlopeSma20,
+        //    AnalyzeLongType = typeof(SignalSlopeSma20TurningPositive),
+        //});
+
+        AlgorithmDefinitionList.Add(new AlgorithmDefinition()
         {
             Name = "Engulfing",
             Strategy = CryptoSignalStrategy.BullishEngulfing,
             AnalyzeLongType = typeof(SignalBullishEngulfing),
         });
 
-        list.Add(new AlgorithmDefinition()
+        AlgorithmDefinitionList.Add(new AlgorithmDefinition()
         {
             Name = "Kumo Breakout",
             Strategy = CryptoSignalStrategy.IchimokuKumoBreakout,
             AnalyzeLongType = typeof(IchimokuKumoBreakout),
         });
 #endif
-        return list;
+
+
+        // En de lijst eenmalig indexeren
+        AlgorithmDefinitionIndex.Clear();
+        foreach (AlgorithmDefinition algorithmDefinition in AlgorithmDefinitionList)
+            AlgorithmDefinitionIndex.Add(algorithmDefinition.Strategy, algorithmDefinition);
     }
 
+
+    public static SignalCreateBase GetSignalAlgorithm(CryptoTradeSide mode, CryptoSignalStrategy strategy, CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle)
+    {
+        if (AlgorithmDefinitionIndex.TryGetValue(strategy, out AlgorithmDefinition definition))
+        {
+            if (mode == CryptoTradeSide.Long && definition.AnalyzeLongType != null)
+                return definition.InstantiateAnalyzeLong(symbol, interval, candle);
+            if (mode == CryptoTradeSide.Short && definition.AnalyzeShortType != null)
+                return definition.InstantiateAnalyzeShort(symbol, interval, candle);
+        }
+        return null;
+    }
+
+    public static string GetSignalAlgorithmText(CryptoSignalStrategy strategy)
+    {
+        if (AlgorithmDefinitionIndex.TryGetValue(strategy, out AlgorithmDefinition definition))
+            return definition.Name;
+        return "";
+    }
 }

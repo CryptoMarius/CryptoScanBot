@@ -820,7 +820,7 @@ public partial class Form1 : Form
 
             // Werkt zoals ik het verwacht! een buy order van ongeveer 1.6 dollar
             var exchangeApi = ExchangeHelper.GetExchangeInstance(GlobalData.Settings.General.ExchangeId);
-            var (result, tradeParams) = await exchangeApi.BuyOrSell(null, GlobalData.ExchangeRealTradeAccount, symbol, DateTime.Now, 
+            var (result, tradeParams) = await exchangeApi.PlaceOrder(null, GlobalData.ExchangeRealTradeAccount, symbol, DateTime.Now, 
                 CryptoOrderType.Limit, CryptoOrderSide.Buy, 52, 0.2276m, null, null);
 
 

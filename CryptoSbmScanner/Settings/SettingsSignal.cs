@@ -49,6 +49,7 @@ public class SettingsSignal
 
     [JsonConverter(typeof(Intern.ColorConverter))]
     public Color ColorStobb { get; set; } = Color.White;
+    public Color ColorStobbShort { get; set; } = Color.White;
     public bool PlaySoundStobbSignal { get; set; } = false;
     public bool PlaySpeechStobbSignal { get; set; } = false;
     public string SoundStobbOversold { get; set; } = "sound-stobb-oversold.wav";
@@ -56,7 +57,10 @@ public class SettingsSignal
     public bool StobIncludeRsi { get; set; } = false;
     public bool StobIncludeSoftSbm { get; set; } = false;
     public bool StobIncludeSbmPercAndCrossing { get; set; } = false;
-    public decimal StobMinimalTrend { get; set; } = -999m;
+    //public bool UseStobTrendLong { get; set; } = false;
+    public decimal StobTrendLong { get; set; } = -999m;
+    //public bool UseStobTrendShort { get; set; } = false;
+    public decimal StobTrendShort { get; set; } = -999m;
 
     // SBM1 signals
     // Het BB percentage kan via de user interface uit worden gezet (nomargin)
@@ -66,6 +70,7 @@ public class SettingsSignal
 
     [JsonConverter(typeof(Intern.ColorConverter))]
     public Color ColorSbm { get; set; } = Color.White;
+    public Color ColorSbmShort { get; set; } = Color.White;
     public bool PlaySoundSbmSignal { get; set; } = true;
     public bool PlaySpeechSbmSignal { get; set; } = true;
     public string SoundSbmOversold { get; set; } = "sound-sbm-oversold.wav";
@@ -99,6 +104,7 @@ public class SettingsSignal
     // JUMP
     [JsonConverter(typeof(Intern.ColorConverter))]
     public Color ColorJump { get; set; } = Color.White;
+    public Color ColorJumpShort { get; set; } = Color.White;
     public bool PlaySoundCandleJumpSignal { get; set; } = false;
     public bool PlaySpeechCandleJumpSignal { get; set; } = false;
     public bool JumpUseLowHighCalculation { get; set; } = false;
@@ -132,17 +138,7 @@ public class SettingsSignal
     public bool CandlesWithFlatPriceCheck { get; set; } = false;
 
 
-    // Op welke intervallen en strategieën willen we analyseren?
-    public IntervalAndStrategyConfig Analyze { get; set; } = new ();
-
-
-    public SettingsSignal()
-    {
-        Analyze.Interval.Add("1m");
-        Analyze.Interval.Add("2m");
-
-        Analyze.Strategy[CryptoOrderSide.Buy].Add("sbm1");
-        Analyze.Strategy[CryptoOrderSide.Buy].Add("sbm2");
-        Analyze.Strategy[CryptoOrderSide.Buy].Add("sbm3");
-    }
+    // Op welke intervallen, strategieën, trend, barometer willen we analyseren?
+    public SettingsTextual Long { get; set; } = new();
+    public SettingsTextual Short { get; set; } = new();
 }

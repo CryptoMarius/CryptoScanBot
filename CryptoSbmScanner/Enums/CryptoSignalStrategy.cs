@@ -12,7 +12,7 @@ public enum CryptoSignalStrategy // CryptoStrategy
     Sbm5, // is er niet meer
     Stobb,
 
-    // Experimental
+    // Vervallen
     PriceCrossedSma20,
     PriceCrossedSma50,
 
@@ -25,6 +25,7 @@ public enum CryptoSignalStrategy // CryptoStrategy
     SlopeEma20,
     SlopeEma50,
 
+    // Experimental
     Flux,
     BullishEngulfing,
     IchimokuKumoBreakout,

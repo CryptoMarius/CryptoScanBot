@@ -1,6 +1,5 @@
 ﻿using Bybit.Net.Clients;
 using Bybit.Net.Enums;
-using Bybit.Net.Objects.Models.Spot;
 
 using CryptoSbmScanner.Context;
 using CryptoSbmScanner.Intern;

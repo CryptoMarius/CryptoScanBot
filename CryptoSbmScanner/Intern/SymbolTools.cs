@@ -1,5 +1,6 @@
 ﻿using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Model;
+using CryptoSbmScanner.Settings;
 using CryptoSbmScanner.Trader;
 
 namespace CryptoSbmScanner.Intern;
@@ -62,12 +63,12 @@ public class SymbolTools
     public static bool CheckValidAmount(CryptoSymbol symbol, decimal assetAmount, out decimal amount, out string reaction)
     {
         // Koopbedrag, heeft de gebruiker een percentage of een aantal ingegeven?
-        decimal percentage = symbol.QuoteData.BuyPercentage;
+        decimal percentage = symbol.QuoteData.EntryPercentage;
         bool isPercentage = percentage > 0m;
         if (isPercentage)
             amount = percentage * assetAmount / 100;
         else
-            amount = symbol.QuoteData.BuyAmount;
+            amount = symbol.QuoteData.EntryAmount;
 
         if (amount <= 0)
         {
@@ -78,7 +79,7 @@ public class SymbolTools
 
         if (assetAmount < amount)
         {
-            reaction = string.Format("Not enough cash available {0} < {1}", assetAmount, amount);
+            reaction = $"Not enough cash available {assetAmount} < {amount}";
             return false;
         }
 
@@ -142,11 +143,11 @@ public class SymbolTools
     }
 
 
-    public static bool CheckSymbolBlackListOversold(CryptoSymbol symbol, CryptoOrderSide mode, out string reaction)
+    public static bool CheckSymbolBlackListOversold(CryptoSymbol symbol, CryptoTradeSide mode, out string reaction)
     {
         //Als de muntpaar op de zwarte lijst staat dit signaal overslagen
         //Indien blacklist: Staat de muntpaar op de blacklist -> ja = signaal negeren
-        if (TradingConfig.Config[mode].InBlackList(symbol.Name) == MatchBlackAndWhiteList.Present)
+        if (TradingConfig.Signals[mode].InBlackList(symbol.Name) == MatchBlackAndWhiteList.Present)
         {
             reaction = "Symbol zit in de black list";
             return false;
@@ -157,11 +158,11 @@ public class SymbolTools
     }
 
 
-    public static bool CheckSymbolWhiteListOversold(CryptoSymbol symbol, CryptoOrderSide mode, out string reaction)
+    public static bool CheckSymbolWhiteListOversold(CryptoSymbol symbol, CryptoTradeSide mode, out string reaction)
     {
         // Als de muntpaar niet op de toegelaten lijst staat dit signaal overslagen
         // Indien whitelist: Staat de muntpaar op de whitelist -> nee = signaal negeren
-        if (TradingConfig.Config[mode].InWhiteList(symbol.Name) == MatchBlackAndWhiteList.NotPresent)
+        if (TradingConfig.Signals[mode].InWhiteList(symbol.Name) == MatchBlackAndWhiteList.NotPresent)
         {
             reaction = "Symbol zit niet in de white list";
             return false;
@@ -333,10 +334,9 @@ public class SymbolTools
     }
 
 
-
-    public static bool CheckValidBarometer(CryptoQuoteData quoteData, CryptoIntervalPeriod intervalPeriod, decimal minValue, out string reaction)
+    public static bool CheckValidBarometer(CryptoQuoteData quoteData, CryptoIntervalPeriod intervalPeriod, (decimal minValue, decimal maxValue) values, out string reaction)
     {
-        if (minValue > -99m)
+        //if (values.minValue > -99m)
         {
             if (!GlobalData.IntervalListPeriod.TryGetValue(intervalPeriod, out CryptoInterval interval))
             {
@@ -345,17 +345,17 @@ public class SymbolTools
             }
 
             // We gaan ervan uit dat alles in 1x wordt berekend
-            BarometerData barometerData = quoteData.BarometerList[(long)intervalPeriod];
+            BarometerData barometerData = quoteData.BarometerList[intervalPeriod];
             if (!barometerData.PriceBarometer.HasValue)
             {
                 reaction = string.Format("Barometer {0} not calculated", interval.Name);
                 return false;
             }
 
-            barometerData = quoteData.BarometerList[(long)intervalPeriod];
-            if (barometerData.PriceBarometer <= minValue)
+            barometerData = quoteData.BarometerList[intervalPeriod];
+            if (!barometerData.PriceBarometer.IsBetween(values.minValue, values.maxValue))
             {
-                reaction = string.Format("Barometer {0} is te laag {1} < {2}", interval.Name, barometerData.PriceBarometer?.ToString0("N2"), minValue.ToString0("N2"));
+                reaction = $"Barometer {interval.Name} {barometerData.PriceBarometer?.ToString0("N2")} niet tussen {values.minValue.ToString0("N2")} en {values.maxValue.ToString0("N2")}";
                 return false;
             }
         }

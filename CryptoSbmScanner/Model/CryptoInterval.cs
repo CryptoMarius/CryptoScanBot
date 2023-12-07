@@ -8,13 +8,24 @@ public class CryptoInterval
 {
     [Key]
     public int Id { get; set; }
+    /// <summary>
+    /// Interval name 
+    /// </summary>
     public string Name { get; set; }
+
+    /// <summary>
+    /// Interval enumeration
+    /// </summary>
     public CryptoIntervalPeriod IntervalPeriod { get; set; }
 
-    // Number of seconds for this interval
+    /// <summary>
+    /// Number of seconds for this interval
+    /// </summary>
     public long Duration { get; set; }
 
-    // Verwijzing naar een ander interval waar deze uit op te bouwen is
+    /// <summary>
+    /// Verwijzing naar een ander interval waar deze uit op te bouwen is
+    /// </summary>
     public int? ConstructFromId { get; set; }
     [Computed]
     public virtual CryptoInterval ConstructFrom { get; set; }

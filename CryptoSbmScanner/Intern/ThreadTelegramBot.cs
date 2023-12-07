@@ -402,7 +402,7 @@ public class ThreadTelegramBotInstance
                 if (interval == CryptoIntervalPeriod.interval5m || interval == CryptoIntervalPeriod.interval15m || interval == CryptoIntervalPeriod.interval30m ||
                      interval == CryptoIntervalPeriod.interval1h || interval == CryptoIntervalPeriod.interval4h || interval == CryptoIntervalPeriod.interval1d)
                 {
-                    BarometerData barometerData = quoteData.BarometerList[(long)interval];
+                    BarometerData barometerData = quoteData.BarometerList[interval];
                     stringbuilder.AppendLine(string.Format("{0} {1:N2}", interval, barometerData.PriceBarometer));
                 }
             }

@@ -20,7 +20,7 @@ internal class SettingsQuoteCoin : IDisposable
 #if TRADEBOT
     // Trade bot settings
     public NumericUpDown BuyAmount;
-    //public NumericUpDown BuyPercentage;
+    public NumericUpDown BuyPercentage;
     public NumericUpDown SlotsMaximal;
 #endif
 
@@ -34,7 +34,7 @@ internal class SettingsQuoteCoin : IDisposable
         if (ButtonColor != null) { ButtonColor.Dispose(); ButtonColor = null; }
 #if TRADEBOT
         if (BuyAmount != null) { BuyAmount.Dispose(); BuyAmount = null; }
-        //if (BuyPercentage != null) { BuyPercentage.Dispose(); BuyPercentage = null; }
+        if (BuyPercentage != null) { BuyPercentage.Dispose(); BuyPercentage = null; }
         if (SlotsMaximal != null) { SlotsMaximal.Dispose(); SlotsMaximal = null; }
 #endif
     }
@@ -108,19 +108,19 @@ internal class SettingsQuoteCoin : IDisposable
         xPos += BuyAmount.Size.Width + 10;
         controls.Add(BuyAmount);
 
-        //// Het initiele aankooppercentage
-        ////public decimal BuyPercentage { get; set; }
-        //BuyPercentage = new()
-        //{
-        //    DecimalPlaces = 3,
-        //    Increment = new decimal(new int[] { 1, 0, 0, 393216 }),
-        //    Location = new Point(xPos, yPos),
-        //    Maximum = new decimal(new int[] { 276447231, 23283, 0, 0 }),
-        //    Size = new Size(60, 23),
-        //    ThousandsSeparator = true
-        //};
-        //xPos += BuyPercentage.Size.Width + 10;
-        //controls.Add(BuyPercentage);
+        // Het initiele aankooppercentage
+        //public decimal BuyPercentage { get; set; }
+        BuyPercentage = new()
+        {
+            DecimalPlaces = 3,
+            Increment = new decimal(new int[] { 1, 0, 0, 393216 }),
+            Location = new Point(xPos, yPos),
+            Maximum = new decimal(new int[] { 276447231, 23283, 0, 0 }),
+            Size = new Size(60, 23),
+            ThousandsSeparator = true
+        };
+        xPos += BuyPercentage.Size.Width + 10;
+        controls.Add(BuyPercentage);
 
         // Maximaal aantal slots op de exchange
         //public int SlotsMaximal { get; set; }
@@ -221,13 +221,13 @@ internal class SettingsQuoteCoin : IDisposable
         };
         controls.Add(label);
 
-        //label = new()
-        //{
-        //    AutoSize = true,
-        //    Text = "Percentage",
-        //    Location = new Point(BuyPercentage.Location.X - correct, yPos),
-        //};
-        //controls.Add(label);
+        label = new()
+        {
+            AutoSize = true,
+            Text = "Percentage",
+            Location = new Point(BuyPercentage.Location.X - correct, yPos),
+        };
+        controls.Add(label);
 
         label = new()
         {
@@ -270,8 +270,8 @@ internal class SettingsQuoteCoin : IDisposable
 
 
 #if TRADEBOT
-        BuyAmount.Value = QuoteData.BuyAmount;
-        //BuyPercentage.Value = QuoteData.BuyPercentage;
+        BuyAmount.Value = QuoteData.EntryAmount;
+        BuyPercentage.Value = QuoteData.EntryPercentage;
         SlotsMaximal.Value = QuoteData.SlotsMaximal;
 #endif
     }
@@ -284,8 +284,8 @@ internal class SettingsQuoteCoin : IDisposable
         QuoteData.CreateSignals = CreateSignals.Checked;
         QuoteData.DisplayColor = PanelColor.BackColor;
 #if TRADEBOT
-        QuoteData.BuyAmount = BuyAmount.Value;
-        //QuoteData.BuyPercentage = BuyPercentage.Value;
+        QuoteData.EntryAmount = BuyAmount.Value;
+        QuoteData.EntryPercentage = BuyPercentage.Value;
         QuoteData.SlotsMaximal = (int)SlotsMaximal.Value;
 #endif
     }

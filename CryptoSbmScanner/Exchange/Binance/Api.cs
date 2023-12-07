@@ -207,7 +207,7 @@ public class Api : ExchangeBase
     //    CryptoTradeAccount tradeAccount, CryptoSymbol symbol, DateTime currentDate,
     //    CryptoOrderType orderType, CryptoOrderSide orderSide,
     //    decimal quantity, decimal price, decimal? stop, decimal? limit)
-    public override async Task<(bool result, TradeParams tradeParams)> BuyOrSell(CryptoDatabase database,
+    public override async Task<(bool result, TradeParams tradeParams)> PlaceOrder(CryptoDatabase database,
         CryptoTradeAccount tradeAccount, CryptoSymbol symbol, DateTime currentDate,
         CryptoOrderType orderType, CryptoOrderSide orderSide,
         decimal quantity, decimal price, decimal? stop, decimal? limit)
@@ -546,6 +546,11 @@ public class Api : ExchangeBase
     public override async Task FetchTradesForSymbolAsync(CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
     {
         await BinanceFetchTrades.FetchTradesForSymbol(tradeAccount, symbol);
+    }
+
+    public override async Task<int> FetchTradesForOrderAsync(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, string orderId)
+    {
+        return await FetchTradeForOrder.FetchTradesForOrderAsync(tradeAccount, symbol, orderId);
     }
 
     public async override Task FetchAssetsAsync(CryptoTradeAccount tradeAccount)

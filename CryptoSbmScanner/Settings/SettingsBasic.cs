@@ -28,7 +28,7 @@ public class SettingsBasic
     public SettingsTelegram Telegram { get; set; } = new();
 
     /// <summary>
-    /// Balanceer instellingen (restant uit een oude tool)
+    /// Balanceer instellingen (restant van oude tool)
     /// </summary>
     public SettingsBalanceBot BalanceBot { get; set; } = new();
 
@@ -50,10 +50,9 @@ public class SettingsBasic
     public List<string> BlackListOverbought { get; set; } = new();
 
 
-    /// <summary>
-    /// Instellingen voor het uitvoeren backtest (work in progres)
-    /// </summary>
-    public SettingsBackTest BackTest { get; set; } = new();
-
+    // Welke kolommen zijn zichtbaar in het tabbblad signalen
     public List<string> HiddenSignalColumns { get; set; } = new();
+
+    /// Instellingen voor het uitvoeren backtest (work in progres)
+    public SettingsBackTest BackTest { get; set; } = new();
 }

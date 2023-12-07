@@ -177,7 +177,7 @@ public partial class DashBoardInformation : UserControl
             EditBarometerQuote.SelectedIndexChanged -= ShowBarometerStuff;
             EditBarometerInterval.SelectedIndexChanged -= ShowBarometerStuff;
 
-            // Enkel de actieve quotes erin zetten (default=busd)
+            // Enkel de actieve quotes erin zetten (default=usdt)
             EditBarometerQuote.Items.Clear();
             foreach (CryptoQuoteData cryptoQuoteData in GlobalData.Settings.QuoteCoins.Values)
             {
@@ -185,7 +185,7 @@ public partial class DashBoardInformation : UserControl
                     EditBarometerQuote.Items.Add(cryptoQuoteData.Name);
             }
             if (EditBarometerQuote.Items.Count == 0)
-                EditBarometerQuote.Items.Add("BUSD");
+                EditBarometerQuote.Items.Add("USDT");
 
             EditBarometerQuote.SelectedIndex = EditBarometerQuote.Items.IndexOf(GlobalData.Settings.General.SelectedBarometerQuote);
             //EditBarometerQuote.Text = GlobalData.Settings.General.SelectedBarometerQuote;
@@ -366,7 +366,7 @@ public partial class DashBoardInformation : UserControl
                 {
 
                     Color color;
-                    BarometerData barometerData = quoteData.BarometerList[(int)intervalPeriod];
+                    BarometerData barometerData = quoteData.BarometerList[intervalPeriod];
                     if (barometerData?.PriceBarometer < 0)
                         color = Color.Red;
                     else
@@ -460,7 +460,7 @@ public partial class DashBoardInformation : UserControl
             if (!GlobalData.IntervalListPeriod.TryGetValue(intervalPeriod, out CryptoInterval interval))
                 return;
 
-            BarometerData barometerData = quoteData.BarometerList[(int)intervalPeriod];
+            BarometerData barometerData = quoteData.BarometerList[intervalPeriod];
             CreateBarometerBitmap(exchange, quoteData, interval);
         }
         catch (Exception error)
@@ -619,7 +619,7 @@ public partial class DashBoardInformation : UserControl
                     if (ExchangeHelper.KLineTicker != null)
                     {
                         text = ExchangeHelper.KLineTicker.Count().ToString("N0");
-                        ShowSymbolPrice(SymbolHistList[1], InformationRowList[1], exchange, quoteData, "BNB", "Kline ticker count", text);
+                        ShowSymbolPrice(SymbolHistList[1], InformationRowList[1], exchange, quoteData, "PAXG", "Kline ticker count", text);
                     }
 
                     text = PositionMonitor.AnalyseCount.ToString("N0");

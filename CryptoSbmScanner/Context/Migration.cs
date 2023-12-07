@@ -6,7 +6,7 @@ namespace CryptoSbmScanner.Context;
 public class Migration
 {
     // De huidige database versie (zoals in de code is gedefinieerd)
-    public readonly static int CurrentDatabaseVersion = 7;
+    public readonly static int CurrentDatabaseVersion = 8;
 
 
     public static void Execute(CryptoDatabase database, int CurrentVersion)
@@ -157,6 +157,66 @@ public class Migration
                 database.Connection.Update(version, transaction);
                 transaction.Commit();
             }
+
+
+            //***********************************************************
+            if (CurrentVersion > version.Version && version.Version == 7)
+            {
+                using var transaction = database.BeginTransaction();
+
+                // Introductie van een nummer per part (initiele buy/sell=0, >0 zijn de dca's)
+                database.Connection.Execute("alter table PositionPart add PartNumber Integer", transaction);
+                database.Connection.Execute("update PositionPart set PartNumber=0 where name='BUY'", transaction);
+                database.Connection.Execute("update PositionPart set PartNumber=1 where name='DCA'", transaction);
+                // -Verwijderen van de Part.Name, dit is een alias voor de Number (=1 > 1)
+                //database.Connection.Execute("alter table PositionPart drop column Name", transaction); // nog even nodig denk ik, kan later wel weg?
+
+                // Op verzoek enige trend indicatoren per interval (slechts een paar)
+                database.Connection.Execute("alter table Signal add Trend15m Integer", transaction);
+                database.Connection.Execute("alter table Signal add Trend30m Integer", transaction);
+                database.Connection.Execute("alter table Signal add Trend1h Integer", transaction);
+                database.Connection.Execute("alter table Signal add Trend4h Integer", transaction);
+                database.Connection.Execute("alter table Signal add Trend12h Integer", transaction);
+
+                // update version
+                version.Version += 1;
+                database.Connection.Update(version, transaction);
+                transaction.Commit();
+            }
+
+
+
+            //***********************************************************
+            if (CurrentVersion > version.Version && version.Version == 8)
+            {
+                using var transaction = database.BeginTransaction();
+
+                // -Een ongebruikte kolom
+                database.Connection.Execute("alter table Position drop column BuyAmount", transaction);
+
+                // -Verwijderen van de Part.Name, vervangen door de PartNumber
+                // TODO: Moet nog doorgevoerd worden?
+                database.Connection.Execute("alter table PositionPart drop column Name", transaction);
+
+
+                // ? of verwijder ik de buy en sell price helemaal?
+
+                // Vervangt de buyprice (naamgeving ivm long/short)
+                database.Connection.Execute("alter table Position add EntryPrice TEXT null", transaction);
+                database.Connection.Execute("update Position set EntryPrice=buyPrice", transaction);
+                database.Connection.Execute("alter table Position drop column BuyPrice", transaction);
+
+                // Vervangt de sellprice (naamgeving ivm long/short)
+                database.Connection.Execute("alter table Position add ProfitPrice TEXT null", transaction);
+                database.Connection.Execute("update Position set ProfitPrice=sellPrice", transaction);
+                database.Connection.Execute("alter table Position drop column SellPrice", transaction);
+
+                // update version
+                version.Version += 1;
+                database.Connection.Update(version, transaction);
+                transaction.Commit();
+            }
+
 
         }
     }

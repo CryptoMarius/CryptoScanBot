@@ -9,7 +9,7 @@ public class SignalSlopeEma50TurningPositive : SignalCreateBase
 {
     public SignalSlopeEma50TurningPositive(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        SignalSide = CryptoOrderSide.Buy;
+        SignalSide = CryptoTradeSide.Long;
         SignalStrategy = CryptoSignalStrategy.SlopeEma50;
     }
 
@@ -27,6 +27,7 @@ public class SignalSlopeEma50TurningPositive : SignalCreateBase
         return true;
     }
 
+
     public override bool IsSignal()
     {
         ExtraText = "";
@@ -37,30 +38,29 @@ public class SignalSlopeEma50TurningPositive : SignalCreateBase
         if (CandleLast.CandleData.Ema50 > CandleLast.CandleData.Ema200)
             return false;
 
-        if (!Candles.TryGetValue(CandleLast.OpenTime - Interval.Duration, out CryptoCandle prevCandle))
-        {
-            ExtraText = "geen prev candle! " + CandleLast.DateLocal.ToString();
+        if (!GetPrevCandle(CandleLast, out CryptoCandle prevCandle))
             return false;
-        }
+
         if (!IndicatorsOkay(prevCandle))
             return false;
 
         if (prevCandle.CandleData.SlopeEma50 > 0)
             return false;
 
-        if (!BarometersOkay())
+        if (!BarometersOkay((0.5m, decimal.MaxValue)))
         {
             ExtraText = "barometer te laag";
             return false;
         }
 
         // Is er een mogelijke LL in de voorgaande 60 candles?
-        DateTime boundary = CandleLast.Date.AddSeconds(Interval.Duration * 60);
-        if (!GlobalData.IsStobSignalAvailableInTheLast(CryptoOrderSide.Buy, boundary))
+        DateTime boundary = CandleLast.Date.AddSeconds(- Interval.Duration * 60);
+        if (!GlobalData.IsStobSignalAvailableInTheLast(CryptoTradeSide.Long, boundary))
         {
             ExtraText = "Geen voorgaande STOB of SBM";
             return false;
         }
+
         return true;
     }
 
@@ -77,35 +77,21 @@ public class SignalSlopeEma50TurningPositive : SignalCreateBase
         }
 
         // De markt is nog niet echt positief
-        // (maar missen we meldingen hierdoor denk het wel!?)
         if (CandleLast.CandleData.Sma50 >= CandleLast.CandleData.Ema50)
             return false;
 
 
-        if (!Candles.TryGetValue(CandleLast.OpenTime - Interval.Duration, out CryptoCandle candlePrev))
+        if (CandleLast.CandleData.Rsi < 55)
         {
-            ExtraText = "No prev1";
+            ExtraText = string.Format("De RSI niet herstellend {0:N8} {1:N8} (last.2)", CandleLast.CandleData.Rsi, CandleLast.CandleData.Rsi);
             return false;
         }
-
-        // Herstel? Verbeterd de RSI
-        if ((CandleLast.CandleData.Rsi < candlePrev.CandleData.Rsi))
-        {
-            ExtraText = string.Format("De RSI niet herstellend {0:N8} {1:N8} (last.1)", candlePrev.CandleData.Rsi, CandleLast.CandleData.Rsi);
-            return false;
-        }
-
-        if ((CandleLast.CandleData.Rsi < 55))
-        {
-            ExtraText = string.Format("De RSI niet herstellend {0:N8} {1:N8} (last.2)", candlePrev.CandleData.Rsi, CandleLast.CandleData.Rsi);
-            return false;
-        }
-        if ((CandleLast.CandleData.StochOscillator < 60))
+        if (CandleLast.CandleData.StochOscillator < 60)
         {
             ExtraText = string.Format("De Stoch.K is niet hoog genoeg {0:N8}", CandleLast.CandleData.StochOscillator);
             return false;
         }
-        if ((CandleLast.CandleData.StochSignal < 60))
+        if (CandleLast.CandleData.StochSignal < 60)
         {
             ExtraText = string.Format("De Stoch.D is niet hoog genoeg {0:N8}", CandleLast.CandleData.StochSignal);
             return false;

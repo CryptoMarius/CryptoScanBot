@@ -1022,10 +1022,9 @@ public class CryptoDatabase : IDisposable
                 "Strategy INTEGER NOT NULL," +
                 "data TEXT NULL," +
 
-                "BuyPrice TEXT NULL," +
+                "BuyPrice TEXT NULL," + // EntryPrice
                 "Quantity TEXT NULL," +
-                "BuyAmount TEXT NULL," +
-                "SellPrice TEXT NULL," +
+                "SellPrice TEXT NULL," + // wordt ProfitPrice
                 "PartCount INTEGER NULL," +
                 "Profit TEXT NULL," +
                 "BreakEvenPrice TEXT NULL," +
@@ -1064,6 +1063,7 @@ public class CryptoDatabase : IDisposable
 
                 "Side INTEGER NOT NULL," +
                 "Name TEXT NULL," +
+                "PartNumber INTEGER NOT NULL," +
                 "CreateTime TEXT NOT NULL," +
                 "CloseTime TEXT NULL," +
                 //"Status INTEGER NOT NULL," + Miet relevant, controle op CloseTime werkt ook

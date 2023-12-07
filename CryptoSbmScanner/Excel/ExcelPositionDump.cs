@@ -33,6 +33,7 @@ public class ExcelPositionDump : ExcelBase
         WriteCell(sheet, columns++, row, "Status");
         WriteCell(sheet, columns++, row, "Trailing");
         WriteCell(sheet, columns++, row, "Quantity");
+        WriteCell(sheet, columns++, row, "Q.Filled");
         WriteCell(sheet, columns++, row, "Price");
         WriteCell(sheet, columns++, row, "StopLimit");
         WriteCell(sheet, columns++, row, "Value");
@@ -43,7 +44,7 @@ public class ExcelPositionDump : ExcelBase
             ++row;
             {
                 cell = WriteCell(sheet, 0, row, part.Id);
-                cell = WriteCell(sheet, 1, row, part.Name);
+                cell = WriteCell(sheet, 1, row, part.Name + " " + part.PartNumber.ToString()); // 0 = entry and >= 1 is dca
                 cell = WriteCell(sheet, 2, row, part.Side.ToString());
                 cell = WriteCell(sheet, 3, row, part.CreateTime.ToLocalTime());
                 cell.CellStyle = CellStyleDate;
@@ -61,6 +62,8 @@ public class ExcelPositionDump : ExcelBase
                     cell = WriteCell(sheet, 8, row, (double)part.Quantity);
                     cell.CellStyle = CellStyleDecimalNormal;
                 }
+                cell = WriteCell(sheet, 8, row, (double)0);
+                cell.CellStyle = CellStyleDecimalNormal;
 
                 cell = WriteCell(sheet, 12, row, (double)part.Commission);
                 cell.CellStyle = CellStyleDecimalNormal;
@@ -130,6 +133,9 @@ public class ExcelPositionDump : ExcelBase
                 //cell.CellStyle = cellStyleDecimalNormal;
 
                 cell = WriteCell(sheet, column++, row, (double)step.Quantity);
+                cell.CellStyle = CellStyleDecimalNormal;
+
+                cell = WriteCell(sheet, column++, row, (double)step.QuantityFilled);
                 cell.CellStyle = CellStyleDecimalNormal;
 
                 // wat is de werkelijke prijs (stopprice of normale price)?
@@ -324,7 +330,9 @@ public class ExcelPositionDump : ExcelBase
         WriteCell(sheet, columns++, row, "Commission");
         WriteCell(sheet, columns++, row, "C. Asset");
 
-        foreach (CryptoTrade trade in Position.Symbol.TradeList.Values.ToList())
+        List<CryptoTrade> tradelist = Position.Symbol.TradeList.Values.ToList();
+        tradelist.Sort((x, y) => x.TradeTime.CompareTo(y.TradeTime));
+        foreach (CryptoTrade trade in tradelist)
         {
             if (!OrderList.ContainsKey(trade.OrderId))
                 continue;
@@ -358,7 +366,14 @@ public class ExcelPositionDump : ExcelBase
 
             cell = WriteCell(sheet, column++, row, trade.CommissionAsset);
             cell.CellStyle = CellStyleDecimalNormal;
+
+            //if (OrderList.ContainsKey(trade.OrderId))
+            //{
+            //    cell = WriteCell(sheet, column++, row, "In orderlist");
+            //    cell.CellStyle = CellStyleDecimalNormal;
+            //}
         }
+
 
         AutoSize(sheet, columns);
     }
@@ -378,6 +393,8 @@ public class ExcelPositionDump : ExcelBase
         WriteCell(sheet, row, column++, "Totale commissie");
         WriteCell(sheet, row, column++, "Markt waarde");
         WriteCell(sheet, row, column++, "Markt percentage");
+        WriteCell(sheet, row, column++, "Geopend");
+        WriteCell(sheet, row, column++, "Gesloten");
 
         row++;
         column = 0;
@@ -391,6 +408,9 @@ public class ExcelPositionDump : ExcelBase
         WriteCell(sheet, row, column++, (double)(Position.Commission ));
         WriteCell(sheet, row, column++, (double)Position.MarketValue());
         WriteCell(sheet, row, column++, (double)Position.MarketValuePercentage());
+        WriteCell(sheet, row, column++, Position.CreateTime.ToLocalTime());
+        if (Position.CloseTime.HasValue)
+            WriteCell(sheet, row, column++, Position.CloseTime.Value.ToLocalTime());
 
         AutoSize(sheet, 6);
     }

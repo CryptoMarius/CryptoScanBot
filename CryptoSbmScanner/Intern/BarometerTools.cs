@@ -95,7 +95,7 @@ public class BarometerTools
         CryptoSymbolInterval symbolInterval = bmSymbol.GetSymbolInterval(interval.IntervalPeriod);
         SortedList<long, CryptoCandle> candles = symbolInterval.CandleList;
 
-        BarometerData barometerData = quoteData.BarometerList[(long)interval.IntervalPeriod];
+        BarometerData barometerData = quoteData.BarometerList[interval.IntervalPeriod];
 
         // Begin van de candle in interval X, bereken het laatste interval opnieuw (bewust)
         long periodStart;

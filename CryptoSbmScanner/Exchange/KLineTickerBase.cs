@@ -29,13 +29,13 @@ public abstract class KLineTickerBase
         {
             if (quoteData.FetchCandles && quoteData.SymbolList.Count > 0)
             {
-                //var activeSymbols = quoteData.SymbolList.Where(s => s.Status == 1);
+                List<CryptoSymbol> symbols = quoteData.SymbolList.ToList();
 
                 List<KLineTickerItemBase> tickers = new();
 
                 // 1 ticker handelt (normaliter) 1..LimitOnSymbols symbols af
                 // Kucoin dot in dit geval weer wat moeilijker, een rare api..
-                int x = quoteData.SymbolList.Count;
+                int x = symbols.Count;
                 while (x > 0)
                 {
                     // 1 ticker handelt 1 tot x kline tickers af
@@ -48,16 +48,13 @@ public abstract class KLineTickerBase
 
                 // Symbols evenredig verdelen over de tickers
                 x = 0;
-                foreach (CryptoSymbol symbol in quoteData.SymbolList.ToList())
+                foreach (CryptoSymbol symbol in symbols)
                 {
-                    if (symbol.Status == 1)
-                    {
-                        tickers[x].Symbols.Add(symbol.Name);
-                        x++;
-                        if (x >= tickers.Count)
-                            x = 0;
-                        symbolCount++;
-                    }
+                    tickers[x].Symbols.Add(symbol.Name);
+                    x++;
+                    if (x >= tickers.Count)
+                        x = 0;
+                    symbolCount++;
                 }
 
 

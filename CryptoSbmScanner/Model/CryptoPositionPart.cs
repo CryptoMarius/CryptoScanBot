@@ -40,9 +40,10 @@ public class CryptoPositionPart
 
     public CryptoSignalStrategy Strategy { get; set; }
     [Computed]
-    public string StrategyText { get { return Strategy.ToString(); } } //SignalHelper.GetSignalAlgorithmText(Strategy);
+    public string StrategyText { get { return Strategy.ToString(); } }
 
     public string Name { get; set; }
+    public int PartNumber { get; set; } // En dan kan de Name vervallen (BUY/SELL = 1, DCA = PartNumber >= 2) - of null based, whatever
     public DateTime CreateTime { get; set; }
     public DateTime? CloseTime { get; set; }
 

@@ -3,7 +3,6 @@ using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Settings;
 using CryptoSbmScanner.Signal;
-using System.Drawing;
 using Microsoft.IdentityModel.Tokens;
 using CryptoSbmScanner.Trader;
 using CryptoSbmScanner.SettingsDialog;
@@ -16,11 +15,24 @@ public partial class FrmSettings : Form
 
     private readonly List<SettingsQuoteCoin> BaseCoinList = new();
 
+    // Welke intervallen willen we analyseren (create signals)
     private readonly Dictionary<Control, CryptoInterval> AnalyzeInterval = new();
+
+    // 
+    private readonly SortedList<CryptoSignalStrategy, SettingsStrategy> StrategyControlsLong = new();
+    private readonly SortedList<CryptoSignalStrategy, SettingsStrategy> StrategyControlsShort = new();
+
+    // Strategy definitions
     private readonly Dictionary<Control, AlgorithmDefinition> AnalyzeDefinitionIndexLong = new();
     private readonly Dictionary<Control, AlgorithmDefinition> AnalyzeDefinitionIndexShort = new();
 
-    private readonly Dictionary<Control, CryptoInterval> MonitorInterval = new();
+    // Trade op interval
+    private readonly Dictionary<Control, CryptoInterval> TradingIntervalLong = new();
+    private readonly Dictionary<Control, CryptoInterval> TradingIntervalShort = new();
+
+    // Gewenste trend op interval
+    private readonly Dictionary<Control, CryptoInterval> TrendLongControls = new();
+    private readonly Dictionary<Control, CryptoInterval> TrendShortControls = new();
 
     public Model.CryptoExchange NewExchange { get; set; }
 
@@ -30,29 +42,28 @@ public partial class FrmSettings : Form
     private readonly SortedList<string, CryptoBuyOrderMethod> BuyOrderMethod = new();
     private readonly SortedList<string, CryptoSellMethod> SellMethod = new();
 #endif
-    private readonly SortedList<CryptoSignalStrategy, SettingsStrategy> SettingsStrategyList = new();
 
 
     public FrmSettings()
     {
         InitializeComponent();
 
-        toolTip1.SetToolTip(EditAnalyzeStobbOverbought, "Dit type signaal is een dubbele indicatie dat een munt overbought is en die bestaat uit:" +
+        toolTip1.SetToolTip(EditAnalyzeStobbShort, "Dit type signaal is een dubbele indicatie dat een munt overbought is en die bestaat uit:" +
             "\n-een candle die opent of sluit boven de bovenste bollingerband\n" +
             "-zowel de %d als %k van de stochastic zijn boven de 80\n" +
             "(dit kan een instapmoment zijn voor een short positie)");
-        toolTip1.SetToolTip(EditAnalyzeStobbOversold, "Dit type signaal is een dubbele indicatie dat een munt oversold is en bestaat uit:\n" +
+        toolTip1.SetToolTip(EditAnalyzeStobbLong, "Dit type signaal is een dubbele indicatie dat een munt oversold is en bestaat uit:\n" +
             "-een candle die opent of sluit onder de onderste bollingerbands\n" +
             "-zowel de % d als % k van de stochastic zijn onder de 20\n" +
             "(dit kan een instapmoment zijn voor een long positie).");
 
-        toolTip1.SetToolTip(EditAnalyzeSbmOverbought, "Dit is een variatie op de stobb overbought signaal en bestaat uit:\n" +
+        toolTip1.SetToolTip(EditAnalyzeSbm1Short, "Dit is een variatie op de stobb overbought signaal en bestaat uit:\n" +
             "-een stobb overbought signaal\n" +
             "-de ma200 onder de ma50 is\n" +
             "-de ma50 onder de ma20 is\n" +
             "-de psar op of boven de ma20\n" +
             "(dit kan een instapmoment zijn voor een short positie)");
-        toolTip1.SetToolTip(EditAnalyzeSbmOversold, "Dit is een variatie op de stobb oversold signaal en bestaat uit:\n" +
+        toolTip1.SetToolTip(EditAnalyzeSbm1Long, "Dit is een variatie op de stobb oversold signaal en bestaat uit:\n" +
             "-een stobb oversold signaal\n" +
             "-de ma200 boven de ma50 is\n" +
             "-de ma50 boven de ma20 is\n" +
@@ -74,9 +85,20 @@ public partial class FrmSettings : Form
         buttonFontDialog.Click += ButtonFontDialog_Click;
         buttonGotoAppDataFolder.Click += ButtonGotoAppDataFolder_Click;
 
-        buttonColorStobb.Click += ButtonColorStobb_Click;
-        buttonColorSbm.Click += ButtonColorSbm_Click;
-        buttonColorJump.Click += ButtonColorJump_Click;
+        buttonColorStobbShort.Tag = panelColorStobbShort;
+        buttonColorStobbShort.Click += ButtonColorClick;
+        buttonColorStobbLong.Tag = panelColorStobbLong;
+        buttonColorStobbLong.Click += ButtonColorClick;
+
+        buttonColorSbmShort.Tag = panelColorSbmShort;
+        buttonColorSbmShort.Click += ButtonColorClick;
+        buttonColorSbmLong.Tag = panelColorSbmLong;
+        buttonColorSbmLong.Click += ButtonColorClick;
+
+        buttonColorJumpShort.Tag = panelColorJumpShort;
+        buttonColorJumpShort.Click += ButtonColorClick;
+        buttonColorJumpLong.Tag = panelColorJumpLong;
+        buttonColorJumpLong.Click += ButtonColorClick;
 
         buttonSelectSoundStobbOverbought.Click += ButtonSelectSoundStobbOverbought_Click;
         buttonSelectSoundStobbOversold.Click += ButtonSelectSoundStobbOversold_Click;
@@ -95,10 +117,16 @@ public partial class FrmSettings : Form
 
         // Deze moeten op het formulier komen te staan (om de edits te kunnen refereren/chainen)
         int yPos = 40;
-        foreach (var signalDefinition in TradingConfig.AlgorithmDefinitionIndex.Values)
-            SettingsStrategyList.Add(signalDefinition.Strategy, new SettingsStrategy(CryptoOrderSide.Buy, signalDefinition, 910, yPos += 30, tabPageTrading.Controls));
-        SettingsStrategyList.Values[0].AddHeaderLabelsMain(20, tabPageTrading.Controls);
-        SettingsStrategyList.Values[0].AddHeaderLabels(40, tabPageTrading.Controls);
+        foreach (var signalDefinition in SignalHelper.AlgorithmDefinitionIndex.Values)
+            StrategyControlsLong.Add(signalDefinition.Strategy, new SettingsStrategy(GlobalData.Settings.Trading.Long, signalDefinition, 910, yPos += 30, tabPageTradingLong.Controls));
+        StrategyControlsLong.Values[0].AddHeaderLabelsMain(20, tabPageTradingLong.Controls);
+        StrategyControlsLong.Values[0].AddHeaderLabels(40, tabPageTradingLong.Controls);
+
+        yPos = 40;
+        foreach (var signalDefinition in SignalHelper.AlgorithmDefinitionIndex.Values)
+            StrategyControlsShort.Add(signalDefinition.Strategy, new SettingsStrategy(GlobalData.Settings.Trading.Short, signalDefinition, 910, yPos += 30, tabPageTradingShort.Controls));
+        StrategyControlsShort.Values[0].AddHeaderLabelsMain(20, tabPageTradingShort.Controls);
+        StrategyControlsShort.Values[0].AddHeaderLabels(40, tabPageTradingShort.Controls);
 
         // analyze interval
         AnalyzeInterval.Add(EditAnalyzeInterval1m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1m]);
@@ -117,43 +145,55 @@ public partial class FrmSettings : Form
         AnalyzeInterval.Add(EditAnalyzeInterval1d, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1d]);
 
         // analyze long
-        AnalyzeDefinitionIndexLong.Add(EditAnalyzeSbmOversold, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Sbm1]);
-        AnalyzeDefinitionIndexLong.Add(EditAnalyzeSbm2Oversold, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Sbm2]);
-        AnalyzeDefinitionIndexLong.Add(EditAnalyzeSbm3Oversold, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Sbm3]);
-        AnalyzeDefinitionIndexLong.Add(EditAnalyzeStobbOversold, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Stobb]);
-        AnalyzeDefinitionIndexLong.Add(EditAnalyzeCandleJumpUp, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Jump]);
-
-        // Vanwege dubbele checkboxes
-        SettingsStrategyList[CryptoSignalStrategy.Sbm1].ChainTo(CryptoOrderSide.Buy, EditAnalyzeSbmOversold);
-        SettingsStrategyList[CryptoSignalStrategy.Sbm1].ChainTo(CryptoOrderSide.Sell, EditAnalyzeSbmOverbought);
-        SettingsStrategyList[CryptoSignalStrategy.Sbm2].ChainTo(CryptoOrderSide.Buy, EditAnalyzeSbm2Oversold);
-        SettingsStrategyList[CryptoSignalStrategy.Sbm2].ChainTo(CryptoOrderSide.Sell, EditAnalyzeSbm2Overbought);
-        SettingsStrategyList[CryptoSignalStrategy.Sbm3].ChainTo(CryptoOrderSide.Buy, EditAnalyzeSbm3Oversold);
-        SettingsStrategyList[CryptoSignalStrategy.Sbm3].ChainTo(CryptoOrderSide.Sell, EditAnalyzeSbm3Overbought);
-        SettingsStrategyList[CryptoSignalStrategy.Stobb].ChainTo(CryptoOrderSide.Buy, EditAnalyzeStobbOversold);
-        SettingsStrategyList[CryptoSignalStrategy.Stobb].ChainTo(CryptoOrderSide.Sell, EditAnalyzeStobbOverbought);
-        SettingsStrategyList[CryptoSignalStrategy.Jump].ChainTo(CryptoOrderSide.Buy, EditAnalyzeCandleJumpUp);
-        SettingsStrategyList[CryptoSignalStrategy.Jump].ChainTo(CryptoOrderSide.Sell, EditAnalyzeCandleJumpDown);
+        AnalyzeDefinitionIndexLong.Add(EditAnalyzeSbm1Long, SignalHelper.AlgorithmDefinitionIndex[CryptoSignalStrategy.Sbm1]);
+        AnalyzeDefinitionIndexLong.Add(EditAnalyzeSbm2Long, SignalHelper.AlgorithmDefinitionIndex[CryptoSignalStrategy.Sbm2]);
+        AnalyzeDefinitionIndexLong.Add(EditAnalyzeSbm3Long, SignalHelper.AlgorithmDefinitionIndex[CryptoSignalStrategy.Sbm3]);
+        AnalyzeDefinitionIndexLong.Add(EditAnalyzeStobbLong, SignalHelper.AlgorithmDefinitionIndex[CryptoSignalStrategy.Stobb]);
+        AnalyzeDefinitionIndexLong.Add(EditAnalyzeCandleJumpUp, SignalHelper.AlgorithmDefinitionIndex[CryptoSignalStrategy.Jump]);
 
         // analyze short
-        AnalyzeDefinitionIndexShort.Add(EditAnalyzeCandleJumpDown, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Jump]);
-        AnalyzeDefinitionIndexShort.Add(EditAnalyzeSbmOverbought, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Sbm1]);
-        AnalyzeDefinitionIndexShort.Add(EditAnalyzeSbm2Overbought, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Sbm2]);
-        AnalyzeDefinitionIndexShort.Add(EditAnalyzeSbm3Overbought, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Sbm3]);
-        AnalyzeDefinitionIndexShort.Add(EditAnalyzeStobbOverbought, TradingConfig.AlgorithmDefinitionIndex[CryptoSignalStrategy.Stobb]);
+        AnalyzeDefinitionIndexShort.Add(EditAnalyzeSbm1Short, SignalHelper.AlgorithmDefinitionIndex[CryptoSignalStrategy.Sbm1]);
+        AnalyzeDefinitionIndexShort.Add(EditAnalyzeSbm2Short, SignalHelper.AlgorithmDefinitionIndex[CryptoSignalStrategy.Sbm2]);
+        AnalyzeDefinitionIndexShort.Add(EditAnalyzeSbm3Short, SignalHelper.AlgorithmDefinitionIndex[CryptoSignalStrategy.Sbm3]);
+        AnalyzeDefinitionIndexShort.Add(EditAnalyzeStobbShort, SignalHelper.AlgorithmDefinitionIndex[CryptoSignalStrategy.Stobb]);
+        AnalyzeDefinitionIndexShort.Add(EditAnalyzeCandleJumpDown, SignalHelper.AlgorithmDefinitionIndex[CryptoSignalStrategy.Jump]);
 
+        // Vanwege dubbele checkboxes op meerdere tabbladen
+        StrategyControlsLong[CryptoSignalStrategy.Sbm1].ChainTo(CryptoOrderSide.Buy, EditAnalyzeSbm1Long);
+        StrategyControlsLong[CryptoSignalStrategy.Sbm2].ChainTo(CryptoOrderSide.Buy, EditAnalyzeSbm2Long);
+        StrategyControlsLong[CryptoSignalStrategy.Sbm3].ChainTo(CryptoOrderSide.Buy, EditAnalyzeSbm3Long);
+        StrategyControlsLong[CryptoSignalStrategy.Stobb].ChainTo(CryptoOrderSide.Buy, EditAnalyzeStobbLong);
+        StrategyControlsLong[CryptoSignalStrategy.Jump].ChainTo(CryptoOrderSide.Buy, EditAnalyzeCandleJumpUp);
 
-        // monitor interval (iets minder intervallen)
-        MonitorInterval.Add(EditMonitorInterval1m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1m]);
-        MonitorInterval.Add(EditMonitorInterval2m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval2m]);
-        MonitorInterval.Add(EditMonitorInterval3m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval3m]);
-        MonitorInterval.Add(EditMonitorInterval5m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval5m]);
-        MonitorInterval.Add(EditMonitorInterval10m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval10m]);
-        MonitorInterval.Add(EditMonitorInterval15m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval15m]);
-        MonitorInterval.Add(EditMonitorInterval30m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval30m]);
-        MonitorInterval.Add(EditMonitorInterval1h, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1h]);
-        MonitorInterval.Add(EditMonitorInterval2h, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval2h]);
-        MonitorInterval.Add(EditMonitorInterval4h, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval4h]);
+        StrategyControlsShort[CryptoSignalStrategy.Sbm1].ChainTo(CryptoOrderSide.Sell, EditAnalyzeSbm1Short);
+        StrategyControlsShort[CryptoSignalStrategy.Sbm2].ChainTo(CryptoOrderSide.Sell, EditAnalyzeSbm2Short);
+        StrategyControlsShort[CryptoSignalStrategy.Sbm3].ChainTo(CryptoOrderSide.Sell, EditAnalyzeSbm3Short);
+        StrategyControlsShort[CryptoSignalStrategy.Stobb].ChainTo(CryptoOrderSide.Sell, EditAnalyzeStobbShort);
+        StrategyControlsShort[CryptoSignalStrategy.Jump].ChainTo(CryptoOrderSide.Sell, EditAnalyzeCandleJumpDown);
+
+        // Trading interval long
+        TradingIntervalLong.Add(EditTradingIntervalLong1m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1m]);
+        TradingIntervalLong.Add(EditTradingIntervalLong2m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval2m]);
+        TradingIntervalLong.Add(EditTradingIntervalLong3m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval3m]);
+        TradingIntervalLong.Add(EditTradingIntervalLong5m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval5m]);
+        TradingIntervalLong.Add(EditTradingIntervalLong10m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval10m]);
+        TradingIntervalLong.Add(EditTradingIntervalLong15m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval15m]);
+        TradingIntervalLong.Add(EditTradingIntervalLong30m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval30m]);
+        TradingIntervalLong.Add(EditTradingIntervalLong1h, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1h]);
+        TradingIntervalLong.Add(EditTradingIntervalLong2h, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval2h]);
+        TradingIntervalLong.Add(EditTradingIntervalLong4h, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval4h]);
+
+        // Trading interval short
+        TradingIntervalShort.Add(EditTradingIntervalShort1m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1m]);
+        TradingIntervalShort.Add(EditTradingIntervalShort2m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval2m]);
+        TradingIntervalShort.Add(EditTradingIntervalShort3m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval3m]);
+        TradingIntervalShort.Add(EditTradingIntervalShort5m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval5m]);
+        TradingIntervalShort.Add(EditTradingIntervalShort10m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval10m]);
+        TradingIntervalShort.Add(EditTradingIntervalShort15m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval15m]);
+        TradingIntervalShort.Add(EditTradingIntervalShort30m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval30m]);
+        TradingIntervalShort.Add(EditTradingIntervalShort1h, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1h]);
+        TradingIntervalShort.Add(EditTradingIntervalShort2h, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval2h]);
+        TradingIntervalShort.Add(EditTradingIntervalShort4h, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval4h]);
 
 #if TRADEBOT
 
@@ -178,6 +218,39 @@ public partial class FrmSettings : Form
         BuyOrderMethod.Add("Limit order op bied prijs", CryptoBuyOrderMethod.BidPrice);
         BuyOrderMethod.Add("Limit order op vraag prijs", CryptoBuyOrderMethod.AskPrice);
         BuyOrderMethod.Add("Limit order op gemiddelde van bied en vraag prijs", CryptoBuyOrderMethod.BidAndAskPriceAvg);
+
+
+        // Trading trend long
+        TrendLongControls.Add(EditTrendLong1m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1m]);
+        TrendLongControls.Add(EditTrendLong2m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval2m]);
+        TrendLongControls.Add(EditTrendLong3m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval3m]);
+        TrendLongControls.Add(EditTrendLong5m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval5m]);
+        TrendLongControls.Add(EditTrendLong10m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval10m]);
+        TrendLongControls.Add(EditTrendLong15m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval15m]);
+        TrendLongControls.Add(EditTrendLong30m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval30m]);
+        TrendLongControls.Add(EditTrendLong1h, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1h]);
+        TrendLongControls.Add(EditTrendLong2h, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval2h]);
+        TrendLongControls.Add(EditTrendLong4h, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval4h]);
+        TrendLongControls.Add(EditTrendLong6h, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval6h]);
+        TrendLongControls.Add(EditTrendLong8h, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval8h]);
+        TrendLongControls.Add(EditTrendLong12h, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval12h]);
+        TrendLongControls.Add(EditTrendLong1d, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1d]);
+
+        // Trading trend short
+        TrendShortControls.Add(EditTrendShort1m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1m]);
+        TrendShortControls.Add(EditTrendShort2m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval2m]);
+        TrendShortControls.Add(EditTrendShort3m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval3m]);
+        TrendShortControls.Add(EditTrendShort5m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval5m]);
+        TrendShortControls.Add(EditTrendShort10m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval10m]);
+        TrendShortControls.Add(EditTrendShort15m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval15m]);
+        TrendShortControls.Add(EditTrendShort30m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval30m]);
+        TrendShortControls.Add(EditTrendShort1h, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1h]);
+        TrendShortControls.Add(EditTrendShort2h, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval2h]);
+        TrendShortControls.Add(EditTrendShort4h, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval4h]);
+        TrendShortControls.Add(EditTrendShort6h, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval6h]);
+        TrendShortControls.Add(EditTrendShort8h, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval8h]);
+        TrendShortControls.Add(EditTrendShort12h, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval12h]);
+        TrendShortControls.Add(EditTrendShort1d, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1d]);
 #endif
     }
 
@@ -254,23 +327,34 @@ public partial class FrmSettings : Form
         tabPageTrading.Parent = null;
         settings.Trading.Active = false;
         tabControl.TabPages.Remove(tabPageTrading);
+        tabControlLong.TabPages.Remove(tabPageTradingLong);
+        tabControlShort.TabPages.Remove(tabPageTradingShort);
 #endif
 
         // Deze worden na de overgang naar .net 7 regelmatig gereset naar 0
         // Benieuwd waarom dit gebeurd (het zijn er gelukkig niet zo veel)
         EditGlobalBuyVarying.Minimum = -0.5m;
+
         EditBarometer1hMinimal.Minimum = -100;
-        EditBarometer15mBotMinimal.Minimum = -100;
-        EditBarometer30mBotMinimal.Minimum = -100;
-        EditBarometer01hBotMinimal.Minimum = -100;
-        EditBarometer04hBotMinimal.Minimum = -100;
-        EditBarometer24hBotMinimal.Minimum = -100;
+        EditBarometer15mBotLong.Minimum = -100;
+        EditBarometer30mBotLong.Minimum = -100;
+        EditBarometer1hBotLong.Minimum = -100;
+        EditBarometer4hBotLong.Minimum = -100;
+        EditBarometer24hBotLong.Minimum = -100;
+
+        EditBarometer15mBotShort.Minimum = -100;
+        EditBarometer30mBotShort.Minimum = -100;
+        EditBarometer1hBotShort.Minimum = -100;
+        EditBarometer4hBotShort.Minimum = -100;
+        EditBarometer24hBotShort.Minimum = -100;
+
         EditAnalysisMinChangePercentage.Minimum = -100;
         EditAnalysisMinEffectivePercentage.Minimum = -1000;
         EditAnalysisMaxEffectivePercentage.Maximum = +1000;
         EditAnalysisMinEffective10DaysPercentage.Minimum = -1000;
         EditAnalysisMaxEffective10DaysPercentage.Maximum = +1000;
-        EditStobMinimalTrend.Minimum = -1000;
+        EditStobTrendLong.Minimum = -1000;
+        EditStobTrendShort.Minimum = -1000;
 
 
 
@@ -287,7 +371,6 @@ public partial class FrmSettings : Form
         EditBlackTheming.Checked = settings.General.BlackTheming;
         EditTradingApp.SelectedIndex = (int)settings.General.TradingApp;
         EditActivateExchange.SelectedIndex = (int)settings.General.ActivateExchange;
-        EditTrendCalculationMethod.SelectedIndex = (int)settings.General.TrendCalculationMethod;
         EditSoundHeartBeatMinutes.Value = settings.General.SoundHeartBeatMinutes;
         EditGetCandleInterval.Value = settings.General.GetCandleInterval;
 
@@ -333,6 +416,9 @@ public partial class FrmSettings : Form
         // ------------------------------------------------------------------------------
         // Signals
         // ------------------------------------------------------------------------------
+        foreach (var item in AnalyzeInterval)
+            SetCheckBoxFrom(item.Key, item.Value, settings.Signal.Long.Interval);
+
         EditAnalysisMinChangePercentage.Value = (decimal)settings.Signal.AnalysisMinChangePercentage;
         EditAnalysisMaxChangePercentage.Value = (decimal)settings.Signal.AnalysisMaxChangePercentage;
         EditLogAnalysisMinMaxChangePercentage.Checked = settings.Signal.LogAnalysisMinMaxChangePercentage;
@@ -354,17 +440,14 @@ public partial class FrmSettings : Form
         EditMinimumTickPercentage.Value = settings.Signal.MinimumTickPercentage;
         EditLogMinimumTickPercentage.Checked = settings.Signal.LogMinimumTickPercentage;
 
-        foreach (var item in AnalyzeInterval)
-            SetCheckBoxFrom(item.Key, item.Value, settings.Signal.Analyze.Interval);
-
         // ------------------------------------------------------------------------------
         // Signal types
         // ------------------------------------------------------------------------------
 
         foreach (var item in AnalyzeDefinitionIndexLong)
-            SetCheckBoxFrom(item.Key, item.Value, settings.Signal.Analyze.Strategy[CryptoOrderSide.Buy]);
+            SetCheckBoxFrom(item.Key, item.Value, settings.Signal.Long.Strategy);
         foreach (var item in AnalyzeDefinitionIndexShort)
-            SetCheckBoxFrom(item.Key, item.Value, settings.Signal.Analyze.Strategy[CryptoOrderSide.Sell]);
+            SetCheckBoxFrom(item.Key, item.Value, settings.Signal.Long.Strategy);
 
         // STOBB
         EditStobbBBMinPercentage.Value = (decimal)settings.Signal.StobbBBMinPercentage;
@@ -377,8 +460,10 @@ public partial class FrmSettings : Form
         EditStobIncludeRsi.Checked = settings.Signal.StobIncludeRsi;
         EditStobIncludeSbmMaLines.Checked = settings.Signal.StobIncludeSoftSbm;
         EditStobIncludeSbmPercAndCrossing.Checked = settings.Signal.StobIncludeSbmPercAndCrossing;
-        panelColorStobb.BackColor = settings.Signal.ColorStobb;
-        EditStobMinimalTrend.Value = settings.Signal.StobMinimalTrend;
+        panelColorStobbLong.BackColor = settings.Signal.ColorStobb;
+        panelColorStobbShort.BackColor = settings.Signal.ColorStobbShort;
+        EditStobTrendLong.Value = settings.Signal.StobTrendLong;
+        EditStobTrendShort.Value = settings.Signal.StobTrendShort;
 
         // SBM 1
         EditSbmBBMinPercentage.Value = (decimal)settings.Signal.SbmBBMinPercentage;
@@ -388,7 +473,8 @@ public partial class FrmSettings : Form
         EditPlaySpeechSbmSignal.Checked = settings.Signal.PlaySpeechSbmSignal;
         EditSoundFileSbmOverbought.Text = settings.Signal.SoundSbmOverbought;
         EditSoundFileSbmOversold.Text = settings.Signal.SoundSbmOversold;
-        panelColorSbm.BackColor = settings.Signal.ColorSbm;
+        panelColorSbmLong.BackColor = settings.Signal.ColorSbm;
+        panelColorSbmShort.BackColor = settings.Signal.ColorSbmShort;
         EditSbm1CandlesLookbackCount.Value = settings.Signal.Sbm1CandlesLookbackCount;
 
         // JUMP
@@ -399,7 +485,8 @@ public partial class FrmSettings : Form
         EditAnalysisCandleJumpPercentage.Value = settings.Signal.AnalysisCandleJumpPercentage;
         EditJumpCandlesLookbackCount.Value = settings.Signal.JumpCandlesLookbackCount;
         EditJumpUseLowHighCalculation.Checked = settings.Signal.JumpUseLowHighCalculation;
-        panelColorJump.BackColor = settings.Signal.ColorJump;
+        panelColorJumpLong.BackColor = settings.Signal.ColorJump;
+        panelColorJumpShort.BackColor = settings.Signal.ColorJumpShort;
 
         // SBM 2
         EditSbm2CandlesLookbackCount.Value = settings.Signal.Sbm2CandlesLookbackCount;
@@ -465,18 +552,10 @@ public partial class FrmSettings : Form
         EditSlotsMaximalSymbol.Value = settings.Trading.SlotsMaximalSymbol;
         EditSlotsMaximalBase.Value = settings.Trading.SlotsMaximalBase;
 
-        // barometer
-        EditBarometer15mBotMinimal.Value = settings.Trading.Barometer15mBotMinimal;
-        EditBarometer30mBotMinimal.Value = settings.Trading.Barometer30mBotMinimal;
-        EditBarometer01hBotMinimal.Value = settings.Trading.Barometer01hBotMinimal;
-        EditBarometer04hBotMinimal.Value = settings.Trading.Barometer04hBotMinimal;
-        EditBarometer24hBotMinimal.Value = settings.Trading.Barometer24hBotMinimal;
-
         // Instap
         EditCheckIncreasingRsi.Checked = settings.Trading.CheckIncreasingRsi;
         EditCheckIncreasingMacd.Checked = settings.Trading.CheckIncreasingMacd;
         EditCheckIncreasingStoch.Checked = settings.Trading.CheckIncreasingStoch;
-        EditWhenThreeTrendsOkay.Checked = settings.Trading.WhenThreeTrendsOkay;
 
 
         // Buy
@@ -518,21 +597,82 @@ public partial class FrmSettings : Form
         EditGlobalStopLimitPercentage.Value = Math.Abs(settings.Trading.GlobalStopLimitPercentage);
 
 
-        foreach (var item in MonitorInterval)
-            SetCheckBoxFrom(item.Key, item.Value, settings.Trading.Monitor.Interval);
-
-
-
 
         EditLeverage.Value = settings.Trading.Leverage;
         EditCrossOrIsolated.SelectedIndex = settings.Trading.CrossOrIsolated;
 
         // --------------------------------------------------------------------------------
-        // Trade bot experiment
+        // Trade bot
         // --------------------------------------------------------------------------------
+        // interval long
+        foreach (var item in TradingIntervalLong)
+            SetCheckBoxFrom(item.Key, item.Value, settings.Trading.Long.Interval);
 
-        foreach (var strategy in SettingsStrategyList.Values)
+        // strategy long
+        foreach (var strategy in StrategyControlsLong.Values)
             strategy.SetControlValues();
+
+        // trend long
+        foreach (var item in TrendLongControls)
+            SetCheckBoxFrom(item.Key, item.Value, settings.Trading.Long.Trend);
+
+        // Barometer long
+        if (settings.Trading.Long.Barometer.TryGetValue("15m", out var value))
+            EditBarometer15mBotLong.Value = value;
+        else
+            EditBarometer15mBotLong.Value = -99;
+        if (settings.Trading.Long.Barometer.TryGetValue("30m", out value))
+            EditBarometer30mBotLong.Value = value;
+        else
+            EditBarometer30mBotLong.Value = -99;
+        if (settings.Trading.Long.Barometer.TryGetValue("1h", out value))
+            EditBarometer1hBotLong.Value = value;
+        else
+            EditBarometer1hBotLong.Value = -99;
+        if (settings.Trading.Long.Barometer.TryGetValue("4h", out value))
+            EditBarometer4hBotLong.Value = value;
+        else
+            EditBarometer4hBotLong.Value = -99;
+        if (settings.Trading.Long.Barometer.TryGetValue("24h", out value))
+            EditBarometer24hBotLong.Value = value;
+        else
+            EditBarometer24hBotLong.Value = -99;
+
+
+        // interval short
+        foreach (var item in TradingIntervalShort)
+            SetCheckBoxFrom(item.Key, item.Value, settings.Trading.Short.Interval);
+
+        // strategy short
+        foreach (var strategy in StrategyControlsShort.Values)
+            strategy.SetControlValues();
+
+        // trend short
+        foreach (var item in TrendShortControls)
+            SetCheckBoxFrom(item.Key, item.Value, settings.Trading.Short.Trend);
+
+        // barometer short
+        if (settings.Trading.Short.Barometer.TryGetValue("15m", out value))
+            EditBarometer15mBotShort.Value = value;
+        else
+            EditBarometer15mBotShort.Value = -99;
+        if (settings.Trading.Short.Barometer.TryGetValue("30m", out value))
+            EditBarometer30mBotShort.Value = value;
+        else
+            EditBarometer30mBotShort.Value = -99;
+        if (settings.Trading.Short.Barometer.TryGetValue("1h", out value))
+            EditBarometer1hBotShort.Value = value;
+        else
+            EditBarometer1hBotShort.Value = -99;
+        if (settings.Trading.Short.Barometer.TryGetValue("4h", out value))
+            EditBarometer4hBotShort.Value = value;
+        else
+            EditBarometer4hBotShort.Value = -99;
+        if (settings.Trading.Short.Barometer.TryGetValue("24h", out value))
+            EditBarometer24hBotShort.Value = value;
+        else
+            EditBarometer24hBotShort.Value = -99;
+
 #endif
 
         // --------------------------------------------------------------------------------
@@ -562,9 +702,9 @@ public partial class FrmSettings : Form
         // --------------------------------------------------------------------------------
         // Font (pas op het einde zodat de dynamisch gegenereerde controls netjes meesizen)
         // --------------------------------------------------------------------------------
-        if (GlobalData.Settings.General.FontSize != Font.Size || GlobalData.Settings.General.FontName.Equals(Font.Name))
+        if (GlobalData.Settings.General.FontSizeNew != Font.Size || GlobalData.Settings.General.FontNameNew.Equals(Font.Name))
         {
-            Font = new Font(GlobalData.Settings.General.FontName, GlobalData.Settings.General.FontSize,
+            Font = new Font(GlobalData.Settings.General.FontNameNew, GlobalData.Settings.General.FontSizeNew,
                 FontStyle.Regular, GraphicsUnit.Point, 0);
         }
 
@@ -592,11 +732,10 @@ public partial class FrmSettings : Form
         settings.General.BlackTheming = EditBlackTheming.Checked;
         settings.General.TradingApp = (CryptoTradingApp)EditTradingApp.SelectedIndex;
         settings.General.ActivateExchange = EditActivateExchange.SelectedIndex;
-        settings.General.TrendCalculationMethod = (CryptoTrendCalculationMethod)EditTrendCalculationMethod.SelectedIndex;
         settings.General.SoundHeartBeatMinutes = (int)EditSoundHeartBeatMinutes.Value;
         settings.General.GetCandleInterval = (int)EditGetCandleInterval.Value;
-        settings.General.FontName = Font.Name;
-        settings.General.FontSize = Font.Size;
+        settings.General.FontNameNew = Font.Name;
+        settings.General.FontSizeNew = Font.Size;
 
         settings.General.ShowInvalidSignals = EditShowInvalidSignals.Checked;
         settings.General.HideSymbolsOnTheLeft = EditHideSymbolsOnTheLeft.Checked;
@@ -605,7 +744,7 @@ public partial class FrmSettings : Form
         // Grenswaarden voor oversold en overbought
         settings.General.RsiValueOversold = (double)EditRsiValueOversold.Value;
         settings.General.RsiValueOverbought = (double)EditRsiValueOverbought.Value;
-        settings.General.StochValueOversold = (double)EditStochValueOversold.Value ;
+        settings.General.StochValueOversold = (double)EditStochValueOversold.Value;
         settings.General.StochValueOverbought = (double)EditStochValueOverbought.Value;
 
         // ------------------------------------------------------------------------------
@@ -626,6 +765,9 @@ public partial class FrmSettings : Form
         // ------------------------------------------------------------------------------
         // Signals
         // ------------------------------------------------------------------------------
+        settings.Signal.Long.Interval.Clear();
+        foreach (var item in AnalyzeInterval)
+            GetValueFromCheckBox(item.Key, item.Value, settings.Signal.Long.Interval);
 
         settings.Signal.AnalysisMinChangePercentage = (double)EditAnalysisMinChangePercentage.Value;
         settings.Signal.AnalysisMaxChangePercentage = (double)EditAnalysisMaxChangePercentage.Value;
@@ -648,10 +790,6 @@ public partial class FrmSettings : Form
         settings.Signal.MinimumTickPercentage = EditMinimumTickPercentage.Value;
         settings.Signal.LogMinimumTickPercentage = EditLogMinimumTickPercentage.Checked;
 
-        settings.Signal.Analyze.Interval.Clear();
-        foreach (var item in AnalyzeInterval)
-            GetValueFromCheckBox(item.Key, item.Value, settings.Signal.Analyze.Interval);
-
 
         // ------------------------------------------------------------------------------
         // Signal types
@@ -667,8 +805,10 @@ public partial class FrmSettings : Form
         settings.Signal.StobIncludeRsi = EditStobIncludeRsi.Checked;
         settings.Signal.StobIncludeSoftSbm = EditStobIncludeSbmMaLines.Checked;
         settings.Signal.StobIncludeSbmPercAndCrossing = EditStobIncludeSbmPercAndCrossing.Checked;
-        settings.Signal.ColorStobb = panelColorStobb.BackColor;
-        settings.Signal.StobMinimalTrend = EditStobMinimalTrend.Value;
+        settings.Signal.ColorStobb = panelColorStobbLong.BackColor;
+        settings.Signal.ColorStobbShort = panelColorStobbShort.BackColor;
+        settings.Signal.StobTrendLong = EditStobTrendLong.Value;
+        settings.Signal.StobTrendShort = EditStobTrendShort.Value;
 
         // SBM x
         settings.Signal.SbmBBMinPercentage = (double)EditSbmBBMinPercentage.Value;
@@ -680,7 +820,8 @@ public partial class FrmSettings : Form
         settings.Signal.PlaySpeechSbmSignal = EditPlaySpeechSbmSignal.Checked;
         settings.Signal.SoundSbmOverbought = EditSoundFileSbmOverbought.Text;
         settings.Signal.SoundSbmOversold = EditSoundFileSbmOversold.Text;
-        settings.Signal.ColorSbm = panelColorSbm.BackColor;
+        settings.Signal.ColorSbm = panelColorSbmLong.BackColor;
+        settings.Signal.ColorSbmShort = panelColorSbmShort.BackColor;
         settings.Signal.Sbm1CandlesLookbackCount = (int)EditSbm1CandlesLookbackCount.Value;
 
         // SBM2
@@ -714,16 +855,17 @@ public partial class FrmSettings : Form
         settings.Signal.AnalysisCandleJumpPercentage = EditAnalysisCandleJumpPercentage.Value;
         settings.Signal.JumpCandlesLookbackCount = (int)EditJumpCandlesLookbackCount.Value;
         settings.Signal.JumpUseLowHighCalculation = EditJumpUseLowHighCalculation.Checked;
-        settings.Signal.ColorJump = panelColorJump.BackColor;
+        settings.Signal.ColorJump = panelColorJumpLong.BackColor;
+        settings.Signal.ColorJumpShort = panelColorJumpShort.BackColor;
 
 
-        settings.Signal.Analyze.Strategy[CryptoOrderSide.Buy].Clear();
+        settings.Signal.Long.Strategy.Clear();
         foreach (var item in AnalyzeDefinitionIndexLong)
-            GetValueFromCheckBox(item.Key, item.Value, settings.Signal.Analyze.Strategy[CryptoOrderSide.Buy]);
+            GetValueFromCheckBox(item.Key, item.Value, settings.Signal.Long.Strategy);
 
-        settings.Signal.Analyze.Strategy[CryptoOrderSide.Sell].Clear();
+        settings.Signal.Short.Strategy.Clear();
         foreach (var item in AnalyzeDefinitionIndexShort)
-            GetValueFromCheckBox(item.Key, item.Value, settings.Signal.Analyze.Strategy[CryptoOrderSide.Sell]);
+            GetValueFromCheckBox(item.Key, item.Value, settings.Signal.Short.Strategy);
 
 
         // --------------------------------------------------------------------------------
@@ -780,18 +922,10 @@ public partial class FrmSettings : Form
         settings.Trading.SlotsMaximalSymbol = (int)EditSlotsMaximalSymbol.Value;
         settings.Trading.SlotsMaximalBase = (int)EditSlotsMaximalBase.Value;
 
-        // barometer
-        settings.Trading.Barometer15mBotMinimal = EditBarometer15mBotMinimal.Value;
-        settings.Trading.Barometer30mBotMinimal = EditBarometer30mBotMinimal.Value;
-        settings.Trading.Barometer01hBotMinimal = EditBarometer01hBotMinimal.Value;
-        settings.Trading.Barometer04hBotMinimal = EditBarometer04hBotMinimal.Value;
-        settings.Trading.Barometer24hBotMinimal = EditBarometer24hBotMinimal.Value;
-
         // Instap
         settings.Trading.CheckIncreasingRsi = EditCheckIncreasingRsi.Checked;
         settings.Trading.CheckIncreasingMacd = EditCheckIncreasingMacd.Checked;
         settings.Trading.CheckIncreasingStoch = EditCheckIncreasingStoch.Checked;
-        settings.Trading.WhenThreeTrendsOkay = EditWhenThreeTrendsOkay.Checked;
 
         // buy
         settings.Trading.BuyStepInMethod = (CryptoStepInMethod)EditBuyStepInMethod.SelectedValue;
@@ -816,19 +950,58 @@ public partial class FrmSettings : Form
         settings.Trading.GlobalStopPercentage = EditGlobalStopPercentage.Value;
         settings.Trading.GlobalStopLimitPercentage = EditGlobalStopLimitPercentage.Value;
 
-
-        settings.Trading.Monitor.Interval.Clear();
-        foreach (var item in MonitorInterval)
-            GetValueFromCheckBox(item.Key, item.Value, settings.Trading.Monitor.Interval);
-
-        settings.Trading.Monitor.Strategy[CryptoOrderSide.Buy].Clear();
-        settings.Trading.Monitor.Strategy[CryptoOrderSide.Sell].Clear();
-        foreach (var strategy in SettingsStrategyList.Values)
-            strategy.GetControlValues();
-
-
         settings.Trading.Leverage = EditLeverage.Value;
         settings.Trading.CrossOrIsolated = EditCrossOrIsolated.SelectedIndex;
+
+
+
+        // interval long
+        settings.Trading.Long.Interval.Clear();
+        foreach (var item in TradingIntervalLong)
+            GetValueFromCheckBox(item.Key, item.Value, settings.Trading.Long.Interval);
+
+        // strategy Long
+        settings.Trading.Long.Strategy.Clear();
+        foreach (var strategy in StrategyControlsLong.Values)
+            strategy.GetControlValues();
+
+        // trend long
+        settings.Trading.Long.Trend.Clear();
+        foreach (var item in TrendLongControls)
+            GetValueFromCheckBox(item.Key, item.Value, settings.Trading.Long.Trend);
+
+        // barometer Long
+        settings.Trading.Long.Barometer.Clear();
+        settings.Trading.Long.Barometer.Add("15m", EditBarometer15mBotLong.Value);
+        settings.Trading.Long.Barometer.Add("30m", EditBarometer30mBotLong.Value);
+        settings.Trading.Long.Barometer.Add("1h", EditBarometer1hBotLong.Value);
+        settings.Trading.Long.Barometer.Add("4h", EditBarometer4hBotLong.Value);
+        settings.Trading.Long.Barometer.Add("24h", EditBarometer24hBotLong.Value);
+
+
+
+        // interval short
+        settings.Trading.Short.Interval.Clear();
+        foreach (var item in TradingIntervalShort)
+            GetValueFromCheckBox(item.Key, item.Value, settings.Trading.Short.Interval);
+
+        // strategy short
+        settings.Trading.Short.Strategy.Clear();
+        foreach (var strategy in StrategyControlsShort.Values)
+            strategy.GetControlValues();
+
+        // trend short
+        settings.Trading.Short.Trend.Clear();
+        foreach (var item in TrendShortControls)
+            GetValueFromCheckBox(item.Key, item.Value, settings.Trading.Short.Trend);
+
+        // barometer short
+        settings.Trading.Short.Barometer.Clear();
+        settings.Trading.Short.Barometer.Add("15m", EditBarometer15mBotShort.Value);
+        settings.Trading.Short.Barometer.Add("30m", EditBarometer30mBotShort.Value);
+        settings.Trading.Short.Barometer.Add("1h", EditBarometer1hBotShort.Value);
+        settings.Trading.Short.Barometer.Add("4h", EditBarometer4hBotShort.Value);
+        settings.Trading.Short.Barometer.Add("24h", EditBarometer24hBotShort.Value);
 
 #endif
 
@@ -924,14 +1097,16 @@ public partial class FrmSettings : Form
         }
     }
 
-    private void ButtonColorStobb_Click(object sender, EventArgs e)
-        => PickColor(ref panelColorStobb);
-
-    private void ButtonColorSbm_Click(object sender, EventArgs e)
-        => PickColor(ref panelColorSbm);
-
-    private void ButtonColorJump_Click(object sender, EventArgs e)
-        => PickColor(ref panelColorJump);
+    private void ButtonColorClick(object sender, EventArgs e)
+    {
+        if (sender is Button button)
+        {
+            if (button.Tag is Panel panel)
+            {
+                PickColor(ref panel);
+            }
+        }
+    }
 
     private void ButtonReset_Click(object sender, EventArgs e)
     {

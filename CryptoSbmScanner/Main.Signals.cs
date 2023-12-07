@@ -257,9 +257,9 @@ public partial class FrmMain
         subItem = item1.SubItems.Add(signal.SideText);
         if (!signal.IsInvalid)
         {
-            if (signal.Side == CryptoOrderSide.Buy)
+            if (signal.Side == CryptoTradeSide.Long)
                 subItem.ForeColor = Color.Green;
-            else if (signal.Side == CryptoOrderSide.Sell)
+            else if (signal.Side == CryptoTradeSide.Short)
                 subItem.ForeColor = Color.Red;
         }
 
@@ -270,13 +270,17 @@ public partial class FrmMain
             switch (signal.Strategy)
             {
                 case CryptoSignalStrategy.Jump:
-                    if (GlobalData.Settings.Signal.ColorJump != Color.White)
+                    if (GlobalData.Settings.Signal.ColorJump != Color.White && signal.Side == CryptoTradeSide.Long)
                         subItem.BackColor = GlobalData.Settings.Signal.ColorJump;
+                    else if (GlobalData.Settings.Signal.ColorJumpShort != Color.White && signal.Side == CryptoTradeSide.Short)
+                        subItem.BackColor = GlobalData.Settings.Signal.ColorJumpShort;
                     break;
 
                 case CryptoSignalStrategy.Stobb:
-                    if (GlobalData.Settings.Signal.ColorStobb != Color.White)
+                    if (GlobalData.Settings.Signal.ColorStobb != Color.White && signal.Side == CryptoTradeSide.Long)
                         subItem.BackColor = GlobalData.Settings.Signal.ColorStobb;
+                    else if (GlobalData.Settings.Signal.ColorStobbShort != Color.White && signal.Side == CryptoTradeSide.Short)
+                        subItem.BackColor = GlobalData.Settings.Signal.ColorStobbShort;
                     break;
 
                 case CryptoSignalStrategy.Sbm1:
@@ -284,8 +288,10 @@ public partial class FrmMain
                 case CryptoSignalStrategy.Sbm3:
                 case CryptoSignalStrategy.Sbm4:
                 case CryptoSignalStrategy.Sbm5:
-                    if (GlobalData.Settings.Signal.ColorSbm != Color.White)
+                    if (GlobalData.Settings.Signal.ColorSbm != Color.White && signal.Side == CryptoTradeSide.Long)
                         subItem.BackColor = GlobalData.Settings.Signal.ColorSbm;
+                    else if (GlobalData.Settings.Signal.ColorSbmShort != Color.White && signal.Side == CryptoTradeSide.Short)
+                        subItem.BackColor = GlobalData.Settings.Signal.ColorSbmShort;
                     break;
 
             }
@@ -437,9 +443,8 @@ public partial class FrmMain
             item1.SubItems.Add("");
 
 
-        // Voor Eric (experiment)
-        var trend = signal.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1h).TrendIndicator;
-        switch (trend)
+        // Op verzoek (een experiment)
+        switch (signal.Trend1h)
         {
             case CryptoTrendIndicator.trendBullish:
                 subItem = item1.SubItems.Add("Up");
@@ -454,8 +459,7 @@ public partial class FrmMain
                 break;
         }
 
-        trend = signal.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval4h).TrendIndicator;
-        switch (trend)
+        switch (signal.Trend4h)
         {
             case CryptoTrendIndicator.trendBullish:
                 subItem = item1.SubItems.Add("Up");
@@ -470,8 +474,7 @@ public partial class FrmMain
                 break;
         }
 
-        trend = signal.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval12h).TrendIndicator;
-        switch (trend)
+        switch (signal.Trend12h)
         {
             case CryptoTrendIndicator.trendBullish:
                 subItem = item1.SubItems.Add("Up");

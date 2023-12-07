@@ -138,22 +138,22 @@ public class CryptoBackTestResults
             percentage = 100 * (Returned - Commission) / Invested;
 
         s = string.Format("Invested={0:N8}", Invested);
-        if (!Quote.Equals("BUSD") && !Quote.Equals("USDT"))
+        if (!Quote.Equals("USDT"))
             s += string.Format(" usdt={0:N2}", Invested * Config.UsdtValue);
         log.AppendLine(s);
 
         s = string.Format("Returned={0:N8}", Returned);
-        if (!Quote.Equals("BUSD") && !Quote.Equals("USDT"))
+        if (!Quote.Equals("USDT"))
             s += string.Format(" usdt={0:N2}", Returned * Config.UsdtValue);
         log.AppendLine(s);
 
         s = string.Format("Commission={0:N8}", Commission);
-        if (!Quote.Equals("BUSD") && !Quote.Equals("USDT"))
+        if (!Quote.Equals("USDT"))
             s += string.Format(" usdt={0:N2}", Commission * Config.UsdtValue);
         log.AppendLine(s);
 
         s = string.Format("Profit={0:N8}", (Returned - Invested - Commission));
-        if (!Quote.Equals("BUSD") && !Quote.Equals("USDT"))
+        if (!Quote.Equals("USDT"))
             s += string.Format(" usdt={0:N2}", (Returned - Invested - Commission) * Config.UsdtValue);
         log.AppendLine(s);
 

@@ -512,18 +512,14 @@ public class SignalSbmBaseOversold : SignalSbmBase
 
 
 
-
-
         // ********************************************************************
         // Barometer(s)
-        if (!SymbolTools.CheckValidBarometer(Symbol.QuoteData, CryptoIntervalPeriod.interval1h, GlobalData.Settings.Trading.Barometer01hBotMinimal, out ExtraText))
-            return true;
-
-        if (!SymbolTools.CheckValidBarometer(Symbol.QuoteData, CryptoIntervalPeriod.interval4h, GlobalData.Settings.Trading.Barometer04hBotMinimal, out ExtraText))
-            return true;
-
-        if (!SymbolTools.CheckValidBarometer(Symbol.QuoteData, CryptoIntervalPeriod.interval1d, GlobalData.Settings.Trading.Barometer24hBotMinimal, out ExtraText))
-            return true;
+        // Als de barometer alsnog daalt/stijgt dan stoppen
+        foreach (KeyValuePair<CryptoIntervalPeriod, (decimal minValue, decimal maxValue)> entry in TradingConfig.Trading[CryptoTradeSide.Long].Barometer)
+        {
+            if (!SymbolTools.CheckValidBarometer(Symbol.QuoteData, entry.Key, entry.Value, out ExtraText))
+                return true;
+        }
 
 
         ExtraText = "";

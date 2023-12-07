@@ -21,7 +21,7 @@ public class SignalCreateBase
     protected CryptoQuoteData QuoteData;
     protected SortedList<long, CryptoCandle> Candles;
 
-    public CryptoOrderSide SignalSide;
+    public CryptoTradeSide SignalSide;
     public CryptoSignalStrategy SignalStrategy;
     public CryptoCandle CandleLast = null;
     public string ExtraText = "";
@@ -125,16 +125,15 @@ public class SignalCreateBase
     }
 
 
-    public bool BarometersOkay()
+    public bool BarometersOkay((decimal minValue, decimal maxValue) values)
     {
-        decimal value = 0.50m;
-        if (!SymbolTools.CheckValidBarometer(Symbol.QuoteData, CryptoIntervalPeriod.interval1h, value, out ExtraText))
-            return false;
-        
-        if (!SymbolTools.CheckValidBarometer(Symbol.QuoteData, CryptoIntervalPeriod.interval4h, value, out ExtraText))
+        if (!SymbolTools.CheckValidBarometer(Symbol.QuoteData, CryptoIntervalPeriod.interval1h, (values.minValue, values.maxValue), out ExtraText))
             return false;
 
-        if (!SymbolTools.CheckValidBarometer(Symbol.QuoteData, CryptoIntervalPeriod.interval1d, value, out ExtraText))
+        if (!SymbolTools.CheckValidBarometer(Symbol.QuoteData, CryptoIntervalPeriod.interval4h, (values.minValue, values.maxValue), out ExtraText))
+            return false;
+
+        if (!SymbolTools.CheckValidBarometer(Symbol.QuoteData, CryptoIntervalPeriod.interval1d, (values.minValue, values.maxValue), out ExtraText))
             return false;
 
         return true;

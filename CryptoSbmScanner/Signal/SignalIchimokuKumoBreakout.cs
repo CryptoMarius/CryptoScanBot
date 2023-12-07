@@ -12,7 +12,7 @@ public class IchimokuKumoBreakout : SignalCreateBase
 {
     public IchimokuKumoBreakout(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        SignalSide = CryptoOrderSide.Buy;
+        SignalSide = CryptoTradeSide.Long;
         SignalStrategy = CryptoSignalStrategy.IchimokuKumoBreakout;
     }
 

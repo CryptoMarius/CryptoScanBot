@@ -134,7 +134,7 @@ public class Api : ExchangeBase
     }
 
 
-    public override async Task<(bool result, TradeParams tradeParams)> BuyOrSell(CryptoDatabase database,
+    public override async Task<(bool result, TradeParams tradeParams)> PlaceOrder(CryptoDatabase database,
         CryptoTradeAccount tradeAccount, CryptoSymbol symbol, DateTime currentDate,
         CryptoOrderType orderType, CryptoOrderSide orderSide,
         decimal quantity, decimal price, decimal? stop, decimal? limit)
@@ -429,7 +429,12 @@ public class Api : ExchangeBase
         await FetchTrades.FetchTradesForSymbolAsync(tradeAccount, symbol);
     }
 
-    public async override Task FetchAssetsAsync(CryptoTradeAccount tradeAccount)
+    public override async Task<int> FetchTradesForOrderAsync(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, string orderId)
+    {
+        return await FetchTradeForOrder.FetchTradesForOrderAsync(tradeAccount, symbol, orderId);
+    }
+
+public async override Task FetchAssetsAsync(CryptoTradeAccount tradeAccount)
     {
         //if (GlobalData.ExchangeListName.TryGetValue(ExchangeName, out Model.CryptoExchange exchange))
         {

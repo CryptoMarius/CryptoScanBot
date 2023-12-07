@@ -16,6 +16,44 @@ public class PauseTradingRule
     public int CoolDown { get; set; }
 }
 
+public class SettingsTradingBase
+{
+    // Is deze trade richting actief
+    public bool Active { get; set; } = true;
+
+    //***************************
+    // Barometer
+    // Geen nieuwe posities openen als de barometer onder een van deze getallen staat
+    public decimal Barometer15mBotMinimal { get; set; }
+    public decimal Barometer30mBotMinimal { get; set; }
+    public decimal Barometer01hBotMinimal { get; set; }
+    public decimal Barometer04hBotMinimal { get; set; }
+    public decimal Barometer24hBotMinimal { get; set; }
+}
+
+public class SettingsTradingLong : SettingsTradingBase
+{
+    public SettingsTradingLong()
+    {
+        Barometer15mBotMinimal = -0.5m;
+        Barometer30mBotMinimal = -0.5m;
+        Barometer01hBotMinimal = 0.3m;
+        Barometer04hBotMinimal = -1.0m;
+        Barometer24hBotMinimal = -99m;
+    }
+}
+
+public class SettingsTradingShort : SettingsTradingBase
+{
+    public SettingsTradingShort()
+    {
+        Barometer15mBotMinimal = +0.5m;
+        Barometer30mBotMinimal = +0.5m;
+        Barometer01hBotMinimal = -0.3m;
+        Barometer04hBotMinimal = +1.0m;
+        Barometer24hBotMinimal = +99m;
+    }
+}
 
 [Serializable]
 public class SettingsTrading
@@ -56,22 +94,10 @@ public class SettingsTrading
 
 
     //***************************
-    // Barometer
-    // De bot maakt geen nieuwe posities als de barometer onder een van deze getallen staat
-    public decimal Barometer15mBotMinimal { get; set; } = -0.5m;
-    public decimal Barometer30mBotMinimal { get; set; } = -0.5m;
-    public decimal Barometer01hBotMinimal { get; set; } = 0.1m;
-    public decimal Barometer04hBotMinimal { get; set; } = -0.5m;
-    public decimal Barometer24hBotMinimal { get; set; } = -99m;
-
-
-    //***************************
     // Instap condities
     public bool CheckIncreasingRsi { get; set; } = false;
     public bool CheckIncreasingMacd { get; set; } = false;    
     public bool CheckIncreasingStoch { get; set; } = false;
-
-    public bool WhenThreeTrendsOkay { get; set; } = false;
 
 
     //***************************
@@ -125,14 +151,17 @@ public class SettingsTrading
     // De buy en sell leverage (die zijn in alle gevallen gelijk)
     public decimal Leverage{ get; set; } = 1m;
     // Cross Of Isolated Margin trading
-    public int CrossOrIsolated { get; set; } = 1; 
+    public int CrossOrIsolated { get; set; } = 1;
 
-    // Op welke intervallen en strategieën willen we traden?
-    public IntervalAndStrategyConfig Monitor { get; set; } = new();
 
+    // Op welke intervallen, strategieën, trend, barometer willen we traden?
+    public SettingsTextual Long { get; set; } = new();
+    public SettingsTextual Short { get; set; } = new();
 
     public List<PauseTradingRule> PauseTradingRules { get; set; } = new();
 
+    // Instap condities indien de "trend" positief is (up/down)
+    //public List<string> TrendOn { get; set; } = new();
 
     //***************************
     // Hervatten van trading als er positieve signalen zijn (automatisch)
@@ -142,13 +171,6 @@ public class SettingsTrading
 
     public SettingsTrading()
     {
-        Monitor.Interval.Add("1m");
-        Monitor.Interval.Add("2m");
-
-        Monitor.Strategy[CryptoOrderSide.Buy].Add("sbm1");
-        Monitor.Strategy[CryptoOrderSide.Buy].Add("sbm2");
-        Monitor.Strategy[CryptoOrderSide.Buy].Add("sbm3");
-
         PauseTradingRules.Add(new PauseTradingRule()
         {
             Symbol = "BTCUSDT",

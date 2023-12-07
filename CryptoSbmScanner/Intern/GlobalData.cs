@@ -2,6 +2,7 @@
 using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Settings;
+using CryptoSbmScanner.Trader;
 using CryptoSbmScanner.TradingView;
 
 using Dapper;
@@ -258,7 +259,7 @@ static public class GlobalData
     }
 
 
-    static public bool IsStobSignalAvailableInTheLast(CryptoOrderSide side, DateTime boundary)
+    static public bool IsStobSignalAvailableInTheLast(CryptoTradeSide side, DateTime boundary)
     {
         // Zoek een signaal die mogelijk een LL heeft geleverd
 
@@ -536,7 +537,7 @@ static public class GlobalData
         {
             CryptoQuoteData quote = new()
             {
-                Name = "BUSD",
+                Name = "ETH",
                 FetchCandles = false,
                 CreateSignals = false,
                 MinimalVolume = 6500000,
@@ -586,6 +587,20 @@ static public class GlobalData
 
         //filename = GlobalData.GetBaseDir() + "Settings.json";
         //File.WriteAllText(filename, text);
+
+
+        //// Ter debug om te zien of alles okay is (maar mislukt vanwege de def's, "Type' instances are not supported")
+        filename = GlobalData.GetBaseDir();
+        Directory.CreateDirectory(filename);
+        filename += "settingsSignalsCompiled.json";
+        text = JsonSerializer.Serialize(TradingConfig.Signals, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
+        File.WriteAllText(filename, text);
+
+        filename = GlobalData.GetBaseDir();
+        Directory.CreateDirectory(filename);
+        filename += "settingsTradingCompiled.json";
+        text = JsonSerializer.Serialize(TradingConfig.Trading, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
+        File.WriteAllText(filename, text);
     }
 
 

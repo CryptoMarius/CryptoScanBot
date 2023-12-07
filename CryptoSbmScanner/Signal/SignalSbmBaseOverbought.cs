@@ -1,6 +1,7 @@
 ﻿using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
+using CryptoSbmScanner.Trader;
 
 namespace CryptoSbmScanner.Signal;
 
@@ -370,14 +371,15 @@ public class SignalSbmBaseOverbought : SignalSbmBase
             return true;
         }
 
-        // Als de barometer alsnog daalt dan stoppen
-        // (MAAR - willen we voor short niet een andere barometer check hanteren?????)
-        BarometerData barometerData = Symbol.QuoteData.BarometerList[(long)CryptoIntervalPeriod.interval1h];
-        if (barometerData.PriceBarometer <= GlobalData.Settings.Trading.Barometer01hBotMinimal)
+        // ********************************************************************
+        // Barometer(s)
+        // Als de barometer alsnog daalt/stijgt dan stoppen
+        foreach (KeyValuePair<CryptoIntervalPeriod, (decimal minValue, decimal maxValue)> entry in TradingConfig.Trading[CryptoTradeSide.Short].Barometer)
         {
-            ExtraText = string.Format("Barometer 1h {0} below {1}", barometerData.PriceBarometer?.ToString0("N2"), GlobalData.Settings.Trading.Barometer01hBotMinimal.ToString0("N2"));
-            return true;
+            if (!SymbolTools.CheckValidBarometer(Symbol.QuoteData, entry.Key, entry.Value, out ExtraText))
+                return true;
         }
+
 
         ExtraText = "";
         return false;

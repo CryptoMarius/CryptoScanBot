@@ -1,6 +1,7 @@
 ﻿using CryptoSbmScanner.Context;
 using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Model;
+using CryptoSbmScanner.Settings;
 using CryptoSbmScanner.Signal;
 using CryptoSbmScanner.Trader;
 using Dapper.Contrib.Extensions;
@@ -14,6 +15,7 @@ public class SignalCreate
 {
     private CryptoSymbol Symbol { get; set; }
     private CryptoInterval Interval { get; set; }
+    private CryptoTradeSide Side { get; set; }
 
     private CryptoCandle Candle { get; set; }
     public List<CryptoCandle> history = null;
@@ -30,10 +32,11 @@ public class SignalCreate
     // Lijkt overbodig te zijn tegenwoordig?
     //static public Dictionary<string, long> AnalyseNotificationList { get; } = new();
 
-    public SignalCreate(CryptoSymbol symbol, CryptoInterval interval)
+    public SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTradeSide side)
     {
         Symbol = symbol;
         Interval = interval;
+        Side = side;
     }
 
     private bool HasOpenPosition()
@@ -227,6 +230,27 @@ public class SignalCreate
                 symbolInterval.TrendInfoDate = signal.OpenDate;
 
                 maxPercentageSum += interval.Duration;
+
+                // Doorzetten naar het signal (op verzoek)
+                switch (intervalPeriod)
+                {
+                    case CryptoIntervalPeriod.interval15m:
+                        signal.Trend15m = trendIndicator;
+                        break;
+                    case CryptoIntervalPeriod.interval30m:
+                        signal.Trend30m = trendIndicator;
+                        break;
+                    case CryptoIntervalPeriod.interval1h:
+                        signal.Trend1h = trendIndicator;
+                        break;
+                    case CryptoIntervalPeriod.interval4h:
+                        signal.Trend4h = trendIndicator;
+                        break;
+                    case CryptoIntervalPeriod.interval12h:
+                        signal.Trend12h = trendIndicator;
+                        break;
+                }
+
             }
 
 
@@ -420,7 +444,7 @@ public class SignalCreate
     //}
 
 
-    public bool PrepareAndSendSignal(SignalCreateBase algorithm)
+    private bool PrepareAndSendSignal(SignalCreateBase algorithm)
     {
         if (Symbol.Name.Equals("LITUSDT"))
             GlobalData.AddTextToLogTab("DEBUG NewCandleArrivedAsync(): " + Symbol.Name);
@@ -456,7 +480,7 @@ public class SignalCreate
         }
 
         // Extra controles, staat de symbol op de blacklist?
-        if (!HasOpenPosition() && !signal.BackTest && TradingConfig.Config[signal.Side].InBlackList(Symbol.Name) == MatchBlackAndWhiteList.Present)
+        if (!HasOpenPosition() && !signal.BackTest && TradingConfig.Signals[signal.Side].InBlackList(Symbol.Name) == MatchBlackAndWhiteList.Present)
         {
             // Als de muntpaar op de black lijst staat dan dit signaal overslagen
             eventText.Add("staat op blacklist");
@@ -464,7 +488,7 @@ public class SignalCreate
         }
 
         // Extra controles, staat de symbol op de whitelist?
-        if (!HasOpenPosition() && !signal.BackTest && TradingConfig.Config[signal.Side].InWhiteList(Symbol.Name) == MatchBlackAndWhiteList.NotPresent)
+        if (!HasOpenPosition() && !signal.BackTest && TradingConfig.Signals[signal.Side].InWhiteList(Symbol.Name) == MatchBlackAndWhiteList.NotPresent)
         {
             // Als de muntpaar niet in de white lijst staat dan dit signaal overslagen
             eventText.Add("niet in whitelist");
@@ -543,7 +567,7 @@ public class SignalCreate
         decimal? Barometer1h = -99m;
         if (GlobalData.Settings.QuoteCoins.TryGetValue(Symbol.Quote, out CryptoQuoteData quoteData))
         {
-            BarometerData barometerData = quoteData.BarometerList[(long)CryptoIntervalPeriod.interval1h];
+            BarometerData barometerData = quoteData.BarometerList[CryptoIntervalPeriod.interval1h];
             Barometer1h = barometerData.PriceBarometer;
         }
         if (Barometer1h <= GlobalData.Settings.Signal.Barometer1hMinimal)
@@ -577,7 +601,7 @@ public class SignalCreate
 
         // Iets wat ik wel eens gebruikt als ik trade
         GetFluxIndcator(Symbol, out int fluxOverSold, out int fluxOverBought);
-        if (signal.Side == CryptoOrderSide.Buy)
+        if (signal.Side == CryptoTradeSide.Long)
             signal.FluxIndicator5m = fluxOverSold;
         else
             signal.FluxIndicator5m = fluxOverBought;
@@ -616,14 +640,25 @@ public class SignalCreate
 
 
         // Bereken de trend, dat is tamelijk CPU heavy en daarom staat deze controle op het einde
-        CalculateTrendStuff(signal); 
+        CalculateTrendStuff(signal);
+
 
         // Extra controles toepassen en het signaal "afkeuren" (maar toch laten zien)
-        if (!HasOpenPosition() && signal.Strategy == CryptoSignalStrategy.Stobb && (decimal)signal.TrendPercentage < GlobalData.Settings.Signal.StobMinimalTrend)
+        if (!HasOpenPosition() && signal.Strategy == CryptoSignalStrategy.Stobb)
         {
-            eventText.Add("de trend% is te laag");
-            signal.IsInvalid = true;
+            if (signal.Side == CryptoTradeSide.Long && GlobalData.Settings.Signal.StobTrendLong > -99m && (decimal)signal.TrendPercentage < GlobalData.Settings.Signal.StobTrendLong)
+            {
+                eventText.Add("de trend% is te laag");
+                signal.IsInvalid = true;
+            }
+            // Die -99 begint verwarrend te werken
+            if (signal.Side == CryptoTradeSide.Short && GlobalData.Settings.Signal.StobTrendShort > -99m && (decimal)signal.TrendPercentage > GlobalData.Settings.Signal.StobTrendShort)
+            {
+                eventText.Add("de trend% is te hoog");
+                signal.IsInvalid = true;
+            }
         }
+
         if (!GlobalData.Settings.General.ShowInvalidSignals && signal.IsInvalid)
             return false;
 
@@ -634,11 +669,11 @@ public class SignalCreate
             // Bied het aan het monitorings systeem (indien aangevinkt) 
             // (lagere intervallen hebben hogere prioriteit - via EventTime, klopt dat?)
             // We gebruiken (nog) geen exit signalen, echter dat zou best realistisch zijn voor de toekomst
-            if (!signal.IsInvalid && GlobalData.Settings.Trading.Active && signal.Side == CryptoOrderSide.Buy) //|| (signal.Side == CryptoOrderSide.Sell) 
+            if (!signal.IsInvalid && GlobalData.Settings.Trading.Active)
             {
-                if (TradingConfig.MonitorInterval.ContainsKey(signal.Interval.IntervalPeriod))
+                if (TradingConfig.Trading[signal.Side].IntervalPeriod.ContainsKey(signal.Interval.IntervalPeriod))
                 {
-                    if (TradingConfig.Config[signal.Side].MonitorStrategy.ContainsKey(signal.Strategy))
+                    if (TradingConfig.Trading[signal.Side].Strategy.ContainsKey(signal.Strategy))
                     {
                         CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(Interval.IntervalPeriod);
                         if (symbolInterval.Signal == null || symbolInterval.Signal?.EventTime != signal.EventTime)
@@ -695,7 +730,7 @@ public class SignalCreate
             Volume = Symbol.Volume,
             EventTime = candle.OpenTime,
             OpenDate = CandleTools.GetUnixDate(candle.OpenTime),
-            Side = CryptoOrderSide.Buy,  // gets modified later
+            Side = CryptoTradeSide.Long,  // gets modified later
             Strategy = CryptoSignalStrategy.Jump,  // gets modified later
         };
 
@@ -739,10 +774,10 @@ public class SignalCreate
     }
 
 
-    private bool ExecuteAlgorithm(CryptoOrderSide side, AlgorithmDefinition strategyDefinition)
+    private bool ExecuteAlgorithm(AlgorithmDefinition strategyDefinition)
     {
         SignalCreateBase algorithm;
-        if (side == CryptoOrderSide.Buy)
+        if (Side == CryptoTradeSide.Long)
             algorithm = strategyDefinition.InstantiateAnalyzeLong(Symbol, Interval, Candle);
         else
             algorithm = strategyDefinition.InstantiateAnalyzeShort(Symbol, Interval, Candle);
@@ -826,41 +861,46 @@ public class SignalCreate
         // Eenmalig de indicators klaarzetten
         if (Prepare(candleOpenTime))
         {
-            foreach (CryptoOrderSide side in Enum.GetValues(typeof(CryptoOrderSide)))
+            // TODO: opnieuw activeren en controleren of het idee klopt:
+
+            // Indien we ongeldige signalen laten zien moeten we deze controle overslagen.
+            // (verderop in het process wordt alsnog hierop gecontroleerd)
+
+            //if (!GlobalData.Settings.General.ShowInvalidSignals && !BackTest)
+            //{
+            // Dan kunnen we direct de controles hier afkappen (scheelt wat cpu)
+            // Weer een extra controle, staat de symbol op de black of whitelist?
+            //    if (TradingConfig.Config[tradeDirection].InBlackList(Symbol.Name))
+            //    {
+            //        // Als de muntpaar op de black lijst staat dit signaal overslagen
+            //        continue;
+            //    }
+            //    else if (!TradingConfig.Config[tradeDirection].InWhiteList(Symbol.Name))
+            //    {
+            //        // Als de muntpaar niet op de white lijst staat dit signaal overslagen
+            //        continue;
+            //    }
+            //}
+
+
+            // SBM en stobb zijn afhankelijk van elkaar, vandaar de break
+            // Ze staan alfabetisch, sbm1, sbm2, sbm3, stobb dat gaat per ongeluk goed
+            foreach (CryptoSignalStrategy strategy in TradingConfig.Trading[Side].StrategySbmStob.ToList())
             {
-                // TODO: opnieuw activeren en controleren of het idee klopt:
-
-                // Indien we ongeldige signalen laten zien moeten we deze controle overslagen.
-                // (verderop in het process wordt alsnog hierop gecontroleerd)
-
-                //if (!GlobalData.Settings.General.ShowInvalidSignals && !BackTest)
-                //{
-                // Dan kunnen we direct de controles hier afkappen (scheelt wat cpu)
-                // Weer een extra controle, staat de symbol op de black of whitelist?
-                //    if (TradingConfig.Config[tradeDirection].InBlackList(Symbol.Name))
-                //    {
-                //        // Als de muntpaar op de black lijst staat dit signaal overslagen
-                //        continue;
-                //    }
-                //    else if (!TradingConfig.Config[tradeDirection].InWhiteList(Symbol.Name))
-                //    {
-                //        // Als de muntpaar niet op de white lijst staat dit signaal overslagen
-                //        continue;
-                //    }
-                //}
-
-
-                // SBM en stobb zijn afhankelijk van elkaar, vandaar de break
-                // Ze staan alfabetisch, sbm1, sbm2, sbm3, stobb dat gaat per ongeluk goed
-                foreach (AlgorithmDefinition strategyDefinition in TradingConfig.Config[side].StrategySbmStob.Values)
+                if (SignalHelper.AlgorithmDefinitionIndex.TryGetValue(strategy, out AlgorithmDefinition strategyDefinition))
                 {
-                    if (ExecuteAlgorithm(side, strategyDefinition))
+                    if (ExecuteAlgorithm(strategyDefinition))
                         break;
                 }
+            }
 
-                // En de overige waaronder de jump
-                foreach (AlgorithmDefinition strategyDefinition in TradingConfig.Config[side].StrategyOthers.Values)
-                    ExecuteAlgorithm(side, strategyDefinition);
+            // En de overige waaronder de jump
+            foreach (CryptoSignalStrategy strategy in TradingConfig.Trading[Side].StrategyOthers.ToList())
+            {
+                if (SignalHelper.AlgorithmDefinitionIndex.TryGetValue(strategy, out AlgorithmDefinition strategyDefinition))
+                {
+                    ExecuteAlgorithm(strategyDefinition);
+                }
             }
 
         }

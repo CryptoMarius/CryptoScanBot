@@ -1,6 +1,5 @@
 ﻿using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Signal;
-
 using Dapper.Contrib.Extensions;
 
 namespace CryptoSbmScanner.Model;
@@ -34,9 +33,9 @@ public class CryptoPosition
     [Computed]
     public CryptoInterval Interval { get; set; }
 
-    public CryptoOrderSide Side { get; set; }
+    public CryptoTradeSide Side { get; set; }
     [Computed]
-    public string SideText { get { return Side switch { CryptoOrderSide.Buy => "long", CryptoOrderSide.Sell => "short", _ => "?", }; } }
+    public string SideText { get { return Side switch { CryptoTradeSide.Long => "long", CryptoTradeSide.Short => "short", _ => "?", }; } }
 
     [Computed]
     public string DisplayText { get { return Symbol.Name + " " + Interval.Name + " " + CreateTime.ToLocalTime() + " " + SideText + " " + StrategyText; } }
@@ -63,8 +62,13 @@ public class CryptoPosition
 
     // Slonzige gegevens, deze 3 mogen wat mij betreft weg, staat allemaal in de steps (ooit)
     public decimal? BuyPrice { get; set; } //(dat kan anders zijn dan die van het signaal) (kan eigenlijk weg, slechts ter debug)
-    public decimal? BuyAmount { get; set; } // slecht gekozen, meer een soort van QuoteQuantity... // Vanwege problemen met het achteraf opzoeken hier opgenomen
     public decimal? SellPrice { get; set; }
+
+    [Computed]
+    public decimal? EntryPrice { get; set; }
+    [Computed]
+    public decimal? ProfitPrice { get; set; }
+
 
 
     // Een experiment (die wegkan, maar we zetten er nu even de naam van de munt in)

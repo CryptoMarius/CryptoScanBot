@@ -116,7 +116,7 @@ public class PaperTrading
                         }
                     }
 
-                    PositionTools.CalculatePositionResultsViaTrades(database, position);
+                    TradeTools.CalculatePositionResultsViaTrades(database, position);
                 }
             }
         }

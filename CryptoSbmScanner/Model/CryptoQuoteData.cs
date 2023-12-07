@@ -18,10 +18,10 @@ public class CryptoQuoteData
     public decimal MinimalPrice { get; set; }
 
     // Het initiele aankoopbedrag
-    public decimal BuyAmount { get; set; }
+    public decimal EntryAmount { get; set; }
 
     // Het initiele aankooppercentage
-    public decimal BuyPercentage { get; set; }
+    public decimal EntryPercentage { get; set; }
 
     // Maximaal aantal slots op de exchange
     public int SlotsMaximal { get; set; }
@@ -32,27 +32,35 @@ public class CryptoQuoteData
     // De laatst berekende barometer standen
     [Computed]
     [JsonIgnore]
-    public BarometerData[] BarometerList { get; } = new BarometerData[Enum.GetValues(typeof(CryptoIntervalPeriod)).Length];
+    //public BarometerData[] BarometerList { get; } = new BarometerData[Enum.GetValues(typeof(CryptoIntervalPeriod)).Length];
+    public Dictionary<CryptoIntervalPeriod, BarometerData> BarometerList { get; set; } = new();
 
     // Gecachte lijst met symbolen (de zoveelste), met name voor de barometer(s)
     [Computed]
     [JsonIgnore]
-    public List<CryptoSymbol> SymbolList { get; } = new List<CryptoSymbol>();
+    public List<CryptoSymbol> SymbolList { get; } = new();
 
     [Computed]
+    [JsonIgnore]
     public string DisplayFormat { get; set; } = "N8";
 
     [Computed]
-    public PauseRule PauseTrading { get; set; } = new();
+    [JsonIgnore]
+    public Dictionary<CryptoTradeSide, PauseRule> PauseBarometer { get; set; } = new();
 
     public CryptoQuoteData()
     {
-        SymbolList = new List<CryptoSymbol>();
+        SymbolList = new();
+        PauseBarometer = new()
+        {
+            { CryptoTradeSide.Long, new PauseRule() },
+            { CryptoTradeSide.Short, new PauseRule() }
+        };
 
         // Dan maar op de moeilijke manier? (kan wellicht gewoon via de symbols BMP$*** en BMV$***?)
         for (CryptoIntervalPeriod interval = CryptoIntervalPeriod.interval1m; interval <= CryptoIntervalPeriod.interval1d; interval++)
         {
-            BarometerList[(long)interval] = new BarometerData();
+            BarometerList[interval] = new BarometerData();
         }
     }
 }

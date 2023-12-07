@@ -2,6 +2,7 @@
 using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
+using CryptoSbmScanner.Trader;
 
 namespace CryptoSbmScanner;
 
@@ -170,9 +171,9 @@ public partial class FrmMain
         item1.SubItems.Add(position.StrategyText);
 
         subItem = item1.SubItems.Add(position.SideText);
-        if (position.Side == CryptoOrderSide.Buy)
+        if (position.Side == CryptoTradeSide.Long)
             subItem.ForeColor = Color.Green;
-        else if (position.Side == CryptoOrderSide.Sell)
+        else if (position.Side == CryptoTradeSide.Short)
             subItem.ForeColor = Color.Red;
 
         subItem = item1.SubItems.Add(position.Status.ToString());
@@ -281,8 +282,8 @@ public partial class FrmMain
 
             // Controleer de orders, en herbereken het geheel
             PositionTools.LoadPosition(databaseThread, position);
-            await PositionTools.LoadTradesfromDatabaseAndExchange(databaseThread, position);
-            PositionTools.CalculatePositionResultsViaTrades(databaseThread, position);
+            await TradeTools.LoadTradesfromDatabaseAndExchange(databaseThread, position);
+            TradeTools.CalculatePositionResultsViaTrades(databaseThread, position);
             FillItemClosed(position, item);
         }
 

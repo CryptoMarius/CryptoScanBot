@@ -21,7 +21,7 @@ public class CryptoSymbol
 
     public string Name { get; set; }
     public string Base { get; set; } //De munt zelf (NKN, THETA, AION enzovoort)
-    public string Quote { get; set; } //De basismunt (BTC, ETH, USDT, BUSD enzovoort)
+    public string Quote { get; set; } //De basismunt (BTC, ETH, USDT enzovoort)
     public int Status { get; set; } //0 voor inactief, 1 voor actief
 
     // Ongebruikt, weg ermee

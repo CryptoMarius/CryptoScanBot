@@ -8,7 +8,7 @@ public class SignalSbm1Overbought : SignalSbmBaseOverbought
 {
     public SignalSbm1Overbought(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        SignalSide = CryptoOrderSide.Sell;
+        SignalSide = CryptoTradeSide.Short;
         SignalStrategy = CryptoSignalStrategy.Sbm1;
     }
 

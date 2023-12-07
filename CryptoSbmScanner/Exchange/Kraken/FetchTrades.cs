@@ -34,6 +34,7 @@ public class FetchTrades
         int tradeCount = 0;
         try
         {
+            // TODO
             // Haal de trades op van 1 symbol
 
             bool isChanged = false;
@@ -55,7 +56,7 @@ public class FetchTrades
                 // CRAP, bybit doet het door middel van ID's ;-) symbol.LastTradeFetched
                 // Wederom een uitdaging!
                 WebCallResult<KrakenUserTradesPage> result = null;
-                //var result = await client.SpotApi.Trading.GetUserTradesAsync(symbol.Name, null, null, null, symbol.LastTradeFetched, null, null, 1000);
+                //var result = await client.SpotApi.Trading.GetUserTradesAsync(symbol.Name, startTime: symbol.LastTradeFetched);
                 if (!result.Success)
                 {
                     GlobalData.AddTextToLogTab("error getting mytrades " + result.Error);

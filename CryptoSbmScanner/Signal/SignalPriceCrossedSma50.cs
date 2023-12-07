@@ -9,7 +9,7 @@ public class SignalPriceCrossedSma50 : SignalCreateBase
 {
     public SignalPriceCrossedSma50(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        SignalSide = CryptoOrderSide.Buy;
+        SignalSide = CryptoTradeSide.Long;
         SignalStrategy = CryptoSignalStrategy.PriceCrossedSma50;
     }
 

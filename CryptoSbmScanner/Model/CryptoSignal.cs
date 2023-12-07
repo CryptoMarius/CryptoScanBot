@@ -1,5 +1,6 @@
 ﻿using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Signal;
+
 using Dapper.Contrib.Extensions;
 
 namespace CryptoSbmScanner.Model;
@@ -46,7 +47,7 @@ public class CryptoSignal
     // Tot dit tijdstip is het signaal geldig (nodig voor de query)
     public DateTime ExpirationDate { get; set; }
 
-    public CryptoOrderSide Side { get; set; }
+    public CryptoTradeSide Side { get; set; }
 
     [Computed]
     public string SideText
@@ -58,8 +59,8 @@ public class CryptoSignal
 
             return Side switch
             {
-                CryptoOrderSide.Buy => "long",
-                CryptoOrderSide.Sell => "short",
+                CryptoTradeSide.Long => "long",
+                CryptoTradeSide.Short => "short",
                 _ => "?",
             };
         }
@@ -139,4 +140,12 @@ public class CryptoSignal
 
     [Computed]
     public int ItemIndex { get; set; }
+
+
+    // Een aantal trendindicatoren
+    public CryptoTrendIndicator? Trend15m { get; set; }
+    public CryptoTrendIndicator? Trend30m { get; set; }
+    public CryptoTrendIndicator? Trend1h { get; set; }
+    public CryptoTrendIndicator? Trend4h { get; set; }
+    public CryptoTrendIndicator? Trend12h { get; set; }
 }

@@ -649,7 +649,7 @@ public partial class TestForm : Form
     {
         if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
         {
-            if (exchange.SymbolListName.TryGetValue("BNBUSDT", out CryptoSymbol symbol))
+            if (exchange.SymbolListName.TryGetValue("ETHUSDT", out CryptoSymbol symbol))
             {
                 //Correctie naar beneden als huidige prijs lager is (gezet door de miniticker)
                 decimal price = 54m;
@@ -1116,9 +1116,9 @@ public partial class TestForm : Form
         if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
         {
 
-            if (exchange.SymbolListName.TryGetValue("NEBLBUSD", out CryptoSymbol symbol))
+            if (exchange.SymbolListName.TryGetValue("NEBLUSDT", out CryptoSymbol symbol))
             {
-                if ((symbol.Quote.Equals("BUSD")) && (symbol.Status == 1))
+                if ((symbol.Quote.Equals("USDT")) && (symbol.Status == 1))
                 {
 
                     CryptoIntervalPeriod intervalPeriod;
@@ -1622,7 +1622,7 @@ public partial class TestForm : Form
                     foreach (CryptoIntervalPeriod intervalPeriod in list)
                     {
                         Color color;
-                        BarometerData barometerData = quoteData.BarometerList[(int)CryptoIntervalPeriod.interval4h];
+                        BarometerData barometerData = quoteData.BarometerList[CryptoIntervalPeriod.interval4h];
                         if (barometerData?.PriceBarometer < 0)
                             color = Color.Red;
                         else
@@ -1717,7 +1717,7 @@ public partial class TestForm : Form
 
         if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
         {
-            if (exchange.SymbolListName.TryGetValue(Model.Constants.SymbolNameBarometerPrice + "BUSD", out CryptoSymbol symbol)) //"BTCBUSD"
+            if (exchange.SymbolListName.TryGetValue(Model.Constants.SymbolNameBarometerPrice + "USDT", out CryptoSymbol symbol)) //"BTCUSDT"
             {
                 DateTime dateCandleStart = DateTime.SpecifyKind(new DateTime(2023, 03, 01, 05, 00, 0), DateTimeKind.Utc);
                 DateTime dateCandleEinde = DateTime.SpecifyKind(new DateTime(2023, 04, 02, 00, 00, 0), DateTimeKind.Utc);
@@ -2059,7 +2059,7 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
                 {
 
                     //hoofdpagina: //https://data.binance.vision/?prefix=data/spot/daily/klines/ACABUSD/1m/
-                    //downloadlink: https://data.binance.vision/data/spot/daily/klines/ACABUSD/1m/ACABUSD-1m-2022-12-02.zip                        
+                    //downloadlink: https://data.binance.vision/data/spot/daily/klines/ACAUSDT/1m/ACAUSDT-1m-2022-12-02.zip                        
                     DateTime date = CandleTools.GetUnixDate(unix);
                     if (date == DateTime.Today)
                         break;

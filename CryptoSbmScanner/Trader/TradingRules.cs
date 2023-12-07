@@ -107,32 +107,33 @@ public static class TradingRules
     }
 
 
+    //TODO: Side!
     /// Controleer de barometer(s)
-    public static bool CheckBarometerValues(CryptoSymbol symbol, CryptoCandle lastCandle1m, out string reaction)
+    public static bool CheckBarometerValues(PauseRule pause, CryptoQuoteData quoteData, CryptoTradeSide side, CryptoCandle lastCandle1m, out string reaction)
     {
-        // alias
-        var pause = symbol.QuoteData.PauseTrading;
-
         // Ongeveer iedere minuut c.q. candle berekenen
         DateTime lastCandle1mCloseTime = CandleTools.GetUnixDate(lastCandle1m.OpenTime + 60);
         if (!pause.Calculated.HasValue || pause.Calculated < lastCandle1mCloseTime)
         {
+            //GlobalData.AddTextToLogTab($"{symbol.QuoteData.Name} CheckBarometerValues()");
+
             // Als de barometer gedaald is onder de limieten dan "stoppen"
             pause.Text = "";
             pause.Calculated = lastCandle1mCloseTime;
 
-            //GlobalData.AddTextToLogTab($"{symbol.QuoteData.Name} CheckBarometerValues()");
-            if (!SymbolTools.CheckValidBarometer(symbol.QuoteData, CryptoIntervalPeriod.interval15m, GlobalData.Settings.Trading.Barometer15mBotMinimal, out reaction) ||
-            (!SymbolTools.CheckValidBarometer(symbol.QuoteData, CryptoIntervalPeriod.interval30m, GlobalData.Settings.Trading.Barometer30mBotMinimal, out reaction)) ||
-            (!SymbolTools.CheckValidBarometer(symbol.QuoteData, CryptoIntervalPeriod.interval1h, GlobalData.Settings.Trading.Barometer01hBotMinimal, out reaction)) ||
-            (!SymbolTools.CheckValidBarometer(symbol.QuoteData, CryptoIntervalPeriod.interval4h, GlobalData.Settings.Trading.Barometer04hBotMinimal, out reaction)) ||
-            (!SymbolTools.CheckValidBarometer(symbol.QuoteData, CryptoIntervalPeriod.interval1d, GlobalData.Settings.Trading.Barometer24hBotMinimal, out reaction)))
-                pause.Text = reaction;
+            foreach (KeyValuePair<CryptoIntervalPeriod, (decimal, decimal )> item in TradingConfig.Signals[side].Barometer)
+            {
+                if (!SymbolTools.CheckValidBarometer(quoteData, item.Key, item.Value, out reaction))
+                {
+                    pause.Text = reaction;
+                    break;
+                }
+            }
 
             if (pause.Text != "")
             {
                 pause.Until = lastCandle1mCloseTime.AddMinutes(5);
-                reaction = symbol.QuoteData.PauseTrading.Text;
+                reaction = pause.Text;
                 return false;
             }
         }
@@ -140,7 +141,7 @@ public static class TradingRules
         // Is al gepauseerd
         if (pause.Until >= lastCandle1mCloseTime)
         {
-            reaction = symbol.QuoteData.PauseTrading.Text;
+            reaction = pause.Text;
             if (reaction == "")
                 reaction = "Barometer low?";
             return false;

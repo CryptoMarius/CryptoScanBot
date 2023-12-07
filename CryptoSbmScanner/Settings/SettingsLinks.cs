@@ -148,7 +148,7 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
         return text;
     }
 
-    //altrady://market/BINA_BUSD_LOKA:2
+    //altrady://market/BINA_ETH_LOKA:2
     //http://www.ccscanner.nl/hypertrader/?e=binance&a=lto&b=usdt&i=60
     ///hypertrader://binance/BETA-BTC/5
     ///https://app.altrady.com/d/BINA_BTC_BETA:1

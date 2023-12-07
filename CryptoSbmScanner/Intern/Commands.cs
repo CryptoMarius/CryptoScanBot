@@ -3,6 +3,7 @@
 using CryptoSbmScanner.Context;
 using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Model;
+using CryptoSbmScanner.Trader;
 
 namespace CryptoSbmScanner.Intern;
 
@@ -225,8 +226,8 @@ public class Commands
                         databaseThread.Open();
                         PositionTools.LoadPosition(databaseThread, position);
 
-                        await PositionTools.LoadTradesfromDatabaseAndExchange(databaseThread, position);
-                        PositionTools.CalculatePositionResultsViaTrades(databaseThread, position);
+                        await TradeTools.LoadTradesfromDatabaseAndExchange(databaseThread, position);
+                        TradeTools.CalculatePositionResultsViaTrades(databaseThread, position);
 
                         _ = Task.Run(() => { new Excel.ExcelPositionDump().ExportToExcel(position); });
                     }

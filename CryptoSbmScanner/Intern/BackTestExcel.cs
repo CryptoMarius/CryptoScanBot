@@ -1,26 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using CryptoExchange.Net.CommonObjects;
-
-using CryptoSbmScanner.Enums;
+﻿using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Signal;
+using CryptoSbmScanner.Trader;
 
 using NPOI.HPSF;
 using NPOI.HSSF.UserModel;
-using NPOI.OpenXmlFormats.Wordprocessing;
-using NPOI.SS.Formula.Functions;
 using NPOI.SS.UserModel;
-using NPOI.SS.Util;
-using NPOI.XWPF.UserModel;
-
-using Org.BouncyCastle.Utilities.Collections;
-
-using Skender.Stock.Indicators;
 
 using ICell = NPOI.SS.UserModel.ICell;
 

@@ -20,9 +20,10 @@ public abstract class ExchangeBase
 #if TRADEBOT
     public abstract Task FetchAssetsAsync(CryptoTradeAccount tradeAccount);
     public abstract Task FetchTradesForSymbolAsync(CryptoTradeAccount tradeAccount, CryptoSymbol symbol);
+    public abstract Task<int> FetchTradesForOrderAsync(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, string orderId);
     public abstract Task<(bool succes, TradeParams tradeParams)> Cancel(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoPositionStep step);
 
-    public abstract Task<(bool result, TradeParams tradeParams)> BuyOrSell(CryptoDatabase database, 
+    public abstract Task<(bool result, TradeParams tradeParams)> PlaceOrder(CryptoDatabase database, 
         CryptoTradeAccount tradeAccount, CryptoSymbol symbol, DateTime currentDate,
         CryptoOrderType orderType, CryptoOrderSide orderSide,
         decimal quantity, decimal price, decimal? stop, decimal? limit);
@@ -33,14 +34,19 @@ public abstract class ExchangeBase
         builder.Append(symbol.Name);
         if (extraText != "")
             builder.Append($" {extraText}");
-        builder.Append($" {tradeParams.OrderSide}");
-        builder.Append($" {tradeParams.OrderType}");
-        builder.Append($" order #{tradeParams.OrderId}");
-        builder.Append($" price={tradeParams.Price.ToString0()}");
-        if (tradeParams.StopPrice.HasValue)
-            builder.Append($" stop={tradeParams.StopPrice?.ToString0()}");
-        builder.Append($" quantity={tradeParams.Quantity.ToString0()}");
-        _ = builder.Append($" value={tradeParams.QuoteQuantity.ToString(symbol.QuoteData.DisplayFormat)}");
+        if (tradeParams == null)
+            builder.Append(" De tradeParams zijn niet opgegeven?");
+        else
+        {
+            builder.Append($" {tradeParams.OrderSide}");
+            builder.Append($" {tradeParams.OrderType}");
+            builder.Append($" order #{tradeParams.OrderId}");
+            builder.Append($" price={tradeParams.Price.ToString0()}");
+            if (tradeParams.StopPrice.HasValue)
+                builder.Append($" stop={tradeParams.StopPrice?.ToString0()}");
+            builder.Append($" quantity={tradeParams.Quantity.ToString0()}");
+            _ = builder.Append($" value={tradeParams.QuoteQuantity.ToString(symbol.QuoteData.DisplayFormat)}");
+        }
 
         return builder.ToString();
     }

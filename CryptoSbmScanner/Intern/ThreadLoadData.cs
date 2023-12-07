@@ -247,7 +247,7 @@ public class ThreadLoadData
                     await ExchangeHelper.FetchSymbolsAsync();
                 IndexQuoteDataSymbols(exchange);
 
-                // Na het inlezen van de symbols de lijsten goed zetten
+                // Na het inlezen van de symbols de lijsten alsnog goed zetten
                 TradingConfig.InitWhiteAndBlackListSettings();
 
                 // De (interne) barometer symbols toevoegen

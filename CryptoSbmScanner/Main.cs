@@ -173,9 +173,9 @@ public partial class FrmMain : Form
         // Eventueel de nieuwe quotes zetten enz.
         dashBoardInformation1.InitializeBarometer();
 
-        if ((GlobalData.Settings.General.FontSize != Font.Size) || (GlobalData.Settings.General.FontName.Equals(Font.Name)))
+        if ((GlobalData.Settings.General.FontSizeNew != Font.Size) || (GlobalData.Settings.General.FontNameNew.Equals(Font.Name)))
         {
-            Font = new System.Drawing.Font(GlobalData.Settings.General.FontName, GlobalData.Settings.General.FontSize,
+            Font = new System.Drawing.Font(GlobalData.Settings.General.FontNameNew, GlobalData.Settings.General.FontSizeNew,
                 System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 
             //this.applicationMenuStrip.Font.Size = GlobalData.Settings.General.FontSize;
@@ -601,19 +601,19 @@ public partial class FrmMain : Form
             switch (signal.Strategy)
             {
                 case CryptoSignalStrategy.Jump:
-                    if (signal.Side == CryptoOrderSide.Buy)
+                    if (signal.Side == CryptoTradeSide.Long)
                         PlaySound(signal, GlobalData.Settings.Signal.PlaySoundCandleJumpSignal, GlobalData.Settings.Signal.PlaySpeechCandleJumpSignal,
                             GlobalData.Settings.Signal.SoundCandleJumpUp, ref LastSignalSoundCandleJumpUp);
-                    if (signal.Side == CryptoOrderSide.Sell)
+                    if (signal.Side == CryptoTradeSide.Short)
                         PlaySound(signal, GlobalData.Settings.Signal.PlaySoundCandleJumpSignal, GlobalData.Settings.Signal.PlaySpeechCandleJumpSignal,
                             GlobalData.Settings.Signal.SoundCandleJumpDown, ref LastSignalSoundCandleJumpDown);
                     break;
 
                 case CryptoSignalStrategy.Stobb:
-                    if (signal.Side == CryptoOrderSide.Buy)
+                    if (signal.Side == CryptoTradeSide.Long)
                         PlaySound(signal, GlobalData.Settings.Signal.PlaySoundStobbSignal, GlobalData.Settings.Signal.PlaySpeechStobbSignal,
                             GlobalData.Settings.Signal.SoundStobbOversold, ref LastSignalSoundStobbOversold);
-                    if (signal.Side == CryptoOrderSide.Sell)
+                    if (signal.Side == CryptoTradeSide.Short)
                         PlaySound(signal, GlobalData.Settings.Signal.PlaySoundStobbSignal, GlobalData.Settings.Signal.PlaySpeechStobbSignal,
                             GlobalData.Settings.Signal.SoundStobbOverbought, ref LastSignalSoundStobbOverbought);
                     break;
@@ -623,10 +623,10 @@ public partial class FrmMain : Form
                 case CryptoSignalStrategy.Sbm3:
                 case CryptoSignalStrategy.Sbm4:
                 case CryptoSignalStrategy.Sbm5:
-                    if (signal.Side == CryptoOrderSide.Buy)
+                    if (signal.Side == CryptoTradeSide.Long)
                         PlaySound(signal, GlobalData.Settings.Signal.PlaySoundSbmSignal, GlobalData.Settings.Signal.PlaySpeechSbmSignal,
                         GlobalData.Settings.Signal.SoundSbmOversold, ref LastSignalSoundSbmOversold);
-                    if (signal.Side == CryptoOrderSide.Sell)
+                    if (signal.Side == CryptoTradeSide.Short)
                         PlaySound(signal, GlobalData.Settings.Signal.PlaySoundSbmSignal, GlobalData.Settings.Signal.PlaySpeechSbmSignal,
                             GlobalData.Settings.Signal.SoundSbmOverbought, ref LastSignalSoundSbmOverbought);
                     break;
@@ -860,31 +860,35 @@ public partial class FrmMain : Form
 
                 long einde = candle.OpenTime;
                 long start = einde - 2 * 60 * interval.Duration;
-                SignalCreate createSignal = new(symbol, interval);
-                while (start <= einde)
+                foreach (CryptoTradeSide side in Enum.GetValues(typeof(CryptoTradeSide))) // niet efficient meer?
                 {
-                    if (symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList.TryGetValue(start, out candle))
+                    SignalCreate createSignal = new(symbol, interval, side);
+                    while (start <= einde)
                     {
-                        if (createSignal.Prepare(start))
+                        if (symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList.TryGetValue(start, out candle))
                         {
-                            // todo, configuratie short/long
-                            SignalCreateBase algorithm = SignalHelper.GetSignalAlgorithm(CryptoOrderSide.Buy, GlobalData.Settings.BackTest.BackTestAlgoritm, symbol, interval, candle);
-                            if (algorithm != null)
+                            if (createSignal.Prepare(start))
                             {
-                                if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
+                                // todo, configuratie short/long
+                                SignalCreateBase algorithm = SignalHelper.GetSignalAlgorithm(CryptoTradeSide.Long, GlobalData.Settings.BackTest.BackTestAlgoritm, symbol, interval, candle);
+                                if (algorithm != null)
                                 {
-                                    //createSignal.PrepareAndSendSignal(algorithm);
-                                    algorithm.ExtraText = "Signal!";
+                                    if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
+                                    {
+                                        //createSignal.PrepareAndSendSignal(algorithm);
+                                        algorithm.ExtraText = "Signal!";
+                                    }
+                                    //candle.ExtraText = algorithm.ExtraText;
                                 }
-                                //candle.ExtraText = algorithm.ExtraText;
                             }
                         }
+                        start += interval.Duration;
                     }
-                    start += interval.Duration;
+
+                    BackTestExcel backTestExcel = new(symbol, createSignal.history);
+                    backTestExcel.ExportToExcell(CryptoOrderSide.Buy, GlobalData.Settings.BackTest.BackTestAlgoritm);
                 }
 
-                BackTestExcel backTestExcel = new(symbol, createSignal.history);
-                backTestExcel.ExportToExcell(CryptoOrderSide.Buy, GlobalData.Settings.BackTest.BackTestAlgoritm);
             }
         }
         catch (Exception error)

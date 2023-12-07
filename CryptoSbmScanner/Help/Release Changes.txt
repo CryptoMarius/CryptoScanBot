@@ -1,13 +1,10 @@
-Mis je iets in onderstaande bevindingen/todo's of toekomstige todo's, geef het AUB aan!
-Groot kans dat datgene we besproken hebben dan ergens tussen wal en schip is beland.
-Openstaande punten/bevindingen/todo's/enzovoort:
+Openstaande punten/bevindingen/todo's/enzovoort: (Mis je iets, geef het AUB even aan, groot kans dat datgene we ooit besproken hebben ergens tussen wal en schip is beland)
+
 
 Scanner:
-- Bij kleine beeldschermen zijn de instellingen niet in zijn geheel zichtbaar (de OK en Cancel knop vallen onder andere weg)
+- De CPU belasting is toegenomen - het ligt niet aan de trader of de verversing van de grids, maar waar ligt het dan wel aan?
+- Bij kleine(re) beeldschermen zijn bepaalde instellingen niet in zijn geheel zichtbaar (de OK en Cancel knop vallen onder andere weg)
 - Het aantal nieuwe munten tonen die op de exchange zijn geintroduceerd (verschil tonen vanwege nieuwe of vervallen munten <kan ook een hele lijst zijn?>)
-- Gerapporteerd, lettertype problemen, het was helaas een melding en er is geen duidelijke oorzaak of uitleg voor het probleem.
-  (daarom was er ook niets om om te kunnen lossen, ik wil daar nog verder op in gaan, maar ben er niet aan toe gekomen)
-- Bybit Futures, melden van de FundingRate en FundingInterval (maar wat is het precies?)
 - Het normale logbestand bevat op het einde een .0, waar komt deze vandaag? Doet NLog alsnog een archive ofzo? Een zooi in die hoek?
 - Scanner/Trader: Een dashboard introduceren, totaal aantal signalen afgelopen dag/week, indeling per categorie, short/long
   Trading: Totaal geinvesteerd, returned, gemiddelde profit, de uitschieters (max), de tegenvallers (min).
@@ -18,7 +15,6 @@ Scanner:
 - Meldingen naar een externe applicatie c.q. script sturen - event of dropbox inbouwen
 - Meldingen naar een syslog server sturen (statistiek) - de signalen worden nu wel opgeslagen in de signal tabel
 - Indien de applicatie traag(?) afsluit wordt tijdens het afsluiten opnieuw begonnen met het activeren van de scanner (ophalen candles enzovoort) - nog niet kunnen herproduceren!
-- De listbox met munten op links met een splitter kunnen verbergen / c.q. dichtklappen - geen prioriteit
 - Teksten kunnen vertalen (de NL en EN lopen nu vaak door elkaar, tenenkrommend, maar ach)
   Een eerste aanzet zit er nu in, inclusief een beetje uitleg over hou je het maakt en configureert
 - Experiment om een Mac versie te bouwen dmv MAUI XAML (een compleet nieuwe aanvliegroute van Microsoft)
@@ -28,33 +24,9 @@ Scanner:
   (ik heb hier eigenlijk geen alternatief voor, als iemand goede ideen heet laat het me weten aub)
   Misschien dat de introductie van een dashboard hier nog iets in kan betekenen t.z.t.
 - Het font van de menuitem (en popup?) wordt niet aangepast (indien een ander lettertype of grootte wordt gekozen)
-- Validatie van de trenddetails voor de CC 2.0 methode (de trend is gerealiseerd, maar de validatie van de trend en % moet nog) 
-  De trend berekening is gebaseerd op de P&T en de analyse daarvan, maar deze kan nog niet helemaal okay zijn (ook lastig te bewijzen).
-  Een EMA8>EMA21 vergelijking is afgekeurd vanwege de obvious pullbacks (dat maakt een trend bearisch terwijl het overduidelijk bullish is)
-  Het alternatief is om de ma's in te zetten (ma50 > ma100 of ma100 > ma200), maar het voelt niet goed om de P&T in te ruilen voor MA's.
-  Besloten om het voor nu consequent te houden en helemaal niets te veranderen (afgezien van het toevoegen van 2 nieuwe intervallen).
-- Het symbol overzicht uitbreiden met volume, prijs e.d. Kunnen filteren op volume etc.
-- Black theming  https://stackoverflow.com/questions/61145347/c-how-to-make-a-dark-mode-theme-in-windows-forms-separate-form-as-select-the <geen prio>
+- Scanner - Het symbol overzicht uitbreiden met volume, prijs e.d. Kunnen filteren op volume etc.
+- Algemeen - Black theming  https://stackoverflow.com/questions/61145347/c-how-to-make-a-dark-mode-theme-in-windows-forms-separate-form-as-select-the <geen prio>
   Er is nu een slappe variant die iets met grijs doet (omdat anders de scrollbars en headers zo'n lelijk getoond worden), ik ben er niet tevreden over.
-
-- Scanner: Rob van Es, [2023-10-27 13:58]
-Hoi Marius, ik maak regelmatig gebruik van de stobb signalen icm de RSI oversold/overbought functie. Merk met de bullish dagen dat de rsi30 dan net aangetikt worden.
-Ik zou graag experimenteren met een iets hogere rsi. Vraag van mijn kant is zou je deze instelbaar kunnen maken? Zodat ik deze dan bv op 32 of iets hoger kan zetten
-
-Rob van Es, [2023-10-27 13:59]
-Net NIET aangetikt bedoel ik...
-
-Marius, [2023-10-27 14:05]
-Het was "tamelijk" positief de afgelopen dagen
-
-Ik denk dat ik er dan een setje van maak voro zowel RSI als STOCH, dan kan iedereen zijn eigen grenswaarden daarin zetten indien gewenst. In een oude bot had ik de STOCH vaak op 25 staan
-
-RSI - oversold(def=30), overbought(def=70)
-Stoch -oversold(def=20), overbought(def=80)
-
-Dus dan komen er 4 waarden bij ergens in de algemene instellingen of iets dergelijks (nog een goed plekje zoeken)
-
-
 
 
 Ik heb het hieronder over trading. De trading module komt op een later tijdstip beschikbaar. Vanwege het vertrek van Binance moet
@@ -64,15 +36,18 @@ posities) komt later (gratis) beschikbaar. Als je ideen hebt voor het vervangen 
 De introductie van de FundingRate/FundingInterval heeft gevolgen voor de trading module (onverwachte bijkomende kosten).
 
 Trading:
-- Trading - Toevoegen van een handmatig gestarte positie (begindatum en munt)
+- Trading - Graph toevoegen met hoe vaak de tweede en derde bijkoop gehit wordt
+- Trading - Bij een partial fill wordt de oude order geannuleerd en wordt er een nieuwe sell geplaatst op de nieuwe BE (er is geen controle op de min_notation)
+- Trading - Bij een partial fill wordt de positie niet gesloten omdat er intern problemen zijn (de partialfilled orders zijn afgemeld als zijnde geannuleerd, dat klopt natuurlijk niet), zie PositionId=604, VETUSDT
+- Trading - Handmatig toevoegen van een positie via een naam munt + begindatum mogelijk maken, laat de bot het gewoon overnemen als je er "moe" van bent.
 - Trading - Verwijderen van een positie (handmatig overnemen van een positie)
-- Trading - De STOBB heeft nu een minimale trend maar dat conflicteerd straks bij een short positie (extra instelling noodzakelijk?)
+- Trading - De STOBB heeft nu een minimale trend maar dat conflicteerd straks bij een short positie (extra instelling noodzakelijk? Splitsen long/short)
 - Trading - Een aparte tool maken voor een backtest, candles ophalen voor BTC (tradingregels), de intervallen 1m en emulator interval.
             Echter de barometer werkt op deze manier niet (omdat niet alle munten geladen zijn...)
 - Trading - Uitzoeken voor iemand in de groep, de backtest emulator aanpassen zodat het (pas) bij een psar wissel instapt - is er nog niet van gekomen, sorry!
 - Trading - Bij een aanpassing van het bijkoop percentage (en op vaste percentage zetten) wordt er meerdere keren bijgekocht! ( blij dat het slechts papertrading is!)
             (de huidige test (van circa 40+ dagen) is hierdoor geen goede test meer, hierdoor is namelijk per abuis 1800 dollar geinvesteerd (papertrading))
-- Trading - Charts - dagen waarin niets gebeurd (ja dat gebeurd helaas ook) worden niet getoond op de x-as
+- Trading - Charts - dagen waarin niets gebeurd worden niet getoond op de x-as (dat gebeurd ook helaas)
 - Trading - Buy Trail gebruikt de verkeerde quantity, naar mate de prijs daalt zou de quantity groter moeten worden (is nu een constante)
 - Trading - Bij het opstarten van de scanner wordt rechtsboven het aantal openstaande posities getoond, die wijkt af van het werkelijke aantal (vreemd!)
 - Trading - Bij het opstarten van de scanner zijn de open en gesloten posities niet direct zichtbaar (geeft je iets te doen). Pas na ophalen candles wordt het getoond, jammer!
@@ -88,21 +63,31 @@ Trading:
 - Trading - Bybit Futures - Testen van een limitorder
 - Trading - Bybit Futures - Testen van een stop-limit order
 - Trading - Naar de trading app gaan na het dubbelklikken op een open of gesloten positie
-Voor alle Exchanges (behalve Binance):
+- Trading - Asset management voor papertrading.
+- Trading - Controles op asset management voor het zetten van een buy/sell (huidige implementatie is niet correct)
+Voor alle Exchanges (behalve Binance en BybitF):
 - Trading - userdate stream implementeren (detectie van trade)
 - Trading - ophalen trades implementeren
 - Trading - plaatsen van de orders (oco/buy/sell/stoplimit etc) - De OCO is Binance specifiek, vervanger?
 - Trading - price ticker implementeren (in Kucoin geeft dit teveel cpu overhead en is om die reden nu niet aangezet)
-TODO: Error control DoSwitchCrossIsolatedMarginAsync()
+TODO:
+- Trading - short - De positionMonitor kan alleen long aan
+- Trading - short - CanOpenAdditionalDca houdt alleen rekening met long
+- Trading - short - de naamgeving van de parts (BUY/DCA klopt niet meer)
+- Trading - short - Tradehandler snapt niet dat een BUY ook een positie kan sluiten
+- Trading - short - Controleren of de nieuwe ranged barometer werkt (config okay)
+- Trading - short - Controleren of de nieuwe trend beperking werkt (config okay)
+- Trading - short - CreateSignals, extra loop short/long (of in de aansturing). Maar pakt vanwege splitsen signals long/short nu wat onhandig uit, cpu killer?)
 
 
 xx-xx-2023 1.8.7
-- Scanner - De CPU belasting is toegenomen - het ligt niet aan de trader of de verversing van de grids, maar waar ligt het dan wel aan?
-- Trading - TODO: Controles op asset management voor het zetten van een buy/sell (is nog niet correct heb ik gezien) - niet OK, testcase maken!
-- Trading - Asset management voor papertrading.
-
-- Trading - Als de userdata ticker een trade niet heeft gedetecteerd dan wordt de positie niet correct geopend of gesloten en blijft de positie hangen (voorlopig even een quick fix)
-
+- Trading - Als een market order een timeout krijgt (intern omdat de trade niet opgepakt kan worden), dan wordt de positie en part gesloten. 
+            Later wordt de trade toch ingelezen maar is de part gesloten en wordt er niets meer gedaan wat leidt tot posities die enkel ruimte innemen maar niets doen.
+            Hiervoor zijn diverse fixes nodig geweest. Ook de manier van trades ophalen is aangepast want de exchange levert ze af en toe gewoon niet (timing?)
+            Achteraf blijft dat de user ticker soms een paar seconden niet werkt waardoor trades niet opgemerkt worden.
+            Voordat een order nu een timeout krijgt wordt de status van de order op de exchange gecontroleerd
+- Trading - Een dashboard introduceren, Totaal geinvesteerd, returned, gemiddelde profit, de uitschieters (max), de tegenvallers (min).
+- Trading - Intern de naamgeving voor de BuyAmount en BuyPercentage aangepast vanwege Long/Short mogelijkheden (moet opnieuw insteld worden)
 - Trading - Na het annuleren van de orders vanwege tradingrules wordt de buy even later toch weer geplaatst
 - Trading - API calls worden nu goed doorgezet naar de juiste exchange (wellicht wel handig)
 - Trading - Een geannuleerde buy order (door lage barometer of tradingrules) wordt later herplaatst maar met de oude prijs. Controle op de laatste prijs ingebouwd.
@@ -123,10 +108,18 @@ xx-xx-2023 1.8.7
 - Trading - Interne refactoring van orderId en tradeId van integer/long naar string's
 - Trading - De fundingrate toegevoegd aan de open posities
 - Trading - Bybit Futures - ophalen trades implementeren
+- Trading - Fix: Bybit Futures - ophalen trades, window voor ophalen is een week
 - Trading - Bybit Spot - ophalen trades implementeren
 - Trading - Bybit Futures - ophalen assets implementeren
 - Trading - Bybit Spot - ophalen assets implementeren
 - Telegram - Het commando assets implementeren
+- Scanner - De trenddetails voor de CC 2.0 methode is gedaan, de validatie zegt dat het niet 100% overeen komt maar redelijk dichtbij zit.
+- Scanner - De listbox met munten op links door middel van een instelling kunnen verbergen
+- Scanner - Bybit Futures, het vermelden van FundingRate en de FundingInterval.
+- Scanner - Het lettertype voor iedereen resetten vanwege vreemde lettertype's die te groot zijn of er raar uitzien (overblijfsel vorige versie?).
+- Scanner - Verschillende kleuren aan de long en short van een strategie kunnen opgeven (nog meer kleurtjes), eventueel moeten de kleuren bijgewerkt worden
+- Scanner - De BUSD vervangen net de PAXG (omdat deze munt door Binance wordt verwijderd en niet meer belangrijk genoeg is)
+- Scanner - Delisted coins blijven hardnekkig bestaan en er komen zelfs meldingen (TOMOUSDT)
 - Scanner - De huidige trendberekening is nu gebaseerd op de low's en high's van de candles, dit moet de open en close zijn
 - Scanner - Op verzoek de grenswaarden voor RSI overbought en oversold instelbaar gemaakt
 - Scanner - Op verzoek de grenswaarden voor STOCH overbought en oversold instelbaar gemaakt
@@ -138,6 +131,7 @@ xx-xx-2023 1.8.7
 - Scanner - De tradingview URL voor Bybit Futures is gecorrigeerd. {base}{quote}.P
 - Scanner - De window coordinaten/breedte wordt niet correct hersteld (na aanpassing volgorde event)
 - Scanner - Bij een negatieve barometer wordt de toevoeging 1h/4h/1d soms niet getoond (niet genoeg ruimte)
+- Scanner - Wat correcties op de handleiding (met dank aan Trinity)
 
 
 23-09-2023 1.8.6

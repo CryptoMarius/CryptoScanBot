@@ -742,7 +742,7 @@ public class BackTest
                             {
                                 // interval1h
                                 CryptoSymbolInterval cryptoSymbolIntervalX = symbolX.GetSymbolInterval(CryptoIntervalPeriod.interval1h);
-                                BarometerData barometerData = symbolX.QuoteData.BarometerList[(long)CryptoIntervalPeriod.interval1h];
+                                BarometerData barometerData = symbolX.QuoteData.BarometerList[CryptoIntervalPeriod.interval1h];
                                 if (cryptoSymbolIntervalX.CandleList.TryGetValue(candle.OpenTime, out CryptoCandle candleX))
                                 {
                                     barometerData.PriceBarometer = candleX.Close;
@@ -752,7 +752,7 @@ public class BackTest
 
                                 // interval4h
                                 cryptoSymbolIntervalX = symbolX.GetSymbolInterval(CryptoIntervalPeriod.interval4h);
-                                barometerData = symbolX.QuoteData.BarometerList[(long)CryptoIntervalPeriod.interval4h];
+                                barometerData = symbolX.QuoteData.BarometerList[CryptoIntervalPeriod.interval4h];
                                 if (cryptoSymbolIntervalX.CandleList.TryGetValue(candle.OpenTime, out candleX))
                                 {
                                     barometerData.PriceBarometer = candleX.Close;
@@ -762,7 +762,7 @@ public class BackTest
 
                                 // interval1d
                                 cryptoSymbolIntervalX = symbolX.GetSymbolInterval(CryptoIntervalPeriod.interval1d);
-                                barometerData = symbolX.QuoteData.BarometerList[(long)CryptoIntervalPeriod.interval1d];
+                                barometerData = symbolX.QuoteData.BarometerList[CryptoIntervalPeriod.interval1d];
                                 if (cryptoSymbolIntervalX.CandleList.TryGetValue(candle.OpenTime, out candleX))
                                 {
                                     barometerData.PriceBarometer = candleX.Close;

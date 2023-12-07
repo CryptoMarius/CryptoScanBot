@@ -9,7 +9,7 @@ public class SignalStobbOverbought : SignalSbmBaseOverbought
     public SignalStobbOverbought(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
         ReplaceSignal = true;
-        SignalSide = CryptoOrderSide.Sell;
+        SignalSide = CryptoTradeSide.Short;
         SignalStrategy = CryptoSignalStrategy.Stobb;
     }
 
