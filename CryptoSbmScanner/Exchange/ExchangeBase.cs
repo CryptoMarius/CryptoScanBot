@@ -56,8 +56,11 @@ public abstract class ExchangeBase
         StringBuilder builder = new();
         builder.Append("ERROR ");
         builder.Append(DumpOrder(symbol, tradeParams, extraText));
-        builder.Append($" {tradeParams.ResponseStatusCode}");
-        builder.Append($" {tradeParams.Error}");
+        if (tradeParams != null)
+        {
+            builder.Append($" {tradeParams.ResponseStatusCode}");
+            builder.Append($" {tradeParams.Error}");
+        }
 
         return builder.ToString();
     }
