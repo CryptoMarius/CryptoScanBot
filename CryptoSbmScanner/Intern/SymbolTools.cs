@@ -355,7 +355,13 @@ public class SymbolTools
             barometerData = quoteData.BarometerList[intervalPeriod];
             if (!barometerData.PriceBarometer.IsBetween(values.minValue, values.maxValue))
             {
-                reaction = $"Barometer {interval.Name} {barometerData.PriceBarometer?.ToString0("N2")} niet tussen {values.minValue.ToString0("N2")} en {values.maxValue.ToString0("N2")}";
+                string minValueStr = values.minValue.ToString0("N2");
+                if (values.minValue == decimal.MinValue)
+                    minValueStr = "-maxint";
+                string maxValueStr = values.maxValue.ToString0("N2");
+                if (values.maxValue == decimal.MaxValue)
+                    maxValueStr = "+maxint";
+                reaction = $"Barometer {interval.Name} {barometerData.PriceBarometer?.ToString0("N2")} niet tussen {minValueStr} en {maxValueStr}";
                 return false;
             }
         }
