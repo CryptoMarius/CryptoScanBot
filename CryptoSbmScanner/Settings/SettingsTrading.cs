@@ -138,12 +138,12 @@ public class SettingsTrading
     // De manier waarop de order geplaatst wordt
     public CryptoSellMethod SellMethod { get; set; } = CryptoSellMethod.FixedPercentage;
     // Zet een OCO zodra we in de winst zijn (kan het geen verlies trade meer worden, samen met tracing)
-    public bool LockProfits { get; set; } = false;
+    //public bool LockProfits { get; set; } = false;
 
     //***************************
     // Stopp loss
-    public decimal GlobalStopPercentage { get; set; } = 0m;
-    public decimal GlobalStopLimitPercentage { get; set; } = 0m;
+    //public decimal GlobalStopPercentage { get; set; } = 0m;
+    //public decimal GlobalStopLimitPercentage { get; set; } = 0m;
 
 
     //***************************

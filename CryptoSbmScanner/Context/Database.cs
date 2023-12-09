@@ -988,7 +988,13 @@ public class CryptoDatabase : IDisposable
                 "SlopeSma20 TEXT NULL," +
 
                 "FluxIndicator5m TEXT NULL," +
-                
+
+                "Trend15m INTEGER NULL," +
+                "Trend30m INTEGER NULL," +
+                "Trend1h INTEGER NULL," +
+                "Trend4h INTEGER NULL," +
+                "Trend12h INTEGER NULL," +
+
 
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)" +
                 "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)," +

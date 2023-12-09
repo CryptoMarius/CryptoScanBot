@@ -558,10 +558,10 @@ public class PositionMonitor : IDisposable
         CryptoPositionStep step, CryptoOrderStatus newStatus = CryptoOrderStatus.Expired)
     {
         // waarom eigenlijk, wat wil ik nu met die buy en sell price? (debuggen, maar verder?)
-        if (step.Side == CryptoOrderSide.Buy && part.Name.Equals("BUY"))
-        {
-            position.EntryPrice = null;
-        }
+        //if (step.Side == CryptoOrderSide.Buy && part.Name.Equals("BUY")) // && part.Side == CryptoOrderSide.Buy
+        //{
+        //    position.EntryPrice = null;
+        //}
         position.UpdateTime = LastCandle1mCloseTimeDate;
         Database.Connection.Update<CryptoPosition>(position);
 
@@ -704,6 +704,7 @@ public class PositionMonitor : IDisposable
             //part.SellPrice = sellPrice;
 
             if (part.Name.Equals("BUY"))
+            //if (part.Side == CryptoOrderSide.Buy)
                 position.ProfitPrice = result.tradeParams.Price;
             var step = PositionTools.CreatePositionStep(position, part, result.tradeParams);
             Database.Connection.Insert<CryptoPositionStep>(step);
@@ -1165,6 +1166,7 @@ public class PositionMonitor : IDisposable
 
                         // Als de instellingen veranderd zijn de lopende order annuleren
                         else if (part.Name.Equals("BUY") & part.StepInMethod != GlobalData.Settings.Trading.BuyStepInMethod)
+                        //else if (part.Side == CryptoOrderSide.Buy & part.StepInMethod != GlobalData.Settings.Trading.BuyStepInMethod)
                         {
                             newStatus = CryptoOrderStatus.ChangedSettings;
                             cancelText = "annuleren vanwege aanpassing buy instellingen";

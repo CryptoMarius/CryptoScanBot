@@ -384,7 +384,7 @@ public class Api : ExchangeBase
         trade.TradeTime = item.Timestamp;
         trade.Side = LocalOrderSide(item.Side);
 
-        trade.Commission = item.Fee;
+        trade.Commission = item.Fee.Value;
         trade.CommissionAsset = symbol.Quote; // item.FeeAsset;?
     }
 

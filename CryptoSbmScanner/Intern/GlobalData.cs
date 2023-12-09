@@ -306,13 +306,15 @@ static public class GlobalData
                 DisplayFormat = "N8",
             };
 
-            if (quoteName.Equals("USDT"))
-                quoteData.DisplayFormat = "N2";
-            if (quoteName.Equals("BUSD"))
+            if (quoteName.Equals("USDT") || quoteName.Equals("BUSD"))
                 quoteData.DisplayFormat = "N2";
 
             Settings.QuoteCoins.Add(quoteName, quoteData);
         }
+
+        if (quoteName.Equals("USDT") || quoteName.Equals("BUSD"))
+            quoteData.DisplayFormat = "N2";
+
         return quoteData;
     }
 

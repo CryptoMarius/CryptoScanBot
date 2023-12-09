@@ -3037,6 +3037,8 @@ partial class FrmSettings
         // EditLockProfits
         // 
         EditLockProfits.AutoSize = true;
+        EditLockProfits.Enabled = false;
+        EditLockProfits.Font = new Font("Segoe UI", 9F, FontStyle.Strikeout);
         EditLockProfits.Location = new Point(324, 403);
         EditLockProfits.Margin = new Padding(4, 3, 4, 3);
         EditLockProfits.Name = "EditLockProfits";

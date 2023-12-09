@@ -24,8 +24,10 @@ public static class TradingConfig
 
     static public void IndexStrategyInternally()
     {
+        // Op dit moment zijn er nog geen gescheiden long en short voor het genereren van signalen (dezelfde bron dus)
         Signals[CryptoTradeSide.Long].IndexStrategyInternally(GlobalData.Settings.Signal.Long, CryptoTradeSide.Long);
-        Signals[CryptoTradeSide.Short].IndexStrategyInternally(GlobalData.Settings.Signal.Short, CryptoTradeSide.Short);
+        //Signals[CryptoTradeSide.Short].IndexStrategyInternally(GlobalData.Settings.Signal.Short, CryptoTradeSide.Short);
+        Signals[CryptoTradeSide.Short].IndexStrategyInternally(GlobalData.Settings.Signal.Long, CryptoTradeSide.Short);
 
         Trading[CryptoTradeSide.Long].IndexStrategyInternally(GlobalData.Settings.Trading.Long, CryptoTradeSide.Long);
         Trading[CryptoTradeSide.Short].IndexStrategyInternally(GlobalData.Settings.Trading.Short, CryptoTradeSide.Short);

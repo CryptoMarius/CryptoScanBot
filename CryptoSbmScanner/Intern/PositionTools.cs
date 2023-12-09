@@ -363,7 +363,7 @@ public class PositionTools
             var symbolPeriod = signal.Symbol.GetSymbolInterval(entry.Key);
             if (symbolPeriod.TrendIndicator != entry.Value)
             {
-                reaction = $"{symbolPeriod.Interval.Name} niet gelijk aan {entry.Value}";
+                reaction = $"trend op de {symbolPeriod.Interval.Name} niet gelijk aan {entry.Value}";
                 return false;
             }
         }

@@ -590,11 +590,11 @@ public partial class FrmSettings : Form
         EditSellMethod.ValueMember = "Value";
         EditSellMethod.SelectedValue = settings.Trading.SellMethod;
         EditProfitPercentage.Value = settings.Trading.ProfitPercentage;
-        EditLockProfits.Checked = settings.Trading.LockProfits;
+        //EditLockProfits.Checked = settings.Trading.LockProfits;
 
         // Stop loss
-        EditGlobalStopPercentage.Value = Math.Abs(settings.Trading.GlobalStopPercentage);
-        EditGlobalStopLimitPercentage.Value = Math.Abs(settings.Trading.GlobalStopLimitPercentage);
+        //EditGlobalStopPercentage.Value = Math.Abs(settings.Trading.GlobalStopPercentage);
+        //EditGlobalStopLimitPercentage.Value = Math.Abs(settings.Trading.GlobalStopLimitPercentage);
 
 
 
@@ -944,11 +944,11 @@ public partial class FrmSettings : Form
         // sell
         settings.Trading.SellMethod = (CryptoSellMethod)EditSellMethod.SelectedValue;
         settings.Trading.ProfitPercentage = EditProfitPercentage.Value;
-        settings.Trading.LockProfits = EditLockProfits.Checked;
+        //settings.Trading.LockProfits = EditLockProfits.Checked;
 
         // Stop loss
-        settings.Trading.GlobalStopPercentage = EditGlobalStopPercentage.Value;
-        settings.Trading.GlobalStopLimitPercentage = EditGlobalStopLimitPercentage.Value;
+        //settings.Trading.GlobalStopPercentage = EditGlobalStopPercentage.Value;
+        //settings.Trading.GlobalStopLimitPercentage = EditGlobalStopLimitPercentage.Value;
 
         settings.Trading.Leverage = EditLeverage.Value;
         settings.Trading.CrossOrIsolated = EditCrossOrIsolated.SelectedIndex;
