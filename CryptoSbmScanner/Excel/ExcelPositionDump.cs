@@ -74,9 +74,10 @@ public class ExcelPositionDump : ExcelBase
                 else
                     cell = WriteCell(sheet, 13, row, Position.Interval.Name);
 
-                // default.. ;-)
-                //if (part.Strategy != CryptoSignalStrategy.Jump)
-                cell = WriteCell(sheet, 14, row, part.StrategyText);
+                if (part.StepInMethod == CryptoStepInMethod.AfterNextSignal)
+                    cell = WriteCell(sheet, 14, row, part.StrategyText);
+                else
+                    cell = WriteCell(sheet, 14, row, "Fixed percentage");
             }
 
             foreach (CryptoPositionStep step in part.Steps.Values.ToList())
