@@ -58,7 +58,7 @@ public class FetchTradeForOrder
                         foreach (var trade in tradeCache)
                         {
                             databaseThread.Connection.Insert(trade, transaction);
-                            GlobalData.AddTextToLogTab($"FetchTradesForOrderAsync: {symbol.Name} ORDER {orderId} TRADE {trade.TradeId} TOEGEVOEGD!");
+                            GlobalData.AddTextToLogTab($"FetchTradesForOrderAsync: {symbol.Name} ORDER {orderId} TRADE {trade.TradeId} toegevoegd!");
                         }
 #endif
                         if (tradeCount == 0)
