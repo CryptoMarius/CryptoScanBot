@@ -555,7 +555,7 @@ public partial class FrmMain : Form
                         if (!this.IsDisposed && GlobalData.ApplicationStatus != CryptoApplicationStatus.Disposing && IsHandleCreated)
                         {
                             if (InvokeRequired)
-                                Invoke((MethodInvoker)(() => TextBoxLog.AppendText(text)));
+                                Invoke((System.Windows.Forms.MethodInvoker)(() => TextBoxLog.AppendText(text)));
                             else
                                 TextBoxLog.AppendText(text);
                         }
@@ -573,7 +573,7 @@ public partial class FrmMain : Form
     private void TimerClearMemo_Tick(object sender, EventArgs e)
     {
         // Elke 24 uur wordt de memo gecleared
-        Invoke((MethodInvoker)(() => TextBoxLog.Clear()));
+        Invoke((System.Windows.Forms.MethodInvoker)(() => TextBoxLog.Clear()));
     }
 
 
@@ -905,7 +905,7 @@ public partial class FrmMain : Form
         GlobalData.SymbolsHaveChanged("");
 
         // De barometer een zetje geven...
-        Invoke((MethodInvoker)(() => dashBoardInformation1.ShowBarometerStuff(null, null)));
+        Invoke((System.Windows.Forms.MethodInvoker)(() => dashBoardInformation1.ShowBarometerStuff(null, null)));
 
 #if TRADEBOT
         // Toon de ingelezen posities
