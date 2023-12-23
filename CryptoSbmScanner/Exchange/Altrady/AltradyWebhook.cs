@@ -131,7 +131,7 @@ namespace CryptoSbmScanner.Exchange.Altrady;
 //        catch (Exception error)
 //        {
 //            // don care (paper account)
-//            GlobalData.Logger.Error(error);
+//            GlobalData.Logger.Error(error, "");
 //            GlobalData.AddTextToLogTab("error webhook " + error.ToString()); // symbol.Text + " " + 
 //        }
 

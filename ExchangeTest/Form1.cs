@@ -220,7 +220,7 @@ public partial class Form1 : Form
         }
         catch (Exception error)
         {
-            GlobalData.Logger.Error(error);
+            GlobalData.Logger.Error(error, "");
             GlobalData.AddTextToLogTab("error back testing " + error.ToString()); // symbol.Text + " " + 
         }
     }
@@ -505,7 +505,7 @@ public partial class Form1 : Form
         }
         catch (Exception error)
         {
-            GlobalData.Logger.Error(error);
+            GlobalData.Logger.Error(error, "");
             GlobalData.AddTextToLogTab("error back testing " + error.ToString()); // symbol.Text + " " + 
         }
     }
@@ -820,7 +820,7 @@ public partial class Form1 : Form
 
             // Werkt zoals ik het verwacht! een buy order van ongeveer 1.6 dollar
             var exchangeApi = ExchangeHelper.GetExchangeInstance(GlobalData.Settings.General.ExchangeId);
-            var (result, tradeParams) = await exchangeApi.PlaceOrder(null, GlobalData.ExchangeRealTradeAccount, symbol, DateTime.Now, 
+            var (result, tradeParams) = await exchangeApi.PlaceOrder(null, GlobalData.ExchangeRealTradeAccount, symbol, CryptoTradeSide.Long, DateTime.Now, 
                 CryptoOrderType.Limit, CryptoOrderSide.Buy, 52, 0.2276m, null, null);
 
 

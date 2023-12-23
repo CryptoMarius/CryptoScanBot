@@ -137,7 +137,7 @@ public class FetchTrades
         }
         catch (Exception error)
         {
-            GlobalData.Logger.Error(error);
+            GlobalData.Logger.Error(error, "");
             GlobalData.AddTextToLogTab("error get prices " + error.ToString()); // symbol.Text + " " + 
         }
 
@@ -178,7 +178,7 @@ public class FetchTrades
         }
         catch (Exception error)
         {
-            GlobalData.Logger.Error(error);
+            GlobalData.Logger.Error(error, "");
             GlobalData.AddTextToLogTab("error getting trades " + error.ToString()); // symbol.Text + " " + 
         }
         return tradeCount;
@@ -229,7 +229,7 @@ public class FetchTrades
             }
             catch (Exception error)
             {
-                GlobalData.Logger.Error(error);
+                GlobalData.Logger.Error(error, "");
                 GlobalData.AddTextToLogTab("error get trades " + error.ToString());
             }
         }

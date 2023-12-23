@@ -48,7 +48,7 @@ public class ThreadMonitorOrder
             }
             catch (Exception error)
             {
-                GlobalData.Logger.Error(error);
+                GlobalData.Logger.Error(error, "");
                 GlobalData.AddTextToLogTab($"{data.symbol.Name} ERROR order handler thread {error.Message}");
             }
         }

@@ -66,7 +66,7 @@ static public class ThreadSoundPlayer
         }
         catch (Exception error)
         {
-            GlobalData.Logger.Error(error);
+            GlobalData.Logger.Error(error, "");
             GlobalData.AddTextToLogTab("");
             GlobalData.AddTextToLogTab(error.ToString(), true);
         }

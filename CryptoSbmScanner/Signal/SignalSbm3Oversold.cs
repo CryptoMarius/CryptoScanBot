@@ -63,7 +63,7 @@ public class SignalSbm3Oversold : SignalSbmBaseOversold
         if (!base.IsSignal())
             return false;
 
-        if (!HasBollingerBandsIncreased(GlobalData.Settings.Signal.Sbm3CandlesLookbackCount, GlobalData.Settings.Signal.Sbm3CandlesBbRecoveryPercentage))
+        if (!HasBollingerBandsIncreased(GlobalData.Settings.Signal.Sbm.Sbm3CandlesLookbackCount, GlobalData.Settings.Signal.Sbm.Sbm3CandlesBbRecoveryPercentage))
             return false;
 
         return true;

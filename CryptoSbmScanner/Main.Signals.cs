@@ -270,28 +270,27 @@ public partial class FrmMain
             switch (signal.Strategy)
             {
                 case CryptoSignalStrategy.Jump:
-                    if (GlobalData.Settings.Signal.ColorJump != Color.White && signal.Side == CryptoTradeSide.Long)
-                        subItem.BackColor = GlobalData.Settings.Signal.ColorJump;
-                    else if (GlobalData.Settings.Signal.ColorJumpShort != Color.White && signal.Side == CryptoTradeSide.Short)
-                        subItem.BackColor = GlobalData.Settings.Signal.ColorJumpShort;
+                    if (GlobalData.Settings.Signal.Jump.ColorLong != Color.White && signal.Side == CryptoTradeSide.Long)
+                        subItem.BackColor = GlobalData.Settings.Signal.Jump.ColorLong;
+                    else if (GlobalData.Settings.Signal.Jump.ColorShort != Color.White && signal.Side == CryptoTradeSide.Short)
+                        subItem.BackColor = GlobalData.Settings.Signal.Jump.ColorShort;
                     break;
 
                 case CryptoSignalStrategy.Stobb:
-                    if (GlobalData.Settings.Signal.ColorStobb != Color.White && signal.Side == CryptoTradeSide.Long)
-                        subItem.BackColor = GlobalData.Settings.Signal.ColorStobb;
-                    else if (GlobalData.Settings.Signal.ColorStobbShort != Color.White && signal.Side == CryptoTradeSide.Short)
-                        subItem.BackColor = GlobalData.Settings.Signal.ColorStobbShort;
+                    if (GlobalData.Settings.Signal.Stobb.ColorLong != Color.White && signal.Side == CryptoTradeSide.Long)
+                        subItem.BackColor = GlobalData.Settings.Signal.Stobb.ColorLong;
+                    else if (GlobalData.Settings.Signal.Stobb.ColorShort != Color.White && signal.Side == CryptoTradeSide.Short)
+                        subItem.BackColor = GlobalData.Settings.Signal.Stobb.ColorShort;
                     break;
 
                 case CryptoSignalStrategy.Sbm1:
                 case CryptoSignalStrategy.Sbm2:
                 case CryptoSignalStrategy.Sbm3:
                 case CryptoSignalStrategy.Sbm4:
-                case CryptoSignalStrategy.Sbm5:
-                    if (GlobalData.Settings.Signal.ColorSbm != Color.White && signal.Side == CryptoTradeSide.Long)
-                        subItem.BackColor = GlobalData.Settings.Signal.ColorSbm;
-                    else if (GlobalData.Settings.Signal.ColorSbmShort != Color.White && signal.Side == CryptoTradeSide.Short)
-                        subItem.BackColor = GlobalData.Settings.Signal.ColorSbmShort;
+                    if (GlobalData.Settings.Signal.Sbm.ColorLong != Color.White && signal.Side == CryptoTradeSide.Long)
+                        subItem.BackColor = GlobalData.Settings.Signal.Sbm.ColorLong;
+                    else if (GlobalData.Settings.Signal.Sbm.ColorShort != Color.White && signal.Side == CryptoTradeSide.Short)
+                        subItem.BackColor = GlobalData.Settings.Signal.Sbm.ColorShort;
                     break;
 
             }

@@ -2,15 +2,14 @@
 
 using CryptoSbmScanner.Context;
 using CryptoSbmScanner.Enums;
-using CryptoSbmScanner.Exchange;
 using CryptoSbmScanner.Model;
 
 using Dapper;
 
 using Telegram.Bot;
+using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
-using Telegram.Bot.Types.ReplyMarkups;
 
 namespace CryptoSbmScanner.Intern;
 
@@ -117,7 +116,7 @@ public class ThreadTelegramBotInstance
         catch (Exception error)
         {
             // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
-            GlobalData.Logger.Error(error);
+            GlobalData.Logger.Error(error, "");
             GlobalData.AddTextToLogTab("\r\n" + "\r\n" + " error telegram thread(1)\r\n" + error.ToString());
         }
     }
@@ -177,7 +176,7 @@ public class ThreadTelegramBotInstance
         catch (Exception error)
         {
             // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
-            GlobalData.Logger.Error(error);
+            GlobalData.Logger.Error(error, "");
             GlobalData.AddTextToLogTab("\r\n" + "\r\n" + " error telegram thread(1)\r\n" + error.ToString());
         }
     }
@@ -421,7 +420,7 @@ public class ThreadTelegramBotInstance
         databaseThread.Open();
 
         foreach (CryptoPosition position in databaseThread.Connection.Query<CryptoPosition>("select * from position " +
-            "where CreateTime >= @fromDate and status=2", new { fromDate = DateTime.Today }))
+            "where CloseTime >= @fromDate and status=2", new { fromDate = DateTime.Today.ToUniversalTime() }))
         {
             sumCount++;
             sumProfit += position.Profit;
@@ -430,7 +429,7 @@ public class ThreadTelegramBotInstance
         if (sumInvested > 0)
             percentage = 100 * sumProfit / sumInvested;
 
-        stringbuilder.AppendLine(string.Format("Invested {0:N2}, profits {1:N2}, {2:N2}%", sumInvested, sumProfit, percentage));
+        stringbuilder.AppendLine($"{sumCount} positions, invested {sumCount:N2}, profits {sumProfit:N2}, {percentage:N2}%");
     }
 #endif
 
@@ -478,19 +477,21 @@ public class ThreadTelegramBotInstance
 
     private static void ShowCoins(string arguments, StringBuilder stringbuilder)
     {
-        string value;
-        string[] parameters = arguments.Split(' ');
-        if (parameters.Length >= 2)
-            value = parameters[1];
-        else
-            value = "BNBUSDT,BTCUSDT,ETHUSDT,PAXGUSDT";
-        parameters = value.Split(',');
+        //string value;
+        //string[] parameters = arguments.Split(' ');
+        //if (parameters.Length >= 2)
+        //    value = parameters[1];
+        //else
+        //    value = GlobalData.Settings.ShowSymbolInformation.ToList();
+        //        //"BTCUSDT,ETHUSDT,PAXGUSDT,BNBUSDT";
+        //parameters = value.Split(',');
+        var parameters = GlobalData.Settings.ShowSymbolInformation;
 
         if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
         {
             foreach (string symbolName in parameters)
             {
-                if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol symbol))
+                if (exchange.SymbolListName.TryGetValue(symbolName + "USDT", out CryptoSymbol symbol))
                 {
                     if (symbol.LastPrice.HasValue)
                     {
@@ -500,7 +501,6 @@ public class ThreadTelegramBotInstance
                 }
 
             }
-
         }
     }
 
@@ -665,20 +665,34 @@ public class ThreadTelegramBotInstance
                                     }
                                     break;
 
-                            //    case MessageType.Photo:
-                            //        {
-                            //            // geen idee, niet belangrijk in een bot denk ik
-                            //            // await ProcessPhotoMessage(update.Message);
-                            //        }
-                            //        break;
+                                    //    case MessageType.Photo:
+                                    //        {
+                                    //            // geen idee, niet belangrijk in een bot denk ik
+                                    //            // await ProcessPhotoMessage(update.Message);
+                                    //        }
+                                    //        break;
                             }
 
 
                         }
+                        catch (HttpRequestException error)
+                        {
+                            // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
+                            GlobalData.Logger.Error(error.Message);
+                            //GlobalData.AddTextToLogTab("\r\n" + "\r\n" + " error telegram thread(1)\r\n" + error.ToString());
+                            Thread.Sleep(5000);
+                        }
+                        catch (RequestException error)
+                        {
+                            // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
+                            GlobalData.Logger.Error(error.Message);
+                            //GlobalData.AddTextToLogTab("\r\n" + "\r\n" + " error telegram thread(1)\r\n" + error.ToString());
+                            Thread.Sleep(5000);
+                        }
                         catch (Exception error)
                         {
                             // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
-                            GlobalData.Logger.Error(error);
+                            GlobalData.Logger.Error(error, "");
                             //GlobalData.AddTextToLogTab("\r\n" + "\r\n" + " error telegram thread(1)\r\n" + error.ToString());
                             Thread.Sleep(2500);
                         }
@@ -688,7 +702,7 @@ public class ThreadTelegramBotInstance
                 catch (Exception error)
                 {
                     // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
-                    GlobalData.Logger.Error(error);
+                    GlobalData.Logger.Error(error, "");
                     GlobalData.AddTextToLogTab($"ERROR telegram thread {error.Message}");
                 }
                 await Task.Delay(250);
@@ -697,7 +711,7 @@ public class ThreadTelegramBotInstance
         catch (Exception error)
         {
             // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
-            GlobalData.Logger.Error(error);
+            GlobalData.Logger.Error(error, "");
             GlobalData.AddTextToLogTab($"ERROR telegram thread {error.Message}");
         }
         GlobalData.AddTextToLogTab("\r\n" + "\r\n TELEGRAM THREAD EXIT " + token);

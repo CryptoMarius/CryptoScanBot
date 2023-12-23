@@ -21,7 +21,7 @@ public class SignalSbm4Oversold : SignalSbmBaseOversold
         while (candleCount > 0)
         {
             // Er een candle onder de bb opent of sluit & een oversold situatie (beide moeten onder de 20 zitten)
-            if ((last.IsBelowBollingerBands(GlobalData.Settings.Signal.SbmUseLowHigh)) && (last.IsStochOversold()))
+            if ((last.IsBelowBollingerBands(GlobalData.Settings.Signal.Sbm.UseLowHigh)) && (last.IsStochOversold()))
                 return true;
 
             if (!GetPrevCandle(last, out last))
@@ -124,15 +124,15 @@ public class SignalSbm4Oversold : SignalSbmBaseOversold
         //    return false;
 
 
-        if (HadStobbInThelastXCandles(GlobalData.Settings.Signal.Sbm1CandlesLookbackCount) 
-            || IsInLowerPartOfBollingerBands(GlobalData.Settings.Signal.Sbm2CandlesLookbackCount, GlobalData.Settings.Signal.Sbm2BbPercentage)
-            || HasBollingerBandsIncreased(GlobalData.Settings.Signal.Sbm3CandlesLookbackCount, GlobalData.Settings.Signal.Sbm3CandlesBbRecoveryPercentage))
+        if (HadStobbInThelastXCandles(GlobalData.Settings.Signal.Sbm.Sbm1CandlesLookbackCount) 
+            || IsInLowerPartOfBollingerBands(GlobalData.Settings.Signal.Sbm.Sbm2CandlesLookbackCount, GlobalData.Settings.Signal.Sbm.Sbm2BbPercentage)
+            || HasBollingerBandsIncreased(GlobalData.Settings.Signal.Sbm.Sbm3CandlesLookbackCount, GlobalData.Settings.Signal.Sbm.Sbm3CandlesBbRecoveryPercentage))
             {
             SignalCreate.GetFluxIndcator(Symbol, out int fluxOverSold, out int _);
             if (fluxOverSold == 100)
             {
                 // Er recovery is via de macd
-                if (IsMacdRecoveryOversold(GlobalData.Settings.Signal.SbmCandlesForMacdRecovery))
+                if (IsMacdRecoveryOversold(GlobalData.Settings.Signal.Sbm.CandlesForMacdRecovery))
                     return true;
             }
         }

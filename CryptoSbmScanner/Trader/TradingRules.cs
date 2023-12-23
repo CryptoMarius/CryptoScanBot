@@ -121,14 +121,18 @@ public static class TradingRules
             pause.Text = "";
             pause.Calculated = lastCandle1mCloseTime;
 
-            foreach (KeyValuePair<CryptoIntervalPeriod, (decimal, decimal )> item in TradingConfig.Signals[side].Barometer)
-            {
-                if (!SymbolTools.CheckValidBarometer(quoteData, item.Key, item.Value, out reaction))
-                {
-                    pause.Text = reaction;
-                    break;
-                }
-            }
+            if (!BarometerHelper.ValidBarometerConditions(quoteData, TradingConfig.Trading[side].Barometer, out reaction))
+                pause.Text = reaction;
+
+
+            //foreach (KeyValuePair<CryptoIntervalPeriod, (decimal, decimal )> item in TradingConfig.Signals[side].Barometer)
+            //{
+            //    if (!SymbolTools.CheckValidBarometer(quoteData, item.Key, item.Value, out reaction))
+            //    {
+            //        pause.Text = reaction;
+            //        break;
+            //    }
+            //}
 
             if (pause.Text != "")
             {

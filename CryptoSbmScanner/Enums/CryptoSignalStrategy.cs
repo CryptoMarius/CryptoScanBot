@@ -9,21 +9,21 @@ public enum CryptoSignalStrategy // CryptoStrategy
     Sbm2,
     Sbm3,
     Sbm4, // is er niet meer
-    Sbm5, // is er niet meer
+    //Sbm5, // is er niet meer
     Stobb,
 
-    // Vervallen
-    PriceCrossedSma20,
-    PriceCrossedSma50,
+    //// Vervallen
+    //PriceCrossedSma20,
+    //PriceCrossedSma50,
 
-    PriceCrossedEma20,
-    PriceCrossedEma50,
+    //PriceCrossedEma20,
+    //PriceCrossedEma50,
 
-    SlopeSma50,
-    SlopeSma20,
+    //SlopeSma50,
+    //SlopeSma20,
 
-    SlopeEma20,
-    SlopeEma50,
+    //SlopeEma20,
+    //SlopeEma50,
 
     // Experimental
     Flux,

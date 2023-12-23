@@ -56,6 +56,14 @@ public class SettingsTradingShort : SettingsTradingBase
 }
 
 [Serializable]
+public class CryptoDcaEntry
+{
+    public decimal Factor { get; set; }
+    public decimal Percentage { get; set; }
+}
+
+
+[Serializable]
 public class SettingsTrading
 {
     // Is de BOT actief
@@ -103,38 +111,30 @@ public class SettingsTrading
     //***************************
     // Buy
     // Wanneer wordt de order geplaatst
-    public CryptoStepInMethod BuyStepInMethod { get; set; } = CryptoStepInMethod.AfterNextSignal;
+    public CryptoEntryOrProfitMethod BuyStepInMethod { get; set; } = CryptoEntryOrProfitMethod.AfterNextSignal;
     // De manier waarop de buy order geplaatst wordt
-    public CryptoBuyOrderMethod BuyOrderMethod { get; set; } = CryptoBuyOrderMethod.BidPrice;
+    public CryptoBuyOrderMethod BuyOrderMethod { get; set; } = CryptoBuyOrderMethod.MarketOrder;
     // Verwijder de order indien niet na zoveel minuten gevuld
-    public int GlobalBuyRemoveTime { get; set; } = 15;
+    public int GlobalBuyRemoveTime { get; set; } = 5;
     //Het afwijkend percentage bij het kopen
-    public decimal GlobalBuyVarying { get; set; } = -0.1m; // aankoop verlagen
+    public decimal GlobalBuyVarying { get; set; } = -0.01m; // verlagen
 
     //***************************
     // Bijkopen (DCA)
     // Wanneer plaatsen we de DCA?
-    public CryptoStepInMethod DcaStepInMethod { get; set; } = CryptoStepInMethod.FixedPercentage;
+    public CryptoEntryOrProfitMethod DcaStepInMethod { get; set; } = CryptoEntryOrProfitMethod.FixedPercentage;
     // De manier waarop de buy order geplaatst wordt
     public CryptoBuyOrderMethod DcaOrderMethod { get; set; } = CryptoBuyOrderMethod.SignalPrice;
-    //public bool DcaOrderMethod2 { get; set; } = CryptoBuyOrderMethod.MarketOrder;
-    // Hoe vaak mogen we bijkopen
-    public int DcaCount { get; set; } = 0; // niet bijkopen
-    // Percentage bijkopen
-    public decimal DcaPercentage { get; set; } = 2m;
-    // Het DCA multifactor (normaal 1, meer bijkopen?)
-    public decimal DcaFactor { get; set; } = 1; // Het bedrag met x DCA's loopt snel op!
-
 
     
 
     // Tijd na een buy om niets te doen (om ladders te voorkomen)
-    public int GlobalBuyCooldownTime { get; set; } = 15;
+    public int GlobalBuyCooldownTime { get; set; } = 30;
 
     //***************************
     // Sell
     // Het verkoop bedrag = buy bedrag * (100+profit / 100)
-    public decimal ProfitPercentage { get; set; } = 1m;
+    public decimal ProfitPercentage { get; set; } = 1.1m;
     // De manier waarop de order geplaatst wordt
     public CryptoSellMethod SellMethod { get; set; } = CryptoSellMethod.FixedPercentage;
     // Zet een OCO zodra we in de winst zijn (kan het geen verlies trade meer worden, samen met tracing)
@@ -142,6 +142,7 @@ public class SettingsTrading
 
     //***************************
     // Stopp loss
+    // Vanwege ontbreken stoplimit op Bybit afgesterd
     //public decimal GlobalStopPercentage { get; set; } = 0m;
     //public decimal GlobalStopLimitPercentage { get; set; } = 0m;
 
@@ -160,6 +161,9 @@ public class SettingsTrading
 
     public List<PauseTradingRule> PauseTradingRules { get; set; } = new();
 
+    // De lijst met bijkopen
+    public List<CryptoDcaEntry> DcaList { get; set; } = new();
+
     // Instap condities indien de "trend" positief is (up/down)
     //public List<string> TrendOn { get; set; } = new();
 
@@ -171,6 +175,15 @@ public class SettingsTrading
 
     public SettingsTrading()
     {
+        Long.Barometer.List.Add("1h", (-1.5m, 999m));
+        Short.Barometer.List.Add("1h", (-999m, 1.5m));
+
+        Long.IntervalTrend.List.Add("1h");
+        Short.IntervalTrend.List.Add("1h");
+
+        Long.MarketTrend.List.Add((0m, 100m));
+        Short.MarketTrend.List.Add((-100m, 0));
+
         PauseTradingRules.Add(new PauseTradingRule()
         {
             Symbol = "BTCUSDT",
@@ -187,6 +200,18 @@ public class SettingsTrading
             Candles = 5,
             Interval = CryptoIntervalPeriod.interval5m,
             CoolDown = 8,
+        });
+
+
+        DcaList.Add(new CryptoDcaEntry()
+        {
+            Factor = 2,
+            Percentage = 1.5m,
+        });
+        DcaList.Add(new CryptoDcaEntry()
+        {
+            Factor = 4,
+            Percentage = 4.5m,
         });
     }
 

@@ -50,6 +50,18 @@
     <AdditionalFiles Remove="C:\Users\Marius\.nuget\packages\microsoft.dotnet.upgradeassistant.extensions.default.analyzers\0.4.421302\build\\WebTypeReplacements.typemap" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Remove="Signal\SignalPriceCrossedEma20.cs" />
+    <Compile Remove="Signal\SignalPriceCrossedEma50.cs" />
+    <Compile Remove="Signal\SignalPriceCrossedSma20.cs" />
+    <Compile Remove="Signal\SignalPriceCrossedSma50.cs" />
+    <Compile Remove="Signal\SignalSlopeEma20TurningPositive.cs" />
+    <Compile Remove="Signal\SignalSlopeEma50TurningNegative.cs" />
+    <Compile Remove="Signal\SignalSlopeEma50TurningPositive.cs" />
+    <Compile Remove="Signal\SignalSlopeSma20TurningPositive.cs" />
+    <Compile Remove="Signal\SignalSlopeSma50TurningNegative.cs" />
+    <Compile Remove="Signal\SignalSlopeSma50TurningPositive.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <Reference Include="System.Speech" />
   </ItemGroup>
   <ItemGroup>
@@ -106,7 +118,7 @@
   <ItemGroup>
     <PackageReference Include="Binance.Net" Version="9.2.0" />
     <PackageReference Include="BouncyCastle.Cryptography" Version="2.2.1" />
-    <PackageReference Include="Bybit.Net" Version="3.2.5" />
+    <PackageReference Include="Bybit.Net" Version="3.2.6" />
     <PackageReference Include="CommandLineParser" Version="2.9.1" />
     <PackageReference Include="Cryptowatcher.TA-LIb-Core" Version="1.0.0" />
     <PackageReference Include="Dapper" Version="2.1.24" />
@@ -162,15 +174,18 @@
       <Version>15.0.4795.1001</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.Web.WebView2">
-      <Version>1.0.2151.40</Version>
+      <Version>1.0.2210.55</Version>
     </PackageReference>
     <PackageReference Include="Nito.AsyncEx.Context" Version="5.1.2" />
     <PackageReference Include="NLog">
       <Version>5.2.7</Version>
     </PackageReference>
     <PackageReference Include="NPOI" Version="2.6.2" />
+    <PackageReference Include="Serilog" Version="3.1.1" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="5.0.1" />
+    <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
     <PackageReference Include="SimpleInjector">
-      <Version>5.4.2</Version>
+      <Version>5.4.3</Version>
     </PackageReference>
     <PackageReference Include="Skender.Stock.Indicators">
       <Version>2.5.0</Version>
@@ -260,6 +275,15 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <AutoGen>True</AutoGen>
       <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
+    <Compile Update="SettingsDialog\UserControlTrendInterval.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="SettingsDialog\UserControlMarketTrendRange.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="SettingsDialog\UserControlStrategy.cs">
+      <SubType>UserControl</SubType>
     </Compile>
   </ItemGroup>
 </Project>

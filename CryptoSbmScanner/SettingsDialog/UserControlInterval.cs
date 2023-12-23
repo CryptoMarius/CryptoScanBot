@@ -1,8 +1,7 @@
-﻿using CryptoSbmScanner.Enums;
-using CryptoSbmScanner.Intern;
-using CryptoSbmScanner.Model;
+﻿using CryptoSbmScanner.Intern;
 
 namespace CryptoSbmScanner.SettingsDialog;
+
 public partial class UserControlInterval : UserControl
 {
 
@@ -14,43 +13,33 @@ public partial class UserControlInterval : UserControl
         InitializeComponent();
     }
 
-    public void InitControls(string caption)
+    public void InitControls()
     {
-        EditGroupBox.Text = caption;
-
-        ControlList.Add(EditInterval1m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1m].Name);
-        ControlList.Add(EditInterval2m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval2m].Name);
-        ControlList.Add(EditInterval3m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval3m].Name);
-        ControlList.Add(EditInterval5m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval5m].Name);
-        ControlList.Add(EditInterval10m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval10m].Name);
-        ControlList.Add(EditInterval15m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval15m].Name);
-        ControlList.Add(EditInterval30m, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval30m].Name);
-        ControlList.Add(EditInterval1h, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1h].Name);
-        ControlList.Add(EditInterval2h, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval2h].Name);
-        ControlList.Add(EditInterval4h, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval4h].Name);
-        ControlList.Add(EditInterval6h, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval6h].Name);
-        ControlList.Add(EditInterval8h, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval8h].Name);
-        ControlList.Add(EditInterval12h, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval12h].Name);
-        ControlList.Add(EditInterval1d, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1d].Name);
-    }
-
-    public void LoadConfig(List<string> list)
-    {
-        foreach (var item in ControlList)
+        foreach (var interval in GlobalData.IntervalList)
         {
-            item.Key.Checked = list.Contains(item.Value);
+            CheckBox checkbox = new()
+            {
+                UseVisualStyleBackColor = true,
+                Text = interval.Name,
+            };
+            flowLayoutPanel1.Controls.Add(checkbox);
+            ControlList.Add(checkbox, interval.Name);
         }
     }
 
-    public List<string> SaveConfig()
+    public void LoadConfig(List<string> settings)
     {
-        List<string> list = new();
+        foreach (var item in ControlList)
+            item.Key.Checked = settings.Contains(item.Value);
+    }
+
+    public void SaveConfig(List<string> settings)
+    {
+        settings.Clear();
         foreach (var item in ControlList)
         {
             if (item.Key.Checked)
-                list.Add(item.Value);
+                settings.Add(item.Value);
         }
-
-        return list;
     }
 }

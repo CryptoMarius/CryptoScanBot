@@ -102,14 +102,14 @@ public class DataStore
                     {
                         // Een vorig formaat
                         File.Delete(filename);
-                        GlobalData.Logger.Error(error);
+                        GlobalData.Logger.Error(error, "");
                         GlobalData.AddTextToLogTab(error.ToString() + "\r\n");
                         //throw;
                     }
                     catch (Exception error)
                     {
                         GlobalData.AddTextToLogTab("Problem " + symbol.Name);
-                        GlobalData.Logger.Error(error);
+                        GlobalData.Logger.Error(error, "");
                         GlobalData.AddTextToLogTab(error.ToString() + "\r\n");
                         // Een vorig formaat
                         File.Delete(filename);

@@ -32,7 +32,6 @@ public class CryptoQuoteData
     // De laatst berekende barometer standen
     [Computed]
     [JsonIgnore]
-    //public BarometerData[] BarometerList { get; } = new BarometerData[Enum.GetValues(typeof(CryptoIntervalPeriod)).Length];
     public Dictionary<CryptoIntervalPeriod, BarometerData> BarometerList { get; set; } = new();
 
     // Gecachte lijst met symbolen (de zoveelste), met name voor de barometer(s)
@@ -62,5 +61,22 @@ public class CryptoQuoteData
         {
             BarometerList[interval] = new BarometerData();
         }
+    }
+}
+
+
+
+public static class CryptoQuoteDataHelper
+{
+    public static decimal GetEntryAmount(this CryptoQuoteData quoteData, decimal currentAssetQuantity)
+    {
+        // Bepaal het entry bedrag 
+        // TODO Er is geen percentage bij papertrading mogelijk (of we moeten een werkende papertrade asset management implementeren)
+
+        // Heeft de gebruiker een percentage of een aantal ingegeven?
+        if (quoteData.EntryPercentage > 0m)
+            return quoteData.EntryPercentage * currentAssetQuantity / 100;
+        else
+            return quoteData.EntryAmount;
     }
 }

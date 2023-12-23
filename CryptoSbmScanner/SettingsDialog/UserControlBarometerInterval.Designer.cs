@@ -29,11 +29,11 @@ partial class UserControlBarometerInterval
     private void InitializeComponent()
     {
         label1 = new Label();
-        EditBarometer = new CheckBox();
-        EditBarometerMax = new NumericUpDown();
-        EditBarometerMin = new NumericUpDown();
-        ((System.ComponentModel.ISupportInitialize)EditBarometerMax).BeginInit();
-        ((System.ComponentModel.ISupportInitialize)EditBarometerMin).BeginInit();
+        EditIsActive = new CheckBox();
+        EditMaximal = new NumericUpDown();
+        EditMinimal = new NumericUpDown();
+        ((System.ComponentModel.ISupportInitialize)EditMaximal).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)EditMinimal).BeginInit();
         SuspendLayout();
         // 
         // label1
@@ -45,36 +45,36 @@ partial class UserControlBarometerInterval
         label1.TabIndex = 270;
         label1.Text = "..";
         // 
-        // EditBarometer
+        // EditIsActive
         // 
-        EditBarometer.AutoSize = true;
-        EditBarometer.Location = new Point(17, 5);
-        EditBarometer.Margin = new Padding(4, 3, 4, 3);
-        EditBarometer.Name = "EditBarometer";
-        EditBarometer.Size = new Size(49, 19);
-        EditBarometer.TabIndex = 269;
-        EditBarometer.Text = "15m";
-        EditBarometer.UseVisualStyleBackColor = true;
+        EditIsActive.AutoSize = true;
+        EditIsActive.Location = new Point(10, 5);
+        EditIsActive.Margin = new Padding(4, 3, 4, 3);
+        EditIsActive.Name = "EditIsActive";
+        EditIsActive.Size = new Size(49, 19);
+        EditIsActive.TabIndex = 269;
+        EditIsActive.Text = "15m";
+        EditIsActive.UseVisualStyleBackColor = true;
         // 
-        // EditBarometerMax
+        // EditMaximal
         // 
-        EditBarometerMax.DecimalPlaces = 2;
-        EditBarometerMax.Location = new Point(256, 4);
-        EditBarometerMax.Margin = new Padding(4, 3, 4, 3);
-        EditBarometerMax.Name = "EditBarometerMax";
-        EditBarometerMax.Size = new Size(88, 23);
-        EditBarometerMax.TabIndex = 268;
-        EditBarometerMax.Value = new decimal(new int[] { 25, 0, 0, 0 });
+        EditMaximal.DecimalPlaces = 2;
+        EditMaximal.Location = new Point(256, 4);
+        EditMaximal.Margin = new Padding(4, 3, 4, 3);
+        EditMaximal.Name = "EditMaximal";
+        EditMaximal.Size = new Size(88, 23);
+        EditMaximal.TabIndex = 268;
+        EditMaximal.Value = new decimal(new int[] { 25, 0, 0, 0 });
         // 
-        // EditBarometerMin
+        // EditMinimal
         // 
-        EditBarometerMin.DecimalPlaces = 2;
-        EditBarometerMin.Location = new Point(129, 3);
-        EditBarometerMin.Margin = new Padding(4, 3, 4, 3);
-        EditBarometerMin.Name = "EditBarometerMin";
-        EditBarometerMin.Size = new Size(88, 23);
-        EditBarometerMin.TabIndex = 267;
-        EditBarometerMin.Value = new decimal(new int[] { 25, 0, 0, 0 });
+        EditMinimal.DecimalPlaces = 2;
+        EditMinimal.Location = new Point(129, 3);
+        EditMinimal.Margin = new Padding(4, 3, 4, 3);
+        EditMinimal.Name = "EditMinimal";
+        EditMinimal.Size = new Size(88, 23);
+        EditMinimal.TabIndex = 267;
+        EditMinimal.Value = new decimal(new int[] { 25, 0, 0, 0 });
         // 
         // UserControlBarometerInterval
         // 
@@ -82,13 +82,13 @@ partial class UserControlBarometerInterval
         AutoScaleMode = AutoScaleMode.Font;
         AutoSize = true;
         Controls.Add(label1);
-        Controls.Add(EditBarometer);
-        Controls.Add(EditBarometerMax);
-        Controls.Add(EditBarometerMin);
+        Controls.Add(EditIsActive);
+        Controls.Add(EditMaximal);
+        Controls.Add(EditMinimal);
         Name = "UserControlBarometerInterval";
         Size = new Size(357, 30);
-        ((System.ComponentModel.ISupportInitialize)EditBarometerMax).EndInit();
-        ((System.ComponentModel.ISupportInitialize)EditBarometerMin).EndInit();
+        ((System.ComponentModel.ISupportInitialize)EditMaximal).EndInit();
+        ((System.ComponentModel.ISupportInitialize)EditMinimal).EndInit();
         ResumeLayout(false);
         PerformLayout();
     }
@@ -96,7 +96,7 @@ partial class UserControlBarometerInterval
     #endregion
 
     private Label label1;
-    private CheckBox EditBarometer;
-    private NumericUpDown EditBarometerMax;
-    private NumericUpDown EditBarometerMin;
+    private CheckBox EditIsActive;
+    private NumericUpDown EditMaximal;
+    private NumericUpDown EditMinimal;
 }

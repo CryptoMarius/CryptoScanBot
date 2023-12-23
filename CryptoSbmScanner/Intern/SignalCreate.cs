@@ -261,7 +261,7 @@ public class SignalCreate
         }
         catch (Exception error)
         {
-            GlobalData.Logger.Error(error);
+            GlobalData.Logger.Error(error, "");
             GlobalData.AddTextToLogTab("");
             GlobalData.AddTextToLogTab(error.ToString(), true);
 
@@ -311,26 +311,22 @@ public class SignalCreate
         {
             if (candles.TryGetValue(unix, out CryptoCandle candle))
             {
-                //break; // we hebben maximaal 260 candles, minder dan de gewenste 2 dagen
-
                 if ((double)candle.Low < min)
                     min = (double)candle.Low;
 
                 if ((double)candle.High > max)
                     max = (double)candle.High;
-
-                //if (!candles.TryGetValue(candle.OpenTime - symbolInterval.Interval.Duration, out candle))
-                //    break; // we hebben maximaal 260 candles, minder dan de gewenste 2 dagen
             }
 
             unix -= symbolInterval.Interval.Duration;
         }
 
         double diff = max - min;
-        if (!min.Equals(0))
-            return 100.0 * (diff / min);
+        if (!max.Equals(0))
+            return 100.0 * (diff / max);
         else
             return 0;
+        //signal.Last10DaysEffective = CalculateMaxMovementInInterval(signal.EventTime, CryptoIntervalPeriod.interval6h, 1 * 40);
     }
 
 
@@ -446,9 +442,6 @@ public class SignalCreate
 
     private bool PrepareAndSendSignal(SignalCreateBase algorithm)
     {
-        if (Symbol.Name.Equals("LITUSDT"))
-            GlobalData.AddTextToLogTab("DEBUG NewCandleArrivedAsync(): " + Symbol.Name);
-
         CryptoSignal signal = CreateSignal(Candle);
         signal.Side = algorithm.SignalSide;
         signal.Strategy = algorithm.SignalStrategy;
@@ -563,21 +556,22 @@ public class SignalCreate
         }
 
 
-        // Check low barometer
-        decimal? Barometer1h = -99m;
-        if (GlobalData.Settings.QuoteCoins.TryGetValue(Symbol.Quote, out CryptoQuoteData quoteData))
-        {
-            BarometerData barometerData = quoteData.BarometerList[CryptoIntervalPeriod.interval1h];
-            Barometer1h = barometerData.PriceBarometer;
-        }
-        if (Barometer1h <= GlobalData.Settings.Signal.Barometer1hMinimal)
-        {
-            // Log iets, maar dat wordt wel veel
-            if (GlobalData.Settings.Signal.LogBarometerToLow)
-                GlobalData.AddTextToLogTab("Analyse Barometer te laag");
-            eventText.Add("barometer te laag");
-            signal.IsInvalid = true;
-        }
+        // TODO: Willen we dat nu hier of in de aansturing (de invalid signals klopt nu niet)
+        //// Check low barometer
+        //decimal? Barometer1h = -99m;
+        //if (GlobalData.Settings.QuoteCoins.TryGetValue(Symbol.Quote, out CryptoQuoteData quoteData))
+        //{
+        //    BarometerData barometerData = quoteData.BarometerList[CryptoIntervalPeriod.interval1h];
+        //    Barometer1h = barometerData.PriceBarometer;
+        //}
+        //if (Barometer1h <= GlobalData.Settings.Signal.Barometer1hMinimal)
+        //{
+        //    // Log iets, maar dat wordt wel veel
+        //    if (GlobalData.Settings.Signal.LogBarometerToLow)
+        //        GlobalData.AddTextToLogTab("Analyse Barometer te laag");
+        //    eventText.Add("barometer te laag");
+        //    signal.IsInvalid = true;
+        //}
 
 
         // Check "Barcode" charts
@@ -644,18 +638,38 @@ public class SignalCreate
 
 
         // Extra controles toepassen en het signaal "afkeuren" (maar toch laten zien)
-        if (!HasOpenPosition() && signal.Strategy == CryptoSignalStrategy.Stobb)
+        if (!HasOpenPosition())
         {
-            if (signal.Side == CryptoTradeSide.Long && GlobalData.Settings.Signal.StobTrendLong > -99m && (decimal)signal.TrendPercentage < GlobalData.Settings.Signal.StobTrendLong)
+            // Filter op bepaalde intervallen waarvan je wil dat die bullisch of bearisch zijn
+            if (!PositionTools.ValidTrendConditions(signal.Symbol, TradingConfig.Signals[signal.Side].Trend, out string reaction))
             {
-                eventText.Add("de trend% is te laag");
+                eventText.Add(reaction);
                 signal.IsInvalid = true;
             }
-            // Die -99 begint verwarrend te werken
-            if (signal.Side == CryptoTradeSide.Short && GlobalData.Settings.Signal.StobTrendShort > -99m && (decimal)signal.TrendPercentage > GlobalData.Settings.Signal.StobTrendShort)
+
+
+            // Filter op de markettrend waarvan je wil dat die qua percentage bullisch of bearisch zijn
+            if (!PositionTools.ValidMarketTrendConditions(signal.Symbol, TradingConfig.Signals[signal.Side].MarketTrend, out reaction))
             {
-                eventText.Add("de trend% is te hoog");
+                eventText.Add(reaction);
                 signal.IsInvalid = true;
+            }
+
+
+            // En aanvullend specifiek voro de STOBB ook een controle op de markettrend
+            if (signal.Strategy == CryptoSignalStrategy.Stobb)
+            {
+                if (signal.Side == CryptoTradeSide.Long && GlobalData.Settings.Signal.Stobb.TrendLong > -99m && (decimal)signal.TrendPercentage < GlobalData.Settings.Signal.Stobb.TrendLong)
+                {
+                    eventText.Add("de trend% is te laag");
+                    signal.IsInvalid = true;
+                }
+                // Die -99 begint verwarrend te werken
+                if (signal.Side == CryptoTradeSide.Short && GlobalData.Settings.Signal.Stobb.TrendShort > -99m && (decimal)signal.TrendPercentage > GlobalData.Settings.Signal.Stobb.TrendShort)
+                {
+                    eventText.Add("de trend% is te hoog");
+                    signal.IsInvalid = true;
+                }
             }
         }
 
@@ -704,7 +718,7 @@ public class SignalCreate
         }
         catch (Exception error)
         {
-            GlobalData.Logger.Error(error);
+            GlobalData.Logger.Error(error, "");
             GlobalData.AddTextToLogTab("");
             GlobalData.AddTextToLogTab(error.ToString(), true);
             return false;
@@ -856,7 +870,7 @@ public class SignalCreate
 
 
 
-    public void AnalyzeSymbol(long candleOpenTime)
+    public void Analyze(long candleOpenTime)
     {
         // Eenmalig de indicators klaarzetten
         if (Prepare(candleOpenTime))

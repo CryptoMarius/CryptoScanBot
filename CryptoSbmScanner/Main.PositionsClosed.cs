@@ -283,7 +283,7 @@ public partial class FrmMain
             // Controleer de orders, en herbereken het geheel
             PositionTools.LoadPosition(databaseThread, position);
             await TradeTools.LoadTradesfromDatabaseAndExchange(databaseThread, position);
-            TradeTools.CalculatePositionResultsViaTrades(databaseThread, position);
+            TradeTools.CalculatePositionResultsViaTrades(databaseThread, position, saveChangesAnywhay: true);
             FillItemClosed(position, item);
         }
 

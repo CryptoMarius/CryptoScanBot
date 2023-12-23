@@ -98,7 +98,7 @@ public class BackTestExcel
         return column;
     }
 
-    public void ExportToExcell(CryptoOrderSide mode, CryptoSignalStrategy strategy)
+    public void ExportToExcell(CryptoSignalStrategy strategy)
     {
         // HSSF => Microsoft Excel(excel 97-2003)
         // XSSF => Office Open XML Workbook(excel 2007)
@@ -292,7 +292,7 @@ public class BackTestExcel
                     WriteCell(sheet, column++, row, "no");
                 }
 
-                if (candle.IsSma200AndSma20OkayOversold(GlobalData.Settings.Signal.SbmMa200AndMa20Percentage, out string _))
+                if (candle.IsSma200AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out string _))
                 {
                     cell = WriteCell(sheet, column++, row, "yes");
                     cell.CellStyle = cellStyleStringGreen;
@@ -302,7 +302,7 @@ public class BackTestExcel
                     WriteCell(sheet, column++, row, "no");
                 }
 
-                if (candle.IsSma200AndSma50OkayOversold(GlobalData.Settings.Signal.SbmMa200AndMa50Percentage, out _))
+                if (candle.IsSma200AndSma50OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out _))
                 {
                     cell = WriteCell(sheet, column++, row, "yes");
                     cell.CellStyle = cellStyleStringGreen;
@@ -312,7 +312,7 @@ public class BackTestExcel
                     WriteCell(sheet, column++, row, "no");
                 }
 
-                if (candle.IsSma50AndSma20OkayOversold(GlobalData.Settings.Signal.SbmMa50AndMa20Percentage, out _))
+                if (candle.IsSma50AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out _))
                 {
                     cell = WriteCell(sheet, column++, row, "yes");
                     cell.CellStyle = cellStyleStringGreen;

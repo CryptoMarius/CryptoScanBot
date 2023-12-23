@@ -5,8 +5,8 @@ namespace CryptoSbmScanner.Context;
 
 public class Migration
 {
-    // De huidige database versie (zoals in de code is gedefinieerd)
-    public readonly static int CurrentDatabaseVersion = 9;
+    // De huidige database versie
+    public readonly static int CurrentDatabaseVersion = 11;
 
 
     public static void Execute(CryptoDatabase database, int CurrentVersion)
@@ -144,6 +144,7 @@ public class Migration
                 // +Introductie van een Exchange.FeeRate en deze vullen voor alle exchanges (de default fee voor een exchange)
                 //  0.01% voor limt orders en 0.015 voor market orders of iets dergelijks (iets met maker en taker)
                 database.Connection.Execute("alter table Exchange add FeeRate TEXT", transaction);
+                // Alle exchanges staan voorlopig op dezelfde feerate
                 database.Connection.Execute("update Exchange set FeeRate=0.001", transaction);
 
                 // -Verwijderen van de Part.Status + de laatste code (verplicht veld)
@@ -168,8 +169,6 @@ public class Migration
                 database.Connection.Execute("alter table PositionPart add PartNumber Integer", transaction);
                 database.Connection.Execute("update PositionPart set PartNumber=0 where name='BUY'", transaction);
                 database.Connection.Execute("update PositionPart set PartNumber=1 where name='DCA'", transaction);
-                // -Verwijderen van de Part.Name, dit is een alias voor de Number (=1 > 1)
-                //database.Connection.Execute("alter table PositionPart drop column Name", transaction); // nog even nodig denk ik, kan later wel weg?
 
                 // Op verzoek enige trend indicatoren per interval (slechts een paar)
                 database.Connection.Execute("alter table Signal add Trend15m Integer", transaction);
@@ -213,9 +212,54 @@ public class Migration
             }
 
 
-            // -Verwijderen van de Part.Name, vervangen door de PartNumber
-            // TODO: Moet nog doorgevoerd worden?
-            //database.Connection.Execute("alter table PositionPart drop column Name", transaction);
+            //***********************************************************
+            if (CurrentVersion > version.Version && version.Version == 9)
+            {
+                using var transaction = database.BeginTransaction();
+
+                // Vanwege DCA bijkoop (daarvoor was die ongebruikte kolom BuyAmount dus bedoeld!)
+                database.Connection.Execute("alter table Position add EntryAmount TEXT null", transaction);
+
+
+                // Introductie van een purpose voor vasstellen van het doen van een part (entry of dca)
+                database.Connection.Execute("alter table PositionPart add Purpose Integer", transaction);
+                database.Connection.Execute("update PositionPart set Purpose=0 where name='BUY'", transaction);
+                database.Connection.Execute("update PositionPart set Purpose=1 where name='DCA'", transaction);
+
+                // Daardoor vervalt het bestaansrecht van de velden Name en Side
+                database.Connection.Execute("alter table PositionPart drop column Name", transaction);
+                database.Connection.Execute("alter table PositionPart drop column Side", transaction);
+
+
+                // Vervangt de StepInMethod door EntryMethod (naamgeving ivm long/short)
+                database.Connection.Execute("alter table PositionPart add EntryMethod TEXT null", transaction);
+                database.Connection.Execute("update PositionPart set EntryMethod=StepInMethod", transaction);
+                database.Connection.Execute("alter table PositionPart drop column StepInMethod", transaction);
+
+                // Vervangt de StepOutMethod door ProfitMethod (naamgeving ivm long/short)
+                database.Connection.Execute("alter table PositionPart add ProfitMethod TEXT null", transaction);
+                database.Connection.Execute("update PositionPart set ProfitMethod=StepOutMethod", transaction);
+                database.Connection.Execute("alter table PositionPart drop column StepOutMethod", transaction);
+
+                // update version
+                version.Version += 1;
+                database.Connection.Update(version, transaction);
+                transaction.Commit();
+            }
+
+
+            //***********************************************************
+            if (CurrentVersion > version.Version && version.Version == 10)
+            {
+                using var transaction = database.BeginTransaction();
+
+                database.Connection.Execute("alter table PositionPart add EntryAmount TEXT null", transaction);
+
+                // update version
+                version.Version += 1;
+                database.Connection.Update(version, transaction);
+                transaction.Commit();
+            }
         }
     }
 

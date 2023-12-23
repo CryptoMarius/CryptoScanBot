@@ -224,19 +224,19 @@ public class SignalSbmBase : SignalCreateBase
 
     public bool CheckMaCrossings(out string response)
     {
-        if (GlobalData.Settings.Signal.SbmMa200AndMa20Crossing && HasCrossed200and20(GlobalData.Settings.Signal.SbmMa200AndMa20Lookback, out int candlesAgo))
+        if (GlobalData.Settings.Signal.Sbm.Ma200AndMa20Crossing && HasCrossed200and20(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Lookback, out int candlesAgo))
         {
             response = string.Format("ma200 and ma20 gekruist ({0} candles)", candlesAgo);
             GlobalData.AddTextToLogTab(Symbol.Name + " " + Interval.Name + " " + response);
             return false;
         }
-        if (GlobalData.Settings.Signal.SbmMa200AndMa50Crossing && HasCrossed200and50(GlobalData.Settings.Signal.SbmMa200AndMa50Lookback, out candlesAgo))
+        if (GlobalData.Settings.Signal.Sbm.Ma200AndMa50Crossing && HasCrossed200and50(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Lookback, out candlesAgo))
         {
             response = string.Format("ma200 en ma50 gekruist ({0} candles)", candlesAgo);
             GlobalData.AddTextToLogTab(Symbol.Name + " " + Interval.Name + " " + response);
             return false;
         }
-        if (GlobalData.Settings.Signal.SbmMa50AndMa20Crossing && HasCrossed50and20(GlobalData.Settings.Signal.SbmMa50AndMa20Lookback, out candlesAgo))
+        if (GlobalData.Settings.Signal.Sbm.Ma50AndMa20Crossing && HasCrossed50and20(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Lookback, out candlesAgo))
         {
             response = string.Format("ma50 and ma20 gekruist ({0} candles)", candlesAgo);
             GlobalData.AddTextToLogTab(Symbol.Name + " " + Interval.Name + " " + response);

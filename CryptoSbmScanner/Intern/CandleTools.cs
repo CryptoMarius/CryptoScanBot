@@ -339,7 +339,7 @@ public static class CandleTools
         }
         catch (Exception error)
         {
-            GlobalData.Logger.Error(error);
+            GlobalData.Logger.Error(error, "");
             // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
             //GlobalData.AddTextToLogTab(error.ToString());
         }
@@ -390,7 +390,7 @@ public static class CandleTools
         }
         catch (Exception error)
         {
-            GlobalData.Logger.Error(error);
+            GlobalData.Logger.Error(error, "");
             // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
             //GlobalData.AddTextToLogTab(error.ToString());
         }

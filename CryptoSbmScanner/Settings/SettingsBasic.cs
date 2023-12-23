@@ -49,10 +49,12 @@ public class SettingsBasic
     // Als de symbol in de blacklist voorkomt worden er geen meldingen voor deze munt gemaakt
     public List<string> BlackListOverbought { get; set; } = new();
 
-
     // Welke kolommen zijn zichtbaar in het tabbblad signalen
     public List<string> HiddenSignalColumns { get; set; } = new();
 
     /// Instellingen voor het uitvoeren backtest (work in progres)
     public SettingsBackTest BackTest { get; set; } = new();
+
+    // What symbols to show
+    public List<string> ShowSymbolInformation { get; set; } = new((new string[] { "BTC", "PAXG", "ETH", "XRP", "SOL", "ADA"}));
 }

@@ -16,6 +16,7 @@ public enum MatchBlackAndWhiteList
 }
 
 // Compiled version of the SettingsTextual for signal (long/short) and trading (long/short)
+
 [Serializable]
 public class SettingsCompiled
 {
@@ -31,14 +32,20 @@ public class SettingsCompiled
     public List<CryptoSignalStrategy> StrategyOthers { get; set; } = new();
     
 
-    // Via interval + Value
+    // Interval trend + Value (bullisch, bearish)
     public Dictionary<CryptoIntervalPeriod, CryptoTrendIndicator> Trend { get; set; } = new();
+    public bool TrendLog = false;
 
-
+    // Markt trend + Value (percentage)
+    public List<(decimal minValue, decimal maxValue)> MarketTrend { get; set; } = new();
+    public bool MarketTrendLog = false;
+    
     // Via interval + Value (ranged)
+    // Minimale barometer om de meldingen te genereren
     public Dictionary<CryptoIntervalPeriod, (decimal minValue, decimal maxValue)> Barometer { get; set; } = new();
+    public bool BarometerLog = false;
 
-
+ 
     // The black- and whitelist
     public SortedList<string, bool> BlackList { get; } = new();
     public SortedList<string, bool> WhiteList { get; } = new();
@@ -62,8 +69,8 @@ public class SettingsCompiled
                 IntervalPeriod.Add(interval.IntervalPeriod, true);
             }
 
-            // Trend *up/down)
-            if (GlobalData.Settings.Trading.Long.Trend.Contains(interval.Name))
+            // Interval trend (up/down)
+            if (settings.IntervalTrend.List.Contains(interval.Name))
             {
                 if (side == CryptoTradeSide.Long)
                     Trend.Add(interval.IntervalPeriod, CryptoTrendIndicator.Bullish);
@@ -72,14 +79,21 @@ public class SettingsCompiled
             }
 
             // Barometer (ranged)
-            if (settings.Barometer.TryGetValue(interval.Name, out var value))
-            {
-                if (side == CryptoTradeSide.Long)
-                    Barometer.Add(interval.IntervalPeriod, (value, decimal.MaxValue));
-                else if (side == CryptoTradeSide.Short)
-                    Barometer.Add(interval.IntervalPeriod, (decimal.MinValue, value));
-            }
+            if (settings.Barometer.List.TryGetValue(interval.Name, out var value))
+                Barometer.Add(interval.IntervalPeriod, value);
         }
+        TrendLog = settings.IntervalTrend.Log;
+        BarometerLog = settings.Barometer.Log;
+
+
+        // Market trend% (min..max), er is maar 1 aanwezig
+        if (settings.MarketTrend.List.Any())
+        {
+            foreach (var (minValue, maxValue) in settings.MarketTrend.List)
+                MarketTrend.Add((minValue, maxValue));
+        }
+        MarketTrendLog = settings.MarketTrend.Log;
+
 
         Strategy.Clear();
         StrategySbmStob.Clear();

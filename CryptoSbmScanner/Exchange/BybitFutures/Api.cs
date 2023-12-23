@@ -1,4 +1,7 @@
-﻿using Bybit.Net.Clients;
+﻿using System.Text.Encodings.Web;
+using System.Text.Json;
+
+using Bybit.Net.Clients;
 using Bybit.Net.Enums;
 using Bybit.Net.Objects.Models.Socket;
 using Bybit.Net.Objects.Models.V5;
@@ -36,6 +39,7 @@ public class Api : ExchangeBase
         // Default opties voor deze exchange
         BybitRestClient.SetDefaultOptions(options =>
         {
+            options.ReceiveWindow = TimeSpan.FromSeconds(15);
             if (GlobalData.Settings.Trading.ApiKey != "")
                 options.ApiCredentials = new ApiCredentials(GlobalData.Settings.Trading.ApiKey, GlobalData.Settings.Trading.ApiSecret);
         });
@@ -118,7 +122,9 @@ public class Api : ExchangeBase
         GlobalData.AddTextToLogTab($"{symbol.Name} Setting CrossOrIsolated={tradeMode} leverage={GlobalData.Settings.Trading.Leverage}");
 
         var result = await client.V5Api.Account.SwitchCrossIsolatedMarginAsync(Category, symbol.Name,
-            tradeMode, GlobalData.Settings.Trading.Leverage, GlobalData.Settings.Trading.Leverage);
+            tradeMode: tradeMode, 
+            buyLeverage: GlobalData.Settings.Trading.Leverage, 
+            sellLeverage: GlobalData.Settings.Trading.Leverage);
         if (!result.Success)
         {
             // Aanpassing zonder dat er daadwerkelijk iets aangepast is
@@ -130,12 +136,28 @@ public class Api : ExchangeBase
 
             GlobalData.AddTextToLogTab($"{symbol.Name} ERROR setting CrossOrIsolated={tradeMode} en leverage={GlobalData.Settings.Trading.Leverage} {result.Error}");
         }
+
+        // Vanwege een onverwachte liquidatie gaan we deze ook uitgebreid loggen
+        var options = new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = false, IncludeFields = true };
+        string text = JsonSerializer.Serialize(result, options);
+        GlobalData.AddTextToLogTab("SwitchCrossIsolatedMarginAsync :" + text);
+
+
+        // Niet te controleren????
+        //if (result.Success)
+        //{
+        //    await client.V5Api.Account.GetSpotMarginStatusAndLeverageAsync();
+
+        //        //BybitSpotMarginLeverageStatus
+        //}
+
+
         return result.Success;
     }
 
 
     public override async Task<(bool result, TradeParams tradeParams)> PlaceOrder(CryptoDatabase database,
-        CryptoTradeAccount tradeAccount, CryptoSymbol symbol, DateTime currentDate,
+        CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoTradeSide tradeSide, DateTime currentDate,
         CryptoOrderType orderType, CryptoOrderSide orderSide,
         decimal quantity, decimal price, decimal? stop, decimal? limit)
     {
@@ -175,10 +197,14 @@ public class Api : ExchangeBase
 
 
         // Plaats een order op de exchange *ze lijken op elkaar, maar het is net elke keer anders)
-        //BinanceWeights.WaitForFairBinanceWeight(1); flauwekul voor die ene tick (geen herhaling toch?)
+        // BinanceWeights.WaitForFairBinanceWeight(1); flauwekul voor die ene tick (geen herhaling toch?)
         using BybitRestClient client = new();
         if (!await DoSwitchCrossIsolatedMarginAsync(client, symbol))
-            return (false, null);
+        {
+            // Herhaal
+            if (!await DoSwitchCrossIsolatedMarginAsync(client, symbol))
+                return (false, null);
+        }
 
 
         WebCallResult<BybitOrderId> result;
@@ -206,11 +232,14 @@ public class Api : ExchangeBase
                 {
                     // Even tijdelijk (kan ook alleen maar op deze plek als je weet dat we ALLEEN long gaan!)
                     bool reduce = false;
-                    if (orderSide == CryptoOrderSide.Sell)
+                    if (tradeSide == CryptoTradeSide.Long && orderSide == CryptoOrderSide.Sell)
+                        reduce = true;
+                    if (tradeSide == CryptoTradeSide.Short && orderSide == CryptoOrderSide.Buy)
                         reduce = true;
 
-                    result = await client.V5Api.Trading.PlaceOrderAsync(Category, symbol.Name, side,
-                        NewOrderType.Limit, quantity: quantity, price: price, timeInForce: TimeInForce.GoodTillCanceled, isLeverage: false, reduceOnly: reduce);
+                    result = await client.V5Api.Trading.PlaceOrderAsync(Category, symbol.Name, side, 
+                        NewOrderType.Limit, quantity: quantity, price: price, timeInForce: TimeInForce.GoodTillCanceled, isLeverage: false, reduceOnly: reduce
+                        );
                     if (!result.Success)
                     {
                         tradeParams.Error = result.Error;
@@ -268,7 +297,7 @@ public class Api : ExchangeBase
             CreateTime = step.CreateTime,
             OrderSide = step.Side,
             OrderType = step.OrderType,
-            Price = step.Price, // the sell part (can also be a buy)
+            Price = step.Price, // the buy or sell price
             StopPrice = step.StopPrice, // OCO - the price at which the limit order to sell is activated
             LimitPrice = step.StopLimitPrice, // OCO - the lowest price that the trader is willing to accept
             Quantity = step.Quantity,
@@ -294,8 +323,12 @@ public class Api : ExchangeBase
             {
                 tradeParams.Error = result.Error;
                 tradeParams.ResponseStatusCode = result.ResponseStatusCode;
+
+                // If its already gone ignore the error
+                if (result.Error.Code == 110001) // 110001: Order does not exist
+                    return (true, tradeParams);
             }
-            return (true, tradeParams);
+            return (result.Success, tradeParams);
         }
 
         return (false, tradeParams);
@@ -348,7 +381,7 @@ public class Api : ExchangeBase
             }
             catch (Exception error)
             {
-                GlobalData.Logger.Error(error);
+                GlobalData.Logger.Error(error, "");
                 GlobalData.AddTextToLogTab(error.ToString());
                 // Als er ooit een rolback plaatsvindt is de database en objects in het geheugen niet meer in sync..
                 transaction.Rollback();
@@ -434,7 +467,7 @@ public class Api : ExchangeBase
         return await FetchTradeForOrder.FetchTradesForOrderAsync(tradeAccount, symbol, orderId);
     }
 
-public async override Task FetchAssetsAsync(CryptoTradeAccount tradeAccount)
+    public async override Task FetchAssetsAsync(CryptoTradeAccount tradeAccount)
     {
         //if (GlobalData.ExchangeListName.TryGetValue(ExchangeName, out Model.CryptoExchange exchange))
         {
@@ -464,7 +497,7 @@ public async override Task FetchAssetsAsync(CryptoTradeAccount tradeAccount)
                     }
                     catch (Exception error)
                     {
-                        GlobalData.Logger.Error(error);
+                        GlobalData.Logger.Error(error, "");
                         GlobalData.AddTextToLogTab(error.ToString());
                         throw;
                     }
@@ -472,7 +505,7 @@ public async override Task FetchAssetsAsync(CryptoTradeAccount tradeAccount)
             }
             catch (Exception error)
             {
-                GlobalData.Logger.Error(error);
+                GlobalData.Logger.Error(error, "");
                 GlobalData.AddTextToLogTab(error.ToString());
                 GlobalData.AddTextToLogTab("");
             }
@@ -497,6 +530,62 @@ public async override Task FetchAssetsAsync(CryptoTradeAccount tradeAccount)
     public static void ResetUserDataStream()
     {
         // niets, hmm
+    }
+
+    public static async Task GetPositionInfo()
+    {
+        //https://api.bybit.com/v5/position/list?category=linear
+        //https://bybit-exchange.github.io/docs/v5/position
+
+        //if (GlobalData.ExchangeListName.TryGetValue(ExchangeName, out Model.CryptoExchange exchange))
+        {
+            try
+            {
+
+                GlobalData.AddTextToLogTab($"Reading position information from {Api.ExchangeName}");
+
+                LimitRates.WaitForFairWeight(1);
+
+                using var client = new BybitRestClient();
+                {
+                    var positionInfo = await client.V5Api.Trading.GetPositionsAsync(Category.Linear, settleAsset: "USDT");
+                    if (!positionInfo.Success)
+                    {
+                        GlobalData.AddTextToLogTab("error getting GetPositions" + positionInfo.Error);
+                    }
+
+                    if (positionInfo == null | positionInfo.Data == null)
+                        throw new ExchangeException("Geen account data ontvangen");
+
+                    try
+                    {
+                        var options = new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = false, IncludeFields = true };
+
+                        foreach (var x in positionInfo.Data.List)
+                        {
+                            string text = JsonSerializer.Serialize(x, options);
+                            GlobalData.AddTextToLogTab("PositionInfo :" + text);
+                        }
+                    }
+
+                    catch (Exception error)
+                    {
+                        GlobalData.Logger.Error(error, "");
+                        GlobalData.AddTextToLogTab(error.ToString());
+                        throw;
+                    }
+                }
+            }
+            catch (Exception error)
+            {
+                GlobalData.Logger.Error(error, "");
+                GlobalData.AddTextToLogTab(error.ToString());
+                GlobalData.AddTextToLogTab("");
+            }
+
+        }
+
+
     }
 #endif
 

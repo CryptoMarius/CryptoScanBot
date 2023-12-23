@@ -1,6 +1,4 @@
-﻿using System.Text.Json.Serialization;
-
-using CryptoSbmScanner.Enums;
+﻿using CryptoSbmScanner.Settings.Strategy;
 
 namespace CryptoSbmScanner.Settings;
 
@@ -10,16 +8,11 @@ public class SettingsSignal
     // Naar general wellicht? (want het geld voor alles)
     public bool SoundsActive { get; set; } = true;
 
-    /// Is het signal algoritme actief
-    // TODO rename naar Active
+    // Is het signal algoritme actief
     public bool SignalsActive { get; set; } = true;
 
-    // Minimale 1h barometer om de meldingen te tonen (van - 1.5 tot hoger of iets dergelijks, en te hoog (>5) is eigenlijk ook niet goed)
-    public decimal Barometer1hMinimal { get; set; } = -99m;
-    public bool LogBarometerToLow { get; set; } = false;
-
     // Aantal dagen dat de munt moet bestaan
-    public int SymbolMustExistsDays { get; set; } = 15;
+    public int SymbolMustExistsDays { get; set; } = 60;
     public bool LogSymbolMustExistsDays { get; set; } = false;
 
     // Vermijden van "barcode" charts
@@ -42,76 +35,13 @@ public class SettingsSignal
     public bool LogAnalysisMinMaxEffective10DaysPercentage { get; set; } = true;
 
     // STOBB signals
-    // Het BB percentage kan via de user interface uit worden gezet (nomargin)
-    public double StobbBBMinPercentage { get; set; } = 1.50;
-    public double StobbBBMaxPercentage { get; set; } = 5.0;
-    public bool StobbUseLowHigh { get; set; } = false;
+    public SettingsSignalStrategyStobb Stobb = new();
 
-    [JsonConverter(typeof(Intern.ColorConverter))]
-    public Color ColorStobb { get; set; } = Color.White;
-    public Color ColorStobbShort { get; set; } = Color.White;
-    public bool PlaySoundStobbSignal { get; set; } = false;
-    public bool PlaySpeechStobbSignal { get; set; } = false;
-    public string SoundStobbOversold { get; set; } = "sound-stobb-oversold.wav";
-    public string SoundStobbOverbought { get; set; } = "sound-stobb-overbought.wav";
-    public bool StobIncludeRsi { get; set; } = false;
-    public bool StobIncludeSoftSbm { get; set; } = false;
-    public bool StobIncludeSbmPercAndCrossing { get; set; } = false;
-    //public bool UseStobTrendLong { get; set; } = false;
-    public decimal StobTrendLong { get; set; } = -999m;
-    //public bool UseStobTrendShort { get; set; } = false;
-    public decimal StobTrendShort { get; set; } = -999m;
-
-    // SBM1 signals
-    // Het BB percentage kan via de user interface uit worden gezet (nomargin)
-    public double SbmBBMinPercentage { get; set; } = 1.50;
-    public double SbmBBMaxPercentage { get; set; } = 100.0;
-    public bool SbmUseLowHigh { get; set; } = false;
-
-    [JsonConverter(typeof(Intern.ColorConverter))]
-    public Color ColorSbm { get; set; } = Color.White;
-    public Color ColorSbmShort { get; set; } = Color.White;
-    public bool PlaySoundSbmSignal { get; set; } = true;
-    public bool PlaySpeechSbmSignal { get; set; } = true;
-    public string SoundSbmOversold { get; set; } = "sound-sbm-oversold.wav";
-    public string SoundSbmOverbought { get; set; } = "sound-sbm-overbought.wav";
-    public int Sbm1CandlesLookbackCount { get; set; } = 1;
-
-    // SBM2 signals
-    public int Sbm2CandlesLookbackCount { get; set; } = 2;
-    public decimal Sbm2BbPercentage { get; set; } = 2.5m;
-    public bool Sbm2UseLowHigh { get; set; } = false;
-
-    // SBM3 signals
-    public int Sbm3CandlesLookbackCount { get; set; } = 8;
-    public decimal Sbm3CandlesBbRecoveryPercentage { get; set; } = 225m;
-
-    // SBM algemene instellingen recovery, percentages, crossing && lookback
-    public int SbmCandlesForMacdRecovery { get; set; } = 2;
-
-    public decimal SbmMa200AndMa50Percentage { get; set; } = 0.25m;
-    public decimal SbmMa50AndMa20Percentage { get; set; } = 0.25m;
-    public decimal SbmMa200AndMa20Percentage { get; set; } = 0.50m;
-
-    public bool SbmMa200AndMa50Crossing { get; set; } = true;
-    public int SbmMa200AndMa50Lookback { get; set; } = 30;
-    public bool SbmMa50AndMa20Crossing { get; set; } = true;
-    public int SbmMa50AndMa20Lookback { get; set; } = 10;
-    public bool SbmMa200AndMa20Crossing { get; set; } = true;
-    public int SbmMa200AndMa20Lookback { get; set; } = 15;
-
+    // SBM signals
+    public SettingsSignalStrategySbm Sbm = new();
 
     // JUMP
-    [JsonConverter(typeof(Intern.ColorConverter))]
-    public Color ColorJump { get; set; } = Color.White;
-    public Color ColorJumpShort { get; set; } = Color.White;
-    public bool PlaySoundCandleJumpSignal { get; set; } = false;
-    public bool PlaySpeechCandleJumpSignal { get; set; } = false;
-    public bool JumpUseLowHighCalculation { get; set; } = false;
-    public int JumpCandlesLookbackCount { get; set; } = 5;
-    public string SoundCandleJumpDown { get; set; } = "sound-jump-down.wav";
-    public string SoundCandleJumpUp { get; set; } = "sound-jump-up.wav";
-    public decimal AnalysisCandleJumpPercentage { get; set; } = 4m;
+    public SettingsSignalStrategyJump Jump = new();
 
 
     // Logging
@@ -141,4 +71,18 @@ public class SettingsSignal
     // Op welke intervallen, strategieën, trend, barometer willen we analyseren?
     public SettingsTextual Long { get; set; } = new();
     public SettingsTextual Short { get; set; } = new();
+
+
+    public SettingsSignal()
+    {
+        Long.Barometer.List.Add("1h", (-1.5m, 999m));
+        Short.Barometer.List.Add("1h", (-999m, 1.5m));
+
+        Long.IntervalTrend.List.Add("1h");
+        Short.IntervalTrend.List.Add("1h");
+
+        Long.MarketTrend.List.Add((0m, 100m));
+        Short.MarketTrend.List.Add((-100m, 0));
+    }
+
 }

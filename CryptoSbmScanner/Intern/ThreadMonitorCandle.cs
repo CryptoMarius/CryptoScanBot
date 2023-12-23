@@ -95,7 +95,7 @@ public class ThreadMonitorCandle
         }
         catch (Exception error) 
         {
-            GlobalData.Logger.Error(error);
+            GlobalData.Logger.Error(error, "");
             GlobalData.AddTextToLogTab($"ERROR monitor candle {error.Message}");
         }
 

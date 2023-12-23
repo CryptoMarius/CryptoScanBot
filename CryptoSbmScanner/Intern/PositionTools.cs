@@ -9,22 +9,9 @@ using Dapper.Contrib.Extensions;
 
 namespace CryptoSbmScanner.Intern;
 
-public class PositionTools
+public static class PositionTools
 {
 #if TRADEBOT
-    private DateTime CurrentDate { get; set; }
-    private CryptoTradeAccount TradeAccount { get; set; }
-    private CryptoSymbol Symbol { get; set; }
-    
-
-    public PositionTools(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, DateTime currentDate)
-    {
-        TradeAccount = tradeAccount;
-
-        Symbol = symbol;
-        CurrentDate = currentDate;
-    }
-
 
     public static bool ValidTradeAccount(CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
     {
@@ -43,18 +30,6 @@ public class PositionTools
         return false;
     }
 
-    /// <summary>
-    /// Retourneer de part met name=x
-    /// </summary>
-    //public static CryptoPositionPart FindPositionPart(CryptoPosition position, string name)
-    //{
-    //    foreach (CryptoPositionPart part in position.Parts.Values.ToList())
-    //    {
-    //        if (part.Name.Equals(name))
-    //            return part;
-    //    }
-    //    return null;
-    //}
 
     /// <summary>
     /// Retourneer de part met id=x
@@ -91,44 +66,19 @@ public class PositionTools
     }
 
 
-    public static CryptoPositionStep GetLowestClosedBuy(CryptoPosition position)
-    {
-        // Retourneer de buy order van een niet afgesloten part (de laagste)
-        CryptoPositionStep step = null;
-        foreach (CryptoPositionPart part in position.Parts.Values.ToList())
-        {
-            // Afgesloten DCA parts sluiten we uit (omdat we zogenaamde jojo's uitvoeren)
-            if (part.CloseTime == null)
-            {
-                foreach (CryptoPositionStep stepX in part.Steps.Values.ToList())
-                {
-                    // TODO: Long/Short! (en naamgeving)
-                    // Voor de zekerheid enkel de Status=Filled erbij (onzeker wat er exact gebeurd met een cancel en het kan geen kwaad)
-                    if (stepX.Side == CryptoOrderSide.Buy && stepX.CloseTime.HasValue && stepX.Status == CryptoOrderStatus.Filled)
-                    {
-                        if (step == null || stepX.Price < step.Price)
-                            step = stepX;
-                    }
-                }
-            }
-        }
-        return step;
-    }
-
-
-    public CryptoPosition CreatePosition(CryptoSignalStrategy strategy, CryptoTradeSide side, CryptoSymbolInterval symbolInterval)
+    public static CryptoPosition CreatePosition(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoSignalStrategy strategy, CryptoTradeSide side, CryptoSymbolInterval symbolInterval, DateTime currentDate)
     {
         CryptoPosition position = new()
         {
-            TradeAccount = TradeAccount,
-            TradeAccountId = TradeAccount.Id,
-            CreateTime = CurrentDate,
-            UpdateTime = CurrentDate,
-            Data = Symbol.Name, // mag vervallen (maar ach)
-            Symbol = Symbol,
-            SymbolId = Symbol.Id,
-            Exchange = Symbol.Exchange,
-            ExchangeId = Symbol.ExchangeId,
+            TradeAccount = tradeAccount,
+            TradeAccountId = tradeAccount.Id,
+            CreateTime = currentDate,
+            UpdateTime = currentDate,
+            Data = symbol.Name, // mag vervallen (maar is ook best handig)
+            Symbol = symbol,
+            SymbolId = symbol.Id,
+            Exchange = symbol.Exchange,
+            ExchangeId = symbol.ExchangeId,
             Interval = symbolInterval.Interval,
             IntervalId = symbolInterval.Interval.Id,
             Status = CryptoPositionStatus.Waiting,
@@ -260,7 +210,7 @@ public class PositionTools
         {
             if (part.IntervalId.HasValue && GlobalData.IntervalListId.TryGetValue((int)position.IntervalId, out CryptoInterval interval))
                part.Interval = interval;
-            AddPositionPart(position, part);
+            PositionTools.AddPositionPart(position, part);
         }
 
         // De steps
@@ -273,21 +223,15 @@ public class PositionTools
     }
 
 
-    public static CryptoPosition HasPosition(CryptoTradeAccount tradeAccount, CryptoSymbol symbol) //, CryptoSymbolInterval symbolInterval
+    public static CryptoPosition HasPosition(CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
     {
         if (tradeAccount.PositionList.TryGetValue(symbol.Name, out var positionList))
         {
             foreach (var position in positionList.Values.ToList())
             {
-                // Alleen voor long trades en het betrokken interval (wat is de redenatie hierachter?)
-                // Een gelijk interval is niet handig, je wilt een bijkoop doen en interval is niet relevant.
-                if (position.Side != CryptoTradeSide.Long) // || position.IntervalId != symbolInterval.IntervalId
-                    continue;
-
                 return position;
             }
         }
-
         return null;
     }
 
@@ -308,59 +252,13 @@ public class PositionTools
 
 
     /// <summary>
-    /// Controles die noodzakelijk zijn voor een eerste koop
-    /// </summary>
-    public static bool ValidFirstBuyConditions(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoCandle lastCandle1m, CryptoTradeSide side, out string reaction)
-    {
-        // Is de barometer goed genoeg dat we willen traden?
-        if (!TradingRules.CheckBarometerValues(symbol.QuoteData.PauseBarometer[side], symbol.QuoteData, side, lastCandle1m, out reaction))
-            return false;
-
-
-        // Staat op de whitelist (kan leeg zijn)
-        if (!SymbolTools.CheckSymbolWhiteListOversold(symbol, side, out reaction))
-            return false;
-
-
-        // Staat niet in de blacklist
-        if (!SymbolTools.CheckSymbolBlackListOversold(symbol, side, out reaction))
-            return false;
-
-
-        // Heeft de munt genoeg 24h volume
-        if (!SymbolTools.CheckValidMinimalVolume(symbol, out reaction))
-            return false;
-
-
-        // Heeft de munt een redelijke prijs
-        if (!SymbolTools.CheckValidMinimalPrice(symbol, out reaction))
-            return false;
-
-
-        // Is de munt te nieuw? (hebben we vertrouwen in nieuwe munten?)
-        if (!SymbolTools.CheckNewCoin(symbol, out reaction))
-            return false;
-
-
-        // Munten waarvan de ticksize percentage nogal groot is (barcode charts)
-        if (!SymbolTools.CheckMinimumTickPercentage(symbol, out reaction))
-            return false;
-
-        if (!SymbolTools.CheckAvailableSlots(tradeAccount, symbol, out reaction))
-            return false;
-
-        return true;
-    }
-
-
-    /// <summary>
     /// Zijn de aangevinkte intervallen UP?
     /// </summary>
-    public static bool ValidTrendConditions(CryptoTradeSide mode, CryptoSignal signal, out string reaction)
+    public static bool ValidTrendConditions(CryptoSymbol symbol, Dictionary<CryptoIntervalPeriod, CryptoTrendIndicator> trend, out string reaction)
     {
-        foreach (KeyValuePair<CryptoIntervalPeriod, CryptoTrendIndicator> entry in TradingConfig.Trading[mode].Trend)
+        foreach (KeyValuePair<CryptoIntervalPeriod, CryptoTrendIndicator> entry in trend)
         {
-            var symbolPeriod = signal.Symbol.GetSymbolInterval(entry.Key);
+            var symbolPeriod = symbol.GetSymbolInterval(entry.Key);
             if (symbolPeriod.TrendIndicator != entry.Value)
             {
                 reaction = $"trend op de {symbolPeriod.Interval.Name} niet gelijk aan {entry.Value}";
@@ -373,103 +271,37 @@ public class PositionTools
     }
 
 
-    /// <summary>
-    /// Zijn de aangevinkte intervallen UP?
-    /// </summary>
-    //public static bool ValidBarometerConditions(CryptoTradeSide mode, CryptoSignal signal, out string reaction)
-    //{
-    //    foreach (KeyValuePair<CryptoInterval, decimal> entry in TradingConfig.Config[mode].BarometerOkForInterval)
-    //    {
-    //        signal.Symbol.Quote?
-
-    //        var symbolPeriod = signal.Symbol.GetSymbolInterval(entry.Key.IntervalPeriod);
-    //        if (symbolPeriod.TrendIndicator != entry.Value)
-    //        {
-    //            if (mode == CryptoTradeSide.Long)
-    //                reaction = $"{entry.Key.Name} niet in uptrend";
-    //            else
-    //                reaction = $"{entry.Key.Name} niet in downtrend";
-    //            return false;
-    //        }
-    //    }
-
-    //    reaction = "";
-    //    return true;
-    //}
-
-    public static bool CheckTradingAndSymbolConditions(CryptoSymbol symbol, CryptoCandle lastCandle1m, out string reaction)
+    public static bool ValidMarketTrendConditions(CryptoSymbol symbol, List<(decimal minValue, decimal maxValue)> marketTrend, out string reaction)
     {
-        // Als de bot niet actief is dan ook geen monitoring (queue leegmaken)
-        // Blijkbaar is de bot dan door de gebruiker uitgezet, verwijder de signalen
-        if (!GlobalData.Settings.Trading.Active)
+        if (marketTrend.Any())
         {
-            reaction = "trade-bot deactivated";
-            return false;
-        }
-
-        // we doen (momenteel) alleen long posities
-        if (!symbol.LastPrice.HasValue)
-        {
-            reaction = "symbol price null";
-            return false;
-        }
-
-        // Om te voorkomen dat we te snel achter elkaar in dezelfde munt stappen
-        if (symbol.LastTradeDate.HasValue && symbol.LastTradeDate?.AddMinutes(GlobalData.Settings.Trading.GlobalBuyCooldownTime) > lastCandle1m.Date) // DateTime.UtcNow
-        {
-            reaction = "is in cooldown";
-            return false;
-        }
-
-        // Als een munt snel is gedaald dan stoppen
-        if (!TradingRules.CheckTradingRules(lastCandle1m))
-        {
-            reaction = string.Format(" de bot is gepauseerd omdat {0}", GlobalData.PauseTrading.Text);
-            return false;
-        }
-
-        reaction = "";
-        return true;
-    }
-
-
-    public bool CheckAvaliableAssets(CryptoTradeAccount tradeAccount, out decimal assetQuantity, out string reaction)
-    {
-        reaction = "";
-        assetQuantity = 0;
-        if (!PositionTools.ValidTradeAccount(tradeAccount, Symbol))
-            return false;
-
-        // TODO: Asset management op de exchange implementeren (dit klopt helemaal niet)
-        if (tradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading)
-        {
-            var (result, value) = SymbolTools.CheckPortFolio(tradeAccount, Symbol);
-            if (!result)
+            if (!symbol.TrendPercentage.HasValue)
+            {
+                reaction = $"Markettrend {symbol.Name} is niet berekend";
                 return false;
-            assetQuantity = value;
+            }
+
+            foreach ((decimal minValue, decimal maxValue) entry in marketTrend)
+            {
+                decimal trendPercentage = (decimal)symbol.TrendPercentage;
+                if (!trendPercentage.IsBetween(entry.minValue, entry.maxValue))
+                {
+                    string minValueStr = entry.minValue.ToString0("N2");
+                    if (entry.minValue == decimal.MinValue)
+                        minValueStr = "-maxint";
+                    string maxValueStr = entry.maxValue.ToString0("N2");
+                    if (entry.maxValue == decimal.MaxValue)
+                        maxValueStr = "+maxint";
+                    reaction = $"Markettrend {symbol.Name} {symbol.TrendPercentage?.ToString("N2")} niet tussen {minValueStr} en {maxValueStr}";
+                    return false;
+                }
+            }
         }
-        else
-            assetQuantity = 1000000m; // ruim genoeg voor backtest of papertrading (todo)
 
-        return true;
-    }
-
-
-    public bool CheckExchangeApiKeys(CryptoTradeAccount tradeAccount, out string reaction)
-    {
         reaction = "";
-        if (!PositionTools.ValidTradeAccount(tradeAccount, Symbol))
-            return false;
-
-        if (tradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading)
-        {
-            // Is er een API key aanwezig (met de juiste opties)
-            if (!SymbolTools.CheckValidApikey(out reaction))
-                return false;
-        }
-
         return true;
     }
+
 
 #endif
 

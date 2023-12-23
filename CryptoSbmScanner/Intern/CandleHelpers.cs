@@ -390,25 +390,13 @@ public static class Helper
 
     static public void ShowPosition(StringBuilder stringBuilder, CryptoPosition position)
     {
-        decimal diffPercentage = 0;
-        decimal investedInTrades = position.Invested - position.Returned; // - position.Commission;
-        if (position.Symbol.LastPrice.HasValue && position.ProfitPrice.HasValue)
-        {
-            decimal currentValue = (position.Quantity * (decimal)position.Symbol.LastPrice) - position.Commission;
-            diffPercentage = (100 * (currentValue / investedInTrades)) - 100;
-        }
-
-
-        string s = string.Format("{0} {1}  {2}%", position.Symbol.Name,
-            investedInTrades.ToString("N2"), diffPercentage.ToString0("N2"));
-        //if (position.TradeAccount.TradeAccountType == CryptoTradeAccountType.BackTest)
-        //    s += string.Format(" ({0})", position.TradeAccount.Name);
-        //else if (position.TradeAccount.TradeAccountType == CryptoTradeAccountType.PaperTrade)
-        //    s += string.Format(" ({0})", position.TradeAccount.Name);
+        decimal investedInTrades = position.Invested - position.Returned;
+        string s = $"{position.Symbol.Name} {investedInTrades.ToString(position.Symbol.QuoteData.DisplayFormat)} " +
+            //$"{position.MarketValue().ToString(position.Symbol.QuoteData.DisplayFormat)} " +
+            $"{position.MarketValuePercentage():N2}%";
         if (position.PartCount > 1)
             s += string.Format(" ({0})", position.PartCount);
         stringBuilder.AppendLine(s);
-        //positionCount++;
     }
 
 

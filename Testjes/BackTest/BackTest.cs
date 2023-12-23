@@ -369,7 +369,7 @@ public class BackTest
             catch (Exception error)
             {
                 // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
-                GlobalData.Logger.Error(error);
+                GlobalData.Logger.Error(error, "");
                 GlobalData.AddTextToLogTab("");
                 GlobalData.AddTextToLogTab("error indicators");
                 GlobalData.AddTextToLogTab(error.ToString());
@@ -817,7 +817,7 @@ public class BackTest
         }
         catch (Exception error)
         {
-            GlobalData.Logger.Error(error);
+            GlobalData.Logger.Error(error, "");
             GlobalData.AddTextToLogTab("");
             GlobalData.AddTextToLogTab(error.ToString(), true);
         }

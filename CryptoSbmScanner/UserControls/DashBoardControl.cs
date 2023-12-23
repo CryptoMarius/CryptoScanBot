@@ -751,7 +751,7 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
             }
             catch (Exception error)
             {
-                GlobalData.Logger.Error(error);
+                GlobalData.Logger.Error(error, "");
                 GlobalData.AddTextToLogTab(error.ToString() + "\r\n");
             }
             //}

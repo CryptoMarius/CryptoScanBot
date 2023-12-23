@@ -31,18 +31,12 @@ public class CryptoPositionPart
     [Computed]
     public CryptoInterval Interval { get; set; }
 
-    public CryptoOrderSide Side { get; set; }
-    [Computed]
-    public string SideText { get { return Side switch { CryptoOrderSide.Buy => "long", CryptoOrderSide.Sell => "short", _ => "?", }; } }
-
-    [Computed]
-    public string DisplayText { get { return Symbol.Name + " " + Position.Interval.Name + " " + CreateTime.ToLocalTime() + " " + SideText + " " + StrategyText; }}
+    public CryptoPartPurpose Purpose { get; set; }
 
     public CryptoSignalStrategy Strategy { get; set; }
     [Computed]
     public string StrategyText { get { return Strategy.ToString(); } }
 
-    public string Name { get; set; }
     public int PartNumber { get; set; } // En dan kan de Name vervallen (BUY/SELL = 1, DCA = PartNumber >= 2) - of null based, whatever
     public DateTime CreateTime { get; set; }
     public DateTime? CloseTime { get; set; }
@@ -54,18 +48,22 @@ public class CryptoPositionPart
     public decimal Percentage { get; set; }
 
     public decimal Quantity { get; set; }
+    public decimal? EntryAmount { get; set; }
     public decimal BreakEvenPrice { get; set; }
-    
-    // Buy gegevens
-    public decimal SignalPrice { get; set; } // initiele prijs van het signaal (data overdracht)
 
-    public CryptoStepInMethod StepInMethod  { get; set; } // De reden van bijkoop
-    public CryptoStepInMethod StepOutMethod { get; set; } // De reden van verkoop
+    // De initiele entry prijs van het signaal
+    // (wordt gebruikt voor data overdracht)
+    public decimal SignalPrice { get; set; } 
+
+    // De bijkoop methode -> EntryMethod (zou wellicht uit de actuele instellingen gehaald kunnen worden)
+    public CryptoEntryOrProfitMethod EntryMethod  { get; set; }
+    // De verkoop methode -> ProfitMethod (zou wellicht uit de actuele instellingen gehaald kunnen worden)
+    public CryptoEntryOrProfitMethod ProfitMethod { get; set; }
 
     // Eigenlijk zijn er maar 2 steps in een deelpositie die van belang zijn?
     // Helaas dat gaat niet 100% op, want die kunnen verdeeld zijn in meerdere orders
-    // De buy (probleem, 50% buy op de bid prijs en 50% op de ask prijs)
-    // De sell (probleem, hoe doe je dat als je meerdere TP's gebruikt?)
+    // De entry orders (bijvoorbeeld 50% buy op de bid prijs en 50% op de ask prijs)
+    // De takeprofit(s) (bijvoorbeeld 33% op 1%, 33% op 2% en rest op 3%)
 
     [Computed]
     public SortedList<int, CryptoPositionStep> Steps { get; set; } = new();

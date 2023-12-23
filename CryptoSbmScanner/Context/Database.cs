@@ -498,20 +498,20 @@ public class CryptoDatabase : IDisposable
         return Connection.BeginTransaction();
     }
 
- //   public void BulkInsertSymbol(List<CryptoSymbol> cache, SqliteTransaction transaction)
-	//{
- //       // todo
-	//}
+    //   public void BulkInsertSymbol(List<CryptoSymbol> cache, SqliteTransaction transaction)
+    //{
+    //       // todo BulkInsertCandles for MsSql
+    //}
 
- //   public void BulkInsertTrades(CryptoSymbol symbol, List<CryptoTrade> cache, SqliteTransaction transaction)
- //   {
- //       // todo
- //   }
+    //   public void BulkInsertTrades(CryptoSymbol symbol, List<CryptoTrade> cache, SqliteTransaction transaction)
+    //   {
+    //       // todo BulkInsertCandles for MsSql
+    //   }
 
- //   public void BulkInsertCandles(List<CryptoCandle> cache, SqliteTransaction transaction)
- //   {
- //       // todo
- //   }
+    //   public void BulkInsertCandles(List<CryptoCandle> cache, SqliteTransaction transaction)
+    //   {
+    //       // todo BulkInsertCandles for MsSql
+    //   }
 
 #endif
 
@@ -862,9 +862,7 @@ public class CryptoDatabase : IDisposable
                 "Status INTEGER NOT NULL," +
                 "Volume TEXT NULL," +
 
-                // vervallen, niet altijd gevuld en daarom onbetrouwbaar
-                //"BaseAssetPrecision integer NULL," +
-                //"QuoteAssetPrecision integer NULL," +
+                // Erg Binance specifiek???
                 //"MinNotional TEXT NULL," +
 
                 "PriceMinimum TEXT NULL," +
@@ -1029,6 +1027,7 @@ public class CryptoDatabase : IDisposable
                 "data TEXT NULL," +
 
                 "EntryPrice TEXT NULL," +
+                "EntryAmount TEXT NULL," + // EntryQuoteAmount?
                 "Quantity TEXT NULL," +
                 "ProfitPrice TEXT NULL," +
                 "PartCount INTEGER NULL," +
@@ -1036,7 +1035,7 @@ public class CryptoDatabase : IDisposable
                 "BreakEvenPrice TEXT NULL," +
 
                 "Invested TEXT NULL," +
-                "Commission TEXTNULL," +
+                "Commission TEXT NULL," +
                 "Returned TEXT NULL," +
                 "Percentage TEXT NULL," +
                 "Reposition Integer," +
@@ -1067,25 +1066,24 @@ public class CryptoDatabase : IDisposable
                 "IntervalId Integer NOT NULL," +
                 "Strategy TEXT NOT NULL," +
 
-                "Side INTEGER NOT NULL," +
-                "Name TEXT NULL," +
+                "Purpose INTEGER NOT NULL," +
                 "PartNumber INTEGER NOT NULL," +
                 "CreateTime TEXT NOT NULL," +
                 "CloseTime TEXT NULL," +
-                //"Status INTEGER NOT NULL," + Miet relevant, controle op CloseTime werkt ook
 
                 "Invested TEXT NULL," +
-                "Commission TEXTNULL," +
+                "Commission TEXT NULL," +
                 "Returned TEXT NULL," +
                 "Profit TEXT NULL," +
                 "Percentage TEXT NULL," +
 
                 "Quantity TEXT NULL," +
+                "EntryAmount TEXT NULL," +
                 "BreakEvenPrice TEXT NULL," +
+                "SignalPrice TEXT NOT NULL," +
 
-                "SignalPrice TEXT NOT NULL," + // was BuyPrice
-                "StepInMethod INTEGER NULL," +
-                "StepOutMethod INTEGER NULL," +
+                "EntryMethod INTEGER NULL," +
+                "ProfitMethod INTEGER NULL," +
 
                 "FOREIGN KEY(PositionId) REFERENCES Position(Id)," +
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +
@@ -1111,7 +1109,6 @@ public class CryptoDatabase : IDisposable
                 "PositionPartId integer NOT NULL," +
                 "CreateTime TEXT NOT NULL," +
                 "CloseTime TEXT NULL," +
-                //"Name TEXT NOT NULL," + =Hetzelfde als de side
                 "Status INTEGER NOT NULL," +
                 "Side INTEGER NOT NULL," +
                 "OrderType INTEGER NOT NULL," +
@@ -1198,14 +1195,15 @@ public class CryptoDatabase : IDisposable
                 "Commission TEXT NOT NULL," +
                 "CommissionAsset TEXT NOT NULL," +
 
-                // Erg Binance specifiek?
                 "Side Integer NOT NULL," +
+                // Erg Binance specifiek???
                 //"IsMaker Integer NOT NULL," + // ivm berekening fee (maar is al in de prijs verwerkt, wellicht om achteraf iets te beredeneren qua fee?)
 
                 "TradeId TEXT NOT NULL," +
                 "OrderId TEXT NOT NULL," +
+                // Erg Binance specifiek???
                 //"OrderListId TEXT NULL," +
-                
+
                 "FOREIGN KEY(TradeAccountId) REFERENCES TradeAccount(Id)," +
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +
                 "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)" +

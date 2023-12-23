@@ -192,7 +192,7 @@ public class FetchSymbols
                     }
                     catch (Exception error)
                     {
-                        GlobalData.Logger.Error(error);
+                        GlobalData.Logger.Error(error, "");
                         GlobalData.AddTextToLogTab(error.ToString());
                         transaction.Rollback();
                         throw;
@@ -205,7 +205,7 @@ public class FetchSymbols
             }
             catch (Exception error)
             {
-                GlobalData.Logger.Error(error);
+                GlobalData.Logger.Error(error, "");
                 GlobalData.AddTextToLogTab(error.ToString());
             }
 

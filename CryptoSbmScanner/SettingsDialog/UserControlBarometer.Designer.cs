@@ -98,7 +98,7 @@ partial class UserControlBarometer
         // EditBarometerLog
         // 
         EditBarometerLog.AutoSize = true;
-        EditBarometerLog.Location = new Point(22, 166);
+        EditBarometerLog.Location = new Point(17, 163);
         EditBarometerLog.Margin = new Padding(4, 3, 4, 3);
         EditBarometerLog.Name = "EditBarometerLog";
         EditBarometerLog.Size = new Size(180, 19);

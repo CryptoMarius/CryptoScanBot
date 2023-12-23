@@ -30,7 +30,7 @@ public class TradeTools
                 account.AssetList.TryAdd(asset.Name, asset);
             }
         }
-       
+
     }
 
 
@@ -108,6 +108,10 @@ public class TradeTools
         position.Returned = 0;
         position.Commission = 0;
 
+        // Ondersteuning long/short
+        CryptoOrderSide entryOrderSide = position.GetEntryOrderSide();
+        CryptoOrderSide takeProfitOrderSide = position.GetTakeProfitOrderSide();
+
         foreach (CryptoPositionPart part in position.Parts.Values.ToList())
         {
             part.Quantity = 0;
@@ -115,49 +119,59 @@ public class TradeTools
             part.Returned = 0;
             part.Commission = 0;
 
-            // TODO: Long/Short
-            int sellCount = 0;
+            int tradeCount = 0;
             foreach (CryptoPositionStep step in part.Steps.Values.ToList())
             {
-                if (step.Status == CryptoOrderStatus.Filled || step.Status == CryptoOrderStatus.PartiallyFilled)
+                if (step.Status == CryptoOrderStatus.Filled) // || step.Status == CryptoOrderStatus.PartiallyFilled => dan wordt de TP's iedere keer verplaatst..
                 {
-                    // TODO: Dit werkt niet voor een short positie
-                    if (position.Side == CryptoTradeSide.Long)
+                    part.Commission += step.Commission;
+                    if (step.Side == entryOrderSide)
                     {
-                        if (step.Side == CryptoOrderSide.Buy)
-                        {
-                            part.Commission += step.Commission;
-                            part.Quantity += step.QuantityFilled;
-                            part.Invested += step.QuoteQuantityFilled;
-                        }
-                        else if (step.Side == CryptoOrderSide.Sell)
-                        {
-                            sellCount++;
-                            part.Commission += step.Commission;
-                            part.Quantity -= step.QuantityFilled;
-                            part.Returned += step.QuoteQuantityFilled;
-                        }
+                        part.Quantity += step.QuantityFilled;
+                        part.Invested += step.QuoteQuantityFilled;
+                    }
+                    else if (step.Side == takeProfitOrderSide)
+                    {
+                        tradeCount++;
+                        part.Quantity -= step.QuantityFilled;
+                        part.Returned += step.QuoteQuantityFilled;
                     }
                 }
                 //string s = string.Format("{0} CalculateProfit bought position={1} part={2} name={3} step={4} {5} price={6} stopprice={7} quantityfilled={8} QuoteQuantityFilled={9}",
-                //   position.Symbol.Name, position.Id, part.Id, part.Name, step.Id, step.Name, step.Price, step.StopPrice, step.QuantityFilled, step.QuoteQuantityFilled);
+                //   position.Symbol.Name, position.Id, part.Id, part.Purpose, step.Id, step.Name, step.Price, step.StopPrice, step.QuantityFilled, step.QuoteQuantityFilled);
                 //GlobalData.AddTextToLogTab(s);
             }
 
             // Rekening houden met de toekomstige kosten van de sell orders.
             // NB: Dit klopt niet 100% als een order gedeeltelijk gevuld wordt!
-            if (sellCount == 0 && !part.CloseTime.HasValue)
+            if (tradeCount == 0 && !part.CloseTime.HasValue)
                 part.Commission *= 2;
 
-
-            part.Profit = part.Returned - part.Invested - part.Commission;
-            part.Percentage = 0m;
-            if (part.Invested != 0m)
-                part.Percentage = 100m * (part.Returned - part.Commission) / part.Invested;
-            if (part.Quantity > 0)
-                part.BreakEvenPrice = (part.Invested + part.Commission - part.Returned) / part.Quantity;
+            if (position.Side == CryptoTradeSide.Long)
+            {
+                part.Profit = part.Returned - part.Invested - part.Commission;
+                part.Percentage = 0m;
+                if (part.Invested != 0m)
+                    //part.Percentage = 100m * (part.Returned - part.Commission) / part.Invested;
+                    part.Percentage = 100m + (100m * part.Profit / part.Invested);
+                if (part.Quantity > 0)
+                    part.BreakEvenPrice = (part.Invested - part.Returned + part.Commission) / part.Quantity;
+                else
+                    part.BreakEvenPrice = 0; // mhh. denk fout? Als we in een dca zitten is de part.BE 0
+            }
             else
-                part.BreakEvenPrice = 0; // mhh. denk fout? Als we in een dca zitten is de part.BE 0
+            {
+                // Short : We krijgen minder terug, omdraaien
+                part.Profit = part.Invested - part.Returned - part.Commission;
+                part.Percentage = 0m;
+                if (part.Invested != 0m)
+                    part.Percentage = 100m + (100m * part.Profit / part.Invested);
+                if (part.Quantity > 0)
+                    part.BreakEvenPrice = (part.Invested - part.Returned - part.Commission) / part.Quantity; //?
+                else
+                    part.BreakEvenPrice = 0; // mhh. denk fout? Als we in een dca zitten is de part.BE 0
+            }
+
 
             //string t = string.Format("{0} CalculateProfit sell invested={1} profit={2} bought={3} sold={4} steps={5}",
             //    position.Symbol.Name, part.Invested, part.Profit, part.Invested, part.Returned, part.Steps.Count);
@@ -177,14 +191,30 @@ public class TradeTools
             position.Status = CryptoPositionStatus.Trading;
         }
 
-        position.Profit = position.Returned - position.Invested - position.Commission;
-        position.Percentage = 0m;
-        if (position.Invested != 0m)
-            position.Percentage = 100m * (position.Returned - position.Commission) / position.Invested;
-        if (position.Quantity > 0)
-            position.BreakEvenPrice = (position.Invested - position.Returned + position.Commission) / position.Quantity;
+        if (position.Side == CryptoTradeSide.Long)
+        {
+            position.Profit = position.Returned - position.Invested - position.Commission;
+            position.Percentage = 0m;
+            if (position.Invested != 0m)
+                //position.Percentage = 100m * (position.Returned - position.Commission) / position.Invested;
+                position.Percentage = 100m + (100m * position.Profit / position.Invested);
+            if (position.Quantity > 0)
+                position.BreakEvenPrice = (position.Invested - position.Returned + position.Commission) / position.Quantity;
+            else
+                position.BreakEvenPrice = 0;
+        }
         else
-            position.BreakEvenPrice = 0;
+        {
+            position.Profit = position.Invested - position.Returned - position.Commission;
+            position.Percentage = 0m;
+            if (position.Returned != 0m)
+                position.Percentage = 100m + (100m * position.Profit / position.Invested);
+            if (position.Quantity > 0)
+                position.BreakEvenPrice = (position.Invested - position.Returned - position.Commission) / position.Quantity; //?
+            else
+                position.BreakEvenPrice = 0;
+        }
+
 
         position.PartCount = position.Parts.Count;
     }
@@ -196,12 +226,12 @@ public class TradeTools
     /// Na het opstarten is er behoefte om openstaande orders en trades te synchroniseren
     /// (dependency: de trades en steps moeten hiervoor ingelezen zijn)
     /// </summary>
-    static public void CalculatePositionResultsViaTrades(CryptoDatabase database, CryptoPosition position)
+    static public void CalculatePositionResultsViaTrades(CryptoDatabase database, CryptoPosition position, bool addToDoubleCheckPosition = true, bool saveChangesAnywhay = false)
     {
         if (position.Parts.Count == 0)
             GlobalData.AddTextToLogTab(string.Format("CalculatePositionViaTrades - er zijn geen parts! {0}", position.Symbol.Name));
 
-        bool isChanged = false;
+        bool isChanged = saveChangesAnywhay;
 
         // Reset eerste de filled
         foreach (CryptoPositionPart part in position.Parts.Values.ToList())
@@ -312,7 +342,13 @@ public class TradeTools
                 isChanged = true;
                 position.CloseTime = DateTime.UtcNow;
                 if (position.Invested > 0)
+                {
+                    // Gevaarlijk, als er een buy niet gedetecteerd is dan wordt de trade zomaar afgesloten
+                    // En dat lijkt soms wel te gebeuren vanwege de exchange, internet of datetime perikelen.
                     position.Status = CryptoPositionStatus.Ready;
+                    if (addToDoubleCheckPosition)
+                        GlobalData.ThreadDoubleCheckPosition.AddToQueue(position);
+                }
                 GlobalData.AddTextToLogTab($"TradeTools: Positie {position.Symbol.Name} status aangepast naar {position.Status}");
             }
         }
@@ -328,7 +364,7 @@ public class TradeTools
                 {
                     isChanged = true;
                     part.CloseTime = null;
-                    GlobalData.AddTextToLogTab($"TradeTools: Part {position.Symbol.Name} weer opengezet vanwege corectie?????? {position.Status}");
+                    GlobalData.AddTextToLogTab($"TradeTools: Part {position.Symbol.Name} weer opengezet vanwege correctie?????? {position.Status}");
                 }
             }
         }

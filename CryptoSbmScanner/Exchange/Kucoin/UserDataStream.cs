@@ -105,7 +105,7 @@ public class UserDataStream
     //    }
     //    catch (Exception error)
     //    {
-    //        GlobalData.Logger.Error(error);
+    //        GlobalData.Logger.Error(error, "");
     //        GlobalData.AddTextToLogTab($"{Api.ExchangeName} ERROR: OrderUpdate " + error.ToString());
     //    }
     //}
@@ -163,7 +163,7 @@ public class UserDataStream
     //    }
     //    catch (Exception error)
     //    {
-    //        GlobalData.Logger.Error(error);
+    //        GlobalData.Logger.Error(error, "");
     //        GlobalData.AddTextToLogTab($"{Api.ExchangeName} ERROR: AccountPositionMessage " + error.ToString());
     //    }
     //}
@@ -178,7 +178,7 @@ public class UserDataStream
     //    }
     //    catch (Exception error)
     //    {
-    //        GlobalData.Logger.Error(error);
+    //        GlobalData.Logger.Error(error, "");
     //        GlobalData.AddTextToLogTab("ERROR: AccountBalanceUpdate " + error.ToString());
     //    }
     //}

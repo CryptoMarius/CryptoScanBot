@@ -1,8 +1,6 @@
 ﻿using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Intern;
-using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Settings;
-using CryptoSbmScanner.Signal;
 
 namespace CryptoSbmScanner.Trader;
 
@@ -24,10 +22,8 @@ public static class TradingConfig
 
     static public void IndexStrategyInternally()
     {
-        // Op dit moment zijn er nog geen gescheiden long en short voor het genereren van signalen (dezelfde bron dus)
         Signals[CryptoTradeSide.Long].IndexStrategyInternally(GlobalData.Settings.Signal.Long, CryptoTradeSide.Long);
-        //Signals[CryptoTradeSide.Short].IndexStrategyInternally(GlobalData.Settings.Signal.Short, CryptoTradeSide.Short);
-        Signals[CryptoTradeSide.Short].IndexStrategyInternally(GlobalData.Settings.Signal.Long, CryptoTradeSide.Short);
+        Signals[CryptoTradeSide.Short].IndexStrategyInternally(GlobalData.Settings.Signal.Short, CryptoTradeSide.Short);
 
         Trading[CryptoTradeSide.Long].IndexStrategyInternally(GlobalData.Settings.Trading.Long, CryptoTradeSide.Long);
         Trading[CryptoTradeSide.Short].IndexStrategyInternally(GlobalData.Settings.Trading.Short, CryptoTradeSide.Short);
@@ -69,8 +65,7 @@ public static class TradingConfig
         InitWhiteAndBlackListHelper(GlobalData.Settings.BlackListOverbought, Signals[CryptoTradeSide.Short].BlackList, "BlackList.Short");
         InitWhiteAndBlackListHelper(GlobalData.Settings.WhiteListOverbought, Signals[CryptoTradeSide.Short].WhiteList, "WhiteList.Short");
 
-
-        // De trading black en whitelist wordt ook geinitialiseerd, maar is eigenlijk overbodig (voila)
+        // De trading black en whitelist worden ook geinitialiseerd, zijn dus gelijk (voila)
         InitWhiteAndBlackListHelper(GlobalData.Settings.BlackListOversold, Trading[CryptoTradeSide.Long].BlackList, "BlackList.Long");
         InitWhiteAndBlackListHelper(GlobalData.Settings.WhiteListOversold, Trading[CryptoTradeSide.Long].WhiteList, "WhiteList.Long");
         InitWhiteAndBlackListHelper(GlobalData.Settings.BlackListOverbought, Trading[CryptoTradeSide.Short].BlackList, "BlackList.Short");

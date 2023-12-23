@@ -20,7 +20,7 @@ public class SignalCandleJumpUp : SignalCreateBase
         ExtraText = "";
 
         // We gaan van rechts naar links
-        int candleCount = GlobalData.Settings.Signal.JumpCandlesLookbackCount;
+        int candleCount = GlobalData.Settings.Signal.Jump.CandlesLookbackCount;
         if (candleCount > 0)
         {
             // Wat is het laagste en hoogste punt in de laatste x candles
@@ -32,14 +32,14 @@ public class SignalCandleJumpUp : SignalCreateBase
             CryptoCandle candle = CandleLast;
             while (candleCount > 0)
             {
-                decimal value = candle.GetLowest(GlobalData.Settings.Signal.JumpUseLowHighCalculation);
+                decimal value = candle.GetLowest(GlobalData.Settings.Signal.Jump.UseLowHighCalculation);
                 if (value < minValue)
                 {
                     minValue = value;
                     minDate = candle.OpenTime;
                 }
 
-                value = candle.GetHighest(GlobalData.Settings.Signal.JumpUseLowHighCalculation);
+                value = candle.GetHighest(GlobalData.Settings.Signal.Jump.UseLowHighCalculation);
                 if (value > maxValue)
                 {
                     maxValue = value;
@@ -58,7 +58,7 @@ public class SignalCandleJumpUp : SignalCreateBase
             if (minDate < maxDate)
             {
                 decimal perc = 100m * (maxValue / minValue - 1);
-                if (perc >= GlobalData.Settings.Signal.AnalysisCandleJumpPercentage)
+                if (perc >= GlobalData.Settings.Signal.Jump.CandlePercentage)
                 {
                     ExtraText = "+"+ perc.ToString("N2") + "%";
                     return true;

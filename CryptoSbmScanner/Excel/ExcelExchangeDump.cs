@@ -127,7 +127,7 @@ public class ExcelExchangeDump : ExcelBase
         }
         catch (Exception error)
         {
-            GlobalData.Logger.Error(error);
+            GlobalData.Logger.Error(error, "");
             GlobalData.AddTextToLogTab("ERROR exchange dump " + error.ToString());
         }
     }

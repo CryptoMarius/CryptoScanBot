@@ -47,6 +47,7 @@
             webViewDummy = new Microsoft.Web.WebView2.WinForms.WebView2();
             panelClient1 = new Panel();
             dashBoardInformation1 = new TradingView.DashBoardInformation();
+            positionInfoToolStripMenuItem = new ToolStripMenuItem();
             panelLeft.SuspendLayout();
             panel4.SuspendLayout();
             panelLeftTop.SuspendLayout();
@@ -139,7 +140,7 @@
             // 
             // MenuMain
             // 
-            MenuMain.DropDownItems.AddRange(new ToolStripItem[] { ApplicationPlaySounds, ApplicationCreateSignals, ApplicationTradingBot, ToolStripMenuItemSettings, ToolStripMenuItemRefresh, clearMenusToolStripMenuItem, applicationMenuItemAbout, backtestToolStripMenuItem });
+            MenuMain.DropDownItems.AddRange(new ToolStripItem[] { ApplicationPlaySounds, ApplicationCreateSignals, ApplicationTradingBot, ToolStripMenuItemSettings, ToolStripMenuItemRefresh, clearMenusToolStripMenuItem, applicationMenuItemAbout, backtestToolStripMenuItem, positionInfoToolStripMenuItem });
             MenuMain.Name = "MenuMain";
             MenuMain.Size = new Size(50, 20);
             MenuMain.Text = "Menu";
@@ -235,7 +236,7 @@
             // tabPageDashBoard
             // 
             tabPageDashBoard.Controls.Add(dashBoardControl1);
-            tabPageDashBoard.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            tabPageDashBoard.Font = new Font("Segoe UI", 9F);
             tabPageDashBoard.Location = new Point(4, 27);
             tabPageDashBoard.Name = "tabPageDashBoard";
             tabPageDashBoard.Padding = new Padding(3);
@@ -376,6 +377,13 @@
             dashBoardInformation1.Size = new Size(1542, 103);
             dashBoardInformation1.TabIndex = 15;
             // 
+            // positionInfoToolStripMenuItem
+            // 
+            positionInfoToolStripMenuItem.Name = "positionInfoToolStripMenuItem";
+            positionInfoToolStripMenuItem.Size = new Size(180, 22);
+            positionInfoToolStripMenuItem.Text = "PositionInfo";
+            positionInfoToolStripMenuItem.Click += PositionInfoToolStripMenuItem_Click;
+            // 
             // FrmMain
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -440,6 +448,7 @@
         private TabPage tabPageDashBoard;
         private DashBoardControl dashBoardControl1;
         private TradingView.DashBoardInformation dashBoardInformation1;
+        private ToolStripMenuItem positionInfoToolStripMenuItem;
     }
 }
 

@@ -24,7 +24,7 @@ public abstract class ExchangeBase
     public abstract Task<(bool succes, TradeParams tradeParams)> Cancel(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoPositionStep step);
 
     public abstract Task<(bool result, TradeParams tradeParams)> PlaceOrder(CryptoDatabase database, 
-        CryptoTradeAccount tradeAccount, CryptoSymbol symbol, DateTime currentDate,
+        CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoTradeSide tradeSide, DateTime currentDate,
         CryptoOrderType orderType, CryptoOrderSide orderSide,
         decimal quantity, decimal price, decimal? stop, decimal? limit);
 
@@ -34,9 +34,7 @@ public abstract class ExchangeBase
         builder.Append(symbol.Name);
         if (extraText != "")
             builder.Append($" {extraText}");
-        if (tradeParams == null)
-            builder.Append(" De tradeParams zijn niet opgegeven?");
-        else
+        if (tradeParams != null)
         {
             builder.Append($" {tradeParams.OrderSide}");
             builder.Append($" {tradeParams.OrderType}");

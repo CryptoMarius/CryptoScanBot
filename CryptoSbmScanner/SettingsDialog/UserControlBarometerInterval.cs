@@ -6,43 +6,43 @@ public partial class UserControlBarometerInterval : UserControl
     {
         InitializeComponent();
 
-        EditBarometer.Click += EditBarometerChecked;
+        EditIsActive.Click += EditIsActiveChecked;
     }
 
-    private void EditBarometerChecked(object sender, EventArgs e)
+    private void EditIsActiveChecked(object sender, EventArgs e)
     {
-        EditBarometerMin.Enabled = EditBarometer.Checked;
-        EditBarometerMax.Enabled = EditBarometer.Checked;
+        EditMinimal.Enabled = EditIsActive.Checked;
+        EditMaximal.Enabled = EditIsActive.Checked;
     }
 
     public void SetChecked(string interval, Dictionary<string, (decimal minValue, decimal maxValue)> barometer)
     {
-        EditBarometer.Text = interval;
+        EditIsActive.Text = interval;
 
-        EditBarometerMin.Minimum = -999;
-        EditBarometerMin.Maximum = +999;
+        EditMinimal.Minimum = -999;
+        EditMinimal.Maximum = +999;
 
-        EditBarometerMax.Minimum = -999;
-        EditBarometerMax.Maximum = +999;
+        EditMaximal.Minimum = -999;
+        EditMaximal.Maximum = +999;
 
         if (barometer.TryGetValue(interval, out var value))
         {
-            EditBarometer.Checked = true;
-            EditBarometerMin.Value = value.minValue;
-            EditBarometerMax.Value = value.maxValue;
+            EditIsActive.Checked = true;
+            EditMinimal.Value = value.minValue;
+            EditMaximal.Value = value.maxValue;
         }
         else
         {
-            EditBarometer.Checked = false;
-            EditBarometerMin.Value = -999;
-            EditBarometerMax.Value = 999;
+            EditIsActive.Checked = false;
+            EditMinimal.Value = -999;
+            EditMaximal.Value = 999;
         }
-        EditBarometerChecked(null, null);
+        EditIsActiveChecked(null, null);
     }
 
     public (bool Checked, (decimal minValue, decimal maxValue)) GetChecked()
     {
-        return (EditBarometer.Checked, (EditBarometerMin.Value, EditBarometerMax.Value));
+        return (EditIsActive.Checked, (EditMinimal.Value, EditMaximal.Value));
     }
 
 }

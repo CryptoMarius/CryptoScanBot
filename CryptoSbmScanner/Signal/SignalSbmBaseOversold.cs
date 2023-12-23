@@ -117,11 +117,11 @@ public class SignalSbmBaseOversold : SignalSbmBase
 
     public override bool AdditionalChecks(CryptoCandle candle, out string response)
     {
-        if (!candle.IsSma200AndSma50OkayOversold(GlobalData.Settings.Signal.SbmMa200AndMa50Percentage, out response))
+        if (!candle.IsSma200AndSma50OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
             return false;
-        if (!candle.IsSma200AndSma20OkayOversold(GlobalData.Settings.Signal.SbmMa200AndMa20Percentage, out response))
+        if (!candle.IsSma200AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out response))
             return false;
-        if (!candle.IsSma50AndSma20OkayOversold(GlobalData.Settings.Signal.SbmMa50AndMa20Percentage, out response))
+        if (!candle.IsSma50AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
             return false;
 
         if (!CheckMaCrossings(out response))
@@ -225,7 +225,7 @@ public class SignalSbmBaseOversold : SignalSbmBase
         ExtraText = "";
 
         // De breedte van de bb is ten minste 1.5%
-        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.SbmBBMinPercentage, GlobalData.Settings.Signal.SbmBBMaxPercentage))
+        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Sbm.BBMinPercentage, GlobalData.Settings.Signal.Sbm.BBMaxPercentage))
         {
             ExtraText = "bb.width te klein " + CandleLast.CandleData.BollingerBandsPercentage?.ToString("N2");
             return false;
@@ -239,7 +239,7 @@ public class SignalSbmBaseOversold : SignalSbmBase
         }
 
         // Er recovery is via de macd
-        if (!IsMacdRecoveryOversold(GlobalData.Settings.Signal.SbmCandlesForMacdRecovery))
+        if (!IsMacdRecoveryOversold(GlobalData.Settings.Signal.Sbm.CandlesForMacdRecovery))
             return false;
 
         return true;
@@ -340,7 +340,7 @@ public class SignalSbmBaseOversold : SignalSbmBase
         // MACD
         if (GlobalData.Settings.Trading.CheckIncreasingMacd)
         {
-            if (!IsMacdRecoveryOversold(GlobalData.Settings.Signal.SbmCandlesForMacdRecovery))
+            if (!IsMacdRecoveryOversold(GlobalData.Settings.Signal.Sbm.CandlesForMacdRecovery))
             {
                 // ExtraText is al ingevuld
                 return false;
@@ -515,11 +515,13 @@ public class SignalSbmBaseOversold : SignalSbmBase
         // ********************************************************************
         // Barometer(s)
         // Als de barometer alsnog daalt/stijgt dan stoppen
-        foreach (KeyValuePair<CryptoIntervalPeriod, (decimal minValue, decimal maxValue)> entry in TradingConfig.Trading[CryptoTradeSide.Long].Barometer)
-        {
-            if (!SymbolTools.CheckValidBarometer(Symbol.QuoteData, entry.Key, entry.Value, out ExtraText))
-                return true;
-        }
+        //foreach (KeyValuePair<CryptoIntervalPeriod, (decimal minValue, decimal maxValue)> entry in TradingConfig.Trading[CryptoTradeSide.Long].Barometer)
+        //{
+        //    if (!SymbolTools.CheckValidBarometer(Symbol.QuoteData, entry.Key, entry.Value, out ExtraText))
+        //        return true;
+        //}
+        if (!BarometerHelper.ValidBarometerConditions(Symbol.QuoteData, TradingConfig.Trading[CryptoTradeSide.Long].Barometer, out ExtraText))
+            return true;
 
 
         ExtraText = "";

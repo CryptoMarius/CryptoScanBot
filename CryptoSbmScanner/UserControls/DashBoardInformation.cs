@@ -465,7 +465,7 @@ public partial class DashBoardInformation : UserControl
         }
         catch (Exception error)
         {
-            GlobalData.Logger.Error(error);
+            GlobalData.Logger.Error(error, "");
             GlobalData.AddTextToLogTab(error.ToString() + "\r\n");
         }
     }
@@ -609,29 +609,35 @@ public partial class DashBoardInformation : UserControl
                 Invoke((MethodInvoker)(() => baseCoin = EditBarometerQuote.Text));
                 if (GlobalData.Settings.QuoteCoins.TryGetValue(baseCoin, out CryptoQuoteData quoteData))
                 {
-                    string text;
+                    string text, symbol;
                     string e = GlobalData.Settings.General.ExchangeName;
                     if (ExchangeHelper.PriceTicker != null)
                     {
                         text = ExchangeHelper.PriceTicker.Count().ToString("N0");
-                        ShowSymbolPrice(SymbolHistList[0], InformationRowList[0], exchange, quoteData, "BTC", "Price ticker count", text);
+                        symbol = GlobalData.Settings.ShowSymbolInformation[0];
+                        ShowSymbolPrice(SymbolHistList[0], InformationRowList[0], exchange, quoteData, symbol, "Price ticker count", text);
                     }
                     if (ExchangeHelper.KLineTicker != null)
                     {
                         text = ExchangeHelper.KLineTicker.Count().ToString("N0");
-                        ShowSymbolPrice(SymbolHistList[1], InformationRowList[1], exchange, quoteData, "PAXG", "Kline ticker count", text);
+                        symbol = GlobalData.Settings.ShowSymbolInformation[1];
+                        ShowSymbolPrice(SymbolHistList[1], InformationRowList[1], exchange, quoteData, symbol, "Kline ticker count", text);
                     }
 
                     text = PositionMonitor.AnalyseCount.ToString("N0");
-                    ShowSymbolPrice(SymbolHistList[2], InformationRowList[2], exchange, quoteData, "ETH", "Scanner analyse count", text);
+                    symbol = GlobalData.Settings.ShowSymbolInformation[2];
+                    ShowSymbolPrice(SymbolHistList[2], InformationRowList[2], exchange, quoteData, symbol, "Scanner analyse count", text);
 
                     text = GlobalData.createdSignalCount.ToString("N0");
-                    ShowSymbolPrice(SymbolHistList[3], InformationRowList[3], exchange, quoteData, "XRP", "Scanner signal count", text);
+                    symbol = GlobalData.Settings.ShowSymbolInformation[3];
+                    ShowSymbolPrice(SymbolHistList[3], InformationRowList[3], exchange, quoteData, symbol, "Scanner signal count", text);
 
 #if SQLDATABASE
                     text = GlobalData.TaskSaveCandles.QueueCount.ToString("N0");
-                    ShowSymbolPrice(SymbolHistList[4], InformationRowList[4], exchange, quoteData, "ADA", "Database Buffer", text);
+                    symbol = GlobalData.Settings.ShowSymbolInformation[4];
+                    ShowSymbolPrice(SymbolHistList[4], InformationRowList[4], exchange, quoteData, symbol, "Database Buffer", text);
 #else
+                    symbol = GlobalData.Settings.ShowSymbolInformation[4];
                     if (GlobalData.Settings.Trading.Active)
                     {
                         int positionCount = 0; // hmm, in welk tradeAccount? Even quick en dirty
@@ -647,10 +653,10 @@ public partial class DashBoardInformation : UserControl
                                 }
                             }
                         }
-                        ShowSymbolPrice(SymbolHistList[4], InformationRowList[4], exchange, quoteData, "ADA", "Openstaande posities", positionCount.ToString());
+                        ShowSymbolPrice(SymbolHistList[4], InformationRowList[4], exchange, quoteData, symbol, "Openstaande posities", positionCount.ToString());
                     }
                     else
-                        ShowSymbolPrice(SymbolHistList[4], InformationRowList[4], exchange, quoteData, "ADA", "", "");
+                        ShowSymbolPrice(SymbolHistList[4], InformationRowList[4], exchange, quoteData, symbol, "", "");
 #endif
                 }
             }

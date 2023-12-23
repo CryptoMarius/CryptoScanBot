@@ -47,6 +47,7 @@ public class Api: ExchangeBase
         // Default opties voor deze exchange
         KucoinRestClient.SetDefaultOptions(options =>
         {
+            //options.ReceiveWindow = TimeSpan.FromSeconds(15);
             if (GlobalData.Settings.Trading.ApiKey != "")
                 options.ApiCredentials = new KucoinApiCredentials(GlobalData.Settings.Trading.ApiKey, GlobalData.Settings.Trading.ApiSecret, GlobalData.Settings.Trading.ApiPassPhrase);
         });
@@ -129,14 +130,14 @@ public class Api: ExchangeBase
 
 
     public override async Task<(bool result, TradeParams tradeParams)> PlaceOrder(CryptoDatabase database,
-        CryptoTradeAccount tradeAccount, CryptoSymbol symbol, DateTime currentDate,
+        CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoTradeSide tradeSide, DateTime currentDate,
         CryptoOrderType orderType, CryptoOrderSide orderSide,
         decimal quantity, decimal price, decimal? stop, decimal? limit)
     {
         // Controleer de limiten van de maximum en minimum bedrag en de quantity
         if (!symbol.InsideBoundaries(quantity, price, out string text))
         {
-            GlobalData.AddTextToLogTab(string.Format("{0} {1} (debug={2} {3})", symbol.Name, text, price, quantity));
+            GlobalData.AddTextToLogTab($"{symbol.Name} {text} (debug={price} {quantity})");
             return (false, null);
         }
 
@@ -263,7 +264,7 @@ public class Api: ExchangeBase
                 tradeParams.Error = result.Error;
                 tradeParams.ResponseStatusCode = result.ResponseStatusCode;
             }
-            return (true, tradeParams);
+            return (result.Success, tradeParams);
         }
 
         return (false, tradeParams);
@@ -319,7 +320,7 @@ public class Api: ExchangeBase
     //        }
     //        catch (Exception error)
     //        {
-    //            GlobalData.Logger.Error(error);
+    //            GlobalData.Logger.Error(error, "");
     //            GlobalData.AddTextToLogTab(error.ToString());
     //            // Als er ooit een rolback plaatsvindt is de database en objects in het geheugen niet meer in sync..
     //            transaction.Rollback();
@@ -376,7 +377,7 @@ public class Api: ExchangeBase
                     //}
                     //catch (Exception error)
                     //{
-                    //    GlobalData.Logger.Error(error);
+                    //    GlobalData.Logger.Error(error, "");
                     //    GlobalData.AddTextToLogTab(error.ToString());
                     //    throw;
                     //}
@@ -384,7 +385,7 @@ public class Api: ExchangeBase
             }
             catch (Exception error)
             {
-                GlobalData.Logger.Error(error);
+                GlobalData.Logger.Error(error, "");
                 GlobalData.AddTextToLogTab(error.ToString());
                 GlobalData.AddTextToLogTab("");
             }

@@ -63,6 +63,7 @@ partial class UserControlStrategy
         AutoScaleMode = AutoScaleMode.Font;
         AutoSize = true;
         Controls.Add(EditGroupBox);
+        MinimumSize = new Size(70, 70);
         Name = "UserControlStrategy";
         Size = new Size(125, 128);
         EditGroupBox.ResumeLayout(false);

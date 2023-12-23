@@ -68,6 +68,7 @@ public static class ScannerSession
         GlobalData.ThreadMonitorCandle = new ThreadMonitorCandle();
 #if TRADEBOT
         GlobalData.ThreadMonitorOrder = new ThreadMonitorOrder();
+        GlobalData.ThreadDoubleCheckPosition = new ThreadDoubleCheckPosition();
         if (GlobalData.Settings.Trading.ApiKey != "")
             _ = ExchangeHelper.UserData.Start();
 #endif
@@ -107,6 +108,7 @@ public static class ScannerSession
 
 #if TRADEBOT
         GlobalData.ThreadMonitorOrder?.Stop();
+        GlobalData.ThreadDoubleCheckPosition?.Stop();
         if (ExchangeHelper.UserData != null)
             await ExchangeHelper.UserData?.Stop();
 #endif

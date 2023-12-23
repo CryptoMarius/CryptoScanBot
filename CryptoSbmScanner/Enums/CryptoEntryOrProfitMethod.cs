@@ -1,6 +1,6 @@
 ﻿namespace CryptoSbmScanner.Enums;
 
-public enum CryptoStepInMethod
+public enum CryptoEntryOrProfitMethod
 {
     AfterNextSignal, // Stap op een melding in (rekening houdende met cooldown en percentage indien DCA)
     FixedPercentage, // Stap in op een gefixeerde percentage (rekening houdende met cooldown en percentage indien DCA)

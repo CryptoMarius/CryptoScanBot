@@ -142,6 +142,14 @@ public partial class FrmMain : Form
     }
 
 
+    /// <summary>
+    /// Voorlopig alleen traden op Bybit Spot en Futures (alleen daar kan ik het testen)
+    /// </summary>
+    private bool AllowTradingOnExchange()
+    {
+        return (GlobalData.Settings.General.ExchangeId == 2 || GlobalData.Settings.General.ExchangeId == 3);
+    }
+
     private void ShowApplicationVersion()
     {
         var assembly = Assembly.GetExecutingAssembly().GetName();
@@ -166,6 +174,8 @@ public partial class FrmMain : Form
                 GlobalData.Settings.General.ExchangeName = exchange.Name;
             }
         }
+        if (!AllowTradingOnExchange())
+            GlobalData.Settings.Trading.Active = false;
 
         // Het juiste trading coount in de globale variabelen zetten
         GlobalData.SetTradingAccounts();
@@ -184,6 +194,7 @@ public partial class FrmMain : Form
 
         ListboxSymbolsInitCaptions();
         ListViewSignalsInitCaptions();
+
 #if TRADEBOT
         ListViewPositionsOpenInitCaptions();
         ListViewPositionsClosedInitCaptions();
@@ -364,7 +375,7 @@ public partial class FrmMain : Form
         activeQuoteData = "";
         foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
         {
-            if (quoteData.FetchCandles)
+            if (quoteData.FetchCandles && quoteData.SymbolList.Count > 0)
                 activeQuoteData += "," + quoteData.Name;
         }
     }
@@ -444,7 +455,7 @@ public partial class FrmMain : Form
         }
         catch (Exception error)
         {
-            GlobalData.Logger.Error(error);
+            GlobalData.Logger.Error(error, "");
             GlobalData.AddTextToLogTab("ERROR settings " + error.ToString());
         }
     }
@@ -602,33 +613,32 @@ public partial class FrmMain : Form
             {
                 case CryptoSignalStrategy.Jump:
                     if (signal.Side == CryptoTradeSide.Long)
-                        PlaySound(signal, GlobalData.Settings.Signal.PlaySoundCandleJumpSignal, GlobalData.Settings.Signal.PlaySpeechCandleJumpSignal,
-                            GlobalData.Settings.Signal.SoundCandleJumpUp, ref LastSignalSoundCandleJumpUp);
+                        PlaySound(signal, GlobalData.Settings.Signal.Jump.PlaySound, GlobalData.Settings.Signal.Jump.PlaySpeech,
+                            GlobalData.Settings.Signal.Jump.SoundFileLong, ref LastSignalSoundCandleJumpUp);
                     if (signal.Side == CryptoTradeSide.Short)
-                        PlaySound(signal, GlobalData.Settings.Signal.PlaySoundCandleJumpSignal, GlobalData.Settings.Signal.PlaySpeechCandleJumpSignal,
-                            GlobalData.Settings.Signal.SoundCandleJumpDown, ref LastSignalSoundCandleJumpDown);
+                        PlaySound(signal, GlobalData.Settings.Signal.Jump.PlaySound, GlobalData.Settings.Signal.Jump.PlaySpeech,
+                            GlobalData.Settings.Signal.Jump.SoundFileShort, ref LastSignalSoundCandleJumpDown);
                     break;
 
                 case CryptoSignalStrategy.Stobb:
                     if (signal.Side == CryptoTradeSide.Long)
-                        PlaySound(signal, GlobalData.Settings.Signal.PlaySoundStobbSignal, GlobalData.Settings.Signal.PlaySpeechStobbSignal,
-                            GlobalData.Settings.Signal.SoundStobbOversold, ref LastSignalSoundStobbOversold);
+                        PlaySound(signal, GlobalData.Settings.Signal.Stobb.PlaySound, GlobalData.Settings.Signal.Stobb.PlaySpeech,
+                            GlobalData.Settings.Signal.Stobb.SoundFileLong, ref LastSignalSoundStobbOversold);
                     if (signal.Side == CryptoTradeSide.Short)
-                        PlaySound(signal, GlobalData.Settings.Signal.PlaySoundStobbSignal, GlobalData.Settings.Signal.PlaySpeechStobbSignal,
-                            GlobalData.Settings.Signal.SoundStobbOverbought, ref LastSignalSoundStobbOverbought);
+                        PlaySound(signal, GlobalData.Settings.Signal.Stobb.PlaySound, GlobalData.Settings.Signal.Stobb.PlaySpeech,
+                            GlobalData.Settings.Signal.Stobb.SoundFileShort, ref LastSignalSoundStobbOverbought);
                     break;
 
                 case CryptoSignalStrategy.Sbm1:
                 case CryptoSignalStrategy.Sbm2:
                 case CryptoSignalStrategy.Sbm3:
                 case CryptoSignalStrategy.Sbm4:
-                case CryptoSignalStrategy.Sbm5:
                     if (signal.Side == CryptoTradeSide.Long)
-                        PlaySound(signal, GlobalData.Settings.Signal.PlaySoundSbmSignal, GlobalData.Settings.Signal.PlaySpeechSbmSignal,
-                        GlobalData.Settings.Signal.SoundSbmOversold, ref LastSignalSoundSbmOversold);
+                        PlaySound(signal, GlobalData.Settings.Signal.Sbm.PlaySound, GlobalData.Settings.Signal.Sbm.PlaySpeech,
+                        GlobalData.Settings.Signal.Sbm.SoundFileLong, ref LastSignalSoundSbmOversold);
                     if (signal.Side == CryptoTradeSide.Short)
-                        PlaySound(signal, GlobalData.Settings.Signal.PlaySoundSbmSignal, GlobalData.Settings.Signal.PlaySpeechSbmSignal,
-                            GlobalData.Settings.Signal.SoundSbmOverbought, ref LastSignalSoundSbmOverbought);
+                        PlaySound(signal, GlobalData.Settings.Signal.Sbm.PlaySound, GlobalData.Settings.Signal.Sbm.PlaySpeech,
+                            GlobalData.Settings.Signal.Sbm.SoundFileShort, ref LastSignalSoundSbmOverbought);
                     break;
             }
 
@@ -799,7 +809,10 @@ public partial class FrmMain : Form
 
     private void ApplicationTradingBot_Click(object sender, EventArgs e)
     {
-        ApplicationTradingBot.Checked = !ApplicationTradingBot.Checked;
+        if (!AllowTradingOnExchange())
+            ApplicationTradingBot.Checked = false;
+        else
+            ApplicationTradingBot.Checked = !ApplicationTradingBot.Checked;
         GlobalData.Settings.Trading.Active = ApplicationTradingBot.Checked;
         GlobalData.SaveSettings();
     }
@@ -886,14 +899,14 @@ public partial class FrmMain : Form
                     }
 
                     BackTestExcel backTestExcel = new(symbol, createSignal.history);
-                    backTestExcel.ExportToExcell(CryptoOrderSide.Buy, GlobalData.Settings.BackTest.BackTestAlgoritm);
+                    backTestExcel.ExportToExcell(GlobalData.Settings.BackTest.BackTestAlgoritm);
                 }
 
             }
         }
         catch (Exception error)
         {
-            GlobalData.Logger.Error(error);
+            GlobalData.Logger.Error(error, "");
             GlobalData.AddTextToLogTab("ERROR settings " + error.ToString());
         }
 
@@ -913,4 +926,8 @@ public partial class FrmMain : Form
 #endif
     }
 
+    private async void PositionInfoToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+        await Exchange.BybitFutures.Api.GetPositionInfo();
+    }
 }

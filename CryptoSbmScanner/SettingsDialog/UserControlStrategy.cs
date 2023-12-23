@@ -12,13 +12,11 @@ public partial class UserControlStrategy : UserControl
         InitializeComponent();
     }
 
-    public void InitControls(string caption, CryptoTradeSide tradeSide)
+    public void InitControls(CryptoTradeSide tradeSide)
     {
-        EditGroupBox.Text = caption;
-
         foreach (var signalDefinition in SignalHelper.AlgorithmDefinitionIndex.Values)
         {
-            bool valid = ((tradeSide == CryptoTradeSide.Long && signalDefinition.AnalyzeLongType != null) ||
+            bool validStrategy = ((tradeSide == CryptoTradeSide.Long && signalDefinition.AnalyzeLongType != null) ||
                 (tradeSide == CryptoTradeSide.Short && signalDefinition.AnalyzeShortType != null));
 
             CheckBox checkbox = new()
@@ -28,7 +26,7 @@ public partial class UserControlStrategy : UserControl
             };
             flowLayoutPanel1.Controls.Add(checkbox);
 
-            if (valid)
+            if (validStrategy)
                 ControlList.Add(checkbox, checkbox.Text);
             else
                 checkbox.Enabled = false;
@@ -38,20 +36,16 @@ public partial class UserControlStrategy : UserControl
     public void LoadConfig(List<string> list)
     {
         foreach (var item in ControlList)
-        {
             item.Key.Checked = list.Contains(item.Value);
-        }
     }
 
-    public List<string> SaveConfig()
+    public void SaveConfig(List<string> list)
     {
-        List<string> list = new();
+        list.Clear();
         foreach (var item in ControlList)
         {
             if (item.Key.Checked)
                 list.Add(item.Value);
         }
-
-        return list;
     }
 }

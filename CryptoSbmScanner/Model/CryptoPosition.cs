@@ -59,6 +59,7 @@ public class CryptoPosition
     // Statistiek voor debug/display (niet noodzakelijk)
     public decimal? EntryPrice { get; set; }
     public decimal? ProfitPrice { get; set; }
+    public decimal? EntryAmount { get; set; }
 
 
     // Een experiment (die wegkan, maar we zetten er nu even de naam van de munt in)
@@ -83,19 +84,30 @@ public static class CryptoPositionHelper
 {
     public static decimal MarketValue(this CryptoPosition position)
     {
+        // zonder commission?
         if (!position.Symbol.LastPrice.HasValue)
             return 0m;
         else
-            return position.Quantity * position.Symbol.LastPrice.Value; // met of zonder commission?
+        {
+            decimal value = position.Quantity * position.Symbol.LastPrice.Value - position.Invested;
+            if (position.Side == CryptoTradeSide.Short)
+                value = -1 * value;
+            return value;
+        }
     }
 
     public static decimal MarketValuePercentage(this CryptoPosition position)
     {
         decimal priceDiff = 0;
         if (position.BreakEvenPrice != 0 && position.Symbol.LastPrice.HasValue)
+        {
             priceDiff = (decimal)(100 * ((position.Symbol.LastPrice / position.BreakEvenPrice) - 1));
+            if (position.Side == CryptoTradeSide.Short)
+                priceDiff = -1 * priceDiff;
+        }
         return priceDiff;
     }
+
 
     public static TimeSpan Duration(this CryptoPosition position)
     {
@@ -106,6 +118,7 @@ public static class CryptoPositionHelper
             span = DateTime.UtcNow - position.CreateTime;
         return span;
     }
+
 
     public static string DurationText(this CryptoPosition position)
     {
@@ -121,6 +134,24 @@ public static class CryptoPositionHelper
         if (span.Seconds > 0)
             text += $" {span.Seconds}s";
         return text.Trim();
+    }
+
+
+    public static CryptoOrderSide GetEntryOrderSide(this CryptoPosition position)
+    {
+        if (position.Side == CryptoTradeSide.Long)
+            return CryptoOrderSide.Buy;
+        else
+            return CryptoOrderSide.Sell;
+    }
+
+
+    public static CryptoOrderSide GetTakeProfitOrderSide(this CryptoPosition position)
+    {
+        if (position.Side == CryptoTradeSide.Long)
+            return CryptoOrderSide.Sell;
+        else
+            return CryptoOrderSide.Buy;
     }
 
 }

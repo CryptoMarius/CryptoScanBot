@@ -1419,8 +1419,8 @@ public partial class TestForm : Form
                     if (++count > 0)
                     {
                         //GlobalData.AddTextToLogTab(candle.OhlcText(symbol.Format) + " " + candle.Id.ToString());
-                        SignalCreate createSignal = new(symbol, interval);
-                        createSignal.AnalyzeSymbol(candle.OpenTime);
+                        SignalCreate createSignal = new(symbol, interval, CryptoTradeSide.Long);
+                        createSignal.Analyze(candle.OpenTime);
                     }
                 }
 
@@ -2002,7 +2002,7 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
         }
         catch (Exception error)
         {
-            GlobalData.Logger.Error(error);
+            GlobalData.Logger.Error(error, "");
             GlobalData.AddTextToLogTab("error webhook " + error.ToString()); // symbol.Text + " " + 
         }
     }
@@ -2333,14 +2333,14 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
         GlobalData.Settings.Trading.CheckIncreasingStoch = false;
 
         // BUY
-        GlobalData.Settings.Trading.BuyStepInMethod = CryptoStepInMethod.AfterNextSignal;
+        GlobalData.Settings.Trading.BuyStepInMethod = CryptoEntryOrProfitMethod.AfterNextSignal;
         GlobalData.Settings.Trading.GlobalBuyCooldownTime = 20;
         GlobalData.Settings.Trading.BuyOrderMethod = CryptoBuyOrderMethod.MarketOrder;
 
         // DCA
         GlobalData.Settings.Trading.DcaPercentage = 2m;
         GlobalData.Settings.Trading.DcaOrderMethod = CryptoBuyOrderMethod.SignalPrice;
-        GlobalData.Settings.Trading.DcaStepInMethod = CryptoStepInMethod.FixedPercentage;
+        GlobalData.Settings.Trading.DcaStepInMethod = CryptoEntryOrProfitMethod.FixedPercentage;
 
         // TP
         GlobalData.Settings.Trading.ProfitPercentage = 0.75m;
@@ -2474,7 +2474,7 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
                                 }
                                 catch (Exception error)
                                 {
-                                    GlobalData.Logger.Error(error);
+                                    GlobalData.Logger.Error(error, "");
                                     GlobalData.AddTextToLogTab("error back testing " + error.ToString()); // symbol.Text + " " + 
                                 }
                             }

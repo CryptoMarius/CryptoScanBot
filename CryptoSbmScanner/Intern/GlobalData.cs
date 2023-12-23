@@ -8,6 +8,8 @@ using CryptoSbmScanner.TradingView;
 using Dapper;
 using Dapper.Contrib.Extensions;
 
+using NLog;
+
 using System.Globalization;
 using System.Text.Encodings.Web;
 using System.Text.Json;
@@ -64,6 +66,10 @@ static public class GlobalData
     // The nlogger stuff
     static public NLog.Logger Logger { get; } = NLog.LogManager.GetCurrentClassLogger();
 
+    //static public Logger Logger;
+    //static public Logger SeriLogError;
+
+
     static public List<CryptoInterval> IntervalList { get; } = new();
     static public SortedList<int, CryptoInterval> IntervalListId { get; } = new();
     static public SortedList<CryptoIntervalPeriod, CryptoInterval> IntervalListPeriod { get; } = new();
@@ -110,6 +116,7 @@ static public class GlobalData
     static public ThreadMonitorCandle ThreadMonitorCandle { get; set; }
 #if TRADEBOT
     static public ThreadMonitorOrder ThreadMonitorOrder { get; set; }
+    static public ThreadDoubleCheckPosition ThreadDoubleCheckPosition { get; set; }
 #endif
 #if BALANCING
     static public ThreadBalanceSymbols ThreadBalanceSymbols { get; set; }
@@ -272,7 +279,7 @@ static public class GlobalData
 
             if (signal.Strategy == CryptoSignalStrategy.Stobb || signal.Strategy == CryptoSignalStrategy.Sbm1 ||
                 signal.Strategy == CryptoSignalStrategy.Sbm2 || signal.Strategy == CryptoSignalStrategy.Sbm3 ||
-                signal.Strategy == CryptoSignalStrategy.Sbm4 || signal.Strategy == CryptoSignalStrategy.Sbm5)
+                signal.Strategy == CryptoSignalStrategy.Sbm4)
                 return true;
 
             if (signal.Side == side)
@@ -330,6 +337,7 @@ static public class GlobalData
           //symbol.Name.Equals("ADAUSDT") ||
           //  symbol.Name.Equals("AAVE3SUSDT") ||
           //  symbol.Name.Equals("DASHUSDT") ||
+          symbol.Name.Equals("ADAUSDT") ||
           symbol.Name.Equals("WLDUSDT") ||
           symbol.Name.Equals("STORJUSDT") ||
 
@@ -426,13 +434,13 @@ static public class GlobalData
             {
                 if (quoteData.FetchCandles)
                 {
-                    if (!exchange.SymbolListName.ContainsKey(Constants.SymbolNameBarometerPrice + quoteData.Name))
+                    if (!exchange.SymbolListName.ContainsKey(Model.Constants.SymbolNameBarometerPrice + quoteData.Name))
                     {
                         CryptoSymbol symbol = new()
                         {
                             Exchange = exchange,
                             ExchangeId = exchange.Id,
-                            Base = Constants.SymbolNameBarometerPrice, // De "munt"
+                            Base = Model.Constants.SymbolNameBarometerPrice, // De "munt"
                             Quote = quoteData.Name, // USDT, BTC etc.
                             Volume = 0,
                             Status = 1,
@@ -454,6 +462,8 @@ static public class GlobalData
     {
         try
         {
+            var options = new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true, IncludeFields = true };
+
             string filename = GetBaseDir() + "settings.json";
             if (File.Exists(filename))
             {
@@ -464,7 +474,7 @@ static public class GlobalData
                 //    readStream.Close();
                 //}
                 string text = File.ReadAllText(filename);
-                Settings = JsonSerializer.Deserialize<SettingsBasic>(text);
+                Settings = JsonSerializer.Deserialize<SettingsBasic>(text, options);
             }
             else
             {
@@ -476,11 +486,11 @@ static public class GlobalData
                     try
                     {
                         string text = File.ReadAllText(oldSettings);
-                        Settings = JsonSerializer.Deserialize<SettingsBasic>(text);
+                        Settings = JsonSerializer.Deserialize<SettingsBasic>(text, options);
                     }
                     catch (Exception error)
                     {
-                        Logger.Error(error);
+                        Logger.Error(error, "");
                         AddTextToLogTab("Error playing music " + error.ToString(), false);
                     }
                 }
@@ -490,7 +500,7 @@ static public class GlobalData
         }
         catch (Exception error)
         {
-            Logger.Error(error);
+            Logger.Error(error, "");
             AddTextToLogTab("Error loading Weblinks.json " + error.ToString(), false);
         }
     }
@@ -521,7 +531,7 @@ static public class GlobalData
         }
         catch (Exception error)
         {
-            Logger.Error(error);
+            Logger.Error(error, "");
             AddTextToLogTab("Error loading Weblinks.json " + error.ToString(), false);
         }
     }
@@ -583,7 +593,9 @@ static public class GlobalData
         //    writeStream.Close();
         //}
 
-        string text = JsonSerializer.Serialize(Settings, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
+        var options = new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true, IncludeFields = true };
+
+        string text = JsonSerializer.Serialize(Settings, options);
         //var accountFile = new FileInfo(filename);
         File.WriteAllText(filename, text);
 
@@ -595,13 +607,13 @@ static public class GlobalData
         filename = GlobalData.GetBaseDir();
         Directory.CreateDirectory(filename);
         filename += "settingsSignalsCompiled.json";
-        text = JsonSerializer.Serialize(TradingConfig.Signals, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
+        text = JsonSerializer.Serialize(TradingConfig.Signals, options);
         File.WriteAllText(filename, text);
 
         filename = GlobalData.GetBaseDir();
         Directory.CreateDirectory(filename);
         filename += "settingsTradingCompiled.json";
-        text = JsonSerializer.Serialize(TradingConfig.Trading, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
+        text = JsonSerializer.Serialize(TradingConfig.Trading, options);
         File.WriteAllText(filename, text);
     }
 
@@ -614,7 +626,7 @@ static public class GlobalData
         }
         catch (Exception error)
         {
-            Logger.Error(error);
+            Logger.Error(error, "");
             AddTextToLogTab("Error playing music " + error.ToString(), false);
         }
     }
@@ -627,7 +639,7 @@ static public class GlobalData
         }
         catch (Exception error)
         {
-            Logger.Error(error);
+            Logger.Error(error, "");
             AddTextToLogTab("Error playing speech " + error.ToString(), false);
         }
     }
@@ -640,7 +652,7 @@ static public class GlobalData
         }
         catch (Exception error)
         {
-            Logger.Error(error);
+            Logger.Error(error, "");
             // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
             AddTextToLogTab(" error telegram thread(1)" + error.ToString(), false);
         }
@@ -728,9 +740,10 @@ static public class GlobalData
     }
 
 
-    static public void InitializeNlog()
+    static public void InitializeLogging()
     {
-        // nlog is lastig te beinvloeden, dus dan maar via code
+        // nlog is lastig te beinvloeden, daarom maar via code
+        // serilog is niet veel anders, prima logging, maar beinvloeding van bestandsnamen is gelimiteerd (splitsen errors is een probleem)
 
         /*
         <targets>
@@ -749,20 +762,50 @@ static public class GlobalData
 
 		<logger name="*" writeTo="default" />
 		<logger name="*" minlevel="Error" writeTo="errors" />
+
+
+        <?xml version="1.0" encoding="utf-8" ?>
+        <nlog xmlns="http://www.nlog-project.org/schemas/NLog.xsd"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" >
+          <extensions>
+            <add assembly="My.Awesome.LoggingExentions"/>
+          </extensions>
+            <targets>
+                <target name="file1" xsi:type="File"
+                          fileName="${basedir}/Logs/${date:format=yyyy-MM-dd}.log"
+                          layout="${longdate} 
+                          ${level:uppercase=true:padding=5} 
+                          ${session} 
+        ${storeid} ${msisdn} - ${logger:shortName=true} - ${message} 
+        ${exception:format=tostring}"
+                          keepFileOpen="true"
+                        />
+            </targets>
+          <rules>
+              <logger name="*" minlevel="Trace" writeTo="file1" />
+          </rules>
+        </nlog>
         */
 
-        // Create configuration object 
+
+        // ik ben het wel even zat met nlog en die filenames
+
+        //// Create configuration object 
         var config = new NLog.Config.LoggingConfiguration();
 
         // Create targets and add them to the configuration 
         var fileTarget = new NLog.Targets.FileTarget();
         config.AddTarget("file", fileTarget);
         fileTarget.Name = "default";
-        fileTarget.ArchiveDateFormat = "yyyy-MM-dd";
-        fileTarget.ArchiveEvery = NLog.Targets.FileArchivePeriod.Day;
-        fileTarget.EnableArchiveFileCompression = false;
-        fileTarget.MaxArchiveDays = 10;
+        //fileTarget.KeepFileOpen = true;
         fileTarget.FileName = GetBaseDir() + "CryptoScanner ${date:format=yyyy-MM-dd}.log";
+        fileTarget.MaxArchiveDays = 14;
+        //fileTarget.ArchiveDateFormat = "yyyy-MM-dd";
+        //fileTarget.EnableArchiveFileCompression = false;
+        //fileTarget.ArchiveEvery = NLog.Targets.FileArchivePeriod.Day; // None?
+        //fileTarget.ArchiveNumbering = NLog.Targets.ArchiveNumberingMode.Date;
+        //fileTarget.MaxArchiveDays = 10;
+        //fileTarget.ArchiveFileName = fileTarget.FileName; //"${logDirectory}/Log.{#}.log";
         //fileTarget.Layout = "Exception Type: ${exception:format=Type}${newline}Target Site:  ${event-context:TargetSite }${newline}Message: ${message}";
 
         var rule = new NLog.Config.LoggingRule("*", NLog.LogLevel.Info, fileTarget);
@@ -771,11 +814,14 @@ static public class GlobalData
         fileTarget = new NLog.Targets.FileTarget();
         config.AddTarget("file", fileTarget);
         fileTarget.Name = "errors";
-        fileTarget.ArchiveDateFormat = "yyyy-MM-dd";
-        fileTarget.ArchiveEvery = NLog.Targets.FileArchivePeriod.Day;
-        fileTarget.MaxArchiveDays = 10;
-        fileTarget.EnableArchiveFileCompression = false;
+        //fileTarget.KeepFileOpen = true;
+        fileTarget.MaxArchiveDays = 14;
+        //fileTarget.ArchiveDateFormat = "yyyy-MM-dd";
+        //fileTarget.EnableArchiveFileCompression = false;
+        //fileTarget.ArchiveEvery = NLog.Targets.FileArchivePeriod.Day; // None?
+        //fileTarget.ArchiveNumbering = NLog.Targets.ArchiveNumberingMode.Date;
         fileTarget.FileName = GetBaseDir() + "CryptoScanner ${date:format=yyyy-MM-dd}-Errors.log";
+        //fileTarget.ArchiveFileName = fileTarget.FileName; //"${logDirectory}/Log.{#}.log";
         //fileTarget.Layout = "Exception Type: ${exception:format=Type}${newline}Target Site:  ${event-context:TargetSite }${newline}Message: ${message}";
 
         rule = new NLog.Config.LoggingRule("*", NLog.LogLevel.Error, fileTarget);
@@ -787,6 +833,51 @@ static public class GlobalData
         Logger.Info("");
         Logger.Info("");
         Logger.Info("****************************************************");
+
+
+
+        //Logger seriLogError = new LoggerConfiguration().MinimumLevel.Debug()
+        //  .WriteTo.File(GetBaseDir() + "CryptoScanner.Seri .log", rollingInterval: RollingInterval.Day)
+        //  .CreateLogger();
+
+        //Logger seriLogNormal = new LoggerConfiguration().MinimumLevel.Debug()
+        //  .WriteTo.File(GetBaseDir() + "CryptoScanner.Seri .log", rollingInterval: RollingInterval.Day)
+        //  .CreateLogger();
+
+
+        //Log.Logger = new LoggerConfiguration()
+        //.WriteTo.Conditional(
+        //    evt => evt.Level == LogEventLevel.Debug,
+        //    wt => wt.RollingFile(GetBaseDir() + "CryptoScanner.Seri .log"))
+        //.WriteTo.Conditional(
+        //    evt => evt.Level == LogEventLevel.Error,
+        //    wt => wt.RollingFile(GetBaseDir() + "CryptoScanner.Seri .log"))
+        //.CreateLogger();
+
+        //Logger = new LoggerConfiguration()
+        //            .MinimumLevel.Debug()
+        //            //.WriteTo.File()
+        //            .WriteTo.File(GetBaseDir() + "CryptoScanner-.log", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 14)
+        //            //.WriteTo.Logger(l => l.Filter.ByIncludingOnly(e => e.Level == LogEventLevel.Information).WriteTo.File(GetBaseDir() + "CryptoScanner-.log", rollingInterval: RollingInterval.Day))
+        //            //.WriteTo.Logger(l => l.Filter.ByIncludingOnly(e => e.Level == LogEventLevel.Debug).WriteTo.File(GetBaseDir() + "CryptoScanner-.log", rollingInterval: RollingInterval.Day))
+        //            //.WriteTo.Logger(l => l.Filter.ByIncludingOnly(e => e.Level == LogEventLevel.Warning).WriteTo.File(GetBaseDir() + "CryptoScanner-.log", rollingInterval: RollingInterval.Day))
+        //            //.WriteTo.Logger(l => l.Filter.ByIncludingOnly(e => e.Level == LogEventLevel.Error).WriteTo.File(GetBaseDir() + "CryptoScanner- Error.log", rollingInterval: RollingInterval.Day))
+        //            //.WriteTo.Logger(l => l.Filter.ByIncludingOnly(e => e.Level == LogEventLevel.Fatal).WriteTo.File(GetBaseDir() + "CryptoScanner- Error.log", rollingInterval: RollingInterval.Day))
+        //            .CreateLogger();
+
+        //Logger.Info("Information");
+        //Logger.Error("Error");
+
+        //Logger.Info("Information2");
+        //Logger.Error("Error2");
+
+        //Logger.Info("Information3");
+        //Logger.Error("Error3");
+
+        //Logger.Fatal("Fatal");
+        //Logger.Warn("Warning");
+        //Logger.Debug("Debug");
+        //Logger.Trace("Trace");
     }
 
     //public static void DumpSessionInformation()

@@ -1,0 +1,69 @@
+Openstaande punten zijn de bevindingen, ideeën, diverse todo's tot dusver.
+Als je iets mist, geef het dat dab AUB even aan in een private PM of in de groep.
+(groot kans dat datgene we besproken hebben tussen wal en schip is beland)
+
+
+Scanner:
+- Op het signalen tabblad de breedte van de kolommen "eenmalig" berekenen en daarna onthouden (de tekst kolom kan aardig varieeren)
+- Bij kleine(re) beeldschermen zijn bepaalde instellingen niet in zijn geheel zichtbaar (de OK en Cancel knop vallen onder andere weg)
+- Het normale logbestand bevat op het einde een .0, waar komt deze vandaag? Doet NLog alsnog een archive ofzo? Een zooi in die hoek?
+- Scanner/Trader: Een dashboard introduceren, totaal aantal signalen afgelopen dag/week, indeling per categorie, short/long
+  Trading: Totaal geinvesteerd, returned, gemiddelde profit, de uitschieters (max), de tegenvallers (min).
+  Diverse grafieken (zoals Altrady) en anders weet ik zeker dat bepaalde mensen hier wel toevoegingen voor hebben ;-)
+- Bij aanpassing van het lettertype lopen de labels over in de control waardoor tekst minder leesbaar wordt
+- Bij aanpassing van het lettertype worden de scrollbars in bovenste listview getoond waardoor de onderste regel niet leesbaar is
+- Via coindelist een munt direct op de blacklist zetten voor zowel oversold als overbought (optioneel) - 1e poging lukt niet
+- Meldingen naar een externe applicatie c.q. script sturen - event of dropbox inbouwen
+- Meldingen naar een syslog server sturen (statistiek) - de signalen worden nu wel opgeslagen in de signal tabel
+- Indien de applicatie traag(?) afsluit wordt tijdens het afsluiten opnieuw begonnen met het activeren van de scanner (ophalen candles enzovoort) - nog niet kunnen herproduceren!
+- Teksten kunnen vertalen (de NL en EN lopen nu vaak door elkaar, tenenkrommend, maar ach)
+  Een eerste aanzet zit er nu in, inclusief een beetje uitleg over hou je het maakt en configureert
+- Experiment om een Mac versie te bouwen dmv MAUI XAML (een compleet nieuwe aanvliegroute van Microsoft)
+  Maar ik verwacht een duizendtal nieuwe problemen met geluid, voice, storage, sockets, hibernate/sleep enzovoort)
+  (ondertussen is er een VM met een Mac installatie, Mac is geheel nieuw voor mij, dat gaat even duren)
+- Visuele herkenning dat de scanner loopt (de getallen linksboven zeggen de mensen niet zoveel)
+  (ik heb hier eigenlijk geen alternatief voor, als iemand goede ideen heet laat het me weten aub)
+  Misschien dat de introductie van een dashboard hier nog iets in kan betekenen t.z.t.
+- Het font van de menuitem (en popup?) wordt niet aangepast (indien een ander lettertype of grootte wordt gekozen)
+- Scanner - Het symbol overzicht uitbreiden met volume, prijs e.d. Kunnen filteren op volume etc.
+- Algemeen - Black theming  https://stackoverflow.com/questions/61145347/c-how-to-make-a-dark-mode-theme-in-windows-forms-separate-form-as-select-the <geen prio>
+  Er is nu een slappe variant die iets met grijs doet (omdat anders de scrollbars en headers zo'n lelijk getoond worden), ik ben er niet tevreden over.
+
+
+Ik heb het hier over trading. De trading module komt op een later tijdstip beschikbaar. Vanwege het vertrek van Binance moet
+het eerst aangepast worden zodat het op een andere exchanges ook werkt en door het wegvallen van de OCO en de stoplimit orders 
+is dat even een probleem. Deze module (in de vorm van wat instellingen, dashboard en openstaande en gesloten posities) komt 
+later beschikbaar. Het wordt gelimiteerd op bybit spot of bybit futures omdat de enige testmogelijkheden voor mij zijn.
+
+Als je ideen hebt voor het vervangen van de OCO/Stop limit informeer me dan AUB..
+De introductie van de FundingRate/FundingInterval heeft gevolgen voor de trading module (onverwachte bijkomende kosten).
+
+Trading:
+- Trading - Charts - Graph toevoegen met hoe vaak de tweede en derde bijkoop gehit wordt
+- Trading - Charts - Graph toevoegen voor inzicht met hoeveel we aan het handelen zijn (inclusief de extra dca orders)
+- Trading - Charts - dagen waarin niets gebeurd worden niet getoond op de x-as (dat gebeurd ook helaas)
+- Trading - Bij een liquidatie wordt de positie geannuleerd en wordt deze niet genoteerd in de statistiek (het is een cancel van buiten af, maar met een herkenbare reden)
+- Trading - Charts - De dashboard statistieken houdt geen rekening met UTC (heeft nu 2 uur verschil met als gevolg een vertekend beeld <als je de verkoop momenten kent>).
+            Hoe kun je via SQLite hier rekening mee houden?
+- Trading - Voor het sluiten van een positie alsnog ALLE trades ophalen om te controleren dat er niet per ongeluk een buy order alsnog gehit is
+- Trading - Soms blijft er een DCA buy order op de exchange staan (error receive window > 5 seconden), daarom pas de positie op ready zetten totdat de gehele administratie afgerond is!
+            (er was ook een bug waardoor de status van het annuleren niet goed terug werd gegeven, wellicht dat dat het probleem was?)
+- Trading - Handmatig toevoegen van een positie via een naam munt + begindatum mogelijk maken, laat de bot het gewoon overnemen als je er "moe" van bent.
+- Trading - Verwijderen van een positie (handmatig overnemen van een positie)
+- Trading - Een aparte tool maken voor een backtest, candles ophalen voor BTC (tradingregels), de intervallen 1m en emulator interval.
+            Echter de barometer werkt op deze manier niet (omdat niet alle munten geladen zijn...)
+- Trading - Uitzoeken voor iemand in de groep, de backtest emulator aanpassen zodat het (pas) bij een psar wissel instapt - is er nog niet van gekomen, sorry!
+            De huidige backtest via een SQL database werkt op dit moment niet meer, opnieuw opzetten na de trading long/short implementatie.
+- Trading - Buy Trail gebruikt de verkeerde quantity, naar mate de prijs daalt zou de quantity groter moeten worden (is nu een constante)
+            -> trailing staat vanwege Binance uit (er is geen stoplimit order op Bybit)
+- Trading - Documentatie uitleggen papertrading bot (achterliggende gedachtes uitleggen)
+- Trading - Documentatie uitleggen wat de open en gesloten posities precies zijn (per kolom)
+- Trading - Documentatie (er is wel een stukje van de trading toegelicht, maar lang niet alles
+- Trading - Bybit Spot - Testen van een stop-limit order (die bestaat niet helaas, alternatieven?)
+- Trading - Bybit Futures - Testen van een stop-limit order (die bestaat niet helaas, alternatieven?)
+- Trading - Asset management voor papertrading (heeft nu ongelimiteerde assets wat geen realistische situatie is).
+Voor alle Exchanges (behalve Binance en BybitF):
+- Trading - userdate stream implementeren (detectie van trade)
+- Trading - ophalen trades implementeren
+- Trading - plaatsen van de orders (oco/buy/sell/stoplimit etc) - De OCO is Binance specifiek, vervanger?
+- Trading - price ticker implementeren (in Kucoin geeft dit teveel cpu overhead en is om die reden nu niet aangezet)

@@ -146,33 +146,18 @@ static public class TradeHandler
 
 
             // *********************************************************************
-            // Positie/Part/Step gevonden, nu verder met het afhandelen van de trade
+            // Positie+Part+Step gevonden, nu verder met het afhandelen van de trade
             // *********************************************************************
 
             
             //Monitor.Enter(position);
             try
             {
+                // Er is een trade gemaakt binnen deze positie c.q. annuleren.
 
-                // Er is een trade gemaakt binnen deze positie.
                 // Synchroniseer de trades en herberekenen het geheel
                 // (oh dear: ik herinner me diverse storingen van Binance, vertragingen, enzovoort)
-                // --> en oh dear, jawel, ook op bybit futures kan deze timing dus fout gaan!
-                //await TradeTools.LoadTradesfromDatabaseAndExchange(databaseThread, position, false);
-
-                // TODO: Opnemen in de exchange API
-                // Soms wordt een trade niet gerapporteerd en dan gaat er van alles mis in onze beredeneringen.
-                // (met een partial fill gaat deze code ook gedeeltelijk fout, later nog eens beter nazoeken)
-                // Haal alle trades van deze order op, wellicht gaat dat beter dan via alle trades?
-                // (achteraf gezien, wellicht is dit een betere c.q. betrouwbaardere methode om de trades te halen?)
-                // Nadeel: Deze methode wordt zwaarder dan eigenlijk de bedoeling was (we zitten al in een event)
-                //GlobalData.AddTextToLogTab($"TradeHandler: DETECTIE: ORDER {data.OrderId} NIET GEVONDEN! PANIC MODE ;-)");
-
-                // --> Eigenlijk doen we het nu 2 keer achter elkaar, ik denk dat deze beter (korter/sneller) is.
-                //if (position.TradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading)
-                //    await CryptoSbmScanner.Exchange.BybitFutures.FetchTradeForOrder.FetchTradesForOrderAsync(position.TradeAccount, position.Symbol, data.OrderId);
-                //TradeTools.CalculatePositionResultsViaTrades(databaseThread, position);
-
+                // --> en oh dear, jawel, ook op bybit futures kan de timing fout gaan!
                 await TradeTools.LoadTradesfromDatabaseAndExchange(databaseThread, position, false);
                 await ExchangeHelper.FetchTradesForOrderAsync(position.TradeAccount, position.Symbol, step.OrderId);
                 TradeTools.CalculatePositionResultsViaTrades(databaseThread, position);
@@ -183,20 +168,18 @@ static public class TradeHandler
                 if (orderStatus == CryptoOrderStatus.Canceled)
                 {
                     // Hebben wij de order geannuleerd? (we gebruiken tenslotte ook een cancel order om orders weg te halen)
-                    if (step.CancelInProgress)
+                    if (step.CancelInProgress || step.Status > CryptoOrderStatus.Canceled)
                     {
-                        // Wij 
-                        // Probleem is dat de step.Status pas na het annulren wordt gezet en bewaard, dus een 
-                        // cancel via de user stream kan (te) snel gaan, nu wel eem soort van dubbele administratie
-                    }
-                    else
-                    if (step.Status > CryptoOrderStatus.Canceled) //part.Status == CryptoPositionStatus.TakeOver || part.Status == CryptoPositionStatus.Timeout || 
-                    {
-                        // Wij, anders was de status van de step niet op expired gezet of de part op timeout gezet
+                        // Wij hebben de order geannuleerd via de CancelStep/CancelOrder/Status
+                        // Probleem is dat de step.Status pas na het annuleren wordt gezet en bewaard. 
+                        // Geconstateerd: een cancel via de user stream kan (te) snel gaan
+
+                        // NB: Er is nu wat overlappende code door die CancelInProgress
                     }
                     else
                     {
-                        // De gebruiker heeft de order geannuleerd, het is nu de verantwoordelijkheid van de gebruiker om het recht te trekken
+                        // De gebruiker heeft de order geannuleerd, het is vanaf nu zijn/haar verantwoordelijkheid...
+                        // Om de statistieken niet te beinvloeden zetten we alles op 0
                         part.Profit = 0;
                         part.Invested = 0;
                         part.Returned = 0;
@@ -209,7 +192,7 @@ static public class TradeHandler
                         GlobalData.AddTextToLogTab(s);
                         GlobalData.AddTextToTelegram(s);
 
-                        // De gebruiker heeft de order geannuleerd, het is nu de verantwoordelijkheid van de gebruiker om het recht te trekken
+                        // De gebruiker heeft de positie geannuleerd
                         position.Profit = 0;
                         position.Invested = 0;
                         position.Returned = 0;
@@ -231,21 +214,19 @@ static public class TradeHandler
 
 
 
+                // Discussie, willen we dit op deze plek of zetten we het centraal?
+                // Het enige wat zinvol is de cancel, de rest gaat toch via de trades.
+                // De rest van de controles doen we tevens bij het opstarten en ieder uur.
+                // 1 thread voor de controles, locking minder relevant, en duidelijker??
+
+
                 if (step.Status == CryptoOrderStatus.Filled)
                 {
-                    // TODO: Long/Short, onderstaande is alleen okay voor LONG!
-                    // dus voor position.Side == CryptoTradeSide.Long
-
-
-                    // De sell order is uitgevoerd, de positie afmelden
-                    if (step.Side == CryptoOrderSide.Sell)
+                    CryptoOrderSide takeProfitOrderSide = position.GetTakeProfitOrderSide();
+                    if (step.Side == takeProfitOrderSide)
                     {
-                        // We zijn uit deze trade, alles verkocht
-                        // (wel vanuit een long positie geredeneerd)
-                        //decimal perc = 0;
-                        //if (part.BreakEvenPrice > 0)
-                        //    perc = (decimal)(100 * ((step.AvgPrice / part.BreakEvenPrice) - 1));
-                        s = $"handletrade {msgInfo} part sold ({part.Percentage:N2}%)";
+                        // De take profit order is uitgevoerd, de positie afmelden
+                        s = $"handletrade {msgInfo} part takeprofit ({part.Percentage:N2}%)";
                         GlobalData.AddTextToLogTab(s);
                         //GlobalData.AddTextToTelegram(s);
 
@@ -253,7 +234,6 @@ static public class TradeHandler
                         databaseThread.Connection.Update<CryptoPositionPart>(part);
 
                         // Sluit de positie indien afgerond
-                        // TODO: Long/Short posities, die timeout even verderop ziet er vreemd uit
                         if (position.Quantity == 0)
                         {
                             // We zijn uit deze trade, alles verkocht
@@ -262,15 +242,14 @@ static public class TradeHandler
                             //GlobalData.AddTextToTelegram(s);
 
                             position.CloseTime = data.TradeTime;
-                            //oldStatus = position.Status;
                             if (position.Invested > 0)
-                                position.Status = CryptoPositionStatus.Ready; // Dit gaat niet goed bij het innemen van een short positie!
-                                                                              //else
-                                                                              //    position.Status = CryptoPositionStatus.Timeout; // Er is iets verkocht en dan volgt een timeout, ehh?
-
+                            {
+                                // Gevaarlijk, als er een buy niet gedetecteerd is dan wordt de trade zomaar afgesloten
+                                // En dat lijkt soms wel te gebeuren vanwege de exchange, internet of datetime perikelen.
+                                position.Status = CryptoPositionStatus.Ready;
+                                GlobalData.ThreadDoubleCheckPosition.AddToQueue(position);
+                            }
                             databaseThread.Connection.Update<CryptoPosition>(position);
-                            //if (oldStatus != position.Status)
-                            //    GlobalData.AddTextToLogTab($"Debug: position status van {oldStatus} naar {position.Status}");
 
                             // In de veronderstelling dat dit allemaal lukt
                             position.Symbol.LastTradeDate = position.CloseTime;
@@ -286,40 +265,17 @@ static public class TradeHandler
                         else if (position.Status == CryptoPositionStatus.Ready)
                             s = $"handletrade {msgInfo} position ready ({position.Percentage:N2}%)";
                         else
-                            s = $"handletrade {msgInfo} part sold ({part.Percentage:N2}%)";
+                            s = $"handletrade {msgInfo} part takeprofit ({part.Percentage:N2}%)";
                         GlobalData.AddTextToLogTab(s);
                         GlobalData.AddTextToTelegram(s);
-
-
-                        // Vanwege deadlock problemen afgesterd, uitzoeken! Via papertrading zal er nooit een probleem
-                        // optreden (dat loopt geheel synchroon). Met de user-data stream en 1m candle stream zou het
-                        // wel kunnen conflicteren. VOOR de aanroep naar deze code moet er gelocked worden!
-
-                        // Is er een openstaande positie (via de openstaande posities in het geheugen)
-                        // NB: Dit gedeelte kan wat mij betreft vervallen (omdat de query ook gedaan wordt)
-                        //if (position.TradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading)
-                        //{
-                        // Lukt dat wel? Wat is de 1m candle enzovoort?
-
-                        //await tradeAccount.PositionListSemaphore.WaitAsync();
-                        //try
-                        //{
-                        // call................. 
-                        //}
-                        //finally
-                        //{
-                        //    //tradeAccount.PositionListSemaphore.Release();
-                        //}
-                        //}
-
                         return;
                     }
 
 
-                    // TODO: Long/Short
-                    if (step.Side == CryptoOrderSide.Buy)
+                    CryptoOrderSide entryOrderSide = position.GetEntryOrderSide();
+                    if (step.Side == entryOrderSide)
                     {
-                        s = $"handletrade {msgInfo} part buy";
+                        s = $"handletrade {msgInfo} part entry";
                         GlobalData.AddTextToLogTab(s);
                         GlobalData.AddTextToTelegram(s);
 
@@ -334,6 +290,26 @@ static public class TradeHandler
                 //Monitor.Exit(position);
             }
 
+            // Vanwege deadlock problemen afgesterd, uitzoeken! Via papertrading zal er nooit een probleem
+            // optreden (dat loopt geheel synchroon). Met de user-data stream en 1m candle stream zou het
+            // wel kunnen conflicteren. VOOR de aanroep naar deze code moet er gelocked worden!
+
+            // Is er een openstaande positie (via de openstaande posities in het geheugen)
+            // NB: Dit gedeelte kan wat mij betreft vervallen (omdat de query ook gedaan wordt)
+            //if (position.TradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading)
+            //{
+            // Lukt dat wel? Wat is de 1m candle enzovoort?
+
+            //await tradeAccount.PositionListSemaphore.WaitAsync();
+            //try
+            //{
+            // call................. 
+            //}
+            //finally
+            //{
+            //    //tradeAccount.PositionListSemaphore.Release();
+            //}
+            //}
             return;
         }
     }

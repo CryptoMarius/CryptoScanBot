@@ -184,7 +184,7 @@ public class ThreadSaveCandles
         }
         catch (Exception error)
         {
-            GlobalData.Logger.Error(error);
+            GlobalData.Logger.Error(error, "");
             GlobalData.AddTextToLogTab(error.ToString());
             //throw; vanaf nu worden er geen candles meer bewaard (oeps)
         }

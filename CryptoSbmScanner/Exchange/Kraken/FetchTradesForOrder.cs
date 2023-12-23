@@ -33,6 +33,7 @@ public class FetchTradeForOrder
             {
                 //foreach (var item in result.Data)
                 //{
+                //    tradeCount++;
                 //    if (!symbol.TradeList.TryGetValue(item.Id, out CryptoTrade trade))
                 //    {
                 //        trade = new CryptoTrade();
@@ -42,7 +43,6 @@ public class FetchTradeForOrder
                 //    }
                 //}
             }
-            tradeCount = tradeCache.Count;
 
 
             // Verwerk de trades
@@ -64,11 +64,7 @@ public class FetchTradeForOrder
                             GlobalData.AddTextToLogTab($"FetchTradesForOrderAsync: {symbol.Name} ORDER {orderId} TRADE {trade.TradeId} toegevoegd!");
                         }
 #endif
-                        if (tradeCount == 0)
-                            GlobalData.AddTextToLogTab($"FetchTradesForOrderAsync: {symbol.Name} ORDER {orderId} NIET GEVONDEN! PANIC MODE?");
-                        else
-                            GlobalData.AddTextToLogTab($"FetchTradesForOrderAsync {symbol.Name} ORDER {orderId} {tradeCache.Count}");
-
+                        GlobalData.AddTextToLogTab($"FetchTradesForOrderAsync {symbol.Name} ORDER {orderId} {tradeCache.Count}");
                         transaction.Commit();
                     }
                     finally
@@ -80,7 +76,7 @@ public class FetchTradeForOrder
         }
         catch (Exception error)
         {
-            GlobalData.Logger.Error(error);
+            GlobalData.Logger.Error(error, "");
             GlobalData.AddTextToLogTab("error get trades " + error.ToString()); // symbol.Text + " " + 
         }
 

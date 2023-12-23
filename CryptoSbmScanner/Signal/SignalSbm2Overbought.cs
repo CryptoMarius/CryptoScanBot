@@ -16,7 +16,7 @@ public class SignalSbm2Overbought : SignalSbmBaseOverbought
 
     public bool IsInLowerPartOfBollingerBands()
     {
-        int candleCount = GlobalData.Settings.Signal.Sbm2CandlesLookbackCount;
+        int candleCount = GlobalData.Settings.Signal.Sbm.Sbm2CandlesLookbackCount;
 
         // Is de prijs onlangs dicht bij de onderste bb geweest?
         // In deze aanpak is de afstand van sma tot de upperband 100%
@@ -25,9 +25,9 @@ public class SignalSbm2Overbought : SignalSbmBaseOverbought
         while (candleCount > 0)
         {
             decimal value = (decimal)last.CandleData.BollingerBandsUpperBand;
-            value -= (decimal)last.CandleData.BollingerBandsDeviation * GlobalData.Settings.Signal.Sbm2BbPercentage / 100m;
+            value -= (decimal)last.CandleData.BollingerBandsDeviation * GlobalData.Settings.Signal.Sbm.Sbm2BbPercentage / 100m;
 
-            if (GlobalData.Settings.Signal.Sbm2UseLowHigh)
+            if (GlobalData.Settings.Signal.Sbm.Sbm2UseLowHigh)
             {
                 if (last.High >= value)
                     return true;

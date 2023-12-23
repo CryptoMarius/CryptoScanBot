@@ -297,7 +297,7 @@ public class FetchCandles
         }
         catch (Exception error)
         {
-            GlobalData.Logger.Error(error);
+            GlobalData.Logger.Error(error, "");
             GlobalData.AddTextToLogTab("error getting candles " + error.ToString()); // symbol.Text + " " + 
         }
     }
@@ -324,7 +324,8 @@ public class FetchCandles
                     if (GlobalData.ApplicationStatus != CryptoApplicationStatus.Initializing)
                         await Task.Run(FetchSymbols.ExecuteAsync);
 
-                    GlobalData.AddTextToLogTab("Aantal symbols = " + exchange.SymbolListName.Values.Count.ToString());
+                    // TODO: Niet alle symbols zijn actief
+                    GlobalData.AddTextToLogTab($"Aantal symbols={exchange.SymbolListName.Values.Count}");
 
 
                     Queue<CryptoSymbol> queue = new();
@@ -369,7 +370,7 @@ public class FetchCandles
             }
             catch (Exception error)
             {
-                GlobalData.Logger.Error(error);
+                GlobalData.Logger.Error(error, "");
                 GlobalData.AddTextToLogTab("error get prices " + error.ToString() + "\r\n");
             }
         }

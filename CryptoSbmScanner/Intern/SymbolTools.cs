@@ -26,91 +26,40 @@ public class SymbolTools
     }
 
 
-    public static bool CheckValidApikey(out string reaction)
-    {
-        reaction = "";
-        //TODO: Configuratie en security
+    //public static bool CheckValidApikey(out string reaction)
 
-        //1-Controleer of er wel een API key aanwezig is
-        //2-Controleer of we met deze API key kunnen handelen
-        //Maar hoe? (geeft uiteindelijk wel een foutmelding)
+    //{
+    //    reaction = "";
+    //    //TODO: Configuratie en security
 
-        //BinanceSocketClient.
-        //BinanceClient.SetDefaultOptions(new BinanceClientOptions()
-        //{
-        //    ApiCredentials = new ApiCredentials(APIKEY, APISECRET),
-        //    LogVerbosity = LogVerbosity.Debug,
-        //    LogWriters = new List<TextWriter> { Console.Out }
-        //});
+    //    //1-Controleer of er wel een API key aanwezig is
+    //    //2-Controleer of we met deze API key kunnen handelen
+    //    //Maar hoe? (geeft uiteindelijk wel een foutmelding)
 
-        //BinanceSocketClient.SetDefaultOptions(new BinanceSocketClientOptions()
-        //{
-        //    ApiCredentials = new ApiCredentials(APIKEY, APISECRET),
-        //    LogVerbosity = LogVerbosity.Debug,
-        //    LogWriters = new List<TextWriter> { Console.Out }
-        //});
+    //    //BinanceSocketClient.
+    //    //BinanceClient.SetDefaultOptions(new BinanceClientOptions()
+    //    //{
+    //    //    ApiCredentials = new ApiCredentials(APIKEY, APISECRET),
+    //    //    LogVerbosity = LogVerbosity.Debug,
+    //    //    LogWriters = new List<TextWriter> { Console.Out }
+    //    //});
 
-        if (GlobalData.Settings.Trading.ApiKey == "" || GlobalData.Settings.Trading.ApiSecret == "")
-        {
-            reaction = "No API credentials available";
-            return false;
-        }
+    //    //BinanceSocketClient.SetDefaultOptions(new BinanceSocketClientOptions()
+    //    //{
+    //    //    ApiCredentials = new ApiCredentials(APIKEY, APISECRET),
+    //    //    LogVerbosity = LogVerbosity.Debug,
+    //    //    LogWriters = new List<TextWriter> { Console.Out }
+    //    //});
 
-        return true;
-    }
+    //    if (GlobalData.Settings.Trading.ApiKey == "" || GlobalData.Settings.Trading.ApiSecret == "")
+    //    {
+    //        reaction = "No API credentials available";
+    //        return false;
+    //    }
 
+    //    return true;
+    //}
 
-    public static bool CheckValidAmount(CryptoSymbol symbol, decimal assetAmount, out decimal amount, out string reaction)
-    {
-        // Koopbedrag, heeft de gebruiker een percentage of een aantal ingegeven?
-        decimal percentage = symbol.QuoteData.EntryPercentage;
-        bool isPercentage = percentage > 0m;
-        if (isPercentage)
-            amount = percentage * assetAmount / 100;
-        else
-            amount = symbol.QuoteData.EntryAmount;
-
-        if (amount <= 0)
-        {
-            reaction = "No amount/percentage given";
-            return false;
-        }
-
-
-        if (assetAmount < amount)
-        {
-            reaction = $"Not enough cash available {assetAmount} < {amount}";
-            return false;
-        }
-
-        reaction = "";
-        return true;
-    }
-
-
-    public static (bool result, decimal value) CheckPortFolio(CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
-    {
-        decimal assetQuantity = 0;
-        tradeAccount.AssetListSemaphore.Wait();
-        try
-        {
-            if (tradeAccount.AssetList.TryGetValue(symbol.Quote, out CryptoAsset asset))
-                assetQuantity = asset.Free;
-        }
-        finally
-        {
-            tradeAccount.AssetListSemaphore.Release();
-        }
-        
-
-        if (assetQuantity == 0)
-        {
-            //reaction = string.Format("No {0} cash available", Signal.Symbol.Quote);
-            return (false, assetQuantity);
-        }
-
-        return (true, assetQuantity);
-    }
 
 
     public static bool CheckValidMinimalVolume(CryptoSymbol symbol, out string reaction)

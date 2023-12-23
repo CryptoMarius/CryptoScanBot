@@ -41,7 +41,7 @@ public class SignalStobbOversold : SignalSbmBaseOversold // inherit from sbm bec
     public override bool AdditionalChecks(CryptoCandle candle, out string response)
     {
         // Controle op de ma-lijnen
-        if (GlobalData.Settings.Signal.StobIncludeSoftSbm)
+        if (GlobalData.Settings.Signal.Stobb.IncludeSoftSbm)
         {
             if (!CandleLast.IsSbmConditionsOversold(false))
             {
@@ -51,13 +51,13 @@ public class SignalStobbOversold : SignalSbmBaseOversold // inherit from sbm bec
         }
 
         // Controle op de ma-kruisingen
-        if (GlobalData.Settings.Signal.StobIncludeSbmPercAndCrossing)
+        if (GlobalData.Settings.Signal.Stobb.IncludeSbmPercAndCrossing)
         {
-            if (!candle.IsSma200AndSma50OkayOversold(GlobalData.Settings.Signal.SbmMa200AndMa50Percentage, out response))
+            if (!candle.IsSma200AndSma50OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
                 return false;
-            if (!candle.IsSma200AndSma20OkayOversold(GlobalData.Settings.Signal.SbmMa200AndMa20Percentage, out response))
+            if (!candle.IsSma200AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out response))
                 return false;
-            if (!candle.IsSma50AndSma20OkayOversold(GlobalData.Settings.Signal.SbmMa50AndMa20Percentage, out response))
+            if (!candle.IsSma50AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
                 return false;
 
             if (!CheckMaCrossings(out response))
@@ -65,7 +65,7 @@ public class SignalStobbOversold : SignalSbmBaseOversold // inherit from sbm bec
         }
 
         // Controle op de RSI
-        if (GlobalData.Settings.Signal.StobIncludeRsi && !CandleLast.IsRsiOversold())
+        if (GlobalData.Settings.Signal.Stobb.IncludeRsi && !CandleLast.IsRsiOversold())
         {
             response = "rsi niet oversold";
             return false;
@@ -81,14 +81,14 @@ public class SignalStobbOversold : SignalSbmBaseOversold // inherit from sbm bec
         ExtraText = "";
 
         // De breedte van de bb is ten minste 1.5%
-        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.StobbBBMinPercentage, GlobalData.Settings.Signal.StobbBBMaxPercentage))
+        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, GlobalData.Settings.Signal.Stobb.BBMaxPercentage))
         {
             ExtraText = "bb.width te klein " + CandleLast.CandleData.BollingerBandsPercentage?.ToString("N2");
             return false;
         }
 
         // Er een candle onder de bb opent of sluit
-        if (!CandleLast.IsBelowBollingerBands(GlobalData.Settings.Signal.StobbUseLowHigh))
+        if (!CandleLast.IsBelowBollingerBands(GlobalData.Settings.Signal.Stobb.UseLowHigh))
         {
             ExtraText = "niet beneden de bb.lower";
             return false;

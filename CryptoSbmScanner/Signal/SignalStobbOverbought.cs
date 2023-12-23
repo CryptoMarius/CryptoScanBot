@@ -41,7 +41,7 @@ public class SignalStobbOverbought : SignalSbmBaseOverbought
     public override bool AdditionalChecks(CryptoCandle candle, out string response)
     {
         // Controle op de ma-lijnen
-        if (GlobalData.Settings.Signal.StobIncludeSoftSbm)
+        if (GlobalData.Settings.Signal.Stobb.IncludeSoftSbm)
         {
             if (!CandleLast.IsSbmConditionsOverbought(false))
             {
@@ -51,13 +51,13 @@ public class SignalStobbOverbought : SignalSbmBaseOverbought
         }
 
         // Controle op de ma-kruisingen
-        if (GlobalData.Settings.Signal.StobIncludeSbmPercAndCrossing)
+        if (GlobalData.Settings.Signal.Stobb.IncludeSbmPercAndCrossing)
         {
-            if (!candle.IsSma200AndSma50OkayOverbought(GlobalData.Settings.Signal.SbmMa200AndMa50Percentage, out response))
+            if (!candle.IsSma200AndSma50OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
                 return false;
-            if (!candle.IsSma200AndSma20OkayOverbought(GlobalData.Settings.Signal.SbmMa200AndMa20Percentage, out response))
+            if (!candle.IsSma200AndSma20OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out response))
                 return false;
-            if (!candle.IsSma50AndSma20OkayOverbought(GlobalData.Settings.Signal.SbmMa50AndMa20Percentage, out response))
+            if (!candle.IsSma50AndSma20OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
                 return false;
 
             if (!CheckMaCrossings(out response))
@@ -65,7 +65,7 @@ public class SignalStobbOverbought : SignalSbmBaseOverbought
         }
 
         // Controle op de RSI
-        if (GlobalData.Settings.Signal.StobIncludeRsi && !CandleLast.IsRsiOverbought())
+        if (GlobalData.Settings.Signal.Stobb.IncludeRsi && !CandleLast.IsRsiOverbought())
         {
             response = "rsi niet overbought";
             return false;
@@ -81,14 +81,14 @@ public class SignalStobbOverbought : SignalSbmBaseOverbought
         ExtraText = "";
 
         // De breedte van de bb is ten minste 1.5%
-        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.StobbBBMinPercentage, GlobalData.Settings.Signal.StobbBBMaxPercentage))
+        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, GlobalData.Settings.Signal.Stobb.BBMaxPercentage))
         {
             ExtraText = "bb.width te klein " + CandleLast.CandleData.BollingerBandsPercentage?.ToString("N2");
             return false;
         }
 
         // Er een candle onder de bb opent of sluit
-        if (!CandleLast.IsAboveBollingerBands(GlobalData.Settings.Signal.StobbUseLowHigh))
+        if (!CandleLast.IsAboveBollingerBands(GlobalData.Settings.Signal.Stobb.UseLowHigh))
         {
             ExtraText = "niet boven de bb";
             return false;

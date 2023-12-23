@@ -1,4 +1,4 @@
-﻿using CryptoSbmScanner.Enums;
+﻿using CryptoSbmScanner.Settings;
 
 namespace CryptoSbmScanner.SettingsDialog;
 
@@ -16,34 +16,33 @@ public partial class UserControlBarometer : UserControl
         EditGroupBox.Text = caption;
     }
 
-    public void LoadConfig(Dictionary<string, (decimal minValue, decimal maxValue)> barometer, bool logBarometer)
+    public void LoadConfig(SettingsTextualBarometer settings)
     {
-        UserControlBarometer15m.SetChecked("15m", barometer);
-        UserControlBarometer30m.SetChecked("30m", barometer);
-        UserControlBarometer1h.SetChecked("1h", barometer);
-        UserControlBarometer4h.SetChecked("4h", barometer);
-        UserControlBarometer1d.SetChecked("1d", barometer);
+        UserControlBarometer15m.SetChecked("15m", settings.List);
+        UserControlBarometer30m.SetChecked("30m", settings.List);
+        UserControlBarometer1h.SetChecked("1h", settings.List);
+        UserControlBarometer4h.SetChecked("4h", settings.List);
+        UserControlBarometer1d.SetChecked("1d", settings.List);
 
-        EditBarometerLog.Checked = logBarometer;
+        EditBarometerLog.Checked = settings.Log;
     }
 
-    private static void GetChecked(string interval, UserControlBarometerInterval edit, ref Dictionary<string, (decimal minValue, decimal maxValue)> barometer)
+    private static void GetChecked(string interval, UserControlBarometerInterval userControl, Dictionary<string, (decimal minValue, decimal maxValue)> barometer)
     {
-        var value = edit.GetChecked();
+        var value = userControl.GetChecked();
         if (value.Checked)
             barometer.Add(interval, value.Item2);
     }
 
-    public Dictionary<string, (decimal minValue, decimal maxValue)> SaveConfig(ref bool logBarometer)
+    public void SaveConfig(SettingsTextualBarometer settings)
     {
-        Dictionary<string, (decimal minValue, decimal maxValue)> list = new();
-        GetChecked("15m", UserControlBarometer15m, ref list);
-        GetChecked("30m", UserControlBarometer30m, ref list);
-        GetChecked("1h", UserControlBarometer1h, ref list);
-        GetChecked("4h", UserControlBarometer4h, ref list);
-        GetChecked("1d", UserControlBarometer1d, ref list);
+        settings.List.Clear();
+        GetChecked("15m", UserControlBarometer15m, settings.List);
+        GetChecked("30m", UserControlBarometer30m, settings.List);
+        GetChecked("1h", UserControlBarometer1h, settings.List);
+        GetChecked("4h", UserControlBarometer4h, settings.List);
+        GetChecked("1d", UserControlBarometer1d, settings.List);
 
-        logBarometer = EditBarometerLog.Checked;
-        return list;
+        settings.Log = EditBarometerLog.Checked;
     }
 }
