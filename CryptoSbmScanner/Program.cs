@@ -11,7 +11,7 @@ static class Program
     static void Main()
     {
         // Vroeger dan alle andere..
-        GlobalData.InitializeNlog();
+        GlobalData.InitializeLogging();
 
         // Add the event handler for handling UI thread exceptions to the event.
         Application.ThreadException += new ThreadExceptionEventHandler(OnThreadException);
