@@ -174,6 +174,7 @@ partial class FrmSettings
         tabTrading = new TabPage();
         tabControlTrading = new TabControl();
         tabTradingGeneral = new TabPage();
+        label15 = new Label();
         groupBoxInstap = new GroupBox();
         EditCheckIncreasingMacd = new CheckBox();
         EditCheckIncreasingStoch = new CheckBox();
@@ -258,7 +259,6 @@ partial class FrmSettings
         toolTip1 = new ToolTip(components);
         imageList1 = new ImageList(components);
         colorDialog1 = new ColorDialog();
-        label15 = new Label();
         panel2.SuspendLayout();
         panel1.SuspendLayout();
         tabControlMain.SuspendLayout();
@@ -1471,7 +1471,7 @@ partial class FrmSettings
         flowLayoutPanel9.Controls.Add(groupBox4);
         flowLayoutPanel9.Location = new Point(3, 179);
         flowLayoutPanel9.Name = "flowLayoutPanel9";
-        flowLayoutPanel9.Size = new Size(878, 370);
+        flowLayoutPanel9.Size = new Size(876, 370);
         flowLayoutPanel9.TabIndex = 161;
         // 
         // groupBox3
@@ -1684,15 +1684,15 @@ partial class FrmSettings
         groupBox4.Margin = new Padding(10);
         groupBox4.Name = "groupBox4";
         groupBox4.Padding = new Padding(10);
-        groupBox4.Size = new Size(511, 341);
+        groupBox4.Size = new Size(509, 318);
         groupBox4.TabIndex = 161;
         groupBox4.TabStop = false;
-        groupBox4.Text = "Extra instellingen voor alle SBM methodes";
+        groupBox4.Text = "Instellingen voor alle SBM methodes";
         // 
         // label39
         // 
         label39.AutoSize = true;
-        label39.Location = new Point(20, 102);
+        label39.Location = new Point(18, 79);
         label39.Margin = new Padding(4, 0, 4, 0);
         label39.Name = "label39";
         label39.Size = new Size(180, 15);
@@ -1701,7 +1701,7 @@ partial class FrmSettings
         // 
         // EditSbmCandlesForMacdRecovery
         // 
-        EditSbmCandlesForMacdRecovery.Location = new Point(440, 102);
+        EditSbmCandlesForMacdRecovery.Location = new Point(438, 79);
         EditSbmCandlesForMacdRecovery.Margin = new Padding(4, 3, 4, 3);
         EditSbmCandlesForMacdRecovery.Maximum = new decimal(new int[] { 10, 0, 0, 0 });
         EditSbmCandlesForMacdRecovery.Name = "EditSbmCandlesForMacdRecovery";
@@ -1744,7 +1744,7 @@ partial class FrmSettings
         // label4
         // 
         label4.AutoSize = true;
-        label4.Location = new Point(18, 265);
+        label4.Location = new Point(16, 242);
         label4.Margin = new Padding(4, 0, 4, 0);
         label4.Name = "label4";
         label4.Size = new Size(372, 15);
@@ -1755,7 +1755,7 @@ partial class FrmSettings
         // 
         EditSbmMa200AndMa20Percentage.DecimalPlaces = 2;
         EditSbmMa200AndMa20Percentage.Increment = new decimal(new int[] { 1, 0, 0, 65536 });
-        EditSbmMa200AndMa20Percentage.Location = new Point(440, 262);
+        EditSbmMa200AndMa20Percentage.Location = new Point(438, 239);
         EditSbmMa200AndMa20Percentage.Margin = new Padding(4, 3, 4, 3);
         EditSbmMa200AndMa20Percentage.Name = "EditSbmMa200AndMa20Percentage";
         EditSbmMa200AndMa20Percentage.Size = new Size(57, 23);
@@ -1765,7 +1765,7 @@ partial class FrmSettings
         // label8
         // 
         label8.AutoSize = true;
-        label8.Location = new Point(18, 290);
+        label8.Location = new Point(16, 267);
         label8.Margin = new Padding(4, 0, 4, 0);
         label8.Name = "label8";
         label8.Size = new Size(363, 15);
@@ -1776,7 +1776,7 @@ partial class FrmSettings
         // 
         EditSbmMa50AndMa20Percentage.DecimalPlaces = 2;
         EditSbmMa50AndMa20Percentage.Increment = new decimal(new int[] { 1, 0, 0, 65536 });
-        EditSbmMa50AndMa20Percentage.Location = new Point(440, 289);
+        EditSbmMa50AndMa20Percentage.Location = new Point(438, 266);
         EditSbmMa50AndMa20Percentage.Margin = new Padding(4, 3, 4, 3);
         EditSbmMa50AndMa20Percentage.Name = "EditSbmMa50AndMa20Percentage";
         EditSbmMa50AndMa20Percentage.Size = new Size(57, 23);
@@ -1786,7 +1786,7 @@ partial class FrmSettings
         // label7
         // 
         label7.AutoSize = true;
-        label7.Location = new Point(18, 236);
+        label7.Location = new Point(16, 213);
         label7.Margin = new Padding(4, 0, 4, 0);
         label7.Name = "label7";
         label7.Size = new Size(369, 15);
@@ -1797,7 +1797,7 @@ partial class FrmSettings
         // 
         EditSbmMa200AndMa50Percentage.DecimalPlaces = 2;
         EditSbmMa200AndMa50Percentage.Increment = new decimal(new int[] { 1, 0, 0, 65536 });
-        EditSbmMa200AndMa50Percentage.Location = new Point(440, 236);
+        EditSbmMa200AndMa50Percentage.Location = new Point(438, 213);
         EditSbmMa200AndMa50Percentage.Margin = new Padding(4, 3, 4, 3);
         EditSbmMa200AndMa50Percentage.Name = "EditSbmMa200AndMa50Percentage";
         EditSbmMa200AndMa50Percentage.Size = new Size(57, 23);
@@ -1807,7 +1807,7 @@ partial class FrmSettings
         // 
         // EditSbmMa50AndMa20Lookback
         // 
-        EditSbmMa50AndMa20Lookback.Location = new Point(440, 194);
+        EditSbmMa50AndMa20Lookback.Location = new Point(438, 171);
         EditSbmMa50AndMa20Lookback.Margin = new Padding(4, 3, 4, 3);
         EditSbmMa50AndMa20Lookback.Maximum = new decimal(new int[] { 60, 0, 0, 0 });
         EditSbmMa50AndMa20Lookback.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
@@ -1819,7 +1819,7 @@ partial class FrmSettings
         // EditSbmMa50AndMa20Crossing
         // 
         EditSbmMa50AndMa20Crossing.AutoSize = true;
-        EditSbmMa50AndMa20Crossing.Location = new Point(20, 193);
+        EditSbmMa50AndMa20Crossing.Location = new Point(18, 170);
         EditSbmMa50AndMa20Crossing.Margin = new Padding(4, 3, 4, 3);
         EditSbmMa50AndMa20Crossing.Name = "EditSbmMa50AndMa20Crossing";
         EditSbmMa50AndMa20Crossing.Size = new Size(402, 19);
@@ -1829,7 +1829,7 @@ partial class FrmSettings
         // 
         // EditSbmMa200AndMa50Lookback
         // 
-        EditSbmMa200AndMa50Lookback.Location = new Point(440, 142);
+        EditSbmMa200AndMa50Lookback.Location = new Point(438, 119);
         EditSbmMa200AndMa50Lookback.Margin = new Padding(4, 3, 4, 3);
         EditSbmMa200AndMa50Lookback.Maximum = new decimal(new int[] { 60, 0, 0, 0 });
         EditSbmMa200AndMa50Lookback.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
@@ -1841,7 +1841,7 @@ partial class FrmSettings
         // EditSbmMa200AndMa50Crossing
         // 
         EditSbmMa200AndMa50Crossing.AutoSize = true;
-        EditSbmMa200AndMa50Crossing.Location = new Point(20, 142);
+        EditSbmMa200AndMa50Crossing.Location = new Point(18, 119);
         EditSbmMa200AndMa50Crossing.Margin = new Padding(4, 3, 4, 3);
         EditSbmMa200AndMa50Crossing.Name = "EditSbmMa200AndMa50Crossing";
         EditSbmMa200AndMa50Crossing.Size = new Size(408, 19);
@@ -1851,7 +1851,7 @@ partial class FrmSettings
         // 
         // EditSbmMa200AndMa20Lookback
         // 
-        EditSbmMa200AndMa20Lookback.Location = new Point(440, 168);
+        EditSbmMa200AndMa20Lookback.Location = new Point(438, 145);
         EditSbmMa200AndMa20Lookback.Margin = new Padding(4, 3, 4, 3);
         EditSbmMa200AndMa20Lookback.Maximum = new decimal(new int[] { 60, 0, 0, 0 });
         EditSbmMa200AndMa20Lookback.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
@@ -1863,7 +1863,7 @@ partial class FrmSettings
         // EditSbmMa200AndMa20Crossing
         // 
         EditSbmMa200AndMa20Crossing.AutoSize = true;
-        EditSbmMa200AndMa20Crossing.Location = new Point(20, 168);
+        EditSbmMa200AndMa20Crossing.Location = new Point(18, 145);
         EditSbmMa200AndMa20Crossing.Margin = new Padding(4, 3, 4, 3);
         EditSbmMa200AndMa20Crossing.Name = "EditSbmMa200AndMa20Crossing";
         EditSbmMa200AndMa20Crossing.Size = new Size(408, 19);
@@ -2057,6 +2057,16 @@ partial class FrmSettings
         tabTradingGeneral.TabIndex = 0;
         tabTradingGeneral.Text = "Trading algemeen";
         tabTradingGeneral.UseVisualStyleBackColor = true;
+        // 
+        // label15
+        // 
+        label15.AutoSize = true;
+        label15.Location = new Point(606, 249);
+        label15.Margin = new Padding(4, 0, 4, 0);
+        label15.Name = "label15";
+        label15.Size = new Size(110, 15);
+        label15.TabIndex = 328;
+        label15.Text = "Voorlopig via JSON!";
         // 
         // groupBoxInstap
         // 
@@ -2928,16 +2938,6 @@ partial class FrmSettings
         imageList1.ImageStream = (ImageListStreamer)resources.GetObject("imageList1.ImageStream");
         imageList1.TransparentColor = Color.Transparent;
         imageList1.Images.SetKeyName(0, "volume.png");
-        // 
-        // label15
-        // 
-        label15.AutoSize = true;
-        label15.Location = new Point(606, 249);
-        label15.Margin = new Padding(4, 0, 4, 0);
-        label15.Name = "label15";
-        label15.Size = new Size(110, 15);
-        label15.TabIndex = 328;
-        label15.Text = "Voorlopig via JSON!";
         // 
         // FrmSettings
         // 

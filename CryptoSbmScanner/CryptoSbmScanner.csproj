@@ -71,6 +71,9 @@
     <None Update="Help\Release Changes.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Help\Roadmap.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Help\Weblinks example.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
