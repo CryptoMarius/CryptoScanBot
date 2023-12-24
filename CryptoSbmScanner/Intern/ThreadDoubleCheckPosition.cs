@@ -50,7 +50,7 @@ public class ThreadDoubleCheckPosition
                 // Omdat de aansturende code bezig kan zijn doen we een redelijk grote sleep
                 Thread.Sleep(10000);
 
-                GlobalData.AddTextToLogTab($"ThreadDoubleCheckPosition: Positie {position.Symbol.Name} nog eens controleren! {position.Status}");
+                //GlobalData.AddTextToLogTab($"ThreadDoubleCheckPosition: Positie {position.Symbol.Name} nog eens controleren! {position.Status}");
 
                 // Controleer de openstaande orders, zijn ze ondertussen gevuld
                 // Haal de trades van deze positie op vanaf de 1e order
@@ -86,7 +86,7 @@ public class ThreadDoubleCheckPosition
                                         database.Connection.Update<CryptoPositionStep>(step);
 
                                         if (GlobalData.Settings.Trading.LogCanceledOrders)
-                                            ExchangeBase.Dump(position.Symbol, result.succes, result.tradeParams, $"annuleren vanwege sluiten {position.Side} positie");
+                                            ExchangeBase.Dump(position.Symbol, result.succes, result.tradeParams, $"annuleren vanwege sluiten {position.Side} positie (2e)");
                                     }
                                     else
                                     {

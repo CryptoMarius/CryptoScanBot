@@ -40,6 +40,7 @@ De introductie van de FundingRate/FundingInterval heeft gevolgen voor de trading
 
 Trading:
 - Trading - Charts - Graph toevoegen met hoe vaak de tweede en derde bijkoop gehit wordt
+- Trading - Charts - Ondersteuning voor long en short (de huidige charts kennen alleen maar long!)
 - Trading - Charts - Graph toevoegen voor inzicht met hoeveel we aan het handelen zijn (inclusief de extra dca orders)
 - Trading - Charts - dagen waarin niets gebeurd worden niet getoond op de x-as (dat gebeurd ook helaas)
 - Trading - Bij een liquidatie wordt de positie geannuleerd en wordt deze niet genoteerd in de statistiek (het is een cancel van buiten af, maar met een herkenbare reden)

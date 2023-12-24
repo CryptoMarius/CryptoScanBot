@@ -74,7 +74,14 @@ public class PositionMonitor : IDisposable
         //    return false;
         //}
         // TODO: Nieuwe method via de DCA list (moet je in de json instellen)
-        if (position.PartCount >= GlobalData.Settings.Trading.DcaList.Count)
+        // dcalist aantal =  3 (5;2*, 10;4* en 15;8*)
+        // Position Entry 0
+        // 1e dca actie   1
+        // 2e dca actie   2
+        // 3e dca actie   3 -- die doet ie nu niet meer?
+        // verderop: var dcaEntry = GlobalData.Settings.Trading.DcaList[position.PartCount - 1];
+
+        if (position.PartCount > GlobalData.Settings.Trading.DcaList.Count)
         {
             step = null;
             percentage = 0;
@@ -1404,7 +1411,7 @@ public class PositionMonitor : IDisposable
                         if (position.CloseTime.HasValue)
                         {
                             newStatus = CryptoOrderStatus.PositionClosed;
-                            cancelText = $"annuleren vanwege sluiten {position.Side} positie";
+                            cancelText = $"annuleren vanwege sluiten {position.Side} positie (1e)";
                         }
 
 
