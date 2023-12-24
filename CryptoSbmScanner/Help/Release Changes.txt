@@ -2,9 +2,6 @@ CryptoSbmScanenr release historie:
 
 xx-01-2024 1.8.7
 todo:
-- Telegram, de link toevoegen zodat de markt direct geopend kan worden in de externe applicatie/website
-- nlog vervangen met serilog (maar of het daar nu zoveel beter van wordt?)
-
 - Trading - De trading werkt exclusief op Bybit Sopt of Futures want andere exchanges kan ik niet testen.
             (en om te voorkomen dat iemand het per ongeluk op een niet ondersteunde exchange aan zet...)
 - Trading - Ondersteuning van long en short posities (maar daarvoor moest de hele configuratie aangepast worden).
