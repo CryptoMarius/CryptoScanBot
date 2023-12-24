@@ -131,8 +131,8 @@ public static class CryptoPositionHelper
             text += $" {span.Hours}h";
         if (span.Minutes > 0)
             text += $" {span.Minutes}m";
-        if (span.Seconds > 0)
-            text += $" {span.Seconds}s";
+        //if (span.Seconds > 0)
+        //    text += $" {span.Seconds}s";
         return text.Trim();
     }
 
