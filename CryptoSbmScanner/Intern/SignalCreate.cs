@@ -899,7 +899,7 @@ public class SignalCreate
 
             // SBM en stobb zijn afhankelijk van elkaar, vandaar de break
             // Ze staan alfabetisch, sbm1, sbm2, sbm3, stobb dat gaat per ongeluk goed
-            foreach (CryptoSignalStrategy strategy in TradingConfig.Trading[Side].StrategySbmStob.ToList())
+            foreach (CryptoSignalStrategy strategy in TradingConfig.Signals[Side].StrategySbmStob.ToList())
             {
                 if (SignalHelper.AlgorithmDefinitionIndex.TryGetValue(strategy, out AlgorithmDefinition strategyDefinition))
                 {
@@ -909,7 +909,7 @@ public class SignalCreate
             }
 
             // En de overige waaronder de jump
-            foreach (CryptoSignalStrategy strategy in TradingConfig.Trading[Side].StrategyOthers.ToList())
+            foreach (CryptoSignalStrategy strategy in TradingConfig.Signals[Side].StrategyOthers.ToList())
             {
                 if (SignalHelper.AlgorithmDefinitionIndex.TryGetValue(strategy, out AlgorithmDefinition strategyDefinition))
                 {
