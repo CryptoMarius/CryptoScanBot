@@ -54,9 +54,6 @@ public class CryptoSignal
     {
         get
         {
-            if (IsInvalid)
-                return "info";
-
             return Side switch
             {
                 CryptoTradeSide.Long => "long",
