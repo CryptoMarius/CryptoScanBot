@@ -87,6 +87,7 @@ public class SettingsCompiled
 
 
         // Market trend% (min..max), er is maar 1 aanwezig
+        MarketTrend.Clear();
         if (settings.MarketTrend.List.Any())
         {
             foreach (var (minValue, maxValue) in settings.MarketTrend.List)
