@@ -19,6 +19,8 @@ public partial class FrmMain
     private ToolStripMenuItem CommandSignalCopyInformation;
     private ToolStripMenuItem CommandSignalSymbolInformationExcelDump;
 
+    private int columnForText;
+
 
     private void ListViewSignalsConstructor()
     {
@@ -165,7 +167,7 @@ public partial class FrmMain
                 columnHeader.Width = 0;
             else
             {
-                //if (i != columnForText)
+                if (i != columnForText)
                 {
                     if (columnHeader.Width != 0)
                         columnHeader.Width = -2;
@@ -183,6 +185,7 @@ public partial class FrmMain
         listViewSignals.Columns.Add("Interval", -2, HorizontalAlignment.Left);
         listViewSignals.Columns.Add("Mode", -2, HorizontalAlignment.Left);
         listViewSignals.Columns.Add("Strategie", -2, HorizontalAlignment.Left);
+        columnForText = listViewSignals.Columns.Count;
         listViewSignals.Columns.Add("Text", 125, HorizontalAlignment.Left);
         listViewSignals.Columns.Add("Price", -2, HorizontalAlignment.Right);
         columnForPriceDiff = listViewSignals.Columns.Count;
@@ -262,6 +265,8 @@ public partial class FrmMain
             else if (signal.Side == CryptoTradeSide.Short)
                 subItem.ForeColor = Color.Red;
         }
+        else
+            subItem.ForeColor = Color.DarkGray; // BlueViolet;
 
 
         subItem = item1.SubItems.Add(signal.StrategyText);
