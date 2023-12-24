@@ -130,8 +130,9 @@ public class ThreadTelegramBotInstance
 
         try
         {
-            string text = GlobalData.ExternalUrls.GetTradingAppName(GlobalData.Settings.General.TradingApp, signal.Exchange.Name);
-            (string Url, CryptoExternalUrlType Execute) refInfo = GlobalData.ExternalUrls.GetExternalRef(GlobalData.Settings.General.TradingApp, true, signal.Symbol, signal.Interval);
+            //bot.send_message(chat_id = update.message.chat_id, text = "<a href='https://www.google.com/'>Google</a>", parse_mode = ParseMode.HTML)
+            //bot.send_message(chat_id = update.message.chat_id, text = "<b>Bold font</b>", parse_mode = ParseMode.HTML)
+
 
             StringBuilder builder = new();
             builder.Append(signal.Symbol.Name + " " + signal.Interval.Name + " ");
@@ -143,8 +144,11 @@ public class ThreadTelegramBotInstance
             //    builder.Append("<p style=\"color:#00FF00\">long</p>");
             //else
             //    builder.Append("<p style=\"color:#FF0000\">short</p>");
+
+            string text = GlobalData.ExternalUrls.GetTradingAppName(GlobalData.Settings.General.TradingApp, signal.Exchange.Name);
+            (string Url, CryptoExternalUrlType Execute) refInfo = GlobalData.ExternalUrls.GetExternalRef(GlobalData.Settings.General.TradingApp, true, signal.Symbol, signal.Interval);
             if (refInfo.Url != "")
-                builder.Append($" <a href=\"{refInfo.Url}\">{text}</a>");
+                builder.Append($" <a href='{refInfo.Url}'>{text}</a>");
             builder.AppendLine();
 
             builder.Append("Candle: open " + signal.Candle.Open.ToString0());
