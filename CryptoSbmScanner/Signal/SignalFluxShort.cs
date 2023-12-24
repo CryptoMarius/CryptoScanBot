@@ -6,11 +6,11 @@ namespace CryptoSbmScanner.Signal;
 
 
 
-public class SignalFluxOversold : SignalSbmBaseOversold
+public class SignalFluxShort: SignalSbmBaseLong
 {
-    public SignalFluxOversold(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
+    public SignalFluxShort(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        SignalSide = CryptoTradeSide.Long;
+        SignalSide = CryptoTradeSide.Short;
         SignalStrategy = CryptoSignalStrategy.Flux;
     }
 
@@ -26,7 +26,7 @@ public class SignalFluxOversold : SignalSbmBaseOversold
         }
 
         // De ma lijnen en psar goed staan
-        if (!CandleLast.IsSbmConditionsOversold(false))
+        if (!CandleLast.IsSbmConditionsOverbought(false))
         {
             ExtraText = "geen sbm condities";
             return false;
@@ -34,14 +34,14 @@ public class SignalFluxOversold : SignalSbmBaseOversold
 
         // ********************************************************************
         // RSI
-        if (CandleLast.CandleData.Rsi > 20) // was 25
+        if (CandleLast.CandleData.Rsi < 80)
         {
-            ExtraText = string.Format("RSI {0:N8} niet boven de 20", CandleLast.CandleData.Rsi);
+            ExtraText = string.Format("RSI {0:N8} niet onder de 80", CandleLast.CandleData.Rsi);
             return false;
         }
 
-        SignalCreate.GetFluxIndcator(Symbol, out int fluxOverSold, out int _);
-        if (fluxOverSold == 100)
+        SignalCreate.GetFluxIndcator(Symbol, out int _, out int fluxOverBought);
+        if (fluxOverBought == 100)
             return true;
 
         return false;

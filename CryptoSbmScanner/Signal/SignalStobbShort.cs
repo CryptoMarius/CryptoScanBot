@@ -4,9 +4,9 @@ using CryptoSbmScanner.Model;
 
 namespace CryptoSbmScanner.Signal;
 
-public class SignalStobbOverbought : SignalSbmBaseOverbought
+public class SignalStobbShort : SignalSbmBaseShort
 {
-    public SignalStobbOverbought(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
+    public SignalStobbShort(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
         ReplaceSignal = true;
         SignalSide = CryptoTradeSide.Short;

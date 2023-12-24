@@ -4,6 +4,7 @@ public class SettingsSignalStrategySbm : SettingsSignalStrategyBase
 {
     // SBM1 signals
     public int Sbm1CandlesLookbackCount { get; set; } = 1;
+    public bool UseLowHigh { get; set; } = false;
 
     // SBM2 signals
     public int Sbm2CandlesLookbackCount { get; set; } = 2;
@@ -32,7 +33,6 @@ public class SettingsSignalStrategySbm : SettingsSignalStrategyBase
     // Het BB percentage kan via de user interface uit worden gezet (nomargin)
     public double BBMinPercentage { get; set; } = 1.50;
     public double BBMaxPercentage { get; set; } = 100.0;
-    public bool UseLowHigh { get; set; } = false;
 
     public SettingsSignalStrategySbm() : base()
     {

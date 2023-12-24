@@ -8,9 +8,9 @@ namespace CryptoSbmScanner.Signal;
 
 #if EXTRASTRATEGIES
 
-public class IchimokuKumoBreakout : SignalCreateBase
+public class IchimokuKumoBreakoutLong : SignalCreateBase
 {
-    public IchimokuKumoBreakout(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
+    public IchimokuKumoBreakoutLong(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
         SignalSide = CryptoTradeSide.Long;
         SignalStrategy = CryptoSignalStrategy.IchimokuKumoBreakout;
@@ -32,14 +32,6 @@ public class IchimokuKumoBreakout : SignalCreateBase
     public override bool IsSignal()
     {
         ExtraText = "";
-
-
-        decimal tickPercentage = 100m * Symbol.PriceTickSize / (decimal)Symbol.LastPrice;
-        if (tickPercentage > GlobalData.Settings.Signal.MinimumTickPercentage)
-        {
-            ExtraText = $"tick percentage {tickPercentage:N2} te hoog";
-            return false;
-        }
 
 
         // De breedte van de bb is ten minste X%

@@ -4,11 +4,11 @@ using CryptoSbmScanner.Model;
 
 namespace CryptoSbmScanner.Signal;
 
-public class SignalCandleJumpDown : SignalCreateBase
+public class SignalCandleJumpLong : SignalCreateBase
 {
-    public SignalCandleJumpDown(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
+    public SignalCandleJumpLong(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        SignalSide = CryptoTradeSide.Short;
+        SignalSide = CryptoTradeSide.Long;
         SignalStrategy = CryptoSignalStrategy.Jump;
     }
 
@@ -54,13 +54,13 @@ public class SignalCandleJumpDown : SignalCreateBase
             }
 
 
-            // Is het gedaald? (maar pas op, het kan alweer gestegen zijn)
-            if (minDate > maxDate)
+            // Is het gestegen ? (maar pas op, het kan alweer gedaald zijn)
+            if (minDate < maxDate)
             {
                 decimal perc = 100m * (maxValue / minValue - 1);
                 if (perc >= GlobalData.Settings.Signal.Jump.CandlePercentage)
                 {
-                    ExtraText = "-" + perc.ToString("N2") + "%";
+                    ExtraText = "+"+ perc.ToString("N2") + "%";
                     return true;
                 }
             }

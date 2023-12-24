@@ -5,17 +5,16 @@ using CryptoSbmScanner.Model;
 namespace CryptoSbmScanner.Signal;
 
 
-
-public class SignalSbm3Oversold : SignalSbmBaseOversold
+public class SignalSbm3Short : SignalSbmBaseShort
 {
-    public SignalSbm3Oversold(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
+    public SignalSbm3Short(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        SignalSide = CryptoTradeSide.Long;
+        SignalSide = CryptoTradeSide.Short;
         SignalStrategy = CryptoSignalStrategy.Sbm3;
     }
 
 
-    public bool HasBollingerBandsIncreased(int candleCount, decimal percentage)
+    public bool HasBollingerBandsIncreased(int candleCount = 5, decimal percentage = 1.5m)
     {
         // Een waarde die plotseling ~2% hoger of lager ligt dan de vorige candle kan interressant 
         // zijn, ook als dat binnen de bollinger bands plaats vindt (dit is dus aanvullend 
@@ -48,7 +47,7 @@ public class SignalSbm3Oversold : SignalSbmBaseOversold
 
         if (bbDiffPerc < percentage)
         {
-            ExtraText = string.Format("Niet genoeg gevallen {0:N8} {1:N8}", bbDiffPerc, percentage);
+            ExtraText = string.Format("Niet genoeg gestegen {0:N8} {1:N8}", bbDiffPerc, percentage);
             return false;
         }
 

@@ -6,43 +6,22 @@ namespace CryptoSbmScanner.Signal;
 
 
 
-public class SignalSbm4Oversold : SignalSbmBaseOversold
+public class SignalSbm4Long : SignalSbmBaseLong
 {
-    public SignalSbm4Oversold(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
+    public SignalSbm4Long(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
         SignalSide = CryptoTradeSide.Long;
         SignalStrategy = CryptoSignalStrategy.Sbm4;
     }
 
-    public bool HadStobbInThelastXCandles(int candleCount)
+    private bool HadStobbInThelastXCandles(int candleCount)
     {
         // Is de prijs onlangs dicht bij de onderste bb geweest?
         CryptoCandle last = CandleLast;
         while (candleCount > 0)
         {
             // Er een candle onder de bb opent of sluit & een oversold situatie (beide moeten onder de 20 zitten)
-            if ((last.IsBelowBollingerBands(GlobalData.Settings.Signal.Sbm.UseLowHigh)) && (last.IsStochOversold()))
-                return true;
-
-            if (!GetPrevCandle(last, out last))
-                return false;
-            candleCount--;
-        }
-
-        return false;
-    }
-
-    public bool IsInLowerPartOfBollingerBands(int candleCount, decimal percentage)
-    {
-        // Is de prijs onlangs dicht bij de onderste bb geweest?
-        CryptoCandle last = CandleLast;
-        while (candleCount > 0)
-        {
-            // Dave bb.PercentB begint bij 0% op de onderste bb, de bovenste bb is 100%
-            // Dat is eigenlijk precies andersom dan wat we in gedachten hebben
-            // Onderstaande berekening doet het andersom, bovenste is 0% en onderste is 100%
-            decimal value = 100m * (decimal)last.CandleData.BollingerBandsLowerBand / (decimal)last.Close;
-            if (value >= percentage)
+            if (last.IsBelowBollingerBands(GlobalData.Settings.Signal.Sbm.UseLowHigh) && last.IsStochOversold())
                 return true;
 
             if (!GetPrevCandle(last, out last))
@@ -54,7 +33,7 @@ public class SignalSbm4Oversold : SignalSbmBaseOversold
     }
 
 
-    public bool HasBollingerBandsIncreased(int candleCount, decimal percentage)
+    private bool HasBollingerBandsIncreased(int candleCount, decimal percentage)
     {
         // Een waarde die plotseling ~2% hoger of lager ligt dan de vorige candle kan interressant 
         // zijn, ook als dat binnen de bollinger bands plaats vindt (dit is dus aanvullend 

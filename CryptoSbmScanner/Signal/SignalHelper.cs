@@ -40,24 +40,24 @@ public static class SignalHelper
         {
             Name = "jump",
             Strategy = CryptoSignalStrategy.Jump,
-            AnalyzeLongType = typeof(SignalCandleJumpDown),
-            AnalyzeShortType = typeof(SignalCandleJumpUp),
+            AnalyzeLongType = typeof(SignalCandleJumpShort),
+            AnalyzeShortType = typeof(SignalCandleJumpLong),
         });
 
         AlgorithmDefinitionList.Add(new AlgorithmDefinition()
         {
             Name = "sbm1",
             Strategy = CryptoSignalStrategy.Sbm1,
-            AnalyzeLongType = typeof(SignalSbm1Oversold),
-            AnalyzeShortType = typeof(SignalSbm1Overbought),
+            AnalyzeLongType = typeof(SignalSbm1Long),
+            AnalyzeShortType = typeof(SignalSbm1Short),
         });
 
         AlgorithmDefinitionList.Add(new AlgorithmDefinition()
         {
             Name = "sbm2",
             Strategy = CryptoSignalStrategy.Sbm2,
-            AnalyzeLongType = typeof(SignalSbm2Oversold),
-            AnalyzeShortType = typeof(SignalSbm2Overbought),
+            AnalyzeLongType = typeof(SignalSbm2Long),
+            AnalyzeShortType = typeof(SignalSbm2Short),
         });
 
 
@@ -65,8 +65,8 @@ public static class SignalHelper
         {
             Name = "sbm3",
             Strategy = CryptoSignalStrategy.Sbm3,
-            AnalyzeLongType = typeof(SignalSbm3Oversold),
-            AnalyzeShortType = typeof(SignalSbm3Overbought),
+            AnalyzeLongType = typeof(SignalSbm3Long),
+            AnalyzeShortType = typeof(SignalSbm3Short),
         });
 
 #if EXTRASTRATEGIES
@@ -74,15 +74,16 @@ public static class SignalHelper
         {
             Name = "sbm4",
             Strategy = CryptoSignalStrategy.Sbm4,
-            AnalyzeLongType = typeof(SignalSbm4Oversold),
-            AnalyzeShortType = null,
+            AnalyzeLongType = typeof(SignalSbm4Long),
+            AnalyzeShortType = typeof(SignalSbm4Short),
         });
 
         AlgorithmDefinitionList.Add(new AlgorithmDefinition()
         {
             Name = "flux",
             Strategy = CryptoSignalStrategy.Flux,
-            AnalyzeLongType = typeof(SignalFluxOversold),
+            AnalyzeLongType = typeof(SignalFluxLong),
+            AnalyzeShortType = typeof(SignalFluxShort),
         });
 #endif
 
@@ -90,8 +91,8 @@ public static class SignalHelper
         {
             Name = "stobb",
             Strategy = CryptoSignalStrategy.Stobb,
-            AnalyzeLongType = typeof(SignalStobbOversold),
-            AnalyzeShortType = typeof(SignalStobbOverbought),
+            AnalyzeLongType = typeof(SignalStobbLong),
+            AnalyzeShortType = typeof(SignalStobbShort),
         });
 
 #if EXTRASTRATEGIES
@@ -160,14 +161,16 @@ public static class SignalHelper
         {
             Name = "Engulfing",
             Strategy = CryptoSignalStrategy.BullishEngulfing,
-            AnalyzeLongType = typeof(SignalBullishEngulfing),
+            AnalyzeLongType = typeof(SignalEngulfingLong),
+            AnalyzeShortType = typeof(SignalEngulfingShort),
         });
 
         AlgorithmDefinitionList.Add(new AlgorithmDefinition()
         {
             Name = "Kumo Breakout",
             Strategy = CryptoSignalStrategy.IchimokuKumoBreakout,
-            AnalyzeLongType = typeof(IchimokuKumoBreakout),
+            AnalyzeLongType = typeof(IchimokuKumoBreakoutLong),
+            AnalyzeShortType = typeof(IchimokuKumoBreakoutShort),
         });
 #endif
 

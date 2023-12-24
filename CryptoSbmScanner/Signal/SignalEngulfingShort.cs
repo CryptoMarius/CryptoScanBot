@@ -5,12 +5,12 @@ using CryptoSbmScanner.Model;
 namespace CryptoSbmScanner.Signal;
 
 #if EXTRASTRATEGIES
-public class SignalBullishEngulfing : SignalCreateBase
+public class SignalEngulfingShort : SignalCreateBase
 {
-    public SignalBullishEngulfing(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
+    public SignalEngulfingShort(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
         ReplaceSignal = false;
-        SignalSide = CryptoTradeSide.Long;
+        SignalSide = CryptoTradeSide.Short;
         SignalStrategy = CryptoSignalStrategy.BullishEngulfing;
     }
 
@@ -79,7 +79,7 @@ public class SignalBullishEngulfing : SignalCreateBase
 
 
         // De laatste moet een groene candle zijn
-        if (CandleLast.Close <= CandleLast.Open)
+        if (CandleLast.Close >= CandleLast.Open)
             return false;
 
         CryptoCandle CandlePrev1;
@@ -117,8 +117,7 @@ public class SignalBullishEngulfing : SignalCreateBase
 
     public override bool GiveUp(CryptoSignal signal)
     {
-        //return true;
-        // Langer dan 60 candles willen we niet wachten (is 60 niet heel erg lang?)
+        // Langer dan 3 candles willen we niet wachten
         if (CandleLast.OpenTime - signal.EventTime > 3 * Interval.Duration)
         {
             ExtraText = "Ophouden na 3 candles";
