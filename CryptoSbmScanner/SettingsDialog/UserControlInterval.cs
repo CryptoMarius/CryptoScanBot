@@ -19,6 +19,7 @@ public partial class UserControlInterval : UserControl
         {
             CheckBox checkbox = new()
             {
+                AutoSize = true,
                 UseVisualStyleBackColor = true,
                 Text = interval.Name,
             };

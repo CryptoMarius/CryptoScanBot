@@ -17,9 +17,9 @@ public partial class UserControlEverything : UserControl
         UserControlInterval.InitControls();
         UserControlIntervalTrend.InitControls(side);
         if (signal)
-            UserControlBarometer.InitControls("Genereer signalen indien barometer");
+            UserControlBarometer.InitControls("Genereer signalen indien de barometer");
         else
-            UserControlBarometer.InitControls("Trade alleen indien barometer");
+            UserControlBarometer.InitControls("Trade alleen indien de barometer");
     }
 
     public void LoadConfig(SettingsTextual settings)

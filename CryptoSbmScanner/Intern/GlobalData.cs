@@ -603,7 +603,8 @@ static public class GlobalData
         //File.WriteAllText(filename, text);
 
 
-        //// Ter debug om te zien of alles okay is (maar mislukt vanwege de def's, "Type' instances are not supported")
+#if DEBUG
+        //// Ter debug om te zien of alles okay is
         filename = GlobalData.GetBaseDir();
         Directory.CreateDirectory(filename);
         filename += "settingsSignalsCompiled.json";
@@ -615,6 +616,7 @@ static public class GlobalData
         filename += "settingsTradingCompiled.json";
         text = JsonSerializer.Serialize(TradingConfig.Trading, options);
         File.WriteAllText(filename, text);
+#endif
     }
 
 

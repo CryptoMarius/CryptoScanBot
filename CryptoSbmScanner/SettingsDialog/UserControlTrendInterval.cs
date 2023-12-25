@@ -27,8 +27,9 @@ public partial class UserControlTrendInterval : UserControl
         {
             CheckBox checkbox = new()
             {
+                AutoSize = true,
                 UseVisualStyleBackColor = true,
-                Text = interval.Name + "=" + text,
+                Text = interval.Name + " interval=" + text,
             };
             flowLayoutPanel1.Controls.Add(checkbox);
             ControlList.Add(checkbox, interval.Name);

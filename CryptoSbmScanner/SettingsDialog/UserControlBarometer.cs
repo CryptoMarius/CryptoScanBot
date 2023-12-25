@@ -4,8 +4,6 @@ namespace CryptoSbmScanner.SettingsDialog;
 
 public partial class UserControlBarometer : UserControl
 {
-    //private CryptoTradeSide TradeSide;
-
     public UserControlBarometer()
     {
         InitializeComponent();

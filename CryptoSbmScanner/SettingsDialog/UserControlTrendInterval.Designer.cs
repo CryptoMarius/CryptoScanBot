@@ -43,7 +43,7 @@ partial class UserControlTrendInterval
         EditGroupBox.Size = new Size(108, 151);
         EditGroupBox.TabIndex = 0;
         EditGroupBox.TabStop = false;
-        EditGroupBox.Text = "Trend op interval";
+        EditGroupBox.Text = "Filter trend op interval";
         // 
         // flowLayoutPanel1
         // 

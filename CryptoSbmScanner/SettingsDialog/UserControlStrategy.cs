@@ -21,6 +21,7 @@ public partial class UserControlStrategy : UserControl
 
             CheckBox checkbox = new()
             {
+                AutoSize = true,
                 UseVisualStyleBackColor = true,
                 Text = SignalHelper.GetSignalAlgorithmText(signalDefinition.Strategy),
             };
