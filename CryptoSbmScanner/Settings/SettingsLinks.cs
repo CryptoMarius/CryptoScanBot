@@ -74,7 +74,7 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
                 ExchangeUrl = new()
                 {
                     Execute = CryptoExternalUrlType.External,
-                    Url = "https://www.bybit.com/trade/{quote}/{base}{quote}",
+                    Url = "https://www.bybit.com/trade/{quote}/{base}&interval={interval}",
                 }
             }
         );
@@ -101,7 +101,7 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
                 ExchangeUrl = new()
                 {
                     Execute = CryptoExternalUrlType.External,
-                    Url = "https://www.bybit.com/trade/{quote}/{base}{quote}",
+                    Url = "https://www.bybit.com/trade/spot/{quote}/{base}&interval={interval}",
                 }
             }
         );
@@ -129,7 +129,7 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
                 {
                     // Geen idee
                     Execute = CryptoExternalUrlType.External,
-                    Url = "https://www.kucoin.com/trade/{quote}/{base}{quote}",
+                    Url = "https://www.kucoin.com/trade/{quote}/{base}&interval={interval}",
                 }
             }
         );
@@ -165,6 +165,7 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
                 return ("", CryptoExternalUrlType.Internal);
         }
 
+        GlobalData.LoadLinkSettings();
         if (GlobalData.ExternalUrls.TryGetValue(exchange.Name, out CryptoExternalUrls externalUrls))
         {
 
