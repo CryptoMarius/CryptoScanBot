@@ -238,7 +238,6 @@ public static class Helper
         else
             value = Math.Min(candle.Open, candle.Close);
         double? band = candle.CandleData.Sma20 - candle.CandleData.BollingerBandsDeviation;
-        //band = band.Clamp(candle.Symbol.PriceMinimum, candle.Symbol.PriceMaximum, candle.Symbol.PriceTickSize);
         if (value <= (decimal)band)
             return true;
         return false;
@@ -254,7 +253,6 @@ public static class Helper
         else
             value = Math.Max(candle.Open, candle.Close);
         double? band = candle.CandleData.Sma20 + candle.CandleData.BollingerBandsDeviation;
-        //band = band.Clamp(candle.Symbol.PriceMinimum, candle.Symbol.PriceMaximum, candle.Symbol.PriceTickSize);
         if (value >= (decimal)band)
             return true;
         return false;
