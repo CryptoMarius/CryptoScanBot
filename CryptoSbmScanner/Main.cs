@@ -585,6 +585,9 @@ public partial class FrmMain : Form
     {
         // Elke 24 uur wordt de memo gecleared
         Invoke((System.Windows.Forms.MethodInvoker)(() => TextBoxLog.Clear()));
+
+        // De database een beetje opruimen
+        CryptoDatabase.CleanUpDatabase();
     }
 
 

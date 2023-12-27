@@ -1,7 +1,6 @@
 CryptoSbmScanenr release historie:
 
 xx-01-2024 1.8.7
-todo:
 - Trading - De trading werkt exclusief op Bybit Sopt of Futures want andere exchanges kan ik niet testen.
             (en om te voorkomen dat iemand het per ongeluk op een niet ondersteunde exchange aan zet...)
 - Trading - Ondersteuning van long en short posities (maar daarvoor moest de hele configuratie aangepast worden).
@@ -45,6 +44,7 @@ todo:
 - Trading - Bybit Futures - ophalen assets implementeren
 - Trading - Bybit Spot - ophalen assets implementeren
 
+- Scanner - De oude signalen van circa 2 week en ouder weggooien uit de database (db werd vrij groot)
 - Scanner - De berekening van de 10d effectieve change was niet juist, daardoor teveel uitval op signalen
 - Scanner - De STOBB heeft nu enkel een minimale trend maar dat gaat dus niet goed voor short posities (splitsen long/short)
 - Scanner - Aangepaste barometer filter voor long/short

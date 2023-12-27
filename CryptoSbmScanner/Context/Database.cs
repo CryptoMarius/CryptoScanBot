@@ -1284,6 +1284,27 @@ public class CryptoDatabase : IDisposable
         }
     }
 
+    public static void CleanUpDatabase()
+    {
+        // Database een beetje opruimen
+        // Zou ook voor de posities mogen? (hoe ver wil je terug?)
+        try
+        {
+            using CryptoDatabase databaseThread = new();
+            databaseThread.Open();
+            using var transaction = databaseThread.BeginTransaction();
+            {
+                databaseThread.Connection.Execute("delete from signal where opendate < @opendate", new { opendate = DateTime.UtcNow.AddDays(-14) });
+                transaction.Commit();
+            }
+        }
+        catch (Exception error)
+        {
+            GlobalData.Logger.Error(error, "");
+            GlobalData.AddTextToLogTab("ERROR " + error.ToString());
+        }
+    }
+
     public static void CreateDatabase()
     {
         // Sqlite gaat afwijkend met datatypes om, zie https://learn.microsoft.com/en-us/dotnet/standard/data/sqlite/types
@@ -1329,6 +1350,9 @@ public class CryptoDatabase : IDisposable
         Migration.Execute(connection, Migration.CurrentDatabaseVersion);
 
 
+        CleanUpDatabase();
+
+        // Lukt alleen bij het opstarten (exclusief toegang nodig)
         using (var command = connection.Connection.CreateCommand())
         {
             command.CommandText = "vacuum;";
