@@ -4,11 +4,10 @@ using CryptoSbmScanner.Model;
 
 namespace CryptoSbmScanner.Signal;
 
-public class SignalStobbLong : SignalSbmBaseLong // inherit from sbm because of 1 call there
+public class SignalStobbLong : SignalSbmBaseLong
 {
     public SignalStobbLong(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        //ReplaceSignal = true;
         SignalSide = CryptoTradeSide.Long;
         SignalStrategy = CryptoSignalStrategy.Stobb;
     }
@@ -101,8 +100,10 @@ public class SignalStobbLong : SignalSbmBaseLong // inherit from sbm because of 
             return false;
         }
 
+
         return true;
     }
+
 
 }
 

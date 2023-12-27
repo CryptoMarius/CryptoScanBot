@@ -8,7 +8,6 @@ public class SignalStobbShort : SignalSbmBaseShort
 {
     public SignalStobbShort(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        ReplaceSignal = true;
         SignalSide = CryptoTradeSide.Short;
         SignalStrategy = CryptoSignalStrategy.Stobb;
     }
@@ -100,21 +99,6 @@ public class SignalStobbShort : SignalSbmBaseShort
             ExtraText = "stoch niet overbought";
             return false;
         }
-
-
-        // TODO: Wellicht toch weer activeren?
-        // Platte candles of candles zonder volume
-        // EXTRA (anders krijg je toch vreemde momenten met platte candles)
-        //CryptoSignal Signal = new CryptoSignal();
-        //SignalCreate.CalculateAdditionalAlarmProperties(Signal, Candles.Values.ToList(), 30, CandleLast.OpenTime);
-        //if (GlobalData.Settings.Signal.CandlesWithZeroVolume > 0 && Signal.CandlesWithZeroVolume >= GlobalData.Settings.Signal.CandlesWithZeroVolume)
-        //    return false;
-        //if (GlobalData.Settings.Signal.CandlesWithFlatPrice > 0 && Signal.CandlesWithFlatPrice >= GlobalData.Settings.Signal.CandlesWithFlatPrice)
-        //    return false;
-        //if (GlobalData.Settings.Signal.AboveBollingerBandsSma > 0 && Signal.AboveBollingerBandsSma < GlobalData.Settings.Signal.AboveBollingerBandsSma)
-        //    return false;
-        //if (GlobalData.Settings.Signal.AboveBollingerBandsUpper > 0 && Signal.AboveBollingerBandsUpper < GlobalData.Settings.Signal.AboveBollingerBandsUpper)
-        //    return false;
 
 
         return true;
