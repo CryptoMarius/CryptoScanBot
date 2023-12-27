@@ -116,7 +116,7 @@ static public class GlobalData
     static public ThreadMonitorCandle ThreadMonitorCandle { get; set; }
 #if TRADEBOT
     static public ThreadMonitorOrder ThreadMonitorOrder { get; set; }
-    static public ThreadDoubleCheckPosition ThreadDoubleCheckPosition { get; set; }
+    static public ThreadCheckFinishedPosition ThreadDoubleCheckPosition { get; set; }
 #endif
 #if BALANCING
     static public ThreadBalanceSymbols ThreadBalanceSymbols { get; set; }
@@ -520,7 +520,7 @@ static public class GlobalData
                 if (ExternalUrls.Count == 0)
                     ExternalUrls.InitializeUrls();
 
-                // het bestand in ieder geval aanmaken (updates moeten achteraf gepushed worden)
+                //het bestand in ieder geval aanmaken(updates moeten achteraf gepushed worden)
                 string text = JsonSerializer.Serialize(ExternalUrls, new JsonSerializerOptions
                 {
                     Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
@@ -799,7 +799,7 @@ static public class GlobalData
         var fileTarget = new NLog.Targets.FileTarget();
         config.AddTarget("file", fileTarget);
         fileTarget.Name = "default";
-        //fileTarget.KeepFileOpen = true;
+        fileTarget.KeepFileOpen = true;
         fileTarget.FileName = GetBaseDir() + "CryptoScanner ${date:format=yyyy-MM-dd}.log";
         fileTarget.MaxArchiveDays = 14;
         //fileTarget.ArchiveDateFormat = "yyyy-MM-dd";
@@ -809,14 +809,14 @@ static public class GlobalData
         //fileTarget.MaxArchiveDays = 10;
         //fileTarget.ArchiveFileName = fileTarget.FileName; //"${logDirectory}/Log.{#}.log";
         //fileTarget.Layout = "Exception Type: ${exception:format=Type}${newline}Target Site:  ${event-context:TargetSite }${newline}Message: ${message}";
-
         var rule = new NLog.Config.LoggingRule("*", NLog.LogLevel.Info, fileTarget);
         config.LoggingRules.Add(rule);
+
 
         fileTarget = new NLog.Targets.FileTarget();
         config.AddTarget("file", fileTarget);
         fileTarget.Name = "errors";
-        //fileTarget.KeepFileOpen = true;
+        fileTarget.KeepFileOpen = true;
         fileTarget.MaxArchiveDays = 14;
         //fileTarget.ArchiveDateFormat = "yyyy-MM-dd";
         //fileTarget.EnableArchiveFileCompression = false;
@@ -825,9 +825,25 @@ static public class GlobalData
         fileTarget.FileName = GetBaseDir() + "CryptoScanner ${date:format=yyyy-MM-dd}-Errors.log";
         //fileTarget.ArchiveFileName = fileTarget.FileName; //"${logDirectory}/Log.{#}.log";
         //fileTarget.Layout = "Exception Type: ${exception:format=Type}${newline}Target Site:  ${event-context:TargetSite }${newline}Message: ${message}";
-
         rule = new NLog.Config.LoggingRule("*", NLog.LogLevel.Error, fileTarget);
         config.LoggingRules.Add(rule);
+
+
+        //fileTarget = new NLog.Targets.FileTarget();
+        //config.AddTarget("file", fileTarget);
+        //fileTarget.Name = "trace";
+        //fileTarget.KeepFileOpen = true;
+        //fileTarget.MaxArchiveDays = 14;
+        ////fileTarget.ArchiveDateFormat = "yyyy-MM-dd";
+        ////fileTarget.EnableArchiveFileCompression = false;
+        ////fileTarget.ArchiveEvery = NLog.Targets.FileArchivePeriod.Day; // None?
+        ////fileTarget.ArchiveNumbering = NLog.Targets.ArchiveNumberingMode.Date;
+        //fileTarget.FileName = GetBaseDir() + "CryptoScanner ${date:format=yyyy-MM-dd}-Trace.log";
+        ////fileTarget.ArchiveFileName = fileTarget.FileName; //"${logDirectory}/Log.{#}.log";
+        ////fileTarget.Layout = "Exception Type: ${exception:format=Type}${newline}Target Site:  ${event-context:TargetSite }${newline}Message: ${message}";
+        //rule = new NLog.Config.LoggingRule("*", NLog.LogLevel.Trace, fileTarget);
+        //config.LoggingRules.Add(rule);
+
 
 
         NLog.LogManager.Configuration = config;

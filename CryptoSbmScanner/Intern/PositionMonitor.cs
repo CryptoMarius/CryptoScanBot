@@ -1689,10 +1689,10 @@ public class PositionMonitor : IDisposable
         //GlobalData.Logger.Info($"CreateSignals(start):" + LastCandle1m.OhlcText(Symbol, GlobalData.IntervalList[0], Symbol.PriceDisplayFormat, true, false, true));
         if (GlobalData.Settings.Signal.SignalsActive && Symbol.QuoteData.CreateSignals && Symbol.Status == 1)
         {
+            // TODO: Pakt onhandig uit, nu meerdere keren aanroep van de signalcreate zonder hergebruik van de candles, dat is jammer
             foreach (CryptoTradeSide side in Enum.GetValues(typeof(CryptoTradeSide)))
             {
-                // Barometer controle? 
-                // TODO logging?
+                // Barometer controle
                 if (!BarometerHelper.ValidBarometerConditions(Symbol.QuoteData, TradingConfig.Signals[side].Barometer, out string reaction))
                 {
                     if (TradingConfig.Signals[side].BarometerLog)
@@ -1700,8 +1700,7 @@ public class PositionMonitor : IDisposable
                 }
                 else
                 {
-                    // Een extra ToList() zodat we een readonly setje hebben (en we de instellingen kunnen muteren)
-                    foreach (CryptoInterval interval in TradingConfig.Signals[side].Interval.ToList())
+                    foreach (CryptoInterval interval in TradingConfig.Signals[side].Interval)
                     {
                         // (0 % 180 = 0, 60 % 180 = 60, 120 % 180 = 120, 180 % 180 = 0)
                         if (LastCandle1mCloseTime % interval.Duration == 0)
@@ -1715,7 +1714,6 @@ public class PositionMonitor : IDisposable
                                 createdSignals++;
 
                             // Teller voor op het beeldscherm zodat je ziet dat deze thread iets doet en actief blijft.
-                            //AnalyseCount++;
                             Interlocked.Increment(ref AnalyseCount);
                         }
                     }
@@ -1794,13 +1792,17 @@ public class PositionMonitor : IDisposable
             if (!Symbol.IsSpotTradingAllowed || Symbol.Status == 0)
                 return;
 
-            //GlobalData.Logger.Info($"analyze:" + LastCandle1m.OhlcText(Symbol, GlobalData.IntervalList[0], Symbol.PriceDisplayFormat, true, false, true));
+            string traceText = LastCandle1m.OhlcText(Symbol, GlobalData.IntervalList[0], Symbol.PriceDisplayFormat, true, false, true);
+
+            //GlobalData.Logger.Trace($"NewCandleArrivedAsync.Signals " + traceText);
 
             // Create signals per interval
             //GlobalData.Logger.Info($"analyze.CreateSignals({Symbol.Name})");
             bool hasCreatedAsignal = CreateSignals();
 
+
 #if TRADEBOT
+            //GlobalData.Logger.Trace($"NewCandleArrivedAsync.Positions " + traceText);
             // Idee1: Zet de echte (gemiddelde) price in de step indien deze gevuld is (het is nu namelijk
             // onduidelijk voor welke prijs het exact verkocht is = lastig met meerdere trades igv market)
             // Idee2: Zet de entryprice en de echte (gemiddelde)exitprice in de part indien deze gevuld zijn
@@ -1866,12 +1868,13 @@ public class PositionMonitor : IDisposable
             }
 #endif
 
+            //GlobalData.Logger.Trace($"NewCandleArrivedAsync.Clean " + traceText);
+
             // Remove old candles or CandleData
-            //GlobalData.Logger.Info($"analyze.CleanSymbolData({Symbol.Name})");
             if (!GlobalData.BackTest)
                 CleanSymbolData();
 
-            //GlobalData.Logger.Info($"analyze.Done({Symbol.Name})");
+            //GlobalData.Logger.Trace($"NewCandleArrivedAsync.Done " + traceText);
         }
         catch (Exception error)
         {

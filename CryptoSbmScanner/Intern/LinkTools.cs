@@ -53,6 +53,7 @@ public static class LinkTools
         (string Url, CryptoExternalUrlType Execute) = GlobalData.ExternalUrls.GetExternalRef(externalTradingApp, false, symbol, interval);
         if (Url != "")
         {
+            GlobalData.AddTextToLogTab($"Linktools activate {Url}");
             if (viaTradingBrowser == CryptoExternalUrlType.Internal)
             {
                 await InitializeWebViewTradingView();
@@ -65,7 +66,6 @@ public static class LinkTools
             {
                 if (Execute == CryptoExternalUrlType.Internal)
                 {
-                    //GlobalData.AddTextToLogTab($"Linktools activate external app (via internal browser) {Url}");
                     await InitializeWebViewDummy();
                     WebViewDummy.Source = new(Url);
                 }

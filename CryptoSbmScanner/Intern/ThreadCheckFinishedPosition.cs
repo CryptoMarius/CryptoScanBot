@@ -15,12 +15,12 @@ namespace CryptoSbmScanner.Intern;
 
 // Bedoeld om een positie te controleren nadat deze op ready is gezet
 
-public class ThreadDoubleCheckPosition
+public class ThreadCheckFinishedPosition
 {
     private readonly CancellationTokenSource cancellationToken = new();
     private readonly BlockingCollection<CryptoPosition> Queue = new();
 
-    public ThreadDoubleCheckPosition()
+    public ThreadCheckFinishedPosition()
     {
     }
 
@@ -28,7 +28,7 @@ public class ThreadDoubleCheckPosition
     {
         cancellationToken.Cancel();
 
-        GlobalData.AddTextToLogTab("Stop position checker handler");
+        GlobalData.AddTextToLogTab("Stop position check finished handler");
     }
 
     public void AddToQueue(CryptoPosition position)
@@ -121,10 +121,10 @@ public class ThreadDoubleCheckPosition
             catch (Exception error)
             {
                 GlobalData.Logger.Error(error, "");
-                GlobalData.AddTextToLogTab($"{position.Symbol.Name} ERROR position DoubleCheckOrder thread {error.Message}");
+                GlobalData.AddTextToLogTab($"{position.Symbol.Name} ERROR position ThreadCheckFinishedPosition thread {error.Message}");
             }
         }
-        GlobalData.AddTextToLogTab("\r\n" + "\r\n ThreadDoubleCheckPosition THREAD EXIT");
+        GlobalData.AddTextToLogTab("\r\n" + "\r\n ThreadCheckFinishedPosition THREAD EXIT");
     }
 }
 #endif
