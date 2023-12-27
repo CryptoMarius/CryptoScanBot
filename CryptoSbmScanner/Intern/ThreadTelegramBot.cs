@@ -427,13 +427,14 @@ public class ThreadTelegramBotInstance
             "where CloseTime >= @fromDate and status=2", new { fromDate = DateTime.Today.ToUniversalTime() }))
         {
             sumCount++;
+            // TODO long/short
             sumProfit += position.Profit;
             sumInvested += position.Invested;
         }
         if (sumInvested > 0)
             percentage = 100 * sumProfit / sumInvested;
 
-        stringbuilder.AppendLine($"{sumCount} positions, invested {sumCount:N2}, profits {sumProfit:N2}, {percentage:N2}%");
+        stringbuilder.AppendLine($"{sumCount} positions, invested {sumInvested:N2}, profits {sumProfit:N2}, {percentage:N2}%");
     }
 #endif
 
