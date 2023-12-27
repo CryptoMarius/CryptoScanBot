@@ -13,50 +13,47 @@ public partial class FrmMain
     private ListViewHeaderContext listViewPositionsOpen;
     private System.Windows.Forms.Timer TimerRefreshSomething;
 
-    // Commands
-    private ToolStripMenuItem CommandPositionsOpenExcelDump;
-    private ToolStripMenuItem CommandPositionsOpenRecalculate;
-    private ToolStripMenuItem CommandPositionsOpenActivateTradingApp;
-    private ToolStripMenuItem CommandPositionsOpenActivateTradingViewInternal;
-    private ToolStripMenuItem CommandPositionsOpenActivateTradingViewExternal;
 
 
     private void ListViewPositionsOpenConstructor()
     {
         ContextMenuStripPositionsOpen = new ContextMenuStrip();
 
+        ToolStripMenuItem menuCommand;
+
         // Commands
-        CommandPositionsOpenActivateTradingApp = new ToolStripMenuItem();
-        CommandPositionsOpenActivateTradingApp.Text = "Activate trading app";
-        CommandPositionsOpenActivateTradingApp.Tag = Command.ActivateTradingApp;
-        CommandPositionsOpenActivateTradingApp.Click += Commands.ExecuteCommandCommandViaTag;
-        ContextMenuStripPositionsOpen.Items.Insert(0, CommandPositionsOpenActivateTradingApp);
+        menuCommand = new ToolStripMenuItem();
+        menuCommand.Text = "Activate trading app";
+        menuCommand.Tag = Command.ActivateTradingApp;
+        menuCommand.Click += Commands.ExecuteCommandCommandViaTag;
+        ContextMenuStripPositionsOpen.Items.Insert(0, menuCommand);
 
-        CommandPositionsOpenActivateTradingViewInternal = new ToolStripMenuItem();
-        CommandPositionsOpenActivateTradingViewInternal.Text = "TradingView browser";
-        CommandPositionsOpenActivateTradingViewInternal.Tag = Command.ActivateTradingviewIntern;
-        CommandPositionsOpenActivateTradingViewInternal.Click += Commands.ExecuteCommandCommandViaTag;
-        ContextMenuStripPositionsOpen.Items.Add(CommandPositionsOpenActivateTradingViewInternal);
+        menuCommand = new ToolStripMenuItem();
+        menuCommand.Text = "TradingView browser";
+        menuCommand.Tag = Command.ActivateTradingviewIntern;
+        menuCommand.Click += Commands.ExecuteCommandCommandViaTag;
+        ContextMenuStripPositionsOpen.Items.Add(menuCommand);
 
-        CommandPositionsOpenActivateTradingViewExternal = new ToolStripMenuItem();
-        CommandPositionsOpenActivateTradingViewExternal.Text = "TradingView extern";
-        CommandPositionsOpenActivateTradingViewExternal.Tag = Command.ActivateTradingviewExtern;
-        CommandPositionsOpenActivateTradingViewExternal.Click += Commands.ExecuteCommandCommandViaTag;
-        ContextMenuStripPositionsOpen.Items.Add(CommandPositionsOpenActivateTradingViewExternal);
+        menuCommand = new ToolStripMenuItem();
+        menuCommand.Text = "TradingView extern";
+        menuCommand.Tag = Command.ActivateTradingviewExtern;
+        menuCommand.Click += Commands.ExecuteCommandCommandViaTag;
+        ContextMenuStripPositionsOpen.Items.Add(menuCommand);
+
 
         ContextMenuStripPositionsOpen.Items.Add(new ToolStripSeparator());
 
-        CommandPositionsOpenRecalculate = new ToolStripMenuItem();
-        CommandPositionsOpenRecalculate.Text = "Herberekenen";
-        CommandPositionsOpenRecalculate.Click += CommandPositionsOpenRecalculateExecute;
-        ContextMenuStripPositionsOpen.Items.Add(CommandPositionsOpenRecalculate);
 
-        CommandPositionsOpenExcelDump = new ToolStripMenuItem();
-        CommandPositionsOpenExcelDump.Text = "Positie informatie (Excel)";
-        //CommandPositionsOpenExcelDump.Click += CommandPositionsOpenExcelDumpExecute;
-        CommandPositionsOpenExcelDump.Tag = Command.ExcelPositionInformation;
-        CommandPositionsOpenExcelDump.Click += Commands.ExecuteCommandCommandViaTag;
-        ContextMenuStripPositionsOpen.Items.Add(CommandPositionsOpenExcelDump);
+        menuCommand = new ToolStripMenuItem();
+        menuCommand.Text = "Herberekenen";
+        menuCommand.Click += CommandPositionsOpenRecalculateExecute;
+        ContextMenuStripPositionsOpen.Items.Add(menuCommand);
+
+        menuCommand = new ToolStripMenuItem();
+        menuCommand.Text = "Positie informatie (Excel)";
+        menuCommand.Tag = Command.ExcelPositionInformation;
+        menuCommand.Click += Commands.ExecuteCommandCommandViaTag;
+        ContextMenuStripPositionsOpen.Items.Add(menuCommand);
 
 
 
@@ -67,7 +64,6 @@ public partial class FrmMain
             Location = new Point(4, 3)
         };
         listViewPositionsOpen.ColumnClick += ListViewPositionsOpenColumnClick;
-        //listViewPositionsOpen.DoubleClick += CommandPositionsOpenActivateTradingAppExecute;
         listViewPositionsOpen.Tag = Command.ActivateTradingApp;
         listViewPositionsOpen.DoubleClick += Commands.ExecuteCommandCommandViaTag;
 
@@ -455,7 +451,7 @@ public partial class FrmMain
     private void ListViewPositionsOpenInitCaptions()
     {
         string text = GlobalData.ExternalUrls.GetTradingAppName(GlobalData.Settings.General.TradingApp, GlobalData.Settings.General.ExchangeName);
-        CommandPositionsOpenActivateTradingApp.Text = text;
+        listViewPositionsOpen.ContextMenuStrip.Items[0].Text = text;
     }
 
     private async void CommandPositionsOpenRecalculateExecute(object sender, EventArgs e)

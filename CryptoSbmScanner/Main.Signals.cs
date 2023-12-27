@@ -12,13 +12,6 @@ public partial class FrmMain
     private ListViewHeaderContext listViewSignals;
     private System.Windows.Forms.Timer TimerClearEvents;
 
-    private ToolStripMenuItem CommandSignalsActivateTradingApp;
-    private ToolStripMenuItem CommandSignalsActivateTradingViewInternal;
-    private ToolStripMenuItem CommandSignalsActivateTradingViewExternal;
-    private ToolStripMenuItem CommandSignalTrendInformation;
-    private ToolStripMenuItem CommandSignalCopyInformation;
-    private ToolStripMenuItem CommandSignalSymbolInformationExcelDump;
-
     private int columnForText;
 
 
@@ -27,42 +20,45 @@ public partial class FrmMain
         ListViewSignalsColumns = new ContextMenuStrip();
         ListViewSignalsMenuStrip = new ContextMenuStrip();
 
-        CommandSignalsActivateTradingApp = new ToolStripMenuItem();
-        CommandSignalsActivateTradingApp.Text = "Activate trading app";
-        CommandSignalsActivateTradingApp.Tag = Command.ActivateTradingApp;
-        CommandSignalsActivateTradingApp.Click += Commands.ExecuteCommandCommandViaTag;
-        ListViewSignalsMenuStrip.Items.Add(CommandSignalsActivateTradingApp);
+        ToolStripMenuItem menuCommand;
 
-        CommandSignalsActivateTradingViewInternal = new ToolStripMenuItem();
-        CommandSignalsActivateTradingViewInternal.Text = "TradingView browser";
-        CommandSignalsActivateTradingViewInternal.Tag = Command.ActivateTradingviewIntern;
-        CommandSignalsActivateTradingViewInternal.Click += Commands.ExecuteCommandCommandViaTag;
-        ListViewSignalsMenuStrip.Items.Add(CommandSignalsActivateTradingViewInternal);
+        menuCommand = new ToolStripMenuItem();
+        menuCommand.Text = "Activate trading app";
+        menuCommand.Tag = Command.ActivateTradingApp;
+        menuCommand.Click += Commands.ExecuteCommandCommandViaTag;
+        ListViewSignalsMenuStrip.Items.Add(menuCommand);
 
-        CommandSignalsActivateTradingViewExternal = new ToolStripMenuItem();
-        CommandSignalsActivateTradingViewExternal.Text = "TradingView extern";
-        CommandSignalsActivateTradingViewExternal.Tag = Command.ActivateTradingviewExtern;
-        CommandSignalsActivateTradingViewExternal.Click += Commands.ExecuteCommandCommandViaTag;
-        ListViewSignalsMenuStrip.Items.Add(CommandSignalsActivateTradingViewExternal);
+        menuCommand = new ToolStripMenuItem();
+        menuCommand.Text = "TradingView browser";
+        menuCommand.Tag = Command.ActivateTradingviewIntern;
+        menuCommand.Click += Commands.ExecuteCommandCommandViaTag;
+        ListViewSignalsMenuStrip.Items.Add(menuCommand);
+
+        menuCommand = new ToolStripMenuItem();
+        menuCommand.Text = "TradingView extern";
+        menuCommand.Tag = Command.ActivateTradingviewExtern;
+        menuCommand.Click += Commands.ExecuteCommandCommandViaTag;
+        ListViewSignalsMenuStrip.Items.Add(menuCommand);
+
 
         ListViewSignalsMenuStrip.Items.Add(new ToolStripSeparator());
 
-        CommandSignalCopyInformation = new ToolStripMenuItem();
-        CommandSignalCopyInformation.Text = "Kopiëer informatie";
-        CommandSignalCopyInformation.Click += CommandSignalCopyInformationExecute;
-        ListViewSignalsMenuStrip.Items.Add(CommandSignalCopyInformation);
+        menuCommand = new ToolStripMenuItem();
+        menuCommand.Text = "Kopiëer informatie";
+        menuCommand.Click += CommandSignalCopyInformationExecute;
+        ListViewSignalsMenuStrip.Items.Add(menuCommand);
 
-        CommandSignalTrendInformation = new ToolStripMenuItem();
-        CommandSignalTrendInformation.Text = "Trend informatie (zie log)";
-        CommandSignalTrendInformation.Tag = Command.ShowTrendInformation;
-        CommandSignalTrendInformation.Click += Commands.ExecuteCommandCommandViaTag;
-        ListViewSignalsMenuStrip.Items.Add(CommandSignalTrendInformation);
+        menuCommand = new ToolStripMenuItem();
+        menuCommand.Text = "Trend informatie (zie log)";
+        menuCommand.Tag = Command.ShowTrendInformation;
+        menuCommand.Click += Commands.ExecuteCommandCommandViaTag;
+        ListViewSignalsMenuStrip.Items.Add(menuCommand);
 
-        CommandSignalSymbolInformationExcelDump = new ToolStripMenuItem();
-        CommandSignalSymbolInformationExcelDump.Text = "Symbol informatie (Excel)";
-        CommandSignalSymbolInformationExcelDump.Tag = Command.ExcelSymbolInformation;
-        CommandSignalSymbolInformationExcelDump.Click += Commands.ExecuteCommandCommandViaTag;
-        ListViewSignalsMenuStrip.Items.Add(CommandSignalSymbolInformationExcelDump);
+        menuCommand = new ToolStripMenuItem();
+        menuCommand.Text = "Symbol informatie (Excel)";
+        menuCommand.Tag = Command.ExcelSymbolInformation;
+        menuCommand.Click += Commands.ExecuteCommandCommandViaTag;
+        ListViewSignalsMenuStrip.Items.Add(menuCommand);
 
 
         //ListViewColumnSorterSignal listViewColumnSorter = new();
@@ -78,8 +74,6 @@ public partial class FrmMain
 
         listViewSignals.Tag = Command.ActivateTradingApp;
         listViewSignals.DoubleClick += Commands.ExecuteCommandCommandViaTag;
-        //listViewSignals.DoubleClick += CommandSignalsActivateTradingAppExecute;
-
         listViewSignals.ContextMenuStrip = ListViewSignalsMenuStrip;
         listViewSignals.HeaderContextMenuStrip = ListViewSignalsColumns;
 
@@ -122,7 +116,7 @@ public partial class FrmMain
     private void ListViewSignalsInitCaptions()
     {
         string text = GlobalData.ExternalUrls.GetTradingAppName(GlobalData.Settings.General.TradingApp, GlobalData.Settings.General.ExchangeName);
-        CommandSignalsActivateTradingApp.Text = text;
+        listViewSignals.ContextMenuStrip.Items[0].Text = text;
     }
 
 
