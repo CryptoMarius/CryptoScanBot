@@ -31,6 +31,7 @@ public class TrendIndicator
     }
 
 
+
     /// <summary>
     /// ZigZag afkomstig uit de cAlgo wereld
     /// </summary>
@@ -43,8 +44,16 @@ public class TrendIndicator
         //GlobalData.AddTextToLogTab("ZigZagTest cAlgo#1");
         //GlobalData.AddTextToLogTab("");
 
-        //List<CryptoCandle> history = CalculateHistory(this.Candles, 1000); // Toch ingekort
-        List<CryptoCandle> history = Candles.Values.ToList();
+        List<CryptoCandle> history;
+
+        // De 1m is absoluut niet relevant genoeg voor een trend, zonde van de cpu (en de ..
+        if (Interval.IntervalPeriod == CryptoIntervalPeriod.interval1m)
+            return CryptoTrendIndicator.Sideways; // history = CalculateHistory(this.Candles, 1000); // inkorten voor de 1m
+        else if (Interval.IntervalPeriod == CryptoIntervalPeriod.interval2m)
+            return CryptoTrendIndicator.Sideways; // history = CalculateHistory(this.Candles, 1000); // inkorten voor de 2m
+
+        //GlobalData.Logger.Trace($"CalculateTrend.Start {Symbol.Name} {Interval.Name}");
+        history = Candles.Values.ToList();
         if (history.Count == 0)
         {
             // Hele discussies, maar als we niet genoeg candles hebben om een trend te berekenen
@@ -59,10 +68,15 @@ public class TrendIndicator
         for (int i = 0; i < history.Count; i++)
             zigZagTest.Calculate(history[i], true);
 
+        //GlobalData.Logger.Trace($"CalculateTrend.Pickup {Symbol.Name} {Interval.Name} {history.Count}");
+
         // Maak van de gevonden punten een bruikbare ZigZag lijst
         List<CryptoZigZagResult> zigZagList = PickupZigZagValues(zigZagTest);
 
+        //GlobalData.Logger.Trace($"CalculateTrend.Interpret {Symbol.Name} {Interval.Name} {history.Count} {zigZagList.Count}");
+
         CryptoTrendIndicator trend = InterpretationZigZagValues(zigZagList);
+        //GlobalData.Logger.Trace($"CalculateTrend.Done {Symbol.Name} {Interval.Name} {history.Count} {trend}");
         return trend;
     }
 

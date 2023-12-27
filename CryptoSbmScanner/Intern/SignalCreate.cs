@@ -199,37 +199,44 @@ public class SignalCreate
 
     void CalculateTrendStuff(CryptoSignal signal)
     {
-        //int iterator = 0;
         long percentageSum = 0;
         long maxPercentageSum = 0;
         try
         {
-
             for (CryptoIntervalPeriod intervalPeriod = CryptoIntervalPeriod.interval1m; intervalPeriod <= CryptoIntervalPeriod.interval1d; intervalPeriod++)
             {
-                //iterator++;
                 if (!GlobalData.IntervalListPeriod.TryGetValue(intervalPeriod, out CryptoInterval interval))
                     return;
-
-                // Nu gebaseerd op de SMA's
                 CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(interval.IntervalPeriod);
-                TrendIndicator trendIndicatorClass = new(Symbol, interval);
 
+                // Trend overnemen indien het reeds berekend is (scheelt aardig wat cpu)
                 CryptoTrendIndicator trendIndicator;
-                trendIndicator = trendIndicatorClass.CalculateTrend();
+                if (!symbolInterval.TrendInfoDate.HasValue || signal.OpenDate != symbolInterval.TrendInfoDate)
+                {
+                    //GlobalData.Logger.Trace($"SignalCreate.CalculateTrendStuff.Start {Symbol.Name} {Interval.Name} {Side} {intervalPeriod} {signal.OpenDate}");
+                    TrendIndicator trendIndicatorClass = new(Symbol, interval);
+                    trendIndicator = trendIndicatorClass.CalculateTrend();
+                    // Dit gaat niet naar een tabel, in memory only
+                    symbolInterval.TrendIndicator = trendIndicator;
+                    symbolInterval.TrendInfoDate = signal.OpenDate;
+                    //GlobalData.Logger.Trace($"SignalCreate.CalculateTrendStuff.Done {Symbol.Name} {Interval.Name} {Side} {intervalPeriod} {signal.OpenDate}");
+                }
+                else
+                {
+                    trendIndicator = symbolInterval.TrendIndicator;
+                    //GlobalData.Logger.Trace($"SignalCreate.CalculateTrendStuff.Reused {Symbol.Name} {Interval.Name} {Side} {intervalPeriod} {signal.OpenDate}");
+                }
+
+
+                // gewicht
                 if (trendIndicator == CryptoTrendIndicator.Bullish)
                     percentageSum += interval.Duration;
                 else if (trendIndicator == CryptoTrendIndicator.Bearish)
                     percentageSum -= interval.Duration;
+                maxPercentageSum += interval.Duration;
 
                 if (intervalPeriod == signal.Interval.IntervalPeriod)
                     signal.TrendIndicator = trendIndicator;
-
-                // Ahh, dat gaat niet naar een tabel (zoals ik eerst dacht)
-                symbolInterval.TrendIndicator = trendIndicator;
-                symbolInterval.TrendInfoDate = signal.OpenDate;
-
-                maxPercentageSum += interval.Duration;
 
                 // Doorzetten naar het signal (op verzoek)
                 switch (intervalPeriod)
@@ -250,7 +257,6 @@ public class SignalCreate
                         signal.Trend12h = trendIndicator;
                         break;
                 }
-
             }
 
 
@@ -798,6 +804,7 @@ public class SignalCreate
 
         if (algorithm != null)
         {
+            //GlobalData.Logger.Trace($"SignalCreate.Done {Symbol.Name} {Interval.Name} {strategyDefinition.Name} {Side}");
             if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
                 return PrepareAndSendSignal(algorithm);
         }
@@ -812,6 +819,8 @@ public class SignalCreate
     /// <returns></returns>
     public bool Prepare(long candleOpenTime)
     {
+        //GlobalData.Logger.Trace($"SignalCreate.Prepare.Start {Symbol.Name} {Interval.Name} {Side}");
+
         Candle = null;
         string response = "";
 
@@ -865,6 +874,7 @@ public class SignalCreate
             if (Candle.CandleData == null)
                 CandleIndicatorData.CalculateIndicators(history);
         }
+        //GlobalData.Logger.Trace($"SignalCreate.Prepare.Stop {Symbol.Name} {Interval.Name} {Side}");
         return true;
     }
 
@@ -872,6 +882,7 @@ public class SignalCreate
 
     public void Analyze(long candleOpenTime)
     {
+        //GlobalData.Logger.Trace($"SignalCreate.Start {Symbol.Name} {Interval.Name}");
         // Eenmalig de indicators klaarzetten
         if (Prepare(candleOpenTime))
         {
@@ -918,6 +929,7 @@ public class SignalCreate
             }
 
         }
+        //GlobalData.Logger.Trace($"SignalCreate.Done {Symbol.Name} {Interval.Name}");
     }
 
 }
