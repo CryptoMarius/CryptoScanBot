@@ -30,10 +30,10 @@ partial class UserControlEverything
     {
         flowLayoutPanel1 = new FlowLayoutPanel();
         UserControlInterval = new UserControlInterval();
+        UserControlIntervalTrend = new UserControlTrendInterval();
         UserControlStrategy = new UserControlStrategy();
         UserControlBarometer = new UserControlBarometer();
         UserControlMarketTrend = new UserControlMarketTrend();
-        UserControlIntervalTrend = new UserControlTrendInterval();
         flowLayoutPanel1.SuspendLayout();
         SuspendLayout();
         // 
@@ -41,9 +41,9 @@ partial class UserControlEverything
         // 
         flowLayoutPanel1.AutoScroll = true;
         flowLayoutPanel1.AutoSize = true;
+        flowLayoutPanel1.Controls.Add(UserControlStrategy);
         flowLayoutPanel1.Controls.Add(UserControlInterval);
         flowLayoutPanel1.Controls.Add(UserControlIntervalTrend);
-        flowLayoutPanel1.Controls.Add(UserControlStrategy);
         flowLayoutPanel1.Controls.Add(UserControlBarometer);
         flowLayoutPanel1.Controls.Add(UserControlMarketTrend);
         flowLayoutPanel1.Dock = DockStyle.Fill;
@@ -56,17 +56,28 @@ partial class UserControlEverything
         // 
         UserControlInterval.AutoScroll = true;
         UserControlInterval.AutoSize = true;
-        UserControlInterval.Location = new Point(3, 3);
+        UserControlInterval.Location = new Point(79, 3);
         UserControlInterval.MinimumSize = new Size(100, 150);
         UserControlInterval.Name = "UserControlInterval";
         UserControlInterval.Padding = new Padding(10);
         UserControlInterval.Size = new Size(100, 150);
         UserControlInterval.TabIndex = 288;
         // 
+        // UserControlIntervalTrend
+        // 
+        UserControlIntervalTrend.AutoScroll = true;
+        UserControlIntervalTrend.AutoSize = true;
+        UserControlIntervalTrend.Location = new Point(185, 3);
+        UserControlIntervalTrend.MinimumSize = new Size(100, 150);
+        UserControlIntervalTrend.Name = "UserControlIntervalTrend";
+        UserControlIntervalTrend.Padding = new Padding(10);
+        UserControlIntervalTrend.Size = new Size(100, 150);
+        UserControlIntervalTrend.TabIndex = 298;
+        // 
         // UserControlStrategy
         // 
         UserControlStrategy.AutoSize = true;
-        UserControlStrategy.Location = new Point(215, 3);
+        UserControlStrategy.Location = new Point(3, 3);
         UserControlStrategy.MinimumSize = new Size(70, 70);
         UserControlStrategy.Name = "UserControlStrategy";
         UserControlStrategy.Padding = new Padding(10);
@@ -90,17 +101,6 @@ partial class UserControlEverything
         UserControlMarketTrend.Padding = new Padding(11);
         UserControlMarketTrend.Size = new Size(396, 127);
         UserControlMarketTrend.TabIndex = 297;
-        // 
-        // UserControlTrendInterval
-        // 
-        UserControlIntervalTrend.AutoScroll = true;
-        UserControlIntervalTrend.AutoSize = true;
-        UserControlIntervalTrend.Location = new Point(109, 3);
-        UserControlIntervalTrend.MinimumSize = new Size(100, 150);
-        UserControlIntervalTrend.Name = "UserControlTrendInterval";
-        UserControlIntervalTrend.Padding = new Padding(10);
-        UserControlIntervalTrend.Size = new Size(100, 150);
-        UserControlIntervalTrend.TabIndex = 298;
         // 
         // UserControlEverything
         // 
