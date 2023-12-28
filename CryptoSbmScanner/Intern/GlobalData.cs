@@ -818,13 +818,7 @@ static public class GlobalData
         fileTarget.Name = "errors";
         fileTarget.KeepFileOpen = true;
         fileTarget.MaxArchiveDays = 14;
-        //fileTarget.ArchiveDateFormat = "yyyy-MM-dd";
-        //fileTarget.EnableArchiveFileCompression = false;
-        //fileTarget.ArchiveEvery = NLog.Targets.FileArchivePeriod.Day; // None?
-        //fileTarget.ArchiveNumbering = NLog.Targets.ArchiveNumberingMode.Date;
         fileTarget.FileName = GetBaseDir() + "CryptoScanner ${date:format=yyyy-MM-dd}-Errors.log";
-        //fileTarget.ArchiveFileName = fileTarget.FileName; //"${logDirectory}/Log.{#}.log";
-        //fileTarget.Layout = "Exception Type: ${exception:format=Type}${newline}Target Site:  ${event-context:TargetSite }${newline}Message: ${message}";
         rule = new NLog.Config.LoggingRule("*", NLog.LogLevel.Error, fileTarget);
         config.LoggingRules.Add(rule);
 
@@ -834,13 +828,7 @@ static public class GlobalData
         //fileTarget.Name = "trace";
         //fileTarget.KeepFileOpen = true;
         //fileTarget.MaxArchiveDays = 14;
-        ////fileTarget.ArchiveDateFormat = "yyyy-MM-dd";
-        ////fileTarget.EnableArchiveFileCompression = false;
-        ////fileTarget.ArchiveEvery = NLog.Targets.FileArchivePeriod.Day; // None?
-        ////fileTarget.ArchiveNumbering = NLog.Targets.ArchiveNumberingMode.Date;
         //fileTarget.FileName = GetBaseDir() + "CryptoScanner ${date:format=yyyy-MM-dd}-Trace.log";
-        ////fileTarget.ArchiveFileName = fileTarget.FileName; //"${logDirectory}/Log.{#}.log";
-        ////fileTarget.Layout = "Exception Type: ${exception:format=Type}${newline}Target Site:  ${event-context:TargetSite }${newline}Message: ${message}";
         //rule = new NLog.Config.LoggingRule("*", NLog.LogLevel.Trace, fileTarget);
         //config.LoggingRules.Add(rule);
 
@@ -851,51 +839,6 @@ static public class GlobalData
         Logger.Info("");
         Logger.Info("");
         Logger.Info("****************************************************");
-
-
-
-        //Logger seriLogError = new LoggerConfiguration().MinimumLevel.Debug()
-        //  .WriteTo.File(GetBaseDir() + "CryptoScanner.Seri .log", rollingInterval: RollingInterval.Day)
-        //  .CreateLogger();
-
-        //Logger seriLogNormal = new LoggerConfiguration().MinimumLevel.Debug()
-        //  .WriteTo.File(GetBaseDir() + "CryptoScanner.Seri .log", rollingInterval: RollingInterval.Day)
-        //  .CreateLogger();
-
-
-        //Log.Logger = new LoggerConfiguration()
-        //.WriteTo.Conditional(
-        //    evt => evt.Level == LogEventLevel.Debug,
-        //    wt => wt.RollingFile(GetBaseDir() + "CryptoScanner.Seri .log"))
-        //.WriteTo.Conditional(
-        //    evt => evt.Level == LogEventLevel.Error,
-        //    wt => wt.RollingFile(GetBaseDir() + "CryptoScanner.Seri .log"))
-        //.CreateLogger();
-
-        //Logger = new LoggerConfiguration()
-        //            .MinimumLevel.Debug()
-        //            //.WriteTo.File()
-        //            .WriteTo.File(GetBaseDir() + "CryptoScanner-.log", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 14)
-        //            //.WriteTo.Logger(l => l.Filter.ByIncludingOnly(e => e.Level == LogEventLevel.Information).WriteTo.File(GetBaseDir() + "CryptoScanner-.log", rollingInterval: RollingInterval.Day))
-        //            //.WriteTo.Logger(l => l.Filter.ByIncludingOnly(e => e.Level == LogEventLevel.Debug).WriteTo.File(GetBaseDir() + "CryptoScanner-.log", rollingInterval: RollingInterval.Day))
-        //            //.WriteTo.Logger(l => l.Filter.ByIncludingOnly(e => e.Level == LogEventLevel.Warning).WriteTo.File(GetBaseDir() + "CryptoScanner-.log", rollingInterval: RollingInterval.Day))
-        //            //.WriteTo.Logger(l => l.Filter.ByIncludingOnly(e => e.Level == LogEventLevel.Error).WriteTo.File(GetBaseDir() + "CryptoScanner- Error.log", rollingInterval: RollingInterval.Day))
-        //            //.WriteTo.Logger(l => l.Filter.ByIncludingOnly(e => e.Level == LogEventLevel.Fatal).WriteTo.File(GetBaseDir() + "CryptoScanner- Error.log", rollingInterval: RollingInterval.Day))
-        //            .CreateLogger();
-
-        //Logger.Info("Information");
-        //Logger.Error("Error");
-
-        //Logger.Info("Information2");
-        //Logger.Error("Error2");
-
-        //Logger.Info("Information3");
-        //Logger.Error("Error3");
-
-        //Logger.Fatal("Fatal");
-        //Logger.Warn("Warning");
-        //Logger.Debug("Debug");
-        //Logger.Trace("Trace");
     }
 
     //public static void DumpSessionInformation()

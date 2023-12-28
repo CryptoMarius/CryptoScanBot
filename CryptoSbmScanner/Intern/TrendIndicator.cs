@@ -22,12 +22,12 @@ public class TrendIndicator
     public StringBuilder Log { get; set; }
 
 
-    public TrendIndicator(CryptoSymbol symbol, CryptoInterval interval, bool showTrend = false)
+    public TrendIndicator(CryptoSymbol symbol, CryptoSymbolInterval symbolInterval, bool showTrend = false)
     {
         Symbol = symbol;
-        Interval = interval;
         ShowTrend = showTrend;
-        Candles = Symbol.GetSymbolInterval(Interval.IntervalPeriod).CandleList;
+        Interval = symbolInterval.Interval;
+        Candles = symbolInterval.CandleList;
     }
 
 
@@ -35,8 +35,11 @@ public class TrendIndicator
     /// <summary>
     /// ZigZag afkomstig uit de cAlgo wereld
     /// </summary>
-    public CryptoTrendIndicator CalculateTrend()
+    public CryptoTrendIndicator CalculateTrend(long candleIntervalStart)
     {
+        // TODO - de parameter candleIntervalStart controleren! (staat nu nog op twee plekken op 0)
+        // Want voor een backtest heb je een eindpunt nodig en dan alleen de candles daarvoor gebruiken, niet allemaal!
+
         // Methode 1 via een cAlgo ZigZag
 
         //GlobalData.AddTextToLogTab("");
@@ -53,6 +56,7 @@ public class TrendIndicator
             return CryptoTrendIndicator.Sideways; // history = CalculateHistory(this.Candles, 1000); // inkorten voor de 2m
 
         //GlobalData.Logger.Trace($"CalculateTrend.Start {Symbol.Name} {Interval.Name}");
+        
         history = Candles.Values.ToList();
         if (history.Count == 0)
         {

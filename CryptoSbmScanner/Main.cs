@@ -878,7 +878,7 @@ public partial class FrmMain : Form
                 long start = einde - 2 * 60 * interval.Duration;
                 foreach (CryptoTradeSide side in Enum.GetValues(typeof(CryptoTradeSide))) // niet efficient meer?
                 {
-                    SignalCreate createSignal = new(symbol, interval, side);
+                    SignalCreate createSignal = new(symbol, interval, side, start + interval.Duration);
                     while (start <= einde)
                     {
                         if (symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList.TryGetValue(start, out candle))

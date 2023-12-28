@@ -105,24 +105,25 @@ public class Commands
 
         long percentageSum = 0;
         long maxPercentageSum = 0;
-        foreach (CryptoInterval interval in GlobalData.IntervalList)
+        foreach (CryptoSymbolInterval cryptoSymbolInterval in symbol.IntervalPeriodList)
         {
             log.AppendLine("");
             log.AppendLine("----");
-            log.AppendLine("Interval " + interval.Name);
+            log.AppendLine("Interval " + cryptoSymbolInterval.Interval.Name);
 
             // Wat is het maximale som (voor de eindberekening)
-            maxPercentageSum += interval.Duration;
+            maxPercentageSum += cryptoSymbolInterval.Interval.Duration;
 
-            TrendIndicator trendIndicatorClass = new(symbol, interval)
+            TrendIndicator trendIndicatorClass = new(symbol, cryptoSymbolInterval)
             {
                 Log = log
             };
-            CryptoTrendIndicator trendIndicator = trendIndicatorClass.CalculateTrend();
+            // TODO Parameter voor de trendIndicatorClass.CalculateTrend goed invullen
+            CryptoTrendIndicator trendIndicator = trendIndicatorClass.CalculateTrend(0);
             if (trendIndicator == CryptoTrendIndicator.Bullish)
-                percentageSum += interval.Duration;
+                percentageSum += cryptoSymbolInterval.Interval.Duration;
             else if (trendIndicator == CryptoTrendIndicator.Bearish)
-                percentageSum -= interval.Duration;
+                percentageSum -= cryptoSymbolInterval.Interval.Duration;
 
 
             // Ahh, dat gaat niet naar een tabel (zoals ik eerst dacht)
@@ -132,11 +133,11 @@ public class Commands
 
             string s = "";
             if (trendIndicator == CryptoTrendIndicator.Bullish)
-                s = string.Format("{0} {1}, trend=bullish", symbol.Name, interval.IntervalPeriod);
+                s = string.Format("{0} {1}, trend=bullish", symbol.Name, cryptoSymbolInterval.Interval.IntervalPeriod);
             else if (trendIndicator == CryptoTrendIndicator.Bearish)
-                s = string.Format("{0} {1}, trend=bearish", symbol.Name, interval.IntervalPeriod);
+                s = string.Format("{0} {1}, trend=bearish", symbol.Name, cryptoSymbolInterval.Interval.IntervalPeriod);
             else
-                s = string.Format("{0} {1}, trend=sideway's", symbol.Name, interval.IntervalPeriod);
+                s = string.Format("{0} {1}, trend=sideway's", symbol.Name, cryptoSymbolInterval.Interval.IntervalPeriod);
             GlobalData.AddTextToLogTab(s);
             log.AppendLine(s);
         }

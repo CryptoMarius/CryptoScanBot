@@ -16,6 +16,7 @@ public class SignalCreate
     private CryptoSymbol Symbol { get; set; }
     private CryptoInterval Interval { get; set; }
     private CryptoTradeSide Side { get; set; }
+    private long LastCandle1mCloseTime { get; set; }
 
     private CryptoCandle Candle { get; set; }
     public List<CryptoCandle> history = null;
@@ -32,11 +33,12 @@ public class SignalCreate
     // Lijkt overbodig te zijn tegenwoordig?
     //static public Dictionary<string, long> AnalyseNotificationList { get; } = new();
 
-    public SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTradeSide side)
+    public SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTradeSide side, long lastCandle1mCloseTime)
     {
         Symbol = symbol;
         Interval = interval;
         Side = side;
+        LastCandle1mCloseTime = lastCandle1mCloseTime;
     }
 
     private bool HasOpenPosition()
@@ -197,7 +199,7 @@ public class SignalCreate
     //}
 
 
-    void CalculateTrendStuff(CryptoSignal signal)
+    private void CalculateTrendStuff(CryptoSignal signal)
     {
         long percentageSum = 0;
         long maxPercentageSum = 0;
@@ -210,21 +212,34 @@ public class SignalCreate
                 CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(interval.IntervalPeriod);
 
                 // Trend overnemen indien het reeds berekend is (scheelt aardig wat cpu)
+                // Elk interval moet na het arriveren van een nieuwe candle opnieuw berekend worden.
+                // De trendkan dan hergebruikt worden totdat er een nieuwe candle komt
                 CryptoTrendIndicator trendIndicator;
-                if (!symbolInterval.TrendInfoDate.HasValue || signal.OpenDate != symbolInterval.TrendInfoDate)
+
+                // (0 % 180 = 0, 60 % 180 = 60, 120 % 180 = 120, 180 % 180 = 0)
+                long diff = LastCandle1mCloseTime % symbolInterval.Interval.Duration;
+                // Naar de start van de candle (die is wellicht nog niet compleet)
+                long candleIntervalStart = LastCandle1mCloseTime - diff;
+                // Als de candle in opbouw is dan naar de vorige complete candle
+                if (diff != 0)
+                    candleIntervalStart -= symbolInterval.Interval.Duration;
+
+                if (!symbolInterval.TrendInfoUnix.HasValue || candleIntervalStart != symbolInterval.TrendInfoUnix)
                 {
-                    //GlobalData.Logger.Trace($"SignalCreate.CalculateTrendStuff.Start {Symbol.Name} {Interval.Name} {Side} {intervalPeriod} {signal.OpenDate}");
-                    TrendIndicator trendIndicatorClass = new(Symbol, interval);
-                    trendIndicator = trendIndicatorClass.CalculateTrend();
-                    // Dit gaat niet naar een tabel, in memory only
+                    // Deze properties zijn calculated (hele class is in memory only)
+                    symbolInterval.TrendInfoDate = CandleTools.GetUnixDate(candleIntervalStart); // controle
+                    //GlobalData.Logger.Trace($"SignalCreate.CalculateTrendStuff.Start {Symbol.Name} {Interval.Name} {Side} {intervalPeriod} {symbolInterval.TrendInfoDate} candles={symbolInterval.CandleList.Count}");
+                    TrendIndicator trendIndicatorClass = new(Symbol, symbolInterval);
+                    // TODO - Laatste tijdstip meegeven zodat de trend over 0..x candles gaat en niet allemaal
+                    trendIndicator = trendIndicatorClass.CalculateTrend(candleIntervalStart);
                     symbolInterval.TrendIndicator = trendIndicator;
-                    symbolInterval.TrendInfoDate = signal.OpenDate;
-                    //GlobalData.Logger.Trace($"SignalCreate.CalculateTrendStuff.Done {Symbol.Name} {Interval.Name} {Side} {intervalPeriod} {signal.OpenDate}");
+                    symbolInterval.TrendInfoUnix = candleIntervalStart;
+                    //GlobalData.Logger.Trace($"SignalCreate.CalculateTrendStuff.Done {Symbol.Name} {Interval.Name} {Side} {intervalPeriod} {symbolInterval.TrendInfoDate} {trendIndicator}");
                 }
                 else
                 {
                     trendIndicator = symbolInterval.TrendIndicator;
-                    //GlobalData.Logger.Trace($"SignalCreate.CalculateTrendStuff.Reused {Symbol.Name} {Interval.Name} {Side} {intervalPeriod} {signal.OpenDate}");
+                    //GlobalData.Logger.Trace($"SignalCreate.CalculateTrendStuff.Reused {Symbol.Name} {Interval.Name} {Side} {intervalPeriod} {symbolInterval.TrendInfoDate} {trendIndicator}");
                 }
 
 
@@ -880,11 +895,11 @@ public class SignalCreate
 
 
 
-    public void Analyze(long candleOpenTime)
+    public void Analyze(long candleIntervalOpenTime)
     {
         //GlobalData.Logger.Trace($"SignalCreate.Start {Symbol.Name} {Interval.Name}");
         // Eenmalig de indicators klaarzetten
-        if (Prepare(candleOpenTime))
+        if (Prepare(candleIntervalOpenTime))
         {
             // TODO: opnieuw activeren en controleren of het idee klopt:
 

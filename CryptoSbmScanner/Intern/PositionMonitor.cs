@@ -1700,7 +1700,7 @@ public class PositionMonitor : IDisposable
                 }
                 else
                 {
-                    foreach (CryptoInterval interval in TradingConfig.Signals[side].Interval)
+                    foreach (CryptoInterval interval in TradingConfig.Signals[side].Interval.ToList())
                     {
                         // (0 % 180 = 0, 60 % 180 = 60, 120 % 180 = 120, 180 % 180 = 0)
                         if (LastCandle1mCloseTime % interval.Duration == 0)
@@ -1708,7 +1708,7 @@ public class PositionMonitor : IDisposable
                             //GlobalData.Logger.Info($"analyze({interval.Name}):" + LastCandle1m.OhlcText(Symbol, interval, Symbol.PriceDisplayFormat, true, false, true));
 
                             // We geven als tijd het begin van de "laatste" candle (van dat interval)
-                            SignalCreate createSignal = new(Symbol, interval, side);
+                            SignalCreate createSignal = new(Symbol, interval, side, LastCandle1mCloseTime);
                             createSignal.Analyze(LastCandle1mCloseTime - interval.Duration);
                             if (createSignal.CreatedSignal)
                                 createdSignals++;

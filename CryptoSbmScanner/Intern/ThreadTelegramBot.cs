@@ -335,6 +335,8 @@ public class ThreadTelegramBotInstance
 
     private static void ShowTrend(string arguments, StringBuilder stringbuilder)
     {
+        // TODO duplicaat code, zie de trendberekening in de commands.cs!
+
         string symbolstr = "";
         string[] parameters = arguments.Split(' ');
         if (parameters.Length > 1)
@@ -349,14 +351,12 @@ public class ThreadTelegramBotInstance
                 int iterator = 0;
                 long percentageSum = 0;
                 long maxPercentageSum = 0;
-                for (CryptoIntervalPeriod intervalPeriod = CryptoIntervalPeriod.interval1m; intervalPeriod <= CryptoIntervalPeriod.interval1d; intervalPeriod++)
+                foreach (CryptoSymbolInterval cryptoSymbolInterval in symbol.IntervalPeriodList)
                 {
                     iterator++;
-                    if (!GlobalData.IntervalListPeriod.TryGetValue(intervalPeriod, out CryptoInterval interval))
-                        return;
-
-                    TrendIndicator trendIndicatorClass = new(symbol, interval);
-                    CryptoTrendIndicator trendIndicator = trendIndicatorClass.CalculateTrend();
+                    TrendIndicator trendIndicatorClass = new(symbol, cryptoSymbolInterval);
+                    // TODO Parameter voor de trendIndicatorClass.CalculateTrend goed invullen
+                    CryptoTrendIndicator trendIndicator = trendIndicatorClass.CalculateTrend(0);
 
                     string s;
                     if (trendIndicator == CryptoTrendIndicator.Bullish)
@@ -365,15 +365,15 @@ public class ThreadTelegramBotInstance
                         s = "trend=bearish";
                     else
                         s = "trend=sideway's?";
-                    stringbuilder.AppendLine(string.Format("{0} {1:N2}", interval.Name, s));
+                    stringbuilder.AppendLine(string.Format("{0} {1:N2}", cryptoSymbolInterval.Interval.Name, s));
 
                     if (trendIndicator == CryptoTrendIndicator.Bullish)
-                        percentageSum += (int)intervalPeriod * iterator;
+                        percentageSum += (int)cryptoSymbolInterval.IntervalPeriod * iterator;
                     else if (trendIndicator == CryptoTrendIndicator.Bearish)
-                        percentageSum -= (int)intervalPeriod * iterator;
+                        percentageSum -= (int)cryptoSymbolInterval.IntervalPeriod * iterator;
 
                     // Wat is het maximale som (voor de eindberekening)
-                    maxPercentageSum += (int)intervalPeriod * iterator;
+                    maxPercentageSum += (int)cryptoSymbolInterval.IntervalPeriod * iterator;
                 }
 
                 decimal trendPercentage = 100 * (decimal)percentageSum / maxPercentageSum;

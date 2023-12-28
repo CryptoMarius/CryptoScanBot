@@ -6,32 +6,23 @@ namespace CryptoSbmScanner.Intern;
 
 public class ThreadMonitorCandle
 {
-    //public Thread Thread;
-
-    private readonly SemaphoreSlim Semaphore = new(3); // X threads tegelijk
+    private readonly SemaphoreSlim Semaphore = new(5); // X threads tegelijk
     private readonly BlockingCollection<(CryptoSymbol symbol, CryptoCandle candle)> Queue = new();
     private readonly CancellationTokenSource cancellationToken = new();
+
 
     public ThreadMonitorCandle()
     {
     }
-    //GlobalData.ThreadProcessCandle.Thread.Start();
 
-    //public void Start()
-    //{
-    //    Thread = new Thread(Execute);
-    //    Thread.Name = "ThreadMonitorCandle";
-    //    Thread.IsBackground = true;
-
-    //    GlobalData.AddTextToLogTab(string.Format("Start create signals"));
-    //}
 
     public void Stop()
     {
         cancellationToken.Cancel();
 
-        GlobalData.AddTextToLogTab(string.Format("Stop create signals"));
+        GlobalData.AddTextToLogTab(string.Format("Stop monitor candle"));
     }
+
 
     public void AddToQueue(CryptoSymbol symbol, CryptoCandle candle)
     {
@@ -49,11 +40,9 @@ public class ThreadMonitorCandle
 
                 new Thread(async () =>
                 {
-                    // Er is een 1m candle gearriveerd, acties adhv deze candle..
-
-                    //await Semaphore.WaitAsync();
                     try
                     {
+                        // Er is een 1m candle gearriveerd, acties adhv deze candle..
                         PositionMonitor positionMonitor = new(symbol, candle);
                         await positionMonitor.NewCandleArrivedAsync();
                     }
@@ -63,32 +52,8 @@ public class ThreadMonitorCandle
                     }
                 }
                 ).Start();
-
-                //await Semaphore.WaitAsync();
-                //_ = Task.Run(async () =>
-                //{
-                //    // Er is een 1m candle gearriveerd, acties adhv deze candle..
-
-                //    //await Semaphore.WaitAsync();
-                //    try
-                //    {
-                //        GlobalData.Logger.Info("Monitor:" + candle.OhlcText(symbol, GlobalData.IntervalList[0], symbol.PriceDisplayFormat, true, false, true));
-                //        PositionMonitor positionMonitor = new(symbol, candle);
-                //        await positionMonitor.NewCandleArrivedAsync();
-                //    }
-                //    finally
-                //    {
-                //        Semaphore.Release();
-                //    }
-                //});
-
-                //GlobalData.Logger.Info("Monitor:" + candle.OhlcText(symbol, GlobalData.IntervalList[0], symbol.PriceDisplayFormat, true, false, true));
-                //PositionMonitor positionMonitor = new(symbol, candle);
-                //await positionMonitor.NewCandleArrivedAsync();
-
             }
         }
-        // Die cancel moet er even uit
         catch (OperationCanceledException)
         {
             // niets..

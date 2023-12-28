@@ -35,9 +35,6 @@ public class CryptoCandle : IQuote
     // Candles die on the fly zijn aangemaakt (niet confirmed) vanwege Kucoin
     [Computed]
     public bool IsDuplicated { get; set; }
-
-    //[Computed]
-    //public string ExtraText { get; set; } // beetje quick en dirty voor een Excel export
 }
 
 //

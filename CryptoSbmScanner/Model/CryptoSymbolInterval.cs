@@ -33,6 +33,7 @@ public class CryptoSymbolInterval
     // De laatst berekende trend
     public CryptoTrendIndicator TrendIndicator { get; set; }
     public DateTime? TrendInfoDate { get; set; }
+    public long? TrendInfoUnix { get; set; }
 
     [Computed]
     public CryptoSignal Signal { get; set; }

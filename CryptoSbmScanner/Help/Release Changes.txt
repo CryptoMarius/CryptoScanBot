@@ -1,7 +1,7 @@
 CryptoSbmScanenr release historie:
 
 xx-01-2024 1.8.7
-- Trading - De trading werkt exclusief op Bybit Sopt of Futures want andere exchanges kan ik niet testen.
+- Trading - Trading werkt nu exclusief op Bybit Spot en/of Futures want andere exchanges kan ik niet testen.
             (en om te voorkomen dat iemand het per ongeluk op een niet ondersteunde exchange aan zet...)
 - Trading - Ondersteuning van long en short posities (maar daarvoor moest de hele configuratie aangepast worden).
 - Trading - Barometer via een range in plaats van 1 getal
@@ -44,6 +44,8 @@ xx-01-2024 1.8.7
 - Trading - Bybit Futures - ophalen assets implementeren
 - Trading - Bybit Spot - ophalen assets implementeren
 
+- Scanner - De trend berekening optimaliseren, de 1m en 2m trend worden niet meer berekend, deze zijn niet significant en erg cpu intensief.
+- Scanner - De trend berekening optimaliseren, alle trends per interval werden tot dusver berekened terwijl dat pas bij een nieuwe candle nodig is. 
 - Scanner - De oude signalen van circa 2 week en ouder weggooien uit de database (db werd vrij groot)
 - Scanner - De berekening van de 10d effectieve change was niet juist, daardoor teveel uitval op signalen
 - Scanner - De STOBB heeft nu enkel een minimale trend maar dat gaat dus niet goed voor short posities (splitsen long/short)
