@@ -107,17 +107,18 @@ public class CryptoSignal
 
     // RSI waarden
     public double? Rsi { get; set; }
-    public double? SlopeRsi { get; set; }
+    //public double? SlopeRsi { get; set; }
 
     public int FluxIndicator5m { get; set; }
 
-    //public double? Ema8 { get; set; }
-    public double? Ema20 { get; set; }
-    public double? Ema50 { get; set; }
-    //public double? Ema100 { get; set; }
-    public double? Ema200 { get; set; }
-    public double? SlopeEma20 { get; set; }
-    public double? SlopeEma50 { get; set; }
+    //uitgezet
+    ////public double? Ema8 { get; set; }
+    //public double? Ema20 { get; set; }
+    //public double? Ema50 { get; set; }
+    ////public double? Ema100 { get; set; }
+    //public double? Ema200 { get; set; }
+    //public double? SlopeEma20 { get; set; }
+    //public double? SlopeEma50 { get; set; }
 
     // SMA waarden
     //public double? Sma8 { get; set; }
@@ -125,8 +126,8 @@ public class CryptoSignal
     public double? Sma50 { get; set; }
     //public double? Sma100 { get; set; }
     public double? Sma200 { get; set; }
-    public double? SlopeSma20 { get; set; }
-    public double? SlopeSma50 { get; set; }
+    //public double? SlopeSma20 { get; set; } uitgezet
+    //public double? SlopeSma50 { get; set; } uitgezet
 
 
     // Wellicht introduceren en weghalen uit de "Alarm"?

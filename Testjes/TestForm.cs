@@ -524,9 +524,9 @@ public partial class TestForm : Form
             item1.SubItems.Add(signal.Interval.Name);
 
             item1.SubItems.Add("buy");
-            if (signal.Side == CryptoOrderSide.Buy)
+            if (signal.Side == CryptoTradeSide.Long)
                 item1.SubItems.Add(signal.Side.ToString()).ForeColor = Color.Green;
-            else if (signal.Side == CryptoOrderSide.Sell)
+            else if (signal.Side == CryptoTradeSide.Short)
                 item1.SubItems.Add(signal.Side.ToString()).ForeColor = Color.Red;
             else
                 item1.SubItems.Add(signal.Side.ToString());
@@ -1344,10 +1344,10 @@ public partial class TestForm : Form
         //GlobalData.Settings.Signal.AnalysisShowStobbOverbought = false;
         //GlobalData.Settings.Signal.AnalysisShowStobbOversold = true;
 
-        GlobalData.Settings.Signal.SbmBBMinPercentage = 1.5;
-        GlobalData.Settings.Signal.SbmBBMaxPercentage = 100.0;
-        GlobalData.Settings.Signal.StobbBBMinPercentage = 1.5;
-        GlobalData.Settings.Signal.StobbBBMaxPercentage = 5.0;
+        GlobalData.Settings.Signal.Sbm.BBMinPercentage = 1.5;
+        GlobalData.Settings.Signal.Sbm.BBMaxPercentage = 100.0;
+        GlobalData.Settings.Signal.Stobb.BBMinPercentage = 1.5;
+        GlobalData.Settings.Signal.Stobb.BBMaxPercentage = 5.0;
 
         GlobalData.Settings.Signal.AboveBollingerBandsSma = 0;
         GlobalData.Settings.Signal.AboveBollingerBandsUpper = 0;
@@ -1700,10 +1700,10 @@ public partial class TestForm : Form
         //GlobalData.Settings.Signal.AnalysisShowStobbOverbought = false;
         //GlobalData.Settings.Signal.AnalysisShowStobbOversold = true;
 
-        GlobalData.Settings.Signal.SbmBBMinPercentage = 1.5;
-        GlobalData.Settings.Signal.SbmBBMaxPercentage = 100.0;
-        GlobalData.Settings.Signal.StobbBBMinPercentage = 1.5;
-        GlobalData.Settings.Signal.StobbBBMaxPercentage = 5.0;
+        GlobalData.Settings.Signal.Sbm.BBMinPercentage = 1.5;
+        GlobalData.Settings.Signal.Sbm.BBMaxPercentage = 100.0;
+        GlobalData.Settings.Signal.Stobb.BBMinPercentage = 1.5;
+        GlobalData.Settings.Signal.Stobb.BBMaxPercentage = 5.0;
 
         GlobalData.Settings.Signal.AboveBollingerBandsSma = 0;
         GlobalData.Settings.Signal.AboveBollingerBandsUpper = 0;
@@ -2125,6 +2125,7 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
 
                                 if (candleCache.Count > 500)
                                 {
+                                    // dit is nog voor mssql zie ik..
                                     databaseThread.BulkInsertCandles(candleCache, transaction);
                                     candleCache.Clear();
                                 }
@@ -2136,6 +2137,7 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
 
                         if (candleCache.Any())
                         {
+                            // dit is nog voor mssql zie ik..
                             databaseThread.BulkInsertCandles(candleCache, transaction);
                             candleCache.Clear();
                         }
@@ -2225,7 +2227,7 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
 
         SignalCreateBase backTestAlgorithm = null;
         BackTest.BackTest backTest = new(symbol, interval1m, interval, config);
-        foreach (AlgorithmDefinition def in TradingConfig.AlgorithmDefinitionList)
+        foreach (AlgorithmDefinition def in TradingConfig.Trading[CryptoTradeSide.Long].Strategy)
         {
             if (algorithm.Equals(def.Name))
             {
@@ -2286,32 +2288,31 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
 
         // Pittige configuratie geworden zie ik ;-)
         GlobalData.Settings.Signal.SignalsActive = true;
-        GlobalData.Settings.Signal.Analyze.Interval.Clear();
-        GlobalData.Settings.Signal.Analyze.Interval.Add(interval.Name);
+        GlobalData.Settings.Signal.Long.Interval.Clear();
+        GlobalData.Settings.Signal.Long.Interval.Add(interval.Name);
 
-        GlobalData.Settings.Signal.Analyze.Strategy[CryptoOrderSide.Buy].Clear();
-        GlobalData.Settings.Signal.Analyze.Strategy[CryptoOrderSide.Sell].Clear();
-        GlobalData.Settings.Signal.Analyze.Strategy[CryptoOrderSide.Buy].Add("sbm1");
-        GlobalData.Settings.Signal.Analyze.Strategy[CryptoOrderSide.Buy].Add("sbm2");
-        GlobalData.Settings.Signal.Analyze.Strategy[CryptoOrderSide.Buy].Add("sbm3");
-        GlobalData.Settings.Signal.Analyze.Strategy[CryptoOrderSide.Buy].Add("sbm4");
-        GlobalData.Settings.Signal.Analyze.Strategy[CryptoOrderSide.Buy].Add("flux");
-        GlobalData.Settings.Signal.Analyze.Strategy[CryptoOrderSide.Buy].Add("stob");
+        GlobalData.Settings.Signal.Long.Strategy.Clear();
+        GlobalData.Settings.Signal.Long.Strategy.Clear();
+        GlobalData.Settings.Signal.Long.Strategy.Add("sbm1");
+        GlobalData.Settings.Signal.Long.Strategy.Add("sbm2");
+        GlobalData.Settings.Signal.Long.Strategy.Add("sbm3");
+        GlobalData.Settings.Signal.Long.Strategy.Add("sbm4");
+        GlobalData.Settings.Signal.Long.Strategy.Add("flux");
+        GlobalData.Settings.Signal.Long.Strategy.Add("stob");
         //GlobalData.Settings.Signal.Analyze.Strategy[CryptoOrderSide.Buy].Add(algorithm);
 
 
         GlobalData.Settings.Trading.Active = true;
-        GlobalData.Settings.Trading.Monitor.Interval.Clear();
-        GlobalData.Settings.Trading.Monitor.Interval.Add(interval.Name);
-
-        GlobalData.Settings.Trading.Monitor.Strategy[CryptoOrderSide.Buy].Clear();
-        GlobalData.Settings.Trading.Monitor.Strategy[CryptoOrderSide.Sell].Clear();
-        GlobalData.Settings.Trading.Monitor.Strategy[CryptoOrderSide.Buy].Add("sbm1");
-        GlobalData.Settings.Trading.Monitor.Strategy[CryptoOrderSide.Buy].Add("sbm2");
-        GlobalData.Settings.Trading.Monitor.Strategy[CryptoOrderSide.Buy].Add("sbm3");
-        GlobalData.Settings.Trading.Monitor.Strategy[CryptoOrderSide.Buy].Add("sbm4");
-        GlobalData.Settings.Trading.Monitor.Strategy[CryptoOrderSide.Buy].Add("flux");
-        GlobalData.Settings.Trading.Monitor.Strategy[CryptoOrderSide.Buy].Add("stob");
+        GlobalData.Settings.Trading.Long.Interval.Clear();
+        GlobalData.Settings.Trading.Long.Interval.Add(interval.Name);
+                                    
+        GlobalData.Settings.Trading.Long.Strategy.Clear();
+        GlobalData.Settings.Trading.Long.Strategy.Add("sbm1");
+        GlobalData.Settings.Trading.Long.Strategy.Add("sbm2");
+        GlobalData.Settings.Trading.Long.Strategy.Add("sbm3");
+        GlobalData.Settings.Trading.Long.Strategy.Add("sbm4");
+        GlobalData.Settings.Trading.Long.Strategy.Add("flux");
+        GlobalData.Settings.Trading.Long.Strategy.Add("stob");
         //GlobalData.Settings.Trading.Monitor.Strategy[CryptoOrderSide.Buy].Add(algorithm);
 
         TradingConfig.IndexStrategyInternally();
@@ -2324,8 +2325,8 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
         GlobalData.BackTest = true;
         GlobalData.Settings.Trading.TradeViaExchange = false;
         GlobalData.Settings.Trading.TradeViaPaperTrading = false;
-        GlobalData.Settings.Trading.Barometer15mBotMinimal = -99m;
-        GlobalData.Settings.Trading.Barometer30mBotMinimal = -99m;
+        //GlobalData.Settings.Trading.Barometer15mBotMinimal = -99m;
+        //GlobalData.Settings.Trading.Barometer30mBotMinimal = -99m;
 
         // Instap
         GlobalData.Settings.Trading.CheckIncreasingRsi = false;
@@ -2338,7 +2339,7 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
         GlobalData.Settings.Trading.BuyOrderMethod = CryptoBuyOrderMethod.MarketOrder;
 
         // DCA
-        GlobalData.Settings.Trading.DcaPercentage = 2m;
+        //GlobalData.Settings.Trading.DcaPercentage = 2m;
         GlobalData.Settings.Trading.DcaOrderMethod = CryptoBuyOrderMethod.SignalPrice;
         GlobalData.Settings.Trading.DcaStepInMethod = CryptoEntryOrProfitMethod.FixedPercentage;
 
@@ -2346,7 +2347,7 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
         GlobalData.Settings.Trading.ProfitPercentage = 0.75m;
         //GlobalData.Settings.Trading.DynamicTpPercentage = 0.75m;
         GlobalData.Settings.Trading.SellMethod = CryptoSellMethod.FixedPercentage;
-        GlobalData.Settings.Trading.LockProfits = true;
+        //GlobalData.Settings.Trading.LockProfits = true;
 
         StringBuilder samenvatting = new();
         //for (int macdCandles = 2; macdCandles <= 2; macdCandles++)

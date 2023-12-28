@@ -762,7 +762,7 @@ public class SignalCreate
         signal.BollingerBandsPercentage = candle.CandleData.BollingerBandsPercentage; // Dit is degene die Marco gebruikt
 
         signal.Rsi = candle.CandleData.Rsi;
-        signal.SlopeRsi = candle.CandleData.SlopeRsi;
+        //signal.SlopeRsi = candle.CandleData.SlopeRsi;
 
         signal.PSar = candle.CandleData.PSar;
         signal.StochSignal = candle.CandleData.StochSignal;
@@ -773,12 +773,12 @@ public class SignalCreate
         //signal.PSarTulip = candle.CandleData.PSarTulip;
         //#endif
         //signal.Ema8 = candle.CandleData.Ema8;
-        signal.Ema20 = candle.CandleData.Ema20;
-        signal.Ema50 = candle.CandleData.Ema50;
+        //signal.Ema20 = candle.CandleData.Ema20;
+        //signal.Ema50 = candle.CandleData.Ema50;
         //signal.Ema100 = candle.CandleData.Ema100;
-        signal.Ema200 = candle.CandleData.Ema200;
-        signal.SlopeEma20 = candle.CandleData.SlopeEma20;
-        signal.SlopeEma50 = candle.CandleData.SlopeEma50;
+        //signal.Ema200 = candle.CandleData.Ema200;
+        //signal.SlopeEma20 = candle.CandleData.SlopeEma20;
+        //signal.SlopeEma50 = candle.CandleData.SlopeEma50;
 
         //signal.Tema = candle.CandleData.Tema;
 
@@ -787,8 +787,8 @@ public class SignalCreate
         signal.Sma50 = candle.CandleData.Sma50;
         //signal.Sma100 = candle.CandleData.Sma100;
         signal.Sma200 = candle.CandleData.Sma200;
-        signal.SlopeSma20 = candle.CandleData.SlopeSma20;
-        signal.SlopeSma50 = candle.CandleData.SlopeSma50;
+        //signal.SlopeSma20 = candle.CandleData.SlopeSma20;
+        //signal.SlopeSma50 = candle.CandleData.SlopeSma50;
 
         return signal;
     }

@@ -321,14 +321,14 @@ public class BackTest
             candle.CandleData = candleData;
             try
             {
-                // EMA's
-                //candleData.Ema8 = emaList8[index].Ema;
-                candleData.Ema20 = emaList20[index].Ema;
-                candleData.Ema50 = emaList50[index].Ema;
-                //candleData.Ema100 = emaList100[index].Ema;
-                candleData.Ema200 = emaList200[index].Ema;
-                candleData.SlopeEma20 = slopeEma20List[index].Slope;
-                candleData.SlopeEma50 = slopeEma50List[index].Slope;
+                //// EMA's
+                ////candleData.Ema8 = emaList8[index].Ema;
+                //candleData.Ema20 = emaList20[index].Ema;
+                //candleData.Ema50 = emaList50[index].Ema;
+                ////candleData.Ema100 = emaList100[index].Ema;
+                //candleData.Ema200 = emaList200[index].Ema;
+                //candleData.SlopeEma20 = slopeEma20List[index].Slope;
+                //candleData.SlopeEma50 = slopeEma50List[index].Slope;
 
                 //candleData.Tema = temaList[index].Tema;
 
@@ -338,11 +338,11 @@ public class BackTest
                 candleData.Sma50 = smaList50[index].Sma;
                 //candleData.Sma100 = smaList100[index].Sma;
                 candleData.Sma200 = smaList200[index].Sma;
-                candleData.SlopeSma20 = slopeSma20List[index].Slope;
-                candleData.SlopeSma50 = slopeSma50List[index].Slope;
+                //candleData.SlopeSma20 = slopeSma20List[index].Slope;
+                //candleData.SlopeSma50 = slopeSma50List[index].Slope;
 
                 candleData.Rsi = rsiList[index].Rsi;
-                candleData.SlopeRsi = slopeRsiList[index].Slope;
+                //candleData.SlopeRsi = slopeRsiList[index].Slope;
 
                 candleData.MacdValue = macdList[index].Macd;
                 candleData.MacdSignal = macdList[index].Signal;
@@ -714,7 +714,7 @@ public class BackTest
                 // Voro de zekerheid..
                 //Exchange.PositionList.Clear();
                 SymbolInterval.Signal = null;
-                GlobalData.Settings.Trading.PauseTradingUntil = null;
+                //GlobalData.Settings.Trading.PauseTradingRules. TradingUntil = null; ??
 
                 // De indicators berekenen (eenmalig) - beetje vaag?
                 //CryptoSymbolInterval cryptoSymbolInterval = Symbol.GetSymbolInterval(Interval.IntervalPeriod);

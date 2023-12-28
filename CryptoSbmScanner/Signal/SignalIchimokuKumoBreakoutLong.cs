@@ -21,7 +21,7 @@ public class IchimokuKumoBreakoutLong : SignalCreateBase
         if ((candle == null)
            || (candle.CandleData == null)
            || (candle.CandleData.Rsi == null)
-           || (candle.CandleData.Ema20 == null)
+           //|| (candle.CandleData.Ema20 == null)
            )
             return false;
 

@@ -344,12 +344,12 @@ public class BackTestExcel
                     cell.CellStyle = cellStyleDecimalNormal;
 
                 // wat kun je hiermee?
-                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.Ema20);
-                cell.CellStyle = cellStyleDecimalNormal;
-                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.Ema50);
-                cell.CellStyle = cellStyleDecimalNormal;
-                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.Ema200);
-                cell.CellStyle = cellStyleDecimalNormal;
+                //cell = WriteCell(sheet, column++, row, (double)candle.CandleData.Ema20);
+                //cell.CellStyle = cellStyleDecimalNormal;
+                //cell = WriteCell(sheet, column++, row, (double)candle.CandleData.Ema50);
+                //cell.CellStyle = cellStyleDecimalNormal;
+                //cell = WriteCell(sheet, column++, row, (double)candle.CandleData.Ema200);
+                //cell.CellStyle = cellStyleDecimalNormal;
             }
             prev = candle;
         }
