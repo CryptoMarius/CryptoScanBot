@@ -384,6 +384,7 @@ public class BackTest
 
     public bool CalculateIndicators()
     {
+        // TODO - Laatste tijdstip meegeven zodat de trend over 0..x candles gaat en niet allemaal
         if (Candles.Count < 300)
         {
             Log.AppendLine("no candles!");
@@ -721,6 +722,7 @@ public class BackTest
                 //if ((!cryptoSymbolInterval.TrendInfoDate.HasValue))
                 if ((!SymbolInterval.TrendInfoDate.HasValue))
                 {
+                    // TODO - Laatste tijdstip meegeven zodat de trend over 0..x candles gaat en niet allemaal
                     if (!CalculateIndicators())
                         return;
                     SymbolInterval.TrendInfoDate = DateTime.UtcNow;

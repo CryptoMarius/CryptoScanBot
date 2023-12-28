@@ -1419,7 +1419,7 @@ public partial class TestForm : Form
                     if (++count > 0)
                     {
                         //GlobalData.AddTextToLogTab(candle.OhlcText(symbol.Format) + " " + candle.Id.ToString());
-                        SignalCreate createSignal = new(symbol, interval, CryptoTradeSide.Long);
+                        SignalCreate createSignal = new(symbol, interval, CryptoTradeSide.Long, candle.OpenTime + 60);
                         createSignal.Analyze(candle.OpenTime);
                     }
                 }
