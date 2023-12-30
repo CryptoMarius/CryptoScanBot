@@ -1,6 +1,6 @@
 CryptoSbmScanenr release historie:
 
-xx-01-2024 1.8.7
+xx-01-2024 1.9
 - Trading - Trading werkt nu exclusief op Bybit Spot en/of Futures want andere exchanges kan ik niet testen.
             (en om te voorkomen dat iemand het per ongeluk op een niet ondersteunde exchange aan zet...)
 - Trading - Ondersteuning van long en short posities (maar daarvoor moest de hele configuratie aangepast worden).
@@ -39,11 +39,12 @@ xx-01-2024 1.8.7
 - Trading - Interne refactoring van orderId en tradeId van integer/long naar string's
 - Trading - De fundingrate toegevoegd aan de open posities
 - Trading - Bybit Futures - ophalen trades implementeren
-- Trading - Fix: Bybit Futures - ophalen trades, window voor ophalen is een week
+- Trading - Bybit Futures - Fix: ophalen trades, het "window" voor ophalen trades is 1 week
 - Trading - Bybit Spot - ophalen trades implementeren
 - Trading - Bybit Futures - ophalen assets implementeren
 - Trading - Bybit Spot - ophalen assets implementeren
 
+- Scanner - Op het signalen tabblad de breedte van de kolommen tekst niet aanpassen (die kolom kan aardig varieeren in breedte)
 - Scanner - De trend berekening optimaliseren, de 1m en 2m trend worden niet meer berekend, deze zijn niet significant en erg cpu intensief.
 - Scanner - De trend berekening optimaliseren, alle trends per interval werden tot dusver berekened terwijl dat pas bij een nieuwe candle nodig is. 
 - Scanner - De oude signalen van circa 2 week en ouder weggooien uit de database (db werd vrij groot)

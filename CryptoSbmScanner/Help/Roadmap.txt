@@ -4,7 +4,8 @@ Als je iets mist, geef het dat dab AUB even aan in een private PM of in de groep
 
 
 Scanner:
-- Op het signalen tabblad de breedte van de kolommen "eenmalig" berekenen en daarna onthouden (de tekst kolom kan aardig varieeren)
+- De globale markt trend % wordt uitgerekend via de 210 aanwezige candles, dat is voor de trend eigenlijk te weinig.
+  Maar je wilt ook niet heel veel candles in het geheugen hebben, de scanner op Bybit gebruikt nu al regelmatig 600Mb
 - Bij kleine(re) beeldschermen zijn bepaalde instellingen niet in zijn geheel zichtbaar (de OK en Cancel knop vallen onder andere weg)
 - Het normale logbestand bevat op het einde een .0, waar komt deze vandaag? Doet NLog alsnog een archive ofzo? Een zooi in die hoek?
 - Scanner/Trader: Een dashboard introduceren, totaal aantal signalen afgelopen dag/week, indeling per categorie, short/long
@@ -30,15 +31,11 @@ Scanner:
   Er is nu een slappe variant die iets met grijs doet (omdat anders de scrollbars en headers zo'n lelijk getoond worden), ik ben er niet tevreden over.
 
 
-Ik heb het hier over trading. De trading module komt op een later tijdstip beschikbaar. Vanwege het vertrek van Binance moet
-het eerst aangepast worden zodat het op een andere exchanges ook werkt en door het wegvallen van de OCO en de stoplimit orders 
-is dat even een probleem. Deze module (in de vorm van wat instellingen, dashboard en openstaande en gesloten posities) komt 
-later beschikbaar. Het wordt gelimiteerd op bybit spot of bybit futures omdat de enige testmogelijkheden voor mij zijn.
-
-Als je ideen hebt voor het vervangen van de OCO/Stop limit informeer me dan AUB..
-De introductie van de FundingRate/FundingInterval heeft gevolgen voor de trading module (onverwachte bijkomende kosten).
+NB: Als je ideen hebt voor het vervangen van de OCO/Stop limit informeer me dan AUB..
 
 Trading:
+- Trading - Via de RMK op een open positie een extra DCA aan de positie kunnen toevoegen (met dialoog)
+- Trading - Via de RMK op een gesloten positie deze kunnen weggooien (vanwege verkeerde statistiek open/long, gebeurd helaas nog in papertrading)
 - Trading - Charts - Graph toevoegen met hoe vaak de tweede en derde bijkoop gehit wordt
 - Trading - Charts - Ondersteuning voor long en short (de huidige charts kennen alleen maar long!)
 - Trading - Charts - Graph toevoegen voor inzicht met hoeveel we aan het handelen zijn (inclusief de extra dca orders)
