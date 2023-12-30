@@ -8,25 +8,26 @@ public enum CryptoSignalStrategy // CryptoStrategy
     Sbm1,
     Sbm2,
     Sbm3,
-    Sbm4, // is er niet meer
-    //Sbm5, // is er niet meer
+    Sbm4, // is er niet meer, blijft bestaan vanwege de enumeratie
+    Sbm5, // is er niet meer, blijft bestaan vanwege de enumeratie
     Stobb,
 
     //// Vervallen
-    //PriceCrossedSma20,
-    //PriceCrossedSma50,
+    //PriceCrossedSma20, Vervallen
+    //PriceCrossedSma50, Vervallen
 
-    //PriceCrossedEma20,
-    //PriceCrossedEma50,
+    //PriceCrossedEma20, Vervallen
+    //PriceCrossedEma50, Vervallen
 
-    //SlopeSma50,
-    //SlopeSma20,
+    //SlopeSma50, Vervallen
+    //SlopeSma20, Vervallen
 
-    //SlopeEma20,
-    //SlopeEma50,
+    //SlopeEma20, Vervallen
+    //SlopeEma50, Vervallen
 
     // Experimental
-    Flux,
-    BullishEngulfing,
-    IchimokuKumoBreakout,
+    Flux, // is er niet meer, blijft bestaan vanwege de enumeratie
+    BullishEngulfing, // zwak
+    IchimokuKumoBreakout, // nazoeken, in de juiste positieve of negatieve trend doet ie het prima
+    Wghbm // uit de Telegram groepen, ziet er leuk uit (maar of het echt wat is moet ik uitzoeken)
 }

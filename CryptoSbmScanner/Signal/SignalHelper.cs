@@ -69,23 +69,23 @@ public static class SignalHelper
             AnalyzeShortType = typeof(SignalSbm3Short),
         });
 
-#if EXTRASTRATEGIES
-        AlgorithmDefinitionList.Add(new AlgorithmDefinition()
-        {
-            Name = "sbm4",
-            Strategy = CryptoSignalStrategy.Sbm4,
-            AnalyzeLongType = typeof(SignalSbm4Long),
-            AnalyzeShortType = typeof(SignalSbm4Short),
-        });
+//#if EXTRASTRATEGIES
+//        AlgorithmDefinitionList.Add(new AlgorithmDefinition()
+//        {
+//            Name = "sbm4",
+//            Strategy = CryptoSignalStrategy.Sbm4,
+//            AnalyzeLongType = typeof(SignalSbm4Long),
+//            AnalyzeShortType = typeof(SignalSbm4Short),
+//        });
 
-        AlgorithmDefinitionList.Add(new AlgorithmDefinition()
-        {
-            Name = "flux",
-            Strategy = CryptoSignalStrategy.Flux,
-            AnalyzeLongType = typeof(SignalFluxLong),
-            AnalyzeShortType = typeof(SignalFluxShort),
-        });
-#endif
+//        AlgorithmDefinitionList.Add(new AlgorithmDefinition()
+//        {
+//            Name = "flux",
+//            Strategy = CryptoSignalStrategy.Flux,
+//            AnalyzeLongType = typeof(SignalFluxLong),
+//            AnalyzeShortType = typeof(SignalFluxShort),
+//        });
+//#endif
 
         AlgorithmDefinitionList.Add(new AlgorithmDefinition()
         {
@@ -172,6 +172,19 @@ public static class SignalHelper
             AnalyzeLongType = typeof(IchimokuKumoBreakoutLong),
             AnalyzeShortType = typeof(IchimokuKumoBreakoutShort),
         });
+
+
+        // https://www.tradingview.com/script/0F1sNM49-WGHBM/
+        // WGHBM - Momentum indicator that shows arrows when the Stochastic and the RSI are at the same time in the oversold or overbought area.
+        AlgorithmDefinitionList.Add(new AlgorithmDefinition()
+        {
+            Name = "WGHBM",
+            Strategy = CryptoSignalStrategy.Wghbm,
+            AnalyzeLongType = typeof(SignalWghbmLong),
+            AnalyzeShortType = typeof(SignalWghbmShort),
+        });
+
+        
 #endif
 
 
