@@ -22,17 +22,17 @@ public class SettingsSignal
     // de 24 change moet binnen dit interval zitten (niet presentatief)
     public double AnalysisMinChangePercentage { get; set; } = -25;
     public double AnalysisMaxChangePercentage { get; set; } = 25;
-    public bool LogAnalysisMinMaxChangePercentage { get; set; } = true;
+    public bool LogAnalysisMinMaxChangePercentage { get; set; } = false;
 
     // de 24 effectief moet binnen dit interval zitten (de echte beweging)
     public double AnalysisMinEffectivePercentage { get; set; } = -40;
     public double AnalysisMaxEffectivePercentage { get; set; } = 40;
-    public bool LogAnalysisMinMaxEffectivePercentage { get; set; } = true;
+    public bool LogAnalysisMinMaxEffectivePercentage { get; set; } = false;
 
     // de 10 dagen effectief moet binnen dit interval zitten (de echte beweging)
     public double AnalysisMinEffective10DaysPercentage { get; set; } = -75;
     public double AnalysisMaxEffective10DaysPercentage { get; set; } = 75;
-    public bool LogAnalysisMinMaxEffective10DaysPercentage { get; set; } = true;
+    public bool LogAnalysisMinMaxEffective10DaysPercentage { get; set; } = false;
 
     // STOBB signals
     public SettingsSignalStrategyStobb Stobb = new();
@@ -50,21 +50,21 @@ public class SettingsSignal
     public bool LogNotEnoughCandles { get; set; }
 
     // Fine tuning (later)
-    public int AboveBollingerBandsSma { get; set; } = 0;
+    public int AboveBollingerBandsSma { get; set; } = 1;
     public bool AboveBollingerBandsSmaCheck { get; set; } = false;
 
     // Fine tuning (later)
-    public int AboveBollingerBandsUpper { get; set; } = 0;
+    public int AboveBollingerBandsUpper { get; set; } = 1;
     public bool AboveBollingerBandsUpperCheck { get; set; } = false;
 
     // Fine tuning (later)
     // Candles zonder volume
-    public int CandlesWithZeroVolume { get; set; } = 0;
+    public int CandlesWithZeroVolume { get; set; } = 20;
     public bool CandlesWithZeroVolumeCheck { get; set; } = false;
 
     // Fine tuning (later)
     // De zogenaamde platte candles
-    public int CandlesWithFlatPrice { get; set; } = 0;
+    public int CandlesWithFlatPrice { get; set; } = 20;
     public bool CandlesWithFlatPriceCheck { get; set; } = false;
 
 
@@ -81,8 +81,8 @@ public class SettingsSignal
         Long.IntervalTrend.List.Add("1h");
         Short.IntervalTrend.List.Add("1h");
 
-        Long.MarketTrend.List.Add((0m, 100m));
-        Short.MarketTrend.List.Add((-100m, 0));
+        //Long.MarketTrend.List.Add((0m, 100m));
+        //Short.MarketTrend.List.Add((-100m, 0));
     }
 
 }

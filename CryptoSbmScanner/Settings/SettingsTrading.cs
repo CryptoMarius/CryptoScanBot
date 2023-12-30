@@ -73,7 +73,7 @@ public class SettingsTrading
     // (ze moeten ook nog ff versleuteld worden lijkt me)
     public string ApiKey { get; set; } = "";
     public string ApiSecret { get; set; } = "";
-    public string ApiPassPhrase { get; set; } = "";
+    public string ApiPassPhrase { get; set; } = ""; // Kucoin
 
 
     //***************************
@@ -134,7 +134,7 @@ public class SettingsTrading
     //***************************
     // Sell
     // Het verkoop bedrag = buy bedrag * (100+profit / 100)
-    public decimal ProfitPercentage { get; set; } = 1.1m;
+    public decimal ProfitPercentage { get; set; } = 1.01m;
     // De manier waarop de order geplaatst wordt
     public CryptoSellMethod SellMethod { get; set; } = CryptoSellMethod.FixedPercentage;
     // Zet een OCO zodra we in de winst zijn (kan het geen verlies trade meer worden, samen met tracing)
@@ -181,8 +181,8 @@ public class SettingsTrading
         Long.IntervalTrend.List.Add("1h");
         Short.IntervalTrend.List.Add("1h");
 
-        Long.MarketTrend.List.Add((0m, 100m));
-        Short.MarketTrend.List.Add((-100m, 0));
+        //Long.MarketTrend.List.Add((0m, 100m));
+        //Short.MarketTrend.List.Add((-100m, 0));
 
         PauseTradingRules.Add(new PauseTradingRule()
         {
@@ -190,7 +190,7 @@ public class SettingsTrading
             Percentage = 1.5,
             Candles = 5,
             Interval = CryptoIntervalPeriod.interval2m,
-            CoolDown = 10,
+            CoolDown = 20,
         });
 
         PauseTradingRules.Add(new PauseTradingRule()
@@ -199,7 +199,7 @@ public class SettingsTrading
             Percentage = 2.5,
             Candles = 5,
             Interval = CryptoIntervalPeriod.interval5m,
-            CoolDown = 8,
+            CoolDown = 10,
         });
 
 
