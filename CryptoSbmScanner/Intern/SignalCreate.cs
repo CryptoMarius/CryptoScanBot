@@ -563,13 +563,13 @@ public class SignalCreate
                 if (GlobalData.Settings.Signal.LogSymbolMustExistsDays)
                 {
                     // Het aantal dagen vermelden dat het bestaat
-                    string text = "";
+                    string text = "0";
                     if (candles1Day.Count > 0)
                     {
                         CryptoCandle first = candles1Day.Values.First();
                         text = CandleTools.GetUnixDate(first.OpenTime).Day.ToString();
                     }
-                    GlobalData.AddTextToLogTab(string.Format("Analyse {0} te nieuw geen {1} dagen {2}", Symbol.Name, GlobalData.Settings.Signal.SymbolMustExistsDays, text));
+                    GlobalData.AddTextToLogTab($"Analyse {Symbol.Name} bestaat {text} dagen en is te nieuw (moet tenminste {GlobalData.Settings.Signal.SymbolMustExistsDays} dagen bestaan)");
                 }
                 eventText.Add("coin te nieuw");
                 signal.IsInvalid = true;
@@ -603,7 +603,7 @@ public class SignalCreate
             {
                 // Er zijn nogal wat van die flut munten, laat de tekst maar achterwege
                 if (GlobalData.Settings.Signal.LogMinimumTickPercentage)
-                    GlobalData.AddTextToLogTab(string.Format("Analyse {0} De tick size percentage is te hoog {1:N3}", Symbol.Name, barcodePercentage));
+                    GlobalData.AddTextToLogTab($"Analyse {Symbol.Name} De tick size percentage is te hoog {barcodePercentage:N3}");
                 eventText.Add("tick perc to high");
                 signal.IsInvalid = true;
             }
