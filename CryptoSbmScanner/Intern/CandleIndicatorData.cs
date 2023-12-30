@@ -376,10 +376,17 @@ public class CandleIndicatorData
         }
         else
         {
-            // Bepaal de start datum (we willen ook niet "teveel" data uit de database of bestanden ophalen)
-            // Voor de 1m tenminste 2 dagen en anders tenminste 215 candles zodat de indicators het doen
-            // (die 2 dagen is nodig voor de (volume) berekening van de 24h barometer, de 215 vanwege de indicators)
-            // Als we de volume berekening achterwege laten dan zijn het er 24*60=1440
+            // Bepaal de start datum (we willen niet "teveel" data uit de database of bestanden ophalen)
+            // Voor de 1m tenminste 2 dagen (die zijn nodig voor de (prijs & volume) berekening van de 24h barometer
+            // --> Als we de volume berekening achterwege laten dan zijn het er 24*60=1440 (volume doen we vanwege hoge cpu niet meer)
+            // En anders tenminste 215 candles voor de indicators (215 vanwege de 200 sma of macd indicator)
+
+            // NB: Achteraf hebben we een markttrend geintroduceerd en deze heeft meer candles nodig dan we in gedachten hadden..
+            // Achteraf beredeneerd wordt de markttrend dus niet correct berekend vanwege het (minimaal) aantal aanwezige candles..
+            // Met deze nieuwe kennis: Zou het een idee zijn om oude zigzag waarden (per interval) te bewaren?
+            // (zodat we niet een volledige hoeveelheid candles hoeven in te laden?)
+            // Maar dan heb je dus wel de voorgeschiedenis nodig, beetje kip/ei
+
             if (interval.IntervalPeriod == CryptoIntervalPeriod.interval1m)
                 startFetchUnix = CandleTools.GetUnixTime(utcNow, 60) - InitialCandleCountFetch;
             else
