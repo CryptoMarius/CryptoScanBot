@@ -201,10 +201,13 @@ public partial class FrmMain
         listViewSignals.Columns.Add("FundingRate", -2, HorizontalAlignment.Right);
 
 
+        listViewSignals.Columns.Add("15m", -2, HorizontalAlignment.Left);
+        listViewSignals.Columns.Add("30m", -2, HorizontalAlignment.Left);
         listViewSignals.Columns.Add("1h", -2, HorizontalAlignment.Left);
         listViewSignals.Columns.Add("4h", -2, HorizontalAlignment.Left);
         listViewSignals.Columns.Add("12h", -2, HorizontalAlignment.Left);
 
+    
         listViewSignals.Columns.Add("", -2, HorizontalAlignment.Right); // filler
 
         listViewSignals.SetSortIcon(
@@ -441,7 +444,39 @@ public partial class FrmMain
             item1.SubItems.Add("");
 
 
+
+
         // Op verzoek (een experiment)
+        switch (signal.Trend15m)
+        {
+            case CryptoTrendIndicator.Bullish:
+                subItem = item1.SubItems.Add("Up");
+                subItem.ForeColor = Color.Green;
+                break;
+            case CryptoTrendIndicator.Bearish:
+                subItem = item1.SubItems.Add("Down");
+                subItem.ForeColor = Color.Red;
+                break;
+            default:
+                item1.SubItems.Add("None");
+                break;
+        }
+
+        switch (signal.Trend30m)
+        {
+            case CryptoTrendIndicator.Bullish:
+                subItem = item1.SubItems.Add("Up");
+                subItem.ForeColor = Color.Green;
+                break;
+            case CryptoTrendIndicator.Bearish:
+                subItem = item1.SubItems.Add("Down");
+                subItem.ForeColor = Color.Red;
+                break;
+            default:
+                item1.SubItems.Add("None");
+                break;
+        }
+
         switch (signal.Trend1h)
         {
             case CryptoTrendIndicator.Bullish:
@@ -486,6 +521,7 @@ public partial class FrmMain
                 item1.SubItems.Add("None");
                 break;
         }
+
     }
 
     private static ListViewItem AddSignalItem(CryptoSignal signal)

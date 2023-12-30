@@ -38,8 +38,14 @@ namespace CryptoSbmScanner
                 21 => ObjectCompare.Compare(signalA.PSar, signalB.PSar),
                 22 => ObjectCompare.Compare(signalA.FluxIndicator5m, signalB.FluxIndicator5m),
                 23 => ObjectCompare.Compare(signalA.Symbol.FundingRate, signalB.Symbol.FundingRate),
+                24 => ObjectCompare.Compare(signalA.Trend15m, signalB.Trend15m),
+                25 => ObjectCompare.Compare(signalA.Trend30m, signalB.Trend30m),
+                26 => ObjectCompare.Compare(signalA.Trend1h, signalB.Trend1h),
+                27 => ObjectCompare.Compare(signalA.Trend4h, signalB.Trend4h),
+                28 => ObjectCompare.Compare(signalA.Trend12h, signalB.Trend12h),
                 _ => 0
             };
+
 
             // Extra defaults (maar waarom omgedraaid?)
             if (compareResult == 0)
