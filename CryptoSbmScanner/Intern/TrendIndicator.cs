@@ -47,18 +47,17 @@ public class TrendIndicator
         //GlobalData.AddTextToLogTab("ZigZagTest cAlgo#1");
         //GlobalData.AddTextToLogTab("");
 
-        List<CryptoCandle> history;
+        //List<CryptoCandle> history;
 
-        // De 1m is absoluut niet relevant genoeg voor een trend, zonde van de cpu (en de ..
-        if (Interval.IntervalPeriod == CryptoIntervalPeriod.interval1m)
-            return CryptoTrendIndicator.Sideways; // history = CalculateHistory(this.Candles, 1000); // inkorten voor de 1m
-        else if (Interval.IntervalPeriod == CryptoIntervalPeriod.interval2m)
-            return CryptoTrendIndicator.Sideways; // history = CalculateHistory(this.Candles, 1000); // inkorten voor de 2m
+        //// De 1m is niet relevant genoeg voor een trend, zonde van de cpu (en de ..
+        //if (Interval.IntervalPeriod == CryptoIntervalPeriod.interval1m)
+        //    return CryptoTrendIndicator.Sideways; // history = CalculateHistory(this.Candles, 1000); // inkorten voor de 1m
+        //else if (Interval.IntervalPeriod == CryptoIntervalPeriod.interval2m)
+        //    return CryptoTrendIndicator.Sideways; // history = CalculateHistory(this.Candles, 1000); // inkorten voor de 2m
 
         //GlobalData.Logger.Trace($"CalculateTrend.Start {Symbol.Name} {Interval.Name}");
         
-        history = Candles.Values.ToList();
-        if (history.Count == 0)
+        if (Candles.Count == 0)
         {
             // Hele discussies, maar als we niet genoeg candles hebben om een trend te berekenen
             // gebruiken we toch de sideway's om aan te geven dat het niet berekend kon worden.
@@ -67,11 +66,13 @@ public class TrendIndicator
             return CryptoTrendIndicator.Sideways;
         }
 
+        //history = Candles.Values.ToList();
         TrendIndicatorZigZag1 zigZagTest = new();
         // Bied de candles een voor 1 aan
-        for (int i = 0; i < history.Count; i++)
-            zigZagTest.Calculate(history[i], true);
-
+        //for (int i = 0; i < history.Count; i++)
+          //  zigZagTest.Calculate(history[i], true);
+        for (int i = 0; i < Candles.Values.Count; i++)
+            zigZagTest.Calculate(Candles.Values[i], true);
         //GlobalData.Logger.Trace($"CalculateTrend.Pickup {Symbol.Name} {Interval.Name} {history.Count}");
 
         // Maak van de gevonden punten een bruikbare ZigZag lijst
