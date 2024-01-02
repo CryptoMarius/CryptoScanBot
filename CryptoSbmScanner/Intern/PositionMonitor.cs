@@ -1096,20 +1096,19 @@ public class PositionMonitor : IDisposable
             }
             else
             {
-                // Gebaseerd op de dca's die E. doet (aggressief bijkopen)
                 //quoteAmount = position.EntryAmount.Value * part.PartNumber * GlobalData.Settings.Trading.DcaFactor;
                 //else
                 // Gebaseerd op Zignally, inleg verdubbelen (wat vaak een tekort aan assets geeft)
                 //    quoteAmount = (position.Invested - position.Returned + position.Commission) * GlobalData.Settings.Trading.DcaFactor;
 
                 // Als ik nu wist hoe en waar ik dat moest vullen (voor trailing werkt het ook)!
-                if (part.EntryAmount.HasValue)
-                    quoteAmount = part.EntryAmount.Value;
-                else
-                {
+                //if (part.EntryAmount.HasValue)
+                //    quoteAmount = part.EntryAmount.Value;
+                //else
+                //{
                     var dcaEntry = GlobalData.Settings.Trading.DcaList[part.PartNumber - 1];
                     quoteAmount = position.EntryAmount.Value * dcaEntry.Factor;
-                }
+                //}
             }
 
 
@@ -1662,7 +1661,7 @@ public class PositionMonitor : IDisposable
                             if (part.ProfitMethod == CryptoEntryOrProfitMethod.FixedPercentage)
                             {
                                 decimal sellPrice = CalculateTakeProfitPrice(position);
-                                if (step.Price != sellPrice)
+                                if (step.Price != sellPrice && step.Status == CryptoOrderStatus.New)
                                 {
                                     var (cancelled, tradeParams) = await CancelOrder(position, part, step, CryptoOrderStatus.ChangedSettings);
                                     if (!cancelled || GlobalData.Settings.Trading.LogCanceledOrders)
