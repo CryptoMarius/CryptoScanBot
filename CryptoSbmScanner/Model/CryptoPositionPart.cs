@@ -7,7 +7,7 @@ namespace CryptoSbmScanner.Model;
 
 
 /// <summary>
-/// Een part is 1 een gedeelte van een positie (een trade binnen een trade)
+/// Een part is een gedeelte van een positie (een trade binnen een trade)
 /// </summary>
 [Table("PositionPart")]
 public class CryptoPositionPart
@@ -37,7 +37,7 @@ public class CryptoPositionPart
     [Computed]
     public string StrategyText { get { return Strategy.ToString(); } }
 
-    public int PartNumber { get; set; } // En dan kan de Name vervallen (BUY/SELL = 1, DCA = PartNumber >= 2) - of null based, whatever
+    public int PartNumber { get; set; }
     public DateTime CreateTime { get; set; }
     public DateTime? CloseTime { get; set; }
 
@@ -48,7 +48,7 @@ public class CryptoPositionPart
     public decimal Percentage { get; set; }
 
     public decimal Quantity { get; set; }
-    public decimal? EntryAmount { get; set; }
+    //public decimal? EntryAmount { get; set; }
     public decimal BreakEvenPrice { get; set; }
 
     // De initiele entry prijs van het signaal

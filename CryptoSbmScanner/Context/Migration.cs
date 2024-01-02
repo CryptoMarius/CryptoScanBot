@@ -260,6 +260,21 @@ public class Migration
                 database.Connection.Update(version, transaction);
                 transaction.Commit();
             }
+
+
+            //***********************************************************
+            if (CurrentVersion > version.Version && version.Version == 11)
+            {
+                using var transaction = database.BeginTransaction();
+
+                // Deze bestaat reeds op position niveau en kan daarom weer weg
+                database.Connection.Execute("alter table PositionPart drop column EntryAmount", transaction);
+
+                // update version
+                version.Version += 1;
+                database.Connection.Update(version, transaction);
+                transaction.Commit();
+            }
         }
     }
 
