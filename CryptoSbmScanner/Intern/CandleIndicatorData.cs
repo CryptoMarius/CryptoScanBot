@@ -357,7 +357,7 @@ public class CandleIndicatorData
     }
 
     // Extended with 1 day + 9 hours because of the 24 hour market climate (or barometer).  (we show ~6 hours of that in the display)
-    private static long InitialCandleCountFetch = (24 + 7) * 60 * 60;
+    private static long InitialCandleCountFetch = ((24 + 7) * 60 * 60) * 2;
 
     public static void SetInitialCandleCountFetch(long value)
     {
@@ -386,12 +386,13 @@ public class CandleIndicatorData
             // Met deze nieuwe kennis: Zou het een idee zijn om oude zigzag waarden (per interval) te bewaren?
             // (zodat we niet een volledige hoeveelheid candles hoeven in te laden?)
             // Maar dan heb je dus wel de voorgeschiedenis nodig, beetje kip/ei
+            // Voorlopig heb ik het aantal candles verdubbeld, we zien het wel.....
 
             if (interval.IntervalPeriod == CryptoIntervalPeriod.interval1m)
                 startFetchUnix = CandleTools.GetUnixTime(utcNow, 60) - InitialCandleCountFetch;
             else
                 // de 0 was eerst een 10 (en later 49) en bedoeld om meldingen met terugwerkende kracht te berekenen bij de start
-                startFetchUnix = CandleTools.GetUnixTime(utcNow, 60) - (49 + maxCandles) * interval.Duration;
+                startFetchUnix = CandleTools.GetUnixTime(utcNow, 60) - ((49 + maxCandles) * interval.Duration) * 2;
             startFetchUnix -= startFetchUnix % interval.Duration;
 
             // Lets extend that with 1 extra candle just in case...
