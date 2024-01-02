@@ -34,6 +34,7 @@ Scanner:
 NB: Als je ideen hebt voor het vervangen van de OCO/Stop limit informeer me dan AUB..
 
 Trading:
+- Trading - Charts, de statistieken voor de combinatiie van short en long kloppen niet (de short wordt sql technisch niet goed opgepakt?)
 - Trading - Via de RMK op een open positie een extra DCA aan de positie kunnen toevoegen (met dialoog)
 - Trading - Via de RMK op een gesloten positie deze kunnen weggooien (vanwege verkeerde statistiek open/long, gebeurd helaas nog in papertrading)
 - Trading - Charts - Graph toevoegen met hoe vaak de tweede en derde bijkoop gehit wordt
