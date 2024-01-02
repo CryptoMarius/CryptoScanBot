@@ -189,6 +189,8 @@ public class Api : ExchangeBase
         }
 
 
+        // BinanceWeights.WaitForFairBinanceWeight(1); flauwekul voor die ene tick (geen herhaling toch?)
+
         OrderSide side;
         if (orderSide == CryptoOrderSide.Buy)
             side = OrderSide.Buy;
@@ -197,13 +199,16 @@ public class Api : ExchangeBase
 
 
         // Plaats een order op de exchange *ze lijken op elkaar, maar het is net elke keer anders)
-        // BinanceWeights.WaitForFairBinanceWeight(1); flauwekul voor die ene tick (geen herhaling toch?)
         using BybitRestClient client = new();
         if (!await DoSwitchCrossIsolatedMarginAsync(client, symbol))
         {
             // Herhaal
             if (!await DoSwitchCrossIsolatedMarginAsync(client, symbol))
-                return (false, null);
+            {
+                // Herhaal
+                if (!await DoSwitchCrossIsolatedMarginAsync(client, symbol))
+                    return (false, null); // raise? throw?
+            }
         }
 
 
