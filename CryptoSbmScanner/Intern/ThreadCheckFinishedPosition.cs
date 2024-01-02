@@ -86,7 +86,7 @@ public class ThreadCheckFinishedPosition
                                         database.Connection.Update<CryptoPositionStep>(step);
 
                                         if (GlobalData.Settings.Trading.LogCanceledOrders)
-                                            ExchangeBase.Dump(position.Symbol, result.succes, result.tradeParams, $"annuleren vanwege sluiten {position.Side} positie (2e)");
+                                            ExchangeBase.Dump(position.Symbol, result.succes, result.tradeParams, $"annuleren vanwege sluiten {position.Side} positie");
                                     }
                                     else
                                     {
