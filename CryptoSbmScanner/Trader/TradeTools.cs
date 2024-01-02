@@ -99,6 +99,7 @@ public class TradeTools
         // is 0.10 % for VIP 0 / regular users. So, if you buy Bitcoin with 200 USDT, you will basically get
         // $199.8 worth of Bitcoin.To calculate these fees, you can also use our Binance fee calculator:
         // (als je verder gaat dan wordt het vanwege de kickback's tamelijk complex)
+        // Op Bybit futures heb je de fundingrates, dat wordt in tijdblokken berekend met varierende fr..
 
         if (position.Parts.Count == 0)
             GlobalData.AddTextToLogTab(string.Format("CalculateProfitAndBeakEvenPrice - er zijn geen parts! {0}", position.Symbol.Name));
@@ -122,7 +123,9 @@ public class TradeTools
             int tradeCount = 0;
             foreach (CryptoPositionStep step in part.Steps.Values.ToList())
             {
-                if (step.Status == CryptoOrderStatus.Filled) // || step.Status == CryptoOrderStatus.PartiallyFilled => dan wordt de TP's iedere keer verplaatst..
+                if (step.Status == CryptoOrderStatus.Filled)
+                    // || step.Status == CryptoOrderStatus.PartiallyFilled => niet doen, want dan worden de TP's iedere keer verplaatst..
+                    // Wellicht moet dat gedeelte op een andere manier ingeregeld worden zodat we hier wel de echte BE kunnen uitrekenen?
                 {
                     part.Commission += step.Commission;
                     if (step.Side == entryOrderSide)
@@ -157,7 +160,7 @@ public class TradeTools
                 if (part.Quantity > 0)
                     part.BreakEvenPrice = (part.Invested - part.Returned + part.Commission) / part.Quantity;
                 else
-                    part.BreakEvenPrice = 0; // mhh. denk fout? Als we in een dca zitten is de part.BE 0
+                    part.BreakEvenPrice = 0;
             }
             else
             {
@@ -167,9 +170,9 @@ public class TradeTools
                 if (part.Invested != 0m)
                     part.Percentage = 100m + (100m * part.Profit / part.Invested);
                 if (part.Quantity > 0)
-                    part.BreakEvenPrice = (part.Invested - part.Returned - part.Commission) / part.Quantity; //?
+                    part.BreakEvenPrice = (part.Invested - part.Returned - part.Commission) / part.Quantity;
                 else
-                    part.BreakEvenPrice = 0; // mhh. denk fout? Als we in een dca zitten is de part.BE 0
+                    part.BreakEvenPrice = 0;
             }
 
 
@@ -316,7 +319,7 @@ public class TradeTools
                 {
                     // Mhhh, als we achteraf (na een gedeeltelijke fill) de order annuleren gaat het wellicht fout?
                     // Maar dat zien we dan wel weer...
-                    if (step.Status == CryptoOrderStatus.New)
+                    //if (step.Status == CryptoOrderStatus.New) doe maar altijd (de status wordt nu per abuis op ChangedSettings gezet)
                     {
                         if (step.Status != CryptoOrderStatus.PartiallyFilled)
                             isChanged = true;
