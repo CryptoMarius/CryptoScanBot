@@ -71,6 +71,8 @@ public class SettingsTrading
 
     // TODO: Iedere exchange heeft 0 of meer key/secret's
     // (ze moeten ook nog ff versleuteld worden lijkt me)
+    // Liefst in database zodat ze niet leesbaar in json staan
+    // https://stackoverflow.com/questions/10168240/encrypting-decrypting-a-string-in-c-sharp
     public string ApiKey { get; set; } = "";
     public string ApiSecret { get; set; } = "";
     public string ApiPassPhrase { get; set; } = ""; // Kucoin
