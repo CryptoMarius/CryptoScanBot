@@ -417,8 +417,7 @@ public class ThreadTelegramBotInstance
     {
         decimal sumInvested = 0;
         decimal sumProfit = 0;
-        decimal sumCount = 0;
-        decimal percentage = 0;
+        decimal sumPositions = 0;
 
         using CryptoDatabase databaseThread = new();
         databaseThread.Open();
@@ -426,15 +425,16 @@ public class ThreadTelegramBotInstance
         foreach (CryptoPosition position in databaseThread.Connection.Query<CryptoPosition>("select * from position " +
             "where CloseTime >= @fromDate and status=2", new { fromDate = DateTime.Today.ToUniversalTime() }))
         {
-            sumCount++;
-            // TODO long/short
+            sumPositions++;
             sumProfit += position.Profit;
             sumInvested += position.Invested;
         }
+
+        decimal percentage = 0;
         if (sumInvested > 0)
             percentage = 100 * sumProfit / sumInvested;
 
-        stringbuilder.AppendLine($"{sumCount} positions, invested {sumInvested:N2}, profits {sumProfit:N2}, {percentage:N2}%");
+        stringbuilder.AppendLine($"{sumPositions} positions, invested {sumInvested:N2}, profits {sumProfit:N2}, {percentage:N2}%");
     }
 #endif
 
@@ -613,6 +613,19 @@ public class ThreadTelegramBotInstance
                                         if (parameters.Length > 0)
                                             command = parameters[0].Trim().ToUpper();
 
+#if TRADEBOT
+                                        if (command == ".")
+                                        {
+                                            ShowBarometer(arguments, stringBuilder);
+                                            stringBuilder.AppendLine();
+                                            Helper.ShowPositions(stringBuilder);
+                                            stringBuilder.AppendLine();
+                                            ShowProfits(stringBuilder);
+                                            stringBuilder.AppendLine();
+                                            Helper.ShowAssets(GlobalData.ExchangeRealTradeAccount, stringBuilder, out decimal _, out decimal _);
+                                        }
+                                        else
+#endif
                                         if (command == "STATUS")
                                             ShowStatus(command, stringBuilder);
                                         else if (command == "VALUE")
@@ -652,7 +665,7 @@ public class ThreadTelegramBotInstance
 #if TRADEBOT
                                         else if (command == "ASSETS")
                                         {
-                                            Helper.ShowAssets(GlobalData.ExchangeRealTradeAccount, stringBuilder, out decimal valueUsdt, out decimal valueBtc);
+                                            Helper.ShowAssets(GlobalData.ExchangeRealTradeAccount, stringBuilder, out decimal _, out decimal _);
                                         }
 #endif
                                         else if (command == "TREND")
