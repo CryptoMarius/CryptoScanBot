@@ -41,6 +41,7 @@ public static class ThreadTelegramBot
     public static string ChatId { get; set; }
     private static ThreadTelegramBotInstance bot;
 
+
     public static async Task Start(string token, string chatId)
     {
         // herstart?
@@ -55,6 +56,7 @@ public static class ThreadTelegramBot
         await bot.ExecuteAsync(token);
     }
 
+
     public static void Stop()
     {
         if (bot != null)
@@ -64,13 +66,13 @@ public static class ThreadTelegramBot
         }
     }
 
+
     public static async void SendMessage(string text)
     {
         if (bot == null || text == "" || ChatId == "")
             return;
         await bot.SendMessage(text);
     }
-
 
 
     async static public void SendSignal(CryptoSignal signal)
@@ -623,6 +625,8 @@ public class ThreadTelegramBotInstance
                                             ShowProfits(stringBuilder);
                                             stringBuilder.AppendLine();
                                             Helper.ShowAssets(GlobalData.ExchangeRealTradeAccount, stringBuilder, out decimal _, out decimal _);
+                                            stringBuilder.AppendLine();
+                                            ShowCoins(command, stringBuilder);
                                         }
                                         else
 #endif
