@@ -224,7 +224,7 @@ public class SignalCreate
                 if (diff != 0)
                     candleIntervalStart -= symbolInterval.Interval.Duration;
 
-                if (!symbolInterval.TrendInfoUnix.HasValue || candleIntervalStart != symbolInterval.TrendInfoUnix)
+                if (!symbolInterval.TrendInfoUnix.HasValue || candleIntervalStart != symbolInterval.TrendInfoUnix || symbolInterval.TrendIndicator == CryptoTrendIndicator.Sideways)
                 {
                     // Deze properties zijn calculated (hele class is in memory only)
                     symbolInterval.TrendInfoDate = CandleTools.GetUnixDate(candleIntervalStart); // controle
