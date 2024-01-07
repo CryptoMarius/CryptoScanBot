@@ -15,13 +15,6 @@ public partial class FrmSettings : Form
 
     public Model.CryptoExchange NewExchange { get; set; }
 
-#if TRADEBOT
-    private readonly SortedList<string, CryptoEntryOrProfitMethod> BuyStepInMethod = new();
-    private readonly SortedList<string, CryptoEntryOrProfitMethod> DcaStepInMethod = new();
-    private readonly SortedList<string, CryptoBuyOrderMethod> BuyOrderMethod = new();
-    private readonly SortedList<string, CryptoSellMethod> SellMethod = new();
-#endif
-
 
     public FrmSettings()
     {
@@ -39,30 +32,6 @@ public partial class FrmSettings : Form
 #if TRADEBOT
         UserControlTradingLong.InitControls(false, CryptoTradeSide.Long);
         UserControlTradingShort.InitControls(false, CryptoTradeSide.Short);
-
-        // BUY
-        BuyStepInMethod.Add("Na een signaal", CryptoEntryOrProfitMethod.AfterNextSignal);
-        // voorlopig even uit, een stoplimit werkt niet op Bybit
-        //BuyStepInMethod.Add("Trace via de Keltner Channel en PSAR", CryptoBuyStepInMethod.TrailViaKcPsar);
-
-        // DCA
-        //DcaStepInMethod.Add("Direct na het signaal", CryptoBuyStepInMethod.Immediately);
-        DcaStepInMethod.Add("Op het opgegeven percentage", CryptoEntryOrProfitMethod.FixedPercentage);
-        DcaStepInMethod.Add("Na een signaal (sbm/stobb/enz)", CryptoEntryOrProfitMethod.AfterNextSignal);
-        DcaStepInMethod.Add("Trace via de Keltner Channel en PSAR", CryptoEntryOrProfitMethod.TrailViaKcPsar);
-
-        // SELL
-        SellMethod.Add("Limit order op een vaste winst percentage", CryptoSellMethod.FixedPercentage);
-        // voorlopig even uit, wel interessant
-        //SellMethod.Add("Limit order op dynamisch percentage van de BB", CryptoSellMethod.DynamicPercentage);
-        SellMethod.Add("Trace via de Keltner Channel en PSAR", CryptoSellMethod.TrailViaKcPsar);
-
-        // BUY/DCA - Manier van kopen
-        BuyOrderMethod.Add("Market order", CryptoBuyOrderMethod.MarketOrder);
-        BuyOrderMethod.Add("Limit order signaal prijs", CryptoBuyOrderMethod.SignalPrice);
-        // Wordt niet door alle exchanges ondersteund
-        BuyOrderMethod.Add("Limit order op bied prijs", CryptoBuyOrderMethod.BidPrice);
-        BuyOrderMethod.Add("Limit order op vraag prijs", CryptoBuyOrderMethod.AskPrice);
 #endif
     }
 
@@ -253,9 +222,11 @@ public partial class FrmSettings : Form
         // Logging
         EditLogCanceledOrders.Checked = settings.Trading.LogCanceledOrders;
 
-        // api
+        // Api
         EditApiKey.Text = settings.Trading.ApiKey;
         EditApiSecret.Text = settings.Trading.ApiSecret;
+        EditGlobalBuyVarying.Value = settings.Trading.GlobalBuyVarying;
+        EditGlobalBuyCooldownTime.Value = settings.Trading.GlobalBuyCooldownTime;
 
         // slots
         EditSlotsMaximalExchange.Value = settings.Trading.SlotsMaximalExchange;
@@ -268,45 +239,13 @@ public partial class FrmSettings : Form
         EditCheckIncreasingStoch.Checked = settings.Trading.CheckIncreasingStoch;
 
 
-        // Buy
-        EditBuyStepInMethod.DataSource = new BindingSource(BuyStepInMethod, null);
-        EditBuyStepInMethod.DisplayMember = "Key";
-        EditBuyStepInMethod.ValueMember = "Value";
-        EditBuyStepInMethod.SelectedValue = settings.Trading.BuyStepInMethod;
-        EditBuyOrderMethod.DataSource = new BindingSource(BuyOrderMethod, null); // DCA opties zijn gelijk aan de BUY variant
-        EditBuyOrderMethod.DisplayMember = "Key";
-        EditBuyOrderMethod.ValueMember = "Value";
-        EditBuyOrderMethod.SelectedValue = settings.Trading.BuyOrderMethod;
-        EditGlobalBuyRemoveTime.Value = settings.Trading.GlobalBuyRemoveTime;
-        EditGlobalBuyVarying.Value = settings.Trading.GlobalBuyVarying;
-
-        // dca
-        EditDcaStepInMethod.DataSource = new BindingSource(DcaStepInMethod, null);
-        EditDcaStepInMethod.DisplayMember = "Key";
-        EditDcaStepInMethod.ValueMember = "Value";
-        EditDcaStepInMethod.SelectedValue = settings.Trading.DcaStepInMethod;
-        EditDcaOrderMethod.DataSource = new BindingSource(BuyOrderMethod, null); // DCA opties zijn gelijk aan de BUY variant
-        EditDcaOrderMethod.DisplayMember = "Key";
-        EditDcaOrderMethod.ValueMember = "Value";
-        EditDcaOrderMethod.SelectedValue = settings.Trading.DcaOrderMethod;
-        //EditDcaPercentage.Value = Math.Abs(settings.Trading.DcaPercentage);
-        //EditDcaFactor.Value = settings.Trading.DcaFactor;
-        //EditDcaCount.Value = settings.Trading.DcaCount;
-        EditGlobalBuyCooldownTime.Value = settings.Trading.GlobalBuyCooldownTime;
-
-        // sell
-        EditSellMethod.DataSource = new BindingSource(SellMethod, null);
-        EditSellMethod.DisplayMember = "Key";
-        EditSellMethod.ValueMember = "Value";
-        EditSellMethod.SelectedValue = settings.Trading.SellMethod;
-        EditProfitPercentage.Value = settings.Trading.ProfitPercentage;
-        //EditLockProfits.Checked = settings.Trading.LockProfits;
+        UserControlTradeBuy.LoadConfig(settings.Trading);
+        UserControlTradeDca.LoadConfig(settings.Trading);
+        UserControlTradeSell.LoadConfig(settings.Trading);
 
         // Stop loss
         //EditGlobalStopPercentage.Value = Math.Abs(settings.Trading.GlobalStopPercentage);
         //EditGlobalStopLimitPercentage.Value = Math.Abs(settings.Trading.GlobalStopLimitPercentage);
-
-
 
         EditLeverage.Value = settings.Trading.Leverage;
         EditCrossOrIsolated.SelectedIndex = settings.Trading.CrossOrIsolated;
@@ -525,9 +464,11 @@ public partial class FrmSettings : Form
         // Logging
         settings.Trading.LogCanceledOrders = EditLogCanceledOrders.Checked;
 
-        // api
+        // Api
         settings.Trading.ApiKey = EditApiKey.Text;
         settings.Trading.ApiSecret = EditApiSecret.Text;
+        settings.Trading.GlobalBuyVarying = EditGlobalBuyVarying.Value;
+        settings.Trading.GlobalBuyCooldownTime = (int)EditGlobalBuyCooldownTime.Value;
 
         // slots
         settings.Trading.SlotsMaximalExchange = (int)EditSlotsMaximalExchange.Value;
@@ -539,24 +480,10 @@ public partial class FrmSettings : Form
         settings.Trading.CheckIncreasingMacd = EditCheckIncreasingMacd.Checked;
         settings.Trading.CheckIncreasingStoch = EditCheckIncreasingStoch.Checked;
 
-        // buy
-        settings.Trading.BuyStepInMethod = (CryptoEntryOrProfitMethod)EditBuyStepInMethod.SelectedValue;
-        settings.Trading.BuyOrderMethod = (CryptoBuyOrderMethod)EditBuyOrderMethod.SelectedValue;
-        settings.Trading.GlobalBuyRemoveTime = (int)EditGlobalBuyRemoveTime.Value;
-        settings.Trading.GlobalBuyVarying = EditGlobalBuyVarying.Value;
 
-        // dca
-        settings.Trading.DcaStepInMethod = (CryptoEntryOrProfitMethod)EditDcaStepInMethod.SelectedValue;
-        settings.Trading.DcaOrderMethod = (CryptoBuyOrderMethod)EditDcaOrderMethod.SelectedValue;
-        //settings.Trading.DcaPercentage = EditDcaPercentage.Value;
-        //settings.Trading.DcaFactor = EditDcaFactor.Value;
-        //settings.Trading.DcaCount = (int)EditDcaCount.Value;
-        settings.Trading.GlobalBuyCooldownTime = (int)EditGlobalBuyCooldownTime.Value;
-
-        // sell
-        settings.Trading.SellMethod = (CryptoSellMethod)EditSellMethod.SelectedValue;
-        settings.Trading.ProfitPercentage = EditProfitPercentage.Value;
-        //settings.Trading.LockProfits = EditLockProfits.Checked;
+        UserControlTradeBuy.SaveConfig(settings.Trading);
+        UserControlTradeDca.SaveConfig(settings.Trading);
+        UserControlTradeSell.SaveConfig(settings.Trading);
 
         // Stop loss
         //settings.Trading.GlobalStopPercentage = EditGlobalStopPercentage.Value;
