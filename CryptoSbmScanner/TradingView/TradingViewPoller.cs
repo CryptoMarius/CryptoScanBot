@@ -53,7 +53,7 @@ public class TradingViewSymbolInfo
             var result = socket.ReceiveData().Result;
             if (result)
             {
-                Thread.Sleep(10);
+                Thread.Sleep(1000);
             }
             else
             {
