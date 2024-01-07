@@ -32,10 +32,7 @@ public class CryptoPositionPart
     public CryptoInterval Interval { get; set; }
 
     public CryptoPartPurpose Purpose { get; set; }
-
     public CryptoSignalStrategy Strategy { get; set; }
-    [Computed]
-    public string StrategyText { get { return Strategy.ToString(); } }
 
     public int PartNumber { get; set; }
     public DateTime CreateTime { get; set; }
@@ -48,7 +45,6 @@ public class CryptoPositionPart
     public decimal Percentage { get; set; }
 
     public decimal Quantity { get; set; }
-    //public decimal? EntryAmount { get; set; }
     public decimal BreakEvenPrice { get; set; }
 
     // De initiele entry prijs van het signaal

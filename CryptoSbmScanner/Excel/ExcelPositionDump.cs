@@ -85,7 +85,7 @@ public class ExcelPositionDump : ExcelBase
                     cell = WriteCell(sheet, 15, row, Position.Interval.Name);
 
                 if (part.EntryMethod == CryptoEntryOrProfitMethod.AfterNextSignal)
-                    cell = WriteCell(sheet, 16, row, part.StrategyText);
+                    cell = WriteCell(sheet, 16, row, part.Strategy.ToString());
                 else
                     cell = WriteCell(sheet, 16, row, "Fixed percentage");
 
