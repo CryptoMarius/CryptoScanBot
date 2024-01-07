@@ -185,8 +185,8 @@ public partial class FrmMain
         columnForPriceDiff = listViewSignals.Columns.Count;
         listViewSignals.Columns.Add("Stijging", -2, HorizontalAlignment.Right);
         listViewSignals.Columns.Add("Volume", -2, HorizontalAlignment.Right);
-        listViewSignals.Columns.Add("Trend", -2, HorizontalAlignment.Right);
-        listViewSignals.Columns.Add("Trend%", -2, HorizontalAlignment.Right);
+        listViewSignals.Columns.Add("TF-Trend", -2, HorizontalAlignment.Right);
+        listViewSignals.Columns.Add("Markttrend%", -2, HorizontalAlignment.Right);
         listViewSignals.Columns.Add("24h Change", -2, HorizontalAlignment.Right);
         listViewSignals.Columns.Add("24h Beweging", -2, HorizontalAlignment.Right);
         listViewSignals.Columns.Add("BB%", -2, HorizontalAlignment.Right);
