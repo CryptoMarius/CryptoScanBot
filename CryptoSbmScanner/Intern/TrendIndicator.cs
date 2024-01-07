@@ -73,15 +73,15 @@ public class TrendIndicator
           //  zigZagTest.Calculate(history[i], true);
         for (int i = 0; i < Candles.Values.Count; i++)
             zigZagTest.Calculate(Candles.Values[i], true);
-        //GlobalData.Logger.Trace($"CalculateTrend.Pickup {Symbol.Name} {Interval.Name} {history.Count}");
+        //GlobalData.Logger.Trace($"CalculateTrend.Pickup {Symbol.Name} {Interval.Name} {Candles.Values.Count}");
 
         // Maak van de gevonden punten een bruikbare ZigZag lijst
         List<CryptoZigZagResult> zigZagList = PickupZigZagValues(zigZagTest);
 
-        //GlobalData.Logger.Trace($"CalculateTrend.Interpret {Symbol.Name} {Interval.Name} {history.Count} {zigZagList.Count}");
+        //GlobalData.Logger.Trace($"CalculateTrend.Interpret {Symbol.Name} {Interval.Name} {Candles.Values.Count} {zigZagList.Count}");
 
         CryptoTrendIndicator trend = InterpretationZigZagValues(zigZagList);
-        //GlobalData.Logger.Trace($"CalculateTrend.Done {Symbol.Name} {Interval.Name} {history.Count} {trend}");
+        //GlobalData.Logger.Trace($"CalculateTrend.Done {Symbol.Name} {Interval.Name} {Candles.Values.Count} {trend}");
         return trend;
     }
 
