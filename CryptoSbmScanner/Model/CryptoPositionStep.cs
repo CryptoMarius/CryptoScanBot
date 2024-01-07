@@ -26,7 +26,6 @@ public class CryptoPositionStep
     public decimal Price { get; set; } // Tevens de LimitPrice indien het een OCO is
     public decimal? StopPrice { get; set; }
     public decimal? StopLimitPrice { get; set; }
-    // Ik heb een soort van AvgPrice nodig (bij meerdere trades igv market of stoplimit orders)
 
     public decimal Quantity { get; set; }
     public decimal QuantityFilled { get; set; }
@@ -38,6 +37,7 @@ public class CryptoPositionStep
     // Of we aan het trailen zijn (de order iedere keer een beetje verzetten)
     public CryptoTrailing Trailing { get; set; }
 
+    // Ik heb een soort van AvgPrice nodig (bij meerdere trades igv market of stoplimit orders)
     // De definitieve gemiddelde prijs over de onderliggende trades (meerdere trades ivm market of stoplimit)
     public decimal AvgPrice { get; set; }
     // De definitieve commissie van alle onderliggende trades (meerdere trades ivm market of stoplimit)

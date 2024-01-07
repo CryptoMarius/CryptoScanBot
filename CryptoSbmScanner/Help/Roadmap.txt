@@ -4,7 +4,9 @@ Als je iets mist, geef het dat dab AUB even aan in een private PM of in de groep
 
 
 Scanner:
-- De globale markt trend % wordt uitgerekend via de 210 aanwezige candles, dat is voor de trend eigenlijk te weinig.
+- Het volume bij de getoonde munten lijkt niet te kloppen (BTC, PAXG, ETH enzovoort)
+  Maar je wilt ook niet heel veel candles in het geheugen hebben, de scanner op Bybit gebruikt nu al regelmatig 600Mb
+- De globale markt trend % wordt uitgerekend via de 210 aanwezige candles, voor de trend calculatie is dat eigenlijk te weinig.
   Maar je wilt ook niet heel veel candles in het geheugen hebben, de scanner op Bybit gebruikt nu al regelmatig 600Mb
 - Bij kleine(re) beeldschermen zijn bepaalde instellingen niet in zijn geheel zichtbaar (de OK en Cancel knop vallen onder andere weg)
 - Het normale logbestand bevat op het einde een .0, waar komt deze vandaag? Doet NLog alsnog een archive ofzo? Een zooi in die hoek?
@@ -34,7 +36,9 @@ Scanner:
 NB: Als je ideen hebt voor het vervangen van de OCO/Stop limit informeer me dan AUB..
 
 Trading:
-- Trading - Charts, de statistieken voor de combinatiie van short en long kloppen niet (de short wordt sql technisch niet goed opgepakt?)
+- Trading - Een link toevoegen aan de Telegram notificaties
+- Trading - Validatie op de ingevoerde DCA's uitvoeren, die moeten qua percentage op volgorde staan met een factor > 0
+- Trading - Charts, de statistieken voor de combinatie van short en long kloppen niet (de short wordt sql technisch niet goed opgepakt?)
 - Trading - Via de RMK op een open positie een extra DCA aan de positie kunnen toevoegen (met dialoog)
 - Trading - Via de RMK op een gesloten positie deze kunnen weggooien (vanwege verkeerde statistiek open/long, gebeurd helaas nog in papertrading)
 - Trading - Charts - Graph toevoegen met hoe vaak de tweede en derde bijkoop gehit wordt
@@ -44,9 +48,6 @@ Trading:
 - Trading - Bij een liquidatie wordt de positie geannuleerd en wordt deze niet genoteerd in de statistiek (het is een cancel van buiten af, maar met een herkenbare reden)
 - Trading - Charts - De dashboard statistieken houdt geen rekening met UTC (heeft nu 2 uur verschil met als gevolg een vertekend beeld <als je de verkoop momenten kent>).
             Hoe kun je via SQLite hier rekening mee houden?
-- Trading - Voor het sluiten van een positie alsnog ALLE trades ophalen om te controleren dat er niet per ongeluk een buy order alsnog gehit is
-- Trading - Soms blijft er een DCA buy order op de exchange staan (error receive window > 5 seconden), daarom pas de positie op ready zetten totdat de gehele administratie afgerond is!
-            (er was ook een bug waardoor de status van het annuleren niet goed terug werd gegeven, wellicht dat dat het probleem was?)
 - Trading - Handmatig toevoegen van een positie via een naam munt + begindatum mogelijk maken, laat de bot het gewoon overnemen als je er "moe" van bent.
 - Trading - Verwijderen van een positie (handmatig overnemen van een positie)
 - Trading - Een aparte tool maken voor een backtest, candles ophalen voor BTC (tradingregels), de intervallen 1m en emulator interval.

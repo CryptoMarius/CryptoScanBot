@@ -217,9 +217,6 @@ public class TradeTools
             else
                 position.BreakEvenPrice = 0;
         }
-
-
-        position.PartCount = position.Parts.Count;
     }
 
 

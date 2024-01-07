@@ -392,8 +392,8 @@ public static class Helper
         string s = $"{position.Symbol.Name} {investedInTrades.ToString(position.Symbol.QuoteData.DisplayFormat)} " +
             //$"{position.MarketValue().ToString(position.Symbol.QuoteData.DisplayFormat)} " +
             $"{position.MarketValuePercentage():N2}%";
-        if (position.PartCount > 1)
-            s += string.Format(" ({0})", position.PartCount);
+        if (position.PartCount > 0)
+            s += $" ({position.PartCount})";
         stringBuilder.AppendLine(s);
     }
 

@@ -56,11 +56,10 @@ public class CryptoPosition
     public decimal Quantity { get; set; }
     public decimal BreakEvenPrice { get; set; }
 
-    // Hulpmiddelen voor statistien en dca (niet echt noodzakelijk, wel makkelijk)
+    // Hulpmiddelen voor statistiek en dca (niet noodzakelijk)
     public decimal? EntryPrice { get; set; }
-    public decimal? ProfitPrice { get; set; }
     public decimal? EntryAmount { get; set; }
-
+    public decimal? ProfitPrice { get; set; }
 
     // Een experiment (die weg kan, we zetten er nu even de naam van de munt in, handig)
     public string Data { get; set; }
