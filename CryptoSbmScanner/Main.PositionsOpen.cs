@@ -1,8 +1,11 @@
 ﻿using CryptoSbmScanner.Context;
 using CryptoSbmScanner.Enums;
+using CryptoSbmScanner.Exchange;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Trader;
+
+using Dapper.Contrib.Extensions;
 
 namespace CryptoSbmScanner;
 
@@ -45,8 +48,18 @@ public partial class FrmMain
 
 
         menuCommand = new ToolStripMenuItem();
-        menuCommand.Text = "Herberekenen";
+        menuCommand.Text = "Positie herberekenen";
         menuCommand.Click += CommandPositionsOpenRecalculateExecute;
+        ContextMenuStripPositionsOpen.Items.Add(menuCommand);
+
+        menuCommand = new ToolStripMenuItem();
+        menuCommand.Text = "Positie toevoegen DCA";
+        menuCommand.Click += CommandPositionCreateAdditionalDca;
+        ContextMenuStripPositionsOpen.Items.Add(menuCommand);
+
+        menuCommand = new ToolStripMenuItem();
+        menuCommand.Text = "Positie profit nemen";
+        menuCommand.Click += CommandPositionLastPartTakeProfit;
         ContextMenuStripPositionsOpen.Items.Add(menuCommand);
 
         menuCommand = new ToolStripMenuItem();
@@ -255,7 +268,7 @@ public partial class FrmMain
     {
         if (IsHandleCreated) //!ProgramExit &&  components != null && 
         {
-            List<CryptoPosition> list = new();
+            List<CryptoPosition> list = [];
             if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
             {
                 foreach (var tradingAccount in GlobalData.TradeAccountList.Values)
@@ -307,7 +320,7 @@ public partial class FrmMain
         listViewPositionsOpen.BeginUpdate();
         try
         {
-            List<ListViewItem> range = new();
+            List<ListViewItem> range = [];
             foreach (CryptoPosition position in list)
             {
                 ListViewItem item = AddOpenPosition(position);
@@ -471,6 +484,146 @@ public partial class FrmMain
             FillItemOpen(position, item);
         }
 
+    }
+
+    private async void CommandPositionCreateAdditionalDca(object sender, EventArgs e)
+    {
+        if (listViewPositionsOpen.SelectedItems.Count > 0)
+        {
+            ListViewItem item = listViewPositionsOpen.SelectedItems[0];
+            CryptoPosition position = (CryptoPosition)item.Tag;
+
+            using CryptoDatabase databaseThread = new();
+            databaseThread.Connection.Open();
+
+            // Controleer de orders, en herbereken het geheel
+            PositionTools.LoadPosition(databaseThread, position);
+            await TradeTools.LoadTradesfromDatabaseAndExchange(databaseThread, position);
+            TradeTools.CalculatePositionResultsViaTrades(databaseThread, position);
+            FillItemOpen(position, item);
+
+            // Op welke prijs? Actueel, of nog X% eronder?
+            //TradeTools.
+            // todo...
+            //TradeTools.CalculatePositionResultsViaTrades(databaseThread, position);
+            //FillItemOpen(position, item);
+
+            //decimal adjust = GlobalData.Settings.Trading.DcaPercentage * step.Price / 100m;
+
+            // Corrigeer de prijs indien de koers ondertussen lager of hoger ligt
+            decimal price = (decimal)position.Symbol.LastPrice;
+            if (position.Side == CryptoTradeSide.Long)
+            {
+                //price = step.Price - adjust;
+                if (position.Symbol.LastPrice.HasValue && position.Symbol.LastPrice < price)
+                    price = (decimal)position.Symbol.LastPrice - position.Symbol.PriceTickSize;
+            }
+            else
+            {
+                //price = step.Price + adjust;
+                if (position.Symbol.LastPrice.HasValue && position.Symbol.LastPrice > price)
+                    price = (decimal)position.Symbol.LastPrice + position.Symbol.PriceTickSize;
+            }
+
+
+            // Zo laat mogelijk controleren vanwege extra calls naar de exchange
+            //var resultCheckAssets = await CheckApiAndAssetsAsync(position.TradeAccount);
+            //if (!resultCheckAssets.success)
+            //{
+            //    string text = $"{position.Symbol.Name} + DCA bijplaatsen op {price.ToString0(position.Symbol.PriceDisplayFormat)}";
+            //    GlobalData.AddTextToLogTab(text + " " + resultCheckAssets.reaction);
+            //    Symbol.ClearSignals();
+            //    return;
+            //}
+
+
+            // De positie uitbreiden nalv een nieuw signaal (de xe bijkoop wordt altijd een aparte DCA)
+            PositionTools.ExtendPosition(databaseThread, position, CryptoPartPurpose.Dca, position.Interval, position.Strategy, 
+                CryptoEntryOrProfitMethod.FixedPercentage, price, DateTime.UtcNow);
+
+            FillItemOpen(position, item);
+        }
+
+    }
+
+
+    private async void CommandPositionLastPartTakeProfit(object sender, EventArgs e)
+    {
+        if (listViewPositionsOpen.SelectedItems.Count > 0)
+        {
+            ListViewItem item = listViewPositionsOpen.SelectedItems[0];
+            CryptoPosition position = (CryptoPosition)item.Tag;
+
+            if (!position.Symbol.LastPrice.HasValue)
+                return;
+
+            using CryptoDatabase databaseThread = new();
+            databaseThread.Connection.Open();
+
+            // Controleer de orders, en herbereken het geheel
+            PositionTools.LoadPosition(databaseThread, position);
+            await TradeTools.LoadTradesfromDatabaseAndExchange(databaseThread, position);
+            TradeTools.CalculatePositionResultsViaTrades(databaseThread, position);
+            FillItemOpen(position, item);
+
+
+            // Itereer de openstaande parts
+            foreach (CryptoPositionPart part in position.Parts.Values.ToList())
+            {
+                // voor de niet afgesloten parts...
+                if (!part.CloseTime.HasValue && part.Quantity > 0)
+                {
+                    CryptoOrderSide entryOrderSide = position.GetEntryOrderSide();
+
+                    // Is er een entry order in zijn geheel gevuld (lastig indien er meerdere entries komen)
+                    CryptoPositionStep step = PositionTools.FindPositionPartStep(part, entryOrderSide, true);
+                    if (step != null && step.Status == CryptoOrderStatus.Filled)
+                    {
+
+                        // Is de entry prijs wel hoger/lager dan de actuele prijs?
+                        //if (position.Side == CryptoTradeSide.Long && step.Price < part.BreakEvenPrice + 5 * position.Symbol.PriceTickSize)
+                        //    continue;
+                        //else if (position.Side == CryptoTradeSide.Short && step.Price > part.BreakEvenPrice - 5 * position.Symbol.PriceTickSize)
+                        //    continue;
+
+                        // Is de laatste prijs wel hoger/lager dan de actuele prijs?
+                        if (position.Side == CryptoTradeSide.Long && position.Symbol.LastPrice.Value < part.BreakEvenPrice + 25 * position.Symbol.PriceTickSize)
+                            continue;
+                        else if (position.Side == CryptoTradeSide.Short && position.Symbol.LastPrice.Value > part.BreakEvenPrice - 25 * position.Symbol.PriceTickSize)
+                            continue;
+
+                        // Is er een openstaande TP die niet gevuld is?
+                        CryptoOrderSide takeProfitOrderSide = position.GetTakeProfitOrderSide();
+                        step = PositionTools.FindPositionPartStep(part, takeProfitOrderSide, false);
+                        if (step != null && part.Quantity > 0)
+                        {
+                            decimal price = (decimal)position.Symbol.LastPrice;
+                            // controle is waarschijnlijk overbodig, de extra tick is prima
+                            // (tenzij het een market order moet zijn? Maar dan moet er meer aangepast worden)
+                            if (position.Side == CryptoTradeSide.Long)
+                                price += position.Symbol.PriceTickSize;
+                            else
+                                price -= position.Symbol.PriceTickSize;
+
+                            var (cancelled, cancelParams) = await TradeTools.CancelOrder(databaseThread, position, part, step, DateTime.UtcNow, CryptoOrderStatus.ManuallyByUser);
+                            if (!cancelled || GlobalData.Settings.Trading.LogCanceledOrders)
+                                ExchangeBase.Dump(position.Symbol, cancelled, cancelParams, "annuleren vanwege handmatige TP");
+
+                            if (cancelled)
+                            {
+                                price = price.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
+                                await TradeTools.PlaceTakeProfitOrderAtPrice(databaseThread, position, part, price, DateTime.UtcNow, "manually placing");
+                                FillItemOpen(position, item);
+
+                                break;
+                            }
+
+                        }
+                    }
+
+                }
+            }
+        }
     }
 
 }

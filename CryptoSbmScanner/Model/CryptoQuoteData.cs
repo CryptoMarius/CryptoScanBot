@@ -24,7 +24,7 @@ public class CryptoQuoteData
     public decimal EntryPercentage { get; set; }
 
     // Maximaal aantal slots op de exchange
-    public int SlotsMaximal { get; set; }
+    //public int SlotsMaximal { get; set; }
 
     [JsonConverter(typeof(Intern.ColorConverter))]
     public Color DisplayColor { get; set; } = Color.White;

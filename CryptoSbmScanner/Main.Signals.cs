@@ -94,11 +94,6 @@ public partial class FrmMain
         {
             if (columnHeader.Text != "")
             {
-                //x.Width = 0;
-                //hide: LVW.Columns.Item(0).Width = 0
-                //show again: LVW.Columns.Item(0).AutoResize(ColumnHeaderAutoResizeStyle.ColumnContent)
-                //Alleen een dictionary nodig voor de opslag?
-
                 ToolStripMenuItem item = new()
                 {
                     Tag = columnHeader,
@@ -143,7 +138,7 @@ public partial class FrmMain
                         listViewSignals.AutoResizeColumn(columnHeader.Index, ColumnHeaderAutoResizeStyle.ColumnContent);
                     }
                 }
-                ResizeColumns();
+                ResizeColumnsSignal();
             }
             finally
             {
@@ -152,7 +147,7 @@ public partial class FrmMain
         }
     }
 
-    private void ResizeColumns()
+    private void ResizeColumnsSignal()
     {
         for (int i = 0; i <= listViewSignals.Columns.Count - 1; i++)
         {
@@ -214,7 +209,7 @@ public partial class FrmMain
               ((ListViewColumnSorterSignal)listViewSignals.ListViewItemSorter).SortColumn,
               ((ListViewColumnSorterSignal)listViewSignals.ListViewItemSorter).SortOrder);
 
-        ResizeColumns();
+        ResizeColumnsSignal();
     }
 
 
@@ -541,7 +536,7 @@ public partial class FrmMain
         listViewSignals.BeginUpdate();
         try
         {
-            List<ListViewItem> range = new();
+            List<ListViewItem> range = [];
             foreach (CryptoSignal signal in signals)
             {
                 ListViewItem item = AddSignalItem(signal);
@@ -553,7 +548,7 @@ public partial class FrmMain
             SetBackGroundColorsSignals();
 
             // Deze redelijk kostbaar? (alles moet gecontroleerd worden)
-            ResizeColumns();
+            ResizeColumnsSignal();
 
             //if (signals.Count > 1)
             //    GlobalData.AddTextToLogTab(signals.Count + " signalen als een range toegevoegd");
@@ -629,7 +624,10 @@ public partial class FrmMain
 
             }
         }
-        Clipboard.SetText(text, TextDataFormat.UnicodeText);
+        if (text == "")
+            Clipboard.Clear();
+        else
+            Clipboard.SetText(text, TextDataFormat.UnicodeText);
     }
 
     /// <summary>

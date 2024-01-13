@@ -270,6 +270,15 @@ public class Migration
                 // Deze bestaat reeds op position niveau en kan daarom weer weg
                 database.Connection.Execute("alter table PositionPart drop column EntryAmount", transaction);
 
+                // Indicatie dat er een openstaande DCA aanwezig is
+                database.Connection.Execute("alter table Position add HasOpenDca TEXT null", transaction);
+
+                // Voor een nieuw statistiek idee moet de partcount alleen de actieve dca's bevatten
+                // De PartCount aanpassen
+                database.Connection.Execute("update Position set PartCount=(select count(*) from positionpart where invested > 0.0)", transaction);
+                database.Connection.Execute("update Position set HasOpenDca=(select count(*) from positionpart where invested <= 0.0)", transaction);
+                database.Connection.Execute("update Position set HasOpenDca=0 where not CloseTime is null", transaction);
+
                 // update version
                 version.Version += 1;
                 database.Connection.Update(version, transaction);

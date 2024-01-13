@@ -4,6 +4,8 @@ using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Trader;
 
+using Dapper;
+
 namespace CryptoSbmScanner;
 
 #if TRADEBOT
@@ -43,6 +45,11 @@ public partial class FrmMain
         menuCommand = new ToolStripMenuItem();
         menuCommand.Text = "Herberekenen";
         menuCommand.Click += CommandPositionsClosedRecalculateExecute;
+        ContextMenuStripPositionsClosed.Items.Add(menuCommand);
+
+        menuCommand = new ToolStripMenuItem();
+        menuCommand.Text = "Verwijder uit database";
+        menuCommand.Click += CommandPositionDeleteFromDatabase;
         ContextMenuStripPositionsClosed.Items.Add(menuCommand);
 
         menuCommand = new ToolStripMenuItem();
@@ -233,7 +240,7 @@ public partial class FrmMain
         listViewPositionsClosed.BeginUpdate();
         try
         {
-            List<ListViewItem> range = new();
+            List<ListViewItem> range = [];
             foreach (CryptoPosition position in list.ToList())
             {
                 ListViewItem item = AddClosedPosition(position);
@@ -283,6 +290,42 @@ public partial class FrmMain
 
     }
 
+
+    private void CommandPositionDeleteFromDatabase(object sender, EventArgs e)
+    {
+        if (listViewPositionsClosed.SelectedItems.Count > 0)
+        {
+            ListViewItem item = listViewPositionsClosed.SelectedItems[0];
+            CryptoPosition position = (CryptoPosition)item.Tag;
+
+            try
+            {
+                using CryptoDatabase databaseThread = new();
+                databaseThread.Connection.Open();
+
+                // Controleer de orders, en herbereken het geheel
+                PositionTools.LoadPosition(databaseThread, position);
+                //await TradeTools.LoadTradesfromDatabaseAndExchange(databaseThread, position);
+                //TradeTools.CalculatePositionResultsViaTrades(databaseThread, position, saveChangesAnywhay: true);
+                //FillItemClosed(position, item);
+
+
+                using var transaction = databaseThread.BeginTransaction();
+                databaseThread.Connection.Execute($"delete from positionstep where positionid={position.Id}", transaction);
+                databaseThread.Connection.Execute($"delete from positionpart where positionid={position.Id}", transaction);
+                databaseThread.Connection.Execute($"delete from position where id={position.Id}", transaction);
+                transaction.Commit();
+
+                listViewPositionsClosed.Items.Remove(item);
+
+            }
+            catch (Exception error)
+            {
+                GlobalData.Logger.Error(error, "");
+                GlobalData.AddTextToLogTab($"error deleteing position {error.Message}");
+            }
+        }
+    }
 }
 #endif
 

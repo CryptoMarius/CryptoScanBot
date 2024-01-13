@@ -17,4 +17,5 @@ public enum CryptoOrderStatus
     ChangedBreakEven,
     JoJoSell,
     TrailingChange,
+    ManuallyByUser
 }

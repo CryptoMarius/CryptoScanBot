@@ -81,7 +81,7 @@ public partial class UserControlTradeDca : UserControl
 
     private void ButtonDcaAddClick(object sender, EventArgs e)
     {
-        // Een dca toevoegen
+        // Een item toevoegen
         CryptoDcaEntry dca = new();
         var control = new UserControlTradeDcaItem();
 
@@ -109,7 +109,7 @@ public partial class UserControlTradeDca : UserControl
 
     private void ButtonDcaDelClick(object sender, EventArgs e)
     {
-        // Verwijder de laatste dca
+        // Verwijder het laatste item
         if (UserControlDcaList.Count != 0)
         {
             var control = UserControlDcaList[^1];

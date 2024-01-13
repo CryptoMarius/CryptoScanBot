@@ -41,16 +41,19 @@ public static class TradingConfig
             string[] words = text.Split(delimiterChars);
             if (words.Length > 0)
             {
-                string symbol = words[0].ToUpper();
-                if (!target.ContainsKey(symbol))
-                    target.Add(symbol, true);
-
-                if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+                string symbol = words[0].ToUpper().Trim();
+                if (symbol != "")
                 {
-                    if (!exchange.SymbolListName.ContainsKey(symbol))
+                    if (!target.ContainsKey(symbol))
+                        target.Add(symbol, true);
+
+                    if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
                     {
-                        if (GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
-                            GlobalData.AddTextToLogTab($"FOUT {caption} {symbol} bestaat niet");
+                        if (!exchange.SymbolListName.ContainsKey(symbol))
+                        {
+                            if (GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
+                                GlobalData.AddTextToLogTab($"FOUT {caption} {symbol} bestaat niet");
+                        }
                     }
                 }
             }

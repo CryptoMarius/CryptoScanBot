@@ -192,7 +192,7 @@ public partial class FrmMain : Form
             dashBoardControl1.Font = Font;
         }
 
-        ListboxSymbolsInitCaptions();
+        ListViewSymbolsInitCaptions();
         ListViewSignalsInitCaptions();
 
 #if TRADEBOT
@@ -511,7 +511,7 @@ public partial class FrmMain : Form
             Monitor.Enter(GlobalData.SignalQueue);
             try
             {
-                List<CryptoSignal> signals = new();
+                List<CryptoSignal> signals = [];
 
                 while (GlobalData.SignalQueue.Count > 0)
                 {

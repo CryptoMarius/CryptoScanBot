@@ -66,7 +66,8 @@ public static class PositionTools
     }
 
 
-    public static CryptoPosition CreatePosition(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoSignalStrategy strategy, CryptoTradeSide side, CryptoSymbolInterval symbolInterval, DateTime currentDate)
+    public static CryptoPosition CreatePosition(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoSignalStrategy strategy, CryptoTradeSide side, 
+        CryptoSymbolInterval symbolInterval, DateTime currentDate)
     {
         CryptoPosition position = new()
         {
@@ -87,6 +88,40 @@ public static class PositionTools
             Side = side,
         };
         return position;
+    }
+
+
+    public static void ExtendPosition(CryptoDatabase database, CryptoPosition position, CryptoPartPurpose purpose, CryptoInterval interval,
+        CryptoSignalStrategy strategy, CryptoEntryOrProfitMethod stepInMethod, decimal signalPrice, DateTime currentDate)
+    {
+        CryptoPositionPart part = new()
+        {
+            Purpose = purpose,
+            PartNumber = position.PartCount,
+            Strategy = strategy,
+            Interval = interval,
+            IntervalId = interval.Id,
+            EntryMethod = stepInMethod,
+            SignalPrice = signalPrice,
+            CreateTime = currentDate,
+            PositionId = position.Id,
+            Symbol = position.Symbol,
+            SymbolId = position.Symbol.Id,
+            Exchange = position.Symbol.Exchange,
+            ExchangeId = position.Symbol.ExchangeId
+        };
+
+        database.Connection.Insert<CryptoPositionPart>(part);
+        AddPositionPart(position, part);
+
+        position.PartCount += 1;
+        position.UpdateTime = part.CreateTime;
+        database.Connection.Update<CryptoPosition>(position);
+
+        // Nieuwe parts worden hierdoor uitgesloten (denk ik?)
+        position.Symbol.LastTradeDate = currentDate;
+
+        GlobalData.AddTextToLogTab($"{position.Symbol.Name} {purpose} {stepInMethod} plaatsen op {signalPrice.ToString0(position.Symbol.PriceDisplayFormat)}");
     }
 
 

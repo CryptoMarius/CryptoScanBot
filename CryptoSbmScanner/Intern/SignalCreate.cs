@@ -551,30 +551,30 @@ public class SignalCreate
 
 
 
-
-        // New coins have a lot of price changes
-        // Are there x day's of candles avaliable on the day interval
-        // Bij het backtesten wordt slechts een gelimiteerd aantal candles ingelezen, dus daarom uitgeschakeld)
-        if (!HasOpenPosition() && !GlobalData.BackTest)
-        {
-            var candles1Day = Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1d).CandleList;
-            if (candles1Day.Count < GlobalData.Settings.Signal.SymbolMustExistsDays)
-            {
-                if (GlobalData.Settings.Signal.LogSymbolMustExistsDays)
-                {
-                    // Het aantal dagen vermelden dat het bestaat
-                    string text = "0";
-                    if (candles1Day.Count > 0)
-                    {
-                        CryptoCandle first = candles1Day.Values.First();
-                        text = CandleTools.GetUnixDate(first.OpenTime).Day.ToString();
-                    }
-                    GlobalData.AddTextToLogTab($"Analyse {Symbol.Name} bestaat {text} dagen en is te nieuw (moet tenminste {GlobalData.Settings.Signal.SymbolMustExistsDays} dagen bestaan)");
-                }
-                eventText.Add("coin te nieuw");
-                signal.IsInvalid = true;
-            }
-        }
+        // Duplicaat code: Dit wordt nu gedaan voordat er signalen worden gemaakt (zie PositionMonitor.CreateSignals())
+        //// New coins have a lot of price changes
+        //// Are there x day's of candles avaliable on the day interval
+        //// Bij het backtesten wordt slechts een gelimiteerd aantal candles ingelezen, dus daarom uitgeschakeld)
+        //if (!HasOpenPosition() && !GlobalData.BackTest)
+        //{
+        //    var candles1Day = Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1d).CandleList;
+        //    if (candles1Day.Count < GlobalData.Settings.Signal.SymbolMustExistsDays)
+        //    {
+        //        if (GlobalData.Settings.Signal.LogSymbolMustExistsDays)
+        //        {
+        //            // Het aantal dagen vermelden dat het bestaat
+        //            string text = "0";
+        //            if (candles1Day.Count > 0)
+        //            {
+        //                CryptoCandle first = candles1Day.Values.First();
+        //                text = CandleTools.GetUnixDate(first.OpenTime).Day.ToString();
+        //            }
+        //            GlobalData.AddTextToLogTab($"Analyse {Symbol.Name} bestaat {text} dagen en is te nieuw (moet tenminste {GlobalData.Settings.Signal.SymbolMustExistsDays} dagen bestaan)");
+        //        }
+        //        eventText.Add("coin te nieuw");
+        //        signal.IsInvalid = true;
+        //    }
+        //}
 
 
         // TODO: Willen we dat nu hier of in de aansturing (de invalid signals klopt nu niet)

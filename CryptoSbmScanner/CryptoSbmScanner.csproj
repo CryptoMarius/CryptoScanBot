@@ -23,11 +23,11 @@
     <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DefineConstants>$(DefineConstants);EXTRASTRATEGIES;TRADEBOT</DefineConstants>
+    <DefineConstants>$(DefineConstants);TRADEBOT;EXTRASTRATEGIES</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
-    <DefineConstants>$(DefineConstants);EXTRASTRATEGIES;TRADEBOT</DefineConstants>
+    <DefineConstants>$(DefineConstants);TRADEBOT;EXTRASTRATEGIES</DefineConstants>
   </PropertyGroup>
   <PropertyGroup />
   <PropertyGroup>
@@ -279,10 +279,16 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
+    <Compile Update="SettingsDialog\UserControlTradeRule.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
     <Compile Update="SettingsDialog\UserControlTradeDca.cs">
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Update="SettingsDialog\UserControlTradeBuy.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="SettingsDialog\UserControlTradeRuleItem.cs">
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Update="SettingsDialog\UserControlTradeSell.cs">

@@ -16,6 +16,9 @@ public partial class UserControlStrategy : UserControl
     {
         foreach (var signalDefinition in SignalHelper.AlgorithmDefinitionIndex.Values)
         {
+            if (signalDefinition.Strategy == CryptoSignalStrategy.Jump)
+                continue;
+
             bool validStrategy = ((tradeSide == CryptoTradeSide.Long && signalDefinition.AnalyzeLongType != null) ||
                 (tradeSide == CryptoTradeSide.Short && signalDefinition.AnalyzeShortType != null));
 

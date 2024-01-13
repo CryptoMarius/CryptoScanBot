@@ -21,7 +21,7 @@ internal class SettingsQuoteCoin : IDisposable
     // Trade bot settings
     public NumericUpDown BuyAmount;
     public NumericUpDown BuyPercentage;
-    public NumericUpDown SlotsMaximal;
+    //public NumericUpDown SlotsMaximal;
 #endif
 
     public void Dispose()
@@ -35,7 +35,7 @@ internal class SettingsQuoteCoin : IDisposable
 #if TRADEBOT
         if (BuyAmount != null) { BuyAmount.Dispose(); BuyAmount = null; }
         if (BuyPercentage != null) { BuyPercentage.Dispose(); BuyPercentage = null; }
-        if (SlotsMaximal != null) { SlotsMaximal.Dispose(); SlotsMaximal = null; }
+        //if (SlotsMaximal != null) { SlotsMaximal.Dispose(); SlotsMaximal = null; }
 #endif
     }
 
@@ -122,23 +122,23 @@ internal class SettingsQuoteCoin : IDisposable
         xPos += BuyPercentage.Size.Width + 10;
         controls.Add(BuyPercentage);
 
-        // Maximaal aantal slots op de exchange
-        //public int SlotsMaximal { get; set; }
-        SlotsMaximal = new()
-        {
-            DecimalPlaces = 0,
-            //Increment = new decimal(new int[] { 1, 0, 0, 393216 }),
-            Location = new Point(xPos, yPos),
-            //Maximum = new decimal(new int[] { 276447231, 23283, 0, 0 }),
-            Size = new Size(60, 23),
-            ThousandsSeparator = true,
-            Minimum = 0m,
-            //DecimalPlaces = 0,
-            Maximum = 1000m,
-            Increment = 1m,
-        };
-        xPos += SlotsMaximal.Size.Width + 10;
-        controls.Add(SlotsMaximal);
+        //// Maximaal aantal slots op de exchange
+        ////public int SlotsMaximal { get; set; }
+        //SlotsMaximal = new()
+        //{
+        //    DecimalPlaces = 0,
+        //    //Increment = new decimal(new int[] { 1, 0, 0, 393216 }),
+        //    Location = new Point(xPos, yPos),
+        //    //Maximum = new decimal(new int[] { 276447231, 23283, 0, 0 }),
+        //    Size = new Size(60, 23),
+        //    ThousandsSeparator = true,
+        //    Minimum = 0m,
+        //    //DecimalPlaces = 0,
+        //    Maximum = 1000m,
+        //    Increment = 1m,
+        //};
+        //xPos += SlotsMaximal.Size.Width + 10;
+        //controls.Add(SlotsMaximal);
 #endif
 
         PanelColor = new()
@@ -229,12 +229,12 @@ internal class SettingsQuoteCoin : IDisposable
         };
         controls.Add(label);
 
-        label = new()
-        {
-            AutoSize = true,
-            Text = "Slots",
-            Location = new Point(SlotsMaximal.Location.X - correct, yPos),
-        };
+        //label = new()
+        //{
+        //    AutoSize = true,
+        //    Text = "Slots",
+        //    Location = new Point(SlotsMaximal.Location.X - correct, yPos),
+        //};
         controls.Add(label);
 #endif
         label = new()
@@ -272,7 +272,7 @@ internal class SettingsQuoteCoin : IDisposable
 #if TRADEBOT
         BuyAmount.Value = QuoteData.EntryAmount;
         BuyPercentage.Value = QuoteData.EntryPercentage;
-        SlotsMaximal.Value = QuoteData.SlotsMaximal;
+        //SlotsMaximal.Value = QuoteData.SlotsMaximal;
 #endif
     }
 
@@ -286,7 +286,7 @@ internal class SettingsQuoteCoin : IDisposable
 #if TRADEBOT
         QuoteData.EntryAmount = BuyAmount.Value;
         QuoteData.EntryPercentage = BuyPercentage.Value;
-        QuoteData.SlotsMaximal = (int)SlotsMaximal.Value;
+        //QuoteData.SlotsMaximal = (int)SlotsMaximal.Value;
 #endif
     }
 }

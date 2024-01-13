@@ -124,19 +124,4 @@ public class SignalCreateBase
         return false;
     }
 
-
-    public bool BarometersOkay((decimal minValue, decimal maxValue) values)
-    {
-        if (!SymbolTools.CheckValidBarometer(Symbol.QuoteData, CryptoIntervalPeriod.interval1h, (values.minValue, values.maxValue), out ExtraText))
-            return false;
-
-        if (!SymbolTools.CheckValidBarometer(Symbol.QuoteData, CryptoIntervalPeriod.interval4h, (values.minValue, values.maxValue), out ExtraText))
-            return false;
-
-        if (!SymbolTools.CheckValidBarometer(Symbol.QuoteData, CryptoIntervalPeriod.interval1d, (values.minValue, values.maxValue), out ExtraText))
-            return false;
-
-        return true;
-    }
-
 }

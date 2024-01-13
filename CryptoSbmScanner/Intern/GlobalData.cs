@@ -800,11 +800,11 @@ static public class GlobalData
         config.AddTarget("file", fileTarget);
         fileTarget.Name = "default";
         fileTarget.KeepFileOpen = true;
+        fileTarget.ArchiveEvery = NLog.Targets.FileArchivePeriod.Day; // None?
         fileTarget.FileName = GetBaseDir() + "CryptoScanner ${date:format=yyyy-MM-dd}.log";
         fileTarget.MaxArchiveDays = 14;
         //fileTarget.ArchiveDateFormat = "yyyy-MM-dd";
         //fileTarget.EnableArchiveFileCompression = false;
-        //fileTarget.ArchiveEvery = NLog.Targets.FileArchivePeriod.Day; // None?
         //fileTarget.ArchiveNumbering = NLog.Targets.ArchiveNumberingMode.Date;
         //fileTarget.MaxArchiveDays = 10;
         //fileTarget.ArchiveFileName = fileTarget.FileName; //"${logDirectory}/Log.{#}.log";
@@ -818,6 +818,7 @@ static public class GlobalData
         fileTarget.Name = "errors";
         fileTarget.KeepFileOpen = true;
         fileTarget.MaxArchiveDays = 14;
+        fileTarget.ArchiveEvery = NLog.Targets.FileArchivePeriod.Day; // None?
         fileTarget.FileName = GetBaseDir() + "CryptoScanner ${date:format=yyyy-MM-dd}-Errors.log";
         rule = new NLog.Config.LoggingRule("*", NLog.LogLevel.Error, fileTarget);
         config.LoggingRules.Add(rule);
@@ -828,6 +829,7 @@ static public class GlobalData
         //fileTarget.Name = "trace";
         //fileTarget.KeepFileOpen = true;
         //fileTarget.MaxArchiveDays = 14;
+        //fileTarget.ArchiveEvery = NLog.Targets.FileArchivePeriod.Day; // None?
         //fileTarget.FileName = GetBaseDir() + "CryptoScanner ${date:format=yyyy-MM-dd}-Trace.log";
         //rule = new NLog.Config.LoggingRule("*", NLog.LogLevel.Trace, fileTarget);
         //config.LoggingRules.Add(rule);

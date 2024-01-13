@@ -108,6 +108,7 @@ public class TradeTools
         position.Invested = 0;
         position.Returned = 0;
         position.Commission = 0;
+        bool hasActiveDca = false;
 
         // Ondersteuning long/short
         CryptoOrderSide entryOrderSide = position.GetEntryOrderSide();
@@ -174,7 +175,8 @@ public class TradeTools
                 else
                     part.BreakEvenPrice = 0;
             }
-
+            if (part.Invested == 0)
+                hasActiveDca = true;
 
             //string t = string.Format("{0} CalculateProfit sell invested={1} profit={2} bought={3} sold={4} steps={5}",
             //    position.Symbol.Name, part.Invested, part.Profit, part.Invested, part.Returned, part.Steps.Count);
@@ -188,6 +190,7 @@ public class TradeTools
         }
 
 
+        // Er is in geinvesteerd en dus moet de positie actief zijn
         if (position.Invested != 0 && position.Status == CryptoPositionStatus.Waiting)
         {
             position.CloseTime = null;
@@ -216,6 +219,18 @@ public class TradeTools
                 position.BreakEvenPrice = (position.Invested - position.Returned - position.Commission) / position.Quantity; //?
             else
                 position.BreakEvenPrice = 0;
+        }
+
+        // Correcties omdat de ActiveDca achteraf geintroduceerd is
+        if (position.ActiveDca && !hasActiveDca)
+        {
+            position.ActiveDca = false;
+            position.PartCount = position.Parts.Count;
+        }
+        if (position.ActiveDca)
+        {
+            //position.ActiveDca = true;
+            position.PartCount = position.Parts.Count - 1;
         }
     }
 
@@ -327,6 +342,7 @@ public class TradeTools
                 if (step.Status < CryptoOrderStatus.Filled)
                     openOrders++;
             }
+
         }
 
         // De positie doorrekenen (parts/steps)
@@ -403,5 +419,70 @@ public class TradeTools
             await ExchangeHelper.FetchTradesAsync(position.TradeAccount, position.Symbol);
     }
 
+
+    static public async Task<(bool cancelled, TradeParams tradeParams)> CancelOrder(CryptoDatabase database, CryptoPosition position, CryptoPositionPart part,
+        CryptoPositionStep step, DateTime currentTime, CryptoOrderStatus newStatus = CryptoOrderStatus.Expired)
+    {
+        position.UpdateTime = currentTime;
+        database.Connection.Update<CryptoPosition>(position);
+
+        // Aankondiging dat we deze order gaan annuleren (de tradehandler weet dan dat wij het waren en het niet de user was via de exchange)
+        step.CancelInProgress = true;
+
+        // Annuleer de order
+        var exchangeApi = ExchangeHelper.GetExchangeInstance(GlobalData.Settings.General.ExchangeId);
+        var result = await exchangeApi.Cancel(position.TradeAccount, position.Symbol, step);
+        if (result.succes)
+        {
+            step.Status = newStatus;
+            step.CloseTime = currentTime;
+            database.Connection.Update<CryptoPositionStep>(step);
+
+            if (position.TradeAccount.TradeAccountType == CryptoTradeAccountType.PaperTrade)
+                PaperAssets.Change(position.TradeAccount, position.Symbol, result.tradeParams.OrderSide,
+                    CryptoOrderStatus.Canceled, result.tradeParams.Quantity, result.tradeParams.QuoteQuantity);
+
+        }
+        return result;
+    }
+
+    static public async Task PlaceTakeProfitOrderAtPrice(CryptoDatabase database, CryptoPosition position, CryptoPositionPart part,
+        decimal takeProfitPrice, DateTime currentTime, string extraText)
+    {
+        // Probleem? Wat als het plaatsen van eem order fout gaat? (hoe vangen we de fout op en hoe herstellen we dat?
+        // Binance is een bitch af en toe!). Met name Binance wilde na het annuleren wel eens de assets niet
+        // vrijgeven waardoor de assets/pf niet snel genoeg bijgewerkt werd en de volgende opdracht dan de fout
+        // in zou kunnen gaan. Geld voor alles wat we in deze tool doen, qua buy en sell gaat de herkansing wel 
+        // goed, ook al zal je dan soms een repeterende fout voorbij zien komen (iedere minuut)
+
+        decimal takeProfitQuantity = part.Quantity;
+        takeProfitQuantity = takeProfitQuantity.Clamp(position.Symbol.QuantityMinimum, position.Symbol.QuantityMaximum, position.Symbol.QuantityTickSize);
+
+        CryptoOrderSide takeProfitOrderSide = position.GetTakeProfitOrderSide();
+
+        (bool result, TradeParams tradeParams) result;
+        var exchangeApi = ExchangeHelper.GetExchangeInstance(GlobalData.Settings.General.ExchangeId);
+        result = await exchangeApi.PlaceOrder(database,
+            position.TradeAccount, position.Symbol, position.Side, currentTime,
+            CryptoOrderType.Limit, takeProfitOrderSide, takeProfitQuantity, takeProfitPrice, null, null);
+
+        if (result.result)
+        {
+            if (part.Purpose == CryptoPartPurpose.Entry)
+                position.ProfitPrice = result.tradeParams.Price;
+            var step = PositionTools.CreatePositionStep(position, part, result.tradeParams);
+            database.Connection.Insert<CryptoPositionStep>(step);
+            PositionTools.AddPositionPartStep(part, step);
+            part.ProfitMethod = CryptoEntryOrProfitMethod.FixedPercentage;
+            database.Connection.Update<CryptoPositionPart>(part);
+            database.Connection.Update<CryptoPosition>(position);
+
+            if (position.TradeAccount.TradeAccountType == CryptoTradeAccountType.PaperTrade)
+                PaperAssets.Change(position.TradeAccount, position.Symbol, result.tradeParams.OrderSide,
+                    step.Status, result.tradeParams.Quantity, result.tradeParams.QuoteQuantity);
+
+            ExchangeBase.Dump(position.Symbol, result.result, result.tradeParams, extraText);
+        }
+    }
 }
 #endif

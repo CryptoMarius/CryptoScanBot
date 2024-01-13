@@ -136,6 +136,7 @@ public class CryptoSignal
     public int AboveBollingerBandsSma { get; set; } // Aantal candles die boven de BB.Sma uitkomen
     public int AboveBollingerBandsUpper { get; set; } // Aantal candles die boven de BB.Upper uitkomen
 
+    // Display only, in het grid om em om een grijze regel laten zien
     [Computed]
     public int ItemIndex { get; set; }
 

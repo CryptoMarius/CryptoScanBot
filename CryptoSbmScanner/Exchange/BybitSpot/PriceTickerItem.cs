@@ -122,7 +122,7 @@ public class PriceTickerItem
         _subscription.ConnectionLost -= ConnectionLost;
         _subscription.ConnectionRestored -= ConnectionRestored;
 
-        await socketClient.UnsubscribeAsync(_subscription);
+        await socketClient?.UnsubscribeAsync(_subscription);
         _subscription = null;
     }
 

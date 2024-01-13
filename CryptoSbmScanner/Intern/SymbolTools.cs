@@ -139,80 +139,80 @@ public class SymbolTools
     }
 
 
-    public static bool CheckAvailableSlotsExchange(CryptoTradeAccount tradeAccount, int slotLimit, out string reaction)
-    {
-        // Zijn er slots beschikbaar op de exchange?
+    //public static bool CheckAvailableSlotsExchange(CryptoTradeAccount tradeAccount, int slotLimit, out string reaction)
+    //{
+    //    // Zijn er slots beschikbaar op de exchange?
 
-        int slotsOccupied = 0;
-        foreach (var positionList in tradeAccount.PositionList.Values)
-        {
-            slotsOccupied += positionList.Count;
-        }
+    //    int slotsOccupied = 0;
+    //    foreach (var positionList in tradeAccount.PositionList.Values)
+    //    {
+    //        slotsOccupied += positionList.Count;
+    //    }
 
-        if (slotsOccupied >= slotLimit)
-        {
-            reaction = string.Format("No more global-slots available {0}", slotLimit);
-            return false;
-        }
+    //    if (slotsOccupied >= slotLimit)
+    //    {
+    //        reaction = string.Format("No more global-slots available {0}", slotLimit);
+    //        return false;
+    //    }
 
-        reaction = "";
-        return true;
-    }
-
-
-    public static bool CheckAvailableSlotsBase(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, int slotLimit, out string reaction)
-    {
-        // Zijn er slots beschikbaar op de base? 
-
-        int slotsOccupied = 0;
-        if (tradeAccount.PositionList.TryGetValue(symbol.Name, out var positionList))
-        {
-            foreach (CryptoPosition position in positionList.Values)
-            {
-                if (position.Symbol.Base.Equals(symbol.Base))
-                    slotsOccupied++;
-            }
-        }
-
-        if (slotsOccupied >= slotLimit)
-        {
-            reaction = string.Format("No more base-slots available {0}", slotLimit);
-            return false;
-        }
-
-        reaction = "";
-        return true;
-    }
+    //    reaction = "";
+    //    return true;
+    //}
 
 
-    public static bool CheckAvailableSlotsQuote(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, int slotLimit, out string reaction)
-    {
-        //Zijn er slots beschikbaar op de quote? 
+    //public static bool CheckAvailableSlotsBase(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, int slotLimit, out string reaction)
+    //{
+    //    // Zijn er slots beschikbaar op de base? 
 
-        int slotsOccupied = 0;
-        if (tradeAccount.PositionList.TryGetValue(symbol.Name, out var positionList))
-        {
-            foreach (CryptoPosition position in positionList.Values)
-            {
-                if (position.Symbol.Quote.Equals(symbol.Quote))
-                    slotsOccupied++;
-            }
-        }
+    //    int slotsOccupied = 0;
+    //    if (tradeAccount.PositionList.TryGetValue(symbol.Name, out var positionList))
+    //    {
+    //        foreach (CryptoPosition position in positionList.Values)
+    //        {
+    //            if (position.Symbol.Base.Equals(symbol.Base))
+    //                slotsOccupied++;
+    //        }
+    //    }
 
-        if (slotsOccupied >= slotLimit)
-        {
-            reaction = string.Format("No more quote-slots available {0}", slotLimit);
-            return false;
-        }
+    //    if (slotsOccupied >= slotLimit)
+    //    {
+    //        reaction = string.Format("No more base-slots available {0}", slotLimit);
+    //        return false;
+    //    }
 
-        reaction = "";
-        return true;
-    }
+    //    reaction = "";
+    //    return true;
+    //}
+
+
+    //public static bool CheckAvailableSlotsQuote(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, int slotLimit, out string reaction)
+    //{
+    //    // Zijn er slots beschikbaar?
+
+    //    int slotsOccupied = 0;
+    //    if (tradeAccount.PositionList.TryGetValue(symbol.Name, out var positionList))
+    //    {
+    //        foreach (CryptoPosition position in positionList.Values)
+    //        {
+    //            if (position.Symbol.Quote.Equals(symbol.Quote))
+    //                slotsOccupied++;
+    //        }
+    //    }
+
+    //    if (slotsOccupied >= slotLimit)
+    //    {
+    //        reaction = string.Format("No more quote-slots available {0}", slotLimit);
+    //        return false;
+    //    }
+
+    //    reaction = "";
+    //    return true;
+    //}
 
 
     public static bool CheckAvailableSlotsSymbol(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, int slotLimit, out string reaction)
     {
-        // Zijn er slots beschikbaar op de munt?
+        // Zijn er slots beschikbaar?
 
         int slotsOccupied = 0;
         if (tradeAccount.PositionList.TryGetValue(symbol.Name, out var positionList))
@@ -231,19 +231,50 @@ public class SymbolTools
         return true;
     }
 
+    public static bool CheckAvailableSlotsLongShort(CryptoTradeAccount tradeAccount, CryptoTradeSide side, int slotLimit, out string reaction)
+    {
+        // Zijn er slots beschikbaar?
+
+        int slotsOccupied = 0;
+        foreach (var positionList in tradeAccount.PositionList.Values)
+        {
+            foreach (CryptoPosition position in positionList.Values)
+            {
+                if (position.Side == side)
+                    slotsOccupied++;
+            }
+        }
+
+        if (slotsOccupied >= slotLimit)
+        {
+            reaction = $"No more slots available {slotLimit} for {side}";
+            return false;
+        }
+
+        reaction = "";
+        return true;
+    }
 
     public static bool CheckAvailableSlots(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, out string reaction)
     {
-        if (!CheckAvailableSlotsExchange(tradeAccount, GlobalData.Settings.Trading.SlotsMaximalExchange, out reaction))
+        //if (!CheckAvailableSlotsExchange(tradeAccount, GlobalData.Settings.Trading.SlotsMaximalExchange, out reaction))
+        //    return false;
+
+        //if (!CheckAvailableSlotsSymbol(tradeAccount, symbol, GlobalData.Settings.Trading.SlotsMaximalSymbol, out reaction))
+        //    return false;
+        if (!CheckAvailableSlotsSymbol(tradeAccount, symbol, 1, out reaction))
             return false;
 
-        if (!CheckAvailableSlotsSymbol(tradeAccount, symbol, GlobalData.Settings.Trading.SlotsMaximalSymbol, out reaction))
+        //if (!CheckAvailableSlotsBase(tradeAccount, symbol, GlobalData.Settings.Trading.SlotsMaximalBase, out reaction))
+        //    return false;
+
+        //if (!CheckAvailableSlotsQuote(tradeAccount, symbol, symbol.QuoteData.SlotsMaximal, out reaction))
+        //    return false;
+
+        if (!CheckAvailableSlotsLongShort(tradeAccount, CryptoTradeSide.Long, GlobalData.Settings.Trading.SlotsMaximalLong, out reaction))
             return false;
 
-        if (!CheckAvailableSlotsBase(tradeAccount, symbol, GlobalData.Settings.Trading.SlotsMaximalBase, out reaction))
-            return false;
-
-        if (!CheckAvailableSlotsQuote(tradeAccount, symbol, symbol.QuoteData.SlotsMaximal, out reaction))
+        if (!CheckAvailableSlotsLongShort(tradeAccount, CryptoTradeSide.Short, GlobalData.Settings.Trading.SlotsMaximalShort, out reaction))
             return false;
 
         reaction = "";
@@ -274,45 +305,8 @@ public class SymbolTools
         CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1d);
         if (symbolPeriod.CandleList.Count < GlobalData.Settings.Signal.SymbolMustExistsDays)
         {
-            reaction = string.Format("De munt is te nieuw, geen {0} dagen beschikbaar", GlobalData.Settings.Signal.SymbolMustExistsDays);
+            reaction =$"De munt is te nieuw, geen {GlobalData.Settings.Signal.SymbolMustExistsDays} dagen beschikbaar";
             return false;
-        }
-
-        reaction = "";
-        return true;
-    }
-
-
-    public static bool CheckValidBarometer(CryptoQuoteData quoteData, CryptoIntervalPeriod intervalPeriod, (decimal minValue, decimal maxValue) values, out string reaction)
-    {
-        //if (values.minValue > -99m)
-        {
-            if (!GlobalData.IntervalListPeriod.TryGetValue(intervalPeriod, out CryptoInterval interval))
-            {
-                reaction = string.Format("Interval {0} bestaat niet", intervalPeriod.ToString());
-                return false;
-            }
-
-            // We gaan ervan uit dat alles in 1x wordt berekend
-            BarometerData barometerData = quoteData.BarometerList[intervalPeriod];
-            if (!barometerData.PriceBarometer.HasValue)
-            {
-                reaction = string.Format("Barometer {0} not calculated", interval.Name);
-                return false;
-            }
-
-            barometerData = quoteData.BarometerList[intervalPeriod];
-            if (!barometerData.PriceBarometer.IsBetween(values.minValue, values.maxValue))
-            {
-                string minValueStr = values.minValue.ToString0("N2");
-                if (values.minValue == decimal.MinValue)
-                    minValueStr = "-maxint";
-                string maxValueStr = values.maxValue.ToString0("N2");
-                if (values.maxValue == decimal.MaxValue)
-                    maxValueStr = "+maxint";
-                reaction = $"Barometer {interval.Name} {barometerData.PriceBarometer?.ToString0("N2")} niet tussen {minValueStr} en {maxValueStr}";
-                return false;
-            }
         }
 
         reaction = "";

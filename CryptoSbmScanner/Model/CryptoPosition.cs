@@ -66,7 +66,9 @@ public class CryptoPosition
 
     // Soort van Parts.Count (maar dan hoeft niet alles geladen te zijn)
     public int PartCount { get; set; }
-
+    [Computed]
+    public bool ActiveDca { get; set; }
+    
     // Zou computed kunnen, maar voor de zekerheid in de database
     public bool Reposition { get; set; }
 
@@ -88,7 +90,7 @@ public static class CryptoPositionHelper
             return 0m;
         else
         {
-            decimal value = position.Quantity * position.Symbol.LastPrice.Value - position.Invested;
+            decimal value = position.Quantity * position.Symbol.LastPrice.Value - (position.Invested - position.Returned);
             if (position.Side == CryptoTradeSide.Short)
                 value = -1 * value;
             return value;

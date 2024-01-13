@@ -1,7 +1,10 @@
 CryptoSbmScanenr release historie:
 
 xx-01-2024 1.9
-- Trading - De DCA's kunnen instellen via de interface (dat was tot dusver alleen mogelijk via de json)
+- Trading - De tradingrules via de interface kunnen instellen (dat was tot dusver alleen mogelijk via de json)
+- Trading - Charts - De dashboard statistieken houdt geen rekening met UTC (met als gevolg een vertekend beeld <als je de verkoop momenten kent>).
+- Trading - Trading op strategie jump is riskant en wordt daarom niet aangeboden om te kunnen traden.
+- Trading - De DCA's via de interface kunnen instellen (dat was tot dusver alleen mogelijk via de json)
 - Trading - DCA buy methode bevat voorlopig alleen de "Limit order op signaal prijs"
 - Trading - Voor het sluiten van een positie alsnog ALLE trades ophalen om te controleren dat er niet per ongeluk een buy order alsnog gehit is
 - Trading - Trading werkt nu exclusief op Bybit Spot en/of Futures want andere exchanges kan ik niet testen.
@@ -47,6 +50,9 @@ xx-01-2024 1.9
 - Trading - Bybit Futures - ophalen assets implementeren
 - Trading - Bybit Spot - ophalen assets implementeren
 
+- Scanner - Er wordt nu correct rekening gehouden met het vinkje log munten ouder dan x dagen (er werd altijd gelogd)
+- Scanner - De controle met de meldingen "er zijn niet genoeg candles voor" uitvoeren NA de controle op het aantal dagen
+- Scanner - Het symbol overzicht uitbreiden met de volume, verversen en kunnen sorteren
 - Scanner - Op het signalen tabblad is de titel van de trend aangepast naar "TF-Trend" (TimeFrame trend)
 - Scanner - Op het signalen tabblad is de titel van de trend% aangepast naar "Markttrend%" (globale trend)
 - Scanner - Op het signalen tabblad de breedte van de kolommen tekst niet aanpassen (die kolom kan aardig varieeren in breedte)

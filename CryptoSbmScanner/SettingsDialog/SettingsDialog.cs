@@ -229,9 +229,8 @@ public partial class FrmSettings : Form
         EditGlobalBuyCooldownTime.Value = settings.Trading.GlobalBuyCooldownTime;
 
         // slots
-        EditSlotsMaximalExchange.Value = settings.Trading.SlotsMaximalExchange;
-        EditSlotsMaximalSymbol.Value = settings.Trading.SlotsMaximalSymbol;
-        EditSlotsMaximalBase.Value = settings.Trading.SlotsMaximalBase;
+        EditSlotsMaximalLong.Value = settings.Trading.SlotsMaximalLong;
+        EditSlotsMaximalShort.Value = settings.Trading.SlotsMaximalShort;
 
         // Instap
         EditCheckIncreasingRsi.Checked = settings.Trading.CheckIncreasingRsi;
@@ -250,11 +249,9 @@ public partial class FrmSettings : Form
         EditLeverage.Value = settings.Trading.Leverage;
         EditCrossOrIsolated.SelectedIndex = settings.Trading.CrossOrIsolated;
 
-        // --------------------------------------------------------------------------------
-        // Trade bot
-        // --------------------------------------------------------------------------------
         UserControlTradingLong.LoadConfig(settings.Trading.Long);
         UserControlTradingShort.LoadConfig(settings.Trading.Short);
+        UserControlTradeRules.LoadConfig(settings.Trading);
 #endif
 
         // --------------------------------------------------------------------------------
@@ -440,16 +437,16 @@ public partial class FrmSettings : Form
         // Black & White list
         // --------------------------------------------------------------------------------
 
-        settings.BlackListOversold = textBoxBlackListOversold.Text.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries).ToList();
+        settings.BlackListOversold = textBoxBlackListOversold.Text.Trim().Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries).ToList();
         settings.WhiteListOversold.Sort();
 
-        settings.WhiteListOversold = textBoxWhiteListOversold.Text.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries).ToList();
+        settings.WhiteListOversold = textBoxWhiteListOversold.Text.Trim().Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries).ToList();
         settings.WhiteListOversold.Sort();
 
-        settings.BlackListOverbought = textBoxBlackListOverbought.Text.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries).ToList();
+        settings.BlackListOverbought = textBoxBlackListOverbought.Text.Trim().Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries).ToList();
         settings.WhiteListOverbought.Sort();
 
-        settings.WhiteListOverbought = textBoxWhiteListOverbought.Text.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries).ToList();
+        settings.WhiteListOverbought = textBoxWhiteListOverbought.Text.Trim().Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries).ToList();
         settings.WhiteListOverbought.Sort();
 
 #if TRADEBOT
@@ -471,9 +468,8 @@ public partial class FrmSettings : Form
         settings.Trading.GlobalBuyCooldownTime = (int)EditGlobalBuyCooldownTime.Value;
 
         // slots
-        settings.Trading.SlotsMaximalExchange = (int)EditSlotsMaximalExchange.Value;
-        settings.Trading.SlotsMaximalSymbol = (int)EditSlotsMaximalSymbol.Value;
-        settings.Trading.SlotsMaximalBase = (int)EditSlotsMaximalBase.Value;
+        settings.Trading.SlotsMaximalLong = (int)EditSlotsMaximalLong.Value;
+        settings.Trading.SlotsMaximalShort = (int)EditSlotsMaximalShort.Value;
 
         // Instap
         settings.Trading.CheckIncreasingRsi = EditCheckIncreasingRsi.Checked;
@@ -495,6 +491,7 @@ public partial class FrmSettings : Form
 
         UserControlTradingLong.SaveConfig(settings.Trading.Long);
         UserControlTradingShort.SaveConfig(settings.Trading.Short);
+        UserControlTradeRules.SaveConfig(settings.Trading);
 #endif
 
         // ------------------------------------------------------------------------------

@@ -121,7 +121,7 @@ public partial class DashBoardControl : UserControl
     {
         // dit is de query die per dag het een en ander aan info ophaalt
         StringBuilder builder = new();
-        builder.AppendLine("select date(positionStep.CloseTime) as CloseTime, symbol.quote, sum(positionStep.QuoteQuantityFilled) as Invested");
+        builder.AppendLine("select date(positionStep.CloseTime,'localtime') as CloseTime, symbol.quote, sum(positionStep.QuoteQuantityFilled) as Invested");
         builder.AppendLine("from PositionStep");
         builder.AppendLine("inner join position on Position.Id = positionStep.PositionId");
         builder.AppendLine("inner join symbol on Position.symbolid = symbol.id");
@@ -129,8 +129,8 @@ public partial class DashBoardControl : UserControl
         builder.AppendLine("and position.Invested > 0");
         builder.AppendLine("and position.Status in (1,2)");
         builder.AppendLine($"and symbol.quote = '{QuoteData.Name}'");
-        builder.AppendLine("group by date(PositionStep.CloseTime), PositionStep.Status, symbol.quote");
-        builder.AppendLine("order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote");
+        builder.AppendLine("group by date(PositionStep.CloseTime,'localtime'), PositionStep.Status, symbol.quote");
+        builder.AppendLine("order by date(PositionStep.CloseTime,'localtime') desc, PositionStep.Status, symbol.quote");
 
         using CryptoDatabase databaseThread = new();
         databaseThread.Open();
@@ -148,7 +148,7 @@ public partial class DashBoardControl : UserControl
     {
         // dit is de query die per dag het een en ander aan info ophaalt
         StringBuilder builder = new();
-        builder.AppendLine("select date(positionStep.CloseTime) as CloseTime, symbol.quote, sum(positionStep.QuoteQuantityFilled) as Returned");
+        builder.AppendLine("select date(positionStep.CloseTime,'localtime') as CloseTime, symbol.quote, sum(positionStep.QuoteQuantityFilled) as Returned");
         builder.AppendLine("from PositionStep");
         builder.AppendLine("inner join position on Position.Id = positionStep.PositionId");
         builder.AppendLine("inner join symbol on Position.symbolid = symbol.id");
@@ -156,8 +156,8 @@ public partial class DashBoardControl : UserControl
         builder.AppendLine("and position.Invested > 0");
         builder.AppendLine("and position.Status in (1,2)");
         builder.AppendLine($"and symbol.quote = '{QuoteData.Name}'");
-        builder.AppendLine("group by date(PositionStep.CloseTime), PositionStep.Status, symbol.quote");
-        builder.AppendLine("order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote");
+        builder.AppendLine("group by date(PositionStep.CloseTime,'localtime'), PositionStep.Status, symbol.quote");
+        builder.AppendLine("order by date(PositionStep.CloseTime,'localtime') desc, PositionStep.Status, symbol.quote");
 
         using CryptoDatabase databaseThread = new();
         databaseThread.Open();
@@ -186,7 +186,7 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
     {
         // dit is de query die per dag het een en ander aan info ophaalt
         StringBuilder builder = new();
-        builder.AppendLine("select date(position.CloseTime) as CloseTime, symbol.quote, position.Status, count(position.id) as Positions,");
+        builder.AppendLine("select date(position.CloseTime,'localtime') as CloseTime, symbol.quote, position.Status, count(position.id) as Positions,");
         builder.AppendLine("round(MIN(ROUND((JULIANDAY(position.CloseTime) - JULIANDAY(position.CreateTime)) * 86400 / 3600)), 2) AS MinMin, -- in uren");
         builder.AppendLine("round(AVG(ROUND((JULIANDAY(position.CloseTime) - JULIANDAY(position.CreateTime)) * 86400 / 3600)), 2) AS AvgMin, -- in uren");
         builder.AppendLine("round(MAX(ROUND((JULIANDAY(position.CloseTime) - JULIANDAY(position.CreateTime)) * 86400 / 3600)), 2) AS MaxMin, -- in uren");
@@ -204,8 +204,8 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
         builder.AppendLine($"where symbol.quote = '{QuoteData.Name}'");
         builder.AppendLine("and position.Invested > 0");
         builder.AppendLine("and position.Status in (1,2)");
-        builder.AppendLine("group by date(position.CloseTime), position.Status, symbol.quote");
-        builder.AppendLine("order by date(position.CloseTime) asc, position.Status, symbol.quote");
+        builder.AppendLine("group by date(position.CloseTime,'localtime'), position.Status, symbol.quote");
+        builder.AppendLine("order by date(position.CloseTime,'localtime') asc, position.Status, symbol.quote");
 
         using CryptoDatabase databaseThread = new();
         databaseThread.Open();
@@ -246,15 +246,15 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
         // dit is de query die per dag het een en ander aan info ophaalt
         StringBuilder builder = new();
         builder.AppendLine("select");
-        builder.AppendLine("  date(trade.TradeTime) as TradeTime,");
+        builder.AppendLine("  date(trade.TradeTime,'localtime') as TradeTime,");
         builder.AppendLine("  trade.Side,");
         builder.AppendLine("  symbol.quote,");
         builder.AppendLine("  sum(trade.QuoteQuantity) as Value");
         builder.AppendLine("from trade");
         builder.AppendLine("inner join symbol on trade.symbolid = symbol.id");
         builder.AppendLine($"where symbol.quote = '{QuoteData.Name}'");
-        builder.AppendLine("group by date(trade.TradeTime), trade.Side,symbol.quote");
-        builder.AppendLine("order by date(trade.TradeTime) asc, trade.Side,symbol.quote");
+        builder.AppendLine("group by date(trade.TradeTime,'localtime'), trade.Side,symbol.quote");
+        builder.AppendLine("order by date(trade.TradeTime,'localtime') asc, trade.Side,symbol.quote");
 
         using CryptoDatabase databaseThread = new();
         databaseThread.Open();

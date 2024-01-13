@@ -9,6 +9,7 @@ public class ListViewColumnSorter : IComparer
 
     internal CaseInsensitiveComparer ObjectCompare = new();
 
+
     public virtual int Compare(object x, object y)
     {
         return 0;

@@ -4,6 +4,7 @@ Als je iets mist, geef het dat dab AUB even aan in een private PM of in de groep
 
 
 Scanner:
+- Scanner - Soms blijft de barometer stilstaan (dan loopt de tijd van de barometer grafiek niet meer op)
 - Het volume bij de getoonde munten lijkt niet te kloppen (BTC, PAXG, ETH enzovoort)
   Maar je wilt ook niet heel veel candles in het geheugen hebben, de scanner op Bybit gebruikt nu al regelmatig 600Mb
 - De globale markt trend % wordt uitgerekend via de 210 aanwezige candles, voor de trend calculatie is dat eigenlijk te weinig.
@@ -28,7 +29,6 @@ Scanner:
   (ik heb hier eigenlijk geen alternatief voor, als iemand goede ideen heet laat het me weten aub)
   Misschien dat de introductie van een dashboard hier nog iets in kan betekenen t.z.t.
 - Het font van de menuitem (en popup?) wordt niet aangepast (indien een ander lettertype of grootte wordt gekozen)
-- Scanner - Het symbol overzicht uitbreiden met volume, prijs e.d. Kunnen filteren op volume etc.
 - Algemeen - Black theming  https://stackoverflow.com/questions/61145347/c-how-to-make-a-dark-mode-theme-in-windows-forms-separate-form-as-select-the <geen prio>
   Er is nu een slappe variant die iets met grijs doet (omdat anders de scrollbars en headers zo'n lelijk getoond worden), ik ben er niet tevreden over.
 
@@ -36,6 +36,9 @@ Scanner:
 NB: Als je ideen hebt voor het vervangen van de OCO/Stop limit informeer me dan AUB..
 
 Trading:
+- Trading - Een optie erbij voor het toevoegen van een extra DCA
+- Trading - De optie voor de backtest verbergen (deze werkt alleen in combinatie met een wat grotere SQL database en langere datum periodes)
+- Trading - Het trade geluidje kunnen instellen (kan nu alleen door het vervangen van de sound notification in de sound map)
 - Trading - Een link toevoegen aan de Telegram notificaties
 - Trading - Validatie op de ingevoerde DCA's uitvoeren, die moeten qua percentage op volgorde staan met een factor > 0
 - Trading - Charts, de statistieken voor de combinatie van short en long kloppen niet (de short wordt sql technisch niet goed opgepakt?)
@@ -46,8 +49,6 @@ Trading:
 - Trading - Charts - Graph toevoegen voor inzicht met hoeveel we aan het handelen zijn (inclusief de extra dca orders)
 - Trading - Charts - dagen waarin niets gebeurd worden niet getoond op de x-as (dat gebeurd ook helaas)
 - Trading - Bij een liquidatie wordt de positie geannuleerd en wordt deze niet genoteerd in de statistiek (het is een cancel van buiten af, maar met een herkenbare reden)
-- Trading - Charts - De dashboard statistieken houdt geen rekening met UTC (heeft nu 2 uur verschil met als gevolg een vertekend beeld <als je de verkoop momenten kent>).
-            Hoe kun je via SQLite hier rekening mee houden?
 - Trading - Handmatig toevoegen van een positie via een naam munt + begindatum mogelijk maken, laat de bot het gewoon overnemen als je er "moe" van bent.
 - Trading - Verwijderen van een positie (handmatig overnemen van een positie)
 - Trading - Een aparte tool maken voor een backtest, candles ophalen voor BTC (tradingregels), de intervallen 1m en emulator interval.

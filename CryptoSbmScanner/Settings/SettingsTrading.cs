@@ -93,14 +93,9 @@ public class SettingsTrading
 
     //***************************
     // Slots
-    //Maximaal aantal slots op de exchange
-    public int SlotsMaximalExchange { get; set; } = 1;
-    //Maximaal aantal slots per munt/asset
-    public int SlotsMaximalSymbol { get; set; } = 1;
-    //Maximaal aantal slots op de *USDT, *BTC, *ETH, enzovoort
-    //public int SlotsMaximalQuote { get; set; } = 1; dubbelop met de basismunten!
-    //Maximaal aantal slots op de AVE*, ADA*, enzovoort
-    public int SlotsMaximalBase { get; set; } = 1;
+    //Maximaal aantal slots voor long en short
+    public int SlotsMaximalLong { get; set; } = 1;
+    public int SlotsMaximalShort { get; set; } = 1;
 
 
     //***************************
