@@ -86,7 +86,7 @@ public partial class FrmMain
         bla.SortOrder = SortOrder.Ascending;
 
 
-        panelSymbols.Controls.Add(ListViewSymbols);
+        tabPageSymbols.Controls.Add(ListViewSymbols);
 
         TimerModifyVolume = new()
         {
@@ -131,7 +131,7 @@ public partial class FrmMain
         ListViewSymbols.Columns.Add("Volume", -2, HorizontalAlignment.Right);
         //ListViewSymbols.Columns.Add("Price", -2, HorizontalAlignment.Right);
 
-        ListViewSymbols.Columns.Add("", -2, HorizontalAlignment.Right); // filler
+        //ListViewSymbols.Columns.Add("", -2, HorizontalAlignment.Right); // filler
 
         ListViewSymbols.SetSortIcon(
               ((ListViewColumnSorterSymbol)ListViewSymbols.ListViewItemSorter).SortColumn,

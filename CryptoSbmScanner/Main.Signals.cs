@@ -87,6 +87,13 @@ public partial class FrmMain
         };
         TimerClearEvents.Tick += TimerClearOldSignals_Tick;
 
+
+        InitialzeSignalColumns();
+    }
+
+
+    private void InitialzeSignalColumns()
+    {
         ListViewSignalsInitColumns();
 
         ListViewSignalsColumns.Items.Clear();
@@ -167,6 +174,8 @@ public partial class FrmMain
 
     private void ListViewSignalsInitColumns()
     {
+        listViewSignals.Columns.Clear();
+
         // Create columns and subitems. Width of -2 indicates auto-size
         listViewSignals.Columns.Add("Candle datum", -2, HorizontalAlignment.Left);
         listViewSignals.Columns.Add("Exchange", -2, HorizontalAlignment.Left);
@@ -196,14 +205,21 @@ public partial class FrmMain
         listViewSignals.Columns.Add("FundingRate", -2, HorizontalAlignment.Right);
 
 
+        // TODO: Alleen de actieve kolommen toevoegen
+        //list<CryptoIntervalPeriod> TrendColumns = []; public maken
+        //Long.IntervalTrend.List.Add("1h");
+        //Short.IntervalTrend.List.Add("1h")
+        // bewerkelijk verderop bij de display..
+
         listViewSignals.Columns.Add("15m", -2, HorizontalAlignment.Left);
         listViewSignals.Columns.Add("30m", -2, HorizontalAlignment.Left);
         listViewSignals.Columns.Add("1h", -2, HorizontalAlignment.Left);
         listViewSignals.Columns.Add("4h", -2, HorizontalAlignment.Left);
         listViewSignals.Columns.Add("12h", -2, HorizontalAlignment.Left);
 
-    
-        listViewSignals.Columns.Add("", -2, HorizontalAlignment.Right); // filler
+
+
+        //listViewSignals.Columns.Add("", -2, HorizontalAlignment.Right); // filler
 
         listViewSignals.SetSortIcon(
               ((ListViewColumnSorterSignal)listViewSignals.ListViewItemSorter).SortColumn,

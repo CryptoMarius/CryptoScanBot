@@ -17,7 +17,7 @@
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FrmMain));
             panelLeft = new Panel();
-            panelSymbols = new Panel();
+            tabControlSymbols = new TabControl();
             panelLeftTop = new Panel();
             label1 = new Label();
             symbolFilter = new TextBox();
@@ -47,7 +47,9 @@
             webViewDummy = new Microsoft.Web.WebView2.WinForms.WebView2();
             panelClient1 = new Panel();
             dashBoardInformation1 = new TradingView.DashBoardInformation();
+            tabPageSymbols = new TabPage();
             panelLeft.SuspendLayout();
+            tabControlSymbols.SuspendLayout();
             panelLeftTop.SuspendLayout();
             applicationMenuStrip.SuspendLayout();
             panelClient.SuspendLayout();
@@ -63,23 +65,25 @@
             // 
             // panelLeft
             // 
-            panelLeft.Controls.Add(panelSymbols);
+            panelLeft.Controls.Add(tabControlSymbols);
             panelLeft.Controls.Add(panelLeftTop);
             panelLeft.Dock = DockStyle.Left;
             panelLeft.Location = new Point(0, 24);
             panelLeft.Margin = new Padding(2);
             panelLeft.Name = "panelLeft";
-            panelLeft.Size = new Size(199, 717);
+            panelLeft.Size = new Size(222, 723);
             panelLeft.TabIndex = 12;
             // 
-            // panelSymbols
+            // tabControlSymbols
             // 
-            panelSymbols.Dock = DockStyle.Fill;
-            panelSymbols.Location = new Point(0, 103);
-            panelSymbols.Margin = new Padding(2);
-            panelSymbols.Name = "panelSymbols";
-            panelSymbols.Size = new Size(199, 614);
-            panelSymbols.TabIndex = 2;
+            tabControlSymbols.Appearance = TabAppearance.FlatButtons;
+            tabControlSymbols.Controls.Add(tabPageSymbols);
+            tabControlSymbols.Dock = DockStyle.Fill;
+            tabControlSymbols.Location = new Point(0, 103);
+            tabControlSymbols.Name = "tabControlSymbols";
+            tabControlSymbols.SelectedIndex = 0;
+            tabControlSymbols.Size = new Size(222, 620);
+            tabControlSymbols.TabIndex = 2;
             // 
             // panelLeftTop
             // 
@@ -89,13 +93,13 @@
             panelLeftTop.Location = new Point(0, 0);
             panelLeftTop.Margin = new Padding(2);
             panelLeftTop.Name = "panelLeftTop";
-            panelLeftTop.Size = new Size(199, 103);
+            panelLeftTop.Size = new Size(222, 103);
             panelLeftTop.TabIndex = 1;
             // 
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new Point(13, 44);
+            label1.Location = new Point(10, 56);
             label1.Margin = new Padding(4, 0, 4, 0);
             label1.Name = "label1";
             label1.Size = new Size(36, 15);
@@ -104,7 +108,7 @@
             // 
             // symbolFilter
             // 
-            symbolFilter.Location = new Point(14, 61);
+            symbolFilter.Location = new Point(10, 75);
             symbolFilter.Margin = new Padding(2);
             symbolFilter.Name = "symbolFilter";
             symbolFilter.Size = new Size(164, 23);
@@ -119,7 +123,7 @@
             applicationMenuStrip.Name = "applicationMenuStrip";
             applicationMenuStrip.Padding = new Padding(5, 2, 0, 2);
             applicationMenuStrip.RenderMode = ToolStripRenderMode.Professional;
-            applicationMenuStrip.Size = new Size(1732, 24);
+            applicationMenuStrip.Size = new Size(1400, 24);
             applicationMenuStrip.TabIndex = 16;
             applicationMenuStrip.Text = "menuStrip1";
             // 
@@ -188,7 +192,6 @@
             backtestToolStripMenuItem.Name = "backtestToolStripMenuItem";
             backtestToolStripMenuItem.Size = new Size(168, 22);
             backtestToolStripMenuItem.Text = "Backtest";
-            backtestToolStripMenuItem.Click += BacktestToolStripMenuItem_Click;
             // 
             // positionInfoToolStripMenuItem
             // 
@@ -204,7 +207,7 @@
             panelClient.Location = new Point(0, 103);
             panelClient.Margin = new Padding(2);
             panelClient.Name = "panelClient";
-            panelClient.Size = new Size(1533, 614);
+            panelClient.Size = new Size(1178, 620);
             panelClient.TabIndex = 13;
             // 
             // tabControl
@@ -222,7 +225,7 @@
             tabControl.Margin = new Padding(2);
             tabControl.Name = "tabControl";
             tabControl.SelectedIndex = 0;
-            tabControl.Size = new Size(1533, 614);
+            tabControl.Size = new Size(1178, 620);
             tabControl.TabIndex = 12;
             // 
             // tabPageDashBoard
@@ -232,7 +235,7 @@
             tabPageDashBoard.Location = new Point(4, 27);
             tabPageDashBoard.Name = "tabPageDashBoard";
             tabPageDashBoard.Padding = new Padding(3);
-            tabPageDashBoard.Size = new Size(1525, 583);
+            tabPageDashBoard.Size = new Size(1170, 589);
             tabPageDashBoard.TabIndex = 9;
             tabPageDashBoard.Text = "Dashboard";
             tabPageDashBoard.UseVisualStyleBackColor = true;
@@ -242,7 +245,7 @@
             dashBoardControl1.Dock = DockStyle.Fill;
             dashBoardControl1.Location = new Point(3, 3);
             dashBoardControl1.Name = "dashBoardControl1";
-            dashBoardControl1.Size = new Size(1519, 577);
+            dashBoardControl1.Size = new Size(1164, 583);
             dashBoardControl1.TabIndex = 0;
             // 
             // tabPageSignals
@@ -251,7 +254,7 @@
             tabPageSignals.Margin = new Padding(4, 3, 4, 3);
             tabPageSignals.Name = "tabPageSignals";
             tabPageSignals.Padding = new Padding(4, 3, 4, 3);
-            tabPageSignals.Size = new Size(1476, 583);
+            tabPageSignals.Size = new Size(1170, 589);
             tabPageSignals.TabIndex = 4;
             tabPageSignals.Text = "Signals";
             tabPageSignals.UseVisualStyleBackColor = true;
@@ -263,7 +266,7 @@
             tabPageBrowser.Margin = new Padding(4, 3, 4, 3);
             tabPageBrowser.Name = "tabPageBrowser";
             tabPageBrowser.Padding = new Padding(4, 3, 4, 3);
-            tabPageBrowser.Size = new Size(1476, 583);
+            tabPageBrowser.Size = new Size(1170, 589);
             tabPageBrowser.TabIndex = 5;
             tabPageBrowser.Text = "Tradingview";
             tabPageBrowser.UseVisualStyleBackColor = true;
@@ -277,7 +280,7 @@
             webViewTradingView.Location = new Point(4, 3);
             webViewTradingView.Margin = new Padding(4, 3, 4, 3);
             webViewTradingView.Name = "webViewTradingView";
-            webViewTradingView.Size = new Size(1468, 577);
+            webViewTradingView.Size = new Size(1162, 583);
             webViewTradingView.TabIndex = 0;
             webViewTradingView.ZoomFactor = 1D;
             // 
@@ -286,7 +289,7 @@
             tabPagePositionsOpen.Location = new Point(4, 27);
             tabPagePositionsOpen.Name = "tabPagePositionsOpen";
             tabPagePositionsOpen.Padding = new Padding(3);
-            tabPagePositionsOpen.Size = new Size(1476, 583);
+            tabPagePositionsOpen.Size = new Size(1170, 589);
             tabPagePositionsOpen.TabIndex = 7;
             tabPagePositionsOpen.Text = "Open positions";
             tabPagePositionsOpen.UseVisualStyleBackColor = true;
@@ -296,7 +299,7 @@
             tabPagePositionsClosed.Location = new Point(4, 27);
             tabPagePositionsClosed.Name = "tabPagePositionsClosed";
             tabPagePositionsClosed.Padding = new Padding(3);
-            tabPagePositionsClosed.Size = new Size(1476, 583);
+            tabPagePositionsClosed.Size = new Size(1170, 589);
             tabPagePositionsClosed.TabIndex = 8;
             tabPagePositionsClosed.Text = "Closed positions";
             tabPagePositionsClosed.UseVisualStyleBackColor = true;
@@ -308,7 +311,7 @@
             tabPageLog.Margin = new Padding(2);
             tabPageLog.Name = "tabPageLog";
             tabPageLog.Padding = new Padding(2);
-            tabPageLog.Size = new Size(1476, 583);
+            tabPageLog.Size = new Size(1170, 589);
             tabPageLog.TabIndex = 1;
             tabPageLog.Text = "Log";
             tabPageLog.UseVisualStyleBackColor = true;
@@ -322,7 +325,7 @@
             TextBoxLog.Multiline = true;
             TextBoxLog.Name = "TextBoxLog";
             TextBoxLog.ScrollBars = ScrollBars.Both;
-            TextBoxLog.Size = new Size(1472, 579);
+            TextBoxLog.Size = new Size(1166, 585);
             TextBoxLog.TabIndex = 1;
             // 
             // tabPagewebViewDummy
@@ -332,7 +335,7 @@
             tabPagewebViewDummy.Margin = new Padding(4, 3, 4, 3);
             tabPagewebViewDummy.Name = "tabPagewebViewDummy";
             tabPagewebViewDummy.Padding = new Padding(4, 3, 4, 3);
-            tabPagewebViewDummy.Size = new Size(1476, 583);
+            tabPagewebViewDummy.Size = new Size(1170, 589);
             tabPagewebViewDummy.TabIndex = 6;
             tabPagewebViewDummy.Text = "WebView (dummy)";
             tabPagewebViewDummy.UseVisualStyleBackColor = true;
@@ -346,7 +349,7 @@
             webViewDummy.Location = new Point(4, 3);
             webViewDummy.Margin = new Padding(4, 3, 4, 3);
             webViewDummy.Name = "webViewDummy";
-            webViewDummy.Size = new Size(1468, 577);
+            webViewDummy.Size = new Size(1162, 583);
             webViewDummy.TabIndex = 1;
             webViewDummy.ZoomFactor = 1D;
             // 
@@ -355,10 +358,10 @@
             panelClient1.Controls.Add(panelClient);
             panelClient1.Controls.Add(dashBoardInformation1);
             panelClient1.Dock = DockStyle.Fill;
-            panelClient1.Location = new Point(199, 24);
+            panelClient1.Location = new Point(222, 24);
             panelClient1.Margin = new Padding(2);
             panelClient1.Name = "panelClient1";
-            panelClient1.Size = new Size(1533, 717);
+            panelClient1.Size = new Size(1178, 723);
             panelClient1.TabIndex = 12;
             // 
             // dashBoardInformation1
@@ -366,14 +369,23 @@
             dashBoardInformation1.Dock = DockStyle.Top;
             dashBoardInformation1.Location = new Point(0, 0);
             dashBoardInformation1.Name = "dashBoardInformation1";
-            dashBoardInformation1.Size = new Size(1533, 103);
+            dashBoardInformation1.Size = new Size(1178, 103);
             dashBoardInformation1.TabIndex = 15;
+            // 
+            // tabPageSymbols
+            // 
+            tabPageSymbols.Location = new Point(4, 27);
+            tabPageSymbols.Name = "tabPageSymbols";
+            tabPageSymbols.Size = new Size(214, 589);
+            tabPageSymbols.TabIndex = 0;
+            tabPageSymbols.Text = "Symbols";
+            tabPageSymbols.UseVisualStyleBackColor = true;
             // 
             // FrmMain
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1732, 741);
+            ClientSize = new Size(1400, 747);
             Controls.Add(panelClient1);
             Controls.Add(panelLeft);
             Controls.Add(applicationMenuStrip);
@@ -382,6 +394,7 @@
             Name = "FrmMain";
             FormClosing += FrmMain_FormClosing;
             panelLeft.ResumeLayout(false);
+            tabControlSymbols.ResumeLayout(false);
             panelLeftTop.ResumeLayout(false);
             panelLeftTop.PerformLayout();
             applicationMenuStrip.ResumeLayout(false);
@@ -404,7 +417,6 @@
         private Panel panelLeft;
         private Panel panelClient;
         private Panel panelLeftTop;
-        private Panel panelSymbols;
         private Panel panelClient1;
         private TextBox symbolFilter;
         private MenuStrip applicationMenuStrip;
@@ -432,6 +444,8 @@
         private DashBoardControl dashBoardControl1;
         private TradingView.DashBoardInformation dashBoardInformation1;
         private ToolStripMenuItem positionInfoToolStripMenuItem;
+        private TabControl tabControlSymbols;
+        private TabPage tabPageSymbols;
     }
 }
 

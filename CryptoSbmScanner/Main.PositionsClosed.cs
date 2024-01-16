@@ -138,7 +138,7 @@ public partial class FrmMain
         listViewPositionsClosed.Columns.Add("BuyPrice", -2, HorizontalAlignment.Right);
         listViewPositionsClosed.Columns.Add("SellPrice", -2, HorizontalAlignment.Right);
 
-        listViewPositionsClosed.Columns.Add("", -2, HorizontalAlignment.Right); // filler
+        //listViewPositionsClosed.Columns.Add("", -2, HorizontalAlignment.Right); // filler
 
         listViewPositionsClosed.SetSortIcon(
               ((ListViewColumnSorterPosition)listViewPositionsClosed.ListViewItemSorter).SortColumn,

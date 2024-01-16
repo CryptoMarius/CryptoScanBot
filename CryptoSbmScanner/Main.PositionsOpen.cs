@@ -57,10 +57,10 @@ public partial class FrmMain
         menuCommand.Click += CommandPositionCreateAdditionalDca;
         ContextMenuStripPositionsOpen.Items.Add(menuCommand);
 
-        menuCommand = new ToolStripMenuItem();
-        menuCommand.Text = "Positie profit nemen";
-        menuCommand.Click += CommandPositionLastPartTakeProfit;
-        ContextMenuStripPositionsOpen.Items.Add(menuCommand);
+        //menuCommand = new ToolStripMenuItem();
+        //menuCommand.Text = "Positie profit nemen";
+        //menuCommand.Click += CommandPositionLastPartTakeProfit;
+        //ContextMenuStripPositionsOpen.Items.Add(menuCommand);
 
         menuCommand = new ToolStripMenuItem();
         menuCommand.Text = "Positie informatie (Excel)";
@@ -149,7 +149,7 @@ public partial class FrmMain
         listViewPositionsOpen.Columns.Add("SellPrice", -2, HorizontalAlignment.Right);
         listViewPositionsOpen.Columns.Add("FundingRate", -2, HorizontalAlignment.Right);
         //listViewPositionsOpen.Columns.Add("LastPrice", -2, HorizontalAlignment.Right);
-        listViewPositionsOpen.Columns.Add("", -2, HorizontalAlignment.Right); // filler
+        //listViewPositionsOpen.Columns.Add("", -2, HorizontalAlignment.Right); // filler
 
         listViewPositionsOpen.SetSortIcon(
               ((ListViewColumnSorterPosition)listViewPositionsOpen.ListViewItemSorter).SortColumn, 

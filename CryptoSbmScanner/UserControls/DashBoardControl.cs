@@ -193,14 +193,12 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
         builder.AppendLine("sum(position.Invested) as Invested,");
         builder.AppendLine("sum(position.Returned) as Returned,");
         builder.AppendLine("sum(position.Commission) as Commission,");
-        builder.AppendLine("sum(position.Profit) as TotalProfit,  --= sum(position.Returned - position.Invested - position.Commission) as Open,");
-        //builder.AppendLine("--100 * sum(position.Profit) / sum(position.Invested) as Average");
+        builder.AppendLine("sum(position.Profit) as TotalProfit,");
         builder.AppendLine("round(min(round(position.percentage, 2)), 2) as MinPerc,");
         builder.AppendLine("round(avg(round(position.percentage, 2)), 2) as AvgPerc,");
         builder.AppendLine("round(max(round(position.percentage, 2)), 2) as MaxPerc");
         builder.AppendLine("from position");
         builder.AppendLine("inner join symbol on position.symbolid = symbol.id");
-        //builder.AppendLine("--where position.status = 2");
         builder.AppendLine($"where symbol.quote = '{QuoteData.Name}'");
         builder.AppendLine("and position.Invested > 0");
         builder.AppendLine("and position.Status in (1,2)");
@@ -666,7 +664,6 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
         {
             foreach (var positionList in tradeAccount.PositionList.Values)
             {
-                // De muntparen toevoegen aan de userinterface
                 foreach (CryptoPosition position in positionList.Values)
                 {
                     if (position.ExchangeId == GlobalData.Settings.General.ExchangeId && position.Symbol.Quote.Equals(QuoteData.Name))

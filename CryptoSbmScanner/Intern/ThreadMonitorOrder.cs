@@ -37,7 +37,7 @@ public class ThreadMonitorOrder
         {
             try
             {
-                // Het gaat te snel, de trade is blijkbaar nog niet in het systeem verwerkt! (ByBit, 31-10-2023)
+                // Het gaat te snel, de trade is blijkbaar nog niet in het systeem van de exchange verwerkt! (ByBit, 31-10-2023)
                 // De optie herberekenen krijgt de order wel binnen
                 Thread.Sleep(2500);
 

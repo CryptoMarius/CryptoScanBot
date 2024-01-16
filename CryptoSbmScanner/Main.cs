@@ -84,7 +84,12 @@ public partial class FrmMain : Form
         tabControl.TabPages.Remove(tabPagePositionsOpen);
         tabControl.TabPages.Remove(tabPagePositionsClosed);
 #endif
-
+#if SQLDATABASE            
+        backtestToolStripMenuItem.Click += BacktestToolStripMenuItem_Click;
+#endif
+#if !SQLDATABASE            
+        backtestToolStripMenuItem.Visible = false;
+#endif
 
         CryptoDatabase.SetDatabaseDefaults();
         GlobalData.LoadExchanges();
@@ -821,6 +826,7 @@ public partial class FrmMain : Form
     }
 
 
+#if SQLDATABASE
     private void BacktestToolStripMenuItem_Click(object sender, EventArgs e)
     {
         /// TODO: Deze code verhuizen naar aparte class of het dialoog zelf?
@@ -914,6 +920,7 @@ public partial class FrmMain : Form
         }
 
     }
+#endif
 
 
     private void ApplicationHasStarted(string text, bool extraLineFeed = false)
