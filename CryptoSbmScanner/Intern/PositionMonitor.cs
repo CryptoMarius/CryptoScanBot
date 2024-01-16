@@ -219,7 +219,8 @@ public class PositionMonitor : IDisposable
                             // Er staan een buy order klaar, dus openen we geen nieuwe DCA
                             if (stepX.Trailing == CryptoTrailing.None && stepX.OrderType == CryptoOrderType.Limit)
                             {
-                                reaction = "de positie heeft al een openstaande DCA";
+                                //reaction = "de positie heeft al een openstaande DCA";
+                                reaction = "";
                                 return false;
                             }
 
@@ -236,7 +237,8 @@ public class PositionMonitor : IDisposable
                 // Er is al een DCA gemaakt maar het heeft nog geen orders of is gepauseerd vanwege barometer of andere oorzaken..
                 if (openOrders == 0)
                 {
-                    reaction = "de positie heeft al een openstaande DCA";
+                    //reaction = "de positie heeft al een openstaande DCA";
+                    reaction = "";
                     return false;
                 }
 
@@ -549,7 +551,8 @@ public class PositionMonitor : IDisposable
                         // Controle of bepaalde intervallen in een uptrend of in een downtrend zijn
                         if (!PositionTools.ValidTrendConditions(signal.Symbol, TradingConfig.Trading[signal.Side].Trend, out reaction))
                         {
-                            GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
+                            if (TradingConfig.Trading[signal.Side].TrendLog)
+                                GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
                             Symbol.ClearSignals();
                             continue;
                         }
@@ -1617,7 +1620,7 @@ public class PositionMonitor : IDisposable
                 return false;
             }
 
-            // TODO: Pakt onhandig uit, nu meerdere keren aanroep van de signalcreate zonder hergebruik van de candles, dat is jammer
+            // Introductie long/short: Pakt wellicht onhandig uit, nu meerdere keren aanroep van de signalcreate zonder dat er hergebruik is van de candles (is dat heel erg?)
             foreach (CryptoTradeSide side in Enum.GetValues(typeof(CryptoTradeSide)))
             {
                 // Barometer controle
