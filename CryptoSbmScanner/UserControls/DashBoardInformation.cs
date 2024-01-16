@@ -466,7 +466,7 @@ public partial class DashBoardInformation : UserControl
         catch (Exception error)
         {
             GlobalData.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab(error.ToString() + "\r\n");
+            GlobalData.AddTextToLogTab(error.ToString(), true);
         }
     }
 
@@ -476,7 +476,9 @@ public partial class DashBoardInformation : UserControl
         // Dan wordt de basecoin bewaard voor een volgende keer
         GlobalData.Settings.General.SelectedBarometerQuote = EditBarometerQuote.Text;
         GlobalData.Settings.General.SelectedBarometerInterval = EditBarometerInterval.Text;
-        new Thread(BinanceBarometerAll).Start();
+
+        Task.Run(() => { BinanceBarometerAll(); } );
+        //new Thread(BinanceBarometerAll).Start();
     }
 
 
@@ -599,7 +601,8 @@ public partial class DashBoardInformation : UserControl
             if ((DateTime.Now.Second > 10) && (DateTime.Now.Minute != BarometerLastMinute))
             {
                 BarometerLastMinute = DateTime.Now.Minute;
-                new Thread(BinanceBarometerAll).Start();
+                //new Thread(BinanceBarometerAll).Start();
+                Task.Run(() => { BinanceBarometerAll(); });
             }
 
             // Toon de prijzen en volume van een aantal symbols
