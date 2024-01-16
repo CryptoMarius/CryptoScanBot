@@ -4,9 +4,8 @@ Als je iets mist, geef het dat dab AUB even aan in een private PM of in de groep
 
 
 Scanner:
-- Scanner - Soms blijft de barometer stilstaan (dan loopt de tijd van de barometer grafiek niet meer op)
-- Het volume bij de getoonde munten lijkt niet te kloppen (BTC, PAXG, ETH enzovoort)
-  Maar je wilt ook niet heel veel candles in het geheugen hebben, de scanner op Bybit gebruikt nu al regelmatig 600Mb
+- Scanner - Soms blijft de barometer stilstaan (dan loopt de tijd van de barometer grafiek niet meer op), een oorzaak daarvoor ontbreekt
+- Het volume bij de getoonde munten lijkt niet te kloppen (die van PAXG in <mijn> informatie balk lijkt niet te kloppen, controleren!)
 - De globale markt trend % wordt uitgerekend via de 210 aanwezige candles, voor de trend calculatie is dat eigenlijk te weinig.
   Maar je wilt ook niet heel veel candles in het geheugen hebben, de scanner op Bybit gebruikt nu al regelmatig 600Mb
 - Bij kleine(re) beeldschermen zijn bepaalde instellingen niet in zijn geheel zichtbaar (de OK en Cancel knop vallen onder andere weg)
@@ -36,8 +35,9 @@ Scanner:
 NB: Als je ideen hebt voor het vervangen van de OCO/Stop limit informeer me dan AUB..
 
 Trading:
+- Trading - Observatie papertrading is dat de laatste TP soms dubbel uitgevoerd wordt (en dan blijft de positie openstaan), probleem vanwege herstart applicatie?
+- Trading - Bij een aankoop de marges bekijken en eventueel afronden naar boven (omdat het soms wel drastisch naar beneden wordt afgerond vanwege de quantity ticksize)
 - Trading - Een optie erbij voor het toevoegen van een extra DCA
-- Trading - De optie voor de backtest verbergen (deze werkt alleen in combinatie met een wat grotere SQL database en langere datum periodes)
 - Trading - Het trade geluidje kunnen instellen (kan nu alleen door het vervangen van de sound notification in de sound map)
 - Trading - Een link toevoegen aan de Telegram notificaties
 - Trading - Validatie op de ingevoerde DCA's uitvoeren, die moeten qua percentage op volgorde staan met een factor > 0

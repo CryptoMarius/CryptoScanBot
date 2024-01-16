@@ -389,7 +389,7 @@ public static class Helper
     static public void ShowPosition(StringBuilder stringBuilder, CryptoPosition position)
     {
         decimal investedInTrades = position.Invested - position.Returned;
-        string s = $"{position.Symbol.Name} {investedInTrades.ToString(position.Symbol.QuoteData.DisplayFormat)} " +
+        string s = $"{position.Symbol.Name} {position.Side} {investedInTrades.ToString(position.Symbol.QuoteData.DisplayFormat)} " +
             //$"{position.MarketValue().ToString(position.Symbol.QuoteData.DisplayFormat)} " +
             $"{position.MarketValuePercentage():N2}%";
         if (position.PartCount > 0)

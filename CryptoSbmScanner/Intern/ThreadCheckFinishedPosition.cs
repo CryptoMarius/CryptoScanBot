@@ -47,7 +47,8 @@ public class ThreadCheckFinishedPosition
         {
             try
             {
-                // Omdat de aansturende code bezig kan zijn doen we een redelijk grote sleep
+                // Geef de exchange en de aansturende code de kans om de administratie af te ronden
+                // We wachten hier dus bewust voor de zekerheid een redelijk lange periode.
                 Thread.Sleep(10000);
 
                 //GlobalData.AddTextToLogTab($"ThreadDoubleCheckPosition: Positie {position.Symbol.Name} nog eens controleren! {position.Status}");
