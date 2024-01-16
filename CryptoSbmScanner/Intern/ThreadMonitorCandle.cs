@@ -30,16 +30,16 @@ public class ThreadMonitorCandle
     }
 
 
-    public async void Execute()
+    public void Execute()
     {
         try
         {
             foreach ((CryptoSymbol symbol, CryptoCandle candle) in Queue.GetConsumingEnumerable(cancellationToken.Token))
             {
-                await Semaphore.WaitAsync();
 
-                new Thread(async () =>
+                Task.Run(async() => 
                 {
+                    await Semaphore.WaitAsync();
                     try
                     {
                         // Er is een 1m candle gearriveerd, acties adhv deze candle..
@@ -51,7 +51,22 @@ public class ThreadMonitorCandle
                         Semaphore.Release();
                     }
                 }
-                ).Start();
+                );
+
+                //new Thread(async () =>
+                //{
+                //    try
+                //    {
+                //        // Er is een 1m candle gearriveerd, acties adhv deze candle..
+                //        PositionMonitor positionMonitor = new(symbol, candle);
+                //        await positionMonitor.NewCandleArrivedAsync();
+                //    }
+                //    finally
+                //    {
+                //        Semaphore.Release();
+                //    }
+                //}
+                //).Start();
             }
         }
         catch (OperationCanceledException)
