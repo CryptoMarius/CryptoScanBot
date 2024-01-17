@@ -65,8 +65,7 @@ static public class TradeHandler
                     if (posTemp.Orders.TryGetValue(data.OrderId, out step))
                     {
                         position = posTemp;
-                        s = string.Format("handletrade#2 {0} positie gevonden, name={1} id={2} positie.status={3} (memory)",
-                            msgInfo, step.Side, step.Id, position.Status);
+                        s = $"handletrade#2 {msgInfo} positie gevonden, name={step.Side} id={step.Id} positie.status={position.Status} (memory)";
                         // Teveel logging vermijden (zo'n trailing order veroorzaakt ook een cancel)
                         if (orderStatus != CryptoOrderStatus.Canceled)
                            GlobalData.AddTextToLogTab(s);
@@ -123,7 +122,7 @@ static public class TradeHandler
                     if (orderStatus == CryptoOrderStatus.Filled || orderStatus == CryptoOrderStatus.PartiallyFilled)
                         await ExchangeHelper.FetchTradesAsync(data.TradeAccount, symbol);
 
-                    s = string.Format("handletrade#4 {0} geen step gevonden. Statistiek bijwerken (exit)", msgInfo);
+                    s = $"handletrade#4 {msgInfo} geen step gevonden. Statistiek bijwerken (exit)";
                     GlobalData.AddTextToLogTab(s);
 
                     // Gebruiker informeren (een trade blijft interessant tenslotte)
@@ -139,7 +138,7 @@ static public class TradeHandler
             if (part == null)
                 throw new Exception("Probleem met het vinden van een part");
 
-            s = string.Format("handletrade#5 {0} step gevonden, name={1} id={2} positie.status={3}", msgInfo, step.Side, step.Id, position.Status);
+            s = $"handletrade#5 {msgInfo} step gevonden, name={step.Side} id={step.Id} positie.status={position.Status}";
             // Teveel logging vermijden (zo'n trailing order veroorzaakt ook een cancel)
             if (orderStatus != CryptoOrderStatus.Canceled)
                 GlobalData.AddTextToLogTab(s);
@@ -188,9 +187,9 @@ static public class TradeHandler
                         part.CloseTime = data.TradeTime;
                         databaseThread.Connection.Update<CryptoPositionPart>(part);
 
-                        s = string.Format("handletrade#7 {0} positie part cancelled, user takeover?", msgInfo);
-                        GlobalData.AddTextToLogTab(s);
-                        GlobalData.AddTextToTelegram(s);
+                        //s = string.Format("handletrade#7 {0} positie part cancelled, user takeover?", msgInfo);
+                        //GlobalData.AddTextToLogTab(s);
+                        //GlobalData.AddTextToTelegram(s);
 
                         // De gebruiker heeft de positie geannuleerd
                         position.Profit = 0;
@@ -205,7 +204,7 @@ static public class TradeHandler
                         position.Status = CryptoPositionStatus.TakeOver;
                         databaseThread.Connection.Update<CryptoPosition>(position);
 
-                        s = string.Format("handletrade#7 {0} positie cancelled, user takeover? position.status={1}", msgInfo, position.Status);
+                        s = $"handletrade#7 {msgInfo} positie cancelled, user takeover? position.status={position.Status}";
                         GlobalData.AddTextToLogTab(s);
                         GlobalData.AddTextToTelegram(s);
                     }
@@ -226,8 +225,8 @@ static public class TradeHandler
                     if (step.Side == takeProfitOrderSide)
                     {
                         // De take profit order is uitgevoerd, de positie afmelden
-                        s = $"handletrade {msgInfo} part takeprofit ({part.Percentage:N2}%)";
-                        GlobalData.AddTextToLogTab(s);
+                        //s = $"handletrade {msgInfo} part takeprofit ({part.Percentage:N2}%)";
+                        //GlobalData.AddTextToLogTab(s);
                         //GlobalData.AddTextToTelegram(s);
 
                         part.CloseTime = data.TradeTime;
