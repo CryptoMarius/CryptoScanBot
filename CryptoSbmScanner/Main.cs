@@ -571,9 +571,16 @@ public partial class FrmMain : Form
                         if (!this.IsDisposed && GlobalData.ApplicationStatus != CryptoApplicationStatus.Disposing && IsHandleCreated)
                         {
                             if (InvokeRequired)
-                                Invoke((System.Windows.Forms.MethodInvoker)(() => TextBoxLog.AppendText(text)));
+                                Invoke((System.Windows.Forms.MethodInvoker)(() =>
+                                {
+                                    if (!TextBoxLog.IsDisposed)
+                                        TextBoxLog.AppendText(text);
+                                }));
                             else
-                                TextBoxLog.AppendText(text);
+                            {
+                                if (!TextBoxLog.IsDisposed)
+                                    TextBoxLog.AppendText(text);
+                            }
                         }
                     }));
                 });
