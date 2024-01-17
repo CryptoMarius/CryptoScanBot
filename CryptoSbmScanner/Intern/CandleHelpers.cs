@@ -391,7 +391,7 @@ public static class Helper
         decimal investedInTrades = position.Invested - position.Returned;
         string s = $"{position.Symbol.Name} {position.Side} {investedInTrades.ToString(position.Symbol.QuoteData.DisplayFormat)} " +
             //$"{position.MarketValue().ToString(position.Symbol.QuoteData.DisplayFormat)} " +
-            $"{position.MarketValuePercentage():N2}%";
+            $"{position.CurrentProfitPercentage():N2}%";
         if (position.PartCount > 0)
             s += $" ({position.PartCount})";
         stringBuilder.AppendLine(s);

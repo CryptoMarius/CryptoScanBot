@@ -64,8 +64,8 @@ public partial class DashBoardControl : UserControl
 
     private QueryPositionData OpenData = new();
     private QueryPositionData ClosedData = new();
-    private readonly List<QueryTradeData> QueryTradeDataList = new();
-    private readonly List<QueryPositionData> QueryPositionDataList = new();
+    private readonly List<QueryTradeData> QueryTradeDataList = [];
+    private readonly List<QueryPositionData> QueryPositionDataList = [];
 
     private Chart ChartPositionsPerDay;
     private Chart ChartProfitsPerDay;
@@ -654,7 +654,7 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
         labelCommission.Text = OpenData.Commission.ToString(quoteDataDisplayString);
 
         // Commision moet apart bij de winst berekening en niet hier
-        decimal investedInTrades = OpenData.Invested - OpenData.Returned - OpenData.Commission;
+        decimal investedInTrades = OpenData.Invested - OpenData.Returned; // - OpenData.Commission;
         labelNettoPnlValue.Text = investedInTrades.ToString(quoteDataDisplayString);
 
 
@@ -667,7 +667,7 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
                 foreach (CryptoPosition position in positionList.Values)
                 {
                     if (position.ExchangeId == GlobalData.Settings.General.ExchangeId && position.Symbol.Quote.Equals(QuoteData.Name))
-                        currentValue += position.Quantity * (decimal)position.Symbol.LastPrice - position.Commission;
+                        currentValue += position.CurrentValue();
                 }
             }
         }

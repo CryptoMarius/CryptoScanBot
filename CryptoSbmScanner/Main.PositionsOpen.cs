@@ -207,29 +207,22 @@ public partial class FrmMain
         if (position.Invested - position.Returned > 7 * position.Symbol.QuoteData.EntryAmount) // een indicatie (beetje willekeurig)
             subItem.ForeColor = Color.Red;
 
-        // Netto NPL (het bedrag wat je krijgt als je nu zou verkopen)
-        decimal NetPnl = position.MarketValue() - position.Commission;
-        decimal priceDiff = position.MarketValuePercentage();
+        decimal NetPnl = position.CurrentProfit();
+        decimal NetPnlPerc = position.CurrentProfitPercentage();
 
         subItem = item1.SubItems.Add(NetPnl.ToString(position.Symbol.QuoteData.DisplayFormat));
-        if (priceDiff > 0)  //if (NetPnl > position.Invested - position.Returned - position.Commission)
+        if (NetPnlPerc > 0) 
             subItem.ForeColor = Color.Green;
-        else if (priceDiff < 0) //else if (NetPnl < position.Invested - position.Returned - position.Commission)
+        else if (NetPnlPerc < 0)
             subItem.ForeColor = Color.Red;
 
         // profit percentage
-        subItem = item1.SubItems.Add(priceDiff.ToString("N2"));
-        if (priceDiff > 0)
+        subItem = item1.SubItems.Add(NetPnlPerc.ToString("N2"));
+        if (NetPnlPerc > 0)
             subItem.ForeColor = Color.Green;
-        else if (priceDiff < 0)
+        else if (NetPnlPerc < 0)
             subItem.ForeColor = Color.Red;
 
-        //subItem = item1.SubItems.Add(position.Percentage.ToString("N2"));
-        //if (position.Percentage > 0)
-        //    subItem.ForeColor = Color.Green;
-        //else
-        //    if (position.Percentage < 0)
-        //    subItem.ForeColor = Color.Red;
 
         item1.SubItems.Add(position.PartCount.ToString());
         item1.SubItems.Add(position.EntryPrice?.ToString(position.Symbol.PriceDisplayFormat));

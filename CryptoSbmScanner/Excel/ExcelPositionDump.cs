@@ -412,8 +412,8 @@ public class ExcelPositionDump : ExcelBase
         WriteCell(sheet, row, column++, (double)Position.Returned);
         WriteCell(sheet, row, column++, (double)investedInTrades);
         WriteCell(sheet, row, column++, (double)(Position.Commission ));
-        WriteCell(sheet, row, column++, (double)Position.MarketValue());
-        WriteCell(sheet, row, column++, (double)Position.MarketValuePercentage());
+        WriteCell(sheet, row, column++, (double)Position.CurrentProfit());
+        WriteCell(sheet, row, column++, (double)Position.CurrentProfitPercentage());
         WriteCell(sheet, row, column++, Position.CreateTime.ToLocalTime());
         if (Position.CloseTime.HasValue)
             WriteCell(sheet, row, column++, Position.CloseTime.Value.ToLocalTime());

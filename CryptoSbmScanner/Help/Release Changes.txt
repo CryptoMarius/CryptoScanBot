@@ -1,6 +1,7 @@
 CryptoSbmScanenr release historie:
 
 xx-01-2024 1.9
+- Trading - De virtuele opbrengst houdt geen rekening met short posities
 - Trading - De optie voor de backtest verbergen (deze werkt alleen in combinatie met een wat grotere SQL database en langere datum periodes)
 - Trading - De tradingrules via de interface kunnen instellen (dat was tot dusver alleen mogelijk via de json)
 - Trading - Charts - De dashboard statistieken houdt geen rekening met UTC (met als gevolg een vertekend beeld <als je de verkoop momenten kent>).

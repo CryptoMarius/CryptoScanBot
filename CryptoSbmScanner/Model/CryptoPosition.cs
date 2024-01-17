@@ -83,30 +83,56 @@ public class CryptoPosition
 
 public static class CryptoPositionHelper
 {
-    public static decimal MarketValue(this CryptoPosition position)
+    /// <summary>
+    /// Netto winst (als je nu zou verkopen)
+    /// </summary>
+    public static decimal CurrentProfit(this CryptoPosition position)
     {
-        // zonder commission?
         if (!position.Symbol.LastPrice.HasValue)
             return 0m;
         else
         {
-            decimal value = position.Quantity * position.Symbol.LastPrice.Value - (position.Invested - position.Returned);
-            if (position.Side == CryptoTradeSide.Short)
-                value = -1 * value;
-            return value;
+            decimal profit = position.Quantity * position.Symbol.LastPrice.Value;
+            if (position.Side == CryptoTradeSide.Long)
+                profit = profit - position.Invested - position.Returned;
+            else
+                profit = position.Invested - position.Returned - profit;
+            profit -= position.Commission;
+
+            return profit;
         }
     }
 
-    public static decimal MarketValuePercentage(this CryptoPosition position)
+    /// <summary>
+    /// Netto waarde (als je nu zou verkopen)
+    /// </summary>
+    public static decimal CurrentValue(this CryptoPosition position)
     {
-        decimal priceDiff = 0;
-        if (position.BreakEvenPrice != 0 && position.Symbol.LastPrice.HasValue)
+        if (!position.Symbol.LastPrice.HasValue)
+            return 0m;
+        else
         {
-            priceDiff = (decimal)(100 * ((position.Symbol.LastPrice / position.BreakEvenPrice) - 1));
-            if (position.Side == CryptoTradeSide.Short)
-                priceDiff = -1 * priceDiff;
+            decimal profit = position.Quantity * position.Symbol.LastPrice.Value;
+            if (position.Side == CryptoTradeSide.Long)
+                profit = profit - position.Invested - position.Returned;
+            else
+                profit = position.Invested - position.Returned - profit;
+            profit -= position.Commission;
+
+            return position.Invested - position.Returned + profit;
         }
-        return priceDiff;
+    }
+
+    /// <summary>
+    /// Winst percentage (als je nu zou verkopen)
+    /// </summary>
+    public static decimal CurrentProfitPercentage(this CryptoPosition position)
+    {
+        decimal total = position.Invested - position.Returned;
+        if (total == 0)
+            return 0m;
+        else 
+            return 100 * position.CurrentProfit() / total;
     }
 
 
