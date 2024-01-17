@@ -127,8 +127,8 @@ public partial class FrmMain
     private void ListViewSymbolsInitColumns()
     {
         // Create columns and subitems. Width of -2 indicates auto-size
-        ListViewSymbols.Columns.Add("Name", -2, HorizontalAlignment.Left);
-        ListViewSymbols.Columns.Add("Volume", -2, HorizontalAlignment.Right);
+        ListViewSymbols.Columns.Add("Name", 150, HorizontalAlignment.Left);
+        ListViewSymbols.Columns.Add("Volume", 80, HorizontalAlignment.Right);
         //ListViewSymbols.Columns.Add("Price", -2, HorizontalAlignment.Right);
 
         //ListViewSymbols.Columns.Add("", -2, HorizontalAlignment.Right); // filler
@@ -348,33 +348,7 @@ public partial class FrmMain
     //    //        }
     //    //    }
     //}
-    //
-    //private void SignalsNegerenToolStripMenuItem_Click(object sender, EventArgs e)
-    //{
-    //    // Neem de door de gebruiker geselecteerde coin
-    //    string symbolName = ListViewSymbols.Text.ToString();
-    //    if (string.IsNullOrEmpty(symbolName))
-    //        return;
 
-    //    if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
-    //    {
-    //        if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol symbol))
-    //        {
-    //            foreach (CryptoSymbolInterval cryptoSymbolInterval in symbol.IntervalPeriodList)
-    //            {
-    //                CryptoSignal signal = cryptoSymbolInterval.Signal;
-    //                if (signal != null)
-    //                {
-    //                    string lastPrice = symbol.LastPrice?.ToString(symbol.PriceDisplayFormat);
-    //                    string text = "Monitor " + symbol.Name + " " + signal.Interval.Name + " signal from=" + signal.OpenDate.ToLocalTime() + " " + signal.Strategy.ToString() + " price=" + lastPrice;
-    //                    GlobalData.AddTextToLogTab(text + " cancelled (removed)");
-
-    //                    cryptoSymbolInterval.Signal = null;
-    //                }
-    //            }
-    //        }
-    //    }
-    //}
 
     private void ListViewSymbols_ColumnClick(object sender, ColumnClickEventArgs e)
     {
