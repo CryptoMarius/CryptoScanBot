@@ -168,7 +168,7 @@ public static class PositionTools
                 if (GlobalData.IntervalListId.TryGetValue((int)position.IntervalId, out CryptoInterval interval))
                     position.Interval = interval;
 
-                tradeAccount.PositionList.TryAdd(symbol.Name, new());
+                tradeAccount.PositionList.TryAdd(symbol.Name, []);
                 if (tradeAccount.PositionList.TryGetValue(symbol.Name, out SortedList<int, CryptoPosition> positionList))
                     positionList.TryAdd(position.Id, position);
             }
@@ -226,7 +226,7 @@ public static class PositionTools
             {
                 positionList.Remove(position.Id);
 
-                if (GlobalData.PositionsClosed.Any())
+                if (GlobalData.PositionsClosed.Count != 0)
                     GlobalData.PositionsClosed.Add(position);
                 else
                     GlobalData.PositionsClosed.Insert(0, position);
@@ -308,7 +308,7 @@ public static class PositionTools
 
     public static bool ValidMarketTrendConditions(CryptoSymbol symbol, List<(decimal minValue, decimal maxValue)> marketTrend, out string reaction)
     {
-        if (marketTrend.Any())
+        if (marketTrend.Count != 0)
         {
             if (!symbol.TrendPercentage.HasValue)
             {

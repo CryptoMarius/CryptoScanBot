@@ -10,7 +10,7 @@ public partial class FrmSettings : Form
 {
     private SettingsBasic settings;
 
-    private readonly List<SettingsQuoteCoin> BaseCoinList = new();
+    private readonly List<SettingsQuoteCoin> BaseCoinList = [];
 
 
     public Model.CryptoExchange NewExchange { get; set; }

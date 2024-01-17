@@ -108,12 +108,8 @@ public static class SignalSbmBaseOversoldHelper
 }
 
 
-public class SignalSbmBaseLong : SignalSbmBase
+public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : SignalSbmBase(symbol, interval, candle)
 {
-    public SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
-    {
-    }
-
     public override bool AdditionalChecks(CryptoCandle candle, out string response)
     {
         if (!candle.IsSma200AndSma50OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
@@ -280,10 +276,8 @@ public class SignalSbmBaseLong : SignalSbmBase
     public bool IsRsiIncreasingInTheLast(int candleCount, int allowedDown)
     {
         // We gaan van rechts naar links (van de nieuwste candle richting verleden)
-
         int down = 0;
         bool first = true;
-        //StringBuilder log = new();
         CryptoCandle last = CandleLast;
 
 
@@ -296,61 +290,15 @@ public class SignalSbmBaseLong : SignalSbmBase
             if (last.CandleData.Rsi <= prev.CandleData.Rsi)
             {
                 down++;
-                if (first)
-                {
-                    //log.AppendLine(string.Format("RSI controle count={0} prev={1:N8} last={2:N8} down={3} (first)", candleCount, prev.CandleData.Rsi, last.CandleData.Rsi, down));
-                    //GlobalData.AddTextToLogTab(log.ToString());
-                    return false;
-                }
-
-                if (down > allowedDown)
+                if (first || down > allowedDown)
                     return false;
             }
 
-            //log.AppendLine(string.Format("RSI controle count={0} prev={1:N8} last={2:N8} down={3}", candleCount, prev.CandleData.Rsi, last.CandleData.Rsi, down));
             last = prev;
             candleCount--;
             first = false;
         }
 
-        //GlobalData.AddTextToLogTab(log.ToString());
-        //if (down > allowedDown)
-        //    return false;
-        return true;
-    }
-
-    /// <summary>
-    /// Is de RSI aflopend in de laatste x candles
-    /// 2e parameter geeft aan hoeveel afwijkend mogen zijn
-    /// </summary>
-    public bool IsRsiDecreasingInTheLast(int candleCount, int allowedDown)
-    {
-        // We gaan van rechts naar links (van de nieuwste candle richting verleden)
-
-        int down = 0;
-        CryptoCandle last = CandleLast;
-
-        // De laatste candle MOET altijd verbeteren
-        if (!GetPrevCandle(last, out CryptoCandle prev))
-            return false;
-        if (last.CandleData.Rsi > prev.CandleData.Rsi)
-            return false;
-
-
-        // En van de candles daarvoor mag er een (of meer) afwijken
-        while (candleCount-- >= 0)
-        {
-            if (!GetPrevCandle(last, out prev))
-                return false;
-
-            if (last.CandleData.Rsi > prev.CandleData.Rsi)
-                down++;
-
-            last = prev;
-        }
-
-        if (down > allowedDown)
-            return false;
         return true;
     }
 

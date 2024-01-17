@@ -110,12 +110,8 @@ public static class SignalSbmBaseOverboughtHelper
 }
 
 
-public class SignalSbmBaseShort : SignalSbmBase
+public class SignalSbmBaseShort(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : SignalSbmBase(symbol, interval, candle)
 {
-    public SignalSbmBaseShort(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
-    {
-    }
-
     public override bool AdditionalChecks(CryptoCandle candle, out string response)
     {
         if (!candle.IsSma200AndSma50OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
@@ -328,31 +324,29 @@ public class SignalSbmBaseShort : SignalSbmBase
     public bool IsRsiDecreasingInTheLast(int candleCount, int allowedDown)
     {
         // We gaan van rechts naar links (van de nieuwste candle richting verleden)
-
         int down = 0;
+        bool first = true;
         CryptoCandle last = CandleLast;
-
-        // De laatste candle MOET altijd verbeteren
-        if (!GetPrevCandle(last, out CryptoCandle prev))
-            return false;
-        if (last.CandleData.Rsi > prev.CandleData.Rsi)
-            return false;
 
 
         // En van de candles daarvoor mag er een (of meer) afwijken
-        while (candleCount-- >= 0)
+        while (candleCount > 0)
         {
-            if (!GetPrevCandle(last, out prev))
+            if (!GetPrevCandle(last, out CryptoCandle prev))
                 return false;
 
-            if (last.CandleData.Rsi > prev.CandleData.Rsi)
+            if (last.CandleData.Rsi >= prev.CandleData.Rsi)
+            {
                 down++;
+                if (first || down > allowedDown)
+                    return false;
+            }
 
             last = prev;
+            candleCount--;
+            first = false;
         }
 
-        if (down > allowedDown)
-            return false;
         return true;
     }
 

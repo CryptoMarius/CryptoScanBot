@@ -61,7 +61,7 @@ static public class GlobalData
     /// <summary>
     /// De url's van de exchanges en/of tradingapps
     /// </summary>
-    static public CryptoExternalUrlList ExternalUrls { get; set; } = new();
+    static public CryptoExternalUrlList ExternalUrls { get; set; } = [];
 
     // The nlogger stuff
     static public NLog.Logger Logger { get; } = NLog.LogManager.GetCurrentClassLogger();
@@ -70,18 +70,18 @@ static public class GlobalData
     //static public Logger SeriLogError;
 
 
-    static public List<CryptoInterval> IntervalList { get; } = new();
-    static public SortedList<int, CryptoInterval> IntervalListId { get; } = new();
-    static public SortedList<CryptoIntervalPeriod, CryptoInterval> IntervalListPeriod { get; } = new();
+    static public List<CryptoInterval> IntervalList { get; } = [];
+    static public SortedList<int, CryptoInterval> IntervalListId { get; } = [];
+    static public SortedList<CryptoIntervalPeriod, CryptoInterval> IntervalListPeriod { get; } = [];
 
     // Exchanges indexed on name
-    static public SortedList<int, Model.CryptoExchange> ExchangeListId { get; } = new();
-    static public SortedList<string, Model.CryptoExchange> ExchangeListName { get; } = new();
+    static public SortedList<int, Model.CryptoExchange> ExchangeListId { get; } = [];
+    static public SortedList<string, Model.CryptoExchange> ExchangeListName { get; } = [];
 
     // Probleem, de signallist wordt nooit opgeruimd!
-    static public List<CryptoSignal> SignalList = new();
+    static public List<CryptoSignal> SignalList = [];
     static public Queue<CryptoSignal> SignalQueue { get; } = new();
-    static public List<CryptoPosition> PositionsClosed { get; } = new();
+    static public List<CryptoPosition> PositionsClosed { get; } = [];
 
     static public event PlayMediaEvent PlaySound;
     static public event PlayMediaEvent PlaySpeech;
@@ -102,8 +102,8 @@ static public class GlobalData
     static public AnalyseEvent AnalyzeSignalCreated { get; set; }
 
     // TODO: Deze rare accounts proberen te verbergen (indien mogelijk)
-    static public SortedList<int, CryptoTradeAccount> TradeAccountList = new();
-    static public SortedList<int, CryptoTradeAccount> ActiveTradeAccountList = new();
+    static public SortedList<int, CryptoTradeAccount> TradeAccountList = [];
+    static public SortedList<int, CryptoTradeAccount> ActiveTradeAccountList = [];
     static public CryptoTradeAccount ExchangeBackTestAccount { get; set; }
     static public CryptoTradeAccount ExchangeRealTradeAccount { get; set; }
     static public CryptoTradeAccount ExchangePaperTradeAccount { get; set; }
@@ -265,29 +265,6 @@ static public class GlobalData
         }
     }
 
-
-    static public bool IsStobSignalAvailableInTheLast(CryptoTradeSide side, DateTime boundary)
-    {
-        // Zoek een signaal die mogelijk een LL heeft geleverd
-
-        for (int i = SignalList.Count - 1; i >= 0; i--)
-        {
-            CryptoSignal signal = SignalList[i];
-
-            if (signal.OpenDate < boundary)
-                break;
-
-            if (signal.Strategy == CryptoSignalStrategy.Stobb || signal.Strategy == CryptoSignalStrategy.Sbm1 ||
-                signal.Strategy == CryptoSignalStrategy.Sbm2 || signal.Strategy == CryptoSignalStrategy.Sbm3 ||
-                signal.Strategy == CryptoSignalStrategy.Sbm4)
-                return true;
-
-            if (signal.Side == side)
-                return true;
-        }
-
-        return false;
-    }
 
     static public void AddExchange(Model.CryptoExchange exchange)
     {
@@ -521,11 +498,12 @@ static public class GlobalData
                     ExternalUrls.InitializeUrls();
 
                 //het bestand in ieder geval aanmaken(updates moeten achteraf gepushed worden)
-                string text = JsonSerializer.Serialize(ExternalUrls, new JsonSerializerOptions
+                JsonSerializerOptions options = new JsonSerializerOptions
                 {
                     Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
                     WriteIndented = true
-                });
+                };
+                string text = JsonSerializer.Serialize(ExternalUrls, options);
                 File.WriteAllText(filename, text);
             }
         }
@@ -594,14 +572,8 @@ static public class GlobalData
         //}
 
         var options = new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true, IncludeFields = true };
-
         string text = JsonSerializer.Serialize(Settings, options);
-        //var accountFile = new FileInfo(filename);
         File.WriteAllText(filename, text);
-
-        //filename = GlobalData.GetBaseDir() + "Settings.json";
-        //File.WriteAllText(filename, text);
-
 
 #if DEBUG
         //// Ter debug om te zien of alles okay is
@@ -711,34 +683,6 @@ static public class GlobalData
         }
 
         return appDataFolder + @"\";
-    }
-
-    static public void DebugOnlySymbol(string name)
-    {
-        // Reduceren naar enkel de BTCUSDT voor traceren van problemen
-        Model.CryptoExchange exchangex = ExchangeListId.Values[0];
-        for (int i = exchangex.SymbolListId.Values.Count - 1; i >= 0; i--)
-        {
-            CryptoSymbol symbol = exchangex.SymbolListId.Values[i];
-            //De "barometer" munten overslagen AUB
-            if (symbol.IsBarometerSymbol())
-                continue;
-            if (!symbol.Name.Equals(name))
-                exchangex.SymbolListId.Remove(symbol.Id);
-        }
-
-        // Reduceren naar enkel de BTCUSDT voor traceren van problemen
-        for (int i = exchangex.SymbolListName.Values.Count - 1; i >= 0; i--)
-        {
-            CryptoSymbol symbol = exchangex.SymbolListName.Values[i];
-            //De "barometer" munten overslagen AUB
-            if (symbol.IsBarometerSymbol())
-                continue;
-            if (!symbol.Name.Equals(name))
-                exchangex.SymbolListName.Remove(symbol.Name);
-        }
-
-        SymbolsHaveChangedEvent("");
     }
 
 
