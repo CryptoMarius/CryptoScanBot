@@ -303,7 +303,7 @@ public class PositionMonitor : IDisposable
 
 
         // Bepaal het entry bedrag 
-        decimal entryAmount = Symbol.QuoteData.GetEntryAmount(currentAssetQuantity);
+        decimal entryAmount = Symbol.QuoteData.GetEntryAmount(currentAssetQuantity, tradeAccount.TradeAccountType);
         if (entryAmount <= 0)
             return (false, null, "No amount/percentage given");
 
@@ -541,7 +541,7 @@ public class PositionMonitor : IDisposable
                             return;
                         }
 
-                        if (!SymbolTools.CheckAvailableSlots(tradeAccount, Symbol, out reaction))
+                        if (!SymbolTools.CheckAvailableSlots(tradeAccount, Symbol, signal.Side, out reaction))
                         {
                             GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
                             Symbol.ClearSignals();
@@ -582,6 +582,7 @@ public class PositionMonitor : IDisposable
                         PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.Entry, signal.Interval, signal.Strategy, 
                             CryptoEntryOrProfitMethod.AfterNextSignal, signal.Price, LastCandle1mCloseTimeDate);
 
+                        // Aanmelden van een nieuwe positie
                         if (!GlobalData.BackTest && GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
                             GlobalData.PositionsHaveChanged("");
                         return;
@@ -878,6 +879,26 @@ public class PositionMonitor : IDisposable
     }
 
 
+    private decimal CorrectEntryQuantityIfWayLess(decimal entryValue, decimal entryQuantity, decimal price)
+    {
+        // Is er een grote afwijking, wellicht iets erbij optellen?
+        decimal clampedEntryValue = entryQuantity * price;
+        decimal p = 100 * (clampedEntryValue - entryValue) / entryValue;
+        if (p < -25)
+        {
+            decimal clampedNewEntryQuantity = entryQuantity + Symbol.QuantityTickSize;
+            decimal clampedNewEntryValue = clampedNewEntryQuantity * price;
+            p = 100 * (clampedNewEntryValue - entryValue) / entryValue;
+            if (p < 10) // 10% erboven is okay?
+            {
+                // is okay
+                entryQuantity = clampedNewEntryQuantity;
+            }
+        }
+        return entryQuantity;
+    }
+
+
     private async Task HandleEntryPart(CryptoPosition position, CryptoPositionPart part, CryptoCandle candleInterval, 
         CryptoEntryOrProfitMethod stepInMethod, CryptoBuyOrderMethod orderMethod)
     {
@@ -988,7 +1009,7 @@ public class PositionMonitor : IDisposable
             decimal? limit = null;
 
             // Amount is het instap bedrag (niet de quantity)
-            decimal quoteAmount;
+            decimal entryValue;
             if (position.Invested == 0)
             {
                 // Bepaal het entry bedrag 
@@ -996,7 +1017,7 @@ public class PositionMonitor : IDisposable
                 decimal currentAssetQuantity = 0;
                 if (position.TradeAccount.AssetList.TryGetValue(Symbol.Quote, out var asset))
                     currentAssetQuantity = asset.Total;
-                quoteAmount = Symbol.QuoteData.GetEntryAmount(currentAssetQuantity);
+                entryValue = Symbol.QuoteData.GetEntryAmount(currentAssetQuantity, position.TradeAccount.TradeAccountType);
             }
             else
             {
@@ -1017,13 +1038,20 @@ public class PositionMonitor : IDisposable
                 if (part.PartNumber - 1 < GlobalData.Settings.Trading.DcaList.Count)
                 {
                     var dcaEntry = GlobalData.Settings.Trading.DcaList[part.PartNumber - 1];
-                    quoteAmount = position.EntryAmount.Value * dcaEntry.Factor;
+                    entryValue = position.EntryAmount.Value * dcaEntry.Factor;
                 }
                 else
                 {
                     // DCA, verdubbelen, gebaseerd op Zignally (geeft snel een asset tekort)
-                    quoteAmount = 1 * (position.Invested - position.Returned + position.Commission);
+                    entryValue = 1 * (position.Invested - position.Returned + position.Commission);
                 }
+            }
+
+            if (entryValue <= 0)
+            {
+                string text = $"{position.Symbol.Name} Er is geen bedrag of percentage ingevuld in de {position.Symbol.Quote} basismunt";
+                GlobalData.AddTextToLogTab(text);
+                throw new Exception(text);
             }
 
 
@@ -1038,8 +1066,11 @@ public class PositionMonitor : IDisposable
                         price = Symbol.LastPrice.Value;
                     price = price.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
 
-                    entryQuantity = quoteAmount / price; // "afgerond"
+                    entryQuantity = entryValue / price; // "afgerond"
                     entryQuantity = entryQuantity.Clamp(Symbol.QuantityMinimum, Symbol.QuantityMaximum, Symbol.QuantityTickSize);
+                    if (position.Invested == 0)
+                        entryQuantity = CorrectEntryQuantityIfWayLess(entryValue, entryQuantity, price);
+
                     break;
                 case CryptoOrderType.StopLimit:
                     // Voor de stopLimit moet de price en stop berekend worden
@@ -1049,8 +1080,11 @@ public class PositionMonitor : IDisposable
                     stop = (decimal)entryPrice;
                     stop = stop?.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
 
-                    entryQuantity = quoteAmount / (decimal)stop; // "afgerond"
+                    entryQuantity = entryValue / (decimal)stop; // "afgerond"
                     entryQuantity = entryQuantity.Clamp(Symbol.QuantityMinimum, Symbol.QuantityMaximum, Symbol.QuantityTickSize);
+                    if (position.Invested == 0)
+                        entryQuantity = CorrectEntryQuantityIfWayLess(entryValue, entryQuantity, price);
+
                     throw new Exception($"{entryOrderType} niet ondersteund");
                     //break;
                 default:
@@ -1627,7 +1661,7 @@ public class PositionMonitor : IDisposable
                 if (!BarometerHelper.ValidBarometerConditions(Symbol.QuoteData, TradingConfig.Signals[side].Barometer, out reaction))
                 {
                     if (TradingConfig.Signals[side].BarometerLog)
-                        GlobalData.AddTextToLogTab($"{Symbol.Name} {reaction}");
+                        GlobalData.AddTextToLogTab($"{Symbol.Name} {side} {reaction}");
                 }
                 else
                 {
