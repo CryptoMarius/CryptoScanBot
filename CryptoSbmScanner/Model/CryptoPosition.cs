@@ -88,18 +88,20 @@ public static class CryptoPositionHelper
     /// </summary>
     public static decimal CurrentProfit(this CryptoPosition position)
     {
+        if (position.Status == CryptoPositionStatus.Ready)
+            return position.Profit;
+
         if (!position.Symbol.LastPrice.HasValue)
             return 0m;
         else
         {
-            decimal profit = position.Quantity * position.Symbol.LastPrice.Value;
-            if (position.Side == CryptoTradeSide.Long)
-                profit = profit - position.Invested - position.Returned;
-            else
-                profit = position.Invested - position.Returned - profit;
-            profit -= position.Commission;
+            decimal plannedValue = position.Quantity * position.BreakEvenPrice;
+            decimal currentValue = position.Quantity * position.Symbol.LastPrice.Value;
 
-            return profit;
+            if (position.Side == CryptoTradeSide.Long) 
+                return currentValue - plannedValue;
+            else
+                return plannedValue - currentValue;
         }
     }
 
@@ -108,19 +110,10 @@ public static class CryptoPositionHelper
     /// </summary>
     public static decimal CurrentValue(this CryptoPosition position)
     {
-        if (!position.Symbol.LastPrice.HasValue)
-            return 0m;
-        else
-        {
-            decimal profit = position.Quantity * position.Symbol.LastPrice.Value;
-            if (position.Side == CryptoTradeSide.Long)
-                profit = profit - position.Invested - position.Returned;
-            else
-                profit = position.Invested - position.Returned - profit;
-            profit -= position.Commission;
+        if (position.Status == CryptoPositionStatus.Ready)
+            return 0; // position.Profit; die hebben we niet meer..
 
-            return position.Invested - position.Returned + profit;
-        }
+        return position.Invested - position.Returned + position.CurrentProfit();
     }
 
     /// <summary>
@@ -128,13 +121,32 @@ public static class CryptoPositionHelper
     /// </summary>
     public static decimal CurrentProfitPercentage(this CryptoPosition position)
     {
+        if (position.Status == CryptoPositionStatus.Ready)
+            return position.Percentage;
+
         decimal total = position.Invested - position.Returned;
         if (total == 0)
             return 0m;
-        else 
-            return 100 * position.CurrentProfit() / total;
+        else
+            return 100 * position.CurrentProfit() / position.Invested; // total; Met de invested is het de netpnl% van altrady
     }
 
+    public static decimal CurrentBreakEvenPercentage(this CryptoPosition position)
+    {
+        if (position.Status == CryptoPositionStatus.Ready)
+            return position.Percentage;
+
+        if (!position.Symbol.LastPrice.HasValue)
+            return 0m;
+
+        if (position.BreakEvenPrice == 0 || position.Symbol.LastPrice.Value == 0)
+            return 0;
+
+        if (position.Side == CryptoTradeSide.Long)
+            return 100 - 100 * position.BreakEvenPrice / position.Symbol.LastPrice.Value;
+        else
+            return 100 - 100 * position.Symbol.LastPrice.Value / position.BreakEvenPrice;
+    }
 
     public static TimeSpan Duration(this CryptoPosition position)
     {
