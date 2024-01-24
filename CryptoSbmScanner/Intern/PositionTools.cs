@@ -285,6 +285,7 @@ public static class PositionTools
         return false;
     }
 
+#endif
 
     /// <summary>
     /// Zijn de aangevinkte intervallen UP?
@@ -336,8 +337,5 @@ public static class PositionTools
         reaction = "";
         return true;
     }
-
-
-#endif
 
 }
