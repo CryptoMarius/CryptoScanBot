@@ -138,7 +138,7 @@ public partial class FrmMain
         listViewPositionsClosed.Columns.Add("BuyPrice", -2, HorizontalAlignment.Right);
         listViewPositionsClosed.Columns.Add("SellPrice", -2, HorizontalAlignment.Right);
 
-        //listViewPositionsClosed.Columns.Add("", -2, HorizontalAlignment.Right); // filler
+        listViewPositionsClosed.Columns.Add("", -2, HorizontalAlignment.Right); // filler
 
         listViewPositionsClosed.SetSortIcon(
               ((ListViewColumnSorterPosition)listViewPositionsClosed.ListViewItemSorter).SortColumn,
@@ -147,7 +147,7 @@ public partial class FrmMain
         for (int i = 0; i <= listViewPositionsClosed.Columns.Count - 1; i++)
         {
             //if (i != 5)
-                listViewPositionsClosed.Columns[i].Width = -2;
+            listViewPositionsClosed.Columns[i].Width = -2;
         }
     }
 

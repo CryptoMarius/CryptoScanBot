@@ -57,10 +57,10 @@ public partial class FrmMain
         menuCommand.Click += CommandPositionCreateAdditionalDca;
         ContextMenuStripPositionsOpen.Items.Add(menuCommand);
 
-        //menuCommand = new ToolStripMenuItem();
-        //menuCommand.Text = "Positie profit nemen";
-        //menuCommand.Click += CommandPositionLastPartTakeProfit;
-        //ContextMenuStripPositionsOpen.Items.Add(menuCommand);
+        menuCommand = new ToolStripMenuItem();
+        menuCommand.Text = "Positie profit nemen";
+        menuCommand.Click += CommandPositionLastPartTakeProfit;
+        ContextMenuStripPositionsOpen.Items.Add(menuCommand);
 
         menuCommand = new ToolStripMenuItem();
         menuCommand.Text = "Positie informatie (Excel)";
@@ -93,7 +93,7 @@ public partial class FrmMain
 
         TimerRefreshSomething = new()
         {
-            Interval = 20 * 1000 // 20 seconden
+            Interval = 15 * 1000 // 15 seconden
         };
         TimerRefreshSomething.Tick += TimerRefreshSomething_Tick;
 		TimerRefreshSomething.Enabled = true;
@@ -142,14 +142,15 @@ public partial class FrmMain
 
         listViewPositionsOpen.Columns.Add("Open", -2, HorizontalAlignment.Right);
         listViewPositionsOpen.Columns.Add("Net NPL", -2, HorizontalAlignment.Right);
-        listViewPositionsOpen.Columns.Add("Percentage", -2, HorizontalAlignment.Right);
+        //listViewPositionsOpen.Columns.Add("Net NPL%", -2, HorizontalAlignment.Right);
+        listViewPositionsOpen.Columns.Add("BE perc", -2, HorizontalAlignment.Right);
 
         listViewPositionsOpen.Columns.Add("Parts", -2, HorizontalAlignment.Right);
-        listViewPositionsOpen.Columns.Add("BuyPrice", -2, HorizontalAlignment.Right);
-        listViewPositionsOpen.Columns.Add("SellPrice", -2, HorizontalAlignment.Right);
+        listViewPositionsOpen.Columns.Add("EntryPrice", -2, HorizontalAlignment.Right);
+        listViewPositionsOpen.Columns.Add("ProfitPrice", -2, HorizontalAlignment.Right);
         listViewPositionsOpen.Columns.Add("FundingRate", -2, HorizontalAlignment.Right);
         //listViewPositionsOpen.Columns.Add("LastPrice", -2, HorizontalAlignment.Right);
-        //listViewPositionsOpen.Columns.Add("", -2, HorizontalAlignment.Right); // filler
+        listViewPositionsOpen.Columns.Add("", -2, HorizontalAlignment.Right); // filler
 
         listViewPositionsOpen.SetSortIcon(
               ((ListViewColumnSorterPosition)listViewPositionsOpen.ListViewItemSorter).SortColumn, 
@@ -216,11 +217,19 @@ public partial class FrmMain
         else if (NetPnlPerc < 0)
             subItem.ForeColor = Color.Red;
 
-        // profit percentage
-        subItem = item1.SubItems.Add(NetPnlPerc.ToString("N2"));
-        if (NetPnlPerc > 0)
+        // profit percentage (NetPnl%)
+        //subItem = item1.SubItems.Add(NetPnlPerc.ToString("N2"));
+        //if (NetPnlPerc > 0)
+        //    subItem.ForeColor = Color.Green;
+        //else if (NetPnlPerc < 0)
+        //    subItem.ForeColor = Color.Red;
+
+        // tov BE percentage
+        decimal bePerc = position.CurrentBreakEvenPercentage();
+        subItem = item1.SubItems.Add(bePerc.ToString("N2"));
+        if (bePerc > 0)
             subItem.ForeColor = Color.Green;
-        else if (NetPnlPerc < 0)
+        else if (bePerc < 0)
             subItem.ForeColor = Color.Red;
 
 
@@ -270,9 +279,7 @@ public partial class FrmMain
                     {
                         //De muntparen toevoegen aan de userinterface
                         foreach (CryptoPosition position in positionList.Values)
-                        {
                             list.Add(position);
-                        }
                     }
                 }
             }
