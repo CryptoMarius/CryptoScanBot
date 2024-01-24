@@ -219,7 +219,7 @@ public partial class FrmMain
 
 
 
-        //listViewSignals.Columns.Add("", -2, HorizontalAlignment.Right); // filler
+        listViewSignals.Columns.Add("", -2, HorizontalAlignment.Right); // filler
 
         listViewSignals.SetSortIcon(
               ((ListViewColumnSorterSignal)listViewSignals.ListViewItemSorter).SortColumn,
