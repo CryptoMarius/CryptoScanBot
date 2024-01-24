@@ -130,8 +130,7 @@ public partial class FrmMain
         ListViewSymbols.Columns.Add("Name", 150, HorizontalAlignment.Left);
         ListViewSymbols.Columns.Add("Volume", 80, HorizontalAlignment.Right);
         //ListViewSymbols.Columns.Add("Price", -2, HorizontalAlignment.Right);
-
-        //ListViewSymbols.Columns.Add("", -2, HorizontalAlignment.Right); // filler
+        ListViewSymbols.Columns.Add("", 5, HorizontalAlignment.Right); // filler
 
         ListViewSymbols.SetSortIcon(
               ((ListViewColumnSorterSymbol)ListViewSymbols.ListViewItemSorter).SortColumn,
@@ -146,16 +145,7 @@ public partial class FrmMain
         for (int i = 0; i <= ListViewSymbols.Columns.Count - 1; i++)
         {
             ColumnHeader columnHeader = ListViewSymbols.Columns[i];
-            //if (GlobalData.Settings.HiddenSignalColumns.Contains(columnHeader.Text))
-            //    columnHeader.Width = 0;
-            //else
-            {
-                if (i != columnForText)
-                {
-                    if (columnHeader.Width != 0)
-                        columnHeader.Width = -2;
-                }
-            }
+            columnHeader.Width = -2;
         }
     }
     private static void FillSymbolItem(CryptoSymbol symbol, ListViewItem item1)
