@@ -79,19 +79,25 @@ public class ThreadCheckFinishedPosition
 
                                     // Annuleer de vorige buy order
                                     var exchangeApi = ExchangeHelper.GetExchangeInstance(GlobalData.Settings.General.ExchangeId);
-                                    var result = await exchangeApi.Cancel(position.TradeAccount, position.Symbol, step);
-                                    if (result.succes)
+                                    var (succes, tradeParams) = await exchangeApi.Cancel(position.TradeAccount, position.Symbol, step);
+                                    if (succes)
                                     {
                                         step.CloseTime = DateTime.UtcNow;
                                         step.Status = CryptoOrderStatus.PositionClosed;
                                         database.Connection.Update<CryptoPositionStep>(step);
 
                                         if (GlobalData.Settings.Trading.LogCanceledOrders)
-                                            ExchangeBase.Dump(position.Symbol, result.succes, result.tradeParams, $"annuleren vanwege sluiten {position.Side} positie");
+                                            ExchangeBase.Dump(position.Symbol, succes, tradeParams, $"annuleren vanwege sluiten {position.Side} positie");
+
+
+                                        // Positie is afgerond (wellicht dubbel op met de code in de PositionTools)
+                                        PositionTools.RemovePosition(position.TradeAccount, position);
+                                        if (!GlobalData.BackTest && GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
+                                            GlobalData.PositionsHaveChanged("");
                                     }
                                     else
                                     {
-                                        ExchangeBase.Dump(position.Symbol, result.succes, result.tradeParams, "DCA ORDER ANNULEREN NIET GELUKT!!! (herkansing)");
+                                        ExchangeBase.Dump(position.Symbol, succes, tradeParams, "DCA ORDER ANNULEREN NIET GELUKT!!! (herkansing)");
                                         AddToQueue(position); // doe nog maar een keer... Endless loop?
                                     }
                                 }
