@@ -255,7 +255,7 @@ public class SymbolTools
         return true;
     }
 
-    public static bool CheckAvailableSlots(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, out string reaction)
+    public static bool CheckAvailableSlots(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoTradeSide side, out string reaction)
     {
         //if (!CheckAvailableSlotsExchange(tradeAccount, GlobalData.Settings.Trading.SlotsMaximalExchange, out reaction))
         //    return false;
@@ -271,10 +271,10 @@ public class SymbolTools
         //if (!CheckAvailableSlotsQuote(tradeAccount, symbol, symbol.QuoteData.SlotsMaximal, out reaction))
         //    return false;
 
-        if (!CheckAvailableSlotsLongShort(tradeAccount, CryptoTradeSide.Long, GlobalData.Settings.Trading.SlotsMaximalLong, out reaction))
+        if (side == CryptoTradeSide.Long && !CheckAvailableSlotsLongShort(tradeAccount, side, GlobalData.Settings.Trading.SlotsMaximalLong, out reaction))
             return false;
 
-        if (!CheckAvailableSlotsLongShort(tradeAccount, CryptoTradeSide.Short, GlobalData.Settings.Trading.SlotsMaximalShort, out reaction))
+        if (side == CryptoTradeSide.Short && !CheckAvailableSlotsLongShort(tradeAccount, side, GlobalData.Settings.Trading.SlotsMaximalShort, out reaction))
             return false;
 
         reaction = "";
