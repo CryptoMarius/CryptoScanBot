@@ -43,8 +43,8 @@ public partial class FrmSettings : Form
 
 #if !TRADEBOT
         settings.Trading.Active = false;
-        tabControlTrading.Parent = null;
-        tabControl.TabPages.Remove(tabControlTrading);
+        tabTrading.Parent = null;
+        tabControlMain.TabPages.Remove(tabTrading);
 #endif
 
         // Deze worden na de overgang naar .net 7 regelmatig gereset naar 0
