@@ -391,10 +391,15 @@ public class ExcelPositionDump : ExcelBase
         WriteCell(sheet, row, column++, "Positie");
         WriteCell(sheet, row, column++, "Exchange");
         WriteCell(sheet, row, column++, "Symbol");
+        WriteCell(sheet, row, column++, "Price ticksize");
+        WriteCell(sheet, row, column++, "Quantity ticksize");
         WriteCell(sheet, row, column++, "Direction");
         WriteCell(sheet, row, column++, "Geinvesteeerd");
         WriteCell(sheet, row, column++, "Geretourneerd");
-        WriteCell(sheet, row, column++, "Nu geinvesteerd");
+        if (Position.Status == CryptoPositionStatus.Ready)
+            WriteCell(sheet, row, column++, "Winst/Verlies");
+        else
+            WriteCell(sheet, row, column++, "Nu geinvesteerd");
         WriteCell(sheet, row, column++, "Totale commissie");
         WriteCell(sheet, row, column++, "Markt waarde");
         WriteCell(sheet, row, column++, "Markt percentage");
@@ -403,20 +408,45 @@ public class ExcelPositionDump : ExcelBase
 
         row++;
         column = 0;
-        decimal investedInTrades = Position.Invested - Position.Returned - Position.Commission;
         WriteCell(sheet, row, column++, Position.Id);
         WriteCell(sheet, row, column++, Position.Exchange.Name);
+
         WriteCell(sheet, row, column++, Position.Symbol.Name);
+        var cell = WriteCell(sheet, row, column++, (double)Position.Symbol.PriceTickSize);
+        cell.CellStyle = CellStyleDecimalNormal;
+
+        cell = WriteCell(sheet, row, column++, (double)Position.Symbol.QuantityTickSize);
+        cell.CellStyle = CellStyleDecimalNormal;
+
         WriteCell(sheet, row, column++, Position.SideText);
-        WriteCell(sheet, row, column++, (double)Position.Invested);
-        WriteCell(sheet, row, column++, (double)Position.Returned);
-        WriteCell(sheet, row, column++, (double)investedInTrades);
-        WriteCell(sheet, row, column++, (double)(Position.Commission ));
-        WriteCell(sheet, row, column++, (double)Position.CurrentProfit());
-        WriteCell(sheet, row, column++, (double)Position.CurrentProfitPercentage());
-        WriteCell(sheet, row, column++, Position.CreateTime.ToLocalTime());
+        
+        cell = WriteCell(sheet, row, column++, (double)Position.Invested);
+        cell.CellStyle = CellStyleDecimalNormal;
+        
+        cell = WriteCell(sheet, row, column++, (double)Position.Returned);
+        cell.CellStyle = CellStyleDecimalNormal;
+
+        decimal investedInTrades = Position.Invested - Position.Returned - Position.Commission;
+        cell = WriteCell(sheet, row, column++, (double)investedInTrades);
+        cell.CellStyle = CellStyleDecimalNormal;
+        
+        cell = WriteCell(sheet, row, column++, (double)(Position.Commission ));
+        cell.CellStyle = CellStyleDecimalNormal;
+        
+        cell = WriteCell(sheet, row, column++, (double)Position.CurrentProfit());
+        cell.CellStyle = CellStyleDecimalNormal;
+        
+        cell = WriteCell(sheet, row, column++, (double)Position.CurrentProfitPercentage());
+        cell.CellStyle = CellStyleDecimalNormal;
+        
+        cell = WriteCell(sheet, row, column++, Position.CreateTime.ToLocalTime());
+        cell.CellStyle = CellStyleDate;
+        
         if (Position.CloseTime.HasValue)
-            WriteCell(sheet, row, column++, Position.CloseTime.Value.ToLocalTime());
+        {
+            cell =  WriteCell(sheet, row, column++, Position.CloseTime.Value.ToLocalTime());
+            cell.CellStyle = CellStyleDate;
+        }
 
         AutoSize(sheet, 6);
     }
