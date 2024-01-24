@@ -361,6 +361,7 @@ public class TradeTools
                 {
                     // Gevaarlijk, als er een buy niet gedetecteerd is dan wordt de trade zomaar afgesloten
                     // En dat lijkt soms wel te gebeuren vanwege de exchange, internet of datetime perikelen.
+                    position.UpdateTime = DateTime.UtcNow;
                     position.Status = CryptoPositionStatus.Ready;
                     if (addToDoubleCheckPosition)
                         GlobalData.ThreadDoubleCheckPosition.AddToQueue(position);
