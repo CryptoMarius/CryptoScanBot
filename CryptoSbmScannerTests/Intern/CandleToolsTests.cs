@@ -15,20 +15,28 @@ namespace CryptoSbmScanner.Intern.Tests;
 [TestClass()]
 public class CandleToolsTests
 {
-    private CryptoSymbol CreateTestSymbol()
+    private static CryptoSymbol CreateTestSymbol()
     {
         CryptoSymbol symbol = new()
         {
             Status = 1,
             Name = "TESTUSDT",
             Base = "TEST",
-            Quote = "USDT"
+            Quote = "USDT",
+
+            QuantityTickSize = 0.0001m,
+            QuantityMinimum= 0.0001m,
+            QuantityMaximum = 999999m,
+
+            PriceTickSize = 0.0001m,
+            PriceMinimum = 0.0001m,
+            PriceMaximum = 999999m
         };
 
         return symbol;
     }
 
-    private void SetupIntervals()
+    private static void SetupIntervals()
     {
         GlobalData.IntervalList.Clear();
         GlobalData.IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval1m, "1m", 1 * 60, null)); //1
