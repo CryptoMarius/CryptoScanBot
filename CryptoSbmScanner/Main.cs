@@ -26,6 +26,54 @@ public partial class FrmMain : Form
         public Color Foreground { get; set; } = Color.White;
     }
 
+    //private decimal CorrectEntryQuantiryIfWayLess(decimal quantityTickSize, decimal entryValue, decimal entryQuantity, decimal price)
+    //{
+    //    // Is er een grote afwijking, wellicht iets erbij optellen?
+    //    decimal clampedEntryValue = entryQuantity * price;
+    //    decimal p = 100 * (clampedEntryValue - entryValue) / entryValue;
+    //    if (p < -25)
+    //    {
+    //        decimal clampedNewEntryQuantity = entryQuantity + quantityTickSize;
+    //        decimal clampedNewEntryValue = clampedNewEntryQuantity * price;
+    //        p = 100 * (clampedNewEntryValue - entryValue) / entryValue;
+    //        if (p < 10) // 10% erboven is okay?
+    //        {
+    //            // is okay
+    //            entryQuantity = clampedNewEntryQuantity;
+    //        }
+    //    }
+    //    return entryQuantity;
+    //}
+
+
+    //public void Klad()
+    //{
+    //    decimal entryPrice = 28.246m;
+    //    entryPrice = entryPrice.Clamp(0.001m, 9999m, 0.001m);
+
+    //    decimal stepSize = 0.1m;
+    //    decimal entryValue = 5.25m;
+        
+    //    decimal entryQuantity = entryValue / entryPrice;
+    //    entryQuantity = entryQuantity.Clamp(0.1m, 9999m, 0.1m);
+
+    //    entryQuantity = CorrectEntryQuantiryIfWayLess(stepSize, entryValue, entryQuantity, entryPrice);
+
+    //    //decimal clampedValue = clampedQuantity * price;
+    //    //decimal p = 100 * (clampedValue - valueUsdt) / valueUsdt;
+
+    //    //if (p < -10)
+    //    //{
+    //    //    decimal clampedQuantity2 = clampedQuantity + stepSize;
+    //    //    decimal clampedValue2 = clampedQuantity2 * price;
+    //    //    p = 100 * (clampedValue2 - valueUsdt) / valueUsdt;
+    //    //    if (p < 10) // 10% erboven is okay?
+    //    //    {
+    //    //        // is okay
+    //    //        clampedValue = clampedValue2;
+    //    //    }
+    //    //}
+    //}
 
     public FrmMain()
     {
@@ -203,6 +251,10 @@ public partial class FrmMain : Form
 #if TRADEBOT
         ListViewPositionsOpenInitCaptions();
         ListViewPositionsClosedInitCaptions();
+
+        if (GlobalData.Settings.General.ExchangeId != 3)
+            positionInfoToolStripMenuItem.Visible = false;
+
 #endif
 
 
@@ -945,6 +997,9 @@ public partial class FrmMain : Form
 
     private async void PositionInfoToolStripMenuItem_Click(object sender, EventArgs e)
     {
-        await Exchange.BybitFutures.Api.GetPositionInfo();
+#if TRADEBOT
+        if (GlobalData.Settings.General.ExchangeId == 3)
+            await Exchange.BybitFutures.Api.GetPositionInfo();
+#endif
     }
 }
