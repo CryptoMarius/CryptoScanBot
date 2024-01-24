@@ -23,11 +23,11 @@
     <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DefineConstants>$(DefineConstants);TRADEBOT;EXTRASTRATEGIES</DefineConstants>
+    <DefineConstants>$(DefineConstants);TRADEBOT</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
-    <DefineConstants>$(DefineConstants);TRADEBOT;EXTRASTRATEGIES</DefineConstants>
+    <DefineConstants>$(DefineConstants);TRADEBOT</DefineConstants>
   </PropertyGroup>
   <PropertyGroup />
   <PropertyGroup>
@@ -102,6 +102,9 @@
     <None Update="Sounds\sound-stobb-oversold.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Sounds\sound-trade-notification-ka-ching.wav">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Sounds\sound-trade-notification.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -121,7 +124,7 @@
   <ItemGroup>
     <PackageReference Include="Binance.Net" Version="9.4.0" />
     <PackageReference Include="BouncyCastle.Cryptography" Version="2.2.1" />
-    <PackageReference Include="Bybit.Net" Version="3.2.7" />
+    <PackageReference Include="Bybit.Net" Version="3.3.0" />
     <PackageReference Include="CommandLineParser" Version="2.9.1" />
     <PackageReference Include="Cryptowatcher.TA-LIb-Core" Version="1.0.0" />
     <PackageReference Include="Dapper" Version="2.1.28" />

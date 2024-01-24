@@ -2,7 +2,7 @@
   "profiles": {
     "CryptoSbmScanner": {
       "commandName": "Project",
-      "commandLineArgs": "-e \"Bybit Spot\" -f CryptoScanner.Bybit.Spot"
+      "commandLineArgs": "-e \"Bybit Futures\" -f CryptoScanner.Bybit.Futures.Live"
     }
   }
 }
