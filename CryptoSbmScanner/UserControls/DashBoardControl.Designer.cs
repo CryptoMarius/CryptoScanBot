@@ -41,11 +41,9 @@ partial class DashBoardControl
         label17 = new Label();
         label18 = new Label();
         label19 = new Label();
-        label20 = new Label();
         label21 = new Label();
         label22 = new Label();
         label23 = new Label();
-        label24 = new Label();
         label25 = new Label();
         labelNettoPnlValue4 = new Label();
         label10 = new Label();
@@ -83,11 +81,9 @@ partial class DashBoardControl
         panel1.Controls.Add(label17);
         panel1.Controls.Add(label18);
         panel1.Controls.Add(label19);
-        panel1.Controls.Add(label20);
         panel1.Controls.Add(label21);
         panel1.Controls.Add(label22);
         panel1.Controls.Add(label23);
-        panel1.Controls.Add(label24);
         panel1.Controls.Add(label25);
         panel1.Controls.Add(labelNettoPnlValue4);
         panel1.Controls.Add(label10);
@@ -221,15 +217,6 @@ partial class DashBoardControl
         label19.Text = "Commissie";
         label19.TextAlign = ContentAlignment.MiddleRight;
         // 
-        // label20
-        // 
-        label20.Location = new Point(410, 126);
-        label20.Name = "label20";
-        label20.Size = new Size(62, 15);
-        label20.TabIndex = 64;
-        label20.Text = "Netto PNL";
-        label20.TextAlign = ContentAlignment.MiddleRight;
-        // 
         // label21
         // 
         label21.Location = new Point(397, 61);
@@ -256,15 +243,6 @@ partial class DashBoardControl
         label23.Size = new Size(66, 15);
         label23.TabIndex = 61;
         label23.Text = "Commissie";
-        // 
-        // label24
-        // 
-        label24.AutoSize = true;
-        label24.Location = new Point(282, 126);
-        label24.Name = "label24";
-        label24.Size = new Size(38, 15);
-        label24.TabIndex = 60;
-        label24.Text = "Totaal";
         // 
         // label25
         // 
@@ -474,11 +452,9 @@ partial class DashBoardControl
     private Label label17;
     private Label label18;
     private Label label19;
-    private Label label20;
     private Label label21;
     private Label label22;
     private Label label23;
-    private Label label24;
     private Label label25;
     private Label labelNettoPnlValue4;
     private Label label10;

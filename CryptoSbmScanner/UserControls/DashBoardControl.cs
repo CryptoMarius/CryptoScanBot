@@ -224,6 +224,7 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
                 ClosedData.Invested += data.Invested;
                 ClosedData.Returned += data.Returned;
                 ClosedData.Commission += data.Commission;
+                ClosedData.TotalProfit += data.TotalProfit;
                 // enzovoort..
             }
             else
@@ -647,7 +648,7 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
     {
         string quoteDataDisplayString = QuoteData.DisplayFormat;
 
-        // En de lopende posities
+        // Open posities
         labelPositions.Text = OpenData.Positions.ToString();
         labelInvested.Text = OpenData.Invested.ToString(quoteDataDisplayString);
         labelReturned.Text = OpenData.Returned.ToString(quoteDataDisplayString);
@@ -680,20 +681,16 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
             labelNettoPnlValue4.Text = "0.00";
 
 
-        // En de gesloten posities
+        // Gesloten posities (wellicht nog uitsplitsen over long en short)
         label16.Text = ClosedData.Positions.ToString();
         label21.Text = ClosedData.Invested.ToString(quoteDataDisplayString);
         label18.Text = ClosedData.Returned.ToString(quoteDataDisplayString);
         label19.Text = ClosedData.Commission.ToString(quoteDataDisplayString);
-
-        currentValue = ClosedData.Returned - ClosedData.Invested - ClosedData.Commission;
-        label20.Text = currentValue.ToString(quoteDataDisplayString);
-        //label14.Text = currentValue.ToString(quoteDataDisplayString);
-        label12.Text = currentValue.ToString(quoteDataDisplayString);
+        label12.Text = ClosedData.TotalProfit.ToString(quoteDataDisplayString);
 
 
         if (ClosedData.Invested > 0)
-            label3.Text = ((100 * (currentValue / ClosedData.Invested))).ToString("N2");
+            label3.Text = ((100 * (ClosedData.TotalProfit / ClosedData.Invested))).ToString("N2");
         else
             label3.Text = "";
     }
