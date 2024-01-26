@@ -11,51 +11,12 @@ public partial class FrmMain
     private ListViewHeaderContext ListViewSymbols;
     private System.Windows.Forms.Timer TimerModifyVolume;
 
-    private ToolStripMenuItem CommandSymbolsActivateTradingApp;
-
-
     private void ListViewSymbolsConstructor()
     {
         ListViewSymbolsColumns = new ();
         ListViewSymbolsMenuStrip = new();
 
-        CommandSymbolsActivateTradingApp = new ToolStripMenuItem();
-        CommandSymbolsActivateTradingApp.Text = "Activate trading app";
-        CommandSymbolsActivateTradingApp.Tag = Command.ActivateTradingApp;
-        CommandSymbolsActivateTradingApp.Click += Commands.ExecuteCommandCommandViaTag;
-        ListViewSymbolsMenuStrip.Items.Add(CommandSymbolsActivateTradingApp);
-
-        ToolStripMenuItem command = new();
-        command.Text = "TradingView browser";
-        command.Tag = Command.ActivateTradingviewIntern;
-        command.Click += Commands.ExecuteCommandCommandViaTag;
-        ListViewSymbolsMenuStrip.Items.Add(command);
-
-        command = new ToolStripMenuItem();
-        command.Text = "TradingView extern";
-        command.Tag = Command.ActivateTradingviewExtern;
-        command.Click += Commands.ExecuteCommandCommandViaTag;
-        ListViewSymbolsMenuStrip.Items.Add(command);
-
-        ListViewSymbolsMenuStrip.Items.Add(new ToolStripSeparator());
-
-        command = new ToolStripMenuItem();
-        command.Text = "Kopiëer informatie";
-        command.Click += CommandSymbolsCopyInformationExecute;
-        ListViewSymbolsMenuStrip.Items.Add(command);
-
-        command = new ToolStripMenuItem();
-        command.Text = "Trend informatie (zie log)";
-        command.Tag = Command.ShowTrendInformation;
-        command.Click += Commands.ExecuteCommandCommandViaTag;
-        ListViewSymbolsMenuStrip.Items.Add(command);
-
-        command = new ToolStripMenuItem();
-        command.Text = "Symbol informatie (Excel)";
-        command.Tag = Command.ExcelSymbolInformation;
-        command.Click += Commands.ExecuteCommandCommandViaTag;
-        ListViewSymbolsMenuStrip.Items.Add(command);
-
+        AddStandardSymbolCommands(ListViewSymbolsMenuStrip, false);
 
         ListViewSymbols = new()
         {
@@ -109,7 +70,7 @@ public partial class FrmMain
     private void ListViewSymbolsInitCaptions()
     {
         string text = GlobalData.ExternalUrls.GetTradingAppName(GlobalData.Settings.General.TradingApp, GlobalData.Settings.General.ExchangeName);
-        CommandSymbolsActivateTradingApp.Text = text;
+        listViewSignals.ContextMenuStrip.Items[0].Text = text;
     }
 
     private void ListViewSymbolsInitColumns()

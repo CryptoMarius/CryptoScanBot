@@ -19,29 +19,11 @@ public partial class FrmMain
     {
         ContextMenuStripPositionsClosed = new ContextMenuStrip();
 
-        ToolStripMenuItem menuCommand;
-
-        // Commands
-        menuCommand = new ToolStripMenuItem();
-        menuCommand.Text = "Activate trading app";
-        menuCommand.Tag = Command.ActivateTradingApp;
-        menuCommand.Click += Commands.ExecuteCommandCommandViaTag;
-        ContextMenuStripPositionsClosed.Items.Add(menuCommand);
-
-        menuCommand = new ToolStripMenuItem();
-        menuCommand.Text = "TradingView browser";
-        menuCommand.Tag = Command.ActivateTradingviewIntern;
-        menuCommand.Click += Commands.ExecuteCommandCommandViaTag;
-        ContextMenuStripPositionsClosed.Items.Add(menuCommand);
-
-        menuCommand = new ToolStripMenuItem();
-        menuCommand.Text = "TradingView extern";
-        menuCommand.Tag = Command.ActivateTradingviewExtern;
-        menuCommand.Click += Commands.ExecuteCommandCommandViaTag;
-        ContextMenuStripPositionsClosed.Items.Add(menuCommand);
+        AddStandardSymbolCommands(ContextMenuStripPositionsClosed, false);
 
         ContextMenuStripPositionsClosed.Items.Add(new ToolStripSeparator());
 
+        ToolStripMenuItem menuCommand;
         menuCommand = new ToolStripMenuItem();
         menuCommand.Text = "Herberekenen";
         menuCommand.Click += CommandPositionsClosedRecalculateExecute;

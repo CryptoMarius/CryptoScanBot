@@ -16,6 +16,8 @@ public enum Command
     ExcelSymbolInformation,
     ExcelExchangeInformation,
     ExcelPositionInformation,
+    CopySignalInformation,
+    CopySymbolInformation,
     About
 }
 
@@ -174,7 +176,7 @@ public class Commands
                 return (true, position.Exchange, position.Symbol, position.Interval, position);
             else if (listviewItem.Tag is CryptoSymbol symbol)
                 // Vanuit de lijst met symbols
-                return (true, GlobalData.Settings.General.Exchange, null, null, null);
+                return (true, symbol.Exchange, symbol, null, null);
             else if (listviewItem.Tag is CryptoSymbol symbol2) //ehhh....
                 // Vanuit de lijst met symbols
                 return (true, GlobalData.Settings.General.Exchange, null, null, null);
@@ -183,6 +185,32 @@ public class Commands
         return (false, null, null, null, null);
     }
 
+    private static void CopyAllColumnsAsTextToClipboard(object sender)
+    {
+        string text = "";
+        if (sender is ListView listview)
+        {
+            if (listview.SelectedItems.Count > 0)
+            {
+                for (int index = 0; index < listview.SelectedItems.Count; index++)
+                {
+                    ListViewItem item = listview.SelectedItems[index];
+
+                    text += item.Text + ";";
+                    foreach (ListViewItem.ListViewSubItem i in item.SubItems)
+                    {
+                        text += i.Text + ";";
+                    }
+                    text += "\r\n";
+
+                }
+            }
+        }
+        if (text == "")
+            Clipboard.Clear();
+        else
+            Clipboard.SetText(text, TextDataFormat.UnicodeText);
+    }
 
     public static async void ExecuteSomethingViaTag(object sender, Command cmd)
     {
@@ -209,6 +237,12 @@ public class Commands
         {
             switch (cmd)
             {
+                case Command.CopySymbolInformation:
+                    Clipboard.SetText(symbol.Name, TextDataFormat.UnicodeText);
+                    break;
+                case Command.CopySignalInformation:
+                    CopyAllColumnsAsTextToClipboard(sender);
+                    break;
                 case Command.ActivateTradingApp:
                     LinkTools.ActivateTradingApp(GlobalData.Settings.General.TradingApp, symbol, interval, CryptoExternalUrlType.External);
                     break;
@@ -245,29 +279,20 @@ public class Commands
     public static void ExecuteCommandCommandViaTag(object sender, EventArgs e)
     {
         // Een poging om de meest gebruikte menu items te centraliseren
-
         if (sender is ToolStripMenuItem tsitem && tsitem.Tag is Command cmd1)
         {
             if (sender is ToolStripMenuItem item)
             {
-                if (item.Owner is ContextMenuStrip strip)
-                {
+                if (item.Owner is ContextMenuStrip strip) // popup menu's
                     ExecuteSomethingViaTag(strip.SourceControl, cmd1);
-                    //applicationMenuStrip = new MenuStrip();
-                }
                 else if (item.Owner is ToolStripDropDownMenu strip2)
-                {
-                    ExecuteSomethingViaTag(strip2, cmd1);
-                    //applicationMenuStrip = new MenuStrip();
-                }
+                    ExecuteSomethingViaTag(strip2, cmd1); // main menu
             }
         }
         else if (sender is ListView listview)
         {
             if (listview.Tag is Command cmd2)
-            {
                 ExecuteSomethingViaTag(listview, cmd2);
-            }
         }
     }
 

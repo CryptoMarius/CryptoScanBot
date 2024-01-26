@@ -5,7 +5,6 @@ Als je iets mist, geef het dat dab AUB even aan in een private PM of in de groep
 
 Scanner:
 - Scanner - Soms blijft de barometer stilstaan (dan loopt de tijd van de barometer grafiek niet meer op), een oorzaak daarvoor ontbreekt
-- Het volume bij de getoonde munten lijkt niet te kloppen (die van PAXG in <mijn> informatie balk lijkt niet te kloppen, controleren!)
 - De globale markt trend % wordt uitgerekend via de 210 aanwezige candles, voor de trend calculatie is dat eigenlijk te weinig.
   Maar je wilt ook niet heel veel candles in het geheugen hebben, de scanner op Bybit gebruikt nu al regelmatig 600Mb
 - Bij kleine(re) beeldschermen zijn bepaalde instellingen niet in zijn geheel zichtbaar (de OK en Cancel knop vallen onder andere weg)

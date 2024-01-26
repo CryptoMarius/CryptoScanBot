@@ -14,52 +14,59 @@ public partial class FrmMain
 
     private int columnForText;
 
-
-    private void ListViewSignalsConstructor()
+    private void AddStandardSymbolCommands(ContextMenuStrip menuStrip, bool isSignal)
     {
-        ListViewSignalsColumns = new ContextMenuStrip();
-        ListViewSignalsMenuStrip = new ContextMenuStrip();
-
         ToolStripMenuItem menuCommand;
 
         menuCommand = new ToolStripMenuItem();
         menuCommand.Text = "Activate trading app";
         menuCommand.Tag = Command.ActivateTradingApp;
         menuCommand.Click += Commands.ExecuteCommandCommandViaTag;
-        ListViewSignalsMenuStrip.Items.Add(menuCommand);
+        menuStrip.Items.Add(menuCommand);
 
         menuCommand = new ToolStripMenuItem();
         menuCommand.Text = "TradingView browser";
         menuCommand.Tag = Command.ActivateTradingviewIntern;
         menuCommand.Click += Commands.ExecuteCommandCommandViaTag;
-        ListViewSignalsMenuStrip.Items.Add(menuCommand);
+        menuStrip.Items.Add(menuCommand);
 
         menuCommand = new ToolStripMenuItem();
         menuCommand.Text = "TradingView extern";
         menuCommand.Tag = Command.ActivateTradingviewExtern;
         menuCommand.Click += Commands.ExecuteCommandCommandViaTag;
-        ListViewSignalsMenuStrip.Items.Add(menuCommand);
+        menuStrip.Items.Add(menuCommand);
 
 
-        ListViewSignalsMenuStrip.Items.Add(new ToolStripSeparator());
+        menuStrip.Items.Add(new ToolStripSeparator());
 
         menuCommand = new ToolStripMenuItem();
         menuCommand.Text = "Kopiëer informatie";
-        menuCommand.Click += CommandSignalCopyInformationExecute;
-        ListViewSignalsMenuStrip.Items.Add(menuCommand);
+        if (isSignal) 
+            menuCommand.Tag = Command.CopySignalInformation;
+        else
+            menuCommand.Tag = Command.CopySymbolInformation;
+        menuCommand.Click += Commands.ExecuteCommandCommandViaTag;
+        menuStrip.Items.Add(menuCommand);
 
         menuCommand = new ToolStripMenuItem();
         menuCommand.Text = "Trend informatie (zie log)";
         menuCommand.Tag = Command.ShowTrendInformation;
         menuCommand.Click += Commands.ExecuteCommandCommandViaTag;
-        ListViewSignalsMenuStrip.Items.Add(menuCommand);
+        menuStrip.Items.Add(menuCommand);
 
         menuCommand = new ToolStripMenuItem();
         menuCommand.Text = "Symbol informatie (Excel)";
         menuCommand.Tag = Command.ExcelSymbolInformation;
         menuCommand.Click += Commands.ExecuteCommandCommandViaTag;
-        ListViewSignalsMenuStrip.Items.Add(menuCommand);
+        menuStrip.Items.Add(menuCommand);
+    }
 
+    private void ListViewSignalsConstructor()
+    {
+        ListViewSignalsColumns = new ContextMenuStrip();
+        ListViewSignalsMenuStrip = new ContextMenuStrip();
+
+        AddStandardSymbolCommands(ListViewSignalsMenuStrip, true);
 
         //ListViewColumnSorterSignal listViewColumnSorter = new();
 
@@ -622,29 +629,6 @@ public partial class FrmMain
         }
     }
 
-    private void CommandSignalCopyInformationExecute(object sender, EventArgs e)
-    {
-        string text = "";
-        if (listViewSignals.SelectedItems.Count > 0)
-        {
-            for (int index = 0; index < listViewSignals.SelectedItems.Count; index++)
-            {
-                ListViewItem item = listViewSignals.SelectedItems[index];
-
-                text += item.Text + ";";
-                foreach (ListViewItem.ListViewSubItem i in item.SubItems)
-                {
-                    text += i.Text + ";";
-                }
-                text += "\r\n";
-
-            }
-        }
-        if (text == "")
-            Clipboard.Clear();
-        else
-            Clipboard.SetText(text, TextDataFormat.UnicodeText);
-    }
 
     /// <summary>
     /// Roulerend de regels een iets andere achtergrond kleur geven
