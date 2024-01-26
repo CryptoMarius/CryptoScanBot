@@ -410,7 +410,7 @@ public class PositionMonitor : IDisposable
                 }
 
                 // Er zijn (technisch) niet altijd candles aanwezig
-                if (!symbolInterval.CandleList.Any())
+                if (symbolInterval.CandleList.Count == 0)
                 {
                     GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " no candles on this interval (removed)");
                     symbolInterval.Signal = null;
@@ -1189,7 +1189,7 @@ public class PositionMonitor : IDisposable
 
 
                 decimal x;
-                List<decimal> qqq = new();
+                List<decimal> qqq = [];
 
                 // Via de psar trailen ipv KC/psar? (dat zou zelfs een instelling kunnen zijn)
                 //x = (decimal)candleInterval.CandleData.PSar - Symbol.PriceTickSize;

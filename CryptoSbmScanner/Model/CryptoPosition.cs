@@ -73,11 +73,11 @@ public class CryptoPosition
     public bool Reposition { get; set; }
 
     [Computed]
-    public SortedList<int, CryptoPositionPart> Parts { get; set; } = new();
+    public SortedList<int, CryptoPositionPart> Parts { get; set; } = [];
 
     [Computed]
     // Orders die uitstaan via de parts/steps
-    public SortedList<string, CryptoPositionStep> Orders { get; set; } = new();
+    public SortedList<string, CryptoPositionStep> Orders { get; set; } = [];
 }
 
 

@@ -122,7 +122,7 @@ public class CryptoSymbol
 
     [Computed]
     // Interval related data like candles, last candle fetched, trend information etc.
-    public List<CryptoSymbolInterval> IntervalPeriodList { get; set; } = new();
+    public List<CryptoSymbolInterval> IntervalPeriodList { get; set; } = [];
 
     [Computed]
     // NB: Verwijst nu naar de IntervalPeriodList<1m>.CandleList
@@ -134,7 +134,7 @@ public class CryptoSymbol
     //public SortedList<long, Order> OrderList { get; } = new SortedList<long, Order>();
 
     [Computed]
-    public SortedList<string, CryptoTrade> TradeList { get; } = new();
+    public SortedList<string, CryptoTrade> TradeList { get; } = [];
 
 
     //// Quick en dirty voor het testen van de performance van balanceren
@@ -166,7 +166,7 @@ public class CryptoSymbol
     //    => IntervalPeriodList = GlobalData.IntervalList.Select(interval 
     //    => new CryptoSymbolInterval { Interval = interval }).ToList();
     {
-        IntervalPeriodList = new();
+        IntervalPeriodList = [];
         foreach (CryptoInterval interval in GlobalData.IntervalList)
         {
             CryptoSymbolInterval symbolInterval = new()

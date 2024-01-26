@@ -103,7 +103,7 @@ public class TradingViewSymbolWebSocket
     /// <returns></returns>
     private static string ParseSocketData(string message, out List<string> jsonList)
     {
-        jsonList = new List<string>();
+        jsonList = [];
         try
         {
             while (message.Length > 3)

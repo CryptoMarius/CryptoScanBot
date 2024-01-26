@@ -32,12 +32,12 @@ public class CryptoQuoteData
     // De laatst berekende barometer standen
     [Computed]
     [JsonIgnore]
-    public Dictionary<CryptoIntervalPeriod, BarometerData> BarometerList { get; set; } = new();
+    public Dictionary<CryptoIntervalPeriod, BarometerData> BarometerList { get; set; } = [];
 
     // Gecachte lijst met symbolen (de zoveelste), met name voor de barometer(s)
     [Computed]
     [JsonIgnore]
-    public List<CryptoSymbol> SymbolList { get; } = new();
+    public List<CryptoSymbol> SymbolList { get; } = [];
 
     //[Computed]
     //[JsonIgnore]
@@ -45,11 +45,11 @@ public class CryptoQuoteData
 
     [Computed]
     [JsonIgnore]
-    public Dictionary<CryptoTradeSide, PauseRule> PauseBarometer { get; set; } = new();
+    public Dictionary<CryptoTradeSide, PauseRule> PauseBarometer { get; set; } = [];
 
     public CryptoQuoteData()
     {
-        SymbolList = new();
+        SymbolList = [];
         PauseBarometer = new()
         {
             { CryptoTradeSide.Long, new PauseRule() },

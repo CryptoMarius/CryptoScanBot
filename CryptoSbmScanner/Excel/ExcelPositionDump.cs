@@ -12,7 +12,7 @@ namespace CryptoSbmScanner.Excel;
 public class ExcelPositionDump : ExcelBase
 {
     CryptoPosition Position;
-    readonly Dictionary<string, bool> OrderList = new();
+    readonly Dictionary<string, bool> OrderList = [];
 
     public void DumpParts()
     {

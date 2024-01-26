@@ -135,7 +135,7 @@ public partial class DashBoardControl : UserControl
         using CryptoDatabase databaseThread = new();
         databaseThread.Open();
 
-        List<QueryPositionData> list = new();
+        List<QueryPositionData> list = [];
         foreach (QueryPositionData data in databaseThread.Connection.Query<QueryPositionData>(builder.ToString()))
         {
             if (data.CloseTime.Date > new DateTime(2000, 01, 01))
@@ -162,7 +162,7 @@ public partial class DashBoardControl : UserControl
         using CryptoDatabase databaseThread = new();
         databaseThread.Open();
 
-        List<QueryPositionData> list = new();
+        List<QueryPositionData> list = [];
         foreach (QueryPositionData data in databaseThread.Connection.Query<QueryPositionData>(builder.ToString()))
         {
             if (data.CloseTime.Date > new DateTime(2000, 01, 01))
@@ -540,7 +540,7 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
 
 
         // Combineer, anders is er verschillende aantal x punten..
-        SortedList<DateTime, QueryPositionData> bla = new();
+        SortedList<DateTime, QueryPositionData> bla = [];
 
         var list = GetQueryInvestedData();
         foreach (var data in list)
