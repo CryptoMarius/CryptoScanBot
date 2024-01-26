@@ -186,6 +186,7 @@ public class Commands
 
     public static async void ExecuteSomethingViaTag(object sender, Command cmd)
     {
+        // Globale commando's
         if (cmd == Command.About)
         {
             AboutBox form = new()
@@ -203,7 +204,6 @@ public class Commands
         }
 
         // De rest van de commando's heeft een object nodig
-
         var (succes, exchange, symbol, interval, position) = GetAttributesFromSender(sender);
         if (succes)
         {

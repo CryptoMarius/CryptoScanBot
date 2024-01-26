@@ -56,6 +56,8 @@ xx-01-2024 1.9
 - Trading - Bybit Futures - ophalen assets implementeren
 - Trading - Bybit Spot - ophalen assets implementeren
 
+- Scanner - Het menu commando "Dump exchange naar Excel" verplaats naar het hoofdmenu (onder instellingen)
+- Scanner - Het menu commando "Dump exchange naar Excel" werkte niet meer (na de refactoring symbol lijst op links)
 - Scanner - Er wordt nu correct rekening gehouden met het vinkje log munten ouder dan x dagen (er werd altijd gelogd)
 - Scanner - De controle met de meldingen "er zijn niet genoeg candles voor" uitvoeren NA de controle op het aantal dagen
 - Scanner - Het symbol overzicht uitbreiden met de volume, verversen en kunnen sorteren
