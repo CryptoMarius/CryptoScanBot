@@ -12,17 +12,11 @@ public partial class FrmMain
     private System.Windows.Forms.Timer TimerModifyVolume;
 
     private ToolStripMenuItem CommandSymbolsActivateTradingApp;
-    private ToolStripMenuItem CommandSymbolsActivateTradingViewInternal;
-    private ToolStripMenuItem CommandSymbolsActivateTradingViewExternal;
-    private ToolStripMenuItem CommandSymbolsTrendInformation;
-    private ToolStripMenuItem CommandSymbolsCopyInformation;
-    private ToolStripMenuItem CommandSymbolsInformationExcelDump;
-    private ToolStripMenuItem CommandSymbolsExchangeInformationExcelDump;
 
 
     private void ListViewSymbolsConstructor()
     {
-        ListViewSymbolsColumns = new();
+        ListViewSymbolsColumns = new ();
         ListViewSymbolsMenuStrip = new();
 
         CommandSymbolsActivateTradingApp = new ToolStripMenuItem();
@@ -31,42 +25,36 @@ public partial class FrmMain
         CommandSymbolsActivateTradingApp.Click += Commands.ExecuteCommandCommandViaTag;
         ListViewSymbolsMenuStrip.Items.Add(CommandSymbolsActivateTradingApp);
 
-        CommandSymbolsActivateTradingViewInternal = new ToolStripMenuItem();
-        CommandSymbolsActivateTradingViewInternal.Text = "TradingView browser";
-        CommandSymbolsActivateTradingViewInternal.Tag = Command.ActivateTradingviewIntern;
-        CommandSymbolsActivateTradingViewInternal.Click += Commands.ExecuteCommandCommandViaTag;
-        ListViewSymbolsMenuStrip.Items.Add(CommandSymbolsActivateTradingViewInternal);
+        ToolStripMenuItem command = new();
+        command.Text = "TradingView browser";
+        command.Tag = Command.ActivateTradingviewIntern;
+        command.Click += Commands.ExecuteCommandCommandViaTag;
+        ListViewSymbolsMenuStrip.Items.Add(command);
 
-        CommandSymbolsActivateTradingViewExternal = new ToolStripMenuItem();
-        CommandSymbolsActivateTradingViewExternal.Text = "TradingView extern";
-        CommandSymbolsActivateTradingViewExternal.Tag = Command.ActivateTradingviewExtern;
-        CommandSymbolsActivateTradingViewExternal.Click += Commands.ExecuteCommandCommandViaTag;
-        ListViewSymbolsMenuStrip.Items.Add(CommandSymbolsActivateTradingViewExternal);
+        command = new ToolStripMenuItem();
+        command.Text = "TradingView extern";
+        command.Tag = Command.ActivateTradingviewExtern;
+        command.Click += Commands.ExecuteCommandCommandViaTag;
+        ListViewSymbolsMenuStrip.Items.Add(command);
 
         ListViewSymbolsMenuStrip.Items.Add(new ToolStripSeparator());
 
-        CommandSymbolsCopyInformation = new ToolStripMenuItem();
-        CommandSymbolsCopyInformation.Text = "Kopiëer informatie";
-        CommandSymbolsCopyInformation.Click += CommandSymbolsCopyInformationExecute;
-        ListViewSymbolsMenuStrip.Items.Add(CommandSymbolsCopyInformation);
+        command = new ToolStripMenuItem();
+        command.Text = "Kopiëer informatie";
+        command.Click += CommandSymbolsCopyInformationExecute;
+        ListViewSymbolsMenuStrip.Items.Add(command);
 
-        CommandSymbolsTrendInformation = new ToolStripMenuItem();
-        CommandSymbolsTrendInformation.Text = "Trend informatie (zie log)";
-        CommandSymbolsTrendInformation.Tag = Command.ShowTrendInformation;
-        CommandSymbolsTrendInformation.Click += Commands.ExecuteCommandCommandViaTag;
-        ListViewSymbolsMenuStrip.Items.Add(CommandSymbolsTrendInformation);
+        command = new ToolStripMenuItem();
+        command.Text = "Trend informatie (zie log)";
+        command.Tag = Command.ShowTrendInformation;
+        command.Click += Commands.ExecuteCommandCommandViaTag;
+        ListViewSymbolsMenuStrip.Items.Add(command);
 
-        CommandSymbolsInformationExcelDump = new ToolStripMenuItem();
-        CommandSymbolsInformationExcelDump.Text = "Symbol informatie (Excel)";
-        CommandSymbolsInformationExcelDump.Tag = Command.ExcelSymbolInformation;
-        CommandSymbolsInformationExcelDump.Click += Commands.ExecuteCommandCommandViaTag;
-        ListViewSymbolsMenuStrip.Items.Add(CommandSymbolsInformationExcelDump);
-
-        CommandSymbolsExchangeInformationExcelDump = new ToolStripMenuItem();
-        CommandSymbolsExchangeInformationExcelDump.Text = "Exchange informatie (Excel)";
-        CommandSymbolsExchangeInformationExcelDump.Tag = Command.ExcelExchangeInformation;
-        CommandSymbolsExchangeInformationExcelDump.Click += Commands.ExecuteCommandCommandViaTag;
-        ListViewSymbolsMenuStrip.Items.Add(CommandSymbolsExchangeInformationExcelDump);
+        command = new ToolStripMenuItem();
+        command.Text = "Symbol informatie (Excel)";
+        command.Tag = Command.ExcelSymbolInformation;
+        command.Click += Commands.ExecuteCommandCommandViaTag;
+        ListViewSymbolsMenuStrip.Items.Add(command);
 
 
         ListViewSymbols = new()

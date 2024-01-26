@@ -15,7 +15,8 @@ public enum Command
     ShowTrendInformation,
     ExcelSymbolInformation,
     ExcelExchangeInformation,
-    ExcelPositionInformation
+    ExcelPositionInformation,
+    About
 }
 
 //class CommandEventArgs : EventArgs
@@ -159,44 +160,51 @@ public class Commands
 
 
 
-    public static (bool succes, CryptoSymbol symbol, CryptoInterval interval, CryptoPosition position) GetAttributesFromSender(object sender)
+    public static (bool succes, Model.CryptoExchange exchange, CryptoSymbol symbol, CryptoInterval interval, CryptoPosition position) GetAttributesFromSender(object sender)
     {
-        // Vanuit de signalen of de open of gesloten posities
+        // Vanuit de symbols, signals of de open of gesloten posities
         if (sender is ListViewHeaderContext listview && listview.SelectedItems.Count > 0)
         {
             ListViewItem listviewItem = listview.SelectedItems[0];
             if (listviewItem.Tag is CryptoSignal signal)
-                return (true, signal.Symbol, signal.Interval, null);
+                // Vanuit de lijst met signalen
+                return (true, signal.Exchange, signal.Symbol, signal.Interval, null);
             else if (listviewItem.Tag is CryptoPosition position)
-                return (true, position.Symbol, position.Interval, position);
-        }
-        else
-        // Vanuit de lijst met symbols
-        if (sender is ListBox listbox && listbox.SelectedItems.Count > 0)
-        {
-            if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
-            {
-                // Neem de door de gebruiker geselecteerde coin
-                string symbolName = listbox.Text.ToString();
-                if (!string.IsNullOrEmpty(symbolName))
-                {
-                    if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol symbol))
-                    {
-                        if (symbol.QuoteData.FetchCandles && symbol.Status == 1)
-                            return (true, symbol, GlobalData.IntervalList[0], null);
-                    }
-                }
-
-            }
+                // Vanuit de lijst met posities
+                return (true, position.Exchange, position.Symbol, position.Interval, position);
+            else if (listviewItem.Tag is CryptoSymbol symbol)
+                // Vanuit de lijst met symbols
+                return (true, GlobalData.Settings.General.Exchange, null, null, null);
+            else if (listviewItem.Tag is CryptoSymbol symbol2) //ehhh....
+                // Vanuit de lijst met symbols
+                return (true, GlobalData.Settings.General.Exchange, null, null, null);
         }
 
-        return (false, null, null, null);
+        return (false, null, null, null, null);
     }
 
 
     public static async void ExecuteSomethingViaTag(object sender, Command cmd)
     {
-        var (succes, symbol, interval, position) = GetAttributesFromSender(sender);
+        if (cmd == Command.About)
+        {
+            AboutBox form = new()
+            {
+                StartPosition = FormStartPosition.CenterParent
+            };
+            form.ShowDialog();
+            return;
+        }
+        else if (cmd == Command.ExcelExchangeInformation)
+        {
+            // Die valt qua parameters buiten de boot
+            _ = Task.Run(() => { new Excel.ExcelExchangeDump().ExportToExcel(GlobalData.Settings.General.Exchange); });
+            return;
+        }
+
+        // De rest van de commando's heeft een object nodig
+
+        var (succes, exchange, symbol, interval, position) = GetAttributesFromSender(sender);
         if (succes)
         {
             switch (cmd)
@@ -215,10 +223,6 @@ public class Commands
                     break;
                 case Command.ExcelSymbolInformation:
                     _ = Task.Run(() => { new Excel.ExcelSymbolDump().ExportToExcel(symbol); });
-                    break;
-                case Command.ExcelExchangeInformation:
-                    // Die valt qua parameters buiten de boot
-                    _ = Task.Run(() => { new Excel.ExcelExchangeDump().ExportToExcel(GlobalData.Settings.General.Exchange); });
                     break;
 #if TRADEBOT
                 case Command.ExcelPositionInformation:
@@ -242,11 +246,20 @@ public class Commands
     {
         // Een poging om de meest gebruikte menu items te centraliseren
 
-        if (sender is ToolStripMenuItem tsitem && tsitem.Tag is Command cmd)
+        if (sender is ToolStripMenuItem tsitem && tsitem.Tag is Command cmd1)
         {
-            if (sender is ToolStripMenuItem item && item.Owner is ContextMenuStrip strip)
+            if (sender is ToolStripMenuItem item)
             {
-                ExecuteSomethingViaTag(strip.SourceControl, cmd);
+                if (item.Owner is ContextMenuStrip strip)
+                {
+                    ExecuteSomethingViaTag(strip.SourceControl, cmd1);
+                    //applicationMenuStrip = new MenuStrip();
+                }
+                else if (item.Owner is ToolStripDropDownMenu strip2)
+                {
+                    ExecuteSomethingViaTag(strip2, cmd1);
+                    //applicationMenuStrip = new MenuStrip();
+                }
             }
         }
         else if (sender is ListView listview)
@@ -254,13 +267,6 @@ public class Commands
             if (listview.Tag is Command cmd2)
             {
                 ExecuteSomethingViaTag(listview, cmd2);
-            }
-        }
-        else if (sender is ListBox listbox)
-        {
-            if (listbox.Tag is Command cmd3)
-            {
-                ExecuteSomethingViaTag(listbox, cmd3);
             }
         }
     }

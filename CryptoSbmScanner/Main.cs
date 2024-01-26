@@ -53,7 +53,7 @@ public partial class FrmMain : Form
 
     //    decimal stepSize = 0.1m;
     //    decimal entryValue = 5.25m;
-        
+
     //    decimal entryQuantity = entryValue / entryPrice;
     //    entryQuantity = entryQuantity.Clamp(0.1m, 9999m, 0.1m);
 
@@ -78,6 +78,8 @@ public partial class FrmMain : Form
     public FrmMain()
     {
         InitializeComponent();
+
+        InitializeExtraMenuItems();
 
         SystemEvents.PowerModeChanged += OnPowerChange;
         FormClosing += FrmMain_FormClosing;
@@ -164,6 +166,20 @@ public partial class FrmMain : Form
         }
     }
 
+    private void InitializeExtraMenuItems()
+    {
+        ToolStripMenuItem command = new();
+        command.Text = "Exchange informatie (Excel)";
+        command.Tag = Command.ExcelExchangeInformation;
+        command.Click += Commands.ExecuteCommandCommandViaTag;
+        MenuMain.DropDownItems.Add(command);
+
+        command = new();
+        command.Text = "About";
+        command.Tag = Command.About;
+        command.Click += Commands.ExecuteCommandCommandViaTag;
+        MenuMain.DropDownItems.Add(command);
+    }
 
     private void FrmMain_FormClosing(object sender, FormClosingEventArgs e)
     {
@@ -241,7 +257,6 @@ public partial class FrmMain : Form
             Font = new System.Drawing.Font(GlobalData.Settings.General.FontNameNew, GlobalData.Settings.General.FontSizeNew,
                 System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 
-            //this.applicationMenuStrip.Font.Size = GlobalData.Settings.General.FontSize;
             dashBoardControl1.Font = Font;
         }
 
@@ -577,7 +592,7 @@ public partial class FrmMain : Form
                         signals.Add(signal);
                 }
 
-                if (signals.Any())
+                if (signals.Count != 0)
                 {
                     // verwerken..
                     Task.Factory.StartNew(() =>
@@ -605,7 +620,7 @@ public partial class FrmMain : Form
             Monitor.Enter(logQueue);
             try
             {
-                List<CryptoSignal> signals = new();
+                List<CryptoSignal> signals = [];
                 StringBuilder stringBuilder = new();
 
                 while (logQueue.Count > 0 && !IsDisposed && GlobalData.ApplicationStatus != CryptoApplicationStatus.Disposing)
@@ -763,7 +778,7 @@ public partial class FrmMain : Form
     //    //}
     //}
 
-    private void ChangeTheme(ColorSchemeTest scheme, Control container)
+    private static void ChangeTheme(ColorSchemeTest scheme, Control container)
     {
         //return;
         foreach (Control component in container.Controls)
@@ -847,15 +862,6 @@ public partial class FrmMain : Form
         }
     }
 
-
-    private void ApplicationMenuItemAbout_Click(object sender, EventArgs e)
-    {
-        AboutBox form = new()
-        {
-            StartPosition = FormStartPosition.CenterParent
-        };
-        form.ShowDialog();
-    }
 
     private void TimerSoundHeartBeat_Tick(object sender, EventArgs e)
       => GlobalData.PlaySomeMusic("sound-heartbeat.wav");
@@ -1002,4 +1008,5 @@ public partial class FrmMain : Form
             await Exchange.BybitFutures.Api.GetPositionInfo();
 #endif
     }
+
 }

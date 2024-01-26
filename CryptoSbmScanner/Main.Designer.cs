@@ -18,20 +18,10 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FrmMain));
             panelLeft = new Panel();
             tabControlSymbols = new TabControl();
+            tabPageSymbols = new TabPage();
             panelLeftTop = new Panel();
             label1 = new Label();
             symbolFilter = new TextBox();
-            applicationMenuStrip = new MenuStrip();
-            MenuMain = new ToolStripMenuItem();
-            ApplicationPlaySounds = new ToolStripMenuItem();
-            ApplicationCreateSignals = new ToolStripMenuItem();
-            ApplicationTradingBot = new ToolStripMenuItem();
-            ToolStripMenuItemSettings = new ToolStripMenuItem();
-            ToolStripMenuItemRefresh = new ToolStripMenuItem();
-            clearMenusToolStripMenuItem = new ToolStripMenuItem();
-            applicationMenuItemAbout = new ToolStripMenuItem();
-            backtestToolStripMenuItem = new ToolStripMenuItem();
-            positionInfoToolStripMenuItem = new ToolStripMenuItem();
             panelClient = new Panel();
             tabControl = new TabControl();
             tabPageDashBoard = new TabPage();
@@ -47,11 +37,19 @@
             webViewDummy = new Microsoft.Web.WebView2.WinForms.WebView2();
             panelClient1 = new Panel();
             dashBoardInformation1 = new TradingView.DashBoardInformation();
-            tabPageSymbols = new TabPage();
+            MenuMain = new ToolStripMenuItem();
+            ApplicationPlaySounds = new ToolStripMenuItem();
+            ApplicationCreateSignals = new ToolStripMenuItem();
+            ApplicationTradingBot = new ToolStripMenuItem();
+            ToolStripMenuItemSettings = new ToolStripMenuItem();
+            ToolStripMenuItemRefresh = new ToolStripMenuItem();
+            clearMenusToolStripMenuItem = new ToolStripMenuItem();
+            backtestToolStripMenuItem = new ToolStripMenuItem();
+            positionInfoToolStripMenuItem = new ToolStripMenuItem();
+            applicationMenuStrip = new MenuStrip();
             panelLeft.SuspendLayout();
             tabControlSymbols.SuspendLayout();
             panelLeftTop.SuspendLayout();
-            applicationMenuStrip.SuspendLayout();
             panelClient.SuspendLayout();
             tabControl.SuspendLayout();
             tabPageDashBoard.SuspendLayout();
@@ -61,6 +59,7 @@
             tabPagewebViewDummy.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)webViewDummy).BeginInit();
             panelClient1.SuspendLayout();
+            applicationMenuStrip.SuspendLayout();
             SuspendLayout();
             // 
             // panelLeft
@@ -84,6 +83,15 @@
             tabControlSymbols.SelectedIndex = 0;
             tabControlSymbols.Size = new Size(222, 620);
             tabControlSymbols.TabIndex = 2;
+            // 
+            // tabPageSymbols
+            // 
+            tabPageSymbols.Location = new Point(4, 27);
+            tabPageSymbols.Name = "tabPageSymbols";
+            tabPageSymbols.Size = new Size(214, 589);
+            tabPageSymbols.TabIndex = 0;
+            tabPageSymbols.Text = "Symbols";
+            tabPageSymbols.UseVisualStyleBackColor = true;
             // 
             // panelLeftTop
             // 
@@ -114,91 +122,6 @@
             symbolFilter.Size = new Size(164, 23);
             symbolFilter.TabIndex = 0;
             symbolFilter.KeyDown += SymbolFilter_KeyDown;
-            // 
-            // applicationMenuStrip
-            // 
-            applicationMenuStrip.ImageScalingSize = new Size(20, 20);
-            applicationMenuStrip.Items.AddRange(new ToolStripItem[] { MenuMain });
-            applicationMenuStrip.Location = new Point(0, 0);
-            applicationMenuStrip.Name = "applicationMenuStrip";
-            applicationMenuStrip.Padding = new Padding(5, 2, 0, 2);
-            applicationMenuStrip.RenderMode = ToolStripRenderMode.Professional;
-            applicationMenuStrip.Size = new Size(1400, 24);
-            applicationMenuStrip.TabIndex = 16;
-            applicationMenuStrip.Text = "menuStrip1";
-            // 
-            // MenuMain
-            // 
-            MenuMain.DropDownItems.AddRange(new ToolStripItem[] { ApplicationPlaySounds, ApplicationCreateSignals, ApplicationTradingBot, ToolStripMenuItemSettings, ToolStripMenuItemRefresh, clearMenusToolStripMenuItem, applicationMenuItemAbout, backtestToolStripMenuItem, positionInfoToolStripMenuItem });
-            MenuMain.Name = "MenuMain";
-            MenuMain.Size = new Size(50, 20);
-            MenuMain.Text = "Menu";
-            // 
-            // ApplicationPlaySounds
-            // 
-            ApplicationPlaySounds.Checked = true;
-            ApplicationPlaySounds.CheckState = CheckState.Checked;
-            ApplicationPlaySounds.Name = "ApplicationPlaySounds";
-            ApplicationPlaySounds.Size = new Size(168, 22);
-            ApplicationPlaySounds.Text = "Geluiden afspelen";
-            ApplicationPlaySounds.Click += ApplicationPlaySounds_Click;
-            // 
-            // ApplicationCreateSignals
-            // 
-            ApplicationCreateSignals.Checked = true;
-            ApplicationCreateSignals.CheckState = CheckState.Checked;
-            ApplicationCreateSignals.Name = "ApplicationCreateSignals";
-            ApplicationCreateSignals.Size = new Size(168, 22);
-            ApplicationCreateSignals.Text = "Signalen maken";
-            ApplicationCreateSignals.Click += ApplicationCreateSignals_Click;
-            // 
-            // ApplicationTradingBot
-            // 
-            ApplicationTradingBot.Name = "ApplicationTradingBot";
-            ApplicationTradingBot.Size = new Size(168, 22);
-            ApplicationTradingBot.Text = "Trading bot actief";
-            ApplicationTradingBot.Click += ApplicationTradingBot_Click;
-            // 
-            // ToolStripMenuItemSettings
-            // 
-            ToolStripMenuItemSettings.Name = "ToolStripMenuItemSettings";
-            ToolStripMenuItemSettings.Size = new Size(168, 22);
-            ToolStripMenuItemSettings.Text = "Instellingen";
-            ToolStripMenuItemSettings.Click += ToolStripMenuItemSettings_Click;
-            // 
-            // ToolStripMenuItemRefresh
-            // 
-            ToolStripMenuItemRefresh.Name = "ToolStripMenuItemRefresh";
-            ToolStripMenuItemRefresh.Size = new Size(168, 22);
-            ToolStripMenuItemRefresh.Text = "Verversen";
-            ToolStripMenuItemRefresh.Click += ToolStripMenuItemRefresh_Click_1;
-            // 
-            // clearMenusToolStripMenuItem
-            // 
-            clearMenusToolStripMenuItem.Name = "clearMenusToolStripMenuItem";
-            clearMenusToolStripMenuItem.Size = new Size(168, 22);
-            clearMenusToolStripMenuItem.Text = "Clear";
-            clearMenusToolStripMenuItem.Click += MainMenuClearAll_Click;
-            // 
-            // applicationMenuItemAbout
-            // 
-            applicationMenuItemAbout.Name = "applicationMenuItemAbout";
-            applicationMenuItemAbout.Size = new Size(168, 22);
-            applicationMenuItemAbout.Text = "About";
-            applicationMenuItemAbout.Click += ApplicationMenuItemAbout_Click;
-            // 
-            // backtestToolStripMenuItem
-            // 
-            backtestToolStripMenuItem.Name = "backtestToolStripMenuItem";
-            backtestToolStripMenuItem.Size = new Size(168, 22);
-            backtestToolStripMenuItem.Text = "Backtest";
-            // 
-            // positionInfoToolStripMenuItem
-            // 
-            positionInfoToolStripMenuItem.Name = "positionInfoToolStripMenuItem";
-            positionInfoToolStripMenuItem.Size = new Size(168, 22);
-            positionInfoToolStripMenuItem.Text = "PositionInfo";
-            positionInfoToolStripMenuItem.Click += PositionInfoToolStripMenuItem_Click;
             // 
             // panelClient
             // 
@@ -372,14 +295,83 @@
             dashBoardInformation1.Size = new Size(1178, 103);
             dashBoardInformation1.TabIndex = 15;
             // 
-            // tabPageSymbols
+            // MenuMain
             // 
-            tabPageSymbols.Location = new Point(4, 27);
-            tabPageSymbols.Name = "tabPageSymbols";
-            tabPageSymbols.Size = new Size(214, 589);
-            tabPageSymbols.TabIndex = 0;
-            tabPageSymbols.Text = "Symbols";
-            tabPageSymbols.UseVisualStyleBackColor = true;
+            MenuMain.DropDownItems.AddRange(new ToolStripItem[] { ApplicationPlaySounds, ApplicationCreateSignals, ApplicationTradingBot, ToolStripMenuItemSettings, ToolStripMenuItemRefresh, clearMenusToolStripMenuItem, backtestToolStripMenuItem, positionInfoToolStripMenuItem });
+            MenuMain.Name = "MenuMain";
+            MenuMain.Size = new Size(50, 20);
+            MenuMain.Text = "Menu";
+            // 
+            // ApplicationPlaySounds
+            // 
+            ApplicationPlaySounds.Checked = true;
+            ApplicationPlaySounds.CheckState = CheckState.Checked;
+            ApplicationPlaySounds.Name = "ApplicationPlaySounds";
+            ApplicationPlaySounds.Size = new Size(168, 22);
+            ApplicationPlaySounds.Text = "Geluiden afspelen";
+            ApplicationPlaySounds.Click += ApplicationPlaySounds_Click;
+            // 
+            // ApplicationCreateSignals
+            // 
+            ApplicationCreateSignals.Checked = true;
+            ApplicationCreateSignals.CheckState = CheckState.Checked;
+            ApplicationCreateSignals.Name = "ApplicationCreateSignals";
+            ApplicationCreateSignals.Size = new Size(168, 22);
+            ApplicationCreateSignals.Text = "Signalen maken";
+            ApplicationCreateSignals.Click += ApplicationCreateSignals_Click;
+            // 
+            // ApplicationTradingBot
+            // 
+            ApplicationTradingBot.Name = "ApplicationTradingBot";
+            ApplicationTradingBot.Size = new Size(168, 22);
+            ApplicationTradingBot.Text = "Trading bot actief";
+            ApplicationTradingBot.Click += ApplicationTradingBot_Click;
+            // 
+            // ToolStripMenuItemSettings
+            // 
+            ToolStripMenuItemSettings.Name = "ToolStripMenuItemSettings";
+            ToolStripMenuItemSettings.Size = new Size(168, 22);
+            ToolStripMenuItemSettings.Text = "Instellingen";
+            ToolStripMenuItemSettings.Click += ToolStripMenuItemSettings_Click;
+            // 
+            // ToolStripMenuItemRefresh
+            // 
+            ToolStripMenuItemRefresh.Name = "ToolStripMenuItemRefresh";
+            ToolStripMenuItemRefresh.Size = new Size(168, 22);
+            ToolStripMenuItemRefresh.Text = "Verversen";
+            ToolStripMenuItemRefresh.Click += ToolStripMenuItemRefresh_Click_1;
+            // 
+            // clearMenusToolStripMenuItem
+            // 
+            clearMenusToolStripMenuItem.Name = "clearMenusToolStripMenuItem";
+            clearMenusToolStripMenuItem.Size = new Size(168, 22);
+            clearMenusToolStripMenuItem.Text = "Clear";
+            clearMenusToolStripMenuItem.Click += MainMenuClearAll_Click;
+            // 
+            // backtestToolStripMenuItem
+            // 
+            backtestToolStripMenuItem.Name = "backtestToolStripMenuItem";
+            backtestToolStripMenuItem.Size = new Size(168, 22);
+            backtestToolStripMenuItem.Text = "Backtest";
+            // 
+            // positionInfoToolStripMenuItem
+            // 
+            positionInfoToolStripMenuItem.Name = "positionInfoToolStripMenuItem";
+            positionInfoToolStripMenuItem.Size = new Size(168, 22);
+            positionInfoToolStripMenuItem.Text = "PositionInfo";
+            positionInfoToolStripMenuItem.Click += PositionInfoToolStripMenuItem_Click;
+            // 
+            // applicationMenuStrip
+            // 
+            applicationMenuStrip.ImageScalingSize = new Size(20, 20);
+            applicationMenuStrip.Items.AddRange(new ToolStripItem[] { MenuMain });
+            applicationMenuStrip.Location = new Point(0, 0);
+            applicationMenuStrip.Name = "applicationMenuStrip";
+            applicationMenuStrip.Padding = new Padding(5, 2, 0, 2);
+            applicationMenuStrip.RenderMode = ToolStripRenderMode.Professional;
+            applicationMenuStrip.Size = new Size(1400, 24);
+            applicationMenuStrip.TabIndex = 16;
+            applicationMenuStrip.Text = "menuStrip1";
             // 
             // FrmMain
             // 
@@ -397,8 +389,6 @@
             tabControlSymbols.ResumeLayout(false);
             panelLeftTop.ResumeLayout(false);
             panelLeftTop.PerformLayout();
-            applicationMenuStrip.ResumeLayout(false);
-            applicationMenuStrip.PerformLayout();
             panelClient.ResumeLayout(false);
             tabControl.ResumeLayout(false);
             tabPageDashBoard.ResumeLayout(false);
@@ -409,6 +399,8 @@
             tabPagewebViewDummy.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)webViewDummy).EndInit();
             panelClient1.ResumeLayout(false);
+            applicationMenuStrip.ResumeLayout(false);
+            applicationMenuStrip.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -419,16 +411,6 @@
         private Panel panelLeftTop;
         private Panel panelClient1;
         private TextBox symbolFilter;
-        private MenuStrip applicationMenuStrip;
-        private ToolStripMenuItem MenuMain;
-        private ToolStripMenuItem ToolStripMenuItemSettings;
-        private ToolStripMenuItem ToolStripMenuItemRefresh;
-        private ToolStripMenuItem clearMenusToolStripMenuItem;
-        private ToolStripMenuItem applicationMenuItemAbout;
-        private ToolStripMenuItem ApplicationPlaySounds;
-        private ToolStripMenuItem ApplicationCreateSignals;
-        private ToolStripMenuItem backtestToolStripMenuItem;
-        private ToolStripMenuItem ApplicationTradingBot;
         private Label label1;
         private TabControl tabControl;
         private TabPage tabPageSignals;
@@ -443,9 +425,18 @@
         private TabPage tabPageDashBoard;
         private DashBoardControl dashBoardControl1;
         private TradingView.DashBoardInformation dashBoardInformation1;
-        private ToolStripMenuItem positionInfoToolStripMenuItem;
         private TabControl tabControlSymbols;
         private TabPage tabPageSymbols;
+        private ToolStripMenuItem MenuMain;
+        private ToolStripMenuItem ApplicationPlaySounds;
+        private ToolStripMenuItem ApplicationCreateSignals;
+        private ToolStripMenuItem ApplicationTradingBot;
+        private ToolStripMenuItem ToolStripMenuItemSettings;
+        private ToolStripMenuItem ToolStripMenuItemRefresh;
+        private ToolStripMenuItem clearMenusToolStripMenuItem;
+        private ToolStripMenuItem backtestToolStripMenuItem;
+        private ToolStripMenuItem positionInfoToolStripMenuItem;
+        private MenuStrip applicationMenuStrip;
     }
 }
 
