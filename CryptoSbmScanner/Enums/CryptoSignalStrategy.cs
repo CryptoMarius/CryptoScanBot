@@ -29,5 +29,6 @@ public enum CryptoSignalStrategy // CryptoStrategy
     Flux, // is er niet meer, blijft bestaan vanwege de enumeratie
     BullishEngulfing, // zwak
     IchimokuKumoBreakout, // nazoeken, in de juiste positieve of negatieve trend doet ie het prima
-    Wghbm // uit de Telegram groepen, ziet er leuk uit (maar of het echt wat is moet ik uitzoeken)
+    Wghbm, // uit de Telegram groepen, ziet er leuk uit (maar of het echt wat is moet ik uitzoeken)
+    MacdLt // Opgepikt uit de groep van Marco (een ziens of dit inderdaad werkt)
 }
