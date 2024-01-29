@@ -5,6 +5,7 @@ using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 using CryptoSbmScanner.Trader;
 
+using Dapper;
 using Dapper.Contrib.Extensions;
 
 namespace CryptoSbmScanner;
@@ -33,13 +34,18 @@ public partial class FrmMain
         ContextMenuStripPositionsOpen.Items.Add(menuCommand);
 
         menuCommand = new ToolStripMenuItem();
-        menuCommand.Text = "Positie toevoegen DCA";
-        menuCommand.Click += CommandPositionCreateAdditionalDca;
+        menuCommand.Text = "Positie verwijderen uit database";
+        menuCommand.Click += CommandPositionsOpenDeleteFromDatabase;
         ContextMenuStripPositionsOpen.Items.Add(menuCommand);
 
         menuCommand = new ToolStripMenuItem();
-        menuCommand.Text = "Positie profit nemen";
-        menuCommand.Click += CommandPositionLastPartTakeProfit;
+        menuCommand.Text = "DCA toevoegen aan positie";
+        menuCommand.Click += CommandPositionsOpenCreateAdditionalDca;
+        ContextMenuStripPositionsOpen.Items.Add(menuCommand);
+
+        menuCommand = new ToolStripMenuItem();
+        menuCommand.Text = "Positie profit nemen (buggy)";
+        menuCommand.Click += CommandPositionsOpenLastPartTakeProfit;
         ContextMenuStripPositionsOpen.Items.Add(menuCommand);
 
         menuCommand = new ToolStripMenuItem();
@@ -264,33 +270,18 @@ public partial class FrmMain
                 }
             }
 
-            // Alel positie gerelateerde zaken verversen
+            GlobalData.AddTextToLogTab("PositionsHaveChangedEvent#start");
+
+            // Alle positie gerelateerde zaken verversen
             Task.Run(() => {
                 Invoke(new Action(() =>
                 {
                     ListViewPositionsOpenAddPositions(list);
                     ClosedPositionsHaveChangedEvent();
                     dashBoardControl1.RefreshInformation(null, null);
+                    GlobalData.AddTextToLogTab("PositionsHaveChangedEvent#einde");
                 }));
             });
-
-
-            //// Gesloten posities
-            //Task.Run(() => {
-            //    Invoke(new Action(() =>
-            //    {
-            //        ClosedPositionsHaveChangedEvent();
-            //    }));
-            //});
-
-
-            //// Statistiek
-            //Task.Run(() => {
-            //    Invoke(new Action(() =>
-            //    {
-            //        dashBoardControl1.RefreshInformation(null, null);
-            //    }));
-            //});
         }
     }
 
@@ -343,6 +334,11 @@ public partial class FrmMain
                         startedUpdating = true;
 
                         FillItemOpen(position, item);
+
+                        // Soms blijven er posities hangen, daarom een extra controle (zou eigenlijk overbodig moeten zijn..)
+                        if (position.Status == CryptoPositionStatus.Ready && position.Invested > 0 && position.Quantity == 0)
+                            GlobalData.ThreadDoubleCheckPosition.AddToQueue(position);
+
 
                         //// Status
                         //subItem = item.SubItems[4];
@@ -466,7 +462,46 @@ public partial class FrmMain
 
     }
 
-    private async void CommandPositionCreateAdditionalDca(object sender, EventArgs e)
+
+    private void CommandPositionsOpenDeleteFromDatabase(object sender, EventArgs e)
+    {
+        if (listViewPositionsOpen.SelectedItems.Count > 0)
+        {
+            ListViewItem item = listViewPositionsOpen.SelectedItems[0];
+            CryptoPosition position = (CryptoPosition)item.Tag;
+
+            try
+            {
+                using CryptoDatabase databaseThread = new();
+                databaseThread.Connection.Open();
+
+                // Controleer de orders, en herbereken het geheel
+                PositionTools.LoadPosition(databaseThread, position);
+                //await TradeTools.LoadTradesfromDatabaseAndExchange(databaseThread, position);
+                //TradeTools.CalculatePositionResultsViaTrades(databaseThread, position, saveChangesAnywhay: true);
+                //FillItemClosed(position, item);
+
+
+                using var transaction = databaseThread.BeginTransaction();
+                databaseThread.Connection.Execute($"delete from positionstep where positionid={position.Id}", transaction);
+                databaseThread.Connection.Execute($"delete from positionpart where positionid={position.Id}", transaction);
+                databaseThread.Connection.Execute($"delete from position where id={position.Id}", transaction);
+                transaction.Commit();
+
+                listViewPositionsOpen.Items.Remove(item);
+
+                PositionTools.RemovePosition(position.TradeAccount, position, false);
+            }
+            catch (Exception error)
+            {
+                GlobalData.Logger.Error(error, "");
+                GlobalData.AddTextToLogTab($"error deleteing position {error.Message}");
+            }
+        }
+    }
+
+
+    private async void CommandPositionsOpenCreateAdditionalDca(object sender, EventArgs e)
     {
         if (listViewPositionsOpen.SelectedItems.Count > 0)
         {
@@ -527,7 +562,7 @@ public partial class FrmMain
     }
 
 
-    private async void CommandPositionLastPartTakeProfit(object sender, EventArgs e)
+    private async void CommandPositionsOpenLastPartTakeProfit(object sender, EventArgs e)
     {
         if (listViewPositionsOpen.SelectedItems.Count > 0)
         {
