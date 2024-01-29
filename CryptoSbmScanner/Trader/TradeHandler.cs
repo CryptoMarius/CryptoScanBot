@@ -233,33 +233,25 @@ static public class TradeHandler
                         databaseThread.Connection.Update<CryptoPositionPart>(part);
 
                         // Sluit de positie indien afgerond
-                        if (position.Quantity == 0)
+                        // Dit is ook "gevaarlijk", want als er een dca buy niet gedetecteerd is wordt de trade afgesloten
+                        // En dat lijkt soms wel te gebeuren vanwege vertraging/storingen scanner/exchange, internet of
+                        // computer gerelateerde tijd perikelen.  Wat doe je eraan, het is niet 100% perfect..
+                        if (position.Quantity == 0 && position.Invested > 0)
                         {
-                            // We zijn uit deze trade, alles verkocht
-                            s = $"handletrade#8 {msgInfo} positie ready {position.Percentage:N2}";
-                            GlobalData.AddTextToLogTab(s);
-                            //GlobalData.AddTextToTelegram(s);
-
                             position.CloseTime = data.TradeTime;
-                            if (position.Invested > 0)
-                            {
-                                // Gevaarlijk, als er een buy niet gedetecteerd is dan wordt de trade zomaar afgesloten
-                                // En dat lijkt soms wel te gebeuren vanwege de exchange, internet of datetime perikelen.
-                                position.UpdateTime = DateTime.UtcNow;
-                                position.Status = CryptoPositionStatus.Ready;
-                                GlobalData.ThreadDoubleCheckPosition.AddToQueue(position);
-                            }
-                            databaseThread.Connection.Update<CryptoPosition>(position);
-
-                            // In de veronderstelling dat dit allemaal lukt
-                            position.Symbol.LastTradeDate = position.CloseTime;
-                            databaseThread.Connection.Update<CryptoSymbol>(position.Symbol);
+                            position.Status = CryptoPositionStatus.Ready;
                         }
 
+                        // Dca orders bijstellen
                         position.Reposition = true;
+                        position.UpdateTime = DateTime.UtcNow;
                         databaseThread.Connection.Update<CryptoPosition>(position);
 
-                        //s = "";
+                        // Statistiek symbol niveau (voor de cooldown)
+                        position.Symbol.LastTradeDate = position.CloseTime;
+                        databaseThread.Connection.Update<CryptoSymbol>(position.Symbol);
+
+
                         if (position.Status == CryptoPositionStatus.Timeout)
                             s = $"handletrade {msgInfo} position timeout ({position.Percentage:N2}%)";
                         else if (position.Status == CryptoPositionStatus.Ready)
@@ -268,6 +260,9 @@ static public class TradeHandler
                             s = $"handletrade {msgInfo} part takeprofit ({part.Percentage:N2}%)";
                         GlobalData.AddTextToLogTab(s);
                         GlobalData.AddTextToTelegram(s);
+
+                        if (position.Status == CryptoPositionStatus.Ready && position.Invested > 0 && position.Quantity == 0)
+                            GlobalData.ThreadDoubleCheckPosition.AddToQueue(position);
                         return;
                     }
 
