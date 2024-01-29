@@ -34,6 +34,11 @@ public class CandleIndicatorData
     public double? MacdHistogram { get; set; } // kan ook calculated worden (signal - value of andersom)
     public double? MacdHistogram2 { get { return MacdSignal - MacdValue; } }
 
+    //public double? MacdLtValue { get; set; }
+    //public double? MacdLtSignal { get; set; }
+    public double? MacdLtHistogram { get; set; } // kan ook calculated worden (signal - value of andersom)
+    //public double? MacdLtHistogram2 { get { return MacdLtSignal - MacdLtValue; } }
+
     /// <summary>
     /// Stoch Oscillator %K (blauw)
     /// </summary>
@@ -237,6 +242,7 @@ public class CandleIndicatorData
         //List<AtrResult> atrList = (List<AtrResult>)Indicator.GetAtr(history);
         List<RsiResult> rsiList = (List<RsiResult>)history.GetRsi();
         List<MacdResult> macdList = (List<MacdResult>)history.GetMacd();
+        List<MacdResult> macdLtList = (List<MacdResult>)history.GetMacd(34, 144);
 
         //List<SlopeResult> slopeRsiList = (List<SlopeResult>)rsiList.GetSma(25).GetSlope(3);
 
@@ -322,6 +328,11 @@ public class CandleIndicatorData
                 candleData.MacdValue = macdList[index].Macd;
                 candleData.MacdSignal = macdList[index].Signal;
                 candleData.MacdHistogram = macdList[index].Histogram;
+
+                //candleData.MacdLtValue = macdLtList[index].Macd;
+                //candleData.MacdLtSignal = macdLtList[index].Signal;
+                candleData.MacdLtHistogram = macdLtList[index].Histogram;
+
                 candleData.StochSignal = stochList[index].Signal;
                 candleData.StochOscillator = stochList[index].Oscillator;
 
