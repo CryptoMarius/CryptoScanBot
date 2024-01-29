@@ -447,10 +447,11 @@ public class ThreadTelegramBotInstance
 
         //Bot status
         if (GlobalData.Settings.Trading.Active)
-            stringbuilder.AppendLine("Trade bot is active!");
+            stringbuilder.AppendLine($"Trade bot is active! (slots long={GlobalData.Settings.Trading.SlotsMaximalLong}, slots short={GlobalData.Settings.Trading.SlotsMaximalShort})");
         else
             stringbuilder.AppendLine("Trade bot is not active!");
 
+#if BALANCING
         // Balance bot status
         if (GlobalData.Settings.BalanceBot.Active)
             stringbuilder.AppendLine("Balance bot is active!");
@@ -460,7 +461,7 @@ public class ThreadTelegramBotInstance
         // Balance bot advice status
         if (GlobalData.Settings.BalanceBot.ShowAdviceOnly)
             stringbuilder.AppendLine("Balance bot showing advice!");
-
+#endif
 
         // Create signals
         if (GlobalData.Settings.Signal.SignalsActive)
@@ -533,13 +534,13 @@ public class ThreadTelegramBotInstance
         stringBuilder.AppendLine("signalstart   start signal bot");
         stringBuilder.AppendLine("signalstop    stop signal bot");
 
-        stringBuilder.AppendLine("value         show value BTC,BNB and ETH");
-        stringBuilder.AppendLine("barometer     show barometer BTC/BNB/USDT");
+        stringBuilder.AppendLine("value         show value BTC,BNB and ETH"); // todo, de juiste basismunten tonen
+        stringBuilder.AppendLine("barometer     show barometer BTC/ETH/USDT"); // todo, de juiste basismunten tonen
 #if TRADEBOT
         stringBuilder.AppendLine("assets        show asset overview");
 #endif
         stringBuilder.AppendLine("chatid        ChatId configuratie");
-        stringBuilder.AppendLine("help          this stuff");
+        stringBuilder.AppendLine("help          this help screen");
     }
 
 
