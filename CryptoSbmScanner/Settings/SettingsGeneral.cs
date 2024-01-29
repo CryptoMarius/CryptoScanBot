@@ -54,5 +54,26 @@ public class SettingsGeneral
     public double StochValueOversold { get; set; } = 20;
     public double StochValueOverbought { get; set; } = 80;
 
+    // Op welk interval moet de totale markttrend berekend worden (standaard op alle intervallen)
+    public List<string> IntervalForMarketTrend = [];
+
+    public SettingsGeneral()
+    {
+        IntervalForMarketTrend.Add("1m");
+        IntervalForMarketTrend.Add("2m");
+        IntervalForMarketTrend.Add("3m");
+        IntervalForMarketTrend.Add("5m");
+        IntervalForMarketTrend.Add("10m");
+        IntervalForMarketTrend.Add("15m");
+        IntervalForMarketTrend.Add("30m");
+        IntervalForMarketTrend.Add("1h");
+        IntervalForMarketTrend.Add("2h");
+        IntervalForMarketTrend.Add("3h");
+        IntervalForMarketTrend.Add("4h");
+        IntervalForMarketTrend.Add("6h");
+        IntervalForMarketTrend.Add("8h");
+        IntervalForMarketTrend.Add("12h");
+        IntervalForMarketTrend.Add("1d");
+    }
 }
 

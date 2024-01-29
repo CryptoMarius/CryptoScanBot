@@ -199,16 +199,14 @@ public class SignalCreate
     //}
 
 
-    private void CalculateTrendStuff(CryptoSignal signal)
+    private void CalculateMarketTrend(CryptoSignal signal)
     {
         long percentageSum = 0;
         long maxPercentageSum = 0;
         try
         {
-            for (CryptoIntervalPeriod intervalPeriod = CryptoIntervalPeriod.interval1m; intervalPeriod <= CryptoIntervalPeriod.interval1d; intervalPeriod++)
+            foreach (CryptoInterval interval in GlobalData.IntervalList)
             {
-                if (!GlobalData.IntervalListPeriod.TryGetValue(intervalPeriod, out CryptoInterval interval))
-                    return;
                 CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(interval.IntervalPeriod);
 
                 // Trend overnemen indien het reeds berekend is (scheelt aardig wat cpu)
@@ -228,7 +226,7 @@ public class SignalCreate
                 {
                     // Deze properties zijn calculated (hele class is in memory only)
                     symbolInterval.TrendInfoDate = CandleTools.GetUnixDate(candleIntervalStart); // controle
-                    //GlobalData.Logger.Trace($"SignalCreate.CalculateTrendStuff.Start {Symbol.Name} {Interval.Name} {Side} {intervalPeriod} {symbolInterval.TrendInfoDate} candles={symbolInterval.CandleList.Count}");
+                                                                                                 //GlobalData.Logger.Trace($"SignalCreate.CalculateTrendStuff.Start {Symbol.Name} {Interval.Name} {Side} {intervalPeriod} {symbolInterval.TrendInfoDate} candles={symbolInterval.CandleList.Count}");
                     TrendIndicator trendIndicatorClass = new(Symbol, symbolInterval);
                     // TODO - Laatste tijdstip meegeven zodat de trend over 0..x candles gaat en niet allemaal
                     trendIndicator = trendIndicatorClass.CalculateTrend(candleIntervalStart);
@@ -242,19 +240,11 @@ public class SignalCreate
                     //GlobalData.Logger.Trace($"SignalCreate.CalculateTrendStuff.Reused {Symbol.Name} {Interval.Name} {Side} {intervalPeriod} {symbolInterval.TrendInfoDate} {trendIndicator}");
                 }
 
-
-                // gewicht
-                if (trendIndicator == CryptoTrendIndicator.Bullish)
-                    percentageSum += interval.Duration;
-                else if (trendIndicator == CryptoTrendIndicator.Bearish)
-                    percentageSum -= interval.Duration;
-                maxPercentageSum += interval.Duration;
-
-                if (intervalPeriod == signal.Interval.IntervalPeriod)
+                if (interval.IntervalPeriod == signal.Interval.IntervalPeriod)
                     signal.TrendIndicator = trendIndicator;
 
                 // Doorzetten naar het signal (op verzoek)
-                switch (intervalPeriod)
+                switch (interval.IntervalPeriod)
                 {
                     case CryptoIntervalPeriod.interval15m:
                         signal.Trend15m = trendIndicator;
@@ -272,7 +262,20 @@ public class SignalCreate
                         signal.Trend12h = trendIndicator;
                         break;
                 }
+
+
+                // gewicht
+                if (GlobalData.Settings.General.IntervalForMarketTrend.Contains(interval.Name))
+                {
+
+                    if (trendIndicator == CryptoTrendIndicator.Bullish)
+                        percentageSum += interval.Duration;
+                    else if (trendIndicator == CryptoTrendIndicator.Bearish)
+                        percentageSum -= interval.Duration;
+                    maxPercentageSum += interval.Duration;
+                }
             }
+            
 
 
             float trendPercentage = 100 * (float)percentageSum / (float)maxPercentageSum;
@@ -655,7 +658,7 @@ public class SignalCreate
 
 
         // Bereken de trend, dat is tamelijk CPU heavy en daarom staat deze controle op het einde
-        CalculateTrendStuff(signal);
+        CalculateMarketTrend(signal);
 
 
         // Extra controles toepassen en het signaal "afkeuren" (maar toch laten zien)

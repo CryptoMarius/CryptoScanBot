@@ -16,10 +16,10 @@ public class SettingsTextual
     }
 
     // Op welke interval
-    public List<string> Interval { get; set; } = new();
+    public List<string> Interval { get; set; } = [];
 
     // Op welke strategie
-    public List<string> Strategy { get; set; } = new();
+    public List<string> Strategy { get; set; } = [];
 
     // Op welk interval moet de trend bull of bear zijn
     public SettingsTextualIntervalTrend IntervalTrend = new();
@@ -35,20 +35,20 @@ public class SettingsTextual
 [Serializable]
 public class SettingsTextualBarometer
 {
-    public Dictionary<string, (decimal minValue, decimal maxValue)> List { get; set; } = new();
+    public Dictionary<string, (decimal minValue, decimal maxValue)> List { get; set; } = [];
     public bool Log = true;
 }
 
 [Serializable]
 public class SettingsTextualMarketTrend
 {
-    public List<(decimal minValue, decimal maxValue)> List { get; set; } = new();
+    public List<(decimal minValue, decimal maxValue)> List { get; set; } = [];
     public bool Log = true;
 }
 
 [Serializable]
 public class SettingsTextualIntervalTrend
 {
-    public List<string> List { get; set; } = new();
+    public List<string> List { get; set; } = [];
     public bool Log = true;
 }
