@@ -218,7 +218,7 @@ public static class PositionTools
     }
 
 
-    static public void RemovePosition(CryptoTradeAccount tradeAccount, CryptoPosition position)
+    static public void RemovePosition(CryptoTradeAccount tradeAccount, CryptoPosition position, bool addToClosed)
     {
         if (tradeAccount.PositionList.TryGetValue(position.Symbol.Name, out var positionList))
         {
@@ -226,10 +226,13 @@ public static class PositionTools
             {
                 positionList.Remove(position.Id);
 
-                if (GlobalData.PositionsClosed.Count != 0)
-                    GlobalData.PositionsClosed.Add(position);
-                else
-                    GlobalData.PositionsClosed.Insert(0, position);
+                if (addToClosed)
+                {
+                    if (GlobalData.PositionsClosed.Count != 0)
+                        GlobalData.PositionsClosed.Add(position);
+                    else
+                        GlobalData.PositionsClosed.Insert(0, position);
+                }
             }
             if (positionList.Count == 0)
                 tradeAccount.PositionList.Remove(position.Symbol.Name);

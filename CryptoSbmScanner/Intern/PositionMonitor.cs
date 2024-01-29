@@ -1530,7 +1530,7 @@ public class PositionMonitor : IDisposable
             // Pas verplaatsen als ALLE DCA orders zijn geannuleerd (een poging daartoe tenminste)
             if (!hasOpenOrder)
             {
-                PositionTools.RemovePosition(position.TradeAccount, position);
+                PositionTools.RemovePosition(position.TradeAccount, position, true);
                 if (!GlobalData.BackTest && GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
                     GlobalData.PositionsHaveChanged("");
             }

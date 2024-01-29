@@ -91,9 +91,12 @@ public class ThreadCheckFinishedPosition
 
 
                                         // Positie is afgerond (wellicht dubbel op met de code in de PositionTools)
-                                        PositionTools.RemovePosition(position.TradeAccount, position);
+                                        PositionTools.RemovePosition(position.TradeAccount, position, true);
                                         if (!GlobalData.BackTest && GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
+                                        {
                                             GlobalData.PositionsHaveChanged("");
+                                            GlobalData.AddTextToLogTab($"ThreadDoubleCheckPosition: Positie {position.Symbol.Name} status aangepast naar {position.Status}");
+                                        }
                                     }
                                     else
                                     {
