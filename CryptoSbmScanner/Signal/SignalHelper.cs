@@ -186,7 +186,14 @@ public static class SignalHelper
 
         
 #endif
-
+        
+        AlgorithmDefinitionList.Add(new AlgorithmDefinition()
+        {
+            Name = "MacdLt",
+            Strategy = CryptoSignalStrategy.MacdLt,
+            AnalyzeLongType = typeof(SignalMacdLtLong),
+            AnalyzeShortType = typeof(SignalMacdLtShort),
+        });
 
         // En de lijst eenmalig indexeren
         AlgorithmDefinitionIndex.Clear();
