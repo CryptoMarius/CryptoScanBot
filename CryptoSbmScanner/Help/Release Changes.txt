@@ -1,6 +1,7 @@
 CryptoSbmScanenr release historie:
 
 xx-01-2024 1.9
+- Trading - Bij het verwijderen van een positie uit de database wordt deze even later terug gezet (buffer probleem)
 - Trading - Standaard commando's zoals kopieer, trend en symbol informatie zitten nu ook in het popupmenu van de open en gesloten commando's
 - Trading - De Quantity wordt nu altijd naar beneden afgerond, dat gaat soms met grote stappen, er wordt nu naar boven afgerond indien het start bedrag "slechts" 10% afwijkt.
 - Trading - De positie excel dump rapporteert de huidige markt waarde, ook als de positie al gesloten is..

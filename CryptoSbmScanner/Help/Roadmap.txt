@@ -34,6 +34,7 @@ Scanner:
 NB: Als je ideen hebt voor het vervangen van de OCO/Stop limit informeer me dan AUB..
 
 Trading:
+- Trading - Een positie kunnen overnemen (zonder dat er orders verwijderd worden, de positie moet echt weg uit de trader anders heropent ie hem)
 - Trading - Observatie: Een gesloten positie blijft soms lang in de lijst met geopende posities staan (de reden is onduidelijk)
 - Trading - Observatie papertrading is dat de laatste TP soms dubbel uitgevoerd wordt (en dan blijft de positie openstaan), probleem vanwege herstart applicatie?
 - Trading - Bij een aankoop de marges bekijken en eventueel afronden naar boven (omdat het soms wel drastisch naar beneden wordt afgerond vanwege de quantity ticksize)
