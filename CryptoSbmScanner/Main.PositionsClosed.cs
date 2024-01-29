@@ -25,13 +25,13 @@ public partial class FrmMain
 
         ToolStripMenuItem menuCommand;
         menuCommand = new ToolStripMenuItem();
-        menuCommand.Text = "Herberekenen";
+        menuCommand.Text = "Positie herberekenen";
         menuCommand.Click += CommandPositionsClosedRecalculateExecute;
         ContextMenuStripPositionsClosed.Items.Add(menuCommand);
 
         menuCommand = new ToolStripMenuItem();
-        menuCommand.Text = "Verwijder uit database";
-        menuCommand.Click += CommandPositionDeleteFromDatabase;
+        menuCommand.Text = "Positie verwijderen uit database";
+        menuCommand.Click += CommandPositionsClosedDeleteFromDatabase;
         ContextMenuStripPositionsClosed.Items.Add(menuCommand);
 
         menuCommand = new ToolStripMenuItem();
@@ -273,7 +273,7 @@ public partial class FrmMain
     }
 
 
-    private void CommandPositionDeleteFromDatabase(object sender, EventArgs e)
+    private void CommandPositionsClosedDeleteFromDatabase(object sender, EventArgs e)
     {
         if (listViewPositionsClosed.SelectedItems.Count > 0)
         {
@@ -299,6 +299,7 @@ public partial class FrmMain
                 transaction.Commit();
 
                 listViewPositionsClosed.Items.Remove(item);
+                GlobalData.PositionsClosed.Remove(position);
 
             }
             catch (Exception error)
