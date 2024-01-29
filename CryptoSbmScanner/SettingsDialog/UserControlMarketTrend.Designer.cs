@@ -46,7 +46,7 @@ partial class UserControlMarketTrend
         groupBox1.Size = new Size(374, 105);
         groupBox1.TabIndex = 0;
         groupBox1.TabStop = false;
-        groupBox1.Text = "Markt trend (geeft problemen)";
+        groupBox1.Text = "Markt trend";
         // 
         // EditLog
         // 
