@@ -72,6 +72,7 @@ static public class GlobalData
 
     static public List<CryptoInterval> IntervalList { get; } = [];
     static public SortedList<int, CryptoInterval> IntervalListId { get; } = [];
+    static public SortedList<string, CryptoInterval> IntervalListPeriodName { get; } = [];
     static public SortedList<CryptoIntervalPeriod, CryptoInterval> IntervalListPeriod { get; } = [];
 
     // Exchanges indexed on name
@@ -196,12 +197,14 @@ static public class GlobalData
         IntervalList.Clear();
         IntervalListId.Clear();
         IntervalListPeriod.Clear();
+        IntervalListPeriodName.Clear();
 
         using var database = new CryptoDatabase();
         foreach (CryptoInterval interval in database.Connection.GetAll<CryptoInterval>())
         {
             IntervalList.Add(interval);
             IntervalListId.Add(interval.Id, interval);
+            IntervalListPeriodName.Add(interval.Name, interval);
             IntervalListPeriod.Add(interval.IntervalPeriod, interval);
         }
 
