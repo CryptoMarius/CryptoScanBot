@@ -268,6 +268,7 @@ public partial class FrmMain
             await TradeTools.LoadTradesfromDatabaseAndExchange(databaseThread, position);
             TradeTools.CalculatePositionResultsViaTrades(databaseThread, position, saveChangesAnywhay: true);
             FillItemClosed(position, item);
+            GlobalData.AddTextToLogTab($"{position.Symbol.Name} handmatig positie herberekend");
         }
 
     }
@@ -300,6 +301,7 @@ public partial class FrmMain
 
                 listViewPositionsClosed.Items.Remove(item);
                 GlobalData.PositionsClosed.Remove(position);
+                GlobalData.AddTextToLogTab($"{position.Symbol.Name} handmatig positie uit database verwijderd");
 
             }
             catch (Exception error)

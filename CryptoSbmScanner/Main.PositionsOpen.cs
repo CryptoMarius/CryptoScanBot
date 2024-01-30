@@ -458,6 +458,7 @@ public partial class FrmMain
             await TradeTools.LoadTradesfromDatabaseAndExchange(databaseThread, position);
             TradeTools.CalculatePositionResultsViaTrades(databaseThread, position);
             FillItemOpen(position, item);
+            GlobalData.AddTextToLogTab($"{position.Symbol.Name} handmatig positie herberekend");
         }
 
     }
@@ -489,8 +490,8 @@ public partial class FrmMain
                 transaction.Commit();
 
                 listViewPositionsOpen.Items.Remove(item);
-
                 PositionTools.RemovePosition(position.TradeAccount, position, false);
+                GlobalData.AddTextToLogTab($"{position.Symbol.Name} handmatig positie uit database verwijderd");
             }
             catch (Exception error)
             {
@@ -555,6 +556,7 @@ public partial class FrmMain
             // De positie uitbreiden nalv een nieuw signaal (de xe bijkoop wordt altijd een aparte DCA)
             PositionTools.ExtendPosition(databaseThread, position, CryptoPartPurpose.Dca, position.Interval, position.Strategy, 
                 CryptoEntryOrProfitMethod.FixedPercentage, price, DateTime.UtcNow);
+            GlobalData.AddTextToLogTab($"{position.Symbol.Name} handmatig een DCA toegevoegd");
 
             FillItemOpen(position, item);
         }
@@ -629,6 +631,7 @@ public partial class FrmMain
                                 price = price.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
                                 await TradeTools.PlaceTakeProfitOrderAtPrice(databaseThread, position, part, price, DateTime.UtcNow, "manually placing");
                                 FillItemOpen(position, item);
+                                GlobalData.AddTextToLogTab($"{position.Symbol.Name} {part.PartNumber} handmatig profit genomen");
 
                                 break;
                             }

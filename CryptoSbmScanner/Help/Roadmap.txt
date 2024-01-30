@@ -34,17 +34,14 @@ Scanner:
 NB: Als je ideen hebt voor het vervangen van de OCO/Stop limit informeer me dan AUB..
 
 Trading:
-- Trading - Een positie kunnen overnemen (zonder dat er orders verwijderd worden, de positie moet echt weg uit de trader anders heropent ie hem)
+- Trading - DCA's kunnen instellen per tijdsframe (redelijk berwerkelijk in de instellingen scherm)
+- Trading - Bij hogere ticksizes komt het werkelijke instapbedrag soms ruim boven het ingestelde aankoopbedrag te liggen, deze controleren voordat we een positie maken
 - Trading - Observatie: Een gesloten positie blijft soms lang in de lijst met geopende posities staan (de reden is onduidelijk)
 - Trading - Observatie papertrading is dat de laatste TP soms dubbel uitgevoerd wordt (en dan blijft de positie openstaan), probleem vanwege herstart applicatie?
-- Trading - Bij een aankoop de marges bekijken en eventueel afronden naar boven (omdat het soms wel drastisch naar beneden wordt afgerond vanwege de quantity ticksize)
-- Trading - Een optie erbij voor het toevoegen van een extra DCA
 - Trading - Het trade geluidje kunnen instellen (kan nu alleen door het vervangen van de sound notification in de sound map)
-- Trading - Een link toevoegen aan de Telegram notificaties
+- Trading - Een symbol-link toevoegen aan de Telegram notificaties
 - Trading - Validatie op de ingevoerde DCA's uitvoeren, die moeten qua percentage op volgorde staan met een factor > 0
 - Trading - Charts, de statistieken voor de combinatie van short en long kloppen niet (de short wordt sql technisch niet goed opgepakt?)
-- Trading - Via de RMK op een open positie een extra DCA aan de positie kunnen toevoegen (met dialoog)
-- Trading - Via de RMK op een gesloten positie deze kunnen weggooien (vanwege verkeerde statistiek open/long, gebeurd helaas nog in papertrading)
 - Trading - Charts - Graph toevoegen met hoe vaak de tweede en derde bijkoop gehit wordt
 - Trading - Charts - Ondersteuning voor long en short (de huidige charts kennen alleen maar long!)
 - Trading - Charts - Graph toevoegen voor inzicht met hoeveel we aan het handelen zijn (inclusief de extra dca orders)
