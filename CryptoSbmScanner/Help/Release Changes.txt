@@ -63,6 +63,7 @@ xx-01-2024 1.9
 - Trading - Bybit Futures - ophalen assets implementeren
 - Trading - Bybit Spot - ophalen assets implementeren
 
+- Scanner - Telegram - De markttrend toegevoegd en de trend op het interval wordt nu getoond
 - Scanner - Standaard commando's zoals kopieer, trend en symbol informatie zitten nu ook in het popupmenu
 - Scanner - Het menu commando "Dump exchange naar Excel" verplaats naar het hoofdmenu (onder instellingen)
 - Scanner - Het menu commando "Dump exchange naar Excel" werkte niet meer (na de refactoring symbol lijst op links)

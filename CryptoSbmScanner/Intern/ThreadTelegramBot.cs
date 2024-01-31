@@ -140,7 +140,14 @@ public class ThreadTelegramBotInstance
             builder.Append(signal.Symbol.Name + " " + signal.Interval.Name + " ");
             builder.Append(CandleTools.GetUnixDate(signal.Candle.OpenTime).ToLocalTime().ToString("dd MMM HH:mm"));
             builder.Append(" " + signal.StrategyText + "");
-            builder.Append(" " + signal.SideText + "");
+            builder.Append(" `" + signal.SideText + "`");
+            ////builder.Append(" " + signal.SideText + ""); <p style="color:DodgerBlue;">Lorem ipsum...</p>
+
+            //if (signal.Side == CryptoTradeSide.Long)
+            //    builder.Append($" <a style=\"color:2;\">{signal.SideText}</a>"); 
+            //else
+            //    builder.Append($" <a style=\"color:1;\">{signal.SideText}</a>");
+
             // Jammer, unsupported tag in message
             //if (signal.Side == CryptoOrderSide.Buy)
             //    builder.Append("<p style=\"color:#00FF00\">long</p>");
@@ -162,6 +169,10 @@ public class ThreadTelegramBotInstance
             builder.Append("Volume 24h: " + signal.Symbol.Volume.ToString("N0"));
             if (signal.CandlesWithZeroVolume > 0)
                 builder.Append(", candles with volume " + signal.CandlesWithZeroVolume.ToString());
+            builder.AppendLine();
+
+            builder.Append("Marktrend: " + signal.TrendPercentage.ToString("N2") + "%");
+            builder.Append(" interval " + signal.TrendIndicator.ToString());
             builder.AppendLine();
 
             builder.Append("Stoch: " + signal.StochOscillator?.ToString("N2"));
