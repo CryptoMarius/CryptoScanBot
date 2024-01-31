@@ -65,18 +65,3 @@ public class CryptoQuoteData
 }
 
 
-
-public static class CryptoQuoteDataHelper
-{
-    public static decimal GetEntryAmount(this CryptoQuoteData quoteData, decimal currentAssetQuantity, CryptoTradeAccountType tradeAccountType)
-    {
-        // Bepaal het entry bedrag 
-        // TODO Er is geen percentage bij papertrading mogelijk (of we moeten een werkende papertrade asset management implementeren)
-
-        // Heeft de gebruiker een percentage of een aantal ingegeven?
-        if (tradeAccountType ==CryptoTradeAccountType.RealTrading && quoteData.EntryPercentage > 0m)
-            return quoteData.EntryPercentage * currentAssetQuantity / 100;
-        else
-            return quoteData.EntryAmount;
-    }
-}

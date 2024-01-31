@@ -485,5 +485,56 @@ public class TradeTools
             ExchangeBase.Dump(position.Symbol, result.result, result.tradeParams, extraText);
         }
     }
+
+
+    /// <summary>
+    /// Bepaal het entry bedrag 
+    /// </summary>
+    public static decimal GetEntryAmount(CryptoSymbol symbol, decimal currentAssetQuantity, CryptoTradeAccountType tradeAccountType)
+    {
+        // TODO Er is geen percentage bij papertrading mogelijk (of we moeten een werkende papertrade asset management implementeren)
+
+        // Heeft de gebruiker een percentage of een aantal ingegeven?
+        if (tradeAccountType == CryptoTradeAccountType.RealTrading && symbol.QuoteData.EntryPercentage > 0m)
+            return symbol.QuoteData.EntryPercentage * currentAssetQuantity / 100;
+        else
+            return symbol.QuoteData.EntryAmount;
+    }
+
+
+    public static decimal CorrectEntryQuantityIfWayLess(CryptoSymbol symbol, decimal entryValue, decimal entryQuantity, decimal entryPrice)
+    {
+        // Daar kunnen we niets mee aanvangen
+        if (entryValue == 0 || entryQuantity == 0 || entryPrice == 0)
+            return entryQuantity;
+
+
+        // Is er een grote afwijking van tenminste -X%
+        decimal clampedEntryValue = entryQuantity * entryPrice;
+        decimal percentage = 100 * (clampedEntryValue - entryValue) / entryValue;
+
+        // Het verschil is te groot, hier kunnen we niet instappen
+        if (percentage > 125)
+        {
+            GlobalData.AddTextToLogTab($"{symbol.Name} vanwege de quantity ticksize {symbol.PriceTickSize} kunnen we niet instappen met de veel te hoge {clampedEntryValue} ({percentage}%) (DEBUG)");
+            return 0;
+        }
+
+        if (clampedEntryValue < entryValue)
+        {
+            // Wellicht er iets bijtellen?
+            decimal newEntryQuantity = entryQuantity + symbol.QuantityTickSize;
+            decimal newEntryValue = newEntryQuantity * entryPrice;
+            percentage = 100 * (newEntryValue - entryValue) / entryValue; // 100 * (16 - 2.50) / 2.50 = 540
+            if (percentage.IsBetween(-2.5m, 2.5m)) 
+            {
+                // 2.5% marge is okay, we willen er niet te ver boven
+                GlobalData.AddTextToLogTab($"{symbol.Name} vanwege de quantity ticksize {symbol.PriceTickSize} is de entry value verhoogd naar {newEntryValue} ({percentage}%) (DEBUG)");
+                return newEntryQuantity;
+            }
+        }
+
+        return entryQuantity;
+    }
 }
 #endif

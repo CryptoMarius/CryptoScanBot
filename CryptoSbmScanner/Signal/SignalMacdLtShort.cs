@@ -65,7 +65,7 @@ public class SignalMacdLtShort : SignalCreateBase
                 return false;
         }
         decimal perc = 100m * (maxValue / minValue - 1);
-        if (perc <= 1.5m)
+        if (perc <= 2.5m)
             return false;
 
 

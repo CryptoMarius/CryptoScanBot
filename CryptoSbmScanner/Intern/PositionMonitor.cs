@@ -269,7 +269,7 @@ public class PositionMonitor : IDisposable
 
 
         // Niet bij iedere keer de assets verversen
-        if (lastRefreshAssets == null || lastRefreshAssets?.AddMinutes(5) > DateTime.UtcNow)
+        if (lastRefreshAssets == null || lastRefreshAssets?.AddMinutes(5) < DateTime.UtcNow)
         {
             // De assets verversen (optioneel adhv account)
             await ExchangeHelper.FetchAssetsAsync(tradeAccount);
@@ -303,7 +303,7 @@ public class PositionMonitor : IDisposable
 
 
         // Bepaal het entry bedrag 
-        decimal entryAmount = Symbol.QuoteData.GetEntryAmount(currentAssetQuantity, tradeAccount.TradeAccountType);
+        decimal entryAmount = TradeTools.GetEntryAmount(Symbol, currentAssetQuantity, tradeAccount.TradeAccountType);
         if (entryAmount <= 0)
             return (false, null, "No amount/percentage given");
 
@@ -573,6 +573,29 @@ public class PositionMonitor : IDisposable
                             GlobalData.AddTextToLogTab(text + " " + resultCheckAssets.reaction);
                             Symbol.ClearSignals();
                             return;
+                        }
+
+
+                        // Controle op de ticksize en dergelijke..
+                        {
+                            // Bepaal het entry bedrag 
+                            // Naast een vast bedrag kan het ook een percentage zijn van de totaal beschikbare quote asset
+                            decimal currentAssetQuantity = 0;
+                            if (tradeAccount.AssetList.TryGetValue(Symbol.Quote, out var asset))
+                                currentAssetQuantity = asset.Total;
+                            decimal entryValue = TradeTools.GetEntryAmount(Symbol, currentAssetQuantity, tradeAccount.TradeAccountType);
+                            decimal entryPrice = Symbol.LastPrice.Value.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
+                            decimal entryQuantity = entryValue / entryPrice;
+                            entryQuantity = entryQuantity.Clamp(Symbol.QuantityMinimum, Symbol.QuantityMaximum, Symbol.QuantityTickSize);
+                            entryQuantity = TradeTools.CorrectEntryQuantityIfWayLess(Symbol, entryValue, entryQuantity, entryPrice);
+
+                            if (entryQuantity == 0)
+                            {
+                                GlobalData.AddTextToLogTab(text + $" vanwege de quantity ticksize {Symbol.PriceTickSize} en aankoopbedrag {entryValue} lukt de aankoop niet");
+                                Symbol.ClearSignals();
+                                return;
+                            }
+
                         }
 
                         // De positie + entry aanmaken
@@ -879,26 +902,6 @@ public class PositionMonitor : IDisposable
     }
 
 
-    private decimal CorrectEntryQuantityIfWayLess(decimal entryValue, decimal entryQuantity, decimal price)
-    {
-        // Is er een grote afwijking, wellicht iets erbij optellen?
-        decimal clampedEntryValue = entryQuantity * price;
-        decimal p = 100 * (clampedEntryValue - entryValue) / entryValue;
-        if (p < -25)
-        {
-            decimal clampedNewEntryQuantity = entryQuantity + Symbol.QuantityTickSize;
-            decimal clampedNewEntryValue = clampedNewEntryQuantity * price;
-            p = 100 * (clampedNewEntryValue - entryValue) / entryValue;
-            if (p < 10) // 10% erboven is okay?
-            {
-                // is okay
-                entryQuantity = clampedNewEntryQuantity;
-            }
-        }
-        return entryQuantity;
-    }
-
-
     private async Task HandleEntryPart(CryptoPosition position, CryptoPositionPart part, CryptoCandle candleInterval, 
         CryptoEntryOrProfitMethod stepInMethod, CryptoBuyOrderMethod orderMethod)
     {
@@ -1017,7 +1020,7 @@ public class PositionMonitor : IDisposable
                 decimal currentAssetQuantity = 0;
                 if (position.TradeAccount.AssetList.TryGetValue(Symbol.Quote, out var asset))
                     currentAssetQuantity = asset.Total;
-                entryValue = Symbol.QuoteData.GetEntryAmount(currentAssetQuantity, position.TradeAccount.TradeAccountType);
+                entryValue = TradeTools.GetEntryAmount(Symbol, currentAssetQuantity, position.TradeAccount.TradeAccountType);
             }
             else
             {
@@ -1069,7 +1072,7 @@ public class PositionMonitor : IDisposable
                     entryQuantity = entryValue / price; // "afgerond"
                     entryQuantity = entryQuantity.Clamp(Symbol.QuantityMinimum, Symbol.QuantityMaximum, Symbol.QuantityTickSize);
                     if (position.Invested == 0)
-                        entryQuantity = CorrectEntryQuantityIfWayLess(entryValue, entryQuantity, price);
+                        entryQuantity = TradeTools.CorrectEntryQuantityIfWayLess(Symbol, entryValue, entryQuantity, price);
 
                     break;
                 case CryptoOrderType.StopLimit:
@@ -1083,7 +1086,7 @@ public class PositionMonitor : IDisposable
                     entryQuantity = entryValue / (decimal)stop; // "afgerond"
                     entryQuantity = entryQuantity.Clamp(Symbol.QuantityMinimum, Symbol.QuantityMaximum, Symbol.QuantityTickSize);
                     if (position.Invested == 0)
-                        entryQuantity = CorrectEntryQuantityIfWayLess(entryValue, entryQuantity, price);
+                        entryQuantity = TradeTools.CorrectEntryQuantityIfWayLess(Symbol, entryValue, entryQuantity, price);
 
                     throw new Exception($"{entryOrderType} niet ondersteund");
                     //break;
