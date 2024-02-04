@@ -308,10 +308,9 @@ public class PositionMonitor : IDisposable
             return (false, null, "No amount/percentage given");
 
 
-        // TODO Short/Long
-        // TODO Bij futures short hoef je dit te bezitten (wel een onderpand?)
-        if (currentAssetQuantity < entryAmount)
-            return (false, entryAmount, $"Not enough cash available {currentAssetQuantity} < {entryAmount}");
+        // TODO Short/Long, bij futures short hoef je dit te bezitten (wel een onderpand?) - uitzoeken
+        if (entryAmount > currentAssetQuantity)
+            return (false, entryAmount, $"Not enough cash available entryamount={entryAmount} >= available assets {Symbol.Quote}={currentAssetQuantity}");
 
 
         // okay
