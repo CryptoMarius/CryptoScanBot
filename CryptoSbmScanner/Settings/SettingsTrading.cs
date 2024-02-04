@@ -12,7 +12,7 @@ public class PauseTradingRule
     public int Candles { get; set; }
     public CryptoIntervalPeriod Interval { get; set; }
 
-    // de wachttijd gemeten in candles
+    // de wachttijd gemeten in minuten
     public int CoolDown { get; set; }
 }
 
@@ -200,7 +200,7 @@ public class SettingsTrading
             Percentage = 2.5,
             Candles = 5,
             Interval = CryptoIntervalPeriod.interval5m,
-            CoolDown = 10,
+            CoolDown = 20,
         });
 
 

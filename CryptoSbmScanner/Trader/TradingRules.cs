@@ -49,7 +49,7 @@ public static class TradingRules
                             double percentage = (double)(100m * ((high / low) - 1m));
                             if (percentage >= rule.Percentage || percentage <= -rule.Percentage)
                             {
-                                long pauseUntil = candleLast.OpenTime + rule.CoolDown * symbolInterval.Interval.Duration;
+                                long pauseUntil = candleLast.OpenTime + rule.CoolDown * 60;
                                 DateTime pauseUntilDate = CandleTools.GetUnixDate(pauseUntil);
 
                                 if (!pause.Until.HasValue || pauseUntilDate > pause.Until)

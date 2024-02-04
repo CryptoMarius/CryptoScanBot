@@ -75,9 +75,9 @@ partial class UserControlTradeRuleItem
         label5.AutoSize = true;
         label5.Location = new Point(262, 156);
         label5.Name = "label5";
-        label5.Size = new Size(49, 15);
+        label5.Size = new Size(52, 15);
         label5.TabIndex = 279;
-        label5.Text = "Candles";
+        label5.Text = "Minuten";
         // 
         // EditCoolDown
         // 

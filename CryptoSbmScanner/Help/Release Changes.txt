@@ -1,6 +1,7 @@
 CryptoSbmScanenr release historie:
 
 xx-01-2024 1.9
+- Trading - Bij hogere ticksizes komt het werkelijke instapbedrag soms ruim boven het ingestelde aankoopbedrag te liggen, deze controleren voordat we een positie maken
 - Trading - Het nemen van een DCA profit loggen
 - Trading - Het toevoegen van een DCA loggen
 - Trading - Het herberekenen van een positie loggen
@@ -63,7 +64,9 @@ xx-01-2024 1.9
 - Trading - Bybit Futures - ophalen assets implementeren
 - Trading - Bybit Spot - ophalen assets implementeren
 
-- Scanner - Telegram - De markttrend toegevoegd en de trend op het interval wordt nu getoond
+- Scanner - De url voor de Bybit futures exchange aangepast (tekst in de weblinks.json is nu case sensitive gemaakt)
+- Scanner - Telegram - De trend van de 15m, 30m, 1h, 4h en 12h toegevoegd (inclusief emoi indicator)
+- Scanner - Telegram - De markttrend toegevoegd en de trend op het interval wordt nu getoond (inclusief emoi indicator)
 - Scanner - Standaard commando's zoals kopieer, trend en symbol informatie zitten nu ook in het popupmenu
 - Scanner - Het menu commando "Dump exchange naar Excel" verplaats naar het hoofdmenu (onder instellingen)
 - Scanner - Het menu commando "Dump exchange naar Excel" werkte niet meer (na de refactoring symbol lijst op links)
@@ -73,6 +76,7 @@ xx-01-2024 1.9
 - Scanner - Op het signalen tabblad is de titel van de trend aangepast naar "TF-Trend" (TimeFrame trend)
 - Scanner - Op het signalen tabblad is de titel van de trend% aangepast naar "Markttrend%" (globale trend)
 - Scanner - Op het signalen tabblad de breedte van de kolommen tekst niet aanpassen (die kolom kan aardig varieeren in breedte)
+- Trading - Charts, de statistieken voor de combinatie van short en long kloppen niet (de short wordt sql technisch niet goed opgepakt?)
 - Scanner - De trend berekening optimaliseren, de 1m en 2m trend worden niet meer berekend, deze zijn niet significant en erg cpu intensief.
 - Scanner - De trend berekening optimaliseren, alle trends per interval werden tot dusver berekened terwijl dat pas bij een nieuwe candle nodig is. 
 - Scanner - De oude signalen van circa 2 week en ouder weggooien uit de database (db werd vrij groot)
