@@ -36,12 +36,14 @@ partial class UserControlTelegram
         EditTelegramChatId = new TextBox();
         EditTelegramToken = new TextBox();
         label15 = new Label();
+        EditUseEmojiInTrend = new CheckBox();
         groupBoxTelegram.SuspendLayout();
         SuspendLayout();
         // 
         // groupBoxTelegram
         // 
         groupBoxTelegram.AutoSize = true;
+        groupBoxTelegram.Controls.Add(EditUseEmojiInTrend);
         groupBoxTelegram.Controls.Add(buttonTelegramStart);
         groupBoxTelegram.Controls.Add(EditSendSignalsToTelegram);
         groupBoxTelegram.Controls.Add(ButtonTestTelegram);
@@ -52,7 +54,7 @@ partial class UserControlTelegram
         groupBoxTelegram.Dock = DockStyle.Fill;
         groupBoxTelegram.Location = new Point(0, 0);
         groupBoxTelegram.Name = "groupBoxTelegram";
-        groupBoxTelegram.Size = new Size(436, 135);
+        groupBoxTelegram.Size = new Size(436, 161);
         groupBoxTelegram.TabIndex = 0;
         groupBoxTelegram.TabStop = false;
         groupBoxTelegram.Text = "Telegram ";
@@ -124,6 +126,17 @@ partial class UserControlTelegram
         label15.TabIndex = 178;
         label15.Text = "Token";
         // 
+        // EditUseEmojiInTrend
+        // 
+        EditUseEmojiInTrend.AutoSize = true;
+        EditUseEmojiInTrend.Location = new Point(10, 119);
+        EditUseEmojiInTrend.Margin = new Padding(4, 3, 4, 3);
+        EditUseEmojiInTrend.Name = "EditUseEmojiInTrend";
+        EditUseEmojiInTrend.Size = new Size(168, 19);
+        EditUseEmojiInTrend.TabIndex = 184;
+        EditUseEmojiInTrend.Text = "Gebruik Emoji's in de trend";
+        EditUseEmojiInTrend.UseVisualStyleBackColor = true;
+        // 
         // UserControlTelegram
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
@@ -132,7 +145,7 @@ partial class UserControlTelegram
         AutoSize = true;
         Controls.Add(groupBoxTelegram);
         Name = "UserControlTelegram";
-        Size = new Size(436, 135);
+        Size = new Size(436, 161);
         groupBoxTelegram.ResumeLayout(false);
         groupBoxTelegram.PerformLayout();
         ResumeLayout(false);
@@ -149,4 +162,5 @@ partial class UserControlTelegram
     private TextBox EditTelegramChatId;
     private TextBox EditTelegramToken;
     private Label label15;
+    private CheckBox EditUseEmojiInTrend;
 }

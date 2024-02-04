@@ -430,7 +430,7 @@ partial class FrmSettings
         tabAlgemeen.Margin = new Padding(4, 3, 4, 3);
         tabAlgemeen.Name = "tabAlgemeen";
         tabAlgemeen.Padding = new Padding(4, 3, 4, 3);
-        tabAlgemeen.Size = new Size(1142, 605);
+        tabAlgemeen.Size = new Size(1142, 642);
         tabAlgemeen.TabIndex = 6;
         tabAlgemeen.Text = "Algemeen";
         tabAlgemeen.UseVisualStyleBackColor = true;
@@ -445,7 +445,7 @@ partial class FrmSettings
         flowLayoutPanel5.FlowDirection = FlowDirection.TopDown;
         flowLayoutPanel5.Location = new Point(4, 3);
         flowLayoutPanel5.Name = "flowLayoutPanel5";
-        flowLayoutPanel5.Size = new Size(1134, 599);
+        flowLayoutPanel5.Size = new Size(1134, 636);
         flowLayoutPanel5.TabIndex = 247;
         // 
         // groupBox1
@@ -787,7 +787,7 @@ partial class FrmSettings
         tabBasismunten.Margin = new Padding(4, 3, 4, 3);
         tabBasismunten.Name = "tabBasismunten";
         tabBasismunten.Padding = new Padding(4, 3, 4, 3);
-        tabBasismunten.Size = new Size(1142, 605);
+        tabBasismunten.Size = new Size(1142, 642);
         tabBasismunten.TabIndex = 0;
         tabBasismunten.Text = "Basismunten";
         tabBasismunten.UseVisualStyleBackColor = true;
@@ -799,7 +799,7 @@ partial class FrmSettings
         tabSignals.Margin = new Padding(4, 3, 4, 3);
         tabSignals.Name = "tabSignals";
         tabSignals.Padding = new Padding(4, 3, 4, 3);
-        tabSignals.Size = new Size(1142, 605);
+        tabSignals.Size = new Size(1142, 642);
         tabSignals.TabIndex = 10;
         tabSignals.Text = "Signalen";
         tabSignals.UseVisualStyleBackColor = true;
@@ -817,7 +817,7 @@ partial class FrmSettings
         tabControlSignals.Location = new Point(4, 3);
         tabControlSignals.Name = "tabControlSignals";
         tabControlSignals.SelectedIndex = 0;
-        tabControlSignals.Size = new Size(1134, 599);
+        tabControlSignals.Size = new Size(1134, 636);
         tabControlSignals.TabIndex = 248;
         // 
         // tabSignalsGeneral
@@ -856,7 +856,7 @@ partial class FrmSettings
         tabSignalsGeneral.Location = new Point(4, 27);
         tabSignalsGeneral.Name = "tabSignalsGeneral";
         tabSignalsGeneral.Padding = new Padding(3);
-        tabSignalsGeneral.Size = new Size(1126, 568);
+        tabSignalsGeneral.Size = new Size(1126, 605);
         tabSignalsGeneral.TabIndex = 0;
         tabSignalsGeneral.Text = "Signalen algemeen";
         tabSignalsGeneral.UseVisualStyleBackColor = true;
@@ -2415,7 +2415,7 @@ partial class FrmSettings
         tabTradingLong.Location = new Point(4, 27);
         tabTradingLong.Name = "tabTradingLong";
         tabTradingLong.Padding = new Padding(3);
-        tabTradingLong.Size = new Size(1126, 568);
+        tabTradingLong.Size = new Size(1126, 605);
         tabTradingLong.TabIndex = 1;
         tabTradingLong.Text = "Trading long";
         tabTradingLong.UseVisualStyleBackColor = true;
@@ -2427,7 +2427,7 @@ partial class FrmSettings
         UserControlTradingLong.Dock = DockStyle.Fill;
         UserControlTradingLong.Location = new Point(3, 3);
         UserControlTradingLong.Name = "UserControlTradingLong";
-        UserControlTradingLong.Size = new Size(1120, 562);
+        UserControlTradingLong.Size = new Size(1120, 599);
         UserControlTradingLong.TabIndex = 0;
         // 
         // tabTradingShort
@@ -2436,7 +2436,7 @@ partial class FrmSettings
         tabTradingShort.Location = new Point(4, 27);
         tabTradingShort.Name = "tabTradingShort";
         tabTradingShort.Padding = new Padding(3);
-        tabTradingShort.Size = new Size(1126, 568);
+        tabTradingShort.Size = new Size(1126, 605);
         tabTradingShort.TabIndex = 2;
         tabTradingShort.Text = "Trading short";
         tabTradingShort.UseVisualStyleBackColor = true;
@@ -2448,7 +2448,7 @@ partial class FrmSettings
         UserControlTradingShort.Dock = DockStyle.Fill;
         UserControlTradingShort.Location = new Point(3, 3);
         UserControlTradingShort.Name = "UserControlTradingShort";
-        UserControlTradingShort.Size = new Size(1120, 562);
+        UserControlTradingShort.Size = new Size(1120, 599);
         UserControlTradingShort.TabIndex = 0;
         // 
         // tabPageTradingRules
@@ -2457,7 +2457,7 @@ partial class FrmSettings
         tabPageTradingRules.Location = new Point(4, 27);
         tabPageTradingRules.Name = "tabPageTradingRules";
         tabPageTradingRules.Padding = new Padding(3);
-        tabPageTradingRules.Size = new Size(1126, 568);
+        tabPageTradingRules.Size = new Size(1126, 605);
         tabPageTradingRules.TabIndex = 3;
         tabPageTradingRules.Text = "Rulez";
         tabPageTradingRules.UseVisualStyleBackColor = true;
@@ -2471,7 +2471,7 @@ partial class FrmSettings
         UserControlTradeRules.Location = new Point(3, 3);
         UserControlTradeRules.Margin = new Padding(0);
         UserControlTradeRules.Name = "UserControlTradeRules";
-        UserControlTradeRules.Size = new Size(1120, 562);
+        UserControlTradeRules.Size = new Size(1120, 599);
         UserControlTradeRules.TabIndex = 0;
         // 
         // label59
@@ -2491,7 +2491,7 @@ partial class FrmSettings
         tabWhiteBlack.Location = new Point(4, 27);
         tabWhiteBlack.Name = "tabWhiteBlack";
         tabWhiteBlack.Padding = new Padding(3);
-        tabWhiteBlack.Size = new Size(1142, 605);
+        tabWhiteBlack.Size = new Size(1142, 642);
         tabWhiteBlack.TabIndex = 13;
         tabWhiteBlack.Text = "Black/White list";
         tabWhiteBlack.UseVisualStyleBackColor = true;
@@ -2507,7 +2507,7 @@ partial class FrmSettings
         tabControlWhiteBlack.Location = new Point(3, 3);
         tabControlWhiteBlack.Name = "tabControlWhiteBlack";
         tabControlWhiteBlack.SelectedIndex = 0;
-        tabControlWhiteBlack.Size = new Size(1136, 599);
+        tabControlWhiteBlack.Size = new Size(1136, 636);
         tabControlWhiteBlack.TabIndex = 0;
         // 
         // tabLongWhiteList
@@ -2517,7 +2517,7 @@ partial class FrmSettings
         tabLongWhiteList.Location = new Point(4, 27);
         tabLongWhiteList.Name = "tabLongWhiteList";
         tabLongWhiteList.Padding = new Padding(3);
-        tabLongWhiteList.Size = new Size(1128, 568);
+        tabLongWhiteList.Size = new Size(1128, 605);
         tabLongWhiteList.TabIndex = 0;
         tabLongWhiteList.Text = "Whitelist long";
         tabLongWhiteList.UseVisualStyleBackColor = true;
@@ -2529,7 +2529,7 @@ partial class FrmSettings
         textBoxWhiteListOversold.Margin = new Padding(4, 3, 4, 3);
         textBoxWhiteListOversold.Multiline = true;
         textBoxWhiteListOversold.Name = "textBoxWhiteListOversold";
-        textBoxWhiteListOversold.Size = new Size(1122, 505);
+        textBoxWhiteListOversold.Size = new Size(1122, 542);
         textBoxWhiteListOversold.TabIndex = 2;
         // 
         // panel3

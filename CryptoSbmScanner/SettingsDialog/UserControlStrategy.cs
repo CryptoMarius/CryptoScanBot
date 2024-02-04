@@ -12,11 +12,11 @@ public partial class UserControlStrategy : UserControl
         InitializeComponent();
     }
 
-    public void InitControls(CryptoTradeSide tradeSide)
+    public void InitControls(bool isForTrading, CryptoTradeSide tradeSide)
     {
         foreach (var signalDefinition in SignalHelper.AlgorithmDefinitionIndex.Values)
         {
-            if (signalDefinition.Strategy == CryptoSignalStrategy.Jump)
+            if (isForTrading && signalDefinition.Strategy == CryptoSignalStrategy.Jump)
                 continue;
 
             bool validStrategy = ((tradeSide == CryptoTradeSide.Long && signalDefinition.AnalyzeLongType != null) ||

@@ -8,5 +8,5 @@ public class SettingsTelegram
     public string ChatId { get; set; } = "";
 
     public bool SendSignalsToTelegram { get; set; } = false;
-    
+    public bool UseEmojiInTrend { get; set; } = true;
 }

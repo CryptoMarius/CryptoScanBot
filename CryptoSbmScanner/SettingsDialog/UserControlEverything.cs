@@ -10,16 +10,16 @@ public partial class UserControlEverything : UserControl
         InitializeComponent();
     }
 
-    public void InitControls(bool signal, CryptoTradeSide side)
+    public void InitControls(bool isForTrading, CryptoTradeSide side)
     {
         // Trading long/short (initialize list etc)
-        UserControlStrategy.InitControls(side);
+        UserControlStrategy.InitControls(isForTrading, side);
         UserControlInterval.InitControls();
         UserControlIntervalTrend.InitControls(side);
-        if (signal)
-            UserControlBarometer.InitControls("Genereer signalen indien de barometer");
+        if (isForTrading)
+            UserControlBarometer.InitControls("Trade alleen indien de barometer"); 
         else
-            UserControlBarometer.InitControls("Trade alleen indien de barometer");
+            UserControlBarometer.InitControls("Genereer signalen indien de barometer");
     }
 
     public void LoadConfig(SettingsTextual settings)

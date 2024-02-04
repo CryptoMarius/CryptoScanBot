@@ -142,14 +142,26 @@ public class ThreadTelegramBotInstance
     {
         // https://beta.emojipedia.org/police-car-light
 
-        // Circles
-        return trend switch
+        if (GlobalData.Settings.Telegram.UseEmojiInTrend)
         {
-            CryptoTrendIndicator.Bullish => "\U0001f7e2",
-            CryptoTrendIndicator.Bearish => "\U0001F534",
-            _ => "\\U00026AB",
+            // Circles
+            return trend switch
+            {
+                CryptoTrendIndicator.Bullish => "\U0001f7e2",
+                CryptoTrendIndicator.Bearish => "\U0001F534",
+                _ => "\U000026AB",
+            };
+        }
+        else
+        {
+            return trend switch
+            {
+                CryptoTrendIndicator.Bullish => "bull",
+                CryptoTrendIndicator.Bearish => "bear",
+                _ => "?",
+            };
+        }
 
-        };
 
         // Arrows
         //return trend switch

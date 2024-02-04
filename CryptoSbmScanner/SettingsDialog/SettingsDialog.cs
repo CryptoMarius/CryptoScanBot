@@ -26,12 +26,12 @@ public partial class FrmSettings : Form
         buttonGotoAppDataFolder.Click += ButtonGotoAppDataFolder_Click;
 
         // Signals/Trading long/short initialize
-        UserControlSignalLong.InitControls(true, CryptoTradeSide.Long);
-        UserControlSignalShort.InitControls(true, CryptoTradeSide.Short);
+        UserControlSignalLong.InitControls(false, CryptoTradeSide.Long);
+        UserControlSignalShort.InitControls(false, CryptoTradeSide.Short);
 
 #if TRADEBOT
-        UserControlTradingLong.InitControls(false, CryptoTradeSide.Long);
-        UserControlTradingShort.InitControls(false, CryptoTradeSide.Short);
+        UserControlTradingLong.InitControls(true, CryptoTradeSide.Long);
+        UserControlTradingShort.InitControls(true, CryptoTradeSide.Short);
 #endif
     }
 
