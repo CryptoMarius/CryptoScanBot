@@ -124,6 +124,41 @@ public class ThreadTelegramBotInstance
     }
 
 
+    private static string GetEmoiFromMarketTrend(float trend)
+    {
+        // https://beta.emojipedia.org/police-car-light
+
+        // Circles
+        if (trend > 0)
+            return "\U00002B06"; // Arrow up
+        else
+        if (trend < 0)
+            return "\U00002B07"; // Arrown down
+        else
+            return "\U00002753"; // questionmark
+    }
+
+    private static string GetEmoiFromTrend(CryptoTrendIndicator? trend)
+    {
+        // https://beta.emojipedia.org/police-car-light
+
+        // Circles
+        return trend switch
+        {
+            CryptoTrendIndicator.Bullish => "\U0001f7e2",
+            CryptoTrendIndicator.Bearish => "\U0001F534",
+            _ => "\\U00026AB",
+
+        };
+
+        // Arrows
+        //return trend switch
+        //{
+        //    CryptoTrendIndicator.Bullish => "\U00002B06",
+        //    CryptoTrendIndicator.Bearish => "\U00002B07",
+        //    _ => "\U00002753", // questionmark
+        //};
+    }
 
     public async Task SendSignal(CryptoSignal signal)
     {
@@ -132,27 +167,17 @@ public class ThreadTelegramBotInstance
 
         try
         {
-            //bot.send_message(chat_id = update.message.chat_id, text = "<a href='https://www.google.com/'>Google</a>", parse_mode = ParseMode.HTML)
-            //bot.send_message(chat_id = update.message.chat_id, text = "<b>Bold font</b>", parse_mode = ParseMode.HTML)
-
-
             StringBuilder builder = new();
             builder.Append(signal.Symbol.Name + " " + signal.Interval.Name + " ");
             builder.Append(CandleTools.GetUnixDate(signal.Candle.OpenTime).ToLocalTime().ToString("dd MMM HH:mm"));
             builder.Append(" " + signal.StrategyText + "");
-            builder.Append(" `" + signal.SideText + "`");
-            ////builder.Append(" " + signal.SideText + ""); <p style="color:DodgerBlue;">Lorem ipsum...</p>
+            //builder.Append(" " + signal.SideText + " ");
 
-            //if (signal.Side == CryptoTradeSide.Long)
-            //    builder.Append($" <a style=\"color:2;\">{signal.SideText}</a>"); 
-            //else
-            //    builder.Append($" <a style=\"color:1;\">{signal.SideText}</a>");
-
-            // Jammer, unsupported tag in message
-            //if (signal.Side == CryptoOrderSide.Buy)
-            //    builder.Append("<p style=\"color:#00FF00\">long</p>");
-            //else
-            //    builder.Append("<p style=\"color:#FF0000\">short</p>");
+            // https://apps.timwhitlock.info/emoji/tables/unicode
+            if (signal.Side == CryptoTradeSide.Long)
+                builder.Append($"\U0001f7e2 {signal.SideText}");
+            else
+                builder.Append($"\U0001F534 {signal.SideText}");
 
             string text = GlobalData.ExternalUrls.GetTradingAppName(GlobalData.Settings.General.TradingApp, signal.Exchange.Name);
             (string Url, CryptoExternalUrlType Execute) refInfo = GlobalData.ExternalUrls.GetExternalRef(GlobalData.Settings.General.TradingApp, true, signal.Symbol, signal.Interval);
@@ -171,8 +196,27 @@ public class ThreadTelegramBotInstance
                 builder.Append(", candles with volume " + signal.CandlesWithZeroVolume.ToString());
             builder.AppendLine();
 
-            builder.Append("Marktrend: " + signal.TrendPercentage.ToString("N2") + "%");
-            builder.Append(" interval " + signal.TrendIndicator.ToString());
+
+            // De trend informatie
+            // Even in de juiste volgorde toevoegen (je verwacht een vaste volgorde)
+            SortedList<CryptoIntervalPeriod, (string, CryptoTrendIndicator)> a = [];
+            a.TryAdd(signal.Interval.IntervalPeriod, (signal.Interval.Name, signal.TrendIndicator));
+            a.TryAdd(CryptoIntervalPeriod.interval15m, ("15m", signal.Trend15m.Value));
+            a.TryAdd(CryptoIntervalPeriod.interval30m, ("30m", signal.Trend30m.Value));
+            a.TryAdd(CryptoIntervalPeriod.interval1h,("1h", signal.Trend1h.Value));
+            a.TryAdd(CryptoIntervalPeriod.interval4h,("4h", signal.Trend4h.Value));
+            a.TryAdd(CryptoIntervalPeriod.interval12h, ("12h", signal.Trend12h.Value));
+
+            builder.Append("Trend: ");
+            builder.Append(GetEmoiFromMarketTrend(signal.TrendPercentage));
+            builder.Append(signal.TrendPercentage.ToString("N2") + "%");
+
+            foreach (KeyValuePair<CryptoIntervalPeriod, (string name, CryptoTrendIndicator trendIndicator)> entry in a)
+            {
+                builder.Append(' ');
+                builder.Append(GetEmoiFromTrend(entry.Value.trendIndicator));
+                builder.Append(entry.Value.name);
+            }
             builder.AppendLine();
 
             builder.Append("Stoch: " + signal.StochOscillator?.ToString("N2"));
@@ -186,8 +230,14 @@ public class ThreadTelegramBotInstance
             builder.AppendLine();
 
 
-            await bot.SendTextMessageAsync(ThreadTelegramBot.ChatId, builder.ToString(), parseMode: ParseMode.Html,
-                disableWebPagePreview: true);
+            //builder.Append("<b>Google</b>");
+            //builder.Append("<a color:red;>Google</a>");
+            //builder.Append("<span color:red;>Google</span>");
+
+            //bot.send_message(chat_id = update.message.chat_id, text = "<a href='https://www.google.com/'>Google</a>", parse_mode = ParseMode.HTML)
+            //bot.send_message(chat_id = update.message.chat_id, text = "<b>Bold font</b>", parse_mode = ParseMode.HTML)
+
+            await bot.SendTextMessageAsync(ThreadTelegramBot.ChatId, builder.ToString(), parseMode: ParseMode.Html, disableWebPagePreview: true);
 
         }
         catch (Exception error)
