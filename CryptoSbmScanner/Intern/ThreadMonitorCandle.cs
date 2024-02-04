@@ -7,7 +7,7 @@ namespace CryptoSbmScanner.Intern;
 public class ThreadMonitorCandle
 {
     private readonly SemaphoreSlim Semaphore = new(5); // X threads tegelijk
-    private readonly BlockingCollection<(CryptoSymbol symbol, CryptoCandle candle)> Queue = new();
+    private readonly BlockingCollection<(CryptoSymbol symbol, CryptoCandle candle)> Queue = [];
     private readonly CancellationTokenSource cancellationToken = new();
 
 

@@ -25,7 +25,7 @@ public class Api : ExchangeBase
     private static readonly Category Category = Category.Linear;
     static private UserDataStream TaskBybitStreamUserData { get; set; }
 #endif
-    public static List<KLineTickerItem> TickerList { get; set; } = new();
+    public static List<KLineTickerItem> TickerList { get; set; } = [];
 
 
     public Api() : base()

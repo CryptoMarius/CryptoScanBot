@@ -11,16 +11,10 @@ using ICell = NPOI.SS.UserModel.ICell;
 
 namespace CryptoSbmScanner.Intern;
 
-public class BackTestExcel
+public class BackTestExcel(CryptoSymbol symbol, List<CryptoCandle> history)
 {
-    private CryptoSymbol Symbol { get; set; }
-    private List<CryptoCandle> History { get; set; }
-
-    public BackTestExcel(CryptoSymbol symbol, List<CryptoCandle> history)
-    {
-        Symbol = symbol;
-        History = history;
-    }
+    private CryptoSymbol Symbol { get; set; } = symbol;
+    private List<CryptoCandle> History { get; set; } = history;
 
     public static ICell WriteCell(ISheet sheet, int columnIndex, int rowIndex, string value)
     {

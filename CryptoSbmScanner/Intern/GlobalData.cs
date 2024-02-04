@@ -501,7 +501,7 @@ static public class GlobalData
                     ExternalUrls.InitializeUrls();
 
                 //het bestand in ieder geval aanmaken(updates moeten achteraf gepushed worden)
-                JsonSerializerOptions options = new JsonSerializerOptions
+                JsonSerializerOptions options = new()
                 {
                     Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
                     WriteIndented = true

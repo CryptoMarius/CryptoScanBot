@@ -35,26 +35,26 @@ public class SettingsBasic
     /// <summary>
     /// Welke basis munten willen we gebruiken
     /// </summary>
-    public SortedList<string, CryptoQuoteData> QuoteCoins { get; set; } = new();
+    public SortedList<string, CryptoQuoteData> QuoteCoins { get; set; } = [];
 
     // Als de whitelist gevuld is dan moet de symbol voorkomen in de lijst (anders geen meldingen)
-    public List<string> WhiteListOversold { get; set; } = new();
+    public List<string> WhiteListOversold { get; set; } = [];
 
     // Als de symbol in de blacklist voorkomt worden er geen meldingen voor deze munt gemaakt
-    public List<string> BlackListOversold { get; set; } = new();
+    public List<string> BlackListOversold { get; set; } = [];
 
     // Als de whitelist gevuld is dan moet de symbol voorkomen in de lijst (anders geen meldingen)
-    public List<string> WhiteListOverbought { get; set; } = new();
+    public List<string> WhiteListOverbought { get; set; } = [];
 
     // Als de symbol in de blacklist voorkomt worden er geen meldingen voor deze munt gemaakt
-    public List<string> BlackListOverbought { get; set; } = new();
+    public List<string> BlackListOverbought { get; set; } = [];
 
     // Welke kolommen zijn zichtbaar in het tabbblad signalen
-    public List<string> HiddenSignalColumns { get; set; } = new();
+    public List<string> HiddenSignalColumns { get; set; } = [];
 
     /// Instellingen voor het uitvoeren backtest (work in progres)
     public SettingsBackTest BackTest { get; set; } = new();
 
     // What symbols to show
-    public List<string> ShowSymbolInformation { get; set; } = new((new string[] { "BTC", "PAXG", "ETH", "XRP", "SOL", "ADA"}));
+    public List<string> ShowSymbolInformation { get; set; } = new(new string[] { "BTC", "PAXG", "ETH", "XRP", "SOL", "ADA" });
 }

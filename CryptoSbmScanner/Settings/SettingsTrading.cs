@@ -160,10 +160,10 @@ public class SettingsTrading
     public SettingsTextual Long { get; set; } = new();
     public SettingsTextual Short { get; set; } = new();
 
-    public List<PauseTradingRule> PauseTradingRules { get; set; } = new();
+    public List<PauseTradingRule> PauseTradingRules { get; set; } = [];
 
     // De lijst met bijkopen
-    public List<CryptoDcaEntry> DcaList { get; set; } = new();
+    public List<CryptoDcaEntry> DcaList { get; set; } = [];
 
     // Instap condities indien de "trend" positief is (up/down)
     //public List<string> TrendOn { get; set; } = new();
