@@ -516,7 +516,7 @@ public class TradeTools
         // Het verschil is te groot, hier kunnen we niet instappen
         if (percentage > 125)
         {
-            GlobalData.AddTextToLogTab($"{symbol.Name} vanwege de quantity ticksize {symbol.PriceTickSize} kunnen we niet instappen met de veel te hoge {clampedEntryValue} ({percentage}%) (DEBUG)");
+            GlobalData.AddTextToLogTab($"{symbol.Name} vanwege de quantity ticksize {symbol.PriceTickSize} kunnen we niet instappen met de veel te hoge {clampedEntryValue} ({percentage:N2}%) (DEBUG)");
             return 0;
         }
 
@@ -529,7 +529,7 @@ public class TradeTools
             if (percentage.IsBetween(-2.5m, 2.5m)) 
             {
                 // 2.5% marge is okay, we willen er niet te ver boven
-                GlobalData.AddTextToLogTab($"{symbol.Name} vanwege de quantity ticksize {symbol.PriceTickSize} is de entry value verhoogd naar {newEntryValue} ({percentage}%) (DEBUG)");
+                GlobalData.AddTextToLogTab($"{symbol.Name} vanwege de quantity ticksize {symbol.PriceTickSize} is de entry value verhoogd naar {newEntryValue} ({percentage:N2}%) (DEBUG)");
                 return newEntryQuantity;
             }
         }
