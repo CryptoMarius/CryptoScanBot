@@ -1,5 +1,7 @@
 ﻿using System.Text.Json;
 
+using CryptoSbmScanner.Intern;
+
 namespace CryptoSbmScanner.TradingView;
 
 public class SymbolValue
@@ -43,6 +45,7 @@ public class TradingViewSymbolInfo
         SymbolValue.Name = displayName;
         SymbolValue.Ticker = tickerName;
         SymbolValue.DisplayFormat = displayFormat;
+        
         socket = new TradingViewSymbolWebSocket(tickerName);
         socket.DataFetched += OnValueFetched;
         socket.ConnectWebSocketAndRequestSession().Wait();
@@ -67,7 +70,7 @@ public class TradingViewSymbolInfo
         }
     }
 
-    private void OnValueFetched(object sender, List<string> e)
+    private void OnValueFetched(object sender, List<string> values)
     {
         try
         {
@@ -76,11 +79,12 @@ public class TradingViewSymbolInfo
             //{
             //    GlobalData.AddTextToLogTab(" ? " + s);
             //}
-            ApplyRates(e);
+            ApplyRates(values);
         }
-        catch (Exception exception)
+        catch (Exception e)
         {
-            Console.WriteLine(exception);
+            GlobalData.AddTextToLogTab($@"Exception {e.Message}");
+            GlobalData.Logger.Error(e, "");
         }
     }
 

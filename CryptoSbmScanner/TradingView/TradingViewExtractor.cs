@@ -1,65 +1,161 @@
 ﻿using System.Net.WebSockets;
 using System.Text;
 
+using CryptoSbmScanner.Intern;
+
 namespace CryptoSbmScanner.TradingView;
 
 public delegate void DataFetchedEvent(object sender, List<string> e);
+
+// Gebaseerd op https://github.com/mli2805/WebListener/tree/master/BalisStandard/Pollers/TradingView
+// informatief: https://github.com/Hattorius/Tradingview-ticker/blob/25d952a3b9c309cb8cc4c914a5e62cec2d8b53af/ticker.py
+// authentication ea: https://github.com/0xrushi/tradingview-scraper
 
 public class TradingViewSymbolWebSocket
 {
     private readonly string TickerName;
     private readonly ClientWebSocket ClientWebSocket;
     private readonly CancellationTokenSource CancellationTokenSource;
-    private const string TradingViewAddress = "wss://data.tradingview.com/socket.io/websocket";
-    private const string SessionRequest = "~m~50~m~{\"p\":[\"my_session\",\"\"],\"m\":\"quote_create_session\"}";
-    private readonly Uri _tradingViewUri;
-    private readonly ArraySegment<byte> _buffer;
     public event DataFetchedEvent DataFetched;
 
     public TradingViewSymbolWebSocket(string tickerName)
     {
         TickerName = tickerName;
 
-        _tradingViewUri = new Uri(TradingViewAddress);
-        var encoded = Encoding.UTF8.GetBytes(SessionRequest);
-        _buffer = new ArraySegment<byte>(encoded, 0, encoded.Length);
-
         ClientWebSocket = new ClientWebSocket();
-        ClientWebSocket.Options.UseDefaultCredentials = true;
-        ClientWebSocket.Options.SetRequestHeader("Origin", "https://www.tradingview.com");
         CancellationTokenSource = new CancellationTokenSource();
     }
 
-    public async Task ConnectWebSocketAndRequestSession()
+    
+    private static string ConstructRequest(string method, List<string> parameters, List<string> flags)
     {
-        try
-        {
-            await ClientWebSocket.ConnectAsync(_tradingViewUri, CancellationTokenSource.Token);
-            await ClientWebSocket.SendAsync(_buffer, WebSocketMessageType.Text, true, CancellationTokenSource.Token);
+        // bulky, maar beter te tarceren dan die stomme encoded strings van c# (nouja, voorkeur)
 
-        }
-        catch (Exception e)
+        StringBuilder stringBuilder = new();
+        stringBuilder.Append('{');
         {
-            Console.WriteLine($@"Exception {e.Message}");
+            // method
+            stringBuilder.Append('"');
+            stringBuilder.Append('m');
+            stringBuilder.Append('"');
+            stringBuilder.Append(':');
+            stringBuilder.Append('"');
+            stringBuilder.Append(method);
+            stringBuilder.Append('"');
+
+
+            // parameters
+            stringBuilder.Append(',');
+            stringBuilder.Append('"');
+            stringBuilder.Append('p');
+            stringBuilder.Append('"');
+            stringBuilder.Append(':');
+            {
+                stringBuilder.Append('[');
+                {
+                    int count = 0;
+                    foreach (string parameter in parameters)
+                    {
+                        if (count > 0)
+                            stringBuilder.Append(',');
+                        count++;
+
+                        stringBuilder.Append('"');
+                        stringBuilder.Append(parameter);
+                        stringBuilder.Append('"');
+                    }
+                }
+
+                // Hier is iets te optimaliseren (als het eerst maar werkt)
+                // "quote_add_symbols",[session, "NASDAQ:AAPL", {"flags":["force_permission"]}]
+                if (flags.Count > 0)
+                {
+                    stringBuilder.Append(',');
+                    stringBuilder.Append('{');
+                    {
+                        stringBuilder.Append('"');
+                        stringBuilder.Append("flags");
+                        stringBuilder.Append('"');
+                        stringBuilder.Append(':');
+
+                        stringBuilder.Append('[');
+                        {
+                            int count = 0;
+                            foreach (string flag in flags)
+                            {
+                                if (count > 0)
+                                    stringBuilder.Append(',');
+                                count++;
+
+                                stringBuilder.Append('"');
+                                stringBuilder.Append(flag);
+                                stringBuilder.Append('"');
+                            }
+                        }
+                        stringBuilder.Append(']');
+                    }
+                    stringBuilder.Append('}');
+                }
+                stringBuilder.Append(']');
+            }
         }
+        stringBuilder.Append('}');
+
+        return stringBuilder.ToString();
     }
 
 
-    public async Task RequestData()
+    public async Task SendData(string request)
     {
-        string request = "{\"p\":[\"my_session\",\"" + TickerName + "\",{\"flags\":[\"force_permission\"]}],\"m\":\"quote_add_symbols\"}";
-        var framed = $"~m~{request.Length}~m~{request}";
-        var bytes = Encoding.UTF8.GetBytes(framed);
+        request = $"~m~{request.Length}~m~{request}";
+        //GlobalData.AddTextToLogTab(request);
+        var bytes = Encoding.UTF8.GetBytes(request);
         ArraySegment<byte> data = new(bytes, 0, bytes.Length);
-
         try
         {
             await ClientWebSocket.SendAsync(data, WebSocketMessageType.Text, true, CancellationTokenSource.Token);
         }
         catch (Exception e)
         {
-            Console.WriteLine($@"Exception {e.Message}");
+            GlobalData.AddTextToLogTab($@"Exception {e.Message}");
+            GlobalData.Logger.Error(e, "");
         }
+    }
+
+    public async Task ConnectWebSocketAndRequestSession()
+    {
+        ClientWebSocket.Options.UseDefaultCredentials = true;
+        ClientWebSocket.Options.SetRequestHeader("Origin", "https://www.tradingview.com");
+        try
+        {
+            Uri uri = new("wss://data.tradingview.com/socket.io/websocket");
+            //https://www.tradingview.com/chart/C0G0Mzob/?symbol=TVC%3ADXY&interval=60
+            await ClientWebSocket.ConnectAsync(uri, CancellationTokenSource.Token);
+
+            //string request = ConstructRequest("chart_create_session", ["my_chartsession", ""], []);
+            //await SendData(request);
+
+            string request = ConstructRequest("quote_create_session", ["my_session", ""], []);
+            await SendData(request);
+
+            //request = ConstructRequest("set_auth_token", ["unauthorized_user_token"], []);
+            //await SendData(request);
+
+            //request = ConstructRequest("set_data_quality", ["low"], []);
+            //await SendData(request);
+        }
+        catch (Exception e)
+        {
+            GlobalData.AddTextToLogTab($@"Exception {e.Message}");
+            GlobalData.Logger.Error(e, "");
+        }
+    }
+
+
+    public async Task RequestData()
+    {
+        string request = ConstructRequest("quote_add_symbols", ["my_session", TickerName], []); // "force_permission"
+        await SendData(request);
     }
 
 
@@ -84,7 +180,8 @@ public class TradingViewSymbolWebSocket
         }
         catch (Exception e)
         {
-            Console.WriteLine($"Exception {e.Message}");
+            GlobalData.AddTextToLogTab($@"Exception {e.Message}");
+            GlobalData.Logger.Error(e, "");
             return false;
         }
     }
@@ -106,6 +203,7 @@ public class TradingViewSymbolWebSocket
         jsonList = [];
         try
         {
+            //GlobalData.AddTextToLogTab(message);
             while (message.Length > 3)
             {
                 var str = message[3..];
@@ -128,8 +226,9 @@ public class TradingViewSymbolWebSocket
             }
             return message;
         }
-        catch (Exception)
+        catch (Exception e)
         {
+            GlobalData.Logger.Error(e, "");
             return "";
         }
     }

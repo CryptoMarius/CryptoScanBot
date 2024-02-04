@@ -1,5 +1,7 @@
 ﻿using System.Text.Json;
 
+using CryptoSbmScanner.Intern;
+
 namespace CryptoSbmScanner.TradingView;
 
 public static class TradingViewJsonParser
@@ -20,8 +22,9 @@ public static class TradingViewJsonParser
 
             return JsonDocument.Parse(branch.V.ToString());
         }
-        catch (Exception)
+        catch (Exception e)
         {
+            GlobalData.Logger.Error(e, "");
             return null;
         }
     }
