@@ -31,23 +31,23 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
                 Altrady = new()
                 {
                     Execute = CryptoExternalUrlType.Internal,
-                    Url = "https://app.altrady.com/d/BINA_{quote}_{base}:{interval}",
+                    Url = "https://app.altrady.com/d/BINA_{QUOTE}_{BASE}:{interval}",
                 },
                 HyperTrader = new()
                 {
                     Execute = CryptoExternalUrlType.External,
-                    Url = "hypertrader://binance/{base}-{quote}/{interval}",
-                    Telegram = "http://www.ccscanner.nl/hypertrader/?e=binance&a={base}&b={quote}&i={interval}",
+                    Url = "hypertrader://binance/{BASE}-{QUOTE}/{interval}",
+                    Telegram = "http://www.ccscanner.nl/hypertrader/?e=binance&a={BASE}&b={QUOTE}&i={interval}",
                 },
                 TradingView = new()
                 {
                     Execute = CryptoExternalUrlType.External,
-                    Url = "https://www.tradingview.com/chart/?symbol=BINANCE:{base}{quote}&interval={interval}"
+                    Url = "https://www.tradingview.com/chart/?symbol=BINANCE:{BASE}{QUOTE}&interval={interval}"
                 },
                 ExchangeUrl = new()
                 {
                     Execute = CryptoExternalUrlType.External,
-                    Url = "https://www.binance.com/en/trade/{base}_{quote}?_from=markets&type=spot",
+                    Url = "https://www.binance.com/en/trade/{BASE}_{QUOTE}?_from=markets&type=spot",
                 }
             }
         );
@@ -58,23 +58,23 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
                 Altrady = new()
                 {
                     Execute = CryptoExternalUrlType.Internal,
-                    Url = "https://app.altrady.com/d/BYBIF_{quote}_{base}:{interval}",
+                    Url = "https://app.altrady.com/d/BYBIF_{QUOTE}_{BASE}:{interval}",
                 },
                 HyperTrader = new()
                 {
                     Execute = CryptoExternalUrlType.External,
-                    Url = "hypertrader://bybit/{base}-{quote}/{interval}",
-                    Telegram = "http://www.ccscanner.nl/hypertrader/?e=bybit&a={base}&b={quote}&i={interval}",
+                    Url = "hypertrader://bybit/{BASE}-{QUOTE}/{interval}",
+                    Telegram = "http://www.ccscanner.nl/hypertrader/?e=bybit&a={BASE}&b={QUOTE}&i={interval}",
                 },
                 TradingView = new()
                 {
                     Execute = CryptoExternalUrlType.External,
-                    Url = "https://www.tradingview.com/chart/?symbol=BYBIT:{base}{quote}.P&interval={interval}",
+                    Url = "https://www.tradingview.com/chart/?symbol=BYBIT:{BASE}{QUOTE}.P&interval={interval}",
                 },
                 ExchangeUrl = new()
                 {
                     Execute = CryptoExternalUrlType.External,
-                    Url = "https://www.bybit.com/trade/{quote}/{base}&interval={interval}",
+                    Url = "https://www.bybit.com/trade/{quote}/{BASE}{QUOTE}",
                 }
             }
         );
@@ -85,23 +85,23 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
                 Altrady = new()
                 {
                     Execute = CryptoExternalUrlType.Internal,
-                    Url = "https://app.altrady.com/d/BYBI_{quote}_{base}:{interval}",
+                    Url = "https://app.altrady.com/d/BYBI_{QUOTE}_{BASE}:{interval}",
                 },
                 HyperTrader = new()
                 {
                     Execute = CryptoExternalUrlType.External,
-                    Url = "hypertrader://bybit-spot/{base}-{quote}/{interval}",
-                    Telegram = "http://www.ccscanner.nl/hypertrader/?e=bybit-spot&a={base}&b={quote}&i={interval}",
+                    Url = "hypertrader://bybit-spot/{BASE}-{QUOTE}/{interval}",
+                    Telegram = "http://www.ccscanner.nl/hypertrader/?e=bybit-spot&a={BASE}&b={QUOTE}&i={interval}",
                 },
                 TradingView = new()
                 {
                     Execute = CryptoExternalUrlType.External,
-                    Url = "https://www.tradingview.com/chart/?symbol=BYBIT:{base}{quote}&interval={interval}",
+                    Url = "https://www.tradingview.com/chart/?symbol=BYBIT:{BASE}{QUOTE}&interval={interval}",
                 },
                 ExchangeUrl = new()
                 {
                     Execute = CryptoExternalUrlType.External,
-                    Url = "https://www.bybit.com/trade/spot/{quote}/{base}&interval={interval}",
+                    Url = "https://www.bybit.com/trade/spot/{BASE}/{QUOTE}",
                 }
             }
         );
@@ -112,24 +112,24 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
                 Altrady = new()
                 {
                     Execute = CryptoExternalUrlType.Internal,
-                    Url = "https://app.altrady.com/d/KUCN_{quote}_{base}:{interval}",
+                    Url = "https://app.altrady.com/d/KUCN_{QUOTE}_{BASE}:{interval}",
                 },
                 HyperTrader = new()
                 {
                     Execute = CryptoExternalUrlType.External,
-                    Url = "hypertrader://kucoin/{base}-{quote}/{interval}",
-                    Telegram = "http://www.ccscanner.nl/hypertrader/?e=kucoin&a={base}&b={quote}&i={interval}",
+                    Url = "hypertrader://kucoin/{BASE}-{QUOTE}/{interval}",
+                    Telegram = "http://www.ccscanner.nl/hypertrader/?e=kucoin&a={BASE}&b={QUOTE}&i={interval}",
                 },
                 TradingView = new()
                 {
                     Execute = CryptoExternalUrlType.External,
-                    Url = "https://www.tradingview.com/chart/?symbol=KUCOIN:{base}{quote}&interval={interval}",
+                    Url = "https://www.tradingview.com/chart/?symbol=KUCOIN:{BASE}{QUOTE}&interval={interval}",
                 },
                 ExchangeUrl = new()
                 {
                     // Geen idee
                     Execute = CryptoExternalUrlType.External,
-                    Url = "https://www.kucoin.com/trade/{quote}/{base}&interval={interval}",
+                    Url = "https://www.kucoin.com/trade/{QUOTE}/{BASE}&interval={interval}",
                 }
             }
         );
@@ -185,13 +185,18 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
             string urlTemplate = externalUrl.Url;
             if (telegram && externalUrl.Telegram != null && externalUrl.Telegram != "")
                 urlTemplate = externalUrl.Telegram;
-            
-            urlTemplate = urlTemplate.Replace("{name}", symbol.Name);
-            urlTemplate = urlTemplate.Replace("{base}", symbol.Base);
-            urlTemplate = urlTemplate.Replace("{quote}", symbol.Quote);
-            
+
+            urlTemplate = urlTemplate.Replace("{name}", symbol.Name.ToLower());
+            urlTemplate = urlTemplate.Replace("{base}", symbol.Base.ToLower());
+            urlTemplate = urlTemplate.Replace("{quote}", symbol.Quote.ToLower());
+
+            urlTemplate = urlTemplate.Replace("{NAME}", symbol.Name.ToUpper());
+            urlTemplate = urlTemplate.Replace("{BASE}", symbol.Base.ToUpper());
+            urlTemplate = urlTemplate.Replace("{QUOTE}", symbol.Quote.ToUpper());
+
             string intervalCode = ((int)(interval.Duration / 60)).ToString();
-            urlTemplate = urlTemplate.Replace("{interval}", intervalCode);
+            urlTemplate = urlTemplate.Replace("{interval}", intervalCode.ToLower());
+            urlTemplate = urlTemplate.Replace("{INTERVAL}", intervalCode.ToUpper());
             return (urlTemplate, externalUrl.Execute);
         }
 
