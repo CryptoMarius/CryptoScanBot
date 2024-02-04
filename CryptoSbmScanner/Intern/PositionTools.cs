@@ -22,9 +22,9 @@ public static class PositionTools
             // Niet echt super, enumeratie oid hiervoor in het leven roepen, werkt verder wel
             if (tradeAccount.TradeAccountType == CryptoTradeAccountType.BackTest && GlobalData.BackTest)
                 return true;
-            if (tradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading && GlobalData.Settings.Trading.TradeViaExchange)
-                return true;
             if (tradeAccount.TradeAccountType == CryptoTradeAccountType.PaperTrade && GlobalData.Settings.Trading.TradeViaPaperTrading)
+                return true;
+            if (tradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading && GlobalData.Settings.Trading.TradeViaExchange)
                 return true;
         }
         return false;
