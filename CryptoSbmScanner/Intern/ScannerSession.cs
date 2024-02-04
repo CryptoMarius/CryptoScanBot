@@ -62,7 +62,7 @@ public static class ScannerSession
 
     public static void Start(bool sleepAwhile)
     {
-        GlobalData.AddTextToLogTab("Debug: ScannerSession.Start", true);
+        //GlobalData.AddTextToLogTab("Debug: ScannerSession.Start", true);
         GlobalData.ApplicationStatus = CryptoApplicationStatus.Initializing;
 
         GlobalData.ThreadMonitorCandle = new ThreadMonitorCandle();
@@ -92,7 +92,7 @@ public static class ScannerSession
     public static async Task Stop()
     {
         //Task.Run(async () => { await ScannerSession.Stop(); }).Wait();
-        GlobalData.AddTextToLogTab("Debug: ScannerSession.Stop", true);
+        //GlobalData.AddTextToLogTab("Debug: ScannerSession.Stop", true);
         //GlobalData.ApplicationStatus = CryptoApplicationStatus.AppStatusExiting;
         GlobalData.ApplicationStatus = CryptoApplicationStatus.Initializing;
 
