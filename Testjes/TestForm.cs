@@ -46,6 +46,8 @@ using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Exchange;
 using CryptoSbmScanner.Exchange.Binance;
 using CryptoSbmScanner.Trader;
+using Font = System.Drawing.Font;
+using CryptoSbmScanner.TradingView;
 //using static System.ComponentModel.Design.ObjectSelectorEditor;
 
 namespace CryptoSbmScanner;
@@ -111,9 +113,9 @@ public partial class TestForm : Form
         TradingConfig.IndexStrategyInternally();
 
         comboBox1.Items.Clear();
-        foreach (AlgorithmDefinition def in TradingConfig.AlgorithmDefinitionIndex.Values)
-            comboBox1.Items.Add(def.Name);
-        comboBox1.SelectedIndex = 5;
+        //foreach (AlgorithmDefinition def in TradingConfig.AlgorithmDefinitionIndex.Values)
+        //    comboBox1.Items.Add(def.Name);
+        //comboBox1.SelectedIndex = 5;
 
         tabControl.SelectedTab = tabPageLog;
 
@@ -154,12 +156,12 @@ public partial class TestForm : Form
         //});
 
 
-        databaseMain = new();
-        databaseMain.Open();
 
         GlobalData.LoadSettings();
 
         // Basicly allemaal constanten
+        CryptoDatabase.SetDatabaseDefaults();
+
         GlobalData.LoadExchanges();
         GlobalData.LoadIntervals();
 
@@ -168,6 +170,9 @@ public partial class TestForm : Form
         // Na het selecteren van een account
         ExchangeHelper.ExchangeDefaults();
         GlobalData.LoadAccounts();
+
+        databaseMain = new();
+        databaseMain.Open();
 
         //Alle symbols uit de database lezen 
         //GlobalData.AddTextToLogTab("Reading symbol information from database");
@@ -215,6 +220,8 @@ public partial class TestForm : Form
         //marketcapTotal.Name = "Maerketcap total";
         //Task.Factory.StartNew(() => new TradingViewSymbolInfo().Start("CRYPTOCAP:TOTAL3", marketcapTotal, 10));
 
+
+        Task.Factory.StartNew(() => new TradingViewSymbolInfo().StartAsync("FX_IDC:EURUSD", "dit is een test", "N2", GlobalData.TradingViewDollarIndex, 1000));
     }
 
 
@@ -818,79 +825,79 @@ public partial class TestForm : Form
 
     private void Button6_Click(object sender, EventArgs e)
     {
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
-        {
-            if (exchange.SymbolListName.TryGetValue("ALCXBTC", out CryptoSymbol symbol))
-            {
-                DateTime dateCandleStart = DateTime.SpecifyKind(new DateTime(2023, 02, 1, 0, 0, 0), DateTimeKind.Utc);
-                DateTime dateCandleEinde = DateTime.SpecifyKind(new DateTime(2023, 05, 1, 0, 0, 0), DateTimeKind.Utc);
+        //if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+        //{
+        //    if (exchange.SymbolListName.TryGetValue("ALCXBTC", out CryptoSymbol symbol))
+        //    {
+        //        DateTime dateCandleStart = DateTime.SpecifyKind(new DateTime(2023, 02, 1, 0, 0, 0), DateTimeKind.Utc);
+        //        DateTime dateCandleEinde = DateTime.SpecifyKind(new DateTime(2023, 05, 1, 0, 0, 0), DateTimeKind.Utc);
 
-                int iterator = 0;
-                long percentageSum = 0;
-                long maxPercentageSum = 0;
-                for (CryptoIntervalPeriod intervalPeriod = CryptoIntervalPeriod.interval1m; intervalPeriod <= CryptoIntervalPeriod.interval1d; intervalPeriod++)
-                {
-                    if (intervalPeriod != CryptoIntervalPeriod.interval5m)
-                        continue;
+        //        int iterator = 0;
+        //        long percentageSum = 0;
+        //        long maxPercentageSum = 0;
+        //        for (CryptoIntervalPeriod intervalPeriod = CryptoIntervalPeriod.interval1m; intervalPeriod <= CryptoIntervalPeriod.interval1d; intervalPeriod++)
+        //        {
+        //            if (intervalPeriod != CryptoIntervalPeriod.interval5m)
+        //                continue;
 
-                    iterator++;
-                    if (!GlobalData.IntervalListPeriod.TryGetValue(intervalPeriod, out CryptoInterval interval))
-                        return;
-                    LoadSymbolCandles(symbol, interval, dateCandleStart, dateCandleEinde);
-                    //SortedList<long, CryptoCandle> candles = symbol.GetSymbolInterval(intervalPeriod).CandleList;
+        //            iterator++;
+        //            if (!GlobalData.IntervalListPeriod.TryGetValue(intervalPeriod, out CryptoInterval interval))
+        //                return;
+        //            LoadSymbolCandles(symbol, interval, dateCandleStart, dateCandleEinde);
+        //            //SortedList<long, CryptoCandle> candles = symbol.GetSymbolInterval(intervalPeriod).CandleList;
 
-                    TrendIndicator trendIndicatorClass = new(symbol, interval);
-                    CryptoTrendIndicator trendIndicator = trendIndicatorClass.CalculateTrend();
+        //            TrendIndicator trendIndicatorClass = new(symbol, interval);
+        //            CryptoTrendIndicator trendIndicator = trendIndicatorClass.CalculateTrend();
 
-                    if (trendIndicator == CryptoTrendIndicator.Bullish)
-                        percentageSum += (int)intervalPeriod * iterator;
-                    else if (trendIndicator == CryptoTrendIndicator.Bearish)
-                        percentageSum -= (int)intervalPeriod * iterator;
+        //            if (trendIndicator == CryptoTrendIndicator.Bullish)
+        //                percentageSum += (int)intervalPeriod * iterator;
+        //            else if (trendIndicator == CryptoTrendIndicator.Bearish)
+        //                percentageSum -= (int)intervalPeriod * iterator;
 
-                    // Wat is het maximale som (voor de eindberekening)
-                    maxPercentageSum += (int)intervalPeriod * iterator;
+        //            // Wat is het maximale som (voor de eindberekening)
+        //            maxPercentageSum += (int)intervalPeriod * iterator;
 
-                    // Ahh, dat gaat niet naar een tabel (zoals ik eerst dacht)
-                    CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(intervalPeriod);
-                    symbolInterval.TrendIndicator = trendIndicator;
-                }
-
-
-                // Display
-                GlobalData.AddTextToLogTab("");
-                GlobalData.AddTextToLogTab("Trend " + symbol.Name);
-                for (CryptoIntervalPeriod intervalPeriod = CryptoIntervalPeriod.interval1m; intervalPeriod <= CryptoIntervalPeriod.interval1d; intervalPeriod++)
-                {
-                    if (intervalPeriod != CryptoIntervalPeriod.interval5m)
-                        continue;
-
-                    if (!GlobalData.IntervalListPeriod.TryGetValue(intervalPeriod, out CryptoInterval interval))
-                        return;
-
-                    CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(intervalPeriod);
-
-                    // De trend van dit interval
-                    string s;
-                    if (symbolInterval.TrendIndicator == CryptoTrendIndicator.Bullish)
-                        s = "trend=bullish";
-                    else if (symbolInterval.TrendIndicator == CryptoTrendIndicator.Bearish)
-                        s = "trend=bearish";
-                    else
-                        s = "trend=sideway's?";
-                    GlobalData.AddTextToLogTab(string.Format("{0} {1:N2}", interval.Name, s));
-                }
+        //            // Ahh, dat gaat niet naar een tabel (zoals ik eerst dacht)
+        //            CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(intervalPeriod);
+        //            symbolInterval.TrendIndicator = trendIndicator;
+        //        }
 
 
-                // De totale trend
-                decimal trendPercentage = 100 * (decimal)percentageSum / (decimal)maxPercentageSum;
-                if (trendPercentage < 0)
-                    GlobalData.AddTextToLogTab(string.Format("Symbol trend {0} bearish", (-trendPercentage).ToString("N2")));
-                else if (trendPercentage > 0)
-                    GlobalData.AddTextToLogTab(string.Format("Symbol trend {0} bullish", trendPercentage.ToString("N2")));
-                else
-                    GlobalData.AddTextToLogTab(string.Format("Symbol trend {0} unknown", trendPercentage.ToString("N2")));
-            }
-        }
+        //        // Display
+        //        GlobalData.AddTextToLogTab("");
+        //        GlobalData.AddTextToLogTab("Trend " + symbol.Name);
+        //        for (CryptoIntervalPeriod intervalPeriod = CryptoIntervalPeriod.interval1m; intervalPeriod <= CryptoIntervalPeriod.interval1d; intervalPeriod++)
+        //        {
+        //            if (intervalPeriod != CryptoIntervalPeriod.interval5m)
+        //                continue;
+
+        //            if (!GlobalData.IntervalListPeriod.TryGetValue(intervalPeriod, out CryptoInterval interval))
+        //                return;
+
+        //            CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(intervalPeriod);
+
+        //            // De trend van dit interval
+        //            string s;
+        //            if (symbolInterval.TrendIndicator == CryptoTrendIndicator.Bullish)
+        //                s = "trend=bullish";
+        //            else if (symbolInterval.TrendIndicator == CryptoTrendIndicator.Bearish)
+        //                s = "trend=bearish";
+        //            else
+        //                s = "trend=sideway's?";
+        //            GlobalData.AddTextToLogTab(string.Format("{0} {1:N2}", interval.Name, s));
+        //        }
+
+
+        //        // De totale trend
+        //        decimal trendPercentage = 100 * (decimal)percentageSum / (decimal)maxPercentageSum;
+        //        if (trendPercentage < 0)
+        //            GlobalData.AddTextToLogTab(string.Format("Symbol trend {0} bearish", (-trendPercentage).ToString("N2")));
+        //        else if (trendPercentage > 0)
+        //            GlobalData.AddTextToLogTab(string.Format("Symbol trend {0} bullish", trendPercentage.ToString("N2")));
+        //        else
+        //            GlobalData.AddTextToLogTab(string.Format("Symbol trend {0} unknown", trendPercentage.ToString("N2")));
+        //    }
+        //}
     }
 
     internal class VolatiteitStat
@@ -2025,129 +2032,129 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
 
     private static void CheckCandlesComplete(CryptoSymbol symbol, CryptoInterval interval)
     {
-        SortedList<long, DateTime> dateList = new();
-        SortedList<long, CryptoCandle> candles = symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList;
+        //SortedList<long, DateTime> dateList = new();
+        //SortedList<long, CryptoCandle> candles = symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList;
 
-        // Zijn de candles compleet?
-        if (candles.Count > 0)
-        {
-            // De laatste niet meenemen (kan wellicht anders)
-            for (int i = 0; i < candles.Values.Count - 1; i++)
-            {
-                CryptoCandle candle = candles.Values[i];
-                long unix = candle.OpenTime + interval.Duration;
+        //// Zijn de candles compleet?
+        //if (candles.Count > 0)
+        //{
+        //    // De laatste niet meenemen (kan wellicht anders)
+        //    for (int i = 0; i < candles.Values.Count - 1; i++)
+        //    {
+        //        CryptoCandle candle = candles.Values[i];
+        //        long unix = candle.OpenTime + interval.Duration;
 
-                if (!candles.ContainsKey(unix))
-                {
-                    DateTime date; // = CandleTools.GetUnixDate(unix);
-                    long unixDay = CandleTools.GetUnixTime(unix, 1 * 24 * 60 * 60);
-                    date = CandleTools.GetUnixDate(unixDay);
+        //        if (!candles.ContainsKey(unix))
+        //        {
+        //            DateTime date; // = CandleTools.GetUnixDate(unix);
+        //            long unixDay = CandleTools.GetUnixTime(unix, 1 * 24 * 60 * 60);
+        //            date = CandleTools.GetUnixDate(unixDay);
 
-                    if (!dateList.ContainsKey(unixDay))
-                        dateList.Add(unixDay, date);
-                }
-            }
+        //            if (!dateList.ContainsKey(unixDay))
+        //                dateList.Add(unixDay, date);
+        //        }
+        //    }
 
-            // en dan maar hopen dat die lijst niet zo lang is
-            if (dateList.Any())
-            {
-                string downLoadFolder = GlobalData.GetBaseDir();
-                downLoadFolder += @"\backtest\Downloads\";
-                Directory.CreateDirectory(downLoadFolder);
+        //    // en dan maar hopen dat die lijst niet zo lang is
+        //    if (dateList.Any())
+        //    {
+        //        string downLoadFolder = GlobalData.GetBaseDir();
+        //        downLoadFolder += @"\backtest\Downloads\";
+        //        Directory.CreateDirectory(downLoadFolder);
 
-                foreach (long unix in dateList.Keys)
-                {
+        //        foreach (long unix in dateList.Keys)
+        //        {
 
-                    //hoofdpagina: //https://data.binance.vision/?prefix=data/spot/daily/klines/ACABUSD/1m/
-                    //downloadlink: https://data.binance.vision/data/spot/daily/klines/ACAUSDT/1m/ACAUSDT-1m-2022-12-02.zip                        
-                    DateTime date = CandleTools.GetUnixDate(unix);
-                    if (date == DateTime.Today)
-                        break;
-                    string name = symbol.Name + "-" + interval.Name + "-" + date.ToLocalTime().ToString("yyyy-MM-dd");
-                    GlobalData.AddTextToLogTab("Downloading " + name);
+        //            //hoofdpagina: //https://data.binance.vision/?prefix=data/spot/daily/klines/ACABUSD/1m/
+        //            //downloadlink: https://data.binance.vision/data/spot/daily/klines/ACAUSDT/1m/ACAUSDT-1m-2022-12-02.zip                        
+        //            DateTime date = CandleTools.GetUnixDate(unix);
+        //            if (date == DateTime.Today)
+        //                break;
+        //            string name = symbol.Name + "-" + interval.Name + "-" + date.ToLocalTime().ToString("yyyy-MM-dd");
+        //            GlobalData.AddTextToLogTab("Downloading " + name);
 
-                    using (WebClient webClient = new())
-                    {
-                        webClient.Headers.Add("Accept: text/html, application/xhtml+xml, */*");
-                        webClient.Headers.Add("User-Agent: Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; WOW64; Trident/5.0)");
+        //            using (WebClient webClient = new())
+        //            {
+        //                webClient.Headers.Add("Accept: text/html, application/xhtml+xml, */*");
+        //                webClient.Headers.Add("User-Agent: Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; WOW64; Trident/5.0)");
 
-                        string href = string.Format("https://data.binance.vision/data/spot/daily/klines/{0}/{1}/{2}.zip", symbol.Name, interval.Name, name);
-                        GlobalData.AddTextToLogTab("Downloading " + href);
-                        webClient.DownloadFile(new Uri(href), downLoadFolder + name + ".zip");
-                    }
-                    //ZipFile.CreateFromDirectory("source", "destination.zip", CompressionLevel.Optimal, false);
+        //                string href = string.Format("https://data.binance.vision/data/spot/daily/klines/{0}/{1}/{2}.zip", symbol.Name, interval.Name, name);
+        //                GlobalData.AddTextToLogTab("Downloading " + href);
+        //                webClient.DownloadFile(new Uri(href), downLoadFolder + name + ".zip");
+        //            }
+        //            //ZipFile.CreateFromDirectory("source", "destination.zip", CompressionLevel.Optimal, false);
 
-                    // Extract the directory we just created.
-                    // ... Store the results in a new folder called "destination".
-                    // ... The new folder must not exist.
-                    System.IO.File.Delete(downLoadFolder + name + ".csv");
-                    ZipFile.ExtractToDirectory(downLoadFolder + name + ".zip", downLoadFolder);
+        //            // Extract the directory we just created.
+        //            // ... Store the results in a new folder called "destination".
+        //            // ... The new folder must not exist.
+        //            System.IO.File.Delete(downLoadFolder + name + ".csv");
+        //            ZipFile.ExtractToDirectory(downLoadFolder + name + ".zip", downLoadFolder);
 
 
-                    //dat is iets met (zie https://github.com/binance/binance-public-data/#trades-1)
-                    //    opentime,open,high,low,close,volume,closetime,Quote asset volume,Number of trades,Taker buy base asset volume, Taker buy quote asset volume, Ignore
-                    //    aantal?
-                    //    maar dan?
-                    //    quaote volume
-                    //    base volume?
+        //            //dat is iets met (zie https://github.com/binance/binance-public-data/#trades-1)
+        //            //    opentime,open,high,low,close,volume,closetime,Quote asset volume,Number of trades,Taker buy base asset volume, Taker buy quote asset volume, Ignore
+        //            //    aantal?
+        //            //    maar dan?
+        //            //    quaote volume
+        //            //    base volume?
 
-                    using CryptoDatabase databaseThread = new();
-                    databaseThread.Connection.Open();
-                    List<CryptoCandle> candleCache = new();
+        //            using CryptoDatabase databaseThread = new();
+        //            databaseThread.Connection.Open();
+        //            List<CryptoCandle> candleCache = new();
 
-                    using (var transaction = databaseThread.Connection.BeginTransaction())
-                    {
-                        using (StreamReader reader = System.IO.File.OpenText(downLoadFolder + name + ".csv"))
-                        {
-                            string line;
-                            while ((line = reader.ReadLine()) != null)
-                            {
-                                line = line.Trim();
-                                if (line != "")
-                                {
-                                    CryptoCandle candleTmp = new();
-                                    string[] items = line.Split(',');
-                                    candleTmp.OpenTime = long.Parse(items[0]) / 1000;
-                                    candleTmp.Open = decimal.Parse(items[1]);
-                                    candleTmp.High = decimal.Parse(items[2]);
-                                    candleTmp.Low = decimal.Parse(items[3]);
-                                    candleTmp.Close = decimal.Parse(items[4]);
-                                    candleTmp.Volume = decimal.Parse(items[7]);
-                                    //6=closetime
-                                    //7=Quote asset volume (wellicht deze?)
-                                    //SaveCandle?
+        //            using (var transaction = databaseThread.Connection.BeginTransaction())
+        //            {
+        //                using (StreamReader reader = System.IO.File.OpenText(downLoadFolder + name + ".csv"))
+        //                {
+        //                    string line;
+        //                    while ((line = reader.ReadLine()) != null)
+        //                    {
+        //                        line = line.Trim();
+        //                        if (line != "")
+        //                        {
+        //                            CryptoCandle candleTmp = new();
+        //                            string[] items = line.Split(',');
+        //                            candleTmp.OpenTime = long.Parse(items[0]) / 1000;
+        //                            candleTmp.Open = decimal.Parse(items[1]);
+        //                            candleTmp.High = decimal.Parse(items[2]);
+        //                            candleTmp.Low = decimal.Parse(items[3]);
+        //                            candleTmp.Close = decimal.Parse(items[4]);
+        //                            candleTmp.Volume = decimal.Parse(items[7]);
+        //                            //6=closetime
+        //                            //7=Quote asset volume (wellicht deze?)
+        //                            //SaveCandle?
 
-                                    // Vul het aan met andere attributen
-                                    CryptoCandle candle = CandleTools.HandleFinalCandleData(symbol, interval, candleTmp.Date,
-                                        candleTmp.Open, candleTmp.High, candleTmp.Low, candleTmp.Close, candleTmp.Volume, false);
-                                    candleCache.Add(candle);
-                                }
+        //                            // Vul het aan met andere attributen
+        //                            CryptoCandle candle = CandleTools.HandleFinalCandleData(symbol, interval, candleTmp.Date,
+        //                                candleTmp.Open, candleTmp.High, candleTmp.Low, candleTmp.Close, candleTmp.Volume, false);
+        //                            candleCache.Add(candle);
+        //                        }
 
-                                if (candleCache.Count > 500)
-                                {
-                                    // dit is nog voor mssql zie ik..
-                                    databaseThread.BulkInsertCandles(candleCache, transaction);
-                                    candleCache.Clear();
-                                }
-                                //static public void BulkInsertCandles(this SqlConnection MyConnection, List<CryptoCandle> cache, SqlTransaction transaction)
-                            }
-                        }
-                        System.IO.File.Delete(downLoadFolder + name + ".csv");
-                        System.IO.File.Delete(downLoadFolder + name + ".zip");
+        //                        if (candleCache.Count > 500)
+        //                        {
+        //                            // dit is nog voor mssql zie ik..
+        //                            databaseThread.BulkInsertCandles(candleCache, transaction);
+        //                            candleCache.Clear();
+        //                        }
+        //                        //static public void BulkInsertCandles(this SqlConnection MyConnection, List<CryptoCandle> cache, SqlTransaction transaction)
+        //                    }
+        //                }
+        //                System.IO.File.Delete(downLoadFolder + name + ".csv");
+        //                System.IO.File.Delete(downLoadFolder + name + ".zip");
 
-                        if (candleCache.Any())
-                        {
-                            // dit is nog voor mssql zie ik..
-                            databaseThread.BulkInsertCandles(candleCache, transaction);
-                            candleCache.Clear();
-                        }
+        //                if (candleCache.Any())
+        //                {
+        //                    // dit is nog voor mssql zie ik..
+        //                    databaseThread.BulkInsertCandles(candleCache, transaction);
+        //                    candleCache.Clear();
+        //                }
 
-                        transaction.Commit();
-                    }
+        //                transaction.Commit();
+        //            }
 
-                }
-            }
-        }
+        //        }
+        //    }
+        //}
     }
 
     public static bool AcceptSymbol(CryptoSymbol symbol, CryptoInterval interval, CryptoBackConfig config)
@@ -2177,94 +2184,94 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
 
     private async Task BackTest(string algorithm, CryptoSymbol symbol, CryptoInterval interval, CryptoBackConfig config, string baseFolder)
     {
-        GlobalData.AddTextToLogTab(string.Format("{0} {1} start---", DateTime.Now.ToLocalTime(), symbol.Name));
+        //GlobalData.AddTextToLogTab(string.Format("{0} {1} start---", DateTime.Now.ToLocalTime(), symbol.Name));
 
-        CryptoInterval interval1m = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m).Interval;
+        //CryptoInterval interval1m = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m).Interval;
 
-        // De symbol candles inlezen en controleren
-        Semaphore.Wait();
-        try
-        {
-            // Altijd 1m inlezen (de basis voor de emulator, blij wordt ik er niet van, maar zo werkt het systeem nu eenmaal, voila!)
-            LoadSymbolCandles(symbol, interval1m, config.DateStart, config.DateEinde);
+        //// De symbol candles inlezen en controleren
+        //Semaphore.Wait();
+        //try
+        //{
+        //    // Altijd 1m inlezen (de basis voor de emulator, blij wordt ik er niet van, maar zo werkt het systeem nu eenmaal, voila!)
+        //    LoadSymbolCandles(symbol, interval1m, config.DateStart, config.DateEinde);
 
-            SortedList<long, CryptoCandle> candles = LoadSymbolCandles(symbol, interval, config.DateStart, config.DateEinde);
-            if (candles.Count == 0)
-            {
-                GlobalData.AddTextToLogTab(string.Format("{0} {1} no candles", DateTime.Now.ToLocalTime(), symbol.Name));
-                return;
-            }
+        //    SortedList<long, CryptoCandle> candles = LoadSymbolCandles(symbol, interval, config.DateStart, config.DateEinde);
+        //    if (candles.Count == 0)
+        //    {
+        //        GlobalData.AddTextToLogTab(string.Format("{0} {1} no candles", DateTime.Now.ToLocalTime(), symbol.Name));
+        //        return;
+        //    }
 
-            CheckCandlesComplete(symbol, interval);
+        //    CheckCandlesComplete(symbol, interval);
 
-            // Extra - voor het bepalen van de 5m Flux indicatie
-            CryptoInterval interval5m = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval5m).Interval;
-            LoadSymbolCandles(symbol, interval5m, config.DateStart, config.DateEinde);
+        //    // Extra - voor het bepalen van de 5m Flux indicatie
+        //    CryptoInterval interval5m = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval5m).Interval;
+        //    LoadSymbolCandles(symbol, interval5m, config.DateStart, config.DateEinde);
 
-            // Extra - voor het bepalen van de 24 Effectieve Change
-            CryptoInterval interval15m = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval15m).Interval;
-            LoadSymbolCandles(symbol, interval15m, config.DateStart, config.DateEinde);
+        //    // Extra - voor het bepalen van de 24 Effectieve Change
+        //    CryptoInterval interval15m = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval15m).Interval;
+        //    LoadSymbolCandles(symbol, interval15m, config.DateStart, config.DateEinde);
 
-            // Extra - voor het bepalen of de munt te nieuw is
-            CryptoInterval interval1d = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1d).Interval;
-            LoadSymbolCandles(symbol, interval1d, config.DateStart.AddDays(-(GlobalData.Settings.Signal.SymbolMustExistsDays + 10)), config.DateEinde);
-        }
-        finally
-        {
-            Semaphore.Release();
-        }
-
-
-
-        // symbols met een lage Satoshi waardering (1 Satoshi = 1E-8) uitsluiten
-        // En munten waarvan de ticksize percentage te groot is (barcode charts)
-        if (!AcceptSymbol(symbol, interval, config))
-            return;
-
-
-        // cooldown..
-        symbol.LastTradeDate = null;
-
-        SignalCreateBase backTestAlgorithm = null;
-        BackTest.BackTest backTest = new(symbol, interval1m, interval, config);
-        foreach (AlgorithmDefinition def in TradingConfig.Trading[CryptoTradeSide.Long].Strategy)
-        {
-            if (algorithm.Equals(def.Name))
-            {
-                backTestAlgorithm = def.InstantiateAnalyzeLong(symbol, interval1m, null);
-                break;
-            }
-        }
-        if (backTestAlgorithm == null)
-        {
-            GlobalData.AddTextToLogTab("Algoritme niet gedefinieerd");
-            return;
-        }
-
-        await backTest.Execute(backTestAlgorithm, baseFolder);
-
-        if (config.ReleaseCandles)
-            backTest.ClearCandles();
+        //    // Extra - voor het bepalen of de munt te nieuw is
+        //    CryptoInterval interval1d = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1d).Interval;
+        //    LoadSymbolCandles(symbol, interval1d, config.DateStart.AddDays(-(GlobalData.Settings.Signal.SymbolMustExistsDays + 10)), config.DateEinde);
+        //}
+        //finally
+        //{
+        //    Semaphore.Release();
+        //}
 
 
 
-        // Omdat er meer threads bezig zijn moet de queue gelocked worden
-        Monitor.Enter(Log);
-        try
-        {
-            Results.Add(backTest.Results);
+        //// symbols met een lage Satoshi waardering (1 Satoshi = 1E-8) uitsluiten
+        //// En munten waarvan de ticksize percentage te groot is (barcode charts)
+        //if (!AcceptSymbol(symbol, interval, config))
+        //    return;
 
-            Log.AppendLine(backTest.Outcome);
-            GlobalData.AddTextToLogTab(DateTime.Now.ToLocalTime() + " " + backTest.Outcome);
 
-            // report
-            string s = Log.ToString();
-            System.IO.File.WriteAllText(baseFolder + "Overview-" + interval.Name + ".txt", s);
-        }
-        finally
-        {
-            Monitor.Exit(Log);
-        }
+        //// cooldown..
+        //symbol.LastTradeDate = null;
+
+        //SignalCreateBase backTestAlgorithm = null;
+        //BackTest.BackTest backTest = new(symbol, interval1m, interval, config);
+        //foreach (AlgorithmDefinition def in TradingConfig.Trading[CryptoTradeSide.Long].Strategy)
+        //{
+        //    if (algorithm.Equals(def.Name))
+        //    {
+        //        backTestAlgorithm = def.InstantiateAnalyzeLong(symbol, interval1m, null);
+        //        break;
+        //    }
+        //}
+        //if (backTestAlgorithm == null)
+        //{
+        //    GlobalData.AddTextToLogTab("Algoritme niet gedefinieerd");
+        //    return;
+        //}
+
+        //await backTest.Execute(backTestAlgorithm, baseFolder);
+
+        //if (config.ReleaseCandles)
+        //    backTest.ClearCandles();
+
+
+
+        //// Omdat er meer threads bezig zijn moet de queue gelocked worden
+        //Monitor.Enter(Log);
+        //try
+        //{
+        //    Results.Add(backTest.Results);
+
+        //    Log.AppendLine(backTest.Outcome);
+        //    GlobalData.AddTextToLogTab(DateTime.Now.ToLocalTime() + " " + backTest.Outcome);
+
+        //    // report
+        //    string s = Log.ToString();
+        //    System.IO.File.WriteAllText(baseFolder + "Overview-" + interval.Name + ".txt", s);
+        //}
+        //finally
+        //{
+        //    Monitor.Exit(Log);
+        //}
     }
 
 
