@@ -47,12 +47,13 @@
   </PropertyGroup>
   <PropertyGroup />
   <ItemGroup>
-    <Compile Remove="Signal\**" />
-    <EmbeddedResource Remove="Signal\**" />
-    <None Remove="Signal\**" />
+    <AdditionalFiles Remove="C:\Users\Marius\.nuget\packages\microsoft.dotnet.upgradeassistant.extensions.default.analyzers\0.4.421302\build\\WebTypeReplacements.typemap" />
   </ItemGroup>
   <ItemGroup>
-    <AdditionalFiles Remove="C:\Users\Marius\.nuget\packages\microsoft.dotnet.upgradeassistant.extensions.default.analyzers\0.4.421302\build\\WebTypeReplacements.typemap" />
+    <Compile Remove="Signal\SignalMacdLtLong.cs" />
+    <Compile Remove="Signal\SignalMacdLtShort.cs" />
+    <Compile Remove="Signal\SignalMacdTestLong.cs" />
+    <Compile Remove="Signal\SignalMacdTestShort .cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System.Speech" />
