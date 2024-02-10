@@ -405,6 +405,7 @@ public class ExcelPositionDump : ExcelBase
         WriteCell(sheet, row, column++, "Markt percentage");
         WriteCell(sheet, row, column++, "Geopend");
         WriteCell(sheet, row, column++, "Gesloten");
+        WriteCell(sheet, row, column++, "Status");
 
         row++;
         column = 0;
@@ -447,6 +448,9 @@ public class ExcelPositionDump : ExcelBase
             cell =  WriteCell(sheet, row, column++, Position.CloseTime.Value.ToLocalTime());
             cell.CellStyle = CellStyleDate;
         }
+        else WriteCell(sheet, row, column++, "");
+        
+        WriteCell(sheet, row, column++, Position.Status.ToString());
 
         AutoSize(sheet, 6);
     }
