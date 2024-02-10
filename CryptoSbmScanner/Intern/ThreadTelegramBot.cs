@@ -156,8 +156,8 @@ public class ThreadTelegramBotInstance
         {
             return trend switch
             {
-                CryptoTrendIndicator.Bullish => "bull",
-                CryptoTrendIndicator.Bearish => "bear",
+                CryptoTrendIndicator.Bullish => "bull@",
+                CryptoTrendIndicator.Bearish => "bear@",
                 _ => "?",
             };
         }
