@@ -13,6 +13,7 @@ public static class ScannerSession
 {
     // Om te voorkomen dat we de signalen 2x inlezen
     private static bool IsStarted { get; set; } = false;
+    private static bool HideDisconnectedMessage { get; set; } = false;
 
     // Er zit verschil in de threading aanpak tussen deze timers (wat is dat nu weer?)
 
@@ -245,14 +246,11 @@ public static class ScannerSession
 
     static private void ConnectionWasLostEvent_Tick(string text, bool extraLineFeed = false)
     {
-        // Onderdruk alle foutmeldingen totdat het hersteld is
-        if (GlobalData.ApplicationStatus != CryptoApplicationStatus.Initializing)
-        {
-            //GlobalData.AddTextToLogTab("Debug: ConnectionWasLostEvent!"); // niet nuttig
-
-            // anders krijgen we alleen maar fouten dat er geen candles zijn
-            GlobalData.ApplicationStatus = CryptoApplicationStatus.Initializing;
-        }
+        // Plan alvast een verversing omdat er een connection timeout was.
+        // Dit kan een aantal berekeningen onderbroken hebben
+        // (er komen een aantal reconnects, daarom circa 120 seconden)
+        if (!TimerGetExchangeInfoAndCandles.Enabled) // anders krijg je 100 van die dingen achter elkaar
+            TimerGetExchangeInfoAndCandles.InitTimerInterval(2 * 60);
     }
 
 
@@ -263,15 +261,13 @@ public static class ScannerSession
 
     static private void ConnectionWasRestoredEvent_Tick(string text, bool extraLineFeed = false)
     {
-        // Plan een verversing omdat er een connection timeout was.
+        // Pas de geplande verversing omdat er een connection timeout was (nu wat 
         // Dit kan een aantal berekeningen onderbroken hebben
         // (er komen een aantal reconnects, daarom circa 20 seconden)
-        if (!TimerGetExchangeInfoAndCandles.Enabled) // anders krijg je 100 van die dingen achter elkaar
-        {
-            //GlobalData.AddTextToLogTab("Debug: ConnectionWasRestoredEvent!"); niet nuttig
-            GlobalData.ApplicationStatus = CryptoApplicationStatus.Running;
-            TimerGetExchangeInfoAndCandles.InitTimerInterval(20);
-        }
+        if (TimerGetExchangeInfoAndCandles.Enabled && TimerGetExchangeInfoAndCandles.Interval == 2 * 60)
+            TimerGetExchangeInfoAndCandles.InitTimerInterval(30);
+        else if (!TimerGetExchangeInfoAndCandles.Enabled) // Anders krijg je diverse achter elkaar
+            TimerGetExchangeInfoAndCandles.InitTimerInterval(30);
     }
 
     static private void SetCandleTimerEnableHandler(bool value)
@@ -288,11 +284,12 @@ public static class ScannerSession
         // Ophalen van candle candles bijwerken
         TimerGetExchangeInfoAndCandles.InitTimerInterval(GlobalData.Settings.General.GetCandleInterval * 60);
 
+        // herstarten van ticker indien errors
         Task.Run(async () =>
         {
-            await ExchangeHelper.FetchSymbolsAsync(); // niet wachten tot deze klaar is
-            await ExchangeHelper.KLineTicker.CheckKlineTickers(); // herstarten van ticker indien errors
-            await ExchangeHelper.FetchCandlesAsync(); // niet wachten tot deze klaar is
+            await ExchangeHelper.FetchSymbolsAsync();
+            await ExchangeHelper.KLineTicker.CheckKlineTickers();
+            await ExchangeHelper.FetchCandlesAsync();
         });
         //_ = ExchangeHelper.KLineTicker.CheckKlineTickers(); // herstarten van ticker indien errors
         //_ = ExchangeHelper.FetchCandlesAsync(); // niet wachten tot deze klaar is
