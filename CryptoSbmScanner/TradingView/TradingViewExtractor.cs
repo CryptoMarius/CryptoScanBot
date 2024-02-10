@@ -110,10 +110,10 @@ public class TradingViewSymbolWebSocket(string tickerName)
         {
             await ClientWebSocket.SendAsync(data, WebSocketMessageType.Text, true, CancellationTokenSource.Token);
         }
-        catch (Exception e)
+        catch (Exception)
         {
-            GlobalData.AddTextToLogTab($@"Exception {e.Message}");
-            GlobalData.Logger.Error(e, "");
+            //GlobalData.AddTextToLogTab($@"Exception {e.Message}");
+            //GlobalData.Logger.Error(e, "");
         }
     }
 
@@ -139,10 +139,10 @@ public class TradingViewSymbolWebSocket(string tickerName)
             //request = ConstructRequest("set_data_quality", ["low"], []);
             //await SendData(request);
         }
-        catch (Exception e)
+        catch (Exception)
         {
-            GlobalData.AddTextToLogTab($@"Exception {e.Message}");
-            GlobalData.Logger.Error(e, "");
+            //GlobalData.AddTextToLogTab($@"Exception {e.Message}");
+            //GlobalData.Logger.Error(e, "");
         }
     }
 
@@ -173,10 +173,10 @@ public class TradingViewSymbolWebSocket(string tickerName)
 
             return ClientWebSocket.State != WebSocketState.CloseReceived;
         }
-        catch (Exception e)
+        catch (Exception)
         {
-            GlobalData.AddTextToLogTab($@"Exception {e.Message}");
-            GlobalData.Logger.Error(e, "");
+            //GlobalData.AddTextToLogTab($@"Exception {e.Message}");
+            //GlobalData.Logger.Error(e, "");
             return false;
         }
     }
@@ -221,9 +221,9 @@ public class TradingViewSymbolWebSocket(string tickerName)
             }
             return message;
         }
-        catch (Exception e)
+        catch (Exception)
         {
-            GlobalData.Logger.Error(e, "");
+            //GlobalData.Logger.Error(e, "");
             return "";
         }
     }
