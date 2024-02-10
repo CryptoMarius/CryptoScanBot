@@ -98,15 +98,15 @@ public class Api : ExchangeBase
 
 
     // Converteer de orderstatus van Exchange naar "intern"
-    public static CryptoOrderStatus LocalOrderStatus(OrderStatus orderStatus)
+    public static CryptoOrderStatus LocalOrderStatus(Bybit.Net.Enums.V5.OrderStatus orderStatus)
     {
         CryptoOrderStatus localOrderStatus = orderStatus switch
         {
-            OrderStatus.New => CryptoOrderStatus.New,
-            OrderStatus.Filled => CryptoOrderStatus.Filled,
-            OrderStatus.PartiallyFilled => CryptoOrderStatus.PartiallyFilled,
-            //OrderStatus.Expired => CryptoOrderStatus.Expired,
-            OrderStatus.Canceled => CryptoOrderStatus.Canceled,
+            Bybit.Net.Enums.V5.OrderStatus.New => CryptoOrderStatus.New,
+            Bybit.Net.Enums.V5.OrderStatus.Filled => CryptoOrderStatus.Filled,
+            Bybit.Net.Enums.V5.OrderStatus.PartiallyFilled => CryptoOrderStatus.PartiallyFilled,
+            //Bybit.Net.Enums.V5.OrderStatus.Expired => CryptoOrderStatus.Expired,
+            Bybit.Net.Enums.V5.OrderStatus.Cancelled => CryptoOrderStatus.Canceled,
             _ => throw new Exception("Niet ondersteunde orderstatus"),
         };
 
@@ -427,7 +427,7 @@ public class Api : ExchangeBase
     }
 
 
-    static public void PickupTrade(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoTrade trade, BybitUsdPerpetualOrderUpdate item)
+    static public void PickupTrade(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoTrade trade, Bybit.Net.Objects.Models.V5.BybitOrderUpdate item)
     {
         trade.TradeAccount = tradeAccount;
         trade.TradeAccountId = tradeAccount.Id;
@@ -439,25 +439,26 @@ public class Api : ExchangeBase
         //TODO: Uitzoeken!!!!
         // Dit zijn updates op orders en we willen eigenlijk de trades!
         //trade.TradeId = item.Id; //Ehhhh????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
-        trade.OrderId = item.Id;
+        trade.OrderId = item.OrderId;
         //trade.OrderListId = item.OrderListId;
 
-        trade.Price = item.Price;
+        trade.Price = item.Price.Value;
         trade.Quantity = item.Quantity;
-        trade.QuoteQuantity = item.Price * item.Quantity;
+        trade.QuoteQuantity = item.Price.Value * item.Quantity;
         // enig debug werk, soms wordt het niet ingevuld!
         //if (item.QuoteQuantity == 0)
         //    GlobalData.AddTextToLogTab(string.Format("{0} PickupTrade#2stream QuoteQuantity is 0 for order TradeId={1}!", symbol.Name, trade.TradeId));
 
         // Verwarrend want deze moet toch altijd gevuld zijn?
-        if (item.UpdateTime.HasValue)
-            trade.TradeTime = item.UpdateTime.Value; // Timestamp;
-        else
-            trade.TradeTime = item.Timestamp;
+        //if (item.UpdateTime)
+        //    trade.TradeTime = item.UpdateTime.Value; // Timestamp;
+        //else
+        //    trade.TradeTime = item.Timestamp;
+        trade.TradeTime = item.UpdateTime;
 
         trade.Side = LocalOrderSide(item.Side);
 
-        trade.Commission = item.Fee;
+        trade.Commission = item.ExecutedFee.Value;
         trade.CommissionAsset = symbol.Quote;
     }
 

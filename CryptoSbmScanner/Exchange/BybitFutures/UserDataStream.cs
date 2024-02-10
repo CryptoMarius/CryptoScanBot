@@ -2,10 +2,8 @@
 using System.Text.Json;
 
 using Bybit.Net.Clients;
-using Bybit.Net.Enums;
-using Bybit.Net.Objects.Models.Socket;
+using Bybit.Net.Enums.V5;
 
-using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Sockets;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
@@ -36,8 +34,10 @@ public class UserDataStream
     {
         socketClient = new();
 
-        var subscriptionResult = await socketClient.UsdPerpetualApi.SubscribeToOrderUpdatesAsync(
-            OnOrderUpdate).ConfigureAwait(false);
+        //var subscriptionResult = await socketClient.UsdPerpetualApi.SubscribeToOrderUpdatesAsync(
+        //    OnOrderUpdate).ConfigureAwait(false);
+
+        var subscriptionResult = await socketClient.V5PrivateApi.SubscribeToOrderUpdatesAsync(OnOrderUpdate).ConfigureAwait(false);
 
         // Subscribe to network-related stuff
         if (subscriptionResult.Success)
@@ -58,7 +58,7 @@ public class UserDataStream
     }
 
 
-    private void OnOrderUpdate(DataEvent<IEnumerable<BybitUsdPerpetualOrderUpdate>> dataList)
+    private void OnOrderUpdate(DataEvent<IEnumerable<Bybit.Net.Objects.Models.V5.BybitOrderUpdate>> dataList)
     {
         try
         {
@@ -66,13 +66,13 @@ public class UserDataStream
             {
                 // We krijgen duplicaat json berichten binnen (even een quick & dirty fix)
                 string text = JsonSerializer.Serialize(data, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = false }).Trim();
-                GlobalData.AddTextToLogTab(string.Format("{0} OnOrderUpdate#1 TradeId={1} {2} quantity={3} price={4} text={5}", data.Symbol, data.Id, data.Status.ToString(), data.Quantity, data.Price, text));
+                GlobalData.AddTextToLogTab(string.Format("{0} OnOrderUpdate#1 TradeId={1} {2} quantity={3} price={4} text={5}", data.Symbol, data.OrderId, data.Status.ToString(), data.Quantity, data.Price, text));
 
 
                 // We zijn slechts geinteresseerd in 3 statussen (de andere zijn niet interessant voor de afhandeling van de order)
                 if (data.Status == OrderStatus.Filled ||
                     data.Status == OrderStatus.PartiallyFilled ||
-                    data.Status == OrderStatus.Canceled)
+                    data.Status == OrderStatus.Cancelled)
                 {
                     // Nieuwe thread opstarten en de data meegeven zodat er een sell wordt gedaan of administratie wordt bijgewerkt.
                     // Het triggeren van een stoploss of een DCA zal op een andere manier gedaan moeten worden (maar hoe en waar?)
@@ -87,7 +87,7 @@ public class UserDataStream
 
                             GlobalData.ThreadMonitorOrder.AddToQueue((
                                 symbol,
-                                Api.LocalOrderType(data.Type),
+                                Api.LocalOrderType(data.OrderType),
                                 Api.LocalOrderSide(data.Side),
                                 Api.LocalOrderStatus((OrderStatus)data.Status),
                                 trade));
