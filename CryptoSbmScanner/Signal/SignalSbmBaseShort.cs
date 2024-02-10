@@ -152,11 +152,11 @@ public class SignalSbmBaseShort(CryptoSymbol symbol, CryptoInterval interval, Cr
                 if (last.CandleData.MacdHistogram <= 0)
                 {
                     // Hoe positief wil je het hebben?
-                    ExtraText = string.Format("De MACD[{0:N0}].Hist is niet lichtrood {1:N8} {2:N8} (last)", iterator, prev.CandleData.MacdHistogram, last.CandleData.MacdHistogram);
+                    //ExtraText = string.Format("De MACD[{0:N0}].Hist is niet lichtrood {1:N8} {2:N8} (last)", iterator, prev.CandleData.MacdHistogram, last.CandleData.MacdHistogram);
                 }
                 else
                 {
-                    ExtraText = string.Format("De MACD[{0:N0}].Hist is niet lichtgroen {1:N8} {2:N8} (last)", iterator, prev.CandleData.MacdHistogram, last.CandleData.MacdHistogram);
+                    //ExtraText = string.Format("De MACD[{0:N0}].Hist is niet lichtgroen {1:N8} {2:N8} (last)", iterator, prev.CandleData.MacdHistogram, last.CandleData.MacdHistogram);
                     return false;
                 }
             }

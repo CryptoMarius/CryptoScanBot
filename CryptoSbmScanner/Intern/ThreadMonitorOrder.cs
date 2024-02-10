@@ -33,7 +33,7 @@ public class ThreadMonitorOrder
     public async Task ExecuteAsync()
     {
         // Een aparte queue die orders afhandeld (met als achterliggende reden de juiste afhandel volgorde)
-        foreach ((CryptoSymbol symbol, CryptoOrderType orderType, CryptoOrderSide orderSide, CryptoOrderStatus orderStatus, CryptoTrade trade) data in Queue.GetConsumingEnumerable(cancellationToken.Token))
+        foreach ((CryptoSymbol symbol, CryptoOrderType orderType, CryptoOrderSide orderSide, CryptoOrderStatus orderStatus, CryptoTrade trade) in Queue.GetConsumingEnumerable(cancellationToken.Token))
         {
             try
             {
@@ -44,12 +44,12 @@ public class ThreadMonitorOrder
                 //string text = JsonSerializer.Serialize(data, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = false }).Trim();
                 //GlobalData.AddTextToLogTab(string.Format("{0} ThreadMonitorOrder#1 TradeId={1} {2} quantity={3} price={4} text={5}", data.symbol, 
                 //    data.trade.OrderId, data.trade.Side, data.trade.Quantity, data.trade.Price, text));
-                await TradeHandler.HandleTradeAsync(data.symbol, data.orderType, data.orderSide, data.orderStatus, data.trade);
+                await TradeHandler.HandleTradeAsync(symbol, orderType, orderSide, orderStatus, trade);
             }
             catch (Exception error)
             {
                 GlobalData.Logger.Error(error, "");
-                GlobalData.AddTextToLogTab($"{data.symbol.Name} ERROR order handler thread {error.Message}");
+                GlobalData.AddTextToLogTab($"{symbol.Name} ERROR order handler thread {error.Message}");
             }
         }
         GlobalData.AddTextToLogTab("\r\n" + "\r\n MONITOR order THREAD EXIT");

@@ -85,7 +85,7 @@ public class PositionMonitor : IDisposable
         {
             step = null;
             percentage = 0;
-            reaction = $"Geen bijkopen nodig vanwege MAX DCA count (partcount={position.PartCount} dcaCount=GlobalData.Settings.Trading.DcaList.Count)";
+            //reaction = $"Geen bijkopen nodig vanwege MAX DCA count (partcount={position.PartCount} dcaCount=GlobalData.Settings.Trading.DcaList.Count)";
             reaction = ""; // ignore
             return false;
         }
