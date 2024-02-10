@@ -612,7 +612,7 @@ public partial class TestForm : Form
         {
             ListViewItem item = listView1.SelectedItems[0];
             CryptoSignal signal = (CryptoSignal)item.Tag;
-            string[] altradyInterval = new[] { "1", "2", "3", "5", "10", "15", "30", "60", "120", "240", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1" };
+            string[] altradyInterval = ["1", "2", "3", "5", "10", "15", "30", "60", "120", "240", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1"];
             string href = string.Format("https://app.altrady.com/d/BINA_{0}_{1}:{2}", signal.Symbol.Quote, signal.Symbol.Base, altradyInterval[(int)signal.Interval.IntervalPeriod]);
             System.Diagnostics.Process.Start(href);
         }
@@ -738,7 +738,7 @@ public partial class TestForm : Form
         //Transporteer de candles naar de Stock list
         //Jammer dat we met tussen-array's moeten werken
         //int i = 1;
-        List<CryptoCandle> history = new();
+        List<CryptoCandle> history = [];
         Monitor.Enter(candleSticks);
         try
         {
@@ -920,7 +920,7 @@ public partial class TestForm : Form
         GlobalData.AddTextToLogTab("");
         GlobalData.AddTextToLogTab("Lijstjes");
         GlobalData.AddTextToLogTab("");
-        List<VolatiteitStat> a = new();
+        List<VolatiteitStat> a = [];
 
         if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
         {
@@ -1624,7 +1624,7 @@ public partial class TestForm : Form
                                           //SolidBrush solidBrush;
                     Rectangle rect1 = new(0, y, intWidth, intHeight);
                     Font drawFont1 = new("Microsoft Sans Serif", this.Font.Size);
-                    CryptoIntervalPeriod[] list = { CryptoIntervalPeriod.interval1h, CryptoIntervalPeriod.interval4h, CryptoIntervalPeriod.interval1d };
+                    CryptoIntervalPeriod[] list = [CryptoIntervalPeriod.interval1h, CryptoIntervalPeriod.interval4h, CryptoIntervalPeriod.interval1d];
 
                     foreach (CryptoIntervalPeriod intervalPeriod in list)
                     {
@@ -2399,7 +2399,7 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
                         }
                     }
 
-                    List<string> quoteList = new();
+                    List<string> quoteList = [];
                     Queue<CryptoSymbol> queue = new();
                     string filter = "," + config.SymbolFilter + ",";
                     foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
