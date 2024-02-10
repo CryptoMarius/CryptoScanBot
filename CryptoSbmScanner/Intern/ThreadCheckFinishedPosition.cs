@@ -42,6 +42,9 @@ public class ThreadCheckFinishedPosition
 
     public async Task ExecuteAsync()
     {
+        using CryptoDatabase database = new();
+        database.Open();
+
         // Een aparte queue die orders afhandeld (met als achterliggende reden de juiste afhandel volgorde)
         foreach (CryptoPosition position in Queue.GetConsumingEnumerable(cancellationToken.Token))
         {
@@ -56,12 +59,8 @@ public class ThreadCheckFinishedPosition
                 // Controleer de openstaande orders, zijn ze ondertussen gevuld
                 // Haal de trades van deze positie op vanaf de 1e order
                 // TODO - Hoe doen we dit met papertrading (er is niets geregeld!)
-                using CryptoDatabase database = new();
-                database.Open();
-
                 await TradeTools.LoadTradesfromDatabaseAndExchange(database, position, true);
                 TradeTools.CalculatePositionResultsViaTrades(database, position, false);
-
 
                 CryptoOrderSide entryOrderSide = position.GetEntryOrderSide();
                 if (position.Status == CryptoPositionStatus.Ready)
@@ -108,8 +107,8 @@ public class ThreadCheckFinishedPosition
                         }
                     }
                 }
-                
-                
+
+
                 //// Als de positie gesloten is, maar er bij nader inzien toch extra geinvesteerd is dan weer openzetten
                 //if (position.Status == CryptoPositionStatus.Ready && position.Quantity != 0 && position.Invested != 0)
                 //{
@@ -125,7 +124,6 @@ public class ThreadCheckFinishedPosition
                 //    // aan het driften was, dat geeft dan op een van de api calls een foutmelding waardoor dingen fout
                 //    // gaan.
                 //}
-
 
             }
             catch (Exception error)
