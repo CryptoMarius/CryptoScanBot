@@ -40,9 +40,6 @@ public class SignalSlopeSma20TurningPositive : SignalCreateBase
         if (!GetPrevCandle(CandleLast, out CryptoCandle prevCandle))
             return false;
 
-        if (!IndicatorsOkay(prevCandle))
-            return false;
-
         if (prevCandle.CandleData.SlopeSma50 > 0)
             return false;
 
@@ -53,8 +50,7 @@ public class SignalSlopeSma20TurningPositive : SignalCreateBase
         }
 
         // Is er een mogelijke LL in de voorgaande 60 candles?
-        DateTime boundary = CandleLast.Date.AddSeconds(- Interval.Duration * 60);
-        if (!GlobalData.IsStobSignalAvailableInTheLast(CryptoTradeSide.Long, boundary))
+        if (IsStobSignalAvailableInTheLast(Symbol, SignalSide, CandleLast.Date.AddMinutes(-5 * Interval.Duration)) == null)
         {
             ExtraText = "Geen voorgaande STOB of SBM";
             return false;

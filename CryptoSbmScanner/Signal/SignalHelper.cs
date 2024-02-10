@@ -28,10 +28,10 @@ public class AlgorithmDefinition
 public static class SignalHelper
 {
     /// Een lijst met alle mogelijke strategieën (en attributen)
-    static public readonly List<AlgorithmDefinition> AlgorithmDefinitionList = new();
+    static public readonly List<AlgorithmDefinition> AlgorithmDefinitionList = [];
 
     // Alle beschikbare strategieën, nu geindexeerd
-    static public readonly SortedList<CryptoSignalStrategy, AlgorithmDefinition> AlgorithmDefinitionIndex = new();
+    static public readonly SortedList<CryptoSignalStrategy, AlgorithmDefinition> AlgorithmDefinitionIndex = [];
 
 
     static SignalHelper()
@@ -125,30 +125,6 @@ public static class SignalHelper
         //    AnalyzeLongType = typeof(SignalPriceCrossedSma50),
         //});
 
-        //AlgorithmDefinitionList.Add(new AlgorithmDefinition()
-        //{
-        //    Name = "sma 50 slope",
-        //    Strategy = CryptoSignalStrategy.SlopeSma50,
-        //    AnalyzeLongType = typeof(SignalSlopeSma50TurningPositive),
-        //    AnalyzeShortType = typeof(SignalSlopeSma50TurningNegative),
-        //});
-
-
-        //AlgorithmDefinitionList.Add(new AlgorithmDefinition()
-        //{
-        //    Name = "ema 50 slope",
-        //    Strategy = CryptoSignalStrategy.SlopeEma50,
-        //    AnalyzeLongType = typeof(SignalSlopeEma50TurningPositive),
-        //    AnalyzeShortType = typeof(SignalSlopeEma50TurningNegative),
-        //});
-
-
-        //AlgorithmDefinitionList.Add(new AlgorithmDefinition()
-        //{
-        //    Name = "ema 20 slope",
-        //    Strategy = CryptoSignalStrategy.SlopeEma20,
-        //    AnalyzeLongType = typeof(SignalSlopeEma20TurningPositive),
-        //});
 
         //AlgorithmDefinitionList.Add(new AlgorithmDefinition()
         //{
@@ -174,26 +150,32 @@ public static class SignalHelper
         });
 
 
-        // https://www.tradingview.com/script/0F1sNM49-WGHBM/
-        // WGHBM - Momentum indicator that shows arrows when the Stochastic and the RSI are at the same time in the oversold or overbought area.
+#endif
+
         AlgorithmDefinitionList.Add(new AlgorithmDefinition()
         {
-            Name = "WGHBM",
-            Strategy = CryptoSignalStrategy.Wghbm,
-            AnalyzeLongType = typeof(SignalWghbmLong),
-            AnalyzeShortType = typeof(SignalWghbmShort),
+            Name = "ema 20 slope",
+            Strategy = CryptoSignalStrategy.SlopeEma20,
+            AnalyzeLongType = typeof(SignalSlopeEma20TurningPositive),
         });
 
-        
-#endif
-        
         AlgorithmDefinitionList.Add(new AlgorithmDefinition()
         {
-            Name = "MacdLt",
-            Strategy = CryptoSignalStrategy.MacdLt,
-            AnalyzeLongType = typeof(SignalMacdLtLong),
-            AnalyzeShortType = typeof(SignalMacdLtShort),
+            Name = "ema 50 slope",
+            Strategy = CryptoSignalStrategy.SlopeEma50,
+            AnalyzeLongType = typeof(SignalSlopeEma50TurningPositive),
+            AnalyzeShortType = typeof(SignalSlopeEma50TurningNegative),
         });
+
+
+        AlgorithmDefinitionList.Add(new AlgorithmDefinition()
+        {
+            Name = "sma 50 slope",
+            Strategy = CryptoSignalStrategy.SlopeSma50,
+            AnalyzeLongType = typeof(SignalSlopeSma50TurningPositive),
+            AnalyzeShortType = typeof(SignalSlopeSma50TurningNegative),
+        });
+
 
         // En de lijst eenmalig indexeren
         AlgorithmDefinitionIndex.Clear();
@@ -218,6 +200,6 @@ public static class SignalHelper
     {
         if (AlgorithmDefinitionIndex.TryGetValue(strategy, out AlgorithmDefinition definition))
             return definition.Name;
-        return "";
+        return strategy.ToString();
     }
 }

@@ -14,17 +14,17 @@ public class CandleIndicatorData
     public double? Sma50 { get; set; }
     //public double? Sma100 { get; set; }
     public double? Sma200 { get; set; }
-    //public double? SlopeSma20 { get; set; }
-    //public double? SlopeSma50 { get; set; }
+    public double? SlopeSma20 { get; set; }
+    public double? SlopeSma50 { get; set; }
 
     // Exponential Moving Average
     //public double? Ema8 { get; set; }
-    //public double? Ema20 { get; set; }
-    //public double? Ema50 { get; set; }
+    public double? Ema20 { get; set; }
+    public double? Ema50 { get; set; }
     //public double? Ema100 { get; set; }
-    //public double? Ema200 { get; set; }
-    //public double? SlopeEma20 { get; set; }
-    //public double? SlopeEma50 { get; set; }
+    public double? Ema200 { get; set; }
+    public double? SlopeEma20 { get; set; }
+    public double? SlopeEma50 { get; set; }
 
     public double? Rsi { get; set; }
     //public double? SlopeRsi { get; set; }
@@ -36,7 +36,7 @@ public class CandleIndicatorData
 
     //public double? MacdLtValue { get; set; }
     //public double? MacdLtSignal { get; set; }
-    public double? MacdLtHistogram { get; set; } // kan ook calculated worden (signal - value of andersom)
+    public double? MacdTestHistogram { get; set; } // kan ook calculated worden (signal - value of andersom)
     //public double? MacdLtHistogram2 { get { return MacdLtSignal - MacdLtValue; } }
 
     /// <summary>
@@ -82,9 +82,16 @@ public class CandleIndicatorData
         }
 
 
+        // https://trendspider.com/learning-center/linear-regression-slope-a-comprehensive-guide-for-traders/
+        //Calculation and Interpretation of the LRS
+        //The Linear Regression Slope is calculated using the following formula:
+        //Slope = (N * Σ(xy) - Σx * Σy) / (N * Σ(x ^ 2) - (Σx) ^ 2)
+        //Where x represents the periods, y represents the asset’s closing prices, and N is the number of periods in the linear regression analysis.
+
+
         // Een kleine selectie van candles overnemen voor het uitrekenen van de indicators
         // De firstCandleOpenTime is de eerste candle die we in de selectie moeten zetten.
-        List<CryptoCandle> candlesForHistory = new();
+        List<CryptoCandle> candlesForHistory = [];
 
 
         //Monitor.Enter(symbol.CandleList);
@@ -153,7 +160,7 @@ public class CandleIndicatorData
         if (candlesForHistory.Count < maxCandles)
         {
             errorstr = $"{symbol.Name} Not enough candles available for interval {interval.Name} count={candlesForHistory.Count} requested={maxCandles}";
-            if (candlesForHistory.Any())
+            if (candlesForHistory.Count != 0)
             {
                 CryptoCandle x = candlesForHistory.Last();
                 errorstr += " last in history = " + x.DateLocal.ToString();
@@ -221,20 +228,20 @@ public class CandleIndicatorData
         //List<TemaResult> temaList = (List<TemaResult>)Indicator.GetTema(history, 5);
 
         //List<EmaResult> emaList8 = (List<EmaResult>)history.GetEma(8);
-        //List<EmaResult> emaList20 = (List<EmaResult>)history.GetEma(20);
-        //List<EmaResult> emaList50 = (List<EmaResult>)history.GetEma(50);
+        List<EmaResult> emaList20 = (List<EmaResult>)history.GetEma(20);
+        List<EmaResult> emaList50 = (List<EmaResult>)history.GetEma(50);
         //List<EmaResult> emaList100 = (List<EmaResult>)history.GetEma(100);
-        //List<EmaResult> emaList200 = (List<EmaResult>)history.GetEma(200);
-        //List<SlopeResult> slopeEma20List = (List<SlopeResult>)emaList20.GetSlope(3);
-        //List<SlopeResult> slopeEma50List = (List<SlopeResult>)emaList50.GetSlope(3);
+        List<EmaResult> emaList200 = (List<EmaResult>)history.GetEma(200);
+        List<SlopeResult> slopeEma20List = (List<SlopeResult>)emaList20.GetSlope(3);
+        List<SlopeResult> slopeEma50List = (List<SlopeResult>)emaList50.GetSlope(3);
 
         //List<SmaResult> smaList8 = (List<SmaResult>)Indicator.GetSma(history, 8);
         List<SmaResult> smaList20 = (List<SmaResult>)Indicator.GetSma(history, 20);
         List<SmaResult> smaList50 = (List<SmaResult>)history.GetSma(50);
         //List<SmaResult> smaList100 = (List<SmaResult>)Indicator.GetSma(history, 100);
         List<SmaResult> smaList200 = (List<SmaResult>)history.GetSma(200);
-        //List<SlopeResult> slopeSma20List = (List<SlopeResult>)smaList20.GetSlope(3);
-        //List<SlopeResult> slopeSma50List = (List<SlopeResult>)smaList50.GetSlope(3);
+        List<SlopeResult> slopeSma20List = (List<SlopeResult>)smaList20.GetSlope(3);
+        List<SlopeResult> slopeSma50List = (List<SlopeResult>)smaList50.GetSlope(3);
 
         // Berekend vanuit de EMA 20 en de upper en lowerband ontstaat uit 2x de ATR
         List<KeltnerResult> keltnerList = (List<KeltnerResult>)Indicator.GetKeltner(history, 20, 1);
@@ -305,11 +312,11 @@ public class CandleIndicatorData
                 //// EMA's
                 ////candleData.Ema8 = emaList8[index].Ema;
                 //candleData.Ema20 = emaList20[index].Ema;
-                //candleData.Ema50 = emaList50[index].Ema;
+                candleData.Ema50 = emaList50[index].Ema;
                 ////candleData.Ema100 = emaList100[index].Ema;
-                //candleData.Ema200 = emaList200[index].Ema;
-                //candleData.SlopeEma20 = slopeEma20List[index].Slope;
-                //candleData.SlopeEma50 = slopeEma50List[index].Slope;
+                candleData.Ema200 = emaList200[index].Ema;
+                candleData.SlopeEma20 = slopeEma20List[index].Slope;
+                candleData.SlopeEma50 = slopeEma50List[index].Slope;
 
                 //candleData.Tema = temaList[index].Tema;
 
@@ -319,8 +326,8 @@ public class CandleIndicatorData
                 candleData.Sma50 = smaList50[index].Sma;
                 //candleData.Sma100 = smaList100[index].Sma;
                 candleData.Sma200 = smaList200[index].Sma;
-                //candleData.SlopeSma20 = slopeSma20List[index].Slope;
-                //candleData.SlopeSma50 = slopeSma50List[index].Slope;
+                candleData.SlopeSma20 = slopeSma20List[index].Slope;
+                candleData.SlopeSma50 = slopeSma50List[index].Slope;
 
                 candleData.Rsi = rsiList[index].Rsi;
                 //candleData.SlopeRsi = slopeRsiList[index].Slope;
@@ -331,7 +338,7 @@ public class CandleIndicatorData
 
                 //candleData.MacdLtValue = macdLtList[index].Macd;
                 //candleData.MacdLtSignal = macdLtList[index].Signal;
-                candleData.MacdLtHistogram = macdLtList[index].Histogram;
+                candleData.MacdTestHistogram = macdLtList[index].Histogram;
 
                 candleData.StochSignal = stochList[index].Signal;
                 candleData.StochOscillator = stochList[index].Oscillator;

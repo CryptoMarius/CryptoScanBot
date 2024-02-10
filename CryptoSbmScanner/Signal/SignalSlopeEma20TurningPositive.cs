@@ -4,7 +4,7 @@ using CryptoSbmScanner.Model;
 
 namespace CryptoSbmScanner.Signal;
 
-#if EXTRASTRATEGIES
+//#if EXTRASTRATEGIES
 public class SignalSlopeEma20TurningPositive : SignalCreateBase
 {
     public SignalSlopeEma20TurningPositive(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
@@ -34,27 +34,22 @@ public class SignalSlopeEma20TurningPositive : SignalCreateBase
         if (CandleLast.CandleData.SlopeEma20 < 0)
             return false;
 
-        if (CandleLast.CandleData.Ema20 > CandleLast.CandleData.Ema50)
-            return false;
+        //if (CandleLast.CandleData.Ema20 > CandleLast.CandleData.Ema50)
+        //    return false;
 
         if (!GetPrevCandle(CandleLast, out CryptoCandle prevCandle))
-            return false;
-
-        if (!IndicatorsOkay(prevCandle))
             return false;
 
         if (prevCandle.CandleData.SlopeEma20 > 0)
             return false;
 
-        if (!BarometersOkay((0.5m, decimal.MaxValue)))
+        if (!BarometerHelper.CheckValidBarometer(Symbol.QuoteData, Interval.IntervalPeriod, (0.5m, decimal.MaxValue), out string reaction))
         {
-            ExtraText = "barometer te laag";
+            ExtraText = reaction;
             return false;
         }
 
-        // Is er een mogelijke LL in de voorgaande 60 candles?
-        DateTime boundary = CandleLast.Date.AddSeconds(- Interval.Duration * 60);
-        if (!GlobalData.IsStobSignalAvailableInTheLast(CryptoTradeSide.Long, boundary))
+        if (HadStobbInThelastXCandles(SignalSide, 0, 60) == null)
         {
             ExtraText = "Geen voorgaande STOB of SBM";
             return false;
@@ -69,7 +64,7 @@ public class SignalSlopeEma20TurningPositive : SignalCreateBase
         // Na de initiele melding hebben we 3 candles de tijd om in te stappen, maar alleen indien de MACD verbetering laat zien.
 
         // Er een candle onder de bb opent of sluit
-        if (CandleLast.IsBelowBollingerBands(GlobalData.Settings.Signal.SbmUseLowHigh))
+        if (CandleLast.IsBelowBollingerBands(GlobalData.Settings.Signal.Sbm.UseLowHigh))
         {
             ExtraText = "beneden de bb";
             return false;
@@ -108,11 +103,11 @@ public class SignalSlopeEma20TurningPositive : SignalCreateBase
 
         // De markt is nog niet echt positief
         // (maar missen we meldingen hierdoor denk het wel!?)
-        if (CandleLast.CandleData.Sma20 > CandleLast.CandleData.Ema20)
-        {
-            ExtraText = "SMA20 > EMA20";
-            return true;
-        }
+        //if (CandleLast.CandleData.Sma20 > CandleLast.CandleData.Ema20)
+        //{
+        //    ExtraText = "SMA20 > EMA20";
+        //    return true;
+        //}
 
         // Langer dan 60 candles willen we niet wachten (is 60 niet heel erg lang?)
         if ((CandleLast.OpenTime - signal.EventTime) > 10 * Interval.Duration)
@@ -127,4 +122,4 @@ public class SignalSlopeEma20TurningPositive : SignalCreateBase
 
 
 }
-#endif
+//#endif

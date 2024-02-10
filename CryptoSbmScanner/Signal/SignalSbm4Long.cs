@@ -14,25 +14,6 @@ public class SignalSbm4Long : SignalSbmBaseLong
         SignalStrategy = CryptoSignalStrategy.Sbm4;
     }
 
-    private bool HadStobbInThelastXCandles(int candleCount)
-    {
-        // Is de prijs onlangs dicht bij de onderste bb geweest?
-        CryptoCandle last = CandleLast;
-        while (candleCount > 0)
-        {
-            // Er een candle onder de bb opent of sluit & een oversold situatie (beide moeten onder de 20 zitten)
-            if (last.IsBelowBollingerBands(GlobalData.Settings.Signal.Sbm.UseLowHigh) && last.IsStochOversold())
-                return true;
-
-            if (!GetPrevCandle(last, out last))
-                return false;
-            candleCount--;
-        }
-
-        return false;
-    }
-
-
     private bool HasBollingerBandsIncreased(int candleCount, decimal percentage)
     {
         // Een waarde die plotseling ~2% hoger of lager ligt dan de vorige candle kan interressant 
@@ -103,7 +84,7 @@ public class SignalSbm4Long : SignalSbmBaseLong
         //    return false;
 
 
-        if (HadStobbInThelastXCandles(GlobalData.Settings.Signal.Sbm.Sbm1CandlesLookbackCount) 
+        if (HadStobbInThelastXCandles(SignalSide, 0, GlobalData.Settings.Signal.Sbm.Sbm1CandlesLookbackCount) != null
             || IsInLowerPartOfBollingerBands(GlobalData.Settings.Signal.Sbm.Sbm2CandlesLookbackCount, GlobalData.Settings.Signal.Sbm.Sbm2BbPercentage)
             || HasBollingerBandsIncreased(GlobalData.Settings.Signal.Sbm.Sbm3CandlesLookbackCount, GlobalData.Settings.Signal.Sbm.Sbm3CandlesBbRecoveryPercentage))
             {
