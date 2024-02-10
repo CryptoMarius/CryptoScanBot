@@ -143,6 +143,8 @@ public partial class FrmSettings : Form
         EditStobIncludeRsi.Checked = settings.Signal.Stobb.IncludeRsi;
         EditStobIncludeSbmMaLines.Checked = settings.Signal.Stobb.IncludeSoftSbm;
         EditStobIncludeSbmPercAndCrossing.Checked = settings.Signal.Stobb.IncludeSbmPercAndCrossing;
+        EditStobOnlyIfPreviousStobb.Checked = settings.Signal.Stobb.OnlyIfPreviousStobb;
+        
         EditStobTrendLong.Value = settings.Signal.Stobb.TrendLong;
         EditStobTrendShort.Value = settings.Signal.Stobb.TrendShort;
 
@@ -371,6 +373,7 @@ public partial class FrmSettings : Form
         settings.Signal.Stobb.IncludeRsi = EditStobIncludeRsi.Checked;
         settings.Signal.Stobb.IncludeSoftSbm = EditStobIncludeSbmMaLines.Checked;
         settings.Signal.Stobb.IncludeSbmPercAndCrossing = EditStobIncludeSbmPercAndCrossing.Checked;
+        settings.Signal.Stobb.OnlyIfPreviousStobb = EditStobOnlyIfPreviousStobb.Checked;
         settings.Signal.Stobb.TrendLong = EditStobTrendLong.Value;
         settings.Signal.Stobb.TrendShort = EditStobTrendShort.Value;
 

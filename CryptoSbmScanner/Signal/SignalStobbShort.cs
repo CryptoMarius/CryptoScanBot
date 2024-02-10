@@ -70,6 +70,11 @@ public class SignalStobbShort : SignalSbmBaseShort
             return false;
         }
 
+        if (GlobalData.Settings.Signal.Stobb.OnlyIfPreviousStobb && HadStobbInThelastXCandles(SignalSide, 5, 60) == null)
+        {
+            response = "geen voorgaande stobb gevonden";
+            return false;
+        }
 
         response = "";
         return true;
@@ -99,7 +104,6 @@ public class SignalStobbShort : SignalSbmBaseShort
             ExtraText = "stoch niet overbought";
             return false;
         }
-
 
         return true;
     }

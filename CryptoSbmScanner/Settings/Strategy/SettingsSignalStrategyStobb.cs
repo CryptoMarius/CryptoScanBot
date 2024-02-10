@@ -16,6 +16,7 @@ public class SettingsSignalStrategyStobb : SettingsSignalStrategyBase
     //public string SoundStobbShort { get; set; } = "sound-stobb-overbought.wav";
     public bool IncludeRsi { get; set; } = false;
     public bool IncludeSoftSbm { get; set; } = false;
+    public bool OnlyIfPreviousStobb { get; set; } = false;
     public bool IncludeSbmPercAndCrossing { get; set; } = false;
     public decimal TrendLong { get; set; } = -999m;
     public decimal TrendShort { get; set; } = -999m;

@@ -237,6 +237,7 @@ partial class FrmSettings
         label49 = new Label();
         toolTip1 = new ToolTip(components);
         colorDialog1 = new ColorDialog();
+        EditStobOnlyIfPreviousStobb = new CheckBox();
         panelButtons.SuspendLayout();
         panelFill.SuspendLayout();
         tabControlMain.SuspendLayout();
@@ -778,7 +779,7 @@ partial class FrmSettings
         UserControlTelegram.Location = new Point(3, 401);
         UserControlTelegram.Name = "UserControlTelegram";
         UserControlTelegram.Padding = new Padding(10);
-        UserControlTelegram.Size = new Size(451, 155);
+        UserControlTelegram.Size = new Size(451, 180);
         UserControlTelegram.TabIndex = 248;
         // 
         // tabBasismunten
@@ -1187,7 +1188,7 @@ partial class FrmSettings
         tabSignalsLong.Location = new Point(4, 27);
         tabSignalsLong.Name = "tabSignalsLong";
         tabSignalsLong.Padding = new Padding(3);
-        tabSignalsLong.Size = new Size(1126, 568);
+        tabSignalsLong.Size = new Size(1126, 605);
         tabSignalsLong.TabIndex = 1;
         tabSignalsLong.Text = "Signalen long";
         tabSignalsLong.UseVisualStyleBackColor = true;
@@ -1199,7 +1200,7 @@ partial class FrmSettings
         UserControlSignalLong.Dock = DockStyle.Fill;
         UserControlSignalLong.Location = new Point(3, 3);
         UserControlSignalLong.Name = "UserControlSignalLong";
-        UserControlSignalLong.Size = new Size(1120, 562);
+        UserControlSignalLong.Size = new Size(1120, 599);
         UserControlSignalLong.TabIndex = 0;
         // 
         // tabSignalsShort
@@ -1208,7 +1209,7 @@ partial class FrmSettings
         tabSignalsShort.Location = new Point(4, 27);
         tabSignalsShort.Name = "tabSignalsShort";
         tabSignalsShort.Padding = new Padding(3);
-        tabSignalsShort.Size = new Size(1126, 568);
+        tabSignalsShort.Size = new Size(1126, 605);
         tabSignalsShort.TabIndex = 2;
         tabSignalsShort.Text = "Signalen short";
         tabSignalsShort.UseVisualStyleBackColor = true;
@@ -1220,7 +1221,7 @@ partial class FrmSettings
         UserControlSignalShort.Dock = DockStyle.Fill;
         UserControlSignalShort.Location = new Point(3, 3);
         UserControlSignalShort.Name = "UserControlSignalShort";
-        UserControlSignalShort.Size = new Size(1120, 562);
+        UserControlSignalShort.Size = new Size(1120, 599);
         UserControlSignalShort.TabIndex = 0;
         // 
         // tabSignalStobb
@@ -1230,7 +1231,7 @@ partial class FrmSettings
         tabSignalStobb.Margin = new Padding(4, 3, 4, 3);
         tabSignalStobb.Name = "tabSignalStobb";
         tabSignalStobb.Padding = new Padding(4, 3, 4, 3);
-        tabSignalStobb.Size = new Size(1126, 568);
+        tabSignalStobb.Size = new Size(1126, 605);
         tabSignalStobb.TabIndex = 3;
         tabSignalStobb.Text = "STOBB";
         tabSignalStobb.UseVisualStyleBackColor = true;
@@ -1245,7 +1246,7 @@ partial class FrmSettings
         flowLayoutPanel6.FlowDirection = FlowDirection.TopDown;
         flowLayoutPanel6.Location = new Point(4, 3);
         flowLayoutPanel6.Name = "flowLayoutPanel6";
-        flowLayoutPanel6.Size = new Size(1118, 562);
+        flowLayoutPanel6.Size = new Size(1118, 599);
         flowLayoutPanel6.TabIndex = 158;
         // 
         // UserControlSettingsSoundAndColorsStobb
@@ -1262,6 +1263,7 @@ partial class FrmSettings
         // groupBox2
         // 
         groupBox2.AutoSize = true;
+        groupBox2.Controls.Add(EditStobOnlyIfPreviousStobb);
         groupBox2.Controls.Add(label1);
         groupBox2.Controls.Add(EditStobbBBMinPercentage);
         groupBox2.Controls.Add(EditStobbBBMaxPercentage);
@@ -1277,7 +1279,7 @@ partial class FrmSettings
         groupBox2.Margin = new Padding(10);
         groupBox2.Name = "groupBox2";
         groupBox2.Padding = new Padding(10);
-        groupBox2.Size = new Size(433, 251);
+        groupBox2.Size = new Size(433, 291);
         groupBox2.TabIndex = 158;
         groupBox2.TabStop = false;
         groupBox2.Text = "Instellingen";
@@ -1317,7 +1319,7 @@ partial class FrmSettings
         // label85
         // 
         label85.AutoSize = true;
-        label85.Location = new Point(21, 210);
+        label85.Location = new Point(21, 243);
         label85.Margin = new Padding(4, 0, 4, 0);
         label85.Name = "label85";
         label85.Size = new Size(118, 15);
@@ -1327,7 +1329,7 @@ partial class FrmSettings
         // EditStobTrendShort
         // 
         EditStobTrendShort.DecimalPlaces = 2;
-        EditStobTrendShort.Location = new Point(177, 198);
+        EditStobTrendShort.Location = new Point(177, 239);
         EditStobTrendShort.Margin = new Padding(4, 3, 4, 3);
         EditStobTrendShort.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
         EditStobTrendShort.Minimum = new decimal(new int[] { 1000, 0, 0, int.MinValue });
@@ -1339,7 +1341,7 @@ partial class FrmSettings
         // label66
         // 
         label66.AutoSize = true;
-        label66.Location = new Point(21, 180);
+        label66.Location = new Point(21, 213);
         label66.Margin = new Padding(4, 0, 4, 0);
         label66.Name = "label66";
         label66.Size = new Size(115, 15);
@@ -1349,7 +1351,7 @@ partial class FrmSettings
         // EditStobTrendLong
         // 
         EditStobTrendLong.DecimalPlaces = 2;
-        EditStobTrendLong.Location = new Point(177, 168);
+        EditStobTrendLong.Location = new Point(177, 209);
         EditStobTrendLong.Margin = new Padding(4, 3, 4, 3);
         EditStobTrendLong.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
         EditStobTrendLong.Minimum = new decimal(new int[] { 1000, 0, 0, int.MinValue });
@@ -1409,7 +1411,7 @@ partial class FrmSettings
         tabSignalSbm.Margin = new Padding(4, 3, 4, 3);
         tabSignalSbm.Name = "tabSignalSbm";
         tabSignalSbm.Padding = new Padding(4, 3, 4, 3);
-        tabSignalSbm.Size = new Size(1126, 568);
+        tabSignalSbm.Size = new Size(1126, 605);
         tabSignalSbm.TabIndex = 6;
         tabSignalSbm.Text = "SBM";
         tabSignalSbm.UseVisualStyleBackColor = true;
@@ -1424,7 +1426,7 @@ partial class FrmSettings
         flowLayoutPanel7.FlowDirection = FlowDirection.TopDown;
         flowLayoutPanel7.Location = new Point(4, 3);
         flowLayoutPanel7.Name = "flowLayoutPanel7";
-        flowLayoutPanel7.Size = new Size(1118, 562);
+        flowLayoutPanel7.Size = new Size(1118, 599);
         flowLayoutPanel7.TabIndex = 160;
         // 
         // UserControlSettingsSoundAndColorsSbm
@@ -1853,7 +1855,7 @@ partial class FrmSettings
         tabSignalJump.Margin = new Padding(4, 3, 4, 3);
         tabSignalJump.Name = "tabSignalJump";
         tabSignalJump.Padding = new Padding(4, 3, 4, 3);
-        tabSignalJump.Size = new Size(1126, 568);
+        tabSignalJump.Size = new Size(1126, 605);
         tabSignalJump.TabIndex = 10;
         tabSignalJump.Text = "JUMP";
         tabSignalJump.UseVisualStyleBackColor = true;
@@ -1868,7 +1870,7 @@ partial class FrmSettings
         flowLayoutPanel8.FlowDirection = FlowDirection.TopDown;
         flowLayoutPanel8.Location = new Point(4, 3);
         flowLayoutPanel8.Name = "flowLayoutPanel8";
-        flowLayoutPanel8.Size = new Size(1118, 562);
+        flowLayoutPanel8.Size = new Size(1118, 599);
         flowLayoutPanel8.TabIndex = 159;
         // 
         // UserControlSettingsSoundAndColorsJump
@@ -2559,7 +2561,7 @@ partial class FrmSettings
         tabLongBlackList.Location = new Point(4, 27);
         tabLongBlackList.Name = "tabLongBlackList";
         tabLongBlackList.Padding = new Padding(3);
-        tabLongBlackList.Size = new Size(1128, 568);
+        tabLongBlackList.Size = new Size(1128, 605);
         tabLongBlackList.TabIndex = 1;
         tabLongBlackList.Text = "Blacklist long";
         tabLongBlackList.UseVisualStyleBackColor = true;
@@ -2571,7 +2573,7 @@ partial class FrmSettings
         textBoxBlackListOversold.Margin = new Padding(4, 3, 4, 3);
         textBoxBlackListOversold.Multiline = true;
         textBoxBlackListOversold.Name = "textBoxBlackListOversold";
-        textBoxBlackListOversold.Size = new Size(1122, 505);
+        textBoxBlackListOversold.Size = new Size(1122, 542);
         textBoxBlackListOversold.TabIndex = 3;
         // 
         // panel4
@@ -2601,7 +2603,7 @@ partial class FrmSettings
         tabShortWhiteList.Location = new Point(4, 27);
         tabShortWhiteList.Name = "tabShortWhiteList";
         tabShortWhiteList.Padding = new Padding(3);
-        tabShortWhiteList.Size = new Size(1128, 568);
+        tabShortWhiteList.Size = new Size(1128, 605);
         tabShortWhiteList.TabIndex = 2;
         tabShortWhiteList.Text = "Whitelist short";
         tabShortWhiteList.UseVisualStyleBackColor = true;
@@ -2613,7 +2615,7 @@ partial class FrmSettings
         textBoxWhiteListOverbought.Margin = new Padding(4, 3, 4, 3);
         textBoxWhiteListOverbought.Multiline = true;
         textBoxWhiteListOverbought.Name = "textBoxWhiteListOverbought";
-        textBoxWhiteListOverbought.Size = new Size(1122, 505);
+        textBoxWhiteListOverbought.Size = new Size(1122, 542);
         textBoxWhiteListOverbought.TabIndex = 4;
         // 
         // panel5
@@ -2643,7 +2645,7 @@ partial class FrmSettings
         tabShortBlackList.Location = new Point(4, 27);
         tabShortBlackList.Name = "tabShortBlackList";
         tabShortBlackList.Padding = new Padding(3);
-        tabShortBlackList.Size = new Size(1128, 568);
+        tabShortBlackList.Size = new Size(1128, 605);
         tabShortBlackList.TabIndex = 3;
         tabShortBlackList.Text = "Blacklist short";
         tabShortBlackList.UseVisualStyleBackColor = true;
@@ -2655,7 +2657,7 @@ partial class FrmSettings
         textBoxBlackListOverbought.Margin = new Padding(4, 3, 4, 3);
         textBoxBlackListOverbought.Multiline = true;
         textBoxBlackListOverbought.Name = "textBoxBlackListOverbought";
-        textBoxBlackListOverbought.Size = new Size(1122, 505);
+        textBoxBlackListOverbought.Size = new Size(1122, 542);
         textBoxBlackListOverbought.TabIndex = 7;
         // 
         // panel6
@@ -2677,6 +2679,17 @@ partial class FrmSettings
         label49.Size = new Size(308, 15);
         label49.TabIndex = 222;
         label49.Text = "(1 munt per regel met een optionele opmerking erachter)";
+        // 
+        // EditStobOnlyIfPreviousStobb
+        // 
+        EditStobOnlyIfPreviousStobb.AutoSize = true;
+        EditStobOnlyIfPreviousStobb.Location = new Point(21, 173);
+        EditStobOnlyIfPreviousStobb.Margin = new Padding(4, 3, 4, 3);
+        EditStobOnlyIfPreviousStobb.Name = "EditStobOnlyIfPreviousStobb";
+        EditStobOnlyIfPreviousStobb.Size = new Size(222, 19);
+        EditStobOnlyIfPreviousStobb.TabIndex = 167;
+        EditStobOnlyIfPreviousStobb.Text = "Alleen als er een voorgaand signaal is";
+        EditStobOnlyIfPreviousStobb.UseVisualStyleBackColor = true;
         // 
         // FrmSettings
         // 
@@ -3028,4 +3041,5 @@ partial class FrmSettings
     private NumericUpDown EditGlobalBuyCooldownTime;
     private TabPage tabPageTradingRules;
     private SettingsDialog.UserControlTradeRule UserControlTradeRules;
+    private CheckBox EditStobOnlyIfPreviousStobb;
 }
