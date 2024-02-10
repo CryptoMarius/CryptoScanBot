@@ -63,11 +63,11 @@ public abstract class ExchangeBase
         return builder.ToString();
     }
 
-    public static void Dump(CryptoSymbol symbol, bool actionOkay, TradeParams tradeParams, string extraText)
+    public static void Dump(CryptoSymbol symbol, bool success, TradeParams tradeParams, string extraText)
     {
         string text;
 
-        if (actionOkay)
+        if (success)
             text = DumpOrder(symbol, tradeParams, extraText);
         else
             text = DumpError(symbol, tradeParams, extraText);
