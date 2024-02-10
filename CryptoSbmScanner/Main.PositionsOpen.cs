@@ -270,7 +270,7 @@ public partial class FrmMain
                 }
             }
 
-            GlobalData.AddTextToLogTab("PositionsHaveChangedEvent#start");
+            //GlobalData.AddTextToLogTab("PositionsHaveChangedEvent#start");
 
             // Alle positie gerelateerde zaken verversen
             Task.Run(() => {
@@ -279,7 +279,7 @@ public partial class FrmMain
                     ListViewPositionsOpenAddPositions(list);
                     ClosedPositionsHaveChangedEvent();
                     dashBoardControl1.RefreshInformation(null, null);
-                    GlobalData.AddTextToLogTab("PositionsHaveChangedEvent#einde");
+                    //GlobalData.AddTextToLogTab("PositionsHaveChangedEvent#einde");
                 }));
             });
         }
