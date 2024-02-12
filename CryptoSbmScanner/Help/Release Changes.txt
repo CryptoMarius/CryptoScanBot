@@ -1,6 +1,59 @@
-CryptoSbmScanenr release historie:
+CryptoSbmScanner release historie:
 
-xx-01-2024 1.9
+xx-02-2024 1.9
+- Scanner - Het loggen van Tradingview errors toegevoegd (voor de dollar index enz) naar ook weer verwijderd, daar komen echt veel foutmeldingen uit!
+- Scanner - Soms blijft de barometer stilstaan (dan loopt de tijd van de barometer grafiek niet meer op), daaronder staat de tekst initializing. Geen signalen daarna..
+- Scanner - De Tradingview waarden voor dollar index, btc dominantie enzovoort werken niet meer (lijkt op een wijziging aan de kant van TV, maar niet zeker)
+- Scanner - De JUMP strategie lijkt niet meer te functioneren (die werd uitgesloten voor trading, maar het signaal moet natuurlijk wel getoond worden)
+- Scanner - De globale markttrend % wordt momenteel uitgerekend via 210 candles, voor de trend calculatie is dat te weinig en het is daarom aangepast naar 619 candles
+            Je wilt ook niet heel veel candles in het geheugen hebben, de scanner op Bybit gebruikt nu al regelmatig 600Mb
+- Scanner - De emoi's in de telegram melding voor de trend configureerbaar maken
+- Scanner - De url voor de Bybit futures exchange aangepast (tekst in de weblinks.json is nu case sensitive gemaakt)
+- Scanner - Telegram - De trend van de 15m, 30m, 1h, 4h en 12h toegevoegd (inclusief emoi indicator)
+- Scanner - Telegram - De markttrend toegevoegd en de trend op het interval wordt nu getoond (inclusief emoi indicator)
+- Scanner - Standaard commando's zoals kopieer, trend en symbol informatie zitten nu ook in het popupmenu
+- Scanner - Het menu commando "Dump exchange naar Excel" verplaats naar het hoofdmenu (onder instellingen)
+- Scanner - Het menu commando "Dump exchange naar Excel" werkte niet meer (na de refactoring symbol lijst op links)
+- Scanner - Er wordt nu correct rekening gehouden met het vinkje log munten ouder dan x dagen (er werd altijd gelogd)
+- Scanner - De controle met de meldingen "er zijn niet genoeg candles voor" uitvoeren NA de controle op het aantal dagen
+- Scanner - Het symbol overzicht uitbreiden met de volume, verversen en kunnen sorteren
+- Scanner - Op het signalen tabblad is de titel van de trend aangepast naar "TF-Trend" (TimeFrame trend)
+- Scanner - Op het signalen tabblad is de titel van de trend% aangepast naar "Markttrend%" (globale trend)
+- Scanner - Op het signalen tabblad de breedte van de kolommen tekst niet aanpassen (die kolom kan aardig varieeren in breedte)
+- Trading - Charts, de statistieken voor de combinatie van short en long kloppen niet (de short wordt sql technisch niet goed opgepakt?)
+- Scanner - De trend berekening optimaliseren, de 1m en 2m trend worden niet meer berekend, deze zijn niet significant en erg cpu intensief.
+- Scanner - De trend berekening optimaliseren, alle trends per interval werden tot dusver berekened terwijl dat pas bij een nieuwe candle nodig is. 
+- Scanner - De oude signalen van circa 2 week en ouder weggooien uit de database (db werd vrij groot)
+- Scanner - De berekening van de 10d effectieve change was niet juist, daardoor teveel uitval op signalen
+- Scanner - De STOBB heeft nu enkel een minimale trend maar dat gaat dus niet goed voor short posities (splitsen long/short)
+- Scanner - Aangepaste barometer filter voor long/short
+- Scanner - Nieuwe trend filter voor long/short op basis van interval=bullish/bearish
+- Scanner - Instellingen - basismunten zonder coins worden niet meer getoond
+- Scanner - Barometer via een range in plaats van 1 getal
+- Scanner - De layout van de long en short signalen is aangepast zodat op een kleiner beeldscherm je ook bij de instellingen kunt
+            (dat blijft wel een issue want ik ontwerp voor een vrij groot scherm en dat past gewoon niet op de kleinere schermen).
+- Scanner - De trenddetails voor de CC 2.0 methode is gedaan, de validatie zegt dat het niet 100% overeen komt maar redelijk dichtbij zit.
+- Scanner - De listbox met munten op links door middel van een instelling kunnen verbergen
+- Scanner - Bybit Futures, het vermelden van FundingRate en de FundingInterval.
+- Scanner - Het lettertype voor iedereen resetten vanwege vreemde lettertype's die te groot zijn of er raar uitzien (overblijfsel vorige versie?).
+- Scanner - Verschillende kleuren aan de long en short van een strategie kunnen opgeven (nog meer kleurtjes), eventueel moeten de kleuren bijgewerkt worden
+- Scanner - De BUSD vervangen net de PAXG (omdat deze munt door Binance wordt verwijderd en niet meer belangrijk genoeg is)
+- Scanner - Delisted coins blijven hardnekkig bestaan en er komen zelfs meldingen (TOMOUSDT)
+- Scanner - De huidige trendberekening is nu gebaseerd op de low's en high's van de candles, dit moet de open en close zijn
+- Scanner - Op verzoek de grenswaarden voor RSI overbought en oversold instelbaar gemaakt
+- Scanner - Op verzoek de grenswaarden voor STOCH overbought en oversold instelbaar gemaakt
+- Scanner - Refactoring van alle RMK (RechterMuisKnop) opties
+- Scanner - Op verzoek de up- of down trend tonen voor de 1h, 4h en 12h.
+- Scanner - De fundingrate toegevoegd aan de signalen
+- Scanner - De fundingRate ophalen voor de Bybit Futures de exchange (via de kline ticker)
+- Scanner - Herintroductie van locking waardoor een bepaalde foutmelding niet kan optreden en de scanner netjes door blijft lopen (heel lastig te controleren)
+- Scanner - De tradingview URL voor Bybit Futures is gecorrigeerd. {base}{quote}.P
+- Scanner - De window coordinaten/breedte wordt niet correct hersteld (na aanpassing volgorde event)
+- Scanner - Bij een negatieve barometer wordt de toevoeging 1h/4h/1d soms niet getoond (niet genoeg ruimte)
+- Scanner - Wat correcties op de handleiding (met dank aan Trinity)
+
+- Trading - Een symbol-link aan de trade-telegram notificaties toevoegen.
+- Trading - De cooldown van de tradingrules ging werd ingevoerd in "aantal candles", het is nu aangepast naar aantal minuten wat gemakkelijker in gebruik is
 - Trading - Bij hogere ticksizes komt het werkelijke instapbedrag soms ruim boven het ingestelde aankoopbedrag te liggen, deze controleren voordat we een positie maken
 - Trading - Het nemen van een DCA profit loggen
 - Trading - Het toevoegen van een DCA loggen
@@ -63,50 +116,6 @@ xx-01-2024 1.9
 - Trading - Bybit Spot - ophalen trades implementeren
 - Trading - Bybit Futures - ophalen assets implementeren
 - Trading - Bybit Spot - ophalen assets implementeren
-
-- Scanner - De url voor de Bybit futures exchange aangepast (tekst in de weblinks.json is nu case sensitive gemaakt)
-- Scanner - Telegram - De trend van de 15m, 30m, 1h, 4h en 12h toegevoegd (inclusief emoi indicator)
-- Scanner - Telegram - De markttrend toegevoegd en de trend op het interval wordt nu getoond (inclusief emoi indicator)
-- Scanner - Standaard commando's zoals kopieer, trend en symbol informatie zitten nu ook in het popupmenu
-- Scanner - Het menu commando "Dump exchange naar Excel" verplaats naar het hoofdmenu (onder instellingen)
-- Scanner - Het menu commando "Dump exchange naar Excel" werkte niet meer (na de refactoring symbol lijst op links)
-- Scanner - Er wordt nu correct rekening gehouden met het vinkje log munten ouder dan x dagen (er werd altijd gelogd)
-- Scanner - De controle met de meldingen "er zijn niet genoeg candles voor" uitvoeren NA de controle op het aantal dagen
-- Scanner - Het symbol overzicht uitbreiden met de volume, verversen en kunnen sorteren
-- Scanner - Op het signalen tabblad is de titel van de trend aangepast naar "TF-Trend" (TimeFrame trend)
-- Scanner - Op het signalen tabblad is de titel van de trend% aangepast naar "Markttrend%" (globale trend)
-- Scanner - Op het signalen tabblad de breedte van de kolommen tekst niet aanpassen (die kolom kan aardig varieeren in breedte)
-- Trading - Charts, de statistieken voor de combinatie van short en long kloppen niet (de short wordt sql technisch niet goed opgepakt?)
-- Scanner - De trend berekening optimaliseren, de 1m en 2m trend worden niet meer berekend, deze zijn niet significant en erg cpu intensief.
-- Scanner - De trend berekening optimaliseren, alle trends per interval werden tot dusver berekened terwijl dat pas bij een nieuwe candle nodig is. 
-- Scanner - De oude signalen van circa 2 week en ouder weggooien uit de database (db werd vrij groot)
-- Scanner - De berekening van de 10d effectieve change was niet juist, daardoor teveel uitval op signalen
-- Scanner - De STOBB heeft nu enkel een minimale trend maar dat gaat dus niet goed voor short posities (splitsen long/short)
-- Scanner - Aangepaste barometer filter voor long/short
-- Scanner - Nieuwe trend filter voor long/short op basis van interval=bullish/bearish
-- Scanner - Instellingen - basismunten zonder coins worden niet meer getoond
-- Scanner - Barometer via een range in plaats van 1 getal
-- Scanner - De layout van de long en short signalen is aangepast zodat op een kleiner beeldscherm je ook bij de instellingen kunt
-            (dat blijft wel een issue want ik ontwerp voor een vrij groot scherm en dat past gewoon niet op de kleinere schermen).
-- Scanner - De trenddetails voor de CC 2.0 methode is gedaan, de validatie zegt dat het niet 100% overeen komt maar redelijk dichtbij zit.
-- Scanner - De listbox met munten op links door middel van een instelling kunnen verbergen
-- Scanner - Bybit Futures, het vermelden van FundingRate en de FundingInterval.
-- Scanner - Het lettertype voor iedereen resetten vanwege vreemde lettertype's die te groot zijn of er raar uitzien (overblijfsel vorige versie?).
-- Scanner - Verschillende kleuren aan de long en short van een strategie kunnen opgeven (nog meer kleurtjes), eventueel moeten de kleuren bijgewerkt worden
-- Scanner - De BUSD vervangen net de PAXG (omdat deze munt door Binance wordt verwijderd en niet meer belangrijk genoeg is)
-- Scanner - Delisted coins blijven hardnekkig bestaan en er komen zelfs meldingen (TOMOUSDT)
-- Scanner - De huidige trendberekening is nu gebaseerd op de low's en high's van de candles, dit moet de open en close zijn
-- Scanner - Op verzoek de grenswaarden voor RSI overbought en oversold instelbaar gemaakt
-- Scanner - Op verzoek de grenswaarden voor STOCH overbought en oversold instelbaar gemaakt
-- Scanner - Refactoring van alle RMK (RechterMuisKnop) opties
-- Scanner - Op verzoek de up- of down trend tonen voor de 1h, 4h en 12h.
-- Scanner - De fundingrate toegevoegd aan de signalen
-- Scanner - De fundingRate ophalen voor de Bybit Futures de exchange (via de kline ticker)
-- Scanner - Herintroductie van locking waardoor een bepaalde foutmelding niet kan optreden en de scanner netjes door blijft lopen (heel lastig te controleren)
-- Scanner - De tradingview URL voor Bybit Futures is gecorrigeerd. {base}{quote}.P
-- Scanner - De window coordinaten/breedte wordt niet correct hersteld (na aanpassing volgorde event)
-- Scanner - Bij een negatieve barometer wordt de toevoeging 1h/4h/1d soms niet getoond (niet genoeg ruimte)
-- Scanner - Wat correcties op de handleiding (met dank aan Trinity)
 
 
 23-09-2023 1.8.6
