@@ -152,29 +152,38 @@ public static class SignalHelper
 
 #endif
 
-        AlgorithmDefinitionList.Add(new AlgorithmDefinition()
-        {
-            Name = "ema 20 slope",
-            Strategy = CryptoSignalStrategy.SlopeEma20,
-            AnalyzeLongType = typeof(SignalSlopeEma20TurningPositive),
-        });
+        //AlgorithmDefinitionList.Add(new AlgorithmDefinition()
+        //{
+        //    Name = "ema 20 slope",
+        //    Strategy = CryptoSignalStrategy.SlopeEma20,
+        //    AnalyzeLongType = typeof(SignalSlopeEma20Long),
+        //    AnalyzeShortType = typeof(SignalSlopeEma20Short),
+        //});
 
-        AlgorithmDefinitionList.Add(new AlgorithmDefinition()
-        {
-            Name = "ema 50 slope",
-            Strategy = CryptoSignalStrategy.SlopeEma50,
-            AnalyzeLongType = typeof(SignalSlopeEma50TurningPositive),
-            AnalyzeShortType = typeof(SignalSlopeEma50TurningNegative),
-        });
+        //AlgorithmDefinitionList.Add(new AlgorithmDefinition()
+        //{
+        //    Name = "ema 50 slope",
+        //    Strategy = CryptoSignalStrategy.SlopeEma50,
+        //    AnalyzeLongType = typeof(SignalSlopeEma50Long),
+        //    AnalyzeShortType = typeof(SignalSlopeEma50Short),
+        //});
 
 
-        AlgorithmDefinitionList.Add(new AlgorithmDefinition()
-        {
-            Name = "sma 50 slope",
-            Strategy = CryptoSignalStrategy.SlopeSma50,
-            AnalyzeLongType = typeof(SignalSlopeSma50TurningPositive),
-            AnalyzeShortType = typeof(SignalSlopeSma50TurningNegative),
-        });
+        //AlgorithmDefinitionList.Add(new AlgorithmDefinition()
+        //{
+        //    Name = "sma 20 slope",
+        //    Strategy = CryptoSignalStrategy.SlopeSma20,
+        //    AnalyzeLongType = typeof(SignalSlopeSma20Long),
+        //    AnalyzeShortType = typeof(SignalSlopeSma20Short),
+        //});
+
+        //AlgorithmDefinitionList.Add(new AlgorithmDefinition()
+        //{
+        //    Name = "sma 50 slope",
+        //    Strategy = CryptoSignalStrategy.SlopeSma50,
+        //    AnalyzeLongType = typeof(SignalSlopeSma50Long),
+        //    AnalyzeShortType = typeof(SignalSlopeSma50Short),
+        //});
 
 
         // En de lijst eenmalig indexeren

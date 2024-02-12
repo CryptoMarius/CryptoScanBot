@@ -134,7 +134,7 @@ public class SignalSbmBaseShort(CryptoSymbol symbol, CryptoInterval interval, Cr
         // Hoe positief wil je het hebben?
         if (last.CandleData.MacdHistogram < 0)
         {
-            ExtraText = string.Format("De MACD.Hist is rood {0:N8}", last.CandleData.MacdHistogram);
+            //ExtraText = string.Format("De MACD.Hist is rood {0:N8}", last.CandleData.MacdHistogram);
             return true;
         }
 

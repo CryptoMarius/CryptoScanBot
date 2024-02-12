@@ -156,29 +156,29 @@ public class SignalCreateBase
         return null;
     }
 
-    static public CryptoSignal IsStobSignalAvailableInTheLast(CryptoSymbol symbol, CryptoTradeSide side, DateTime from)
-    {
-        for (int i = GlobalData.SignalList.Count - 1; i >= 0; i--)
-        {
-            CryptoSignal signal = GlobalData.SignalList[i];
-            if (symbol.Id == signal.SymbolId)
-            {
-                if (signal.Side == side)
-                {
-                    // Niet te dicht op het laatste signaal zitten (slechts een idee)
-                    if (signal.OpenDate > from)
-                        continue;
+    //static public CryptoSignal IsStobSignalAvailableInTheLast(CryptoSymbol symbol, CryptoTradeSide side, DateTime from)
+    //{
+    //    for (int i = GlobalData.SignalList.Count - 1; i >= 0; i--)
+    //    {
+    //        CryptoSignal signal = GlobalData.SignalList[i];
+    //        if (symbol.Id == signal.SymbolId)
+    //        {
+    //            if (signal.Side == side)
+    //            {
+    //                // Niet te dicht op het laatste signaal zitten (slechts een idee)
+    //                if (signal.OpenDate > from)
+    //                    continue;
 
-                    if (signal.Strategy == CryptoSignalStrategy.Stobb || signal.Strategy == CryptoSignalStrategy.Sbm1 ||
-                        signal.Strategy == CryptoSignalStrategy.Sbm2 || signal.Strategy == CryptoSignalStrategy.Sbm3 ||
-                        signal.Strategy == CryptoSignalStrategy.Sbm4 || signal.Strategy == CryptoSignalStrategy.Sbm5)
-                        return signal;
-                }
-                else return null;
-            }
-        }
+    //                if (signal.Strategy == CryptoSignalStrategy.Stobb || signal.Strategy == CryptoSignalStrategy.Sbm1 ||
+    //                    signal.Strategy == CryptoSignalStrategy.Sbm2 || signal.Strategy == CryptoSignalStrategy.Sbm3 ||
+    //                    signal.Strategy == CryptoSignalStrategy.Sbm4 || signal.Strategy == CryptoSignalStrategy.Sbm5)
+    //                    return signal;
+    //            }
+    //            else return null;
+    //        }
+    //    }
 
-        return null;
-    }
+    //    return null;
+    //}
 
 }

@@ -5,11 +5,11 @@ using CryptoSbmScanner.Model;
 namespace CryptoSbmScanner.Signal;
 
 //#if EXTRASTRATEGIES
-public class SignalSlopeEma20TurningNegative : SignalCreateBase
+public class SignalSlopeEma20Long : SignalCreateBase
 {
-    public SignalSlopeEma20TurningNegative(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
+    public SignalSlopeEma20Long(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        SignalSide = CryptoTradeSide.Short;
+        SignalSide = CryptoTradeSide.Long;
         SignalStrategy = CryptoSignalStrategy.SlopeEma20;
     }
 
@@ -17,43 +17,46 @@ public class SignalSlopeEma20TurningNegative : SignalCreateBase
     {
         if ((candle == null)
            || (candle.CandleData == null)
-           || (candle.CandleData.Ema50 == null)
-           || (candle.CandleData.Ema20 == null)
-           || (candle.CandleData.SlopeSma20 == null)
-           || (candle.CandleData.SlopeSma50 == null)
+           || (candle.CandleData.SlopeEma20 == null)
+           || (candle.CandleData.Rsi == null)
            )
             return false;
 
         return true;
     }
 
+    public override bool AdditionalChecks(CryptoCandle candle, out string response)
+    {
+        if (!BarometerHelper.CheckValidBarometer(Symbol.QuoteData, CryptoIntervalPeriod.interval1h, (1m, decimal.MaxValue), out string reaction))
+        {
+            response = reaction;
+            return false;
+        }
+
+
+        if (HadStobbInThelastXCandles(SignalSide, 0, 60) == null)
+        {
+            response = "Geen voorgaande STOBB of SBM";
+            return false;
+        }
+
+        response = "";
+        return true;
+    }
+
+
     public override bool IsSignal()
     {
         ExtraText = "";
 
-        if (CandleLast.CandleData.SlopeEma20 > 0)
+        if (CandleLast.CandleData.SlopeEma20 < 0)
             return false;
-
-        //if (CandleLast.CandleData.Ema20 > CandleLast.CandleData.Ema50)
-        //    return false;
 
         if (!GetPrevCandle(CandleLast, out CryptoCandle prevCandle))
             return false;
 
-        if (prevCandle.CandleData.SlopeEma20 < 0)
+        if (prevCandle.CandleData.SlopeEma20 > 0)
             return false;
-
-        if (!BarometerHelper.CheckValidBarometer(Symbol.QuoteData, Interval.IntervalPeriod, (decimal.MinValue, -0.5m), out string reaction))
-        {
-            ExtraText = reaction;
-            return false;
-        }
-
-        if (HadStobbInThelastXCandles(SignalSide, 0, 60) == null)
-        {
-            ExtraText = "Geen voorgaande STOB of SBM";
-            return false;
-        }
 
         return true;
     }
@@ -75,19 +78,19 @@ public class SignalSlopeEma20TurningNegative : SignalCreateBase
         //    return false;
 
 
-        if (CandleLast.CandleData.Rsi > 45)
+        if (CandleLast.CandleData.Rsi < 55)
         {
             ExtraText = string.Format("De RSI niet herstellend {0:N8} {1:N8} (last.2)", CandleLast.CandleData.Rsi, CandleLast.CandleData.Rsi);
             return false;
         }
-        if (CandleLast.CandleData.StochOscillator > 40)
+        if (CandleLast.CandleData.StochOscillator < 60)
         {
-            ExtraText = string.Format("De Stoch.K is niet laag genoeg {0:N8}", CandleLast.CandleData.StochOscillator);
+            ExtraText = string.Format("De Stoch.K is niet hoog genoeg {0:N8}", CandleLast.CandleData.StochOscillator);
             return false;
         }
-        if (CandleLast.CandleData.StochSignal > 40)
+        if (CandleLast.CandleData.StochSignal < 60)
         {
-            ExtraText = string.Format("De Stoch.D is niet laag genoeg {0:N8}", CandleLast.CandleData.StochSignal);
+            ExtraText = string.Format("De Stoch.D is niet hoog genoeg {0:N8}", CandleLast.CandleData.StochSignal);
             return false;
         }
 
@@ -101,13 +104,6 @@ public class SignalSlopeEma20TurningNegative : SignalCreateBase
     {
         ExtraText = "";
 
-        //// De markt is nog niet echt positief
-        //// (maar missen we meldingen hierdoor denk het wel!?)
-        //if (CandleLast.CandleData.Sma20 > CandleLast.CandleData.Ema20)
-        //{
-        //    ExtraText = "SMA20 > EMA20";
-        //    return true;
-        //}
 
         // Langer dan 60 candles willen we niet wachten (is 60 niet heel erg lang?)
         if ((CandleLast.OpenTime - signal.EventTime) > 10 * Interval.Duration)
