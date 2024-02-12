@@ -1021,16 +1021,17 @@ public class CryptoDatabase : IDisposable
                 "ExchangeId Integer NOT NULL," +
                 "SymbolId Integer NOT NULL," +
                 "IntervalId Integer NOT NULL," +
-                "Status INTEGER NOT NULL," +
-                "Side INTEGER NOT NULL," +
-                "Strategy INTEGER NOT NULL," +
+                "Status Integer NOT NULL," +
+                "Side Integer NOT NULL," +
+                "Strategy Integer NOT NULL," +
                 "data TEXT NULL," +
 
                 "EntryPrice TEXT NULL," +
                 "EntryAmount TEXT NULL," + // EntryQuoteAmount?
                 "Quantity TEXT NULL," +
                 "ProfitPrice TEXT NULL," +
-                "PartCount INTEGER NULL," +
+                "PartCount Integer NOT NULL," +
+                "HasOpenDca Integer NOT NULL," +
                 "Profit TEXT NULL," +
                 "BreakEvenPrice TEXT NULL," +
 
@@ -1039,6 +1040,7 @@ public class CryptoDatabase : IDisposable
                 "Returned TEXT NULL," +
                 "Percentage TEXT NULL," +
                 "Reposition Integer," +
+
 
                 "FOREIGN KEY(TradeAccountId) REFERENCES TradeAccount(Id)," +
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +
@@ -1066,8 +1068,8 @@ public class CryptoDatabase : IDisposable
                 "IntervalId Integer NOT NULL," +
                 "Strategy TEXT NOT NULL," +
 
-                "Purpose INTEGER NOT NULL," +
-                "PartNumber INTEGER NOT NULL," +
+                "Purpose Integer NOT NULL," +
+                "PartNumber Integer NOT NULL," +
                 "CreateTime TEXT NOT NULL," +
                 "CloseTime TEXT NULL," +
 
@@ -1078,12 +1080,13 @@ public class CryptoDatabase : IDisposable
                 "Percentage TEXT NULL," +
 
                 "Quantity TEXT NULL," +
-                "EntryAmount TEXT NULL," +
                 "BreakEvenPrice TEXT NULL," +
                 "SignalPrice TEXT NOT NULL," +
 
                 "EntryMethod INTEGER NULL," +
                 "ProfitMethod INTEGER NULL," +
+
+                "ManualOrder INTEGER NULL," + // Handmatig jojo geplaatst
 
                 "FOREIGN KEY(PositionId) REFERENCES Position(Id)," +
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +

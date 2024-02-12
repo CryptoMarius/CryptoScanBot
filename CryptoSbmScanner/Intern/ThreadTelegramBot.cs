@@ -113,7 +113,7 @@ public class ThreadTelegramBotInstance
 
         try
         {
-            await bot.SendTextMessageAsync(ThreadTelegramBot.ChatId, text);
+            await bot.SendTextMessageAsync(ThreadTelegramBot.ChatId, text, parseMode: ParseMode.Html, disableWebPagePreview: true);
         }
         catch (Exception error)
         {

@@ -635,6 +635,29 @@ static public class GlobalData
         }
     }
 
+    static public void AddTextToTelegram(string text, CryptoPosition position)
+    {
+        try
+        {
+            //string symbolLink = GlobalData.ExternalUrls.GetTradingAppName(GlobalData.Settings.General.TradingApp, position.Exchange.Name);
+            string symbol = position.Symbol.Name.ToUpper();
+            (string Url, CryptoExternalUrlType Execute) refInfo = GlobalData.ExternalUrls.GetExternalRef(GlobalData.Settings.General.TradingApp, true, position.Symbol, position.Interval);
+            if (refInfo.Url != "")
+            {
+                string x = $" <a href='{refInfo.Url}'>{symbol}</a>";
+                text = text.Replace(symbol, x);
+            }
+            LogToTelegram(text);
+        }
+        catch (Exception error)
+        {
+            Logger.Error(error, "");
+            // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
+            AddTextToLogTab(" error telegram thread(1)" + error.ToString(), false);
+        }
+    }
+
+
 
     static public void AddTextToLogTab(string text, bool extraLineFeed = false)
     {

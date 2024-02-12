@@ -351,7 +351,7 @@ public class BackTest
 
                 //candleData.MacdLtValue = macdLtList[index].Macd;
                 //candleData.MacdLtSignal = macdLtList[index].Signal;
-                candleData.MacdLtHistogram = macdLtList[index].Histogram;
+                //candleData.MacdLtHistogram = macdLtList[index].Histogram;
 
                 candleData.StochSignal = stochList[index].Signal;
                 candleData.StochOscillator = stochList[index].Oscillator;

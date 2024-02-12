@@ -218,8 +218,16 @@ public partial class FrmMain
         else if (bePerc < 0)
             subItem.ForeColor = Color.Red;
 
-
-        item1.SubItems.Add(position.PartCount.ToString());
+        // PartCount is het aantal parts die we gemaakt hebben (de parts.Count), er kan nog eentje open staan
+        int partCount = position.PartCount;
+        if (position.ActiveDca)
+            partCount--;
+        // En we willen de openstaande part niet zien totdat deze echt gevuld is
+        string text = partCount.ToString();
+        // + ten teken dat er een openstaande DCA klaar staat (wellicht ook nog dat ie manual is)
+        if (position.ActiveDca)
+            text += "+";
+        item1.SubItems.Add(text);
         item1.SubItems.Add(position.EntryPrice?.ToString(position.Symbol.PriceDisplayFormat));
         if (position.ProfitPrice.HasValue)
             item1.SubItems.Add(position.ProfitPrice?.ToString(position.Symbol.PriceDisplayFormat));
@@ -555,7 +563,7 @@ public partial class FrmMain
 
             // De positie uitbreiden nalv een nieuw signaal (de xe bijkoop wordt altijd een aparte DCA)
             PositionTools.ExtendPosition(databaseThread, position, CryptoPartPurpose.Dca, position.Interval, position.Strategy, 
-                CryptoEntryOrProfitMethod.FixedPercentage, price, DateTime.UtcNow);
+                CryptoEntryOrProfitMethod.FixedPercentage, price, DateTime.UtcNow, true);
             GlobalData.AddTextToLogTab($"{position.Symbol.Name} handmatig een DCA toegevoegd");
 
             FillItemOpen(position, item);
@@ -624,7 +632,7 @@ public partial class FrmMain
 
                             var (cancelled, cancelParams) = await TradeTools.CancelOrder(databaseThread, position, part, step, DateTime.UtcNow, CryptoOrderStatus.ManuallyByUser);
                             if (!cancelled || GlobalData.Settings.Trading.LogCanceledOrders)
-                                ExchangeBase.Dump(position.Symbol, cancelled, cancelParams, "annuleren vanwege handmatige TP");
+                                ExchangeBase.Dump(position, cancelled, cancelParams, "annuleren vanwege handmatige TP");
 
                             if (cancelled)
                             {

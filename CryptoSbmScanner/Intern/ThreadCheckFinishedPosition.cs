@@ -86,7 +86,7 @@ public class ThreadCheckFinishedPosition
                                         database.Connection.Update<CryptoPositionStep>(step);
 
                                         if (GlobalData.Settings.Trading.LogCanceledOrders)
-                                            ExchangeBase.Dump(position.Symbol, succes, tradeParams, $"annuleren vanwege sluiten {position.Side} positie");
+                                            ExchangeBase.Dump(position, succes, tradeParams, $"annuleren vanwege sluiten {position.Side} positie");
 
 
                                         // Positie is afgerond (wellicht dubbel op met de code in de PositionTools)
@@ -99,7 +99,7 @@ public class ThreadCheckFinishedPosition
                                     }
                                     else
                                     {
-                                        ExchangeBase.Dump(position.Symbol, succes, tradeParams, "DCA ORDER ANNULEREN NIET GELUKT!!! (herkansing)");
+                                        ExchangeBase.Dump(position, succes, tradeParams, "DCA ORDER ANNULEREN NIET GELUKT!!! (herkansing)");
                                         AddToQueue(position); // doe nog maar een keer... Endless loop?
                                     }
                                 }

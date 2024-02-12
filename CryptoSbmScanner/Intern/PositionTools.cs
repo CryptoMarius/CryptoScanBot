@@ -84,6 +84,7 @@ public static class PositionTools
             IntervalId = symbolInterval.Interval.Id,
             Status = CryptoPositionStatus.Waiting,
             Strategy = strategy,
+            ActiveDca = false,
             PartCount = 0,
             Side = side,
         };
@@ -92,12 +93,12 @@ public static class PositionTools
 
 
     public static void ExtendPosition(CryptoDatabase database, CryptoPosition position, CryptoPartPurpose purpose, CryptoInterval interval,
-        CryptoSignalStrategy strategy, CryptoEntryOrProfitMethod stepInMethod, decimal signalPrice, DateTime currentDate)
+        CryptoSignalStrategy strategy, CryptoEntryOrProfitMethod stepInMethod, decimal signalPrice, DateTime currentDate, bool manualOrder = false)
     {
         CryptoPositionPart part = new()
         {
             Purpose = purpose,
-            PartNumber = position.PartCount,
+            PartNumber = position.Parts.Count,
             Strategy = strategy,
             Interval = interval,
             IntervalId = interval.Id,
@@ -108,17 +109,19 @@ public static class PositionTools
             Symbol = position.Symbol,
             SymbolId = position.Symbol.Id,
             Exchange = position.Symbol.Exchange,
-            ExchangeId = position.Symbol.ExchangeId
+            ExchangeId = position.Symbol.ExchangeId,
+            ManualOrder = manualOrder,
         };
 
         database.Connection.Insert<CryptoPositionPart>(part);
         AddPositionPart(position, part);
 
         position.PartCount += 1;
+        position.ActiveDca = true;
         position.UpdateTime = part.CreateTime;
         database.Connection.Update<CryptoPosition>(position);
 
-        // Nieuwe parts worden hierdoor uitgesloten (denk ik?)
+        // Nieuwe parts kunnen hierdoor via de cooldown worden uitgesteld
         position.Symbol.LastTradeDate = currentDate;
 
         GlobalData.AddTextToLogTab($"{position.Symbol.Name} {purpose} {stepInMethod} plaatsen op {signalPrice.ToString0(position.Symbol.PriceDisplayFormat)}");

@@ -127,7 +127,7 @@ static public class TradeHandler
 
                     // Gebruiker informeren (een trade blijft interessant tenslotte)
                     if (orderStatus == CryptoOrderStatus.Filled || orderStatus == CryptoOrderStatus.PartiallyFilled)
-                        GlobalData.AddTextToTelegram(msgInfo);
+                        GlobalData.AddTextToTelegram(msgInfo, position);
 
                     return;
                 }
@@ -206,7 +206,7 @@ static public class TradeHandler
 
                         s = $"handletrade#7 {msgInfo} positie cancelled, user takeover? position.status={position.Status}";
                         GlobalData.AddTextToLogTab(s);
-                        GlobalData.AddTextToTelegram(s);
+                        GlobalData.AddTextToTelegram(s, position);
                     }
                     return;
                 }
@@ -227,7 +227,7 @@ static public class TradeHandler
                         // De take profit order is uitgevoerd, de positie afmelden
                         //s = $"handletrade {msgInfo} part takeprofit ({part.Percentage:N2}%)";
                         //GlobalData.AddTextToLogTab(s);
-                        //GlobalData.AddTextToTelegram(s);
+                        //GlobalData.AddTextToTelegram(s, position);
 
                         part.CloseTime = data.TradeTime;
                         databaseThread.Connection.Update<CryptoPositionPart>(part);
@@ -259,7 +259,7 @@ static public class TradeHandler
                         else
                             s = $"handletrade {msgInfo} part takeprofit ({part.Percentage:N2}%)";
                         GlobalData.AddTextToLogTab(s);
-                        GlobalData.AddTextToTelegram(s);
+                        GlobalData.AddTextToTelegram(s, position);
 
                         if (position.Status == CryptoPositionStatus.Ready && position.Invested > 0 && position.Quantity == 0)
                             GlobalData.ThreadDoubleCheckPosition.AddToQueue(position);
@@ -272,7 +272,7 @@ static public class TradeHandler
                     {
                         s = $"handletrade {msgInfo} part entry";
                         GlobalData.AddTextToLogTab(s);
-                        GlobalData.AddTextToTelegram(s);
+                        GlobalData.AddTextToTelegram(s, position);
 
                         position.Reposition = true;
                         databaseThread.Connection.Update<CryptoPosition>(position);

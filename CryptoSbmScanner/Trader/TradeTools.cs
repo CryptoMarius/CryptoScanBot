@@ -101,9 +101,6 @@ public class TradeTools
         // (als je verder gaat dan wordt het vanwege de kickback's tamelijk complex)
         // Op Bybit futures heb je de fundingrates, dat wordt in tijdblokken berekend met varierende fr..
 
-        if (position.Parts.Count == 0)
-            GlobalData.AddTextToLogTab(string.Format("CalculateProfitAndBeakEvenPrice - er zijn geen parts! {0}", position.Symbol.Name));
-
         position.Quantity = 0;
         position.Invested = 0;
         position.Returned = 0;
@@ -175,7 +172,7 @@ public class TradeTools
                 else
                     part.BreakEvenPrice = 0;
             }
-            if (part.Invested == 0)
+            if (part.Invested <= 0)
                 hasActiveDca = true;
 
             //string t = string.Format("{0} CalculateProfit sell invested={1} profit={2} bought={3} sold={4} steps={5}",
@@ -222,16 +219,7 @@ public class TradeTools
         }
 
         // Correcties omdat de ActiveDca achteraf geintroduceerd is
-        if (position.ActiveDca && !hasActiveDca)
-        {
-            position.ActiveDca = false;
-            position.PartCount = position.Parts.Count;
-        }
-        if (position.ActiveDca)
-        {
-            //position.ActiveDca = true;
-            position.PartCount = position.Parts.Count - 1;
-        }
+        position.ActiveDca = hasActiveDca;
     }
 
 
@@ -482,7 +470,7 @@ public class TradeTools
                 PaperAssets.Change(position.TradeAccount, position.Symbol, result.tradeParams.OrderSide,
                     step.Status, result.tradeParams.Quantity, result.tradeParams.QuoteQuantity);
 
-            ExchangeBase.Dump(position.Symbol, result.result, result.tradeParams, extraText);
+            ExchangeBase.Dump(position, result.result, result.tradeParams, extraText);
         }
     }
 

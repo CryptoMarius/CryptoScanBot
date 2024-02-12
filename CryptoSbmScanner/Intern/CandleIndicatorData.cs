@@ -19,10 +19,10 @@ public class CandleIndicatorData
 
     // Exponential Moving Average
     //public double? Ema8 { get; set; }
-    public double? Ema20 { get; set; }
-    public double? Ema50 { get; set; }
+    //public double? Ema20 { get; set; }
+    //public double? Ema50 { get; set; }
     //public double? Ema100 { get; set; }
-    public double? Ema200 { get; set; }
+    //public double? Ema200 { get; set; }
     public double? SlopeEma20 { get; set; }
     public double? SlopeEma50 { get; set; }
 
@@ -228,20 +228,20 @@ public class CandleIndicatorData
         //List<TemaResult> temaList = (List<TemaResult>)Indicator.GetTema(history, 5);
 
         //List<EmaResult> emaList8 = (List<EmaResult>)history.GetEma(8);
-        List<EmaResult> emaList20 = (List<EmaResult>)history.GetEma(20);
-        List<EmaResult> emaList50 = (List<EmaResult>)history.GetEma(50);
+        //List<EmaResult> emaList20 = (List<EmaResult>)history.GetEma(20);
+        //List<EmaResult> emaList50 = (List<EmaResult>)history.GetEma(50);
         //List<EmaResult> emaList100 = (List<EmaResult>)history.GetEma(100);
-        List<EmaResult> emaList200 = (List<EmaResult>)history.GetEma(200);
-        List<SlopeResult> slopeEma20List = (List<SlopeResult>)emaList20.GetSlope(3);
-        List<SlopeResult> slopeEma50List = (List<SlopeResult>)emaList50.GetSlope(3);
+        //List<EmaResult> emaList200 = (List<EmaResult>)history.GetEma(200);
+        //List<SlopeResult> slopeEma20List = (List<SlopeResult>)emaList20.GetSlope(3);
+        //List<SlopeResult> slopeEma50List = (List<SlopeResult>)emaList50.GetSlope(3);
 
         //List<SmaResult> smaList8 = (List<SmaResult>)Indicator.GetSma(history, 8);
         List<SmaResult> smaList20 = (List<SmaResult>)Indicator.GetSma(history, 20);
         List<SmaResult> smaList50 = (List<SmaResult>)history.GetSma(50);
         //List<SmaResult> smaList100 = (List<SmaResult>)Indicator.GetSma(history, 100);
         List<SmaResult> smaList200 = (List<SmaResult>)history.GetSma(200);
-        List<SlopeResult> slopeSma20List = (List<SlopeResult>)smaList20.GetSlope(3);
-        List<SlopeResult> slopeSma50List = (List<SlopeResult>)smaList50.GetSlope(3);
+        //List<SlopeResult> slopeSma20List = (List<SlopeResult>)smaList20.GetSlope(3);
+        //List<SlopeResult> slopeSma50List = (List<SlopeResult>)smaList50.GetSlope(3);
 
         // Berekend vanuit de EMA 20 en de upper en lowerband ontstaat uit 2x de ATR
         List<KeltnerResult> keltnerList = (List<KeltnerResult>)Indicator.GetKeltner(history, 20, 1);
@@ -312,11 +312,11 @@ public class CandleIndicatorData
                 //// EMA's
                 ////candleData.Ema8 = emaList8[index].Ema;
                 //candleData.Ema20 = emaList20[index].Ema;
-                candleData.Ema50 = emaList50[index].Ema;
+                //candleData.Ema50 = emaList50[index].Ema;
                 ////candleData.Ema100 = emaList100[index].Ema;
-                candleData.Ema200 = emaList200[index].Ema;
-                candleData.SlopeEma20 = slopeEma20List[index].Slope;
-                candleData.SlopeEma50 = slopeEma50List[index].Slope;
+                //candleData.Ema200 = emaList200[index].Ema;
+                //candleData.SlopeEma20 = slopeEma20List[index].Slope;
+                //candleData.SlopeEma50 = slopeEma50List[index].Slope;
 
                 //candleData.Tema = temaList[index].Tema;
 
@@ -326,8 +326,8 @@ public class CandleIndicatorData
                 candleData.Sma50 = smaList50[index].Sma;
                 //candleData.Sma100 = smaList100[index].Sma;
                 candleData.Sma200 = smaList200[index].Sma;
-                candleData.SlopeSma20 = slopeSma20List[index].Slope;
-                candleData.SlopeSma50 = slopeSma50List[index].Slope;
+                //candleData.SlopeSma20 = slopeSma20List[index].Slope;
+                //candleData.SlopeSma50 = slopeSma50List[index].Slope;
 
                 candleData.Rsi = rsiList[index].Rsi;
                 //candleData.SlopeRsi = slopeRsiList[index].Slope;

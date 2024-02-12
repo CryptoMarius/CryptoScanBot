@@ -28,10 +28,10 @@ public abstract class ExchangeBase
         CryptoOrderType orderType, CryptoOrderSide orderSide,
         decimal quantity, decimal price, decimal? stop, decimal? limit);
 
-    private static string DumpOrder(CryptoSymbol symbol, TradeParams tradeParams, string extraText)
+    private static string DumpOrder(CryptoPosition position, TradeParams tradeParams, string extraText)
     {
         StringBuilder builder = new();
-        builder.Append(symbol.Name);
+        builder.Append(position.Symbol.Name);
         if (extraText != "")
             builder.Append($" {extraText}");
         if (tradeParams != null)
@@ -43,17 +43,17 @@ public abstract class ExchangeBase
             if (tradeParams.StopPrice.HasValue)
                 builder.Append($" stop={tradeParams.StopPrice?.ToString0()}");
             builder.Append($" quantity={tradeParams.Quantity.ToString0()}");
-            _ = builder.Append($" value={tradeParams.QuoteQuantity.ToString(symbol.QuoteData.DisplayFormat)}");
+            _ = builder.Append($" value={tradeParams.QuoteQuantity.ToString(position.Symbol.QuoteData.DisplayFormat)}");
         }
 
         return builder.ToString();
     }
 
-    private static string DumpError(CryptoSymbol symbol, TradeParams tradeParams, string extraText)
+    private static string DumpError(CryptoPosition position, TradeParams tradeParams, string extraText)
     {
         StringBuilder builder = new();
         builder.Append("ERROR ");
-        builder.Append(DumpOrder(symbol, tradeParams, extraText));
+        builder.Append(DumpOrder(position, tradeParams, extraText));
         if (tradeParams != null)
         {
             builder.Append($" {tradeParams.ResponseStatusCode}");
@@ -63,17 +63,17 @@ public abstract class ExchangeBase
         return builder.ToString();
     }
 
-    public static void Dump(CryptoSymbol symbol, bool success, TradeParams tradeParams, string extraText)
+    public static void Dump(CryptoPosition position, bool success, TradeParams tradeParams, string extraText)
     {
         string text;
 
         if (success)
-            text = DumpOrder(symbol, tradeParams, extraText);
+            text = DumpOrder(position, tradeParams, extraText);
         else
-            text = DumpError(symbol, tradeParams, extraText);
+            text = DumpError(position, tradeParams, extraText);
 
         GlobalData.AddTextToLogTab(text);
-        GlobalData.AddTextToTelegram(text);
+        GlobalData.AddTextToTelegram(text, position);
     }
 
 #endif

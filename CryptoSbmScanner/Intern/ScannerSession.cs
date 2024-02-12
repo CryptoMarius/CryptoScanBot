@@ -191,6 +191,7 @@ public static class ScannerSession
     private static void TimerRestartStreams_Tick(object sender, EventArgs e)
     {
         GlobalData.AddTextToLogTab("Debug: ScannerSession.Restart", true);
+        GlobalData.AddTextToTelegram("Debug: ScannerSession.Restart");
 
         TimerRestartStreams.Enabled = false;
         TimerCheckDataStream.Enabled = false;

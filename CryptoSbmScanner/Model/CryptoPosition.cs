@@ -64,9 +64,8 @@ public class CryptoPosition
     // Een experiment (die weg kan, we zetten er nu even de naam van de munt in, handig)
     public string Data { get; set; }
 
-    // Soort van Parts.Count (maar dan hoeft niet alles geladen te zijn)
+    // Is de Parts.Count (met een active DCA)
     public int PartCount { get; set; }
-    [Computed]
     public bool ActiveDca { get; set; }
     
     // Zou computed kunnen, maar voor de zekerheid in de database

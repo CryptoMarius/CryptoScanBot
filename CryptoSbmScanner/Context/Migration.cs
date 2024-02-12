@@ -6,7 +6,7 @@ namespace CryptoSbmScanner.Context;
 public class Migration
 {
     // De huidige database versie
-    public readonly static int CurrentDatabaseVersion = 11;
+    public readonly static int CurrentDatabaseVersion = 12;
 
 
     public static void Execute(CryptoDatabase database, int CurrentVersion)
@@ -267,17 +267,19 @@ public class Migration
             {
                 using var transaction = database.BeginTransaction();
 
-                // Deze bestaat reeds op position niveau en kan daarom weer weg
-                database.Connection.Execute("alter table PositionPart drop column EntryAmount", transaction);
-
-                // Indicatie dat er een openstaande DCA aanwezig is
-                database.Connection.Execute("alter table Position add HasOpenDca TEXT null", transaction);
-
+                // Indicatie dat er een openstaande DCA aanwezig is + migratie
                 // Voor een nieuw statistiek idee moet de partcount alleen de actieve dca's bevatten
-                // De PartCount aanpassen
-                database.Connection.Execute("update Position set PartCount=(select count(*) from positionpart where invested > 0.0)", transaction);
-                database.Connection.Execute("update Position set HasOpenDca=(select count(*) from positionpart where invested <= 0.0)", transaction);
-                database.Connection.Execute("update Position set HasOpenDca=0 where not CloseTime is null", transaction);
+                database.Connection.Execute("alter table Position add ActiveDca Integer null", transaction);
+                database.Connection.Execute("update Position set ActiveDca=0", transaction);
+                database.Connection.Execute("update Position set ActiveDca=(select count(*) from positionpart where positionpart.positionid=Position.id and invested <= 0.0)", transaction);
+                database.Connection.Execute("update Position set ActiveDca=1 where ActiveDca>1", transaction);
+
+                // Administratie voor het geval we handmatig een order openen (en we deze niet willen laten aanpassen)
+                database.Connection.Execute("alter table PositionPart add ManualOrder Integer", transaction);
+                database.Connection.Execute("update PositionPart set ManualOrder=0", transaction);
+
+                // Deze bestaat reeds op position niveau en kan daarom weg
+                database.Connection.Execute("alter table PositionPart drop column EntryAmount", transaction);
 
                 // update version
                 version.Version += 1;

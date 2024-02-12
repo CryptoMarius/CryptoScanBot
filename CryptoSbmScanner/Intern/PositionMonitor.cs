@@ -947,7 +947,7 @@ public class PositionMonitor : IDisposable
                             logText = $"trailing {part.Purpose}";
                             var (cancelled, tradeParams) = await TradeTools.CancelOrder(Database, position, part, step, LastCandle1mCloseTimeDate, CryptoOrderStatus.TrailingChange);
                             if (!cancelled || GlobalData.Settings.Trading.LogCanceledOrders)
-                                ExchangeBase.Dump(position.Symbol, cancelled, tradeParams, "annuleren vanwege aanpassing stoploss trailing");
+                                ExchangeBase.Dump(position, cancelled, tradeParams, "annuleren vanwege aanpassing stoploss trailing");
 
                             // tsja, wat als het mislukt?
                             //if (!cancelled)
@@ -963,7 +963,7 @@ public class PositionMonitor : IDisposable
                             logText = $"trailing {part.Purpose}";
                             var (cancelled, tradeParams) = await TradeTools.CancelOrder(Database, position, part, step, LastCandle1mCloseTimeDate, CryptoOrderStatus.TrailingChange);
                             if (!cancelled || GlobalData.Settings.Trading.LogCanceledOrders)
-                                ExchangeBase.Dump(position.Symbol, cancelled, tradeParams, "annuleren vanwege aanpassing stoploss trailing");
+                                ExchangeBase.Dump(position, cancelled, tradeParams, "annuleren vanwege aanpassing stoploss trailing");
                         }
                     }
                 }
@@ -1129,7 +1129,7 @@ public class PositionMonitor : IDisposable
                 Database.Connection.Update<CryptoPositionPart>(part);
                 Database.Connection.Update<CryptoPosition>(position);
 
-                ExchangeBase.Dump(position.Symbol, result.result, result.tradeParams, logText);
+                ExchangeBase.Dump(position, result.result, result.tradeParams, logText);
 
                 // Een eventuele market order direct laten vullen
                 if (position.TradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading && step.OrderType == CryptoOrderType.Market)
@@ -1138,7 +1138,7 @@ public class PositionMonitor : IDisposable
                     position.Reposition = false; // anders twee keer achter elkaar indien papertrading of backtesting!
                 }
             }
-            else ExchangeBase.Dump(position.Symbol, result.result, result.tradeParams, logText);
+            else ExchangeBase.Dump(position, result.result, result.tradeParams, logText);
         }
     }
 
@@ -1251,7 +1251,7 @@ public class PositionMonitor : IDisposable
 
                     var (cancelled, cancelParams) = await TradeTools.CancelOrder(Database, position, part, step, LastCandle1mCloseTimeDate, CryptoOrderStatus.TrailingChange);
                     if (!cancelled || GlobalData.Settings.Trading.LogCanceledOrders)
-                        ExchangeBase.Dump(position.Symbol, cancelled, cancelParams, "annuleren vanwege aanpassing stoploss trailing");
+                        ExchangeBase.Dump(position, cancelled, cancelParams, "annuleren vanwege aanpassing stoploss trailing");
 
                     // Afhankelijk van de invoer stop of stoplimit een OCO of standaard sell plaatsen.
                     // TODO: Wat als het plaatsen van de order fout gaat? (hoe vangen we de fout op en hoe herstellen we dat? Binance is een bitch af en toe!)
@@ -1281,7 +1281,7 @@ public class PositionMonitor : IDisposable
                     decimal perc = 0;
                     if (part.BreakEvenPrice > 0)
                         perc = (decimal)(100 * ((stop / part.BreakEvenPrice) - 1));
-                    ExchangeBase.Dump(position.Symbol, success, tradeParams, $"locking ({perc:N2}%)");
+                    ExchangeBase.Dump(position, success, tradeParams, $"locking ({perc:N2}%)");
                 }
             }
 
@@ -1466,7 +1466,7 @@ public class PositionMonitor : IDisposable
                     {
                         var (cancelled, cancelParams) = await TradeTools.CancelOrder(Database, position, part, step, LastCandle1mCloseTimeDate, newStatus);
                         if (!cancelled || GlobalData.Settings.Trading.LogCanceledOrders)
-                            ExchangeBase.Dump(position.Symbol, cancelled, cancelParams, cancelText);
+                            ExchangeBase.Dump(position, cancelled, cancelParams, cancelText);
 
                         if (cancelled)
                         {
@@ -1617,13 +1617,13 @@ public class PositionMonitor : IDisposable
                             if (part.ProfitMethod == CryptoEntryOrProfitMethod.FixedPercentage)
                             {
                                 decimal sellPrice = CalculateTakeProfitPrice(position);
-                                if (step.Price != sellPrice && step.Status == CryptoOrderStatus.New)
+                                if (step.Price != sellPrice && step.Status == CryptoOrderStatus.New && !part.ManualOrder)
                                 {
                                     var (cancelled, tradeParams) = await TradeTools.CancelOrder(Database, position, part, step, LastCandle1mCloseTimeDate, CryptoOrderStatus.ChangedSettings);
                                     if (!cancelled || GlobalData.Settings.Trading.LogCanceledOrders)
                                     {
                                         string text3 = $"annuleren vanwege aanpassing percentage ({step.Price} -> {sellPrice})";
-                                        ExchangeBase.Dump(position.Symbol, cancelled, tradeParams, text3);
+                                        ExchangeBase.Dump(position, cancelled, tradeParams, text3);
                                     }
                                     if (cancelled)
                                     {

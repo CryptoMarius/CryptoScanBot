@@ -145,22 +145,6 @@ public class CryptoSymbol
     //public Decimal QuoteQuantityTest { get; set; }
 
 
-    //[Computed]
-    //public int SignalCount
-    //{
-    //    get
-    //    {
-    //        int count = 0;
-    //        foreach (CryptoSymbolInterval symbolInterval in IntervalPeriodList)
-    //        {
-    //            if (symbolInterval.Signal != null)
-    //                count++;
-    //        }
-    //        return count;
-    //    }
-    //}
-
-
     public CryptoSymbol()
     //???
     //    => IntervalPeriodList = GlobalData.IntervalList.Select(interval 

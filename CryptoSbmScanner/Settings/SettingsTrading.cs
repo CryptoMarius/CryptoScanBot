@@ -94,7 +94,6 @@ public class SettingsTrading
     // =Overkill in de logging
     public bool LogCanceledOrders { get; set; } = true;
 
-
     //***************************
     // Slots
     //Maximaal aantal slots voor long en short
@@ -143,9 +142,9 @@ public class SettingsTrading
 
     //***************************
     // Stopp loss
-    // Vanwege ontbreken stoplimit op Bybit afgesterd
-    //public decimal GlobalStopPercentage { get; set; } = 0m;
-    //public decimal GlobalStopLimitPercentage { get; set; } = 0m;
+    // Vanwege ontbreken stoplimit op Bybit afgesterd (niet geheel waar, is technisch anders geregeld
+    //public decimal StopLossPercentage { get; set; } = 0m;
+    //public decimal StopLossLimitPercentage { get; set; } = 0m;
 
 
     //***************************

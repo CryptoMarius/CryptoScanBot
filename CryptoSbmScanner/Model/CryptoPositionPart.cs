@@ -61,6 +61,9 @@ public class CryptoPositionPart
     // De entry orders (bijvoorbeeld 50% buy op de bid prijs en 50% op de ask prijs)
     // De takeprofit(s) (bijvoorbeeld 33% op 1%, 33% op 2% en rest op 3%)
 
+    // Administratie voor het geval we handmatig een order openen (en we deze niet willen laten aanpassen)
+    public bool ManualOrder { get; set; }
+
     [Computed]
     public SortedList<int, CryptoPositionStep> Steps { get; set; } = new();
 }

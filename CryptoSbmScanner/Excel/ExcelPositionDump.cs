@@ -50,7 +50,10 @@ public class ExcelPositionDump : ExcelBase
             ++row;
             {
                 cell = WriteCell(sheet, 0, row, part.Id);
-                cell = WriteCell(sheet, 1, row, part.Purpose + " " + part.PartNumber.ToString()); // 0 = entry and >= 1 is dca
+                string text = part.Purpose + " " + part.PartNumber.ToString();
+                if (part.ManualOrder)
+                    text += " manual";
+                cell = WriteCell(sheet, 1, row, text); // 0 = entry and >= 1 is dca
                 cell = WriteCell(sheet, 2, row, part.Purpose.ToString());
                 cell = WriteCell(sheet, 3, row, part.CreateTime.ToLocalTime());
                 cell.CellStyle = CellStyleDate;

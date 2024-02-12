@@ -37,4 +37,5 @@ public enum CryptoSignalStrategy // CryptoStrategy
     SlopeEma50, // test
     SlopeSma50, // test
     SlopeEma20, // test
+    SlopeSma20, // test
 }
