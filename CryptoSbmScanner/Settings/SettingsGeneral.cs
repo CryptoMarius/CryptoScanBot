@@ -57,6 +57,7 @@ public class SettingsGeneral
     // Op welk interval moet de totale markttrend berekend worden (standaard op alle intervallen)
     public List<string> IntervalForMarketTrend = [];
 
+
     public SettingsGeneral()
     {
         IntervalForMarketTrend.Add("1m");
@@ -74,6 +75,8 @@ public class SettingsGeneral
         IntervalForMarketTrend.Add("8h");
         IntervalForMarketTrend.Add("12h");
         IntervalForMarketTrend.Add("1d");
+
+
     }
 }
 

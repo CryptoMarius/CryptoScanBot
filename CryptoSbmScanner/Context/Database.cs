@@ -1303,7 +1303,7 @@ public class CryptoDatabase : IDisposable
         }
         catch (Exception error)
         {
-            GlobalData.Logger.Error(error, "");
+            ScannerLog.Logger.Error(error, "");
             GlobalData.AddTextToLogTab("ERROR " + error.ToString());
         }
     }

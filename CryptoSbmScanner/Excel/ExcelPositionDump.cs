@@ -538,7 +538,7 @@ public class ExcelPositionDump : ExcelBase
         }
         catch (Exception error)
         {
-            GlobalData.Logger.Error(error, "");
+            ScannerLog.Logger.Error(error, "");
             GlobalData.AddTextToLogTab("ERROR postion dump " + error.ToString());
         }
     }

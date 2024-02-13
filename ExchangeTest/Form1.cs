@@ -220,7 +220,7 @@ public partial class Form1 : Form
         }
         catch (Exception error)
         {
-            GlobalData.Logger.Error(error, "");
+            ScannerLog.Logger.Error(error, "");
             GlobalData.AddTextToLogTab("error back testing " + error.ToString()); // symbol.Text + " " + 
         }
     }
@@ -505,7 +505,7 @@ public partial class Form1 : Form
         }
         catch (Exception error)
         {
-            GlobalData.Logger.Error(error, "");
+            ScannerLog.Logger.Error(error, "");
             GlobalData.AddTextToLogTab("error back testing " + error.ToString()); // symbol.Text + " " + 
         }
     }

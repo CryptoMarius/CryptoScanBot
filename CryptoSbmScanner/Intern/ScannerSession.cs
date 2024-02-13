@@ -148,7 +148,7 @@ public static class ScannerSession
     private static void TimerSaveCandleData_Tick(object sender, EventArgs e)
     {
 #if !SQLDATABASE
-        // Elke x uur wordt de candle data bewaard
+        // Save the candles each x hours..
         DataStore.SaveCandles();
 #endif
     }
@@ -157,13 +157,13 @@ public static class ScannerSession
 
     public static void SetTimerDefaults()
     {
-        TimerAddSignal.InitTimerInterval(1.25); // 1.25 seconde
+        TimerAddSignal.InitTimerInterval(2.5); // 2.5 seconds
         TimerShowInformation.InitTimerInterval(5); // 5 seconds
 
         TimerSoundHeartBeat.InitTimerInterval(60 * GlobalData.Settings.General.SoundHeartBeatMinutes); // x minutes
 
         // Check data stream's (om toch zeker te zijn van nieuwe candles)
-        TimerRestartStreams.InitTimerInterval(0); // UIT!
+        TimerRestartStreams.InitTimerInterval(0); // OFF
         TimerCheckDataStream.InitTimerInterval(5 * 60); // 5 minutes
 
         // Restart data stream's every day

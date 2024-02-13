@@ -426,7 +426,7 @@ public class Api : ExchangeBase
             }
             catch (Exception error)
             {
-                GlobalData.Logger.Error(error, "");
+                ScannerLog.Logger.Error(error, "");
                 GlobalData.AddTextToLogTab(error.ToString());
                 // Als er ooit een rolback plaatsvindt is de database en objects in het geheugen niet meer in sync..
                 transaction.Rollback();
@@ -584,7 +584,7 @@ public class Api : ExchangeBase
                     }
                     catch (Exception error)
                     {
-                        GlobalData.Logger.Error(error, "");
+                        ScannerLog.Logger.Error(error, "");
                         GlobalData.AddTextToLogTab(error.ToString());
                         throw;
                     }
@@ -592,7 +592,7 @@ public class Api : ExchangeBase
             }
             catch (Exception error)
             {
-                GlobalData.Logger.Error(error, "");
+                ScannerLog.Logger.Error(error, "");
                 GlobalData.AddTextToLogTab(error.ToString());
                 GlobalData.AddTextToLogTab("");
             }

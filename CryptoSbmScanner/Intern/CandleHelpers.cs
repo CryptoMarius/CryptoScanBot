@@ -372,7 +372,7 @@ public static class Helper
                     catch (Exception error)
                     {
                         stringBuilder.AppendLine(string.Format("ERROR assets " + error.ToString()));
-                        GlobalData.Logger.Error(error, "ERROR assets");
+                        ScannerLog.Logger.Error(error, "ERROR assets");
                     }
                     // Dat doet de aanroepende partij (telegram of knop Show wallets)
                     //GlobalData.AddTextToLogTab(stringBuilder.ToString());

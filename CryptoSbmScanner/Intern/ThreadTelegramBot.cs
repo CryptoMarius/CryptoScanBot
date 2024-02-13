@@ -118,7 +118,7 @@ public class ThreadTelegramBotInstance
         catch (Exception error)
         {
             // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
-            GlobalData.Logger.Error(error, "");
+            ScannerLog.Logger.Error(error, "");
             GlobalData.AddTextToLogTab("\r\n" + "\r\n" + " error telegram thread(1)\r\n" + error.ToString());
         }
     }
@@ -255,7 +255,7 @@ public class ThreadTelegramBotInstance
         catch (Exception error)
         {
             // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
-            GlobalData.Logger.Error(error, "");
+            ScannerLog.Logger.Error(error, "");
             GlobalData.AddTextToLogTab("\r\n" + "\r\n" + " error telegram thread(1)\r\n" + error.ToString());
         }
     }
@@ -774,21 +774,21 @@ public class ThreadTelegramBotInstance
                         catch (HttpRequestException error)
                         {
                             // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
-                            GlobalData.Logger.Error(error.Message);
+                            ScannerLog.Logger.Error(error.Message);
                             //GlobalData.AddTextToLogTab("\r\n" + "\r\n" + " error telegram thread(1)\r\n" + error.ToString());
                             Thread.Sleep(5000);
                         }
                         catch (RequestException error)
                         {
                             // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
-                            GlobalData.Logger.Error(error.Message);
+                            ScannerLog.Logger.Error(error.Message);
                             //GlobalData.AddTextToLogTab("\r\n" + "\r\n" + " error telegram thread(1)\r\n" + error.ToString());
                             Thread.Sleep(5000);
                         }
                         catch (Exception error)
                         {
                             // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
-                            GlobalData.Logger.Error(error, "");
+                            ScannerLog.Logger.Error(error, "");
                             //GlobalData.AddTextToLogTab("\r\n" + "\r\n" + " error telegram thread(1)\r\n" + error.ToString());
                             Thread.Sleep(2500);
                         }
@@ -798,7 +798,7 @@ public class ThreadTelegramBotInstance
                 catch (Exception error)
                 {
                     // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
-                    GlobalData.Logger.Error(error, "");
+                    ScannerLog.Logger.Error(error, "");
                     GlobalData.AddTextToLogTab($"ERROR telegram thread {error.Message}");
                 }
                 await Task.Delay(250);
@@ -807,7 +807,7 @@ public class ThreadTelegramBotInstance
         catch (Exception error)
         {
             // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
-            GlobalData.Logger.Error(error, "");
+            ScannerLog.Logger.Error(error, "");
             GlobalData.AddTextToLogTab($"ERROR telegram thread {error.Message}");
         }
         GlobalData.AddTextToLogTab("\r\n" + "\r\n TELEGRAM THREAD EXIT " + token);

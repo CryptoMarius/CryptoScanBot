@@ -113,7 +113,7 @@ public class TradingViewSymbolWebSocket(string tickerName)
         catch (Exception)
         {
             //GlobalData.AddTextToLogTab($@"Exception {e.Message}");
-            //GlobalData.Logger.Error(e, "");
+            //ScannerLog.Logger.Error(e, "");
         }
     }
 
@@ -142,7 +142,7 @@ public class TradingViewSymbolWebSocket(string tickerName)
         catch (Exception)
         {
             //GlobalData.AddTextToLogTab($@"Exception {e.Message}");
-            //GlobalData.Logger.Error(e, "");
+            //ScannerLog.Logger.Error(e, "");
         }
     }
 
@@ -176,7 +176,7 @@ public class TradingViewSymbolWebSocket(string tickerName)
         catch (Exception)
         {
             //GlobalData.AddTextToLogTab($@"Exception {e.Message}");
-            //GlobalData.Logger.Error(e, "");
+            //ScannerLog.Logger.Error(e, "");
             return false;
         }
     }
@@ -223,7 +223,7 @@ public class TradingViewSymbolWebSocket(string tickerName)
         }
         catch (Exception)
         {
-            //GlobalData.Logger.Error(e, "");
+            //ScannerLog.Logger.Error(e, "");
             return "";
         }
     }

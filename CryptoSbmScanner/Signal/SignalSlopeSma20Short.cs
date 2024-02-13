@@ -4,7 +4,7 @@ using CryptoSbmScanner.Model;
 
 namespace CryptoSbmScanner.Signal;
 
-//#if EXTRASTRATEGIES
+#if EXTRASTRATEGIES
 public class SignalSlopeSma20Short : SignalCreateBase
 {
     public SignalSlopeSma20Short(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
@@ -128,4 +128,4 @@ public class SignalSlopeSma20Short : SignalCreateBase
 
 
 }
-//#endif
+#endif

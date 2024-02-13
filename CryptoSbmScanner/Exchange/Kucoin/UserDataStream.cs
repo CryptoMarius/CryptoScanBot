@@ -14,7 +14,7 @@ public class UserDataStream
     public async Task StopAsync()
     {
         if (_subscription == null)
-            return; // Task.CompletedTask;
+            return;
 
         GlobalData.AddTextToLogTab($"{Api.ExchangeName} Stopping user stream");
 
@@ -23,7 +23,7 @@ public class UserDataStream
         _subscription.ConnectionRestored -= ConnectionRestored;
 
         await socketClient.SpotApi.UnsubscribeAllAsync();
-        return; // Task.CompletedTask;
+        return;
     }
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
@@ -105,7 +105,7 @@ public class UserDataStream
     //    }
     //    catch (Exception error)
     //    {
-    //        GlobalData.Logger.Error(error, "");
+    //        ScannerLog.Logger.Error(error, "");
     //        GlobalData.AddTextToLogTab($"{Api.ExchangeName} ERROR: OrderUpdate " + error.ToString());
     //    }
     //}
@@ -163,7 +163,7 @@ public class UserDataStream
     //    }
     //    catch (Exception error)
     //    {
-    //        GlobalData.Logger.Error(error, "");
+    //        ScannerLog.Logger.Error(error, "");
     //        GlobalData.AddTextToLogTab($"{Api.ExchangeName} ERROR: AccountPositionMessage " + error.ToString());
     //    }
     //}
@@ -178,7 +178,7 @@ public class UserDataStream
     //    }
     //    catch (Exception error)
     //    {
-    //        GlobalData.Logger.Error(error, "");
+    //        ScannerLog.Logger.Error(error, "");
     //        GlobalData.AddTextToLogTab("ERROR: AccountBalanceUpdate " + error.ToString());
     //    }
     //}

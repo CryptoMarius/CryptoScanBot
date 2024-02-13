@@ -24,7 +24,7 @@ public static class TradingViewJsonParser
         }
         catch (Exception e)
         {
-            GlobalData.Logger.Error(e, "");
+            ScannerLog.Logger.Error(e, "");
             return null;
         }
     }

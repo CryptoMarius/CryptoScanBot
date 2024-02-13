@@ -281,7 +281,7 @@ public class BarometerTools
         }
         catch (Exception error)
         {
-            GlobalData.Logger.Error(error, "");
+            ScannerLog.Logger.Error(error, "");
             GlobalData.AddTextToLogTab("");
             GlobalData.AddTextToLogTab(error.ToString());
         }

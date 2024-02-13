@@ -373,7 +373,7 @@ public partial class FrmMain : Form
         // Via queue want afzonderlijk regels toevoegen kost relatief veel tijd
 
         text = text.TrimEnd();
-        GlobalData.Logger.Info(text);
+        ScannerLog.Logger.Info(text);
 
         if (text != "")
             text = DateTime.Now.ToLocalTime() + " " + text;
@@ -527,7 +527,7 @@ public partial class FrmMain : Form
         }
         catch (Exception error)
         {
-            GlobalData.Logger.Error(error, "");
+            ScannerLog.Logger.Error(error, "");
             GlobalData.AddTextToLogTab("ERROR settings " + error.ToString());
         }
     }
@@ -580,7 +580,7 @@ public partial class FrmMain : Form
         // Speed up adding signals
         if (GlobalData.SignalQueue.Count > 0 && !IsDisposed && GlobalData.ApplicationStatus != CryptoApplicationStatus.Disposing)
         {
-            Monitor.Enter(GlobalData.SignalQueue);
+            if (Monitor.TryEnter(GlobalData.SignalQueue))
             try
             {
                 List<CryptoSignal> signals = [];
@@ -617,7 +617,7 @@ public partial class FrmMain : Form
         // Speed up adding text
         if (logQueue.Count > 0 && !IsDisposed && GlobalData.ApplicationStatus != CryptoApplicationStatus.Disposing)
         {
-            Monitor.Enter(logQueue);
+            if (Monitor.TryEnter(logQueue))
             try
             {
                 List<CryptoSignal> signals = [];
@@ -654,7 +654,7 @@ public partial class FrmMain : Form
             }
             finally
             {
-                Monitor.Exit(logQueue);
+               Monitor.Exit(logQueue);
             }
         }
     }
@@ -980,7 +980,7 @@ public partial class FrmMain : Form
         }
         catch (Exception error)
         {
-            GlobalData.Logger.Error(error, "");
+            ScannerLog.Logger.Error(error, "");
             GlobalData.AddTextToLogTab("ERROR settings " + error.ToString());
         }
 

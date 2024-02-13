@@ -52,7 +52,7 @@ static public class ThreadSpeechPlayer
         }
         catch (Exception error)
         {
-            GlobalData.Logger.Error(error, "");
+            ScannerLog.Logger.Error(error, "");
             GlobalData.AddTextToLogTab("");
             GlobalData.AddTextToLogTab(error.ToString(), true);
         }

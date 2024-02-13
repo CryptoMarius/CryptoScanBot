@@ -53,7 +53,7 @@ public class ThreadBalanceSymbols
             catch (Exception error)
             {
                 // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
-                GlobalData.Logger.Error(error, "");
+                ScannerLog.Logger.Error(error, "");
                 GlobalData.AddTextToLogTab("");
                 GlobalData.AddTextToLogTab(symbol.Name + " error symbol balance thread" + error.ToString());
             }

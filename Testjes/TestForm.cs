@@ -2009,7 +2009,7 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
         }
         catch (Exception error)
         {
-            GlobalData.Logger.Error(error, "");
+            ScannerLog.Logger.Error(error, "");
             GlobalData.AddTextToLogTab("error webhook " + error.ToString()); // symbol.Text + " " + 
         }
     }
@@ -2482,7 +2482,7 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
                                 }
                                 catch (Exception error)
                                 {
-                                    GlobalData.Logger.Error(error, "");
+                                    ScannerLog.Logger.Error(error, "");
                                     GlobalData.AddTextToLogTab("error back testing " + error.ToString()); // symbol.Text + " " + 
                                 }
                             }

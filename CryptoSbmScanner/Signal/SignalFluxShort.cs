@@ -4,8 +4,7 @@ using CryptoSbmScanner.Model;
 
 namespace CryptoSbmScanner.Signal;
 
-
-
+#if EXTRASTRATEGIES
 public class SignalFluxShort: SignalSbmBaseLong
 {
     public SignalFluxShort(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
@@ -46,5 +45,5 @@ public class SignalFluxShort: SignalSbmBaseLong
 
         return false;
     }
-
 }
+#endif

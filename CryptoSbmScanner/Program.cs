@@ -11,7 +11,7 @@ static class Program
     static void Main()
     {
         // Vroeger dan alle andere..
-        GlobalData.InitializeLogging();
+        ScannerLog.InitializeLogging();
 
         // Add the event handler for handling UI thread exceptions to the event.
         Application.ThreadException += new ThreadExceptionEventHandler(OnThreadException);
@@ -34,19 +34,16 @@ static class Program
         //MessageBox.Show("UnhandledException!!!!");
         Exception e = (Exception)eventArgs.ExceptionObject;
         if (eventArgs.IsTerminating)
-            GlobalData.Logger.Error(e, "UnhandledException (terminating)");
+            ScannerLog.Logger.Error(e, "UnhandledException (terminating)");
         else
-            GlobalData.Logger.Error(e, "UnhandledException (not terminating)");
-        //Application.Exit();
+            ScannerLog.Logger.Error(e, "UnhandledException (not terminating)");
     }
 
     static void OnThreadException(object sender, ThreadExceptionEventArgs eventArgs)
     {
-        GlobalData.Logger.Info("");
-        GlobalData.Logger.Info("Error " + eventArgs.Exception.Message);
-        GlobalData.Logger.Error("");
-        GlobalData.Logger.Error(eventArgs.Exception, "Global Thread Exception");
-        //MessageBox.Show("UIThreadException!!!!","UIThreadException!!!!", MessageBoxButtons.AbortRetryIgnore, MessageBoxIcon.Stop);
-        //Application.Exit();
+        ScannerLog.Logger.Info("");
+        ScannerLog.Logger.Info("Error " + eventArgs.Exception.Message);
+        ScannerLog.Logger.Error("");
+        ScannerLog.Logger.Error(eventArgs.Exception, "Global Thread Exception");
     }
 }

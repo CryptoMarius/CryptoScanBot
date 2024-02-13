@@ -297,7 +297,7 @@ public class FetchCandles
         }
         catch (Exception error)
         {
-            GlobalData.Logger.Error(error, "");
+            ScannerLog.Logger.Error(error, "");
             GlobalData.AddTextToLogTab("error getting candles " + error.ToString()); // symbol.Text + " " + 
         }
     }
@@ -370,7 +370,7 @@ public class FetchCandles
             }
             catch (Exception error)
             {
-                GlobalData.Logger.Error(error, "");
+                ScannerLog.Logger.Error(error, "");
                 GlobalData.AddTextToLogTab("error get prices " + error.ToString() + "\r\n");
             }
         }

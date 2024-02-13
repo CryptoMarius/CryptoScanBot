@@ -1846,7 +1846,7 @@ public class PositionMonitor : IDisposable
         catch (Exception error)
         {
             // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
-            GlobalData.Logger.Error(error, "");
+            ScannerLog.Logger.Error(error, "");
             GlobalData.AddTextToLogTab($"{Symbol.Name} error Monitor {error.Message}");
         }
     }

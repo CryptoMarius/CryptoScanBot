@@ -131,7 +131,7 @@ public class ExcelSymbolDump : ExcelBase
         }
         catch (Exception error)
         {
-            GlobalData.Logger.Error(error, "");
+            ScannerLog.Logger.Error(error, "");
             GlobalData.AddTextToLogTab("ERROR candle dump " + error.ToString());
         }
     }

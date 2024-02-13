@@ -73,7 +73,7 @@ public class FetchTradeForOrder
         }
         catch (Exception error)
         {
-            GlobalData.Logger.Error(error, "");
+            ScannerLog.Logger.Error(error, "");
             GlobalData.AddTextToLogTab("error get trades " + error.ToString()); // symbol.Text + " " + 
         }
 

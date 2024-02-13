@@ -4,6 +4,8 @@ Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep
 
 
 Scanner:
+  Scanner - Prive gegevens zoals telegram api en exchange apikey en dergelijke in een ander versleuteld bestand opslagen.
+  Dan kun je de settings.json delen met iemand anders (niemand zit te wachten op per ongeluk gepubliceerde api key's..
 - Scanner - TODO: Scanner - De overgang van de 1.8 naar de 1.9 werkt niet (crash)
 - Scanner - TODO: Ingevoerde marktrend% controleren/valideren, het eerste getal moet lager zijn dan het tweede getal, swap?
 - Scanner - locking inbouwen zodat dezelfde scanner niet twee keer opgestart kan worden
@@ -34,6 +36,8 @@ Scanner:
 
 
 Trading:
+- Trading - Instappen via de bid of ask prijs (icm long/short)
+- Trading - De trader zet soms (zeg maar gerust in een enkele keer) correct afgehandelde posities weg als zijnde een takeover. Daar is/was geen aanleiding voor dus dat moet wel een bug zijn!
 - Trading - Controleren of de userstream ticker nog loopt (detectie van order aanpassingen c.q. trades)
 - Trading - In de open posities is de kolom BE perc te hoog indien er een JoJo heeft plaatsgevonden (invested=42, returned=39, BE% = 14.49%)
 - Trading - Telegram commando's, uitbreiden zodat het aantal slots voor short en long ingesteld kan worden

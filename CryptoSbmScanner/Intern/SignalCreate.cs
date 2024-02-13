@@ -99,9 +99,10 @@ public class SignalCreate
                         aboveBollingerBandsUpper++;
                 }
             }
-            else // een belachelijke value zodat het eruit valt
+            else 
             {
-                GlobalData.AddTextToLogTab(string.Format("Analyse {0} {1} {2:N8} heeft geen candledata of geen BB?", signal.Symbol.Name, CandleLast.DateLocal.ToString(), CandleLast.Close));
+                // Toch maar even melden, want dit is niet normaal..
+                GlobalData.AddTextToLogTab($"Analyse {signal.Symbol.Name} {CandleLast.DateLocal.ToString()} {CandleLast.Close:N8} iteration={iterations} heeft geen candledata of geen BB?");
             }
 
             iterations++;
@@ -285,7 +286,7 @@ public class SignalCreate
         }
         catch (Exception error)
         {
-            GlobalData.Logger.Error(error, "");
+            ScannerLog.Logger.Error(error, "");
             GlobalData.AddTextToLogTab("");
             GlobalData.AddTextToLogTab(error.ToString(), true);
 
@@ -742,7 +743,7 @@ public class SignalCreate
         }
         catch (Exception error)
         {
-            GlobalData.Logger.Error(error, "");
+            ScannerLog.Logger.Error(error, "");
             GlobalData.AddTextToLogTab("");
             GlobalData.AddTextToLogTab(error.ToString(), true);
             return false;

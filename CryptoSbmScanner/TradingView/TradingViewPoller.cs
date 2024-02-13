@@ -84,7 +84,7 @@ public class TradingViewSymbolInfo
         catch (Exception e)
         {
             GlobalData.AddTextToLogTab($@"Exception {e.Message}");
-            GlobalData.Logger.Error(e, "");
+            ScannerLog.Logger.Error(e, "");
         }
     }
 

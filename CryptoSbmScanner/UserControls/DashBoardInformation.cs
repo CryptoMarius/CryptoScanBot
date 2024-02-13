@@ -465,7 +465,7 @@ public partial class DashBoardInformation : UserControl
         }
         catch (Exception error)
         {
-            GlobalData.Logger.Error(error, "");
+            ScannerLog.Logger.Error(error, "");
             GlobalData.AddTextToLogTab(error.ToString(), true);
         }
     }

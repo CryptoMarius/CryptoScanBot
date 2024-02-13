@@ -80,7 +80,7 @@ public class ThreadLoadData
     //                }
     //                catch (Exception error)
     //                {
-    //                    GlobalData.Logger.Error(error, "");
+    //                    ScannerLog.Logger.Error(error, "");
     //                    GlobalData.AddTextToLogTab(error.ToString());
     //                    throw;
     //                }
@@ -425,7 +425,7 @@ public class ThreadLoadData
                 //        }
                 //        catch (Exception error)
                 //        {
-                //            GlobalData.Logger.Error(error, "");
+                //            ScannerLog.Logger.Error(error, "");
                 //            GlobalData.AddTextToLogTab(error.ToString());
                 //            throw;
                 //        }
@@ -590,7 +590,7 @@ public class ThreadLoadData
         }
         catch (Exception error)
         {
-            GlobalData.Logger.Error(error, "");
+            ScannerLog.Logger.Error(error, "");
             GlobalData.AddTextToLogTab(error.ToString());
             throw;
         }
