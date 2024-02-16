@@ -12,8 +12,6 @@ public class ThreadMonitorOrder
     private readonly CancellationTokenSource cancellationToken = new();
     private readonly BlockingCollection<(CryptoSymbol symbol, CryptoOrderType ordertype, CryptoOrderSide side, CryptoOrderStatus status, CryptoTrade trade)> Queue = new();
 
-     
-
     public ThreadMonitorOrder()
     {
     }
@@ -39,7 +37,8 @@ public class ThreadMonitorOrder
             {
                 // Het gaat te snel, de trade is blijkbaar nog niet in het systeem van de exchange verwerkt! (ByBit, 31-10-2023)
                 // De optie herberekenen krijgt de order wel binnen
-                Thread.Sleep(2500);
+                await Task.Delay(2500);
+
 
                 //string text = JsonSerializer.Serialize(data, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = false }).Trim();
                 //GlobalData.AddTextToLogTab(string.Format("{0} ThreadMonitorOrder#1 TradeId={1} {2} quantity={3} price={4} text={5}", data.symbol, 
