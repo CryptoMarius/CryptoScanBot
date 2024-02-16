@@ -56,12 +56,12 @@ public class TradingViewSymbolInfo
             var result = socket.ReceiveData().Result;
             if (result)
             {
-                Thread.Sleep(1000);
+                await Task.Delay(1000);
             }
             else
             {
                 // Failed, connect again..
-                Thread.Sleep(100);
+                await Task.Delay(100);
                 socket = new TradingViewSymbolWebSocket(tickerName);
                 socket.DataFetched += OnValueFetched;
                 socket.ConnectWebSocketAndRequestSession().Wait();

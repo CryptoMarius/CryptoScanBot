@@ -66,7 +66,7 @@ public class FearAndGreatSymbolInfo
                 //GlobalData.FearAndGreedIndex.LastValue = decimal.Parse(FearAndGreedIndex);
             }
 
-            Thread.Sleep(60 * 1000);
+            await Task.Delay(60 * 1000);
         }
     }
 }
