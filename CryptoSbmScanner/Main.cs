@@ -18,6 +18,7 @@ namespace CryptoSbmScanner;
 
 public partial class FrmMain : Form
 {
+    private bool FormIsClosing = false;
     private readonly ColorSchemeTest theme = new();
 
     public class ColorSchemeTest
@@ -26,54 +27,6 @@ public partial class FrmMain : Form
         public Color Foreground { get; set; } = Color.White;
     }
 
-    //private decimal CorrectEntryQuantiryIfWayLess(decimal quantityTickSize, decimal entryValue, decimal entryQuantity, decimal price)
-    //{
-    //    // Is er een grote afwijking, wellicht iets erbij optellen?
-    //    decimal clampedEntryValue = entryQuantity * price;
-    //    decimal p = 100 * (clampedEntryValue - entryValue) / entryValue;
-    //    if (p < -25)
-    //    {
-    //        decimal clampedNewEntryQuantity = entryQuantity + quantityTickSize;
-    //        decimal clampedNewEntryValue = clampedNewEntryQuantity * price;
-    //        p = 100 * (clampedNewEntryValue - entryValue) / entryValue;
-    //        if (p < 10) // 10% erboven is okay?
-    //        {
-    //            // is okay
-    //            entryQuantity = clampedNewEntryQuantity;
-    //        }
-    //    }
-    //    return entryQuantity;
-    //}
-
-
-    //public void Klad()
-    //{
-    //    decimal entryPrice = 28.246m;
-    //    entryPrice = entryPrice.Clamp(0.001m, 9999m, 0.001m);
-
-    //    decimal stepSize = 0.1m;
-    //    decimal entryValue = 5.25m;
-
-    //    decimal entryQuantity = entryValue / entryPrice;
-    //    entryQuantity = entryQuantity.Clamp(0.1m, 9999m, 0.1m);
-
-    //    entryQuantity = CorrectEntryQuantiryIfWayLess(stepSize, entryValue, entryQuantity, entryPrice);
-
-    //    //decimal clampedValue = clampedQuantity * price;
-    //    //decimal p = 100 * (clampedValue - valueUsdt) / valueUsdt;
-
-    //    //if (p < -10)
-    //    //{
-    //    //    decimal clampedQuantity2 = clampedQuantity + stepSize;
-    //    //    decimal clampedValue2 = clampedQuantity2 * price;
-    //    //    p = 100 * (clampedValue2 - valueUsdt) / valueUsdt;
-    //    //    if (p < 10) // 10% erboven is okay?
-    //    //    {
-    //    //        // is okay
-    //    //        clampedValue = clampedValue2;
-    //    //    }
-    //    //}
-    //}
 
     public FrmMain()
     {
@@ -185,7 +138,7 @@ public partial class FrmMain : Form
     {
         // Save Window coordinates and screen
         ApplicationTools.SaveWindowLocation(this);
-
+        FormIsClosing = true;
     }
 
     private void FrmMain_Load(object sender, EventArgs e)
@@ -331,8 +284,7 @@ public partial class FrmMain : Form
 
             if (components != null)
             {
-                GlobalData.ApplicationStatus = CryptoApplicationStatus.Disposing;
-                LinkTools.WebViewDummy.Dispose(); // dirty
+                LinkTools.WebViewDummy.Dispose();
                 components.Dispose();
             }
         }
@@ -574,11 +526,8 @@ public partial class FrmMain : Form
 
     private void TimerAddSignalsAndLog_Tick(object sender, EventArgs e)
     {
-        //if (components == null)
-        //    return;
-
         // Speed up adding signals
-        if (GlobalData.SignalQueue.Count > 0 && !IsDisposed && GlobalData.ApplicationStatus != CryptoApplicationStatus.Disposing)
+        if (GlobalData.SignalQueue.Count > 0 && !FormIsClosing)
         {
             if (Monitor.TryEnter(GlobalData.SignalQueue))
             try
@@ -599,7 +548,7 @@ public partial class FrmMain : Form
                     {
                         Invoke(new Action(() =>
                         {
-                            if (!IsDisposed && GlobalData.ApplicationStatus != CryptoApplicationStatus.Disposing)
+                            if (!FormIsClosing)
                             {
                                 ListViewSignalsAddSignalRange(signals);
                             }
@@ -615,7 +564,7 @@ public partial class FrmMain : Form
 
 
         // Speed up adding text
-        if (logQueue.Count > 0 && !IsDisposed && GlobalData.ApplicationStatus != CryptoApplicationStatus.Disposing)
+        if (logQueue.Count > 0 && !FormIsClosing)
         {
             if (Monitor.TryEnter(logQueue))
             try
@@ -623,8 +572,8 @@ public partial class FrmMain : Form
                 List<CryptoSignal> signals = [];
                 StringBuilder stringBuilder = new();
 
-                while (logQueue.Count > 0 && !IsDisposed && GlobalData.ApplicationStatus != CryptoApplicationStatus.Disposing)
-                {
+                while (logQueue.Count > 0 && !FormIsClosing)
+                    {
                     string text = logQueue.Dequeue();
                     stringBuilder.AppendLine(text);
                 }
@@ -635,19 +584,15 @@ public partial class FrmMain : Form
                     Invoke(new Action(() =>
                     {
                         string text = stringBuilder.ToString().TrimEnd() + "\r\n";
-                        if (!this.IsDisposed && GlobalData.ApplicationStatus != CryptoApplicationStatus.Disposing && IsHandleCreated)
+                        if (!FormIsClosing)
                         {
                             if (InvokeRequired)
                                 Invoke((System.Windows.Forms.MethodInvoker)(() =>
                                 {
-                                    if (!TextBoxLog.IsDisposed)
-                                        TextBoxLog.AppendText(text);
+                                    TextBoxLog.AppendText(text);
                                 }));
                             else
-                            {
-                                if (!TextBoxLog.IsDisposed)
-                                    TextBoxLog.AppendText(text);
-                            }
+                                TextBoxLog.AppendText(text);
                         }
                     }));
                 });
