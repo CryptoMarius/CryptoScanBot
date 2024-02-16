@@ -215,6 +215,19 @@ public static class SignalHelper
             AnalyzeLongType = typeof(SignalWghbmLong),
             AnalyzeShortType = typeof(SignalWghbmShort),
         });
+
+
+        //***************************************************
+        // EMA cross (9, 26)
+        //***************************************************
+        AlgorithmDefinitionList.Add(new AlgorithmDefinition()
+        {
+            Name = "ema cross",
+            Strategy = CryptoSignalStrategy.EmaCross926,
+            AnalyzeLongType = typeof(SignalEmaCross926Long),
+            AnalyzeShortType = typeof(SignalEmaCross926Short),
+        });
+        
 #endif
 
 
