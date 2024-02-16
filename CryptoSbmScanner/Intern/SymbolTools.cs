@@ -210,6 +210,9 @@ public class SymbolTools
     //}
 
 
+    /// <summary>
+    /// Is er nog een slot beschikbaar (het aantal openstaande posities in 1 munt)
+    /// </summary>
     public static bool CheckAvailableSlotsSymbol(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, int slotLimit, out string reaction)
     {
         // Zijn er slots beschikbaar?
@@ -231,10 +234,11 @@ public class SymbolTools
         return true;
     }
 
+    /// <summary>
+    /// Is er nog een slot beschikbaar (het aantal openstaande posities ten opzichte van de configuratie)
+    /// </summary>
     public static bool CheckAvailableSlotsLongShort(CryptoTradeAccount tradeAccount, CryptoTradeSide side, int slotLimit, out string reaction)
     {
-        // Zijn er slots beschikbaar?
-
         int slotsOccupied = 0;
         foreach (var positionList in tradeAccount.PositionList.Values)
         {
@@ -254,6 +258,7 @@ public class SymbolTools
         reaction = "";
         return true;
     }
+
 
     public static bool CheckAvailableSlots(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoTradeSide side, out string reaction)
     {
