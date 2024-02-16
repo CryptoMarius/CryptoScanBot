@@ -776,21 +776,21 @@ public class ThreadTelegramBotInstance
                             // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
                             ScannerLog.Logger.Error(error.Message);
                             //GlobalData.AddTextToLogTab("\r\n" + "\r\n" + " error telegram thread(1)\r\n" + error.ToString());
-                            Thread.Sleep(5000);
+                            await Task.Delay(5000);
                         }
                         catch (RequestException error)
                         {
                             // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
                             ScannerLog.Logger.Error(error.Message);
                             //GlobalData.AddTextToLogTab("\r\n" + "\r\n" + " error telegram thread(1)\r\n" + error.ToString());
-                            Thread.Sleep(5000);
+                            await Task.Delay(5000);
                         }
                         catch (Exception error)
                         {
                             // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
                             ScannerLog.Logger.Error(error, "");
                             //GlobalData.AddTextToLogTab("\r\n" + "\r\n" + " error telegram thread(1)\r\n" + error.ToString());
-                            Thread.Sleep(2500);
+                            await Task.Delay(2500);
                         }
 
                     }
