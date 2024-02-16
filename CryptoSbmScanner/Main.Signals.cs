@@ -4,6 +4,11 @@ using CryptoSbmScanner.Model;
 
 namespace CryptoSbmScanner;
 
+// TODO: Convert this into a Control and hide most of this stuff..
+// TODO: Test object binding and IObservable stuff?
+// https://stackoverflow.com/questions/11892585/ui-isnt-resembling-observablecollection?rq=3
+
+
 public partial class FrmMain
 {
     private static int columnForPriceDiff;
@@ -585,46 +590,57 @@ public partial class FrmMain
 
     private void TimerClearOldSignals_Tick(object sender, EventArgs e)
     {
-        // Circa 1x per minuut de verouderde signalen opruimen
-        if (listViewSignals.Items.Count > 0)
+        // Avoid duplicate calls (when the list is way too long)
+        if (Monitor.TryEnter(listViewSignals))
         {
-            bool startedUpdating = false;
             try
             {
-                ListViewItem.ListViewSubItem subItem;
-
-                for (int index = listViewSignals.Items.Count - 1; index >= 0; index--)
+                // Circa 1x per minuut de verouderde signalen opruimen
+                if (listViewSignals.Items.Count > 0)
                 {
-                    ListViewItem item = listViewSignals.Items[index];
-                    CryptoSignal signal = (CryptoSignal)item.Tag;
-
-                    DateTime expirationDate = signal.CloseDate.AddSeconds(GlobalData.Settings.General.RemoveSignalAfterxCandles * signal.Interval.Duration);
-                    if (expirationDate < DateTime.UtcNow)
+                    bool startedUpdating = false;
+                    try
                     {
-                        if (!startedUpdating)
+                        ListViewItem.ListViewSubItem subItem;
+
+                        for (int index = listViewSignals.Items.Count - 1; index >= 0; index--)
                         {
-                            listViewSignals.BeginUpdate();
-                            startedUpdating = true;
-                        }
-                        listViewSignals.Items.RemoveAt(index);
-                    }
-                    else
-                    {
-                        subItem = item.SubItems[columnForPriceDiff];
-                        //subItem.Text = signal.Symbol.LastPrice.ToString0(signal.Symbol.DisplayFormat);
-                        subItem.Text = signal.PriceDiff?.ToString("N2");
-                        if (signal.Symbol.LastPrice > signal.Price)
-                            subItem.ForeColor = Color.Green;
-                        else if (signal.Symbol.LastPrice < signal.Price)
-                            subItem.ForeColor = Color.Red;
-                    }
+                            ListViewItem item = listViewSignals.Items[index];
+                            CryptoSignal signal = (CryptoSignal)item.Tag;
 
+                            DateTime expirationDate = signal.CloseDate.AddSeconds(GlobalData.Settings.General.RemoveSignalAfterxCandles * signal.Interval.Duration);
+                            if (expirationDate < DateTime.UtcNow)
+                            {
+                                if (!startedUpdating)
+                                {
+                                    listViewSignals.BeginUpdate();
+                                    startedUpdating = true;
+                                }
+                                listViewSignals.Items.RemoveAt(index);
+                            }
+                            else
+                            {
+                                subItem = item.SubItems[columnForPriceDiff];
+                                //subItem.Text = signal.Symbol.LastPrice.ToString0(signal.Symbol.DisplayFormat);
+                                subItem.Text = signal.PriceDiff?.ToString("N2");
+                                if (signal.Symbol.LastPrice > signal.Price)
+                                    subItem.ForeColor = Color.Green;
+                                else if (signal.Symbol.LastPrice < signal.Price)
+                                    subItem.ForeColor = Color.Red;
+                            }
+
+                        }
+                    }
+                    finally
+                    {
+                        if (startedUpdating)
+                            listViewSignals.EndUpdate();
+                    }
                 }
             }
             finally
             {
-                if (startedUpdating)
-                    listViewSignals.EndUpdate();
+                Monitor.Exit(listViewSignals);
             }
         }
     }
