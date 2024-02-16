@@ -32,15 +32,15 @@ static public class TradeHandler
             string msgInfo = $"{symbol.Name} side={orderSide} type={orderType} status={orderStatus} order={data.OrderId} " +
                 $"trade={data.TradeId} price={data.Price.ToString0()} quantity={data.Quantity.ToString0()} value={data.QuoteQuantity.ToString0()}";
             
-            // Extra logging ingeschakeld
-            s = string.Format("handletrade#1 {0}", msgInfo);
-            if (data.TradeAccount.TradeAccountType == CryptoTradeAccountType.BackTest)
-                s += string.Format(" ({0})", data.TradeAccount.Name);
-            else if (data.TradeAccount.TradeAccountType == CryptoTradeAccountType.PaperTrade)
-                s += string.Format(" ({0})", data.TradeAccount.Name);
-            // Teveel logging vermijden (zo'n trailing order veroorzaakt ook een cancel)
-            if (orderStatus != CryptoOrderStatus.Canceled)
-                GlobalData.AddTextToLogTab(s);
+            //// Extra logging ingeschakeld
+            //s = string.Format("handletrade#1 {0}", msgInfo);
+            //if (data.TradeAccount.TradeAccountType == CryptoTradeAccountType.BackTest)
+            //    s += string.Format(" ({0})", data.TradeAccount.Name);
+            //else if (data.TradeAccount.TradeAccountType == CryptoTradeAccountType.PaperTrade)
+            //    s += string.Format(" ({0})", data.TradeAccount.Name);
+            //// Teveel logging vermijden (zo'n trailing order veroorzaakt ook een cancel)
+            //if (orderStatus != CryptoOrderStatus.Canceled)
+            //    GlobalData.AddTextToLogTab(s);
 
 
 
@@ -65,10 +65,10 @@ static public class TradeHandler
                     if (posTemp.Orders.TryGetValue(data.OrderId, out step))
                     {
                         position = posTemp;
-                        s = $"handletrade#2 {msgInfo} positie gevonden, name={step.Side} id={step.Id} positie.status={position.Status} (memory)";
-                        // Teveel logging vermijden (zo'n trailing order veroorzaakt ook een cancel)
-                        if (orderStatus != CryptoOrderStatus.Canceled)
-                           GlobalData.AddTextToLogTab(s);
+                        //s = $"handletrade#2 {msgInfo} positie gevonden, name={step.Side} id={step.Id} positie.status={position.Status} (memory)";
+                        //// Teveel logging vermijden (zo'n trailing order veroorzaakt ook een cancel)
+                        //if (orderStatus != CryptoOrderStatus.Canceled)
+                        //   GlobalData.AddTextToLogTab(s);
                         break;
                     }
                 }
@@ -138,10 +138,10 @@ static public class TradeHandler
             if (part == null)
                 throw new Exception("Probleem met het vinden van een part");
 
-            s = $"handletrade#5 {msgInfo} step gevonden, name={step.Side} id={step.Id} positie.status={position.Status}";
-            // Teveel logging vermijden (zo'n trailing order veroorzaakt ook een cancel)
-            if (orderStatus != CryptoOrderStatus.Canceled)
-                GlobalData.AddTextToLogTab(s);
+            //s = $"handletrade#5 {msgInfo} step gevonden, name={step.Side} id={step.Id} positie.status={position.Status}";
+            //// Teveel logging vermijden (zo'n trailing order veroorzaakt ook een cancel)
+            //if (orderStatus != CryptoOrderStatus.Canceled)
+            //    GlobalData.AddTextToLogTab(s);
 
 
             // *********************************************************************
@@ -261,8 +261,11 @@ static public class TradeHandler
                         GlobalData.AddTextToLogTab(s);
                         GlobalData.AddTextToTelegram(s, position);
 
-                        if (position.Status == CryptoPositionStatus.Ready && position.Invested > 0 && position.Quantity == 0)
+                        if (position.Invested > 0 && position.Quantity == 0)
+                        {
+                            position.DelayUntil = position.UpdateTime.Value.AddSeconds(10);
                             GlobalData.ThreadDoubleCheckPosition.AddToQueue(position);
+                        }
                         return;
                     }
 
@@ -276,6 +279,13 @@ static public class TradeHandler
 
                         position.Reposition = true;
                         databaseThread.Connection.Update<CryptoPosition>(position);
+
+                        if (position.Invested > 0 && position.Quantity == 0)
+                        {
+                            position.DelayUntil = position.UpdateTime.Value.AddSeconds(10);
+                            GlobalData.ThreadDoubleCheckPosition.AddToQueue(position);
+                        }
+
                         return;
                     }
                 }
