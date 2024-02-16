@@ -39,12 +39,17 @@ public partial class FrmMain
         ContextMenuStripPositionsOpen.Items.Add(menuCommand);
 
         menuCommand = new ToolStripMenuItem();
-        menuCommand.Text = "DCA toevoegen aan positie";
+        menuCommand.Text = "Extra DCA toevoegen aan de positie";
         menuCommand.Click += CommandPositionsOpenCreateAdditionalDca;
         ContextMenuStripPositionsOpen.Items.Add(menuCommand);
 
         menuCommand = new ToolStripMenuItem();
-        menuCommand.Text = "Positie profit nemen (buggy)";
+        menuCommand.Text = "Openstaande DCA van positie annuleren";
+        menuCommand.Click += CommandPositionsOpenRemoveAdditionalDca;
+        ContextMenuStripPositionsOpen.Items.Add(menuCommand);
+
+        menuCommand = new ToolStripMenuItem();
+        menuCommand.Text = "Positie profit nemen (indien mogelijk)";
         menuCommand.Click += CommandPositionsOpenLastPartTakeProfit;
         ContextMenuStripPositionsOpen.Items.Add(menuCommand);
 
@@ -466,7 +471,7 @@ public partial class FrmMain
             await TradeTools.LoadTradesfromDatabaseAndExchange(databaseThread, position);
             TradeTools.CalculatePositionResultsViaTrades(databaseThread, position);
             FillItemOpen(position, item);
-            GlobalData.AddTextToLogTab($"{position.Symbol.Name} handmatig positie herberekend");
+            GlobalData.AddTextToLogTab($"{position.Symbol.Name} handmatig positie {position.Id} herberekend");
         }
 
     }
@@ -499,12 +504,12 @@ public partial class FrmMain
 
                 listViewPositionsOpen.Items.Remove(item);
                 PositionTools.RemovePosition(position.TradeAccount, position, false);
-                GlobalData.AddTextToLogTab($"{position.Symbol.Name} handmatig positie uit database verwijderd");
+                GlobalData.AddTextToLogTab($"{position.Symbol.Name} handmatig positie {position.Id} uit de database verwijderd");
             }
             catch (Exception error)
             {
                 ScannerLog.Logger.Error(error, "");
-                GlobalData.AddTextToLogTab($"error deleteing position {error.Message}");
+                GlobalData.AddTextToLogTab($"error deleting position {position.Id} {error.Message}");
             }
         }
     }
@@ -564,9 +569,84 @@ public partial class FrmMain
             // De positie uitbreiden nalv een nieuw signaal (de xe bijkoop wordt altijd een aparte DCA)
             PositionTools.ExtendPosition(databaseThread, position, CryptoPartPurpose.Dca, position.Interval, position.Strategy, 
                 CryptoEntryOrProfitMethod.FixedPercentage, price, DateTime.UtcNow, true);
-            GlobalData.AddTextToLogTab($"{position.Symbol.Name} handmatig een DCA toegevoegd");
+            GlobalData.AddTextToLogTab($"{position.Symbol.Name} handmatig een DCA toegevoegd aan positie {position.Id}");
 
             FillItemOpen(position, item);
+
+
+            // Er is een 1m candle gearriveerd, acties adhv deze candle..
+            var symbolPeriod = position.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
+            if (symbolPeriod.CandleList.Count > 0)
+            {
+                var lastCandle1m = symbolPeriod.CandleList.Values.Last();
+                PositionMonitor positionMonitor = new(position.Symbol, lastCandle1m);
+                await positionMonitor.HandlePosition(position);
+            }
+        }
+
+    }
+
+
+    private async void CommandPositionsOpenRemoveAdditionalDca(object sender, EventArgs e)
+    {
+        if (listViewPositionsOpen.SelectedItems.Count > 0)
+        {
+            ListViewItem item = listViewPositionsOpen.SelectedItems[0];
+            CryptoPosition position = (CryptoPosition)item.Tag;
+
+            using CryptoDatabase databaseThread = new();
+            databaseThread.Connection.Open();
+
+            // Controleer de orders, en herbereken het geheel
+            PositionTools.LoadPosition(databaseThread, position);
+            await TradeTools.LoadTradesfromDatabaseAndExchange(databaseThread, position);
+            TradeTools.CalculatePositionResultsViaTrades(databaseThread, position);
+
+            // Er is een 1m candle gearriveerd, acties adhv deze candle..
+            var symbolPeriod = position.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
+            if (symbolPeriod.CandleList.Count > 0)
+            {
+                var lastCandle1m = symbolPeriod.CandleList.Values.Last();
+                long lastCandle1mCloseTime = lastCandle1m.OpenTime + 60;
+                DateTime lastCandle1mCloseTimeDate = CandleTools.GetUnixDate(lastCandle1mCloseTime);
+
+                PositionMonitor positionMonitor = new(position.Symbol, lastCandle1m);
+                await positionMonitor.HandlePosition(position);
+
+
+                var entryOrderSide = position.GetEntryOrderSide();
+                foreach (CryptoPositionPart part in position.Parts.Values.ToList())
+                {
+                    if (!part.CloseTime.HasValue && part.Purpose == CryptoPartPurpose.Dca)
+                    {
+                        foreach (CryptoPositionStep step in part.Steps.Values.ToList())
+                        {
+                            if (!step.CloseTime.HasValue && step.Side == entryOrderSide)
+                            {
+                                var (cancelled, tradeParams) = await TradeTools.CancelOrder(databaseThread, position, part, step, lastCandle1mCloseTimeDate, CryptoOrderStatus.TrailingChange);
+                                if (!cancelled || GlobalData.Settings.Trading.LogCanceledOrders)
+                                    ExchangeBase.Dump(position, cancelled, tradeParams, $"annuleren vanwege annuleren van DCA positie {position.Id}");
+                                else
+                                {
+                                    step.CloseTime = DateTime.UtcNow;
+                                    step.Status = CryptoOrderStatus.ManuallyByUser;
+                                    databaseThread.Connection.Update<CryptoPositionStep>(step);
+
+                                    part.CloseTime = DateTime.UtcNow;
+                                    databaseThread.Connection.Update<CryptoPositionPart>(part);
+
+                                    position.ActiveDca = false;
+                                    databaseThread.Connection.Update<CryptoPosition>(position);
+
+                                    GlobalData.AddTextToLogTab($"{position.Symbol.Name} positie {position.Id} handmatig de openstaande DCA {part.PartNumber} annuleren");
+                                }
+                            }
+                        }
+                    }
+                }
+
+                FillItemOpen(position, item);
+            }
         }
 
     }
@@ -632,14 +712,14 @@ public partial class FrmMain
 
                             var (cancelled, cancelParams) = await TradeTools.CancelOrder(databaseThread, position, part, step, DateTime.UtcNow, CryptoOrderStatus.ManuallyByUser);
                             if (!cancelled || GlobalData.Settings.Trading.LogCanceledOrders)
-                                ExchangeBase.Dump(position, cancelled, cancelParams, "annuleren vanwege handmatige TP");
+                                ExchangeBase.Dump(position, cancelled, cancelParams, $"positie {position.Id} annuleren vanwege handmatige TP");
 
                             if (cancelled)
                             {
                                 price = price.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
                                 await TradeTools.PlaceTakeProfitOrderAtPrice(databaseThread, position, part, price, DateTime.UtcNow, "manually placing");
                                 FillItemOpen(position, item);
-                                GlobalData.AddTextToLogTab($"{position.Symbol.Name} {part.PartNumber} handmatig profit genomen");
+                                GlobalData.AddTextToLogTab($"{position.Symbol.Name} positie {position.Id} part={part.PartNumber} handmatig profit genomen");
 
                                 break;
                             }
