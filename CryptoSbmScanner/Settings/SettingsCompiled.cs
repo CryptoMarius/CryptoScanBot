@@ -88,7 +88,7 @@ public class SettingsCompiled
 
         // Market trend% (min..max), er is maar 1 aanwezig
         MarketTrend.Clear();
-        if (settings.MarketTrend.List.Any())
+        if (settings.MarketTrend.List.Count != 0)
         {
             foreach (var (minValue, maxValue) in settings.MarketTrend.List)
                 MarketTrend.Add((minValue, maxValue));
@@ -124,7 +124,7 @@ public class SettingsCompiled
 
     public MatchBlackAndWhiteList InBlackList(string name)
     {
-        if (!BlackList.Any())
+        if (BlackList.Count == 0)
             return MatchBlackAndWhiteList.Empty;
 
         if (BlackList.ContainsKey(name))
@@ -136,7 +136,7 @@ public class SettingsCompiled
 
     public MatchBlackAndWhiteList InWhiteList(string name)
     {
-        if (!WhiteList.Any())
+        if (WhiteList.Count == 0)
             return MatchBlackAndWhiteList.Empty;
 
         if (WhiteList.ContainsKey(name))
