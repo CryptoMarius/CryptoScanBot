@@ -3,6 +3,5 @@
 public enum CryptoApplicationStatus
 {
     Initializing,
-    Running,
-    Disposing
+    Running
 }
