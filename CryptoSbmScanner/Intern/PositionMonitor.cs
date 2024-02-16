@@ -246,7 +246,7 @@ public class PositionMonitor : IDisposable
         }
 
 
-        GlobalData.AddTextToLogTab($"{position.Symbol.Name} DCA? partcount={position.PartCount} count={GlobalData.Settings.Trading.DcaList.Count} dca.perc={dcaEntry.Percentage}");
+        GlobalData.AddTextToLogTab($"{position.Symbol.Name} DCA partcount={position.PartCount} count={GlobalData.Settings.Trading.DcaList.Count} dca.perc={dcaEntry.Percentage}");
 
         reaction = "";
         return true;
@@ -540,13 +540,6 @@ public class PositionMonitor : IDisposable
                             return;
                         }
 
-                        if (!SymbolTools.CheckAvailableSlots(tradeAccount, Symbol, signal.Side, out reaction))
-                        {
-                            GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                            Symbol.ClearSignals();
-                            return;
-                        }
-
                         // Controle of bepaalde intervallen in een uptrend of in een downtrend zijn
                         if (!PositionTools.ValidTrendConditions(signal.Symbol, TradingConfig.Trading[signal.Side].Trend, out reaction))
                         {
@@ -564,6 +557,13 @@ public class PositionMonitor : IDisposable
                             continue;
                         }
 
+                        // Slechts 1 slot per symbol, en controleer aantal long/shorts
+                        if (!SymbolTools.CheckAvailableSlots(tradeAccount, Symbol, signal.Side, out reaction))
+                        {
+                            GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
+                            Symbol.ClearSignals();
+                            return;
+                        }
 
                         // Zo laat mogelijk controleren vanwege extra calls naar de exchange
                         var resultCheckAssets = await CheckApiAndAssetsAsync(tradeAccount);
@@ -678,7 +678,9 @@ public class PositionMonitor : IDisposable
                 string t = string.Format("candle 1m interval: {0}", LastCandle1m.DateLocal.ToString()) + ".." + LastCandle1mCloseTimeDate.ToLocalTime() + "\r\n" +
                 string.Format("is de candle op het {0} interval echt missing in action?", interval.Name) + "\r\n" +
                     string.Format("position.CreateDate = {0}", position.CreateTime.ToString()) + "\r\n";
-                throw new Exception($"Candle niet aanwezig? {t}");
+                //throw new Exception($"Candle niet aanwezig? {t}");
+                GlobalData.AddTextToLogTab("Analyse " + t);
+                return false;
             }
 
             if (candleInterval.CandleData == null)
@@ -687,8 +689,9 @@ public class PositionMonitor : IDisposable
                 history = CandleIndicatorData.CalculateCandles(Symbol, interval, candleInterval.OpenTime, out string response);
                 if (history == null)
                 {
-                    GlobalData.AddTextToLogTab("Analyse " + response);
-                    throw new Exception($"{position.Symbol.Name} Candle {interval.Name} {candleInterval.DateLocal} niet berekend? {response}");
+                    GlobalData.AddTextToLogTab("Analyse " + response + $"{position.Symbol.Name} Candle {interval.Name} {candleInterval.DateLocal} niet berekend? {response}");
+                    //throw new Exception($"{position.Symbol.Name} Candle {interval.Name} {candleInterval.DateLocal} niet berekend? {response}");
+                    return false;
                 }
 
                 // Eenmalig de indicators klaarzetten
@@ -750,13 +753,17 @@ public class PositionMonitor : IDisposable
                 price = CorrectBuyOrDcaPrice(position, price);
                 break;
             case CryptoBuyOrderMethod.BidPrice:
-                if (part.Symbol.BidPrice.HasValue)
+                if (position.Side == CryptoTradeSide.Long && part.Symbol.BidPrice.HasValue)
+                    price = (decimal)part.Symbol.BidPrice;
+                else if (position.Side == CryptoTradeSide.Short && part.Symbol.AskPrice.HasValue)
                     price = (decimal)part.Symbol.BidPrice;
                 price = CorrectBuyOrDcaPrice(position, price);
                 break;
             case CryptoBuyOrderMethod.AskPrice:
-                if (part.Symbol.AskPrice.HasValue)
-                    price = (decimal)part.Symbol.AskPrice;
+                if (position.Side == CryptoTradeSide.Long && part.Symbol.AskPrice.HasValue)
+                    price = (decimal)part.Symbol.BidPrice;
+                else if (position.Side == CryptoTradeSide.Short && part.Symbol.AskPrice.HasValue)
+                    price = (decimal)part.Symbol.BidPrice;
                 price = CorrectBuyOrDcaPrice(position, price);
                 break;
             //case CryptoBuyOrderMethod.BidAndAskPriceAvg:
@@ -1746,6 +1753,36 @@ public class PositionMonitor : IDisposable
     }
 
 
+
+
+    public async Task CheckThePosition(CryptoPosition position)
+    {
+        // Pauzeren vanwege de trading regels of te lage barometer
+        PauseBecauseOfTradingRules = !TradingRules.CheckTradingRules(LastCandle1m);
+
+        //Monitor.Enter(position);
+        try
+        {
+            // Verwijder orders voor verschillende redenenen (timeout, barometer, tradingrules, positie gesloten, reposition enzovoort)
+            await CancelOrdersIfClosedOrTimeoutOrReposition(position);
+
+            if (!position.CloseTime.HasValue)
+            {
+                // Pauzeren vanwege de trading regels of te lage barometer
+                if (!PauseBecauseOfTradingRules) // || PauseBecauseOfBarometer
+                    await CheckAddDcaFixedPercentage(position);
+
+                // Plaats of modificeer de buy of sell orders + optionele LockProfits
+                await HandlePosition(position);
+            }
+        }
+        finally
+        {
+            //Monitor.Exit(position);
+        }
+    }
+
+
     /// <summary>
     /// De afhandeling van een nieuwe 1m candle.
     /// (de andere intervallen zijn ook berekend)
@@ -1759,8 +1796,7 @@ public class PositionMonitor : IDisposable
             if (!Symbol.IsSpotTradingAllowed || Symbol.Status == 0)
                 return;
 
-            string traceText = LastCandle1m.OhlcText(Symbol, GlobalData.IntervalList[0], Symbol.PriceDisplayFormat, true, false, true);
-
+            //string traceText = LastCandle1m.OhlcText(Symbol, GlobalData.IntervalList[0], Symbol.PriceDisplayFormat, true, false, true);
             //GlobalData.Logger.Trace($"NewCandleArrivedAsync.Signals " + traceText);
 
             // Create signals per interval
@@ -1770,17 +1806,6 @@ public class PositionMonitor : IDisposable
 
 #if TRADEBOT
             //GlobalData.Logger.Trace($"NewCandleArrivedAsync.Positions " + traceText);
-            // Idee1: Zet de echte (gemiddelde) price in de step indien deze gevuld is (het is nu namelijk
-            // onduidelijk voor welke prijs het exact verkocht is = lastig met meerdere trades igv market)
-            // Idee2: Zet de entryprice en de echte (gemiddelde)exitprice in de part indien deze gevuld zijn
-            // Probleem: De migratie van de oude naar een nieuwe situatie (als je het al zou uitvoeren)
-
-
-            //#if BALANCING
-            // TODO: Weer werkzaam maken
-            //if (GlobalData.Settings.BalanceBot.Active && (symbol.IsBalancing))
-            //GlobalData.ThreadBalanceSymbols.AddToQueue(symbol);
-            //#endif
 
 
             // Simulate Trade indien openstaande orders gevuld zijn
@@ -1809,26 +1834,7 @@ public class PositionMonitor : IDisposable
                     {
                         foreach (CryptoPosition position in positionList.Values.ToList())
                         {
-                            //Monitor.Enter(position);
-                            try
-                            {
-                                // Verwijder orders voor verschillende redenenen (timeout, barometer, tradingrules, positie gesloten, reposition enzovoort)
-                                await CancelOrdersIfClosedOrTimeoutOrReposition(position);
-
-                                if (!position.CloseTime.HasValue)
-                                {
-                                    // Pauzeren vanwege de trading regels of te lage barometer
-                                    if (!PauseBecauseOfTradingRules) // || PauseBecauseOfBarometer
-                                        await CheckAddDcaFixedPercentage(position);
-
-                                    // Plaats of modificeer de buy of sell orders + optionele LockProfits
-                                    await HandlePosition(position);
-                                }
-                            }
-                            finally
-                            {
-                                //Monitor.Exit(position);
-                            }
+                            GlobalData.ThreadDoubleCheckPosition.AddToQueue(position);
                         }
                     }
                 }
