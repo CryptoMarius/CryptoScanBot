@@ -503,11 +503,11 @@ public class ThreadLoadData
                 {
                     GlobalData.AddTextToLogTab("Starting task for handling orders");
                     _ = Task.Run(async () => { await GlobalData.ThreadMonitorOrder.ExecuteAsync(); });
-
-                    GlobalData.AddTextToLogTab("Starting task for checking positions");
-                    _ = Task.Run(async () => { await GlobalData.ThreadDoubleCheckPosition.ExecuteAsync(); });
                 }
-                
+
+                GlobalData.AddTextToLogTab("Starting task for checking positions");
+                _ = Task.Run(async () => { await GlobalData.ThreadDoubleCheckPosition.ExecuteAsync(); });
+
                 await TradeTools.CheckOpenPositions();
 
 
