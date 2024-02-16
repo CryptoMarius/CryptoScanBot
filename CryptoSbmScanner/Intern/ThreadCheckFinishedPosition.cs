@@ -52,22 +52,31 @@ public class ThreadCheckFinishedPosition
             {
                 // Geef de exchange en de aansturende code de kans om de administratie af te ronden
                 // We wachten hier dus bewust voor de zekerheid een redelijk lange periode.
-                Thread.Sleep(10000);
+                if (position.DelayUntil.HasValue && position.DelayUntil.Value > DateTime.UtcNow)
+                {
+                    AddToQueue(position); // opnieuw, na een vertraging
+                    await Task.Delay(500);
+                    continue;
+                }
+
+                //GlobalData.AddTextToLogTab($"{position.Symbol.Name} debug position ThreadCheckFinishedPosition Execute...");
+
 
                 //GlobalData.AddTextToLogTab($"ThreadDoubleCheckPosition: Positie {position.Symbol.Name} nog eens controleren! {position.Status}");
 
-                // Controleer de openstaande orders, zijn ze ondertussen gevuld
-                // Haal de trades van deze positie op vanaf de 1e order
-                // TODO - Hoe doen we dit met papertrading (er is niets geregeld!)
-                await TradeTools.LoadTradesfromDatabaseAndExchange(database, position, true);
-                TradeTools.CalculatePositionResultsViaTrades(database, position, false);
-
-                CryptoOrderSide entryOrderSide = position.GetEntryOrderSide();
                 if (position.Status == CryptoPositionStatus.Ready)
                 {
+                    bool removePosition = true;
+                    // Controleer de openstaande orders, zijn ze ondertussen gevuld
+                    // Haal de trades van deze positie op vanaf de 1e order
+                    // TODO - Hoe doen we dit met papertrading (er is niets geregeld!)
+                    await TradeTools.LoadTradesfromDatabaseAndExchange(database, position, true);
+                    TradeTools.CalculatePositionResultsViaTrades(database, position, false);
+
+                    CryptoOrderSide entryOrderSide = position.GetEntryOrderSide();
                     foreach (CryptoPositionPart part in position.Parts.Values.ToList())
                     {
-                        if (!part.CloseTime.HasValue)
+                        //if (!part.CloseTime.HasValue)
                         {
                             foreach (CryptoPositionStep step in part.Steps.Values.ToList())
                             {
@@ -87,43 +96,47 @@ public class ThreadCheckFinishedPosition
 
                                         if (GlobalData.Settings.Trading.LogCanceledOrders)
                                             ExchangeBase.Dump(position, succes, tradeParams, $"annuleren vanwege sluiten {position.Side} positie");
-
-
-                                        // Positie is afgerond (wellicht dubbel op met de code in de PositionTools)
-                                        PositionTools.RemovePosition(position.TradeAccount, position, true);
-                                        if (!GlobalData.BackTest && GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
-                                        {
-                                            GlobalData.PositionsHaveChanged("");
-                                            GlobalData.AddTextToLogTab($"ThreadDoubleCheckPosition: Positie {position.Symbol.Name} status aangepast naar {position.Status}");
-                                        }
                                     }
                                     else
                                     {
-                                        ExchangeBase.Dump(position, succes, tradeParams, "DCA ORDER ANNULEREN NIET GELUKT!!! (herkansing)");
+                                        ExchangeBase.Dump(position, succes, tradeParams, "DCA ORDER ANNULEREN NIET IN 1x GELUKT!!! (herkansing)");
                                         AddToQueue(position); // doe nog maar een keer... Endless loop?
+                                        removePosition = false;
                                     }
                                 }
                             }
                         }
                     }
+
+                    if (removePosition)
+                    {
+                        // Positie is afgerond (wellicht dubbel op met de code in de PositionTools)
+                        PositionTools.RemovePosition(position.TradeAccount, position, true);
+                        if (!GlobalData.BackTest && GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
+                        {
+                            GlobalData.PositionsHaveChanged("");
+                            //GlobalData.AddTextToLogTab($"ThreadDoubleCheckPosition: Positie {position.Symbol.Name} status aangepast naar {position.Status}");
+                        }
+                    }
                 }
+                else
+                {
+                    // PositionMonitor aanroep code verplaatst vanuit kline-ticker thread naar hier
+                    var symbolPeriod = position.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
+                    if (symbolPeriod.CandleList.Count > 0)
+                    {
+                        // Ahj, deze routine is vanwege de Last() niet geschikt voor de emulator
+                        var lastCandle1m = symbolPeriod.CandleList.Values.Last();
+                        long lastCandle1mCloseTime = lastCandle1m.OpenTime + 60;
+                        DateTime lastCandle1mCloseTimeDate = CandleTools.GetUnixDate(lastCandle1mCloseTime);
 
+                        PositionMonitor positionMonitor = new(position.Symbol, lastCandle1m);
+                        await positionMonitor.CheckThePosition(position);
 
-                //// Als de positie gesloten is, maar er bij nader inzien toch extra geinvesteerd is dan weer openzetten
-                //if (position.Status == CryptoPositionStatus.Ready && position.Quantity != 0 && position.Invested != 0)
-                //{
-                //    position.CloseTime = null;
-                //    position.Status = CryptoPositionStatus.Trading;
-                //    GlobalData.AddTextToLogTab($"ThreadDoubleCheckPosition: Positie {position.Symbol.Name} status aangepast naar {position.Status}");
-
-
-                //    // Ehh, moeten we dan nog een part opnieuw openen??
-                //    // TODO In de gaten houden wat exact het probleem is!
-
-                //    // Bij nader inzien: Het probleem was dat we een foutmelding kregen omdat de tijd van de computer
-                //    // aan het driften was, dat geeft dan op een van de api calls een foutmelding waardoor dingen fout
-                //    // gaan.
-                //}
+                        if (position.Status == CryptoPositionStatus.Ready)
+                            AddToQueue(position); // nog eens, en dan laten verplaatsen naar gesloten posities
+                    }
+                }
 
             }
             catch (Exception error)

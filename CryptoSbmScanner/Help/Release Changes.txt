@@ -52,6 +52,7 @@ xx-02-2024 1.9
 - Scanner - Bij een negatieve barometer wordt de toevoeging 1h/4h/1d soms niet getoond (niet genoeg ruimte)
 - Scanner - Wat correcties op de handleiding (met dank aan Trinity)
 
+- Trading - Instappen via de bid of ask prijs (icm long/short)
 - Trading - Een symbol-link aan de trade-telegram notificaties toevoegen.
 - Trading - De cooldown van de tradingrules ging werd ingevoerd in "aantal candles", het is nu aangepast naar aantal minuten wat gemakkelijker in gebruik is
 - Trading - Bij hogere ticksizes komt het werkelijke instapbedrag soms ruim boven het ingestelde aankoopbedrag te liggen, deze controleren voordat we een positie maken

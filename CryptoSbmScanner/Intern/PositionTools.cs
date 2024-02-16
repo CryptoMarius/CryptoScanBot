@@ -45,7 +45,7 @@ public static class PositionTools
     }
 
     /// <summary>
-    /// Retourneer de openstaande "order" met naam=x
+    /// Retourneer een openstaande TP
     /// </summary>
     public static CryptoPositionStep FindPositionPartStep(CryptoPositionPart part, CryptoOrderSide side, bool closed)
     {

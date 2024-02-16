@@ -352,7 +352,10 @@ public class TradeTools
                     position.UpdateTime = DateTime.UtcNow;
                     position.Status = CryptoPositionStatus.Ready;
                     if (addToDoubleCheckPosition)
+                    {
+                        position.DelayUntil = position.UpdateTime.Value.AddSeconds(10);
                         GlobalData.ThreadDoubleCheckPosition.AddToQueue(position);
+                    }
                 }
                 GlobalData.AddTextToLogTab($"TradeTools: Positie {position.Symbol.Name} status aangepast naar {position.Status}");
             }

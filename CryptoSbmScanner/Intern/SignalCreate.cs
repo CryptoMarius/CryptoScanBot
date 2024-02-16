@@ -666,6 +666,7 @@ public class SignalCreate
         if (!HasOpenPosition())
         {
             // Filter op bepaalde intervallen waarvan je wil dat die bullisch of bearisch zijn
+            
             if (!PositionTools.ValidTrendConditions(signal.Symbol, TradingConfig.Signals[signal.Side].Trend, out string reaction))
             {
                 eventText.Add(reaction);

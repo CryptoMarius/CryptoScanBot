@@ -22,15 +22,16 @@ public enum CryptoSignalStrategy // CryptoStrategy
     MacdLt, // Vervallen, opgepikt uit de groep van Marco (een ziens of dit inderdaad werkt)
     MacdTest, // Vervallen, Nieuw idee maar dat bevalt  niet
 
-    SlopeEma50, // test
-    SlopeSma50, // test
-    SlopeEma20, // test
-    SlopeSma20, // test
+    SlopeEma50,
+    SlopeSma50,
+    SlopeEma20,
+    SlopeSma20,
 
-    //// Vervallen
-    PriceCrossedSma20, //Vervallen
-    PriceCrossedSma50, //Vervallen
-    PriceCrossedEma20, //Vervallen
-    PriceCrossedEma50, //Vervallen
+    //// Vervallen?
+    PriceCrossedSma20,
+    PriceCrossedSma50,
+    PriceCrossedEma20,
+    PriceCrossedEma50,
+    EmaCross926,
 #endif
 }

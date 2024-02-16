@@ -72,6 +72,9 @@ public class CryptoPosition
     public bool Reposition { get; set; }
 
     [Computed]
+    public DateTime? DelayUntil { get; set; }
+
+    [Computed]
     public SortedList<int, CryptoPositionPart> Parts { get; set; } = [];
 
     [Computed]
