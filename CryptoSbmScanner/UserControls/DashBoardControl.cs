@@ -601,7 +601,7 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
         var series1 = new Series
         {
             Name = "Minimaal",
-            Color = Color.Red,
+            Color = Color.Green,
             IsVisibleInLegend = true,
             IsXValueIndexed = true,
             //ChartType = SeriesChartType.Bar
@@ -623,7 +623,7 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
         var series3 = new Series
         {
             Name = "Maximaal",
-            Color = Color.Green,
+            Color = Color.Red,
             IsVisibleInLegend = true,
             IsXValueIndexed = true,
             //ChartType = SeriesChartType.Bar
