@@ -41,6 +41,8 @@ public class CryptoPositionPart
     public decimal Invested { get; set; }
     public decimal Returned { get; set; }
     public decimal Commission { get; set; }
+    [Computed]
+    public decimal Reserved { get; set; }
     public decimal Profit { get; set; }
     public decimal Percentage { get; set; }
 
