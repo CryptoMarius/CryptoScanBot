@@ -104,6 +104,7 @@ public class TradeTools
         position.Quantity = 0;
         position.Invested = 0;
         position.Returned = 0;
+        position.Reserved = 0;
         position.Commission = 0;
         bool hasActiveDca = false;
 
@@ -116,14 +117,15 @@ public class TradeTools
             part.Quantity = 0;
             part.Invested = 0;
             part.Returned = 0;
+            part.Reserved = 0;
             part.Commission = 0;
 
             int tradeCount = 0;
             foreach (CryptoPositionStep step in part.Steps.Values.ToList())
             {
+                // || step.Status == CryptoOrderStatus.PartiallyFilled => niet doen, want dan worden de TP's iedere keer verplaatst..
+                // Wellicht moet dat gedeelte op een andere manier ingeregeld worden zodat we hier wel de echte BE kunnen uitrekenen?
                 if (step.Status == CryptoOrderStatus.Filled)
-                    // || step.Status == CryptoOrderStatus.PartiallyFilled => niet doen, want dan worden de TP's iedere keer verplaatst..
-                    // Wellicht moet dat gedeelte op een andere manier ingeregeld worden zodat we hier wel de echte BE kunnen uitrekenen?
                 {
                     part.Commission += step.Commission;
                     if (step.Side == entryOrderSide)
@@ -138,6 +140,12 @@ public class TradeTools
                         part.Returned += step.QuoteQuantityFilled;
                     }
                 }
+                else if (step.Status == CryptoOrderStatus.New || step.Status == CryptoOrderStatus.PartiallyFilled) 
+                {
+                    // Voluit, ook als ie voor 99% gevuld is..
+                    part.Reserved += step.Price * step.Quantity;
+                }
+
                 //string s = string.Format("{0} CalculateProfit bought position={1} part={2} name={3} step={4} {5} price={6} stopprice={7} quantityfilled={8} QuoteQuantityFilled={9}",
                 //   position.Symbol.Name, position.Id, part.Id, part.Purpose, step.Id, step.Name, step.Price, step.StopPrice, step.QuantityFilled, step.QuoteQuantityFilled);
                 //GlobalData.AddTextToLogTab(s);
@@ -183,6 +191,7 @@ public class TradeTools
             position.Quantity += part.Quantity;
             position.Invested += part.Invested;
             position.Returned += part.Returned;
+            position.Reserved += part.Reserved;
             position.Commission += part.Commission;
         }
 

@@ -182,6 +182,7 @@ static public class TradeHandler
                         part.Profit = 0;
                         part.Invested = 0;
                         part.Returned = 0;
+                        part.Reserved = 0;
                         part.Commission = 0;
                         part.Percentage = 0;
                         part.CloseTime = data.TradeTime;
@@ -195,6 +196,7 @@ static public class TradeHandler
                         position.Profit = 0;
                         position.Invested = 0;
                         position.Returned = 0;
+                        position.Reserved = 0;
                         position.Commission = 0;
                         position.Percentage = 0;
                         position.CloseTime = data.TradeTime;

@@ -286,6 +286,23 @@ public class Migration
                 database.Connection.Update(version, transaction);
                 transaction.Commit();
             }
+
+
+            //***********************************************************
+            if (CurrentVersion > version.Version && version.Version == 11)
+            {
+                using var transaction = database.BeginTransaction();
+
+                // Indicatie van wat er aan DCA's gereserveerd is (extra geld welke nodig is voor de dca's)
+                database.Connection.Execute("alter table Position add Reserved TEXT NULL", transaction);
+                database.Connection.Execute("alter table PositionPart add Reserved TEXT NULL", transaction);
+
+                // update version
+                version.Version += 1;
+                database.Connection.Update(version, transaction);
+                transaction.Commit();
+            }
+
         }
     }
 

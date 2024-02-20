@@ -1038,6 +1038,7 @@ public class CryptoDatabase : IDisposable
                 "Invested TEXT NULL," +
                 "Commission TEXT NULL," +
                 "Returned TEXT NULL," +
+                "Reserved TEXT NULL," +
                 "Percentage TEXT NULL," +
                 "Reposition Integer," +
 
@@ -1076,6 +1077,7 @@ public class CryptoDatabase : IDisposable
                 "Invested TEXT NULL," +
                 "Commission TEXT NULL," +
                 "Returned TEXT NULL," +
+                "Reserved TEXT NULL," +
                 "Profit TEXT NULL," +
                 "Percentage TEXT NULL," +
 
