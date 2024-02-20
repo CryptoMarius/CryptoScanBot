@@ -557,56 +557,66 @@ public class PositionMonitor : IDisposable
                             continue;
                         }
 
-                        // Slechts 1 slot per symbol, en controleer aantal long/shorts
-                        if (!SymbolTools.CheckAvailableSlots(tradeAccount, Symbol, signal.Side, out reaction))
+                        // Locking omdat het aantal posities over de slot limits kunnen gaan
+                        // (er zijn x threads tegelijk met deze code aan de gang)
+                        Monitor.Enter(tradeAccount.PositionList);
+                        try
                         {
-                            GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                            Symbol.ClearSignals();
-                            return;
-                        }
-
-                        // Zo laat mogelijk controleren vanwege extra calls naar de exchange
-                        var resultCheckAssets = await CheckApiAndAssetsAsync(tradeAccount);
-                        if (!resultCheckAssets.success)
-                        {
-                            GlobalData.AddTextToLogTab(text + " " + resultCheckAssets.reaction);
-                            Symbol.ClearSignals();
-                            return;
-                        }
-
-
-                        // Controle op de ticksize en dergelijke..
-                        {
-                            // Bepaal het entry bedrag 
-                            // Naast een vast bedrag kan het ook een percentage zijn van de totaal beschikbare quote asset
-                            decimal currentAssetQuantity = 0;
-                            if (tradeAccount.AssetList.TryGetValue(Symbol.Quote, out var asset))
-                                currentAssetQuantity = asset.Total;
-                            decimal entryValue = TradeTools.GetEntryAmount(Symbol, currentAssetQuantity, tradeAccount.TradeAccountType);
-                            decimal entryPrice = Symbol.LastPrice.Value.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
-                            decimal entryQuantity = entryValue / entryPrice;
-                            entryQuantity = entryQuantity.Clamp(Symbol.QuantityMinimum, Symbol.QuantityMaximum, Symbol.QuantityTickSize);
-                            entryQuantity = TradeTools.CorrectEntryQuantityIfWayLess(Symbol, entryValue, entryQuantity, entryPrice);
-
-                            if (entryQuantity == 0)
+                            // We willen 1 slot per symbol en x slots voor de long en shorts
+                            if (!SymbolTools.CheckAvailableSlots(tradeAccount, Symbol, signal.Side, out reaction))
                             {
-                                GlobalData.AddTextToLogTab(text + $" vanwege de quantity ticksize {Symbol.PriceTickSize} en aankoopbedrag {entryValue} lukt de aankoop niet");
+                                GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
                                 Symbol.ClearSignals();
                                 return;
                             }
 
-                        }
+                            // Zo laat mogelijk controleren vanwege extra calls naar de exchange
+                            var resultCheckAssets = await CheckApiAndAssetsAsync(tradeAccount);
+                            if (!resultCheckAssets.success)
+                            {
+                                GlobalData.AddTextToLogTab(text + " " + resultCheckAssets.reaction);
+                                Symbol.ClearSignals();
+                                return;
+                            }
 
-                        // De positie + entry aanmaken
-                        position = PositionTools.CreatePosition(tradeAccount, Symbol, signal.Strategy, signal.Side, symbolInterval, LastCandle1mCloseTimeDate);
-                        Database.Connection.Insert<CryptoPosition>(position);
-                        PositionTools.AddPosition(tradeAccount, position);
-                        PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.Entry, signal.Interval, signal.Strategy, 
-                            CryptoEntryOrProfitMethod.AfterNextSignal, signal.Price, LastCandle1mCloseTimeDate);
+
+                            // Controle op de ticksize en dergelijke..
+                            {
+                                // Bepaal het entry bedrag 
+                                // Naast een vast bedrag kan het ook een percentage zijn van de totaal beschikbare quote asset
+                                decimal currentAssetQuantity = 0;
+                                if (tradeAccount.AssetList.TryGetValue(Symbol.Quote, out var asset))
+                                    currentAssetQuantity = asset.Total;
+                                decimal entryValue = TradeTools.GetEntryAmount(Symbol, currentAssetQuantity, tradeAccount.TradeAccountType);
+                                decimal entryPrice = Symbol.LastPrice.Value.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
+                                decimal entryQuantity = entryValue / entryPrice;
+                                entryQuantity = entryQuantity.Clamp(Symbol.QuantityMinimum, Symbol.QuantityMaximum, Symbol.QuantityTickSize);
+                                entryQuantity = TradeTools.CorrectEntryQuantityIfWayLess(Symbol, entryValue, entryQuantity, entryPrice);
+
+                                if (entryQuantity == 0)
+                                {
+                                    GlobalData.AddTextToLogTab(text + $" vanwege de quantity ticksize {Symbol.PriceTickSize} en aankoopbedrag {entryValue} lukt de aankoop niet");
+                                    Symbol.ClearSignals();
+                                    return;
+                                }
+                            }
+
+                            // De positie + entry aanmaken
+                            position = PositionTools.CreatePosition(tradeAccount, Symbol, signal.Strategy, signal.Side, symbolInterval, LastCandle1mCloseTimeDate);
+                            Database.Connection.Insert<CryptoPosition>(position);
+                            PositionTools.AddPosition(tradeAccount, position);
+                            PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.Entry, signal.Interval, signal.Strategy,
+                                CryptoEntryOrProfitMethod.AfterNextSignal, signal.Price, LastCandle1mCloseTimeDate);
+                        }
+                        finally
+                        {
+                            Monitor.Exit(tradeAccount.PositionList);
+                        }
 
                         // Aanmelden van een nieuwe positie
                         if (!GlobalData.BackTest && GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
                             GlobalData.PositionsHaveChanged("");
+
                         return;
                     }
                     else
@@ -1652,7 +1662,7 @@ public class PositionMonitor : IDisposable
     {
         int createdSignals = 0;
         //GlobalData.Logger.Info($"CreateSignals(start):" + LastCandle1m.OhlcText(Symbol, GlobalData.IntervalList[0], Symbol.PriceDisplayFormat, true, false, true));
-        if (GlobalData.Settings.Signal.SignalsActive && Symbol.QuoteData.CreateSignals && Symbol.Status == 1)
+        if (GlobalData.Settings.Signal.Active && Symbol.QuoteData.CreateSignals && Symbol.Status == 1)
         {
             // Is de munt te nieuw? (hebben we vertrouwen in nieuwe munten?)
             if (!SymbolTools.CheckNewCoin(Symbol, out string reaction))
