@@ -125,10 +125,19 @@ public class ThreadCheckFinishedPosition
                     var symbolPeriod = position.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
                     if (symbolPeriod.CandleList.Count > 0)
                     {
-                        // Ahj, deze routine is vanwege de Last() niet geschikt voor de emulator
-                        var lastCandle1m = symbolPeriod.CandleList.Values.Last();
-                        long lastCandle1mCloseTime = lastCandle1m.OpenTime + 60;
-                        DateTime lastCandle1mCloseTimeDate = CandleTools.GetUnixDate(lastCandle1mCloseTime);
+                        CryptoCandle lastCandle1m;
+
+                        // Deze routine is vanwege de Last() niet geschikt voor de emulator
+                        // Hoe lossen we dat nu weer op, want wordt strakt een echt probleem.
+                        Monitor.Enter(position.Symbol.CandleList);
+                        try
+                        {
+                            lastCandle1m = symbolPeriod.CandleList.Values.Last();
+                        }
+                        finally
+                        {
+                            Monitor.Exit(position.Symbol.CandleList);
+                        }
 
                         PositionMonitor positionMonitor = new(position.Symbol, lastCandle1m);
                         await positionMonitor.CheckThePosition(position);
