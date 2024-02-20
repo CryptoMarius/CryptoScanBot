@@ -4,8 +4,11 @@ Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep
 
 
 Scanner:
-  Scanner - Papertrading werkt niet meer na de laatste refactoring dmv de position Queue
-  Scanner - Prive gegevens zoals telegram api en exchange apikey en dergelijke in een ander versleuteld bestand opslagen.
+- Scanner - Binance Futures introduceren?
+- Scanner - Keuze om Telegram meldingen te sturen met een optionele link naar TV.
+- Scanner - Er worden klines opgehaald van munten die slechts ~1 maand aanwezig zijn op de exchange (bybit spot, DYNUSDT is bijvoorbeeld pas op 6-2 op de exchange geactiveerd) - EN..
+- Scanner - De controle op de laatste 60 candles (aantal boven de Bollinger Band enzovoort) houdt helemaal geen rekening met short..
+- Scanner - Prive gegevens zoals telegram api en exchange apikey en dergelijke in een ander versleuteld bestand opslagen.
   Dan kun je de settings.json delen met iemand anders (niemand zit te wachten op per ongeluk gepubliceerde api key's..
 - Scanner - TODO: Scanner - De overgang van de 1.8 naar de 1.9 werkt niet (crash)
 - Scanner - TODO: Ingevoerde marktrend% controleren/valideren, het eerste getal moet lager zijn dan het tweede getal, swap?
@@ -37,9 +40,11 @@ Scanner:
 
 
 Trading:
+- Trading - Soms worden er meer posities geopend dan wat er is ingesteld (5 threads die naast elkaar posities openen zonder locking)
+- Trading - Bybit futures wordt verboden in NL (DNB, dank je wel), de Bybit spot afstoffen om hierop te kunnen traden.
 - Trading - De trader zet soms (zeg maar gerust in een enkele keer) correct afgehandelde posities weg als zijnde een takeover. Daar is/was geen aanleiding voor dus dat moet wel een bug zijn!
 - Trading - Controleren of de userstream ticker nog loopt (detectie van order aanpassingen c.q. trades)
-- Trading - In de open posities is de kolom BE perc te hoog indien er een JoJo heeft plaatsgevonden (invested=42, returned=39, BE% = 14.49%)
+- Trading - In de open posities is de kolom BE perc te hoog indien er een JoJo heeft plaatsgevonden (invested=42, returned=39, BE% = 14.49%), maar het is slechts 1x gerapporteerd, incident?
 - Trading - Telegram commando's, uitbreiden zodat het aantal slots voor short en long ingesteld kan worden
 - Trading - Papertrading is nu alleen mogelijk voor Bybit spot en futures, maar papertrading kan natuurlijk voor alle andere exchanges (configuratie aanpassen, alleen exchange of paper, niet beide!)
 - Trading - DCA's kunnen instellen per tijdsframe (maar dat is bewst bewerkelijk voor het instellingen scherm)

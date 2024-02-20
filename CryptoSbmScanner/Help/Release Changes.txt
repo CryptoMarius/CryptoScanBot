@@ -1,7 +1,7 @@
 CryptoSbmScanner release historie:
 
 xx-02-2024 1.9
-- Scanner - Het loggen van Tradingview errors toegevoegd (voor de dollar index enz) naar ook weer verwijderd, daar komen echt veel foutmeldingen uit!
+- Scanner - Het loggen van Tradingview errors toegevoegd (voor de dollar index enz) naar ook weer verwijderd, daar komen echt veel te veel foutmeldingen uit!
 - Scanner - Soms blijft de barometer stilstaan (dan loopt de tijd van de barometer grafiek niet meer op), daaronder staat de tekst initializing. Geen signalen daarna..
 - Scanner - De Tradingview waarden voor dollar index, btc dominantie enzovoort werken niet meer (lijkt op een wijziging aan de kant van TV, maar niet zeker)
 - Scanner - De JUMP strategie lijkt niet meer te functioneren (die werd uitgesloten voor trading, maar het signaal moet natuurlijk wel getoond worden)
@@ -52,6 +52,7 @@ xx-02-2024 1.9
 - Scanner - Bij een negatieve barometer wordt de toevoeging 1h/4h/1d soms niet getoond (niet genoeg ruimte)
 - Scanner - Wat correcties op de handleiding (met dank aan Trinity)
 
+(testen)- Trading - Telegram commando's, uitbreiden zodat het aantal slots voor short en long ingesteld kan worden
 - Trading - Instappen via de bid of ask prijs (icm long/short)
 - Trading - Een symbol-link aan de trade-telegram notificaties toevoegen.
 - Trading - De cooldown van de tradingrules ging werd ingevoerd in "aantal candles", het is nu aangepast naar aantal minuten wat gemakkelijker in gebruik is
