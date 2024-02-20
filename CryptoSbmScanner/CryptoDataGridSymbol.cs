@@ -8,6 +8,8 @@ public class CryptoDataGridSymbol<T>(DataGridView grid, List<T> list) : CryptoDa
     public override void InitializeCommands(ContextMenuStrip menuStrip)
     {
         AddStandardSymbolCommands(menuStrip, false);
+        Grid.Tag = Command.ActivateTradingApp;
+        Grid.DoubleClick += Commands.ExecuteCommandCommandViaTag;
     }
 
 

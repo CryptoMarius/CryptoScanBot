@@ -6,7 +6,7 @@ namespace CryptoSbmScanner.Context;
 public class Migration
 {
     // De huidige database versie
-    public readonly static int CurrentDatabaseVersion = 12;
+    public readonly static int CurrentDatabaseVersion = 13;
 
 
     public static void Execute(CryptoDatabase database, int CurrentVersion)
