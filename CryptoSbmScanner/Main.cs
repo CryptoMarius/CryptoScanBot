@@ -248,7 +248,7 @@ public partial class FrmMain : Form
 
         ApplicationTradingBot.Checked = GlobalData.Settings.Trading.Active;
         ApplicationPlaySounds.Checked = GlobalData.Settings.Signal.SoundsActive;
-        ApplicationCreateSignals.Checked = GlobalData.Settings.Signal.SignalsActive;
+        ApplicationCreateSignals.Checked = GlobalData.Settings.Signal.Active;
 
         panelLeft.Visible = !GlobalData.Settings.General.HideSymbolsOnTheLeft;
 
@@ -416,7 +416,7 @@ public partial class FrmMain : Form
         ApplicationTools.SaveWindowLocation(this);
         GlobalData.Settings.Trading.Active = ApplicationTradingBot.Checked;
         GlobalData.Settings.Signal.SoundsActive = ApplicationPlaySounds.Checked;
-        GlobalData.Settings.Signal.SignalsActive = ApplicationCreateSignals.Checked;
+        GlobalData.Settings.Signal.Active = ApplicationCreateSignals.Checked;
         dashBoardInformation1.PickupBarometerProperties();
         try
         {
@@ -814,7 +814,7 @@ public partial class FrmMain : Form
     private void ApplicationCreateSignals_Click(object sender, EventArgs e)
     {
         ApplicationCreateSignals.Checked = !ApplicationCreateSignals.Checked;
-        GlobalData.Settings.Signal.SignalsActive = ApplicationCreateSignals.Checked;
+        GlobalData.Settings.Signal.Active = ApplicationCreateSignals.Checked;
         GlobalData.SaveSettings();
     }
 

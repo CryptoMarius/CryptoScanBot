@@ -266,12 +266,14 @@ public class ThreadTelegramBotInstance
         bool balanceBot = false;
         bool signalsBot = false;
         bool adviceOnly = false;
+        bool tradingBot = false;
         string[] parameters = arguments.Split(' ');
         if (parameters.Length > 1)
         {
             soundSignal = parameters[1].Trim().ToLower().Equals("sound");
             adviceOnly = parameters[1].Trim().ToLower().Equals("advice");
             signalsBot = parameters[1].Trim().ToLower().Equals("signals");
+            tradingBot = parameters[1].Trim().ToLower().Equals("trading");
             balanceBot = parameters[1].Trim().ToLower().Equals("balancing");
         }
 
@@ -310,14 +312,25 @@ public class ThreadTelegramBotInstance
         }
         else if (signalsBot)
         {
-            if (!GlobalData.Settings.Signal.SignalsActive)
+            if (!GlobalData.Settings.Signal.Active)
             {
-                GlobalData.Settings.Signal.SignalsActive = true;
+                GlobalData.Settings.Signal.Active = true;
                 stringbuilder.AppendLine("Signal bot started!");
                 GlobalData.SaveSettings();
             }
             else
                 stringbuilder.AppendLine("Signal bot already active!");
+        }
+        else if (tradingBot)
+        {
+            if (!GlobalData.Settings.Trading.Active)
+            {
+                GlobalData.Settings.Trading.Active = true;
+                stringbuilder.AppendLine("Trading bot started!");
+                GlobalData.SaveSettings();
+            }
+            else
+                stringbuilder.AppendLine("Trading bot already active!");
         }
         else
         {
@@ -383,10 +396,10 @@ public class ThreadTelegramBotInstance
         }
         else if (signalsBot)
         {
-            if (GlobalData.Settings.Signal.SignalsActive)
+            if (GlobalData.Settings.Signal.Active)
             {
                 // TODO: User interface ook updaten
-                GlobalData.Settings.Signal.SignalsActive = false;
+                GlobalData.Settings.Signal.Active = false;
                 stringbuilder.AppendLine("Signal bot stopped!");
                 GlobalData.SaveSettings();
             }
@@ -488,7 +501,46 @@ public class ThreadTelegramBotInstance
     }
 
 #if TRADEBOT
-    private static void ShowProfits(StringBuilder stringbuilder)
+    private static void CommandSlots(string arguments, StringBuilder stringbuilder)
+    {
+        bool slotsLong = false;
+        bool slotsShort = false;
+        string[] parameters = arguments.Split(' ');
+        if (parameters.Length > 1)
+        {
+            slotsLong = parameters[1].Trim().ToLower().Equals("long");
+            slotsShort = parameters[1].Trim().ToLower().Equals("short");
+        }
+
+        if (slotsLong && parameters.Length > 2)
+        {
+            int slots = int.Parse(parameters[2].Trim());
+            if (slots >= 0)
+            {
+                stringbuilder.AppendLine($"Slots long = {slots}");
+                GlobalData.Settings.Trading.SlotsMaximalLong = slots;
+                GlobalData.SaveSettings();
+            }
+            else
+                stringbuilder.AppendLine("Not a valid number!");
+        }
+
+        if (slotsShort && parameters.Length > 2)
+        {
+            int slots = int.Parse(parameters[2].Trim());
+            if (slots >= 0)
+            {
+                stringbuilder.AppendLine($"Slots short = {slots}");
+                GlobalData.Settings.Trading.SlotsMaximalShort = slots;
+                GlobalData.SaveSettings();
+            }
+            else
+                stringbuilder.AppendLine("Not a valid number!");
+        }
+    }
+
+
+    private static void CommandShowProfits(StringBuilder stringbuilder)
     {
         decimal sumInvested = 0;
         decimal sumProfit = 0;
@@ -537,7 +589,7 @@ public class ThreadTelegramBotInstance
 #endif
 
         // Create signals
-        if (GlobalData.Settings.Signal.SignalsActive)
+        if (GlobalData.Settings.Signal.Active)
             stringbuilder.AppendLine("Signal bot is active!");
         else
             stringbuilder.AppendLine("Signal bot is not active!");
@@ -696,7 +748,7 @@ public class ThreadTelegramBotInstance
                                             stringBuilder.AppendLine();
                                             Helper.ShowPositions(stringBuilder);
                                             stringBuilder.AppendLine();
-                                            ShowProfits(stringBuilder);
+                                            CommandShowProfits(stringBuilder);
                                             stringBuilder.AppendLine();
                                             Helper.ShowAssets(GlobalData.ExchangeRealTradeAccount, stringBuilder, out decimal _, out decimal _);
                                             stringBuilder.AppendLine();
@@ -712,7 +764,9 @@ public class ThreadTelegramBotInstance
                                         else if (command == "POSITIONS")
                                             Helper.ShowPositions(stringBuilder);
                                         else if (command == "PROFITS")
-                                            ShowProfits(stringBuilder);
+                                            CommandShowProfits(stringBuilder);
+                                        else if (command == "SLOTS")
+                                            CommandSlots(arguments, stringBuilder);
 #endif
                                         else if (command == "START")
                                             StartBot(arguments, stringBuilder);
