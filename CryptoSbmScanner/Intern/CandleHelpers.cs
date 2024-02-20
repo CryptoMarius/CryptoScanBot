@@ -392,10 +392,9 @@ public static class Helper
         string s = $"{position.Symbol.Name} {position.Side} {investedInTrades.ToString(position.Symbol.QuoteData.DisplayFormat)} " +
             //$"{position.MarketValue().ToString(position.Symbol.QuoteData.DisplayFormat)} " +
             $"{position.CurrentBreakEvenPercentage():N2}%";
+        
         if (position.PartCount > 0)
-            s += $" ({position.PartCount})";
-        if (position.ActiveDca)
-            s += "+";
+            s += position.PartCountText();
         stringBuilder.AppendLine(s);
     }
 
