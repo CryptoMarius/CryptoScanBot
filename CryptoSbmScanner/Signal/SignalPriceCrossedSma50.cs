@@ -37,6 +37,19 @@ public class SignalPriceCrossedSma50 : SignalCreateBase
             return false;
         }
 
+
+        // De laatste candle moet de sma opwaarts kruisen
+        if ((CandleLast.Open > (decimal)CandleLast.CandleData.Sma50) || (CandleLast.Close < (decimal)CandleLast.CandleData.Sma50))
+            return false;
+
+        if (!GetPrevCandle(CandleLast, out CryptoCandle prevCandle))
+            return false;
+
+        // De vorige candle mag de sma niet gekruist hebben
+        if ((prevCandle.Open > (decimal)prevCandle.CandleData.Sma50) || (prevCandle.Close > (decimal)CandleLast.CandleData.Sma50))
+            return false;
+
+
         // Er is een goed opwaarts momentum
         if (CandleLast.CandleData.Rsi <= 60)
             return false;
@@ -47,31 +60,7 @@ public class SignalPriceCrossedSma50 : SignalCreateBase
         if (CandleLast.CandleData.StochOscillator <= 70)
             return false;
 
-        if (!Candles.TryGetValue(CandleLast.OpenTime - Interval.Duration, out CryptoCandle prevCandle))
-        {
-            ExtraText = "geen prev candle! " + CandleLast.DateLocal.ToString();
-            return false;
-        }
-
-        // De vorige candle mag de ema niet gekruist hebben
-        if ((prevCandle.Open > (decimal)prevCandle.CandleData.Sma50) || (prevCandle.Close > (decimal)CandleLast.CandleData.Sma50))
-            return false;
-        //if (prevCandle.CandleData.Tema > prevCandle.CandleData.Sma50)
-        //    return false;
-
-
-        // De laatste candle moet de ema opwaarts kruisen
-        if ((CandleLast.Open > (decimal)CandleLast.CandleData.Sma50) || (CandleLast.Close < (decimal)CandleLast.CandleData.Sma50))
-            return false;
-        //if (CandleLast.CandleData.Tema < CandleLast.CandleData.Sma50)
-        //    return false;
-
         if (!WasRsiOversoldInTheLast(20))
-            return false;
-
-
-        decimal tickPercentage = 100m * Symbol.PriceTickSize / (decimal)Symbol.LastPrice;
-        if (tickPercentage > GlobalData.Settings.Signal.MinimumTickPercentage)
             return false;
 
         return true;
