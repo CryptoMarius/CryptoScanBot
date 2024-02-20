@@ -409,6 +409,7 @@ public class ExcelPositionDump : ExcelBase
         WriteCell(sheet, row, column++, "Geopend");
         WriteCell(sheet, row, column++, "Gesloten");
         WriteCell(sheet, row, column++, "Status");
+        WriteCell(sheet, row, column++, "Account");
 
         row++;
         column = 0;
@@ -454,6 +455,7 @@ public class ExcelPositionDump : ExcelBase
         else WriteCell(sheet, row, column++, "");
         
         WriteCell(sheet, row, column++, Position.Status.ToString());
+        WriteCell(sheet, row, column++, Position.TradeAccount.Name);
 
         AutoSize(sheet, 6);
     }
