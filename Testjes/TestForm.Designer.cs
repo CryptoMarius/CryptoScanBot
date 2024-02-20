@@ -33,6 +33,10 @@ namespace CryptoSbmScanner
         {
             components = new System.ComponentModel.Container();
             panel1 = new Panel();
+            button4 = new Button();
+            button3 = new Button();
+            button2 = new Button();
+            button1 = new Button();
             ButtonVolatiteit = new Button();
             comboBox1 = new ComboBox();
             ButtonBackTest = new Button();
@@ -45,6 +49,10 @@ namespace CryptoSbmScanner
             tabPageBitmap = new TabPage();
             pictureBox1 = new PictureBox();
             tabPage3 = new TabPage();
+            tabPage1 = new TabPage();
+            dataGridViewSignal = new DataGridView();
+            tabPage2 = new TabPage();
+            dataGridViewSymbol = new DataGridView();
             contextMenuStripSignals = new ContextMenuStrip(components);
             toolStripMenuItemClear = new ToolStripMenuItem();
             toolStripMenuItemAltrady = new ToolStripMenuItem();
@@ -69,12 +77,20 @@ namespace CryptoSbmScanner
             tabPageSignals.SuspendLayout();
             tabPageBitmap.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
+            tabPage1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dataGridViewSignal).BeginInit();
+            tabPage2.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dataGridViewSymbol).BeginInit();
             contextMenuStripSignals.SuspendLayout();
             contextMenuStrip1.SuspendLayout();
             SuspendLayout();
             // 
             // panel1
             // 
+            panel1.Controls.Add(button4);
+            panel1.Controls.Add(button3);
+            panel1.Controls.Add(button2);
+            panel1.Controls.Add(button1);
             panel1.Controls.Add(ButtonVolatiteit);
             panel1.Controls.Add(comboBox1);
             panel1.Controls.Add(ButtonBackTest);
@@ -85,6 +101,46 @@ namespace CryptoSbmScanner
             panel1.Name = "panel1";
             panel1.Size = new Size(1423, 59);
             panel1.TabIndex = 10;
+            // 
+            // button4
+            // 
+            button4.Location = new Point(360, 17);
+            button4.Name = "button4";
+            button4.Size = new Size(75, 23);
+            button4.TabIndex = 16;
+            button4.Text = "button4";
+            button4.UseVisualStyleBackColor = true;
+            button4.Click += button4_Click;
+            // 
+            // button3
+            // 
+            button3.Location = new Point(279, 17);
+            button3.Name = "button3";
+            button3.Size = new Size(75, 23);
+            button3.TabIndex = 15;
+            button3.Text = "Prijs ++";
+            button3.UseVisualStyleBackColor = true;
+            button3.Click += button3_Click_2;
+            // 
+            // button2
+            // 
+            button2.Location = new Point(198, 18);
+            button2.Name = "button2";
+            button2.Size = new Size(75, 23);
+            button2.TabIndex = 14;
+            button2.Text = "+2 records";
+            button2.UseVisualStyleBackColor = true;
+            button2.Click += button2_Click_2;
+            // 
+            // button1
+            // 
+            button1.Location = new Point(117, 18);
+            button1.Name = "button1";
+            button1.Size = new Size(75, 23);
+            button1.TabIndex = 13;
+            button1.Text = "Datagrid";
+            button1.UseVisualStyleBackColor = true;
+            button1.Click += Button1_Click;
             // 
             // ButtonVolatiteit
             // 
@@ -134,6 +190,8 @@ namespace CryptoSbmScanner
             tabControl.Controls.Add(tabPageSignals);
             tabControl.Controls.Add(tabPageBitmap);
             tabControl.Controls.Add(tabPage3);
+            tabControl.Controls.Add(tabPage1);
+            tabControl.Controls.Add(tabPage2);
             tabControl.Dock = DockStyle.Fill;
             tabControl.Location = new Point(0, 59);
             tabControl.Margin = new Padding(4, 3, 4, 3);
@@ -217,6 +275,46 @@ namespace CryptoSbmScanner
             tabPage3.TabIndex = 3;
             tabPage3.Text = "tabPage3";
             tabPage3.UseVisualStyleBackColor = true;
+            // 
+            // tabPage1
+            // 
+            tabPage1.Controls.Add(dataGridViewSignal);
+            tabPage1.Location = new Point(4, 24);
+            tabPage1.Name = "tabPage1";
+            tabPage1.Padding = new Padding(3);
+            tabPage1.Size = new Size(1415, 710);
+            tabPage1.TabIndex = 4;
+            tabPage1.Text = "tabPage1";
+            tabPage1.UseVisualStyleBackColor = true;
+            // 
+            // dataGridViewSignal
+            // 
+            dataGridViewSignal.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dataGridViewSignal.Dock = DockStyle.Fill;
+            dataGridViewSignal.Location = new Point(3, 3);
+            dataGridViewSignal.Name = "dataGridViewSignal";
+            dataGridViewSignal.Size = new Size(1409, 704);
+            dataGridViewSignal.TabIndex = 0;
+            // 
+            // tabPage2
+            // 
+            tabPage2.Controls.Add(dataGridViewSymbol);
+            tabPage2.Location = new Point(4, 24);
+            tabPage2.Name = "tabPage2";
+            tabPage2.Padding = new Padding(3);
+            tabPage2.Size = new Size(1415, 710);
+            tabPage2.TabIndex = 5;
+            tabPage2.Text = "tabPage2";
+            tabPage2.UseVisualStyleBackColor = true;
+            // 
+            // dataGridViewSymbol
+            // 
+            dataGridViewSymbol.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dataGridViewSymbol.Dock = DockStyle.Fill;
+            dataGridViewSymbol.Location = new Point(3, 3);
+            dataGridViewSymbol.Name = "dataGridViewSymbol";
+            dataGridViewSymbol.Size = new Size(1409, 704);
+            dataGridViewSymbol.TabIndex = 0;
             // 
             // contextMenuStripSignals
             // 
@@ -337,6 +435,10 @@ namespace CryptoSbmScanner
             tabPageSignals.ResumeLayout(false);
             tabPageBitmap.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
+            tabPage1.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)dataGridViewSignal).EndInit();
+            tabPage2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)dataGridViewSymbol).EndInit();
             contextMenuStripSignals.ResumeLayout(false);
             contextMenuStrip1.ResumeLayout(false);
             ResumeLayout(false);
@@ -375,6 +477,14 @@ namespace CryptoSbmScanner
         private ToolStripMenuItem toolStripMenuItemHypertrader;
         private ListView listView1;
         private PictureBox pictureBox1;
+        private TabPage tabPage1;
+        private Button button1;
+        private Button button2;
+        private Button button3;
+        private Button button4;
+        private DataGridView dataGridViewSignal;
+        private TabPage tabPage2;
+        private DataGridView dataGridViewSymbol;
     }
 }
 

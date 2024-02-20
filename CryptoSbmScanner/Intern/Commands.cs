@@ -182,6 +182,24 @@ public class Commands
                 return (true, GlobalData.Settings.General.Exchange, null, null, null);
         }
 
+        if (sender is DataGridView grid && grid.SelectedRows.Count > 0)
+        {
+            // todo, oeps dit werkt niet met een virtualgrid!
+            DataGridViewRow row = grid.SelectedRows[0];
+            if (row.Tag is CryptoSignal signal)
+                // Vanuit de lijst met signalen
+                return (true, signal.Exchange, signal.Symbol, signal.Interval, null);
+            else if (row.Tag is CryptoPosition position)
+                // Vanuit de lijst met posities
+                return (true, position.Exchange, position.Symbol, position.Interval, position);
+            else if (row.Tag is CryptoSymbol symbol)
+                // Vanuit de lijst met symbols
+                return (true, symbol.Exchange, symbol, null, null);
+            else if (row.Tag is CryptoSymbol symbol2) //ehhh....
+                // Vanuit de lijst met symbols
+                return (true, GlobalData.Settings.General.Exchange, null, null, null);
+        }
+
         return (false, null, null, null, null);
     }
 
@@ -293,6 +311,11 @@ public class Commands
         {
             if (listview.Tag is Command cmd2)
                 ExecuteSomethingViaTag(listview, cmd2);
+        }
+        else if (sender is DataGridView grid)
+        {
+            if (grid.Tag is Command cmd2)
+                ExecuteSomethingViaTag(grid, cmd2);
         }
     }
 

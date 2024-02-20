@@ -48,9 +48,13 @@ using CryptoSbmScanner.Exchange.Binance;
 using CryptoSbmScanner.Trader;
 using Font = System.Drawing.Font;
 using CryptoSbmScanner.TradingView;
-//using static System.ComponentModel.Design.ObjectSelectorEditor;
+using System.ComponentModel;
+using System.Data;
+using CryptoSbmTestjes;
 
 namespace CryptoSbmScanner;
+
+
 
 public partial class TestForm : Form
 {
@@ -87,16 +91,16 @@ public partial class TestForm : Form
     //    Bottom = 8
     //}
 
-//--update exchange set LastTimeFetched = null;
-//--delete from candle
-//--delete from SymbolInterval
-//--delete from Symbol
+    //--update exchange set LastTimeFetched = null;
+    //--delete from candle
+    //--delete from SymbolInterval
+    //--delete from Symbol
 
-//update symbol set LastTradeDate = null;
-//delete from PositionStep
-//delete from PositionPart
-//delete from Position
-//delete from Signal
+    //update symbol set LastTradeDate = null;
+    //delete from PositionStep
+    //delete from PositionPart
+    //delete from Position
+    //delete from Signal
 
 
     private readonly CryptoDatabase databaseMain;
@@ -105,6 +109,12 @@ public partial class TestForm : Form
     public CryptoBackTestResults Results;
     public int createdSignalCount = 0;
 
+    
+    private readonly List<CryptoSignal> SignalList = [];
+    private readonly CryptoDataGridSignal<CryptoSignal> GridSignals;
+
+    private readonly List<CryptoSymbol> SymbolList = [];
+    private readonly CryptoDataGridSymbol<CryptoSymbol> GridSymbols;
 
     public TestForm()
     {
@@ -119,10 +129,10 @@ public partial class TestForm : Form
 
         tabControl.SelectedTab = tabPageLog;
 
-        //AppDomain.CurrentDomain.ProcessExit += (sender, eventArgs) =>
-        //{
-        //    ProgramExit = true;
-        //};
+        GridSignals = new(dataGridViewSignal, SignalList);
+        GridSymbols = new(dataGridViewSymbol, SymbolList);
+        
+
 
         //Om vanuit achtergrond threads iets te kunnen loggen (kan charmanter?)
         GlobalData.LogToTelegram += new AddTextEvent(AddTextToTelegram);
@@ -221,7 +231,8 @@ public partial class TestForm : Form
         //Task.Factory.StartNew(() => new TradingViewSymbolInfo().Start("CRYPTOCAP:TOTAL3", marketcapTotal, 10));
 
 
-        Task.Factory.StartNew(() => new TradingViewSymbolInfo().StartAsync("FX_IDC:EURUSD", "dit is een test", "N2", GlobalData.TradingViewDollarIndex, 1000));
+        //Task.Factory.StartNew(() => new TradingViewSymbolInfo().StartAsync("FX_IDC:EURUSD", "dit is een test", "N2", GlobalData.TradingViewDollarIndex, 1000));
+        Button1_Click(null, null);
     }
 
 
@@ -330,7 +341,7 @@ public partial class TestForm : Form
         if (IsHandleCreated)
         {
             text = text.TrimEnd();
-            GlobalData.Logger.Info(text);
+            ScannerLog.Logger.Info(text);
 
             //if (text != "")
             //  text = DateTime.Now.ToLocalTime() + " " + text;
@@ -2294,7 +2305,7 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
         GlobalData.ExchangeBackTestAccount.PositionList.Clear();
 
         // Pittige configuratie geworden zie ik ;-)
-        GlobalData.Settings.Signal.SignalsActive = true;
+        GlobalData.Settings.Signal.Active = true;
         GlobalData.Settings.Signal.Long.Interval.Clear();
         GlobalData.Settings.Signal.Long.Interval.Add(interval.Name);
 
@@ -2312,7 +2323,7 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
         GlobalData.Settings.Trading.Active = true;
         GlobalData.Settings.Trading.Long.Interval.Clear();
         GlobalData.Settings.Trading.Long.Interval.Add(interval.Name);
-                                    
+
         GlobalData.Settings.Trading.Long.Strategy.Clear();
         GlobalData.Settings.Trading.Long.Strategy.Add("sbm1");
         GlobalData.Settings.Trading.Long.Strategy.Add("sbm2");
@@ -2528,5 +2539,154 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
         Task task = new(new Action(BackTest));
         task.Start();
     }
+
+
+
+    private void Button1_Click(object sender, EventArgs e)
+    {
+        tabControl.SelectedTab = tabPage1;
+
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+        {
+            int i = 0;
+            foreach (CryptoSymbol symbol in exchange.SymbolListId.Values)
+            {
+                CryptoSignal signal = new();
+                signal.OpenDate = DateTime.UtcNow.AddHours(SignalList.Count);
+                signal.Price = 0.12345m;
+                signal.Symbol = symbol;
+                signal.Exchange = exchange;
+                if (i % 2 == 0)
+                    signal.Side = CryptoTradeSide.Long;
+                else
+                    signal.Side = CryptoTradeSide.Short;
+
+                if (i % 2 == 0)
+                    signal.Interval = GlobalData.IntervalList[0];
+                else
+                    signal.Interval = GlobalData.IntervalList[1];
+
+                if (i % 2 == 0)
+                    signal.Strategy = CryptoSignalStrategy.Sbm1;
+                else
+                    signal.Strategy = CryptoSignalStrategy.Stobb;
+
+                if (i % 2 == 0)
+                    signal.Symbol.LastPrice = signal.Price - 1;
+                else 
+                    signal.Symbol.LastPrice = signal.Price + 1;
+
+                signal.Last24HoursChange = 12345.12;
+                signal.Last24HoursEffective= 82345.12;
+
+                signal.Rsi = 12.12;
+                signal.Sma200 = 11.11;
+                signal.EventText = "Hello";
+                signal.Sma50 = 10.09;
+                signal.Sma20 = 9.08;
+                signal.StochSignal = 70.03;
+                signal.StochOscillator = 71.05;
+                SignalList.Add(signal);
+
+                symbol.Volume = SignalList.Count * 12345678.01m;
+                signal.Volume = symbol.Volume;
+                signal.TrendIndicator = CryptoTrendIndicator.Bearish;
+                signal.TrendPercentage = 85.85f;
+                symbol.FundingRate = 0.0001m;
+                SymbolList.Add(symbol);
+                i++;
+            }
+        }
+
+        GridSignals.AdjustObjectCount();
+        GridSignals.ApplySorting();
+
+        GridSymbols.AdjustObjectCount();
+        GridSymbols.ApplySorting();
+    }
+
+
+    private void button2_Click_2(object sender, EventArgs e)
+    {
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+        {
+            if (exchange.SymbolListName.TryGetValue("ADAUSDT", out CryptoSymbol symbol))
+            {
+                CryptoSignal signal = new();
+                signal.OpenDate = DateTime.UtcNow.AddHours(SignalList.Count);
+                signal.Price = 0.12345m;
+                signal.Symbol = symbol;
+                signal.Exchange = exchange;
+                signal.Side = CryptoTradeSide.Long;
+                signal.Interval = GlobalData.IntervalList[3];
+                SignalList.Add(signal);
+            }
+
+            if (exchange.SymbolListName.TryGetValue("LEVERUSDT", out symbol))
+            {
+                CryptoSignal signal = new();
+                signal.OpenDate = DateTime.UtcNow.AddHours(SignalList.Count);
+                signal.Price = 0.12345m;
+                signal.Symbol = symbol;
+                signal.Exchange = exchange;
+                signal.Interval = GlobalData.IntervalList[5];
+                signal.Side = CryptoTradeSide.Short;
+                SignalList.Add(signal);
+            }
+
+            if (exchange.SymbolListName.TryGetValue("ABCUSDT", out symbol))
+            {
+                CryptoSignal signal = new();
+                signal.OpenDate = DateTime.UtcNow.AddHours(SignalList.Count);
+                signal.Price = 0.12345m;
+                signal.Symbol = symbol;
+                signal.Exchange = exchange;
+                signal.Side = CryptoTradeSide.Long;
+                signal.Interval = GlobalData.IntervalList[3];
+                SignalList.Add(signal);
+            }
+
+            if (exchange.SymbolListName.TryGetValue("ACAUSDT", out symbol))
+            {
+                CryptoSignal signal = new();
+                signal.OpenDate = DateTime.UtcNow.AddHours(SignalList.Count);
+                signal.Price = 0.12345m;
+                signal.Symbol = symbol;
+                signal.Exchange = exchange;
+                signal.Interval = GlobalData.IntervalList[5];
+                signal.Side = CryptoTradeSide.Short;
+                SignalList.Add(signal);
+            }
+        }
+
+        GridSignals.AdjustObjectCount();
+    }
+
+    private void button3_Click_2(object sender, EventArgs e)
+    {
+        GridSignals.UpdatePriceDifferences();
+    }
+
+    private void button4_Click(object sender, EventArgs e)
+    {
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+        {
+            if (exchange.SymbolListName.TryGetValue("PAXGUSDT", out CryptoSymbol symbol))
+            {
+                CryptoSignal signal = new();
+                signal.OpenDate = DateTime.UtcNow.AddHours(SignalList.Count);
+                signal.Price = 0.12345m;
+                signal.Symbol = symbol;
+                signal.Exchange = exchange;
+                signal.Side = CryptoTradeSide.Long;
+                signal.Interval = GlobalData.IntervalList[3];
+                SignalList.Insert(0, signal);
+            }
+
+            GridSignals.AdjustObjectCount();
+        }
+    }
+
+
 
 }
