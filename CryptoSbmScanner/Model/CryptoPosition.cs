@@ -50,6 +50,8 @@ public class CryptoPosition
     public decimal Invested { get; set; }
     public decimal Returned { get; set; }
     public decimal Commission { get; set; }
+    [Computed]
+    public decimal Reserved { get; set; }
     public decimal Profit { get; set; }
     public decimal Percentage { get; set; }
 
@@ -105,6 +107,19 @@ public static class CryptoPositionHelper
             else
                 return plannedValue - currentValue;
         }
+    }
+
+    public static string PartCountText(this CryptoPosition position)
+    {
+        int partCount = position.PartCount;
+        if (position.ActiveDca)
+            partCount--;
+        // En we willen de openstaande part niet zien totdat deze echt gevuld is
+        string text = partCount.ToString();
+        // + ten teken dat er een openstaande DCA klaar staat (wellicht ook nog dat ie manual is)
+        if (position.ActiveDca)
+            text += "+";
+        return text;
     }
 
     /// <summary>
