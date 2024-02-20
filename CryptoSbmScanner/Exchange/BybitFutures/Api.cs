@@ -243,8 +243,7 @@ public class Api : ExchangeBase
                         reduce = true;
 
                     result = await client.V5Api.Trading.PlaceOrderAsync(Category, symbol.Name, side, 
-                        NewOrderType.Limit, quantity: quantity, price: price, timeInForce: TimeInForce.GoodTillCanceled, isLeverage: false, reduceOnly: reduce
-                        );
+                        NewOrderType.Limit, quantity: quantity, price: price, timeInForce: TimeInForce.GoodTillCanceled, isLeverage: false, reduceOnly: reduce);
                     if (!result.Success)
                     {
                         tradeParams.Error = result.Error;

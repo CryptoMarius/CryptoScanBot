@@ -57,10 +57,10 @@ public class FetchTradeForOrder
                         foreach (var trade in tradeCache)
                         {
                             databaseThread.Connection.Insert(trade, transaction);
-                            GlobalData.AddTextToLogTab($"FetchTradesForOrderAsync: {symbol.Name} ORDER {orderId} TRADE {trade.TradeId} toegevoegd!");
+                            GlobalData.AddTextToLogTab($"{symbol.Name} fetching trades for orderid {orderId} - added tradeid {trade.TradeId}");
                         }
 #endif
-                        GlobalData.AddTextToLogTab($"FetchTradesForOrderAsync {symbol.Name} ORDER {orderId} {tradeCache.Count}");
+                        //GlobalData.AddTextToLogTab($"FetchTradesForOrderAsync {symbol.Name} ORDER {orderId} {tradeCache.Count}");
                         transaction.Commit();
                     }
                     finally

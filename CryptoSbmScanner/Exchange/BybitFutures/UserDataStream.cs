@@ -34,9 +34,6 @@ public class UserDataStream
     {
         socketClient = new();
 
-        //var subscriptionResult = await socketClient.UsdPerpetualApi.SubscribeToOrderUpdatesAsync(
-        //    OnOrderUpdate).ConfigureAwait(false);
-
         var subscriptionResult = await socketClient.V5PrivateApi.SubscribeToOrderUpdatesAsync(OnOrderUpdate).ConfigureAwait(false);
 
         // Subscribe to network-related stuff

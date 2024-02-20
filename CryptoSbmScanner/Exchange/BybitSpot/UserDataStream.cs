@@ -1,8 +1,9 @@
-﻿using Bybit.Net.Clients;
-using Bybit.Net.Enums;
-using Bybit.Net.Objects.Models.Socket;
+﻿using System.Text.Encodings.Web;
+using System.Text.Json;
 
-using CryptoExchange.Net.Objects;
+using Bybit.Net.Clients;
+using Bybit.Net.Enums.V5;
+
 using CryptoExchange.Net.Sockets;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
@@ -33,8 +34,7 @@ public class UserDataStream
     {
         socketClient = new();
 
-        var subscriptionResult = await socketClient.UsdPerpetualApi.SubscribeToOrderUpdatesAsync(
-            OnOrderUpdate).ConfigureAwait(false);
+        var subscriptionResult = await socketClient.V5PrivateApi.SubscribeToOrderUpdatesAsync(OnOrderUpdate).ConfigureAwait(false);
 
         // Subscribe to network-related stuff
         if (subscriptionResult.Success)
@@ -55,17 +55,20 @@ public class UserDataStream
     }
 
 
-    private void OnOrderUpdate(DataEvent<IEnumerable<BybitUsdPerpetualOrderUpdate>> dataList)
+    private void OnOrderUpdate(DataEvent<IEnumerable<Bybit.Net.Objects.Models.V5.BybitOrderUpdate>> dataList)
     {
         try
         {
             foreach (var data in dataList.Data)
             {
+                // We krijgen duplicaat json berichten binnen (even een quick & dirty fix)
+                string text = JsonSerializer.Serialize(data, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = false }).Trim();
+                GlobalData.AddTextToLogTab($"{data.Symbol} UserTicker {data.Status} quantity={data.Quantity} price={data.Price} value={data.ValueFilled} text={text}");
 
                 // We zijn slechts geinteresseerd in 3 statussen (de andere zijn niet interessant voor de afhandeling van de order)
                 if (data.Status == OrderStatus.Filled ||
                     data.Status == OrderStatus.PartiallyFilled ||
-                    data.Status == OrderStatus.Canceled)
+                    data.Status == OrderStatus.Cancelled)
                 {
                     // Nieuwe thread opstarten en de data meegeven zodat er een sell wordt gedaan of administratie wordt bijgewerkt.
                     // Het triggeren van een stoploss of een DCA zal op een andere manier gedaan moeten worden (maar hoe en waar?)
@@ -74,15 +77,16 @@ public class UserDataStream
                         if (exchange.SymbolListName.TryGetValue(data.Symbol, out CryptoSymbol symbol))
                         {
                             // Converteer de data naar een (tijdelijke) trade
-                            //CryptoTrade tradeTemp = new();
-                            //BybitApi.PickupTrade(GlobalData.ExchangeRealTradeAccount, symbol, tradeTemp, data);
+                            CryptoTrade trade = new();
+                            Api.PickupTrade(GlobalData.ExchangeRealTradeAccount, symbol, trade, data);
+                            //GlobalData.AddTextToLogTab(string.Format("{0} OnOrderUpdate#2 TradeId={1} {2} quantity={3} price={4} (addtoqueue)", symbol.Name, trade.TradeId, data.Status.ToString(), trade.Quantity, trade.Price));
 
-                //            GlobalData.ThreadMonitorOrder.AddToQueue((
-                //                symbol,
-                //                BybitApi.LocalOrderType(data.Data.Type),
-                //                BybitApi.LocalOrderSide(data.Data.Side),
-                //                BybitApi.LocalOrderStatus(data.Data.Status),
-                //                tradeTemp));
+                            GlobalData.ThreadMonitorOrder.AddToQueue((
+                                symbol,
+                                Api.LocalOrderType(data.OrderType),
+                                Api.LocalOrderSide(data.Side),
+                                Api.LocalOrderStatus((OrderStatus)data.Status),
+                                trade));
                         }
                     }
                 }
@@ -175,17 +179,18 @@ public class UserDataStream
 
     private void ConnectionLost()
     {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} price ticker connection lost.");
+        //ConnectionLostCount++;
+        GlobalData.AddTextToLogTab($"{Api.ExchangeName} user ticker connection lost.");
     }
 
     private void ConnectionRestored(TimeSpan timeSpan)
     {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} price ticker connection restored.");
+        GlobalData.AddTextToLogTab($"{Api.ExchangeName} user ticker connection restored.");
     }
 
     private void Exception(Exception ex)
     {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} price ticker connection error {ex.Message} | Stack trace: {ex.StackTrace}");
+        GlobalData.AddTextToLogTab($"{Api.ExchangeName} user ticker connection error {ex.Message} | Stack trace: {ex.StackTrace}");
     }
 }
 

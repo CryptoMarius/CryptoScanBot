@@ -147,6 +147,7 @@ public class FetchSymbols
 #if SQLDATABASE
                         database.BulkInsertSymbol(cache, transaction);
 #endif
+
                         // Deactiveer de munten die niet meer voorkomen
                         int deactivated = 0;
                         foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)

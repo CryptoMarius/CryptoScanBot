@@ -22,7 +22,7 @@ public class Api : ExchangeBase
     private static readonly Category Category = Category.Spot;
     static private UserDataStream TaskBybitStreamUserData { get; set; }
 #endif
-    public static List<KLineTickerItem> TickerList { get; set; } = new();
+    public static List<KLineTickerItem> TickerList { get; set; } = [];
 
 
     public Api() : base()
@@ -95,15 +95,15 @@ public class Api : ExchangeBase
 
 
     // Converteer de orderstatus van Exchange naar "intern"
-    public static CryptoOrderStatus LocalOrderStatus(OrderStatus orderStatus)
+    public static CryptoOrderStatus LocalOrderStatus(Bybit.Net.Enums.V5.OrderStatus orderStatus)
     {
         CryptoOrderStatus localOrderStatus = orderStatus switch
         {
-            OrderStatus.New => CryptoOrderStatus.New,
-            OrderStatus.Filled => CryptoOrderStatus.Filled,
-            OrderStatus.PartiallyFilled => CryptoOrderStatus.PartiallyFilled,
-            //OrderStatus.Expired => CryptoOrderStatus.Expired,
-            OrderStatus.Canceled => CryptoOrderStatus.Canceled,
+            Bybit.Net.Enums.V5.OrderStatus.New => CryptoOrderStatus.New,
+            Bybit.Net.Enums.V5.OrderStatus.Filled => CryptoOrderStatus.Filled,
+            Bybit.Net.Enums.V5.OrderStatus.PartiallyFilled => CryptoOrderStatus.PartiallyFilled,
+            //Bybit.Net.Enums.V5.OrderStatus.Expired => CryptoOrderStatus.Expired,
+            Bybit.Net.Enums.V5.OrderStatus.Cancelled => CryptoOrderStatus.Canceled,
             _ => throw new Exception("Niet ondersteunde orderstatus"),
         };
 
@@ -111,7 +111,7 @@ public class Api : ExchangeBase
     }
 
 
-    public async override Task<(bool result, TradeParams tradeParams)> PlaceOrder(CryptoDatabase database,
+    public override async Task<(bool result, TradeParams tradeParams)> PlaceOrder(CryptoDatabase database,
         CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoTradeSide tradeSide, DateTime currentDate,
         CryptoOrderType orderType, CryptoOrderSide orderSide,
         decimal quantity, decimal price, decimal? stop, decimal? limit)
@@ -144,6 +144,8 @@ public class Api : ExchangeBase
         }
 
 
+        // BinanceWeights.WaitForFairBinanceWeight(1); flauwekul voor die ene tick (geen herhaling toch?)
+
         OrderSide side;
         if (orderSide == CryptoOrderSide.Buy)
             side = OrderSide.Buy;
@@ -152,8 +154,8 @@ public class Api : ExchangeBase
 
 
         // Plaats een order op de exchange *ze lijken op elkaar, maar het is net elke keer anders)
-        //BinanceWeights.WaitForFairBinanceWeight(1); flauwekul voor die ene tick (geen herhaling toch?)
         using BybitRestClient client = new();
+
 
         WebCallResult<BybitOrderId> result;
         switch (orderType)
@@ -237,7 +239,7 @@ public class Api : ExchangeBase
             CreateTime = step.CreateTime,
             OrderSide = step.Side,
             OrderType = step.OrderType,
-            Price = step.Price, // the sell part (can also be a buy)
+            Price = step.Price, // the buy or sell price
             StopPrice = step.StopPrice, // OCO - the price at which the limit order to sell is activated
             LimitPrice = step.StopLimitPrice, // OCO - the lowest price that the trader is willing to accept
             Quantity = step.Quantity,
@@ -263,6 +265,10 @@ public class Api : ExchangeBase
             {
                 tradeParams.Error = result.Error;
                 tradeParams.ResponseStatusCode = result.ResponseStatusCode;
+
+                // If its already gone ignore the error
+                if (result.Error.Code == 110001) // 110001: Order does not exist
+                    return (true, tradeParams);
             }
             return (result.Success, tradeParams);
         }
@@ -358,33 +364,40 @@ public class Api : ExchangeBase
     }
 
 
-    //static public void PickupTrade(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoTrade trade, BybitUsdPerpetualOrderUpdate item)
-    //{
-    //    trade.TradeAccount = tradeAccount;
-    //    trade.TradeAccountId = tradeAccount.Id;
-    //    trade.Exchange = symbol.Exchange;
-    //    trade.ExchangeId = symbol.ExchangeId;
-    //    trade.Symbol = symbol;
-    //    trade.SymbolId = symbol.Id;
+    static public void PickupTrade(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoTrade trade, Bybit.Net.Objects.Models.V5.BybitOrderUpdate item)
+    {
+        trade.TradeAccount = tradeAccount;
+        trade.TradeAccountId = tradeAccount.Id;
+        trade.Exchange = symbol.Exchange;
+        trade.ExchangeId = symbol.ExchangeId;
+        trade.Symbol = symbol;
+        trade.SymbolId = symbol.Id;
 
-    //    //TODO: Uitzoeken!!!!
-    //    //trade.TradeId = item.TradeId; Ehhhh????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
-    //    trade.OrderId = item.Id;
-    //    //trade.OrderListId = item.OrderListId;
+        //TODO: Uitzoeken!!!!
+        // Dit zijn updates op orders en we willen eigenlijk de trades!
+        //trade.TradeId = item.Id; //Ehhhh????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
+        trade.OrderId = item.OrderId;
+        //trade.OrderListId = item.OrderListId;
 
-    //    trade.Price = item.Price;
-    //    trade.Quantity = item.Quantity;
-    //    trade.QuoteQuantity = item.Price * item.Quantity;
-    //    // enig debug werk, soms wordt het niet ingevuld!
-    //    //if (item.QuoteQuantity == 0)
-    //    //    GlobalData.AddTextToLogTab(string.Format("{0} PickupTrade#2stream QuoteQuantity is 0 for order TradeId={1}!", symbol.Name, trade.TradeId));
+        trade.Price = item.Price.Value;
+        trade.Quantity = item.Quantity;
+        trade.QuoteQuantity = item.Price.Value * item.Quantity;
+        // enig debug werk, soms wordt het niet ingevuld!
+        //if (item.QuoteQuantity == 0)
+        //    GlobalData.AddTextToLogTab(string.Format("{0} PickupTrade#2stream QuoteQuantity is 0 for order TradeId={1}!", symbol.Name, trade.TradeId));
 
-    //    trade.TradeTime = item.Timestamp;
-    //    trade.Side = LocalOrderSide(item.Side);
+        // Verwarrend want deze moet toch altijd gevuld zijn?
+        //if (item.UpdateTime)
+        //    trade.TradeTime = item.UpdateTime.Value; // Timestamp;
+        //else
+        //    trade.TradeTime = item.Timestamp;
+        trade.TradeTime = item.UpdateTime;
 
-    //    trade.Commission = item.Fee;
-    //    trade.CommissionAsset = symbol.Quote; // item.FeeAsset; ??????
-    //}
+        trade.Side = LocalOrderSide(item.Side);
+
+        trade.Commission = item.ExecutedFee.Value;
+        trade.CommissionAsset = symbol.Quote;
+    }
 
 
     public override async Task FetchTradesForSymbolAsync(CryptoTradeAccount tradeAccount, CryptoSymbol symbol)

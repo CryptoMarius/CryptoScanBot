@@ -30,9 +30,6 @@ public class PriceTickerItem
                     if (exchange.SymbolListName.TryGetValue(tick.Symbol, out CryptoSymbol symbol))
                     {
                         TickerCount++;
-                        if (TickerCount > 999999999)
-                            TickerCount = 0;
-
                         // Waarschijnlijk ALLEMAAL gebaseerd op de 24h prijs
                         //symbol.OpenPrice = tick.OpenPrice;
                         //symbol.HighPrice = tick.HighPrice;
@@ -86,9 +83,12 @@ public class PriceTickerItem
                         //    string text = JsonSerializer.Serialize(data, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
                         //    File.WriteAllText(filename, text);
                         //}
+
                     }
                 }
 
+                if (TickerCount > 999999999)
+                    TickerCount = 0;
             }
         }).ConfigureAwait(false);
 
@@ -120,7 +120,7 @@ public class PriceTickerItem
         _subscription.ConnectionLost -= ConnectionLost;
         _subscription.ConnectionRestored -= ConnectionRestored;
 
-        await socketClient.UnsubscribeAsync(_subscription);
+        await socketClient?.UnsubscribeAsync(_subscription);
         _subscription = null;
     }
 

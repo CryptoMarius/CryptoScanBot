@@ -93,7 +93,7 @@ public class KLineTickerItem : KLineTickerItemBase
                 //            await Task.Delay(TimeSpan.FromMinutes(30));
                 //        }
                 //    });
-                //GlobalData.AddTextToLogTab(string.Format("Bybit {0} 1m started candle stream {1} symbols", quote, symbols.Count));
+                //GlobalData.AddTextToLogTab($"{Api.ExchangeName} {quote} 1m started candle stream {symbols.Count} symbols");
             }
             else
             {
