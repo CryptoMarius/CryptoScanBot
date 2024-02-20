@@ -223,16 +223,7 @@ public partial class FrmMain
         else if (bePerc < 0)
             subItem.ForeColor = Color.Red;
 
-        // PartCount is het aantal parts die we gemaakt hebben (de parts.Count), er kan nog eentje open staan
-        int partCount = position.PartCount;
-        if (position.ActiveDca)
-            partCount--;
-        // En we willen de openstaande part niet zien totdat deze echt gevuld is
-        string text = partCount.ToString();
-        // + ten teken dat er een openstaande DCA klaar staat (wellicht ook nog dat ie manual is)
-        if (position.ActiveDca)
-            text += "+";
-        item1.SubItems.Add(text);
+        item1.SubItems.Add(position.PartCountText());
         item1.SubItems.Add(position.EntryPrice?.ToString(position.Symbol.PriceDisplayFormat));
         if (position.ProfitPrice.HasValue)
             item1.SubItems.Add(position.ProfitPrice?.ToString(position.Symbol.PriceDisplayFormat));
