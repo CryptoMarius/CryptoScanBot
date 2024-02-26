@@ -29,6 +29,7 @@ partial class UserControlTelegram
     private void InitializeComponent()
     {
         groupBoxTelegram = new GroupBox();
+        EditUseEmojiInTrend = new CheckBox();
         buttonTelegramStart = new Button();
         EditSendSignalsToTelegram = new CheckBox();
         ButtonTestTelegram = new Button();
@@ -36,7 +37,6 @@ partial class UserControlTelegram
         EditTelegramChatId = new TextBox();
         EditTelegramToken = new TextBox();
         label15 = new Label();
-        EditUseEmojiInTrend = new CheckBox();
         groupBoxTelegram.SuspendLayout();
         SuspendLayout();
         // 
@@ -58,6 +58,17 @@ partial class UserControlTelegram
         groupBoxTelegram.TabIndex = 0;
         groupBoxTelegram.TabStop = false;
         groupBoxTelegram.Text = "Telegram ";
+        // 
+        // EditUseEmojiInTrend
+        // 
+        EditUseEmojiInTrend.AutoSize = true;
+        EditUseEmojiInTrend.Location = new Point(10, 119);
+        EditUseEmojiInTrend.Margin = new Padding(4, 3, 4, 3);
+        EditUseEmojiInTrend.Name = "EditUseEmojiInTrend";
+        EditUseEmojiInTrend.Size = new Size(168, 19);
+        EditUseEmojiInTrend.TabIndex = 184;
+        EditUseEmojiInTrend.Text = "Gebruik Emoji's in de trend";
+        EditUseEmojiInTrend.UseVisualStyleBackColor = true;
         // 
         // buttonTelegramStart
         // 
@@ -125,17 +136,6 @@ partial class UserControlTelegram
         label15.Size = new Size(38, 15);
         label15.TabIndex = 178;
         label15.Text = "Token";
-        // 
-        // EditUseEmojiInTrend
-        // 
-        EditUseEmojiInTrend.AutoSize = true;
-        EditUseEmojiInTrend.Location = new Point(10, 119);
-        EditUseEmojiInTrend.Margin = new Padding(4, 3, 4, 3);
-        EditUseEmojiInTrend.Name = "EditUseEmojiInTrend";
-        EditUseEmojiInTrend.Size = new Size(168, 19);
-        EditUseEmojiInTrend.TabIndex = 184;
-        EditUseEmojiInTrend.Text = "Gebruik Emoji's in de trend";
-        EditUseEmojiInTrend.UseVisualStyleBackColor = true;
         // 
         // UserControlTelegram
         // 

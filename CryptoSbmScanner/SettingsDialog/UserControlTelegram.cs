@@ -39,4 +39,5 @@ public partial class UserControlTelegram : UserControl
         settings.Telegram.UseEmojiInTrend = EditUseEmojiInTrend.Checked;
         settings.Telegram.SendSignalsToTelegram = EditSendSignalsToTelegram.Checked;
     }
+
 }
