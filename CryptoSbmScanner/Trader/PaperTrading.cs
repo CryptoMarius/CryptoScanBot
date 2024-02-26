@@ -39,7 +39,6 @@ public class PaperTrading
             CommissionAsset = symbol.Quote,
 
             TradeId = Database.CreateNewUniqueId(), // Een fake trade ID (als er maar een getal in zit)
-            Side = step.Side,
         };
         // TODO: Dit gaat niet goed als van een OCO de stop wordt geraakt (Order2Id), price is wel okay overigens
         if (step.OrderId != "")
@@ -59,7 +58,7 @@ public class PaperTrading
 
         await TradeHandler.HandleTradeAsync(position.Symbol, step.OrderType, step.Side, CryptoOrderStatus.Filled, trade);
 
-        PaperAssets.Change(position.TradeAccount, position.Symbol, trade.Side, CryptoOrderStatus.Filled, trade.Quantity, trade.QuoteQuantity);
+        PaperAssets.Change(position.TradeAccount, position.Symbol, step.Side, CryptoOrderStatus.Filled, trade.Quantity, trade.QuoteQuantity);
     }
 
 
