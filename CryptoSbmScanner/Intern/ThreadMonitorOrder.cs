@@ -10,7 +10,7 @@ namespace CryptoSbmScanner.Intern;
 public class ThreadMonitorOrder
 {
     private readonly CancellationTokenSource cancellationToken = new();
-    private readonly BlockingCollection<(CryptoSymbol symbol, CryptoOrderType ordertype, CryptoOrderSide side, CryptoOrderStatus status, CryptoTrade trade)> Queue = new();
+    private readonly BlockingCollection<(CryptoSymbol symbol, CryptoOrderType ordertype, CryptoOrderSide side, CryptoOrderStatus status, CryptoTrade trade)> Queue = [];
 
     public ThreadMonitorOrder()
     {
@@ -51,7 +51,7 @@ public class ThreadMonitorOrder
                 GlobalData.AddTextToLogTab($"{symbol.Name} ERROR order handler thread {error.Message}");
             }
         }
-        GlobalData.AddTextToLogTab("\r\n" + "\r\n MONITOR order THREAD EXIT");
+        GlobalData.AddTextToLogTab("Task order monitor stopped");
     }
 }
 #endif

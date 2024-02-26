@@ -864,7 +864,7 @@ public class ThreadTelegramBotInstance
             ScannerLog.Logger.Error(error, "");
             GlobalData.AddTextToLogTab($"ERROR telegram thread {error.Message}");
         }
-        GlobalData.AddTextToLogTab("\r\n" + "\r\n TELEGRAM THREAD EXIT " + token);
+        GlobalData.AddTextToLogTab("Task Telegram stopped");
 #endif
                                     }
 
