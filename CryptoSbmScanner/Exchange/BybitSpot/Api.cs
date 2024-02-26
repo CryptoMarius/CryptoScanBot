@@ -1,7 +1,10 @@
 ﻿using Bybit.Net.Clients;
 using Bybit.Net.Enums;
+using Bybit.Net.Objects;
 using Bybit.Net.Objects.Models.Socket;
+using Bybit.Net.Objects.Models.Spot;
 using Bybit.Net.Objects.Models.V5;
+using Bybit.Net.Objects.Options;
 
 using CryptoExchange.Net.Authentication;
 using CryptoExchange.Net.Objects;
@@ -12,6 +15,10 @@ using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
 
 using Dapper.Contrib.Extensions;
+
+//using Microsoft.Extensions.DependencyInjection;
+//using Microsoft.Extensions.Logging;
+
 
 namespace CryptoSbmScanner.Exchange.BybitSpot;
 
@@ -24,19 +31,57 @@ public class Api : ExchangeBase
 #endif
     public static List<KLineTickerItem> TickerList { get; set; } = [];
 
+    //internal static TraceLoggerProvider TraceProvider;
+    //internal static LoggerFactory LogFactory;
 
     public Api() : base()
     {
     }
 
+    //internal static BybitRestClient CreateRestClient()
+    //{
+    //    // Ik snap er helemaal niets van.. Heb een paar classes verkeerd begrepen log en logger
+
+    //    //NLog.Extensions.Logging.NLogLoggerFactory loggerFactory = new();
+    //    //MyClass myClass = new(loggerFactory);
+    //    //loggerFactory.
+    //    //LoadNLogConfigurationOnFactory(loggerFactory);
+    //    //using ILoggerFactory factory = LoggerFactory.Create(builder => builder.AddNLog());
+    //    //Microsoft.Extensions.Logging.ILogger logger = factory.CreateLogger("Program");
+    //    //logger.LogInformation("Hello World! Logging is {Description}.", "fun");
+
+    //    //var loggerFactory = new NLog.Extensions.Logging.NLogLoggerFactory();
+
+    //    //Logger moduleLogger = NLog.LogManager.GetLogger("Modules.MyModuleName");
+    //    //NLog.LogFactory Factory1 = new LogFactory();
+    //    //LoadNLogConfigurationOnFactory(Factory1);
+
+
+    //    BybitRestClient client = new(null, LogFactory, options =>
+    //    {
+    //        //options.Environment = _environment;
+    //        options.OutputOriginalData = true;
+    //        options.ReceiveWindow = TimeSpan.FromSeconds(15);
+    //        if (GlobalData.Settings.Trading.ApiKey != "")
+    //            options.ApiCredentials = new ApiCredentials(GlobalData.Settings.Trading.ApiKey, GlobalData.Settings.Trading.ApiSecret);
+    //    });
+    //    return client;
+    //}
+
+
     public override void ExchangeDefaults()
     {
+        //TraceProvider = new();
+        //LogFactory = new(new[] { TraceProvider });
         GlobalData.AddTextToLogTab($"{ExchangeName} defaults");
 
         // Default opties voor deze exchange
         BybitRestClient.SetDefaultOptions(options =>
         {
+            //options.OutputOriginalData = true;
+            //options.SpotOptions.AutoTimestamp = true;
             options.ReceiveWindow = TimeSpan.FromSeconds(15);
+            //options.SpotOptions.RateLimiters = ?
             if (GlobalData.Settings.Trading.ApiKey != "")
                 options.ApiCredentials = new ApiCredentials(GlobalData.Settings.Trading.ApiKey, GlobalData.Settings.Trading.ApiSecret);
         });
@@ -44,6 +89,7 @@ public class Api : ExchangeBase
         BybitSocketClient.SetDefaultOptions(options =>
         {
             options.AutoReconnect = true;
+            //options.OutputOriginalData = true;
             options.ReconnectInterval = TimeSpan.FromSeconds(15);
             if (GlobalData.Settings.Trading.ApiKey != "")
                 options.ApiCredentials = new ApiCredentials(GlobalData.Settings.Trading.ApiKey, GlobalData.Settings.Trading.ApiSecret);
@@ -181,7 +227,7 @@ public class Api : ExchangeBase
             case CryptoOrderType.Limit:
                 {
                     result = await client.V5Api.Trading.PlaceOrderAsync(Category, symbol.Name, side,
-                    NewOrderType.Limit, quantity, price: price, timeInForce: TimeInForce.GoodTillCanceled, isLeverage: false);
+                    NewOrderType.Limit, quantity: quantity, price: price, timeInForce: TimeInForce.GoodTillCanceled, isLeverage: false);
                     if (!result.Success)
                     {
                         tradeParams.Error = result.Error;
@@ -336,7 +382,7 @@ public class Api : ExchangeBase
         }
     }
 
-    static public void PickupTrade(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoTrade trade, BybitUserTrade item)
+    static public void PickupTrade(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoTrade trade, BybitSpotUserTradeV3 item)
     {
         trade.TradeAccount = tradeAccount;
         trade.TradeAccountId = tradeAccount.Id;
@@ -345,22 +391,18 @@ public class Api : ExchangeBase
         trade.Symbol = symbol;
         trade.SymbolId = symbol.Id;
 
-        trade.TradeId = item.TradeId;
-        trade.OrderId = item.OrderId;
+        trade.TradeId = item.Id.ToString();
+        trade.OrderId = item.OrderId.ToString();
         //trade.OrderListId = (long)item.OrderListId;
 
         trade.Price = item.Price;
         trade.Quantity = item.Quantity;
         trade.QuoteQuantity = item.Price * item.Quantity;
-        // enig debug werk, soms wordt het niet ingevuld!
-        //if (item.QuoteQuantity == 0)
-        //    GlobalData.AddTextToLogTab(string.Format("{0} PickupTrade#1trade QuoteQuantity is 0 for order TradeId={1}!", symbol.Name, trade.TradeId));
 
-        trade.TradeTime = item.Timestamp;
-        trade.Side = LocalOrderSide(item.Side);
+        trade.TradeTime = item.TradeTime; // Timestamp;
 
-        trade.Commission = item.Fee.Value;
-        trade.CommissionAsset = symbol.Quote; // item.FeeAsset;?
+        trade.Commission = item.Fee;
+        trade.CommissionAsset = item.FeeTokenId;
     }
 
 
@@ -382,9 +424,6 @@ public class Api : ExchangeBase
         trade.Price = item.Price.Value;
         trade.Quantity = item.Quantity;
         trade.QuoteQuantity = item.Price.Value * item.Quantity;
-        // enig debug werk, soms wordt het niet ingevuld!
-        //if (item.QuoteQuantity == 0)
-        //    GlobalData.AddTextToLogTab(string.Format("{0} PickupTrade#2stream QuoteQuantity is 0 for order TradeId={1}!", symbol.Name, trade.TradeId));
 
         // Verwarrend want deze moet toch altijd gevuld zijn?
         //if (item.UpdateTime)
@@ -393,10 +432,8 @@ public class Api : ExchangeBase
         //    trade.TradeTime = item.Timestamp;
         trade.TradeTime = item.UpdateTime;
 
-        trade.Side = LocalOrderSide(item.Side);
-
         trade.Commission = item.ExecutedFee.Value;
-        trade.CommissionAsset = symbol.Quote;
+        trade.CommissionAsset = item.FeeAsset;
     }
 
 
@@ -407,7 +444,9 @@ public class Api : ExchangeBase
 
     public override async Task<int> FetchTradesForOrderAsync(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, string orderId)
     {
-        return await FetchTradeForOrder.FetchTradesForOrderAsync(tradeAccount, symbol, orderId);
+        //return await FetchTradeForOrder.FetchTradesForOrderAsync(tradeAccount, symbol, orderId);
+        await FetchTrades.FetchTradesForSymbolAsync(tradeAccount, symbol);
+        return 0;
     }
 
     public async override Task FetchAssetsAsync(CryptoTradeAccount tradeAccount)

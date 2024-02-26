@@ -1,6 +1,7 @@
 ﻿using System.Text.Encodings.Web;
 using System.Text.Json;
 
+using CryptoExchange.Net.Objects.Sockets;
 using CryptoExchange.Net.Sockets;
 
 using CryptoSbmScanner.Enums;

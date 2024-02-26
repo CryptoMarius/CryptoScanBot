@@ -1,5 +1,6 @@
 ﻿using Binance.Net;
 using Binance.Net.Clients;
+using Binance.Net.ExtensionMethods;
 using Binance.Net.Objects.Models.Spot;
 
 using CryptoSbmScanner.Context;

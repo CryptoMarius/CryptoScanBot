@@ -1,6 +1,7 @@
-﻿using Bybit.Net.Clients;
-using Bybit.Net.Enums;
-using Bybit.Net.Objects.Models.Spot;
+﻿using System.Text.Encodings.Web;
+using System.Text.Json;
+
+using Bybit.Net.Clients;
 
 using CryptoSbmScanner.Context;
 using CryptoSbmScanner.Intern;
@@ -37,20 +38,18 @@ public class FetchTrades
             // Haal de trades op van 1 symbol
 
             bool isChanged = false;
-            DateTime? startTime;
-            List<CryptoTrade> tradeCache = new();
+            long? fromId = symbol.LastTradeIdFetched;
+            long? toId = null;
+            List<CryptoTrade> tradeCache = [];
 
-            //Verzin een begin datum
-            if (symbol.LastTradeFetched == null)
+            while (true)
             {
-                isChanged = true;
-                symbol.LastTradeFetched = DateTime.Today.AddMonths(-2);
-            }
-            // Bybit doet het alleen in blokken van 7 dagen
-            startTime = symbol.LastTradeFetched;
+                if (fromId != null)
+                {
+                    fromId += 1;
+                    toId = fromId + 500;
+                }
 
-            while (startTime < DateTime.UtcNow)
-            {
                 // Weight verdubbelt omdat deze wel erg aggressief trades ophaalt
                 //BinanceWeights.WaitForFairBinanceWeight(5, "mytrades");
                 LimitRates.WaitForFairWeight(1); // *5x ivm API weight waarschuwingen
@@ -60,45 +59,46 @@ public class FetchTrades
 
                 // If only startTime is passed, return range between startTime and startTime+7days!!
 
-                var result = await client.V5Api.Trading.GetUserTradesAsync(Category.Spot, symbol.Name, startTime: startTime, limit: 1000);
+                var result = await client.SpotApiV3.Trading.GetUserTradesAsync(symbol.Name, fromId: fromId, toId: toId, limit: 1000);
                 if (!result.Success)
                 {
                     GlobalData.AddTextToLogTab("error getting mytrades " + result.Error);
+                    break;
                 }
 
 
-                if (result.Data != null)
+                //We hebben een volledige aantal trades meegekregen, nog eens proberen
+                if (result.Data != null && result.Data.Any())
                 {
-                    foreach (var item in result.Data.List)
+                    foreach (var item in result.Data)
                     {
-                        if (!symbol.TradeList.TryGetValue(item.TradeId, out CryptoTrade trade))
+                        if (!symbol.TradeList.TryGetValue(item.Id.ToString(), out CryptoTrade trade))
                         {
                             trade = new CryptoTrade();
                             Api.PickupTrade(tradeAccount, symbol, trade, item);
+                            string text = JsonSerializer.Serialize(item, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = false }).Trim();
+                            GlobalData.AddTextToLogTab($"{item.Symbol} Trade details json={text}");
                             tradeCache.Add(trade);
 
                             GlobalData.AddTrade(trade);
+                        }
 
-                            //De fetch administratie bijwerken
-                            if (trade.TradeTime > symbol.LastTradeFetched)
+                        //De fetch administratie bijwerken
+                        // dat gaat compleet kriskra door elkaar zo te zien
+                        //if (!symbol.LastTradeIdFetched.HasValue || item.Id > symbol.LastTradeIdFetched)
+                        {
+                            isChanged = true;
+                            if (!symbol.LastTradeIdFetched.HasValue || item.Id > symbol.LastTradeIdFetched)
                             {
-                                isChanged = true;
+                                fromId = item.Id;
+                                symbol.LastTradeIdFetched = item.Id;
                                 symbol.LastTradeFetched = trade.TradeTime;
                             }
                         }
                     }
 
-                    //We hebben een volledige aantal trades meegekregen, nog eens proberen
-                    if (!result.Success)
-                        break;
                 }
-
-                if (startTime > symbol.LastTradeFetched)
-                {
-                    isChanged = true;
-                    symbol.LastTradeFetched = startTime;
-                }
-                startTime = startTime?.AddDays(7);
+                else break;
             }
 
 
@@ -222,7 +222,7 @@ public class FetchTrades
                     }
 
                     // En dan door x tasks de queue leeg laten trekken
-                    List<Task> taskList = new();
+                    List<Task> taskList = [];
                     while (taskList.Count < 3)
                     {
                         Task task = Task.Run(async () => { tradeCount += await ExecuteInternalAsync(queue); });

@@ -1,4 +1,5 @@
-﻿using CryptoExchange.Net.Sockets;
+﻿using CryptoExchange.Net.Objects.Sockets;
+using CryptoExchange.Net.Sockets;
 
 using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Intern;

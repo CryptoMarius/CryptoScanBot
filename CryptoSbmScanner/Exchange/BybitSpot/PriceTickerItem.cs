@@ -6,6 +6,7 @@ using Bybit.Net.Enums;
 using Bybit.Net.Objects.Models.V5;
 
 using CryptoExchange.Net.Objects;
+using CryptoExchange.Net.Objects.Sockets;
 using CryptoExchange.Net.Sockets;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;

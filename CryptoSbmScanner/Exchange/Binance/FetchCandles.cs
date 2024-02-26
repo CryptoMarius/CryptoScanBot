@@ -1,6 +1,7 @@
 ﻿using Binance.Net;
 using Binance.Net.Clients;
 using Binance.Net.Enums;
+using Binance.Net.ExtensionMethods;
 using Binance.Net.Interfaces;
 using Binance.Net.Objects.Models.Spot;
 

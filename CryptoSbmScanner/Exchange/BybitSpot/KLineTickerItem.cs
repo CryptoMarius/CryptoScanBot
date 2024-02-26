@@ -2,6 +2,7 @@
 using Bybit.Net.Enums;
 using Bybit.Net.Objects.Models.V5;
 
+using CryptoExchange.Net.Objects.Sockets;
 using CryptoExchange.Net.Sockets;
 
 using CryptoSbmScanner.Enums;
@@ -31,8 +32,8 @@ public class KLineTickerItem : KLineTickerItemBase
         // base volume would be MFN
         // quote volume would be USDT
 
-        // De interval wordt geprefixed in de topic
-        string symbolName = topic[2..];
+        // De interval wordt geprefixed in de topic (kline.1.SymbolName)
+        string symbolName = topic[8..];
         if (GlobalData.ExchangeListName.TryGetValue(Api.ExchangeName, out Model.CryptoExchange exchange))
         {
             if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol symbol))

@@ -3,6 +3,7 @@ using Binance.Net.Enums;
 using Binance.Net.Objects.Models.Spot.Socket;
 
 using CryptoExchange.Net.Objects;
+using CryptoExchange.Net.Objects.Sockets;
 using CryptoExchange.Net.Sockets;
 
 using CryptoSbmScanner.Intern;

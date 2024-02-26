@@ -4,6 +4,7 @@ using System.Text.Json;
 using Bybit.Net.Clients;
 using Bybit.Net.Enums.V5;
 
+using CryptoExchange.Net.Objects.Sockets;
 using CryptoExchange.Net.Sockets;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;

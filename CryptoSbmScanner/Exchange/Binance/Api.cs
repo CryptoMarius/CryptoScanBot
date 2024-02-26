@@ -16,6 +16,9 @@ using CryptoSbmScanner.Model;
 
 using Dapper.Contrib.Extensions;
 
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+
 namespace CryptoSbmScanner.Exchange.Binance;
 
 
@@ -117,6 +120,14 @@ public class Api : ExchangeBase
         //if (GlobalData.Settings.ApiKey != "")
         //  options.ApiCredentials = new BinanceApiCredentials(GlobalData.Settings.ApiKey, GlobalData.Settings.ApiSecret);
         //BinanceClient.SetDefaultOptions(options);
+
+
+        //BinanceSocketClient socketClient = new BinanceSocketClient(new BinanceSocketClientOptions
+        //{
+        //    LogLevel = LogLevel.Trace,
+        //    //    ApiCredentials = new ApiCredentials(GlobalData.Settings.Trading.ApiKey, GlobalData.Settings.Trading.ApiSecret)
+        //});
+
         BinanceRestClient.SetDefaultOptions(options =>
         {
             options.ReceiveWindow = TimeSpan.FromSeconds(15);
@@ -138,6 +149,8 @@ public class Api : ExchangeBase
             if (GlobalData.Settings.Trading.ApiKey != "")
                 options.ApiCredentials = new ApiCredentials(GlobalData.Settings.Trading.ApiKey, GlobalData.Settings.Trading.ApiSecret);
         });
+
+
 
         ExchangeHelper.PriceTicker = new PriceTicker();
         ExchangeHelper.KLineTicker = new KLineTicker();
@@ -496,19 +509,10 @@ public class Api : ExchangeBase
         trade.Price = item.Price;
         trade.Quantity = item.Quantity;
         trade.QuoteQuantity = item.Price * item.Quantity;
-        // enig debug werk, soms wordt het niet ingevuld!
-        //if (item.QuoteQuantity == 0)
-        //    GlobalData.AddTextToLogTab(string.Format("{0} PickupTrade#1trade QuoteQuantity is 0 for order TradeId={1}!", symbol.Name, trade.TradeId));
-
         trade.Commission = item.Fee;
         trade.CommissionAsset = item.FeeAsset;
 
         trade.TradeTime = item.Timestamp;
-
-        if (item.IsBuyer)
-            trade.Side = CryptoOrderSide.Buy;
-        else
-            trade.Side = CryptoOrderSide.Sell;
     }
 
 
@@ -528,19 +532,10 @@ public class Api : ExchangeBase
         trade.Price = item.Price;
         trade.Quantity = item.Quantity;
         trade.QuoteQuantity = item.Price * item.Quantity;
-        // enig debug werk, soms wordt het niet ingevuld!
-        //if (item.QuoteQuantity == 0)
-        //    GlobalData.AddTextToLogTab(string.Format("{0} PickupTrade#2stream QuoteQuantity is 0 for order TradeId={1}!", symbol.Name, trade.TradeId));
-
         trade.Commission = item.Fee;
         trade.CommissionAsset = item.FeeAsset;
 
         trade.TradeTime = item.EventTime;
-
-        if (item.Side == OrderSide.Buy)
-            trade.Side = CryptoOrderSide.Buy;
-        else
-            trade.Side = CryptoOrderSide.Sell;
     }
 
 
@@ -549,9 +544,9 @@ public class Api : ExchangeBase
         await BinanceFetchTrades.FetchTradesForSymbol(tradeAccount, symbol);
     }
 
-    public override async Task<int> FetchTradesForOrderAsync(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, string orderId)
+    public override async Task FetchTradesForOrderAsync(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, string orderId)
     {
-        return await FetchTradeForOrder.FetchTradesForOrderAsync(tradeAccount, symbol, orderId);
+        await FetchTradeForOrder.FetchTradesForOrderAsync(tradeAccount, symbol, orderId);
     }
 
     public async override Task FetchAssetsAsync(CryptoTradeAccount tradeAccount)

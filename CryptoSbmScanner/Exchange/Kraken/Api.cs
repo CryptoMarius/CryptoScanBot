@@ -20,7 +20,7 @@ public class Api : ExchangeBase
 #if TRADEBOT
     static private UserDataStream TaskBybitStreamUserData { get; set; }
 #endif
-    public static List<KLineTickerItem> TickerList { get; set; } = new();
+    public static List<KLineTickerItem> TickerList { get; set; } = [];
 
 
     public Api() : base() //, CryptoSymbol symbol, DateTime currentDate
@@ -346,15 +346,11 @@ public class Api : ExchangeBase
         trade.Price = item.Price;
         trade.Quantity = item.Quantity;
         trade.QuoteQuantity = item.Price * item.Quantity;
-        // enig debug werk, soms wordt het niet ingevuld!
-        //if (item.QuoteQuantity == 0)
-        //    GlobalData.AddTextToLogTab(string.Format("{0} PickupTrade#1trade QuoteQuantity is 0 for order TradeId={1}!", symbol.Name, trade.TradeId));
 
         trade.Commission = item.Fee;
         trade.CommissionAsset = symbol.Quote; // item.FeeAsset;?
 
         trade.TradeTime = item.Timestamp;
-        trade.Side = LocalOrderSide(item.Side);
     }
 
 
@@ -375,15 +371,12 @@ public class Api : ExchangeBase
     //    trade.Price = item.Price;
     //    trade.Quantity = item.Quantity;
     //    trade.QuoteQuantity = item.Price * item.Quantity;
-    //    // enig debug werk, soms wordt het niet ingevuld!
-    //    //if (item.QuoteQuantity == 0)
-    //    //    GlobalData.AddTextToLogTab(string.Format("{0} PickupTrade#2stream QuoteQuantity is 0 for order TradeId={1}!", symbol.Name, trade.TradeId));
 
     //    trade.TradeTime = item.Timestamp;
     //    trade.Side = LocalOrderSide(item.Side);
 
     //    trade.Commission = item.Fee;
-    //    trade.CommissionAsset = symbol.Quote; // item.FeeAsset; ??????
+    //    trade.CommissionAsset = item.FeeAsset;
     //}
 
 
@@ -392,9 +385,9 @@ public class Api : ExchangeBase
         await FetchTrades.FetchTradesForSymbolAsync(tradeAccount, symbol);
     }
 
-    public override async Task<int> FetchTradesForOrderAsync(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, string orderId)
+    public override async Task FetchTradesForOrderAsync(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, string orderId)
     {
-        return await FetchTradeForOrder.FetchTradesForOrderAsync(tradeAccount, symbol, orderId);
+        await FetchTradeForOrder.FetchTradesForOrderAsync(tradeAccount, symbol, orderId);
     }
 
     public async override Task FetchAssetsAsync(CryptoTradeAccount tradeAccount)

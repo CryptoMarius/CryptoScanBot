@@ -12,7 +12,7 @@ namespace CryptoSbmScanner.Exchange.Binance;
 #if TRADEBOT
 public class FetchTradeForOrder
 {
-    public static async Task<int> FetchTradesForOrderAsync(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, string orderId)
+    public static async Task FetchTradesForOrderAsync(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, string orderId)
     {
         int tradeCount = 0;
         try
@@ -80,7 +80,7 @@ public class FetchTradeForOrder
             GlobalData.AddTextToLogTab("error get trades " + error.ToString()); // symbol.Text + " " + 
         }
 
-        return tradeCount;
+        return;
     }
 
 

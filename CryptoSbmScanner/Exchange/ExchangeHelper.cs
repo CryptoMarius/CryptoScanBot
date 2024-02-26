@@ -67,11 +67,11 @@ public class ExchangeHelper
         await GetApiInstance().FetchTradesForSymbolAsync(tradeAccount, symbol);
     }
 
-    public static async Task<int> FetchTradesForOrderAsync(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, string orderId)
+    public static async Task FetchTradesForOrderAsync(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, string orderId)
     {
         if (tradeAccount == null || tradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
-            return 0;
-        return await GetApiInstance().FetchTradesForOrderAsync(tradeAccount, symbol, orderId);
+            return;
+        await GetApiInstance().FetchTradesForOrderAsync(tradeAccount, symbol, orderId);
     }
 
     public static async Task<(bool succes, TradeParams tradeParams)> Cancel(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoPositionStep step)
