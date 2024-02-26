@@ -34,6 +34,4 @@ public class CryptoTrade
 
     public string TradeId { get; set; }
     public string OrderId { get; set; }
-
-    public CryptoOrderSide Side { get; set; }
 }
