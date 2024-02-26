@@ -19,6 +19,8 @@ public class CryptoTradeAccount
     public CryptoAccountType AccountType { get; set; }
     public CryptoTradeAccountType TradeAccountType { get; set; }
 
+    public bool CanTrade { get; set; }
+
     // Instellingen:
     // Eventueel aangepaste instellingen per accountType voor bijvoorbeeld backtest project?
     //[Computed]
