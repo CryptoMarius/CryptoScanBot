@@ -39,7 +39,8 @@ public class ExcelPositionDump : ExcelBase
         WriteCell(sheet, columns++, row, "Limit");
         WriteCell(sheet, columns++, row, "Value");
         WriteCell(sheet, columns++, row, "Commission");
-        
+        WriteCell(sheet, columns++, row, "Asset");
+
         WriteCell(sheet, columns++, row, "");
         WriteCell(sheet, columns++, row, "");
         WriteCell(sheet, columns++, row, "Profit");
@@ -48,61 +49,63 @@ public class ExcelPositionDump : ExcelBase
         foreach (CryptoPositionPart part in Position.Parts.Values.ToList())
         {
             ++row;
+            int column = 0;
             {
-                cell = WriteCell(sheet, 0, row, part.Id);
+                cell = WriteCell(sheet, column++, row, part.Id);
                 string text = part.Purpose + " " + part.PartNumber.ToString();
                 if (part.ManualOrder)
                     text += " manual";
-                cell = WriteCell(sheet, 1, row, text); // 0 = entry and >= 1 is dca
-                cell = WriteCell(sheet, 2, row, part.Purpose.ToString());
-                cell = WriteCell(sheet, 3, row, part.CreateTime.ToLocalTime());
+                cell = WriteCell(sheet, column++, row, text); // 0 = entry and >= 1 is dca
+                cell = WriteCell(sheet, column++, row, part.Purpose.ToString());
+                cell = WriteCell(sheet, column++, row, part.CreateTime.ToLocalTime());
                 cell.CellStyle = CellStyleDate;
 
+                column++;
                 if (part.CloseTime.HasValue)
                 {
-                    cell = WriteCell(sheet, 4, row, (DateTime)part.CloseTime?.ToLocalTime());
+                    cell = WriteCell(sheet, column, row, (DateTime)part.CloseTime?.ToLocalTime());
                     cell.CellStyle = CellStyleDate;
                 }
 
-                //cell = WriteCell(sheet, 6, row, part.Status.ToString());
+                //cell = WriteCell(sheet, column, row, part.Status.ToString());
 
+                column = 8;
                 if (part.Quantity != 0)
                 {
-                    cell = WriteCell(sheet, 8, row, (double)part.Quantity);
+                    cell = WriteCell(sheet, column, row, (double)part.Quantity);
                     cell.CellStyle = CellStyleDecimalNormal;
                 }
-                //?
-                //cell = WriteCell(sheet, 8, row, (double)0);
-                //cell.CellStyle = CellStyleDecimalNormal;
 
+                column = 14;
                 if (part.Commission != 0)
                 {
-                    cell = WriteCell(sheet, 14, row, (double)part.Commission);
+                    cell = WriteCell(sheet, column++, row, (double)part.Commission);
                     cell.CellStyle = CellStyleDecimalNormal;
                 }
+                else column++;
 
 
                 if (part.Interval != null)
-                    cell = WriteCell(sheet, 15, row, part.Interval.Name);
+                    cell = WriteCell(sheet, column++, row, part.Interval.Name);
                 else
-                    cell = WriteCell(sheet, 15, row, Position.Interval.Name);
+                    cell = WriteCell(sheet, column++, row, Position.Interval.Name);
 
                 if (part.EntryMethod == CryptoEntryOrProfitMethod.AfterNextSignal)
-                    cell = WriteCell(sheet, 16, row, part.Strategy.ToString());
+                    cell = WriteCell(sheet, column++, row, part.Strategy.ToString());
                 else
-                    cell = WriteCell(sheet, 16, row, "Fixed percentage");
+                    cell = WriteCell(sheet, column++, row, "Fixed percentage");
 
 
                 if (part.CloseTime.HasValue) // && part.Status == CryptoPositionStatus.Ready
                 {
-                    cell = WriteCell(sheet, 17, row, (double)part.Profit);
+                    cell = WriteCell(sheet, column++, row, (double)part.Profit);
                     if (part.Profit >= 0)
                         cell.CellStyle = CellStyleDecimalGreen;
                     else
                         cell.CellStyle = CellStyleDecimalRed;
 
 
-                    cell = WriteCell(sheet, 18, row, (double)part.Percentage);
+                    cell = WriteCell(sheet, column++, row, (double)part.Percentage);
                     if (part.Profit >= 0)
                         cell.CellStyle = CellStylePercentageGreen;
                     else
@@ -118,7 +121,7 @@ public class ExcelPositionDump : ExcelBase
                 //if (step.Status == CryptoOrderStatus.Expired || step.Status == CryptoOrderStatus.Canceled || !step.CloseTime.HasValue)
                 //    continue;
 
-                int column = 0;
+                column = 0;
 
                 if (step.OrderId != "")
                     OrderList.TryAdd(step.OrderId, false);
@@ -195,6 +198,13 @@ public class ExcelPositionDump : ExcelBase
                     cell.CellStyle = CellStyleDecimalNormal;
                 }
                 else column++;
+
+                if (step.CommissionAsset != null)
+                {
+                    cell = WriteCell(sheet, column++, row, step.CommissionAsset);
+                    cell.CellStyle = CellStyleDecimalNormal;
+                }
+                else column++;
             }
 
             ++row;
@@ -204,12 +214,15 @@ public class ExcelPositionDump : ExcelBase
         ++row;
         ++row;
 
-        int x = 15;
+        // Wat een zooi met die kolommen en rijen, denk dat het ondertussen niet meer overeenkomt met het originele ontwerp..
+        //(continue kolommen toevoegen heeft zijn nadelen)
+
+        int x = 16;
         WriteCell(sheet, x++, row, "BE");
         cell = WriteCell(sheet, x++, row, (double)Position.BreakEvenPrice);
         cell.CellStyle = CellStyleDecimalNormal;
 
-        x = 15;
+        x = 16;
         ++row;
         WriteCell(sheet, x++, row, "LP");
         cell = WriteCell(sheet, x++, row, (double)Position.Symbol.LastPrice);
@@ -220,13 +233,13 @@ public class ExcelPositionDump : ExcelBase
 
         if (Position.CloseTime.HasValue)
         {
-            cell = WriteCell(sheet, 17, row, (double)Position.Profit);
+            cell = WriteCell(sheet, 18, row, (double)Position.Profit);
             if (Position.Profit >= 0)
                 cell.CellStyle = CellStyleStringGreen;
             else
                 cell.CellStyle = CellStyleStringRed;
 
-            cell = WriteCell(sheet, 18, row, (double)Position.Percentage);
+            cell = WriteCell(sheet, 19, row, (double)Position.Percentage);
             if (Position.Percentage >= 100)
                 cell.CellStyle = CellStyleStringGreen;
             else
@@ -234,7 +247,7 @@ public class ExcelPositionDump : ExcelBase
         }
 
 
-        columns = 18;
+        columns = 19;
         AutoSize(sheet, columns);
     }
 
@@ -354,7 +367,7 @@ public class ExcelPositionDump : ExcelBase
 
             cell = WriteCell(sheet, column++, row, trade.OrderId);
 
-            cell = WriteCell(sheet, column++, row, trade.Side.ToString());
+            cell = WriteCell(sheet, column++, row, "?");
 
             cell = WriteCell(sheet, column++, row, trade.TradeTime.ToLocalTime());
             cell.CellStyle = CellStyleDate;
