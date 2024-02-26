@@ -112,6 +112,7 @@ partial class FrmSettings
         flowLayoutPanel6 = new FlowLayoutPanel();
         UserControlSettingsSoundAndColorsStobb = new SettingsDialog.UserControlSettingsPlaySoundAndColors();
         groupBox2 = new GroupBox();
+        EditStobOnlyIfPreviousStobb = new CheckBox();
         label1 = new Label();
         EditStobbBBMinPercentage = new NumericUpDown();
         EditStobbBBMaxPercentage = new NumericUpDown();
@@ -237,7 +238,6 @@ partial class FrmSettings
         label49 = new Label();
         toolTip1 = new ToolTip(components);
         colorDialog1 = new ColorDialog();
-        EditStobOnlyIfPreviousStobb = new CheckBox();
         panelButtons.SuspendLayout();
         panelFill.SuspendLayout();
         tabControlMain.SuspendLayout();
@@ -1283,6 +1283,17 @@ partial class FrmSettings
         groupBox2.TabIndex = 158;
         groupBox2.TabStop = false;
         groupBox2.Text = "Instellingen";
+        // 
+        // EditStobOnlyIfPreviousStobb
+        // 
+        EditStobOnlyIfPreviousStobb.AutoSize = true;
+        EditStobOnlyIfPreviousStobb.Location = new Point(21, 173);
+        EditStobOnlyIfPreviousStobb.Margin = new Padding(4, 3, 4, 3);
+        EditStobOnlyIfPreviousStobb.Name = "EditStobOnlyIfPreviousStobb";
+        EditStobOnlyIfPreviousStobb.Size = new Size(222, 19);
+        EditStobOnlyIfPreviousStobb.TabIndex = 167;
+        EditStobOnlyIfPreviousStobb.Text = "Alleen als er een voorgaand signaal is";
+        EditStobOnlyIfPreviousStobb.UseVisualStyleBackColor = true;
         // 
         // label1
         // 
@@ -2679,17 +2690,6 @@ partial class FrmSettings
         label49.Size = new Size(308, 15);
         label49.TabIndex = 222;
         label49.Text = "(1 munt per regel met een optionele opmerking erachter)";
-        // 
-        // EditStobOnlyIfPreviousStobb
-        // 
-        EditStobOnlyIfPreviousStobb.AutoSize = true;
-        EditStobOnlyIfPreviousStobb.Location = new Point(21, 173);
-        EditStobOnlyIfPreviousStobb.Margin = new Padding(4, 3, 4, 3);
-        EditStobOnlyIfPreviousStobb.Name = "EditStobOnlyIfPreviousStobb";
-        EditStobOnlyIfPreviousStobb.Size = new Size(222, 19);
-        EditStobOnlyIfPreviousStobb.TabIndex = 167;
-        EditStobOnlyIfPreviousStobb.Text = "Alleen als er een voorgaand signaal is";
-        EditStobOnlyIfPreviousStobb.UseVisualStyleBackColor = true;
         // 
         // FrmSettings
         // 
