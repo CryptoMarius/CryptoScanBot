@@ -164,40 +164,50 @@ public class Commands
 
     public static (bool succes, Model.CryptoExchange exchange, CryptoSymbol symbol, CryptoInterval interval, CryptoPosition position) GetAttributesFromSender(object sender)
     {
-        // Vanuit de symbols, signals of de open of gesloten posities
-        if (sender is ListViewHeaderContext listview && listview.SelectedItems.Count > 0)
-        {
-            ListViewItem listviewItem = listview.SelectedItems[0];
-            if (listviewItem.Tag is CryptoSignal signal)
-                // Vanuit de lijst met signalen
-                return (true, signal.Exchange, signal.Symbol, signal.Interval, null);
-            else if (listviewItem.Tag is CryptoPosition position)
-                // Vanuit de lijst met posities
-                return (true, position.Exchange, position.Symbol, position.Interval, position);
-            else if (listviewItem.Tag is CryptoSymbol symbol)
-                // Vanuit de lijst met symbols
-                return (true, symbol.Exchange, symbol, null, null);
-            else if (listviewItem.Tag is CryptoSymbol symbol2) //ehhh....
-                // Vanuit de lijst met symbols
-                return (true, GlobalData.Settings.General.Exchange, null, null, null);
-        }
+        //// Vanuit de symbols, signals of de open of gesloten posities
+        //if (sender is ListViewHeaderContext listview && listview.SelectedItems.Count > 0)
+        //{
+        //    ListViewItem listviewItem = listview.SelectedItems[0];
+        //    if (listviewItem.Tag is CryptoSignal signal)
+        //        // Vanuit de lijst met signalen
+        //        return (true, signal.Exchange, signal.Symbol, signal.Interval, null);
+        //    else if (listviewItem.Tag is CryptoPosition position)
+        //        // Vanuit de lijst met posities
+        //        return (true, position.Exchange, position.Symbol, position.Interval, position);
+        //    else if (listviewItem.Tag is CryptoSymbol symbol)
+        //        // Vanuit de lijst met symbols
+        //        return (true, symbol.Exchange, symbol, null, null);
+        //    else if (listviewItem.Tag is CryptoSymbol symbol2) //ehhh....
+        //        // Vanuit de lijst met symbols
+        //        return (true, GlobalData.Settings.General.Exchange, null, null, null);
+        //}
 
+
+        // Beetje op de moeilijk manier, voila (wat een gepruts brrr)
+        // Wellicht mogelijk met event die het object in de tag zet?
         if (sender is DataGridView grid && grid.SelectedRows.Count > 0)
         {
-            // todo, oeps dit werkt niet met een virtualgrid!
             DataGridViewRow row = grid.SelectedRows[0];
-            if (row.Tag is CryptoSignal signal)
-                // Vanuit de lijst met signalen
+            if (grid.Tag is CryptoDataGridSymbol<CryptoSymbol> x1)
+            {
+                var symbol = x1.List[row.Index];
+                return (true, symbol.Exchange, symbol, GlobalData.IntervalList[5], null);
+            }
+            else if (grid.Tag is CryptoDataGridSignal<CryptoSignal> x2)
+            {
+                var signal = x2.List[row.Index];
                 return (true, signal.Exchange, signal.Symbol, signal.Interval, null);
-            else if (row.Tag is CryptoPosition position)
-                // Vanuit de lijst met posities
+            }
+            else if (grid.Tag is CryptoDataGridPositionsOpen<CryptoPosition> x3)
+            {
+                var position = x3.List[row.Index];
                 return (true, position.Exchange, position.Symbol, position.Interval, position);
-            else if (row.Tag is CryptoSymbol symbol)
-                // Vanuit de lijst met symbols
-                return (true, symbol.Exchange, symbol, null, null);
-            else if (row.Tag is CryptoSymbol symbol2) //ehhh....
-                // Vanuit de lijst met symbols
-                return (true, GlobalData.Settings.General.Exchange, null, null, null);
+            }
+            else if (grid.Tag is CryptoDataGridPositionsClosed<CryptoPosition> x4)
+            {
+                var position = x4.List[row.Index];
+                return (true, position.Exchange, position.Symbol, position.Interval, position);
+            }
         }
 
         return (false, null, null, null, null);
@@ -297,9 +307,9 @@ public class Commands
     public static void ExecuteCommandCommandViaTag(object sender, EventArgs e)
     {
         // Een poging om de meest gebruikte menu items te centraliseren
-        if (sender is ToolStripMenuItem tsitem && tsitem.Tag is Command cmd1)
+        if (sender is ToolStripMenuItem item && item.Tag is Command cmd1)
         {
-            if (sender is ToolStripMenuItem item)
+            //if (sender is ToolStripMenuItem item)
             {
                 if (item.Owner is ContextMenuStrip strip) // popup menu's
                     ExecuteSomethingViaTag(strip.SourceControl, cmd1);
@@ -314,8 +324,11 @@ public class Commands
         }
         else if (sender is DataGridView grid)
         {
-            if (grid.Tag is Command cmd2)
-                ExecuteSomethingViaTag(grid, cmd2);
+            // dblclick
+            //if (grid.Tag is Command cmd2)
+            //    ExecuteSomethingViaTag(grid, cmd2);
+            //else
+            ExecuteSomethingViaTag(grid, Command.ActivateTradingApp);
         }
     }
 
