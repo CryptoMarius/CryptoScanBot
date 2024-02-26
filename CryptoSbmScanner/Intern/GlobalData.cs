@@ -569,20 +569,20 @@ static public class GlobalData
         string text = JsonSerializer.Serialize(Settings, options);
         File.WriteAllText(filename, text);
 
-#if DEBUG
-        //// Ter debug om te zien of alles okay is
-        filename = GlobalData.GetBaseDir();
-        Directory.CreateDirectory(filename);
-        filename += "settingsSignalsCompiled.json";
-        text = JsonSerializer.Serialize(TradingConfig.Signals, options);
-        File.WriteAllText(filename, text);
+//#if DEBUG
+//        //// Ter debug om te zien of alles okay is
+//        filename = GlobalData.GetBaseDir();
+//        Directory.CreateDirectory(filename);
+//        filename += "settingsSignalsCompiled.json";
+//        text = JsonSerializer.Serialize(TradingConfig.Signals, options);
+//        File.WriteAllText(filename, text);
 
-        filename = GlobalData.GetBaseDir();
-        Directory.CreateDirectory(filename);
-        filename += "settingsTradingCompiled.json";
-        text = JsonSerializer.Serialize(TradingConfig.Trading, options);
-        File.WriteAllText(filename, text);
-#endif
+//        filename = GlobalData.GetBaseDir();
+//        Directory.CreateDirectory(filename);
+//        filename += "settingsTradingCompiled.json";
+//        text = JsonSerializer.Serialize(TradingConfig.Trading, options);
+//        File.WriteAllText(filename, text);
+//#endif
     }
 
 
@@ -630,13 +630,16 @@ static public class GlobalData
     {
         try
         {
-            //string symbolLink = GlobalData.ExternalUrls.GetTradingAppName(GlobalData.Settings.General.TradingApp, position.Exchange.Name);
-            string symbol = position.Symbol.Name.ToUpper();
-            (string Url, CryptoExternalUrlType Execute) refInfo = GlobalData.ExternalUrls.GetExternalRef(GlobalData.Settings.General.TradingApp, true, position.Symbol, position.Interval);
-            if (refInfo.Url != "")
+            if (position != null)
             {
-                string x = $" <a href='{refInfo.Url}'>{symbol}</a>";
-                text = text.Replace(symbol, x);
+                //string symbolLink = GlobalData.ExternalUrls.GetTradingAppName(GlobalData.Settings.General.TradingApp, position.Exchange.Name);
+                string symbol = position.Symbol.Name.ToUpper();
+                (string Url, CryptoExternalUrlType Execute) refInfo = GlobalData.ExternalUrls.GetExternalRef(GlobalData.Settings.General.TradingApp, true, position.Symbol, position.Interval);
+                if (refInfo.Url != "")
+                {
+                    string x = $" <a href='{refInfo.Url}'>{symbol}</a>";
+                    text = text.Replace(symbol, x);
+                }
             }
             LogToTelegram(text);
         }
