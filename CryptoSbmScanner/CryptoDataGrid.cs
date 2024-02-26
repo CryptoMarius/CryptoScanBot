@@ -1,11 +1,35 @@
 ﻿using System.Collections;
 using System.ComponentModel;
+using System.Runtime.InteropServices;
 
 using CryptoSbmScanner.Intern;
 
 namespace CryptoSbmScanner;
 
 // Virtual DataGrid Base for displaying objects (symbol, signal, positions)
+
+public static class ControlHelper
+{
+    [DllImport("user32.dll", EntryPoint = "SendMessageA", ExactSpelling = true, CharSet = CharSet.Ansi, SetLastError = true)]
+    private static extern int SendMessage(IntPtr hwnd, int wMsg, int wParam, int lParam);
+    private const int WM_SETREDRAW = 0xB;
+
+    public static void SuspendDrawing(this Control target)
+    {
+        SendMessage(target.Handle, WM_SETREDRAW, 0, 0);
+    }
+
+    public static void ResumeDrawing(this Control target) { ResumeDrawing(target, true); }
+    public static void ResumeDrawing(this Control target, bool redraw)
+    {
+        SendMessage(target.Handle, WM_SETREDRAW, 1, 0);
+
+        if (redraw)
+        {
+            target.Refresh();
+        }
+    }
+}
 
 public class CryptoDataGrid<T>
 {
@@ -19,13 +43,17 @@ public class CryptoDataGrid<T>
     internal CaseInsensitiveComparer ObjectCompare = new();
 
     // background color
-    internal Color VeryLightGray = Color.FromArgb(0xf1, 0xf1, 0xf1);
+    internal Color VeryLightGray1 = Color.FromArgb(0xf1, 0xf1, 0xf1);
+    internal Color VeryLightGray2 = Color.FromArgb(0xa1, 0xa1, 0xa1);
 
 
     public CryptoDataGrid(DataGridView grid, List<T> list)
     {
         Grid = grid;
         List = list;
+
+        Grid.Tag = this; // dirty to acces the list
+        Grid.DoubleClick += Commands.ExecuteCommandCommandViaTag;
 
         // Grid
         InitializeDataGrid();
@@ -36,12 +64,37 @@ public class CryptoDataGrid<T>
         Grid.ContextMenuStrip = MenuStrip;
     }
 
+    internal T GetSelectedObject(out int rowIndex)
+    {
+        rowIndex = -1;
+        if (Grid.SelectedRows.Count > 0)
+        {
+            rowIndex = Grid.SelectedRows[0].Index;
+            if (rowIndex >= 0 && rowIndex < List.Count)
+            {
+                return List[rowIndex];
+            }
+        }
+
+        return default;
+    }
+
+    internal T GetCellObject(int rowIndex)
+    {
+        if (rowIndex >= 0 && rowIndex < List.Count)
+        {
+            return List[rowIndex];
+        }
+
+        return default;
+    }
     public void AdjustObjectCount()
     {
         Grid.RowCount = List.Count;
     }
 
-    internal void CreateColumn(string headerText, Type type, string format, DataGridViewContentAlignment align) //, { Compare(T A, T B)} compare? add sort? add color? add text? whatever..
+    internal void CreateColumn(string headerText, Type type, string format, DataGridViewContentAlignment align, int width = 0) 
+        //, { Compare(T A, T B)} compare? add sort? add color? add text? whatever..
     {
         //DataGridViewColumn c;
         DataGridViewTextBoxColumn c;
@@ -49,8 +102,17 @@ public class CryptoDataGrid<T>
         c = new();
         //c.Name = name;
         c.HeaderText = headerText;
-        c.AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells; //AllCellsExceptHeader
-        c.Tag = Grid.ColumnCount;
+        if (width > 0)
+        {
+            c.Width = width;
+            c.AutoSizeMode = DataGridViewAutoSizeColumnMode.None; // NotSet; // AllCellsExceptHeader; // AllCells; //
+        }
+        else
+        {
+            c.AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells; // NotSet; // AllCellsExceptHeader; // AllCells; //
+            c.AutoSizeMode = DataGridViewAutoSizeColumnMode.None; // NotSet; // AllCellsExceptHeader; // AllCells; //
+        }
+        //c.Tag = Grid.ColumnCount;
         //c.ValueType = GetType(decimal);
         Grid.Columns.Add(c);
         c.ValueType = type;
@@ -84,9 +146,14 @@ public class CryptoDataGrid<T>
 
     public virtual void RowSetDefaultColor(object sender, DataGridViewRowPrePaintEventArgs e)
     {
-        // Get the defauklt color for the row (even=gray)
+        if (e.RowIndex % 2 == 0)
+        {
+            if (GlobalData.Settings.General.BlackTheming)
+                Grid.Rows[e.RowIndex].DefaultCellStyle.BackColor = VeryLightGray2; // Color.DarkGray; // VeryLightGray // VeryLightGray2; // 
+            else
+                Grid.Rows[e.RowIndex].DefaultCellStyle.BackColor = VeryLightGray1;
+        }
     }
-
     public virtual void CellFormattingEvent(object sender, DataGridViewCellFormattingEventArgs e)
     {
         // Cell format (color)
@@ -102,10 +169,13 @@ public class CryptoDataGrid<T>
         Grid.VirtualMode = true;
         Grid.RowHeadersVisible = false; // the first column to select rows
         Grid.AllowUserToAddRows = false;
-        Grid.AllowUserToOrderColumns = true;
         Grid.AutoGenerateColumns = false;
         Grid.MultiSelect = false;
+        Grid.AllowUserToResizeRows = false;
+        Grid.AllowUserToResizeColumns = true;
+        Grid.AllowUserToOrderColumns = true;
         Grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+        Grid.BackgroundColor = Grid.DefaultCellStyle.BackColor;
 
         // Hide header cell highlight stuff
         //Grid.EnableHeadersVisualStyles = false;
@@ -115,7 +185,7 @@ public class CryptoDataGrid<T>
         Grid.ColumnHeadersDefaultCellStyle.SelectionForeColor = Grid.ColumnHeadersDefaultCellStyle.ForeColor;
         Grid.EnableHeadersVisualStyles = false;
 
-        Grid.GridColor = VeryLightGray;
+        Grid.GridColor = VeryLightGray1;
         Grid.BorderStyle = BorderStyle.None; // Fixed3D, FixedSingle;
         Grid.CellBorderStyle = DataGridViewCellBorderStyle.None;
         Grid.RowHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single; // Single;
@@ -134,7 +204,8 @@ public class CryptoDataGrid<T>
         //style.ForeColor = Color.White;
         //style.Font = new Font(Grid.Font, FontStyle.Italic);
 
-        Grid.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.DisplayedCells;
+        //Grid.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.Fill; // DisplayedCells; ?
+        Grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None; // AllCellsExceptHeader; // AllCells; // DisplayedCells;
         Grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
         Grid.CellBorderStyle = DataGridViewCellBorderStyle.Single;
         //Grid.GridColor = SystemColors.ActiveBorder;
@@ -175,16 +246,20 @@ public class CryptoDataGrid<T>
     }
 
 
-    public void AddObject(T signal)
+    public virtual void AddObject(T signal)
     {
         List.Add(signal);
-        Grid.RowCount = List.Count;
+        SortFunction();
+
+        Grid.Invoke((MethodInvoker)(() => { Grid.RowCount = List.Count; Grid.Invalidate(); }));
     }
 
-    public void AddObject(List<T> range)
+    public virtual void AddObject(List<T> range)
     {
         List.AddRange(range);
-        Grid.RowCount = List.Count;
+        SortFunction();
+
+        Grid.Invoke((MethodInvoker)(() => { Grid.RowCount = List.Count; Grid.Invalidate(); }));
     }
 
     private void HeaderClick(object sender, DataGridViewCellMouseEventArgs e)
@@ -224,9 +299,22 @@ public class CryptoDataGrid<T>
 
     public void ApplySorting()
     {
+        int column = SortColumn;
+        DataGridViewColumn newSortColumn = Grid.Columns[column];
+        newSortColumn.HeaderCell.SortGlyphDirection = SortOrder == SortOrder.Ascending ? SortOrder.Ascending : SortOrder.Descending;
+
         SortFunction();
+
         Grid.Invalidate();
     }
+
+
+    public void InitCommandCaptions()
+    {
+        string text = GlobalData.ExternalUrls.GetTradingAppName(GlobalData.Settings.General.TradingApp, GlobalData.Settings.General.ExchangeName);
+        Grid.ContextMenuStrip.Items[0].Text = text;
+    }
+
 
     internal static void AddStandardSymbolCommands(ContextMenuStrip menuStrip, bool isSignal)
     {

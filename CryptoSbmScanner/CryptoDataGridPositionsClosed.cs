@@ -1,13 +1,46 @@
-﻿using CryptoSbmScanner.Enums;
+﻿using CryptoSbmScanner.Context;
+using CryptoSbmScanner.Enums;
 using CryptoSbmScanner.Intern;
 using CryptoSbmScanner.Model;
+using CryptoSbmScanner.Trader;
+
+using Dapper;
 
 namespace CryptoSbmScanner;
 
 public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list) : CryptoDataGrid<T>(grid, list) where T : CryptoPosition
 {
+    public override void InitializeCommands(ContextMenuStrip menuStrip)
+    {
+        AddStandardSymbolCommands(menuStrip, false);
+
+        menuStrip.Items.Add(new ToolStripSeparator());
+
+        ToolStripMenuItem menuCommand;
+        menuCommand = new ToolStripMenuItem();
+        menuCommand.Text = "Positie herberekenen";
+        menuCommand.Click += CommandPositionsClosedRecalculateExecute;
+        menuStrip.Items.Add(menuCommand);
+
+        menuCommand = new ToolStripMenuItem();
+        menuCommand.Text = "Positie verwijderen uit database";
+        menuCommand.Click += CommandPositionsClosedDeleteFromDatabase;
+        menuStrip.Items.Add(menuCommand);
+
+        menuCommand = new ToolStripMenuItem();
+        menuCommand.Text = "Positie informatie (Excel)";
+        menuCommand.Tag = Command.ExcelPositionInformation;
+        menuCommand.Click += Commands.ExecuteCommandCommandViaTag;
+        menuStrip.Items.Add(menuCommand);
+
+
+    }
+
     public override void InitializeHeaders()
     {
+        SortColumn = 2;
+        SortOrder = SortOrder.Descending;
+
         CreateColumn("Id", typeof(int), string.Empty, DataGridViewContentAlignment.MiddleRight);
         CreateColumn("Datum", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleLeft);
         CreateColumn("Closed", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleLeft);
@@ -102,69 +135,99 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list) :
 
     public override void GetTextFunction(object sender, DataGridViewCellValueEventArgs e)
     {
-        // TODO: Een paar kleine verschillen tov de Main.Positions.Open (vanwege de switch notatie)
-        //CryptoPosition position = ListBla[e.RowIndex];
-        //switch (e.ColumnIndex)
-        //{
-        //    case 0 :
-        //        e.Value = position.Id.ToString();
-        //        break;
-        //    case 1:
-        //        if (position.EntryAmount > 0)
-        //        e.Value = position.EntryAmount.ToString();
-        //        else
-        //            e.Value = position.ProfitPrice.ToString();
-
-        //        break;
-        //};
-
-        CryptoPosition position = List[e.RowIndex];
-        e.Value = e.ColumnIndex switch
+        CryptoPosition position = GetCellObject(e.RowIndex);
+        if (position != null)
         {
-            0 => position.Id.ToString(),
-            1 => position.CreateTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm"),
-            2 => position.CloseTime?.ToLocalTime().ToString("yyyy-MM-dd HH:mm"),
-            3 => position.DurationText(),
-            4 => position.TradeAccount.Name,
-            5 => position.Symbol.Exchange.Name,
-            6 => position.Symbol.Name,
-            7 => position.Interval.Name,
-            8 => position.StrategyText,
-            9 => position.SideText,
-            10 => position.Status.ToString(),
+            e.Value = e.ColumnIndex switch
+            {
+                0 => position.Id.ToString(),
+                1 => position.CreateTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm"),
+                2 => position.CloseTime?.ToLocalTime().ToString("yyyy-MM-dd HH:mm"),
+                3 => position.DurationText(),
+                4 => position.TradeAccount.Name,
+                5 => position.Symbol.Exchange.Name,
+                6 => position.Symbol.Name,
+                7 => position.Interval.Name,
+                8 => position.StrategyText,
+                9 => position.SideText,
+                10 => position.Status.ToString(),
 
-            11 => position.Invested.ToString(position.Symbol.QuoteData.DisplayFormat),
-            12 => position.Returned.ToString(position.Symbol.QuoteData.DisplayFormat),
-            13 => position.Commission.ToString(position.Symbol.QuoteData.DisplayFormat),
+                11 => position.Invested.ToString(position.Symbol.QuoteData.DisplayFormat),
+                12 => position.Returned.ToString(position.Symbol.QuoteData.DisplayFormat),
+                13 => position.Commission.ToString(position.Symbol.QuoteData.DisplayFormat),
 
-            14 => position.Profit.ToString(position.Symbol.QuoteData.DisplayFormat),
-            15 => position.Percentage.ToString("N2"),
-            16 => position.PartCountText(),
-            17 => position.EntryPrice?.ToString(position.Symbol.PriceDisplayFormat),
-            18 => position.ProfitPrice?.ToString(position.Symbol.PriceDisplayFormat),
-            _ => '?',
-        };
-
-    }
-
-    public override void RowSetDefaultColor(object sender, DataGridViewRowPrePaintEventArgs e)
-    {
-        if (e.RowIndex % 2 == 0)
-        {
-            Grid.Rows[e.RowIndex].DefaultCellStyle.BackColor = VeryLightGray;
+                14 => position.Profit.ToString(position.Symbol.QuoteData.DisplayFormat),
+                15 => position.Percentage.ToString("N2"),
+                16 => position.PartCountText(),
+                17 => position.EntryPrice?.ToString(position.Symbol.PriceDisplayFormat),
+                18 => position.ProfitPrice?.ToString(position.Symbol.PriceDisplayFormat),
+                _ => '?',
+            };
         }
     }
 
 
     public override void CellFormattingEvent(object sender, DataGridViewCellFormattingEventArgs e)
     {
-        // done by column so it happens once per row
-        //if (e.ColumnIndex == Grid.Columns["Interval"].Index)
-        //{
-        //    //Grid.Rows[e.RowIndex].DefaultCellStyle.BackColor = Color.Red;
-        //    Grid.Rows[e.RowIndex].Cells[e.ColumnIndex].Style = styleRed;
-        //}
     }
 
+    private async void CommandPositionsClosedRecalculateExecute(object sender, EventArgs e)
+    {
+        CryptoPosition position = GetSelectedObject(out int rowIndex);
+        if (position != null)
+        {
+            using CryptoDatabase databaseThread = new();
+            databaseThread.Connection.Open();
+
+            // Controleer de orders, en herbereken het geheel
+            PositionTools.LoadPosition(databaseThread, position);
+            await TradeTools.LoadTradesfromDatabaseAndExchange(databaseThread, position);
+            TradeTools.CalculatePositionResultsViaTrades(databaseThread, position, saveChangesAnywhay: true);
+
+            Grid.InvalidateRow(rowIndex);
+            GlobalData.AddTextToLogTab($"{position.Symbol.Name} handmatig positie herberekend");
+        }
+
+    }
+
+
+    private void CommandPositionsClosedDeleteFromDatabase(object sender, EventArgs e)
+    {
+        CryptoPosition position = GetSelectedObject(out int _);
+        if (position != null)
+        {
+            if (MessageBox.Show($"Delete position {position.Symbol.Name}", "Delete position?", MessageBoxButtons.YesNo) != DialogResult.Yes)
+                return;
+
+            try
+            {
+                using CryptoDatabase databaseThread = new();
+                databaseThread.Connection.Open();
+
+                // Controleer de orders, en herbereken het geheel
+                PositionTools.LoadPosition(databaseThread, position);
+                //await TradeTools.LoadTradesfromDatabaseAndExchange(databaseThread, position);
+                //TradeTools.CalculatePositionResultsViaTrades(databaseThread, position, saveChangesAnywhay: true);
+                //FillItemClosed(position, item);
+
+
+                using var transaction = databaseThread.BeginTransaction();
+                databaseThread.Connection.Execute($"delete from positionstep where positionid={position.Id}", transaction);
+                databaseThread.Connection.Execute($"delete from positionpart where positionid={position.Id}", transaction);
+                databaseThread.Connection.Execute($"delete from position where id={position.Id}", transaction);
+                transaction.Commit();
+
+                List.Remove((T)position);
+                GlobalData.PositionsClosed.Remove(position);
+                GlobalData.AddTextToLogTab($"{position.Symbol.Name} handmatig positie uit database verwijderd");
+                GlobalData.PositionsHaveChanged("");
+            }
+            catch (Exception error)
+            {
+                ScannerLog.Logger.Error(error, "");
+                GlobalData.AddTextToLogTab($"error deleteing position {error.Message}");
+            }
+        }
+    }
 
 }
