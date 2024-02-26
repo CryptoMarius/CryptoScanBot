@@ -98,9 +98,10 @@ public class CryptoSymbol
 
     
     /// <summary>
-    /// Voor het ophalen van de trades bij Binance
+    /// Voor het ophalen van de trades
     /// </summary>
     public DateTime? LastTradeFetched { get; set; }
+    public long ? LastTradeIdFetched { get; set; }
 
     // De trend percentage (berekend uit de candlefetched.TrendIndicator)
     public float? TrendPercentage { get; set; }
