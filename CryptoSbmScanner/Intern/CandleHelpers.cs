@@ -394,7 +394,7 @@ public static class Helper
             $"{position.CurrentBreakEvenPercentage():N2}%";
         
         if (position.PartCount > 0)
-            s += position.PartCountText();
+            s += " " + position.PartCountText();
         stringBuilder.AppendLine(s);
     }
 
