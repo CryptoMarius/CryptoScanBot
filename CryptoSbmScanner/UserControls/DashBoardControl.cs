@@ -64,7 +64,7 @@ public partial class DashBoardControl : UserControl
 
     private QueryPositionData OpenData = new();
     private QueryPositionData ClosedData = new();
-    private readonly List<QueryTradeData> QueryTradeDataList = [];
+    //private readonly List<QueryTradeData> QueryTradeDataList = [];
     private readonly List<QueryPositionData> QueryPositionDataList = [];
 
     private Chart ChartPositionsPerDay;
@@ -239,35 +239,35 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
         }
     }
 
-    private void GetQueryPositionData()
-    {
-        // Mhhhh, dat zou eigenlijk via de trades moeten lopen
-        // dit is de query die per dag het een en ander aan info ophaalt
-        StringBuilder builder = new();
-        builder.AppendLine("select");
-        builder.AppendLine("  date(trade.TradeTime,'localtime') as TradeTime,");
-        builder.AppendLine("  trade.Side,");
-        builder.AppendLine("  symbol.quote,");
-        builder.AppendLine("  sum(trade.QuoteQuantity) as Value");
-        builder.AppendLine("from trade");
-        builder.AppendLine("inner join symbol on trade.symbolid = symbol.id");
-        builder.AppendLine($"where symbol.quote = '{QuoteData.Name}'");
-        builder.AppendLine("group by date(trade.TradeTime,'localtime'), trade.Side,symbol.quote");
-        builder.AppendLine("order by date(trade.TradeTime,'localtime') asc, trade.Side,symbol.quote");
+    //private void GetQueryPositionData()
+    //{
+    //    // Mhhhh, dat zou eigenlijk via de trades moeten lopen
+    //    // dit is de query die per dag het een en ander aan info ophaalt
+    //    StringBuilder builder = new();
+    //    builder.AppendLine("select");
+    //    builder.AppendLine("  date(trade.TradeTime,'localtime') as TradeTime,");
+    //    //builder.AppendLine("  trade.Side,");
+    //    builder.AppendLine("  symbol.quote,");
+    //    builder.AppendLine("  sum(trade.QuoteQuantity) as Value");
+    //    builder.AppendLine("from trade");
+    //    builder.AppendLine("inner join symbol on trade.symbolid = symbol.id");
+    //    builder.AppendLine($"where symbol.quote = '{QuoteData.Name}'");
+    //    builder.AppendLine("group by date(trade.TradeTime,'localtime'), trade.Side,symbol.quote");
+    //    builder.AppendLine("order by date(trade.TradeTime,'localtime') asc, trade.Side,symbol.quote");
 
-        using CryptoDatabase databaseThread = new();
-        databaseThread.Open();
+    //    using CryptoDatabase databaseThread = new();
+    //    databaseThread.Open();
 
-        // TODO: Vandaag toevoegen
-        QueryTradeDataList.Clear();
-        foreach (QueryTradeData data in databaseThread.Connection.Query<QueryTradeData>(builder.ToString()))
-        {
-            if (data.TradeTime.Date > new DateTime(2000, 01, 01))
-            {
-                QueryTradeDataList.Add(data);
-            }
-        }
-    }
+    //    // TODO: Vandaag toevoegen
+    //    QueryTradeDataList.Clear();
+    //    foreach (QueryTradeData data in databaseThread.Connection.Query<QueryTradeData>(builder.ToString()))
+    //    {
+    //        if (data.TradeTime.Date > new DateTime(2000, 01, 01))
+    //        {
+    //            QueryTradeDataList.Add(data);
+    //        }
+    //    }
+    //}
 
     private Chart CreateChart(string title, int x, int y)
     {
@@ -708,7 +708,7 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
         if (!GlobalData.Settings.QuoteCoins.TryGetValue(quoteName, out QuoteData))
             return;
 
-        GetQueryPositionData();
+        //GetQueryPositionData();
         GetQueryTradeData();
 
         DoChartPositionsPerDay(OffsetX, OffsetY);
