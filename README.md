@@ -1,4 +1,4 @@
-Crypto SBM Scanner for Binance, Bybit Spot, ByBit Futures and Kucoin
+CryptoScanBot for Binance, Bybit Spot, ByBit Futures and Kucoin
 
 The Crypto scanner was initially only intended to generate oversold signals on the Binance exchange (because someone said something about DYOR and you shouldn't say that to a programmer). In the meantime, the application has been overhauled a number of times, split, merged the best points, improved, simplified, adapted for SBM signals and made multi-exchange.
 
