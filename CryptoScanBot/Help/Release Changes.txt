@@ -1,0 +1,472 @@
+CryptoScanBot release historie:
+
+xx-02-2024 1.9
+- Scanner - Applicatienaam herbenoemd naar CryptoScanner (want CryptoScanBot dekt de lading niet meer) - De nieuwe naam is CryptoScanBot (CSB)
+- Scanner - De kolommen van alle grids aan of uit kunnen zetten en tevens onthouden van de kolom breedte
+- Scanner - Soms (wellicht bij na heactivatie na een hybernate of sleepmode) worden de instellingen gereset.
+            Coordinaten van het scherm niet bewaren bij het afsluiten van de applicatie.
+- Scanner - Prive gegevens zoals de Telegram api en eventuele exchange API key's en dergelijke in andere bestanden opslagen
+- Scanner - Instellingen - de ingevoerde marktrend% controleren/valideren, het 1e getal moet altijd lager zijn dan het 2e getal, swappen indien dat niet zo is
+- Scanner - Vanwege performance een nieuw component ingezet voor het tonen van de symbols en signals (een datagridview ipv een listview)
+- Scanner - Het loggen van Tradingview errors toegevoegd (voor de dollar index enz) naar ook weer verwijderd, daar komen echt veel te veel foutmeldingen uit!
+- Scanner - Soms blijft de barometer stilstaan (dan loopt de tijd van de barometer grafiek niet meer op), daaronder staat de tekst initializing. Geen signalen daarna..
+- Scanner - De Tradingview waarden voor dollar index, btc dominantie enzovoort werken niet meer (lijkt op een wijziging aan de kant van TV, maar niet zeker)
+- Scanner - De JUMP strategie lijkt niet meer te functioneren (die werd uitgesloten voor trading, maar het signaal moet natuurlijk wel getoond worden)
+- Scanner - De globale markttrend % wordt momenteel uitgerekend via 210 candles, voor de trend calculatie is dat te weinig en het is daarom aangepast naar 619 candles
+            Je wilt ook niet heel veel candles in het geheugen hebben, de scanner op Bybit gebruikt nu al regelmatig 600Mb
+- Scanner - De emoi's in de telegram melding voor de trend configureerbaar maken
+- Scanner - De url voor de Bybit futures exchange aangepast (tekst in de weblinks.json is nu case sensitive gemaakt)
+- Scanner - Telegram - De trend van de 15m, 30m, 1h, 4h en 12h toegevoegd (inclusief emoi indicator)
+- Scanner - Telegram - De markttrend toegevoegd en de trend op het interval wordt nu getoond (inclusief emoi indicator)
+- Scanner - Standaard commando's zoals kopieer, trend en symbol informatie zitten nu ook in het popupmenu
+- Scanner - Het menu commando "Dump exchange naar Excel" verplaats naar het hoofdmenu (onder instellingen)
+- Scanner - Het menu commando "Dump exchange naar Excel" werkte niet meer (na de refactoring symbol lijst op links)
+- Scanner - Er wordt nu correct rekening gehouden met het vinkje log munten ouder dan x dagen (er werd altijd gelogd)
+- Scanner - De controle met de meldingen "er zijn niet genoeg candles voor" uitvoeren NA de controle op het aantal dagen
+- Scanner - Het symbol overzicht uitbreiden met de volume, verversen en kunnen sorteren
+- Scanner - Op het signalen tabblad is de titel van de trend aangepast naar "TF-Trend" (TimeFrame trend)
+- Scanner - Op het signalen tabblad is de titel van de trend% aangepast naar "Markttrend%" (globale trend)
+- Trading - Charts, de statistieken voor de combinatie van short en long kloppen niet (de short wordt sql technisch niet goed opgepakt?)
+- Scanner - De trend berekening optimaliseren, de 1m en 2m trend worden niet meer berekend, deze zijn niet significant en erg cpu intensief.
+- Scanner - De trend berekening optimaliseren, alle trends per interval werden tot dusver berekened terwijl dat pas bij een nieuwe candle nodig is. 
+- Scanner - De oude signalen van circa 2 week en ouder weggooien uit de database (db werd vrij groot)
+- Scanner - De berekening van de 10d effectieve change was niet juist, daardoor teveel uitval op signalen
+- Scanner - De STOBB heeft nu enkel een minimale trend maar dat gaat dus niet goed voor short posities (splitsen long/short)
+- Scanner - Aangepaste barometer filter voor long/short
+- Scanner - Nieuwe trend filter voor long/short op basis van interval=bullish/bearish
+- Scanner - Instellingen - basismunten zonder coins worden niet meer getoond
+- Scanner - Barometer via een range in plaats van 1 getal
+- Scanner - De layout van de long en short signalen is aangepast zodat op een kleiner beeldscherm je ook bij de instellingen kunt
+            (dat blijft wel een issue want ik ontwerp voor een vrij groot scherm en dat past gewoon niet op de kleinere schermen).
+- Scanner - De trenddetails voor de CC 2.0 methode is gedaan, de validatie zegt dat het niet 100% overeen komt maar redelijk dichtbij zit.
+- Scanner - De listbox met munten op links door middel van een instelling kunnen verbergen
+- Scanner - Bybit Futures, het vermelden van FundingRate en de FundingInterval.
+- Scanner - Het lettertype voor iedereen resetten vanwege vreemde lettertype's die te groot zijn of er raar uitzien (overblijfsel vorige versie?).
+- Scanner - Verschillende kleuren aan de long en short van een strategie kunnen opgeven (nog meer kleurtjes), eventueel moeten de kleuren bijgewerkt worden
+- Scanner - De BUSD vervangen net de PAXG (omdat deze munt door Binance wordt verwijderd en niet meer belangrijk genoeg is)
+- Scanner - Delisted coins blijven hardnekkig bestaan en er komen zelfs meldingen (TOMOUSDT)
+- Scanner - De huidige trendberekening is nu gebaseerd op de low's en high's van de candles, dit moet de open en close zijn
+- Scanner - Op verzoek de grenswaarden voor RSI overbought en oversold instelbaar gemaakt
+- Scanner - Op verzoek de grenswaarden voor STOCH overbought en oversold instelbaar gemaakt
+- Scanner - Refactoring van alle RMK (RechterMuisKnop) opties
+- Scanner - Op verzoek de up- of down trend tonen voor de 1h, 4h en 12h.
+- Scanner - De fundingrate toegevoegd aan de signalen
+- Scanner - De fundingRate ophalen voor de Bybit Futures de exchange (via de kline ticker)
+- Scanner - Herintroductie van locking waardoor een bepaalde foutmelding niet kan optreden en de scanner netjes door blijft lopen (heel lastig te controleren)
+- Scanner - De tradingview URL voor Bybit Futures is gecorrigeerd. {base}{quote}.P
+- Scanner - De window coordinaten/breedte wordt niet correct hersteld (na aanpassing volgorde event)
+- Scanner - Bij een negatieve barometer wordt de toevoeging 1h/4h/1d soms niet getoond (niet genoeg ruimte)
+- Scanner - Wat correcties op de handleiding (met dank aan Trinity)
+
+(testen)- Trading - Telegram commando's, uitbreiden zodat het aantal slots voor short en long ingesteld kan worden
+- Trading - Vanwege de overgang naar spot rekening houden met de commissies van de exchange
+- Trading - Bybit futures wordt verboden in NL (dank je wel), Bybit spot afstoffen om hierop te kunnen traden.
+- Trading - Vanwege performance een nieuw component ingezet voor het tonen van de posities (een datagridview ipv een listview)
+- Trading - Instappen via de bid of ask prijs (icm long/short)
+- Trading - Een symbol-link aan de trade-telegram notificaties toevoegen.
+- Trading - De cooldown van de tradingrules ging werd ingevoerd in "aantal candles", het is nu aangepast naar aantal minuten wat gemakkelijker in gebruik is
+- Trading - Bij hogere ticksizes komt het werkelijke instapbedrag soms ruim boven het ingestelde aankoopbedrag te liggen, deze controleren voordat we een positie maken
+- Trading - Het nemen van een DCA profit loggen
+- Trading - Het toevoegen van een DCA loggen
+- Trading - Het herberekenen van een positie loggen
+- Trading - Het verwijderen van een positie uit de database loggen
+- Trading - Bij het verwijderen van een positie uit de database wordt deze even later terug gezet (buffer probleem)
+- Trading - Standaard commando's zoals kopieer, trend en symbol informatie zitten nu ook in het popupmenu van de open en gesloten commando's
+- Trading - Bij een aankoop de marges bekijken en eventueel afronden naar boven (omdat het soms wel drastisch naar beneden wordt afgerond vanwege de quantity ticksize)
+- Trading - De Quantity wordt nu altijd naar beneden afgerond, dat gaat soms met grote stappen, er wordt nu naar boven afgerond indien het start bedrag "slechts" 10% afwijkt.
+- Trading - De positie excel dump rapporteert de huidige markt waarde, ook als de positie al gesloten is..
+- Trading - Als het percentage bij de basismunt is ingevuld werkt papertrading niet (omdat er geen asset management aanwezig is wordt het aantal 0, fallback op het bedrag van de basismunt)
+- Trading - De virtuele opbrengst houdt geen rekening met short posities
+- Trading - De controle op het aantal slots is verkeerd (er worden geen posities geopend als de long/short slots helemaal vol zit)
+- Trading - De optie voor de backtest verbergen (deze werkt alleen in combinatie met een wat grotere SQL database en langere datum periodes)
+- Trading - De tradingrules via de interface kunnen instellen (dat was tot dusver alleen mogelijk via de json)
+- Trading - Charts - De dashboard statistieken houdt geen rekening met UTC (met als gevolg een vertekend beeld <als je de verkoop momenten kent>).
+- Trading - Trading op strategie jump is riskant en wordt daarom niet aangeboden om te kunnen traden.
+- Trading - De DCA's via de interface kunnen instellen (dat was tot dusver alleen mogelijk via de json)
+- Trading - DCA buy methode bevat voorlopig alleen de "Limit order op signaal prijs"
+- Trading - Voor het sluiten van een positie alsnog ALLE trades ophalen om te controleren dat er niet per ongeluk een buy order alsnog gehit is
+- Trading - Trading werkt nu exclusief op Bybit Spot en/of Futures want andere exchanges kan ik niet testen.
+            (en om te voorkomen dat iemand het per ongeluk op een niet ondersteunde exchange aan zet...)
+- Trading - Ondersteuning van long en short posities (maar daarvoor moest de hele configuratie aangepast worden).
+- Trading - Barometer via een range in plaats van 1 getal
+- Trading - Excel positie overzicht aangepast (er werden kolommen overschreven)
+- Trading - Naar de trading app gaan na het dubbelklikken op een open of gesloten positie
+- Trading - Nieuwe trend filter voor long/short op basis van interval=bullish/bearish
+- Trading - short - Controleren of de nieuwe trend beperking werkt (config okay)
+- Trading - Bij partial fills wordt de order geannuleerd met een ChangedSettings en wordt de positie niet gesloten
+            Daarom wordt nu bij een partial fill de order niet geannuleerd, er wordt gewacht tot de gehele order gevuld is.
+            (zodoende omzeilen we ook de controle op de min_notation indien we met een nieuwe BE de TP order opnieuw gaan plaatsen met een lagere quantity)
+- Trading - Als een market order een timeout krijgt (intern omdat de trade niet opgepakt kan worden), dan wordt de positie en part gesloten. 
+            Later wordt de trade toch ingelezen maar is de part gesloten en wordt er niets meer gedaan wat leidt tot posities die enkel ruimte innemen maar niets doen.
+            Hiervoor zijn diverse fixes nodig geweest. Ook de manier van trades ophalen is aangepast want de exchange levert ze af en toe gewoon niet (timing?)
+            Achteraf blijft dat de user ticker soms een paar seconden niet werkt waardoor trades niet opgemerkt worden.
+            Voordat een order nu een timeout krijgt wordt de status van de order op de exchange gecontroleerd
+- Trading - Een dashboard introduceren, Totaal geinvesteerd, returned, gemiddelde profit, de uitschieters (max), de tegenvallers (min).
+- Trading - Intern de naamgeving voor de BuyAmount en BuyPercentage aangepast vanwege Long/Short mogelijkheden (moet opnieuw insteld worden)
+- Trading - Na het annuleren van de orders vanwege tradingrules wordt de buy even later toch weer geplaatst
+- Trading - API calls worden nu goed doorgezet naar de juiste exchange (wellicht wel handig)
+- Trading - Een geannuleerde buy order (door lage barometer of tradingrules) wordt later herplaatst maar met de oude prijs. Controle op de laatste prijs ingebouwd.
+- Trading - Statistiek, bij de virtuele opbrengst werd ook de USDT waarde opgeteld.
+- Trading - Statistiek, de BTC display format was niet juist, gebruikte altijd een N2 wat prima is voor USDT maar niet voor BTC
+- Trading - Statistiek, de x en y-as van de grafieken worden niet bijgewerkt waardoor het juiste aantal trades en winst niet zichtbaar zijn (punten liggen buiten de chart als het ware, herstart nodig)
+- Trading - Open en gesloten posities - extra kolom met daarin de doorlooptijd van de trade
+- Trading - Open en gesloten posities - Dubbelklik naar de tradingapp, of rmk voor trading view etc
+- Trading - Refactoring trading mechanisme (de focus meer op gefixeerde bijkoop en winst percentages leggen in plaats van trailing <komt later>)
+- Trading - Sell-orders worden achteraf aangepast naar een lagere prijs. Het verschil zit in de commissie van de nog niet gevulde sell orders.
+- Trading - De commissie wordt niet correct in de BE berekening meegenomen, pas achteraf wordt de laatste commissie erbij berekend waardoor de winst 0.1% lager uitvalt
+- Trading - De trade direction omgewisseld in de signal-up en signal-down signalen
+- Trading - Het is nu mogelijk om op de signalen van de signal-up en signal-down kan traden (geen idee of dat OK werkt of kan werken!)
+- Trading - Statistiek, sinds de introductie van een timeout is het aantal geloten posities van slag (deze worden alsnog meegeteld)
+- Trading - Statistiek, sinds de introductie van een timeout is de grafiek van de winst percentages van slag (er wordt een -100% geregistreerd)
+- Trading - 1 van de buy timeout controles werkt via minuten in plaats van candles, dat zou dus heel lastig traden zijn op de hogere intervallen.
+- Trading - De trader werd per abuis gepauseerd vanwege de trading rules. Dit vanwege een niet geinitialiseerde Symbol.LastPrice (die niet in de berekening thuishoorde)
+- Trading - Interne refactoring van orderId en tradeId van integer/long naar string's
+- Trading - De fundingrate toegevoegd aan de open posities
+- Trading - Bybit Futures - ophalen trades implementeren
+- Trading - Bybit Futures - Fix: ophalen trades, het "window" voor ophalen trades is 1 week
+- Trading - Bybit Spot - ophalen trades implementeren
+- Trading - Bybit Futures - ophalen assets implementeren
+- Trading - Bybit Spot - ophalen assets implementeren
+
+
+23-09-2023 1.8.6
+- Trading - Openstaande sell opdrachten afkomstig van een fixed percentage aanpassen na een mutatie van het verkoop percentage
+- Trading - Toevoegen scrollbars aan tabsheet grafieken
+- Trading - Bybit Spot - Testen van een limitorder
+- Trading - Bybit Spot - Testen van een marketorder
+- Trading - Instelling instap voor toepassen oplopende/aflopende RSI
+- Trading - Instelling instap voor toepassen oplopende/aflopende MACD
+- Trading - Instelling instap voor toepassen oplopende/aflopende Stoch
+- Trading - Instelling uitstap locking toepassen zodra je in de winst zit
+- Trading - De info dump van de positie, bij de value staat vaak een 0, graag invullen via stop*q of price*q indien mogelijk
+- Trading - De info dump van de positie, de sell aan de linkerkant zetten (kleurtje wellicht?) zodat je niet zover naar rechts hoeft te scrollen)
+- Trading - Er worden geen signalen gemaakt voor symbols met posities (low volume, low price, flat candles enzovoort) - maar dan gebeurd er helemaal niets! (weken lang)!
+
+
+07-09-2023 1.8.5
+- Bij het activeren van de Kucoin exchange wordt de Binance exchange geactiveerd (het weblinks.json bevat een foutje)
+- De tekstuele reden van afkeuring is nu een comma seperated lijst (wordt getoond als de tekst van de signal)
+- Bij gebruik van de minimale stobpercentage werd deze niet gemeld in de afgekeurde signalen
+- De minimale stobpercentage werd voor alle signalen toegepast (is exclusief voor stobb bedoeld)
+- Minor, de label met de barometer tijd wordt nu gecentreerd in plaats van rechts (ziet er beter uit)
+
+
+03-09-2023 1.8.4
+- Bij gebruik van een NL decimal seperator (,) worden de prijzen van de symbols in de display en signalen afgekapt.
+
+
+02-09-2023 1.8.3
+- Scanner - Excel overzicht met informatie van de symbols van de exchange
+- Scanner - Excel overzicht met informatie van de candles (van alle intervallen) van die munt (Kucoin debug)
+- Scanner - Kukoin Spot limieten (rate limits) ondersteunen
+- Scanner - Kukoin Spot kline ticker implementeren (en opvullen van niet gerapporteerde candles)
+- Scanner - De barometer grafiek wordt na het kiezen van een andere basismunt niet direct getoond.
+- Scanner - Munten blijven de rest van hun leven actief, ook als ze niet worden genoemd in de lijst van symbolen enzovoort (alle 4 exchanges!)
+- Scanner -Signalen - De sortering van de signalen klopt niet (er is namelijk een kolom exchange toegevoegd, maar de sortering is niet aangepast)
+- Scanner -Signalen - Het aantal getoonde signalen klopt niet, enkel lage intervallen worden getoond, de hogere intervallen zijn weggefilterd (de expirationdate herintroduceren)
+- Scanner - Een betere manier om de kline ticker te herstellen in het geval van (internet of exchange) storingen
+- Documentatie in zijn geheel bijgewerkt waaronder aanpassing .net framework
+- Een extra instelling waarmee je de munten aan de linkerkant kan verbergen
+- Het initiele lettertype in het dialoog komt niet overeen met de voorheen gekozen lettertype
+  (het letterype wordt standaard op "Microsoft Sans Serif; 8pt" gezet terwijl de default "Segoe UI; 9pt" gebruikt wordt
+- De afhankelijkheid naar een ASP .net package verwijderd. Hierdoor wordt bij een nieuwe installatie de juiste .net package geinstalleerd.
+- Trading - De barometer grafiek direct na het opstarten tonen (het duurde nogal lang voordat deze getoond werd)
+- Trading - Caption "Binance Trading (naast de papertrading))
+- Trading - Excel overzicht met informatie over een positie, de parts, de gemaakte trades, de BE berekening enzovoort
+
+
+03-08-2023 1.8.2
+- De kolommen van de signalen kunnen met de rechtermuisknop menu onzichtbaar worden gemaakt
+- De sorteer indicator van de signalen (en posities) wordt nu correct getoond.
+- De tekst 1h, 4h en 1d toevoegen bij de barometer waardes.
+  De barometer bolletjes verwijderen (dan hoef ik niet meer uit te leggen wat het betekend)
+- De tijd en de cijfers in de barometer graph links boven zijn door het aanpassen van het lettertype slecht leesbaar geworden.
+  En er kwam vervelend genoeg in de informatie rechtsboven een verticale scrollbar bij die niet weg te krijgen was.
+  Daarom is de listview die de informatie toonde nu vervangen met ouderwetse labels (heb het idee dat het iets meer CPU kost?)
+- Typo bearisch -> bearish
+- Bybit Futures, FundingRate en FundingInterval aan de database toegevoegd (maar ter info, ik doe er nog niets mee)
+- Aanpassing lettertype, het standaard lettertype in .net 7 is blijkbaar "Segoe UI; 9pt" geworden ipv "Microsoft Sans Serif 8.25p"
+  De applicatie ziet er hierdoor anders uit en het kan wellicht het probleem met de gemelde lettertypes oplossen (geen garanties)
+  NB: Het heeft geen zin om tegen het Microsoft systeem te werken door een ander lettertype te gebruiken dan voorgesteld.
+- Vanuit de settings via een verkenner openen de data-folder openen, dat scheelt het eea aan uitleg en support (voor mij ook sneller).
+- Een munt kunnen openen in op de exchange zelf (dus niet de app, niet TV, maar de website van de exchange zelf)
+  Omdat dit enigzins dubbelzinnig is met de optie dubbelklik is die komen te vervallen
+- De configuratie opgesplitst in een Settings.json en een Weblinks.json, het bevat de te gebruiken url's en apps
+  Op deze manier kunnen we de gebruikte referenties delen en via Telegram laten bijwerken
+  (er zijn nog een paar url's die niet goed zijn)
+- Een knop voor het (her)starten van Telegram toegevoegd.
+- De knop voor het testen van de Telegram api/key werkte niet 
+- Als een computer geen speech kan afspelen crasht de applicatie (deze fout opvangen, loggen en doorgaan). Virtuele machine zonder audio mogelijkheden?
+- Als iets wordt toegevoegd aan de blacklist komen er geen enkele meldingen meer (een typo in de controle van de whitelist).
+- Er zijn minder short meldingen dan voorheen want in de stobb overbought werdt een controle op oversold gedaan (op zowel de ma lijnen als de rsi)
+- De tabs in de instellingen en hoofdscherm zijn iets duidelijker gemaakt
+- De oneven regels in de grids een lichtgrijze achtergrond kleurtje geven
+- Correcties in de hypertrader links naar bybit-spot en bybit futures (met dank aan Marco)
+
+
+16-07-2023 1.8.0 (een gedeeltelijk hiervan zit al in de 1.7.2 vanwege de laatste hotfix <*>)
+- Ondersteuning Bybit Spot
+- Ondersteuning Bybit Futures
+- Een extra instelling waarmee je kan aangeven welke Exchange je wilt openen. De bedoeling hiervan is dat er meldingen genereerd worden op bijvoorbeeld
+  Binance maar dat je dan via een dubbelklik naar de munt gaat op een andere exchange (bijvoorbeeld Kucoin). Er is wel een blacklist nodig om het 
+  verschil in de ondersteunde munten van Binance en Kucoin glad te poetsen zodat je geen meldingen krijgt van munten die niet bestaan op Kucoin.
+- Omdat de uitlijning van de barometer labels ten opzichte van de barometer bolletjes niet meer lukt (scaling) zijn deze nu aan de bovenkant gezet.
+- Scanner: Telegram meer details toevoegen en inclusief een link naar de exchange
+- De extra stategien (allemaal interne experimenten niet geschikt voor publicatie) verbergen in de release (via een ifdefje)
+- Via een opstartparameter kun je de juiste exchange activeren (let op de quotes en gebruik van hoofdletters!)
+  CryptoScanBot.exe -e Binance
+  CryptoScanBot.exe -e "Bybit Spot"
+  CryptoScanBot.exe -e "Bybit Futures"
+- Voor STOBB de minimale trend controleren voor de CC manier (een nieuwe instelling) (direct een probleem bij short posities)
+- Het Volume van Bybit staat in BASE volume in plaats van QUOTE volume!
+- Bugfix Bybit 1m kline ticker (symbol wordt geprefixed door het interval, rare jongens)
+- De white en blacklist functionaliteit aangepast, de whitelist werkte helemaal niet zo te zien
+- De captions van Binance rechtsboven vervangen door de juiste exchange naam
+- Ondersteuning van andere exchanges (dat heeft na het vertrek van Binance uit NL een nieuwe impuls heeft gekregen in de vorm van Bybit)
+  Ondersteuning van andere exchanges volgt later (Bybit futures/Kucoin)
+- Nieuwe methode om de ticker en de 1m stream opnieuw te starten als je wijzigingen maakt in het quote rijtje (BTC/USDT/BUSD/*).
+  Tegelijk kan hier de detectie van wijzigingen in de gekozen exchange op meeliften.
+- De laatste keer dat de symbols zijn opgehaald wordt nu bewaard in de database, deze informatie wordt ~1x per uur ververst 
+  zodat de juiste volumes worden opgehaald. Dit scheelt aanzienlijk in snelheid bij het opnieuw opstarten van de scanner.
+- Kukoin Spot - Scanner: de exchange informatie (symbol informatie) ophalen
+- Kukoin Spot - Scanner: historische klines informatie (candle informatie) ophalen
+- Bybit - Scanner - 1m candle stream informatie implementeren (per 10 symbolen, pfft)
+- Bybit - Scanner - historische klines informatie (candle informatie) ophalen
+- ByBit - Scanner - price ticker implementeren (Volume en LastPrice)
+- Bybit - Scanner - de exchange informatie (symbol informatie) ophalen
+- Bybit - Scanner - De limieten (rate limits) van bybit ondersteunen
+  het is gebaseerd op het aantal verzoeken per seconde wat je naar ByBit stuurt
+  https://bybit-exchange.github.io/docs-legacy/futuresV2/inverse/#t-ratelimits
+- Probleem: Nadat je naar deze versie bent gegaan kan een oudere scanner niet meer worden opgestart
+  (json problemen met de "General.WindowPosition.Location" en zo zijn er nog een paar problemen)
+  Opgelost door een nieuwe configuratie bestand te maken en geheel te breken met het verleden
+- De (slordige naam) "GlobalData.Settings2.json is vervangen door de naam "Settings.json"
+- Via de startup parameter "-f FolderName" kun je aangeven in welke folder (van de APPDATA) de data wordt bewaard (voor meerdere sessies)
+- Trailing sell ala Cryptocoiners met de Keltner Channel en PSAR (maar zoals zo vaak valt het effect trailen vaak tegen)
+- Papertrading ingebouwd om de eerste beginselen van een bot te testen/controleren
+- Wens: bij het opstarten de laatste X candles opnieuw berekenen, dat gaf echter zoveel (cpu) overhead dat ik het niet ga ondersteunen)
+  Daarnaast geeft het onverwachte problemen zoals duplicaat meldingen (vanwege introductie database)
+  Wie weet komt het ooit nog terug, maar voor nu opzij gezet
+- Zien hoeveel een munt gestegen of gedaald is na de initiele melding (zie kolom "Stijging").
+- Telegram die de meldingen (en trades) kan weergeven.
+- Instellingen voor Telegram in een aparte tab (documentatie nog uitbreiden.
+- De Altrady Webhook verwijderd (vanwege random fills niet presentatief)
+- Database ondersteuning ingebouwd voor het bewaren van de symbols, signalen, posities e.d. (sqlite database)
+- Trade mogelijkheden ingebouwd (waarschuwing, het is experimenteel en niet 100% uitgekristalliseerd/getest).
+- Aanpassingen om "dichter" bij een TradeBot te komen, daarom de introductie van een sqlite dataabse
+- Elke 4 uur wordt nu de candle data bewaard, als de applicatie of computer crashed hoeft er minder opgehaald te worden
+  (in de veronderstelling dat de scanner soms dagen achter elkaar aan staat)
+- Elke 24 uur wordt nu de log-memo gecleared. Hoe meer tekst daarin zit des te "trager" het wordt en als het dagen loopt..
+  (in de veronderstelling dat de scanner soms dagen achter elkaar aan staat)
+- Controle op het maximaal aantal platte candles en het maximaal aantal candles zonder volume
+- Controle op de minimaal aantal bounces op de sma20 en bb.upper (beweegt de munt "veel")
+- De SBM2 instellingen zijn aangepast, er is nu 1 percentage die zowel voor de long als short geld
+  We rekenen nu het percentage ten opzichte van de bovenste of onderste bollingerband, default = 5%
+  Echter die 0.5% zit erg dicht bij de onderste band, een percentage van 2.5% geeft ook goed resultaat
+- Nieuwe kolom met daarin de "24 uur beweging" (tussen de absolute high en low van de afgelopen 24 uur)
+  Dit is bedoeld om meer inzicht te krijgen en om de pump en dumps beter te detecteren (munten die veel bewegen)
+  Dit omdat het 24 uur percentage de lading (c.q. die beweging) niet laat zien.
+- Een label filter  bij de textbox toevoegen, die zorgt nu blijkbaar voor verwarring (staat er "los" in, duidelijk maken!)
+- De fear and great index staat bij het opstarten er eerder dan de rest, het ziet er mooier uit alles tegelijk tevoorschijn komt
+- De actuele prijs stijging ten opzichte van de melding laten zien? (percentueel + kleur)
+- Een cooldown periode inlassen via regels waardoor het handelen gepauseerd wordt als een munt in een bepaald aantal candles een bepaalt percentage dropt.
+- NALV TUSD: De header labels ontbreken op dit moment
+- NALV TUSD: De plaatsing van controls gaat niet goed bij een afwijkend lettertype/grootte gebruikt
+- White- en black list: De vinkjes zijn verwijderd, als een lijst iets bevat worden ze gebruikt!
+- White- en black list: Comments kunnen toevoegen achter de munten "NEBLBUSD Vervalt per 01-04-2023"
+- White- en black list: Munten gewoon netjes onder elkaar zetten, dat leest stukken makkelijker.
+- De sortering werkt niet goed, het lijkt zelfs een eenmalige sortering!
+- Instellingen verplaats van het signaal naar de "general" gedeelte (de instelling gaat hierdoor verloren)
+  (Heartbeat, verwijderen signalen na x min, verbergen technische gegevens)
+- Extra STOBB instelling waardoor nu ook de ma% afstand en kruising gecontroleerd kan worden
+- Het verversen van de Binance informatie configureerbaar maken (detectie nieuwe of delisted munten)
+- Een detectie maken die als de candlestream niet meer werkt deze opnieuw opstart
+  (dat mag best een paar minuten duren zolang het maar hersteld)
+* Kunnen dubbelklikken op de fear and greed index (https://alternative.me/crypto/fear-and-greed-index/)
+* Kunnen dubbelklikken op de US dollar index e.d. en dat je dan in de (interne) Tradingview uitkomt bij de juist chart uitkomt.
+- De 1h, 4h en 24h barometer in de graph zetten zodat ze niet iedere 5 seconden worden bijgewerkt
+* Uitbreiding van basismunten (waaronder de TUSD enzovoort)
+- Naar aanleiding van de Binance storing op 24 maart de ontbrekende candles automatisch invullen
+- Upgrade naar .net 7 (met dank aan Harmen Kooiker)
+* Sorteer indicatie op de kolom waarop gesorteerd wordt
+- Bij het afsluiten kan de applicatie alsnog candles gaan ophalen doordat de timer nog loopt en de applicatie status niet gecontroleerd wordt
+- De logmeldingen werken van boven naar beneden (iemand stelde voor om het om te draaien)
+  Niet opgelost: Dat laat ik achterwege want er zijn ook multiline teksten zoals trend details met meerdere regels (en het was bovendien geen groot issue)
+- Een typefoutje in een error-melding in de log. Ik had even internet uitstaan en toen kwam in de log deze melding: 
+  "HttpRequestException - Er is een fout opgetreden bij het verzenden van het aanvraag" : het/de aanvraag.
+  Niet opgelost: want waarschijnlijk zijn er andere vertaal zaken aanwezig die door de libraries (of Google?) krom zijn vertaald.
+* Op de naam van de kolom kunnen sorteren (2e sleutel is de eindtijd, 3e sleutel de symbol en de 4e is het interval).
+  Sorteren moet niet op basis van de tekst maar op basis van de waarde (indien relevant)
+* De signalen sorteren op candle-eindtijd, naam en dan interval (de default sortering).
+* Met de basismunt USDT actief wordt bij iedere herstart alsnog candles opgehaald (de UP en de DOWN munten).
+  (deze sluit ik normaliter uit, maar bij het ophalen van de candles kloppen de condities niet)
+* Bij veel signalen wordt de applicatie traag. De mutaties op de lijst met signalen lijkt de oorzaak te zijn
+  (de signalen worden nu gecached en 1 seconde vertraging helpt al behoorlijk)
+  NB: Dit was ook echt een ergernis voor mij, blij dat het opgelost is!
+- Aanpassingen trend, 2 nieuwe variaties, 1 op basis van cAlgo en een op basis van EMA.
+  Het is een experiment om dit te verbeteren, maar echt veel beter is het niet geworden.
+  Zie opmerking bij de TODO's "Validatie van de trenddetails" in het voorgaande stukje
+
+
+12-04-2023 1.7.2
+- Kunnen dubbelklikken op de fear and greed index (https://alternative.me/crypto/fear-and-greed-index/)
+- Kunnen dubbelklikken op de US dollar index e.d. en dat je dan in de (interne) Tradingview uitkomt bij de juist chart uitkomt.
+- Met de basismunt USDT actief wordt bij iedere herstart alsnog candles opgehaald (de UP en de DOWN munten).
+  (deze sluit ik normaliter uit, maar bij het ophalen van de candles kloppen de condities niet)
+- Op de naam van de kolom kunnen sorteren (2e sleutel is de eindtijd, 3e sleutel de symbol en de 4e is het interval).
+  Sorteren moet niet op basis van de tekst maar op basis van de waarde (indien relevant)
+- De signalen sorteren op candle-eindtijd, naam en dan interval (de default sortering).
+- Sorteer indicatie op de kolom waarop gesorteerd wordt
+- Uitbreiding van basismunten (waaronder de TUSD enzovoort)
+- Fix voor een Deserialize foutmelding op de exchangeinfo
+- Bij veel signalen wordt de applicatie traag. De mutaties op de lijst met signalen lijkt de oorzaak te zijn
+  (de signalen worden nu gecached en 1 seconde vertraging helpt al behoorlijk)
+  NB: Dit was ook echt een ergernis voor mij, blij dat het opgelost is!
+
+
+01-03-2023 1.7.1
+- Het geheel open source maken (https://github.com/CryptoMarius/CryptoScanBot)
+- Een verkeerde tooltip op de SBM oversold en overbought vinkje
+- De laatste Obfuscation restanten verwijderd (toch een stukje versleuteld!)
+  En er zijn vast virus scanners die problemen met die restant hebben.
+
+
+26-02-2023 1.7
+- De instellingen opgesplitst (intervallen, STOBB/SBM/JUMP)
+  de SBM instellingen staan nu eindelijk bij elkaar.
+- De folder voor de webview2 browser wordt nu in de data folder geplaatst
+- De signalen en/of geluiden vanaf het hoofdscherm uit kunnen zetten
+- De maximale BB breedte bij SBM word niet gecontroleerd, deze staat intern op 100%
+  (er zijn nu extra instellingen voor geintroduceerd die een default waarde hebben)
+- De instelling "Nieuwe munt dagen" deed helemaal niets, de code erachter is geherintroduceerd
+- Andere indicaties zoals de Bitcoin Dominantie, de DXY dolar index, de Market Cap and Volume en de SP&D.
+- Documentatie - Hoe start je de applicatie op.
+- Een nieuwe white- en black list speciaal voor de overbought (zodat je slechts bepaalde assets kunt gaan shorten, is nu een waterval van meldingen)
+  NB: De migratie van de oude white- en black list naar de nieuwe is niet gelukt, dus gaarne extra attentie daarvoor.
+- Een tabblad algemeen geintroduceerd om de instelingen te fatsoeneren.
+- Kleurtjes voor het accentueren van basismunten (Robin)
+- De limiet van de kruising maX/maY staat op 30, verhoogd naar 60
+- Onthouden van de laatste plaatsing op het scherm, en welk scherm
+- combobox interval: Het laatst gekozen interval onthouden
+- combobox barometer: De basis munten die niet aangevinkt zijn niet tonen in de barometer combobox, dan kun je ze ook niet kiezen en zie je de niet ingevulde data niet)
+- combobox barometer: De BUSD wordt standaard geselecteerd bij het opstarten (de instellingen zijn nog niet ingelezen)
+- combobox barometer: (duplicaat) Na een sleep/hybernate wordt de combobox barometer niet correct hersteld
+- De JUMP over een aantal candles laten lopen en optioneel ook via de highs en low's
+- Gray theming (een echte dark mode heeft teveel consequenties op dit moment, consessie is dat het voorlopig grijs is <work in progress!>)
+- De minimum prijs heeft 9 decimalen in plaats van de gebruikelijke 8 die voor een sat wordt gebruikt.
+- Black en whitelist: Eventuele spaties worden nu automatisch uit de invoer gehaald.
+- Documentatie - In de uitleg van de SBM werd gezegd dat de PSAR aan de "verkeerde" kant van de MA20 moet zitten
+- De instelling om een te lage barometer te loggen doet helemaal niets, deze alsnog geimplementeerd
+- Een fout opgelost die kan optreden bij het ophalen van de Binance info terwijl tegelijk verouderde candle informatie wordt verwijderd (ontbrekende locking)
+  "Exception: De verzameling is gewijzigd nadat de enumerator is gemaakt"
+- De melding "ma200 en ma50 gekruist" uitgebreid met het interval (kosmetisch)
+- De jump up/down wordt op basis van de voorgaande candle berekend (en niet de laatste candle)
+- De barometer 1h, 4h en 24h resizen niet netjes na het kiezen van een ander lettertype/grootte
+
+
+28-01-2023 1.61
+- Via dubbelklik op de prijzen rechtstreeks naar de trading application
+- Er worden geen meldingen meer gemaakt voor alle intervallen boven de 1 minuten
+- Op verzoek staan de waarden van de 1h, de 4h en de 1d weer op het hoofdscherm (via een grid dit keer)
+
+
+27-01-2023 1.6
+- De overgang van de 1.5 de 1.6 gaat niet oevral even goed dus iedereen moet de instellingen echt even controleren!
+- Aanpassing van de berekening van de SBM3, de BB moet van laag naar hoog gaan en ten opzichte van de eerste zoveel % gestegen zijn
+- Technische informatie optioneel verbergen via een instelling tonen (rsi, psar, ma's enzovoort)
+- Wat icoontjes toevoegen voor het kiezen en het testen van de sounds
+- Herstellen van de verbindingen als er binnen een aantal minuten geen candles of ticker infomatie meer binnenkomt
+  Dat gaat niet snel, maar werkt uiteindelijk wel, het duurt tot circa 2.5m dat de ontbrekende candles gesynched worden met Binance.
+- Initiele caption aangepast en het versie nummer tonen (altijd handig bij screenshots)
+- Een nieuwe optie om alle instellingen te resetten (na bevestiging dialoog)
+- Het lettertype kunnen instellen (via een dialoog)
+- Bijwerken van diverse overbought opties (stobb, sbm 1, 2 en 3), c.q. bijwerken met de nieuw geintroduceerde opties
+- De getoonde symbol en prijzen uitgebreid met de Fear en Greed index
+- Kleurtjes voor het accentueren van de type meldingen stobb, sbm of jump's?
+- Nieuwe (of delisted) symbols blijven in de scanner, daarom iedere uur opnieuw synchoniseren (de coint blijft wel een uur in de scanner hangen, opletten traders!)
+- De prijzen en 24h volume van een paar munten tonen (en kleuren toepassen ten opzichte van de voorgaande "interval" <dag/minuut>)
+- De icoontjes bijgewerkt (wat een werk voor wat suffe graphics)
+- Niet alle intervallen worden correct opgehaald, want Binance ondersteund niet alle intervallen die wij willen, hierdoor gaat de trend berekening niet correct
+- De 1d barometer (en wellicht ook de 4h) kan soms niet goed berekend worden (er moeten extra info opgehaald worden om de ontbrekende informatie op te bouwen). 
+  De 24 barometer moet voor de laatste 6 uur berekend worden (vanwege grafiek) en dus zijn er een paar uurtjes extra aan candle info nodig (denkfout)
+- De display van de 24 uur barometer wijkt qua display x-as af van de 1h (bevinding: er zijn te weinig candles omdat ze te snel worden opgeruimd)
+- Obfuscation alsnog activeren, maar dit keer slechts een beetje. Daarvoor is wel de serialization c.q. opslag structuur aangepast (probleem 1.5 -> 1.6 overgang)
+- Introductie folder "sounds" met daarin de geluidjes
+- Introductie folder "Help" met de pdf en release changes
+- De Binance.Exchangeinfo.json wordt niet meer bewaard
+- Als iets zowel een jump en een sbm is dan wordt daar intern niet correct mee omgesprongen (dat kan resulteren in een rare melding die wel te herkennen is, maar van verkeerde type)
+- Het bewaren en laden van de symbols is overbodig, alles loopt exclusief via de symbols die we ophalen van Binance (overblijfsel merge?)
+- De Barometer is enigzins traag (c.q. loopt ongeveer 25 seconden achter). Nu is er wel enige vertraging om alles te kunnen verwerken. Nu 10 seconden achterstand
+- Laden en bewaren van de json bestanden via een andere library (en sneller is dan de Newtonsoft <geen prio>)
+- De sbm3 gebruikt onderhuids een verkeerde formule (het is de bedoeling dat deze een sbm kan detecteren via oprekking van de bb.width, 100*max/min > 175 <instelbaar>)
+- Introductie van de 3h en 8h interval (voor de trendberekening is het van belang om ook genoeg zware intervallen te hebben)
+- Diverse nieuwe opties voor kruising van de ma's voor SBM in de laatste zoveel candles
+- Een grafische weergave van de 1h barometer (klein grafiekje rechtsboven met de laatste 3 uur), hiervoor de bovenste panel iets hoger gemaakt.
+- Ondersteuning van sleep/hybernate zodat het gewoon door werkt (en zonder dat de app crasht bij het herstellen van de verbinding)
+- Aangepaste interval berekening, het gebruikte gewicht is te laag ten opzichte van het interval (maar zonder alle candles zowiezo niet correct)
+- De kolom laatste 48h is vervallen (dan hoeven we niet 48 uur aan candles in het geheugen te hebben)
+- Bij het afspelen van de geluiden voor SBM wordt de stobb geluiden gebruikt.
+
+
+08-01-2023 1.5
+- Optie om zelf te kiezen uit geluiden (zonder dat je ze zelf in de map moet zetten)
+- De stobb melding kan optioneel uitgebreid worden met een extra RSI oversold (of overbought) controle
+- De stobb melding kan optioneel uitgebreid worden met een extra SBM oversold (of overbought) (zonder de psar)
+- Bij een technische fout staan de regelnummers niet in de stackdump, lastig traceren (pdf file bijleveren)
+- Instellingen voor het afspelen, configureren en testen van speech uitbreiden
+- Naast Altrady ook een Altrady web ondersteuning (als je de Altrady applicatie niet gebruikt)
+- De 3 verschillende signalen kunnen nu via speech meegedeeld worden (male adult voice).
+  Attentie: er wordt per type signaal slechts 1 mededeling via voice gedaan (anders wordt je "gek")
+- Vanwege gebrek aan meldingen variaties op SBM bedacht, namelijk de SBM2, SBM3 en SBM4 mogelijkheid (niet publiseren denk ik?)
+- Vanwege audio problemen is een test-knop handig. Op deze manier kan bv op de mac/parallels snel iets testen.
+- De white- en black-list werkt helemaal niet. Na invoer (en opnieuw openen van de instellingen) zijn de munten verdwenen
+  (er is een stukje code niet overgezet van de "grote broertje" van de scanner naar de light-scanner)
+- Candles worden na 24 of 48 uur uit de cache gehaald, hiervoor si er een opruim routine, maar die heeft een bug omdat deze ook een First() doet op een lege lijst.
+- Als je in de signalen dubbelklikt wordt een andere munt in Hypertrader geopend.
+- De 24h barometer wordt niet meer getoond (na een recente aanpassing)
+- Instelling voor het verwijderen van signalen, die staat standaard op 15 candles.
+- Een "About" scherm, zodat je kan zien welke versie je draait.
+- Correcties op de hints van de STOBB en SBM (correcte tekst en nu met linebreaks)
+- De display van de Stochastic signal en oscillator bevatten te veel decimalen (het aantal decimalen van de munt worden gebruikt)
+- De bestanden voor de geluiden uitgebreid naar de 6 type signalen die de applicatie kan genereren (+ instellingen daarvoor)
+- Het onderdrukken van (te frequente geluiden) zorgde ervoor dat het stobb geluidje niet correct werd afgespeeld
+- Het browser tab alvast vullen met BTCBUSD bij het opstarten om er zo voor te zorgen dat deze het direct doet (geen witte pagina).
+- STOBB: De afronding verwijderd. want deze zou vanwege "barcode charts" (1 tick is een grote percentage) problemen kunnen veroorzaken
+- Trenddetails (deel 1 - ophalen van candle informatie van alle intervallen) zodat de CC 2.0 methode er ook op werkt
+  (de eerste keer opstarten duurt hierdoor vbeel langer,, ook het geheugengebruik gaat hierdoor omhoog)
+- Afwijkend waarden voor de BB% percentage (en daarom ook kans kans op verkeerde signalen), formule Percentage=100 * (UpperBand / LowerBand) -1
+- Trenddetails zodat de CC 2.0 methode er ook op werkt (dit is gerealiseerd maar de trend en % is nog niet gevalideerd!)
+
+
+23-12-2023 1.4
+- De documentatie moet in pdf (met wat plaatjes)
+- Een verborgen browser gebruiken om Altrady op te starten
+- De 48h% change klopte niet. Deze heeft net 1 candle te kort om het te berekenen
+- Documentatie via de Tooltip, dan hoeft er niet persee een apart document bij..
+- De trend indicatie klopt niet, achteraf logisch, want deze tool berekend dit vanuit de laagste 3 intervallen.
+- De barometer symbool niet in de lijst zetten (dit is een muntje voor de interne administratie van de barometer)
+- Er worden geen (broncode) obfuscators meer gebruikt, de virus scanners zouden nu allemaal braaf moeten zijn
+- Het browser tab alvast vullen met BTCBUSD bij het opstarten om er zo voor te zorgen dat deze het direct doet (geen witte pagina).
+
+
+21-12-2022 1.3
+- Ik zag een nullable error in de log voorbij komen (een psar object was niet berekend)
+
+
+21-12-2022 1.2
+- Alle serializable classes moeten wel worden uitgesloten van obfuscatie.
+- Een andere c# obfuscator ingezet (een trial van .NET Reactor v6.9 waardoor deze applicatie 14 dagen kan draaien)
+- De applicatie word helaas als een false positive verwijderd door MS Defender (op zoek naar andere obfuscator)
+
+
+21-12-2022 1.1
+- Object CandleFetched verwijderd.
+- Obfuscator zorgde voor valse virus meldingen.
+- Opslag voor candle aangepast binance\quote\base.
+- Opslag folder C:\Users\YourName\AppData\Roaming\CryptoScanner
+- Het geselecteerde barometer symbool wordt nu bewaard
+
+
+03-12-2022
+- Hypertrader werd niet op de juiste manier geactiveerd
+

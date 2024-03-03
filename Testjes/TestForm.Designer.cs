@@ -1,7 +1,7 @@
 ﻿
-using CryptoSbmScanner;
+using CryptoScanBot;
 
-namespace CryptoSbmScanner
+namespace CryptoScanBot
 {
     partial class TestForm
     {

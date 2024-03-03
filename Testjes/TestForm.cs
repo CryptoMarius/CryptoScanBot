@@ -12,12 +12,12 @@ using Binance.Net.Objects.Models.Spot;
 
 using CryptoExchange.Net.Objects;
 
-using CryptoSbmScanner.BackTest;
-using CryptoSbmScanner.Context;
-using CryptoSbmScanner.Intern;
-using CryptoSbmScanner.Model;
-using CryptoSbmScanner.Settings;
-using CryptoSbmScanner.Signal;
+using CryptoScanBot.BackTest;
+using CryptoScanBot.Context;
+using CryptoScanBot.Intern;
+using CryptoScanBot.Model;
+using CryptoScanBot.Settings;
+using CryptoScanBot.Signal;
 
 using Dapper;
 using Dapper.Contrib.Extensions;
@@ -42,17 +42,16 @@ using Humanizer;
 using System.Security.Cryptography.Xml;
 using System.Transactions;
 using CryptoExchange.Net.Authentication;
-using CryptoSbmScanner.Enums;
-using CryptoSbmScanner.Exchange;
-using CryptoSbmScanner.Exchange.Binance;
-using CryptoSbmScanner.Trader;
+using CryptoScanBot.Enums;
+using CryptoScanBot.Exchange;
+using CryptoScanBot.Exchange.Binance;
+using CryptoScanBot.Trader;
 using Font = System.Drawing.Font;
-using CryptoSbmScanner.TradingView;
+using CryptoScanBot.TradingView;
 using System.ComponentModel;
 using System.Data;
-using CryptoSbmTestjes;
 
-namespace CryptoSbmScanner;
+namespace CryptoScanBot;
 
 
 
@@ -129,8 +128,8 @@ public partial class TestForm : Form
 
         tabControl.SelectedTab = tabPageLog;
 
-        GridSignals = new(dataGridViewSignal, SignalList);
-        GridSymbols = new(dataGridViewSymbol, SymbolList);
+        GridSignals = new(dataGridViewSignal, SignalList, GlobalData.SettingsUser.GridColumnsSignal);
+        GridSymbols = new(dataGridViewSymbol, SymbolList, GlobalData.SettingsUser.GridColumnsSymbol);
         
 
 
@@ -192,10 +191,10 @@ public partial class TestForm : Form
         }
 
         //Alle trades uit de database lezen (dat kunnen er best veel worden)
-        foreach (CryptoTrade trade in databaseMain.Connection.GetAll<CryptoTrade>())
-        {
-            GlobalData.AddTrade(trade);
-        }
+        //foreach (CryptoTrade trade in databaseMain.Connection.GetAll<CryptoTrade>())
+        //{
+        //    GlobalData.AddTrade(trade);
+        //}
 
         InitEventView();
 
@@ -355,7 +354,7 @@ public partial class TestForm : Form
             else
                 textBox1.AppendText(text);
 
-            //File.AppendAllText(@"D:\Shares\Projects\.Net\CryptoSbmScanner\Testjes\bin\Debug\data\backtest.txt", text);
+            //File.AppendAllText(@"D:\Shares\Projects\.Net\CryptoScanBot\Testjes\bin\Debug\data\backtest.txt", text);
         }
     }
 
@@ -2486,7 +2485,7 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
                                                 Monitor.Exit(queue);
                                             }
 
-                                            symbol.TradeList.Clear();
+                                            //symbol.TradeList.Clear();
                                             BackTest(algorithm, symbol, interval, config, baseFolder);
                                         }
                                     }
@@ -2664,7 +2663,7 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
 
     private void button3_Click_2(object sender, EventArgs e)
     {
-        GridSignals.UpdatePriceDifferences();
+        //GridSignals.UpdatePriceDifferences();
     }
 
     private void button4_Click(object sender, EventArgs e)

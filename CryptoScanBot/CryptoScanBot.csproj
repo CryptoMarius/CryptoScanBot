@@ -1,0 +1,310 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <OutputType>WinExe</OutputType>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>2</ApplicationRevision>
+    <ApplicationVersion>1.0.0.2</ApplicationVersion>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <PublishWizardCompleted>true</PublishWizardCompleted>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DefineConstants>$(DefineConstants);TRADEBOT;EXTRASTRATEGIES</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DefineConstants>$(DefineConstants);EXTRASTRATEGIES;TRADEBOT</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup />
+  <PropertyGroup>
+    <ManifestCertificateThumbprint>725A7C16499D81B90F6D6FA5EB846A0F6D0DAFBF</ManifestCertificateThumbprint>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ManifestKeyFile>CryptoSbmScanner_TemporaryKey.pfx</ManifestKeyFile>
+  </PropertyGroup>
+  <PropertyGroup>
+    <GenerateManifests>false</GenerateManifests>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignManifests>false</SignManifests>
+  </PropertyGroup>
+  <PropertyGroup>
+    <TargetZone>LocalIntranet</TargetZone>
+  </PropertyGroup>
+  <PropertyGroup />
+  <ItemGroup>
+    <AdditionalFiles Remove="C:\Users\Marius\.nuget\packages\microsoft.dotnet.upgradeassistant.extensions.default.analyzers\0.4.421302\build\\WebTypeReplacements.typemap" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="Exchange\Binance\FetchTrades.cs" />
+    <Compile Remove="Exchange\Binance\FetchTradesForOrder.cs" />
+    <Compile Remove="Exchange\BybitFutures\FetchTrades.cs" />
+    <Compile Remove="Exchange\BybitFutures\FetchTradesForOrder.cs" />
+    <Compile Remove="Exchange\BybitSpot\FetchTrades.cs" />
+    <Compile Remove="Exchange\BybitSpot\FetchTradesForOrder.cs" />
+    <Compile Remove="Exchange\Kraken\FetchTrades.cs" />
+    <Compile Remove="Exchange\Kraken\FetchTradesForOrder.cs" />
+    <Compile Remove="Exchange\Kucoin\FetchTradesForOrder.cs" />
+    <Compile Remove="Model\CryptoTrade.cs" />
+    <Compile Remove="Signal\SignalMacdLtLong.cs" />
+    <Compile Remove="Signal\SignalMacdLtShort.cs" />
+    <Compile Remove="Signal\SignalMacdTestLong.cs" />
+    <Compile Remove="Signal\SignalMacdTestShort .cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System.Speech" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="Help\CryptoScanBot.pdf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Help\Release Changes.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Help\Roadmap.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Help\Weblinks example.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <None Update="Sounds\sound-heartbeat.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\sound-jump-down.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\sound-jump-up.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\sound-sbm-overbought.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\sound-sbm-oversold.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\sound-stobb-overbought.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\sound-stobb-oversold.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\sound-trade-notification-ka-ching.wav">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\sound-trade-notification.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include=".NETFramework,Version=v4.6.1">
+      <Visible>False</Visible>
+      <ProductName>Microsoft .NET Framework 4.6.1 %28x86 and x64%29</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Binance.Net" Version="9.5.0" />
+    <PackageReference Include="BouncyCastle.Cryptography" Version="2.3.0" />
+    <PackageReference Include="Bybit.Net" Version="3.5.0" />
+    <PackageReference Include="CommandLineParser" Version="2.9.1" />
+    <PackageReference Include="Cryptowatcher.TA-LIb-Core" Version="1.0.0" />
+    <PackageReference Include="Dapper" Version="2.1.28" />
+    <PackageReference Include="Dapper.Contrib" Version="2.0.78" />
+    <PackageReference Include="Fasterflect.Reflect">
+      <Version>3.1.0</Version>
+    </PackageReference>
+    <PackageReference Include="Google.Protobuf">
+      <Version>3.25.3</Version>
+    </PackageReference>
+    <PackageReference Include="Humanizer.Core">
+      <Version>2.14.1</Version>
+    </PackageReference>
+    <PackageReference Include="K4os.Compression.LZ4.Streams">
+      <Version>1.3.6</Version>
+    </PackageReference>
+    <PackageReference Include="KrakenExchange.Net" Version="4.3.0" />
+    <PackageReference Include="Kucoin.Net" Version="5.2.0" />
+    <PackageReference Include="MathNet.Filtering">
+      <Version>0.7.0</Version>
+    </PackageReference>
+    <PackageReference Include="MathNet.Numerics">
+      <Version>5.0.0</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Bcl.HashCode">
+      <Version>1.1.1</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers">
+      <Version>8.0.0</Version>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.CSharp">
+      <Version>4.7.0</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.5" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory">
+      <Version>8.0.0</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder">
+      <Version>8.0.1</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Logging.Console">
+      <Version>8.0.0</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Identity.Client">
+      <Version>4.59.0</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect">
+      <Version>7.3.1</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Office.Interop.Excel">
+      <Version>15.0.4795.1001</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Web.WebView2">
+      <Version>1.0.2365.46</Version>
+    </PackageReference>
+    <PackageReference Include="Nito.AsyncEx.Context" Version="5.1.2" />
+    <PackageReference Include="NLog">
+      <Version>5.2.8</Version>
+    </PackageReference>
+    <PackageReference Include="NLog.Extensions.Logging" Version="5.3.8" />
+    <PackageReference Include="NPOI" Version="2.6.2" />
+    <PackageReference Include="SimpleInjector">
+      <Version>5.4.4</Version>
+    </PackageReference>
+    <PackageReference Include="Skender.Stock.Indicators">
+      <Version>2.5.0</Version>
+    </PackageReference>
+    <PackageReference Include="SSH.NET">
+      <Version>2024.0.0</Version>
+    </PackageReference>
+    <PackageReference Include="System.ComponentModel.Annotations">
+      <Version>5.0.0</Version>
+    </PackageReference>
+    <PackageReference Include="System.Composition">
+      <Version>8.0.0</Version>
+    </PackageReference>
+    <PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
+    <PackageReference Include="System.Net.Security">
+      <Version>4.3.2</Version>
+    </PackageReference>
+    <PackageReference Include="System.Reflection.Emit">
+      <Version>4.7.0</Version>
+    </PackageReference>
+    <PackageReference Include="System.Reflection.Metadata">
+      <Version>8.0.0</Version>
+    </PackageReference>
+    <PackageReference Include="System.Reflection.TypeExtensions">
+      <Version>4.7.0</Version>
+    </PackageReference>
+    <PackageReference Include="System.Runtime.Extensions">
+      <Version>4.3.1</Version>
+    </PackageReference>
+    <PackageReference Include="System.Runtime.WindowsRuntime.UI.Xaml">
+      <Version>4.7.0</Version>
+    </PackageReference>
+    <PackageReference Include="System.Security.Cryptography.Algorithms">
+      <Version>4.3.1</Version>
+    </PackageReference>
+    <PackageReference Include="System.Security.Cryptography.X509Certificates">
+      <Version>4.3.2</Version>
+    </PackageReference>
+    <PackageReference Include="System.Text.Json">
+      <Version>8.0.2</Version>
+    </PackageReference>
+    <PackageReference Include="System.Text.RegularExpressions">
+      <Version>4.3.1</Version>
+    </PackageReference>
+    <PackageReference Include="Telegram.Bot" Version="19.0.0" />
+    <PackageReference Include="WebSocket4Net">
+      <Version>0.15.2</Version>
+    </PackageReference>
+    <PackageReference Include="System.Net.Http" Version="4.3.4" />
+    <PackageReference Include="System.ServiceModel.Federation" Version="8.0.0" />
+    <PackageReference Include="Microsoft.DotNet.UpgradeAssistant.Extensions.Default.Analyzers" Version="0.4.421302">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="System.Windows.Forms.DataVisualization" Version="1.0.0-prerelease.20110.1" />
+    <PackageReference Include="Microsoft.Windows.Compatibility" Version="8.0.2" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <WebView2UseWinRT>False</WebView2UseWinRT>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>icons.ico</ApplicationIcon>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationManifest>Properties\app.manifest</ApplicationManifest>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <BaseOutputPath></BaseOutputPath>
+    <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
+  </PropertyGroup>
+  <Target Name="AfterCompile">
+    <Exec Command="echo Release@@Win32&#xD;&#xA;if &quot;$(ConfigurationName)&quot; == &quot;Release&quot; (if &quot;$(PlatformName)&quot; == &quot;Win32&quot; (&quot;$(ProjectDir)_Obfuscar\Obfuscar.Console.exe&quot; &quot;$(ProjectDir)_Obfuscar\obfuscar_Release_Win32.xml&quot;&#xD;&#xA;xcopy /e /v &quot;$(ProjectDir)obj\Win32\Release\\Out\&quot; &quot;$(ProjectDir)obj\Win32\Release\&quot; /Y))" />
+  </Target>
+  <ItemGroup>
+    <EmbeddedResource Remove="Main.PositionsClosed.resx" />
+    <EmbeddedResource Remove="Main.PositionsOpen.resx" />
+    <EmbeddedResource Remove="Main.Signals.resx" />
+    <EmbeddedResource Remove="Main.Symbols.resx" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Update="Main.PositionsClosed.cs" />
+    <Compile Update="Properties\Settings.Designer.cs">
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
+    <Compile Update="SettingsDialog\UserControlTradeRule.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="SettingsDialog\UserControlTradeDca.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="SettingsDialog\UserControlTradeBuy.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="SettingsDialog\UserControlTradeRuleItem.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="SettingsDialog\UserControlTradeSell.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="SettingsDialog\UserControlTradeDcaItem.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="SettingsDialog\UserControlTrendInterval.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="SettingsDialog\UserControlMarketTrendRange.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="SettingsDialog\UserControlStrategy.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+  </ItemGroup>
+</Project>

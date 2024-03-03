@@ -1,13 +1,13 @@
 ﻿using System.Text;
 using CryptoExchange.Net.CommonObjects;
-using CryptoSbmScanner.Enums;
-using CryptoSbmScanner.Intern;
-using CryptoSbmScanner.Model;
-using CryptoSbmScanner.Signal;
+using CryptoScanBot.Enums;
+using CryptoScanBot.Intern;
+using CryptoScanBot.Model;
+using CryptoScanBot.Signal;
 using Newtonsoft.Json;
 using Skender.Stock.Indicators;
 
-namespace CryptoSbmScanner.BackTest;
+namespace CryptoScanBot.BackTest;
 
 public class BackTest
 {

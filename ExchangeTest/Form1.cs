@@ -23,13 +23,25 @@
 //using Kucoin.Net.Enums;
 //using Kucoin.Net.Objects.Models.Spot;
 
-using CryptoSbmScanner;
-using CryptoSbmScanner.Context;
-using CryptoSbmScanner.Enums;
-using CryptoSbmScanner.Exchange;
-using CryptoSbmScanner.Intern;
-using CryptoSbmScanner.Model;
-using CryptoSbmScanner.Trader;
+using System.Text.Encodings.Web;
+using System.Text.Json;
+
+using Bybit.Net.Clients;
+using Bybit.Net.Enums;
+
+using CryptoExchange.Net.Authentication;
+using CryptoExchange.Net.Objects;
+
+using CryptoScanBot;
+using CryptoScanBot.Context;
+using CryptoScanBot.Enums;
+using CryptoScanBot.Exchange;
+using CryptoScanBot.Exchange.BybitSpot;
+using CryptoScanBot.Intern;
+using CryptoScanBot.Model;
+using CryptoScanBot.Trader;
+
+using Microsoft.Extensions.Logging;
 
 namespace ExchangeTest;
 
@@ -116,8 +128,8 @@ public partial class Form1 : Form
         //Database = new();
         ExchangeApi = ExchangeHelper.GetExchangeInstance(GlobalData.Settings.General.ExchangeId);
 
-        GlobalData.Settings.Trading.ApiKey = "";
-        GlobalData.Settings.Trading.ApiSecret = "";
+        GlobalData.TradingApi.Key = "";
+        GlobalData.TradingApi.Secret = "";
 
         //GlobalData.Settings.General.Exchange = exchange;
         //GlobalData.Settings.General.ExchangeId = exchange.Id;
@@ -125,7 +137,7 @@ public partial class Form1 : Form
 
 
         //BinanceTestAsync();
-        ByBitTestAsync();
+        ByBitSpotTestAsync();
         //KucoinTest();
         //MexcTest();
     }
@@ -135,7 +147,7 @@ public partial class Form1 : Form
         if (IsHandleCreated)
         {
             text = text.TrimEnd();
-            GlobalData.Logger.Info(text);
+            ScannerLog.Logger.Info(text);
 
             if (text != "")
                 text = DateTime.Now.ToLocalTime() + " " + text;
@@ -149,7 +161,7 @@ public partial class Form1 : Form
             else
                 textBox1.AppendText(text);
 
-            //File.AppendAllText(@"D:\Shares\Projects\.Net\CryptoSbmScanner\Testjes\bin\Debug\data\backtest.txt", text);
+            //File.AppendAllText(@"D:\Shares\Projects\.Net\CryptoScanBot\Testjes\bin\Debug\data\backtest.txt", text);
         }
     }
 
@@ -251,7 +263,7 @@ public partial class Form1 : Form
 
             // OSMO-USDT is zo'n  flat coin, er komt soms meerdere uren geen kline
 
-            CryptoSbmScanner.Exchange.Kucoin.Api api = new();
+            CryptoScanBot.Exchange.Kucoin.Api api = new();
 
             CryptoSymbol symbol = new()
             {
@@ -270,7 +282,7 @@ public partial class Form1 : Form
                 throw new Exception("Geen intervallen?");
 
 
-            if (GlobalData.ExchangeListName.TryGetValue("Kucoin", out CryptoSbmScanner.Model.CryptoExchange exchange))
+            if (GlobalData.ExchangeListName.TryGetValue("Kucoin", out CryptoScanBot.Model.CryptoExchange exchange))
             {
                 // Aanvullend de tickers aanroepen voor het volume...
                 KucoinRestClient client = new();
@@ -329,7 +341,7 @@ public partial class Form1 : Form
 
 
             KucoinSocketClient socketClient = new();
-            CryptoSbmScanner.Exchange.Kucoin.KLineTickerItem ticker = new(symbol.QuoteData);
+            CryptoScanBot.Exchange.Kucoin.KLineTickerItem ticker = new(symbol.QuoteData);
             ticker.Symbol = symbol;
             Task task = Task.Run(async () => { await ticker.StartAsync(socketClient); });
 
@@ -346,7 +358,7 @@ public partial class Form1 : Form
             //            string text = JsonSerializer.Serialize(kline, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
             //            GlobalData.AddTextToLogTab(data.Topic + " " + text);
 
-            //            if (GlobalData.ExchangeListName.TryGetValue(CryptoSbmScanner.Exchange.Kucoin.Api.ExchangeName, out CryptoSbmScanner.Model.CryptoExchange exchange))
+            //            if (GlobalData.ExchangeListName.TryGetValue(CryptoScanBot.Exchange.Kucoin.Api.ExchangeName, out CryptoScanBot.Model.CryptoExchange exchange))
             //            {
             //                string symbolName = data.Topic.Replace("-", "");
             //                if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol symbol))
@@ -659,7 +671,7 @@ public partial class Form1 : Form
 
             CryptoTradeAccount account = GlobalData.ExchangePaperTradeAccount;
 
-            CryptoSbmScanner.Model.CryptoExchange exchange = GlobalData.Settings.General.Exchange;
+            CryptoScanBot.Model.CryptoExchange exchange = GlobalData.Settings.General.Exchange;
 
             if (!exchange.SymbolListName.TryGetValue("IDUSDT", out CryptoSymbol symbol))
                 return;
@@ -872,12 +884,12 @@ public partial class Form1 : Form
 
             GlobalData.AddTextToLogTab("");
             GlobalData.AddTextToLogTab($"Trades: {symbol.Name}");
-            await ExchangeApi.FetchTradesForSymbolAsync(account, symbol);
+            //await ExchangeApi.FetchTradesForSymbolAsync(account, symbol);
 
-            foreach (var trade in symbol.TradeList.Values)
-            {
-                GlobalData.AddTextToLogTab($"Quote={trade.Symbol.Name} price={trade.Price} Quantity={trade.Quantity} Value={trade.QuoteQuantity}");
-            }
+            //foreach (var trade in symbol.TradeList.Values)
+            //{
+            //    GlobalData.AddTextToLogTab($"Quote={trade.Symbol.Name} price={trade.Price} Quantity={trade.Quantity} Value={trade.QuoteQuantity}");
+            //}
         }
 
         catch (Exception error)
@@ -992,4 +1004,129 @@ public partial class Form1 : Form
     ////    Invoke((MethodInvoker)(() => textBox1.AppendText(text2 + "\r\n")));
     ////}
 
+
+    // testje
+    internal static TraceLoggerProvider TraceProvider;
+    internal static LoggerFactory LogFactory;
+    //internal static ILoggerFactory factory = null;
+
+    internal static BybitRestClient CreateRestClient()
+    {
+        // Ik snap er helemaal niets van.. Heb een paar classes verkeerd begrepen log en logger
+
+        //NLog.Extensions.Logging.NLogLoggerFactory loggerFactory = new();
+        //MyClass myClass = new(loggerFactory);
+        //loggerFactory.
+        //LoadNLogConfigurationOnFactory(loggerFactory);
+        //using ILoggerFactory factory = LoggerFactory.Create(builder => builder.AddNLog());
+        //Microsoft.Extensions.Logging.ILogger logger = factory.CreateLogger("Program");
+        //logger.LogInformation("Hello World! Logging is {Description}.", "fun");
+
+        //var loggerFactory = new NLog.Extensions.Logging.NLogLoggerFactory();
+
+        //Logger moduleLogger = NLog.LogManager.GetLogger("Modules.MyModuleName");
+        //NLog.LogFactory Factory1 = new LogFactory();
+        //LoadNLogConfigurationOnFactory(Factory1);
+
+
+        BybitRestClient client = new(null, LogFactory, options =>
+        {
+            //options.Environment = _environment;
+            options.OutputOriginalData = true;
+            options.ReceiveWindow = TimeSpan.FromSeconds(15);
+            if (GlobalData.TradingApi.Key != "")
+                options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
+        });
+        return client;
+    }
+
+
+    private async void ByBitSpotTestAsync()
+    {
+        GlobalData.LoadSettings();
+
+        BybitRestClient.SetDefaultOptions(options =>
+        {
+            options.OutputOriginalData = true;
+            options.SpotOptions.AutoTimestamp = true;
+            options.ReceiveWindow = TimeSpan.FromSeconds(15);
+            if (GlobalData.TradingApi.Key != "")
+                options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
+        });
+
+        BybitSocketClient.SetDefaultOptions(options =>
+        {
+            options.AutoReconnect = true;
+            options.OutputOriginalData = true;
+            options.ReconnectInterval = TimeSpan.FromSeconds(15);
+            if (GlobalData.TradingApi.Key != "")
+                options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
+        });
+
+        //ILoggerFactory factory = LoggerFactory.Create(builder => builder.AddNLog());
+        string text;
+        TraceProvider = new();
+        LogFactory = new(new[] { TraceProvider });
+
+
+        if (GlobalData.ExchangeListName.TryGetValue(Api.ExchangeName, out CryptoScanBot.Model.CryptoExchange exchange))
+        {
+            if (exchange.SymbolListName.TryGetValue("DOGEUSDT", out CryptoSymbol symbol))
+            {
+                BybitRestClient client = CreateRestClient();
+                //client.ClientOptions.OutputOriginalData = true;
+                //client.ClientOptions.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
+                try
+                {
+                    DateTime startDate = DateTime.UtcNow.AddDays(-1);
+
+                    // Experiment bybit spot, even quick en dirty om te zien of dit echt werkt...
+                    // Controleer de order, als het de status "PartiallyFilledCanceled" heeft dan bijstellen
+                    // Idee achter de boekhouding, de status van de order bepaald of het gesloten is
+                    // de trades gebruiken we dan tzt enkel om de fee te bepalen (.... idee he......)
+                    // Het zou ook geheel zonder de trades kunnen lijkt me, maar dan weet ik niet hoe we met de commissie omgaan
+                    var orderInfo = await client.V5Api.Trading.GetOrderHistoryAsync(
+                        Category.Spot, 
+                        symbol: symbol.Name,
+                        startTime: startDate
+                        //, orderId: "1629879712499136512"
+                    );
+
+                    if (orderInfo.Success && orderInfo.Data != null)
+                    {
+                        foreach (var order in orderInfo.Data.List)
+                        {
+                            text = JsonSerializer.Serialize(order, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
+                            System.Diagnostics.Debug.WriteLine(text);
+                            GlobalData.AddTextToLogTab(text);
+                        }
+                    }
+
+                    //System.Diagnostics.Debug.WriteLine("Output client.V5Api.Trading.GetUserTradesAsync");
+                    //var resultV5 = await client.V5Api.Trading.GetUserTradesAsync(Category.Spot, symbol.Name);
+                    //text = JsonSerializer.Serialize(resultV5, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
+                    //System.Diagnostics.Debug.WriteLine(text);
+
+
+                    //System.Diagnostics.Debug.WriteLine("client.SpotApiV3.Trading.GetUserTradesAsync");
+                    //var resultV3 = await client.SpotApiV3.Trading.GetUserTradesAsync(symbol.Name);
+                    //text = JsonSerializer.Serialize(resultV3, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
+                    //System.Diagnostics.Debug.WriteLine(text);
+
+                    //if (!resultV3.Success)
+                    //{
+                    //    GlobalData.AddTextToLogTab("error getting mytrades " + resultV3.Error);
+                    //}
+
+                }
+                catch (Exception error)
+                {
+                    ScannerLog.Logger.Error(error, "");
+                    GlobalData.AddTextToLogTab("error get prices " + error.ToString()); // symbol.Text + " " + 
+                }
+
+
+            }
+        }
+    }
 }

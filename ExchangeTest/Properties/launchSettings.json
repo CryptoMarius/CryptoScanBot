@@ -2,7 +2,7 @@
   "profiles": {
     "ExchangeTest": {
       "commandName": "Project",
-      "commandLineArgs": "-e \"Bybit Spot\" -f CryptoScanner.Bybit.Spot"
+      "commandLineArgs": "-e \"Bybit Spot\" -f CryptoScanner.Bybit.Spot.Live\r\n"
     }
   }
 }

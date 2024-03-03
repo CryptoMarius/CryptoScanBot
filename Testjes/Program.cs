@@ -1,4 +1,4 @@
-using CryptoSbmScanner;
+using CryptoScanBot;
 
 namespace Testjes2
 {
