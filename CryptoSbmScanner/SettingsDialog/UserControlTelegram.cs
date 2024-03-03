@@ -28,7 +28,7 @@ public partial class UserControlTelegram : UserControl
     {
         EditTelegramToken.Text = settings.Telegram.Token;
         EditTelegramChatId.Text = settings.Telegram.ChatId;
-        EditUseEmojiInTrend.Checked = settings.Telegram.UseEmojiInTrend;
+        EditUseEmojiInTrend.Checked = settings.Telegram.EmojiInTrend;
         EditSendSignalsToTelegram.Checked = settings.Telegram.SendSignalsToTelegram;
     }
 
@@ -36,7 +36,7 @@ public partial class UserControlTelegram : UserControl
     {
         settings.Telegram.Token = EditTelegramToken.Text.Trim();
         settings.Telegram.ChatId = EditTelegramChatId.Text.Trim();
-        settings.Telegram.UseEmojiInTrend = EditUseEmojiInTrend.Checked;
+        settings.Telegram.EmojiInTrend = EditUseEmojiInTrend.Checked;
         settings.Telegram.SendSignalsToTelegram = EditSendSignalsToTelegram.Checked;
     }
 
