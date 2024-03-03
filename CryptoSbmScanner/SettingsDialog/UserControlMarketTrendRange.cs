@@ -42,7 +42,10 @@ public partial class UserControlMarketTrendRange : UserControl
 
     public (bool isActive, (decimal minValue, decimal maxValue) range) GetChecked()
     {
-        return (EditIsActive.Checked, (EditMinimal.Value, EditMaximal.Value));
+        if (EditMinimal.Value > EditMaximal.Value)
+            return (EditIsActive.Checked, (EditMaximal.Value, EditMinimal.Value));
+        else
+            return (EditIsActive.Checked, (EditMinimal.Value, EditMaximal.Value));
     }
 
 }
