@@ -4,17 +4,17 @@ using CryptoSbmScanner.Model;
 
 namespace CryptoSbmScanner.Signal;
 
-
 #if EXTRASTRATEGIES
+
 // https://www.tradingview.com/script/0F1sNM49-WGHBM/
 // Momentum indicator that shows arrows when the Stochastic and the RSI are at the same time in the oversold or overbought area.
 
-public class SignalWghbmShort : SignalSbmBaseShort
+public class SignalWghmLong : SignalSbmBaseLong
 {
-    public SignalWghbmShort(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
+    public SignalWghmLong(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        SignalSide = CryptoTradeSide.Short;
-        SignalStrategy = CryptoSignalStrategy.Wghbm;
+        SignalSide = CryptoTradeSide.Long;
+        SignalStrategy = CryptoSignalStrategy.Wghm;
     }
 
 
@@ -51,23 +51,23 @@ public class SignalWghbmShort : SignalSbmBaseShort
             return false;
         }
 
-        //if (!IsInUpperPartOfBollingerBands(2, 2.5m))
+        //if (!IsInLowerPartOfBollingerBands(2, 2.5m))
         //{
-        //    ExtraText = "geen hoge prijs in de laatste x candles";
+        //    ExtraText = "geen lage prijs in de laatste x candles";
         //    return false;
         //}
 
-        // Sprake van een overbought situatie
-        if (!CandleLast.IsStochOverbought())
+        // Sprake van een oversold situatie
+        if (!CandleLast.IsStochOversold())
         {
-            ExtraText = "stoch niet overbought";
+            ExtraText = "stoch niet oversold";
             return false;
         }
 
-        // Sprake van een overbought situatie
-        if (!CandleLast.IsRsiOverbought())
+        // Sprake van een oversold situatie
+        if (!CandleLast.IsRsiOversold())
         {
-            ExtraText = "rsi niet overbought";
+            ExtraText = "rsi niet oversold";
             return false;
         }
 
