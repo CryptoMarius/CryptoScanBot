@@ -536,7 +536,7 @@ public class ThreadLoadData
                 // Via een event worden de assets in de userinterface gezet (dat duurt even)
                 //************************************************************************************
                 if (GlobalData.TradingApi.Key != "")
-                    await ExchangeHelper.FetchAssetsAsync(GlobalData.ExchangeRealTradeAccount);
+                    await ExchangeHelper.GetAssetsForAccountAsync(GlobalData.ExchangeRealTradeAccount);
 
 
                 // Toon de ingelezen posities

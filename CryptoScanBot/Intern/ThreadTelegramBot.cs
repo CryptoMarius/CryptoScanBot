@@ -128,14 +128,25 @@ public class ThreadTelegramBotInstance
     {
         // https://beta.emojipedia.org/police-car-light
 
-        // Circles
-        if (trend > 0)
-            return "\U00002B06"; // Arrow up
+        if (GlobalData.Telegram.EmojiInTrend)
+        {
+            // Circles
+            if (trend >= 0)
+                return "\U00002B06"; // Arrow up
+            else
+            if (trend < 0)
+                    return "\U00002B07"; // Arrown down
+                else
+                    return "\U00002753"; // questionmark
+            }
         else
-        if (trend < 0)
-            return "\U00002B07"; // Arrown down
-        else
-            return "\U00002753"; // questionmark
+        {
+            if (trend >= 0)
+                return "bullish";
+            else if (trend < 0)
+                return "bearish";
+        }
+        return "sideways";
     }
 
     private static string GetEmoiFromTrend(CryptoTrendIndicator? trend)
@@ -156,8 +167,8 @@ public class ThreadTelegramBotInstance
         {
             return trend switch
             {
-                CryptoTrendIndicator.Bullish => "bull@",
-                CryptoTrendIndicator.Bearish => "bear@",
+                CryptoTrendIndicator.Bullish => "up@",
+                CryptoTrendIndicator.Bearish => "down@",
                 _ => "?",
             };
         }
@@ -186,10 +197,20 @@ public class ThreadTelegramBotInstance
             //builder.Append(" " + signal.SideText + " ");
 
             // https://apps.timwhitlock.info/emoji/tables/unicode
-            if (signal.Side == CryptoTradeSide.Long)
-                builder.Append($"\U0001f7e2 {signal.SideText}");
+            if (GlobalData.Telegram.EmojiInTrend)
+            {
+                if (signal.Side == CryptoTradeSide.Long)
+                    builder.Append($"\U0001f7e2 {signal.SideText}");
+                else
+                    builder.Append($"\U0001F534 {signal.SideText}");
+            }
             else
-                builder.Append($"\U0001F534 {signal.SideText}");
+            {
+                if (signal.Side == CryptoTradeSide.Long)
+                    builder.Append($" {signal.SideText}");
+                else
+                    builder.Append($" {signal.SideText}");
+            }
 
             string text = GlobalData.ExternalUrls.GetTradingAppName(GlobalData.Settings.General.TradingApp, signal.Exchange.Name);
             (string Url, CryptoExternalUrlType Execute) refInfo = GlobalData.ExternalUrls.GetExternalRef(GlobalData.Settings.General.TradingApp, true, signal.Symbol, signal.Interval);
@@ -221,6 +242,7 @@ public class ThreadTelegramBotInstance
 
             builder.Append("Trend: ");
             builder.Append(GetEmoiFromMarketTrend(signal.TrendPercentage));
+            builder.Append(' ');
             builder.Append(signal.TrendPercentage.ToString("N2") + "%");
 
             foreach (KeyValuePair<CryptoIntervalPeriod, (string name, CryptoTrendIndicator trendIndicator)> entry in a)

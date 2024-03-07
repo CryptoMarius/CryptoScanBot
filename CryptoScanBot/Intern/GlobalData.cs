@@ -416,6 +416,30 @@ static public class GlobalData
     }
 
 
+    static public void AddTrade(CryptoTrade trade)
+    {
+        if (TradeAccountList.TryGetValue(trade.TradeAccountId, out CryptoTradeAccount tradeAccount))
+        {
+            trade.TradeAccount = tradeAccount;
+
+            if (ExchangeListId.TryGetValue(trade.ExchangeId, out Model.CryptoExchange exchange))
+            {
+                trade.Exchange = exchange;
+
+                if (exchange.SymbolListId.TryGetValue(trade.SymbolId, out CryptoSymbol symbol))
+                {
+                    trade.Symbol = symbol;
+
+                    if (!symbol.TradeList.ContainsKey(trade.TradeId))
+                    {
+                        symbol.TradeList.Add(trade.TradeId, trade);
+                    }
+                }
+
+            }
+        }
+    }
+
     static public void InitBarometerSymbols(CryptoDatabase database)
     {
         // TODO: Deze routine is een discrepantie tussen de scanner en trader!
@@ -457,7 +481,7 @@ static public class GlobalData
         {
             var options = new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true, IncludeFields = true };
 
-            string filename = GetBaseDir() + "settings.json";
+            string filename = GetBaseDir() + $"{AppName}-settings.json";
             if (File.Exists(filename))
             {
                 //using (FileStream readStream = new FileStream(filename, FileMode.Open))
@@ -469,27 +493,6 @@ static public class GlobalData
                 string text = File.ReadAllText(filename);
                 Settings = JsonSerializer.Deserialize<SettingsBasic>(text, options);
             }
-            else
-            {
-                // Oude naam = "GlobalData.Settings2.json"
-                // Toch de instellingen proberen over te nemen
-                string oldSettings = GetBaseDir() + "GlobalData.Settings2.json";
-                if (File.Exists(oldSettings))
-                {
-                    try
-                    {
-                        string text = File.ReadAllText(oldSettings);
-                        Settings = JsonSerializer.Deserialize<SettingsBasic>(text, options);
-                    }
-                    catch (Exception error)
-                    {
-                        ScannerLog.Logger.Error(error, "");
-                        AddTextToLogTab("Error loading old settings " + error.ToString(), false);
-                    }
-                }
-                else
-                    DefaultSettings();
-            }
         }
         catch (Exception error)
         {
@@ -497,6 +500,7 @@ static public class GlobalData
             AddTextToLogTab("Error loading setting " + error.ToString(), false);
         }
     }
+
 
     static public void LoadLinkSettings()
     {
@@ -666,7 +670,7 @@ static public class GlobalData
         //    writeStream.Close();
         //}
 
-        string filename = baseFolder + "settings.json";
+        string filename = baseFolder + $"{AppName}-settings.json";
         var options = new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true, IncludeFields = true };
         string text = JsonSerializer.Serialize(Settings, options);
         File.WriteAllText(filename, text);

@@ -874,7 +874,7 @@ public partial class Form1 : Form
 
 
             GlobalData.AddTextToLogTab($"Balance: {account.Name}");
-            await ExchangeApi.FetchAssetsAsync(account);
+            await ExchangeApi.GetAssetsForAccountAsync(account);
 
             foreach (var asset in account.AssetList.Values)
             {
@@ -1071,52 +1071,58 @@ public partial class Form1 : Form
 
         if (GlobalData.ExchangeListName.TryGetValue(Api.ExchangeName, out CryptoScanBot.Model.CryptoExchange exchange))
         {
-            if (exchange.SymbolListName.TryGetValue("DOGEUSDT", out CryptoSymbol symbol))
+            if (exchange.SymbolListName.TryGetValue("FETUSDT", out CryptoSymbol symbol))
             {
                 BybitRestClient client = CreateRestClient();
                 //client.ClientOptions.OutputOriginalData = true;
                 //client.ClientOptions.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
                 try
                 {
-                    DateTime startDate = DateTime.UtcNow.AddDays(-1);
+                    //    DateTime startDate = DateTime.UtcNow.AddDays(-1);
 
-                    // Experiment bybit spot, even quick en dirty om te zien of dit echt werkt...
-                    // Controleer de order, als het de status "PartiallyFilledCanceled" heeft dan bijstellen
-                    // Idee achter de boekhouding, de status van de order bepaald of het gesloten is
-                    // de trades gebruiken we dan tzt enkel om de fee te bepalen (.... idee he......)
-                    // Het zou ook geheel zonder de trades kunnen lijkt me, maar dan weet ik niet hoe we met de commissie omgaan
-                    var orderInfo = await client.V5Api.Trading.GetOrderHistoryAsync(
-                        Category.Spot, 
-                        symbol: symbol.Name,
-                        startTime: startDate
-                        //, orderId: "1629879712499136512"
-                    );
+                    //    // Experiment bybit spot, even quick en dirty om te zien of dit echt werkt...
+                    //    // Controleer de order, als het de status "PartiallyFilledCanceled" heeft dan bijstellen
+                    //    // Idee achter de boekhouding, de status van de order bepaald of het gesloten is
+                    //    // de trades gebruiken we dan tzt enkel om de fee te bepalen (.... idee he......)
+                    //    // Het zou ook geheel zonder de trades kunnen lijkt me, maar dan weet ik niet hoe we met de commissie omgaan
+                    //    var orderInfo = await client.V5Api.Trading.GetOrderHistoryAsync(
+                    //        Category.Spot, 
+                    //        symbol: symbol.Name,
+                    //        //startTime: startDate
+                    //        orderId: "1636499753797799680"
+                    //    );
 
-                    if (orderInfo.Success && orderInfo.Data != null)
-                    {
-                        foreach (var order in orderInfo.Data.List)
-                        {
-                            text = JsonSerializer.Serialize(order, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
-                            System.Diagnostics.Debug.WriteLine(text);
-                            GlobalData.AddTextToLogTab(text);
-                        }
-                    }
+                    //    if (orderInfo.Success && orderInfo.Data != null)
+                    //    {
+                    //        foreach (var order in orderInfo.Data.List)
+                    //        {
+                    //            text = JsonSerializer.Serialize(order, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
+                    //            System.Diagnostics.Debug.WriteLine(text);
+                    //            GlobalData.AddTextToLogTab(text);
+                    //        }
+                    //    }
 
-                    //System.Diagnostics.Debug.WriteLine("Output client.V5Api.Trading.GetUserTradesAsync");
-                    //var resultV5 = await client.V5Api.Trading.GetUserTradesAsync(Category.Spot, symbol.Name);
+                    //text = "Output client.V5Api.Trading.GetUserTradesAsync";
+                    //System.Diagnostics.Debug.WriteLine(text);
+                    //GlobalData.AddTextToLogTab(text);
+                    //var resultV5 = await client.V5Api.Trading.GetUserTradesAsync(Category.Spot, symbol.Name, orderId: "1636499753797799680");
                     //text = JsonSerializer.Serialize(resultV5, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
                     //System.Diagnostics.Debug.WriteLine(text);
+                    //GlobalData.AddTextToLogTab(text);
 
 
-                    //System.Diagnostics.Debug.WriteLine("client.SpotApiV3.Trading.GetUserTradesAsync");
-                    //var resultV3 = await client.SpotApiV3.Trading.GetUserTradesAsync(symbol.Name);
-                    //text = JsonSerializer.Serialize(resultV3, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
-                    //System.Diagnostics.Debug.WriteLine(text);
+                    // , fromId: 1636499753797799679, toId: 1636499753797799681
+                    text = "client.SpotApiV3.Trading.GetUserTradesAsync";
+                    System.Diagnostics.Debug.WriteLine(text);
+                    var resultV3 = await client.SpotApiV3.Trading.GetUserTradesAsync(symbol.Name, fromId: 1636499753898383104);
+                    text = JsonSerializer.Serialize(resultV3, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
+                    System.Diagnostics.Debug.WriteLine(text);
+                    GlobalData.AddTextToLogTab(text);
 
-                    //if (!resultV3.Success)
-                    //{
-                    //    GlobalData.AddTextToLogTab("error getting mytrades " + resultV3.Error);
-                    //}
+                    if (!resultV3.Success)
+                    {
+                        GlobalData.AddTextToLogTab("error getting mytrades " + resultV3.Error);
+                    }
 
                 }
                 catch (Exception error)

@@ -273,7 +273,7 @@ public class PositionMonitor : IDisposable
         if (lastRefreshAssets == null || lastRefreshAssets?.AddMinutes(5) < DateTime.UtcNow)
         {
             // De assets verversen (optioneel adhv account)
-            await ExchangeHelper.FetchAssetsAsync(tradeAccount);
+            await ExchangeHelper.GetAssetsForAccountAsync(tradeAccount);
             lastRefreshAssets = DateTime.UtcNow;
         }
 
@@ -1870,7 +1870,7 @@ public class PositionMonitor : IDisposable
                     {
                         foreach (CryptoPosition position in positionList.Values.ToList())
                         {
-                            GlobalData.ThreadDoubleCheckPosition.AddToQueue(position);
+                            GlobalData.ThreadDoubleCheckPosition.AddToQueue(position, false);
                         }
                     }
                 }

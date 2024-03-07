@@ -84,7 +84,7 @@ public class TradeTools
                     // TODO - Hoe doen we dit met papertrading (er is niets geregeld!)
                     await LoadOrdersFromDatabaseAndExchangeAsync(database, position);
                     await CalculatePositionResultsViaOrders(database, position);
-                    GlobalData.ThreadDoubleCheckPosition.AddToQueue(position);
+                    GlobalData.ThreadDoubleCheckPosition.AddToQueue(position, true);
                 }
             }
         }
@@ -277,7 +277,7 @@ public class TradeTools
 
         bool markedAsReady = false;
         bool positionChanged = false;
-        await ExchangeHelper.GetOrdersForPositionAsync(position);
+        await ExchangeHelper.GetOrdersForPositionAsync(database, position);
 
 
         // De filled quantity in de steps opnieuw opbouwen vanuit de trades
@@ -300,15 +300,55 @@ public class TradeTools
                         $"price={order.AveragePrice?.ToString0()} quantity={order.QuantityFilled?.ToString0()} value={order.QuoteQuantity.ToString0()}";
 
 
-                    // De exchange is van de opdracht afgeweken, we passen de originele order aan.
-                    // (notitie: Dit is een vreemde status van Bybit Spot i.c.m. een marketorder)
+
+                    // Calculate the fee from te orders
+                    // (Bybit V5 does not return the fee via orders)
+                    step.Commission = 0;
+                    step.CommissionBase = 0;
+                    step.CommissionQuote = 0;
+                    step.CommissionAsset = ""; //?
+                    foreach (CryptoTrade trade in position.Symbol.TradeList.Values.ToList())
+                    {
+                        if (trade.OrderId == step.OrderId)
+                        {
+                            // Afhankelijk van de asset wordt de commissie berekend (debug)
+                            // Voor de step is dit niet relevant (mits we het omrekenen naar base en quote)
+                            step.CommissionAsset = trade.CommissionAsset;
+
+                            if (trade.CommissionAsset == position.Symbol.Base)
+                            {
+                                decimal value = (decimal)trade.Commission * (decimal)trade.Price;
+                                step.CommissionBase += (decimal)trade.Commission;
+                                step.CommissionQuote += value;
+                                step.Commission += value;
+                            }
+                            else if (trade.CommissionAsset == position.Symbol.Quote || trade.CommissionAsset == "")
+                            {
+                                decimal value = (decimal)trade.Commission / (decimal)trade.Price;
+                                step.CommissionBase += value;
+                                step.CommissionQuote += (decimal)trade.Commission;
+                                step.Commission += (decimal)trade.Commission;
+                            }
+                            //else
+                            //{
+                            //    // dan doen we de aanname dat het in quote is
+                            //    decimal value = (decimal)trade.Commission / (decimal)trade.Price;
+                            //    step.CommissionBase += value;
+                            //    step.CommissionQuote += (decimal)trade.Commission;
+                            //    step.Commission += (decimal)trade.Commission;
+                            //}
+                        }
+                    }
+
+
+                    // A Bybit Spot special / marketorder (some weird status).
+                    // Exchange is van de opdracht afgeweken, we passen de originele order aan.
                     if (order.Status == CryptoOrderStatus.PartiallyAndClosed)
                     {
                         //step.Status = order.Status;
                         step.Quantity = order.Quantity;
                         step.QuantityFilled = (decimal)order.QuantityFilled;
                         step.QuoteQuantityFilled = (decimal)order.AveragePrice * (decimal)order.QuantityFilled;
-                        //database.Connection.Update<CryptoPositionStep>(step);
                     }
 
 
@@ -373,26 +413,6 @@ public class TradeTools
                         step.CloseTime = order.UpdateTime;
                         step.QuantityFilled = (decimal)order.QuantityFilled;
                         step.QuoteQuantityFilled = (decimal)order.QuoteQuantityFilled;
-                        // TODO: gebruiken we niet meer
-                        //if (step.QuantityFilled != 0)
-                        //    step.AvgPrice = step.QuoteQuantityFilled / step.QuantityFilled;
-                        // Afhankelijk van de asset wordt de fee berekend
-                        step.CommissionAsset = order.CommissionAsset;
-                        step.AvgPrice = (decimal)order.AveragePrice;
-                        if (order.CommissionAsset == position.Symbol.Base)
-                        {
-                            step.CommissionQuote = 0;
-                            step.CommissionBase = (decimal)order.Commission;
-                            step.Commission = (decimal)order.Commission * (decimal)order.AveragePrice;
-                        }
-                        else if (order.CommissionAsset == position.Symbol.Quote)
-                        {
-                            step.CommissionBase = 0;
-                            step.CommissionQuote = (decimal)order.Commission;
-                            step.Commission = (decimal)order.Commission;
-                        }
-                        else
-                            step.Commission = (decimal)order.Commission;
 
 
                         // Als er 1 (of meerdere trades zijn) dan zitten we in de trade (de user ticker valt wel eens stil)
@@ -402,6 +422,7 @@ public class TradeTools
                         {
                             position.CloseTime = null;
                             position.Status = CryptoPositionStatus.Trading;
+                            step.AveragePrice = (decimal)order.AveragePrice;
                         }
 
 
@@ -523,7 +544,7 @@ public class TradeTools
             if (markedAsReady)
             {
                 position.DelayUntil = position.UpdateTime.Value.AddSeconds(10);
-                GlobalData.ThreadDoubleCheckPosition.AddToQueue(position);
+                GlobalData.ThreadDoubleCheckPosition.AddToQueue(position, true);
             }
         }
     }
@@ -532,29 +553,30 @@ public class TradeTools
 
     static public async Task LoadOrdersFromDatabaseAndExchangeAsync(CryptoDatabase database, CryptoPosition position) //, bool loadFromExchange = true
     {
-        //// Bij het laden zijn niet alle trades in het geheugen ingelezen, dus deze alsnog inladen (of verversen)
-        //// Probleem, er zitten msec in de position.CreateTime en niet in de Trade.TradeTime (pfft)
-        //// string sql = string.Format("select * from trades where ExchangeId={0} and SymbolId={1} and TradeTime >='{2}' order by TradeId",
-        //// position.ExchangeId, position.SymbolId, position.CreateTime.ToString("yyyy-MM-dd HH:mm:ss"));
-        string sql = "select * from [order] where SymbolId=@symbolId and CreateTime >= @fromDate order by CreateTime";
-        foreach (CryptoOrder order in database.Connection.Query<CryptoOrder>(sql, new { symbolId = position.SymbolId, fromDate = position.CreateTime }))
-            GlobalData.AddOrder(order);
+        if (!position.Symbol.HasOrdersAndTradesLoaded)
+        {
+            // Vanwege tijd afrondingen (msec)
+            DateTime from = position.CreateTime.AddMinutes(-1);
 
+            //// Bij het laden zijn niet alle trades in het geheugen ingelezen, dus deze alsnog inladen (of verversen)
+            string sql = "select * from [order] where SymbolId=@symbolId and CreateTime >= @fromDate order by CreateTime";
+            foreach (CryptoOrder order in database.Connection.Query<CryptoOrder>(sql, new { symbolId = position.SymbolId, fromDate = from }))
+                GlobalData.AddOrder(order);
+
+            sql = "select * from [trade] where SymbolId=@symbolId and TradeTime >= @fromDate order by TradeTime";
+            foreach (CryptoTrade trade in database.Connection.Query<CryptoTrade>(sql, new { symbolId = position.SymbolId, fromDate = from }))
+                GlobalData.AddTrade(trade);
+
+            position.Symbol.HasOrdersAndTradesLoaded = true;
+        }
 
         // Daarna de "nieuwe" orders van deze coin ophalen en die toegevoegen aan dezelfde orderlist
         if (position.TradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading) // && loadFromExchange
-        {
-            await ExchangeHelper.GetOrdersForPositionAsync(position);
+            await ExchangeHelper.GetOrdersForPositionAsync(database, position);
 
-            // Beetje jammer, maar voorlopig even quick en dirty
-            foreach (var order in position.Symbol.OrderList.Values)
-            {
-                if (order.Id == 0)
-                    database.Connection.Insert<CryptoOrder>(order);
-                else
-                    database.Connection.Update<CryptoOrder>(order);
-            }
-        }
+        // Daarna de "nieuwe" orders van deze coin ophalen en die toegevoegen aan dezelfde orderlist
+        if (position.TradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading) // && loadFromExchange
+            await ExchangeHelper.GetTradesForPositionAsync(database, position);
     }
 
 

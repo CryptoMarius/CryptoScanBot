@@ -38,16 +38,21 @@ public class CryptoSymbol
     // Deze is voor bybit niet aanwezig en bij Binance slechts voor ~20 gevuld, weg ermee!
     //public decimal MinNotional { get; set; }
 
-    //BinanceSymbolLotSizeFilter;
-    //The minimal quantity of an order
+    // The minimal quantity of an order
     public decimal QuantityMinimum { get; set; }
     //The maximum quantity of an order
     public decimal QuantityMaximum { get; set; }
-    //The tick size of the quantity. The quantity can not have more precision as this
-    //and can only be incremented in steps of this.
+    // The tick size of the quantity. The quantity can not have more precision as this and can only be incremented in steps of this.
     public decimal QuantityTickSize { get; set; }
     [Computed]
     public string QuantityDisplayFormat { get; set; } = "N8";
+
+
+    // The minimal value of an order
+    public decimal QuoteValueMinimum { get; set; }
+    // The maximum value of an order
+    public decimal QuoteValueMaximum { get; set; }
+
 
     //BinanceSymbolPriceFilter
     //The minimal price the order can be for
@@ -102,6 +107,10 @@ public class CryptoSymbol
     /// </summary>
     public DateTime? LastTradeFetched { get; set; }
     public long ? LastTradeIdFetched { get; set; }
+    public DateTime? LastOrderFetched { get; set; }
+    [Computed]
+    // Laatste waarde volgens de ticker
+    public bool HasOrdersAndTradesLoaded { get; set; } = false;
 
     // De trend percentage (berekend uit de candlefetched.TrendIndicator)
     public float? TrendPercentage { get; set; }
@@ -129,13 +138,9 @@ public class CryptoSymbol
     // NB: Verwijst nu naar de IntervalPeriodList<1m>.CandleList
     public SortedList<long, CryptoCandle> CandleList { get { return IntervalPeriodList[0].CandleList; } }
 
-    //[Computed]
-    //Besloten om de orders niet meer op te halen, ze zijn niet echt nodig.
-    //De trades bevat ook alle informatie die we feitelijk nodig hebben.
-    //public SortedList<long, Order> OrderList { get; } = new SortedList<long, Order>();
 
-    //[Computed]
-    //public SortedList<string, CryptoTrade> TradeList { get; } = [];
+    [Computed]
+    public SortedList<string, CryptoTrade> TradeList { get; } = [];
 
     [Computed]
     public SortedList<string, CryptoOrder> OrderList { get; } = [];

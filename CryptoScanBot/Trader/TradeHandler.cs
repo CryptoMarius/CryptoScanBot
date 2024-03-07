@@ -150,7 +150,7 @@ static public class TradeHandler
             // De positie laten afhandelen door een andere thread.
             // (dan staat alle code voor het afhandelen van een positie centraal)
             position.DelayUntil = position.UpdateTime.Value.AddSeconds(5);
-            GlobalData.ThreadDoubleCheckPosition.AddToQueue(position);
+            GlobalData.ThreadDoubleCheckPosition.AddToQueue(position, true);
 
 
             ////Monitor.Enter(position);

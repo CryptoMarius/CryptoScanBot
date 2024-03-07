@@ -18,7 +18,7 @@ namespace CryptoScanBot.Intern;
 public class ThreadCheckFinishedPosition
 {
     private readonly CancellationTokenSource cancellationToken = new();
-    private readonly BlockingCollection<CryptoPosition> Queue = new();
+    private readonly BlockingCollection<(CryptoPosition, bool)> Queue = new();
 
     public ThreadCheckFinishedPosition()
     {
@@ -31,13 +31,13 @@ public class ThreadCheckFinishedPosition
         GlobalData.AddTextToLogTab("Stop position check finished handler");
     }
 
-    public void AddToQueue(CryptoPosition position)
+    public void AddToQueue(CryptoPosition position, bool check)
     {
         // De positie is net klaar gemeld, maar pijnlijke ervaring leert ons dat het niet altijd juist is.
         // Er kunnen fouten ontstaan doordat orders of trades enzovoort niet correct afgehandeld zijn, of
         // dat er een bijkoop order net gevallen is. Dus extra controles doen na het administratief sluiten
         // van de positie.
-        Queue.Add(position);
+        Queue.Add((position, check));
     }
 
 
@@ -48,7 +48,7 @@ public class ThreadCheckFinishedPosition
         database.Open();
 
         // Een aparte queue die orders afhandeld (met als achterliggende reden de juiste afhandel volgorde)
-        foreach (CryptoPosition position in Queue.GetConsumingEnumerable(cancellationToken.Token))
+        foreach ((CryptoPosition position, bool check) in Queue.GetConsumingEnumerable(cancellationToken.Token))
         {
             //GlobalData.AddTextToLogTab($"{position.Symbol.Name} debug position ThreadCheckFinishedPosition Execute...");
             try
@@ -57,7 +57,7 @@ public class ThreadCheckFinishedPosition
                 // We wachten hier dus bewust voor de zekerheid een redelijk lange periode.
                 if (position.DelayUntil.HasValue && position.DelayUntil.Value > DateTime.UtcNow)
                 {
-                    AddToQueue(position); // opnieuw, na een vertraging
+                    AddToQueue(position, check); // opnieuw, na een vertraging
                     await Task.Delay(500);
                     continue;
                 }
@@ -66,8 +66,11 @@ public class ThreadCheckFinishedPosition
                 //GlobalData.AddTextToLogTab($"ThreadDoubleCheckPosition: Positie {position.Symbol.Name} controleren! {position.Status}");
 
                 // Controleer orders
-                await TradeTools.LoadOrdersFromDatabaseAndExchangeAsync(database, position);
-                await TradeTools.CalculatePositionResultsViaOrders(database, position);
+                if (check)
+                {
+                    await TradeTools.LoadOrdersFromDatabaseAndExchangeAsync(database, position);
+                    await TradeTools.CalculatePositionResultsViaOrders(database, position);
+                }
 
 
                 if (position.Status == CryptoPositionStatus.Ready)
@@ -101,7 +104,7 @@ public class ThreadCheckFinishedPosition
                                     else
                                     {
                                         ExchangeBase.Dump(position, succes, tradeParams, "DCA ORDER ANNULEREN NIET IN 1x GELUKT!!! (herkansing)");
-                                        AddToQueue(position); // doe nog maar een keer... Endless loop?
+                                        AddToQueue(position, true); // doe nog maar een keer... Endless loop?
                                         removePosition = false;
                                     }
                                 }
@@ -144,7 +147,7 @@ public class ThreadCheckFinishedPosition
                         await positionMonitor.CheckThePosition(position);
 
                         if (position.Status == CryptoPositionStatus.Ready)
-                            AddToQueue(position); // nog eens, en dan laten verplaatsen naar gesloten posities
+                            AddToQueue(position, true); // nog eens, en dan laten verplaatsen naar gesloten posities
                     }
                 }
 
