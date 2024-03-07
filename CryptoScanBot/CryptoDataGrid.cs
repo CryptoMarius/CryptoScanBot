@@ -51,7 +51,6 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
     internal readonly List<T> List;
     internal ContextMenuStrip MenuStripCells = new();
     internal ContextMenuStrip MenuStripHeader = new();
-    //public (T Selected, int RowIndex) MySelection = new();
 
     // sorting
     internal int SortColumn = 0;
@@ -137,7 +136,7 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         Grid.VirtualMode = true;
         
         Grid.RowHeadersWidth = 20;
-        Grid.RowHeadersVisible = true; // the first column to select rows
+        Grid.RowHeadersVisible = false; // the first column to select rows
         Grid.RowHeadersDefaultCellStyle.BackColor = Grid.DefaultCellStyle.BackColor;
 
         Grid.AllowUserToAddRows = false;
@@ -152,27 +151,29 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         Grid.ColumnHeadersDefaultCellStyle.SelectionBackColor = Grid.ColumnHeadersDefaultCellStyle.BackColor;
         Grid.ColumnHeadersDefaultCellStyle.SelectionForeColor = Grid.ColumnHeadersDefaultCellStyle.ForeColor;
 
-        Grid.GridColor = VeryLightGray1;
+        Grid.RowTemplate.Height = 21;
+
+        Grid.GridColor = Color.Black; // VeryLightGray1;
         Grid.BackgroundColor = Grid.DefaultCellStyle.BackColor;
         Grid.BorderStyle = BorderStyle.None; // Fixed3D, FixedSingle;
-        Grid.CellBorderStyle = DataGridViewCellBorderStyle.None;
+        //Grid.CellBorderStyle = DataGridViewCellBorderStyle.None;
         Grid.RowHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single; // Single;
         Grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single; // Raised;
 
         Grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-        Grid.DefaultCellStyle.SelectionBackColor = Grid.DefaultCellStyle.BackColor;
-        Grid.DefaultCellStyle.SelectionForeColor = Grid.DefaultCellStyle.ForeColor;
+        //Grid.DefaultCellStyle.SelectionBackColor = Grid.DefaultCellStyle.BackColor;
+        //Grid.DefaultCellStyle.SelectionForeColor = Grid.DefaultCellStyle.ForeColor;
 
         //Grid.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.Fill; // DisplayedCells; ?
         Grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None; // AllCellsExceptHeader; // AllCells; // DisplayedCells;
         Grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
-        Grid.CellBorderStyle = DataGridViewCellBorderStyle.Single;
+        //Grid.CellBorderStyle = DataGridViewCellBorderStyle.Single;
 
         Grid.CellFormatting += CellFormattingEvent;
         Grid.CellValueNeeded += new DataGridViewCellValueEventHandler(GetTextFunction);
         Grid.ColumnHeaderMouseClick += HeaderClick;
         Grid.DoubleClick += GridDoubleClick;
-        Grid.SelectionChanged += ClearSelection;
+        //Grid.SelectionChanged += ClearSelection;
         Grid.MouseUp += ShowPopupMenu;
 
         // Commands
@@ -194,37 +195,54 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
 
     internal void FillColumnPopup()
     {
+        ToolStripMenuItem item = new()
+        {
+            Text = "Change columns",
+            Size = new Size(100, 22),
+        };
+        item.Click += CheckColumn;
+        MenuStripHeader.Items.Add(item);
+
+
+
+        int count = 0;
         foreach (DataGridViewColumn column in Grid.Columns)
         {
-            if (column.HeaderText != "")
+
+            if (!ColumnList.TryGetValue(column.HeaderText, out ColumnSetting columnSetting))
             {
-                if (!ColumnList.TryGetValue(column.HeaderText, out ColumnSetting columnSetting))
-                {
-                    columnSetting = new();
-                    ColumnList.Add(column.HeaderText, columnSetting);
-                }
-
-                ToolStripMenuItem item = new()
-                {
-                    Tag = column,
-                    Text = column.HeaderText,
-                    Size = new Size(100, 22),
-                    CheckState = CheckState.Unchecked,
-                    Checked = columnSetting.Visible,
-                };
-                item.Click += CheckColumn;
-                MenuStripHeader.Items.Add(item);
-
-                column.Visible = columnSetting.Visible;
-                if (columnSetting.Width > 0)
-                    column.Width = columnSetting.Width;
-                else
-                    columnSetting.Width = column.Width;
-
-
-                column.ContextMenuStrip = MenuStripHeader;
-                column.AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+                columnSetting = new();
+                ColumnList.Add(column.HeaderText, columnSetting);
             }
+
+            //ToolStripMenuItem item = new()
+            //{
+            //    Tag = column,
+            //    Text = column.HeaderText,
+            //    Size = new Size(100, 22),
+            //    CheckState = CheckState.Unchecked,
+            //    Checked = columnSetting.Visible,
+            //};
+            //item.Click += CheckColumn;
+            //MenuStripHeader.Items.Add(item);
+
+            column.Visible = columnSetting.Visible;
+            if (columnSetting.Width > 0)
+                column.Width = columnSetting.Width;
+            else
+                columnSetting.Width = column.Width;
+
+            column.ContextMenuStrip = MenuStripHeader;
+            column.AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+            if (column.Visible)
+                count++;
+        }
+
+        // Restore a column (otherwise the complete header is gone)
+        if (count == 0)
+        {
+            Grid.Columns[0].Visible = true;
+            ColumnList.Values[0].Visible = true;
         }
         Grid.ColumnWidthChanged += ColumnWidthChanged;
     }
@@ -252,25 +270,44 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
 
     private void CheckColumn(object sender, EventArgs e)
     {
-        if (sender is ToolStripMenuItem item)
+        // tijdelijk, debug
+        CryptoDataGridColumns f = new();
+        f.AddColumns(this);
+        f.ShowDialog();
+
+        if (f.DialogResult == DialogResult.OK)
         {
-            item.Checked = !item.Checked;
-            if (item.Tag is DataGridViewTextBoxColumn column)
+            // iets..
+            foreach (DataGridViewColumn column in Grid.Columns)
             {
-                if (!ColumnList.TryGetValue(column.HeaderText, out ColumnSetting columnSetting))
+                if (ColumnList.TryGetValue(column.HeaderText, out ColumnSetting columnSetting))
                 {
-                    columnSetting = new();
-                    ColumnList.Add(column.HeaderText, columnSetting);
+                    column.Visible = columnSetting.Visible;
                 }
-                column.Visible = item.Checked;
-
-                columnSetting.Width = column.Width;
-                columnSetting.Visible = column.Visible;
             }
-
             GlobalData.SaveUserSettings();
             Grid.Invoke((MethodInvoker)(() => { Grid.Invalidate(); }));
         }
+
+        //if (sender is ToolStripMenuItem item)
+        //{
+        //    item.Checked = !item.Checked;
+        //    if (item.Tag is DataGridViewTextBoxColumn column)
+        //    {
+        //        if (!ColumnList.TryGetValue(column.HeaderText, out ColumnSetting columnSetting))
+        //        {
+        //            columnSetting = new();
+        //            ColumnList.Add(column.HeaderText, columnSetting);
+        //        }
+        //        column.Visible = item.Checked;
+
+        //        columnSetting.Width = column.Width;
+        //        columnSetting.Visible = column.Visible;
+        //    }
+
+        //    GlobalData.SaveUserSettings();
+        //    Grid.Invoke((MethodInvoker)(() => { Grid.Invalidate(); }));
+        //}
     }
 
     private void ColumnWidthChanged(object sender, DataGridViewColumnEventArgs e)
@@ -292,29 +329,47 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         GlobalData.SaveUserSettings();
     }
 
-    public void ClearSelection(object sender, EventArgs e)
-    {
-        Grid.ClearSelection();
-    }
+    //public void ClearSelection(object sender, EventArgs e)
+    //{
+    //    Grid.ClearSelection();
+    //}
 
     public void MenuStripOpening(object sender, EventArgs e)
     {
-        var point = Grid.PointToClient(Cursor.Position);
-        var info = Grid.HitTest(point.X, point.Y);
-        if (info.RowIndex >= 0)
+        if (Grid.SelectedRows.Count > 0)
         {
-            SelectedObjectIndex = info.RowIndex;
+            SelectedObjectIndex = Grid.SelectedRows[0].Index; ;
             SelectedObject = List[SelectedObjectIndex];
-            //Grid.Rows[SelectedObjectIndex].Selected = true;
-            //Grid.ClearSelection();
-            Grid.CurrentCell = Grid[0, info.RowIndex];
         }
         else
         {
             SelectedObjectIndex = -1;
             SelectedObject = null;
-            //Grid.ClearSelection();
         }
+
+        //var point = Grid.PointToClient(Cursor.Position);
+        //var info = Grid.HitTest(point.X, point.Y);
+        //if (info.RowIndex >= 0)
+        //{
+        //    SelectedObjectIndex = info.RowIndex;
+        //    SelectedObject = List[SelectedObjectIndex];
+        //    //Grid.Rows[SelectedObjectIndex].Selected = true;
+        //    //Grid.ClearSelection();
+        //    foreach (DataGridViewColumn column in Grid.Columns)
+        //    {
+        //        if (column.Visible)
+        //        {
+        //            Grid.CurrentCell = Grid[column.Index, info.RowIndex];
+        //            break;
+        //        }
+        //    }
+        //}
+        //else
+        //{
+        //    SelectedObjectIndex = -1;
+        //    SelectedObject = null;
+        //    //Grid.ClearSelection();
+        //}
     }
 
     public void GridDoubleClick(object sender, EventArgs e)

@@ -364,8 +364,11 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
                     e.Value = position.RemainingDust.ToString("N8");
                     break;
                 case ColumnsForGrid.DustValue: // ter debug
-                    decimal dustValue = position.RemainingDust * position.Symbol.LastPrice.Value;
-                    e.Value = dustValue.ToString("N2");
+                    if (position.Symbol.LastPrice.HasValue)
+                    {
+                        decimal dustValue = position.RemainingDust * position.Symbol.LastPrice.Value;
+                        e.Value = dustValue.ToString("N2");
+                    }
                     break;
                 default:
                     e.Value = '?';
