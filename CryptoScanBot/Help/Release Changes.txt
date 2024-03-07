@@ -1,6 +1,7 @@
 CryptoScanBot release historie:
 
 xx-02-2024 1.9
+- Scanner - Meerdere kolommen tegelijk kunnen uitzetten (je krijgt er nu bijna RSI van)
 - Scanner - Applicatienaam herbenoemd naar CryptoScanner (want CryptoScanBot dekt de lading niet meer) - De nieuwe naam is CryptoScanBot (CSB)
 - Scanner - De kolommen van alle grids aan of uit kunnen zetten en tevens onthouden van de kolom breedte
 - Scanner - Soms (wellicht bij na heactivatie na een hybernate of sleepmode) worden de instellingen gereset.

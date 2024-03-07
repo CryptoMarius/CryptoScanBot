@@ -21,7 +21,6 @@ Dus dan moet ie rekening houden met het aantal onder de SMA en onder de BB ipv e
 - Scanner - controle van de SBM en JUMP signalen (nog niet gezien op Bybit spot)
 
 - Scanner - De FundingRate kolom automatisch uitzetten indien geen derivaten.futues.
-- Scanner - Meerdere kolommen tegelijk kunnen uitzetten (je krijgt er nu bijna RSI van)
 - Scanner - Binance Futures introduceren (maar alleen indien dat niet te veel werk is)
 - Scanner - Telegram meldingen sturen met een extra link naar TV (optioneel via de instelllingen).
 - Scanner - locking inbouwen zodat dezelfde scanner niet twee keer opgestart kan worden
@@ -52,6 +51,7 @@ Dus dan moet ie rekening houden met het aantal onder de SMA en onder de BB ipv e
 
 Trading:
 - Trading - Documentatie bijwerken - dit keer best een grote klus
+- Trading - De laatste X posities dumpen naar Excel voor een overzichtje
 - Trading - Vanwege de overgang naar spot rekening houden met de commissies van de exchange (nog niet 100% goed)
 - Trading - Controle inbouwen op het short gaan, in futures kan dat, maar in spot lukt dat alleen als de assets beschikbaar zijn
 - Trading - Soms worden er meer posities geopend dan wat er is ingesteld (5 threads die naast elkaar posities openen zonder locking)
