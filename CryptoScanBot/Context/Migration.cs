@@ -314,6 +314,7 @@ public class Migration
                 database.Connection.Execute("alter table Position add RemainingDust Text null", transaction);
                 
                 // Voor Bybit spot moeten we bijhouden in welke asset de commisie wordt afgetrokken
+                // TODO: Leuk voro de debug, maar kan ook al weer weg
                 database.Connection.Execute("alter table PositionStep add CommissionAsset Text null", transaction);
                 
                 // In de trade tabel is het een not nullable veld, mag null zijn (blijkbaar)
@@ -333,12 +334,21 @@ public class Migration
 
                 // Bybit spot doet de administratie op ID ipv date
                 database.Connection.Execute("alter table symbol add LastTradeIdFetched integer null", transaction);
+                database.Connection.Execute("alter table symbol add LastOrderFetched Text null", transaction);
+
                 // Bybit spot levert deze niet aan en om problemen te vermijden uit de orders halen
                 database.Connection.Execute("alter table trade drop column side", transaction);
 
+                // Boundaries for Quote Value
+                database.Connection.Execute("alter table symbol add QuoteValueMinimum Text null", transaction);
+                database.Connection.Execute("alter table symbol add QuoteValueMaximum Text null", transaction);
+
+                database.Connection.Execute("alter table positionstep add AveragePrice Text null", transaction);
+                database.Connection.Execute("alter table positionstep drop column AvgPrice", transaction);
+                database.Connection.Execute("alter table positionstep drop column CommissionAsset", transaction);
 
                 // De trade tabel is nu vervangen door de order tabel
-                database.Connection.Execute("drop table trade", transaction);
+                //database.Connection.Execute("drop table trade", transaction);
 
                 // vervallen? step.AvgPrice
 

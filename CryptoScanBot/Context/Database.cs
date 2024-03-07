@@ -894,9 +894,6 @@ public class CryptoDatabase : IDisposable
                 "Status INTEGER NOT NULL," +
                 "Volume TEXT NULL," +
 
-                // Erg Binance specifiek???
-                //"MinNotional TEXT NULL," +
-
                 "PriceMinimum TEXT NULL," +
                 "PriceMaximum TEXT NULL," +
                 "PriceTickSize TEXT NULL," +
@@ -905,8 +902,13 @@ public class CryptoDatabase : IDisposable
                 "QuantityMaximum TEXT NULL," +
                 "QuantityTickSize TEXT NULL," +
 
-                "LastTradefetched TEXT NULL," +
+                "QuoteValueMinimum TEXT NULL," +
+                "QuoteValueMaximum TEXT NULL," +
+
+                "LastTradeFetched TEXT NULL," +
                 "LastTradeIdFetched TEXT NULL," +
+                "LastOrderFetched TEXT NULL," +
+
                 "IsSpotTradingAllowed INTEGER NULL," +
                 "IsMarginTradingAllowed INTEGER NULL," +
                 "LastPrice TEXT NULL," +
@@ -1169,7 +1171,7 @@ public class CryptoDatabase : IDisposable
                 // Vanwege Papertrading nullable
                 "OrderId TEXT NOT NULL," +
                 "Order2Id TEXT NULL," + // OCO Binance
-                "AvgPrice TEXT NULL," +
+                "AveragePrice TEXT NULL," +
                 "Trailing INTEGER NULL," +
                 "FOREIGN KEY(PositionId) REFERENCES Position(Id)," +
                 "FOREIGN KEY(PositionPartId) REFERENCES PositionPart(Id)" +
@@ -1224,46 +1226,39 @@ public class CryptoDatabase : IDisposable
         }
     }
 
-    //private static void CreateTableTrade(CryptoDatabase connection)
-    //{
-    //    if (MissingTable(connection, "Trade"))
-    //    {
-    //        connection.Connection.Execute("CREATE TABLE [Trade] (" +
-    //            "Id integer primary key autoincrement not null," +
-    //            "TradeTime TEXT NOT NULL," +
-                
-    //            "TradeAccountId Integer NOT NULL," +
-    //            "ExchangeId Integer NOT NULL," +
-    //            "SymbolId Integer NOT NULL," +
+    private static void CreateTableTrade(CryptoDatabase connection)
+    {
+        if (MissingTable(connection, "Trade"))
+        {
+            connection.Connection.Execute("CREATE TABLE [Trade] (" +
+                "Id integer primary key autoincrement not null," +
+                "TradeTime TEXT NOT NULL," +
 
-    //            "Price TEXT NOT NULL," +
-    //            "Quantity TEXT NOT NULL," +
-    //            "QuoteQuantity TEXT NOT NULL," +
-    //            // TODO: Universele iets (omrekenen!)
-    //            "Commission TEXT NOT NULL," +
-    //            "CommissionAsset TEXT NULL," +
+                "TradeAccountId Integer NOT NULL," +
+                "ExchangeId Integer NOT NULL," +
+                "SymbolId Integer NOT NULL," +
 
-    //            //"Side Integer NOT NULL," +
-    //            // Erg Binance specifiek???
-    //            //"IsMaker Integer NOT NULL," + // ivm berekening fee (maar is al in de prijs verwerkt, wellicht om achteraf iets te beredeneren qua fee?)
+                "TradeId TEXT NOT NULL," +
+                "OrderId TEXT NOT NULL," +
 
-    //            "TradeId TEXT NOT NULL," +
-    //            "OrderId TEXT NOT NULL," +
-    //            // Erg Binance specifiek???
-    //            //"OrderListId TEXT NULL," +
+                "Price TEXT NOT NULL," +
+                "Quantity TEXT NOT NULL," +
+                "QuoteQuantity TEXT NOT NULL," +
+                "Commission TEXT NOT NULL," +
+                "CommissionAsset TEXT NULL," +
 
-    //            "FOREIGN KEY(TradeAccountId) REFERENCES TradeAccount(Id)," +
-    //            "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +
-    //            "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)" +
-    //        ")");
-    //        connection.Connection.Execute("CREATE INDEX IdxTradeId ON [Trade](Id)");
-    //        connection.Connection.Execute("CREATE INDEX IdxTradeExchangeId ON [Trade](ExchangeId)");
-    //        connection.Connection.Execute("CREATE INDEX IdxTradeSymbolId ON [Trade](SymbolId)");
-    //        connection.Connection.Execute("CREATE INDEX IdxTradeTradeTime ON [Trade](TradeTime)");
-    //        connection.Connection.Execute("CREATE INDEX IdxTradeTradeAccountId ON [Trade](TradeAccountId)");
-    //     }
+                "FOREIGN KEY(TradeAccountId) REFERENCES TradeAccount(Id)," +
+                "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +
+                "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)" +
+            ")");
+            connection.Connection.Execute("CREATE INDEX IdxTradeId ON [Trade](Id)");
+            connection.Connection.Execute("CREATE INDEX IdxTradeExchangeId ON [Trade](ExchangeId)");
+            connection.Connection.Execute("CREATE INDEX IdxTradeSymbolId ON [Trade](SymbolId)");
+            connection.Connection.Execute("CREATE INDEX IdxTradeTradeTime ON [Trade](TradeTime)");
+            connection.Connection.Execute("CREATE INDEX IdxTradeTradeAccountId ON [Trade](TradeAccountId)");
+        }
 
-    //}
+    }
 
     private static void CreateTableAsset(CryptoDatabase connection)
     {
@@ -1386,7 +1381,7 @@ public class CryptoDatabase : IDisposable
         CreateTablePositionStep(connection);
 
         CreateTableOrder(connection); 
-        //CreateTableTrade(connection);
+        CreateTableTrade(connection);
         CreateTableAsset(connection);
 
         //CreateTableBalancing(connection); -- todo ooit
