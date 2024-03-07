@@ -28,10 +28,13 @@ partial class UserControlColorAndSound
     /// </summary>
     private void InitializeComponent()
     {
+        components = new System.ComponentModel.Container();
+        System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(UserControlColorAndSound));
         labelCaption = new Label();
         label28 = new Label();
         buttonColor = new Button();
         buttonPlaySound = new Button();
+        imageList1 = new ImageList(components);
         PanelColor = new Panel();
         EditSoundFile = new TextBox();
         buttonSelectSound = new Button();
@@ -69,12 +72,22 @@ partial class UserControlColorAndSound
         // 
         // buttonPlaySound
         // 
+        buttonPlaySound.ImageIndex = 0;
+        buttonPlaySound.ImageList = imageList1;
         buttonPlaySound.Location = new Point(748, 4);
         buttonPlaySound.Margin = new Padding(4, 3, 4, 3);
         buttonPlaySound.Name = "buttonPlaySound";
         buttonPlaySound.Size = new Size(23, 23);
         buttonPlaySound.TabIndex = 161;
         buttonPlaySound.UseVisualStyleBackColor = true;
+        // 
+        // imageList1
+        // 
+        imageList1.ColorDepth = ColorDepth.Depth32Bit;
+        imageList1.ImageStream = (ImageListStreamer)resources.GetObject("imageList1.ImageStream");
+        imageList1.TransparentColor = Color.Transparent;
+        imageList1.Images.SetKeyName(0, "volume.png");
+        imageList1.Images.SetKeyName(1, "open-folderblack.png");
         // 
         // PanelColor
         // 
@@ -96,6 +109,8 @@ partial class UserControlColorAndSound
         // 
         // buttonSelectSound
         // 
+        buttonSelectSound.ImageIndex = 1;
+        buttonSelectSound.ImageList = imageList1;
         buttonSelectSound.Location = new Point(718, 4);
         buttonSelectSound.Margin = new Padding(4, 3, 4, 3);
         buttonSelectSound.Name = "buttonSelectSound";
@@ -131,4 +146,5 @@ partial class UserControlColorAndSound
     private Panel PanelColor;
     private TextBox EditSoundFile;
     private Button buttonSelectSound;
+    private ImageList imageList1;
 }
