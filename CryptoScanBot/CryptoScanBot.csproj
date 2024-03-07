@@ -50,16 +50,11 @@
     <AdditionalFiles Remove="C:\Users\Marius\.nuget\packages\microsoft.dotnet.upgradeassistant.extensions.default.analyzers\0.4.421302\build\\WebTypeReplacements.typemap" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Remove="Exchange\Binance\FetchTrades.cs" />
     <Compile Remove="Exchange\Binance\FetchTradesForOrder.cs" />
-    <Compile Remove="Exchange\BybitFutures\FetchTrades.cs" />
     <Compile Remove="Exchange\BybitFutures\FetchTradesForOrder.cs" />
-    <Compile Remove="Exchange\BybitSpot\FetchTrades.cs" />
     <Compile Remove="Exchange\BybitSpot\FetchTradesForOrder.cs" />
-    <Compile Remove="Exchange\Kraken\FetchTrades.cs" />
     <Compile Remove="Exchange\Kraken\FetchTradesForOrder.cs" />
     <Compile Remove="Exchange\Kucoin\FetchTradesForOrder.cs" />
-    <Compile Remove="Model\CryptoTrade.cs" />
     <Compile Remove="Signal\SignalMacdLtLong.cs" />
     <Compile Remove="Signal\SignalMacdLtShort.cs" />
     <Compile Remove="Signal\SignalMacdTestLong.cs" />
@@ -126,12 +121,12 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Binance.Net" Version="9.5.0" />
+    <PackageReference Include="Binance.Net" Version="9.6.1" />
     <PackageReference Include="BouncyCastle.Cryptography" Version="2.3.0" />
-    <PackageReference Include="Bybit.Net" Version="3.5.0" />
+    <PackageReference Include="Bybit.Net" Version="3.5.2" />
     <PackageReference Include="CommandLineParser" Version="2.9.1" />
     <PackageReference Include="Cryptowatcher.TA-LIb-Core" Version="1.0.0" />
-    <PackageReference Include="Dapper" Version="2.1.28" />
+    <PackageReference Include="Dapper" Version="2.1.35" />
     <PackageReference Include="Dapper.Contrib" Version="2.0.78" />
     <PackageReference Include="Fasterflect.Reflect">
       <Version>3.1.0</Version>
@@ -164,7 +159,7 @@
     <PackageReference Include="Microsoft.CSharp">
       <Version>4.7.0</Version>
     </PackageReference>
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.5" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.0" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.2" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory">
       <Version>8.0.0</Version>
@@ -179,7 +174,7 @@
       <Version>4.59.0</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect">
-      <Version>7.3.1</Version>
+      <Version>7.4.0</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.Office.Interop.Excel">
       <Version>15.0.4795.1001</Version>
