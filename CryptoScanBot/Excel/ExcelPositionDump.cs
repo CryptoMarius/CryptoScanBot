@@ -382,72 +382,146 @@ public class ExcelPositionDump : ExcelBase
     }
 
 
-    //public void DumpTrades()
-    //{
-    //    HSSFSheet sheet = (HSSFSheet)Book.CreateSheet("Trades");
-    //    int row = 0;
+    public void DumpOrders()
+    {
+        HSSFSheet sheet = (HSSFSheet)Book.CreateSheet("Orders");
+        int row = 0;
 
-    //    int columns = 0;
-    //    WriteCell(sheet, columns++, row, "Id");
-    //    WriteCell(sheet, columns++, row, "TradeId");
-    //    WriteCell(sheet, columns++, row, "OrderId");
+        int columns = 0;
+        WriteCell(sheet, columns++, row, "Id");
+        WriteCell(sheet, columns++, row, "OrderId");
 
-    //    WriteCell(sheet, columns++, row, "Side");
-    //    WriteCell(sheet, columns++, row, "Time");
+        WriteCell(sheet, columns++, row, "Side");
+        WriteCell(sheet, columns++, row, "Time");
 
-    //    WriteCell(sheet, columns++, row, "Price");
-    //    WriteCell(sheet, columns++, row, "Quantity");
-    //    WriteCell(sheet, columns++, row, "QuoteQuantity");
-    //    WriteCell(sheet, columns++, row, "Commission");
-    //    WriteCell(sheet, columns++, row, "C. Asset");
+        WriteCell(sheet, columns++, row, "Price");
+        WriteCell(sheet, columns++, row, "Quantity");
+        WriteCell(sheet, columns++, row, "QuoteQuantity");
 
-    //    List<CryptoTrade> tradelist = Position.Symbol.TradeList.Values.ToList();
-    //    tradelist.Sort((x, y) => x.TradeTime.CompareTo(y.TradeTime));
-    //    foreach (CryptoTrade trade in tradelist)
-    //    {
-    //        if (!OrderList.ContainsKey(trade.OrderId))
-    //            continue;
+        WriteCell(sheet, columns++, row, "Avg Price");
+        WriteCell(sheet, columns++, row, "Quantity filled");
+        WriteCell(sheet, columns++, row, "QuoteQuantity fileld");
 
-    //        ++row;
-    //        int column = 0;
+        WriteCell(sheet, columns++, row, "Commission");
+        WriteCell(sheet, columns++, row, "C. Asset");
 
-    //        var cell = WriteCell(sheet, column++, row, trade.Id);
-    //        //cell.CellStyle = cellStyleDecimalNormal;
+        List<CryptoOrder> orderList = Position.Symbol.OrderList.Values.ToList();
+        orderList.Sort((x, y) => x.CreateTime.CompareTo(y.CreateTime));
+        foreach (CryptoOrder order in orderList)
+        {
+            if (!OrderList.ContainsKey(order.OrderId))
+                continue;
 
-    //        cell = WriteCell(sheet, column++, row, trade.TradeId);
+            ++row;
+            int column = 0;
 
-    //        cell = WriteCell(sheet, column++, row, trade.OrderId);
+            var cell = WriteCell(sheet, column++, row, order.Id);
+            //cell.CellStyle = cellStyleDecimalNormal;
 
-    //        cell = WriteCell(sheet, column++, row, "?");
+            cell = WriteCell(sheet, column++, row, order.OrderId);
 
-    //        cell = WriteCell(sheet, column++, row, trade.TradeTime.ToLocalTime());
-    //        cell.CellStyle = CellStyleDate;
+            cell = WriteCell(sheet, column++, row, order.Side.ToString());
 
-    //        cell = WriteCell(sheet, column++, row, (double)trade.Price);
-    //        cell.CellStyle = CellStyleDecimalNormal;
+            cell = WriteCell(sheet, column++, row, order.CreateTime.ToLocalTime());
+            cell.CellStyle = CellStyleDate;
 
-    //        cell = WriteCell(sheet, column++, row, (double)trade.Quantity);
-    //        cell.CellStyle = CellStyleDecimalNormal;
+            cell = WriteCell(sheet, column++, row, (double)order.Price);
+            cell.CellStyle = CellStyleDecimalNormal;
 
-    //        cell = WriteCell(sheet, column++, row, (double)trade.QuoteQuantity);
-    //        cell.CellStyle = CellStyleDecimalNormal;
+            cell = WriteCell(sheet, column++, row, (double)order.Quantity);
+            cell.CellStyle = CellStyleDecimalNormal;
 
-    //        cell = WriteCell(sheet, column++, row, (double)trade.Commission);
-    //        cell.CellStyle = CellStyleDecimalNormal;
-
-    //        cell = WriteCell(sheet, column++, row, trade.CommissionAsset);
-    //        cell.CellStyle = CellStyleDecimalNormal;
-
-    //        //if (OrderList.ContainsKey(trade.OrderId))
-    //        //{
-    //        //    cell = WriteCell(sheet, column++, row, "In orderlist");
-    //        //    cell.CellStyle = CellStyleDecimalNormal;
-    //        //}
-    //    }
+            cell = WriteCell(sheet, column++, row, (double)order.QuoteQuantity);
+            cell.CellStyle = CellStyleDecimalNormal;
 
 
-    //    AutoSize(sheet, columns);
-    //}
+            cell = WriteCell(sheet, column++, row, (double)order.AveragePrice);
+            cell.CellStyle = CellStyleDecimalNormal;
+
+            cell = WriteCell(sheet, column++, row, (double)order.QuantityFilled);
+            cell.CellStyle = CellStyleDecimalNormal;
+
+            cell = WriteCell(sheet, column++, row, (double)order.QuoteQuantityFilled);
+            cell.CellStyle = CellStyleDecimalNormal;
+
+
+            cell = WriteCell(sheet, column++, row, (double)order.Commission);
+            cell.CellStyle = CellStyleDecimalNormal;
+
+            cell = WriteCell(sheet, column++, row, order.CommissionAsset);
+            cell.CellStyle = CellStyleDecimalNormal;
+        }
+
+
+        AutoSize(sheet, columns);
+    }
+
+    public void DumpTrades()
+    {
+        HSSFSheet sheet = (HSSFSheet)Book.CreateSheet("Trades");
+        int row = 0;
+
+        int columns = 0;
+        WriteCell(sheet, columns++, row, "Id");
+        WriteCell(sheet, columns++, row, "TradeId");
+        WriteCell(sheet, columns++, row, "OrderId");
+
+        WriteCell(sheet, columns++, row, "Side");
+        WriteCell(sheet, columns++, row, "Time");
+
+        WriteCell(sheet, columns++, row, "Price");
+        WriteCell(sheet, columns++, row, "Quantity");
+        WriteCell(sheet, columns++, row, "QuoteQuantity");
+        WriteCell(sheet, columns++, row, "Commission");
+        WriteCell(sheet, columns++, row, "C. Asset");
+
+        List<CryptoTrade> tradelist = Position.Symbol.TradeList.Values.ToList();
+        tradelist.Sort((x, y) => x.TradeTime.CompareTo(y.TradeTime));
+        foreach (CryptoTrade trade in tradelist)
+        {
+            if (!OrderList.ContainsKey(trade.OrderId))
+                continue;
+
+            ++row;
+            int column = 0;
+
+            var cell = WriteCell(sheet, column++, row, trade.Id);
+            //cell.CellStyle = cellStyleDecimalNormal;
+
+            cell = WriteCell(sheet, column++, row, trade.TradeId);
+
+            cell = WriteCell(sheet, column++, row, trade.OrderId);
+
+            cell = WriteCell(sheet, column++, row, "?");
+
+            cell = WriteCell(sheet, column++, row, trade.TradeTime.ToLocalTime());
+            cell.CellStyle = CellStyleDate;
+
+            cell = WriteCell(sheet, column++, row, (double)trade.Price);
+            cell.CellStyle = CellStyleDecimalNormal;
+
+            cell = WriteCell(sheet, column++, row, (double)trade.Quantity);
+            cell.CellStyle = CellStyleDecimalNormal;
+
+            cell = WriteCell(sheet, column++, row, (double)trade.QuoteQuantity);
+            cell.CellStyle = CellStyleDecimalNormal;
+
+            cell = WriteCell(sheet, column++, row, (double)trade.Commission);
+            cell.CellStyle = CellStyleDecimalNormal;
+
+            cell = WriteCell(sheet, column++, row, trade.CommissionAsset);
+            cell.CellStyle = CellStyleDecimalNormal;
+
+            //if (OrderList.ContainsKey(trade.OrderId))
+            //{
+            //    cell = WriteCell(sheet, column++, row, "In orderlist");
+            //    cell.CellStyle = CellStyleDecimalNormal;
+            //}
+        }
+
+
+        AutoSize(sheet, columns);
+    }
 
     private void DumpInformation()
     {
@@ -598,7 +672,8 @@ public class ExcelPositionDump : ExcelBase
 
             DumpParts();
             DumpBreakEven();
-            //DumpTrades();
+            DumpOrders();
+            DumpTrades();
             //DumpSignals();
             DumpInformation();
 
