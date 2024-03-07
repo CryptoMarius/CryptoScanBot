@@ -399,6 +399,33 @@ public class Api : ExchangeBase
     }
 
 
+    static public void PickupTrade(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoTrade trade, BybitUserTrade item)
+    {
+        trade.TradeTime = item.Timestamp;
+
+        trade.TradeAccount = tradeAccount;
+        trade.TradeAccountId = tradeAccount.Id;
+        trade.Exchange = symbol.Exchange;
+        trade.ExchangeId = symbol.ExchangeId;
+        trade.Symbol = symbol;
+        trade.SymbolId = symbol.Id;
+
+        trade.TradeId = item.TradeId;
+        trade.OrderId = item.OrderId;
+
+        trade.Price = item.Price;
+        trade.Quantity = item.Quantity;
+        trade.QuoteQuantity = item.Price * item.Quantity;
+        trade.Commission = item.Fee.Value;
+        trade.CommissionAsset = symbol.Quote; // item.FeeAsset;?
+    }
+
+
+    public override async Task GetTradesForSymbolAsync(CryptoDatabase database, CryptoPosition position)
+    {
+        //await KucoinFetchTrades.FetchTradesForSymbol(database, position);
+    }
+
     static public void PickupOrder(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoOrder order, Bybit.Net.Objects.Models.V5.BybitOrderUpdate item)
     {
         order.CreateTime = item.CreateTime;
@@ -429,12 +456,18 @@ public class Api : ExchangeBase
     }
 
 
-    public override Task GetOrdersForPositionAsync(CryptoPosition position)
+    public override Task GetOrdersForPositionAsync(CryptoDatabase database, CryptoPosition position)
     {
         return Task.CompletedTask;
     }
 
-    public async override Task FetchAssetsAsync(CryptoTradeAccount tradeAccount)
+
+    //public override async Task<int> FetchTradesForOrderAsync(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, string orderId)
+    //{
+    //    return await FetchTradeForOrder.FetchTradesForOrderAsync(tradeAccount, symbol, orderId);
+    //}
+
+    public async override Task GetAssetsForAccountAsync(CryptoTradeAccount tradeAccount)
     {
         //if (GlobalData.ExchangeListName.TryGetValue(ExchangeName, out Model.CryptoExchange exchange))
         {

@@ -1,4 +1,7 @@
-﻿using Bybit.Net.Clients;
+﻿using System.Text.Encodings.Web;
+using System.Text.Json;
+
+using Bybit.Net.Clients;
 using Bybit.Net.Enums;
 using Bybit.Net.Objects;
 using Bybit.Net.Objects.Models.Socket;
@@ -106,6 +109,7 @@ public class Api : ExchangeBase
     {
         await FetchSymbols.ExecuteAsync();
     }
+        
     public async override Task FetchCandlesAsync()
     {
         await FetchCandles.ExecuteAsync();
@@ -163,6 +167,11 @@ public class Api : ExchangeBase
         CryptoOrderType orderType, CryptoOrderSide orderSide,
         decimal quantity, decimal price, decimal? stop, decimal? limit)
     {
+        // debug
+        //GlobalData.AddTextToLogTab(string.Format("{0} {1} (debug={2} {3})", symbol.Name, "not at this moment", price, quantity));
+        //return (false, null);
+
+
         // Controleer de limiten van de maximum en minimum bedrag en de quantity
         if (!symbol.InsideBoundaries(quantity, price, out string text))
         {
@@ -202,7 +211,6 @@ public class Api : ExchangeBase
 
         // Plaats een order op de exchange *ze lijken op elkaar, maar het is net elke keer anders)
         using BybitRestClient client = new();
-
 
         WebCallResult<BybitOrderId> result;
         switch (orderType)
@@ -383,7 +391,34 @@ public class Api : ExchangeBase
         }
     }
 
+    static public void PickupTrade(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoTrade trade, BybitSpotUserTradeV3 item)
+    {
+        trade.TradeTime = item.TradeTime;
 
+        trade.TradeAccount = tradeAccount;
+        trade.TradeAccountId = tradeAccount.Id;
+        trade.Exchange = symbol.Exchange;
+        trade.ExchangeId = symbol.ExchangeId;
+        trade.Symbol = symbol;
+        trade.SymbolId = symbol.Id;
+
+        trade.TradeId = item.TradeId.ToString();
+        trade.OrderId = item.OrderId.ToString();
+
+        trade.Price = item.Price;
+        trade.Quantity = item.Quantity;
+        trade.QuoteQuantity = item.Price * item.Quantity;
+        trade.Commission = item.Fee;
+        trade.CommissionAsset = item.FeeAsset;
+    }
+
+
+    public override async Task GetTradesForSymbolAsync(CryptoDatabase database, CryptoPosition position)
+    {
+        await FetchTrades.FetchTradesForSymbolAsync(database, position);
+    }
+	
+	
     static public void PickupOrder(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoOrder order, Bybit.Net.Objects.Models.V5.BybitOrder item)
     {
         order.CreateTime = item.CreateTime;
@@ -406,42 +441,63 @@ public class Api : ExchangeBase
         order.QuoteQuantity = item.Price.Value * item.Quantity;
 
         order.AveragePrice = item.AveragePrice;
-        order.Quantity = item.Quantity;
-        order.QuoteQuantity = item.Price.Value * item.Quantity;
+        order.QuantityFilled = item.QuantityFilled;
+        order.QuoteQuantityFilled = item.Price.Value * item.QuantityFilled;
 
-        order.Commission = item.ExecutedFee.Value;
-        order.CommissionAsset = item.FeeAsset;
+        // Bybit spot does currently not return any info on fees
+        order.Commission = 0; // item.ExecutedFee;
+        order.CommissionAsset = ""; //  item.FeeAsset;
     }
 
 
-    public override async Task GetOrdersForPositionAsync(CryptoPosition position)
+    public override async Task GetOrdersForPositionAsync(CryptoDatabase database, CryptoPosition position)
     {
         // Behoorlijk weinig error control ...... 
+
+        DateTime? from = position.Symbol.LastOrderFetched;
+        if (from == null)
+            from = position.CreateTime.AddHours(-1);
 
         using var client = new BybitRestClient();
         var info = await client.V5Api.Trading.GetOrderHistoryAsync(
             Category.Spot, symbol: position.Symbol.Name, 
-            startTime: position.CreateTime.AddHours(-1));
+            startTime: from);
 
         
         if (info.Success && info.Data != null)
         {
             foreach (var item in info.Data.List)
             {
-                if (!position.Symbol.OrderList.ContainsKey(item.OrderId))
+                if (position.Symbol.OrderList.TryGetValue(item.OrderId, out CryptoOrder order))
                 {
-                    CryptoOrder order = new();
+                    PickupOrder(position.TradeAccount, position.Symbol, order, item);
+                    database.Connection.Update<CryptoOrder>(order);
+                }
+                else
+                {
+                    order = new();
                     PickupOrder(position.TradeAccount, position.Symbol, order, item);
                     position.Symbol.OrderList.Add(order.OrderId, order);
+                    database.Connection.Insert<CryptoOrder>(order);
                 }
+
+                if (position.Symbol.LastOrderFetched == null || order.CreateTime > position.Symbol.LastOrderFetched)
+                    position.Symbol.LastOrderFetched = order.CreateTime;
+
+
+                string text = JsonSerializer.Serialize(item, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = false }).Trim();
+                GlobalData.AddTextToLogTab($"{item.Symbol} Order 'input' details json={text}");
+                //text = JsonSerializer.Serialize(order, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = false }).Trim();
+                //GlobalData.AddTextToLogTab($"{item.Symbol} Order 'order' details json={text}");
             }
+            database.Connection.Update<CryptoSymbol>(position.Symbol);
         }
         else
             GlobalData.AddTextToLogTab($"Error reading orders from {Api.ExchangeName} for {position.Symbol.Name} {info.Error}");
     }
 
 
-    public async override Task FetchAssetsAsync(CryptoTradeAccount tradeAccount)
+    public async override Task GetAssetsForAccountAsync(CryptoTradeAccount tradeAccount)
     {
         //if (GlobalData.ExchangeListName.TryGetValue(ExchangeName, out Model.CryptoExchange exchange))
         {

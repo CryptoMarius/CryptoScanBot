@@ -1,13 +1,13 @@
 ﻿using Bybit.Net.Clients;
 using Bybit.Net.Enums;
 
-using CryptoSbmScanner.Context;
-using CryptoSbmScanner.Intern;
-using CryptoSbmScanner.Model;
+using CryptoScanBot.Context;
+using CryptoScanBot.Intern;
+using CryptoScanBot.Model;
 
 using Dapper.Contrib.Extensions;
 
-namespace CryptoSbmScanner.Exchange.BybitFutures;
+namespace CryptoScanBot.Exchange.BybitFutures;
 
 #if TRADEBOT
 public class FetchTradeForOrder

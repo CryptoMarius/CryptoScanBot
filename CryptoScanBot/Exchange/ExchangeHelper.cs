@@ -1,4 +1,5 @@
-﻿using CryptoScanBot.Enums;
+﻿using CryptoScanBot.Context;
+using CryptoScanBot.Enums;
 using CryptoScanBot.Intern;
 using CryptoScanBot.Model;
 using CryptoScanBot.Settings;
@@ -53,18 +54,25 @@ public class ExchangeHelper
     }
 
 #if TRADEBOT
-    public static async Task FetchAssetsAsync(CryptoTradeAccount tradeAccount)
+    public static async Task GetAssetsForAccountAsync(CryptoTradeAccount tradeAccount)
     {
         if (tradeAccount == null || tradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
             return;
-        await GetApiInstance().FetchAssetsAsync(tradeAccount);
+        await GetApiInstance().GetAssetsForAccountAsync(tradeAccount);
     }
 
-    public static async Task GetOrdersForPositionAsync(CryptoPosition position)
+	public static async Task GetOrdersForPositionAsync(CryptoDatabase database, CryptoPosition position)
     {
         if (position.TradeAccount == null || position.TradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
             return;
-        await GetApiInstance().GetOrdersForPositionAsync(position);
+        await GetApiInstance().GetOrdersForPositionAsync(database, position);
+    }
+
+    public static async Task GetTradesForPositionAsync(CryptoDatabase database, CryptoPosition position)
+    {
+        if (position.TradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
+            return;
+        await GetApiInstance().GetTradesForSymbolAsync(database, position);
     }
 
     public static async Task<(bool succes, TradeParams tradeParams)> Cancel(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoPositionStep step)

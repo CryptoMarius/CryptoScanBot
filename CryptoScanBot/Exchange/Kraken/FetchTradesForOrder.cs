@@ -1,15 +1,15 @@
 ﻿using Kraken.Net.Clients;
 using Kraken.Net.Enums;
 
-using CryptoSbmScanner.Context;
-using CryptoSbmScanner.Intern;
-using CryptoSbmScanner.Model;
+using CryptoScanBot.Context;
+using CryptoScanBot.Intern;
+using CryptoScanBot.Model;
 
 using Dapper.Contrib.Extensions;
 using Kraken.Net.Objects.Models;
 using CryptoExchange.Net.Objects;
 
-namespace CryptoSbmScanner.Exchange.Kraken;
+namespace CryptoScanBot.Exchange.Kraken;
 
 #if TRADEBOT
 public class FetchTradeForOrder

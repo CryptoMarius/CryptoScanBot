@@ -330,6 +330,34 @@ public class Api : ExchangeBase
         }
     }
 
+    static public void PickupTrade(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoTrade trade, KrakenUserTrade item)
+    {
+        trade.TradeTime = item.Timestamp;
+
+        trade.TradeAccount = tradeAccount;
+        trade.TradeAccountId = tradeAccount.Id;
+        trade.Exchange = symbol.Exchange;
+        trade.ExchangeId = symbol.ExchangeId;
+        trade.Symbol = symbol;
+        trade.SymbolId = symbol.Id;
+
+        trade.TradeId = item.Id;
+        trade.OrderId = item.OrderId;
+
+        trade.Price = item.Price;
+        trade.Quantity = item.Quantity;
+        trade.QuoteQuantity = item.Price * item.Quantity;
+        trade.Commission = item.Fee;
+        trade.CommissionAsset = symbol.Quote; // item.FeeAsset;?
+    }
+
+
+    public override async Task GetTradesForSymbolAsync(CryptoDatabase database, CryptoPosition position)
+    {
+        await FetchTrades.FetchTradesForSymbolAsync(database, position);
+    }
+	
+
     static public void PickupOrder(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoOrder order, KrakenUserTrade item)
     {
         order.CreateTime = item.Timestamp;
@@ -343,9 +371,7 @@ public class Api : ExchangeBase
         order.SymbolId = symbol.Id;
 
         order.OrderId = item.OrderId;
-        //order.Type = LocalOrderType(item.OrderType); ??
         order.Side = LocalOrderSide(item.Side);
-        //order.Status = LocalOrderStatus(item.PositionStatus); ??
 
         order.Price = item.Price;
         order.Quantity = item.Quantity;
@@ -360,13 +386,13 @@ public class Api : ExchangeBase
     }
 
 
-    public override Task GetOrdersForPositionAsync(CryptoPosition position)
+    public override Task GetOrdersForPositionAsync(CryptoDatabase database, CryptoPosition position)
     {
         return Task.CompletedTask;
     }
 
 
-    public async override Task FetchAssetsAsync(CryptoTradeAccount tradeAccount)
+    public async override Task GetAssetsForAccountAsync(CryptoTradeAccount tradeAccount)
     {
         //if (GlobalData.ExchangeListName.TryGetValue(ExchangeName, out Model.CryptoExchange exchange))
         {

@@ -1,13 +1,13 @@
 ﻿using Binance.Net.Clients;
 using Binance.Net.Enums;
 
-using CryptoSbmScanner.Context;
-using CryptoSbmScanner.Intern;
-using CryptoSbmScanner.Model;
+using CryptoScanBot.Context;
+using CryptoScanBot.Intern;
+using CryptoScanBot.Model;
 
 using Dapper.Contrib.Extensions;
 
-namespace CryptoSbmScanner.Exchange.Binance;
+namespace CryptoScanBot.Exchange.Binance;
 
 #if TRADEBOT
 public class FetchTradeForOrder

@@ -1,13 +1,13 @@
 ﻿using Bybit.Net.Clients;
 using Bybit.Net.Enums;
 
-using CryptoSbmScanner.Context;
-using CryptoSbmScanner.Intern;
-using CryptoSbmScanner.Model;
+using CryptoScanBot.Context;
+using CryptoScanBot.Intern;
+using CryptoScanBot.Model;
 
 using Dapper.Contrib.Extensions;
 
-namespace CryptoSbmScanner.Exchange.BybitFutures;
+namespace CryptoScanBot.Exchange.BybitFutures;
 
 #if TRADEBOT
 /// <summary>
@@ -15,21 +15,12 @@ namespace CryptoSbmScanner.Exchange.BybitFutures;
 /// </summary>
 public class FetchTrades
 {
-    //Om meerdere updates te voorkomen (gebruiker die meerdere keren erop klikt)
-    static private readonly SemaphoreSlim Semaphore = new(1);
-    static public int tradeCount;
-
     /// <summary>
     /// Haal de trades van 1 symbol op
     /// </summary>
-    public static async Task<int> FetchTradesForSymbolAsync(CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
+    public static async Task<int> FetchTradesForSymbolAsync(CryptoDatabase database, CryptoPosition position)
     {
         using BybitRestClient client = new();
-        return await FetchTradesInternal(client, tradeAccount, symbol);
-    }
-
-    private static async Task<int> FetchTradesInternal(BybitRestClient client, CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
-    {
         int tradeCount = 0;
         try
         {
@@ -40,13 +31,13 @@ public class FetchTrades
             List<CryptoTrade> tradeCache = new();
 
             //Verzin een begin datum
-            if (symbol.LastTradeFetched == null)
+            if (position.Symbol.LastTradeFetched == null)
             {
                 isChanged = true;
-                symbol.LastTradeFetched = DateTime.Today.AddMonths(-2);
+                position.Symbol.LastTradeFetched = DateTime.Today.AddMonths(-2);
             }
             // Bybit doet het alleen in blokken van 7 dagen
-            startTime = symbol.LastTradeFetched;
+            startTime = position.Symbol.LastTradeFetched;
 
             while (startTime < DateTime.UtcNow)
             {
@@ -59,7 +50,7 @@ public class FetchTrades
 
                 // If only startTime is passed, return range between startTime and startTime+7days!!
 
-                var result = await client.V5Api.Trading.GetUserTradesAsync(Category.Linear, symbol.Name, startTime: startTime, limit: 1000);
+                var result = await client.V5Api.Trading.GetUserTradesAsync(Category.Linear, position.Symbol.Name, startTime: startTime, limit: 1000);
                 if (!result.Success)
                 {
                     GlobalData.AddTextToLogTab("error getting mytrades " + result.Error);
@@ -70,19 +61,19 @@ public class FetchTrades
                 {
                     foreach (var item in result.Data.List)
                     {
-                        if (!symbol.TradeList.TryGetValue(item.TradeId, out CryptoTrade trade))
+                        if (!position.Symbol.TradeList.TryGetValue(item.TradeId, out CryptoTrade trade))
                         {
                             trade = new CryptoTrade();
-                            Api.PickupTrade(tradeAccount, symbol, trade, item);
+                            Api.PickupTrade(position.TradeAccount, position.Symbol, trade, item);
                             tradeCache.Add(trade);
 
                             GlobalData.AddTrade(trade);
 
                             //De fetch administratie bijwerken
-                            if (trade.TradeTime > symbol.LastTradeFetched)
+                            if (trade.TradeTime > position.Symbol.LastTradeFetched)
                             {
                                 isChanged = true;
-                                symbol.LastTradeFetched = trade.TradeTime;
+                                position.Symbol.LastTradeFetched = trade.TradeTime;
                             }
                         }
                     }
@@ -92,10 +83,10 @@ public class FetchTrades
                         break;
                 }
 
-                if (startTime > symbol.LastTradeFetched)
+                if (startTime > position.Symbol.LastTradeFetched)
                 {
                     isChanged = true;
-                    symbol.LastTradeFetched = startTime;
+                    position.Symbol.LastTradeFetched = startTime;
                 }
                 startTime = startTime?.AddDays(7);
             }
@@ -103,150 +94,47 @@ public class FetchTrades
 
 
             // Verwerk de trades
-            if (tradeAccount.Id > 0) // debug
+            if (position.TradeAccount.Id > 0) // debug
             {
-                using CryptoDatabase databaseThread = new();
-                {
-                    // Extra close vanwege transactie problemen (hergebuik van connecties wellicht?)
-                    databaseThread.Close();
-                    databaseThread.Open();
-                    try
-                    {
-                        //GlobalData.AddTextToLogTab(symbol.Name);
-                        Monitor.Enter(symbol.TradeList);
-                        try
-                        {
-                            using (var transaction = databaseThread.BeginTransaction())
-                            {
-                                GlobalData.AddTextToLogTab("Trades " + symbol.Name + " " + tradeCache.Count.ToString());
-#if SQLDATABASE
-                                databaseThread.BulkInsertTrades(symbol, tradeCache, transaction);
-#else
-                                foreach (var trade in tradeCache)
-                                {
-                                    databaseThread.Connection.Insert(trade, transaction);
-                                }
-#endif
-
-                                tradeCount += tradeCache.Count;
-
-                                if (isChanged)
-                                    databaseThread.Connection.Update(symbol, transaction);
-                                transaction.Commit();
-                            }
-                        }
-                        finally
-                        {
-                            Monitor.Exit(symbol.TradeList);
-                        }
-                    }
-                    finally
-                    {
-                        databaseThread.Close();
-                    }
-                }
-            }
-        }
-        catch (Exception error)
-        {
-            ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab("error get prices " + error.ToString()); // symbol.Text + " " + 
-        }
-
-        return tradeCount;
-    }
-
-
-    private static async Task<int> ExecuteInternalAsync(Queue<CryptoSymbol> queue)
-    {
-        int tradeCount = 0;
-        try
-        {
-            // We hergebruiken de client binnen deze thread, teveel connecties opnenen resulteerd in een foutmelding:
-            // "An operation on a socket could not be performed because the system lacked sufficient buffer space or because a queue was full"
-            using BybitRestClient client = new();
-            {
-                while (true)
-                {
-                    CryptoSymbol symbol;
-
-                    // Omdat er meer threads bezig zijn moet de queue gelocked worden
-                    Monitor.Enter(queue);
-                    try
-                    {
-                        if (queue.Count > 0)
-                            symbol = queue.Dequeue();
-                        else
-                            break;
-                    }
-                    finally
-                    {
-                        Monitor.Exit(queue);
-                    }
-
-                    tradeCount += await FetchTradesInternal(client, GlobalData.ExchangeRealTradeAccount, symbol);
-                }
-            }
-        }
-        catch (Exception error)
-        {
-            ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab("error getting trades " + error.ToString()); // symbol.Text + " " + 
-        }
-        return tradeCount;
-    }
-
-    public static async Task ExecuteAsync()
-    {
-        if (GlobalData.ExchangeListName.TryGetValue(Api.ExchangeName, out Model.CryptoExchange exchange))
-        {
-            try
-            {
-                int tradeCount = 0;
-
-                //Zorgen dat er maar 1 thread tegelijk loopt die de Trades ophaal
-                //(want dan krijgen we dubbele Trades, dus blokkeren die hap)
-                await Semaphore.WaitAsync();
+                //GlobalData.AddTextToLogTab(symbol.Name);
+                Monitor.Enter(position.Symbol.TradeList);
                 try
                 {
-                    GlobalData.AddTextToLogTab("\r\n\r\n" + "Trades ophalen");
-
-                    Queue<CryptoSymbol> queue = new();
-                    foreach (var symbol in exchange.SymbolListName.Values)
+                    database.Open();
+                    using var transaction = database.BeginTransaction();
+                    GlobalData.AddTextToLogTab("Trades " + position.Symbol.Name + " " + tradeCache.Count.ToString());
+#if SQLDATABASE
+                    databaseThread.BulkInsertTrades(symbol, tradeCache, transaction);
+#else
+                    foreach (var trade in tradeCache)
                     {
-                        //if (symbol.Quote.Equals(quoteData.Name) && (symbol.Status == 1) && (!symbol.IsBarometerSymbol()))
-                        //if (CandleTools.MatchingQuote(symbol) && (symbol.Status == 1) && (!symbol.IsBarometerSymbol()))
-                        if (symbol.QuoteData.FetchCandles && symbol.Status == 1 && !symbol.IsBarometerSymbol())
-                            queue.Enqueue(symbol);
+                        database.Connection.Insert(trade, transaction);
                     }
+#endif
 
-                    // En dan door x tasks de queue leeg laten trekken
-                    List<Task> taskList = new();
-                    while (taskList.Count < 3)
-                    {
-                        Task task = Task.Run(async () => { tradeCount += await ExecuteInternalAsync(queue); });
-                        taskList.Add(task);
-                    }
-                    Task t = Task.WhenAll(taskList);
-                    t.Wait();
+                    tradeCount += tradeCache.Count;
 
-
-                    GlobalData.AddTextToLogTab(string.Format("Trades ophalen klaar ({0} records)", tradeCount), true);
+                    if (isChanged)
+                        database.Connection.Update(position.Symbol, transaction);
+                    transaction.Commit();
                 }
                 finally
                 {
-                    Semaphore.Release();
+                    Monitor.Exit(position.Symbol.TradeList);
                 }
-
-            }
-            catch (Exception error)
-            {
-                ScannerLog.Logger.Error(error, "");
-                GlobalData.AddTextToLogTab("error get trades " + error.ToString());
             }
         }
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Error(error, "");
+            GlobalData.AddTextToLogTab("error get trades " + error.ToString()); // symbol.Text + " " + 
+        }
 
+        return tradeCount;
     }
+
+
+
 }
 
 #endif

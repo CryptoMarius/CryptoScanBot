@@ -334,22 +334,23 @@ public class Api: ExchangeBase
     //}
 
 
-    //public override async Task FetchTradesForSymbolAsync(CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
-    //{
-    //    //await KucoinFetchTrades.FetchTradesForSymbol(tradeAccount, symbol);
-    //}
+    public override async Task GetTradesForSymbolAsync(CryptoDatabase database, CryptoPosition position)
+    {
+        //await KucoinFetchTrades.FetchTradesForSymbol(database, position);
+    }
 
     //public override async Task<int> FetchTradesForOrderAsync(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, string orderId)
     //{
     //    return 0; // await FetchTradeForOrder.FetchTradesForOrderAsync(tradeAccount, symbol, orderId);
     //}
 
-    public override Task GetOrdersForPositionAsync(CryptoPosition position)
+
+    public override Task GetOrdersForPositionAsync(CryptoDatabase database, CryptoPosition position)
     {
         return Task.CompletedTask;
     }
 
-    public async override Task FetchAssetsAsync(CryptoTradeAccount tradeAccount)
+    public async override Task GetAssetsForAccountAsync(CryptoTradeAccount tradeAccount)
     {
         //if (GlobalData.ExchangeListName.TryGetValue(ExchangeName, out Model.CryptoExchange exchange))
         {

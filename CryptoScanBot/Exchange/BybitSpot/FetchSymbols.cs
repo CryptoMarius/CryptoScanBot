@@ -62,27 +62,30 @@ public class FetchSymbols
 
                                 // https://api.bybit.com/v5/market/instruments-info?category=spot
                                 /*
-                                  "Data": {
-                                    "List": [
-                                      {
-                                        "Name": "BTCUSDT",
-                                        "BaseAsset": "BTC",
-                                        "QuoteAsset": "USDT",
-                                        "Status": 1,
-                                        "MarginTading": 0,
-                                        "Innovation": false,
-                                        "LotSizeFilter": {
-                                          "BasePrecision": 0.000001,
-                                          "QuotePrecision": 0.00000001,
-                                          "MinOrderQuantity": 0.000048,
-                                          "MaxOrderQuantity": 71.73956243,
-                                          "MinOrderValue": 1,
-                                          "MaxOrderValue": 2000000
-                                        },
-                                        "PriceFilter": {
-                                          "TickSize": 0.01
-                                        }
-                                      },
+                                    {
+                                    "Name": "HFTUSDT",
+                                    "BaseAsset": "HFT",
+                                    "QuoteAsset": "USDT",
+                                    "Status": 1,
+                                    "MarginTrading": 2,
+                                    "Innovation": false,
+                                    "LotSizeFilter": {
+                                        "BasePrecision": 0.01,
+                                        "QuotePrecision": 0.000001,
+                                        "MinOrderQuantity": 2.5,
+                                        "MaxOrderQuantity": 738825.267824,
+                                        "MinOrderValue": 1,
+                                        "MaxOrderValue": 200000
+                                    },
+                                    "PriceFilter": {
+                                        "TickSize": 0.0001
+                                    },
+                                    "PricePercentageFilter": {
+                                        "LimitPricePercentageLimit": 0.03,
+                                        "MarketPricePercentageLimit": 0.03
+                                    }
+                                    },
+                               
                                 enzovoort..
                                 */
                                 //Eventueel symbol toevoegen
@@ -113,6 +116,9 @@ public class FetchSymbols
                                 symbol.QuantityTickSize = symbolData.LotSizeFilter.BasePrecision;
                                 symbol.QuantityMinimum = symbolData.LotSizeFilter.MinOrderQuantity;
                                 symbol.QuantityMaximum = symbolData.LotSizeFilter.MaxOrderQuantity;
+
+                                symbol.QuoteValueMinimum = symbolData.LotSizeFilter.MinOrderValue;
+                                symbol.QuoteValueMaximum= symbolData.LotSizeFilter.MaxOrderValue;
 
 
                                 // De minimale en maximale prijs voor een order (in base price)

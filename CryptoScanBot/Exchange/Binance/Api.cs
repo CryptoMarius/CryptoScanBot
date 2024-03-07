@@ -120,14 +120,6 @@ public class Api : ExchangeBase
         //if (GlobalData.Settings.ApiKey != "")
         //  options.ApiCredentials = new BinanceApiCredentials(GlobalData.Settings.ApiKey, GlobalData.Settings.ApiSecret);
         //BinanceClient.SetDefaultOptions(options);
-
-
-        //BinanceSocketClient socketClient = new BinanceSocketClient(new BinanceSocketClientOptions
-        //{
-        //    LogLevel = LogLevel.Trace,
-        //    //    ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret)
-        //});
-
         BinanceRestClient.SetDefaultOptions(options =>
         {
             options.ReceiveWindow = TimeSpan.FromSeconds(15);
@@ -149,8 +141,6 @@ public class Api : ExchangeBase
             if (GlobalData.TradingApi.Key != "")
                 options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
         });
-
-
 
         ExchangeHelper.PriceTicker = new PriceTicker();
         ExchangeHelper.KLineTicker = new KLineTicker();
@@ -493,6 +483,34 @@ public class Api : ExchangeBase
     }
 
 
+    static public void PickupTrade(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoTrade trade, BinanceTrade item)
+    {
+        trade.TradeTime = item.Timestamp;
+
+        trade.TradeAccount = tradeAccount;
+        trade.TradeAccountId = tradeAccount.Id;
+        trade.Exchange = symbol.Exchange;
+        trade.ExchangeId = symbol.ExchangeId;
+        trade.Symbol = symbol;
+        trade.SymbolId = symbol.Id;
+
+        trade.TradeId = item.Id.ToString();
+        trade.OrderId = item.OrderId.ToString();
+    
+        trade.Price = item.Price;
+        trade.Quantity = item.Quantity;
+        trade.QuoteQuantity = item.Price * item.Quantity;
+        trade.Commission = item.Fee;
+        trade.CommissionAsset = item.FeeAsset;
+    }
+
+
+    public override async Task GetTradesForSymbolAsync(CryptoDatabase database, CryptoPosition position)
+    {
+        await BinanceFetchTrades.FetchTradesForSymbolAsync(database, position);
+    }
+	
+	
     static public void PickupOrder(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoOrder order, BinanceStreamOrderUpdate item)
     {
         order.CreateTime = item.CreateTime;
@@ -523,12 +541,13 @@ public class Api : ExchangeBase
     }
 
 
-    public override Task GetOrdersForPositionAsync(CryptoPosition position)
+    public override Task GetOrdersForPositionAsync(CryptoDatabase database, CryptoPosition position)
     {
         return Task.CompletedTask;
     }
 
-    public async override Task FetchAssetsAsync(CryptoTradeAccount tradeAccount)
+
+    public async override Task GetAssetsForAccountAsync(CryptoTradeAccount tradeAccount)
     {
         {
             try
