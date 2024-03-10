@@ -10,11 +10,8 @@ public class CommandCopySymbolInfo : CommandBase
     public override void Execute(object sender)
     {
         string text = "";
-
         if (sender is CryptoSymbol symbol)
-        {
-            Clipboard.SetText(symbol.Name, TextDataFormat.UnicodeText);
-        }
+            text = symbol.Name;
 
         if (text == "")
             Clipboard.Clear();

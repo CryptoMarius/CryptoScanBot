@@ -1,5 +1,4 @@
 ﻿using System.Collections;
-using System.ComponentModel;
 using System.Runtime.InteropServices;
 using CryptoScanBot.Commands;
 using CryptoScanBot.Intern;
@@ -68,7 +67,7 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         List = list;
         ColumnList = columnList;
 
-        InitializeDataGrid();
+        InitializeGrid();
         InitializeHeaders();
         ShowSortIndicator();
         FillColumnPopup();
@@ -122,7 +121,7 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         return c;
     }
 
-    private void InitializeDataGrid()
+    private void InitializeGrid()
     {
         // https://stackoverflow.com/questions/35214250/c-sharp-using-icomparer-to-sort-x-number-of-columns
 
@@ -135,6 +134,7 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         Grid.ReadOnly = true;
         Grid.VirtualMode = true;
         
+        // TODO testen 
         Grid.RowHeadersWidth = 20;
         Grid.RowHeadersVisible = false; // the first column to select rows
         Grid.RowHeadersDefaultCellStyle.BackColor = Grid.DefaultCellStyle.BackColor;
@@ -151,14 +151,27 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         Grid.ColumnHeadersDefaultCellStyle.SelectionBackColor = Grid.ColumnHeadersDefaultCellStyle.BackColor;
         Grid.ColumnHeadersDefaultCellStyle.SelectionForeColor = Grid.ColumnHeadersDefaultCellStyle.ForeColor;
 
-        Grid.RowTemplate.Height = 21;
+        //var font = Grid.DefaultCellStyle.Font;
+        //font.he
+        //var ratio = (float)font.FontFamily.GetEmHeight(font.Style) / (float)font.SizeInPoints;
+        //Grid.RowTemplate.Height = (int)((font.FontFamily.GetCellAscent(font.Style) + font.FontFamily.GetCellDescent(font.Style)) / ratio);
+        //GetLineSpacing(FontStyle.Regular)
+        //int ascent = Grid.Font.FontFamily.GetCellAscent(FontStyle.Regular);
+        //int desscent = Grid.Font.FontFamily.GetCellAscent(FontStyle.Regular);
+        //Grid.RowTemplate.Height = ascent + desscent + 4;
+        //var points = font.SizeInPoints;
+        //var pixels = points * Grid.DpiX / 72;
+        //MessageBox.Show("myFont size in pixels: " + pixels);
+        //int lineSpacing = font.FontFamily.GetLineSpacing(FontStyle.Regular);
+        //float lineSpacingPixel = font.Size * lineSpacing / font.FontFamily.GetEmHeight(FontStyle.Regular);
+        Grid.RowTemplate.Height = Grid.RowTemplate.Height - 1;
 
         Grid.GridColor = Color.Black; // VeryLightGray1;
         Grid.BackgroundColor = Grid.DefaultCellStyle.BackColor;
-        Grid.BorderStyle = BorderStyle.None; // Fixed3D, FixedSingle;
-        //Grid.CellBorderStyle = DataGridViewCellBorderStyle.None;
-        Grid.RowHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single; // Single;
-        Grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single; // Raised;
+        
+        Grid.BorderStyle = BorderStyle.None; // Fixed3D, FixedSingle; // Rand rond de grids
+        //Grid.RowHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single; // Single;
+        //Grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single; // Raised;
 
         Grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
         //Grid.DefaultCellStyle.SelectionBackColor = Grid.DefaultCellStyle.BackColor;
@@ -167,7 +180,7 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         //Grid.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.Fill; // DisplayedCells; ?
         Grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None; // AllCellsExceptHeader; // AllCells; // DisplayedCells;
         Grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
-        //Grid.CellBorderStyle = DataGridViewCellBorderStyle.Single;
+        Grid.CellBorderStyle = DataGridViewCellBorderStyle.Single;
 
         Grid.CellFormatting += CellFormattingEvent;
         Grid.CellValueNeeded += new DataGridViewCellValueEventHandler(GetTextFunction);
@@ -455,56 +468,68 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
     }
 
 
-    internal void AddStandardSymbolCommands(ContextMenuStrip menuStrip, bool isSignal)
+    internal static void AddCommand(ContextMenuStrip menuStrip, CryptoDataGrid dataGrid, string text, Command command, EventHandler? click)
     {
-        ToolStripMenuItemCommand menuCommand;
-
-        menuCommand = new();
-        menuCommand.DataGrid = this;
-        menuCommand.Text = "Activate trading app";
-        menuCommand.Command = Command.ActivateTradingApp;
-        menuCommand.Click += CommandTools.ExecuteCommandCommandViaTag;
-        menuStrip.Items.Add(menuCommand);
-
-        menuCommand = new();
-        menuCommand.DataGrid = this;
-        menuCommand.Text = "TradingView browser";
-        menuCommand.Command = Command.ActivateTradingviewIntern;
-        menuCommand.Click += CommandTools.ExecuteCommandCommandViaTag;
-        menuStrip.Items.Add(menuCommand);
-
-        menuCommand = new();
-        menuCommand.Text = "TradingView extern";
-        menuCommand.Command = Command.ActivateTradingviewExtern;
-        menuCommand.Click += CommandTools.ExecuteCommandCommandViaTag;
-        menuStrip.Items.Add(menuCommand);
-
-
-        menuStrip.Items.Add(new ToolStripSeparator());
-
-        menuCommand = new();
-        menuCommand.DataGrid = this;
-        menuCommand.Text = "Kopiëer informatie";
-        if (isSignal)
-            menuCommand.Command = Command.CopySignalInformation;
-        else
-            menuCommand.Command = Command.CopySymbolInformation;
-        menuCommand.Click += CommandTools.ExecuteCommandCommandViaTag;
-        menuStrip.Items.Add(menuCommand);
-
-        menuCommand = new();
-        menuCommand.DataGrid = this;
-        menuCommand.Text = "Trend informatie (zie log)";
-        menuCommand.Command = Command.ShowTrendInformation;
-        menuCommand.Click += CommandTools.ExecuteCommandCommandViaTag;
-        menuStrip.Items.Add(menuCommand);
-
-        menuCommand = new();
-        menuCommand.DataGrid = this;
-        menuCommand.Text = "Symbol informatie (Excel)";
-        menuCommand.Command = Command.ExcelSymbolInformation;
-        menuCommand.Click += CommandTools.ExecuteCommandCommandViaTag;
-        menuStrip.Items.Add(menuCommand);
+        ToolStripMenuItemCommand menuItem = new()
+        {
+            Command = command,
+            DataGrid = dataGrid,
+            Text = text
+        };
+        menuItem.Click += click;
+        menuStrip.Items.Add(menuItem);
     }
+
+
+    //internal void AddStandardSymbolCommands(ContextMenuStrip menuStrip, bool isSignal)
+    //{
+    //    //ToolStripMenuItemCommand menuCommand;
+    //    //menuCommand = new();
+    //    //menuCommand.DataGrid = this;
+    //    //menuCommand.Text = "Activate trading app";
+    //    //menuCommand.Command = Command.ActivateTradingApp;
+    //    //menuCommand.Click += CommandTools.ExecuteCommandCommandViaTag;
+    //    //menuStrip.Items.Add(menuCommand);
+
+    //    //menuCommand = new();
+    //    //menuCommand.DataGrid = this;
+    //    //menuCommand.Text = "TradingView browser";
+    //    //menuCommand.Command = Command.ActivateTradingviewIntern;
+    //    //menuCommand.Click += CommandTools.ExecuteCommandCommandViaTag;
+    //    //menuStrip.Items.Add(menuCommand);
+
+    //    //menuCommand = new();
+    //    //menuCommand.Text = "TradingView extern";
+    //    //menuCommand.Command = Command.ActivateTradingviewExtern;
+    //    //menuCommand.Click += CommandTools.ExecuteCommandCommandViaTag;
+    //    //menuStrip.Items.Add(menuCommand);
+
+
+    //    //menuStrip.Items.Add(new ToolStripSeparator());
+
+    //    //menuCommand = new();
+    //    //menuCommand.DataGrid = this;
+    //    //menuCommand.Text = "Kopiëer informatie";
+    //    //if (isSignal)
+    //    //    menuCommand.Command = Command.CopySignalInformation;
+    //    //else
+    //    //    menuCommand.Command = Command.CopySymbolInformation;
+    //    //menuCommand.Click += CommandTools.ExecuteCommandCommandViaTag;
+    //    //menuStrip.Items.Add(menuCommand);
+
+    //    //menuCommand = new();
+    //    //menuCommand.DataGrid = this;
+    //    //menuCommand.Text = "Trend informatie (zie log)";
+    //    //menuCommand.Command = Command.ShowTrendInformation;
+    //    //menuCommand.Click += CommandTools.ExecuteCommandCommandViaTag;
+    //    //menuStrip.Items.Add(menuCommand);
+
+    //    //menuCommand = new();
+    //    //menuCommand.DataGrid = this;
+    //    //menuCommand.Text = "Symbol informatie (Excel)";
+    //    //menuCommand.Command = Command.ExcelSymbolInformation;
+    //    //menuCommand.Click += CommandTools.ExecuteCommandCommandViaTag;
+    //    //menuStrip.Items.Add(menuCommand);
+    //}
 
 }

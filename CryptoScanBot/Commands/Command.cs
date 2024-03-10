@@ -2,6 +2,7 @@
 
 public enum Command
 {
+    None,
     ActivateTradingApp,
     ActivateTradingviewIntern,
     ActivateTradingviewExtern,
@@ -9,7 +10,7 @@ public enum Command
     ExcelSymbolInformation,
     ExcelExchangeInformation,
     ExcelPositionInformation,
-    CopySignalInformation,
+    //CopySignalInformation,
     CopySymbolInformation,
     About
 }

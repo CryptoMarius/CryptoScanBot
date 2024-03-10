@@ -1,21 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-
-using CryptoScanBot.Settings;
+﻿using CryptoScanBot.Settings;
 
 namespace CryptoScanBot;
 
 public partial class CryptoDataGridColumns : Form
 {
-    private List<CheckBox> List = [];
     private CryptoDataGrid Grid;
+    private readonly List<CheckBox> List = [];
 
     public CryptoDataGridColumns()
     {

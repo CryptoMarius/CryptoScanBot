@@ -56,9 +56,9 @@ public class CommandTools
                 case Command.CopySymbolInformation:
                     new CommandCopySymbolInfo().Execute(symbol);
                     break;
-                case Command.CopySignalInformation:
-                    new CommandCopySignalInfo().Execute(sender); // werkt niet meer
-                    break;
+                //case Command.CopySignalInformation:
+                //   new CommandCopySignalInfo().Execute(sender);
+                //    break;
                 case Command.ActivateTradingApp:
                     LinkTools.ActivateTradingApp(GlobalData.Settings.General.TradingApp, symbol, interval, CryptoExternalUrlType.External);
                     break;

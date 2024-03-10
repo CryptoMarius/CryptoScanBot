@@ -41,30 +41,19 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
 
     public override void InitializeCommands(ContextMenuStrip menuStrip)
     {
-        AddStandardSymbolCommands(menuStrip, false);
+        AddCommand(menuStrip, this, "Activate trading app", Command.ActivateTradingApp, CommandTools.ExecuteCommandCommandViaTag);
+        AddCommand(menuStrip, this, "TradingView internal", Command.ActivateTradingviewIntern, CommandTools.ExecuteCommandCommandViaTag);
+        AddCommand(menuStrip, this, "TradingView external", Command.ActivateTradingviewExtern, CommandTools.ExecuteCommandCommandViaTag);
 
         menuStrip.Items.Add(new ToolStripSeparator());
+        AddCommand(menuStrip, this, "Copy symbol name", Command.CopySymbolInformation, CommandTools.ExecuteCommandCommandViaTag);
+        AddCommand(menuStrip, this, "Trend information (log)", Command.ShowTrendInformation, CommandTools.ExecuteCommandCommandViaTag);
+        AddCommand(menuStrip, this, "Symbol information (Excel)", Command.ExcelSymbolInformation, CommandTools.ExecuteCommandCommandViaTag);
 
-        ToolStripMenuItemCommand menuCommand;
-
-        menuCommand = new();
-        menuCommand.DataGrid = this;
-        menuCommand.Text = "Positie herberekenen";
-        menuCommand.Click += CommandPositionsClosedRecalculateExecute;
-        menuStrip.Items.Add(menuCommand);
-
-        menuCommand = new();
-        menuCommand.DataGrid = this;
-        menuCommand.Text = "Positie verwijderen uit database";
-        menuCommand.Click += CommandPositionsClosedDeleteFromDatabaseAsync;
-        menuStrip.Items.Add(menuCommand);
-
-        menuCommand = new();
-        menuCommand.DataGrid = this;
-        menuCommand.Text = "Positie informatie (Excel)";
-        menuCommand.Command = Command.ExcelPositionInformation;
-        menuCommand.Click += CommandTools.ExecuteCommandCommandViaTag;
-        menuStrip.Items.Add(menuCommand);
+        menuStrip.Items.Add(new ToolStripSeparator());
+        AddCommand(menuStrip, this, "Position recalculate", Command.None, CommandPositionRecalculateExecute);
+        AddCommand(menuStrip, this, "Position delete from database", Command.None, CommandPositionDeleteFromDatabaseAsync);
+        AddCommand(menuStrip, this, "Position information (Excel)", Command.ExcelPositionInformation, CommandTools.ExecuteCommandCommandViaTag);
     }
 
     public override void InitializeHeaders()
@@ -342,7 +331,7 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
     }
 
 
-    private async void CommandPositionsClosedRecalculateExecute(object sender, EventArgs e)
+    private async void CommandPositionRecalculateExecute(object sender, EventArgs e)
     {
         CryptoPosition position = GetSelectedObject(out int rowIndex);
         if (position != null)
@@ -362,7 +351,7 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
     }
 
 
-    private async void CommandPositionsClosedDeleteFromDatabaseAsync(object sender, EventArgs e)
+    private async void CommandPositionDeleteFromDatabaseAsync(object sender, EventArgs e)
     {
         CryptoPosition position = GetSelectedObject(out int _);
         if (position != null)
@@ -374,12 +363,7 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
             {
                 using CryptoDatabase databaseThread = new();
                 databaseThread.Connection.Open();
-
-                // Controleer de orders, en herbereken het geheel
                 PositionTools.LoadPosition(databaseThread, position);
-                await TradeTools.LoadOrdersFromDatabaseAndExchangeAsync(databaseThread, position);
-                await TradeTools.CalculatePositionResultsViaOrders(databaseThread, position);
-                
 
                 using var transaction = databaseThread.BeginTransaction();
                 databaseThread.Connection.Execute($"delete from positionstep where positionid={position.Id}", transaction);

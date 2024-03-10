@@ -46,62 +46,34 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
         DustValue,
     }
 
-    private System.Windows.Forms.Timer TimerRefreshSomething;
+    private System.Windows.Forms.Timer TimerRefreshInformation;
 
-
-    private void InitializeTimers()
-    {
-        TimerRefreshSomething = new()
-        {
-            Interval = 15 * 1000
-        };
-        TimerRefreshSomething.Tick += TimerRefreshSomething_Tick;
-        TimerRefreshSomething.Enabled = true;
-    }
 
     public override void InitializeCommands(ContextMenuStrip menuStrip)
     {
-        AddStandardSymbolCommands(menuStrip, false);
+        AddCommand(menuStrip, this, "Activate trading app", Command.ActivateTradingApp, CommandTools.ExecuteCommandCommandViaTag);
+        AddCommand(menuStrip, this, "TradingView internal", Command.ActivateTradingviewIntern, CommandTools.ExecuteCommandCommandViaTag);
+        AddCommand(menuStrip, this, "TradingView external", Command.ActivateTradingviewExtern, CommandTools.ExecuteCommandCommandViaTag);
 
         menuStrip.Items.Add(new ToolStripSeparator());
+        AddCommand(menuStrip, this, "Copy symbol name", Command.CopySymbolInformation, CommandTools.ExecuteCommandCommandViaTag);
+        AddCommand(menuStrip, this, "Trend information (log)", Command.ShowTrendInformation, CommandTools.ExecuteCommandCommandViaTag);
+        AddCommand(menuStrip, this, "Symbol information (Excel)", Command.ExcelSymbolInformation, CommandTools.ExecuteCommandCommandViaTag);
 
-        ToolStripMenuItemCommand menuCommand;
-        menuCommand = new();
-        menuCommand.DataGrid = this;
-        menuCommand.Text = "Positie herberekenen";
-        menuCommand.Click += CommandPositionsOpenRecalculateExecute;
-        menuStrip.Items.Add(menuCommand);
+        menuStrip.Items.Add(new ToolStripSeparator());
+        AddCommand(menuStrip, this, "Position recalculate", Command.None, CommandPositionRecalculateExecute);
+        AddCommand(menuStrip, this, "Position delete from database", Command.None, CommandPositionDeleteFromDatabaseAsync);
+        AddCommand(menuStrip, this, "Position add additional DCA", Command.None, CommandPositionCreateAdditionalDca);
+        AddCommand(menuStrip, this, "Position cancel open DCA", Command.None, CommandPositionRemoveAdditionalDca);
+        AddCommand(menuStrip, this, "Position take profit (if possible)", Command.None, CommandPositionLastPartTakeProfit);
+        AddCommand(menuStrip, this, "Position information (Excel)", Command.ExcelPositionInformation, CommandTools.ExecuteCommandCommandViaTag);
 
-        menuCommand = new();
-        menuCommand.DataGrid = this;
-        menuCommand.Text = "Positie verwijderen uit database";
-        menuCommand.Click += CommandPositionsOpenDeleteFromDatabaseAsync;
-        menuStrip.Items.Add(menuCommand);
-
-        menuCommand = new();
-        menuCommand.DataGrid = this;
-        menuCommand.Text = "Extra DCA toevoegen aan de positie";
-        menuCommand.Click += CommandPositionsOpenCreateAdditionalDca;
-        menuStrip.Items.Add(menuCommand);
-
-        menuCommand = new();
-        menuCommand.DataGrid = this;
-        menuCommand.Text = "Openstaande DCA van positie annuleren";
-        menuCommand.Click += CommandPositionsOpenRemoveAdditionalDca;
-        menuStrip.Items.Add(menuCommand);
-
-        menuCommand = new();
-        menuCommand.DataGrid = this;
-        menuCommand.Text = "Positie profit nemen (indien mogelijk)";
-        menuCommand.Click += CommandPositionsOpenLastPartTakeProfit;
-        menuStrip.Items.Add(menuCommand);
-
-        menuCommand = new();
-        menuCommand.DataGrid = this;
-        menuCommand.Text = "Positie informatie (Excel)";
-        menuCommand.Command = Command.ExcelPositionInformation;
-        menuCommand.Click += CommandTools.ExecuteCommandCommandViaTag;
-        menuStrip.Items.Add(menuCommand);
+        TimerRefreshInformation = new()
+        {
+            Enabled = true,
+            Interval = 15 * 1000,
+        };
+        TimerRefreshInformation.Tick += RefreshInformation;
     }
 
     public override void InitializeHeaders()
@@ -481,7 +453,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
         cell.Style.ForeColor = foreColor;
     }
 
-    private async void CommandPositionsOpenRecalculateExecute(object sender, EventArgs e)
+    private async void CommandPositionRecalculateExecute(object sender, EventArgs e)
     {
         CryptoPosition position = GetSelectedObject(out int rowIndex);
         if (position != null)
@@ -501,7 +473,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
     }
 
 
-    private async void CommandPositionsOpenDeleteFromDatabaseAsync(object sender, EventArgs e)
+    private void CommandPositionDeleteFromDatabaseAsync(object sender, EventArgs e)
     {
         CryptoPosition position = GetSelectedObject(out int _);
         if (position != null)
@@ -514,12 +486,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
             {
                 using CryptoDatabase databaseThread = new();
                 databaseThread.Connection.Open();
-
-                // Controleer de orders, en herbereken het geheel
                 PositionTools.LoadPosition(databaseThread, position);
-                await TradeTools.LoadOrdersFromDatabaseAndExchangeAsync(databaseThread, position);
-                await TradeTools.CalculatePositionResultsViaOrders(databaseThread, position);
-
 
                 using var transaction = databaseThread.BeginTransaction();
                 databaseThread.Connection.Execute($"delete from positionstep where positionid={position.Id}", transaction);
@@ -541,7 +508,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
     }
 
 
-    private async void CommandPositionsOpenCreateAdditionalDca(object sender, EventArgs e)
+    private async void CommandPositionCreateAdditionalDca(object sender, EventArgs e)
     {
         CryptoPosition position = GetSelectedObject(out int rowIndex);
         if (position != null)
@@ -613,7 +580,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
     }
 
 
-    private async void CommandPositionsOpenRemoveAdditionalDca(object sender, EventArgs e)
+    private async void CommandPositionRemoveAdditionalDca(object sender, EventArgs e)
     {
         CryptoPosition position = GetSelectedObject(out int rowIndex);
         if (position != null)
@@ -676,7 +643,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
     }
 
 
-    private async void CommandPositionsOpenLastPartTakeProfit(object sender, EventArgs e)
+    private async void CommandPositionLastPartTakeProfit(object sender, EventArgs e)
     {
 
         CryptoPosition position = GetSelectedObject(out int rowIndex);
@@ -705,7 +672,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
 
                     // Is er een entry order in zijn geheel gevuld (lastig indien er meerdere entries komen)
                     CryptoPositionStep step = PositionTools.FindPositionPartStep(part, entryOrderSide, true);
-                    if (step != null && step.Status == CryptoOrderStatus.Filled)
+                    if (step != null && step.Status.IsFilled())
                     {
 
                         // Is de entry prijs wel hoger/lager dan de actuele prijs?
@@ -756,7 +723,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
     }
 
 
-    private void TimerRefreshSomething_Tick(object sender, EventArgs e)
+    private void RefreshInformation(object sender, EventArgs e)
     {
         Grid.SuspendDrawing();
         try

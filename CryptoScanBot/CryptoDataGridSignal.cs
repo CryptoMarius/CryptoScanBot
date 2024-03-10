@@ -1,4 +1,5 @@
-﻿using CryptoScanBot.Enums;
+﻿using CryptoScanBot.Commands;
+using CryptoScanBot.Enums;
 using CryptoScanBot.Intern;
 using CryptoScanBot.Model;
 using CryptoScanBot.Settings;
@@ -42,31 +43,33 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
         Trend12h,
     }
 
-    private System.Windows.Forms.Timer TimerClearEvents;
-    private System.Windows.Forms.Timer TimerRefreshSomething;
+    private System.Windows.Forms.Timer TimerClearOldSignals;
+    private System.Windows.Forms.Timer TimerRefreshInformation;
 
-    private void InitializeTimers()
-    {
-        TimerClearEvents = new()
-        {
-            Enabled = true,
-            Interval = 1 * 60 * 1000,
-        };
-        TimerClearEvents.Tick += ClearOldSignals;
-
-        TimerRefreshSomething = new()
-        {
-            Interval = 15 * 1000
-        };
-        TimerRefreshSomething.Tick += TimerRefreshSomething_Tick;
-        TimerRefreshSomething.Enabled = true;
-    }
 
     public override void InitializeCommands(ContextMenuStrip menuStrip)
     {
-        AddStandardSymbolCommands(menuStrip, true);
+        AddCommand(menuStrip, this, "Activate trading app", Command.ActivateTradingApp, CommandTools.ExecuteCommandCommandViaTag);
+        AddCommand(menuStrip, this, "TradingView internal", Command.ActivateTradingviewIntern, CommandTools.ExecuteCommandCommandViaTag);
+        AddCommand(menuStrip, this, "TradingView external", Command.ActivateTradingviewExtern, CommandTools.ExecuteCommandCommandViaTag);
+        menuStrip.Items.Add(new ToolStripSeparator());
+        AddCommand(menuStrip, this, "Copy symbol name", Command.CopySymbolInformation, CommandTools.ExecuteCommandCommandViaTag);
+        AddCommand(menuStrip, this, "Trend information (log)", Command.ShowTrendInformation, CommandTools.ExecuteCommandCommandViaTag);
+        AddCommand(menuStrip, this, "Symbol information (Excel)", Command.ExcelSymbolInformation, CommandTools.ExecuteCommandCommandViaTag);
 
-        InitializeTimers();
+        TimerClearOldSignals = new()
+        {
+            Enabled = true,
+            Interval = 15 * 1000
+        };
+        TimerClearOldSignals.Tick += ClearOldSignals;
+
+        TimerRefreshInformation = new()
+        {
+            Enabled = true,
+            Interval = 120 * 1000
+        };
+        TimerRefreshInformation.Tick += RefreshInformation;
     }
 
 
@@ -233,7 +236,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                     e.Value = signal.Interval.Name;
                     break;
                 case ColumnsForGrid.Mode:
-                    e.Value = signal.Side;
+                    e.Value = signal.SideText;
                     break;
                 case ColumnsForGrid.Strategy:
                     e.Value = signal.StrategyText;
@@ -585,7 +588,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
         }
     }
 
-    private void TimerRefreshSomething_Tick(object sender, EventArgs e)
+    private void RefreshInformation(object sender, EventArgs e)
     {
         Grid.SuspendDrawing();
         try
