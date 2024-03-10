@@ -91,19 +91,19 @@ public class ScannerLog
         config.LoggingRules.Add(rule);
 
 
-        //fileTarget = new NLog.Targets.FileTarget();
-        //config.AddTarget("file", fileTarget);
-        //fileTarget.Name = "trace";
-        //fileTarget.KeepFileOpen = true;
-        //fileTarget.MaxArchiveDays = 14;
-        //fileTarget.ArchiveEvery = NLog.Targets.FileArchivePeriod.Day; // None?
-        //fileTarget.FileName = logPrefix + ${date:format=yyyy-MM-dd}-Trace.log";
-        //rule = new NLog.Config.LoggingRule("*", NLog.LogLevel.Trace, fileTarget);
-        //config.LoggingRules.Add(rule);
+        fileTarget = new NLog.Targets.FileTarget();
+        config.AddTarget("file", fileTarget);
+        fileTarget.Name = "trace";
+        fileTarget.KeepFileOpen = true;
+        fileTarget.MaxArchiveDays = 14;
+        fileTarget.ArchiveEvery = NLog.Targets.FileArchivePeriod.Day; // None?
+        fileTarget.FileName = logPrefix + "${date:format=yyyy-MM-dd}-Trace.log";
+        rule = new NLog.Config.LoggingRule("*", NLog.LogLevel.Trace, fileTarget);
+        config.LoggingRules.Add(rule);
 
 
 
-        NLog.LogManager.Configuration = config;
+        LogManager.Configuration = config;
 
         Logger.Info("");
         Logger.Info("");
