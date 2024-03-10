@@ -82,9 +82,9 @@ public class TradeTools
                     // Controleer de openstaande orders, zijn ze ondertussen gevuld
                     // Haal de trades van deze positie op vanaf de 1e order
                     // TODO - Hoe doen we dit met papertrading (er is niets geregeld!)
-                    await LoadOrdersFromDatabaseAndExchangeAsync(database, position);
-                    await CalculatePositionResultsViaOrders(database, position);
-                    GlobalData.ThreadDoubleCheckPosition.AddToQueue(position, true);
+                    //await LoadOrdersFromDatabaseAndExchangeAsync(database, position);
+                    //await CalculatePositionResultsViaOrders(database, position);
+                    GlobalData.ThreadDoubleCheckPosition.AddToQueue(position, true, "CheckOpenPositions");
                 }
             }
         }
@@ -105,6 +105,8 @@ public class TradeTools
         // Op Bybit futures heb je de fundingrates, dat wordt in tijdblokken berekend met varierende fr..
 
         position.Quantity = 0;
+        position.QuantityEntry = 0;
+        position.QuantityTakeProfit = 0;
         position.Invested = 0;
         position.Returned = 0;
         position.Reserved = 0;
@@ -121,6 +123,8 @@ public class TradeTools
         foreach (CryptoPositionPart part in position.Parts.Values.ToList())
         {
             part.Quantity = 0;
+            part.QuantityEntry = 0;
+            part.QuantityTakeProfit = 0;
             part.Invested = 0;
             part.Returned = 0;
             part.Reserved = 0;
@@ -134,11 +138,12 @@ public class TradeTools
             {
                 // || step.Status == CryptoOrderStatus.PartiallyFilled => niet doen, want dan worden de TP's iedere keer verplaatst..
                 // Wellicht moet dat gedeelte op een andere manier ingeregeld worden zodat we hier wel de echte BE kunnen uitrekenen?
-                if (step.Status == CryptoOrderStatus.Filled)
+                if (step.Status.IsFilled())
                 {
                     if (step.Side == entryOrderSide)
                     {
                         part.Quantity += step.QuantityFilled;
+                        part.QuantityEntry += step.QuantityFilled;
                         part.Invested += step.QuoteQuantityFilled;
 
                         // Bybit spot fix
@@ -149,6 +154,7 @@ public class TradeTools
                     {
                         tradeCount++;
                         part.Quantity -= step.QuantityFilled;
+                        part.QuantityTakeProfit += step.QuantityFilled;
                         part.Returned += step.QuoteQuantityFilled;
 
                         // Bybit spot fix
@@ -160,7 +166,7 @@ public class TradeTools
                     part.CommissionBase += step.CommissionBase;
                     part.CommissionQuote += step.CommissionQuote;
                 }
-                else if (step.Status == CryptoOrderStatus.New || step.Status == CryptoOrderStatus.PartiallyFilled || step.Status == CryptoOrderStatus.PartiallyAndClosed)
+                else if (step.Status == CryptoOrderStatus.New || step.Status == CryptoOrderStatus.PartiallyFilled)
                 {
                     // Voluit, ook als ie voor 99% gevuld is..
                     part.Reserved += step.Price * step.Quantity;
@@ -212,6 +218,8 @@ public class TradeTools
 
 
             position.Quantity += part.Quantity;
+            position.QuantityEntry += part.QuantityEntry;
+            position.QuantityTakeProfit += part.QuantityTakeProfit;
             position.Invested += part.Invested;
             position.Returned += part.Returned;
             position.Reserved += part.Reserved;
@@ -222,13 +230,6 @@ public class TradeTools
         }
 
 
-        // Er is in geinvesteerd en dus moet de positie actief zijn
-        if (position.Invested != 0 && position.Status == CryptoPositionStatus.Waiting)
-        {
-            position.CloseTime = null;
-            position.Status = CryptoPositionStatus.Trading;
-        }
-
         // Voor de BE de originele quantity gebruiken (niet de gecorrigeerde met EntryQuantity-commissionBase dus daarom een correctie)
         if (position.Side == CryptoTradeSide.Long)
         {
@@ -236,7 +237,6 @@ public class TradeTools
             position.Percentage = 0m;
             if (position.Invested != 0m)
                 position.Percentage = 100m + (100m * position.Profit / position.Invested);
-            // TODO: Dit werkt niet op spot ICM dust (bepaling position.BE)
             if (position.Quantity > 0 && position.Status == CryptoPositionStatus.Trading)
                 position.BreakEvenPrice = (position.Invested - position.Returned + position.Commission) / (position.Quantity + position.CommissionBase);
             else
@@ -248,7 +248,6 @@ public class TradeTools
             position.Percentage = 0m;
             if (position.Returned != 0m)
                 position.Percentage = 100m + (100m * position.Profit / position.Invested);
-            // TODO: Dit werkt niet op spot ICM dust (bepaling position.BE)
             if (position.Quantity > 0 && position.Status == CryptoPositionStatus.Trading)
                 position.BreakEvenPrice = (position.Invested - position.Returned - position.Commission) / (position.Quantity + position.CommissionBase);
             else
@@ -259,7 +258,71 @@ public class TradeTools
         position.ActiveDca = hasActiveDca;
     }
 
+    ///// <summary>
+    ///// Count the number of open take profit orders?
+    ///// </summary>
+    ///// <param name="position"></param>
+    ///// <returns>Amount of open TP orders</returns>
+    //private static int CountOpenTakeProfitOrders(CryptoPosition position)
+    //{
+    //    int entryCount = 0;
+    //    int takeProfitCount = 0;
+    //    CryptoOrderSide entryOrderSide = position.GetEntryOrderSide();
+    //    CryptoOrderSide takeProfitOrderSide = position.GetTakeProfitOrderSide();
+    //    foreach (CryptoPositionPart part in position.Parts.Values.ToList())
+    //    {
+    //        foreach (CryptoPositionStep step in part.Steps.Values.ToList())
+    //        {
+    //            if (step.Side == entryOrderSide)
+    //            {
+    //                if (step.CloseTime.HasValue && step.Status.IsFilled())
+    //                    entryCount++;
+    //            }
 
+    //            if (step.Side == takeProfitOrderSide)
+    //            {
+    //                if (step.CloseTime.HasValue && step.Status.IsFilled())
+    //                    takeProfitCount++;
+    //            }
+
+
+    //        }
+    //    }
+    //    return takeProfitCount - entryCount;
+    //}
+
+    private static void CalculateOrderFeeFromTrades(CryptoSymbol symbol, CryptoPositionStep step)
+    {
+        // Calculate fee from the trades (Bybit V5 doesn't return fee via orders)
+        // Afhankelijk van de asset wordt de commissie berekend (debug)
+        // Voor de step is dit niet relevant (mits we het omrekenen naar base en quote)
+        step.Commission = 0;
+        step.CommissionBase = 0;
+        step.CommissionQuote = 0;
+        step.CommissionAsset = "";
+        foreach (CryptoTrade trade in symbol.TradeList.Values.ToList())
+        {
+            if (trade.OrderId == step.OrderId)
+            {
+                if (trade.CommissionAsset == symbol.Base) // fee in base quantity
+                {
+                    decimal value = (decimal)trade.Commission * (decimal)trade.Price;
+                    step.CommissionBase += (decimal)trade.Commission; // debug, not really relevant after this
+                    //step.CommissionQuote += value;
+                    step.Commission += value;
+                }
+                else if (trade.CommissionAsset == symbol.Quote || trade.CommissionAsset == "") // default, fee in quote quantity
+                {
+                    //decimal value = (decimal)trade.Commission / (decimal)trade.Price;
+                    //step.CommissionBase += value;
+                    step.CommissionQuote += (decimal)trade.Commission; // debug, not really relevant after this
+                    step.Commission += (decimal)trade.Commission;
+                }
+
+                step.CommissionAsset = trade.CommissionAsset; // debug, not really relevant after this
+            }
+        }
+    }
 
 
     /// <summary>
@@ -274,21 +337,22 @@ public class TradeTools
         if (position.Status == CryptoPositionStatus.Ready)
             return;
 
-
         bool markedAsReady = false;
-        bool positionChanged = false;
+        bool orderStatusChanged = false;
         await ExchangeHelper.GetOrdersForPositionAsync(database, position);
+        await ExchangeHelper.GetTradesForPositionAsync(database, position);
 
+        ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} {position.Status}");
+        
 
         // De filled quantity in de steps opnieuw opbouwen vanuit de trades
         foreach (CryptoOrder order in position.Symbol.OrderList.Values.ToList())
         {
             if (position.Orders.TryGetValue(order.OrderId, out CryptoPositionStep step))
             {
-                if (step.Status != order.Status || forceCalculation)
+                if (step.Status != order.Status || step.QuoteQuantityFilled != order.QuoteQuantityFilled || forceCalculation)
                 {
-                    positionChanged = true;
-                    //step.Status = order.Status; pas op het einde
+                    orderStatusChanged = true;
 
                     //  Bij iedere step hoort een part (maar technisch kan alles)
                     CryptoPositionPart part = PositionTools.FindPositionPart(position, step.PositionPartId);
@@ -299,215 +363,166 @@ public class TradeTools
                     string msgInfo = $"{position.Symbol.Name} side={order.Side} type={order.Type} status={order.Status} order={order.OrderId} " +
                         $"price={order.AveragePrice?.ToString0()} quantity={order.QuantityFilled?.ToString0()} value={order.QuoteQuantity.ToString0()}";
 
+                    // Kan overgeslagen worden?
+                    CalculateOrderFeeFromTrades(position.Symbol, step);
 
 
-                    // Calculate the fee from te orders
-                    // (Bybit V5 does not return the fee via orders)
-                    step.Commission = 0;
-                    step.CommissionBase = 0;
-                    step.CommissionQuote = 0;
-                    step.CommissionAsset = ""; //?
-                    foreach (CryptoTrade trade in position.Symbol.TradeList.Values.ToList())
+                    // Afgesloten steps niet aanpassen en ook geen meldingen meer op geven
+                    if (!step.CloseTime.HasValue)
                     {
-                        if (trade.OrderId == step.OrderId)
+                        // Hebben wij de order geannuleerd? (we gebruiken tenslotte ook een cancel order om orders weg te halen)
+                        if (order.Status == CryptoOrderStatus.Canceled)
                         {
-                            // Afhankelijk van de asset wordt de commissie berekend (debug)
-                            // Voor de step is dit niet relevant (mits we het omrekenen naar base en quote)
-                            step.CommissionAsset = trade.CommissionAsset;
-
-                            if (trade.CommissionAsset == position.Symbol.Base)
+                            if (step.CancelInProgress) //|| step.Status > CryptoOrderStatus.Canceled
                             {
-                                decimal value = (decimal)trade.Commission * (decimal)trade.Price;
-                                step.CommissionBase += (decimal)trade.Commission;
-                                step.CommissionQuote += value;
-                                step.Commission += value;
+                                // Wij hebben de order geannuleerd via de CancelStep/CancelOrder/Status
+                                // Probleem is dat de step.Status pas na het annuleren wordt gezet en bewaard. 
+                                // Geconstateerd: een cancel via de user stream kan (te) snel gaan
+
+                                // NB: Er is nu wat overlappende code door die CancelInProgress
+                                step.CloseTime = order.UpdateTime;
                             }
-                            else if (trade.CommissionAsset == position.Symbol.Quote || trade.CommissionAsset == "")
-                            {
-                                decimal value = (decimal)trade.Commission / (decimal)trade.Price;
-                                step.CommissionBase += value;
-                                step.CommissionQuote += (decimal)trade.Commission;
-                                step.Commission += (decimal)trade.Commission;
-                            }
-                            //else
-                            //{
-                            //    // dan doen we de aanname dat het in quote is
-                            //    decimal value = (decimal)trade.Commission / (decimal)trade.Price;
-                            //    step.CommissionBase += value;
-                            //    step.CommissionQuote += (decimal)trade.Commission;
-                            //    step.Commission += (decimal)trade.Commission;
-                            //}
-                        }
-                    }
-
-
-                    // A Bybit Spot special / marketorder (some weird status).
-                    // Exchange is van de opdracht afgeweken, we passen de originele order aan.
-                    if (order.Status == CryptoOrderStatus.PartiallyAndClosed)
-                    {
-                        //step.Status = order.Status;
-                        step.Quantity = order.Quantity;
-                        step.QuantityFilled = (decimal)order.QuantityFilled;
-                        step.QuoteQuantityFilled = (decimal)order.AveragePrice * (decimal)order.QuantityFilled;
-                    }
-
-
-                    // Hebben wij de order geannuleerd? (we gebruiken tenslotte ook een cancel order om orders weg te halen)
-                    if (order.Status == CryptoOrderStatus.Canceled)
-                    {
-                        if (step.CancelInProgress) //|| step.Status > CryptoOrderStatus.Canceled
-                        {
-                            // Wij hebben de order geannuleerd via de CancelStep/CancelOrder/Status
-                            // Probleem is dat de step.Status pas na het annuleren wordt gezet en bewaard. 
-                            // Geconstateerd: een cancel via de user stream kan (te) snel gaan
-
-                            // NB: Er is nu wat overlappende code door die CancelInProgress
-                            step.CloseTime = order.UpdateTime;
-                            //step.Status = CryptoOrderStatus.Canceled;
-                        }
-                        else
-                        {
-                            step.CloseTime = order.UpdateTime;
-                            //step.Status = CryptoOrderStatus.Canceled;
-
-                            // De gebruiker heeft de order geannuleerd, het is vanaf nu zijn/haar verantwoordelijkheid...
-                            // Om de statistieken niet te beinvloeden zetten we alles op 0
-                            part.Profit = 0;
-                            part.Invested = 0;
-                            part.Returned = 0;
-                            part.Reserved = 0;
-                            part.Commission = 0;
-                            part.CommissionBase = 0;
-                            part.CommissionQuote = 0;
-                            part.Percentage = 0;
-                            part.CloseTime = order.UpdateTime;
-                            //database.Connection.Update<CryptoPositionPart>(part);
-
-                            //s = string.Format("handletrade#7 {0} positie part cancelled, user takeover?", msgInfo);
-                            //GlobalData.AddTextToLogTab(s);
-                            //GlobalData.AddTextToTelegram(s);
-
-                            // De gebruiker heeft de positie geannuleerd
-                            position.Profit = 0;
-                            position.Invested = 0;
-                            position.Returned = 0;
-                            position.Reserved = 0;
-                            position.Commission = 0;
-                            position.CommissionBase = 0;
-                            position.CommissionQuote = 0;
-                            position.Percentage = 0;
-                            position.CloseTime = order.UpdateTime;
-                            if (!position.CloseTime.HasValue)
-                                position.CloseTime = DateTime.UtcNow;
-
-                            position.Status = CryptoPositionStatus.TakeOver;
-                            //database.Connection.Update<CryptoPosition>(position);
-
-                            s = $"handletrade#7 {msgInfo} positie cancelled, user takeover? position.status={position.Status}";
-                            GlobalData.AddTextToLogTab(s);
-                            GlobalData.AddTextToTelegram(s, position);
-                        }
-                    }
-                    else if (order.Status == CryptoOrderStatus.Filled || order.Status == CryptoOrderStatus.PartiallyAndClosed)
-                    {
-                        step.CloseTime = order.UpdateTime;
-                        step.QuantityFilled = (decimal)order.QuantityFilled;
-                        step.QuoteQuantityFilled = (decimal)order.QuoteQuantityFilled;
-
-
-                        // Als er 1 (of meerdere trades zijn) dan zitten we in de trade (de user ticker valt wel eens stil)
-                        // Eventuele handmatige correctie geven daarna problemen (we mogen eigenlijk niet handmatig corrigeren)
-                        // (Dit geeft te denken aan de problemen als we straks een lopende order gaan opnemen als een positie)
-                        if (position.Status == CryptoPositionStatus.Waiting)
-                        {
-                            position.CloseTime = null;
-                            position.Status = CryptoPositionStatus.Trading;
-                            step.AveragePrice = (decimal)order.AveragePrice;
-                        }
-
-
-
-
-                        CryptoOrderSide takeProfitOrderSide = position.GetTakeProfitOrderSide();
-                        if (step.Side == takeProfitOrderSide)
-                        {
-                            // De take profit order is uitgevoerd, de positie afmelden
-                            //s = $"handletrade {msgInfo} part takeprofit ({part.Percentage:N2}%)";
-                            //GlobalData.AddTextToLogTab(s);
-                            //GlobalData.AddTextToTelegram(s, position);
-
-                            part.CloseTime = order.UpdateTime;
-                            //database.Connection.Update<CryptoPositionPart>(part);
-
-                            // Sluit de positie indien afgerond
-                            // Dit is ook "gevaarlijk", want als er een dca buy niet gedetecteerd is wordt de trade afgesloten
-                            // En dat lijkt soms wel te gebeuren vanwege vertraging/storingen scanner/exchange, internet of
-                            // computer gerelateerde tijd perikelen.  Wat doe je eraan, het is niet 100% perfect..
-                            if (position.Invested > 0 && position.Quantity <= position.RemainingDust)
-                            {
-                                position.CloseTime = order.UpdateTime;
-                                position.Status = CryptoPositionStatus.Ready;
-                            }
-
-                            // Dca orders bijstellen
-                            position.Reposition = true;
-                            position.UpdateTime = DateTime.UtcNow;
-                            database.Connection.Update<CryptoPosition>(position);
-
-                            // Statistiek symbol niveau (voor de cooldown)
-                            position.Symbol.LastTradeDate = position.CloseTime;
-                            //database.Connection.Update<CryptoSymbol>(position.Symbol);
-
-
-                            if (position.Status == CryptoPositionStatus.Timeout)
-                                s = $"handletrade {msgInfo} position timeout ({position.Percentage:N2}%)";
-                            else if (position.Status == CryptoPositionStatus.Ready)
-                                s = $"handletrade {msgInfo} position ready ({position.Percentage:N2}%)";
                             else
-                                s = $"handletrade {msgInfo} part takeprofit ({part.Percentage:N2}%)";
-                            GlobalData.AddTextToLogTab(s);
-                            GlobalData.AddTextToTelegram(s, position);
+                            {
+                                // De gebruiker heeft de positie geannuleerd
+                                // Vanaf nu zijn/haar probleem/verantwoordelijkheid
+                                step.CloseTime = order.UpdateTime;
+
+                                // Om de statistieken niet te beinvloeden zetten we alles op 0
+                                part.Profit = 0;
+                                part.Invested = 0;
+                                part.Returned = 0;
+                                part.Reserved = 0;
+                                part.Commission = 0;
+                                part.CommissionBase = 0;
+                                part.CommissionQuote = 0;
+                                part.Percentage = 0;
+                                part.CloseTime = order.UpdateTime;
+
+                                //s = string.Format("handletrade#7 {0} positie part cancelled, user takeover?", msgInfo);
+                                //GlobalData.AddTextToLogTab(s);
+                                //GlobalData.AddTextToTelegram(s);
+
+                                position.Profit = 0;
+                                position.Invested = 0;
+                                position.Returned = 0;
+                                position.Reserved = 0;
+                                position.Commission = 0;
+                                position.CommissionBase = 0;
+                                position.CommissionQuote = 0;
+                                position.Percentage = 0;
+                                position.CloseTime = order.UpdateTime;
+                                if (!position.CloseTime.HasValue)
+                                    position.CloseTime = DateTime.UtcNow;
+                                position.Status = CryptoPositionStatus.TakeOver;
+
+                                s = $"handletrade#7 {msgInfo} positie cancelled, user takeover? position.status={position.Status}";
+                                GlobalData.AddTextToLogTab(s);
+                                GlobalData.AddTextToTelegram(s, position);
+                            }
                         }
-
-
-
-                        CryptoOrderSide entryOrderSide = position.GetEntryOrderSide();
-                        if (step.Side == entryOrderSide)
+                        else if (order.Status.IsFilled())
                         {
-                            s = $"handletrade {msgInfo} part entry";
+                            s = $"handletrade {msgInfo}";
+
+                            // Statistics entry or take profit order.
+                            step.CloseTime = order.UpdateTime;
+                            step.AveragePrice = (decimal)order.AveragePrice;
+                            step.QuantityFilled = (decimal)order.QuantityFilled;
+                            step.QuoteQuantityFilled = (decimal)order.QuoteQuantityFilled;
+
+                            // Needed for Bybit Spot + market order && status=CryptoOrderStatus.PartiallyAndClosed
+                            // (the exchange sligtly diverted from the task, adapt to the new situation)
+                            if (order.Status == CryptoOrderStatus.PartiallyAndClosed)
+                                step.Quantity = order.Quantity;
+
+                            // Can't be cancelled anymore if its filled
+                            if (step.Status > CryptoOrderStatus.Canceled)
+                                step.Status = CryptoOrderStatus.Filled;
+
+
+                            // Statistics position
+                            position.Reposition = true;
+                            position.UpdateTime = order.UpdateTime;
+                            ScannerLog.Logger.Trace($"TradeTools.CalculatePositionResultsViaOrders: {position.Symbol.Name} take profit -> position.Reposition = true");
+
+                            // Statistics symbol (cooldown)
+                            position.Symbol.LastTradeDate = order.UpdateTime;
+
+
+                            CryptoOrderSide entryOrderSide = position.GetEntryOrderSide();
+                            if (step.Side == entryOrderSide)
+                            {
+                                s += " entry";
+
+                                // Als er 1 (of meerdere trades zijn) dan zitten we in de trade (de user ticker valt wel eens stil)
+                                // Eventuele handmatige correctie geven daarna problemen (we mogen eigenlijk niet handmatig corrigeren)
+                                // (Dit geeft te denken aan de problemen als we straks een lopende order gaan opnemen als een positie)
+                                if (position.Status == CryptoPositionStatus.Waiting)
+                                {
+                                    position.CloseTime = null; // reopen
+                                    position.Status = CryptoPositionStatus.Trading;
+                                }
+                            }
+
+
+                            CryptoOrderSide takeProfitOrderSide = position.GetTakeProfitOrderSide();
+                            if (step.Side == takeProfitOrderSide)
+                            {
+                                part.CloseTime = order.UpdateTime;
+
+                                // durf het niet aan op deze manier
+                                //if (CountOpenTakeProfitOrders(position) == 0)
+                                //{
+                                //    markedAsReady = true;
+                                //    position.CloseTime = order.UpdateTime;
+                                //    position.Status = CryptoPositionStatus.Ready;
+                                //}
+
+                                if (position.Status == CryptoPositionStatus.Ready)
+                                    s += $" ready ({position.Percentage:N2}%)";
+                                else
+                                    s += $" takeprofit ({part.Percentage:N2}%)"; // is die wel berekend?
+                            }
+
                             GlobalData.AddTextToLogTab(s);
                             GlobalData.AddTextToTelegram(s, position);
-
-                            position.Reposition = true;
-                            //database.Connection.Update<CryptoPosition>(position);
                         }
-                    }
 
-                    // De reden van annuleren niet overschrijven (kunnen wat mij btereft ook weg, extra text veld voor annuleren wellicht?)
-                    if (step.Status < CryptoOrderStatus.Canceled)
-                        step.Status = order.Status;
-                    //database.Connection.Update<CryptoPositionStep>(step);
+                        // De reden van annuleren niet overschrijven
+                        if (step.Status < CryptoOrderStatus.Canceled)
+                            step.Status = order.Status;
+                    }
                 }
             }
         }
 
 
-        if (positionChanged || forceCalculation)
+        if (orderStatusChanged || forceCalculation)
         {
             CalculateProfitAndBreakEvenPrice(position);
 
 
-
-            // Als alles verkocht is de positie alsnog sluiten
-            // TODO: Controle of dit wel goed komt, vergelijken met quantity icm met dust is vragen om problemen.. Maar het kan wellicht
-            if (position.Status == CryptoPositionStatus.Trading && position.Invested != 0 && position.Quantity <= position.RemainingDust)
+            // Er is in geinvesteerd en dus moet de positie ten minste actief zijn
+            if (position.QuantityEntry != 0 && position.Status == CryptoPositionStatus.Waiting)
             {
-                positionChanged = true;
+                orderStatusChanged = true;
+                position.CloseTime = null;
+                position.Reposition = true;
+                position.Status = CryptoPositionStatus.Trading;
+                GlobalData.AddTextToLogTab($"TradeTools: Position {position.Symbol.Name} status aangepast naar {position.Status} (should not occur)");
+            }
+
+            // Als alles verkocht is de positie alsnog sluiten. Maar wanneer weet je of alles echt verkocht is?
+            if (position.QuantityEntry != 0 && position.Status == CryptoPositionStatus.Trading && position.QuantityEntry - position.QuantityTakeProfit - position.RemainingDust - position.CommissionBase <= 0)
+            {
                 markedAsReady = true;
+                orderStatusChanged = true;
+                position.Reposition = false;
                 position.CloseTime = DateTime.UtcNow;
                 position.UpdateTime = DateTime.UtcNow;
                 position.Status = CryptoPositionStatus.Ready;
-                GlobalData.AddTextToLogTab($"TradeTools: Positie {position.Symbol.Name} status aangepast naar {position.Status}");
+                GlobalData.AddTextToLogTab($"TradeTools: Position {position.Symbol.Name} status aangepast naar {position.Status}");
             }
 
 
@@ -519,8 +534,8 @@ public class TradeTools
                 {
                     if (part.CloseTime.HasValue && part.Invested != 0 && part.Returned == 0)
                     {
-                        positionChanged = true;
                         part.CloseTime = null;
+                        orderStatusChanged = true;
                         GlobalData.AddTextToLogTab($"TradeTools: Part {position.Symbol.Name} weer opengezet vanwege correctie?????? {position.Status}");
                     }
                 }
@@ -528,7 +543,7 @@ public class TradeTools
 
 
             // De positie bewaren (dit kost nogal wat tijd, dus extra controle of het nodig is)
-            //if (positionChanged)
+            if (orderStatusChanged || markedAsReady)
             {
                 foreach (CryptoPositionPart part in position.Parts.Values.ToList())
                 {
@@ -544,7 +559,7 @@ public class TradeTools
             if (markedAsReady)
             {
                 position.DelayUntil = position.UpdateTime.Value.AddSeconds(10);
-                GlobalData.ThreadDoubleCheckPosition.AddToQueue(position, true);
+                GlobalData.ThreadDoubleCheckPosition.AddToQueue(position, true, "CalculatePositionResultsViaOrders positie ready");
             }
         }
     }
@@ -555,17 +570,19 @@ public class TradeTools
     {
         if (!position.Symbol.HasOrdersAndTradesLoaded)
         {
+            ScannerLog.Logger.Trace($"TradeTools.LoadOrdersFromDatabaseAndExchangeAsync: Position {position.Symbol.Name} loading orders and trades from database");
+
             // Vanwege tijd afrondingen (msec)
             DateTime from = position.CreateTime.AddMinutes(-1);
 
             //// Bij het laden zijn niet alle trades in het geheugen ingelezen, dus deze alsnog inladen (of verversen)
             string sql = "select * from [order] where SymbolId=@symbolId and CreateTime >= @fromDate order by CreateTime";
             foreach (CryptoOrder order in database.Connection.Query<CryptoOrder>(sql, new { symbolId = position.SymbolId, fromDate = from }))
-                GlobalData.AddOrder(order);
+                GlobalData.AddOrder(order, false);
 
             sql = "select * from [trade] where SymbolId=@symbolId and TradeTime >= @fromDate order by TradeTime";
             foreach (CryptoTrade trade in database.Connection.Query<CryptoTrade>(sql, new { symbolId = position.SymbolId, fromDate = from }))
-                GlobalData.AddTrade(trade);
+                GlobalData.AddTrade(trade, false);
 
             position.Symbol.HasOrdersAndTradesLoaded = true;
         }

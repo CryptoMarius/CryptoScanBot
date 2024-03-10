@@ -54,7 +54,7 @@ public class PaperAssets
                     // Bij het annuleren/vullen van een buy order wordt de hoeveelheid locked USDT lager
                     assetQuote.Locked -= quoteQuantity;
 
-                if (status == CryptoOrderStatus.Filled)
+                if (status.IsFilled())
                 {
                     assetBase.Total += quantity;
                     assetQuote.Total -= quoteQuantity;
@@ -70,7 +70,7 @@ public class PaperAssets
                     // Bij het annuleren/vullen van een sell order wordt de hoeveelheid locked BTC lager
                     assetBase.Locked -= quantity;
 
-                if (status == CryptoOrderStatus.Filled)
+                if (status.IsFilled())
                 {
                     assetBase.Total -= quantity;
                     assetQuote.Total += quoteQuantity;

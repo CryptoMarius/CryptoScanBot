@@ -124,7 +124,7 @@ public partial class FrmMain : Form
         {
             // De default exchange is Binance (geen goede keuze in NL op dit moment)
             if (exchangeName == "")
-                exchangeName = "Binance";
+                exchangeName = "Bybit Spot";
             if (GlobalData.ExchangeListName.TryGetValue(exchangeName, out var exchange))
             {
                 GlobalData.Settings.General.Exchange = exchange;
@@ -138,7 +138,7 @@ public partial class FrmMain : Form
     private void InitializeExtraMenuItems()
     {
         ToolStripMenuItemCommand command = new();
-        command.Text = "Exchange informatie (Excel)";
+        command.Text = "Exchange information (Excel)";
         command.Command = Command.ExcelExchangeInformation;
         command.Click += CommandTools.ExecuteCommandCommandViaTag;
         MenuMain.DropDownItems.Add(command);
@@ -1082,4 +1082,5 @@ public partial class FrmMain : Form
         }
 
     }
+
 }

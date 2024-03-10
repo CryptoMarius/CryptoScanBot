@@ -112,7 +112,7 @@ public class PositionMonitor : IDisposable
                 foreach (CryptoPositionStep stepX in part.Steps.Values.ToList())
                 {
                     // Voor de zekerheid de Status=Filled erbij (het kan geen kwaad)
-                    if (stepX.Side == entryOrderSide && stepX.CloseTime.HasValue && stepX.Status == CryptoOrderStatus.Filled)
+                    if (stepX.Side == entryOrderSide && stepX.CloseTime.HasValue && stepX.Status.IsFilled())
                     {
                         if (position.Side == CryptoTradeSide.Long)
                         {
@@ -624,6 +624,17 @@ public class PositionMonitor : IDisposable
                                         return;
                                     }
                                 }
+
+
+                                // We zitten direct op het minimum, kans is klein dat we het aangekochte kunnen verkopen
+                                if (entryQuantity == Symbol.QuantityMinimum)
+                                {
+                                    GlobalData.AddTextToLogTab(text + $" vanwege de minimum quantity {Symbol.QuantityMinimum} lukt de aankoop niet (te weinig)");
+                                    Symbol.ClearSignals();
+                                    return;
+                                }
+
+
                             }
 
 
@@ -903,11 +914,11 @@ public class PositionMonitor : IDisposable
     private decimal CalculateTakeProfitPrice(CryptoPosition position)
     {
         decimal price;
+        decimal breakEven = position.BreakEvenPrice;
 
         if (position.Side == CryptoTradeSide.Long)
         {
             // We nemen hiervoor de BreakEvenPrice van de gehele positie en de sell price ligt standaard X% hoger
-            decimal breakEven = position.BreakEvenPrice;
             if (GlobalData.Settings.Trading.SellMethod == CryptoSellMethod.TrailViaKcPsar)
                 price = breakEven + (breakEven * (2.0m / 100)); // In eerste instantie flink hoog!
             else
@@ -924,7 +935,6 @@ public class PositionMonitor : IDisposable
         else
         {
             // We nemen hiervoor de BreakEvenPrice van de gehele positie en de sell price ligt standaard X% lager
-            decimal breakEven = position.BreakEvenPrice;
             if (GlobalData.Settings.Trading.SellMethod == CryptoSellMethod.TrailViaKcPsar)
                 price = breakEven - (breakEven * (2.0m / 100)); // In eerste instantie flink hoog!
             else
@@ -1193,141 +1203,141 @@ public class PositionMonitor : IDisposable
         CryptoOrderSide entryOrderSide = position.GetEntryOrderSide();
 
         // Is er wel iets om te verkopen in deze "part"? (hetzelfde als part.Quantity !=0 of part.Invested != 0?)
-        CryptoPositionStep step = PositionTools.FindPositionPartStep(part, entryOrderSide, true);
-        if (step != null && (step.Status == CryptoOrderStatus.Filled || step.Status == CryptoOrderStatus.PartiallyFilled || step.Status == CryptoOrderStatus.PartiallyAndClosed))
+        CryptoPositionStep stepEntry = PositionTools.FindPositionPartStep(part, entryOrderSide, true);
+        if (stepEntry != null && (stepEntry.Status.IsFilled() || stepEntry.Status == CryptoOrderStatus.PartiallyFilled)) // Partially?
         {
             // TODO, is er genoeg Quantity van de symbol om het te kunnen verkopen? (min-quantity en notation)
             // (nog niet opgemerkt in reallive trading, maar dit gaat zeker een keer gebeuren in de toekomst!)
 
             CryptoOrderSide takeProfitOrderSide = position.GetTakeProfitOrderSide();
-            step = PositionTools.FindPositionPartStep(part, takeProfitOrderSide, false);
-            if (step == null && part.Quantity > 0)
+            CryptoPositionStep stepProfit = PositionTools.FindPositionPartStep(part, takeProfitOrderSide, false);
+            if (stepProfit == null && part.Quantity > 0)
             {
                 decimal takeProfitPrice = CalculateTakeProfitPrice(position);
                 await TradeTools.PlaceTakeProfitOrderAtPrice(Database, position, part, takeProfitPrice, LastCandle1mCloseTimeDate, "placing");
             }
-            else if (step != null && part.Quantity > 0 && part.BreakEvenPrice > 0 && GlobalData.Settings.Trading.SellMethod == CryptoSellMethod.TrailViaKcPsar)
-            {
-                // TODO Long/Short, trailing order...
-                bool doIt = false;
+            //else if (step != null && part.Quantity > 0 && part.BreakEvenPrice > 0 && GlobalData.Settings.Trading.SellMethod == CryptoSellMethod.TrailViaKcPsar)
+            //{
+            //    // TODO Long/Short, trailing order...
+            //    bool doIt = false;
 
-                // Als de actuele prijs ondertussen substantieel hoger dan winst proberen te nemen (jojo)
-                // Dit verstoord eigenlijk de trailing sell, maar het is maar even zo...
-                // Voorlopig even hardcoded (vanwege ontbreken OCO en stop order )
-                // TODO: Hier nog eens een instelling van maken!
-                // De winst ppercentage is nu eigenlijk de trigger prijs!
-                decimal breakEven = part.BreakEvenPrice;
-                decimal breakEvenExtra = breakEven + breakEven * (GlobalData.Settings.Trading.ProfitPercentage / 100m); 
+            //    // Als de actuele prijs ondertussen substantieel hoger dan winst proberen te nemen (jojo)
+            //    // Dit verstoord eigenlijk de trailing sell, maar het is maar even zo...
+            //    // Voorlopig even hardcoded (vanwege ontbreken OCO en stop order )
+            //    // TODO: Hier nog eens een instelling van maken!
+            //    // De winst ppercentage is nu eigenlijk de trigger prijs!
+            //    decimal breakEven = part.BreakEvenPrice;
+            //    decimal breakEvenExtra = breakEven + breakEven * (GlobalData.Settings.Trading.ProfitPercentage / 100m); 
 
-                //if (position.Symbol.LastPrice > breakEvenExtra) // LastPrice is niet altijd gezet
-                //    doIt = true;
+            //    //if (position.Symbol.LastPrice > breakEvenExtra) // LastPrice is niet altijd gezet
+            //    //    doIt = true;
 
-                // Als de candle in zijn geheel boven de BE + extra zit beginnen met trailen (de zogenaamde trigger)
-                if (candleInterval.Open > breakEvenExtra && candleInterval.Close > breakEvenExtra)
-                    doIt = true;
-
-
-                // Trailing SELL
-                // Alleen in een opwaarste "trend" beginnen we met trailen (niet in een neergaande)
-                // Dit is een fix om te voorkomen dat we direct na het kopen een trailing sell starten
-                if (step.Trailing == CryptoTrailing.None && candleInterval.Low > (decimal)candleInterval.CandleData.PSar && !doIt)
-                    return;
+            //    // Als de candle in zijn geheel boven de BE + extra zit beginnen met trailen (de zogenaamde trigger)
+            //    if (candleInterval.Open > breakEvenExtra && candleInterval.Close > breakEvenExtra)
+            //        doIt = true;
 
 
-                decimal x;
-                List<decimal> qqq = [];
+            //    // Trailing SELL
+            //    // Alleen in een opwaarste "trend" beginnen we met trailen (niet in een neergaande)
+            //    // Dit is een fix om te voorkomen dat we direct na het kopen een trailing sell starten
+            //    if (step.Trailing == CryptoTrailing.None && candleInterval.Low > (decimal)candleInterval.CandleData.PSar && !doIt)
+            //        return;
 
-                // Via de psar trailen ipv KC/psar? (dat zou zelfs een instelling kunnen zijn)
-                //x = (decimal)candleInterval.CandleData.PSar - Symbol.PriceTickSize;
-                //qqq.Add(x.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize));
-                x = breakEvenExtra;
-                if (x > breakEvenExtra)
-                    qqq.Add(x);
 
-                x = Math.Min((decimal)candleInterval.CandleData.KeltnerLowerBand, (decimal)candleInterval.CandleData.PSar) - Symbol.PriceTickSize;
-                x = x.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
-                if (x > breakEvenExtra)
-                    qqq.Add(x);
+            //    decimal x;
+            //    List<decimal> qqq = [];
 
-                //x = (((decimal)candleInterval.CandleData.BollingerBandsUpperBand + (decimal)candleInterval.CandleData.BollingerBandsLowerBand) / 2m) - Symbol.PriceTickSize;
-                x = (decimal)candleInterval.CandleData.Sma20 - Symbol.PriceTickSize;
-                x = x.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
-                if (x > breakEvenExtra)
-                    qqq.Add(x);
+            //    // Via de psar trailen ipv KC/psar? (dat zou zelfs een instelling kunnen zijn)
+            //    //x = (decimal)candleInterval.CandleData.PSar - Symbol.PriceTickSize;
+            //    //qqq.Add(x.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize));
+            //    x = breakEvenExtra;
+            //    if (x > breakEvenExtra)
+            //        qqq.Add(x);
 
-                x = (decimal)candleInterval.CandleData.KeltnerUpperBand - Symbol.PriceTickSize;
-                x = x.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
-                if (x > breakEvenExtra)
-                    qqq.Add(x);
+            //    x = Math.Min((decimal)candleInterval.CandleData.KeltnerLowerBand, (decimal)candleInterval.CandleData.PSar) - Symbol.PriceTickSize;
+            //    x = x.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
+            //    if (x > breakEvenExtra)
+            //        qqq.Add(x);
 
-                x = (decimal)candleInterval.CandleData.BollingerBandsUpperBand - Symbol.PriceTickSize;
-                x = x.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
-                if (x > breakEvenExtra)
-                    qqq.Add(x);
+            //    //x = (((decimal)candleInterval.CandleData.BollingerBandsUpperBand + (decimal)candleInterval.CandleData.BollingerBandsLowerBand) / 2m) - Symbol.PriceTickSize;
+            //    x = (decimal)candleInterval.CandleData.Sma20 - Symbol.PriceTickSize;
+            //    x = x.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
+            //    if (x > breakEvenExtra)
+            //        qqq.Add(x);
 
-                // De hoogst mogelijke waarde nemen (extra controles op de low anders wordt ie direct gevuld)
-                decimal stop = 0;
-                qqq.Sort((valueA, valueB) => valueB.CompareTo(valueA));
-                foreach (var stopX in qqq)
-                {
-                    if (step.Status == CryptoOrderStatus.New && step.Side == CryptoOrderSide.Sell
-                        //&& Symbol.LastPrice > stopX
-                        && stopX > breakEvenExtra
-                        && candleInterval.Low > stopX
-                        && (step.StopPrice == null || stopX > step.StopPrice))
-                    {
-                        decimal oldPrice = stop;
-                        stop = stopX;
-                        if (oldPrice > 0)
-                            GlobalData.AddTextToLogTab($"{Symbol.Name} SELL correction sellStop -> {oldPrice:N6} to {stop.ToString0()}");
-                    }
-                    //else break;
-                }
+            //    x = (decimal)candleInterval.CandleData.KeltnerUpperBand - Symbol.PriceTickSize;
+            //    x = x.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
+            //    if (x > breakEvenExtra)
+            //        qqq.Add(x);
 
-                if (stop > 0)
-                {
-                    var exchangeApi = ExchangeHelper.GetExchangeInstance(GlobalData.Settings.General.ExchangeId);
+            //    x = (decimal)candleInterval.CandleData.BollingerBandsUpperBand - Symbol.PriceTickSize;
+            //    x = x.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
+            //    if (x > breakEvenExtra)
+            //        qqq.Add(x);
+
+            //    // De hoogst mogelijke waarde nemen (extra controles op de low anders wordt ie direct gevuld)
+            //    decimal stop = 0;
+            //    qqq.Sort((valueA, valueB) => valueB.CompareTo(valueA));
+            //    foreach (var stopX in qqq)
+            //    {
+            //        if (step.Status == CryptoOrderStatus.New && step.Side == CryptoOrderSide.Sell
+            //            //&& Symbol.LastPrice > stopX
+            //            && stopX > breakEvenExtra
+            //            && candleInterval.Low > stopX
+            //            && (step.StopPrice == null || stopX > step.StopPrice))
+            //        {
+            //            decimal oldPrice = stop;
+            //            stop = stopX;
+            //            if (oldPrice > 0)
+            //                GlobalData.AddTextToLogTab($"{Symbol.Name} SELL correction sellStop -> {oldPrice:N6} to {stop.ToString0()}");
+            //        }
+            //        //else break;
+            //    }
+
+            //    if (stop > 0)
+            //    {
+            //        var exchangeApi = ExchangeHelper.GetExchangeInstance(GlobalData.Settings.General.ExchangeId);
                     
-                    // price moet lager, 1.5% moet genoeg zijn.
-                    decimal price = stop - (stop * 1.5m / 100); // ergens eronder
-                    price = price.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
+            //        // price moet lager, 1.5% moet genoeg zijn.
+            //        decimal price = stop - (stop * 1.5m / 100); // ergens eronder
+            //        price = price.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
 
 
-                    var (cancelled, cancelParams) = await TradeTools.CancelOrder(Database, position, part, step, LastCandle1mCloseTimeDate, CryptoOrderStatus.TrailingChange);
-                    if (!cancelled || GlobalData.Settings.Trading.LogCanceledOrders)
-                        ExchangeBase.Dump(position, cancelled, cancelParams, "annuleren vanwege aanpassing stoploss trailing");
+            //        var (cancelled, cancelParams) = await TradeTools.CancelOrder(Database, position, part, step, LastCandle1mCloseTimeDate, CryptoOrderStatus.TrailingChange);
+            //        if (!cancelled || GlobalData.Settings.Trading.LogCanceledOrders)
+            //            ExchangeBase.Dump(position, cancelled, cancelParams, "annuleren vanwege aanpassing stoploss trailing");
 
-                    // Afhankelijk van de invoer stop of stoplimit een OCO of standaard sell plaatsen.
-                    // TODO: Wat als het plaatsen van de order fout gaat? (hoe vangen we de fout op en hoe herstellen we dat? Binance is een bitch af en toe!)
-                    //Api exchangeApi = new();
-                    var (success, tradeParams) = await exchangeApi.PlaceOrder(Database,
-                        position.TradeAccount, position.Symbol, position.Side, LastCandle1mCloseTimeDate,
-                        CryptoOrderType.StopLimit, CryptoOrderSide.Sell,
-                        step.Quantity, price, stop, null); // Was een OCO met een sellLimit
-                    if (success)
-                    {
-                        // Administratie van de nieuwe sell bewaren (iets met tonen van de posities)
-                        if (!position.ProfitPrice.HasValue)
-                            position.ProfitPrice = price; // part.SellPrice; // (kan eigenlijk weg, slechts ter debug en tracering, voila)
-                        // Als vervanger van bovenstaande tzt (maar willen we die ook als een afzonderlijke step? Het zou ansich kunnen)
-                        var sellStep = PositionTools.CreatePositionStep(position, part, tradeParams, CryptoTrailing.Trailing);
-                        Database.Connection.Insert<CryptoPositionStep>(sellStep);
-                        PositionTools.AddPositionPartStep(part, sellStep);
-                        part.ProfitMethod = CryptoEntryOrProfitMethod.TrailViaKcPsar;
-                        Database.Connection.Update<CryptoPositionPart>(part);
-                        Database.Connection.Update<CryptoPosition>(position);
+            //        // Afhankelijk van de invoer stop of stoplimit een OCO of standaard sell plaatsen.
+            //        // TODO: Wat als het plaatsen van de order fout gaat? (hoe vangen we de fout op en hoe herstellen we dat? Binance is een bitch af en toe!)
+            //        //Api exchangeApi = new();
+            //        var (success, tradeParams) = await exchangeApi.PlaceOrder(Database,
+            //            position.TradeAccount, position.Symbol, position.Side, LastCandle1mCloseTimeDate,
+            //            CryptoOrderType.StopLimit, CryptoOrderSide.Sell,
+            //            step.Quantity, price, stop, null); // Was een OCO met een sellLimit
+            //        if (success)
+            //        {
+            //            // Administratie van de nieuwe sell bewaren (iets met tonen van de posities)
+            //            if (!position.ProfitPrice.HasValue)
+            //                position.ProfitPrice = price; // part.SellPrice; // (kan eigenlijk weg, slechts ter debug en tracering, voila)
+            //            // Als vervanger van bovenstaande tzt (maar willen we die ook als een afzonderlijke step? Het zou ansich kunnen)
+            //            var sellStep = PositionTools.CreatePositionStep(position, part, tradeParams, CryptoTrailing.Trailing);
+            //            Database.Connection.Insert<CryptoPositionStep>(sellStep);
+            //            PositionTools.AddPositionPartStep(part, sellStep);
+            //            part.ProfitMethod = CryptoEntryOrProfitMethod.TrailViaKcPsar;
+            //            Database.Connection.Update<CryptoPositionPart>(part);
+            //            Database.Connection.Update<CryptoPosition>(position);
 
-                        if (position.TradeAccount.TradeAccountType == CryptoTradeAccountType.PaperTrade)
-                            PaperAssets.Change(position.TradeAccount, position.Symbol, tradeParams.OrderSide,
-                                step.Status, tradeParams.Quantity, tradeParams.QuoteQuantity);
-                    }
+            //            if (position.TradeAccount.TradeAccountType == CryptoTradeAccountType.PaperTrade)
+            //                PaperAssets.Change(position.TradeAccount, position.Symbol, tradeParams.OrderSide,
+            //                    step.Status, tradeParams.Quantity, tradeParams.QuoteQuantity);
+            //        }
 
-                    decimal perc = 0;
-                    if (part.BreakEvenPrice > 0)
-                        perc = (decimal)(100 * ((stop / part.BreakEvenPrice) - 1));
-                    ExchangeBase.Dump(position, success, tradeParams, $"locking ({perc:N2}%)");
-                }
-            }
+            //        decimal perc = 0;
+            //        if (part.BreakEvenPrice > 0)
+            //            perc = (decimal)(100 * ((stop / part.BreakEvenPrice) - 1));
+            //        ExchangeBase.Dump(position, success, tradeParams, $"locking ({perc:N2}%)");
+            //    }
+            //}
 
         }
     }
@@ -1643,7 +1653,7 @@ public class PositionMonitor : IDisposable
             if (!part.CloseTime.HasValue)
             {
                 CryptoPositionStep step = PositionTools.FindPositionPartStep(part, entryOrderSide, true);
-                if (step != null && step.Status == CryptoOrderStatus.Filled)
+                if (step != null && step.Status.IsFilled())
                 //if (step != null && (step.Status == CryptoOrderStatus.Filled /*|| step.Status == CryptoOrderStatus.PartiallyFilled*/)) -- problemen, quick fix voor nu, order laten staan
                 {
                     if (position.Quantity > 0) // voldoende saldo om de sell te plaatsen
@@ -1833,7 +1843,7 @@ public class PositionMonitor : IDisposable
                 return;
 
             //string traceText = LastCandle1m.OhlcText(Symbol, GlobalData.IntervalList[0], Symbol.PriceDisplayFormat, true, false, true);
-            //GlobalData.Logger.Trace($"NewCandleArrivedAsync.Signals " + traceText);
+            //ScannerLog.Logger.Trace($"NewCandleArrivedAsync.Signals " + traceText);
 
             // Create signals per interval
             //GlobalData.Logger.Info($"analyze.CreateSignals({Symbol.Name})");
@@ -1870,7 +1880,7 @@ public class PositionMonitor : IDisposable
                     {
                         foreach (CryptoPosition position in positionList.Values.ToList())
                         {
-                            GlobalData.ThreadDoubleCheckPosition.AddToQueue(position, false);
+                            GlobalData.ThreadDoubleCheckPosition.AddToQueue(position, false, "NewCandleArrived");
                         }
                     }
                 }

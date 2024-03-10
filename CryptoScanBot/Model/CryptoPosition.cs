@@ -55,6 +55,8 @@ public class CryptoPosition
     public decimal Percentage { get; set; }
 
     public decimal Quantity { get; set; }
+    public decimal QuantityEntry { get; set; }
+    public decimal QuantityTakeProfit { get; set; }
     public decimal BreakEvenPrice { get; set; }
     public decimal RemainingDust { get; set; } // overblijvend vanwege afrondingen
     // Even een experiment
@@ -151,7 +153,11 @@ public static class CryptoPositionHelper
         if (total == 0)
             return 0m;
         else
-            return 100 * position.CurrentProfit() / position.Invested; // total; Met de invested is het de netpnl% van altrady
+        {
+            if (position.Invested != 0)
+                return 100 * position.CurrentProfit() / position.Invested; // total; Met de invested is het de netpnl% van altrady
+            else return 0;
+        }
     }
 
     public static decimal CurrentBreakEvenPercentage(this CryptoPosition position)

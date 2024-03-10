@@ -46,6 +46,8 @@ public class CryptoPositionPart
     public decimal Percentage { get; set; }
 
     public decimal Quantity { get; set; }
+    public decimal QuantityEntry { get; set; }
+    public decimal QuantityTakeProfit { get; set; }
     public decimal BreakEvenPrice { get; set; }
     public decimal RemainingDust { get; set; } // overblijvend vanwege afrondingen
     // Even een experiment

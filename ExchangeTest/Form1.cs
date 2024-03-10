@@ -935,7 +935,7 @@ public partial class Form1 : Form
     ////    (bool result, TradeParams? tradeParams) result;
 
     ////    result = await BuyOrSell(symbol, CryptoOrderType.Limit, CryptoOrderSide.Buy, quantity, 29500m, null, null, "eerste limit buy");
-    ////    text2 = string.Format("{0} POSITION {1} {2} ORDER #{3} PLACED price={4} stop={5} quantity={6} quotequantity={7}",
+    ////    text2 = string.Format("{0} POSITION {1} {2} ORDER {3} PLACED price={4} stop={5} quantity={6} quotequantity={7}",
     ////        symbol, CryptoOrderSide.Buy,
     ////        result.tradeParams?.OrderType.ToString(),
     ////        result.tradeParams?.OrderId,
@@ -946,7 +946,7 @@ public partial class Form1 : Form
     ////    Invoke((MethodInvoker)(() => textBox1.AppendText(text2 + "\r\n")));
 
     ////    result = await BuyOrSell(symbol, CryptoOrderType.Limit, CryptoOrderSide.Sell, quantity, 32000m, null, null, "eerste limit sell");
-    ////    text2 = string.Format("{0} POSITION {1} {2} ORDER #{3} PLACED price={4} stop={5} quantity={6} quotequantity={7}",
+    ////    text2 = string.Format("{0} POSITION {1} {2} ORDER {3} PLACED price={4} stop={5} quantity={6} quotequantity={7}",
     ////        symbol, CryptoOrderSide.Buy,
     ////        result.tradeParams?.OrderType.ToString(),
     ////        result.tradeParams?.OrderId,
@@ -958,7 +958,7 @@ public partial class Form1 : Form
 
 
     ////    result = await BuyOrSell(symbol, CryptoOrderType.StopLimit, CryptoOrderSide.Buy, quantity, 32000m, 31500m, null, "eerste stop limit buy");
-    ////    text2 = string.Format("{0} POSITION {1} {2} ORDER #{3} PLACED price={4} stop={5} quantity={6} quotequantity={7}",
+    ////    text2 = string.Format("{0} POSITION {1} {2} ORDER {3} PLACED price={4} stop={5} quantity={6} quotequantity={7}",
     ////        symbol, CryptoOrderSide.Sell,
     ////        result.tradeParams?.OrderType.ToString(),
     ////        result.tradeParams?.OrderId,
@@ -969,7 +969,7 @@ public partial class Form1 : Form
     ////    Invoke((MethodInvoker)(() => textBox1.AppendText(text2 + "\r\n")));
 
     ////    result = await BuyOrSell(symbol, CryptoOrderType.StopLimit, CryptoOrderSide.Sell, quantity, 28000m, 28500m, null, "eerste stop limit sell");
-    ////    text2 = string.Format("{0} POSITION {1} {2} ORDER #{3} PLACED price={4} stop={5} quantity={6} quotequantity={7}",
+    ////    text2 = string.Format("{0} POSITION {1} {2} ORDER {3} PLACED price={4} stop={5} quantity={6} quotequantity={7}",
     ////        symbol, CryptoOrderSide.Sell,
     ////        result.tradeParams?.OrderType.ToString(),
     ////        result.tradeParams?.OrderId,
@@ -981,7 +981,7 @@ public partial class Form1 : Form
 
 
     ////    result = await BuyOrSell(symbol, CryptoOrderType.Oco, CryptoOrderSide.Buy, quantity, 28500, 32000m, 32500m, "eerste OCO buy");
-    ////    text2 = string.Format("{0} POSITION {1} {2} ORDER #{3} PLACED price={4} stop={5} quantity={6} quotequantity={7}",
+    ////    text2 = string.Format("{0} POSITION {1} {2} ORDER {3} PLACED price={4} stop={5} quantity={6} quotequantity={7}",
     ////        symbol, CryptoOrderSide.Sell,
     ////        result.tradeParams?.OrderType.ToString(),
     ////        result.tradeParams?.OrderId,
@@ -993,7 +993,7 @@ public partial class Form1 : Form
 
 
     ////    result = await BuyOrSell(symbol, CryptoOrderType.Oco, CryptoOrderSide.Sell, quantity, 32500, 28500m, 28000m, "eerste OCO sell");
-    ////    text2 = string.Format("{0} POSITION {1} {2} ORDER #{3} PLACED price={4} stop={5} quantity={6} quotequantity={7}",
+    ////    text2 = string.Format("{0} POSITION {1} {2} ORDER {3} PLACED price={4} stop={5} quantity={6} quotequantity={7}",
     ////        symbol, CryptoOrderSide.Sell,
     ////        result.tradeParams?.OrderType.ToString(),
     ////        result.tradeParams?.OrderId,
@@ -1071,7 +1071,7 @@ public partial class Form1 : Form
 
         if (GlobalData.ExchangeListName.TryGetValue(Api.ExchangeName, out CryptoScanBot.Model.CryptoExchange exchange))
         {
-            if (exchange.SymbolListName.TryGetValue("FETUSDT", out CryptoSymbol symbol))
+            if (exchange.SymbolListName.TryGetValue("SUSHIUSDT", out CryptoSymbol symbol))
             {
                 BybitRestClient client = CreateRestClient();
                 //client.ClientOptions.OutputOriginalData = true;
@@ -1112,9 +1112,11 @@ public partial class Form1 : Form
 
 
                     // , fromId: 1636499753797799679, toId: 1636499753797799681
+                    long fromId = 1637244246473975808;
+                    long toId = fromId + 1000; //, toId : toId
                     text = "client.SpotApiV3.Trading.GetUserTradesAsync";
                     System.Diagnostics.Debug.WriteLine(text);
-                    var resultV3 = await client.SpotApiV3.Trading.GetUserTradesAsync(symbol.Name, fromId: 1636499753898383104);
+                    var resultV3 = await client.SpotApiV3.Trading.GetUserTradesAsync(symbol.Name, fromId: fromId);
                     text = JsonSerializer.Serialize(resultV3, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
                     System.Diagnostics.Debug.WriteLine(text);
                     GlobalData.AddTextToLogTab(text);

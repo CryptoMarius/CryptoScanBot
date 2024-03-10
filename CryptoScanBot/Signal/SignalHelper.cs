@@ -210,7 +210,7 @@ public static class SignalHelper
         // https://www.tradingview.com/script/0F1sNM49-WGHBM/ (not available anymore)
         AlgorithmDefinitionList.Add(new AlgorithmDefinition()
         {
-            Name = "wghm",
+            Name = "wghm", // we gaan het (beter) (mee)maken
             Strategy = CryptoSignalStrategy.Wghm,
             AnalyzeLongType = typeof(SignalWghmLong),
             AnalyzeShortType = typeof(SignalWghmShort),

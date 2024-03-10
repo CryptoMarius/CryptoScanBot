@@ -11,7 +11,7 @@ namespace CryptoScanBot.Trader;
 #if TRADEBOT
 public class PaperTrading
 {
-    public static async Task CreatePaperTradeObject(CryptoDatabase Database, CryptoPosition position, CryptoPositionStep step, decimal price, DateTime LastCandle1mCloseTimeDate)
+    public static async Task CreatePaperTradeObject(CryptoDatabase database, CryptoPosition position, CryptoPositionStep step, decimal price, DateTime LastCandle1mCloseTimeDate)
     {
         // Als een surrogaat van de exchange...
         var symbol = position.Symbol;
@@ -31,7 +31,7 @@ public class PaperTrading
             SymbolId = position.SymbolId,
             OrderId = step.OrderId, //Database.CreateNewUniqueId(), // Een fake trade ID (als er maar een getal in zit)
 
-            Status = CryptoOrderStatus.Filled,
+            Status = CryptoOrderStatus.PartiallyAndClosed, //Filled,
             Type = step.OrderType,
             Side = step.Side,
 
@@ -46,40 +46,55 @@ public class PaperTrading
             QuantityFilled = step.Quantity,
             QuoteQuantityFilled = step.Quantity * price,
 
-            Commission = step.Quantity * price * feeRate * GlobalData.Settings.General.Exchange.FeeRate / 100, // commission, zou ook per quote of munt kunnen?
-            CommissionAsset = symbol.Quote,
+            Commission = 0, //step.Quantity * price * feeRate * GlobalData.Settings.General.Exchange.FeeRate / 100, // commission, zou ook per quote of munt kunnen?
+            CommissionAsset = "" //symbol.Quote,
+        };
+        database.Connection.Insert<CryptoOrder>(order);
+        GlobalData.AddOrder(order);
+
+
+
+        CryptoTrade trade = new()
+        {
+            TradeAccount = position.TradeAccount,
+            TradeAccountId = position.TradeAccountId,
+            Exchange = symbol.Exchange,
+            ExchangeId = position.ExchangeId,
+            Symbol = position.Symbol,
+            SymbolId = position.SymbolId,
+            TradeId = database.CreateNewUniqueId(),
+            OrderId = step.OrderId, //Database.CreateNewUniqueId(), // Een fake trade ID (als er maar een getal in zit)
+
+            TradeTime = order.CreateTime,
+
+            Price = price,
+            Quantity = step.Quantity,
+            QuoteQuantity = step.Quantity * price,
+
+            Commission = 0,
+            CommissionAsset = "",
         };
 
         // Entry commissie opboeken in base amount (base/quote)
         var entrySide = position.GetEntryOrderSide();
         if (step.Side == entrySide)
         {
-            order.CommissionAsset = symbol.Base;
-            order.Commission = step.Quantity * GlobalData.Settings.General.Exchange.FeeRate / 100;
+            trade.CommissionAsset = symbol.Base;
+            trade.Commission = (decimal)(step.Quantity * GlobalData.Settings.General.Exchange.FeeRate / 100);
         }
 
         // TP commissie opboeken in quote amount (base/quote)
         var takeProfitSide = position.GetTakeProfitOrderSide();
         if (step.Side == takeProfitSide)
         {
-            order.CommissionAsset = symbol.Quote;
-            order.Commission = step.Quantity * step.Price * GlobalData.Settings.General.Exchange.FeeRate / 100;
+            trade.CommissionAsset = symbol.Quote;
+            trade.Commission = (decimal)(step.Quantity * step.Price * GlobalData.Settings.General.Exchange.FeeRate / 100);
         }
+        database.Connection.Insert<CryptoTrade>(trade);
+        GlobalData.AddTrade(trade);
 
-
-        // Bewaar de gegevens
-        using CryptoDatabase database = new();
-        database.Open();
-
-        using (var transaction = database.BeginTransaction())
-        {
-            database.Connection.Insert<CryptoOrder>(order, transaction);
-            GlobalData.AddOrder(order);
-            transaction.Commit();
-        }
 
         await TradeHandler.HandleTradeAsync(position.Symbol, step.OrderType, step.Side, CryptoOrderStatus.Filled, order);
-
         PaperAssets.Change(position.TradeAccount, position.Symbol, step.Side, CryptoOrderStatus.Filled, order.Quantity, order.QuoteQuantity);
     }
 

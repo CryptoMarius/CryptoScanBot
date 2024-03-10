@@ -42,12 +42,22 @@ public class CryptoPositionStep
 
     // De definitieve commissie van alle onderliggende trades (meerdere trades ivm market of stoplimit)
     public decimal Commission { get; set; }
-    public decimal CommissionBase { get; set; }
-    public decimal CommissionQuote { get; set; }
-    public string CommissionAsset { get; set; }
+    public decimal CommissionBase { get; set; }  // debug, not really relevant
+    public decimal CommissionQuote { get; set; }  // debug, not really relevant
+    public string CommissionAsset { get; set; }  // debug, not really relevant
 
     [Computed]
     public bool CancelInProgress { get; set; }
     [Computed]
     public bool IsChanged { get; set; }
+}
+
+
+public static class CryptoOrderStatusHelper
+{
+    public static bool IsFilled(this CryptoOrderStatus status)
+    {
+        // Het zijn nu twee statussen, vervelend..
+        return (status == CryptoOrderStatus.Filled || status == CryptoOrderStatus.PartiallyAndClosed);
+    }
 }

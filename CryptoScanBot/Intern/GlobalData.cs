@@ -391,7 +391,7 @@ static public class GlobalData
 
 
 
-    static public void AddOrder(CryptoOrder order)
+    static public void AddOrder(CryptoOrder order, bool log = true)
     {
         if (TradeAccountList.TryGetValue(order.TradeAccountId, out CryptoTradeAccount tradeAccount))
         {
@@ -408,6 +408,8 @@ static public class GlobalData
                     if (!symbol.OrderList.ContainsKey(order.OrderId))
                     {
                         symbol.OrderList.Add(order.OrderId, order);
+                        if (log)
+                            AddTextToLogTab($"{order.Symbol.Name} added order {order.OrderId}");
                     }
                 }
 
@@ -416,7 +418,7 @@ static public class GlobalData
     }
 
 
-    static public void AddTrade(CryptoTrade trade)
+    static public void AddTrade(CryptoTrade trade, bool log = true)
     {
         if (TradeAccountList.TryGetValue(trade.TradeAccountId, out CryptoTradeAccount tradeAccount))
         {
@@ -433,6 +435,8 @@ static public class GlobalData
                     if (!symbol.TradeList.ContainsKey(trade.TradeId))
                     {
                         symbol.TradeList.Add(trade.TradeId, trade);
+                        if (log)
+                            AddTextToLogTab($"{trade.Symbol.Name} order {trade.OrderId} added trade {trade.TradeId}");
                     }
                 }
 
