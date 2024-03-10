@@ -82,7 +82,7 @@ public class FetchCandles
             // Might have problems with no internet etc.
             if (result == null || result.Data == null || !result.Data.Any())
             {
-                GlobalData.AddTextToLogTab($"{prefix} ophalen vanaf {CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized)} geen candles ontvangen");
+                GlobalData.AddTextToLogTab($"{prefix} fetch from {CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized)} no candles received");
                 return 0;
             }
 

@@ -64,9 +64,10 @@ public class UserDataStream
             {
                 // We krijgen duplicaat json berichten binnen (even een quick & dirty fix)
                 string text = JsonSerializer.Serialize(data, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = false }).Trim();
-                GlobalData.AddTextToLogTab($"{data.Symbol} UserTicker {data.Status} quantity={data.Quantity} price={data.Price} value={data.ValueFilled} text={text}");
+                ScannerLog.Logger.Trace($"{data.Symbol} UserTicker {data.Status} quantity={data.Quantity} price={data.Price} value={data.ValueFilled} text={text}");
+                GlobalData.AddTextToLogTab($"{data.Symbol} UserTicker {data.Status} quantity={data.Quantity} price={data.Price} value={data.Price * data.QuantityFilled}");
 
-                // We zijn slechts geinteresseerd in 3 statussen (de andere zijn niet interessant voor de afhandeling van de order)
+                // We zijn slechts geinteresseerd in een paar statussen (de andere zijn niet interessant voor de afhandeling van de order)
                 if (data.Status == OrderStatus.Filled ||
                     data.Status == OrderStatus.PartiallyFilled ||
                     data.Status == OrderStatus.PartiallyFilledCanceled ||
@@ -92,10 +93,6 @@ public class UserDataStream
                         }
                     }
                 }
-
-                // Converteer de data naar een (tijdelijke) trade
-                //BinanceApi.PickupOrder(trade, data.Data);
-                //GlobalData.ThreadMonitorOrder.AddToQueue(data.Data);
             }
         }
         catch (Exception error)

@@ -30,29 +30,29 @@ public class FetchTrades
 
             bool isChanged = false;
             long? fromId = position.Symbol.LastTradeIdFetched;
-            long? toId = null;
+            //long? toId = null;
             List<CryptoTrade> tradeCache = [];
+
+            ScannerLog.Logger.Trace($"FetchTradesForSymbolAsync {position.Symbol.Name} fetching trades from exchange {fromId}");
 
             while (true)
             {
                 if (fromId != null)
                 {
                     fromId += 1;
-                    toId = fromId + 500;
+                    //toId = fromId + 500; toId: toId, 
                 }
 
                 //BinanceWeights.WaitForFairBinanceWeight(5, "mytrades");
                 LimitRates.WaitForFairWeight(1);
 
-                var result = await client.SpotApiV3.Trading.GetUserTradesAsync(position.Symbol.Name, fromId: fromId, toId: toId, limit: 1000);
+                var result = await client.SpotApiV3.Trading.GetUserTradesAsync(position.Symbol.Name, fromId: fromId, limit: 1000);
                 if (!result.Success)
                 {
-                    GlobalData.AddTextToLogTab("error getting mytrades " + result.Error);
+                    GlobalData.AddTextToLogTab("error retreiving mytrades " + result.Error);
                     break;
                 }
 
-
-                // We hebben een volledige aantal trades meegekregen, nog eens proberen
                 if (result.Data != null && result.Data.Any())
                 {
                     foreach (var item in result.Data)
@@ -62,20 +62,18 @@ public class FetchTrades
                             trade = new CryptoTrade();
                             Api.PickupTrade(position.TradeAccount, position.Symbol, trade, item);
                             string text = JsonSerializer.Serialize(item, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = false }).Trim();
-                            GlobalData.AddTextToLogTab($"{item.Symbol} Trade 'input' details json={text}");
-                            //text = JsonSerializer.Serialize(trade, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = false }).Trim();
-                            //GlobalData.AddTextToLogTab($"{item.Symbol} Trade 'trade' details json={text}");
+                            ScannerLog.Logger.Trace($"{item.Symbol} Trade added json={text}");
 
                             tradeCache.Add(trade);
                             GlobalData.AddTrade(trade);
                         }
 
                         // De administratie bijwerken (de Id en TradeId zijn twee verschillende getallen)
-                        if (!position.Symbol.LastTradeIdFetched.HasValue || item.Id > position.Symbol.LastTradeIdFetched)
+                        if (!position.Symbol.LastTradeIdFetched.HasValue || item.TradeId > position.Symbol.LastTradeIdFetched)
                         {
                             isChanged = true;
-                            fromId = item.Id;
-                            position.Symbol.LastTradeIdFetched = item.Id;
+                            fromId = item.TradeId;
+                            position.Symbol.LastTradeIdFetched = item.TradeId;
                             position.Symbol.LastTradeFetched = trade.TradeTime;
                         }
                     }

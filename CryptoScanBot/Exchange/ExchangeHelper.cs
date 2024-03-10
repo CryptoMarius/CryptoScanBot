@@ -30,7 +30,7 @@ public class ExchangeHelper
         else if (exchangeId == 5)
             return new Kraken.Api();
         else
-            throw new Exception("Niet ondersteunde exchange");
+            throw new Exception("Exchange not supported");
     }
 
     private static ExchangeBase GetApiInstance()
@@ -56,6 +56,7 @@ public class ExchangeHelper
 #if TRADEBOT
     public static async Task GetAssetsForAccountAsync(CryptoTradeAccount tradeAccount)
     {
+        ScannerLog.Logger.Trace($"ExchangeHelper.GetAssetsForAccountAsync: Position {tradeAccount.Name}");
         if (tradeAccount == null || tradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
             return;
         await GetApiInstance().GetAssetsForAccountAsync(tradeAccount);
@@ -63,6 +64,7 @@ public class ExchangeHelper
 
 	public static async Task GetOrdersForPositionAsync(CryptoDatabase database, CryptoPosition position)
     {
+        ScannerLog.Logger.Trace($"ExchangeHelper.GetOrdersForPositionAsync: Position {position.Symbol.Name}");
         if (position.TradeAccount == null || position.TradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
             return;
         await GetApiInstance().GetOrdersForPositionAsync(database, position);
@@ -70,9 +72,10 @@ public class ExchangeHelper
 
     public static async Task GetTradesForPositionAsync(CryptoDatabase database, CryptoPosition position)
     {
+        ScannerLog.Logger.Trace($"ExchangeHelper.GetTradesForPositionAsync: Position {position.Symbol.Name}");
         if (position.TradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
             return;
-        await GetApiInstance().GetTradesForSymbolAsync(database, position);
+        await GetApiInstance().GetTradesForPositionAsync(database, position);
     }
 
     public static async Task<(bool succes, TradeParams tradeParams)> Cancel(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoPositionStep step)

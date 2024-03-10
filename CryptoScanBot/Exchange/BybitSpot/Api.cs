@@ -167,6 +167,7 @@ public class Api : ExchangeBase
         CryptoOrderType orderType, CryptoOrderSide orderSide,
         decimal quantity, decimal price, decimal? stop, decimal? limit)
     {
+        //ScannerLog.Logger.Trace($"Exchange.BybitSpot.PlaceOrder {symbol.Name}");
         // debug
         //GlobalData.AddTextToLogTab(string.Format("{0} {1} (debug={2} {3})", symbol.Name, "not at this moment", price, quantity));
         //return (false, null);
@@ -288,6 +289,7 @@ public class Api : ExchangeBase
 
     public override async Task<(bool succes, TradeParams tradeParams)> Cancel(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoPositionStep step)
     {
+        //ScannerLog.Logger.Trace($"Exchange.BybitSpot.Cancel {symbol.Name}");
         // Order gegevens overnemen (enkel voor een eventuele error dump)
         TradeParams tradeParams = new()
         {
@@ -342,6 +344,12 @@ public class Api : ExchangeBase
             using var transaction = databaseThread.BeginTransaction();
             try
             {
+                // remove assets with total=0
+                foreach (var asset in tradeAccount.AssetList.Values.ToList())
+                {
+                    asset.Total = 0;
+                }
+
                 foreach (var assetInfo in balances.Balances)
                 {
                     if (assetInfo.WalletBalance > 0)
@@ -413,7 +421,7 @@ public class Api : ExchangeBase
     }
 
 
-    public override async Task GetTradesForSymbolAsync(CryptoDatabase database, CryptoPosition position)
+    public override async Task GetTradesForPositionAsync(CryptoDatabase database, CryptoPosition position)
     {
         await FetchTrades.FetchTradesForSymbolAsync(database, position);
     }
@@ -436,13 +444,19 @@ public class Api : ExchangeBase
         order.Type = LocalOrderType(item.OrderType);
         order.Status = LocalOrderStatus(item.Status);
 
-        order.Price = item.Price;
+        // Bij een marketorder is deze niet gevuld
+        // alsnog vullen (zodat de QuoteQuantity gevuld wordt..)
+        if (item.Price != 0)
+            order.Price = item.Price; 
+        else
+            order.Price = item.AveragePrice;
         order.Quantity = item.Quantity;
         order.QuoteQuantity = item.Price.Value * item.Quantity;
 
         order.AveragePrice = item.AveragePrice;
         order.QuantityFilled = item.QuantityFilled;
-        order.QuoteQuantityFilled = item.Price.Value * item.QuantityFilled;
+        if (item.AveragePrice.HasValue && item.QuantityFilled.HasValue)
+            order.QuoteQuantityFilled = item.AveragePrice * item.QuantityFilled;
 
         // Bybit spot does currently not return any info on fees
         order.Commission = 0; // item.ExecutedFee;
@@ -452,11 +466,15 @@ public class Api : ExchangeBase
 
     public override async Task GetOrdersForPositionAsync(CryptoDatabase database, CryptoPosition position)
     {
+        //ScannerLog.Logger.Trace($"Exchange.BybitSpot.GetOrdersForPositionAsync: Positie {position.Symbol.Name}");
         // Behoorlijk weinig error control ...... 
 
         DateTime? from = position.Symbol.LastOrderFetched;
-        if (from == null)
-            from = position.CreateTime.AddHours(-1);
+        //if (from == null)
+        // altijd alles ophalen, geeft wat veel logging, maar ach..
+        from = position.CreateTime.AddMinutes(-1);
+
+        ScannerLog.Logger.Trace($"GetOrdersForPositionAsync {position.Symbol.Name} fetching orders from exchange {from}");
 
         using var client = new BybitRestClient();
         var info = await client.V5Api.Trading.GetOrderHistoryAsync(
@@ -466,29 +484,35 @@ public class Api : ExchangeBase
         
         if (info.Success && info.Data != null)
         {
+            string text;
             foreach (var item in info.Data.List)
             {
                 if (position.Symbol.OrderList.TryGetValue(item.OrderId, out CryptoOrder order))
                 {
+                    var oldStatus = order.Status;
+                    var oldQuoteQuantityFilled = order.QuoteQuantityFilled;
                     PickupOrder(position.TradeAccount, position.Symbol, order, item);
                     database.Connection.Update<CryptoOrder>(order);
+
+                    if (oldStatus != order.Status || oldQuoteQuantityFilled != order.QuoteQuantityFilled)
+                    {
+                        text = JsonSerializer.Serialize(item, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = false }).Trim();
+                        ScannerLog.Logger.Trace($"{item.Symbol} order updated json={text}");
+                    }
                 }
                 else
                 {
+                    text = JsonSerializer.Serialize(item, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = false }).Trim();
+                    ScannerLog.Logger.Trace($"{item.Symbol} order added json={text}");
+
                     order = new();
                     PickupOrder(position.TradeAccount, position.Symbol, order, item);
-                    position.Symbol.OrderList.Add(order.OrderId, order);
                     database.Connection.Insert<CryptoOrder>(order);
+                    GlobalData.AddOrder(order);
                 }
 
                 if (position.Symbol.LastOrderFetched == null || order.CreateTime > position.Symbol.LastOrderFetched)
                     position.Symbol.LastOrderFetched = order.CreateTime;
-
-
-                string text = JsonSerializer.Serialize(item, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = false }).Trim();
-                GlobalData.AddTextToLogTab($"{item.Symbol} Order 'input' details json={text}");
-                //text = JsonSerializer.Serialize(order, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = false }).Trim();
-                //GlobalData.AddTextToLogTab($"{item.Symbol} Order 'order' details json={text}");
             }
             database.Connection.Update<CryptoSymbol>(position.Symbol);
         }
@@ -499,6 +523,7 @@ public class Api : ExchangeBase
 
     public async override Task GetAssetsForAccountAsync(CryptoTradeAccount tradeAccount)
     {
+        //ScannerLog.Logger.Trace($"Exchange.BybitSpot.GetAssetsForAccountAsync: Positie {tradeAccount.Name}");
         //if (GlobalData.ExchangeListName.TryGetValue(ExchangeName, out Model.CryptoExchange exchange))
         {
             try
@@ -518,7 +543,7 @@ public class Api : ExchangeBase
                     //Zo af en toe komt er geen data of is de Data niet gezet.
                     //De verbindingen naar extern kunnen (tijdelijk) geblokkeerd zijn
                     if (accountInfo == null | accountInfo.Data == null)
-                        throw new ExchangeException("Geen account data ontvangen");
+                        throw new ExchangeException("No account data received");
 
                     try
                     {

@@ -82,7 +82,7 @@ public class FetchCandles
         // Might have problems with no internet etc.
         if (result == null || result.Data == null || !result.Data.Any())
         {
-            GlobalData.AddTextToLogTab($"{prefix} ophalen vanaf {CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized)} geen candles ontvangen");
+            GlobalData.AddTextToLogTab($"{prefix} fetch from {CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized)} no candles received");
             return 0;
         }
 
@@ -134,8 +134,8 @@ public class FetchCandles
 
         CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
         SortedList<long, CryptoCandle> candles = symbolPeriod.CandleList;
-        string s = symbol.Exchange.Name + " " + symbol.Name + " " + interval.Name + " ophalen vanaf " + CandleTools.GetUnixDate(startFetchDate).ToLocalTime() + " UTC tot " + CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized).ToLocalTime() + " UTC";
-        GlobalData.AddTextToLogTab(s + " opgehaald: " + result.Data.Count() + " totaal: " + candles.Count.ToString());
+        string s = symbol.Exchange.Name + " " + symbol.Name + " " + interval.Name + " fetch from " + CandleTools.GetUnixDate(startFetchDate).ToLocalTime() + " UTC up to " + CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized).ToLocalTime() + " UTC";
+        GlobalData.AddTextToLogTab(s + " received: " + result.Data.Count() + " total: " + candles.Count.ToString());
         return result.Data.Count();
     }
 

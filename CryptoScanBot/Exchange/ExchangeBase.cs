@@ -19,7 +19,7 @@ public abstract class ExchangeBase
 
 #if TRADEBOT
     public abstract Task GetAssetsForAccountAsync(CryptoTradeAccount tradeAccount);
-    public abstract Task GetTradesForSymbolAsync(CryptoDatabase database, CryptoPosition position);
+    public abstract Task GetTradesForPositionAsync(CryptoDatabase database, CryptoPosition position);
     public abstract Task GetOrdersForPositionAsync(CryptoDatabase database, CryptoPosition position);
 
     public abstract Task<(bool succes, TradeParams tradeParams)> Cancel(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoPositionStep step);
@@ -38,7 +38,7 @@ public abstract class ExchangeBase
         {
             builder.Append($" {tradeParams.OrderSide}");
             builder.Append($" {tradeParams.OrderType}");
-            builder.Append($" order #{tradeParams.OrderId}");
+            builder.Append($" order={tradeParams.OrderId}");
             builder.Append($" price={tradeParams.Price.ToString0()}");
             if (tradeParams.StopPrice.HasValue)
                 builder.Append($" stop={tradeParams.StopPrice?.ToString0()}");

@@ -352,7 +352,7 @@ public class Api : ExchangeBase
     }
 
 
-    public override async Task GetTradesForSymbolAsync(CryptoDatabase database, CryptoPosition position)
+    public override async Task GetTradesForPositionAsync(CryptoDatabase database, CryptoPosition position)
     {
         await FetchTrades.FetchTradesForSymbolAsync(database, position);
     }
