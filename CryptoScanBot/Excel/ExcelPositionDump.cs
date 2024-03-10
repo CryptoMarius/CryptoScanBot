@@ -64,7 +64,6 @@ public class ExcelPositionDump : ExcelBase
             cell = WriteCell(sheet, column++, row, part.CreateTime.ToLocalTime());
             cell.CellStyle = CellStyleDate;
 
-            column++;
             if (part.CloseTime.HasValue)
             {
                 cell = WriteCell(sheet, column, row, (DateTime)part.CloseTime?.ToLocalTime());
@@ -373,7 +372,9 @@ public class ExcelPositionDump : ExcelBase
                 // Percentage
                 if (firstValue == 0)
                     firstValue = be;
-                decimal perc = (100 * be / firstValue) - 100;
+                decimal perc = 0;
+                if (firstValue != 0)
+                    perc = (100 * be / firstValue) - 100;
                 cell = WriteCell(sheet, column++, row, (double)perc);
                 cell.CellStyle = CellStyleDecimalNormal;
             }
@@ -392,7 +393,8 @@ public class ExcelPositionDump : ExcelBase
         WriteCell(sheet, columns++, row, "OrderId");
 
         WriteCell(sheet, columns++, row, "Side");
-        WriteCell(sheet, columns++, row, "Time");
+        WriteCell(sheet, columns++, row, "Created");
+        WriteCell(sheet, columns++, row, "Updated");
 
         WriteCell(sheet, columns++, row, "Price");
         WriteCell(sheet, columns++, row, "Quantity");
@@ -400,7 +402,7 @@ public class ExcelPositionDump : ExcelBase
 
         WriteCell(sheet, columns++, row, "Avg Price");
         WriteCell(sheet, columns++, row, "Quantity filled");
-        WriteCell(sheet, columns++, row, "QuoteQuantity fileld");
+        WriteCell(sheet, columns++, row, "QuoteQuantity filled");
 
         WriteCell(sheet, columns++, row, "Commission");
         WriteCell(sheet, columns++, row, "C. Asset");
@@ -416,13 +418,15 @@ public class ExcelPositionDump : ExcelBase
             int column = 0;
 
             var cell = WriteCell(sheet, column++, row, order.Id);
-            //cell.CellStyle = cellStyleDecimalNormal;
 
             cell = WriteCell(sheet, column++, row, order.OrderId);
 
             cell = WriteCell(sheet, column++, row, order.Side.ToString());
 
             cell = WriteCell(sheet, column++, row, order.CreateTime.ToLocalTime());
+            cell.CellStyle = CellStyleDate;
+
+            cell = WriteCell(sheet, column++, row, order.UpdateTime.ToLocalTime());
             cell.CellStyle = CellStyleDate;
 
             cell = WriteCell(sheet, column++, row, (double)order.Price);
@@ -465,10 +469,7 @@ public class ExcelPositionDump : ExcelBase
         WriteCell(sheet, columns++, row, "Id");
         WriteCell(sheet, columns++, row, "TradeId");
         WriteCell(sheet, columns++, row, "OrderId");
-
-        WriteCell(sheet, columns++, row, "Side");
         WriteCell(sheet, columns++, row, "Time");
-
         WriteCell(sheet, columns++, row, "Price");
         WriteCell(sheet, columns++, row, "Quantity");
         WriteCell(sheet, columns++, row, "QuoteQuantity");
@@ -491,8 +492,6 @@ public class ExcelPositionDump : ExcelBase
             cell = WriteCell(sheet, column++, row, trade.TradeId);
 
             cell = WriteCell(sheet, column++, row, trade.OrderId);
-
-            cell = WriteCell(sheet, column++, row, "?");
 
             cell = WriteCell(sheet, column++, row, trade.TradeTime.ToLocalTime());
             cell.CellStyle = CellStyleDate;
@@ -529,7 +528,7 @@ public class ExcelPositionDump : ExcelBase
 
         int row = 0;
         int column = 0;
-        WriteCell(sheet, row, column++, "Positie");
+        WriteCell(sheet, row, column++, "Positie ID");
         WriteCell(sheet, row, column++, "Exchange");
         WriteCell(sheet, row, column++, "Symbol");
         WriteCell(sheet, row, column++, "Price ticksize");
