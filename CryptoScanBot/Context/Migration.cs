@@ -68,7 +68,7 @@ public class Migration
                 database.Connection.Execute("alter table PositionPart add StepInMethod Integer", transaction);
                 // De reden van verkoop (c.q. methode van verkoop)
                 database.Connection.Execute("alter table PositionPart add StepOutMethod Integer", transaction);
-                
+
 
                 // De gemiddelde prijs dat het gekocht of verkocht is (meerdere trades ivm market of stoplimit)
                 database.Connection.Execute("alter table PositionStep add AvgPrice TEXT", transaction);
@@ -106,7 +106,7 @@ public class Migration
                 database.Connection.Execute("insert into TradeAccount(Short, Name, AccountType, TradeAccountType, ExchangeId) values('Trading', 'Kraken trading', 0, 2, 5);", transaction);
                 database.Connection.Execute("insert into TradeAccount(Short, Name, AccountType, TradeAccountType, ExchangeId) values('Paper', 'Kraken paper', 0, 1, 5);", transaction);
                 database.Connection.Execute("insert into TradeAccount(Short, Name, AccountType, TradeAccountType, ExchangeId) values('Backtest', 'Kraken backtest', 0, 0, 5);", transaction);
-                
+
                 // update version
                 version.Version += 1;
                 database.Connection.Update(version, transaction);
@@ -312,11 +312,11 @@ public class Migration
                 database.Connection.Execute("alter table positionstep add RemainingDust Text null", transaction);
                 database.Connection.Execute("alter table PositionPart add RemainingDust Text null", transaction);
                 database.Connection.Execute("alter table Position add RemainingDust Text null", transaction);
-                
+
                 // Voor Bybit spot moeten we bijhouden in welke asset de commisie wordt afgetrokken
                 // TODO: Leuk voro de debug, maar kan ook al weer weg
                 database.Connection.Execute("alter table PositionStep add CommissionAsset Text null", transaction);
-                
+
                 // In de trade tabel is het een not nullable veld, mag null zijn (blijkbaar)
                 database.Connection.Execute("alter table Trade drop column CommissionAsset", transaction);
                 database.Connection.Execute("alter table Trade add CommissionAsset Text null", transaction);
@@ -326,7 +326,7 @@ public class Migration
                 database.Connection.Execute("alter table positionstep add CommissionBase Text null", transaction);
                 database.Connection.Execute("alter table PositionPart add CommissionBase Text null", transaction);
                 database.Connection.Execute("alter table Position add CommissionBase Text null", transaction);
-                
+
                 // Voor Bybit spot moeten we bijhouden hoeveel dust we overhouden (administratie)
                 database.Connection.Execute("alter table positionstep add CommissionQuote Text null", transaction);
                 database.Connection.Execute("alter table PositionPart add CommissionQuote Text null", transaction);
@@ -346,6 +346,11 @@ public class Migration
                 database.Connection.Execute("alter table positionstep add AveragePrice Text null", transaction);
                 database.Connection.Execute("alter table positionstep drop column AvgPrice", transaction);
                 database.Connection.Execute("alter table positionstep drop column CommissionAsset", transaction);
+
+                database.Connection.Execute("alter table PositionPart add QuantityEntry Text null", transaction);
+                database.Connection.Execute("alter table PositionPart add QuantityTakeProfit Text null", transaction);
+                database.Connection.Execute("alter table Position add QuantityEntry Text null", transaction);
+                database.Connection.Execute("alter table Position add QuantityTakeProfit Text null", transaction);
 
                 // De trade tabel is nu vervangen door de order tabel
                 //database.Connection.Execute("drop table trade", transaction);

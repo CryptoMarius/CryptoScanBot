@@ -1064,6 +1064,8 @@ public class CryptoDatabase : IDisposable
                 "EntryPrice TEXT NULL," +
                 "EntryAmount TEXT NULL," + // EntryQuoteAmount?
                 "Quantity TEXT NULL," +
+                "QuantityEntry TEXT NULL," +
+                "QuantityTakeProfit TEXT NULL," +
                 "RemainingDust TEXT NULL," +
                 "ProfitPrice TEXT NULL," +
                 "PartCount Integer NOT NULL," +
@@ -1121,6 +1123,8 @@ public class CryptoDatabase : IDisposable
                 "Percentage TEXT NULL," +
 
                 "Quantity TEXT NULL," +
+                "QuantityEntry TEXT NULL," +
+                "QuantityTakeProfit TEXT NULL," +
                 "BreakEvenPrice TEXT NULL," +
                 "SignalPrice TEXT NOT NULL," +
                 "RemainingDust TEXT NULL," +
@@ -1157,21 +1161,20 @@ public class CryptoDatabase : IDisposable
                 "Status INTEGER NOT NULL," +
                 "Side INTEGER NOT NULL," +
                 "OrderType INTEGER NOT NULL," +
+                "OrderId TEXT NOT NULL," +
+                "Order2Id TEXT NULL," +
                 "Price TEXT NOT NULL," +
                 "StopPrice TEXT NULL," +
                 "StopLimitPrice TEXT NULL," +
                 "Quantity TEXT NOT NULL," +
-                "RemainingDust Text null," +
-                "Commission NOT NULL," +
-                "CommissionAsset NULL," +
-                "CommissionBase TEXT NULL," +
-                "CommissionQuote TEXT NULL," +
+                "AveragePrice TEXT NULL," +
                 "QuantityFilled TEXT NOT NULL," +
                 "QuoteQuantityFilled TEXT NOT NULL," +
-                // Vanwege Papertrading nullable
-                "OrderId TEXT NOT NULL," +
-                "Order2Id TEXT NULL," + // OCO Binance
-                "AveragePrice TEXT NULL," +
+                "Commission NOT NULL," +
+                "CommissionBase TEXT NULL," +
+                "CommissionQuote TEXT NULL," +
+                "CommissionAsset NULL," +
+                "RemainingDust Text null," +
                 "Trailing INTEGER NULL," +
                 "FOREIGN KEY(PositionId) REFERENCES Position(Id)," +
                 "FOREIGN KEY(PositionPartId) REFERENCES PositionPart(Id)" +
