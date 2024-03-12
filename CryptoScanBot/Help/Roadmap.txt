@@ -5,22 +5,11 @@ Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep
 
 Scanner:
 - Scanner - Documentatie bijwerken - dit keer best een grote klus
-
-- Kleuren en geluidjes per strategie en long/short globaal kunnen instellen (ook de nieuwe strategien)
-
-- Scanner - Scanner - De overgang van de 1.8 naar de 1.9 werkt niet (deze crash hard op de json settings) - voorstel, opnieuw beginnen?
-Project naar CryptoScanBot
-Instellingen naar CryptoScanBot.json
-
+- Scanner - Kleuren en geluidjes per strategie en long/short globaal kunnen instellen (ook de nieuwe strategien)
 - Scanner - Er worden klines opgehaald van munten die slechts ~1 maand aanwezig zijn op de exchange (bybit spot, DYNUSDT is bijvoorbeeld pas op 6-2 op de exchange geactiveerd) - EN..
-Dat is best een hardnekkig iets, nog eens debuggen waarom dit zo vaak uitgevoerd wordt (je weet toch dat ze er niet zijn?)
+            Dat is best een hardnekkig iets, nog eens debuggen waarom dit zo vaak uitgevoerd wordt (je weet toch dat ze er niet zijn?)
 
-- Scanner - De controle op de laatste 60 candles (aantal boven de Bollinger Band enzovoort) houdt helemaal geen rekening met short..
-Dus dan moet ie rekening houden met het aantal onder de SMA en onder de BB ipv erboven!
-
-- Scanner - controle van de SBM en JUMP signalen (nog niet gezien op Bybit spot)
-
-- Scanner - De FundingRate kolom automatisch uitzetten indien geen derivaten.futues.
+- Scanner - De FundingRate kolom automatisch uitzetten indien geen derivaten.futues?
 - Scanner - Binance Futures introduceren (maar alleen indien dat niet te veel werk is)
 - Scanner - Telegram meldingen sturen met een extra link naar TV (optioneel via de instelllingen).
 - Scanner - locking inbouwen zodat dezelfde scanner niet twee keer opgestart kan worden
@@ -50,11 +39,10 @@ Dus dan moet ie rekening houden met het aantal onder de SMA en onder de BB ipv e
 
 
 Trading:
-- Trading - Documentatie bijwerken - dit keer best een grote klus
+- Trading - Documentatie bijwerken - dit keer een grote klus
 - Trading - De laatste X posities dumpen naar Excel voor een overzichtje
 - Trading - Vanwege de overgang naar spot rekening houden met de commissies van de exchange (nog niet 100% goed)
-- Trading - Controle inbouwen op het short gaan, in futures kan dat, maar in spot lukt dat alleen als de assets beschikbaar zijn
-- Trading - Soms worden er meer posities geopend dan wat er is ingesteld (5 threads die naast elkaar posities openen zonder locking)
+- Trading - Controle inbouwen op het short gaan, in futures kan dat, maar in spot lukt dat natuurlijk alleen als er assets beschikbaar zijn
 - Trading - De trader zet soms (zeg maar gerust in een enkele keer) correct afgehandelde posities weg als zijnde een takeover. Daar is/was geen aanleiding voor dus dat moet wel een bug zijn!
 - Trading - Controleren of de userstream ticker nog loopt (detectie van order aanpassingen c.q. trades)
 - Trading - In de open posities is de kolom BE perc te hoog indien er een JoJo heeft plaatsgevonden (invested=42, returned=39, BE% = 14.49%), maar het is slechts 1x gerapporteerd, incident?

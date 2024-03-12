@@ -1,11 +1,14 @@
 CryptoScanBot release historie:
 
-xx-02-2024 1.9
+xx-03-2024 1.9
+- Scanner - De overgang van de 1.8 naar de 1.9 werkt niet (crash op de oude settings.json)
+            Besloten om met een schone lei te beginnen, betekend wel alles opnieuw instellen.
 - Scanner - Meerdere kolommen tegelijk kunnen uitzetten (je krijgt er nu bijna RSI van)
 - Scanner - Applicatienaam herbenoemd naar CryptoScanner (want CryptoScanBot dekt de lading niet meer) - De nieuwe naam is CryptoScanBot (CSB)
 - Scanner - De kolommen van alle grids aan of uit kunnen zetten en tevens onthouden van de kolom breedte
 - Scanner - Soms (wellicht bij na heactivatie na een hybernate of sleepmode) worden de instellingen gereset.
             Coordinaten van het scherm niet bewaren bij het afsluiten van de applicatie.
+- Scanner - De controle op de laatste 60 candles icm met short (aantal onder de Bollinger Band) klopte niet
 - Scanner - Prive gegevens zoals de Telegram api en eventuele exchange API key's en dergelijke in andere bestanden opslagen
 - Scanner - Instellingen - de ingevoerde marktrend% controleren/valideren, het 1e getal moet altijd lager zijn dan het 2e getal, swappen indien dat niet zo is
 - Scanner - Vanwege performance een nieuw component ingezet voor het tonen van de symbols en signals (een datagridview ipv een listview)
@@ -58,9 +61,9 @@ xx-02-2024 1.9
 - Scanner - De window coordinaten/breedte wordt niet correct hersteld (na aanpassing volgorde event)
 - Scanner - Bij een negatieve barometer wordt de toevoeging 1h/4h/1d soms niet getoond (niet genoeg ruimte)
 - Scanner - Wat correcties op de handleiding (met dank aan Trinity)
-
-(testen)- Trading - Telegram commando's, uitbreiden zodat het aantal slots voor short en long ingesteld kan worden
-- Trading - Vanwege de overgang naar spot rekening houden met de commissies van de exchange
+--------------------------------------------------------------------------------------------------------------------------------------------
+- Trading - Telegram commando's, uitbreiden zodat het aantal slots voor short en long ingesteld kan worden
+- Trading - Vanwege de overgang naar Bybit spot rekening houden met commissies en dust, veel werk vanwege andere aanpak
 - Trading - Bybit futures wordt verboden in NL (dank je wel), Bybit spot afstoffen om hierop te kunnen traden.
 - Trading - Vanwege performance een nieuw component ingezet voor het tonen van de posities (een datagridview ipv een listview)
 - Trading - Instappen via de bid of ask prijs (icm long/short)
