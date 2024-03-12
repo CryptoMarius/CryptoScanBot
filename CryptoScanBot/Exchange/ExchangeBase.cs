@@ -19,8 +19,8 @@ public abstract class ExchangeBase
 
 #if TRADEBOT
     public abstract Task GetAssetsForAccountAsync(CryptoTradeAccount tradeAccount);
-    public abstract Task GetTradesForPositionAsync(CryptoDatabase database, CryptoPosition position);
-    public abstract Task GetOrdersForPositionAsync(CryptoDatabase database, CryptoPosition position);
+    public abstract Task<int> GetTradesForPositionAsync(CryptoDatabase database, CryptoPosition position);
+    public abstract Task<int> GetOrdersForPositionAsync(CryptoDatabase database, CryptoPosition position);
 
     public abstract Task<(bool succes, TradeParams tradeParams)> Cancel(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoPositionStep step);
     public abstract Task<(bool result, TradeParams tradeParams)> PlaceOrder(CryptoDatabase database, 

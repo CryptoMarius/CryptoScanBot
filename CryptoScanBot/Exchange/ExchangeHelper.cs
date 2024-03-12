@@ -62,20 +62,20 @@ public class ExchangeHelper
         await GetApiInstance().GetAssetsForAccountAsync(tradeAccount);
     }
 
-	public static async Task GetOrdersForPositionAsync(CryptoDatabase database, CryptoPosition position)
+	public static async Task<int> GetOrdersForPositionAsync(CryptoDatabase database, CryptoPosition position)
     {
         ScannerLog.Logger.Trace($"ExchangeHelper.GetOrdersForPositionAsync: Position {position.Symbol.Name}");
         if (position.TradeAccount == null || position.TradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
-            return;
-        await GetApiInstance().GetOrdersForPositionAsync(database, position);
+            return 0;
+        return await GetApiInstance().GetOrdersForPositionAsync(database, position);
     }
 
-    public static async Task GetTradesForPositionAsync(CryptoDatabase database, CryptoPosition position)
+    public static async Task<int> GetTradesForPositionAsync(CryptoDatabase database, CryptoPosition position)
     {
         ScannerLog.Logger.Trace($"ExchangeHelper.GetTradesForPositionAsync: Position {position.Symbol.Name}");
         if (position.TradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
-            return;
-        await GetApiInstance().GetTradesForPositionAsync(database, position);
+            return 0;
+        return await GetApiInstance().GetTradesForPositionAsync(database, position);
     }
 
     public static async Task<(bool succes, TradeParams tradeParams)> Cancel(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoPositionStep step)

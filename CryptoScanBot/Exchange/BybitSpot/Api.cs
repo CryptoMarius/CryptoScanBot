@@ -421,9 +421,9 @@ public class Api : ExchangeBase
     }
 
 
-    public override async Task GetTradesForPositionAsync(CryptoDatabase database, CryptoPosition position)
+    public override async Task<int> GetTradesForPositionAsync(CryptoDatabase database, CryptoPosition position)
     {
-        await FetchTrades.FetchTradesForSymbolAsync(database, position);
+        return await FetchTrades.FetchTradesForSymbolAsync(database, position);
     }
 	
 	
@@ -464,11 +464,12 @@ public class Api : ExchangeBase
     }
 
 
-    public override async Task GetOrdersForPositionAsync(CryptoDatabase database, CryptoPosition position)
+    public override async Task<int> GetOrdersForPositionAsync(CryptoDatabase database, CryptoPosition position)
     {
         //ScannerLog.Logger.Trace($"Exchange.BybitSpot.GetOrdersForPositionAsync: Positie {position.Symbol.Name}");
         // Behoorlijk weinig error control ...... 
 
+        int count = 0;
         DateTime? from = position.Symbol.LastOrderFetched;
         //if (from == null)
         // altijd alles ophalen, geeft wat veel logging, maar ach..
@@ -493,11 +494,13 @@ public class Api : ExchangeBase
                     var oldQuoteQuantityFilled = order.QuoteQuantityFilled;
                     PickupOrder(position.TradeAccount, position.Symbol, order, item);
                     database.Connection.Update<CryptoOrder>(order);
+                    ScannerLog.Logger.Trace($"GetOrdersForPositionAsync {position.Symbol.Name} updated order {item.OrderId}");
 
                     if (oldStatus != order.Status || oldQuoteQuantityFilled != order.QuoteQuantityFilled)
                     {
                         text = JsonSerializer.Serialize(item, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = false }).Trim();
                         ScannerLog.Logger.Trace($"{item.Symbol} order updated json={text}");
+                        count++;
                     }
                 }
                 else
@@ -509,6 +512,7 @@ public class Api : ExchangeBase
                     PickupOrder(position.TradeAccount, position.Symbol, order, item);
                     database.Connection.Insert<CryptoOrder>(order);
                     GlobalData.AddOrder(order);
+                    count++;
                 }
 
                 if (position.Symbol.LastOrderFetched == null || order.CreateTime > position.Symbol.LastOrderFetched)
@@ -518,6 +522,8 @@ public class Api : ExchangeBase
         }
         else
             GlobalData.AddTextToLogTab($"Error reading orders from {Api.ExchangeName} for {position.Symbol.Name} {info.Error}");
+
+        return count;
     }
 
 

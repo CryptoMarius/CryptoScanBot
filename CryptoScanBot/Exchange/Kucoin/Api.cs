@@ -334,9 +334,10 @@ public class Api: ExchangeBase
     //}
 
 
-    public override async Task GetTradesForPositionAsync(CryptoDatabase database, CryptoPosition position)
+    public override Task<int> GetTradesForPositionAsync(CryptoDatabase database, CryptoPosition position)
     {
         //await KucoinFetchTrades.FetchTradesForSymbol(database, position);
+        return Task.FromResult(0);
     }
 
     //public override async Task<int> FetchTradesForOrderAsync(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, string orderId)
@@ -345,9 +346,10 @@ public class Api: ExchangeBase
     //}
 
 
-    public override Task GetOrdersForPositionAsync(CryptoDatabase database, CryptoPosition position)
+    public override Task<int> GetOrdersForPositionAsync(CryptoDatabase database, CryptoPosition position)
     {
-        return Task.CompletedTask;
+        return Task.FromResult(0);
+
     }
 
     public async override Task GetAssetsForAccountAsync(CryptoTradeAccount tradeAccount)

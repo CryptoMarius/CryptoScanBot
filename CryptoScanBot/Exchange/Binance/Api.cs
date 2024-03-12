@@ -505,9 +505,9 @@ public class Api : ExchangeBase
     }
 
 
-    public override async Task GetTradesForPositionAsync(CryptoDatabase database, CryptoPosition position)
+    public override async Task<int> GetTradesForPositionAsync(CryptoDatabase database, CryptoPosition position)
     {
-        await BinanceFetchTrades.FetchTradesForSymbolAsync(database, position);
+        return await BinanceFetchTrades.FetchTradesForSymbolAsync(database, position);
     }
 	
 	
@@ -541,9 +541,9 @@ public class Api : ExchangeBase
     }
 
 
-    public override Task GetOrdersForPositionAsync(CryptoDatabase database, CryptoPosition position)
+    public override Task<int> GetOrdersForPositionAsync(CryptoDatabase database, CryptoPosition position)
     {
-        return Task.CompletedTask;
+        return Task.FromResult(0);
     }
 
 
