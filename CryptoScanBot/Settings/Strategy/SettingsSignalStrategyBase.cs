@@ -13,6 +13,8 @@ public class SettingsSignalStrategyBase
     [JsonConverter(typeof(Intern.ColorConverter))]
     public Color ColorLong { get; set; } = Color.White;
     public string SoundFileLong { get; set; } = "";
+    //string text = ColorTranslator.ToHtml(Color);
+    //Color color = ColorTranslator.FromHtml(text);
 
     [JsonConverter(typeof(Intern.ColorConverter))]
     public Color ColorShort { get; set; } = Color.White;
