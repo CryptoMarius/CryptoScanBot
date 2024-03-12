@@ -41,19 +41,19 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
 
     public override void InitializeCommands(ContextMenuStrip menuStrip)
     {
-        AddCommand(menuStrip, this, "Activate trading app", Command.ActivateTradingApp, CommandTools.ExecuteCommandCommandViaTag);
-        AddCommand(menuStrip, this, "TradingView internal", Command.ActivateTradingviewIntern, CommandTools.ExecuteCommandCommandViaTag);
-        AddCommand(menuStrip, this, "TradingView external", Command.ActivateTradingviewExtern, CommandTools.ExecuteCommandCommandViaTag);
+        menuStrip.AddCommand(this, "Activate trading app", Command.ActivateTradingApp, CommandTools.ExecuteCommandCommandViaTag);
+        menuStrip.AddCommand(this, "TradingView internal", Command.ActivateTradingviewIntern, CommandTools.ExecuteCommandCommandViaTag);
+        menuStrip.AddCommand(this, "TradingView external", Command.ActivateTradingviewExtern, CommandTools.ExecuteCommandCommandViaTag);
 
-        menuStrip.Items.Add(new ToolStripSeparator());
-        AddCommand(menuStrip, this, "Copy symbol name", Command.CopySymbolInformation, CommandTools.ExecuteCommandCommandViaTag);
-        AddCommand(menuStrip, this, "Trend information (log)", Command.ShowTrendInformation, CommandTools.ExecuteCommandCommandViaTag);
-        AddCommand(menuStrip, this, "Symbol information (Excel)", Command.ExcelSymbolInformation, CommandTools.ExecuteCommandCommandViaTag);
+        menuStrip.AddSeperator();
+        menuStrip.AddCommand(this, "Copy symbol name", Command.CopySymbolInformation, CommandTools.ExecuteCommandCommandViaTag);
+        menuStrip.AddCommand(this, "Trend information (log)", Command.ShowTrendInformation, CommandTools.ExecuteCommandCommandViaTag);
+        menuStrip.AddCommand(this, "Symbol information (Excel)", Command.ExcelSymbolInformation, CommandTools.ExecuteCommandCommandViaTag);
 
-        menuStrip.Items.Add(new ToolStripSeparator());
-        AddCommand(menuStrip, this, "Position recalculate", Command.None, CommandPositionRecalculateExecute);
-        AddCommand(menuStrip, this, "Position delete from database", Command.None, CommandPositionDeleteFromDatabaseAsync);
-        AddCommand(menuStrip, this, "Position information (Excel)", Command.ExcelPositionInformation, CommandTools.ExecuteCommandCommandViaTag);
+        menuStrip.AddSeperator();
+        menuStrip.AddCommand(this, "Position recalculate", Command.None, CommandPositionRecalculateExecute);
+        menuStrip.AddCommand(this, "Position delete from database", Command.None, CommandPositionDeleteFromDatabaseAsync);
+        menuStrip.AddCommand(this, "Position information (Excel)", Command.ExcelPositionInformation, CommandTools.ExecuteCommandCommandViaTag);
     }
 
     public override void InitializeHeaders()
@@ -159,7 +159,7 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
             ColumnsForGrid.Commission => ObjectCompare.Compare(a.Commission, b.Commission),
             ColumnsForGrid.Profit => ObjectCompare.Compare(a.Profit, b.Profit),
             ColumnsForGrid.Percentage => ObjectCompare.Compare(a.Percentage, b.Percentage),
-            ColumnsForGrid.Parts => ObjectCompare.Compare(a.PartCount, b.PartCount),
+            ColumnsForGrid.Parts => ObjectCompare.Compare(a.PartCount - Convert.ToInt32(a.ActiveDca), b.PartCount - Convert.ToInt32(b.ActiveDca)),
             //ColumnsForGrid.EntryPrice => ObjectCompare.Compare(a.EntryPrice, b.EntryPrice),
             //ColumnsForGrid.ProfitPrice => ObjectCompare.Compare(a.ProfitPrice, b.ProfitPrice),
             ColumnsForGrid.QuantityTick => ObjectCompare.Compare(a.Symbol.QuantityTickSize, b.Symbol.QuantityTickSize),

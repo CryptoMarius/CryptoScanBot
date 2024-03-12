@@ -49,13 +49,13 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
 
     public override void InitializeCommands(ContextMenuStrip menuStrip)
     {
-        AddCommand(menuStrip, this, "Activate trading app", Command.ActivateTradingApp, CommandTools.ExecuteCommandCommandViaTag);
-        AddCommand(menuStrip, this, "TradingView internal", Command.ActivateTradingviewIntern, CommandTools.ExecuteCommandCommandViaTag);
-        AddCommand(menuStrip, this, "TradingView external", Command.ActivateTradingviewExtern, CommandTools.ExecuteCommandCommandViaTag);
-        menuStrip.Items.Add(new ToolStripSeparator());
-        AddCommand(menuStrip, this, "Copy symbol name", Command.CopySymbolInformation, CommandTools.ExecuteCommandCommandViaTag);
-        AddCommand(menuStrip, this, "Trend information (log)", Command.ShowTrendInformation, CommandTools.ExecuteCommandCommandViaTag);
-        AddCommand(menuStrip, this, "Symbol information (Excel)", Command.ExcelSymbolInformation, CommandTools.ExecuteCommandCommandViaTag);
+        menuStrip.AddCommand(this, "Activate trading app", Command.ActivateTradingApp, CommandTools.ExecuteCommandCommandViaTag);
+        menuStrip.AddCommand(this, "TradingView internal", Command.ActivateTradingviewIntern, CommandTools.ExecuteCommandCommandViaTag);
+        menuStrip.AddCommand(this, "TradingView external", Command.ActivateTradingviewExtern, CommandTools.ExecuteCommandCommandViaTag);
+        menuStrip.AddSeperator();
+        menuStrip.AddCommand(this, "Copy symbol name", Command.CopySymbolInformation, CommandTools.ExecuteCommandCommandViaTag);
+        menuStrip.AddCommand(this, "Trend information (log)", Command.ShowTrendInformation, CommandTools.ExecuteCommandCommandViaTag);
+        menuStrip.AddCommand(this, "Symbol information (Excel)", Command.ExcelSymbolInformation, CommandTools.ExecuteCommandCommandViaTag);
 
         TimerClearOldSignals = new()
         {
@@ -78,45 +78,104 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
         SortOrder = SortOrder.Descending;
         SortColumn = (int)ColumnsForGrid.Date;
 
+        DataGridViewTextBoxColumn c;
         var columns = Enum.GetValues(typeof(ColumnsForGrid));
         foreach (ColumnsForGrid column in columns)
         {
-            DataGridViewTextBoxColumn _ = column switch
+            switch (column)
             {
                 //CreateColumn("Id", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 50);
-                ColumnsForGrid.Date => CreateColumn("Candle date", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleLeft, 140),
-                ColumnsForGrid.Exchange => CreateColumn("Exchange", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleLeft, 125),
-                ColumnsForGrid.Symbol => CreateColumn("Symbol", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleLeft, 100),
-                ColumnsForGrid.Interval => CreateColumn("Interval", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 45),
-                ColumnsForGrid.Mode => CreateColumn("Side", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 40),
-                ColumnsForGrid.Strategy => CreateColumn("Strategy", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 70),
-                ColumnsForGrid.Text => CreateColumn("Text", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleLeft, 50),
-                ColumnsForGrid.Price => CreateColumn("Price", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 70),
-                ColumnsForGrid.PriceChange => CreateColumn("Change", typeof(decimal), "#,##0.#0", DataGridViewContentAlignment.MiddleRight, 50),
-                ColumnsForGrid.Volume => CreateColumn("Volume", typeof(decimal), "#,##0", DataGridViewContentAlignment.MiddleRight, 80),
-                ColumnsForGrid.TfTrend => CreateColumn("TF trend", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 50),
-                ColumnsForGrid.MarketTrend => CreateColumn("Market trend%", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50),
-                ColumnsForGrid.Change24h => CreateColumn("24h Change", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50),
-                ColumnsForGrid.Move24h => CreateColumn("24h Move", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50),
-                ColumnsForGrid.BB => CreateColumn("BB%", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50),
-                ColumnsForGrid.RSI => CreateColumn("RSI", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50),
-                ColumnsForGrid.Stoch => CreateColumn("Stoch", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50),
-                ColumnsForGrid.Signal => CreateColumn("Signal", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50),
-                ColumnsForGrid.Sma200 => CreateColumn("Sma200", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50),
-                ColumnsForGrid.Sma50 => CreateColumn("Sma50", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50),
-                ColumnsForGrid.Sma20 => CreateColumn("Sma20", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50),
-                ColumnsForGrid.PSar => CreateColumn("PSar", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50),
-                ColumnsForGrid.Flux5m => CreateColumn("Flux 5m", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 45),
-                ColumnsForGrid.FundingRate => CreateColumn("Funding Rate", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50),
-                ColumnsForGrid.Trend15m => CreateColumn("15m", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42),
-                ColumnsForGrid.Trend30m => CreateColumn("30m", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42),
-                ColumnsForGrid.Trend1h => CreateColumn("1h", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42),
-                ColumnsForGrid.Trend4h => CreateColumn("4h", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42),
-                ColumnsForGrid.Trend12h => CreateColumn("12h", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42), // MiddleLeft
-                _ => throw new NotImplementedException(),
-            };
+                case ColumnsForGrid.Date:
+                    CreateColumn("Candle date", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleLeft, 140);
+                    break;
+                case ColumnsForGrid.Exchange:
+                    CreateColumn("Exchange", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleLeft, 125);
+                    break;
+                case ColumnsForGrid.Symbol:
+                    CreateColumn("Symbol", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleLeft, 100);
+                    break;
+                case ColumnsForGrid.Interval:
+                    CreateColumn("Interval", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 45);
+                    break;
+                case ColumnsForGrid.Mode:
+                    CreateColumn("Side", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 40);
+                    break;
+                case ColumnsForGrid.Strategy:
+                    CreateColumn("Strategy", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 70);
+                    break;
+                case ColumnsForGrid.Text:
+                    CreateColumn("Text", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleLeft, 50);
+                    break;
+                case ColumnsForGrid.Price:
+                    CreateColumn("Price", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 70);
+                    break;
+                case ColumnsForGrid.PriceChange:
+                    CreateColumn("Change", typeof(decimal), "#,##0.#0", DataGridViewContentAlignment.MiddleRight, 50);
+                    break;
+                case ColumnsForGrid.Volume:
+                    CreateColumn("Volume", typeof(decimal), "#,##0", DataGridViewContentAlignment.MiddleRight, 80);
+                    break;
+                case ColumnsForGrid.TfTrend:
+                    CreateColumn("TF trend", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 50);
+                    break;
+                case ColumnsForGrid.MarketTrend:
+                    CreateColumn("Market trend%", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50);
+                    break;
+                case ColumnsForGrid.Change24h:
+                    CreateColumn("24h Change", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50);
+                    break;
+                case ColumnsForGrid.Move24h:
+                    CreateColumn("24h Move", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50);
+                    break;
+                case ColumnsForGrid.BB:
+                    CreateColumn("BB%", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50);
+                    break;
+                case ColumnsForGrid.RSI:
+                    CreateColumn("RSI", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50);
+                    break;
+                case ColumnsForGrid.Stoch:
+                    CreateColumn("Stoch", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50);
+                    break;
+                case ColumnsForGrid.Signal:
+                    CreateColumn("Signal", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50);
+                    break;
+                case ColumnsForGrid.Sma200:
+                    CreateColumn("Sma200", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50);
+                    break;
+                case ColumnsForGrid.Sma50:
+                    CreateColumn("Sma50", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50);
+                    break;
+                case ColumnsForGrid.Sma20:
+                    CreateColumn("Sma20", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50);
+                    break;
+                case ColumnsForGrid.PSar:
+                    CreateColumn("PSar", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50);
+                    break;
+                case ColumnsForGrid.Flux5m:
+                    CreateColumn("Flux 5m", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 45);
+                    break;
+                case ColumnsForGrid.FundingRate:
+                    //c = 
+                    CreateColumn("Funding Rate", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50);
+                    //if (GlobalData.Settings.General.ActivateExchange. Futures ...  disable the column...
+                    break;
+                case ColumnsForGrid.Trend15m:
+                    CreateColumn("15m", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42);
+                    break;
+                case ColumnsForGrid.Trend30m:
+                    CreateColumn("30m", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42);
+                    break;
+                case ColumnsForGrid.Trend1h:
+                    CreateColumn("1h", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42);
+                    break;
+                case ColumnsForGrid.Trend4h:
+                    CreateColumn("4h", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42);
+                    break;
+                case ColumnsForGrid.Trend12h:
+                    CreateColumn("12h", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42);
+                    break;
+            }
         }
-
         
     }
 

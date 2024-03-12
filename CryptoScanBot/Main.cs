@@ -21,6 +21,7 @@ public partial class FrmMain : Form
     private bool FormIsShowed = false;
     private bool FormIsClosing = false;
     private readonly ColorSchemeTest theme = new();
+    private ContextMenuStrip MenuTest = new();
 
     public class ColorSchemeTest
     {
@@ -43,7 +44,10 @@ public partial class FrmMain : Form
     public FrmMain()
     {
         InitializeComponent();
-        InitializeExtraMenuItems();
+
+        MenuMain.AddCommand(null, "Exchange information (Excel)", Command.ExcelExchangeInformation, CommandTools.ExecuteCommandCommandViaTag);
+        MenuMain.AddCommand(null, "About", Command.About, CommandTools.ExecuteCommandCommandViaTag);
+        MenuMain.AddCommand(null, "Scannersession test", Command.ScannerSessionDebug, CommandTools.ExecuteCommandCommandViaTag);
 
         //Console.Write("Hello world 1");
         //System.Diagnostics.Debug.WriteLine("Hello world 2");
@@ -122,7 +126,7 @@ public partial class FrmMain : Form
         string exchangeName = ApplicationParams.Options.ExchangeName;
         if (exchangeName != null)
         {
-            // De default exchange is Binance (geen goede keuze in NL op dit moment)
+            // De default exchange is Bybit Spot (Binance is geen goede keuze meer)
             if (exchangeName == "")
                 exchangeName = "Bybit Spot";
             if (GlobalData.ExchangeListName.TryGetValue(exchangeName, out var exchange))
@@ -135,20 +139,6 @@ public partial class FrmMain : Form
         }
     }
 
-    private void InitializeExtraMenuItems()
-    {
-        ToolStripMenuItemCommand command = new();
-        command.Text = "Exchange information (Excel)";
-        command.Command = Command.ExcelExchangeInformation;
-        command.Click += CommandTools.ExecuteCommandCommandViaTag;
-        MenuMain.DropDownItems.Add(command);
-
-        command = new();
-        command.Text = "About";
-        command.Command = Command.About;
-        command.Click += CommandTools.ExecuteCommandCommandViaTag;
-        MenuMain.DropDownItems.Add(command);
-    }
 
     private void FrmMain_FormClosing(object sender, FormClosingEventArgs e)
     {

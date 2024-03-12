@@ -100,8 +100,12 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
 
     internal DataGridViewTextBoxColumn CreateColumn(string headerText, Type type, string format, DataGridViewContentAlignment align, int width = 0)
     {
-        DataGridViewTextBoxColumn c = new();
-        c.HeaderText = headerText;
+        DataGridViewTextBoxColumn c = new()
+        {
+            HeaderText = headerText,
+            ValueType = type,
+        };
+        
         c.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
         if (width > 0)
         {
@@ -113,7 +117,6 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
             c.AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCellsExceptHeader; // AllCells; // NotSet; // AllCellsExceptHeader; // AllCells; //
             c.AutoSizeMode = DataGridViewAutoSizeColumnMode.None; // NotSet; // AllCellsExceptHeader; // AllCells; //
         }
-        c.ValueType = type;
         c.DefaultCellStyle.Format = format;
         c.DefaultCellStyle.Alignment = align;
 
@@ -467,18 +470,6 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         Grid.ContextMenuStrip.Items[0].Text = text;
     }
 
-
-    internal static void AddCommand(ContextMenuStrip menuStrip, CryptoDataGrid dataGrid, string text, Command command, EventHandler? click)
-    {
-        ToolStripMenuItemCommand menuItem = new()
-        {
-            Command = command,
-            DataGrid = dataGrid,
-            Text = text
-        };
-        menuItem.Click += click;
-        menuStrip.Items.Add(menuItem);
-    }
 
 
     //internal void AddStandardSymbolCommands(ContextMenuStrip menuStrip, bool isSignal)

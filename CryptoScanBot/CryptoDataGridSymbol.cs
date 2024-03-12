@@ -18,13 +18,13 @@ public class CryptoDataGridSymbol<T>(DataGridView grid, List<T> list, SortedList
 
     public override void InitializeCommands(ContextMenuStrip menuStrip)
     {
-        AddCommand(menuStrip, this, "Activate trading app", Command.ActivateTradingApp, CommandTools.ExecuteCommandCommandViaTag);
-        AddCommand(menuStrip, this, "TradingView internal", Command.ActivateTradingviewIntern, CommandTools.ExecuteCommandCommandViaTag);
-        AddCommand(menuStrip, this, "TradingView external", Command.ActivateTradingviewExtern, CommandTools.ExecuteCommandCommandViaTag);
-        menuStrip.Items.Add(new ToolStripSeparator());
-        AddCommand(menuStrip, this, "Copy symbol name", Command.CopySymbolInformation, CommandTools.ExecuteCommandCommandViaTag);
-        AddCommand(menuStrip, this, "Trend information (log)", Command.ShowTrendInformation, CommandTools.ExecuteCommandCommandViaTag);
-        AddCommand(menuStrip, this, "Symbol information (Excel)", Command.ExcelSymbolInformation, CommandTools.ExecuteCommandCommandViaTag);
+        menuStrip.AddCommand(this, "Activate trading app", Command.ActivateTradingApp, CommandTools.ExecuteCommandCommandViaTag);
+        menuStrip.AddCommand(this, "TradingView internal", Command.ActivateTradingviewIntern, CommandTools.ExecuteCommandCommandViaTag);
+        menuStrip.AddCommand(this, "TradingView external", Command.ActivateTradingviewExtern, CommandTools.ExecuteCommandCommandViaTag);
+        menuStrip.AddSeperator();
+        menuStrip.AddCommand(this, "Copy symbol name", Command.CopySymbolInformation, CommandTools.ExecuteCommandCommandViaTag);
+        menuStrip.AddCommand(this, "Trend information (log)", Command.ShowTrendInformation, CommandTools.ExecuteCommandCommandViaTag);
+        menuStrip.AddCommand(this, "Symbol information (Excel)", Command.ExcelSymbolInformation, CommandTools.ExecuteCommandCommandViaTag);
     }
 
 

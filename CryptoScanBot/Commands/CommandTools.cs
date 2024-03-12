@@ -14,6 +14,40 @@ public class ToolStripMenuItemCommand : ToolStripMenuItem
 }
 
 
+public static class CommandHelper
+{
+
+    public static void AddSeperator(this ContextMenuStrip menuStrip)
+    {
+        menuStrip.Items.Add(new ToolStripSeparator());
+    }
+
+    public static void AddCommand(this ContextMenuStrip menuStrip, CryptoDataGrid dataGrid, string text, Command command, EventHandler click)
+    {
+        ToolStripMenuItemCommand menuItem = new()
+        {
+            Command = command,
+            DataGrid = dataGrid,
+            Text = text
+        };
+        menuItem.Click += click;
+        menuStrip.Items.Add(menuItem);
+    }
+
+    public static void AddCommand(this ToolStripMenuItem menuStrip, CryptoDataGrid dataGrid, string text, Command command, EventHandler click)
+    {
+        ToolStripMenuItemCommand menuItem = new()
+        {
+            Command = command,
+            DataGrid = dataGrid,
+            Text = text
+        };
+        menuItem.Click += click;
+        menuStrip.DropDownItems.Add(menuItem);
+    }
+}
+
+
 public class CommandTools
 {
     public static (bool succes, Model.CryptoExchange exchange, CryptoSymbol symbol, CryptoInterval interval, CryptoPosition position) GetAttributesFromSender(object sender)
@@ -34,18 +68,23 @@ public class CommandTools
 
     public static async void ExecuteSomethingViaTag(object sender, int index, Command cmd)
     {
-        // Globale commando's
-        if (cmd == Command.About)
+        // Global commands
+        switch (cmd)
         {
-            new CommandAbout().Execute(null);
-            return;
+            case Command.About:
+                new CommandAbout().Execute(null);
+                return;
+
+            case Command.ExcelExchangeInformation:
+                // Die valt qua parameters buiten de boot
+                _ = Task.Run(() => { new Excel.ExcelExchangeDump().ExportToExcel(GlobalData.Settings.General.Exchange); });
+                return;
+
+            case Command.ScannerSessionDebug:
+                ScannerSession.ScheduleRefresh();
+                return;
         }
-        else if (cmd == Command.ExcelExchangeInformation)
-        {
-            // Die valt qua parameters buiten de boot
-            _ = Task.Run(() => { new Excel.ExcelExchangeDump().ExportToExcel(GlobalData.Settings.General.Exchange); });
-            return;
-        }
+
 
         // De rest van de commando's heeft een object nodig
         var (succes, exchange, symbol, interval, position) = GetAttributesFromSender(sender);

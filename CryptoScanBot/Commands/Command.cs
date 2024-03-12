@@ -12,6 +12,7 @@ public enum Command
     ExcelPositionInformation,
     //CopySignalInformation,
     CopySymbolInformation,
+    ScannerSessionDebug,
     About
 }
 
