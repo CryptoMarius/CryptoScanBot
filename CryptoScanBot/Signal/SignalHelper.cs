@@ -95,6 +95,19 @@ public static class SignalHelper
         });
 
 
+        //***************************************************
+        // WGHBM - Momentum indicator that shows arrows when the Stochastic and the RSI are at the same time in the oversold or overbought area.
+        //***************************************************
+        // https://www.tradingview.com/script/0F1sNM49-WGHBM/ (not available anymore)
+        AlgorithmDefinitionList.Add(new AlgorithmDefinition()
+        {
+            Name = "storsi", // was WGHM = We Gaan Het Meemaken.. 
+            Strategy = CryptoSignalStrategy.Wghm,
+            AnalyzeLongType = typeof(SignalWghmLong),
+            AnalyzeShortType = typeof(SignalWghmShort),
+        });
+
+
 #if EXTRASTRATEGIES
         //***************************************************
         // Flux (kind of SBM + flux on 5m)
@@ -203,20 +216,6 @@ public static class SignalHelper
             AnalyzeShortType = typeof(SignalSlopeSma50Short),
         });
 
-
-        //***************************************************
-        // WGHBM - Momentum indicator that shows arrows when the Stochastic and the RSI are at the same time in the oversold or overbought area.
-        //***************************************************
-        // https://www.tradingview.com/script/0F1sNM49-WGHBM/ (not available anymore)
-        AlgorithmDefinitionList.Add(new AlgorithmDefinition()
-        {
-            Name = "wghm", // we gaan het (beter) (mee)maken
-            Strategy = CryptoSignalStrategy.Wghm,
-            AnalyzeLongType = typeof(SignalWghmLong),
-            AnalyzeShortType = typeof(SignalWghmShort),
-        });
-
-
         //***************************************************
         // EMA cross (9, 26)
         //***************************************************
@@ -227,7 +226,7 @@ public static class SignalHelper
             AnalyzeLongType = typeof(SignalEmaCross926Long),
             AnalyzeShortType = typeof(SignalEmaCross926Short),
         });
-        
+
 #endif
 
 
