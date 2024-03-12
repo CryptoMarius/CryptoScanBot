@@ -12,13 +12,13 @@ public enum CryptoSignalStrategy // CryptoStrategy
     Sbm5, // is er niet meer, blijft bestaan vanwege de enumeratie
     Stobb,
 
-#if EXTRASTRATEGIES
     // Experimental
     Flux, // is er niet meer, blijft bestaan vanwege de enumeratie
     BullishEngulfing, // zwak
     IchimokuKumoBreakout, // nazoeken, in de juiste positieve of negatieve trend doet ie het prima
     
     Wghm, // Vervallen, uit de Telegram groepen, ziet er leuk uit (maar of het echt wat is moet ik uitzoeken)
+#if EXTRASTRATEGIES
     MacdLt, // Vervallen, opgepikt uit de groep van Marco (een ziens of dit inderdaad werkt)
     MacdTest, // Vervallen, Nieuw idee maar dat bevalt  niet
 
