@@ -8,6 +8,7 @@ public class SettingsTextual
     {
         Interval.Add("1m");
         Interval.Add("2m");
+        Interval.Add("3m");
 
         Strategy.Add("sbm1");
         Strategy.Add("sbm2");

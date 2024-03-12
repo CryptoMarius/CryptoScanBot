@@ -63,7 +63,7 @@ public static class ScannerSession
 
     public static void Start(bool sleepAwhile)
     {
-        //GlobalData.AddTextToLogTab("Debug: ScannerSession.Start", true);
+        GlobalData.AddTextToLogTab("Debug: ScannerSession.Start", true);
         GlobalData.ApplicationStatus = CryptoApplicationStatus.Initializing;
 
         GlobalData.ThreadMonitorCandle = new ThreadMonitorCandle();

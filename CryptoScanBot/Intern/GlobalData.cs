@@ -2,7 +2,7 @@
 using CryptoScanBot.Enums;
 using CryptoScanBot.Model;
 using CryptoScanBot.Settings;
-using CryptoScanBot.Trader;
+using CryptoScanBot.Signal;
 using CryptoScanBot.TradingView;
 
 using Dapper;

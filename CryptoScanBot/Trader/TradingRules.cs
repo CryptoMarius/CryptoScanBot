@@ -15,8 +15,10 @@ public static class TradingRules
         // Als een munt (met name BTC) snel gedaald is dan stoppen
         if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
         {
+            int index = 0;
             foreach (PauseTradingRule rule in GlobalData.Settings.Trading.PauseTradingRules)
             {
+                index++;
                 if (exchange.SymbolListName.TryGetValue(rule.Symbol, out CryptoSymbol symbol))
                 {
                     CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(rule.Interval);
@@ -43,7 +45,7 @@ public static class TradingRules
                             else missingCandles = true;
                         }
 
-                        // todo: het percentage wordt echt niet negatief als je met de high en low werkt, duh
+                        // TODO: het percentage wordt echt niet negatief als je met de high en low werkt..
                         if (!missingCandles)
                         {
                             double percentage = (double)(100m * ((high / low) - 1m));
@@ -55,23 +57,15 @@ public static class TradingRules
                                 if (!pause.Until.HasValue || pauseUntilDate > pause.Until)
                                 {
                                     pause.Until = pauseUntilDate;
-                                    pause.Text = string.Format("{0} heeft {1:N2}% bewogen (gepauseerd tot {2}) - 2", rule.Symbol, percentage, pauseUntilDate.ToLocalTime());
+                                    pause.Text = $"{rule.Symbol} {index} heeft {percentage:N2}% bewogen (gepauseerd tot {pauseUntilDate.ToLocalTime()})";
                                     GlobalData.AddTextToLogTab(GlobalData.PauseTrading.Text);
                                     GlobalData.AddTextToTelegram(GlobalData.PauseTrading.Text);
                                 }
                             }
-                            else
-                            {
-                                //if (percentage > 0.5 || percentage < -0.5)
-                                //{
-                                //    GlobalData.AddTextToLogTab(string.Format("{0} heeft {1:N2}% bewogen", rule.Symbol, percentage));
-                                //    GlobalData.AddTextToTelegram(string.Format("{0} heeft {1:N2}% bewogen", rule.Symbol, percentage));
-                                //}
-                            }
                         }
                     }
                 }
-                else GlobalData.AddTextToLogTab("Pauze regel: symbol " + rule.Symbol + " bestaat niet");
+                else GlobalData.AddTextToLogTab($"Pauze regel: symbol {rule.Symbol} bestaat niet");
             }
         }
     }

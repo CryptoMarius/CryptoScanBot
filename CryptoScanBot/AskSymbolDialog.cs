@@ -2,7 +2,6 @@
 using CryptoScanBot.Intern;
 using CryptoScanBot.Model;
 using CryptoScanBot.Signal;
-using CryptoScanBot.Trader;
 
 namespace CryptoScanBot
 {

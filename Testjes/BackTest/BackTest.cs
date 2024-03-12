@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using CryptoExchange.Net.CommonObjects;
 using CryptoScanBot.Enums;
 using CryptoScanBot.Intern;
 using CryptoScanBot.Model;
