@@ -339,11 +339,13 @@ public class TradeTools
 
         bool markedAsReady = false;
         bool orderStatusChanged = false;
-        await ExchangeHelper.GetOrdersForPositionAsync(database, position);
-        await ExchangeHelper.GetTradesForPositionAsync(database, position);
+        int orderCount = await ExchangeHelper.GetOrdersForPositionAsync(database, position);
+        int tradeCount = await ExchangeHelper.GetTradesForPositionAsync(database, position);
 
-        ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} {position.Status}");
-        
+        ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} {position.Status} force={forceCalculation} orders={orderCount} trades={tradeCount}");
+
+        if (orderCount + tradeCount > 0)
+            forceCalculation = true;
 
         // De filled quantity in de steps opnieuw opbouwen vanuit de trades
         foreach (CryptoOrder order in position.Symbol.OrderList.Values.ToList())
@@ -536,7 +538,7 @@ public class TradeTools
                     {
                         part.CloseTime = null;
                         orderStatusChanged = true;
-                        GlobalData.AddTextToLogTab($"TradeTools: Part {position.Symbol.Name} weer opengezet vanwege correctie?????? {position.Status}");
+                        GlobalData.AddTextToLogTab($"TradeTools: Part {position.Symbol.Name} opnieuw opengezet vanwege correctie {position.Status}");
                     }
                 }
             }
