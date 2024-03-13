@@ -67,6 +67,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
         menuStrip.AddCommand(this, "Position cancel open DCA", Command.None, CommandPositionRemoveAdditionalDca);
         menuStrip.AddCommand(this, "Position take profit (if possible)", Command.None, CommandPositionLastPartTakeProfit);
         menuStrip.AddCommand(this, "Position information (Excel)", Command.ExcelPositionInformation, CommandTools.ExecuteCommandCommandViaTag);
+        menuStrip.AddCommand(this, "Hide selection", Command.None, ClearSelection);
 
         TimerRefreshInformation = new()
         {

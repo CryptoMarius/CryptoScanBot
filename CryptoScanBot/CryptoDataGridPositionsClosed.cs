@@ -54,6 +54,7 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
         menuStrip.AddCommand(this, "Position recalculate", Command.None, CommandPositionRecalculateExecute);
         menuStrip.AddCommand(this, "Position delete from database", Command.None, CommandPositionDeleteFromDatabaseAsync);
         menuStrip.AddCommand(this, "Position information (Excel)", Command.ExcelPositionInformation, CommandTools.ExecuteCommandCommandViaTag);
+        menuStrip.AddCommand(this, "Hide selection", Command.None, ClearSelection);
     }
 
     public override void InitializeHeaders()

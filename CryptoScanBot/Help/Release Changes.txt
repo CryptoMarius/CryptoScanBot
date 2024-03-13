@@ -1,6 +1,7 @@
 CryptoScanBot release historie:
 
 xx-03-2024 1.9
+- Scanner - Regelhoogte grid - icm het aanpassen van het lettertype wordt het nu dynamisch ingesteld
 - Scanner - De overgang van de 1.8 naar de 1.9 werkt niet (crash op de oude settings.json)
             Besloten om met een schone lei te beginnen, betekend wel alles opnieuw instellen.
 - Scanner - Meerdere kolommen tegelijk kunnen uitzetten (je krijgt er nu bijna RSI van)

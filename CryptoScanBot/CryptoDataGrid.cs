@@ -4,6 +4,7 @@ using CryptoScanBot.Commands;
 using CryptoScanBot.Intern;
 using CryptoScanBot.Settings;
 
+
 namespace CryptoScanBot;
 
 // Virtual DataGrid Base for displaying objects (symbol, signal, positions)
@@ -137,10 +138,9 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         Grid.ReadOnly = true;
         Grid.VirtualMode = true;
         
-        // TODO testen 
         Grid.RowHeadersWidth = 20;
         Grid.RowHeadersVisible = false; // the first column to select rows
-        Grid.RowHeadersDefaultCellStyle.BackColor = Grid.DefaultCellStyle.BackColor;
+        //Grid.RowHeadersDefaultCellStyle.BackColor = Grid.DefaultCellStyle.BackColor;
 
         Grid.AllowUserToAddRows = false;
         Grid.AutoGenerateColumns = false;
@@ -154,36 +154,23 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         Grid.ColumnHeadersDefaultCellStyle.SelectionBackColor = Grid.ColumnHeadersDefaultCellStyle.BackColor;
         Grid.ColumnHeadersDefaultCellStyle.SelectionForeColor = Grid.ColumnHeadersDefaultCellStyle.ForeColor;
 
-        //var font = Grid.DefaultCellStyle.Font;
-        //font.he
-        //var ratio = (float)font.FontFamily.GetEmHeight(font.Style) / (float)font.SizeInPoints;
-        //Grid.RowTemplate.Height = (int)((font.FontFamily.GetCellAscent(font.Style) + font.FontFamily.GetCellDescent(font.Style)) / ratio);
-        //GetLineSpacing(FontStyle.Regular)
-        //int ascent = Grid.Font.FontFamily.GetCellAscent(FontStyle.Regular);
-        //int desscent = Grid.Font.FontFamily.GetCellAscent(FontStyle.Regular);
-        //Grid.RowTemplate.Height = ascent + desscent + 4;
-        //var points = font.SizeInPoints;
-        //var pixels = points * Grid.DpiX / 72;
-        //MessageBox.Show("myFont size in pixels: " + pixels);
-        //int lineSpacing = font.FontFamily.GetLineSpacing(FontStyle.Regular);
-        //float lineSpacingPixel = font.Size * lineSpacing / font.FontFamily.GetEmHeight(FontStyle.Regular);
-        Grid.RowTemplate.Height = Grid.RowTemplate.Height - 1;
-
         Grid.GridColor = Color.Black; // VeryLightGray1;
         Grid.BackgroundColor = Grid.DefaultCellStyle.BackColor;
         
-        Grid.BorderStyle = BorderStyle.None; // Fixed3D, FixedSingle; // Rand rond de grids
-        //Grid.RowHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single; // Single;
-        //Grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single; // Raised;
+        Grid.BorderStyle = BorderStyle.None; // Fixed3D, FixedSingle; // Rand rond het grid
+        Grid.RowHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single; // Single;
+        Grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single; // Raised;
 
         Grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
         //Grid.DefaultCellStyle.SelectionBackColor = Grid.DefaultCellStyle.BackColor;
         //Grid.DefaultCellStyle.SelectionForeColor = Grid.DefaultCellStyle.ForeColor;
 
-        //Grid.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.Fill; // DisplayedCells; ?
         Grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None; // AllCellsExceptHeader; // AllCells; // DisplayedCells;
-        Grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
-        Grid.CellBorderStyle = DataGridViewCellBorderStyle.Single;
+        Grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single; // Kader rond de header cells
+
+        // Raised  geeft een mooi kadertje om iedere cell, maar dat is wel erg druk (instelbaar maken?)
+        Grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single; // Kader rond de header cells
+        Grid.CellBorderStyle = DataGridViewCellBorderStyle.Single; // .Single; // Sunken;
 
         Grid.CellFormatting += CellFormattingEvent;
         Grid.CellValueNeeded += new DataGridViewCellValueEventHandler(GetTextFunction);
@@ -197,16 +184,6 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         MenuStripCells.Opening += MenuStripOpening;
         InitializeCommands(MenuStripCells);
 
-        // Bind to a textbox
-        //txtModel.DataBindings.Add("Text", bs, "Model");
-
-        //if (cell.RowIndex == Grid.CurrentCell.RowIndex)
-        //    cell.Style.Font = SelectedFont;
-        //else
-        //    cell.Style.Font = DefaultFont;
-
-        // Make the font italic for row four.
-        //Grid.Columns[4].DefaultCellStyle.Font = new Font(DataGridView.DefaultFont, FontStyle.Italic);
     }
 
     internal void FillColumnPopup()
@@ -224,23 +201,11 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         int count = 0;
         foreach (DataGridViewColumn column in Grid.Columns)
         {
-
             if (!ColumnList.TryGetValue(column.HeaderText, out ColumnSetting columnSetting))
             {
                 columnSetting = new();
                 ColumnList.Add(column.HeaderText, columnSetting);
             }
-
-            //ToolStripMenuItem item = new()
-            //{
-            //    Tag = column,
-            //    Text = column.HeaderText,
-            //    Size = new Size(100, 22),
-            //    CheckState = CheckState.Unchecked,
-            //    Checked = columnSetting.Visible,
-            //};
-            //item.Click += CheckColumn;
-            //MenuStripHeader.Items.Add(item);
 
             column.Visible = columnSetting.Visible;
             if (columnSetting.Width > 0)
@@ -304,26 +269,6 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
             GlobalData.SaveUserSettings();
             Grid.Invoke((MethodInvoker)(() => { Grid.Invalidate(); }));
         }
-
-        //if (sender is ToolStripMenuItem item)
-        //{
-        //    item.Checked = !item.Checked;
-        //    if (item.Tag is DataGridViewTextBoxColumn column)
-        //    {
-        //        if (!ColumnList.TryGetValue(column.HeaderText, out ColumnSetting columnSetting))
-        //        {
-        //            columnSetting = new();
-        //            ColumnList.Add(column.HeaderText, columnSetting);
-        //        }
-        //        column.Visible = item.Checked;
-
-        //        columnSetting.Width = column.Width;
-        //        columnSetting.Visible = column.Visible;
-        //    }
-
-        //    GlobalData.SaveUserSettings();
-        //    Grid.Invoke((MethodInvoker)(() => { Grid.Invalidate(); }));
-        //}
     }
 
     private void ColumnWidthChanged(object sender, DataGridViewColumnEventArgs e)
@@ -345,10 +290,10 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         GlobalData.SaveUserSettings();
     }
 
-    //public void ClearSelection(object sender, EventArgs e)
-    //{
-    //    Grid.ClearSelection();
-    //}
+    internal void ClearSelection(object sender, EventArgs e)
+    {
+        Grid.ClearSelection();
+    }
 
     public void MenuStripOpening(object sender, EventArgs e)
     {
@@ -362,45 +307,19 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
             SelectedObjectIndex = -1;
             SelectedObject = null;
         }
-
-        //var point = Grid.PointToClient(Cursor.Position);
-        //var info = Grid.HitTest(point.X, point.Y);
-        //if (info.RowIndex >= 0)
-        //{
-        //    SelectedObjectIndex = info.RowIndex;
-        //    SelectedObject = List[SelectedObjectIndex];
-        //    //Grid.Rows[SelectedObjectIndex].Selected = true;
-        //    //Grid.ClearSelection();
-        //    foreach (DataGridViewColumn column in Grid.Columns)
-        //    {
-        //        if (column.Visible)
-        //        {
-        //            Grid.CurrentCell = Grid[column.Index, info.RowIndex];
-        //            break;
-        //        }
-        //    }
-        //}
-        //else
-        //{
-        //    SelectedObjectIndex = -1;
-        //    SelectedObject = null;
-        //    //Grid.ClearSelection();
-        //}
     }
 
     public void GridDoubleClick(object sender, EventArgs e)
     {
-        MenuStripOpening(sender, e);
-        MenuStripCells.Items[0].PerformClick();
+        var point = Grid.PointToClient(Cursor.Position);
+        var info = Grid.HitTest(point.X, point.Y);
+        if (info.RowIndex >= 0)
+        {
+            MenuStripOpening(sender, e);
+            MenuStripCells.Items[0].PerformClick();
+        }
     }
 
-    //public virtual void AddObject(T signal)
-    //{
-    //    List.Add(signal);
-    //    SortFunction();
-
-    //    Grid.Invoke((MethodInvoker)(() => { Grid.RowCount = List.Count; Grid.Invalidate(); }));
-    //}
 
     public virtual void AddObject(List<T> range)
     {
@@ -413,33 +332,21 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
     private void HeaderClick(object sender, DataGridViewCellMouseEventArgs e)
     {
         int column = e.ColumnIndex;
-        //DataGridViewColumn newSortColumn = Grid.Columns[column];
-
-        //ListSortDirection direction;
         if (SortColumn >= 0)
         {
             if (SortColumn == column && SortOrder == SortOrder.Ascending)
-            {
-                // Sort the same column again, reversing the SortOrder.
-                SortOrder = SortOrder.Descending;
-                //direction = ListSortDirection.Descending;
-            }
+                SortOrder = SortOrder.Descending; // same column, reverse
             else
             {
                 // Sort on new column and remove the old SortGlyph
-                //direction = ListSortDirection.Ascending;
                 SortOrder = SortOrder.Ascending;
-                // Sort indicator niet altijd zichtbaar vanwege breedte kolom
-                //Grid.Columns[SortColumn].HeaderCell.SortGlyphDirection = SortOrder.None;
+                // Sort indicator not always visible because of column width, make it bold instead
+                //clumn.HeaderCell.SortGlyphDirection = SortOrder == SortOrder.Ascending ? SortOrder.Ascending : SortOrder.Descending;
                 Grid.Columns[SortColumn].HeaderCell.Style.Font = new(Grid.ColumnHeadersDefaultCellStyle.Font.Name, Grid.ColumnHeadersDefaultCellStyle.Font.Size);
             }
         }
         else
-        {
-            // Sort on new column and remove the old SortGlyph
-            //direction = ListSortDirection.Ascending;
-            SortOrder = SortOrder.Ascending;
-        }
+            SortOrder = SortOrder.Ascending; // new column, sort
         SortColumn = column;
 
         ShowSortIndicator();
@@ -451,9 +358,13 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
     {
         int column = SortColumn;
         DataGridViewColumn newSortColumn = Grid.Columns[column];
-        // Sort indicator niet altijd zichtbaar vanwege breedte kolom
+        // Sort indicator not always visible because of column width, make it bold instead
         //newSortColumn.HeaderCell.SortGlyphDirection = SortOrder == SortOrder.Ascending ? SortOrder.Ascending : SortOrder.Descending;
         newSortColumn.HeaderCell.Style.Font = new(Grid.ColumnHeadersDefaultCellStyle.Font.Name, Grid.ColumnHeadersDefaultCellStyle.Font.Size, FontStyle.Bold);
+    }
+
+    public void AdjustRowHeight()
+    {
     }
 
     public void ApplySorting()
@@ -468,59 +379,13 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
     {
         string text = GlobalData.ExternalUrls.GetTradingAppName(GlobalData.Settings.General.TradingApp, GlobalData.Settings.General.ExchangeName);
         Grid.ContextMenuStrip.Items[0].Text = text;
+
+        // https://learn.microsoft.com/en-us/dotnet/desktop/winforms/advanced/how-to-obtain-font-metrics?view=netframeworkdesktop-4.8
+        var font = new Font(GlobalData.Settings.General.FontNameNew, GlobalData.Settings.General.FontSizeNew);
+        var fontFamily = font.FontFamily;
+        float lineSpacing = fontFamily.GetLineSpacing(FontStyle.Regular);
+        var lineSpacingPixel = font.Size * lineSpacing / fontFamily.GetEmHeight(FontStyle.Regular);
+        Grid.RowTemplate.Height = 8 + (int)Math.Round(lineSpacingPixel, 1, MidpointRounding.AwayFromZero);
     }
-
-
-
-    //internal void AddStandardSymbolCommands(ContextMenuStrip menuStrip, bool isSignal)
-    //{
-    //    //ToolStripMenuItemCommand menuCommand;
-    //    //menuCommand = new();
-    //    //menuCommand.DataGrid = this;
-    //    //menuCommand.Text = "Activate trading app";
-    //    //menuCommand.Command = Command.ActivateTradingApp;
-    //    //menuCommand.Click += CommandTools.ExecuteCommandCommandViaTag;
-    //    //menuStrip.Items.Add(menuCommand);
-
-    //    //menuCommand = new();
-    //    //menuCommand.DataGrid = this;
-    //    //menuCommand.Text = "TradingView browser";
-    //    //menuCommand.Command = Command.ActivateTradingviewIntern;
-    //    //menuCommand.Click += CommandTools.ExecuteCommandCommandViaTag;
-    //    //menuStrip.Items.Add(menuCommand);
-
-    //    //menuCommand = new();
-    //    //menuCommand.Text = "TradingView extern";
-    //    //menuCommand.Command = Command.ActivateTradingviewExtern;
-    //    //menuCommand.Click += CommandTools.ExecuteCommandCommandViaTag;
-    //    //menuStrip.Items.Add(menuCommand);
-
-
-    //    //menuStrip.Items.Add(new ToolStripSeparator());
-
-    //    //menuCommand = new();
-    //    //menuCommand.DataGrid = this;
-    //    //menuCommand.Text = "Kopiëer informatie";
-    //    //if (isSignal)
-    //    //    menuCommand.Command = Command.CopySignalInformation;
-    //    //else
-    //    //    menuCommand.Command = Command.CopySymbolInformation;
-    //    //menuCommand.Click += CommandTools.ExecuteCommandCommandViaTag;
-    //    //menuStrip.Items.Add(menuCommand);
-
-    //    //menuCommand = new();
-    //    //menuCommand.DataGrid = this;
-    //    //menuCommand.Text = "Trend informatie (zie log)";
-    //    //menuCommand.Command = Command.ShowTrendInformation;
-    //    //menuCommand.Click += CommandTools.ExecuteCommandCommandViaTag;
-    //    //menuStrip.Items.Add(menuCommand);
-
-    //    //menuCommand = new();
-    //    //menuCommand.DataGrid = this;
-    //    //menuCommand.Text = "Symbol informatie (Excel)";
-    //    //menuCommand.Command = Command.ExcelSymbolInformation;
-    //    //menuCommand.Click += CommandTools.ExecuteCommandCommandViaTag;
-    //    //menuStrip.Items.Add(menuCommand);
-    //}
 
 }
