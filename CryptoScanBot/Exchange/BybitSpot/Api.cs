@@ -451,16 +451,29 @@ public class Api : ExchangeBase
         else
             order.Price = item.AveragePrice;
         order.Quantity = item.Quantity;
-        order.QuoteQuantity = item.Price.Value * item.Quantity;
+        // Bij deze status wordt het aangevraagde hoeveelheid niet goed ingevuld
+        if (item.Status == Bybit.Net.Enums.V5.OrderStatus.PartiallyFilledCanceled && item.QuantityFilled.HasValue)
+            order.Quantity = item.QuantityFilled.Value;
+        order.QuoteQuantity = order.Price.Value * order.Quantity;
 
-        order.AveragePrice = item.AveragePrice;
-        order.QuantityFilled = item.QuantityFilled;
-        if (item.AveragePrice.HasValue && item.QuantityFilled.HasValue)
-            order.QuoteQuantityFilled = item.AveragePrice * item.QuantityFilled;
+
+        // Filled
+        if (item.AveragePrice.HasValue)
+            order.AveragePrice = item.AveragePrice;
+        else
+            order.AveragePrice = 0;
+
+        if (item.QuantityFilled.HasValue)
+            order.QuantityFilled = item.QuantityFilled;
+        else
+            order.QuantityFilled = 0;
+        order.QuoteQuantityFilled = order.Price * item.QuantityFilled;
+
 
         // Bybit spot does currently not return any info on fees
         order.Commission = 0; // item.ExecutedFee;
         order.CommissionAsset = ""; //  item.FeeAsset;
+
     }
 
 
