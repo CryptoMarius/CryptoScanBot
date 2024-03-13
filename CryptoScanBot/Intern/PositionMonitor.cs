@@ -1461,13 +1461,13 @@ public class PositionMonitor : IDisposable
                         }
 
                         // Verwijderen de buy vanwege een te lage barometer, pauseer stand of timeout (behalve trailing of reserved dca)
-                        else if (PauseBecauseOfTradingRules)
-                        {
-                            timeOut = true;
-                            closePart = false;
-                            newStatus = CryptoOrderStatus.TradingRules;
-                            cancelText = "annuleren vanwege trading regels";
-                        }
+                        //else if (PauseBecauseOfTradingRules)
+                        //{
+                        //    timeOut = true;
+                        //    closePart = false;
+                        //    newStatus = CryptoOrderStatus.TradingRules;
+                        //    cancelText = "annuleren vanwege trading regels";
+                        //}
 
 
                         // Verwijderen de buy vanwege een te lage barometer, pauseer stand of timeout (behalve trailing of reserved dca)
