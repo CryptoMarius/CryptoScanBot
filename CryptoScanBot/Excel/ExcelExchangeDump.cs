@@ -23,15 +23,20 @@ public class ExcelExchangeDump : ExcelBase
         WriteCell(sheet, column++, row, "Status");
         WriteCell(sheet, column++, row, "Volume");
 
-        WriteCell(sheet, column++, row, "PriceTickSize");
-        WriteCell(sheet, column++, row, "PriceMinimum");
-        WriteCell(sheet, column++, row, "PriceMaximum");
-        WriteCell(sheet, column++, row, "PriceDisplay");
+        WriteCell(sheet, column++, row, "Price TickSize");
+        WriteCell(sheet, column++, row, "Price Minimum");
+        WriteCell(sheet, column++, row, "Price Maximum");
+        WriteCell(sheet, column++, row, "Price Display");
 
-        WriteCell(sheet, column++, row, "QuantityTickSize");
-        WriteCell(sheet, column++, row, "QuantityMinimum");
-        WriteCell(sheet, column++, row, "QuantityMaximum");
-        WriteCell(sheet, column++, row, "QuantityDisplay");
+        WriteCell(sheet, column++, row, "Quantity TickSize");
+        WriteCell(sheet, column++, row, "Quantity Minimum");
+        WriteCell(sheet, column++, row, "Quantity Maximum");
+        WriteCell(sheet, column++, row, "Quantity Display");
+
+        WriteCell(sheet, column++, row, "Quote Min");
+        WriteCell(sheet, column++, row, "Quote Max");
+
+        WriteCell(sheet, column++, row, "LastPrice");
         return column;
     }
 
@@ -81,6 +86,7 @@ public class ExcelExchangeDump : ExcelBase
             cell = WriteCell(sheet, column++, row, symbol.PriceDisplayFormat);
 
 
+
             cell = WriteCell(sheet, column++, row, (double)symbol.QuantityTickSize);
             cell.CellStyle = CellStyleDecimalNormal;
             
@@ -91,6 +97,22 @@ public class ExcelExchangeDump : ExcelBase
             cell.CellStyle = CellStyleDecimalNormal;
 
             cell = WriteCell(sheet, column++, row, symbol.QuantityDisplayFormat);
+
+
+            cell = WriteCell(sheet, column++, row, (double)symbol.QuoteValueMinimum);
+            cell.CellStyle = CellStyleDecimalNormal;
+
+            cell = WriteCell(sheet, column++, row, (double)symbol.QuoteValueMaximum);
+            cell.CellStyle = CellStyleDecimalNormal;
+
+
+
+
+            if (symbol.LastPrice.HasValue)
+            {
+                cell = WriteCell(sheet, column++, row, (double)symbol.LastPrice);
+                cell.CellStyle = CellStyleDecimalNormal;
+            }
         }
 
         AutoSize(sheet, columns);
