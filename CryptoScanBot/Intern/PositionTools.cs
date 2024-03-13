@@ -136,6 +136,7 @@ public static class PositionTools
             PositionId = position.Id,
             PositionPartId = part.Id,
 
+            CancelInProgress = false,
             Side = tradeParams.OrderSide,
             Status = CryptoOrderStatus.New,
             OrderType = tradeParams.OrderType,
