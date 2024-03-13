@@ -391,6 +391,7 @@ public class ExcelPositionDump : ExcelBase
         int columns = 0;
         WriteCell(sheet, columns++, row, "Id");
         WriteCell(sheet, columns++, row, "OrderId");
+        WriteCell(sheet, columns++, row, "Status");
 
         WriteCell(sheet, columns++, row, "Side");
         WriteCell(sheet, columns++, row, "Created");
@@ -418,9 +419,8 @@ public class ExcelPositionDump : ExcelBase
             int column = 0;
 
             var cell = WriteCell(sheet, column++, row, order.Id);
-
             cell = WriteCell(sheet, column++, row, order.OrderId);
-
+            cell = WriteCell(sheet, column++, row, order.Status.ToString());
             cell = WriteCell(sheet, column++, row, order.Side.ToString());
 
             cell = WriteCell(sheet, column++, row, order.CreateTime.ToLocalTime());
@@ -530,7 +530,9 @@ public class ExcelPositionDump : ExcelBase
         int column = 0;
         WriteCell(sheet, row, column++, "Positie ID");
         WriteCell(sheet, row, column++, "Exchange");
+        WriteCell(sheet, row, column++, "Account");
         WriteCell(sheet, row, column++, "Symbol");
+        WriteCell(sheet, row, column++, "Symbol Id");
         WriteCell(sheet, row, column++, "Price ticksize");
         WriteCell(sheet, row, column++, "Quantity ticksize");
         WriteCell(sheet, row, column++, "Direction");
@@ -546,15 +548,16 @@ public class ExcelPositionDump : ExcelBase
         WriteCell(sheet, row, column++, "Geopend");
         WriteCell(sheet, row, column++, "Gesloten");
         WriteCell(sheet, row, column++, "Status");
-        WriteCell(sheet, row, column++, "Account");
         WriteCell(sheet, row, column++, "Parts");
 
         row++;
         column = 0;
         WriteCell(sheet, row, column++, Position.Id);
         WriteCell(sheet, row, column++, Position.Exchange.Name);
+        WriteCell(sheet, row, column++, Position.TradeAccount.Name);
 
         WriteCell(sheet, row, column++, Position.Symbol.Name);
+        WriteCell(sheet, row, column++, Position.Symbol.Id);
         var cell = WriteCell(sheet, row, column++, (double)Position.Symbol.PriceTickSize);
         cell.CellStyle = CellStyleDecimalNormal;
 
@@ -593,7 +596,6 @@ public class ExcelPositionDump : ExcelBase
         else WriteCell(sheet, row, column++, "");
         
         WriteCell(sheet, row, column++, Position.Status.ToString());
-        WriteCell(sheet, row, column++, Position.TradeAccount.Name);
         WriteCell(sheet, row, column++, Position.PartCount);
 
         AutoSize(sheet, 6);

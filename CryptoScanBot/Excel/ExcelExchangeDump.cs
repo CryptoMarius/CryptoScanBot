@@ -17,6 +17,7 @@ public class ExcelExchangeDump : ExcelBase
         int column = 0;
 
         // Columns...
+        WriteCell(sheet, column++, row, "Id");
         WriteCell(sheet, column++, row, "Symbol");
         WriteCell(sheet, column++, row, "Base");
         WriteCell(sheet, column++, row, "Quote");
@@ -58,17 +59,11 @@ public class ExcelExchangeDump : ExcelBase
             column = 0;
 
             ICell cell;
-            cell = WriteCell(sheet, column++, row, symbol.Name);
-            //cell.CellStyle = CellStyleDate;
-
-            cell = WriteCell(sheet, column++, row, symbol.Base);
-            //cell.CellStyle = CellStyleDecimalNormal;
-
-            cell = WriteCell(sheet, column++, row, symbol.Quote);
-            //cell.CellStyle = CellStyleDecimalNormal;
-
-            cell = WriteCell(sheet, column++, row, symbol.Status);
-            //cell.CellStyle = CellStyleDate;
+            WriteCell(sheet, column++, row, symbol.Id);
+            WriteCell(sheet, column++, row, symbol.Name);
+            WriteCell(sheet, column++, row, symbol.Base);
+            WriteCell(sheet, column++, row, symbol.Quote);
+            WriteCell(sheet, column++, row, symbol.Status);
 
             cell = WriteCell(sheet, column++, row, (double)symbol.Volume);
             cell.CellStyle = CellStyleDecimalNormal;
