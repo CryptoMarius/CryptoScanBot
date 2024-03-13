@@ -22,6 +22,7 @@ public class CryptoPositionStep
     public CryptoOrderSide Side { get; set; } // (buy of sell)
     public CryptoOrderStatus Status { get; set; } // New, Filled, PartiallFilled
     public CryptoOrderType OrderType { get; set; } // (limit, stop limit, oco enz)
+    public bool CancelInProgress { get; set; }
 
     public string OrderId { get; set; } // Vanwege papertrading moet deze nullable zijn
     public string Order2Id { get; set; } // Eventuele limit order
@@ -45,9 +46,6 @@ public class CryptoPositionStep
     public decimal CommissionBase { get; set; }  // debug, not really relevant
     public decimal CommissionQuote { get; set; }  // debug, not really relevant
     public string CommissionAsset { get; set; }  // debug, not really relevant
-
-    [Computed]
-    public bool CancelInProgress { get; set; }
     [Computed]
     public bool IsChanged { get; set; }
 }

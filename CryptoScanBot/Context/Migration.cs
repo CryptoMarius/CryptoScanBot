@@ -6,7 +6,7 @@ namespace CryptoScanBot.Context;
 public class Migration
 {
     // De huidige database versie
-    public readonly static int CurrentDatabaseVersion = 13;
+    public readonly static int CurrentDatabaseVersion = 14;
 
 
     public static void Execute(CryptoDatabase database, int CurrentVersion)
@@ -363,6 +363,22 @@ public class Migration
                 transaction.Commit();
             }
 
+
+            //***********************************************************
+            if (CurrentVersion > version.Version && version.Version == 13)
+            {
+                using var transaction = database.BeginTransaction();
+
+                database.Connection.Execute("alter table positionstep add CancelInProgress Integer null", transaction);
+                database.Connection.Execute("update positionstep set CancelInProgress=0", transaction);
+                database.Connection.Execute("update positionstep set CancelInProgress=1 where status>4", transaction);
+
+                // update version
+                version.Version += 1;
+                database.Connection.Update(version, transaction);
+                transaction.Commit();
+            }
+            
 
         }
     }

@@ -1160,6 +1160,7 @@ public class CryptoDatabase : IDisposable
                 "CloseTime TEXT NULL," +
                 "Status INTEGER NOT NULL," +
                 "Side INTEGER NOT NULL," +
+                "CancelInProgress INTEGER NOT NULL," +
                 "OrderType INTEGER NOT NULL," +
                 "OrderId TEXT NOT NULL," +
                 "Order2Id TEXT NULL," +
