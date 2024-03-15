@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Runtime.InteropServices;
 using CryptoScanBot.Commands;
+using CryptoScanBot.Enums;
 using CryptoScanBot.Intern;
 using CryptoScanBot.Settings;
 
@@ -386,6 +387,47 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         float lineSpacing = fontFamily.GetLineSpacing(FontStyle.Regular);
         var lineSpacingPixel = font.Size * lineSpacing / fontFamily.GetEmHeight(FontStyle.Regular);
         Grid.RowTemplate.Height = 8 + (int)Math.Round(lineSpacingPixel, 1, MidpointRounding.AwayFromZero);
+    }
+
+    internal static Color GetBackgroudColorForStrategy(CryptoSignalStrategy strategy, CryptoTradeSide side)
+    {
+        // Dit kan veel optimaler door het van te voren te indexeren 
+
+        switch (strategy)
+        {
+            case CryptoSignalStrategy.Jump:
+                if (side == CryptoTradeSide.Long)
+                    return GlobalData.Settings.Signal.Jump.ColorLong;
+                else if (side == CryptoTradeSide.Short)
+                    return GlobalData.Settings.Signal.Jump.ColorShort;
+                break;
+
+            case CryptoSignalStrategy.Stobb:
+                if (side == CryptoTradeSide.Long)
+                    return GlobalData.Settings.Signal.Stobb.ColorLong;
+                else if (side == CryptoTradeSide.Short)
+                    return GlobalData.Settings.Signal.Stobb.ColorShort;
+                break;
+
+            case CryptoSignalStrategy.Sbm1:
+            case CryptoSignalStrategy.Sbm2:
+            case CryptoSignalStrategy.Sbm3:
+            case CryptoSignalStrategy.Sbm4:
+                if (side == CryptoTradeSide.Long)
+                    return GlobalData.Settings.Signal.Sbm.ColorLong;
+                else if (side == CryptoTradeSide.Short)
+                    return GlobalData.Settings.Signal.Sbm.ColorShort;
+                break;
+
+            case CryptoSignalStrategy.StoRsi:
+                if (side == CryptoTradeSide.Long)
+                    return GlobalData.Settings.Signal.StoRsi.ColorLong;
+                else if (side == CryptoTradeSide.Short)
+                    return GlobalData.Settings.Signal.StoRsi.ColorShort;
+                break;
+        }
+
+        return Color.White;
     }
 
 }

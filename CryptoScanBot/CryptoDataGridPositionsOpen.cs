@@ -378,33 +378,9 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
                     break;
 
                 case ColumnsForGrid.Strategy: // strategy
-
-                    switch (position.Strategy)
-                    {
-                        case CryptoSignalStrategy.Jump:
-                            if (GlobalData.Settings.Signal.Jump.ColorLong != Color.White && position.Side == CryptoTradeSide.Long)
-                                backColor = GlobalData.Settings.Signal.Jump.ColorLong;
-                            else if (GlobalData.Settings.Signal.Jump.ColorShort != Color.White && position.Side == CryptoTradeSide.Short)
-                                backColor = GlobalData.Settings.Signal.Jump.ColorShort;
-                            break;
-
-                        case CryptoSignalStrategy.Stobb:
-                            if (GlobalData.Settings.Signal.Stobb.ColorLong != Color.White && position.Side == CryptoTradeSide.Long)
-                                backColor = GlobalData.Settings.Signal.Stobb.ColorLong;
-                            else if (GlobalData.Settings.Signal.Stobb.ColorShort != Color.White && position.Side == CryptoTradeSide.Short)
-                                backColor = GlobalData.Settings.Signal.Stobb.ColorShort;
-                            break;
-
-                        case CryptoSignalStrategy.Sbm1:
-                        case CryptoSignalStrategy.Sbm2:
-                        case CryptoSignalStrategy.Sbm3:
-                        case CryptoSignalStrategy.Sbm4:
-                            if (GlobalData.Settings.Signal.Sbm.ColorLong != Color.White && position.Side == CryptoTradeSide.Long)
-                                backColor = GlobalData.Settings.Signal.Sbm.ColorLong;
-                            else if (GlobalData.Settings.Signal.Sbm.ColorShort != Color.White && position.Side == CryptoTradeSide.Short)
-                                backColor = GlobalData.Settings.Signal.Sbm.ColorShort;
-                            break;
-                    }
+                    Color color = GetBackgroudColorForStrategy(position.Strategy, position.Side);
+                    if (color != Color.White)
+                        backColor = color;
                     break;
 
                 case ColumnsForGrid.Side:

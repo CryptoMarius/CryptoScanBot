@@ -56,7 +56,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
         menuStrip.AddCommand(this, "Copy symbol name", Command.CopySymbolInformation, CommandTools.ExecuteCommandCommandViaTag);
         menuStrip.AddCommand(this, "Trend information (log)", Command.ShowTrendInformation, CommandTools.ExecuteCommandCommandViaTag);
         menuStrip.AddCommand(this, "Symbol information (Excel)", Command.ExcelSymbolInformation, CommandTools.ExecuteCommandCommandViaTag);
-        menuStrip.AddCommand(this, "Hide selection", Command.None, ClearSelection);
+        menuStrip.AddCommand(this, "Hide grid selection", Command.None, ClearSelection);
 
         TimerClearOldSignals = new()
         {
@@ -79,7 +79,6 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
         SortOrder = SortOrder.Descending;
         SortColumn = (int)ColumnsForGrid.Date;
 
-        DataGridViewTextBoxColumn c;
         var columns = Enum.GetValues(typeof(ColumnsForGrid));
         foreach (ColumnsForGrid column in columns)
         {
@@ -156,7 +155,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                     CreateColumn("Flux 5m", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 45);
                     break;
                 case ColumnsForGrid.FundingRate:
-                    //c = 
+                    //DataGridViewTextBoxColumn c = 
                     CreateColumn("Funding Rate", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50);
                     //if (GlobalData.Settings.General.ActivateExchange. Futures ...  disable the column...
                     break;
@@ -444,36 +443,11 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
 
                 case ColumnsForGrid.Strategy:
                     {
-                        // todo - configuratie per strategie introduceren?
-
                         if (!signal.IsInvalid)
                         {
-                            switch (signal.Strategy)
-                            {
-                                case CryptoSignalStrategy.Jump:
-                                    if (GlobalData.Settings.Signal.Jump.ColorLong != Color.White && signal.Side == CryptoTradeSide.Long)
-                                        backColor = GlobalData.Settings.Signal.Jump.ColorLong;
-                                    else if (GlobalData.Settings.Signal.Jump.ColorShort != Color.White && signal.Side == CryptoTradeSide.Short)
-                                        backColor = GlobalData.Settings.Signal.Jump.ColorShort;
-                                    break;
-
-                                case CryptoSignalStrategy.Stobb:
-                                    if (GlobalData.Settings.Signal.Stobb.ColorLong != Color.White && signal.Side == CryptoTradeSide.Long)
-                                        backColor = GlobalData.Settings.Signal.Stobb.ColorLong;
-                                    else if (GlobalData.Settings.Signal.Stobb.ColorShort != Color.White && signal.Side == CryptoTradeSide.Short)
-                                        backColor = GlobalData.Settings.Signal.Stobb.ColorShort;
-                                    break;
-
-                                case CryptoSignalStrategy.Sbm1:
-                                case CryptoSignalStrategy.Sbm2:
-                                case CryptoSignalStrategy.Sbm3:
-                                case CryptoSignalStrategy.Sbm4:
-                                    if (GlobalData.Settings.Signal.Sbm.ColorLong != Color.White && signal.Side == CryptoTradeSide.Long)
-                                        backColor = GlobalData.Settings.Signal.Sbm.ColorLong;
-                                    else if (GlobalData.Settings.Signal.Sbm.ColorShort != Color.White && signal.Side == CryptoTradeSide.Short)
-                                        backColor = GlobalData.Settings.Signal.Sbm.ColorShort;
-                                    break;
-                            }
+                            Color color = GetBackgroudColorForStrategy(signal.Strategy, signal.Side);
+                            if (color != Color.White)
+                                backColor = color;
                         }
                     }
                     break;
