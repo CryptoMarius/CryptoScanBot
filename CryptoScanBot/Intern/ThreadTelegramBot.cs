@@ -253,6 +253,22 @@ public class ThreadTelegramBotInstance
             }
             builder.AppendLine();
 
+
+            // De barometer informatie
+            SortedList<CryptoIntervalPeriod, string> b = [];
+            b.TryAdd(CryptoIntervalPeriod.interval1h, "1h");
+            b.TryAdd(CryptoIntervalPeriod.interval4h, "4h");
+            b.TryAdd(CryptoIntervalPeriod.interval1d, "1d");
+
+            builder.Append("Barometer: ");
+            foreach (KeyValuePair<CryptoIntervalPeriod, string> entry in b)
+            {
+                BarometerData barometerData = signal.Symbol.QuoteData.BarometerList[entry.Key];
+                builder.Append($" {entry.Value} {barometerData.PriceBarometer?.ToString("N2")}");
+            }
+            builder.AppendLine();
+
+
             builder.Append("Stoch: " + signal.StochOscillator?.ToString("N2"));
             builder.Append(" Signal " + signal.StochSignal?.ToString("N2"));
             builder.Append(" RSI " + signal.Rsi?.ToString("N2"));
