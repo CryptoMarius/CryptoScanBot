@@ -182,6 +182,9 @@ public partial class FrmSettings : Form
         EditSbmMa50AndMa20Lookback.Value = settings.Signal.Sbm.Ma50AndMa20Lookback;
 
 
+        // STORSI
+        UserControlSettingsSoundAndColorsStoRsi.LoadConfig("STORSI", settings.Signal.StoRsi);
+
         // JUMP
         UserControlSettingsSoundAndColorsJump.LoadConfig("Jump", settings.Signal.Jump);
 
@@ -408,6 +411,9 @@ public partial class FrmSettings : Form
         settings.Signal.Sbm.Ma200AndMa50Lookback = (int)EditSbmMa200AndMa50Lookback.Value;
         settings.Signal.Sbm.Ma50AndMa20Crossing = EditSbmMa50AndMa20Crossing.Checked;
         settings.Signal.Sbm.Ma50AndMa20Lookback = (int)EditSbmMa50AndMa20Lookback.Value;
+
+        // STORSI
+        UserControlSettingsSoundAndColorsStoRsi.SaveConfig(settings.Signal.StoRsi);
 
         // JUMP
         UserControlSettingsSoundAndColorsJump.SaveConfig(settings.Signal.Jump);

@@ -8,12 +8,12 @@ namespace CryptoScanBot.Signal;
 // https://www.tradingview.com/script/0F1sNM49-WGHBM/
 // Momentum indicator that shows arrows when the Stochastic and the RSI are at the same time in the oversold or overbought area.
 
-public class SignalWghmShort : SignalSbmBaseShort
+public class SignalStoRsiShort : SignalSbmBaseShort
 {
-    public SignalWghmShort(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
+    public SignalStoRsiShort(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
         SignalSide = CryptoTradeSide.Short;
-        SignalStrategy = CryptoSignalStrategy.Wghm;
+        SignalStrategy = CryptoSignalStrategy.StoRsi;
     }
 
 

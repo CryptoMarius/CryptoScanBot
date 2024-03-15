@@ -102,9 +102,9 @@ public static class SignalHelper
         AlgorithmDefinitionList.Add(new AlgorithmDefinition()
         {
             Name = "storsi", // was WGHM = We Gaan Het Meemaken.. 
-            Strategy = CryptoSignalStrategy.Wghm,
-            AnalyzeLongType = typeof(SignalWghmLong),
-            AnalyzeShortType = typeof(SignalWghmShort),
+            Strategy = CryptoSignalStrategy.StoRsi,
+            AnalyzeLongType = typeof(SignalStoRsiLong),
+            AnalyzeShortType = typeof(SignalStoRsiShort),
         });
 
 

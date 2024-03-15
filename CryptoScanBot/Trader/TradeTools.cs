@@ -320,6 +320,11 @@ public class TradeTools
                 }
 
                 step.CommissionAsset = trade.CommissionAsset; // debug, not really relevant after this
+
+                // De order heeft een trade, dus het kan nooit canceled of hoger zijn!
+                if (step.Status >= CryptoOrderStatus.Canceled && step.QuantityFilled > 0)
+                    step.Status = CryptoOrderStatus.Filled; // Eigenlijk niet de juiste status, maar beter dan canceled?
+
             }
         }
     }
@@ -365,12 +370,12 @@ public class TradeTools
                     string msgInfo = $"{position.Symbol.Name} side={order.Side} type={order.Type} status={order.Status} order={order.OrderId} " +
                         $"price={order.AveragePrice?.ToString0()} quantity={order.QuantityFilled?.ToString0()} value={order.QuoteQuantity.ToString0()}";
 
-                    // Kan overgeslagen worden?
                     CalculateOrderFeeFromTrades(position.Symbol, step);
 
-
+                    // Avoid messages to the user if already closed
+                    bool isOrderClosed = step.CloseTime.HasValue;
                     // Afgesloten steps niet aanpassen en ook geen meldingen meer op geven
-                    if (!step.CloseTime.HasValue)
+                    //if (!isOrderClosed || forceCalculation)
                     {
                         // Hebben wij de order geannuleerd? (we gebruiken tenslotte ook een cancel order om orders weg te halen)
                         if (order.Status == CryptoOrderStatus.Canceled)
@@ -418,9 +423,12 @@ public class TradeTools
                                     position.CloseTime = DateTime.UtcNow;
                                 position.Status = CryptoPositionStatus.TakeOver;
 
-                                s = $"handletrade#7 {msgInfo} positie cancelled, user takeover? position.status={position.Status}";
-                                GlobalData.AddTextToLogTab(s);
-                                GlobalData.AddTextToTelegram(s, position);
+                                if (!isOrderClosed)
+                                {
+                                    s = $"handletrade#7 {msgInfo} positie cancelled, user takeover? position.status={position.Status}";
+                                    GlobalData.AddTextToLogTab(s);
+                                    GlobalData.AddTextToTelegram(s, position);
+                                }
                             }
                         }
                         else if (order.Status.IsFilled())
@@ -429,6 +437,12 @@ public class TradeTools
 
                             // Statistics entry or take profit order.
                             step.CloseTime = order.UpdateTime;
+
+                            // Overnemen, kan aangepast zijn (exchange is alway's leading)
+                            step.Price = (decimal)order.Price;
+                            step.Quantity = (decimal)order.QuantityFilled;
+                            //step.QuoteQuantity = (decimal)order.QuoteQuantityFilled;
+
                             step.AveragePrice = (decimal)order.AveragePrice;
                             step.QuantityFilled = (decimal)order.QuantityFilled;
                             step.QuoteQuantityFilled = (decimal)order.QuoteQuantityFilled;
@@ -443,10 +457,13 @@ public class TradeTools
                                 step.Status = CryptoOrderStatus.Filled;
 
 
-                            // Statistics position
-                            position.Reposition = true;
-                            position.UpdateTime = order.UpdateTime;
-                            ScannerLog.Logger.Trace($"TradeTools.CalculatePositionResultsViaOrders: {position.Symbol.Name} take profit -> position.Reposition = true");
+                            if (!isOrderClosed)
+                            {
+                                // Statistics position
+                                position.Reposition = true;
+                                position.UpdateTime = order.UpdateTime;
+                                ScannerLog.Logger.Trace($"TradeTools.CalculatePositionResultsViaOrders: {position.Symbol.Name} take profit -> position.Reposition = true");
+                            }
 
                             // Statistics symbol (cooldown)
                             position.Symbol.LastTradeDate = order.UpdateTime;
@@ -487,8 +504,11 @@ public class TradeTools
                                     s += $" takeprofit ({part.Percentage:N2}%)"; // is die wel berekend?
                             }
 
-                            GlobalData.AddTextToLogTab(s);
-                            GlobalData.AddTextToTelegram(s, position);
+                            if (!isOrderClosed)
+                            {
+                                GlobalData.AddTextToLogTab(s);
+                                GlobalData.AddTextToTelegram(s, position);
+                            }
                         }
 
                         // De reden van annuleren niet overschrijven
