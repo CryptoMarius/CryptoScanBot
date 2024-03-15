@@ -656,7 +656,8 @@ public partial class DashBoardInformation : UserControl
                                 }
                             }
                         }
-                        ShowSymbolPrice(SymbolHistList[4], InformationRowList[4], exchange, quoteData, symbol, "Openstaande posities", positionCount.ToString());
+                        text = $"({GlobalData.Settings.Trading.SlotsMaximalLong}/{GlobalData.Settings.Trading.SlotsMaximalShort}) {positionCount}";
+                        ShowSymbolPrice(SymbolHistList[4], InformationRowList[4], exchange, quoteData, symbol, "Openstaande posities", text);
                     }
                     else
                         ShowSymbolPrice(SymbolHistList[4], InformationRowList[4], exchange, quoteData, symbol, "", "");
