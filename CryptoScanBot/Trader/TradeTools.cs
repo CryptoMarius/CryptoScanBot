@@ -68,22 +68,16 @@ public class TradeTools
 
     static async public Task CheckOpenPositions()
     {
-        // Alle openstaande posities lezen 
+        // De openstaande posities controleren
         GlobalData.AddTextToLogTab("Checking open positions");
 
         using var database = new CryptoDatabase();
         foreach (CryptoTradeAccount tradeAccount in GlobalData.TradeAccountList.Values.ToList())
         {
-            //foreach (CryptoPosition position in tradeAccount.PositionList.Values.ToList())
             foreach (var positionList in tradeAccount.PositionList.Values.ToList())
             {
                 foreach (var position in positionList.Values.ToList())
                 {
-                    // Controleer de openstaande orders, zijn ze ondertussen gevuld
-                    // Haal de trades van deze positie op vanaf de 1e order
-                    // TODO - Hoe doen we dit met papertrading (er is niets geregeld!)
-                    //await LoadOrdersFromDatabaseAndExchangeAsync(database, position);
-                    //await CalculatePositionResultsViaOrders(database, position);
                     GlobalData.ThreadDoubleCheckPosition.AddToQueue(position, true, "CheckOpenPositions");
                 }
             }
@@ -258,41 +252,11 @@ public class TradeTools
         position.ActiveDca = hasActiveDca;
     }
 
-    ///// <summary>
-    ///// Count the number of open take profit orders?
-    ///// </summary>
-    ///// <param name="position"></param>
-    ///// <returns>Amount of open TP orders</returns>
-    //private static int CountOpenTakeProfitOrders(CryptoPosition position)
-    //{
-    //    int entryCount = 0;
-    //    int takeProfitCount = 0;
-    //    CryptoOrderSide entryOrderSide = position.GetEntryOrderSide();
-    //    CryptoOrderSide takeProfitOrderSide = position.GetTakeProfitOrderSide();
-    //    foreach (CryptoPositionPart part in position.Parts.Values.ToList())
-    //    {
-    //        foreach (CryptoPositionStep step in part.Steps.Values.ToList())
-    //        {
-    //            if (step.Side == entryOrderSide)
-    //            {
-    //                if (step.CloseTime.HasValue && step.Status.IsFilled())
-    //                    entryCount++;
-    //            }
-
-    //            if (step.Side == takeProfitOrderSide)
-    //            {
-    //                if (step.CloseTime.HasValue && step.Status.IsFilled())
-    //                    takeProfitCount++;
-    //            }
-
-
-    //        }
-    //    }
-    //    return takeProfitCount - entryCount;
-    //}
 
     private static void CalculateOrderFeeFromTrades(CryptoSymbol symbol, CryptoPositionStep step)
     {
+        ScannerLog.Logger.Trace($"CalculateOrderFeeFromTrades: Positie {symbol.Name} check step={step.OrderId}");
+
         // Calculate fee from the trades (Bybit V5 doesn't return fee via orders)
         // Afhankelijk van de asset wordt de commissie berekend (debug)
         // Voor de step is dit niet relevant (mits we het omrekenen naar base en quote)
@@ -304,6 +268,7 @@ public class TradeTools
         {
             if (trade.OrderId == step.OrderId)
             {
+                ScannerLog.Logger.Trace($"CalculateOrderFeeFromTrades: Positie {symbol.Name} check trade={trade.TradeId} order={trade.OrderId}");
                 if (trade.CommissionAsset == symbol.Base) // fee in base quantity
                 {
                     decimal value = (decimal)trade.Commission * (decimal)trade.Price;
@@ -339,18 +304,19 @@ public class TradeTools
         // Als de positie reeds gesloten is gaan we niet meer aanpassen
         // (kan gesloten zijn vanwege een verkeerde beslissing, timeout?)
         // Die controle wordt door de ThreadCheckFinishedPosition gedaan
-        if (position.Status == CryptoPositionStatus.Ready)
-            return;
+        //if (position.Status == CryptoPositionStatus.Ready)
+        //    return;
 
         bool markedAsReady = false;
         bool orderStatusChanged = false;
         int orderCount = await ExchangeHelper.GetOrdersForPositionAsync(database, position);
         int tradeCount = await ExchangeHelper.GetTradesForPositionAsync(database, position);
 
-        ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} {position.Status} force={forceCalculation} orders={orderCount} trades={tradeCount}");
-
         if (orderCount + tradeCount > 0)
             forceCalculation = true;
+
+        ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} {position.Status} force={forceCalculation} orders={orderCount} trades={tradeCount}");
+
 
         // De filled quantity in de steps opnieuw opbouwen vanuit de trades
         foreach (CryptoOrder order in position.Symbol.OrderList.Values.ToList())
@@ -360,6 +326,7 @@ public class TradeTools
                 if (step.Status != order.Status || step.QuoteQuantityFilled != order.QuoteQuantityFilled || forceCalculation)
                 {
                     orderStatusChanged = true;
+                    ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} check {order.OrderId}");
 
                     //  Bij iedere step hoort een part (maar technisch kan alles)
                     CryptoPositionPart part = PositionTools.FindPositionPart(position, step.PositionPartId);
@@ -374,146 +341,146 @@ public class TradeTools
 
                     // Avoid messages to the user if already closed
                     bool isOrderClosed = step.CloseTime.HasValue;
-                    // Afgesloten steps niet aanpassen en ook geen meldingen meer op geven
-                    //if (!isOrderClosed || forceCalculation)
+
+                    // Hebben wij de order geannuleerd? (we gebruiken tenslotte ook een cancel order om orders weg te halen)
+                    if (order.Status == CryptoOrderStatus.Canceled)
                     {
-                        // Hebben wij de order geannuleerd? (we gebruiken tenslotte ook een cancel order om orders weg te halen)
-                        if (order.Status == CryptoOrderStatus.Canceled)
+                        if (step.CancelInProgress) //|| step.Status > CryptoOrderStatus.Canceled
                         {
-                            if (step.CancelInProgress) //|| step.Status > CryptoOrderStatus.Canceled
-                            {
-                                // Wij hebben de order geannuleerd via de CancelStep/CancelOrder/Status
-                                // Probleem is dat de step.Status pas na het annuleren wordt gezet en bewaard. 
-                                // Geconstateerd: een cancel via de user stream kan (te) snel gaan
+                            // Wij hebben de order geannuleerd via de CancelStep/CancelOrder/Status
+                            // Probleem is dat de step.Status pas na het annuleren wordt gezet en bewaard. 
+                            // Geconstateerd: een cancel via de user stream kan (te) snel gaan
 
-                                // NB: Er is nu wat overlappende code door die CancelInProgress
-                                step.CloseTime = order.UpdateTime;
-                            }
-                            else
-                            {
-                                // De gebruiker heeft de positie geannuleerd
-                                // Vanaf nu zijn/haar probleem/verantwoordelijkheid
-                                step.CloseTime = order.UpdateTime;
-
-                                // Om de statistieken niet te beinvloeden zetten we alles op 0
-                                part.Profit = 0;
-                                part.Invested = 0;
-                                part.Returned = 0;
-                                part.Reserved = 0;
-                                part.Commission = 0;
-                                part.CommissionBase = 0;
-                                part.CommissionQuote = 0;
-                                part.Percentage = 0;
-                                part.CloseTime = order.UpdateTime;
-
-                                //s = string.Format("handletrade#7 {0} positie part cancelled, user takeover?", msgInfo);
-                                //GlobalData.AddTextToLogTab(s);
-                                //GlobalData.AddTextToTelegram(s);
-
-                                position.Profit = 0;
-                                position.Invested = 0;
-                                position.Returned = 0;
-                                position.Reserved = 0;
-                                position.Commission = 0;
-                                position.CommissionBase = 0;
-                                position.CommissionQuote = 0;
-                                position.Percentage = 0;
-                                position.CloseTime = order.UpdateTime;
-                                if (!position.CloseTime.HasValue)
-                                    position.CloseTime = DateTime.UtcNow;
-                                position.Status = CryptoPositionStatus.TakeOver;
-
-                                if (!isOrderClosed)
-                                {
-                                    s = $"handletrade#7 {msgInfo} positie cancelled, user takeover? position.status={position.Status}";
-                                    GlobalData.AddTextToLogTab(s);
-                                    GlobalData.AddTextToTelegram(s, position);
-                                }
-                            }
+                            // NB: Er is nu wat overlappende code door die CancelInProgress
+                            step.CloseTime = order.UpdateTime;
+                            ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} check {order.OrderId} -> Canceled by trader");
                         }
-                        else if (order.Status.IsFilled())
+                        else
                         {
-                            s = $"handletrade {msgInfo}";
-
-                            // Statistics entry or take profit order.
+                            // De gebruiker heeft de positie geannuleerd
+                            // Vanaf nu zijn/haar probleem/verantwoordelijkheid
                             step.CloseTime = order.UpdateTime;
 
-                            // Overnemen, kan aangepast zijn (exchange is alway's leading)
-                            step.Price = (decimal)order.Price;
-                            step.Quantity = (decimal)order.QuantityFilled;
-                            //step.QuoteQuantity = (decimal)order.QuoteQuantityFilled;
+                            // Om de statistieken niet te beinvloeden zetten we alles op 0
+                            part.Profit = 0;
+                            part.Invested = 0;
+                            part.Returned = 0;
+                            part.Reserved = 0;
+                            part.Commission = 0;
+                            part.CommissionBase = 0;
+                            part.CommissionQuote = 0;
+                            part.Percentage = 0;
+                            part.CloseTime = order.UpdateTime;
 
-                            step.AveragePrice = (decimal)order.AveragePrice;
-                            step.QuantityFilled = (decimal)order.QuantityFilled;
-                            step.QuoteQuantityFilled = (decimal)order.QuoteQuantityFilled;
+                            //s = string.Format("handletrade#7 {0} positie part cancelled, user takeover?", msgInfo);
+                            //GlobalData.AddTextToLogTab(s);
+                            //GlobalData.AddTextToTelegram(s);
 
-                            // Needed for Bybit Spot + market order && status=CryptoOrderStatus.PartiallyAndClosed
-                            // (the exchange sligtly diverted from the task, adapt to the new situation)
-                            if (order.Status == CryptoOrderStatus.PartiallyAndClosed)
-                                step.Quantity = order.Quantity;
+                            position.Profit = 0;
+                            position.Invested = 0;
+                            position.Returned = 0;
+                            position.Reserved = 0;
+                            position.Commission = 0;
+                            position.CommissionBase = 0;
+                            position.CommissionQuote = 0;
+                            position.Percentage = 0;
+                            position.CloseTime = order.UpdateTime;
+                            position.Status = CryptoPositionStatus.TakeOver;
 
-                            // Can't be cancelled anymore if its filled
-                            if (step.Status > CryptoOrderStatus.Canceled)
-                                step.Status = CryptoOrderStatus.Filled;
-
-
+                            // Geen melding geven bij afgesloten orders
                             if (!isOrderClosed)
                             {
-                                // Statistics position
-                                position.Reposition = true;
-                                position.UpdateTime = order.UpdateTime;
-                                ScannerLog.Logger.Trace($"TradeTools.CalculatePositionResultsViaOrders: {position.Symbol.Name} take profit -> position.Reposition = true");
-                            }
-
-                            // Statistics symbol (cooldown)
-                            position.Symbol.LastTradeDate = order.UpdateTime;
-
-
-                            CryptoOrderSide entryOrderSide = position.GetEntryOrderSide();
-                            if (step.Side == entryOrderSide)
-                            {
-                                s += " entry";
-
-                                // Als er 1 (of meerdere trades zijn) dan zitten we in de trade (de user ticker valt wel eens stil)
-                                // Eventuele handmatige correctie geven daarna problemen (we mogen eigenlijk niet handmatig corrigeren)
-                                // (Dit geeft te denken aan de problemen als we straks een lopende order gaan opnemen als een positie)
-                                if (position.Status == CryptoPositionStatus.Waiting)
-                                {
-                                    position.CloseTime = null; // reopen
-                                    position.Status = CryptoPositionStatus.Trading;
-                                }
-                            }
-
-
-                            CryptoOrderSide takeProfitOrderSide = position.GetTakeProfitOrderSide();
-                            if (step.Side == takeProfitOrderSide)
-                            {
-                                part.CloseTime = order.UpdateTime;
-
-                                // durf het niet aan op deze manier
-                                //if (CountOpenTakeProfitOrders(position) == 0)
-                                //{
-                                //    markedAsReady = true;
-                                //    position.CloseTime = order.UpdateTime;
-                                //    position.Status = CryptoPositionStatus.Ready;
-                                //}
-
-                                if (position.Status == CryptoPositionStatus.Ready)
-                                    s += $" ready ({position.Percentage:N2}%)";
-                                else
-                                    s += $" takeprofit ({part.Percentage:N2}%)"; // is die wel berekend?
-                            }
-
-                            if (!isOrderClosed)
-                            {
+                                s = $"handletrade#7 {msgInfo} positie cancelled, user takeover? position.status={position.Status}";
                                 GlobalData.AddTextToLogTab(s);
                                 GlobalData.AddTextToTelegram(s, position);
                             }
+                            ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} check {order.OrderId} -> Canceled by user");
+                        }
+                    }
+                    else if (order.Status.IsFilled())
+                    {
+                        ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} check {order.OrderId} -> IsFilled");
+                        s = $"handletrade {msgInfo}";
+
+                        // Statistics entry or take profit order.
+                        step.CloseTime = order.UpdateTime;
+
+                        // Overnemen, kan aangepast zijn (exchange is alway's leading)
+                        step.Price = (decimal)order.Price;
+                        step.Quantity = (decimal)order.QuantityFilled;
+                        //step.QuoteQuantity = (decimal)order.QuoteQuantityFilled; is er niet
+
+                        step.AveragePrice = (decimal)order.AveragePrice;
+                        step.QuantityFilled = (decimal)order.QuantityFilled;
+                        step.QuoteQuantityFilled = (decimal)order.QuoteQuantityFilled;
+
+                        // Needed for Bybit Spot + market order && status=CryptoOrderStatus.PartiallyAndClosed
+                        // (the exchange sligtly diverted from the task, adapt to the new situation)
+                        // (Maar achteraf: vraag ik me af of dit daadwerkelijk het geval is, nakijken!)
+                        if (order.Status == CryptoOrderStatus.PartiallyAndClosed)
+                            step.Quantity = order.Quantity;
+
+                        // Can't be cancelled anymore if its filled
+                        if (step.Status > CryptoOrderStatus.Canceled)
+                            step.Status = CryptoOrderStatus.Filled;
+
+
+                        // Geen melding geven bij afgesloten orders
+                        if (!isOrderClosed)
+                        {
+                            // Statistics position
+                            position.Reposition = true;
+                            ScannerLog.Logger.Trace($"TradeTools.CalculatePositionResultsViaOrders: {position.Symbol.Name} take profit -> position.Reposition = true");
                         }
 
-                        // De reden van annuleren niet overschrijven
-                        if (step.Status < CryptoOrderStatus.Canceled)
-                            step.Status = order.Status;
+                        // Statistics symbol (cooldown)
+                        position.Symbol.LastTradeDate = order.UpdateTime;
+
+
+                        CryptoOrderSide entryOrderSide = position.GetEntryOrderSide();
+                        if (step.Side == entryOrderSide)
+                        {
+                            s += " entry";
+
+                            // Als er 1 (of meerdere trades zijn) dan zitten we in de trade (de user ticker valt wel eens stil)
+                            // Eventuele handmatige correctie geven daarna problemen (we mogen eigenlijk niet handmatig corrigeren)
+                            // (Dit geeft te denken aan de problemen als we straks een lopende order gaan opnemen als een positie)
+                            if (position.Status == CryptoPositionStatus.Waiting)
+                            {
+                                position.CloseTime = null; // reopen
+                                position.UpdateTime = order.UpdateTime;
+                                position.Status = CryptoPositionStatus.Trading;
+                            }
+
+                            ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} check {order.OrderId} -> IsFilled (entry)");
+                        }
+
+
+                        CryptoOrderSide takeProfitOrderSide = position.GetTakeProfitOrderSide();
+                        if (step.Side == takeProfitOrderSide)
+                        {
+                            part.CloseTime = order.UpdateTime;
+                            if (position.Status == CryptoPositionStatus.Ready)
+                                s += $" ready"; //  ({position.Percentage:N2}%)
+                            else
+                                s += $" takeprofit"; //  ({part.Percentage:N2}%) is die wel berekend?
+
+                            ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} check {order.OrderId} -> IsFilled (takeprofit)");
+                        }
+
+                        // Geen melding geven bij afgesloten orders
+                        if (!isOrderClosed)
+                        {
+                            GlobalData.AddTextToLogTab(s);
+                            GlobalData.AddTextToTelegram(s, position);
+                        }
+                    }
+
+                    // De reden van annuleren niet overschrijven
+                    if (step.Status < CryptoOrderStatus.Canceled)
+                    {
+                        step.Status = order.Status;
+                        ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} check {order.OrderId} -> set status to {order.Status}");
                     }
                 }
             }
@@ -531,6 +498,7 @@ public class TradeTools
                 orderStatusChanged = true;
                 position.CloseTime = null;
                 position.Reposition = true;
+                position.UpdateTime = DateTime.UtcNow;
                 position.Status = CryptoPositionStatus.Trading;
                 GlobalData.AddTextToLogTab($"TradeTools: Position {position.Symbol.Name} status aangepast naar {position.Status} (should not occur)");
             }
@@ -577,11 +545,10 @@ public class TradeTools
             }
 
 
-            // Laatste controles uitvoeren en de nog openstaande DCA orders afsluiten
+            // Een laatste controle laten uitvoeren en de nog openstaande DCA orders afsluiten/verplaatsen
             if (markedAsReady)
             {
-                position.DelayUntil = position.UpdateTime.Value.AddSeconds(10);
-                GlobalData.ThreadDoubleCheckPosition.AddToQueue(position, true, "CalculatePositionResultsViaOrders positie ready");
+                GlobalData.ThreadDoubleCheckPosition.AddToQueue(position, true, "CalculatePositionResultsViaOrders positie ready", true);
             }
         }
     }

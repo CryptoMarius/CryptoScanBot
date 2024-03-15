@@ -47,7 +47,7 @@ public partial class FrmMain : Form
 
         MenuMain.AddCommand(null, "Exchange information (Excel)", Command.ExcelExchangeInformation, CommandTools.ExecuteCommandCommandViaTag);
         MenuMain.AddCommand(null, "About", Command.About, CommandTools.ExecuteCommandCommandViaTag);
-        MenuMain.AddCommand(null, "Scannersession test", Command.ScannerSessionDebug, CommandTools.ExecuteCommandCommandViaTag);
+        //MenuMain.AddCommand(null, "Scannersession test", Command.ScannerSessionDebug, CommandTools.ExecuteCommandCommandViaTag);
 
         //Console.Write("Hello world 1");
         //System.Diagnostics.Debug.WriteLine("Hello world 2");
@@ -680,6 +680,15 @@ public partial class FrmMain : Form
                     if (signal.Side == CryptoTradeSide.Short)
                         PlaySound(signal, GlobalData.Settings.Signal.Sbm.PlaySound, GlobalData.Settings.Signal.Sbm.PlaySpeech,
                             GlobalData.Settings.Signal.Sbm.SoundFileShort, ref LastSignalSoundSbmOverbought);
+                    break;
+
+                case CryptoSignalStrategy.StoRsi:
+                    if (signal.Side == CryptoTradeSide.Long)
+                        PlaySound(signal, GlobalData.Settings.Signal.StoRsi.PlaySound, GlobalData.Settings.Signal.StoRsi.PlaySpeech,
+                            GlobalData.Settings.Signal.StoRsi.SoundFileLong, ref LastSignalSoundStobbOversold);
+                    if (signal.Side == CryptoTradeSide.Short)
+                        PlaySound(signal, GlobalData.Settings.Signal.StoRsi.PlaySound, GlobalData.Settings.Signal.StoRsi.PlaySpeech,
+                            GlobalData.Settings.Signal.StoRsi.SoundFileShort, ref LastSignalSoundStobbOverbought);
                     break;
             }
 

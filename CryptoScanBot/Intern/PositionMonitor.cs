@@ -1717,6 +1717,7 @@ public class PositionMonitor : IDisposable
                 {
                     if (TradingConfig.Signals[side].BarometerLog)
                         GlobalData.AddTextToLogTab($"{Symbol.Name} {side} {reaction}");
+                    Symbol.ClearSignals();
                 }
                 else
                 {
@@ -1880,7 +1881,7 @@ public class PositionMonitor : IDisposable
                     {
                         foreach (CryptoPosition position in positionList.Values.ToList())
                         {
-                            GlobalData.ThreadDoubleCheckPosition.AddToQueue(position, false, "NewCandleArrived");
+                            GlobalData.ThreadDoubleCheckPosition.AddToQueue(position, false, "New 1m candle");
                         }
                     }
                 }

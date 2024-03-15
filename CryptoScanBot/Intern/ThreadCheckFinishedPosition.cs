@@ -31,13 +31,17 @@ public class ThreadCheckFinishedPosition
         GlobalData.AddTextToLogTab("Stop position check finished handler");
     }
 
-    public void AddToQueue(CryptoPosition position, bool check, string reason)
+    public void AddToQueue(CryptoPosition position, bool check, string reason, bool addExtraDelay = false)
     {
-        // De positie is net klaar gemeld, maar pijnlijke ervaring leert ons dat het niet altijd juist is.
-        // Er kunnen fouten ontstaan doordat orders of trades enzovoort niet correct afgehandeld zijn, of
-        // dat er een bijkoop order net gevallen is. Dus extra controles doen na het administratief sluiten
-        // van de positie.
-        //ScannerLog.Logger.Trace($"ThreadDoubleCheckPosition.AddToQueue: Positie {position.Symbol.Name} controleren! {position.Status} {reason}");
+        // Extra delay omdat de exchange mogelijk de administratie niet rond heeft.
+        // Met name als het druk op de exchange is kan het problemen geven.
+        if (addExtraDelay)
+        {
+            // Eigenlijk wil je de positie niet in deze queue hebben.
+            // Hoe voorkom je duplicaten in deze queue, niet netjes.
+            position.DelayUntil = DateTime.UtcNow.AddSeconds(5);
+        }
+
         Queue.Add((position, check, reason));
     }
 
@@ -112,7 +116,7 @@ public class ThreadCheckFinishedPosition
                                         {
                                             ScannerLog.Logger.Trace($"ThreadDoubleCheckPosition.Execute: {position.Symbol.Name} annuleren dca order mislukt");
                                             ExchangeBase.Dump(position, succes, tradeParams, "DCA ORDER ANNULEREN NIET IN 1x GELUKT!!! (herkansing)");
-                                            AddToQueue(position, true, "herkansing annuleren dca order"); // doe nog maar een keer... Endless loop?
+                                            AddToQueue(position, true, "herkansing annuleren dca order", true); // doe nog maar een keer... Endless loop?
                                             removePosition = false;
                                         }
                                     }
@@ -151,14 +155,14 @@ public class ThreadCheckFinishedPosition
                                 Monitor.Exit(position.Symbol.CandleList);
                             }
 
-                            ScannerLog.Logger.Trace($"ThreadDoubleCheckPosition.Execute: {position.Symbol.Name} CheckThePosition");
+                            ScannerLog.Logger.Trace($"ThreadDoubleCheckPosition.Execute: {position.Symbol.Name} CheckThePosition {reason}");
                             PositionMonitor positionMonitor = new(position.Symbol, lastCandle1m);
                             await positionMonitor.CheckThePosition(position);
 
                             if (position.Status == CryptoPositionStatus.Ready)
                             {
                                 ScannerLog.Logger.Trace($"ThreadDoubleCheckPosition.Execute: {position.Symbol.Name} ready, nog een keer!");
-                                AddToQueue(position, true, "positie is reaady, laten verplaatsen"); // nog eens, en dan laten verplaatsen naar gesloten posities
+                                AddToQueue(position, true, "positie is reaady, laten verplaatsen", true); // nog eens, en dan laten verplaatsen naar gesloten posities
                             }
                         }
                     }

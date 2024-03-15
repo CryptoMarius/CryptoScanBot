@@ -454,7 +454,10 @@ public class Api : ExchangeBase
         // Bij deze status wordt het aangevraagde hoeveelheid niet goed ingevuld
         if (item.Status == Bybit.Net.Enums.V5.OrderStatus.PartiallyFilledCanceled && item.QuantityFilled.HasValue)
             order.Quantity = item.QuantityFilled.Value;
-        order.QuoteQuantity = order.Price.Value * order.Quantity;
+        if (order.Price.HasValue)
+            order.QuoteQuantity = order.Price.Value * order.Quantity;
+        else
+            order.QuoteQuantity = 0;
 
 
         // Filled
@@ -507,10 +510,10 @@ public class Api : ExchangeBase
                     var oldQuoteQuantityFilled = order.QuoteQuantityFilled;
                     PickupOrder(position.TradeAccount, position.Symbol, order, item);
                     database.Connection.Update<CryptoOrder>(order);
-                    ScannerLog.Logger.Trace($"GetOrdersForPositionAsync {position.Symbol.Name} updated order {item.OrderId}");
 
                     if (oldStatus != order.Status || oldQuoteQuantityFilled != order.QuoteQuantityFilled)
                     {
+                        ScannerLog.Logger.Trace($"GetOrdersForPositionAsync {position.Symbol.Name} updated order {item.OrderId}");
                         text = JsonSerializer.Serialize(item, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = false }).Trim();
                         ScannerLog.Logger.Trace($"{item.Symbol} order updated json={text}");
                         count++;
