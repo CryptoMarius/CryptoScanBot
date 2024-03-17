@@ -50,7 +50,7 @@ static public class ThreadSoundPlayer
                     fileName = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location) + @"\Sounds\" + text;
 
                 // Als we binnen x seconden hetzelfde bestand afspelen negeren we het (anders een eindeloze reeks met pingeltjes)
-                if (lastFile == fileName && (DateTime.Now - last).TotalSeconds < 5)
+                if (lastFile == fileName && (DateTime.Now - last).TotalSeconds < 15)
                     continue;
                 
                 last = DateTime.Now;
