@@ -177,7 +177,6 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         Grid.CellValueNeeded += new DataGridViewCellValueEventHandler(GetTextFunction);
         Grid.ColumnHeaderMouseClick += HeaderClick;
         Grid.DoubleClick += GridDoubleClick;
-        //Grid.SelectionChanged += ClearSelection;
         Grid.MouseUp += ShowPopupMenu;
 
         // Commands
@@ -244,8 +243,15 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
                 break;
             case DataGridViewHitTestType.Cell:
                 cms = MenuStripCells;
+                // adjust the selection
+                var info = Grid.HitTest(e.X, e.Y);
+                if (info.RowIndex >= 0)
+                    Grid.Rows[info.RowIndex].Selected = true;
+                else
+                    return;
                 break;
         }
+
         if (cms != null)
             cms.Show(dgv, e.Location);
     }
@@ -300,7 +306,7 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
     {
         if (Grid.SelectedRows.Count > 0)
         {
-            SelectedObjectIndex = Grid.SelectedRows[0].Index; ;
+            SelectedObjectIndex = Grid.SelectedRows[0].Index;
             SelectedObject = List[SelectedObjectIndex];
         }
         else
