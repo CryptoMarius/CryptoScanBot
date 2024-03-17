@@ -67,6 +67,8 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
         menuStrip.AddCommand(this, "Position cancel open DCA", Command.None, CommandPositionRemoveAdditionalDca);
         menuStrip.AddCommand(this, "Position take profit (if possible)", Command.None, CommandPositionLastPartTakeProfit);
         menuStrip.AddCommand(this, "Position information (Excel)", Command.ExcelPositionInformation, CommandTools.ExecuteCommandCommandViaTag);
+
+        menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Hide selection", Command.None, ClearSelection);
 
         TimerRefreshInformation = new()
@@ -331,7 +333,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
                         e.Value = position.Symbol.FundingRate.ToString();
                     break;
                 case ColumnsForGrid.QuantityTick:// ter debug..
-                    e.Value = position.Symbol?.QuantityTickSize.ToString(position.Symbol.PriceDisplayFormat);
+                    e.Value = position.Symbol?.QuantityTickSize.ToString0();
                     break;
                 case ColumnsForGrid.RemainingDust: // ter debug
                     e.Value = position.RemainingDust.ToString("N8");
@@ -340,7 +342,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
                     if (position.Symbol.LastPrice.HasValue)
                     {
                         decimal dustValue = position.RemainingDust * position.Symbol.LastPrice.Value;
-                        e.Value = dustValue.ToString("N2");
+                        e.Value = dustValue.ToString("N8");
                     }
                     break;
                 default:

@@ -56,6 +56,8 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
         menuStrip.AddCommand(this, "Copy symbol name", Command.CopySymbolInformation, CommandTools.ExecuteCommandCommandViaTag);
         menuStrip.AddCommand(this, "Trend information (log)", Command.ShowTrendInformation, CommandTools.ExecuteCommandCommandViaTag);
         menuStrip.AddCommand(this, "Symbol information (Excel)", Command.ExcelSymbolInformation, CommandTools.ExecuteCommandCommandViaTag);
+
+        menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Hide grid selection", Command.None, ClearSelection);
 
         TimerClearOldSignals = new()

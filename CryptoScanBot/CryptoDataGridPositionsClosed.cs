@@ -54,6 +54,8 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
         menuStrip.AddCommand(this, "Position recalculate", Command.None, CommandPositionRecalculateExecute);
         menuStrip.AddCommand(this, "Position delete from database", Command.None, CommandPositionDeleteFromDatabaseAsync);
         menuStrip.AddCommand(this, "Position information (Excel)", Command.ExcelPositionInformation, CommandTools.ExecuteCommandCommandViaTag);
+
+        menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Hide selection", Command.None, ClearSelection);
     }
 
@@ -234,9 +236,9 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
                 //ColumnsForGrid.EntryPrice => position.EntryPrice?.ToString(position.Symbol.PriceDisplayFormat),
                 //ColumnsForGrid.ProfitPrice => position.ProfitPrice?.ToString(position.Symbol.PriceDisplayFormat),
                 // ter debug..
-                ColumnsForGrid.QuantityTick => position.Symbol?.QuantityTickSize.ToString(position.Symbol.PriceDisplayFormat),
+                ColumnsForGrid.QuantityTick => position.Symbol?.QuantityTickSize.ToString0(),
                 ColumnsForGrid.RemainingDust => position.RemainingDust.ToString("N8"),
-                ColumnsForGrid.DustValue => (position.RemainingDust * position.Symbol.LastPrice).ToString0("N2"),
+                ColumnsForGrid.DustValue => (position.RemainingDust * position.Symbol.LastPrice).ToString0("N8"),
                 _ => '?',
             };
         }
