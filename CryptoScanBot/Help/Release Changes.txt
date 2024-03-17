@@ -1,6 +1,7 @@
 CryptoScanBot release historie:
 
 xx-03-2024 1.9
+- Scanner - Documentatie bijwerken - dit keer best een grote klus
 - Scanner - Regelhoogte grid - icm het aanpassen van het lettertype wordt het nu dynamisch ingesteld
 - Scanner - De overgang van de 1.8 naar de 1.9 werkt niet (crash op de oude settings.json)
             Besloten om met een schone lei te beginnen, betekend wel alles opnieuw instellen.
@@ -63,6 +64,7 @@ xx-03-2024 1.9
 - Scanner - Bij een negatieve barometer wordt de toevoeging 1h/4h/1d soms niet getoond (niet genoeg ruimte)
 - Scanner - Wat correcties op de handleiding (met dank aan Trinity)
 --------------------------------------------------------------------------------------------------------------------------------------------
+- Trading - Openstaande posities uitgebreid met het aantal slots voor long en short
 - Trading - Telegram commando's, uitbreiden zodat het aantal slots voor short en long ingesteld kan worden
 - Trading - Vanwege de overgang naar Bybit spot rekening houden met commissies en dust, veel werk vanwege andere aanpak
 - Trading - Bybit futures wordt verboden in NL (dank je wel), Bybit spot afstoffen om hierop te kunnen traden.

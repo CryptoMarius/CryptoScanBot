@@ -406,8 +406,13 @@ public class TradeTools
                         step.CloseTime = order.UpdateTime;
 
                         // Overnemen, kan aangepast zijn (exchange is alway's leading)
-                        step.Price = (decimal)order.Price;
-                        step.Quantity = (decimal)order.QuantityFilled;
+                        // Bij nader inzien geeft dit problemen met de partially filled, afgesterd
+
+// Bybit Spot: Bij een market order bevat de order.Quantity de USDT value, en de price is leeg
+// Daarom proberen we hier iets te repareren, maar dat heeft andere problemen
+
+                        //step.Price = (decimal)order.Price;
+                        //step.Quantity = (decimal)order.QuantityFilled;
                         //step.QuoteQuantity = (decimal)order.QuoteQuantityFilled; is er niet
 
                         step.AveragePrice = (decimal)order.AveragePrice;
@@ -417,8 +422,12 @@ public class TradeTools
                         // Needed for Bybit Spot + market order && status=CryptoOrderStatus.PartiallyAndClosed
                         // (the exchange sligtly diverted from the task, adapt to the new situation)
                         // (Maar achteraf: vraag ik me af of dit daadwerkelijk het geval is, nakijken!)
-                        if (order.Status == CryptoOrderStatus.PartiallyAndClosed)
-                            step.Quantity = order.Quantity;
+
+// Bij nader inzien geeft dit problemen met de partially filled, afgesterd
+// Want op een PartialFill volgt namelijk ook een PartiallyAndClosed!!! Verdorie!
+
+                        //if (order.Status == CryptoOrderStatus.PartiallyAndClosed)
+                        //    step.Quantity = order.Quantity;
 
                         // Can't be cancelled anymore if its filled
                         if (step.Status > CryptoOrderStatus.Canceled)

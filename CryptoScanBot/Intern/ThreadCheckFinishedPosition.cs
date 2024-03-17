@@ -39,7 +39,7 @@ public class ThreadCheckFinishedPosition
         {
             // Eigenlijk wil je de positie niet in deze queue hebben.
             // Hoe voorkom je duplicaten in deze queue, niet netjes.
-            position.DelayUntil = DateTime.UtcNow.AddSeconds(5);
+            position.DelayUntil = DateTime.UtcNow.AddSeconds(10);
         }
 
         Queue.Add((position, check, reason));
@@ -55,7 +55,7 @@ public class ThreadCheckFinishedPosition
         // Een aparte queue die orders afhandeld (met als achterliggende reden de juiste afhandel volgorde)
         foreach ((CryptoPosition position, bool check, string reason) in Queue.GetConsumingEnumerable(cancellationToken.Token))
         {
-            //GlobalData.AddTextToLogTab($"{position.Symbol.Name} debug position ThreadCheckFinishedPosition Execute...");
+            ScannerLog.Logger.Trace($"ThreadDoubleCheckPosition.Execute: Positie {position.Symbol.Name} pickup {position.Status} check={check} {reason}");
             try
             {
                 //Monitor.Enter(position); // Object synchronization method was called from an unsynchronized block of code (at exit)
@@ -65,6 +65,7 @@ public class ThreadCheckFinishedPosition
                     // We wachten hier dus bewust voor de zekerheid een redelijk lange periode.
                     if (position.DelayUntil.HasValue && position.DelayUntil.Value > DateTime.UtcNow)
                     {
+                        ScannerLog.Logger.Trace($"ThreadDoubleCheckPosition.Execute: Positie {position.Symbol.Name} delay {position.Status} check={check} {position.DelayUntil} {reason}");
                         AddToQueue(position, check, reason); // opnieuw, na een vertraging
                         await Task.Delay(500);
                         continue;
@@ -72,7 +73,7 @@ public class ThreadCheckFinishedPosition
 
 
                     //GlobalData.AddTextToLogTab($"ThreadDoubleCheckPosition: Positie {position.Symbol.Name} controleren! {position.Status} {position.DelayUntil}");
-                    ScannerLog.Logger.Trace($"ThreadDoubleCheckPosition.Execute: Positie {position.Symbol.Name} controleren! {position.Status} {position.DelayUntil} {reason}");
+                    ScannerLog.Logger.Trace($"ThreadDoubleCheckPosition.Execute: Positie {position.Symbol.Name} checking {position.Status} check={check} {reason}");
 
                     // Controleer orders
                     if (check)

@@ -76,7 +76,8 @@ public class UserDataStream
     //    try
     //    {
     //        // We zijn slechts geinteresseerd in 3 statussen (de andere zijn niet interessant voor de afhandeling van de order)
-    //        if (data.Data.Status == OrderStatus.Filled || 
+    //        if (data.Data.Status == OrderStatus.New || 
+    //            data.Data.Status == OrderStatus.Filled || 
     //            data.Data.Status == OrderStatus.PartiallyFilled || 
     //            data.Data.Status == OrderStatus.Canceled)
     //        {

@@ -67,7 +67,8 @@ public class UserDataStream
                 GlobalData.AddTextToLogTab($"{data.Symbol} UserTicker {data.Status} quantity={data.Quantity} price={data.Price} value={data.ValueFilled} text={text}");
 
                 // We zijn slechts geinteresseerd in 3 statussen (de andere zijn niet interessant voor de afhandeling van de order)
-                if (data.Status == OrderStatus.Filled ||
+                if (data.Status == OrderStatus.New ||
+                    data.Status == OrderStatus.Filled ||
                     data.Status == OrderStatus.PartiallyFilled || 
                     data.Status == OrderStatus.PartiallyFilledCanceled ||
                     data.Status == OrderStatus.Cancelled)
