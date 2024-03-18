@@ -356,7 +356,7 @@ public class Api : ExchangeBase
                     {
                         if (!tradeAccount.AssetList.TryGetValue(assetInfo.Asset, out CryptoAsset asset))
                         {
-                            asset = new CryptoAsset();
+                            asset = new();
                             asset.Name = assetInfo.Asset;
                             asset.TradeAccountId = tradeAccount.Id;
                             tradeAccount.AssetList.Add(asset.Name, asset);
