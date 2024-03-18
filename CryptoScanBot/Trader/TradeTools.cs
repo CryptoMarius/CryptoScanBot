@@ -156,7 +156,6 @@ public class TradeTools
                             part.Quantity -= step.CommissionQuote;
                     }
                     part.Commission += step.Commission;
-                    part.RemainingDust += step.RemainingDust;
                     part.CommissionBase += step.CommissionBase;
                     part.CommissionQuote += step.CommissionQuote;
                 }
@@ -165,6 +164,7 @@ public class TradeTools
                     // Voluit, ook als ie voor 99% gevuld is..
                     part.Reserved += step.Price * step.Quantity;
                 }
+                part.RemainingDust += step.RemainingDust;
 
                 //string s = string.Format("{0} CalculateProfit bought position={1} part={2} name={3} step={4} {5} price={6} stopprice={7} quantityfilled={8} QuoteQuantityFilled={9}",
                 //   position.Symbol.Name, position.Id, part.Id, part.Purpose, step.Id, step.Name, step.Price, step.StopPrice, step.QuantityFilled, step.QuoteQuantityFilled);
@@ -408,12 +408,26 @@ public class TradeTools
                         // Overnemen, kan aangepast zijn (exchange is alway's leading)
                         // Bij nader inzien geeft dit problemen met de partially filled, afgesterd
 
-// Bybit Spot: Bij een market order bevat de order.Quantity de USDT value, en de price is leeg
-// Daarom proberen we hier iets te repareren, maar dat heeft andere problemen
 
-                        //step.Price = (decimal)order.Price;
-                        //step.Quantity = (decimal)order.QuantityFilled;
-                        //step.QuoteQuantity = (decimal)order.QuoteQuantityFilled; is er niet
+                        // Bybit Spot Market order, niet alles kan gevuld worden vanwege tick sizes enz.
+                        if (order.Status == CryptoOrderStatus.PartiallyAndClosed && order.Type == CryptoOrderType.Market)
+                        {
+                            if (!isOrderClosed)
+                            {
+                                ScannerLog.Logger.Trace($"TradeTools.CalculatePositionResultsViaOrders: {position.Symbol.Name} status=PartiallyAndClosed reduced quantity from {step.Quantity} to {order.QuantityFilled}");
+                            }
+
+                            // Bybit Spot: Bij een market order bevat de order.Quantity de USDT value en de Order.Price is leeg
+                            // We proberen hier iets te repareren in de originele opdracht (dat is tamelijk vervelend)
+
+                            // Notitie: Bij nader inzien geeft dit problemen met de partially filled? Hoezo?
+                            // Want op een PartialFill volgt namelijk ook een PartiallyAndClosed!!! Verdorie!
+
+
+                            step.Price = (decimal)order.Price;
+                            step.Quantity = (decimal)order.QuantityFilled;
+                            //step.QuoteQuantity = (decimal)order.QuoteQuantityFilled; is er niet
+                        }
 
                         step.AveragePrice = (decimal)order.AveragePrice;
                         step.QuantityFilled = (decimal)order.QuantityFilled;
@@ -422,9 +436,6 @@ public class TradeTools
                         // Needed for Bybit Spot + market order && status=CryptoOrderStatus.PartiallyAndClosed
                         // (the exchange sligtly diverted from the task, adapt to the new situation)
                         // (Maar achteraf: vraag ik me af of dit daadwerkelijk het geval is, nakijken!)
-
-// Bij nader inzien geeft dit problemen met de partially filled, afgesterd
-// Want op een PartialFill volgt namelijk ook een PartiallyAndClosed!!! Verdorie!
 
                         //if (order.Status == CryptoOrderStatus.PartiallyAndClosed)
                         //    step.Quantity = order.Quantity;
