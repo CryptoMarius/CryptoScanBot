@@ -404,7 +404,7 @@ public static class Helper
         int positionTotal = 0;
         foreach (var tradeAccount in GlobalData.TradeAccountList.Values)
         {
-            if (tradeAccount.PositionList.Any())
+            if (tradeAccount.PositionList.Count != 0)
             {
                 int positionCount = 0;
                 stringBuilder.AppendLine(tradeAccount.Name);
