@@ -21,7 +21,7 @@ public partial class FrmMain : Form
     private bool FormIsShowed = false;
     private bool FormIsClosing = false;
     private readonly ColorSchemeTest theme = new();
-    private ContextMenuStrip MenuTest = new();
+    //private ContextMenuStrip MenuTest = new();
 
     public class ColorSchemeTest
     {
@@ -35,19 +35,42 @@ public partial class FrmMain : Form
     private readonly List<CryptoSignal> SignalListView = [];
     private readonly CryptoDataGridSignal<CryptoSignal> GridSignalView;
 
+    private ToolStripMenuItemCommand ApplicationPlaySounds;
+    private ToolStripMenuItemCommand ApplicationCreateSignals;
+#if TRADEBOT
+    private ToolStripMenuItemCommand ApplicationTradingBotTest;
     private readonly List<CryptoPosition> PositionOpenListView = [];
     private readonly CryptoDataGridPositionsOpen<CryptoPosition> GridPositionOpenView;
 
     private readonly List<CryptoPosition> PositionClosedListView = [];
     private readonly CryptoDataGridPositionsClosed<CryptoPosition> GridPositionClosedView;
+#endif
 
     public FrmMain()
     {
         InitializeComponent();
 
+        ApplicationPlaySounds = MenuMain.AddCommand(null, "Geluiden afspelen", Command.None, ApplicationPlaySounds_Click);
+        ApplicationPlaySounds.Checked = true;
+        ApplicationCreateSignals = MenuMain.AddCommand(null, "Signalen maken", Command.None, ApplicationCreateSignals_Click);
+        ApplicationCreateSignals.Checked = true;
+#if TRADEBOT
+        ApplicationTradingBot = MenuMain.AddCommand(null, "Trading bot actief", Command.None, ApplicationTradingBot_Click);
+        ApplicationTradingBotTest.Checked = true;
+#endif
+        MenuMain.AddCommand(null, "Verversen", Command.None, ToolStripMenuItemRefresh_Click_1);
+        MenuMain.AddCommand(null, "Clear", Command.None, MainMenuClearAll_Click);
+        MenuMain.AddCommand(null, "Instellingen", Command.None, ToolStripMenuItemSettings_Click);
         MenuMain.AddCommand(null, "Exchange information (Excel)", Command.ExcelExchangeInformation, CommandTools.ExecuteCommandCommandViaTag);
-        MenuMain.AddCommand(null, "About", Command.About, CommandTools.ExecuteCommandCommandViaTag);
+#if TRADEBOT
+#if SQLDATABASE
+        MenuMain.AddCommand(null, "Backtest", Command.None, BacktestToolStripMenuItem_Click);
+#endif
+        MenuMain.AddCommand(null, "PositionInfo", Command.None, PositionInfoToolStripMenuItem_Click);
+#endif
         //MenuMain.AddCommand(null, "Scannersession test", Command.ScannerSessionDebug, CommandTools.ExecuteCommandCommandViaTag);
+        MenuMain.AddCommand(null, "About", Command.About, CommandTools.ExecuteCommandCommandViaTag);
+
 
         //Console.Write("Hello world 1");
         //System.Diagnostics.Debug.WriteLine("Hello world 2");
@@ -101,18 +124,10 @@ public partial class FrmMain : Form
         tabControl.TabPages.Remove(tabPagewebViewDummy);
 
 #if !TRADEBOT
-        ApplicationTradingBot.Visible = false;
-        backtestToolStripMenuItem.Visible = false;
         GlobalData.Settings.Trading.Active = false;
         tabControl.TabPages.Remove(tabPageDashBoard);
         tabControl.TabPages.Remove(tabPagePositionsOpen);
         tabControl.TabPages.Remove(tabPagePositionsClosed);
-#endif
-#if SQLDATABASE            
-        backtestToolStripMenuItem.Click += BacktestToolStripMenuItem_Click;
-#endif
-#if !SQLDATABASE            
-        backtestToolStripMenuItem.Visible = false;
 #endif
 
         CryptoDatabase.SetDatabaseDefaults();
@@ -260,8 +275,9 @@ public partial class FrmMain : Form
         }
         ChangeTheme(theme, this);
 
-
+#if TRADEBOT
         ApplicationTradingBot.Checked = GlobalData.Settings.Trading.Active;
+#endif
         ApplicationPlaySounds.Checked = GlobalData.Settings.Signal.SoundsActive;
         ApplicationCreateSignals.Checked = GlobalData.Settings.Signal.Active;
 
@@ -364,6 +380,7 @@ public partial class FrmMain : Form
         //    TextBoxLog.AppendText(text);
     }
 
+#if TRADEBOT
     /// <summary>
     /// Dan is er in de achtergrond een verversing actie geweest, display bijwerken!
     /// </summary>
@@ -393,7 +410,7 @@ public partial class FrmMain : Form
         //GlobalData.AddTextToLogTab(stringBuilder.ToString());
         //}
     }
-
+#endif
 
     private void ToolStripMenuItemRefresh_Click_1(object sender, EventArgs e)
     {
@@ -425,7 +442,9 @@ public partial class FrmMain : Form
         Model.CryptoExchange oldExchange = GlobalData.Settings.General.Exchange;
 
         // Dan wordt de basecoin en coordinaten etc. bewaard voor een volgende keer
+#if TRADEBOT
         GlobalData.Settings.Trading.Active = ApplicationTradingBot.Checked;
+#endif
         GlobalData.Settings.Signal.SoundsActive = ApplicationPlaySounds.Checked;
         GlobalData.Settings.Signal.Active = ApplicationCreateSignals.Checked;
         dashBoardInformation1.PickupBarometerProperties();
@@ -819,12 +838,14 @@ public partial class FrmMain : Form
         GlobalData.SaveSettings();
     }
 
+#if TRADEBOT
     private void ApplicationTradingBot_Click(object sender, EventArgs e)
     {
         ApplicationTradingBot.Checked = !ApplicationTradingBot.Checked;
         GlobalData.Settings.Trading.Active = ApplicationTradingBot.Checked;
         GlobalData.SaveSettings();
     }
+#endif
 
 
 #if SQLDATABASE
@@ -937,13 +958,13 @@ public partial class FrmMain : Form
 #endif
     }
 
+#if TRADEBOT
     private async void PositionInfoToolStripMenuItem_Click(object sender, EventArgs e)
     {
-#if TRADEBOT
         if (GlobalData.Settings.General.ExchangeId == 3) // alleen bybit futures
             await Exchange.BybitFutures.Api.GetPositionInfo();
-#endif
     }
+#endif
 
 
     private void SymbolsHaveChangedEvent(string text, bool extraLineFeed = false)
@@ -1009,7 +1030,7 @@ public partial class FrmMain : Form
         }
     }
 
-
+#if TRADEBOT
     private void PositionsHaveChangedEvent(string text, bool extraLineFeed = false)
     {
         if (!FormIsClosing)
@@ -1066,7 +1087,7 @@ public partial class FrmMain : Form
             });
         }
     }
-
+#endif
 
     private void TabControl_SelectedIndexChanged(object sender, EventArgs e)
     {
