@@ -35,10 +35,11 @@ public partial class FrmMain : Form
     private readonly List<CryptoSignal> SignalListView = [];
     private readonly CryptoDataGridSignal<CryptoSignal> GridSignalView;
 
-    private ToolStripMenuItemCommand ApplicationPlaySounds;
-    private ToolStripMenuItemCommand ApplicationCreateSignals;
+    private readonly ToolStripMenuItemCommand ApplicationPlaySounds;
+    private readonly ToolStripMenuItemCommand ApplicationCreateSignals;
 #if TRADEBOT
-    private ToolStripMenuItemCommand ApplicationTradingBotTest;
+    private readonly ToolStripMenuItemCommand ApplicationTradingBot;
+    private readonly ToolStripMenuItemCommand ApplicationShowPositionInfo;
     private readonly List<CryptoPosition> PositionOpenListView = [];
     private readonly CryptoDataGridPositionsOpen<CryptoPosition> GridPositionOpenView;
 
@@ -56,7 +57,7 @@ public partial class FrmMain : Form
         ApplicationCreateSignals.Checked = true;
 #if TRADEBOT
         ApplicationTradingBot = MenuMain.AddCommand(null, "Trading bot actief", Command.None, ApplicationTradingBot_Click);
-        ApplicationTradingBotTest.Checked = true;
+        ApplicationTradingBot.Checked = true;
 #endif
         MenuMain.AddCommand(null, "Verversen", Command.None, ToolStripMenuItemRefresh_Click_1);
         MenuMain.AddCommand(null, "Clear", Command.None, MainMenuClearAll_Click);
@@ -66,7 +67,7 @@ public partial class FrmMain : Form
 #if SQLDATABASE
         MenuMain.AddCommand(null, "Backtest", Command.None, BacktestToolStripMenuItem_Click);
 #endif
-        MenuMain.AddCommand(null, "PositionInfo", Command.None, PositionInfoToolStripMenuItem_Click);
+        ApplicationShowPositionInfo = MenuMain.AddCommand(null, "PositionInfo", Command.None, PositionInfoToolStripMenuItem_Click);
 #endif
         //MenuMain.AddCommand(null, "Scannersession test", Command.ScannerSessionDebug, CommandTools.ExecuteCommandCommandViaTag);
         MenuMain.AddCommand(null, "About", Command.About, CommandTools.ExecuteCommandCommandViaTag);
@@ -251,7 +252,7 @@ public partial class FrmMain : Form
         GridPositionClosedView.InitCommandCaptions();
 
         if (GlobalData.Settings.General.ExchangeId != 3)
-            positionInfoToolStripMenuItem.Visible = false;
+            ApplicationShowPositionInfo.Visible = false;
 
 #endif
 
