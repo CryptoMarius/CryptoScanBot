@@ -6,6 +6,7 @@ Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep
 Scanner:
 - Scanner - Er worden klines opgehaald van munten die slechts ~1 maand aanwezig zijn op de exchange (bybit spot, DYNUSDT is bijvoorbeeld pas op 6-2 op de exchange geactiveerd) - EN..
             Dat is best een hardnekkig iets, nog eens debuggen waarom dit zo vaak uitgevoerd wordt (je weet toch dat ze er niet zijn?)
+
 - Scanner - De FundingRate kolom automatisch uitzetten indien geen derivaten.futues?
 - Scanner - Binance Futures introduceren (maar alleen indien dat niet te veel werk is)
 - Scanner - Telegram meldingen sturen met een extra link naar TV (optioneel via de instelllingen).
@@ -35,7 +36,7 @@ Scanner:
 
 
 Trading:
-- Trading - Documentatie bijwerken - dit keer een grote klus
+- Trading - Documentatie bijwerken - Een klusje..
 - Trading - De trader blijft hardnekkeig instappen terwijl er geen assets beschikbaar zijn.
 - Trading - De laatste X posities dumpen naar Excel voor een overzichtje
 - Trading - Vanwege de overgang naar spot rekening houden met de commissies van de exchange (nog niet 100% goed)

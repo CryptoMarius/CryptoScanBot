@@ -2,6 +2,7 @@ CryptoScanBot release historie:
 
 xx-03-2024 1.9
 - Scanner - Documentatie bijwerken - dit keer best een grote klus
+- Scanner - De RMK wordt uitgevoerd op de getoonde selectie, echter bij een RMK op een bepaald record wordt de selectie niet aangepast waardoor de actie op een verkeerd record wordt uitgevoerd.
 - Scanner - Regelhoogte grid - icm het aanpassen van het lettertype wordt het nu dynamisch ingesteld
 - Scanner - De overgang van de 1.8 naar de 1.9 werkt niet (crash op de oude settings.json)
             Besloten om met een schone lei te beginnen, betekend wel alles opnieuw instellen.
