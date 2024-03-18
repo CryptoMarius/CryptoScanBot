@@ -59,9 +59,9 @@ public partial class FrmMain : Form
         ApplicationTradingBot = MenuMain.AddCommand(null, "Trading bot actief", Command.None, ApplicationTradingBot_Click);
         ApplicationTradingBot.Checked = true;
 #endif
-        MenuMain.AddCommand(null, "Verversen", Command.None, ToolStripMenuItemRefresh_Click_1);
-        MenuMain.AddCommand(null, "Clear", Command.None, MainMenuClearAll_Click);
         MenuMain.AddCommand(null, "Instellingen", Command.None, ToolStripMenuItemSettings_Click);
+        MenuMain.AddCommand(null, "Verversen informatie", Command.None, ToolStripMenuItemRefresh_Click_1);
+        MenuMain.AddCommand(null, "Reset log en getallen", Command.None, MainMenuClearAll_Click);
         MenuMain.AddCommand(null, "Exchange information (Excel)", Command.ExcelExchangeInformation, CommandTools.ExecuteCommandCommandViaTag);
 #if TRADEBOT
 #if SQLDATABASE
