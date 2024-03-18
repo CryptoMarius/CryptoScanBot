@@ -18,7 +18,7 @@ namespace CryptoScanBot.Intern;
 public class ThreadCheckFinishedPosition
 {
     private readonly CancellationTokenSource cancellationToken = new();
-    private readonly BlockingCollection<(CryptoPosition, bool, string)> Queue = new();
+    private readonly BlockingCollection<(CryptoPosition, bool, string)> Queue = [];
 
     public ThreadCheckFinishedPosition()
     {

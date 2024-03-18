@@ -22,7 +22,7 @@ public static class CommandHelper
         menuStrip.Items.Add(new ToolStripSeparator());
     }
 
-    public static void AddCommand(this ContextMenuStrip menuStrip, CryptoDataGrid dataGrid, string text, Command command, EventHandler click)
+    public static ToolStripMenuItemCommand AddCommand(this ContextMenuStrip menuStrip, CryptoDataGrid dataGrid, string text, Command command, EventHandler click)
     {
         ToolStripMenuItemCommand menuItem = new()
         {
@@ -32,9 +32,10 @@ public static class CommandHelper
         };
         menuItem.Click += click;
         menuStrip.Items.Add(menuItem);
+        return menuItem;
     }
 
-    public static void AddCommand(this ToolStripMenuItem menuStrip, CryptoDataGrid dataGrid, string text, Command command, EventHandler click)
+    public static ToolStripMenuItemCommand AddCommand(this ToolStripMenuItem menuStrip, CryptoDataGrid dataGrid, string text, Command command, EventHandler click)
     {
         ToolStripMenuItemCommand menuItem = new()
         {
@@ -44,6 +45,7 @@ public static class CommandHelper
         };
         menuItem.Click += click;
         menuStrip.DropDownItems.Add(menuItem);
+        return menuItem;
     }
 }
 

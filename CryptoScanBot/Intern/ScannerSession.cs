@@ -13,7 +13,7 @@ public static class ScannerSession
 {
     // Om te voorkomen dat we de signalen 2x inlezen
     private static bool IsStarted { get; set; } = false;
-    private static bool HideDisconnectedMessage { get; set; } = false;
+    //private static bool HideDisconnectedMessage { get; set; } = false;
 
     // Er zit verschil in de threading aanpak tussen deze timers (wat is dat nu weer?)
 
@@ -36,9 +36,10 @@ public static class ScannerSession
     // Vervolg van check, herstel actie in de vorm van exchangeinfo + achterstand candles inhalen
     private static readonly System.Timers.Timer TimerRestartStreams = new() { Enabled = false };
 
+#if TRADEBOT
     // Voor het geval de user ticker het laat afwaten controleren we de posities ook 1x per uur
     private static readonly System.Timers.Timer TimerCheckPositions = new() { Enabled = false };
-
+#endif
 
     // Exchange events
     private static AddTextEvent ConnectionWasLostEvent { get; set; }
@@ -47,7 +48,9 @@ public static class ScannerSession
 
     static ScannerSession()
     {
+#if TRADEBOT
         TimerCheckPositions.Elapsed += TimerCheckPositions_Tick;
+#endif
         TimerCheckDataStream.Elapsed += TimerCheckDataStream_Tick;
         TimerRestartStreams.Elapsed += TimerRestartStreams_Tick;
 
@@ -98,7 +101,9 @@ public static class ScannerSession
         GlobalData.ApplicationStatus = CryptoApplicationStatus.Initializing;
 
         // pfft, kan er net zo goed een array van maken
+#if TRADEBOT
         TimerCheckPositions.Enabled = false;
+#endif
         TimerCheckDataStream.Enabled = false;
         TimerRestartStreams.Enabled = false;
         TimerSoundHeartBeat.Enabled = false;
@@ -175,8 +180,10 @@ public static class ScannerSession
         // Maak de log leeg iedere 24 uur
         TimerClearMemo.InitTimerInterval(24 * 60 * 60); // 24 hours
 
+#if TRADEBOT
         // Controleer de posities (fix probleem user ticker)
         TimerCheckPositions.InitTimerInterval(1 * 60 * 60); // 1 hours
+#endif
 
         // Interval voor het ophalen van de exchange info (delisted coins) + bijwerken candles 
         TimerGetExchangeInfoAndCandles.InitTimerInterval(GlobalData.Settings.General.GetCandleInterval * 60);
@@ -211,10 +218,10 @@ public static class ScannerSession
         //}
     }
 
-    
+
+#if TRADEBOT
     private static async void TimerCheckPositions_Tick(object sender, EventArgs e)
     {
-#if TRADEBOT
         if (TimerCheckPositions.Enabled)
         {
             await TradeTools.CheckOpenPositions();
@@ -225,8 +232,8 @@ public static class ScannerSession
         //{
         //    //?
         //}
-#endif
     }
+#endif
 
     private static void TimerCheckDataStream_Tick(object sender, EventArgs e)
     {

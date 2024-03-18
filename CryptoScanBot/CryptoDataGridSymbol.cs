@@ -25,7 +25,9 @@ public class CryptoDataGridSymbol<T>(DataGridView grid, List<T> list, SortedList
         menuStrip.AddCommand(this, "Copy symbol name", Command.CopySymbolInformation, CommandTools.ExecuteCommandCommandViaTag);
         menuStrip.AddCommand(this, "Trend information (log)", Command.ShowTrendInformation, CommandTools.ExecuteCommandCommandViaTag);
         menuStrip.AddCommand(this, "Symbol information (Excel)", Command.ExcelSymbolInformation, CommandTools.ExecuteCommandCommandViaTag);
+#if TRADEBOT
         menuStrip.AddCommand(this, "Create Position", Command.None, CreatePosition);
+#endif
 
         menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Hide selection", Command.None, ClearSelection);
@@ -137,8 +139,11 @@ public class CryptoDataGridSymbol<T>(DataGridView grid, List<T> list, SortedList
         cell.Style.ForeColor = foreColor;
     }
 
+#if TRADEBOT
     private void CreatePosition(object sender, EventArgs e)
     {
         //PositionTools.CreatePosition(GlobalData.Settings.General.)
     }
+#endif
+
 }

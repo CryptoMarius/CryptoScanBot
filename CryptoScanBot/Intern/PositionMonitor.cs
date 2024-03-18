@@ -15,7 +15,9 @@ public class PositionMonitor : IDisposable
 
     public CryptoSymbol Symbol { get; set; }
     public Model.CryptoExchange Exchange { get; set; }
+#if TRADEBOT
     private static readonly SemaphoreSlim Semaphore = new(1);
+#endif
 
     // De laatste gesloten 1m candle
     public CryptoCandle LastCandle1m { get; set; }
@@ -1802,6 +1804,7 @@ public class PositionMonitor : IDisposable
 
 
 
+#if TRADEBOT
     public async Task CheckThePosition(CryptoPosition position)
     {
         // Pauzeren vanwege de trading regels of te lage barometer
@@ -1828,6 +1831,7 @@ public class PositionMonitor : IDisposable
             //Monitor.Exit(position);
         }
     }
+#endif
 
 
     /// <summary>

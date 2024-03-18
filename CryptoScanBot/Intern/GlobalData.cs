@@ -755,10 +755,10 @@ static public class GlobalData
             {
                 //string symbolLink = GlobalData.ExternalUrls.GetTradingAppName(GlobalData.Settings.General.TradingApp, position.Exchange.Name);
                 string symbol = position.Symbol.Name.ToUpper();
-                (string Url, CryptoExternalUrlType Execute) refInfo = GlobalData.ExternalUrls.GetExternalRef(GlobalData.Settings.General.TradingApp, true, position.Symbol, position.Interval);
-                if (refInfo.Url != "")
+                (string Url, CryptoExternalUrlType Execute) = GlobalData.ExternalUrls.GetExternalRef(GlobalData.Settings.General.TradingApp, true, position.Symbol, position.Interval);
+                if (Url != "")
                 {
-                    string x = $" <a href='{refInfo.Url}'>{symbol}</a>";
+                    string x = $" <a href='{Url}'>{symbol}</a>";
                     text = text.Replace(symbol, x);
                 }
             }
