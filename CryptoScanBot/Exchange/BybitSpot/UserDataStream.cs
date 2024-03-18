@@ -66,7 +66,7 @@ public class UserDataStream
                 string info = $"{data.Symbol} UserTicker {data.Status} quantity={data.Quantity} price={data.Price} value={data.Price * data.QuantityFilled}";
                 string text = JsonSerializer.Serialize(data, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = false }).Trim();
                 GlobalData.AddTextToLogTab(info);
-                ScannerLog.Logger.Trace($"{info} text={text}");
+                ScannerLog.Logger.Trace($"{info} json={text}");
 
                 // We zijn slechts geinteresseerd in een paar statussen (de andere zijn niet interessant voor de afhandeling van de order)
                 if (data.Status == OrderStatus.New || 
