@@ -405,6 +405,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
                     break;
 
                 case ColumnsForGrid.Profit: // Current profit
+                case ColumnsForGrid.Percentage:
                     decimal NetPnlPerc1 = position.CurrentProfitPercentage();
                     if (NetPnlPerc1 > 0)
                         foreColor = Color.Green;
@@ -446,7 +447,6 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
 
             // Controleer de orders, en herbereken het geheel
             PositionTools.LoadPosition(databaseThread, position);
-            await TradeTools.LoadOrdersFromDatabaseAndExchangeAsync(databaseThread, position);
             await TradeTools.CalculatePositionResultsViaOrders(databaseThread, position, forceCalculation: true);
 
             Grid.InvalidateRow(rowIndex);
@@ -502,8 +502,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
 
             // Controleer de orders, en herbereken het geheel
             PositionTools.LoadPosition(databaseThread, position);
-            await TradeTools.LoadOrdersFromDatabaseAndExchangeAsync(databaseThread, position);
-            await TradeTools.CalculatePositionResultsViaOrders(databaseThread, position);
+            await TradeTools.CalculatePositionResultsViaOrders(databaseThread, position, forceCalculation: true);
             //FillItemOpen(position, item);
 
             // Op welke prijs? Actueel, of nog X% eronder?
@@ -573,8 +572,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
 
             // Controleer de orders, en herbereken het geheel
             PositionTools.LoadPosition(databaseThread, position);
-            await TradeTools.LoadOrdersFromDatabaseAndExchangeAsync(databaseThread, position);
-            await TradeTools.CalculatePositionResultsViaOrders(databaseThread, position);
+            await TradeTools.CalculatePositionResultsViaOrders(databaseThread, position, forceCalculation: true);
 
             // Er is een 1m candle gearriveerd, acties adhv deze candle..
             var symbolPeriod = position.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
@@ -640,8 +638,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
 
             // Controleer de orders, en herbereken het geheel
             PositionTools.LoadPosition(databaseThread, position);
-            await TradeTools.LoadOrdersFromDatabaseAndExchangeAsync(databaseThread, position);
-            await TradeTools.CalculatePositionResultsViaOrders(databaseThread, position);
+            await TradeTools.CalculatePositionResultsViaOrders(databaseThread, position, forceCalculation: true);
             Grid.InvalidateRow(rowIndex);
 
 

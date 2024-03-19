@@ -409,7 +409,7 @@ static public class GlobalData
                     {
                         symbol.OrderList.Add(order.OrderId, order);
                         if (log)
-                            AddTextToLogTab($"{order.Symbol.Name} added order {order.OrderId}");
+                            AddTextToLogTab($"{order.Symbol.Name} added order {order.OrderId} {order.Status}");
                     }
                 }
 

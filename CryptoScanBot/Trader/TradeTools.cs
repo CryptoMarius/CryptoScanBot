@@ -78,7 +78,7 @@ public class TradeTools
             {
                 foreach (var position in positionList.Values.ToList())
                 {
-                    GlobalData.ThreadDoubleCheckPosition.AddToQueue(position, true, "CheckOpenPositions");
+                    await GlobalData.ThreadDoubleCheckPosition.AddToQueue(position, true, "CheckOpenPositions");
                 }
             }
         }
@@ -309,13 +309,11 @@ public class TradeTools
 
         bool markedAsReady = false;
         bool orderStatusChanged = false;
-        int orderCount = await ExchangeHelper.GetOrdersForPositionAsync(database, position);
-        int tradeCount = await ExchangeHelper.GetTradesForPositionAsync(database, position);
-
-        if (orderCount + tradeCount > 0)
+        int count = await LoadOrdersFromDatabaseAndExchangeAsync(database, position);
+        if (count > 0)
             forceCalculation = true;
 
-        ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} {position.Status} force={forceCalculation} orders={orderCount} trades={tradeCount}");
+        ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} {position.Status} force={forceCalculation}");
 
 
         // De filled quantity in de steps opnieuw opbouwen vanuit de trades
@@ -568,14 +566,14 @@ public class TradeTools
             // Een laatste controle laten uitvoeren en de nog openstaande DCA orders afsluiten/verplaatsen
             if (markedAsReady)
             {
-                GlobalData.ThreadDoubleCheckPosition.AddToQueue(position, true, "CalculatePositionResultsViaOrders positie ready", true);
+                await GlobalData.ThreadDoubleCheckPosition.AddToQueue(position, true, "CalculatePositionResultsViaOrders positie ready", true);
             }
         }
     }
 
 
 
-    static public async Task LoadOrdersFromDatabaseAndExchangeAsync(CryptoDatabase database, CryptoPosition position) //, bool loadFromExchange = true
+    static private async Task<int> LoadOrdersFromDatabaseAndExchangeAsync(CryptoDatabase database, CryptoPosition position) //, bool loadFromExchange = true
     {
         if (!position.Symbol.HasOrdersAndTradesLoaded)
         {
@@ -596,13 +594,17 @@ public class TradeTools
             position.Symbol.HasOrdersAndTradesLoaded = true;
         }
 
-        // Daarna de "nieuwe" orders van deze coin ophalen en die toegevoegen aan dezelfde orderlist
-        if (position.TradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading) // && loadFromExchange
-            await ExchangeHelper.GetOrdersForPositionAsync(database, position);
+        int count = 0;
 
         // Daarna de "nieuwe" orders van deze coin ophalen en die toegevoegen aan dezelfde orderlist
         if (position.TradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading) // && loadFromExchange
-            await ExchangeHelper.GetTradesForPositionAsync(database, position);
+            count += await ExchangeHelper.GetOrdersForPositionAsync(database, position);
+
+        // Daarna de "nieuwe" orders van deze coin ophalen en die toegevoegen aan dezelfde orderlist
+        if (position.TradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading) // && loadFromExchange
+            count += await ExchangeHelper.GetTradesForPositionAsync(database, position);
+
+        return count;
     }
 
 

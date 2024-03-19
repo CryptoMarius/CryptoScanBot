@@ -90,6 +90,11 @@ public class CryptoPosition
     [Computed]
     // Orders die uitstaan via de parts/steps
     public SortedList<string, CryptoPositionStep> Orders { get; set; } = [];
+
+    [Computed]
+    public SemaphoreSlim Semaphore { get; set; } = new(1);
+    [Computed]
+    public bool ForceCheckPosition { get; set; } = false;
 }
 
 

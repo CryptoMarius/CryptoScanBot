@@ -53,7 +53,7 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
 #if TRADEBOT
         menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Position recalculate", Command.None, CommandPositionRecalculateExecute);
-        menuStrip.AddCommand(this, "Position delete from database", Command.None, CommandPositionDeleteFromDatabaseAsync);
+        menuStrip.AddCommand(this, "Position delete from database", Command.None, CommandPositionDeleteFromDatabase);
         menuStrip.AddCommand(this, "Position information (Excel)", Command.ExcelPositionInformation, CommandTools.ExecuteCommandCommandViaTag);
 #endif
 
@@ -323,7 +323,6 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
 
             // Controleer de orders, en herbereken het geheel
             PositionTools.LoadPosition(databaseThread, position);
-            await TradeTools.LoadOrdersFromDatabaseAndExchangeAsync(databaseThread, position);
             await TradeTools.CalculatePositionResultsViaOrders(databaseThread, position, forceCalculation: true);
 
             Grid.InvalidateRow(rowIndex);
@@ -333,7 +332,7 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
     }
 
 
-    private async void CommandPositionDeleteFromDatabaseAsync(object sender, EventArgs e)
+    private void CommandPositionDeleteFromDatabase(object sender, EventArgs e)
     {
         CryptoPosition position = GetSelectedObject(out int _);
         if (position != null)

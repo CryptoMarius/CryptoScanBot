@@ -121,9 +121,7 @@ public class CommandTools
                     {
                         databaseThread.Open();
                         PositionTools.LoadPosition(databaseThread, position);
-
-                        await TradeTools.LoadOrdersFromDatabaseAndExchangeAsync(databaseThread, position);
-                        await TradeTools.CalculatePositionResultsViaOrders(databaseThread, position);
+                        await TradeTools.CalculatePositionResultsViaOrders(databaseThread, position, forceCalculation: true);
 
                         _ = Task.Run(() => { new Excel.ExcelPositionDump().ExportToExcel(position); });
                     }

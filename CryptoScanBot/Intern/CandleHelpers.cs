@@ -166,7 +166,7 @@ public static class Helper
 
     public static bool IsBarometerSymbol(this CryptoSymbol symbol)
     {
-        return symbol.Base.StartsWith("$"); // de $BMV (Volume) of $BMP (Price)
+        return symbol.Base.StartsWith('$'); // de $BMV (Volume) of $BMP (Price)
         //return ((symbol.Base.Equals(Constants.SymbolNameBarometerPrice)) || (symbol.Base.Equals(Constants.SymbolNameBarometerVolume));
     }
 

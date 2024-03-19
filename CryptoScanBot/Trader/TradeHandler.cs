@@ -17,7 +17,7 @@ static public class TradeHandler
     /// Momenteel wordt enkel de step, trade en/of positie bijgewerkt, er wordt niet geannuleerd of geplaatst
     /// Omdat deze in BULK (kan) worden aangeroepen worden hier verder geen besissingen gemaakt (denk aan 5 openstaande oco's)
     /// </summary>
-    public static Task HandleTradeAsync(CryptoSymbol symbol,
+    public static async Task HandleTradeAsync(CryptoSymbol symbol,
         CryptoOrderType orderType,
         CryptoOrderSide orderSide,
         CryptoOrderStatus orderStatus,
@@ -86,7 +86,7 @@ static public class TradeHandler
                     {
                         s = string.Format("handletrade#3.1 {0} step gevonden, name={1} id={2} positie.status={3} (cancel + positie gesloten)", info, step.Side, step.Id, position.Status);
                         GlobalData.AddTextToLogTab(s);
-                        return Task.CompletedTask;
+                        return; // Task.CompletedTask;
                     }
 
 
@@ -117,18 +117,17 @@ static public class TradeHandler
                     // Gebruiker informeren (een trade blijft interessant tenslotte)
                     //if (orderStatus.IsFilled() || orderStatus == CryptoOrderStatus.PartiallyFilled)
                     GlobalData.AddTextToTelegram(info, position);
-                    return Task.CompletedTask;
+                    return; // Task.CompletedTask;
                 }
             }
 
             // De positie laten afhandelen door een andere thread.
             // (dan staat alle code voor het afhandelen van een positie centraal)
-            GlobalData.ThreadDoubleCheckPosition.AddToQueue(position, true, $"Trigger userticker {order.OrderId}", true);
-
-
+            position.ForceCheckPosition = true;
+            await GlobalData.ThreadDoubleCheckPosition.AddToQueue(position, true, $"Trigger userticker {order.OrderId}", true);
         }
 
-        return Task.CompletedTask;
+        return; // Task.CompletedTask;
     }
 }
 #endif

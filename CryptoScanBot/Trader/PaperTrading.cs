@@ -107,7 +107,7 @@ public class PaperTrading
     {
         // Positions - Parts - Steps 1 voor 1 bij langs om te zien of de prijs ooit boven of beneden de prijs is geweest
 
-        if (tradeAccount.PositionList.Any())
+        if (tradeAccount.PositionList.Count != 0)
         {
             CryptoDatabase database = new();
             database.Open();

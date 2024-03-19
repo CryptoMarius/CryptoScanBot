@@ -1449,8 +1449,7 @@ public class PositionMonitor : IDisposable
                                 // Nadeel: Deze methode wordt zwaarder dan eigenlijk de bedoeling was (we zitten al in een event)
                                 //GlobalData.AddTextToLogTab($"TradeHandler: DETECTIE: ORDER {data.OrderId} NIET GEVONDEN! PANIC MODE ;-)");
 
-                                await TradeTools.LoadOrdersFromDatabaseAndExchangeAsync(Database, position);
-                                await TradeTools.CalculatePositionResultsViaOrders(Database, position);
+                                await TradeTools.CalculatePositionResultsViaOrders(Database, position, forceCalculation: true);
 
                                 // Als er niets mee gedaan is dan de order annuleren
                                 if (step.Status == CryptoOrderStatus.New)
@@ -1547,7 +1546,7 @@ public class PositionMonitor : IDisposable
                                 }
 
 
-                                await TradeTools.CalculatePositionResultsViaOrders(Database, position);
+                                await TradeTools.CalculatePositionResultsViaOrders(Database, position, false);
                             }
                         }
                     }
@@ -1885,7 +1884,7 @@ public class PositionMonitor : IDisposable
                     {
                         foreach (CryptoPosition position in positionList.Values.ToList())
                         {
-                            GlobalData.ThreadDoubleCheckPosition.AddToQueue(position, false, "New 1m candle");
+                            await GlobalData.ThreadDoubleCheckPosition.AddToQueue(position, false, "New 1m candle");
                         }
                     }
                 }
