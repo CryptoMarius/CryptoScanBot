@@ -408,15 +408,12 @@ public static class Helper
             {
                 int positionCount = 0;
                 stringBuilder.AppendLine(tradeAccount.Name);
-                foreach (var positionList in tradeAccount.PositionList.Values)
+                foreach (var position in tradeAccount.PositionList.Values)
                 {
                     //De muntparen toevoegen aan de userinterface
-                    foreach (CryptoPosition position in positionList.Values)
-                    {
-                        ShowPosition(stringBuilder, position);
-                        positionCount++;
-                        positionTotal++;
-                    }
+                    ShowPosition(stringBuilder, position);
+                    positionCount++;
+                    positionTotal++;
                 }
                 stringBuilder.AppendLine(string.Format("{0} posities", positionCount));
             }

@@ -663,13 +663,10 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
         decimal currentValue = 0;
         foreach (CryptoTradeAccount tradeAccount in GlobalData.TradeAccountList.Values)
         {
-            foreach (var positionList in tradeAccount.PositionList.Values)
+            foreach (var position in tradeAccount.PositionList.Values)
             {
-                foreach (CryptoPosition position in positionList.Values)
-                {
-                    if (position.ExchangeId == GlobalData.Settings.General.ExchangeId && position.Symbol.Quote.Equals(QuoteData.Name))
-                        currentValue += position.CurrentValue();
-                }
+                if (position.ExchangeId == GlobalData.Settings.General.ExchangeId && position.Symbol.Quote.Equals(QuoteData.Name))
+                    currentValue += position.CurrentValue();
             }
         }
         labelNettoPnlValue2.Text = currentValue.ToString(quoteDataDisplayString);

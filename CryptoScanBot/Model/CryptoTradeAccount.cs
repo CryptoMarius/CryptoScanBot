@@ -42,7 +42,7 @@ public class CryptoTradeAccount
     //[Computed]
     //public SemaphoreSlim PositionListSemaphore { get; set; } = new(1);
     [Computed]
-    public SortedList<string, SortedList<int, CryptoPosition>> PositionList { get; } = [];
+    public SortedList<string, CryptoPosition> PositionList { get; } = [];
 
 
     /// <summary>

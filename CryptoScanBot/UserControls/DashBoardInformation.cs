@@ -646,13 +646,12 @@ public partial class DashBoardInformation : UserControl
                         int positionCount = 0; // hmm, in welk tradeAccount? Even quick en dirty
                         foreach (var tradeAccount in GlobalData.TradeAccountList.Values)
                         {
-                            if (tradeAccount.PositionList.Any())
+                            if (tradeAccount.PositionList.Count != 0)
                             {
-                                foreach (var positionList in tradeAccount.PositionList.Values)
+                                //De muntparen toevoegen aan de userinterface
+                                foreach (var position in tradeAccount.PositionList.Values)
                                 {
-                                    //De muntparen toevoegen aan de userinterface
-                                    foreach (CryptoPosition position in positionList.Values)
-                                        positionCount++;
+                                    positionCount++;
                                 }
                             }
                         }

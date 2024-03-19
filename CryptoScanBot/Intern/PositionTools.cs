@@ -172,9 +172,7 @@ public static class PositionTools
                 if (GlobalData.IntervalListId.TryGetValue((int)position.IntervalId, out CryptoInterval interval))
                     position.Interval = interval;
 
-                tradeAccount.PositionList.TryAdd(symbol.Name, []);
-                if (tradeAccount.PositionList.TryGetValue(symbol.Name, out SortedList<int, CryptoPosition> positionList))
-                    positionList.TryAdd(position.Id, position);
+                tradeAccount.PositionList.TryAdd(symbol.Name, position);
             }
         }
     }
@@ -224,22 +222,17 @@ public static class PositionTools
 
     static public void RemovePosition(CryptoTradeAccount tradeAccount, CryptoPosition position, bool addToClosed)
     {
-        if (tradeAccount.PositionList.TryGetValue(position.Symbol.Name, out var positionList))
+        if (tradeAccount.PositionList.TryGetValue(position.Symbol.Name, out var positionFound))
         {
-            if (positionList.ContainsKey(position.Id))
-            {
-                positionList.Remove(position.Id);
+            tradeAccount.PositionList.Remove(positionFound.Symbol.Name);
 
-                if (addToClosed)
-                {
-                    if (GlobalData.PositionsClosed.Count != 0)
-                        GlobalData.PositionsClosed.Add(position);
-                    else
-                        GlobalData.PositionsClosed.Insert(0, position);
-                }
+            if (addToClosed)
+            {
+                if (GlobalData.PositionsClosed.Count != 0)
+                    GlobalData.PositionsClosed.Add(position);
+                else
+                    GlobalData.PositionsClosed.Insert(0, position);
             }
-            if (positionList.Count == 0)
-                tradeAccount.PositionList.Remove(position.Symbol.Name);
         }
     }
 
@@ -267,12 +260,9 @@ public static class PositionTools
 
     public static CryptoPosition HasPosition(CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
     {
-        if (tradeAccount.PositionList.TryGetValue(symbol.Name, out var positionList))
+        if (tradeAccount.PositionList.TryGetValue(symbol.Name, out var position))
         {
-            foreach (var position in positionList.Values.ToList())
-            {
-                return position;
-            }
+            return position;
         }
         return null;
     }

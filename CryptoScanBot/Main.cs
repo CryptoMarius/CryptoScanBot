@@ -1041,10 +1041,9 @@ public partial class FrmMain : Form
             {
                 foreach (var tradingAccount in GlobalData.TradeAccountList.Values)
                 {
-                    foreach (var positionList in tradingAccount.PositionList.Values)
+                    foreach (var position in tradingAccount.PositionList.Values)
                     {
-                        foreach (CryptoPosition position in positionList.Values)
-                            list.Add(position);
+                        list.Add(position);
                     }
                 }
             }

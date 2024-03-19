@@ -74,12 +74,9 @@ public class TradeTools
         using var database = new CryptoDatabase();
         foreach (CryptoTradeAccount tradeAccount in GlobalData.TradeAccountList.Values.ToList())
         {
-            foreach (var positionList in tradeAccount.PositionList.Values.ToList())
+            foreach (var position in tradeAccount.PositionList.Values.ToList())
             {
-                foreach (var position in positionList.Values.ToList())
-                {
-                    await GlobalData.ThreadDoubleCheckPosition.AddToQueue(position, true, "CheckOpenPositions");
-                }
+                await GlobalData.ThreadDoubleCheckPosition.AddToQueue(position, true, "CheckOpenPositions");
             }
         }
     }

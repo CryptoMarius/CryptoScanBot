@@ -112,49 +112,45 @@ public class PaperTrading
             CryptoDatabase database = new();
             database.Open();
 
-            foreach (var positionList in tradeAccount.PositionList.Values.ToList())
+            foreach (var position in tradeAccount.PositionList.Values.ToList())
             {
-                foreach (var position in positionList.Values.ToList())
+                SortedList<DateTime, CryptoPositionStep> indexList = new();
+
+                // Verzamel de open steps
+                foreach (var part in position.Parts.Values.ToList())
                 {
-                    SortedList<DateTime, CryptoPositionStep> indexList = new();
-
-                    // Verzamel de open steps
-                    foreach (var part in position.Parts.Values.ToList())
+                    if (!part.CloseTime.HasValue)
                     {
-                        if (!part.CloseTime.HasValue)
+                        foreach (var step in part.Steps.Values.ToList())
                         {
-                            foreach (var step in part.Steps.Values.ToList())
-                            {
-                                if (step.Status == CryptoOrderStatus.New)
-                                    indexList.TryAdd(step.CreateTime, step);
-                            }
+                            if (step.Status == CryptoOrderStatus.New)
+                                indexList.TryAdd(step.CreateTime, step);
                         }
                     }
-
-
-                    // controleer vanaf de openstaande step, en het kan vast veel optimaler
-                    // als we de hogere intervallen inzetten (of een combinatie indien nodig)
-                    // (maar zoveel posities staan niet open. dus voorlopig is dit prima)
-                    foreach (var step in indexList.Values)
-                    {
-                        long from = CandleTools.GetUnixTime(step.CreateTime, 60) + 60;
-                        long limit = CandleTools.GetUnixTime(DateTime.UtcNow, 60);
-                        while (from < limit)
-                        {
-                            // Eventueel missende candles hebben op deze manier geen impact
-                            if (position.Symbol.CandleList.TryGetValue(from, out CryptoCandle candle))
-                            {
-                                await PaperTradingCheckStep(database, position, step, candle);
-                            }
-                            from += 60;
-                        }
-                    }
-
-                    await TradeTools.CalculatePositionResultsViaOrders(database, position);
                 }
+
+
+                // controleer vanaf de openstaande step, en het kan vast veel optimaler
+                // als we de hogere intervallen inzetten (of een combinatie indien nodig)
+                // (maar zoveel posities staan niet open. dus voorlopig is dit prima)
+                foreach (var step in indexList.Values)
+                {
+                    long from = CandleTools.GetUnixTime(step.CreateTime, 60) + 60;
+                    long limit = CandleTools.GetUnixTime(DateTime.UtcNow, 60);
+                    while (from < limit)
+                    {
+                        // Eventueel missende candles hebben op deze manier geen impact
+                        if (position.Symbol.CandleList.TryGetValue(from, out CryptoCandle candle))
+                        {
+                            await PaperTradingCheckStep(database, position, step, candle);
+                        }
+                        from += 60;
+                    }
+                }
+
+                await TradeTools.CalculatePositionResultsViaOrders(database, position);
             }
         }
-
     }
 
 
@@ -196,22 +192,19 @@ public class PaperTrading
         // Is er iets gekocht of verkocht?
         // Zoja dan de HandleTrade aanroepen.
 
-        if (tradeAccount.PositionList.TryGetValue(symbol.Name, out var positionList))
+        if (tradeAccount.PositionList.TryGetValue(symbol.Name, out var position))
         {
-            foreach (CryptoPosition position in positionList.Values.ToList())
+            foreach (CryptoPositionPart part in position.Parts.Values.ToList())
             {
-                foreach (CryptoPositionPart part in position.Parts.Values.ToList())
+                // reeds afgesloten
+                if (part.CloseTime.HasValue)
+                    continue;
+
+                foreach (CryptoPositionStep step in part.Steps.Values.ToList())
                 {
-                    // reeds afgesloten
-                    if (part.CloseTime.HasValue)
-                        continue;
-
-                    foreach (CryptoPositionStep step in part.Steps.Values.ToList())
-                    {
-                        await PaperTradingCheckStep(database, position, step, lastCandle1m);
-                    }
-
+                    await PaperTradingCheckStep(database, position, step, lastCandle1m);
                 }
+
             }
         }
     }

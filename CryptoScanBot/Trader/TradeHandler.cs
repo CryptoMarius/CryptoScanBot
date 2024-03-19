@@ -51,16 +51,11 @@ static public class TradeHandler
 
             // Zoek de openstaande positie op
             CryptoPosition position = null;
-            if (order.TradeAccount.PositionList.TryGetValue(symbol.Name, out var positionList))
+            if (order.TradeAccount.PositionList.TryGetValue(symbol.Name, out var posTemp))
             {
-                for (int i = 0; i < positionList.Count; i++)
+                if (posTemp.Orders.TryGetValue(order.OrderId, out _))
                 {
-                    CryptoPosition posTemp = positionList.Values[i];
-                    if (posTemp.Orders.TryGetValue(order.OrderId, out _))
-                    {
-                        position = posTemp;
-                        break;
-                    }
+                    position = posTemp;
                 }
             }
 

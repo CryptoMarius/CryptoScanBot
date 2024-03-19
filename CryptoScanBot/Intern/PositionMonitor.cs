@@ -1880,12 +1880,9 @@ public class PositionMonitor : IDisposable
                 if (PositionTools.ValidTradeAccount(tradeAccount, Symbol))
                 {
                     // Check the positions
-                    if (tradeAccount.PositionList.TryGetValue(Symbol.Name, out var positionList))
+                    if (tradeAccount.PositionList.TryGetValue(Symbol.Name, out var position))
                     {
-                        foreach (CryptoPosition position in positionList.Values.ToList())
-                        {
-                            await GlobalData.ThreadDoubleCheckPosition.AddToQueue(position, false, "New 1m candle");
-                        }
+                        await GlobalData.ThreadDoubleCheckPosition.AddToQueue(position, false, "New 1m candle");
                     }
                 }
             }

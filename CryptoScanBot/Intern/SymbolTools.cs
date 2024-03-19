@@ -218,10 +218,9 @@ public class SymbolTools
         // Zijn er slots beschikbaar?
 
         int slotsOccupied = 0;
-        if (tradeAccount.PositionList.TryGetValue(symbol.Name, out var positionList))
+        if (tradeAccount.PositionList.TryGetValue(symbol.Name, out var position))
         {
-            foreach (CryptoPosition position in positionList.Values)
-                slotsOccupied++;
+             slotsOccupied++;
         }
 
         if (slotsOccupied >= slotLimit)
@@ -240,13 +239,10 @@ public class SymbolTools
     public static bool CheckAvailableSlotsLongShort(CryptoTradeAccount tradeAccount, CryptoTradeSide side, int slotLimit, out string reaction)
     {
         int slotsOccupied = 0;
-        foreach (var positionList in tradeAccount.PositionList.Values)
+        foreach (var position in tradeAccount.PositionList.Values)
         {
-            foreach (CryptoPosition position in positionList.Values)
-            {
-                if (position.Side == side)
-                    slotsOccupied++;
-            }
+            if (position.Side == side)
+                slotsOccupied++;
         }
 
         if (slotsOccupied >= slotLimit)
