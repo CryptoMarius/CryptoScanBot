@@ -119,7 +119,8 @@ static public class TradeHandler
             // De positie laten afhandelen door een andere thread.
             // (dan staat alle code voor het afhandelen van een positie centraal)
             position.ForceCheckPosition = true;
-            await GlobalData.ThreadDoubleCheckPosition.AddToQueue(position, true, $"Trigger userticker {order.OrderId}", true);
+            position.DelayUntil = DateTime.UtcNow.AddSeconds(10);
+            await GlobalData.ThreadDoubleCheckPosition.AddToQueue(position, order.OrderId, order.Status);
         }
 
         return; // Task.CompletedTask;

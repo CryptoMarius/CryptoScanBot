@@ -1,6 +1,8 @@
 ﻿
 using System.Collections.Concurrent;
 
+using Bybit.Net.Enums.V5;
+
 using CryptoScanBot.Context;
 using CryptoScanBot.Enums;
 using CryptoScanBot.Exchange;
@@ -20,7 +22,7 @@ public class ThreadCheckFinishedPosition
     private readonly SemaphoreSlim Semaphore = new(1);
     private readonly SortedList<string, CryptoPosition> Dupes = [];
     private readonly CancellationTokenSource cancellationToken = new();
-    private readonly BlockingCollection<(CryptoPosition, string)> Queue = [];
+    private readonly BlockingCollection<(CryptoPosition position, string orderId, CryptoOrderStatus? status)> Queue = [];
 
     public ThreadCheckFinishedPosition()
     {
@@ -33,40 +35,27 @@ public class ThreadCheckFinishedPosition
         GlobalData.AddTextToLogTab("Stop position check finished handler");
     }
 
-    public async Task AddToQueue(CryptoPosition position, bool check, string reason = "", bool addExtraDelay = false)
+    public async Task AddToQueue(CryptoPosition position, string orderId = null, CryptoOrderStatus? status = null)
     {
         await Semaphore.WaitAsync();
         try
         {
-            if (check)
-                position.ForceCheckPosition = true;
-
-            // Extra delay omdat de exchange mogelijk de administratie niet rond heeft.
-            // Met name als het druk op de exchange is kan het problemen geven.
-            if (addExtraDelay)
+            ////await position.Semaphore.WaitAsync();
+            //try
+            //{
+            if (Dupes.ContainsKey(position.Symbol.Name))
             {
-                // Eigenlijk wil je de positie niet in deze queue hebben.
-                // Hoe voorkom je duplicaten in deze queue, niet netjes.
-                position.DelayUntil = DateTime.UtcNow.AddSeconds(10);
+                ScannerLog.Logger.Trace($"ThreadDoubleCheckPosition.Execute: Positie {position.Symbol.Name} duplicate {position.Status} check={position.ForceCheckPosition} {position.DelayUntil} {orderId} {status}");
+                return;
             }
-
-            //await position.Semaphore.WaitAsync();
-            try
-            {
-                if (Dupes.ContainsKey(position.Symbol.Name))
-                {
-                    ScannerLog.Logger.Trace($"ThreadDoubleCheckPosition.Execute: Positie {position.Symbol.Name} duplicate {position.Status} check={check} {position.DelayUntil} {reason}");
-                    return;
-                }
-            }
-            finally
-            {
-                //Semaphore.Release();
-            }
-
+            //}
+            //finally
+            //{
+            //    //Semaphore.Release();
+            //}
 
             Dupes.Add(position.Symbol.Name, position);
-            Queue.Add((position, reason));
+            Queue.Add((position, orderId, status));
         }
         finally
         {
@@ -82,7 +71,7 @@ public class ThreadCheckFinishedPosition
         database.Open();
 
         // Een aparte queue die orders afhandeld (met als achterliggende reden de juiste afhandel volgorde)
-        foreach ((CryptoPosition position, string reason) in Queue.GetConsumingEnumerable(cancellationToken.Token))
+        foreach ((CryptoPosition position, string orderId, CryptoOrderStatus? status) in Queue.GetConsumingEnumerable(cancellationToken.Token))
         {
             //ScannerLog.Logger.Trace($"ThreadDoubleCheckPosition.Execute: Positie {position.Symbol.Name} pickup {position.Status} check={position.ForceCheckPosition} {reason}");
             try
@@ -97,16 +86,50 @@ public class ThreadCheckFinishedPosition
                     if (position.DelayUntil.HasValue && position.DelayUntil.Value > DateTime.UtcNow)
                     {
                         //ScannerLog.Logger.Trace($"ThreadDoubleCheckPosition.Execute: Positie {position.Symbol.Name} delay {position.Status} check={position.ForceCheckPosition} {position.DelayUntil} {reason}");
-                        await AddToQueue(position, false, reason + "."); // opnieuw, na een vertraging
+                        await AddToQueue(position); // opnieuw, na een vertraging
                         await Task.Delay(500);
                         continue;
                     }
 
 
                     //GlobalData.AddTextToLogTab($"ThreadDoubleCheckPosition: Positie {position.Symbol.Name} controleren! {position.Status} {position.DelayUntil}");
-                    ScannerLog.Logger.Trace($"ThreadDoubleCheckPosition.Execute: Positie {position.Symbol.Name} checking {position.Status} check={position.ForceCheckPosition} {reason}");
+                    ScannerLog.Logger.Trace($"ThreadDoubleCheckPosition.Execute: Positie {position.Symbol.Name} checking {position.Status} check={position.ForceCheckPosition} {orderId}");
 
-                    // Controleer orders
+
+                    // een extra orderid en een status erbij (nullable)
+
+                    // OrderStatus:
+                    // status = New                     -> de order ophalen
+                    // status = PartiallyFilled         -> positie tenminste trading, verder geheel negeren
+                    // status = Filled                  -> positie tenminste trading, order ophalen, trade(s) ophalen, status, herberekenen, eventueel closen
+                    // status = PartiallyFilledClosed   -> positie tenminste trading, order ophalen, trade(s) ophalen, status, bijwerken step, herberekenen, eventueel closen
+                    // status = Canceled                -> door trader of gebruiker?, eventueel closen als takeover.
+
+                    // PositieStatus:
+                    // Status = Ready                   -> orders ophalen, trades ophalen, herberekenen, indien geen wijzigingen verplaatsen naar closed
+                    
+
+                    // het nieuwe idee
+                    if (status.HasValue)
+                    {
+                        // De positie status aanpassen
+                        switch (status)
+                        {
+                            case CryptoOrderStatus.New:
+                            case CryptoOrderStatus.Filled:
+                            case CryptoOrderStatus.PartiallyFilled:
+                            case CryptoOrderStatus.PartiallyAndClosed:
+                                if (position.Status == CryptoPositionStatus.Waiting)
+                                {
+                                    position.Status = CryptoPositionStatus.Trading;
+                                    position.ForceCheckPosition = true;
+                                }
+                                break;
+                        }
+                    }
+
+
+                    // Controleer orders, trades en herbereken de quantity, commissie etc
                     if (position.ForceCheckPosition)
                     {
                         position.ForceCheckPosition = false;
@@ -114,43 +137,50 @@ public class ThreadCheckFinishedPosition
                     }
 
 
+                    // Voor status=new is ophalen van de orders genoeg er veranderd niets aan de positie
+                    if (status.HasValue && status ==CryptoOrderStatus.New)
+                    {
+                        ScannerLog.Logger.Trace($"ThreadDoubleCheckPosition.Execute: Positie {position.Symbol.Name} checking {position.Status} check={position.ForceCheckPosition} {orderId} status ==CryptoOrderStatus.New");
+                        continue;
+                    }
+
+
+
                     if (position.Status == CryptoPositionStatus.Ready)
                     {
                         bool removePosition = true;
-
                         CryptoOrderSide entryOrderSide = position.GetEntryOrderSide();
                         foreach (CryptoPositionPart part in position.Parts.Values.ToList())
                         {
-                            //if (!part.CloseTime.HasValue)
+                            foreach (CryptoPositionStep step in part.Steps.Values.ToList())
                             {
-                                foreach (CryptoPositionStep step in part.Steps.Values.ToList())
+                                if (step.Status == CryptoOrderStatus.New && step.Side == entryOrderSide)
                                 {
-                                    if (step.Status == CryptoOrderStatus.New && step.Side == entryOrderSide)
+                                    ScannerLog.Logger.Trace($"ThreadDoubleCheckPosition.Execute: {position.Symbol.Name} annuleren dca order");
+
+                                    // Aankondiging dat we deze order gaan annuleren (de tradehandler weet dan dat wij het waren en het niet de user was via de exchange)
+                                    step.CancelInProgress = true;
+
+                                    // Annuleer de vorige buy order
+                                    var exchangeApi = ExchangeHelper.GetExchangeInstance(GlobalData.Settings.General.ExchangeId);
+                                    var (succes, tradeParams) = await exchangeApi.Cancel(position.TradeAccount, position.Symbol, step);
+                                    if (succes)
                                     {
-                                        ScannerLog.Logger.Trace($"ThreadDoubleCheckPosition.Execute: {position.Symbol.Name} annuleren dca order");
+                                        step.CloseTime = DateTime.UtcNow;
+                                        step.Status = CryptoOrderStatus.PositionClosed;
+                                        database.Connection.Update<CryptoPositionStep>(step);
 
-                                        // Aankondiging dat we deze order gaan annuleren (de tradehandler weet dan dat wij het waren en het niet de user was via de exchange)
-                                        step.CancelInProgress = true;
-
-                                        // Annuleer de vorige buy order
-                                        var exchangeApi = ExchangeHelper.GetExchangeInstance(GlobalData.Settings.General.ExchangeId);
-                                        var (succes, tradeParams) = await exchangeApi.Cancel(position.TradeAccount, position.Symbol, step);
-                                        if (succes)
-                                        {
-                                            step.CloseTime = DateTime.UtcNow;
-                                            step.Status = CryptoOrderStatus.PositionClosed;
-                                            database.Connection.Update<CryptoPositionStep>(step);
-
-                                            if (GlobalData.Settings.Trading.LogCanceledOrders)
-                                                ExchangeBase.Dump(position, succes, tradeParams, $"annuleren vanwege sluiten {position.Side} positie");
-                                        }
-                                        else
-                                        {
-                                            ScannerLog.Logger.Trace($"ThreadDoubleCheckPosition.Execute: {position.Symbol.Name} annuleren dca order mislukt");
-                                            ExchangeBase.Dump(position, succes, tradeParams, "DCA ORDER ANNULEREN NIET IN 1x GELUKT!!! (herkansing)");
-                                            await AddToQueue(position, true, "herkansing annuleren dca order", true); // doe nog maar een keer... Endless loop?
-                                            removePosition = false;
-                                        }
+                                        if (GlobalData.Settings.Trading.LogCanceledOrders)
+                                            ExchangeBase.Dump(position, succes, tradeParams, $"annuleren vanwege sluiten {position.Side} positie");
+                                    }
+                                    else
+                                    {
+                                        ScannerLog.Logger.Trace($"ThreadDoubleCheckPosition.Execute: {position.Symbol.Name} annuleren dca order mislukt");
+                                        ExchangeBase.Dump(position, succes, tradeParams, "DCA ORDER ANNULEREN NIET IN 1x GELUKT!!! (herkansing)");
+                                        position.ForceCheckPosition = true;
+                                        position.DelayUntil = DateTime.UtcNow.AddSeconds(10);
+                                        await AddToQueue(position); // doe nog maar een keer... Endless loop?
+                                        removePosition = false;
                                     }
                                 }
                             }
@@ -169,6 +199,8 @@ public class ThreadCheckFinishedPosition
                     }
                     else
                     {
+                        // De normale positie afhandeling
+
                         // PositionMonitor aanroep code verplaatst vanuit kline-ticker thread naar hier
                         var symbolPeriod = position.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
                         if (symbolPeriod.CandleList.Count > 0)
@@ -187,15 +219,17 @@ public class ThreadCheckFinishedPosition
                                 Monitor.Exit(position.Symbol.CandleList);
                             }
 
-                            ScannerLog.Logger.Trace($"ThreadDoubleCheckPosition.Execute: {position.Symbol.Name} CheckThePosition {reason}");
+                            ScannerLog.Logger.Trace($"ThreadDoubleCheckPosition.Execute: {position.Symbol.Name} CheckThePosition {orderId}");
                             PositionMonitor positionMonitor = new(position.Symbol, lastCandle1m);
-                            await positionMonitor.CheckThePosition(position);
+                            await positionMonitor.CheckThePosition(position); // CancelOrdersIfClosedOrTimeoutOrReposition?
 
-                            if (position.Status == CryptoPositionStatus.Ready)
-                            {
-                                ScannerLog.Logger.Trace($"ThreadDoubleCheckPosition.Execute: {position.Symbol.Name} ready, nog een keer!");
-                                await AddToQueue(position, false, "positie is reaady, laten verplaatsen", true); // nog eens, en dan laten verplaatsen naar gesloten posities
-                            }
+                            // Bij nader inzien kan die status hier nooit ready zijn...
+                            //if (position.Status == CryptoPositionStatus.Ready) 
+                            //{
+                            //    ScannerLog.Logger.Trace($"ThreadDoubleCheckPosition.Execute: {position.Symbol.Name} ready, nog een keer!");
+                            //    position.DelayUntil = DateTime.UtcNow.AddSeconds(10);
+                            //    await AddToQueue(position); // nog eens, en dan laten verplaatsen naar gesloten posities
+                            //}
                         }
                     }
                 }

@@ -1389,7 +1389,7 @@ public class PositionMonitor : IDisposable
     }
 
 
-    private async Task CancelOrdersIfClosedOrTimeoutOrReposition(CryptoPosition position)
+    public async Task CancelOrdersIfClosedOrTimeoutOrReposition(CryptoPosition position)
     {
         // Voor ondersteuning van long/short
         CryptoOrderSide entryOrderSide = position.GetEntryOrderSide();
@@ -1882,7 +1882,7 @@ public class PositionMonitor : IDisposable
                     // Check the positions
                     if (tradeAccount.PositionList.TryGetValue(Symbol.Name, out var position))
                     {
-                        await GlobalData.ThreadDoubleCheckPosition.AddToQueue(position, false, "New 1m candle");
+                        await GlobalData.ThreadDoubleCheckPosition.AddToQueue(position);
                     }
                 }
             }

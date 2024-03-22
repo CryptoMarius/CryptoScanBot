@@ -76,7 +76,8 @@ public class TradeTools
         {
             foreach (var position in tradeAccount.PositionList.Values.ToList())
             {
-                await GlobalData.ThreadDoubleCheckPosition.AddToQueue(position, true, "CheckOpenPositions");
+                position.ForceCheckPosition = true;
+                await GlobalData.ThreadDoubleCheckPosition.AddToQueue(position);
             }
         }
     }
@@ -124,12 +125,12 @@ public class TradeTools
             part.CommissionQuote = 0;
             part.RemainingDust = 0;
 
-            int tradeCount = 0;
+            //int tradeCount = 0;
             foreach (CryptoPositionStep step in part.Steps.Values.ToList())
             {
                 // || step.Status == CryptoOrderStatus.PartiallyFilled => niet doen, want dan worden de TP's iedere keer verplaatst..
                 // Wellicht moet dat gedeelte op een andere manier ingeregeld worden zodat we hier wel de echte BE kunnen uitrekenen?
-                if (step.Status.IsFilled())
+                if (step.Status.IsFilled()) // Filled or PartiallyFilledAndClosed
                 {
                     if (step.Side == entryOrderSide)
                     {
@@ -143,7 +144,7 @@ public class TradeTools
                     }
                     else if (step.Side == takeProfitOrderSide)
                     {
-                        tradeCount++;
+                        //tradeCount++;
                         part.Quantity -= step.QuantityFilled;
                         part.QuantityTakeProfit += step.QuantityFilled;
                         part.Returned += step.QuoteQuantityFilled;
@@ -158,8 +159,11 @@ public class TradeTools
                 }
                 else if (step.Status == CryptoOrderStatus.New || step.Status == CryptoOrderStatus.PartiallyFilled)
                 {
-                    // Voluit, ook als ie voor 99% gevuld is..
-                    part.Reserved += step.Price * step.Quantity;
+                    decimal value = step.Price * step.Quantity;
+                    step.Commission = (decimal)position.Exchange.FeeRate * value / 100m; // Estimated commission in quote
+
+                    part.Commission += step.Commission;
+                    part.Reserved += value;
                 }
                 part.RemainingDust += step.RemainingDust;
 
@@ -168,10 +172,9 @@ public class TradeTools
                 //GlobalData.AddTextToLogTab(s);
             }
 
-            // Rekening houden met de toekomstige kosten van de sell orders.
-            // NB: Dit klopt niet 100% als een order gedeeltelijk gevuld wordt!
-            if (tradeCount == 0 && !part.CloseTime.HasValue)
-                part.Commission *= 2;
+            // Rekening houden met de toekomstige kosten van de sell orders (zie reserved hierboven)
+            //if (tradeCount == 0 && !part.CloseTime.HasValue)
+            //    part.Commission *= 2;
 
             // Voor de BE de originele quantity gebruiken (niet de gecorrigeerde met EntryQuantity-commissionBase dus daarom een correctie)
             if (position.Side == CryptoTradeSide.Long)
@@ -563,7 +566,9 @@ public class TradeTools
             // Een laatste controle laten uitvoeren en de nog openstaande DCA orders afsluiten/verplaatsen
             if (markedAsReady)
             {
-                await GlobalData.ThreadDoubleCheckPosition.AddToQueue(position, true, "CalculatePositionResultsViaOrders positie ready", true);
+                position.ForceCheckPosition = true;
+                position.DelayUntil = DateTime.UtcNow.AddSeconds(10);
+                await GlobalData.ThreadDoubleCheckPosition.AddToQueue(position);
             }
         }
     }
