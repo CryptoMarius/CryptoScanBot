@@ -68,11 +68,14 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         Grid = grid;
         List = list;
         ColumnList = columnList;
+        int count = columnList.Count;
 
         InitializeGrid();
         InitializeHeaders();
         ShowSortIndicator();
         FillColumnPopup();
+        if (columnList.Count != count)
+            GlobalData.SaveUserSettings();
     }
 
     public abstract void InitializeHeaders();
@@ -205,6 +208,7 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
             {
                 columnSetting = new();
                 ColumnList.Add(column.HeaderText, columnSetting);
+                columnSetting.Visible = column.Visible;
             }
 
             column.Visible = columnSetting.Visible;
