@@ -13,6 +13,7 @@ public enum Command
     //CopySignalInformation,
     CopySymbolInformation,
     ScannerSessionDebug,
+    PositionCalculate,
     About
 }
 

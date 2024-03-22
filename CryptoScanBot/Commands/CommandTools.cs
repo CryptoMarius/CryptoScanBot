@@ -22,7 +22,7 @@ public static class CommandHelper
         menuStrip.Items.Add(new ToolStripSeparator());
     }
 
-    public static ToolStripMenuItemCommand AddCommand(this ContextMenuStrip menuStrip, CryptoDataGrid dataGrid, string text, Command command, EventHandler click)
+    public static ToolStripMenuItemCommand AddCommand(this ContextMenuStrip menuStrip, CryptoDataGrid dataGrid, string text, Command command, EventHandler click = null)
     {
         ToolStripMenuItemCommand menuItem = new()
         {
@@ -30,7 +30,10 @@ public static class CommandHelper
             DataGrid = dataGrid,
             Text = text
         };
-        menuItem.Click += click;
+        if (command == Command.None)
+            menuItem.Click += CommandTools.ExecuteCommandCommandViaTag;
+        else 
+            menuItem.Click += click;
         menuStrip.Items.Add(menuItem);
         return menuItem;
     }
@@ -112,6 +115,18 @@ public class CommandTools
                 case Command.ShowTrendInformation:
                     new CommandShowTrendInfo().Execute(symbol);
                     break;
+                case Command.PositionCalculate:
+                    using (CryptoDatabase databaseThread = new())
+                    {
+                        if (position.Status >= CryptoPositionStatus.Ready)
+                        {
+                            databaseThread.Open();
+                            PositionTools.LoadPosition(databaseThread, position);
+                        }
+                        GlobalData.AddTextToLogTab($"{position.Symbol.Name} positie {position.Id} handmatig herberekenen");
+                        await TradeTools.CalculatePositionResultsViaOrders(databaseThread, position, forceCalculation: true);
+                    }
+                    break;
                 case Command.ExcelSymbolInformation:
                     _ = Task.Run(() => { new Excel.ExcelSymbolDump().ExportToExcel(symbol); });
                     break;
@@ -119,10 +134,13 @@ public class CommandTools
                 case Command.ExcelPositionInformation:
                     using (CryptoDatabase databaseThread = new())
                     {
-                        databaseThread.Open();
-                        PositionTools.LoadPosition(databaseThread, position);
+                        if (position.Status >= CryptoPositionStatus.Ready)
+                        {
+                            databaseThread.Open();
+                            PositionTools.LoadPosition(databaseThread, position);
+                        }
+                        GlobalData.AddTextToLogTab($"{position.Symbol.Name} positie {position.Id} herberekenen voor Excel");
                         await TradeTools.CalculatePositionResultsViaOrders(databaseThread, position, forceCalculation: true);
-
                         _ = Task.Run(() => { new Excel.ExcelPositionDump().ExportToExcel(position); });
                     }
                     break;
