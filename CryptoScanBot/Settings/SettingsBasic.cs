@@ -50,4 +50,19 @@ public class SettingsBasic
 
     // What symbols to show
     public List<string> ShowSymbolInformation { get; set; } = new(new string[] { "BTC", "PAXG", "ETH", "XRP", "SOL", "ADA" });
+
+    public SettingsBasic()
+    {
+        // Als default toch iets inschieten
+
+        CryptoQuoteData quoteData = new()
+        {
+            Name = "USDT",
+            FetchCandles = true,
+            CreateSignals = true,
+            MinimalVolume = 4500000,
+        };
+
+        QuoteCoins.Add(quoteData.Name, quoteData);
+    }
 }
