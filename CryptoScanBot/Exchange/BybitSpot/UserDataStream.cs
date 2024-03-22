@@ -69,7 +69,7 @@ public class UserDataStream
                 ScannerLog.Logger.Trace($"{info} json={text}");
 
                 // We zijn slechts geinteresseerd in een paar statussen (de andere zijn niet interessant voor de afhandeling van de order)
-                if (//data.Status == OrderStatus.New || 
+                if (data.Status == OrderStatus.New || 
                     data.Status == OrderStatus.Filled ||
                     data.Status == OrderStatus.PartiallyFilled ||
                     data.Status == OrderStatus.PartiallyFilledCanceled ||
