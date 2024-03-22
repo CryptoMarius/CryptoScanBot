@@ -115,6 +115,10 @@ public class CommandTools
                 case Command.ShowTrendInformation:
                     new CommandShowTrendInfo().Execute(symbol);
                     break;
+                case Command.ExcelSymbolInformation:
+                    _ = Task.Run(() => { new Excel.ExcelSymbolDump().ExportToExcel(symbol); });
+                    break;
+#if TRADEBOT
                 case Command.PositionCalculate:
                     using (CryptoDatabase databaseThread = new())
                     {
@@ -127,10 +131,6 @@ public class CommandTools
                         await TradeTools.CalculatePositionResultsViaOrders(databaseThread, position, forceCalculation: true);
                     }
                     break;
-                case Command.ExcelSymbolInformation:
-                    _ = Task.Run(() => { new Excel.ExcelSymbolDump().ExportToExcel(symbol); });
-                    break;
-#if TRADEBOT
                 case Command.ExcelPositionInformation:
                     using (CryptoDatabase databaseThread = new())
                     {
