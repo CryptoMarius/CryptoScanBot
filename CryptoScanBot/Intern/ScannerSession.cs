@@ -269,13 +269,14 @@ public static class ScannerSession
 
     static private void ConnectionWasRestoredEvent_Tick(string text, bool extraLineFeed = false)
     {
-        // Pas de geplande verversing omdat er een connection timeout was (nu wat 
+        // Pas de geplande verversing omdat er een connection timeout was.
         // Dit kan een aantal berekeningen onderbroken hebben
-        // (er komen een aantal reconnects, daarom circa 20 seconden)
-        if (TimerGetExchangeInfoAndCandles.Enabled && TimerGetExchangeInfoAndCandles.Interval == 2 * 60)
-            TimerGetExchangeInfoAndCandles.InitTimerInterval(30);
-        else if (!TimerGetExchangeInfoAndCandles.Enabled) // Anders krijg je diverse achter elkaar
-            TimerGetExchangeInfoAndCandles.InitTimerInterval(30);
+        // (er komen een aantal reconnects, daarom circa 30 seconden)
+        //if (TimerGetExchangeInfoAndCandles.Enabled && TimerGetExchangeInfoAndCandles.Interval == 2 * 60) //?
+        //    TimerGetExchangeInfoAndCandles.InitTimerInterval(30);
+        //else if (!TimerGetExchangeInfoAndCandles.Enabled) // Anders krijg je diverse achter elkaar
+        //    TimerGetExchangeInfoAndCandles.InitTimerInterval(30);
+        TimerGetExchangeInfoAndCandles.InitTimerInterval(30);
     }
 
     static private void SetCandleTimerEnableHandler(bool value)
