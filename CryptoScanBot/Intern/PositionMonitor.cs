@@ -1518,6 +1518,9 @@ public class PositionMonitor : IDisposable
 
                     if (cancelText != "")
                     {
+                        step.CancelInProgress = true;
+                        Database.Connection.Update<CryptoPositionStep>(step);
+
                         var (cancelled, cancelParams) = await TradeTools.CancelOrder(Database, position, part, step, LastCandle1mCloseTimeDate, newStatus);
                         if (!cancelled || GlobalData.Settings.Trading.LogCanceledOrders)
                             ExchangeBase.Dump(position, cancelled, cancelParams, cancelText);
