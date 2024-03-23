@@ -241,11 +241,15 @@ public partial class DashBoardInformation : UserControl
                     loX = candle.OpenTime;
                 if (hiX < candle.OpenTime)
                     hiX = candle.OpenTime;
-
-                if (loY > (float)candle.Close)
-                    loY = (float)candle.Close;
-                if (hiY < (float)candle.Close)
-                    hiY = (float)candle.Close;
+                
+                // In Bybit Futures zijn er (vanwege storingen) hoge waarden ingevuld
+                if (candle.Close > -50 && candle.Close < 50)
+                {
+                    if (loY > (float)candle.Close)
+                        loY = (float)candle.Close;
+                    if (hiY < (float)candle.Close)
+                        hiY = (float)candle.Close;
+                }
                 if (candleCount-- < 0)
                     break;
             }
@@ -419,7 +423,7 @@ public partial class DashBoardInformation : UserControl
     }
 
 
-    public void BinanceBarometerAll()
+    public async void BinanceBarometerAll()
     {
         try
         {
@@ -433,7 +437,7 @@ public partial class DashBoardInformation : UserControl
 
             // Bereken de laatste barometer waarden
             BarometerTools barometerTools = new();
-            barometerTools.Execute();
+            await barometerTools.ExecuteAsync();
 
             if (!GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
                 return;
@@ -476,9 +480,7 @@ public partial class DashBoardInformation : UserControl
         // Dan wordt de basecoin bewaard voor een volgende keer
         GlobalData.Settings.General.SelectedBarometerQuote = EditBarometerQuote.Text;
         GlobalData.Settings.General.SelectedBarometerInterval = EditBarometerInterval.Text;
-
-        Task.Run(() => { BinanceBarometerAll(); } );
-        //new Thread(BinanceBarometerAll).Start();
+        Task.Run(BinanceBarometerAll);
     }
 
 
@@ -601,8 +603,7 @@ public partial class DashBoardInformation : UserControl
             if ((DateTime.Now.Second > 10) && (DateTime.Now.Minute != BarometerLastMinute))
             {
                 BarometerLastMinute = DateTime.Now.Minute;
-                //new Thread(BinanceBarometerAll).Start();
-                Task.Run(() => { BinanceBarometerAll(); });
+                Task.Run(BinanceBarometerAll);
             }
 
             // Toon de prijzen en volume van een aantal symbols
