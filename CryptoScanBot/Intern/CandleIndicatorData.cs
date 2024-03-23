@@ -14,7 +14,7 @@ public class CandleIndicatorData
     public double? Sma50 { get; set; }
     //public double? Sma100 { get; set; }
     public double? Sma200 { get; set; }
-#if EXTRASTRATEGIES
+#if EXTRASTRATEGIESSLOPESMA
     public double? SlopeSma20 { get; set; }
     public double? SlopeSma50 { get; set; }
 #endif
@@ -29,6 +29,8 @@ public class CandleIndicatorData
     public double? Ema50 { get; set; }
     //public double? Ema100 { get; set; }
     //public double? Ema200 { get; set; }
+#endif
+#if  EXTRASTRATEGIESSLOPEEMA
     public double? SlopeEma20 { get; set; }
     public double? SlopeEma50 { get; set; }
 #endif
@@ -240,10 +242,12 @@ public class CandleIndicatorData
 #if EXTRASTRATEGIES
         List<EmaResult> emaList9 = (List<EmaResult>)history.GetEma(9);
         List<EmaResult> emaList26 = (List<EmaResult>)history.GetEma(26);
-        List<EmaResult> emaList20 = (List<EmaResult>)history.GetEma(20);
-        List<EmaResult> emaList50 = (List<EmaResult>)history.GetEma(50);
         //List<EmaResult> emaList100 = (List<EmaResult>)history.GetEma(100);
         //List<EmaResult> emaList200 = (List<EmaResult>)history.GetEma(200);
+#endif
+#if EXTRASTRATEGIESSLOPEEMA
+        List<EmaResult> emaList20 = (List<EmaResult>)history.GetEma(20);
+        List<EmaResult> emaList50 = (List<EmaResult>)history.GetEma(50);
         List<SlopeResult> slopeEma20List = (List<SlopeResult>)emaList20.GetSlope(3);
         List<SlopeResult> slopeEma50List = (List<SlopeResult>)emaList50.GetSlope(3);
 #endif
@@ -253,7 +257,7 @@ public class CandleIndicatorData
         List<SmaResult> smaList50 = (List<SmaResult>)history.GetSma(50);
         //List<SmaResult> smaList100 = (List<SmaResult>)Indicator.GetSma(history, 100);
         List<SmaResult> smaList200 = (List<SmaResult>)history.GetSma(200);
-#if EXTRASTRATEGIES
+#if EXTRASTRATEGIESSLOPESMA
         List<SlopeResult> slopeSma20List = (List<SlopeResult>)smaList20.GetSlope(3);
         List<SlopeResult> slopeSma50List = (List<SlopeResult>)smaList50.GetSlope(3);
 #endif
@@ -335,6 +339,8 @@ public class CandleIndicatorData
                 candleData.Ema50 = emaList50[index].Ema;
                 //candleData.Ema100 = emaList100[index].Ema;
                 //candleData.Ema200 = emaList200[index].Ema;
+#endif
+#if EXTRASTRATEGIESSLOPEEMA
                 candleData.SlopeEma20 = slopeEma20List[index].Slope;
                 candleData.SlopeEma50 = slopeEma50List[index].Slope;
 #endif
@@ -347,7 +353,7 @@ public class CandleIndicatorData
                 candleData.Sma50 = smaList50[index].Sma;
                 //candleData.Sma100 = smaList100[index].Sma;
                 candleData.Sma200 = smaList200[index].Sma;
-#if EXTRASTRATEGIES
+#if EXTRASTRATEGIESSLOPESMA
                 candleData.SlopeSma20 = slopeSma20List[index].Slope;
                 candleData.SlopeSma50 = slopeSma50List[index].Slope;
 #endif

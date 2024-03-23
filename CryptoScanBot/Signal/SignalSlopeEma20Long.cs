@@ -4,7 +4,7 @@ using CryptoScanBot.Model;
 
 namespace CryptoScanBot.Signal;
 
-#if EXTRASTRATEGIES
+#if EXTRASTRATEGIESSLOPEEMA
 public class SignalSlopeEma20Long : SignalCreateBase
 {
     public SignalSlopeEma20Long(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
@@ -27,14 +27,14 @@ public class SignalSlopeEma20Long : SignalCreateBase
 
     public override bool AdditionalChecks(CryptoCandle candle, out string response)
     {
-        if (!BarometerHelper.CheckValidBarometer(Symbol.QuoteData, CryptoIntervalPeriod.interval1h, (1m, decimal.MaxValue), out string reaction))
-        {
-            response = reaction;
-            return false;
-        }
+        //if (!BarometerHelper.CheckValidBarometer(Symbol.QuoteData, CryptoIntervalPeriod.interval1h, (0.5m, decimal.MaxValue), out string reaction))
+        //{
+        //    response = reaction;
+        //    return false;
+        //}
 
 
-        if (HadStobbInThelastXCandles(SignalSide, 0, 60) == null)
+        if (HadStobbInThelastXCandles(SignalSide, 10, 60) == null)
         {
             response = "Geen voorgaande STOBB of SBM";
             return false;

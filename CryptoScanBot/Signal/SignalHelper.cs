@@ -178,10 +178,22 @@ public static class SignalHelper
             AnalyzeShortType = typeof(IchimokuKumoBreakoutShort),
         });
 
-
-
         //***************************************************
-        // Slopes
+        // EMA cross (9, 26)
+        //***************************************************
+        AlgorithmDefinitionList.Add(new AlgorithmDefinition()
+        {
+            Name = "ema cross",
+            Strategy = CryptoSignalStrategy.EmaCross926,
+            AnalyzeLongType = typeof(SignalEmaCross926Long),
+            AnalyzeShortType = typeof(SignalEmaCross926Short),
+        });
+
+#endif
+
+#if EXTRASTRATEGIESSLOPEEMA
+        //***************************************************
+        // Slope EMA
         //***************************************************
         AlgorithmDefinitionList.Add(new AlgorithmDefinition()
         {
@@ -198,8 +210,12 @@ public static class SignalHelper
             AnalyzeLongType = typeof(SignalSlopeEma50Long),
             AnalyzeShortType = typeof(SignalSlopeEma50Short),
         });
+#endif
 
-
+#if EXTRASTRATEGIESSLOPESMA
+        //***************************************************
+        // Slope SMA
+        //***************************************************
         AlgorithmDefinitionList.Add(new AlgorithmDefinition()
         {
             Name = "sma 20 slope",
@@ -216,26 +232,13 @@ public static class SignalHelper
             AnalyzeShortType = typeof(SignalSlopeSma50Short),
         });
 
-        //***************************************************
-        // EMA cross (9, 26)
-        //***************************************************
-        AlgorithmDefinitionList.Add(new AlgorithmDefinition()
-        {
-            Name = "ema cross",
-            Strategy = CryptoSignalStrategy.EmaCross926,
-            AnalyzeLongType = typeof(SignalEmaCross926Long),
-            AnalyzeShortType = typeof(SignalEmaCross926Short),
-        });
-
 #endif
-
 
         // En de lijst eenmalig indexeren
         AlgorithmDefinitionIndex.Clear();
         foreach (AlgorithmDefinition algorithmDefinition in AlgorithmDefinitionList)
             AlgorithmDefinitionIndex.Add(algorithmDefinition.Strategy, algorithmDefinition);
     }
-
 
     public static SignalCreateBase GetSignalAlgorithm(CryptoTradeSide mode, CryptoSignalStrategy strategy, CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle)
     {

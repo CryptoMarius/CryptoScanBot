@@ -18,14 +18,18 @@ public enum CryptoSignalStrategy // CryptoStrategy
     IchimokuKumoBreakout, // nazoeken, in de juiste positieve of negatieve trend doet ie het prima
     
     StoRsi, // WGHM - STOSCH en RSI momentum indicator
+#if EXTRASTRATEGIESSLOPEEMA
+    SlopeEma50,
+    SlopeEma20,
+#endif
+#if EXTRASTRATEGIESSLOPESMA
+    SlopeSma20,
+    SlopeSma50,
+#endif
 #if EXTRASTRATEGIES
     MacdLt, // Vervallen, opgepikt uit de groep van Marco (een ziens of dit inderdaad werkt)
     MacdTest, // Vervallen, Nieuw idee maar dat bevalt  niet
 
-    SlopeEma50,
-    SlopeSma50,
-    SlopeEma20,
-    SlopeSma20,
 
     //// Vervallen?
     PriceCrossedSma20,
