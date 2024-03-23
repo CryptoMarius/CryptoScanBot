@@ -38,7 +38,7 @@ public class KLineTickerItem : KLineTickerItemBase
         {
             if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol symbol))
             {
-                TickerCount++;
+                Interlocked.Increment(ref TickerCount);
                 //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", topic, kline.Timestamp.ToLocalTime()));
                 Process1mCandle(symbol, kline.OpenTime, kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.Volume);
 
@@ -68,6 +68,7 @@ public class KLineTickerItem : KLineTickerItemBase
             // Subscribe to network-related stuff
             if (subscriptionResult.Success)
             {
+                ErrorDuringStartup = false;
                 _subscription = subscriptionResult.Data;
 
                 // Events
@@ -91,9 +92,9 @@ public class KLineTickerItem : KLineTickerItemBase
             else
             {
                 ConnectionLostCount++;
-                GlobalData.AddTextToLogTab($"{Api.ExchangeName} {QuoteData.Name} 1m ERROR starting kline ticker {subscriptionResult.Error.Message}");
-                GlobalData.AddTextToLogTab($"{Api.ExchangeName} {QuoteData.Name} 1m ERROR starting kline ticker {string.Join(',', Symbols)}");
-                
+                ErrorDuringStartup = true;
+                GlobalData.AddTextToLogTab($"{Api.ExchangeName} {QuoteData.Name} 1m kline ticker ERROR starting {subscriptionResult.Error.Message}");
+                GlobalData.AddTextToLogTab($"{Api.ExchangeName} {QuoteData.Name} 1m kline ticker ERROR starting {string.Join(',', Symbols)}");
             }
         }
     }

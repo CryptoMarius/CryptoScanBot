@@ -99,7 +99,9 @@ public class KLineTickerItem
         if (subscriptionResult.Success)
         {
             //GlobalData.AddTextToLogTab($"Subscription succes! {subscriptionResult.Data.Id}");
+            //ErrorDuringStartup = true;
             _subscription = subscriptionResult.Data;
+
 
             // Events
             _subscription.Exception += Exception;
@@ -108,7 +110,9 @@ public class KLineTickerItem
         }
         else
         {
-            GlobalData.AddTextToLogTab($"{Api.ExchangeName} {QuoteData.Name} 1m ERROR starting candle stream {Symbol.Name} {subscriptionResult.Error.Message}");
+            //ConnectionLostCount++;
+            //ErrorDuringStartup = true;
+            GlobalData.AddTextToLogTab($"{Api.ExchangeName} {QuoteData.Name} 1m kline ticker ERROR starting {Symbol.Name} {subscriptionResult.Error.Message}");
         }
 
 

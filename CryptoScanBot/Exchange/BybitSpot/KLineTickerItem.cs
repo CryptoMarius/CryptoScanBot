@@ -32,13 +32,16 @@ public class KLineTickerItem : KLineTickerItemBase
         // base volume would be MFN
         // quote volume would be USDT
 
-        // De interval wordt geprefixed in de topic (kline.1.SymbolName)
+        //ScannerLog.Logger.Trace($"kline ticker {topic}");
+
+        // De interval wordt geprefixed in de topic "kline.1.SymbolName"
         string symbolName = topic[8..];
         if (GlobalData.ExchangeListName.TryGetValue(Api.ExchangeName, out Model.CryptoExchange exchange))
         {
             if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol symbol))
             {
-                TickerCount++;
+                Interlocked.Increment(ref TickerCount);
+                //ScannerLog.Logger.Trace($"kline ticker {topic} process");
                 //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", topic, kline.Timestamp.ToLocalTime()));
                 Process1mCandle(symbol, kline.StartTime, kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.Volume);
 
@@ -58,17 +61,13 @@ public class KLineTickerItem : KLineTickerItemBase
             var subscriptionResult = await socketClient.V5SpotApi.SubscribeToKlineUpdatesAsync(
                 Symbols, KlineInterval.OneMinute, data =>
             {
-                //if (data.Data.Data.Confirm)
+                //Er zit tot ongeveer 8 a 10 seconden vertraging is van de exchange tot hier, dat moet ansich genoeg zijn
+                //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} added for processing", data.Data.OpenTime.ToLocalTime(), data.Symbol));
+
+                foreach (BybitKlineUpdate kline in data.Data)
                 {
-                    //Er zit tot ongeveer 8 a 10 seconden vertraging is van de exchange tot hier, dat moet ansich genoeg zijn
-                    //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} added for processing", data.Data.OpenTime.ToLocalTime(), data.Symbol));
-
-                    foreach (BybitKlineUpdate kline in data.Data)
-                    {
-                        if (kline.Confirm) // Het is een definitieve candle (niet eentje in opbouw)
-                            Task.Run(() => { ProcessCandle(data.Topic, kline); });
-                    }
-
+                    if (kline.Confirm) // Het is een definitieve candle (niet eentje in opbouw)
+                        Task.Run(() => { ProcessCandle(data.Topic, kline); });
                 }
             });
             // .ConfigureAwait(false);
@@ -76,6 +75,7 @@ public class KLineTickerItem : KLineTickerItemBase
             // Subscribe to network-related stuff
             if (subscriptionResult.Success)
             {
+                ErrorDuringStartup = false;
                 _subscription = subscriptionResult.Data;
 
                 // Events
@@ -99,8 +99,9 @@ public class KLineTickerItem : KLineTickerItemBase
             else
             {
                 ConnectionLostCount++;
-                GlobalData.AddTextToLogTab($"{Api.ExchangeName} {QuoteData.Name} 1m ERROR starting kline ticker {subscriptionResult.Error.Message}");
-                GlobalData.AddTextToLogTab($"{Api.ExchangeName} {QuoteData.Name} 1m ERROR starting kline ticker {string.Join(',', Symbols)}");
+                ErrorDuringStartup = true;
+                GlobalData.AddTextToLogTab($"{Api.ExchangeName} {QuoteData.Name} 1m kline ticker ERROR starting {subscriptionResult.Error.Message}");
+                GlobalData.AddTextToLogTab($"{Api.ExchangeName} {QuoteData.Name} 1m kline ticker ERROR starting {string.Join(',', Symbols)}");
             }
         }
     }

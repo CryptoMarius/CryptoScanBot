@@ -6,11 +6,12 @@ namespace CryptoScanBot.Exchange;
 
 public abstract class KLineTickerItemBase
 {
+    public bool ErrorDuringStartup = false;
     public int TickerCount = 0;
     public int TickerCountLast = 0;
     public int ConnectionLostCount = 0;
     public CryptoQuoteData QuoteData;
-    public List<string> Symbols = new();
+    public List<string> Symbols = [];
     public string ApiExchangeName;
 
     public KLineTickerItemBase(string apiExchangeName, CryptoQuoteData quoteData)
@@ -23,7 +24,7 @@ public abstract class KLineTickerItemBase
     public abstract Task StopAsync();
 
 
-    private protected void Process1mCandle(CryptoSymbol symbol, DateTime openTime, decimal open, decimal high, decimal low, decimal close, decimal volume)
+    private protected static void Process1mCandle(CryptoSymbol symbol, DateTime openTime, decimal open, decimal high, decimal low, decimal close, decimal volume)
     {
         Monitor.Enter(symbol.CandleList);
         try
