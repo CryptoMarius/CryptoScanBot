@@ -1,6 +1,10 @@
 CryptoScanBot release historie:
 
-xx-03-2024 1.9
+23-03-2024 1.9.1
+- Scanner - Bybit Futures - De kLine ticker gefixed + herkansing als de afzonderlijke kline ticker niet direct starten
+
+
+22-03-2024 1.9
 - Scanner - Documentatie bijwerken - dit keer best een grote klus
 - Scanner - De RMK wordt uitgevoerd op de getoonde selectie, echter bij een RMK op een bepaald record wordt de selectie niet aangepast waardoor de actie op een verkeerd record wordt uitgevoerd.
 - Scanner - Regelhoogte grid - icm het aanpassen van het lettertype wordt het nu dynamisch ingesteld
