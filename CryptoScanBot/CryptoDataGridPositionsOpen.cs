@@ -51,14 +51,14 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
 
     public override void InitializeCommands(ContextMenuStrip menuStrip)
     {
-        menuStrip.AddCommand(this, "Activate trading app", Command.ActivateTradingApp, CommandTools.ExecuteCommandCommandViaTag);
-        menuStrip.AddCommand(this, "TradingView internal", Command.ActivateTradingviewIntern, CommandTools.ExecuteCommandCommandViaTag);
-        menuStrip.AddCommand(this, "TradingView external", Command.ActivateTradingviewExtern, CommandTools.ExecuteCommandCommandViaTag);
+        menuStrip.AddCommand(this, "Activate trading app", Command.ActivateTradingApp);
+        menuStrip.AddCommand(this, "TradingView internal", Command.ActivateTradingviewIntern);
+        menuStrip.AddCommand(this, "TradingView external", Command.ActivateTradingviewExtern);
 
         menuStrip.AddSeperator();
-        menuStrip.AddCommand(this, "Copy symbol name", Command.CopySymbolInformation, CommandTools.ExecuteCommandCommandViaTag);
-        menuStrip.AddCommand(this, "Trend information (log)", Command.ShowTrendInformation, CommandTools.ExecuteCommandCommandViaTag);
-        menuStrip.AddCommand(this, "Symbol information (Excel)", Command.ExcelSymbolInformation, CommandTools.ExecuteCommandCommandViaTag);
+        menuStrip.AddCommand(this, "Copy symbol name", Command.CopySymbolInformation);
+        menuStrip.AddCommand(this, "Trend information (log)", Command.ShowTrendInformation);
+        menuStrip.AddCommand(this, "Symbol information (Excel)", Command.ExcelSymbolInformation);
 
 #if TRADEBOT
         menuStrip.AddSeperator();
@@ -67,7 +67,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
         menuStrip.AddCommand(this, "Position add additional DCA", Command.None, CommandPositionCreateAdditionalDca);
         menuStrip.AddCommand(this, "Position cancel open DCA", Command.None, CommandPositionRemoveAdditionalDca);
         menuStrip.AddCommand(this, "Position take profit (if possible)", Command.None, CommandPositionLastPartTakeProfit);
-        menuStrip.AddCommand(this, "Position information (Excel)", Command.ExcelPositionInformation, CommandTools.ExecuteCommandCommandViaTag);
+        menuStrip.AddCommand(this, "Position information (Excel)", Command.ExcelPositionInformation);
 #endif
 
         menuStrip.AddSeperator();

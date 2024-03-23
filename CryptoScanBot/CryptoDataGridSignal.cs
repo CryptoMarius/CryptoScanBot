@@ -49,13 +49,13 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
 
     public override void InitializeCommands(ContextMenuStrip menuStrip)
     {
-        menuStrip.AddCommand(this, "Activate trading app", Command.ActivateTradingApp, CommandTools.ExecuteCommandCommandViaTag);
-        menuStrip.AddCommand(this, "TradingView internal", Command.ActivateTradingviewIntern, CommandTools.ExecuteCommandCommandViaTag);
-        menuStrip.AddCommand(this, "TradingView external", Command.ActivateTradingviewExtern, CommandTools.ExecuteCommandCommandViaTag);
+        menuStrip.AddCommand(this, "Activate trading app", Command.ActivateTradingApp);
+        menuStrip.AddCommand(this, "TradingView internal", Command.ActivateTradingviewIntern);
+        menuStrip.AddCommand(this, "TradingView external", Command.ActivateTradingviewExtern);
         menuStrip.AddSeperator();
-        menuStrip.AddCommand(this, "Copy symbol name", Command.CopySymbolInformation, CommandTools.ExecuteCommandCommandViaTag);
-        menuStrip.AddCommand(this, "Trend information (log)", Command.ShowTrendInformation, CommandTools.ExecuteCommandCommandViaTag);
-        menuStrip.AddCommand(this, "Symbol information (Excel)", Command.ExcelSymbolInformation, CommandTools.ExecuteCommandCommandViaTag);
+        menuStrip.AddCommand(this, "Copy symbol name", Command.CopySymbolInformation);
+        menuStrip.AddCommand(this, "Trend information (log)", Command.ShowTrendInformation);
+        menuStrip.AddCommand(this, "Symbol information (Excel)", Command.ExcelSymbolInformation);
 
         menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Hide grid selection", Command.None, ClearSelection);

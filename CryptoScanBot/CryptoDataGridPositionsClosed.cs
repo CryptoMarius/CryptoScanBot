@@ -70,7 +70,7 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
         var columns = Enum.GetValues(typeof(ColumnsForGrid));
         foreach (ColumnsForGrid column in columns)
         {
-            switch ((ColumnsForGrid)column)
+            switch (column)
             {
                 case ColumnsForGrid.Id:
                     CreateColumn("Id", typeof(int), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42);

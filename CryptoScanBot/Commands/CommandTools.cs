@@ -30,15 +30,15 @@ public static class CommandHelper
             DataGrid = dataGrid,
             Text = text
         };
-        if (command == Command.None)
-            menuItem.Click += CommandTools.ExecuteCommandCommandViaTag;
+        if (click == null)
+            menuItem.Click += CommandTools.ExecuteCommand;
         else 
             menuItem.Click += click;
         menuStrip.Items.Add(menuItem);
         return menuItem;
     }
 
-    public static ToolStripMenuItemCommand AddCommand(this ToolStripMenuItem menuStrip, CryptoDataGrid dataGrid, string text, Command command, EventHandler click)
+    public static ToolStripMenuItemCommand AddCommand(this ToolStripMenuItem menuStrip, CryptoDataGrid dataGrid, string text, Command command, EventHandler click = null)
     {
         ToolStripMenuItemCommand menuItem = new()
         {
@@ -46,7 +46,10 @@ public static class CommandHelper
             DataGrid = dataGrid,
             Text = text
         };
-        menuItem.Click += click;
+        if (click == null)
+            menuItem.Click += CommandTools.ExecuteCommand;
+        else
+            menuItem.Click += click;
         menuStrip.DropDownItems.Add(menuItem);
         return menuItem;
     }
@@ -71,7 +74,7 @@ public class CommandTools
 
 
 
-    public static async void ExecuteSomethingViaTag(object sender, int index, Command cmd)
+    public static async void ExecuteSomething(object sender, int index, Command cmd)
     {
         // Global commands
         switch (cmd)
@@ -149,15 +152,15 @@ public class CommandTools
         }
     }
 
-    public static void ExecuteCommandCommandViaTag(object sender, EventArgs e)
+    public static void ExecuteCommand(object sender, EventArgs e)
     {
         // Een poging om de meest gebruikte menu items te centraliseren
         if (sender is ToolStripMenuItemCommand item)
         {
             if (item.DataGrid is CryptoDataGrid dataGrid)
-                ExecuteSomethingViaTag(dataGrid.SelectedObject, dataGrid.SelectedObjectIndex, item.Command);
+                ExecuteSomething(dataGrid.SelectedObject, dataGrid.SelectedObjectIndex, item.Command);
             else
-                ExecuteSomethingViaTag(sender, -1, item.Command);
+                ExecuteSomething(sender, -1, item.Command);
         }
     }
 }
