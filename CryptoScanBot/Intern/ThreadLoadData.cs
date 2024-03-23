@@ -468,7 +468,6 @@ public class ThreadLoadData
 
 
                 //************************************************************************************
-                // Vanaf dit moment worden de 1m candles bijgewerkt 
                 // Vanaf dit moment worden de aangeboden 1m candles in ons systeem verwerkt
                 // (Dit moet overlappen met "achterstand bijwerken" want anders ontstaan er gaten)
                 // BUG/Probleem! na nieuwe munt of instellingen wordt dit niet opnieuw gedaan (herstart nodig)
@@ -476,7 +475,7 @@ public class ThreadLoadData
                 await ExchangeHelper.KLineTicker.StartAsync();
 
                 //************************************************************************************
-                // Om het volume per symbol en laatste prijs te achterhalen (weet geen betere manier)
+                // Om het volume per symbol en laatste prijs te achterhalen
                 //************************************************************************************
                 await ExchangeHelper.PriceTicker.Start();
 
@@ -492,7 +491,7 @@ public class ThreadLoadData
                 // Nu we de achterstand ingehaald hebben kunnen/mogen we analyseren (signals maken)
                 //************************************************************************************
                 GlobalData.AddTextToLogTab("Starting task for creating signals");
-                _ = Task.Run(() => { GlobalData.ThreadMonitorCandle.Execute(); });
+                _ = Task.Run(GlobalData.ThreadMonitorCandle.Execute);
 
 
 #if TRADEBOT
@@ -502,11 +501,11 @@ public class ThreadLoadData
                 if (GlobalData.TradingApi.Key != "")
                 {
                     GlobalData.AddTextToLogTab("Starting task for handling orders");
-                    _ = Task.Run(async () => { await GlobalData.ThreadMonitorOrder.ExecuteAsync(); });
+                    _ = Task.Run(GlobalData.ThreadMonitorOrder.ExecuteAsync);
                 }
 
                 GlobalData.AddTextToLogTab("Starting task for checking positions");
-                _ = Task.Run(async () => { await GlobalData.ThreadDoubleCheckPosition.ExecuteAsync(); });
+                _ = Task.Run(GlobalData.ThreadDoubleCheckPosition.ExecuteAsync);
 
                 await TradeTools.CheckOpenPositions();
 
