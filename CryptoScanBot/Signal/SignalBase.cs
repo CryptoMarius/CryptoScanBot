@@ -125,30 +125,32 @@ public class SignalCreateBase
     }
 
 
-    public CryptoCandle HadStobbInThelastXCandles(CryptoTradeSide side, int skipCount, int candleCount)
+    public CryptoCandle HadStobbInThelastXCandles(CryptoTradeSide side, int skipCandleCount, int candleCount)
     {
         // Is de prijs onlangs dicht bij de onderste bb geweest?
-        CryptoCandle last = CandleLast;
+        CryptoCandle candle = CandleLast;
         while (candleCount > 0)
         {
-            skipCount--;
+            skipCandleCount--;
+            bool isOverSold = candle.IsBelowBollingerBands(false) && candle.IsStochOversold();
+            bool isOverBought = candle.IsAboveBollingerBands(false) && candle.IsStochOverbought();
 
             if (side == CryptoTradeSide.Long)
             {
-                if (last.IsAboveBollingerBands(GlobalData.Settings.Signal.Sbm.UseLowHigh) && last.IsStochOverbought())
+                if (isOverBought) // Een short melding! Nee ongeldig!
                     return null;
-                if (skipCount <= 0 && last.IsBelowBollingerBands(GlobalData.Settings.Signal.Sbm.UseLowHigh) && last.IsStochOversold())
-                    return last;
+                if (skipCandleCount <= 0 && isOverSold)
+                    return candle;
             }
             else
             {
-                if (last.IsBelowBollingerBands(GlobalData.Settings.Signal.Sbm.UseLowHigh) && last.IsStochOversold())
+                if (isOverSold) // Een long melding! Nee ongeldig!
                     return null;
-                if (skipCount <= 0 && last.IsAboveBollingerBands(GlobalData.Settings.Signal.Sbm.UseLowHigh) && last.IsStochOverbought())
-                    return last;
+                if (skipCandleCount <= 0 && isOverBought)
+                    return candle;
             }
 
-            if (!GetPrevCandle(last, out last))
+            if (!GetPrevCandle(candle, out candle))
                 return null;
             candleCount--;
         }
