@@ -293,7 +293,7 @@ public static class CandleTools
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
         SortedList<long, CryptoCandle> candles = symbolInterval.CandleList;
 
-        if (candles.Any())
+        if (candles.Count != 0)
         {
             // Wacht met een waarde geven totdat de fetch candles zijn werk heeft gedaan
             if (symbolInterval.LastCandleSynchronized != null)
