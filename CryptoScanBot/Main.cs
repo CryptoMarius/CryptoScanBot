@@ -62,15 +62,15 @@ public partial class FrmMain : Form
         MenuMain.AddCommand(null, "Instellingen", Command.None, ToolStripMenuItemSettings_Click);
         MenuMain.AddCommand(null, "Verversen informatie", Command.None, ToolStripMenuItemRefresh_Click_1);
         MenuMain.AddCommand(null, "Reset log en getallen", Command.None, MainMenuClearAll_Click);
-        MenuMain.AddCommand(null, "Exchange information (Excel)", Command.ExcelExchangeInformation, CommandTools.ExecuteCommandCommandViaTag);
+        MenuMain.AddCommand(null, "Exchange information (Excel)", Command.ExcelExchangeInformation);
 #if TRADEBOT
 #if SQLDATABASE
         MenuMain.AddCommand(null, "Backtest", Command.None, BacktestToolStripMenuItem_Click);
 #endif
         ApplicationShowPositionInfo = MenuMain.AddCommand(null, "PositionInfo", Command.None, PositionInfoToolStripMenuItem_Click);
 #endif
-        //MenuMain.AddCommand(null, "Scannersession test", Command.ScannerSessionDebug, CommandTools.ExecuteCommandCommandViaTag);
-        MenuMain.AddCommand(null, "About", Command.About, CommandTools.ExecuteCommandCommandViaTag);
+        //MenuMain.AddCommand(null, "Scannersession test", Command.ScannerSessionDebug);
+        MenuMain.AddCommand(null, "About", Command.About);
 
 
         //Console.Write("Hello world 1");
@@ -210,7 +210,7 @@ public partial class FrmMain : Form
         string appVersion = assembly.Version.ToString();
         while (appVersion.EndsWith(".0"))
             appVersion = appVersion[0..^2];
-        string text = $"{appName} {GlobalData.Settings.General.ExchangeName} {appVersion}" + " " + GlobalData.Settings.General.ExtraCaption;
+        string text = $"{appName} {appVersion} {GlobalData.Settings.General.ExchangeName} {GlobalData.Settings.General.ExtraCaption}".Trim();
         Text = text.Trim();
     }
 
