@@ -8,7 +8,7 @@ namespace CryptoScanBot.Intern;
 public class BarometerTools
 {
 
-    private readonly object LockObject = new();
+    private static readonly SemaphoreSlim Semaphore = new(1);
     private delegate bool CalcBarometerMethod(CryptoQuoteData quoteData, SortedList<string, CryptoSymbol> symbols, CryptoInterval interval, long unixCandleLast, out decimal barometerPerc);
 
 
@@ -261,23 +261,19 @@ public class BarometerTools
     }
 
 
-    public void Execute()
+    public async Task ExecuteAsync()
     {
         try
         {
-            if (Monitor.TryEnter(LockObject))
+            await Semaphore.WaitAsync();
+            try
             {
-                try
-                {
-                    ExecuteInternal();
-                }
-                finally
-                {
-                    Monitor.Exit(LockObject);
-                }
+                ExecuteInternal();
             }
-            else
-                GlobalData.AddTextToLogTab("");
+            finally
+            {
+                Semaphore.Release();
+            }
         }
         catch (Exception error)
         {
