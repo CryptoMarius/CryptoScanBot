@@ -156,32 +156,20 @@ public class ThreadCheckFinishedPosition
                             {
                                 if (step.Status == CryptoOrderStatus.New && step.Side == entryOrderSide)
                                 {
-                                    ScannerLog.Logger.Trace($"ThreadDoubleCheckPosition.Execute: {position.Symbol.Name} annuleren dca order");
-
-                                    // Aankondiging dat we deze order gaan annuleren (de tradehandler weet dan dat wij het waren en het niet de user was via de exchange)
-                                    step.CancelInProgress = true;
-
-                                    // Annuleer de vorige buy order
-                                    var exchangeApi = ExchangeHelper.GetExchangeInstance(GlobalData.Settings.General.ExchangeId);
-                                    var (succes, tradeParams) = await exchangeApi.Cancel(position.TradeAccount, position.Symbol, step);
-                                    if (succes)
+                                    string cancelReason = $"{position.Symbol.Name} annuleren openstaande dca order";
+                                    ScannerLog.Logger.Trace($"ThreadDoubleCheckPosition.Execute: {cancelReason}");
+                                    var (succes, tradeParams) = await TradeTools.CancelOrder(database, position, part, step, 
+                                        DateTime.UtcNow, CryptoOrderStatus.PositionClosed, cancelReason);
+                                    if (!succes)
                                     {
-                                        step.CloseTime = DateTime.UtcNow;
-                                        step.Status = CryptoOrderStatus.PositionClosed;
-                                        database.Connection.Update<CryptoPositionStep>(step);
-
-                                        if (GlobalData.Settings.Trading.LogCanceledOrders)
-                                            ExchangeBase.Dump(position, succes, tradeParams, $"annuleren vanwege sluiten {position.Side} positie");
-                                    }
-                                    else
-                                    {
-                                        ScannerLog.Logger.Trace($"ThreadDoubleCheckPosition.Execute: {position.Symbol.Name} annuleren dca order mislukt");
+                                        ScannerLog.Logger.Trace($"ThreadDoubleCheckPosition.Execute: {cancelReason} mislukt");
                                         ExchangeBase.Dump(position, succes, tradeParams, "DCA ORDER ANNULEREN NIET IN 1x GELUKT!!! (herkansing)");
                                         position.ForceCheckPosition = true;
                                         position.DelayUntil = DateTime.UtcNow.AddSeconds(10);
                                         await AddToQueue(position); // doe nog maar een keer... Endless loop?
                                         removePosition = false;
                                     }
+
                                 }
                             }
                         }

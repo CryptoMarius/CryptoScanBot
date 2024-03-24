@@ -343,7 +343,7 @@ public class TradeTools
                     // Hebben wij de order geannuleerd? (we gebruiken tenslotte ook een cancel order om orders weg te halen)
                     if (order.Status == CryptoOrderStatus.Canceled)
                     {
-                        if (step.CancelInProgress) //|| step.Status > CryptoOrderStatus.Canceled
+                        if (step.CancelInProgress)
                         {
                             // Wij hebben de order geannuleerd via de CancelStep/CancelOrder/Status
                             // Probleem is dat de step.Status pas na het annuleren wordt gezet en bewaard. 
@@ -610,14 +610,18 @@ public class TradeTools
     }
 
 
-    static public async Task<(bool cancelled, TradeParams tradeParams)> CancelOrder(CryptoDatabase database, CryptoPosition position, CryptoPositionPart part,
-        CryptoPositionStep step, DateTime currentTime, CryptoOrderStatus newStatus = CryptoOrderStatus.Expired)
+    static public async Task<(bool cancelled, TradeParams tradeParams)> CancelOrder(CryptoDatabase database, 
+        CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step, 
+        DateTime currentTime, CryptoOrderStatus newStatus, string cancelReason)
     {
+        ScannerLog.Logger.Trace($"{position.Symbol.Name} annuleren dca order {step.OrderId} {cancelReason}");
+
         position.UpdateTime = currentTime;
         database.Connection.Update<CryptoPosition>(position);
 
         // Aankondiging dat we deze order gaan annuleren (de tradehandler weet dan dat wij het waren en het niet de user was via de exchange)
         step.CancelInProgress = true;
+        database.Connection.Update<CryptoPositionStep>(step);
 
         // Annuleer de order
         var exchangeApi = ExchangeHelper.GetExchangeInstance(GlobalData.Settings.General.ExchangeId);
@@ -631,8 +635,10 @@ public class TradeTools
             if (position.TradeAccount.TradeAccountType == CryptoTradeAccountType.PaperTrade)
                 PaperAssets.Change(position.TradeAccount, position.Symbol, result.tradeParams.OrderSide,
                     CryptoOrderStatus.Canceled, result.tradeParams.Quantity, result.tradeParams.QuoteQuantity);
-
         }
+        if (!result.succes || GlobalData.Settings.Trading.LogCanceledOrders)
+            ExchangeBase.Dump(position, result.succes, result.tradeParams, cancelReason);
+        
         return result;
     }
 
@@ -662,8 +668,8 @@ public class TradeTools
 
         if (result.result)
         {
-            if (part.Purpose == CryptoPartPurpose.Entry)
-                position.ProfitPrice = result.tradeParams.Price;
+            //if (part.Purpose == CryptoPartPurpose.Entry) // vrij beperkt?
+            position.ProfitPrice = result.tradeParams.Price;
             var step = PositionTools.CreatePositionStep(position, part, result.tradeParams);
             step.RemainingDust = takeProfitQuantityOriginal - takeProfitQuantity; // de verwachte dust
             database.Connection.Insert<CryptoPositionStep>(step);

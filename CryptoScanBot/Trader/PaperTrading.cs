@@ -16,11 +16,6 @@ public class PaperTrading
         // Als een surrogaat van de exchange...
         var symbol = position.Symbol;
 
-        // full commission = 0.1, met BNB korting=0.075 (zonder kickback, anders was het 0.065?)
-        decimal feeRate = 0.1m;
-        if (position.Exchange.FeeRate.HasValue)
-            feeRate = (decimal)position.Exchange.FeeRate;
-
         CryptoOrder order = new()
         {
             TradeAccount = position.TradeAccount,
@@ -75,20 +70,23 @@ public class PaperTrading
             CommissionAsset = "",
         };
 
+        // full commission = 0.1, met BNB korting=0.075 (zonder kickback, anders was het 0.065?)
+        decimal feeRate = 0.1m;
+        if (position.Exchange.FeeRate.HasValue)
+            feeRate = (decimal)position.Exchange.FeeRate;
+
         // Entry commissie opboeken in base amount (base/quote)
-        var entrySide = position.GetEntryOrderSide();
-        if (step.Side == entrySide)
+        if (step.Side == position.GetEntryOrderSide())
         {
             trade.CommissionAsset = symbol.Base;
-            trade.Commission = (decimal)(step.Quantity * GlobalData.Settings.General.Exchange.FeeRate / 100);
+            trade.Commission = (decimal)(step.Quantity * feeRate / 100);
         }
 
         // TP commissie opboeken in quote amount (base/quote)
-        var takeProfitSide = position.GetTakeProfitOrderSide();
-        if (step.Side == takeProfitSide)
+        if (step.Side == position.GetTakeProfitOrderSide())
         {
             trade.CommissionAsset = symbol.Quote;
-            trade.Commission = (decimal)(step.Quantity * step.Price * GlobalData.Settings.General.Exchange.FeeRate / 100);
+            trade.Commission = (decimal)(step.Quantity * step.Price * feeRate / 100);
         }
         database.Connection.Insert<CryptoTrade>(trade);
         GlobalData.AddTrade(trade);

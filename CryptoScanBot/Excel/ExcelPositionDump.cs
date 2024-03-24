@@ -120,10 +120,6 @@ public class ExcelPositionDump : ExcelBase
             foreach (CryptoPositionStep step in part.Steps.Values.ToList())
             {
                 ++row;
-                // Geannuleerde order of openstaande orders overslagen
-                //if (step.Status == CryptoOrderStatus.Expired || step.Status == CryptoOrderStatus.Canceled || !step.CloseTime.HasValue)
-                //    continue;
-
                 column = 0;
 
                 if (step.OrderId != "")

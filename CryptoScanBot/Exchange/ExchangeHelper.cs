@@ -78,11 +78,6 @@ public class ExchangeHelper
         return await GetApiInstance().GetTradesForPositionAsync(database, position);
     }
 
-    public static async Task<(bool succes, TradeParams tradeParams)> Cancel(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoPositionStep step)
-    {
-        return await GetApiInstance().Cancel(tradeAccount, symbol, step);
-    }
-
 #endif
 
 }

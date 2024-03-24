@@ -595,15 +595,11 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
                         {
                             if (!step.CloseTime.HasValue && step.Side == entryOrderSide)
                             {
-                                var (cancelled, tradeParams) = await TradeTools.CancelOrder(databaseThread, position, part, step, lastCandle1mCloseTimeDate, CryptoOrderStatus.TrailingChange);
-                                if (!cancelled || GlobalData.Settings.Trading.LogCanceledOrders)
-                                    ExchangeBase.Dump(position, cancelled, tradeParams, $"annuleren vanwege annuleren van DCA positie {position.Id}");
-                                else
+                                string cancelReason = $"annuleren vanwege annuleren van DCA positie {position.Id}";
+                                var (cancelled, tradeParams) = await TradeTools.CancelOrder(databaseThread, position, part, step, 
+                                    lastCandle1mCloseTimeDate, CryptoOrderStatus.ManuallyByUser, cancelReason);
+                                if (cancelled)
                                 {
-                                    step.CloseTime = DateTime.UtcNow;
-                                    step.Status = CryptoOrderStatus.ManuallyByUser;
-                                    databaseThread.Connection.Update<CryptoPositionStep>(step);
-
                                     part.CloseTime = DateTime.UtcNow;
                                     databaseThread.Connection.Update<CryptoPositionPart>(part);
 
@@ -680,10 +676,9 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
                             else
                                 price -= position.Symbol.PriceTickSize;
 
-                            var (cancelled, cancelParams) = await TradeTools.CancelOrder(databaseThread, position, part, step, DateTime.UtcNow, CryptoOrderStatus.ManuallyByUser);
-                            if (!cancelled || GlobalData.Settings.Trading.LogCanceledOrders)
-                                ExchangeBase.Dump(position, cancelled, cancelParams, $"positie {position.Id} annuleren vanwege handmatige TP");
-
+                            string cancelReason = $"positie {position.Id} annuleren vanwege handmatige TP";
+                            var (cancelled, cancelParams) = await TradeTools.CancelOrder(databaseThread, position, part, step, 
+                                DateTime.UtcNow, CryptoOrderStatus.ManuallyByUser, cancelReason);
                             if (cancelled)
                             {
                                 price = price.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
