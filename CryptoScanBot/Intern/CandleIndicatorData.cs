@@ -421,7 +421,7 @@ public class CandleIndicatorData
         // Since the market climate is also a coin we must make an exception, it needs more candles because of the 24h bm calculation
         if (symbol.IsBarometerSymbol())
         {
-            startFetchUnix = CandleTools.GetUnixTime(utcNow, 60) - 1440 * interval.Duration;
+            startFetchUnix = CandleTools.GetUnixTime(utcNow, 60) - 1440 * 60; // interval.Duration;
         }
         else
         {
