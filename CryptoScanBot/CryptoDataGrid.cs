@@ -19,17 +19,27 @@ public static class ControlHelper
 
     public static void SuspendDrawing(this Control target)
     {
-        SendMessage(target.Handle, WM_SETREDRAW, 0, 0);
+        if (!GlobalData.ApplicationIsClosing)
+        {
+            SendMessage(target.Handle, WM_SETREDRAW, 0, 0);
+        }
     }
 
-    public static void ResumeDrawing(this Control target) { ResumeDrawing(target, true); }
+    public static void ResumeDrawing(this Control target) 
+    { 
+        ResumeDrawing(target, true); 
+    }
+
     public static void ResumeDrawing(this Control target, bool redraw)
     {
-        SendMessage(target.Handle, WM_SETREDRAW, 1, 0);
-
-        if (redraw)
+        if (!GlobalData.ApplicationIsClosing)
         {
-            target.Refresh();
+            SendMessage(target.Handle, WM_SETREDRAW, 1, 0);
+
+            if (redraw)
+            {
+                target.Refresh();
+            }
         }
     }
 }

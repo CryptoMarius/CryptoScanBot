@@ -253,6 +253,9 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
 
     public override void GetTextFunction(object sender, DataGridViewCellValueEventArgs e)
     {
+        if (GlobalData.ApplicationIsClosing)
+            return;
+
         CryptoPosition position = GetCellObject(e.RowIndex);
         if (position != null)
         {
@@ -357,6 +360,9 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
 
     public override void CellFormattingEvent(object sender, DataGridViewCellFormattingEventArgs e)
     {
+        if (GlobalData.ApplicationIsClosing)
+            return;
+
         // Standard background for the cell (with alternating line color)
         Color backColor;
         if (e.RowIndex % 2 == 0)
@@ -595,17 +601,17 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
                         {
                             if (!step.CloseTime.HasValue && step.Side == entryOrderSide)
                             {
-                                string cancelReason = $"annuleren vanwege annuleren van DCA positie {position.Id}";
-                                var (cancelled, tradeParams) = await TradeTools.CancelOrder(databaseThread, position, part, step, 
+                                string cancelReason = $"annuleren vanwege handmatig annuleren DCA positie {position.Id}";
+                                var (success, _) = await TradeTools.CancelOrder(databaseThread, position, part, step, 
                                     lastCandle1mCloseTimeDate, CryptoOrderStatus.ManuallyByUser, cancelReason);
-                                if (cancelled)
+                                if (success)
                                 {
                                     part.CloseTime = DateTime.UtcNow;
                                     databaseThread.Connection.Update<CryptoPositionPart>(part);
 
                                     position.ActiveDca = false;
                                     databaseThread.Connection.Update<CryptoPosition>(position);
-
+                                     
                                     GlobalData.AddTextToLogTab($"{position.Symbol.Name} positie {position.Id} handmatig de openstaande DCA {part.PartNumber} annuleren");
                                 }
                             }
@@ -676,10 +682,10 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
                             else
                                 price -= position.Symbol.PriceTickSize;
 
-                            string cancelReason = $"positie {position.Id} annuleren vanwege handmatige TP";
-                            var (cancelled, cancelParams) = await TradeTools.CancelOrder(databaseThread, position, part, step, 
+                            string cancelReason = $"positie {position.Id} annuleren vanwege handmatige plaatsing TP";
+                            var (success, _) = await TradeTools.CancelOrder(databaseThread, position, part, step, 
                                 DateTime.UtcNow, CryptoOrderStatus.ManuallyByUser, cancelReason);
-                            if (cancelled)
+                            if (success)
                             {
                                 price = price.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
                                 await TradeTools.PlaceTakeProfitOrderAtPrice(databaseThread, position, part, price, DateTime.UtcNow, "manually placing");
@@ -701,6 +707,9 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
 
     private void RefreshInformation(object sender, EventArgs e)
     {
+        if (GlobalData.ApplicationIsClosing)
+            return;
+
         Grid.SuspendDrawing();
         try
         {

@@ -214,6 +214,9 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
 
     public override void GetTextFunction(object sender, DataGridViewCellValueEventArgs e)
     {
+        if (GlobalData.ApplicationIsClosing)
+            return;
+
         CryptoPosition position = GetCellObject(e.RowIndex);
         if (position != null)
         {
@@ -250,6 +253,9 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
 
     public override void CellFormattingEvent(object sender, DataGridViewCellFormattingEventArgs e)
     {
+        if (GlobalData.ApplicationIsClosing)
+            return;
+
         // Standard background for the cell (with alternating line color)
         Color backColor;
         if (e.RowIndex % 2 == 0)

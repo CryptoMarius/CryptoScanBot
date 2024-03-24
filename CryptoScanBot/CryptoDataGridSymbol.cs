@@ -91,6 +91,9 @@ public class CryptoDataGridSymbol<T>(DataGridView grid, List<T> list, SortedList
 
     public override void GetTextFunction(object sender, DataGridViewCellValueEventArgs e)
     {
+        if (GlobalData.ApplicationIsClosing)
+            return;
+
         CryptoSymbol symbol = GetCellObject(e.RowIndex);
         if (symbol != null)
         {           
@@ -107,6 +110,9 @@ public class CryptoDataGridSymbol<T>(DataGridView grid, List<T> list, SortedList
 
     public override void CellFormattingEvent(object sender, DataGridViewCellFormattingEventArgs e)
     {
+        if (GlobalData.ApplicationIsClosing)
+            return;
+
         // Standard background for the cell (with alternating line color)
         Color backColor;
         if (e.RowIndex % 2 == 0)

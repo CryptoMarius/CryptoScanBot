@@ -279,6 +279,9 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
 
     public override void GetTextFunction(object sender, DataGridViewCellValueEventArgs e)
     {
+        if (GlobalData.ApplicationIsClosing)
+            return;
+
         CryptoSignal signal = GetCellObject(e.RowIndex);
         if (signal != null)
         {
@@ -397,6 +400,9 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
 
     public override void CellFormattingEvent(object sender, DataGridViewCellFormattingEventArgs e)
     {
+        if (GlobalData.ApplicationIsClosing)
+            return;
+
         // Standard background for the cell (with alternating line color)
         Color backColor;
         if (e.RowIndex % 2 == 0)
@@ -626,6 +632,9 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
 
     private void RefreshInformation(object sender, EventArgs e)
     {
+        if (GlobalData.ApplicationIsClosing)
+            return;
+
         Grid.SuspendDrawing();
         try
         {
