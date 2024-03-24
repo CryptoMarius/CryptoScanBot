@@ -8,7 +8,7 @@ namespace CryptoScanBot.Intern;
 public class BarometerTools
 {
 
-    private static readonly SemaphoreSlim Semaphore = new(1);
+    private static readonly object LockObject = new();
     private delegate bool CalcBarometerMethod(CryptoQuoteData quoteData, SortedList<string, CryptoSymbol> symbols, CryptoInterval interval, long unixCandleLast, out decimal barometerPerc);
 
 
@@ -45,7 +45,6 @@ public class BarometerTools
     }
 
 
-
     private bool CalculatePriceBarometer(CryptoQuoteData quoteData, SortedList<string, CryptoSymbol> symbols, CryptoInterval interval, long unixCandleLast, out decimal barometerPerc)
     {
         // Wat is de candle in het vorige interval
@@ -57,6 +56,7 @@ public class BarometerTools
 
         decimal sumPerc = 0;
         int coinsMatching = 0;
+
         // De prijs en/of volume sommeren over alle munten
         for (int i = 0; i < quoteData.SymbolList.Count; i++) // een foreach variant met een ToList() kost extra cpu
         {
@@ -94,6 +94,18 @@ public class BarometerTools
     {
         CryptoSymbolInterval symbolInterval = bmSymbol.GetSymbolInterval(interval.IntervalPeriod);
         SortedList<long, CryptoCandle> candles = symbolInterval.CandleList;
+
+        // Remove old candles (< 24 hours, 1440 candles)
+        long startFetchUnix = CandleIndicatorData.GetCandleFetchStart(bmSymbol, interval, DateTime.UtcNow);
+        while (candles.Values.Count > 0)
+        {
+            CryptoCandle c = candles.Values[0];
+            if (c.OpenTime < startFetchUnix)
+                candles.Remove(c.OpenTime);
+            else break;
+        }
+
+
 
         BarometerData barometerData = quoteData.BarometerList[interval.IntervalPeriod];
 
@@ -214,40 +226,40 @@ public class BarometerTools
                 //Monitor.Enter(quoteData.SymbolList);
                 //try
                 //{
-                    //GlobalData.AddTextToLogTab(string.Format("Calculating barometer charts start for {0}", quoteData.Name));
+                //GlobalData.AddTextToLogTab(string.Format("Calculating barometer charts start for {0}", quoteData.Name));
 
-                    // Controleer of de prijs barometer symbol bestaat en berekenen
-                    //GlobalData.AddTextToLogTab("Calculating price barometer chart " + baseCoin");
-                    CryptoSymbol symbol = CheckSymbolPrecence(Constants.SymbolNameBarometerPrice, quoteData);
-                    if (symbol != null)
-                    {
-                        //Monitor.Enter(symbol.CandleList);
-                        //try
-                        //{
-                            CalculateBarometerIntervals(symbol, quoteData, CalculatePriceBarometer, true);
-                        //}
-                        //finally
-                        //{
-                        //    Monitor.Exit(symbol.CandleList);
-                        //}
-                    }
-
-                    // Ik weet niet wat ik met de volume barometer kan (of moet aanvangen, laat maar achterwege)
-                    // Controleer of de volume barometer symbol bestaat en berekenen (CPU gaat behoorlijk omhoog)
-                    //GlobalData.AddTextToLogTab("Calculating volume barometer chart " + baseCoin");
-                    //symbol = CheckSymbolPrecence(Constants.SymbolNameBarometerVolume, quoteData);
-                    //if (symbol != null)
+                // Controleer of de prijs barometer symbol bestaat en berekenen
+                //GlobalData.AddTextToLogTab("Calculating price barometer chart " + baseCoin");
+                CryptoSymbol symbol = CheckSymbolPrecence(Constants.SymbolNameBarometerPrice, quoteData);
+                if (symbol != null)
+                {
+                    //Monitor.Enter(symbol.CandleList);
+                    //try
                     //{
-                    //    Monitor.Enter(symbol.CandleList);
-                    //    try
-                    //    {
-                    //        CalculateBarometerIntervals(symbol, quoteData, CalculateVolumeBarometer, false);
-                    //    }
-                    //    finally
-                    //    {
-                    //        Monitor.Exit(symbol.CandleList);
-                    //    }
+                    CalculateBarometerIntervals(symbol, quoteData, CalculatePriceBarometer, true);
                     //}
+                    //finally
+                    //{
+                    //    Monitor.Exit(symbol.CandleList);
+                    //}
+                }
+
+                // Ik weet niet wat ik met de volume barometer kan (of moet aanvangen, laat maar achterwege)
+                // Controleer of de volume barometer symbol bestaat en berekenen (CPU gaat behoorlijk omhoog)
+                //GlobalData.AddTextToLogTab("Calculating volume barometer chart " + baseCoin");
+                //symbol = CheckSymbolPrecence(Constants.SymbolNameBarometerVolume, quoteData);
+                //if (symbol != null)
+                //{
+                //    Monitor.Enter(symbol.CandleList);
+                //    try
+                //    {
+                //        CalculateBarometerIntervals(symbol, quoteData, CalculateVolumeBarometer, false);
+                //    }
+                //    finally
+                //    {
+                //        Monitor.Exit(symbol.CandleList);
+                //    }
+                //}
                 //}
                 //finally
                 //{
@@ -261,18 +273,20 @@ public class BarometerTools
     }
 
 
-    public async Task ExecuteAsync()
+    public void ExecuteAsync()
     {
         try
         {
-            await Semaphore.WaitAsync();
-            try
+            if (Monitor.TryEnter(LockObject))
             {
-                ExecuteInternal();
-            }
-            finally
-            {
-                Semaphore.Release();
+                try
+                {
+                    ExecuteInternal();
+                }
+                finally
+                {
+                    Monitor.Exit(LockObject);
+                }
             }
         }
         catch (Exception error)
