@@ -32,6 +32,7 @@ public class ThreadMonitorCandle
 
     public void Execute()
     {
+        GlobalData.AddTextToLogTab("Starting task for creating signals");
         try
         {
             foreach ((CryptoSymbol symbol, CryptoCandle candle) in Queue.GetConsumingEnumerable(cancellationToken.Token))
@@ -52,21 +53,6 @@ public class ThreadMonitorCandle
                     }
                 }
                 );
-
-                //new Thread(async () =>
-                //{
-                //    try
-                //    {
-                //        // Er is een 1m candle gearriveerd, acties adhv deze candle..
-                //        PositionMonitor positionMonitor = new(symbol, candle);
-                //        await positionMonitor.NewCandleArrivedAsync();
-                //    }
-                //    finally
-                //    {
-                //        Semaphore.Release();
-                //    }
-                //}
-                //).Start();
             }
         }
         catch (OperationCanceledException)

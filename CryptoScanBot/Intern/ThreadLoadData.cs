@@ -490,8 +490,7 @@ public class ThreadLoadData
                 //************************************************************************************
                 // Nu we de achterstand ingehaald hebben kunnen/mogen we analyseren (signals maken)
                 //************************************************************************************
-                GlobalData.AddTextToLogTab("Starting task for creating signals");
-                _ = Task.Run(GlobalData.ThreadMonitorCandle.Execute);
+                _ = Task.Run(() => { GlobalData.ThreadMonitorCandle.Execute(); });
 
 
 #if TRADEBOT
@@ -501,11 +500,11 @@ public class ThreadLoadData
                 if (GlobalData.TradingApi.Key != "")
                 {
                     GlobalData.AddTextToLogTab("Starting task for handling orders");
-                    _ = Task.Run(GlobalData.ThreadMonitorOrder.ExecuteAsync);
+                    _ = Task.Run(async () => { await GlobalData.ThreadMonitorOrder.ExecuteAsync(); });
                 }
 
                 GlobalData.AddTextToLogTab("Starting task for checking positions");
-                _ = Task.Run(GlobalData.ThreadDoubleCheckPosition.ExecuteAsync);
+                _ = Task.Run(async () => { await GlobalData.ThreadDoubleCheckPosition.ExecuteAsync(); });
 
                 await TradeTools.CheckOpenPositions();
 
