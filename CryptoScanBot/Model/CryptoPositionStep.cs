@@ -5,8 +5,8 @@ using Dapper.Contrib.Extensions;
 namespace CryptoScanBot.Model;
 
 /// <summary>
-/// Een step is een geplaatste buy of sell order en het is onderdeel van een positiestap (een zogenaamde groep van orders)
-/// De exchanges afhandeling van een order en het lokaal verwijderen van een order kruisen elkaar wel eens (daarom wordt alles bewaard)
+/// Een step is de administratie van een geplaatste buy of sell order en het 
+/// is een onderdeel van een PositionPart (een zogenaamde groep van orders)
 /// </summary>
 [Table("PositionStep")]
 public class CryptoPositionStep
@@ -25,29 +25,27 @@ public class CryptoPositionStep
     public bool CancelInProgress { get; set; }
 
     public string OrderId { get; set; } // Vanwege papertrading moet deze nullable zijn
-    public string Order2Id { get; set; } // Eventuele limit order
+    public string Order2Id { get; set; } // Eventuele limit order  // not supported
 
     public decimal Price { get; set; } // Tevens de LimitPrice indien het een OCO is
     public decimal Quantity { get; set; }
-    public decimal? StopPrice { get; set; }
-    public decimal? StopLimitPrice { get; set; }
+    public decimal? StopPrice { get; set; } // not supported
+    public decimal? StopLimitPrice { get; set; } // not supported
 
     public decimal AveragePrice { get; set; }
     public decimal QuantityFilled { get; set; }
-    public decimal QuoteQuantityFilled { get; set; } // value
+    public decimal QuoteQuantityFilled { get; set; } // quote value
 
     public decimal RemainingDust { get; set; } // overblijvend vanwege afrondingen
 
     // Of we aan het trailen zijn (de order iedere keer een beetje verzetten)
-    public CryptoTrailing Trailing { get; set; }
+    public CryptoTrailing Trailing { get; set; } // not supported
 
-    // De definitieve commissie van alle onderliggende trades (meerdere trades ivm market of stoplimit)
+    // De commissie berekend vanuit de trades
     public decimal Commission { get; set; }
     public decimal CommissionBase { get; set; }  // debug, not really relevant
     public decimal CommissionQuote { get; set; }  // debug, not really relevant
     public string CommissionAsset { get; set; }  // debug, not really relevant
-    [Computed]
-    public bool IsChanged { get; set; }
 }
 
 

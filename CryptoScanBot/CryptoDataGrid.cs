@@ -401,7 +401,7 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
 
     internal static Color GetBackgroudColorForStrategy(CryptoSignalStrategy strategy, CryptoTradeSide side)
     {
-        // Dit kan veel optimaler door het van te voren te indexeren 
+        // Dit kan optimaler door het van te voren te indexeren
 
         switch (strategy)
         {
