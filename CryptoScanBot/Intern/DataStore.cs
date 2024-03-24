@@ -102,7 +102,7 @@ public class DataStore
                     {
                         // Een vorig formaat
                         File.Delete(filename);
-                        ScannerLog.Logger.Error(error, "");
+                        ScannerLog.Logger.Error(error, symbol.Name);
                         GlobalData.AddTextToLogTab(error.ToString() + "\r\n");
                         //throw;
                     }
@@ -153,48 +153,45 @@ public class DataStore
 
                 if (count > 0)
                 {
-                    Directory.CreateDirectory(dirSymbol);
+                    using var memoryStream = new MemoryStream(1024 * 1024);
+                    using BinaryWriter binaryWriter = new(memoryStream, Encoding.UTF8, false);
+                    int version = 1; // Even teruggezet
 
-                    // Een experiment (vanwege de obfuscator)
-                    using FileStream writeStream = new(filename, FileMode.Create);
+                    // Iets met een version
+                    binaryWriter.Write(version);
+                    binaryWriter.Write(symbol.Name);
 
-                    using (BinaryWriter binaryWriter = new(writeStream, Encoding.UTF8, false))
+                    foreach (CryptoSymbolInterval symbolInterval in symbol.IntervalPeriodList)
                     {
-                        int version = 1; // Even teruggezet
+                        binaryWriter.Write((int)symbolInterval.Interval.IntervalPeriod);
+                        if (symbolInterval.LastCandleSynchronized.HasValue)
+                            binaryWriter.Write((long)symbolInterval.LastCandleSynchronized); // int64
+                        else
+                            binaryWriter.Write((long)0); // int64
 
-                        // Iets met een version
-                        binaryWriter.Write(version);
-                        binaryWriter.Write(symbol.Name);
+                        binaryWriter.Write(symbolInterval.CandleList.Count);
 
-                        foreach (CryptoSymbolInterval symbolInterval in symbol.IntervalPeriodList)
+                        for (int j = 0; j < symbolInterval.CandleList.Count; j++)
                         {
-                            binaryWriter.Write((int)symbolInterval.Interval.IntervalPeriod);
-                            if (symbolInterval.LastCandleSynchronized.HasValue)
-                                binaryWriter.Write((long)symbolInterval.LastCandleSynchronized); // int64
-                            else
-                                binaryWriter.Write((long)0); // int64
-
-                            binaryWriter.Write(symbolInterval.CandleList.Count);
-
-                            for (int j = 0 ; j < symbolInterval.CandleList.Count; j++)
-                            {
-                                CryptoCandle candle = symbolInterval.CandleList.Values[j];
-                                binaryWriter.Write(candle.OpenTime);
-                                binaryWriter.Write(candle.Open);
-                                binaryWriter.Write(candle.High);
-                                binaryWriter.Write(candle.Low);
-                                binaryWriter.Write(candle.Close);
-                                binaryWriter.Write(candle.Volume);
-                            }
+                            CryptoCandle candle = symbolInterval.CandleList.Values[j];
+                            binaryWriter.Write(candle.OpenTime);
+                            binaryWriter.Write(candle.Open);
+                            binaryWriter.Write(candle.High);
+                            binaryWriter.Write(candle.Low);
+                            binaryWriter.Write(candle.Close);
+                            binaryWriter.Write(candle.Volume);
                         }
                     }
+                    Directory.CreateDirectory(dirSymbol);
+                    using FileStream writeStream = new(filename, FileMode.Create);
+                    memoryStream.Position = 0;
+                    memoryStream.CopyTo(writeStream);
                     writeStream.Close();
-
                 }
             }
         }
 
-        //GlobalData.AddTextToLogTab("Information saved");
+        ScannerLog.Logger.Trace("Candle information saved");
     }
 
 
