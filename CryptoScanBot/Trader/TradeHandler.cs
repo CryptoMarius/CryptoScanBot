@@ -1,11 +1,6 @@
-﻿using CryptoScanBot.Context;
-using CryptoScanBot.Enums;
-using CryptoScanBot.Exchange;
+﻿using CryptoScanBot.Enums;
 using CryptoScanBot.Intern;
 using CryptoScanBot.Model;
-
-using Dapper;
-using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot.Trader;
 
@@ -60,70 +55,76 @@ static public class TradeHandler
             }
 
 
-            // De positie staat niet in het geheugen. Exchange en trader hebben
-            // elkaar gekruist, daarom de positie hier alsnog laden vanuit de db.
+            // 20240324 Ervoor gekozen om het te versimpelen, hoeft dus (voorlopig) niet meer te bestaan..
+            // NB: Tickers zijn traag, maar soms ook zo snel dat wij de administratie niet rond hebben!
+            // (In de PlaceOrder wordt de step pas bewaard nadat de order op de exchange geplaatst is)
             if (position == null)
             {
-                using CryptoDatabase databaseThread = new();
-                databaseThread.Open();
+                // De positie staat niet in het geheugen. Exchange en trader hebben
+                // elkaar gekruist, daarom de positie hier alsnog laden vanuit de db.
 
-                // Controleer via de database of we de positie kunnen vinden (opnieuw inladen van de positie)
-                string sql = string.Format("select * from positionstep where OrderId=@OrderId or Order2Id=@OrderId");
-                CryptoPositionStep step = databaseThread.Connection.QueryFirstOrDefault<CryptoPositionStep>(sql, new { order.OrderId });
-                if (step != null && step.Id > 0)
-                {
-                    // De positie en child objects alsnog uit de database laden
-                    position = databaseThread.Connection.Get<CryptoPosition>(step.PositionId);
+                //using CryptoDatabase databaseThread = new();
+                //databaseThread.Open();
 
-                    // Na het sluiten van de positie annuleren we tevens de (optionele) openstaande DCA order.
-                    // Deze code veroorzaakt nu een reload van de positie en dat is niet echt nodig.
-                    if (orderStatus == CryptoOrderStatus.Canceled && position.CloseTime.HasValue)
-                    {
-                        s = string.Format("handletrade#3.1 {0} step gevonden, name={1} id={2} positie.status={3} (cancel + positie gesloten)", info, step.Side, step.Id, position.Status);
-                        GlobalData.AddTextToLogTab(s);
-                        return; // Task.CompletedTask;
-                    }
+                //// Controleer via de database of we de positie kunnen vinden (opnieuw inladen van de positie)
+                //string sql = string.Format("select * from positionstep where OrderId=@OrderId or Order2Id=@OrderId");
+                //CryptoPositionStep step = databaseThread.Connection.QueryFirstOrDefault<CryptoPositionStep>(sql, new { order.OrderId });
+                //if (step != null && step.Id > 0)
+                //{
+                //    // De positie en child objects alsnog uit de database laden
+                //    position = databaseThread.Connection.Get<CryptoPosition>(step.PositionId);
+
+                //    // Na het sluiten van de positie annuleren we tevens de (optionele) openstaande DCA order.
+                //    // Deze code veroorzaakt nu een reload van de positie en dat is niet echt nodig.
+                //    if (orderStatus == CryptoOrderStatus.Canceled && position.CloseTime.HasValue)
+                //    {
+                //        s = string.Format("handletrade#3.1 {0} step gevonden, name={1} id={2} positie.status={3} (cancel + positie gesloten)", info, step.Side, step.Id, position.Status);
+                //        GlobalData.AddTextToLogTab(s);
+                //        return; // Task.CompletedTask;
+                //    }
 
 
-                    // De positie en child objects alsnog uit de database laden
-                    PositionTools.AddPosition(order.TradeAccount, position);
-                    PositionTools.LoadPosition(databaseThread, position);
-                    if (!GlobalData.BackTest && GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
-                        GlobalData.PositionsHaveChanged("");
+                //    // De positie en child objects alsnog uit de database laden
+                //    PositionTools.AddPosition(order.TradeAccount, position);
+                //    PositionTools.LoadPosition(databaseThread, position);
+                //    if (!GlobalData.BackTest && GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
+                //        GlobalData.PositionsHaveChanged("");
 
-                    // De positie terugzetten naar trading (wordt verderop toch opnieuw doorgerekend)
-                    if (orderStatus.IsFilled() || orderStatus == CryptoOrderStatus.PartiallyFilled)
-                        position.Status = CryptoPositionStatus.Trading;
+                //    // De positie terugzetten naar trading (wordt verderop toch opnieuw doorgerekend)
+                //    if (orderStatus.IsFilled() || orderStatus == CryptoOrderStatus.PartiallyFilled)
+                //        position.Status = CryptoPositionStatus.Trading;
 
-                    s = string.Format("handletrade#3.2 {0} step hersteld, name={1} id={2} positie.status={3} (database)", info, step.Side, step.Id, position.Status);
-                    GlobalData.AddTextToLogTab(s);
+                //    s = string.Format("handletrade#3.2 {0} step hersteld, name={1} id={2} positie.status={3} (database)", info, step.Side, step.Id, position.Status);
+                //    GlobalData.AddTextToLogTab(s);
 
-                    //if (orderStatus.IsFilled() || orderStatus == CryptoOrderStatus.PartiallyFilled)
-                    GlobalData.AddTextToTelegram(info, position);
-                }
-                else
-                {
-                    // De step kan niet gevonden worden! We negeren deze order en gaan verder..
-                    // We hebben handmatig een order geplaatst (buiten de bot om).
+                //    //if (orderStatus.IsFilled() || orderStatus == CryptoOrderStatus.PartiallyFilled)
+                //    GlobalData.AddTextToTelegram(info, position);
+                //}
+                //else
+                //{
+                // De step kan niet gevonden worden! We negeren deze order en gaan verder..
+                // We hebben handmatig een order geplaatst (buiten de bot om).
+                
+                // NB: Er is nu wel een kans dat de gebruiker een order in de positiie heeft bijgeplaatst
+                // Maar die komen we dan verderop wel weer tegen (die order heeft geen effect op de positie)
 
-                    s = $"handletrade#4 {info} dit is geen order van de trader. Statistiek bijwerken & exit";
-                    GlobalData.AddTextToLogTab(s);
+                s = $"handletrade {info} dit is geen order van de trader. Statistiek bijwerken & exit";
+                GlobalData.AddTextToLogTab(s);
 
-                    // Gebruiker informeren (een trade blijft interessant tenslotte)
-                    //if (orderStatus.IsFilled() || orderStatus == CryptoOrderStatus.PartiallyFilled)
-                    GlobalData.AddTextToTelegram(info, position);
-                    return; // Task.CompletedTask;
-                }
+                // Gebruiker informeren (een trade blijft interessant tenslotte)
+                //if (orderStatus.IsFilled() || orderStatus == CryptoOrderStatus.PartiallyFilled)
+                GlobalData.AddTextToTelegram(info, position);
+                return;
+                //}
             }
 
-            // De positie laten afhandelen door een andere thread.
-            // (dan staat alle code voor het afhandelen van een positie centraal)
+            // De actie laten afhandelen door een andere thread (we zitten hier in de context v/d user ticker)
             position.ForceCheckPosition = true;
             position.DelayUntil = DateTime.UtcNow.AddSeconds(10);
             await GlobalData.ThreadDoubleCheckPosition.AddToQueue(position, order.OrderId, order.Status);
         }
 
-        return; // Task.CompletedTask;
+        return;
     }
 }
 #endif
