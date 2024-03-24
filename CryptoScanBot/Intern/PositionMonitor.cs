@@ -1512,9 +1512,9 @@ public class PositionMonitor : IDisposable
 
                     if (cancelReason != "")
                     {
-                        var (cancelled, _) = await TradeTools.CancelOrder(Database, position, part, step, 
+                        var (success, _) = await TradeTools.CancelOrder(Database, position, part, step, 
                             LastCandle1mCloseTimeDate, newStatus, cancelReason);
-                        if (cancelled)
+                        if (success)
                         {
                             // Na een timeout (barometer, tradingrules) even 5 minuten helemaal niets doen
                             if (newStatus == CryptoOrderStatus.TradingRules || newStatus == CryptoOrderStatus.BarameterToLow)
@@ -1665,10 +1665,10 @@ public class PositionMonitor : IDisposable
                                 decimal sellPrice = CalculateTakeProfitPrice(position);
                                 if (step.Price != sellPrice && step.Status == CryptoOrderStatus.New && !part.ManualOrder)
                                 {
-                                    string cancelReason = $"annuleren vanwege aanpassing percentage ({step.Price} -> {sellPrice})";
-                                    var (cancelled, tradeParams) = await TradeTools.CancelOrder(Database, position, part, step, 
+                                    string cancelReason = $"annuleren vanwege aanpassing verkoop prijs ({step.Price} -> {sellPrice})";
+                                    var (success, _) = await TradeTools.CancelOrder(Database, position, part, step, 
                                         LastCandle1mCloseTimeDate, CryptoOrderStatus.ChangedSettings, cancelReason);
-                                    if (cancelled)
+                                    if (success)
                                     {
                                         decimal takeProfitPrice = CalculateTakeProfitPrice(position);
                                         await TradeTools.PlaceTakeProfitOrderAtPrice(Database, position, part, takeProfitPrice, LastCandle1mCloseTimeDate, "modifying");
