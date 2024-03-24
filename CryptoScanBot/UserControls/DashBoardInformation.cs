@@ -423,7 +423,7 @@ public partial class DashBoardInformation : UserControl
     }
 
 
-    public async void BinanceBarometerAll()
+    public void BinanceBarometerAll()
     {
         try
         {
@@ -437,7 +437,7 @@ public partial class DashBoardInformation : UserControl
 
             // Bereken de laatste barometer waarden
             BarometerTools barometerTools = new();
-            await barometerTools.ExecuteAsync();
+            barometerTools.ExecuteAsync();
 
             if (!GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
                 return;
