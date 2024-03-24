@@ -1,10 +1,16 @@
 CryptoScanBot release historie:
 
 23-03-2024 1.9.1
-- Scanner - Bybit Futures - De kLine ticker gefixed + herkansing als de afzonderlijke kline ticker niet direct starten
+- Scanner - Verbeteringen zodat de scanner sneller opstart en afsluit (is wel trager dan voorheen).
+- Scanner - Het geheugen loopt geleidelijk op omdat de data voor de barometer niet wordt geschoond
+- Scanner - Aan- of uitzetten van signal bot of geluid via telegram wordt niet door de userinterface opgepikt
+- Scanner - Bybit Futures - De kLine ticker aangepast zodat de niet gestarte kline tickers alsnog worden gestart.
+- Scanner - Downgraded packages voor Bybit, Binance, Kraken en Kucoin vanwege problemen met de kline-ticker snelheid (opstart problemen)
+- Scanner - Het opstarten van de configuratie gaat fout als er geen basismunten aanwezig zijn (Index was out of range error)
+- Scanner - De default configuratie van het filter interval-trend verwijderd zodat deze overeenkomt met de instellingen van de 1.8.x scanner
 
 
-22-03-2024 1.9
+22-03-2024 1.9.0
 - Scanner - Documentatie bijwerken - dit keer best een grote klus
 - Scanner - De RMK wordt uitgevoerd op de getoonde selectie, echter bij een RMK op een bepaald record wordt de selectie niet aangepast waardoor de actie op een verkeerd record wordt uitgevoerd.
 - Scanner - Regelhoogte grid - icm het aanpassen van het lettertype wordt het nu dynamisch ingesteld
