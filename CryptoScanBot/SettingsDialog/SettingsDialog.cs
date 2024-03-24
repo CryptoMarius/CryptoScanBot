@@ -92,6 +92,20 @@ public partial class FrmSettings : Form
         // ------------------------------------------------------------------------------
         // Base coins
         // ------------------------------------------------------------------------------
+        // Er moet er eentje zijn, de USDT maar toevoegen
+        if (GlobalData.Settings.QuoteCoins.Count == 0)
+        {
+            // Als default toch iets inschieten
+            CryptoQuoteData quoteData = new()
+            {
+                Name = "USDT",
+                FetchCandles = true,
+                CreateSignals = true,
+                MinimalVolume = 4500000,
+            };
+
+            GlobalData.Settings.QuoteCoins.Add(quoteData.Name, quoteData);
+        }
 
         int yPos = 40;
         foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
