@@ -37,6 +37,7 @@ public class SignalStobbLong : SignalSbmBaseLong
     }
 
 
+    
     public override bool AdditionalChecks(CryptoCandle candle, out string response)
     {
         // Controle op de ma-lijnen

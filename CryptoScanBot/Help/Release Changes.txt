@@ -1,6 +1,7 @@
 CryptoScanBot release historie:
 
 23-03-2024 1.9.1
+- Scanner - De nieuwe StoRsi gebruikte de SBM/MA lijnen controle, en dat is niet de bedoeling
 - Scanner - Verbeteringen zodat de scanner sneller opstart en afsluit (is wel trager dan voorheen).
 - Scanner - Het geheugen loopt geleidelijk op omdat de data voor de barometer niet wordt geschoond
 - Scanner - Aan- of uitzetten van signal bot of geluid via telegram wordt niet door de userinterface opgepikt

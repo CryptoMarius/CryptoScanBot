@@ -41,6 +41,13 @@ public class SignalStoRsiShort : SignalSbmBaseShort
     }
 
 
+    public override bool AdditionalChecks(CryptoCandle candle, out string response)
+    {
+        response = "";
+        return true;
+    }
+
+
     public override bool IsSignal()
     {
         // De breedte van de bb is ten minste 1.5%
