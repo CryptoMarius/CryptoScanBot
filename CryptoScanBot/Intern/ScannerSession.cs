@@ -110,24 +110,56 @@ public static class ScannerSession
         TimerGetExchangeInfoAndCandles.Enabled = false;
         TimerShowInformation.Enabled = false;
         TimerSaveCandleData.Enabled = false;
-        ThreadTelegramBot.Stop();
+
+        Task task;
+        List<Task> taskList = [];
+
+        //ThreadTelegramBot.Stop();
+        task = Task.Run(() => { ThreadTelegramBot.Stop(); });
+        taskList.Add(task);
+
 
 #if TRADEBOT
-        GlobalData.ThreadMonitorOrder?.Stop();
-        GlobalData.ThreadDoubleCheckPosition?.Stop();
+        //GlobalData.ThreadMonitorOrder?.Stop();
+        task = Task.Run(() => { GlobalData.ThreadMonitorOrder?.Stop(); });
+        taskList.Add(task);
+
+        //GlobalData.ThreadDoubleCheckPosition?.Stop();
+        task = Task.Run(() => { GlobalData.ThreadDoubleCheckPosition?.Stop(); });
+        taskList.Add(task);
+
         if (ExchangeHelper.UserData != null)
-            await ExchangeHelper.UserData?.Stop();
+        {
+            //await ExchangeHelper.UserData?.Stop();
+            task = Task.Run(async () => { await ExchangeHelper.UserData?.Stop(); });
+            taskList.Add(task);
+        }
 #endif
 #if BALANCING
         //GlobalData.ThreadBalanceSymbols?.Stop();
+        //task = Task.Run(async() => { await GlobalData.ThreadBalanceSymbols?.Stop(); });
+        //taskList.Add(task);
 #endif
 
         // streams Threads (of tasks)
-        GlobalData.ThreadMonitorCandle?.Stop();
+        //GlobalData.ThreadMonitorCandle?.Stop();
+        task = Task.Run(() => { GlobalData.ThreadMonitorCandle?.Stop(); });
+        taskList.Add(task);
+
         if (ExchangeHelper.PriceTicker != null)
-            await ExchangeHelper.PriceTicker?.Stop();
+        {
+            //await ExchangeHelper.PriceTicker?.Stop();
+            task = Task.Run(async () => { await ExchangeHelper.PriceTicker?.Stop(); });
+            taskList.Add(task);
+        }
+
         if (ExchangeHelper.KLineTicker != null)
-            await ExchangeHelper.KLineTicker?.StopAsync();
+        {
+            //await ExchangeHelper.KLineTicker?.StopAsync();
+            task = Task.Run(async () => { await ExchangeHelper.KLineTicker?.StopAsync(); });
+            taskList.Add(task);
+        }
+
 #if SQLDATABASE
         GlobalData.TaskSaveCandles.Stop();
 
@@ -141,8 +173,13 @@ public static class ScannerSession
                 break;
         }
 #else
-        DataStore.SaveCandles();
+        //DataStore.SaveCandles();
+        task = Task.Run(() => { DataStore.SaveCandles(); });
+        taskList.Add(task);
 #endif
+
+        task = Task.WhenAll(taskList);
+        task.Wait();
 
 
         // Vanwege coordinaten formulier

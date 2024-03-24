@@ -60,7 +60,7 @@ public abstract class KLineTickerBase(string apiExchangeName, int limitOnSymbols
 
         if (taskList.Count != 0)
         {
-            await Task.Run(async () => { await Task.WhenAll(taskList); });
+            _ = Task.Run(async () => { await Task.WhenAll(taskList); });
             GlobalData.AddTextToLogTab($"{ApiExchangeName} started kline ticker for {symbolCount} symbols in {taskList.Count} groups");
         }
         else GlobalData.AddTextToLogTab($"{ApiExchangeName} started kline ticker with 0 symbols!");
@@ -81,7 +81,7 @@ public abstract class KLineTickerBase(string apiExchangeName, int limitOnSymbols
         }
         if (taskList.Count != 0)
         {
-            await Task.Run(async () => { await Task.WhenAll(taskList); });
+            _ = Task.Run(async () => { await Task.WhenAll(taskList); });
             GlobalData.AddTextToLogTab($"{ApiExchangeName} retry - started kline ticker for {symbolCount} symbols in {taskList.Count} groups");
         }
     }
@@ -97,9 +97,10 @@ public abstract class KLineTickerBase(string apiExchangeName, int limitOnSymbols
             taskList.Add(task);
         }
         if (taskList.Count != 0)
-            await Task.WhenAll(taskList);
+            _ = Task.WhenAll(taskList);
         else GlobalData.AddTextToLogTab($"{ApiExchangeName} stopped kline ticker with 0 symbols!");
         TickerList.Clear();
+        ScannerLog.Logger.Trace($"{ApiExchangeName} kline tickers stopped");
     }
 
 

@@ -76,11 +76,12 @@ internal class PriceTicker : PriceTickerBase
             taskList.Add(task);
         }
         if (taskList.Any())
-            await Task.WhenAll(taskList);
+            _ = Task.WhenAll(taskList);
         TickerList.Clear();
+        ScannerLog.Logger.Trace($"{Api.ExchangeName} price tickers stopped");
     }
 
-    
+
     public override void Reset()
     {
         foreach (var ticker in TickerList)
