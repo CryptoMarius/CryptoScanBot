@@ -18,8 +18,6 @@ namespace CryptoScanBot;
 
 public partial class FrmMain : Form
 {
-    private bool FormIsShowed = false;
-    private bool FormIsClosing = false;
     private readonly ColorSchemeTest theme = new();
     //private ContextMenuStrip MenuTest = new();
 
@@ -69,9 +67,12 @@ public partial class FrmMain : Form
 #endif
         ApplicationShowPositionInfo = MenuMain.AddCommand(null, "PositionInfo", Command.None, PositionInfoToolStripMenuItem_Click);
 #endif
-        //MenuMain.AddCommand(null, "Scannersession test", Command.ScannerSessionDebug);
         MenuMain.AddCommand(null, "About", Command.About);
 
+#if DEBUG
+        MenuMain.AddCommand(null, "Test - Scanner restart", Command.ScannerSessionDebug);
+        MenuMain.AddCommand(null, "Test - Save Candles", Command.None, TestClick);
+#endif
 
         //Console.Write("Hello world 1");
         //System.Diagnostics.Debug.WriteLine("Hello world 2");
@@ -89,6 +90,7 @@ public partial class FrmMain : Form
         GlobalData.PlaySpeech += new PlayMediaEvent(PlaySpeech);
         GlobalData.LogToTelegram += new AddTextEvent(AddTextToTelegram);
         GlobalData.LogToLogTabEvent += new AddTextEvent(AddTextToLogTab);
+        GlobalData.TelegramHasChangedEvent += new AddTextEvent(TelegramHasChangedEvent);
 
         // Niet echt een text event, meer misbruik van het event type
         GlobalData.SymbolsHaveChangedEvent += new AddTextEvent(SymbolsHaveChangedEvent);
@@ -155,15 +157,19 @@ public partial class FrmMain : Form
         }
     }
 
+    private void TestClick(object sender, EventArgs e)
+    {
+        DataStore.SaveCandles();
+    }
 
     private void FrmMain_FormClosing(object sender, FormClosingEventArgs e)
     {
-        FormIsClosing = true;
+        GlobalData.ApplicationIsClosing = true;
     }
 
     private void FrmMain_Shown(object sender, EventArgs e)
     {
-        FormIsShowed = true;
+        GlobalData.ApplicationIsShowed = true;
     }
 
 
@@ -172,7 +178,7 @@ public partial class FrmMain : Form
     /// </summary>
     private void FrmMain_Resize(object sender, EventArgs e)
     {
-        if (FormIsClosing || !FormIsShowed)
+        if (GlobalData.ApplicationIsClosing || !GlobalData.ApplicationIsShowed)
             return;
 
         ApplicationTools.SaveWindowLocation(this);
@@ -246,8 +252,6 @@ public partial class FrmMain : Form
         GridSignalView.InitCommandCaptions();
 
 #if TRADEBOT
-        //ListViewPositionsOpenInitCaptions();
-        //ListViewPositionsClosedInitCaptions();
         GridPositionOpenView.InitCommandCaptions();
         GridPositionClosedView.InitCommandCaptions();
 
@@ -380,6 +384,16 @@ public partial class FrmMain : Form
         //else
         //    TextBoxLog.AppendText(text);
     }
+
+    private void TelegramHasChangedEvent(string text, bool extraLineFeed = false)
+    {
+#if TRADEBOT
+        Invoke((System.Windows.Forms.MethodInvoker)(() => ApplicationTradingBot.Checked = GlobalData.Settings.Trading.Active));
+#endif
+        Invoke((System.Windows.Forms.MethodInvoker)(() => ApplicationPlaySounds.Checked = GlobalData.Settings.Signal.SoundsActive));
+        Invoke((System.Windows.Forms.MethodInvoker)(() => ApplicationCreateSignals.Checked = GlobalData.Settings.Signal.Active));
+    }
+
 
 #if TRADEBOT
     /// <summary>
@@ -559,8 +573,11 @@ public partial class FrmMain : Form
 
     private void TimerAddSignalsAndLog_Tick(object sender, EventArgs e)
     {
+        if (GlobalData.ApplicationIsClosing)
+            return;
+
         // Speed up adding signals
-        if (GlobalData.SignalQueue.Count > 0 && !FormIsClosing)
+        if (GlobalData.SignalQueue.Count > 0)
         {
             if (Monitor.TryEnter(GlobalData.SignalQueue))
                 try
@@ -581,7 +598,7 @@ public partial class FrmMain : Form
                         {
                             Invoke(new Action(() =>
                             {
-                                if (!FormIsClosing)
+                                if (!GlobalData.ApplicationIsClosing)
                                 {
                                     GridSignalView.AddObject(signals);
                                     //ListViewSignalsAddSignalRange(signals);
@@ -598,7 +615,7 @@ public partial class FrmMain : Form
 
 
         // Speed up adding text
-        if (logQueue.Count > 0 && !FormIsClosing)
+        if (logQueue.Count > 0)
         {
             if (Monitor.TryEnter(logQueue))
                 try
@@ -606,7 +623,7 @@ public partial class FrmMain : Form
                     List<CryptoSignal> signals = [];
                     StringBuilder stringBuilder = new();
 
-                    while (logQueue.Count > 0 && !FormIsClosing)
+                    while (logQueue.Count > 0 && !GlobalData.ApplicationIsClosing)
                     {
                         string text = logQueue.Dequeue();
                         stringBuilder.AppendLine(text);
@@ -618,7 +635,7 @@ public partial class FrmMain : Form
                         Invoke(new Action(() =>
                         {
                             string text = stringBuilder.ToString().TrimEnd() + "\r\n";
-                            if (!FormIsClosing)
+                            if (!GlobalData.ApplicationIsClosing)
                             {
                                 if (InvokeRequired)
                                     Invoke((System.Windows.Forms.MethodInvoker)(() =>
@@ -1034,7 +1051,7 @@ public partial class FrmMain : Form
 #if TRADEBOT
     private void PositionsHaveChangedEvent(string text, bool extraLineFeed = false)
     {
-        if (!FormIsClosing)
+        if (!GlobalData.ApplicationIsClosing)
         {
             List<CryptoPosition> list = [];
             if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))

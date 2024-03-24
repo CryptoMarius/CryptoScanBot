@@ -44,6 +44,8 @@ static public class GlobalData
 {
     public const string AppName = "CryptoScanBot";
 
+    static public bool ApplicationIsShowed { get; set; } = false;
+    static public bool ApplicationIsClosing { get; set; } = false;
 
     // Emulator kan alleen de backTest zetten (anders gaan er onverwachte zaken naar de database enzo)
     static public bool BackTest { get; set; }
@@ -101,6 +103,7 @@ static public class GlobalData
 
     // Events for refresing data
     static public event AddTextEvent SymbolsHaveChangedEvent;
+    static public event AddTextEvent TelegramHasChangedEvent;
 #if TRADEBOT
     static public event AddTextEvent AssetsHaveChangedEvent;
     static public event AddTextEvent PositionsHaveChangedEvent;
@@ -797,6 +800,12 @@ static public class GlobalData
         PositionsHaveChangedEvent?.Invoke(text);
     }
 #endif
+
+    static public void TelegramHasChanged(string text)
+    {
+        TelegramHasChangedEvent?.Invoke(text);
+    }
+   
 
     static public void SetCandleTimerEnable(bool value)
     {

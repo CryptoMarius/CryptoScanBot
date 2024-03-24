@@ -301,30 +301,31 @@ public class ThreadTelegramBotInstance
     private static void StartBot(string arguments, StringBuilder stringbuilder)
     {
         bool soundSignal = false;
-        bool balanceBot = false;
+        //bool balanceBot = false;
         bool signalsBot = false;
-        bool adviceOnly = false;
+        //bool adviceOnly = false;
         bool tradingBot = false;
         string[] parameters = arguments.Split(' ');
         if (parameters.Length > 1)
         {
             soundSignal = parameters[1].Trim().ToLower().Equals("sound");
-            adviceOnly = parameters[1].Trim().ToLower().Equals("advice");
+            //adviceOnly = parameters[1].Trim().ToLower().Equals("advice");
             signalsBot = parameters[1].Trim().ToLower().Equals("signals");
             tradingBot = parameters[1].Trim().ToLower().Equals("trading");
-            balanceBot = parameters[1].Trim().ToLower().Equals("balancing");
+            //balanceBot = parameters[1].Trim().ToLower().Equals("balancing");
         }
 
         if (soundSignal)
         {
-            //if (!GlobalData.Settings.Signal.SoundSignalNotification)
-            //{
-            //    GlobalData.Settings.Signal.SoundSignalNotification = true;
-            //    stringbuilder.AppendLine("Sound started!");
-            //    GlobalData.SaveSettings();
-            //}
-            //else
-            //    stringbuilder.AppendLine("Sound is already active!");
+            if (!GlobalData.Settings.Signal.SoundsActive)
+            {
+                GlobalData.Settings.Signal.SoundsActive = true;
+                stringbuilder.AppendLine("Sound started!");
+                GlobalData.SaveSettings();
+                GlobalData.TelegramHasChanged("");
+            }
+            else
+                stringbuilder.AppendLine("Sound is already active!");
         }
         //else if (balanceBot)
         //{
@@ -333,6 +334,7 @@ public class ThreadTelegramBotInstance
         //        GlobalData.Settings.BalanceBot.Active = true;
         //        stringbuilder.AppendLine("Balance bot started!");
         //        GlobalData.SaveSettings();
+        //GlobalData.TelegramHasChanged("");
         //    }
         //    else
         //        stringbuilder.AppendLine("Balance bot already active!");
@@ -344,6 +346,7 @@ public class ThreadTelegramBotInstance
         //        GlobalData.Settings.BalanceBot.ShowAdviceOnly = true;
         //        stringbuilder.AppendLine("Balance bot advice only started!");
         //        GlobalData.SaveSettings();
+        //GlobalData.TelegramHasChanged("");
         //    }
         //    else
         //        stringbuilder.AppendLine("Balance bot advice only already active!");
@@ -355,6 +358,7 @@ public class ThreadTelegramBotInstance
                 GlobalData.Settings.Signal.Active = true;
                 stringbuilder.AppendLine("Signal bot started!");
                 GlobalData.SaveSettings();
+                GlobalData.TelegramHasChanged("");
             }
             else
                 stringbuilder.AppendLine("Signal bot already active!");
@@ -366,6 +370,7 @@ public class ThreadTelegramBotInstance
                 GlobalData.Settings.Trading.Active = true;
                 stringbuilder.AppendLine("Trading bot started!");
                 GlobalData.SaveSettings();
+                GlobalData.TelegramHasChanged("");
             }
             else
                 stringbuilder.AppendLine("Trading bot already active!");
@@ -377,6 +382,7 @@ public class ThreadTelegramBotInstance
                 GlobalData.Settings.Trading.Active = true;
                 stringbuilder.AppendLine("Bot started!");
                 GlobalData.SaveSettings();
+                GlobalData.TelegramHasChanged("");
             }
             else
                 stringbuilder.AppendLine("Bot already active!");
@@ -387,28 +393,29 @@ public class ThreadTelegramBotInstance
     private static void StopBot(string arguments, StringBuilder stringbuilder)
     {
         bool sound = false;
-        bool balanceBot = false;
+        //bool balanceBot = false;
         bool signalsBot = false;
-        bool adviceOnly = false;
+        //bool adviceOnly = false;
         string[] parameters = arguments.Split(' ');
         if (parameters.Length > 1)
         {
             sound = parameters[1].Trim().ToLower().Equals("sound");
-            adviceOnly = parameters[1].Trim().ToLower().Equals("advice");
+            //adviceOnly = parameters[1].Trim().ToLower().Equals("advice");
             signalsBot = parameters[1].Trim().ToLower().Equals("signals");
-            balanceBot = parameters[1].Trim().ToLower().Equals("balancing");
+            //balanceBot = parameters[1].Trim().ToLower().Equals("balancing");
         }
 
         if (sound)
         {
-            //if (GlobalData.Settings.Signal.SoundSignalNotification)
-            //{
-            //    GlobalData.Settings.Signal.SoundSignalNotification = false;
-            //    stringbuilder.AppendLine("Sound stopped!");
-            //    GlobalData.SaveSettings();
-            //}
-            //else
-            //    stringbuilder.AppendLine("Sound is already inactive!");
+            if (GlobalData.Settings.Signal.SoundsActive)
+            {
+                GlobalData.Settings.Signal.SoundsActive = false;
+                stringbuilder.AppendLine("Sound stopped!");
+                GlobalData.SaveSettings();
+                GlobalData.TelegramHasChanged("");
+            }
+            else
+                stringbuilder.AppendLine("Sound is already inactive!");
         }
         //else if (balanceBot)
         //{
@@ -417,6 +424,7 @@ public class ThreadTelegramBotInstance
         //        GlobalData.Settings.BalanceBot.Active = false;
         //        stringbuilder.AppendLine("Balance bot stopped!");
         //        GlobalData.SaveSettings();
+        //GlobalData.TelegramHasChanged("");
         //    }
         //    else
         //        stringbuilder.AppendLine("Balance bot already inactive!");
@@ -428,6 +436,7 @@ public class ThreadTelegramBotInstance
         //        GlobalData.Settings.BalanceBot.ShowAdviceOnly = false;
         //        stringbuilder.AppendLine("Balance bot advice only stopped!");
         //        GlobalData.SaveSettings();
+        //GlobalData.TelegramHasChanged("");
         //    }
         //    else
         //        stringbuilder.AppendLine("Balance bot advice only inactive!");
@@ -440,6 +449,7 @@ public class ThreadTelegramBotInstance
                 GlobalData.Settings.Signal.Active = false;
                 stringbuilder.AppendLine("Signal bot stopped!");
                 GlobalData.SaveSettings();
+                GlobalData.TelegramHasChanged("");
             }
             else
                 stringbuilder.AppendLine("Signal bot already inactive!");
@@ -452,6 +462,7 @@ public class ThreadTelegramBotInstance
                 GlobalData.Settings.Trading.Active = false;
                 stringbuilder.AppendLine("Bot stopped!");
                 GlobalData.SaveSettings();
+                GlobalData.TelegramHasChanged("");
             }
             else
                 stringbuilder.AppendLine("Bot already inactive!");
@@ -558,6 +569,7 @@ public class ThreadTelegramBotInstance
                 stringbuilder.AppendLine($"Slots long = {slots}");
                 GlobalData.Settings.Trading.SlotsMaximalLong = slots;
                 GlobalData.SaveSettings();
+                GlobalData.TelegramHasChanged("");
             }
             else
                 stringbuilder.AppendLine("Not a valid number!");
@@ -571,6 +583,7 @@ public class ThreadTelegramBotInstance
                 stringbuilder.AppendLine($"Slots short = {slots}");
                 GlobalData.Settings.Trading.SlotsMaximalShort = slots;
                 GlobalData.SaveSettings();
+                GlobalData.TelegramHasChanged("");
             }
             else
                 stringbuilder.AppendLine("Not a valid number!");
