@@ -14,18 +14,13 @@ using Kraken.Net.Objects.Models;
 
 namespace CryptoScanBot.Exchange.Kraken;
 
-public class Api : ExchangeBase
+public class Api() : ExchangeBase()
 {
     public static readonly string ExchangeName = "Kraken";
 #if TRADEBOT
     static private UserDataStream TaskBybitStreamUserData { get; set; }
 #endif
     public static List<KLineTickerItem> TickerList { get; set; } = [];
-
-
-    public Api() : base() //, CryptoSymbol symbol, DateTime currentDate
-    {
-    }
 
     public override void ExchangeDefaults()
     {

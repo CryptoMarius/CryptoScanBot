@@ -3,9 +3,9 @@ using CryptoScanBot.Model;
 
 namespace CryptoScanBot.Exchange.BybitFutures;
 
-internal class PriceTicker : PriceTickerBase
+internal class PriceTicker() : PriceTickerBase()
 {
-    static private List<PriceTickerItem> TickerList { get; set; } = new();
+    static private List<PriceTickerItem> TickerList { get; set; } = [];
 
     public override async Task Start()
     {
@@ -13,7 +13,7 @@ internal class PriceTicker : PriceTickerBase
         if (GlobalData.ExchangeListName.TryGetValue(Api.ExchangeName, out Model.CryptoExchange exchange))
         {
             int count = 0;
-            List<Task> taskList = new();
+            List<Task> taskList = [];
             foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
             {
                 if (quoteData.FetchCandles && quoteData.SymbolList.Count > 0)
@@ -56,7 +56,7 @@ internal class PriceTicker : PriceTickerBase
                 }
             }
 
-            if (taskList.Any())
+            if (taskList.Count != 0)
             {
                 await Task.WhenAll(taskList);
                 GlobalData.AddTextToLogTab($"{Api.ExchangeName} started price ticker stream for {count} symbols");
@@ -69,14 +69,14 @@ internal class PriceTicker : PriceTickerBase
     public override async Task Stop()
     {
         GlobalData.AddTextToLogTab($"{Api.ExchangeName} stopping price ticker");
-        List<Task> taskList = new();
+        List<Task> taskList = [];
         foreach (var ticker in TickerList)
         {
             Task task = Task.Run(async () => { await ticker.StopAsync(); });
             taskList.Add(task);
         }
-        if (taskList.Any())
-            _ = Task.WhenAll(taskList);
+        if (taskList.Count != 0)
+            await Task.WhenAll(taskList);
         TickerList.Clear();
         ScannerLog.Logger.Trace($"{Api.ExchangeName} price tickers stopped");
     }

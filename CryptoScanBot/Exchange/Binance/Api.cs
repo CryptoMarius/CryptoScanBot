@@ -86,14 +86,9 @@ https://api-testnet.bybit.com/spot/v3/public/symbols
 
  */
 
-public class Api : ExchangeBase
+public class Api() : ExchangeBase()
 {
     public static readonly string ExchangeName = "Binance";
-
-
-    public Api() : base()
-    {
-    }
 
     public override void ExchangeDefaults()
     {

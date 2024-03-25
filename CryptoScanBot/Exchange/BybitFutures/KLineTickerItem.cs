@@ -14,14 +14,10 @@ namespace CryptoScanBot.Exchange.BybitFutures;
 /// <summary>
 /// Monitoren van 1m candles (die gepushed worden door Binance)
 /// </summary>
-public class KLineTickerItem : KLineTickerItemBase
+public class KLineTickerItem(string apiExchangeName, CryptoQuoteData quoteData) : KLineTickerItemBase(apiExchangeName, quoteData)
 {
     private BybitSocketClient socketClient;
     private UpdateSubscription _subscription;
-
-    public KLineTickerItem(string apiExchangeName, CryptoQuoteData quoteData) : base(apiExchangeName, quoteData)
-    {
-    }
 
     private void ProcessCandle(string topic, BybitKlineUpdate kline)
     {
@@ -68,7 +64,7 @@ public class KLineTickerItem : KLineTickerItemBase
                     if (kline.Confirm) // Het is een definitieve candle (niet eentje in opbouw)
                         Task.Run(() => { ProcessCandle(data.Topic, kline); });
                 }
-            });
+            }, ExchangeHelper.CancellationToken);
             // .ConfigureAwait(false);
 
             // Subscribe to network-related stuff

@@ -14,14 +14,10 @@ namespace CryptoScanBot.Exchange.Kraken;
 /// <summary>
 /// Monitoren van 1m candles (die gepushed worden door Binance)
 /// </summary>
-public class KLineTickerItem : KLineTickerItemBase
+public class KLineTickerItem(string apiExchangeName, CryptoQuoteData quoteData) : KLineTickerItemBase(apiExchangeName, quoteData)
 {
     private KrakenSocketClient socketClient;
     private UpdateSubscription _subscription;
-
-    public KLineTickerItem(string apiExchangeName, CryptoQuoteData quoteData) : base(apiExchangeName, quoteData)
-    {
-    }
 
     private void ProcessCandle(string topic, KrakenStreamKline kline)
     {
@@ -62,7 +58,7 @@ public class KLineTickerItem : KLineTickerItemBase
                 //{
                 //    Task.Run(() => { ProcessCandle(data.Topic, kline); });
                 //}
-            });
+            }, ExchangeHelper.CancellationToken);
             // .ConfigureAwait(false);
 
             // Subscribe to network-related stuff

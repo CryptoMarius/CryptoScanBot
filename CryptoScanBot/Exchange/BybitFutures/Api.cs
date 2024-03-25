@@ -18,7 +18,7 @@ using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot.Exchange.BybitFutures;
 
-public class Api : ExchangeBase
+public class Api() : ExchangeBase()
 {
     public static readonly string ExchangeName = "Bybit Futures";
 #if TRADEBOT
@@ -26,11 +26,6 @@ public class Api : ExchangeBase
     static private UserDataStream TaskBybitStreamUserData { get; set; }
 #endif
     public static List<KLineTickerItem> TickerList { get; set; } = [];
-
-
-    public Api() : base()
-    {
-    }
 
     public override void ExchangeDefaults()
     {
@@ -355,9 +350,11 @@ public class Api : ExchangeBase
                     {
                         if (!tradeAccount.AssetList.TryGetValue(assetInfo.Asset, out CryptoAsset asset))
                         {
-                            asset = new CryptoAsset();
-                            asset.Name = assetInfo.Asset;
-                            asset.TradeAccountId = tradeAccount.Id;
+                            asset = new CryptoAsset
+                            {
+                                Name = assetInfo.Asset,
+                                TradeAccountId = tradeAccount.Id
+                            };
                             tradeAccount.AssetList.Add(asset.Name, asset);
                         }
                         asset.Total = (decimal)assetInfo.WalletBalance;

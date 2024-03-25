@@ -345,7 +345,7 @@ public class FetchCandles
 
 
                     // En dan door x tasks de queue leeg laten trekken
-                    List<Task> taskList = new();
+                    List<Task> taskList = [];
                     while (taskList.Count < 5)
                     {
                         Task task = Task.Run(async () => { await FetchCandlesAsync(fetchEndUnix, queue); });

@@ -25,7 +25,7 @@ using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot.Exchange.BybitSpot;
 
-public class Api : ExchangeBase
+public class Api() : ExchangeBase()
 {
     public static readonly string ExchangeName = "Bybit Spot";
 #if TRADEBOT
@@ -33,13 +33,6 @@ public class Api : ExchangeBase
     static private UserDataStream TaskBybitStreamUserData { get; set; }
 #endif
     public static List<KLineTickerItem> TickerList { get; set; } = [];
-
-    //internal static TraceLoggerProvider TraceProvider;
-    //internal static LoggerFactory LogFactory;
-
-    public Api() : base()
-    {
-    }
 
     //internal static BybitRestClient CreateRestClient()
     //{
@@ -488,7 +481,7 @@ public class Api : ExchangeBase
         // Behoorlijk weinig error control ...... 
 
         int count = 0;
-        DateTime? from = position.Symbol.LastOrderFetched;
+        DateTime? from; // = position.Symbol.LastOrderFetched;
         //if (from == null)
         // altijd alles ophalen, geeft wat veel logging, maar ach..
         from = position.CreateTime.AddMinutes(-1);

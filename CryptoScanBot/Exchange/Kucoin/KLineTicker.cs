@@ -7,13 +7,9 @@ namespace CryptoScanBot.Exchange.Kucoin;
 
 // Deze class afwijkend tov de base
 
-internal class KLineTicker : KLineTickerBase
+internal class KLineTicker() : KLineTickerBase(Api.ExchangeName, 1, typeof(KLineTickerItem))
 {
-    public static new List<KLineTickerItem> TickerList { get; set; } = new();
-
-    public KLineTicker() : base(Api.ExchangeName, 1, typeof(KLineTickerItem))
-    {
-    }
+    public static new List<KLineTickerItem> TickerList { get; set; } = [];
 
     public override async Task StartAsync()
     {
@@ -21,7 +17,7 @@ internal class KLineTicker : KLineTickerBase
 
         int totalSymbols = 0;
         int tickersCreated = 0;
-        List<Task> taskList = new();
+        List<Task> taskList = [];
         KucoinSocketClient socketClient = new();
         foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
         {
@@ -47,7 +43,7 @@ internal class KLineTicker : KLineTickerBase
 
                 while (symbols.Count > 0)
                 {
-                    KLineTickerItem ticker = new(quoteData);
+                    KLineTickerItem ticker = new("Kucoin", quoteData);
                     TickerList.Add(ticker);
 
                     // Op deze exchange is er een limiet van 1 symbols, dus opknippen in (veel) stukjes
@@ -74,7 +70,7 @@ internal class KLineTicker : KLineTickerBase
             }
         }
 
-        if (taskList.Any())
+        if (taskList.Count != 0)
         {
             await Task.WhenAll(taskList);
             GlobalData.AddTextToLogTab($"{Api.ExchangeName} started kline ticker voor {tickersCreated} van de {totalSymbols} symbols");
@@ -85,13 +81,13 @@ internal class KLineTicker : KLineTickerBase
     public override async Task StopAsync()
     {
         GlobalData.AddTextToLogTab($"{Api.ExchangeName} stopping kline ticker");
-        List<Task> taskList = new();
+        List<Task> taskList = [];
         foreach (var ticker in TickerList)
         {
             Task task = Task.Run(async () => { await ticker.StopAsync(); });
             taskList.Add(task);
         }
-        if (taskList.Any())
+        if (taskList.Count != 0)
             await Task.WhenAll(taskList);
         TickerList.Clear();
     }

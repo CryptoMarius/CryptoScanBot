@@ -60,7 +60,7 @@ public abstract class KLineTickerBase(string apiExchangeName, int limitOnSymbols
 
         if (taskList.Count != 0)
         {
-            _ = Task.Run(async () => { await Task.WhenAll(taskList); });
+            await Task.Run(async () => { await Task.WhenAll(taskList); });
             GlobalData.AddTextToLogTab($"{ApiExchangeName} started kline ticker for {symbolCount} symbols in {taskList.Count} groups");
         }
         else GlobalData.AddTextToLogTab($"{ApiExchangeName} started kline ticker with 0 symbols!");
@@ -81,7 +81,7 @@ public abstract class KLineTickerBase(string apiExchangeName, int limitOnSymbols
         }
         if (taskList.Count != 0)
         {
-            _ = Task.Run(async () => { await Task.WhenAll(taskList); });
+            await Task.Run(async () => { await Task.WhenAll(taskList); });
             GlobalData.AddTextToLogTab($"{ApiExchangeName} retry - started kline ticker for {symbolCount} symbols in {taskList.Count} groups");
         }
     }
@@ -97,7 +97,7 @@ public abstract class KLineTickerBase(string apiExchangeName, int limitOnSymbols
             taskList.Add(task);
         }
         if (taskList.Count != 0)
-            _ = Task.WhenAll(taskList);
+            await Task.WhenAll(taskList);
         else GlobalData.AddTextToLogTab($"{ApiExchangeName} stopped kline ticker with 0 symbols!");
         TickerList.Clear();
         ScannerLog.Logger.Trace($"{ApiExchangeName} kline tickers stopped");
@@ -139,21 +139,21 @@ public abstract class KLineTickerBase(string apiExchangeName, int limitOnSymbols
 
     public virtual async Task CheckKlineTickers()
     {
-        List<KLineTickerItemBase> tickers = new();
+        List<KLineTickerItemBase> tickers = [];
         foreach (var ticker in TickerList)
         {
             if (ticker.ConnectionLostCount > 0)
                 tickers.Add(ticker);
         }
 
-        if (tickers.Any())
+        if (tickers.Count != 0)
         {
             GlobalData.AddTextToLogTab($"{ApiExchangeName} herstarten {tickers.Count} kline tickers (starting)");
 
             // de bestaande ticker verwijderen (de combinatie met ticker en timer zou problemen kunnen geven?)
 
             Task task;
-            List<Task> taskList = new();
+            List<Task> taskList = [];
             foreach (var ticker in tickers)
             {
                 task = Task.Run(ticker.StopAsync);

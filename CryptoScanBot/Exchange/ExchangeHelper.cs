@@ -8,6 +8,8 @@ namespace CryptoScanBot.Exchange;
 
 public class ExchangeHelper
 {
+    public static CancellationTokenSource CancellationTokenSource { get; set; } = new();
+    public static CancellationToken CancellationToken { get; set; } = CancellationTokenSource.Token;
 
     public static PriceTickerBase PriceTicker { get; set; }
     public static KLineTickerBase KLineTicker { get; set; }

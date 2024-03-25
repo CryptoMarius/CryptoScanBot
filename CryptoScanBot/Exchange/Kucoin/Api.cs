@@ -20,13 +20,9 @@ using Microsoft.Extensions.Logging.Console;
 namespace CryptoScanBot.Exchange.Kucoin;
 
 
-public class Api: ExchangeBase
+public class Api() : ExchangeBase()
 {
     public static readonly string ExchangeName = "Kucoin";
-
-    public Api() : base()
-    {
-    }
 
     public override void ExchangeDefaults()
     {

@@ -4,21 +4,15 @@ using CryptoScanBot.Model;
 
 namespace CryptoScanBot.Exchange;
 
-public abstract class KLineTickerItemBase
+public abstract class KLineTickerItemBase(string apiExchangeName, CryptoQuoteData quoteData)
 {
     public bool ErrorDuringStartup = false;
     public int TickerCount = 0;
     public int TickerCountLast = 0;
     public int ConnectionLostCount = 0;
-    public CryptoQuoteData QuoteData;
+    public CryptoQuoteData QuoteData = quoteData;
     public List<string> Symbols = [];
-    public string ApiExchangeName;
-
-    public KLineTickerItemBase(string apiExchangeName, CryptoQuoteData quoteData)
-    {
-        ApiExchangeName = apiExchangeName;
-        QuoteData = quoteData;
-    }
+    public string ApiExchangeName = apiExchangeName;
 
     public abstract Task StartAsync();
     public abstract Task StopAsync();

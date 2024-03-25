@@ -217,7 +217,7 @@ public class FetchCandles
                 // Fill missing candles (the only place we know fore it can be done)
                 // We hebben de candles opgevraagd van x tot y, dat betekend dat we alle candles hebben,
                 // eventueel ontbrekende candles in deze reeks mogen we opvullen met een "zero" candle
-                if (symbolInterval.CandleList.Any())
+                if (symbolInterval.CandleList.Count != 0)
                 {
                     CryptoCandle stickOld = symbolInterval.CandleList.Values.First();
                     //GlobalData.AddTextToLogTab(symbol.Name + " " + interval.Name + " Debug missing candle " + CandleTools.GetUnixDate(stickOld.OpenTime).ToLocalTime());
@@ -372,7 +372,7 @@ public class FetchCandles
 
 
                     // En dan door x tasks de queue leeg laten trekken
-                    List<Task> taskList = new();
+                    List<Task> taskList = [];
                     while (taskList.Count < 5)
                     {
                         Task task = Task.Run(async () => { await FetchCandlesAsync(fetchEndUnix, queue); });

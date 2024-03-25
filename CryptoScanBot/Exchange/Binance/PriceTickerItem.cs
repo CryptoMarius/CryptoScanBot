@@ -71,7 +71,7 @@ public class PriceTickerItem
                 if (TickerCount > 999999999)
                     TickerCount = 0;
             }
-        }).ConfigureAwait(false);
+        }, ExchangeHelper.CancellationToken).ConfigureAwait(false);
 
         // Subscribe to network-related stuff
         if (subscriptionResult.Success)

@@ -3,7 +3,7 @@ using CryptoScanBot.Model;
 
 namespace CryptoScanBot.Exchange.Kucoin;
 
-internal class PriceTicker : PriceTickerBase
+internal class PriceTicker() : PriceTickerBase
 {
     static private List<PriceTickerItem> TickerList { get; set; } = [];
 

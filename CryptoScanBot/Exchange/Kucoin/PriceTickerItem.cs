@@ -14,7 +14,7 @@ public class PriceTickerItem
     public int TickerCount = 0; //Tellertje om te laten zien dat de stream doorloopt (anders geen candle uupdates)
     private KucoinSocketClient socketClient;
     private UpdateSubscription _subscription;
-    public List<string> Symbols = new();
+    public List<string> Symbols = [];
 
     public async Task StartAsync()
     {
@@ -77,7 +77,7 @@ public class PriceTickerItem
                 if (TickerCount > 999999999)
                     TickerCount = 0;
             }
-        }).ConfigureAwait(false);
+        }, ExchangeHelper.CancellationToken).ConfigureAwait(false);
 
         // Subscribe to network-related stuff
         if (subscriptionResult.Success)

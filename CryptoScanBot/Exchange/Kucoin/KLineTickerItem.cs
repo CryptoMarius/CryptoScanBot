@@ -19,30 +19,26 @@ namespace CryptoScanBot.Exchange.Kucoin;
 /// Monitoren van 1m candles (die gepushed worden door de exchange, 
 /// in Kucoin helaas ondersteund door een extra timer)
 /// </summary>
-public class KLineTickerItem
+public class KLineTickerItem(string apiExchangeName, CryptoQuoteData quoteData)
 {
     //KucoinKline klinePrev;
     //long klinePrevOpenTime = 0;
 #if KUCOINDEBUG
     private static int tickerIndex = 0;
 #endif
-    public CryptoQuoteData QuoteData;
+    public string ApiExchangeName = apiExchangeName;
+    public CryptoQuoteData QuoteData = quoteData;
+
     public int TickerCount = 0;
     private KucoinSocketClient _socketClient;
     private UpdateSubscription _subscription;
     public CryptoSymbol Symbol;
 
-
-    public KLineTickerItem(CryptoQuoteData quoteData)
-    {
-        QuoteData = quoteData;
-    }
-
     public async Task StartAsync(KucoinSocketClient socketClient)
     {
         _socketClient = socketClient;
         string symbolName = Symbol.Base + "-" + Symbol.Quote;
-        SortedList<long, CryptoCandle> klineListTemp = new();
+        SortedList<long, CryptoCandle> klineListTemp = [];
 
         if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1m, out CryptoInterval interval))
             throw new Exception("Geen intervallen?");
@@ -51,49 +47,49 @@ public class KLineTickerItem
         // Implementatie kline ticker (via cache, wordt door de timer verwerkt)
         //var socketClient = new KucoinSocketClient();
         var subscriptionResult = await socketClient.SpotApi.SubscribeToKlineUpdatesAsync(symbolName, KlineInterval.OneMinute, data =>
+        {
+            Task taskKline = Task.Run(() =>
             {
-                Task taskKline = Task.Run(() =>
+                KucoinKline kline = data.Data.Candles;
+                //string text = JsonSerializer.Serialize(kline, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
+                //GlobalData.AddTextToLogTab(data.Topic + " " + text);
+
+                //TickerCount++;
+                //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", topic, kline.Timestamp.ToLocalTime()));
+
+                Monitor.Enter(Symbol.CandleList);
+                try
                 {
-                    KucoinKline kline = data.Data.Candles;
-                    //string text = JsonSerializer.Serialize(kline, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
-                    //GlobalData.AddTextToLogTab(data.Topic + " " + text);
-
-//TickerCount++;
-//GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", topic, kline.Timestamp.ToLocalTime()));
-
-                    Monitor.Enter(Symbol.CandleList);
-                    try
+                    // Toevoegen aan de lokale cache en/of aanvullen
+                    // (via de cache omdat de candle in opbouw is)
+                    // (bij veel updates is dit stukje cpu-intensief?)
+                    long candleOpenUnix = CandleTools.GetUnixTime(kline.OpenTime, 60);
+                    if (!klineListTemp.TryGetValue(candleOpenUnix, out CryptoCandle candle))
                     {
-                        // Toevoegen aan de lokale cache en/of aanvullen
-                        // (via de cache omdat de candle in opbouw is)
-                        // (bij veel updates is dit stukje cpu-intensief?)
-                        long candleOpenUnix = CandleTools.GetUnixTime(kline.OpenTime, 60);
-                        if (!klineListTemp.TryGetValue(candleOpenUnix, out CryptoCandle candle))
-                        {
-                            //TickerCount++;
-                            candle = new();
-                            klineListTemp.TryAdd(candleOpenUnix, candle);
-                        }
-                        candle.IsDuplicated = false;
-                        candle.OpenTime = candleOpenUnix;
-                        candle.Open = kline.OpenPrice;
-                        candle.High = kline.HighPrice;
-                        candle.Low = kline.LowPrice;
-                        candle.Close = kline.ClosePrice;
-                        candle.Volume = kline.QuoteVolume;
-                        //GlobalData.AddTextToLogTab("Ticker update " + candle.OhlcText(Symbol, interval, Symbol.PriceDisplayFormat));
+                        //TickerCount++;
+                        candle = new();
+                        klineListTemp.TryAdd(candleOpenUnix, candle);
+                    }
+                    candle.IsDuplicated = false;
+                    candle.OpenTime = candleOpenUnix;
+                    candle.Open = kline.OpenPrice;
+                    candle.High = kline.HighPrice;
+                    candle.Low = kline.LowPrice;
+                    candle.Close = kline.ClosePrice;
+                    candle.Volume = kline.QuoteVolume;
+                    //GlobalData.AddTextToLogTab("Ticker update " + candle.OhlcText(Symbol, interval, Symbol.PriceDisplayFormat));
 
-                        // Dit is de laatste bekende prijs (de priceticker vult eventueel aan)
-                        Symbol.LastPrice = kline.ClosePrice;
-                        Symbol.AskPrice = kline.ClosePrice;
-                        Symbol.BidPrice = kline.ClosePrice;
-                    }
-                    finally
-                    {
-                        Monitor.Exit(Symbol.CandleList);
-                    }
-                });
+                    // Dit is de laatste bekende prijs (de priceticker vult eventueel aan)
+                    Symbol.LastPrice = kline.ClosePrice;
+                    Symbol.AskPrice = kline.ClosePrice;
+                    Symbol.BidPrice = kline.ClosePrice;
+                }
+                finally
+                {
+                    Monitor.Exit(Symbol.CandleList);
+                }
             });
+        }, ExchangeHelper.CancellationToken);
 
         // Subscribe to network-related stuff
         if (subscriptionResult.Success)

@@ -6,12 +6,8 @@ using CryptoScanBot.Model;
 
 namespace CryptoScanBot.Exchange;
 
-public abstract class ExchangeBase
+public abstract class ExchangeBase()
 {
-    public ExchangeBase()
-    {
-    }
-
     public abstract void ExchangeDefaults();
     public abstract Task FetchSymbolsAsync();
     public abstract Task FetchCandlesAsync();

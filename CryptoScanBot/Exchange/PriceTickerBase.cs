@@ -1,6 +1,6 @@
 ﻿namespace CryptoScanBot.Exchange;
 
-public abstract class PriceTickerBase
+public abstract class PriceTickerBase()
 {
     public abstract Task Start();
     public abstract Task Stop();
