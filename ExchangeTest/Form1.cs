@@ -778,7 +778,7 @@ public partial class Form1 : Form
 
 
             //// En dan door x tasks de queue leeg laten trekken
-            //List<Task> taskList = new();
+            //List<Task> taskList = [];
             //while (taskList.Count < 10)
             //{
             //    Task task = Task.Run(async () =>

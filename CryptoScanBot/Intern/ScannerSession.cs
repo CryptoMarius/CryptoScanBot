@@ -61,13 +61,16 @@ public static class ScannerSession
 
         TimerGetExchangeInfoAndCandles.Elapsed += TimerGetExchangeInfoAndCandles_Tick;
         GlobalData.SetCandleTimerEnableEvent += new SetCandleTimerEnable(SetCandleTimerEnableHandler);
-    }
+}
 
 
-    public static void Start(bool sleepAwhile)
+public static void Start(bool sleepAwhile)
     {
         GlobalData.AddTextToLogTab("Debug: ScannerSession.Start", true);
         GlobalData.ApplicationStatus = CryptoApplicationStatus.Initializing;
+
+        ExchangeHelper.CancellationTokenSource = new();
+        ExchangeHelper.CancellationToken = ExchangeHelper.CancellationTokenSource.Token;
 
         GlobalData.ThreadMonitorCandle = new ThreadMonitorCandle();
 #if TRADEBOT
@@ -93,7 +96,7 @@ public static class ScannerSession
     }
 
 
-    public static async Task Stop()
+    public static void Stop()
     {
         //Task.Run(async () => { await ScannerSession.Stop(); }).Wait();
         //GlobalData.AddTextToLogTab("Debug: ScannerSession.Stop", true);
@@ -110,6 +113,8 @@ public static class ScannerSession
         TimerGetExchangeInfoAndCandles.Enabled = false;
         TimerShowInformation.Enabled = false;
         TimerSaveCandleData.Enabled = false;
+
+        ExchangeHelper.CancellationTokenSource.Cancel();
 
         Task task;
         List<Task> taskList = [];

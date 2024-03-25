@@ -2453,7 +2453,7 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
                     }
 
                     // En door x tasks de queue leeg laten trekken
-                    List<Task> taskList = new();
+                    List<Task> taskList = [];
                     while (taskList.Count < 3)
                     {
                         Task task = Task.Run(() =>

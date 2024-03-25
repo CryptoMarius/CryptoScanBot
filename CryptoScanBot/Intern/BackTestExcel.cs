@@ -353,7 +353,7 @@ public class BackTestExcel(CryptoSymbol symbol, List<CryptoCandle> history)
         for (int i = 0; i < columns; i++)
         {
             sheet.AutoSizeColumn(i);
-            int width = sheet.GetColumnWidth(i);
+            double width = sheet.GetColumnWidth(i);
             sheet.SetColumnWidth(i, (int)(1.1 * width));
         }
 

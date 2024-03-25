@@ -165,7 +165,7 @@ public class ExcelBase
         for (int i = 0; i < columns; i++)
         {
             sheet.AutoSizeColumn(i);
-            int width = sheet.GetColumnWidth(i);
+            double width = sheet.GetColumnWidth(i);
             sheet.SetColumnWidth(i, (int)(1.1 * width));
         }
     }

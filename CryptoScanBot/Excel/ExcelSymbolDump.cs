@@ -47,7 +47,7 @@ public class ExcelSymbolDump : ExcelBase
             WriteCell(sheet, column++, row, symbolInterval.Interval.Name);
             WriteCell(sheet, column++, row, (double)symbolInterval.CandleList.Count);
 
-            if (symbolInterval.CandleList.Any())
+            if (symbolInterval.CandleList.Count != 0)
             {
                 cell = WriteCell(sheet, column++, row, symbolInterval.CandleList.Values.First().DateLocal);
                 cell.CellStyle = CellStyleDate;
