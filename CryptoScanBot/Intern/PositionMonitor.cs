@@ -1707,7 +1707,7 @@ public class PositionMonitor : IDisposable
                 {
                     if (TradingConfig.Signals[side].BarometerLog)
                         GlobalData.AddTextToLogTab($"{Symbol.Name} {side} {reaction}");
-                    Symbol.ClearSignals();
+                    //Symbol.ClearSignals();
                 }
                 else
                 {
