@@ -64,8 +64,7 @@ public class KLineTickerItem(string apiExchangeName, CryptoQuoteData quoteData) 
                     if (kline.Confirm) // Het is een definitieve candle (niet eentje in opbouw)
                         Task.Run(() => { ProcessCandle(data.Topic, kline); });
                 }
-            }, ExchangeHelper.CancellationToken);
-            // .ConfigureAwait(false);
+            }, ExchangeHelper.CancellationToken).ConfigureAwait(false);
 
             // Subscribe to network-related stuff
             if (subscriptionResult.Success)

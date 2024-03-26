@@ -7,10 +7,9 @@ internal class PriceTicker() : PriceTickerBase
 {
     static private List<PriceTickerItem> TickerList { get; set; } = [];
 
-    public override async Task Start()
+    public override async Task StartAsync()
     {
         // De Kucoin price ticker is een echte CPU killer, uitgezet, dan maar op een andere manier (of niet)
-
         return;
 
         GlobalData.AddTextToLogTab($"{Api.ExchangeName} starting price ticker");
@@ -24,13 +23,6 @@ internal class PriceTicker() : PriceTickerBase
                 {
                     List<CryptoSymbol> symbols = quoteData.SymbolList.ToList();
 
-                    //// We krijgen soms timeouts (eigenlijk de library) omdat we teveel 
-                    //// symbols aanbieden, daarom splitsen we het hier de lijst in twee stukken.
-                    //int splitCount = 200;
-                    //if (symbols.Count > splitCount)
-                    //    splitCount = 1 + (symbols.Count / 2);
-
-                    //raar..
                     while (symbols.Count > 0)
                     {
                         PriceTickerItem ticker = new();
@@ -50,7 +42,6 @@ internal class PriceTicker() : PriceTickerBase
                         // opvullen tot circa 150 coins?
                         //ExchangeStream1mCandles.Add(bybitStream1mCandles);
                         //await bybitStream1mCandles.StartAsync(); // bewust geen await
-
                         //await TaskBybitStreamPriceTicker.ExecuteAsync(symbolNames);
 
                         Task task = Task.Run(async () => { await ticker.StartAsync(); });
@@ -61,17 +52,18 @@ internal class PriceTicker() : PriceTickerBase
 
             if (taskList.Count != 0)
             {
-                await Task.WhenAll(taskList);
+                await Task.WhenAll(taskList).ConfigureAwait(false);
                 GlobalData.AddTextToLogTab($"{Api.ExchangeName} started price ticker stream for {count} symbols");
             }
         }
+        GlobalData.AddTextToLogTab($"{Api.ExchangeName} price tickers started");
     }
 
 
 
-    public override async Task Stop()
+    public override async Task StopAsync()
     {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} stopping price ticker");
+        GlobalData.AddTextToLogTab($"{Api.ExchangeName} stopping price tickers");
         List<Task> taskList = [];
         foreach (var ticker in TickerList)
         {
@@ -79,11 +71,12 @@ internal class PriceTicker() : PriceTickerBase
             taskList.Add(task);
         }
         if (taskList.Count != 0)
-            await Task.WhenAll(taskList);
+            await Task.WhenAll(taskList).ConfigureAwait(false);
         TickerList.Clear();
+        ScannerLog.Logger.Trace($"{Api.ExchangeName} price tickers stopped");
     }
 
-    
+
     public override void Reset()
     {
         foreach (var ticker in TickerList)

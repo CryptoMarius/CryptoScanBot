@@ -12,6 +12,7 @@ internal class UserData : UserDataBase
         GlobalData.AddTextToLogTab($"{Api.ExchangeName} starting userdata stream");
         TaskStreamUserData = new UserDataStream();
         await Task.Run(async () => { await TaskStreamUserData.ExecuteAsync(); });
+        ScannerLog.Logger.Trace($"{Api.ExchangeName} userdata stream started");
     }
 
 
@@ -21,6 +22,7 @@ internal class UserData : UserDataBase
         if (TaskStreamUserData != null)
             await TaskStreamUserData?.StopAsync();
         TaskStreamUserData = null;
+        ScannerLog.Logger.Trace($"{Api.ExchangeName} userdata stream stopped");
     }
 
     //public override void Reset()

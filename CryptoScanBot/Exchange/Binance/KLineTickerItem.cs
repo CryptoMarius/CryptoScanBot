@@ -56,8 +56,7 @@ public class KLineTickerItem(string apiExchangeName, CryptoQuoteData quoteData) 
                 {
                     Task.Run(() => { ProcessCandle(data.Data as BinanceStreamKlineData); });
                 }
-            }, ExchangeHelper.CancellationToken);
-            // .ConfigureAwait(false);
+            }, ExchangeHelper.CancellationToken).ConfigureAwait(false);
 
             // Subscribe to network-related stuff
             if (subscriptionResult.Success)

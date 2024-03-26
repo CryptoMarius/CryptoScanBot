@@ -376,8 +376,7 @@ public class FetchCandles
                         Task task = Task.Run(async () => { await FetchCandlesAsync(fetchEndUnix, queue); });
                         taskList.Add(task);
                     }
-                    Task t = Task.WhenAll(taskList);
-                    t.Wait();
+                    await Task.WhenAll(taskList).ConfigureAwait(false);
 
                     GlobalData.AddTextToLogTab("Candles ophalen klaar", true);
                 }

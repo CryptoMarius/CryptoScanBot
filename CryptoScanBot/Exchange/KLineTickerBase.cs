@@ -60,7 +60,7 @@ public abstract class KLineTickerBase(string apiExchangeName, int limitOnSymbols
 
         if (taskList.Count != 0)
         {
-            await Task.Run(async () => { await Task.WhenAll(taskList); });
+            await Task.WhenAll(taskList).ConfigureAwait(false);
             GlobalData.AddTextToLogTab($"{ApiExchangeName} started kline ticker for {symbolCount} symbols in {taskList.Count} groups");
         }
         else GlobalData.AddTextToLogTab($"{ApiExchangeName} started kline ticker with 0 symbols!");
@@ -81,7 +81,7 @@ public abstract class KLineTickerBase(string apiExchangeName, int limitOnSymbols
         }
         if (taskList.Count != 0)
         {
-            await Task.Run(async () => { await Task.WhenAll(taskList); });
+            await Task.WhenAll(taskList).ConfigureAwait(false);
             GlobalData.AddTextToLogTab($"{ApiExchangeName} retry - started kline ticker for {symbolCount} symbols in {taskList.Count} groups");
         }
     }
@@ -97,7 +97,7 @@ public abstract class KLineTickerBase(string apiExchangeName, int limitOnSymbols
             taskList.Add(task);
         }
         if (taskList.Count != 0)
-            await Task.WhenAll(taskList);
+            await Task.WhenAll(taskList).ConfigureAwait(false);
         else GlobalData.AddTextToLogTab($"{ApiExchangeName} stopped kline ticker with 0 symbols!");
         TickerList.Clear();
         ScannerLog.Logger.Trace($"{ApiExchangeName} kline tickers stopped");
@@ -160,7 +160,7 @@ public abstract class KLineTickerBase(string apiExchangeName, int limitOnSymbols
                 taskList.Add(task);
                 TickerList.Remove(ticker);
             }
-            await Task.WhenAll(taskList);
+            await Task.WhenAll(taskList).ConfigureAwait(false);
 
 
             GlobalData.AddTextToLogTab($"{ApiExchangeName} herstarten {tickers.Count} kline tickers (stopped)");
@@ -176,7 +176,7 @@ public abstract class KLineTickerBase(string apiExchangeName, int limitOnSymbols
                 task = Task.Run(tickerNew.StartAsync);
                 taskList.Add(task);
             }
-            await Task.WhenAll(taskList);
+            await Task.WhenAll(taskList).ConfigureAwait(false);
 
             GlobalData.AddTextToLogTab($"{ApiExchangeName} herstarten {tickers.Count} kline tickers (finished)");
         }

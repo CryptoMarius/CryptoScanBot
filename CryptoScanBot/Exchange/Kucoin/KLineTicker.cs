@@ -72,15 +72,16 @@ internal class KLineTicker() : KLineTickerBase(Api.ExchangeName, 1, typeof(KLine
 
         if (taskList.Count != 0)
         {
-            await Task.WhenAll(taskList);
+            await Task.WhenAll(taskList).ConfigureAwait(false);
             GlobalData.AddTextToLogTab($"{Api.ExchangeName} started kline ticker voor {tickersCreated} van de {totalSymbols} symbols");
         }
+        GlobalData.AddTextToLogTab($"{Api.ExchangeName} kline tickers started");
     }
 
 
     public override async Task StopAsync()
     {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} stopping kline ticker");
+        GlobalData.AddTextToLogTab($"{Api.ExchangeName} stopping kline tickers");
         List<Task> taskList = [];
         foreach (var ticker in TickerList)
         {
@@ -88,8 +89,9 @@ internal class KLineTicker() : KLineTickerBase(Api.ExchangeName, 1, typeof(KLine
             taskList.Add(task);
         }
         if (taskList.Count != 0)
-            await Task.WhenAll(taskList);
+            await Task.WhenAll(taskList).ConfigureAwait(false);
         TickerList.Clear();
+        ScannerLog.Logger.Trace($"{ApiExchangeName} kline tickers stopped");
     }
 
 

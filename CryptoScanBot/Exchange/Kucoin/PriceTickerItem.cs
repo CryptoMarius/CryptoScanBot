@@ -62,15 +62,15 @@ public class PriceTickerItem
                         //    File.WriteAllText(filename, text);
                         //}
 
-//#if KUCOINDEBUG
-//                        //Debug
-//                        tickerIndex++;
-//                        long unix = CandleTools.GetUnixTime(tick.Timestamp, 60);
-//                        string filename = GlobalData.GetBaseDir() + $@"\Kucoin\Price-{data.Topic}-1m-{unix}-#{tickerIndex}.json";
-//                        string text = System.Text.Json.JsonSerializer.Serialize(tick, new System.Text.Json.JsonSerializerOptions {
-//                            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true});
-//                        File.WriteAllText(filename, text);
-//#endif
+                        //#if KUCOINDEBUG
+                        //                        //Debug
+                        //                        tickerIndex++;
+                        //                        long unix = CandleTools.GetUnixTime(tick.Timestamp, 60);
+                        //                        string filename = GlobalData.GetBaseDir() + $@"\Kucoin\Price-{data.Topic}-1m-{unix}-#{tickerIndex}.json";
+                        //                        string text = System.Text.Json.JsonSerializer.Serialize(tick, new System.Text.Json.JsonSerializerOptions {
+                        //                            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true});
+                        //                        File.WriteAllText(filename, text);
+                        //#endif
                     }
                 }
 

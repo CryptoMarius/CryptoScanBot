@@ -7,7 +7,7 @@ internal class PriceTicker() : PriceTickerBase()
 {
     static private List<PriceTickerItem> TickerList { get; set; } = [];
 
-    public override async Task Start()
+    public override async Task StartAsync()
     {
         GlobalData.AddTextToLogTab($"{Api.ExchangeName} starting price ticker");
         if (GlobalData.ExchangeListName.TryGetValue(Api.ExchangeName, out Model.CryptoExchange exchange))
@@ -58,15 +58,16 @@ internal class PriceTicker() : PriceTickerBase()
 
             if (taskList.Count != 0)
             {
-                await Task.WhenAll(taskList);
+                await Task.WhenAll(taskList).ConfigureAwait(false);
                 GlobalData.AddTextToLogTab($"{Api.ExchangeName} started price ticker stream for {count} symbols");
             }
         }
+        GlobalData.AddTextToLogTab($"{Api.ExchangeName} price tickers started");
     }
 
 
 
-    public override async Task Stop()
+    public override async Task StopAsync()
     {
         GlobalData.AddTextToLogTab($"{Api.ExchangeName} stopping price ticker");
         List<Task> taskList = [];
@@ -76,7 +77,7 @@ internal class PriceTicker() : PriceTickerBase()
             taskList.Add(task);
         }
         if (taskList.Count != 0)
-            await Task.WhenAll(taskList);
+            await Task.WhenAll(taskList).ConfigureAwait(false);
         TickerList.Clear();
         ScannerLog.Logger.Trace($"{Api.ExchangeName} price tickers stopped");
     }

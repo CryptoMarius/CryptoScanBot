@@ -59,14 +59,13 @@ public class KLineTickerItem(string apiExchangeName, CryptoQuoteData quoteData) 
             {
                 //Er zit tot ongeveer 8 a 10 seconden vertraging is van de exchange tot hier, dat moet ansich genoeg zijn
                 //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} added for processing", data.Data.OpenTime.ToLocalTime(), data.Symbol));
-
                 foreach (BybitKlineUpdate kline in data.Data)
                 {
                     if (kline.Confirm) // Het is een definitieve candle (niet eentje in opbouw)
                         Task.Run(() => { ProcessCandle(data.Topic, kline); });
                 }
-            }, ExchangeHelper.CancellationToken);
-            // .ConfigureAwait(false);
+            }, ExchangeHelper.CancellationToken).ConfigureAwait(false);
+
 
             // Subscribe to network-related stuff
             if (subscriptionResult.Success)

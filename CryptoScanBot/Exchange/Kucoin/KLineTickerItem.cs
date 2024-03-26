@@ -89,7 +89,7 @@ public class KLineTickerItem(string apiExchangeName, CryptoQuoteData quoteData)
                     Monitor.Exit(Symbol.CandleList);
                 }
             });
-        }, ExchangeHelper.CancellationToken);
+        }, ExchangeHelper.CancellationToken).ConfigureAwait(false);
 
         // Subscribe to network-related stuff
         if (subscriptionResult.Success)
