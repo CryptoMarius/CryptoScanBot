@@ -8,6 +8,30 @@ namespace CryptoScanBot.Intern;
 
 public static class CandleTools
 {
+    /*
+
+    Geheugen besparen door alleen het aantal minuten vanaf 2000 (ofzo) te gebruiken
+    Dat scheelt in de candle data en de indexen (die indexen zijn ook smelly)
+    Maar dot kost wel (debug) werk, daar zit ik niet op te wachten.....
+
+    https://stackoverflow.com/questions/249760/how-can-i-convert-a-unix-timestamp-to-datetime-and-vice-versa
+    public Double CreatedEpoch
+    {
+      get
+      {
+        DateTime epoch = new DateTime(1970, 1, 1, 0, 0, 0, 0).ToLocalTime();
+        TimeSpan span = (this.Created.ToLocalTime() - epoch);
+        return span.TotalSeconds;
+      }
+      set
+      {
+        DateTime epoch = new DateTime(1970, 1, 1, 0, 0, 0, 0).ToLocalTime();
+        this.Created = epoch.AddSeconds(value);
+      }
+    }
+
+    */
+
     /// <summary>
     /// Datum's kunnen afrondings problemen veroorzaken (op dit moment niet meer duidelijk waarom dat zo was?)
     /// Het resultaat valt in het opgegeven interval (60, 120, etc)
