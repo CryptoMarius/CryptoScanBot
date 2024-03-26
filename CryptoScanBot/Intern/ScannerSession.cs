@@ -96,14 +96,12 @@ public static void Start(bool sleepAwhile)
     }
 
 
-    public static void Stop()
+    public static async Task StopAsync()
     {
-        //Task.Run(async () => { await ScannerSession.Stop(); }).Wait();
-        //GlobalData.AddTextToLogTab("Debug: ScannerSession.Stop", true);
-        //GlobalData.ApplicationStatus = CryptoApplicationStatus.AppStatusExiting;
         GlobalData.ApplicationStatus = CryptoApplicationStatus.Initializing;
+        ScannerLog.Logger.Trace($"Debug: Request for ticker cancel");
+        ExchangeHelper.CancellationTokenSource.Cancel();
 
-        // pfft, kan er net zo goed een array van maken
 #if TRADEBOT
         TimerCheckPositions.Enabled = false;
 #endif
@@ -114,13 +112,11 @@ public static void Start(bool sleepAwhile)
         TimerShowInformation.Enabled = false;
         TimerSaveCandleData.Enabled = false;
 
-        ExchangeHelper.CancellationTokenSource.Cancel();
 
         Task task;
         List<Task> taskList = [];
 
-        //ThreadTelegramBot.Stop();
-        task = Task.Run(() => { ThreadTelegramBot.Stop(); });
+        task = Task.Run(ThreadTelegramBot.Stop);
         taskList.Add(task);
 
 
@@ -154,14 +150,14 @@ public static void Start(bool sleepAwhile)
         if (ExchangeHelper.PriceTicker != null)
         {
             //await ExchangeHelper.PriceTicker?.Stop();
-            task = Task.Run(async () => { await ExchangeHelper.PriceTicker?.Stop(); });
+            task = Task.Run(() => { ExchangeHelper.PriceTicker?.StopAsync(); });
             taskList.Add(task);
         }
 
         if (ExchangeHelper.KLineTicker != null)
         {
             //await ExchangeHelper.KLineTicker?.StopAsync();
-            task = Task.Run(async () => { await ExchangeHelper.KLineTicker?.StopAsync(); });
+            task = Task.Run(() => { ExchangeHelper.KLineTicker?.StopAsync(); });
             taskList.Add(task);
         }
 
@@ -183,8 +179,8 @@ public static void Start(bool sleepAwhile)
         taskList.Add(task);
 #endif
 
-        task = Task.WhenAll(taskList);
-        task.Wait();
+        await Task.WhenAll(taskList).ConfigureAwait(false);
+        //task.Wait().ConfigureAwait(false);
 
 
         // Vanwege coordinaten formulier
@@ -237,7 +233,7 @@ public static void Start(bool sleepAwhile)
         TimerRestartStreams.InitTimerInterval(1 * 5);
     }
 
-    private static void TimerRestartStreams_Tick(object sender, EventArgs e)
+    private static async void TimerRestartStreams_Tick(object sender, EventArgs e)
     {
         GlobalData.AddTextToLogTab("Debug: ScannerSession.Restart", true);
         GlobalData.AddTextToTelegram("Debug: ScannerSession.Restart");
@@ -249,7 +245,7 @@ public static void Start(bool sleepAwhile)
         //try
         //{
         //CloseScannerSession().Wait();
-        Task.Run(Stop).Wait();
+        await Task.Run(StopAsync).ConfigureAwait(false);   //.Wait();
         Start(true);
         //}
         //finally

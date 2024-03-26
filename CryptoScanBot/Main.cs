@@ -165,6 +165,7 @@ public partial class FrmMain : Form
     private void FrmMain_FormClosing(object sender, FormClosingEventArgs e)
     {
         GlobalData.ApplicationIsClosing = true;
+        AsyncContext.Run(ScannerSession.StopAsync);
     }
 
     private void FrmMain_Shown(object sender, EventArgs e)
@@ -303,7 +304,7 @@ public partial class FrmMain : Form
                 break;
             case PowerModes.Suspend:
                 GlobalData.AddTextToLogTab("PowerMode - Suspend");
-                AsyncContext.Run(ScannerSession.Stop);
+                AsyncContext.Run(ScannerSession.StopAsync);
                 break;
         }
     }
@@ -313,7 +314,7 @@ public partial class FrmMain : Form
     {
         if (disposing)
         {
-            AsyncContext.Run(ScannerSession.Stop);
+            //AsyncContext.Run(ScannerSession.StopAsync);
 
             if (components != null)
             {
@@ -488,7 +489,7 @@ public partial class FrmMain : Form
                     GlobalData.AddTextToLogTab("De exchange is aangepast (reload)!");
                 else if (reloadQuoteChange)
                     GlobalData.AddTextToLogTab("De lijst met quote's is aangepast (reload)!");
-                AsyncContext.Run(ScannerSession.Stop);
+                AsyncContext.Run(ScannerSession.StopAsync);
 
                 GlobalData.Settings.General.Exchange = dialog.NewExchange;
                 GlobalData.Settings.General.ExchangeId = dialog.NewExchange.Id;

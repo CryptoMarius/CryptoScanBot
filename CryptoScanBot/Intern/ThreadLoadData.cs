@@ -477,7 +477,7 @@ public class ThreadLoadData
                 //************************************************************************************
                 // Om het volume per symbol en laatste prijs te achterhalen
                 //************************************************************************************
-                await ExchangeHelper.PriceTicker.Start();
+                await ExchangeHelper.PriceTicker.StartAsync();
 
                 //************************************************************************************
                 // De (ontbrekende) candles downloaden (en de achterstand inhalen, blocking!)
@@ -490,8 +490,7 @@ public class ThreadLoadData
                 //************************************************************************************
                 // Nu we de achterstand ingehaald hebben kunnen/mogen we analyseren (signals maken)
                 //************************************************************************************
-                _ = Task.Run(() => { GlobalData.ThreadMonitorCandle.Execute(); });
-
+                _ = Task.Run(GlobalData.ThreadMonitorCandle.Execute).ConfigureAwait(false);
 
 #if TRADEBOT
                 //************************************************************************************

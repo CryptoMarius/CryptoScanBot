@@ -52,7 +52,7 @@ public class ThreadMonitorCandle
                         Semaphore.Release();
                     }
                 }
-                );
+                ).ConfigureAwait(false);
             }
         }
         catch (OperationCanceledException)

@@ -1884,7 +1884,7 @@ public partial class TestForm : Form
     {
 
 
-        Task.Run(async () =>
+        await Task.Run(() =>
         {
             using SpeechSynthesizer synthesizer = new();
             {
@@ -1896,7 +1896,7 @@ public partial class TestForm : Form
                 synthesizer.Speak("Found a signal for BTCUSDT interval 1m"); // Asynchronous
 
             }
-        }).Wait();
+        }).ConfigureAwait(false);
 
     }
 
@@ -2192,8 +2192,8 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
     }
 
 
-    private async Task BackTest(string algorithm, CryptoSymbol symbol, CryptoInterval interval, CryptoBackConfig config, string baseFolder)
-    {
+    //private async Task BackTest(string algorithm, CryptoSymbol symbol, CryptoInterval interval, CryptoBackConfig config, string baseFolder)
+   // {
         //GlobalData.AddTextToLogTab(string.Format("{0} {1} start---", DateTime.Now.ToLocalTime(), symbol.Name));
 
         //CryptoInterval interval1m = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m).Interval;
@@ -2282,10 +2282,10 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
         //{
         //    Monitor.Exit(Log);
         //}
-    }
+    //}
 
 
-    private void BackTest()
+    private async Task BackTestAsync()
     {
         string algorithm = ""; //string algorithm, 
         Invoke((MethodInvoker)(() => algorithm = comboBox1.Text));
@@ -2456,7 +2456,7 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
                     List<Task> taskList = [];
                     while (taskList.Count < 3)
                     {
-                        Task task = Task.Run(() =>
+                        Task task = Task.Run(async () =>
                         {
                             //BackTest(barometer, queue, interval, config, baseFolder);
                             //private void BackTest(CryptoSymbol barometer, Queue<CryptoSymbol> queue, CryptoInterval interval, CryptoBackConfig config, string baseFolder)
@@ -2486,7 +2486,7 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
                                             }
 
                                             //symbol.TradeList.Clear();
-                                            BackTest(algorithm, symbol, interval, config, baseFolder);
+                                            //await BackTest(algorithm, symbol, interval, config, baseFolder);
                                         }
                                     }
                                 }
@@ -2499,8 +2499,7 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
                         });
                         taskList.Add(task);
                     }
-                    Task t = Task.WhenAll(taskList);
-                    t.Wait();
+                    await Task.WhenAll(taskList).ConfigureAwait(false);
 
 
                     Results.ShowFooter(Log);
@@ -2535,7 +2534,7 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
 
     private void ButtonBackTest_Click(object sender, EventArgs e)
     {
-        Task task = new(new Action(BackTest));
+        Task task = Task.Run(BackTestAsync);
         task.Start();
     }
 

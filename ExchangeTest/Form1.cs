@@ -827,8 +827,7 @@ public partial class Form1 : Form
             //    });
             //    taskList.Add(task);
             //}
-            //Task t = Task.WhenAll(taskList);
-            //t.Wait();
+            //await Task.WhenAll(taskList).ConfigureAwait(false);
 
             // Werkt zoals ik het verwacht! een buy order van ongeveer 1.6 dollar
             var exchangeApi = ExchangeHelper.GetExchangeInstance(GlobalData.Settings.General.ExchangeId);
