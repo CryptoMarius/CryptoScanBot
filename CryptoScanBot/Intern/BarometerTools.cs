@@ -50,7 +50,7 @@ public class BarometerTools
         // Wat is de candle in het vorige interval
         long unixCandlePrev = unixCandleLast - interval.Duration;
 
-        // Ter debug van de intervallen (unix datetime's zijn slecht leesbaar)
+        // Ter debug van de intervallen (unix datetime's zijn niet zo goed leesbaar)
         //DateTime dateCandlePrev = CandleTools.GetUnixDate(unixCandlePrev);
         //DateTime dateCandleLast = CandleTools.GetUnixDate(unixCandleLast);
 
@@ -83,10 +83,9 @@ public class BarometerTools
             barometerPerc = decimal.Round(result, 8);
         }
         else
-            barometerPerc = -99m;
+            barometerPerc = 0m; // Geen -99 want dan is short juist aantrekkelijk..
 
-        // Met 1 munt krijgen we dus een true, mhhhh
-        return coinsMatching > 0;
+        return coinsMatching > 0; // Met 1 munt krijgen we okay, mhhhh geeft een aardig vertekend beeld in dat geval..
     }
 
 
