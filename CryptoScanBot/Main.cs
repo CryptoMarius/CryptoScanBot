@@ -166,6 +166,7 @@ public partial class FrmMain : Form
     {
         GlobalData.ApplicationIsClosing = true;
         AsyncContext.Run(ScannerSession.StopAsync);
+        //await ScannerSession.StopAsync();
     }
 
     private void FrmMain_Shown(object sender, EventArgs e)
@@ -206,7 +207,7 @@ public partial class FrmMain : Form
         PositionsHaveChangedEvent("");
 #endif
 
-        ScannerSession.Start(false);
+        ScannerSession.Start(0);
     }
 
 
@@ -300,7 +301,7 @@ public partial class FrmMain : Form
         {
             case PowerModes.Resume:
                 GlobalData.AddTextToLogTab("PowerMode - Resume");
-                ScannerSession.Start(true);
+                ScannerSession.Start(5000);
                 break;
             case PowerModes.Suspend:
                 GlobalData.AddTextToLogTab("PowerMode - Suspend");
