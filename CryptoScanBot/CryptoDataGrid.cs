@@ -207,14 +207,6 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         CommandHelper.AddCommand(MenuStripHeader, null, "Reset column width (cell)", Command.None, CommandResetColumnWidth1);
         CommandHelper.AddCommand(MenuStripHeader, null, "Reset column width (cell+header)", Command.None, CommandResetColumnWidth2);
 
-        //ToolStripMenuItem item = new()
-        //{
-        //    Text = "Change columns",
-        //    Size = new Size(100, 22),
-        //};
-        //item.Click += CommandAdjustColumns;
-        //MenuStripHeader.Items.Add(item);
-
 
         int count = 0;
         foreach (DataGridViewColumn column in Grid.Columns)
