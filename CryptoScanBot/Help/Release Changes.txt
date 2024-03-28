@@ -1,8 +1,11 @@
 CryptoScanBot release historie:
 
-23-03-2024 1.9.1
-- Scanner - De nieuwe StoRsi gebruikte de SBM/MA lijnen controle, en dat is niet de bedoeling
+xx-03-2024 1.9.1
+- Scanner - De kolom breedte kunnen resetten
+- Scanner - De rowheight van de grids worden niet meer aangepast (standaard hoogte)
 - Scanner - Verbeteringen zodat de scanner sneller opstart en afsluit (is wel trager dan voorheen).
+- Scanner - Bij het afsluiten van de applicatie niet wachten op correct sluiten van de price-, kline en usertickers
+- Scanner - De nieuwe StoRsi gebruikte de SBM/MA lijnen controle, en dat is niet de bedoeling
 - Scanner - Het geheugen loopt geleidelijk op omdat de data voor de barometer niet wordt geschoond
 - Scanner - Aan- of uitzetten van signal bot of geluid via telegram wordt niet door de userinterface opgepikt
 - Scanner - Bybit Futures - De kLine ticker aangepast zodat de niet gestarte kline tickers alsnog worden gestart.
