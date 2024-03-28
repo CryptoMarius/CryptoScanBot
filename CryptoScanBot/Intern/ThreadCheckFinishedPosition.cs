@@ -24,14 +24,10 @@ public class ThreadCheckFinishedPosition
     private readonly CancellationTokenSource cancellationToken = new();
     private readonly BlockingCollection<(CryptoPosition position, string orderId, CryptoOrderStatus? status)> Queue = [];
 
-    public ThreadCheckFinishedPosition()
-    {
-    }
 
     public void Stop()
     {
         cancellationToken.Cancel();
-
         GlobalData.AddTextToLogTab("Stop position check finished handler");
     }
 

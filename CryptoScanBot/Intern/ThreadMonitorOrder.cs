@@ -13,11 +13,6 @@ public class ThreadMonitorOrder
     private readonly BlockingCollection<(CryptoSymbol symbol, CryptoOrderType ordertype, CryptoOrderSide side, CryptoOrderStatus status, CryptoOrder order)> Queue = [];
 
 
-    public ThreadMonitorOrder()
-    {
-    }
-
-
     public void Stop()
     {
         cancellationToken.Cancel();

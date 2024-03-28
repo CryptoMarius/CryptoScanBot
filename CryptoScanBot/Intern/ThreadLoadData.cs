@@ -194,7 +194,7 @@ public class ThreadLoadData
 
 
 
-    public static async Task ExecuteAsync(bool afterRestart)
+    public static async Task ExecuteAsync(bool checkPositions)
     {
         try
         {
@@ -525,7 +525,7 @@ public class ThreadLoadData
                 // Alle data van de exchange monitoren
                 //************************************************************************************
                 if (GlobalData.TradingApi.Key != "")
-                    _ = ExchangeHelper.UserData.Start();
+                    _ = ExchangeHelper.UserData.StartAsync();
 
 
                 //************************************************************************************              
@@ -566,7 +566,7 @@ public class ThreadLoadData
                 //RecalculateLastXCandles(1);
 
 
-                if (!afterRestart)
+                if (!checkPositions)
                 {
 #if TRADEBOT
                     if (GlobalData.BackTest)

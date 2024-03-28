@@ -16,8 +16,7 @@ public static class PositionTools
     public static bool ValidTradeAccount(CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
     {
         // De exchanges moet uiteraard matchen
-        if (symbol.ExchangeId == GlobalData.Settings.General.ExchangeId
-            && tradeAccount.ExchangeId == GlobalData.Settings.General.ExchangeId) 
+        if (symbol.ExchangeId == GlobalData.Settings.General.ExchangeId && tradeAccount.ExchangeId == GlobalData.Settings.General.ExchangeId) 
         {
             // Niet echt super, enumeratie oid hiervoor in het leven roepen, werkt verder wel
             if (tradeAccount.TradeAccountType == CryptoTradeAccountType.BackTest && GlobalData.BackTest)

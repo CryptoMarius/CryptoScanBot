@@ -11,15 +11,9 @@ public class ThreadMonitorCandle
     private readonly CancellationTokenSource cancellationToken = new();
 
 
-    public ThreadMonitorCandle()
-    {
-    }
-
-
     public void Stop()
     {
         cancellationToken.Cancel();
-
         GlobalData.AddTextToLogTab(string.Format("Stop monitor candle"));
     }
 
