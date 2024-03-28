@@ -22,7 +22,7 @@ public class UserDataStream
         if (_subscription == null)
             return; // Task.CompletedTask;
 
-        GlobalData.AddTextToLogTab("Stopping user stream");
+        GlobalData.AddTextToLogTab($"{Api.ExchangeName} Stopping user ticker");
 
         _subscription.Exception -= Exception;
         _subscription.ConnectionLost -= ConnectionLost;

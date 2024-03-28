@@ -114,15 +114,21 @@ public class PriceTickerItem
 
     public async Task StopAsync()
     {
-        if (_subscription == null)
-            return;
+        string GroupName = "";
+        ScannerLog.Logger.Trace($"kline ticker stopping for group {GroupName}");
+        if (_subscription != null)
+        {
+            _subscription.Exception -= Exception;
+            _subscription.ConnectionLost -= ConnectionLost;
+            _subscription.ConnectionRestored -= ConnectionRestored;
 
-        _subscription.Exception -= Exception;
-        _subscription.ConnectionLost -= ConnectionLost;
-        _subscription.ConnectionRestored -= ConnectionRestored;
+            await socketClient?.UnsubscribeAsync(_subscription);
+            _subscription = null;
 
-        await socketClient?.UnsubscribeAsync(_subscription);
-        _subscription = null;
+            socketClient?.Dispose();
+            socketClient = null;
+        }
+        ScannerLog.Logger.Trace($"kline ticker stopped for group {GroupName}");
     }
 
     private void ConnectionLost()

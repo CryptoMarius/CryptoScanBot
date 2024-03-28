@@ -17,7 +17,7 @@ public class UserDataStream
         if (_subscription == null)
             return;
 
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} Stopping user stream");
+        GlobalData.AddTextToLogTab($"{Api.ExchangeName} Stopping user ticker");
 
         _subscription.Exception -= Exception;
         _subscription.ConnectionLost -= ConnectionLost;

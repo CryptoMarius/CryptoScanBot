@@ -13,6 +13,7 @@ public abstract class KLineTickerItemBase(string apiExchangeName, CryptoQuoteDat
     public CryptoQuoteData QuoteData = quoteData;
     public List<string> Symbols = [];
     public string ApiExchangeName = apiExchangeName;
+    public string GroupName = "";
 
     public abstract Task StartAsync();
     public abstract Task StopAsync();

@@ -12,7 +12,7 @@ public abstract class KLineTickerBase(string apiExchangeName, int limitOnSymbols
 
     public virtual async Task StartAsync()
     {
-        GlobalData.AddTextToLogTab($"{ApiExchangeName} starting kline ticker");
+        GlobalData.AddTextToLogTab($"{ApiExchangeName} starting kline tickers");
 
         int groupCount = 0;
         int symbolCount = 0;
@@ -24,20 +24,19 @@ public abstract class KLineTickerBase(string apiExchangeName, int limitOnSymbols
                 List<KLineTickerItemBase> tickers = [];
                 List<CryptoSymbol> symbols = quoteData.SymbolList.ToList();
 
-                // 1 ticker handelt (normaliter) 1..LimitOnSymbols symbols af
-                // Kucoin doet in dit geval moeilijk, een afwijkende api..
+                // 1 ticker handelt (normaliter) 1..X symbols af (met x=LimitOnSymbols)
+                // Kucoin doet als enige moeilijk, daarom daar 1 symbol per ticker.
                 int x = symbols.Count;
                 while (x > 0)
                 {
-                    // 1 ticker handelt 1 tot x kline tickers af
                     KLineTickerItemBase ticker = (KLineTickerItemBase)Activator.CreateInstance(KLineTickerItemType, [ApiExchangeName, quoteData]);
+                    ticker.GroupName = $"{quoteData.Name}#{groupCount}";
                     tickers.Add(ticker);
-
                     x -= LimitOnSymbols;
                     groupCount++;
                 }
 
-                // Symbols evenredig verdelen over de tickers
+                // De symbols evenredig verdelen over de tickers
                 x = 0;
                 foreach (CryptoSymbol symbol in symbols)
                 {
@@ -52,6 +51,7 @@ public abstract class KLineTickerBase(string apiExchangeName, int limitOnSymbols
                 foreach (var ticker in tickers)
                 {
                     TickerList.Add(ticker);
+                    ticker.GroupName += $" ({ticker.Symbols.Count})";
                     Task task = Task.Run(ticker.StartAsync);
                     taskList.Add(task);
                 }
@@ -89,25 +89,28 @@ public abstract class KLineTickerBase(string apiExchangeName, int limitOnSymbols
 
     public virtual async Task StopAsync()
     {
-        GlobalData.AddTextToLogTab($"{ApiExchangeName} stopping kline ticker");
-        List<Task> taskList = [];
-        foreach (var ticker in TickerList)
+        if (TickerList.Count != 0)
         {
-            Task task = Task.Run(ticker.StopAsync);
-            taskList.Add(task);
-        }
-        if (taskList.Count != 0)
+            GlobalData.AddTextToLogTab($"{ApiExchangeName} kline tickers stopping");
+            List<Task> taskList = [];
+            foreach (var ticker in TickerList)
+            {
+                Task task = Task.Run(ticker.StopAsync);
+                taskList.Add(task);
+            }
             await Task.WhenAll(taskList).ConfigureAwait(false);
-        else GlobalData.AddTextToLogTab($"{ApiExchangeName} stopped kline ticker with 0 symbols!");
-        TickerList.Clear();
-        ScannerLog.Logger.Trace($"{ApiExchangeName} kline tickers stopped");
+            ScannerLog.Logger.Trace($"{ApiExchangeName} kline tickers stopped");
+            TickerList.Clear();
+        }
+        else
+            ScannerLog.Logger.Trace($"{ApiExchangeName} kline tickers already stopped");
     }
 
 
     public virtual void Reset()
     {
         foreach (var ticker in TickerList)
-            Interlocked.Exchange(ref ticker.TickerCount, 0); //ticker.TickerCount = 0;
+            Interlocked.Exchange(ref ticker.TickerCount, 0);
     }
 
 
