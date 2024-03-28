@@ -11,9 +11,9 @@ namespace CryptoScanBot.Intern;
 
 public static class ScannerSession
 {
-    // Om te voorkomen dat we de signalen 2x inlezen
     private static bool IsStarted { get; set; } = false;
-    //private static bool HideDisconnectedMessage { get; set; } = false;
+    private static bool IsStartedBefore { get; set; } = false;
+    private static bool IsStopInProgress { get; set; } = false;
 
     // Er zit verschil in de threading aanpak tussen deze timers (wat is dat nu weer?)
 
@@ -22,7 +22,7 @@ public static class ScannerSession
     // Timertje voor de barometer grafiek
     public static readonly System.Timers.Timer TimerShowInformation = new() { Enabled = false };
     // Timertje voor afspelen van heartbeat signaal (zodat bluetooth speaker wakker blijft)
-    public static readonly System.Timers.Timer TimerSoundHeartBeat = new () { Enabled = false };
+    public static readonly System.Timers.Timer TimerSoundHeartBeat = new() { Enabled = false };
     // Iedere zoveel uren de memo clearen (anders wordt het te traag)
     public static readonly System.Timers.Timer TimerClearMemo = new() { Enabled = false };
 
@@ -61,23 +61,28 @@ public static class ScannerSession
 
         TimerGetExchangeInfoAndCandles.Elapsed += TimerGetExchangeInfoAndCandles_Tick;
         GlobalData.SetCandleTimerEnableEvent += new SetCandleTimerEnable(SetCandleTimerEnableHandler);
-}
+    }
 
 
-public static void Start(bool sleepAwhile)
+    public static void Start(int delay)
     {
         GlobalData.AddTextToLogTab("Debug: ScannerSession.Start", true);
-        GlobalData.ApplicationStatus = CryptoApplicationStatus.Initializing;
+        ScannerLog.Logger.Trace($"ScannerSession.Starting");
+        if (!IsStarted)
+        {
+            try
+            {
+                GlobalData.ApplicationStatus = CryptoApplicationStatus.Initializing;
 
-        ExchangeHelper.CancellationTokenSource = new();
-        ExchangeHelper.CancellationToken = ExchangeHelper.CancellationTokenSource.Token;
+                ExchangeHelper.CancellationTokenSource = new();
+                ExchangeHelper.CancellationToken = ExchangeHelper.CancellationTokenSource.Token;
 
-        GlobalData.ThreadMonitorCandle = new ThreadMonitorCandle();
+                GlobalData.ThreadMonitorCandle = new ThreadMonitorCandle();
 #if TRADEBOT
-        GlobalData.ThreadMonitorOrder = new ThreadMonitorOrder();
-        GlobalData.ThreadDoubleCheckPosition = new ThreadCheckFinishedPosition();
-        if (GlobalData.TradingApi.Key != "")
-            _ = ExchangeHelper.UserData.Start();
+                GlobalData.ThreadMonitorOrder = new ThreadMonitorOrder();
+                GlobalData.ThreadDoubleCheckPosition = new ThreadCheckFinishedPosition();
+                if (GlobalData.TradingApi.Key != "")
+                    _ = ExchangeHelper.UserData.StartAsync();
 #endif
 #if BALANCING
         GlobalData.ThreadBalanceSymbols = new ThreadBalanceSymbols();
@@ -85,106 +90,117 @@ public static void Start(bool sleepAwhile)
 #if SQLDATABASE
         GlobalData.TaskSaveCandles = new ThreadSaveCandles();
 #endif
+                // Vanuit hybernate wachten ivm netwerk verbindingen..
+                if (delay > 0)
+                    Thread.Sleep(delay);
 
-        // Iets met netwerk verbindingen wat nog niet "up" is?
-        if (sleepAwhile)
-            Thread.Sleep(5000);
-
-        bool IsStartedCopy = IsStarted;
-        Task.Run(async () => { await ThreadLoadData.ExecuteAsync(IsStartedCopy); });
-        IsStarted = true;
+                // De task start "traag" en dan heeft ie de nieuwe true te pakken
+                bool checkPositions = IsStartedBefore;
+                Task.Run(async () => { await ThreadLoadData.ExecuteAsync(checkPositions); });
+            }
+            finally
+            {
+                IsStarted = true;
+                IsStartedBefore = true;
+            }
+        }
+        ScannerLog.Logger.Trace($"ScannerSession.Started");
     }
 
 
     public static async Task StopAsync()
     {
-        GlobalData.ApplicationStatus = CryptoApplicationStatus.Initializing;
-        ScannerLog.Logger.Trace($"Debug: Request for ticker cancel");
-        ExchangeHelper.CancellationTokenSource.Cancel();
-
-#if TRADEBOT
-        TimerCheckPositions.Enabled = false;
-#endif
-        TimerCheckDataStream.Enabled = false;
-        TimerRestartStreams.Enabled = false;
-        TimerSoundHeartBeat.Enabled = false;
-        TimerGetExchangeInfoAndCandles.Enabled = false;
-        TimerShowInformation.Enabled = false;
-        TimerSaveCandleData.Enabled = false;
-
-
-        Task task;
-        List<Task> taskList = [];
-
-        task = Task.Run(ThreadTelegramBot.Stop);
-        taskList.Add(task);
-
-
-#if TRADEBOT
-        //GlobalData.ThreadMonitorOrder?.Stop();
-        task = Task.Run(() => { GlobalData.ThreadMonitorOrder?.Stop(); });
-        taskList.Add(task);
-
-        //GlobalData.ThreadDoubleCheckPosition?.Stop();
-        task = Task.Run(() => { GlobalData.ThreadDoubleCheckPosition?.Stop(); });
-        taskList.Add(task);
-
-        if (ExchangeHelper.UserData != null)
+        ScannerLog.Logger.Trace($"ScannerSession.Stopping");
+        if (IsStarted && !IsStopInProgress)
         {
-            //await ExchangeHelper.UserData?.Stop();
-            task = Task.Run(async () => { await ExchangeHelper.UserData?.Stop(); });
-            taskList.Add(task);
-        }
+            IsStopInProgress = true;
+            GlobalData.ApplicationStatus = CryptoApplicationStatus.Initializing;
+            try
+            {
+#if TRADEBOT
+                TimerCheckPositions.Enabled = false;
+#endif
+                TimerCheckDataStream.Enabled = false;
+                TimerRestartStreams.Enabled = false;
+                TimerSoundHeartBeat.Enabled = false;
+                TimerGetExchangeInfoAndCandles.Enabled = false;
+                TimerShowInformation.Enabled = false;
+                TimerSaveCandleData.Enabled = false;
+
+                ScannerLog.Logger.Trace($"Debug: Request for ticker cancel");
+                ExchangeHelper.CancellationTokenSource.Cancel();
+
+                Task task;
+                List<Task> taskList = [];
+
+                task = Task.Run(ThreadTelegramBot.Stop);
+                taskList.Add(task);
+
+                //GlobalData.ThreadMonitorCandle?.Stop();
+                task = Task.Run(() => { GlobalData.ThreadMonitorCandle?.Stop(); });
+                taskList.Add(task);
+
+#if TRADEBOT
+                //GlobalData.ThreadMonitorOrder?.Stop();
+                task = Task.Run(() => { GlobalData.ThreadMonitorOrder?.Stop(); });
+                taskList.Add(task);
+
+                //GlobalData.ThreadDoubleCheckPosition?.Stop();
+                task = Task.Run(() => { GlobalData.ThreadDoubleCheckPosition?.Stop(); });
+                taskList.Add(task);
+
+                if (ExchangeHelper.UserData != null && !GlobalData.ApplicationIsClosing)
+                {
+                    task = Task.Run(async () => { await ExchangeHelper.UserData?.StopAsync(); });
+                    taskList.Add(task);
+                }
 #endif
 #if BALANCING
-        //GlobalData.ThreadBalanceSymbols?.Stop();
-        //task = Task.Run(async() => { await GlobalData.ThreadBalanceSymbols?.Stop(); });
-        //taskList.Add(task);
+                //GlobalData.ThreadBalanceSymbols?.Stop();
+                //task = Task.Run(async() => { await GlobalData.ThreadBalanceSymbols?.Stop(); });
+                //taskList.Add(task);
 #endif
 
-        // streams Threads (of tasks)
-        //GlobalData.ThreadMonitorCandle?.Stop();
-        task = Task.Run(() => { GlobalData.ThreadMonitorCandle?.Stop(); });
-        taskList.Add(task);
+                if (ExchangeHelper.KLineTicker != null && !GlobalData.ApplicationIsClosing)
+                {
+                    //await ExchangeHelper.KLineTicker?.StopAsync();
+                    task = Task.Run(() => { ExchangeHelper.KLineTicker?.StopAsync(); });
+                    taskList.Add(task);
+                }
 
-        if (ExchangeHelper.PriceTicker != null)
-        {
-            //await ExchangeHelper.PriceTicker?.Stop();
-            task = Task.Run(() => { ExchangeHelper.PriceTicker?.StopAsync(); });
-            taskList.Add(task);
-        }
-
-        if (ExchangeHelper.KLineTicker != null)
-        {
-            //await ExchangeHelper.KLineTicker?.StopAsync();
-            task = Task.Run(() => { ExchangeHelper.KLineTicker?.StopAsync(); });
-            taskList.Add(task);
-        }
+                if (ExchangeHelper.PriceTicker != null && !GlobalData.ApplicationIsClosing)
+                {
+                    //await ExchangeHelper.PriceTicker?.Stop();
+                    task = Task.Run(() => { ExchangeHelper.PriceTicker?.StopAsync(); });
+                    taskList.Add(task);
+                }
 
 #if SQLDATABASE
-        GlobalData.TaskSaveCandles.Stop();
+                GlobalData.TaskSaveCandles.Stop();
 
-        // En vervolgens alsnog de niet werkte candles bewaren (een nadeel van de lazy write)
-        while (true)
-        {
-            List<CryptoCandle> list = GlobalData.TaskSaveCandles.GetSomeFromQueue();
-            if (list.Any())
-                GlobalData.TaskSaveCandles.SaveQueuedCandles(list);
-            else
-                break;
-        }
+                // En vervolgens alsnog de niet werkte candles bewaren (een nadeel van de lazy write)
+                while (true)
+                {
+                    List<CryptoCandle> list = GlobalData.TaskSaveCandles.GetSomeFromQueue();
+                    if (list.Any())
+                        GlobalData.TaskSaveCandles.SaveQueuedCandles(list);
+                    else
+                        break;
+                }
 #else
-        //DataStore.SaveCandles();
-        task = Task.Run(() => { DataStore.SaveCandles(); });
-        taskList.Add(task);
+                task = Task.Run(() => { DataStore.SaveCandles(); });
+                taskList.Add(task);
 #endif
 
-        await Task.WhenAll(taskList).ConfigureAwait(false);
-        //task.Wait().ConfigureAwait(false);
-
-
-        // Vanwege coordinaten formulier
-        GlobalData.SaveSettings();
+                await Task.WhenAll(taskList).ConfigureAwait(false);
+            }
+            finally
+            {
+                IsStopInProgress = false;
+                IsStarted = false;
+            }
+        }
+        ScannerLog.Logger.Trace($"ScannerSession.Stopped");
     }
 
 
@@ -246,13 +262,13 @@ public static void Start(bool sleepAwhile)
         //{
         //CloseScannerSession().Wait();
         await Task.Run(StopAsync).ConfigureAwait(false);   //.Wait();
-        Start(true);
+        Start(5000);
         //}
         //finally
         //{
-            //lastCandlesKLineCount = 0;
-            //TimerCheckDataStream.InitTimerInterval(5 * 60); // reset interval (back to 5m)
-            //TimerRestartStreams.InitTimerInterval(4 * 60 * 60); // reset interval (back to 4h)
+        //lastCandlesKLineCount = 0;
+        //TimerCheckDataStream.InitTimerInterval(5 * 60); // reset interval (back to 5m)
+        //TimerRestartStreams.InitTimerInterval(4 * 60 * 60); // reset interval (back to 4h)
         //}
     }
 
