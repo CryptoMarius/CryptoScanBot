@@ -56,8 +56,6 @@ public class SettingsGeneral
 
     public SettingsGeneral()
     {
-        ApplyFontSettings = true;
-
         IntervalForMarketTrend.Add("1m");
         IntervalForMarketTrend.Add("2m");
         IntervalForMarketTrend.Add("3m");
