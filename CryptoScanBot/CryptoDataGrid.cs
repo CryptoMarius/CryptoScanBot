@@ -184,7 +184,8 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
 
         // Raised  geeft een mooi kadertje om iedere cell, maar dat is wel erg druk (instelbaar maken?)
         Grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single; // Kader rond de header cells
-        Grid.CellBorderStyle = DataGridViewCellBorderStyle.Single; // .Single; // Sunken;
+        Grid.CellBorderStyle = DataGridViewCellBorderStyle.None; // .Single; // Sunken;
+        Grid.AdvancedCellBorderStyle.All = DataGridViewAdvancedCellBorderStyle.None;
 
         Grid.CellFormatting += CellFormattingEvent;
         Grid.CellValueNeeded += new DataGridViewCellValueEventHandler(GetTextFunction);
@@ -199,16 +200,20 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
 
     }
 
+
     internal void FillColumnPopup()
     {
-        ToolStripMenuItem item = new()
-        {
-            Text = "Change columns",
-            Size = new Size(100, 22),
-        };
-        item.Click += CheckColumn;
-        MenuStripHeader.Items.Add(item);
+        CommandHelper.AddCommand(MenuStripHeader, null, "Add or hide columns", Command.None, CommandAdjustColumns);
+        CommandHelper.AddCommand(MenuStripHeader, null, "Reset column width (cell)", Command.None, CommandResetColumnWidth1);
+        CommandHelper.AddCommand(MenuStripHeader, null, "Reset column width (cell+header)", Command.None, CommandResetColumnWidth2);
 
+        //ToolStripMenuItem item = new()
+        //{
+        //    Text = "Change columns",
+        //    Size = new Size(100, 22),
+        //};
+        //item.Click += CommandAdjustColumns;
+        //MenuStripHeader.Items.Add(item);
 
 
         int count = 0;
@@ -242,6 +247,7 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         Grid.ColumnWidthChanged += ColumnWidthChanged;
     }
 
+
     private void ShowPopupMenu(object sender, MouseEventArgs e)
     {
         if (e.Button != MouseButtons.Right)
@@ -270,7 +276,7 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
             cms.Show(dgv, e.Location);
     }
 
-    private void CheckColumn(object sender, EventArgs e)
+    private void CommandAdjustColumns(object sender, EventArgs e)
     {
         // tijdelijk, debug
         CryptoDataGridColumns f = new();
@@ -279,7 +285,6 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
 
         if (f.DialogResult == DialogResult.OK)
         {
-            // iets..
             foreach (DataGridViewColumn column in Grid.Columns)
             {
                 if (ColumnList.TryGetValue(column.HeaderText, out ColumnSetting columnSetting))
@@ -291,6 +296,21 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
             Grid.Invoke((MethodInvoker)(() => { Grid.Invalidate(); }));
         }
     }
+
+    private void CommandResetColumnWidth1(object sender, EventArgs e)
+    {
+        Grid.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCellsExceptHeader);
+        GlobalData.SaveUserSettings();
+        Grid.Invoke((MethodInvoker)(() => { Grid.Invalidate(); }));
+    }
+
+    private void CommandResetColumnWidth2(object sender, EventArgs e)
+    {
+        Grid.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCells);
+        GlobalData.SaveUserSettings();
+        Grid.Invoke((MethodInvoker)(() => { Grid.Invalidate(); }));
+    }
+
 
     private void ColumnWidthChanged(object sender, DataGridViewColumnEventArgs e)
     {
@@ -401,12 +421,15 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         string text = GlobalData.ExternalUrls.GetTradingAppName(GlobalData.Settings.General.TradingApp, GlobalData.Settings.General.ExchangeName);
         Grid.ContextMenuStrip.Items[0].Text = text;
 
-        // https://learn.microsoft.com/en-us/dotnet/desktop/winforms/advanced/how-to-obtain-font-metrics?view=netframeworkdesktop-4.8
-        var font = new Font(GlobalData.Settings.General.FontNameNew, GlobalData.Settings.General.FontSizeNew);
-        var fontFamily = font.FontFamily;
-        float lineSpacing = fontFamily.GetLineSpacing(FontStyle.Regular);
-        var lineSpacingPixel = font.Size * lineSpacing / fontFamily.GetEmHeight(FontStyle.Regular);
-        Grid.RowTemplate.Height = 8 + (int)Math.Round(lineSpacingPixel, 1, MidpointRounding.AwayFromZero);
+        //if (GlobalData.Settings.General.ApplyFontSettings)
+        //{
+        //    // https://learn.microsoft.com/en-us/dotnet/desktop/winforms/advanced/how-to-obtain-font-metrics?view=netframeworkdesktop-4.8
+        //    var font = new Font(GlobalData.Settings.General.FontNameNew, GlobalData.Settings.General.FontSizeNew);
+        //    var fontFamily = font.FontFamily;
+        //    float lineSpacing = fontFamily.GetLineSpacing(FontStyle.Regular);
+        //    var lineSpacingPixel = font.Size * lineSpacing / fontFamily.GetEmHeight(FontStyle.Regular);
+        //    Grid.RowTemplate.Height = 8 + (int)Math.Round(lineSpacingPixel, 1, MidpointRounding.AwayFromZero);
+        //}
     }
 
     internal static Color GetBackgroudColorForStrategy(CryptoSignalStrategy strategy, CryptoTradeSide side)
