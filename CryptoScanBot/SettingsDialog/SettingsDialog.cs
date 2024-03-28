@@ -107,11 +107,20 @@ public partial class FrmSettings : Form
             GlobalData.Settings.QuoteCoins.Add(quoteData.Name, quoteData);
         }
 
-        int yPos = 40;
+        // Hey, een ouderwetse control, zou eigenlijk meerdere usercontrol moeten zijn die op een flowpanel worden geplaatst... later...
+        int yInc = 0;
+        int yPos = 75;
         foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
         {
             if (quoteData.SymbolList.Count > 0) //|| quoteData.Name.Equals("BTC") || quoteData.Name.Equals("USDT")
-                BaseCoinList.Add(new SettingsQuoteCoin(quoteData, yPos += 26, tabBasismunten.Controls));
+            {
+                var baseCoin = new SettingsQuoteCoin(quoteData, yPos, tabBasismunten.Controls);
+                BaseCoinList.Add(baseCoin);
+
+                if (yInc == 0)
+                    yInc = (int)(baseCoin.MinVolume.Height * 1.2m);
+                yPos += yInc;
+            }
             else
             {
                 quoteData.FetchCandles = false;

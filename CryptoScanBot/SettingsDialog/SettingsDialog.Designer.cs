@@ -162,6 +162,9 @@ partial class FrmSettings
         EditSbmMa200AndMa50Crossing = new CheckBox();
         EditSbmMa200AndMa20Lookback = new NumericUpDown();
         EditSbmMa200AndMa20Crossing = new CheckBox();
+        tabSignalStoRsi = new TabPage();
+        flowLayoutPanel2 = new FlowLayoutPanel();
+        UserControlSettingsSoundAndColorsStoRsi = new SettingsDialog.UserControlSettingsPlaySoundAndColors();
         tabSignalJump = new TabPage();
         flowLayoutPanel8 = new FlowLayoutPanel();
         UserControlSettingsSoundAndColorsJump = new SettingsDialog.UserControlSettingsPlaySoundAndColors();
@@ -238,9 +241,6 @@ partial class FrmSettings
         label49 = new Label();
         toolTip1 = new ToolTip(components);
         colorDialog1 = new ColorDialog();
-        tabSignalStoRsi = new TabPage();
-        flowLayoutPanel2 = new FlowLayoutPanel();
-        UserControlSettingsSoundAndColorsStoRsi = new SettingsDialog.UserControlSettingsPlaySoundAndColors();
         panelButtons.SuspendLayout();
         panelFill.SuspendLayout();
         tabControlMain.SuspendLayout();
@@ -299,6 +299,8 @@ partial class FrmSettings
         ((System.ComponentModel.ISupportInitialize)EditSbmMa50AndMa20Lookback).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditSbmMa200AndMa50Lookback).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditSbmMa200AndMa20Lookback).BeginInit();
+        tabSignalStoRsi.SuspendLayout();
+        flowLayoutPanel2.SuspendLayout();
         tabSignalJump.SuspendLayout();
         flowLayoutPanel8.SuspendLayout();
         groupBox5.SuspendLayout();
@@ -332,8 +334,6 @@ partial class FrmSettings
         panel5.SuspendLayout();
         tabShortBlackList.SuspendLayout();
         panel6.SuspendLayout();
-        tabSignalStoRsi.SuspendLayout();
-        flowLayoutPanel2.SuspendLayout();
         SuspendLayout();
         // 
         // panelButtons
@@ -1865,6 +1865,40 @@ partial class FrmSettings
         EditSbmMa200AndMa20Crossing.Text = "Controleer op een kruising van de ma200 en ma20 in de laatste x candles";
         EditSbmMa200AndMa20Crossing.UseVisualStyleBackColor = true;
         // 
+        // tabSignalStoRsi
+        // 
+        tabSignalStoRsi.Controls.Add(flowLayoutPanel2);
+        tabSignalStoRsi.Location = new Point(4, 27);
+        tabSignalStoRsi.Name = "tabSignalStoRsi";
+        tabSignalStoRsi.Padding = new Padding(3);
+        tabSignalStoRsi.Size = new Size(1126, 605);
+        tabSignalStoRsi.TabIndex = 11;
+        tabSignalStoRsi.Text = "STORSI";
+        tabSignalStoRsi.UseVisualStyleBackColor = true;
+        // 
+        // flowLayoutPanel2
+        // 
+        flowLayoutPanel2.AutoScroll = true;
+        flowLayoutPanel2.AutoSize = true;
+        flowLayoutPanel2.Controls.Add(UserControlSettingsSoundAndColorsStoRsi);
+        flowLayoutPanel2.Dock = DockStyle.Fill;
+        flowLayoutPanel2.FlowDirection = FlowDirection.TopDown;
+        flowLayoutPanel2.Location = new Point(3, 3);
+        flowLayoutPanel2.Name = "flowLayoutPanel2";
+        flowLayoutPanel2.Size = new Size(1120, 599);
+        flowLayoutPanel2.TabIndex = 160;
+        // 
+        // UserControlSettingsSoundAndColorsStoRsi
+        // 
+        UserControlSettingsSoundAndColorsStoRsi.AutoScroll = true;
+        UserControlSettingsSoundAndColorsStoRsi.AutoSize = true;
+        UserControlSettingsSoundAndColorsStoRsi.Location = new Point(0, 0);
+        UserControlSettingsSoundAndColorsStoRsi.Margin = new Padding(0);
+        UserControlSettingsSoundAndColorsStoRsi.Name = "UserControlSettingsSoundAndColorsStoRsi";
+        UserControlSettingsSoundAndColorsStoRsi.Padding = new Padding(10);
+        UserControlSettingsSoundAndColorsStoRsi.Size = new Size(807, 176);
+        UserControlSettingsSoundAndColorsStoRsi.TabIndex = 158;
+        // 
         // tabSignalJump
         // 
         tabSignalJump.Controls.Add(flowLayoutPanel8);
@@ -2697,40 +2731,6 @@ partial class FrmSettings
         label49.TabIndex = 222;
         label49.Text = "(1 munt per regel met een optionele opmerking erachter)";
         // 
-        // tabSignalStoRsi
-        // 
-        tabSignalStoRsi.Controls.Add(flowLayoutPanel2);
-        tabSignalStoRsi.Location = new Point(4, 27);
-        tabSignalStoRsi.Name = "tabSignalStoRsi";
-        tabSignalStoRsi.Padding = new Padding(3);
-        tabSignalStoRsi.Size = new Size(1126, 605);
-        tabSignalStoRsi.TabIndex = 11;
-        tabSignalStoRsi.Text = "STORSI";
-        tabSignalStoRsi.UseVisualStyleBackColor = true;
-        // 
-        // flowLayoutPanel2
-        // 
-        flowLayoutPanel2.AutoScroll = true;
-        flowLayoutPanel2.AutoSize = true;
-        flowLayoutPanel2.Controls.Add(UserControlSettingsSoundAndColorsStoRsi);
-        flowLayoutPanel2.Dock = DockStyle.Fill;
-        flowLayoutPanel2.FlowDirection = FlowDirection.TopDown;
-        flowLayoutPanel2.Location = new Point(3, 3);
-        flowLayoutPanel2.Name = "flowLayoutPanel2";
-        flowLayoutPanel2.Size = new Size(1120, 599);
-        flowLayoutPanel2.TabIndex = 160;
-        // 
-        // UserControlSettingsSoundAndColorsStoRsi
-        // 
-        UserControlSettingsSoundAndColorsStoRsi.AutoScroll = true;
-        UserControlSettingsSoundAndColorsStoRsi.AutoSize = true;
-        UserControlSettingsSoundAndColorsStoRsi.Location = new Point(0, 0);
-        UserControlSettingsSoundAndColorsStoRsi.Margin = new Padding(0);
-        UserControlSettingsSoundAndColorsStoRsi.Name = "UserControlSettingsSoundAndColorsStoRsi";
-        UserControlSettingsSoundAndColorsStoRsi.Padding = new Padding(10);
-        UserControlSettingsSoundAndColorsStoRsi.Size = new Size(807, 176);
-        UserControlSettingsSoundAndColorsStoRsi.TabIndex = 158;
-        // 
         // FrmSettings
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
@@ -2816,6 +2816,10 @@ partial class FrmSettings
         ((System.ComponentModel.ISupportInitialize)EditSbmMa50AndMa20Lookback).EndInit();
         ((System.ComponentModel.ISupportInitialize)EditSbmMa200AndMa50Lookback).EndInit();
         ((System.ComponentModel.ISupportInitialize)EditSbmMa200AndMa20Lookback).EndInit();
+        tabSignalStoRsi.ResumeLayout(false);
+        tabSignalStoRsi.PerformLayout();
+        flowLayoutPanel2.ResumeLayout(false);
+        flowLayoutPanel2.PerformLayout();
         tabSignalJump.ResumeLayout(false);
         tabSignalJump.PerformLayout();
         flowLayoutPanel8.ResumeLayout(false);
@@ -2869,10 +2873,6 @@ partial class FrmSettings
         tabShortBlackList.PerformLayout();
         panel6.ResumeLayout(false);
         panel6.PerformLayout();
-        tabSignalStoRsi.ResumeLayout(false);
-        tabSignalStoRsi.PerformLayout();
-        flowLayoutPanel2.ResumeLayout(false);
-        flowLayoutPanel2.PerformLayout();
         ResumeLayout(false);
     }
 
