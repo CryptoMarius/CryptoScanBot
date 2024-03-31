@@ -46,7 +46,7 @@ internal class PriceTicker() : PriceTickerBase()
 
                         // opvullen tot circa 150 coins?
                         //ExchangeStream1mCandles.Add(bybitStream1mCandles);
-                        //await bybitStream1mCandles.StartAsync(); // bewust geen await
+                        //await bybitStream1mCandles.StartAsync();
 
                         //await TaskBybitStreamPriceTicker.ExecuteAsync(symbolNames);
 
