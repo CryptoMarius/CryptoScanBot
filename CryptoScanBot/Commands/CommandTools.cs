@@ -107,7 +107,11 @@ public class CommandTools
                 //   new CommandCopySignalInfo().Execute(sender);
                 //    break;
                 case Command.ActivateTradingApp:
-                    LinkTools.ActivateTradingApp(GlobalData.Settings.General.TradingApp, symbol, interval, CryptoExternalUrlType.External);
+                    CryptoExternalUrlType tradingAppInternExtern = CryptoExternalUrlType.External;
+                    // Voor Altrady en Hypertrader werkt dit kunstje natuurlijk niet
+                    if (GlobalData.Settings.General.TradingApp == CryptoTradingApp.TradingView || GlobalData.Settings.General.TradingApp == CryptoTradingApp.ExchangeUrl)
+                        tradingAppInternExtern = GlobalData.Settings.General.TradingAppInternExtern;
+                    LinkTools.ActivateTradingApp(GlobalData.Settings.General.TradingApp, symbol, interval, tradingAppInternExtern);
                     break;
                 case Command.ActivateTradingviewIntern:
                     LinkTools.ActivateTradingApp(CryptoTradingApp.TradingView, symbol, interval, CryptoExternalUrlType.Internal);

@@ -40,6 +40,8 @@ partial class FrmSettings
         tabAlgemeen = new TabPage();
         flowLayoutPanel5 = new FlowLayoutPanel();
         groupBox1 = new GroupBox();
+        label15 = new Label();
+        EditActivateExchangeInternExtern = new ComboBox();
         groupBoxStoch = new GroupBox();
         EditStochValueOversold = new NumericUpDown();
         label88 = new Label();
@@ -457,6 +459,8 @@ partial class FrmSettings
         // groupBox1
         // 
         groupBox1.AutoSize = true;
+        groupBox1.Controls.Add(label15);
+        groupBox1.Controls.Add(EditActivateExchangeInternExtern);
         groupBox1.Controls.Add(groupBoxStoch);
         groupBox1.Controls.Add(groupBoxRsi);
         groupBox1.Controls.Add(EditExtraCaption);
@@ -481,10 +485,31 @@ partial class FrmSettings
         groupBox1.Margin = new Padding(10);
         groupBox1.Name = "groupBox1";
         groupBox1.Padding = new Padding(10);
-        groupBox1.Size = new Size(631, 378);
+        groupBox1.Size = new Size(631, 401);
         groupBox1.TabIndex = 249;
         groupBox1.TabStop = false;
         groupBox1.Text = "Algemeen";
+        // 
+        // label15
+        // 
+        label15.AutoSize = true;
+        label15.Location = new Point(5, 152);
+        label15.Margin = new Padding(4, 0, 4, 0);
+        label15.Name = "label15";
+        label15.Size = new Size(139, 15);
+        label15.TabIndex = 287;
+        label15.Text = "Intern of extern activeren";
+        // 
+        // EditActivateExchangeInternExtern
+        // 
+        EditActivateExchangeInternExtern.DropDownStyle = ComboBoxStyle.DropDownList;
+        EditActivateExchangeInternExtern.FormattingEnabled = true;
+        EditActivateExchangeInternExtern.Items.AddRange(new object[] { "Internal browser", "External browser" });
+        EditActivateExchangeInternExtern.Location = new Point(153, 147);
+        EditActivateExchangeInternExtern.Margin = new Padding(4, 3, 4, 3);
+        EditActivateExchangeInternExtern.Name = "EditActivateExchangeInternExtern";
+        EditActivateExchangeInternExtern.Size = new Size(190, 23);
+        EditActivateExchangeInternExtern.TabIndex = 286;
         // 
         // groupBoxStoch
         // 
@@ -613,7 +638,7 @@ partial class FrmSettings
         // EditHideSymbolsOnTheLeft
         // 
         EditHideSymbolsOnTheLeft.AutoSize = true;
-        EditHideSymbolsOnTheLeft.Location = new Point(12, 272);
+        EditHideSymbolsOnTheLeft.Location = new Point(12, 295);
         EditHideSymbolsOnTheLeft.Margin = new Padding(4, 3, 4, 3);
         EditHideSymbolsOnTheLeft.Name = "EditHideSymbolsOnTheLeft";
         EditHideSymbolsOnTheLeft.Size = new Size(182, 19);
@@ -636,7 +661,7 @@ partial class FrmSettings
         EditActivateExchange.DropDownStyle = ComboBoxStyle.DropDownList;
         EditActivateExchange.FormattingEnabled = true;
         EditActivateExchange.Items.AddRange(new object[] { "De actieve exchange", "Binance", "Bybit Spot", "Bybit Futures", "Kucoin" });
-        EditActivateExchange.Location = new Point(155, 89);
+        EditActivateExchange.Location = new Point(153, 89);
         EditActivateExchange.Margin = new Padding(4, 3, 4, 3);
         EditActivateExchange.Name = "EditActivateExchange";
         EditActivateExchange.Size = new Size(190, 23);
@@ -645,7 +670,7 @@ partial class FrmSettings
         // EditShowInvalidSignals
         // 
         EditShowInvalidSignals.AutoSize = true;
-        EditShowInvalidSignals.Location = new Point(12, 245);
+        EditShowInvalidSignals.Location = new Point(12, 268);
         EditShowInvalidSignals.Margin = new Padding(4, 3, 4, 3);
         EditShowInvalidSignals.Name = "EditShowInvalidSignals";
         EditShowInvalidSignals.Size = new Size(175, 19);
@@ -667,7 +692,7 @@ partial class FrmSettings
         // 
         EditExchange.DropDownStyle = ComboBoxStyle.DropDownList;
         EditExchange.FormattingEnabled = true;
-        EditExchange.Location = new Point(154, 60);
+        EditExchange.Location = new Point(153, 60);
         EditExchange.Margin = new Padding(4, 3, 4, 3);
         EditExchange.Name = "EditExchange";
         EditExchange.Size = new Size(190, 23);
@@ -676,7 +701,7 @@ partial class FrmSettings
         // label16
         // 
         label16.AutoSize = true;
-        label16.Location = new Point(9, 212);
+        label16.Location = new Point(9, 235);
         label16.Margin = new Padding(4, 0, 4, 0);
         label16.Name = "label16";
         label16.Size = new Size(263, 15);
@@ -685,7 +710,7 @@ partial class FrmSettings
         // 
         // EditGetCandleInterval
         // 
-        EditGetCandleInterval.Location = new Point(289, 209);
+        EditGetCandleInterval.Location = new Point(289, 232);
         EditGetCandleInterval.Margin = new Padding(4, 3, 4, 3);
         EditGetCandleInterval.Maximum = new decimal(new int[] { 300, 0, 0, 0 });
         EditGetCandleInterval.Name = "EditGetCandleInterval";
@@ -696,7 +721,7 @@ partial class FrmSettings
         // label6
         // 
         label6.AutoSize = true;
-        label6.Location = new Point(9, 187);
+        label6.Location = new Point(9, 210);
         label6.Margin = new Padding(4, 0, 4, 0);
         label6.Name = "label6";
         label6.Size = new Size(186, 15);
@@ -705,7 +730,7 @@ partial class FrmSettings
         // 
         // EditGlobalDataRemoveSignalAfterxCandles
         // 
-        EditGlobalDataRemoveSignalAfterxCandles.Location = new Point(289, 183);
+        EditGlobalDataRemoveSignalAfterxCandles.Location = new Point(289, 206);
         EditGlobalDataRemoveSignalAfterxCandles.Margin = new Padding(4, 3, 4, 3);
         EditGlobalDataRemoveSignalAfterxCandles.Maximum = new decimal(new int[] { 60, 0, 0, 0 });
         EditGlobalDataRemoveSignalAfterxCandles.Minimum = new decimal(new int[] { 2, 0, 0, 0 });
@@ -718,7 +743,7 @@ partial class FrmSettings
         // EditBlackTheming
         // 
         EditBlackTheming.AutoSize = true;
-        EditBlackTheming.Location = new Point(12, 330);
+        EditBlackTheming.Location = new Point(12, 353);
         EditBlackTheming.Margin = new Padding(4, 3, 4, 3);
         EditBlackTheming.Name = "EditBlackTheming";
         EditBlackTheming.Size = new Size(84, 19);
@@ -728,7 +753,7 @@ partial class FrmSettings
         // 
         // buttonFontDialog
         // 
-        buttonFontDialog.Location = new Point(9, 296);
+        buttonFontDialog.Location = new Point(9, 319);
         buttonFontDialog.Margin = new Padding(4, 3, 4, 3);
         buttonFontDialog.Name = "buttonFontDialog";
         buttonFontDialog.Size = new Size(139, 27);
@@ -739,7 +764,7 @@ partial class FrmSettings
         // label18
         // 
         label18.AutoSize = true;
-        label18.Location = new Point(9, 160);
+        label18.Location = new Point(9, 183);
         label18.Margin = new Padding(4, 0, 4, 0);
         label18.Name = "label18";
         label18.Size = new Size(257, 15);
@@ -748,7 +773,7 @@ partial class FrmSettings
         // 
         // EditSoundHeartBeatMinutes
         // 
-        EditSoundHeartBeatMinutes.Location = new Point(289, 157);
+        EditSoundHeartBeatMinutes.Location = new Point(289, 180);
         EditSoundHeartBeatMinutes.Margin = new Padding(4, 3, 4, 3);
         EditSoundHeartBeatMinutes.Maximum = new decimal(new int[] { 60, 0, 0, 0 });
         EditSoundHeartBeatMinutes.Name = "EditSoundHeartBeatMinutes";
@@ -771,7 +796,7 @@ partial class FrmSettings
         EditTradingApp.DropDownStyle = ComboBoxStyle.DropDownList;
         EditTradingApp.FormattingEnabled = true;
         EditTradingApp.Items.AddRange(new object[] { "Altrady", "Hypertrader", "TradingView", "Via de exchange" });
-        EditTradingApp.Location = new Point(155, 118);
+        EditTradingApp.Location = new Point(153, 118);
         EditTradingApp.Margin = new Padding(4, 3, 4, 3);
         EditTradingApp.Name = "EditTradingApp";
         EditTradingApp.Size = new Size(190, 23);
@@ -781,7 +806,7 @@ partial class FrmSettings
         // 
         UserControlTelegram.AutoScroll = true;
         UserControlTelegram.AutoSize = true;
-        UserControlTelegram.Location = new Point(3, 401);
+        UserControlTelegram.Location = new Point(3, 424);
         UserControlTelegram.Name = "UserControlTelegram";
         UserControlTelegram.Padding = new Padding(10);
         UserControlTelegram.Size = new Size(451, 180);
@@ -3089,4 +3114,6 @@ partial class FrmSettings
     private TabPage tabSignalStoRsi;
     private FlowLayoutPanel flowLayoutPanel2;
     private SettingsDialog.UserControlSettingsPlaySoundAndColors UserControlSettingsSoundAndColorsStoRsi;
+    private Label label15;
+    private ComboBox EditActivateExchangeInternExtern;
 }

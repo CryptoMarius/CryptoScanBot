@@ -22,9 +22,9 @@ public class SettingsGeneral
     [JsonIgnore]
     public virtual Model.CryptoExchange Exchange { get; set; }
 
-
     public bool BlackTheming { get; set; } = false;
     public CryptoTradingApp TradingApp { get; set; } = CryptoTradingApp.Altrady;
+    public CryptoExternalUrlType TradingAppInternExtern { get; set; } = CryptoExternalUrlType.External;
     public int ActivateExchange { get; set; } = 0;
     public bool SoundTradeNotification { get; set; }
     public string SelectedBarometerQuote { get; set; } = "USDT";
