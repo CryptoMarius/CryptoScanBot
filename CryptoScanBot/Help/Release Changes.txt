@@ -2,6 +2,7 @@ CryptoScanBot release historie:
 
 xx-03-2024 1.9.1
 - Scanner - De kolom breedte kunnen resetten
+- Scanner - Nieuwe optie om Tradingview of de exchange in de interne browser te openen
 - Scanner - De rowheight van de grids worden niet meer aangepast (standaard hoogte)
 - Scanner - Verbeteringen zodat de scanner sneller opstart en afsluit (is wel trager dan voorheen).
 - Scanner - Bij het afsluiten van de applicatie niet wachten op correct sluiten van de price-, kline en usertickers
