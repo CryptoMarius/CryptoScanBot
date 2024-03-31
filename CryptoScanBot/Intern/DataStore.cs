@@ -137,56 +137,73 @@ public class DataStore
             {
                 CryptoSymbol symbol = exchange.SymbolListName.Values[i];
                 string dirSymbol = dirExchange + symbol.Quote.ToLower() + @"\";
-
-                // Verwijder het bestand indien niet relevant of niet actief
-                string filename = dirSymbol + symbol.Base.ToLower(); // + ".json.bin";
-                if (!symbol.IsBarometerSymbol() && (!symbol.QuoteData.FetchCandles || !symbol.IsSpotTradingAllowed))
+                try
                 {
-                    //if (File.Exists(filename))
-                    //    File.Delete(filename);
-                    continue;
-                }
 
-                long count = 0;
-                foreach (CryptoSymbolInterval cryptoSymbolInterval in symbol.IntervalPeriodList)
-                    count += cryptoSymbolInterval.CandleList.Count;
-
-                if (count > 0)
-                {
-                    using var memoryStream = new MemoryStream(1024 * 1024);
-                    using BinaryWriter binaryWriter = new(memoryStream, Encoding.UTF8, false);
-                    int version = 1; // Even teruggezet
-
-                    // Iets met een version
-                    binaryWriter.Write(version);
-                    binaryWriter.Write(symbol.Name);
-
-                    foreach (CryptoSymbolInterval symbolInterval in symbol.IntervalPeriodList)
+                    // Verwijder het bestand indien niet relevant of niet actief
+                    string filename = dirSymbol + symbol.Base.ToLower(); // + ".json.bin";
+                    if (!symbol.IsBarometerSymbol() && (!symbol.QuoteData.FetchCandles || !symbol.IsSpotTradingAllowed))
                     {
-                        binaryWriter.Write((int)symbolInterval.Interval.IntervalPeriod);
-                        if (symbolInterval.LastCandleSynchronized.HasValue)
-                            binaryWriter.Write((long)symbolInterval.LastCandleSynchronized); // int64
-                        else
-                            binaryWriter.Write((long)0); // int64
+                        //if (File.Exists(filename))
+                        //    File.Delete(filename);
+                        continue;
+                    }
 
-                        binaryWriter.Write(symbolInterval.CandleList.Count);
+                    long count = 0;
+                    foreach (CryptoSymbolInterval cryptoSymbolInterval in symbol.IntervalPeriodList)
+                        count += cryptoSymbolInterval.CandleList.Count;
 
-                        for (int j = 0; j < symbolInterval.CandleList.Count; j++)
+                    if (count > 0)
+                    {
+                        using (var memoryStream = new MemoryStream(2 * 1024 * 1024))
                         {
-                            CryptoCandle candle = symbolInterval.CandleList.Values[j];
-                            binaryWriter.Write(candle.OpenTime);
-                            binaryWriter.Write(candle.Open);
-                            binaryWriter.Write(candle.High);
-                            binaryWriter.Write(candle.Low);
-                            binaryWriter.Write(candle.Close);
-                            binaryWriter.Write(candle.Volume);
+                            using (BinaryWriter binaryWriter = new(memoryStream, Encoding.UTF8, false))
+                            {
+                                int version = 1; // Even teruggezet
+
+                                // Iets met een version
+                                binaryWriter.Write(version);
+                                binaryWriter.Write(symbol.Name);
+
+                                foreach (CryptoSymbolInterval symbolInterval in symbol.IntervalPeriodList)
+                                {
+                                    binaryWriter.Write((int)symbolInterval.Interval.IntervalPeriod);
+                                    if (symbolInterval.LastCandleSynchronized.HasValue)
+                                        binaryWriter.Write((long)symbolInterval.LastCandleSynchronized); // int64
+                                    else
+                                        binaryWriter.Write((long)0); // int64
+
+                                    binaryWriter.Write(symbolInterval.CandleList.Count);
+
+                                    for (int j = 0; j < symbolInterval.CandleList.Count; j++)
+                                    {
+                                        CryptoCandle candle = symbolInterval.CandleList.Values[j];
+                                        binaryWriter.Write(candle.OpenTime);
+                                        binaryWriter.Write(candle.Open);
+                                        binaryWriter.Write(candle.High);
+                                        binaryWriter.Write(candle.Low);
+                                        binaryWriter.Write(candle.Close);
+                                        binaryWriter.Write(candle.Volume);
+                                    }
+                                }
+                                Directory.CreateDirectory(dirSymbol);
+                                using (FileStream writeStream = new(filename, FileMode.Create))
+                                {
+                                    memoryStream.Position = 0;
+                                    memoryStream.CopyTo(writeStream);
+                                    writeStream.Close();
+                                }
+                                binaryWriter.Close();
+                            }
+                            memoryStream.Close();
                         }
                     }
-                    Directory.CreateDirectory(dirSymbol);
-                    using FileStream writeStream = new(filename, FileMode.Create);
-                    memoryStream.Position = 0;
-                    memoryStream.CopyTo(writeStream);
-                    writeStream.Close();
+                }
+                catch (Exception error)
+                {
+                    GlobalData.AddTextToLogTab("Problem " + symbol.Name);
+                    ScannerLog.Logger.Error(error, "");
+                    GlobalData.AddTextToLogTab(error.ToString() + "\r\n");
                 }
             }
         }
