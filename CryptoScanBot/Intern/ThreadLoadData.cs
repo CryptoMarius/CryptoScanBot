@@ -509,32 +509,29 @@ public class ThreadLoadData
 
 
 
-#if BALANCING
-                //************************************************************************************
-                // Nu we de achterstand ingehaald hebben kunnen/mogen we balancen
-                //************************************************************************************
-                if (GlobalData.Settings.ApiKey != "")
+                if (GlobalData.TradingApi.Key != "")
                 {
+#if BALANCING
+                    //************************************************************************************
+                    // Nu we de achterstand ingehaald hebben kunnen/mogen we balancen
+                    //************************************************************************************
                     GlobalData.AddTextToLogTab("Starting task for balancing assets");
                     _ = Task.Run(async () => { await GlobalData.ThreadBalanceSymbols.ExecuteAsync(); });
-                }
 #endif
 
 
-                //************************************************************************************
-                // Alle data van de exchange monitoren
-                //************************************************************************************
-                if (GlobalData.TradingApi.Key != "")
+                    //************************************************************************************
+                    // Alle data van de exchange monitoren
+                    //************************************************************************************
                     _ = ExchangeHelper.UserData.StartAsync();
 
 
-                //************************************************************************************              
-                // De assets van de exchange halen (overlappend met exchange monitoring om niets te missen)
-                // Via een event worden de assets in de userinterface gezet (dat duurt even)
-                //************************************************************************************
-                if (GlobalData.TradingApi.Key != "")
+                    //************************************************************************************              
+                    // De assets van de exchange halen (overlappend met exchange monitoring om niets te missen)
+                    // Via een event worden de assets in de userinterface gezet (dat duurt even)
+                    //************************************************************************************
                     await ExchangeHelper.GetAssetsForAccountAsync(GlobalData.ExchangeRealTradeAccount);
-
+                }
 
                 // Toon de ingelezen posities
                 //GlobalData.PositionsHaveChanged("");
