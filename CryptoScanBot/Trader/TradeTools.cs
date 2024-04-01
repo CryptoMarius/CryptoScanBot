@@ -144,7 +144,6 @@ public class TradeTools
                     }
                     else if (step.Side == takeProfitOrderSide)
                     {
-                        //tradeCount++;
                         part.Quantity -= step.QuantityFilled;
                         part.QuantityTakeProfit += step.QuantityFilled;
                         part.Returned += step.QuoteQuantityFilled;
@@ -153,17 +152,20 @@ public class TradeTools
                         if (step.CommissionAsset != null && step.CommissionAsset == position.Symbol.Base)
                             part.Quantity -= step.CommissionQuote;
                     }
+                    // De berekende kosten
                     part.Commission += step.Commission;
                     part.CommissionBase += step.CommissionBase;
                     part.CommissionQuote += step.CommissionQuote;
                 }
                 else if (step.Status == CryptoOrderStatus.New || step.Status == CryptoOrderStatus.PartiallyFilled)
                 {
+                    // Blijft een constante totdat de order gevuld is
                     decimal value = step.Price * step.Quantity;
                     step.Commission = (decimal)position.Exchange.FeeRate * value / 100m; // Estimated commission in quote
 
                     part.Commission += step.Commission;
-                    part.Reserved += value;
+                    if (step.Side == entryOrderSide)
+                        part.Reserved += value;
                 }
                 part.RemainingDust += step.RemainingDust;
 
@@ -172,7 +174,7 @@ public class TradeTools
                 //GlobalData.AddTextToLogTab(s);
             }
 
-            // Rekening houden met de toekomstige kosten van de sell orders (zie reserved hierboven)
+            // Rekening houden met de toekomstige kosten van de sell orders (is reeds gecorrigeerd, zie new/partial en reserved hierboven)
             //if (tradeCount == 0 && !part.CloseTime.HasValue)
             //    part.Commission *= 2;
 
@@ -690,13 +692,13 @@ public class TradeTools
     /// <summary>
     /// Bepaal het entry bedrag 
     /// </summary>
-    public static decimal GetEntryAmount(CryptoSymbol symbol, decimal currentAssetQuantity, CryptoTradeAccountType tradeAccountType)
+    public static decimal GetEntryAmount(CryptoSymbol symbol, decimal quoteAssetQuantity, CryptoTradeAccountType tradeAccountType)
     {
-        // TODO Er is geen percentage bij papertrading mogelijk (of we moeten een werkende papertrade asset management implementeren)
+        // Opmerking: Er is geen percentage bij papertrading mogelijk (of we moeten een werkende papertrade asset management implementeren)
 
         // Heeft de gebruiker een percentage of een aantal ingegeven?
         if (tradeAccountType == CryptoTradeAccountType.RealTrading && symbol.QuoteData.EntryPercentage > 0m)
-            return symbol.QuoteData.EntryPercentage * currentAssetQuantity / 100;
+            return symbol.QuoteData.EntryPercentage * quoteAssetQuantity / 100;
         else
             return symbol.QuoteData.EntryAmount;
     }
