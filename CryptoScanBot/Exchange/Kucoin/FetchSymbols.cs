@@ -61,8 +61,8 @@ public class FetchSymbols
                     throw new ExchangeException("Geen exchange data ontvangen (1)");
                 if (!exchangeInfo.Success)
                     GlobalData.AddTextToLogTab("error getting exchangeinfo " + exchangeInfo.Error + "\r\n");
-                if (exchangeInfo.Data == null)
-                    throw new ExchangeException("Geen exchange data ontvangen (2)");
+                //if (exchangeInfo.Data == null)
+                //    throw new ExchangeException($"Geen exchange data ontvangen (2) {exchangeInfo.Error}");
 
                 // Bewaren voor debug werkzaamheden
                 {
@@ -107,8 +107,8 @@ public class FetchSymbols
                     throw new ExchangeException("Geen symbol ticker data ontvangen (1)");
                 if (!tickersInfos.Success)
                     GlobalData.AddTextToLogTab("error getting symbol ticker " + tickersInfos.Error + "\r\n");
-                if (tickersInfos.Data == null)
-                    throw new ExchangeException("Geen symbol ticker data ontvangen (2)");
+                //if (tickersInfos.Data == null)
+                //    throw new ExchangeException("Geen symbol ticker data ontvangen (2)");
 
                 // Bewaren voor debug werkzaamheden
                 {string filename = GlobalData.GetBaseDir();
@@ -123,12 +123,12 @@ public class FetchSymbols
 
 
                 // Om achteraf de niet aangeboden munten te deactiveren
-                SortedList<string, CryptoSymbol> activeSymbols = new();
+                SortedList<string, CryptoSymbol> activeSymbols = [];
 
 
                 using (var transaction = database.BeginTransaction())
                 {
-                    List<CryptoSymbol> cache = new();
+                    List<CryptoSymbol> cache = [];
                     try
                     {
                         foreach (var symbolData in exchangeInfo.Data)
