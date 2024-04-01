@@ -640,7 +640,7 @@ public class CryptoDatabase : IDisposable
                  "Id integer primary key autoincrement not null," +
                  "LastTimeFetched TEXT NULL," +
                  "Name TEXT not NULL," +
-                 "FeeRate TEXT" +
+                 "FeeRate TEXT not NULL" +
             ")");
             connection.Connection.Execute("CREATE INDEX IdxExchangeId ON Exchange(Id)");
             connection.Connection.Execute("CREATE INDEX IdxExchangeName ON Exchange(Name)");
@@ -649,7 +649,7 @@ public class CryptoDatabase : IDisposable
             // De ondersteunde exchanges toevoegen
             // NB: In de code wordt aannames van de ID gedaan dus gaarne niet knutselen met volgorde
             using var transaction = connection.Connection.BeginTransaction();
-            Model.CryptoExchange exchange = new() { Name = "Binance" };
+            Model.CryptoExchange exchange = new() { Name = "Binance", FeeRate = 0.1m };
             connection.Connection.Insert(exchange, transaction);
 
             exchange = new() { Name = "Bybit Spot", FeeRate =0.1m};
