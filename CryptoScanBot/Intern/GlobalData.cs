@@ -42,7 +42,7 @@ public class BarometerData
 
 static public class GlobalData
 {
-    public const string AppName = "CryptoScanBot";
+    static public string AppName { get; set; } = "CryptoScanBot";
 
     static public bool ApplicationIsShowed { get; set; } = false;
     static public bool ApplicationIsClosing { get; set; } = false;
@@ -752,6 +752,8 @@ static public class GlobalData
 
     static public void AddTextToTelegram(string text, CryptoPosition position)
     {
+        if (LogToTelegram == null)
+            return;
         try
         {
             if (position != null)
@@ -779,7 +781,7 @@ static public class GlobalData
 
     static public void AddTextToLogTab(string text, bool extraLineFeed = false)
     {
-        LogToLogTabEvent(text, extraLineFeed);
+        LogToLogTabEvent?.Invoke(text, extraLineFeed);
     }
 
 
@@ -812,27 +814,26 @@ static public class GlobalData
         SetCandleTimerEnableEvent(value);
     }
 
-    static bool IsInitialized = false;
+    static string AppDataFolder = "";
 
 
     static public string GetBaseDir()
     {
-        ApplicationParams.InitApplicationOptions();
-        string appDataFolder = ApplicationParams.Options.AppDataFolder;
-        if (appDataFolder == null | appDataFolder == "")
-            appDataFolder = AppName;
-
-        string baseFolder = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        appDataFolder = Path.Combine(baseFolder, appDataFolder);
-
-
-        if (!IsInitialized)
+        if (AppDataFolder == "")
         {
-            IsInitialized = true;
-            Directory.CreateDirectory(appDataFolder);
+            ApplicationParams.InitApplicationOptions();
+            AppDataFolder = ApplicationParams.Options?.AppDataFolder;
+            if (AppDataFolder == null || AppDataFolder == "")
+                AppDataFolder = AppName;
+
+            string baseFolder = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            AppDataFolder = Path.Combine(baseFolder, AppDataFolder);
+
+            Directory.CreateDirectory(AppDataFolder);
+            AppDataFolder += @"\";
         }
 
-        return appDataFolder + @"\";
+        return AppDataFolder;
     }
 
 
