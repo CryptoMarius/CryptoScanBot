@@ -9,19 +9,16 @@ public class ScannerLog
 
     static private NLog.Targets.FileTarget CreateTarget(string name, string extra)
     {
-        string logPrefix = GlobalData.GetBaseDir() + @"\Log\" + GlobalData.AppName + " ";
-
-        string filename = logPrefix + " " + extra;
-        filename = filename.Trim();
+        string filename = GlobalData.GetBaseDir() + @"\Log\" + GlobalData.AppName;
 
         return new NLog.Targets.FileTarget
         {
             Name = name,
             KeepFileOpen = true,
             MaxArchiveDays = 10,
-            FileName = filename + ".log",
+            FileName = filename + extra + ".log",
             ArchiveDateFormat = "yyyy-MM-dd",
-            ArchiveFileName = filename + " {#}.log",
+            ArchiveFileName = filename + " {#}" + extra + ".log",
             ArchiveEvery = NLog.Targets.FileArchivePeriod.Day,
             ArchiveNumbering = NLog.Targets.ArchiveNumberingMode.Date
         };
@@ -88,11 +85,11 @@ public class ScannerLog
         var rule = new NLog.Config.LoggingRule("*", LogLevel.Info, fileTarget);
         config.LoggingRules.Add(rule);
 
-        fileTarget = CreateTarget("errors", "Error");
+        fileTarget = CreateTarget("errors", " Error");
         rule = new NLog.Config.LoggingRule("*", LogLevel.Error, fileTarget);
         config.LoggingRules.Add(rule);
 
-        fileTarget = CreateTarget("trace", "Trace");
+        fileTarget = CreateTarget("trace", " Trace");
         rule = new NLog.Config.LoggingRule("*", LogLevel.Trace, fileTarget);
         config.LoggingRules.Add(rule);
 
