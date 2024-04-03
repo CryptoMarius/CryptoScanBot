@@ -1,4 +1,6 @@
-﻿using CryptoScanBot.Context;
+﻿using System.Text;
+
+using CryptoScanBot.Context;
 using CryptoScanBot.Enums;
 using CryptoScanBot.Exchange;
 using CryptoScanBot.Intern;
@@ -82,6 +84,23 @@ public class TradeTools
         }
     }
 
+
+    private static StringBuilder DumpPosition(CryptoPosition position)
+    {
+        StringBuilder stringBuilder = new(); // debug
+        stringBuilder.AppendLine($"positie {position.Symbol.Name}");
+        foreach (CryptoPositionPart part in position.Parts.Values.ToList())
+        {
+            stringBuilder.AppendLine($"dca {part.PartNumber} {part.Invested} {part.Commission} {part.CommissionQuote} {part.CommissionBase}");
+            foreach (CryptoPositionStep step in part.Steps.Values.ToList())
+            {
+                stringBuilder.AppendLine($"step {step.Side} {step.Status} {step.OrderId} {step.QuoteQuantityFilled} {step.Commission} {step.CommissionQuote} {step.CommissionBase}");
+            }
+        }
+        stringBuilder.AppendLine($"berekening={position.BreakEvenPrice}=({position.Invested}-{position.Returned}+{position.Commission})/({position.Quantity} + {position.CommissionBase})");
+        return stringBuilder;
+    }
+
     /// <summary>
     /// De break-even prijs berekenen vanuit de parts en steps
     /// </summary>
@@ -95,6 +114,7 @@ public class TradeTools
         // $199.8 worth of Bitcoin.To calculate these fees, you can also use our Binance fee calculator:
         // (als je verder gaat dan wordt het vanwege de kickback's tamelijk complex)
         // Op Bybit futures heb je de fundingrates, dat wordt in tijdblokken berekend met varierende fr..
+        StringBuilder stringBuilderOld = DumpPosition(position);
 
         position.Quantity = 0;
         position.QuantityEntry = 0;
@@ -161,9 +181,9 @@ public class TradeTools
                 {
                     // Blijft een constante totdat de order gevuld is
                     decimal value = step.Price * step.Quantity;
-                    step.Commission = (decimal)position.Exchange.FeeRate * value / 100m; // Estimated commission in quote
-
-                    part.Commission += step.Commission;
+                    // Het vooraf berekenen geeft blijkbaar problemen waardoor de TP's verzet worden
+                    //step.Commission = (decimal)position.Exchange.FeeRate * value / 100m; // Estimated commission in quote
+                    //part.Commission += step.Commission;
                     if (step.Side == entryOrderSide)
                         part.Reserved += value;
                 }
@@ -174,9 +194,10 @@ public class TradeTools
                 //GlobalData.AddTextToLogTab(s);
             }
 
-            // Rekening houden met de toekomstige kosten van de sell orders (is reeds gecorrigeerd, zie new/partial en reserved hierboven)
-            //if (tradeCount == 0 && !part.CloseTime.HasValue)
-            //    part.Commission *= 2;
+            // Rekening houden met de toekomstige kosten van de sell orders
+            // (was reeds gecorrigeerd, zie new/partial en reserved hierboven) -- maar afgekeurd?
+            if (!part.CloseTime.HasValue)
+                part.Commission *= 2;
 
             // Voor de BE de originele quantity gebruiken (niet de gecorrigeerde met EntryQuantity-commissionBase dus daarom een correctie)
             if (position.Side == CryptoTradeSide.Long)
@@ -227,6 +248,7 @@ public class TradeTools
 
 
         // Voor de BE de originele quantity gebruiken (niet de gecorrigeerde met EntryQuantity-commissionBase dus daarom een correctie)
+        decimal BreakEvenPriceOld = position.BreakEvenPrice;
         if (position.Side == CryptoTradeSide.Long)
         {
             position.Profit = position.Returned - position.Invested - position.Commission;
@@ -248,6 +270,13 @@ public class TradeTools
                 position.BreakEvenPrice = (position.Invested - position.Returned - position.Commission) / (position.Quantity + position.CommissionBase);
             else
                 position.BreakEvenPrice = 0;
+        }
+        if (BreakEvenPriceOld != position.BreakEvenPrice)
+        {
+            ScannerLog.Logger.Trace($"{position.Symbol.Name} aanpassing BE van {BreakEvenPriceOld} naar {position.BreakEvenPrice}");
+            ScannerLog.Logger.Trace(stringBuilderOld);
+            StringBuilder stringBuilderNew = DumpPosition(position);
+            ScannerLog.Logger.Trace(stringBuilderNew);
         }
 
         // Correcties omdat de ActiveDca achteraf geintroduceerd is
