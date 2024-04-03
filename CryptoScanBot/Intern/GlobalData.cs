@@ -745,7 +745,6 @@ static public class GlobalData
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
             AddTextToLogTab(" error telegram thread(1)" + error.ToString(), false);
         }
     }
@@ -772,7 +771,6 @@ static public class GlobalData
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
             AddTextToLogTab(" error telegram thread(1)" + error.ToString(), false);
         }
     }
