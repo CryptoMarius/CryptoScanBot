@@ -91,7 +91,7 @@ public static class PositionTools
     }
 
 
-    public static void ExtendPosition(CryptoDatabase database, CryptoPosition position, CryptoPartPurpose purpose, CryptoInterval interval,
+    public static CryptoPositionPart ExtendPosition(CryptoDatabase database, CryptoPosition position, CryptoPartPurpose purpose, CryptoInterval interval,
         CryptoSignalStrategy strategy, CryptoEntryOrProfitMethod stepInMethod, decimal signalPrice, DateTime currentDate, bool manualOrder = false)
     {
         CryptoPositionPart part = new()
@@ -124,6 +124,7 @@ public static class PositionTools
         position.Symbol.LastTradeDate = currentDate;
 
         GlobalData.AddTextToLogTab($"{position.Symbol.Name} {purpose} {stepInMethod} plaatsen op {signalPrice.ToString0(position.Symbol.PriceDisplayFormat)}");
+        return part;
     }
 
 
@@ -155,7 +156,8 @@ public static class PositionTools
             Trailing = trailing
         };
 
-        position.UpdateTime = step.CreateTime;
+        if (position.UpdateTime == null || step.CreateTime > position.UpdateTime)
+            position.UpdateTime = step.CreateTime;
         return step;
     }
 
