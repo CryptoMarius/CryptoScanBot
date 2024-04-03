@@ -258,21 +258,21 @@ public class PositionMonitor : IDisposable
     private static DateTime? lastRefreshAssets = null;
 
 
-    private async Task<(bool success, decimal? entryAmount, decimal? currentAssetQuantity, string reaction)> CheckApiAndAssetsAsync(CryptoTradeAccount tradeAccount)
+    private async Task<(bool success, decimal entryQuoteAsset, decimal totalQuoteAsset, decimal freeQuoteAsset, string reaction)> CheckApiAndAssetsAsync(CryptoTradeAccount tradeAccount)
     {
         if (!PositionTools.ValidTradeAccount(tradeAccount, Symbol))
-            return (false, null, null, "Invalid trade account");
+            return (false, 0, 0, 0, "Invalid trade account");
 
 
         if (tradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading)
         {
             if (GlobalData.TradingApi.Key == "" || GlobalData.TradingApi.Secret == "")
-                return (false, null, null, "No API credentials available");
+                return (false, 0, 0, 0, "No API credentials available");
         }
 
 
-        // Niet bij iedere keer de assets verversen
-        if (lastRefreshAssets == null || lastRefreshAssets?.AddMinutes(5) < DateTime.UtcNow)
+        // Niet bij iedere keer de assets verversen (hammering)
+        if (lastRefreshAssets == null || lastRefreshAssets?.AddMinutes(1) < DateTime.UtcNow)
         {
             // De assets verversen (optioneel adhv account)
             await ExchangeHelper.GetAssetsForAccountAsync(tradeAccount);
@@ -282,44 +282,57 @@ public class PositionMonitor : IDisposable
 
 
         // Hoeveel muntjes hebben we op dit moment van deze munt?
-        decimal currentAssetQuantity = 0;
+        // (Opmerking: een gedeelte hiervan kan in orders zitten!)
+        decimal freeQuoteAsset = 0;
+        decimal totalQuoteAsset = 0;       
         if (tradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading)
         {
             tradeAccount.AssetListSemaphore.Wait();
             try
             {
                 if (tradeAccount.AssetList.TryGetValue(Symbol.Quote, out CryptoAsset asset))
-                    currentAssetQuantity = asset.Total;
+                {
+                    freeQuoteAsset = asset.Free;
+                    totalQuoteAsset = asset.Total;
+                }
             }
             finally
             {
                 tradeAccount.AssetListSemaphore.Release();
             }
 
-            if (currentAssetQuantity <= 0)
-                return (false, null, null, $"No assets available for {Symbol.Quote}");
+            if (totalQuoteAsset <= 0)
+                return (false, 0, totalQuoteAsset, freeQuoteAsset, $"No assets available for {Symbol.Quote}");
         }
         else
         {
-            // Ruim genoeg voor backtest of papertrading.
-            // TODO Werkende asset management papertrading!
-            currentAssetQuantity = 1000000m; 
+            // Ruim genoeg voor backtest of papertrading. TODO Werkende asset management papertrading (en een reset optie hiervoor)!
+            freeQuoteAsset = 1000000m;
+            totalQuoteAsset = 1000000m;
         }
        
 
 
-        // Bepaal het entry bedrag 
-        decimal entryAmount = TradeTools.GetEntryAmount(Symbol, currentAssetQuantity, tradeAccount.TradeAccountType);
-        if (entryAmount <= 0)
-            return (false, null, null, "No amount/percentage given");
+        // entry value (in quote)
+        decimal entryQuoteAsset = TradeTools.GetEntryAmount(Symbol, totalQuoteAsset, tradeAccount.TradeAccountType);
+        if (entryQuoteAsset <= 0)
+            return (false, entryQuoteAsset, totalQuoteAsset, freeQuoteAsset, "No amount/percentage given");
 
-        // TODO Short/Long, bij futures short hoef je dit te bezitten (wel een onderpand?) - uitzoeken
-        if (entryAmount > currentAssetQuantity)
-            return (false, entryAmount, currentAssetQuantity, $"Not enough cash available entryamount={entryAmount} >= available assets {Symbol.Quote}={currentAssetQuantity}");
+        // Check [min..max]
+        if (Symbol.QuoteValueMinimum > 0 && entryQuoteAsset < Symbol.QuoteValueMinimum)
+            return (false, entryQuoteAsset, totalQuoteAsset, freeQuoteAsset, $"Not enough cash available entryamount {entryQuoteAsset} < minimum instap van {Symbol.QuoteValueMinimum}");
+        if (Symbol.QuoteValueMaximum > 0 && entryQuoteAsset > Symbol.QuoteValueMaximum)
+            return (false, entryQuoteAsset, totalQuoteAsset, freeQuoteAsset, $"Not enough cash available entryamount {entryQuoteAsset} > maximum instap van {Symbol.QuoteValueMaximum}");
 
+        // TODO Short/Long, bij futures/margin && short hoef je dit te bezitten (wel een onderpand?) - uitzoeken
+        if (entryQuoteAsset > freeQuoteAsset)
+            return (false, entryQuoteAsset, totalQuoteAsset, freeQuoteAsset, $"Not enough cash available entryamount {entryQuoteAsset} >= free assets {Symbol.Quote}={freeQuoteAsset}");
+        // Totaal overbodig
+        if (entryQuoteAsset > totalQuoteAsset)
+            return (false, entryQuoteAsset, totalQuoteAsset, freeQuoteAsset, $"Not enough cash available entryamount {entryQuoteAsset} >= total assets {Symbol.Quote}={totalQuoteAsset}");
 
         // okay
-        return (true, entryAmount, currentAssetQuantity, "");
+        return (true, entryQuoteAsset, totalQuoteAsset, freeQuoteAsset, "");
     }
 
 
@@ -566,7 +579,7 @@ public class PositionMonitor : IDisposable
                         // Voorlopig alleen traden op Bybit Spot en Futures (alleen daar kan ik het testen)
                         if (!tradeAccount.CanTrade)
                         {
-                            GlobalData.AddTextToLogTab(text + $" trader niet ondersteund op {tradeAccount} (removed)");
+                            GlobalData.AddTextToLogTab(text + $" trader niet ondersteund op {tradeAccount.Name} (removed)");
                             Symbol.ClearSignals();
                             return;
                         }
@@ -598,20 +611,18 @@ public class PositionMonitor : IDisposable
                             // Controle op de ticksize en dergelijke..
                             {
                                 // Bepaal het entry bedrag 
-                                // Naast een vast bedrag kan het ook een percentage zijn van de totaal beschikbare quote asset
-                                decimal currentAssetQuantity = 0;
-                                if (tradeAccount.AssetList.TryGetValue(Symbol.Quote, out var asset))
-                                    currentAssetQuantity = asset.Total;
-                                decimal entryValue = TradeTools.GetEntryAmount(Symbol, currentAssetQuantity, tradeAccount.TradeAccountType);
+                                decimal totalQuote = resultCheckAssets.totalQuoteAsset;
+                                decimal entryQuote = resultCheckAssets.entryQuoteAsset;
                                 decimal entryPrice = Symbol.LastPrice.Value.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
-                                decimal entryQuantity = entryValue / entryPrice;
-                                entryQuantity = entryQuantity.Clamp(Symbol.QuantityMinimum, Symbol.QuantityMaximum, Symbol.QuantityTickSize);
-                                entryQuantity = TradeTools.CorrectEntryQuantityIfWayLess(Symbol, entryValue, entryQuantity, entryPrice);
+
+                                decimal entryBase = entryQuote / entryPrice;
+                                entryBase = entryBase.Clamp(Symbol.QuantityMinimum, Symbol.QuantityMaximum, Symbol.QuantityTickSize);
+                                entryBase = TradeTools.CorrectEntryQuantityIfWayLess(Symbol, entryQuote, entryBase, entryPrice);
 
                                 // Its rounded to zero
-                                if (entryQuantity == 0)
+                                if (entryBase <= 0)
                                 {
-                                    GlobalData.AddTextToLogTab(text + $" vanwege de quantity ticksize {Symbol.PriceTickSize} en aankoopbedrag {entryValue} lukt de aankoop niet");
+                                    GlobalData.AddTextToLogTab(text + $" vanwege de quantity ticksize {Symbol.PriceTickSize} en aankoopbedrag {entryQuote} lukt de aankoop niet");
                                     Symbol.ClearSignals();
                                     return;
                                 }
@@ -619,9 +630,9 @@ public class PositionMonitor : IDisposable
 
                                 if (tradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading && tradeAccount.AccountType == CryptoAccountType.Spot)
                                 {
-                                    if (resultCheckAssets.currentAssetQuantity == 0 || entryQuantity > (decimal)resultCheckAssets.currentAssetQuantity)
+                                    if (resultCheckAssets.totalQuoteAsset == 0 || entryBase * entryPrice > totalQuote)
                                     {
-                                        GlobalData.AddTextToLogTab($"{text} niet genoeg assets beschikbaar om in te stappen {(decimal)resultCheckAssets.currentAssetQuantity})");
+                                        GlobalData.AddTextToLogTab($"{text} niet genoeg assets beschikbaar om in te stappen {entryBase * entryPrice} > {totalQuote})");
                                         Symbol.ClearSignals();
                                         return;
                                     }
@@ -629,7 +640,7 @@ public class PositionMonitor : IDisposable
 
 
                                 // We zitten direct op het minimum, kans is klein dat we het aangekochte kunnen verkopen
-                                if (entryQuantity == Symbol.QuantityMinimum)
+                                if (entryBase == Symbol.QuantityMinimum)
                                 {
                                     GlobalData.AddTextToLogTab(text + $" vanwege de minimum quantity {Symbol.QuantityMinimum} lukt de aankoop niet (te weinig)");
                                     Symbol.ClearSignals();
@@ -930,7 +941,6 @@ public class PositionMonitor : IDisposable
             {
                 decimal oldPrice = price;
                 price = (decimal)Symbol.LastPrice + Symbol.PriceTickSize;
-                // Deze tekst wordt nu soms spontaan gemeld terwijl er verder geen actie is (TODO? flow controleren)
                 GlobalData.AddTextToLogTab($"{Symbol.Name} SELL correction: {oldPrice:N6} to {price.ToString0()}");
             }
         }
@@ -946,7 +956,6 @@ public class PositionMonitor : IDisposable
             {
                 decimal oldPrice = price;
                 price = (decimal)Symbol.LastPrice - Symbol.PriceTickSize;
-                // Deze tekst wordt nu soms spontaan gemeld terwijl er verder geen actie is (TODO? flow controleren)
                 GlobalData.AddTextToLogTab($"{Symbol.Name} SELL correction: {oldPrice:N6} to {price.ToString0()}");
             }
         }
@@ -1184,7 +1193,7 @@ public class PositionMonitor : IDisposable
                 // Een eventuele market order direct laten vullen
                 if (position.TradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading && step.OrderType == CryptoOrderType.Market)
                 {
-                    await PaperTrading.CreatePaperTradeObject(Database, position, step, LastCandle1m.Close, LastCandle1mCloseTimeDate);
+                    await PaperTrading.CreatePaperTradeObject(Database, position, part, step, LastCandle1m.Close, LastCandle1mCloseTimeDate);
                     position.Reposition = false; // anders twee keer achter elkaar indien papertrading of backtesting!
                 }
             }
