@@ -2,6 +2,7 @@ CryptoScanBot release historie:
 
 xx-03-2024 1.9.1
 - Scanner - De kolom breedte kunnen resetten
+- Scanner - De naamgeving van de log bestanden aangepast (vanwege de manier van archivering van nlog)
 - Scanner - Nieuwe optie om Tradingview of de exchange in de interne browser te openen
 - Scanner - De rowheight van de grids worden niet meer aangepast (standaard hoogte)
 - Scanner - Verbeteringen zodat de scanner sneller opstart en afsluit (is wel trager dan voorheen).
@@ -14,6 +15,10 @@ xx-03-2024 1.9.1
 - Scanner - Het opstarten van de configuratie gaat fout als er geen basismunten aanwezig zijn (Index was out of range error)
 - Scanner - De default configuratie van het filter interval-trend verwijderd zodat deze overeenkomt met de instellingen van de 1.8.x scanner
 
+- Trading - De fee rate van Binance was niet ingevuld in de database
+- Trading - De 1e order van een positie werdt niet opgemerkt omdat de administratie van de orderId niet uitgevoerd is
+- Trading - De controle op beschikbare assets klopte niet (een vergissing met BaseValue (Quantity) en QuoteValue (USDT))
+- Trading - De berekende fee van de te vullen orders (dca/tp's) zorgde ervoor dat de tp's 1x (ietjes) verzet werden (terug naar de oude manier)
 
 22-03-2024 1.9.0
 - Scanner - Documentatie bijwerken - dit keer best een grote klus
