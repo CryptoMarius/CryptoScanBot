@@ -1,85 +1,25 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using CryptoScanBot.Intern;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using CryptoScanBot.Model;
 using CryptoScanBot.Enums;
+using CryptoScanBotTests;
+using CryptoScanBot.Context;
 
 namespace CryptoScanBot.Intern.Tests;
 
 [TestClass()]
-public class CandleToolsTests
+public class CandleToolsTests : TestBase
 {
-    private static CryptoSymbol CreateTestSymbol()
-    {
-        CryptoSymbol symbol = new()
-        {
-            Status = 1,
-            Name = "TESTUSDT",
-            Base = "TEST",
-            Quote = "USDT",
-
-            QuantityTickSize = 0.0001m,
-            QuantityMinimum= 0.0001m,
-            QuantityMaximum = 999999m,
-
-            PriceTickSize = 0.0001m,
-            PriceMinimum = 0.0001m,
-            PriceMaximum = 999999m
-        };
-
-        return symbol;
-    }
-
-    private static void SetupIntervals()
-    {
-        GlobalData.IntervalList.Clear();
-        GlobalData.IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval1m, "1m", 1 * 60, null)); //1
-        GlobalData.IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval2m, "2m", 2 * 60, GlobalData.IntervalList[0])); //1
-        GlobalData.IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval3m, "3m", 3 * 60, GlobalData.IntervalList[0])); //2
-        GlobalData.IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval5m, "5m", 5 * 60, GlobalData.IntervalList[0])); //3
-        GlobalData.IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval10m, "10m", 10 * 60, GlobalData.IntervalList[3])); //4
-        GlobalData.IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval15m, "15m", 15 * 60, GlobalData.IntervalList[3]));  //5
-        GlobalData.IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval30m, "30m", 30 * 60, GlobalData.IntervalList[5])); //6
-        GlobalData.IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval1h, "1h", 01 * 60 * 60, GlobalData.IntervalList[6])); //7
-        GlobalData.IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval2h, "2h", 02 * 60 * 60, GlobalData.IntervalList[7])); //8
-        GlobalData.IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval3h, "3h", 03 * 60 * 60, GlobalData.IntervalList[7])); //9
-        GlobalData.IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval4h, "4h", 04 * 60 * 60, GlobalData.IntervalList[8])); //10
-        GlobalData.IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval6h, "6h", 06 * 60 * 60, GlobalData.IntervalList[9])); //11
-        GlobalData.IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval8h, "8h", 08 * 60 * 60, GlobalData.IntervalList[10])); //12
-        GlobalData.IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval12h, "12h", 12 * 60 * 60, GlobalData.IntervalList[10])); //13
-        GlobalData.IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval1d, "1d", 1 * 24 * 60 * 60, GlobalData.IntervalList[11])); //14
-    }
-
-    private void AddTextToLogTab(string text, bool extraLineFeed = false)
-    {
-        text = text.TrimEnd();
-
-        if (extraLineFeed)
-            text += "\r\n\r\n";
-        else
-            text += "\r\n";
-
-        Console.WriteLine(text);
-    }
-
-
     [TestMethod()]
     public void CalculateCandleForIntervalTest()
     {
-        // Description: toevoegen en mergen van candles (de happy flow)
-
+        InitTestSession();
+        CryptoDatabase database = new();
+        database.Open();
 
         // arrange
-        SetupIntervals();
-        GlobalData.LogToLogTabEvent += new AddTextEvent(AddTextToLogTab);
-        CryptoSymbol symbol = CreateTestSymbol();
-
+        CryptoSymbol symbol = CreateTestSymbol(database);
 
         // act
 
