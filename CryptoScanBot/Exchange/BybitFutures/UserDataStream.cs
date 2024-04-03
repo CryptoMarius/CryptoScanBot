@@ -64,7 +64,7 @@ public class UserDataStream
             {
                 // We krijgen duplicaat json berichten binnen (even een quick & dirty fix)
                 string text = JsonSerializer.Serialize(data, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = false }).Trim();
-                GlobalData.AddTextToLogTab($"{data.Symbol} UserTicker {data.Status} quantity={data.Quantity} price={data.Price} value={data.ValueFilled} text={text}");
+                GlobalData.AddTextToLogTab($"{data.Symbol} UserTicker {data.Side} {data.Status} order={data.OrderId} quantity={data.Quantity} price={data.Price} value={data.ValueFilled} text={text}");
 
                 // We zijn slechts geinteresseerd in 3 statussen (de andere zijn niet interessant voor de afhandeling van de order)
                 if (data.Status == OrderStatus.New ||

@@ -63,7 +63,7 @@ public class UserDataStream
             foreach (var data in dataList.Data)
             {
                 // We melden voorlopig alles
-                string info = $"{data.Symbol} UserTicker {data.Status} quantity={data.Quantity} price={data.Price} value={data.Price * data.QuantityFilled}";
+                string info = $"{data.Symbol} UserTicker {data.Side} {data.Status} order={data.OrderId} quantity={data.Quantity} price={data.Price} value={data.Price * data.QuantityFilled}";
                 string text = JsonSerializer.Serialize(data, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = false }).Trim();
                 GlobalData.AddTextToLogTab(info);
                 ScannerLog.Logger.Trace($"{info} json={text}");
