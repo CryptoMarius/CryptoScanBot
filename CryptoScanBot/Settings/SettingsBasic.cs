@@ -54,7 +54,6 @@ public class SettingsBasic
     public SettingsBasic()
     {
         // Als default toch iets inschieten
-
         CryptoQuoteData quoteData = new()
         {
             Name = "USDT",

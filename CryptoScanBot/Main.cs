@@ -37,7 +37,6 @@ public partial class FrmMain : Form
     private readonly ToolStripMenuItemCommand ApplicationCreateSignals;
 #if TRADEBOT
     private readonly ToolStripMenuItemCommand ApplicationTradingBot;
-    private readonly ToolStripMenuItemCommand ApplicationShowPositionInfo;
     private readonly List<CryptoPosition> PositionOpenListView = [];
     private readonly CryptoDataGridPositionsOpen<CryptoPosition> GridPositionOpenView;
 
@@ -65,7 +64,6 @@ public partial class FrmMain : Form
 #if SQLDATABASE
         MenuMain.AddCommand(null, "Backtest", Command.None, BacktestToolStripMenuItem_Click);
 #endif
-        ApplicationShowPositionInfo = MenuMain.AddCommand(null, "PositionInfo", Command.None, PositionInfoToolStripMenuItem_Click);
 #endif
         MenuMain.AddCommand(null, "About", Command.About);
 
@@ -256,10 +254,6 @@ public partial class FrmMain : Form
 #if TRADEBOT
         GridPositionOpenView.InitCommandCaptions();
         GridPositionClosedView.InitCommandCaptions();
-
-        if (GlobalData.Settings.General.ExchangeId != 3)
-            ApplicationShowPositionInfo.Visible = false;
-
 #endif
 
 
@@ -977,14 +971,6 @@ public partial class FrmMain : Form
         GlobalData.PositionsHaveChanged("");
 #endif
     }
-
-#if TRADEBOT
-    private async void PositionInfoToolStripMenuItem_Click(object sender, EventArgs e)
-    {
-        if (GlobalData.Settings.General.ExchangeId == 3) // alleen bybit futures
-            await Exchange.BybitFutures.Api.GetPositionInfo();
-    }
-#endif
 
 
     private void SymbolsHaveChangedEvent(string text, bool extraLineFeed = false)
