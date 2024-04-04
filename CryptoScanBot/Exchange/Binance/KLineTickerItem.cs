@@ -16,9 +16,6 @@ namespace CryptoScanBot.Exchange.Binance;
 /// </summary>
 public class KLineTickerItem(string apiExchangeName, CryptoQuoteData quoteData) : KLineTickerItemBase(apiExchangeName, quoteData)
 {
-    private BinanceSocketClient socketClient;
-    private UpdateSubscription _subscription;
-
     private void ProcessCandle(BinanceStreamKlineData kline)
     {
         // Aantekeningen
@@ -52,12 +49,13 @@ public class KLineTickerItem(string apiExchangeName, CryptoQuoteData quoteData) 
 
 
         ConnectionLostCount = 0;
+        ErrorDuringStartup = false;
         ScannerLog.Logger.Trace($"kline ticker for group {GroupName} starting");
 
         if (Symbols.Count > 0)
         {
             socketClient = new BinanceSocketClient();
-            CallResult<UpdateSubscription> subscriptionResult = await socketClient.SpotApi.ExchangeData.SubscribeToKlineUpdatesAsync(
+            CallResult<UpdateSubscription> subscriptionResult = await ((BinanceSocketClient)socketClient).SpotApi.ExchangeData.SubscribeToKlineUpdatesAsync(
                 Symbols, KlineInterval.OneMinute, (data) =>
             {
                 if (data.Data.Data.Final)
@@ -67,81 +65,31 @@ public class KLineTickerItem(string apiExchangeName, CryptoQuoteData quoteData) 
             }, ExchangeHelper.CancellationToken).ConfigureAwait(false);
 
 
-            // Subscribe to network-related stuff
             if (subscriptionResult.Success)
             {
-                ErrorDuringStartup = false;
                 _subscription = subscriptionResult.Data;
-
-                // Events
                 _subscription.Exception += Exception;
                 _subscription.ConnectionLost += ConnectionLost;
                 _subscription.ConnectionRestored += ConnectionRestored;
-
-
-                //    // TODO: Put a CancellationToken in order to stop it gracefully
-                //    BinanceClient client = new();
-                //    var keepAliveTask = Task.Run(async () =>
-                //    {
-                //        while (true)
-                //        {
-                //            await client.SpotApi.Account.KeepAliveUserStreamAsync(subscriptionResult.Data.); //???
-                //            await Task.Delay(TimeSpan.FromMinutes(30));
-                //        }
-                //    });
-                //GlobalData.AddTextToLogTab($"{Api.ExchangeName} {quote} 1m started candle stream {symbols.Count} symbols");
                 ScannerLog.Logger.Trace($"kline ticker for group {GroupName} started");
             }
             else
             {
+                _subscription.Exception -= Exception;
+                _subscription.ConnectionLost -= ConnectionLost;
+                _subscription.ConnectionRestored -= ConnectionRestored;
                 _subscription = null;
+
                 socketClient.Dispose();
                 socketClient = null;
+
                 ConnectionLostCount++;
                 ErrorDuringStartup = true;
+
                 ScannerLog.Logger.Trace($"kline ticker for group {GroupName} error {subscriptionResult.Error.Message} {string.Join(',', Symbols)}");
                 GlobalData.AddTextToLogTab($"kline ticker for group {GroupName} error {subscriptionResult.Error.Message} {string.Join(',', Symbols)}");
             }
         }
-    }
-
-    public override async Task StopAsync()
-    {
-        if (_subscription == null)
-        {
-            ScannerLog.Logger.Trace($"kline ticker for group {GroupName} already stopped");
-            return;
-        }
-
-        ScannerLog.Logger.Trace($"kline ticker for group {GroupName} stopping");
-        _subscription.Exception -= Exception;
-        _subscription.ConnectionLost -= ConnectionLost;
-        _subscription.ConnectionRestored -= ConnectionRestored;
-
-        await socketClient?.UnsubscribeAsync(_subscription);
-        _subscription = null;
-
-        socketClient?.Dispose();
-        socketClient = null;
-        ScannerLog.Logger.Trace($"kline ticker for group {GroupName} stopped");
-    }
-
-    private void ConnectionLost()
-    {
-        ConnectionLostCount++;
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} {QuoteData.Name} kline ticker for group {GroupName} connection lost.");
-        ScannerSession.ConnectionWasLost("");
-    }
-
-    private void ConnectionRestored(TimeSpan timeSpan)
-    {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} {QuoteData.Name} kline ticker for group {GroupName} connection restored.");
-        ScannerSession.ConnectionWasRestored("");
-    }
-
-    private void Exception(Exception ex)
-    {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} kline ticker for group {GroupName} connection error {ex.Message} | Stack trace: {ex.StackTrace}");
     }
 
 }

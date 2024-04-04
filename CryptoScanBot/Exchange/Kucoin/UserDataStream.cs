@@ -188,17 +188,17 @@ public class UserDataStream
 
     private void ConnectionLost()
     {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} price ticker connection lost.");
+        GlobalData.AddTextToLogTab($"{Api.ExchangeName} user ticker connection lost.");
     }
 
     private void ConnectionRestored(TimeSpan timeSpan)
     {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} price ticker connection restored.");
+        GlobalData.AddTextToLogTab($"{Api.ExchangeName} user ticker connection restored.");
     }
 
     private void Exception(Exception ex)
     {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} price ticker connection error {ex.Message} | Stack trace: {ex.StackTrace}");
+        GlobalData.AddTextToLogTab($"{Api.ExchangeName} user ticker connection error {ex.Message} | Stack trace: {ex.StackTrace}");
     }
 }
 

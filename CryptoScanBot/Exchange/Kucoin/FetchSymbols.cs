@@ -60,7 +60,7 @@ public class FetchSymbols
                 if (exchangeInfo == null)
                     throw new ExchangeException("Geen exchange data ontvangen (1)");
                 if (!exchangeInfo.Success)
-                    GlobalData.AddTextToLogTab("error getting exchangeinfo " + exchangeInfo.Error + "\r\n");
+                    GlobalData.AddTextToLogTab($"error getting exchangeinfo {exchangeInfo.Error}", true);
                 //if (exchangeInfo.Data == null)
                 //    throw new ExchangeException($"Geen exchange data ontvangen (2) {exchangeInfo.Error}");
 

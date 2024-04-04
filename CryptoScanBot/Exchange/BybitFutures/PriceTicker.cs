@@ -29,7 +29,7 @@ internal class PriceTicker() : PriceTickerBase()
                     //raar..
                     while (symbols.Count > 0)
                     {
-                        PriceTickerItem ticker = new();
+                        PriceTickerItem ticker = new(Api.ExchangeName, quoteData);
                         TickerList.Add(ticker);
 
                         // Op deze exchange is er een limiet van 10 symbols, dus opknippen in (veel) stukjes

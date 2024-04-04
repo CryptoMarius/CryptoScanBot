@@ -8,6 +8,8 @@ namespace CryptoScanBot.Exchange;
 
 public abstract class ExchangeBase()
 {
+    //public string ExchangeName { get; set; } = "";
+
     public abstract void ExchangeDefaults();
     public abstract Task FetchSymbolsAsync();
     public abstract Task FetchCandlesAsync();

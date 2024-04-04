@@ -29,7 +29,7 @@ internal class PriceTicker() : PriceTickerBase
                     //raar..
                     while (symbols.Count > 0)
                     {
-                        PriceTickerItem ticker = new();
+                        PriceTickerItem ticker = new(Api.ExchangeName, quoteData);
                         TickerList.Add(ticker);
 
                         // Op deze exchange is er een limiet van 10 symbols, dus opknippen in (veel) stukjes
@@ -45,7 +45,7 @@ internal class PriceTicker() : PriceTickerBase
                         }
 
                         ticker.GroupName = $"{TickerList.Count} ({ticker.Symbols.Count})";
-                        Task task = Task.Run(async () => { await ticker.StartAsync(); });
+                        Task task = Task.Run(ticker.StartAsync);
                         taskList.Add(task);
                     }
                 }

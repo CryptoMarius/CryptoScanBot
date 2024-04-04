@@ -1,7 +1,4 @@
-﻿using System.Text.Encodings.Web;
-using System.Text.Json;
-
-using Bybit.Net.Clients;
+﻿using Bybit.Net.Clients;
 using Bybit.Net.Enums;
 using Bybit.Net.Objects.Models.V5;
 
@@ -13,15 +10,9 @@ using CryptoScanBot.Model;
 
 namespace CryptoScanBot.Exchange.BybitSpot;
 
-public class PriceTickerItem
+public class PriceTickerItem(string apiName, CryptoQuoteData quoteData) : PriceTickerItemBase(apiName, quoteData)
 {
-    public int TickerCount = 0; //Tellertje om te laten zien dat de stream doorloopt (anders geen candle uupdates)
-    private BybitSocketClient socketClient;
-    private UpdateSubscription _subscription;
-    public List<string> Symbols = [];
-    public string GroupName = "";
-
-    public async Task StartAsync()
+    public override async Task StartAsync()
     {
         if (_subscription != null)
         {
@@ -29,10 +20,12 @@ public class PriceTickerItem
             return;
         }
 
+        ConnectionLostCount = 0;
+        ErrorDuringStartup = false;
         ScannerLog.Logger.Trace($"price ticker for group {GroupName} starting");
 
-        socketClient = new();
-        CallResult<UpdateSubscription> subscriptionResult = await socketClient.V5SpotApi.SubscribeToTickerUpdatesAsync(Symbols, data =>
+        socketClient = new BybitSocketClient();
+        CallResult<UpdateSubscription> subscriptionResult = await ((BybitSocketClient)socketClient).V5SpotApi.SubscribeToTickerUpdatesAsync(Symbols, data =>
         {
             if (GlobalData.ExchangeListName.TryGetValue(Api.ExchangeName, out Model.CryptoExchange exchange))
             {
@@ -103,66 +96,30 @@ public class PriceTickerItem
             }
         }, ExchangeHelper.CancellationToken).ConfigureAwait(false);
 
-        // Subscribe to network-related stuff
+
         if (subscriptionResult.Success)
         {
-            //ErrorDuringStartup = false;
             _subscription = subscriptionResult.Data;
-
-            // Events
             _subscription.Exception += Exception;
             _subscription.ConnectionLost += ConnectionLost;
             _subscription.ConnectionRestored += ConnectionRestored;
-            //GlobalData.AddTextToLogTab($"{Api.ExchangeName} started price ticker stream for {Symbols.Count} symbols");
             ScannerLog.Logger.Trace($"price ticker for group {GroupName} started");
         }
         else
         {
+            _subscription.Exception -= Exception;
+            _subscription.ConnectionLost -= ConnectionLost;
+            _subscription.ConnectionRestored -= ConnectionRestored;
             _subscription = null;
+
             socketClient.Dispose();
             socketClient = null;
-            //ConnectionLostCount++;
-            //ErrorDuringStartup = true;
+
+            ConnectionLostCount++;
+            ErrorDuringStartup = true;
             ScannerLog.Logger.Trace($"price ticker for group {GroupName} error {subscriptionResult.Error.Message} {string.Join(',', Symbols)}");
             GlobalData.AddTextToLogTab($"price ticker for group {GroupName} error {subscriptionResult.Error.Message} {string.Join(',', Symbols)}");
         }
-    }
-
-    public async Task StopAsync()
-    {
-        if (_subscription == null)
-        {
-            ScannerLog.Logger.Trace($"price ticker for group {GroupName} already stopped");
-            return;
-        }
-
-        ScannerLog.Logger.Trace($"price ticker for group {GroupName} stopping");
-        _subscription.Exception -= Exception;
-        _subscription.ConnectionLost -= ConnectionLost;
-        _subscription.ConnectionRestored -= ConnectionRestored;
-
-        await socketClient?.UnsubscribeAsync(_subscription);
-        _subscription = null;
-        socketClient?.Dispose();
-        socketClient = null;
-        ScannerLog.Logger.Trace($"price ticker for group {GroupName} stopped");
-    }
-
-
-    private void ConnectionLost()
-    {
-        //ConnectionLostCount++;
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} price ticker connection lost for group {GroupName}.");
-    }
-
-    private void ConnectionRestored(TimeSpan timeSpan)
-    {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} price ticker connection restored for group {GroupName}.");
-    }
-
-    private void Exception(Exception ex)
-    {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} price ticker connection error {ex.Message} | Stack trace: {ex.StackTrace}");
     }
 
 }
