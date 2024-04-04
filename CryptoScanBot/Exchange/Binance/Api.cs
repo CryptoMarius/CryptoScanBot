@@ -119,7 +119,7 @@ public class Api() : ExchangeBase()
         });
 
         ExchangeHelper.PriceTicker = new PriceTicker();
-        ExchangeHelper.KLineTicker = new KLineTicker();
+        ExchangeHelper.KLineTicker = new KLineTickerBase(Api.ExchangeName, 200, typeof(KLineTickerItem));
 #if TRADEBOT
         ExchangeHelper.UserData = new UserData();
 #endif

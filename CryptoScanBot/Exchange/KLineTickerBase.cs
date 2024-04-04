@@ -3,7 +3,7 @@ using CryptoScanBot.Model;
 
 namespace CryptoScanBot.Exchange;
 
-public abstract class KLineTickerBase(string apiExchangeName, int limitOnSymbols, Type kLineTickerItemType)
+public class KLineTickerBase(string apiExchangeName, int limitOnSymbols, Type kLineTickerItemType)
 {
     public int LimitOnSymbols = limitOnSymbols;
     public string ApiExchangeName { get; set; } = apiExchangeName;
