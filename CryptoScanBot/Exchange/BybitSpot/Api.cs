@@ -77,6 +77,7 @@ public class Api() : ExchangeBase()
             //options.OutputOriginalData = true;
             //options.SpotOptions.AutoTimestamp = true;
             options.ReceiveWindow = TimeSpan.FromSeconds(15);
+            options.RequestTimeout = TimeSpan.FromSeconds(40); // standard=20 seconds
             //options.SpotOptions.RateLimiters = ?
             if (GlobalData.TradingApi.Key != "")
                 options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
@@ -85,8 +86,13 @@ public class Api() : ExchangeBase()
         BybitSocketClient.SetDefaultOptions(options =>
         {
             options.AutoReconnect = true;
-            //options.OutputOriginalData = true;
-            options.ReconnectInterval = TimeSpan.FromSeconds(15);
+
+            options.RequestTimeout = TimeSpan.FromSeconds(40); // standard=20 seconds
+            options.ReconnectInterval = TimeSpan.FromSeconds(10); // standard=5 seconds
+            options.SocketNoDataTimeout = TimeSpan.FromMinutes(1); // standard=30 seconds
+            options.V5Options.SocketNoDataTimeout = options.SocketNoDataTimeout;
+            options.SpotV3Options.SocketNoDataTimeout = options.SocketNoDataTimeout;
+
             if (GlobalData.TradingApi.Key != "")
                 options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
         });
@@ -394,6 +400,7 @@ public class Api() : ExchangeBase()
         }
     }
 
+
     static public void PickupTrade(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoTrade trade, BybitSpotUserTradeV3 item)
     {
         trade.TradeTime = item.TradeTime;
@@ -471,7 +478,6 @@ public class Api() : ExchangeBase()
         // Bybit spot does currently not return any info on fees
         order.Commission = 0; // item.ExecutedFee;
         order.CommissionAsset = ""; //  item.FeeAsset;
-
     }
 
 

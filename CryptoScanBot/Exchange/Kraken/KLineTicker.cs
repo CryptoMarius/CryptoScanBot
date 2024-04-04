@@ -1,9 +1,5 @@
 ﻿namespace CryptoScanBot.Exchange.Kraken;
 
-internal class KLineTicker : KLineTickerBase
+internal class KLineTicker() : KLineTickerBase(Api.ExchangeName, 10, typeof(KLineTickerItem))
 {
-    public KLineTicker() : base(Api.ExchangeName, 10, typeof(KLineTickerItem))
-    {
-    }
-
 }

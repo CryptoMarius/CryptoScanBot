@@ -26,7 +26,6 @@ public class FetchSymbols
                 using CryptoDatabase database = new();
                 database.Open();
 
-                //WebCallResult<BybitSpotResponse> exchangeInfo = null;
                 using var client = new KrakenRestClient();
                 var exchangeInfo = await client.SpotApi.ExchangeData.GetSymbolsAsync();
 
@@ -57,7 +56,6 @@ public class FetchSymbols
                                 /*
                                     enzovoort..
                                 */
-
                                 //Eventueel symbol toevoegen
                                 if (!exchange.SymbolListName.TryGetValue(name, out CryptoSymbol symbol))
                                 {

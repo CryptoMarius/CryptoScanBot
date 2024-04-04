@@ -81,7 +81,7 @@ public class UserDataStream
                         {
                             // Converteer de data naar een (tijdelijke) trade
                             CryptoOrder order = new();
-                            Api.PickupOrder(GlobalData.ExchangeRealTradeAccount, symbol, order, (Bybit.Net.Objects.Models.V5.BybitOrder)data);
+                            Api.PickupOrder(GlobalData.ExchangeRealTradeAccount, symbol, order, data);
 
                             GlobalData.ThreadMonitorOrder.AddToQueue((
                                 symbol,

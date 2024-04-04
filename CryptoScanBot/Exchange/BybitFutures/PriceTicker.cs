@@ -50,6 +50,7 @@ internal class PriceTicker() : PriceTickerBase()
 
                         //await TaskBybitStreamPriceTicker.ExecuteAsync(symbolNames);
 
+                        ticker.GroupName = $"{TickerList.Count} ({ticker.Symbols.Count})";
                         Task task = Task.Run(ticker.StartAsync);
                         taskList.Add(task);
                     }
@@ -71,7 +72,7 @@ internal class PriceTicker() : PriceTickerBase()
     {
         if (TickerList.Count != 0)
         {
-            GlobalData.AddTextToLogTab($"{Api.ExchangeName} stopping price ticker");
+            GlobalData.AddTextToLogTab($"{Api.ExchangeName} price ticker stopping");
             List<Task> taskList = [];
             foreach (var ticker in TickerList)
             {

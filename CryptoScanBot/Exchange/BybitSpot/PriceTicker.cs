@@ -44,14 +44,8 @@ internal class PriceTicker() : PriceTickerBase
                                 break;
                         }
 
-                        // opvullen tot circa 150 coins?
-                        //ExchangeStream1mCandles.Add(bybitStream1mCandles);
-                        //await bybitStream1mCandles.StartAsync(); // bewust geen await
-
-                        //await TaskBybitStreamPriceTicker.ExecuteAsync(symbolNames);
-
                         ticker.GroupName = $"{TickerList.Count} ({ticker.Symbols.Count})";
-                        Task task = Task.Run(ticker.StartAsync);
+                        Task task = Task.Run(async () => { await ticker.StartAsync(); });
                         taskList.Add(task);
                     }
                 }

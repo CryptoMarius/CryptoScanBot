@@ -22,16 +22,12 @@ public class FetchSymbols
         {
             try
             {
-                // todo: https://api.bybit.com/v5/market/funding/history?category=linear&symbol=BTC&limit=100
-
-
                 GlobalData.AddTextToLogTab($"Reading symbol information from {Api.ExchangeName}");
                 LimitRates.WaitForFairWeight(1);
 
                 using CryptoDatabase database = new();
                 database.Open();
 
-                //WebCallResult<BybitSpotResponse> exchangeInfo = null;
                 using var client = new BybitRestClient();
                 var exchangeInfo = await client.V5Api.ExchangeData.GetLinearInverseSymbolsAsync(Category.Linear);
 
@@ -40,18 +36,18 @@ public class FetchSymbols
                 if (exchangeInfo == null)
                     throw new ExchangeException("Geen exchange data ontvangen (1)");
                 if (!exchangeInfo.Success)
-                    GlobalData.AddTextToLogTab("error getting exchangeinfo " + exchangeInfo.Error + "\r\n");
+                    GlobalData.AddTextToLogTab("error getting exchangeinfo " + exchangeInfo.Error, true);
                 if (exchangeInfo.Data == null)
                     throw new ExchangeException("Geen exchange data ontvangen (2)");
 
 
                 // Om achteraf de niet aangeboden munten te deactiveren
-                SortedList<string, CryptoSymbol> activeSymbols = new();
+                SortedList<string, CryptoSymbol> activeSymbols = [];
 
 
                 using (var transaction = database.BeginTransaction())
                 {
-                    List<CryptoSymbol> cache = new();
+                    List<CryptoSymbol> cache = [];
                     try
                     {
                         //BybitSpotSymbol

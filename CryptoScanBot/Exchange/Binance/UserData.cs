@@ -5,10 +5,15 @@ namespace CryptoScanBot.Exchange.Binance;
 #if TRADEBOT
 internal class UserData : UserDataBase
 {
+    //private List<PriceTickerStream> TickerList { get; set; } = new();
     static private UserDataStream TaskStreamUserData { get; set; }
 
     public override async Task StartAsync()
     {
+        // Is al gestart?
+        if (TaskStreamUserData != null)
+            return;
+
         GlobalData.AddTextToLogTab($"{Api.ExchangeName} user ticker starting");
         TaskStreamUserData = new UserDataStream();
         await Task.Run(async () => { await TaskStreamUserData.ExecuteAsync(); });

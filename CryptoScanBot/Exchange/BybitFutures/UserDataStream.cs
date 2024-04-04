@@ -63,8 +63,10 @@ public class UserDataStream
             foreach (var data in dataList.Data)
             {
                 // We krijgen duplicaat json berichten binnen (even een quick & dirty fix)
+                string info = $"{data.Symbol} UserTicker {data.Side} {data.Status} order={data.OrderId} quantity={data.Quantity} price={data.Price} value={data.Price * data.QuantityFilled}";
                 string text = JsonSerializer.Serialize(data, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = false }).Trim();
-                GlobalData.AddTextToLogTab($"{data.Symbol} UserTicker {data.Side} {data.Status} order={data.OrderId} quantity={data.Quantity} price={data.Price} value={data.ValueFilled} text={text}");
+                GlobalData.AddTextToLogTab(info);
+                ScannerLog.Logger.Trace($"{info} json={text}");
 
                 // We zijn slechts geinteresseerd in 3 statussen (de andere zijn niet interessant voor de afhandeling van de order)
                 if (data.Status == OrderStatus.New ||
@@ -73,8 +75,6 @@ public class UserDataStream
                     data.Status == OrderStatus.PartiallyFilledCanceled ||
                     data.Status == OrderStatus.Cancelled)
                 {
-                    // Nieuwe thread opstarten en de data meegeven zodat er een sell wordt gedaan of administratie wordt bijgewerkt.
-                    // Het triggeren van een stoploss of een DCA zal op een andere manier gedaan moeten worden (maar hoe en waar?)
                     if (GlobalData.ExchangeListName.TryGetValue(Api.ExchangeName, out Model.CryptoExchange exchange))
                     {
                         if (exchange.SymbolListName.TryGetValue(data.Symbol, out CryptoSymbol symbol))
@@ -82,7 +82,6 @@ public class UserDataStream
                             // Converteer de data naar een (tijdelijke) trade
                             CryptoOrder order = new();
                             Api.PickupOrder(GlobalData.ExchangeRealTradeAccount, symbol, order, data);
-                            //GlobalData.AddTextToLogTab(string.Format("{0} OnOrderUpdate#2 TradeId={1} {2} quantity={3} price={4} (addtoqueue)", symbol.Name, trade.TradeId, data.Status.ToString(), trade.Quantity, trade.Price));
 
                             GlobalData.ThreadMonitorOrder.AddToQueue((
                                 symbol,
@@ -93,10 +92,6 @@ public class UserDataStream
                         }
                     }
                 }
-
-                // Converteer de data naar een (tijdelijke) trade
-                //BinanceApi.PickupTrade(trade, data.Data);
-                //GlobalData.ThreadMonitorOrder.AddToQueue(data.Data);
             }
         }
         catch (Exception error)

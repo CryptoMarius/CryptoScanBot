@@ -1,34 +1,89 @@
 ﻿using CryptoScanBot.Intern;
+using CryptoScanBot.Model;
 
 namespace CryptoScanBot.Exchange.Binance;
 
 internal class PriceTicker() : PriceTickerBase
 {
-    private List<PriceTickerItem> TickerList { get; set; } = [];
+    static private List<PriceTickerItem> TickerList { get; set; } = [];
 
     public override async Task StartAsync()
     {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} starting price tickers");
-        PriceTickerItem ticker = new();
-        TickerList.Add(ticker);
-        await ticker.ExecuteAsync();
+        GlobalData.AddTextToLogTab($"{Api.ExchangeName} starting price ticker");
+        if (GlobalData.ExchangeListName.TryGetValue(Api.ExchangeName, out Model.CryptoExchange exchange))
+        {
+            int count = 0;
+            List<Task> taskList = [];
+            foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
+            {
+                if (quoteData.FetchCandles && quoteData.SymbolList.Count > 0)
+                {
+                    List<CryptoSymbol> symbols = quoteData.SymbolList.ToList();
+
+                    // We krijgen soms timeouts (eigenlijk de library) omdat we teveel 
+                    // symbols aanbieden, daarom splitsen we het hier de lijst in twee stukken.
+                    //int splitCount = 200;
+                    //if (symbols.Count > splitCount)
+                    //    splitCount = 1 + (symbols.Count / 2);
+
+                    //raar..
+                    while (symbols.Count > 0)
+                    {
+                        PriceTickerItem ticker = new();
+                        TickerList.Add(ticker);
+
+                        // Op deze exchange is er een limiet van 10 symbols, dus opknippen in (veel) stukjes
+                        while (symbols.Count > 0)
+                        {
+                            CryptoSymbol symbol = symbols[0];
+                            ticker.Symbols.Add(symbol.Name);
+                            symbols.Remove(symbol);
+                            count++;
+
+                            if (ticker.Symbols.Count >= 200)
+                                break;
+                        }
+
+                        // opvullen tot circa 150 coins?
+                        //ExchangeStream1mCandles.Add(bybitStream1mCandles);
+                        //await bybitStream1mCandles.StartAsync(); // bewust geen await
+
+                        //await TaskBybitStreamPriceTicker.ExecuteAsync(symbolNames);
+
+                        ticker.GroupName = $"{TickerList.Count} ({ticker.Symbols.Count})";
+                        Task task = Task.Run(ticker.StartAsync);
+                        taskList.Add(task);
+                    }
+                }
+            }
+
+            if (taskList.Count != 0)
+            {
+                await Task.WhenAll(taskList).ConfigureAwait(false);
+                GlobalData.AddTextToLogTab($"{Api.ExchangeName} started price ticker stream for {count} symbols");
+            }
+        }
         GlobalData.AddTextToLogTab($"{Api.ExchangeName} price tickers started");
     }
 
 
     public override async Task StopAsync()
     {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} stopping price tickers");
-        List<Task> taskList = [];
-        foreach (var ticker in TickerList)
+        if (TickerList.Count != 0)
         {
-            Task task = Task.Run(async () => { await ticker.StopAsync(); });
-            taskList.Add(task);
-        }
-        if (taskList.Count != 0)
+            GlobalData.AddTextToLogTab($"{Api.ExchangeName} price ticker stopping");
+            List<Task> taskList = [];
+            foreach (var ticker in TickerList)
+            {
+                Task task = Task.Run(async () => { await ticker.StopAsync(); });
+                taskList.Add(task);
+            }
             await Task.WhenAll(taskList).ConfigureAwait(false);
-        TickerList.Clear();
-        ScannerLog.Logger.Trace($"{Api.ExchangeName} price tickers stopped");
+            ScannerLog.Logger.Trace($"{Api.ExchangeName} price tickers stopped");
+            TickerList.Clear();
+        }
+        else
+            ScannerLog.Logger.Trace($"{Api.ExchangeName} price tickers already stopped");
     }
 
 

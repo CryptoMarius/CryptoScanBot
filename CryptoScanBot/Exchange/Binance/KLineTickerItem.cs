@@ -44,7 +44,15 @@ public class KLineTickerItem(string apiExchangeName, CryptoQuoteData quoteData) 
 
     public override async Task StartAsync()
     {
+        if (_subscription != null)
+        {
+            ScannerLog.Logger.Trace($"kline ticker for group {GroupName} already started");
+            return;
+        }
+
+
         ConnectionLostCount = 0;
+        ScannerLog.Logger.Trace($"kline ticker for group {GroupName} starting");
 
         if (Symbols.Count > 0)
         {
@@ -57,6 +65,7 @@ public class KLineTickerItem(string apiExchangeName, CryptoQuoteData quoteData) 
                     Task.Run(() => { ProcessCandle(data.Data as BinanceStreamKlineData); });
                 }
             }, ExchangeHelper.CancellationToken).ConfigureAwait(false);
+
 
             // Subscribe to network-related stuff
             if (subscriptionResult.Success)
@@ -81,13 +90,17 @@ public class KLineTickerItem(string apiExchangeName, CryptoQuoteData quoteData) 
                 //        }
                 //    });
                 //GlobalData.AddTextToLogTab($"{Api.ExchangeName} {quote} 1m started candle stream {symbols.Count} symbols");
+                ScannerLog.Logger.Trace($"kline ticker for group {GroupName} started");
             }
             else
             {
+                _subscription = null;
+                socketClient.Dispose();
+                socketClient = null;
                 ConnectionLostCount++;
                 ErrorDuringStartup = true;
-                GlobalData.AddTextToLogTab($"{Api.ExchangeName} {QuoteData.Name} 1m kline ticker ERROR starting {subscriptionResult.Error.Message}");
-                GlobalData.AddTextToLogTab($"{Api.ExchangeName} {QuoteData.Name} 1m kline ticker ERROR starting {string.Join(',', Symbols)}");
+                ScannerLog.Logger.Trace($"kline ticker for group {GroupName} error {subscriptionResult.Error.Message} {string.Join(',', Symbols)}");
+                GlobalData.AddTextToLogTab($"kline ticker for group {GroupName} error {subscriptionResult.Error.Message} {string.Join(',', Symbols)}");
             }
         }
     }
@@ -95,8 +108,12 @@ public class KLineTickerItem(string apiExchangeName, CryptoQuoteData quoteData) 
     public override async Task StopAsync()
     {
         if (_subscription == null)
+        {
+            ScannerLog.Logger.Trace($"kline ticker for group {GroupName} already stopped");
             return;
+        }
 
+        ScannerLog.Logger.Trace($"kline ticker for group {GroupName} stopping");
         _subscription.Exception -= Exception;
         _subscription.ConnectionLost -= ConnectionLost;
         _subscription.ConnectionRestored -= ConnectionRestored;
@@ -106,24 +123,25 @@ public class KLineTickerItem(string apiExchangeName, CryptoQuoteData quoteData) 
 
         socketClient?.Dispose();
         socketClient = null;
+        ScannerLog.Logger.Trace($"kline ticker for group {GroupName} stopped");
     }
 
     private void ConnectionLost()
     {
         ConnectionLostCount++;
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} {QuoteData.Name} 1m kline ticker connection lost.");
+        GlobalData.AddTextToLogTab($"{Api.ExchangeName} {QuoteData.Name} kline ticker for group {GroupName} connection lost.");
         ScannerSession.ConnectionWasLost("");
     }
 
     private void ConnectionRestored(TimeSpan timeSpan)
     {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} {QuoteData.Name} 1m kline ticker connection restored.");
+        GlobalData.AddTextToLogTab($"{Api.ExchangeName} {QuoteData.Name} kline ticker for group {GroupName} connection restored.");
         ScannerSession.ConnectionWasRestored("");
     }
 
     private void Exception(Exception ex)
     {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} 1m kline ticker connection error {ex.Message} | Stack trace: {ex.StackTrace}");
+        GlobalData.AddTextToLogTab($"{Api.ExchangeName} kline ticker for group {GroupName} connection error {ex.Message} | Stack trace: {ex.StackTrace}");
     }
 
 }

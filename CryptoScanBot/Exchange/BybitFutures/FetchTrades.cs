@@ -1,4 +1,7 @@
-﻿using Bybit.Net.Clients;
+﻿using System.Text.Encodings.Web;
+using System.Text.Json;
+
+using Bybit.Net.Clients;
 using Bybit.Net.Enums;
 
 using CryptoScanBot.Context;
@@ -28,7 +31,7 @@ public class FetchTrades
 
             bool isChanged = false;
             DateTime? startTime;
-            List<CryptoTrade> tradeCache = new();
+            List<CryptoTrade> tradeCache = [];
 
             //Verzin een begin datum
             if (position.Symbol.LastTradeFetched == null)
@@ -53,7 +56,7 @@ public class FetchTrades
                 var result = await client.V5Api.Trading.GetUserTradesAsync(Category.Linear, position.Symbol.Name, startTime: startTime, limit: 1000);
                 if (!result.Success)
                 {
-                    GlobalData.AddTextToLogTab("error getting mytrades " + result.Error);
+                    GlobalData.AddTextToLogTab("error retreiving mytrades " + result.Error);
                 }
 
 
@@ -65,6 +68,9 @@ public class FetchTrades
                         {
                             trade = new CryptoTrade();
                             Api.PickupTrade(position.TradeAccount, position.Symbol, trade, item);
+                            string text = JsonSerializer.Serialize(item, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = false }).Trim();
+                            ScannerLog.Logger.Trace($"{item.Symbol} Trade added json={text}");
+
                             tradeCache.Add(trade);
 
                             GlobalData.AddTrade(trade);

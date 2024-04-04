@@ -271,7 +271,7 @@ public class FetchCandles
         {
             // Reuse the socket in this thread, because:
             // "An operation on a socket could not be performed because the system lacked sufficient buffer space or because a queue was full"
-            using BybitRestClient client = new(); // Api.CreateRestClient(); // 
+            using BybitRestClient client = new();
 
             while (true)
             {
@@ -310,7 +310,7 @@ public class FetchCandles
         if (GlobalData.ExchangeListName.TryGetValue(Api.ExchangeName, out Model.CryptoExchange exchange))
         {
             GlobalData.AddTextToLogTab("");
-            GlobalData.AddTextToLogTab(string.Format("Fetching {0} information", exchange.Name));
+            GlobalData.AddTextToLogTab($"Fetching {exchange.Name} information");
             try
             {
                 await Semaphore.WaitAsync();

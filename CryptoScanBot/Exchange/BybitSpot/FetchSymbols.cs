@@ -28,7 +28,6 @@ public class FetchSymbols
                 using CryptoDatabase database = new();
                 database.Open();
 
-                //WebCallResult<BybitSpotResponse> exchangeInfo = null;
                 using var client = new BybitRestClient();
                 var exchangeInfo = await client.V5Api.ExchangeData.GetSpotSymbolsAsync();
 

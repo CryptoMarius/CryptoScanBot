@@ -95,44 +95,25 @@ public class Api() : ExchangeBase()
         GlobalData.AddTextToLogTab($"{ExchangeName} defaults");
 
         // Default opties voor deze exchange
-        //
-
-
-
-        //BinanceRestClient.SetDefaultOptions(options => { 
-        //    options.ApiCredentials = new ApiCredentials(apiKey, apiSecret); 
-        //});
-
-
-        //var client = new BinanceRestClient(options => {
-        //    options.OutputOriginalData = true;
-        //    options.Environment = BinanceEnvironment.Testnet;
-        //    // Other options
-        //});
-
-        // Waarom werkt dit niet meer? (In CryptoBot is het okay)
-        //BinanceClientOptions options = new();
-        //if (GlobalData.Settings.ApiKey != "")
-        //  options.ApiCredentials = new BinanceApiCredentials(GlobalData.Settings.ApiKey, GlobalData.Settings.ApiSecret);
-        //BinanceClient.SetDefaultOptions(options);
         BinanceRestClient.SetDefaultOptions(options =>
         {
+            //options.OutputOriginalData = true;
+            //options.SpotOptions.AutoTimestamp = true;
             options.ReceiveWindow = TimeSpan.FromSeconds(15);
+            options.RequestTimeout = TimeSpan.FromSeconds(40); // standard=20 seconds
+            //options.SpotOptions.RateLimiters = ?
             if (GlobalData.TradingApi.Key != "")
                 options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
         });
 
-        //{
-            //BinanceSocketClientOptions options = new();
-            //if (GlobalData.Settings.ApiKey != "")
-            //    options.ApiCredentials = new BinanceApiCredentials(GlobalData.Settings.ApiKey, GlobalData.Settings.ApiSecret);
-            //options.SpotStreamsOptions.AutoReconnect = true;
-            //options.SpotStreamsOptions.ReconnectInterval = TimeSpan.FromSeconds(15);
-        //}
         BinanceSocketClient.SetDefaultOptions(options =>
         {
             options.AutoReconnect = true;
-            options.ReconnectInterval = TimeSpan.FromSeconds(15);
+
+            options.RequestTimeout = TimeSpan.FromSeconds(40); // standard=20 seconds
+            options.ReconnectInterval = TimeSpan.FromSeconds(10); // standard=5 seconds
+            options.SocketNoDataTimeout = TimeSpan.FromMinutes(1); // standard=30 seconds
+
             if (GlobalData.TradingApi.Key != "")
                 options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
         });
@@ -148,6 +129,7 @@ public class Api() : ExchangeBase()
     {
         await FetchSymbols.ExecuteAsync();
     }
+
     public async override Task FetchCandlesAsync()
     {
         await FetchCandles.ExecuteAsync();
@@ -211,6 +193,12 @@ public class Api() : ExchangeBase()
         CryptoOrderType orderType, CryptoOrderSide orderSide,
         decimal quantity, decimal price, decimal? stop, decimal? limit)
     {
+        //ScannerLog.Logger.Trace($"Exchange.BybitSpot.PlaceOrder {symbol.Name}");
+        // debug
+        //GlobalData.AddTextToLogTab(string.Format("{0} {1} (debug={2} {3})", symbol.Name, "not at this moment", price, quantity));
+        //return (false, null);
+
+
         // Controleer de limiten van de maximum en minimum bedrag en de quantity
         if (!symbol.InsideBoundaries(quantity, price, out string text))
         {
@@ -544,6 +532,8 @@ public class Api() : ExchangeBase()
 
     public async override Task GetAssetsForAccountAsync(CryptoTradeAccount tradeAccount)
     {
+        //ScannerLog.Logger.Trace($"Exchange.Binance.GetAssetsForAccountAsync: Positie {tradeAccount.Name}");
+        //if (GlobalData.ExchangeListName.TryGetValue(ExchangeName, out Model.CryptoExchange exchange))
         {
             try
             {
@@ -554,7 +544,6 @@ public class Api() : ExchangeBase()
                 using var client = new BinanceRestClient();
                 {
                     WebCallResult<BinanceAccountInfo> accountInfo = await client.SpotApi.Account.GetAccountInfoAsync();
-
                     if (!accountInfo.Success)
                     {
                         GlobalData.AddTextToLogTab("error getting accountinfo " + accountInfo.Error);
@@ -563,7 +552,7 @@ public class Api() : ExchangeBase()
                     //Zo af en toe komt er geen data of is de Data niet gezet.
                     //De verbindingen naar extern kunnen (tijdelijk) geblokkeerd zijn
                     if (accountInfo == null | accountInfo.Data == null)
-                        throw new ExchangeException("Geen account data ontvangen");
+                        throw new ExchangeException("No account data received");
 
                     try
                     {

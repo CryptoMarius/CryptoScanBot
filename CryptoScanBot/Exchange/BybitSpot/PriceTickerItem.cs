@@ -31,8 +31,6 @@ public class PriceTickerItem
 
         ScannerLog.Logger.Trace($"price ticker for group {GroupName} starting");
 
-        //bool first = true;
-        //GlobalData.AddTextToLogTab($"{Api.ExchangeName} Starting price ticker stream");
         socketClient = new();
         CallResult<UpdateSubscription> subscriptionResult = await socketClient.V5SpotApi.SubscribeToTickerUpdatesAsync(Symbols, data =>
         {
@@ -46,6 +44,7 @@ public class PriceTickerItem
                     if (exchange.SymbolListName.TryGetValue(tick.Symbol, out CryptoSymbol symbol))
                     {
                         TickerCount++;
+
                         // Waarschijnlijk ALLEMAAL gebaseerd op de 24h prijs
                         //symbol.OpenPrice = tick.OpenPrice;
                         //symbol.HighPrice = tick.HighPrice;
@@ -141,6 +140,7 @@ public class PriceTickerItem
         _subscription.Exception -= Exception;
         _subscription.ConnectionLost -= ConnectionLost;
         _subscription.ConnectionRestored -= ConnectionRestored;
+
         await socketClient?.UnsubscribeAsync(_subscription);
         _subscription = null;
         socketClient?.Dispose();

@@ -13,15 +13,20 @@ public class PriceTickerItem
     public int TickerCount = 0; //Tellertje om te laten zien dat de stream doorloopt (anders geen candle uupdates)
     private BinanceSocketClient socketClient;
     private UpdateSubscription _subscription;
+    public List<string> Symbols = [];
+    public string GroupName = "";
 
-    public async Task ExecuteAsync()
+    public async Task StartAsync()
     {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} Starting price ticker stream");
+        if (_subscription != null)
+        {
+            ScannerLog.Logger.Trace($"price ticker for group {GroupName} already started");
+            return;
+        }
 
-        // Wordt gebruikt voor het zetten van de 24 uur volume
-        socketClient = new BinanceSocketClient();
+        ScannerLog.Logger.Trace($"price ticker for group {GroupName} starting");
 
-        //
+        socketClient = new();
         CallResult<UpdateSubscription> subscriptionResult = await socketClient.SpotApi.ExchangeData.SubscribeToAllTickerUpdatesAsync((data) =>
         {
             if (GlobalData.ExchangeListName.TryGetValue(Api.ExchangeName, out Model.CryptoExchange exchange))
@@ -76,6 +81,7 @@ public class PriceTickerItem
         // Subscribe to network-related stuff
         if (subscriptionResult.Success)
         {
+            //ErrorDuringStartup = false;
             _subscription = subscriptionResult.Data;
 
             // Events
@@ -83,42 +89,55 @@ public class PriceTickerItem
             _subscription.ConnectionLost += ConnectionLost;
             _subscription.ConnectionRestored += ConnectionRestored;
             //GlobalData.AddTextToLogTab($"{Api.ExchangeName} started price ticker stream for all symbols");
+            ScannerLog.Logger.Trace($"price ticker for group {GroupName} started");
         }
         else
         {
-            GlobalData.AddTextToLogTab($"ERROR {Api.ExchangeName} starting price ticker stream " + subscriptionResult.Error.Message);
-
+            _subscription = null;
+            socketClient.Dispose();
+            socketClient = null;
+            //ConnectionLostCount++;
+            //ErrorDuringStartup = true;
+            ScannerLog.Logger.Trace($"price ticker for group {GroupName} error {subscriptionResult.Error.Message} {string.Join(',', Symbols)}");
+            GlobalData.AddTextToLogTab($"price ticker for group {GroupName} error {subscriptionResult.Error.Message} {string.Join(',', Symbols)}");
         }
     }
 
     public async Task StopAsync()
     {
         if (_subscription == null)
+        {
+            ScannerLog.Logger.Trace($"price ticker for group {GroupName} already stopped");
             return;
+        }
 
-        //GlobalData.AddTextToLogTab("Stopping price ticker stream");
-
+        ScannerLog.Logger.Trace($"price ticker for group {GroupName} stopping");
         _subscription.Exception -= Exception;
         _subscription.ConnectionLost -= ConnectionLost;
         _subscription.ConnectionRestored -= ConnectionRestored;
 
-        await socketClient.UnsubscribeAsync(_subscription);
+        await socketClient?.UnsubscribeAsync(_subscription);
         _subscription = null;
+        socketClient?.Dispose();
+        socketClient = null;
+        ScannerLog.Logger.Trace($"price ticker for group {GroupName} stopped");
     }
+
 
     private void ConnectionLost()
     {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} price ticker stream connection lost.");
+        //ConnectionLostCount++;
+        GlobalData.AddTextToLogTab($"{Api.ExchangeName} price ticker connection lost for group {GroupName}.");
     }
 
     private void ConnectionRestored(TimeSpan timeSpan)
     {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} price ticker stream connection restored.");
+        GlobalData.AddTextToLogTab($"{Api.ExchangeName} price ticker connection restored for group {GroupName}.");
     }
 
     private void Exception(Exception ex)
     {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} price ticker stream connection error {ex.Message} | Stack trace: {ex.StackTrace}");
+        GlobalData.AddTextToLogTab($"{Api.ExchangeName} price ticker connection error {ex.Message} | Stack trace: {ex.StackTrace}");
     }
 
 }

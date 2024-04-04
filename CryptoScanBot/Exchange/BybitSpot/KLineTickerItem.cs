@@ -28,8 +28,6 @@ public class KLineTickerItem(string apiExchangeName, CryptoQuoteData quoteData) 
         // base volume would be MFN
         // quote volume would be USDT
 
-        //ScannerLog.Logger.Trace($"kline ticker {topic}");
-
         // De interval wordt geprefixed in de topic "kline.1.SymbolName"
         string symbolName = topic[8..];
         if (GlobalData.ExchangeListName.TryGetValue(Api.ExchangeName, out Model.CryptoExchange exchange))
@@ -37,7 +35,6 @@ public class KLineTickerItem(string apiExchangeName, CryptoQuoteData quoteData) 
             if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol symbol))
             {
                 Interlocked.Increment(ref TickerCount);
-                //ScannerLog.Logger.Trace($"kline ticker {topic} process");
                 //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", topic, kline.Timestamp.ToLocalTime()));
                 Process1mCandle(symbol, kline.StartTime, kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.Volume);
 

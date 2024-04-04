@@ -66,7 +66,7 @@ public class UserDataStream
             }
             else
             {
-                GlobalData.AddTextToLogTab("Error subscribing to spot.userstream " + subscriptionResult.Error.Message);
+                GlobalData.AddTextToLogTab($"{Api.ExchangeName} Error subscribing to userstream " + subscriptionResult.Error.Message);
                 return;
             }
         }
@@ -110,7 +110,7 @@ public class UserDataStream
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab("ERROR: OrderUpdate " + error.ToString());
+            GlobalData.AddTextToLogTab($"{Api.ExchangeName} ERROR: OrderUpdate " + error.ToString());
         }
     }
 
@@ -189,17 +189,18 @@ public class UserDataStream
 
     private void ConnectionLost()
     {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} price ticker connection lost.");
+        //ConnectionLostCount++;
+        GlobalData.AddTextToLogTab($"{Api.ExchangeName} user ticker connection lost.");
     }
 
     private void ConnectionRestored(TimeSpan timeSpan)
     {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} price ticker connection restored.");
+        GlobalData.AddTextToLogTab($"{Api.ExchangeName} user ticker connection restored.");
     }
 
     private void Exception(Exception ex)
     {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} price ticker connection error {ex.Message} | Stack trace: {ex.StackTrace}");
+        GlobalData.AddTextToLogTab($"{Api.ExchangeName} user ticker connection error {ex.Message} | Stack trace: {ex.StackTrace}");
     }
 }
 

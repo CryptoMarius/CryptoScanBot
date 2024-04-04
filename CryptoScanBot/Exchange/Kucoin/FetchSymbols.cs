@@ -111,7 +111,8 @@ public class FetchSymbols
                 //    throw new ExchangeException("Geen symbol ticker data ontvangen (2)");
 
                 // Bewaren voor debug werkzaamheden
-                {string filename = GlobalData.GetBaseDir();
+                {
+                    string filename = GlobalData.GetBaseDir();
                     filename += $@"\{exchange.Name}\";
                     Directory.CreateDirectory(filename);
                     filename += "tickers.json";
@@ -122,133 +123,136 @@ public class FetchSymbols
                 }
 
 
-                // Om achteraf de niet aangeboden munten te deactiveren
-                SortedList<string, CryptoSymbol> activeSymbols = [];
-
-
-                using (var transaction = database.BeginTransaction())
+                if (exchangeInfo.Data != null && tickersInfos.Data != null && tickersInfos.Data.Data != null)
                 {
-                    List<CryptoSymbol> cache = [];
-                    try
+
+                    // Om achteraf de niet aangeboden munten te deactiveren
+                    SortedList<string, CryptoSymbol> activeSymbols = [];
+
+
+                    using (var transaction = database.BeginTransaction())
                     {
-                        foreach (var symbolData in exchangeInfo.Data)
+                        List<CryptoSymbol> cache = [];
+                        try
                         {
-                            // https://docs.kucoin.com/#symbols-amp-ticker
-                            // https://api.kucoin.com/api/v1/symbols
-                            //Eventueel symbol toevoegen
-                            string symbolName = symbolData.Name.Replace("-", "");
-                            if (!exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol symbol))
+                            foreach (var symbolData in exchangeInfo.Data)
                             {
-                                symbol = new()
+                                // https://docs.kucoin.com/#symbols-amp-ticker
+                                // https://api.kucoin.com/api/v1/symbols
+                                //Eventueel symbol toevoegen
+                                string symbolName = symbolData.Name.Replace("-", "");
+                                if (!exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol symbol))
                                 {
-                                    Exchange = exchange,
-                                    ExchangeId = exchange.Id,
-                                    Name = symbolName,
-                                    Base = symbolData.BaseAsset,
-                                    Quote = symbolData.QuoteAsset,
-                                    Status = 1,
-                                };
-                            }
+                                    symbol = new()
+                                    {
+                                        Exchange = exchange,
+                                        ExchangeId = exchange.Id,
+                                        Name = symbolName,
+                                        Base = symbolData.BaseAsset,
+                                        Quote = symbolData.QuoteAsset,
+                                        Status = 1,
+                                    };
+                                }
 
-                            //Tijdelijk alles overnemen (vanwege into nieuwe velden)
-                            //De te gebruiken precisie in prijzen
-                            //symbol.BaseAssetPrecision = binanceSymbol.LotSizeFilter.BasePrecision.ToString().Length - 2;
-                            //if (symbol.BaseAssetPrecision <= 0)
-                            //    symbol.BaseAssetPrecision = 8;
-                            //symbol.QuoteAssetPrecision = binanceSymbol.LotSizeFilter.QuotePrecision.ToString().Length - 2;
-                            //if (symbol.QuoteAssetPrecision <= 0)
-                            //    symbol.QuoteAssetPrecision = 8;
-                            //symbol.MinNotional = binanceSymbol.MinNotional; // ????
+                                //Tijdelijk alles overnemen (vanwege into nieuwe velden)
+                                //De te gebruiken precisie in prijzen
+                                //symbol.BaseAssetPrecision = binanceSymbol.LotSizeFilter.BasePrecision.ToString().Length - 2;
+                                //if (symbol.BaseAssetPrecision <= 0)
+                                //    symbol.BaseAssetPrecision = 8;
+                                //symbol.QuoteAssetPrecision = binanceSymbol.LotSizeFilter.QuotePrecision.ToString().Length - 2;
+                                //if (symbol.QuoteAssetPrecision <= 0)
+                                //    symbol.QuoteAssetPrecision = 8;
+                                //symbol.MinNotional = binanceSymbol.MinNotional; // ????
 
-                            //Minimale en maximale amount voor een order (in base amount)
-                            symbol.QuantityMinimum = symbolData.BaseMinQuantity;
-                            symbol.QuantityMaximum = symbolData.BaseMaxQuantity; //baseMinSize
-                                                                                 // Dit klopt niet, deze heeft wederom effect op de Clamp routine!
-                            symbol.QuantityTickSize = symbolData.BaseIncrement;
+                                //Minimale en maximale amount voor een order (in base amount)
+                                symbol.QuantityMinimum = symbolData.BaseMinQuantity;
+                                symbol.QuantityMaximum = symbolData.BaseMaxQuantity; //baseMinSize
+                                                                                     // Dit klopt niet, deze heeft wederom effect op de Clamp routine!
+                                symbol.QuantityTickSize = symbolData.BaseIncrement;
 
-                            // De minimale en maximale prijs voor een order (in base price)
-                            // In de definities is wel een minPrice en maxprice aanwezig, maar die is niet gevuld
-                            // (dat heeft consequenties voro de werking van de Clamp die wel waarden verwacht)
-                            //symbol.PriceMinimum = niet aanwezig! binanceSymbol.PriceFilter.min;
-                            //symbol.PriceMaximum = niet aanwezig! binanceSymbol.LotSizeFilter.MaxOrderValue;
+                                // De minimale en maximale prijs voor een order (in base price)
+                                // In de definities is wel een minPrice en maxprice aanwezig, maar die is niet gevuld
+                                // (dat heeft consequenties voro de werking van de Clamp die wel waarden verwacht)
+                                //symbol.PriceMinimum = niet aanwezig! binanceSymbol.PriceFilter.min;
+                                //symbol.PriceMaximum = niet aanwezig! binanceSymbol.LotSizeFilter.MaxOrderValue;
 
-                            symbol.PriceTickSize = symbolData.PriceIncrement;
+                                symbol.PriceTickSize = symbolData.PriceIncrement;
 
-                            symbol.IsSpotTradingAllowed = true; // binanceSymbol.IsSpotTradingAllowed;
-                            symbol.IsMarginTradingAllowed = false; // binanceSymbol.MarginTading; ???
+                                symbol.IsSpotTradingAllowed = true; // binanceSymbol.IsSpotTradingAllowed;
+                                symbol.IsMarginTradingAllowed = false; // binanceSymbol.MarginTading; ???
 
-                            if (symbolData.EnableTrading)
-                                symbol.Status = 1;
-                            else
-                                symbol.Status = 0; //Zet de status door (PreTrading, PostTrading of Halt)
+                                if (symbolData.EnableTrading)
+                                    symbol.Status = 1;
+                                else
+                                    symbol.Status = 0; //Zet de status door (PreTrading, PostTrading of Halt)
 
-                            if (symbol.Id == 0)
-                            {
+                                if (symbol.Id == 0)
+                                {
 #if !SQLDATABASE
-                                database.Connection.Insert(symbol, transaction);
+                                    database.Connection.Insert(symbol, transaction);
 #endif
-                                cache.Add(symbol);
+                                    cache.Add(symbol);
+                                }
+                                else
+                                    database.Connection.Update(symbol, transaction);
+                                activeSymbols.Add(symbol.Name, symbol);
                             }
-                            else
-                                database.Connection.Update(symbol, transaction);
-                            activeSymbols.Add(symbol.Name, symbol);
-                        }
 #if SQLDATABASE
                         database.BulkInsertSymbol(cache, transaction);
 #endif
 
-                        // Deactiveer de munten die niet meer voorkomen
-                        int deactivated = 0;
-                        foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
-                        {
-                            if (symbol.Status == 1 && !symbol.IsBarometerSymbol() && !activeSymbols.ContainsKey(symbol.Name))
+                            // Deactiveer de munten die niet meer voorkomen
+                            int deactivated = 0;
+                            foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
                             {
-                                deactivated++;
-                                symbol.Status = 0;
-                                database.Connection.Update(symbol, transaction);
-                            }
-                        }
-                        if (deactivated > 0)
-                            GlobalData.AddTextToLogTab($"{deactivated} munten gedeactiveerd");
-
-
-                        // De nieuwe symbols toevoegen aan de lijst
-                        // (omdat de symbols pas tijdens de BulkInsert een id krijgen)
-                        foreach (CryptoSymbol symbol in cache)
-                        {
-                            GlobalData.AddSymbol(symbol);
-                        }
-
-
-
-                        // Aanvullend de tickers aanroepen voor het volume...
-                        foreach (var tickerInfo in tickersInfos.Data.Data)
-                        {
-                            string symbolName = tickerInfo.Symbol.Replace("-", "");
-                            if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol symbol))
-                            {
-                                if (tickerInfo.QuoteVolume.HasValue)
+                                if (symbol.Status == 1 && !symbol.IsBarometerSymbol() && !activeSymbols.ContainsKey(symbol.Name))
                                 {
-                                    symbol.Volume = (decimal)tickerInfo.QuoteVolume;
+                                    deactivated++;
+                                    symbol.Status = 0;
                                     database.Connection.Update(symbol, transaction);
                                 }
                             }
+                            if (deactivated > 0)
+                                GlobalData.AddTextToLogTab($"{deactivated} munten gedeactiveerd");
+
+
+                            // De nieuwe symbols toevoegen aan de lijst
+                            // (omdat de symbols pas tijdens de BulkInsert een id krijgen)
+                            foreach (CryptoSymbol symbol in cache)
+                            {
+                                GlobalData.AddSymbol(symbol);
+                            }
+
+
+
+                            // Aanvullend de tickers aanroepen voor het volume...
+                            foreach (var tickerInfo in tickersInfos.Data.Data)
+                            {
+                                string symbolName = tickerInfo.Symbol.Replace("-", "");
+                                if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol symbol))
+                                {
+                                    if (tickerInfo.QuoteVolume.HasValue)
+                                    {
+                                        symbol.Volume = (decimal)tickerInfo.QuoteVolume;
+                                        database.Connection.Update(symbol, transaction);
+                                    }
+                                }
+                            }
+
+                            transaction.Commit();
                         }
+                        catch (Exception error)
+                        {
+                            ScannerLog.Logger.Error(error, "");
+                            GlobalData.AddTextToLogTab(error.ToString());
+                            transaction.Rollback();
+                            throw;
+                        }
+                    }
 
-                        transaction.Commit();
-                    }
-                    catch (Exception error)
-                    {
-                        ScannerLog.Logger.Error(error, "");
-                        GlobalData.AddTextToLogTab(error.ToString());
-                        transaction.Rollback();
-                        throw;
-                    }
+                    exchange.LastTimeFetched = DateTime.UtcNow;
+                    database.Connection.Update(exchange);
                 }
-
-                exchange.LastTimeFetched = DateTime.UtcNow;
-                database.Connection.Update(exchange);
-
             }
             catch (Exception error)
             {

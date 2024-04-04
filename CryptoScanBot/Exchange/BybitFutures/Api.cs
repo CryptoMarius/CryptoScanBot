@@ -34,7 +34,11 @@ public class Api() : ExchangeBase()
         // Default opties voor deze exchange
         BybitRestClient.SetDefaultOptions(options =>
         {
+            //options.OutputOriginalData = true;
+            //options.SpotOptions.AutoTimestamp = true;
             options.ReceiveWindow = TimeSpan.FromSeconds(15);
+            options.RequestTimeout = TimeSpan.FromSeconds(40); // standard=20 seconds
+            //options.SpotOptions.RateLimiters = ?
             if (GlobalData.TradingApi.Key != "")
                 options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
         });
@@ -42,7 +46,13 @@ public class Api() : ExchangeBase()
         BybitSocketClient.SetDefaultOptions(options =>
         {
             options.AutoReconnect = true;
-            options.ReconnectInterval = TimeSpan.FromSeconds(15);
+
+            options.RequestTimeout = TimeSpan.FromSeconds(40); // standard=20 seconds
+            options.ReconnectInterval = TimeSpan.FromSeconds(10); // standard=5 seconds
+            options.SocketNoDataTimeout = TimeSpan.FromMinutes(1); // standard=30 seconds
+            options.V5Options.SocketNoDataTimeout = options.SocketNoDataTimeout;
+            options.SpotV3Options.SocketNoDataTimeout = options.SocketNoDataTimeout;
+
             if (GlobalData.TradingApi.Key != "")
                 options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
         });
@@ -58,6 +68,7 @@ public class Api() : ExchangeBase()
     {
         await FetchSymbols.ExecuteAsync();
     }
+
     public async override Task FetchCandlesAsync()
     {
         await FetchCandles.ExecuteAsync();
@@ -344,13 +355,19 @@ public class Api() : ExchangeBase()
             using var transaction = databaseThread.BeginTransaction();
             try
             {
+                // remove assets with total=0
+                foreach (var asset in tradeAccount.AssetList.Values.ToList())
+                {
+                    asset.Total = 0;
+                }
+
                 foreach (var assetInfo in balances.Balances)
                 {
                     if (assetInfo.WalletBalance > 0)
                     {
                         if (!tradeAccount.AssetList.TryGetValue(assetInfo.Asset, out CryptoAsset asset))
                         {
-                            asset = new CryptoAsset
+                            asset = new()
                             {
                                 Name = assetInfo.Asset,
                                 TradeAccountId = tradeAccount.Id
@@ -454,16 +471,67 @@ public class Api() : ExchangeBase()
     }
 
 
-    public override Task<int> GetOrdersForPositionAsync(CryptoDatabase database, CryptoPosition position)
+    public override async Task<int> GetOrdersForPositionAsync(CryptoDatabase database, CryptoPosition position)
     {
-        return Task.FromResult(0);
+        //ScannerLog.Logger.Trace($"Exchange.BybitSpot.GetOrdersForPositionAsync: Positie {position.Symbol.Name}");
+        // Behoorlijk weinig error control ...... 
+
+        int count = 0;
+        DateTime? from; // = position.Symbol.LastOrderFetched;
+        //if (from == null)
+        // altijd alles ophalen, geeft wat veel logging, maar ach..
+        from = position.CreateTime.AddMinutes(-1);
+
+        ScannerLog.Logger.Trace($"GetOrdersForPositionAsync {position.Symbol.Name} fetching orders from exchange {from}");
+
+        using var client = new BybitRestClient();
+        var info = await client.V5Api.Trading.GetOrderHistoryAsync(
+            Category.Spot, symbol: position.Symbol.Name, 
+            startTime: from);
+
+        
+        if (info.Success && info.Data != null)
+        {
+            string text;
+            foreach (var item in info.Data.List)
+            {
+                if (position.Symbol.OrderList.TryGetValue(item.OrderId, out CryptoOrder order))
+                {
+                    var oldStatus = order.Status;
+                    var oldQuoteQuantityFilled = order.QuoteQuantityFilled;
+                    PickupOrder(position.TradeAccount, position.Symbol, order, (BybitOrderUpdate)item);
+                    database.Connection.Update<CryptoOrder>(order);
+
+                    if (oldStatus != order.Status || oldQuoteQuantityFilled != order.QuoteQuantityFilled)
+                    {
+                        ScannerLog.Logger.Trace($"GetOrdersForPositionAsync {position.Symbol.Name} updated order {item.OrderId}");
+                        text = JsonSerializer.Serialize(item, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = false }).Trim();
+                        ScannerLog.Logger.Trace($"{item.Symbol} order updated json={text}");
+                        count++;
+                    }
+                }
+                else
+                {
+                    text = JsonSerializer.Serialize(item, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = false }).Trim();
+                    ScannerLog.Logger.Trace($"{item.Symbol} order added json={text}");
+
+                    order = new();
+                    PickupOrder(position.TradeAccount, position.Symbol, order, (BybitOrderUpdate)item);
+                    database.Connection.Insert<CryptoOrder>(order);
+                    GlobalData.AddOrder(order);
+                    count++;
+                }
+
+                if (position.Symbol.LastOrderFetched == null || order.CreateTime > position.Symbol.LastOrderFetched)
+                    position.Symbol.LastOrderFetched = order.CreateTime;
+            }
+            database.Connection.Update<CryptoSymbol>(position.Symbol);
+        }
+        else
+            GlobalData.AddTextToLogTab($"Error reading orders from {Api.ExchangeName} for {position.Symbol.Name} {info.Error}");
+
+        return count;
     }
-
-
-    //public override async Task<int> FetchTradesForOrderAsync(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, string orderId)
-    //{
-    //    return await FetchTradeForOrder.FetchTradesForOrderAsync(tradeAccount, symbol, orderId);
-    //}
 
     public async override Task GetAssetsForAccountAsync(CryptoTradeAccount tradeAccount)
     {
@@ -486,7 +554,7 @@ public class Api() : ExchangeBase()
                     //Zo af en toe komt er geen data of is de Data niet gezet.
                     //De verbindingen naar extern kunnen (tijdelijk) geblokkeerd zijn
                     if (accountInfo == null | accountInfo.Data == null)
-                        throw new ExchangeException("Geen account data ontvangen");
+                        throw new ExchangeException("No account data received");
 
                     try
                     {
@@ -528,62 +596,6 @@ public class Api() : ExchangeBase()
     public static void ResetUserDataStream()
     {
         // niets, hmm
-    }
-
-    public static async Task GetPositionInfo()
-    {
-        //https://api.bybit.com/v5/position/list?category=linear
-        //https://bybit-exchange.github.io/docs/v5/position
-
-        //if (GlobalData.ExchangeListName.TryGetValue(ExchangeName, out Model.CryptoExchange exchange))
-        {
-            try
-            {
-
-                GlobalData.AddTextToLogTab($"Reading position information from {Api.ExchangeName}");
-
-                LimitRates.WaitForFairWeight(1);
-
-                using var client = new BybitRestClient();
-                {
-                    var positionInfo = await client.V5Api.Trading.GetPositionsAsync(Category.Linear, settleAsset: "USDT");
-                    if (!positionInfo.Success)
-                    {
-                        GlobalData.AddTextToLogTab("error getting GetPositions" + positionInfo.Error);
-                    }
-
-                    if (positionInfo == null | positionInfo.Data == null)
-                        throw new ExchangeException("Geen account data ontvangen");
-
-                    try
-                    {
-                        var options = new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = false, IncludeFields = true };
-
-                        foreach (var x in positionInfo.Data.List)
-                        {
-                            string text = JsonSerializer.Serialize(x, options);
-                            GlobalData.AddTextToLogTab("PositionInfo :" + text);
-                        }
-                    }
-
-                    catch (Exception error)
-                    {
-                        ScannerLog.Logger.Error(error, "");
-                        GlobalData.AddTextToLogTab(error.ToString());
-                        throw;
-                    }
-                }
-            }
-            catch (Exception error)
-            {
-                ScannerLog.Logger.Error(error, "");
-                GlobalData.AddTextToLogTab(error.ToString());
-                GlobalData.AddTextToLogTab("");
-            }
-
-        }
-
-
     }
 #endif
 

@@ -16,6 +16,7 @@ namespace CryptoScanBot.Exchange.Binance;
 
 public class FetchSymbols
 {
+
     public static async Task ExecuteAsync()
     {
         if (GlobalData.ExchangeListName.TryGetValue(Api.ExchangeName, out Model.CryptoExchange exchange))
@@ -28,20 +29,18 @@ public class FetchSymbols
                 using CryptoDatabase database = new();
                 database.Open();
 
-                WebCallResult<BinanceExchangeInfo> exchangeInfo = null;
-                var client = new BinanceRestClient();
-                {
-                    exchangeInfo = await client.SpotApi.ExchangeData.GetExchangeInfoAsync();
-                    if (!exchangeInfo.Success)
-                    {
-                        GlobalData.AddTextToLogTab("error getting exchangeinfo " + exchangeInfo.Error + "\r\n");
-                    }
+                using var client = new BinanceRestClient();
+                var exchangeInfo = await client.SpotApi.ExchangeData.GetExchangeInfoAsync();
 
-                    //Zo af en toe komt er geen data of is de Data niet gezet.
-                    //De verbindingen naar extern kunnen (tijdelijk) geblokkeerd zijn
-                    if (exchangeInfo == null || exchangeInfo.Data == null)
-                        throw new ExchangeException("Geen exchange data ontvangen");
-                }
+                // Zo af en toe komt er geen data of is de Data niet gezet.
+                // De verbindingen naar extern kunnen (tijdelijk) geblokkeerd zijn
+                if (exchangeInfo == null)
+                    throw new ExchangeException("Geen exchange data ontvangen (1)");
+                if (!exchangeInfo.Success)
+                    GlobalData.AddTextToLogTab("error getting exchangeinfo " + exchangeInfo.Error, true);
+                if (exchangeInfo.Data == null)
+                    throw new ExchangeException("Geen exchange data ontvangen (2)");
+                
 
                 // Om achteraf de niet gedeactiveerde munten te melden en te deactiveren
                 List<string> reportSymbols = new();

@@ -1,9 +1,5 @@
 ﻿namespace CryptoScanBot.Exchange.Binance;
 
-internal class KLineTicker : KLineTickerBase
+internal class KLineTicker() : KLineTickerBase(Api.ExchangeName, 200, typeof(KLineTickerItem))
 {
-    public KLineTicker() : base(Api.ExchangeName, 200, typeof(KLineTickerItem))
-    {
-    }
-
 }

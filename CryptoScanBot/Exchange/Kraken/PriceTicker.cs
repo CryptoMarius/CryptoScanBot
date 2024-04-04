@@ -5,7 +5,7 @@ namespace CryptoScanBot.Exchange.Kraken;
 
 internal class PriceTicker() : PriceTickerBase
 {
-    static private List<PriceTickerItem> TickerList { get; set; } = new();
+    static private List<PriceTickerItem> TickerList { get; set; } = [];
 
     public override async Task StartAsync()
     {
@@ -44,6 +44,7 @@ internal class PriceTicker() : PriceTickerBase
                                 break;
                         }
 
+                        ticker.GroupName = $"{TickerList.Count} ({ticker.Symbols.Count})";
                         Task task = Task.Run(async () => { await ticker.StartAsync(); });
                         taskList.Add(task);
                     }
@@ -63,17 +64,21 @@ internal class PriceTicker() : PriceTickerBase
 
     public override async Task StopAsync()
     {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} stopping price ticker");
-        List<Task> taskList = [];
-        foreach (var ticker in TickerList)
+        if (TickerList.Count != 0)
         {
-            Task task = Task.Run(async () => { await ticker.StopAsync(); });
-            taskList.Add(task);
-        }
-        if (taskList.Count != 0)
+            GlobalData.AddTextToLogTab($"{Api.ExchangeName} price ticker stopping");
+            List<Task> taskList = [];
+            foreach (var ticker in TickerList)
+            {
+                Task task = Task.Run(async () => { await ticker.StopAsync(); });
+                taskList.Add(task);
+            }
             await Task.WhenAll(taskList).ConfigureAwait(false);
-        TickerList.Clear();
-        ScannerLog.Logger.Trace($"{Api.ExchangeName} price tickers stopped");
+            ScannerLog.Logger.Trace($"{Api.ExchangeName} price tickers stopped");
+            TickerList.Clear();
+        }
+        else
+            ScannerLog.Logger.Trace($"{Api.ExchangeName} price tickers already stopped");
     }
 
 
