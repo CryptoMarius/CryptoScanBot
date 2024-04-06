@@ -358,7 +358,7 @@ public partial class Form1 : Form
             //            string text = JsonSerializer.Serialize(kline, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
             //            GlobalData.AddTextToLogTab(data.Topic + " " + text);
 
-            //            if (GlobalData.ExchangeListName.TryGetValue(CryptoScanBot.Exchange.Kucoin.Api.ExchangeName, out CryptoScanBot.Model.CryptoExchange exchange))
+            //            if (GlobalData.ExchangeListName.TryGetValue(CryptoScanBot.Exchange.Kucoin.ExchangeOptions.ExchangeName, out CryptoScanBot.Model.CryptoExchange exchange))
             //            {
             //                string symbolName = data.Topic.Replace("-", "");
             //                if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol symbol))
@@ -415,8 +415,8 @@ public partial class Form1 : Form
             //    }
             //    else
             //    {
-            //        GlobalData.AddTextToLogTab($"{Api.ExchangeName} {quote} 1m ERROR starting candle stream {subscriptionResult.Error.Message}");
-            //        GlobalData.AddTextToLogTab($"{Api.ExchangeName} {quote} 1m ERROR starting candle stream {symbolNames}");
+            //        GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} {quote} 1m ERROR starting candle stream {subscriptionResult.Error.Message}");
+            //        GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} {quote} 1m ERROR starting candle stream {symbolNames}");
 
             //    }
 
@@ -786,7 +786,7 @@ public partial class Form1 : Form
             //        BybitSocketClient socketClient = new();
             //        CallResult<UpdateSubscription> subscriptionResult2 = await socketClient.V5SpotApi.SubscribeToTickerUpdatesAsync(symbols, data =>
             //        {
-            //            //if (GlobalData.ExchangeListName.TryGetValue(Api.ExchangeName, out Model.CryptoExchange exchange))
+            //            //if (GlobalData.ExchangeListName.TryGetValue(ExchangeOptions.ExchangeName, out Model.CryptoExchange exchange))
             //            //{
             //            var tick = data.Data;
             //            //foreach (var tick in data.Data)
@@ -1068,7 +1068,7 @@ public partial class Form1 : Form
         LogFactory = new(new[] { TraceProvider });
 
 
-        if (GlobalData.ExchangeListName.TryGetValue(Api.ExchangeName, out CryptoScanBot.Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(ExchangeOptions.ExchangeName, out CryptoScanBot.Model.CryptoExchange exchange))
         {
             if (exchange.SymbolListName.TryGetValue("SUSHIUSDT", out CryptoSymbol symbol))
             {

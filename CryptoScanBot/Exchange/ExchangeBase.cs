@@ -6,13 +6,20 @@ using CryptoScanBot.Model;
 
 namespace CryptoScanBot.Exchange;
 
-public abstract class ExchangeBase()
+public abstract class ExchangeBase
 {
-    //public string ExchangeName { get; set; } = "";
-
+    internal static ExchangeOptions ExchangeOptions { get; } = new();
     public abstract void ExchangeDefaults();
     public abstract Task FetchSymbolsAsync();
     public abstract Task FetchCandlesAsync();
+
+    /// <summary>
+    /// return the thechnical format of the symbol on the exchange name 
+    /// </summary>
+    public virtual string ExchangeSymbolName(CryptoSymbol symbol)
+    {
+        return symbol.Name;
+    }
 
 
 #if TRADEBOT

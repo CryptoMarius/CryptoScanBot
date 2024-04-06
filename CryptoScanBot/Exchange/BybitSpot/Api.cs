@@ -25,14 +25,14 @@ using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot.Exchange.BybitSpot;
 
-public class Api() : ExchangeBase()
+public class Api : ExchangeBase
 {
-    public static readonly string ExchangeName = "Bybit Spot";
 #if TRADEBOT
     private static readonly Category Category = Category.Spot;
-    static private UserDataStream TaskBybitStreamUserData { get; set; }
+
+    static private TickerUserItem TaskBybitStreamUserData { get; set; }
 #endif
-    public static List<KLineTickerItem> TickerList { get; set; } = [];
+    public static List<TickerKLineItem> TickerList { get; set; } = [];
 
     //internal static BybitRestClient CreateRestClient()
     //{
@@ -64,12 +64,15 @@ public class Api() : ExchangeBase()
     //    return client;
     //}
 
-
     public override void ExchangeDefaults()
     {
-        //TraceProvider = new();
-        //LogFactory = new(new[] { TraceProvider });
-        GlobalData.AddTextToLogTab($"{ExchangeName} defaults");
+        ExchangeOptions.ExchangeName = "Bybit Spot";
+        ExchangeOptions.SubscriptionLimit = 10;
+        ExchangeOptions.KLineTickerItemType = typeof(TickerKLineItem);
+        ExchangeOptions.PriceTickerItemType = typeof(TickerPriceItem);
+        ExchangeOptions.UserTickerItemType = typeof(TickerUserItem);
+        
+        GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         // Default opties voor deze exchange
         BybitRestClient.SetDefaultOptions(options =>
@@ -97,21 +100,21 @@ public class Api() : ExchangeBase()
                 options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
         });
 
-        ExchangeHelper.PriceTicker = new PriceTicker();
-        ExchangeHelper.KLineTicker = new KLineTickerBase(Api.ExchangeName, 10, typeof(KLineTickerItem));
+        ExchangeHelper.PriceTicker = new TickerPrice(ExchangeOptions);
+        ExchangeHelper.KLineTicker = new TickerKLine(ExchangeOptions);
 #if TRADEBOT
-        ExchangeHelper.UserData = new UserData();
+        ExchangeHelper.UserTicker = new TickerUser(ExchangeOptions);
 #endif
     }
 
     public async override Task FetchSymbolsAsync()
     {
-        await FetchSymbols.ExecuteAsync();
+        await GetSymbols.ExecuteAsync();
     }
         
     public async override Task FetchCandlesAsync()
     {
-        await FetchCandles.ExecuteAsync();
+        await GetCandles.ExecuteAsync();
     }
 
 #if TRADEBOT
@@ -425,7 +428,7 @@ public class Api() : ExchangeBase()
 
     public override async Task<int> GetTradesForPositionAsync(CryptoDatabase database, CryptoPosition position)
     {
-        return await FetchTrades.FetchTradesForSymbolAsync(database, position);
+        return await GetTrades.FetchTradesForSymbolAsync(database, position);
     }
 	
 	
@@ -538,7 +541,7 @@ public class Api() : ExchangeBase()
             database.Connection.Update<CryptoSymbol>(position.Symbol);
         }
         else
-            GlobalData.AddTextToLogTab($"Error reading orders from {Api.ExchangeName} for {position.Symbol.Name} {info.Error}");
+            GlobalData.AddTextToLogTab($"Error reading orders from {ExchangeOptions.ExchangeName} for {position.Symbol.Name} {info.Error}");
 
         return count;
     }
@@ -551,7 +554,7 @@ public class Api() : ExchangeBase()
         {
             try
             {
-                GlobalData.AddTextToLogTab($"Reading asset information from {Api.ExchangeName}");
+                GlobalData.AddTextToLogTab($"Reading asset information from {ExchangeOptions.ExchangeName}");
 
                 LimitRates.WaitForFairWeight(1);
 
@@ -594,8 +597,8 @@ public class Api() : ExchangeBase()
 
     public static void StartUserDataStream()
     {
-        TaskBybitStreamUserData = new UserDataStream();
-        var _ = Task.Run(async () => { await TaskBybitStreamUserData.ExecuteAsync(); });
+        TaskBybitStreamUserData = new TickerUserItem(ExchangeOptions);
+        var _ = Task.Run(async () => { await TaskBybitStreamUserData.StartAsync(); });
     }
 
     public static async Task StopUserDataStream()

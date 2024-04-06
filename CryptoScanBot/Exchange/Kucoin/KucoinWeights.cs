@@ -55,7 +55,7 @@ public static class KucoinWeights
 
                 if (CurrentWeight > 50)
                 {
-                    GlobalData.AddTextToLogTab($"{Api.ExchangeName} delay needed for weight: {CurrentWeight} (because of rate limits)");
+                    GlobalData.AddTextToLogTab($"{Api.ExchangeOptions.ExchangeName} delay needed for weight: {CurrentWeight} (because of rate limits)");
                     Thread.Sleep(2500);
                 }
                 else

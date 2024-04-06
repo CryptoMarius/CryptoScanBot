@@ -86,13 +86,16 @@ https://api-testnet.bybit.com/spot/v3/public/symbols
 
  */
 
-public class Api() : ExchangeBase()
+public class Api : ExchangeBase
 {
-    public static readonly string ExchangeName = "Binance";
-
     public override void ExchangeDefaults()
     {
-        GlobalData.AddTextToLogTab($"{ExchangeName} defaults");
+        ExchangeOptions.ExchangeName = "Binance";
+        ExchangeOptions.SubscriptionLimit = 200;
+        ExchangeOptions.KLineTickerItemType = typeof(TickerKLineItem);
+        ExchangeOptions.PriceTickerItemType = typeof(TickerPriceItem);
+        ExchangeOptions.UserTickerItemType = typeof(TickerUserItem);
+        GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         // Default opties voor deze exchange
         BinanceRestClient.SetDefaultOptions(options =>
@@ -118,21 +121,21 @@ public class Api() : ExchangeBase()
                 options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
         });
 
-        ExchangeHelper.PriceTicker = new PriceTicker();
-        ExchangeHelper.KLineTicker = new KLineTickerBase(Api.ExchangeName, 200, typeof(KLineTickerItem));
+        ExchangeHelper.PriceTicker = new TickerPrice(ExchangeOptions);
+        ExchangeHelper.KLineTicker = new TickerKLine(ExchangeOptions);
 #if TRADEBOT
-        ExchangeHelper.UserData = new UserData();
+        ExchangeHelper.UserTicker = new TickerUser(ExchangeOptions);
 #endif
     }
 
     public async override Task FetchSymbolsAsync()
     {
-        await FetchSymbols.ExecuteAsync();
+        await GetSymbols.ExecuteAsync();
     }
 
     public async override Task FetchCandlesAsync()
     {
-        await FetchCandles.ExecuteAsync();
+        await GetCandles.ExecuteAsync();
     }
 
 #if TRADEBOT
@@ -537,7 +540,7 @@ public class Api() : ExchangeBase()
         {
             try
             {
-                GlobalData.AddTextToLogTab($"Reading asset information from {Api.ExchangeName}");
+                GlobalData.AddTextToLogTab($"Reading asset information from {ExchangeOptions.ExchangeName}");
 
                 LimitRates.WaitForFairWeight(1);
 

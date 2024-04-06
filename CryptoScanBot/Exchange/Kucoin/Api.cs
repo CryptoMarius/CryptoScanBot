@@ -13,20 +13,20 @@ using Kucoin.Net.Enums;
 using Kucoin.Net.Objects;
 using Kucoin.Net.Objects.Models.Spot;
 
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Console;
-
 namespace CryptoScanBot.Exchange.Kucoin;
 
 
-public class Api() : ExchangeBase()
+public class Api : ExchangeBase
 {
-    public static readonly string ExchangeName = "Kucoin";
-
     public override void ExchangeDefaults()
     {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeName} defaults");
+        ExchangeOptions.ExchangeName = "Kucoin";
+        ExchangeOptions.SubscriptionLimit = 1;
+        ExchangeOptions.LimitAmountOfSymbols = true;
+        ExchangeOptions.KLineTickerItemType = typeof(TickerKLineItem);
+        ExchangeOptions.PriceTickerItemType = typeof(TickerPriceItem);
+        ExchangeOptions.UserTickerItemType = typeof(TickerUserItem);
+        GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         // Ik begrijp hier niet zoveel van.....
         //var logFactory = new LoggerFactory();
@@ -58,8 +58,8 @@ public class Api() : ExchangeBase()
                 options.ApiCredentials = new KucoinApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret, GlobalData.TradingApi.PassPhrase);
         });
 
-        ExchangeHelper.PriceTicker = new PriceTicker();
-        ExchangeHelper.KLineTicker = new KLineTicker();
+        ExchangeHelper.PriceTicker = new TickerPriceKucoin(ExchangeOptions);
+        ExchangeHelper.KLineTicker = new TickerKLineKucoin(ExchangeOptions);
 #if TRADEBOT
         //ExchangeHelper.UserData = new userData();
 #endif
@@ -67,12 +67,17 @@ public class Api() : ExchangeBase()
 
     public async override Task FetchSymbolsAsync()
     {
-        await FetchSymbols.ExecuteAsync();
+        await GetSymbols.ExecuteAsync();
     }
 
     public async override Task FetchCandlesAsync()
     {
-        await FetchCandles.ExecuteAsync();
+        await GetCandles.ExecuteAsync();
+    }
+
+    public override string ExchangeSymbolName(CryptoSymbol symbol)
+    {
+        return symbol.Base + '-' + symbol.Quote;
     }
 
 #if TRADEBOT
@@ -354,7 +359,7 @@ public class Api() : ExchangeBase()
         {
             try
             {
-                GlobalData.AddTextToLogTab($"Reading asset information from {Api.ExchangeName} TODO!!!!");
+                GlobalData.AddTextToLogTab($"Reading asset information from {ExchangeOptions.ExchangeName} TODO!!!!");
 
                 //BybitWeights.WaitForFairWeight(1);
 

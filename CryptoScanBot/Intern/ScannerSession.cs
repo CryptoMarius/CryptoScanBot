@@ -82,7 +82,7 @@ public static class ScannerSession
                 GlobalData.ThreadMonitorOrder = new ThreadMonitorOrder();
                 GlobalData.ThreadDoubleCheckPosition = new ThreadCheckFinishedPosition();
                 if (GlobalData.TradingApi.Key != "")
-                    _ = ExchangeHelper.UserData.StartAsync();
+                    _ = ExchangeHelper.UserTicker.StartAsync();
 #endif
 #if BALANCING
         GlobalData.ThreadBalanceSymbols = new ThreadBalanceSymbols();
@@ -149,9 +149,9 @@ public static class ScannerSession
                 task = Task.Run(() => { GlobalData.ThreadDoubleCheckPosition?.Stop(); });
                 taskList.Add(task);
 
-                if (ExchangeHelper.UserData != null && !GlobalData.ApplicationIsClosing)
+                if (ExchangeHelper.UserTicker != null && !GlobalData.ApplicationIsClosing)
                 {
-                    task = Task.Run(async () => { await ExchangeHelper.UserData?.StopAsync(); });
+                    task = Task.Run(async () => { await ExchangeHelper.UserTicker?.StopAsync(); });
                     taskList.Add(task);
                 }
 #endif

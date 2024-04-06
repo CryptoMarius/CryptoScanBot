@@ -53,7 +53,7 @@ public static class LimitRates
                 // (er draaien ook diverse taken en socket streams die de nodige weight gebruiken, dus lager is veiliger)
                 if (CurrentWeight > 600)
                 {
-                    GlobalData.AddTextToLogTab($"{Api.ExchangeName} delay needed for weight: {CurrentWeight} (because of rate limits)");
+                    GlobalData.AddTextToLogTab($"{Api.ExchangeOptions.ExchangeName} delay needed for weight: {CurrentWeight} (because of rate limits)");
                     Thread.Sleep(2500);
                 }
                 else

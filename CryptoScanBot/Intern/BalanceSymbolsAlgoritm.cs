@@ -418,7 +418,7 @@ public class BalanceSymbolsAlgoritm
     //    if (Simulation)
     //        return true;
 
-    //    BinanceWeights.WaitForFairBinanceWeight(5, $"{Api.ExchangeName} account info");
+    //    BinanceWeights.WaitForFairBinanceWeight(5, $"{ExchangeOptions.ExchangeName} account info");
     //    using (var client = new BinanceClient())
     //    {
     //        // Eigenlijk hebben we die assets al (via de trades, maar ook via de balance items)
@@ -600,7 +600,7 @@ public class BalanceSymbolsAlgoritm
             if (GlobalData.Settings.BalanceBot.CoinList.Any())
             {
                 if (!GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Exchange))
-                    throw new Exception($"Exchange {Api.ExchangeName} niet aanwezig");
+                    throw new Exception($"Exchange {ExchangeOptions.ExchangeName} niet aanwezig");
 
                 // De te balanceren munten
                 foreach (BalanceSymbol balanceSymbol in GlobalData.Settings.BalanceBot.CoinList)
