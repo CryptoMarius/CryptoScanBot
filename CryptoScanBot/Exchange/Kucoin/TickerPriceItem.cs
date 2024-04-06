@@ -1,6 +1,5 @@
 ﻿using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
-using CryptoExchange.Net.Sockets;
 using CryptoScanBot.Intern;
 using CryptoScanBot.Model;
 
@@ -8,19 +7,14 @@ using Kucoin.Net.Clients;
 
 namespace CryptoScanBot.Exchange.Kucoin;
 
-public class TickerPriceItem
+public class TickerPriceItem() : TickerItem(Api.ExchangeOptions)
 {
-//    private static int tickerIndex = 0;
-    public int TickerCount = 0; //Tellertje om te laten zien dat de stream doorloopt (anders geen candle uupdates)
-    private KucoinSocketClient socketClient;
-    private UpdateSubscription _subscription;
-    public List<string> Symbols = [];
 
-    public async Task StartAsync()
+    public override async Task<CallResult<UpdateSubscription>> Subscribe()
     {
-        //GlobalData.AddTextToLogTab("Bybit Starting price ticker stream");
-        socketClient = new();
-        CallResult<UpdateSubscription> subscriptionResult = await socketClient.SpotApi.SubscribeToAllTickerUpdatesAsync(data =>
+        if (TickerGroup.SocketClient == null)
+            TickerGroup.SocketClient = new KucoinSocketClient();
+        CallResult<UpdateSubscription> subscriptionResult = await ((KucoinSocketClient)TickerGroup.SocketClient).SpotApi.SubscribeToAllTickerUpdatesAsync(data =>
         {
             if (GlobalData.ExchangeListName.TryGetValue(Api.ExchangeOptions.ExchangeName, out Model.CryptoExchange exchange))
             {
@@ -79,51 +73,8 @@ public class TickerPriceItem
             }
         }, ExchangeHelper.CancellationToken).ConfigureAwait(false);
 
-        // Subscribe to network-related stuff
-        if (subscriptionResult.Success)
-        {
-            _subscription = subscriptionResult.Data;
+        return subscriptionResult;
 
-            // Events
-            _subscription.Exception += Exception;
-            _subscription.ConnectionLost += ConnectionLost;
-            _subscription.ConnectionRestored += ConnectionRestored;
-            //GlobalData.AddTextToLogTab(string.Format("Bybit started price ticker stream for {0} symbols", Symbols.Count));
-        }
-        else
-        {
-            GlobalData.AddTextToLogTab($"ERROR {Api.ExchangeOptions.ExchangeName}  starting price ticker stream " + subscriptionResult.Error.Message);
-            GlobalData.AddTextToLogTab($"ERROR {Api.ExchangeOptions.ExchangeName}  starting price ticker stream " + String.Join(',', Symbols));
-
-        }
-    }
-
-    public async Task StopAsync()
-    {
-        if (_subscription == null)
-            return;
-
-        _subscription.Exception -= Exception;
-        _subscription.ConnectionLost -= ConnectionLost;
-        _subscription.ConnectionRestored -= ConnectionRestored;
-
-        await socketClient.UnsubscribeAsync(_subscription);
-        _subscription = null;
-    }
-
-    private void ConnectionLost()
-    {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeOptions.ExchangeName} price ticker stream connection lost.");
-    }
-
-    private void ConnectionRestored(TimeSpan timeSpan)
-    {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeOptions.ExchangeName} price ticker stream connection restored.");
-    }
-
-    private void Exception(Exception ex)
-    {
-        GlobalData.AddTextToLogTab($"{Api.ExchangeOptions.ExchangeName} price ticker stream connection error {ex.Message} | Stack trace: {ex.StackTrace}");
     }
 
 }

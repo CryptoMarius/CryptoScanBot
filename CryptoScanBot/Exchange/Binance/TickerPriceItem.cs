@@ -8,7 +8,7 @@ using CryptoScanBot.Model;
 
 namespace CryptoScanBot.Exchange.Binance;
 
-public class TickerPriceItem() : TickerPriceItemBase(Api.ExchangeOptions)
+public class TickerPriceItem() : TickerItem(Api.ExchangeOptions)
 {
     public override async Task StartAsync()
     {
@@ -22,8 +22,9 @@ public class TickerPriceItem() : TickerPriceItemBase(Api.ExchangeOptions)
         ErrorDuringStartup = false;
         ScannerLog.Logger.Trace($"price ticker for group {GroupName} starting");
 
-        socketClient = new BinanceSocketClient();
-        CallResult<UpdateSubscription> subscriptionResult = await ((BinanceSocketClient)socketClient).SpotApi.ExchangeData.SubscribeToAllTickerUpdatesAsync((data) =>
+        if (TickerGroup.SocketClient == null)
+            TickerGroup.SocketClient = new BinanceSocketClient();
+        CallResult<UpdateSubscription> subscriptionResult = await ((BinanceSocketClient)TickerGroup.SocketClient).SpotApi.ExchangeData.SubscribeToAllTickerUpdatesAsync((data) =>
         {
             if (GlobalData.ExchangeListName.TryGetValue(Api.ExchangeOptions.ExchangeName, out Model.CryptoExchange exchange))
             {
@@ -78,20 +79,20 @@ public class TickerPriceItem() : TickerPriceItemBase(Api.ExchangeOptions)
         if (subscriptionResult.Success)
         {
             _subscription = subscriptionResult.Data;
-            _subscription.Exception += Exception;
-            _subscription.ConnectionLost += ConnectionLost;
-            _subscription.ConnectionRestored += ConnectionRestored;
+            _subscription.Exception += TickerException;
+            _subscription.ConnectionLost += TickerConnectionLost;
+            _subscription.ConnectionRestored += TickerConnectionRestored;
             ScannerLog.Logger.Trace($"price ticker for group {GroupName} started");
         }
         else
         {
-            _subscription.Exception -= Exception;
-            _subscription.ConnectionLost -= ConnectionLost;
-            _subscription.ConnectionRestored -= ConnectionRestored;
+            _subscription.Exception -= TickerException;
+            _subscription.ConnectionLost -= TickerConnectionLost;
+            _subscription.ConnectionRestored -= TickerConnectionRestored;
             _subscription = null;
 
-            socketClient.Dispose();
-            socketClient = null;
+            //socketClient.Dispose();
+            //socketClient = null;
             ConnectionLostCount++;
             ErrorDuringStartup = true;
             ScannerLog.Logger.Trace($"price ticker for group {GroupName} error {subscriptionResult.Error.Message} {string.Join(',', Symbols)}");

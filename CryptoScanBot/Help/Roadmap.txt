@@ -4,7 +4,7 @@ Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep
 
 
 Scanner:
-- Trading - De barometer naar Excel kunnen exporteren voor een overzichtje (liefts met een op te geven datum/tijd)
+- Trading - De barometer naar Excel kunnen exporteren voor een overzichtje (liefst met een op te geven datum/tijd)
 - Scanner - Er worden klines opgehaald van munten die slechts ~1 maand aanwezig zijn op de exchange (bybit spot, DYNUSDT is bijvoorbeeld pas op 6-2 op de exchange geactiveerd) - EN..
             Dat is best een hardnekkig iets, nog eens debuggen waarom dit zo vaak uitgevoerd wordt (je weet toch dat ze er niet zijn?)
 - Scanner - Het geheugen loopt gemeten over meerdere dagen op. Een oorzaak kan wellicht de barometer zijn (wat intern gewoon een muntje met candles is, maar waarin de candles niet opgeruimd worden)

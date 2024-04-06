@@ -1,12 +1,9 @@
-﻿using CryptoExchange.Net.Authentication;
-using CryptoExchange.Net.Objects;
+﻿using CryptoExchange.Net.Objects;
 
 using CryptoScanBot.Context;
 using CryptoScanBot.Enums;
 using CryptoScanBot.Intern;
 using CryptoScanBot.Model;
-
-using Dapper.Contrib.Extensions;
 
 using Kucoin.Net.Clients;
 using Kucoin.Net.Enums;
@@ -21,11 +18,8 @@ public class Api : ExchangeBase
     public override void ExchangeDefaults()
     {
         ExchangeOptions.ExchangeName = "Kucoin";
-        ExchangeOptions.SubscriptionLimit = 1;
+        ExchangeOptions.SubscriptionLimitSymbols = 1;
         ExchangeOptions.LimitAmountOfSymbols = true;
-        ExchangeOptions.KLineTickerItemType = typeof(TickerKLineItem);
-        ExchangeOptions.PriceTickerItemType = typeof(TickerPriceItem);
-        ExchangeOptions.UserTickerItemType = typeof(TickerUserItem);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         // Ik begrijp hier niet zoveel van.....
@@ -58,8 +52,8 @@ public class Api : ExchangeBase
                 options.ApiCredentials = new KucoinApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret, GlobalData.TradingApi.PassPhrase);
         });
 
-        ExchangeHelper.PriceTicker = new TickerPriceKucoin(ExchangeOptions);
-        ExchangeHelper.KLineTicker = new TickerKLineKucoin(ExchangeOptions);
+        ExchangeHelper.PriceTicker = new Ticker(ExchangeOptions, typeof(TickerPriceItem), "price");
+        ExchangeHelper.KLineTicker = new Ticker(ExchangeOptions, typeof(TickerKLineItem), "kline");
 #if TRADEBOT
         //ExchangeHelper.UserData = new userData();
 #endif

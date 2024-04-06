@@ -10,7 +10,7 @@ using Kraken.Net.Objects.Models;
 
 namespace CryptoScanBot.Exchange.Kraken;
 
-public class TickerKLineItem() : TickerKLineItemBase(Api.ExchangeOptions)
+public class TickerKLineItem() : TickerItem(Api.ExchangeOptions)
 {
     private void ProcessCandle(string topic, KrakenStreamKline kline)
     {
@@ -29,8 +29,7 @@ public class TickerKLineItem() : TickerKLineItemBase(Api.ExchangeOptions)
             {
                 Interlocked.Increment(ref TickerCount);
                 //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", topic, kline.Timestamp.ToLocalTime()));
-                Process1mCandle(symbol, kline.OpenTime, kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.Volume);
-
+                CandleTools.Process1mCandle(symbol, kline.OpenTime, kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.Volume);
             }
         }
 
@@ -38,15 +37,16 @@ public class TickerKLineItem() : TickerKLineItemBase(Api.ExchangeOptions)
 
     public override async Task<CallResult<UpdateSubscription>> Subscribe()
     {
-            socketClient = new KrakenSocketClient();
-            var subscriptionResult = await ((KrakenSocketClient)socketClient).SpotApi.SubscribeToKlineUpdatesAsync(
-                Symbols, KlineInterval.OneMinute, data =>
-            {
-                //foreach (KrakenStreamKline kline in data.Data)
-                //{
-                //    Task.Run(() => { ProcessCandle(data.Topic, kline); });
-                //}
-            }, ExchangeHelper.CancellationToken).ConfigureAwait(false);
+        if (TickerGroup.SocketClient == null)
+            TickerGroup.SocketClient = new KrakenSocketClient();
+        var subscriptionResult = await ((KrakenSocketClient)TickerGroup.SocketClient).SpotApi.SubscribeToKlineUpdatesAsync(
+            Symbols, KlineInterval.OneMinute, data =>
+        {
+            //foreach (KrakenStreamKline kline in data.Data)
+            //{
+            //    Task.Run(() => { ProcessCandle(data.Topic, kline); });
+            //}
+        }, ExchangeHelper.CancellationToken).ConfigureAwait(false);
 
         return subscriptionResult;
     }

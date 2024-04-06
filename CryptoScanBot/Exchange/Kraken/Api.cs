@@ -24,10 +24,7 @@ public class Api : ExchangeBase
     public override void ExchangeDefaults()
     {
         ExchangeOptions.ExchangeName = "Kraken";
-        ExchangeOptions.SubscriptionLimit = 10; // onbekend
-        ExchangeOptions.KLineTickerItemType = typeof(TickerKLineItem);
-        ExchangeOptions.PriceTickerItemType = typeof(TickerPriceItem);
-        ExchangeOptions.UserTickerItemType = typeof(TickerUserItem);
+        ExchangeOptions.SubscriptionLimitSymbols = 10; // onbekend
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         // Default opties voor deze exchange
@@ -46,8 +43,8 @@ public class Api : ExchangeBase
                 options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
         });
 
-        ExchangeHelper.PriceTicker = new TickerPrice(ExchangeOptions);
-        ExchangeHelper.KLineTicker = new TickerKLine(ExchangeOptions);
+        ExchangeHelper.PriceTicker = new Ticker(ExchangeOptions, typeof(TickerPriceItem), "price");
+        ExchangeHelper.KLineTicker = new Ticker(ExchangeOptions, typeof(TickerKLineItem), "kline");
 #if TRADEBOT
         //ExchangeHelper.UserData = new UserData();
 #endif
@@ -353,7 +350,7 @@ public class Api : ExchangeBase
 
     public override async Task<int> GetTradesForPositionAsync(CryptoDatabase database, CryptoPosition position)
     {
-        return await FetchTrades.FetchTradesForSymbolAsync(database, position);
+        return await GetTrades.FetchTradesForSymbolAsync(database, position);
     }
 	
 

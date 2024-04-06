@@ -16,7 +16,7 @@ using Kucoin.Net.Objects.Models.Spot.Socket;
 
 namespace CryptoScanBot.Exchange.Kucoin;
 
-public class TickerKLineItem(ExchangeOptions exchangeOptions): TickerKLineItemBase(exchangeOptions)
+public class TickerKLineItem(ExchangeOptions exchangeOptions): TickerItem(exchangeOptions)
 {
     //KucoinKline klinePrev;
     //long klinePrevOpenTime = 0;
@@ -24,9 +24,6 @@ public class TickerKLineItem(ExchangeOptions exchangeOptions): TickerKLineItemBa
     //private static int tickerIndex = 0;
 //#endif
 
-    //public int TickerCount = 0;
-    //private KucoinSocketClient socketClient;
-    //private UpdateSubscription _subscription;
     public CryptoSymbol Symbol;
 
 
@@ -56,8 +53,9 @@ public class TickerKLineItem(ExchangeOptions exchangeOptions): TickerKLineItemBa
 
 
         // Implementatie kline ticker (via cache, wordt door de timer verwerkt)
-        //var socketClient = new KucoinSocketClient();
-        var subscriptionResult = await ((KucoinSocketClient)socketClient).SpotApi.SubscribeToKlineUpdatesAsync(symbolName, KlineInterval.OneMinute, data =>
+        if (TickerGroup.SocketClient == null)
+            TickerGroup.SocketClient = new KucoinSocketClient();
+        var subscriptionResult = await ((KucoinSocketClient)TickerGroup.SocketClient).SpotApi.SubscribeToKlineUpdatesAsync(symbolName, KlineInterval.OneMinute, data =>
         {
             Task taskKline = Task.Run(() =>
             {

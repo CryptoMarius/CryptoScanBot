@@ -7,12 +7,13 @@ using CryptoScanBot.Model;
 
 namespace CryptoScanBot.Exchange.BybitFutures;
 
-public class TickerPriceItem() : TickerPriceItemBase(Api.ExchangeOptions)
+public class TickerPriceItem() : TickerItem(Api.ExchangeOptions)
 {
     public override async Task<CallResult<UpdateSubscription>> Subscribe()
     {
-        socketClient = new BybitSocketClient();
-        CallResult<UpdateSubscription> subscriptionResult = await ((BybitSocketClient)socketClient).V5LinearApi.SubscribeToTickerUpdatesAsync(Symbols, data =>
+        if (TickerGroup.SocketClient == null)
+            TickerGroup.SocketClient = new BybitSocketClient();
+        CallResult<UpdateSubscription> subscriptionResult = await ((BybitSocketClient)TickerGroup.SocketClient).V5LinearApi.SubscribeToTickerUpdatesAsync(Symbols, data =>
         {
             if (GlobalData.ExchangeListName.TryGetValue(Api.ExchangeOptions.ExchangeName, out Model.CryptoExchange exchange))
             {

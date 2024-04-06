@@ -3,20 +3,19 @@ using System.Text.Json;
 
 using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
-using CryptoExchange.Net.Sockets;
 using CryptoScanBot.Intern;
-using CryptoScanBot.Model;
 
 using Kraken.Net.Clients;
 
 namespace CryptoScanBot.Exchange.Kraken;
 
-public class TickerPriceItem() : TickerPriceItemBase(Api.ExchangeOptions)
+public class TickerPriceItem() : TickerItem(Api.ExchangeOptions)
 {
     public override async Task<CallResult<UpdateSubscription>> Subscribe()
     {
-        socketClient = new KrakenSocketClient();
-        CallResult<UpdateSubscription> subscriptionResult = await ((KrakenSocketClient)socketClient).SpotApi.SubscribeToTickerUpdatesAsync(Symbols, data =>
+        if (TickerGroup.SocketClient == null)
+            TickerGroup.SocketClient = new KrakenSocketClient();
+        CallResult<UpdateSubscription> subscriptionResult = await ((KrakenSocketClient)TickerGroup.SocketClient).SpotApi.SubscribeToTickerUpdatesAsync(Symbols, data =>
         {
             if (GlobalData.ExchangeListName.TryGetValue(Api.ExchangeOptions.ExchangeName, out Model.CryptoExchange exchange))
             {

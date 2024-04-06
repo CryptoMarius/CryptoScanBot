@@ -12,7 +12,7 @@ using CryptoScanBot.Model;
 
 namespace CryptoScanBot.Exchange.BybitSpot;
 
-public class TickerKLineItem() : TickerKLineItemBase(Api.ExchangeOptions)
+public class TickerKLineItem() : TickerItem(Api.ExchangeOptions)
 {
     private void ProcessCandle(string topic, BybitKlineUpdate kline)
     {
@@ -31,8 +31,7 @@ public class TickerKLineItem() : TickerKLineItemBase(Api.ExchangeOptions)
             {
                 Interlocked.Increment(ref TickerCount);
                 //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", topic, kline.Timestamp.ToLocalTime()));
-                Process1mCandle(symbol, kline.StartTime, kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.Volume);
-
+                CandleTools.Process1mCandle(symbol, kline.StartTime, kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.Volume);
             }
         }
 
@@ -41,8 +40,9 @@ public class TickerKLineItem() : TickerKLineItemBase(Api.ExchangeOptions)
 
     public override async Task<CallResult<UpdateSubscription>> Subscribe()
     {
-        socketClient = new BybitSocketClient();
-        var subscriptionResult = await ((BybitSocketClient)socketClient).V5SpotApi.SubscribeToKlineUpdatesAsync(
+        if (TickerGroup.SocketClient == null)
+            TickerGroup.SocketClient = new BybitSocketClient();
+        var subscriptionResult = await ((BybitSocketClient)TickerGroup.SocketClient).V5SpotApi.SubscribeToKlineUpdatesAsync(
             Symbols, KlineInterval.OneMinute, data =>
         {
             //Er zit tot ongeveer 8 a 10 seconden vertraging is van de exchange tot hier, dat moet ansich genoeg zijn

@@ -259,57 +259,104 @@ public static class CandleTools
         return candleNew;
     }
 
+    // Move?
+    public static void Process1mCandle(CryptoSymbol symbol, DateTime openTime, decimal open, decimal high, decimal low, decimal close, decimal volume)
+    {
+        Monitor.Enter(symbol.CandleList);
+        try
+        {
+            // Laatste bekende prijs (priceticker vult aan)
+            symbol.LastPrice = close;
 
-//    /// <summary>
-//    /// Voeg de ontbrekende candles to aan de lijst (een nadeel van de stream)
-//    /// </summary>
-//    static public void AddMissingSticks(SortedList<long, CryptoCandle> candles, long candleUnixTime, CryptoInterval interval)
-//    {
-//        // De eventueel ontbrekende candles maken (dat kan een hele reeks zijn)
-//        // Die zetten we op de close van laatste candle (wat moeten we anders?)
-//        // (niet bedoeld om ontbrekende <tussenliggende> candles in te voegen)
+            // Process the single 1m candle
+            CryptoCandle candle = CandleTools.HandleFinalCandleData(symbol, GlobalData.IntervalList[0], openTime, open, high, low, close, volume, false);
+            CandleTools.UpdateCandleFetched(symbol, GlobalData.IntervalList[0]);
+#if SQLDATABASE
+            GlobalData.TaskSaveCandles.AddToQueue(candle);
+#endif
+#if SHOWTIMING
 
-//        if (candles.Count > 0)
-//        {
-//            CryptoCandle stickOld = candles.Values.Last();
+            GlobalData.Logger.Info($"ticker(1m):" + candle.OhlcText(symbol, GlobalData.IntervalList[0], symbol.PriceDisplayFormat, true, false, true));
+#endif
 
-//            long currentCandleUnix = candleUnixTime;
-//            //DateTime currentCandleDate = GetUnixDate(currentCandleUnix);
 
-//            //De verwachte datum van de volgende candle in deze reeks
-//            long nextCandleUnix = stickOld.OpenTime + interval.Duration;
-//            //DateTime nextCandleDate = GetUnixDate(nextCandleUnix); //debug
+            // Calculate higher timeframes
+            //long candle1mOpenTime = candle.OpenTime;
+            long candle1mCloseTime = candle.OpenTime + 60;
+            foreach (CryptoInterval interval in GlobalData.IntervalList)
+            {
+                if (interval.ConstructFrom != null && candle1mCloseTime % interval.Duration == 0)
+                {
+                    CryptoCandle candleNew = CandleTools.CalculateCandleForInterval(interval, interval.ConstructFrom, symbol, candle1mCloseTime);
+                    CandleTools.UpdateCandleFetched(symbol, interval);
+#if SHOWTIMING
 
-//            while (nextCandleUnix < currentCandleUnix)
-//            {
-//                if (!candles.ContainsKey(nextCandleUnix))
-//                {
-//                    CryptoCandle stickNew = new()
-//                    {
-//#if SQLDATABASE
-//                        ExchangeId = stickOld.ExchangeId,
-//                        SymbolId = stickOld.SymbolId,
-//                        IntervalId = interval.Id,
-//#endif
-//                        //Symbol = stickOld.Symbol,
-//                        //Interval = interval,
-//                        OpenTime = nextCandleUnix,
-//                        Open = stickOld.Close,
-//                        Close = stickOld.Close,
-//                        Low = stickOld.Close,
-//                        High = stickOld.Close,
-//                        Volume = 0
-//                    };
-//                    candles.Add(nextCandleUnix, stickNew);
-//                }
+                    GlobalData.Logger.Info($"ticker({interval.Name}):" + candleNew.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, false, true));
+#endif
 
-//                // De gegevens voor de volgende candle (bevat dezelfde gegevens)
-//                nextCandleUnix += interval.Duration;
-//                //nextCandleDate = GetUnixDate(nextCandleUnix); //debug
-//            }
-//        }
+                }
+            }
 
-//    }
+            // Aanbieden voor analyse (dit gebeurd zowel in de ticker als ProcessCandles)
+            if (GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
+                GlobalData.ThreadMonitorCandle.AddToQueue(symbol, candle);
+        }
+        finally
+        {
+            Monitor.Exit(symbol.CandleList);
+        }
+    }
+
+    //    /// <summary>
+    //    /// Voeg de ontbrekende candles to aan de lijst (een nadeel van de stream)
+    //    /// </summary>
+    //    static public void AddMissingSticks(SortedList<long, CryptoCandle> candles, long candleUnixTime, CryptoInterval interval)
+    //    {
+    //        // De eventueel ontbrekende candles maken (dat kan een hele reeks zijn)
+    //        // Die zetten we op de close van laatste candle (wat moeten we anders?)
+    //        // (niet bedoeld om ontbrekende <tussenliggende> candles in te voegen)
+
+    //        if (candles.Count > 0)
+    //        {
+    //            CryptoCandle stickOld = candles.Values.Last();
+
+    //            long currentCandleUnix = candleUnixTime;
+    //            //DateTime currentCandleDate = GetUnixDate(currentCandleUnix);
+
+    //            //De verwachte datum van de volgende candle in deze reeks
+    //            long nextCandleUnix = stickOld.OpenTime + interval.Duration;
+    //            //DateTime nextCandleDate = GetUnixDate(nextCandleUnix); //debug
+
+    //            while (nextCandleUnix < currentCandleUnix)
+    //            {
+    //                if (!candles.ContainsKey(nextCandleUnix))
+    //                {
+    //                    CryptoCandle stickNew = new()
+    //                    {
+    //#if SQLDATABASE
+    //                        ExchangeId = stickOld.ExchangeId,
+    //                        SymbolId = stickOld.SymbolId,
+    //                        IntervalId = interval.Id,
+    //#endif
+    //                        //Symbol = stickOld.Symbol,
+    //                        //Interval = interval,
+    //                        OpenTime = nextCandleUnix,
+    //                        Open = stickOld.Close,
+    //                        Close = stickOld.Close,
+    //                        Low = stickOld.Close,
+    //                        High = stickOld.Close,
+    //                        Volume = 0
+    //                    };
+    //                    candles.Add(nextCandleUnix, stickNew);
+    //                }
+
+    //                // De gegevens voor de volgende candle (bevat dezelfde gegevens)
+    //                nextCandleUnix += interval.Duration;
+    //                //nextCandleDate = GetUnixDate(nextCandleUnix); //debug
+    //            }
+    //        }
+
+    //    }
 
 
     static public void UpdateCandleFetched(CryptoSymbol symbol, CryptoInterval interval)

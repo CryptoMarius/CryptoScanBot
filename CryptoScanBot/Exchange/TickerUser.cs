@@ -3,10 +3,12 @@
 namespace CryptoScanBot.Exchange;
 
 #if TRADEBOT
-public class TickerUser(ExchangeOptions exchangeOptions)
+public class TickerUser(ExchangeOptions exchangeOptions, Type userTickerItemType, string tickerType)
 {
     internal ExchangeOptions ExchangeOptions { get; set; } = exchangeOptions;
     static private TickerUserBase UserTickerTask { get; set; }
+    Type UserTickerItemType { get; set; } = userTickerItemType;
+    string tickerType { get; set; } = tickerType;
 
     public virtual async Task StartAsync()
     {
@@ -15,7 +17,7 @@ public class TickerUser(ExchangeOptions exchangeOptions)
             return;
 
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} user ticker starting");
-        UserTickerTask = (TickerUserBase)Activator.CreateInstance(ExchangeOptions.UserTickerItemType, []);
+        UserTickerTask = (TickerUserBase)Activator.CreateInstance(UserTickerItemType, [ExchangeOptions]);
         await Task.Run(async () => { await UserTickerTask.StartAsync(); });
         ScannerLog.Logger.Trace($"{ExchangeOptions.ExchangeName} user ticker started");
     }

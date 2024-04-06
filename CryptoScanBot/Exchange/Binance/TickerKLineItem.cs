@@ -14,7 +14,7 @@ namespace CryptoScanBot.Exchange.Binance;
 /// <summary>
 /// Monitoren van 1m candles (die gepushed worden door Binance)
 /// </summary>
-public class TickerKLineItem() : TickerKLineItemBase(Api.ExchangeOptions)
+public class TickerKLineItem() : TickerItem(Api.ExchangeOptions)
 {
     private void ProcessCandle(BinanceStreamKlineData kline)
     {
@@ -31,7 +31,7 @@ public class TickerKLineItem() : TickerKLineItemBase(Api.ExchangeOptions)
             {
                 Interlocked.Increment(ref TickerCount);
                 //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", temp.Symbol, temp.Data.OpenTime.ToLocalTime()));
-                Process1mCandle(symbol, kline.Data.OpenTime, kline.Data.OpenPrice, kline.Data.HighPrice, kline.Data.LowPrice, kline.Data.ClosePrice, kline.Data.Volume);
+                CandleTools.Process1mCandle(symbol, kline.Data.OpenTime, kline.Data.OpenPrice, kline.Data.HighPrice, kline.Data.LowPrice, kline.Data.ClosePrice, kline.Data.Volume);
 
             }
         }
@@ -54,8 +54,9 @@ public class TickerKLineItem() : TickerKLineItemBase(Api.ExchangeOptions)
 
         if (Symbols.Count > 0)
         {
-            socketClient = new BinanceSocketClient();
-            CallResult<UpdateSubscription> subscriptionResult = await ((BinanceSocketClient)socketClient).SpotApi.ExchangeData.SubscribeToKlineUpdatesAsync(
+            if (TickerGroup.SocketClient == null)
+                TickerGroup.SocketClient = new BinanceSocketClient();
+            CallResult<UpdateSubscription> subscriptionResult = await ((BinanceSocketClient)TickerGroup.SocketClient).SpotApi.ExchangeData.SubscribeToKlineUpdatesAsync(
                 Symbols, KlineInterval.OneMinute, (data) =>
             {
                 if (data.Data.Data.Final)
@@ -80,8 +81,8 @@ public class TickerKLineItem() : TickerKLineItemBase(Api.ExchangeOptions)
                 _subscription.ConnectionRestored -= TickerConnectionRestored;
                 _subscription = null;
 
-                socketClient.Dispose();
-                socketClient = null;
+                //socketClient.Dispose();
+                //socketClient = null;
 
                 ConnectionLostCount++;
                 ErrorDuringStartup = true;

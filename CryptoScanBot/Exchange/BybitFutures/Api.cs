@@ -29,10 +29,7 @@ public class Api : ExchangeBase
     public override void ExchangeDefaults()
     {
         ExchangeOptions.ExchangeName = "Bybit Futures";
-        ExchangeOptions.SubscriptionLimit = 10;
-        ExchangeOptions.KLineTickerItemType = typeof(TickerKLineItem);
-        ExchangeOptions.PriceTickerItemType = typeof(TickerPriceItem);
-        ExchangeOptions.UserTickerItemType = typeof(TickerUserItem);
+        ExchangeOptions.SubscriptionLimitSymbols = 10;
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         // Default opties voor deze exchange
@@ -61,10 +58,10 @@ public class Api : ExchangeBase
                 options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
         });
 
-        ExchangeHelper.PriceTicker = new TickerPrice(ExchangeOptions);
-        ExchangeHelper.KLineTicker = new TickerKLine(ExchangeOptions);
+        ExchangeHelper.PriceTicker = new Ticker(ExchangeOptions, typeof(TickerPriceItem), "price");
+        ExchangeHelper.KLineTicker = new Ticker(ExchangeOptions, typeof(TickerKLineItem), "kline");
 #if TRADEBOT
-        ExchangeHelper.UserTicker = new TickerUser(ExchangeOptions);
+        ExchangeHelper.UserTicker = new TickerUser(ExchangeOptions, typeof(TickerUserItem), "user");
 #endif
     }
 

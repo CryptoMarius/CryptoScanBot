@@ -15,7 +15,7 @@ namespace CryptoScanBot.Exchange.Kraken;
 /// <summary>
 /// De Trades ophalen
 /// </summary>
-public class FetchTrades
+public class GetTrades
 {
     /// <summary>
     /// Haal de trades van 1 symbol op

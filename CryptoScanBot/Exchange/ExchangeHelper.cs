@@ -11,8 +11,8 @@ public class ExchangeHelper
     public static CancellationTokenSource CancellationTokenSource { get; set; } = new();
     public static CancellationToken CancellationToken { get; set; } = CancellationTokenSource.Token;
 
-    public static TickerPrice PriceTicker { get; set; }
-    public static TickerKLine KLineTicker { get; set; }
+    public static Ticker PriceTicker { get; set; }
+    public static Ticker KLineTicker { get; set; }
 #if TRADEBOT
     public static TickerUser UserTicker { get; set; }
 #endif
