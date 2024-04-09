@@ -3,7 +3,6 @@
 using CryptoScanBot.Context;
 using CryptoScanBot.Enums;
 using CryptoScanBot.Exchange;
-using CryptoScanBot.Exchange.Binance; // later
 using CryptoScanBot.Model;
 using CryptoScanBot.Settings;
 

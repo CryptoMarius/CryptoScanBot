@@ -143,6 +143,9 @@ static public class GlobalData
     static public SymbolValue TradingViewBitcoinDominance { get; set; } = new();
     static public SymbolValue TradingViewMarketCapTotal { get; set; } = new();
 
+    public static readonly JsonSerializerOptions JsonSerializerIndented = new()
+    { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true, IncludeFields = true };
+
 
     static public void LoadExchanges()
     {
@@ -486,8 +489,6 @@ static public class GlobalData
     {
         try
         {
-            var options = new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true, IncludeFields = true };
-
             string filename = GetBaseDir() + $"{AppName}-settings.json";
             if (File.Exists(filename))
             {
@@ -498,7 +499,7 @@ static public class GlobalData
                 //    readStream.Close();
                 //}
                 string text = File.ReadAllText(filename);
-                Settings = JsonSerializer.Deserialize<SettingsBasic>(text, options);
+                Settings = JsonSerializer.Deserialize<SettingsBasic>(text, JsonSerializerIndented);
             }
         }
         catch (Exception error)
@@ -526,12 +527,7 @@ static public class GlobalData
                     ExternalUrls.InitializeUrls();
 
                 //het bestand in ieder geval aanmaken(updates moeten achteraf gepushed worden)
-                JsonSerializerOptions options = new()
-                {
-                    Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-                    WriteIndented = true
-                };
-                string text = JsonSerializer.Serialize(ExternalUrls, options);
+                string text = JsonSerializer.Serialize(ExternalUrls, GlobalData.JsonSerializerIndented);
                 File.WriteAllText(fullName, text);
             }
         }
@@ -658,8 +654,7 @@ static public class GlobalData
         var baseFolder = GetBaseDir();
         Directory.CreateDirectory(baseFolder);
         var filename = baseFolder + $"{AppName}-user.json";
-        var options = new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true, IncludeFields = true };
-        string text = JsonSerializer.Serialize(SettingsUser, options);
+        string text = JsonSerializer.Serialize(SettingsUser, JsonSerializerIndented);
         File.WriteAllText(filename, text);
     }
 
@@ -678,18 +673,15 @@ static public class GlobalData
         //}
 
         string filename = baseFolder + $"{AppName}-settings.json";
-        var options = new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true, IncludeFields = true };
-        string text = JsonSerializer.Serialize(Settings, options);
+        string text = JsonSerializer.Serialize(Settings, JsonSerializerIndented);
         File.WriteAllText(filename, text);
 
         filename = baseFolder + $"{AppName}-telegram.json";
-        options = new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true, IncludeFields = true };
-        text = JsonSerializer.Serialize(GlobalData.Telegram, options);
+        text = JsonSerializer.Serialize(GlobalData.Telegram, JsonSerializerIndented);
         File.WriteAllText(filename, text);
 
         filename = baseFolder + $"{AppName}-exchange.json";
-        options = new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true, IncludeFields = true };
-        text = JsonSerializer.Serialize(TradingApi, options);
+        text = JsonSerializer.Serialize(TradingApi, JsonSerializerIndented);
         File.WriteAllText(filename, text);
 
 

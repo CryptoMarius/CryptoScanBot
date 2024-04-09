@@ -44,7 +44,7 @@ using System.Transactions;
 using CryptoExchange.Net.Authentication;
 using CryptoScanBot.Enums;
 using CryptoScanBot.Exchange;
-using CryptoScanBot.Exchange.Binance;
+using CryptoScanBot.Exchange.BinanceSpot;
 using CryptoScanBot.Trader;
 using Font = System.Drawing.Font;
 using CryptoScanBot.TradingView;

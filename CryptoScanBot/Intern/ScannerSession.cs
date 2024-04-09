@@ -188,7 +188,7 @@ public static class ScannerSession
                         break;
                 }
 #else
-                task = Task.Run(() => { DataStore.SaveCandles(); });
+                task = Task.Run(DataStore.SaveCandlesAsync);
                 taskList.Add(task);
 #endif
 
@@ -204,11 +204,11 @@ public static class ScannerSession
     }
 
 
-    private static void TimerSaveCandleData_Tick(object sender, EventArgs e)
+    private static async void TimerSaveCandleData_Tick(object sender, EventArgs e)
     {
 #if !SQLDATABASE
         // Save the candles each x hours..
-        DataStore.SaveCandles();
+        await DataStore.SaveCandlesAsync();
 #endif
     }
 
@@ -350,9 +350,13 @@ public static class ScannerSession
         // herstarten van ticker indien errors
         Task.Run(async () =>
         {
-            await ExchangeHelper.FetchSymbolsAsync();
-            await ExchangeHelper.KLineTicker.CheckKlineTickers();
-            await ExchangeHelper.FetchCandlesAsync();
+            await ExchangeHelper.GetSymbolsAsync();
+            await ExchangeHelper.KLineTicker.CheckTickers(); // herstarten van ticker indien errors
+            await ExchangeHelper.PriceTicker.CheckTickers(); // herstarten van ticker indien errors
+#if TRADEBOT
+            await ExchangeHelper.UserTicker.CheckTickers(); // herstarten van ticker indien errors
+#endif
+            await ExchangeHelper.GetCandlesAsync();
         });
         //_ = ExchangeHelper.KLineTicker.CheckKlineTickers(); // herstarten van ticker indien errors
         //_ = ExchangeHelper.FetchCandlesAsync(); // niet wachten tot deze klaar is

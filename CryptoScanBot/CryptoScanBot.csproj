@@ -49,11 +49,11 @@
     <AdditionalFiles Remove="C:\Users\Marius\.nuget\packages\microsoft.dotnet.upgradeassistant.extensions.default.analyzers\0.4.421302\build\\WebTypeReplacements.typemap" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Remove="Exchange\Binance\FetchTradesForOrder.cs" />
+    <Compile Remove="Exchange\BinanceSpot\FetchTradesForOrder.cs" />
     <Compile Remove="Exchange\BybitFutures\FetchTradesForOrder.cs" />
     <Compile Remove="Exchange\BybitSpot\FetchTradesForOrder.cs" />
-    <Compile Remove="Exchange\Kraken\FetchTradesForOrder.cs" />
-    <Compile Remove="Exchange\Kucoin\FetchTradesForOrder.cs" />
+    <Compile Remove="Exchange\KrakenSpot\FetchTradesForOrder.cs" />
+    <Compile Remove="Exchange\KucoinSpot\FetchTradesForOrder.cs" />
     <Compile Remove="Signal\SignalMacdLtLong.cs" />
     <Compile Remove="Signal\SignalMacdLtShort.cs" />
     <Compile Remove="Signal\SignalMacdTestLong.cs" />

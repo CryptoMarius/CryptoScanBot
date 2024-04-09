@@ -203,7 +203,7 @@ public partial class Form1 : Form
             //string apiSecret = "your secret";
             //string BaseUrl = "https://api.mexc.com";
 
-            HttpClient httpClient = new HttpClient();
+            HttpClient httpClient = new();
             //MexcService service = new(apiKey, apiSecret, BaseUrl, httpClient);
 
 
@@ -873,7 +873,7 @@ public partial class Form1 : Form
 
 
             GlobalData.AddTextToLogTab($"Balance: {account.Name}");
-            await ExchangeApi.GetAssetsForAccountAsync(account);
+            await ExchangeApi.GetAssetsAsync(account);
 
             foreach (var asset in account.AssetList.Values)
             {
@@ -1068,7 +1068,7 @@ public partial class Form1 : Form
         LogFactory = new(new[] { TraceProvider });
 
 
-        if (GlobalData.ExchangeListName.TryGetValue(ExchangeOptions.ExchangeName, out CryptoScanBot.Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue("Bybit Spot", out CryptoScanBot.Model.CryptoExchange exchange))
         {
             if (exchange.SymbolListName.TryGetValue("SUSHIUSDT", out CryptoSymbol symbol))
             {
@@ -1116,7 +1116,7 @@ public partial class Form1 : Form
                     text = "client.SpotApiV3.Trading.GetUserTradesAsync";
                     System.Diagnostics.Debug.WriteLine(text);
                     var resultV3 = await client.SpotApiV3.Trading.GetUserTradesAsync(symbol.Name, fromId: fromId);
-                    text = JsonSerializer.Serialize(resultV3, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
+                    text = JsonSerializer.Serialize(resultV3, GlobalData.JsonSerializerIndented);
                     System.Diagnostics.Debug.WriteLine(text);
                     GlobalData.AddTextToLogTab(text);
 

@@ -631,11 +631,11 @@ public class TradeTools
 
         // Daarna de "nieuwe" orders van deze coin ophalen en die toegevoegen aan dezelfde orderlist
         if (position.TradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading) // && loadFromExchange
-            count += await ExchangeHelper.GetOrdersForPositionAsync(database, position);
+            count += await ExchangeHelper.GetOrdersAsync(database, position);
 
         // Daarna de "nieuwe" orders van deze coin ophalen en die toegevoegen aan dezelfde orderlist
         if (position.TradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading) // && loadFromExchange
-            count += await ExchangeHelper.GetTradesForPositionAsync(database, position);
+            count += await ExchangeHelper.GetTradesAsync(database, position);
 
         return count;
     }

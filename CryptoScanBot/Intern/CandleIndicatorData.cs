@@ -144,14 +144,16 @@ public class CandleIndicatorData
                 // Genereer dan maar een dummy candle
                 if (candleLast != null)
                 {
-                    candle = new();
-                    candle.OpenTime = candleLoop;
-                    candle.Open = candleLast.Close;
-                    candle.Low = candleLast.Close;
-                    candle.High = candleLast.Close;
-                    candle.Close = candleLast.Close;
-                    candle.Volume = 0;
-                    candle.IsDuplicated = true;
+                    candle = new()
+                    {
+                        OpenTime = candleLoop,
+                        Open = candleLast.Close,
+                        Low = candleLast.Close,
+                        High = candleLast.Close,
+                        Close = candleLast.Close,
+                        Volume = 0,
+                        IsDuplicated = true
+                    };
 
                     candlesForHistory.Add(candle);
                 }

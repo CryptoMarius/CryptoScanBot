@@ -69,9 +69,10 @@ public partial class FrmMain : Form
 
 #if DEBUG
         MenuMain.AddCommand(null, "Test - Scanner restart", Command.ScannerSessionDebug);
-        MenuMain.AddCommand(null, "Test - Save Candles", Command.None, TestClick);
+        MenuMain.AddCommand(null, "Test - Save Candles", Command.None, TestSaveCandlesClick);
+        MenuMain.AddCommand(null, "Test - Dumpt ticker information", Command.None, TestShowTickerInformationClick);
 #endif
-
+        
         //Console.Write("Hello world 1");
         //System.Diagnostics.Debug.WriteLine("Hello world 2");
 
@@ -145,6 +146,15 @@ public partial class FrmMain : Form
             // De default exchange is Bybit Spot (Binance is geen goede keuze meer)
             if (exchangeName == "")
                 exchangeName = "Bybit Spot";
+
+            // migratie
+            if (exchangeName == "Binance")
+                exchangeName = "Binance Spot";
+            if (exchangeName == "Kraken")
+                exchangeName = "Kraken Spot";
+            if (exchangeName == "Kucoin")
+                exchangeName = "Kucoin Spot";
+
             if (GlobalData.ExchangeListName.TryGetValue(exchangeName, out var exchange))
             {
                 GlobalData.Settings.General.Exchange = exchange;
@@ -155,10 +165,20 @@ public partial class FrmMain : Form
         }
     }
 
-    private void TestClick(object sender, EventArgs e)
+#if DEBUG
+    private async void TestSaveCandlesClick(object sender, EventArgs e)
     {
-        DataStore.SaveCandles();
+        await DataStore.SaveCandlesAsync();
     }
+
+
+    private void TestShowTickerInformationClick(object sender, EventArgs e)
+    {
+        ExchangeHelper.KLineTicker.DumpTickerInfo();
+        ExchangeHelper.PriceTicker.DumpTickerInfo();
+        ExchangeHelper.UserTicker.DumpTickerInfo();
+    }
+#endif
 
     private void FrmMain_FormClosing(object sender, FormClosingEventArgs e)
     {
@@ -427,9 +447,13 @@ public partial class FrmMain : Form
     {
         Task.Run(async () =>
         {
-            await ExchangeHelper.FetchSymbolsAsync(); // niet wachten tot deze klaar is
-            await ExchangeHelper.KLineTicker.CheckKlineTickers(); // herstarten van ticker indien errors
-            await ExchangeHelper.FetchCandlesAsync(); // niet wachten tot deze klaar is
+            await ExchangeHelper.GetSymbolsAsync(); // niet wachten tot deze klaar is
+            await ExchangeHelper.KLineTicker.CheckTickers(); // herstarten van ticker indien errors
+            await ExchangeHelper.PriceTicker.CheckTickers(); // herstarten van ticker indien errors
+#if TRADEBOT
+            await ExchangeHelper.UserTicker.CheckTickers(); // herstarten van ticker indien errors
+#endif
+            await ExchangeHelper.GetCandlesAsync(); // niet wachten tot deze klaar is
         });
     }
 
@@ -502,6 +526,25 @@ public partial class FrmMain : Form
                     // TradingAccount: Posities en Assets clearen!
                     foreach (CryptoTradeAccount ta in GlobalData.TradeAccountList.Values)
                         ta.Clear();
+                }
+
+                // Clear candle data
+                if (reloadQuoteChange || reloadExchangeChange)
+                {
+                    foreach (var s in GlobalData.Settings.General.Exchange.SymbolListId.Values)
+                    {
+                        if ((!s.QuoteData.FetchCandles || s.Status == 0) && s.CandleList.Count != 0)
+                        {
+                            foreach (var x in s.IntervalPeriodList)
+                            {
+                                if (x.CandleList.Count != 0)
+                                {
+                                    x.CandleList.Clear();
+                                    GlobalData.AddTextToLogTab($"Cleared candles for {s.Name} {x.Interval.Name}");
+                                }
+                            }
+                        }
+                    }
                 }
 
                 // Bij wijzigingen aantal signalen)

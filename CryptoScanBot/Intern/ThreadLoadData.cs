@@ -244,7 +244,7 @@ public class ThreadLoadData
                 // Via een event worden de muntparen in de userinterface gezet (dat duurt even)
                 //************************************************************************************
                 if (!exchange.LastTimeFetched.HasValue || exchange.LastTimeFetched?.AddHours(1) < DateTime.UtcNow)
-                    await ExchangeHelper.FetchSymbolsAsync();
+                    await ExchangeHelper.GetSymbolsAsync();
                 IndexQuoteDataSymbols(exchange);
 
                 // Na het inlezen van de symbols de lijsten alsnog goed zetten
@@ -482,7 +482,7 @@ public class ThreadLoadData
                 //************************************************************************************
                 // De (ontbrekende) candles downloaden (en de achterstand inhalen, blocking!)
                 //************************************************************************************
-                await ExchangeHelper.FetchCandlesAsync();
+                await ExchangeHelper.GetCandlesAsync();
 
                 //Ze zijn er wel, deze is eigenlijk overbodig geworden (zit alleen zoveel werk in!)
                 //CalculateMissingCandles();
@@ -530,7 +530,7 @@ public class ThreadLoadData
                     // De assets van de exchange halen (overlappend met exchange monitoring om niets te missen)
                     // Via een event worden de assets in de userinterface gezet (dat duurt even)
                     //************************************************************************************
-                    await ExchangeHelper.GetAssetsForAccountAsync(GlobalData.ExchangeRealTradeAccount);
+                    await ExchangeHelper.GetAssetsAsync(GlobalData.ExchangeRealTradeAccount);
                 }
 
                 // Toon de ingelezen posities

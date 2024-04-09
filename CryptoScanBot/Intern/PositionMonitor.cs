@@ -275,7 +275,7 @@ public class PositionMonitor : IDisposable
         if (lastRefreshAssets == null || lastRefreshAssets?.AddMinutes(1) < DateTime.UtcNow)
         {
             // De assets verversen (optioneel adhv account)
-            await ExchangeHelper.GetAssetsForAccountAsync(tradeAccount);
+            await ExchangeHelper.GetAssetsAsync(tradeAccount);
             lastRefreshAssets = DateTime.UtcNow;
         }
 

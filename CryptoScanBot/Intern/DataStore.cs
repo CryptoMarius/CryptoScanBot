@@ -12,6 +12,9 @@ namespace CryptoScanBot.Intern;
 #if !SQLDATABASE
 public class DataStore
 {
+    // Prevent multiple sessions
+    private static readonly SemaphoreSlim Semaphore = new(1);
+
     public static void LoadCandles()
     {
         // De candles uit de database lezen
@@ -123,92 +126,103 @@ public class DataStore
     }
 
 
-    public static void SaveCandles()
+    public static async Task SaveCandlesAsync()
     {
-        GlobalData.AddTextToLogTab("Saving candle information (please wait!)");
-
-        string basedir = GlobalData.GetBaseDir();
-        foreach (Model.CryptoExchange exchange in GlobalData.ExchangeListName.Values.ToList())
+        await Semaphore.WaitAsync();
+        try
         {
-            string dirExchange = basedir + exchange.Name.ToLower() + @"\";
+            GlobalData.AddTextToLogTab("Saving candle information (please wait!)");
 
-            for (int i = 0; i < exchange.SymbolListName.Count; i++)
-            //foreach (CryptoSymbol symbol in exchange.SymbolListName.Values.ToList())
+            string basedir = GlobalData.GetBaseDir();
+            foreach (Model.CryptoExchange exchange in GlobalData.ExchangeListName.Values.ToList())
             {
-                CryptoSymbol symbol = exchange.SymbolListName.Values[i];
-                string dirSymbol = dirExchange + symbol.Quote.ToLower() + @"\";
-                try
+                string dirExchange = basedir + exchange.Name.ToLower() + @"\";
+
+                for (int i = 0; i < exchange.SymbolListName.Count; i++)
+                //foreach (CryptoSymbol symbol in exchange.SymbolListName.Values.ToList())
                 {
-
-                    // Verwijder het bestand indien niet relevant of niet actief
-                    string filename = dirSymbol + symbol.Base.ToLower(); // + ".json.bin";
-                    if (!symbol.IsBarometerSymbol() && (!symbol.QuoteData.FetchCandles || !symbol.IsSpotTradingAllowed))
+                    CryptoSymbol symbol = exchange.SymbolListName.Values[i];
+                    string dirSymbol = dirExchange + symbol.Quote.ToLower() + @"\";
+                    try
                     {
-                        //if (File.Exists(filename))
-                        //    File.Delete(filename);
-                        continue;
-                    }
 
-                    long count = 0;
-                    foreach (CryptoSymbolInterval cryptoSymbolInterval in symbol.IntervalPeriodList)
-                        count += cryptoSymbolInterval.CandleList.Count;
-
-                    if (count > 0)
-                    {
-                        using (var memoryStream = new MemoryStream(2 * 1024 * 1024))
+                        // Verwijder het bestand indien niet relevant of niet actief
+                        string filename = dirSymbol + symbol.Base.ToLower(); // + ".json.bin";
+                        if (!symbol.IsBarometerSymbol() && (!symbol.QuoteData.FetchCandles || !symbol.IsSpotTradingAllowed))
                         {
-                            using (BinaryWriter binaryWriter = new(memoryStream, Encoding.UTF8, false))
+                            //if (File.Exists(filename))
+                            //    File.Delete(filename);
+                            continue;
+                        }
+
+                        long count = 0;
+                        foreach (CryptoSymbolInterval cryptoSymbolInterval in symbol.IntervalPeriodList)
+                            count += cryptoSymbolInterval.CandleList.Count;
+
+                        if (count > 0)
+                        {
+                            using (var memoryStream = new MemoryStream(2 * 1024 * 1024))
                             {
-                                int version = 1; // Even teruggezet
-
-                                // Iets met een version
-                                binaryWriter.Write(version);
-                                binaryWriter.Write(symbol.Name);
-
-                                foreach (CryptoSymbolInterval symbolInterval in symbol.IntervalPeriodList)
+                                using (BinaryWriter binaryWriter = new(memoryStream, Encoding.UTF8, false))
                                 {
-                                    binaryWriter.Write((int)symbolInterval.Interval.IntervalPeriod);
-                                    if (symbolInterval.LastCandleSynchronized.HasValue)
-                                        binaryWriter.Write((long)symbolInterval.LastCandleSynchronized); // int64
-                                    else
-                                        binaryWriter.Write((long)0); // int64
+                                    int version = 1; // Even teruggezet
 
-                                    binaryWriter.Write(symbolInterval.CandleList.Count);
+                                    // Iets met een version
+                                    binaryWriter.Write(version);
+                                    binaryWriter.Write(symbol.Name);
 
-                                    for (int j = 0; j < symbolInterval.CandleList.Count; j++)
+                                    foreach (CryptoSymbolInterval symbolInterval in symbol.IntervalPeriodList)
                                     {
-                                        CryptoCandle candle = symbolInterval.CandleList.Values[j];
-                                        binaryWriter.Write(candle.OpenTime);
-                                        binaryWriter.Write(candle.Open);
-                                        binaryWriter.Write(candle.High);
-                                        binaryWriter.Write(candle.Low);
-                                        binaryWriter.Write(candle.Close);
-                                        binaryWriter.Write(candle.Volume);
+                                        binaryWriter.Write((int)symbolInterval.Interval.IntervalPeriod);
+                                        if (symbolInterval.LastCandleSynchronized.HasValue)
+                                            binaryWriter.Write((long)symbolInterval.LastCandleSynchronized); // int64
+                                        else
+                                            binaryWriter.Write((long)0); // int64
+
+                                        binaryWriter.Write(symbolInterval.CandleList.Count);
+
+                                        for (int j = 0; j < symbolInterval.CandleList.Count; j++)
+                                        {
+                                            CryptoCandle candle = symbolInterval.CandleList.Values[j];
+                                            binaryWriter.Write(candle.OpenTime);
+                                            binaryWriter.Write(candle.Open);
+                                            binaryWriter.Write(candle.High);
+                                            binaryWriter.Write(candle.Low);
+                                            binaryWriter.Write(candle.Close);
+                                            binaryWriter.Write(candle.Volume);
+                                        }
                                     }
+                                    Directory.CreateDirectory(dirSymbol);
+                                    using (FileStream writeStream = new(filename, FileMode.Create))
+                                    {
+                                        memoryStream.Position = 0;
+                                        memoryStream.CopyTo(writeStream);
+                                        writeStream.Close();
+                                    }
+                                    binaryWriter.Close();
                                 }
-                                Directory.CreateDirectory(dirSymbol);
-                                using (FileStream writeStream = new(filename, FileMode.Create))
-                                {
-                                    memoryStream.Position = 0;
-                                    memoryStream.CopyTo(writeStream);
-                                    writeStream.Close();
-                                }
-                                binaryWriter.Close();
+                                memoryStream.Close();
                             }
-                            memoryStream.Close();
                         }
                     }
-                }
-                catch (Exception error)
-                {
-                    GlobalData.AddTextToLogTab("Problem " + symbol.Name);
-                    ScannerLog.Logger.Error(error, "");
-                    GlobalData.AddTextToLogTab(error.ToString() + "\r\n");
+                    catch (Exception error)
+                    {
+                        GlobalData.AddTextToLogTab("Problem " + symbol.Name);
+                        ScannerLog.Logger.Error(error, "");
+                        GlobalData.AddTextToLogTab(error.ToString() + "\r\n");
+                    }
                 }
             }
-        }
 
-        ScannerLog.Logger.Trace("Candle information saved");
+            ScannerLog.Logger.Trace("Candle information saved");
+        }
+        finally
+        {
+            // Enabled analysing
+            GlobalData.SetCandleTimerEnable(true);
+
+            Semaphore.Release();
+        }
     }
 
 

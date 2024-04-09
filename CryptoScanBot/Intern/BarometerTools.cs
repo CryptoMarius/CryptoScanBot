@@ -218,7 +218,7 @@ public class BarometerTools
         // Bereken de (prijs en volume) barometers voor de aangevinkte basismunten
 
         //GlobalData.AddTextToLogTab("Calculating barometer charts start");
-        foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
+        foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values.ToList())
         {
             if (quoteData.FetchCandles)
             {

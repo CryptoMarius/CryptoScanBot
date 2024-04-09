@@ -25,7 +25,7 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
 
     public void InitializeUrls()
     {
-        Add("Binance",
+        Add("Binance Spot",
             new()
             {
                 Altrady = new()
@@ -48,6 +48,33 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
                 {
                     Execute = CryptoExternalUrlType.External,
                     Url = "https://www.binance.com/en/trade/{BASE}_{QUOTE}?_from=markets&type=spot",
+                }
+            }
+        );
+
+        Add("Binance Futures",
+            new()
+            {
+                Altrady = new()
+                {
+                    Execute = CryptoExternalUrlType.Internal,
+                    Url = "https://app.altrady.com/d/BINA_{QUOTE}_{BASE}:{interval}",
+                },
+                HyperTrader = new()
+                {
+                    Execute = CryptoExternalUrlType.External,
+                    Url = "hypertrader://binance/{BASE}-{QUOTE}/{interval}",
+                    Telegram = "http://www.ccscanner.nl/hypertrader/?e=binance&a={BASE}&b={QUOTE}&i={interval}",
+                },
+                TradingView = new() // werkt
+                {
+                    Execute = CryptoExternalUrlType.External,
+                    Url = "https://www.tradingview.com/chart/?symbol=BINANCE:{BASE}{QUOTE}.P&interval={interval}"
+                },
+                ExchangeUrl = new() //?
+                {
+                    Execute = CryptoExternalUrlType.External,
+                    Url = "https://www.binance.com/en/trade/{BASE}_{QUOTE}?_from=markets&type=futures",
                 }
             }
         );
@@ -106,7 +133,7 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
             }
         );
 
-        Add("Kucoin",
+        Add("Kucoin Spot",
             new()
             {
                 Altrady = new()
