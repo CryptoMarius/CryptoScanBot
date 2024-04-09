@@ -1,12 +1,4 @@
-﻿using System.Text.Encodings.Web;
-using System.Text.Json;
-
-using Bybit.Net.Clients;
-using Bybit.Net.Enums;
-using Bybit.Net.Objects.Models.Spot;
-using Bybit.Net.Objects.Models.V5;
-
-using CryptoExchange.Net.Authentication;
+﻿using CryptoExchange.Net.Authentication;
 using CryptoExchange.Net.Objects;
 
 using CryptoScanBot.Context;
@@ -16,74 +8,33 @@ using CryptoScanBot.Model;
 
 using Dapper.Contrib.Extensions;
 
+using Kraken.Net.Clients;
+using Kraken.Net.Enums;
+using Kraken.Net.Objects.Models;
 
-namespace CryptoScanBot.Exchange.BybitSpot;
+namespace CryptoScanBot.Exchange.KrakenSpot;
 
 public class Api : ExchangeBase
 {
-    private static readonly Category Category = Category.Spot;
-   
-
-    //internal static BybitRestClient CreateRestClient()
-    //{
-    //    // Ik snap er helemaal niets van.. Heb een paar classes verkeerd begrepen log en logger
-
-    //    //NLog.Extensions.Logging.NLogLoggerFactory loggerFactory = new();
-    //    //MyClass myClass = new(loggerFactory);
-    //    //loggerFactory.
-    //    //LoadNLogConfigurationOnFactory(loggerFactory);
-    //    //using ILoggerFactory factory = LoggerFactory.Create(builder => builder.AddNLog());
-    //    //Microsoft.Extensions.Logging.ILogger logger = factory.CreateLogger("Program");
-    //    //logger.LogInformation("Hello World! Logging is {Description}.", "fun");
-
-    //    //var loggerFactory = new NLog.Extensions.Logging.NLogLoggerFactory();
-
-    //    //Logger moduleLogger = NLog.LogManager.GetLogger("Modules.MyModuleName");
-    //    //NLog.LogFactory Factory1 = new LogFactory();
-    //    //LoadNLogConfigurationOnFactory(Factory1);
-
-
-    //    BybitRestClient client = new(null, LogFactory, options =>
-    //    {
-    //        //options.Environment = _environment;
-    //        options.OutputOriginalData = true;
-    //        options.ReceiveWindow = TimeSpan.FromSeconds(15);
-    //        if (GlobalData.TradingApi.Key != "")
-    //            options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
-    //    });
-    //    return client;
-    //}
-
     public override void ExchangeDefaults()
     {
-        ExchangeOptions.ExchangeName = "Bybit Spot";
+        ExchangeOptions.ExchangeName = "Kraken Spot";
         ExchangeOptions.LimitAmountOfSymbols = false;
-        ExchangeOptions.SubscriptionLimitSymbols = 10;
-        
+        ExchangeOptions.SubscriptionLimitSymbols = 10; // onbekend
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         // Default opties voor deze exchange
-        BybitRestClient.SetDefaultOptions(options =>
+        KrakenRestClient.SetDefaultOptions(options =>
         {
-            //options.OutputOriginalData = true;
-            //options.SpotOptions.AutoTimestamp = true;
-            options.ReceiveWindow = TimeSpan.FromSeconds(15);
-            options.RequestTimeout = TimeSpan.FromSeconds(40); // standard=20 seconds
-            //options.SpotOptions.RateLimiters = ?
+            //options.ReceiveWindow = TimeSpan.FromSeconds(15);
             if (GlobalData.TradingApi.Key != "")
                 options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
         });
 
-        BybitSocketClient.SetDefaultOptions(options =>
+        KrakenSocketClient.SetDefaultOptions(options =>
         {
             options.AutoReconnect = true;
-
-            options.RequestTimeout = TimeSpan.FromSeconds(40); // standard=20 seconds
-            options.ReconnectInterval = TimeSpan.FromSeconds(10); // standard=5 seconds
-            options.SocketNoDataTimeout = TimeSpan.FromMinutes(1); // standard=30 seconds
-            options.V5Options.SocketNoDataTimeout = options.SocketNoDataTimeout;
-            options.SpotV3Options.SocketNoDataTimeout = options.SocketNoDataTimeout;
-
+            options.ReconnectInterval = TimeSpan.FromSeconds(15);
             if (GlobalData.TradingApi.Key != "")
                 options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
         });
@@ -99,7 +50,7 @@ public class Api : ExchangeBase
     {
         await GetSymbols.ExecuteAsync();
     }
-        
+
     public async override Task GetCandlesAsync()
     {
         await GetCandles.ExecuteAsync();
@@ -113,7 +64,8 @@ public class Api : ExchangeBase
         {
             OrderType.Market => CryptoOrderType.Market,
             OrderType.Limit => CryptoOrderType.Limit,
-            OrderType.LimitMaker => CryptoOrderType.StopLimit, /// ????????????????????????????????????????????????
+            OrderType.StopLoss => CryptoOrderType.StopLimit,
+            OrderType.StopLossLimit => CryptoOrderType.Oco,
             _ => throw new Exception("Niet ondersteunde ordertype"),
         };
 
@@ -135,16 +87,15 @@ public class Api : ExchangeBase
 
 
     // Converteer de orderstatus van Exchange naar "intern"
-    public static CryptoOrderStatus LocalOrderStatus(Bybit.Net.Enums.V5.OrderStatus orderStatus)
+    public static CryptoOrderStatus LocalOrderStatus(OrderStatus orderStatus)
     {
         CryptoOrderStatus localOrderStatus = orderStatus switch
         {
-            Bybit.Net.Enums.V5.OrderStatus.New => CryptoOrderStatus.New,
-            Bybit.Net.Enums.V5.OrderStatus.Filled => CryptoOrderStatus.Filled,
-            Bybit.Net.Enums.V5.OrderStatus.PartiallyFilled => CryptoOrderStatus.PartiallyFilled,
-            Bybit.Net.Enums.V5.OrderStatus.PartiallyFilledCanceled => CryptoOrderStatus.PartiallyAndClosed, // niet alles kon omgezet worden, iets minder gekregen
-            //Bybit.Net.Enums.V5.OrderStatus.Expired => CryptoOrderStatus.Expired,
-            Bybit.Net.Enums.V5.OrderStatus.Cancelled => CryptoOrderStatus.Canceled,
+            OrderStatus.Pending => CryptoOrderStatus.New,
+            OrderStatus.Open => CryptoOrderStatus.Filled,
+            //OrderStatus.PartiallyFilled => CryptoOrderStatus.PartiallyFilled,
+            //OrderStatus.Expired => CryptoOrderStatus.Expired,
+            OrderStatus.Canceled => CryptoOrderStatus.Canceled,
             _ => throw new Exception("Niet ondersteunde orderstatus"),
         };
 
@@ -157,16 +108,10 @@ public class Api : ExchangeBase
         CryptoOrderType orderType, CryptoOrderSide orderSide,
         decimal quantity, decimal price, decimal? stop, decimal? limit)
     {
-        //ScannerLog.Logger.Trace($"Exchange.BybitSpot.PlaceOrder {symbol.Name}");
-        // debug
-        //GlobalData.AddTextToLogTab(string.Format("{0} {1} (debug={2} {3})", symbol.Name, "not at this moment", price, quantity));
-        //return (false, null);
-
-
         // Controleer de limiten van de maximum en minimum bedrag en de quantity
         if (!symbol.InsideBoundaries(quantity, price, out string text))
         {
-            GlobalData.AddTextToLogTab($"{symbol.Name} {text} (debug={price} {quantity})");
+            GlobalData.AddTextToLogTab(string.Format("{0} {1} (debug={2} {3})", symbol.Name, text, price, quantity));
             return (false, null);
         }
 
@@ -191,8 +136,6 @@ public class Api : ExchangeBase
         }
 
 
-        // BinanceWeights.WaitForFairBinanceWeight(1); flauwekul voor die ene tick (geen herhaling toch?)
-
         OrderSide side;
         if (orderSide == CryptoOrderSide.Buy)
             side = OrderSide.Buy;
@@ -201,17 +144,16 @@ public class Api : ExchangeBase
 
 
         // Plaats een order op de exchange *ze lijken op elkaar, maar het is net elke keer anders)
-        using BybitRestClient client = new();
+        //BinanceWeights.WaitForFairBinanceWeight(1); flauwekul voor die ene tick (geen herhaling toch?)
+        using KrakenRestClient client = new();
 
-        WebCallResult<BybitOrderId> result;
+        WebCallResult<KrakenPlacedOrder> result;
         switch (orderType)
         {
             case CryptoOrderType.Market:
                 {
-                    // JA, price * quantity omdat dat blijkbaar zo moet, zie voorbeeld (onderin)
-                    // https://bybit-exchange.github.io/docs/v5/order/create-order
-                    result = await client.V5Api.Trading.PlaceOrderAsync(Category, symbol.Name, side,
-                        NewOrderType.Market, price * quantity, timeInForce: TimeInForce.GoodTillCanceled, isLeverage: false);
+                    result = await client.SpotApi.Trading.PlaceOrderAsync(symbol.Name, side,
+                        OrderType.Market, quantity);
                     if (!result.Success)
                     {
                         tradeParams.Error = result.Error;
@@ -220,14 +162,14 @@ public class Api : ExchangeBase
                     if (result.Success && result.Data != null)
                     {
                         tradeParams.CreateTime = currentDate;
-                        tradeParams.OrderId = result.Data.OrderId;
+                        tradeParams.OrderId = "12345"; // long.Parse(result.Data.OrderIds); dat wordt een conversie!
                     }
                     return (result.Success, tradeParams);
                 }
             case CryptoOrderType.Limit:
                 {
-                    result = await client.V5Api.Trading.PlaceOrderAsync(Category, symbol.Name, side,
-                    NewOrderType.Limit, quantity: quantity, price: price, timeInForce: TimeInForce.GoodTillCanceled, isLeverage: false);
+                    result = await client.SpotApi.Trading.PlaceOrderAsync(symbol.Name, side,
+                    OrderType.Limit, quantity, price: price, timeInForce: TimeInForce.GTC);
                     if (!result.Success)
                     {
                         tradeParams.Error = result.Error;
@@ -236,14 +178,14 @@ public class Api : ExchangeBase
                     if (result.Success && result.Data != null)
                     {
                         tradeParams.CreateTime = currentDate;
-                        tradeParams.OrderId = result.Data.OrderId;
+                        tradeParams.OrderId = "12345"; // long.Parse(result.Data.OrderIds); dat wordt een conversie!
                     }
                     return (result.Success, tradeParams);
                 }
             case CryptoOrderType.StopLimit:
                 {
                     // wordt het nu wel of niet ondersteund? Het zou ook een extra optie van de limit kunnen (zie wel een tp)
-                    //result = await client.V5Api.Trading.PlaceOrderAsync(Category, symbol.Name, side, NewOrderType.Market,
+                    //result = await client.V5Api.Trading.PlaceOrderAsync(Category.Linear, symbol.Name, side, NewOrderType.Market,
                     //    quantity, price: price, timeInForce: TimeInForce.GoodTillCanceled, isLeverage: false);
                     throw new Exception("${orderType} not supported");
                 }
@@ -279,14 +221,13 @@ public class Api : ExchangeBase
 
     public override async Task<(bool succes, TradeParams tradeParams)> Cancel(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoPositionStep step)
     {
-        //ScannerLog.Logger.Trace($"Exchange.BybitSpot.Cancel {symbol.Name}");
         // Order gegevens overnemen (enkel voor een eventuele error dump)
         TradeParams tradeParams = new()
         {
             CreateTime = step.CreateTime,
             OrderSide = step.Side,
             OrderType = step.OrderType,
-            Price = step.Price, // the buy or sell price
+            Price = step.Price, // the sell part (can also be a buy)
             StopPrice = step.StopPrice, // OCO - the price at which the limit order to sell is activated
             LimitPrice = step.StopLimitPrice, // OCO - the lowest price that the trader is willing to accept
             Quantity = step.Quantity,
@@ -306,16 +247,12 @@ public class Api : ExchangeBase
         if (step.OrderId != "")
         {
             // BinanceWeights.WaitForFairBinanceWeight(1); flauwekul
-            using var client = new BybitRestClient();
-            var result = await client.V5Api.Trading.CancelOrderAsync(Category, symbol.Name, step.OrderId.ToString());
+            using var client = new KrakenRestClient();
+            var result = await client.SpotApi.Trading.CancelOrderAsync(symbol.Name, step.OrderId.ToString());
             if (!result.Success)
             {
                 tradeParams.Error = result.Error;
                 tradeParams.ResponseStatusCode = result.ResponseStatusCode;
-
-                // If its already gone ignore the error
-                if (result.Error.Code == 110001) // 110001: Order does not exist
-                    return (true, tradeParams);
             }
             return (result.Success, tradeParams);
         }
@@ -323,7 +260,7 @@ public class Api : ExchangeBase
         return (false, tradeParams);
     }
 
-    static public void PickupAssets(CryptoTradeAccount tradeAccount, BybitAllAssetBalances balances)
+    static public void PickupAssets(CryptoTradeAccount tradeAccount, Dictionary<string, KrakenBalanceAvailable> balances)
     {
         tradeAccount.AssetListSemaphore.Wait();
         try
@@ -334,28 +271,22 @@ public class Api : ExchangeBase
             using var transaction = databaseThread.BeginTransaction();
             try
             {
-                // remove assets with total=0
-                foreach (var asset in tradeAccount.AssetList.Values.ToList())
+                foreach (var assetInfo in balances.Values)
                 {
-                    asset.Total = 0;
-                }
-
-                foreach (var assetInfo in balances.Balances)
-                {
-                    if (assetInfo.WalletBalance > 0)
+                    if (assetInfo.Available > 0)
                     {
                         if (!tradeAccount.AssetList.TryGetValue(assetInfo.Asset, out CryptoAsset asset))
                         {
-                            asset = new()
+                            asset = new CryptoAsset()
                             {
                                 Name = assetInfo.Asset,
-                                TradeAccountId = tradeAccount.Id
+                                TradeAccountId = tradeAccount.Id,
                             };
                             tradeAccount.AssetList.Add(asset.Name, asset);
                         }
-                        asset.Total = (decimal)assetInfo.WalletBalance;
-                        asset.Locked = (decimal)assetInfo.WalletBalance - (decimal)assetInfo.TransferBalance;
-                        asset.Free = asset.Total - asset.Locked;
+                        asset.Free = assetInfo.Available;
+                        asset.Locked = assetInfo.Locked;
+                        asset.Total = assetInfo.Total;
 
                         if (asset.Id == 0)
                             databaseThread.Connection.Insert(asset, transaction);
@@ -391,10 +322,9 @@ public class Api : ExchangeBase
         }
     }
 
-
-    static public void PickupTrade(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoTrade trade, BybitSpotUserTradeV3 item)
+    static public void PickupTrade(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoTrade trade, KrakenUserTrade item)
     {
-        trade.TradeTime = item.TradeTime;
+        trade.TradeTime = item.Timestamp;
 
         trade.TradeAccount = tradeAccount;
         trade.TradeAccountId = tradeAccount.Id;
@@ -403,14 +333,14 @@ public class Api : ExchangeBase
         trade.Symbol = symbol;
         trade.SymbolId = symbol.Id;
 
-        trade.TradeId = item.TradeId.ToString();
-        trade.OrderId = item.OrderId.ToString();
+        trade.TradeId = item.Id;
+        trade.OrderId = item.OrderId;
 
         trade.Price = item.Price;
         trade.Quantity = item.Quantity;
         trade.QuoteQuantity = item.Price * item.Quantity;
         trade.Commission = item.Fee;
-        trade.CommissionAsset = item.FeeAsset;
+        trade.CommissionAsset = symbol.Quote; // item.FeeAsset;?
     }
 
 
@@ -419,11 +349,11 @@ public class Api : ExchangeBase
         return await GetTrades.FetchTradesForSymbolAsync(database, position);
     }
 	
-	
-    static public void PickupOrder(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoOrder order, Bybit.Net.Objects.Models.V5.BybitOrder item)
+
+    static public void PickupOrder(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoOrder order, KrakenStreamOrder item)
     {
         order.CreateTime = item.CreateTime;
-        order.UpdateTime = item.UpdateTime;
+        order.UpdateTime = item.CreateTime; // TODO??? 
 
         order.TradeAccount = tradeAccount;
         order.TradeAccountId = tradeAccount.Id;
@@ -432,112 +362,30 @@ public class Api : ExchangeBase
         order.Symbol = symbol;
         order.SymbolId = symbol.Id;
 
-        order.OrderId = item.OrderId;
-        order.Side = LocalOrderSide(item.Side);
-        order.Type = LocalOrderType(item.OrderType);
-        order.Status = LocalOrderStatus(item.Status);
+        order.OrderId = item.Id; 
+        order.Side = LocalOrderSide(item.OrderDetails.Side);
 
-        // Bij een marketorder is deze niet gevuld
-        // alsnog vullen (zodat de QuoteQuantity gevuld wordt..)
-        if (item.Price != 0)
-            order.Price = item.Price; 
-        else
-            order.Price = item.AveragePrice;
+        order.Price = item.Price;
         order.Quantity = item.Quantity;
-        // Bij deze status wordt het aangevraagde hoeveelheid niet goed ingevuld
-        if (item.Status == Bybit.Net.Enums.V5.OrderStatus.PartiallyFilledCanceled && item.QuantityFilled.HasValue)
-            order.Quantity = item.QuantityFilled.Value;
-        if (order.Price.HasValue)
-            order.QuoteQuantity = order.Price.Value * order.Quantity;
-        else
-            order.QuoteQuantity = 0;
+        order.QuoteQuantity = item.Price * item.Quantity;
 
+        order.Price = item.Price;
+        order.Quantity = item.Quantity;
+        order.QuoteQuantity = item.Price * item.Quantity;
 
-        // Filled
-        if (item.AveragePrice.HasValue)
-            order.AveragePrice = item.AveragePrice;
-        else
-            order.AveragePrice = 0;
-
-        if (item.QuantityFilled.HasValue)
-            order.QuantityFilled = item.QuantityFilled;
-        else
-            order.QuantityFilled = 0;
-        order.QuoteQuantityFilled = order.Price * item.QuantityFilled;
-
-
-        // Bybit spot does currently not return any info on fees
-        order.Commission = 0; // item.ExecutedFee;
-        order.CommissionAsset = ""; //  item.FeeAsset;
+        order.Commission = item.Fee;
+        order.CommissionAsset = symbol.Quote;
     }
 
 
-    public override async Task<int> GetOrdersAsync(CryptoDatabase database, CryptoPosition position)
+    public override Task<int> GetOrdersAsync(CryptoDatabase database, CryptoPosition position)
     {
-        //ScannerLog.Logger.Trace($"Exchange.BybitSpot.GetOrdersForPositionAsync: Positie {position.Symbol.Name}");
-        // Behoorlijk weinig error control ...... 
-
-        int count = 0;
-        DateTime? from; // = position.Symbol.LastOrderFetched;
-        //if (from == null)
-        // altijd alles ophalen, geeft wat veel logging, maar ach..
-        from = position.CreateTime.AddMinutes(-1);
-
-        ScannerLog.Logger.Trace($"GetOrdersForPositionAsync {position.Symbol.Name} fetching orders from exchange {from}");
-
-        using var client = new BybitRestClient();
-        var info = await client.V5Api.Trading.GetOrderHistoryAsync(
-            Category.Spot, symbol: position.Symbol.Name, 
-            startTime: from);
-
-        
-        if (info.Success && info.Data != null)
-        {
-            string text;
-            foreach (var item in info.Data.List)
-            {
-                if (position.Symbol.OrderList.TryGetValue(item.OrderId, out CryptoOrder order))
-                {
-                    var oldStatus = order.Status;
-                    var oldQuoteQuantityFilled = order.QuoteQuantityFilled;
-                    PickupOrder(position.TradeAccount, position.Symbol, order, item);
-                    database.Connection.Update<CryptoOrder>(order);
-
-                    if (oldStatus != order.Status || oldQuoteQuantityFilled != order.QuoteQuantityFilled)
-                    {
-                        ScannerLog.Logger.Trace($"GetOrdersForPositionAsync {position.Symbol.Name} updated order {item.OrderId}");
-                        text = JsonSerializer.Serialize(item, ExchangeHelper.JsonSerializerNotIndented).Trim();
-                        ScannerLog.Logger.Trace($"{item.Symbol} order updated json={text}");
-                        count++;
-                    }
-                }
-                else
-                {
-                    text = JsonSerializer.Serialize(item, ExchangeHelper.JsonSerializerNotIndented).Trim();
-                    ScannerLog.Logger.Trace($"{item.Symbol} order added json={text}");
-
-                    order = new();
-                    PickupOrder(position.TradeAccount, position.Symbol, order, item);
-                    database.Connection.Insert<CryptoOrder>(order);
-                    GlobalData.AddOrder(order);
-                    count++;
-                }
-
-                if (position.Symbol.LastOrderFetched == null || order.CreateTime > position.Symbol.LastOrderFetched)
-                    position.Symbol.LastOrderFetched = order.CreateTime;
-            }
-            database.Connection.Update<CryptoSymbol>(position.Symbol);
-        }
-        else
-            GlobalData.AddTextToLogTab($"Error reading orders from {ExchangeOptions.ExchangeName} for {position.Symbol.Name} {info.Error}");
-
-        return count;
+        return Task.FromResult(0);
     }
 
 
     public async override Task GetAssetsAsync(CryptoTradeAccount tradeAccount)
     {
-        //ScannerLog.Logger.Trace($"Exchange.BybitSpot.GetAssetsForAccountAsync: Positie {tradeAccount.Name}");
         //if (GlobalData.ExchangeListName.TryGetValue(ExchangeName, out Model.CryptoExchange exchange))
         {
             try
@@ -546,9 +394,9 @@ public class Api : ExchangeBase
 
                 LimitRates.WaitForFairWeight(1);
 
-                using var client = new BybitRestClient();
+                using var client = new KrakenRestClient();
                 {
-                    var accountInfo = await client.V5Api.Account.GetAllAssetBalancesAsync(AccountType.Spot);
+                    var accountInfo = await client.SpotApi.Account.GetAvailableBalancesAsync();
                     if (!accountInfo.Success)
                     {
                         GlobalData.AddTextToLogTab("error getting accountinfo " + accountInfo.Error);
@@ -557,7 +405,7 @@ public class Api : ExchangeBase
                     //Zo af en toe komt er geen data of is de Data niet gezet.
                     //De verbindingen naar extern kunnen (tijdelijk) geblokkeerd zijn
                     if (accountInfo == null | accountInfo.Data == null)
-                        throw new ExchangeException("No account data received");
+                        throw new ExchangeException("Geen account data ontvangen");
 
                     try
                     {
@@ -581,7 +429,6 @@ public class Api : ExchangeBase
 
         }
     }
-
 
 #endif
 

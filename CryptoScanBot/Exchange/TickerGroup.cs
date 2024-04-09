@@ -8,7 +8,7 @@ public class TickerGroup : IDisposable
     // Iedere subscription bedient een aantal symbols
     // dat is zo'n 1..200 en afhankelijk van de exchange..
     internal BaseSocketClient SocketClient;
-    public List<TickerItem> TickerList { get; set; } = [];
+    public List<SubscriptionTicker> TickerList { get; set; } = [];
 
 
     public void Dispose()

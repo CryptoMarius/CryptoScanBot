@@ -3,28 +3,53 @@ using CryptoScanBot.Model;
 
 namespace CryptoScanBot.Exchange;
 
-public class Ticker(ExchangeOptions exchangeOptions, Type userTickerItemType, string tickerType)
+public enum CryptoTickerType
+{
+    user,
+    price,
+    kline
+}
+
+public class Ticker(ExchangeOptions exchangeOptions, Type userTickerItemType, CryptoTickerType tickerType)
 {
     internal ExchangeOptions ExchangeOptions { get; set; } = exchangeOptions;
-    public List<TickerGroup> TickerGroupList { get; set; } = [];
-    Type UserTickerItemType { get; set; } = userTickerItemType;
-    string tickerType { get; set; } = tickerType;
+    internal List<TickerGroup> TickerGroupList { get; set; } = [];
+    internal Type UserTickerItemType { get; set; } = userTickerItemType;
+    internal CryptoTickerType TickerType { get; set; } = tickerType;
+    public bool Enabled { get; set; } = true;
 
-    public virtual async Task StartAsync()
+    /// <summary>
+    /// Voor de user ticker
+    /// </summary>
+    private List<SubscriptionTicker> CreateUserTickers(ref int symbolCount)
     {
-        // ? Geen controle of het wel gestart is (dan zou het het aantal tickers oplopen) ?
-        GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} starting {tickerType} tickers {TickerGroupList.Count}");
+        symbolCount = 0;
+        List<SubscriptionTicker> tickerList = [];
+
+        SubscriptionTicker ticker = (SubscriptionTicker)Activator.CreateInstance(UserTickerItemType, [ExchangeOptions]);
+
+        ticker.GroupName = "*";
+        ticker.TickerType = TickerType;
+        tickerList.Add(ticker);
+
+        return tickerList;
+    }
 
 
+    /// <summary>
+    /// Voor de kline en price ticker
+    /// </summary>
+    private List<SubscriptionTicker> CreateTheTickers(ref int symbolCount)
+    {
         // Splits de symbols
+        symbolCount = 0;
         int groupCount = 0;
-        int symbolCount = 0;
-        List<TickerItem> tickerList = [];
-        foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
+        List<SubscriptionTicker> tickerList = [];
+        foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values.ToList())
         {
             if (quoteData.FetchCandles && quoteData.SymbolList.Count > 0)
             {
-                List<TickerItem> tickers = [];
+                List<SubscriptionTicker> tickers = [];
                 List<CryptoSymbol> symbols = quoteData.SymbolList.ToList();
 
                 // Limiteer de munten (dat heeft dan ook impact op de barometer)
@@ -32,6 +57,8 @@ public class Ticker(ExchangeOptions exchangeOptions, Type userTickerItemType, st
                 {
                     foreach (var symbol in symbols.ToList())
                     {
+                        if (symbol.Name.Equals("KONUSDT"))
+                            continue; // debug
                         if (symbol.QuoteData.MinimalVolume > 0 && symbol.Volume < 0.1m * symbol.QuoteData.MinimalVolume)
                             symbols.Remove(symbol);
                     }
@@ -41,9 +68,9 @@ public class Ticker(ExchangeOptions exchangeOptions, Type userTickerItemType, st
                 int x = symbols.Count;
                 while (x > 0)
                 {
-                    TickerItem ticker = (TickerItem)Activator.CreateInstance(UserTickerItemType, []);
+                    SubscriptionTicker ticker = (SubscriptionTicker)Activator.CreateInstance(UserTickerItemType, [ExchangeOptions]);
                     ticker.GroupName = $"{quoteData.Name}#{groupCount}";
-                    ticker.TickerType = tickerType;
+                    ticker.TickerType = TickerType;
                     tickers.Add(ticker);
                     x -= ExchangeOptions.SubscriptionLimitSymbols;
                     groupCount++;
@@ -55,21 +82,58 @@ public class Ticker(ExchangeOptions exchangeOptions, Type userTickerItemType, st
                 {
                     //ticker.Symbols.Add(symbol.Name); // Werkt niet voor kucoin..
                     //TODO: ticker.Symbols.Add(Api.ExchangeSymbolName(symbol)); // beter!
-                    tickers[x].Symbols.Add(symbol.Name);
+                    var ticker = tickers[x];
+                    ticker.SymbolList.Add(symbol);
+                    ticker.Symbols.Add(symbol.Name);
+
+                    //if (ticker.SymbolOverview == "")
+                    //    ticker.SymbolOverview += symbol.Name;
+                    //else
+                    //    ticker.SymbolOverview += "," + symbol.Name;
                     x++;
                     if (x >= tickers.Count)
                         x = 0;
                     symbolCount++;
                 }
+                //string.Join(',', Symbols)
 
                 // kan gecombineerd worden ^^
                 foreach (var ticker in tickers)
                 {
                     tickerList.Add(ticker);
-                    ticker.GroupName += $" ({ticker.Symbols.Count})";
+                    ticker.GroupName += $" ({ticker.SymbolList.Count})";
+                    ticker.SymbolOverview = string.Join(',', ticker.Symbols);
                 }
             }
         }
+        return tickerList;
+    }
+
+    public virtual async Task StartAsync()
+    {
+        if (!Enabled)
+        {
+            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} {TickerType} ticker is disabled");
+            return;
+        }
+
+        // Is al gestart
+        if (TickerGroupList.Count > 0)
+        {
+            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} {TickerType} is already started");
+            return;
+        }
+
+        GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} starting {TickerType} tickers");
+
+
+        // Splits de symbols (user ticker is much simpler)
+        int symbolCount = 0;
+        List<SubscriptionTicker> tickerList;
+        if  (TickerType == CryptoTickerType.user)
+            tickerList = CreateUserTickers(ref symbolCount);
+        else
+            tickerList = CreateTheTickers(ref symbolCount);
 
 
         // Vanwege technische limiet reduceren we het aantal subscriptions per client
@@ -101,12 +165,21 @@ public class Ticker(ExchangeOptions exchangeOptions, Type userTickerItemType, st
             }
         }
 
+
+        string text = "";
         if (taskList.Count != 0)
         {
             await Task.WhenAll(taskList).ConfigureAwait(false);
-            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} started {tickerType} ticker for {symbolCount} symbols in {taskList.Count} groups");
+            if (TickerType != CryptoTickerType.user)
+                text = $" for {symbolCount} symbols";
+            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} started {TickerType} ticker{text} in {taskList.Count} groups");
         }
-        else GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} started {tickerType} ticker with 0 symbols!");
+        else
+        {
+            if (TickerType != CryptoTickerType.user)
+                text = $" with 0 symbols!";
+            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} started {TickerType} ticker{text}");
+        }
 
 
 
@@ -122,23 +195,28 @@ public class Ticker(ExchangeOptions exchangeOptions, Type userTickerItemType, st
                 {
                     Task task = Task.Run(ticker.StartAsync);
                     taskList.Add(task);
-                    symbolCount += ticker.Symbols.Count;
+                    symbolCount += ticker.SymbolList.Count;
                 }
             }
         }
         if (taskList.Count != 0)
         {
             await Task.WhenAll(taskList).ConfigureAwait(false);
-            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} retry - started {tickerType} ticker for {symbolCount} symbols in {taskList.Count} groups");
+            if (TickerType != CryptoTickerType.user)
+                text = $" for {symbolCount} symbols";
+            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} retry - started {TickerType} ticker{text} in {taskList.Count} groups");
         }
     }
 
 
     public virtual async Task StopAsync()
     {
+        if (!Enabled)
+            return;
+
         if (TickerGroupList.Count != 0)
         {
-            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} {tickerType} tickers stopping");
+            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} {TickerType} tickers stopping");
             List<Task> taskList = [];
             foreach (var tickerGroup in TickerGroupList)
             {
@@ -149,11 +227,11 @@ public class Ticker(ExchangeOptions exchangeOptions, Type userTickerItemType, st
                 }
             }
             await Task.WhenAll(taskList).ConfigureAwait(false);
-            ScannerLog.Logger.Trace($"{ExchangeOptions.ExchangeName} {tickerType} tickers stopped");
+            ScannerLog.Logger.Trace($"{ExchangeOptions.ExchangeName} {TickerType} tickers stopped");
             TickerGroupList.Clear();
         }
         else
-            ScannerLog.Logger.Trace($"{ExchangeOptions.ExchangeName} {tickerType} tickers already stopped");
+            ScannerLog.Logger.Trace($"{ExchangeOptions.ExchangeName} {TickerType} tickers already stopped");
     }
 
 
@@ -203,7 +281,7 @@ public class Ticker(ExchangeOptions exchangeOptions, Type userTickerItemType, st
         return restart;
     }
 
-    public virtual async Task CheckKlineTickers()
+    public virtual async Task CheckTickers()
     {
         int tickerCount = 0;
         List<TickerGroup> tickerGroups = [];
@@ -211,7 +289,7 @@ public class Ticker(ExchangeOptions exchangeOptions, Type userTickerItemType, st
         {
             foreach (var ticker in tickerGroup.TickerList)
             {
-                if (ticker.ConnectionLostCount > 0)
+                if (ticker.ConnectionLostCount > 0 || ticker.ErrorDuringStartup)
                 {
                     tickerCount += tickerGroup.TickerList.Count;
                     tickerGroups.Add(tickerGroup);
@@ -224,7 +302,7 @@ public class Ticker(ExchangeOptions exchangeOptions, Type userTickerItemType, st
         {
 
             // Stop de getrande tickers
-            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} herstarten {tickerCount} {tickerType} tickers (stopping)");
+            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} herstarten {tickerCount} {TickerType} tickers (stopping)");
             
             List<Task> taskList = [];
             foreach (var tickerGroup in TickerGroupList)
@@ -238,7 +316,7 @@ public class Ticker(ExchangeOptions exchangeOptions, Type userTickerItemType, st
             await Task.WhenAll(taskList).ConfigureAwait(false);
 
 
-            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} herstarten {tickerCount} {tickerType} tickers (stopped)");
+            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} herstarten {tickerCount} {TickerType} tickers (stopped)");
 
 
             // Start de getrande tickers opnieuw
@@ -247,16 +325,15 @@ public class Ticker(ExchangeOptions exchangeOptions, Type userTickerItemType, st
             {
                 foreach (var ticker in tickerGroup.TickerList)
                 {
-                    // Hergebruiken de groep
+                    // We hergebruiken de group nu (de indeling is ingewikkelder geworden)
                     //TickerKLineItemBase tickerNew = (TickerKLineItemBase)Activator.CreateInstance(ExchangeOptions.KLineTickerItemType, [ExchangeOptions]);
                     //tickerNew.Symbols = ticker.Symbols;
-
                     Task task = Task.Run(ticker.StartAsync);
                     taskList.Add(task);
                 }
             }
             await Task.WhenAll(taskList).ConfigureAwait(false);
-            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} herstarten {tickerGroups.Count} {tickerType} tickers (finished)");
+            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} herstarten {tickerGroups.Count} {TickerType} tickers (finished)");
         }
 
         // En de applicatie status herstellen (niet 100% zuiver)
@@ -264,4 +341,19 @@ public class Ticker(ExchangeOptions exchangeOptions, Type userTickerItemType, st
             GlobalData.ApplicationStatus = Enums.CryptoApplicationStatus.Running;
 
     }
+
+    public void DumpTickerInfo()
+    {
+        GlobalData.AddTextToLogTab("");
+        GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} Ticker info {TickerType}");
+
+        foreach (var tickerGroup in TickerGroupList)
+        {
+            foreach (var ticker in tickerGroup.TickerList)
+            {
+                GlobalData.AddTextToLogTab($"Ticker {ticker.GroupName} ErrorDuringStartup={ticker.ErrorDuringStartup} ConnectionLostCount={ticker.ConnectionLostCount} {ticker.SymbolOverview}");
+            }
+        }
+    }
+
 }

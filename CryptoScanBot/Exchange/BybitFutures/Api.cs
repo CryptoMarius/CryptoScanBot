@@ -20,15 +20,13 @@ namespace CryptoScanBot.Exchange.BybitFutures;
 
 public class Api : ExchangeBase
 {
-#if TRADEBOT
     private static readonly Category Category = Category.Linear;
-    static private TickerUserItem TaskBybitStreamUserData { get; set; }
-#endif
-    public static List<TickerKLineItem> TickerList { get; set; } = [];
+
 
     public override void ExchangeDefaults()
     {
         ExchangeOptions.ExchangeName = "Bybit Futures";
+        ExchangeOptions.LimitAmountOfSymbols = false;
         ExchangeOptions.SubscriptionLimitSymbols = 10;
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
@@ -58,19 +56,19 @@ public class Api : ExchangeBase
                 options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
         });
 
-        ExchangeHelper.PriceTicker = new Ticker(ExchangeOptions, typeof(TickerPriceItem), "price");
-        ExchangeHelper.KLineTicker = new Ticker(ExchangeOptions, typeof(TickerKLineItem), "kline");
+        ExchangeHelper.PriceTicker = new Ticker(ExchangeOptions, typeof(SubscriptionPriceTicker), CryptoTickerType.price);
+        ExchangeHelper.KLineTicker = new Ticker(ExchangeOptions, typeof(SubscriptionKLineTicker), CryptoTickerType.kline);
 #if TRADEBOT
-        ExchangeHelper.UserTicker = new TickerUser(ExchangeOptions, typeof(TickerUserItem), "user");
+        ExchangeHelper.UserTicker = new Ticker(ExchangeOptions, typeof(SubscriptionUserTicker), CryptoTickerType.user);
 #endif
     }
 
-    public async override Task FetchSymbolsAsync()
+    public async override Task GetSymbolsAsync()
     {
         await GetSymbols.ExecuteAsync();
     }
 
-    public async override Task FetchCandlesAsync()
+    public async override Task GetCandlesAsync()
     {
         await GetCandles.ExecuteAsync();
     }
@@ -121,7 +119,7 @@ public class Api : ExchangeBase
     }
 
 
-    public async Task<bool> DoSwitchCrossIsolatedMarginAsync(BybitRestClient client, CryptoSymbol symbol)
+    public static async Task<bool> DoSwitchCrossIsolatedMarginAsync(BybitRestClient client, CryptoSymbol symbol)
     {
         //await client.V5Api.Account.SetLeverageAsync(Category, symbol.Name, 1, 1);
         //await client.V5Api.Account.SetMarginModeAsync(Category, symbol.Name, TradeMode.Isolated);
@@ -145,8 +143,7 @@ public class Api : ExchangeBase
         }
 
         // Vanwege een onverwachte liquidatie gaan we deze ook uitgebreid loggen
-        var options = new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = false, IncludeFields = true };
-        string text = JsonSerializer.Serialize(result, options);
+        string text = JsonSerializer.Serialize(result, ExchangeHelper.JsonSerializerNotIndented);
         GlobalData.AddTextToLogTab("SwitchCrossIsolatedMarginAsync :" + text);
 
 
@@ -436,10 +433,9 @@ public class Api : ExchangeBase
     }
 
 
-    public override async Task<int> GetTradesForPositionAsync(CryptoDatabase database, CryptoPosition position)
+    public override async Task<int> GetTradesAsync(CryptoDatabase database, CryptoPosition position)
     {
-        //await KucoinFetchTrades.FetchTradesForSymbol(database, position);
-        return 0; // Task.FromResult(0);
+        return await GetTrades.FetchTradesForSymbolAsync(database, position);
     }
 
     static public void PickupOrder(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoOrder order, Bybit.Net.Objects.Models.V5.BybitOrderUpdate item)
@@ -472,7 +468,7 @@ public class Api : ExchangeBase
     }
 
 
-    public override async Task<int> GetOrdersForPositionAsync(CryptoDatabase database, CryptoPosition position)
+    public override async Task<int> GetOrdersAsync(CryptoDatabase database, CryptoPosition position)
     {
         //ScannerLog.Logger.Trace($"Exchange.BybitSpot.GetOrdersForPositionAsync: Positie {position.Symbol.Name}");
         // Behoorlijk weinig error control ...... 
@@ -506,14 +502,14 @@ public class Api : ExchangeBase
                     if (oldStatus != order.Status || oldQuoteQuantityFilled != order.QuoteQuantityFilled)
                     {
                         ScannerLog.Logger.Trace($"GetOrdersForPositionAsync {position.Symbol.Name} updated order {item.OrderId}");
-                        text = JsonSerializer.Serialize(item, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = false }).Trim();
+                        text = JsonSerializer.Serialize(item, ExchangeHelper.JsonSerializerNotIndented).Trim();
                         ScannerLog.Logger.Trace($"{item.Symbol} order updated json={text}");
                         count++;
                     }
                 }
                 else
                 {
-                    text = JsonSerializer.Serialize(item, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = false }).Trim();
+                    text = JsonSerializer.Serialize(item, ExchangeHelper.JsonSerializerNotIndented).Trim();
                     ScannerLog.Logger.Trace($"{item.Symbol} order added json={text}");
 
                     order = new();
@@ -534,7 +530,7 @@ public class Api : ExchangeBase
         return count;
     }
 
-    public async override Task GetAssetsForAccountAsync(CryptoTradeAccount tradeAccount)
+    public async override Task GetAssetsAsync(CryptoTradeAccount tradeAccount)
     {
         //if (GlobalData.ExchangeListName.TryGetValue(ExchangeName, out Model.CryptoExchange exchange))
         {
@@ -580,24 +576,6 @@ public class Api : ExchangeBase
         }
     }
 
-
-    public static void StartUserDataStream()
-    {
-        TaskBybitStreamUserData = new TickerUserItem(ExchangeOptions);
-        var _ = Task.Run(async () => { await TaskBybitStreamUserData.StartAsync(); });
-    }
-
-    public static async Task StopUserDataStream()
-    {
-        if (TaskBybitStreamUserData != null)
-            await TaskBybitStreamUserData?.StopAsync();
-        TaskBybitStreamUserData = null;
-    }
-
-    public static void ResetUserDataStream()
-    {
-        // niets, hmm
-    }
 #endif
 
 }

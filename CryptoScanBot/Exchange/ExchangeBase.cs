@@ -10,8 +10,8 @@ public abstract class ExchangeBase
 {
     internal static ExchangeOptions ExchangeOptions { get; } = new();
     public abstract void ExchangeDefaults();
-    public abstract Task FetchSymbolsAsync();
-    public abstract Task FetchCandlesAsync();
+    public abstract Task GetSymbolsAsync();
+    public abstract Task GetCandlesAsync();
 
     /// <summary>
     /// return the thechnical format of the symbol on the exchange name 
@@ -23,9 +23,9 @@ public abstract class ExchangeBase
 
 
 #if TRADEBOT
-    public abstract Task GetAssetsForAccountAsync(CryptoTradeAccount tradeAccount);
-    public abstract Task<int> GetTradesForPositionAsync(CryptoDatabase database, CryptoPosition position);
-    public abstract Task<int> GetOrdersForPositionAsync(CryptoDatabase database, CryptoPosition position);
+    public abstract Task GetAssetsAsync(CryptoTradeAccount tradeAccount);
+    public abstract Task<int> GetTradesAsync(CryptoDatabase database, CryptoPosition position);
+    public abstract Task<int> GetOrdersAsync(CryptoDatabase database, CryptoPosition position);
 
     public abstract Task<(bool succes, TradeParams tradeParams)> Cancel(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoPositionStep step);
     public abstract Task<(bool result, TradeParams tradeParams)> PlaceOrder(CryptoDatabase database, 
