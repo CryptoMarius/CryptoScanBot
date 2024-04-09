@@ -1,7 +1,18 @@
 CryptoScanBot release historie:
 
-xx-03-2024 1.9.1
+xx-04-2024 1.9.1
+
+TODO: url voor Kraken Spot
+TODO: url voor Binance Futures
+TODO: De debug informatie verwijderen uit Kucoin!
+
+- Scanner - Kraken spot introduceren? (nog wel experimenteel)
+- Scanner - Binance Futures introduceren? (nog wel experimenteel)
+
+- Scanner - Bij bewaren van de candle data komt er soms een foutmelding "The process cannot access the file"?
 - Scanner - De kolom breedte kunnen resetten
+- Scanner - De naamgeving van de exchanges zijn aangepast (toevoeging Spot)
+- Scanner - De code van de ticker code herschreven, herstart van price en user ticker en waarschijnlijk verbeteringen voor Kucoin
 - Scanner - De naamgeving van de log bestanden aangepast (vanwege de manier van archivering van nlog)
 - Scanner - Nieuwe optie om Tradingview of de exchange in de interne browser te openen
 - Scanner - De rowheight van de grids worden niet meer aangepast (standaard hoogte)
