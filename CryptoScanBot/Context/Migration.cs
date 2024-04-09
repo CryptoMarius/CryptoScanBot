@@ -6,7 +6,7 @@ namespace CryptoScanBot.Context;
 public class Migration
 {
     // De huidige database versie
-    public readonly static int CurrentDatabaseVersion = 14;
+    public readonly static int CurrentDatabaseVersion = 15;
 
 
     public static void Execute(CryptoDatabase database, int CurrentVersion)
@@ -378,8 +378,43 @@ public class Migration
                 database.Connection.Update(version, transaction);
                 transaction.Commit();
             }
-            
 
+
+            //***********************************************************
+            if (CurrentVersion > version.Version && version.Version == 14)
+            {
+                using var transaction = database.BeginTransaction();
+
+                // Onderverdeling maken in Spot en Futures
+
+                database.Connection.Execute("insert into exchange(Name) values('Binance Futures')", transaction);
+                database.Connection.Execute("insert into TradeAccount(Short, Name, AccountType, TradeAccountType, ExchangeId, CanTrade) values('Trading', 'Binance Futures trading', 0, 2, 6, 1);", transaction);
+                database.Connection.Execute("insert into TradeAccount(Short, Name, AccountType, TradeAccountType, ExchangeId, CanTrade) values('Paper', 'Binance Futures paper', 0, 1, 6, 0);", transaction);
+                database.Connection.Execute("insert into TradeAccount(Short, Name, AccountType, TradeAccountType, ExchangeId, CanTrade) values('Backtest', 'Binance Futures backtest', 0, 0, 6, 0);", transaction);
+
+                database.Connection.Execute("update exchange set name='Binance Spot' where name='Binance'", transaction);
+                database.Connection.Execute("update TradeAccount set name='Binance Spot trading' where name= 'Binance trading';", transaction);
+                database.Connection.Execute("update TradeAccount set name='Binance Spot paper' where name= 'Binance paper';", transaction);
+                database.Connection.Execute("update TradeAccount set name='Binance Spot backtest' where name= 'Binance backtest';", transaction);
+
+                database.Connection.Execute("update exchange set name='Kraken Spot' where name='Kraken'", transaction);
+                database.Connection.Execute("update TradeAccount set name='Kraken Spot trading' where name= 'Kraken trading';", transaction);
+                database.Connection.Execute("update TradeAccount set name='Kraken Spot paper' where name= 'Kraken paper';", transaction);
+                database.Connection.Execute("update TradeAccount set name='Kraken Spot backtest' where name= 'Kraken backtest';", transaction);
+
+                database.Connection.Execute("update exchange set name='Kucoin Spot' where name='Kucoin'", transaction);
+                database.Connection.Execute("update TradeAccount set name='Kucoin Spot trading' where name= 'Kucoin trading';", transaction);
+                database.Connection.Execute("update TradeAccount set name='Kucoin Spot paper' where name= 'Kucoin paper';", transaction);
+                database.Connection.Execute("update TradeAccount set name='Kucoin Spot backtest' where name= 'Kucoin backtest';", transaction);
+
+                // Kraken inactief zetten (de klines zijn ontzettend traag en de fee is ook gewoon te hoog 0.25%)
+                database.Connection.Execute("update TradeAccount set CanTrade=0 where Name like '%Kraken%' and TradeAccountType=2", transaction);
+
+                // update version
+                version.Version += 1;
+                database.Connection.Update(version, transaction);
+                transaction.Commit();
+            }
         }
     }
 

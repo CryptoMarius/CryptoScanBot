@@ -649,7 +649,7 @@ public class CryptoDatabase : IDisposable
             // De ondersteunde exchanges toevoegen
             // NB: In de code wordt aannames van de ID gedaan dus gaarne niet knutselen met volgorde
             using var transaction = connection.Connection.BeginTransaction();
-            Model.CryptoExchange exchange = new() { Name = "Binance", FeeRate = 0.1m };
+            Model.CryptoExchange exchange = new() { Name = "Binance Spot", FeeRate = 0.1m };
             connection.Connection.Insert(exchange, transaction);
 
             exchange = new() { Name = "Bybit Spot", FeeRate =0.1m};
@@ -658,10 +658,13 @@ public class CryptoDatabase : IDisposable
             exchange = new() { Name = "Bybit Futures", FeeRate = 0.1m };
             connection.Connection.Insert(exchange, transaction);
 
-            exchange = new() { Name = "Kucoin", FeeRate = 0.1m };
+            exchange = new() { Name = "Kucoin Spot", FeeRate = 0.1m };
             connection.Connection.Insert(exchange, transaction);
 
-            exchange = new() { Name = "Kraken", FeeRate = 0.1m };
+            exchange = new() { Name = "Kraken Spot", FeeRate = 0.1m };
+            connection.Connection.Insert(exchange, transaction);
+
+            exchange = new() { Name = "Binance Futures", FeeRate = 0.1m };
             connection.Connection.Insert(exchange, transaction);
 
             transaction.Commit();
@@ -690,7 +693,7 @@ public class CryptoDatabase : IDisposable
             using var transaction = connection.Connection.BeginTransaction();
 
             // *****************************************************
-            // Binance
+            // Binance Spot
             // *****************************************************
 
             CryptoTradeAccount tradeAccount = new()
@@ -725,6 +728,44 @@ public class CryptoDatabase : IDisposable
                 TradeAccountType = CryptoTradeAccountType.BackTest,
             };
             connection.Connection.Insert(tradeAccount, transaction);
+
+            // *****************************************************
+            // Binance Spot
+            // *****************************************************
+
+            tradeAccount = new()
+            {
+                Name = "Binance Futures trading",
+                Short = "Trading",
+                CanTrade = false,
+                ExchangeId = 1,
+                AccountType = CryptoAccountType.Futures,
+                TradeAccountType = CryptoTradeAccountType.RealTrading,
+            };
+            connection.Connection.Insert(tradeAccount, transaction);
+
+            tradeAccount = new()
+            {
+                Name = "Binance Futures paper",
+                Short = "Paper",
+                CanTrade = true,
+                ExchangeId = 1,
+                AccountType = CryptoAccountType.Futures,
+                TradeAccountType = CryptoTradeAccountType.PaperTrade,
+            };
+            connection.Connection.Insert(tradeAccount, transaction);
+
+            tradeAccount = new()
+            {
+                Name = "Binance Futures backtest",
+                Short = "Backtest",
+                CanTrade = true,
+                ExchangeId = 1,
+                AccountType = CryptoAccountType.Futures,
+                TradeAccountType = CryptoTradeAccountType.BackTest,
+            };
+            connection.Connection.Insert(tradeAccount, transaction);
+
 
             // *****************************************************
             // Bybit spot
