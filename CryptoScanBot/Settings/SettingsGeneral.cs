@@ -15,9 +15,9 @@ public class SettingsGeneral
     public string ExtraCaption { get; set; } = "";
 
     // Welke exchange
-    public string ExchangeName { get; set; } = "Binance";
+    public string ExchangeName { get; set; } = "Bybit Spot";
     [Computed]
-    public int ExchangeId { get; set; } = 1;
+    public int ExchangeId { get; set; } = 2;
     [Computed]
     [JsonIgnore]
     public virtual Model.CryptoExchange Exchange { get; set; }
