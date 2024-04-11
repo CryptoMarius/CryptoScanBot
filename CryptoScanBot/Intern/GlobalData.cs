@@ -520,12 +520,11 @@ static public class GlobalData
             {
                 string text = File.ReadAllText(fullName);
                 ExternalUrls = JsonSerializer.Deserialize<CryptoExternalUrlList>(text);
+                ExternalUrls.InitializeUrls();
             }
             else
             {
-                if (ExternalUrls.Count == 0)
-                    ExternalUrls.InitializeUrls();
-
+                ExternalUrls.InitializeUrls();
                 //het bestand in ieder geval aanmaken(updates moeten achteraf gepushed worden)
                 string text = JsonSerializer.Serialize(ExternalUrls, GlobalData.JsonSerializerIndented);
                 File.WriteAllText(fullName, text);
