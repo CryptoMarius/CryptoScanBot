@@ -68,7 +68,7 @@ public class GetTrades
                         {
                             trade = new CryptoTrade();
                             Api.PickupTrade(position.TradeAccount, position.Symbol, trade, item);
-                            string text = JsonSerializer.Serialize(item, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = false }).Trim();
+                            string text = JsonSerializer.Serialize(item, ExchangeHelper.JsonSerializerNotIndented).Trim();
                             ScannerLog.Logger.Trace($"{item.Symbol} Trade added json={text}");
 
                             tradeCache.Add(trade);

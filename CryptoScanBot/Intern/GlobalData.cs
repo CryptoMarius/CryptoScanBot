@@ -415,7 +415,7 @@ static public class GlobalData
                     {
                         symbol.OrderList.Add(order.OrderId, order);
                         if (log)
-                            AddTextToLogTab($"{order.Symbol.Name} added order {order.OrderId} {order.Status}");
+                            AddTextToLogTab($"{order.Symbol.Name} added order {order.CreateTime} {order.OrderId} {order.Status} (#{order.Id})");
                     }
                 }
 
@@ -442,7 +442,7 @@ static public class GlobalData
                     {
                         symbol.TradeList.Add(trade.TradeId, trade);
                         if (log)
-                            AddTextToLogTab($"{trade.Symbol.Name} order {trade.OrderId} added trade {trade.TradeId}");
+                            AddTextToLogTab($"{trade.Symbol.Name} order {trade.TradeTime} {trade.OrderId} added trade {trade.TradeId} (#{trade.Id})");
                     }
                 }
 

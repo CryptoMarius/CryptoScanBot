@@ -606,11 +606,12 @@ public class TradeTools
 
 
 
-    static private async Task<int> LoadOrdersFromDatabaseAndExchangeAsync(CryptoDatabase database, CryptoPosition position) //, bool loadFromExchange = true
+    static private async Task<int> LoadOrdersFromDatabaseAndExchangeAsync(CryptoDatabase database, CryptoPosition position)
     {
         if (!position.Symbol.HasOrdersAndTradesLoaded)
         {
-            ScannerLog.Logger.Trace($"TradeTools.LoadOrdersFromDatabaseAndExchangeAsync: Position {position.Symbol.Name} loading orders and trades from database");
+            //GlobalData.AddTextToLogTab($"TradeTools.LoadOrdersFromDatabaseAndExchangeAsync: Position {position.Symbol.Name} loading orders and trades from database {position.CreateTime}");
+            ScannerLog.Logger.Trace($"TradeTools.LoadOrdersFromDatabaseAndExchangeAsync: Position {position.Symbol.Name} loading orders and trades from database {position.CreateTime}");
 
             // Vanwege tijd afrondingen (msec)
             DateTime from = position.CreateTime.AddMinutes(-1);
@@ -760,7 +761,8 @@ public class TradeTools
             if (percentage.IsBetween(-2.5m, 2.5m)) 
             {
                 // 2.5% marge is okay, we willen er niet te ver boven
-                GlobalData.AddTextToLogTab($"{symbol.Name} vanwege de quantity ticksize {symbol.QuantityTickSize} is de entry value verhoogd naar {newEntryValue} ({percentage:N2}%) (DEBUG)");
+                if (percentage > 0.1m) // hele kleine verschillen willen we liever niet zien
+                    GlobalData.AddTextToLogTab($"{symbol.Name} vanwege de quantity ticksize {symbol.QuantityTickSize} is de entry value verhoogd naar {newEntryValue} ({percentage:N2}%) (DEBUG)");
                 return newEntryQuantity;
             }
         }

@@ -176,7 +176,7 @@ public class GetSymbols
                             Directory.CreateDirectory(filename);
                             filename += "symbols.json";
 
-                            string text = JsonSerializer.Serialize(exchangeInfo, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
+                            string text = JsonSerializer.Serialize(exchangeInfo, GlobalData.JsonSerializerIndented);
                             File.WriteAllText(filename, text);
                         }
 

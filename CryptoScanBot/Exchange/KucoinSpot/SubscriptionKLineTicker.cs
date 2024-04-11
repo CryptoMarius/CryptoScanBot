@@ -63,8 +63,8 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions): Subscript
             Task taskKline = Task.Run(() =>
             {
                 KucoinKline kline = data.Data.Candles;
-                string json = JsonSerializer.Serialize(kline, ExchangeHelper.JsonSerializerNotIndented);
-                ScannerLog.Logger.Trace($"kline ticker {data.Topic} {json}");
+                //string json = JsonSerializer.Serialize(kline, ExchangeHelper.JsonSerializerNotIndented);
+                //ScannerLog.Logger.Trace($"kline ticker {data.Topic} {json}");
 
                 //TickerCount++;
                 //ScannerLog.Logger.Trace(String.Format("{0} Candle {1} start processing", topic, kline.Timestamp.ToLocalTime()));
@@ -89,7 +89,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions): Subscript
                     candle.Low = kline.LowPrice;
                     candle.Close = kline.ClosePrice;
                     candle.Volume = kline.QuoteVolume;
-                    ScannerLog.Logger.Trace($"candle update {candle.OhlcText(Symbol, interval, Symbol.PriceDisplayFormat, true, true)}");
+                    //ScannerLog.Logger.Trace($"candle update {candle.OhlcText(Symbol, interval, Symbol.PriceDisplayFormat, true, true)}");
 
                     // Dit is de laatste bekende prijs (de priceticker vult eventueel aan)
                     Symbol.LastPrice = kline.ClosePrice;
@@ -185,15 +185,15 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions): Subscript
                             Symbol.AskPrice = candle.Close;
                             Symbol.BidPrice = candle.Close;
 
-                            if (candle.IsDuplicated)
-                                ScannerLog.Logger.Trace("Dup candle " + candle.OhlcText(Symbol, interval, Symbol.PriceDisplayFormat, true, true));
-                            else
-                                ScannerLog.Logger.Trace("New candle " + candle.OhlcText(Symbol, interval, Symbol.PriceDisplayFormat, true, true));
+                            //if (candle.IsDuplicated)
+                            //    ScannerLog.Logger.Trace("Dup candle " + candle.OhlcText(Symbol, interval, Symbol.PriceDisplayFormat, true, true));
+                            //else
+                            //    ScannerLog.Logger.Trace("New candle " + candle.OhlcText(Symbol, interval, Symbol.PriceDisplayFormat, true, true));
 
                             // Aanbieden voor analyse (dit gebeurd zowel in de ticker als ProcessCandles)
                             if (candle.OpenTime == expectedCandlesUpto)
                             {
-                                ScannerLog.Logger.Trace("Aanbieden analyze " + candle.OhlcText(Symbol, interval, Symbol.PriceDisplayFormat, true, true));
+                                //ScannerLog.Logger.Trace("Aanbieden analyze " + candle.OhlcText(Symbol, interval, Symbol.PriceDisplayFormat, true, true));
                                 TickerCount++;
                                 if (GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
                                     GlobalData.ThreadMonitorCandle.AddToQueue(Symbol, candle);

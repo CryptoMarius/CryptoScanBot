@@ -18,12 +18,10 @@ static public class TradeHandler
         // Zoek de openstaande positie op
         if (order.TradeAccount.PositionList.TryGetValue(symbol.Name, out CryptoPosition position))
         {
-            if (orderStatus.IsFilled()) //|| orderStatus == CryptoOrderStatus.PartiallyFilled
-            {
-                if (GlobalData.Settings.General.SoundTradeNotification)
-                    GlobalData.PlaySomeMusic("sound-trade-notification.wav");
-            }
-            // De actie laten afhandelen door een andere thread (we zitten hier in de context v/d user ticker)
+            if (orderStatus.IsFilled() && GlobalData.Settings.General.SoundTradeNotification)
+                GlobalData.PlaySomeMusic("sound-trade-notification.wav");
+
+            // De actie doorgeven naar een andere thread
             position.ForceCheckPosition = true;
             position.DelayUntil = DateTime.UtcNow.AddSeconds(10);
             if (GlobalData.ThreadDoubleCheckPosition != null)
@@ -31,15 +29,10 @@ static public class TradeHandler
         }
         else
         {
-            string info = $"{symbol.Name} side={orderSide} type={orderType} status={orderStatus} order={order.OrderId} " +
+            string s = $"andletrade {symbol.Name} side={orderSide} type={orderType} status={orderStatus} order={order.OrderId} " +
                 $"price={order.Price.ToString0()} quantity={order.Quantity.ToString0()} value={order.QuoteQuantity.ToString0()}";
-
-            string s = $"handletrade {info} dit is geen order van de trader..";
             GlobalData.AddTextToLogTab(s);
-
-            //if (orderStatus.IsFilled() || orderStatus == CryptoOrderStatus.PartiallyFilled)
             GlobalData.AddTextToTelegram(s, null);
-            //}
         }
     }
 }

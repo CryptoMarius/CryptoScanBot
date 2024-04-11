@@ -32,10 +32,8 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
             {
                 Interlocked.Increment(ref TickerCount);
                 //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", temp.Symbol, temp.Data.OpenTime.ToLocalTime()));
-
-                string json = JsonSerializer.Serialize(kline, ExchangeHelper.JsonSerializerNotIndented);
-                ScannerLog.Logger.Trace($"kline ticker {symbol.Name} {json}");
-
+                //string json = JsonSerializer.Serialize(kline, ExchangeHelper.JsonSerializerNotIndented);
+                //ScannerLog.Logger.Trace($"kline ticker {symbol.Name} {json}");
                 CandleTools.Process1mCandle(symbol, kline.Data.OpenTime, kline.Data.OpenPrice, kline.Data.HighPrice, kline.Data.LowPrice, kline.Data.ClosePrice, kline.Data.Volume);
 
             }

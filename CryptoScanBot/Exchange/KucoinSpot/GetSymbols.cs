@@ -71,7 +71,7 @@ public class GetSymbols
                     Directory.CreateDirectory(filename);
                     filename += "symbols.json";
 
-                    string text = JsonSerializer.Serialize(exchangeInfo, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
+                    string text = JsonSerializer.Serialize(exchangeInfo, GlobalData.JsonSerializerIndented);
                     //var accountFile = new FileInfo(filename);
                     File.WriteAllText(filename, text);
                 }
@@ -117,7 +117,7 @@ public class GetSymbols
                     Directory.CreateDirectory(filename);
                     filename += "tickers.json";
 
-                    string text = JsonSerializer.Serialize(tickersInfos, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
+                    string text = JsonSerializer.Serialize(tickersInfos, GlobalData.JsonSerializerIndented);
                     //var accountFile = new FileInfo(filename);
                     File.WriteAllText(filename, text);
                 }

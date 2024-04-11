@@ -75,7 +75,7 @@ public class SubscriptionPriceTicker(ExchangeOptions exchangeOptions) : Subscrip
                         //    Directory.CreateDirectory(filename);
                         //    filename += "PriceTicker.json";
 
-                        //    string text = JsonSerializer.Serialize(data, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
+                        //    string text = JsonSerializer.Serialize(data, ExchangeHelper.JsonSerializerNotIndented);
                         //    File.WriteAllText(filename, text);
                         //}
 

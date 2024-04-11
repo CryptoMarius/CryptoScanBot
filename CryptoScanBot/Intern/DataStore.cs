@@ -139,7 +139,6 @@ public class DataStore
                 string dirExchange = basedir + exchange.Name.ToLower() + @"\";
 
                 for (int i = 0; i < exchange.SymbolListName.Count; i++)
-                //foreach (CryptoSymbol symbol in exchange.SymbolListName.Values.ToList())
                 {
                     CryptoSymbol symbol = exchange.SymbolListName.Values[i];
                     string dirSymbol = dirExchange + symbol.Quote.ToLower() + @"\";
@@ -165,7 +164,7 @@ public class DataStore
                             {
                                 using (BinaryWriter binaryWriter = new(memoryStream, Encoding.UTF8, false))
                                 {
-                                    int version = 1; // Even teruggezet
+                                    int version = 1;
 
                                     // Iets met een version
                                     binaryWriter.Write(version);
@@ -207,9 +206,9 @@ public class DataStore
                     }
                     catch (Exception error)
                     {
-                        GlobalData.AddTextToLogTab("Problem " + symbol.Name);
                         ScannerLog.Logger.Error(error, "");
-                        GlobalData.AddTextToLogTab(error.ToString() + "\r\n");
+                        GlobalData.AddTextToLogTab($"Problem {symbol.Name}");
+                        GlobalData.AddTextToLogTab(error.ToString(), true);
                     }
                 }
             }

@@ -6,7 +6,9 @@ using Bybit.Net.Enums;
 using Bybit.Net.Objects.Models.Spot;
 using Bybit.Net.Objects.Models.V5;
 
+using CryptoExchange.Net;
 using CryptoExchange.Net.Authentication;
+using CryptoExchange.Net.Converters.JsonNet;
 using CryptoExchange.Net.Objects;
 
 using CryptoScanBot.Context;
@@ -21,7 +23,7 @@ namespace CryptoScanBot.Exchange.BybitSpot;
 
 public class Api : ExchangeBase
 {
-    private static readonly Category Category = Category.Spot;
+    //private static readonly Category Category = Category.Spot;
    
 
     //internal static BybitRestClient CreateRestClient()
@@ -483,19 +485,28 @@ public class Api : ExchangeBase
         // altijd alles ophalen, geeft wat veel logging, maar ach..
         from = position.CreateTime.AddMinutes(-1);
 
+        //GlobalData.AddTextToLogTab($"GetOrdersForPositionAsync {position.Symbol.Name} fetching orders from exchange {from}");
         ScannerLog.Logger.Trace($"GetOrdersForPositionAsync {position.Symbol.Name} fetching orders from exchange {from}");
 
         using var client = new BybitRestClient();
-        var info = await client.V5Api.Trading.GetOrderHistoryAsync(
-            Category.Spot, symbol: position.Symbol.Name, 
-            startTime: from);
-
-        
+        var info = await client.V5Api.Trading.GetOrderHistoryAsync(Category.Spot, symbol: position.Symbol.Name, startTime: from);
         if (info.Success && info.Data != null)
         {
+            //foreach (var item in info.Data.List)
+            //{
+            //    // problems... exchange geeft meer orders terug dan verwacht
+            //    if (item.CreateTime < position.CreateTime)
+            //        continue;
+            //    GlobalData.AddTextToLogTab($"{item.Symbol} order {item.CreateTime} {item.OrderId} fetched from exchange");
+            //}
+
             string text;
             foreach (var item in info.Data.List)
             {
+                // problems... exchange geeft meer orders terug dan verwacht
+                if (item.CreateTime < position.CreateTime)
+                    continue;
+
                 if (position.Symbol.OrderList.TryGetValue(item.OrderId, out CryptoOrder order))
                 {
                     var oldStatus = order.Status;
@@ -581,6 +592,46 @@ public class Api : ExchangeBase
 
         }
     }
+
+    //public async Task<WebCallResult<BybitResponse<Bybit.Net.Objects.Models.V5.BybitOrder>>> GetOrderHistoryAsync(
+    //    Category category,
+    //    string? symbol = null,
+    //    string? baseAsset = null,
+    //    string? orderId = null,
+    //    string? clientOrderId = null,
+    //    OrderStatus? status = null,
+    //    OrderFilter? orderFilter = null,
+    //    DateTime? startTime = null,
+    //    DateTime? endTime = null,
+    //    int? limit = null,
+    //    string? cursor = null,
+    //    CancellationToken ct = default)
+    //{
+    //    var parameters = new Dictionary<string, object>()
+    //        {
+    //            { "category", EnumConverter.GetString(category) }
+    //        };
+
+    //    parameters.AddOptionalParameter("symbol", symbol);
+    //    parameters.AddOptionalParameter("baseCoin", baseAsset);
+    //    parameters.AddOptionalParameter("orderId", orderId);
+    //    parameters.AddOptionalParameter("orderLinkId", clientOrderId);
+    //    parameters.AddOptionalParameter("orderFilter", EnumConverter.GetString(orderFilter));
+    //    parameters.AddOptionalParameter("orderStatus", EnumConverter.GetString(status));
+    //    parameters.AddOptionalParameter("startTime", DateTimeConverter.ConvertToMilliseconds(startTime));
+    //    parameters.AddOptionalParameter("endTime", DateTimeConverter.ConvertToMilliseconds(endTime));
+    //    parameters.AddOptionalParameter("limit", limit);
+    //    parameters.AddOptionalParameter("cursor", cursor);
+
+    //    using var client = new BybitRestClient();
+
+    //    Deze routine is internal, kom ik niet bij voor zover ik dat kan zien..
+
+    //    return await client.V5Api.Trading.SendRequestAsync<BybitResponse<Bybit.Net.Objects.Models.V5.BybitOrder>>(
+    //        client.V5Api.Trading.GetUrl("v5/order/history"), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
+
+    //    // private readonly BybitRestClientApi _baseClient;
+    //}
 
 
 #endif

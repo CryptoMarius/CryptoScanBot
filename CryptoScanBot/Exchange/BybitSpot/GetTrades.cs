@@ -33,6 +33,7 @@ public class GetTrades
             //long? toId = null;
             List<CryptoTrade> tradeCache = [];
 
+            //GlobalData.AddTextToLogTab($"FetchTradesForSymbolAsync {position.Symbol.Name} fetching trades from exchange {fromId}");
             ScannerLog.Logger.Trace($"FetchTradesForSymbolAsync {position.Symbol.Name} fetching trades from exchange {fromId}");
 
             while (true)
@@ -49,19 +50,31 @@ public class GetTrades
                 var result = await client.SpotApiV3.Trading.GetUserTradesAsync(position.Symbol.Name, fromId: fromId, limit: 1000);
                 if (!result.Success)
                 {
-                    GlobalData.AddTextToLogTab("error retreiving mytrades " + result.Error);
+                    GlobalData.AddTextToLogTab("error retreiving trades " + result.Error);
                     break;
                 }
 
                 if (result.Data != null && result.Data.Any())
                 {
+                    //foreach (var item in result.Data)
+                    //{
+                    //    // problems... exchange geeft meer trades terug dan verwacht
+                    //    if (item.TradeTime < position.CreateTime)
+                    //        continue;
+                    //    GlobalData.AddTextToLogTab($"{item.Symbol} trade {item.TradeTime} {item.TradeId} fetched from exchange");
+                    //}
+
                     foreach (var item in result.Data)
                     {
+                        // problems... exchange geeft meer trades terug dan verwacht
+                        if (item.TradeTime < position.CreateTime)
+                            continue;
+
                         if (!position.Symbol.TradeList.TryGetValue(item.TradeId.ToString(), out CryptoTrade trade))
                         {
                             trade = new CryptoTrade();
                             Api.PickupTrade(position.TradeAccount, position.Symbol, trade, item);
-                            string text = JsonSerializer.Serialize(item, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = false }).Trim();
+                            string text = JsonSerializer.Serialize(item, ExchangeHelper.JsonSerializerNotIndented).Trim();
                             ScannerLog.Logger.Trace($"{item.Symbol} Trade added json={text}");
 
                             tradeCache.Add(trade);
