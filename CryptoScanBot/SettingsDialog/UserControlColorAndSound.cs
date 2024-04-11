@@ -32,22 +32,25 @@ public partial class UserControlColorAndSound : UserControl
         {
             Filter = "wav bestanden|*.wav"
         };
-        if (!EditSoundFile.Text.IsNullOrEmpty())
-            openFileDialog.FileName = Path.GetFileName(EditSoundFile.Text);
-        if (!EditSoundFile.Text.IsNullOrEmpty())
-            openFileDialog.InitialDirectory = Path.GetDirectoryName(EditSoundFile.Text);
+
+        string path = Path.GetDirectoryName(EditSoundFile.Text);
+        if (path == null || path == "")
+        {
+            //This will give us the full name path of the executable file:
+            string strExeFilePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+            path = Path.GetDirectoryName(strExeFilePath) + @"\Sounds\";
+        }
+
+        openFileDialog.InitialDirectory = path;
+        openFileDialog.FileName = Path.GetFileName(EditSoundFile.Text);
 
         if (openFileDialog.ShowDialog() == DialogResult.OK)
         {
             string fileName = openFileDialog.FileName;
             if (File.Exists(fileName))
-            {
                 EditSoundFile.Text = fileName;
-            }
             else
-            {
                 MessageBox.Show("Selected file doesn't exist.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
         }
     }
 
