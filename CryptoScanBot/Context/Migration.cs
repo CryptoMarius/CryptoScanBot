@@ -385,23 +385,25 @@ public class Migration
             {
                 using var transaction = database.BeginTransaction();
 
-                // Onderverdeling maken in Spot en Futures
-
-                database.Connection.Execute("insert into exchange(Name) values('Binance Futures')", transaction);
+                // Nieuwe exchange Binance Futures
+                database.Connection.Execute("insert into exchange(Name, FeeRate) values('Binance Futures', 0.1)", transaction);
                 database.Connection.Execute("insert into TradeAccount(Short, Name, AccountType, TradeAccountType, ExchangeId, CanTrade) values('Trading', 'Binance Futures trading', 0, 2, 6, 1);", transaction);
                 database.Connection.Execute("insert into TradeAccount(Short, Name, AccountType, TradeAccountType, ExchangeId, CanTrade) values('Paper', 'Binance Futures paper', 0, 1, 6, 0);", transaction);
                 database.Connection.Execute("insert into TradeAccount(Short, Name, AccountType, TradeAccountType, ExchangeId, CanTrade) values('Backtest', 'Binance Futures backtest', 0, 0, 6, 0);", transaction);
 
+                // Onderverdeling maken in Spot en Futures
                 database.Connection.Execute("update exchange set name='Binance Spot' where name='Binance'", transaction);
                 database.Connection.Execute("update TradeAccount set name='Binance Spot trading' where name= 'Binance trading';", transaction);
                 database.Connection.Execute("update TradeAccount set name='Binance Spot paper' where name= 'Binance paper';", transaction);
                 database.Connection.Execute("update TradeAccount set name='Binance Spot backtest' where name= 'Binance backtest';", transaction);
 
-                database.Connection.Execute("update exchange set name='Kraken Spot' where name='Kraken'", transaction);
+                // Onderverdeling maken in Spot en Futures
+                database.Connection.Execute("update exchange set name='Kraken Spot', FeeRate=0.25 where name='Kraken'", transaction);
                 database.Connection.Execute("update TradeAccount set name='Kraken Spot trading' where name= 'Kraken trading';", transaction);
                 database.Connection.Execute("update TradeAccount set name='Kraken Spot paper' where name= 'Kraken paper';", transaction);
                 database.Connection.Execute("update TradeAccount set name='Kraken Spot backtest' where name= 'Kraken backtest';", transaction);
 
+                // Onderverdeling maken in Spot en Futures
                 database.Connection.Execute("update exchange set name='Kucoin Spot' where name='Kucoin'", transaction);
                 database.Connection.Execute("update TradeAccount set name='Kucoin Spot trading' where name= 'Kucoin trading';", transaction);
                 database.Connection.Execute("update TradeAccount set name='Kucoin Spot paper' where name= 'Kucoin paper';", transaction);
