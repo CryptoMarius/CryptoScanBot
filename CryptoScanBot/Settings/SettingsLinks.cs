@@ -55,12 +55,12 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
         Add("Binance Futures",
             new()
             {
-                Altrady = new()
+                Altrady = new() // werkt niet
                 {
                     Execute = CryptoExternalUrlType.Internal,
-                    Url = "https://app.altrady.com/d/BINA_{QUOTE}_{BASE}:{interval}",
+                    Url = "https://app.altrady.com/d/BINAF_{QUOTE}_{BASE}:{interval}",
                 },
-                HyperTrader = new()
+                HyperTrader = new() // werkt niet
                 {
                     Execute = CryptoExternalUrlType.External,
                     Url = "hypertrader://binance/{BASE}-{QUOTE}/{interval}",
@@ -71,7 +71,7 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
                     Execute = CryptoExternalUrlType.External,
                     Url = "https://www.tradingview.com/chart/?symbol=BINANCE:{BASE}{QUOTE}.P&interval={interval}"
                 },
-                ExchangeUrl = new() //?
+                ExchangeUrl = new() // werkt niet
                 {
                     Execute = CryptoExternalUrlType.External,
                     Url = "https://www.binance.com/en/trade/{BASE}_{QUOTE}?_from=markets&type=futures",
@@ -191,7 +191,12 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
             if (!GlobalData.ExchangeListId.TryGetValue(GlobalData.Settings.General.ActivateExchange, out exchange))
                 return ("", CryptoExternalUrlType.Internal);
         }
+        return GetExternalRef(exchange, externalApp, telegram, symbol, interval);
+    }
 
+
+    public (string Url, CryptoExternalUrlType Execute) GetExternalRef(Model.CryptoExchange exchange, CryptoTradingApp externalApp, bool telegram, CryptoSymbol symbol, CryptoInterval interval)
+    {
         GlobalData.LoadLinkSettings();
         if (GlobalData.ExternalUrls.TryGetValue(exchange.Name, out CryptoExternalUrls externalUrls))
         {
