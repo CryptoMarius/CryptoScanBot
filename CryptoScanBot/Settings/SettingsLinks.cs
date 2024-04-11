@@ -25,7 +25,8 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
 
     public void InitializeUrls()
     {
-        Add("Binance Spot",
+        this.Remove("Binance");
+        this.TryAdd("Binance Spot",
             new()
             {
                 Altrady = new()
@@ -52,7 +53,7 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
             }
         );
 
-        Add("Binance Futures",
+        this.TryAdd("Binance Futures",
             new()
             {
                 Altrady = new() // werkt niet
@@ -79,7 +80,7 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
             }
         );
 
-        Add("Bybit Futures",
+        this.TryAdd("Bybit Futures",
             new()
             {
                 Altrady = new()
@@ -106,7 +107,8 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
             }
         );
 
-        Add("Bybit Spot",
+        this.Remove("Bybit");
+        this.TryAdd("Bybit Spot",
             new()
             {
                 Altrady = new()
@@ -133,7 +135,8 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
             }
         );
 
-        Add("Kucoin Spot",
+        this.Remove("Kucoin");
+        this.TryAdd("Kucoin Spot",
             new()
             {
                 Altrady = new()
