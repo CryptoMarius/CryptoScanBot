@@ -97,6 +97,7 @@ public class SettingsTrading
     public bool CheckIncreasingRsi { get; set; } = false;
     public bool CheckIncreasingMacd { get; set; } = false;    
     public bool CheckIncreasingStoch { get; set; } = false;
+    public bool CheckFurtherPriceMove { get; set; } = false;
 
 
     //***************************

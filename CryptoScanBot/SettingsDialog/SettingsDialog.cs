@@ -265,6 +265,7 @@ public partial class FrmSettings : Form
         EditCheckIncreasingRsi.Checked = settings.Trading.CheckIncreasingRsi;
         EditCheckIncreasingMacd.Checked = settings.Trading.CheckIncreasingMacd;
         EditCheckIncreasingStoch.Checked = settings.Trading.CheckIncreasingStoch;
+        EditCheckFurtherPriceMove.Checked = settings.Trading.CheckFurtherPriceMove;
 
 
         UserControlTradeBuy.LoadConfig(settings.Trading);
@@ -509,6 +510,7 @@ public partial class FrmSettings : Form
         settings.Trading.CheckIncreasingRsi = EditCheckIncreasingRsi.Checked;
         settings.Trading.CheckIncreasingMacd = EditCheckIncreasingMacd.Checked;
         settings.Trading.CheckIncreasingStoch = EditCheckIncreasingStoch.Checked;
+        settings.Trading.CheckFurtherPriceMove = EditCheckFurtherPriceMove.Checked;
 
 
         UserControlTradeBuy.SaveConfig(settings.Trading);

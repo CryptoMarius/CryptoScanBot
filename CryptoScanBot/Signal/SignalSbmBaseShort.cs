@@ -441,13 +441,16 @@ public class SignalSbmBaseShort(CryptoSymbol symbol, CryptoInterval interval, Cr
         // Extra?
 
         // Profiteren van een nog hogere prijs?
-        if (Symbol.LastPrice > signal.LastPrice)
+        if (GlobalData.Settings.Trading.CheckFurtherPriceMove)
         {
-            if (Symbol.LastPrice != signal.LastPrice)
+            if (Symbol.LastPrice > signal.LastPrice)
             {
-                ExtraText = string.Format("Symbol.LastPrice {0:N8} gaat verder naar boven {1:N8}", Symbol.LastPrice, signal.LastPrice);
+                if (Symbol.LastPrice != signal.LastPrice)
+                {
+                    ExtraText = string.Format("Symbol.LastPrice {0:N8} gaat verder naar boven {1:N8}", Symbol.LastPrice, signal.LastPrice);
+                }
+                return false;
             }
-            return false;
         }
         signal.LastPrice = (decimal)Symbol.LastPrice;
 

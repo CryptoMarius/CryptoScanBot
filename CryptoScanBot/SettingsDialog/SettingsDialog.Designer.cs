@@ -243,6 +243,7 @@ partial class FrmSettings
         label49 = new Label();
         toolTip1 = new ToolTip(components);
         colorDialog1 = new ColorDialog();
+        EditCheckFurtherPriceMove = new CheckBox();
         panelButtons.SuspendLayout();
         panelFill.SuspendLayout();
         tabControlMain.SuspendLayout();
@@ -346,7 +347,7 @@ partial class FrmSettings
         panelButtons.Controls.Add(buttonCancel);
         panelButtons.Controls.Add(buttonOk);
         panelButtons.Dock = DockStyle.Bottom;
-        panelButtons.Location = new Point(0, 673);
+        panelButtons.Location = new Point(0, 733);
         panelButtons.Margin = new Padding(4, 3, 4, 3);
         panelButtons.Name = "panelButtons";
         panelButtons.Size = new Size(1150, 46);
@@ -412,7 +413,7 @@ partial class FrmSettings
         panelFill.Location = new Point(0, 0);
         panelFill.Margin = new Padding(4, 3, 4, 3);
         panelFill.Name = "panelFill";
-        panelFill.Size = new Size(1150, 673);
+        panelFill.Size = new Size(1150, 733);
         panelFill.TabIndex = 0;
         // 
         // tabControlMain
@@ -428,7 +429,7 @@ partial class FrmSettings
         tabControlMain.Margin = new Padding(4, 3, 4, 3);
         tabControlMain.Name = "tabControlMain";
         tabControlMain.SelectedIndex = 0;
-        tabControlMain.Size = new Size(1150, 673);
+        tabControlMain.Size = new Size(1150, 733);
         tabControlMain.TabIndex = 100;
         // 
         // tabAlgemeen
@@ -2037,7 +2038,7 @@ partial class FrmSettings
         tabTrading.Margin = new Padding(4, 3, 4, 3);
         tabTrading.Name = "tabTrading";
         tabTrading.Padding = new Padding(4, 3, 4, 3);
-        tabTrading.Size = new Size(1142, 642);
+        tabTrading.Size = new Size(1142, 702);
         tabTrading.TabIndex = 11;
         tabTrading.Text = "Trading";
         tabTrading.UseVisualStyleBackColor = true;
@@ -2053,7 +2054,7 @@ partial class FrmSettings
         tabControlTrading.Location = new Point(4, 3);
         tabControlTrading.Name = "tabControlTrading";
         tabControlTrading.SelectedIndex = 0;
-        tabControlTrading.Size = new Size(1134, 636);
+        tabControlTrading.Size = new Size(1134, 696);
         tabControlTrading.TabIndex = 283;
         // 
         // tabTradingGeneral
@@ -2063,7 +2064,7 @@ partial class FrmSettings
         tabTradingGeneral.Location = new Point(4, 27);
         tabTradingGeneral.Name = "tabTradingGeneral";
         tabTradingGeneral.Padding = new Padding(3);
-        tabTradingGeneral.Size = new Size(1126, 605);
+        tabTradingGeneral.Size = new Size(1126, 665);
         tabTradingGeneral.TabIndex = 0;
         tabTradingGeneral.Text = "Trading algemeen";
         tabTradingGeneral.UseVisualStyleBackColor = true;
@@ -2080,7 +2081,7 @@ partial class FrmSettings
         flowLayoutPanel1.Margin = new Padding(0);
         flowLayoutPanel1.MinimumSize = new Size(450, 0);
         flowLayoutPanel1.Name = "flowLayoutPanel1";
-        flowLayoutPanel1.Size = new Size(848, 599);
+        flowLayoutPanel1.Size = new Size(848, 659);
         flowLayoutPanel1.TabIndex = 336;
         // 
         // UserControlTradeBuy
@@ -2141,13 +2142,13 @@ partial class FrmSettings
         panel7.Dock = DockStyle.Left;
         panel7.Location = new Point(3, 3);
         panel7.Name = "panel7";
-        panel7.Size = new Size(272, 599);
+        panel7.Size = new Size(272, 659);
         panel7.TabIndex = 335;
         // 
         // label73
         // 
         label73.AutoSize = true;
-        label73.Location = new Point(12, 485);
+        label73.Location = new Point(7, 503);
         label73.Margin = new Padding(4, 0, 4, 0);
         label73.Name = "label73";
         label73.Size = new Size(114, 15);
@@ -2156,7 +2157,7 @@ partial class FrmSettings
         // 
         // EditGlobalBuyCooldownTime
         // 
-        EditGlobalBuyCooldownTime.Location = new Point(159, 483);
+        EditGlobalBuyCooldownTime.Location = new Point(154, 501);
         EditGlobalBuyCooldownTime.Margin = new Padding(4, 3, 4, 3);
         EditGlobalBuyCooldownTime.Maximum = new decimal(new int[] { 276447231, 23283, 0, 0 });
         EditGlobalBuyCooldownTime.Name = "EditGlobalBuyCooldownTime";
@@ -2165,12 +2166,13 @@ partial class FrmSettings
         // 
         // groupBoxInstap
         // 
+        groupBoxInstap.Controls.Add(EditCheckFurtherPriceMove);
         groupBoxInstap.Controls.Add(EditCheckIncreasingMacd);
         groupBoxInstap.Controls.Add(EditCheckIncreasingStoch);
         groupBoxInstap.Controls.Add(EditCheckIncreasingRsi);
         groupBoxInstap.Location = new Point(12, 375);
         groupBoxInstap.Name = "groupBoxInstap";
-        groupBoxInstap.Size = new Size(234, 101);
+        groupBoxInstap.Size = new Size(234, 120);
         groupBoxInstap.TabIndex = 346;
         groupBoxInstap.TabStop = false;
         groupBoxInstap.Text = "Instap condities";
@@ -2359,7 +2361,7 @@ partial class FrmSettings
         // 
         label36.AutoSize = true;
         label36.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-        label36.Location = new Point(17, 550);
+        label36.Location = new Point(12, 568);
         label36.Margin = new Padding(4, 0, 4, 0);
         label36.Name = "label36";
         label36.Size = new Size(63, 15);
@@ -2423,7 +2425,7 @@ partial class FrmSettings
         // 
         EditGlobalStopLimitPercentage.DecimalPlaces = 2;
         EditGlobalStopLimitPercentage.Font = new Font("Segoe UI", 9F, FontStyle.Strikeout);
-        EditGlobalStopLimitPercentage.Location = new Point(185, 603);
+        EditGlobalStopLimitPercentage.Location = new Point(180, 621);
         EditGlobalStopLimitPercentage.Margin = new Padding(4, 3, 4, 3);
         EditGlobalStopLimitPercentage.Name = "EditGlobalStopLimitPercentage";
         EditGlobalStopLimitPercentage.Size = new Size(88, 23);
@@ -2434,7 +2436,7 @@ partial class FrmSettings
         // 
         label70.AutoSize = true;
         label70.Font = new Font("Segoe UI", 9F, FontStyle.Strikeout);
-        label70.Location = new Point(17, 605);
+        label70.Location = new Point(12, 623);
         label70.Margin = new Padding(4, 0, 4, 0);
         label70.Name = "label70";
         label70.Size = new Size(107, 15);
@@ -2446,7 +2448,7 @@ partial class FrmSettings
         // 
         EditGlobalStopPercentage.DecimalPlaces = 2;
         EditGlobalStopPercentage.Font = new Font("Segoe UI", 9F, FontStyle.Strikeout);
-        EditGlobalStopPercentage.Location = new Point(185, 576);
+        EditGlobalStopPercentage.Location = new Point(180, 594);
         EditGlobalStopPercentage.Margin = new Padding(4, 3, 4, 3);
         EditGlobalStopPercentage.Name = "EditGlobalStopPercentage";
         EditGlobalStopPercentage.Size = new Size(88, 23);
@@ -2457,7 +2459,7 @@ partial class FrmSettings
         // 
         label71.AutoSize = true;
         label71.Font = new Font("Segoe UI", 9F, FontStyle.Strikeout);
-        label71.Location = new Point(17, 578);
+        label71.Location = new Point(12, 596);
         label71.Margin = new Padding(4, 0, 4, 0);
         label71.Name = "label71";
         label71.Size = new Size(109, 15);
@@ -2468,7 +2470,8 @@ partial class FrmSettings
         // EditGlobalBuyVarying
         // 
         EditGlobalBuyVarying.DecimalPlaces = 2;
-        EditGlobalBuyVarying.Location = new Point(158, 512);
+        EditGlobalBuyVarying.Font = new Font("Segoe UI", 9F, FontStyle.Strikeout);
+        EditGlobalBuyVarying.Location = new Point(153, 530);
         EditGlobalBuyVarying.Margin = new Padding(4, 3, 4, 3);
         EditGlobalBuyVarying.Maximum = new decimal(new int[] { 5, 0, 0, 65536 });
         EditGlobalBuyVarying.Minimum = new decimal(new int[] { 5, 0, 0, -2147418112 });
@@ -2480,7 +2483,8 @@ partial class FrmSettings
         // label47
         // 
         label47.AutoSize = true;
-        label47.Location = new Point(12, 511);
+        label47.Font = new Font("Segoe UI", 9F, FontStyle.Strikeout);
+        label47.Location = new Point(7, 529);
         label47.Margin = new Padding(4, 0, 4, 0);
         label47.Name = "label47";
         label47.Size = new Size(108, 15);
@@ -2756,12 +2760,23 @@ partial class FrmSettings
         label49.TabIndex = 222;
         label49.Text = "(1 munt per regel met een optionele opmerking erachter)";
         // 
+        // EditCheckFurtherPriceDrop
+        // 
+        EditCheckFurtherPriceMove.AutoSize = true;
+        EditCheckFurtherPriceMove.Location = new Point(21, 91);
+        EditCheckFurtherPriceMove.Margin = new Padding(4, 3, 4, 3);
+        EditCheckFurtherPriceMove.Name = "EditCheckFurtherPriceDrop";
+        EditCheckFurtherPriceMove.Size = new Size(184, 19);
+        EditCheckFurtherPriceMove.TabIndex = 278;
+        EditCheckFurtherPriceMove.Text = "Controleer prijsdaling/stijging";
+        EditCheckFurtherPriceMove.UseVisualStyleBackColor = true;
+        // 
         // FrmSettings
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
         AutoSize = true;
-        ClientSize = new Size(1150, 719);
+        ClientSize = new Size(1150, 779);
         Controls.Add(panelFill);
         Controls.Add(panelButtons);
         Margin = new Padding(4, 3, 4, 3);
@@ -3116,4 +3131,5 @@ partial class FrmSettings
     private SettingsDialog.UserControlSettingsPlaySoundAndColors UserControlSettingsSoundAndColorsStoRsi;
     private Label label15;
     private ComboBox EditActivateExchangeInternExtern;
+    private CheckBox EditCheckFurtherPriceMove;
 }
