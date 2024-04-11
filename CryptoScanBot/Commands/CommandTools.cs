@@ -22,6 +22,11 @@ public static class CommandHelper
         menuStrip.Items.Add(new ToolStripSeparator());
     }
 
+    public static void AddSeperator(this ToolStripMenuItem menuStrip)
+    {
+        menuStrip.DropDownItems.Add(new ToolStripSeparator());
+    }
+
     public static ToolStripMenuItemCommand AddCommand(this ContextMenuStrip menuStrip, CryptoDataGrid dataGrid, string text, Command command, EventHandler click = null)
     {
         ToolStripMenuItemCommand menuItem = new()

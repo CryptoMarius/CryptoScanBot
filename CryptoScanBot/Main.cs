@@ -13,6 +13,7 @@ using Nito.AsyncEx;
 
 using System.Reflection;
 using System.Text;
+using System.Text.Json;
 
 namespace CryptoScanBot;
 
@@ -68,11 +69,13 @@ public partial class FrmMain : Form
         MenuMain.AddCommand(null, "About", Command.About);
 
 #if DEBUG
+        MenuMain.AddSeperator();
         MenuMain.AddCommand(null, "Test - Scanner restart", Command.ScannerSessionDebug);
         MenuMain.AddCommand(null, "Test - Save Candles", Command.None, TestSaveCandlesClick);
-        MenuMain.AddCommand(null, "Test - Dumpt ticker information", Command.None, TestShowTickerInformationClick);
+        MenuMain.AddCommand(null, "Test - Create url testfile", Command.None, TestCreateUrlTestFileClick);
+        MenuMain.AddCommand(null, "Test - Dump ticker information", Command.None, TestShowTickerInformationClick);
 #endif
-        
+
         //Console.Write("Hello world 1");
         //System.Diagnostics.Debug.WriteLine("Hello world 2");
 
@@ -1151,4 +1154,50 @@ public partial class FrmMain : Form
 
     }
 
+    private void TestCreateUrlTestFileClick(object sender, EventArgs e)
+    {
+        GlobalData.ExternalUrls.Clear();
+        GlobalData.ExternalUrls.InitializeUrls();
+        string filename = GlobalData.GetBaseDir() + $"{GlobalData.AppName}-weblinks.json";
+        string text = JsonSerializer.Serialize(GlobalData.ExternalUrls, GlobalData.JsonSerializerIndented);
+        File.WriteAllText(filename, text);
+
+
+        string symbolname = "XRPUSDT";
+        CryptoInterval interval = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval15m];
+        if (GlobalData.Settings.General.Exchange.SymbolListName.TryGetValue(symbolname, out CryptoSymbol symbol))
+        {
+            StringBuilder stringBuilder = new();
+            stringBuilder.AppendLine("<html>");
+            stringBuilder.AppendLine("<body>");
+            foreach (var exchange in GlobalData.ExchangeListName.Values)
+            {
+                stringBuilder.AppendLine("<br>");
+                stringBuilder.AppendLine("<br>");
+                stringBuilder.AppendLine($"{exchange.Name}<br>");
+
+                //foreach (var x in GlobalData.ExternalUrls)
+                {
+                    foreach (CryptoTradingApp tradingApp in Enum.GetValues(typeof(CryptoTradingApp)))
+                    {
+                        // standaard url voor de exchange
+                        (string url1, CryptoExternalUrlType _) = GlobalData.ExternalUrls.GetExternalRef(exchange, tradingApp, false, symbol, interval);
+                        stringBuilder.AppendLine($"<a href=\"{url1}\">{tradingApp} {symbol.Name} {interval.Name}</a><br>");
+
+                        // url via de cc scanner voor hypertrader
+                        (string url2, CryptoExternalUrlType _) = GlobalData.ExternalUrls.GetExternalRef(exchange, tradingApp, true, symbol, interval);
+                        if (url1 != url2)
+                            stringBuilder.AppendLine($"<a href=\"{url2}\">Telegram {tradingApp} {symbol.Name} {interval.Name}</a><br>");
+                    }
+                }
+            }
+
+            stringBuilder.AppendLine("</body>");
+            stringBuilder.AppendLine("</html>");
+
+
+            filename = GlobalData.GetBaseDir() + @"\trading app urls.html";
+            File.WriteAllText(filename, stringBuilder.ToString());
+        }
+    }
 }
