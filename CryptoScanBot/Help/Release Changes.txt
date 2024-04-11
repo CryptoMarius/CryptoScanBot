@@ -1,14 +1,8 @@
 CryptoScanBot release historie:
 
 xx-04-2024 1.9.1
-
-TODO: url voor Kraken Spot
-TODO: url voor Binance Futures
-TODO: De debug informatie verwijderen uit Kucoin!
-
-- Scanner - Kraken spot introduceren? (nog wel experimenteel)
-- Scanner - Binance Futures introduceren? (nog wel experimenteel)
-
+TODO: url's voor Binance Futures
+- Scanner - Introductie van Binance Futures
 - Scanner - Bij bewaren van de candle data komt er soms een foutmelding "The process cannot access the file"?
 - Scanner - De kolom breedte kunnen resetten
 - Scanner - De naamgeving van de exchanges zijn aangepast (toevoeging Spot)
@@ -26,7 +20,7 @@ TODO: De debug informatie verwijderen uit Kucoin!
 - Scanner - Het opstarten van de configuratie gaat fout als er geen basismunten aanwezig zijn (Index was out of range error)
 - Scanner - De default configuratie van het filter interval-trend verwijderd zodat deze overeenkomt met de instellingen van de 1.8.x scanner
 
-- Trading - De fee rate van Binance was niet ingevuld in de database
+- Trading - De fee rate van Binance was niet ingevuld in de database && een sql error vanwege verplicht veld
 - Trading - De 1e order van een positie werdt niet opgemerkt omdat de administratie van de orderId niet uitgevoerd is
 - Trading - De controle op beschikbare assets klopte niet (een vergissing met BaseValue (Quantity) en QuoteValue (USDT))
 - Trading - De berekende fee van de te vullen orders (dca/tp's) zorgde ervoor dat de tp's 1x (ietjes) verzet werden (terug naar de oude manier)

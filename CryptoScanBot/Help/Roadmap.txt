@@ -4,11 +4,8 @@ Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep
 
 
 Scanner:
-TODO: De debug informatie verwijderen uit Kucoin spot!
 TODO: url voor Binance Futures
-TODO: url voor Kraken Spot
-
-- Scanner - Bij wisselen van basismunten komt er soms een SQLite Error 5: 'database is locked?
+- Scanner - Bij wisselen van basismunten (of exchange?) komt er soms een SQLite Error 5: 'database is locked? (oorzaak nog onbekend)
 - Scanner - Rate limits van de libraries bestuderen en eventueel de ingebouwde vervangen (de interne is aan de voorzichtige kant)
 - Trading - De barometer naar Excel kunnen exporteren voor een overzichtje (liefst met een op te geven datum/tijd)
 - Scanner - Er worden klines opgehaald van munten die slechts ~1 maand aanwezig zijn op de exchange (bybit spot, DYNUSDT is bijvoorbeeld pas op 6-2 op de exchange geactiveerd) - EN..
@@ -42,8 +39,11 @@ TODO: url voor Kraken Spot
 
 
 Trading:
+- Trading - De Add Order wordt dubbel gedaan (en komt dan ook dubbel in de database tee staan?) voor een order is dat niet zo erg
+- Trading - De Add Order en Add Trade worden vermeld terwijl deze al ingelezen hadden moeten zijn?
 - Trading - Documentatie bijwerken - Een klusje..
-- Trading - De trader blijft hardnekkeig instappen terwijl er geen assets beschikbaar zijn.
+- Trading - Een positie kunnen maken vanaf een bepaalde datum (een positie overnemen van de gebruiker)
+- Trading - (testen)De trader blijft hardnekkig instappen terwijl er geen assets beschikbaar zijn.
 - Trading - De laatste X posities dumpen naar Excel voor een overzichtje
 - Trading - Vanwege de overgang naar spot rekening houden met de commissies van de exchange (nog niet 100% goed)
 - Trading - Controle inbouwen op het short gaan, in futures kan dat, maar in spot lukt dat natuurlijk alleen als er assets beschikbaar zijn

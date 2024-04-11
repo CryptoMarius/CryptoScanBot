@@ -2,7 +2,7 @@
   "profiles": {
     "CryptoScanBot": {
       "commandName": "Project",
-      "commandLineArgs": " -f \"CryptoScanBot\\Test\""
+      "commandLineArgs": "-e \"Bybit Spot\" -f CryptoScanner.Bybit.Spot.Live"
     }
   }
 }
