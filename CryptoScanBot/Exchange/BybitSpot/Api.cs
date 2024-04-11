@@ -23,7 +23,7 @@ namespace CryptoScanBot.Exchange.BybitSpot;
 
 public class Api : ExchangeBase
 {
-    //private static readonly Category Category = Category.Spot;
+    private static readonly Category Category = Category.Spot;
    
 
     //internal static BybitRestClient CreateRestClient()

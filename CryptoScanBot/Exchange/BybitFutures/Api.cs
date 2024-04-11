@@ -20,7 +20,7 @@ namespace CryptoScanBot.Exchange.BybitFutures;
 
 public class Api : ExchangeBase
 {
-    //private static readonly Category Category = Category.Linear;
+    private static readonly Category Category = Category.Linear;
 
 
     public override void ExchangeDefaults()
