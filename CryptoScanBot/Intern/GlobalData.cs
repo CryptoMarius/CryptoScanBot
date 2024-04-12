@@ -748,9 +748,8 @@ static public class GlobalData
         {
             if (position != null)
             {
-                //string symbolLink = GlobalData.ExternalUrls.GetTradingAppName(GlobalData.Settings.General.TradingApp, position.Exchange.Name);
                 string symbol = position.Symbol.Name.ToUpper();
-                (string Url, CryptoExternalUrlType Execute) = GlobalData.ExternalUrls.GetExternalRef(GlobalData.Settings.General.TradingApp, true, position.Symbol, position.Interval);
+                (string Url, CryptoExternalUrlType Execute) = ExternalUrls.GetExternalRef(Settings.General.TradingApp, true, position.Symbol, position.Interval);
                 if (Url != "")
                 {
                     string x = $" <a href='{Url}'>{symbol}</a>";
@@ -766,7 +765,30 @@ static public class GlobalData
         }
     }
 
-
+    static public void AddTextToTelegram(string text, CryptoSymbol symbol)
+    {
+        if (LogToTelegram == null)
+            return;
+        try
+        {
+            if (symbol != null)
+            {
+                string symbolName = symbol.Name.ToUpper();
+                (string Url, CryptoExternalUrlType Execute) = ExternalUrls.GetExternalRef(Settings.General.TradingApp, true, symbol, IntervalList[0]);
+                if (Url != "")
+                {
+                    string x = $" <a href='{Url}'>{symbolName}</a>";
+                    text = text.Replace(symbolName, x);
+                }
+            }
+            LogToTelegram(text);
+        }
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Error(error, "");
+            AddTextToLogTab(" error telegram thread(2)" + error.ToString(), false);
+        }
+    }
 
     static public void AddTextToLogTab(string text, bool extraLineFeed = false)
     {

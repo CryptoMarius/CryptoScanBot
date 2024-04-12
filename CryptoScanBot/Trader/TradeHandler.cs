@@ -29,10 +29,10 @@ static public class TradeHandler
         }
         else
         {
-            string s = $"andletrade {symbol.Name} side={orderSide} type={orderType} status={orderStatus} order={order.OrderId} " +
+            string s = $"Handletrade {symbol.Name} side={orderSide} type={orderType} status={orderStatus} order={order.OrderId} " +
                 $"price={order.Price.ToString0()} quantity={order.Quantity.ToString0()} value={order.QuoteQuantity.ToString0()}";
             GlobalData.AddTextToLogTab(s);
-            GlobalData.AddTextToTelegram(s, null);
+            GlobalData.AddTextToTelegram(s, symbol);
         }
     }
 }
