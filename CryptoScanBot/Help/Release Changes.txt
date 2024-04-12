@@ -1,7 +1,14 @@
 CryptoScanBot release historie:
 
-xx-04-2024 1.9.1
-TODO: url's voor Binance Futures
+12-04-2024 1.9.2
+TODO: url's voor Binance Futures werken nog niet
+- Scanner - Fix voor de url's van Binance Spot, Bybit Spot en Kucoin Spot.
+- Scanner - Selecteren van geluidbestanden laten beginnen in de bin map
+
+- Trading - Instapcondities uitbreiden, instelbaar maken of de prijs de "verkeerde" kant op beweegt (waarna de instap vertraagt wordt)
+
+
+11-04-2024 1.9.1
 - Scanner - Introductie van Binance Futures
 - Scanner - Bij bewaren van de candle data komt er soms een foutmelding "The process cannot access the file"?
 - Scanner - De kolom breedte kunnen resetten
@@ -25,7 +32,8 @@ TODO: url's voor Binance Futures
 - Trading - De controle op beschikbare assets klopte niet (een vergissing met BaseValue (Quantity) en QuoteValue (USDT))
 - Trading - De berekende fee van de te vullen orders (dca/tp's) zorgde ervoor dat de tp's 1x (ietjes) verzet werden (terug naar de oude manier)
 
-22-03-2024 1.9.0
+
+-22-03-2024 1.9.0
 - Scanner - Documentatie bijwerken - dit keer best een grote klus
 - Scanner - De RMK wordt uitgevoerd op de getoonde selectie, echter bij een RMK op een bepaald record wordt de selectie niet aangepast waardoor de actie op een verkeerd record wordt uitgevoerd.
 - Scanner - Regelhoogte grid - icm het aanpassen van het lettertype wordt het nu dynamisch ingesteld

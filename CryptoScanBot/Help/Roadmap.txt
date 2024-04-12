@@ -5,6 +5,7 @@ Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep
 
 Scanner:
 TODO: url voor Binance Futures
+- Scanner - De Kucoin deeplink voor Altrady werkt niet
 - Scanner - Bij wisselen van basismunten (of exchange?) komt er soms een SQLite Error 5: 'database is locked? (oorzaak nog onbekend)
 - Scanner - Rate limits van de libraries bestuderen en eventueel de ingebouwde vervangen (de interne is aan de voorzichtige kant)
 - Trading - De barometer naar Excel kunnen exporteren voor een overzichtje (liefst met een op te geven datum/tijd)
