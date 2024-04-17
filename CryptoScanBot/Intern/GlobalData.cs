@@ -752,7 +752,7 @@ static public class GlobalData
                 (string Url, CryptoExternalUrlType Execute) = ExternalUrls.GetExternalRef(Settings.General.TradingApp, true, position.Symbol, position.Interval);
                 if (Url != "")
                 {
-                    string x = $" <a href='{Url}'>{symbol}</a>";
+                    string x = $"<a href='{Url}'>{symbol}</a>";
                     text = text.Replace(symbol, x);
                 }
             }
@@ -777,7 +777,7 @@ static public class GlobalData
                 (string Url, CryptoExternalUrlType Execute) = ExternalUrls.GetExternalRef(Settings.General.TradingApp, true, symbol, IntervalList[0]);
                 if (Url != "")
                 {
-                    string x = $" <a href='{Url}'>{symbolName}</a>";
+                    string x = $"<a href='{Url}'>{symbolName}</a>";
                     text = text.Replace(symbolName, x);
                 }
             }
