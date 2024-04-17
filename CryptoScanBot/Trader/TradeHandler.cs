@@ -15,9 +15,10 @@ static public class TradeHandler
     public static async Task HandleTradeAsync(CryptoSymbol symbol, CryptoOrderType orderType, 
         CryptoOrderSide orderSide, CryptoOrderStatus orderStatus, CryptoOrder order)
     {
-        // Zoek de openstaande positie op
+        // Find the open position
         if (order.TradeAccount.PositionList.TryGetValue(symbol.Name, out CryptoPosition position))
         {
+            // could also be done in ThreadDoubleCheckPosition
             if (orderStatus.IsFilled() && GlobalData.Settings.General.SoundTradeNotification)
                 GlobalData.PlaySomeMusic("sound-trade-notification.wav");
 
@@ -27,13 +28,15 @@ static public class TradeHandler
             if (GlobalData.ThreadDoubleCheckPosition != null)
                 await GlobalData.ThreadDoubleCheckPosition.AddToQueue(position, order.OrderId, order.Status);
         }
-        else
-        {
-            string s = $"Handletrade {symbol.Name} side={orderSide} type={orderType} status={orderStatus} order={order.OrderId} " +
-                $"price={order.Price.ToString0()} quantity={order.Quantity.ToString0()} value={order.QuoteQuantity.ToString0()}";
-            GlobalData.AddTextToLogTab(s);
-            GlobalData.AddTextToTelegram(s, symbol);
-        }
+        // This leads to confusion if we signal stuff when the position is already closed, just keep it simple..
+        //else
+        //{
+        //    //...if (!symbol.OrderList.TryGetValue(order.OrderId, out CryptoOrder tempOrder)) // closed?
+        //    string s = $"Handletrade {symbol.Name} side={orderSide} type={orderType} status={orderStatus} order={order.OrderId} " +
+        //        $"price={order.Price.ToString0()} quantity={order.Quantity.ToString0()} value={order.QuoteQuantity.ToString0()}";
+        //    GlobalData.AddTextToLogTab(s);
+        //    GlobalData.AddTextToTelegram(s, symbol);
+        //}
     }
 }
 #endif
