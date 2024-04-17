@@ -472,16 +472,16 @@ public partial class FrmSettings : Form
         // Black & White list
         // --------------------------------------------------------------------------------
 
-        settings.BlackListOversold = textBoxBlackListOversold.Text.Trim().Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries).ToList();
+        settings.BlackListOversold = [.. textBoxBlackListOversold.Text.Trim().Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries)];
         settings.WhiteListOversold.Sort();
 
-        settings.WhiteListOversold = textBoxWhiteListOversold.Text.Trim().Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries).ToList();
+        settings.WhiteListOversold = [.. textBoxWhiteListOversold.Text.Trim().Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries)];
         settings.WhiteListOversold.Sort();
 
-        settings.BlackListOverbought = textBoxBlackListOverbought.Text.Trim().Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries).ToList();
+        settings.BlackListOverbought = [.. textBoxBlackListOverbought.Text.Trim().Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries)];
         settings.WhiteListOverbought.Sort();
 
-        settings.WhiteListOverbought = textBoxWhiteListOverbought.Text.Trim().Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries).ToList();
+        settings.WhiteListOverbought = [.. textBoxWhiteListOverbought.Text.Trim().Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries)];
         settings.WhiteListOverbought.Sort();
 
 #if TRADEBOT

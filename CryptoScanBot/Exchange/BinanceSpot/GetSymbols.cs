@@ -40,16 +40,16 @@ public class GetSymbols
                     GlobalData.AddTextToLogTab("error getting exchangeinfo " + exchangeInfo.Error, true);
                 if (exchangeInfo.Data == null)
                     throw new ExchangeException("Geen exchange data ontvangen (2)");
-                
+
 
                 // Om achteraf de niet gedeactiveerde munten te melden en te deactiveren
-                List<string> reportSymbols = new();
-                SortedList<string, CryptoSymbol> activeSymbols = new();
+                List<string> reportSymbols = [];
+                SortedList<string, CryptoSymbol> activeSymbols = [];
 
 
                 using (var transaction = database.BeginTransaction())
                 {
-                    List<CryptoSymbol> cache = new();
+                    List<CryptoSymbol> cache = [];
                     try
                     {
                         foreach (var symbolData in exchangeInfo.Data.Symbols)
@@ -161,7 +161,7 @@ public class GetSymbols
                         }
                         if (reportSymbols.Any())
                         {
-                            var symbols = string.Join(',', reportSymbols.ToArray());
+                            var symbols = string.Join(',', [.. reportSymbols]);
                             GlobalData.AddTextToLogTab($"{reportSymbols.Count} munten gedeactiveerd {symbols}");
                         }
 

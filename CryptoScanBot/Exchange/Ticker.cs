@@ -50,7 +50,7 @@ public class Ticker(ExchangeOptions exchangeOptions, Type userTickerItemType, Cr
             if (quoteData.FetchCandles && quoteData.SymbolList.Count > 0)
             {
                 List<SubscriptionTicker> tickers = [];
-                List<CryptoSymbol> symbols = quoteData.SymbolList.ToList();
+                List<CryptoSymbol> symbols = [.. quoteData.SymbolList];
 
                 // Limiteer de munten (dat heeft dan ook impact op de barometer)
                 if (ExchangeOptions.LimitAmountOfSymbols)

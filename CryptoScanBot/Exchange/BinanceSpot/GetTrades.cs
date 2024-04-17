@@ -29,7 +29,7 @@ public class BinanceFetchTrades
             // Haal de trades op van 1 symbol
 
             bool isChanged = false;
-            List<CryptoTrade> tradeCache = new();
+            List<CryptoTrade> tradeCache = [];
 
             //Verzin een begin datum
             if (position.Symbol.LastTradeFetched == null)

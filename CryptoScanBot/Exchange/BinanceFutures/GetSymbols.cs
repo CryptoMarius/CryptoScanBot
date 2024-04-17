@@ -41,7 +41,7 @@ public class GetSymbols
 
                 // Om achteraf de niet gedeactiveerde munten te melden en te deactiveren
                 List<string> reportSymbols = [];
-                SortedList<string, CryptoSymbol> activeSymbols = new();
+                SortedList<string, CryptoSymbol> activeSymbols = [];
 
 
                 using (var transaction = database.BeginTransaction())
@@ -158,7 +158,7 @@ public class GetSymbols
                         }
                         if (reportSymbols.Count != 0)
                         {
-                            var symbols = string.Join(',', reportSymbols.ToArray());
+                            var symbols = string.Join(',', [.. reportSymbols]);
                             GlobalData.AddTextToLogTab($"{reportSymbols.Count} munten gedeactiveerd {symbols}");
                         }
 

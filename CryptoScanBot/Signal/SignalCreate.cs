@@ -117,7 +117,7 @@ public class SignalCreate
             else
             {
                 // Toch maar even melden, want dit is niet normaal..
-                GlobalData.AddTextToLogTab($"Analyse {signal.Symbol.Name} {CandleLast.DateLocal.ToString()} {CandleLast.Close:N8} iteration={iterations} heeft geen candledata of geen BB?");
+                GlobalData.AddTextToLogTab($"Analyse {signal.Symbol.Name} {CandleLast.DateLocal} {CandleLast.Close:N8} iteration={iterations} heeft geen candledata of geen BB?");
             }
 
             iterations++;
@@ -488,7 +488,7 @@ public class SignalCreate
         signal.LastPrice = (decimal)Symbol.LastPrice;
 
         string response;
-        List<string> eventText = new();
+        List<string> eventText = [];
         if (algorithm.ExtraText != "")
             eventText.Add(algorithm.ExtraText);
 

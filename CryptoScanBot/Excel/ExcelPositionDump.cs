@@ -50,15 +50,21 @@ public class ExcelPositionDump : ExcelBase
         WriteCell(sheet, columns++, row, "Profit");
         WriteCell(sheet, columns++, row, "Percent");
 
-        foreach (CryptoPositionPart part in Position.Parts.Values.ToList())
+        var partList = Position.Parts.Values.ToList();
+        partList.Sort((x, y) => x.PartNumber.CompareTo(y.PartNumber));
+        foreach (CryptoPositionPart part in partList)
         {
             ++row;
             column = 0;
             
             cell = WriteCell(sheet, column++, row, part.Id);
-            string text = part.Purpose + " " + part.PartNumber.ToString();
-            if (part.ManualOrder)
-                text += " manual";
+            string text = part.Purpose.ToString();
+            if (part.Purpose == CryptoPartPurpose.Dca)
+            {
+                text += " " + part.PartNumber.ToString();
+                if (part.ManualOrder)
+                    text += " manual";
+            }
             cell = WriteCell(sheet, column++, row, text); // 0 = entry and >= 1 is dca
             cell = WriteCell(sheet, column++, row, part.Purpose.ToString());
             cell = WriteCell(sheet, column++, row, part.CreateTime.ToLocalTime());
@@ -404,7 +410,7 @@ public class ExcelPositionDump : ExcelBase
         WriteCell(sheet, columns++, row, "Commission");
         WriteCell(sheet, columns++, row, "C. Asset");
 
-        List<CryptoOrder> orderList = Position.Symbol.OrderList.Values.ToList();
+        List<CryptoOrder> orderList = [.. Position.Symbol.OrderList.Values];
         orderList.Sort((x, y) => x.CreateTime.CompareTo(y.CreateTime));
         foreach (CryptoOrder order in orderList)
         {
@@ -472,7 +478,7 @@ public class ExcelPositionDump : ExcelBase
         WriteCell(sheet, columns++, row, "Commission");
         WriteCell(sheet, columns++, row, "C. Asset");
 
-        List<CryptoTrade> tradelist = Position.Symbol.TradeList.Values.ToList();
+        List<CryptoTrade> tradelist = [.. Position.Symbol.TradeList.Values];
         tradelist.Sort((x, y) => x.TradeTime.CompareTo(y.TradeTime));
         foreach (CryptoTrade trade in tradelist)
         {
@@ -544,7 +550,7 @@ public class ExcelPositionDump : ExcelBase
         WriteCell(sheet, row, column++, "Geopend");
         WriteCell(sheet, row, column++, "Gesloten");
         WriteCell(sheet, row, column++, "Status");
-        WriteCell(sheet, row, column++, "Parts");
+        WriteCell(sheet, row, column++, "DCA count");
 
         row++;
         column = 0;
