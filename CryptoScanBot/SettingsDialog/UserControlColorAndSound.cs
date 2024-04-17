@@ -1,7 +1,5 @@
 ﻿using CryptoScanBot.Intern;
 
-using Microsoft.IdentityModel.Tokens;
-
 namespace CryptoScanBot.SettingsDialog;
 public partial class UserControlColorAndSound : UserControl
 {

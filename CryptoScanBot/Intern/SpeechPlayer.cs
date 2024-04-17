@@ -1,14 +1,12 @@
 ﻿using System.Collections.Concurrent;
 using System.Speech.Synthesis;
 
-using Humanizer;
-
 namespace CryptoScanBot.Intern;
 
 static public class ThreadSpeechPlayer
 {
     private static Thread speechPlayThread;
-    private static readonly BlockingCollection<string> speechQueue = new();
+    private static readonly BlockingCollection<string> speechQueue = [];
     private static readonly CancellationTokenSource speechCancelToken = new();
 
     public static void AddToQueue(string filename)

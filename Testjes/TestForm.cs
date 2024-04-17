@@ -38,7 +38,6 @@ using Microsoft.Identity.Client;
 using static System.Net.Mime.MediaTypeNames;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using System;
-using Humanizer;
 using System.Security.Cryptography.Xml;
 using System.Transactions;
 using CryptoExchange.Net.Authentication;
@@ -1164,7 +1163,7 @@ public partial class TestForm : Form
                     decimal multiplier = 3.0m;
                     Period21 prevData = null;
 
-                    List<CryptoCandle> viewPort = new();
+                    List<CryptoCandle> viewPort = [];
 
                     for (int x = 0; x < candles.Count; x++)
                     {
@@ -2008,11 +2007,9 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
 
 
             var httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
-            using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
-            {
-                var result = streamReader.ReadToEnd();
-                GlobalData.AddTextToLogTab(result);
-            }
+            using var streamReader = new StreamReader(httpResponse.GetResponseStream());
+            var result = streamReader.ReadToEnd();
+            GlobalData.AddTextToLogTab(result);
 
             //string href = string.Format("https://api.altrady.com/v2/signal_bot_positions/");
             //webClient.UploadData(new Uri(href), downLoadFolder);
@@ -2549,11 +2546,13 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
             int i = 0;
             foreach (CryptoSymbol symbol in exchange.SymbolListId.Values)
             {
-                CryptoSignal signal = new();
-                signal.OpenDate = DateTime.UtcNow.AddHours(SignalList.Count);
-                signal.Price = 0.12345m;
-                signal.Symbol = symbol;
-                signal.Exchange = exchange;
+                CryptoSignal signal = new()
+                {
+                    OpenDate = DateTime.UtcNow.AddHours(SignalList.Count),
+                    Price = 0.12345m,
+                    Symbol = symbol,
+                    Exchange = exchange
+                };
                 if (i % 2 == 0)
                     signal.Side = CryptoTradeSide.Long;
                 else
@@ -2604,7 +2603,7 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
     }
 
 
-    private void button2_Click_2(object sender, EventArgs e)
+    private void Button2_Click_2(object sender, EventArgs e)
     {
         if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
         {
@@ -2660,12 +2659,12 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
         GridSignals.AdjustObjectCount();
     }
 
-    private void button3_Click_2(object sender, EventArgs e)
+    private void Button3_Click_2(object sender, EventArgs e)
     {
         //GridSignals.UpdatePriceDifferences();
     }
 
-    private void button4_Click(object sender, EventArgs e)
+    private void Button4_Click(object sender, EventArgs e)
     {
         if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
         {
