@@ -110,7 +110,7 @@ namespace CryptoScanBot
             button4.TabIndex = 16;
             button4.Text = "button4";
             button4.UseVisualStyleBackColor = true;
-            button4.Click += button4_Click;
+            button4.Click += Button4_Click;
             // 
             // button3
             // 
@@ -120,7 +120,7 @@ namespace CryptoScanBot
             button3.TabIndex = 15;
             button3.Text = "Prijs ++";
             button3.UseVisualStyleBackColor = true;
-            button3.Click += button3_Click_2;
+            button3.Click += Button3_Click_2;
             // 
             // button2
             // 
@@ -130,7 +130,7 @@ namespace CryptoScanBot
             button2.TabIndex = 14;
             button2.Text = "+2 records";
             button2.UseVisualStyleBackColor = true;
-            button2.Click += button2_Click_2;
+            button2.Click += Button2_Click_2;
             // 
             // button1
             // 

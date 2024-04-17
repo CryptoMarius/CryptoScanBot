@@ -13,7 +13,7 @@ namespace CryptoScanBot.Trader;
 #if TRADEBOT
 public class TradeTools
 {
-    static public void LoadAssets()
+    public static void LoadAssets()
     {
         GlobalData.AddTextToLogTab("Reading asset information");
 
@@ -32,11 +32,9 @@ public class TradeTools
                 account.AssetList.TryAdd(asset.Name, asset);
             }
         }
-
     }
 
-
-    static public void LoadClosedPositions()
+    public static void LoadClosedPositions()
     {
         // Alle gesloten posities lezen 
         // TODO - beperken tot de laatste 2 dagen? (en wat handigheden toevoegen wellicht)
@@ -51,7 +49,7 @@ public class TradeTools
             PositionTools.AddPositionClosed(position);
     }
 
-    static public void LoadOpenPositions()
+    public static void LoadOpenPositions()
     {
         // Alle openstaande posities lezen 
         GlobalData.AddTextToLogTab("Reading open position");
@@ -68,7 +66,7 @@ public class TradeTools
         }
     }
 
-    static async public Task CheckOpenPositions()
+    public static async Task CheckOpenPositions()
     {
         // De openstaande posities controleren
         GlobalData.AddTextToLogTab("Checking open positions");
@@ -126,7 +124,9 @@ public class TradeTools
         position.CommissionBase = 0;
         position.CommissionQuote = 0;
         position.RemainingDust = 0;
-        bool hasActiveDca = false;
+
+        position.PartCount = 0;
+        position.ActiveDca = false;
 
         // Ondersteuning long/short
         CryptoOrderSide entryOrderSide = position.GetEntryOrderSide();
@@ -226,8 +226,27 @@ public class TradeTools
                 else
                     part.BreakEvenPrice = 0;
             }
-            if (part.Invested <= 0)
-                hasActiveDca = true;
+
+            // De parts opnieuw instellen
+            if (part.Purpose == CryptoPartPurpose.Entry)
+                part.PartNumber = 0;
+            if (part.Purpose == CryptoPartPurpose.Dca)
+            {
+                if (part.Invested > 0)
+                {
+                    position.PartCount++;
+                    part.PartNumber = position.PartCount;
+                }
+                else
+                {
+                    position.ActiveDca = true;
+                    part.PartNumber = position.PartCount + 1;
+                }
+            }
+            // fix..
+            if (part.Purpose == CryptoPartPurpose.TakeProfit)
+                part.PartNumber = 9999;
+
 
             //string t = string.Format("{0} CalculateProfit sell invested={1} profit={2} bought={3} sold={4} steps={5}",
             //    position.Symbol.Name, part.Invested, part.Profit, part.Invested, part.Returned, part.Steps.Count);
@@ -278,9 +297,6 @@ public class TradeTools
             StringBuilder stringBuilderNew = DumpPosition(position);
             ScannerLog.Logger.Trace(stringBuilderNew);
         }
-
-        // Correcties omdat de ActiveDca achteraf geintroduceerd is
-        position.ActiveDca = hasActiveDca;
     }
 
 
@@ -363,7 +379,7 @@ public class TradeTools
                         throw new Exception("Probleem met het vinden van een part");
 
                     string s;
-                    string msgInfo = $"{position.Symbol.Name} side={order.Side} type={order.Type} status={order.Status} order={order.OrderId} " +
+                    string msgInfo = $"{part.Purpose} {order.Status} {order.Side} {order.Type} order={order.OrderId} " +
                         $"price={order.AveragePrice?.ToString0()} quantity={order.QuantityFilled?.ToString0()} value={order.QuoteQuantity.ToString0()}";
 
                     CalculateOrderFeeFromTrades(position.Symbol, step);
@@ -419,7 +435,7 @@ public class TradeTools
                             // Geen melding geven bij afgesloten orders
                             if (!isOrderClosed)
                             {
-                                s = $"handletrade#7 {msgInfo} positie cancelled, user takeover? position.status={position.Status}";
+                                s = $"handletrade#7 {position.Symbol.Name} {msgInfo} user takeover? position.status={position.Status}";
                                 GlobalData.AddTextToLogTab(s);
                                 GlobalData.AddTextToTelegram(s, position);
                             }
@@ -429,7 +445,7 @@ public class TradeTools
                     else if (order.Status.IsFilled())
                     {
                         ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} check {order.OrderId} -> IsFilled");
-                        s = $"handletrade {msgInfo}";
+                        s = $"handletrade {position.Symbol.Name} {msgInfo}";
 
                         // Statistics entry or take profit order.
                         step.CloseTime = order.UpdateTime;
@@ -481,6 +497,11 @@ public class TradeTools
                             position.Reposition = true;
                             ScannerLog.Logger.Trace($"TradeTools.CalculatePositionResultsViaOrders: {position.Symbol.Name} take profit -> position.Reposition = true");
                         }
+
+                        // Sluit de part als het gevuld is (probleem igv meerdere entries)
+                        //if (part.Purpose != CryptoPartPurpose.TakeProfit && !part.CloseTime.HasValue)
+                        //    part.CloseTime = step.CloseTime;
+
 
                         // Statistics symbol (cooldown)
                         position.Symbol.LastTradeDate = order.UpdateTime;
@@ -683,12 +704,51 @@ public class TradeTools
         // in zou kunnen gaan. Geld voor alles wat we in deze tool doen, qua buy en sell gaat de herkansing wel 
         // goed, ook al zal je dan soms een repeterende fout voorbij zien komen (iedere minuut)
 
-        decimal takeProfitQuantity = part.Quantity;
-        decimal takeProfitQuantityOriginal = part.Quantity;
-        takeProfitQuantity = takeProfitQuantity.Clamp(position.Symbol.QuantityMinimum, position.Symbol.QuantityMaximum, position.Symbol.QuantityTickSize);
+        // Bevat niet de laatste informatie (vanwege het annuleren)
+        decimal freeBaseAsset = 0;
+        decimal totalBaseAsset = 0;
+        position.TradeAccount.AssetListSemaphore.Wait();
+        try
+        {
+            if (position.TradeAccount.AssetList.TryGetValue(position.Symbol.Base, out CryptoAsset asset))
+            {
+                freeBaseAsset = asset.Free;
+                totalBaseAsset = asset.Total;
+            }
+        }
+        finally
+        {
+            position.TradeAccount.AssetListSemaphore.Release();
+        }
 
-        string text = $"{position.Symbol.Name} quantity part={part.Quantity}, rounded={takeProfitQuantity}, expected dust = {takeProfitQuantityOriginal - takeProfitQuantity}";
+        decimal takeProfitQuantityOriginal = position.Quantity;
+
+        decimal takeProfitQuantity = position.Quantity;
+        takeProfitQuantity = takeProfitQuantity.Clamp(position.Symbol.QuantityMinimum, position.Symbol.QuantityMaximum, position.Symbol.QuantityTickSize);
+        decimal expectedDust = takeProfitQuantityOriginal - takeProfitQuantity;
+        string text = $"{position.Symbol.Name} quantity={position.Quantity}, rounded={takeProfitQuantity}, expected dust = {expectedDust} free={freeBaseAsset} total={totalBaseAsset}";
         GlobalData.AddTextToLogTab(text);
+
+        // tijdelijke fix omdat ik de dust al verkocht heb......
+        //if (position.Id == 228) // && position.Symbol.Name.Equals("AAVEUSDT"))
+        //    takeProfitQuantity = 0.902m;
+        //if (position.Id == 130) // && position.Symbol.Name.Equals("BOBAUSDT"))
+        //    takeProfitQuantity = ?m;
+
+        //if (freeBaseAsset > 0 && position.Symbol.LastPrice * freeBaseAsset < 1.01m)
+        //{
+        //    takeProfitQuantity = position.Quantity + freeBaseAsset; // extra!!!!
+        //    takeProfitQuantity = takeProfitQuantity.Clamp(position.Symbol.QuantityMinimum, position.Symbol.QuantityMaximum, position.Symbol.QuantityTickSize);
+        //    expectedDust = takeProfitQuantityOriginal - takeProfitQuantity;
+        //    text = $"{position.Symbol.Name} quantity={position.Quantity}, rounded={takeProfitQuantity}, (fixed) expected dust = {expectedDust}";
+        //    GlobalData.AddTextToLogTab(text);
+        //}
+
+        // tijdelijke fix omdat ik de dust al verkocht heb......
+        //if (position.Quantity < totalBaseAsset)
+        //    position.Quantity = totalBaseAsset;
+
+
 
         CryptoOrderSide takeProfitOrderSide = position.GetTakeProfitOrderSide();
 

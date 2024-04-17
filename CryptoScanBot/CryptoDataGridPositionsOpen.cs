@@ -66,7 +66,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
         menuStrip.AddCommand(this, "Position delete from database", Command.None, CommandPositionDeleteFromDatabaseAsync);
         menuStrip.AddCommand(this, "Position add additional DCA", Command.None, CommandPositionCreateAdditionalDca);
         menuStrip.AddCommand(this, "Position cancel open DCA", Command.None, CommandPositionRemoveAdditionalDca);
-        menuStrip.AddCommand(this, "Position take profit (if possible)", Command.None, CommandPositionLastPartTakeProfit);
+        //menuStrip.AddCommand(this, "Position take profit (if possible)", Command.None, CommandPositionLastPartTakeProfit);
         menuStrip.AddCommand(this, "Position information (Excel)", Command.ExcelPositionInformation);
 #endif
 
@@ -626,82 +626,82 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
     }
 
 
-    private async void CommandPositionLastPartTakeProfit(object sender, EventArgs e)
-    {
+    //private async void CommandPositionLastPartTakeProfit(object sender, EventArgs e)
+    //{
 
-        CryptoPosition position = GetSelectedObject(out int rowIndex);
-        if (position != null)
-        {
-            if (!position.Symbol.LastPrice.HasValue)
-                return;
+    //    CryptoPosition position = GetSelectedObject(out int rowIndex);
+    //    if (position != null)
+    //    {
+    //        if (!position.Symbol.LastPrice.HasValue)
+    //            return;
 
-            using CryptoDatabase databaseThread = new();
-            databaseThread.Connection.Open();
+    //        using CryptoDatabase databaseThread = new();
+    //        databaseThread.Connection.Open();
 
-            // Controleer de orders, en herbereken het geheel
-            PositionTools.LoadPosition(databaseThread, position);
-            await TradeTools.CalculatePositionResultsViaOrders(databaseThread, position, forceCalculation: true);
-            Grid.InvalidateRow(rowIndex);
+    //        // Controleer de orders, en herbereken het geheel
+    //        PositionTools.LoadPosition(databaseThread, position);
+    //        await TradeTools.CalculatePositionResultsViaOrders(databaseThread, position, forceCalculation: true);
+    //        Grid.InvalidateRow(rowIndex);
 
 
-            // Itereer de openstaande parts
-            foreach (CryptoPositionPart part in position.Parts.Values.ToList())
-            {
-                // voor de niet afgesloten parts...
-                if (!part.CloseTime.HasValue && part.Quantity > 0)
-                {
-                    CryptoOrderSide entryOrderSide = position.GetEntryOrderSide();
+    //        // Itereer de openstaande parts
+    //        foreach (CryptoPositionPart part in position.Parts.Values.ToList())
+    //        {
+    //            // voor de niet afgesloten parts...
+    //            if (!part.CloseTime.HasValue && part.Quantity > 0)
+    //            {
+    //                CryptoOrderSide entryOrderSide = position.GetEntryOrderSide();
 
-                    // Is er een entry order in zijn geheel gevuld (lastig indien er meerdere entries komen)
-                    CryptoPositionStep step = PositionTools.FindPositionPartStep(part, entryOrderSide, true);
-                    if (step != null && step.Status.IsFilled())
-                    {
+    //                // Is er een entry order in zijn geheel gevuld (lastig indien er meerdere entries komen)
+    //                CryptoPositionStep step = PositionTools.FindPositionPartStep(part, entryOrderSide, true);
+    //                if (step != null && step.Status.IsFilled())
+    //                {
 
-                        // Is de entry prijs wel hoger/lager dan de actuele prijs?
-                        //if (position.Side == CryptoTradeSide.Long && step.Price < part.BreakEvenPrice + 5 * position.Symbol.PriceTickSize)
-                        //    continue;
-                        //else if (position.Side == CryptoTradeSide.Short && step.Price > part.BreakEvenPrice - 5 * position.Symbol.PriceTickSize)
-                        //    continue;
+    //                    // Is de entry prijs wel hoger/lager dan de actuele prijs?
+    //                    //if (position.Side == CryptoTradeSide.Long && step.Price < part.BreakEvenPrice + 5 * position.Symbol.PriceTickSize)
+    //                    //    continue;
+    //                    //else if (position.Side == CryptoTradeSide.Short && step.Price > part.BreakEvenPrice - 5 * position.Symbol.PriceTickSize)
+    //                    //    continue;
 
-                        // Is de laatste prijs wel hoger/lager dan de actuele prijs?
-                        if (position.Side == CryptoTradeSide.Long && position.Symbol.LastPrice.Value < part.BreakEvenPrice + 25 * position.Symbol.PriceTickSize)
-                            continue;
-                        else if (position.Side == CryptoTradeSide.Short && position.Symbol.LastPrice.Value > part.BreakEvenPrice - 25 * position.Symbol.PriceTickSize)
-                            continue;
+    //                    // Is de laatste prijs wel hoger/lager dan de actuele prijs?
+    //                    if (position.Side == CryptoTradeSide.Long && position.Symbol.LastPrice.Value < part.BreakEvenPrice + 25 * position.Symbol.PriceTickSize)
+    //                        continue;
+    //                    else if (position.Side == CryptoTradeSide.Short && position.Symbol.LastPrice.Value > part.BreakEvenPrice - 25 * position.Symbol.PriceTickSize)
+    //                        continue;
 
-                        // Is er een openstaande TP die niet gevuld is?
-                        CryptoOrderSide takeProfitOrderSide = position.GetTakeProfitOrderSide();
-                        step = PositionTools.FindPositionPartStep(part, takeProfitOrderSide, false);
-                        if (step != null && part.Quantity > 0)
-                        {
-                            decimal price = (decimal)position.Symbol.LastPrice;
-                            // controle is waarschijnlijk overbodig, de extra tick is prima
-                            // (tenzij het een market order moet zijn? Maar dan moet er meer aangepast worden)
-                            if (position.Side == CryptoTradeSide.Long)
-                                price += position.Symbol.PriceTickSize;
-                            else
-                                price -= position.Symbol.PriceTickSize;
+    //                    // Is er een openstaande TP die niet gevuld is?
+    //                    CryptoOrderSide takeProfitOrderSide = position.GetTakeProfitOrderSide();
+    //                    step = PositionTools.FindPositionPartStep(part, takeProfitOrderSide, false);
+    //                    if (step != null && part.Quantity > 0)
+    //                    {
+    //                        decimal price = (decimal)position.Symbol.LastPrice;
+    //                        // controle is waarschijnlijk overbodig, de extra tick is prima
+    //                        // (tenzij het een market order moet zijn? Maar dan moet er meer aangepast worden)
+    //                        if (position.Side == CryptoTradeSide.Long)
+    //                            price += position.Symbol.PriceTickSize;
+    //                        else
+    //                            price -= position.Symbol.PriceTickSize;
 
-                            string cancelReason = $"positie {position.Id} annuleren vanwege handmatige plaatsing TP";
-                            var (success, _) = await TradeTools.CancelOrder(databaseThread, position, part, step, 
-                                DateTime.UtcNow, CryptoOrderStatus.ManuallyByUser, cancelReason);
-                            if (success)
-                            {
-                                price = price.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
-                                await TradeTools.PlaceTakeProfitOrderAtPrice(databaseThread, position, part, price, DateTime.UtcNow, "manually placing");
-                                Grid.InvalidateRow(rowIndex);
-                                GlobalData.AddTextToLogTab($"{position.Symbol.Name} positie {position.Id} part={part.PartNumber} handmatig profit genomen");
+    //                        string cancelReason = $"positie {position.Id} annuleren vanwege handmatige plaatsing TP";
+    //                        var (success, _) = await TradeTools.CancelOrder(databaseThread, position, part, step, 
+    //                            DateTime.UtcNow, CryptoOrderStatus.ManuallyByUser, cancelReason);
+    //                        if (success)
+    //                        {
+    //                            price = price.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
+    //                            await TradeTools.PlaceTakeProfitOrderAtPrice(databaseThread, position, part, price, DateTime.UtcNow, "manually placing");
+    //                            Grid.InvalidateRow(rowIndex);
+    //                            GlobalData.AddTextToLogTab($"{position.Symbol.Name} positie {position.Id} part={part.PartNumber} handmatig profit genomen");
 
-                                break;
-                            }
+    //                            break;
+    //                        }
 
-                        }
-                    }
+    //                    }
+    //                }
 
-                }
-            }
-        }
-    }
+    //            }
+    //        }
+    //    }
+    //}
 #endif
 
 

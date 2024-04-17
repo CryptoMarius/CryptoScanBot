@@ -124,9 +124,9 @@ public static class CryptoPositionHelper
 
     public static string PartCountText(this CryptoPosition position, bool isOpenPosition = true)
     {
-        int partCount = position.PartCount;
-        if (position.ActiveDca)
-            partCount--;
+        int partCount = position.PartCount + 1; // entry geld ook als 1
+        //if (position.ActiveDca)
+        //    partCount--;
         // En we willen de openstaande part niet zien totdat deze echt gevuld is
         string text = partCount.ToString();
         // + ten teken dat er een openstaande DCA klaar staat (wellicht ook nog dat ie manual is)

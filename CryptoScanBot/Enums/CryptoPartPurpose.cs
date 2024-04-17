@@ -9,9 +9,9 @@ public enum CryptoPartPurpose
     /// <summary>
     /// Additional entries
     /// </summary>
-    Dca
+    Dca,
     /// <summary>
     /// Take profit
     /// </summary>
-    //TakeProfit
+    TakeProfit
 }

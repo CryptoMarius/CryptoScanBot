@@ -24,6 +24,21 @@ public class ScannerLog
         };
         //NLog.Targets.FileTarget fileTarget = 
         //return fileTarget;
+
+
+        //// Create targets and add them to the configuration 
+        //var fileTarget = new NLog.Targets.FileTarget();
+        //config.AddTarget("file", fileTarget);
+        //fileTarget.Name = "default";
+        //fileTarget.KeepFileOpen = true;
+        //fileTarget.MaxArchiveDays = 10;
+        //fileTarget.FileName = logPrefix + ".log";
+        //fileTarget.ArchiveDateFormat = "yyyy-MM-dd";
+        //fileTarget.ArchiveFileName = logPrefix + "{#}.log";
+        //fileTarget.ArchiveEvery = NLog.Targets.FileArchivePeriod.Day;
+        //fileTarget.ArchiveNumbering = NLog.Targets.ArchiveNumberingMode.Date;
+        //var rule = new NLog.Config.LoggingRule("*", LogLevel.Info, fileTarget);
+        //config.LoggingRules.Add(rule);
     }
 
     static public void InitializeLogging()
@@ -92,47 +107,6 @@ public class ScannerLog
         fileTarget = CreateTarget("trace", " Trace");
         rule = new NLog.Config.LoggingRule("*", LogLevel.Trace, fileTarget);
         config.LoggingRules.Add(rule);
-
-        //// Create targets and add them to the configuration 
-        //var fileTarget = new NLog.Targets.FileTarget();
-        //config.AddTarget("file", fileTarget);
-        //fileTarget.Name = "default";
-        //fileTarget.KeepFileOpen = true;
-        //fileTarget.MaxArchiveDays = 10;
-        //fileTarget.FileName = logPrefix + ".log";
-        //fileTarget.ArchiveDateFormat = "yyyy-MM-dd";
-        //fileTarget.ArchiveFileName = logPrefix + "{#}.log";
-        //fileTarget.ArchiveEvery = NLog.Targets.FileArchivePeriod.Day;
-        //fileTarget.ArchiveNumbering = NLog.Targets.ArchiveNumberingMode.Date;
-        //var rule = new NLog.Config.LoggingRule("*", LogLevel.Info, fileTarget);
-        //config.LoggingRules.Add(rule);
-
-        //fileTarget = new NLog.Targets.FileTarget();
-        //config.AddTarget("file", fileTarget);
-        //fileTarget.Name = "errors";
-        //fileTarget.KeepFileOpen = true;
-        //fileTarget.MaxArchiveDays = 10;
-        //fileTarget.FileName = logPrefix + "Error.log";
-        //fileTarget.ArchiveDateFormat = "yyyy-MM-dd";
-        //fileTarget.ArchiveFileName = logPrefix + " Error {#}.log";
-        //fileTarget.ArchiveEvery = NLog.Targets.FileArchivePeriod.Day;
-        //fileTarget.ArchiveNumbering = NLog.Targets.ArchiveNumberingMode.Date;
-        //rule = new NLog.Config.LoggingRule("*", LogLevel.Error, fileTarget);
-        //config.LoggingRules.Add(rule);
-
-
-        //fileTarget = new NLog.Targets.FileTarget();
-        //config.AddTarget("file", fileTarget);
-        //fileTarget.Name = "trace";
-        //fileTarget.KeepFileOpen = true;
-        //fileTarget.MaxArchiveDays = 10;
-        //fileTarget.FileName = logPrefix + " Trace.log";
-        //fileTarget.ArchiveDateFormat = "yyyy-MM-dd";
-        //fileTarget.ArchiveFileName = logPrefix + " Trace {#}.log";
-        //fileTarget.ArchiveEvery = NLog.Targets.FileArchivePeriod.Day;
-        //fileTarget.ArchiveNumbering = NLog.Targets.ArchiveNumberingMode.Date;
-        //rule = new NLog.Config.LoggingRule("*", LogLevel.Trace, fileTarget);
-        //config.LoggingRules.Add(rule);
 
         LogManager.Configuration = config;
 

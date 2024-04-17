@@ -30,6 +30,8 @@ public class CryptoTradeAccount
     [Computed]
     public SemaphoreSlim AssetListSemaphore { get; set; } = new(1);
     [Computed]
+    public DateTime? LastRefreshAssets { get; set; } = null;
+    [Computed]
     public SortedList<string, CryptoAsset> AssetList { get; } = [];
 
     // Trades + locking
@@ -43,6 +45,7 @@ public class CryptoTradeAccount
     //public SemaphoreSlim PositionListSemaphore { get; set; } = new(1);
     [Computed]
     public SortedList<string, CryptoPosition> PositionList { get; } = [];
+
 
 
     /// <summary>

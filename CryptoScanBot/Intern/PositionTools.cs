@@ -13,10 +13,10 @@ public static class PositionTools
 {
 #if TRADEBOT
 
-    public static bool ValidTradeAccount(CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
+    public static bool ValidTradeAccount(CryptoTradeAccount tradeAccount)
     {
         // De exchanges moet uiteraard matchen
-        if (symbol.ExchangeId == GlobalData.Settings.General.ExchangeId && tradeAccount.ExchangeId == GlobalData.Settings.General.ExchangeId) 
+        if (tradeAccount.ExchangeId == GlobalData.Settings.General.ExchangeId) 
         {
             // Niet echt super, enumeratie oid hiervoor in het leven roepen, werkt verder wel
             if (tradeAccount.TradeAccountType == CryptoTradeAccountType.BackTest && GlobalData.BackTest)
@@ -97,7 +97,7 @@ public static class PositionTools
         CryptoPositionPart part = new()
         {
             Purpose = purpose,
-            PartNumber = position.Parts.Count,
+            PartNumber = position.Parts.Count, //position.PartCount + 1, // 
             Strategy = strategy,
             Interval = interval,
             IntervalId = interval.Id,
@@ -115,8 +115,9 @@ public static class PositionTools
         database.Connection.Insert<CryptoPositionPart>(part);
         AddPositionPart(position, part);
 
-        position.PartCount += 1;
-        position.ActiveDca = true;
+        if (purpose == CryptoPartPurpose.Dca)
+            position.ActiveDca = true;
+
         position.UpdateTime = part.CreateTime;
         database.Connection.Update<CryptoPosition>(position);
 
