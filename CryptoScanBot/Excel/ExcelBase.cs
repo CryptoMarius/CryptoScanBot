@@ -87,9 +87,9 @@ public class ExcelBase
 
         CellStylePercentageRed = Book.CreateCellStyle();
         CellStylePercentageRed.DataFormat = HSSFDataFormat.GetBuiltinFormat("0.00");
-        CellStylePercentageRed.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.LightGreen.Index;
+        CellStylePercentageRed.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.Red.Index;
         CellStylePercentageRed.FillPattern = FillPattern.SolidForeground;
-        CellStylePercentageRed.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.LightGreen.Index;
+        CellStylePercentageRed.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.Red.Index;
 
         //// macd.red
         //ICellStyle cellStyleMacdRed = book.CreateCellStyle();

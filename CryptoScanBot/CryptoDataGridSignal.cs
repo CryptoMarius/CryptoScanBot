@@ -55,6 +55,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
         menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Copy symbol name", Command.CopySymbolInformation);
         menuStrip.AddCommand(this, "Trend information (log)", Command.ShowTrendInformation);
+        menuStrip.AddCommand(this, "Signal information (Excel)", Command.ExcelSignalInformation);
         menuStrip.AddCommand(this, "Symbol information (Excel)", Command.ExcelSymbolInformation);
 
         menuStrip.AddSeperator();

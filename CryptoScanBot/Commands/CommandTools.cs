@@ -63,18 +63,18 @@ public static class CommandHelper
 
 public class CommandTools
 {
-    public static (bool succes, Model.CryptoExchange exchange, CryptoSymbol symbol, CryptoInterval interval, CryptoPosition position) GetAttributesFromSender(object sender)
+    public static (bool succes, Model.CryptoExchange exchange, CryptoSymbol symbol, CryptoSignal signal, CryptoInterval interval, CryptoPosition position) GetAttributesFromSender(object sender)
     {
         if (sender is CryptoSymbol symbol)
-            return (true, symbol.Exchange, symbol, GlobalData.IntervalList[5], null);
+            return (true, symbol.Exchange, symbol, null, GlobalData.IntervalList[5], null);
 
         if (sender is CryptoSignal signal)
-            return (true, signal.Exchange, signal.Symbol, signal.Interval, null);
+            return (true, signal.Exchange, signal.Symbol, signal, signal.Interval, null);
 
         if (sender is CryptoPosition position)
-            return (true, position.Exchange, position.Symbol, position.Interval, position);
+            return (true, position.Exchange, position.Symbol, null, position.Interval, position);
 
-        return (false, null, null, null, null);
+        return (false, null, null, null, null, null);
     }
 
 
@@ -100,7 +100,7 @@ public class CommandTools
 
 
         // De rest van de commando's heeft een object nodig
-        var (succes, exchange, symbol, interval, position) = GetAttributesFromSender(sender);
+        var (succes, exchange, symbol, signal, interval, position) = GetAttributesFromSender(sender);
         if (succes)
         {
             switch (cmd)
@@ -126,6 +126,9 @@ public class CommandTools
                     break;
                 case Command.ShowTrendInformation:
                     new CommandShowTrendInfo().Execute(symbol);
+                    break;
+                case Command.ExcelSignalInformation:
+                    _ = Task.Run(() => { new Excel.ExcelSignalDump().ExportToExcel(signal); });
                     break;
                 case Command.ExcelSymbolInformation:
                     _ = Task.Run(() => { new Excel.ExcelSymbolDump().ExportToExcel(symbol); });

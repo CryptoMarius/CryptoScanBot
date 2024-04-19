@@ -7,6 +7,7 @@ public enum Command
     ActivateTradingviewIntern,
     ActivateTradingviewExtern,
     ShowTrendInformation,
+    ExcelSignalInformation,
     ExcelSymbolInformation,
     ExcelExchangeInformation,
     ExcelPositionInformation,
