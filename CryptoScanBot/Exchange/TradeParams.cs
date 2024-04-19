@@ -4,6 +4,7 @@ namespace CryptoScanBot.Exchange;
 
 public class TradeParams
 {
+    public CryptoPartPurpose Purpose { get; set; }
     public CryptoOrderSide OrderSide { get; set; }
     public CryptoOrderType OrderType { get; set; }
     public string OrderId { get; set; }

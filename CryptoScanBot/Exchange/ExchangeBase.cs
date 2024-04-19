@@ -27,9 +27,9 @@ public abstract class ExchangeBase
     public abstract Task<int> GetTradesAsync(CryptoDatabase database, CryptoPosition position);
     public abstract Task<int> GetOrdersAsync(CryptoDatabase database, CryptoPosition position);
 
-    public abstract Task<(bool succes, TradeParams tradeParams)> Cancel(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoPositionStep step);
-    public abstract Task<(bool result, TradeParams tradeParams)> PlaceOrder(CryptoDatabase database, 
-        CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoTradeSide tradeSide, DateTime currentDate,
+    public abstract Task<(bool succes, TradeParams tradeParams)> Cancel(CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step);
+    public abstract Task<(bool result, TradeParams tradeParams)> PlaceOrder(CryptoDatabase database,
+        CryptoPosition position, CryptoPositionPart part, CryptoTradeSide tradeSide, DateTime currentDate,
         CryptoOrderType orderType, CryptoOrderSide orderSide,
         decimal quantity, decimal price, decimal? stop, decimal? limit);
 
@@ -41,8 +41,9 @@ public abstract class ExchangeBase
             builder.Append($" {extraText}");
         if (tradeParams != null)
         {
-            builder.Append($" {tradeParams.OrderSide}");
-            builder.Append($" {tradeParams.OrderType}");
+            builder.Append($" {tradeParams.Purpose.ToString().ToLower()}");
+            builder.Append($" {tradeParams.OrderSide.ToString().ToLower()}");
+            builder.Append($" {tradeParams.OrderType.ToString().ToLower()}");
             builder.Append($" order={tradeParams.OrderId}");
             builder.Append($" price={tradeParams.Price.ToString0()}");
             if (tradeParams.StopPrice.HasValue)

@@ -155,7 +155,7 @@ public class Api : ExchangeBase
 
 
     public override async Task<(bool result, TradeParams tradeParams)> PlaceOrder(CryptoDatabase database,
-        CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoTradeSide tradeSide, DateTime currentDate,
+        CryptoPosition position, CryptoPositionPart part, CryptoTradeSide tradeSide, DateTime currentDate,
         CryptoOrderType orderType, CryptoOrderSide orderSide,
         decimal quantity, decimal price, decimal? stop, decimal? limit)
     {
@@ -166,14 +166,15 @@ public class Api : ExchangeBase
 
 
         // Controleer de limiten van de maximum en minimum bedrag en de quantity
-        if (!symbol.InsideBoundaries(quantity, price, out string text))
+        if (!position.Symbol.InsideBoundaries(quantity, price, out string text))
         {
-            GlobalData.AddTextToLogTab($"{symbol.Name} {text} (debug={price} {quantity})");
+            GlobalData.AddTextToLogTab($"{position.Symbol.Name} {text} (debug={price} {quantity})");
             return (false, null);
         }
 
         TradeParams tradeParams = new()
         {
+            Purpose = part.Purpose,
             CreateTime = currentDate,
             OrderSide = orderSide,
             OrderType = orderType,
@@ -186,7 +187,7 @@ public class Api : ExchangeBase
         };
         if (orderType == CryptoOrderType.StopLimit)
             tradeParams.QuoteQuantity = (decimal)tradeParams.StopPrice * tradeParams.Quantity;
-        if (tradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
+        if (position.TradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
         {
             tradeParams.OrderId = database.CreateNewUniqueId();
             return (true, tradeParams);
@@ -212,7 +213,7 @@ public class Api : ExchangeBase
                 {
                     // JA, price * quantity omdat dat blijkbaar zo moet, zie voorbeeld (onderin)
                     // https://bybit-exchange.github.io/docs/v5/order/create-order
-                    result = await client.V5Api.Trading.PlaceOrderAsync(Category, symbol.Name, side,
+                    result = await client.V5Api.Trading.PlaceOrderAsync(Category, position.Symbol.Name, side,
                         NewOrderType.Market, price * quantity, timeInForce: TimeInForce.GoodTillCanceled, isLeverage: false);
                     if (!result.Success)
                     {
@@ -228,7 +229,7 @@ public class Api : ExchangeBase
                 }
             case CryptoOrderType.Limit:
                 {
-                    result = await client.V5Api.Trading.PlaceOrderAsync(Category, symbol.Name, side,
+                    result = await client.V5Api.Trading.PlaceOrderAsync(Category, position.Symbol.Name, side,
                     NewOrderType.Limit, quantity: quantity, price: price, timeInForce: TimeInForce.GoodTillCanceled, isLeverage: false);
                     if (!result.Success)
                     {
@@ -279,12 +280,13 @@ public class Api : ExchangeBase
     }
 
 
-    public override async Task<(bool succes, TradeParams tradeParams)> Cancel(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoPositionStep step)
+    public override async Task<(bool succes, TradeParams tradeParams)> Cancel(CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step)
     {
         //ScannerLog.Logger.Trace($"Exchange.BybitSpot.Cancel {symbol.Name}");
         // Order gegevens overnemen (enkel voor een eventuele error dump)
         TradeParams tradeParams = new()
         {
+            Purpose = part.Purpose,
             CreateTime = step.CreateTime,
             OrderSide = step.Side,
             OrderType = step.OrderType,
@@ -300,7 +302,7 @@ public class Api : ExchangeBase
         if (step.OrderType == CryptoOrderType.StopLimit)
             tradeParams.QuoteQuantity = (decimal)tradeParams.StopPrice * tradeParams.Quantity;
 
-        if (tradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
+        if (position.TradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
             return (true, tradeParams);
 
 
@@ -309,7 +311,7 @@ public class Api : ExchangeBase
         {
             // BinanceWeights.WaitForFairBinanceWeight(1); flauwekul
             using var client = new BybitRestClient();
-            var result = await client.V5Api.Trading.CancelOrderAsync(Category, symbol.Name, step.OrderId.ToString());
+            var result = await client.V5Api.Trading.CancelOrderAsync(Category, position.Symbol.Name, step.OrderId.ToString());
             if (!result.Success)
             {
                 tradeParams.Error = result.Error;

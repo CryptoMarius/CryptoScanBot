@@ -57,7 +57,7 @@ public static class TradingRules
                                 if (!pause.Until.HasValue || pauseUntilDate > pause.Until)
                                 {
                                     pause.Until = pauseUntilDate;
-                                    pause.Text = $"{rule.Symbol} {index} heeft {percentage:N2}% bewogen (gepauseerd tot {pauseUntilDate.ToLocalTime()})";
+                                    pause.Text = $"{symbol.Name} #{index} price={symbol.LastPrice.ToString0()} heeft {percentage:N2}% bewogen (gepauseerd tot {pauseUntilDate.ToLocalTime()})";
                                     GlobalData.AddTextToLogTab(GlobalData.PauseTrading.Text);
                                     GlobalData.AddTextToTelegram(GlobalData.PauseTrading.Text);
                                 }

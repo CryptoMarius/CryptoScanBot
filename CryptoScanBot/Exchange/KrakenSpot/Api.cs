@@ -104,19 +104,20 @@ public class Api : ExchangeBase
 
 
     public override async Task<(bool result, TradeParams tradeParams)> PlaceOrder(CryptoDatabase database,
-        CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoTradeSide tradeSide, DateTime currentDate,
+        CryptoPosition position, CryptoPositionPart part, CryptoTradeSide tradeSide, DateTime currentDate,
         CryptoOrderType orderType, CryptoOrderSide orderSide,
         decimal quantity, decimal price, decimal? stop, decimal? limit)
     {
         // Controleer de limiten van de maximum en minimum bedrag en de quantity
-        if (!symbol.InsideBoundaries(quantity, price, out string text))
+        if (!position.Symbol.InsideBoundaries(quantity, price, out string text))
         {
-            GlobalData.AddTextToLogTab(string.Format("{0} {1} (debug={2} {3})", symbol.Name, text, price, quantity));
+            GlobalData.AddTextToLogTab(string.Format("{0} {1} (debug={2} {3})", position.Symbol.Name, text, price, quantity));
             return (false, null);
         }
 
         TradeParams tradeParams = new()
         {
+            Purpose = part.Purpose,
             CreateTime = currentDate,
             OrderSide = orderSide,
             OrderType = orderType,
@@ -129,7 +130,7 @@ public class Api : ExchangeBase
         };
         if (orderType == CryptoOrderType.StopLimit)
             tradeParams.QuoteQuantity = (decimal)tradeParams.StopPrice * tradeParams.Quantity;
-        if (tradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
+        if (position.TradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
         {
             tradeParams.OrderId = database.CreateNewUniqueId();
             return (true, tradeParams);
@@ -152,7 +153,7 @@ public class Api : ExchangeBase
         {
             case CryptoOrderType.Market:
                 {
-                    result = await client.SpotApi.Trading.PlaceOrderAsync(symbol.Name, side,
+                    result = await client.SpotApi.Trading.PlaceOrderAsync(position.Symbol.Name, side,
                         OrderType.Market, quantity);
                     if (!result.Success)
                     {
@@ -168,7 +169,7 @@ public class Api : ExchangeBase
                 }
             case CryptoOrderType.Limit:
                 {
-                    result = await client.SpotApi.Trading.PlaceOrderAsync(symbol.Name, side,
+                    result = await client.SpotApi.Trading.PlaceOrderAsync(position.Symbol.Name, side,
                     OrderType.Limit, quantity, price: price, timeInForce: TimeInForce.GTC);
                     if (!result.Success)
                     {
@@ -219,11 +220,12 @@ public class Api : ExchangeBase
     }
 
 
-    public override async Task<(bool succes, TradeParams tradeParams)> Cancel(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoPositionStep step)
+    public override async Task<(bool succes, TradeParams tradeParams)> Cancel(CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step)
     {
         // Order gegevens overnemen (enkel voor een eventuele error dump)
         TradeParams tradeParams = new()
-        {
+        { 
+            Purpose = part.Purpose,
             CreateTime = step.CreateTime,
             OrderSide = step.Side,
             OrderType = step.OrderType,
@@ -239,7 +241,7 @@ public class Api : ExchangeBase
         if (step.OrderType == CryptoOrderType.StopLimit)
             tradeParams.QuoteQuantity = (decimal)tradeParams.StopPrice * tradeParams.Quantity;
 
-        if (tradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
+        if (position.TradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
             return (true, tradeParams);
 
 
@@ -248,7 +250,7 @@ public class Api : ExchangeBase
         {
             // BinanceWeights.WaitForFairBinanceWeight(1); flauwekul
             using var client = new KrakenRestClient();
-            var result = await client.SpotApi.Trading.CancelOrderAsync(symbol.Name, step.OrderId.ToString());
+            var result = await client.SpotApi.Trading.CancelOrderAsync(position.Symbol.Name, step.OrderId.ToString());
             if (!result.Success)
             {
                 tradeParams.Error = result.Error;

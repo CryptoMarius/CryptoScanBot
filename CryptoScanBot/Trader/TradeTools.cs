@@ -435,7 +435,7 @@ public class TradeTools
                             // Geen melding geven bij afgesloten orders
                             if (!isOrderClosed)
                             {
-                                s = $"handletrade#7 {position.Symbol.Name} {msgInfo} user takeover? position.status={position.Status}";
+                                s = $"{position.Symbol.Name} {msgInfo} user takeover";
                                 GlobalData.AddTextToLogTab(s);
                                 GlobalData.AddTextToTelegram(s, position);
                             }
@@ -445,7 +445,7 @@ public class TradeTools
                     else if (order.Status.IsFilled())
                     {
                         ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} check {order.OrderId} -> IsFilled");
-                        s = $"handletrade {position.Symbol.Name} {msgInfo}";
+                        s = $"{position.Symbol.Name} {msgInfo}";
 
                         // Statistics entry or take profit order.
                         step.CloseTime = order.UpdateTime;
@@ -485,7 +485,8 @@ public class TradeTools
                         //if (order.Status == CryptoOrderStatus.PartiallyAndClosed)
                         //    step.Quantity = order.Quantity;
 
-                        // Can't be cancelled anymore if its filled
+                        // Fix, it cannot be status=cancelled anymore if it was filled...
+                        // (doubt if this will happen, but it did in the past <timing>)
                         if (step.Status > CryptoOrderStatus.Canceled)
                             step.Status = CryptoOrderStatus.Filled;
 
@@ -667,7 +668,7 @@ public class TradeTools
         CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step, 
         DateTime currentTime, CryptoOrderStatus newStatus, string cancelReason)
     {
-        ScannerLog.Logger.Trace($"{position.Symbol.Name} annuleren dca order {step.OrderId} {cancelReason}");
+        ScannerLog.Logger.Trace($"{position.Symbol.Name} {part.Purpose} cancelling {step.Side} {step.OrderType} order={step.OrderId} {cancelReason}");
 
         position.UpdateTime = currentTime;
         database.Connection.Update<CryptoPosition>(position);
@@ -678,7 +679,7 @@ public class TradeTools
 
         // Annuleer de order
         var exchangeApi = ExchangeHelper.GetExchangeInstance(GlobalData.Settings.General.ExchangeId);
-        var result = await exchangeApi.Cancel(position.TradeAccount, position.Symbol, step);
+        var result = await exchangeApi.Cancel(position, part, step);
         if (result.succes)
         {
             step.Status = newStatus;
@@ -698,42 +699,73 @@ public class TradeTools
     static public async Task PlaceTakeProfitOrderAtPrice(CryptoDatabase database, CryptoPosition position, CryptoPositionPart part,
         decimal takeProfitPrice, DateTime currentTime, string extraText)
     {
+        CryptoSymbol symbol = position.Symbol;
+
         // Probleem? Wat als het plaatsen van eem order fout gaat? (hoe vangen we de fout op en hoe herstellen we dat?
         // Binance is een bitch af en toe!). Met name Binance wilde na het annuleren wel eens de assets niet
         // vrijgeven waardoor de assets/pf niet snel genoeg bijgewerkt werd en de volgende opdracht dan de fout
         // in zou kunnen gaan. Geld voor alles wat we in deze tool doen, qua buy en sell gaat de herkansing wel 
         // goed, ook al zal je dan soms een repeterende fout voorbij zien komen (iedere minuut)
 
-        // Bevat niet de laatste informatie (vanwege het annuleren)
-        decimal freeBaseAsset = 0;
-        decimal totalBaseAsset = 0;
-        position.TradeAccount.AssetListSemaphore.Wait();
-        try
+
+//EXPERIMENT...
+
+        // Get available assets from the exchange (as late as possible because of webcall)
+        var resultFetchAssets = await AssetTools.FetchAssetsAsync(position.TradeAccount, true);
+        if (!resultFetchAssets.success)
         {
-            if (position.TradeAccount.AssetList.TryGetValue(position.Symbol.Base, out CryptoAsset asset))
-            {
-                freeBaseAsset = asset.Free;
-                totalBaseAsset = asset.Total;
-            }
+            GlobalData.AddTextToLogTab($"{position.Symbol.Name} {resultFetchAssets.reaction}");
+            return;
         }
-        finally
+
+        // Get asset amounts
+        var info = AssetTools.GetAsset(position.TradeAccount, symbol);
+        if (info.QuoteTotal <= 0)
         {
-            position.TradeAccount.AssetListSemaphore.Release();
+            GlobalData.AddTextToLogTab($"No assets available for {symbol.Quote}");
+            return;
         }
+
+
+        // tp quantity
+        decimal entryBase = position.Quantity;
+
+        // debug of we de dust erbij kunnen tellen? ;-)
+        StringBuilder stringBuilder = new();
+        stringBuilder.AppendLine($"");
+        stringBuilder.AppendLine($"Symbol = {symbol.Name}");
+        stringBuilder.AppendLine($"position.Quantity = {entryBase}");
+        stringBuilder.AppendLine($"info.BaseFree = {info.BaseFree}");
+        stringBuilder.AppendLine($"info.BaseTotal = {info.BaseTotal}");
+        stringBuilder.AppendLine($"info.QuoteFree = {info.QuoteFree}");
+        stringBuilder.AppendLine($"info.QuoteTotal = {info.QuoteTotal}");
+
+        decimal takeProfitQuantityNew = 0;
+        decimal dust = info.BaseFree - position.Quantity;
+        stringBuilder.AppendLine($"can we add quantity={dust} value={dust * position.Symbol.LastPrice}?");
+        if (dust > 0 && dust * symbol.LastPrice < 1.0m)
+        {
+            stringBuilder.AppendLine($"yes we can");
+
+            takeProfitQuantityNew = info.BaseFree;
+            takeProfitQuantityNew = takeProfitQuantityNew.Clamp(symbol.QuantityMinimum, symbol.QuantityMaximum, symbol.QuantityTickSize);
+            stringBuilder.AppendLine($"new rounded quantity={takeProfitQuantityNew} value={takeProfitQuantityNew * symbol.LastPrice}...");
+        }
+        GlobalData.AddTextToLogTab(stringBuilder.ToString());
+
+//EXPERIMENT...
+
 
         decimal takeProfitQuantityOriginal = position.Quantity;
 
-        decimal takeProfitQuantity = position.Quantity;
+        decimal takeProfitQuantity = position.Quantity; // + addExtraQuantity;
         takeProfitQuantity = takeProfitQuantity.Clamp(position.Symbol.QuantityMinimum, position.Symbol.QuantityMaximum, position.Symbol.QuantityTickSize);
+        // pas op, straks negatieve dust (met die addExtraQuantity)..
         decimal expectedDust = takeProfitQuantityOriginal - takeProfitQuantity;
-        string text = $"{position.Symbol.Name} quantity={position.Quantity}, rounded={takeProfitQuantity}, expected dust = {expectedDust} free={freeBaseAsset} total={totalBaseAsset}";
+        string text = $"{position.Symbol.Name} quantity={position.Quantity}, rounded={takeProfitQuantity}, expected dust = {expectedDust} free={info.BaseFree} total={info.BaseTotal}";
         GlobalData.AddTextToLogTab(text);
 
-        // tijdelijke fix omdat ik de dust al verkocht heb......
-        //if (position.Id == 228) // && position.Symbol.Name.Equals("AAVEUSDT"))
-        //    takeProfitQuantity = 0.902m;
-        //if (position.Id == 130) // && position.Symbol.Name.Equals("BOBAUSDT"))
-        //    takeProfitQuantity = ?m;
+
 
         //if (freeBaseAsset > 0 && position.Symbol.LastPrice * freeBaseAsset < 1.01m)
         //{
@@ -754,8 +786,7 @@ public class TradeTools
 
         (bool result, TradeParams tradeParams) result;
         var exchangeApi = ExchangeHelper.GetExchangeInstance(GlobalData.Settings.General.ExchangeId);
-        result = await exchangeApi.PlaceOrder(database,
-            position.TradeAccount, position.Symbol, position.Side, currentTime,
+        result = await exchangeApi.PlaceOrder(database, position, part, position.Side, currentTime,
             CryptoOrderType.Limit, takeProfitOrderSide, takeProfitQuantity, takeProfitPrice, null, null);
 
         if (result.result)

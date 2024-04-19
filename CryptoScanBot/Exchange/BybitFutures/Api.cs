@@ -161,19 +161,20 @@ public class Api : ExchangeBase
 
 
     public override async Task<(bool result, TradeParams tradeParams)> PlaceOrder(CryptoDatabase database,
-        CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoTradeSide tradeSide, DateTime currentDate,
+        CryptoPosition position, CryptoPositionPart part, CryptoTradeSide tradeSide, DateTime currentDate,
         CryptoOrderType orderType, CryptoOrderSide orderSide,
         decimal quantity, decimal price, decimal? stop, decimal? limit)
     {
         // Controleer de limiten van de maximum en minimum bedrag en de quantity
-        if (!symbol.InsideBoundaries(quantity, price, out string text))
+        if (!position.Symbol.InsideBoundaries(quantity, price, out string text))
         {
-            GlobalData.AddTextToLogTab(string.Format("{0} {1} (debug={2} {3})", symbol.Name, text, price, quantity));
+            GlobalData.AddTextToLogTab(string.Format("{0} {1} (debug={2} {3})", position.Symbol.Name, text, price, quantity));
             return (false, null);
         }
 
         TradeParams tradeParams = new()
         {
+            Purpose = part.Purpose,
             CreateTime = currentDate,
             OrderSide = orderSide,
             OrderType = orderType,
@@ -186,7 +187,7 @@ public class Api : ExchangeBase
         };
         if (orderType == CryptoOrderType.StopLimit)
             tradeParams.QuoteQuantity = (decimal)tradeParams.StopPrice * tradeParams.Quantity;
-        if (tradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
+        if (position.TradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
         {
             tradeParams.OrderId = database.CreateNewUniqueId();
             return (true, tradeParams);
@@ -204,13 +205,13 @@ public class Api : ExchangeBase
 
         // Plaats een order op de exchange *ze lijken op elkaar, maar het is net elke keer anders)
         using BybitRestClient client = new();
-        if (!await DoSwitchCrossIsolatedMarginAsync(client, symbol))
+        if (!await DoSwitchCrossIsolatedMarginAsync(client, position.Symbol))
         {
             // Herhaal
-            if (!await DoSwitchCrossIsolatedMarginAsync(client, symbol))
+            if (!await DoSwitchCrossIsolatedMarginAsync(client, position.Symbol))
             {
                 // Herhaal
-                if (!await DoSwitchCrossIsolatedMarginAsync(client, symbol))
+                if (!await DoSwitchCrossIsolatedMarginAsync(client, position.Symbol))
                     return (false, null); // raise? throw?
             }
         }
@@ -223,7 +224,7 @@ public class Api : ExchangeBase
                 {
                     // JA, price * quantity omdat dat blijkbaar zo moet, zie voorbeeld (onderin)
                     // https://bybit-exchange.github.io/docs/v5/order/create-order
-                    result = await client.V5Api.Trading.PlaceOrderAsync(Category, symbol.Name, side,
+                    result = await client.V5Api.Trading.PlaceOrderAsync(Category, position.Symbol.Name, side,
                         NewOrderType.Market, quantity: quantity, price: null, timeInForce: TimeInForce.GoodTillCanceled, isLeverage: false);
                     if (!result.Success)
                     {
@@ -246,7 +247,7 @@ public class Api : ExchangeBase
                     if (tradeSide == CryptoTradeSide.Short && orderSide == CryptoOrderSide.Buy)
                         reduce = true;
 
-                    result = await client.V5Api.Trading.PlaceOrderAsync(Category, symbol.Name, side, 
+                    result = await client.V5Api.Trading.PlaceOrderAsync(Category, position.Symbol.Name, side, 
                         NewOrderType.Limit, quantity: quantity, price: price, timeInForce: TimeInForce.GoodTillCanceled, isLeverage: false, reduceOnly: reduce);
                     if (!result.Success)
                     {
@@ -297,11 +298,12 @@ public class Api : ExchangeBase
     }
 
 
-    public override async Task<(bool succes, TradeParams tradeParams)> Cancel(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoPositionStep step)
+    public override async Task<(bool succes, TradeParams tradeParams)> Cancel(CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step)
     {
         // Order gegevens overnemen (enkel voor een eventuele error dump)
         TradeParams tradeParams = new()
         {
+            Purpose = part.Purpose,
             CreateTime = step.CreateTime,
             OrderSide = step.Side,
             OrderType = step.OrderType,
@@ -317,7 +319,7 @@ public class Api : ExchangeBase
         if (step.OrderType == CryptoOrderType.StopLimit)
             tradeParams.QuoteQuantity = (decimal)tradeParams.StopPrice * tradeParams.Quantity;
 
-        if (tradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
+        if (position.TradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
             return (true, tradeParams);
 
 
@@ -326,7 +328,7 @@ public class Api : ExchangeBase
         {
             // BinanceWeights.WaitForFairBinanceWeight(1); flauwekul
             using var client = new BybitRestClient();
-            var result = await client.V5Api.Trading.CancelOrderAsync(Category, symbol.Name, step.OrderId.ToString());
+            var result = await client.V5Api.Trading.CancelOrderAsync(Category, position.Symbol.Name, step.OrderId.ToString());
             if (!result.Success)
             {
                 tradeParams.Error = result.Error;
