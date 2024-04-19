@@ -1,6 +1,7 @@
 ﻿using CryptoScanBot.Enums;
 using CryptoScanBot.Intern;
 using CryptoScanBot.Model;
+using CryptoScanBot.Signal.Momentum;
 
 namespace CryptoScanBot.Signal;
 

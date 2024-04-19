@@ -1,5 +1,8 @@
 ﻿using CryptoScanBot.Enums;
 using CryptoScanBot.Model;
+using CryptoScanBot.Signal.Momentum;
+using CryptoScanBot.Signal.Other;
+using CryptoScanBot.Signal.Slope;
 
 namespace CryptoScanBot.Signal;
 
@@ -232,6 +235,19 @@ public static class SignalHelper
             AnalyzeShortType = typeof(SignalSlopeSma50Short),
         });
 
+#endif
+
+#if EXTRASTRATEGIESSLOPEKELTNER
+        //***************************************************
+        // Slope Keltner
+        //***************************************************
+        AlgorithmDefinitionList.Add(new AlgorithmDefinition()
+        {
+            Name = "keltner slope",
+            Strategy = CryptoSignalStrategy.SlopeKeltner,
+            AnalyzeLongType = typeof(SignalSlopeKeltnerLong),
+            AnalyzeShortType = typeof(SignalSlopeKeltnerShort),
+        });
 #endif
 
         // En de lijst eenmalig indexeren
