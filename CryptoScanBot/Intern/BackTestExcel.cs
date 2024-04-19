@@ -1,7 +1,7 @@
 ﻿using CryptoScanBot.Enums;
 using CryptoScanBot.Model;
 using CryptoScanBot.Signal;
-
+using CryptoScanBot.Signal.Momentum;
 using NPOI.HPSF;
 using NPOI.HSSF.UserModel;
 using NPOI.SS.UserModel;

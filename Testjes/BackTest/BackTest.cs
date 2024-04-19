@@ -397,7 +397,7 @@ public class BackTest
         }
 
         // in 1x alle indicators berekenen (eenmalig)
-        CalculateAllIndicatorsViaSkender(Candles.Values.ToList());
+        CalculateAllIndicatorsViaSkender([.. Candles.Values]);
         //CalculateAllIndicatorsViaSkender(Candles1m.Values.ToList()); // wordt verder niet gebruikt
         //CalculateAllIndicatorsViaTaLib(Candles.Values.ToList());
 

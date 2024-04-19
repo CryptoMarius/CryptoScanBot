@@ -73,6 +73,8 @@ public class CandleIndicatorData
 
     public double? KeltnerUpperBand { get; set; }
     public double? KeltnerLowerBand { get; set; }
+    public double? KeltnerCenterLine { get; set; }
+    public double? KeltnerCenterLineSlope { get; set; }
 
     // Voor de SMA lookback willen we 60 sma200's erin, dus 200 + 60
     private const int maxCandles = 260;
@@ -231,7 +233,7 @@ public class CandleIndicatorData
     /// <summary>
     /// Calculate all the indicators we want to have an fill in the last 60 candles
     /// </summary>
-    public static void CalculateIndicators(List<CryptoCandle> history)
+    public static void CalculateIndicators(List<CryptoCandle> history, int fillMax = 61)
     {
         // Overslaan indien het gevuld is (meerdere aanroepen)
         CryptoCandle candle = history.Last();
@@ -266,6 +268,7 @@ public class CandleIndicatorData
 
         // Berekend vanuit de EMA 20 en de upper en lowerband ontstaat uit 2x de ATR
         List<KeltnerResult> keltnerList = (List<KeltnerResult>)Indicator.GetKeltner(history, 20, 1);
+        List<SlopeResult> keltnerSlopeList = keltnerList.GetSlope(3);
 
         //List<AtrResult> atrList = (List<AtrResult>)Indicator.GetAtr(history);
         List<RsiResult> rsiList = (List<RsiResult>)history.GetRsi();
@@ -322,7 +325,7 @@ public class CandleIndicatorData
         {
             // Maximaal 60 records aanvullen
             iteration++;
-            if (iteration > 61)
+            if (iteration > fillMax)
                 break;
 
 
@@ -391,7 +394,9 @@ public class CandleIndicatorData
 #endif
                 candleData.KeltnerUpperBand = keltnerList[index].UpperBand;
                 candleData.KeltnerLowerBand = keltnerList[index].LowerBand;
-}
+                candleData.KeltnerCenterLine = keltnerList[index].Centerline;
+                candleData.KeltnerCenterLineSlope = keltnerSlopeList[index].Slope;
+            }
             catch (Exception error)
             {
                 // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
@@ -482,5 +487,107 @@ public class CandleIndicatorData
         reaction = "";
         return true;
     }
+}
 
+
+public static class KeltnerHelper
+{
+    // parameter validation
+    private static void ValidateSlope(int lookbackPeriods)
+    {
+        // check parameter arguments
+        if (lookbackPeriods <= 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(lookbackPeriods), lookbackPeriods,
+                "Lookback periods must be greater than 1 for Slope/Linear Regression.");
+        }
+    }
+
+    // calculate series
+    internal static List<SlopeResult> GetSlope(this List<KeltnerResult> tpList, int lookbackPeriods)
+    {
+        // check parameter arguments
+        ValidateSlope(lookbackPeriods);
+
+        // initialize
+        int length = tpList.Count;
+        List<SlopeResult> results = new(length);
+
+        // roll through quotes
+        for (int i = 0; i < length; i++)
+        {
+            KeltnerResult x = tpList[i];
+
+            SlopeResult r = new(x.Date);
+            results.Add(r);
+
+            // skip initialization period
+            if (i + 1 < lookbackPeriods)
+            {
+                continue;
+            }
+
+            // get averages for period
+            double sumX = 0;
+            double sumY = 0;
+
+            for (int p = i - lookbackPeriods + 1; p <= i; p++)
+            {
+                KeltnerResult x2 = tpList[p];
+
+                sumX += p + 1d;
+                if (x2.Centerline.HasValue)
+                    sumY += (double)x2.Centerline;
+            }
+
+            double avgX = sumX / lookbackPeriods;
+            double avgY = sumY / lookbackPeriods;
+
+            // least squares method
+            double sumSqX = 0;
+            double sumSqY = 0;
+            double sumSqXY = 0;
+
+            for (int p = i - lookbackPeriods + 1; p <= i; p++)
+            {
+                KeltnerResult x3 = tpList[p];
+
+                double devX = p + 1d - avgX;
+                double devY = 0;
+                if (x3.Centerline.HasValue)
+                    devY = (double)x3.Centerline - avgY;
+
+                sumSqX += devX * devX;
+                sumSqY += devY * devY;
+                sumSqXY += devX * devY;
+            }
+
+            r.Slope = (sumSqXY / sumSqX).NaN2Null();
+            r.Intercept = (avgY - (r.Slope * avgX)).NaN2Null();
+
+            // calculate Standard Deviation and R-Squared
+            double stdDevX = Math.Sqrt(sumSqX / lookbackPeriods);
+            double stdDevY = Math.Sqrt(sumSqY / lookbackPeriods);
+            r.StdDev = stdDevY.NaN2Null();
+
+            if (stdDevX * stdDevY != 0)
+            {
+                double arrr = sumSqXY / (stdDevX * stdDevY) / lookbackPeriods;
+                r.RSquared = (arrr * arrr).NaN2Null();
+            }
+        }
+
+        // add last Line (y = mx + b)
+        if (length >= lookbackPeriods)
+        {
+            SlopeResult last = results.LastOrDefault();
+            for (int p = length - lookbackPeriods; p < length; p++)
+            {
+                SlopeResult d = results[p];
+                d.Line = (decimal?)((last?.Slope * (p + 1)) + last?.Intercept).NaN2Null();
+            }
+        }
+
+        return results;
+    }
 }

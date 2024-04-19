@@ -138,7 +138,7 @@ public class ThreadCheckFinishedPosition
                         {
                             if (step.Status == CryptoOrderStatus.New && step.Side == entryOrderSide)
                             {
-                                string cancelReason = $"{position.Symbol.Name} annuleren openstaande dca order";
+                                string cancelReason = $"annuleren";
                                 ScannerLog.Logger.Trace($"ThreadDoubleCheckPosition.Execute: {cancelReason}");
                                 var (succes, tradeParams) = await TradeTools.CancelOrder(database, position, part, step,
                                     DateTime.UtcNow, CryptoOrderStatus.PositionClosed, cancelReason);

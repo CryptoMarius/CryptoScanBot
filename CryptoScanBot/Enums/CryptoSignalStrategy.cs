@@ -26,6 +26,9 @@ public enum CryptoSignalStrategy // CryptoStrategy
     SlopeSma20,
     SlopeSma50,
 #endif
+#if EXTRASTRATEGIESSLOPEKELTNER
+    SlopeKeltner,
+#endif
 #if EXTRASTRATEGIES
     MacdLt, // Vervallen, opgepikt uit de groep van Marco (een ziens of dit inderdaad werkt)
     MacdTest, // Vervallen, Nieuw idee maar dat bevalt  niet

@@ -830,8 +830,10 @@ public partial class Form1 : Form
             //await Task.WhenAll(taskList).ConfigureAwait(false);
 
             // Werkt zoals ik het verwacht! een buy order van ongeveer 1.6 dollar
+            CryptoPosition position = null;
+            CryptoPositionPart part = null;
             var exchangeApi = ExchangeHelper.GetExchangeInstance(GlobalData.Settings.General.ExchangeId);
-            var (result, tradeParams) = await exchangeApi.PlaceOrder(null, GlobalData.ExchangeRealTradeAccount, symbol, CryptoTradeSide.Long, DateTime.Now, 
+            var (result, tradeParams) = await exchangeApi.PlaceOrder(null, position, part, CryptoTradeSide.Long, DateTime.Now, 
                 CryptoOrderType.Limit, CryptoOrderSide.Buy, 52, 0.2276m, null, null);
 
 
