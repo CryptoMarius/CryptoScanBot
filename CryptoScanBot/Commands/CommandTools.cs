@@ -91,7 +91,7 @@ public class CommandTools
 
             case Command.ExcelExchangeInformation:
                 // Die valt qua parameters buiten de boot
-                _ = Task.Run(() => { new Excel.ExcelExchangeDump().ExportToExcel(GlobalData.Settings.General.Exchange); });
+                _ = Task.Run(() => { new Core.Excel.ExcelExchangeDump().ExportToExcel(GlobalData.Settings.General.Exchange); });
                 return;
 
             case Command.ScannerSessionDebug:
@@ -129,10 +129,10 @@ public class CommandTools
                     new CommandShowTrendInfo().Execute(symbol);
                     break;
                 case Command.ExcelSignalInformation:
-                    _ = Task.Run(() => { new Excel.ExcelSignalDump().ExportToExcel(signal); });
+                    _ = Task.Run(() => { new Core.Excel.ExcelSignalDump().ExportToExcel(signal); });
                     break;
                 case Command.ExcelSymbolInformation:
-                    _ = Task.Run(() => { new Excel.ExcelSymbolDump().ExportToExcel(symbol); });
+                    _ = Task.Run(() => { new Core.Excel.ExcelSymbolDump().ExportToExcel(symbol); });
                     break;
 #if TRADEBOT
                 case Command.PositionCalculate:
@@ -157,7 +157,7 @@ public class CommandTools
                         }
                         GlobalData.AddTextToLogTab($"{position.Symbol.Name} positie {position.Id} herberekenen voor Excel");
                         await TradeTools.CalculatePositionResultsViaOrders(databaseThread, position, forceCalculation: true);
-                        _ = Task.Run(() => { new Excel.ExcelPositionDump().ExportToExcel(position); });
+                        _ = Task.Run(() => { new Core.Excel.ExcelPositionDump().ExportToExcel(position); });
                     }
                     break;
 #endif

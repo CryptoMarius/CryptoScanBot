@@ -5,7 +5,7 @@ using NPOI.HSSF.UserModel;
 using NPOI.SS.UserModel;
 
 
-namespace CryptoScanBot.Excel;
+namespace CryptoScanBot.Core.Excel;
 
 public class ExcelExchangeDump : ExcelBase
 {
