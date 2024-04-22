@@ -633,7 +633,7 @@ public partial class DashBoardInformation : UserControl
                     symbol = GlobalData.Settings.ShowSymbolInformation[2];
                     ShowSymbolPrice(SymbolHistList[2], InformationRowList[2], exchange, quoteData, symbol, "Scanner analyse count", text);
 
-                    text = GlobalData.createdSignalCount.ToString("N0");
+                    text = GlobalData.CreatedSignalCount.ToString("N0");
                     symbol = GlobalData.Settings.ShowSymbolInformation[3];
                     ShowSymbolPrice(SymbolHistList[3], InformationRowList[3], exchange, quoteData, symbol, "Scanner signal count", text);
 

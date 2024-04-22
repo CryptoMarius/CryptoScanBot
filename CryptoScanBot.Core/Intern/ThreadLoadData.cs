@@ -6,10 +6,8 @@ using CryptoScanBot.Core.Trader;
 using CryptoScanBot.Core.TradingView;
 
 using Dapper;
-using Dapper.Contrib.Extensions;
 
 using System.Reflection;
-using System.Text;
 
 namespace CryptoScanBot.Core.Intern;
 

@@ -11,7 +11,7 @@ public class CryptoInterval
     /// <summary>
     /// Interval name 
     /// </summary>
-    public string Name { get; set; }
+    public required string Name { get; set; }
 
     /// <summary>
     /// Interval enumeration
@@ -28,10 +28,10 @@ public class CryptoInterval
     /// </summary>
     public int? ConstructFromId { get; set; }
     [Computed]
-    public virtual CryptoInterval ConstructFrom { get; set; }
+    public virtual CryptoInterval? ConstructFrom { get; set; }
 
 
-    public static CryptoInterval CreateInterval(CryptoIntervalPeriod intervalPeriod, string name, long duration, CryptoInterval constructFrom)
+    public static CryptoInterval CreateInterval(CryptoIntervalPeriod intervalPeriod, string name, long duration, CryptoInterval? constructFrom)
     {
         CryptoInterval cryptoInterval = new()
         {

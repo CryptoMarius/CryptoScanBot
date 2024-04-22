@@ -41,106 +41,106 @@ public class BarometerData
 
 static public class GlobalData
 {
-    static public string AppName { get; set; } = "CryptoScanBot";
+    public static string AppName { get; set; } = "CryptoScanBot";
 
-    static public bool ApplicationIsShowed { get; set; } = false;
-    static public bool ApplicationIsClosing { get; set; } = false;
+    public static bool ApplicationIsShowed { get; set; } = false;
+    public static bool ApplicationIsClosing { get; set; } = false;
 
     // Emulator kan alleen de backTest zetten (anders gaan er onverwachte zaken naar de database enzo)
-    static public bool BackTest { get; set; }
+    public static bool BackTest { get; set; }
 
-    static public CryptoApplicationStatus ApplicationStatus { get; set; } = CryptoApplicationStatus.Initializing;
+    public static CryptoApplicationStatus ApplicationStatus { get; set; } = CryptoApplicationStatus.Initializing;
 
-    static public int createdSignalCount = 0; // Tellertje met het aantal meldingen (komt in de taakbalk c.q. applicatie titel)
+    public static int CreatedSignalCount { get; set; } // Tellertje met het aantal meldingen (komt in de taakbalk c.q. applicatie titel)
 
     /// <summary>
     /// Alle instellingen van de scanner/trader
     /// </summary>
-    static public SettingsBasic Settings { get; set; } = new();
+    public static SettingsBasic Settings { get; set; } = new();
 
     /// <summary>
     /// API gerelateerde instellingen
     /// </summary>
-    static public SettingsExchangeApi TradingApi { get; set; } = new();
+    public static SettingsExchangeApi TradingApi { get; set; } = new();
 
     /// <summary>
     /// Instellingen zoals kolombreedte, kolom zichtbaar en laatste venster cooridinaten
     /// </summary>
-    static public SettingsUser SettingsUser { get; set; } = new();
+    public static SettingsUser SettingsUser { get; set; } = new();
 
     /// <summary>
     /// Telegram gerelateerde instellingen
     /// </summary>
-    static public SettingsTelegram Telegram { get; set; } = new();
+    public static SettingsTelegram Telegram { get; set; } = new();
 
 
-    static public PauseRule PauseTrading { get; set; } = new();
+    public static PauseRule PauseTrading { get; set; } = new();
 
     /// <summary>
     /// De url's van de exchanges en/of tradingapps
     /// </summary>
-    static public CryptoExternalUrlList ExternalUrls { get; set; } = [];
+    public static CryptoExternalUrlList ExternalUrls { get; set; } = [];
 
-    static public List<CryptoInterval> IntervalList { get; } = [];
-    static public SortedList<int, CryptoInterval> IntervalListId { get; } = [];
-    static public SortedList<string, CryptoInterval> IntervalListPeriodName { get; } = [];
-    static public SortedList<CryptoIntervalPeriod, CryptoInterval> IntervalListPeriod { get; } = [];
+    public static List<CryptoInterval> IntervalList { get; } = [];
+    public static SortedList<int, CryptoInterval> IntervalListId { get; } = [];
+    public static SortedList<string, CryptoInterval> IntervalListPeriodName { get; } = [];
+    public static SortedList<CryptoIntervalPeriod, CryptoInterval> IntervalListPeriod { get; } = [];
 
     // Exchanges indexed on name
-    static public SortedList<int, Model.CryptoExchange> ExchangeListId { get; } = [];
-    static public SortedList<string, Model.CryptoExchange> ExchangeListName { get; } = [];
+    public static readonly SortedList<int, Model.CryptoExchange> ExchangeListId = [];
+    public static readonly SortedList<string, Model.CryptoExchange> ExchangeListName = [];
 
     // Probleem, de signallist wordt nooit opgeruimd!
-    static public List<CryptoSignal> SignalList = [];
-    static public Queue<CryptoSignal> SignalQueue { get; } = new();
-    static public List<CryptoPosition> PositionsClosed { get; } = [];
+    public static readonly List<CryptoSignal> SignalList = [];
+    public static readonly Queue<CryptoSignal> SignalQueue = new();
+    public static readonly List<CryptoPosition> PositionsClosed = [];
 
-    static public event PlayMediaEvent PlaySound;
-    static public event PlayMediaEvent PlaySpeech;
-    static public event AddTextEvent LogToTelegram;
-    static public event AddTextEvent LogToLogTabEvent;
+    public static event PlayMediaEvent? PlaySound;
+    public static event PlayMediaEvent? PlaySpeech;
+    public static event AddTextEvent? LogToTelegram;
+    public static event AddTextEvent? LogToLogTabEvent;
 
     // Events for refresing data
-    static public event AddTextEvent SymbolsHaveChangedEvent;
-    static public event AddTextEvent TelegramHasChangedEvent;
+    public static event AddTextEvent? SymbolsHaveChangedEvent;
+    public static event AddTextEvent? TelegramHasChangedEvent;
 #if TRADEBOT
-    static public event AddTextEvent AssetsHaveChangedEvent;
-    static public event AddTextEvent PositionsHaveChangedEvent;
+    public static event AddTextEvent? AssetsHaveChangedEvent;
+    public static event AddTextEvent? PositionsHaveChangedEvent;
 #endif
-    static public AddTextEvent ApplicationHasStarted { get; set; }
+    public static AddTextEvent? ApplicationHasStarted { get; set; }
 
     // Ophalen van historische candles duurt lang, dus niet halverwege nog 1 starten (en nog 1 en...)
-    static public event SetCandleTimerEnable SetCandleTimerEnableEvent;
+    public static event SetCandleTimerEnable? SetCandleTimerEnableEvent;
 
-    static public AnalyseEvent AnalyzeSignalCreated { get; set; }
+    public static AnalyseEvent? AnalyzeSignalCreated { get; set; }
 
     // TODO: Deze rare accounts proberen te verbergen (indien mogelijk)
-    static public SortedList<int, CryptoTradeAccount> TradeAccountList = [];
-    static public SortedList<int, CryptoTradeAccount> ActiveTradeAccountList = [];
-    static public CryptoTradeAccount ExchangeBackTestAccount { get; set; }
-    static public CryptoTradeAccount ExchangeRealTradeAccount { get; set; }
-    static public CryptoTradeAccount ExchangePaperTradeAccount { get; set; }
+    public static readonly SortedList<int, CryptoTradeAccount> TradeAccountList = [];
+    public static readonly SortedList<int, CryptoTradeAccount> ActiveTradeAccountList = [];
+    public static CryptoTradeAccount? ExchangeBackTestAccount { get; private set; }
+    public static CryptoTradeAccount? ExchangeRealTradeAccount { get; set; }
+    public static CryptoTradeAccount? ExchangePaperTradeAccount { get; set; }
 
 
     // Some running tasks/threads
 #if SQLDATABASE
     static public ThreadSaveCandles TaskSaveCandles { get; set; }
 #endif
-    static public ThreadMonitorCandle ThreadMonitorCandle { get; set; }
+    public static ThreadMonitorCandle? ThreadMonitorCandle { get; set; }
 #if TRADEBOT
-    static public ThreadMonitorOrder ThreadMonitorOrder { get; set; }
-    static public ThreadCheckFinishedPosition ThreadDoubleCheckPosition { get; set; }
+    public static ThreadMonitorOrder? ThreadMonitorOrder { get; set; }
+    public static ThreadCheckFinishedPosition? ThreadDoubleCheckPosition { get; set; }
 #endif
 #if BALANCING
     static public ThreadBalanceSymbols ThreadBalanceSymbols { get; set; }
 #endif
 
     // On special request of a hardcore trader..
-    static public SymbolValue FearAndGreedIndex { get; set; } = new();
-    static public SymbolValue TradingViewDollarIndex { get; set; } = new();
-    static public SymbolValue TradingViewSpx500 { get; set; } = new();
-    static public SymbolValue TradingViewBitcoinDominance { get; set; } = new();
-    static public SymbolValue TradingViewMarketCapTotal { get; set; } = new();
+    public static SymbolValue FearAndGreedIndex { get; set; } = new();
+    public static SymbolValue TradingViewDollarIndex { get; set; } = new();
+    public static SymbolValue TradingViewSpx500 { get; set; } = new();
+    public static SymbolValue TradingViewBitcoinDominance { get; set; } = new();
+    public static SymbolValue TradingViewMarketCapTotal { get; set; } = new();
 
     public static readonly JsonSerializerOptions JsonSerializerIndented = new()
     { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true, IncludeFields = true };
@@ -824,21 +824,16 @@ static public class GlobalData
         SetCandleTimerEnableEvent(value);
     }
 
-    static string AppDataFolder = "";
+    private static string? AppDataFolder;
 
 
     static public string GetBaseDir()
     {
-        if (AppDataFolder == "")
+        if (string.IsNullOrEmpty(AppDataFolder))
         {
             ApplicationParams.InitApplicationOptions();
-            AppDataFolder = ApplicationParams.Options?.AppDataFolder;
-            if (AppDataFolder == null || AppDataFolder == "")
-                AppDataFolder = AppName;
-
-            string baseFolder = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            AppDataFolder = Path.Combine(baseFolder, AppDataFolder);
-
+            AppDataFolder = ApplicationParams.Options?.AppDataFolder ?? AppName;
+            AppDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), AppDataFolder);
             Directory.CreateDirectory(AppDataFolder);
             AppDataFolder += @"\";
         }

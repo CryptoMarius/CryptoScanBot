@@ -16,7 +16,7 @@ namespace CryptoScanBot.Core.Exchange.KrakenSpot;
 
 public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
 {
-    public override async Task<CallResult<UpdateSubscription>> Subscribe()
+    public override Task<CallResult<UpdateSubscription>>? Subscribe()
     {
         TickerGroup.SocketClient ??= new KrakenSocketClient();
 
@@ -52,15 +52,15 @@ public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscript
                     data.Status == OrderStatus.Closed || // Fully filled
                     data.Status == OrderStatus.Canceled)
                 {
-                    if (GlobalData.ExchangeListName.TryGetValue(Api.ExchangeOptions.ExchangeName, out Model.CryptoExchange exchange))
+                    if (GlobalData.ExchangeListName.TryGetValue(ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
                     {
-                        if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol symbol))
+                        if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
                         {
                             // Converteer de data naar een (tijdelijke) trade
                             CryptoOrder order = new();
-                            Api.PickupOrder(GlobalData.ExchangeRealTradeAccount, symbol, order, data);
+                            Api.PickupOrder(GlobalData.ExchangeRealTradeAccount!, symbol, order, data);
 
-                            GlobalData.ThreadMonitorOrder.AddToQueue((
+                            GlobalData.ThreadMonitorOrder?.AddToQueue((
                                 symbol,
                                 Api.LocalOrderType(data.OrderDetails.Type),
                                 Api.LocalOrderSide(data.OrderDetails.Side),

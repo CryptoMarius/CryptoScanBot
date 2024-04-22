@@ -21,7 +21,7 @@ public class ThreadCheckFinishedPosition
         GlobalData.AddTextToLogTab("Stop position check finished handler");
     }
 
-    public async Task AddToQueue(CryptoPosition position, string orderId = null, CryptoOrderStatus? status = null)
+    public async Task AddToQueue(CryptoPosition position, string? orderId = null, CryptoOrderStatus? status = null)
     {
         await QueueSemaphore.WaitAsync();
         try

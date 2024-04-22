@@ -17,15 +17,15 @@ public abstract class SubscriptionTicker(ExchangeOptions exchangeOptions)
 
     public string GroupName = "";
     internal CryptoTickerType TickerType;
-    public TickerGroup TickerGroup = null;
-    internal UpdateSubscription _subscription;
+    public TickerGroup? TickerGroup = null;
+    internal UpdateSubscription? _subscription;
 
     // Deze worden niet gebruikt bij de userticker 
     public List<string> Symbols = [];
     public List<CryptoSymbol> SymbolList = [];
     public string SymbolOverview = "";
 
-    public abstract Task<CallResult<UpdateSubscription>> Subscribe();
+    public abstract Task<CallResult<UpdateSubscription>?> Subscribe();
 
 
     public virtual async Task StartAsync()
@@ -41,7 +41,7 @@ public abstract class SubscriptionTicker(ExchangeOptions exchangeOptions)
         ScannerLog.Logger.Trace($"{TickerType} ticker for group {GroupName} starting");
 
         var subscriptionResult = await Subscribe();
-        if (subscriptionResult.Success)
+        if (subscriptionResult is not null && subscriptionResult.Success)
         {
             _subscription = subscriptionResult.Data;
             _subscription.Exception += TickerException;
@@ -66,8 +66,8 @@ public abstract class SubscriptionTicker(ExchangeOptions exchangeOptions)
             ConnectionLostCount++;
             ErrorDuringStartup = true;
 
-            ScannerLog.Logger.Trace($"{TickerType} ticker for group {GroupName} error {subscriptionResult.Error.Message} {SymbolOverview}");
-            GlobalData.AddTextToLogTab($"{TickerType} ticker for group {GroupName} error {subscriptionResult.Error.Message} {SymbolOverview}");
+            ScannerLog.Logger.Trace($"{TickerType} ticker for group {GroupName} error {subscriptionResult.Error?.Message} {SymbolOverview}");
+            GlobalData.AddTextToLogTab($"{TickerType} ticker for group {GroupName} error {subscriptionResult.Error?.Message} {SymbolOverview}");
         }
     }
 

@@ -1,6 +1,4 @@
-﻿using System.Text.Json;
-
-using Binance.Net.Clients;
+﻿using Binance.Net.Clients;
 using Binance.Net.Enums;
 using Binance.Net.Objects.Models.Spot.Socket;
 
@@ -8,7 +6,6 @@ using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
-using CryptoScanBot.Core.Exchange;
 
 namespace CryptoScanBot.Core.Exchange.BinanceFutures;
 
@@ -26,9 +23,9 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         // base volume would be MFN
         // quote volume would be USDT
 
-        if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
         {
-            if (exchange.SymbolListName.TryGetValue(kline.Symbol, out CryptoSymbol symbol))
+            if (exchange.SymbolListName.TryGetValue(kline.Symbol, out CryptoSymbol? symbol))
             {
                 Interlocked.Increment(ref TickerCount);
                 //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", temp.Symbol, temp.Data.OpenTime.ToLocalTime()));
@@ -42,18 +39,17 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
     }
 
 
-    public override async Task<CallResult<UpdateSubscription>> Subscribe()
+    public override async Task<CallResult<UpdateSubscription>?> Subscribe()
     {
-        TickerGroup.SocketClient ??= new BinanceSocketClient();
+        TickerGroup!.SocketClient ??= new BinanceSocketClient();
         CallResult<UpdateSubscription> subscriptionResult = await ((BinanceSocketClient)TickerGroup.SocketClient).UsdFuturesApi.SubscribeToKlineUpdatesAsync(
             Symbols, KlineInterval.OneMinute, (data) =>
         {
             if (data.Data.Data.Final)
             {
-                Task.Run(() => { ProcessCandle(data.Data as BinanceStreamKlineData); });
+                Task.Run(() => { ProcessCandle((BinanceStreamKlineData)data.Data); });
             }
         }, ExchangeHelper.CancellationToken).ConfigureAwait(false);
-
 
         return subscriptionResult;
     }

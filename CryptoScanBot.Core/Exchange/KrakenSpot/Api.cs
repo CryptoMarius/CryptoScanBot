@@ -102,7 +102,7 @@ public class Api : ExchangeBase
     }
 
 
-    public override async Task<(bool result, TradeParams tradeParams)> PlaceOrder(CryptoDatabase database,
+    public override async Task<(bool result, TradeParams? tradeParams)> PlaceOrder(CryptoDatabase database,
         CryptoPosition position, CryptoPositionPart part, CryptoTradeSide tradeSide, DateTime currentDate,
         CryptoOrderType orderType, CryptoOrderSide orderSide,
         decimal quantity, decimal price, decimal? stop, decimal? limit)
@@ -128,7 +128,7 @@ public class Api : ExchangeBase
             //OrderId = 0,
         };
         if (orderType == CryptoOrderType.StopLimit)
-            tradeParams.QuoteQuantity = (decimal)tradeParams.StopPrice * tradeParams.Quantity;
+            tradeParams.QuoteQuantity = (tradeParams.StopPrice ?? 0) * tradeParams.Quantity;
         if (position.TradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
         {
             tradeParams.OrderId = database.CreateNewUniqueId();
@@ -238,7 +238,7 @@ public class Api : ExchangeBase
         };
         // Eigenlijk niet nodig
         if (step.OrderType == CryptoOrderType.StopLimit)
-            tradeParams.QuoteQuantity = (decimal)tradeParams.StopPrice * tradeParams.Quantity;
+            tradeParams.QuoteQuantity = (tradeParams.StopPrice ?? 0) * tradeParams.Quantity;
 
         if (position.TradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
             return (true, tradeParams);
@@ -276,7 +276,7 @@ public class Api : ExchangeBase
                 {
                     if (assetInfo.Available > 0)
                     {
-                        if (!tradeAccount.AssetList.TryGetValue(assetInfo.Asset, out CryptoAsset asset))
+                        if (!tradeAccount.AssetList.TryGetValue(assetInfo.Asset, out CryptoAsset? asset))
                         {
                             asset = new CryptoAsset()
                             {
@@ -405,7 +405,7 @@ public class Api : ExchangeBase
 
                     //Zo af en toe komt er geen data of is de Data niet gezet.
                     //De verbindingen naar extern kunnen (tijdelijk) geblokkeerd zijn
-                    if (accountInfo == null | accountInfo.Data == null)
+                    if (accountInfo?.Data is null)
                         throw new ExchangeException("Geen account data ontvangen");
 
                     try

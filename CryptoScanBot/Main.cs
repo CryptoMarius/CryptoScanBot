@@ -578,7 +578,7 @@ public partial class FrmMain : Form
     private void MainMenuClearAll_Click(object sender, EventArgs e)
     {
         TextBoxLog.Clear();
-        GlobalData.createdSignalCount = 0;
+        GlobalData.CreatedSignalCount = 0;
 
         PositionMonitor.AnalyseCount = 0;
         ExchangeHelper.KLineTicker.Reset();
@@ -711,7 +711,7 @@ public partial class FrmMain : Form
 
     private void AnalyzeSignalCreated(CryptoSignal signal)
     {
-        GlobalData.createdSignalCount++;
+        GlobalData.CreatedSignalCount++;
         string text = "Analyze signal " + signal.Symbol.Name + " " + signal.Interval.Name + " " + signal.SideText + " " + signal.StrategyText + " " + signal.EventText;
         GlobalData.AddTextToLogTab(text);
 

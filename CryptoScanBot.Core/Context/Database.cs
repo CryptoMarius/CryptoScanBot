@@ -75,7 +75,7 @@ public class DateTimeHandler : SqlMapper.TypeHandler<DateTime>
 abstract class SqliteTypeHandler<T> : SqlMapper.TypeHandler<T>
 {
     // Parameters are converted by Microsoft.Data.Sqlite
-    public override void SetValue(IDbDataParameter parameter, T value) => parameter.Value = value;
+    public override void SetValue(IDbDataParameter parameter, T? value) => parameter.Value = value;
 }
 
 class DateTimeOffsetHandler : SqliteTypeHandler<DateTimeOffset>
@@ -103,7 +103,7 @@ public class CryptoDatabase : IDisposable
         SqlMapper.Settings.CommandTimeout = 180;
 
 #if !SQLDATABASE
-        BasePath = GlobalData.GetBaseDir();
+        basePath = GlobalData.GetBaseDir();
         CreateDatabase();
 #endif
     }
@@ -485,12 +485,12 @@ public class CryptoDatabase : IDisposable
     //}
 
 #else
-    public static string BasePath { get; set; }
+    private static string? basePath;
     public SqliteConnection Connection { get; set; }
 
     public CryptoDatabase()
     {
-        Connection = new("Filename=" + BasePath + GlobalData.AppName + ".db;Mode=ReadWriteCreate");
+        Connection = new("Filename=" + basePath + GlobalData.AppName + ".db;Mode=ReadWriteCreate");
     }
 
     public SqliteTransaction BeginTransaction()

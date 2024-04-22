@@ -20,5 +20,5 @@ public class TradeParams
 
     // if error
     public System.Net.HttpStatusCode? ResponseStatusCode { get; set; }
-    public CryptoExchange.Net.Objects.Error Error { get; internal set; }
+    public CryptoExchange.Net.Objects.Error? Error { get; internal set; }
 }
