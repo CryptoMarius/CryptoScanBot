@@ -1,4 +1,6 @@
-﻿using CryptoScanBot.Context;
+﻿using System.Text;
+
+using CryptoScanBot.Context;
 using CryptoScanBot.Enums;
 using CryptoScanBot.Exchange;
 using CryptoScanBot.Model;
@@ -511,8 +513,8 @@ public class PositionMonitor : IDisposable
                             }
 
 
-                            // As late as possible because of asset call
-                            var resultFetchAssets = await AssetTools.FetchAssetsAsync(tradeAccount);
+                            // Get available assets from the exchange (as late as possible because of webcall)
+                            var resultFetchAssets = await AssetTools.FetchAssetsAsync(tradeAccount, true);
                             if (!resultFetchAssets.success)
                             {
                                 GlobalData.AddTextToLogTab($"{text} {resultFetchAssets.reaction}");
@@ -521,55 +523,57 @@ public class PositionMonitor : IDisposable
                             }
 
                             // Enough stuff to take position? + entryAmount
-                            var resultCheckAssets = AssetTools.CheckAvailableAssets(tradeAccount, Symbol);
-                            if (!resultCheckAssets.success)
+                            var resultAvailableAssets = AssetTools.CheckAvailableAssets(tradeAccount, Symbol);
+                            if (!resultAvailableAssets.success)
                             {
-                                GlobalData.AddTextToLogTab($"{text} {resultCheckAssets.reaction}");
+                                GlobalData.AddTextToLogTab($"{text} {resultAvailableAssets.reaction}");
                                 Symbol.ClearSignals();
                                 return;
                             }
+                            var info = resultAvailableAssets.info; // short alias
+                            decimal entryQuote = resultAvailableAssets.entryQuoteAsset;
 
-
-                            // Controle op de ticksize en dergelijke..
+                            // Check the assets, the symbol limits..
                             {
                                 // Bepaal het entry bedrag 
-                                decimal totalQuote = resultCheckAssets.totalQuoteAsset;
-                                decimal entryQuote = resultCheckAssets.entryQuoteAsset;
                                 decimal entryPrice = Symbol.LastPrice.Value.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
-
                                 decimal entryBase = entryQuote / entryPrice;
                                 entryBase = entryBase.Clamp(Symbol.QuantityMinimum, Symbol.QuantityMaximum, Symbol.QuantityTickSize);
                                 entryBase = TradeTools.CorrectEntryQuantityIfWayLess(Symbol, entryQuote, entryBase, entryPrice);
 
-                                // Its rounded to zero
+                                // Its rounded towards zero
                                 if (entryBase <= 0)
                                 {
-                                    GlobalData.AddTextToLogTab(text + $" vanwege de quantity ticksize {Symbol.PriceTickSize} en aankoopbedrag {entryQuote} lukt de aankoop niet");
+                                    GlobalData.AddTextToLogTab(text + $" vanwege de minimum quantity {Symbol.QuantityMinimum} en aankoopbedrag {entryQuote} lukt de aankoop niet");
                                     Symbol.ClearSignals();
                                     return;
                                 }
 
+                                // Below the minimum allowed quantity
+                                if (entryBase == Symbol.QuantityMinimum)
+                                {
+                                    GlobalData.AddTextToLogTab(text + $" vanwege de minimum quantity {entryBase} < {Symbol.QuantityMinimum} lukt de aankoop niet (te weinig)");
+                                    Symbol.ClearSignals();
+                                    return;
+                                }
+
+                                // Below the minimum allowed value
+                                if (Symbol.QuoteValueMinimum > 0 && entryQuote < Symbol.QuoteValueMinimum)
+                                {
+                                    GlobalData.AddTextToLogTab(text + $" vanwege de minimum value {entryQuote} < {Symbol.QuoteValueMinimum} lukt de aankoop niet (te weinig)");
+                                    Symbol.ClearSignals();
+                                    return;
+                                }
 
                                 if (tradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading && tradeAccount.AccountType == CryptoAccountType.Spot)
                                 {
-                                    if (resultCheckAssets.totalQuoteAsset == 0 || entryBase * entryPrice > totalQuote)
+                                    if (info.QuoteFree == 0 || entryBase * entryPrice > info.QuoteTotal)
                                     {
-                                        GlobalData.AddTextToLogTab($"{text} niet genoeg assets beschikbaar om in te stappen {entryBase * entryPrice} > {totalQuote})");
+                                        GlobalData.AddTextToLogTab($"{text} niet genoeg assets beschikbaar om in te stappen {entryBase * entryPrice} > {info.QuoteTotal})");
                                         Symbol.ClearSignals();
                                         return;
                                     }
                                 }
-
-
-                                // We zitten direct op het minimum, kans is klein dat we het aangekochte kunnen verkopen
-                                if (entryBase == Symbol.QuantityMinimum)
-                                {
-                                    GlobalData.AddTextToLogTab(text + $" vanwege de minimum quantity {Symbol.QuantityMinimum} lukt de aankoop niet (te weinig)");
-                                    Symbol.ClearSignals();
-                                    return;
-                                }
-
-
                             }
 
 
@@ -904,7 +908,7 @@ public class PositionMonitor : IDisposable
 
 
         // defaults
-        string logText = $"placing {part.Purpose}";
+        string logText = "placing";
         decimal? entryPrice = null;
         CryptoOrderType entryOrderType;
         CryptoTrailing trailing = CryptoTrailing.None;
@@ -939,9 +943,8 @@ public class PositionMonitor : IDisposable
                         if (x < step.StopPrice && Symbol.LastPrice < x && candleInterval.High < x)
                         {
                             entryPrice = x;
-                            string cancelReason = $"positie {position.Id} annuleren vanwege aanpassing {part.Purpose} stoploss trailing";
                             await TradeTools.CancelOrder(Database, position, part, step,
-                                LastCandle1mCloseTimeDate, CryptoOrderStatus.TrailingChange, cancelReason);
+                                LastCandle1mCloseTimeDate, CryptoOrderStatus.TrailingChange, "adjusting trailing");
                         }
                     }
                     else
@@ -950,9 +953,8 @@ public class PositionMonitor : IDisposable
                         if (x > step.StopPrice && Symbol.LastPrice > x && candleInterval.Low > x)
                         {
                             entryPrice = x;
-                            string cancelReason = $"positie {position.Id} annuleren vanwege aanpassing {part.Purpose} stoploss trailing";
                             await TradeTools.CancelOrder(Database, position, part, step,
-                                LastCandle1mCloseTimeDate, CryptoOrderStatus.TrailingChange, cancelReason);
+                                LastCandle1mCloseTimeDate, CryptoOrderStatus.TrailingChange, "adjusting trailing");
                         }
                     }
                 }
@@ -969,7 +971,7 @@ public class PositionMonitor : IDisposable
                         decimal x = Math.Max((decimal)candleInterval.CandleData.KeltnerUpperBand, (decimal)candleInterval.CandleData.PSar) + Symbol.PriceTickSize;
                         if (Symbol.LastPrice < x && candleInterval.High < x)
                         {
-                            logText = $"trailing {part.Purpose}";
+                            logText = "trailing";
                             entryPrice = x;
                         }
                     }
@@ -983,7 +985,7 @@ public class PositionMonitor : IDisposable
                         decimal x = Math.Min((decimal)candleInterval.CandleData.KeltnerLowerBand, (decimal)candleInterval.CandleData.PSar) - Symbol.PriceTickSize;
                         if (Symbol.LastPrice > x && candleInterval.Low > x)
                         {
-                            logText = $"trailing {part.Purpose}";
+                            logText = "trailing";
                             entryPrice = x;
                         }
                     }
@@ -1102,7 +1104,7 @@ public class PositionMonitor : IDisposable
             // Plaats de entry order
             var exchangeApi = ExchangeHelper.GetExchangeInstance(GlobalData.Settings.General.ExchangeId);
             (bool result, TradeParams tradeParams) result = await exchangeApi.PlaceOrder(Database,
-                position.TradeAccount, position.Symbol, position.Side, LastCandle1mCloseTimeDate,
+                position, part, position.Side, LastCandle1mCloseTimeDate,
                 entryOrderType, entryOrderSide, entryQuantity, price, stop, limit);
             if (result.result)
             {
@@ -1363,7 +1365,7 @@ public class PositionMonitor : IDisposable
                         if (position.CloseTime.HasValue)
                         {
                             newStatus = CryptoOrderStatus.PositionClosed;
-                            cancelReason = $"annuleren vanwege sluiten {position.Side} positie (1e)";
+                            cancelReason = "annuleren vanwege sluiten positie";
                         }
 
 
@@ -1378,17 +1380,12 @@ public class PositionMonitor : IDisposable
                             if (step.CreateTime.AddSeconds(GlobalData.Settings.Trading.GlobalBuyRemoveTime * symbolInterval.Interval.Duration) < LastCandle1mCloseTimeDate)
                             {
                                 // Trades worden niet altijd op het juiste tijdstip opgemerkt (de user ticker ligt er vaak uit)
-                                // Controleer daarom eerst of de order toch gevallen is
-                                // Er is een trade gemaakt binnen deze positie.
-                                // Synchroniseer de trades en herberekenen het geheel
-                                // (oh dear: ik herinner me diverse storingen van Binance, vertragingen, enzovoort)
-                                // --> en oh dear, jawel, ook op bybit futures kan deze timing dus fout gaan!
+                                // Controleer daarom eerst of de order gevallen is, synchroniseer de trades en herberekenen het geheel..
 
                                 // Soms wordt een trade niet gerapporteerd en dan gaat er van alles mis in onze beredeneringen.
                                 // (met een partial fill gaat deze code ook gedeeltelijk fout, later nog eens beter nazoeken)
                                 // Haal alle trades van deze order op, wellicht gaat dat beter dan via alle trades?
                                 // (achteraf gezien, wellicht is dit een betere c.q. betrouwbaardere methode om de trades te halen?)
-                                // Nadeel: Deze methode wordt zwaarder dan eigenlijk de bedoeling was (we zitten al in een event)
                                 //GlobalData.AddTextToLogTab($"TradeHandler: DETECTIE: ORDER {data.OrderId} NIET GEVONDEN! PANIC MODE ;-)");
 
                                 await TradeTools.CalculatePositionResultsViaOrders(Database, position, forceCalculation: true);
@@ -1428,7 +1425,7 @@ public class PositionMonitor : IDisposable
                         else if (part.Purpose == CryptoPartPurpose.Entry & part.EntryMethod != GlobalData.Settings.Trading.BuyStepInMethod)
                         {
                             newStatus = CryptoOrderStatus.ChangedSettings;
-                            cancelReason = "annuleren vanwege aanpassing buy instellingen";
+                            cancelReason = "annuleren vanwege aanpassing entry instellingen";
                         }
 
                         // Als de instellingen veranderd zijn de lopende order annuleren
@@ -1569,7 +1566,6 @@ public class PositionMonitor : IDisposable
         //GlobalData.Logger.Info($"position:" + LastCandle1m.OhlcText(Symbol, GlobalData.IntervalList[0], Symbol.PriceDisplayFormat, true, false, true));
         CryptoPositionPart takeProfitPart = null;
 
-        // Itereer de openstaande parts
         foreach (CryptoPositionPart part in position.Parts.Values.ToList())
         {
             // voor de niet afgesloten parts...
@@ -1588,10 +1584,6 @@ public class PositionMonitor : IDisposable
                         if (part.Purpose == CryptoPartPurpose.Dca)
                             await HandleEntryPart(position, part, candleInterval, GlobalData.Settings.Trading.DcaStepInMethod, GlobalData.Settings.Trading.DcaOrderMethod);
                     }
-
-                    //// Check Take Profit
-                    //if (position.Quantity > 0)
-                    //    await HandleTakeProfitPart(position, part, candleInterval);
                 }
 
 
@@ -1631,9 +1623,9 @@ public class PositionMonitor : IDisposable
             decimal takeprofitPrice = CalculateTakeProfitPrice(position);
             if (takeProfitOrder == null || takeProfitOrder.Price != takeprofitPrice)
             {
-                string text = "placing";
+                string text = $"placing {takeProfitPart.Purpose}";
                 if (takeProfitOrder != null && takeProfitOrder.Quantity != position.Quantity)
-                    text = "modyfying";
+                    text = $"modyfying {takeProfitPart.Purpose}";
 
                 // Cancel all open take profit orders
                 if (await CancelAllOrders(position, takeProfitOrderSide))
@@ -1856,9 +1848,7 @@ public class PositionMonitor : IDisposable
     /// De afhandeling van een nieuwe 1m candle.
     /// (de andere intervallen zijn ook berekend)
     /// </summary>
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
     public async Task NewCandleArrivedAsync()
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
     {
         try
         {

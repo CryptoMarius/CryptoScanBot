@@ -41,6 +41,9 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
         Trend1h,
         Trend4h,
         Trend12h,
+#if TRADEBOT
+        MinimumEntry,
+#endif
     }
 
     private System.Windows.Forms.Timer TimerClearOldSignals;
@@ -177,6 +180,12 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                 case ColumnsForGrid.Trend12h:
                     CreateColumn("12h", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42);
                     break;
+#if TRADEBOT
+                case ColumnsForGrid.MinimumEntry:
+                    CreateColumn("M.Entry", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42);
+                    break;
+#endif
+
             }
         }
         
@@ -215,6 +224,9 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
             ColumnsForGrid.Trend1h => ObjectCompare.Compare(a.Trend1h, b.Trend1h),
             ColumnsForGrid.Trend4h => ObjectCompare.Compare(a.Trend4h, b.Trend4h),
             ColumnsForGrid.Trend12h => ObjectCompare.Compare(a.Trend12h, b.Trend12h),
+#if TRADEBOT
+            ColumnsForGrid.MinimumEntry => ObjectCompare.Compare(a.MinEntry, b.MinEntry),
+#endif
             _ => 0
         };
 
@@ -376,6 +388,11 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                 case ColumnsForGrid.Trend12h:
                     e.Value = TrendIndicatorText(signal.Trend12h);
                     break;
+#if TRADEBOT
+                case ColumnsForGrid.MinimumEntry:
+                    e.Value = signal.MinEntry.ToString(signal.Symbol.QuoteData.DisplayFormat);
+                    break;
+#endif
                 default:
                     e.Value = '?';
                     break;

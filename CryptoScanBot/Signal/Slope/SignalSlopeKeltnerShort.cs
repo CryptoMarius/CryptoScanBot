@@ -39,6 +39,46 @@ public class SignalSlopeKeltnerShort : SignalCreateBase
         return true;
     }
 
+    /// <summary>
+    /// Is de ... aflopend in de laatste x candles
+    /// 2e parameter geeft aan hoeveel afwijkend mogen zijn
+    /// </summary>
+    public bool CheckKeltnerSlopeInTheLastPeriod(int candleCount, int allowedWrongCount, out string response)
+    {
+        // We gaan van rechts naar links (van de nieuwste candle richting verleden)
+        bool first = true;
+        int wrongCount = 0;
+        CryptoCandle last = CandleLast;
+
+        // En van de candles daarvoor mag er een (of meer) afwijken
+        while (candleCount > 0)
+        {
+            if (!GetPrevCandle(last, out CryptoCandle prev))
+            {
+                response = "No prev candle";
+                return false;
+            }
+
+            if (last.CandleData.KeltnerCenterLineSlope < 0)
+            {
+                wrongCount++;
+                if (first || wrongCount > allowedWrongCount)
+                {
+                    response = $"No positive keltner period ({first} {wrongCount}/{allowedWrongCount})";
+                    return false;
+                }
+            }
+
+            last = prev;
+            candleCount--;
+            first = false;
+        }
+
+        response = "";
+        return true;
+    }
+
+
     public override bool AdditionalChecks(CryptoCandle candle, out string response)
     {
         //if (!BarometerHelper.CheckValidBarometer(Symbol.QuoteData, CryptoIntervalPeriod.interval1h, (decimal.MinValue, -0.5m), out string reaction))
@@ -48,15 +88,15 @@ public class SignalSlopeKeltnerShort : SignalCreateBase
         //}
 
 
-        if (!WasKeltnerPositiveInTheLast())
+        if (!CheckKeltnerSlopeInTheLastPeriod(30, 5, out response))
         {
-            response = "No negative keltner period before";
+            //response = "No positive keltner period";
             return false;
         }
 
-        if (HadStobbInThelastXCandles(SignalSide, 10, 60) == null)
+        if (HadStobbInThelastXCandles(SignalSide, 5, 30) == null)
         {
-            response = "Geen voorgaande STOBB of SBM";
+            response = "No previous STOBB/SBM";
             return false;
         }
 

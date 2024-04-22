@@ -28,18 +28,20 @@ public class ExcelSignalDump : ExcelBase
         row++;
         row++;
 
-        // Interval overview
-        int columns = 0;
-        WriteCell(sheet, columns++, row, "Exchange");
-        WriteCell(sheet, columns++, row, "Symbol");
-        WriteCell(sheet, columns++, row, "Strategy");
-        WriteCell(sheet, columns++, row, "Interval");
 
-        int column = 0;
-        WriteCell(sheet, column++, row, Symbol.Exchange.Name);
-        WriteCell(sheet, column++, row, Symbol.Name);
-        WriteCell(sheet, column++, row, Signal.StrategyText);
-        WriteCell(sheet, column++, row, Signal.Interval.Name);
+        // Interval overview
+        int columns = 2;
+        int startRow = row;
+        WriteCell(sheet, 0, row++, "Exchange");
+        WriteCell(sheet, 0, row++, "Symbol");
+        WriteCell(sheet, 0, row++, "Strategy");
+        WriteCell(sheet, 0, row++, "Interval");
+
+        row = startRow;
+        WriteCell(sheet, 1, row++, Symbol.Exchange.Name);
+        WriteCell(sheet, 1, row++, Symbol.Name);
+        WriteCell(sheet, 1, row++, Signal.StrategyText);
+        WriteCell(sheet, 1, row++, Signal.Interval.Name);
 
 
         AutoSize(sheet, columns);

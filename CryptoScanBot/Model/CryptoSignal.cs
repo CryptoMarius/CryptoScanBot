@@ -147,4 +147,22 @@ public class CryptoSignal
     public CryptoTrendIndicator? Trend1h { get; set; }
     public CryptoTrendIndicator? Trend4h { get; set; }
     public CryptoTrendIndicator? Trend12h { get; set; }
+
+#if TRADEBOT
+    [Computed]
+    public decimal MinEntry
+    {
+        get
+        {
+            decimal minEntryValue = 0;
+            if (Symbol.LastPrice.HasValue)
+                minEntryValue = Symbol.QuantityMinimum * (decimal)Symbol.LastPrice;
+
+            if (Symbol.QuoteValueMinimum > 0 && Symbol.QuoteValueMinimum > minEntryValue)
+                minEntryValue = Symbol.QuoteValueMinimum;
+
+            return minEntryValue; 
+        }
+    }
+#endif
 }

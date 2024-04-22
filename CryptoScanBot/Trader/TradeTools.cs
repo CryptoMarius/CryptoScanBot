@@ -575,15 +575,20 @@ public class TradeTools
             }
 
             // Als alles verkocht is de positie alsnog sluiten. Maar wanneer weet je of alles echt verkocht is?
-            if (position.QuantityEntry != 0 && position.Status == CryptoPositionStatus.Trading && position.QuantityEntry - position.QuantityTakeProfit - position.RemainingDust - position.CommissionBase <= 0)
+            if (position.QuantityEntry != 0 && position.Status == CryptoPositionStatus.Trading)
             {
-                markedAsReady = true;
-                orderStatusChanged = true;
-                position.Reposition = false;
-                position.CloseTime = DateTime.UtcNow;
-                position.UpdateTime = DateTime.UtcNow;
-                position.Status = CryptoPositionStatus.Ready;
-                GlobalData.AddTextToLogTab($"TradeTools: Position {position.Symbol.Name} status aangepast naar {position.Status}");
+                // Close if q=0 or less than the minimum amount we can sell
+                decimal remaining = position.QuantityEntry - position.QuantityTakeProfit - position.RemainingDust - position.CommissionBase;
+                if (remaining <= position.Symbol.QuantityMinimum || remaining * position.Symbol.LastPrice < position.Symbol.QuoteValueMinimum)
+                {
+                    markedAsReady = true;
+                    orderStatusChanged = true;
+                    position.Reposition = false;
+                    position.CloseTime = DateTime.UtcNow;
+                    position.UpdateTime = DateTime.UtcNow;
+                    position.Status = CryptoPositionStatus.Ready;
+                    GlobalData.AddTextToLogTab($"TradeTools: Position {position.Symbol.Name} status aangepast naar {position.Status}");
+                }
             }
 
 
@@ -664,8 +669,8 @@ public class TradeTools
     }
 
 
-    static public async Task<(bool cancelled, TradeParams tradeParams)> CancelOrder(CryptoDatabase database, 
-        CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step, 
+    static public async Task<(bool cancelled, TradeParams tradeParams)> CancelOrder(CryptoDatabase database,
+        CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step,
         DateTime currentTime, CryptoOrderStatus newStatus, string cancelReason)
     {
         ScannerLog.Logger.Trace($"{position.Symbol.Name} {part.Purpose} cancelling {step.Side} {step.OrderType} order={step.OrderId} {cancelReason}");
@@ -692,9 +697,11 @@ public class TradeTools
         }
         if (!result.succes || GlobalData.Settings.Trading.LogCanceledOrders)
             ExchangeBase.Dump(position, result.succes, result.tradeParams, cancelReason);
-        
+
         return result;
     }
+
+
 
     static public async Task PlaceTakeProfitOrderAtPrice(CryptoDatabase database, CryptoPosition position, CryptoPositionPart part,
         decimal takeProfitPrice, DateTime currentTime, string extraText)
@@ -707,8 +714,6 @@ public class TradeTools
         // in zou kunnen gaan. Geld voor alles wat we in deze tool doen, qua buy en sell gaat de herkansing wel 
         // goed, ook al zal je dan soms een repeterende fout voorbij zien komen (iedere minuut)
 
-
-//EXPERIMENT...
 
         // Get available assets from the exchange (as late as possible because of webcall)
         var resultFetchAssets = await AssetTools.FetchAssetsAsync(position.TradeAccount, true);
@@ -727,58 +732,47 @@ public class TradeTools
         }
 
 
-        // tp quantity
-        decimal entryBase = position.Quantity;
+        // This is the amount we want in the TP
+        decimal takeProfitQuantityOriginal = position.Quantity;
+        decimal takeProfitQuantity = position.Quantity;
+        takeProfitQuantity = takeProfitQuantity.Clamp(position.Symbol.QuantityMinimum, position.Symbol.QuantityMaximum, position.Symbol.QuantityTickSize);
+
+
+        // DEBUG --- ADD DUST to TP (how does this work for shorts???)
 
         // debug of we de dust erbij kunnen tellen? ;-)
         StringBuilder stringBuilder = new();
         stringBuilder.AppendLine($"");
         stringBuilder.AppendLine($"Symbol = {symbol.Name}");
-        stringBuilder.AppendLine($"position.Quantity = {entryBase}");
+        stringBuilder.AppendLine($"position.Quantity = {position.Quantity}");
         stringBuilder.AppendLine($"info.BaseFree = {info.BaseFree}");
         stringBuilder.AppendLine($"info.BaseTotal = {info.BaseTotal}");
         stringBuilder.AppendLine($"info.QuoteFree = {info.QuoteFree}");
         stringBuilder.AppendLine($"info.QuoteTotal = {info.QuoteTotal}");
 
-        decimal takeProfitQuantityNew = 0;
         decimal dust = info.BaseFree - position.Quantity;
         stringBuilder.AppendLine($"can we add quantity={dust} value={dust * position.Symbol.LastPrice}?");
         if (dust > 0 && dust * symbol.LastPrice < 1.0m)
         {
-            stringBuilder.AppendLine($"yes we can");
+            stringBuilder.AppendLine($"yes we can add extra dust={dust} value dust ={dust * symbol.LastPrice}");
 
-            takeProfitQuantityNew = info.BaseFree;
-            takeProfitQuantityNew = takeProfitQuantityNew.Clamp(symbol.QuantityMinimum, symbol.QuantityMaximum, symbol.QuantityTickSize);
-            stringBuilder.AppendLine($"new rounded quantity={takeProfitQuantityNew} value={takeProfitQuantityNew * symbol.LastPrice}...");
+            decimal takeProfitQuantityWithExtraDust = info.BaseFree;
+            takeProfitQuantityWithExtraDust = takeProfitQuantityWithExtraDust.Clamp(symbol.QuantityMinimum, symbol.QuantityMaximum, symbol.QuantityTickSize);
+            stringBuilder.AppendLine($"new rounded quantity={takeProfitQuantityWithExtraDust} value={takeProfitQuantityWithExtraDust * symbol.LastPrice}...");
+
+            takeProfitQuantity = takeProfitQuantityWithExtraDust;
+            takeProfitQuantityOriginal = takeProfitQuantityWithExtraDust;
         }
         GlobalData.AddTextToLogTab(stringBuilder.ToString());
 
-//EXPERIMENT...
+        //END DEBUG
 
 
-        decimal takeProfitQuantityOriginal = position.Quantity;
-
-        decimal takeProfitQuantity = position.Quantity; // + addExtraQuantity;
-        takeProfitQuantity = takeProfitQuantity.Clamp(position.Symbol.QuantityMinimum, position.Symbol.QuantityMaximum, position.Symbol.QuantityTickSize);
-        // pas op, straks negatieve dust (met die addExtraQuantity)..
+        // This could be more than expected because of the (unexpected) dust
+        // But hey, what else are you going to do with the stupid useless dust?
         decimal expectedDust = takeProfitQuantityOriginal - takeProfitQuantity;
         string text = $"{position.Symbol.Name} quantity={position.Quantity}, rounded={takeProfitQuantity}, expected dust = {expectedDust} free={info.BaseFree} total={info.BaseTotal}";
         GlobalData.AddTextToLogTab(text);
-
-
-
-        //if (freeBaseAsset > 0 && position.Symbol.LastPrice * freeBaseAsset < 1.01m)
-        //{
-        //    takeProfitQuantity = position.Quantity + freeBaseAsset; // extra!!!!
-        //    takeProfitQuantity = takeProfitQuantity.Clamp(position.Symbol.QuantityMinimum, position.Symbol.QuantityMaximum, position.Symbol.QuantityTickSize);
-        //    expectedDust = takeProfitQuantityOriginal - takeProfitQuantity;
-        //    text = $"{position.Symbol.Name} quantity={position.Quantity}, rounded={takeProfitQuantity}, (fixed) expected dust = {expectedDust}";
-        //    GlobalData.AddTextToLogTab(text);
-        //}
-
-        // tijdelijke fix omdat ik de dust al verkocht heb......
-        //if (position.Quantity < totalBaseAsset)
-        //    position.Quantity = totalBaseAsset;
 
 
 
@@ -791,7 +785,6 @@ public class TradeTools
 
         if (result.result)
         {
-            //if (part.Purpose == CryptoPartPurpose.Entry) // vrij beperkt?
             position.ProfitPrice = result.tradeParams.Price;
             var step = PositionTools.CreatePositionStep(position, part, result.tradeParams);
             step.RemainingDust = takeProfitQuantityOriginal - takeProfitQuantity; // de verwachte dust
@@ -810,6 +803,7 @@ public class TradeTools
     }
 
 
+
     /// <summary>
     /// Bepaal het entry bedrag 
     /// </summary>
@@ -823,6 +817,7 @@ public class TradeTools
         else
             return symbol.QuoteData.EntryAmount;
     }
+
 
 
     public static decimal CorrectEntryQuantityIfWayLess(CryptoSymbol symbol, decimal entryValue, decimal entryQuantity, decimal entryPrice)
@@ -849,7 +844,7 @@ public class TradeTools
             decimal newEntryQuantity = entryQuantity + symbol.QuantityTickSize;
             decimal newEntryValue = newEntryQuantity * entryPrice;
             percentage = 100 * (newEntryValue - entryValue) / entryValue; // 100 * (16 - 2.50) / 2.50 = 540
-            if (percentage.IsBetween(-2.5m, 2.5m)) 
+            if (percentage.IsBetween(-2.5m, 2.5m))
             {
                 // 2.5% marge is okay, we willen er niet te ver boven
                 if (percentage > 0.1m) // hele kleine verschillen willen we liever niet zien

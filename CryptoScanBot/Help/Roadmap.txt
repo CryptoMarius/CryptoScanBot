@@ -42,8 +42,7 @@ TODO: url voor Binance Futures
 
 
 Trading:
-- Trading - De Add Order wordt dubbel gedaan (en komt dan ook dubbel in de database tee staan?) voor een order is dat niet zo erg
-- Trading - De Add Order en Add Trade worden vermeld terwijl deze al ingelezen hadden moeten zijn?
+- Trading - De eventuele dust meenemen in een gecombineerde TP
 - Trading - Documentatie bijwerken - Een klusje..
 - Trading - Een positie kunnen maken vanaf een bepaalde datum (een positie overnemen van de gebruiker)
 - Trading - (testen)De trader blijft hardnekkig instappen terwijl er geen assets beschikbaar zijn.
