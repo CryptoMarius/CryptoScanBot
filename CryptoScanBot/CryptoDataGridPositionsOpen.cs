@@ -4,8 +4,8 @@ using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Settings;
-using CryptoScanBot.Exchange;
-using CryptoScanBot.Trader;
+using CryptoScanBot.Core.Exchange;
+using CryptoScanBot.Core.Trader;
 
 using Dapper;
 using Dapper.Contrib.Extensions;

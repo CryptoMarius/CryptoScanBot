@@ -1,7 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using CryptoScanBotTests;
 using Dapper.Contrib.Extensions;
-using CryptoScanBot.Trader;
+using CryptoScanBot.Core.Trader;
 using Dapper;
 using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Enums;

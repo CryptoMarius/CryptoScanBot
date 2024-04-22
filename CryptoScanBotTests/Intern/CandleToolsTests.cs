@@ -1,5 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using CryptoScanBot.Enums;
+using CryptoScanBot.Core.Enums;
 using CryptoScanBotTests;
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Model;

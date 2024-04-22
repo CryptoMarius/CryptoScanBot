@@ -1,4 +1,4 @@
-﻿using CryptoScanBot.Context;
+﻿using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;

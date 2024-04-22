@@ -2,7 +2,8 @@
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
-using CryptoScanBot.Trader;
+using CryptoScanBot.Core.Trader;
+using CryptoScanBot.Intern;
 
 namespace CryptoScanBot.Commands;
 

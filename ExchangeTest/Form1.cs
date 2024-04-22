@@ -39,9 +39,10 @@ using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Trader;
-using CryptoScanBot.Exchange.BybitSpot;
+using CryptoScanBot.Core.Exchange.BybitSpot;
 
 using Microsoft.Extensions.Logging;
+using CryptoScanBot.Core;
 
 namespace ExchangeTest;
 

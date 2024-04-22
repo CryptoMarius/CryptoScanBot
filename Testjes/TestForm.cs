@@ -37,7 +37,7 @@ using System;
 using System.Security.Cryptography.Xml;
 using System.Transactions;
 using CryptoExchange.Net.Authentication;
-using CryptoScanBot.Exchange.BinanceSpot;
+using CryptoScanBot.Core.Exchange.BinanceSpot;
 using Font = System.Drawing.Font;
 using CryptoScanBot.TradingView;
 using System.ComponentModel;
@@ -50,6 +50,7 @@ using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Trader;
 using CryptoScanBot.Core.Signal;
 using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core;
 
 namespace CryptoScanBot;
 

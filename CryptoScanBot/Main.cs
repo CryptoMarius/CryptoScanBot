@@ -1,4 +1,5 @@
 ﻿using CryptoScanBot.Commands;
+using CryptoScanBot.Core;
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Exchange;
@@ -6,6 +7,7 @@ using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Settings;
 using CryptoScanBot.Core.Trader;
+using CryptoScanBot.Intern;
 using Microsoft.Win32;
 
 using Nito.AsyncEx;
