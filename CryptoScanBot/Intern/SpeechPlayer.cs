@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using CryptoScanBot.Core.Intern;
+using System.Collections.Concurrent;
 using System.Speech.Synthesis;
 
 namespace CryptoScanBot.Intern;

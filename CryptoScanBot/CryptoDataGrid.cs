@@ -1,10 +1,9 @@
 ﻿using System.Collections;
 using System.Runtime.InteropServices;
 using CryptoScanBot.Commands;
-using CryptoScanBot.Enums;
-using CryptoScanBot.Intern;
-using CryptoScanBot.Settings;
-
+using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Settings;
 
 namespace CryptoScanBot;
 

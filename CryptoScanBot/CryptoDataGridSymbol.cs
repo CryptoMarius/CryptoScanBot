@@ -1,7 +1,7 @@
 ﻿using CryptoScanBot.Commands;
-using CryptoScanBot.Intern;
-using CryptoScanBot.Model;
-using CryptoScanBot.Settings;
+using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Model;
+using CryptoScanBot.Core.Settings;
 
 namespace CryptoScanBot;
 

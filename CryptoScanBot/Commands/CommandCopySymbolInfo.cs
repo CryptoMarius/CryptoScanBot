@@ -1,4 +1,4 @@
-﻿using CryptoScanBot.Model;
+﻿using CryptoScanBot.Core.Model;
 
 namespace CryptoScanBot.Commands;
 

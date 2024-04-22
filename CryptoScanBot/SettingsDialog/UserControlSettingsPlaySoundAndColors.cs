@@ -1,4 +1,4 @@
-﻿using CryptoScanBot.Settings.Strategy;
+﻿using CryptoScanBot.Core.Settings.Strategy;
 
 namespace CryptoScanBot.SettingsDialog;
 

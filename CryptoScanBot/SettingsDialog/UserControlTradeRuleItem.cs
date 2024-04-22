@@ -1,6 +1,6 @@
-﻿using CryptoScanBot.Enums;
-using CryptoScanBot.Intern;
-using CryptoScanBot.Settings;
+﻿using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Settings;
 
 namespace CryptoScanBot.SettingsDialog;
 

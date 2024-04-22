@@ -1,7 +1,7 @@
-﻿using CryptoScanBot.Context;
-using CryptoScanBot.Enums;
-using CryptoScanBot.Intern;
-using CryptoScanBot.Model;
+﻿using CryptoScanBot.Core.Context;
+using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Model;
 using CryptoScanBot.Trader;
 
 namespace CryptoScanBot.Commands;
@@ -63,7 +63,7 @@ public static class CommandHelper
 
 public class CommandTools
 {
-    public static (bool succes, Model.CryptoExchange exchange, CryptoSymbol symbol, CryptoSignal signal, CryptoInterval interval, CryptoPosition position) GetAttributesFromSender(object sender)
+    public static (bool succes, Core.Model.CryptoExchange exchange, CryptoSymbol symbol, CryptoSignal signal, CryptoInterval interval, CryptoPosition position) GetAttributesFromSender(object sender)
     {
         if (sender is CryptoSymbol symbol)
             return (true, symbol.Exchange, symbol, null, GlobalData.IntervalList[5], null);

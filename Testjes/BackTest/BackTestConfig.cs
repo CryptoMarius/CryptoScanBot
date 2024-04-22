@@ -1,4 +1,4 @@
-﻿using CryptoScanBot.Enums;
+﻿using CryptoScanBot.Core.Enums;
 
 namespace CryptoScanBot.BackTest;
 

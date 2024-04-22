@@ -33,13 +33,13 @@ using CryptoExchange.Net.Authentication;
 using CryptoExchange.Net.Objects;
 
 using CryptoScanBot;
-using CryptoScanBot.Context;
-using CryptoScanBot.Enums;
-using CryptoScanBot.Exchange;
+using CryptoScanBot.Core.Context;
+using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Exchange;
+using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Model;
+using CryptoScanBot.Core.Trader;
 using CryptoScanBot.Exchange.BybitSpot;
-using CryptoScanBot.Intern;
-using CryptoScanBot.Model;
-using CryptoScanBot.Trader;
 
 using Microsoft.Extensions.Logging;
 
@@ -671,7 +671,7 @@ public partial class Form1 : Form
 
             CryptoTradeAccount account = GlobalData.ExchangePaperTradeAccount;
 
-            CryptoScanBot.Model.CryptoExchange exchange = GlobalData.Settings.General.Exchange;
+            CryptoScanBot.Core.Model.CryptoExchange exchange = GlobalData.Settings.General.Exchange;
 
             if (!exchange.SymbolListName.TryGetValue("IDUSDT", out CryptoSymbol symbol))
                 return;
@@ -1070,7 +1070,7 @@ public partial class Form1 : Form
         LogFactory = new(new[] { TraceProvider });
 
 
-        if (GlobalData.ExchangeListName.TryGetValue("Bybit Spot", out CryptoScanBot.Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue("Bybit Spot", out CryptoScanBot.Core.Model.CryptoExchange exchange))
         {
             if (exchange.SymbolListName.TryGetValue("SUSHIUSDT", out CryptoSymbol symbol))
             {

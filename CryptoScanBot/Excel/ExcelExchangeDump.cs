@@ -1,6 +1,5 @@
-﻿using CryptoScanBot.Intern;
-using CryptoScanBot.Model;
-
+﻿using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Model;
 using NPOI.HPSF;
 using NPOI.HSSF.UserModel;
 using NPOI.SS.UserModel;
@@ -10,7 +9,7 @@ namespace CryptoScanBot.Excel;
 
 public class ExcelExchangeDump : ExcelBase
 {
-    private Model.CryptoExchange Exchange;
+    private Core.Model.CryptoExchange Exchange;
 
     private static int OHLCHeaders(HSSFSheet sheet, int row)
     {
@@ -128,7 +127,7 @@ public class ExcelExchangeDump : ExcelBase
     }
 
 
-    public void ExportToExcel(Model.CryptoExchange exchange)
+    public void ExportToExcel(Core.Model.CryptoExchange exchange)
     {
         Exchange = exchange;
         try

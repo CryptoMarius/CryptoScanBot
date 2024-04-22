@@ -1,7 +1,7 @@
-﻿using CryptoScanBot.Enums;
-using CryptoScanBot.Intern;
-using CryptoScanBot.Model;
-using CryptoScanBot.Settings;
+﻿using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Model;
+using CryptoScanBot.Core.Settings;
 using CryptoScanBot.SettingsDialog;
 
 namespace CryptoScanBot;
@@ -13,7 +13,7 @@ public partial class FrmSettings : Form
     private readonly List<SettingsQuoteCoin> BaseCoinList = [];
 
 
-    public Model.CryptoExchange NewExchange { get; set; }
+    public Core.Model.CryptoExchange NewExchange { get; set; }
 
 
     public FrmSettings()
@@ -331,7 +331,7 @@ public partial class FrmSettings : Form
         // General
         // ------------------------------------------------------------------------------
         settings.General.ExtraCaption = EditExtraCaption.Text;
-        NewExchange = (Model.CryptoExchange)EditExchange.SelectedValue;
+        NewExchange = (Core.Model.CryptoExchange)EditExchange.SelectedValue;
         // Niet direct zetten, eerst moet alles uitgezet worden
         //settings.General.Exchange = (Model.CryptoExchange)EditExchange.SelectedValue;
         //settings.General.ExchangeId = settings.General.Exchange.Id;

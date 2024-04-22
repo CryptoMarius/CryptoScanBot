@@ -1,7 +1,6 @@
 ﻿using System.Reflection;
 using System.Text;
-
-using CryptoScanBot.Intern;
+using CryptoScanBot.Core.Intern;
 
 namespace CryptoScanBot;
 
@@ -20,7 +19,7 @@ partial class AboutBox : Form
         builder.AppendLine(AssemblyDescription);
         builder.AppendLine("for");
         builder.AppendLine("");
-        foreach (Model.CryptoExchange exchange in GlobalData.ExchangeListName.Values)
+        foreach (Core.Model.CryptoExchange exchange in GlobalData.ExchangeListName.Values)
             builder.AppendLine($"-{exchange.Name}");
         textBoxDescription.Text = builder.ToString();
     }

@@ -1,12 +1,11 @@
 ﻿using CryptoScanBot.Commands;
-using CryptoScanBot.Context;
-using CryptoScanBot.Enums;
-using CryptoScanBot.Exchange;
-using CryptoScanBot.Intern;
-using CryptoScanBot.Model;
-using CryptoScanBot.Settings;
-using CryptoScanBot.Trader;
-
+using CryptoScanBot.Core.Context;
+using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Exchange;
+using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Model;
+using CryptoScanBot.Core.Settings;
+using CryptoScanBot.Core.Trader;
 using Microsoft.Win32;
 
 using Nito.AsyncEx;
@@ -477,7 +476,7 @@ public partial class FrmMain : Form
         SettingsBasic oldSettings = GlobalData.Settings;
 
         GetReloadRelatedSettings(out string activeQuotes);
-        Model.CryptoExchange oldExchange = GlobalData.Settings.General.Exchange;
+        Core.Model.CryptoExchange oldExchange = GlobalData.Settings.General.Exchange;
 
         // Dan wordt de basecoin en coordinaten etc. bewaard voor een volgende keer
 #if TRADEBOT
@@ -1021,7 +1020,7 @@ public partial class FrmMain : Form
 
     private void SymbolsHaveChangedEvent(string text, bool extraLineFeed = false)
     {
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange exchange))
         {
 
             List<CryptoSymbol> range = [];
@@ -1088,7 +1087,7 @@ public partial class FrmMain : Form
         if (!GlobalData.ApplicationIsClosing)
         {
             List<CryptoPosition> list = [];
-            if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+            if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange exchange))
             {
                 foreach (var tradingAccount in GlobalData.TradeAccountList.Values)
                 {

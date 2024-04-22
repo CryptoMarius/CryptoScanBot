@@ -13,11 +13,7 @@ using Binance.Net.Objects.Models.Spot;
 using CryptoExchange.Net.Objects;
 
 using CryptoScanBot.BackTest;
-using CryptoScanBot.Context;
 using CryptoScanBot.Intern;
-using CryptoScanBot.Model;
-using CryptoScanBot.Settings;
-using CryptoScanBot.Signal;
 
 using Dapper;
 using Dapper.Contrib.Extensions;
@@ -41,14 +37,19 @@ using System;
 using System.Security.Cryptography.Xml;
 using System.Transactions;
 using CryptoExchange.Net.Authentication;
-using CryptoScanBot.Enums;
-using CryptoScanBot.Exchange;
 using CryptoScanBot.Exchange.BinanceSpot;
-using CryptoScanBot.Trader;
 using Font = System.Drawing.Font;
 using CryptoScanBot.TradingView;
 using System.ComponentModel;
 using System.Data;
+using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Context;
+using CryptoScanBot.Core.Exchange;
+using CryptoScanBot.Core.Settings;
+using CryptoScanBot.Core.Model;
+using CryptoScanBot.Core.Trader;
+using CryptoScanBot.Core.Signal;
+using CryptoScanBot.Core.Intern;
 
 namespace CryptoScanBot;
 
@@ -663,7 +664,7 @@ public partial class TestForm : Form
 
     private async void Button2_Click(object sender, EventArgs e)
     {
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange exchange))
         {
             if (exchange.SymbolListName.TryGetValue("ETHUSDT", out CryptoSymbol symbol))
             {
@@ -931,7 +932,7 @@ public partial class TestForm : Form
         GlobalData.AddTextToLogTab("");
         List<VolatiteitStat> a = [];
 
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange exchange))
         {
             //CryptoSymbol symbol;
             foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
@@ -1129,7 +1130,7 @@ public partial class TestForm : Form
         //trend.assignvaluecolor( if pos == -1 then color.red else if pos == 1 then color.green else color.blue);
 
 
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange exchange))
         {
 
             if (exchange.SymbolListName.TryGetValue("NEBLUSDT", out CryptoSymbol symbol))
@@ -1375,7 +1376,7 @@ public partial class TestForm : Form
         //GlobalData.Settings.Signal.AnalysisShowCandleJumpUp = false;
 
 
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange exchange))
         {
             if (exchange.SymbolListName.TryGetValue("WANBTC", out CryptoSymbol symbol))
             {
@@ -1492,9 +1493,9 @@ public partial class TestForm : Form
         int intWidth = pictureBox1.Width;
         int intHeight = pictureBox1.Height;
 
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange exchange))
         {
-            if ((quoteData != null) && (exchange.SymbolListName.TryGetValue(Model.Constants.SymbolNameBarometerPrice + quoteData.Name, out CryptoSymbol symbol)))
+            if ((quoteData != null) && (exchange.SymbolListName.TryGetValue(Core.Model.Constants.SymbolNameBarometerPrice + quoteData.Name, out CryptoSymbol symbol)))
             {
                 CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
                 SortedList<long, CryptoCandle> candleList = symbolPeriod.CandleList;
@@ -1731,9 +1732,9 @@ public partial class TestForm : Form
         //GlobalData.Settings.Signal.AnalysisShowCandleJumpUp = false;
 
 
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange exchange))
         {
-            if (exchange.SymbolListName.TryGetValue(Model.Constants.SymbolNameBarometerPrice + "USDT", out CryptoSymbol symbol)) //"BTCUSDT"
+            if (exchange.SymbolListName.TryGetValue(Core.Model.Constants.SymbolNameBarometerPrice + "USDT", out CryptoSymbol symbol)) //"BTCUSDT"
             {
                 DateTime dateCandleStart = DateTime.SpecifyKind(new DateTime(2023, 03, 01, 05, 00, 0), DateTimeKind.Utc);
                 DateTime dateCandleEinde = DateTime.SpecifyKind(new DateTime(2023, 04, 02, 00, 00, 0), DateTimeKind.Utc);
@@ -2388,7 +2389,7 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
                 Results.ShowHeader(header, false);
                 GlobalData.AddTextToLogTab(header.ToString());
 
-                if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+                if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange exchange))
                 {
                     string baseFolder = GlobalData.GetBaseDir();
                     baseFolder += @"\backtest\" + exchange.Name + @"\" + strategy.ToString() + @"\";
@@ -2541,7 +2542,7 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
     {
         tabControl.SelectedTab = tabPage1;
 
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange exchange))
         {
             int i = 0;
             foreach (CryptoSymbol symbol in exchange.SymbolListId.Values)
@@ -2605,7 +2606,7 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
 
     private void Button2_Click_2(object sender, EventArgs e)
     {
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange exchange))
         {
             if (exchange.SymbolListName.TryGetValue("ADAUSDT", out CryptoSymbol symbol))
             {
@@ -2666,7 +2667,7 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
 
     private void Button4_Click(object sender, EventArgs e)
     {
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange exchange))
         {
             if (exchange.SymbolListName.TryGetValue("PAXGUSDT", out CryptoSymbol symbol))
             {

@@ -1,9 +1,8 @@
-﻿using CryptoScanBot.Context;
-using CryptoScanBot.Enums;
-using CryptoScanBot.Exchange;
-using CryptoScanBot.Intern;
-using CryptoScanBot.Model;
-
+﻿using CryptoScanBot.Core.Context;
+using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Exchange;
+using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Model;
 using Dapper;
 using Dapper.Contrib.Extensions;
 
@@ -49,7 +48,7 @@ public class TestBase
 
     internal static CryptoSymbol CreateTestSymbol(CryptoDatabase database)
     {
-        if (GlobalData.ExchangeListId.TryGetValue(GlobalData.Settings.General.ExchangeId, out CryptoScanBot.Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListId.TryGetValue(GlobalData.Settings.General.ExchangeId, out CryptoScanBot.Core.Model.CryptoExchange exchange))
         {
             if (!exchange.SymbolListName.TryGetValue("MASKUSDT", out CryptoSymbol? symbol))
             {

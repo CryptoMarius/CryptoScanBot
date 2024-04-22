@@ -1,6 +1,5 @@
 ﻿using System.Text;
-
-using CryptoScanBot.Model;
+using CryptoScanBot.Core.Model;
 
 using Newtonsoft.Json;
 

@@ -23,7 +23,7 @@
     <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DefineConstants>$(DefineConstants);TRADEBOT;EXTRASTRATEGIESSLOPEKELTNER</DefineConstants>
+    <DefineConstants>$(DefineConstants);EXTRASTRATEGIESSLOPEKELTNER;TRADEBOT</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -49,17 +49,6 @@
     <AdditionalFiles Remove="C:\Users\Marius\.nuget\packages\microsoft.dotnet.upgradeassistant.extensions.default.analyzers\0.4.421302\build\\WebTypeReplacements.typemap" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Remove="Exchange\BinanceSpot\FetchTradesForOrder.cs" />
-    <Compile Remove="Exchange\BybitFutures\FetchTradesForOrder.cs" />
-    <Compile Remove="Exchange\BybitSpot\FetchTradesForOrder.cs" />
-    <Compile Remove="Exchange\KrakenSpot\FetchTradesForOrder.cs" />
-    <Compile Remove="Exchange\KucoinSpot\FetchTradesForOrder.cs" />
-    <Compile Remove="Signal\SignalMacdLtLong.cs" />
-    <Compile Remove="Signal\SignalMacdLtShort.cs" />
-    <Compile Remove="Signal\SignalMacdTestLong.cs" />
-    <Compile Remove="Signal\SignalMacdTestShort .cs" />
-  </ItemGroup>
-  <ItemGroup>
     <Reference Include="System.Speech" />
   </ItemGroup>
   <ItemGroup>
@@ -79,33 +68,6 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
-    <None Update="Sounds\sound-heartbeat.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\sound-jump-down.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\sound-jump-up.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\sound-sbm-overbought.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\sound-sbm-oversold.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\sound-stobb-overbought.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\sound-stobb-oversold.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\sound-trade-notification-ka-ching.wav">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\sound-trade-notification.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.6.1">
@@ -120,7 +82,7 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Binance.Net" Version="9.9.1" />
+    <PackageReference Include="Binance.Net" Version="9.9.2" />
     <PackageReference Include="BouncyCastle.Cryptography" Version="2.3.0" />
     <PackageReference Include="Bybit.Net" Version="3.8.2" />
     <PackageReference Include="CommandLineParser" Version="2.9.1" />
@@ -183,6 +145,9 @@
     <EmbeddedResource Remove="Main.PositionsOpen.resx" />
     <EmbeddedResource Remove="Main.Signals.resx" />
     <EmbeddedResource Remove="Main.Symbols.resx" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CryptoScanBot.Core\CryptoScanBot.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Compile Update="Main.PositionsClosed.cs" />

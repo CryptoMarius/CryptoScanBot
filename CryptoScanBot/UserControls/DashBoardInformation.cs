@@ -1,9 +1,9 @@
 ﻿using System.Drawing.Drawing2D;
-
-using CryptoScanBot.Enums;
-using CryptoScanBot.Exchange;
-using CryptoScanBot.Intern;
-using CryptoScanBot.Model;
+using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Exchange;
+using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Model;
+using CryptoScanBot.Core.TradingView;
 using CryptoScanBot.Settings;
 
 namespace CryptoScanBot.TradingView;
@@ -215,7 +215,7 @@ public partial class DashBoardInformation : UserControl
     }
 
 
-    public void CreateBarometerBitmap(Model.CryptoExchange exchange, CryptoQuoteData quoteData, CryptoInterval interval)
+    public void CreateBarometerBitmap(Core.Model.CryptoExchange exchange, CryptoQuoteData quoteData, CryptoInterval interval)
     {
         float blocks = 6;
 
@@ -439,7 +439,7 @@ public partial class DashBoardInformation : UserControl
             BarometerTools barometerTools = new();
             barometerTools.ExecuteAsync();
 
-            if (!GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+            if (!GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange exchange))
                 return;
 
             string baseCoin = "";
@@ -484,7 +484,7 @@ public partial class DashBoardInformation : UserControl
     }
 
 
-    private static void ShowSymbolPrice(SymbolHist hist, InformationRow item, Model.CryptoExchange exchange,
+    private static void ShowSymbolPrice(SymbolHist hist, InformationRow item, Core.Model.CryptoExchange exchange,
         CryptoQuoteData quoteData, string baseCoin, string caption, string valueText)
     {
         // Not a really charming way to display items, but voila, it works for now..
@@ -607,7 +607,7 @@ public partial class DashBoardInformation : UserControl
             }
 
             // Toon de prijzen en volume van een aantal symbols
-            if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+            if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange exchange))
             {
                 string baseCoin = "";
                 Invoke((MethodInvoker)(() => baseCoin = EditBarometerQuote.Text));
@@ -676,7 +676,7 @@ public partial class DashBoardInformation : UserControl
                 if (x.SymbolName == target || x.SymbolPrice == target || x.SymbolVolume == target)
                 {
                     string symbolName = x.SymbolName.Text;
-                    if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+                    if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange exchange))
                     {
                         if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol symbol))
                         {

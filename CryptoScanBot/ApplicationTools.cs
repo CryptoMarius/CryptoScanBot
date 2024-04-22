@@ -1,4 +1,4 @@
-﻿using CryptoScanBot.Intern;
+﻿using CryptoScanBot.Core.Intern;
 
 namespace CryptoScanBot;
 
@@ -12,9 +12,9 @@ static class ApplicationTools
         // only save the WindowState if Normal or Maximized
         GlobalData.SettingsUser.WindowState = form.WindowState switch
         {
-            FormWindowState.Normal => form.WindowState,
-            FormWindowState.Maximized => form.WindowState,
-            _ => FormWindowState.Normal,
+            FormWindowState.Normal => 0,
+            FormWindowState.Maximized => 2,
+            _ => 0,
         };
     }
 
@@ -32,7 +32,7 @@ static class ApplicationTools
             form.DesktopBounds = GlobalData.SettingsUser.WindowPosition;
 
             // afterwards set the window state to the saved value (which could be Maximized)
-            form.WindowState = GlobalData.SettingsUser.WindowState;
+            form.WindowState = (FormWindowState)GlobalData.SettingsUser.WindowState;
         }
         else
         {

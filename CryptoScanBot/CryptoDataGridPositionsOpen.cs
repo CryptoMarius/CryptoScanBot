@@ -1,10 +1,10 @@
 ﻿using CryptoScanBot.Commands;
-using CryptoScanBot.Context;
-using CryptoScanBot.Enums;
+using CryptoScanBot.Core.Context;
+using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Model;
+using CryptoScanBot.Core.Settings;
 using CryptoScanBot.Exchange;
-using CryptoScanBot.Intern;
-using CryptoScanBot.Model;
-using CryptoScanBot.Settings;
 using CryptoScanBot.Trader;
 
 using Dapper;

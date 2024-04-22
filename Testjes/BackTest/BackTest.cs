@@ -1,8 +1,8 @@
 ﻿using System.Text;
-using CryptoScanBot.Enums;
-using CryptoScanBot.Intern;
-using CryptoScanBot.Model;
-using CryptoScanBot.Signal;
+using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Model;
+using CryptoScanBot.Core.Signal;
 using Newtonsoft.Json;
 using Skender.Stock.Indicators;
 
@@ -743,7 +743,7 @@ public class BackTest
                     if (--warmUptime <= 0)
                     {
                         // barometer initialiseren
-                        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchangeX))
+                        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange exchangeX))
                         {
                             if (exchangeX.SymbolListName.TryGetValue("$BMP" + Symbol.Quote, out CryptoSymbol symbolX))
                             {

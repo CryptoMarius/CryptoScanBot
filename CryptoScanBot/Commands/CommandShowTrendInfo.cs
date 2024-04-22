@@ -1,8 +1,7 @@
 ﻿using System.Text;
-
-using CryptoScanBot.Enums;
-using CryptoScanBot.Intern;
-using CryptoScanBot.Model;
+using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Model;
 
 namespace CryptoScanBot.Commands;
 

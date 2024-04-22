@@ -1,6 +1,6 @@
-﻿using CryptoScanBot.Intern;
-using CryptoScanBot.Model;
-
+﻿using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Model;
 using NPOI.HPSF;
 using NPOI.HSSF.UserModel;
 using NPOI.SS.UserModel;
@@ -10,7 +10,7 @@ namespace CryptoScanBot.Excel;
 
 public class ExcelSignalDump : ExcelBase
 {
-    Model.CryptoExchange Exchange;
+    Core.Model.CryptoExchange Exchange;
     CryptoSymbol Symbol;
     CryptoSignal Signal;
 
@@ -56,7 +56,7 @@ public class ExcelSignalDump : ExcelBase
 
         if (Exchange.SymbolListName.TryGetValue(Constants.SymbolNameBarometerPrice + Symbol.Quote, out CryptoSymbol bmSymbol))
         {
-            CryptoSymbolInterval bmSymbolInterval = bmSymbol.GetSymbolInterval(Enums.CryptoIntervalPeriod.interval1h);
+            CryptoSymbolInterval bmSymbolInterval = bmSymbol.GetSymbolInterval(CryptoIntervalPeriod.interval1h);
             SortedList<long, CryptoCandle> bmCandles = bmSymbolInterval.CandleList;
 
             CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(Signal.Interval.IntervalPeriod);

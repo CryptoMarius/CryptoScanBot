@@ -1,11 +1,9 @@
 ﻿using System.Text;
 using System.Windows.Forms.DataVisualization.Charting;
-
-using CryptoScanBot.Context;
-using CryptoScanBot.Enums;
-using CryptoScanBot.Intern;
-using CryptoScanBot.Model;
-
+using CryptoScanBot.Core.Context;
+using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Model;
 using Dapper;
 
 namespace CryptoScanBot;
