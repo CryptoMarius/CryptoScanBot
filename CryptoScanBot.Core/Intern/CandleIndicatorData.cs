@@ -383,7 +383,7 @@ public class CandleIndicatorData
                 double? BollingerBandsLowerBand = bollingerBandsList[index].LowerBand;
                 double? BollingerBandsUpperBand = bollingerBandsList[index].UpperBand;
                 candleData.BollingerBandsDeviation = 0.5 * (BollingerBandsUpperBand - BollingerBandsLowerBand);
-                candleData.BollingerBandsPercentage = 100 * (BollingerBandsUpperBand / BollingerBandsLowerBand - 1);
+                candleData.BollingerBandsPercentage = 100 * ((BollingerBandsUpperBand / BollingerBandsLowerBand) - 1);
 
                 if (index >= outBegIdxPSar)
                     candleData.PSar = psarValues[index - outBegIdxPSar];
@@ -414,7 +414,7 @@ public class CandleIndicatorData
     }
 
     // Extended with 1 day + 9 hours because of the 24 hour market climate (or barometer).  (we show ~6 hours of that in the display)
-    private static long InitialCandleCountFetch = (24 + 7) * 60 * 60 * 2;
+    private static long InitialCandleCountFetch = ((24 + 7) * 60 * 60) * 2;
 
     public static void SetInitialCandleCountFetch(long value)
     {
@@ -449,7 +449,7 @@ public class CandleIndicatorData
                 startFetchUnix = CandleTools.GetUnixTime(utcNow, 60) - InitialCandleCountFetch;
             else
                 // de 0 was eerst een 10 (en later 49) en bedoeld om meldingen met terugwerkende kracht te berekenen bij de start
-                startFetchUnix = CandleTools.GetUnixTime(utcNow, 60) - (49 + maxCandles) * interval.Duration * 2;
+                startFetchUnix = CandleTools.GetUnixTime(utcNow, 60) - ((49 + maxCandles) * interval.Duration) * 2;
             startFetchUnix -= startFetchUnix % interval.Duration;
 
             // Lets extend that with 1 extra candle just in case...
@@ -460,7 +460,8 @@ public class CandleIndicatorData
     }
 
 
-    public static bool PrepareIndicators(CryptoSymbol symbol, CryptoSymbolInterval symbolInterval, CryptoCandle candle, out string reaction)
+    public static bool PrepareIndicators(CryptoSymbol symbol, CryptoSymbolInterval symbolInterval, 
+        CryptoCandle candle, out string reaction, int fillMax = 61)
     {
         if (candle.CandleData == null)
         {
@@ -482,7 +483,7 @@ public class CandleIndicatorData
                 return false;
             }
 
-            CalculateIndicators(History);
+            CalculateIndicators(History, fillMax);
         }
 
         reaction = "";
