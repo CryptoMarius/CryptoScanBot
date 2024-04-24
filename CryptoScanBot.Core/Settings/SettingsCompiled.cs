@@ -3,6 +3,7 @@ using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Signal;
+using CryptoScanBot.Signal;
 
 namespace CryptoScanBot.Core.Settings;
 

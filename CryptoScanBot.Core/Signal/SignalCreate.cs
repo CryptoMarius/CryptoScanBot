@@ -4,6 +4,8 @@ using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Settings;
 using CryptoScanBot.Core.Trader;
+using CryptoScanBot.Signal;
+
 using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot.Core.Signal;

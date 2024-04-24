@@ -1,5 +1,6 @@
 ﻿using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Signal;
+using CryptoScanBot.Signal;
 
 namespace CryptoScanBot.SettingsDialog;
 public partial class UserControlStrategy : UserControl

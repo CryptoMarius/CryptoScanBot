@@ -2,6 +2,8 @@
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Signal;
 using CryptoScanBot.Core.Signal.Momentum;
+using CryptoScanBot.Signal;
+
 using NPOI.HPSF;
 using NPOI.HSSF.UserModel;
 using NPOI.SS.UserModel;

@@ -1,5 +1,6 @@
-﻿using CryptoScanBot.Enums;
-using CryptoScanBot.Model;
+﻿using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Model;
+using CryptoScanBot.Core.Signal;
 
 namespace CryptoScanBot.Signal.Slope;
 
