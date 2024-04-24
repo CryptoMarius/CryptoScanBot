@@ -1,10 +1,10 @@
-﻿using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Model;
-using CryptoScanBot.Core.Signal.Momentum;
-using CryptoScanBot.Core.Signal.Other;
-using CryptoScanBot.Core.Signal.Slope;
+﻿using CryptoScanBot.Enums;
+using CryptoScanBot.Model;
+using CryptoScanBot.Signal.Momentum;
+using CryptoScanBot.Signal.Other;
+using CryptoScanBot.Signal.Slope;
 
-namespace CryptoScanBot.Core.Signal;
+namespace CryptoScanBot.Signal;
 
 
 // Een oude enumeratie "SignalStrategy" is vervallen en overgenomen door de combinatie
@@ -247,6 +247,20 @@ public static class SignalHelper
             Strategy = CryptoSignalStrategy.SlopeKeltner,
             AnalyzeLongType = typeof(SignalSlopeKeltnerLong),
             AnalyzeShortType = typeof(SignalSlopeKeltnerShort),
+        });
+#endif
+
+#if EXTRASTRATEGIESPSARRSI
+        //***************************************************
+        // PSAR + RSI
+        // https://blog.elearnmarkets.com/trading-signals-using-parabolic-sar-rsi/
+        //***************************************************
+        AlgorithmDefinitionList.Add(new AlgorithmDefinition()
+        {
+            Name = "psar rsi",
+            Strategy = CryptoSignalStrategy.PSarRsi,
+            AnalyzeLongType = typeof(SignalPSarRsiLong),
+            AnalyzeShortType = typeof(SignalPSarRsiShort),
         });
 #endif
 
