@@ -1,7 +1,7 @@
-﻿using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Model;
+﻿using CryptoScanBot.Enums;
+using CryptoScanBot.Model;
 
-namespace CryptoScanBot.Core.Signal.Slope;
+namespace CryptoScanBot.Signal.Slope;
 
 #if EXTRASTRATEGIESSLOPEKELTNER
 public class SignalSlopeKeltnerLong : SignalCreateBase
@@ -86,7 +86,7 @@ public class SignalSlopeKeltnerLong : SignalCreateBase
         //    return false;
         //}
 
-        if (!CheckKeltnerSlopeInTheLastPeriod(30, 5, out response))
+        if (!CheckKeltnerSlopeInTheLastPeriod(10, 5, out response))
         {
             //response = "No negative keltner period";
             return false;
