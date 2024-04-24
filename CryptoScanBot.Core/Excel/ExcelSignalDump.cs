@@ -1,6 +1,7 @@
 ﻿using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
+
 using NPOI.HPSF;
 using NPOI.HSSF.UserModel;
 using NPOI.SS.UserModel;
@@ -135,49 +136,49 @@ public class ExcelSignalDump : ExcelBase
                                 cell = WriteCell(sheet, column++, row, (double)candle.Volume);
                                 cell.CellStyle = CellStyleDecimalNormal;
 
-                                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.BollingerBandsLowerBand);
+                                cell = WriteCell(sheet, column++, row, candle.CandleData.BollingerBandsLowerBand);
                                 cell.CellStyle = CellStyleDecimalNormal;
-                                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.Sma20);
+                                cell = WriteCell(sheet, column++, row, candle.CandleData.Sma20);
                                 cell.CellStyle = CellStyleDecimalNormal;
-                                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.BollingerBandsUpperBand);
+                                cell = WriteCell(sheet, column++, row, candle.CandleData.BollingerBandsUpperBand);
                                 cell.CellStyle = CellStyleDecimalNormal;
-                                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.BollingerBandsPercentage);
+                                cell = WriteCell(sheet, column++, row, candle.CandleData.BollingerBandsPercentage);
                                 cell.CellStyle = CellStylePercentageNormal;
 
 
-                                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.KeltnerLowerBand);
+                                cell = WriteCell(sheet, column++, row, candle.CandleData.KeltnerLowerBand);
                                 cell.CellStyle = CellStyleDecimalNormal;
-                                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.KeltnerCenterLine);
+                                cell = WriteCell(sheet, column++, row, candle.CandleData.KeltnerCenterLine);
                                 cell.CellStyle = CellStyleDecimalNormal;
-                                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.KeltnerUpperBand);
+                                cell = WriteCell(sheet, column++, row, candle.CandleData.KeltnerUpperBand);
                                 cell.CellStyle = CellStyleDecimalNormal;
 #if EXTRASTRATEGIESSLOPEKELTNER
-                                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.KeltnerCenterLineSlope);
+                                cell = WriteCell(sheet, column++, row, candle.CandleData.KeltnerCenterLineSlope);
                                 cell.CellStyle = CellStyleDecimalNormal;
 #endif
 
-                                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.Sma20);
+                                cell = WriteCell(sheet, column++, row, candle.CandleData.Sma20);
                                 cell.CellStyle = CellStyleDecimalNormal;
-                                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.Sma50);
+                                cell = WriteCell(sheet, column++, row, candle.CandleData.Sma50);
                                 cell.CellStyle = CellStyleDecimalNormal;
-                                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.Sma200);
+                                cell = WriteCell(sheet, column++, row, candle.CandleData.Sma200);
                                 cell.CellStyle = CellStyleDecimalNormal;
-                                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.PSar);
-                                cell.CellStyle = CellStyleDecimalNormal;
-
-                                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.MacdValue);
-                                cell.CellStyle = CellStyleDecimalNormal;
-                                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.MacdSignal);
-                                cell.CellStyle = CellStyleDecimalNormal;
-                                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.MacdHistogram);
+                                cell = WriteCell(sheet, column++, row, candle.CandleData.PSar);
                                 cell.CellStyle = CellStyleDecimalNormal;
 
-                                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.Rsi);
+                                cell = WriteCell(sheet, column++, row, candle.CandleData.MacdValue);
+                                cell.CellStyle = CellStyleDecimalNormal;
+                                cell = WriteCell(sheet, column++, row, candle.CandleData.MacdSignal);
+                                cell.CellStyle = CellStyleDecimalNormal;
+                                cell = WriteCell(sheet, column++, row, candle.CandleData.MacdHistogram);
                                 cell.CellStyle = CellStyleDecimalNormal;
 
-                                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.StochSignal);
+                                cell = WriteCell(sheet, column++, row, candle.CandleData.Rsi);
                                 cell.CellStyle = CellStyleDecimalNormal;
-                                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.StochOscillator);
+
+                                cell = WriteCell(sheet, column++, row, candle.CandleData.StochSignal);
+                                cell.CellStyle = CellStyleDecimalNormal;
+                                cell = WriteCell(sheet, column++, row, candle.CandleData.StochOscillator);
                                 cell.CellStyle = CellStyleDecimalNormal;
 
                                 if (bmCandles.TryGetValue(candle.OpenTime, out CryptoCandle bmCandle))
