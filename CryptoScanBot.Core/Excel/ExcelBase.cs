@@ -141,6 +141,35 @@ public class ExcelBase
         return cell;
     }
 
+    public static ICell WriteCell(ISheet sheet, int columnIndex, int rowIndex, double? value)
+    {
+        var row = sheet.GetRow(rowIndex) ?? sheet.CreateRow(rowIndex);
+        var cell = row.GetCell(columnIndex) ?? row.CreateCell(columnIndex);
+
+        if (value != null)
+            cell.SetCellValue(value.Value);
+        return cell;
+    }
+
+    public static ICell WriteCell(ISheet sheet, int columnIndex, int rowIndex, int value)
+    {
+        var row = sheet.GetRow(rowIndex) ?? sheet.CreateRow(rowIndex);
+        var cell = row.GetCell(columnIndex) ?? row.CreateCell(columnIndex);
+
+        cell.SetCellValue(value);
+        return cell;
+    }
+
+    public static ICell WriteCell(ISheet sheet, int columnIndex, int rowIndex, int? value)
+    {
+        var row = sheet.GetRow(rowIndex) ?? sheet.CreateRow(rowIndex);
+        var cell = row.GetCell(columnIndex) ?? row.CreateCell(columnIndex);
+
+        if (value != null)
+            cell.SetCellValue(value.Value);
+        return cell;
+    }
+
     public static ICell WriteCell(ISheet sheet, int columnIndex, int rowIndex, DateTime value)
     {
         var row = sheet.GetRow(rowIndex) ?? sheet.CreateRow(rowIndex);
