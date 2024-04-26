@@ -1,5 +1,6 @@
 ﻿using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Excel;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Trader;
@@ -7,78 +8,15 @@ using CryptoScanBot.Intern;
 
 namespace CryptoScanBot.Commands;
 
-
-public class ToolStripMenuItemCommand : ToolStripMenuItem
-{
-    public new Command Command { get; set; }
-    public CryptoDataGrid DataGrid { get; set; }
-}
-
-
-public static class CommandHelper
-{
-
-    public static void AddSeperator(this ContextMenuStrip menuStrip)
-    {
-        menuStrip.Items.Add(new ToolStripSeparator());
-    }
-
-    public static void AddSeperator(this ToolStripMenuItem menuStrip)
-    {
-        menuStrip.DropDownItems.Add(new ToolStripSeparator());
-    }
-
-    public static ToolStripMenuItemCommand AddCommand(this ContextMenuStrip menuStrip, CryptoDataGrid dataGrid, string text, Command command, EventHandler click = null)
-    {
-        ToolStripMenuItemCommand menuItem = new()
-        {
-            Command = command,
-            DataGrid = dataGrid,
-            Text = text
-        };
-        if (click == null)
-            menuItem.Click += CommandTools.ExecuteCommand;
-        else 
-            menuItem.Click += click;
-        menuStrip.Items.Add(menuItem);
-        return menuItem;
-    }
-
-    public static ToolStripMenuItemCommand AddCommand(this ToolStripMenuItem menuStrip, CryptoDataGrid dataGrid, string text, Command command, EventHandler click = null)
-    {
-        ToolStripMenuItemCommand menuItem = new()
-        {
-            Command = command,
-            DataGrid = dataGrid,
-            Text = text
-        };
-        if (click == null)
-            menuItem.Click += CommandTools.ExecuteCommand;
-        else
-            menuItem.Click += click;
-        menuStrip.DropDownItems.Add(menuItem);
-        return menuItem;
-    }
-}
-
-
 public class CommandTools
 {
-    public static (bool succes, Core.Model.CryptoExchange exchange, CryptoSymbol symbol, CryptoSignal signal, CryptoInterval interval, CryptoPosition position) GetAttributesFromSender(object sender)
+    public static (bool succes, Core.Model.CryptoExchange exchange, CryptoSymbol symbol, CryptoSignal signal, CryptoInterval interval, CryptoPosition position) GetAttributesFromSender(object sender) => sender switch
     {
-        if (sender is CryptoSymbol symbol)
-            return (true, symbol.Exchange, symbol, null, GlobalData.IntervalList[5], null);
-
-        if (sender is CryptoSignal signal)
-            return (true, signal.Exchange, signal.Symbol, signal, signal.Interval, null);
-
-        if (sender is CryptoPosition position)
-            return (true, position.Exchange, position.Symbol, null, position.Interval, position);
-
-        return (false, null, null, null, null, null);
-    }
-
-
+        CryptoSymbol symbol => (true, symbol.Exchange, symbol, null, GlobalData.IntervalList[5], null),
+        CryptoSignal signal => (true, signal.Exchange, signal.Symbol, signal, signal.Interval, null),
+        CryptoPosition position => (true, position.Exchange, position.Symbol, null, position.Interval, position),
+        _ => (false, null, null, null, null, null)
+    };
 
     public static async void ExecuteSomething(object sender, int index, Command cmd)
     {
@@ -91,7 +29,7 @@ public class CommandTools
 
             case Command.ExcelExchangeInformation:
                 // Die valt qua parameters buiten de boot
-                _ = Task.Run(() => { new Core.Excel.ExcelExchangeDump().ExportToExcel(GlobalData.Settings.General.Exchange); });
+                _ = Task.Run(() => { new ExcelExchangeDump(GlobalData.Settings.General.Exchange).ExportToExcel(); });
                 return;
 
             case Command.ScannerSessionDebug:
@@ -129,10 +67,10 @@ public class CommandTools
                     new CommandShowTrendInfo().Execute(symbol);
                     break;
                 case Command.ExcelSignalInformation:
-                    _ = Task.Run(() => { new Core.Excel.ExcelSignalDump().ExportToExcel(signal); });
+                    _ = Task.Run(() => { new ExcelSignalDump(signal).ExportToExcel(); });
                     break;
                 case Command.ExcelSymbolInformation:
-                    _ = Task.Run(() => { new Core.Excel.ExcelSymbolDump().ExportToExcel(symbol); });
+                    _ = Task.Run(() => { new ExcelSymbolDump(symbol).ExportToExcel(); });
                     break;
 #if TRADEBOT
                 case Command.PositionCalculate:
@@ -157,7 +95,7 @@ public class CommandTools
                         }
                         GlobalData.AddTextToLogTab($"{position.Symbol.Name} positie {position.Id} herberekenen voor Excel");
                         await TradeTools.CalculatePositionResultsViaOrders(databaseThread, position, forceCalculation: true);
-                        _ = Task.Run(() => { new Core.Excel.ExcelPositionDump().ExportToExcel(position); });
+                        _ = Task.Run(() => { new ExcelPositionDump(position).ExportToExcel(); });
                     }
                     break;
 #endif

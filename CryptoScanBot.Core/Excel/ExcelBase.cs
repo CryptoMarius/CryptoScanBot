@@ -1,29 +1,26 @@
 ﻿using CryptoScanBot.Core.Intern;
-
 using NPOI.HPSF;
 using NPOI.HSSF.UserModel;
+using NPOI.HSSF.Util;
 using NPOI.SS.UserModel;
+using System.Diagnostics;
 
 namespace CryptoScanBot.Core.Excel;
 
-public class ExcelBase
+public abstract class ExcelBase
 {
-    public HSSFWorkbook Book { get; set; }
-    public ICellStyle CellStyleDate { get; set; }
+    protected HSSFWorkbook Book;
+    protected ICellStyle CellStyleDate;
+    protected ICellStyle CellStyleStringGreen;
+    protected ICellStyle CellStyleStringRed;
+    protected ICellStyle CellStyleDecimalNormal;
+    protected ICellStyle CellStyleDecimalGreen;
+    protected ICellStyle CellStyleDecimalRed;
+    protected ICellStyle CellStylePercentageNormal;
+    protected ICellStyle CellStylePercentageGreen;
+    protected ICellStyle CellStylePercentageRed;
 
-    public ICellStyle CellStyleStringGreen { get; set; }
-    public ICellStyle CellStyleStringRed { get; set; }
-
-    public ICellStyle CellStyleDecimalNormal { get; set; }
-    public ICellStyle CellStyleDecimalGreen { get; set; }
-    public ICellStyle CellStyleDecimalRed { get; set; }
-
-    public ICellStyle CellStylePercentageNormal { get; set; }
-    public ICellStyle CellStylePercentageGreen { get; set; }
-    public ICellStyle CellStylePercentageRed { get; set; }
-
-
-    public void CreateBook(string subject)
+    protected ExcelBase(string subject)
     {
         // HSSF => Microsoft Excel(excel 97-2003)
         // XSSF => Office Open XML Workbook(excel 2007)
@@ -38,26 +35,22 @@ public class ExcelBase
         SummaryInformation summaryInformation = PropertySetFactory.CreateSummaryInformation();
         summaryInformation.Subject = subject;
         Book.SummaryInformation = summaryInformation;
-    }
 
-
-    public void CreateFormats()
-    {
         IDataFormat format = Book.CreateDataFormat();
 
         CellStyleDate = Book.CreateCellStyle();
         CellStyleDate.DataFormat = format.GetFormat("dd-MM-yyyy HH:mm");
-        CellStyleDate.Alignment = NPOI.SS.UserModel.HorizontalAlignment.Left;
+        CellStyleDate.Alignment = HorizontalAlignment.Left;
 
         CellStyleStringGreen = Book.CreateCellStyle();
-        CellStyleStringGreen.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.LightGreen.Index;
+        CellStyleStringGreen.FillForegroundColor = HSSFColor.LightGreen.Index;
         CellStyleStringGreen.FillPattern = FillPattern.SolidForeground;
-        CellStyleStringGreen.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.LightGreen.Index;
+        CellStyleStringGreen.FillBackgroundColor = HSSFColor.LightGreen.Index;
 
         CellStyleStringRed = Book.CreateCellStyle();
-        CellStyleStringRed.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.Red.Index;
+        CellStyleStringRed.FillForegroundColor = HSSFColor.Red.Index;
         CellStyleStringRed.FillPattern = FillPattern.SolidForeground;
-        CellStyleStringRed.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.Red.Index;
+        CellStyleStringRed.FillBackgroundColor = HSSFColor.Red.Index;
 
 
         CellStyleDecimalNormal = Book.CreateCellStyle();
@@ -65,15 +58,15 @@ public class ExcelBase
 
         CellStyleDecimalGreen = Book.CreateCellStyle();
         CellStyleDecimalGreen.DataFormat = format.GetFormat("0.0000000000");
-        CellStyleDecimalGreen.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.LightGreen.Index;
+        CellStyleDecimalGreen.FillForegroundColor = HSSFColor.LightGreen.Index;
         CellStyleDecimalGreen.FillPattern = FillPattern.SolidForeground;
-        CellStyleDecimalGreen.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.LightGreen.Index;
+        CellStyleDecimalGreen.FillBackgroundColor = HSSFColor.LightGreen.Index;
 
         CellStyleDecimalRed = Book.CreateCellStyle();
         CellStyleDecimalRed.DataFormat = format.GetFormat("0.0000000000");
-        CellStyleDecimalRed.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.Red.Index;
+        CellStyleDecimalRed.FillForegroundColor = HSSFColor.Red.Index;
         CellStyleDecimalRed.FillPattern = FillPattern.SolidForeground;
-        CellStyleDecimalRed.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.Red.Index;
+        CellStyleDecimalRed.FillBackgroundColor = HSSFColor.Red.Index;
 
 
         CellStylePercentageNormal = Book.CreateCellStyle();
@@ -81,15 +74,15 @@ public class ExcelBase
 
         CellStylePercentageGreen = Book.CreateCellStyle();
         CellStylePercentageGreen.DataFormat = HSSFDataFormat.GetBuiltinFormat("0.00");
-        CellStylePercentageGreen.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.LightGreen.Index;
+        CellStylePercentageGreen.FillForegroundColor = HSSFColor.LightGreen.Index;
         CellStylePercentageGreen.FillPattern = FillPattern.SolidForeground;
-        CellStylePercentageGreen.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.LightGreen.Index;
+        CellStylePercentageGreen.FillBackgroundColor = HSSFColor.LightGreen.Index;
 
         CellStylePercentageRed = Book.CreateCellStyle();
         CellStylePercentageRed.DataFormat = HSSFDataFormat.GetBuiltinFormat("0.00");
-        CellStylePercentageRed.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.Red.Index;
+        CellStylePercentageRed.FillForegroundColor = HSSFColor.Red.Index;
         CellStylePercentageRed.FillPattern = FillPattern.SolidForeground;
-        CellStylePercentageRed.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.Red.Index;
+        CellStylePercentageRed.FillBackgroundColor = HSSFColor.Red.Index;
 
         //// macd.red
         //ICellStyle cellStyleMacdRed = book.CreateCellStyle();
@@ -124,82 +117,34 @@ public class ExcelBase
         //cellStyleMacdLightGreen.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.LightGreen.Index;
     }
 
-    public static ICell WriteCell(ISheet sheet, int columnIndex, int rowIndex, string value)
-    {
-        var row = sheet.GetRow(rowIndex) ?? sheet.CreateRow(rowIndex);
-        var cell = row.GetCell(columnIndex) ?? row.CreateCell(columnIndex);
+    protected static ICell WriteCell(ISheet sheet, int columnIndex, int rowIndex, string? value, ICellStyle? cellStyle = null)
+        => sheet.GetOrCreateRow(rowIndex).GetOrCreateCell(columnIndex).WithValue(value).WithStyle(cellStyle);
 
-        cell.SetCellValue(value);
-        return cell;
-    }
+    protected static ICell WriteCell(ISheet sheet, int columnIndex, int rowIndex, double? value, ICellStyle? cellStyle = null)
+        => sheet.GetOrCreateRow(rowIndex).GetOrCreateCell(columnIndex).WithValue(value).WithStyle(cellStyle);
 
-    public static ICell WriteCell(ISheet sheet, int columnIndex, int rowIndex, double value)
-    {
-        var row = sheet.GetRow(rowIndex) ?? sheet.CreateRow(rowIndex);
-        var cell = row.GetCell(columnIndex) ?? row.CreateCell(columnIndex);
+    protected static ICell WriteCell(ISheet sheet, int columnIndex, int rowIndex, decimal? value, ICellStyle? cellStyle = null) 
+        => sheet.GetOrCreateRow(rowIndex).GetOrCreateCell(columnIndex).WithValue((double?)value).WithStyle(cellStyle);
 
-        cell.SetCellValue(value);
-        return cell;
-    }
+    protected static ICell WriteCell(ISheet sheet, int columnIndex, int rowIndex, int? value, ICellStyle? cellStyle = null)
+        => sheet.GetOrCreateRow(rowIndex).GetOrCreateCell(columnIndex).WithValue(value).WithStyle(cellStyle);
 
-    public static ICell WriteCell(ISheet sheet, int columnIndex, int rowIndex, double? value)
-    {
-        var row = sheet.GetRow(rowIndex) ?? sheet.CreateRow(rowIndex);
-        var cell = row.GetCell(columnIndex) ?? row.CreateCell(columnIndex);
+    protected static ICell WriteCell(ISheet sheet, int columnIndex, int rowIndex, long? value, ICellStyle? cellStyle = null) 
+        => sheet.GetOrCreateRow(rowIndex).GetOrCreateCell(columnIndex).WithValue(value).WithStyle(cellStyle);
 
-        if (value != null)
-            cell.SetCellValue(value.Value);
-        return cell;
-    }
+    protected static ICell WriteCell(ISheet sheet, int columnIndex, int rowIndex, DateTime? value, ICellStyle? cellStyle = null)
+        => sheet.GetOrCreateRow(rowIndex).GetOrCreateCell(columnIndex).WithValue(value).WithStyle(cellStyle);
 
-    public static ICell WriteCell(ISheet sheet, int columnIndex, int rowIndex, int value)
-    {
-        var row = sheet.GetRow(rowIndex) ?? sheet.CreateRow(rowIndex);
-        var cell = row.GetCell(columnIndex) ?? row.CreateCell(columnIndex);
-
-        cell.SetCellValue(value);
-        return cell;
-    }
-
-    public static ICell WriteCell(ISheet sheet, int columnIndex, int rowIndex, int? value)
-    {
-        var row = sheet.GetRow(rowIndex) ?? sheet.CreateRow(rowIndex);
-        var cell = row.GetCell(columnIndex) ?? row.CreateCell(columnIndex);
-
-        if (value != null)
-            cell.SetCellValue(value.Value);
-        return cell;
-    }
-
-    public static ICell WriteCell(ISheet sheet, int columnIndex, int rowIndex, DateTime value)
-    {
-        var row = sheet.GetRow(rowIndex) ?? sheet.CreateRow(rowIndex);
-        var cell = row.GetCell(columnIndex) ?? row.CreateCell(columnIndex);
-
-        cell.SetCellValue(value);
-        return cell;
-    }
-
-    public static ICell WriteStyle(ISheet sheet, int columnIndex, int rowIndex, ICellStyle style)
-    {
-        var row = sheet.GetRow(rowIndex) ?? sheet.CreateRow(rowIndex);
-        ICell cell = row.GetCell(columnIndex) ?? row.CreateCell(columnIndex);
-
-        cell.CellStyle = style;
-        return cell;
-    }
-
-    public static void AutoSize(HSSFSheet sheet, int columns)
+    protected static void AutoSize(ISheet sheet, int columns)
     {
         for (int i = 0; i < columns; i++)
         {
             sheet.AutoSizeColumn(i);
-            double width = sheet.GetColumnWidth(i);
-            sheet.SetColumnWidth(i, (int)(1.1 * width));
+            sheet.SetColumnWidth(i, (int)(1.1 * sheet.GetColumnWidth(i)));
         }
     }
 
-    public void StartExcell(string title, string symbolName, string exchangeName)
+    protected void StartExcell(string title, string symbolName, string exchangeName)
     {
         GlobalData.AddTextToLogTab($"Information dump {title} {symbolName}");
 
@@ -210,7 +155,6 @@ public class ExcelBase
         using var fs = new FileStream(filename, FileMode.Create);
         Book.Write(fs);
 
-        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(filename) { UseShellExecute = true });
+        Process.Start(new ProcessStartInfo(filename) { UseShellExecute = true });
     }
 }
-

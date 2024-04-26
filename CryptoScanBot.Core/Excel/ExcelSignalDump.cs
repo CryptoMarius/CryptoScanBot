@@ -1,34 +1,22 @@
 ﻿using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
-
-using NPOI.HPSF;
-using NPOI.HSSF.UserModel;
 using NPOI.SS.UserModel;
-
 
 namespace CryptoScanBot.Core.Excel;
 
-public class ExcelSignalDump : ExcelBase
+public class ExcelSignalDump(CryptoSignal Signal) : ExcelBase(Signal.Symbol.Name)
 {
-    Core.Model.CryptoExchange Exchange;
-    CryptoSymbol Symbol;
-    CryptoSignal Signal;
-
-
     private void DumpInformation()
     {
         // Overzichts van de aanwezige candles
-        HSSFSheet sheet = (HSSFSheet)Book.CreateSheet("Information");
-        ICell cell;
+        ISheet sheet = Book.CreateSheet("Information");
 
         int row = 0;
         WriteCell(sheet, 0, row, "Created");
-        cell = WriteCell(sheet, 1, row, DateTime.Now);
-        cell.CellStyle = CellStyleDate;
+        WriteCell(sheet, 1, row, DateTime.Now, CellStyleDate);
         row++;
         row++;
-
 
         // Interval overview
         int columns = 2;
@@ -39,32 +27,30 @@ public class ExcelSignalDump : ExcelBase
         WriteCell(sheet, 0, row++, "Interval");
 
         row = startRow;
-        WriteCell(sheet, 1, row++, Symbol.Exchange.Name);
-        WriteCell(sheet, 1, row++, Symbol.Name);
+        WriteCell(sheet, 1, row++, Signal.Symbol.Exchange.Name);
+        WriteCell(sheet, 1, row++, Signal.Symbol.Name);
         WriteCell(sheet, 1, row++, Signal.StrategyText);
         WriteCell(sheet, 1, row++, Signal.Interval.Name);
-
 
         AutoSize(sheet, columns);
     }
 
 
     private void DumpCandeData()
-    {
-        ICell cell;
+    {        
         int columns = 0;
-        HSSFSheet sheet = (HSSFSheet)Book.CreateSheet("Signal");
+        ISheet sheet = Book.CreateSheet("Signal");
 
-        if (Exchange.SymbolListName.TryGetValue(Constants.SymbolNameBarometerPrice + Symbol.Quote, out CryptoSymbol bmSymbol))
+        if (Signal.Symbol.Exchange.SymbolListName.TryGetValue(Constants.SymbolNameBarometerPrice + Signal.Symbol.Quote, out CryptoSymbol? bmSymbol))
         {
             CryptoSymbolInterval bmSymbolInterval = bmSymbol.GetSymbolInterval(CryptoIntervalPeriod.interval1h);
             SortedList<long, CryptoCandle> bmCandles = bmSymbolInterval.CandleList;
 
-            CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(Signal.Interval.IntervalPeriod);
+            CryptoSymbolInterval symbolInterval = Signal.Symbol.GetSymbolInterval(Signal.Interval.IntervalPeriod);
             if (symbolInterval.CandleList.Count > 0)
             {
                 CryptoCandle candleLast = symbolInterval.CandleList.Values.Last();
-                if (CandleIndicatorData.PrepareIndicators(Symbol, symbolInterval, candleLast, out _))
+                if (CandleIndicatorData.PrepareIndicators(Signal.Symbol, symbolInterval, candleLast, out _))
                 {
                     int row = 0;
 
@@ -113,88 +99,47 @@ public class ExcelSignalDump : ExcelBase
                             try
                             {
                                 row++;
-                                if (Signal.OpenDate == candle.Date)
-                                    cell = WriteCell(sheet, column++, row, "Signal");
-                                else
-                                    cell = WriteCell(sheet, column++, row, "");
 
-                                cell = WriteCell(sheet, column++, row, candle.DateLocal);
-                                cell.CellStyle = CellStyleDate;
-
-                                cell = WriteCell(sheet, column++, row, (double)candle.Open);
-                                cell.CellStyle = CellStyleDecimalNormal;
-
-                                cell = WriteCell(sheet, column++, row, (double)candle.High);
-                                cell.CellStyle = CellStyleDecimalNormal;
-
-                                cell = WriteCell(sheet, column++, row, (double)candle.Low);
-                                cell.CellStyle = CellStyleDecimalNormal;
-
-                                cell = WriteCell(sheet, column++, row, (double)candle.Close);
-                                cell.CellStyle = CellStyleDecimalNormal;
-
-                                cell = WriteCell(sheet, column++, row, (double)candle.Volume);
-                                cell.CellStyle = CellStyleDecimalNormal;
-
-                                cell = WriteCell(sheet, column++, row, candle.CandleData.BollingerBandsLowerBand);
-                                cell.CellStyle = CellStyleDecimalNormal;
-                                cell = WriteCell(sheet, column++, row, candle.CandleData.Sma20);
-                                cell.CellStyle = CellStyleDecimalNormal;
-                                cell = WriteCell(sheet, column++, row, candle.CandleData.BollingerBandsUpperBand);
-                                cell.CellStyle = CellStyleDecimalNormal;
-                                cell = WriteCell(sheet, column++, row, candle.CandleData.BollingerBandsPercentage);
-                                cell.CellStyle = CellStylePercentageNormal;
-
-
-                                cell = WriteCell(sheet, column++, row, candle.CandleData.KeltnerLowerBand);
-                                cell.CellStyle = CellStyleDecimalNormal;
-                                cell = WriteCell(sheet, column++, row, candle.CandleData.KeltnerCenterLine);
-                                cell.CellStyle = CellStyleDecimalNormal;
-                                cell = WriteCell(sheet, column++, row, candle.CandleData.KeltnerUpperBand);
-                                cell.CellStyle = CellStyleDecimalNormal;
+                                WriteCell(sheet, column++, row, Signal.OpenDate == candle.Date ? "Signal" : "");
+                                WriteCell(sheet, column++, row, candle.DateLocal, CellStyleDate); 
+                                WriteCell(sheet, column++, row, candle.Open, CellStyleDecimalNormal);
+                                WriteCell(sheet, column++, row, candle.High, CellStyleDecimalNormal);
+                                WriteCell(sheet, column++, row, candle.Low, CellStyleDecimalNormal);
+                                WriteCell(sheet, column++, row, candle.Close, CellStyleDecimalNormal);
+                                WriteCell(sheet, column++, row, candle.Volume, CellStyleDecimalNormal);
+                                WriteCell(sheet, column++, row, candle.CandleData.BollingerBandsLowerBand, CellStyleDecimalNormal);
+                                WriteCell(sheet, column++, row, candle.CandleData.Sma20, CellStyleDecimalNormal);
+                                WriteCell(sheet, column++, row, candle.CandleData.BollingerBandsUpperBand, CellStyleDecimalNormal);                                
+                                WriteCell(sheet, column++, row, candle.CandleData.BollingerBandsPercentage, CellStylePercentageNormal);
+                                
+                                WriteCell(sheet, column++, row, candle.CandleData.KeltnerLowerBand, CellStyleDecimalNormal);
+                                WriteCell(sheet, column++, row, candle.CandleData.KeltnerCenterLine, CellStyleDecimalNormal);
+                                WriteCell(sheet, column++, row, candle.CandleData.KeltnerUpperBand, CellStyleDecimalNormal);                                
 #if EXTRASTRATEGIESSLOPEKELTNER
-                                cell = WriteCell(sheet, column++, row, candle.CandleData.KeltnerCenterLineSlope);
-                                cell.CellStyle = CellStyleDecimalNormal;
+                                WriteCell(sheet, column++, row, candle.CandleData.KeltnerCenterLineSlope, CellStyleDecimalNormal);                                
 #endif
 
-                                cell = WriteCell(sheet, column++, row, candle.CandleData.Sma20);
-                                cell.CellStyle = CellStyleDecimalNormal;
-                                cell = WriteCell(sheet, column++, row, candle.CandleData.Sma50);
-                                cell.CellStyle = CellStyleDecimalNormal;
-                                cell = WriteCell(sheet, column++, row, candle.CandleData.Sma200);
-                                cell.CellStyle = CellStyleDecimalNormal;
-                                cell = WriteCell(sheet, column++, row, candle.CandleData.PSar);
-                                cell.CellStyle = CellStyleDecimalNormal;
+                                WriteCell(sheet, column++, row, candle.CandleData.Sma20, CellStyleDecimalNormal);
+                                WriteCell(sheet, column++, row, candle.CandleData.Sma50, CellStyleDecimalNormal);
+                                WriteCell(sheet, column++, row, candle.CandleData.Sma200, CellStyleDecimalNormal);
+                                WriteCell(sheet, column++, row, candle.CandleData.PSar, CellStyleDecimalNormal);
+                                WriteCell(sheet, column++, row, candle.CandleData.MacdValue, CellStyleDecimalNormal);
+                                WriteCell(sheet, column++, row, candle.CandleData.MacdSignal, CellStyleDecimalNormal);
+                                WriteCell(sheet, column++, row, candle.CandleData.MacdHistogram, CellStyleDecimalNormal);
+                                WriteCell(sheet, column++, row, candle.CandleData.Rsi, CellStyleDecimalNormal);
+                                WriteCell(sheet, column++, row, candle.CandleData.StochSignal, CellStyleDecimalNormal);
+                                WriteCell(sheet, column++, row, candle.CandleData.StochOscillator, CellStyleDecimalNormal);
 
-                                cell = WriteCell(sheet, column++, row, candle.CandleData.MacdValue);
-                                cell.CellStyle = CellStyleDecimalNormal;
-                                cell = WriteCell(sheet, column++, row, candle.CandleData.MacdSignal);
-                                cell.CellStyle = CellStyleDecimalNormal;
-                                cell = WriteCell(sheet, column++, row, candle.CandleData.MacdHistogram);
-                                cell.CellStyle = CellStyleDecimalNormal;
-
-                                cell = WriteCell(sheet, column++, row, candle.CandleData.Rsi);
-                                cell.CellStyle = CellStyleDecimalNormal;
-
-                                cell = WriteCell(sheet, column++, row, candle.CandleData.StochSignal);
-                                cell.CellStyle = CellStyleDecimalNormal;
-                                cell = WriteCell(sheet, column++, row, candle.CandleData.StochOscillator);
-                                cell.CellStyle = CellStyleDecimalNormal;
-
-                                if (bmCandles.TryGetValue(candle.OpenTime, out CryptoCandle bmCandle))
+                                if (bmCandles.TryGetValue(candle.OpenTime, out CryptoCandle? bmCandle))
                                 {
-                                    cell = WriteCell(sheet, column++, row, (double)bmCandle.Close);
-                                    if (bmCandle.Close < 0)
-                                        cell.CellStyle = CellStylePercentageRed;
-                                    else if (bmCandle.Close > 0)
-                                        cell.CellStyle = CellStylePercentageGreen;
+                                    WriteCell(sheet, column++, row, bmCandle.Close, bmCandle.Close < 0 ? CellStylePercentageRed : bmCandle.Close > 0 ? CellStylePercentageGreen : CellStylePercentageNormal);
                                 }
 
                             }
                             catch (Exception error)
                             {
                                 // ignore more or less..
-                                cell = WriteCell(sheet, column++, row, error.Message);
+                                WriteCell(sheet, column++, row, error.Message);
                             }
                         }
                     }
@@ -205,20 +150,14 @@ public class ExcelSignalDump : ExcelBase
         AutoSize(sheet, columns);
     }
 
-    public void ExportToExcel(CryptoSignal signal)
+    public void ExportToExcel()
     {
-        Signal = signal;
-        Symbol = signal.Symbol;
-        Exchange = Symbol.Exchange;
         try
         {
-            CreateBook(Symbol.Name);
-            CreateFormats();
-
             DumpCandeData();
             DumpInformation();
 
-            StartExcell("Signal", Symbol.Name, Symbol.Exchange.Name);
+            StartExcell("Signal", Signal.Symbol.Name, Signal.Symbol.Exchange.Name);
         }
         catch (Exception error)
         {
