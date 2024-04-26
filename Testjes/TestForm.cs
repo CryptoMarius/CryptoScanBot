@@ -2023,24 +2023,20 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
         }
     }
 
-    static string Config(string what)
+    static string Config(string what) => what switch
     {
-        switch (what)
-        {
-            case "api_id": return "22959519";
-            case "api_hash": return "ab771edffa172f885dee0da9fcc8c9ec";
-            case "phone_number": return "+31624600002";
-            case "verification_code": return "10128"; // Console.Write("Code: "); return Console.ReadLine();
-            case "first_name": return "Marius";      // if sign-up is required
-            case "last_name": return "Doe";        // if sign-up is required
-            case "password": return "?";     // if user has enabled 2FA
-            default: return null;                  // let WTelegramClient decide the default config
-        }
-    }
+        "api_id" => "22959519",
+        "api_hash" => "ab771edffa172f885dee0da9fcc8c9ec",
+        "phone_number" => "+31624600002",
+        "verification_code" => "10128",// Console.Write("Code: "); return Console.ReadLine();
+        "first_name" => "Marius",// if sign-up is required
+        "last_name" => "Doe",// if sign-up is required
+        "password" => "?",// if user has enabled 2FA
+        _ => null,// let WTelegramClient decide the default config
+    };
 
-
-    private static void CheckCandlesComplete(CryptoSymbol symbol, CryptoInterval interval)
-    {
+    //private static void CheckCandlesComplete(CryptoSymbol symbol, CryptoInterval interval)
+    //{
         //SortedList<long, DateTime> dateList = new();
         //SortedList<long, CryptoCandle> candles = symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList;
 
@@ -2164,7 +2160,7 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
         //        }
         //    }
         //}
-    }
+    //}
 
     public static bool AcceptSymbol(CryptoSymbol symbol, CryptoInterval interval, CryptoBackConfig config)
     {
@@ -2611,49 +2607,57 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
         {
             if (exchange.SymbolListName.TryGetValue("ADAUSDT", out CryptoSymbol symbol))
             {
-                CryptoSignal signal = new();
-                signal.OpenDate = DateTime.UtcNow.AddHours(SignalList.Count);
-                signal.Price = 0.12345m;
-                signal.Symbol = symbol;
-                signal.Exchange = exchange;
-                signal.Side = CryptoTradeSide.Long;
-                signal.Interval = GlobalData.IntervalList[3];
+                CryptoSignal signal = new()
+                {
+                    OpenDate = DateTime.UtcNow.AddHours(SignalList.Count),
+                    Price = 0.12345m,
+                    Symbol = symbol,
+                    Exchange = exchange,
+                    Side = CryptoTradeSide.Long,
+                    Interval = GlobalData.IntervalList[3]
+                };
                 SignalList.Add(signal);
             }
 
             if (exchange.SymbolListName.TryGetValue("LEVERUSDT", out symbol))
             {
-                CryptoSignal signal = new();
-                signal.OpenDate = DateTime.UtcNow.AddHours(SignalList.Count);
-                signal.Price = 0.12345m;
-                signal.Symbol = symbol;
-                signal.Exchange = exchange;
-                signal.Interval = GlobalData.IntervalList[5];
-                signal.Side = CryptoTradeSide.Short;
+                CryptoSignal signal = new()
+                {
+                    OpenDate = DateTime.UtcNow.AddHours(SignalList.Count),
+                    Price = 0.12345m,
+                    Symbol = symbol,
+                    Exchange = exchange,
+                    Interval = GlobalData.IntervalList[5],
+                    Side = CryptoTradeSide.Short
+                };
                 SignalList.Add(signal);
             }
 
             if (exchange.SymbolListName.TryGetValue("ABCUSDT", out symbol))
             {
-                CryptoSignal signal = new();
-                signal.OpenDate = DateTime.UtcNow.AddHours(SignalList.Count);
-                signal.Price = 0.12345m;
-                signal.Symbol = symbol;
-                signal.Exchange = exchange;
-                signal.Side = CryptoTradeSide.Long;
-                signal.Interval = GlobalData.IntervalList[3];
+                CryptoSignal signal = new()
+                {
+                    OpenDate = DateTime.UtcNow.AddHours(SignalList.Count),
+                    Price = 0.12345m,
+                    Symbol = symbol,
+                    Exchange = exchange,
+                    Side = CryptoTradeSide.Long,
+                    Interval = GlobalData.IntervalList[3]
+                };
                 SignalList.Add(signal);
             }
 
             if (exchange.SymbolListName.TryGetValue("ACAUSDT", out symbol))
             {
-                CryptoSignal signal = new();
-                signal.OpenDate = DateTime.UtcNow.AddHours(SignalList.Count);
-                signal.Price = 0.12345m;
-                signal.Symbol = symbol;
-                signal.Exchange = exchange;
-                signal.Interval = GlobalData.IntervalList[5];
-                signal.Side = CryptoTradeSide.Short;
+                CryptoSignal signal = new()
+                {
+                    OpenDate = DateTime.UtcNow.AddHours(SignalList.Count),
+                    Price = 0.12345m,
+                    Symbol = symbol,
+                    Exchange = exchange,
+                    Interval = GlobalData.IntervalList[5],
+                    Side = CryptoTradeSide.Short
+                };
                 SignalList.Add(signal);
             }
         }
@@ -2672,13 +2676,15 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
         {
             if (exchange.SymbolListName.TryGetValue("PAXGUSDT", out CryptoSymbol symbol))
             {
-                CryptoSignal signal = new();
-                signal.OpenDate = DateTime.UtcNow.AddHours(SignalList.Count);
-                signal.Price = 0.12345m;
-                signal.Symbol = symbol;
-                signal.Exchange = exchange;
-                signal.Side = CryptoTradeSide.Long;
-                signal.Interval = GlobalData.IntervalList[3];
+                CryptoSignal signal = new()
+                {
+                    OpenDate = DateTime.UtcNow.AddHours(SignalList.Count),
+                    Price = 0.12345m,
+                    Symbol = symbol,
+                    Exchange = exchange,
+                    Side = CryptoTradeSide.Long,
+                    Interval = GlobalData.IntervalList[3]
+                };
                 SignalList.Insert(0, signal);
             }
 

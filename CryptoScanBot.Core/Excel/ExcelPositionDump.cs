@@ -440,7 +440,7 @@ public class ExcelPositionDump(CryptoPosition position) : ExcelBase(position.Sym
             //DumpSignals();
             DumpInformation();
 
-            StartExcell("position", position.Symbol.Name, position.Exchange.Name);
+            StartExcell("position", position.Symbol.Name);
         }
         catch (Exception error)
         {

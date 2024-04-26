@@ -1,31 +1,26 @@
 ﻿using Bybit.Net.Clients;
-using Bybit.Net.Enums;
-using Bybit.Net.Objects.Models.V5;
-
 using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
-using CryptoExchange.Net.Sockets;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
-using CryptoScanBot.Core.Exchange;
 
 namespace CryptoScanBot.Core.Exchange.BybitSpot;
 
 public class SubscriptionPriceTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
 {
-    public override async Task<CallResult<UpdateSubscription>> Subscribe()
+    public override async Task<CallResult<UpdateSubscription>?> Subscribe()
     {
-        TickerGroup.SocketClient ??= new BybitSocketClient();
+        TickerGroup!.SocketClient ??= new BybitSocketClient();
         CallResult<UpdateSubscription> subscriptionResult = await ((BybitSocketClient)TickerGroup.SocketClient).V5SpotApi.SubscribeToTickerUpdatesAsync(Symbols, data =>
         {
-            if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange exchange))
+            if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
             {
                 //GET /api/v3/ticker/24hr
                 // client.Spot.SubscribeToSymbolTickerUpdates("ETHBTC", (test) => result = test);
 
                 var tick = data.Data;
                 {
-                    if (exchange.SymbolListName.TryGetValue(tick.Symbol, out CryptoSymbol symbol))
+                    if (exchange.SymbolListName.TryGetValue(tick.Symbol, out CryptoSymbol? symbol))
                     {
                         TickerCount++;
 
@@ -34,14 +29,14 @@ public class SubscriptionPriceTicker(ExchangeOptions exchangeOptions) : Subscrip
                         //symbol.HighPrice = tick.HighPrice;
                         //symbol.LowPrice = tick.LowPrice;
                         //if (tick.LastPrice.HasValue)
-                        symbol.LastPrice = (decimal)tick.LastPrice;
+                        symbol.LastPrice = tick.LastPrice;
                         //if (tick.BestBidPrice.HasValue)
                         //symbol.BidPrice = tick.BestBidPrice;
                         //if (tick.BestAskPrice.HasValue)
                         //    symbol.AskPrice = tick.BestAskPrice;
                         //symbol.Volume = tick.BaseVolume; //?
                         //if (tick.Turnover24h.HasValue)
-                        symbol.Volume = (decimal)tick.Turnover24h; //= Quoted = het volume * de prijs
+                        symbol.Volume = tick.Turnover24h; //= Quoted = het volume * de prijs
 
                         //symbol.Volume = tick.Volume24h; //= Base = het volume * de prijs                                
 

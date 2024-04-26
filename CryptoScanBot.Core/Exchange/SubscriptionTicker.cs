@@ -17,7 +17,7 @@ public abstract class SubscriptionTicker(ExchangeOptions exchangeOptions)
 
     public string GroupName = "";
     internal CryptoTickerType TickerType;
-    public TickerGroup? TickerGroup = null;
+    public TickerGroup? TickerGroup;
     internal UpdateSubscription? _subscription;
 
     // Deze worden niet gebruikt bij de userticker 

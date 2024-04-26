@@ -157,7 +157,7 @@ public class ExcelSignalDump(CryptoSignal Signal) : ExcelBase(Signal.Symbol.Name
             DumpCandeData();
             DumpInformation();
 
-            StartExcell("Signal", Signal.Symbol.Name, Signal.Symbol.Exchange.Name);
+            StartExcell("Signal", Signal.Symbol.Name);
         }
         catch (Exception error)
         {

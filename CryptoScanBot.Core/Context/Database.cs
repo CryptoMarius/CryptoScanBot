@@ -1,8 +1,4 @@
-﻿using System.Data;
-using System.Data.SqlClient;
-using System.Globalization;
-using System.Text;
-using CryptoScanBot.Core.Enums;
+﻿using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using Dapper;
@@ -10,88 +6,6 @@ using Dapper.Contrib.Extensions;
 using Microsoft.Data.Sqlite;
 
 namespace CryptoScanBot.Core.Context;
-
-// Dapper slaat de kind van een datum niet op waardoor de UTC van slag is
-
-// from https://stackoverflow.com/questions/12510299/get-datetime-as-utc-with-dapper
-
-public class DateTimeHandler : SqlMapper.TypeHandler<DateTime>
-{
-    private static readonly DateTime unixOrigin = new(1970, 1, 1, 0, 0, 0, 0);
-
-
-    public override void SetValue(IDbDataParameter parameter, DateTime value)
-    {
-        parameter.Value = value;
-    }
-
-    //public override DateTime Parse(object value)
-    //{
-    //    return DateTime.SpecifyKind((DateTime)value, DateTimeKind.Utc);
-    //}
-
-    public override DateTime Parse(object value)
-    {
-        if (!TryGetDateTime(value, out DateTime storedDateValue))
-        {
-            throw new InvalidOperationException($"Unable to parse value {value} as DateTimeOffset");
-        }
-
-        return DateTime.SpecifyKind(storedDateValue, DateTimeKind.Utc);
-    }
-
-    private static bool TryGetDateTime(object value, out DateTime dateTimeValue)
-    {
-        dateTimeValue = default;
-        if (value is DateTime d)
-        {
-            dateTimeValue = d;
-            return true;
-        }
-
-        if (value is string v)
-        {
-            dateTimeValue = DateTime.Parse(v);
-            return true;
-        }
-
-        if (long.TryParse(value?.ToString() ?? string.Empty, out long l))
-        {
-            dateTimeValue = unixOrigin.AddSeconds(l);
-            return true;
-        }
-
-        if (float.TryParse(value?.ToString() ?? string.Empty, out float _))
-        {
-            throw new InvalidOperationException("Unsupported Sqlite datetime type, REAL.");
-        }
-
-        return false;
-    }
-}
-
-// From https://learn.microsoft.com/en-us/dotnet/standard/data/sqlite/dapper-limitations
-
-abstract class SqliteTypeHandler<T> : SqlMapper.TypeHandler<T>
-{
-    // Parameters are converted by Microsoft.Data.Sqlite
-    public override void SetValue(IDbDataParameter parameter, T? value) => parameter.Value = value;
-}
-
-class DateTimeOffsetHandler : SqliteTypeHandler<DateTimeOffset>
-{
-    public override DateTimeOffset Parse(object value) => DateTimeOffset.Parse((string)value);
-}
-
-class GuidHandler : SqliteTypeHandler<Guid>
-{
-    public override Guid Parse(object value) => Guid.Parse((string)value);
-}
-
-class TimeSpanHandler : SqliteTypeHandler<TimeSpan>
-{
-    public override TimeSpan Parse(object value) => TimeSpan.Parse((string)value);
-}
 
 // SqlConnection is sealed, dus dan maar via een compositie
 // De SqliteConnection is niet sealed (die gebruiken we ook)

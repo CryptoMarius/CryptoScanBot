@@ -89,7 +89,7 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
             foreach (CryptoSymbolInterval symbolInterval in Symbol.IntervalPeriodList.ToList())
                 DumpInterval(symbolInterval);
 
-            StartExcell("Candles", Symbol.Name, Symbol.Exchange.Name);
+            StartExcell("Candles", Symbol.Name);
         }
         catch (Exception error)
         {

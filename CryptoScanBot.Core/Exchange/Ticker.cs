@@ -68,12 +68,14 @@ public class Ticker(ExchangeOptions exchangeOptions, Type userTickerItemType, Cr
                 int x = symbols.Count;
                 while (x > 0)
                 {
-                    SubscriptionTicker ticker = (SubscriptionTicker)Activator.CreateInstance(UserTickerItemType, [ExchangeOptions]);
-                    ticker.GroupName = $"{quoteData.Name}#{groupCount}";
-                    ticker.TickerType = TickerType;
-                    tickers.Add(ticker);
-                    x -= ExchangeOptions.SubscriptionLimitSymbols;
-                    groupCount++;
+                    if (Activator.CreateInstance(UserTickerItemType, [ExchangeOptions]) is SubscriptionTicker ticker)
+                    {
+                        ticker.GroupName = $"{quoteData.Name}#{groupCount}";
+                        ticker.TickerType = TickerType;
+                        tickers.Add(ticker);
+                        x -= ExchangeOptions.SubscriptionLimitSymbols;
+                        groupCount++;
+                    }
                 }
 
                 // De symbols evenredig verdelen over de tickers

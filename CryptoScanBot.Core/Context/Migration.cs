@@ -11,11 +11,10 @@ public class Migration
 
     public static void Execute(CryptoDatabase database, int CurrentVersion)
     {
-        CryptoVersion version = database.Connection.GetAll<CryptoVersion>().FirstOrDefault();
+        CryptoVersion version = database.Connection.GetAll<CryptoVersion>().First();
 
         if (CurrentVersion > version.Version)
         {
-
             //***********************************************************
             if (CurrentVersion > version.Version && version.Version == 1)
             {

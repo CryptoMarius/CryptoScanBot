@@ -144,11 +144,11 @@ public abstract class ExcelBase
         }
     }
 
-    protected void StartExcell(string title, string symbolName, string exchangeName)
+    protected void StartExcell(string title, string symbolName)
     {
         GlobalData.AddTextToLogTab($"Information dump {title} {symbolName}");
 
-        string folder = GlobalData.GetBaseDir() + $@"\Excel\"; //{exchangeName}\
+        string folder = GlobalData.GetBaseDir() + $@"\Excel\";
         Directory.CreateDirectory(folder);
 
         string filename = folder + symbolName + " " + title + ".xls";

@@ -646,7 +646,6 @@ static public class GlobalData
         }
     }
 
-
     static public void SaveUserSettings()
     {
         var baseFolder = GetBaseDir();
@@ -656,12 +655,10 @@ static public class GlobalData
         File.WriteAllText(filename, text);
     }
 
-
     static public void SaveSettings()
     {
         string baseFolder = GetBaseDir();
         Directory.CreateDirectory(baseFolder);
-
 
         //using (FileStream writeStream = new FileStream(filename, FileMode.Create))
         //{
@@ -704,7 +701,7 @@ static public class GlobalData
     {
         try
         {
-            PlaySound(text, test);
+            PlaySound?.Invoke(text, test);
         }
         catch (Exception error)
         {
@@ -717,7 +714,7 @@ static public class GlobalData
     {
         try
         {
-            PlaySpeech(text, test);
+            PlaySpeech?.Invoke(text, test);
         }
         catch (Exception error)
         {
@@ -730,7 +727,7 @@ static public class GlobalData
     {
         try
         {
-            LogToTelegram(text);
+            LogToTelegram?.Invoke(text);
         }
         catch (Exception error)
         {
@@ -741,11 +738,11 @@ static public class GlobalData
 
     static public void AddTextToTelegram(string text, CryptoPosition position)
     {
-        if (LogToTelegram == null)
+        if (LogToTelegram is null)
             return;
         try
         {
-            if (position != null)
+            if (position is not null)
             {
                 string symbol = position.Symbol.Name.ToUpper();
                 (string Url, CryptoExternalUrlType Execute) = ExternalUrls.GetExternalRef(Settings.General.TradingApp, true, position.Symbol, position.Interval);
@@ -766,11 +763,11 @@ static public class GlobalData
 
     static public void AddTextToTelegram(string text, CryptoSymbol symbol)
     {
-        if (LogToTelegram == null)
+        if (LogToTelegram is null)
             return;
         try
         {
-            if (symbol != null)
+            if (symbol is not null)
             {
                 string symbolName = symbol.Name.ToUpper();
                 (string Url, CryptoExternalUrlType Execute) = ExternalUrls.GetExternalRef(Settings.General.TradingApp, true, symbol, IntervalList[0]);
@@ -789,59 +786,31 @@ static public class GlobalData
         }
     }
 
-    static public void AddTextToLogTab(string text, bool extraLineFeed = false)
-    {
-        LogToLogTabEvent?.Invoke(text, extraLineFeed);
-    }
-
-
-    static public void SymbolsHaveChanged(string text)
-    {
-        SymbolsHaveChangedEvent?.Invoke(text);
-    }
+    static public void AddTextToLogTab(string text, bool extraLineFeed = false) => LogToLogTabEvent?.Invoke(text, extraLineFeed);
+    static public void SymbolsHaveChanged(string text) => SymbolsHaveChangedEvent?.Invoke(text);
 
 #if TRADEBOT
 
-    static public void AssetsHaveChanged(string text)
-    {
-        AssetsHaveChangedEvent?.Invoke(text);
-    }
-
-    static public void PositionsHaveChanged(string text)
-    {
-        PositionsHaveChangedEvent?.Invoke(text);
-    }
+    static public void AssetsHaveChanged(string text) => AssetsHaveChangedEvent?.Invoke(text);
+    static public void PositionsHaveChanged(string text) => PositionsHaveChangedEvent?.Invoke(text);
 #endif
 
-    static public void TelegramHasChanged(string text)
-    {
-        TelegramHasChangedEvent?.Invoke(text);
-    }
-
-
-    static public void SetCandleTimerEnable(bool value)
-    {
-        SetCandleTimerEnableEvent(value);
-    }
+    static public void TelegramHasChanged(string text) => TelegramHasChangedEvent?.Invoke(text);
+    static public void SetCandleTimerEnable(bool value) => SetCandleTimerEnableEvent?.Invoke(value);
 
     private static string? AppDataFolder;
-
 
     static public string GetBaseDir()
     {
         if (string.IsNullOrEmpty(AppDataFolder))
         {
             ApplicationParams.InitApplicationOptions();
-            AppDataFolder = ApplicationParams.Options?.AppDataFolder ?? AppName;
-            AppDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), AppDataFolder);
+            AppDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), ApplicationParams.Options?.AppDataFolder ?? AppName);
             Directory.CreateDirectory(AppDataFolder);
             AppDataFolder += @"\";
         }
-
         return AppDataFolder;
     }
-
-
 
     //public static void DumpSessionInformation()
     //{

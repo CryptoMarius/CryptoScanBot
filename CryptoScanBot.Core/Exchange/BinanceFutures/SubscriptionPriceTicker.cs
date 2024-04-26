@@ -1,9 +1,7 @@
 ﻿using Binance.Net.Clients;
 using Binance.Net.Objects.Models.Spot.Socket;
-
 using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
-using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 
@@ -11,19 +9,19 @@ namespace CryptoScanBot.Core.Exchange.BinanceFutures;
 
 public class SubscriptionPriceTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
 {
-    public override async Task<CallResult<UpdateSubscription>> Subscribe()
+    public override async Task<CallResult<UpdateSubscription>?> Subscribe()
     {
-        TickerGroup.SocketClient ??= new BinanceSocketClient();
+        TickerGroup!.SocketClient ??= new BinanceSocketClient();
         CallResult<UpdateSubscription> subscriptionResult = await ((BinanceSocketClient)TickerGroup.SocketClient).UsdFuturesApi.SubscribeToAllTickerUpdatesAsync((data) =>
         {
-            if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange exchange))
+            if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
             {
                 //GET /api/v3/ticker/24hr
                 // client.Spot.SubscribeToSymbolTickerUpdates("ETHBTC", (test) => result = test);
 
                 foreach (var tick in data.Data.Cast<BinanceStreamTick>())
                 {
-                    if (exchange.SymbolListName.TryGetValue(tick.Symbol, out CryptoSymbol symbol))
+                    if (exchange.SymbolListName.TryGetValue(tick.Symbol, out CryptoSymbol? symbol))
                     {
                         TickerCount++;
 

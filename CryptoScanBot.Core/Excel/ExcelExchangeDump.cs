@@ -89,7 +89,7 @@ public class ExcelExchangeDump(Model.CryptoExchange exchange) : ExcelBase(exchan
             DumpSymbols();
             DumpInformation();
 
-            StartExcell("Symbols", exchange.Name, exchange.Name);
+            StartExcell("Symbols", exchange.Name);
 
         }
         catch (Exception error)
