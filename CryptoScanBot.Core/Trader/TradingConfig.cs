@@ -7,8 +7,8 @@ namespace CryptoScanBot.Core.Trader;
 
 public static class TradingConfig
 {
-    static public Dictionary<CryptoTradeSide, SettingsCompiled> Signals { get; } = new();
-    static public Dictionary<CryptoTradeSide, SettingsCompiled> Trading { get; } = new();
+    public static Dictionary<CryptoTradeSide, SettingsCompiled> Signals { get; } = [];
+    public static Dictionary<CryptoTradeSide, SettingsCompiled> Trading { get; } = [];
 
 
     static TradingConfig()
@@ -33,7 +33,7 @@ public static class TradingConfig
     static public void InitWhiteAndBlackListHelper(List<string> list, SortedList<string, bool> target, string caption)
     {
         // Het 1e woord is de symbol
-        char[] delimiterChars = { ' ', ',', '-', '.', ':', '\t' };
+        char[] delimiterChars = [' ', ',', '-', '.', ':', '\t'];
 
         target.Clear();
         foreach (string text in list)
@@ -47,7 +47,7 @@ public static class TradingConfig
                     if (!target.ContainsKey(symbol))
                         target.Add(symbol, true);
 
-                    if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+                    if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange? exchange))
                     {
                         if (!exchange.SymbolListName.ContainsKey(symbol))
                         {

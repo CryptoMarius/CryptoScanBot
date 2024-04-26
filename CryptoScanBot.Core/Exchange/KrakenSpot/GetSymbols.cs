@@ -14,7 +14,7 @@ public class GetSymbols
 
     public static async Task ExecuteAsync()
     {
-        if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
         {
             try
             {
@@ -25,12 +25,7 @@ public class GetSymbols
                 database.Open();
 
                 using var client = new KrakenRestClient();
-                var exchangeInfo = await client.SpotApi.ExchangeData.GetSymbolsAsync();
-
-                // Zo af en toe komt er geen data of is de Data niet gezet.
-                // De verbindingen naar extern kunnen (tijdelijk) geblokkeerd zijn
-                if (exchangeInfo == null)
-                    throw new ExchangeException("Geen exchange data ontvangen (1)");
+                var exchangeInfo = await client.SpotApi.ExchangeData.GetSymbolsAsync() ?? throw new ExchangeException("Geen exchange data ontvangen (1)");
                 if (!exchangeInfo.Success)
                     GlobalData.AddTextToLogTab("error getting exchangeinfo " + exchangeInfo.Error + "\r\n");
                 if (exchangeInfo.Data == null)
@@ -65,7 +60,7 @@ public class GetSymbols
                                     enzovoort..
                                 */
                                 //Eventueel symbol toevoegen
-                                if (!exchange.SymbolListName.TryGetValue(name, out CryptoSymbol symbol))
+                                if (!exchange.SymbolListName.TryGetValue(name, out CryptoSymbol? symbol))
                                 {
                                     symbol = new()
                                     {
@@ -104,7 +99,7 @@ public class GetSymbols
                                 if (symbolData.MinValue.HasValue)
                                     symbol.QuoteValueMinimum = (decimal)symbolData.MinValue;
 
-                                symbol.PriceTickSize = (decimal)symbolData.TickSize; // ? binanceSymbol.PriceFilter.TickSize;
+                                symbol.PriceTickSize = symbolData.TickSize ?? 0; // ? binanceSymbol.PriceFilter.TickSize;
 
                                 symbol.IsSpotTradingAllowed = true; // binanceSymbol.IsSpotTradingAllowed;
                                 symbol.IsMarginTradingAllowed = false; // binanceSymbol.MarginTading; ???

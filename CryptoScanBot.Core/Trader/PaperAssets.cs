@@ -22,7 +22,7 @@ public class PaperAssets
 
 
             // Base asset
-            if (!tradeAccount.AssetList.TryGetValue(symbol.Base, out CryptoAsset assetBase))
+            if (!tradeAccount.AssetList.TryGetValue(symbol.Base, out CryptoAsset? assetBase))
             {
                 assetBase = new CryptoAsset()
                 {
@@ -33,7 +33,7 @@ public class PaperAssets
             }
 
             // Quote asset
-            if (!tradeAccount.AssetList.TryGetValue(symbol.Quote, out CryptoAsset assetQuote))
+            if (!tradeAccount.AssetList.TryGetValue(symbol.Quote, out CryptoAsset? assetQuote))
             {
                 assetQuote = new CryptoAsset()
                 {

@@ -5,18 +5,18 @@ namespace CryptoScanBot.Core.TradingView;
 
 public class FGIndex
 {
-    public FGIndexData[] Data { get; set; }
+    public FGIndexData[] Data { get; set; } = [];
 }
 
 public class FGIndexData
 {
-    public string Value { get; set; }
+    public string? Value { get; set; }
 }
 
 public class FearAndGreatSymbolInfo
 {
-    private SymbolValue SymbolValue;
-    private readonly HttpClient httpClient = new HttpClient();
+    private SymbolValue? SymbolValue;
+    private readonly HttpClient httpClient = new();
 
     public async void StartAsync(string url, string displayName, string displayFormat, SymbolValue symbolValue, int startDelayMs)
     {
@@ -54,7 +54,7 @@ public class FearAndGreatSymbolInfo
                 if (SymbolValue.LastCheck == null || DateTime.UtcNow >= SymbolValue.LastCheck)
                 {
                     var jsonData = await httpClient.GetFromJsonAsync<FGIndex>("https://api.alternative.me/fng/");
-                    string value = jsonData.Data[0].Value;
+                    string value = jsonData?.Data[0].Value ?? "";
                     //FearAndGreedIndex = jsonData["data"][0]["value"].Value<string>();
                     SymbolValue.Lp = decimal.Parse(value);
                     SymbolValue.LastCheck = DateTime.UtcNow.AddHours(1); // = Next check

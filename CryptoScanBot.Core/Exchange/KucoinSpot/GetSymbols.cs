@@ -15,7 +15,7 @@ public class GetSymbols
 
     public static async Task ExecuteAsync()
     {
-        if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
         {
             try
             {
@@ -52,11 +52,7 @@ public class GetSymbols
                 ]
                 */
 
-                var exchangeInfo = await client.SpotApi.ExchangeData.GetSymbolsAsync();
-                // Zo af en toe komt er geen data of is de Data niet gezet.
-                // De verbindingen naar extern kunnen (tijdelijk) geblokkeerd zijn
-                if (exchangeInfo == null)
-                    throw new ExchangeException("Geen exchange data ontvangen (1)");
+                var exchangeInfo = await client.SpotApi.ExchangeData.GetSymbolsAsync() ?? throw new ExchangeException("Geen exchange data ontvangen (1)");
                 if (!exchangeInfo.Success)
                     GlobalData.AddTextToLogTab($"error getting exchangeinfo {exchangeInfo.Error}", true);
                 //if (exchangeInfo.Data == null)
@@ -98,11 +94,7 @@ public class GetSymbols
                 */
                 // Aanvullend de tickers aanroepen voor het volume...
                 GlobalData.AddTextToLogTab($"Reading symbol ticker information from {ExchangeBase.ExchangeOptions.ExchangeName}");
-                var tickersInfos = await client.SpotApi.ExchangeData.GetTickersAsync();
-                // Zo af en toe komt er geen data of is de Data niet gezet.
-                // De verbindingen naar extern kunnen (tijdelijk) geblokkeerd zijn
-                if (tickersInfos == null)
-                    throw new ExchangeException("Geen symbol ticker data ontvangen (1)");
+                var tickersInfos = await client.SpotApi.ExchangeData.GetTickersAsync() ?? throw new ExchangeException("Geen symbol ticker data ontvangen (1)");
                 if (!tickersInfos.Success)
                     GlobalData.AddTextToLogTab("error getting symbol ticker " + tickersInfos.Error + "\r\n");
                 //if (tickersInfos.Data == null)
@@ -139,7 +131,7 @@ public class GetSymbols
                                 // https://api.kucoin.com/api/v1/symbols
                                 //Eventueel symbol toevoegen
                                 string symbolName = symbolData.Name.Replace("-", "");
-                                if (!exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol symbol))
+                                if (!exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
                                 {
                                     symbol = new()
                                     {
@@ -227,7 +219,7 @@ public class GetSymbols
                             foreach (var tickerInfo in tickersInfos.Data.Data)
                             {
                                 string symbolName = tickerInfo.Symbol.Replace("-", "");
-                                if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol symbol))
+                                if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
                                 {
                                     if (tickerInfo.QuoteVolume.HasValue)
                                     {

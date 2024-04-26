@@ -30,7 +30,7 @@ public class SignalSlopeKeltnerShort : SignalCreateBase
         CryptoCandle candle = CandleLast;
         while (candleCount >= 0)
         {
-            if (CandleLast.CandleData.KeltnerCenterLineSlope < 0)
+            if (CandleLast.CandleData?.KeltnerCenterLineSlope < 0)
                 return false;
 
             if (!GetPrevCandle(candle, out candle))
@@ -60,7 +60,7 @@ public class SignalSlopeKeltnerShort : SignalCreateBase
                 return false;
             }
 
-            if (last.CandleData.KeltnerCenterLineSlope < 0)
+            if (last.CandleData?.KeltnerCenterLineSlope < 0)
             {
                 wrongCount++;
                 if (first || wrongCount > allowedWrongCount)
@@ -110,13 +110,13 @@ public class SignalSlopeKeltnerShort : SignalCreateBase
     {
         ExtraText = "";
 
-        if (CandleLast.CandleData.KeltnerCenterLineSlope > 0)
+        if (CandleLast.CandleData?.KeltnerCenterLineSlope > 0)
             return false;
 
-        if (!GetPrevCandle(CandleLast, out CryptoCandle prevCandle))
+        if (!GetPrevCandle(CandleLast, out CryptoCandle? prevCandle))
             return false;
 
-        if (prevCandle.CandleData.KeltnerCenterLineSlope < 0)
+        if (prevCandle.CandleData?.KeltnerCenterLineSlope < 0)
             return false;
 
         return true;

@@ -14,10 +14,10 @@ public class ExchangeHelper
     public static readonly JsonSerializerOptions JsonSerializerNotIndented = new()
     { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = false };
 
-    public static Ticker PriceTicker { get; set; }
-    public static Ticker KLineTicker { get; set; }
+    public static Ticker? PriceTicker { get; set; }
+    public static Ticker? KLineTicker { get; set; }
 #if TRADEBOT
-    public static Ticker UserTicker { get; set; }
+    public static Ticker? UserTicker { get; set; }
 #endif
 
 

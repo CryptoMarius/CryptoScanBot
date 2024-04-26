@@ -66,7 +66,7 @@ public class GetCandles
         }
 
         // Remember
-        long startFetchDate = (long)symbolInterval.LastCandleSynchronized;
+        long? startFetchDate = symbolInterval.LastCandleSynchronized;
 
         Monitor.Enter(symbol.CandleList);
         try
@@ -138,14 +138,14 @@ public class GetCandles
             while (true)
             {
                 DateTime startFetchUnixDate = CandleTools.GetUnixDate(startFetchUnix);
-                if (fetchFrom[(int)loopInterval.IntervalPeriod] > startFetchUnixDate)
-                    fetchFrom[(int)loopInterval.IntervalPeriod] = startFetchUnixDate;
+                if (fetchFrom[(int)loopInterval!.IntervalPeriod] > startFetchUnixDate)
+                    fetchFrom[(int)loopInterval!.IntervalPeriod] = startFetchUnixDate;
 
                 // Is this timeframe supported?
                 if (GetExchangeInterval(loopInterval) != KlineInterval.OneMonth)
                     break;
                 else
-                    loopInterval = loopInterval.ConstructFrom;
+                    loopInterval = loopInterval.ConstructFrom!;
             }
         }
 
@@ -192,14 +192,14 @@ public class GetCandles
             try
             {
                 // Fill missing candles (at only place we know it can be done safely)
-                if (symbolInterval.CandleList.Any())
+                if (symbolInterval.CandleList.Count != 0)
                 {
                     CryptoCandle stickOld = symbolInterval.CandleList.Values.First();
                     //GlobalData.AddTextToLogTab(symbol.Name + " " + interval.Name + " Debug missing candle " + CandleTools.GetUnixDate(stickOld.OpenTime).ToLocalTime());
                     long unixTime = stickOld.OpenTime;
-                    while (unixTime < (long)symbolInterval.LastCandleSynchronized)
+                    while (unixTime < symbolInterval.LastCandleSynchronized)
                     {
-                        if (!symbolInterval.CandleList.TryGetValue(unixTime, out CryptoCandle candle))
+                        if (!symbolInterval.CandleList.TryGetValue(unixTime, out CryptoCandle? candle))
                         {
                             candle = new()
                             {
@@ -229,7 +229,7 @@ public class GetCandles
                 for (int j = i + 1; j < GlobalData.IntervalList.Count; j++)
                 {
                     CryptoInterval intervalHigherTimeFrame = GlobalData.IntervalList[j];
-                    CryptoInterval intervalLowerTimeFrame = intervalHigherTimeFrame.ConstructFrom;
+                    CryptoInterval intervalLowerTimeFrame = intervalHigherTimeFrame.ConstructFrom!;
 
                     CryptoSymbolInterval periodLowerTimeFrame = symbol.GetSymbolInterval(intervalLowerTimeFrame.IntervalPeriod);
                     SortedList<long, CryptoCandle> candlesLowerTimeFrame = periodLowerTimeFrame.CandleList;
@@ -306,7 +306,7 @@ public class GetCandles
     {
         //GlobalData.AddTextToLogTab("Fetching historical candles");
 
-        if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
         {
             GlobalData.AddTextToLogTab("");
             GlobalData.AddTextToLogTab($"Fetching {exchange.Name} information");

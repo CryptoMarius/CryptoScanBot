@@ -1,6 +1,5 @@
 ﻿using System.Net.WebSockets;
 using System.Text;
-using CryptoScanBot.Core.Intern;
 
 namespace CryptoScanBot.Core.TradingView;
 
@@ -19,7 +18,7 @@ public class TradingViewSymbolWebSocket(string tickerName)
     private readonly string TickerName = tickerName;
     private readonly ClientWebSocket ClientWebSocket = new();
     private readonly CancellationTokenSource CancellationTokenSource = new();
-    public event DataFetchedEvent DataFetched;
+    public event DataFetchedEvent? DataFetched;
 
     private static string ConstructRequest(string method, List<string> parameters, List<string> flags)
     {

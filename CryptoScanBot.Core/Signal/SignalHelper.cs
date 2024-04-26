@@ -249,9 +249,9 @@ public static class SignalHelper
             AlgorithmDefinitionIndex.Add(algorithmDefinition.Strategy, algorithmDefinition);
     }
 
-    public static SignalCreateBase GetSignalAlgorithm(CryptoTradeSide mode, CryptoSignalStrategy strategy, CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle)
+    public static SignalCreateBase? GetSignalAlgorithm(CryptoTradeSide mode, CryptoSignalStrategy strategy, CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle)
     {
-        if (AlgorithmDefinitionIndex.TryGetValue(strategy, out AlgorithmDefinition definition))
+        if (AlgorithmDefinitionIndex.TryGetValue(strategy, out AlgorithmDefinition? definition))
         {
             if (mode == CryptoTradeSide.Long && definition.AnalyzeLongType != null)
                 return definition.InstantiateAnalyzeLong(symbol, interval, candle);

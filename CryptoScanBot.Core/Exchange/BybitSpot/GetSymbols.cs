@@ -16,7 +16,7 @@ public class GetSymbols
 
     public static async Task ExecuteAsync()
     {
-        if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
         {
             try
             {
@@ -27,12 +27,7 @@ public class GetSymbols
                 database.Open();
 
                 using var client = new BybitRestClient();
-                var exchangeInfo = await client.V5Api.ExchangeData.GetSpotSymbolsAsync();
-
-                // Zo af en toe komt er geen data of is de Data niet gezet.
-                // De verbindingen naar extern kunnen (tijdelijk) geblokkeerd zijn
-                if (exchangeInfo == null)
-                    throw new ExchangeException("Geen exchange data ontvangen (1)");
+                var exchangeInfo = await client.V5Api.ExchangeData.GetSpotSymbolsAsync() ?? throw new ExchangeException("Geen exchange data ontvangen (1)");
                 if (!exchangeInfo.Success)
                     GlobalData.AddTextToLogTab("error getting exchangeinfo " + exchangeInfo.Error, true);
                 if (exchangeInfo.Data == null)
@@ -86,7 +81,7 @@ public class GetSymbols
                                 enzovoort..
                                 */
                                 //Eventueel symbol toevoegen
-                                if (!exchange.SymbolListName.TryGetValue(symbolData.Name, out CryptoSymbol symbol))
+                                if (!exchange.SymbolListName.TryGetValue(symbolData.Name, out CryptoSymbol? symbol))
                                 {
                                     symbol = new()
                                     {
@@ -110,12 +105,12 @@ public class GetSymbols
                                 //symbol.MinNotional = binanceSymbol.MinNotional; // ????
 
                                 // min, max en tick (in base amount)
-                                symbol.QuantityTickSize = symbolData.LotSizeFilter.BasePrecision;
-                                symbol.QuantityMinimum = symbolData.LotSizeFilter.MinOrderQuantity;
-                                symbol.QuantityMaximum = symbolData.LotSizeFilter.MaxOrderQuantity;
+                                symbol.QuantityTickSize = symbolData.LotSizeFilter?.BasePrecision ?? 0;
+                                symbol.QuantityMinimum = symbolData.LotSizeFilter?.MinOrderQuantity ?? 0;
+                                symbol.QuantityMaximum = symbolData.LotSizeFilter?.MaxOrderQuantity ?? 0;
 
-                                symbol.QuoteValueMinimum = symbolData.LotSizeFilter.MinOrderValue;
-                                symbol.QuoteValueMaximum = symbolData.LotSizeFilter.MaxOrderValue;
+                                symbol.QuoteValueMinimum = symbolData.LotSizeFilter?.MinOrderValue ?? 0;
+                                symbol.QuoteValueMaximum = symbolData.LotSizeFilter?.MaxOrderValue ?? 0;
 
 
                                 // De minimale en maximale prijs voor een order (in base price)
@@ -124,7 +119,7 @@ public class GetSymbols
                                 //symbol.PriceMinimum = symbolData.LotSizeFilter.MinOrderValue;
                                 //symbol.PriceMaximum = symbolData.LotSizeFilter.MaxOrderValue;
 
-                                symbol.PriceTickSize = symbolData.PriceFilter.TickSize;
+                                symbol.PriceTickSize = symbolData.PriceFilter?.TickSize ?? 0;
 
                                 symbol.IsSpotTradingAllowed = true; // binanceSymbol.IsSpotTradingAllowed;
                                 symbol.IsMarginTradingAllowed = false; // binanceSymbol.MarginTading; ???

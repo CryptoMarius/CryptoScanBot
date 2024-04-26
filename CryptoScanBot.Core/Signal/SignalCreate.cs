@@ -12,16 +12,15 @@ namespace CryptoScanBot.Core.Signal;
 
 public delegate void AnalyseEvent(CryptoSignal signal);
 
-
-public class SignalCreate
+public class SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTradeSide side, long lastCandle1mCloseTime)
 {
-    private CryptoSymbol Symbol { get; set; }
-    private CryptoInterval Interval { get; set; }
-    private CryptoTradeSide Side { get; set; }
-    private long LastCandle1mCloseTime { get; set; }
+    private CryptoSymbol Symbol { get; set; } = symbol;
+    private CryptoInterval Interval { get; set; } = interval;
+    private CryptoTradeSide Side { get; set; } = side;
+    private long LastCandle1mCloseTime { get; set; } = lastCandle1mCloseTime;
 
-    private CryptoCandle Candle { get; set; }
-    public List<CryptoCandle> history = null;
+    private CryptoCandle? Candle { get; set; }
+    public List<CryptoCandle>? history = null;
 
     public bool CreatedSignal = false;
 
@@ -29,19 +28,6 @@ public class SignalCreate
     bool hasOpenPosistion = false;
     bool hasOpenPosistionCalculated = false;
 #endif
-
-    // To avoid duplicate signals
-    //static private DateTime? AnalyseNotificationClean { get; set;  } = null;
-    // Lijkt overbodig te zijn tegenwoordig?
-    //static public Dictionary<string, long> AnalyseNotificationList { get; } = new();
-
-    public SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTradeSide side, long lastCandle1mCloseTime)
-    {
-        Symbol = symbol;
-        Interval = interval;
-        Side = side;
-        LastCandle1mCloseTime = lastCandle1mCloseTime;
-    }
 
     private bool HasOpenPosition()
     {
@@ -68,7 +54,7 @@ public class SignalCreate
 
 
         int iterations = 0;
-        CryptoCandle prevCandle, CandleLast = null;
+        CryptoCandle? prevCandle, CandleLast = null;
         for (int i = history.Count - 1; i >= 0; i--)
         {
             prevCandle = CandleLast;
@@ -100,18 +86,18 @@ public class SignalCreate
                     {
                         decimal prevMax = Math.Max(prevCandle.Open, prevCandle.Close);
                         decimal lastMax = Math.Max(CandleLast.Open, CandleLast.Close);
-                        if (lastMax >= (decimal)CandleLast.CandleData.Sma20 && prevMax < (decimal)prevCandle.CandleData.Sma20)
+                        if (lastMax >= (decimal?)CandleLast.CandleData.Sma20 && prevMax < (decimal?)prevCandle.CandleData.Sma20)
                             countBollingerBandSma++;
-                        if (lastMax >= (decimal)CandleLast.CandleData.BollingerBandsUpperBand && prevMax < (decimal)prevCandle.CandleData.BollingerBandsUpperBand)
+                        if (lastMax >= (decimal?)CandleLast.CandleData.BollingerBandsUpperBand && prevMax < (decimal?)prevCandle.CandleData.BollingerBandsUpperBand)
                             countBollingerBand++;
                     }
                     else
                     {
                         decimal prevMin = Math.Min(prevCandle.Open, prevCandle.Close);
                         decimal lastMin = Math.Min(CandleLast.Open, CandleLast.Close);
-                        if (lastMin <= (decimal)CandleLast.CandleData.Sma20 && prevMin > (decimal)prevCandle.CandleData.Sma20)
+                        if (lastMin <= (decimal?)CandleLast.CandleData.Sma20 && prevMin > (decimal?)prevCandle.CandleData.Sma20)
                             countBollingerBandSma++;
-                        if (lastMin <= (decimal)CandleLast.CandleData.BollingerBandsLowerBand && prevMin > (decimal)prevCandle.CandleData.BollingerBandsLowerBand)
+                        if (lastMin <= (decimal?)CandleLast.CandleData.BollingerBandsLowerBand && prevMin > (decimal?)prevCandle.CandleData.BollingerBandsLowerBand)
                             countBollingerBand++;
                     }
                 }
@@ -233,7 +219,7 @@ public class SignalCreate
                 CryptoTrendIndicator trendIndicator;
 
                 // (0 % 180 = 0, 60 % 180 = 60, 120 % 180 = 120, 180 % 180 = 0)
-                long diff = LastCandle1mCloseTime % symbolInterval.Interval.Duration;
+                long diff = LastCandle1mCloseTime % symbolInterval.Interval!.Duration;
                 // Naar de start van de candle (die is wellicht nog niet compleet)
                 long candleIntervalStart = LastCandle1mCloseTime - diff;
                 // Als de candle in opbouw is dan naar de vorige complete candle
@@ -322,7 +308,7 @@ public class SignalCreate
         // Vanwege backtest altijd redeneren vanaf het signaal (en niet de laatste candle)
         CryptoCandle candle = signal.Candle; // Symbol.CandleList.Values.Last();
         long openTime = CandleTools.GetUnixTime(candle.Date, 60);
-        if (!Symbol.CandleList.TryGetValue(openTime - interval, out CryptoCandle candlePrev))
+        if (!Symbol.CandleList.TryGetValue(openTime - interval, out CryptoCandle? candlePrev))
             candlePrev = Symbol.CandleList.Values.First(); // niet helemaal okay maar beter dan 0
 
         double closeLast = (double)candle.Close;
@@ -347,11 +333,11 @@ public class SignalCreate
         double max = double.MinValue;
 
         // Vanwege backtest altijd redeneren vanaf het signaal (en niet de laatste candle)
-        long unix = CandleTools.GetUnixTime(startTime, symbolInterval.Interval.Duration);
+        long unix = CandleTools.GetUnixTime(startTime, symbolInterval.Interval!.Duration);
 
         while (candleCount-- > 0)
         {
-            if (candles.TryGetValue(unix, out CryptoCandle candle))
+            if (candles.TryGetValue(unix, out CryptoCandle? candle))
             {
                 if ((double)candle.Low < min)
                     min = (double)candle.Low;
@@ -400,8 +386,8 @@ public class SignalCreate
 
         int overbuy = 0;
         int oversell = 0;
-        CryptoCandle candlePrev;
-        CryptoCandle candleLast = null;
+        CryptoCandle? candlePrev;
+        CryptoCandle? candleLast = null;
 
         for (int j = candles.Count - 30; j < candles.Count; j++)
         {
@@ -484,10 +470,10 @@ public class SignalCreate
 
     private bool PrepareAndSendSignal(SignalCreateBase algorithm)
     {
-        CryptoSignal signal = CreateSignal(Candle);
+        CryptoSignal signal = CreateSignal(Candle!);
         signal.Side = algorithm.SignalSide;
         signal.Strategy = algorithm.SignalStrategy;
-        signal.LastPrice = (decimal)Symbol.LastPrice;
+        signal.LastPrice = Symbol.LastPrice;
 
         string response;
         List<string> eventText = [];
@@ -498,7 +484,7 @@ public class SignalCreate
         // Extra attributen erbij halen (dat lukt niet bij een backtest vanwege het ontbreken van een "history list")
         if (!GlobalData.BackTest)
         {
-            CalculateAdditionalSignalProperties(signal, history, 60);
+            CalculateAdditionalSignalProperties(signal, history!, 60);
             if (!HasOpenPosition() && !CheckAdditionalAlarmProperties(signal, out response))
             {
                 eventText.Add(response);
@@ -508,7 +494,7 @@ public class SignalCreate
 
 
         // Extra controles toepassen en het signaal "afkeuren" (maar toch laten zien)
-        if (!algorithm.AdditionalChecks(Candle, out response))
+        if (!algorithm.AdditionalChecks(Candle!, out response))
         {
             eventText.Add(response);
             signal.IsInvalid = true;
@@ -619,7 +605,7 @@ public class SignalCreate
         // Check "Barcode" charts
         if (!HasOpenPosition() && !signal.BackTest)
         {
-            decimal barcodePercentage = 100 * Symbol.PriceTickSize / (decimal)Symbol.LastPrice;
+            decimal barcodePercentage = 100 * Symbol.PriceTickSize / Symbol.LastPrice ?? 0;
             if (barcodePercentage > GlobalData.Settings.Signal.MinimumTickPercentage)
             {
                 // Er zijn nogal wat van die flut munten, laat de tekst maar achterwege
@@ -795,15 +781,15 @@ public class SignalCreate
         signal.ExpirationDate = signal.CloseDate.AddSeconds(GlobalData.Settings.General.RemoveSignalAfterxCandles * Interval.Duration);
 
         // Copy indicators values
-        signal.BollingerBandsDeviation = candle.CandleData.BollingerBandsDeviation;
-        signal.BollingerBandsPercentage = candle.CandleData.BollingerBandsPercentage; // Dit is degene die Marco gebruikt
+        signal.BollingerBandsDeviation = candle.CandleData?.BollingerBandsDeviation;
+        signal.BollingerBandsPercentage = candle.CandleData?.BollingerBandsPercentage; // Dit is degene die Marco gebruikt
 
-        signal.Rsi = candle.CandleData.Rsi;
+        signal.Rsi = candle.CandleData?.Rsi;
         //signal.SlopeRsi = candle.CandleData.SlopeRsi;
 
-        signal.PSar = candle.CandleData.PSar;
-        signal.StochSignal = candle.CandleData.StochSignal;
-        signal.StochOscillator = candle.CandleData.StochOscillator;
+        signal.PSar = candle.CandleData?.PSar;
+        signal.StochSignal = candle.CandleData?.StochSignal;
+        signal.StochOscillator = candle.CandleData?.StochOscillator;
         //#if DEBUG
         //signal.PSarDave = candle.CandleData.PSarDave;
         //signal.PSarJason = candle.CandleData.PSarJason;
@@ -820,10 +806,10 @@ public class SignalCreate
         //signal.Tema = candle.CandleData.Tema;
 
         //signal.Sma8 = candle.CandleData.Sma8;
-        signal.Sma20 = candle.CandleData.Sma20;
-        signal.Sma50 = candle.CandleData.Sma50;
+        signal.Sma20 = candle.CandleData?.Sma20;
+        signal.Sma50 = candle.CandleData?.Sma50;
         //signal.Sma100 = candle.CandleData.Sma100;
-        signal.Sma200 = candle.CandleData.Sma200;
+        signal.Sma200 = candle.CandleData?.Sma200;
         //signal.SlopeSma20 = candle.CandleData.SlopeSma20;
         //signal.SlopeSma50 = candle.CandleData.SlopeSma50;
 
@@ -833,16 +819,16 @@ public class SignalCreate
 
     private bool ExecuteAlgorithm(AlgorithmDefinition strategyDefinition)
     {
-        SignalCreateBase algorithm;
+        SignalCreateBase? algorithm;
         if (Side == CryptoTradeSide.Long)
-            algorithm = strategyDefinition.InstantiateAnalyzeLong(Symbol, Interval, Candle);
+            algorithm = strategyDefinition.InstantiateAnalyzeLong(Symbol, Interval, Candle!);
         else
-            algorithm = strategyDefinition.InstantiateAnalyzeShort(Symbol, Interval, Candle);
+            algorithm = strategyDefinition.InstantiateAnalyzeShort(Symbol, Interval, Candle!);
 
         if (algorithm != null)
         {
             //GlobalData.Logger.Trace($"SignalCreate.Done {Symbol.Name} {Interval.Name} {strategyDefinition.Name} {Side}");
-            if (algorithm.IndicatorsOkay(Candle) && algorithm.IsSignal())
+            if (algorithm.IndicatorsOkay(Candle!) && algorithm.IsSignal())
                 return PrepareAndSendSignal(algorithm);
         }
         return false;
@@ -889,14 +875,13 @@ public class SignalCreate
         if (GlobalData.BackTest)
         {
             CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(Interval.IntervalPeriod);
-            if (symbolInterval.CandleList.TryGetValue(candleOpenTime, out CryptoCandle candle))
+            if (symbolInterval.CandleList.TryGetValue(candleOpenTime, out CryptoCandle? candle))
                 Candle = candle;
         }
         else
         {
             // Build a list of candles
-            if (history == null)
-                history = CandleIndicatorData.CalculateCandles(Symbol, Interval, candleOpenTime, out response);
+            history ??= CandleIndicatorData.CalculateCandles(Symbol, Interval, candleOpenTime, out response);
             if (history == null)
             {
 #if DEBUG
@@ -949,7 +934,7 @@ public class SignalCreate
             // Ze staan alfabetisch, sbm1, sbm2, sbm3, stobb dat gaat per ongeluk goed
             foreach (CryptoSignalStrategy strategy in TradingConfig.Signals[Side].StrategySbmStob.ToList())
             {
-                if (SignalHelper.AlgorithmDefinitionIndex.TryGetValue(strategy, out AlgorithmDefinition strategyDefinition))
+                if (SignalHelper.AlgorithmDefinitionIndex.TryGetValue(strategy, out AlgorithmDefinition? strategyDefinition))
                 {
                     if (ExecuteAlgorithm(strategyDefinition))
                         break;
@@ -959,7 +944,7 @@ public class SignalCreate
             // En de overige waaronder de jump
             foreach (CryptoSignalStrategy strategy in TradingConfig.Signals[Side].StrategyOthers.ToList())
             {
-                if (SignalHelper.AlgorithmDefinitionIndex.TryGetValue(strategy, out AlgorithmDefinition strategyDefinition))
+                if (SignalHelper.AlgorithmDefinitionIndex.TryGetValue(strategy, out AlgorithmDefinition? strategyDefinition))
                 {
                     ExecuteAlgorithm(strategyDefinition);
                 }

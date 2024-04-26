@@ -63,7 +63,7 @@ public class GetTrades
                 {
                     foreach (var item in result.Data.List)
                     {
-                        if (!position.Symbol.TradeList.TryGetValue(item.TradeId, out CryptoTrade trade))
+                        if (!position.Symbol.TradeList.TryGetValue(item.TradeId, out CryptoTrade? trade))
                         {
                             trade = new CryptoTrade();
                             Api.PickupTrade(position.TradeAccount, position.Symbol, trade, item);

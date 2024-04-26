@@ -69,7 +69,7 @@ public class GetTrades
                         if (item.TradeTime < position.CreateTime)
                             continue;
 
-                        if (!position.Symbol.TradeList.TryGetValue(item.TradeId.ToString(), out CryptoTrade trade))
+                        if (!position.Symbol.TradeList.TryGetValue(item.TradeId.ToString(), out CryptoTrade? trade))
                         {
                             trade = new CryptoTrade();
                             Api.PickupTrade(position.TradeAccount, position.Symbol, trade, item);

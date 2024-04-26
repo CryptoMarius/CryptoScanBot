@@ -1,9 +1,6 @@
-﻿using System.Text.Encodings.Web;
-using System.Text.Json;
-
+﻿using System.Text.Json;
 using Bybit.Net.Clients;
 using Bybit.Net.Enums;
-using Bybit.Net.Objects.Models.V5;
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
@@ -16,7 +13,7 @@ public class GetSymbols
 
     public static async Task ExecuteAsync()
     {
-        if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
         {
             try
             {
@@ -27,12 +24,7 @@ public class GetSymbols
                 database.Open();
 
                 using var client = new BybitRestClient();
-                var exchangeInfo = await client.V5Api.ExchangeData.GetLinearInverseSymbolsAsync(Category.Linear);
-
-                // Zo af en toe komt er geen data of is de Data niet gezet.
-                // De verbindingen naar extern kunnen (tijdelijk) geblokkeerd zijn
-                if (exchangeInfo == null)
-                    throw new ExchangeException("Geen exchange data ontvangen (1)");
+                var exchangeInfo = await client.V5Api.ExchangeData.GetLinearInverseSymbolsAsync(Category.Linear) ?? throw new ExchangeException("Geen exchange data ontvangen (1)");
                 if (!exchangeInfo.Success)
                     GlobalData.AddTextToLogTab("error getting exchangeinfo " + exchangeInfo.Error, true);
                 if (exchangeInfo.Data == null)
@@ -83,7 +75,7 @@ public class GetSymbols
                                 enzovoort..
                                 */
                                 //Eventueel symbol toevoegen
-                                if (!exchange.SymbolListName.TryGetValue(symbolData.Name, out CryptoSymbol symbol))
+                                if (!exchange.SymbolListName.TryGetValue(symbolData.Name, out CryptoSymbol? symbol))
                                 {
                                     symbol = new()
                                     {
@@ -110,16 +102,16 @@ public class GetSymbols
                                 //symbol.MinNotional = binanceSymbol.MinNotional; // ????
 
                                 //Minimale en maximale amount voor een order (in base amount)
-                                symbol.QuantityMinimum = symbolData.LotSizeFilter.MinOrderQuantity;
-                                symbol.QuantityMaximum = symbolData.LotSizeFilter.MaxOrderQuantity;
-                                symbol.QuantityTickSize = symbolData.LotSizeFilter.QuantityStep;
+                                symbol.QuantityMinimum = symbolData.LotSizeFilter?.MinOrderQuantity ?? 0;
+                                symbol.QuantityMaximum = symbolData.LotSizeFilter?.MaxOrderQuantity ?? 0;
+                                symbol.QuantityTickSize = symbolData.LotSizeFilter?.QuantityStep ?? 0;
 
                                 // De minimale en maximale prijs voor een order (in base price)
                                 // In de definities is wel een minPrice en maxprice aanwezig, maar die is niet gevuld
                                 // (dat heeft consequenties voro de werking van de Clamp die wel waarden verwacht)
-                                symbol.PriceMinimum = symbolData.PriceFilter.MinPrice;
-                                symbol.PriceMaximum = symbolData.PriceFilter.MaxPrice;
-                                symbol.PriceTickSize = symbolData.PriceFilter.TickSize; // ? binanceSymbol.PriceFilter.TickSize;
+                                symbol.PriceMinimum = symbolData.PriceFilter?.MinPrice ?? 0;
+                                symbol.PriceMaximum = symbolData.PriceFilter?.MaxPrice ?? 0;
+                                symbol.PriceTickSize = symbolData.PriceFilter?.TickSize ?? 0; // ? binanceSymbol.PriceFilter.TickSize;
 
                                 symbol.IsSpotTradingAllowed = true; // binanceSymbol.IsSpotTradingAllowed;
                                 symbol.IsMarginTradingAllowed = false; // binanceSymbol.MarginTading; ???

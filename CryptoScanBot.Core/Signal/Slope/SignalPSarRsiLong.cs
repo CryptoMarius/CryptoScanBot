@@ -38,21 +38,21 @@ public class SignalPSarRsiLong : SignalCreateBase
         // De breedte van de bb is ten minste 1.5%
         if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, 100)) //GlobalData.Settings.Signal.AnalysisBBMaxPercentage
         {
-            ExtraText = "bb.width te klein " + CandleLast.CandleData.BollingerBandsPercentage?.ToString("N2");
+            ExtraText = "bb.width te klein " + CandleLast.CandleData?.BollingerBandsPercentage?.ToString("N2");
             return false;
         }
 
-        if ((decimal)CandleLast.CandleData.PSar >= CandleLast.Close)
+        if ((decimal?)CandleLast.CandleData?.PSar >= CandleLast.Close)
             return false;
-        if ((decimal)CandleLast.CandleData.Rsi < 30)
+        if ((decimal?)CandleLast.CandleData?.Rsi < 30)
             return false;
 
         if (!GetPrevCandle(CandleLast, out CryptoCandle prevCandle))
             return false;
 
-        if ((decimal)prevCandle.CandleData.PSar <= prevCandle.Close)
+        if ((decimal?)prevCandle.CandleData?.PSar <= prevCandle.Close)
             return false;
-        if ((decimal)prevCandle.CandleData.Rsi > 30)
+        if ((decimal?)prevCandle.CandleData?.Rsi > 30)
             return false;
 
         // detect false signals?

@@ -7,22 +7,22 @@ namespace CryptoScanBot.Core.Trader;
 
 public static class TradingRules
 {
-    private static void CalculateTradingRules(CryptoCandle lastCandle1m)
+    private static void CalculateTradingRules()
     {
         // alias
         var pause = GlobalData.PauseTrading;
 
         // Als een munt (met name BTC) snel gedaald is dan stoppen
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange? exchange))
         {
             int index = 0;
             foreach (PauseTradingRule rule in GlobalData.Settings.Trading.PauseTradingRules)
             {
                 index++;
-                if (exchange.SymbolListName.TryGetValue(rule.Symbol, out CryptoSymbol symbol))
+                if (exchange.SymbolListName.TryGetValue(rule.Symbol, out CryptoSymbol? symbol))
                 {
                     CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(rule.Interval);
-                    if (symbolInterval.CandleList.Any())
+                    if (symbolInterval.CandleList.Count != 0)
                     {
                         // Niet geschikt voor de emulator vanwege de Last()
                         // De LastCandle1m even terug rekenen naar het interval
@@ -35,8 +35,8 @@ public static class TradingRules
                         int candleCount = rule.Candles - 1;
                         while (candleCount-- > 0)
                         {
-                            time -= symbolInterval.Interval.Duration;
-                            if (symbolInterval.CandleList.TryGetValue(time, out CryptoCandle candle))
+                            time -= symbolInterval.Interval?.Duration ?? 0;
+                            if (symbolInterval.CandleList.TryGetValue(time, out CryptoCandle? candle))
                             {
                                 low = Math.Min(low, candle.Low);
                                 high = Math.Max(high, candle.High);
@@ -87,7 +87,7 @@ public static class TradingRules
             pause.Calculated = lastCandle1mCloseTime;
 
             //GlobalData.AddTextToLogTab("CheckTradingRules()");
-            CalculateTradingRules(lastCandle1m);
+            CalculateTradingRules();
 
             if (pause.Text != "")
                 return false;

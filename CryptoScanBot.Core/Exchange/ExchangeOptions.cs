@@ -3,7 +3,7 @@
 public class ExchangeOptions
 {
     // Official exchange name (registered in database)
-    public string ExchangeName { get; set; }
+    public required string ExchangeName { get; set; }
 
     //public Type ApiType { get; set; }
 

@@ -26,12 +26,13 @@ public class BackTestExcel(CryptoSymbol symbol, List<CryptoCandle> history)
         return cell;
     }
 
-    public static ICell WriteCell(ISheet sheet, int columnIndex, int rowIndex, double value)
+    public static ICell WriteCell(ISheet sheet, int columnIndex, int rowIndex, double? value)
     {
         var row = sheet.GetRow(rowIndex) ?? sheet.CreateRow(rowIndex);
         var cell = row.GetCell(columnIndex) ?? row.CreateCell(columnIndex);
 
-        cell.SetCellValue(value);
+        if(value.HasValue)
+            cell.SetCellValue(value.Value);
         return cell;
     }
 
@@ -186,7 +187,7 @@ public class BackTestExcel(CryptoSymbol symbol, List<CryptoCandle> history)
 
         int row = 0;
         int column;
-        CryptoCandle prev = null;
+        CryptoCandle? prev = null;
         for (int i = 0; i < History.Count; i++)
         {
             row++;
@@ -215,42 +216,42 @@ public class BackTestExcel(CryptoSymbol symbol, List<CryptoCandle> history)
 
             if (candle.CandleData != null)
             {
-                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.BollingerBandsLowerBand);
+                cell = WriteCell(sheet, column++, row, candle.CandleData?.BollingerBandsLowerBand);
                 cell.CellStyle = cellStyleDecimalNormal;
-                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.BollingerBandsUpperBand);
+                cell = WriteCell(sheet, column++, row, candle.CandleData?.BollingerBandsUpperBand);
                 cell.CellStyle = cellStyleDecimalNormal;
-                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.BollingerBandsPercentage);
-                if (candle.CandleData.BollingerBandsPercentage >= 1.5)
+                cell = WriteCell(sheet, column++, row, candle.CandleData?.BollingerBandsPercentage);
+                if (candle.CandleData?.BollingerBandsPercentage >= 1.5)
                     cell.CellStyle = cellStylePercentageGreen;
                 else
                     cell.CellStyle = cellStylePercentageNormal;
 
-                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.Sma200);
+                cell = WriteCell(sheet, column++, row, candle.CandleData?.Sma200);
                 cell.CellStyle = cellStyleDecimalNormal;
-                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.Sma50);
-                if (candle.CandleData.Sma200 >= candle.CandleData.Sma50)
+                cell = WriteCell(sheet, column++, row, candle.CandleData?.Sma50);
+                if (candle.CandleData?.Sma200 >= candle.CandleData?.Sma50)
                     cell.CellStyle = cellStyleDecimalGreen;
                 else
                     cell.CellStyle = cellStyleDecimalNormal;
-                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.Sma20);
-                if (candle.CandleData.Sma50 >= candle.CandleData.Sma20)
+                cell = WriteCell(sheet, column++, row, candle.CandleData?.Sma20);
+                if (candle.CandleData?.Sma50 >= candle.CandleData?.Sma20)
                     cell.CellStyle = cellStyleDecimalGreen;
                 else
                     cell.CellStyle = cellStyleDecimalNormal;
-                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.PSar);
-                if (candle.CandleData.Sma20 > candle.CandleData.PSar)
+                cell = WriteCell(sheet, column++, row, candle.CandleData?.PSar);
+                if (candle.CandleData?.Sma20 > candle.CandleData?.PSar)
                     cell.CellStyle = cellStyleDecimalGreen;
                 else
                     cell.CellStyle = cellStyleDecimalNormal;
 
-                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.MacdValue);
+                cell = WriteCell(sheet, column++, row, candle.CandleData?.MacdValue);
                 cell.CellStyle = cellStyleDecimalNormal;
 
-                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.MacdSignal);
+                cell = WriteCell(sheet, column++, row, candle.CandleData?.MacdSignal);
                 cell.CellStyle = cellStyleDecimalNormal;
 
-                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.MacdHistogram);
-                if (candle.CandleData.MacdHistogram >= 0)
+                cell = WriteCell(sheet, column++, row, candle.CandleData?.MacdHistogram);
+                if (candle.CandleData?.MacdHistogram >= 0)
                 {
                     // above zero line = green
                     if (prev == null || prev.CandleData == null)
@@ -270,7 +271,7 @@ public class BackTestExcel(CryptoSymbol symbol, List<CryptoCandle> history)
                         cell.CellStyle = cellStyleDecimalNormal;
                     else
                     {
-                        if (candle.CandleData.MacdHistogram <= prev.CandleData.MacdHistogram)
+                        if (candle.CandleData?.MacdHistogram <= prev.CandleData.MacdHistogram)
                             cell.CellStyle = cellStyleMacdRed;
                         else
                             cell.CellStyle = cellStyleMacdLightRed;
@@ -322,18 +323,18 @@ public class BackTestExcel(CryptoSymbol symbol, List<CryptoCandle> history)
 
                 // overbodig?
 
-                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.Rsi);
-                if (candle.CandleData.Rsi > 30)
+                cell = WriteCell(sheet, column++, row, candle.CandleData?.Rsi);
+                if (candle.CandleData?.Rsi > 30)
                     cell.CellStyle = cellStyleDecimalGreen;
                 else
                     cell.CellStyle = cellStyleDecimalNormal;
-                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.StochOscillator);
-                if (candle.CandleData.StochOscillator > 20)
+                cell = WriteCell(sheet, column++, row, candle.CandleData?.StochOscillator);
+                if (candle.CandleData?.StochOscillator > 20)
                     cell.CellStyle = cellStyleDecimalGreen;
                 else
                     cell.CellStyle = cellStyleDecimalNormal;
-                cell = WriteCell(sheet, column++, row, (double)candle.CandleData.StochSignal);
-                if (candle.CandleData.StochSignal > 20)
+                cell = WriteCell(sheet, column++, row, candle.CandleData?.StochSignal);
+                if (candle.CandleData?.StochSignal > 20)
                     cell.CellStyle = cellStyleDecimalGreen;
                 else
                     cell.CellStyle = cellStyleDecimalNormal;

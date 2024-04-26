@@ -57,7 +57,7 @@ public class TradeTools
         string sql = "select * from position where closetime is null and status < 2";
         foreach (CryptoPosition position in database.Connection.Query<CryptoPosition>(sql))
         {
-            if (!GlobalData.TradeAccountList.TryGetValue(position.TradeAccountId, out CryptoTradeAccount tradeAccount))
+            if (!GlobalData.TradeAccountList.TryGetValue(position.TradeAccountId, out CryptoTradeAccount? tradeAccount))
                 throw new Exception("Geen trade account gevonden");
 
             PositionTools.AddPosition(tradeAccount, position);
@@ -76,7 +76,7 @@ public class TradeTools
             foreach (var position in tradeAccount.PositionList.Values.ToList())
             {
                 position.ForceCheckPosition = true;
-                await GlobalData.ThreadDoubleCheckPosition.AddToQueue(position);
+                await GlobalData.ThreadDoubleCheckPosition!.AddToQueue(position);
             }
         }
     }
@@ -365,7 +365,7 @@ public class TradeTools
         // De filled quantity in de steps opnieuw opbouwen vanuit de trades
         foreach (CryptoOrder order in position.Symbol.OrderList.Values.ToList())
         {
-            if (position.Orders.TryGetValue(order.OrderId, out CryptoPositionStep step))
+            if (position.Orders.TryGetValue(order.OrderId, out CryptoPositionStep? step))
             {
                 if (step.Status != order.Status || step.QuoteQuantityFilled != order.QuoteQuantityFilled || forceCalculation)
                 {
@@ -373,10 +373,7 @@ public class TradeTools
                     ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} check {order.OrderId}");
 
                     //  Bij iedere step hoort een part (maar technisch kan alles)
-                    CryptoPositionPart part = PositionTools.FindPositionPart(position, step.PositionPartId);
-                    if (part == null)
-                        throw new Exception("Probleem met het vinden van een part");
-
+                    CryptoPositionPart part = PositionTools.FindPositionPart(position, step.PositionPartId) ?? throw new Exception("Probleem met het vinden van een part");
                     string s;
                     string msgInfo = $"{part.Purpose} {order.Status} {order.Side} {order.Type} order={order.OrderId} " +
                         $"price={order.AveragePrice?.ToString0()} quantity={order.QuantityFilled?.ToString0()} value={order.QuoteQuantity.ToString0()}";
@@ -468,14 +465,14 @@ public class TradeTools
                             // Want op een PartialFill volgt namelijk ook een PartiallyAndClosed!!! Verdorie!
 
 
-                            step.Price = (decimal)order.Price;
-                            step.Quantity = (decimal)order.QuantityFilled;
+                            step.Price = order.Price ?? 0;
+                            step.Quantity = order.QuantityFilled ?? 0;
                             //step.QuoteQuantity = (decimal)order.QuoteQuantityFilled; is er niet
                         }
 
-                        step.AveragePrice = (decimal)order.AveragePrice;
-                        step.QuantityFilled = (decimal)order.QuantityFilled;
-                        step.QuoteQuantityFilled = (decimal)order.QuoteQuantityFilled;
+                        step.AveragePrice = order.AveragePrice ?? 0;
+                        step.QuantityFilled = order.QuantityFilled ?? 0;
+                        step.QuoteQuantityFilled = order.QuoteQuantityFilled ?? 0;
 
                         // Needed for Bybit Spot + market order && status=CryptoOrderStatus.PartiallyAndClosed
                         // (the exchange sligtly diverted from the task, adapt to the new situation)
@@ -625,7 +622,7 @@ public class TradeTools
             {
                 position.ForceCheckPosition = true;
                 position.DelayUntil = DateTime.UtcNow.AddSeconds(10);
-                await GlobalData.ThreadDoubleCheckPosition.AddToQueue(position);
+                await GlobalData.ThreadDoubleCheckPosition!.AddToQueue(position);
             }
         }
     }
@@ -715,10 +712,10 @@ public class TradeTools
 
 
         // Get available assets from the exchange (as late as possible because of webcall)
-        var resultFetchAssets = await AssetTools.FetchAssetsAsync(position.TradeAccount, true);
-        if (!resultFetchAssets.success)
+        var (success, reaction) = await AssetTools.FetchAssetsAsync(position.TradeAccount, true);
+        if (!success)
         {
-            GlobalData.AddTextToLogTab($"{position.Symbol.Name} {resultFetchAssets.reaction}");
+            GlobalData.AddTextToLogTab($"{position.Symbol.Name} {reaction}");
             return;
         }
 
@@ -777,28 +774,31 @@ public class TradeTools
 
         CryptoOrderSide takeProfitOrderSide = position.GetTakeProfitOrderSide();
 
-        (bool result, TradeParams tradeParams) result;
+        (bool result, TradeParams? tradeParams) result;
         var exchangeApi = ExchangeHelper.GetExchangeInstance(GlobalData.Settings.General.ExchangeId);
         result = await exchangeApi.PlaceOrder(database, position, part, position.Side, currentTime,
             CryptoOrderType.Limit, takeProfitOrderSide, takeProfitQuantity, takeProfitPrice, null, null);
 
-        if (result.result)
+        if (result.tradeParams is not null)
         {
-            position.ProfitPrice = result.tradeParams.Price;
-            var step = PositionTools.CreatePositionStep(position, part, result.tradeParams);
-            step.RemainingDust = takeProfitQuantityOriginal - takeProfitQuantity; // de verwachte dust
-            database.Connection.Insert<CryptoPositionStep>(step);
-            PositionTools.AddPositionPartStep(part, step);
+            if (result.result)
+            {
+                position.ProfitPrice = result.tradeParams.Price;
+                var step = PositionTools.CreatePositionStep(position, part, result.tradeParams);
+                step.RemainingDust = takeProfitQuantityOriginal - takeProfitQuantity; // de verwachte dust
+                database.Connection.Insert<CryptoPositionStep>(step);
+                PositionTools.AddPositionPartStep(part, step);
 
-            part.ProfitMethod = CryptoEntryOrProfitMethod.FixedPercentage;
-            database.Connection.Update<CryptoPositionPart>(part);
-            database.Connection.Update<CryptoPosition>(position);
+                part.ProfitMethod = CryptoEntryOrProfitMethod.FixedPercentage;
+                database.Connection.Update<CryptoPositionPart>(part);
+                database.Connection.Update<CryptoPosition>(position);
 
-            if (position.TradeAccount.TradeAccountType == CryptoTradeAccountType.PaperTrade)
-                PaperAssets.Change(position.TradeAccount, position.Symbol, result.tradeParams.OrderSide,
-                    step.Status, result.tradeParams.Quantity, result.tradeParams.QuoteQuantity);
+                if (position.TradeAccount.TradeAccountType == CryptoTradeAccountType.PaperTrade)
+                    PaperAssets.Change(position.TradeAccount, position.Symbol, result.tradeParams.OrderSide,
+                        step.Status, result.tradeParams.Quantity, result.tradeParams.QuoteQuantity);
+            }
+            ExchangeBase.Dump(position, result.result, result.tradeParams, extraText);
         }
-        ExchangeBase.Dump(position, result.result, result.tradeParams, extraText);
     }
 
 

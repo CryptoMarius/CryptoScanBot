@@ -1455,8 +1455,8 @@ public partial class TestForm : Form
     //    int intHeight = 2 * 10 + ((int)(n * hiY - n * loY));
     //}
 
-    Rectangle zoomTgtArea = new(300, 500, 200, 200);
-    Point zoomOrigin = Point.Empty;   // updated in MouseMove when button is pressed
+    //Rectangle zoomTgtArea = new(300, 500, 200, 200);
+    //Point zoomOrigin = Point.Empty;   // updated in MouseMove when button is pressed
     readonly float zoomFactor = 2f;
 
     private void PictureBox_Paint(object sender, PaintEventArgs e)
@@ -1901,139 +1901,139 @@ public partial class TestForm : Form
 
     }
 
-    private void Button1_Click_1(object sender, EventArgs e)
-    {
-        //        var message = new GelfMessage
-        //        {
-        //            ShortMessage = "Dit is een test logbericht",
-        //            FullMessage = "Dit is een test logbericht met meer informatie",
-        //            Facility = "C# App",
-        //            Level = Gelf4Net.Level.Debug,
-        //            Host = "localhost",
-        //            Timestamp = DateTime.UtcNow,
-        //            AdditionalFields =
-        //{
-        //    { "ApplicationName", "My C# App" },
-        //    { "SomeOtherField", "Some value" }
-        //}
-        //        };
+//    private void Button1_Click_1(object sender, EventArgs e)
+//    {
+//        //        var message = new GelfMessage
+//        //        {
+//        //            ShortMessage = "Dit is een test logbericht",
+//        //            FullMessage = "Dit is een test logbericht met meer informatie",
+//        //            Facility = "C# App",
+//        //            Level = Gelf4Net.Level.Debug,
+//        //            Host = "localhost",
+//        //            Timestamp = DateTime.UtcNow,
+//        //            AdditionalFields =
+//        //{
+//        //    { "ApplicationName", "My C# App" },
+//        //    { "SomeOtherField", "Some value" }
+//        //}
+//        //        };
 
-        //        using (var client = new GelfUdpClient("graylog-server-hostname", 12201))
-        //        {
-        //            client.Send(message);
-        //        }
+//        //        using (var client = new GelfUdpClient("graylog-server-hostname", 12201))
+//        //        {
+//        //            client.Send(message);
+//        //        }
 
-        /*
+//        /*
 
-{
-
-
-https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
-{
-
-"dca_orders": [
-{
-  "price_percentage": 0,
-  "quantity_percentage": 0
-}
-],
-}
-}
-
-         */
+//{
 
 
-        HttpWebRequest httpWebRequest = (HttpWebRequest)WebRequest.Create("https://api.altrady.com/v2/signal_bot_positions");
-        httpWebRequest.ContentType = "application/json";
-        httpWebRequest.Method = "POST";
+//https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
+//{
 
-        try
-        {
-            //"test": true,
-            //"api_key": "string",
-            //"api_secret": "string",
-            //"side": "long",
-            //"exchange": "string",
-            //"symbol": "string",
-            //"signal_price": 0,
+//"dca_orders": [
+//{
+//  "price_percentage": 0,
+//  "quantity_percentage": 0
+//}
+//],
+//}
+//}
 
-            dynamic request = new JObject();
-            request.test = true;
-            request.api_key = "5c4b5f1c-ddde-4b59-983e-025aa90c4f30";
-            request.api_secret = "8baab98b-e1dc-41d9-af22-f964185e82d6";
-            request.side = "long";
-            request.exchange = "binance";
-            request.symbol = "btcusdt";
-            request.signal_price = "22101.50";
-
-            //"take_profit": [
-            //{
-            //"price_percentage": 0,
-            //"position_percentage": 0
-            //}
-            //],
-            dynamic take_ProfitList = new JArray(); // List<dynamic>();
-            request.take_profit = take_ProfitList;
-
-            dynamic take_Profit1 = new JObject();
-            take_Profit1.price_percentage = 0.25;
-            take_Profit1.position_percentage = 50;
-            take_ProfitList.Add(take_Profit1);
-
-            dynamic take_Profit2 = new JObject();
-            take_Profit2.price_percentage = 0.50;
-            take_Profit2.position_percentage = 50;
-            take_ProfitList.Add(take_Profit2);
-
-            //"stop_loss": 
-            //{
-            //"stop_percentage": 0,
-            //"cool_down_amount": 0,
-            //"cool_down_time_frame": "minute"
-            //}
-
-            dynamic stop_loss = new JObject();
-            request.stop_loss = stop_loss;
-            stop_loss.stop_percentage = 1.5;
-            stop_loss.cool_down_amount = 0;
-            stop_loss.cool_down_time_frame = "minute";
-
-            string json = request.ToString();
-            Console.WriteLine(json);
-
-            using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
-            {
-                streamWriter.Write(json);
-                GlobalData.AddTextToLogTab(json);
-            }
+//         */
 
 
-            var httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
-            using var streamReader = new StreamReader(httpResponse.GetResponseStream());
-            var result = streamReader.ReadToEnd();
-            GlobalData.AddTextToLogTab(result);
+//        HttpWebRequest httpWebRequest = (HttpWebRequest)WebRequest.Create("https://api.altrady.com/v2/signal_bot_positions");
+//        httpWebRequest.ContentType = "application/json";
+//        httpWebRequest.Method = "POST";
 
-            //string href = string.Format("https://api.altrady.com/v2/signal_bot_positions/");
-            //webClient.UploadData(new Uri(href), downLoadFolder);
-        }
-        catch (Exception error)
-        {
-            ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab("error webhook " + error.ToString()); // symbol.Text + " " + 
-        }
-    }
+//        try
+//        {
+//            //"test": true,
+//            //"api_key": "string",
+//            //"api_secret": "string",
+//            //"side": "long",
+//            //"exchange": "string",
+//            //"symbol": "string",
+//            //"signal_price": 0,
 
-    static string Config(string what) => what switch
-    {
-        "api_id" => "22959519",
-        "api_hash" => "ab771edffa172f885dee0da9fcc8c9ec",
-        "phone_number" => "+31624600002",
-        "verification_code" => "10128",// Console.Write("Code: "); return Console.ReadLine();
-        "first_name" => "Marius",// if sign-up is required
-        "last_name" => "Doe",// if sign-up is required
-        "password" => "?",// if user has enabled 2FA
-        _ => null,// let WTelegramClient decide the default config
-    };
+//            dynamic request = new JObject();
+//            request.test = true;
+//            request.api_key = "5c4b5f1c-ddde-4b59-983e-025aa90c4f30";
+//            request.api_secret = "8baab98b-e1dc-41d9-af22-f964185e82d6";
+//            request.side = "long";
+//            request.exchange = "binance";
+//            request.symbol = "btcusdt";
+//            request.signal_price = "22101.50";
+
+//            //"take_profit": [
+//            //{
+//            //"price_percentage": 0,
+//            //"position_percentage": 0
+//            //}
+//            //],
+//            dynamic take_ProfitList = new JArray(); // List<dynamic>();
+//            request.take_profit = take_ProfitList;
+
+//            dynamic take_Profit1 = new JObject();
+//            take_Profit1.price_percentage = 0.25;
+//            take_Profit1.position_percentage = 50;
+//            take_ProfitList.Add(take_Profit1);
+
+//            dynamic take_Profit2 = new JObject();
+//            take_Profit2.price_percentage = 0.50;
+//            take_Profit2.position_percentage = 50;
+//            take_ProfitList.Add(take_Profit2);
+
+//            //"stop_loss": 
+//            //{
+//            //"stop_percentage": 0,
+//            //"cool_down_amount": 0,
+//            //"cool_down_time_frame": "minute"
+//            //}
+
+//            dynamic stop_loss = new JObject();
+//            request.stop_loss = stop_loss;
+//            stop_loss.stop_percentage = 1.5;
+//            stop_loss.cool_down_amount = 0;
+//            stop_loss.cool_down_time_frame = "minute";
+
+//            string json = request.ToString();
+//            Console.WriteLine(json);
+
+//            using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
+//            {
+//                streamWriter.Write(json);
+//                GlobalData.AddTextToLogTab(json);
+//            }
+
+
+//            var httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
+//            using var streamReader = new StreamReader(httpResponse.GetResponseStream());
+//            var result = streamReader.ReadToEnd();
+//            GlobalData.AddTextToLogTab(result);
+
+//            //string href = string.Format("https://api.altrady.com/v2/signal_bot_positions/");
+//            //webClient.UploadData(new Uri(href), downLoadFolder);
+//        }
+//        catch (Exception error)
+//        {
+//            ScannerLog.Logger.Error(error, "");
+//            GlobalData.AddTextToLogTab("error webhook " + error.ToString()); // symbol.Text + " " + 
+//        }
+//    }
+
+    //static string Config(string what) => what switch
+    //{
+    //    "api_id" => "22959519",
+    //    "api_hash" => "ab771edffa172f885dee0da9fcc8c9ec",
+    //    "phone_number" => "+31624600002",
+    //    "verification_code" => "10128",// Console.Write("Code: "); return Console.ReadLine();
+    //    "first_name" => "Marius",// if sign-up is required
+    //    "last_name" => "Doe",// if sign-up is required
+    //    "password" => "?",// if user has enabled 2FA
+    //    _ => null,// let WTelegramClient decide the default config
+    //};
 
     //private static void CheckCandlesComplete(CryptoSymbol symbol, CryptoInterval interval)
     //{

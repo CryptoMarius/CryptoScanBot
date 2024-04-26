@@ -65,7 +65,7 @@ public class GetCandles
             {
                 // We doen het gewoon over (dat is tenminste het advies)
                 // 13-07-2023 14:08:00 AOA-BTC 30m error getting klines 429000: Too Many Requests
-                if (result.Error.Code == 429000)
+                if (result.Error?.Code == 429000)
                 {
                     GlobalData.AddTextToLogTab($"{prefix} delay needed for weight: (because of rate limits)");
                     Thread.Sleep(10000);
@@ -86,7 +86,7 @@ public class GetCandles
             }
 
             // Remember
-            long startFetchDate = (long)symbolInterval.LastCandleSynchronized;
+            long? startFetchDate = symbolInterval.LastCandleSynchronized;
 
             Monitor.Enter(symbol.CandleList);
             try
@@ -160,14 +160,14 @@ public class GetCandles
             while (true)
             {
                 DateTime startFetchUnixDate = CandleTools.GetUnixDate(startFetchUnix);
-                if (fetchFrom[(int)loopInterval.IntervalPeriod] > startFetchUnixDate)
-                    fetchFrom[(int)loopInterval.IntervalPeriod] = startFetchUnixDate;
+                if (fetchFrom[(int)loopInterval!.IntervalPeriod] > startFetchUnixDate)
+                    fetchFrom[(int)loopInterval!.IntervalPeriod] = startFetchUnixDate;
 
                 // Is this timeframe supported?
                 if (GetExchangeInterval(loopInterval) != KlineInterval.OneWeek)
                     break;
                 else
-                    loopInterval = loopInterval.ConstructFrom;
+                    loopInterval = loopInterval.ConstructFrom!;
             }
         }
 
@@ -221,9 +221,9 @@ public class GetCandles
                     CryptoCandle stickOld = symbolInterval.CandleList.Values.First();
                     //GlobalData.AddTextToLogTab(symbol.Name + " " + interval.Name + " Debug missing candle " + CandleTools.GetUnixDate(stickOld.OpenTime).ToLocalTime());
                     long unixTime = stickOld.OpenTime;
-                    while (unixTime < (long)symbolInterval.LastCandleSynchronized)
+                    while (unixTime < symbolInterval.LastCandleSynchronized)
                     {
-                        if (!symbolInterval.CandleList.TryGetValue(unixTime, out CryptoCandle candle))
+                        if (!symbolInterval.CandleList.TryGetValue(unixTime, out CryptoCandle? candle))
                         {
                             candle = new()
                             {
@@ -256,7 +256,7 @@ public class GetCandles
                     if (intervalCalc.IntervalPeriod > interval.IntervalPeriod)
                     {
                         // Naar het lagere tijd interval om de eerste en laatste candle te achterhalen
-                        CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(intervalCalc.ConstructFrom.IntervalPeriod);
+                        CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(intervalCalc.ConstructFrom!.IntervalPeriod);
                         SortedList<long, CryptoCandle> candlesLowerInterval = symbolPeriod.CandleList;
                         if (candlesLowerInterval.Values.Any())
                         {
@@ -328,7 +328,7 @@ public class GetCandles
 
     public static async Task ExecuteAsync()
     {
-        if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
         {
             GlobalData.AddTextToLogTab("");
             GlobalData.AddTextToLogTab(string.Format("Fetching {0} information", exchange.Name));

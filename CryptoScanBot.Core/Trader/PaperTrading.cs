@@ -94,7 +94,7 @@ public class PaperTrading
         GlobalData.AddTrade(trade);
 
 
-        await TradeHandler.HandleTradeAsync(position.Symbol, step.OrderType, step.Side, CryptoOrderStatus.Filled, order);
+        await TradeHandler.HandleTradeAsync(position.Symbol, CryptoOrderStatus.Filled, order);
         PaperAssets.Change(position.TradeAccount, position.Symbol, step.Side, CryptoOrderStatus.Filled, order.Quantity, order.QuoteQuantity);
     }
 
@@ -140,7 +140,7 @@ public class PaperTrading
                     while (from < limit)
                     {
                         // Eventueel missende candles hebben op deze manier geen impact
-                        if (position.Symbol.CandleList.TryGetValue(from, out CryptoCandle candle))
+                        if (position.Symbol.CandleList.TryGetValue(from, out CryptoCandle? candle))
                         {
                             await PaperTradingCheckStep(database, position, part, step, candle);
                         }

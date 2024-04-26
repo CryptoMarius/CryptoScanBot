@@ -63,7 +63,7 @@ public class AssetTools
         {
             if (tradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading)
             {
-                if (tradeAccount.AssetList.TryGetValue(symbol.Base, out CryptoAsset asset))
+                if (tradeAccount.AssetList.TryGetValue(symbol.Base, out CryptoAsset? asset))
                 {
                     info.BaseFree = asset.Free;
                     info.BaseTotal = asset.Total;
@@ -78,7 +78,7 @@ public class AssetTools
 
             if (tradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading)
             {
-                if (tradeAccount.AssetList.TryGetValue(symbol.Quote, out CryptoAsset asset))
+                if (tradeAccount.AssetList.TryGetValue(symbol.Quote, out CryptoAsset? asset))
                 {
                     info.QuoteFree = asset.Free;
                     info.QuoteTotal = asset.Total;

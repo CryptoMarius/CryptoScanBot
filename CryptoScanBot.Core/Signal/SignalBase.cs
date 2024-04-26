@@ -24,7 +24,7 @@ public class SignalCreateBase
 
     public CryptoTradeSide SignalSide;
     public CryptoSignalStrategy SignalStrategy;
-    public CryptoCandle CandleLast = null;
+    public CryptoCandle? CandleLast = null;
     public string ExtraText = "";
     public bool ReplaceSignal = true;
 
@@ -49,10 +49,7 @@ public class SignalCreateBase
     /// <summary>
     /// Is het een signaal?
     /// </summary>
-    public virtual bool IsSignal()
-    {
-        return false;
-    }
+    public virtual bool IsSignal() => false;
 
 
     public virtual bool AdditionalChecks(CryptoCandle candle, out string response)
@@ -62,10 +59,8 @@ public class SignalCreateBase
     }
 
 
-    public virtual string DisplayText()
-    {
-        return $"stoch={CandleLast.CandleData.StochOscillator.Value:N8} signal={CandleLast.CandleData.StochSignal.Value:N8}";
-    }
+    public virtual string DisplayText() 
+        => $"stoch={CandleLast?.CandleData?.StochOscillator:N8} signal={CandleLast?.CandleData?.StochSignal:N8}";
 
 
     /// <summary>
@@ -81,13 +76,10 @@ public class SignalCreateBase
     /// <summary>
     /// Extra controles nadat we het accepteren
     /// </summary>
-    public virtual bool AllowStepIn(CryptoSignal signal)
-    {
-        return true;
-    }
+    public virtual bool AllowStepIn(CryptoSignal signal) => true;
 
 
-    public bool GetPrevCandle(CryptoCandle oldCandle, out CryptoCandle newCandle)
+    public bool GetPrevCandle(CryptoCandle oldCandle, out CryptoCandle? newCandle)
     {
         if (!Candles.TryGetValue(oldCandle.OpenTime - Interval.Duration, out newCandle))
         {
@@ -112,13 +104,13 @@ public class SignalCreateBase
     public bool WasRsiOversoldInTheLast(int candleCount = 30)
     {
         // We gaan van rechts naar links (dus prev en last zijn ietwat raar)
-        CryptoCandle candle = CandleLast;
+        CryptoCandle? candle = CandleLast;
         while (candleCount >= 0)
         {
-            if (candle.IsRsiOversold())
+            if (candle is not null && candle.IsRsiOversold())
                 return true;
 
-            if (!GetPrevCandle(candle, out candle))
+            if (candle is not null && !GetPrevCandle(candle, out candle))
                 return false;
             candleCount--;
         }
@@ -126,15 +118,15 @@ public class SignalCreateBase
     }
 
 
-    public CryptoCandle HadStobbInThelastXCandles(CryptoTradeSide side, int skipCandleCount, int candleCount)
+    public CryptoCandle? HadStobbInThelastXCandles(CryptoTradeSide side, int skipCandleCount, int candleCount)
     {
         // Is de prijs onlangs dicht bij de onderste bb geweest?
-        CryptoCandle candle = CandleLast;
+        CryptoCandle? candle = CandleLast;
         while (candleCount > 0)
         {
             skipCandleCount--;
-            bool isOverSold = candle.IsBelowBollingerBands(false) && candle.IsStochOversold();
-            bool isOverBought = candle.IsAboveBollingerBands(false) && candle.IsStochOverbought();
+            bool isOverSold = candle is not null && candle.IsBelowBollingerBands(false) && candle.IsStochOversold();
+            bool isOverBought = candle is not null && candle.IsAboveBollingerBands(false) && candle.IsStochOverbought();
 
             if (side == CryptoTradeSide.Long)
             {
@@ -151,13 +143,11 @@ public class SignalCreateBase
                     return candle;
             }
 
-            if (!GetPrevCandle(candle, out candle))
+            if (candle is not null && !GetPrevCandle(candle, out candle))
                 return null;
             candleCount--;
         }
 
         return null;
     }
-
-
 }

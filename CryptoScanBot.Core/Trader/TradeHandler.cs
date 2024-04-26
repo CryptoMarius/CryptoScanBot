@@ -12,11 +12,10 @@ static public class TradeHandler
     /// een andere thread waar de positie doorberekend wordt (met een kleine vertraging) 
     /// NB: De meegegeven order is meestal een tijdelijke order (voor interne datatransfer)
     /// </summary>
-    public static async Task HandleTradeAsync(CryptoSymbol symbol, CryptoOrderType orderType, 
-        CryptoOrderSide orderSide, CryptoOrderStatus orderStatus, CryptoOrder order)
+    public static async Task HandleTradeAsync(CryptoSymbol symbol, CryptoOrderStatus orderStatus, CryptoOrder order)
     {
         // Find the open position
-        if (order.TradeAccount.PositionList.TryGetValue(symbol.Name, out CryptoPosition position))
+        if (order.TradeAccount.PositionList.TryGetValue(symbol.Name, out CryptoPosition? position))
         {
             // could also be done in ThreadDoubleCheckPosition
             if (orderStatus.IsFilled() && GlobalData.Settings.General.SoundTradeNotification)

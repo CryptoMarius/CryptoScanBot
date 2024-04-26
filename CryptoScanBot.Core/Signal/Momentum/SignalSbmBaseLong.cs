@@ -19,21 +19,21 @@ public static class SignalSbmBaseOversoldHelper
         // psar
 
         // Staan de 3 ma-lijnen (200, 50, 20) en psar in de juiste volgorde
-        if (candle.CandleData.Sma50 >= candle.CandleData.Sma200)
+        if (candle.CandleData?.Sma50 >= candle.CandleData?.Sma200)
             return false;
-        if (candle.CandleData.Sma20 >= candle.CandleData.Sma200)
+        if (candle.CandleData?.Sma20 >= candle.CandleData?.Sma200)
             return false;
-        if (candle.CandleData.Sma20 >= candle.CandleData.Sma50)
+        if (candle.CandleData?.Sma20 >= candle.CandleData?.Sma50)
             return false;
 
 
         if (includePsarCheck)
         {
-            if (candle.CandleData.PSar > candle.CandleData.Sma20)
+            if (candle.CandleData?.PSar > candle.CandleData?.Sma20)
                 return false;
 
             // Dan is de psar omgeslagen (hoort hier niet)
-            if ((decimal)candle.CandleData.PSar <= candle.Close)
+            if ((decimal?)candle.CandleData?.PSar <= candle.Close)
                 return false;
         }
 
@@ -43,9 +43,9 @@ public static class SignalSbmBaseOversoldHelper
     public static bool IsSma200AndSma50OkayOversold(this CryptoCandle candle, decimal percentage, out string response)
     {
         // En aanvullend, de ma lijnen moeten afwijken (bij benadering, dat hoeft niet geheel exact)
-        decimal value = (decimal)candle.CandleData.Sma200 - (decimal)candle.CandleData.Sma50;
-        decimal value2 = ((decimal)candle.CandleData.Sma200 + (decimal)candle.CandleData.Sma50) / 2;
-        decimal perc = 100 * value / value2;
+        decimal? value = (decimal?)candle.CandleData?.Sma200 - (decimal?)candle.CandleData?.Sma50;
+        decimal? value2 = ((decimal?)candle.CandleData?.Sma200 + (decimal?)candle.CandleData?.Sma50) / 2;
+        decimal? perc = 100 * value / value2;
         if (perc < percentage)
         {
             response = string.Format("percentage sma200 and sma50 ({0:N2} < {1:N2})", perc, percentage);
@@ -59,9 +59,9 @@ public static class SignalSbmBaseOversoldHelper
 
     public static bool IsSma50AndSma20OkayOversold(this CryptoCandle candle, decimal percentage, out string response)
     {
-        decimal value = (decimal)candle.CandleData.Sma50 - (decimal)candle.CandleData.Sma20;
-        decimal value2 = ((decimal)candle.CandleData.Sma50 + (decimal)candle.CandleData.Sma20) / 2;
-        decimal perc = 100 * value / value2;
+        decimal? value = (decimal?)candle.CandleData?.Sma50 - (decimal?)candle.CandleData?.Sma20;
+        decimal? value2 = ((decimal?)candle.CandleData?.Sma50 + (decimal?)candle.CandleData?.Sma20) / 2;
+        decimal? perc = 100 * value / value2;
         if (perc < percentage)
         {
             response = string.Format("percentage sma50 and sma20 ({0:N2} < {1:N2})", perc, percentage);
@@ -76,9 +76,9 @@ public static class SignalSbmBaseOversoldHelper
     public static bool IsSma200AndSma20OkayOversold(this CryptoCandle candle, decimal percentage, out string response)
     {
         // En aanvullend, de ma lijnen moeten afwijken (bij benadering, dat hoeft niet geheel exact)
-        decimal value = (decimal)candle.CandleData.Sma200 - (decimal)candle.CandleData.Sma20;
-        decimal value2 = ((decimal)candle.CandleData.Sma200 + (decimal)candle.CandleData.Sma20) / 2;
-        decimal perc = 100 * value / value2;
+        decimal? value = (decimal?)candle.CandleData?.Sma200 - (decimal?)candle.CandleData?.Sma20;
+        decimal? value2 = ((decimal?)candle.CandleData?.Sma200 + (decimal?)candle.CandleData?.Sma20) / 2;
+        decimal? perc = 100 * value / value2;
         if (perc < percentage)
         {
             response = string.Format("percentage sma200 and sma20 ({0:N2} < {1:N2})", perc, percentage);
@@ -92,16 +92,16 @@ public static class SignalSbmBaseOversoldHelper
     public static bool IsStochOversold(this CryptoCandle candle)
     {
         // Stochastic Oscillator: K en D (langzaam) moeten kleiner zijn dan 20% (oversold)
-        if (candle.CandleData.StochSignal > GlobalData.Settings.General.StochValueOversold)
+        if (candle.CandleData?.StochSignal > GlobalData.Settings.General.StochValueOversold)
             return false;
-        if (candle.CandleData.StochOscillator > GlobalData.Settings.General.StochValueOversold)
+        if (candle.CandleData?.StochOscillator > GlobalData.Settings.General.StochValueOversold)
             return false;
         return true;
     }
 
     public static bool IsRsiOversold(this CryptoCandle candle)
     {
-        if (candle.CandleData.Rsi > GlobalData.Settings.General.RsiValueOversold)
+        if (candle.CandleData?.Rsi > GlobalData.Settings.General.RsiValueOversold)
             return false;
         return true;
     }
@@ -127,10 +127,10 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
 
     public bool IsMacdRecoveryOversold(int candleCount)
     {
-        CryptoCandle last = CandleLast;
+        CryptoCandle last = CandleLast!;
 
         // Hoe positief wil je het hebben?
-        if (last.CandleData.MacdHistogram > 0)
+        if (last.CandleData?.MacdHistogram > 0)
         {
             //ExtraText = string.Format("De MACD.Hist is groen {0:N8}", last.CandleData.MacdHistogram);
             return true; // niet echt een juiste controle
@@ -140,11 +140,11 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
         int iterator = 0;
         while (candleCount > 0)
         {
-            if (!GetPrevCandle(last, out CryptoCandle prev))
+            if (!GetPrevCandle(last, out CryptoCandle? prev))
                 return false;
 
 
-            if (last.CandleData.MacdHistogram <= prev.CandleData.MacdHistogram || last.CandleData.MacdHistogram >= 0)
+            if (last.CandleData?.MacdHistogram <= prev!.CandleData?.MacdHistogram || last.CandleData?.MacdHistogram >= 0)
             {
                 // Vermeld ik wel de juiste kleur(en)? 
                 if (last.CandleData.MacdHistogram >= 0)
@@ -172,24 +172,24 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
     {
         // Is de prijs onlangs dicht bij de onderste bb geweest?
 
-        CryptoCandle last = CandleLast;
+        CryptoCandle? last = CandleLast;
         while (candleCount > 0)
         {
-            decimal value = (decimal)last.CandleData.BollingerBandsLowerBand;
-            value += (decimal)last.CandleData.BollingerBandsDeviation * percentage / 100m;
+            decimal? value = (decimal?)last?.CandleData?.BollingerBandsLowerBand;
+            value += (decimal?)last?.CandleData?.BollingerBandsDeviation * percentage / 100m;
 
             if (GlobalData.Settings.Signal.Sbm.Sbm2UseLowHigh)
             {
-                if (last.Low <= value)
+                if (last?.Low <= value)
                     return true;
             }
             else
             {
-                if (last.Open <= value || last.Close <= value)
+                if (last?.Open <= value || last?.Close <= value)
                     return true;
             }
 
-            if (!GetPrevCandle(last, out last))
+            if (last is not null && !GetPrevCandle(last, out last))
                 return false;
             candleCount--;
         }
@@ -248,14 +248,14 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
         ExtraText = "";
 
         // De breedte van de bb is ten minste 1.5%
-        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Sbm.BBMinPercentage, GlobalData.Settings.Signal.Sbm.BBMaxPercentage))
+        if (!CandleLast!.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Sbm.BBMinPercentage, GlobalData.Settings.Signal.Sbm.BBMaxPercentage))
         {
-            ExtraText = "bb.width te klein " + CandleLast.CandleData.BollingerBandsPercentage?.ToString("N2");
+            ExtraText = "bb.width te klein " + CandleLast!.CandleData?.BollingerBandsPercentage?.ToString("N2");
             return false;
         }
 
         // De ma lijnen en psar goed staan
-        if (!CandleLast.IsSbmConditionsOversold(true))
+        if (!CandleLast!.IsSbmConditionsOversold(true))
         {
             ExtraText = "geen sbm condities";
             return false;
@@ -268,7 +268,6 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
         return true;
     }
 
-
     /// <summary>
     /// Is de RSI oplopend in de laatste x candles
     /// 2e parameter geeft aan hoeveel afwijkend mogen zijn
@@ -278,16 +277,15 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
         // We gaan van rechts naar links (van de nieuwste candle richting verleden)
         int down = 0;
         bool first = true;
-        CryptoCandle last = CandleLast;
-
+        CryptoCandle? last = CandleLast;
 
         // En van de candles daarvoor mag er een (of meer) afwijken
         while (candleCount > 0)
         {
-            if (!GetPrevCandle(last, out CryptoCandle prev))
+            if (!GetPrevCandle(last!, out CryptoCandle? prev))
                 return false;
 
-            if (last.CandleData.Rsi <= prev.CandleData.Rsi)
+            if (last?.CandleData?.Rsi <= prev?.CandleData?.Rsi)
             {
                 down++;
                 if (first || down > allowedDown)
@@ -302,13 +300,12 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
         return true;
     }
 
-
     public override bool AllowStepIn(CryptoSignal signal)
     {
         // Deze routine is een beetje back to the basics, gewoon een nette SBM, vervolgens
         // 2 MACD herstel candles, wat rsi en stoch condities om glijbanen te voorkomen
 
-        if (!GetPrevCandle(CandleLast, out CryptoCandle candlePrev))
+        if (!GetPrevCandle(CandleLast!, out CryptoCandle? candlePrev))
             return false;
 
         // ********************************************************************
@@ -328,7 +325,7 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
         if (GlobalData.Settings.Trading.CheckIncreasingRsi)
         {
             // Is there any RSI recovery visible (a bit weak)
-            if (CandleLast.CandleData.Rsi < GlobalData.Settings.General.RsiValueOversold)
+            if (CandleLast?.CandleData?.Rsi < GlobalData.Settings.General.RsiValueOversold)
             {
                 ExtraText = $"RSI {CandleLast.CandleData.Rsi:N8} niet boven de {GlobalData.Settings.General.RsiValueOversold}";
                 return false;
@@ -366,7 +363,7 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
 
             // Afgesterd - 27-04-2023 10:12
             // Met name de %K moet herstellen
-            if (candlePrev.CandleData.StochOscillator >= CandleLast.CandleData.StochOscillator)
+            if (candlePrev?.CandleData?.StochOscillator >= CandleLast?.CandleData?.StochOscillator)
             {
                 ExtraText = string.Format("Stoch.K {0:N8} hersteld niet < {1:N8}", candlePrev.CandleData.StochOscillator, CandleLast.CandleData.StochOscillator);
                 return false;
@@ -381,9 +378,9 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
             //}
 
             // De %D en %K moeten elkaar gekruist hebben. Dus %K(snel/blauw) > %D(traag/rood)
-            if (CandleLast.CandleData.StochSignal > CandleLast.CandleData.StochOscillator)
+            if (CandleLast?.CandleData?.StochSignal > CandleLast?.CandleData?.StochOscillator)
             {
-                ExtraText = string.Format("Stoch.%D {0:N8} heeft de %K {1:N8} niet gekruist", candlePrev.CandleData.StochSignal, candlePrev.CandleData.StochOscillator);
+                ExtraText = string.Format("Stoch.%D {0:N8} heeft de %K {1:N8} niet gekruist", candlePrev?.CandleData?.StochSignal, candlePrev?.CandleData?.StochOscillator);
                 return false;
             }
         }
@@ -404,7 +401,7 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
                 return false;
             }
         }
-        signal.LastPrice = (decimal)Symbol.LastPrice;
+        signal.LastPrice = Symbol.LastPrice;
 
         // Koop als de close vlak bij de bb.lower is (c.q. niet te ver naar boven zit)
         // Werkt goed!!! (toch even experimenteren) - maar negeert hierdoor ook veel signalen die wel bruikbaar waren
@@ -432,9 +429,9 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
 
 
         // De breedte van de bb is ten minste 1.5%
-        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Sbm.BBMinPercentage, GlobalData.Settings.Signal.Sbm.BBMaxPercentage))
+        if (!CandleLast!.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Sbm.BBMinPercentage, GlobalData.Settings.Signal.Sbm.BBMaxPercentage))
         {
-            ExtraText = "bb.width te klein " + CandleLast.CandleData.BollingerBandsPercentage?.ToString("N2");
+            ExtraText = "bb.width te klein " + CandleLast?.CandleData?.BollingerBandsPercentage?.ToString("N2");
             return true;
         }
 
@@ -442,7 +439,7 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
 
         // ********************************************************************
         // Instaptijd verstreken (oneindig wachten is geen optie)
-        if (CandleLast.OpenTime - signal.EventTime > GlobalData.Settings.Trading.GlobalBuyRemoveTime * Interval.Duration)
+        if (CandleLast?.OpenTime - signal.EventTime > GlobalData.Settings.Trading.GlobalBuyRemoveTime * Interval.Duration)
         {
             ExtraText = $"Ophouden na {GlobalData.Settings.Trading.GlobalBuyRemoveTime} candles";
             return true;
@@ -475,7 +472,7 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
         //    return true;
         //}
 
-        if (CandleLast.Close > (decimal)CandleLast.CandleData.BollingerBandsUpperBand || Symbol.LastPrice > (decimal)CandleLast.CandleData.BollingerBandsUpperBand)
+        if (CandleLast?.Close > (decimal?)CandleLast?.CandleData?.BollingerBandsUpperBand || Symbol.LastPrice > (decimal?)CandleLast?.CandleData?.BollingerBandsUpperBand)
         {
             ExtraText = "Close of LastPrice boven de bb.upper";
             return true;

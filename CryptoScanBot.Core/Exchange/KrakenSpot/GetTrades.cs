@@ -29,7 +29,7 @@ public class GetTrades
             // Haal de trades op van 1 symbol
 
             bool isChanged = false;
-            List<CryptoTrade> tradeCache = new();
+            List<CryptoTrade> tradeCache = [];
 
             //Verzin een begin datum
             if (position.Symbol.LastTradeFetched == null)
@@ -56,7 +56,7 @@ public class GetTrades
                 {
                     foreach (var item in result.Data.Trades.Values)
                     {
-                        if (!position.Symbol.TradeList.TryGetValue(item.Id, out CryptoTrade trade))
+                        if (!position.Symbol.TradeList.TryGetValue(item.Id, out CryptoTrade? trade))
                         {
                             trade = new CryptoTrade();
                             Api.PickupTrade(position.TradeAccount, position.Symbol, trade, item);

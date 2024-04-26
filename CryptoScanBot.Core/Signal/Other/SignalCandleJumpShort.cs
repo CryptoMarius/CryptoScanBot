@@ -24,12 +24,12 @@ public class SignalCandleJumpShort : SignalCreateBase
         if (candleCount > 0)
         {
             // Wat is het laagste en hoogste punt in de laatste x candles
-            long minDate = CandleLast.OpenTime;
+            long minDate = CandleLast!.OpenTime;
             decimal minValue = decimal.MaxValue;
             long maxDate = CandleLast.OpenTime;
             decimal maxValue = decimal.MinValue;
 
-            CryptoCandle candle = CandleLast;
+            CryptoCandle? candle = CandleLast;
             while (candleCount > 0)
             {
                 decimal value = candle.GetLowest(GlobalData.Settings.Signal.Jump.UseLowHighCalculation);

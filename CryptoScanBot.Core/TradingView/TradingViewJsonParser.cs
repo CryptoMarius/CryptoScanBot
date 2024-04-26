@@ -14,7 +14,7 @@ public static class TradingViewJsonParser
 
             JsonSerializerOptions options = new() { PropertyNameCaseInsensitive = true };
             var root = JsonSerializer.Deserialize<TradingViewJsonRootObject>(message, options);
-            var p = root?.P[1].ToString();
+            var p = root?.P[1].ToString() ?? "";
             if (root?.M != "qsd")
                 return null;
 
