@@ -434,6 +434,7 @@ public class CryptoDatabase : IDisposable
     {
         //Dispose(true);
         Connection.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     public void Open()
@@ -506,10 +507,8 @@ public class CryptoDatabase : IDisposable
             using var transaction = connection.BeginTransaction();
 
             // De intervallen moeten aanwezig zijn na initialisatie
-            List<CryptoInterval> IntervalList =
-            [
-                CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval1m, "1m", 1 * 60, null) //0
-            ];
+            List<CryptoInterval> IntervalList = [];
+            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval1m, "1m", 1 * 60, null)); //0
             IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval2m, "2m", 2 * 60, IntervalList[0])); //1
             IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval3m, "3m", 3 * 60, IntervalList[0])); //2
             IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval5m, "5m", 5 * 60, IntervalList[0])); //3

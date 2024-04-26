@@ -87,7 +87,7 @@ public partial class Form1 : Form
     //private static int first = 1;
     //public object BinanceClient { get; private set; }
     //CryptoDatabase Database;
-    ExchangeBase ExchangeApi;
+    //ExchangeBase ExchangeApi;
 
     public Form1()
     {
@@ -127,7 +127,7 @@ public partial class Form1 : Form
         GlobalData.ApplicationStatus = CryptoApplicationStatus.Running;
 
         //Database = new();
-        ExchangeApi = ExchangeHelper.GetExchangeInstance(GlobalData.Settings.General.ExchangeId);
+        //ExchangeApi = ExchangeHelper.GetExchangeInstance(GlobalData.Settings.General.ExchangeId);
 
         GlobalData.TradingApi.Key = "";
         GlobalData.TradingApi.Secret = "";
@@ -195,16 +195,16 @@ public partial class Form1 : Form
     //    }
     //}
 
-    private async Task MexcTest()
-    {
-        try
-        {
+    //private async Task MexcTest()
+    //{
+        //try
+        //{
             //string text;
             //string apiKey = "your apikey";
             //string apiSecret = "your secret";
             //string BaseUrl = "https://api.mexc.com";
 
-            HttpClient httpClient = new();
+            //HttpClient httpClient = new();
             //MexcService service = new(apiKey, apiSecret, BaseUrl, httpClient);
 
 
@@ -230,13 +230,13 @@ public partial class Form1 : Form
             //    string text = await response;
             //    //GlobalData.AddTextToLogTab(text);
             //};
-        }
-        catch (Exception error)
-        {
-            ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab("error back testing " + error.ToString()); // symbol.Text + " " + 
-        }
-    }
+        //}
+        //catch (Exception error)
+        //{
+        //    ScannerLog.Logger.Error(error, "");
+        //    GlobalData.AddTextToLogTab("error back testing " + error.ToString()); // symbol.Text + " " + 
+        //}
+    //}
 
 
     /*
@@ -563,10 +563,10 @@ public partial class Form1 : Form
     //    }
     //}
 
-    private async Task ByBitTestAsync()
-    {
-        try
-        {
+    //private async Task ByBitTestAsync()
+    //{
+        //try
+        //{
             // Problemen met de opties, met name de AutoTimestamp en Reconnect wil ik hebben
             //string text;
 
@@ -670,12 +670,12 @@ public partial class Form1 : Form
             */
 
 
-            CryptoTradeAccount account = GlobalData.ExchangePaperTradeAccount;
+            //CryptoTradeAccount account = GlobalData.ExchangePaperTradeAccount;
 
-            CryptoScanBot.Core.Model.CryptoExchange exchange = GlobalData.Settings.General.Exchange;
+            //CryptoScanBot.Core.Model.CryptoExchange exchange = GlobalData.Settings.General.Exchange;
 
-            if (!exchange.SymbolListName.TryGetValue("IDUSDT", out CryptoSymbol symbol))
-                return;
+            //if (!exchange.SymbolListName.TryGetValue("IDUSDT", out CryptoSymbol symbol))
+                //return;
             //CryptoSymbol symbol = new()
             //{
             //    Id = -1,
@@ -831,77 +831,77 @@ public partial class Form1 : Form
             //await Task.WhenAll(taskList).ConfigureAwait(false);
 
             // Werkt zoals ik het verwacht! een buy order van ongeveer 1.6 dollar
-            CryptoPosition position = null;
-            CryptoPositionPart part = null;
-            var exchangeApi = ExchangeHelper.GetExchangeInstance(GlobalData.Settings.General.ExchangeId);
-            var (result, tradeParams) = await exchangeApi.PlaceOrder(null, position, part, CryptoTradeSide.Long, DateTime.Now, 
-                CryptoOrderType.Limit, CryptoOrderSide.Buy, 52, 0.2276m, null, null);
+            //CryptoPosition position = null;
+            //CryptoPositionPart part = null;
+            //var exchangeApi = ExchangeHelper.GetExchangeInstance(GlobalData.Settings.General.ExchangeId);
+            //var (result, tradeParams) = await exchangeApi.PlaceOrder(null, position, part, CryptoTradeSide.Long, DateTime.Now, 
+            //    CryptoOrderType.Limit, CryptoOrderSide.Buy, 52, 0.2276m, null, null);
 
 
             // BTC asset
-            if (!account.AssetList.TryGetValue("BTC", out CryptoAsset assetBtc))
-            {
-                assetBtc = new CryptoAsset()
-                {
-                    Name = "BTC",
-                    TradeAccountId = account.Id,
-                };
-                account.AssetList.Add(assetBtc.Name, assetBtc);
-            }
-            assetBtc.Total = 10;
-
-            // USDT asset
-            if (!account.AssetList.TryGetValue("USDT", out CryptoAsset assetUsdt))
-            {
-                assetUsdt = new CryptoAsset()
-                {
-                    Name = "USDT",
-                    TradeAccountId = account.Id,
-                };
-                account.AssetList.Add(assetUsdt.Name, assetUsdt);
-            }
-            assetUsdt.Total = 100000;
-
-
-            // Initieel
-            PaperAssets.Change(account, symbol, CryptoOrderSide.Buy, CryptoOrderStatus.New, 1, 10);
-            // Wordt gevuld
-            PaperAssets.Change(account, symbol, CryptoOrderSide.Buy, CryptoOrderStatus.Filled, 1, 10);
-
-            // Initieel
-            PaperAssets.Change(account, symbol, CryptoOrderSide.Sell, CryptoOrderStatus.New, 1, 10);
-            // Wordt gevuld
-            PaperAssets.Change(account, symbol, CryptoOrderSide.Sell, CryptoOrderStatus.Filled, 1, 10.05m);
-
-
-
-            GlobalData.AddTextToLogTab($"Balance: {account.Name}");
-            await ExchangeApi.GetAssetsAsync(account);
-
-            foreach (var asset in account.AssetList.Values)
-            {
-                GlobalData.AddTextToLogTab($"Quote={asset.Name} Total={asset.Total} Free={asset.Free} Locked={asset.Locked}");
-            }
-
-
-            GlobalData.AddTextToLogTab("");
-            GlobalData.AddTextToLogTab($"Trades: {symbol.Name}");
-            //await ExchangeApi.FetchTradesForSymbolAsync(account, symbol);
-
-            //foreach (var trade in symbol.TradeList.Values)
+            //if (!account.AssetList.TryGetValue("BTC", out CryptoAsset assetBtc))
             //{
-            //    GlobalData.AddTextToLogTab($"Quote={trade.Symbol.Name} price={trade.Price} Quantity={trade.Quantity} Value={trade.QuoteQuantity}");
+            //    assetBtc = new CryptoAsset()
+            //    {
+            //        Name = "BTC",
+            //        TradeAccountId = account.Id,
+            //    };
+            //    account.AssetList.Add(assetBtc.Name, assetBtc);
             //}
-        }
+            //assetBtc.Total = 10;
 
-        catch (Exception error)
-        {
-            Invoke((MethodInvoker)(() => textBox1.AppendText(error.Message + "\r\n")));
-            throw;
-        }
+            //// USDT asset
+            //if (!account.AssetList.TryGetValue("USDT", out CryptoAsset assetUsdt))
+            //{
+            //    assetUsdt = new CryptoAsset()
+            //    {
+            //        Name = "USDT",
+            //        TradeAccountId = account.Id,
+            //    };
+            //    account.AssetList.Add(assetUsdt.Name, assetUsdt);
+            //}
+            //assetUsdt.Total = 100000;
 
-        Invoke((MethodInvoker)(() => textBox1.AppendText("ready" + "\r\n")));
-    }
+
+    //        // Initieel
+    //        PaperAssets.Change(account, symbol, CryptoOrderSide.Buy, CryptoOrderStatus.New, 1, 10);
+    //        // Wordt gevuld
+    //        PaperAssets.Change(account, symbol, CryptoOrderSide.Buy, CryptoOrderStatus.Filled, 1, 10);
+
+    //        // Initieel
+    //        PaperAssets.Change(account, symbol, CryptoOrderSide.Sell, CryptoOrderStatus.New, 1, 10);
+    //        // Wordt gevuld
+    //        PaperAssets.Change(account, symbol, CryptoOrderSide.Sell, CryptoOrderStatus.Filled, 1, 10.05m);
+
+
+
+    //        GlobalData.AddTextToLogTab($"Balance: {account.Name}");
+    //        await ExchangeApi.GetAssetsAsync(account);
+
+    //        foreach (var asset in account.AssetList.Values)
+    //        {
+    //            GlobalData.AddTextToLogTab($"Quote={asset.Name} Total={asset.Total} Free={asset.Free} Locked={asset.Locked}");
+    //        }
+
+
+    //        GlobalData.AddTextToLogTab("");
+    //        GlobalData.AddTextToLogTab($"Trades: {symbol.Name}");
+    //        //await ExchangeApi.FetchTradesForSymbolAsync(account, symbol);
+
+    //        //foreach (var trade in symbol.TradeList.Values)
+    //        //{
+    //        //    GlobalData.AddTextToLogTab($"Quote={trade.Symbol.Name} price={trade.Price} Quantity={trade.Quantity} Value={trade.QuoteQuantity}");
+    //        //}
+    //    }
+
+    //    catch (Exception error)
+    //    {
+    //        Invoke((MethodInvoker)(() => textBox1.AppendText(error.Message + "\r\n")));
+    //        throw;
+    //    }
+
+    //    Invoke((MethodInvoker)(() => textBox1.AppendText("ready" + "\r\n")));
+    //}
 
 
 
@@ -1043,7 +1043,7 @@ public partial class Form1 : Form
     }
 
 
-    private async void ByBitSpotTestAsync()
+    private static async void ByBitSpotTestAsync()
     {
         GlobalData.LoadSettings();
 

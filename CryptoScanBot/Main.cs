@@ -580,7 +580,7 @@ public partial class FrmMain : Form
         TextBoxLog.Clear();
         GlobalData.CreatedSignalCount = 0;
 
-        PositionMonitor.AnalyseCount = 0;
+        PositionMonitor.ResetAnalyseCount();
         ExchangeHelper.KLineTicker.Reset();
         ExchangeHelper.PriceTicker.Reset();
     }

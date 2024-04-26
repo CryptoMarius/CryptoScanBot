@@ -61,23 +61,19 @@ public class Api : ExchangeBase
                 options.ApiCredentials = new KucoinApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret, GlobalData.TradingApi.PassPhrase);
         });
 
-        ExchangeHelper.PriceTicker = new Ticker(ExchangeOptions, typeof(SubscriptionPriceTicker), CryptoTickerType.price);
-        ExchangeHelper.PriceTicker.Enabled = false; // many many errors
+        ExchangeHelper.PriceTicker = new Ticker(ExchangeOptions, typeof(SubscriptionPriceTicker), CryptoTickerType.price)
+        {
+            Enabled = false // many many errors
+        };
         ExchangeHelper.KLineTicker = new Ticker(ExchangeOptions, typeof(SubscriptionKLineTicker), CryptoTickerType.kline);
 #if TRADEBOT
         ExchangeHelper.UserTicker = new Ticker(ExchangeOptions, typeof(SubscriptionUserTicker), CryptoTickerType.user);
 #endif
     }
 
-    public async override Task GetSymbolsAsync()
-    {
-        await GetSymbols.ExecuteAsync();
-    }
+    public override Task GetSymbolsAsync() => GetSymbols.ExecuteAsync();
 
-    public async override Task GetCandlesAsync()
-    {
-        await GetCandles.ExecuteAsync();
-    }
+    public override async Task GetCandlesAsync() => await GetCandles.ExecuteAsync();
 
     //public override string ExchangeSymbolName(CryptoSymbol symbol)
     //{
@@ -134,7 +130,7 @@ public class Api : ExchangeBase
     }
 
 
-    public override async Task<(bool result, TradeParams tradeParams)> PlaceOrder(CryptoDatabase database,
+    public override async Task<(bool result, TradeParams? tradeParams)> PlaceOrder(CryptoDatabase database,
         CryptoPosition position, CryptoPositionPart part, CryptoTradeSide tradeSide, DateTime currentDate,
         CryptoOrderType orderType, CryptoOrderSide orderSide,
         decimal quantity, decimal price, decimal? stop, decimal? limit)
@@ -160,7 +156,7 @@ public class Api : ExchangeBase
             //OrderId = 0,
         };
         if (orderType == CryptoOrderType.StopLimit)
-            tradeParams.QuoteQuantity = (decimal)tradeParams.StopPrice * tradeParams.Quantity;
+            tradeParams.QuoteQuantity = tradeParams.StopPrice ?? 0 * tradeParams.Quantity;
         if (position.TradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
         {
             tradeParams.OrderId = database.CreateNewUniqueId();
@@ -256,7 +252,7 @@ public class Api : ExchangeBase
         };
         // Eigenlijk niet nodig
         if (step.OrderType == CryptoOrderType.StopLimit)
-            tradeParams.QuoteQuantity = (decimal)tradeParams.StopPrice * tradeParams.Quantity;
+            tradeParams.QuoteQuantity = tradeParams.StopPrice ?? 0 * tradeParams.Quantity;
 
         if (position.TradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
             return (true, tradeParams);

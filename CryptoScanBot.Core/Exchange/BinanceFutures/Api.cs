@@ -338,7 +338,7 @@ public class Api : ExchangeBase
         };
         // Eigenlijk niet nodig
         if (step.OrderType == CryptoOrderType.StopLimit)
-            tradeParams.QuoteQuantity = (decimal)tradeParams.StopPrice * tradeParams.Quantity;
+            tradeParams.QuoteQuantity = tradeParams.StopPrice ?? 0 * tradeParams.Quantity;
 
         if (position.TradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
             return (true, tradeParams);
@@ -376,7 +376,7 @@ public class Api : ExchangeBase
                 {
                     if (assetInfo.WalletBalance > 0)
                     {
-                        if (!tradeAccount.AssetList.TryGetValue(assetInfo.Asset, out CryptoAsset asset))
+                        if (!tradeAccount.AssetList.TryGetValue(assetInfo.Asset, out CryptoAsset? asset))
                         {
                             asset = new CryptoAsset()
                             {
@@ -549,7 +549,7 @@ public class Api : ExchangeBase
 
                     //Zo af en toe komt er geen data of is de Data niet gezet.
                     //De verbindingen naar extern kunnen (tijdelijk) geblokkeerd zijn
-                    if (accountInfo == null | accountInfo.Data == null)
+                    if (accountInfo.Data is null)
                         throw new ExchangeException("No account data received");
 
                     try

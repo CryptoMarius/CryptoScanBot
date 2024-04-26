@@ -54,7 +54,7 @@ public class CandleToolsTests : TestBase
             foreach (CryptoInterval interval in GlobalData.IntervalList)
             {
                 CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
-                Assert.AreEqual(count / symbolPeriod.Interval.Duration, symbolPeriod.CandleList.Count, $"Aantal candles in de {symbolPeriod.Interval}");
+                Assert.AreEqual(count / symbolPeriod.Interval?.Duration, symbolPeriod.CandleList.Count, $"Aantal candles in de {symbolPeriod.Interval}");
 
                 foreach (var c in symbolPeriod.CandleList.Values)
                 {

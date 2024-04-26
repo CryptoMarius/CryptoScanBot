@@ -14,7 +14,7 @@ namespace CryptoScanBot.Core.Exchange.BybitFutures;
 
 public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
 {
-    private void ProcessCandle(string topic, BybitKlineUpdate kline)
+    private void ProcessCandle(string? topic, BybitKlineUpdate kline)
     {
         // Aantekeningen
         // De Base volume is the volume in terms of the first currency pair.
@@ -26,10 +26,13 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         //ScannerLog.Logger.Trace($"kline ticker {topic}");
 
         // De interval wordt geprefixed in de topic "kline.1.SymbolName"
+        if (string.IsNullOrEmpty(topic))
+            return;
+
         string symbolName = topic[8..];
-        if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
         {
-            if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol symbol))
+            if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
             {
                 Interlocked.Increment(ref TickerCount);
                 //ScannerLog.Logger.Trace($"kline ticker {topic} process");
@@ -40,10 +43,9 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
     }
 
-    public override async Task<CallResult<UpdateSubscription>> Subscribe()
-
+    public override async Task<CallResult<UpdateSubscription>?> Subscribe()
     {
-        TickerGroup.SocketClient ??= new BybitSocketClient();
+        TickerGroup!.SocketClient ??= new BybitSocketClient();
         var subscriptionResult = await ((BybitSocketClient)TickerGroup.SocketClient).V5LinearApi.SubscribeToKlineUpdatesAsync(
             Symbols, KlineInterval.OneMinute, data =>
         {

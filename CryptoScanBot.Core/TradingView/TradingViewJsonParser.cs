@@ -5,21 +5,22 @@ namespace CryptoScanBot.Core.TradingView;
 
 public static class TradingViewJsonParser
 {
-    public static JsonDocument TryParse(string message)
+    public static JsonDocument? TryParse(string message)
     {
         try
         {
             if (!message.StartsWith("{\"m"))
                 return null;
 
-            var root = JsonSerializer.Deserialize<TradingViewJsonRootObject>(message, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            var p = root.P[1].ToString();
-            if (root.M != "qsd")
+            JsonSerializerOptions options = new() { PropertyNameCaseInsensitive = true };
+            var root = JsonSerializer.Deserialize<TradingViewJsonRootObject>(message, options);
+            var p = root?.P[1].ToString();
+            if (root?.M != "qsd")
                 return null;
 
-            var branch = JsonSerializer.Deserialize<TradingViewJsonPayloadObject>(p, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            var branch = JsonSerializer.Deserialize<TradingViewJsonPayloadObject>(p, options);
 
-            return JsonDocument.Parse(branch.V.ToString());
+            return JsonDocument.Parse(branch?.V?.ToString() ?? "");
         }
         catch (Exception e)
         {
@@ -32,21 +33,21 @@ public static class TradingViewJsonParser
 
 public class TradingViewJsonRootObject
 {
-    public string M { get; set; }
-    public List<object> P { get; set; }
+    public required string M { get; set; }
+    public required List<object> P { get; set; }
 }
 
 public class TradingViewJsonPayloadObject
 {
-    public string N { get; set; }
-    public string S { get; set; }
-    public object V { get; set; }
+    public required string N { get; set; }
+    public required string S { get; set; }
+    public required object V { get; set; }
 
 }
 
 public class TradingViewMarketStatusObject
 {
-    public string Phase { get; set; }
-    public string Tradingday { get; set; }
+    public required string Phase { get; set; }
+    public required string Tradingday { get; set; }
 
 }

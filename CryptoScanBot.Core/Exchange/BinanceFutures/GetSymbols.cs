@@ -14,7 +14,7 @@ public class GetSymbols
 
     public static async Task ExecuteAsync()
     {
-        if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
         {
             try
             {
@@ -25,12 +25,7 @@ public class GetSymbols
                 database.Open();
 
                 using var client = new BinanceRestClient();
-                var exchangeInfo = await client.UsdFuturesApi.ExchangeData.GetExchangeInfoAsync();
-
-                // Zo af en toe komt er geen data of is de Data niet gezet.
-                // De verbindingen naar extern kunnen (tijdelijk) geblokkeerd zijn
-                if (exchangeInfo == null)
-                    throw new ExchangeException("Geen exchange data ontvangen (1)");
+                var exchangeInfo = await client.UsdFuturesApi.ExchangeData.GetExchangeInfoAsync() ?? throw new ExchangeException("Geen exchange data ontvangen (1)");
                 if (!exchangeInfo.Success)
                     GlobalData.AddTextToLogTab("error getting exchangeinfo " + exchangeInfo.Error, true);
                 if (exchangeInfo.Data == null)
@@ -82,7 +77,7 @@ public class GetSymbols
                             //(ik heb wat slechte ervaringen met de Altrady bot die op paniek pieken handelt)
 
                             //Eventueel symbol toevoegen
-                            if (!exchange.SymbolListName.TryGetValue(symbolData.Name, out CryptoSymbol symbol))
+                            if (!exchange.SymbolListName.TryGetValue(symbolData.Name, out CryptoSymbol? symbol))
                             {
                                 symbol = new()
                                 {
@@ -106,14 +101,14 @@ public class GetSymbols
                             //    symbol.MinNotional = 0;
 
                             //Minimale en maximale amount voor een order (in base amount)
-                            symbol.QuantityMinimum = symbolData.LotSizeFilter.MinQuantity;
-                            symbol.QuantityMaximum = symbolData.LotSizeFilter.MaxQuantity;
-                            symbol.QuantityTickSize = symbolData.LotSizeFilter.StepSize;
+                            symbol.QuantityMinimum = symbolData.LotSizeFilter?.MinQuantity ?? 0;
+                            symbol.QuantityMaximum = symbolData.LotSizeFilter?.MaxQuantity ?? 0;
+                            symbol.QuantityTickSize = symbolData.LotSizeFilter?.StepSize ?? 0;
 
                             //Minimale en maximale prijs voor een order (in base price)
-                            symbol.PriceMinimum = symbolData.PriceFilter.MinPrice;
-                            symbol.PriceMaximum = symbolData.PriceFilter.MaxPrice;
-                            symbol.PriceTickSize = symbolData.PriceFilter.TickSize;
+                            symbol.PriceMinimum = symbolData.PriceFilter?.MinPrice ?? 0;
+                            symbol.PriceMaximum = symbolData.PriceFilter?.MaxPrice ?? 0;
+                            symbol.PriceTickSize = symbolData.PriceFilter?.TickSize ?? 0;
 
                             symbol.IsSpotTradingAllowed = true; // symbolData.IsSpotTradingAllowed;
                             symbol.IsMarginTradingAllowed = true; // symbolData.IsMarginTradingAllowed;

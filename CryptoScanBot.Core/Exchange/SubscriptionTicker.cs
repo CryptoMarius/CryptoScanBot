@@ -66,8 +66,8 @@ public abstract class SubscriptionTicker(ExchangeOptions exchangeOptions)
             ConnectionLostCount++;
             ErrorDuringStartup = true;
 
-            ScannerLog.Logger.Trace($"{TickerType} ticker for group {GroupName} error {subscriptionResult.Error?.Message} {SymbolOverview}");
-            GlobalData.AddTextToLogTab($"{TickerType} ticker for group {GroupName} error {subscriptionResult.Error?.Message} {SymbolOverview}");
+            ScannerLog.Logger.Trace($"{TickerType} ticker for group {GroupName} error {subscriptionResult?.Error?.Message} {SymbolOverview}");
+            GlobalData.AddTextToLogTab($"{TickerType} ticker for group {GroupName} error {subscriptionResult?.Error?.Message} {SymbolOverview}");
         }
     }
 
@@ -85,7 +85,9 @@ public abstract class SubscriptionTicker(ExchangeOptions exchangeOptions)
         _subscription.ConnectionLost -= TickerConnectionLost;
         _subscription.ConnectionRestored -= TickerConnectionRestored;
 
-        await TickerGroup.SocketClient?.UnsubscribeAsync(_subscription);
+        if(TickerGroup!.SocketClient is not null)
+            await TickerGroup.SocketClient.UnsubscribeAsync(_subscription);
+
         _subscription = null;
 
         //TickerGroup.SocketClient?.Dispose();

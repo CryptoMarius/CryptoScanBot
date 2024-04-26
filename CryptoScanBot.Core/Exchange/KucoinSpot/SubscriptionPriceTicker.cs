@@ -1,6 +1,5 @@
 ﻿using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
-using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using Kucoin.Net.Clients;
@@ -10,12 +9,12 @@ namespace CryptoScanBot.Core.Exchange.KucoinSpot;
 public class SubscriptionPriceTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
 {
 
-    public override async Task<CallResult<UpdateSubscription>> Subscribe()
+    public override async Task<CallResult<UpdateSubscription>?> Subscribe()
     {
-        TickerGroup.SocketClient ??= new KucoinSocketClient();
+        TickerGroup!.SocketClient ??= new KucoinSocketClient();
         CallResult<UpdateSubscription> subscriptionResult = await ((KucoinSocketClient)TickerGroup.SocketClient).SpotApi.SubscribeToAllTickerUpdatesAsync(data =>
         {
-            if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange exchange))
+            if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
             {
                 //GET /api/v3/ticker/24hr
                 // client.Spot.SubscribeToSymbolTickerUpdates("ETHBTC", (test) => result = test);
@@ -23,7 +22,7 @@ public class SubscriptionPriceTicker(ExchangeOptions exchangeOptions) : Subscrip
                 var tick = data.Data;
                 {
                     string symbolName = tick.Symbol.Replace("-", "");
-                    if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol symbol))
+                    if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
                     {
                         TickerCount++;
                         // Waarschijnlijk ALLEMAAL gebaseerd op de 24h prijs

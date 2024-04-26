@@ -12,11 +12,11 @@ namespace CryptoScanBot.Core.Exchange.BinanceSpot;
 #if TRADEBOT
 public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
 {
-    public override async Task<CallResult<UpdateSubscription>> Subscribe()
+    public override async Task<CallResult<UpdateSubscription>?> Subscribe()
     {
         using BinanceRestClient client = new();
         {
-            TickerGroup.SocketClient ??= new BinanceSocketClient();            
+            TickerGroup!.SocketClient ??= new BinanceSocketClient();            
             CallResult<string> userStreamResult = await client.SpotApi.Account.StartUserStreamAsync();
             //if (!userStreamResult.Success)
             //{
@@ -51,15 +51,15 @@ public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscript
             {
                 // Nieuwe thread opstarten en de data meegeven zodat er een sell wordt gedaan of administratie wordt bijgewerkt.
                 // Het triggeren van een stoploss of een DCA zal op een andere manier gedaan moeten worden (maar hoe en waar?)
-                if (GlobalData.ExchangeListName.TryGetValue(Api.ExchangeOptions.ExchangeName, out Model.CryptoExchange exchange))
+                if (GlobalData.ExchangeListName.TryGetValue(Api.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
                 {
-                    if (exchange.SymbolListName.TryGetValue(data.Data.Symbol, out CryptoSymbol symbol))
+                    if (exchange.SymbolListName.TryGetValue(data.Data.Symbol, out CryptoSymbol? symbol))
                     {
                         // Converteer de data naar een (tijdelijke) trade
                         CryptoOrder orderTemp = new();
-                        Api.PickupOrder(GlobalData.ExchangeRealTradeAccount, symbol, orderTemp, data.Data);
+                        Api.PickupOrder(GlobalData.ExchangeRealTradeAccount!, symbol, orderTemp, data.Data);
 
-                        GlobalData.ThreadMonitorOrder.AddToQueue((
+                        GlobalData.ThreadMonitorOrder?.AddToQueue((
                             symbol, 
                             Api.LocalOrderType(data.Data.Type), 
                             Api.LocalOrderSide(data.Data.Side), 

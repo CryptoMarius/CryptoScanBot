@@ -1,28 +1,26 @@
 ﻿using Bybit.Net.Clients;
 using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
-using CryptoExchange.Net.Sockets;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
-using CryptoScanBot.Core.Exchange;
 
 namespace CryptoScanBot.Core.Exchange.BybitFutures;
 
 public class SubscriptionPriceTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
 {
-    public override async Task<CallResult<UpdateSubscription>> Subscribe()
+    public override async Task<CallResult<UpdateSubscription>?> Subscribe()
     {
-        TickerGroup.SocketClient ??= new BybitSocketClient();
+        TickerGroup!.SocketClient ??= new BybitSocketClient();
         CallResult<UpdateSubscription> subscriptionResult = await ((BybitSocketClient)TickerGroup.SocketClient).V5LinearApi.SubscribeToTickerUpdatesAsync(Symbols, data =>
         {
-            if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange exchange))
+            if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
             {
                 //GET /api/v3/ticker/24hr
                 // client.Spot.SubscribeToSymbolTickerUpdates("ETHBTC", (test) => result = test);
 
                 var tick = data.Data;
                 {
-                    if (exchange.SymbolListName.TryGetValue(tick.Symbol, out CryptoSymbol symbol))
+                    if (exchange.SymbolListName.TryGetValue(tick.Symbol, out CryptoSymbol? symbol))
                     {
                         TickerCount++;
 
@@ -90,5 +88,4 @@ public class SubscriptionPriceTicker(ExchangeOptions exchangeOptions) : Subscrip
 
         return subscriptionResult;
     }
-
 }

@@ -5,11 +5,11 @@ namespace CryptoScanBot.Core.TradingView;
 
 public class SymbolValue
 {
-    public string Name { get; set; }
-    public string Ticker { get; set; }
-    public string Url { get; set; }
+    public string? Name { get; set; }
+    public string? Ticker { get; set; }
+    public string? Url { get; set; }
 
-    public string DisplayFormat { get; set; }
+    public string? DisplayFormat { get; set; }
     public DateTime? LastCheck { get; set; }
     public decimal LastValue { get; set; } // For colors
 
@@ -33,8 +33,8 @@ public class SymbolValue
 
 public class TradingViewSymbolInfo
 {
-    private SymbolValue SymbolValue;
-    private TradingViewSymbolWebSocket socket;
+    private SymbolValue SymbolValue = null!;
+    private TradingViewSymbolWebSocket socket = null!;
 
     public async void StartAsync(string tickerName, string displayName, string displayFormat, SymbolValue symbolValue, int startDelayMs)
     {

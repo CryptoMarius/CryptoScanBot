@@ -1,17 +1,11 @@
-﻿using System.Text.Encodings.Web;
-using System.Text.Json;
-
-using CryptoExchange.Net.Objects;
+﻿using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
-using CryptoExchange.Net.Sockets;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
-using CryptoScanBot.Core.Exchange;
 using Kucoin.Net.Clients;
 using Kucoin.Net.Enums;
 using Kucoin.Net.Objects.Models.Spot;
-using Kucoin.Net.Objects.Models.Spot.Socket;
 
 namespace CryptoScanBot.Core.Exchange.KucoinSpot;
 
@@ -23,8 +17,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
     //private static int tickerIndex = 0;
     //#endif
 
-    public CryptoSymbol Symbol;
-
+    CryptoSymbol Symbol = null!;
 
     static double GetInterval()
     {
@@ -35,7 +28,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
     }
 
 
-    public override async Task<CallResult<UpdateSubscription>> Subscribe()
+    public override async Task<CallResult<UpdateSubscription>?> Subscribe()
     {
         // TODO: quick en dirty code hier, nog eens verbeteren
         // We verwachten (helaas) slechts 1 symbol per ticker
@@ -51,12 +44,12 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
         SortedList<long, CryptoCandle> klineListTemp = [];
 
-        if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1m, out CryptoInterval interval))
+        if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1m, out CryptoInterval? interval))
             throw new Exception("Geen intervallen?");
 
 
         // Implementatie kline ticker (via cache, wordt door de timer verwerkt)
-        TickerGroup.SocketClient ??= new KucoinSocketClient();
+        TickerGroup!.SocketClient ??= new KucoinSocketClient();
         var subscriptionResult = await ((KucoinSocketClient)TickerGroup.SocketClient).SpotApi.SubscribeToKlineUpdatesAsync(symbolName, KlineInterval.OneMinute, data =>
         {
             Task taskKline = Task.Run(() =>
@@ -75,7 +68,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                     // (via de cache omdat de candle in opbouw is)
                     // (bij veel updates is dit stukje cpu-intensief?)
                     long candleOpenUnix = CandleTools.GetUnixTime(kline.OpenTime, 60);
-                    if (!klineListTemp.TryGetValue(candleOpenUnix, out CryptoCandle candle))
+                    if (!klineListTemp.TryGetValue(candleOpenUnix, out CryptoCandle? candle))
                     {
                         //TickerCount++;
                         candle = new();
@@ -132,7 +125,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                         {
                             // Als deze al aanwezig dmv een ticker update niet dupliceren
                             long nextCandleUnix = lastCandle.OpenTime + interval.Duration;
-                            if (klineListTemp.TryGetValue(nextCandleUnix, out CryptoCandle nextCandle))
+                            if (klineListTemp.TryGetValue(nextCandleUnix, out CryptoCandle? nextCandle))
                                 break;
 
                             // Dupliceer de laatste candle als deze niet voorkomt (zogenaamde "flat" candle)
@@ -195,7 +188,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                                 //ScannerLog.Logger.Trace("Aanbieden analyze " + candle.OhlcText(Symbol, interval, Symbol.PriceDisplayFormat, true, true));
                                 TickerCount++;
                                 if (GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
-                                    GlobalData.ThreadMonitorCandle.AddToQueue(Symbol, candle);
+                                    GlobalData.ThreadMonitorCandle?.AddToQueue(Symbol, candle);
                             }
                         }
                         else break;

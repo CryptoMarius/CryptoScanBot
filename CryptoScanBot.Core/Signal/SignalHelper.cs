@@ -8,28 +8,6 @@ using CryptoScanBot.Signal.Slope;
 
 namespace CryptoScanBot.Signal;
 
-
-// Een oude enumeratie "SignalStrategy" is vervallen en overgenomen door de combinatie
-//  van Mode en SignalStrategy (zonder de oversold/overbought toevoegingen)
-public class AlgorithmDefinition
-{
-    public string Name { get; set; }
-    public CryptoSignalStrategy Strategy { get; set; }
-    public Type AnalyzeLongType { get; set; }
-    public Type AnalyzeShortType { get; set; }
-
-    public SignalCreateBase InstantiateAnalyzeLong(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle)
-    {
-        return (SignalCreateBase)Activator.CreateInstance(AnalyzeLongType, new object[] { symbol, interval, candle });
-    }
-
-    public SignalCreateBase InstantiateAnalyzeShort(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle)
-    {
-        return (SignalCreateBase)Activator.CreateInstance(AnalyzeShortType, new object[] { symbol, interval, candle });
-    }
-}
-
-
 public static class SignalHelper
 {
     /// Een lijst met alle mogelijke strategieën (en attributen)
@@ -37,7 +15,6 @@ public static class SignalHelper
 
     // Alle beschikbare strategieën, nu geindexeerd
     static public readonly SortedList<CryptoSignalStrategy, AlgorithmDefinition> AlgorithmDefinitionIndex = [];
-
 
     static SignalHelper()
     {
@@ -286,7 +263,7 @@ public static class SignalHelper
 
     public static string GetSignalAlgorithmText(CryptoSignalStrategy strategy)
     {
-        if (AlgorithmDefinitionIndex.TryGetValue(strategy, out AlgorithmDefinition definition))
+        if (AlgorithmDefinitionIndex.TryGetValue(strategy, out AlgorithmDefinition? definition))
             return definition.Name;
         return strategy.ToString();
     }

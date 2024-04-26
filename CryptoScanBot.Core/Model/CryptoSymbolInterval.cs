@@ -12,7 +12,7 @@ public class CryptoSymbolInterval
     public int SymbolId { get; set; }
     public int IntervalId { get; set; }
     [Computed]
-    public virtual CryptoInterval Interval { get; set; }
+    public virtual CryptoInterval? Interval { get; set; }
 
     public CryptoIntervalPeriod IntervalPeriod { get; set; }
 
@@ -36,9 +36,9 @@ public class CryptoSymbolInterval
     public long? TrendInfoUnix { get; set; }
 
     [Computed]
-    public CryptoSignal Signal { get; set; }
+    public CryptoSignal? Signal { get; set; }
 
     // De candles voor dit interval
     [Computed]
-    public SortedList<long, CryptoCandle> CandleList { get; set; } = new();
+    public SortedList<long, CryptoCandle> CandleList { get; set; } = [];
 }

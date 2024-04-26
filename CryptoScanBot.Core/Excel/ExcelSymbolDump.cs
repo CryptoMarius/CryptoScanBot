@@ -33,7 +33,7 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
 
             WriteCell(sheet, column++, row, Symbol.Exchange.Name);
             WriteCell(sheet, column++, row, Symbol.Name);
-            WriteCell(sheet, column++, row, symbolInterval.Interval.Name);
+            WriteCell(sheet, column++, row, symbolInterval.Interval?.Name);
             WriteCell(sheet, column++, row, symbolInterval.CandleList.Count);
             WriteCell(sheet, column++, row, symbolInterval.CandleList.Values.FirstOrDefault()?.DateLocal, CellStyleDate);
             WriteCell(sheet, column++, row, symbolInterval.CandleList.Values.LastOrDefault()?.DateLocal, CellStyleDate);
@@ -45,7 +45,7 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
 
     private void DumpInterval(CryptoSymbolInterval symbolInterval)
     {
-        ISheet sheet = Book.CreateSheet(symbolInterval.Interval.Name);
+        ISheet sheet = Book.CreateSheet(symbolInterval.Interval?.Name);
 
         int row = 0;
 
@@ -68,7 +68,7 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
 
             WriteCell(sheet, column++, row, candle.OpenTime);
             WriteCell(sheet, column++, row, candle.DateLocal, CellStyleDate);
-            WriteCell(sheet, column++, row, candle.DateLocal.AddSeconds(symbolInterval.Interval.Duration), CellStyleDate);
+            WriteCell(sheet, column++, row, candle.DateLocal.AddSeconds(symbolInterval.Interval?.Duration ?? 0), CellStyleDate);
             WriteCell(sheet, column++, row, candle.Open, CellStyleDecimalNormal);
             WriteCell(sheet, column++, row, candle.High, CellStyleDecimalNormal);
             WriteCell(sheet, column++, row, candle.Low, CellStyleDecimalNormal);

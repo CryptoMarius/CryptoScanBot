@@ -153,7 +153,7 @@ public class Api : ExchangeBase
     }
 
 
-    public override async Task<(bool result, TradeParams tradeParams)> PlaceOrder(CryptoDatabase database,
+    public override async Task<(bool result, TradeParams? tradeParams)> PlaceOrder(CryptoDatabase database,
         CryptoPosition position, CryptoPositionPart part, CryptoTradeSide tradeSide, DateTime currentDate,
         CryptoOrderType orderType, CryptoOrderSide orderSide,
         decimal quantity, decimal price, decimal? stop, decimal? limit)
@@ -185,7 +185,7 @@ public class Api : ExchangeBase
             //OrderId = 0,
         };
         if (orderType == CryptoOrderType.StopLimit)
-            tradeParams.QuoteQuantity = (decimal)tradeParams.StopPrice * tradeParams.Quantity;
+            tradeParams.QuoteQuantity = tradeParams.StopPrice ?? 0 * tradeParams.Quantity;
         if (position.TradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
         {
             tradeParams.OrderId = database.CreateNewUniqueId();
@@ -299,7 +299,7 @@ public class Api : ExchangeBase
         };
         // Eigenlijk niet nodig
         if (step.OrderType == CryptoOrderType.StopLimit)
-            tradeParams.QuoteQuantity = (decimal)tradeParams.StopPrice * tradeParams.Quantity;
+            tradeParams.QuoteQuantity = tradeParams.StopPrice ?? 0 * tradeParams.Quantity;
 
         if (position.TradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
             return (true, tradeParams);
@@ -317,7 +317,7 @@ public class Api : ExchangeBase
                 tradeParams.ResponseStatusCode = result.ResponseStatusCode;
 
                 // If its already gone ignore the error
-                if (result.Error.Code == 110001) // 110001: Order does not exist
+                if (result.Error?.Code == 110001) // 110001: Order does not exist
                     return (true, tradeParams);
             }
             return (result.Success, tradeParams);
@@ -347,7 +347,7 @@ public class Api : ExchangeBase
                 {
                     if (assetInfo.WalletBalance > 0)
                     {
-                        if (!tradeAccount.AssetList.TryGetValue(assetInfo.Asset, out CryptoAsset asset))
+                        if (!tradeAccount.AssetList.TryGetValue(assetInfo.Asset, out CryptoAsset? asset))
                         {
                             asset = new()
                             {
@@ -508,12 +508,12 @@ public class Api : ExchangeBase
                 if (item.CreateTime < position.CreateTime)
                     continue;
 
-                if (position.Symbol.OrderList.TryGetValue(item.OrderId, out CryptoOrder order))
+                if (position.Symbol.OrderList.TryGetValue(item.OrderId, out CryptoOrder? order))
                 {
                     var oldStatus = order.Status;
                     var oldQuoteQuantityFilled = order.QuoteQuantityFilled;
                     PickupOrder(position.TradeAccount, position.Symbol, order, item);
-                    database.Connection.Update<CryptoOrder>(order);
+                    database.Connection.Update(order);
 
                     if (oldStatus != order.Status || oldQuoteQuantityFilled != order.QuoteQuantityFilled)
                     {
@@ -568,7 +568,7 @@ public class Api : ExchangeBase
 
                     //Zo af en toe komt er geen data of is de Data niet gezet.
                     //De verbindingen naar extern kunnen (tijdelijk) geblokkeerd zijn
-                    if (accountInfo == null | accountInfo.Data == null)
+                    if (accountInfo?.Data is null)
                         throw new ExchangeException("No account data received");
 
                     try

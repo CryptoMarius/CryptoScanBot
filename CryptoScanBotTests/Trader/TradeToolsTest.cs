@@ -48,7 +48,7 @@ public class TradeToolsTest : TestBase
 
         DeleteAllPositionRelatedStuff(database, symbol);
 
-        CryptoPosition position = PositionTools.CreatePosition(GlobalData.ExchangeBackTestAccount, symbol, CryptoSignalStrategy.Stobb, 
+        CryptoPosition position = PositionTools.CreatePosition(GlobalData.ExchangeBackTestAccount!, symbol, CryptoSignalStrategy.Stobb, 
             CryptoTradeSide.Long, symbol.IntervalPeriodList[0], lastCandle1mCloseTimeDate);
         database.Connection.Insert<CryptoPosition>(position);
         position.TradeAccount.PositionList.Add(symbol.Name, position);
@@ -86,7 +86,7 @@ public class TradeToolsTest : TestBase
         // 2 controles, want blijft alles wel hetzelfde?
         task = Task.Run(() => _ = TradeTools.CalculatePositionResultsViaOrders(database, position) );
         task.Wait();
-        CheckAfterMarketBuy(position, entryPart, step, lastCandle1mCloseTimeDate, CryptoOrderStatus.PartiallyAndClosed);
+        CheckAfterMarketBuy(position, entryPart, step, CryptoOrderStatus.PartiallyAndClosed);
 
         // TODO: Verkeerde datum in de stepo voor emulator /backtest, dat moet de laatste datum van de order of trade zijn!
         //step.CloseTime = lastCandle.Date.AddMinutes(1); // CloseDate
@@ -115,7 +115,7 @@ public class TradeToolsTest : TestBase
         // De sell veranderd niets, maar blijft alles wel hetzelfde?
         task = Task.Run(() => _ = TradeTools.CalculatePositionResultsViaOrders(database, position));
         task.Wait();
-        CheckAfterMarketBuy(position, entryPart, step, lastCandle1mCloseTimeDate, CryptoOrderStatus.PartiallyAndClosed);
+        CheckAfterMarketBuy(position, entryPart, step, CryptoOrderStatus.PartiallyAndClosed);
 
 
         // Is de sell order wel geplaatst?
@@ -145,7 +145,7 @@ public class TradeToolsTest : TestBase
         // De dca en sell veranderd niets, maar blijft alles wel hetzelfde?
         task = Task.Run(() => _ = TradeTools.CalculatePositionResultsViaOrders(database, position) );
         task.Wait();
-        CheckAfterMarketBuy(position, entryPart, step, lastCandle1mCloseTimeDate, CryptoOrderStatus.PartiallyAndClosed);
+        CheckAfterMarketBuy(position, entryPart, step, CryptoOrderStatus.PartiallyAndClosed);
 
 
 
@@ -164,7 +164,7 @@ public class TradeToolsTest : TestBase
         // Nu wordt het een en ander aangepast (en wordt het interessant)
         task = Task.Run(() => _ = TradeTools.CalculatePositionResultsViaOrders(database, position));
         task.Wait();
-        CheckAfterDca1Buy(position, dca1Part, dca1Step, lastCandle1mCloseTimeDate, CryptoOrderStatus.Filled);
+        CheckAfterDca1Buy(position, dca1Part, dca1Step, CryptoOrderStatus.Filled);
 
 
         // reactie:
@@ -195,7 +195,7 @@ public class TradeToolsTest : TestBase
         // De sell veranderd niets, maar blijft alles wel hetzelfde?
         task = Task.Run(() => _ = TradeTools.CalculatePositionResultsViaOrders(database, position));
         task.Wait();
-        CheckAfterDca1Buy(position, dca1Part, dca1Step, lastCandle1mCloseTimeDate, CryptoOrderStatus.Filled);
+        CheckAfterDca1Buy(position, dca1Part, dca1Step, CryptoOrderStatus.Filled);
 
 
         // Is sell order van de entry part geplaatst?
@@ -229,15 +229,14 @@ public class TradeToolsTest : TestBase
             // De sell veranderd niets, maar blijft alles wel hetzelfde?
             task = Task.Run(() => _ = TradeTools.CalculatePositionResultsViaOrders(database, position));
             task.Wait();
-            CheckAfterDca1Buy(position, dca1Part, dca1Step, lastCandle1mCloseTimeDate, CryptoOrderStatus.Filled);
+            CheckAfterDca1Buy(position, dca1Part, dca1Step, CryptoOrderStatus.Filled);
         }
     }
 
 
 
 
-    private static void CheckAfterMarketBuy(CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step, 
-        DateTime lastCandle1mCloseTimeDate, CryptoOrderStatus status)
+    private static void CheckAfterMarketBuy(CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step, CryptoOrderStatus status)
     {
 
         Assert.IsNotNull(step.CloseTime);
@@ -278,10 +277,8 @@ public class TradeToolsTest : TestBase
 
 
 
-    private static void CheckAfterDca1Buy(CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step,
-        DateTime lastCandle1mCloseTimeDate, CryptoOrderStatus status)
+    private static void CheckAfterDca1Buy(CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step, CryptoOrderStatus status)
     {
-
         Assert.IsNotNull(step.CloseTime);
         // die kunnen wel varieren afhankelijk van de vorige acties, even uitgezet want is niet zo boeiend
         //Assert.AreEqual(step.CloseTime.Value, lastCandle1mCloseTimeDate.AddSeconds(2));

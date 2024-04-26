@@ -1,9 +1,6 @@
-﻿using System.Text.Encodings.Web;
-using System.Text.Json;
-
+﻿using System.Text.Json;
 using Bybit.Net.Clients;
 using Bybit.Net.Enums.V5;
-
 using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
 using CryptoScanBot.Core.Intern;
@@ -13,9 +10,9 @@ namespace CryptoScanBot.Core.Exchange.BybitFutures;
 #if TRADEBOT
 public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
 {
-    public override async Task<CallResult<UpdateSubscription>> Subscribe()
+    public override async Task<CallResult<UpdateSubscription>?> Subscribe()
     {
-        TickerGroup.SocketClient ??= new BybitSocketClient();
+        TickerGroup!.SocketClient ??= new BybitSocketClient();
         var subscriptionResult = await ((BybitSocketClient)TickerGroup.SocketClient).V5PrivateApi.SubscribeToOrderUpdatesAsync(OnOrderUpdate).ConfigureAwait(false);
         return subscriptionResult;
     }
@@ -39,15 +36,15 @@ public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscript
                     data.Status == OrderStatus.PartiallyFilledCanceled ||
                     data.Status == OrderStatus.Cancelled)
                 {
-                    if (GlobalData.ExchangeListName.TryGetValue(Api.ExchangeOptions.ExchangeName, out Model.CryptoExchange exchange))
+                    if (GlobalData.ExchangeListName.TryGetValue(Api.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
                     {
-                        if (exchange.SymbolListName.TryGetValue(data.Symbol, out CryptoSymbol symbol))
+                        if (exchange.SymbolListName.TryGetValue(data.Symbol, out CryptoSymbol? symbol))
                         {
                             // Converteer de data naar een (tijdelijke) trade
                             CryptoOrder order = new();
-                            Api.PickupOrder(GlobalData.ExchangeRealTradeAccount, symbol, order, data);
+                            Api.PickupOrder(GlobalData.ExchangeRealTradeAccount!, symbol, order, data);
 
-                            GlobalData.ThreadMonitorOrder.AddToQueue((
+                            GlobalData.ThreadMonitorOrder?.AddToQueue((
                                 symbol,
                                 Api.LocalOrderType(data.OrderType),
                                 Api.LocalOrderSide(data.Side),

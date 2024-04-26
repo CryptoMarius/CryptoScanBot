@@ -30,7 +30,7 @@ public class CryptoCandle : IQuote
     public DateTime DateLocal { get { return CandleTools.GetUnixDate(OpenTime).ToLocalTime(); } }
 
     [Computed]
-    public CandleIndicatorData CandleData { get; set; }
+    public CandleIndicatorData? CandleData { get; set; }
 
     // Candles die on the fly zijn aangemaakt (niet confirmed) vanwege Kucoin
     [Computed]

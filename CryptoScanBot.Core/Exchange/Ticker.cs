@@ -26,11 +26,12 @@ public class Ticker(ExchangeOptions exchangeOptions, Type userTickerItemType, Cr
         symbolCount = 0;
         List<SubscriptionTicker> tickerList = [];
 
-        SubscriptionTicker ticker = (SubscriptionTicker)Activator.CreateInstance(UserTickerItemType, [ExchangeOptions]);
-
-        ticker.GroupName = "*";
-        ticker.TickerType = TickerType;
-        tickerList.Add(ticker);
+        if (Activator.CreateInstance(UserTickerItemType, [ExchangeOptions]) is SubscriptionTicker ticker)
+        {
+            ticker.GroupName = "*";
+            ticker.TickerType = TickerType;
+            tickerList.Add(ticker);
+        }
 
         return tickerList;
     }

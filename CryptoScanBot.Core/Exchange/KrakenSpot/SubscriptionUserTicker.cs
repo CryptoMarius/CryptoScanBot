@@ -1,33 +1,31 @@
 ﻿using System.Text.Json;
-
 using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
-using CryptoExchange.Net.Sockets;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using Kraken.Net.Clients;
 using Kraken.Net.Enums;
 using Kraken.Net.Objects.Models;
+using Kraken.Net.Objects.Models.Socket;
 
 namespace CryptoScanBot.Core.Exchange.KrakenSpot;
 
 #if TRADEBOT
 
-
 public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
 {
-    public override Task<CallResult<UpdateSubscription>>? Subscribe()
+    public override async Task<CallResult<UpdateSubscription>?> Subscribe()
     {
-        TickerGroup.SocketClient ??= new KrakenSocketClient();
+        TickerGroup!.SocketClient ??= new KrakenSocketClient();
 
-        //Task<CallResult<UpdateSubscription>> SubscribeToOrderUpdatesAsync(string socketToken,
-        //Action<DataEvent<IEnumerable<KrakenStreamOrder>>> handler,
-        //CancellationToken ct = default(CancellationToken));
+        WebCallResult<KrakenWebSocketToken> tokenResult = await new KrakenRestClient().SpotApi.Account.GetWebsocketTokenAsync();
+        if (!tokenResult.Success)
+            return default;
 
-        // TODO:
-        //var subscriptionResult = await ((KrakenSocketClient)TickerGroup.SocketClient).SpotApi.SubscribeToOrderUpdatesAsync(
-        //    OnOrderUpdate, ExchangeHelper.CancellationToken).ConfigureAwait(false);
-        return null; // subscriptionResult;
+        CallResult<UpdateSubscription> subscriptionResult = await ((KrakenSocketClient)TickerGroup.SocketClient).SpotApi.SubscribeToOrderUpdatesAsync(tokenResult.Data.Token,
+            OnOrderUpdate, ExchangeHelper.CancellationToken).ConfigureAwait(false);        
+
+        return subscriptionResult;
     }
 
     private void OnOrderUpdate(DataEvent<IEnumerable<KrakenStreamOrder>> dataList)
@@ -64,7 +62,7 @@ public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscript
                                 symbol,
                                 Api.LocalOrderType(data.OrderDetails.Type),
                                 Api.LocalOrderSide(data.OrderDetails.Side),
-                                Api.LocalOrderStatus((OrderStatus)data.Status),
+                                Api.LocalOrderStatus(data.Status),
                                 order));
                         }
                     }
@@ -74,7 +72,7 @@ public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscript
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab($"{Api.ExchangeOptions.ExchangeName} ERROR: OrderUpdate " + error.ToString());
+            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} ERROR: OrderUpdate " + error.ToString());
         }
     }
 }

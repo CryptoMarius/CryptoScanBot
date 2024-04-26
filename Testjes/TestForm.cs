@@ -2451,7 +2451,7 @@ https://support.altrady.com/en/article/webhook-and-trading-view-signals-onbhbt/
                     List<Task> taskList = [];
                     while (taskList.Count < 3)
                     {
-                        Task task = Task.Run(async () =>
+                        Task task = Task.Run(() =>
                         {
                             //BackTest(barometer, queue, interval, config, baseFolder);
                             //private void BackTest(CryptoSymbol barometer, Queue<CryptoSymbol> queue, CryptoInterval interval, CryptoBackConfig config, string baseFolder)

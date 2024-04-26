@@ -134,9 +134,9 @@ public class Api : ExchangeBase
         {
             // Aanpassing zonder dat er daadwerkelijk iets aangepast is
             // 110026: Cross / isolated margin mode is not modified
-            if (result.Error.Code == 110026)
+            if (result.Error?.Code == 110026)
                 return true; // {110026: Cross/isolated margin mode is not modified }
-            if (result.Error.Code == 110027)
+            if (result.Error?.Code == 110027)
                 return true; // {110027	Margin is not modified }
 
             GlobalData.AddTextToLogTab($"{symbol.Name} ERROR setting CrossOrIsolated={tradeMode} en leverage={GlobalData.Settings.Trading.Leverage} {result.Error}");
@@ -160,7 +160,7 @@ public class Api : ExchangeBase
     }
 
 
-    public override async Task<(bool result, TradeParams tradeParams)> PlaceOrder(CryptoDatabase database,
+    public override async Task<(bool result, TradeParams? tradeParams)> PlaceOrder(CryptoDatabase database,
         CryptoPosition position, CryptoPositionPart part, CryptoTradeSide tradeSide, DateTime currentDate,
         CryptoOrderType orderType, CryptoOrderSide orderSide,
         decimal quantity, decimal price, decimal? stop, decimal? limit)
@@ -186,7 +186,7 @@ public class Api : ExchangeBase
             //OrderId = 0,
         };
         if (orderType == CryptoOrderType.StopLimit)
-            tradeParams.QuoteQuantity = (decimal)tradeParams.StopPrice * tradeParams.Quantity;
+            tradeParams.QuoteQuantity = tradeParams.StopPrice ?? 0 * tradeParams.Quantity;
         if (position.TradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
         {
             tradeParams.OrderId = database.CreateNewUniqueId();
@@ -317,7 +317,7 @@ public class Api : ExchangeBase
         };
         // Eigenlijk niet nodig
         if (step.OrderType == CryptoOrderType.StopLimit)
-            tradeParams.QuoteQuantity = (decimal)tradeParams.StopPrice * tradeParams.Quantity;
+            tradeParams.QuoteQuantity = tradeParams.StopPrice ?? 0 * tradeParams.Quantity;
 
         if (position.TradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
             return (true, tradeParams);
@@ -335,7 +335,7 @@ public class Api : ExchangeBase
                 tradeParams.ResponseStatusCode = result.ResponseStatusCode;
 
                 // If its already gone ignore the error
-                if (result.Error.Code == 110001) // 110001: Order does not exist
+                if (result.Error?.Code == 110001) // 110001: Order does not exist
                     return (true, tradeParams);
             }
             return (result.Success, tradeParams);
@@ -365,7 +365,7 @@ public class Api : ExchangeBase
                 {
                     if (assetInfo.WalletBalance > 0)
                     {
-                        if (!tradeAccount.AssetList.TryGetValue(assetInfo.Asset, out CryptoAsset asset))
+                        if (!tradeAccount.AssetList.TryGetValue(assetInfo.Asset, out CryptoAsset? asset))
                         {
                             asset = new()
                             {
@@ -430,7 +430,7 @@ public class Api : ExchangeBase
         trade.Price = item.Price;
         trade.Quantity = item.Quantity;
         trade.QuoteQuantity = item.Price * item.Quantity;
-        trade.Commission = item.Fee.Value;
+        trade.Commission = item.Fee ?? 0;
         trade.CommissionAsset = symbol.Quote; // item.FeeAsset;?
     }
 
@@ -457,16 +457,16 @@ public class Api : ExchangeBase
         order.Side = LocalOrderSide(item.Side);
         order.Status = LocalOrderStatus(item.Status);
 
-        order.Price = item.Price.Value;
+        order.Price = item.Price ?? 0;
         order.Quantity = item.Quantity;
-        order.QuoteQuantity = item.Price.Value * item.Quantity;
+        order.QuoteQuantity = item.Price ?? 0 * item.Quantity;
 
         order.AveragePrice = item.AveragePrice;
         order.QuantityFilled = item.QuantityFilled;
         order.QuoteQuantityFilled = item.AveragePrice * item.QuantityFilled;
 
-        order.Commission = item.ExecutedFee.Value;
-        order.CommissionAsset = item.FeeAsset;
+        order.Commission = item.ExecutedFee ?? 0;
+        order.CommissionAsset = item.FeeAsset ?? "";
     }
 
 
@@ -494,12 +494,12 @@ public class Api : ExchangeBase
             string text;
             foreach (var item in info.Data.List)
             {
-                if (position.Symbol.OrderList.TryGetValue(item.OrderId, out CryptoOrder order))
+                if (position.Symbol.OrderList.TryGetValue(item.OrderId, out CryptoOrder? order))
                 {
                     var oldStatus = order.Status;
                     var oldQuoteQuantityFilled = order.QuoteQuantityFilled;
                     PickupOrder(position.TradeAccount, position.Symbol, order, (BybitOrderUpdate)item);
-                    database.Connection.Update<CryptoOrder>(order);
+                    database.Connection.Update(order);
 
                     if (oldStatus != order.Status || oldQuoteQuantityFilled != order.QuoteQuantityFilled)
                     {
@@ -552,7 +552,7 @@ public class Api : ExchangeBase
 
                     //Zo af en toe komt er geen data of is de Data niet gezet.
                     //De verbindingen naar extern kunnen (tijdelijk) geblokkeerd zijn
-                    if (accountInfo == null | accountInfo.Data == null)
+                    if (accountInfo?.Data is null)
                         throw new ExchangeException("No account data received");
 
                     try

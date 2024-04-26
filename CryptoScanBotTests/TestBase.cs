@@ -48,7 +48,7 @@ public class TestBase
 
     internal static CryptoSymbol CreateTestSymbol(CryptoDatabase database)
     {
-        if (GlobalData.ExchangeListId.TryGetValue(GlobalData.Settings.General.ExchangeId, out CryptoScanBot.Core.Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListId.TryGetValue(GlobalData.Settings.General.ExchangeId, out CryptoScanBot.Core.Model.CryptoExchange? exchange))
         {
             if (!exchange.SymbolListName.TryGetValue("MASKUSDT", out CryptoSymbol? symbol))
             {
@@ -149,8 +149,8 @@ public class TestBase
 
         symbol.OrderList.Clear();
         symbol.TradeList.Clear();
-        GlobalData.ExchangeBackTestAccount.AssetList.Clear();
-        GlobalData.ExchangeBackTestAccount.PositionList.Clear();
+        GlobalData.ExchangeBackTestAccount?.AssetList.Clear();
+        GlobalData.ExchangeBackTestAccount?.PositionList.Clear();
     }
 
 }
