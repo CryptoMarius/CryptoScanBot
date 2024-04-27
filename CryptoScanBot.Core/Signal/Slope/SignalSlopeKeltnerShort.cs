@@ -2,7 +2,7 @@
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Signal;
 
-namespace CryptoScanBot.Signal.Slope;
+namespace CryptoScanBot.Core.Signal.Slope;
 
 #if EXTRASTRATEGIESSLOPEKELTNER
 public class SignalSlopeKeltnerShort : SignalCreateBase
@@ -24,21 +24,21 @@ public class SignalSlopeKeltnerShort : SignalCreateBase
         return true;
     }
 
-    public bool WasKeltnerPositiveInTheLast(int candleCount = 10)
-    {
-        // We gaan van rechts naar links (dus prev en last zijn ietwat raar)
-        CryptoCandle candle = CandleLast;
-        while (candleCount >= 0)
-        {
-            if (CandleLast.CandleData?.KeltnerCenterLineSlope < 0)
-                return false;
+    //public bool WasKeltnerPositiveInTheLast(int candleCount = 10)
+    //{
+    //    // We gaan van rechts naar links (dus prev en last zijn ietwat raar)
+    //    CryptoCandle candle = CandleLast;
+    //    while (candleCount >= 0)
+    //    {
+    //        if (CandleLast.CandleData.KeltnerCenterLineSlope < 0)
+    //            return false;
 
-            if (!GetPrevCandle(candle, out candle))
-                return false;
-            candleCount--;
-        }
-        return true;
-    }
+    //        if (!GetPrevCandle(candle, out candle))
+    //            return false;
+    //        candleCount--;
+    //    }
+    //    return true;
+    //}
 
     /// <summary>
     /// Is de ... aflopend in de laatste x candles
@@ -47,7 +47,7 @@ public class SignalSlopeKeltnerShort : SignalCreateBase
     public bool CheckKeltnerSlopeInTheLastPeriod(int candleCount, int allowedWrongCount, out string response)
     {
         // We gaan van rechts naar links (van de nieuwste candle richting verleden)
-        bool first = true;
+        bool first = false;
         int wrongCount = 0;
         CryptoCandle last = CandleLast;
 
@@ -89,17 +89,17 @@ public class SignalSlopeKeltnerShort : SignalCreateBase
         //}
 
 
-        if (!CheckKeltnerSlopeInTheLastPeriod(10, 5, out response))
+        if (!CheckKeltnerSlopeInTheLastPeriod(15, 5, out response))
         {
             //response = "No positive keltner period";
             return false;
         }
 
-        if (HadStobbInThelastXCandles(SignalSide, 5, 30) == null)
-        {
-            response = "No previous STOBB/SBM";
-            return false;
-        }
+        //if (HadStobbInThelastXCandles(SignalSide, 5, 30) == null)
+        //{
+        //    response = "No previous STOBB/SBM";
+        //    return false;
+        //}
 
         response = "";
         return true;
@@ -109,6 +109,8 @@ public class SignalSlopeKeltnerShort : SignalCreateBase
     public override bool IsSignal()
     {
         ExtraText = "";
+
+        // The slope of the Keltner channel centerline is getting negative
 
         if (CandleLast.CandleData?.KeltnerCenterLineSlope > 0)
             return false;

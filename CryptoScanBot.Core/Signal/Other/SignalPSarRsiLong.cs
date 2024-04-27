@@ -3,15 +3,15 @@ using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Signal;
 
-namespace CryptoScanBot.Signal.Other;
+namespace CryptoScanBot.Core.Signal.Other;
 
 #if EXTRASTRATEGIESPSARRSI
-public class SignalPSarRsiShort : SignalCreateBase
+public class SignalPSarRsiLong : SignalCreateBase
 {
-    public SignalPSarRsiShort(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
+    public SignalPSarRsiLong(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
         ReplaceSignal = false;
-        SignalSide = CryptoTradeSide.Short;
+        SignalSide = CryptoTradeSide.Long;
         SignalStrategy = CryptoSignalStrategy.PSarRsi;
     }
 
@@ -20,10 +20,11 @@ public class SignalPSarRsiShort : SignalCreateBase
     /// </summary>
     public override bool IndicatorsOkay(CryptoCandle candle)
     {
-        if ((candle == null)
-           || (candle.CandleData == null)
-            || (candle.CandleData.PSar == null)
-            || (candle.CandleData.Rsi == null)
+        if (candle == null
+           || candle.CandleData == null
+            || candle.CandleData.PSar == null
+            || candle.CandleData.Rsi == null
+            || candle.CandleData.Sma200 == null
             )
             return false;
 
@@ -35,25 +36,27 @@ public class SignalPSarRsiShort : SignalCreateBase
     {
         ExtraText = "";
 
+        if (CandleLast.CandleData.Sma200 >= (double)CandleLast.Close)
+            return false;
+
         // De breedte van de bb is ten minste 1.5%
         if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, 100)) //GlobalData.Settings.Signal.AnalysisBBMaxPercentage
         {
-            ExtraText = "bb.width te klein " + CandleLast.CandleData?.BollingerBandsPercentage?.ToString("N2");
+            ExtraText = "bb.width te klein " + CandleLast.CandleData.BollingerBandsPercentage?.ToString("N2");
             return false;
         }
 
-
-        if ((decimal?)CandleLast.CandleData?.PSar <= CandleLast.Close)
+        if (CandleLast.CandleData.PSar >= (double)CandleLast.Close)
             return false;
-        if (CandleLast.CandleData?.Rsi > 30)
+        if (CandleLast.CandleData.Rsi < 30)
             return false;
 
         if (!GetPrevCandle(CandleLast, out CryptoCandle prevCandle))
             return false;
 
-        if ((decimal?)prevCandle.CandleData?.PSar >= prevCandle.Close)
+        if (prevCandle.CandleData.PSar <= (double)prevCandle.Close)
             return false;
-        if (prevCandle.CandleData?.Rsi < 30)
+        if (prevCandle.CandleData.Rsi > 30)
             return false;
 
         // detect false signals?
