@@ -3,8 +3,7 @@ using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Signal;
 using CryptoScanBot.Core.Signal.Momentum;
 using CryptoScanBot.Core.Signal.Other;
-using CryptoScanBot.Signal.Other;
-using CryptoScanBot.Signal.Slope;
+using CryptoScanBot.Core.Signal.Slope;
 
 namespace CryptoScanBot.Signal;
 
