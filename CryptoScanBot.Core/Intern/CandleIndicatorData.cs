@@ -61,12 +61,11 @@ public class CandleIndicatorData
     public double? StochSignal { get; set; } // D
 
     public double? PSar { get; set; }
-
-    //#if DEBUG
-    //public double? PSarDave { get; set; }
-    //public double? PSarJason { get; set; }
-    //public double? PSarTulip { get; set; }
-    //#endif
+    #if DEBUG
+    public double? PSarDave { get; set; }
+    public double? PSarJason { get; set; }
+    public double? PSarTulip { get; set; }
+    #endif
     public double? BollingerBandsUpperBand { get { return Sma20 + BollingerBandsDeviation; } }
     public double? BollingerBandsLowerBand { get { return Sma20 - BollingerBandsDeviation; } }
     public double? BollingerBandsPercentage { get; set; }
@@ -285,9 +284,9 @@ public class CandleIndicatorData
 
 
 #if DEBUG
-        //List<ParabolicSarResult> psarListDave = (List<ParabolicSarResult>)history.GetParabolicSar();
-        //List<ParabolicSarResult> psarListJason = (List<ParabolicSarResult>)history.CalcParabolicSarJasonLam();
-        //List<ParabolicSarResult> psarListTulip = (List<ParabolicSarResult>)history.CalcParabolicSarTulip();
+        List<ParabolicSarResult> psarListDave = (List<ParabolicSarResult>)history.GetParabolicSar();
+        List<ParabolicSarResult> psarListJason = (List<ParabolicSarResult>)history.CalcParabolicSarJasonLam();
+        List<ParabolicSarResult> psarListTulip = (List<ParabolicSarResult>)history.CalcParabolicSarTulip();
 #endif
         List<BollingerBandsResult> bollingerBandsList = (List<BollingerBandsResult>)history.GetBollingerBands();
 
@@ -388,10 +387,10 @@ public class CandleIndicatorData
                 if (index >= outBegIdxPSar)
                     candleData.PSar = psarValues[index - outBegIdxPSar];
 #if DEBUG
-                //if (psarListDave[index].Sar != null)
-                //    candleData.PSarDave = psarListDave[index].Sar;
-                //candleData.PSarJason = psarListJason[index].Sar;
-                //candleData.PSarTulip = psarListTulip[index].Sar;
+                if (psarListDave[index].Sar != null)
+                    candleData.PSarDave = psarListDave[index].Sar;
+                candleData.PSarJason = psarListJason[index].Sar;
+                candleData.PSarTulip = psarListTulip[index].Sar;
 #endif
                 candleData.KeltnerUpperBand = keltnerList[index].UpperBand;
                 candleData.KeltnerLowerBand = keltnerList[index].LowerBand;

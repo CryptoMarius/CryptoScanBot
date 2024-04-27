@@ -788,13 +788,13 @@ public class SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTr
         //signal.SlopeRsi = candle.CandleData.SlopeRsi;
 
         signal.PSar = candle.CandleData?.PSar;
+#if DEBUG
+        signal.PSarDave = candle.CandleData?.PSarDave;
+        signal.PSarJason = candle.CandleData?.PSarJason;
+        signal.PSarTulip = candle.CandleData?.PSarTulip;
+#endif
         signal.StochSignal = candle.CandleData?.StochSignal;
         signal.StochOscillator = candle.CandleData?.StochOscillator;
-        //#if DEBUG
-        //signal.PSarDave = candle.CandleData.PSarDave;
-        //signal.PSarJason = candle.CandleData.PSarJason;
-        //signal.PSarTulip = candle.CandleData.PSarTulip;
-        //#endif
         //signal.Ema8 = candle.CandleData.Ema8;
         //signal.Ema20 = candle.CandleData.Ema20;
         //signal.Ema50 = candle.CandleData.Ema50;
