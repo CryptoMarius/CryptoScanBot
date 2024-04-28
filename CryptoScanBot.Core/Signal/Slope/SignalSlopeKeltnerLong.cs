@@ -110,7 +110,11 @@ public class SignalSlopeKeltnerLong : SignalCreateBase
     {
         ExtraText = "";
 
-        if ((double)CandleLast?.Close >= CandleLast?.CandleData?.Sma200)
+        // Too many results
+        if (Interval.IntervalPeriod < CryptoIntervalPeriod.interval5m)
+            return false;
+
+        if ((double?)CandleLast?.Close >= CandleLast?.CandleData?.Sma200)
             return false;
 
         // The slope of the Keltner channel centerline is getting positive
