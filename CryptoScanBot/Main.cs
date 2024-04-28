@@ -235,12 +235,16 @@ public partial class FrmMain : Form
 
     private void ShowApplicationVersion()
     {
+        GlobalData.AppName = Assembly.GetExecutingAssembly().GetName().Name;
+        GlobalData.AppPath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+
         var assembly = Assembly.GetExecutingAssembly().GetName();
-        string appName = assembly.Name.ToString();
         string appVersion = assembly.Version.ToString();
         while (appVersion.EndsWith(".0"))
             appVersion = appVersion[0..^2];
-        string text = $"{appName} {appVersion} {GlobalData.Settings.General.ExchangeName} {GlobalData.Settings.General.ExtraCaption}".Trim();
+        GlobalData.AppVersion = appVersion;
+
+        string text = $"{GlobalData.AppName} {appVersion} {GlobalData.Settings.General.ExchangeName} {GlobalData.Settings.General.ExtraCaption}".Trim();
         Text = text.Trim();
     }
 
