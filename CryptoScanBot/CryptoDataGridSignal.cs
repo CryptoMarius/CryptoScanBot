@@ -631,8 +631,8 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
 #if DEBUG
                 case ColumnsForGrid.PSarDave:
                     {
-                        string value = signal.PSarDave?.ToString("N8");
-                        if (value != signal.PSar?.ToString("N8"))
+                        string value = signal.PSarDave?.ToString("N12");
+                        if (value != signal.PSar?.ToString("N12"))
                             foreColor = Color.Red;
                         else
                             foreColor = Color.Green;
@@ -640,8 +640,8 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                     break;
                 case ColumnsForGrid.PSarJason:
                     {
-                        string value = signal.PSarJason?.ToString("N8");
-                        if (value != signal.PSar?.ToString("N8"))
+                        string value = signal.PSarJason?.ToString("N12");
+                        if (value != signal.PSar?.ToString("N12"))
                             foreColor = Color.Red;
                         else
                             foreColor = Color.Green;
@@ -649,8 +649,8 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                     break;
                 case ColumnsForGrid.PSarTulip:
                     {
-                        string value = signal.PSarTulip?.ToString("N8");
-                        if (value != signal.PSar?.ToString("N8"))
+                        string value = signal.PSarTulip?.ToString("N12");
+                        if (value != signal.PSar?.ToString("N12"))
                             foreColor = Color.Red;
                         else
                             foreColor = Color.Green;
