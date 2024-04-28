@@ -17,7 +17,8 @@ public class SignalSlopeKeltnerShort : SignalCreateBase
     {
         if ((candle == null)
            || (candle.CandleData == null)
-           || (candle.CandleData.KeltnerCenterLineSlope == null)
+           || (candle.CandleData?.Sma200 == null)
+           || (candle.CandleData?.KeltnerCenterLineSlope == null)
            )
             return false;
 
@@ -109,6 +110,9 @@ public class SignalSlopeKeltnerShort : SignalCreateBase
     public override bool IsSignal()
     {
         ExtraText = "";
+
+        if ((double)CandleLast.Close <= CandleLast?.CandleData?.Sma200)
+            return false;
 
         // The slope of the Keltner channel centerline is getting negative
 

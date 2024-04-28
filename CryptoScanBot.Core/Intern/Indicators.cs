@@ -347,7 +347,7 @@ public static class Indicators
     /// https://github.com/jasonlam604/StockTechnicals/blob/master/src/com/jasonlam604/stocktechnicals/indicators/ParabolicSar.java
     /// Deze doet het ietsjes anders dan die van Dave Skender, interessant!
     /// </summary>
-    public static List<ParabolicSarResult> CalcParabolicSarJasonLam(List<CryptoCandle> history, decimal acceleration = 0.02m, decimal accelerationMax = 0.2m)
+    public static List<ParabolicSarResult> CalcParabolicSarJasonLam(this List<CryptoCandle> history, decimal acceleration = 0.02m, decimal accelerationMax = 0.2m)
     {
         //* parabolicSars contains psar values
         //decimal[] parabolicSars;
@@ -480,7 +480,7 @@ public static class Indicators
     // En nog eentje:
     // https://tulipindicators.org/download
 
-    public static List<ParabolicSarResult> CalcParabolicSarTulip(List<CryptoCandle> history, decimal acceleration = 0.02m, decimal accelerationMax = 0.2m)
+    public static List<ParabolicSarResult> CalcParabolicSarTulip(this List<CryptoCandle> history, decimal acceleration = 0.02m, decimal accelerationMax = 0.2m)
     {
         int size = history.Count;
         List<ParabolicSarResult> results = new(size);

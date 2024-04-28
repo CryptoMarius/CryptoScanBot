@@ -17,7 +17,8 @@ public class SignalSlopeKeltnerLong : SignalCreateBase
     {
         if ((candle == null)
            || (candle.CandleData == null)
-           || (candle.CandleData.KeltnerCenterLineSlope == null)
+           || (candle.CandleData?.Sma200 == null)
+           || (candle.CandleData?.KeltnerCenterLineSlope == null)
            )
             return false;
 
@@ -109,15 +110,18 @@ public class SignalSlopeKeltnerLong : SignalCreateBase
     {
         ExtraText = "";
 
+        if ((double)CandleLast?.Close >= CandleLast?.CandleData?.Sma200)
+            return false;
+
         // The slope of the Keltner channel centerline is getting positive
 
-        if (CandleLast.CandleData?.KeltnerCenterLineSlope < 0)
+        if (CandleLast?.CandleData?.KeltnerCenterLineSlope < 0)
             return false;
 
         if (!GetPrevCandle(CandleLast, out CryptoCandle prevCandle))
             return false;
 
-        if (prevCandle.CandleData?.KeltnerCenterLineSlope > 0)
+        if (prevCandle?.CandleData?.KeltnerCenterLineSlope > 0)
             return false;
 
         return true;
@@ -178,7 +182,7 @@ public class SignalSlopeKeltnerLong : SignalCreateBase
 
 
         // Langer dan 60 candles willen we niet wachten (is 60 niet heel erg lang?)
-        if ((CandleLast.OpenTime - signal.EventTime) > 10 * Interval.Duration)
+        if ((CandleLast?.OpenTime - signal.EventTime) > 10 * Interval.Duration)
         {
             ExtraText = "Ophouden na 10 candles";
             return true;

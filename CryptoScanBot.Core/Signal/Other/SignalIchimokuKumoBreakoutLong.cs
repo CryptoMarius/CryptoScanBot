@@ -7,9 +7,9 @@ namespace CryptoScanBot.Core.Signal.Other;
 
 #if EXTRASTRATEGIES
 
-public class IchimokuKumoBreakoutLong : SignalCreateBase
+public class SignalIchimokuKumoBreakoutLong : SignalCreateBase
 {
-    public IchimokuKumoBreakoutLong(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
+    public SignalIchimokuKumoBreakoutLong(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
         SignalSide = CryptoTradeSide.Long;
         SignalStrategy = CryptoSignalStrategy.IchimokuKumoBreakout;
