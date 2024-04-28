@@ -41,7 +41,9 @@ public class BarometerData
 
 static public class GlobalData
 {
-    public static string AppName { get; set; } = "CryptoScanBot";
+    public static string AppName { get; set; } = "";
+    public static string AppPath { get; set; } = "";
+    public static string AppVersion { get; set; } = "";
 
     public static bool ApplicationIsShowed { get; set; } = false;
     public static bool ApplicationIsClosing { get; set; } = false;
