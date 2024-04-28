@@ -268,7 +268,9 @@ public class CandleIndicatorData
 
         // Berekend vanuit de EMA 20 en de upper en lowerband ontstaat uit 2x de ATR
         List<KeltnerResult> keltnerList = (List<KeltnerResult>)Indicator.GetKeltner(history, 20, 1);
+#if EXTRASTRATEGIESSLOPEKELTNER
         List<SlopeResult> keltnerSlopeList = keltnerList.GetSlope(3);
+#endif
 
         //List<AtrResult> atrList = (List<AtrResult>)Indicator.GetAtr(history);
         List<RsiResult> rsiList = (List<RsiResult>)history.GetRsi();
@@ -395,7 +397,9 @@ public class CandleIndicatorData
                 candleData.KeltnerUpperBand = keltnerList[index].UpperBand;
                 candleData.KeltnerLowerBand = keltnerList[index].LowerBand;
                 candleData.KeltnerCenterLine = keltnerList[index].Centerline;
+#if EXTRASTRATEGIESSLOPEKELTNER
                 candleData.KeltnerCenterLineSlope = keltnerSlopeList[index].Slope;
+#endif
             }
             catch (Exception error)
             {
