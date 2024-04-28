@@ -49,6 +49,7 @@ public partial class FrmMain : Form
     public FrmMain()
     {
         InitializeComponent();
+        InitializeApplicationVariables();
 
         ApplicationPlaySounds = MenuMain.AddCommand(null, "Geluiden afspelen", Command.None, ApplicationPlaySounds_Click);
         ApplicationPlaySounds.Checked = true;
@@ -233,22 +234,6 @@ public partial class FrmMain : Form
     }
 
 
-    private void ShowApplicationVersion()
-    {
-        GlobalData.AppName = Assembly.GetExecutingAssembly().GetName().Name;
-        GlobalData.AppPath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
-
-        var assembly = Assembly.GetExecutingAssembly().GetName();
-        string appVersion = assembly.Version.ToString();
-        while (appVersion.EndsWith(".0"))
-            appVersion = appVersion[0..^2];
-        GlobalData.AppVersion = appVersion;
-
-        string text = $"{GlobalData.AppName} {appVersion} {GlobalData.Settings.General.ExchangeName} {GlobalData.Settings.General.ExtraCaption}".Trim();
-        Text = text.Trim();
-    }
-
-
     private void ApplySettings()
     {
         // De exchange overnemen die is ingesteld (vanuit dialoog wordt het wel gedaan, bij laden)
@@ -312,8 +297,24 @@ public partial class FrmMain : Form
 
         panelLeft.Visible = !GlobalData.Settings.General.HideSymbolsOnTheLeft;
 
-        ShowApplicationVersion();
+        // Adjust the application title
+        Text = $"{GlobalData.AppName} {GlobalData.AppVersion} {GlobalData.Settings.General.ExchangeName} {GlobalData.Settings.General.ExtraCaption}".Trim();
+
         Refresh(); // Redraw
+    }
+
+
+    public static void InitializeApplicationVariables()
+    {
+        GlobalData.AppName = Assembly.GetExecutingAssembly().GetName().Name;
+        GlobalData.AppPath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+
+        var assembly = Assembly.GetExecutingAssembly().GetName();
+        string appVersion = assembly.Version.ToString();
+        while (appVersion.EndsWith(".0"))
+            appVersion = appVersion[0..^2];
+
+        GlobalData.AppVersion = appVersion;
     }
 
 

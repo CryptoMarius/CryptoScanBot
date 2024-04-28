@@ -490,7 +490,7 @@ static public class GlobalData
     {
         try
         {
-            string filename = GetBaseDir() + $"{AppName}-settings.json";
+            string filename = GetBaseDir() + $"{GlobalData.AppName}-settings.json";
             if (File.Exists(filename))
             {
                 //using (FileStream readStream = new FileStream(filename, FileMode.Open))
@@ -513,7 +513,7 @@ static public class GlobalData
 
     static public void LoadLinkSettings()
     {
-        string filename = $"{AppName}-weblinks.json";
+        string filename = $"{GlobalData.AppName}-weblinks.json";
         try
         {
             string fullName = GetBaseDir() + filename;
@@ -544,7 +544,7 @@ static public class GlobalData
     /// </summary>
     static public void LoadUserSettings()
     {
-        string filename = $"{AppName}-user.json";
+        string filename = $"{GlobalData.AppName}-user.json";
         try
         {
             string fullName = GetBaseDir() + filename;
@@ -563,7 +563,7 @@ static public class GlobalData
 
     static public void LoadTelegramSettings()
     {
-        string filename = $"{AppName}-telegram.json";
+        string filename = $"{GlobalData.AppName}-telegram.json";
         try
         {
             string fullName = GetBaseDir() + filename;
@@ -582,7 +582,7 @@ static public class GlobalData
 
     static public void LoadExchangeSettings()
     {
-        string filename = $"{AppName}-exchange.json";
+        string filename = $"{GlobalData.AppName}-exchange.json";
         try
         {
             string fullName = GetBaseDir() + filename;
@@ -652,7 +652,7 @@ static public class GlobalData
     {
         var baseFolder = GetBaseDir();
         Directory.CreateDirectory(baseFolder);
-        var filename = baseFolder + $"{AppName}-user.json";
+        var filename = baseFolder + $"{GlobalData.AppName}-user.json";
         string text = JsonSerializer.Serialize(SettingsUser, JsonSerializerIndented);
         File.WriteAllText(filename, text);
     }
@@ -669,15 +669,15 @@ static public class GlobalData
         //    writeStream.Close();
         //}
 
-        string filename = baseFolder + $"{AppName}-settings.json";
+        string filename = baseFolder + $"{GlobalData.AppName}-settings.json";
         string text = JsonSerializer.Serialize(Settings, JsonSerializerIndented);
         File.WriteAllText(filename, text);
 
-        filename = baseFolder + $"{AppName}-telegram.json";
+        filename = baseFolder + $"{GlobalData.AppName}-telegram.json";
         text = JsonSerializer.Serialize(Telegram, JsonSerializerIndented);
         File.WriteAllText(filename, text);
 
-        filename = baseFolder + $"{AppName}-exchange.json";
+        filename = baseFolder + $"{GlobalData.AppName}-exchange.json";
         text = JsonSerializer.Serialize(TradingApi, JsonSerializerIndented);
         File.WriteAllText(filename, text);
 
@@ -807,7 +807,8 @@ static public class GlobalData
         if (string.IsNullOrEmpty(AppDataFolder))
         {
             ApplicationParams.InitApplicationOptions();
-            AppDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), ApplicationParams.Options?.AppDataFolder ?? AppName);
+            AppDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), 
+                ApplicationParams.Options?.AppDataFolder ?? GlobalData.AppName);
             Directory.CreateDirectory(AppDataFolder);
             AppDataFolder += @"\";
         }

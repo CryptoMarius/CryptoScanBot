@@ -1,10 +1,12 @@
 ﻿using System.Collections.Concurrent;
 
-namespace CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Intern;
+
+namespace CryptoScanBot.Intern;
 
 static public class ThreadSoundPlayer
 {
-    private static Thread soundThread;
+    private static Thread? soundThread = null;
     private static readonly BlockingCollection<string> soundQueue = new();
     private static readonly CancellationTokenSource soundCancelToken = new();
 
@@ -47,7 +49,7 @@ static public class ThreadSoundPlayer
                 if (Path.GetDirectoryName(text) != "")
                     fileName = text;
                 else
-                    fileName = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location) + @"\Sounds\" + text;
+                    fileName = GlobalData.AppPath + @"\Sounds\" + text;
 
                 // Als we binnen x seconden hetzelfde bestand afspelen negeren we het (anders een eindeloze reeks met pingeltjes)
                 if (lastFile == fileName && (DateTime.Now - last).TotalSeconds < 15)
