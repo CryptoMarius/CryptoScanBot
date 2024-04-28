@@ -7,8 +7,6 @@ using CryptoScanBot.Core.TradingView;
 
 using Dapper;
 
-using System.Reflection;
-
 namespace CryptoScanBot.Core.Intern;
 
 public class ThreadLoadData
@@ -537,13 +535,8 @@ public class ThreadLoadData
 
 
 
-                var assembly = Assembly.GetExecutingAssembly().GetName();
-                string appName = assembly.Name.ToString();
-                string appVersion = assembly.Version.ToString();
-                while (appVersion.EndsWith(".0"))
-                    appVersion = appVersion[0..^2];
-                GlobalData.AddTextToLogTab(appName + " " + appVersion + " ready", true);
-                GlobalData.AddTextToTelegram(appName + " " + appVersion + " ready");
+                GlobalData.AddTextToLogTab(GlobalData.AppName + " " + GlobalData.AppVersion + " ready", true);
+                GlobalData.AddTextToTelegram(GlobalData.AppName + " " + GlobalData.AppVersion + " ready");
                 GlobalData.AddTextToTelegram("");
 
                 // Heb me dag lopen af te vragen waarom er geen signalen kwamen, iets met white&black, right
