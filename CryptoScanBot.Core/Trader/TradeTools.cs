@@ -362,11 +362,16 @@ public class TradeTools
         ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} {position.Status} force={forceCalculation}");
 
 
-        // De filled quantity in de steps opnieuw opbouwen vanuit de trades
+        // Build the filled quantity via the present orders & calculate fees
+        DateTime? lastDateTime = null;
         foreach (CryptoOrder order in position.Symbol.OrderList.Values.ToList())
         {
             if (position.Orders.TryGetValue(order.OrderId, out CryptoPositionStep? step))
             {
+                // Remember the last datetime so we can close the position with this date if needed
+                if (lastDateTime == null || order.UpdateTime > lastDateTime)
+                    lastDateTime = order.UpdateTime;
+
                 if (step.Status != order.Status || step.QuoteQuantityFilled != order.QuoteQuantityFilled || forceCalculation)
                 {
                     orderStatusChanged = true;
@@ -558,6 +563,8 @@ public class TradeTools
         {
             CalculateProfitAndBreakEvenPrice(position);
 
+            if (lastDateTime == null)
+                lastDateTime = DateTime.UtcNow; ;
 
             // Er is in geinvesteerd en dus moet de positie ten minste actief zijn
             if (position.QuantityEntry != 0 && position.Status == CryptoPositionStatus.Waiting)
@@ -565,7 +572,7 @@ public class TradeTools
                 orderStatusChanged = true;
                 position.CloseTime = null;
                 position.Reposition = true;
-                position.UpdateTime = DateTime.UtcNow;
+                position.UpdateTime = lastDateTime;
                 position.Status = CryptoPositionStatus.Trading;
                 GlobalData.AddTextToLogTab($"TradeTools: Position {position.Symbol.Name} status aangepast naar {position.Status} (should not occur)");
             }
@@ -580,8 +587,8 @@ public class TradeTools
                     markedAsReady = true;
                     orderStatusChanged = true;
                     position.Reposition = false;
-                    position.CloseTime = DateTime.UtcNow;
-                    position.UpdateTime = DateTime.UtcNow;
+                    position.CloseTime = lastDateTime;
+                    position.UpdateTime = lastDateTime;
                     position.Status = CryptoPositionStatus.Ready;
                     GlobalData.AddTextToLogTab($"TradeTools: Position {position.Symbol.Name} status aangepast naar {position.Status}");
                 }
