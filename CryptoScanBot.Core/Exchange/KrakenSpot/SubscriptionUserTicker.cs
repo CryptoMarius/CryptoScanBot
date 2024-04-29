@@ -60,8 +60,8 @@ public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscript
 
                             GlobalData.ThreadMonitorOrder?.AddToQueue((
                                 symbol,
-                                Api.LocalOrderType(data.OrderDetails.Type),
-                                Api.LocalOrderSide(data.OrderDetails.Side),
+                                //Api.LocalOrderType(data.OrderDetails.Type),
+                                //Api.LocalOrderSide(data.OrderDetails.Side),
                                 Api.LocalOrderStatus(data.Status),
                                 order));
                         }
