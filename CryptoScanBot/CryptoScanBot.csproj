@@ -23,7 +23,7 @@
     <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DefineConstants>$(DefineConstants);EXTRASTRATEGIESSLOPEKELTNER;TRADEBOT;EXTRASTRATEGIESPSARRSI</DefineConstants>
+    <DefineConstants>$(DefineConstants);EXTRASTRATEGIESPSARRSI;EXTRASTRATEGIESSLOPEKELTNER;TRADEBOT;EXTRASTRATEGIESDPO</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>

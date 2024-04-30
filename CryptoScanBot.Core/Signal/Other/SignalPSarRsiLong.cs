@@ -36,8 +36,8 @@ public class SignalPSarRsiLong : SignalCreateBase
     {
         ExtraText = "";
 
-        if (CandleLast?.CandleData?.Sma200 >= (double)CandleLast?.Close)
-            return false;
+        //if ((double?)CandleLast?.Close >= CandleLast?.CandleData?.Sma200)
+        //    return false;
 
         // De breedte van de bb is ten minste 1.5%
         if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, 100)) //GlobalData.Settings.Signal.AnalysisBBMaxPercentage
@@ -46,7 +46,7 @@ public class SignalPSarRsiLong : SignalCreateBase
             return false;
         }
 
-        if (CandleLast?.CandleData?.PSar >= (double)CandleLast?.Close)
+        if (CandleLast?.CandleData?.PSar >= (double?)CandleLast?.Close)
             return false;
         if (CandleLast?.CandleData?.Rsi < 30)
             return false;
@@ -54,7 +54,7 @@ public class SignalPSarRsiLong : SignalCreateBase
         if (!GetPrevCandle(CandleLast, out CryptoCandle prevCandle))
             return false;
 
-        if (prevCandle?.CandleData?.PSar <= (double)prevCandle?.Close)
+        if (prevCandle?.CandleData?.PSar <= (double?)prevCandle?.Close)
             return false;
         if (prevCandle?.CandleData?.Rsi > 30)
             return false;

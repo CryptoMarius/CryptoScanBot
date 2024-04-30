@@ -242,6 +242,35 @@ public static class SignalHelper
         });
 #endif
 
+#if EXTRASTRATEGIESDPO
+        //***************************************************
+        // Detrended Price Oscillator (DPO)
+        // https://dotnet.stockindicators.dev/indicators/Dpo/#content
+        //***************************************************
+        AlgorithmDefinitionList.Add(new AlgorithmDefinition()
+        {
+            Name = "dpo",
+            Strategy = CryptoSignalStrategy.Dpo,
+            AnalyzeLongType = typeof(SignalDetrendedPriceOscillatorLong),
+            AnalyzeShortType = typeof(SignalDetrendedPriceOscillatorShort),
+        });
+#endif
+
+#if EXTRASTRATEGIESFISHER
+        //***************************************************
+        // Ehlers Fisher Transform
+        // https://dotnet.stockindicators.dev/indicators/FisherTransform/#content
+        //***************************************************
+        AlgorithmDefinitionList.Add(new AlgorithmDefinition()
+        {
+            Name = "fisher",
+            Strategy = CryptoSignalStrategy.Fisher,
+            AnalyzeLongType = typeof(SignalFisherTransformLong),
+            AnalyzeShortType = typeof(SignalFisherTransformShort),
+        });
+#endif
+        
+
         // En de lijst eenmalig indexeren
         AlgorithmDefinitionIndex.Clear();
         foreach (AlgorithmDefinition algorithmDefinition in AlgorithmDefinitionList)

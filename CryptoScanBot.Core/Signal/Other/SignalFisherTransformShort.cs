@@ -1,18 +1,17 @@
 ﻿using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
-using CryptoScanBot.Core.Signal;
 
 namespace CryptoScanBot.Core.Signal.Other;
 
-#if EXTRASTRATEGIESPSARRSI
-public class SignalPSarRsiShort : SignalCreateBase
+#if EXTRASTRATEGIESFISHER
+public class SignalFisherTransformShort : SignalCreateBase
 {
-    public SignalPSarRsiShort(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
+    public SignalFisherTransformShort(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
         ReplaceSignal = false;
         SignalSide = CryptoTradeSide.Short;
-        SignalStrategy = CryptoSignalStrategy.PSarRsi;
+        SignalStrategy = CryptoSignalStrategy.Fisher;
     }
 
     /// <summary>
@@ -22,9 +21,8 @@ public class SignalPSarRsiShort : SignalCreateBase
     {
         if (candle == null
            || candle.CandleData == null
-            || candle.CandleData?.PSar == null
-            || candle.CandleData?.Rsi == null
-            || candle.CandleData?.Sma200 == null
+            || candle.CandleData?.FisherValue == null
+            || candle.CandleData?.FisherTrigger == null
             )
             return false;
 
@@ -36,28 +34,28 @@ public class SignalPSarRsiShort : SignalCreateBase
     {
         ExtraText = "";
 
-        //if ((double?)CandleLast?.Close <= CandleLast?.CandleData?.Sma200)
+        // Too many results
+        if (Interval.IntervalPeriod < CryptoIntervalPeriod.interval3m)
+            return false;
+
+        //if (CandleLast?.CandleData?.Sma200 <= (double)CandleLast.Close)
         //    return false;
 
         // De breedte van de bb is ten minste 1.5%
-        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, 100)) //GlobalData.Settings.Signal.AnalysisBBMaxPercentage
+        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, 100))
         {
             ExtraText = "bb.width te klein " + CandleLast?.CandleData?.BollingerBandsPercentage?.ToString("N2");
             return false;
         }
 
 
-        if (CandleLast?.CandleData?.PSar <= (double?)CandleLast?.Close)
-            return false;
-        if (CandleLast?.CandleData?.Rsi > 30)
+        if (CandleLast?.CandleData?.FisherTrigger <= CandleLast?.CandleData?.FisherValue)
             return false;
 
         if (!GetPrevCandle(CandleLast, out CryptoCandle prevCandle))
             return false;
 
-        if (prevCandle?.CandleData?.PSar >= (double?)prevCandle?.Close)
-            return false;
-        if (prevCandle?.CandleData?.Rsi < 30)
+        if (prevCandle?.CandleData?.FisherTrigger >= prevCandle?.CandleData?.FisherValue)
             return false;
 
         // detect false signals?
