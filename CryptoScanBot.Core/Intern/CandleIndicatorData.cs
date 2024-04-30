@@ -31,9 +31,17 @@ public class CandleIndicatorData
     //public double? Ema100 { get; set; }
     //public double? Ema200 { get; set; }
 #endif
-#if  EXTRASTRATEGIESSLOPEEMA
+#if EXTRASTRATEGIESSLOPEEMA
     public double? SlopeEma20 { get; set; }
     public double? SlopeEma50 { get; set; }
+#endif
+#if EXTRASTRATEGIESDPO
+    public double? DpoSma { get; set; }
+    public double? DpoOscillator { get; set; }
+#endif
+#if EXTRASTRATEGIESFISHER
+    public double? FisherValue { get; set; }
+    public double? FisherTrigger { get; set; }
 #endif
 
     public double? Rsi { get; set; }
@@ -271,6 +279,12 @@ public class CandleIndicatorData
 #if EXTRASTRATEGIESSLOPEKELTNER
         List<SlopeResult> keltnerSlopeList = keltnerList.GetSlope(3);
 #endif
+#if EXTRASTRATEGIESDPO
+        List<DpoResult> dpoList = (List<DpoResult>)history.GetDpo(25);
+#endif
+#if EXTRASTRATEGIESFISHER
+        List<FisherTransformResult> fisherList = (List<FisherTransformResult>)history.GetFisherTransform();
+#endif
 
         //List<AtrResult> atrList = (List<AtrResult>)Indicator.GetAtr(history);
         List<RsiResult> rsiList = (List<RsiResult>)history.GetRsi();
@@ -400,6 +414,20 @@ public class CandleIndicatorData
 #if EXTRASTRATEGIESSLOPEKELTNER
                 candleData.KeltnerCenterLineSlope = keltnerSlopeList[index].Slope;
 #endif
+#if EXTRASTRATEGIESDPO
+                // https://github.com/DaveSkender/Stock.Indicators/discussions/551
+                // this one is a bit unusual as it shifts the values back by N/2+1 periods
+                if (index > 13)
+                {
+                    candleData.DpoSma = dpoList[index - 13].Sma;
+                    candleData.DpoOscillator = dpoList[index - 13].Dpo;
+                }
+#endif
+#if EXTRASTRATEGIESFISHER
+                candleData.FisherValue = fisherList[index].Fisher;
+                candleData.FisherTrigger = fisherList[index].Trigger;
+#endif
+
             }
             catch (Exception error)
             {
