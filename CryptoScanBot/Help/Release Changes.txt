@@ -1,9 +1,12 @@
 CryptoScanBot release historie:
 
 xx-xx-2024 1.9.3
+- Scanner - Er worden klines opgehaald van munten die slechts ~1 maand aanwezig zijn op de exchange (bybit spot)
+
 - Trading - Eventuele dust van vorige positie(s) meenemen in een gecombineerde TP
 - Trading - Meerdere TP's combineren in een enkele TP om de hoeveelheid dust te minimaliseren
 - Trading - De update- en sluittijd van de positie krijgt de verkeerde vulling indien de scanner uit geeft gestaan
+
 
 12-04-2024 1.9.2
 TODO: url's voor Binance Futures werken nog niet

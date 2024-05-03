@@ -5,14 +5,13 @@ Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep
 
 Scanner:
 TODO: url voor Binance Futures
+- Scanner - Nieuwe munten die toegevoegd worden op de exchange terwijl de scanner loopt worden niet automatisch toegevoegd aan de price- en kline tickers
 - Scanner - Limit rates voor Kucoin verder uitwerken (ophalen candles geeft soms een foutmelding, wordt bij een volgende herstart wel hersteld, maar hoort niet zo)
             error getting klines [ServerRateLimitError] 429: Server rate limit exceeded: {"code":"429000","msg":"too many request"}
 - Scanner - De Kucoin deeplink voor Altrady werkt niet
 - Scanner - Bij wisselen van basismunten (of exchange?) komt er soms een SQLite Error 5: 'database is locked? (oorzaak nog onbekend)
 - Scanner - Rate limits van de libraries bestuderen en eventueel de ingebouwde vervangen (de interne is aan de voorzichtige kant)
 - Trading - De barometer naar Excel kunnen exporteren voor een overzichtje (liefst met een op te geven datum/tijd)
-- Scanner - Er worden klines opgehaald van munten die slechts ~1 maand aanwezig zijn op de exchange (bybit spot, DYNUSDT is bijvoorbeeld pas op 6-2 op de exchange geactiveerd) - EN..
-            Dat is best een hardnekkig iets, nog eens debuggen waarom dit zo vaak uitgevoerd wordt (je weet toch dat ze er niet zijn?)
 - Scanner - Het geheugen loopt gemeten over meerdere dagen op. Een oorzaak kan wellicht de barometer zijn (wat intern gewoon een muntje met candles is, maar waarin de candles niet opgeruimd worden)
 - Scanner - De FundingRate kolom automatisch uitzetten indien geen derivaten.futues?
 - Scanner - Telegram meldingen sturen met een extra link naar TV (optioneel maken via de instelllingen).
@@ -39,6 +38,8 @@ TODO: url voor Binance Futures
 - Het font van de menuitem (en popup?) wordt niet aangepast (indien een ander lettertype of grootte wordt gekozen)
 - Algemeen - Black theming  https://stackoverflow.com/questions/61145347/c-how-to-make-a-dark-mode-theme-in-windows-forms-separate-form-as-select-the <geen prio>
   Er is nu een slappe variant die iets met grijs doet (omdat anders de scrollbars en headers zo'n lelijk getoond worden), ik ben er niet tevreden over.
+- Scanner - We rekenen intern nu met het aantal seconden vanaf X waardoor een long nodig is, dat kan ook met een minuten vanaf X dat scheelt mogelijk opslag en geheugen
+  (maar zijn die paar megabytes wel de moeite waard voor het vele werk?)
 
 
 Trading:
