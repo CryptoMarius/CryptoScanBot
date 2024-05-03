@@ -95,7 +95,6 @@ public class GetCandles
 
         // The maximum is 1000 candles
         // (verrassing) de volgorde van de candles is van nieuw naar oud!
-        // En de limiet is strikt, geen extra candles ...
         KlineInterval? exchangeInterval = GetExchangeInterval(interval);
         DateTime dateStart = CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized);
         var result = await client.V5Api.ExchangeData.GetKlinesAsync(Category.Spot, symbol.Name, (KlineInterval)exchangeInterval, startTime: dateStart, limit: 1000);
@@ -106,17 +105,10 @@ public class GetCandles
             return 0;
         }
 
-        //if (symbol.Name.Equals("EVERYUSDT"))
-        //{
-        //    //GlobalData.AddTextToLogTab($"{prefix} getting klines {result.OriginalData}");
-        //    GlobalData.AddTextToLogTab($"{prefix} getting klines {result.RequestUrl}");
-        //}
 
         // Might have problems with no internet etc.
         if (result == null || result.Data == null || !result.Data.List.Any())
         {
-            // Appearently there are no candles available?
-            //symbolInterval.LastCandleSynchronized = symbolInterval.LastCandleSynchronized;
             GlobalData.AddTextToLogTab($"{prefix} fetch from {CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized)} no candles received");
             return 0;
         }
@@ -170,20 +162,10 @@ public class GetCandles
         return result.Data.List.Count();
     }
 
+
     private static async Task FetchCandlesInternal(BybitRestClient client, CryptoSymbol symbol, long fetchEndUnix)
     {
         var fetchFrom = DetermineFetchStartDate(symbol, fetchEndUnix);
-
-
-        //// Debug
-        //if (symbol.Name.Equals("EVERYUSDT"))
-        //{
-        //    foreach (CryptoInterval interval in GlobalData.IntervalList)
-        //    {
-        //        DateTime startDate = CandleTools.GetUnixDate(fetchFrom[(int)interval.IntervalPeriod]);
-        //        GlobalData.AddTextToLogTab("Fetching " + symbol.Name + " " + interval.Name + " " + startDate.ToLocalTime());
-        //    }
-        //}
 
 
         for (int i = 0; i < GlobalData.IntervalList.Count; i++)
@@ -386,7 +368,7 @@ public class GetCandles
 
                     // En dan door x tasks de queue leeg laten trekken
                     List<Task> taskList = [];
-                    while (taskList.Count < 1)
+                    while (taskList.Count < 5)
                     {
                         Task task = Task.Run(async () => { await FetchCandlesAsync(fetchEndUnix, queue); });
                         taskList.Add(task);
