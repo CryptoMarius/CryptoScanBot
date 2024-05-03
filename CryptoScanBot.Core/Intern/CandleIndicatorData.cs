@@ -484,7 +484,7 @@ public class CandleIndicatorData
             startFetchUnix -= startFetchUnix % interval.Duration;
 
             // Lets extend that with 1 extra candle just in case...
-            startFetchUnix -= interval.Duration;
+            //startFetchUnix -= interval.Duration;
         }
         //DateTime symbolfetchCandleDebug = CandleTools.GetUnixDate(startFetchUnix);  //debug
         return startFetchUnix;
