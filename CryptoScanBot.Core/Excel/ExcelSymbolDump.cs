@@ -1,4 +1,5 @@
-﻿using CryptoScanBot.Core.Intern;
+﻿using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using NPOI.SS.UserModel;
 
@@ -25,6 +26,7 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
         WriteCell(sheet, columns++, row, "Count");
         WriteCell(sheet, columns++, row, "First");
         WriteCell(sheet, columns++, row, "Last");
+        WriteCell(sheet, columns++, row, "Synchronized");
 
         foreach (CryptoSymbolInterval symbolInterval in Symbol.IntervalPeriodList.ToList())
         {
@@ -37,6 +39,13 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
             WriteCell(sheet, column++, row, symbolInterval.CandleList.Count);
             WriteCell(sheet, column++, row, symbolInterval.CandleList.Values.FirstOrDefault()?.DateLocal, CellStyleDate);
             WriteCell(sheet, column++, row, symbolInterval.CandleList.Values.LastOrDefault()?.DateLocal, CellStyleDate);
+
+            // Debug: There is something not right in the synchronizing or building of candles..
+            if (symbolInterval.LastCandleSynchronized.HasValue)
+            {
+                DateTime x = CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized);
+                WriteCell(sheet, column++, row, x.ToLocal(), CellStyleDate);
+            }
         }
 
         AutoSize(sheet, columns);
