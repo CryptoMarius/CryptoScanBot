@@ -55,15 +55,15 @@ public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscript
                         if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
                         {
                             // Converteer de data naar een (tijdelijke) trade
-                            CryptoOrder order = new();
-                            Api.PickupOrder(GlobalData.ExchangeRealTradeAccount!, symbol, order, data);
+                            CryptoOrder orderTemp = new();
+                            Api.PickupOrder(GlobalData.ExchangeRealTradeAccount!, symbol, orderTemp, data);
 
                             GlobalData.ThreadMonitorOrder?.AddToQueue((
                                 symbol,
                                 //Api.LocalOrderType(data.OrderDetails.Type),
                                 //Api.LocalOrderSide(data.OrderDetails.Side),
                                 Api.LocalOrderStatus(data.Status),
-                                order));
+                                orderTemp));
                         }
                     }
                 }
