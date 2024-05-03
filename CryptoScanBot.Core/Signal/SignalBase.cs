@@ -79,7 +79,7 @@ public class SignalCreateBase
     public virtual bool AllowStepIn(CryptoSignal signal) => true;
 
 
-    public bool GetPrevCandle(CryptoCandle oldCandle, out CryptoCandle? newCandle)
+    public bool GetPrevCandle(CryptoCandle? oldCandle, out CryptoCandle? newCandle)
     {
         if (!Candles.TryGetValue(oldCandle.OpenTime - Interval.Duration, out newCandle))
         {
