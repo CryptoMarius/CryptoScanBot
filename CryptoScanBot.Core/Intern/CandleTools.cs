@@ -360,22 +360,12 @@ public static class CandleTools
 
     static public void UpdateCandleFetched(CryptoSymbol symbol, CryptoInterval interval)
     {
-        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-        SortedList<long, CryptoCandle> candles = symbolInterval.CandleList;
-
-        if (candles.Count != 0)
+        var symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+        if (symbolInterval.LastCandleSynchronized.HasValue)
         {
-            // Wacht met een waarde geven totdat de fetch candles zijn werk heeft gedaan
-            if (symbolInterval.LastCandleSynchronized != null)
+            var candles = symbolInterval.CandleList;
+            if (candles.Count != 0)
             {
-                // Het moet een waarde hebben om in de database te zetten
-                if (!symbolInterval.LastCandleSynchronized.HasValue)
-                {
-                    symbolInterval.LastCandleSynchronized = candles.Values.First().OpenTime;
-                    // dat zou niet eens kunnen gebeuren, maar voila..
-                    symbolInterval.LastCandleSynchronized -= symbolInterval.LastCandleSynchronized % interval.Duration;
-                }
-
                 while (candles.TryGetValue((long)symbolInterval.LastCandleSynchronized, out CryptoCandle candle) && !candle.IsDuplicated)
                     symbolInterval.LastCandleSynchronized += interval.Duration;
             }
