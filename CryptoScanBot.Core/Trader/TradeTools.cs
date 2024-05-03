@@ -582,7 +582,9 @@ public class TradeTools
             {
                 // Close if q=0 or less than the minimum amount we can sell
                 decimal remaining = position.QuantityEntry - position.QuantityTakeProfit - position.RemainingDust - position.CommissionBase;
-                if (remaining <= position.Symbol.QuantityMinimum || remaining * position.Symbol.LastPrice < position.Symbol.QuoteValueMinimum)
+                if (remaining <= 0 || remaining <= position.Symbol.QuantityMinimum || 
+                    remaining * position.Symbol.LastPrice < position.Symbol.QuoteValueMinimum)
+                //if (remaining <= 0)
                 {
                     markedAsReady = true;
                     orderStatusChanged = true;
@@ -591,6 +593,12 @@ public class TradeTools
                     position.UpdateTime = lastDateTime;
                     position.Status = CryptoPositionStatus.Ready;
                     GlobalData.AddTextToLogTab($"TradeTools: Position {position.Symbol.Name} status aangepast naar {position.Status}");
+                    GlobalData.AddTextToLogTab($"TradeTools: debug ? closing if ({remaining} <= 0)");
+                    GlobalData.AddTextToLogTab($"TradeTools: debug ? closing if ({remaining} < {position.Symbol.QuantityMinimum})");
+                    GlobalData.AddTextToLogTab($"TradeTools: debug ? closing if ({remaining * position.Symbol.LastPrice} < {position.Symbol.QuoteValueMinimum})");
+                    GlobalData.AddTextToLogTab($"TradeTools: debug ? Symbol.LastPrice={position.Symbol.LastPrice}");
+                    GlobalData.AddTextToLogTab($"TradeTools: debug ? Symbol.QuantityMinimum={position.Symbol.QuantityMinimum}");
+                    GlobalData.AddTextToLogTab($"TradeTools: debug ? Symbol.QuoteValueMinimum={position.Symbol.QuoteValueMinimum}");
                 }
             }
 
