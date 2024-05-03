@@ -1551,7 +1551,9 @@ public class PositionMonitor : IDisposable
                         if (success)
                         {
                             // niets?
-                            step.RemainingDust = 0; // reset
+                            //step.RemainingDust = 0; // reset
+                            // There are problems closing the position because of dust, added some debugging
+                            GlobalData.AddTextToLogTab($"Monitor {Symbol.Name} CancelAllOrders - reset TP RemainingDust?????? {step.RemainingDust}");
                         }
                         else
                             return false;
@@ -1611,11 +1613,10 @@ public class PositionMonitor : IDisposable
         }
 
 
-        //CryptoOrderSide entryOrderSide = position.GetEntryOrderSide();
         CryptoOrderSide takeProfitOrderSide = position.GetTakeProfitOrderSide();
         if (position.Quantity > 0)
         {
-            // Maak een tp part
+            // Always create a separate take profit part (if it didn't exist)
             takeProfitPart ??= PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.TakeProfit, position.Interval, position.Strategy,
                     CryptoEntryOrProfitMethod.FixedPercentage, 0, DateTime.UtcNow);
             CryptoPositionStep takeProfitOrder = PositionTools.FindPositionPartStep(takeProfitPart, takeProfitOrderSide, false);
