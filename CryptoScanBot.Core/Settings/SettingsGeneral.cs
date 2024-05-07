@@ -39,14 +39,29 @@ public class SettingsGeneral
     public int SoundHeartBeatMinutes { get; set; } = 0;
     public string SoundHeartBeat { get; set; } = "sound-heart-beat.wav";
 
+
     // RSI instelbare oversold /overbought (op verzoek)
+    /// <summary>
+    /// RSI oversold, normally value = 30
+    /// </summary>
     public double RsiValueOversold { get; set; } = 30;
+    /// <summary>
+    /// RSI overbought, normally value = 70
+    /// </summary>
     public double RsiValueOverbought { get; set; } = 70;
 
+    
     // STOCH instelbare oversold /overbought (op verzoek)
+    /// <summary>
+    /// Stochastic oversold, normally value = 20
+    /// </summary>
     public double StochValueOversold { get; set; } = 20;
+    /// <summary>
+    /// Stochastic overbought, normally value = 80
+    /// </summary>
     public double StochValueOverbought { get; set; } = 80;
 
+    
     // Op welk interval moet de totale markttrend berekend worden (standaard op alle intervallen)
     public List<string> IntervalForMarketTrend = [];
 
