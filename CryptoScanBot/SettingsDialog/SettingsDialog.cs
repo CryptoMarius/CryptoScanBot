@@ -11,6 +11,7 @@ public partial class FrmSettings : Form
     private SettingsBasic settings;
 
     private readonly List<SettingsQuoteCoin> BaseCoinList = [];
+    private readonly SortedList<string, CryptoTradeAccountType> TradeVia = [];
 
 
     public Core.Model.CryptoExchange NewExchange { get; set; }
@@ -33,6 +34,15 @@ public partial class FrmSettings : Form
         UserControlTradingLong.InitControls(true, CryptoTradeSide.Long);
         UserControlTradingShort.InitControls(true, CryptoTradeSide.Short);
 #endif
+
+        // Trading (excluded backtest)
+        TradeVia.Add("No trading", CryptoTradeAccountType.NoTrading);
+        TradeVia.Add("Papertrading", CryptoTradeAccountType.PaperTrade);
+        TradeVia.Add("Trading", CryptoTradeAccountType.RealTrading);
+
+        EditTradeVia.DataSource = new BindingSource(TradeVia, null);
+        EditTradeVia.DisplayMember = "Key";
+        EditTradeVia.ValueMember = "Value";
     }
 
 
@@ -243,8 +253,7 @@ public partial class FrmSettings : Form
         // ------------------------------------------------------------------------------
 
         // Hoe gaan we traden
-        EditTradeViaExchange.Checked = settings.Trading.TradeViaExchange;
-        EditTradeViaPaperTrading.Checked = settings.Trading.TradeViaPaperTrading;
+        EditTradeVia.SelectedValue = settings.Trading.TradeVia;
         EditDisableNewPositions.Checked = settings.Trading.DisableNewPositions;
         EditSoundTradeNotification.Checked = settings.General.SoundTradeNotification;
 
@@ -488,9 +497,7 @@ public partial class FrmSettings : Form
         // --------------------------------------------------------------------------------
         // Trade bot
         // --------------------------------------------------------------------------------
-        settings.Trading.TradeViaExchange = EditTradeViaExchange.Checked;
-        settings.Trading.TradeViaPaperTrading = EditTradeViaPaperTrading.Checked;
-        settings.Trading.DisableNewPositions = EditDisableNewPositions.Checked;
+        settings.Trading.TradeVia = (CryptoTradeAccountType)EditTradeVia.SelectedValue;
         settings.General.SoundTradeNotification = EditSoundTradeNotification.Checked;
 
         // Logging

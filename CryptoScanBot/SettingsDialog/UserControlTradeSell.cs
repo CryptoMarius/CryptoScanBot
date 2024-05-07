@@ -5,7 +5,7 @@ namespace CryptoScanBot.SettingsDialog;
 
 public partial class UserControlTradeSell : UserControl
 {
-    private readonly SortedList<string, CryptoSellMethod> SellMethod = new();
+    private readonly SortedList<string, CryptoSellMethod> SellMethod = [];
 
     public UserControlTradeSell()
     {

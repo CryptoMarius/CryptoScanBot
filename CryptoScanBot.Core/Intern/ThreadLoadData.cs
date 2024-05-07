@@ -557,10 +557,10 @@ public class ThreadLoadData
                 if (!checkPositions)
                 {
 #if TRADEBOT
-                    if (GlobalData.BackTest)
-                        await PaperTrading.CheckPositionsAfterRestart(GlobalData.ExchangeBackTestAccount);
-                    if (GlobalData.Settings.Trading.TradeViaPaperTrading)
-                        await PaperTrading.CheckPositionsAfterRestart(GlobalData.ExchangePaperTradeAccount);
+                    if (GlobalData.BackTest || GlobalData.Settings.Trading.TradeVia == CryptoTradeAccountType.BackTest)
+                        await PaperTrading.CheckPositionsAfterRestart(GlobalData.ExchangeBackTestAccount!);
+                    if (GlobalData.Settings.Trading.TradeVia == CryptoTradeAccountType.PaperTrade)
+                        await PaperTrading.CheckPositionsAfterRestart(GlobalData.ExchangePaperTradeAccount!);
 #endif
                 }
 

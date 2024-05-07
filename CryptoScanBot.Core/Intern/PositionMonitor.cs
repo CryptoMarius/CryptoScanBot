@@ -1870,9 +1870,9 @@ public class PositionMonitor : IDisposable
 
             // Simulate Trade indien openstaande orders gevuld zijn
             //GlobalData.Logger.Info($"analyze.PaperTradingCheckOrders({Symbol.Name})");
-            if (GlobalData.BackTest)
+            if (GlobalData.BackTest || GlobalData.Settings.Trading.TradeVia == CryptoTradeAccountType.BackTest)
                 await PaperTrading.PaperTradingCheckOrders(Database, GlobalData.ExchangeBackTestAccount!, Symbol, LastCandle1m);
-            if (GlobalData.Settings.Trading.TradeViaPaperTrading)
+            if (GlobalData.Settings.Trading.TradeVia == CryptoTradeAccountType.PaperTrade)
                 await PaperTrading.PaperTradingCheckOrders(Database, GlobalData.ExchangePaperTradeAccount!, Symbol, LastCandle1m);
 
 

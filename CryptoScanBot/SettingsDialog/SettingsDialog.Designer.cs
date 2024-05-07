@@ -184,9 +184,12 @@ partial class FrmSettings
         UserControlTradeSell = new SettingsDialog.UserControlTradeSell();
         UserControlTradeDca = new SettingsDialog.UserControlTradeDca();
         panel7 = new Panel();
+        label83 = new Label();
+        EditTradeVia = new ComboBox();
         label73 = new Label();
         EditGlobalBuyCooldownTime = new NumericUpDown();
         groupBoxInstap = new GroupBox();
+        EditCheckFurtherPriceMove = new CheckBox();
         EditCheckIncreasingMacd = new CheckBox();
         EditCheckIncreasingStoch = new CheckBox();
         EditCheckIncreasingRsi = new CheckBox();
@@ -202,8 +205,6 @@ partial class FrmSettings
         EditLogCanceledOrders = new CheckBox();
         EditSoundTradeNotification = new CheckBox();
         EditDisableNewPositions = new CheckBox();
-        EditTradeViaExchange = new CheckBox();
-        EditTradeViaPaperTrading = new CheckBox();
         label36 = new Label();
         groupBoxSlots = new GroupBox();
         label50 = new Label();
@@ -243,7 +244,6 @@ partial class FrmSettings
         label49 = new Label();
         toolTip1 = new ToolTip(components);
         colorDialog1 = new ColorDialog();
-        EditCheckFurtherPriceMove = new CheckBox();
         panelButtons.SuspendLayout();
         panelFill.SuspendLayout();
         tabControlMain.SuspendLayout();
@@ -439,7 +439,7 @@ partial class FrmSettings
         tabAlgemeen.Margin = new Padding(4, 3, 4, 3);
         tabAlgemeen.Name = "tabAlgemeen";
         tabAlgemeen.Padding = new Padding(4, 3, 4, 3);
-        tabAlgemeen.Size = new Size(1142, 642);
+        tabAlgemeen.Size = new Size(1142, 702);
         tabAlgemeen.TabIndex = 6;
         tabAlgemeen.Text = "Algemeen";
         tabAlgemeen.UseVisualStyleBackColor = true;
@@ -454,7 +454,7 @@ partial class FrmSettings
         flowLayoutPanel5.FlowDirection = FlowDirection.TopDown;
         flowLayoutPanel5.Location = new Point(4, 3);
         flowLayoutPanel5.Name = "flowLayoutPanel5";
-        flowLayoutPanel5.Size = new Size(1134, 636);
+        flowLayoutPanel5.Size = new Size(1134, 696);
         flowLayoutPanel5.TabIndex = 247;
         // 
         // groupBox1
@@ -819,7 +819,7 @@ partial class FrmSettings
         tabBasismunten.Margin = new Padding(4, 3, 4, 3);
         tabBasismunten.Name = "tabBasismunten";
         tabBasismunten.Padding = new Padding(4, 3, 4, 3);
-        tabBasismunten.Size = new Size(1142, 642);
+        tabBasismunten.Size = new Size(1142, 702);
         tabBasismunten.TabIndex = 0;
         tabBasismunten.Text = "Basismunten";
         tabBasismunten.UseVisualStyleBackColor = true;
@@ -831,7 +831,7 @@ partial class FrmSettings
         tabSignals.Margin = new Padding(4, 3, 4, 3);
         tabSignals.Name = "tabSignals";
         tabSignals.Padding = new Padding(4, 3, 4, 3);
-        tabSignals.Size = new Size(1142, 642);
+        tabSignals.Size = new Size(1142, 702);
         tabSignals.TabIndex = 10;
         tabSignals.Text = "Signalen";
         tabSignals.UseVisualStyleBackColor = true;
@@ -850,7 +850,7 @@ partial class FrmSettings
         tabControlSignals.Location = new Point(4, 3);
         tabControlSignals.Name = "tabControlSignals";
         tabControlSignals.SelectedIndex = 0;
-        tabControlSignals.Size = new Size(1134, 636);
+        tabControlSignals.Size = new Size(1134, 696);
         tabControlSignals.TabIndex = 248;
         // 
         // tabSignalsGeneral
@@ -889,7 +889,7 @@ partial class FrmSettings
         tabSignalsGeneral.Location = new Point(4, 27);
         tabSignalsGeneral.Name = "tabSignalsGeneral";
         tabSignalsGeneral.Padding = new Padding(3);
-        tabSignalsGeneral.Size = new Size(1126, 605);
+        tabSignalsGeneral.Size = new Size(1126, 665);
         tabSignalsGeneral.TabIndex = 0;
         tabSignalsGeneral.Text = "Signalen algemeen";
         tabSignalsGeneral.UseVisualStyleBackColor = true;
@@ -1220,7 +1220,7 @@ partial class FrmSettings
         tabSignalsLong.Location = new Point(4, 27);
         tabSignalsLong.Name = "tabSignalsLong";
         tabSignalsLong.Padding = new Padding(3);
-        tabSignalsLong.Size = new Size(1126, 605);
+        tabSignalsLong.Size = new Size(1126, 665);
         tabSignalsLong.TabIndex = 1;
         tabSignalsLong.Text = "Signalen long";
         tabSignalsLong.UseVisualStyleBackColor = true;
@@ -1232,7 +1232,7 @@ partial class FrmSettings
         UserControlSignalLong.Dock = DockStyle.Fill;
         UserControlSignalLong.Location = new Point(3, 3);
         UserControlSignalLong.Name = "UserControlSignalLong";
-        UserControlSignalLong.Size = new Size(1120, 599);
+        UserControlSignalLong.Size = new Size(1120, 659);
         UserControlSignalLong.TabIndex = 0;
         // 
         // tabSignalsShort
@@ -1241,7 +1241,7 @@ partial class FrmSettings
         tabSignalsShort.Location = new Point(4, 27);
         tabSignalsShort.Name = "tabSignalsShort";
         tabSignalsShort.Padding = new Padding(3);
-        tabSignalsShort.Size = new Size(1126, 605);
+        tabSignalsShort.Size = new Size(1126, 665);
         tabSignalsShort.TabIndex = 2;
         tabSignalsShort.Text = "Signalen short";
         tabSignalsShort.UseVisualStyleBackColor = true;
@@ -1253,7 +1253,7 @@ partial class FrmSettings
         UserControlSignalShort.Dock = DockStyle.Fill;
         UserControlSignalShort.Location = new Point(3, 3);
         UserControlSignalShort.Name = "UserControlSignalShort";
-        UserControlSignalShort.Size = new Size(1120, 599);
+        UserControlSignalShort.Size = new Size(1120, 659);
         UserControlSignalShort.TabIndex = 0;
         // 
         // tabSignalStobb
@@ -1263,7 +1263,7 @@ partial class FrmSettings
         tabSignalStobb.Margin = new Padding(4, 3, 4, 3);
         tabSignalStobb.Name = "tabSignalStobb";
         tabSignalStobb.Padding = new Padding(4, 3, 4, 3);
-        tabSignalStobb.Size = new Size(1126, 605);
+        tabSignalStobb.Size = new Size(1126, 665);
         tabSignalStobb.TabIndex = 3;
         tabSignalStobb.Text = "STOBB";
         tabSignalStobb.UseVisualStyleBackColor = true;
@@ -1278,7 +1278,7 @@ partial class FrmSettings
         flowLayoutPanel6.FlowDirection = FlowDirection.TopDown;
         flowLayoutPanel6.Location = new Point(4, 3);
         flowLayoutPanel6.Name = "flowLayoutPanel6";
-        flowLayoutPanel6.Size = new Size(1118, 599);
+        flowLayoutPanel6.Size = new Size(1118, 659);
         flowLayoutPanel6.TabIndex = 158;
         // 
         // UserControlSettingsSoundAndColorsStobb
@@ -1454,7 +1454,7 @@ partial class FrmSettings
         tabSignalSbm.Margin = new Padding(4, 3, 4, 3);
         tabSignalSbm.Name = "tabSignalSbm";
         tabSignalSbm.Padding = new Padding(4, 3, 4, 3);
-        tabSignalSbm.Size = new Size(1126, 605);
+        tabSignalSbm.Size = new Size(1126, 665);
         tabSignalSbm.TabIndex = 6;
         tabSignalSbm.Text = "SBM";
         tabSignalSbm.UseVisualStyleBackColor = true;
@@ -1469,7 +1469,7 @@ partial class FrmSettings
         flowLayoutPanel7.FlowDirection = FlowDirection.TopDown;
         flowLayoutPanel7.Location = new Point(4, 3);
         flowLayoutPanel7.Name = "flowLayoutPanel7";
-        flowLayoutPanel7.Size = new Size(1118, 599);
+        flowLayoutPanel7.Size = new Size(1118, 659);
         flowLayoutPanel7.TabIndex = 160;
         // 
         // UserControlSettingsSoundAndColorsSbm
@@ -1897,7 +1897,7 @@ partial class FrmSettings
         tabSignalStoRsi.Location = new Point(4, 27);
         tabSignalStoRsi.Name = "tabSignalStoRsi";
         tabSignalStoRsi.Padding = new Padding(3);
-        tabSignalStoRsi.Size = new Size(1126, 605);
+        tabSignalStoRsi.Size = new Size(1126, 665);
         tabSignalStoRsi.TabIndex = 11;
         tabSignalStoRsi.Text = "STORSI";
         tabSignalStoRsi.UseVisualStyleBackColor = true;
@@ -1911,7 +1911,7 @@ partial class FrmSettings
         flowLayoutPanel2.FlowDirection = FlowDirection.TopDown;
         flowLayoutPanel2.Location = new Point(3, 3);
         flowLayoutPanel2.Name = "flowLayoutPanel2";
-        flowLayoutPanel2.Size = new Size(1120, 599);
+        flowLayoutPanel2.Size = new Size(1120, 659);
         flowLayoutPanel2.TabIndex = 160;
         // 
         // UserControlSettingsSoundAndColorsStoRsi
@@ -1932,7 +1932,7 @@ partial class FrmSettings
         tabSignalJump.Margin = new Padding(4, 3, 4, 3);
         tabSignalJump.Name = "tabSignalJump";
         tabSignalJump.Padding = new Padding(4, 3, 4, 3);
-        tabSignalJump.Size = new Size(1126, 605);
+        tabSignalJump.Size = new Size(1126, 665);
         tabSignalJump.TabIndex = 10;
         tabSignalJump.Text = "JUMP";
         tabSignalJump.UseVisualStyleBackColor = true;
@@ -1947,7 +1947,7 @@ partial class FrmSettings
         flowLayoutPanel8.FlowDirection = FlowDirection.TopDown;
         flowLayoutPanel8.Location = new Point(4, 3);
         flowLayoutPanel8.Name = "flowLayoutPanel8";
-        flowLayoutPanel8.Size = new Size(1118, 599);
+        flowLayoutPanel8.Size = new Size(1118, 659);
         flowLayoutPanel8.TabIndex = 159;
         // 
         // UserControlSettingsSoundAndColorsJump
@@ -2118,6 +2118,8 @@ partial class FrmSettings
         // 
         // panel7
         // 
+        panel7.Controls.Add(label83);
+        panel7.Controls.Add(EditTradeVia);
         panel7.Controls.Add(label73);
         panel7.Controls.Add(EditGlobalBuyCooldownTime);
         panel7.Controls.Add(groupBoxInstap);
@@ -2129,8 +2131,6 @@ partial class FrmSettings
         panel7.Controls.Add(EditLogCanceledOrders);
         panel7.Controls.Add(EditSoundTradeNotification);
         panel7.Controls.Add(EditDisableNewPositions);
-        panel7.Controls.Add(EditTradeViaExchange);
-        panel7.Controls.Add(EditTradeViaPaperTrading);
         panel7.Controls.Add(label36);
         panel7.Controls.Add(groupBoxSlots);
         panel7.Controls.Add(EditGlobalStopLimitPercentage);
@@ -2145,10 +2145,30 @@ partial class FrmSettings
         panel7.Size = new Size(272, 659);
         panel7.TabIndex = 335;
         // 
+        // label83
+        // 
+        label83.AutoSize = true;
+        label83.Location = new Point(12, 10);
+        label83.Margin = new Padding(4, 0, 4, 0);
+        label83.Name = "label83";
+        label83.Size = new Size(46, 15);
+        label83.TabIndex = 350;
+        label83.Text = "Trading";
+        // 
+        // EditTradeVia
+        // 
+        EditTradeVia.DropDownStyle = ComboBoxStyle.DropDownList;
+        EditTradeVia.FormattingEnabled = true;
+        EditTradeVia.Location = new Point(71, 7);
+        EditTradeVia.Margin = new Padding(4, 3, 4, 3);
+        EditTradeVia.Name = "EditTradeVia";
+        EditTradeVia.Size = new Size(160, 23);
+        EditTradeVia.TabIndex = 349;
+        // 
         // label73
         // 
         label73.AutoSize = true;
-        label73.Location = new Point(7, 503);
+        label73.Location = new Point(7, 480);
         label73.Margin = new Padding(4, 0, 4, 0);
         label73.Name = "label73";
         label73.Size = new Size(114, 15);
@@ -2157,7 +2177,7 @@ partial class FrmSettings
         // 
         // EditGlobalBuyCooldownTime
         // 
-        EditGlobalBuyCooldownTime.Location = new Point(154, 501);
+        EditGlobalBuyCooldownTime.Location = new Point(154, 478);
         EditGlobalBuyCooldownTime.Margin = new Padding(4, 3, 4, 3);
         EditGlobalBuyCooldownTime.Maximum = new decimal(new int[] { 276447231, 23283, 0, 0 });
         EditGlobalBuyCooldownTime.Name = "EditGlobalBuyCooldownTime";
@@ -2170,12 +2190,23 @@ partial class FrmSettings
         groupBoxInstap.Controls.Add(EditCheckIncreasingMacd);
         groupBoxInstap.Controls.Add(EditCheckIncreasingStoch);
         groupBoxInstap.Controls.Add(EditCheckIncreasingRsi);
-        groupBoxInstap.Location = new Point(12, 375);
+        groupBoxInstap.Location = new Point(12, 352);
         groupBoxInstap.Name = "groupBoxInstap";
         groupBoxInstap.Size = new Size(234, 120);
         groupBoxInstap.TabIndex = 346;
         groupBoxInstap.TabStop = false;
         groupBoxInstap.Text = "Instap condities";
+        // 
+        // EditCheckFurtherPriceMove
+        // 
+        EditCheckFurtherPriceMove.AutoSize = true;
+        EditCheckFurtherPriceMove.Location = new Point(21, 91);
+        EditCheckFurtherPriceMove.Margin = new Padding(4, 3, 4, 3);
+        EditCheckFurtherPriceMove.Name = "EditCheckFurtherPriceMove";
+        EditCheckFurtherPriceMove.Size = new Size(184, 19);
+        EditCheckFurtherPriceMove.TabIndex = 278;
+        EditCheckFurtherPriceMove.Text = "Controleer prijsdaling/stijging";
+        EditCheckFurtherPriceMove.UseVisualStyleBackColor = true;
         // 
         // EditCheckIncreasingMacd
         // 
@@ -2216,7 +2247,7 @@ partial class FrmSettings
         groupBoxFutures.Controls.Add(EditCrossOrIsolated);
         groupBoxFutures.Controls.Add(label23);
         groupBoxFutures.Controls.Add(EditLeverage);
-        groupBoxFutures.Location = new Point(12, 283);
+        groupBoxFutures.Location = new Point(12, 260);
         groupBoxFutures.Name = "groupBoxFutures";
         groupBoxFutures.Size = new Size(234, 86);
         groupBoxFutures.TabIndex = 345;
@@ -2266,7 +2297,7 @@ partial class FrmSettings
         // 
         // EditApiSecret
         // 
-        EditApiSecret.Location = new Point(143, 166);
+        EditApiSecret.Location = new Point(143, 143);
         EditApiSecret.Margin = new Padding(4, 3, 4, 3);
         EditApiSecret.Name = "EditApiSecret";
         EditApiSecret.PasswordChar = '*';
@@ -2275,7 +2306,7 @@ partial class FrmSettings
         // 
         // EditApiKey
         // 
-        EditApiKey.Location = new Point(143, 140);
+        EditApiKey.Location = new Point(143, 117);
         EditApiKey.Margin = new Padding(4, 3, 4, 3);
         EditApiKey.Name = "EditApiKey";
         EditApiKey.PasswordChar = '*';
@@ -2285,7 +2316,7 @@ partial class FrmSettings
         // label80
         // 
         label80.AutoSize = true;
-        label80.Location = new Point(12, 169);
+        label80.Location = new Point(12, 146);
         label80.Margin = new Padding(4, 0, 4, 0);
         label80.Name = "label80";
         label80.Size = new Size(59, 15);
@@ -2295,7 +2326,7 @@ partial class FrmSettings
         // label65
         // 
         label65.AutoSize = true;
-        label65.Location = new Point(12, 143);
+        label65.Location = new Point(12, 120);
         label65.Margin = new Padding(4, 0, 4, 0);
         label65.Name = "label65";
         label65.Size = new Size(46, 15);
@@ -2305,7 +2336,7 @@ partial class FrmSettings
         // EditLogCanceledOrders
         // 
         EditLogCanceledOrders.AutoSize = true;
-        EditLogCanceledOrders.Location = new Point(12, 113);
+        EditLogCanceledOrders.Location = new Point(12, 90);
         EditLogCanceledOrders.Margin = new Padding(4, 3, 4, 3);
         EditLogCanceledOrders.Name = "EditLogCanceledOrders";
         EditLogCanceledOrders.Size = new Size(157, 19);
@@ -2316,7 +2347,7 @@ partial class FrmSettings
         // EditSoundTradeNotification
         // 
         EditSoundTradeNotification.AutoSize = true;
-        EditSoundTradeNotification.Location = new Point(12, 88);
+        EditSoundTradeNotification.Location = new Point(12, 65);
         EditSoundTradeNotification.Margin = new Padding(4, 3, 4, 3);
         EditSoundTradeNotification.Name = "EditSoundTradeNotification";
         EditSoundTradeNotification.Size = new Size(186, 19);
@@ -2327,7 +2358,7 @@ partial class FrmSettings
         // EditDisableNewPositions
         // 
         EditDisableNewPositions.AutoSize = true;
-        EditDisableNewPositions.Location = new Point(12, 63);
+        EditDisableNewPositions.Location = new Point(12, 40);
         EditDisableNewPositions.Margin = new Padding(4, 3, 4, 3);
         EditDisableNewPositions.Name = "EditDisableNewPositions";
         EditDisableNewPositions.Size = new Size(187, 19);
@@ -2335,33 +2366,11 @@ partial class FrmSettings
         EditDisableNewPositions.Text = "Geen nieuwe posities innemen";
         EditDisableNewPositions.UseVisualStyleBackColor = true;
         // 
-        // EditTradeViaExchange
-        // 
-        EditTradeViaExchange.AutoSize = true;
-        EditTradeViaExchange.Location = new Point(12, 38);
-        EditTradeViaExchange.Margin = new Padding(4, 3, 4, 3);
-        EditTradeViaExchange.Name = "EditTradeViaExchange";
-        EditTradeViaExchange.Size = new Size(148, 19);
-        EditTradeViaExchange.TabIndex = 337;
-        EditTradeViaExchange.Text = "Traden op de exchange";
-        EditTradeViaExchange.UseVisualStyleBackColor = true;
-        // 
-        // EditTradeViaPaperTrading
-        // 
-        EditTradeViaPaperTrading.AutoSize = true;
-        EditTradeViaPaperTrading.Location = new Point(12, 16);
-        EditTradeViaPaperTrading.Margin = new Padding(4, 3, 4, 3);
-        EditTradeViaPaperTrading.Name = "EditTradeViaPaperTrading";
-        EditTradeViaPaperTrading.Size = new Size(97, 19);
-        EditTradeViaPaperTrading.TabIndex = 336;
-        EditTradeViaPaperTrading.Text = "Paper trading";
-        EditTradeViaPaperTrading.UseVisualStyleBackColor = true;
-        // 
         // label36
         // 
         label36.AutoSize = true;
         label36.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-        label36.Location = new Point(12, 568);
+        label36.Location = new Point(12, 545);
         label36.Margin = new Padding(4, 0, 4, 0);
         label36.Name = "label36";
         label36.Size = new Size(63, 15);
@@ -2376,7 +2385,7 @@ partial class FrmSettings
         groupBoxSlots.Controls.Add(label52);
         groupBoxSlots.Controls.Add(EditSlotsMaximalShort);
         groupBoxSlots.Font = new Font("Segoe UI", 9F);
-        groupBoxSlots.Location = new Point(12, 195);
+        groupBoxSlots.Location = new Point(12, 172);
         groupBoxSlots.Name = "groupBoxSlots";
         groupBoxSlots.Size = new Size(234, 82);
         groupBoxSlots.TabIndex = 334;
@@ -2425,7 +2434,7 @@ partial class FrmSettings
         // 
         EditGlobalStopLimitPercentage.DecimalPlaces = 2;
         EditGlobalStopLimitPercentage.Font = new Font("Segoe UI", 9F, FontStyle.Strikeout);
-        EditGlobalStopLimitPercentage.Location = new Point(180, 621);
+        EditGlobalStopLimitPercentage.Location = new Point(180, 598);
         EditGlobalStopLimitPercentage.Margin = new Padding(4, 3, 4, 3);
         EditGlobalStopLimitPercentage.Name = "EditGlobalStopLimitPercentage";
         EditGlobalStopLimitPercentage.Size = new Size(88, 23);
@@ -2436,7 +2445,7 @@ partial class FrmSettings
         // 
         label70.AutoSize = true;
         label70.Font = new Font("Segoe UI", 9F, FontStyle.Strikeout);
-        label70.Location = new Point(12, 623);
+        label70.Location = new Point(12, 600);
         label70.Margin = new Padding(4, 0, 4, 0);
         label70.Name = "label70";
         label70.Size = new Size(107, 15);
@@ -2448,7 +2457,7 @@ partial class FrmSettings
         // 
         EditGlobalStopPercentage.DecimalPlaces = 2;
         EditGlobalStopPercentage.Font = new Font("Segoe UI", 9F, FontStyle.Strikeout);
-        EditGlobalStopPercentage.Location = new Point(180, 594);
+        EditGlobalStopPercentage.Location = new Point(180, 571);
         EditGlobalStopPercentage.Margin = new Padding(4, 3, 4, 3);
         EditGlobalStopPercentage.Name = "EditGlobalStopPercentage";
         EditGlobalStopPercentage.Size = new Size(88, 23);
@@ -2459,7 +2468,7 @@ partial class FrmSettings
         // 
         label71.AutoSize = true;
         label71.Font = new Font("Segoe UI", 9F, FontStyle.Strikeout);
-        label71.Location = new Point(12, 596);
+        label71.Location = new Point(12, 573);
         label71.Margin = new Padding(4, 0, 4, 0);
         label71.Name = "label71";
         label71.Size = new Size(109, 15);
@@ -2471,7 +2480,7 @@ partial class FrmSettings
         // 
         EditGlobalBuyVarying.DecimalPlaces = 2;
         EditGlobalBuyVarying.Font = new Font("Segoe UI", 9F, FontStyle.Strikeout);
-        EditGlobalBuyVarying.Location = new Point(153, 530);
+        EditGlobalBuyVarying.Location = new Point(153, 507);
         EditGlobalBuyVarying.Margin = new Padding(4, 3, 4, 3);
         EditGlobalBuyVarying.Maximum = new decimal(new int[] { 5, 0, 0, 65536 });
         EditGlobalBuyVarying.Minimum = new decimal(new int[] { 5, 0, 0, -2147418112 });
@@ -2484,7 +2493,7 @@ partial class FrmSettings
         // 
         label47.AutoSize = true;
         label47.Font = new Font("Segoe UI", 9F, FontStyle.Strikeout);
-        label47.Location = new Point(7, 529);
+        label47.Location = new Point(7, 506);
         label47.Margin = new Padding(4, 0, 4, 0);
         label47.Name = "label47";
         label47.Size = new Size(108, 15);
@@ -2497,7 +2506,7 @@ partial class FrmSettings
         tabTradingLong.Location = new Point(4, 27);
         tabTradingLong.Name = "tabTradingLong";
         tabTradingLong.Padding = new Padding(3);
-        tabTradingLong.Size = new Size(1126, 605);
+        tabTradingLong.Size = new Size(1126, 665);
         tabTradingLong.TabIndex = 1;
         tabTradingLong.Text = "Trading long";
         tabTradingLong.UseVisualStyleBackColor = true;
@@ -2509,7 +2518,7 @@ partial class FrmSettings
         UserControlTradingLong.Dock = DockStyle.Fill;
         UserControlTradingLong.Location = new Point(3, 3);
         UserControlTradingLong.Name = "UserControlTradingLong";
-        UserControlTradingLong.Size = new Size(1120, 599);
+        UserControlTradingLong.Size = new Size(1120, 659);
         UserControlTradingLong.TabIndex = 0;
         // 
         // tabTradingShort
@@ -2518,7 +2527,7 @@ partial class FrmSettings
         tabTradingShort.Location = new Point(4, 27);
         tabTradingShort.Name = "tabTradingShort";
         tabTradingShort.Padding = new Padding(3);
-        tabTradingShort.Size = new Size(1126, 605);
+        tabTradingShort.Size = new Size(1126, 665);
         tabTradingShort.TabIndex = 2;
         tabTradingShort.Text = "Trading short";
         tabTradingShort.UseVisualStyleBackColor = true;
@@ -2530,7 +2539,7 @@ partial class FrmSettings
         UserControlTradingShort.Dock = DockStyle.Fill;
         UserControlTradingShort.Location = new Point(3, 3);
         UserControlTradingShort.Name = "UserControlTradingShort";
-        UserControlTradingShort.Size = new Size(1120, 599);
+        UserControlTradingShort.Size = new Size(1120, 659);
         UserControlTradingShort.TabIndex = 0;
         // 
         // tabPageTradingRules
@@ -2539,7 +2548,7 @@ partial class FrmSettings
         tabPageTradingRules.Location = new Point(4, 27);
         tabPageTradingRules.Name = "tabPageTradingRules";
         tabPageTradingRules.Padding = new Padding(3);
-        tabPageTradingRules.Size = new Size(1126, 605);
+        tabPageTradingRules.Size = new Size(1126, 665);
         tabPageTradingRules.TabIndex = 3;
         tabPageTradingRules.Text = "Rulez";
         tabPageTradingRules.UseVisualStyleBackColor = true;
@@ -2553,7 +2562,7 @@ partial class FrmSettings
         UserControlTradeRules.Location = new Point(3, 3);
         UserControlTradeRules.Margin = new Padding(0);
         UserControlTradeRules.Name = "UserControlTradeRules";
-        UserControlTradeRules.Size = new Size(1120, 599);
+        UserControlTradeRules.Size = new Size(1120, 659);
         UserControlTradeRules.TabIndex = 0;
         // 
         // label59
@@ -2573,7 +2582,7 @@ partial class FrmSettings
         tabWhiteBlack.Location = new Point(4, 27);
         tabWhiteBlack.Name = "tabWhiteBlack";
         tabWhiteBlack.Padding = new Padding(3);
-        tabWhiteBlack.Size = new Size(1142, 642);
+        tabWhiteBlack.Size = new Size(1142, 702);
         tabWhiteBlack.TabIndex = 13;
         tabWhiteBlack.Text = "Black/White list";
         tabWhiteBlack.UseVisualStyleBackColor = true;
@@ -2589,7 +2598,7 @@ partial class FrmSettings
         tabControlWhiteBlack.Location = new Point(3, 3);
         tabControlWhiteBlack.Name = "tabControlWhiteBlack";
         tabControlWhiteBlack.SelectedIndex = 0;
-        tabControlWhiteBlack.Size = new Size(1136, 636);
+        tabControlWhiteBlack.Size = new Size(1136, 696);
         tabControlWhiteBlack.TabIndex = 0;
         // 
         // tabLongWhiteList
@@ -2599,7 +2608,7 @@ partial class FrmSettings
         tabLongWhiteList.Location = new Point(4, 27);
         tabLongWhiteList.Name = "tabLongWhiteList";
         tabLongWhiteList.Padding = new Padding(3);
-        tabLongWhiteList.Size = new Size(1128, 605);
+        tabLongWhiteList.Size = new Size(1128, 665);
         tabLongWhiteList.TabIndex = 0;
         tabLongWhiteList.Text = "Whitelist long";
         tabLongWhiteList.UseVisualStyleBackColor = true;
@@ -2611,7 +2620,7 @@ partial class FrmSettings
         textBoxWhiteListOversold.Margin = new Padding(4, 3, 4, 3);
         textBoxWhiteListOversold.Multiline = true;
         textBoxWhiteListOversold.Name = "textBoxWhiteListOversold";
-        textBoxWhiteListOversold.Size = new Size(1122, 542);
+        textBoxWhiteListOversold.Size = new Size(1122, 602);
         textBoxWhiteListOversold.TabIndex = 2;
         // 
         // panel3
@@ -2641,7 +2650,7 @@ partial class FrmSettings
         tabLongBlackList.Location = new Point(4, 27);
         tabLongBlackList.Name = "tabLongBlackList";
         tabLongBlackList.Padding = new Padding(3);
-        tabLongBlackList.Size = new Size(1128, 605);
+        tabLongBlackList.Size = new Size(1128, 665);
         tabLongBlackList.TabIndex = 1;
         tabLongBlackList.Text = "Blacklist long";
         tabLongBlackList.UseVisualStyleBackColor = true;
@@ -2653,7 +2662,7 @@ partial class FrmSettings
         textBoxBlackListOversold.Margin = new Padding(4, 3, 4, 3);
         textBoxBlackListOversold.Multiline = true;
         textBoxBlackListOversold.Name = "textBoxBlackListOversold";
-        textBoxBlackListOversold.Size = new Size(1122, 542);
+        textBoxBlackListOversold.Size = new Size(1122, 602);
         textBoxBlackListOversold.TabIndex = 3;
         // 
         // panel4
@@ -2683,7 +2692,7 @@ partial class FrmSettings
         tabShortWhiteList.Location = new Point(4, 27);
         tabShortWhiteList.Name = "tabShortWhiteList";
         tabShortWhiteList.Padding = new Padding(3);
-        tabShortWhiteList.Size = new Size(1128, 605);
+        tabShortWhiteList.Size = new Size(1128, 665);
         tabShortWhiteList.TabIndex = 2;
         tabShortWhiteList.Text = "Whitelist short";
         tabShortWhiteList.UseVisualStyleBackColor = true;
@@ -2695,7 +2704,7 @@ partial class FrmSettings
         textBoxWhiteListOverbought.Margin = new Padding(4, 3, 4, 3);
         textBoxWhiteListOverbought.Multiline = true;
         textBoxWhiteListOverbought.Name = "textBoxWhiteListOverbought";
-        textBoxWhiteListOverbought.Size = new Size(1122, 542);
+        textBoxWhiteListOverbought.Size = new Size(1122, 602);
         textBoxWhiteListOverbought.TabIndex = 4;
         // 
         // panel5
@@ -2725,7 +2734,7 @@ partial class FrmSettings
         tabShortBlackList.Location = new Point(4, 27);
         tabShortBlackList.Name = "tabShortBlackList";
         tabShortBlackList.Padding = new Padding(3);
-        tabShortBlackList.Size = new Size(1128, 605);
+        tabShortBlackList.Size = new Size(1128, 665);
         tabShortBlackList.TabIndex = 3;
         tabShortBlackList.Text = "Blacklist short";
         tabShortBlackList.UseVisualStyleBackColor = true;
@@ -2737,7 +2746,7 @@ partial class FrmSettings
         textBoxBlackListOverbought.Margin = new Padding(4, 3, 4, 3);
         textBoxBlackListOverbought.Multiline = true;
         textBoxBlackListOverbought.Name = "textBoxBlackListOverbought";
-        textBoxBlackListOverbought.Size = new Size(1122, 542);
+        textBoxBlackListOverbought.Size = new Size(1122, 602);
         textBoxBlackListOverbought.TabIndex = 7;
         // 
         // panel6
@@ -2759,17 +2768,6 @@ partial class FrmSettings
         label49.Size = new Size(308, 15);
         label49.TabIndex = 222;
         label49.Text = "(1 munt per regel met een optionele opmerking erachter)";
-        // 
-        // EditCheckFurtherPriceDrop
-        // 
-        EditCheckFurtherPriceMove.AutoSize = true;
-        EditCheckFurtherPriceMove.Location = new Point(21, 91);
-        EditCheckFurtherPriceMove.Margin = new Padding(4, 3, 4, 3);
-        EditCheckFurtherPriceMove.Name = "EditCheckFurtherPriceDrop";
-        EditCheckFurtherPriceMove.Size = new Size(184, 19);
-        EditCheckFurtherPriceMove.TabIndex = 278;
-        EditCheckFurtherPriceMove.Text = "Controleer prijsdaling/stijging";
-        EditCheckFurtherPriceMove.UseVisualStyleBackColor = true;
         // 
         // FrmSettings
         // 
@@ -3103,8 +3101,6 @@ partial class FrmSettings
     private CheckBox EditLogCanceledOrders;
     private CheckBox EditSoundTradeNotification;
     private CheckBox EditDisableNewPositions;
-    private CheckBox EditTradeViaExchange;
-    private CheckBox EditTradeViaPaperTrading;
     private Label label36;
     private GroupBox groupBoxSlots;
     private Label label50;
@@ -3132,4 +3128,6 @@ partial class FrmSettings
     private Label label15;
     private ComboBox EditActivateExchangeInternExtern;
     private CheckBox EditCheckFurtherPriceMove;
+    private Label label83;
+    private ComboBox EditTradeVia;
 }

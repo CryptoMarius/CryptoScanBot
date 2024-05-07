@@ -49,6 +49,7 @@ static public class GlobalData
     public static bool ApplicationIsClosing { get; set; } = false;
 
     // Emulator kan alleen de backTest zetten (anders gaan er onverwachte zaken naar de database enzo)
+    // (staat op de nominatie om te vervallen dmv de Settings.Trading.TradeVia == BackTest)
     public static bool BackTest { get; set; }
 
     public static CryptoApplicationStatus ApplicationStatus { get; set; } = CryptoApplicationStatus.Initializing;
@@ -199,7 +200,7 @@ static public class GlobalData
                     ExchangeRealTradeAccount = tradeAccount;
 
                 // Niet echt super, enumeratie oid hiervoor in het leven roepen, werkt verder wel
-                if (BackTest || Settings.Trading.TradeViaExchange || Settings.Trading.TradeViaPaperTrading)
+                if (BackTest || Settings.Trading.TradeVia != CryptoTradeAccountType.NoTrading)
                     ActiveTradeAccountList.Add(tradeAccount.Id, tradeAccount);
             }
         }
