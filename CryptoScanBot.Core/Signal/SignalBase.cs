@@ -118,6 +118,26 @@ public class SignalCreateBase
     }
 
 
+    /// <summary>
+    /// Is de RSI overbought geweest in de laatste x candles
+    /// </summary>
+    public bool WasRsiOverboughtInTheLast(int candleCount = 30)
+    {
+        // We gaan van rechts naar links (dus prev en last zijn ietwat raar)
+        CryptoCandle? candle = CandleLast;
+        while (candleCount >= 0)
+        {
+            if (candle is not null && candle.IsRsiOverbought())
+                return true;
+
+            if (candle is not null && !GetPrevCandle(candle, out candle))
+                return false;
+            candleCount--;
+        }
+        return false;
+    }
+
+
     public CryptoCandle? HadStobbInThelastXCandles(CryptoTradeSide side, int skipCandleCount, int candleCount)
     {
         // Is de prijs onlangs dicht bij de onderste bb geweest?
