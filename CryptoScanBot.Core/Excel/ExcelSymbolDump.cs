@@ -44,7 +44,7 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
             if (symbolInterval.LastCandleSynchronized.HasValue)
             {
                 DateTime x = CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized);
-                WriteCell(sheet, column++, row, x.ToLocal(), CellStyleDate);
+                WriteCell(sheet, column++, row, x.ToLocalTime(), CellStyleDate);
             }
         }
 
