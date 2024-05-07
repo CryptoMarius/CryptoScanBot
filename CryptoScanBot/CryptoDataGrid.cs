@@ -446,7 +446,6 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
             case CryptoSignalStrategy.Sbm1:
             case CryptoSignalStrategy.Sbm2:
             case CryptoSignalStrategy.Sbm3:
-            case CryptoSignalStrategy.Sbm4:
                 if (side == CryptoTradeSide.Long)
                     return GlobalData.Settings.Signal.Sbm.ColorLong;
                 else if (side == CryptoTradeSide.Short)
