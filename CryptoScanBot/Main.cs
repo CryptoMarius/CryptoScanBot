@@ -758,7 +758,6 @@ public partial class FrmMain : Form
                 case CryptoSignalStrategy.Sbm1:
                 case CryptoSignalStrategy.Sbm2:
                 case CryptoSignalStrategy.Sbm3:
-                case CryptoSignalStrategy.Sbm4:
                     if (signal.Side == CryptoTradeSide.Long)
                         PlaySound(signal, GlobalData.Settings.Signal.Sbm.PlaySound, GlobalData.Settings.Signal.Sbm.PlaySpeech,
                         GlobalData.Settings.Signal.Sbm.SoundFileLong, ref LastSignalSoundSbmOversold);
