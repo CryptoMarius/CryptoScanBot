@@ -73,10 +73,8 @@ public class SettingsTrading
     // Account - Positie gerelateerd
 
     // De 3 account types zijn raar gekozen
-    //public CryptoTradeAccountType TradeVia { get; set; } = CryptoTradeAccountType.PaperTrade;
+    public CryptoTradeAccountType TradeVia { get; set; } = CryptoTradeAccountType.NoTrading;
 
-    // Alles is functioneel in de bot, echter we simuleren of we aan het traden zijn
-    public bool TradeViaPaperTrading { get; set; } = false;
     // Trade via exchange (instelling enkel omdat we nu keuze hebben)
     public bool TradeViaExchange { get; set; } = false;
     // Geen nieuwe posities openen (wel bijkopen voor openstaande posities)
