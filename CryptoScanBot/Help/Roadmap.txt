@@ -4,11 +4,11 @@ Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep
 
 
 Scanner:
-TODO: url voor Binance Futures
+- Scanner - Binance Futures deeplink url werkt niet
 - Scanner - Nieuwe munten die toegevoegd worden op de exchange terwijl de scanner loopt worden niet automatisch toegevoegd aan de price- en kline tickers
 - Scanner - Limit rates voor Kucoin verder uitwerken (ophalen candles geeft soms een foutmelding, wordt bij een volgende herstart wel hersteld, maar hoort niet zo)
             error getting klines [ServerRateLimitError] 429: Server rate limit exceeded: {"code":"429000","msg":"too many request"}
-- Scanner - De Kucoin deeplink voor Altrady werkt niet
+- Scanner - De Kucoin deeplink url voor Altrady werkt niet
 - Scanner - Bij wisselen van basismunten (of exchange?) komt er soms een SQLite Error 5: 'database is locked? (oorzaak nog onbekend)
 - Scanner - Rate limits van de libraries bestuderen en eventueel de ingebouwde vervangen (de interne is aan de voorzichtige kant)
 - Trading - De barometer naar Excel kunnen exporteren voor een overzichtje (liefst met een op te geven datum/tijd)
@@ -43,20 +43,13 @@ TODO: url voor Binance Futures
 
 
 Trading:
-- Trading - De eventuele dust meenemen in een gecombineerde TP
 - Trading - Documentatie bijwerken - Een klusje..
-- Trading - Een positie kunnen maken vanaf een bepaalde datum (een positie overnemen van de gebruiker)
-- Trading - (testen)De trader blijft hardnekkig instappen terwijl er geen assets beschikbaar zijn.
 - Trading - De laatste X posities dumpen naar Excel voor een overzichtje
-- Trading - Vanwege de overgang naar spot rekening houden met de commissies van de exchange (nog niet 100% goed)
 - Trading - Controle inbouwen op het short gaan, in futures kan dat, maar in spot lukt dat natuurlijk alleen als er assets beschikbaar zijn
 - Trading - De trader zet soms (zeg maar gerust in een enkele keer) correct afgehandelde posities weg als zijnde een takeover. Daar is/was geen aanleiding voor dus dat moet wel een bug zijn!
-- Trading - Controleren of de userstream ticker nog loopt (detectie van order aanpassingen c.q. trades)
 - Trading - In de open posities is de kolom BE perc te hoog indien er een JoJo heeft plaatsgevonden (invested=42, returned=39, BE% = 14.49%), maar het is slechts 1x gerapporteerd, incident?
-- Trading - Telegram commando's, uitbreiden zodat het aantal slots voor short en long ingesteld kan worden
 - Trading - Papertrading is nu alleen mogelijk voor Bybit spot en futures, maar papertrading kan natuurlijk voor alle andere exchanges (configuratie aanpassen, alleen exchange of paper, niet beide!)
 - Trading - DCA's kunnen instellen per tijdsframe (maar dat is bewst bewerkelijk voor het instellingen scherm)
-- Trading - Observatie: Een gesloten positie blijft soms lang in de lijst met geopende posities staan (de reden is onduidelijk)
 - Trading - Observatie papertrading is dat de laatste TP soms dubbel uitgevoerd wordt (en dan blijft de positie openstaan), probleem vanwege herstart applicatie? 1 op 500 probleem?
 - Trading - Het trade geluidje kunnen instellen (kan nu alleen door het vervangen van de sound notification in de sound map)
 - Trading - Validatie op de ingevoerde DCA's uitvoeren, die moeten qua percentage op volgorde staan met een factor > 0
@@ -78,6 +71,7 @@ Trading:
 - Trading - Bybit Spot - Testen van een stop-limit order (die bestaat niet helaas, alternatieven?)
 - Trading - Bybit Futures - Testen van een stop-limit order (die bestaat niet helaas, alternatieven?)
 - Trading - Asset management voor papertrading (heeft nu ongelimiteerde assets wat geen realistische situatie is).
+
 Voor alle Exchanges (behalve Binance en Bybit Futures/Spot):
 - Trading - userdate stream implementeren (detectie van trade)
 - Trading - ophalen trades implementeren
