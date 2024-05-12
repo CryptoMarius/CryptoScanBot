@@ -2335,10 +2335,7 @@ public partial class TestForm : Form
         GlobalData.Settings.General.SoundTradeNotification = false;
 
         GlobalData.BackTest = true;
-        GlobalData.Settings.Trading.TradeViaExchange = false;
-        GlobalData.Settings.Trading.TradeViaPaperTrading = false;
-        //GlobalData.Settings.Trading.Barometer15mBotMinimal = -99m;
-        //GlobalData.Settings.Trading.Barometer30mBotMinimal = -99m;
+        GlobalData.Settings.Trading.TradeVia = CryptoTradeAccountType.NoTrading;
 
         // Instap
         GlobalData.Settings.Trading.CheckIncreasingRsi = false;
