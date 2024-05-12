@@ -12,7 +12,7 @@ public class BarometerTools
     private delegate bool CalcBarometerMethod(CryptoQuoteData quoteData, SortedList<string, CryptoSymbol> symbols, CryptoInterval interval, long unixCandleLast, out decimal barometerPerc);
 
 
-    private static CryptoSymbol CheckSymbolPrecence(string baseName, CryptoQuoteData quoteData)
+    private static CryptoSymbol? CheckSymbolPrecence(string baseName, CryptoQuoteData quoteData)
     {
         if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
         {
@@ -21,7 +21,6 @@ public class BarometerTools
                 using CryptoDatabase databaseThread = new();
                 databaseThread.Close();
                 databaseThread.Open();
-                using var transaction = databaseThread.BeginTransaction();
 
                 symbol = new CryptoSymbol
                 {
@@ -33,6 +32,7 @@ public class BarometerTools
                 };
                 symbol.Name = symbol.Base + symbol.Quote;
 
+                using var transaction = databaseThread.BeginTransaction();
                 databaseThread.Connection.Insert(symbol, transaction);
                 transaction.Commit();
 
