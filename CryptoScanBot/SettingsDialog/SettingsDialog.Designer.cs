@@ -40,6 +40,8 @@ partial class FrmSettings
         tabAlgemeen = new TabPage();
         flowLayoutPanel5 = new FlowLayoutPanel();
         groupBox1 = new GroupBox();
+        label22 = new Label();
+        EditBbStdDeviation = new NumericUpDown();
         label15 = new Label();
         EditActivateExchangeInternExtern = new ComboBox();
         groupBoxStoch = new GroupBox();
@@ -244,12 +246,16 @@ partial class FrmSettings
         label49 = new Label();
         toolTip1 = new ToolTip(components);
         colorDialog1 = new ColorDialog();
+        groupBox6 = new GroupBox();
+        label26 = new Label();
+        EditStorsiAddAmount = new NumericUpDown();
         panelButtons.SuspendLayout();
         panelFill.SuspendLayout();
         tabControlMain.SuspendLayout();
         tabAlgemeen.SuspendLayout();
         flowLayoutPanel5.SuspendLayout();
         groupBox1.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)EditBbStdDeviation).BeginInit();
         groupBoxStoch.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)EditStochValueOversold).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditStochValueOverbought).BeginInit();
@@ -337,6 +343,8 @@ partial class FrmSettings
         panel5.SuspendLayout();
         tabShortBlackList.SuspendLayout();
         panel6.SuspendLayout();
+        groupBox6.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)EditStorsiAddAmount).BeginInit();
         SuspendLayout();
         // 
         // panelButtons
@@ -460,6 +468,8 @@ partial class FrmSettings
         // groupBox1
         // 
         groupBox1.AutoSize = true;
+        groupBox1.Controls.Add(label22);
+        groupBox1.Controls.Add(EditBbStdDeviation);
         groupBox1.Controls.Add(label15);
         groupBox1.Controls.Add(EditActivateExchangeInternExtern);
         groupBox1.Controls.Add(groupBoxStoch);
@@ -490,6 +500,26 @@ partial class FrmSettings
         groupBox1.TabIndex = 249;
         groupBox1.TabStop = false;
         groupBox1.Text = "Algemeen";
+        // 
+        // label22
+        // 
+        label22.AutoSize = true;
+        label22.Location = new Point(393, 266);
+        label22.Margin = new Padding(4, 0, 4, 0);
+        label22.Name = "label22";
+        label22.Size = new Size(94, 15);
+        label22.TabIndex = 288;
+        label22.Text = "BB Std Deviation";
+        // 
+        // EditBbStdDeviation
+        // 
+        EditBbStdDeviation.DecimalPlaces = 2;
+        EditBbStdDeviation.Location = new Point(514, 264);
+        EditBbStdDeviation.Margin = new Padding(4, 3, 4, 3);
+        EditBbStdDeviation.Name = "EditBbStdDeviation";
+        EditBbStdDeviation.Size = new Size(88, 23);
+        EditBbStdDeviation.TabIndex = 289;
+        EditBbStdDeviation.Value = new decimal(new int[] { 20, 0, 0, 65536 });
         // 
         // label15
         // 
@@ -1907,6 +1937,7 @@ partial class FrmSettings
         flowLayoutPanel2.AutoScroll = true;
         flowLayoutPanel2.AutoSize = true;
         flowLayoutPanel2.Controls.Add(UserControlSettingsSoundAndColorsStoRsi);
+        flowLayoutPanel2.Controls.Add(groupBox6);
         flowLayoutPanel2.Dock = DockStyle.Fill;
         flowLayoutPanel2.FlowDirection = FlowDirection.TopDown;
         flowLayoutPanel2.Location = new Point(3, 3);
@@ -1981,7 +2012,7 @@ partial class FrmSettings
         // label5
         // 
         label5.AutoSize = true;
-        label5.Location = new Point(21, 75);
+        label5.Location = new Point(21, 66);
         label5.Margin = new Padding(4, 0, 4, 0);
         label5.Name = "label5";
         label5.Size = new Size(95, 15);
@@ -2013,7 +2044,7 @@ partial class FrmSettings
         // label3
         // 
         label3.AutoSize = true;
-        label3.Location = new Point(21, 44);
+        label3.Location = new Point(21, 36);
         label3.Margin = new Padding(4, 0, 4, 0);
         label3.Name = "label3";
         label3.Size = new Size(98, 15);
@@ -2769,6 +2800,39 @@ partial class FrmSettings
         label49.TabIndex = 222;
         label49.Text = "(1 munt per regel met een optionele opmerking erachter)";
         // 
+        // groupBox6
+        // 
+        groupBox6.AutoSize = true;
+        groupBox6.Controls.Add(label26);
+        groupBox6.Controls.Add(EditStorsiAddAmount);
+        groupBox6.Location = new Point(10, 186);
+        groupBox6.Margin = new Padding(10);
+        groupBox6.Name = "groupBox6";
+        groupBox6.Padding = new Padding(10);
+        groupBox6.Size = new Size(227, 86);
+        groupBox6.TabIndex = 160;
+        groupBox6.TabStop = false;
+        groupBox6.Text = "Instellingen";
+        // 
+        // label26
+        // 
+        label26.AutoSize = true;
+        label26.Location = new Point(25, 36);
+        label26.Margin = new Padding(4, 0, 4, 0);
+        label26.Name = "label26";
+        label26.Size = new Size(38, 15);
+        label26.TabIndex = 125;
+        label26.Text = "Add ..";
+        // 
+        // EditStorsiAddAmount
+        // 
+        EditStorsiAddAmount.Increment = new decimal(new int[] { 25, 0, 0, 131072 });
+        EditStorsiAddAmount.Location = new Point(157, 34);
+        EditStorsiAddAmount.Margin = new Padding(4, 3, 4, 3);
+        EditStorsiAddAmount.Name = "EditStorsiAddAmount";
+        EditStorsiAddAmount.Size = new Size(56, 23);
+        EditStorsiAddAmount.TabIndex = 126;
+        // 
         // FrmSettings
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
@@ -2789,6 +2853,7 @@ partial class FrmSettings
         flowLayoutPanel5.PerformLayout();
         groupBox1.ResumeLayout(false);
         groupBox1.PerformLayout();
+        ((System.ComponentModel.ISupportInitialize)EditBbStdDeviation).EndInit();
         groupBoxStoch.ResumeLayout(false);
         groupBoxStoch.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)EditStochValueOversold).EndInit();
@@ -2911,6 +2976,9 @@ partial class FrmSettings
         tabShortBlackList.PerformLayout();
         panel6.ResumeLayout(false);
         panel6.PerformLayout();
+        groupBox6.ResumeLayout(false);
+        groupBox6.PerformLayout();
+        ((System.ComponentModel.ISupportInitialize)EditStorsiAddAmount).EndInit();
         ResumeLayout(false);
     }
 
@@ -3130,4 +3198,9 @@ partial class FrmSettings
     private CheckBox EditCheckFurtherPriceMove;
     private Label label83;
     private ComboBox EditTradeVia;
+    private Label label22;
+    private NumericUpDown EditBbStdDeviation;
+    private GroupBox groupBox6;
+    private Label label26;
+    private NumericUpDown EditStorsiAddAmount;
 }

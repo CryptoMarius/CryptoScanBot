@@ -97,6 +97,8 @@ public partial class FrmSettings : Form
         EditStochValueOversold.Value = (decimal)settings.General.StochValueOversold;
         EditStochValueOverbought.Value = (decimal)settings.General.StochValueOverbought;
 
+        EditBbStdDeviation.Value = (decimal)settings.General.BbStdDeviation;
+
         UserControlTelegram.LoadConfig();
 
 
@@ -218,6 +220,8 @@ public partial class FrmSettings : Form
 
         // STORSI
         UserControlSettingsSoundAndColorsStoRsi.LoadConfig("STORSI", settings.Signal.StoRsi);
+        EditStorsiAddAmount.Value = settings.Signal.StoRsi.AddAmount;
+
 
         // JUMP
         UserControlSettingsSoundAndColorsJump.LoadConfig("Jump", settings.Signal.Jump);
@@ -364,6 +368,8 @@ public partial class FrmSettings : Form
         settings.General.StochValueOversold = (double)EditStochValueOversold.Value;
         settings.General.StochValueOverbought = (double)EditStochValueOverbought.Value;
 
+        settings.General.BbStdDeviation = (double)EditBbStdDeviation.Value;
+
         UserControlTelegram.SaveConfig();
 
 
@@ -449,6 +455,8 @@ public partial class FrmSettings : Form
 
         // STORSI
         UserControlSettingsSoundAndColorsStoRsi.SaveConfig(settings.Signal.StoRsi);
+        settings.Signal.StoRsi.AddAmount = (int)EditStorsiAddAmount.Value;
+
 
         // JUMP
         UserControlSettingsSoundAndColorsJump.SaveConfig(settings.Signal.Jump);

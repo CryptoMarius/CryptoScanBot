@@ -35,14 +35,6 @@ public class CandleIndicatorData
     public double? SlopeEma20 { get; set; }
     public double? SlopeEma50 { get; set; }
 #endif
-#if EXTRASTRATEGIESDPO
-    public double? DpoSma { get; set; }
-    public double? DpoOscillator { get; set; }
-#endif
-#if EXTRASTRATEGIESFISHER
-    public double? FisherValue { get; set; }
-    public double? FisherTrigger { get; set; }
-#endif
 
     public double? Rsi { get; set; }
     //public double? SlopeRsi { get; set; }
@@ -60,11 +52,11 @@ public class CandleIndicatorData
 #endif
 
     /// <summary>
-    /// Stoch Oscillator %K (blauw)
+    /// Stoch Oscillator %K (blue)
     /// </summary>
     public double? StochOscillator { get; set; } // K
     /// <summary>
-    /// Stoch Signal %D (rood)
+    /// Stoch Signal %D (red)
     /// </summary>
     public double? StochSignal { get; set; } // D
 
@@ -81,8 +73,8 @@ public class CandleIndicatorData
 
     public double? KeltnerUpperBand { get; set; }
     public double? KeltnerLowerBand { get; set; }
-    public double? KeltnerCenterLine { get; set; }
-    public double? KeltnerCenterLineSlope { get; set; }
+    //public double? KeltnerCenterLine { get; set; }
+    //public double? KeltnerCenterLineSlope { get; set; }
 
     // Voor de SMA lookback willen we 60 sma200's erin, dus 200 + 60
     private const int maxCandles = 260;
@@ -276,15 +268,6 @@ public class CandleIndicatorData
 
         // Berekend vanuit de EMA 20 en de upper en lowerband ontstaat uit 2x de ATR
         List<KeltnerResult> keltnerList = (List<KeltnerResult>)Indicator.GetKeltner(history, 20, 1);
-#if EXTRASTRATEGIESSLOPEKELTNER
-        List<SlopeResult> keltnerSlopeList = keltnerList.GetSlope(3);
-#endif
-#if EXTRASTRATEGIESDPO
-        List<DpoResult> dpoList = (List<DpoResult>)history.GetDpo(25);
-#endif
-#if EXTRASTRATEGIESFISHER
-        List<FisherTransformResult> fisherList = (List<FisherTransformResult>)history.GetFisherTransform();
-#endif
 
         //List<AtrResult> atrList = (List<AtrResult>)Indicator.GetAtr(history);
         List<RsiResult> rsiList = (List<RsiResult>)history.GetRsi();
@@ -304,7 +287,8 @@ public class CandleIndicatorData
         List<ParabolicSarResult> psarListJason = (List<ParabolicSarResult>)history.CalcParabolicSarJasonLam();
         List<ParabolicSarResult> psarListTulip = (List<ParabolicSarResult>)history.CalcParabolicSarTulip();
 #endif
-        List<BollingerBandsResult> bollingerBandsList = (List<BollingerBandsResult>)history.GetBollingerBands();
+        List<BollingerBandsResult> bollingerBandsList = (List<BollingerBandsResult>)history.GetBollingerBands(
+            standardDeviations: GlobalData.Settings.General.BbStdDeviation);
 
         // Because Skender.Psar has different results  we use the old ta-lib (I dont like that)
         //var inOpen = history.Select(x => Convert.ToDouble(x.Open)).ToArray();
@@ -410,24 +394,8 @@ public class CandleIndicatorData
 #endif
                 candleData.KeltnerUpperBand = keltnerList[index].UpperBand;
                 candleData.KeltnerLowerBand = keltnerList[index].LowerBand;
-                candleData.KeltnerCenterLine = keltnerList[index].Centerline;
-#if EXTRASTRATEGIESSLOPEKELTNER
-                candleData.KeltnerCenterLineSlope = keltnerSlopeList[index].Slope;
-#endif
-#if EXTRASTRATEGIESDPO
-                // https://github.com/DaveSkender/Stock.Indicators/discussions/551
-                // this one is a bit unusual as it shifts the values back by N/2+1 periods
-                if (index > 13)
-                {
-                    candleData.DpoSma = dpoList[index - 13].Sma;
-                    candleData.DpoOscillator = dpoList[index - 13].Dpo;
-                }
-#endif
-#if EXTRASTRATEGIESFISHER
-                candleData.FisherValue = fisherList[index].Fisher;
-                candleData.FisherTrigger = fisherList[index].Trigger;
-#endif
-
+                //candleData.KeltnerCenterLine = keltnerList[index].Centerline;
+                //candleData.KeltnerCenterLineSlope = keltnerSlopeList[index].Slope;
             }
             catch (Exception error)
             {

@@ -17,7 +17,7 @@ public class SettingsGeneral
     public int ExchangeId { get; set; } = 2;
     [Computed]
     [JsonIgnore]
-    public virtual Model.CryptoExchange Exchange { get; set; }
+    public virtual Model.CryptoExchange? Exchange { get; set; }
 
     public bool BlackTheming { get; set; } = false;
     public CryptoTradingApp TradingApp { get; set; } = CryptoTradingApp.Altrady;
@@ -61,7 +61,13 @@ public class SettingsGeneral
     /// </summary>
     public double StochValueOverbought { get; set; } = 80;
 
+    /// <summary>
+    /// Standard Deviation for the Bollingerbands indicator
+    /// </summary>
+    public double BbStdDeviation { get; set; } = 2.0;
     
+
+
     // Op welk interval moet de totale markttrend berekend worden (standaard op alle intervallen)
     public List<string> IntervalForMarketTrend = [];
 
