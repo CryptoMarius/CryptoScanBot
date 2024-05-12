@@ -770,6 +770,10 @@ public class SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTr
             IntervalId = Interval.Id,
             BackTest = GlobalData.BackTest,
             Price = candle.Close,
+            PriceMin = candle.Close, // statistics
+            PriceMax = candle.Close, // statistics
+            PriceMinPerc = 0, // statistics
+            PriceMaxPerc = 0, // statistics
             Volume = Symbol.Volume,
             EventTime = candle.OpenTime,
             OpenDate = CandleTools.GetUnixDate(candle.OpenTime),
