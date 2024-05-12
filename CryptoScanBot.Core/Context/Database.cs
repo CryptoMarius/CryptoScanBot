@@ -404,7 +404,7 @@ public class CryptoDatabase : IDisposable
 
     public CryptoDatabase()
     {
-        Connection = new("Filename=" + basePath + GlobalData.AppName + ".db;Mode=ReadWriteCreate");
+        Connection = new("Filename=" + basePath + GlobalData.AppName + ".db;Mode=ReadWriteCreate;"); //Pooling=True;default)
     }
 
     public SqliteTransaction BeginTransaction()
@@ -957,8 +957,11 @@ public class CryptoDatabase : IDisposable
 
                 "Rsi TEXT NULL," +
                 "SlopeRsi TEXT NULL," +
+
                 "Psar TEXT NULL," +
-                "Psar2 TEXT NULL," +
+                "PSarDave TEXT NULL," +
+                "PSarJason TEXT NULL," +
+                "PSarTulip TEXT NULL," +
 
                 "sma20 TEXT NULL," +
                 "ema50 TEXT NULL," +
@@ -982,6 +985,11 @@ public class CryptoDatabase : IDisposable
                 "Trend4h INTEGER NULL," +
                 "Trend12h INTEGER NULL," +
 
+                // statistics
+                "PriceMin TEXT NULL," +
+                "PriceMax TEXT NULL," +
+                "PriceMinPerc TEXT NULL," +
+                "PriceMaxPerc TEXT NULL," +
 
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)" +
                 "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)," +

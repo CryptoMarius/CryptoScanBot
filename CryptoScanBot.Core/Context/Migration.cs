@@ -6,7 +6,7 @@ namespace CryptoScanBot.Core.Context;
 public class Migration
 {
     // De huidige database versie
-    public readonly static int CurrentDatabaseVersion = 15;
+    public readonly static int CurrentDatabaseVersion = 16;
 
 
     public static void Execute(CryptoDatabase database, int CurrentVersion)
@@ -410,6 +410,29 @@ public class Migration
 
                 // Kraken inactief zetten (de klines zijn ontzettend traag en de fee is ook gewoon te hoog 0.25%)
                 database.Connection.Execute("update TradeAccount set CanTrade=0 where Name like '%Kraken%' and TradeAccountType=2", transaction);
+
+                // update version
+                version.Version += 1;
+                database.Connection.Update(version, transaction);
+                transaction.Commit();
+            }
+
+
+            //***********************************************************
+            if (CurrentVersion > version.Version && version.Version == 15)
+            {
+                using var transaction = database.BeginTransaction();
+
+                // psar values debug
+                database.Connection.Execute("alter table signal add PSarDave Text null", transaction);
+                database.Connection.Execute("alter table signal add PSarJason Text null", transaction);
+                database.Connection.Execute("alter table signal add PSarTulip Text null", transaction);
+
+                // statistics
+                database.Connection.Execute("alter table signal add PriceMin Text null", transaction);
+                database.Connection.Execute("alter table signal add PriceMax Text null", transaction);
+                database.Connection.Execute("alter table signal add PriceMinPerc Text null", transaction);
+                database.Connection.Execute("alter table signal add PriceMaxPerc Text null", transaction);
 
                 // update version
                 version.Version += 1;
