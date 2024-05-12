@@ -67,13 +67,6 @@ public class ExcelSignalDump(CryptoSignal Signal) : ExcelBase(Signal.Symbol.Name
                     WriteCell(sheet, columns++, row, "BB.Upper");
                     WriteCell(sheet, columns++, row, "BB.Perc");
 
-                    WriteCell(sheet, columns++, row, "K.Lower");
-                    WriteCell(sheet, columns++, row, "K.Center");
-                    WriteCell(sheet, columns++, row, "K.Upper");
-#if EXTRASTRATEGIESSLOPEKELTNER
-                    WriteCell(sheet, columns++, row, "K.Slope");
-#endif
-
                     WriteCell(sheet, columns++, row, "SMA20");
                     WriteCell(sheet, columns++, row, "SMA50");
                     WriteCell(sheet, columns++, row, "SMA200");
@@ -112,12 +105,6 @@ public class ExcelSignalDump(CryptoSignal Signal) : ExcelBase(Signal.Symbol.Name
                                 WriteCell(sheet, column++, row, candle.CandleData.BollingerBandsUpperBand, CellStyleDecimalNormal);                                
                                 WriteCell(sheet, column++, row, candle.CandleData.BollingerBandsPercentage, CellStylePercentageNormal);
                                 
-                                WriteCell(sheet, column++, row, candle.CandleData.KeltnerLowerBand, CellStyleDecimalNormal);
-                                WriteCell(sheet, column++, row, candle.CandleData.KeltnerCenterLine, CellStyleDecimalNormal);
-                                WriteCell(sheet, column++, row, candle.CandleData.KeltnerUpperBand, CellStyleDecimalNormal);                                
-#if EXTRASTRATEGIESSLOPEKELTNER
-                                WriteCell(sheet, column++, row, candle.CandleData.KeltnerCenterLineSlope, CellStyleDecimalNormal);                                
-#endif
 
                                 WriteCell(sheet, column++, row, candle.CandleData.Sma20, CellStyleDecimalNormal);
                                 WriteCell(sheet, column++, row, candle.CandleData.Sma50, CellStyleDecimalNormal);
