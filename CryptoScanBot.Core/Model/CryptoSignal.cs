@@ -79,6 +79,12 @@ public class CryptoSignal
 
     public string EventText { get; set; }
     public decimal Price { get; set; }
+
+    public decimal PriceMin { get; set; }
+    public decimal PriceMax { get; set; }
+    public double PriceMinPerc { get; set; }
+    public double PriceMaxPerc { get; set; }
+
     [Computed]
     public decimal? LastPrice { get; set; }
     [Computed]
@@ -102,14 +108,9 @@ public class CryptoSignal
 
     // PSAR waarden
     public double? PSar { get; set; }
-#if DEBUG
-    [Computed]
     public double? PSarDave { get; set; }
-    [Computed]
     public double? PSarJason { get; set; }
-    [Computed]
     public double? PSarTulip { get; set; }
-#endif
 
     public double? KeltnerUpperBand { get; set; }
     public double? KeltnerLowerBand { get; set; }
@@ -156,6 +157,7 @@ public class CryptoSignal
     public CryptoTrendIndicator? Trend1h { get; set; }
     public CryptoTrendIndicator? Trend4h { get; set; }
     public CryptoTrendIndicator? Trend12h { get; set; }
+
 
 #if TRADEBOT
     [Computed]
