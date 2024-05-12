@@ -377,11 +377,16 @@ public class TradeTools
                     orderStatusChanged = true;
                     ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} check {order.OrderId}");
 
-                    //  Bij iedere step hoort een part (maar technisch kan alles)
-                    CryptoPositionPart part = PositionTools.FindPositionPart(position, step.PositionPartId) ?? throw new Exception("Probleem met het vinden van een part");
-                    string s;
-                    string msgInfo = $"{part.Purpose} {order.Status} {order.Side} {order.Type} order={order.OrderId} " +
-                        $"price={order.AveragePrice?.ToString0()} quantity={order.QuantityFilled?.ToString0()} value={order.QuoteQuantity.ToString0()}";
+                    CryptoPositionPart part = PositionTools.FindPositionPart(position, step.PositionPartId) ?? throw new Exception("Problem finding parent part");
+                    string msgInfo = $"{position.Symbol.Name} " +
+                        $"{order.Status.ToString().ToLower()} " + // PartiallyAndClosed -> Filled
+                        $"{part.Purpose.ToString().ToLower()} " +
+                        $"{order.Side.ToString().ToLower()} " +
+                        $"{order.Type.ToString().ToLower()} " +
+                        $"order={order.OrderId} " +
+                        $"price={order.AveragePrice?.ToString0()} " +
+                        $"quantity={order.QuantityFilled?.ToString0()} " +
+                        $"value={order.QuoteQuantity.ToString0(position.Symbol.QuoteData.DisplayFormat)}";
 
                     CalculateOrderFeeFromTrades(position.Symbol, step);
 
@@ -436,7 +441,7 @@ public class TradeTools
                             // Geen melding geven bij afgesloten orders
                             if (!isOrderClosed)
                             {
-                                s = $"{position.Symbol.Name} {msgInfo} user takeover";
+                                string s = $"{msgInfo} user takeover";
                                 GlobalData.AddTextToLogTab(s);
                                 GlobalData.AddTextToTelegram(s, position);
                             }
@@ -446,7 +451,6 @@ public class TradeTools
                     else if (order.Status.IsFilled())
                     {
                         ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} check {order.OrderId} -> IsFilled");
-                        s = $"{position.Symbol.Name} {msgInfo}";
 
                         // Statistics entry or take profit order.
                         step.CloseTime = order.UpdateTime;
@@ -512,8 +516,6 @@ public class TradeTools
                         CryptoOrderSide entryOrderSide = position.GetEntryOrderSide();
                         if (step.Side == entryOrderSide)
                         {
-                            s += " entry";
-
                             // Als er 1 (of meerdere trades zijn) dan zitten we in de trade (de user ticker valt wel eens stil)
                             // Eventuele handmatige correctie geven daarna problemen (we mogen eigenlijk niet handmatig corrigeren)
                             // (Dit geeft te denken aan de problemen als we straks een lopende order gaan opnemen als een positie)
@@ -532,19 +534,14 @@ public class TradeTools
                         if (step.Side == takeProfitOrderSide)
                         {
                             part.CloseTime = order.UpdateTime;
-                            if (position.Status == CryptoPositionStatus.Ready)
-                                s += $" ready"; //  ({position.Percentage:N2}%)
-                            else
-                                s += $" takeprofit"; //  ({part.Percentage:N2}%) is die wel berekend?
-
                             ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} check {order.OrderId} -> IsFilled (takeprofit)");
                         }
 
                         // Geen melding geven bij afgesloten orders
                         if (!isOrderClosed)
                         {
-                            GlobalData.AddTextToLogTab(s);
-                            GlobalData.AddTextToTelegram(s, position);
+                            GlobalData.AddTextToLogTab(msgInfo);
+                            GlobalData.AddTextToTelegram(msgInfo, position);
                         }
                     }
 
