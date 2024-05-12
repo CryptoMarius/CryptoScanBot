@@ -1,4 +1,6 @@
-﻿using CryptoScanBot.Core.Intern;
+﻿using System.Reflection;
+
+using CryptoScanBot.Core.Intern;
 
 namespace CryptoScanBot;
 
@@ -11,6 +13,7 @@ static class Program
     static void Main()
     {
         // Vroeger dan alle andere..
+        InitializeApplicationVariables();
         ScannerLog.InitializeLogging();
 
         // Add the event handler for handling UI thread exceptions to the event.
@@ -26,6 +29,20 @@ static class Program
         Application.SetHighDpiMode(HighDpiMode.SystemAware);
         Application.SetCompatibleTextRenderingDefault(false);
         Application.Run(new FrmMain());
+    }
+
+
+    public static void InitializeApplicationVariables()
+    {
+        GlobalData.AppName = Assembly.GetExecutingAssembly().GetName().Name;
+        GlobalData.AppPath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+
+        var assembly = Assembly.GetExecutingAssembly().GetName();
+        string appVersion = assembly.Version.ToString();
+        while (appVersion.EndsWith(".0"))
+            appVersion = appVersion[0..^2];
+
+        GlobalData.AppVersion = appVersion;
     }
 
 

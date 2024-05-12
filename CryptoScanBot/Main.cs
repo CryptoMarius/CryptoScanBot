@@ -49,7 +49,6 @@ public partial class FrmMain : Form
     public FrmMain()
     {
         InitializeComponent();
-        InitializeApplicationVariables();
 
         ApplicationPlaySounds = MenuMain.AddCommand(null, "Geluiden afspelen", Command.None, ApplicationPlaySounds_Click);
         ApplicationPlaySounds.Checked = true;
@@ -301,20 +300,6 @@ public partial class FrmMain : Form
         Text = $"{GlobalData.AppName} {GlobalData.AppVersion} {GlobalData.Settings.General.ExchangeName} {GlobalData.Settings.General.ExtraCaption}".Trim();
 
         Refresh(); // Redraw
-    }
-
-
-    public static void InitializeApplicationVariables()
-    {
-        GlobalData.AppName = Assembly.GetExecutingAssembly().GetName().Name;
-        GlobalData.AppPath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
-
-        var assembly = Assembly.GetExecutingAssembly().GetName();
-        string appVersion = assembly.Version.ToString();
-        while (appVersion.EndsWith(".0"))
-            appVersion = appVersion[0..^2];
-
-        GlobalData.AppVersion = appVersion;
     }
 
 

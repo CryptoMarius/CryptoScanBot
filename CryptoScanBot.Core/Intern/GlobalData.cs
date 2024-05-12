@@ -44,6 +44,7 @@ static public class GlobalData
     public static string AppName { get; set; } = "";
     public static string AppPath { get; set; } = "";
     public static string AppVersion { get; set; } = "";
+    private static string? AppDataFolder { get; set; } = ""; // depends on starup parameters
 
     public static bool ApplicationIsShowed { get; set; } = false;
     public static bool ApplicationIsClosing { get; set; } = false;
@@ -801,7 +802,6 @@ static public class GlobalData
     static public void TelegramHasChanged(string text) => TelegramHasChangedEvent?.Invoke(text);
     static public void SetCandleTimerEnable(bool value) => SetCandleTimerEnableEvent?.Invoke(value);
 
-    private static string? AppDataFolder;
 
     static public string GetBaseDir()
     {
