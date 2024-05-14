@@ -31,11 +31,13 @@ public class ExchangeHelper
         else if (exchangeId == 3)
             return new BybitFutures.Api();
         else if (exchangeId == 4)
-            return new KucoinSpot.Api();
+            return new Kucoin.Spot.Api();
         else if (exchangeId == 5)
             return new KrakenSpot.Api();
         else if (exchangeId == 6)
             return new BinanceFutures.Api();
+        else if (exchangeId == 7)
+            return new Kucoin.Spot.Api(); // todo Futures
         else
             throw new Exception("Exchange not supported");
     }
