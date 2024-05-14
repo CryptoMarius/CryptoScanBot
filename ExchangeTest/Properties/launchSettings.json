@@ -2,7 +2,7 @@
   "profiles": {
     "ExchangeTest": {
       "commandName": "Project",
-      "commandLineArgs": "-e \"Bybit Spot\" -f CryptoScanner.Bybit.Spot.Live\r\n"
+      "commandLineArgs": "-e \"Kucoin Futures\" -f \"CryptoScanBot\\Test\\Kucoin Futures\"\r\n"
     }
   }
 }
