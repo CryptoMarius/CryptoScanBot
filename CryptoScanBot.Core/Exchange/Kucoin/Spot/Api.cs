@@ -1,6 +1,5 @@
 ﻿using CryptoExchange.Net.Objects;
 using CryptoScanBot.Core.Context;
-using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
@@ -10,7 +9,7 @@ using Kucoin.Net.Enums;
 using Kucoin.Net.Objects;
 using Kucoin.Net.Objects.Models.Spot;
 
-namespace CryptoScanBot.Core.Exchange.KucoinSpot;
+namespace CryptoScanBot.Core.Exchange.Kucoin.Spot;
 
 
 public class Api : ExchangeBase
@@ -113,7 +112,7 @@ public class Api : ExchangeBase
     // Converteer de orderstatus van Exchange naar "intern"
     public static CryptoOrderStatus LocalOrderStatus(OrderStatus orderStatus)
     {
-        
+
         CryptoOrderStatus localOrderStatus = orderStatus switch
         {
             OrderStatus.Active => CryptoOrderStatus.New,
@@ -285,7 +284,7 @@ public class Api : ExchangeBase
     {
         return Task.FromResult(0); // await GetTrades.FetchTradesForSymbolAsync(database, position);
     }
-    
+
     public override Task<int> GetOrdersAsync(CryptoDatabase database, CryptoPosition position)
     {
         return Task.FromResult(0);

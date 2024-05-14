@@ -11,11 +11,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Exchange\Kucoin\Futures\**" />
+    <EmbeddedResource Remove="Exchange\Kucoin\Futures\**" />
+    <None Remove="Exchange\Kucoin\Futures\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Remove="Exchange\BinanceSpot\FetchTradesForOrder.cs" />
     <Compile Remove="Exchange\BybitFutures\FetchTradesForOrder.cs" />
     <Compile Remove="Exchange\BybitSpot\FetchTradesForOrder.cs" />
     <Compile Remove="Exchange\KrakenSpot\FetchTradesForOrder.cs" />
-    <Compile Remove="Exchange\KucoinSpot\FetchTradesForOrder.cs" />
     <Compile Remove="Signal\SignalMacdLtLong.cs" />
     <Compile Remove="Signal\SignalMacdLtShort.cs" />
     <Compile Remove="Signal\SignalMacdTestLong.cs" />
@@ -66,6 +71,10 @@
     <None Update="Sounds\sound-trade-notification.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Exchange\Kucoin\Futures\" />
   </ItemGroup>
 
 </Project>

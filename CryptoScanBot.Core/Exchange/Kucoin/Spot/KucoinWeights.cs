@@ -1,6 +1,6 @@
 ﻿using CryptoScanBot.Core.Intern;
 
-namespace CryptoScanBot.Core.Exchange.KucoinSpot;
+namespace CryptoScanBot.Core.Exchange.Kucoin.Spot;
 
 internal class KucoinWeight
 {

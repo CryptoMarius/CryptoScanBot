@@ -7,7 +7,7 @@ using Kucoin.Net.Clients;
 using Kucoin.Net.Enums;
 using Kucoin.Net.Objects.Models.Spot;
 
-namespace CryptoScanBot.Core.Exchange.KucoinSpot;
+namespace CryptoScanBot.Core.Exchange.Kucoin.Spot;
 
 public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
 {

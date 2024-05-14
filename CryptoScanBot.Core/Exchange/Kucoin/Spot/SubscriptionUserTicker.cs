@@ -3,7 +3,7 @@ using CryptoExchange.Net.Objects.Sockets;
 using Kucoin.Net.Clients;
 using Kucoin.Net.Objects.Models.Spot.Socket;
 
-namespace CryptoScanBot.Core.Exchange.KucoinSpot;
+namespace CryptoScanBot.Core.Exchange.Kucoin.Spot;
 #if TRADEBOT
 public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
 {

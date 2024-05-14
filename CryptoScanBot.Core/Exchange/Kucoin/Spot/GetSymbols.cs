@@ -8,7 +8,7 @@ using Dapper.Contrib.Extensions;
 using Kucoin.Net.Clients;
 using Kucoin.Net.Objects.Models.Spot;
 
-namespace CryptoScanBot.Core.Exchange.KucoinSpot;
+namespace CryptoScanBot.Core.Exchange.Kucoin.Spot;
 
 public class GetSymbols
 {

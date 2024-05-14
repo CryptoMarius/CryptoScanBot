@@ -4,7 +4,7 @@ using CryptoScanBot.Core.Model;
 using Kucoin.Net.Clients;
 using Kucoin.Net.Enums;
 
-namespace CryptoScanBot.Core.Exchange.KucoinSpot;
+namespace CryptoScanBot.Core.Exchange.Kucoin.Spot;
 
 /// <summary>
 /// Fetch the candles from Binance

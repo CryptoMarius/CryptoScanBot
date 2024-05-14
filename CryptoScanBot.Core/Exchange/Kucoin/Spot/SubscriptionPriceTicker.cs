@@ -4,7 +4,7 @@ using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using Kucoin.Net.Clients;
 
-namespace CryptoScanBot.Core.Exchange.KucoinSpot;
+namespace CryptoScanBot.Core.Exchange.Kucoin.Spot;
 
 public class SubscriptionPriceTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
 {
