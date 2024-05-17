@@ -152,24 +152,25 @@ static public class GlobalData
 
     static public void LoadExchanges()
     {
+        // Load & index the exchanges
         AddTextToLogTab("Reading exchange information");
 
-        // De exchanges uit de database laden
         ExchangeListId.Clear();
         ExchangeListName.Clear();
 
         using var database = new CryptoDatabase();
         foreach (Model.CryptoExchange exchange in database.Connection.GetAll<Model.CryptoExchange>())
         {
-            AddExchange(exchange);
+            if (exchange.IsActive)
+                AddExchange(exchange);
         }
     }
 
     static public void LoadAccounts()
     {
+        // Load & index the accounts
         AddTextToLogTab("Reading account information");
 
-        // De accounts uit de database laden
         TradeAccountList.Clear();
 
         using var database = new CryptoDatabase();
@@ -190,7 +191,7 @@ static public class GlobalData
         ActiveTradeAccountList.Clear();
         foreach (CryptoTradeAccount tradeAccount in TradeAccountList.Values)
         {
-            // Er zijn 3 accounts per exchange aanwezig (of dat een goede keuze is vraag ik me af)
+            // There are 3 accounts per exchange
             if (tradeAccount.ExchangeId == Settings.General.ExchangeId)
             {
                 if (tradeAccount.TradeAccountType == CryptoTradeAccountType.BackTest)
@@ -200,7 +201,7 @@ static public class GlobalData
                 if (tradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading)
                     ExchangeRealTradeAccount = tradeAccount;
 
-                // Niet echt super, enumeratie oid hiervoor in het leven roepen, werkt verder wel
+                // That BackTest setting is kind of a weird setting for now...
                 if (BackTest || Settings.Trading.TradeVia != CryptoTradeAccountType.NoTrading)
                     ActiveTradeAccountList.Add(tradeAccount.Id, tradeAccount);
             }
@@ -210,9 +211,9 @@ static public class GlobalData
 
     static public void LoadIntervals()
     {
+        // Load & index all the available intervals
         AddTextToLogTab("Reading interval information");
 
-        // De intervallen uit de database laden
         IntervalList.Clear();
         IntervalListId.Clear();
         IntervalListPeriod.Clear();
