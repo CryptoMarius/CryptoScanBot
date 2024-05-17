@@ -504,7 +504,7 @@ public class SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTr
         if (!HasOpenPosition() && !signal.BackTest && TradingConfig.Signals[signal.Side].InBlackList(Symbol.Name) == MatchBlackAndWhiteList.Present)
         {
             // Als de muntpaar op de black lijst staat dan dit signaal overslagen
-            eventText.Add("staat op blacklist");
+            eventText.Add("blacklisted");
             signal.IsInvalid = true;
         }
 
@@ -512,7 +512,7 @@ public class SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTr
         if (!HasOpenPosition() && !signal.BackTest && TradingConfig.Signals[signal.Side].InWhiteList(Symbol.Name) == MatchBlackAndWhiteList.NotPresent)
         {
             // Als de muntpaar niet in de white lijst staat dan dit signaal overslagen
-            eventText.Add("niet in whitelist");
+            eventText.Add("not whitelisted");
             signal.IsInvalid = true;
         }
 
@@ -523,10 +523,10 @@ public class SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTr
         {
             if (GlobalData.Settings.Signal.LogAnalysisMinMaxChangePercentage)
             {
-                string text = string.Format("Analyse {0} 1d change {1} niet tussen {2} .. {3}", Symbol.Name, signal.Last24HoursChange.ToString("N2"), GlobalData.Settings.Signal.AnalysisMinChangePercentage.ToString(), GlobalData.Settings.Signal.AnalysisMaxChangePercentage.ToString());
+                string text = string.Format("Analyse {0} 1d change {1} not between {2} .. {3}", Symbol.Name, signal.Last24HoursChange.ToString("N2"), GlobalData.Settings.Signal.AnalysisMinChangePercentage.ToString(), GlobalData.Settings.Signal.AnalysisMaxChangePercentage.ToString());
                 GlobalData.AddTextToLogTab(text);
             }
-            eventText.Add("1d verandering% te hoog");
+            eventText.Add("1d change% to high");
             signal.IsInvalid = true;
         }
 
@@ -536,10 +536,10 @@ public class SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTr
         {
             if (GlobalData.Settings.Signal.LogAnalysisMinMaxEffectivePercentage)
             {
-                string text = string.Format("Analyse {0} 1d change effectief {1} niet tussen {2} .. {3}", Symbol.Name, signal.Last24HoursEffective.ToString("N2"), GlobalData.Settings.Signal.AnalysisMinEffectivePercentage.ToString(), GlobalData.Settings.Signal.AnalysisMaxEffectivePercentage.ToString());
+                string text = string.Format("Analyse {0} 1d change effective {1} not between {2} .. {3}", Symbol.Name, signal.Last24HoursEffective.ToString("N2"), GlobalData.Settings.Signal.AnalysisMinEffectivePercentage.ToString(), GlobalData.Settings.Signal.AnalysisMaxEffectivePercentage.ToString());
                 GlobalData.AddTextToLogTab(text);
             }
-            eventText.Add("1d effectief% te hoog");
+            eventText.Add("1d effective% to high");
             signal.IsInvalid = true;
         }
 
@@ -549,10 +549,10 @@ public class SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTr
         {
             if (GlobalData.Settings.Signal.LogAnalysisMinMaxEffective10DaysPercentage)
             {
-                string text = string.Format("Analyse {0} 10d change effectief {1} niet tussen {2} .. {3}", Symbol.Name, signal.Last10DaysEffective.ToString("N2"), GlobalData.Settings.Signal.AnalysisMinEffective10DaysPercentage.ToString(), GlobalData.Settings.Signal.AnalysisMaxEffective10DaysPercentage.ToString());
+                string text = string.Format("Analyse {0} 10d change effective {1} not between {2} .. {3}", Symbol.Name, signal.Last10DaysEffective.ToString("N2"), GlobalData.Settings.Signal.AnalysisMinEffective10DaysPercentage.ToString(), GlobalData.Settings.Signal.AnalysisMaxEffective10DaysPercentage.ToString());
                 GlobalData.AddTextToLogTab(text);
             }
-            eventText.Add("10d effectief% te hoog");
+            eventText.Add("10d effective% to high");
             signal.IsInvalid = true;
         }
 
