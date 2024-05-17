@@ -552,6 +552,7 @@ public class CryptoDatabase : IDisposable
             connection.Connection.Execute("CREATE TABLE [Exchange] (" +
                  "Id integer primary key autoincrement not null," +
                  "LastTimeFetched TEXT NULL," +
+                 "IsActive Integer not NULL," +
                  "Name TEXT not NULL," +
                  "FeeRate TEXT not NULL" +
             ")");
@@ -562,22 +563,25 @@ public class CryptoDatabase : IDisposable
             // De ondersteunde exchanges toevoegen
             // NB: In de code wordt aannames van de ID gedaan dus gaarne niet knutselen met volgorde
             using var transaction = connection.Connection.BeginTransaction();
-            Model.CryptoExchange exchange = new() { Name = "Binance Spot", FeeRate = 0.1m };
+            Model.CryptoExchange exchange = new() { Name = "Binance Spot", FeeRate = 0.1m, IsActive = true };
             connection.Connection.Insert(exchange, transaction);
 
-            exchange = new() { Name = "Bybit Spot", FeeRate = 0.1m };
+            exchange = new() { Name = "Bybit Spot", FeeRate = 0.1m, IsActive = true };
             connection.Connection.Insert(exchange, transaction);
 
-            exchange = new() { Name = "Bybit Futures", FeeRate = 0.1m };
+            exchange = new() { Name = "Bybit Futures", FeeRate = 0.1m, IsActive = true };
             connection.Connection.Insert(exchange, transaction);
 
-            exchange = new() { Name = "Kucoin Spot", FeeRate = 0.1m };
+            exchange = new() { Name = "Kucoin Spot", FeeRate = 0.1m, IsActive = true };
             connection.Connection.Insert(exchange, transaction);
 
-            exchange = new() { Name = "Kraken Spot", FeeRate = 0.1m };
+            exchange = new() { Name = "Kraken Spot", FeeRate = 0.1m, IsActive = false };
             connection.Connection.Insert(exchange, transaction);
 
-            exchange = new() { Name = "Binance Futures", FeeRate = 0.1m };
+            exchange = new() { Name = "Binance Futures", FeeRate = 0.1m, IsActive = true };
+            connection.Connection.Insert(exchange, transaction);
+
+            exchange = new() { Name = "Kucoin Futures", FeeRate = 0.1m, IsActive = false };
             connection.Connection.Insert(exchange, transaction);
 
             transaction.Commit();
@@ -651,7 +655,7 @@ public class CryptoDatabase : IDisposable
                 Name = "Binance Futures trading",
                 Short = "Trading",
                 CanTrade = false,
-                ExchangeId = 1,
+                ExchangeId = 6,
                 AccountType = CryptoAccountType.Futures,
                 TradeAccountType = CryptoTradeAccountType.RealTrading,
             };
@@ -662,7 +666,7 @@ public class CryptoDatabase : IDisposable
                 Name = "Binance Futures paper",
                 Short = "Paper",
                 CanTrade = true,
-                ExchangeId = 1,
+                ExchangeId = 6,
                 AccountType = CryptoAccountType.Futures,
                 TradeAccountType = CryptoTradeAccountType.PaperTrade,
             };
@@ -673,7 +677,7 @@ public class CryptoDatabase : IDisposable
                 Name = "Binance Futures backtest",
                 Short = "Backtest",
                 CanTrade = true,
-                ExchangeId = 1,
+                ExchangeId = 6,
                 AccountType = CryptoAccountType.Futures,
                 TradeAccountType = CryptoTradeAccountType.BackTest,
             };
@@ -831,6 +835,43 @@ public class CryptoDatabase : IDisposable
             connection.Connection.Insert(tradeAccount, transaction);
 
 
+
+            // *****************************************************
+            // Kucoin Futures
+            // *****************************************************
+
+            tradeAccount = new()
+            {
+                Name = "Kucoin Futures trading",
+                Short = "Trading",
+                CanTrade = false,
+                ExchangeId = 7,
+                AccountType = CryptoAccountType.Futures,
+                TradeAccountType = CryptoTradeAccountType.RealTrading,
+            };
+            connection.Connection.Insert(tradeAccount, transaction);
+
+            tradeAccount = new()
+            {
+                Name = "Kucoin Futures paper",
+                Short = "Paper",
+                CanTrade = true,
+                ExchangeId = 7,
+                AccountType = CryptoAccountType.Futures,
+                TradeAccountType = CryptoTradeAccountType.PaperTrade,
+            };
+            connection.Connection.Insert(tradeAccount, transaction);
+
+            tradeAccount = new()
+            {
+                Name = "Kucoin Futures backtest",
+                Short = "Backtest",
+                CanTrade = true,
+                ExchangeId = 7,
+                AccountType = CryptoAccountType.Futures,
+                TradeAccountType = CryptoTradeAccountType.BackTest,
+            };
+            connection.Connection.Insert(tradeAccount, transaction);
             transaction.Commit();
         }
     }
@@ -1361,11 +1402,10 @@ public class CryptoDatabase : IDisposable
 
         CleanUpDatabase();
 
-        // Lukt alleen bij het opstarten (exclusief toegang nodig)
+        // Only works during startup (because of exclusive acces)
         using var command = connection.Connection.CreateCommand();
         command.CommandText = "vacuum;";
         command.ExecuteNonQuery();
-
     }
 
 }

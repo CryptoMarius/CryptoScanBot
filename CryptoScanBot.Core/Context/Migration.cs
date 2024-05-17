@@ -434,11 +434,26 @@ public class Migration
                 database.Connection.Execute("alter table signal add PriceMinPerc Text null", transaction);
                 database.Connection.Execute("alter table signal add PriceMaxPerc Text null", transaction);
 
+                // For now Kraken is not fully supported (so we make it inactive until it is fixed)
+                database.Connection.Execute("alter table exchange add IsActive Integer", transaction);
+                database.Connection.Execute("update exchange set IsActive=1", transaction);
+                database.Connection.Execute("update exchange set IsActive=0 where Name like '%Kraken%'", transaction);
+
+                // Nieuwe exchange Kucoin Futures (experiment)
+                database.Connection.Execute("insert into exchange(Name, FeeRate, IsActive) values('Kucoin Futures', 0.1, 1)", transaction);
+                database.Connection.Execute("insert into TradeAccount(Short, Name, AccountType, TradeAccountType, ExchangeId, CanTrade) values('Trading', 'Kucoin Futures trading', 0, 2, 7, 1);", transaction);
+                database.Connection.Execute("insert into TradeAccount(Short, Name, AccountType, TradeAccountType, ExchangeId, CanTrade) values('Paper', 'Kucoin Futures paper', 0, 1, 7, 0);", transaction);
+                database.Connection.Execute("insert into TradeAccount(Short, Name, AccountType, TradeAccountType, ExchangeId, CanTrade) values('Backtest', 'Kucoin Futures backtest', 0, 0, 7, 0);", transaction);
+
+                // De exchangeId's in de TradeAccount van Binance Futures staan verkeerd (verkeerde initialisatie)
+                database.Connection.Execute("update TradeAccount set ExchangeId=6 where name like 'Binance Futures%'", transaction);
+
                 // update version
                 version.Version += 1;
                 database.Connection.Update(version, transaction);
                 transaction.Commit();
             }
+
         }
     }
 
