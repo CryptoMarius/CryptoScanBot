@@ -8,6 +8,7 @@ public class CryptoExchange
     [Key]
     public int Id { get; set; }
     public string Name { get; set; }
+    public bool IsActive { get; set; }
 
     // Datum dat de laatste keer de exchange informatie is opgehaald
     public DateTime? LastTimeFetched { get; set; }
