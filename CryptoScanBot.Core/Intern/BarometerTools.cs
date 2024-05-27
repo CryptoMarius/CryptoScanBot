@@ -143,13 +143,6 @@ public class BarometerTools
                 {
                     candle = new CryptoCandle
                     {
-#if SQLDATABASE
-                        ExchangeId = bmSymbol.ExchangeId,
-                        SymbolId = bmSymbol.Id,
-                        IntervalId = interval.Id,
-#endif
-                        //Symbol = bmSymbol,
-                        //Interval = interval,
                         OpenTime = periodStart,
                     };
                     candles.Add(candle.OpenTime, candle);
@@ -179,10 +172,6 @@ public class BarometerTools
                     symbolInterval.IsChanged = true;
                     symbolInterval.LastCandleSynchronized = periodStart;
                 }
-#if SQLDATABASE
-                // Experimenteel (de berekening van LastFetched gaat fout voor de barometers!)
-                GlobalData.TaskSaveCandles.AddToQueue(candle);
-#endif
             }
 
             // Naar de volgende 1m candle 

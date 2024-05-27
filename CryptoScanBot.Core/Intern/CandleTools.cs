@@ -80,16 +80,7 @@ public static class CandleTools
         // Altijd de candle maken als deze niet bestaat
         if (!candles.TryGetValue(candleOpenUnix, out CryptoCandle candle))
         {
-            candle = new CryptoCandle
-            {
-#if SQLDATABASE
-                ExchangeId = symbol.ExchangeId,
-                SymbolId = symbol.Id,
-	            IntervalId = interval.Id,
-#endif
-                //Symbol = symbol,
-                //Interval = interval
-            };
+            candle = new CryptoCandle();
             candles.Add(candleOpenUnix, candle);
         }
 
@@ -149,11 +140,6 @@ public static class CandleTools
             IsChanged = true;
             candleNew = new CryptoCandle()
             {
-#if SQLDATABASE
-                ExchangeId = symbol.ExchangeId,
-                SymbolId = symbol.Id,
-                IntervalId = higherInterval.Id,
-#endif
                 OpenTime = candleHigherTimeFrameOpenTime,
                 Open = -1,
                 High = decimal.MinValue,
@@ -225,33 +211,11 @@ public static class CandleTools
         // Onvolledige candles willen we niet bewaren(dat geeft alleen problemen)
         if (candleNew.Open != -1 && candleNew.Close != -1 && candleCount == 0)
         {
-#if SQLDATABASE
-            if (candleNew.Id > 0)
-            {
-                //Optimalisatie: Vaak wordt een candle helemaal niet aangepast, valt bijvoorbeeld tussen eerdere high en lows.
-                //deze hoeft dan niet naar de database geschreven te worden wat zeer waarschijnlijk een beetje tijd scheelt....
-                if (IsChanged)
-                {
-                    CandleTools.UpdateCandleFetched(symbol, higherInterval);
-                    GlobalData.TaskSaveCandles.AddToQueue(candleNew);
-                }
-            }
-            else
-            {
-                if (!candlesHigherTimeFrame.ContainsKey(candleNew.OpenTime))
-                {
-                    candlesHigherTimeFrame.Add(candleNew.OpenTime, candleNew);
-                    CandleTools.UpdateCandleFetched(symbol, higherInterval);
-                    GlobalData.TaskSaveCandles.AddToQueue(candleNew);
-                }
-            }
-#else
             if (!candlesHigherTimeFrame.ContainsKey(candleNew.OpenTime))
             {
                 candlesHigherTimeFrame.Add(candleNew.OpenTime, candleNew);
                 UpdateCandleFetched(symbol, higherInterval);
             }
-#endif
         }
 
         //GlobalData.Logger.Info(candleNew.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true, true));
@@ -270,9 +234,6 @@ public static class CandleTools
             // Process the single 1m candle
             CryptoCandle candle = HandleFinalCandleData(symbol, GlobalData.IntervalList[0], openTime, open, high, low, close, volume, false);
             UpdateCandleFetched(symbol, GlobalData.IntervalList[0]);
-#if SQLDATABASE
-            GlobalData.TaskSaveCandles.AddToQueue(candle);
-#endif
 #if SHOWTIMING
 
             GlobalData.Logger.Info($"ticker(1m):" + candle.OhlcText(symbol, GlobalData.IntervalList[0], symbol.PriceDisplayFormat, true, false, true));
@@ -332,13 +293,6 @@ public static class CandleTools
     //                {
     //                    CryptoCandle stickNew = new()
     //                    {
-    //#if SQLDATABASE
-    //                        ExchangeId = stickOld.ExchangeId,
-    //                        SymbolId = stickOld.SymbolId,
-    //                        IntervalId = interval.Id,
-    //#endif
-    //                        //Symbol = stickOld.Symbol,
-    //                        //Interval = interval,
     //                        OpenTime = nextCandleUnix,
     //                        Open = stickOld.Close,
     //                        Close = stickOld.Close,

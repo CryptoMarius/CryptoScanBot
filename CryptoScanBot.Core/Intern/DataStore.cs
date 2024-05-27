@@ -9,7 +9,6 @@ namespace CryptoScanBot.Core.Intern;
 // </summary>
 
 
-#if !SQLDATABASE
 public class DataStore
 {
     // Prevent multiple sessions
@@ -77,13 +76,6 @@ public class DataStore
                                 {
                                     CryptoCandle candle = new()
                                     {
-#if SQLDATABASE
-                                        ExchangeId = symbol.Exchange.Id,
-                                        SymbolId = symbol.Id,
-                                        IntervalId = symbolInterval.Interval.Id,
-#endif
-                                        //Symbol = symbol,
-                                        //Interval = symbolInterval.Interval,
                                         OpenTime = binaryReader.ReadInt64(),
                                         Open = binaryReader.ReadDecimal(),
                                         High = binaryReader.ReadDecimal(),
@@ -226,4 +218,4 @@ public class DataStore
 
 
 }
-#endif
+

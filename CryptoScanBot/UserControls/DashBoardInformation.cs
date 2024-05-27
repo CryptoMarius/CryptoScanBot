@@ -637,11 +637,6 @@ public partial class DashBoardInformation : UserControl
                     symbol = GlobalData.Settings.ShowSymbolInformation[3];
                     ShowSymbolPrice(SymbolHistList[3], InformationRowList[3], exchange, quoteData, symbol, "Scanner signal count", text);
 
-#if SQLDATABASE
-                    text = GlobalData.TaskSaveCandles.QueueCount.ToString("N0");
-                    symbol = GlobalData.Settings.ShowSymbolInformation[4];
-                    ShowSymbolPrice(SymbolHistList[4], InformationRowList[4], exchange, quoteData, symbol, "Database Buffer", text);
-#else
                     symbol = GlobalData.Settings.ShowSymbolInformation[4];
                     if (GlobalData.Settings.Trading.Active)
                     {
@@ -662,7 +657,6 @@ public partial class DashBoardInformation : UserControl
                     }
                     else
                         ShowSymbolPrice(SymbolHistList[4], InformationRowList[4], exchange, quoteData, symbol, "", "");
-#endif
                 }
             }
         }

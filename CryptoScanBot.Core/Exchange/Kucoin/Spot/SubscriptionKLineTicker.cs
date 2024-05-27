@@ -158,9 +158,6 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                             //Process1mCandle(Symbol, candle.Date, candle.Open, candle.High, candle.Low, candle.Close, candle.Volume);
                             CandleTools.HandleFinalCandleData(Symbol, interval, candle.Date, candle.Open, candle.High, candle.Low, candle.Close, candle.Volume, candle.IsDuplicated);
                             //SaveCandleAndUpdateHigherTimeFrames(Symbol, candle);
-#if SQLDATABASE
-                            GlobalData.TaskSaveCandles.AddToQueue(candle);
-#endif
                             // Calculate higher timeframes
                             long candle1mCloseTime = candle.OpenTime + interval.Duration;
                             foreach (CryptoInterval interval in GlobalData.IntervalList)

@@ -87,9 +87,6 @@ public static class ScannerSession
 #if BALANCING
         GlobalData.ThreadBalanceSymbols = new ThreadBalanceSymbols();
 #endif
-#if SQLDATABASE
-        GlobalData.TaskSaveCandles = new ThreadSaveCandles();
-#endif
                 // Vanuit hybernate wachten ivm netwerk verbindingen..
                 if (delay > 0)
                     Thread.Sleep(delay);
@@ -175,22 +172,8 @@ public static class ScannerSession
                     taskList.Add(task);
                 }
 
-#if SQLDATABASE
-                GlobalData.TaskSaveCandles.Stop();
-
-                // En vervolgens alsnog de niet werkte candles bewaren (een nadeel van de lazy write)
-                while (true)
-                {
-                    List<CryptoCandle> list = GlobalData.TaskSaveCandles.GetSomeFromQueue();
-                    if (list.Any())
-                        GlobalData.TaskSaveCandles.SaveQueuedCandles(list);
-                    else
-                        break;
-                }
-#else
                 task = Task.Run(DataStore.SaveCandlesAsync);
                 taskList.Add(task);
-#endif
 
                 await Task.WhenAll(taskList).ConfigureAwait(false);
             }
@@ -206,10 +189,8 @@ public static class ScannerSession
 
     private static async void TimerSaveCandleData_Tick(object sender, EventArgs e)
     {
-#if !SQLDATABASE
         // Save the candles each x hours..
         await DataStore.SaveCandlesAsync();
-#endif
     }
 
 

@@ -38,11 +38,7 @@ public class TradeTools
         // Alle gesloten posities lezen 
         // TODO - beperken tot de laatste 2 dagen? (en wat handigheden toevoegen wellicht)
         GlobalData.AddTextToLogTab("Reading closed position");
-#if SQLDATABASE
-        string sql = "select top 250 * from position where not closetime is null order by id desc";
-#else
         string sql = "select * from position where not closetime is null order by id desc limit 250";
-#endif
         using var database = new CryptoDatabase();
         foreach (CryptoPosition position in database.Connection.Query<CryptoPosition>(sql))
             PositionTools.AddPositionClosed(position);

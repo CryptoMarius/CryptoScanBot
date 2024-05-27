@@ -723,7 +723,6 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
 
     public void RefreshInformation(object sender, EventArgs e)
     {
-#if !SQLDATABASE
         // Dit heeft geen nut.. Zandloper is beter
         //if (Monitor.TryEnter(this))
         //{
@@ -751,6 +750,5 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
             //}
         }
         //}
-#endif
     }
 }

@@ -78,9 +78,6 @@ public class GetCandles
                     // Onthoud de laatste aangeleverde candle, t/m die datum is ten minste alles binnen gehaald
                     if (candle.OpenTime > last)
                         last = candle.OpenTime;
-#if SQLDATABASE
-                GlobalData.TaskSaveCandles.AddToQueue(candle);
-#endif
                 }
 
                 // Voor de volgende GetCandlesForInterval() sessie

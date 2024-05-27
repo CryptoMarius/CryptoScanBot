@@ -396,13 +396,8 @@ public class ExcelPositionDump(CryptoPosition position) : ExcelBase(position.Sym
     //    WriteCell(sheet, 0, row, "TODO");
 
     //    //        // De signalen laden
-    //    //#if SQLDATABASE
-    //    //        string sql = "select top 50 * from signal order by id desc";
-    //    //        //sql = string.Format("select top 50 * from signal where exchangeid={0} order by id desc", exchange.Id);
-    //    //#else
     //    //        string sql = "select * from signal order by id desc limit 50";
     //    //        //sql = string.Format("select * from signal where exchangeid={0} order by id desc limit 50", exchange.Id);
-    //    //#endif
     //    //        using var database = new CryptoDatabase();
 
     //    //        foreach (Cryptoposition position in databaseThread.Connection.Query<Cryptoposition>("select * from position " +

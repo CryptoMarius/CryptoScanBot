@@ -206,32 +206,6 @@ public class ThreadLoadData
             if (GlobalData.ExchangeListId.TryGetValue(GlobalData.Settings.General.ExchangeId, out Model.CryptoExchange exchange))
             {
 
-#if SQLDATABASE
-                // Alle CandleFetched items uit de database lezen
-                // En ja, hier is wat duplicaat code, verhuist naar de AddSymbol() 
-                GlobalData.AddTextToLogTab("Reading fetched information");
-                string sql = string.Format("select * from symbolinterval where exchangeid={0}", exchange.Id);
-                foreach (var candleFetched in databaseThread.Connection.Query<CryptoSymbolInterval>(sql))
-                {
-                    candleFetched.ExchangeId = exchange.Id;
-                    if (exchange.SymbolListId.TryGetValue((int)candleFetched.SymbolId, out CryptoSymbol symbol))
-                    {
-                        candleFetched.SymbolId = symbol.Id;
-
-                        // De aanwezige SymbolInterval in het geheugen OVERSCHRIJVEN (dat is de clue hier)
-                        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(candleFetched.IntervalPeriod);
-
-                        // Raar heen en weer gekopieer van data, dit kan optimaler...
-                        symbolInterval.Id = candleFetched.Id;
-                        symbolInterval.SymbolId = symbol.Id;
-                        symbolInterval.ExchangeId = exchange.Id;
-                        symbolInterval.TrendInfoDate = candleFetched.TrendInfoDate;
-                        symbolInterval.TrendIndicator = candleFetched.TrendIndicator;
-                        symbolInterval.LastCandleSynchronized = candleFetched.LastCandleSynchronized;
-                        symbolInterval.IsChanged = false;
-                    }
-                }
-#endif
 
 
 
@@ -253,109 +227,13 @@ public class ThreadLoadData
 
                 GlobalData.AddTextToLogTab("Reading candle information");
 
-#if SQLDATABASE
-                //************************************************************************************
-                // De candles uit de database lezen
-                // Voor de 1m hebben we de laatste 2 dagen nodig (vanwege de berekening van de barometer)
-                // In het algemeen is een minimum van 2 dagen OF 215 candles nodig (indicators)
-                //************************************************************************************
-                int aantaltotaal = 0;
-                int maxCandles = 261;
-                long currentTime = CandleTools.GetUnixTime(DateTime.UtcNow, 60);
-                // Hmmm, is dit wel UTC?                    
-                long openUnixStart = CandleTools.GetUnixTime(DateTime.Today.AddDays(-2), 60);  // ~2 dagen
-                DateTime openUnixStartDebug = CandleTools.GetUnixDate(openUnixStart); // ter debug want een unix date is onleesbaar      
-
-
-                // SQL server kan de hoeveelheid niet aan (het is dan ook veel), daarom per
-                // interval opgeknipt (dat lijkt een optimalisatie probleem te zijn? of niet?)
-                // Het is ontzettend veel data, dus het is handiger om dit per interval op te vragen
-                // (vraag is of we dit altijd zo willen houden, want het is eigenlijk teveel)
-                // Met name op de niet SSD HD is het verschil aanzienlijk
-                foreach (CryptoInterval interval in GlobalData.IntervalList)
-                {
-                    int aantal = 0;
-                    StringBuilder builder = new StringBuilder();
-                    //builder.AppendLine("select * from candles where");
-                    //if (interval.IntervalPeriod != IntervalPeriod.interval1m)
-                    //  builder.Append("or ");
-
-                    // Tenminste x dagen of 1000 candles terug.
-
-                    // Voor de 1m hebben we twee dagen nodig (2880 candles) vanwege de 24h barometer
-                    //if (interval.IntervalPeriod != IntervalPeriod.interval1m)
-                    //    openUnixTime = CandleTools.GetUnixTime(DateTime.UtcNow, 60) - (1000 * interval.Duration);  // Ten minste 1000 candles
-
-                    // 1m: 24*60*2=2880
-                    // 2m: 1000 candles, 1440 ?
-                    // 3m: 24*60*2=2880
-
-
-                    // Nu dezelfde waarden als in de GetCandlesSub methode
-                    //openUnixTime = CandleTools.GetUnixTime(DateTime.Today.AddDays(-2), 60);
-                    //if (interval.IntervalPeriod == CryptoIntervalPeriod.interval1m)
-                    //    openUnixTime = CandleTools.GetUnixTime(DateTime.Today.AddDays(-2), 60); 
-                    //else
-                    // 210 candles of 2 dagen (het aantal candles wordt kleiner naar mate het interval hoger wordt)
-                    // Vreemd genoeg klopt dat niet helemaal (aldus de read Candles statistiek, waarom?)
-                    // Door het gelimiteerd inlezen kunnen de candles niet volledig gecontruct worden uit voorgaande (indien er iets miste)
-                    long openUnixTime = currentTime - maxCandles * interval.Duration;
-                    DateTime openUnixTimeDebug = CandleTools.GetUnixDate(openUnixTime); // ter debug want een unix date is onleesbaar      
-                    if (openUnixTime > openUnixStart)
-                        openUnixTime = openUnixStart;
-                    openUnixTimeDebug = CandleTools.GetUnixDate(openUnixTime); // ter debug want een unix date is onleesbaar      
-
-                    // Moeten we dan ook nog rekening houden met het voorgaande candleFetched object?
-                    // zodat we candles kunnen constructen uit het voorgaande interval?
-
-                    openUnixTime = openUnixTime - openUnixTime % interval.Duration;
-                    openUnixTimeDebug = CandleTools.GetUnixDate(openUnixTime); // ter debug want een unix date is onleesbaar      
-
-
-                    //builder.AppendLine(string.Format("(`opentime`>{0} and `interval`={1})", openUnixTime, (int)interval.IntervalPeriod));
-                    builder.AppendLine(string.Format("select * from candle with(index(IdxCandleIntervalOpenTime)) where (exchangeid={0} and intervalid={1} and opentime>={2}) -- {2} {3}",
-                        //symbolid=12 and (btcusdt)
-                        GlobalData.Settings.General.ExchangeId, interval.Id, openUnixTime, interval.Name, CandleTools.GetUnixDate(openUnixTime).ToLocalTime()));
-                    //builder.AppendLine(string.Format("(interval={0} and date>='{1}')", (int)interval.IntervalPeriod, openUnixDate.ToString("yyyy-MM-dd HH:mm")));
-                    // ter debug (controle timing)
-                    GlobalData.AddTextToLogTab("Interval " + interval.Name + " " + builder.ToString());
-
-                    // Voeg de candle toe aan de lijst verrijkt met meta data over interval, symbol en exchange
-                    foreach (CryptoCandle candle in databaseThread.Connection.Query<CryptoCandle>(builder.ToString()))
-                    {
-                        if (exchange.SymbolListId.TryGetValue(candle.SymbolId, out CryptoSymbol symbol))
-                        {
-                            CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
-                            SortedList<long, CryptoCandle> candles = symbolPeriod.CandleList;
-
-                            candle.IntervalId = symbolPeriod.Interval.Id;
-
-                            if (!candles.ContainsKey(candle.OpenTime))
-                            {
-                                candles.Add(candle.OpenTime, candle);
-                                aantaltotaal++;
-                                aantal++;
-                            }
-                        }
-                    }
-                    GlobalData.AddTextToLogTab("Interval " + interval.Name + " " + aantal.ToString("N0") + " candles read");
-                }
-                GlobalData.AddTextToLogTab(aantaltotaal.ToString("N0") + " candles read");
-#else
                 DataStore.LoadCandles();
-#endif
 
 
                 //************************************************************************************
                 // Vanaf dit moment worden de candles (en candleperiod) bewaard 
                 // (het herberekenen kan definitieve candles produceren)
                 //************************************************************************************
-#if SQLDATABASE
-                GlobalData.AddTextToLogTab("Starting task for saving candles");
-                GlobalData.TaskSaveCandles = new ThreadSaveCandles();
-                // Geen await, deze mag/MOET parallel
-                var whateverX = Task.Run(() => { GlobalData.TaskSaveCandles.Execute(); });
-#endif
 
                 ////************************************************************************************
                 //// Alle intervallen herberekenen (het is een bulk hercalculatie voor de laatste in het geheugen gelezen candles)

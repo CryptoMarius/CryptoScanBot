@@ -6,19 +6,9 @@ using Skender.Stock.Indicators;
 
 namespace CryptoScanBot.Core.Model;
 
-#if SQLDATABASE
-[Table("Candle")]
-#endif
 [Serializable]
 public class CryptoCandle : IQuote
 {
-#if SQLDATABASE
-    [Key]
-    public int Id { get; set; }
-    public int ExchangeId { get; set; }
-    public int SymbolId { get; set; }
-    public int IntervalId { get; set; }
-#endif
     public long OpenTime { get; set; } // een long is 128 bit, het zou in een uint kunnen (delen door 60)
     public decimal Open { get; set; }
     public decimal High { get; set; }

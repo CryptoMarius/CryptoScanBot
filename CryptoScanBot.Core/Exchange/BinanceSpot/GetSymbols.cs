@@ -120,9 +120,7 @@ public class GetSymbols
 
                             if (symbol.Id == 0)
                             {
-#if !SQLDATABASE
                                 database.Connection.Insert(symbol, transaction);
-#endif
                                 cache.Add(symbol);
                             }
                             else
@@ -131,9 +129,6 @@ public class GetSymbols
                             activeSymbols.Add(symbol.Name, symbol);
 
                         }
-#if SQLDATABASE
-                        database.BulkInsertSymbol(cache, transaction);
-#endif
 
                         // Deactiveer de munten die niet meer voorkomen
                         foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)

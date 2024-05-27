@@ -127,9 +127,6 @@ static public class GlobalData
 
 
     // Some running tasks/threads
-#if SQLDATABASE
-    static public ThreadSaveCandles TaskSaveCandles { get; set; }
-#endif
     public static ThreadMonitorCandle? ThreadMonitorCandle { get; set; }
 #if TRADEBOT
     public static ThreadMonitorOrder? ThreadMonitorOrder { get; set; }
@@ -258,13 +255,6 @@ static public class GlobalData
         // Een aantal signalen laden
         // TODO - beperken tot de signalen die nog enigzins bruikbaar zijn??
         AddTextToLogTab("Reading some signals");
-        //#if SQLDATABASE
-        //        string sql = "select top 50 * from signal order by id desc";
-        //        //sql = string.Format("select top 50 * from signal where exchangeid={0} order by id desc", exchange.Id);
-        //#else
-        //        string sql = "select * from signal order by id desc limit 50";
-        //        //sql = string.Format("select * from signal where exchangeid={0} order by id desc limit 50", exchange.Id);
-        //#endif
         string sql = "select * from signal where ExpirationDate >= @FromDate order by OpenDate";
 
         using var database = new CryptoDatabase();

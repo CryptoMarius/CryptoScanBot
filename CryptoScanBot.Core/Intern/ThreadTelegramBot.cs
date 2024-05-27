@@ -724,7 +724,6 @@ public class ThreadTelegramBotInstance
             return;
 
         // Bij het testen staat vaak de scanner aan, daatom bij sql telegram ff uit
-#if !SQLDATABASE
 
         System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
         //    // Extra parameters vanwege ambigious constructor (die ik niet geheel kon volgen)
@@ -914,7 +913,6 @@ public class ThreadTelegramBotInstance
             GlobalData.AddTextToLogTab($"ERROR telegram thread {error.Message}");
         }
         GlobalData.AddTextToLogTab("Task Telegram stopped");
-#endif
     }
 
 }
