@@ -1,4 +1,6 @@
-﻿using CryptoScanBot.Core.Intern;
+﻿using System.Text.Json.Serialization;
+
+using CryptoScanBot.Core.Intern;
 using Dapper.Contrib.Extensions;
 using Skender.Stock.Indicators;
 
@@ -7,6 +9,7 @@ namespace CryptoScanBot.Core.Model;
 #if SQLDATABASE
 [Table("Candle")]
 #endif
+[Serializable]
 public class CryptoCandle : IQuote
 {
 #if SQLDATABASE
@@ -24,16 +27,20 @@ public class CryptoCandle : IQuote
     public decimal Volume { get; set; }
 
     [Computed]
+    //[JsonIgnore]
     public DateTime Date { get { return CandleTools.GetUnixDate(OpenTime); } }
 
     [Computed]
+    //[JsonIgnore]
     public DateTime DateLocal { get { return CandleTools.GetUnixDate(OpenTime).ToLocalTime(); } }
 
     [Computed]
+    [JsonIgnore]
     public CandleIndicatorData? CandleData { get; set; }
 
     // Candles die on the fly zijn aangemaakt (niet confirmed) vanwege Kucoin
     [Computed]
+    [JsonIgnore]
     public bool IsDuplicated { get; set; }
 }
 
