@@ -15,58 +15,6 @@ public class GetCandles
     private static readonly SemaphoreSlim Semaphore = new(1);
 
 
-    /// <summary>
-    /// Determine the startdate per interval
-    /// </summary>
-    private static long[] DetermineFetchStartDate(CryptoSymbol symbol, long fetchEndUnix)
-    {
-        DateTime fetchEndDate = CandleTools.GetUnixDate(fetchEndUnix);
-
-        long[] fetchFrom = new long[Enum.GetNames(typeof(CryptoIntervalPeriod)).Length];
-
-
-        // Determine the maximum startdate per interval
-        foreach (CryptoInterval interval in GlobalData.IntervalList)
-        {
-            // Calculate date what we need for the calculation of indicators (and markettrend)
-            long startFromUnixTime = CandleIndicatorData.GetCandleFetchStart(symbol, interval, fetchEndDate);
-            fetchFrom[(int)interval.IntervalPeriod] = startFromUnixTime;
-        }
-
-
-        // If the exchange does not support the interval than retrieve more 
-        // candles from a lower timeframe so we can calculate the candles.
-        foreach (CryptoInterval interval in GlobalData.IntervalList)
-        {
-            CryptoInterval? loopInterval = interval;
-            while (Interval.GetExchangeInterval(loopInterval) == null)
-            {
-                // Retrieve more candles from a lower timeframe
-                loopInterval = loopInterval.ConstructFrom;
-
-                // Calculate date what we need for the calculation of indicators (and markettrend)
-                long startFromUnixTime = CandleIndicatorData.GetCandleFetchStart(symbol, loopInterval!, fetchEndDate);
-                fetchFrom[(int)loopInterval!.IntervalPeriod] = startFromUnixTime;
-            }
-        }
-
-
-        // Correct the (worst case scenario) startdate with what we previously collected..
-        foreach (CryptoInterval interval in GlobalData.IntervalList)
-        {
-            CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-            if (symbolInterval.LastCandleSynchronized.HasValue)
-            {
-                long alreadyFetched = (long)symbolInterval.LastCandleSynchronized;
-                if (alreadyFetched > fetchFrom[(int)interval.IntervalPeriod])
-                    fetchFrom[(int)interval.IntervalPeriod] = alreadyFetched;
-            }
-            symbolInterval.LastCandleSynchronized = fetchFrom[(int)interval.IntervalPeriod];
-        }
-
-        return fetchFrom;
-    }
-
 
     private static async Task<long> GetCandlesForInterval(BybitRestClient client, CryptoSymbol symbol, CryptoInterval interval, CryptoSymbolInterval symbolInterval)
     {
@@ -113,9 +61,6 @@ public class GetCandles
                 // NB: De candle volgorde is niet gegarandeerd (op bybit zelfs omgedraaid)
                 if (candle.OpenTime > last)
                     last = candle.OpenTime;
-#if SQLDATABASE
-                GlobalData.TaskSaveCandles.AddToQueue(candle);
-#endif
             }
 
             // For the next session
@@ -145,9 +90,6 @@ public class GetCandles
 
     private static async Task FetchCandlesInternal(BybitRestClient client, CryptoSymbol symbol, long fetchEndUnix)
     {
-        var fetchFrom = DetermineFetchStartDate(symbol, fetchEndUnix);
-
-
         for (int i = 0; i < GlobalData.IntervalList.Count; i++)
         {
             CryptoInterval interval = GlobalData.IntervalList[i];
@@ -190,13 +132,6 @@ public class GetCandles
                         {
                             candle = new()
                             {
-#if SQLDATABASE
-                                ExchangeId = symbol.Exchange.Id,
-                                SymbolId = symbol.Id,
-                                IntervalId = interval.Id,
-#endif
-                                //Symbol = symbol,
-                                //Interval = interval,
                                 OpenTime = unixTime,
                                 Open = stickOld.Close,
                                 High = stickOld.Close,
@@ -290,7 +225,10 @@ public class GetCandles
 
                 // Er is niet geswicthed van exchange (omdat het ophalen zo lang duurt)
                 if (symbol.ExchangeId == GlobalData.Settings.General.ExchangeId)
+                {
+                    Interval.DetermineFetchStartDate(symbol, fetchEndUnix);
                     await FetchCandlesInternal(client, symbol, fetchEndUnix);
+                }
             }
         }
         catch (Exception error)

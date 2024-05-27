@@ -4,30 +4,29 @@ using CryptoScanBot.Core.Model;
 
 using Kucoin.Net.Enums;
 
-namespace CryptoScanBot.Core.Exchange.Kucoin.Spot;
+namespace CryptoScanBot.Core.Exchange.Kucoin.Futures;
 
 public class Interval
 {
-    public static KlineInterval? GetExchangeInterval(CryptoInterval interval)
+    public static FuturesKlineInterval? GetExchangeInterval(CryptoInterval interval)
     {
         return interval.IntervalPeriod switch
         {
-            CryptoIntervalPeriod.interval1m => KlineInterval.OneMinute,
-            CryptoIntervalPeriod.interval3m => KlineInterval.ThreeMinutes,
-            CryptoIntervalPeriod.interval5m => KlineInterval.FiveMinutes,
-            CryptoIntervalPeriod.interval15m => KlineInterval.FifteenMinutes,
-            CryptoIntervalPeriod.interval30m => KlineInterval.ThirtyMinutes,
-            CryptoIntervalPeriod.interval1h => KlineInterval.OneHour,
-            CryptoIntervalPeriod.interval2h => KlineInterval.TwoHours,
-            CryptoIntervalPeriod.interval4h => KlineInterval.FourHours,
-            CryptoIntervalPeriod.interval6h => KlineInterval.SixHours,
-            CryptoIntervalPeriod.interval8h => KlineInterval.EightHours,
-            CryptoIntervalPeriod.interval12h => KlineInterval.TwelveHours,
-            CryptoIntervalPeriod.interval1d => KlineInterval.OneDay,
-            _ => null, 
+            CryptoIntervalPeriod.interval1m => FuturesKlineInterval.OneMinute,
+            //CryptoIntervalPeriod.interval3m => FuturesKlineInterval.ThreeMinutes,
+            CryptoIntervalPeriod.interval5m => FuturesKlineInterval.FiveMinutes,
+            CryptoIntervalPeriod.interval15m => FuturesKlineInterval.FifteenMinutes,
+            CryptoIntervalPeriod.interval30m => FuturesKlineInterval.ThirtyMinutes,
+            CryptoIntervalPeriod.interval1h => FuturesKlineInterval.OneHour,
+            CryptoIntervalPeriod.interval2h => FuturesKlineInterval.TwoHours,
+            CryptoIntervalPeriod.interval4h => FuturesKlineInterval.FourHours,
+            //CryptoIntervalPeriod.interval6h => FuturesKlineInterval.SixHours,
+            CryptoIntervalPeriod.interval8h => FuturesKlineInterval.EightHours,
+            CryptoIntervalPeriod.interval12h => FuturesKlineInterval.TwelveHours,
+            CryptoIntervalPeriod.interval1d => FuturesKlineInterval.OneDay,
+            _ => null,
         };
     }
-
 
 
     /// <summary>
@@ -54,7 +53,7 @@ public class Interval
         foreach (CryptoInterval interval in GlobalData.IntervalList)
         {
             CryptoInterval? loopInterval = interval;
-            while (GetExchangeInterval(loopInterval) == null)
+            while (Interval.GetExchangeInterval(loopInterval) == null)
             {
                 // Retrieve more candles from a lower timeframe
                 loopInterval = loopInterval.ConstructFrom;

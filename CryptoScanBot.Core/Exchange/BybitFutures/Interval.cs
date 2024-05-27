@@ -1,6 +1,7 @@
 ﻿using Bybit.Net.Enums;
 
 using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 
 namespace CryptoScanBot.Core.Exchange.BybitFutures;
@@ -25,4 +26,59 @@ public class Interval
             _ => null,
         };
     }
+
+
+
+    /// <summary>
+    /// Determine the startdate per interval
+    /// </summary>
+    public static long[] DetermineFetchStartDate(CryptoSymbol symbol, long fetchEndUnix)
+    {
+        DateTime fetchEndDate = CandleTools.GetUnixDate(fetchEndUnix);
+
+        long[] fetchFrom = new long[Enum.GetNames(typeof(CryptoIntervalPeriod)).Length];
+
+
+        // Determine the maximum startdate per interval
+        foreach (CryptoInterval interval in GlobalData.IntervalList)
+        {
+            // Calculate date what we need for the calculation of indicators (and markettrend)
+            long startFromUnixTime = CandleIndicatorData.GetCandleFetchStart(symbol, interval, fetchEndDate);
+            fetchFrom[(int)interval.IntervalPeriod] = startFromUnixTime;
+        }
+
+
+        // If the exchange does not support the interval than retrieve more 
+        // candles from a lower timeframe so we can calculate the candles.
+        foreach (CryptoInterval interval in GlobalData.IntervalList)
+        {
+            CryptoInterval? loopInterval = interval;
+            while (Interval.GetExchangeInterval(loopInterval) == null)
+            {
+                // Retrieve more candles from a lower timeframe
+                loopInterval = loopInterval.ConstructFrom;
+
+                // Calculate date what we need for the calculation of indicators (and markettrend)
+                long startFromUnixTime = CandleIndicatorData.GetCandleFetchStart(symbol, loopInterval!, fetchEndDate);
+                fetchFrom[(int)loopInterval!.IntervalPeriod] = startFromUnixTime;
+            }
+        }
+
+
+        // Correct the (worst case scenario) startdate with what we previously collected..
+        foreach (CryptoInterval interval in GlobalData.IntervalList)
+        {
+            CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+            if (symbolInterval.LastCandleSynchronized.HasValue)
+            {
+                long alreadyFetched = (long)symbolInterval.LastCandleSynchronized;
+                if (alreadyFetched > fetchFrom[(int)interval.IntervalPeriod])
+                    fetchFrom[(int)interval.IntervalPeriod] = alreadyFetched;
+            }
+            symbolInterval.LastCandleSynchronized = fetchFrom[(int)interval.IntervalPeriod];
+        }
+
+        return fetchFrom;
+    }
+
 }

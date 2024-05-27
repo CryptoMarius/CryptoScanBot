@@ -1,15 +1,16 @@
 ﻿using Binance.Net.Enums;
 
 using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 
 namespace CryptoScanBot.Core.Exchange.BinanceFutures;
 
 public class Interval
 {
-    public static KlineInterval GetExchangeInterval(CryptoInterval interval)
+    public static KlineInterval? GetExchangeInterval(CryptoInterval interval)
     {
-        var binanceInterval = interval.IntervalPeriod switch
+        return interval.IntervalPeriod switch
         {
             CryptoIntervalPeriod.interval1m => KlineInterval.OneMinute,
             CryptoIntervalPeriod.interval3m => KlineInterval.ThreeMinutes,
@@ -23,11 +24,60 @@ public class Interval
             CryptoIntervalPeriod.interval8h => KlineInterval.EightHour,
             CryptoIntervalPeriod.interval12h => KlineInterval.TwelveHour,
             CryptoIntervalPeriod.interval1d => KlineInterval.OneDay,
-            //case IntervalPeriod.interval1w:
-            //    binanceInterval = KlineInterval.OneWeek;
-            //    break;
-            _ => KlineInterval.OneMonth,// Ten teken dat het niet ondersteund wordt
+            _ => null,
         };
-        return binanceInterval;
     }
+
+    /// <summary>
+    /// Determine the startdate per interval
+    /// </summary>
+    public static long[] DetermineFetchStartDate(CryptoSymbol symbol, long fetchEndUnix)
+    {
+        DateTime fetchEndDate = CandleTools.GetUnixDate(fetchEndUnix);
+
+        long[] fetchFrom = new long[Enum.GetNames(typeof(CryptoIntervalPeriod)).Length];
+
+
+        // Determine the maximum startdate per interval
+        foreach (CryptoInterval interval in GlobalData.IntervalList)
+        {
+            // Calculate date what we need for the calculation of indicators (and markettrend)
+            long startFromUnixTime = CandleIndicatorData.GetCandleFetchStart(symbol, interval, fetchEndDate);
+            fetchFrom[(int)interval.IntervalPeriod] = startFromUnixTime;
+        }
+
+
+        // If the exchange does not support the interval than retrieve more 
+        // candles from a lower timeframe so we can calculate the candles.
+        foreach (CryptoInterval interval in GlobalData.IntervalList)
+        {
+            CryptoInterval? loopInterval = interval;
+            while (GetExchangeInterval(loopInterval) == null)
+            {
+                // Retrieve more candles from a lower timeframe
+                loopInterval = loopInterval.ConstructFrom;
+
+                // Calculate date what we need for the calculation of indicators (and markettrend)
+                long startFromUnixTime = CandleIndicatorData.GetCandleFetchStart(symbol, loopInterval!, fetchEndDate);
+                fetchFrom[(int)loopInterval!.IntervalPeriod] = startFromUnixTime;
+            }
+        }
+
+
+        // Correct the (worst case scenario) startdate with what we previously collected..
+        foreach (CryptoInterval interval in GlobalData.IntervalList)
+        {
+            CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+            if (symbolInterval.LastCandleSynchronized.HasValue)
+            {
+                long alreadyFetched = (long)symbolInterval.LastCandleSynchronized;
+                if (alreadyFetched > fetchFrom[(int)interval.IntervalPeriod])
+                    fetchFrom[(int)interval.IntervalPeriod] = alreadyFetched;
+            }
+            symbolInterval.LastCandleSynchronized = fetchFrom[(int)interval.IntervalPeriod];
+        }
+
+        return fetchFrom;
+    }
+
 }

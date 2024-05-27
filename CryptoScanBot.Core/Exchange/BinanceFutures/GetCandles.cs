@@ -21,8 +21,8 @@ public class GetCandles
 
     private static async Task<long> GetCandlesForInterval(BinanceRestClient client, CryptoSymbol symbol, CryptoInterval interval, CryptoSymbolInterval symbolInterval)
     {
-        KlineInterval exchangeInterval = Interval.GetExchangeInterval(interval);
-        if (exchangeInterval >= KlineInterval.OneMonth)
+        KlineInterval? exchangeInterval = Interval.GetExchangeInterval(interval);
+        if (exchangeInterval == null)
             return 0;
 
         //BinanceWeights.WaitForFairBinanceWeight(5, "klines"); // *5x ivm API weight waarschuwingen
@@ -30,7 +30,7 @@ public class GetCandles
 
         // The maximum is 1000 candles
         DateTime dateStart = CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized);
-        WebCallResult<IEnumerable<IBinanceKline>> result = await client.UsdFuturesApi.ExchangeData.GetKlinesAsync(symbol.Name, exchangeInterval, dateStart, null, 1000);
+        WebCallResult<IEnumerable<IBinanceKline>> result = await client.UsdFuturesApi.ExchangeData.GetKlinesAsync(symbol.Name, (KlineInterval)exchangeInterval, dateStart, null, 1000);
         if (!result.Success)
         {
             // Might do something better than this
@@ -116,51 +116,6 @@ public class GetCandles
 
     private static async Task FetchCandlesInternal(BinanceRestClient client, CryptoSymbol symbol, long fetchEndUnix)
     {
-        DateTime[] fetchFrom = new DateTime[Enum.GetNames(typeof(CryptoIntervalPeriod)).Length];
-
-        DateTime utcNow = DateTime.UtcNow;
-        foreach (CryptoInterval interval in GlobalData.IntervalList)
-            fetchFrom[(int)interval.IntervalPeriod] = utcNow;
-
-        // Determine the (maximum) startdate (without knowing what we already have)
-        // If the exchange does not have this interval than make the lower timeframe
-        // a bit bigger so we can calculate the candles ourselves
-        foreach (CryptoInterval interval in GlobalData.IntervalList)
-        {
-            long startFetchUnix = CandleIndicatorData.GetCandleFetchStart(symbol, interval, utcNow);
-
-            CryptoInterval loopInterval = interval;
-            while (true)
-            {
-                DateTime startFetchUnixDate = CandleTools.GetUnixDate(startFetchUnix);
-                if (fetchFrom[(int)loopInterval!.IntervalPeriod] > startFetchUnixDate)
-                    fetchFrom[(int)loopInterval!.IntervalPeriod] = startFetchUnixDate;
-
-                // Is this timeframe supported?
-                if (Interval.GetExchangeInterval(loopInterval) != KlineInterval.OneMonth)
-                    break;
-                else
-                    loopInterval = loopInterval.ConstructFrom!;
-            }
-        }
-
-        // Debug
-        //foreach (CryptoInterval interval in GlobalData.IntervalList)
-        //  GlobalData.AddTextToLogTab("Fetching " + symbol.Name + " " + interval.Name + " " + fetchFrom[(int)interval.IntervalPeriod].ToLocalTime());
-
-
-        // Correct the start date with what we already have
-        foreach (CryptoInterval interval in GlobalData.IntervalList)
-        {
-            DateTime startFetchUnixDate = fetchFrom[(int)interval.IntervalPeriod];
-            long startFetchUnix = CandleTools.GetUnixTime(startFetchUnixDate, 60);
-
-            CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-            if (symbolInterval.LastCandleSynchronized == null || startFetchUnix > symbolInterval.LastCandleSynchronized)
-                symbolInterval.LastCandleSynchronized = startFetchUnix;
-        }
-
-
         for (int i = 0; i < GlobalData.IntervalList.Count; i++)
         {
             CryptoInterval interval = GlobalData.IntervalList[i];
@@ -286,7 +241,10 @@ public class GetCandles
 
                 // Er is niet geswicthed van exchange (omdat het ophalen zo lang duurt)
                 if (symbol.ExchangeId == GlobalData.Settings.General.ExchangeId)
+                {
+                    Interval.DetermineFetchStartDate(symbol, fetchEndUnix);
                     await FetchCandlesInternal(client, symbol, fetchEndUnix);
+                }
             }
         }
         catch (Exception error)
