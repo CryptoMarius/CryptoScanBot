@@ -20,33 +20,9 @@ public class GetCandles
     // Prevent multiple sessions
     private static readonly SemaphoreSlim Semaphore = new(1);
 
-    private static KlineInterval GetExchangeInterval(CryptoInterval interval)
-    {
-        var binanceInterval = interval.IntervalPeriod switch
-        {
-            CryptoIntervalPeriod.interval1m => KlineInterval.OneMinute,
-            CryptoIntervalPeriod.interval3m => KlineInterval.ThreeMinutes,
-            CryptoIntervalPeriod.interval5m => KlineInterval.FiveMinutes,
-            CryptoIntervalPeriod.interval15m => KlineInterval.FifteenMinutes,
-            CryptoIntervalPeriod.interval30m => KlineInterval.ThirtyMinutes,
-            CryptoIntervalPeriod.interval1h => KlineInterval.OneHour,
-            CryptoIntervalPeriod.interval2h => KlineInterval.TwoHour,
-            CryptoIntervalPeriod.interval4h => KlineInterval.FourHour,
-            CryptoIntervalPeriod.interval6h => KlineInterval.SixHour,
-            CryptoIntervalPeriod.interval8h => KlineInterval.EightHour,
-            CryptoIntervalPeriod.interval12h => KlineInterval.TwelveHour,
-            CryptoIntervalPeriod.interval1d => KlineInterval.OneDay,
-            //case IntervalPeriod.interval1w:
-            //    binanceInterval = KlineInterval.OneWeek;
-            //    break;
-            _ => KlineInterval.OneMonth,// Ten teken dat het niet ondersteund wordt
-        };
-        return binanceInterval;
-    }
-
     private static async Task<long> GetCandlesForInterval(BinanceRestClient client, CryptoSymbol symbol, CryptoInterval interval, CryptoSymbolInterval symbolInterval)
     {
-        KlineInterval exchangeInterval = GetExchangeInterval(interval);
+        KlineInterval exchangeInterval = Interval.GetExchangeInterval(interval);
         if (exchangeInterval >= KlineInterval.OneMonth)
             return 0;
 
@@ -162,7 +138,7 @@ public class GetCandles
                     fetchFrom[(int)loopInterval!.IntervalPeriod] = startFetchUnixDate;
 
                 // Is this timeframe supported?
-                if (GetExchangeInterval(loopInterval) != KlineInterval.OneMonth)
+                if (Interval.GetExchangeInterval(loopInterval) != KlineInterval.OneMonth)
                     break;
                 else
                     loopInterval = loopInterval.ConstructFrom!;

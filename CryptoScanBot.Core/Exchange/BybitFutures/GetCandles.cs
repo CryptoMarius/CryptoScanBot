@@ -15,26 +15,6 @@ public class GetCandles
     private static readonly SemaphoreSlim Semaphore = new(1);
 
 
-    private static KlineInterval? GetExchangeInterval(CryptoInterval interval)
-    {
-        return interval.IntervalPeriod switch
-        {
-            CryptoIntervalPeriod.interval1m => KlineInterval.OneMinute,
-            CryptoIntervalPeriod.interval3m => KlineInterval.ThreeMinutes,
-            CryptoIntervalPeriod.interval5m => KlineInterval.FiveMinutes,
-            CryptoIntervalPeriod.interval15m => KlineInterval.FifteenMinutes,
-            CryptoIntervalPeriod.interval30m => KlineInterval.ThirtyMinutes,
-            CryptoIntervalPeriod.interval1h => KlineInterval.OneHour,
-            CryptoIntervalPeriod.interval2h => KlineInterval.TwoHours,
-            CryptoIntervalPeriod.interval4h => KlineInterval.FourHours,
-            CryptoIntervalPeriod.interval6h => KlineInterval.SixHours,
-            CryptoIntervalPeriod.interval12h => KlineInterval.TwelveHours,
-            CryptoIntervalPeriod.interval1d => KlineInterval.OneDay,
-            _ => null,
-        };
-    }
-
-
     /// <summary>
     /// Determine the startdate per interval
     /// </summary>
@@ -59,7 +39,7 @@ public class GetCandles
         foreach (CryptoInterval interval in GlobalData.IntervalList)
         {
             CryptoInterval? loopInterval = interval;
-            while (GetExchangeInterval(loopInterval) == null)
+            while (Interval.GetExchangeInterval(loopInterval) == null)
             {
                 // Retrieve more candles from a lower timeframe
                 loopInterval = loopInterval.ConstructFrom;
@@ -93,7 +73,7 @@ public class GetCandles
 
         // The maximum is 1000 candles
         // En (verrassing) de volgorde van de candles is van nieuw naar oud! 
-        KlineInterval? exchangeInterval = GetExchangeInterval(interval);
+        KlineInterval? exchangeInterval = Interval.GetExchangeInterval(interval);
         DateTime dateStart = CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized);
         var result = await client.V5Api.ExchangeData.GetKlinesAsync(Category.Linear, symbol.Name, (KlineInterval)exchangeInterval, dateStart, null, 1000);
         if (!result.Success)
@@ -170,7 +150,7 @@ public class GetCandles
         {
             CryptoInterval interval = GlobalData.IntervalList[i];
             CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-            bool intervalSupported = GetExchangeInterval(interval) != null;
+            bool intervalSupported = Interval.GetExchangeInterval(interval) != null;
 
 
             if (intervalSupported)

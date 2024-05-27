@@ -14,28 +14,9 @@ public class GetCandles
     // Prevent multiple sessions
     private static readonly SemaphoreSlim Semaphore = new(1);
 
-    private static KlineInterval GetExchangeInterval(CryptoInterval interval)
-    {
-        var binanceInterval = interval.IntervalPeriod switch
-        {
-            CryptoIntervalPeriod.interval1m => KlineInterval.OneMinute,
-            CryptoIntervalPeriod.interval5m => KlineInterval.FiveMinutes,
-            CryptoIntervalPeriod.interval15m => KlineInterval.FifteenMinutes,
-            CryptoIntervalPeriod.interval30m => KlineInterval.ThirtyMinutes,
-            CryptoIntervalPeriod.interval1h => KlineInterval.OneHour,
-            CryptoIntervalPeriod.interval4h => KlineInterval.FourHour,
-            CryptoIntervalPeriod.interval1d => KlineInterval.OneDay,
-            //case IntervalPeriod.interval1w:
-            //    binanceInterval = KlineInterval.OneWeek;
-            //    break;
-            _ => KlineInterval.FifteenDays,// Ten teken dat het niet ondersteund wordt
-        };
-        return binanceInterval;
-    }
-
     private static async Task<long> GetCandlesForInterval(KrakenRestClient client, CryptoSymbol symbol, CryptoInterval interval, CryptoSymbolInterval symbolInterval)
     {
-        KlineInterval exchangeInterval = GetExchangeInterval(interval);
+        KlineInterval exchangeInterval = Interval.GetExchangeInterval(interval);
         if (exchangeInterval >= KlineInterval.FifteenDays)
             return 0;
 
@@ -139,7 +120,7 @@ public class GetCandles
                     fetchFrom[(int)loopInterval!.IntervalPeriod] = startFetchUnixDate;
 
                 // Is this timeframe supported?
-                if (GetExchangeInterval(loopInterval) != KlineInterval.FifteenDays)
+                if (Interval.GetExchangeInterval(loopInterval) != KlineInterval.FifteenDays)
                     break;
                 else
                     loopInterval = loopInterval.ConstructFrom!;
