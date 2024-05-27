@@ -22,8 +22,8 @@ public class GetTrades
     /// </summary>
     public static async Task<int> FetchTradesForSymbolAsync(CryptoDatabase database, CryptoPosition position)
     {
-        using BybitRestClient client = new();
         int tradeCount = 0;
+        using BybitRestClient client = new();
         try
         {
             // Haal de trades op van 1 symbol
@@ -137,8 +137,6 @@ public class GetTrades
 
         return tradeCount;
     }
-
-
 
 }
 

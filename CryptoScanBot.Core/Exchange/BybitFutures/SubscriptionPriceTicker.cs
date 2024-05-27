@@ -88,4 +88,5 @@ public class SubscriptionPriceTicker(ExchangeOptions exchangeOptions) : Subscrip
 
         return subscriptionResult;
     }
+
 }

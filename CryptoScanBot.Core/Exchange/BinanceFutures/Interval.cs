@@ -28,11 +28,15 @@ public class Interval
         };
     }
 
+
+
     /// <summary>
     /// Determine the startdate per interval
     /// </summary>
     public static long[] DetermineFetchStartDate(CryptoSymbol symbol, long fetchEndUnix)
     {
+        // TODO: Find a better place, problem is the method "Interval.GetExchangeInterval" which is exchange specific
+
         DateTime fetchEndDate = CandleTools.GetUnixDate(fetchEndUnix);
 
         long[] fetchFrom = new long[Enum.GetNames(typeof(CryptoIntervalPeriod)).Length];

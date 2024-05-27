@@ -104,14 +104,10 @@ public class GetTrades
                 database.Open();
                 using var transaction = database.BeginTransaction();
                 GlobalData.AddTextToLogTab("Trades " + position.Symbol.Name + " " + tradeCache.Count.ToString());
-#if SQLDATABASE
-                databaseThread.BulkInsertTrades(symbol, tradeCache, transaction);
-#else
                 foreach (var trade in tradeCache)
                 {
                     database.Connection.Insert(trade, transaction);
                 }
-#endif
 
                 tradeCount += tradeCache.Count;
 
@@ -132,8 +128,6 @@ public class GetTrades
 
         return tradeCount;
     }
-
-
 
 }
 

@@ -35,6 +35,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
     }
 
+
     public override async Task<CallResult<UpdateSubscription>?> Subscribe()
     {
         TickerGroup!.SocketClient ??= new BinanceSocketClient();
@@ -50,4 +51,5 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
         return subscriptionResult;
     }
+
 }

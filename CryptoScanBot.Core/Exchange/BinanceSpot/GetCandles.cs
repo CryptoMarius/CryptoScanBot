@@ -77,17 +77,10 @@ public class GetCandles
 
                 //GlobalData.AddTextToLogTab("Debug: Fetched candle " + symbol.Name + " " + interval.Name + " " + candle.DateLocal);
 
-                // Pas op: Candle volgorde is niet gegarandeerd (zeker bybit niet), onthoud de jongste candle 
-                // Voor de volgende GetCandlesForInterval() sessie
-                //symbolInterval.IsChanged = true; // zie tevens setter (maar ach)
-                //symbolInterval.LastCandleSynchronized = candle.OpenTime;
-
-                // Onthoud de laatste aangeleverde candle, t/m die datum is alles binnen gehaald
+                // Onthoud de laatste candle, t/m die datum is alles binnen gehaald.
+                // NB: De candle volgorde is niet gegarandeerd (op bybit zelfs omgedraaid)
                 if (candle.OpenTime > last)
                     last = candle.OpenTime;
-#if SQLDATABASE
-                GlobalData.TaskSaveCandles.AddToQueue(candle);
-#endif
             }
 
             // Voor de volgende GetCandlesForInterval() sessie
@@ -121,24 +114,29 @@ public class GetCandles
         {
             CryptoInterval interval = GlobalData.IntervalList[i];
             CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+            bool intervalSupported = Interval.GetExchangeInterval(interval) != null;
 
-            // Fetch the candles
-            while (symbolInterval.LastCandleSynchronized < fetchEndUnix)
+
+            if (intervalSupported)
             {
-                long lastDate = (long)symbolInterval.LastCandleSynchronized;
-                //DateTime dateStart = CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized);
-                //GlobalData.AddTextToLogTab("Debug: Fetching " + symbol.Name + " " + interval.Name + " " + dateStart.ToLocalTime());
+                // Fetch the candles
+                while (symbolInterval.LastCandleSynchronized < fetchEndUnix)
+                {
+                    long lastDate = (long)symbolInterval.LastCandleSynchronized;
+                    //DateTime dateStart = CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized);
+                    //GlobalData.AddTextToLogTab("Debug: Fetching " + symbol.Name + " " + interval.Name + " " + dateStart.ToLocalTime());
 
+                    if (symbolInterval.LastCandleSynchronized + interval.Duration > fetchEndUnix)
+                        break;
 
-                if (symbolInterval.LastCandleSynchronized + interval.Duration > fetchEndUnix)
-                    break;
-
-                // Nothing more? (we have coins stopping, beaware for endless loops)
-                long candleCount = await GetCandlesForInterval(client, symbol, interval, symbolInterval);
-                if (symbolInterval.LastCandleSynchronized == lastDate || candleCount == 0)
-                    break;
+                    // Nothing more? (we have coins stopping, beaware for endless loops)
+                    long candleCount = await GetCandlesForInterval(client, symbol, interval, symbolInterval);
+                    if (symbolInterval.LastCandleSynchronized == lastDate || candleCount == 0)
+                        break;
+                }
             }
 
+            
             Monitor.Enter(symbol.CandleList);
             try
             {
@@ -256,7 +254,7 @@ public class GetCandles
         if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
         {
             GlobalData.AddTextToLogTab("");
-            GlobalData.AddTextToLogTab(string.Format("Fetching {0} information", exchange.Name));
+            GlobalData.AddTextToLogTab($"Fetching {exchange.Name} information");
             try
             {
                 await Semaphore.WaitAsync();
@@ -272,7 +270,6 @@ public class GetCandles
 
                     // TODO: Niet alle symbols zijn actief
                     GlobalData.AddTextToLogTab($"Aantal symbols={exchange.SymbolListName.Values.Count}");
-
 
 
                     Queue<CryptoSymbol> queue = new();

@@ -19,8 +19,8 @@ public class GetCandles
 
     private static async Task<long> GetCandlesForInterval(KucoinRestClient client, CryptoSymbol symbol, CryptoInterval interval, CryptoSymbolInterval symbolInterval)
     {
-        FuturesKlineInterval exchangeInterval = Interval.GetExchangeInterval(interval);
-        if (exchangeInterval == FuturesKlineInterval.OneWeek)
+        FuturesKlineInterval? exchangeInterval = Interval.GetExchangeInterval(interval);
+        if (exchangeInterval == null)
             return 0;
 
         //KucoinWeights.WaitForFairWeight(1);
@@ -35,7 +35,7 @@ public class GetCandles
 
 
             DateTime dateEnd = dateStart.AddSeconds(1500 * interval.Duration);
-            var result = await client.FuturesApi.ExchangeData.GetKlinesAsync(symbol.Base + '-' + symbol.Quote, exchangeInterval, dateStart, dateEnd);
+            var result = await client.FuturesApi.ExchangeData.GetKlinesAsync(symbol.Base + '-' + symbol.Quote, (KlineInterval)exchangeInterval, dateStart, dateEnd);
             //GlobalData.AddTextToLogTab($"Debug: {symbol.Name} {interval.Name} volume={symbol.Volume} start={dateStart} end={dateEnd} url={result.RequestUrl}");
             if (!result.Success)
             {
@@ -119,51 +119,6 @@ public class GetCandles
 
     private static async Task FetchCandlesInternal(KucoinRestClient client, CryptoSymbol symbol, long fetchEndUnix)
     {
-        DateTime[] fetchFrom = new DateTime[Enum.GetNames(typeof(CryptoIntervalPeriod)).Length];
-
-        DateTime utcNow = DateTime.UtcNow;
-        foreach (CryptoInterval interval in GlobalData.IntervalList)
-            fetchFrom[(int)interval.IntervalPeriod] = utcNow;
-
-        // Determine the (maximum) startdate (without knowing what we already have)
-        // If the exchange does not have this interval than make the lower timeframe
-        // a bit bigger so we can calculate the candles ourselves
-        foreach (CryptoInterval interval in GlobalData.IntervalList)
-        {
-            long startFetchUnix = CandleIndicatorData.GetCandleFetchStart(symbol, interval, utcNow);
-
-            CryptoInterval loopInterval = interval;
-            while (true)
-            {
-                DateTime startFetchUnixDate = CandleTools.GetUnixDate(startFetchUnix);
-                if (fetchFrom[(int)loopInterval!.IntervalPeriod] > startFetchUnixDate)
-                    fetchFrom[(int)loopInterval!.IntervalPeriod] = startFetchUnixDate;
-
-                // Is this timeframe supported?
-                if (Interval.GetExchangeInterval(loopInterval) != FuturesKlineInterval.OneWeek)
-                    break;
-                else
-                    loopInterval = loopInterval.ConstructFrom!;
-            }
-        }
-
-        // Debug
-        //foreach (CryptoInterval interval in GlobalData.IntervalList)
-        //  GlobalData.AddTextToLogTab("Fetching " + symbol.Name + " " + interval.Name + " " + fetchFrom[(int)interval.IntervalPeriod].ToLocalTime());
-
-
-        // Correct the start date with what we already have
-        foreach (CryptoInterval interval in GlobalData.IntervalList)
-        {
-            DateTime startFetchUnixDate = fetchFrom[(int)interval.IntervalPeriod];
-            long startFetchUnix = CandleTools.GetUnixTime(startFetchUnixDate, 60);
-
-            CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-            if (symbolInterval.LastCandleSynchronized == null || startFetchUnix > symbolInterval.LastCandleSynchronized)
-                symbolInterval.LastCandleSynchronized = startFetchUnix;
-        }
-
-
         for (int i = 0; i < GlobalData.IntervalList.Count; i++)
         {
             CryptoInterval interval = GlobalData.IntervalList[i];

@@ -17,6 +17,7 @@ public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscript
         return subscriptionResult;
     }
 
+
     private void OnOrderUpdate(DataEvent<IEnumerable<Bybit.Net.Objects.Models.V5.BybitOrderUpdate>> dataList)
     {
         try

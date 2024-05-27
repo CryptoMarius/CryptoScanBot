@@ -84,9 +84,6 @@ public class GetCandles
                 // Onthoud de laatste aangeleverde candle, t/m die datum is alles binnen gehaald
                 if (candle.OpenTime > last)
                     last = candle.OpenTime;
-#if SQLDATABASE
-                GlobalData.TaskSaveCandles.AddToQueue(candle);
-#endif
             }
 
             // Voor de volgende GetCandlesForInterval() sessie
@@ -153,13 +150,6 @@ public class GetCandles
                         {
                             candle = new()
                             {
-#if SQLDATABASE
-                                ExchangeId = symbol.Exchange.Id,
-                                SymbolId = symbol.Id,
-                                IntervalId = interval.Id,
-#endif
-                                //Symbol = symbol,
-                                //Interval = interval,
                                 OpenTime = unixTime,
                                 Open = stickOld.Close,
                                 High = stickOld.Close,

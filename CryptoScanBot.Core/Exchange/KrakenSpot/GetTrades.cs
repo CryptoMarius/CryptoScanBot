@@ -82,30 +82,23 @@ public class GetTrades
 
 
             // Verwerk de trades
-
             //GlobalData.AddTextToLogTab(symbol.Name);
             Monitor.Enter(position.Symbol.TradeList);
             try
             {
                 database.Open();
                 using var transaction = database.BeginTransaction();
-
                 GlobalData.AddTextToLogTab("Trades " + position.Symbol.Name + " " + tradeCache.Count.ToString());
-#if SQLDATABASE
-                        databaseThread.BulkInsertTrades(symbol, tradeCache, transaction);
-#else
-                foreach (var x in tradeCache)
+                foreach (var trade in tradeCache)
                 {
-                    database.Connection.Insert(position.Symbol, transaction);
+                    database.Connection.Insert(trade, transaction);
                 }
-#endif
 
                 tradeCount += tradeCache.Count;
 
                 if (isChanged)
                     database.Connection.Update(position.Symbol, transaction);
                 transaction.Commit();
-
             }
             finally
             {
@@ -115,14 +108,11 @@ public class GetTrades
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab("error get prices " + error.ToString()); // symbol.Text + " " + 
+            GlobalData.AddTextToLogTab("error get trades " + error.ToString()); // symbol.Text + " " + 
         }
 
         return tradeCount;
     }
-
-
-
 
 }
 

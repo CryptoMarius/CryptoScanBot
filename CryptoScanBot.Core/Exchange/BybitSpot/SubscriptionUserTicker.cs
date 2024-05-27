@@ -25,7 +25,7 @@ public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscript
         {
             foreach (var data in dataList.Data)
             {
-                // We melden voorlopig alles
+                // We krijgen duplicaat json berichten binnen (even een quick & dirty fix)
                 string info = $"{data.Symbol} UserTicker {data.Side} {data.Status} order={data.OrderId} quantity={data.Quantity} price={data.Price} value={data.Price * data.QuantityFilled}";
                 string text = JsonSerializer.Serialize(data, GlobalData.JsonSerializerIndented).Trim();
                 GlobalData.AddTextToLogTab(info);
@@ -63,6 +63,7 @@ public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscript
             GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} ERROR: OrderUpdate " + error.ToString());
         }
     }
+
 }
 
 #endif

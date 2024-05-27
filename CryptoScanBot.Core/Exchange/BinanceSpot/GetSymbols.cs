@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+
 using Binance.Net.Clients;
 using Binance.Net.Enums;
 using CryptoScanBot.Core.Context;
@@ -10,6 +11,7 @@ namespace CryptoScanBot.Core.Exchange.BinanceSpot;
 
 public class GetSymbols
 {
+
     public static async Task ExecuteAsync()
     {
         if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
@@ -167,6 +169,7 @@ public class GetSymbols
                             string text = JsonSerializer.Serialize(exchangeInfo, GlobalData.JsonSerializerIndented);
                             File.WriteAllText(filename, text);
                         }
+
 
 
                         // De nieuwe symbols toevoegen aan de lijst

@@ -15,13 +15,14 @@ public class GetCandles
     private static readonly SemaphoreSlim Semaphore = new(1);
 
 
+
     private static async Task<long> GetCandlesForInterval(BybitRestClient client, CryptoSymbol symbol, CryptoInterval interval, CryptoSymbolInterval symbolInterval)
     {
-        LimitRates.WaitForFairWeight(1); // *5x ivm API weight waarschuwingen
+        LimitRates.WaitForFairWeight(1);
         string prefix = $"{ExchangeBase.ExchangeOptions.ExchangeName} {symbol.Name} {interval!.Name}";
 
         // The maximum is 1000 candles
-        // En (verrassing) de volgorde van de candles is van nieuw naar oud! 
+        // (verrassing) de volgorde van de candles is van nieuw naar oud!
         KlineInterval? exchangeInterval = Interval.GetExchangeInterval(interval);
         DateTime dateStart = CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized);
         var result = await client.V5Api.ExchangeData.GetKlinesAsync(Category.Linear, symbol.Name, (KlineInterval)exchangeInterval, dateStart, null, 1000);
@@ -50,7 +51,7 @@ public class GetCandles
             // Combine candles, calculating other interval's
             foreach (var kline in result.Data.List)
             {
-                // Quoted = volume * price (expressed in usdt/eth/btc etc), base is coins
+                // Combine candles, calculating other interval's
                 CryptoCandle candle = CandleTools.HandleFinalCandleData(symbol, interval, kline.StartTime,
                     kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.QuoteVolume, false);
 
@@ -62,7 +63,7 @@ public class GetCandles
                     last = candle.OpenTime;
             }
 
-            // Voor de volgende GetCandlesForInterval() sessie
+            // For the next session
             if (last > long.MinValue)
             {
                 symbolInterval.IsChanged = true; // zie tevens setter (maar ach)
@@ -81,8 +82,8 @@ public class GetCandles
 
         CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
         SortedList<long, CryptoCandle> candles = symbolPeriod.CandleList;
-        string s = symbol.Exchange.Name + " " + symbol.Name + " " + interval.Name + " ophalen vanaf " + CandleTools.GetUnixDate(startFetchDate).ToLocalTime() + " UTC tot " + CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized).ToLocalTime() + " UTC";
-        GlobalData.AddTextToLogTab(s + " opgehaald: " + result.Data.List.Count() + " totaal: " + candles.Count.ToString());
+        string s = symbol.Exchange.Name + " " + symbol.Name + " " + interval.Name + " fetch from " + CandleTools.GetUnixDate(startFetchDate).ToLocalTime() + " UTC tot " + CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized).ToLocalTime() + " UTC";
+        GlobalData.AddTextToLogTab(s + " received: " + result.Data.List.Count() + " totaal: " + candles.Count.ToString());
         return result.Data.List.Count();
     }
 
@@ -115,7 +116,7 @@ public class GetCandles
                 }
             }
 
-            
+
             Monitor.Enter(symbol.CandleList);
             try
             {

@@ -56,7 +56,7 @@ public class Interval
         foreach (CryptoInterval interval in GlobalData.IntervalList)
         {
             CryptoInterval? loopInterval = interval;
-            while (Interval.GetExchangeInterval(loopInterval) == null)
+            while (GetExchangeInterval(loopInterval) == null)
             {
                 // Retrieve more candles from a lower timeframe
                 loopInterval = loopInterval.ConstructFrom;

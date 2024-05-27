@@ -8,6 +8,9 @@ using CryptoScanBot.Core.Model;
 
 namespace CryptoScanBot.Core.Exchange.BybitSpot;
 
+/// <summary>
+/// Monitoren van 1m candles (die gepushed worden door Binance)
+/// </summary>
 public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
 {
     private void ProcessCandle(string? topic, BybitKlineUpdate kline)
@@ -19,6 +22,8 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         // base volume would be MFN
         // quote volume would be USDT
 
+        //ScannerLog.Logger.Trace($"kline ticker {topic}");
+
         // De interval wordt geprefixed in de topic "kline.1.SymbolName"
         if (string.IsNullOrEmpty(topic))
             return;
@@ -29,6 +34,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
             if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
             {
                 Interlocked.Increment(ref TickerCount);
+                //ScannerLog.Logger.Trace($"kline ticker {topic} process");
                 //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", topic, kline.Timestamp.ToLocalTime()));
                 CandleTools.Process1mCandle(symbol, kline.StartTime, kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.Volume);
             }
@@ -43,7 +49,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         var subscriptionResult = await ((BybitSocketClient)TickerGroup.SocketClient).V5SpotApi.SubscribeToKlineUpdatesAsync(
             Symbols, KlineInterval.OneMinute, data =>
         {
-            //Er zit tot ongeveer 8 a 10 seconden vertraging is van de exchange tot hier, dat moet ansich genoeg zijn
+            // Er zit tot ongeveer 8 a 10 seconden vertraging is van de exchange tot hier, dat moet ansich genoeg zijn
             //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} added for processing", data.Data.OpenTime.ToLocalTime(), data.Symbol));
             foreach (BybitKlineUpdate kline in data.Data)
             {
@@ -54,4 +60,5 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
         return subscriptionResult;
     }
+
 }

@@ -34,6 +34,8 @@ public class Interval
     /// </summary>
     public static long[] DetermineFetchStartDate(CryptoSymbol symbol, long fetchEndUnix)
     {
+        // TODO: Find a better place, problem is the method "Interval.GetExchangeInterval" which is exchange specific
+
         DateTime fetchEndDate = CandleTools.GetUnixDate(fetchEndUnix);
 
         long[] fetchFrom = new long[Enum.GetNames(typeof(CryptoIntervalPeriod)).Length];
@@ -53,7 +55,7 @@ public class Interval
         foreach (CryptoInterval interval in GlobalData.IntervalList)
         {
             CryptoInterval? loopInterval = interval;
-            while (Interval.GetExchangeInterval(loopInterval) == null)
+            while (GetExchangeInterval(loopInterval) == null)
             {
                 // Retrieve more candles from a lower timeframe
                 loopInterval = loopInterval.ConstructFrom;

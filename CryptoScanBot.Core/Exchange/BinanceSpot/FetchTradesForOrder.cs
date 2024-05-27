@@ -28,6 +28,7 @@ public class FetchTradeForOrder
             {
                 foreach (var item in result.Data)
                 {
+                    tradeCount++;
                     if (!symbol.TradeList.TryGetValue(item.Id.ToString(), out CryptoTrade trade))
                     {
                         trade = new CryptoTrade();
@@ -37,7 +38,6 @@ public class FetchTradeForOrder
                     }
                 }
             }
-            tradeCount = tradeCache.Count;
 
 
             // Verwerk de trades
@@ -50,15 +50,11 @@ public class FetchTradeForOrder
                     try
                     {
                         using var transaction = databaseThread.BeginTransaction();
-#if SQLDATABASE
-                        databaseThread.BulkInsertTrades(symbol, tradeCache, transaction);
-#else
                         foreach (var trade in tradeCache)
                         {
                             databaseThread.Connection.Insert(trade, transaction);
                             GlobalData.AddTextToLogTab($"FetchTradesForOrderAsync: {symbol.Name} ORDER {orderId} TRADE {trade.TradeId} toegevoegd!");
                         }
-#endif
                         if (tradeCount == 0)
                             GlobalData.AddTextToLogTab($"FetchTradesForOrderAsync: {symbol.Name} ORDER {orderId}, geen trades, PANIC MODE?");
                         else

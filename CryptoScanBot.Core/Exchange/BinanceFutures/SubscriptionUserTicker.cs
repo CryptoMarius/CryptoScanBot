@@ -39,18 +39,6 @@ public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscript
             return subscriptionResult;
         }
 
-        //Task<CallResult<UpdateSubscription>> SubscribeToUserDataUpdatesAsync(string listenKey,
-        //Action<DataEvent<BinanceFuturesStreamConfigUpdate>>? onLeverageUpdate = null,
-        //Action<DataEvent<BinanceFuturesStreamMarginUpdate>>? onMarginUpdate = null,
-        //Action<DataEvent<BinanceFuturesStreamAccountUpdate>>? onAccountUpdate = null,
-        //Action<DataEvent<BinanceFuturesStreamOrderUpdate>>? onOrderUpdate = null,
-        //Action<DataEvent<BinanceStreamEvent>>? onListenKeyExpired = null,
-        //Action<DataEvent<BinanceStrategyUpdate>>? onStrategyUpdate = null,
-        //Action<DataEvent<BinanceGridUpdate>>? onGridUpdate = null,
-        //Action<DataEvent<BinanceConditionOrderTriggerRejectUpdate>>? onConditionalOrderTriggerRejectUpdate = null,
-        //CancellationToken ct = default(CancellationToken));
-
-
     }
 
     private void OnOrderUpdate(DataEvent<BinanceFuturesStreamOrderUpdate> data) //DataEvent<BinanceStreamOrderUpdate> data

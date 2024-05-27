@@ -20,13 +20,12 @@ public class GetCandles
         if (exchangeInterval == null)
             return 0;
 
-        LimitRates.WaitForFairWeight(1); // *5x ivm API weight waarschuwingen
-        string prefix = $"{ExchangeBase.ExchangeOptions.ExchangeName} {symbol.Name} {interval.Name}";
+        LimitRates.WaitForFairWeight(1);
+        string prefix = $"{ExchangeBase.ExchangeOptions.ExchangeName} {symbol.Name} {interval!.Name}";
 
         // The maximum is 1000 candles
-        // En (verrassing) de volgorde van de candles is van nieuw naar oud! 
+        // (verrassing) de volgorde van de candles is van nieuw naar oud!
         DateTime dateStart = CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized);
-        //var result = await client.SpotApi.ExchangeData.GetKlinesAsync(symbol.Base + '/' + symbol.Quote, exchangeInterval, dateStart);
         var result = await client.SpotApi.ExchangeData.GetKlinesAsync(symbol.Name, (KlineInterval)exchangeInterval, dateStart);
         if (!result.Success)
         {
@@ -59,20 +58,13 @@ public class GetCandles
 
                 //GlobalData.AddTextToLogTab("Debug: Fetched candle " + symbol.Name + " " + interval.Name + " " + candle.DateLocal);
 
-                // Pas op: Candle volgorde is niet gegarandeerd (zeker bybit niet), onthoud de jongste candle 
-                // Voor de volgende GetCandlesForInterval() sessie
-                //symbolInterval.IsChanged = true; // zie tevens setter (maar ach)
-                //symbolInterval.LastCandleSynchronized = candle.OpenTime;
-
-                // Onthoud de laatste aangeleverde candle, t/m die datum is alles binnen gehaald
+                // Onthoud de laatste candle, t/m die datum is alles binnen gehaald.
+                // NB: De candle volgorde is niet gegarandeerd (op bybit zelfs omgedraaid)
                 if (candle.OpenTime > last)
                     last = candle.OpenTime;
-#if SQLDATABASE
-                GlobalData.TaskSaveCandles.AddToQueue(candle);
-#endif
             }
 
-            // Voor de volgende GetCandlesForInterval() sessie
+            // For the next session
             if (last > long.MinValue)
             {
                 symbolInterval.IsChanged = true; // zie tevens setter (maar ach)
@@ -91,8 +83,8 @@ public class GetCandles
 
         CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
         SortedList<long, CryptoCandle> candles = symbolPeriod.CandleList;
-        string s = symbol.Exchange.Name + " " + symbol.Name + " " + interval.Name + " ophalen vanaf " + CandleTools.GetUnixDate(startFetchDate).ToLocalTime() + " UTC tot " + CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized).ToLocalTime() + " UTC";
-        GlobalData.AddTextToLogTab(s + " opgehaald: " + result.Data.Data.Count() + " totaal: " + candles.Count.ToString());
+        string s = symbol.Exchange.Name + " " + symbol.Name + " " + interval.Name + " fetch from " + CandleTools.GetUnixDate(startFetchDate).ToLocalTime() + " UTC tot " + CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized).ToLocalTime() + " UTC";
+        GlobalData.AddTextToLogTab(s + " received: " + result.Data.Data.Count() + " totaal: " + candles.Count.ToString());
         return result.Data.Data.Count();
     }
 
@@ -103,23 +95,28 @@ public class GetCandles
         {
             CryptoInterval interval = GlobalData.IntervalList[i];
             CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+            bool intervalSupported = Interval.GetExchangeInterval(interval) != null;
 
-            // Fetch the candles
-            while (symbolInterval.LastCandleSynchronized < fetchEndUnix)
+
+            if (intervalSupported)
             {
-                long lastDate = (long)symbolInterval.LastCandleSynchronized;
-                //DateTime dateStart = CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized);
-                //GlobalData.AddTextToLogTab("Debug: Fetching " + symbol.Name + " " + interval.Name + " " + dateStart.ToLocalTime());
+                // Fetch the candles
+                while (symbolInterval.LastCandleSynchronized < fetchEndUnix)
+                {
+                    long lastDate = (long)symbolInterval.LastCandleSynchronized;
+                    //DateTime dateStart = CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized);
+                    //GlobalData.AddTextToLogTab("Debug: Fetching " + symbol.Name + " " + interval.Name + " " + dateStart.ToLocalTime());
 
+                    if (symbolInterval.LastCandleSynchronized + interval.Duration > fetchEndUnix)
+                        break;
 
-                if (symbolInterval.LastCandleSynchronized + interval.Duration > fetchEndUnix)
-                    break;
-
-                // Nothing more? (we have coins stopping, beaware for endless loops)
-                long candleCount = await GetCandlesForInterval(client, symbol, interval, symbolInterval);
-                if (symbolInterval.LastCandleSynchronized == lastDate || candleCount == 0)
-                    break;
+                    // Nothing more? (we have coins stopping, beaware for endless loops)
+                    long candleCount = await GetCandlesForInterval(client, symbol, interval, symbolInterval);
+                    if (symbolInterval.LastCandleSynchronized == lastDate || candleCount == 0)
+                        break;
+                }
             }
+
 
             Monitor.Enter(symbol.CandleList);
             try
@@ -215,6 +212,7 @@ public class GetCandles
                     Monitor.Exit(queue);
                 }
 
+                // Er is niet geswicthed van exchange (omdat het ophalen zo lang duurt)
                 if (symbol.ExchangeId == GlobalData.Settings.General.ExchangeId)
                 {
                     Interval.DetermineFetchStartDate(symbol, fetchEndUnix);

@@ -50,15 +50,11 @@ public class FetchTradeForOrder
                     try
                     {
                         using var transaction = databaseThread.BeginTransaction();
-#if SQLDATABASE
-                        databaseThread.BulkInsertTrades(symbol, tradeCache, transaction);
-#else
                         foreach (var trade in tradeCache)
                         {
                             databaseThread.Connection.Insert(trade, transaction);
                             GlobalData.AddTextToLogTab($"{symbol.Name} fetching trades for orderid {orderId} - added tradeid {trade.TradeId}");
                         }
-#endif
                         //GlobalData.AddTextToLogTab($"FetchTradesForOrderAsync {symbol.Name} ORDER {orderId} {tradeCache.Count}");
                         transaction.Commit();
                     }

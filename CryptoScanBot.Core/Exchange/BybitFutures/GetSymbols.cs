@@ -162,7 +162,6 @@ public class GetSymbols
                             filename += "symbols.json";
 
                             string text = JsonSerializer.Serialize(exchangeInfo, GlobalData.JsonSerializerIndented);
-                            //var accountFile = new FileInfo(filename);
                             File.WriteAllText(filename, text);
                         }
 

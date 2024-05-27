@@ -8,7 +8,7 @@ namespace CryptoScanBot.Core.Exchange;
 
 public abstract class ExchangeBase
 {
-    internal static ExchangeOptions ExchangeOptions { get; } = new();
+    public static ExchangeOptions ExchangeOptions { get; } = new(); // made public for ExchangeTest project
     public abstract void ExchangeDefaults();
     public abstract Task GetSymbolsAsync();
     public abstract Task GetCandlesAsync();

@@ -11,7 +11,6 @@ namespace CryptoScanBot.Core.Exchange.BinanceFutures;
 
 public class GetSymbols
 {
-
     public static async Task ExecuteAsync()
     {
         if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))

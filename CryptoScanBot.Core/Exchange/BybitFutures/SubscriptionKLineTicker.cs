@@ -12,6 +12,9 @@ using CryptoScanBot.Core.Exchange;
 
 namespace CryptoScanBot.Core.Exchange.BybitFutures;
 
+/// <summary>
+/// Monitoren van 1m candles (die gepushed worden door Binance)
+/// </summary>
 public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
 {
     private void ProcessCandle(string? topic, BybitKlineUpdate kline)
@@ -43,6 +46,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
     }
 
+
     public override async Task<CallResult<UpdateSubscription>?> Subscribe()
     {
         TickerGroup!.SocketClient ??= new BybitSocketClient();
@@ -57,7 +61,6 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                     Task.Run(() => { ProcessCandle(data.Topic, kline); });
             }
         }, ExchangeHelper.CancellationToken).ConfigureAwait(false);
-
 
         return subscriptionResult;
     }

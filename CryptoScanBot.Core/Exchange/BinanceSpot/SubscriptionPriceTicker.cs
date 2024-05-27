@@ -25,36 +25,10 @@ public class SubscriptionPriceTicker(ExchangeOptions exchangeOptions) : Subscrip
                     {
                         TickerCount++;
 
-                        // Waarschijnlijk ALLEMAAL gebaseerd op de 24h prijs
-                        //symbol.OpenPrice = tick.OpenPrice;
-                        //symbol.HighPrice = tick.HighPrice;
-                        //symbol.LowPrice = tick.LowPrice;
                         symbol.LastPrice = tick.LastPrice;
                         symbol.BidPrice = tick.BestBidPrice;
                         symbol.AskPrice = tick.BestAskPrice;
-                        //symbol.Volume = tick.BaseVolume; //?
-                        symbol.Volume = tick.QuoteVolume; //= Quoted = het volume * de prijs                                
-
-
-                        // Hiermee kunnen we een "toekomstige" candle opbouwen.
-                        // (maar de berekeningen verwachten dat niet en dan gaan er zaken fout)
-                        // Kortom: Beslissingen op basis van niet voltooide candles moet je vermijden.
-                        //try
-                        //{
-                        //Monitor.Enter(symbol.CandleList);
-                        //try
-                        //{
-                        //    //symbol.HandleExchangeMiniTick(GlobalData.Settings, symbol, tick);
-                        //}
-                        //catch (Exception error)
-                        //{
-                        //    GlobalData.AddTextToLogTab(error.ToString());
-                        //}
-                        //}
-                        //finally
-                        //{
-                        //    Monitor.Exit(symbol.CandleList);
-                        //}
+                        symbol.Volume = tick.QuoteVolume; //= Quoted = het volume * de prijs
                     }
                 }
 
@@ -65,4 +39,5 @@ public class SubscriptionPriceTicker(ExchangeOptions exchangeOptions) : Subscrip
 
         return subscriptionResult;
     }
+
 }

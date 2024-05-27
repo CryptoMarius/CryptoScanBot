@@ -50,6 +50,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
             }
         }, ExchangeHelper.CancellationToken).ConfigureAwait(false);
 
+
         return subscriptionResult;
     }
 
