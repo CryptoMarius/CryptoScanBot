@@ -904,7 +904,7 @@ public class ThreadTelegramBotInstance
                     ScannerLog.Logger.Error(error, "");
                     GlobalData.AddTextToLogTab($"ERROR telegram thread {error.Message}");
                 }
-                await Task.Delay(250);
+                await Task.Delay(500);
             }
         }
         catch (Exception error)
