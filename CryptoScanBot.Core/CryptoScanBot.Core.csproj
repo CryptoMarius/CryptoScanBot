@@ -28,6 +28,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="Exchange\Kucoin\Futures\Interval.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Binance.Net" Version="9.9.7" />
     <PackageReference Include="Bybit.Net" Version="3.8.8" />
     <PackageReference Include="CommandLineParser" Version="2.9.1" />
@@ -71,10 +75,6 @@
     <None Update="Sounds\sound-trade-notification.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Exchange\Kucoin\Futures\" />
   </ItemGroup>
 
 </Project>
