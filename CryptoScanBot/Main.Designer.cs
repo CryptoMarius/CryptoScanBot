@@ -194,7 +194,7 @@
             tabPageSignals.Margin = new Padding(4, 3, 4, 3);
             tabPageSignals.Name = "tabPageSignals";
             tabPageSignals.Padding = new Padding(4, 3, 4, 3);
-            tabPageSignals.Size = new Size(1253, 589);
+            tabPageSignals.Size = new Size(1306, 589);
             tabPageSignals.TabIndex = 4;
             tabPageSignals.Text = "Signals";
             tabPageSignals.UseVisualStyleBackColor = true;
@@ -205,7 +205,7 @@
             dataGridViewSignals.Dock = DockStyle.Fill;
             dataGridViewSignals.Location = new Point(4, 3);
             dataGridViewSignals.Name = "dataGridViewSignals";
-            dataGridViewSignals.Size = new Size(1245, 583);
+            dataGridViewSignals.Size = new Size(1298, 583);
             dataGridViewSignals.TabIndex = 1;
             // 
             // tabPageBrowser
@@ -215,7 +215,7 @@
             tabPageBrowser.Margin = new Padding(4, 3, 4, 3);
             tabPageBrowser.Name = "tabPageBrowser";
             tabPageBrowser.Padding = new Padding(4, 3, 4, 3);
-            tabPageBrowser.Size = new Size(1253, 589);
+            tabPageBrowser.Size = new Size(1306, 589);
             tabPageBrowser.TabIndex = 5;
             tabPageBrowser.Text = "Tradingview";
             tabPageBrowser.UseVisualStyleBackColor = true;
@@ -229,7 +229,7 @@
             webViewTradingView.Location = new Point(4, 3);
             webViewTradingView.Margin = new Padding(4, 3, 4, 3);
             webViewTradingView.Name = "webViewTradingView";
-            webViewTradingView.Size = new Size(1245, 583);
+            webViewTradingView.Size = new Size(1298, 583);
             webViewTradingView.TabIndex = 0;
             webViewTradingView.ZoomFactor = 1D;
             // 
@@ -239,7 +239,7 @@
             tabPagePositionsOpen.Location = new Point(4, 27);
             tabPagePositionsOpen.Name = "tabPagePositionsOpen";
             tabPagePositionsOpen.Padding = new Padding(3);
-            tabPagePositionsOpen.Size = new Size(1253, 589);
+            tabPagePositionsOpen.Size = new Size(1306, 589);
             tabPagePositionsOpen.TabIndex = 7;
             tabPagePositionsOpen.Text = "Open positions";
             tabPagePositionsOpen.UseVisualStyleBackColor = true;
@@ -250,7 +250,7 @@
             dataGridViewPositionOpen.Dock = DockStyle.Fill;
             dataGridViewPositionOpen.Location = new Point(3, 3);
             dataGridViewPositionOpen.Name = "dataGridViewPositionOpen";
-            dataGridViewPositionOpen.Size = new Size(1247, 583);
+            dataGridViewPositionOpen.Size = new Size(1300, 583);
             dataGridViewPositionOpen.TabIndex = 1;
             // 
             // tabPagePositionsClosed
@@ -259,7 +259,7 @@
             tabPagePositionsClosed.Location = new Point(4, 27);
             tabPagePositionsClosed.Name = "tabPagePositionsClosed";
             tabPagePositionsClosed.Padding = new Padding(3);
-            tabPagePositionsClosed.Size = new Size(1253, 589);
+            tabPagePositionsClosed.Size = new Size(1306, 589);
             tabPagePositionsClosed.TabIndex = 8;
             tabPagePositionsClosed.Text = "Closed positions";
             tabPagePositionsClosed.UseVisualStyleBackColor = true;
@@ -270,7 +270,7 @@
             dataGridViewPositionClosed.Dock = DockStyle.Fill;
             dataGridViewPositionClosed.Location = new Point(3, 3);
             dataGridViewPositionClosed.Name = "dataGridViewPositionClosed";
-            dataGridViewPositionClosed.Size = new Size(1247, 583);
+            dataGridViewPositionClosed.Size = new Size(1300, 583);
             dataGridViewPositionClosed.TabIndex = 1;
             // 
             // tabPageLog
@@ -280,7 +280,7 @@
             tabPageLog.Margin = new Padding(2);
             tabPageLog.Name = "tabPageLog";
             tabPageLog.Padding = new Padding(2);
-            tabPageLog.Size = new Size(1253, 589);
+            tabPageLog.Size = new Size(1306, 589);
             tabPageLog.TabIndex = 1;
             tabPageLog.Text = "Log";
             tabPageLog.UseVisualStyleBackColor = true;
@@ -294,7 +294,7 @@
             TextBoxLog.Multiline = true;
             TextBoxLog.Name = "TextBoxLog";
             TextBoxLog.ScrollBars = ScrollBars.Both;
-            TextBoxLog.Size = new Size(1249, 585);
+            TextBoxLog.Size = new Size(1302, 585);
             TextBoxLog.TabIndex = 1;
             // 
             // tabPagewebViewDummy
@@ -304,7 +304,7 @@
             tabPagewebViewDummy.Margin = new Padding(4, 3, 4, 3);
             tabPagewebViewDummy.Name = "tabPagewebViewDummy";
             tabPagewebViewDummy.Padding = new Padding(4, 3, 4, 3);
-            tabPagewebViewDummy.Size = new Size(1253, 589);
+            tabPagewebViewDummy.Size = new Size(1306, 589);
             tabPagewebViewDummy.TabIndex = 6;
             tabPagewebViewDummy.Text = "WebView (dummy)";
             tabPagewebViewDummy.UseVisualStyleBackColor = true;
@@ -318,7 +318,7 @@
             webViewDummy.Location = new Point(4, 3);
             webViewDummy.Margin = new Padding(4, 3, 4, 3);
             webViewDummy.Name = "webViewDummy";
-            webViewDummy.Size = new Size(1245, 583);
+            webViewDummy.Size = new Size(1298, 583);
             webViewDummy.TabIndex = 1;
             webViewDummy.ZoomFactor = 1D;
             // 

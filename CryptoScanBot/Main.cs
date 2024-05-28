@@ -6,8 +6,11 @@ using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Settings;
+using CryptoScanBot.Core.Signal;
 using CryptoScanBot.Core.Trader;
 using CryptoScanBot.Intern;
+using CryptoScanBot.Signal;
+
 using Microsoft.Win32;
 
 using Nito.AsyncEx;
@@ -63,9 +66,7 @@ public partial class FrmMain : Form
         MenuMain.AddCommand(null, "Reset log en getallen", Command.None, MainMenuClearAll_Click);
         MenuMain.AddCommand(null, "Exchange information (Excel)", Command.ExcelExchangeInformation);
 #if TRADEBOT
-#if SQLDATABASE
-        MenuMain.AddCommand(null, "Backtest", Command.None, BacktestToolStripMenuItem_Click);
-#endif
+        MenuMain.AddCommand(null, "Backtest (experimental)", Command.None, BacktestToolStripMenuItem_Click);
 #endif
         MenuMain.AddCommand(null, "About", Command.About);
 
@@ -895,10 +896,8 @@ public partial class FrmMain : Form
         GlobalData.Settings.Trading.Active = ApplicationTradingBot.Checked;
         GlobalData.SaveSettings();
     }
-#endif
 
 
-#if SQLDATABASE
     private void BacktestToolStripMenuItem_Click(object sender, EventArgs e)
     {
         /// TODO: Deze code verhuizen naar aparte class of het dialoog zelf?
@@ -916,7 +915,7 @@ public partial class FrmMain : Form
             {
                 GlobalData.SaveSettings();
 
-                if (!GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+                if (!GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange exchange))
                 {
                     MessageBox.Show("Exchange bestaat niet");
                     return;
@@ -1190,4 +1189,5 @@ public partial class FrmMain : Form
             File.WriteAllText(filename, stringBuilder.ToString());
         }
     }
+
 }
