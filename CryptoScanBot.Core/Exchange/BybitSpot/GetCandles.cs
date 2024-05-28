@@ -7,12 +7,13 @@ using CryptoScanBot.Core.Model;
 namespace CryptoScanBot.Core.Exchange.BybitSpot;
 
 /// <summary>
-/// Fetch the candles from Binance
+/// Fetch klines/candles from the exchange
 /// </summary>
 public class GetCandles
 {
     // Prevent multiple sessions
     private static readonly SemaphoreSlim Semaphore = new(1);
+
 
     private static async Task<long> GetCandlesForInterval(BybitRestClient client, CryptoSymbol symbol, CryptoInterval interval, CryptoSymbolInterval symbolInterval)
     {
@@ -24,7 +25,7 @@ public class GetCandles
         string prefix = $"{ExchangeBase.ExchangeOptions.ExchangeName} {symbol.Name} {interval!.Name}";
 
         // The maximum is 1000 candles
-        // (verrassing) de volgorde van de candles is van nieuw naar oud!
+        // (suprise) the sort order can be from new to old..
         DateTime dateStart = CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized);
         var result = await client.V5Api.ExchangeData.GetKlinesAsync(Category.Spot, symbol.Name, (KlineInterval)exchangeInterval, startTime: dateStart, limit: 1000);
         if (!result.Success)
@@ -61,7 +62,7 @@ public class GetCandles
                 // Onthoud de laatste candle, t/m die datum is alles binnen gehaald.
                 // NB: De candle volgorde is niet gegarandeerd (op bybit zelfs omgedraaid)
                 if (candle.OpenTime > last)
-                    last = candle.OpenTime;
+                    last = candle.OpenTime + interval.Duration; // new (saves 1 candle)
             }
 
             // For the next session
