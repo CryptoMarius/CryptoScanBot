@@ -7,7 +7,7 @@ public class TickerGroup : IDisposable
     // Iedere client bedient maximaal 10 subscriptions
     // Iedere subscription bedient een aantal symbols
     // dat is zo'n 1..200 en afhankelijk van de exchange..
-    internal BaseSocketClient? SocketClient;
+    public BaseSocketClient? SocketClient; // made public for ExchangeTest project
     public List<SubscriptionTicker> TickerList { get; set; } = [];
 
 
