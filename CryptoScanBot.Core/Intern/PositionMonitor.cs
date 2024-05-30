@@ -250,7 +250,7 @@ public class PositionMonitor : IDisposable
 
 
 
-    public async Task CreateOrExtendPositionViaSignalAsync()
+    public async Task CreateOrExtendPositionAsync()
     {
         string? lastPrice = Symbol.LastPrice?.ToString(Symbol.PriceDisplayFormat);
         string text = "Monitor " + Symbol.Name;
@@ -1631,8 +1631,8 @@ public class PositionMonitor : IDisposable
                 // Cancel all open take profit orders
                 if (await CancelAllOrders(position, takeProfitOrderSide))
                 {
-                    // Hebben we nog een hercalcualtie nodig? Wellicht???
-                    //PositionTools.CalculateProfitAndBreakEvenPrice(position);
+                    // Calculate the BE price (without the previous TP commission)
+                    TradeTools.CalculateProfitAndBreakEvenPrice(position, position.BreakEvenPrice);
 
                     // And place the (single/combined) take profit order to minimize dust)
                     decimal takeProfitPrice = CalculateTakeProfitPrice(position);
@@ -1876,12 +1876,12 @@ public class PositionMonitor : IDisposable
                 await PaperTrading.PaperTradingCheckOrders(Database, GlobalData.ExchangePaperTradeAccount!, Symbol, LastCandle1m);
 
 
-            // Pauzeren vanwege de trading regels of te lage barometer
+            // Pause becuase of trading rules or low barometer
             PauseBecauseOfTradingRules = !TradingRules.CheckTradingRules(LastCandle1m);
 
-            // Open or extend a position (maar willen we wel DCA's als de barometer of trading rules een probleem zijn?)
+            // Open or extend a position
             if (hasCreatedAsignal)
-                await CreateOrExtendPositionViaSignalAsync();
+                await CreateOrExtendPositionAsync();
 
             // Per (actief) trade account de posities controleren
             foreach (CryptoTradeAccount tradeAccount in GlobalData.ActiveTradeAccountList.Values.ToList())
