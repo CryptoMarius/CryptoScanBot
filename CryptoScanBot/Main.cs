@@ -42,6 +42,8 @@ public partial class FrmMain : Form
     private readonly ToolStripMenuItemCommand ApplicationCreateSignals;
 #if TRADEBOT
     private readonly ToolStripMenuItemCommand ApplicationTradingBot;
+    private readonly ToolStripMenuItemCommand ApplicationBackTestMode;
+    
     private readonly List<CryptoPosition> PositionOpenListView = [];
     private readonly CryptoDataGridPositionsOpen<CryptoPosition> GridPositionOpenView;
 
@@ -60,14 +62,12 @@ public partial class FrmMain : Form
 #if TRADEBOT
         ApplicationTradingBot = MenuMain.AddCommand(null, "Trading bot actief", Command.None, ApplicationTradingBot_Click);
         ApplicationTradingBot.Checked = true;
+        ApplicationBackTestMode = MenuMain.AddCommand(null, "Backtest mode", Command.None, ApplicationBackTestMode_Click);
 #endif
         MenuMain.AddCommand(null, "Instellingen", Command.None, ToolStripMenuItemSettings_Click);
         MenuMain.AddCommand(null, "Verversen informatie", Command.None, ToolStripMenuItemRefresh_Click_1);
         MenuMain.AddCommand(null, "Reset log en getallen", Command.None, MainMenuClearAll_Click);
         MenuMain.AddCommand(null, "Exchange information (Excel)", Command.ExcelExchangeInformation);
-#if TRADEBOT
-        MenuMain.AddCommand(null, "Backtest (experimental)", Command.None, BacktestToolStripMenuItem_Click);
-#endif
         MenuMain.AddCommand(null, "About", Command.About);
 
 #if DEBUG
@@ -76,6 +76,9 @@ public partial class FrmMain : Form
         MenuMain.AddCommand(null, "Test - Save Candles", Command.None, TestSaveCandlesClick);
         MenuMain.AddCommand(null, "Test - Create url testfile", Command.None, TestCreateUrlTestFileClick);
         MenuMain.AddCommand(null, "Test - Dump ticker information", Command.None, TestShowTickerInformationClick);
+#if TRADEBOT
+        MenuMain.AddCommand(null, "Test - Backtest (experimental)", Command.None, BacktestToolStripMenuItem_Click);
+#endif
 #endif
 
         //Console.Write("Hello world 1");
@@ -889,6 +892,7 @@ public partial class FrmMain : Form
         GlobalData.SaveSettings();
     }
 
+
 #if TRADEBOT
     private void ApplicationTradingBot_Click(object sender, EventArgs e)
     {
@@ -897,6 +901,26 @@ public partial class FrmMain : Form
         GlobalData.SaveSettings();
     }
 
+
+    private void ApplicationBackTestMode_Click(object sender, EventArgs e)
+    {
+        ApplicationBackTestMode.Checked = !ApplicationBackTestMode.Checked;
+        if (ApplicationBackTestMode.Checked)
+        {
+            ApplicationTradingBot.Enabled = false;
+            GlobalData.Settings.Trading.Active = false;
+            GlobalData.Settings.Trading.TradeViaBackup = GlobalData.Settings.Trading.TradeVia;
+        }
+        else
+        {
+            ApplicationTradingBot.Enabled = true;
+            GlobalData.Settings.Trading.Active = ApplicationBackTestMode.Checked;
+            GlobalData.Settings.Trading.TradeVia = GlobalData.Settings.Trading.TradeViaBackup;
+        }
+
+        GlobalData.SaveSettings();
+    }
+    
 
     private void BacktestToolStripMenuItem_Click(object sender, EventArgs e)
     {
@@ -928,59 +952,59 @@ public partial class FrmMain : Form
                     return;
                 }
 
-                CryptoInterval interval = null;
-                //CryptoInterval interval = GlobalData.IntervalList => (Name == GlobalData.Settings.BackTestInterval); ???
-                foreach (CryptoInterval intervalX in GlobalData.IntervalList)
-                {
-                    if (intervalX.Name == GlobalData.Settings.BackTest.BackTestInterval)
-                    {
-                        interval = intervalX;
-                        break;
-                    }
-                }
-                if (interval == null)
-                {
-                    MessageBox.Show("Interval bestaat niet");
-                    return;
-                }
+                //CryptoInterval interval = null;
+                ////CryptoInterval interval = GlobalData.IntervalList => (Name == GlobalData.Settings.BackTestInterval); ???
+                //foreach (CryptoInterval intervalX in GlobalData.IntervalList)
+                //{
+                //    if (intervalX.Name == GlobalData.Settings.BackTest.BackTestInterval)
+                //    {
+                //        interval = intervalX;
+                //        break;
+                //    }
+                //}
+                //if (interval == null)
+                //{
+                //    MessageBox.Show("Interval bestaat niet");
+                //    return;
+                //}
 
-                long unix = CandleTools.GetUnixTime(GlobalData.Settings.BackTest.BackTestTime, interval.Duration);
-                if (!symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList.TryGetValue(unix, out CryptoCandle candle))
-                {
-                    MessageBox.Show("Candle bestaat niet");
-                    return;
-                }
+                //long unix = CandleTools.GetUnixTime(GlobalData.Settings.BackTest.BackTestTime, interval.Duration);
+                //if (!symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList.TryGetValue(unix, out CryptoCandle candle))
+                //{
+                //    MessageBox.Show("Candle bestaat niet");
+                //    return;
+                //}
 
-                long einde = candle.OpenTime;
-                long start = einde - 2 * 60 * interval.Duration;
-                foreach (CryptoTradeSide side in Enum.GetValues(typeof(CryptoTradeSide))) // niet efficient meer?
-                {
-                    SignalCreate createSignal = new(symbol, interval, side, start + interval.Duration);
-                    while (start <= einde)
-                    {
-                        if (symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList.TryGetValue(start, out candle))
-                        {
-                            if (createSignal.Prepare(start))
-                            {
-                                // todo, configuratie short/long
-                                SignalCreateBase algorithm = SignalHelper.GetSignalAlgorithm(CryptoTradeSide.Long, GlobalData.Settings.BackTest.BackTestAlgoritm, symbol, interval, candle);
-                                if (algorithm != null)
-                                {
-                                    if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
-                                    {
-                                        //createSignal.PrepareAndSendSignal(algorithm);
-                                        algorithm.ExtraText = "Signal!";
-                                    }
-                                    //candle.ExtraText = algorithm.ExtraText;
-                                }
-                            }
-                        }
-                        start += interval.Duration;
-                    }
+                //long einde = candle.OpenTime;
+                //long start = einde - 2 * 60 * interval.Duration;
+                //foreach (CryptoTradeSide side in Enum.GetValues(typeof(CryptoTradeSide))) // niet efficient meer?
+                //{
+                //    SignalCreate createSignal = new(symbol, interval, side, start + interval.Duration);
+                //    while (start <= einde)
+                //    {
+                //        if (symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList.TryGetValue(start, out candle))
+                //        {
+                //            if (createSignal.Prepare(start))
+                //            {
+                //                // todo, configuratie short/long
+                //                SignalCreateBase algorithm = SignalHelper.GetSignalAlgorithm(CryptoTradeSide.Long, GlobalData.Settings.BackTest.BackTestAlgoritm, symbol, interval, candle);
+                //                if (algorithm != null)
+                //                {
+                //                    if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
+                //                    {
+                //                        //createSignal.PrepareAndSendSignal(algorithm);
+                //                        algorithm.ExtraText = "Signal!";
+                //                    }
+                //                    //candle.ExtraText = algorithm.ExtraText;
+                //                }
+                //            }
+                //        }
+                //        start += interval.Duration;
+                //    }
 
-                    BackTestExcel backTestExcel = new(symbol, createSignal.history);
-                    backTestExcel.ExportToExcell(GlobalData.Settings.BackTest.BackTestAlgoritm);
-                }
+                //    BackTestExcel backTestExcel = new(symbol, createSignal.history);
+                //    backTestExcel.ExportToExcell(GlobalData.Settings.BackTest.BackTestAlgoritm);
+                //}
 
             }
         }
