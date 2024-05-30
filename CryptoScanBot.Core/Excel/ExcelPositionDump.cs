@@ -149,9 +149,15 @@ public class ExcelPositionDump(CryptoPosition position) : ExcelBase(position.Sym
 
         if (position.RemainingDust != 0)
         {
+            // Not the right value (because of price differences), this is just an estimate
             ++row;
-            WriteCell(sheet, column, row, "Dust Value");
+            WriteCell(sheet, column, row, "Dust amount");
+            WriteCell(sheet, column + 1, row, position.RemainingDust, CellStyleDecimalNormal);
+
+            ++row;
+            WriteCell(sheet, column, row, "Dust value");
             WriteCell(sheet, column + 1, row, position.Symbol.LastPrice * position.RemainingDust, CellStyleDecimalNormal);
+            WriteCell(sheet, column + 2, row, "(estimated using lastprice)");
         }
 
         columns = 22;
