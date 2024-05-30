@@ -3,10 +3,9 @@ using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using Dapper.Contrib.Extensions;
-
 using Kucoin.Net.Clients;
 
-namespace CryptoScanBot.Kucoin.Futures;
+namespace ExchangeTest.Exchange.Kucoin.Futures;
 
 public class Symbols
 {
@@ -15,7 +14,7 @@ public class Symbols
 
     public static async Task ExecuteAsync()
     {
-        if (GlobalData.ExchangeListName.TryGetValue(ExchangeName, out Core.Model.CryptoExchange? exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(ExchangeName, out CryptoScanBot.Core.Model.CryptoExchange? exchange))
         {
             try
             {

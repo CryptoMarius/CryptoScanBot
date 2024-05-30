@@ -4,6 +4,7 @@ Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep
 
 
 Scanner:
+- Scanner - Gerapporteerd: Het geheugen loopt langzaam op gedurende meerdere weken
 - Scanner - Binance Futures deeplink url werkt niet
 - Scanner - Nieuwe munten die toegevoegd worden op de exchange terwijl de scanner loopt worden niet automatisch toegevoegd aan de price- en kline tickers
 - Scanner - Limit rates voor Kucoin verder uitwerken (ophalen candles geeft soms een foutmelding, wordt bij een volgende herstart wel hersteld, maar hoort niet zo)
@@ -43,6 +44,8 @@ Scanner:
 
 
 Trading:
+- Trading - Bij een niet gevulde entry limit order met een timeout wordt de positie niet gesloten
+- Trading - De profit percentage klopt niet (met name als de dust een hoog aantal is)
 - Trading - Documentatie bijwerken - Een klusje..
 - Trading - De laatste X posities dumpen naar Excel voor een overzichtje
 - Trading - Controle inbouwen op het short gaan, in futures kan dat, maar in spot lukt dat natuurlijk alleen als er assets beschikbaar zijn

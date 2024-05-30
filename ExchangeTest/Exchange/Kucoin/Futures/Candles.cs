@@ -1,10 +1,13 @@
 ﻿using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
+
 using Kucoin.Net.Clients;
 using Kucoin.Net.Enums;
 
-namespace CryptoScanBot.Kucoin.Futures;
+using ApiAlias = CryptoScanBot.Core.Exchange.Kucoin.Futures;
+
+namespace ExchangeTest.Exchange.Kucoin.Futures;
 
 /// <summary>
 /// Fetch the candles from Binance
@@ -35,12 +38,8 @@ public class Candles
             CryptoIntervalPeriod.interval8h => FuturesKlineInterval.EightHours,
             CryptoIntervalPeriod.interval12h => FuturesKlineInterval.TwelveHours,
             CryptoIntervalPeriod.interval1d => FuturesKlineInterval.OneDay,
-            //case IntervalPeriod.interval1w:
-            //    exchangeInterval = FuturesKlineInterval.OneWeek;
-            //    break;
-            _ => null, //FuturesKlineInterval.OneWeek,// Ten teken dat het niet ondersteund wordt
+            _ => null,
         };
-        //return exchangeInterval;
     }
 
     private static async Task<long> GetCandlesForInterval(KucoinRestClient client, CryptoSymbol symbol, CryptoInterval interval, CryptoSymbolInterval symbolInterval)
@@ -102,9 +101,6 @@ public class Candles
                     // Onthoud de laatste aangeleverde candle, t/m die datum is ten minste alles binnen gehaald
                     if (candle.OpenTime > last)
                         last = candle.OpenTime;
-#if SQLDATABASE
-                GlobalData.TaskSaveCandles.AddToQueue(candle);
-#endif
                 }
 
                 // Voor de volgende GetCandlesForInterval() sessie
@@ -143,51 +139,6 @@ public class Candles
 
     private static async Task FetchCandlesInternal(KucoinRestClient client, CryptoSymbol symbol, long fetchEndUnix)
     {
-        DateTime[] fetchFrom = new DateTime[Enum.GetNames(typeof(CryptoIntervalPeriod)).Length];
-
-        DateTime utcNow = DateTime.UtcNow;
-        foreach (CryptoInterval interval in GlobalData.IntervalList)
-            fetchFrom[(int)interval.IntervalPeriod] = utcNow;
-
-        // Determine the (maximum) startdate (without knowing what we already have)
-        // If the exchange does not have this interval than make the lower timeframe
-        // a bit bigger so we can calculate the candles ourselves
-        foreach (CryptoInterval interval in GlobalData.IntervalList)
-        {
-            long startFetchUnix = CandleIndicatorData.GetCandleFetchStart(symbol, interval, utcNow);
-
-            CryptoInterval loopInterval = interval;
-            while (true)
-            {
-                DateTime startFetchUnixDate = CandleTools.GetUnixDate(startFetchUnix);
-                if (fetchFrom[(int)loopInterval!.IntervalPeriod] > startFetchUnixDate)
-                    fetchFrom[(int)loopInterval!.IntervalPeriod] = startFetchUnixDate;
-
-                // Is this timeframe supported?
-                if (GetExchangeInterval(loopInterval) != null)
-                    break;
-                else
-                    loopInterval = loopInterval.ConstructFrom!;
-            }
-        }
-
-        // Debug
-        foreach (CryptoInterval interval in GlobalData.IntervalList)
-          GlobalData.AddTextToLogTab("Fetching " + symbol.Name + " " + interval.Name + " " + fetchFrom[(int)interval.IntervalPeriod].ToLocalTime());
-
-
-        // Correct the start date with what we already have
-        foreach (CryptoInterval interval in GlobalData.IntervalList)
-        {
-            DateTime startFetchUnixDate = fetchFrom[(int)interval.IntervalPeriod];
-            long startFetchUnix = CandleTools.GetUnixTime(startFetchUnixDate, 60);
-
-            CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-            if (symbolInterval.LastCandleSynchronized == null || startFetchUnix > symbolInterval.LastCandleSynchronized)
-                symbolInterval.LastCandleSynchronized = startFetchUnix;
-        }
-
-
         for (int i = 0; i < GlobalData.IntervalList.Count; i++)
         {
             CryptoInterval interval = GlobalData.IntervalList[i];
@@ -227,13 +178,6 @@ public class Candles
                         {
                             candle = new()
                             {
-#if SQLDATABASE
-                                ExchangeId = symbol.Exchange.Id,
-                                SymbolId = symbol.Id,
-                                IntervalId = interval.Id,
-#endif
-                                //Symbol = symbol,
-                                //Interval = interval,
                                 OpenTime = unixTime,
                                 Open = stickOld.Close,
                                 High = stickOld.Close,
@@ -315,7 +259,10 @@ public class Candles
 
                 // Er is niet geswicthed van exchange (omdat het ophalen zo lang duurt)
                 if (symbol.ExchangeId == GlobalData.Settings.General.ExchangeId)
+                {
+                    ApiAlias.Interval.DetermineFetchStartDate(symbol, fetchEndUnix);
                     await FetchCandlesInternal(client, symbol, fetchEndUnix);
+                }
             }
         }
         catch (Exception error)
@@ -328,7 +275,7 @@ public class Candles
 
     public static async Task ExecuteAsync(string symbolName)
     {
-        if (GlobalData.ExchangeListName.TryGetValue(ExchangeName, out Core.Model.CryptoExchange? exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(ExchangeName, out CryptoScanBot.Core.Model.CryptoExchange? exchange))
         {
             GlobalData.AddTextToLogTab("");
             GlobalData.AddTextToLogTab(string.Format("Fetching {0} information", exchange.Name));
