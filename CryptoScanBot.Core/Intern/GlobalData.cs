@@ -199,7 +199,7 @@ static public class GlobalData
                     ExchangeRealTradeAccount = tradeAccount;
 
                 // That BackTest setting is kind of a weird setting for now...
-                if (BackTest || Settings.Trading.TradeVia != CryptoTradeAccountType.NoTrading)
+                //if (BackTest || Settings.Trading.TradeVia != CryptoTradeAccountType.NoTrading)
                     ActiveTradeAccountList.Add(tradeAccount.Id, tradeAccount);
             }
         }

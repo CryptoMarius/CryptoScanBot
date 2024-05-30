@@ -73,7 +73,8 @@ public class SettingsTrading
     // Account - Positie gerelateerd
 
     // De 3 account types zijn raar gekozen
-    public CryptoTradeAccountType TradeVia { get; set; } = CryptoTradeAccountType.NoTrading;
+    public CryptoTradeAccountType TradeVia { get; set; } = CryptoTradeAccountType.PaperTrade;
+    public CryptoTradeAccountType TradeViaBackup { get; set; } // for Backtest mode
 
     // Trade via exchange (instelling enkel omdat we nu keuze hebben)
     public bool TradeViaExchange { get; set; } = false;
@@ -99,7 +100,7 @@ public class SettingsTrading
 
 
     //***************************
-    // Buy
+    // Entry
     // Wanneer wordt de order geplaatst
     public CryptoEntryOrProfitMethod BuyStepInMethod { get; set; } = CryptoEntryOrProfitMethod.AfterNextSignal;
     // De manier waarop de buy order geplaatst wordt
@@ -110,7 +111,7 @@ public class SettingsTrading
     public decimal GlobalBuyVarying { get; set; } = -0.01m; // verlagen
 
     //***************************
-    // Bijkopen (DCA)
+    // Dca
     // Wanneer plaatsen we de DCA?
     public CryptoEntryOrProfitMethod DcaStepInMethod { get; set; } = CryptoEntryOrProfitMethod.FixedPercentage;
     // De manier waarop de buy order geplaatst wordt
@@ -122,7 +123,7 @@ public class SettingsTrading
     public int GlobalBuyCooldownTime { get; set; } = 30;
 
     //***************************
-    // Sell
+    // Take profit
     // Het verkoop bedrag = buy bedrag * (100+profit / 100)
     public decimal ProfitPercentage { get; set; } = 1.01m;
     // De manier waarop de order geplaatst wordt

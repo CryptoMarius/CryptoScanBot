@@ -19,8 +19,8 @@
     <PackageReference Include="KrakenExchange.Net" Version="4.6.5" />
     <PackageReference Include="Kucoin.Net" Version="5.5.5" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
-    <PackageReference Include="MSTest.TestAdapter" Version="3.4.0" />
-    <PackageReference Include="MSTest.TestFramework" Version="3.4.0" />
+    <PackageReference Include="MSTest.TestAdapter" Version="3.4.1" />
+    <PackageReference Include="MSTest.TestFramework" Version="3.4.1" />
   </ItemGroup>
 
   <ItemGroup>

@@ -35,8 +35,8 @@ public partial class FrmSettings : Form
         UserControlTradingShort.InitControls(true, CryptoTradeSide.Short);
 #endif
 
-        // Trading (excluded backtest)
-        TradeVia.Add("No trading", CryptoTradeAccountType.NoTrading);
+        // Trading (excluding the backtest)
+        //TradeVia.Add("Backtest", CryptoTradeAccountType.BackTest);
         TradeVia.Add("Papertrading", CryptoTradeAccountType.PaperTrade);
         TradeVia.Add("Trading", CryptoTradeAccountType.RealTrading);
 
