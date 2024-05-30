@@ -108,6 +108,20 @@ public static class SignalHelper
             AnalyzeShortType = typeof(SignalRsiStochKShort),
         });
 
+
+        //***************************************************
+        // Experiment FLUX - JanH
+        //***************************************************
+        AlgorithmDefinitionList.Add(new AlgorithmDefinition()
+        {
+            Name = "lux",
+            Strategy = CryptoSignalStrategy.Lux,
+            AnalyzeLongType = typeof(SignalLuxLong),
+            AnalyzeShortType = typeof(SignalFluxShort),
+        });
+
+
+
         // En de lijst eenmalig indexeren
         AlgorithmDefinitionIndex.Clear();
         foreach (AlgorithmDefinition algorithmDefinition in AlgorithmDefinitionList)

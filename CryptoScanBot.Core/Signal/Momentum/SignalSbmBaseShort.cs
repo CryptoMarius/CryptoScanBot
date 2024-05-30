@@ -317,39 +317,6 @@ public class SignalSbmBaseShort(CryptoSymbol symbol, CryptoInterval interval, Cr
         return true;
     }
 
-    /// <summary>
-    /// Is de RSI aflopend in de laatste x candles
-    /// 2e parameter geeft aan hoeveel afwijkend mogen zijn
-    /// </summary>
-    public bool IsRsiDecreasingInTheLast(int candleCount, int allowedDown)
-    {
-        // We gaan van rechts naar links (van de nieuwste candle richting verleden)
-        int down = 0;
-        bool first = true;
-        CryptoCandle last = CandleLast;
-
-
-        // En van de candles daarvoor mag er een (of meer) afwijken
-        while (candleCount > 0)
-        {
-            if (!GetPrevCandle(last, out CryptoCandle prev))
-                return false;
-
-            if (last.CandleData?.Rsi >= prev.CandleData?.Rsi)
-            {
-                down++;
-                if (first || down > allowedDown)
-                    return false;
-            }
-
-            last = prev;
-            candleCount--;
-            first = false;
-        }
-
-        return true;
-    }
-
 
     public override bool AllowStepIn(CryptoSignal signal)
     {

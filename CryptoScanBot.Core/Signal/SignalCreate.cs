@@ -364,7 +364,7 @@ public class SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTr
     /// </summary>
     /// <param name="overSell">Retourneer de oversell of de overbuy tellertje</param>
     /// <returns></returns>
-    public static void GetFluxIndcator(CryptoSymbol symbol, out int fluxOverSold, out int fluxOverBought)
+    public static void GetLuxIndicator(CryptoSymbol symbol, out int luxOverSold, out int luxOverBought)
     {
         SortedList<long, CryptoCandle> candles = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval5m).CandleList;
 
@@ -432,8 +432,8 @@ public class SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTr
             }
         }
 
-        fluxOverSold = 10 * oversell;
-        fluxOverBought = 10 * overbuy;
+        luxOverSold = 10 * oversell;
+        luxOverBought = 10 * overbuy;
     }
 
     //static public List<CryptoCandle> CalculateHistory(SortedList<long, CryptoCandle> candleSticks, int maxCandles)
@@ -622,7 +622,7 @@ public class SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTr
 
 
         // Iets wat ik wel eens gebruikt als ik trade
-        GetFluxIndcator(Symbol, out int fluxOverSold, out int fluxOverBought);
+        GetLuxIndicator(Symbol, out int fluxOverSold, out int fluxOverBought);
         if (signal.Side == CryptoTradeSide.Long)
             signal.FluxIndicator5m = fluxOverSold;
         else
