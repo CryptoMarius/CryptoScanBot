@@ -35,7 +35,7 @@ public class CryptoPositionStep
     public decimal QuantityFilled { get; set; }
     public decimal QuoteQuantityFilled { get; set; } // quote value
 
-    public decimal RemainingDust { get; set; } // overblijvend vanwege afrondingen
+    public decimal RemainingDust { get; set; } // remainder because of tick sizes (only filled for TP)
 
     // Of we aan het trailen zijn (de order iedere keer een beetje verzetten)
     public CryptoTrailing Trailing { get; set; } // not supported
