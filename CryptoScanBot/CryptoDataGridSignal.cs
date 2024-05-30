@@ -771,6 +771,9 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
 
     private void ClearOldSignals(object sender, EventArgs e)
     {
+        if (GlobalData.BackTest)
+            return;
+
         // Avoid duplicate calls (when the list is serious long)
         if (Monitor.TryEnter(List))
         {
@@ -789,7 +792,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                         // TODO: Long/Short..?
                         // statistics (not sure where to put it right now)
                         decimal? price = signal.Symbol.LastPrice;
-                        if (price.HasValue)
+                        if (!signal.BackTest && price.HasValue)
                         {
                             if (price < signal.PriceMin)
                             {
@@ -828,6 +831,8 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
     private void UpdateStatistics()
     {
         // statistics (not sure where to put it right now)
+        if (GlobalData.BackTest)
+            return;
 
         // Avoid duplicate calls (when the list is serious long)
         if (Monitor.TryEnter(List))
@@ -842,20 +847,30 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                         CryptoSignal signal = List[index];
 
                         decimal? price = signal.Symbol.LastPrice;
-                        if (price.HasValue)
+                        if (!signal.BackTest && price.HasValue)
                         {
                             // TODO: Long/Short..?
+                            bool changed = false;
 
                             if (price < signal.PriceMin)
                             {
+                                changed = true;
                                 signal.PriceMin = price.Value;
                                 signal.PriceMinPerc = signal.PriceDiff.Value;
                             }
 
                             if (price > signal.PriceMax)
                             {
+                                changed = true;
                                 signal.PriceMax = price.Value;
                                 signal.PriceMaxPerc = signal.PriceDiff.Value;
+                            }
+
+                            // cpu killer?
+                            if (changed)
+                            {
+                                using CryptoDatabase databaseThread = new();
+                                databaseThread.Connection.Update(signal);
                             }
                         }
                     }
