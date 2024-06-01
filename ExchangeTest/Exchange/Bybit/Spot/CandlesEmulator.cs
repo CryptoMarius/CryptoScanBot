@@ -67,7 +67,6 @@ public class CandlesEmulator
             // For the next session
             if (last > long.MinValue)
             {
-                symbolInterval.IsChanged = true; // zie tevens setter (maar ach)
                 symbolInterval.LastCandleSynchronized = last;
                 // Alternatief (maar als er gaten in de candles zijn geeft dit problemen, endless loops)
                 //CandleTools.UpdateCandleFetched(symbol, interval);
@@ -184,7 +183,6 @@ public class CandlesEmulator
             {
                 Monitor.Exit(symbol.CandleList);
             }
-
         }
     }
 
