@@ -3,7 +3,7 @@
 
 //https://github.com/StockSharp/StockSharp/blob/master/Algo/Indicators/ZigZag.cs
 
-namespace CryptoScanBot.Core.Intern;
+namespace CryptoScanBot.Core.Trend;
 
 /// <summary>
 /// ZigZag.
@@ -11,13 +11,12 @@ namespace CryptoScanBot.Core.Intern;
 /// <remarks>
 /// ZigZag traces and combines extreme points of the chart, distanced for not less than specified percentage by the price scale.
 /// </remarks>
-public class TrendIndicatorZigZag1
+public class ZigZagIndicator
 {
-    public readonly IList<CryptoCandle> Candles = new List<CryptoCandle>();
-
-    public readonly List<decimal> _lowBuffer = new();
-    public readonly List<decimal> _highBuffer = new();
-    public readonly List<decimal> _zigZagBuffer = new();
+    public readonly List<CryptoCandle> Candles = [];
+    public readonly List<decimal> _lowBuffer = [];
+    public readonly List<decimal> _highBuffer = [];
+    public readonly List<decimal> _zigZagBuffer = [];
 
     private Func<CryptoCandle, decimal> _currentValue = candle => candle.Close;
     private int _depth;
@@ -27,7 +26,7 @@ public class TrendIndicatorZigZag1
     /// <summary>
     /// Initializes a new instance of the <see cref="ZigZag"/>.
     /// </summary>
-    public TrendIndicatorZigZag1()
+    public ZigZagIndicator()
     {
         BackStep = 3;
         Depth = 12;
