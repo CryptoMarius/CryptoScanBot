@@ -2,6 +2,7 @@
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
+using CryptoScanBot.Core.Trend;
 using Dapper;
 
 using Telegram.Bot;
@@ -478,6 +479,7 @@ public class ThreadTelegramBotInstance
             symbolstr = parameters[1].Trim().ToUpper();
         stringbuilder.AppendLine(string.Format("Trend {0}", symbolstr));
 
+        //Remark: Isn't this the same code as CommandShowTrendInfo?
 
         if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
         {
@@ -486,29 +488,27 @@ public class ThreadTelegramBotInstance
                 int iterator = 0;
                 long percentageSum = 0;
                 long maxPercentageSum = 0;
-                foreach (CryptoSymbolInterval cryptoSymbolInterval in symbol.IntervalPeriodList)
+                foreach (CryptoSymbolInterval symbolInterval in symbol.IntervalPeriodList)
                 {
                     iterator++;
-                    TrendIndicator trendIndicatorClass = new(symbol, cryptoSymbolInterval);
-                    // TODO Parameter voor de trendIndicatorClass.CalculateTrend goed invullen
-                    CryptoTrendIndicator trendIndicator = trendIndicatorClass.CalculateTrend(0);
+                    TrendInterval.Calculate(symbolInterval, 0, 0);
 
                     string s;
-                    if (trendIndicator == CryptoTrendIndicator.Bullish)
+                    if (symbolInterval.TrendIndicator == CryptoTrendIndicator.Bullish)
                         s = "trend=bullish";
-                    else if (trendIndicator == CryptoTrendIndicator.Bearish)
+                    else if (symbolInterval.TrendIndicator == CryptoTrendIndicator.Bearish)
                         s = "trend=bearish";
                     else
                         s = "trend=sideway's?";
-                    stringbuilder.AppendLine(string.Format("{0} {1:N2}", cryptoSymbolInterval.Interval.Name, s));
+                    stringbuilder.AppendLine(string.Format("{0} {1:N2}", symbolInterval.Interval.Name, s));
 
-                    if (trendIndicator == CryptoTrendIndicator.Bullish)
-                        percentageSum += (int)cryptoSymbolInterval.IntervalPeriod * iterator;
-                    else if (trendIndicator == CryptoTrendIndicator.Bearish)
-                        percentageSum -= (int)cryptoSymbolInterval.IntervalPeriod * iterator;
+                    if (symbolInterval.TrendIndicator == CryptoTrendIndicator.Bullish)
+                        percentageSum += (int)symbolInterval.IntervalPeriod * iterator;
+                    else if (symbolInterval.TrendIndicator == CryptoTrendIndicator.Bearish)
+                        percentageSum -= (int)symbolInterval.IntervalPeriod * iterator;
 
                     // Wat is het maximale som (voor de eindberekening)
-                    maxPercentageSum += (int)cryptoSymbolInterval.IntervalPeriod * iterator;
+                    maxPercentageSum += (int)symbolInterval.IntervalPeriod * iterator;
                 }
 
                 decimal trendPercentage = 100 * (decimal)percentageSum / maxPercentageSum;
@@ -798,7 +798,7 @@ public class ThreadTelegramBotInstance
                                             stringBuilder.AppendLine();
                                             CommandShowProfits(stringBuilder);
                                             stringBuilder.AppendLine();
-                                            Helper.ShowAssets(GlobalData.ExchangeRealTradeAccount, stringBuilder, out decimal _, out decimal _);
+                                            Helper.ShowAssets(GlobalData.ActiveAccount, stringBuilder, out decimal _, out decimal _);
                                             stringBuilder.AppendLine();
                                             ShowCoins(command, stringBuilder);
                                         }
@@ -845,7 +845,7 @@ public class ThreadTelegramBotInstance
 #if TRADEBOT
                                         else if (command == "ASSETS")
                                         {
-                                            Helper.ShowAssets(GlobalData.ExchangeRealTradeAccount, stringBuilder, out decimal _, out decimal _);
+                                            Helper.ShowAssets(GlobalData.ActiveAccount, stringBuilder, out decimal _, out decimal _);
                                         }
 #endif
                                         else if (command == "TREND")

@@ -4,6 +4,7 @@ using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Settings;
 using CryptoScanBot.Core.Trader;
+using CryptoScanBot.Core.Trend;
 using CryptoScanBot.Signal;
 
 using Dapper.Contrib.Extensions;
@@ -175,131 +176,6 @@ public class SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTr
     }
 
 
-    //private static void AnalyseNotificationClearOutOld()
-    //{
-    //    // 1x in de 15 minuten de notificatie lijst cleanen is wel genoeg
-    //    if (AnalyseNotificationClean == null || AnalyseNotificationClean < DateTime.UtcNow)
-    //    {
-    //        // Next clean date
-    //        AnalyseNotificationClean = DateTime.UtcNow.AddMinutes(15);
-
-    //        Monitor.Enter(AnalyseNotificationList);
-    //        try
-    //        {
-    //            // De lijst kleiner maken
-    //            long someTimeAgo = CandleTools.GetUnixTime(DateTime.UtcNow.AddHours(-2), 60);
-    //            for (int i = AnalyseNotificationList.Count - 1; i >= 0; i--)
-    //            {
-    //                KeyValuePair<string, long> item2 = AnalyseNotificationList.ElementAt(i);
-    //                if (item2.Value < someTimeAgo)
-    //                    AnalyseNotificationList.Remove(item2.Key);
-    //            }
-    //        }
-    //        finally
-    //        {
-    //            Monitor.Exit(AnalyseNotificationList);
-    //        }
-    //    }
-    //}
-
-
-    private void CalculateMarketTrend(CryptoSignal signal)
-    {
-        long percentageSum = 0;
-        long maxPercentageSum = 0;
-        try
-        {
-            foreach (CryptoInterval interval in GlobalData.IntervalList)
-            {
-                CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(interval.IntervalPeriod);
-
-                // Trend overnemen indien het reeds berekend is (scheelt aardig wat cpu)
-                // Elk interval moet na het arriveren van een nieuwe candle opnieuw berekend worden.
-                // De trendkan dan hergebruikt worden totdat er een nieuwe candle komt
-                CryptoTrendIndicator trendIndicator;
-
-                // (0 % 180 = 0, 60 % 180 = 60, 120 % 180 = 120, 180 % 180 = 0)
-                long diff = LastCandle1mCloseTime % symbolInterval.Interval!.Duration;
-                // Naar de start van de candle (die is wellicht nog niet compleet)
-                long candleIntervalStart = LastCandle1mCloseTime - diff;
-                // Als de candle in opbouw is dan naar de vorige complete candle
-                if (diff != 0)
-                    candleIntervalStart -= symbolInterval.Interval.Duration;
-
-                if (!symbolInterval.TrendInfoUnix.HasValue || candleIntervalStart != symbolInterval.TrendInfoUnix || symbolInterval.TrendIndicator == CryptoTrendIndicator.Sideways)
-                {
-                    // Deze properties zijn calculated (hele class is in memory only)
-                    symbolInterval.TrendInfoDate = CandleTools.GetUnixDate(candleIntervalStart); // controle
-                                                                                                 //GlobalData.Logger.Trace($"SignalCreate.CalculateTrendStuff.Start {Symbol.Name} {Interval.Name} {Side} {intervalPeriod} {symbolInterval.TrendInfoDate} candles={symbolInterval.CandleList.Count}");
-                    TrendIndicator trendIndicatorClass = new(Symbol, symbolInterval);
-                    // TODO - Laatste tijdstip meegeven zodat de trend over 0..x candles gaat en niet allemaal
-                    trendIndicator = trendIndicatorClass.CalculateTrend(candleIntervalStart);
-                    symbolInterval.TrendIndicator = trendIndicator;
-                    symbolInterval.TrendInfoUnix = candleIntervalStart;
-                    //GlobalData.Logger.Trace($"SignalCreate.CalculateTrendStuff.Done {Symbol.Name} {Interval.Name} {Side} {intervalPeriod} {symbolInterval.TrendInfoDate} {trendIndicator}");
-                }
-                else
-                {
-                    trendIndicator = symbolInterval.TrendIndicator;
-                    //GlobalData.Logger.Trace($"SignalCreate.CalculateTrendStuff.Reused {Symbol.Name} {Interval.Name} {Side} {intervalPeriod} {symbolInterval.TrendInfoDate} {trendIndicator}");
-                }
-
-                if (interval.IntervalPeriod == signal.Interval.IntervalPeriod)
-                    signal.TrendIndicator = trendIndicator;
-
-                // Doorzetten naar het signal (op verzoek)
-                switch (interval.IntervalPeriod)
-                {
-                    case CryptoIntervalPeriod.interval15m:
-                        signal.Trend15m = trendIndicator;
-                        break;
-                    case CryptoIntervalPeriod.interval30m:
-                        signal.Trend30m = trendIndicator;
-                        break;
-                    case CryptoIntervalPeriod.interval1h:
-                        signal.Trend1h = trendIndicator;
-                        break;
-                    case CryptoIntervalPeriod.interval4h:
-                        signal.Trend4h = trendIndicator;
-                        break;
-                    case CryptoIntervalPeriod.interval12h:
-                        signal.Trend12h = trendIndicator;
-                        break;
-                }
-
-
-                // gewicht
-                if (GlobalData.Settings.General.IntervalForMarketTrend.Contains(interval.Name))
-                {
-
-                    if (trendIndicator == CryptoTrendIndicator.Bullish)
-                        percentageSum += interval.Duration;
-                    else if (trendIndicator == CryptoTrendIndicator.Bearish)
-                        percentageSum -= interval.Duration;
-                    maxPercentageSum += interval.Duration;
-                }
-            }
-
-
-
-            float trendPercentage = 100 * (float)percentageSum / maxPercentageSum;
-            signal.TrendPercentage = trendPercentage;
-            Symbol.TrendPercentage = trendPercentage;
-            Symbol.TrendInfoDate = CandleTools.GetUnixDate(signal.EventTime);
-        }
-        catch (Exception error)
-        {
-            ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab("");
-            GlobalData.AddTextToLogTab(error.ToString(), true);
-
-            signal.TrendPercentage = -100;
-            Symbol.TrendPercentage = -100;
-            Symbol.TrendInfoDate = CandleTools.GetUnixDate(signal.EventTime);
-        }
-    }
-
-
     private double CalculateLastPeriodsInInterval(CryptoSignal signal, long interval)
     {
         //Dit moet via de standaard 1m candles omdat de lijst niet alle candles bevat
@@ -358,115 +234,6 @@ public class SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTr
     }
 
 
-    /// <summary>
-    /// Dit is gebaseerd op de "RSI Multi Length [LuxAlgo]"
-    /// We gebruiken de oversell of overbuy indicator als extra tekst in de melding
-    /// </summary>
-    /// <param name="overSell">Retourneer de oversell of de overbuy tellertje</param>
-    /// <returns></returns>
-    public static void GetLuxIndicator(CryptoSymbol symbol, out int luxOverSold, out int luxOverBought)
-    {
-        SortedList<long, CryptoCandle> candles = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval5m).CandleList;
-
-        // Dat array van 10 (nu globaal)
-        decimal[] num = new decimal[10];
-        decimal[] den = new decimal[10];
-        for (int j = 0; j < 10; j++)
-        {
-            num[j] = 0m;
-            den[j] = 0m;
-        }
-
-        // Gefixeerde getallen
-        int min = 10;
-        int max = 20;
-        int oversold = 30;
-        int overbought = 70;
-        //decimal N = max - min + 1;
-
-        int overbuy = 0;
-        int oversell = 0;
-        CryptoCandle? candlePrev;
-        CryptoCandle? candleLast = null;
-
-        for (int j = candles.Count - 30; j < candles.Count; j++)
-        {
-            if (j < 1)
-                continue;
-            candlePrev = candleLast;
-            candleLast = candles.Values[j];
-            if (candlePrev == null)
-                continue;
-
-            int k = 0;
-            decimal avg = 0m;
-            overbuy = 0;
-            oversell = 0;
-            decimal diff = candleLast.Close - candlePrev.Close;
-
-            for (int i = min; i < max; i++)
-            {
-                decimal alpha = 1 / (decimal)i;
-
-                decimal num_rma = alpha * diff + (1m - alpha) * num[k];
-                decimal den_rma = alpha * Math.Abs(diff) + (1m - alpha) * den[k];
-
-                decimal rsi;
-                if (den_rma == 0)
-                    rsi = 50m;
-                else
-                    rsi = 50m * num_rma / den_rma + 50m;
-
-                avg += rsi;
-
-                if (rsi > overbought)
-                    overbuy++;
-                if (rsi < oversold)
-                    oversell++;
-
-
-                num[k] = num_rma;
-                den[k] = den_rma;
-                k++;
-
-            }
-        }
-
-        luxOverSold = 10 * oversell;
-        luxOverBought = 10 * overbuy;
-    }
-
-    //static public List<CryptoCandle> CalculateHistory(SortedList<long, CryptoCandle> candleSticks, int maxCandles)
-    //{
-    //    //Transporteer de candles naar de Stock list
-    //    //Jammer dat we met tussen-array's moeten werken
-    //    List<CryptoCandle> history = new();
-    //    Monitor.Enter(candleSticks);
-    //    try
-    //    {
-    //        //Vanwege performance nemen we een gedeelte van de candles
-    //        for (int i = candleSticks.Values.Count - 1; i >= 0; i--)
-    //        {
-    //            CryptoCandle candle = candleSticks.Values[i];
-
-    //            //In omgekeerde volgorde in de lijst zetten
-    //            if (history.Count == 0)
-    //                history.Add(candle);
-    //            else
-    //                history.Insert(0, candle);
-
-    //            maxCandles--;
-    //            if (maxCandles == 0)
-    //                break;
-    //        }
-    //    }
-    //    finally
-    //    {
-    //        Monitor.Exit(candleSticks);
-    //    }
-    //    return history;
-    //}
-
 
     private bool PrepareAndSendSignal(SignalCreateBase algorithm)
     {
@@ -482,7 +249,7 @@ public class SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTr
 
 
         // Extra attributen erbij halen (dat lukt niet bij een backtest vanwege het ontbreken van een "history list")
-        if (!GlobalData.BackTest)
+        //if (!GlobalData.BackTest)
         {
             CalculateAdditionalSignalProperties(signal, history!, 60);
             if (!HasOpenPosition() && !CheckAdditionalAlarmProperties(signal, out response))
@@ -501,7 +268,7 @@ public class SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTr
         }
 
         // Extra controles, staat de symbol op de blacklist?
-        if (!HasOpenPosition() && !signal.BackTest && TradingConfig.Signals[signal.Side].InBlackList(Symbol.Name) == MatchBlackAndWhiteList.Present)
+        if (!HasOpenPosition() && TradingConfig.Signals[signal.Side].InBlackList(Symbol.Name) == MatchBlackAndWhiteList.Present)
         {
             // Als de muntpaar op de black lijst staat dan dit signaal overslagen
             eventText.Add("blacklisted");
@@ -509,7 +276,7 @@ public class SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTr
         }
 
         // Extra controles, staat de symbol op de whitelist?
-        if (!HasOpenPosition() && !signal.BackTest && TradingConfig.Signals[signal.Side].InWhiteList(Symbol.Name) == MatchBlackAndWhiteList.NotPresent)
+        if (!HasOpenPosition() && TradingConfig.Signals[signal.Side].InWhiteList(Symbol.Name) == MatchBlackAndWhiteList.NotPresent)
         {
             // Als de muntpaar niet in de white lijst staat dan dit signaal overslagen
             eventText.Add("not whitelisted");
@@ -557,53 +324,8 @@ public class SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTr
         }
 
 
-
-        // Duplicaat code: Dit wordt nu gedaan voordat er signalen worden gemaakt (zie PositionMonitor.CreateSignals())
-        //// New coins have a lot of price changes
-        //// Are there x day's of candles avaliable on the day interval
-        //// Bij het backtesten wordt slechts een gelimiteerd aantal candles ingelezen, dus daarom uitgeschakeld)
-        //if (!HasOpenPosition() && !GlobalData.BackTest)
-        //{
-        //    var candles1Day = Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1d).CandleList;
-        //    if (candles1Day.Count < GlobalData.Settings.Signal.SymbolMustExistsDays)
-        //    {
-        //        if (GlobalData.Settings.Signal.LogSymbolMustExistsDays)
-        //        {
-        //            // Het aantal dagen vermelden dat het bestaat
-        //            string text = "0";
-        //            if (candles1Day.Count > 0)
-        //            {
-        //                CryptoCandle first = candles1Day.Values.First();
-        //                text = CandleTools.GetUnixDate(first.OpenTime).Day.ToString();
-        //            }
-        //            GlobalData.AddTextToLogTab($"Analyse {Symbol.Name} bestaat {text} dagen en is te nieuw (moet tenminste {GlobalData.Settings.Signal.SymbolMustExistsDays} dagen bestaan)");
-        //        }
-        //        eventText.Add("coin te nieuw");
-        //        signal.IsInvalid = true;
-        //    }
-        //}
-
-
-        // TODO: Willen we dat nu hier of in de aansturing (de invalid signals klopt nu niet)
-        //// Check low barometer
-        //decimal? Barometer1h = -99m;
-        //if (GlobalData.Settings.QuoteCoins.TryGetValue(Symbol.Quote, out CryptoQuoteData quoteData))
-        //{
-        //    BarometerData barometerData = quoteData.BarometerList[CryptoIntervalPeriod.interval1h];
-        //    Barometer1h = barometerData.PriceBarometer;
-        //}
-        //if (Barometer1h <= GlobalData.Settings.Signal.Barometer1hMinimal)
-        //{
-        //    // Log iets, maar dat wordt wel veel
-        //    if (GlobalData.Settings.Signal.LogBarometerToLow)
-        //        GlobalData.AddTextToLogTab("Analyse Barometer te laag");
-        //    eventText.Add("barometer te laag");
-        //    signal.IsInvalid = true;
-        //}
-
-
         // Check "Barcode" charts
-        if (!HasOpenPosition() && !signal.BackTest)
+        if (!HasOpenPosition())
         {
             decimal barcodePercentage = 100 * Symbol.PriceTickSize / Symbol.LastPrice ?? 0;
             if (barcodePercentage > GlobalData.Settings.Signal.MinimumTickPercentage)
@@ -622,47 +344,17 @@ public class SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTr
 
 
         // Iets wat ik wel eens gebruikt als ik trade
-        GetLuxIndicator(Symbol, out int fluxOverSold, out int fluxOverBought);
+        LuxIndicator.Calculate(Symbol, out int luxOverSold, out int luxOverBought);
         if (signal.Side == CryptoTradeSide.Long)
-            signal.FluxIndicator5m = fluxOverSold;
+            signal.FluxIndicator5m = luxOverSold;
         else
-            signal.FluxIndicator5m = fluxOverBought;
+            signal.FluxIndicator5m = luxOverBought;
 
 
-        // Dit lijkt overbodig te zijn tegenwoordig?
-        //// Hebben we deze al eerder gemeld?
-        //if (!signal.BackTest)
-        //{
-        //    AnalyseNotificationClearOutOld();
 
-        //    string notification =
-        //        signal.Symbol.Name + "-" +
-        //        signal.Interval.Name + "-" +
-        //        signal.Strategy.ToString() + "-" +
-        //        signal.Side.ToString() + "-" +
-        //        signal.Candle.Date.ToLocalTime();
+        // Calculate MarketTrend and the individual interval trends (reasonably CPU heavy and thatswhy it is on the end of the routine)
+        MarketTrend.Calculate(signal, LastCandle1mCloseTime);
 
-        //    Monitor.Enter(AnalyseNotificationList);
-        //    try
-        //    {
-        //        if (AnalyseNotificationList.ContainsKey(notification))
-        //        {
-        //            // Is deze nog nodig?
-        //            GlobalData.AddTextToLogTab("Duplicaat melding settings " + notification);
-        //            return false;
-        //        }
-
-        //        AnalyseNotificationList.Add(notification, signal.EventTime);
-        //    }
-        //    finally
-        //    {
-        //        Monitor.Exit(AnalyseNotificationList);
-        //    }
-        //}
-
-
-        // Bereken de trend, dat is tamelijk CPU heavy en daarom staat deze controle op het einde
-        CalculateMarketTrend(signal);
 
 
         // Extra controles toepassen en het signaal "afkeuren" (maar toch laten zien)
@@ -732,7 +424,7 @@ public class SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTr
             }
 
             // Signal naar database wegschrijven (niet echt noodzakelijk, we doen er later niets mee)
-            if (!signal.BackTest)
+            //if (!signal.BackTest)
             {
                 using CryptoDatabase databaseThread = new();
                 databaseThread.Open();
@@ -876,13 +568,13 @@ public class SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTr
         }
 
 
-        if (GlobalData.BackTest)
-        {
-            CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(Interval.IntervalPeriod);
-            if (symbolInterval.CandleList.TryGetValue(candleOpenTime, out CryptoCandle? candle))
-                Candle = candle;
-        }
-        else
+        //if (GlobalData.BackTest)
+        //{
+        //    CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(Interval.IntervalPeriod);
+        //    if (symbolInterval.CandleList.TryGetValue(candleOpenTime, out CryptoCandle? candle))
+        //        Candle = candle;
+        //}
+        //else
         {
             // Build a list of candles
             history ??= CandleIndicatorData.CalculateCandles(Symbol, Interval, candleOpenTime, out response);
