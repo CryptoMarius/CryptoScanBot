@@ -4,7 +4,15 @@ Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep
 
 
 Scanner:
+- Scanner - De berekening van de trend is enorm traag (zeker in de emulator)
 - Scanner - Gerapporteerd: Het geheugen loopt langzaam op gedurende meerdere weken
+            https://memprofiler.com/
+            https://www.red-gate.com/products/ants-performance-profiler/
+            https://www.jetbrains.com/dotmemory/
+            https://www.telerik.com/
+            https://learn.microsoft.com/en-us/visualstudio/profiling/memory-usage?view=vs-2022
+            CLRProfiler 
+
 - Scanner - Binance Futures deeplink url werkt niet
 - Scanner - Nieuwe munten die toegevoegd worden op de exchange terwijl de scanner loopt worden niet automatisch toegevoegd aan de price- en kline tickers
 - Scanner - Limit rates voor Kucoin verder uitwerken (ophalen candles geeft soms een foutmelding, wordt bij een volgende herstart wel hersteld, maar hoort niet zo)

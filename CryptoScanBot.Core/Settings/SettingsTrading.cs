@@ -92,7 +92,7 @@ public class SettingsTrading
 
 
     //***************************
-    // Instap condities
+    // Entry conditions
     public bool CheckIncreasingRsi { get; set; } = false;
     public bool CheckIncreasingMacd { get; set; } = false;
     public bool CheckIncreasingStoch { get; set; } = false;
@@ -130,6 +130,10 @@ public class SettingsTrading
     public CryptoSellMethod SellMethod { get; set; } = CryptoSellMethod.FixedPercentage;
     // Zet een OCO zodra we in de winst zijn (kan het geen verlies trade meer worden, samen met tracing)
     //public bool LockProfits { get; set; } = false;
+
+    // Allow previous (small) dust to be added to the TP
+    public bool AddDustToTp { get; set; } = true;
+    
 
     //***************************
     // Stopp loss

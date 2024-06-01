@@ -3,6 +3,8 @@ CryptoScanBot release historie:
 xx-xx-2024 1.9.3
 - Scanner - Er worden klines opgehaald van munten die slechts ~1 maand aanwezig zijn op de exchange (bybit spot)
 
+- Trading - Instelling gemaakt om bestaande dust mee te nemen in een verkoop, deze staat standaard aan
+- Trading - De instelling papertrading en traden op de exchange gecombineerd (actie: moet opnieuw ingesteld worden)
 - Trading - Een hele vracht met experimentele stategieen afgevoerd
 - Trading - Instelling voor papertrading of exchange trading is nu gecombineerd in 1 instelling
 - Trading - Eventuele dust van vorige positie(s) meenemen in een gecombineerde TP

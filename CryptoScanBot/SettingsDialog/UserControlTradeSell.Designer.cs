@@ -29,6 +29,7 @@ partial class UserControlTradeSell
     private void InitializeComponent()
     {
         groupBoxDca = new GroupBox();
+        EditAddDustToTp = new CheckBox();
         EditLockProfits = new CheckBox();
         label63 = new Label();
         EditSellMethod = new ComboBox();
@@ -41,6 +42,7 @@ partial class UserControlTradeSell
         // groupBoxDca
         // 
         groupBoxDca.AutoSize = true;
+        groupBoxDca.Controls.Add(EditAddDustToTp);
         groupBoxDca.Controls.Add(EditLockProfits);
         groupBoxDca.Controls.Add(label63);
         groupBoxDca.Controls.Add(EditSellMethod);
@@ -50,17 +52,29 @@ partial class UserControlTradeSell
         groupBoxDca.Location = new Point(0, 0);
         groupBoxDca.Name = "groupBoxDca";
         groupBoxDca.Padding = new Padding(5);
-        groupBoxDca.Size = new Size(386, 129);
+        groupBoxDca.Size = new Size(386, 159);
         groupBoxDca.TabIndex = 0;
         groupBoxDca.TabStop = false;
         groupBoxDca.Text = "Verkoop";
+        // 
+        // EditAddDustToTp
+        // 
+        EditAddDustToTp.AutoSize = true;
+        EditAddDustToTp.Font = new Font("Segoe UI", 9F);
+        EditAddDustToTp.Location = new Point(9, 91);
+        EditAddDustToTp.Margin = new Padding(4, 3, 4, 3);
+        EditAddDustToTp.Name = "EditAddDustToTp";
+        EditAddDustToTp.Size = new Size(191, 19);
+        EditAddDustToTp.TabIndex = 328;
+        EditAddDustToTp.Text = "Allow addition of previous dust";
+        EditAddDustToTp.UseVisualStyleBackColor = true;
         // 
         // EditLockProfits
         // 
         EditLockProfits.AutoSize = true;
         EditLockProfits.Enabled = false;
         EditLockProfits.Font = new Font("Segoe UI", 9F, FontStyle.Strikeout);
-        EditLockProfits.Location = new Point(9, 86);
+        EditLockProfits.Location = new Point(9, 116);
         EditLockProfits.Margin = new Padding(4, 3, 4, 3);
         EditLockProfits.Name = "EditLockProfits";
         EditLockProfits.Size = new Size(88, 19);
@@ -117,7 +131,7 @@ partial class UserControlTradeSell
         AutoSizeMode = AutoSizeMode.GrowAndShrink;
         Controls.Add(groupBoxDca);
         Name = "UserControlTradeSell";
-        Size = new Size(386, 129);
+        Size = new Size(386, 159);
         groupBoxDca.ResumeLayout(false);
         groupBoxDca.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)EditProfitPercentage).EndInit();
@@ -133,4 +147,5 @@ partial class UserControlTradeSell
     private ComboBox EditSellMethod;
     private Label label72;
     private NumericUpDown EditProfitPercentage;
+    private CheckBox EditAddDustToTp;
 }

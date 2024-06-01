@@ -11,30 +11,29 @@ public partial class UserControlTradeSell : UserControl
     {
         InitializeComponent();
 
-        // SELL
         // Voorlopig de trailing uit, maar die zijn zeer zeker interessant..
-        SellMethod.Add("Limit order op een vaste winst percentage", CryptoSellMethod.FixedPercentage);
-        //SellMethod.Add("Limit order op dynamisch percentage van de BB", CryptoSellMethod.DynamicPercentage);
+        SellMethod.Add("Limit order on fixed percentage", CryptoSellMethod.FixedPercentage);
+        //SellMethod.Add("Limit order on dynamic percentage van de BB", CryptoSellMethod.DynamicPercentage);
         //SellMethod.Add("Trace via de Keltner Channel en PSAR", CryptoSellMethod.TrailViaKcPsar);
     }
 
     public void LoadConfig(SettingsTrading settings)
     {
-        // sell
         EditSellMethod.DataSource = new BindingSource(SellMethod, null);
         EditSellMethod.DisplayMember = "Key";
         EditSellMethod.ValueMember = "Value";
         EditSellMethod.SelectedValue = settings.SellMethod;
 
         EditProfitPercentage.Value = settings.ProfitPercentage;
+        EditAddDustToTp.Checked = settings.AddDustToTp;
         //EditLockProfits.Checked = settings.Trading.LockProfits;
     }
 
     public void SaveConfig(SettingsTrading settings)
     {
-        // sell
         settings.SellMethod = (CryptoSellMethod)EditSellMethod.SelectedValue;
         settings.ProfitPercentage = EditProfitPercentage.Value;
+        settings.AddDustToTp = EditAddDustToTp.Checked;
         //settings.Trading.LockProfits = EditLockProfits.Checked;
     }
 }
