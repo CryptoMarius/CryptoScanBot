@@ -48,7 +48,7 @@ public class TradeToolsTest : TestBase
 
         DeleteAllPositionRelatedStuff(database, symbol);
 
-        CryptoPosition position = PositionTools.CreatePosition(GlobalData.ExchangeBackTestAccount!, symbol, CryptoSignalStrategy.Stobb, 
+        CryptoPosition position = PositionTools.CreatePosition(GlobalData.ActiveAccount!, symbol, CryptoSignalStrategy.Stobb, 
             CryptoTradeSide.Long, symbol.IntervalPeriodList[0], lastCandle1mCloseTimeDate);
         database.Connection.Insert<CryptoPosition>(position);
         position.TradeAccount.PositionList.Add(symbol.Name, position);
