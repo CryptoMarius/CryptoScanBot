@@ -1,44 +1,29 @@
 ﻿using CryptoScanBot.Core.Enums;
-using Dapper.Contrib.Extensions;
+using CryptoScanBot.Core.Trend;
 
 namespace CryptoScanBot.Core.Model;
 
-[Table("SymbolInterval")]
+// An in-memory class
 public class CryptoSymbolInterval
 {
-    [Key]
-    public int Id { get; set; }
-    public int ExchangeId { get; set; }
-    public int SymbolId { get; set; }
-    public int IntervalId { get; set; }
-    [Computed]
     public virtual CryptoInterval? Interval { get; set; }
 
     public CryptoIntervalPeriod IntervalPeriod { get; set; }
 
-    [Computed]
-    public bool IsChanged { get; set; }
+    // The last collected candle (synchonized with exchange)
+    public long LastCandleSynchronized { get; set; }
 
-    // De laatste datum dat de candles aansluiten c.q. zijn gesynchroniseerd met de exchange
-    private long? _Date;
-    public long? LastCandleSynchronized
-    {
-        get => _Date; set
-        {
-            IsChanged = true;
-            _Date = value;
-        }
-    }
-
-    // De laatst berekende trend
+    // The last calculated trend & generated date
     public CryptoTrendIndicator TrendIndicator { get; set; }
     public DateTime? TrendInfoDate { get; set; }
     public long? TrendInfoUnix { get; set; }
+    // Caching ZigZag indicator because of emulator speed
+    public ZigZagIndicatorCache? ZigZagCache { get; set; }
 
-    [Computed]
+    // The last generated signal
+    // TODO: Interesting: We create signals with lots of strategies, but have only place for 1 signal, that does not sound right..
     public CryptoSignal? Signal { get; set; }
 
-    // De candles voor dit interval
-    [Computed]
+    // The candles for this interval
     public SortedList<long, CryptoCandle> CandleList { get; set; } = [];
 }

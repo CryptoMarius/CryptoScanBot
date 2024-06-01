@@ -78,7 +78,6 @@ public class GetCandles
 
                 // Pas op: Candle volgorde is niet gegarandeerd (zeker bybit niet), onthoud de jongste candle 
                 // Voor de volgende GetCandlesForInterval() sessie
-                //symbolInterval.IsChanged = true; // zie tevens setter (maar ach)
                 //symbolInterval.LastCandleSynchronized = candle.OpenTime;
 
                 // Onthoud de laatste aangeleverde candle, t/m die datum is alles binnen gehaald
@@ -89,7 +88,6 @@ public class GetCandles
             // Voor de volgende GetCandlesForInterval() sessie
             if (last > long.MinValue)
             {
-                symbolInterval.IsChanged = true; // zie tevens setter (maar ach)
                 symbolInterval.LastCandleSynchronized = last;
                 // Alternatief (maar als er gaten in de candles zijn geeft dit problemen, endless loops)
                 //CandleTools.UpdateCandleFetched(symbol, interval);
