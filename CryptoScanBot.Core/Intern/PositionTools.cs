@@ -186,17 +186,17 @@ public static class PositionTools
 
     static public void AddPositionClosed(CryptoPosition position)
     {
-        if (GlobalData.TradeAccountList.TryGetValue(position.TradeAccountId, out CryptoTradeAccount tradeAccount))
+        if (GlobalData.TradeAccountList.TryGetValue(position.TradeAccountId, out CryptoTradeAccount? tradeAccount))
         {
             position.TradeAccount = tradeAccount;
-            if (GlobalData.ExchangeListId.TryGetValue(position.ExchangeId, out Model.CryptoExchange exchange))
+            if (GlobalData.ExchangeListId.TryGetValue(position.ExchangeId, out Model.CryptoExchange? exchange))
             {
                 position.Exchange = exchange;
-                if (exchange.SymbolListId.TryGetValue(position.SymbolId, out CryptoSymbol symbol))
+                if (exchange.SymbolListId.TryGetValue(position.SymbolId, out CryptoSymbol? symbol))
                 {
                     position.Symbol = symbol;
-                    if (GlobalData.IntervalListId.TryGetValue((int)position.IntervalId, out CryptoInterval interval))
-                        position.Interval = interval;
+                    if (GlobalData.IntervalListId.TryGetValue((int)position.IntervalId, out CryptoInterval? interval))
+                        position.Interval = interval!;
 
                     GlobalData.PositionsClosed.Add(position);
                 }
@@ -207,7 +207,7 @@ public static class PositionTools
 
     static public void RemovePosition(CryptoTradeAccount tradeAccount, CryptoPosition position, bool addToClosed)
     {
-        if (tradeAccount.PositionList.TryGetValue(position.Symbol.Name, out var positionFound))
+        if (tradeAccount.PositionList.TryGetValue(position.Symbol.Name, out CryptoPosition? positionFound))
         {
             tradeAccount.PositionList.Remove(positionFound.Symbol.Name);
 
@@ -228,24 +228,24 @@ public static class PositionTools
         string sql = string.Format("select * from positionpart where PositionId={0} order by Id", position.Id);
         foreach (CryptoPositionPart part in database.Connection.Query<CryptoPositionPart>(sql))
         {
-            if (part.IntervalId.HasValue && GlobalData.IntervalListId.TryGetValue((int)position.IntervalId, out CryptoInterval interval))
-               part.Interval = interval;
-            PositionTools.AddPositionPart(position, part);
+            if (part.IntervalId.HasValue && GlobalData.IntervalListId.TryGetValue((int)position.IntervalId, out CryptoInterval? interval))
+               part.Interval = interval!;
+            AddPositionPart(position, part);
         }
 
         // De steps
         sql = string.Format("select * from positionstep where PositionId={0} order by Id", position.Id);
         foreach (CryptoPositionStep step in database.Connection.Query<CryptoPositionStep>(sql))
         {
-            if (position.Parts.TryGetValue(step.PositionPartId, out CryptoPositionPart part))
+            if (position.Parts.TryGetValue(step.PositionPartId, out CryptoPositionPart? part))
                 AddPositionPartStep(part, step);
         }
     }
 
 
-    public static CryptoPosition HasPosition(CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
+    public static CryptoPosition? HasPosition(CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
     {
-        if (tradeAccount.PositionList.TryGetValue(symbol.Name, out var position))
+        if (tradeAccount.PositionList.TryGetValue(symbol.Name, out CryptoPosition? position))
         {
             return position;
         }
