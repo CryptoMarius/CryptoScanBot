@@ -138,10 +138,10 @@ internal class FileName
 
     // Werkt zoals ik het verwacht! een buy order van ongeveer 1.6 dollar
     //var exchangeApi = ExchangeHelper.GetExchangeInstance(GlobalData.Settings.General.ExchangeId);
-    //var (result, tradeParams) = await exchangeApi.BuyOrSell(null, GlobalData.ExchangeRealTradeAccount, symbol, DateTime.Now, 
+    //var (result, tradeParams) = await exchangeApi.BuyOrSell(null, GlobalData.ActiveAccount, symbol, DateTime.Now, 
     //    CryptoOrderType.Limit, CryptoOrderSide.Buy, 52, 0.2276m, null, null);
 
-    //var (result, tradeParams) = await api.BuyOrSell(Database, GlobalData.ExchangeRealTradeAccount, symbol, DateTime.Now,
+    //var (result, tradeParams) = await api.BuyOrSell(Database, GlobalData.ActiveAccount, symbol, DateTime.Now,
     //    CryptoOrderType.Limit, CryptoOrderSide.Buy, 0.000048m, 25000m, null, null);
 
     //GlobalData.AddTextToLogTab($"{symbol.Name} {result} {tradeParams.Error}");
