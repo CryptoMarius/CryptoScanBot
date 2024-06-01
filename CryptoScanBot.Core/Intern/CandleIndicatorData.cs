@@ -238,7 +238,7 @@ public class CandleIndicatorData
     {
         // Overslaan indien het gevuld is (meerdere aanroepen)
         CryptoCandle candle = history.Last();
-        if (!GlobalData.BackTest && candle.CandleData != null)
+        if (candle.CandleData != null)
             return;
 
         //List<TemaResult> temaList = (List<TemaResult>)Indicator.GetTema(history, 5);
