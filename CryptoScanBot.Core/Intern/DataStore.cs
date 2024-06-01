@@ -40,11 +40,14 @@ public class DataStore
                     continue;
                 }
 
+                // reset the precious collected trend data
                 foreach (CryptoSymbolInterval symbolInterval in symbol.IntervalPeriodList)
                 {
                     symbolInterval.TrendIndicator = CryptoTrendIndicator.Sideways;
                     symbolInterval.LastCandleSynchronized = null;
+                    symbolInterval.TrendInfoUnix = null;
                     symbolInterval.TrendInfoDate = null;
+                    symbolInterval.ZigZagCache = null;
                 }
 
                 // Laad in 1x alle intervallen 
