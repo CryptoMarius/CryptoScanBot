@@ -454,6 +454,8 @@ public class Migration
                 transaction.Commit();
             }
 
+
+            // todo, rename Signal.FluxIndicator5m to Signal.LuxIndicator5m (Flux=Lux duh!)
         }
     }
 
