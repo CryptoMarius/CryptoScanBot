@@ -149,8 +149,8 @@ public class TestBase
 
         symbol.OrderList.Clear();
         symbol.TradeList.Clear();
-        GlobalData.ExchangeBackTestAccount?.AssetList.Clear();
-        GlobalData.ExchangeBackTestAccount?.PositionList.Clear();
+        GlobalData.ActiveAccount?.AssetList.Clear();
+        GlobalData.ActiveAccount?.PositionList.Clear();
     }
 
 }
