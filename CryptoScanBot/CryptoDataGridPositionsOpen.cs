@@ -55,11 +55,6 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
         menuStrip.AddCommand(this, "TradingView internal", Command.ActivateTradingviewIntern);
         menuStrip.AddCommand(this, "TradingView external", Command.ActivateTradingviewExtern);
 
-        menuStrip.AddSeperator();
-        menuStrip.AddCommand(this, "Copy symbol name", Command.CopySymbolInformation);
-        menuStrip.AddCommand(this, "Trend information (log)", Command.ShowTrendInformation);
-        menuStrip.AddCommand(this, "Symbol information (Excel)", Command.ExcelSymbolInformation);
-
 #if TRADEBOT
         menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Position recalculate", Command.None, CommandPositionRecalculateExecute);
@@ -69,6 +64,11 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
         //menuStrip.AddCommand(this, "Position take profit (if possible)", Command.None, CommandPositionLastPartTakeProfit);
         menuStrip.AddCommand(this, "Position information (Excel)", Command.ExcelPositionInformation);
 #endif
+
+        menuStrip.AddSeperator();
+        menuStrip.AddCommand(this, "Copy symbol name", Command.CopySymbolInformation);
+        menuStrip.AddCommand(this, "Trend information (log)", Command.ShowTrendInformation);
+        menuStrip.AddCommand(this, "Symbol information (Excel)", Command.ExcelSymbolInformation);
 
         menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Hide selection", Command.None, ClearSelection);
