@@ -2296,7 +2296,7 @@ public partial class TestForm : Form
             return;
 
         //SignalCreate.AnalyseNotificationList.Clear();
-        GlobalData.ExchangeBackTestAccount.PositionList.Clear();
+        GlobalData.ActiveAccount.PositionList.Clear();
 
         // Pittige configuratie geworden zie ik ;-)
         GlobalData.Settings.Signal.Active = true;
@@ -2323,7 +2323,7 @@ public partial class TestForm : Form
         GlobalData.Settings.Trading.Long.Strategy.Add("sbm2");
         GlobalData.Settings.Trading.Long.Strategy.Add("sbm3");
         GlobalData.Settings.Trading.Long.Strategy.Add("sbm4");
-        GlobalData.Settings.Trading.Long.Strategy.Add("flux");
+        GlobalData.Settings.Trading.Long.Strategy.Add("lux");
         GlobalData.Settings.Trading.Long.Strategy.Add("stob");
         //GlobalData.Settings.Trading.Monitor.Strategy[CryptoOrderSide.Buy].Add(algorithm);
 
@@ -2335,7 +2335,7 @@ public partial class TestForm : Form
         GlobalData.Settings.General.SoundTradeNotification = false;
 
         GlobalData.BackTest = true;
-        GlobalData.Settings.Trading.TradeVia = CryptoTradeAccountType.NoTrading;
+        GlobalData.Settings.Trading.TradeVia = CryptoTradeAccountType.PaperTrade;
 
         // Instap
         GlobalData.Settings.Trading.CheckIncreasingRsi = false;
