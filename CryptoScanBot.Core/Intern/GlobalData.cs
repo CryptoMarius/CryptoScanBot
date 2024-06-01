@@ -188,11 +188,11 @@ static public class GlobalData
             // There are 3 accounts per exchange
             if (tradeAccount.ExchangeId == Settings.General.ExchangeId)
             {
-                if (GlobalData.BackTest || tradeAccount.TradeAccountType == CryptoTradeAccountType.BackTest)
+                if (GlobalData.BackTest && tradeAccount.TradeAccountType == CryptoTradeAccountType.BackTest) // ignore the GlobalData.Settings.Trading.TradeVia in this case
                     ActiveAccount = tradeAccount;
-                if (!GlobalData.BackTest && tradeAccount.TradeAccountType == CryptoTradeAccountType.PaperTrade)
+                if (!GlobalData.BackTest && tradeAccount.TradeAccountType == CryptoTradeAccountType.PaperTrade && GlobalData.Settings.Trading.TradeVia == CryptoTradeAccountType.PaperTrade)
                     ActiveAccount = tradeAccount;
-                if (tradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading)
+                if (!GlobalData.BackTest && tradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading && GlobalData.Settings.Trading.TradeVia == CryptoTradeAccountType.RealTrading)
                     ActiveAccount = tradeAccount;
             }
         }
