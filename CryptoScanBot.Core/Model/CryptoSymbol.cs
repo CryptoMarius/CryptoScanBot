@@ -165,11 +165,7 @@ public class CryptoSymbol
         {
             CryptoSymbolInterval symbolInterval = new()
             {
-                // Dit is een constructor, exchange en symbol zijn er nog niet
-                //ExchangeId = this.ExchangeId,
-                //SymbolId = this.Id,
                 Interval = interval,
-                IntervalId = interval.Id,
                 IntervalPeriod = interval.IntervalPeriod,
             };
             IntervalPeriodList.Add(symbolInterval);
