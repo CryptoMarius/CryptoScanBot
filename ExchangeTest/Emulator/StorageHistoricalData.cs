@@ -6,7 +6,7 @@ using CryptoScanBot.Core.Model;
 
 namespace ExchangeTest.Emulator;
 
-public class Storage
+public class StorageHistoricalData
 {
 
     /// <summary>
