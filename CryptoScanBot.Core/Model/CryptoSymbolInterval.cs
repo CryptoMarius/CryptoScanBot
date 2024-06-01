@@ -11,7 +11,7 @@ public class CryptoSymbolInterval
     public CryptoIntervalPeriod IntervalPeriod { get; set; }
 
     // The last collected candle (synchonized with exchange)
-    public long LastCandleSynchronized { get; set; }
+    public long? LastCandleSynchronized { get; set; }
 
     // The last calculated trend & generated date
     public CryptoTrendIndicator TrendIndicator { get; set; }
