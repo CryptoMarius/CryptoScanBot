@@ -157,7 +157,7 @@ public class ExcelPositionDump(CryptoPosition position) : ExcelBase(position.Sym
             ++row;
             WriteCell(sheet, column, row, "Dust value");
             WriteCell(sheet, column + 1, row, position.Symbol.LastPrice * position.RemainingDust, CellStyleDecimalNormal);
-            WriteCell(sheet, column + 2, row, "(estimated using lastprice)");
+            WriteCell(sheet, column + 2, row, "(estimated)");
         }
 
         columns = 22;
