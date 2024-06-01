@@ -59,7 +59,7 @@ public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscript
                     {
                         // Converteer de data naar een (tijdelijke) trade
                         CryptoOrder orderTemp = new();
-                        Api.PickupOrder(GlobalData.ExchangeRealTradeAccount!, symbol, orderTemp, data.Data.UpdateData);
+                        Api.PickupOrder(GlobalData.ActiveAccount!, symbol, orderTemp, data.Data.UpdateData);
 
                         GlobalData.ThreadMonitorOrder?.AddToQueue((
                             symbol, 
@@ -85,7 +85,7 @@ public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscript
     //    {
     //        if (GlobalData.ExchangeListName.TryGetValue(Api.ExchangeOptions.ExchangeName, out Model.CryptoExchange exchange))
     //        {
-    //            Api.PickupAssets(GlobalData.ExchangeRealTradeAccount, data.Data.Balances);
+    //            Api.PickupAssets(GlobalData.ActiveAccount, data.Data.Balances);
     //            GlobalData.AssetsHaveChanged("");
     //        }
     //    }

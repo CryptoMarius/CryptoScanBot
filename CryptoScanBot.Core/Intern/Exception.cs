@@ -2,11 +2,6 @@
 
 namespace CryptoScanBot.Core.Intern;
 
-public class ExchangeException : SystemException, ISerializable
+public class ExchangeException(string message) : SystemException(message), ISerializable
 {
-
-    public ExchangeException(string message) : base(message)
-    {
-
-    }
 }

@@ -404,7 +404,7 @@ public class ThreadLoadData
                     // De assets van de exchange halen (overlappend met exchange monitoring om niets te missen)
                     // Via een event worden de assets in de userinterface gezet (dat duurt even)
                     //************************************************************************************
-                    await ExchangeHelper.GetAssetsAsync(GlobalData.ExchangeRealTradeAccount);
+                    await ExchangeHelper.GetAssetsAsync(GlobalData.ActiveAccount);
                 }
 
                 // Toon de ingelezen posities
@@ -432,13 +432,11 @@ public class ThreadLoadData
                 //RecalculateLastXCandles(1);
 
 
-                if (!checkPositions)
+                if (!checkPositions && GlobalData.ActiveAccount != null)
                 {
 #if TRADEBOT
-                    if (GlobalData.BackTest || GlobalData.Settings.Trading.TradeVia == CryptoTradeAccountType.BackTest)
-                        await PaperTrading.CheckPositionsAfterRestart(GlobalData.ExchangeBackTestAccount!);
-                    if (GlobalData.Settings.Trading.TradeVia == CryptoTradeAccountType.PaperTrade)
-                        await PaperTrading.CheckPositionsAfterRestart(GlobalData.ExchangePaperTradeAccount!);
+                    if (GlobalData.Settings.Trading.TradeVia != CryptoTradeAccountType.RealTrading)
+                        await PaperTrading.CheckPositionsAfterRestart(GlobalData.ActiveAccount!);
 #endif
                 }
 

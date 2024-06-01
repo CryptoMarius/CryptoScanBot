@@ -25,7 +25,7 @@ public class AssetTools
 {
     public static async Task<(bool success, string reaction)> FetchAssetsAsync(CryptoTradeAccount tradeAccount, bool forceRefresh = false)
     {
-        if (!PositionTools.ValidTradeAccount(tradeAccount))
+        if (tradeAccount == null)
             return (false, "Invalid trade account");
 
 

@@ -16,19 +16,15 @@ public class TradeTools
     {
         GlobalData.AddTextToLogTab("Reading asset information");
 
-        // ALLE assets laden
-        foreach (var account in GlobalData.ActiveTradeAccountList.Values.ToList())
+        if (GlobalData.ActiveAccount != null)
         {
-            account.AssetList.Clear();
-        }
+            // ALLE assets laden
+            GlobalData.ActiveAccount.AssetList.Clear();
 
-
-        using var database = new CryptoDatabase();
-        foreach (CryptoAsset asset in database.Connection.GetAll<CryptoAsset>())
-        {
-            if (GlobalData.ActiveTradeAccountList.TryGetValue(asset.TradeAccountId, out var account))
+            using var database = new CryptoDatabase();
+            foreach (CryptoAsset asset in database.Connection.GetAll<CryptoAsset>())
             {
-                account.AssetList.TryAdd(asset.Name, asset);
+                GlobalData.ActiveAccount.AssetList.TryAdd(asset.Name, asset);
             }
         }
     }
@@ -97,7 +93,7 @@ public class TradeTools
     /// <summary>
     /// De break-even prijs berekenen vanuit de parts en steps
     /// </summary>
-    private static void CalculateProfitAndBreakEvenPrice(CryptoPosition position)
+    public static void CalculateProfitAndBreakEvenPrice(CryptoPosition position, decimal? takeProfitPrice = null)
     {
         //----
         // De positie doorrekene,  er wordt alleen gerekend, geen beslissingen over status
@@ -109,6 +105,8 @@ public class TradeTools
         // Op Bybit futures heb je de fundingrates, dat wordt in tijdblokken berekend met varierende fr..
         StringBuilder stringBuilderOld = DumpPosition(position);
 
+        position.Profit = 0;
+        position.BreakEvenPrice = 0;
         position.Quantity = 0;
         position.QuantityEntry = 0;
         position.QuantityTakeProfit = 0;
@@ -126,6 +124,9 @@ public class TradeTools
         // Ondersteuning long/short
         CryptoOrderSide entryOrderSide = position.GetEntryOrderSide();
         CryptoOrderSide takeProfitOrderSide = position.GetTakeProfitOrderSide();
+
+        decimal totalValue = 0;
+        decimal totalQuantity = 0;
 
         foreach (CryptoPositionPart part in position.Parts.Values.ToList())
         {
@@ -147,25 +148,29 @@ public class TradeTools
                 // Wellicht moet dat gedeelte op een andere manier ingeregeld worden zodat we hier wel de echte BE kunnen uitrekenen?
                 if (step.Status.IsFilled()) // Filled or PartiallyFilledAndClosed
                 {
+                    decimal filledQuantity = step.QuantityFilled - step.CommissionBase;
                     if (step.Side == entryOrderSide)
                     {
-                        part.Quantity += step.QuantityFilled;
-                        part.QuantityEntry += step.QuantityFilled;
-                        part.Invested += step.QuoteQuantityFilled;
+                        part.Quantity += filledQuantity;
+                        part.QuantityEntry += filledQuantity;
+                        part.Invested += step.AveragePrice * filledQuantity;
+
+                        totalValue += step.AveragePrice * filledQuantity;
+                        totalQuantity += filledQuantity;
 
                         // Bybit spot fix
-                        if (step.CommissionAsset != null && step.CommissionAsset == position.Symbol.Base)
-                            part.Quantity -= step.CommissionBase;
+                        //if (step.CommissionAsset != null && step.CommissionAsset == position.Symbol.Base)
+                        //    part.Quantity -= step.CommissionBase;
                     }
                     else if (step.Side == takeProfitOrderSide)
                     {
-                        part.Quantity -= step.QuantityFilled;
-                        part.QuantityTakeProfit += step.QuantityFilled;
-                        part.Returned += step.QuoteQuantityFilled;
+                        part.Quantity -= filledQuantity;
+                        part.QuantityTakeProfit += filledQuantity;
+                        part.Returned += step.AveragePrice * filledQuantity;
 
                         // Bybit spot fix
-                        if (step.CommissionAsset != null && step.CommissionAsset == position.Symbol.Base)
-                            part.Quantity -= step.CommissionQuote;
+                        //if (step.CommissionAsset != null && step.CommissionAsset == position.Symbol.Base)
+                        //    part.Quantity -= step.CommissionQuote;
                     }
                     // De berekende kosten
                     part.Commission += step.Commission;
@@ -176,7 +181,7 @@ public class TradeTools
                 {
                     // Blijft een constante totdat de order gevuld is
                     decimal value = step.Price * step.Quantity;
-                    // Het vooraf berekenen geeft blijkbaar problemen waardoor de TP's verzet worden
+                    // Predicted TP commission (but this gives problems because tp's are later adjusted)
                     //step.Commission = (decimal)position.Exchange.FeeRate * value / 100m; // Estimated commission in quote
                     //part.Commission += step.Commission;
                     if (step.Side == entryOrderSide)
@@ -189,10 +194,6 @@ public class TradeTools
                 //GlobalData.AddTextToLogTab(s);
             }
 
-            // Rekening houden met de toekomstige kosten van de sell orders
-            // (was reeds gecorrigeerd, zie new/partial en reserved hierboven) -- maar afgekeurd?
-            if (!part.CloseTime.HasValue)
-                part.Commission *= 2;
 
             // Voor de BE de originele quantity gebruiken (niet de gecorrigeerde met EntryQuantity-commissionBase dus daarom een correctie)
             if (position.Side == CryptoTradeSide.Long)
@@ -200,11 +201,11 @@ public class TradeTools
                 part.Profit = part.Returned - part.Invested - part.Commission;
                 part.Percentage = 0m;
                 if (part.Invested != 0m)
-                    //part.Percentage = 100m * (part.Returned - part.Commission) / part.Invested;
                     part.Percentage = 100m + (100m * part.Profit / part.Invested);
-                // TODO: Dit werkt niet op spot ICM dust (bepaling part.BE)
+
                 if (part.Quantity > 0)
-                    part.BreakEvenPrice = (part.Invested - part.Returned + part.Commission) / (part.Quantity + part.CommissionBase);
+                    //part.BreakEvenPrice = (part.Invested - part.Returned + part.Commission) / (part.Quantity + part.CommissionBase);
+                    part.BreakEvenPrice = (part.Invested - part.Returned + part.Commission) / part.Quantity;
                 else
                     part.BreakEvenPrice = 0;
             }
@@ -215,9 +216,10 @@ public class TradeTools
                 part.Percentage = 0m;
                 if (part.Invested != 0m)
                     part.Percentage = 100m + (100m * part.Profit / part.Invested);
-                // TODO: Dit werkt niet op spot ICM dust (bepaling part.BE)
+
                 if (part.Quantity > 0)
-                    part.BreakEvenPrice = (part.Invested - part.Returned - part.Commission) / (part.Quantity + part.CommissionBase);
+                    //part.BreakEvenPrice = (part.Invested - part.Returned - part.Commission) / (part.Quantity + part.CommissionBase);
+                    part.BreakEvenPrice = (part.Invested - part.Returned - part.Commission) / part.Quantity;
                 else
                     part.BreakEvenPrice = 0;
             }
@@ -261,29 +263,49 @@ public class TradeTools
         }
 
 
-        // Voor de BE de originele quantity gebruiken (niet de gecorrigeerde met EntryQuantity-commissionBase dus daarom een correctie)
+
+        // Predicted commission (in quote), we need a fixed avg-price to calculate the TP-commission
+        // (this is not the exact tp-commission, but we need to calculating anything)
+        // if the position is closed the position.Quantity is 0 and the real commission will be calculated
+        decimal avgPrice = totalValue / totalQuantity;
+        decimal predictedCommission = avgPrice * (decimal)position.Exchange.FeeRate * position.Quantity / 100m;
+
+
         decimal BreakEvenPriceOld = position.BreakEvenPrice;
         if (position.Side == CryptoTradeSide.Long)
         {
-            position.Profit = position.Returned - position.Invested - position.Commission;
+            if (position.Quantity > 0 && position.Status == CryptoPositionStatus.Trading)
+                //position.BreakEvenPrice = (position.Invested - position.Returned + position.Commission - predictedCommission) / (position.Quantity + position.CommissionBase);
+                position.BreakEvenPrice = (position.Invested - position.Returned + position.Commission + predictedCommission) / position.Quantity;
+            else
+                position.BreakEvenPrice = (decimal)position.ProfitPrice; // last TP-price
+
+            decimal invested = position.Invested;
+            if (position.RemainingDust > 0)
+                invested -= position.RemainingDust * position.BreakEvenPrice;
+
+            position.Profit = position.Returned - invested - position.Commission;
             position.Percentage = 0m;
             if (position.Invested != 0m)
-                position.Percentage = 100m + (100m * position.Profit / position.Invested);
-            if (position.Quantity > 0 && position.Status == CryptoPositionStatus.Trading)
-                position.BreakEvenPrice = (position.Invested - position.Returned + position.Commission) / (position.Quantity + position.CommissionBase);
-            else
-                position.BreakEvenPrice = 0;
+                position.Percentage = 100m + (100m * position.Profit / invested);
         }
         else
         {
-            position.Profit = position.Invested - position.Returned - position.Commission;
+            if (position.Quantity > 0 && position.Status == CryptoPositionStatus.Trading)
+                //position.BreakEvenPrice = (position.Invested - position.Returned - position.Commission - predictedCommission) / (position.Quantity + position.CommissionBase);
+                position.BreakEvenPrice = (position.Invested - position.Returned - position.Commission - predictedCommission) / position.Quantity;
+            else
+                position.BreakEvenPrice = (decimal)position.ProfitPrice;
+
+            // TODO: Test if this is the right formula? (think I messed up here?)
+            decimal invested = position.Invested;
+            if (position.RemainingDust > 0)
+                invested -= position.RemainingDust * position.BreakEvenPrice;
+
+            position.Profit = invested - position.Returned - position.Commission;
             position.Percentage = 0m;
             if (position.Returned != 0m)
-                position.Percentage = 100m + (100m * position.Profit / position.Invested);
-            if (position.Quantity > 0 && position.Status == CryptoPositionStatus.Trading)
-                position.BreakEvenPrice = (position.Invested - position.Returned - position.Commission) / (position.Quantity + position.CommissionBase);
-            else
-                position.BreakEvenPrice = 0;
+                position.Percentage = 100m + (100m * position.Profit / invested);
         }
         if (BreakEvenPriceOld != position.BreakEvenPrice)
         {
@@ -574,8 +596,9 @@ public class TradeTools
             if (position.QuantityEntry != 0 && position.Status == CryptoPositionStatus.Trading)
             {
                 // Close if q=0 or less than the minimum amount we can sell
-                decimal remaining = position.QuantityEntry - position.QuantityTakeProfit - position.RemainingDust - position.CommissionBase;
-                if (remaining <= 0 || remaining <= position.Symbol.QuantityMinimum || 
+                //decimal remaining = position.QuantityEntry - position.QuantityTakeProfit - position.RemainingDust - position.CommissionBase;
+                decimal remaining = position.QuantityEntry - position.QuantityTakeProfit - position.RemainingDust;
+                if (remaining <= 0 || remaining < position.Symbol.QuantityMinimum || 
                     remaining * position.Symbol.LastPrice < position.Symbol.QuoteValueMinimum)
                 //if (remaining <= 0)
                 {
@@ -585,13 +608,19 @@ public class TradeTools
                     position.CloseTime = lastDateTime;
                     position.UpdateTime = lastDateTime;
                     position.Status = CryptoPositionStatus.Ready;
+
                     GlobalData.AddTextToLogTab($"TradeTools: Position {position.Symbol.Name} status aangepast naar {position.Status}");
                     GlobalData.AddTextToLogTab($"TradeTools: debug ? closing if ({remaining} <= 0)");
                     GlobalData.AddTextToLogTab($"TradeTools: debug ? closing if ({remaining} < {position.Symbol.QuantityMinimum})");
                     GlobalData.AddTextToLogTab($"TradeTools: debug ? closing if ({remaining * position.Symbol.LastPrice} < {position.Symbol.QuoteValueMinimum})");
+
                     GlobalData.AddTextToLogTab($"TradeTools: debug ? Symbol.LastPrice={position.Symbol.LastPrice}");
                     GlobalData.AddTextToLogTab($"TradeTools: debug ? Symbol.QuantityMinimum={position.Symbol.QuantityMinimum}");
                     GlobalData.AddTextToLogTab($"TradeTools: debug ? Symbol.QuoteValueMinimum={position.Symbol.QuoteValueMinimum}");
+                    GlobalData.AddTextToLogTab($"TradeTools: debug ? QuantityEntry={position.QuantityEntry}");
+                    GlobalData.AddTextToLogTab($"TradeTools: debug ? QuantityTakeProfit={position.QuantityTakeProfit}");
+                    GlobalData.AddTextToLogTab($"TradeTools: debug ? RemainingDust={position.RemainingDust}");
+                    GlobalData.AddTextToLogTab($"TradeTools: debug ? remaining={remaining}");
                 }
             }
 
@@ -737,38 +766,39 @@ public class TradeTools
 
 
         // This is the amount we want in the TP
-        decimal takeProfitQuantityOriginal = position.Quantity;
         decimal takeProfitQuantity = position.Quantity;
+        decimal takeProfitQuantityOriginal = position.Quantity;
         takeProfitQuantity = takeProfitQuantity.Clamp(position.Symbol.QuantityMinimum, position.Symbol.QuantityMaximum, position.Symbol.QuantityTickSize);
+        decimal remainingDust = takeProfitQuantityOriginal - takeProfitQuantity; // expected dust
 
 
-        // DEBUG --- ADD DUST to TP (how does this work for shorts???)
-
-        // debug of we de dust erbij kunnen tellen? ;-)
-        StringBuilder stringBuilder = new();
-        stringBuilder.AppendLine($"");
-        stringBuilder.AppendLine($"Symbol = {symbol.Name}");
-        stringBuilder.AppendLine($"position.Quantity = {position.Quantity}");
-        stringBuilder.AppendLine($"info.BaseFree = {info.BaseFree}");
-        stringBuilder.AppendLine($"info.BaseTotal = {info.BaseTotal}");
-        stringBuilder.AppendLine($"info.QuoteFree = {info.QuoteFree}");
-        stringBuilder.AppendLine($"info.QuoteTotal = {info.QuoteTotal}");
-
-        decimal dust = info.BaseFree - position.Quantity;
-        stringBuilder.AppendLine($"can we add quantity={dust} value={dust * position.Symbol.LastPrice}?");
-        if (dust > 0 && dust * symbol.LastPrice < 1.0m)
+        // DEBUG --- ADD DUST to TP (short are excluded for now <how does that work?>)
+        if (GlobalData.Settings.Trading.AddDustToTp && position.Side == CryptoTradeSide.Long)
         {
-            stringBuilder.AppendLine($"yes we can add extra dust={dust} value dust ={dust * symbol.LastPrice}");
+            StringBuilder stringBuilder = new();
+            stringBuilder.AppendLine($"");
+            stringBuilder.AppendLine($"Symbol = {symbol.Name}");
+            stringBuilder.AppendLine($"position.Quantity = {position.Quantity}");
+            stringBuilder.AppendLine($"info.BaseFree = {info.BaseFree}");
+            stringBuilder.AppendLine($"info.BaseTotal = {info.BaseTotal}");
+            stringBuilder.AppendLine($"info.QuoteFree = {info.QuoteFree}");
+            stringBuilder.AppendLine($"info.QuoteTotal = {info.QuoteTotal}");
 
-            decimal takeProfitQuantityWithExtraDust = info.BaseFree;
-            takeProfitQuantityWithExtraDust = takeProfitQuantityWithExtraDust.Clamp(symbol.QuantityMinimum, symbol.QuantityMaximum, symbol.QuantityTickSize);
-            stringBuilder.AppendLine($"new rounded quantity={takeProfitQuantityWithExtraDust} value={takeProfitQuantityWithExtraDust * symbol.LastPrice}...");
+            decimal dust = info.BaseFree - position.Quantity;
+            stringBuilder.AppendLine($"can we add quantity={dust} value={dust * position.Symbol.LastPrice}?");
+            if (dust > 0 && dust * symbol.LastPrice < 1.0m)
+            {
+                stringBuilder.AppendLine($"yes we can add extra dust={dust} value dust ={dust * symbol.LastPrice}");
 
-            takeProfitQuantity = takeProfitQuantityWithExtraDust;
-            takeProfitQuantityOriginal = takeProfitQuantityWithExtraDust;
+                decimal takeProfitQuantityWithExtraDust = info.BaseFree;
+                takeProfitQuantityWithExtraDust = takeProfitQuantityWithExtraDust.Clamp(symbol.QuantityMinimum, symbol.QuantityMaximum, symbol.QuantityTickSize);
+                stringBuilder.AppendLine($"new rounded quantity={takeProfitQuantityWithExtraDust} value={takeProfitQuantityWithExtraDust * symbol.LastPrice}...");
+
+                takeProfitQuantity = takeProfitQuantityWithExtraDust;
+                takeProfitQuantityOriginal = takeProfitQuantityWithExtraDust;
+            }
+            GlobalData.AddTextToLogTab(stringBuilder.ToString());
         }
-        GlobalData.AddTextToLogTab(stringBuilder.ToString());
-
         //END DEBUG
 
 
@@ -793,7 +823,7 @@ public class TradeTools
             {
                 position.ProfitPrice = result.tradeParams.Price;
                 var step = PositionTools.CreatePositionStep(position, part, result.tradeParams);
-                step.RemainingDust = takeProfitQuantityOriginal - takeProfitQuantity; // de verwachte dust
+                step.RemainingDust = remainingDust; // takeProfitQuantityOriginal - takeProfitQuantity; // stick to original dust? for calculating profits
                 database.Connection.Insert<CryptoPositionStep>(step);
                 PositionTools.AddPositionPartStep(part, step);
 

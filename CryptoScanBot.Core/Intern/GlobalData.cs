@@ -118,12 +118,9 @@ static public class GlobalData
 
     public static AnalyseEvent? AnalyzeSignalCreated { get; set; }
 
-    // TODO: Deze rare accounts proberen te verbergen (indien mogelijk)
+    // All possible account (overkill)
     public static readonly SortedList<int, CryptoTradeAccount> TradeAccountList = [];
-    public static readonly SortedList<int, CryptoTradeAccount> ActiveTradeAccountList = [];
-    public static CryptoTradeAccount? ExchangeBackTestAccount { get; private set; }
-    public static CryptoTradeAccount? ExchangeRealTradeAccount { get; set; }
-    public static CryptoTradeAccount? ExchangePaperTradeAccount { get; set; }
+    public static CryptoTradeAccount? ActiveAccount { get; set; }
 
 
     // Some running tasks/threads
@@ -185,22 +182,18 @@ static public class GlobalData
 
     public static void SetTradingAccounts()
     {
-        ActiveTradeAccountList.Clear();
+        ActiveAccount = null;
         foreach (CryptoTradeAccount tradeAccount in TradeAccountList.Values)
         {
             // There are 3 accounts per exchange
             if (tradeAccount.ExchangeId == Settings.General.ExchangeId)
             {
-                if (tradeAccount.TradeAccountType == CryptoTradeAccountType.BackTest)
-                    ExchangeBackTestAccount = tradeAccount;
-                if (tradeAccount.TradeAccountType == CryptoTradeAccountType.PaperTrade)
-                    ExchangePaperTradeAccount = tradeAccount;
+                if (GlobalData.BackTest || tradeAccount.TradeAccountType == CryptoTradeAccountType.BackTest)
+                    ActiveAccount = tradeAccount;
+                if (!GlobalData.BackTest && tradeAccount.TradeAccountType == CryptoTradeAccountType.PaperTrade)
+                    ActiveAccount = tradeAccount;
                 if (tradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading)
-                    ExchangeRealTradeAccount = tradeAccount;
-
-                // That BackTest setting is kind of a weird setting for now...
-                //if (BackTest || Settings.Trading.TradeVia != CryptoTradeAccountType.NoTrading)
-                    ActiveTradeAccountList.Add(tradeAccount.Id, tradeAccount);
+                    ActiveAccount = tradeAccount;
             }
         }
     }

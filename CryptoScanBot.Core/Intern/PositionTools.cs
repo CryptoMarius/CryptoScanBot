@@ -13,23 +13,6 @@ public static class PositionTools
 {
 #if TRADEBOT
 
-    public static bool ValidTradeAccount(CryptoTradeAccount tradeAccount)
-    {
-        // De exchanges moet uiteraard matchen
-        if (tradeAccount.ExchangeId == GlobalData.Settings.General.ExchangeId) 
-        {
-            // Niet echt super, enumeratie oid hiervoor in het leven roepen, werkt verder wel
-            if (tradeAccount.TradeAccountType == CryptoTradeAccountType.BackTest && GlobalData.BackTest)
-                return true;
-            if (tradeAccount.TradeAccountType == CryptoTradeAccountType.PaperTrade && GlobalData.Settings.Trading.TradeVia == CryptoTradeAccountType.PaperTrade)
-                return true;
-            if (tradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading && GlobalData.Settings.Trading.TradeVia == CryptoTradeAccountType.RealTrading)
-                return true;
-        }
-        return false;
-    }
-
-
     /// <summary>
     /// Retourneer de part met id=x
     /// </summary>

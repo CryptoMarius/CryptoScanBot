@@ -56,7 +56,7 @@ public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscript
                         {
                             // Converteer de data naar een (tijdelijke) trade
                             CryptoOrder orderTemp = new();
-                            Api.PickupOrder(GlobalData.ExchangeRealTradeAccount!, symbol, orderTemp, data);
+                            Api.PickupOrder(GlobalData.ActiveAccount!, symbol, orderTemp, data);
 
                             GlobalData.ThreadMonitorOrder?.AddToQueue((
                                 symbol,

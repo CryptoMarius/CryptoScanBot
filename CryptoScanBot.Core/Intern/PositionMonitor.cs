@@ -6,6 +6,7 @@ using CryptoScanBot.Core.Trader;
 using CryptoScanBot.Core.Exchange;
 using Dapper.Contrib.Extensions;
 using CryptoScanBot.Signal;
+using CryptoScanBot.Core.Barometer;
 
 namespace CryptoScanBot.Core.Intern;
 
@@ -395,10 +396,13 @@ public class PositionMonitor : IDisposable
                 // (kan aangeroepen worden op meerdere TF's)
                 //******************************************
 
-                foreach (CryptoTradeAccount tradeAccount in GlobalData.ActiveTradeAccountList.Values.ToList())
+                //foreach (CryptoTradeAccount tradeAccount in GlobalData.ActiveTradeAccountList.Values.ToList())
                 {
-                    if (!PositionTools.ValidTradeAccount(tradeAccount))
+                    //if (!PositionTools.ValidTradeAccount(GlobalData.ActiveAccount))
+                    //    continue;
+                    if (GlobalData.ActiveAccount == null)
                         continue;
+                    CryptoTradeAccount tradeAccount = GlobalData.ActiveAccount;
 
                     CryptoPosition position = PositionTools.HasPosition(tradeAccount, Symbol);
                     if (position == null)
@@ -1617,15 +1621,17 @@ public class PositionMonitor : IDisposable
         if (position.Quantity > 0)
         {
             // Always create a separate take profit part (if it didn't exist)
-            takeProfitPart ??= PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.TakeProfit, position.Interval, position.Strategy,
-                    CryptoEntryOrProfitMethod.FixedPercentage, 0, DateTime.UtcNow);
+            takeProfitPart ??= PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.TakeProfit, position.Interval, 
+                position.Strategy, CryptoEntryOrProfitMethod.FixedPercentage, 0, DateTime.UtcNow);
             CryptoPositionStep takeProfitOrder = PositionTools.FindPositionPartStep(takeProfitPart, takeProfitOrderSide, false);
             
             decimal takeprofitPrice = CalculateTakeProfitPrice(position);
             if (takeProfitOrder == null || takeProfitOrder.Price != takeprofitPrice)
             {
                 string text = $"placing {takeProfitPart.Purpose}";
-                if (takeProfitOrder != null && takeProfitOrder.Quantity != position.Quantity)
+                // position.Quantity is not clamped
+                decimal quantity = position.Quantity.Clamp(Symbol.QuantityMinimum, Symbol.QuantityMaximum, Symbol.QuantityTickSize);
+                if (takeProfitOrder != null && takeProfitOrder.Quantity != quantity)
                     text = $"modyfying {takeProfitPart.Purpose}";
 
                 // Cancel all open take profit orders
@@ -1867,33 +1873,25 @@ public class PositionMonitor : IDisposable
 #if TRADEBOT
             //GlobalData.Logger.Trace($"NewCandleArrivedAsync.Positions " + traceText);
 
-
-            // Simulate Trade indien openstaande orders gevuld zijn
-            //GlobalData.Logger.Info($"analyze.PaperTradingCheckOrders({Symbol.Name})");
-            if (GlobalData.BackTest || GlobalData.Settings.Trading.TradeVia == CryptoTradeAccountType.BackTest)
-                await PaperTrading.PaperTradingCheckOrders(Database, GlobalData.ExchangeBackTestAccount!, Symbol, LastCandle1m);
-            if (GlobalData.Settings.Trading.TradeVia == CryptoTradeAccountType.PaperTrade)
-                await PaperTrading.PaperTradingCheckOrders(Database, GlobalData.ExchangePaperTradeAccount!, Symbol, LastCandle1m);
-
-
-            // Pause becuase of trading rules or low barometer
-            PauseBecauseOfTradingRules = !TradingRules.CheckTradingRules(LastCandle1m);
-
-            // Open or extend a position
-            if (hasCreatedAsignal)
-                await CreateOrExtendPositionAsync();
-
-            // Per (actief) trade account de posities controleren
-            foreach (CryptoTradeAccount tradeAccount in GlobalData.ActiveTradeAccountList.Values.ToList())
+            if (GlobalData.ActiveAccount != null)
             {
-                // Aan de hand van de instellingen accounts uitsluiten
-                if (PositionTools.ValidTradeAccount(tradeAccount))
+
+                // Simulate Trade indien openstaande orders gevuld zijn
+                //GlobalData.Logger.Info($"analyze.PaperTradingCheckOrders({Symbol.Name})");
+                if (GlobalData.ActiveAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
+                    await PaperTrading.PaperTradingCheckOrders(Database, GlobalData.ActiveAccount!, Symbol, LastCandle1m);
+
+                // Pause becuase of trading rules or low barometer
+                PauseBecauseOfTradingRules = !TradingRules.CheckTradingRules(LastCandle1m);
+
+                // Open or extend a position
+                if (hasCreatedAsignal)
+                    await CreateOrExtendPositionAsync();
+
+                // Check the positions
+                if (GlobalData.ActiveAccount.PositionList.TryGetValue(Symbol.Name, out var position))
                 {
-                    // Check the positions
-                    if (tradeAccount.PositionList.TryGetValue(Symbol.Name, out var position))
-                    {
-                        await GlobalData.ThreadDoubleCheckPosition!.AddToQueue(position);
-                    }
+                    await GlobalData.ThreadDoubleCheckPosition!.AddToQueue(position);
                 }
             }
 #endif

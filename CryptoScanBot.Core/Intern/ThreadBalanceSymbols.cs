@@ -43,7 +43,7 @@ public class ThreadBalanceSymbols
                         BalanceCount++;
                         LastRunDate = nowDate;
 
-                        BalanceSymbolsAlgoritm balanceSymbolsAlgoritm = new(GlobalData.ExchangeRealTradeAccount);
+                        BalanceSymbolsAlgoritm balanceSymbolsAlgoritm = new(GlobalData.ActiveAccount);
                         await balanceSymbolsAlgoritm.Execute();
                     }
                 }

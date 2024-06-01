@@ -169,7 +169,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                                 }
                             }
 
-                            // Dit is de laatste bekende prijs (de priceticker vult eventueel aan)
+                            // This is the last know price (the priceticker corrects the price later)
                             Symbol.LastPrice = candle.Close;
                             Symbol.AskPrice = candle.Close;
                             Symbol.BidPrice = candle.Close;
