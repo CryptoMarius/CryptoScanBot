@@ -261,7 +261,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
             ColumnsForGrid.PSarJason => ObjectCompare.Compare(a.PSarJason, b.PSarJason),
             ColumnsForGrid.PSarTulip => ObjectCompare.Compare(a.PSarTulip, b.PSarTulip),
 #endif
-            ColumnsForGrid.Flux5m => ObjectCompare.Compare(a.FluxIndicator5m, b.FluxIndicator5m),
+            ColumnsForGrid.Flux5m => ObjectCompare.Compare(a.LuxIndicator5m, b.LuxIndicator5m),
             ColumnsForGrid.FundingRate => ObjectCompare.Compare(a.Symbol.FundingRate, b.Symbol.FundingRate),
             ColumnsForGrid.Trend15m => ObjectCompare.Compare(a.Trend15m, b.Trend15m),
             ColumnsForGrid.Trend30m => ObjectCompare.Compare(a.Trend30m, b.Trend30m),
@@ -426,7 +426,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                     break;
 #endif
                 case ColumnsForGrid.Flux5m:
-                    e.Value = signal.FluxIndicator5m;
+                    e.Value = signal.LuxIndicator5m;
                     break;
                 case ColumnsForGrid.FundingRate: // Only relevant for Bybit Futures..
                     if (signal.Symbol.FundingRate != 0.0m)
@@ -828,11 +828,20 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
         }
     }
 
+
+    static long LastStatisticUpdate = 0;
+
     private void UpdateStatistics()
     {
         // statistics (not sure where to put it right now)
         if (GlobalData.BackTest)
             return;
+
+        // Avoid needless updates
+        long x = CandleTools.GetUnixTime(DateTime.UtcNow, 45);
+        if (x == LastStatisticUpdate)
+            return;
+        LastStatisticUpdate = x;
 
         // Avoid duplicate calls (when the list is serious long)
         if (Monitor.TryEnter(List))
@@ -888,22 +897,30 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
         if (GlobalData.ApplicationIsClosing)
             return;
 
-        Grid.SuspendDrawing();
         try
         {
-            Grid.InvalidateColumn((int)ColumnsForGrid.Price);
-            Grid.InvalidateColumn((int)ColumnsForGrid.PriceChange);
+            Grid.SuspendDrawing();
+            try
+            {
+                Grid.InvalidateColumn((int)ColumnsForGrid.Price);
+                Grid.InvalidateColumn((int)ColumnsForGrid.PriceChange);
 
-            Grid.InvalidateColumn((int)ColumnsForGrid.PriceMin);
-            Grid.InvalidateColumn((int)ColumnsForGrid.PriceMax);
-            Grid.InvalidateColumn((int)ColumnsForGrid.PriceMinPerc);
-            Grid.InvalidateColumn((int)ColumnsForGrid.PriceMaxPerc);
+                Grid.InvalidateColumn((int)ColumnsForGrid.PriceMin);
+                Grid.InvalidateColumn((int)ColumnsForGrid.PriceMax);
+                Grid.InvalidateColumn((int)ColumnsForGrid.PriceMinPerc);
+                Grid.InvalidateColumn((int)ColumnsForGrid.PriceMaxPerc);
 
-            UpdateStatistics();
+                UpdateStatistics();
+            }
+            finally
+            {
+                Grid.ResumeDrawing();
+            }
         }
-        finally
+        catch (Exception error)
         {
-            Grid.ResumeDrawing();
+            ScannerLog.Logger.Error(error, "");
+            GlobalData.AddTextToLogTab($"Error RefreshInformation {error}");
         }
     }
 

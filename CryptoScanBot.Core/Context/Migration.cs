@@ -6,7 +6,7 @@ namespace CryptoScanBot.Core.Context;
 public class Migration
 {
     // De huidige database versie
-    public readonly static int CurrentDatabaseVersion = 16;
+    public readonly static int CurrentDatabaseVersion = 17;
 
 
     public static void Execute(CryptoDatabase database, int CurrentVersion)
@@ -439,13 +439,13 @@ public class Migration
                 database.Connection.Execute("update exchange set IsActive=1", transaction);
                 database.Connection.Execute("update exchange set IsActive=0 where Name like '%Kraken%'", transaction);
 
-                // Nieuwe exchange Kucoin Futures (experiment)
+                // New exchange Kucoin Futures (experiment)
                 database.Connection.Execute("insert into exchange(Name, FeeRate, IsActive) values('Kucoin Futures', 0.1, 1)", transaction);
                 database.Connection.Execute("insert into TradeAccount(Short, Name, AccountType, TradeAccountType, ExchangeId, CanTrade) values('Trading', 'Kucoin Futures trading', 0, 2, 7, 1);", transaction);
                 database.Connection.Execute("insert into TradeAccount(Short, Name, AccountType, TradeAccountType, ExchangeId, CanTrade) values('Paper', 'Kucoin Futures paper', 0, 1, 7, 0);", transaction);
                 database.Connection.Execute("insert into TradeAccount(Short, Name, AccountType, TradeAccountType, ExchangeId, CanTrade) values('Backtest', 'Kucoin Futures backtest', 0, 0, 7, 0);", transaction);
 
-                // De exchangeId's in de TradeAccount van Binance Futures staan verkeerd (verkeerde initialisatie)
+                // The exchangeId's in the TradeAccount of Binance Futures are not right (wrong initialisation)
                 database.Connection.Execute("update TradeAccount set ExchangeId=6 where name like 'Binance Futures%'", transaction);
 
                 // update version
@@ -455,7 +455,34 @@ public class Migration
             }
 
 
-            // todo, rename Signal.FluxIndicator5m to Signal.LuxIndicator5m (Flux=Lux duh!)
+            //***********************************************************
+            // 20240602 1.9.3 in progress
+            if (CurrentVersion > version.Version && version.Version == 16)
+            {
+                using var transaction = database.BeginTransaction();
+
+                // rename Signal.FluxIndicator5m LuxIndicator5m (typo)
+                database.Connection.Execute("alter table signal add LuxIndicator5m Text null", transaction);
+                database.Connection.Execute("update signal set LuxIndicator5m=FluxIndicator5m", transaction);
+                database.Connection.Execute("alter table signal drop column FluxIndicator5m", transaction);
+
+                // Introduce Signal.Backtest (because of emulator)
+                database.Connection.Execute("alter table signal add Backtest Integer null", transaction);
+
+                // After some tweaking no longer needed (we correct the quantity field instead)
+                database.Connection.Execute("alter table PositionPart drop column QuantityEntry", transaction);
+                database.Connection.Execute("alter table PositionPart drop column QuantityTakeProfit", transaction);
+                database.Connection.Execute("alter table Position drop column QuantityEntry", transaction);
+                database.Connection.Execute("alter table Position drop column QuantityTakeProfit", transaction);
+
+                // Feerate was recently increased, also for market orders.
+                database.Connection.Execute("update exchange set FeeRate=0.15 where Name like '%Bybit Spot%'", transaction);
+
+                // update version
+                version.Version += 1;
+                database.Connection.Update(version, transaction);
+                transaction.Commit();
+            }
         }
     }
 

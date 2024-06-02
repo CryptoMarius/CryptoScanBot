@@ -170,7 +170,7 @@ public class CryptoDatabase : IDisposable
             Model.CryptoExchange exchange = new() { Name = "Binance Spot", FeeRate = 0.1m, IsActive = true };
             connection.Connection.Insert(exchange, transaction);
 
-            exchange = new() { Name = "Bybit Spot", FeeRate = 0.1m, IsActive = true };
+            exchange = new() { Name = "Bybit Spot", FeeRate = 0.15m, IsActive = true };
             connection.Connection.Insert(exchange, transaction);
 
             exchange = new() { Name = "Bybit Futures", FeeRate = 0.1m, IsActive = true };
@@ -564,7 +564,8 @@ public class CryptoDatabase : IDisposable
                 "SymbolId INTEGER NOT NULL," +
                 "IntervalId INTEGER NULL," +
 
-                "IsInvalid INTEGER NULL," +
+                "BackTest INTEGER NOT NULL," +
+                "IsInvalid INTEGER NOT NULL," +
 
                 "EventTime bigint NOT NULL," +
                 "Side INTEGER NOT NULL," +
@@ -622,7 +623,7 @@ public class CryptoDatabase : IDisposable
                 "SlopeSma50 TEXT NULL," +
                 "SlopeSma20 TEXT NULL," +
 
-                "FluxIndicator5m TEXT NULL," +
+                "LuxIndicator5m TEXT NULL," +
 
                 "Trend15m INTEGER NULL," +
                 "Trend30m INTEGER NULL," +
@@ -669,10 +670,8 @@ public class CryptoDatabase : IDisposable
                 "data TEXT NULL," +
 
                 "EntryPrice TEXT NULL," +
-                "EntryAmount TEXT NULL," + // EntryQuoteAmount?
+                "EntryAmount TEXT NULL," +
                 "Quantity TEXT NULL," +
-                "QuantityEntry TEXT NULL," +
-                "QuantityTakeProfit TEXT NULL," +
                 "RemainingDust TEXT NULL," +
                 "ProfitPrice TEXT NULL," +
                 "PartCount Integer NOT NULL," +
@@ -730,8 +729,6 @@ public class CryptoDatabase : IDisposable
                 "Percentage TEXT NULL," +
 
                 "Quantity TEXT NULL," +
-                "QuantityEntry TEXT NULL," +
-                "QuantityTakeProfit TEXT NULL," +
                 "BreakEvenPrice TEXT NULL," +
                 "SignalPrice TEXT NOT NULL," +
                 "RemainingDust TEXT NULL," +
@@ -739,7 +736,7 @@ public class CryptoDatabase : IDisposable
                 "EntryMethod INTEGER NULL," +
                 "ProfitMethod INTEGER NULL," +
 
-                "ManualOrder INTEGER NULL," + // Handmatig jojo geplaatst
+                "ManualOrder INTEGER NULL," +
 
                 "FOREIGN KEY(PositionId) REFERENCES Position(Id)," +
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +

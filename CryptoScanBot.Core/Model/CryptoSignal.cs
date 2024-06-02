@@ -29,8 +29,6 @@ public class CryptoSignal
     [Computed]
     public virtual CryptoCandle Candle { get; set; }
 
-
-    [Computed]
     public bool BackTest { get; set; }
 
     // Melden en tevens bewaren
@@ -119,7 +117,7 @@ public class CryptoSignal
     public double? Rsi { get; set; }
     //public double? SlopeRsi { get; set; }
 
-    public int FluxIndicator5m { get; set; }
+    public int LuxIndicator5m { get; set; }
 
     //uitgezet
     ////public double? Ema8 { get; set; }
