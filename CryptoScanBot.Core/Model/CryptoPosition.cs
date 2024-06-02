@@ -51,13 +51,11 @@ public class CryptoPosition
     public decimal Invested { get; set; }
     public decimal Returned { get; set; }
 
-    // Total commission in quote quantity
+    // The commission in quote quantity
     public decimal Commission { get; set; }
-    // This is the calculated (expected) dust when tp is not the same as the quantity because of ticksizes
-    public decimal RemainingDust { get; set; }
-    // Base commission is the fee in base quantity (Bybit Spot calculates fee in base when entry=buy)
+    // The fee in base quantity (Bybit Spot) (0 if none)
     public decimal CommissionBase { get; set; }
-    // Quote commission is the fee in quote quantity (Bybit Spot calculates fee in quote when tp=sell)
+    // The fee in quote quantity (Bybit Spot)
     public decimal CommissionQuote { get; set; }
     // Amount in orders
     public decimal Reserved { get; set; }
@@ -65,8 +63,9 @@ public class CryptoPosition
     public decimal Percentage { get; set; }
 
     public decimal Quantity { get; set; }
-    public decimal QuantityEntry { get; set; }
-    public decimal QuantityTakeProfit { get; set; }
+    // Expected dust because of fees and ticksizes  etc.
+    public decimal RemainingDust { get; set; }
+    // The Break Even Price
     public decimal BreakEvenPrice { get; set; }
 
     // Hulpmiddelen voor statistiek en dca (niet noodzakelijk)

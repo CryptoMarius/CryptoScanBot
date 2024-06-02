@@ -106,10 +106,7 @@ public class TradeTools
         StringBuilder stringBuilderOld = DumpPosition(position);
 
         position.Profit = 0;
-        position.BreakEvenPrice = 0;
         position.Quantity = 0;
-        position.QuantityEntry = 0;
-        position.QuantityTakeProfit = 0;
         position.Invested = 0;
         position.Returned = 0;
         position.Reserved = 0;
@@ -120,6 +117,7 @@ public class TradeTools
 
         position.PartCount = 0;
         position.ActiveDca = false;
+        position.BreakEvenPrice = 0;
 
         // Ondersteuning long/short
         CryptoOrderSide entryOrderSide = position.GetEntryOrderSide();
@@ -131,8 +129,6 @@ public class TradeTools
         foreach (CryptoPositionPart part in position.Parts.Values.ToList())
         {
             part.Quantity = 0;
-            part.QuantityEntry = 0;
-            part.QuantityTakeProfit = 0;
             part.Invested = 0;
             part.Returned = 0;
             part.Reserved = 0;
@@ -140,6 +136,7 @@ public class TradeTools
             part.CommissionBase = 0;
             part.CommissionQuote = 0;
             part.RemainingDust = 0;
+            part.BreakEvenPrice = 0;
 
             //int tradeCount = 0;
             foreach (CryptoPositionStep step in part.Steps.Values.ToList())
@@ -152,7 +149,6 @@ public class TradeTools
                     if (step.Side == entryOrderSide)
                     {
                         part.Quantity += filledQuantity;
-                        part.QuantityEntry += filledQuantity;
                         part.Invested += step.AveragePrice * filledQuantity;
 
                         totalValue += step.AveragePrice * filledQuantity;
@@ -165,7 +161,6 @@ public class TradeTools
                     else if (step.Side == takeProfitOrderSide)
                     {
                         part.Quantity -= filledQuantity;
-                        part.QuantityTakeProfit += filledQuantity;
                         part.Returned += step.AveragePrice * filledQuantity;
 
                         // Bybit spot fix
@@ -251,8 +246,6 @@ public class TradeTools
 
 
             position.Quantity += part.Quantity;
-            position.QuantityEntry += part.QuantityEntry;
-            position.QuantityTakeProfit += part.QuantityTakeProfit;
             position.Invested += part.Invested;
             position.Returned += part.Returned;
             position.Reserved += part.Reserved;
@@ -582,7 +575,7 @@ public class TradeTools
                 lastDateTime = DateTime.UtcNow; ;
 
             // Er is in geinvesteerd en dus moet de positie ten minste actief zijn
-            if (position.QuantityEntry != 0 && position.Status == CryptoPositionStatus.Waiting)
+            if (position.Quantity != 0 && position.Status == CryptoPositionStatus.Waiting)
             {
                 orderStatusChanged = true;
                 position.CloseTime = null;
@@ -593,11 +586,10 @@ public class TradeTools
             }
 
             // Als alles verkocht is de positie alsnog sluiten. Maar wanneer weet je of alles echt verkocht is?
-            if (position.QuantityEntry != 0 && position.Status == CryptoPositionStatus.Trading)
+            if (position.Quantity != 0 && position.Status == CryptoPositionStatus.Trading)
             {
                 // Close if q=0 or less than the minimum amount we can sell
-                //decimal remaining = position.QuantityEntry - position.QuantityTakeProfit - position.RemainingDust - position.CommissionBase;
-                decimal remaining = position.QuantityEntry - position.QuantityTakeProfit - position.RemainingDust;
+                decimal remaining = position.Quantity - position.RemainingDust;
                 if (remaining <= 0 || remaining < position.Symbol.QuantityMinimum || 
                     remaining * position.Symbol.LastPrice < position.Symbol.QuoteValueMinimum)
                 //if (remaining <= 0)
@@ -610,17 +602,15 @@ public class TradeTools
                     position.Status = CryptoPositionStatus.Ready;
 
                     GlobalData.AddTextToLogTab($"TradeTools: Position {position.Symbol.Name} status aangepast naar {position.Status}");
-                    GlobalData.AddTextToLogTab($"TradeTools: debug ? closing if ({remaining} <= 0)");
-                    GlobalData.AddTextToLogTab($"TradeTools: debug ? closing if ({remaining} < {position.Symbol.QuantityMinimum})");
-                    GlobalData.AddTextToLogTab($"TradeTools: debug ? closing if ({remaining * position.Symbol.LastPrice} < {position.Symbol.QuoteValueMinimum})");
-
+                    GlobalData.AddTextToLogTab($"TradeTools: debug ? Quantity={position.Quantity}");
+                    GlobalData.AddTextToLogTab($"TradeTools: debug ? Dust={position.RemainingDust}");
+                    GlobalData.AddTextToLogTab($"TradeTools: debug ? Remaining={remaining}");
                     GlobalData.AddTextToLogTab($"TradeTools: debug ? Symbol.LastPrice={position.Symbol.LastPrice}");
                     GlobalData.AddTextToLogTab($"TradeTools: debug ? Symbol.QuantityMinimum={position.Symbol.QuantityMinimum}");
                     GlobalData.AddTextToLogTab($"TradeTools: debug ? Symbol.QuoteValueMinimum={position.Symbol.QuoteValueMinimum}");
-                    GlobalData.AddTextToLogTab($"TradeTools: debug ? QuantityEntry={position.QuantityEntry}");
-                    GlobalData.AddTextToLogTab($"TradeTools: debug ? QuantityTakeProfit={position.QuantityTakeProfit}");
-                    GlobalData.AddTextToLogTab($"TradeTools: debug ? RemainingDust={position.RemainingDust}");
-                    GlobalData.AddTextToLogTab($"TradeTools: debug ? remaining={remaining}");
+                    GlobalData.AddTextToLogTab($"TradeTools: debug ? closing if ({remaining} <= 0)");
+                    GlobalData.AddTextToLogTab($"TradeTools: debug ? closing if ({position.Quantity} < {position.Symbol.QuantityMinimum})");
+                    GlobalData.AddTextToLogTab($"TradeTools: debug ? closing if ({remaining * position.Symbol.LastPrice} < {position.Symbol.QuoteValueMinimum})");
                 }
             }
 
