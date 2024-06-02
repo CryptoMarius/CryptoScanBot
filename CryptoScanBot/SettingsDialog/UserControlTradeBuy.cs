@@ -5,8 +5,8 @@ namespace CryptoScanBot.SettingsDialog;
 
 public partial class UserControlTradeBuy : UserControl
 {
-    private readonly SortedList<string, CryptoEntryOrProfitMethod> BuyStepInMethod = new();
-    private readonly SortedList<string, CryptoBuyOrderMethod> BuyOrderMethod = new();
+    private readonly SortedList<string, CryptoEntryOrProfitMethod> BuyStepInMethod = [];
+    private readonly SortedList<string, CryptoBuyOrderMethod> BuyOrderMethod = [];
 
     public UserControlTradeBuy()
     {
