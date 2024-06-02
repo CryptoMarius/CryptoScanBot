@@ -42,7 +42,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
         PSarJason,
         PSarTulip,
 #endif
-        Flux5m,
+        Lux5m,
         FundingRate,
         Trend15m,
         Trend30m,
@@ -185,8 +185,8 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                     CreateColumn("P.Tulip", typeof(decimal), "##0.#0000000", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
                     break;
 #endif
-                case ColumnsForGrid.Flux5m:
-                    CreateColumn("Flux 5m", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 45).Visible = false;
+                case ColumnsForGrid.Lux5m:
+                    CreateColumn("Lux 5m", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 45).Visible = false;
                     break;
                 case ColumnsForGrid.FundingRate:
                     //DataGridViewTextBoxColumn c = 
@@ -261,7 +261,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
             ColumnsForGrid.PSarJason => ObjectCompare.Compare(a.PSarJason, b.PSarJason),
             ColumnsForGrid.PSarTulip => ObjectCompare.Compare(a.PSarTulip, b.PSarTulip),
 #endif
-            ColumnsForGrid.Flux5m => ObjectCompare.Compare(a.LuxIndicator5m, b.LuxIndicator5m),
+            ColumnsForGrid.Lux5m => ObjectCompare.Compare(a.LuxIndicator5m, b.LuxIndicator5m),
             ColumnsForGrid.FundingRate => ObjectCompare.Compare(a.Symbol.FundingRate, b.Symbol.FundingRate),
             ColumnsForGrid.Trend15m => ObjectCompare.Compare(a.Trend15m, b.Trend15m),
             ColumnsForGrid.Trend30m => ObjectCompare.Compare(a.Trend30m, b.Trend30m),
@@ -425,7 +425,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                     e.Value = signal.PSarTulip;
                     break;
 #endif
-                case ColumnsForGrid.Flux5m:
+                case ColumnsForGrid.Lux5m:
                     e.Value = signal.LuxIndicator5m;
                     break;
                 case ColumnsForGrid.FundingRate: // Only relevant for Bybit Futures..
