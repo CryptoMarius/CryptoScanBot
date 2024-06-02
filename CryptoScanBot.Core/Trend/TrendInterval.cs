@@ -164,18 +164,6 @@ public class TrendInterval
     }
 
 
-    // Move to candletools, or interval tools, whatever, not here..
-    public static long GetStartOfIntervalCandle(CryptoInterval interval, long someUnixDate)
-    {
-        long diff = someUnixDate % interval!.Duration;
-        long lastCandleIntervalOpenTime = someUnixDate - diff;
-        // ?Why? remark: debug and explain..
-        if (diff != 0)
-            lastCandleIntervalOpenTime -= interval.Duration;
-        return lastCandleIntervalOpenTime;
-    }
-
-
     public static void Calculate(CryptoSymbolInterval symbolInterval, long candleIntervalStart, long candleIntervalEnd, StringBuilder? log = null)
     {
         // TODO - de parameter candleIntervalStart controleren! (staat nu nog op twee plekken op 0)
@@ -209,7 +197,7 @@ public class TrendInterval
             var candle = symbolInterval.CandleList.Values.First();
             candleIntervalStart = candle.OpenTime;
         }
-        candleIntervalStart = GetStartOfIntervalCandle(symbolInterval.Interval, candleIntervalStart);
+        candleIntervalStart = CandleTools.StartOfIntervalCandle(symbolInterval.Interval, candleIntervalStart);
         // correct the start with what we previously added
         if (cache.LastCandleAdded.HasValue && cache.LastCandleAdded.Value >= candleIntervalStart)
             candleIntervalStart = cache.LastCandleAdded.Value;
@@ -244,12 +232,12 @@ public class TrendInterval
             var candle = symbolInterval.CandleList.Values.Last();
             candleIntervalEnd = candle.OpenTime;
         }
-        candleIntervalEnd = GetStartOfIntervalCandle(symbolInterval.Interval, candleIntervalEnd);
+        candleIntervalEnd = CandleTools.StartOfIntervalCandle(symbolInterval.Interval, candleIntervalEnd);
 
 
         // Add to the ZigZag indicator
         long loop = candleIntervalStart;
-        while (loop < candleIntervalEnd)
+        while (loop <= candleIntervalEnd)
         {
             if (symbolInterval.CandleList.TryGetValue(loop, out var candle))
             {
