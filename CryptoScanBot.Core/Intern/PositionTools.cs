@@ -299,16 +299,16 @@ public static class PositionTools
                 return false;
             }
 
-            foreach ((decimal minValue, decimal maxValue) entry in marketTrend)
+            foreach ((decimal minValue, decimal maxValue) in marketTrend)
             {
                 decimal trendPercentage = (decimal)symbol.TrendPercentage;
-                if (!trendPercentage.IsBetween(entry.minValue, entry.maxValue))
+                if (!trendPercentage.IsBetween(minValue, maxValue))
                 {
-                    string minValueStr = entry.minValue.ToString0("N2");
-                    if (entry.minValue == decimal.MinValue)
+                    string minValueStr = minValue.ToString0("N2");
+                    if (minValue == decimal.MinValue)
                         minValueStr = "-maxint";
-                    string maxValueStr = entry.maxValue.ToString0("N2");
-                    if (entry.maxValue == decimal.MaxValue)
+                    string maxValueStr = maxValue.ToString0("N2");
+                    if (maxValue == decimal.MaxValue)
                         maxValueStr = "+maxint";
                     reaction = $"Markettrend {symbol.Name} {symbol.TrendPercentage?.ToString("N2")} niet tussen {minValueStr} en {maxValueStr}";
                     return false;
