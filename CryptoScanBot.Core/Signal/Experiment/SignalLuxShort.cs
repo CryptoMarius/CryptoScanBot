@@ -78,7 +78,7 @@ public class SignalFluxShort : SignalSbmBaseShort
 
         // ********************************************************************
         // Flux
-        LuxIndicator.Calculate(Symbol, out int _, out int luxOverBought);
+        LuxIndicator.Calculate(Symbol, out int _, out int luxOverBought, CryptoIntervalPeriod.interval5m, CandleLast.OpenTime + Interval.Duration);
         if (luxOverBought < 100)
         {
             ExtraText = $"flux overbought {luxOverBought} below 100";
