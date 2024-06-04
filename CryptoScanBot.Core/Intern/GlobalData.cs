@@ -248,24 +248,52 @@ static public class GlobalData
         // Een aantal signalen laden
         // TODO - beperken tot de signalen die nog enigzins bruikbaar zijn??
         AddTextToLogTab("Reading some signals");
-        string sql = "select * from signal where ExpirationDate >= @FromDate order by OpenDate";
 
-        using var database = new CryptoDatabase();
-        foreach (CryptoSignal signal in database.Connection.Query<CryptoSignal>(sql, new { FromDate = DateTime.UtcNow }))
+        if (BackTest)
         {
-            if (ExchangeListId.TryGetValue(signal.ExchangeId, out Model.CryptoExchange exchange2))
+            string sql = "select * from signal where BackTest=1 order by OpenDate";
+
+            using var database = new CryptoDatabase();
+            foreach (CryptoSignal signal in database.Connection.Query<CryptoSignal>(sql))
             {
-                signal.Exchange = exchange2;
-
-                if (exchange2.SymbolListId.TryGetValue(signal.SymbolId, out CryptoSymbol symbol))
+                if (ExchangeListId.TryGetValue(signal.ExchangeId, out Model.CryptoExchange exchange2))
                 {
-                    signal.Symbol = symbol;
+                    signal.Exchange = exchange2;
 
-                    if (IntervalListId.TryGetValue(signal.IntervalId, out CryptoInterval interval))
-                        signal.Interval = interval;
+                    if (exchange2.SymbolListId.TryGetValue(signal.SymbolId, out CryptoSymbol symbol))
+                    {
+                        signal.Symbol = symbol;
 
-                    SignalList.Add(signal);
-                    SignalQueue.Enqueue(signal);
+                        if (IntervalListId.TryGetValue(signal.IntervalId, out CryptoInterval interval))
+                            signal.Interval = interval;
+
+                        SignalList.Add(signal);
+                        SignalQueue.Enqueue(signal);
+                    }
+                }
+            }
+        }
+        else
+        {
+            string sql = "select * from signal where BackTest=0 and ExpirationDate >= @FromDate order by OpenDate";
+
+            using var database = new CryptoDatabase();
+            foreach (CryptoSignal signal in database.Connection.Query<CryptoSignal>(sql, new { FromDate = DateTime.UtcNow }))
+            {
+                if (ExchangeListId.TryGetValue(signal.ExchangeId, out Model.CryptoExchange exchange2))
+                {
+                    signal.Exchange = exchange2;
+
+                    if (exchange2.SymbolListId.TryGetValue(signal.SymbolId, out CryptoSymbol symbol))
+                    {
+                        signal.Symbol = symbol;
+
+                        if (IntervalListId.TryGetValue(signal.IntervalId, out CryptoInterval interval))
+                            signal.Interval = interval;
+
+                        SignalList.Add(signal);
+                        SignalQueue.Enqueue(signal);
+                    }
                 }
             }
         }
