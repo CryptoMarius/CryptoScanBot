@@ -228,8 +228,9 @@ public static class CandleTools
         Monitor.Enter(symbol.CandleList);
         try
         {
-            // Laatste bekende prijs (priceticker vult aan)
-            symbol.LastPrice = close;
+            // Last known price (and the price ticker will adjust)
+            if (!GlobalData.BackTest)
+                symbol.LastPrice = close;
 
             // Process the single 1m candle
             CryptoCandle candle = HandleFinalCandleData(symbol, GlobalData.IntervalList[0], openTime, open, high, low, close, volume, false);
@@ -258,7 +259,7 @@ public static class CandleTools
             }
 
             // Aanbieden voor analyse (dit gebeurd zowel in de ticker als ProcessCandles)
-            if (GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
+            if (!GlobalData.BackTest && GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
                 GlobalData.ThreadMonitorCandle.AddToQueue(symbol, candle);
         }
         finally
@@ -428,13 +429,13 @@ public static class CandleTools
         }
     }
 
-    public static long StartOfIntervalCandle(CryptoInterval interval, long someUnixDate)
+    public static long StartOfIntervalCandle(CryptoInterval interval, long someUnixDate, bool fixFinalCandle)
     {
         long diff = someUnixDate % interval!.Duration;
         long lastCandleIntervalOpenTime = someUnixDate - diff;
         // The candle cannot be final if it has a remainder, go 1 back
         // (09:14 -> 09:05 because candle 09:10..09:14:59 cannot be finished)
-        if (diff != 0)
+        if (fixFinalCandle && diff != 0)
             lastCandleIntervalOpenTime -= interval.Duration;
         return lastCandleIntervalOpenTime;
     }
