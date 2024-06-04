@@ -169,6 +169,9 @@ partial class FrmSettings
         tabSignalStoRsi = new TabPage();
         flowLayoutPanel2 = new FlowLayoutPanel();
         UserControlSettingsSoundAndColorsStoRsi = new SettingsDialog.UserControlSettingsPlaySoundAndColors();
+        groupBox6 = new GroupBox();
+        label26 = new Label();
+        EditStorsiAddAmount = new NumericUpDown();
         tabSignalJump = new TabPage();
         flowLayoutPanel8 = new FlowLayoutPanel();
         UserControlSettingsSoundAndColorsJump = new SettingsDialog.UserControlSettingsPlaySoundAndColors();
@@ -246,9 +249,7 @@ partial class FrmSettings
         label49 = new Label();
         toolTip1 = new ToolTip(components);
         colorDialog1 = new ColorDialog();
-        groupBox6 = new GroupBox();
-        label26 = new Label();
-        EditStorsiAddAmount = new NumericUpDown();
+        EditCheckWeekVolume = new CheckBox();
         panelButtons.SuspendLayout();
         panelFill.SuspendLayout();
         tabControlMain.SuspendLayout();
@@ -310,6 +311,8 @@ partial class FrmSettings
         ((System.ComponentModel.ISupportInitialize)EditSbmMa200AndMa20Lookback).BeginInit();
         tabSignalStoRsi.SuspendLayout();
         flowLayoutPanel2.SuspendLayout();
+        groupBox6.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)EditStorsiAddAmount).BeginInit();
         tabSignalJump.SuspendLayout();
         flowLayoutPanel8.SuspendLayout();
         groupBox5.SuspendLayout();
@@ -343,8 +346,6 @@ partial class FrmSettings
         panel5.SuspendLayout();
         tabShortBlackList.SuspendLayout();
         panel6.SuspendLayout();
-        groupBox6.SuspendLayout();
-        ((System.ComponentModel.ISupportInitialize)EditStorsiAddAmount).BeginInit();
         SuspendLayout();
         // 
         // panelButtons
@@ -885,6 +886,7 @@ partial class FrmSettings
         // 
         // tabSignalsGeneral
         // 
+        tabSignalsGeneral.Controls.Add(EditCheckWeekVolume);
         tabSignalsGeneral.Controls.Add(label86);
         tabSignalsGeneral.Controls.Add(EditAnalysisMinEffective10DaysPercentage);
         tabSignalsGeneral.Controls.Add(EditAnalysisMaxEffective10DaysPercentage);
@@ -1956,6 +1958,39 @@ partial class FrmSettings
         UserControlSettingsSoundAndColorsStoRsi.Size = new Size(807, 176);
         UserControlSettingsSoundAndColorsStoRsi.TabIndex = 158;
         // 
+        // groupBox6
+        // 
+        groupBox6.AutoSize = true;
+        groupBox6.Controls.Add(label26);
+        groupBox6.Controls.Add(EditStorsiAddAmount);
+        groupBox6.Location = new Point(10, 186);
+        groupBox6.Margin = new Padding(10);
+        groupBox6.Name = "groupBox6";
+        groupBox6.Padding = new Padding(10);
+        groupBox6.Size = new Size(227, 86);
+        groupBox6.TabIndex = 160;
+        groupBox6.TabStop = false;
+        groupBox6.Text = "Instellingen";
+        // 
+        // label26
+        // 
+        label26.AutoSize = true;
+        label26.Location = new Point(25, 36);
+        label26.Margin = new Padding(4, 0, 4, 0);
+        label26.Name = "label26";
+        label26.Size = new Size(38, 15);
+        label26.TabIndex = 125;
+        label26.Text = "Add ..";
+        // 
+        // EditStorsiAddAmount
+        // 
+        EditStorsiAddAmount.Increment = new decimal(new int[] { 25, 0, 0, 131072 });
+        EditStorsiAddAmount.Location = new Point(157, 34);
+        EditStorsiAddAmount.Margin = new Padding(4, 3, 4, 3);
+        EditStorsiAddAmount.Name = "EditStorsiAddAmount";
+        EditStorsiAddAmount.Size = new Size(56, 23);
+        EditStorsiAddAmount.TabIndex = 126;
+        // 
         // tabSignalJump
         // 
         tabSignalJump.Controls.Add(flowLayoutPanel8);
@@ -2132,7 +2167,7 @@ partial class FrmSettings
         UserControlTradeSell.Location = new Point(3, 145);
         UserControlTradeSell.Name = "UserControlTradeSell";
         UserControlTradeSell.Padding = new Padding(5);
-        UserControlTradeSell.Size = new Size(396, 112);
+        UserControlTradeSell.Size = new Size(396, 144);
         UserControlTradeSell.TabIndex = 335;
         // 
         // UserControlTradeDca
@@ -2140,7 +2175,7 @@ partial class FrmSettings
         UserControlTradeDca.AutoScroll = true;
         UserControlTradeDca.AutoSize = true;
         UserControlTradeDca.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-        UserControlTradeDca.Location = new Point(0, 260);
+        UserControlTradeDca.Location = new Point(0, 292);
         UserControlTradeDca.Margin = new Padding(0);
         UserControlTradeDca.Name = "UserControlTradeDca";
         UserControlTradeDca.Padding = new Padding(5);
@@ -2800,38 +2835,16 @@ partial class FrmSettings
         label49.TabIndex = 222;
         label49.Text = "(1 munt per regel met een optionele opmerking erachter)";
         // 
-        // groupBox6
+        // EditCheckWeekVolume
         // 
-        groupBox6.AutoSize = true;
-        groupBox6.Controls.Add(label26);
-        groupBox6.Controls.Add(EditStorsiAddAmount);
-        groupBox6.Location = new Point(10, 186);
-        groupBox6.Margin = new Padding(10);
-        groupBox6.Name = "groupBox6";
-        groupBox6.Padding = new Padding(10);
-        groupBox6.Size = new Size(227, 86);
-        groupBox6.TabIndex = 160;
-        groupBox6.TabStop = false;
-        groupBox6.Text = "Instellingen";
-        // 
-        // label26
-        // 
-        label26.AutoSize = true;
-        label26.Location = new Point(25, 36);
-        label26.Margin = new Padding(4, 0, 4, 0);
-        label26.Name = "label26";
-        label26.Size = new Size(38, 15);
-        label26.TabIndex = 125;
-        label26.Text = "Add ..";
-        // 
-        // EditStorsiAddAmount
-        // 
-        EditStorsiAddAmount.Increment = new decimal(new int[] { 25, 0, 0, 131072 });
-        EditStorsiAddAmount.Location = new Point(157, 34);
-        EditStorsiAddAmount.Margin = new Padding(4, 3, 4, 3);
-        EditStorsiAddAmount.Name = "EditStorsiAddAmount";
-        EditStorsiAddAmount.Size = new Size(56, 23);
-        EditStorsiAddAmount.TabIndex = 126;
+        EditCheckWeekVolume.AutoSize = true;
+        EditCheckWeekVolume.Location = new Point(21, 406);
+        EditCheckWeekVolume.Margin = new Padding(4, 3, 4, 3);
+        EditCheckWeekVolume.Name = "EditCheckWeekVolume";
+        EditCheckWeekVolume.Size = new Size(212, 19);
+        EditCheckWeekVolume.TabIndex = 284;
+        EditCheckWeekVolume.Text = "Controleer het volume van 7 dagen";
+        EditCheckWeekVolume.UseVisualStyleBackColor = true;
         // 
         // FrmSettings
         // 
@@ -2923,6 +2936,9 @@ partial class FrmSettings
         tabSignalStoRsi.PerformLayout();
         flowLayoutPanel2.ResumeLayout(false);
         flowLayoutPanel2.PerformLayout();
+        groupBox6.ResumeLayout(false);
+        groupBox6.PerformLayout();
+        ((System.ComponentModel.ISupportInitialize)EditStorsiAddAmount).EndInit();
         tabSignalJump.ResumeLayout(false);
         tabSignalJump.PerformLayout();
         flowLayoutPanel8.ResumeLayout(false);
@@ -2976,9 +2992,6 @@ partial class FrmSettings
         tabShortBlackList.PerformLayout();
         panel6.ResumeLayout(false);
         panel6.PerformLayout();
-        groupBox6.ResumeLayout(false);
-        groupBox6.PerformLayout();
-        ((System.ComponentModel.ISupportInitialize)EditStorsiAddAmount).EndInit();
         ResumeLayout(false);
     }
 
@@ -3203,4 +3216,5 @@ partial class FrmSettings
     private GroupBox groupBox6;
     private Label label26;
     private NumericUpDown EditStorsiAddAmount;
+    private CheckBox EditCheckWeekVolume;
 }

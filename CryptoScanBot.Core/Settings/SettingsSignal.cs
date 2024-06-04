@@ -14,6 +14,7 @@ public class SettingsSignal
     // Aantal dagen dat de munt moet bestaan
     public int SymbolMustExistsDays { get; set; } = 60;
     public bool LogSymbolMustExistsDays { get; set; } = false;
+    public bool CheckWeekVolume { get; set; } = true;
 
     // Vermijden van "barcode" charts
     public decimal MinimumTickPercentage { get; set; } = 0.25m;

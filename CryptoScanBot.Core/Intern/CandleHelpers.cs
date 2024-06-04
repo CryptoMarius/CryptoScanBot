@@ -184,9 +184,37 @@ public static class Helper
             // Controleer of er genoeg volume is (van de afgelopen 24 uur)
             if (symbol.Volume < symbol.QuoteData.MinimalVolume)
             {
-                text = string.Format("{0} 24 uur volume {1} onder het minimum {2}", symbol.Name, symbol.Volume.ToString0(), symbol.QuoteData.MinimalVolume.ToString0());
+                text = $"{symbol.Name} 24 uur volume {symbol.Volume.ToString0()} onder het minimum {symbol.QuoteData.MinimalVolume.ToString0()}";
                 return false;
             }
+
+            // Check the volume of multiple day's (so we know its not just a stupid temporary spike in volume)
+            if (GlobalData.Settings.Signal.CheckWeekVolume) // Need setting?
+            {
+                CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1d);
+                if (symbolInterval.CandleList.Count > 0)
+                {
+                    int count = 7;
+                    CryptoCandle candle = symbolInterval.CandleList.Values.Last();
+                    while (count > 0)
+                    {
+                        if (candle.Volume < symbol.QuoteData.MinimalVolume)
+                        {
+                            text = $"{symbol.Name} 10 day's volume not consistent above the minimum of {symbol.QuoteData.MinimalVolume.ToString0()}";
+                            return false;
+                        }
+
+                        // to the previous day
+                        if (!symbolInterval.CandleList.TryGetValue(candle.OpenTime - symbolInterval.Interval.Duration, out candle))
+                        {
+                            text = "Method enough volume - no 10 day's of candles available";
+                            return false;
+                        }
+                        count--;
+                    }
+                }
+            }
+
         }
 
         text = "";
