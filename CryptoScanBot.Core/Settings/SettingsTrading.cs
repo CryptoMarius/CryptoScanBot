@@ -1,5 +1,7 @@
 ﻿using CryptoScanBot.Core.Enums;
 
+using Dapper.Contrib.Extensions;
+
 namespace CryptoScanBot.Core.Settings;
 
 
@@ -68,13 +70,14 @@ public class SettingsTrading
 {
     // Is de BOT actief
     public bool Active { get; set; } = false;
+    [Computed]
+    public bool ActiveBackup { get; set; } = false;
 
     //***************************
     // Account - Positie gerelateerd
 
     // De 3 account types zijn raar gekozen
     public CryptoTradeAccountType TradeVia { get; set; } = CryptoTradeAccountType.PaperTrade;
-    public CryptoTradeAccountType TradeViaBackup { get; set; } // for Backtest mode
 
     // Trade via exchange (instelling enkel omdat we nu keuze hebben)
     public bool TradeViaExchange { get; set; } = false;

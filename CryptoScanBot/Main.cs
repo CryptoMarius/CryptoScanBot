@@ -907,20 +907,43 @@ public partial class FrmMain : Form
         ApplicationBackTestMode.Checked = !ApplicationBackTestMode.Checked;
         if (ApplicationBackTestMode.Checked)
         {
-            ApplicationTradingBot.Enabled = false;
-            GlobalData.Settings.Trading.Active = false;
-            GlobalData.Settings.Trading.TradeViaBackup = GlobalData.Settings.Trading.TradeVia;
+            GlobalData.BackTest = true;
+            GlobalData.Settings.Trading.ActiveBackup = GlobalData.Settings.Trading.Active;
+            GlobalData.Settings.Trading.Active = true;
         }
         else
         {
-            ApplicationTradingBot.Enabled = true;
-            GlobalData.Settings.Trading.Active = ApplicationBackTestMode.Checked;
-            GlobalData.Settings.Trading.TradeVia = GlobalData.Settings.Trading.TradeViaBackup;
+            GlobalData.BackTest = false;
+            GlobalData.Settings.Trading.Active = GlobalData.Settings.Trading.ActiveBackup;
         }
+        ApplicationTradingBot.Enabled = !GlobalData.BackTest;
+        ApplicationPlaySounds.Enabled = !GlobalData.BackTest;
+        ApplicationCreateSignals.Enabled = !GlobalData.BackTest;
 
         GlobalData.SaveSettings();
+
+
+        // Refresh displayed information
+        GridSignalView.Clear();
+#if TRADEBOT
+        GridPositionOpenView.Clear();
+        GridPositionClosedView.Clear();
+        GlobalData.PositionsClosed.Clear(); // weird, move to account?
+#endif
+
+        GlobalData.SetTradingAccounts();
+        GlobalData.LoadSignals();
+#if TRADEBOT
+        TradeTools.LoadOpenPositions();
+        TradeTools.LoadClosedPositions();
+        PositionsHaveChangedEvent("");
+
+        // Fill the missing information
+        if (!GlobalData.BackTest)
+            ToolStripMenuItemRefresh_Click_1(null, null);
+#endif
     }
-    
+
 
     private void BacktestToolStripMenuItem_Click(object sender, EventArgs e)
     {
@@ -1098,18 +1121,12 @@ public partial class FrmMain : Form
 #if TRADEBOT
     private void PositionsHaveChangedEvent(string text, bool extraLineFeed = false)
     {
-        if (!GlobalData.ApplicationIsClosing)
+        if (!GlobalData.ApplicationIsClosing && GlobalData.ActiveAccount != null)
         {
             List<CryptoPosition> list = [];
-            if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange exchange))
+            foreach (var position in GlobalData.ActiveAccount.PositionList.Values)
             {
-                foreach (var tradingAccount in GlobalData.TradeAccountList.Values)
-                {
-                    foreach (var position in tradingAccount.PositionList.Values)
-                    {
-                        list.Add(position);
-                    }
-                }
+                list.Add(position);
             }
 
             //GlobalData.AddTextToLogTab("PositionsHaveChangedEvent#start");

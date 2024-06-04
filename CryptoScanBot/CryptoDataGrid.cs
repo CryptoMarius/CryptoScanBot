@@ -112,6 +112,21 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         Grid.RowCount = List.Count;
     }
 
+    public void Clear()
+    {
+        Grid.SuspendDrawing();
+        try
+        {
+            List.Clear();
+            Grid.RowCount = List.Count;
+            Grid.Invalidate();
+        }
+        finally
+        {
+            Grid.ResumeDrawing();
+        }
+    }
+
     internal DataGridViewTextBoxColumn CreateColumn(string headerText, Type type, string format, DataGridViewContentAlignment align, int width = 0)
     {
         DataGridViewTextBoxColumn c = new()

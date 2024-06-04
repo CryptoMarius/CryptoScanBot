@@ -34,9 +34,13 @@ public class TradeTools
         // Alle gesloten posities lezen 
         // TODO - beperken tot de laatste 2 dagen? (en wat handigheden toevoegen wellicht)
         GlobalData.AddTextToLogTab("Reading closed position");
-        string sql = "select * from position where not closetime is null order by id desc limit 250";
+        string sql = "select * from position where not closetime is null and TradeAccountId=@TradeAccountId order by id desc";
+        if (!GlobalData.BackTest)
+            sql += " limit 250";
         using var database = new CryptoDatabase();
-        foreach (CryptoPosition position in database.Connection.Query<CryptoPosition>(sql))
+
+        GlobalData.PositionsClosed.Clear();
+        foreach (CryptoPosition position in database.Connection.Query<CryptoPosition>(sql, new { TradeAccountId = GlobalData.ActiveAccount.Id }))
             PositionTools.AddPositionClosed(position);
     }
 
@@ -46,8 +50,8 @@ public class TradeTools
         GlobalData.AddTextToLogTab("Reading open position");
 
         using var database = new CryptoDatabase();
-        string sql = "select * from position where closetime is null and status < 2";
-        foreach (CryptoPosition position in database.Connection.Query<CryptoPosition>(sql))
+        string sql = "select * from position where closetime is null and status < 2 and TradeAccountId=@TradeAccountId";
+        foreach (CryptoPosition position in database.Connection.Query<CryptoPosition>(sql, new { TradeAccountId = GlobalData.ActiveAccount.Id }))
         {
             if (!GlobalData.TradeAccountList.TryGetValue(position.TradeAccountId, out CryptoTradeAccount? tradeAccount))
                 throw new Exception("Geen trade account gevonden");
@@ -260,7 +264,9 @@ public class TradeTools
         // Predicted commission (in quote), we need a fixed avg-price to calculate the TP-commission
         // (this is not the exact tp-commission, but we need to calculating anything)
         // if the position is closed the position.Quantity is 0 and the real commission will be calculated
-        decimal avgPrice = totalValue / totalQuantity;
+        decimal avgPrice = 0;
+        if (totalQuantity > 0)
+            avgPrice = totalValue / totalQuantity;
         decimal predictedCommission = avgPrice * (decimal)position.Exchange.FeeRate * position.Quantity / 100m;
 
 
@@ -377,7 +383,7 @@ public class TradeTools
         DateTime? lastDateTime = null;
         foreach (CryptoOrder order in position.Symbol.OrderList.Values.ToList())
         {
-            if (position.Orders.TryGetValue(order.OrderId, out CryptoPositionStep? step))
+            if (order != null && position.Orders.TryGetValue(order.OrderId, out CryptoPositionStep? step))
             {
                 // Remember the last datetime so we can close the position with this date if needed
                 if (lastDateTime == null || order.UpdateTime > lastDateTime)
