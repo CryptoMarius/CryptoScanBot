@@ -27,10 +27,14 @@ public class SubscriptionPriceTicker(ExchangeOptions exchangeOptions) : Subscrip
                     if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
                     {
                         TickerCount++;
-                        symbol.LastPrice = tick.LastTrade.Price;
-                        symbol.BidPrice = tick.BestBids.Price;
-                        symbol.AskPrice = tick.BestAsks.Price;
-                        symbol.Volume = tick.Volume.Value24H;
+
+                        if (!GlobalData.BackTest)
+                        {
+                            symbol.LastPrice = tick.LastTrade.Price;
+                            symbol.BidPrice = tick.BestBids.Price;
+                            symbol.AskPrice = tick.BestAsks.Price;
+                            symbol.Volume = tick.Volume.Value24H;
+                        }
                     }
                 }
 

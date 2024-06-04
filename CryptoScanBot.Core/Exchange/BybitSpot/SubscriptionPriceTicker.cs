@@ -24,56 +24,59 @@ public class SubscriptionPriceTicker(ExchangeOptions exchangeOptions) : Subscrip
                     {
                         TickerCount++;
 
-                        // Waarschijnlijk ALLEMAAL gebaseerd op de 24h prijs
-                        //symbol.OpenPrice = tick.OpenPrice;
-                        //symbol.HighPrice = tick.HighPrice;
-                        //symbol.LowPrice = tick.LowPrice;
-                        //if (tick.LastPrice.HasValue)
-                        symbol.LastPrice = tick.LastPrice;
-                        //if (tick.BestBidPrice.HasValue)
-                        //symbol.BidPrice = tick.BestBidPrice;
-                        //if (tick.BestAskPrice.HasValue)
-                        //    symbol.AskPrice = tick.BestAskPrice;
-                        //symbol.Volume = tick.BaseVolume; //?
-                        //if (tick.Turnover24h.HasValue)
-                        symbol.Volume = tick.Turnover24h; //= Quoted = het volume * de prijs
+                        if (!GlobalData.BackTest)
+                        {
 
-                        //symbol.Volume = tick.Volume24h; //= Base = het volume * de prijs                                
+                            // Waarschijnlijk ALLEMAAL gebaseerd op de 24h prijs
+                            //symbol.OpenPrice = tick.OpenPrice;
+                            //symbol.HighPrice = tick.HighPrice;
+                            //symbol.LowPrice = tick.LowPrice;
+                            //if (tick.LastPrice.HasValue)
+                            symbol.LastPrice = tick.LastPrice;
+                            //if (tick.BestBidPrice.HasValue)
+                            //symbol.BidPrice = tick.BestBidPrice;
+                            //if (tick.BestAskPrice.HasValue)
+                            //    symbol.AskPrice = tick.BestAskPrice;
+                            //symbol.Volume = tick.BaseVolume; //?
+                            //if (tick.Turnover24h.HasValue)
+                            symbol.Volume = tick.Turnover24h; //= Quoted = het volume * de prijs
+
+                            //symbol.Volume = tick.Volume24h; //= Base = het volume * de prijs                                
 
 
-                        // Hiermee kunnen we een "toekomstige" candle opbouwen.
-                        // (maar de berekeningen verwachten dat niet en dan gaan er zaken fout)
-                        // Kortom: Beslissingen op basis van niet voltooide candles moet je vermijden.
-                        //try
-                        //{
-                        //Monitor.Enter(symbol.CandleList);
-                        //try
-                        //{
-                        //    //symbol.HandleExchangeMiniTick(GlobalData.Settings, symbol, tick);
-                        //}
-                        //catch (Exception error)
-                        //{
-                        //    GlobalData.AddTextToLogTab(error.ToString());
-                        //}
-                        //}
-                        //finally
-                        //{
-                        //    Monitor.Exit(symbol.CandleList);
-                        //}
+                            // Hiermee kunnen we een "toekomstige" candle opbouwen.
+                            // (maar de berekeningen verwachten dat niet en dan gaan er zaken fout)
+                            // Kortom: Beslissingen op basis van niet voltooide candles moet je vermijden.
+                            //try
+                            //{
+                            //Monitor.Enter(symbol.CandleList);
+                            //try
+                            //{
+                            //    //symbol.HandleExchangeMiniTick(GlobalData.Settings, symbol, tick);
+                            //}
+                            //catch (Exception error)
+                            //{
+                            //    GlobalData.AddTextToLogTab(error.ToString());
+                            //}
+                            //}
+                            //finally
+                            //{
+                            //    Monitor.Exit(symbol.CandleList);
+                            //}
 
-                        //Bewaren voor debug werkzaamheden
-                        //if (first && tick.Symbol == "BTCUSDT")
-                        //{
-                        //    first = false;
-                        //    string filename = GlobalData.GetBaseDir();
-                        //    filename += @"\Bybit\";
-                        //    Directory.CreateDirectory(filename);
-                        //    filename += "PriceTicker.json";
+                            //Bewaren voor debug werkzaamheden
+                            //if (first && tick.Symbol == "BTCUSDT")
+                            //{
+                            //    first = false;
+                            //    string filename = GlobalData.GetBaseDir();
+                            //    filename += @"\Bybit\";
+                            //    Directory.CreateDirectory(filename);
+                            //    filename += "PriceTicker.json";
 
-                        //    string text = JsonSerializer.Serialize(data, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
-                        //    File.WriteAllText(filename, text);
-                        //}
-
+                            //    string text = JsonSerializer.Serialize(data, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true });
+                            //    File.WriteAllText(filename, text);
+                            //}
+                        }
                     }
                 }
 

@@ -24,60 +24,62 @@ public class SubscriptionPriceTicker(ExchangeOptions exchangeOptions) : Subscrip
                     {
                         TickerCount++;
 
-                        // Waarschijnlijk ALLEMAAL gebaseerd op de 24h prijs
-                        //symbol.OpenPrice = tick.OpenPrice;
-                        //symbol.HighPrice = tick.HighPrice;
-                        //symbol.LowPrice = tick.LowPrice;
-                        if (tick.LastPrice.HasValue)
-                            symbol.LastPrice = (decimal)tick.LastPrice;
-                        //if (tick.BestBidPrice.HasValue)
-                        //    symbol.BidPrice = tick.BestBidPrice;
-                        //if (tick.BestAskPrice.HasValue)
-                        //    symbol.AskPrice = tick.BestAskPrice;
-                        //symbol.Volume = tick.BaseVolume; //?
-                        if (tick.Turnover24h.HasValue)
-                            symbol.Volume = (decimal)tick.Turnover24h; //= Quoted = het volume * de prijs
+                        if (!GlobalData.BackTest)
+                        {
 
-                        //symbol.Volume = tick.Volume24h; //= Base = het volume * de prijs                                
+                            //symbol.OpenPrice = tick.OpenPrice;
+                            //symbol.HighPrice = tick.HighPrice;
+                            //symbol.LowPrice = tick.LowPrice;
+                            if (tick.LastPrice.HasValue)
+                                symbol.LastPrice = (decimal)tick.LastPrice;
+                            //if (tick.BestBidPrice.HasValue)
+                            //    symbol.BidPrice = tick.BestBidPrice;
+                            //if (tick.BestAskPrice.HasValue)
+                            //    symbol.AskPrice = tick.BestAskPrice;
+                            //symbol.Volume = tick.BaseVolume; //?
+                            if (tick.Turnover24h.HasValue)
+                                symbol.Volume = (decimal)tick.Turnover24h; //= Quoted = het volume * de prijs
 
-                        if (tick.FundingRate.HasValue)
-                            symbol.FundingRate = (decimal)tick.FundingRate;
+                            //symbol.Volume = tick.Volume24h; //= Base = het volume * de prijs                                
 
-                        //"nextFundingTime": "1673280000000",
+                            if (tick.FundingRate.HasValue)
+                                symbol.FundingRate = (decimal)tick.FundingRate;
 
-                        // Hiermee kunnen we een "toekomstige" candle opbouwen.
-                        // (maar de berekeningen verwachten dat niet en dan gaan er zaken fout)
-                        // Kortom: Beslissingen op basis van niet voltooide candles moet je vermijden.
-                        //try
-                        //{
-                        //Monitor.Enter(symbol.CandleList);
-                        //try
-                        //{
-                        //    //symbol.HandleExchangeMiniTick(GlobalData.Settings, symbol, tick);
-                        //}
-                        //catch (Exception error)
-                        //{
-                        //    GlobalData.AddTextToLogTab(error.ToString());
-                        //}
-                        //}
-                        //finally
-                        //{
-                        //    Monitor.Exit(symbol.CandleList);
-                        //}
+                            //"nextFundingTime": "1673280000000",
 
-                        //Bewaren voor debug werkzaamheden
-                        //if (first && tick.Symbol == "BTCUSDT")
-                        //{
-                        //    first = false;
-                        //    string filename = GlobalData.GetBaseDir();
-                        //    filename += @"\Bybit\";
-                        //    Directory.CreateDirectory(filename);
-                        //    filename += "PriceTicker.json";
+                            // Hiermee kunnen we een "toekomstige" candle opbouwen.
+                            // (maar de berekeningen verwachten dat niet en dan gaan er zaken fout)
+                            // Kortom: Beslissingen op basis van niet voltooide candles moet je vermijden.
+                            //try
+                            //{
+                            //Monitor.Enter(symbol.CandleList);
+                            //try
+                            //{
+                            //    //symbol.HandleExchangeMiniTick(GlobalData.Settings, symbol, tick);
+                            //}
+                            //catch (Exception error)
+                            //{
+                            //    GlobalData.AddTextToLogTab(error.ToString());
+                            //}
+                            //}
+                            //finally
+                            //{
+                            //    Monitor.Exit(symbol.CandleList);
+                            //}
 
-                        //    string text = JsonSerializer.Serialize(data, ExchangeHelper.JsonSerializerNotIndented);
-                        //    File.WriteAllText(filename, text);
-                        //}
+                            //Bewaren voor debug werkzaamheden
+                            //if (first && tick.Symbol == "BTCUSDT")
+                            //{
+                            //    first = false;
+                            //    string filename = GlobalData.GetBaseDir();
+                            //    filename += @"\Bybit\";
+                            //    Directory.CreateDirectory(filename);
+                            //    filename += "PriceTicker.json";
 
+                            //    string text = JsonSerializer.Serialize(data, ExchangeHelper.JsonSerializerNotIndented);
+                            //    File.WriteAllText(filename, text);
+                            //}
+                        }
                     }
                 }
 
