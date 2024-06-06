@@ -23,7 +23,7 @@ public class DataStore
 
         //int aantaltotaal = 0;
         string basedir = GlobalData.GetBaseDir();
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange? exchange))
         {
             string dirExchange = basedir + exchange.Name.ToLower() + @"\";
 

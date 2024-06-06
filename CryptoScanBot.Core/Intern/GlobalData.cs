@@ -52,6 +52,15 @@ static public class GlobalData
     // Emulator kan alleen de backTest zetten (anders gaan er onverwachte zaken naar de database enzo)
     // (staat op de nominatie om te vervallen dmv de Settings.Trading.TradeVia == BackTest)
     public static bool BackTest { get; set; }
+    public static DateTime BackTestDateTime { get; set; }
+
+    public static DateTime GetCurrentDateTime()
+    {
+        if (BackTest)
+            return BackTestDateTime;
+        else
+            return DateTime.UtcNow;
+    }
 
     public static CryptoApplicationStatus ApplicationStatus { get; set; } = CryptoApplicationStatus.Initializing;
 
@@ -248,6 +257,7 @@ static public class GlobalData
         // Een aantal signalen laden
         // TODO - beperken tot de signalen die nog enigzins bruikbaar zijn??
         AddTextToLogTab("Reading some signals");
+        SignalList.Clear();
 
         if (BackTest)
         {
@@ -256,15 +266,15 @@ static public class GlobalData
             using var database = new CryptoDatabase();
             foreach (CryptoSignal signal in database.Connection.Query<CryptoSignal>(sql))
             {
-                if (ExchangeListId.TryGetValue(signal.ExchangeId, out Model.CryptoExchange exchange2))
+                if (ExchangeListId.TryGetValue(signal.ExchangeId, out Model.CryptoExchange? exchange2))
                 {
                     signal.Exchange = exchange2;
 
-                    if (exchange2.SymbolListId.TryGetValue(signal.SymbolId, out CryptoSymbol symbol))
+                    if (exchange2.SymbolListId.TryGetValue(signal.SymbolId, out CryptoSymbol? symbol))
                     {
                         signal.Symbol = symbol;
 
-                        if (IntervalListId.TryGetValue(signal.IntervalId, out CryptoInterval interval))
+                        if (IntervalListId.TryGetValue(signal.IntervalId, out CryptoInterval? interval))
                             signal.Interval = interval;
 
                         SignalList.Add(signal);
@@ -280,15 +290,15 @@ static public class GlobalData
             using var database = new CryptoDatabase();
             foreach (CryptoSignal signal in database.Connection.Query<CryptoSignal>(sql, new { FromDate = DateTime.UtcNow }))
             {
-                if (ExchangeListId.TryGetValue(signal.ExchangeId, out Model.CryptoExchange exchange2))
+                if (ExchangeListId.TryGetValue(signal.ExchangeId, out Model.CryptoExchange? exchange2))
                 {
                     signal.Exchange = exchange2;
 
-                    if (exchange2.SymbolListId.TryGetValue(signal.SymbolId, out CryptoSymbol symbol))
+                    if (exchange2.SymbolListId.TryGetValue(signal.SymbolId, out CryptoSymbol? symbol))
                     {
                         signal.Symbol = symbol;
 
-                        if (IntervalListId.TryGetValue(signal.IntervalId, out CryptoInterval interval))
+                        if (IntervalListId.TryGetValue(signal.IntervalId, out CryptoInterval? interval))
                             signal.Interval = interval;
 
                         SignalList.Add(signal);
@@ -316,7 +326,7 @@ static public class GlobalData
 
     static public CryptoQuoteData AddQuoteData(string quoteName)
     {
-        if (!Settings.QuoteCoins.TryGetValue(quoteName, out CryptoQuoteData quoteData))
+        if (!Settings.QuoteCoins.TryGetValue(quoteName, out CryptoQuoteData? quoteData))
         {
             quoteData = new CryptoQuoteData
             {
@@ -362,7 +372,7 @@ static public class GlobalData
           )
 #endif
 
-        if (ExchangeListId.TryGetValue(symbol.ExchangeId, out Model.CryptoExchange exchange))
+        if (ExchangeListId.TryGetValue(symbol.ExchangeId, out Model.CryptoExchange? exchange))
         {
             symbol.Exchange = exchange;
 
@@ -409,68 +419,12 @@ static public class GlobalData
     }
 
 
-
-
-
-    static public void AddOrder(CryptoOrder order, bool log = true)
-    {
-        if (TradeAccountList.TryGetValue(order.TradeAccountId, out CryptoTradeAccount tradeAccount))
-        {
-            order.TradeAccount = tradeAccount;
-
-            if (ExchangeListId.TryGetValue(order.ExchangeId, out Model.CryptoExchange exchange))
-            {
-                order.Exchange = exchange;
-
-                if (exchange.SymbolListId.TryGetValue(order.SymbolId, out CryptoSymbol symbol))
-                {
-                    order.Symbol = symbol;
-
-                    if (!symbol.OrderList.ContainsKey(order.OrderId))
-                    {
-                        symbol.OrderList.Add(order.OrderId, order);
-                        if (log)
-                            AddTextToLogTab($"{order.Symbol.Name} added order {order.CreateTime} {order.OrderId} {order.Status} (#{order.Id})");
-                    }
-                }
-
-            }
-        }
-    }
-
-
-    static public void AddTrade(CryptoTrade trade, bool log = true)
-    {
-        if (TradeAccountList.TryGetValue(trade.TradeAccountId, out CryptoTradeAccount tradeAccount))
-        {
-            trade.TradeAccount = tradeAccount;
-
-            if (ExchangeListId.TryGetValue(trade.ExchangeId, out Model.CryptoExchange exchange))
-            {
-                trade.Exchange = exchange;
-
-                if (exchange.SymbolListId.TryGetValue(trade.SymbolId, out CryptoSymbol symbol))
-                {
-                    trade.Symbol = symbol;
-
-                    if (!symbol.TradeList.ContainsKey(trade.TradeId))
-                    {
-                        symbol.TradeList.Add(trade.TradeId, trade);
-                        if (log)
-                            AddTextToLogTab($"{trade.Symbol.Name} order {trade.TradeTime} {trade.OrderId} added trade {trade.TradeId} (#{trade.Id})");
-                    }
-                }
-
-            }
-        }
-    }
-
     static public void InitBarometerSymbols(CryptoDatabase database)
     {
         // TODO: Deze routine is een discrepantie tussen de scanner en trader!
         // De BarometerTools bevat een vergelijkbare routine, enkel de timing verschilt?
 
-        if (ExchangeListName.TryGetValue(Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+        if (ExchangeListName.TryGetValue(Settings.General.ExchangeName, out Model.CryptoExchange? exchange))
         {
             foreach (CryptoQuoteData quoteData in Settings.QuoteCoins.Values)
             {

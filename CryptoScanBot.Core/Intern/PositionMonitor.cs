@@ -369,7 +369,7 @@ public class PositionMonitor : IDisposable
                 }
 
                 // Bestaan het gekozen strategy wel, klinkt raar, maar is (op dit moment) niet altijd geimplementeerd
-                SignalCreateBase algorithm = SignalHelper.GetSignalAlgorithm(signal.Side, signal.Strategy, signal.Symbol, signal.Interval, candleInterval);
+                SignalCreateBase? algorithm = SignalHelper.GetSignalAlgorithm(signal.Side, signal.Strategy, signal.Symbol, signal.Interval, candleInterval);
                 if (algorithm == null)
                 {
                     GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " unknown algorithm (removed)");
@@ -404,7 +404,7 @@ public class PositionMonitor : IDisposable
                         continue;
                     CryptoTradeAccount tradeAccount = GlobalData.ActiveAccount;
 
-                    CryptoPosition position = PositionTools.HasPosition(tradeAccount, Symbol);
+                    CryptoPosition? position = PositionTools.HasPosition(tradeAccount, Symbol);
                     if (position == null)
                     {
                         if (GlobalData.Settings.Trading.DisableNewPositions)
@@ -876,11 +876,7 @@ public class PositionMonitor : IDisposable
                 price = breakEven + (breakEven * (GlobalData.Settings.Trading.ProfitPercentage / 100));
 
             if (Symbol.LastPrice.HasValue && Symbol.LastPrice > price)
-            {
-                decimal oldPrice = price;
                 price = (decimal)Symbol.LastPrice + Symbol.PriceTickSize;
-                GlobalData.AddTextToLogTab($"{Symbol.Name} SELL correction: {oldPrice:N6} to {price.ToString0()}");
-            }
         }
         else
         {
@@ -891,11 +887,7 @@ public class PositionMonitor : IDisposable
                 price = breakEven - (breakEven * (GlobalData.Settings.Trading.ProfitPercentage / 100));
 
             if (Symbol.LastPrice.HasValue && Symbol.LastPrice < price)
-            {
-                decimal oldPrice = price;
                 price = (decimal)Symbol.LastPrice - Symbol.PriceTickSize;
-                GlobalData.AddTextToLogTab($"{Symbol.Name} SELL correction: {oldPrice:N6} to {price.ToString0()}");
-            }
         }
 
         price = price.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
@@ -908,7 +900,7 @@ public class PositionMonitor : IDisposable
     {
         // Controleer de entry
         CryptoOrderSide entryOrderSide = position.GetEntryOrderSide();
-        CryptoPositionStep step = PositionTools.FindPositionPartStep(part, entryOrderSide, false);
+        CryptoPositionStep? step = PositionTools.FindPositionPartStep(part, entryOrderSide, false);
 
 
         // defaults
@@ -1380,7 +1372,8 @@ public class PositionMonitor : IDisposable
                         // (een toekomstige gereserveerde DCA buy orders of actieve trailing orders moeten we niet annuleren)
                         // Verwijder openstaande buy orders die niet gevuld worden binnen zoveel X minuten/candles?
                         // En dan mag eventueel de positie gesloten worden (indien het uit 1 deelpositie bestaat)
-                        else if (part.EntryMethod != CryptoEntryOrProfitMethod.FixedPercentage && step.Trailing == CryptoTrailing.None)
+                        //else if (part.EntryMethod != CryptoEntryOrProfitMethod.FixedPercentage && step.Trailing == CryptoTrailing.None)
+                        else if (part.Purpose == CryptoPartPurpose.Entry && step.Trailing == CryptoTrailing.None)
                         {
                             // Is de order ouder dan X minuten dan deze verwijderen
                             CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(part.Interval.IntervalPeriod);
@@ -1397,7 +1390,7 @@ public class PositionMonitor : IDisposable
 
                                 await TradeTools.CalculatePositionResultsViaOrders(Database, position, forceCalculation: true);
 
-                                // Als er niets mee gedaan is dan de order annuleren
+                                // Check the orders, if its still not filled than timeout
                                 if (step.Status == CryptoOrderStatus.New)
                                 {
                                     timeOut = true;
@@ -1546,7 +1539,7 @@ public class PositionMonitor : IDisposable
                 if (!part.CloseTime.HasValue)
                 {
                     // Has it an open takeprofit order?
-                    CryptoPositionStep step = PositionTools.FindPositionPartStep(part, takeProfitOrderSide, false);
+                    CryptoPositionStep? step = PositionTools.FindPositionPartStep(part, takeProfitOrderSide, false);
                     if (step != null && step.Status == CryptoOrderStatus.New && step.Side == takeProfitOrderSide)
                     {
                         string cancelReason = $"cancel because of change BE";
@@ -1622,12 +1615,15 @@ public class PositionMonitor : IDisposable
         {
             // Always create a separate take profit part (if it didn't exist)
             takeProfitPart ??= PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.TakeProfit, position.Interval, 
-                position.Strategy, CryptoEntryOrProfitMethod.FixedPercentage, 0, DateTime.UtcNow);
-            CryptoPositionStep takeProfitOrder = PositionTools.FindPositionPartStep(takeProfitPart, takeProfitOrderSide, false);
+                position.Strategy, CryptoEntryOrProfitMethod.FixedPercentage, 0, GlobalData.GetCurrentDateTime());
+            CryptoPositionStep? takeProfitOrder = PositionTools.FindPositionPartStep(takeProfitPart, takeProfitOrderSide, false);
             
             decimal takeprofitPrice = CalculateTakeProfitPrice(position);
             if (takeProfitOrder == null || takeProfitOrder.Price != takeprofitPrice)
             {
+                if (takeProfitOrder != null)
+                    GlobalData.AddTextToLogTab($"{Symbol.Name} SELL correction: {takeProfitOrder.Price:N6} to {takeprofitPrice.ToString0()}");
+
                 string text = $"placing {takeProfitPart.Purpose}";
                 // position.Quantity is not clamped
                 decimal quantity = position.Quantity.Clamp(Symbol.QuantityMinimum, Symbol.QuantityMaximum, Symbol.QuantityTickSize);
@@ -1638,7 +1634,7 @@ public class PositionMonitor : IDisposable
                 if (await CancelAllOrders(position, takeProfitOrderSide))
                 {
                     // Calculate the BE price (without the previous TP commission)
-                    TradeTools.CalculateProfitAndBreakEvenPrice(position, position.BreakEvenPrice);
+                    TradeTools.CalculateProfitAndBreakEvenPrice(position);
 
                     // And place the (single/combined) take profit order to minimize dust)
                     decimal takeProfitPrice = CalculateTakeProfitPrice(position);
@@ -1795,7 +1791,7 @@ public class PositionMonitor : IDisposable
 
 
                     // Remove old candles
-                    long startFetchUnix = CandleIndicatorData.GetCandleFetchStart(Symbol, interval, DateTime.UtcNow);
+                    long startFetchUnix = CandleIndicatorData.GetCandleFetchStart(Symbol, interval, GlobalData.GetCurrentDateTime());
                     DateTime startFetchUnixDate = CandleTools.GetUnixDate(startFetchUnix);
                     while (candles.Values.Any())
                     {
