@@ -46,7 +46,7 @@ public class TradeToolsTest : TestBase
         CryptoCandle lastCandle = GenerateCandles(symbol, ref startTime, 1440, tradeParams.Price);
         lastCandle1mCloseTimeDate = lastCandle.Date.AddMinutes(1);
 
-        DeleteAllPositionRelatedStuff(database, symbol);
+        DeleteAllPositionRelatedStuff(database);
 
         CryptoPosition position = PositionTools.CreatePosition(GlobalData.ActiveAccount!, symbol, CryptoSignalStrategy.Stobb, 
             CryptoTradeSide.Long, symbol.IntervalPeriodList[0], lastCandle1mCloseTimeDate);
@@ -119,7 +119,7 @@ public class TradeToolsTest : TestBase
 
 
         // Is de sell order wel geplaatst?
-        CryptoPositionStep stepProfit = PositionTools.FindPositionPartStep(entryPart, takeProfitOrderSide, false);
+        CryptoPositionStep? stepProfit = PositionTools.FindPositionPartStep(entryPart, takeProfitOrderSide, false);
         if (stepProfit == null)
             Assert.Fail("Geen take profit order aanwezig");
 
@@ -199,12 +199,12 @@ public class TradeToolsTest : TestBase
 
 
         // Is sell order van de entry part geplaatst?
-        CryptoPositionStep entryProfit = PositionTools.FindPositionPartStep(entryPart, takeProfitOrderSide, false);
+        CryptoPositionStep? entryProfit = PositionTools.FindPositionPartStep(entryPart, takeProfitOrderSide, false);
         if (entryProfit == null)
             Assert.Fail("Geen take profit order aanwezig");
 
         // Is sell order van de dca 1 geplaatst?
-        CryptoPositionStep dca1Profit = PositionTools.FindPositionPartStep(dca1Part, takeProfitOrderSide, false);
+        CryptoPositionStep? dca1Profit = PositionTools.FindPositionPartStep(dca1Part, takeProfitOrderSide, false);
         if (dca1Profit == null)
             Assert.Fail("Geen take profit order aanwezig");
 

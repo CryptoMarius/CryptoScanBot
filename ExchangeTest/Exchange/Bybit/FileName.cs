@@ -226,7 +226,7 @@ internal class FileName
     //        BybitSocketClient socketClient = new();
     //        CallResult<UpdateSubscription> subscriptionResult2 = await socketClient.V5SpotApi.SubscribeToTickerUpdatesAsync(symbols, data =>
     //        {
-    //            //if (GlobalData.ExchangeListName.TryGetValue(ExchangeOptions.ExchangeName, out Model.CryptoExchange exchange))
+    //            //if (GlobalData.ExchangeListName.TryGetValue(ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
     //            //{
     //            var tick = data.Data;
     //            //foreach (var tick in data.Data)

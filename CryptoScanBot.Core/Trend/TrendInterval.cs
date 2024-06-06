@@ -9,7 +9,7 @@ namespace CryptoScanBot.Core.Trend;
 
 public class TrendInterval
 {
-    private static List<ZigZagResult> PickupZigZagValues(ZigZagIndicator zigZagTest, StringBuilder log)
+    private static List<ZigZagResult> PickupZigZagValues(ZigZagIndicator zigZagTest, StringBuilder? log)
     {
         List<ZigZagResult> zigZagList = [];
 
@@ -72,7 +72,7 @@ public class TrendInterval
     /// <summary>
     /// Interpreteer de zigzag values (P&T) en identificeer de trend
     /// </summary>
-    public static CryptoTrendIndicator InterpretZigZagValues(List<ZigZagResult> zigZagList, StringBuilder log)
+    public static CryptoTrendIndicator InterpretZigZagValues(List<ZigZagResult> zigZagList, StringBuilder? log)
     {
         if (log != null)
         {
@@ -195,9 +195,10 @@ public class TrendInterval
         if (candleIntervalStart == 0)
         {
             var candle = symbolInterval.CandleList.Values.First();
-            candleIntervalStart = candle.OpenTime;
+            candleIntervalStart = candle.OpenTime; // in the right interval
         }
-        candleIntervalStart = CandleTools.StartOfIntervalCandle(symbolInterval.Interval, candleIntervalStart);
+        else
+            candleIntervalStart = CandleTools.StartOfIntervalCandle(symbolInterval.Interval, candleIntervalStart);
         // correct the start with what we previously added
         if (cache.LastCandleAdded.HasValue && cache.LastCandleAdded.Value >= candleIntervalStart)
             candleIntervalStart = cache.LastCandleAdded.Value;
@@ -230,9 +231,14 @@ public class TrendInterval
         if (candleIntervalEnd == 0)
         {
             var candle = symbolInterval.CandleList.Values.Last();
-            candleIntervalEnd = candle.OpenTime;
+            candleIntervalEnd = candle.OpenTime; // in the right interval
         }
-        candleIntervalEnd = CandleTools.StartOfIntervalCandle(symbolInterval.Interval, candleIntervalEnd);
+        else
+            candleIntervalEnd = CandleTools.StartOfIntervalCandle(symbolInterval.Interval, candleIntervalEnd);
+        // go 1 candle back (date parameter was a low interval candle and higher interval not yet closed)
+        if (!symbolInterval.CandleList.ContainsKey(candleIntervalEnd))
+            candleIntervalEnd -= symbolInterval.Interval.Duration;
+
 
 
         // Add to the ZigZag indicator
