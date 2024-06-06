@@ -10,7 +10,7 @@ public class LuxIndicator
     /// Based on the "RSI Multi Length [LuxAlgo]"
     /// We use the luxOverSold of luxOverBought values as extra text in the signal
     /// </summary>
-    public static void CalculateOrg(CryptoSymbol symbol, out int luxOverSold, out int luxOverBought)
+    public static void CalculateOld(CryptoSymbol symbol, out int luxOverSold, out int luxOverBought)
     {
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval5m);
 
@@ -35,16 +35,16 @@ public class LuxIndicator
         CryptoCandle? candlePrev;
         CryptoCandle? candleLast = null;
 
-
+        int count = 0;
         for (int j = symbolInterval.CandleList.Count - 30; j < symbolInterval.CandleList.Count; j++)
         {
-            candlePrev = candleLast;
             if (j < 1) //out of range, not sure if skipping 0 was intentional?
                 continue;
             candlePrev = candleLast;
             candleLast = symbolInterval.CandleList.Values[j];
             if (candlePrev == null)
                 continue;
+            count++;
 
             int k = 0;
             decimal avg = 0m;
@@ -83,11 +83,15 @@ public class LuxIndicator
         luxOverBought = 10 * overbuy;
     }
 
-    public static void Calculate(CryptoSymbol symbol, out int luxOverSold, out int luxOverBought, CryptoIntervalPeriod cryptoIntervalPeriod, long lastOpenTime)
+    public static void CalculateNew(CryptoSymbol symbol, out int luxOverSold, out int luxOverBought, CryptoIntervalPeriod cryptoIntervalPeriod, long candleCloseTime)
     {
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(cryptoIntervalPeriod);
-        long candleIntervalOpenTimeStart = CandleTools.StartOfIntervalCandle(symbolInterval.Interval, lastOpenTime);
-        long candleIntervalOpenTimeEnd = candleIntervalOpenTimeStart - 30 * symbolInterval.Interval.Duration;
+        long candleIntervalOpenTimeEnd = CandleTools.StartOfIntervalCandle(symbolInterval.Interval, candleCloseTime);
+        if (!symbolInterval.CandleList.ContainsKey(candleIntervalOpenTimeEnd))
+            candleIntervalOpenTimeEnd -= symbolInterval.Interval.Duration;
+
+
+        long candleIntervalOpenTimeStart = candleIntervalOpenTimeEnd - 29 * symbolInterval.Interval.Duration;
 
         // Dat array van 10 (nu globaal)
         decimal[] num = new decimal[10];
@@ -112,12 +116,14 @@ public class LuxIndicator
 
 
         //for (int j = candles.Count - 30; j < candles.Count; j++)
-        long loop = candleIntervalOpenTimeEnd;
-        while (loop <= candleIntervalOpenTimeStart)
+        int count = 0;
+        long loop = candleIntervalOpenTimeStart;
+        while (loop <= candleIntervalOpenTimeEnd)
         {
             candlePrev = candleLast;
             if (symbolInterval.CandleList.TryGetValue(loop, out candleLast) && candlePrev != null)
             {
+                count++;
                 //if (j < 1) out of range, not sure if skipping 0 was intentional?
                 //    continue;
                 //candlePrev = candleLast;
@@ -164,13 +170,23 @@ public class LuxIndicator
         luxOverBought = 10 * overbuy;
 
 
+    }
 
-        int luxOverSold2 = 0;
-        int luxOverBought2 = 0;
-        CalculateOrg(symbol, out luxOverSold2, out luxOverBought2);
+    public static void Calculate(CryptoSymbol symbol, out int luxOverSold, out int luxOverBought, CryptoIntervalPeriod cryptoIntervalPeriod, long lastOpenTime)
+    {
+        CalculateNew(symbol, out luxOverSold, out luxOverBought, cryptoIntervalPeriod, lastOpenTime);
+
+        // Debug, are old have the samen results?
+        CalculateOld(symbol, out int luxOverSold2, out int luxOverBought2);
 
 
         if (luxOverSold != luxOverSold2 || luxOverBought != luxOverBought2)
-            luxOverBought2 = 1234;
+        {
+            CalculateOld(symbol, out luxOverSold2, out luxOverBought2);
+            GlobalData.AddTextToLogTab($"LuxIndicator.CalculateOld {luxOverSold2} {luxOverBought2}");
+            
+            CalculateNew(symbol, out luxOverSold, out luxOverBought, cryptoIntervalPeriod, lastOpenTime);
+            GlobalData.AddTextToLogTab($"LuxIndicator.CalculateNew {luxOverSold} {luxOverBought}");
+        }
     }
 }
