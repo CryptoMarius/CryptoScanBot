@@ -18,12 +18,12 @@ static public class TradeHandler
         if (order.TradeAccount.PositionList.TryGetValue(symbol.Name, out CryptoPosition? position))
         {
             // could also be done in ThreadDoubleCheckPosition
-            if (orderStatus.IsFilled() && GlobalData.Settings.General.SoundTradeNotification)
+            if (!GlobalData.BackTest && orderStatus.IsFilled() && GlobalData.Settings.General.SoundTradeNotification)
                 GlobalData.PlaySomeMusic("sound-trade-notification.wav");
 
             // De actie doorgeven naar een andere thread
             position.ForceCheckPosition = true;
-            position.DelayUntil = DateTime.UtcNow.AddSeconds(10);
+            position.DelayUntil = GlobalData.GetCurrentDateTime().AddSeconds(10);
             if (GlobalData.ThreadDoubleCheckPosition != null)
                 await GlobalData.ThreadDoubleCheckPosition.AddToQueue(position, order.OrderId, order.Status);
         }

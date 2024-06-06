@@ -23,49 +23,60 @@ public class ThreadCheckFinishedPosition
 
     public async Task AddToQueue(CryptoPosition position, string? orderId = null, CryptoOrderStatus? status = null)
     {
-        await QueueSemaphore.WaitAsync();
-        try
+        if (GlobalData.BackTest)
         {
-            ////await position.Semaphore.WaitAsync();
-            //try
-            //{
-            //var bla = Queue.Contains(position);
-            //var isPresent = Queue.Any(d => d.position == position);
-            //if (Queue.Any(d => d.position == position)) //Dupes.ContainsKey(position.Symbol.Name))
-            if (Queue.TryGetValue(position.Symbol.Name, out (CryptoPosition position, string orderId, CryptoOrderStatus? status) foundPosition))
-            {
-                foundPosition.status ??= status;
-                foundPosition.orderId ??= orderId;
-                ScannerLog.Logger.Trace($"ThreadDoubleCheckPosition.Execute: Positie {position.Symbol.Name} duplicate {position.Status} check={position.ForceCheckPosition} {position.DelayUntil} {orderId} {status}");
-                return;
-            }
-            //}
-            //finally
-            //{
-            //    //Semaphore.Release();
-            //}
-
-            //Queue.Add((position, orderId, status));
-            Queue.Add(position.Symbol.Name, (position, orderId, status));
+            using CryptoDatabase database = new();
+            database.Open();
+            await ProcessPosition(database, position, orderId, status);
         }
-        finally
+        else
         {
-            QueueSemaphore.Release();
+
+            await QueueSemaphore.WaitAsync();
+            try
+            {
+                ////await position.Semaphore.WaitAsync();
+                //try
+                //{
+                //var bla = Queue.Contains(position);
+                //var isPresent = Queue.Any(d => d.position == position);
+                //if (Queue.Any(d => d.position == position)) //Dupes.ContainsKey(position.Symbol.Name))
+                if (Queue.TryGetValue(position.Symbol.Name, out (CryptoPosition position, string? orderId, CryptoOrderStatus? status) foundPosition))
+                {
+                    foundPosition.status ??= status;
+                    foundPosition.orderId ??= orderId;
+                    ScannerLog.Logger.Trace($"ThreadDoubleCheckPosition.Execute: Positie {position.Symbol.Name} duplicate {position.Status} check={position.ForceCheckPosition} {position.DelayUntil} {orderId} {status}");
+                    return;
+                }
+                //}
+                //finally
+                //{
+                //    //Semaphore.Release();
+                //}
+
+                //Queue.Add((position, orderId, status));
+                Queue.Add(position.Symbol.Name, (position, orderId, status));
+            }
+            finally
+            {
+                QueueSemaphore.Release();
+            }
         }
     }
 
 
-    private async Task ProcessPosition(CryptoDatabase database, CryptoPosition position, string orderId, CryptoOrderStatus? status)
+    private async Task ProcessPosition(CryptoDatabase database, CryptoPosition position, string? orderId, CryptoOrderStatus? status)
     {
         //ScannerLog.Logger.Trace($"ThreadDoubleCheckPosition.Execute: Positie {position.Symbol.Name} pickup {position.Status} check={position.ForceCheckPosition} {reason}");
         try
         {
-            await position.Semaphore.WaitAsync();
+            if (!GlobalData.BackTest)
+                await position.Semaphore.WaitAsync();
             try
             {
                 // Geef de exchange en de aansturende code de kans om de administratie af te ronden
                 // We wachten hier dus bewust voor de zekerheid een redelijk lange periode.
-                if (position.DelayUntil.HasValue && position.DelayUntil.Value >= DateTime.UtcNow)
+                if (!GlobalData.BackTest && position.DelayUntil.HasValue && position.DelayUntil.Value >= GlobalData.GetCurrentDateTime())
                 {
                     //ScannerLog.Logger.Trace($"ThreadDoubleCheckPosition.Execute: Positie {position.Symbol.Name} delay {position.Status} check={position.ForceCheckPosition} {position.DelayUntil} {reason}");
                     await AddToQueue(position, orderId, status); // opnieuw, na een vertraging
@@ -141,13 +152,13 @@ public class ThreadCheckFinishedPosition
                                 string cancelReason = $"annuleren";
                                 ScannerLog.Logger.Trace($"ThreadDoubleCheckPosition.Execute: {cancelReason}");
                                 var (succes, tradeParams) = await TradeTools.CancelOrder(database, position, part, step,
-                                    DateTime.UtcNow, CryptoOrderStatus.PositionClosed, cancelReason);
+                                    GlobalData.GetCurrentDateTime(), CryptoOrderStatus.PositionClosed, cancelReason);
                                 if (!succes)
                                 {
                                     ScannerLog.Logger.Trace($"ThreadDoubleCheckPosition.Execute: {cancelReason} mislukt");
                                     ExchangeBase.Dump(position, succes, tradeParams, "DCA ORDER ANNULEREN NIET IN 1x GELUKT!!! (herkansing)");
                                     position.ForceCheckPosition = true;
-                                    position.DelayUntil = DateTime.UtcNow.AddSeconds(10);
+                                    position.DelayUntil = GlobalData.GetCurrentDateTime().AddSeconds(10);
                                     await AddToQueue(position); // doe nog maar een keer... Endless loop?
                                     removePosition = false;
                                 }
@@ -197,7 +208,7 @@ public class ThreadCheckFinishedPosition
                         //if (position.Status == CryptoPositionStatus.Ready) 
                         //{
                         //    ScannerLog.Logger.Trace($"ThreadDoubleCheckPosition.Execute: {position.Symbol.Name} ready, nog een keer!");
-                        //    position.DelayUntil = DateTime.UtcNow.AddSeconds(10);
+                        //    position.DelayUntil = GlobalData.GetCurrentDateTime().AddSeconds(10);
                         //    await AddToQueue(position); // nog eens, en dan laten verplaatsen naar gesloten posities
                         //}
                     }
@@ -205,7 +216,8 @@ public class ThreadCheckFinishedPosition
             }
             finally
             {
-                position.Semaphore.Release();
+                if (!GlobalData.BackTest) 
+                    position.Semaphore.Release();
             }
 
         }

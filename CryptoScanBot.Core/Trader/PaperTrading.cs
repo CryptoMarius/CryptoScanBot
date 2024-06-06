@@ -2,7 +2,6 @@
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
-using Dapper;
 using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot.Core.Trader;
@@ -47,7 +46,7 @@ public class PaperTrading
             order.Status = CryptoOrderStatus.Filled;
 
         database.Connection.Insert<CryptoOrder>(order);
-        GlobalData.AddOrder(order);
+        position.TradeAccount.OrderList.Add(order);
 
 
 
@@ -73,9 +72,7 @@ public class PaperTrading
         };
 
         // full commission = 0.1, met BNB korting=0.075 (zonder kickback, anders was het 0.065?)
-        decimal feeRate = 0.1m;
-        if (position.Exchange.FeeRate.HasValue)
-            feeRate = (decimal)position.Exchange.FeeRate;
+        decimal feeRate = position.Exchange.FeeRate;
 
         // Entry commissie opboeken in base amount (base/quote)
         if (step.Side == position.GetEntryOrderSide())
@@ -91,7 +88,7 @@ public class PaperTrading
             trade.Commission = (decimal)(step.Quantity * step.Price * feeRate / 100);
         }
         database.Connection.Insert<CryptoTrade>(trade);
-        GlobalData.AddTrade(trade);
+        position.TradeAccount.TradeList.Add(trade);
 
 
         await TradeHandler.HandleTradeAsync(position.Symbol, CryptoOrderStatus.Filled, order);
@@ -136,7 +133,7 @@ public class PaperTrading
                 foreach (var (part, step) in indexList.Values)
                 {
                     long from = CandleTools.GetUnixTime(step.CreateTime, 60) + 60;
-                    long limit = CandleTools.GetUnixTime(DateTime.UtcNow, 60);
+                    long limit = CandleTools.GetUnixTime(GlobalData.GetCurrentDateTime(), 60);
                     while (from < limit)
                     {
                         // Eventueel missende candles hebben op deze manier geen impact
@@ -156,6 +153,8 @@ public class PaperTrading
 
     public static async Task PaperTradingCheckStep(CryptoDatabase database, CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step, CryptoCandle lastCandle1m)
     {
+        //return; // test for the timeout...
+
         if (step.Status == CryptoOrderStatus.New)
         {
             if (step.Side == CryptoOrderSide.Buy)
