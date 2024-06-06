@@ -49,7 +49,7 @@ public class SignalSbmBase(CryptoSymbol symbol, CryptoInterval interval, CryptoC
     public override string DisplayText()
     {
         return string.Format("ma200={0:N8} ma50={1:N8} ma20={2:N8} psar={3:N8} macd.h={4:N8} bb%={5:N2} rsi=={6:N2}",
-            CandleLast.CandleData.Sma200,
+            CandleLast.CandleData!.Sma200,
             CandleLast.CandleData.Sma50,
             CandleLast.CandleData.Sma20,
             CandleLast.CandleData.PSar,
@@ -70,10 +70,10 @@ public class SignalSbmBase(CryptoSymbol symbol, CryptoInterval interval, CryptoC
         candlesAgo = 0;
         long time = CandleLast.OpenTime;
         //DateTime TimeDebug = CandleTools.GetUnixDate(CandleLast.OpenTime);
-        CryptoCandle prevCandle = null;
+        CryptoCandle? prevCandle = null;
         while (candleCount >= 0)
         {
-            if (Candles.TryGetValue(time, out CryptoCandle lastCandle))
+            if (Candles.TryGetValue(time, out CryptoCandle? lastCandle))
             {
                 //TimeDebug = CandleTools.GetUnixDate(lCandle.OpenTime);
                 if (prevCandle != null)
@@ -81,12 +81,12 @@ public class SignalSbmBase(CryptoSymbol symbol, CryptoInterval interval, CryptoC
                     if (IndicatorsOkay(lastCandle) && IndicatorsOkay(prevCandle))
                     {
                         // de 50 kruist de 200 naar boven
-                        if (prevCandle.CandleData.Sma50 < prevCandle.CandleData.Sma200 &&
-                                lastCandle.CandleData.Sma50 >= lastCandle.CandleData.Sma200)
+                        if (prevCandle.CandleData!.Sma50 < prevCandle.CandleData.Sma200 &&
+                                lastCandle.CandleData!.Sma50 >= lastCandle.CandleData.Sma200)
                             return true;
                         // de 50 kruist de 200 naar beneden
-                        if (prevCandle.CandleData.Sma50 > prevCandle.CandleData.Sma200 &&
-                                lastCandle.CandleData.Sma50 <= lastCandle.CandleData.Sma200)
+                        if (prevCandle.CandleData!.Sma50 > prevCandle.CandleData.Sma200 &&
+                                lastCandle.CandleData!.Sma50 <= lastCandle.CandleData.Sma200)
                             return true;
                     }
 #if DEBUG
@@ -123,10 +123,10 @@ public class SignalSbmBase(CryptoSymbol symbol, CryptoInterval interval, CryptoC
         candlesAgo = 0;
         long time = CandleLast.OpenTime;
         //DateTime TimeDebug = CandleTools.GetUnixDate(CandleLast.OpenTime);
-        CryptoCandle prevCandle = null;
+        CryptoCandle? prevCandle = null;
         while (candleCount >= 0)
         {
-            if (Candles.TryGetValue(time, out CryptoCandle lastCandle))
+            if (Candles.TryGetValue(time, out CryptoCandle? lastCandle))
             {
                 //TimeDebug = CandleTools.GetUnixDate(lCandle.OpenTime);
                 if (prevCandle != null)
@@ -134,12 +134,12 @@ public class SignalSbmBase(CryptoSymbol symbol, CryptoInterval interval, CryptoC
                     if (IndicatorsOkay(lastCandle) && IndicatorsOkay(prevCandle))
                     {
                         // de 50 kruist de 200 naar boven
-                        if (prevCandle.CandleData.Sma20 < prevCandle.CandleData.Sma200 &&
-                                lastCandle.CandleData.Sma20 >= lastCandle.CandleData.Sma200)
+                        if (prevCandle.CandleData!.Sma20 < prevCandle.CandleData.Sma200 &&
+                                lastCandle.CandleData!.Sma20 >= lastCandle.CandleData.Sma200)
                             return true;
                         // de 50 kruist de 200 naar beneden
-                        if (prevCandle.CandleData.Sma20 > prevCandle.CandleData.Sma200 &&
-                                lastCandle.CandleData.Sma20 <= lastCandle.CandleData.Sma200)
+                        if (prevCandle.CandleData!.Sma20 > prevCandle.CandleData.Sma200 &&
+                                lastCandle.CandleData!.Sma20 <= lastCandle.CandleData.Sma200)
                             return true;
                     }
 #if DEBUG
@@ -175,10 +175,10 @@ public class SignalSbmBase(CryptoSymbol symbol, CryptoInterval interval, CryptoC
         candlesAgo = 0;
         long time = CandleLast.OpenTime;
         //DateTime TimeDebug = CandleTools.GetUnixDate(CandleLast.OpenTime);
-        CryptoCandle prevCandle = null;
+        CryptoCandle? prevCandle = null;
         while (candleCount >= 0)
         {
-            if (Candles.TryGetValue(time, out CryptoCandle lastCandle))
+            if (Candles.TryGetValue(time, out CryptoCandle? lastCandle))
             {
                 //TimeDebug = CandleTools.GetUnixDate(lCandle.OpenTime);
                 if (prevCandle != null)
@@ -186,13 +186,13 @@ public class SignalSbmBase(CryptoSymbol symbol, CryptoInterval interval, CryptoC
                     if (IndicatorsOkay(lastCandle) && IndicatorsOkay(prevCandle))
                     {
                         // de 50 kruist de 20 naar boven
-                        if (prevCandle.CandleData.Sma50 < prevCandle.CandleData.Sma20 &&
-                                lastCandle.CandleData.Sma50 >= lastCandle.CandleData.Sma20)
+                        if (prevCandle.CandleData!.Sma50 < prevCandle.CandleData.Sma20 &&
+                                lastCandle.CandleData!.Sma50 >= lastCandle.CandleData.Sma20)
                             return true;
 
                         // de 50 kruist de 20 naar beneden
-                        if (prevCandle.CandleData.Sma50 > prevCandle.CandleData.Sma20 &&
-                                lastCandle.CandleData.Sma50 <= lastCandle.CandleData.Sma20)
+                        if (prevCandle.CandleData!.Sma50 > prevCandle.CandleData.Sma20 &&
+                                lastCandle.CandleData!.Sma50 <= lastCandle.CandleData.Sma20)
                             return true;
                     }
 #if DEBUG

@@ -66,17 +66,17 @@ public class BinanceFetchTrades
                 {
                     foreach (BinanceFuturesUsdtTrade item in result.Data)
                     {
-                        if (!position.Symbol.TradeList.TryGetValue(item.Id.ToString(), out CryptoTrade? trade))
+                        CryptoTrade? trade = position.TradeAccount.TradeList.Find(position.Symbol, item.Id.ToString());
+                        if (trade == null)
                         {
-                            trade = new CryptoTrade();
+                            trade = new();
                             Api.PickupTrade(position.TradeAccount, position.Symbol, trade, item);
 
 
                             // TODO! Converteer de BNB of enzovoort naar de QUOTE van de BASE
 
                             tradeCache.Add(trade);
-
-                            GlobalData.AddTrade(trade);
+                            position.TradeAccount.TradeList.Add(trade);
 
                             //De fetch administratie bijwerken
                             if (trade.TradeTime > position.Symbol.LastTradeFetched)
@@ -99,7 +99,7 @@ public class BinanceFetchTrades
             if (position.TradeAccount.Id > 0) // debug
             {
                 //GlobalData.AddTextToLogTab(symbol.Name);
-                Monitor.Enter(position.Symbol.TradeList);
+                Monitor.Enter(position.TradeAccount.TradeList);
                 try
                 {
                     database.Open();
@@ -118,7 +118,7 @@ public class BinanceFetchTrades
                 }
                 finally
                 {
-                    Monitor.Exit(position.Symbol.TradeList);
+                    Monitor.Exit(position.TradeAccount.TradeList);
                 }
             }
         }

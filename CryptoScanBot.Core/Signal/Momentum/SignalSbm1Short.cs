@@ -16,11 +16,11 @@ public class SignalSbm1Short : SignalSbmBaseShort
     public bool HadStobbInThelastXCandles(int candleCount)
     {
         // Is de prijs onlangs dicht bij de onderste bb geweest?
-        CryptoCandle last = CandleLast;
+        CryptoCandle? last = CandleLast;
         while (candleCount > 0)
         {
             // Er een candle onder de bb opent of sluit & een overbought situatie (beide moeten onder de 20 zitten)
-            if (last.IsAboveBollingerBands(GlobalData.Settings.Signal.Sbm.UseLowHigh) && last.IsStochOverbought())
+            if (last!.IsAboveBollingerBands(GlobalData.Settings.Signal.Sbm.UseLowHigh) && last.IsStochOverbought())
                 return true;
 
             if (!GetPrevCandle(last, out last))

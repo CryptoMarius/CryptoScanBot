@@ -83,7 +83,7 @@ public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscript
     //{
     //    try
     //    {
-    //        if (GlobalData.ExchangeListName.TryGetValue(Api.ExchangeOptions.ExchangeName, out Model.CryptoExchange exchange))
+    //        if (GlobalData.ExchangeListName.TryGetValue(Api.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
     //        {
     //            Api.PickupAssets(GlobalData.ActiveAccount, data.Data.Balances);
     //            GlobalData.AssetsHaveChanged("");

@@ -100,6 +100,10 @@ public class CryptoPosition
     public SemaphoreSlim Semaphore { get; set; } = new(1);
     [Computed]
     public bool ForceCheckPosition { get; set; } = false;
+
+    [Computed]
+    public bool HasOrdersAndTradesLoaded { get; set; } = false;
+
 }
 
 

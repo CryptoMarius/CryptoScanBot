@@ -27,11 +27,11 @@ public class SignalSbm3Long : SignalSbmBaseLong
             return false;
 
         decimal minValue = (decimal)CandleLast.CandleData.BollingerBandsPercentage;
-        CryptoCandle last = CandleLast;
+        CryptoCandle? last = CandleLast;
         while (candleCount > 0)
         {
             decimal value;
-            value = (decimal)last.CandleData.BollingerBandsPercentage;
+            value = (decimal)last!.CandleData.BollingerBandsPercentage;
             if (value < minValue)
                 minValue = value;
 

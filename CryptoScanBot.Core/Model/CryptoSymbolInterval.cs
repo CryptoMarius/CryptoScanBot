@@ -6,7 +6,7 @@ namespace CryptoScanBot.Core.Model;
 // An in-memory class
 public class CryptoSymbolInterval
 {
-    public virtual CryptoInterval? Interval { get; set; }
+    public virtual CryptoInterval Interval { get; set; }
 
     public CryptoIntervalPeriod IntervalPeriod { get; set; }
 

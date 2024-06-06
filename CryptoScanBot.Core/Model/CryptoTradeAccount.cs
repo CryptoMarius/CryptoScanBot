@@ -33,27 +33,32 @@ public class CryptoTradeAccount
     [Computed]
     public SortedList<string, CryptoAsset> AssetList { get; } = [];
 
-    // Trades + locking
-    //[Computed]
-    //public SemaphoreSlim TradeListSemaphore { get; set; } = new(1);
-    //[Computed]
-    //public SortedList<string, SortedList<int, CryptoTrade>> TradeList { get; set; } = [];
+
+    [Computed]
+    // Key = symbolName
+    public SortedList<string, CryptoPosition> PositionList { get; } = [];
+
+    [Computed]
+    // Key = (symbolName, TradeId), value = trade
+    public CryptoTradeList TradeList { get; } = [];
+
+    [Computed]
+    // Key = (symbolName, OrderId), value = order
+    public CryptoOrderList OrderList { get; } = [];
 
     // Posities + locking
     //[Computed]
     //public SemaphoreSlim PositionListSemaphore { get; set; } = new(1);
-    [Computed]
-    public SortedList<string, CryptoPosition> PositionList { get; } = [];
-
 
 
     /// <summary>
-    /// Clear symbol information (after change of exchange)
+    /// Clear cached information (after change of exchange), assets, orders, trades and positions
     /// </summary>
     public void Clear()
     {
         AssetList.Clear();
-        //OrderList.Clear();
+        OrderList.Clear();
+        TradeList.Clear();
         PositionList.Clear();
     }
 

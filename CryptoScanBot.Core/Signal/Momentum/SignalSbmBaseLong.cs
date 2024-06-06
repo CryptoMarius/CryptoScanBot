@@ -227,7 +227,7 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
     //    }
 
 
-    //    if (!GetPrevCandle(CandleLast, out CryptoCandle candlePrev))
+    //    if (!GetPrevCandle(CandleLast, out CryptoCandle? candlePrev))
     //    {
     //        reaction = ExtraText;
     //        return false;

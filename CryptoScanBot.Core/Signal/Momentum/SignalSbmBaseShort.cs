@@ -77,8 +77,8 @@ public static class SignalSbmBaseOverboughtHelper
     public static bool IsSma200AndSma20OkayOverbought(this CryptoCandle candle, decimal percentage, out string response)
     {
         // En aanvullend, de ma lijnen moeten afwijken (bij benadering, dat hoeft niet geheel exact)
-        decimal value = (decimal)candle.CandleData?.Sma20 - (decimal)candle.CandleData?.Sma200;
-        decimal value2 = ((decimal)candle.CandleData?.Sma20 + (decimal)candle.CandleData?.Sma200) / 2;
+        decimal value = (decimal)candle!.CandleData?.Sma20 - (decimal)candle.CandleData?.Sma200;
+        decimal value2 = ((decimal)candle!.CandleData?.Sma20 + (decimal)candle.CandleData?.Sma200) / 2;
         decimal perc = 100 * value / value2;
         if (perc < percentage)
         {
@@ -130,10 +130,10 @@ public class SignalSbmBaseShort(CryptoSymbol symbol, CryptoInterval interval, Cr
 
     public bool IsMacdRecoveryOverbought(int candleCount)
     {
-        CryptoCandle last = CandleLast;
+        CryptoCandle? last = CandleLast;
 
         // Hoe positief wil je het hebben?
-        if (last.CandleData?.MacdHistogram < 0)
+        if (last!.CandleData?.MacdHistogram < 0)
         {
             //ExtraText = string.Format("De MACD.Hist is rood {0:N8}", last.CandleData?.MacdHistogram);
             return true;
@@ -143,7 +143,7 @@ public class SignalSbmBaseShort(CryptoSymbol symbol, CryptoInterval interval, Cr
         int iterator = 0;
         while (candleCount > 0)
         {
-            if (!GetPrevCandle(last, out CryptoCandle prev))
+            if (!GetPrevCandle(last, out CryptoCandle? prev))
                 return false;
 
 
@@ -175,11 +175,11 @@ public class SignalSbmBaseShort(CryptoSymbol symbol, CryptoInterval interval, Cr
     {
         // Is de prijs onlangs dicht bij de bovenste bb geweest?
 
-        CryptoCandle last = CandleLast;
+        CryptoCandle? last = CandleLast;
         while (candleCount > 0)
         {
-            decimal value = (decimal)last.CandleData?.BollingerBandsUpperBand;
-            value -= (decimal)last.CandleData?.BollingerBandsDeviation * percentage / 100m;
+            decimal value = (decimal)last!.CandleData?.BollingerBandsUpperBand;
+            value -= (decimal)last!.CandleData?.BollingerBandsDeviation * percentage / 100m;
 
             if (GlobalData.Settings.Signal.Sbm.Sbm2UseLowHigh)
             {
@@ -229,7 +229,7 @@ public class SignalSbmBaseShort(CryptoSymbol symbol, CryptoInterval interval, Cr
     //    }
 
 
-    //    if (!GetPrevCandle(CandleLast, out CryptoCandle candlePrev))
+    //    if (!GetPrevCandle(CandleLast, out CryptoCandle? candlePrev))
     //    {
     //        reaction = ExtraText;
     //        return false;
@@ -289,10 +289,10 @@ public class SignalSbmBaseShort(CryptoSymbol symbol, CryptoInterval interval, Cr
         // En van de candles daarvoor mag er een (of meer) afwijken
         while (candleCount > 0)
         {
-            if (!GetPrevCandle(last, out CryptoCandle prev))
+            if (!GetPrevCandle(last, out CryptoCandle? prev))
                 return false;
 
-            if (last.CandleData?.Rsi <= prev.CandleData?.Rsi)
+            if (last.CandleData?.Rsi <= prev!.CandleData?.Rsi)
             {
                 down++;
                 if (first)
@@ -324,7 +324,7 @@ public class SignalSbmBaseShort(CryptoSymbol symbol, CryptoInterval interval, Cr
         // Deze routine is een beetje back to the basics, gewoon een nette SBM, vervolgens
         // 2 MACD herstel candles, wat rsi en stoch condities om glijbanen te voorkomen
 
-        if (!GetPrevCandle(CandleLast, out CryptoCandle candlePrev))
+        if (!GetPrevCandle(CandleLast, out CryptoCandle? candlePrev))
             return false;
 
         // ********************************************************************

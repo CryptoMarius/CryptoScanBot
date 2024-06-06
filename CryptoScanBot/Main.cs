@@ -1,21 +1,19 @@
 ﻿using CryptoScanBot.Commands;
 using CryptoScanBot.Core;
 using CryptoScanBot.Core.Context;
+using CryptoScanBot.Core.Emulator;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Settings;
-using CryptoScanBot.Core.Signal;
 using CryptoScanBot.Core.Trader;
 using CryptoScanBot.Intern;
-using CryptoScanBot.Signal;
 
 using Microsoft.Win32;
 
 using Nito.AsyncEx;
 
-using System.Reflection;
 using System.Text;
 using System.Text.Json;
 
@@ -43,7 +41,8 @@ public partial class FrmMain : Form
 #if TRADEBOT
     private readonly ToolStripMenuItemCommand ApplicationTradingBot;
     private readonly ToolStripMenuItemCommand ApplicationBackTestMode;
-    
+    private readonly ToolStripMenuItemCommand ApplicationBackTestExec;
+
     private readonly List<CryptoPosition> PositionOpenListView = [];
     private readonly CryptoDataGridPositionsOpen<CryptoPosition> GridPositionOpenView;
 
@@ -55,18 +54,17 @@ public partial class FrmMain : Form
     {
         InitializeComponent();
 
-        ApplicationPlaySounds = MenuMain.AddCommand(null, "Geluiden afspelen", Command.None, ApplicationPlaySounds_Click);
+        ApplicationPlaySounds = MenuMain.AddCommand(null, "Play sounds", Command.None, ApplicationPlaySounds_Click);
         ApplicationPlaySounds.Checked = true;
-        ApplicationCreateSignals = MenuMain.AddCommand(null, "Signalen maken", Command.None, ApplicationCreateSignals_Click);
+        ApplicationCreateSignals = MenuMain.AddCommand(null, "Create signals", Command.None, ApplicationCreateSignals_Click);
         ApplicationCreateSignals.Checked = true;
 #if TRADEBOT
-        ApplicationTradingBot = MenuMain.AddCommand(null, "Trading bot actief", Command.None, ApplicationTradingBot_Click);
+        ApplicationTradingBot = MenuMain.AddCommand(null, "Trading bot active", Command.None, ApplicationTradingBot_Click);
         ApplicationTradingBot.Checked = true;
-        ApplicationBackTestMode = MenuMain.AddCommand(null, "Backtest mode", Command.None, ApplicationBackTestMode_Click);
 #endif
-        MenuMain.AddCommand(null, "Instellingen", Command.None, ToolStripMenuItemSettings_Click);
-        MenuMain.AddCommand(null, "Verversen informatie", Command.None, ToolStripMenuItemRefresh_Click_1);
-        MenuMain.AddCommand(null, "Reset log en getallen", Command.None, MainMenuClearAll_Click);
+        MenuMain.AddCommand(null, "Settings", Command.None, ToolStripMenuItemSettings_Click);
+        MenuMain.AddCommand(null, "Refresh information", Command.None, ToolStripMenuItemRefresh_Click_1);
+        MenuMain.AddCommand(null, "Clear log en ticker count", Command.None, MainMenuClearAll_Click);
         MenuMain.AddCommand(null, "Exchange information (Excel)", Command.ExcelExchangeInformation);
         MenuMain.AddCommand(null, "About", Command.About);
 
@@ -77,7 +75,11 @@ public partial class FrmMain : Form
         MenuMain.AddCommand(null, "Test - Create url testfile", Command.None, TestCreateUrlTestFileClick);
         MenuMain.AddCommand(null, "Test - Dump ticker information", Command.None, TestShowTickerInformationClick);
 #if TRADEBOT
-        MenuMain.AddCommand(null, "Test - Backtest (experimental)", Command.None, BacktestToolStripMenuItem_Click);
+        MenuMain.AddSeperator();
+        ApplicationBackTestExec = MenuMain.AddCommand(null, "Test - Backtest (experimental)", Command.None, BacktestToolStripMenuItem_Click);
+        ApplicationBackTestExec.Enabled = GlobalData.BackTest;
+        ApplicationBackTestMode = MenuMain.AddCommand(null, "Backtest mode (experimental)", Command.None, ApplicationBackTestMode_Click);
+        ApplicationBackTestExec.Enabled = !GlobalData.BackTest;
 #endif
 #endif
 
@@ -709,8 +711,6 @@ public partial class FrmMain : Form
         string text = "Analyze signal " + signal.Symbol.Name + " " + signal.Interval.Name + " " + signal.SideText + " " + signal.StrategyText + " " + signal.EventText;
         GlobalData.AddTextToLogTab(text);
 
-        if (signal.BackTest)
-            return;
 
         // Zet de laatste munt in de "caption" (en taskbar) van de applicatie bar (visuele controle of er meldingen zijn)
         //Invoke(new Action(() => { this.Text = signal.Symbol.Name + " " + createdSignalCount.ToString(); }));
@@ -720,6 +720,10 @@ public partial class FrmMain : Form
             GlobalData.SignalList.Add(signal);
             GlobalData.SignalQueue.Enqueue(signal);
         }
+
+        if (signal.BackTest)
+            return;
+
 
         // Speech and/or sound
         if (!signal.IsInvalid)
@@ -919,33 +923,21 @@ public partial class FrmMain : Form
         ApplicationTradingBot.Enabled = !GlobalData.BackTest;
         ApplicationPlaySounds.Enabled = !GlobalData.BackTest;
         ApplicationCreateSignals.Enabled = !GlobalData.BackTest;
+        ApplicationBackTestExec.Enabled = GlobalData.BackTest;
 
         GlobalData.SaveSettings();
 
-
-        // Refresh displayed information
-        GridSignalView.Clear();
-#if TRADEBOT
-        GridPositionOpenView.Clear();
-        GridPositionClosedView.Clear();
-        GlobalData.PositionsClosed.Clear(); // weird, move to account?
-#endif
-
         GlobalData.SetTradingAccounts();
-        GlobalData.LoadSignals();
-#if TRADEBOT
-        TradeTools.LoadOpenPositions();
-        TradeTools.LoadClosedPositions();
-        PositionsHaveChangedEvent("");
+        RefreshDataGrids();
 
-        // Fill the missing information
+        // Resume scanenr session, fill missing information
         if (!GlobalData.BackTest)
             ToolStripMenuItemRefresh_Click_1(null, null);
 #endif
     }
 
 
-    private void BacktestToolStripMenuItem_Click(object sender, EventArgs e)
+    private async void BacktestToolStripMenuItem_Click(object sender, EventArgs e)
     {
         /// TODO: Deze code verhuizen naar aparte class of het dialoog zelf?
         /// Probleem: Door recente aanpassingen lopen de meldingen en accounts 
@@ -1029,6 +1021,7 @@ public partial class FrmMain : Form
                 //    backTestExcel.ExportToExcell(GlobalData.Settings.BackTest.BackTestAlgoritm);
                 //}
 
+                await BackTestAsync();
             }
         }
         catch (Exception error)
@@ -1038,7 +1031,6 @@ public partial class FrmMain : Form
         }
 
     }
-#endif
 
 
     private void ApplicationHasStarted(string text, bool extraLineFeed = false)
@@ -1229,6 +1221,39 @@ public partial class FrmMain : Form
             filename = GlobalData.GetBaseDir() + @"\trading app urls.html";
             File.WriteAllText(filename, stringBuilder.ToString());
         }
+    }
+
+
+    public void RefreshDataGrids()
+    {
+        // Refresh displayed information
+        GridSignalView.Clear();
+#if TRADEBOT
+        GridPositionOpenView.Clear();
+        GridPositionClosedView.Clear();
+        GlobalData.PositionsClosed.Clear(); // weird, move to account?
+#endif
+
+        GlobalData.LoadSignals();
+        GridSignalView.Grid.Invalidate();
+
+#if TRADEBOT
+        TradeTools.LoadOpenPositions();
+        TradeTools.LoadClosedPositions();
+        PositionsHaveChangedEvent("");
+#endif
+    }
+
+    public async Task BackTestAsync()
+    {
+        if (!GlobalData.Settings.General.Exchange.SymbolListName.TryGetValue(GlobalData.Settings.BackTest.BackTestSymbol, out CryptoSymbol symbol))
+            return;
+
+        if (!GlobalData.Settings.General.Exchange.SymbolListName.TryGetValue("BTCUSDT", out CryptoSymbol btcSymbol))
+            return;
+
+        RefreshDataGrids();
+        var _ = Task.Run(async () => { await Emulator.Execute(btcSymbol, symbol); });
     }
 
 }

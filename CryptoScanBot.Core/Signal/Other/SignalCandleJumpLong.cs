@@ -29,7 +29,7 @@ public class SignalCandleJumpLong : SignalCreateBase
             long maxDate = CandleLast.OpenTime;
             decimal maxValue = decimal.MinValue;
 
-            CryptoCandle candle = CandleLast;
+            CryptoCandle? candle = CandleLast;
             while (candleCount > 0)
             {
                 decimal value = candle.GetLowest(GlobalData.Settings.Signal.Jump.UseLowHighCalculation);

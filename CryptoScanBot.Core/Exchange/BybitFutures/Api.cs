@@ -494,7 +494,8 @@ public class Api : ExchangeBase
             string text;
             foreach (var item in info.Data.List)
             {
-                if (position.Symbol.OrderList.TryGetValue(item.OrderId, out CryptoOrder? order))
+                CryptoOrder? order = position.TradeAccount.OrderList.Find(position.Symbol, item.OrderId);
+                if (order != null)
                 {
                     var oldStatus = order.Status;
                     var oldQuoteQuantityFilled = order.QuoteQuantityFilled;
@@ -517,7 +518,7 @@ public class Api : ExchangeBase
                     order = new();
                     PickupOrder(position.TradeAccount, position.Symbol, order, (BybitOrderUpdate)item);
                     database.Connection.Insert<CryptoOrder>(order);
-                    GlobalData.AddOrder(order);
+                    position.TradeAccount.OrderList.Add(order);
                     count++;
                 }
 
@@ -534,7 +535,7 @@ public class Api : ExchangeBase
 
     public async override Task GetAssetsAsync(CryptoTradeAccount tradeAccount)
     {
-        //if (GlobalData.ExchangeListName.TryGetValue(ExchangeName, out Model.CryptoExchange exchange))
+        //if (GlobalData.ExchangeListName.TryGetValue(ExchangeName, out Model.CryptoExchange? exchange))
         {
             try
             {

@@ -31,8 +31,8 @@ public class SignalStobbLong : SignalSbmBaseLong
     public override string DisplayText()
     {
         return string.Format("stoch.oscillator={0:N8} stoch.signal={1:N8}",
-            CandleLast.CandleData.StochOscillator,
-            CandleLast.CandleData.StochSignal
+            CandleLast!.CandleData.StochOscillator,
+            CandleLast!.CandleData.StochSignal
         );
     }
 
@@ -43,7 +43,7 @@ public class SignalStobbLong : SignalSbmBaseLong
         // Controle op de ma-lijnen
         if (GlobalData.Settings.Signal.Stobb.IncludeSoftSbm)
         {
-            if (!CandleLast.IsSbmConditionsOversold(false))
+            if (!CandleLast!.IsSbmConditionsOversold(false))
             {
                 response = "geen sbm condities";
                 return false;

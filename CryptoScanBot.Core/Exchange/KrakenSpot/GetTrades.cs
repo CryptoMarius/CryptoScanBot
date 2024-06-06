@@ -56,13 +56,14 @@ public class GetTrades
                 {
                     foreach (var item in result.Data.Trades.Values)
                     {
-                        if (!position.Symbol.TradeList.TryGetValue(item.Id, out CryptoTrade? trade))
+                        CryptoTrade? trade = position.TradeAccount.TradeList.Find(position.Symbol, item.Id);
+                        if (trade == null)
                         {
-                            trade = new CryptoTrade();
+                            trade = new();
                             Api.PickupTrade(position.TradeAccount, position.Symbol, trade, item);
+                            
                             tradeCache.Add(trade);
-
-                            GlobalData.AddTrade(trade);
+                            position.TradeAccount.TradeList.Add(trade);
 
                             //De fetch administratie bijwerken
                             if (trade.TradeTime > position.Symbol.LastTradeFetched)
@@ -83,7 +84,7 @@ public class GetTrades
 
             // Verwerk de trades
             //GlobalData.AddTextToLogTab(symbol.Name);
-            Monitor.Enter(position.Symbol.TradeList);
+            Monitor.Enter(position.TradeAccount.TradeList);
             try
             {
                 database.Open();
@@ -102,7 +103,7 @@ public class GetTrades
             }
             finally
             {
-                Monitor.Exit(position.Symbol.TradeList);
+                Monitor.Exit(position.TradeAccount.TradeList);
             }
         }
         catch (Exception error)

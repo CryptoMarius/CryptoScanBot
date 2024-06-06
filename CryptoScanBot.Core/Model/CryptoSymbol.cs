@@ -108,9 +108,6 @@ public class CryptoSymbol
     public DateTime? LastTradeFetched { get; set; }
     public long? LastTradeIdFetched { get; set; }
     public DateTime? LastOrderFetched { get; set; }
-    [Computed]
-    // Laatste waarde volgens de ticker
-    public bool HasOrdersAndTradesLoaded { get; set; } = false;
 
     // De trend percentage (berekend uit de candlefetched.TrendIndicator)
     public float? TrendPercentage { get; set; }
@@ -135,16 +132,8 @@ public class CryptoSymbol
     public List<CryptoSymbolInterval> IntervalPeriodList { get; set; } = [];
 
     [Computed]
-    // NB: Verwijst nu naar de IntervalPeriodList<1m>.CandleList
+    // Quick reference to the first intervalSymbol
     public SortedList<long, CryptoCandle> CandleList { get { return IntervalPeriodList[0].CandleList; } }
-
-
-    [Computed]
-    public SortedList<string, CryptoTrade> TradeList { get; } = [];
-
-    [Computed]
-    public SortedList<string, CryptoOrder> OrderList { get; } = [];
-
 
 
     //// Quick en dirty voor het testen van de performance van balanceren

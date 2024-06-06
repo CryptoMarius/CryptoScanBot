@@ -534,7 +534,7 @@ public class Api : ExchangeBase
     public async override Task GetAssetsAsync(CryptoTradeAccount tradeAccount)
     {
         //ScannerLog.Logger.Trace($"Exchange.Binance.GetAssetsForAccountAsync: Positie {tradeAccount.Name}");
-        //if (GlobalData.ExchangeListName.TryGetValue(ExchangeName, out Model.CryptoExchange exchange))
+        //if (GlobalData.ExchangeListName.TryGetValue(ExchangeName, out Model.CryptoExchange? exchange))
         {
             try
             {

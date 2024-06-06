@@ -31,8 +31,8 @@ public class SignalStobbShort : SignalSbmBaseShort
     public override string DisplayText()
     {
         return string.Format("stoch.oscillator={0:N8} stoch.signal={1:N8}",
-            CandleLast.CandleData.StochOscillator,
-            CandleLast.CandleData.StochSignal
+            CandleLast.CandleData!.StochOscillator,
+            CandleLast.CandleData!.StochSignal
         );
     }
 
@@ -87,7 +87,7 @@ public class SignalStobbShort : SignalSbmBaseShort
         // De breedte van de bb is ten minste 1.5%
         if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, GlobalData.Settings.Signal.Stobb.BBMaxPercentage))
         {
-            ExtraText = "bb.width te klein " + CandleLast.CandleData.BollingerBandsPercentage?.ToString("N2");
+            ExtraText = "bb.width te klein " + CandleLast.CandleData!.BollingerBandsPercentage?.ToString("N2");
             return false;
         }
 

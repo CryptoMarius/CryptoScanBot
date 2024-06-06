@@ -69,7 +69,8 @@ public class GetTrades
                         if (item.TradeTime < position.CreateTime)
                             continue;
 
-                        if (!position.Symbol.TradeList.TryGetValue(item.TradeId.ToString(), out CryptoTrade? trade))
+                        CryptoTrade? trade = position.TradeAccount.TradeList.Find(position.Symbol, item.TradeId.ToString());
+                        if (trade == null)
                         {
                             trade = new CryptoTrade();
                             Api.PickupTrade(position.TradeAccount, position.Symbol, trade, item);
@@ -77,7 +78,7 @@ public class GetTrades
                             ScannerLog.Logger.Trace($"{item.Symbol} Trade added json={text}");
 
                             tradeCache.Add(trade);
-                            GlobalData.AddTrade(trade);
+                            position.TradeAccount.TradeList.Add(trade);
                         }
 
                         // De administratie bijwerken (de Id en TradeId zijn twee verschillende getallen)
@@ -98,7 +99,7 @@ public class GetTrades
 
             // Verwerk de trades
             //GlobalData.AddTextToLogTab(symbol.Name);
-            Monitor.Enter(position.Symbol.TradeList);
+            Monitor.Enter(position.TradeAccount.TradeList);
             try
             {
                 database.Open();
@@ -117,7 +118,7 @@ public class GetTrades
             }
             finally
             {
-                Monitor.Exit(position.Symbol.TradeList);
+                Monitor.Exit(position.TradeAccount.TradeList);
             }
         }
         catch (Exception error)
