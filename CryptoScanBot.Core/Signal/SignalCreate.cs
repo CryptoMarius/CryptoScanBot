@@ -209,7 +209,7 @@ public class SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTr
         double max = double.MinValue;
 
         // Vanwege backtest altijd redeneren vanaf het signaal (en niet de laatste candle)
-        long unix = CandleTools.GetUnixTime(startTime, symbolInterval.Interval!.Duration);
+        long unix = CandleTools.GetUnixTime(startTime, symbolInterval.Interval.Duration);
 
         while (candleCount-- > 0)
         {
@@ -344,7 +344,7 @@ public class SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTr
 
 
         // Iets wat ik wel eens gebruikt als ik trade
-        LuxIndicator.Calculate(Symbol, out int luxOverSold, out int luxOverBought, CryptoIntervalPeriod.interval5m, Candle.OpenTime + Interval.Duration);
+        LuxIndicator.Calculate(Symbol, out int luxOverSold, out int luxOverBought, CryptoIntervalPeriod.interval5m, Candle!.OpenTime + Interval.Duration);
         if (signal.Side == CryptoTradeSide.Long)
             signal.LuxIndicator5m = luxOverSold;
         else

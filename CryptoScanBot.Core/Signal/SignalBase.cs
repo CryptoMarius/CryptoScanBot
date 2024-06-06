@@ -24,7 +24,7 @@ public class SignalCreateBase
 
     public CryptoTradeSide SignalSide;
     public CryptoSignalStrategy SignalStrategy;
-    public CryptoCandle? CandleLast = null;
+    public CryptoCandle CandleLast;
     public string ExtraText = "";
     public bool ReplaceSignal = true;
 
@@ -81,6 +81,12 @@ public class SignalCreateBase
 
     public bool GetPrevCandle(CryptoCandle? oldCandle, out CryptoCandle? newCandle)
     {
+        if (oldCandle == null)
+        {
+            newCandle = null;
+            return false;
+        }
+
         if (!Candles.TryGetValue(oldCandle.OpenTime - Interval.Duration, out newCandle))
         {
             ExtraText = "No prev candle! " + oldCandle.DateLocal.ToString();
@@ -214,16 +220,16 @@ public class SignalCreateBase
         // We gaan van rechts naar links (van de nieuwste candle richting verleden)
         int down = 0;
         bool first = true;
-        CryptoCandle last = CandleLast;
+        CryptoCandle? last = CandleLast;
 
 
         // En van de candles daarvoor mag er een (of meer) afwijken
         while (candleCount > 0)
         {
-            if (!GetPrevCandle(last, out CryptoCandle prev))
+            if (!GetPrevCandle(last, out CryptoCandle? prev))
                 return false;
 
-            if (last.CandleData?.Rsi >= prev.CandleData?.Rsi)
+            if (last.CandleData?.Rsi >= prev!.CandleData?.Rsi)
             {
                 down++;
                 if (first || down > allowedDown)
