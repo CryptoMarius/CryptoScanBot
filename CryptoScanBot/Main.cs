@@ -74,13 +74,13 @@ public partial class FrmMain : Form
         MenuMain.AddCommand(null, "Test - Save Candles", Command.None, TestSaveCandlesClick);
         MenuMain.AddCommand(null, "Test - Create url testfile", Command.None, TestCreateUrlTestFileClick);
         MenuMain.AddCommand(null, "Test - Dump ticker information", Command.None, TestShowTickerInformationClick);
+#endif
 #if TRADEBOT
         MenuMain.AddSeperator();
-        ApplicationBackTestExec = MenuMain.AddCommand(null, "Test - Backtest (experimental)", Command.None, BacktestToolStripMenuItem_Click);
+        ApplicationBackTestMode = MenuMain.AddCommand(null, "Test - Backtest mode (experimental)", Command.None, ApplicationBackTestMode_Click);
+        //ApplicationBackTestExec.Enabled = !GlobalData.BackTest;?
+        ApplicationBackTestExec = MenuMain.AddCommand(null, "Test - Backtest exec (experimental)", Command.None, BacktestToolStripMenuItem_Click);
         ApplicationBackTestExec.Enabled = GlobalData.BackTest;
-        ApplicationBackTestMode = MenuMain.AddCommand(null, "Backtest mode (experimental)", Command.None, ApplicationBackTestMode_Click);
-        ApplicationBackTestExec.Enabled = !GlobalData.BackTest;
-#endif
 #endif
 
         //Console.Write("Hello world 1");
@@ -302,12 +302,20 @@ public partial class FrmMain : Form
 
         panelLeft.Visible = !GlobalData.Settings.General.HideSymbolsOnTheLeft;
 
-        // Adjust the application title
-        Text = $"{GlobalData.AppName} {GlobalData.AppVersion} {GlobalData.Settings.General.ExchangeName} {GlobalData.Settings.General.ExtraCaption}".Trim();
+        SetApplicationTitle();
 
         Refresh(); // Redraw
     }
 
+
+    private void SetApplicationTitle()
+    {
+        string text = $"{GlobalData.AppName} {GlobalData.AppVersion} {GlobalData.Settings.General.ExchangeName} {GlobalData.Settings.General.ExtraCaption}".Trim();
+        if (GlobalData.BackTest)
+            text += " (backtest mode)";
+        // Adjust the application title
+        Text = text;
+    }
 
     private void OnPowerChange(object s, PowerModeChangedEventArgs e)
     {
@@ -926,14 +934,14 @@ public partial class FrmMain : Form
         ApplicationBackTestExec.Enabled = GlobalData.BackTest;
 
         GlobalData.SaveSettings();
+        SetApplicationTitle();
 
         GlobalData.SetTradingAccounts();
         RefreshDataGrids();
 
-        // Resume scanenr session, fill missing information
+        // Resume scanner session, fill missing information
         if (!GlobalData.BackTest)
             ToolStripMenuItemRefresh_Click_1(null, null);
-#endif
     }
 
 
@@ -1031,6 +1039,7 @@ public partial class FrmMain : Form
         }
 
     }
+#endif
 
 
     private void ApplicationHasStarted(string text, bool extraLineFeed = false)
@@ -1244,16 +1253,21 @@ public partial class FrmMain : Form
 #endif
     }
 
-    public async Task BackTestAsync()
+#if TRADEBOT
+    public Task BackTestAsync()
     {
         if (!GlobalData.Settings.General.Exchange.SymbolListName.TryGetValue(GlobalData.Settings.BackTest.BackTestSymbol, out CryptoSymbol symbol))
-            return;
-
+            return Task.CompletedTask;
         if (!GlobalData.Settings.General.Exchange.SymbolListName.TryGetValue("BTCUSDT", out CryptoSymbol btcSymbol))
-            return;
+            return Task.CompletedTask;
 
+        MainMenuClearAll_Click(null, null);
+        Emulator.DeletePreviousData();
         RefreshDataGrids();
+        
         var _ = Task.Run(async () => { await Emulator.Execute(btcSymbol, symbol); });
+        return Task.CompletedTask;
     }
+#endif
 
 }

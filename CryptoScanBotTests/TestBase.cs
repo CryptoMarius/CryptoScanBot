@@ -137,7 +137,7 @@ public class TestBase
     }
 
 
-    internal static void DeleteAllPositionRelatedStuff(CryptoDatabase database, CryptoSymbol symbol)
+    internal static void DeleteAllPositionRelatedStuff(CryptoDatabase database)
     {
         // Voorgaande orders en trades verwijderen
         database.Connection.Execute($"delete from [Asset]");
@@ -147,10 +147,7 @@ public class TestBase
         database.Connection.Execute($"delete from [Order]");
         database.Connection.Execute($"delete from [Trade]");
 
-        symbol.OrderList.Clear();
-        symbol.TradeList.Clear();
-        GlobalData.ActiveAccount?.AssetList.Clear();
-        GlobalData.ActiveAccount?.PositionList.Clear();
+        GlobalData.ActiveAccount?.Clear();
     }
 
 }

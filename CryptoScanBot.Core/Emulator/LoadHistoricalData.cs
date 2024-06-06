@@ -2,7 +2,7 @@
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 
-namespace ExchangeTest.Emulator;
+namespace CryptoScanBot.Core.Emulator;
 
 public class LoadHistoricalData
 {
@@ -44,7 +44,7 @@ public class LoadHistoricalData
 
 
         // fetch additional candles
-        await ExchangeTest.Exchange.Bybit.Spot.CandlesEmulator.ExecuteAsync(symbol, end);
+        await CryptoScanBot.Core.Exchange.BybitSpot.CandlesEmulator.ExecuteAsync(symbol, end);
 
         // restore LastCandleSynchronized
         foreach (var interval in GlobalData.IntervalList)

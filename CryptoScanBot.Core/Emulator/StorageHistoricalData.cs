@@ -4,7 +4,7 @@ using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 
-namespace ExchangeTest.Emulator;
+namespace CryptoScanBot.Core.Emulator;
 
 public class StorageHistoricalData
 {
@@ -54,11 +54,11 @@ public class StorageHistoricalData
 
     public static string GetFolder(CryptoSymbol symbol, CryptoInterval interval, DateTime date)
     {
-        var period = GetPeriod(interval, date);
+        var (start, _) = GetPeriod(interval, date);
 
-        string s = period.start.Year.ToString("D4");
-        s += period.start.Month.ToString("D2");
-        s += period.start.Day.ToString("D2");
+        string s = start.Year.ToString("D4");
+        s += start.Month.ToString("D2");
+        s += start.Day.ToString("D2");
 
         return GetFolder(symbol, interval) + $"{s}.json";
     }
@@ -71,7 +71,7 @@ public class StorageHistoricalData
             try
             {
                 string text = File.ReadAllText(filename);
-                List<CryptoCandle> candleList = JsonSerializer.Deserialize<List<CryptoCandle>>(text, GlobalData.JsonSerializerIndented);
+                List<CryptoCandle>? candleList = JsonSerializer.Deserialize<List<CryptoCandle>>(text, GlobalData.JsonSerializerIndented);
 
                 CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
                 foreach (var candle in candleList)
