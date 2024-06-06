@@ -945,7 +945,7 @@ public class CryptoDatabase : IDisposable
             databaseThread.Open();
             using var transaction = databaseThread.BeginTransaction();
             {
-                databaseThread.Connection.Execute("delete from signal where opendate < @opendate", new { opendate = DateTime.UtcNow.AddDays(-14) });
+                databaseThread.Connection.Execute("delete from signal where backtest=0 and opendate < @opendate", new { opendate = DateTime.UtcNow.AddDays(-14) });
                 transaction.Commit();
             }
         }

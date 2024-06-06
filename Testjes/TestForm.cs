@@ -836,7 +836,7 @@ public partial class TestForm : Form
 
     private void Button6_Click(object sender, EventArgs e)
     {
-        //if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+        //if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange? exchange))
         //{
         //    if (exchange.SymbolListName.TryGetValue("ALCXBTC", out CryptoSymbol symbol))
         //    {
