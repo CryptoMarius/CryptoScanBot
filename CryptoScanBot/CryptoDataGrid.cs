@@ -278,8 +278,7 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
                 break;
         }
 
-        if (cms != null)
-            cms.Show(dgv, e.Location);
+        cms?.Show(dgv, e.Location);
     }
 
     private void CommandAdjustColumns(object sender, EventArgs e)

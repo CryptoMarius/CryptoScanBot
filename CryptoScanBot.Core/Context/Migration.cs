@@ -478,6 +478,9 @@ public class Migration
                 // Feerate was recently increased, also for market orders.
                 database.Connection.Execute("update exchange set FeeRate=0.15 where Name like '%Bybit Spot%'", transaction);
 
+
+                // Introduce separate fee for market orders and fee for limit orders?
+
                 // update version
                 version.Version += 1;
                 database.Connection.Update(version, transaction);

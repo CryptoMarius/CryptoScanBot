@@ -9,7 +9,7 @@ public static class BarometerHelper
 
     public static bool CheckValidBarometer(CryptoQuoteData quoteData, CryptoIntervalPeriod intervalPeriod, (decimal minValue, decimal maxValue) values, out string reaction)
     {
-        if (!GlobalData.IntervalListPeriod.TryGetValue(intervalPeriod, out CryptoInterval interval))
+        if (!GlobalData.IntervalListPeriod.TryGetValue(intervalPeriod, out CryptoInterval? interval))
         {
             reaction = $"Interval {intervalPeriod} bestaat niet";
             return false;

@@ -253,7 +253,7 @@ public class ExcelPositionDump(CryptoPosition position) : ExcelBase(position.Sym
         WriteCell(sheet, columns++, row, "Commission");
         WriteCell(sheet, columns++, row, "C. Asset");
 
-        List<CryptoOrder> orderList = [.. position.Symbol.OrderList.Values];
+        List<CryptoOrder> orderList = [.. position.TradeAccount.OrderList.GetOrdersForSymbol(position.Symbol).Values];
         orderList.Sort((x, y) => x.CreateTime.CompareTo(y.CreateTime));
         foreach (CryptoOrder order in orderList)
         {
@@ -298,7 +298,8 @@ public class ExcelPositionDump(CryptoPosition position) : ExcelBase(position.Sym
         WriteCell(sheet, columns++, row, "Commission");
         WriteCell(sheet, columns++, row, "C. Asset");
 
-        List<CryptoTrade> tradelist = [.. position.Symbol.TradeList.Values];
+        //List<CryptoTrade> tradelist = [.. position.Symbol.TradeList.Values];
+        List<CryptoTrade> tradelist = [.. position.TradeAccount.TradeList.GetTradesForSymbol(position.Symbol).Values];
         tradelist.Sort((x, y) => x.TradeTime.CompareTo(y.TradeTime));
         foreach (CryptoTrade trade in tradelist)
         {

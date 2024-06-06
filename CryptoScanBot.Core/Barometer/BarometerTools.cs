@@ -13,11 +13,11 @@ public class BarometerTools
     private delegate bool CalcBarometerMethod(CryptoQuoteData quoteData, SortedList<string, CryptoSymbol> symbols, CryptoInterval interval, long unixCandleLast, out decimal barometerPerc);
 
 
-    private static CryptoSymbol? CheckSymbolPrecence(string baseName, CryptoQuoteData quoteData)
+    private static CryptoSymbol? CheckSymbolPrecence(string baseName, CryptoQuoteData? quoteData)
     {
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange? exchange))
         {
-            if (!exchange.SymbolListName.TryGetValue(baseName + quoteData.Name, out CryptoSymbol symbol))
+            if (!exchange.SymbolListName.TryGetValue(baseName + quoteData!.Name, out CryptoSymbol? symbol))
             {
                 using CryptoDatabase databaseThread = new();
                 databaseThread.Close();
@@ -62,7 +62,7 @@ public class BarometerTools
         for (int i = 0; i < quoteData.SymbolList.Count; i++) // een foreach variant met een ToList() kost extra cpu
         {
             CryptoSymbol symbol = quoteData.SymbolList[i];
-            if (symbol.CandleList.TryGetValue(unixCandlePrev, out CryptoCandle candlePrev) && symbol.CandleList.TryGetValue(unixCandleLast, out CryptoCandle candleLast))
+            if (symbol.CandleList.TryGetValue(unixCandlePrev, out CryptoCandle? candlePrev) && symbol.CandleList.TryGetValue(unixCandleLast, out CryptoCandle? candleLast))
             {
                 if (candlePrev != null && candleLast != null) // Er worden in kucoin null candles toegevoegd?
                 {
@@ -96,7 +96,7 @@ public class BarometerTools
         SortedList<long, CryptoCandle> candles = symbolInterval.CandleList;
 
         // Remove old candles (< 24 hours, 1440 candles)
-        long startFetchUnix = CandleIndicatorData.GetCandleFetchStart(bmSymbol, interval, DateTime.UtcNow);
+        long startFetchUnix = CandleIndicatorData.GetCandleFetchStart(bmSymbol, interval, GlobalData.GetCurrentDateTime());
         while (candles.Values.Count > 0)
         {
             CryptoCandle c = candles.Values[0];
@@ -119,7 +119,7 @@ public class BarometerTools
             if (candles.Values.Any())
                 periodStart = candles.Values.First().OpenTime;
             else
-                periodStart = CandleTools.GetUnixTime(DateTime.UtcNow.AddDays(-2), 60);
+                periodStart = CandleTools.GetUnixTime(GlobalData.GetCurrentDateTime().AddDays(-2), 60);
 
             symbolInterval.LastCandleSynchronized = periodStart;
         }
@@ -127,7 +127,7 @@ public class BarometerTools
 
         // De laatste candle die we moeten berekenen. Mogelijk 1 te hoog, wat "valse" waarden kan geven?
         // Dat kan opgelost worden door de laatst aangekomen candle mee te geven (vanuit de 1m stream)
-        long periodStop = CandleTools.GetUnixTime(DateTime.UtcNow, 60);
+        long periodStop = CandleTools.GetUnixTime(GlobalData.GetCurrentDateTime(), 60);
         //DateTime periodStopDebug = CandleTools.GetUnixDate(periodStop);
 
         // De opgegeven periode per minuut itereren
@@ -139,7 +139,7 @@ public class BarometerTools
             if (calcBarometerMethod(quoteData, bmSymbol.Exchange.SymbolListName, interval, periodStart, out decimal BarometerPerc))
             {
                 // De candle aanmaken of bijwerken
-                if (!candles.TryGetValue(periodStart, out CryptoCandle candle))
+                if (!candles.TryGetValue(periodStart, out CryptoCandle? candle))
                 {
                     candle = new CryptoCandle
                     {
@@ -215,7 +215,7 @@ public class BarometerTools
 
                 // Controleer of de prijs barometer symbol bestaat en berekenen
                 //GlobalData.AddTextToLogTab("Calculating price barometer chart " + baseCoin");
-                CryptoSymbol symbol = CheckSymbolPrecence(Constants.SymbolNameBarometerPrice, quoteData);
+                CryptoSymbol? symbol = CheckSymbolPrecence(Constants.SymbolNameBarometerPrice, quoteData);
                 if (symbol != null)
                 {
                     //Monitor.Enter(symbol.CandleList);

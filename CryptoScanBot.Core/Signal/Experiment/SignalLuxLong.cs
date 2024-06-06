@@ -83,8 +83,39 @@ public class SignalLuxLong : SignalSbmBaseLong
         }
 
 
+        if (!GetPrevCandle(CandleLast, out CryptoCandle? prevCandle))
+            return false;
+
         // ********************************************************************
-        // Flux
+        // Need some sign of recovery (weak)
+        if (CandleLast.CandleData.Rsi < prevCandle.CandleData.Rsi)
+        {
+            ExtraText = $"rsi {CandleLast.CandleData.Rsi} still decreasing";
+            return false;
+        }
+
+        // ********************************************************************
+        // Need some sign of recovery (weak)
+        if (CandleLast.CandleData.StochSignal < prevCandle.CandleData.StochSignal)
+        {
+            ExtraText = $"stoch {CandleLast.CandleData.Rsi} still decreasing";
+            return false;
+        }
+
+        // ********************************************************************
+        // the distance between ema5 and close needs to be as big as possible (weak)
+        // Begins to looks like the SBM method with distances, actually kind of interesting..
+        // ==> rubber bands methology & recovery signs
+        decimal percentage = 100 * (decimal)CandleLast.CandleData.Ema5 / CandleLast.Close;
+        if (percentage < 100.25m)
+        {
+            ExtraText = $"distance close and ema5 not ok {percentage:N2}";
+            return false;
+        }
+
+
+        // ********************************************************************
+        // Lux Algo indicator (but can be a long time on 100%)
         LuxIndicator.Calculate(Symbol, out int luxOverSold, out int _, CryptoIntervalPeriod.interval5m, CandleLast.OpenTime + Interval.Duration);
         if (luxOverSold < 100)
         {
@@ -92,7 +123,14 @@ public class SignalLuxLong : SignalSbmBaseLong
             return false;
         }
 
-        decimal percentage = 100 * (decimal)CandleLast.CandleData.Ema5 / CandleLast.Close;
+
+
+        // idea, geef de signaal af op het moment dat het van 100% naar < 100% gaat?
+
+
+
+
+        //percentage = 100 * (decimal)CandleLast.CandleData.Ema5 / CandleLast.Close;
         ExtraText = $"{percentage:N2}%";
         return true;
     }

@@ -212,9 +212,9 @@ public class ThreadTelegramBotInstance
             }
 
             string text = GlobalData.ExternalUrls.GetTradingAppName(GlobalData.Settings.General.TradingApp, signal.Exchange.Name);
-            (string Url, CryptoExternalUrlType Execute) refInfo = GlobalData.ExternalUrls.GetExternalRef(GlobalData.Settings.General.TradingApp, true, signal.Symbol, signal.Interval);
-            if (refInfo.Url != "")
-                builder.Append($" <a href='{refInfo.Url}'>{text}</a>");
+            (string Url, CryptoExternalUrlType Execute) = GlobalData.ExternalUrls.GetExternalRef(GlobalData.Settings.General.TradingApp, true, signal.Symbol, signal.Interval);
+            if (Url != "")
+                builder.Append($" <a href='{Url}'>{text}</a>");
             builder.AppendLine();
 
             builder.Append("Candle: open " + signal.Candle.Open.ToString0());
@@ -481,9 +481,9 @@ public class ThreadTelegramBotInstance
 
         //Remark: Isn't this the same code as CommandShowTrendInfo?
 
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange? exchange))
         {
-            if (exchange.SymbolListName.TryGetValue(symbolstr, out CryptoSymbol symbol))
+            if (exchange.SymbolListName.TryGetValue(symbolstr, out CryptoSymbol? symbol))
             {
                 int iterator = 0;
                 long percentageSum = 0;
@@ -533,7 +533,7 @@ public class ThreadTelegramBotInstance
         stringbuilder.AppendLine(string.Format("Barometer {0}", quote));
 
         // Even een quick fix voor de barometer
-        if (GlobalData.Settings.QuoteCoins.TryGetValue(quote, out CryptoQuoteData quoteData))
+        if (GlobalData.Settings.QuoteCoins.TryGetValue(quote, out CryptoQuoteData? quoteData))
         {
             for (CryptoIntervalPeriod interval = CryptoIntervalPeriod.interval5m; interval <= CryptoIntervalPeriod.interval1d; interval++)
             {
@@ -669,11 +669,11 @@ public class ThreadTelegramBotInstance
         //parameters = value.Split(',');
         var parameters = GlobalData.Settings.ShowSymbolInformation;
 
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange? exchange))
         {
             foreach (string symbolName in parameters)
             {
-                if (exchange.SymbolListName.TryGetValue(symbolName + "USDT", out CryptoSymbol symbol))
+                if (exchange.SymbolListName.TryGetValue(symbolName + "USDT", out CryptoSymbol? symbol))
                 {
                     if (symbol.LastPrice.HasValue)
                     {
@@ -798,7 +798,7 @@ public class ThreadTelegramBotInstance
                                             stringBuilder.AppendLine();
                                             CommandShowProfits(stringBuilder);
                                             stringBuilder.AppendLine();
-                                            Helper.ShowAssets(GlobalData.ActiveAccount, stringBuilder, out decimal _, out decimal _);
+                                            Helper.ShowAssets(GlobalData.ActiveAccount!, stringBuilder, out decimal _, out decimal _);
                                             stringBuilder.AppendLine();
                                             ShowCoins(command, stringBuilder);
                                         }
@@ -845,7 +845,7 @@ public class ThreadTelegramBotInstance
 #if TRADEBOT
                                         else if (command == "ASSETS")
                                         {
-                                            Helper.ShowAssets(GlobalData.ActiveAccount, stringBuilder, out decimal _, out decimal _);
+                                            Helper.ShowAssets(GlobalData.ActiveAccount!, stringBuilder, out decimal _, out decimal _);
                                         }
 #endif
                                         else if (command == "TREND")

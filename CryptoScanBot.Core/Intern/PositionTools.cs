@@ -16,7 +16,7 @@ public static class PositionTools
     /// <summary>
     /// Retourneer de part met id=x
     /// </summary>
-    public static CryptoPositionPart FindPositionPart(CryptoPosition position, int Id)
+    public static CryptoPositionPart? FindPositionPart(CryptoPosition position, int Id)
     {
         foreach (CryptoPositionPart part in position.Parts.Values.ToList())
         {
@@ -29,7 +29,7 @@ public static class PositionTools
     /// <summary>
     /// Retourneer een openstaande TP
     /// </summary>
-    public static CryptoPositionStep FindPositionPartStep(CryptoPositionPart part, CryptoOrderSide side, bool closed)
+    public static CryptoPositionStep? FindPositionPartStep(CryptoPositionPart part, CryptoOrderSide side, bool closed)
     {
         foreach (CryptoPositionStep step in part.Steps.Values.ToList())
         {
@@ -148,13 +148,13 @@ public static class PositionTools
     public static void AddPosition(CryptoTradeAccount tradeAccount, CryptoPosition position)
     {
         position.TradeAccount = tradeAccount;
-        if (GlobalData.ExchangeListId.TryGetValue(position.ExchangeId, out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListId.TryGetValue(position.ExchangeId, out Model.CryptoExchange? exchange))
         {
             position.Exchange = exchange;
-            if (exchange.SymbolListId.TryGetValue(position.SymbolId, out CryptoSymbol symbol))
+            if (exchange.SymbolListId.TryGetValue(position.SymbolId, out CryptoSymbol? symbol))
             {
                 position.Symbol = symbol;
-                if (GlobalData.IntervalListId.TryGetValue((int)position.IntervalId, out CryptoInterval interval))
+                if (GlobalData.IntervalListId.TryGetValue((int)position.IntervalId!, out CryptoInterval? interval))
                     position.Interval = interval;
 
                 tradeAccount.PositionList.TryAdd(symbol.Name, position);
@@ -195,7 +195,7 @@ public static class PositionTools
                 if (exchange.SymbolListId.TryGetValue(position.SymbolId, out CryptoSymbol? symbol))
                 {
                     position.Symbol = symbol;
-                    if (GlobalData.IntervalListId.TryGetValue((int)position.IntervalId, out CryptoInterval? interval))
+                    if (GlobalData.IntervalListId.TryGetValue((int)position.IntervalId!, out CryptoInterval? interval))
                         position.Interval = interval!;
 
                     GlobalData.PositionsClosed.Add(position);
@@ -228,7 +228,7 @@ public static class PositionTools
         string sql = string.Format("select * from positionpart where PositionId={0} order by Id", position.Id);
         foreach (CryptoPositionPart part in database.Connection.Query<CryptoPositionPart>(sql))
         {
-            if (part.IntervalId.HasValue && GlobalData.IntervalListId.TryGetValue((int)position.IntervalId, out CryptoInterval? interval))
+            if (part.IntervalId.HasValue && GlobalData.IntervalListId.TryGetValue((int)position.IntervalId!, out CryptoInterval? interval))
                part.Interval = interval!;
             AddPositionPart(position, part);
         }

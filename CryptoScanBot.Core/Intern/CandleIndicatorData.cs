@@ -85,7 +85,7 @@ public class CandleIndicatorData
     /// Make a list of candles up to firstCandleOpenTime with at least 260 candles.
     /// (target: ma200 for the last 60 minutes, but also the other indicators)
     /// </summary>
-    static public List<CryptoCandle> CalculateCandles(CryptoSymbol symbol, CryptoInterval interval, long firstCandleOpenTime, out string errorstr)
+    static public List<CryptoCandle>? CalculateCandles(CryptoSymbol symbol, CryptoInterval interval, long firstCandleOpenTime, out string errorstr)
     {
         CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
         SortedList<long, CryptoCandle> intervalCandles = symbolPeriod.CandleList;
@@ -115,14 +115,14 @@ public class CandleIndicatorData
         long candleEndTime = firstCandleOpenTime - firstCandleOpenTime % interval.Duration;
         long candleStartTime = candleEndTime - (maxCandles - 1) * interval.Duration;
 
-        CryptoCandle candleLast = null;
+        CryptoCandle? candleLast = null;
         long candleLoop = candleStartTime;
         while (candleLoop <= candleEndTime)
         {
 #if DEBUG
             DateTime candleLoopDate = CandleTools.GetUnixDate(candleLoop);
 #endif
-            if (intervalCandles.TryGetValue(candleLoop, out CryptoCandle candle))
+            if (intervalCandles.TryGetValue(candleLoop, out CryptoCandle? candle))
             {
                 //if (!candlesForHistory.ContainsKey(candle.OpenTime))
                 candlesForHistory.Add(candle);

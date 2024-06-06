@@ -203,7 +203,7 @@ public class ThreadLoadData
 
             // TODO: controleren of we de info van de juiste exchange halen (of juist bewust multi exchyange laten zien)
 
-            if (GlobalData.ExchangeListId.TryGetValue(GlobalData.Settings.General.ExchangeId, out Model.CryptoExchange exchange))
+            if (GlobalData.ExchangeListId.TryGetValue(GlobalData.Settings.General.ExchangeId, out Model.CryptoExchange? exchange))
             {
 
 
@@ -213,7 +213,7 @@ public class ThreadLoadData
                 // Alle symbols van de exchange halen en mergen met de ingelezen symbols.
                 // Via een event worden de muntparen in de userinterface gezet (dat duurt even)
                 //************************************************************************************
-                if (!exchange.LastTimeFetched.HasValue || exchange.LastTimeFetched?.AddHours(1) < DateTime.UtcNow)
+                if (!exchange.LastTimeFetched.HasValue || exchange.LastTimeFetched?.AddHours(1) < GlobalData.GetCurrentDateTime())
                     await ExchangeHelper.GetSymbolsAsync();
                 IndexQuoteDataSymbols(exchange);
 
@@ -346,12 +346,12 @@ public class ThreadLoadData
                 // (Dit moet overlappen met "achterstand bijwerken" want anders ontstaan er gaten)
                 // BUG/Probleem! na nieuwe munt of instellingen wordt dit niet opnieuw gedaan (herstart nodig)
                 //************************************************************************************
-                await ExchangeHelper.KLineTicker.StartAsync();
+                await ExchangeHelper.KLineTicker!.StartAsync();
 
                 //************************************************************************************
                 // Om het volume per symbol en laatste prijs te achterhalen
                 //************************************************************************************
-                await ExchangeHelper.PriceTicker.StartAsync();
+                await ExchangeHelper.PriceTicker!.StartAsync();
 
                 //************************************************************************************
                 // De (ontbrekende) candles downloaden (en de achterstand inhalen, blocking!)
@@ -364,7 +364,7 @@ public class ThreadLoadData
                 //************************************************************************************
                 // Nu we de achterstand ingehaald hebben kunnen/mogen we analyseren (signals maken)
                 //************************************************************************************
-                _ = Task.Run(GlobalData.ThreadMonitorCandle.Execute).ConfigureAwait(false);
+                _ = Task.Run(GlobalData.ThreadMonitorCandle!.Execute).ConfigureAwait(false);
 
 #if TRADEBOT
                 //************************************************************************************
@@ -373,11 +373,11 @@ public class ThreadLoadData
                 if (GlobalData.TradingApi.Key != "")
                 {
                     GlobalData.AddTextToLogTab("Starting task for handling orders");
-                    _ = Task.Run(async () => { await GlobalData.ThreadMonitorOrder.ExecuteAsync(); });
+                    _ = Task.Run(async () => { await GlobalData.ThreadMonitorOrder!.ExecuteAsync(); });
                 }
 
                 GlobalData.AddTextToLogTab("Starting task for checking positions");
-                _ = Task.Run(async () => { await GlobalData.ThreadDoubleCheckPosition.ExecuteAsync(); });
+                _ = Task.Run(async () => { await GlobalData.ThreadDoubleCheckPosition!.ExecuteAsync(); });
 
                 await TradeTools.CheckOpenPositions();
 
@@ -397,14 +397,14 @@ public class ThreadLoadData
                     //************************************************************************************
                     // Alle data van de exchange monitoren
                     //************************************************************************************
-                    _ = ExchangeHelper.UserTicker.StartAsync();
+                    _ = ExchangeHelper.UserTicker!.StartAsync();
 
 
                     //************************************************************************************              
                     // De assets van de exchange halen (overlappend met exchange monitoring om niets te missen)
                     // Via een event worden de assets in de userinterface gezet (dat duurt even)
                     //************************************************************************************
-                    await ExchangeHelper.GetAssetsAsync(GlobalData.ActiveAccount);
+                    await ExchangeHelper.GetAssetsAsync(GlobalData.ActiveAccount!);
                 }
 
                 // Toon de ingelezen posities

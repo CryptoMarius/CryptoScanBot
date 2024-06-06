@@ -218,7 +218,7 @@ public class SymbolTools
         // Zijn er slots beschikbaar?
 
         int slotsOccupied = 0;
-        if (tradeAccount.PositionList.TryGetValue(symbol.Name, out var position))
+        if (tradeAccount.PositionList.TryGetValue(symbol.Name, out _))
         {
             slotsOccupied++;
         }
@@ -320,16 +320,16 @@ public class SymbolTools
         // TODO: Probleem: De barometer is afhankelijk van alle symbols en wordt x seconden NA het minuut berekend
         // dat betekend dat de laatste candle (nog) niet aanwezig hoeft te zijn (en de candleOpenTime impliceert)
 
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange? exchange))
         {
-            if (exchange.SymbolListName.TryGetValue(Constants.SymbolNameBarometerPrice, out CryptoSymbol symbol))
+            if (exchange.SymbolListName.TryGetValue(Constants.SymbolNameBarometerPrice, out CryptoSymbol? symbol))
             {
                 CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-                if (symbolInterval.CandleList.TryGetValue(candleOpenTime, out CryptoCandle candle))
+                if (symbolInterval.CandleList.TryGetValue(candleOpenTime, out CryptoCandle? candle))
                 {
                     if (candle.CandleData == null)
                     {
-                        List<CryptoCandle> history = CandleIndicatorData.CalculateCandles(Symbol, Interval, candleOpenTime, out response);
+                        List<CryptoCandle>? history = CandleIndicatorData.CalculateCandles(Symbol, Interval, candleOpenTime, out response);
 
                         if (history == null)
                         {

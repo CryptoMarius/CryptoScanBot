@@ -195,12 +195,12 @@ public static class Helper
                 if (symbolInterval.CandleList.Count > 0)
                 {
                     int count = 7;
-                    CryptoCandle candle = symbolInterval.CandleList.Values.Last();
+                    CryptoCandle? candle = symbolInterval.CandleList.Values.Last();
                     while (count > 0)
                     {
                         if (candle.Volume < symbol.QuoteData.MinimalVolume)
                         {
-                            text = $"{symbol.Name} 10 day's volume not consistent above the minimum of {symbol.QuoteData.MinimalVolume.ToString0()}";
+                            text = $"{symbol.Name} volume in the last 7 day's not consistent above the minimum of {symbol.QuoteData.MinimalVolume.ToString0()}";
                             return false;
                         }
 
@@ -245,11 +245,11 @@ public static class Helper
     public static bool CheckBollingerBandsWidth(this CryptoCandle candle, double minValue, double maxValue)
     {
         double boundary = minValue;
-        if (boundary > 0 && candle.CandleData.BollingerBandsPercentage <= boundary)
+        if (boundary > 0 && candle.CandleData!.BollingerBandsPercentage <= boundary)
             return false;
 
         boundary = maxValue;
-        if (boundary > 0 && candle.CandleData.BollingerBandsPercentage >= boundary)
+        if (boundary > 0 && candle.CandleData!.BollingerBandsPercentage >= boundary)
             return false;
 
         return true;
@@ -264,7 +264,7 @@ public static class Helper
             value = candle.Low;
         else
             value = Math.Min(candle.Open, candle.Close);
-        double? band = candle.CandleData.Sma20 - candle.CandleData.BollingerBandsDeviation;
+        double? band = candle.CandleData!.Sma20 - candle.CandleData.BollingerBandsDeviation;
         if (value <= (decimal)band)
             return true;
         return false;
@@ -279,7 +279,7 @@ public static class Helper
             value = candle.High;
         else
             value = Math.Max(candle.Open, candle.Close);
-        double? band = candle.CandleData.Sma20 + candle.CandleData.BollingerBandsDeviation;
+        double? band = candle.CandleData!.Sma20 + candle.CandleData.BollingerBandsDeviation;
         if (value >= (decimal)band)
             return true;
         return false;
@@ -347,7 +347,7 @@ public static class Helper
         valueBtc = 0;
         valueUsdt = 0;
 
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange? exchange))
         {
             tradeAccount.AssetListSemaphore.Wait();
             {
@@ -366,7 +366,7 @@ public static class Helper
                                 stringBuilder.AppendLine(string.Format("{0} {1} Free={2}", asset.Name, asset.Total.ToString0(), asset.Free.ToString0()));
 
 
-                            CryptoSymbol symbol;
+                            CryptoSymbol? symbol;
                             if (asset.Name == "USDT")
                                 valueUsdt += asset.Total;
                             else if (exchange.SymbolListName.TryGetValue(asset.Name + "USDT", out symbol))

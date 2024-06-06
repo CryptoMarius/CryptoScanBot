@@ -45,9 +45,9 @@ public class SignalPSarRsiLong : SignalCreateBase
             return false;
         }
 
-        if (!GetPrevCandle(CandleLast, out CryptoCandle prevCandle))
+        if (!GetPrevCandle(CandleLast, out CryptoCandle? prevCandle))
             return false;
-        if (!GetPrevCandle(prevCandle, out CryptoCandle prevCandle2))
+        if (!GetPrevCandle(prevCandle, out CryptoCandle? prevCandle2))
             return false;
 
 

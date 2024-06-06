@@ -78,7 +78,7 @@ public static class CandleTools
         //DateTime candleOpenDate = CandleTools.GetUnixDate(candleOpenUnix); //ter debug want een unix date is onleesbaar
 
         // Altijd de candle maken als deze niet bestaat
-        if (!candles.TryGetValue(candleOpenUnix, out CryptoCandle candle))
+        if (!candles.TryGetValue(candleOpenUnix, out CryptoCandle? candle))
         {
             candle = new CryptoCandle();
             candles.Add(candleOpenUnix, candle);
@@ -135,7 +135,7 @@ public static class CandleTools
 #pragma warning disable CS0219 // Variable is assigned but its value is never used
         bool IsChanged = false; // nodig  voor SQL database
 #pragma warning restore CS0219 // Variable is assigned but its value is never used
-        if (!candlesHigherTimeFrame.TryGetValue(candleHigherTimeFrameOpenTime, out CryptoCandle candleNew))
+        if (!candlesHigherTimeFrame.TryGetValue(candleHigherTimeFrameOpenTime, out CryptoCandle? candleNew))
         {
             IsChanged = true;
             candleNew = new CryptoCandle()
@@ -160,7 +160,7 @@ public static class CandleTools
         // Itereer over de bron candles van start tot einde en 
         while (candleOpenUnixLoop < candleLowerTimeFrameCloseTime)
         {
-            if (candlesLowerTimeFrame.TryGetValue(candleOpenUnixLoop, out CryptoCandle candle))
+            if (candlesLowerTimeFrame.TryGetValue(candleOpenUnixLoop, out CryptoCandle? candle))
             {
                 candleCount--;
 
@@ -260,7 +260,7 @@ public static class CandleTools
 
             // Aanbieden voor analyse (dit gebeurd zowel in de ticker als ProcessCandles)
             if (!GlobalData.BackTest && GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
-                GlobalData.ThreadMonitorCandle.AddToQueue(symbol, candle);
+                GlobalData.ThreadMonitorCandle!.AddToQueue(symbol, candle);
         }
         finally
         {
@@ -321,7 +321,7 @@ public static class CandleTools
             var candles = symbolInterval.CandleList;
             if (candles.Count != 0)
             {
-                while (candles.TryGetValue((long)symbolInterval.LastCandleSynchronized, out CryptoCandle candle) && !candle.IsDuplicated)
+                while (candles.TryGetValue((long)symbolInterval.LastCandleSynchronized, out CryptoCandle? candle) && !candle.IsDuplicated)
                     symbolInterval.LastCandleSynchronized += interval.Duration;
             }
         }
@@ -429,14 +429,14 @@ public static class CandleTools
         }
     }
 
-    public static long StartOfIntervalCandle(CryptoInterval interval, long someUnixDate, bool fixFinalCandle)
+    public static long StartOfIntervalCandle(CryptoInterval interval, long someUnixDate) //, bool fixFinalCandle
     {
         long diff = someUnixDate % interval!.Duration;
         long lastCandleIntervalOpenTime = someUnixDate - diff;
         // The candle cannot be final if it has a remainder, go 1 back
         // (09:14 -> 09:05 because candle 09:10..09:14:59 cannot be finished)
-        if (fixFinalCandle && diff != 0)
-            lastCandleIntervalOpenTime -= interval.Duration;
+        //if (fixFinalCandle && diff != 0)
+        //    lastCandleIntervalOpenTime -= interval.Duration;
         return lastCandleIntervalOpenTime;
     }
 

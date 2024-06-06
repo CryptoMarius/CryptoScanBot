@@ -82,7 +82,7 @@ public static class ScannerSession
                 GlobalData.ThreadMonitorOrder = new ThreadMonitorOrder();
                 GlobalData.ThreadDoubleCheckPosition = new ThreadCheckFinishedPosition();
                 if (GlobalData.TradingApi.Key != "")
-                    _ = ExchangeHelper.UserTicker.StartAsync();
+                    _ = ExchangeHelper.UserTicker!.StartAsync();
 #endif
 #if BALANCING
         GlobalData.ThreadBalanceSymbols = new ThreadBalanceSymbols();
