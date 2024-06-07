@@ -510,6 +510,7 @@ public partial class FrmSettings : Form
         // Trade bot
         // --------------------------------------------------------------------------------
         settings.Trading.TradeVia = (CryptoTradeAccountType)EditTradeVia.SelectedValue;
+        settings.Trading.DisableNewPositions = EditDisableNewPositions.Checked;
         settings.General.SoundTradeNotification = EditSoundTradeNotification.Checked;
 
         // Logging
