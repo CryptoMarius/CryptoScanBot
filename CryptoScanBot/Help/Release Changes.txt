@@ -2,11 +2,12 @@ CryptoScanBot release historie:
 
 xx-xx-2024 1.9.3
 - Scanner - Er worden klines opgehaald van munten die slechts ~1 maand aanwezig zijn op de exchange (bybit spot)
-- Scanner - De volume controle over meerdere dagen uitvoeren waardoor er geen melding komt op een symbol met een tijdelijk hogere volume
+- Scanner - Extra instelling erbij om de volume controle over meerdere dagen uit te voeren waardoor er geen melding komt op een symbol met een (tijdelijk) hogere volume
 
-
+- Trading - De instelling "Geen nieuwe posities innemen" kon niet geconfigureerd worden
 - Trading - De profit percentage klopt niet (met name als de dust een hoog aantal is)
 - Trading - Instelling gemaakt om bestaande dust mee te nemen in een verkoop, deze staat standaard aan
+- Trading - Bij een niet gevulde entry limit order (met een timeout als gevolg) werdt de positie niet afgesloten
 - Trading - De instelling papertrading en traden op de exchange gecombineerd (actie: moet opnieuw ingesteld worden)
 - Trading - Een hele vracht met experimentele stategieen afgevoerd
 - Trading - Instelling voor papertrading of exchange trading is nu gecombineerd in 1 instelling

@@ -52,7 +52,6 @@ Scanner:
 
 
 Trading:
-******- Trading - Bij een niet gevulde entry limit order met een timeout wordt de positie niet gesloten
 - Trading - Documentatie bijwerken - Een klusje..
 - Trading - De laatste X posities dumpen naar Excel voor een overzichtje
 - Trading - Controle inbouwen op het short gaan, in futures kan dat, maar in spot lukt dat natuurlijk alleen als er assets beschikbaar zijn
