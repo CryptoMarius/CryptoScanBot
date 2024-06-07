@@ -101,7 +101,8 @@ public class PositionMonitor : IDisposable
         {
             step = null;
             percentage = 0;
-            reaction = "Geen 1e entry gevonden (1)";
+            //reaction = "Geen 1e entry gevonden (1)";
+            reaction = ""; // ignore
             return false;
         }
 
@@ -1100,7 +1101,7 @@ public class PositionMonitor : IDisposable
             // Plaats de entry order
             var exchangeApi = ExchangeHelper.GetExchangeInstance(GlobalData.Settings.General.ExchangeId);
             (bool result, TradeParams? tradeParams) result = await exchangeApi.PlaceOrder(Database,
-                position, part, position.Side, LastCandle1mCloseTimeDate,
+                position, part, LastCandle1mCloseTimeDate,
                 entryOrderType, entryOrderSide, entryQuantity, price, stop, limit);
             if (result.tradeParams is not null)
             {
@@ -1615,7 +1616,7 @@ public class PositionMonitor : IDisposable
         {
             // Always create a separate take profit part (if it didn't exist)
             takeProfitPart ??= PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.TakeProfit, position.Interval, 
-                position.Strategy, CryptoEntryOrProfitMethod.FixedPercentage, 0, GlobalData.GetCurrentDateTime());
+                position.Strategy, CryptoEntryOrProfitMethod.FixedPercentage, 0, GlobalData.GetCurrentDateTime(position.TradeAccount));
             CryptoPositionStep? takeProfitOrder = PositionTools.FindPositionPartStep(takeProfitPart, takeProfitOrderSide, false);
             
             decimal takeprofitPrice = CalculateTakeProfitPrice(position);
@@ -1790,8 +1791,8 @@ public class PositionMonitor : IDisposable
                     }
 
 
-                    // Remove old candles
-                    long startFetchUnix = CandleIndicatorData.GetCandleFetchStart(Symbol, interval, GlobalData.GetCurrentDateTime());
+                    // Remove old candles (not for backtest)
+                    long startFetchUnix = CandleIndicatorData.GetCandleFetchStart(Symbol, interval, DateTime.UtcNow);
                     DateTime startFetchUnixDate = CandleTools.GetUnixDate(startFetchUnix);
                     while (candles.Values.Any())
                     {
@@ -1871,7 +1872,6 @@ public class PositionMonitor : IDisposable
 
             if (GlobalData.ActiveAccount != null)
             {
-
                 // Simulate Trade indien openstaande orders gevuld zijn
                 //GlobalData.Logger.Info($"analyze.PaperTradingCheckOrders({Symbol.Name})");
                 if (GlobalData.ActiveAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
@@ -1885,10 +1885,8 @@ public class PositionMonitor : IDisposable
                     await CreateOrExtendPositionAsync();
 
                 // Check the positions
-                if (GlobalData.ActiveAccount.PositionList.TryGetValue(Symbol.Name, out var position))
-                {
-                    await GlobalData.ThreadDoubleCheckPosition!.AddToQueue(position);
-                }
+                if (GlobalData.ActiveAccount.PositionList.TryGetValue(Symbol.Name, out CryptoPosition? position))
+                    await GlobalData.ThreadDoubleCheckPosition!.AddToQueue(position!);
             }
 #endif
 

@@ -92,6 +92,8 @@ public class Emulator
     {
         try
         {
+            if (GlobalData.ActiveAccount.TradeAccountType != CryptoTradeAccountType.BackTest)
+                return;
 
 
             GlobalData.AddTextToLogTab($"Emulator {symbol.Name} started");
@@ -130,6 +132,8 @@ public class Emulator
 
             // todo: Restore afterwards!
             symbol.LastTradeDate = null;
+            GlobalData.ActiveAccount.Clear();
+            GlobalData.BackTestCandle = null;
             GlobalData.BackTestDateTime = start;
 
             // needs account (like position): Move declarations to account?
@@ -139,7 +143,6 @@ public class Emulator
 
             // slowest (interesting though)
             {
-                int showProgress = 0;
                 CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
                 foreach (CryptoCandle candle in symbolPeriod.CandleList.Values.ToList())
                 {
@@ -148,9 +151,9 @@ public class Emulator
                     if (candle.Date > end)
                         break;
 
-                    if (showProgress <= 0)
+                    if (candle.Date.Minute == 0)
                     {
-                        showProgress = 1220;
+                        // show some progress (quite minimal, but voila)
                         GlobalData.AddTextToLogTab($"Emulator execute {candle.Date}");
                     }
 
@@ -165,12 +168,13 @@ public class Emulator
                     symbol.AskPrice = candle.Close;
                     symbol.BidPrice = candle.Close;
 
+                    GlobalData.BackTestCandle = candle;
                     GlobalData.BackTestDateTime = CandleTools. GetUnixDate(candle.OpenTime + 60);
                     PositionMonitor positionMonitor = new(symbol, candle);
                     await positionMonitor.NewCandleArrivedAsync();
-                    showProgress--;
                 }
             }
+            GlobalData.BackTestCandle = null;
 
             // report something?
             GlobalData.AddTextToLogTab($"Emulator {symbol.Name} completed");

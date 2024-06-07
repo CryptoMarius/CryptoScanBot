@@ -77,10 +77,9 @@ public partial class FrmMain : Form
 #endif
 #if TRADEBOT
         MenuMain.AddSeperator();
-        ApplicationBackTestMode = MenuMain.AddCommand(null, "Test - Backtest mode (experimental)", Command.None, ApplicationBackTestMode_Click);
-        //ApplicationBackTestExec.Enabled = !GlobalData.BackTest;?
-        ApplicationBackTestExec = MenuMain.AddCommand(null, "Test - Backtest exec (experimental)", Command.None, BacktestToolStripMenuItem_Click);
-        ApplicationBackTestExec.Enabled = GlobalData.BackTest;
+        ApplicationBackTestMode = MenuMain.AddCommand(null, "Test - Backtest mode", Command.None, ApplicationBackTestMode_Click);
+        ApplicationBackTestExec = MenuMain.AddCommand(null, "Test - Backtest exec", Command.None, BacktestToolStripMenuItem_Click);
+        //ApplicationBackTestExec.Enabled = GlobalData.BackTest;
 #endif
 
         //Console.Write("Hello world 1");
@@ -912,133 +911,6 @@ public partial class FrmMain : Form
         GlobalData.Settings.Trading.Active = ApplicationTradingBot.Checked;
         GlobalData.SaveSettings();
     }
-
-
-    private void ApplicationBackTestMode_Click(object sender, EventArgs e)
-    {
-        ApplicationBackTestMode.Checked = !ApplicationBackTestMode.Checked;
-        if (ApplicationBackTestMode.Checked)
-        {
-            GlobalData.BackTest = true;
-            GlobalData.Settings.Trading.ActiveBackup = GlobalData.Settings.Trading.Active;
-            GlobalData.Settings.Trading.Active = true;
-        }
-        else
-        {
-            GlobalData.BackTest = false;
-            GlobalData.Settings.Trading.Active = GlobalData.Settings.Trading.ActiveBackup;
-        }
-        ApplicationTradingBot.Enabled = !GlobalData.BackTest;
-        ApplicationPlaySounds.Enabled = !GlobalData.BackTest;
-        ApplicationCreateSignals.Enabled = !GlobalData.BackTest;
-        ApplicationBackTestExec.Enabled = GlobalData.BackTest;
-
-        GlobalData.SaveSettings();
-        SetApplicationTitle();
-
-        GlobalData.SetTradingAccounts();
-        RefreshDataGrids();
-
-        // Resume scanner session, fill missing information
-        if (!GlobalData.BackTest)
-            ToolStripMenuItemRefresh_Click_1(null, null);
-    }
-
-
-    private async void BacktestToolStripMenuItem_Click(object sender, EventArgs e)
-    {
-        /// TODO: Deze code verhuizen naar aparte class of het dialoog zelf?
-        /// Probleem: Door recente aanpassingen lopen de meldingen en accounts 
-        /// allemaal door elkaar (misschien een extra tabsheet met de resultaten?)
-        /// (waarschijnlijk werkt het niets eens meer! was tijdelijk experiment)
-
-        try
-        {
-            AskSymbolDialog form = new()
-            {
-                StartPosition = FormStartPosition.CenterParent
-            };
-            if (form.ShowDialog() == DialogResult.OK)
-            {
-                GlobalData.SaveSettings();
-
-                if (!GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange exchange))
-                {
-                    MessageBox.Show("Exchange bestaat niet");
-                    return;
-                }
-
-                // Bestaat de coin? (uiteraard, net geladen)
-                if (!exchange.SymbolListName.TryGetValue(GlobalData.Settings.BackTest.BackTestSymbol, out CryptoSymbol symbol))
-                {
-                    MessageBox.Show("Symbol bestaat niet");
-                    return;
-                }
-
-                //CryptoInterval interval = null;
-                ////CryptoInterval interval = GlobalData.IntervalList => (Name == GlobalData.Settings.BackTestInterval); ???
-                //foreach (CryptoInterval intervalX in GlobalData.IntervalList)
-                //{
-                //    if (intervalX.Name == GlobalData.Settings.BackTest.BackTestInterval)
-                //    {
-                //        interval = intervalX;
-                //        break;
-                //    }
-                //}
-                //if (interval == null)
-                //{
-                //    MessageBox.Show("Interval bestaat niet");
-                //    return;
-                //}
-
-                //long unix = CandleTools.GetUnixTime(GlobalData.Settings.BackTest.BackTestTime, interval.Duration);
-                //if (!symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList.TryGetValue(unix, out CryptoCandle candle))
-                //{
-                //    MessageBox.Show("Candle bestaat niet");
-                //    return;
-                //}
-
-                //long einde = candle.OpenTime;
-                //long start = einde - 2 * 60 * interval.Duration;
-                //foreach (CryptoTradeSide side in Enum.GetValues(typeof(CryptoTradeSide))) // niet efficient meer?
-                //{
-                //    SignalCreate createSignal = new(symbol, interval, side, start + interval.Duration);
-                //    while (start <= einde)
-                //    {
-                //        if (symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList.TryGetValue(start, out candle))
-                //        {
-                //            if (createSignal.Prepare(start))
-                //            {
-                //                // todo, configuratie short/long
-                //                SignalCreateBase algorithm = SignalHelper.GetSignalAlgorithm(CryptoTradeSide.Long, GlobalData.Settings.BackTest.BackTestAlgoritm, symbol, interval, candle);
-                //                if (algorithm != null)
-                //                {
-                //                    if (algorithm.IndicatorsOkay(candle) && algorithm.IsSignal())
-                //                    {
-                //                        //createSignal.PrepareAndSendSignal(algorithm);
-                //                        algorithm.ExtraText = "Signal!";
-                //                    }
-                //                    //candle.ExtraText = algorithm.ExtraText;
-                //                }
-                //            }
-                //        }
-                //        start += interval.Duration;
-                //    }
-
-                //    BackTestExcel backTestExcel = new(symbol, createSignal.history);
-                //    backTestExcel.ExportToExcell(GlobalData.Settings.BackTest.BackTestAlgoritm);
-                //}
-
-                await BackTestAsync();
-            }
-        }
-        catch (Exception error)
-        {
-            ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab("ERROR settings " + error.ToString());
-        }
-
-    }
 #endif
 
 
@@ -1254,19 +1126,98 @@ public partial class FrmMain : Form
     }
 
 #if TRADEBOT
-    public Task BackTestAsync()
+    private void ApplicationBackTestMode_Click(object sender, EventArgs e)
     {
-        if (!GlobalData.Settings.General.Exchange.SymbolListName.TryGetValue(GlobalData.Settings.BackTest.BackTestSymbol, out CryptoSymbol symbol))
-            return Task.CompletedTask;
+        ApplicationBackTestMode.Checked = !ApplicationBackTestMode.Checked;
+        if (ApplicationBackTestMode.Checked)
+        {
+            GlobalData.BackTest = true;
+            GlobalData.BackTestDateTime = GlobalData.Settings.BackTest.BackTestStartTime;
+            GlobalData.Settings.Trading.ActiveBackup = GlobalData.Settings.Trading.Active;
+            GlobalData.Settings.Trading.Active = true;
+        }
+        else
+        {
+            GlobalData.BackTest = false;
+            GlobalData.Settings.Trading.Active = GlobalData.Settings.Trading.ActiveBackup;
+        }
+        ApplicationTradingBot.Enabled = !GlobalData.BackTest;
+        ApplicationPlaySounds.Enabled = !GlobalData.BackTest;
+        ApplicationCreateSignals.Enabled = !GlobalData.BackTest;
+        ApplicationBackTestExec.Enabled = GlobalData.BackTest;
+
+        GlobalData.SaveSettings();
+        SetApplicationTitle();
+
+        GlobalData.SetTradingAccounts();
+        RefreshDataGrids();
+
+        // Resume scanner session, fill missing information
+        if (!GlobalData.BackTest)
+            ToolStripMenuItemRefresh_Click_1(null, null);
+    }
+
+    private async void BacktestToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+        /// TODO: Deze code verhuizen naar aparte class of het dialoog zelf?
+        /// Probleem: Door recente aanpassingen lopen de meldingen en accounts 
+        /// allemaal door elkaar (misschien een extra tabsheet met de resultaten?)
+        /// (waarschijnlijk werkt het niets eens meer! was tijdelijk experiment)
+
+        try
+        {
+            AskSymbolDialog form = new()
+            {
+                StartPosition = FormStartPosition.CenterParent
+            };
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                GlobalData.SaveSettings();
+
+                if (!GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange exchange))
+                {
+                    MessageBox.Show("Exchange bestaat niet");
+                    return;
+                }
+
+                // Bestaat de coin? (uiteraard, net geladen)
+                if (!exchange.SymbolListName.TryGetValue(GlobalData.Settings.BackTest.BackTestSymbol, out CryptoSymbol symbol))
+                {
+                    MessageBox.Show("Symbol bestaat niet");
+                    return;
+                }
+
+                if (!GlobalData.BackTest)
+                    ApplicationBackTestMode_Click(null, null);
+
+                BackTestAsync();
+            }
+        }
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Error(error, "");
+            GlobalData.AddTextToLogTab("ERROR settings " + error.ToString());
+        }
+
+    }
+
+    public void BackTestAsync()
+    {
         if (!GlobalData.Settings.General.Exchange.SymbolListName.TryGetValue("BTCUSDT", out CryptoSymbol btcSymbol))
-            return Task.CompletedTask;
+            return;
+        if (!GlobalData.Settings.General.Exchange.SymbolListName.TryGetValue(GlobalData.Settings.BackTest.BackTestSymbol, out CryptoSymbol symbol))
+            return;
 
         MainMenuClearAll_Click(null, null);
         Emulator.DeletePreviousData();
         RefreshDataGrids();
         
-        var _ = Task.Run(async () => { await Emulator.Execute(btcSymbol, symbol); });
-        return Task.CompletedTask;
+        var _ = Task.Run(async () => { 
+            await Emulator.Execute(btcSymbol, symbol);
+            PositionsHaveChangedEvent("");
+            RefreshDataGrids();
+        });
+        return;
     }
 #endif
 

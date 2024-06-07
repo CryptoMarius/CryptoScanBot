@@ -40,11 +40,11 @@ public class AssetTools
 
 
         // Niet bij iedere keer de assets verversen (hammering) - difficult when not to refresh.. not to repeat the same action..
-        if (forceRefresh || tradeAccount.LastRefreshAssets == null || tradeAccount.LastRefreshAssets?.AddMinutes(1) < GlobalData.GetCurrentDateTime())
+        if (forceRefresh || tradeAccount.LastRefreshAssets == null || tradeAccount.LastRefreshAssets?.AddMinutes(1) < GlobalData.GetCurrentDateTime(tradeAccount))
         {
             // De assets verversen (optioneel adhv account)
             await ExchangeHelper.GetAssetsAsync(tradeAccount);
-            tradeAccount.LastRefreshAssets = GlobalData.GetCurrentDateTime();
+            tradeAccount.LastRefreshAssets = GlobalData.GetCurrentDateTime(tradeAccount);
         }
 
         // okay

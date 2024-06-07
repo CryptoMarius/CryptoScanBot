@@ -548,7 +548,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
 
             // De positie uitbreiden nalv een nieuw signaal (de xe bijkoop wordt altijd een aparte DCA)
             PositionTools.ExtendPosition(databaseThread, position, CryptoPartPurpose.Dca, position.Interval, position.Strategy,
-                CryptoEntryOrProfitMethod.FixedPercentage, price, DateTime.UtcNow, true);
+                CryptoEntryOrProfitMethod.FixedPercentage, price, GlobalData.GetCurrentDateTime(position.TradeAccount), true);
             GlobalData.AddTextToLogTab($"{position.Symbol.Name} handmatig een DCA toegevoegd aan positie {position.Id}");
 
             //FillItemOpen(position, item);

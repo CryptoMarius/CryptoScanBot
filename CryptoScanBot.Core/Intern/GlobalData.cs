@@ -50,14 +50,16 @@ static public class GlobalData
     public static bool ApplicationIsClosing { get; set; } = false;
 
     // Emulator kan alleen de backTest zetten (anders gaan er onverwachte zaken naar de database enzo)
-    // (staat op de nominatie om te vervallen dmv de Settings.Trading.TradeVia == BackTest)
+    // (staat op de nominatie om te vervallen dmv de Trading.TradeVia == BackTest of GlobalData.ActiveAccount)
+    // todo cleanup? (more and more properties voor backtest for the candle and candle.Close date)
     public static bool BackTest { get; set; }
     public static DateTime BackTestDateTime { get; set; }
+    public static CryptoCandle? BackTestCandle { get; set; }
 
-    public static DateTime GetCurrentDateTime()
+    public static DateTime GetCurrentDateTime(CryptoTradeAccount account)
     {
-        if (BackTest)
-            return BackTestDateTime;
+        if (account.TradeAccountType == CryptoTradeAccountType.BackTest)
+            return BackTestDateTime; // or BackTestCandle.Date + 1 minute
         else
             return DateTime.UtcNow;
     }

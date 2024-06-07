@@ -76,7 +76,7 @@ public class ThreadCheckFinishedPosition
             {
                 // Geef de exchange en de aansturende code de kans om de administratie af te ronden
                 // We wachten hier dus bewust voor de zekerheid een redelijk lange periode.
-                if (!GlobalData.BackTest && position.DelayUntil.HasValue && position.DelayUntil.Value >= GlobalData.GetCurrentDateTime())
+                if (!GlobalData.BackTest && position.DelayUntil.HasValue && position.DelayUntil.Value >= GlobalData.GetCurrentDateTime(position.TradeAccount))
                 {
                     //ScannerLog.Logger.Trace($"ThreadDoubleCheckPosition.Execute: Positie {position.Symbol.Name} delay {position.Status} check={position.ForceCheckPosition} {position.DelayUntil} {reason}");
                     await AddToQueue(position, orderId, status); // opnieuw, na een vertraging
@@ -152,13 +152,13 @@ public class ThreadCheckFinishedPosition
                                 string cancelReason = $"annuleren";
                                 ScannerLog.Logger.Trace($"ThreadDoubleCheckPosition.Execute: {cancelReason}");
                                 var (succes, tradeParams) = await TradeTools.CancelOrder(database, position, part, step,
-                                    GlobalData.GetCurrentDateTime(), CryptoOrderStatus.PositionClosed, cancelReason);
+                                    GlobalData.GetCurrentDateTime(position.TradeAccount), CryptoOrderStatus.PositionClosed, cancelReason);
                                 if (!succes)
                                 {
                                     ScannerLog.Logger.Trace($"ThreadDoubleCheckPosition.Execute: {cancelReason} mislukt");
                                     ExchangeBase.Dump(position, succes, tradeParams, "DCA ORDER ANNULEREN NIET IN 1x GELUKT!!! (herkansing)");
                                     position.ForceCheckPosition = true;
-                                    position.DelayUntil = GlobalData.GetCurrentDateTime().AddSeconds(10);
+                                    position.DelayUntil = GlobalData.GetCurrentDateTime(position.TradeAccount).AddSeconds(10);
                                     await AddToQueue(position); // doe nog maar een keer... Endless loop?
                                     removePosition = false;
                                 }
@@ -193,7 +193,10 @@ public class ThreadCheckFinishedPosition
                         Monitor.Enter(position.Symbol.CandleList);
                         try
                         {
-                            lastCandle1m = symbolPeriod.CandleList.Values.Last();
+                            if (GlobalData.BackTest)
+                                lastCandle1m = GlobalData.BackTestCandle;
+                            else
+                                lastCandle1m = symbolPeriod.CandleList.Values.Last();
                         }
                         finally
                         {

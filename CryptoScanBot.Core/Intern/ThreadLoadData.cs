@@ -213,7 +213,7 @@ public class ThreadLoadData
                 // Alle symbols van de exchange halen en mergen met de ingelezen symbols.
                 // Via een event worden de muntparen in de userinterface gezet (dat duurt even)
                 //************************************************************************************
-                if (!exchange.LastTimeFetched.HasValue || exchange.LastTimeFetched?.AddHours(1) < GlobalData.GetCurrentDateTime())
+                if (!exchange.LastTimeFetched.HasValue || exchange.LastTimeFetched?.AddHours(1) < DateTime.UtcNow)
                     await ExchangeHelper.GetSymbolsAsync();
                 IndexQuoteDataSymbols(exchange);
 

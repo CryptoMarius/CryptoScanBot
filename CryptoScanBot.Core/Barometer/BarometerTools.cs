@@ -96,13 +96,16 @@ public class BarometerTools
         SortedList<long, CryptoCandle> candles = symbolInterval.CandleList;
 
         // Remove old candles (< 24 hours, 1440 candles)
-        long startFetchUnix = CandleIndicatorData.GetCandleFetchStart(bmSymbol, interval, GlobalData.GetCurrentDateTime());
-        while (candles.Values.Count > 0)
+        if (!GlobalData.BackTest)
         {
-            CryptoCandle c = candles.Values[0];
-            if (c.OpenTime < startFetchUnix)
-                candles.Remove(c.OpenTime);
-            else break;
+            long startFetchUnix = CandleIndicatorData.GetCandleFetchStart(bmSymbol, interval, DateTime.UtcNow);
+            while (candles.Values.Count > 0)
+            {
+                CryptoCandle c = candles.Values[0];
+                if (c.OpenTime < startFetchUnix)
+                    candles.Remove(c.OpenTime);
+                else break;
+            }
         }
 
 
@@ -119,7 +122,7 @@ public class BarometerTools
             if (candles.Values.Any())
                 periodStart = candles.Values.First().OpenTime;
             else
-                periodStart = CandleTools.GetUnixTime(GlobalData.GetCurrentDateTime().AddDays(-2), 60);
+                periodStart = CandleTools.GetUnixTime(DateTime.UtcNow.AddDays(-2), 60); // GlobalData.GetCurrentDateTime(position.TradeAccount) oeps
 
             symbolInterval.LastCandleSynchronized = periodStart;
         }
@@ -127,7 +130,7 @@ public class BarometerTools
 
         // De laatste candle die we moeten berekenen. Mogelijk 1 te hoog, wat "valse" waarden kan geven?
         // Dat kan opgelost worden door de laatst aangekomen candle mee te geven (vanuit de 1m stream)
-        long periodStop = CandleTools.GetUnixTime(GlobalData.GetCurrentDateTime(), 60);
+        long periodStop = CandleTools.GetUnixTime(DateTime.UtcNow, 60); // GlobalData.GetCurrentDateTime(position.TradeAccount) oeps
         //DateTime periodStopDebug = CandleTools.GetUnixDate(periodStop);
 
         // De opgegeven periode per minuut itereren
@@ -191,7 +194,6 @@ public class BarometerTools
                 interval.IntervalPeriod == CryptoIntervalPeriod.interval4h ||
                 interval.IntervalPeriod >= CryptoIntervalPeriod.interval1d)
             {
-                //if (interval.IntervalPeriod == CryptoIntervalPeriod.interval1h)
                 //GlobalData.AddTextToLogTab("Calculating barometer chart " + bmSymbol.Name + " " + interval.Name);
                 CalculateBarometerInternal(symbol, interval, quoteData, calcBarometerMethod, pricebarometer);
             }

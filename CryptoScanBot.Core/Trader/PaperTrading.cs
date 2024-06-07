@@ -133,7 +133,7 @@ public class PaperTrading
                 foreach (var (part, step) in indexList.Values)
                 {
                     long from = CandleTools.GetUnixTime(step.CreateTime, 60) + 60;
-                    long limit = CandleTools.GetUnixTime(GlobalData.GetCurrentDateTime(), 60);
+                    long limit = CandleTools.GetUnixTime(GlobalData.GetCurrentDateTime(tradeAccount), 60);
                     while (from < limit)
                     {
                         // Eventueel missende candles hebben op deze manier geen impact
