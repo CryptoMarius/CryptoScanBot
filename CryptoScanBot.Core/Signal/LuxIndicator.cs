@@ -176,17 +176,17 @@ public class LuxIndicator
     {
         CalculateNew(symbol, out luxOverSold, out luxOverBought, cryptoIntervalPeriod, lastOpenTime);
 
-        // Debug, are old have the samen results?
-        CalculateOld(symbol, out int luxOverSold2, out int luxOverBought2);
+        //// Debug, same results for old and new? No?
+        //CalculateOld(symbol, out int luxOverSold2, out int luxOverBought2);
 
 
-        if (luxOverSold != luxOverSold2 || luxOverBought != luxOverBought2)
-        {
-            CalculateOld(symbol, out luxOverSold2, out luxOverBought2);
-            GlobalData.AddTextToLogTab($"LuxIndicator.CalculateOld {luxOverSold2} {luxOverBought2}");
+        //if (luxOverSold != luxOverSold2 || luxOverBought != luxOverBought2)
+        //{
+        //    CalculateOld(symbol, out luxOverSold2, out luxOverBought2);
+        //    GlobalData.AddTextToLogTab($"LuxIndicator.CalculateOld {luxOverSold2} {luxOverBought2}");
             
-            CalculateNew(symbol, out luxOverSold, out luxOverBought, cryptoIntervalPeriod, lastOpenTime);
-            GlobalData.AddTextToLogTab($"LuxIndicator.CalculateNew {luxOverSold} {luxOverBought}");
-        }
+        //    CalculateNew(symbol, out luxOverSold, out luxOverBought, cryptoIntervalPeriod, lastOpenTime);
+        //    GlobalData.AddTextToLogTab($"LuxIndicator.CalculateNew {luxOverSold} {luxOverBought}");
+        //}
     }
 }
