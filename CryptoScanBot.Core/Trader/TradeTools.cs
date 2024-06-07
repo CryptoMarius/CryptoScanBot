@@ -585,7 +585,7 @@ public class TradeTools
             CalculateProfitAndBreakEvenPrice(position);
 
             if (lastDateTime == null)
-                lastDateTime = GlobalData.GetCurrentDateTime();
+                lastDateTime = GlobalData.GetCurrentDateTime(position.TradeAccount);
 
             // Er is in geinvesteerd en dus moet de positie ten minste actief zijn
             if (position.Quantity != 0 && position.Status == CryptoPositionStatus.Waiting)
@@ -661,7 +661,7 @@ public class TradeTools
             if (markedAsReady)
             {
                 position.ForceCheckPosition = true;
-                position.DelayUntil = GlobalData.GetCurrentDateTime().AddSeconds(10);
+                position.DelayUntil = GlobalData.GetCurrentDateTime(position.TradeAccount).AddSeconds(10);
                 await GlobalData.ThreadDoubleCheckPosition!.AddToQueue(position);
             }
         }
@@ -817,7 +817,7 @@ public class TradeTools
 
         (bool result, TradeParams? tradeParams) result;
         var exchangeApi = ExchangeHelper.GetExchangeInstance(GlobalData.Settings.General.ExchangeId);
-        result = await exchangeApi.PlaceOrder(database, position, part, position.Side, currentTime,
+        result = await exchangeApi.PlaceOrder(database, position, part, currentTime,
             CryptoOrderType.Limit, takeProfitOrderSide, takeProfitQuantity, takeProfitPrice, null, null);
 
         if (result.tradeParams is not null)

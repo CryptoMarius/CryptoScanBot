@@ -189,7 +189,7 @@ public class Api : ExchangeBase
     //    CryptoOrderType orderType, CryptoOrderSide orderSide,
     //    decimal quantity, decimal price, decimal? stop, decimal? limit)
     public override async Task<(bool result, TradeParams? tradeParams)> PlaceOrder(CryptoDatabase database,
-        CryptoPosition position, CryptoPositionPart part, CryptoTradeSide tradeSide, DateTime currentDate,
+        CryptoPosition position, CryptoPositionPart part, DateTime currentDate,
         CryptoOrderType orderType, CryptoOrderSide orderSide,
         decimal quantity, decimal price, decimal? stop, decimal? limit)
     {

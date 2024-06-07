@@ -29,7 +29,7 @@ public abstract class ExchangeBase
 
     public abstract Task<(bool succes, TradeParams tradeParams)> Cancel(CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step);
     public abstract Task<(bool result, TradeParams? tradeParams)> PlaceOrder(CryptoDatabase database,
-        CryptoPosition position, CryptoPositionPart part, CryptoTradeSide tradeSide, DateTime currentDate,
+        CryptoPosition position, CryptoPositionPart part, DateTime currentDate,
         CryptoOrderType orderType, CryptoOrderSide orderSide,
         decimal quantity, decimal price, decimal? stop, decimal? limit);
 

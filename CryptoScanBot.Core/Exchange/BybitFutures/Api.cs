@@ -161,7 +161,7 @@ public class Api : ExchangeBase
 
 
     public override async Task<(bool result, TradeParams? tradeParams)> PlaceOrder(CryptoDatabase database,
-        CryptoPosition position, CryptoPositionPart part, CryptoTradeSide tradeSide, DateTime currentDate,
+        CryptoPosition position, CryptoPositionPart part, DateTime currentDate,
         CryptoOrderType orderType, CryptoOrderSide orderSide,
         decimal quantity, decimal price, decimal? stop, decimal? limit)
     {
@@ -242,9 +242,9 @@ public class Api : ExchangeBase
                 {
                     // Even tijdelijk (kan ook alleen maar op deze plek als je weet dat we ALLEEN long gaan!)
                     bool reduce = false;
-                    if (tradeSide == CryptoTradeSide.Long && orderSide == CryptoOrderSide.Sell)
+                    if (position.Side == CryptoTradeSide.Long && orderSide == CryptoOrderSide.Sell)
                         reduce = true;
-                    if (tradeSide == CryptoTradeSide.Short && orderSide == CryptoOrderSide.Buy)
+                    if (position.Side == CryptoTradeSide.Short && orderSide == CryptoOrderSide.Buy)
                         reduce = true;
 
                     result = await client.V5Api.Trading.PlaceOrderAsync(Category, position.Symbol.Name, side, 
