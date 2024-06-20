@@ -147,7 +147,7 @@ public class TestBase
         database.Connection.Execute($"delete from [Order]");
         database.Connection.Execute($"delete from [Trade]");
 
-        GlobalData.ActiveAccount?.Clear();
+        GlobalData.ActiveAccount?.Data.Clear();
     }
 
 }

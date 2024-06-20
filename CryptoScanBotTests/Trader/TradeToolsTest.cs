@@ -27,7 +27,7 @@ public class TradeToolsTest : TestBase
         DateTime startTime = DateTime.UtcNow.AddHours(-48);
 
         GlobalData.Settings.Trading.GlobalBuyCooldownTime = 10;
-        GlobalData.Settings.Trading.SellMethod = CryptoSellMethod.FixedPercentage;
+        GlobalData.Settings.Trading.TakeProfitStrategy = CryptoTakeProfitStrategy.FixedPercentage;
         GlobalData.Settings.Trading.ProfitPercentage = 1m;
 
 
@@ -51,15 +51,15 @@ public class TradeToolsTest : TestBase
         CryptoPosition position = PositionTools.CreatePosition(GlobalData.ActiveAccount!, symbol, CryptoSignalStrategy.Stobb, 
             CryptoTradeSide.Long, symbol.IntervalPeriodList[0], lastCandle1mCloseTimeDate);
         database.Connection.Insert<CryptoPosition>(position);
-        position.TradeAccount.PositionList.Add(symbol.Name, position);
+        position.Account.Data.PositionList.Add(symbol.Name, position);
 
         CryptoOrderSide takeProfitOrderSide = position.GetTakeProfitOrderSide();
 
         // Dit wordt een rommeltje, in aparte routines afsplitsen?
 
         CryptoPositionPart entryPart = PositionTools.ExtendPosition(database, position, CryptoPartPurpose.Entry, GlobalData.IntervalList[0], 
-            CryptoSignalStrategy.Stobb, CryptoEntryOrProfitMethod.AfterNextSignal, tradeParams.Price, lastCandle1mCloseTimeDate);
-        if (position.Parts.Count != 1)
+            CryptoSignalStrategy.Stobb, CryptoEntryOrDcaStrategy.AfterNextSignal, tradeParams.Price, lastCandle1mCloseTimeDate);
+        if (position.PartList.Count != 1)
             Assert.Fail("Geen entry gemaakt");
 
         CryptoPositionStep step = PositionTools.CreatePositionStep(position, entryPart, tradeParams, CryptoTrailing.None);
@@ -71,7 +71,7 @@ public class TradeToolsTest : TestBase
         position.EntryAmount = tradeParams.QuoteQuantity;
         database.Connection.Update<CryptoPosition>(position);
 
-        if (entryPart.Steps.Count != 1)
+        if (entryPart.StepList.Count != 1)
             Assert.Fail("Geen entry order gemaakt");
 
         // probleem, deze gaat rechtstreeks door naar andere routines (teveel verweven)
@@ -103,13 +103,13 @@ public class TradeToolsTest : TestBase
 
         task = Task.Run(() =>
         {
-            PositionMonitor positionMonitor = new(position.Symbol, lastCandle);
+            PositionMonitor positionMonitor = new(position.Account, position.Symbol, lastCandle);
             _ = positionMonitor.CheckThePosition(position);
         });
         task.Wait();
 
 
-        if (entryPart.Steps.Count != 2)
+        if (entryPart.StepList.Count != 2)
             Assert.Fail("Geen tp order gemaakt");
 
         // De sell veranderd niets, maar blijft alles wel hetzelfde?
@@ -132,12 +132,12 @@ public class TradeToolsTest : TestBase
 
         task = Task.Run(() =>
         {
-            PositionMonitor positionMonitor = new(position.Symbol, lastCandle);
+            PositionMonitor positionMonitor = new(position.Account, position.Symbol, lastCandle);
             _ = positionMonitor.CheckThePosition(position);
         });
         task.Wait();
 
-        if (position.Parts.Count != 2)
+        if (position.PartList.Count != 2)
             Assert.Fail("Geen dca gemaakt");
 
         // Check, of het wel zoveel % lager is (wat is die standaard percentage eigenlijk?)
@@ -152,8 +152,8 @@ public class TradeToolsTest : TestBase
         // *********************************************************************************************
         // ********************************** DCA 1 filled *********************************************
         // *********************************************************************************************
-        CryptoPositionPart dca1Part = position.Parts.Values.Last();
-        CryptoPositionStep dca1Step = dca1Part.Steps.Values.Last();
+        CryptoPositionPart dca1Part = position.PartList.Values.Last();
+        CryptoPositionStep dca1Step = dca1Part.StepList.Values.Last();
         lastCandle = GenerateCandles(symbol, ref startTime, 20, dca1Step.Price);
         lastCandle1mCloseTimeDate = lastCandle.Date.AddMinutes(1);
         tradeParams = CreateTradeParams(database, startTime, CryptoOrderSide.Buy, CryptoOrderType.Market, dca1Step.Price, dca1Step.Quantity);
@@ -181,15 +181,15 @@ public class TradeToolsTest : TestBase
 
         task = Task.Run(() =>
         {
-            PositionMonitor positionMonitor = new(position.Symbol, lastCandle);
+            PositionMonitor positionMonitor = new(position.Account, position.Symbol, lastCandle);
             _ = positionMonitor.CheckThePosition(position);
         });
         task.Wait();
 
 
-        if (entryPart.Steps.Count != 3)
+        if (entryPart.StepList.Count != 3)
             Assert.Fail("Geen tp order gemaakt");
-        if (dca1Part.Steps.Count != 2)
+        if (dca1Part.StepList.Count != 2)
             Assert.Fail("Geen tp order gemaakt");
 
         // De sell veranderd niets, maar blijft alles wel hetzelfde?
@@ -216,14 +216,14 @@ public class TradeToolsTest : TestBase
 
             task = Task.Run(() =>
             {
-                PositionMonitor positionMonitor = new(position.Symbol, lastCandle);
+                PositionMonitor positionMonitor = new(position.Account, position.Symbol, lastCandle);
                 _ = positionMonitor.CheckThePosition(position);
             });
             task.Wait();
 
-            if (entryPart.Steps.Count != 3)
+            if (entryPart.StepList.Count != 3)
                 Assert.Fail("Geen tp order gemaakt");
-            if (dca1Part.Steps.Count != 2)
+            if (dca1Part.StepList.Count != 2)
                 Assert.Fail("Geen tp order gemaakt");
 
             // De sell veranderd niets, maar blijft alles wel hetzelfde?
