@@ -37,7 +37,6 @@ using System;
 using System.Security.Cryptography.Xml;
 using System.Transactions;
 using CryptoExchange.Net.Authentication;
-using CryptoScanBot.Core.Exchange.BinanceSpot;
 using Font = System.Drawing.Font;
 using CryptoScanBot.TradingView;
 using System.ComponentModel;
@@ -51,6 +50,7 @@ using CryptoScanBot.Core.Trader;
 using CryptoScanBot.Core.Signal;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core;
+using CryptoScanBot.Core.Barometer;
 
 namespace CryptoScanBot;
 
@@ -617,7 +617,7 @@ public partial class TestForm : Form
 
 
 
-    private void ListView1_DoubleClick(object sender, EventArgs e)
+    private void ListView1_DoubleClick(object? sender, EventArgs? e)
     {
         if (listView1.SelectedItems.Count > 0)
         {
@@ -629,7 +629,7 @@ public partial class TestForm : Form
         }
     }
 
-    private void TimerClearEvents_Tick(object sender, EventArgs e)
+    private void TimerClearEvents_Tick(object? sender, EventArgs? e)
     {
         // Beetje locking is misschien handig? We zien wel?
         if (listView1.Items.Count > 0)
@@ -663,7 +663,7 @@ public partial class TestForm : Form
     }
 
 
-    private async void Button2_Click(object sender, EventArgs e)
+    private async void Button2_Click(object? sender, EventArgs? e)
     {
         if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange exchange))
         {
@@ -724,7 +724,7 @@ public partial class TestForm : Form
         }
     }
 
-    private void Button3_Click(object sender, EventArgs e)
+    private void Button3_Click(object? sender, EventArgs? e)
     {
         decimal sumInvested = 0;
         decimal sumProfit = 0;
@@ -834,7 +834,7 @@ public partial class TestForm : Form
 
 
 
-    private void Button6_Click(object sender, EventArgs e)
+    private void Button6_Click(object? sender, EventArgs? e)
     {
         //if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange? exchange))
         //{
@@ -926,7 +926,7 @@ public partial class TestForm : Form
     /// Volatiteit meten van coins
     /// Bedoeld om leuke munten voor een gridbot te vinden
     /// </summary>
-    private void ButtonVolatiteit_Click(object sender, EventArgs e)
+    private void ButtonVolatiteit_Click(object? sender, EventArgs? e)
     {
         GlobalData.AddTextToLogTab("");
         GlobalData.AddTextToLogTab("Lijstjes");
@@ -1045,7 +1045,7 @@ public partial class TestForm : Form
         public decimal AvgTr = 0m;
     }
 
-    private void Button7_Click(object sender, EventArgs e)
+    private void Button7_Click(object? sender, EventArgs? e)
     {
         GlobalData.AddTextToLogTab("");
         GlobalData.AddTextToLogTab("Lijstjes");
@@ -1345,7 +1345,7 @@ public partial class TestForm : Form
     }
 
 
-    private void Button3_Click_1(object sender, EventArgs e)
+    private void Button3_Click_1(object? sender, EventArgs? e)
     {
         // Achtergrond hiervan:
         // Ik lijk STOB meldingen te missen in de JOEBTC chart (andere mensen hebben die melding wel gehad).
@@ -1437,7 +1437,7 @@ public partial class TestForm : Form
                     if (++count > 0)
                     {
                         //GlobalData.AddTextToLogTab(candle.OhlcText(symbol.Format) + " " + candle.Id.ToString());
-                        SignalCreate createSignal = new(symbol, interval, CryptoTradeSide.Long, candle.OpenTime + 60);
+                        SignalCreate createSignal = new(null, symbol, interval, CryptoTradeSide.Long, candle.OpenTime + 60);
                         createSignal.Analyze(candle.OpenTime);
                     }
                 }
@@ -1640,7 +1640,7 @@ public partial class TestForm : Form
                     foreach (CryptoIntervalPeriod intervalPeriod in list)
                     {
                         Color color;
-                        BarometerData barometerData = quoteData.BarometerList[CryptoIntervalPeriod.interval4h];
+                        BarometerData? barometerData = GlobalData.ActiveAccount!.Data.GetBarometer(quoteData.Name, intervalPeriod);
                         if (barometerData?.PriceBarometer < 0)
                             color = Color.Red;
                         else
@@ -1709,7 +1709,7 @@ public partial class TestForm : Form
     }
 
 
-    private void ButtonBitmap_Click(object sender, EventArgs e)
+    private void ButtonBitmap_Click(object? sender, EventArgs? e)
     {
         tabControl.SelectedTab = tabPageBitmap;
 
@@ -1881,7 +1881,7 @@ public partial class TestForm : Form
 
     }
 
-    private async void Button2_Click_1(object sender, EventArgs e)
+    private async void Button2_Click_1(object? sender, EventArgs? e)
     {
 
 
@@ -1901,7 +1901,7 @@ public partial class TestForm : Form
 
     }
 
-//    private void Button1_Click_1(object sender, EventArgs e)
+//    private void Button1_Click_1(object? sender, EventArgs? e)
 //    {
 //        //        var message = new GelfMessage
 //        //        {
@@ -2296,7 +2296,7 @@ public partial class TestForm : Form
             return;
 
         //SignalCreate.AnalyseNotificationList.Clear();
-        GlobalData.ActiveAccount.PositionList.Clear();
+        GlobalData.ActiveAccount.Data.PositionList.Clear();
 
         // Pittige configuratie geworden zie ik ;-)
         GlobalData.Settings.Signal.Active = true;
@@ -2335,7 +2335,7 @@ public partial class TestForm : Form
         GlobalData.Settings.General.SoundTradeNotification = false;
 
         GlobalData.BackTest = true;
-        GlobalData.Settings.Trading.TradeVia = CryptoTradeAccountType.PaperTrade;
+        GlobalData.Settings.Trading.TradeVia = CryptoAccountType.PaperTrade;
 
         // Instap
         GlobalData.Settings.Trading.CheckIncreasingRsi = false;
@@ -2343,19 +2343,19 @@ public partial class TestForm : Form
         GlobalData.Settings.Trading.CheckIncreasingStoch = false;
 
         // BUY
-        GlobalData.Settings.Trading.BuyStepInMethod = CryptoEntryOrProfitMethod.AfterNextSignal;
+        GlobalData.Settings.Trading.EntryStrategy = CryptoEntryOrDcaStrategy.AfterNextSignal;
         GlobalData.Settings.Trading.GlobalBuyCooldownTime = 20;
-        GlobalData.Settings.Trading.BuyOrderMethod = CryptoBuyOrderMethod.MarketOrder;
+        GlobalData.Settings.Trading.EntryOrderPrice = CryptoEntryOrDcaPricing.MarketPrice;
 
         // DCA
         //GlobalData.Settings.Trading.DcaPercentage = 2m;
-        GlobalData.Settings.Trading.DcaOrderMethod = CryptoBuyOrderMethod.SignalPrice;
-        GlobalData.Settings.Trading.DcaStepInMethod = CryptoEntryOrProfitMethod.FixedPercentage;
+        GlobalData.Settings.Trading.DcaOrderPrice = CryptoEntryOrDcaPricing.SignalPrice;
+        GlobalData.Settings.Trading.DcaStrategy = CryptoEntryOrDcaStrategy.FixedPercentage;
 
         // TP
         GlobalData.Settings.Trading.ProfitPercentage = 0.75m;
         //GlobalData.Settings.Trading.DynamicTpPercentage = 0.75m;
-        GlobalData.Settings.Trading.SellMethod = CryptoSellMethod.FixedPercentage;
+        GlobalData.Settings.Trading.TakeProfitStrategy = CryptoTakeProfitStrategy.FixedPercentage;
         //GlobalData.Settings.Trading.LockProfits = true;
 
         StringBuilder samenvatting = new();
@@ -2390,7 +2390,7 @@ public partial class TestForm : Form
                     Directory.CreateDirectory(baseFolder);
 
                     // De symbols van/voor de pauseer regels inlezen
-                    foreach (PauseTradingRule rule in GlobalData.Settings.Trading.PauseTradingRules)
+                    foreach (Core.Settings.PauseTradingRule rule in GlobalData.Settings.Trading.PauseTradingRules)
                     {
                         if (exchange.SymbolListName.TryGetValue(rule.Symbol, out CryptoSymbol symbolX))
                         {
@@ -2524,7 +2524,7 @@ public partial class TestForm : Form
 
     }
 
-    private void ButtonBackTest_Click(object sender, EventArgs e)
+    private void ButtonBackTest_Click(object? sender, EventArgs? e)
     {
         Task task = Task.Run(BackTestAsync);
         task.Start();
@@ -2532,7 +2532,7 @@ public partial class TestForm : Form
 
 
 
-    private void Button1_Click(object sender, EventArgs e)
+    private void Button1_Click(object? sender, EventArgs? e)
     {
         tabControl.SelectedTab = tabPage1;
 
@@ -2598,7 +2598,7 @@ public partial class TestForm : Form
     }
 
 
-    private void Button2_Click_2(object sender, EventArgs e)
+    private void Button2_Click_2(object? sender, EventArgs? e)
     {
         if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange exchange))
         {
@@ -2662,12 +2662,12 @@ public partial class TestForm : Form
         GridSignals.AdjustObjectCount();
     }
 
-    private void Button3_Click_2(object sender, EventArgs e)
+    private void Button3_Click_2(object? sender, EventArgs? e)
     {
         //GridSignals.UpdatePriceDifferences();
     }
 
-    private void Button4_Click(object sender, EventArgs e)
+    private void Button4_Click(object? sender, EventArgs? e)
     {
         if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange exchange))
         {

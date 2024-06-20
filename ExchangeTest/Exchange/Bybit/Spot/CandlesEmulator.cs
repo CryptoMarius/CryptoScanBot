@@ -2,25 +2,25 @@
 using Bybit.Net.Enums;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Exchange;
+using CryptoScanBot.Core.Exchange.BybitApi.Spot;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 
-using ApiAlias=CryptoScanBot.Core.Exchange.BybitSpot;
 
 namespace ExchangeTest.Exchange.Bybit.Spot;
 
 /// <summary>
 /// Fetch klines/candles from the exchange
 /// </summary>
-public class CandlesEmulator
+public class CandlesEmulatorKanWeg
 {
     private static async Task<long> GetCandlesForInterval(BybitRestClient client, CryptoSymbol symbol, CryptoInterval interval, CryptoSymbolInterval symbolInterval)
     {
-        KlineInterval? exchangeInterval = ApiAlias.Interval.GetExchangeInterval(interval);
+        KlineInterval? exchangeInterval = Interval.GetExchangeInterval(interval);
         if (exchangeInterval == null)
             return 0;
 
-        LimitRates.WaitForFairWeight(1);
+        LimitRate.WaitForFairWeight(1);
         string prefix = $"{ExchangeBase.ExchangeOptions.ExchangeName} {symbol.Name} {interval!.Name}";
 
         // The maximum is 1000 candles
@@ -94,7 +94,7 @@ public class CandlesEmulator
         {
             CryptoInterval interval = GlobalData.IntervalList[i];
             CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-            bool intervalSupported = ApiAlias.Interval.GetExchangeInterval(interval) != null;
+            bool intervalSupported = Interval.GetExchangeInterval(interval) != null;
 
 
             if (intervalSupported)

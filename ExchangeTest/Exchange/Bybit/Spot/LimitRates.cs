@@ -22,7 +22,7 @@ internal class ByBitWeight
 /// Hi, I've added the response headers to the WebCallResult object. I also added a helper method to quickly retrieve the used weight header:
 /// var weight = client.GetAllOrders("ETHBTC").ResponseHeaders.UsedWeight(); (obviously you should check for errors)
 /// </summary>
-public static class LimitRates
+public static class LimitRatesKanWeg
 {
     static public long CurrentWeight { get; set; }
     static private List<ByBitWeight> List { get; } = new List<ByBitWeight>();

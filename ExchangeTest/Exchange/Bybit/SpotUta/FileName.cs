@@ -57,20 +57,20 @@ internal class FileName
             return;
         }
 
-        CryptoTradeAccount tradeAccount = new();
+        CryptoAccount tradeAccount = new();
 
         foreach (var assetInfo in balances.Balances)
         {
             if (assetInfo.WalletBalance > 0)
             {
-                if (!tradeAccount.AssetList.TryGetValue(assetInfo.Asset, out CryptoAsset? asset))
+                if (!tradeAccount.Data.AssetList.TryGetValue(assetInfo.Asset, out CryptoAsset? asset))
                 {
                     asset = new()
                     {
                         Name = assetInfo.Asset,
                         TradeAccountId = tradeAccount.Id
                     };
-                    tradeAccount.AssetList.Add(asset.Name, asset);
+                    tradeAccount.Data.AssetList.Add(asset.Name, asset);
                 }
                 asset.Total = (decimal)assetInfo.WalletBalance;
                 asset.Locked = (decimal)assetInfo.WalletBalance - (decimal)assetInfo.TransferBalance;
@@ -79,18 +79,18 @@ internal class FileName
         }
 
         // remove assets with total=0
-        foreach (var asset in tradeAccount.AssetList.Values.ToList())
+        foreach (var asset in tradeAccount.Data.AssetList.Values.ToList())
         {
             if (asset.Total == 0)
             {
                 //databaseThread.Connection.Delete(asset, transaction);
-                tradeAccount.AssetList.Remove(asset.Name);
+                tradeAccount.Data.AssetList.Remove(asset.Name);
             }
         }
 
-        if (tradeAccount.AssetList.Count > 0)
+        if (tradeAccount.Data.AssetList.Count > 0)
         {
-            foreach (var asset in tradeAccount.AssetList.Values.ToList())
+            foreach (var asset in tradeAccount.Data.AssetList.Values.ToList())
             {
                 GlobalData.AddTextToLogTab($"{asset.Name} {asset.Total} {asset.Free}");
             }

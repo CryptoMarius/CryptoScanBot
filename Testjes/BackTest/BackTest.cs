@@ -1,4 +1,6 @@
 ﻿using System.Text;
+
+using CryptoScanBot.Core.Barometer;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
@@ -711,123 +713,122 @@ public class BackTest
         //    Log = Log
         //};
 
-        try
-        {
-            Results.ShowHeader(Log);
+        //try
+        //{
+        //    Results.ShowHeader(Log);
 
-            try
-            {
-                // Voro de zekerheid..
-                //Exchange.PositionList.Clear();
-                SymbolInterval.Signal = null;
-                //GlobalData.Settings.Trading.PauseTradingRules. TradingUntil = null; ??
+        //    try
+        //    {
+        //        // Voro de zekerheid..
+        //        //Exchange.PositionList.Clear();
+        //        SymbolInterval.Signal = null;
+        //        //GlobalData.Settings.Trading.PauseTradingRules. TradingUntil = null; ??
 
-                // De indicators berekenen (eenmalig) - beetje vaag?
-                //CryptoSymbolInterval cryptoSymbolInterval = Symbol.GetSymbolInterval(Interval.IntervalPeriod);
-                //if ((!cryptoSymbolInterval.TrendInfoDate.HasValue))
-                if ((!SymbolInterval.TrendInfoDate.HasValue))
-                {
-                    // TODO - Laatste tijdstip meegeven zodat de trend over 0..x candles gaat en niet allemaal
-                    if (!CalculateIndicators())
-                        return;
-                    SymbolInterval.TrendInfoDate = DateTime.UtcNow;
-                }
+        //        // De indicators berekenen (eenmalig) - beetje vaag?
+        //        //CryptoSymbolInterval cryptoSymbolInterval = Symbol.GetSymbolInterval(Interval.IntervalPeriod);
+        //        //if ((!cryptoSymbolInterval.TrendInfoDate.HasValue))
+        //        if ((!SymbolInterval.TrendInfoDate.HasValue))
+        //        {
+        //            // TODO - Laatste tijdstip meegeven zodat de trend over 0..x candles gaat en niet allemaal
+        //            if (!CalculateIndicators())
+        //                return;
+        //            SymbolInterval.TrendInfoDate = DateTime.UtcNow;
+        //        }
 
-                // Iedere symbol heeft op elk interval een PersistentData nodig
-                // Iedere positie heeft een eigen PersistenData voor de lopende positie
+        //        // Iedere symbol heeft op elk interval een PersistentData nodig
+        //        // Iedere positie heeft een eigen PersistenData voor de lopende positie
 
-                int warmUptime = 210; // De warmup time is enkel voor de indicators en emulator
-                for (int i = 0; i < Candles1m.Count; i++)
-                {
-                    CryptoCandle candle = Candles1m.Values[i];
-                    if (--warmUptime <= 0)
-                    {
-                        // barometer initialiseren
-                        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange exchangeX))
-                        {
-                            if (exchangeX.SymbolListName.TryGetValue("$BMP" + Symbol.Quote, out CryptoSymbol symbolX))
-                            {
-                                // interval1h
-                                CryptoSymbolInterval cryptoSymbolIntervalX = symbolX.GetSymbolInterval(CryptoIntervalPeriod.interval1h);
-                                BarometerData barometerData = symbolX.QuoteData.BarometerList[CryptoIntervalPeriod.interval1h];
-                                if (cryptoSymbolIntervalX.CandleList.TryGetValue(candle.OpenTime, out CryptoCandle candleX))
-                                {
-                                    barometerData.PriceBarometer = candleX.Close;
-                                    barometerData.PriceDateTime = candleX.OpenTime;
-                                }
-                                else barometerData.PriceBarometer = 0;
+        //        int warmUptime = 210; // De warmup time is enkel voor de indicators en emulator
+        //        for (int i = 0; i < Candles1m.Count; i++)
+        //        {
+        //            CryptoCandle candle = Candles1m.Values[i];
+        //            if (--warmUptime <= 0)
+        //            {
+        //                // barometer initialiseren
+        //                if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange exchangeX))
+        //                {
+        //                    if (exchangeX.SymbolListName.TryGetValue("$BMP" + Symbol.Quote, out CryptoSymbol symbolX))
+        //                    {
+        //                        CryptoSymbolInterval cryptoSymbolIntervalX = symbolX.GetSymbolInterval(CryptoIntervalPeriod.interval1h);
+        //                        BarometerData? barometerData = GlobalData.ActiveAccount!.Data.GetBarometer(symbolX.Quote, CryptoIntervalPeriod.interval1h);
+        //                        if (cryptoSymbolIntervalX.CandleList.TryGetValue(candle.OpenTime, out CryptoCandle candleX))
+        //                        {
+        //                            barometerData.PriceBarometer = candleX.Close;
+        //                            barometerData.PriceDateTime = candleX.OpenTime;
+        //                        }
+        //                        else barometerData.PriceBarometer = 0;
 
-                                // interval4h
-                                cryptoSymbolIntervalX = symbolX.GetSymbolInterval(CryptoIntervalPeriod.interval4h);
-                                barometerData = symbolX.QuoteData.BarometerList[CryptoIntervalPeriod.interval4h];
-                                if (cryptoSymbolIntervalX.CandleList.TryGetValue(candle.OpenTime, out candleX))
-                                {
-                                    barometerData.PriceBarometer = candleX.Close;
-                                    barometerData.PriceDateTime = candleX.OpenTime;
-                                }
-                                else barometerData.PriceBarometer = 0;
+        //                        // interval4h
+        //                        cryptoSymbolIntervalX = symbolX.GetSymbolInterval(CryptoIntervalPeriod.interval4h);
+        //                        barometerData = GlobalData.ActiveAccount!.Data.GetBarometer(symbolX.Quote, CryptoIntervalPeriod.interval4h);
+        //                        if (cryptoSymbolIntervalX.CandleList.TryGetValue(candle.OpenTime, out candleX))
+        //                        {
+        //                            barometerData.PriceBarometer = candleX.Close;
+        //                            barometerData.PriceDateTime = candleX.OpenTime;
+        //                        }
+        //                        else barometerData.PriceBarometer = 0;
 
-                                // interval1d
-                                cryptoSymbolIntervalX = symbolX.GetSymbolInterval(CryptoIntervalPeriod.interval1d);
-                                barometerData = symbolX.QuoteData.BarometerList[CryptoIntervalPeriod.interval1d];
-                                if (cryptoSymbolIntervalX.CandleList.TryGetValue(candle.OpenTime, out candleX))
-                                {
-                                    barometerData.PriceBarometer = candleX.Close;
-                                    barometerData.PriceDateTime = candleX.OpenTime;
-                                }
-                                else barometerData.PriceBarometer = 0;
-                            }
-
+        //                        // interval1d
+        //                        cryptoSymbolIntervalX = symbolX.GetSymbolInterval(CryptoIntervalPeriod.interval1d);
+        //                        barometerData = GlobalData.ActiveAccount!.Data.GetBarometer(symbolX.Quote, CryptoIntervalPeriod.interval1d);
+        //                        if (cryptoSymbolIntervalX.CandleList.TryGetValue(candle.OpenTime, out candleX))
+        //                        {
+        //                            barometerData.PriceBarometer = candleX.Close;
+        //                            barometerData.PriceDateTime = candleX.OpenTime;
+        //                        }
+        //                        else barometerData.PriceBarometer = 0;
+        //                    }
 
 
-                        }
 
-                        Symbol.LastPrice = candle.Close;
-                        //await HandleCandle(emulator, cryptoBackTest, candle);
+        //                }
 
-                        using PositionMonitor positionMonitor = new(Symbol, candle);
-                        await positionMonitor.NewCandleArrivedAsync();
-                    }
-                }
+        //                Symbol.LastPrice = candle.Close;
+        //                //await HandleCandle(emulator, cryptoBackTest, candle);
 
-                Log.AppendLine("");
-                Log.AppendLine("einde");
-                Log.AppendLine("");
-            }
-            catch (Exception error)
-            {
-                GlobalData.AddTextToLogTab(error.ToString());
-                Log.AppendLine(error.ToString());
-                // De log echter wel schrijven dus geen raize
-            }
+        //                using PositionMonitor positionMonitor = new(Symbol, candle);
+        //                await positionMonitor.NewCandleArrivedAsync();
+        //            }
+        //        }
 
-
-            Log.AppendLine("Totaal:");
-            Outcome = Results.ShowFooter(Log);
-            Log.AppendLine(Outcome);
-
-            string s = Log.ToString();
-            //filename = filename + @"\data\" + Exchange.Name + @"\BackTest\" + Symbol.Name + @"\"; // + interval.Name + @"\";
-            baseFolder += Symbol.Name + @"\";
-            Directory.CreateDirectory(baseFolder);
-            File.WriteAllText(baseFolder + Symbol.Name + "-" + Interval.Name + ".txt", s);
+        //        Log.AppendLine("");
+        //        Log.AppendLine("einde");
+        //        Log.AppendLine("");
+        //    }
+        //    catch (Exception error)
+        //    {
+        //        GlobalData.AddTextToLogTab(error.ToString());
+        //        Log.AppendLine(error.ToString());
+        //        // De log echter wel schrijven dus geen raize
+        //    }
 
 
-            // Bewaar de candles (voor debug en test)
-            {
-                SortedList<long, CryptoCandle> candles = Symbol.GetSymbolInterval(Interval.IntervalPeriod).CandleList;
-                string filename = baseFolder + Symbol.Name + ".json";
-                string text = JsonConvert.SerializeObject(candles.Values, Formatting.Indented);
-                System.IO.File.WriteAllText(filename, text);
-            }
+        //    Log.AppendLine("Totaal:");
+        //    Outcome = Results.ShowFooter(Log);
+        //    Log.AppendLine(Outcome);
 
-        }
-        catch (Exception error)
-        {
-            ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab("");
-            GlobalData.AddTextToLogTab(error.ToString(), true);
-        }
+        //    string s = Log.ToString();
+        //    //filename = filename + @"\data\" + Exchange.Name + @"\BackTest\" + Symbol.Name + @"\"; // + interval.Name + @"\";
+        //    baseFolder += Symbol.Name + @"\";
+        //    Directory.CreateDirectory(baseFolder);
+        //    File.WriteAllText(baseFolder + Symbol.Name + "-" + Interval.Name + ".txt", s);
+
+
+        //    // Bewaar de candles (voor debug en test)
+        //    {
+        //        SortedList<long, CryptoCandle> candles = Symbol.GetSymbolInterval(Interval.IntervalPeriod).CandleList;
+        //        string filename = baseFolder + Symbol.Name + ".json";
+        //        string text = JsonConvert.SerializeObject(candles.Values, Formatting.Indented);
+        //        System.IO.File.WriteAllText(filename, text);
+        //    }
+
+        //}
+        //catch (Exception error)
+        //{
+        //    ScannerLog.Logger.Error(error, "");
+        //    GlobalData.AddTextToLogTab("");
+        //    GlobalData.AddTextToLogTab(error.ToString(), true);
+        //}
     }
 
 }

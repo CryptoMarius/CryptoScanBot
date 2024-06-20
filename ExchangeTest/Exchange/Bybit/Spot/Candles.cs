@@ -1,17 +1,16 @@
 ﻿using Bybit.Net.Clients;
 using Bybit.Net.Enums;
 using CryptoScanBot.Core.Exchange;
+using CryptoScanBot.Core.Exchange.BybitApi.Spot;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
-
-using ApiAlias=CryptoScanBot.Core.Exchange.BybitSpot;
 
 namespace ExchangeTest.Exchange.Bybit.Spot;
 
 /// <summary>
 /// Fetch klines/candles from the exchange
 /// </summary>
-public class Candles
+public class CandlesKanWeg
 {
     // Prevent multiple sessions
     private static readonly SemaphoreSlim Semaphore = new(1);
@@ -19,11 +18,11 @@ public class Candles
 
     private static async Task<long> GetCandlesForInterval(BybitRestClient client, CryptoSymbol symbol, CryptoInterval interval, CryptoSymbolInterval symbolInterval)
     {
-        KlineInterval? exchangeInterval = ApiAlias.Interval.GetExchangeInterval(interval);
+        KlineInterval? exchangeInterval = Interval.GetExchangeInterval(interval);
         if (exchangeInterval == null)
             return 0;
 
-        LimitRates.WaitForFairWeight(1);
+        LimitRate.WaitForFairWeight(1);
         string prefix = $"{ExchangeBase.ExchangeOptions.ExchangeName} {symbol.Name} {interval!.Name}";
 
         // The maximum is 1000 candles
@@ -97,7 +96,7 @@ public class Candles
         {
             CryptoInterval interval = GlobalData.IntervalList[i];
             CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-            bool intervalSupported = ApiAlias.Interval.GetExchangeInterval(interval) != null;
+            bool intervalSupported = Interval.GetExchangeInterval(interval) != null;
 
 
             if (intervalSupported)
@@ -218,7 +217,7 @@ public class Candles
                 // Er is niet geswicthed van exchange (omdat het ophalen zo lang duurt)
                 if (symbol.ExchangeId == GlobalData.Settings.General.ExchangeId)
                 {
-                    ApiAlias.Interval.DetermineFetchStartDate(symbol, fetchEndUnix);
+                    Interval.DetermineFetchStartDate(symbol, fetchEndUnix);
                     await FetchCandlesInternal(client, symbol, fetchEndUnix);
                 }
             }

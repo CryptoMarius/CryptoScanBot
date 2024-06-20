@@ -5,8 +5,8 @@ internal class FileName
     ////private async Task BinanceTestAsync()
     ////{
     ////    // TM account, IP protected
-    ////    string api = "nlKFRX8wmxRsu8qNST5oTfrW3tg9JSOKsY0O14VwqPDnhDVAuu7ix5VgFM5ROgF0";
-    ////    string key = "C4NPbofOp4x7xJFa4UDLCQrGkEAfIFOv3psOlX4xE3vponxmaWjcQ5Jj0KHkxn9Z";
+    ////    string api = "";
+    ////    string key = "";
 
     ////    var binanceClient = new BinanceClient(new BinanceClientOptions
     ////    {

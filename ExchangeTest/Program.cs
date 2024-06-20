@@ -12,7 +12,10 @@ internal static class Program
     [STAThread]
     static void Main()
     {
+        // Vroeger dan alle andere..
         InitializeApplicationVariables();
+        ScannerLog.InitializeLogging();
+
         // To customize application configuration such as set high DPI settings or default font,
         // see https://aka.ms/applicationconfiguration.
         ApplicationConfiguration.Initialize();
