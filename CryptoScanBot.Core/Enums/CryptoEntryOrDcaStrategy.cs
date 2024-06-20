@@ -1,6 +1,7 @@
 ﻿namespace CryptoScanBot.Core.Enums;
 
-public enum CryptoEntryOrProfitMethod
+// for both entry or dca
+public enum CryptoEntryOrDcaStrategy
 {
     AfterNextSignal, // Stap op een melding in (rekening houdende met cooldown en percentage indien DCA)
     FixedPercentage, // Stap in op een gefixeerde percentage (rekening houdende met cooldown en percentage indien DCA)

@@ -2,6 +2,8 @@
 
 public enum CryptoAccountType
 {
-    Spot,
-    Futures
+    BackTest = 0,
+    PaperTrade = 1,
+    RealTrading = 2,
+    Altrady = 3,
 }

@@ -1,9 +1,9 @@
 ﻿namespace CryptoScanBot.Core.Enums;
 
-public enum CryptoBuyOrderMethod
+public enum CryptoEntryOrDcaPricing
 {
     SignalPrice,
-    MarketOrder,
-    BidPrice,
+    MarketPrice,
+    BidPrice, 
     AskPrice
 }

@@ -6,5 +6,6 @@ public enum CryptoPositionStatus
     Trading, // 1
     Ready, // 2
     Timeout, // 3
-    TakeOver // 4
+    TakeOver, // 4
+    Altrady, // 5
 }
