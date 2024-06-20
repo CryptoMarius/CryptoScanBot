@@ -7,23 +7,22 @@ namespace CryptoScanBot.Core.Barometer;
 public static class BarometerHelper
 {
 
-    public static bool CheckValidBarometer(CryptoQuoteData quoteData, CryptoIntervalPeriod intervalPeriod, (decimal minValue, decimal maxValue) values, out string reaction)
+    public static bool CheckValidBarometer(CryptoAccount account, string quoteName, CryptoIntervalPeriod intervalPeriod, (decimal minValue, decimal maxValue) values, out string reaction)
     {
         if (!GlobalData.IntervalListPeriod.TryGetValue(intervalPeriod, out CryptoInterval? interval))
         {
-            reaction = $"Interval {intervalPeriod} bestaat niet";
+            reaction = $"Interval {intervalPeriod} does not exist"; // impossible but voila
             return false;
         }
 
         // We gaan ervan uit dat alles in 1x wordt berekend
-        BarometerData barometerData = quoteData.BarometerList[intervalPeriod];
+        BarometerData? barometerData = account.Data.GetBarometer(quoteName, intervalPeriod);
         if (!barometerData.PriceBarometer.HasValue)
         {
             reaction = $"Barometer {interval.Name} not calculated";
             return false;
         }
 
-        barometerData = quoteData.BarometerList[intervalPeriod];
         if (!barometerData.PriceBarometer.IsBetween(values.minValue, values.maxValue))
         {
             string minValueStr = values.minValue.ToString0("N2");
@@ -32,7 +31,7 @@ public static class BarometerHelper
             string maxValueStr = values.maxValue.ToString0("N2");
             if (values.maxValue == decimal.MaxValue)
                 maxValueStr = "+maxint";
-            reaction = $"Barometer {interval.Name} {barometerData.PriceBarometer?.ToString0("N2")} niet tussen {minValueStr} en {maxValueStr}";
+            reaction = $"Barometer {interval.Name} {barometerData.PriceBarometer?.ToString0("N2")} not between {minValueStr} and {maxValueStr}";
             return false;
         }
 
@@ -42,14 +41,12 @@ public static class BarometerHelper
     }
 
 
-    public static bool ValidBarometerConditions(CryptoQuoteData quoteData, Dictionary<CryptoIntervalPeriod, (decimal minValue, decimal maxValue)> barometer, out string reaction)
+    public static bool ValidBarometerConditions(CryptoAccount account, string quoteName, Dictionary<CryptoIntervalPeriod, (decimal minValue, decimal maxValue)> barometer, out string reaction)
     {
         foreach (KeyValuePair<CryptoIntervalPeriod, (decimal, decimal)> item in barometer)
         {
-            if (!CheckValidBarometer(quoteData, item.Key, item.Value, out reaction))
-            {
+            if (!CheckValidBarometer(account, quoteName, item.Key, item.Value, out reaction))
                 return false;
-            }
         }
 
         reaction = "";

@@ -13,8 +13,9 @@ namespace CryptoScanBot.Core.Signal;
 
 public delegate void AnalyseEvent(CryptoSignal signal);
 
-public class SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTradeSide side, long lastCandle1mCloseTime)
+public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoInterval interval, CryptoTradeSide side, long lastCandle1mCloseTime)
 {
+    private CryptoAccount TradeAccount { get; set; } = tradeAccount;
     private CryptoSymbol Symbol { get; set; } = symbol;
     private CryptoInterval Interval { get; set; } = interval;
     private CryptoTradeSide Side { get; set; } = side;
@@ -23,7 +24,8 @@ public class SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTr
     private CryptoCandle? Candle { get; set; }
     public List<CryptoCandle>? history = null;
 
-    public bool CreatedSignal = false;
+    //public bool CreatedSignal = false;
+    public List<CryptoSignal> SignalList { get; set; } = [];
 
 #if TRADEBOT
     bool hasOpenPosistion = false;
@@ -37,7 +39,7 @@ public class SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTr
         if (!hasOpenPosistionCalculated)
         {
             hasOpenPosistionCalculated = true;
-            hasOpenPosistion = GlobalData.Settings.Trading.Active && PositionTools.HasPosition(Symbol);
+            hasOpenPosistion = GlobalData.Settings.Trading.Active && PositionTools.HasPosition(Symbol) && GlobalData.Settings.Trading.DcaStrategy == CryptoEntryOrDcaStrategy.AfterNextSignal;
         }
         return hasOpenPosistion;
 #else
@@ -249,14 +251,11 @@ public class SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTr
 
 
         // Extra attributen erbij halen (dat lukt niet bij een backtest vanwege het ontbreken van een "history list")
-        //if (!GlobalData.BackTest)
+        CalculateAdditionalSignalProperties(signal, history!, 60);
+        if (!HasOpenPosition() && !CheckAdditionalAlarmProperties(signal, out response))
         {
-            CalculateAdditionalSignalProperties(signal, history!, 60);
-            if (!HasOpenPosition() && !CheckAdditionalAlarmProperties(signal, out response))
-            {
-                eventText.Add(response);
-                signal.IsInvalid = true;
-            }
+            eventText.Add(response);
+            signal.IsInvalid = true;
         }
 
 
@@ -353,7 +352,7 @@ public class SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTr
 
 
         // Calculate MarketTrend and the individual interval trends (reasonably CPU heavy and thatswhy it is on the end of the routine)
-        MarketTrend.Calculate(signal, LastCandle1mCloseTime);
+        MarketTrend.Calculate(TradeAccount, signal, LastCandle1mCloseTime);
 
 
 
@@ -362,7 +361,7 @@ public class SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTr
         {
             // Filter op bepaalde intervallen waarvan je wil dat die bullisch of bearisch zijn
 
-            if (!PositionTools.ValidTrendConditions(signal.Symbol, TradingConfig.Signals[signal.Side].Trend, out string reaction))
+            if (!PositionTools.ValidTrendConditions(TradeAccount, signal.Symbol.Name, TradingConfig.Signals[signal.Side].Trend, out string reaction))
             {
                 eventText.Add(reaction);
                 signal.IsInvalid = true;
@@ -370,7 +369,7 @@ public class SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTr
 
 
             // Filter op de markettrend waarvan je wil dat die qua percentage bullisch of bearisch zijn
-            if (!PositionTools.ValidMarketTrendConditions(signal.Symbol, TradingConfig.Signals[signal.Side].MarketTrend, out reaction))
+            if (!PositionTools.ValidMarketTrendConditions(TradeAccount, signal.Symbol, TradingConfig.Signals[signal.Side].MarketTrend, out reaction))
             {
                 eventText.Add(reaction);
                 signal.IsInvalid = true;
@@ -416,7 +415,8 @@ public class SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTr
                             if (symbolInterval.Signal == null || algorithm.ReplaceSignal)
                             {
                                 symbolInterval.Signal = signal;
-                                CreatedSignal = true;
+                                //CreatedSignal = true;
+                                SignalList.Add(signal);
                             }
                         }
                     }
@@ -424,15 +424,12 @@ public class SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTr
             }
 
             // Signal naar database wegschrijven (niet echt noodzakelijk, we doen er later niets mee)
-            //if (!signal.BackTest)
+            using CryptoDatabase databaseThread = new();
+            databaseThread.Open();
+            using var transaction = databaseThread.BeginTransaction();
             {
-                using CryptoDatabase databaseThread = new();
-                databaseThread.Open();
-                using var transaction = databaseThread.BeginTransaction();
-                {
-                    databaseThread.Connection.Insert(signal, transaction);
-                    transaction.Commit();
-                }
+                databaseThread.Connection.Insert(signal, transaction);
+                transaction.Commit();
             }
 
             GlobalData.AnalyzeSignalCreated?.Invoke(signal);
@@ -552,7 +549,7 @@ public class SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTr
 
 
         // Is het volume binnen de gestelde grenzen          
-        if (!HasOpenPosition() && !GlobalData.BackTest && !Symbol.CheckValidMinimalVolume(out response))
+        if (!HasOpenPosition() && !Symbol.CheckValidMinimalVolume(candleOpenTime, Interval.Duration, out response))
         {
             if (GlobalData.Settings.Signal.LogMinimalVolume)
                 GlobalData.AddTextToLogTab("Analyse " + response);
@@ -560,7 +557,7 @@ public class SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTr
         }
 
         // Is de prijs binnen de gestelde grenzen
-        if (!HasOpenPosition() && !GlobalData.BackTest && !Symbol.CheckValidMinimalPrice(out response))
+        if (!HasOpenPosition() && !Symbol.CheckValidMinimalPrice(out response))
         {
             if (GlobalData.Settings.Signal.LogMinimalPrice)
                 GlobalData.AddTextToLogTab("Analyse " + response);
@@ -568,37 +565,29 @@ public class SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTr
         }
 
 
-        //if (GlobalData.BackTest)
-        //{
-        //    CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(Interval.IntervalPeriod);
-        //    if (symbolInterval.CandleList.TryGetValue(candleOpenTime, out CryptoCandle? candle))
-        //        Candle = candle;
-        //}
-        //else
+        // Build a list of candles
+        history ??= CandleIndicatorData.CalculateCandles(Symbol, Interval, candleOpenTime, out response);
+        if (history == null)
         {
-            // Build a list of candles
-            history ??= CandleIndicatorData.CalculateCandles(Symbol, Interval, candleOpenTime, out response);
-            if (history == null)
-            {
 #if DEBUG
-                //if (GlobalData.Settings.Signal.LogNotEnoughCandles)
-                GlobalData.AddTextToLogTab("Analyse " + response);
+            //if (GlobalData.Settings.Signal.LogNotEnoughCandles)
+            GlobalData.AddTextToLogTab("Analyse " + response);
 #endif
-                return false;
-            }
-
-            // Eenmalig de indicators klaarzetten
-            Candle = history[^1];
-            if (Candle.CandleData == null)
-                CandleIndicatorData.CalculateIndicators(history);
+            return false;
         }
+
+        // Eenmalig de indicators klaarzetten
+        Candle = history[^1];
+        if (Candle.CandleData == null)
+            CandleIndicatorData.CalculateIndicators(history);
+        
         //GlobalData.Logger.Trace($"SignalCreate.Prepare.Stop {Symbol.Name} {Interval.Name} {Side}");
         return true;
     }
 
 
 
-    public void Analyze(long candleIntervalOpenTime)
+    public bool Analyze(long candleIntervalOpenTime)
     {
         //GlobalData.Logger.Trace($"SignalCreate.Start {Symbol.Name} {Interval.Name}");
         // Eenmalig de indicators klaarzetten
@@ -647,6 +636,7 @@ public class SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTr
             }
 
         }
+        return SignalList.Count > 0;
         //GlobalData.Logger.Trace($"SignalCreate.Done {Symbol.Name} {Interval.Name}");
     }
 

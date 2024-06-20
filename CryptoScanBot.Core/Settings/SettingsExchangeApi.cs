@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace CryptoScanBot.Core.Settings;
+﻿namespace CryptoScanBot.Core.Settings;
 
 [Serializable]
 public class SettingsExchangeApi

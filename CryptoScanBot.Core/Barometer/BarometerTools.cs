@@ -8,16 +8,27 @@ namespace CryptoScanBot.Core.Barometer;
 
 public class BarometerTools
 {
-
     private static readonly object LockObject = new();
     private delegate bool CalcBarometerMethod(CryptoQuoteData quoteData, SortedList<string, CryptoSymbol> symbols, CryptoInterval interval, long unixCandleLast, out decimal barometerPerc);
 
 
-    private static CryptoSymbol? CheckSymbolPrecence(string baseName, CryptoQuoteData? quoteData)
+    static public void InitBarometerSymbols()
+    {
+        // Check all the (internal) barometer symbols
+        foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
+        {
+            if (quoteData.FetchCandles)
+            {
+                CheckBarometerSymbolPrecence(Constants.SymbolNameBarometerPrice, quoteData);
+            }
+        }
+    }
+
+    private static CryptoSymbol? CheckBarometerSymbolPrecence(string baseName, CryptoQuoteData quoteData)
     {
         if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange? exchange))
         {
-            if (!exchange.SymbolListName.TryGetValue(baseName + quoteData!.Name, out CryptoSymbol? symbol))
+            if (!exchange.SymbolListName.TryGetValue(baseName + quoteData.Name, out CryptoSymbol? symbol))
             {
                 using CryptoDatabase databaseThread = new();
                 databaseThread.Close();
@@ -30,6 +41,7 @@ public class BarometerTools
                     Base = baseName, //De "munt"
                     Quote = quoteData.Name, //USDT, BTC etc.
                     Volume = 0,
+                    Status = 1,
                 };
                 symbol.Name = symbol.Base + symbol.Quote;
 
@@ -44,58 +56,19 @@ public class BarometerTools
         }
         return null;
     }
+    
 
-
-    private bool CalculatePriceBarometer(CryptoQuoteData quoteData, SortedList<string, CryptoSymbol> symbols, CryptoInterval interval, long unixCandleLast, out decimal barometerPerc)
+    private static void CalculateBarometerInternal(CryptoSymbol bmSymbol, CryptoInterval interval, CryptoQuoteData quoteData, CalcBarometerMethod calcBarometerMethod, bool priceBarometer)
     {
-        // Wat is de candle in het vorige interval
-        long unixCandlePrev = unixCandleLast - interval.Duration;
+        //if (priceBarometer)
+        //    GlobalData.AddTextToLogTab($"Calculating price barometer chart {quoteData.Name}");
+        //else
+        //    GlobalData.AddTextToLogTab($"Calculating volume barometer chart {quoteData.Name}");
 
-        // Ter debug van de intervallen (unix datetime's zijn niet zo goed leesbaar)
-        //DateTime dateCandlePrev = CandleTools.GetUnixDate(unixCandlePrev);
-        //DateTime dateCandleLast = CandleTools.GetUnixDate(unixCandleLast);
-
-        decimal sumPerc = 0;
-        int coinsMatching = 0;
-
-        // De prijs en/of volume sommeren over alle munten
-        for (int i = 0; i < quoteData.SymbolList.Count; i++) // een foreach variant met een ToList() kost extra cpu
-        {
-            CryptoSymbol symbol = quoteData.SymbolList[i];
-            if (symbol.CandleList.TryGetValue(unixCandlePrev, out CryptoCandle? candlePrev) && symbol.CandleList.TryGetValue(unixCandleLast, out CryptoCandle? candleLast))
-            {
-                if (candlePrev != null && candleLast != null) // Er worden in kucoin null candles toegevoegd?
-                {
-                    decimal perc;
-                    decimal diff = candleLast.Close - candlePrev.Close;
-                    if (!candlePrev.Close.Equals(0))
-                        perc = 100m * (diff / candlePrev.Close);
-                    else perc = 0;
-
-                    sumPerc += perc;
-                    coinsMatching++;
-                }
-            }
-        }
-
-        if (coinsMatching > 0)
-        {
-            decimal result = sumPerc / coinsMatching;
-            barometerPerc = decimal.Round(result, 8);
-        }
-        else
-            barometerPerc = 0m; // Geen -99 want dan is short juist aantrekkelijk..
-
-        return coinsMatching > 0; // Met 1 munt krijgen we okay, mhhhh geeft een aardig vertekend beeld in dat geval..
-    }
-
-
-    private static void CalculateBarometerInternal(CryptoSymbol bmSymbol, CryptoInterval interval, CryptoQuoteData quoteData, CalcBarometerMethod calcBarometerMethod, bool pricebarometer)
-    {
         CryptoSymbolInterval symbolInterval = bmSymbol.GetSymbolInterval(interval.IntervalPeriod);
         SortedList<long, CryptoCandle> candles = symbolInterval.CandleList;
 
-        // Remove old candles (< 24 hours, 1440 candles)
+        // Remove old candles from the barometer symbol (< 24 hours, 1440 candles)
         if (!GlobalData.BackTest)
         {
             long startFetchUnix = CandleIndicatorData.GetCandleFetchStart(bmSymbol, interval, DateTime.UtcNow);
@@ -109,29 +82,42 @@ public class BarometerTools
         }
 
 
+        long periodStart, periodStop;
 
-        BarometerData barometerData = quoteData.BarometerList[interval.IntervalPeriod];
+        BarometerData? barometerData = GlobalData.ActiveAccount!.Data.GetBarometer(quoteData.Name, interval.IntervalPeriod);
 
-        // Begin van de candle in interval X, bereken het laatste interval opnieuw (bewust)
-        long periodStart;
-        if (symbolInterval.LastCandleSynchronized.HasValue)
-            periodStart = (long)symbolInterval.LastCandleSynchronized;
+        if (GlobalData.BackTest)
+        {
+            if (GlobalData.BackTestCandle == null)
+                return;
+
+            // Just 1 is okay
+            periodStart = GlobalData.BackTestCandle!.OpenTime;
+            periodStop = GlobalData.BackTestCandle!.OpenTime;
+        }
         else
         {
-            // Geef deze alvast een waarde
-            if (candles.Values.Any())
-                periodStart = candles.Values.First().OpenTime;
+            // Begin van de candle in interval X, bereken het laatste interval opnieuw (bewust)
+            if (symbolInterval.LastCandleSynchronized.HasValue)
+                periodStart = (long)symbolInterval.LastCandleSynchronized;
             else
-                periodStart = CandleTools.GetUnixTime(DateTime.UtcNow.AddDays(-2), 60); // GlobalData.GetCurrentDateTime(position.TradeAccount) oeps
+            {
+                // Geef deze alvast een waarde
+                if (candles.Count > 0)
+                    periodStart = candles.Values.First().OpenTime;
+                else
+                    periodStart = CandleTools.GetUnixTime(DateTime.UtcNow.AddDays(-2), 60); // GlobalData.GetCurrentDateTime(position.TradeAccount) oeps
 
-            symbolInterval.LastCandleSynchronized = periodStart;
+                symbolInterval.LastCandleSynchronized = periodStart;
+            }
+
+            // De laatste candle die we moeten berekenen. Mogelijk 1 te hoog, wat "valse" waarden kan geven?
+            // Dat kan opgelost worden door de laatst aangekomen candle mee te geven (vanuit de 1m stream)
+            periodStop = CandleTools.GetUnixTime(DateTime.UtcNow, 60); // GlobalData.GetCurrentDateTime(position.TradeAccount) oeps
         }
         //DateTime periodStartDebug = CandleTools.GetUnixDate(periodStart);
-
-        // De laatste candle die we moeten berekenen. Mogelijk 1 te hoog, wat "valse" waarden kan geven?
-        // Dat kan opgelost worden door de laatst aangekomen candle mee te geven (vanuit de 1m stream)
-        long periodStop = CandleTools.GetUnixTime(DateTime.UtcNow, 60); // GlobalData.GetCurrentDateTime(position.TradeAccount) oeps
         //DateTime periodStopDebug = CandleTools.GetUnixDate(periodStop);
+
 
         // De opgegeven periode per minuut itereren
         while (periodStart <= periodStop)
@@ -157,8 +143,9 @@ public class BarometerTools
                 candle.Low = BarometerPerc;
                 candle.Close = BarometerPerc;
 
+                
                 // Administratie bijwerken
-                if (pricebarometer)
+                if (priceBarometer)
                 {
                     barometerData.PriceDateTime = periodStart;
                     barometerData.PriceBarometer = BarometerPerc;
@@ -200,63 +187,26 @@ public class BarometerTools
         }
     }
 
+    // Separate call because of emulator (calculate only 1 quote)
+    public void CalculatePriceBarometerForQuote(CryptoQuoteData quoteData)
+    {
+        CryptoSymbol? symbol = CheckBarometerSymbolPrecence(Constants.SymbolNameBarometerPrice, quoteData);
+        if (symbol != null)
+        {
+            CalculateBarometerIntervals(symbol, quoteData, BarometerPrice.CalculatePriceBarometer, true);
+        }
+    }
 
-    public void ExecuteInternal()
+
+    public void CalculatePriceBarometerForAllQuotes()
     {
         // Bereken de (prijs en volume) barometers voor de aangevinkte basismunten
-
-        //GlobalData.AddTextToLogTab("Calculating barometer charts start");
+        //GlobalData.AddTextToLogTab("Calculating barometer for all quotes");
         foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values.ToList())
         {
             if (quoteData.FetchCandles)
-            {
-                //Monitor.Enter(quoteData.SymbolList);
-                //try
-                //{
-                //GlobalData.AddTextToLogTab(string.Format("Calculating barometer charts start for {0}", quoteData.Name));
-
-                // Controleer of de prijs barometer symbol bestaat en berekenen
-                //GlobalData.AddTextToLogTab("Calculating price barometer chart " + baseCoin");
-                CryptoSymbol? symbol = CheckSymbolPrecence(Constants.SymbolNameBarometerPrice, quoteData);
-                if (symbol != null)
-                {
-                    //Monitor.Enter(symbol.CandleList);
-                    //try
-                    //{
-                    CalculateBarometerIntervals(symbol, quoteData, CalculatePriceBarometer, true);
-                    //}
-                    //finally
-                    //{
-                    //    Monitor.Exit(symbol.CandleList);
-                    //}
-                }
-
-                // Ik weet niet wat ik met de volume barometer kan (of moet aanvangen, laat maar achterwege)
-                // Controleer of de volume barometer symbol bestaat en berekenen (CPU gaat behoorlijk omhoog)
-                //GlobalData.AddTextToLogTab("Calculating volume barometer chart " + baseCoin");
-                //symbol = CheckSymbolPrecence(Constants.SymbolNameBarometerVolume, quoteData);
-                //if (symbol != null)
-                //{
-                //    Monitor.Enter(symbol.CandleList);
-                //    try
-                //    {
-                //        CalculateBarometerIntervals(symbol, quoteData, CalculateVolumeBarometer, false);
-                //    }
-                //    finally
-                //    {
-                //        Monitor.Exit(symbol.CandleList);
-                //    }
-                //}
-                //}
-                //finally
-                //{
-                //    Monitor.Exit(quoteData.SymbolList);
-                //}
-            }
+                CalculatePriceBarometerForQuote(quoteData);
         }
-
-        // Nu de barometer uitgerekend is mag het aantal 1m candles naar beneden
-        CandleIndicatorData.SetInitialCandleCountFetch(24 * 60 * 60 + 10 * 60); // 10 extra, maar dat is een quick en dirty fix voor iets anders
     }
 
 
@@ -268,12 +218,15 @@ public class BarometerTools
             {
                 try
                 {
-                    ExecuteInternal();
+                    CalculatePriceBarometerForAllQuotes();
                 }
                 finally
                 {
                     Monitor.Exit(LockObject);
                 }
+
+                // Nu de barometer uitgerekend is mag het aantal 1m candles naar beneden
+                CandleIndicatorData.SetInitialCandleCountFetch(24 * 60 * 60 + 10 * 60); // 10 extra, maar dat is een quick en dirty fix voor iets anders
             }
         }
         catch (Exception error)

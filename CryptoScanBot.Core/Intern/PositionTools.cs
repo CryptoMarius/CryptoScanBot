@@ -18,7 +18,7 @@ public static class PositionTools
     /// </summary>
     public static CryptoPositionPart? FindPositionPart(CryptoPosition position, int Id)
     {
-        foreach (CryptoPositionPart part in position.Parts.Values.ToList())
+        foreach (CryptoPositionPart part in position.PartList.Values.ToList())
         {
             if (part.Id == Id)
                 return part;
@@ -31,7 +31,7 @@ public static class PositionTools
     /// </summary>
     public static CryptoPositionStep? FindPositionPartStep(CryptoPositionPart part, CryptoOrderSide side, bool closed)
     {
-        foreach (CryptoPositionStep step in part.Steps.Values.ToList())
+        foreach (CryptoPositionStep step in part.StepList.Values.ToList())
         {
             // Alle geannuleerde orders overslagen
             if (step.Side == side && step.Status < CryptoOrderStatus.Canceled)
@@ -48,12 +48,12 @@ public static class PositionTools
     }
 
 
-    public static CryptoPosition CreatePosition(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoSignalStrategy strategy, CryptoTradeSide side, 
+    public static CryptoPosition CreatePosition(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoSignalStrategy strategy, CryptoTradeSide side, 
         CryptoSymbolInterval symbolInterval, DateTime currentDate)
     {
         CryptoPosition position = new()
         {
-            TradeAccount = tradeAccount,
+            Account = tradeAccount,
             TradeAccountId = tradeAccount.Id,
             CreateTime = currentDate,
             UpdateTime = currentDate,
@@ -75,12 +75,12 @@ public static class PositionTools
 
 
     public static CryptoPositionPart ExtendPosition(CryptoDatabase database, CryptoPosition position, CryptoPartPurpose purpose, CryptoInterval interval,
-        CryptoSignalStrategy strategy, CryptoEntryOrProfitMethod stepInMethod, decimal signalPrice, DateTime currentDate, bool manualOrder = false)
+        CryptoSignalStrategy strategy, CryptoEntryOrDcaStrategy stepInMethod, decimal signalPrice, DateTime currentDate, bool manualOrder = false)
     {
         CryptoPositionPart part = new()
         {
             Purpose = purpose,
-            PartNumber = position.Parts.Count, //position.PartCount + 1, // 
+            PartNumber = position.PartList.Count, //position.PartCount + 1, // 
             Strategy = strategy,
             Interval = interval,
             IntervalId = interval.Id,
@@ -145,9 +145,9 @@ public static class PositionTools
         return step;
     }
 
-    public static void AddPosition(CryptoTradeAccount tradeAccount, CryptoPosition position)
+    public static void AddPosition(CryptoAccount tradeAccount, CryptoPosition position)
     {
-        position.TradeAccount = tradeAccount;
+        position.Account = tradeAccount;
         if (GlobalData.ExchangeListId.TryGetValue(position.ExchangeId, out Model.CryptoExchange? exchange))
         {
             position.Exchange = exchange;
@@ -157,7 +157,7 @@ public static class PositionTools
                 if (GlobalData.IntervalListId.TryGetValue((int)position.IntervalId!, out CryptoInterval? interval))
                     position.Interval = interval;
 
-                tradeAccount.PositionList.TryAdd(symbol.Name, position);
+                tradeAccount.Data.PositionList.TryAdd(symbol.Name, position);
             }
         }
     }
@@ -165,7 +165,7 @@ public static class PositionTools
 
     static public void AddPositionPart(CryptoPosition position, CryptoPositionPart part)
     {
-        position.Parts.TryAdd(part.Id, part);
+        position.PartList.TryAdd(part.Id, part);
         part.Position = position; // parent
         part.Exchange = position.Exchange;
         part.Symbol = position.Symbol;
@@ -174,21 +174,21 @@ public static class PositionTools
 
     static public void AddPositionPartStep(CryptoPositionPart part, CryptoPositionStep step)
     {
-        part.Steps.TryAdd(step.Id, step);
+        part.StepList.TryAdd(step.Id, step);
 
         // OrderId index aanvullen
         if (step.OrderId != null && step.OrderId != "")
-            part.Position.Orders.TryAdd(step.OrderId, step);
+            part.Position.StepOrderList.TryAdd(step.OrderId, step);
         if (step.Order2Id != null && step.Order2Id != "") 
-            part.Position.Orders.TryAdd(step.Order2Id, step);
+            part.Position.StepOrderList.TryAdd(step.Order2Id, step);
     }
 
 
     static public void AddPositionClosed(CryptoPosition position)
     {
-        if (GlobalData.TradeAccountList.TryGetValue(position.TradeAccountId, out CryptoTradeAccount? tradeAccount))
+        if (GlobalData.TradeAccountList.TryGetValue(position.TradeAccountId, out CryptoAccount? tradeAccount))
         {
-            position.TradeAccount = tradeAccount;
+            position.Account = tradeAccount;
             if (GlobalData.ExchangeListId.TryGetValue(position.ExchangeId, out Model.CryptoExchange? exchange))
             {
                 position.Exchange = exchange;
@@ -205,11 +205,11 @@ public static class PositionTools
     }
 
 
-    static public void RemovePosition(CryptoTradeAccount tradeAccount, CryptoPosition position, bool addToClosed)
+    static public void RemovePosition(CryptoAccount tradeAccount, CryptoPosition position, bool addToClosed)
     {
-        if (tradeAccount.PositionList.TryGetValue(position.Symbol.Name, out CryptoPosition? positionFound))
+        if (tradeAccount.Data.PositionList.TryGetValue(position.Symbol.Name, out CryptoPosition? positionFound))
         {
-            tradeAccount.PositionList.Remove(positionFound.Symbol.Name);
+            tradeAccount.Data.PositionList.Remove(positionFound.Symbol.Name);
 
             if (addToClosed)
             {
@@ -237,15 +237,15 @@ public static class PositionTools
         sql = string.Format("select * from positionstep where PositionId={0} order by Id", position.Id);
         foreach (CryptoPositionStep step in database.Connection.Query<CryptoPositionStep>(sql))
         {
-            if (position.Parts.TryGetValue(step.PositionPartId, out CryptoPositionPart? part))
+            if (position.PartList.TryGetValue(step.PositionPartId, out CryptoPositionPart? part))
                 AddPositionPartStep(part, step);
         }
     }
 
 
-    public static CryptoPosition? HasPosition(CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
+    public static CryptoPosition? HasPosition(CryptoAccount tradeAccount, CryptoSymbol symbol)
     {
-        if (tradeAccount.PositionList.TryGetValue(symbol.Name, out CryptoPosition? position))
+        if (tradeAccount.Data.PositionList.TryGetValue(symbol.Name, out CryptoPosition? position))
         {
             return position;
         }
@@ -258,9 +258,9 @@ public static class PositionTools
     /// </summary>
     public static bool HasPosition(CryptoSymbol symbol)
     {
-        foreach (CryptoTradeAccount tradeAccount in GlobalData.TradeAccountList.Values.ToList())
+        foreach (CryptoAccount tradeAccount in GlobalData.TradeAccountList.Values.ToList())
         {
-            if (tradeAccount.PositionList.TryGetValue(symbol.Name, out var _))
+            if (tradeAccount.Data.PositionList.TryGetValue(symbol.Name, out var _))
                 return true;
         }
 
@@ -272,14 +272,14 @@ public static class PositionTools
     /// <summary>
     /// Zijn de aangevinkte intervallen UP?
     /// </summary>
-    public static bool ValidTrendConditions(CryptoSymbol symbol, Dictionary<CryptoIntervalPeriod, CryptoTrendIndicator> trend, out string reaction)
+    public static bool ValidTrendConditions(CryptoAccount tradeAccount, string symbolName, Dictionary<CryptoIntervalPeriod, CryptoTrendIndicator> trend, out string reaction)
     {
         foreach (KeyValuePair<CryptoIntervalPeriod, CryptoTrendIndicator> entry in trend)
         {
-            var symbolPeriod = symbol.GetSymbolInterval(entry.Key);
-            if (symbolPeriod.TrendIndicator != entry.Value)
+            AccountSymbolIntervalData accountSymbolIntervalData = tradeAccount.Data.GetSymbolTrendData(symbolName, entry.Key);
+            if (accountSymbolIntervalData.TrendIndicator != entry.Value)
             {
-                reaction = $"trend op de {symbolPeriod.Interval.Name} niet gelijk aan {entry.Value}";
+                reaction = $"trend op de {accountSymbolIntervalData.Interval.Name} niet gelijk aan {entry.Value}";
                 return false;
             }
         }
@@ -289,11 +289,12 @@ public static class PositionTools
     }
 
 
-    public static bool ValidMarketTrendConditions(CryptoSymbol symbol, List<(decimal minValue, decimal maxValue)> marketTrend, out string reaction)
+    public static bool ValidMarketTrendConditions(CryptoAccount tradeAccount, CryptoSymbol symbol, List<(decimal minValue, decimal maxValue)> marketTrend, out string reaction)
     {
         if (marketTrend.Count != 0)
         {
-            if (!symbol.TrendPercentage.HasValue)
+            AccountSymbolData accountSymbolData = tradeAccount.Data.GetSymbolData(symbol.Name);
+            if (!accountSymbolData.TrendPercentage.HasValue)
             {
                 reaction = $"Markettrend {symbol.Name} is niet berekend";
                 return false;
@@ -301,7 +302,7 @@ public static class PositionTools
 
             foreach ((decimal minValue, decimal maxValue) in marketTrend)
             {
-                decimal trendPercentage = (decimal)symbol.TrendPercentage;
+                decimal trendPercentage = (decimal)accountSymbolData.TrendPercentage;
                 if (!trendPercentage.IsBetween(minValue, maxValue))
                 {
                     string minValueStr = minValue.ToString0("N2");
@@ -310,7 +311,7 @@ public static class PositionTools
                     string maxValueStr = maxValue.ToString0("N2");
                     if (maxValue == decimal.MaxValue)
                         maxValueStr = "+maxint";
-                    reaction = $"Markettrend {symbol.Name} {symbol.TrendPercentage?.ToString("N2")} niet tussen {minValueStr} en {maxValueStr}";
+                    reaction = $"Markettrend {symbol.Name} {accountSymbolData.TrendPercentage?.ToString("N2")} niet tussen {minValueStr} en {maxValueStr}";
                     return false;
                 }
             }

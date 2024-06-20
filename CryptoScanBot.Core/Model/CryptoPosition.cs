@@ -20,23 +20,24 @@ public class CryptoPosition
 
     public int TradeAccountId { get; set; }
     [Computed]
-    public CryptoTradeAccount TradeAccount { get; set; }
+    public virtual CryptoAccount Account { get; set; }
 
     public int ExchangeId { get; set; }
     [Computed]
-    public CryptoExchange Exchange { get; set; }
+    public virtual CryptoExchange Exchange { get; set; }
 
     public int SymbolId { get; set; }
     [Computed]
-    public CryptoSymbol Symbol { get; set; }
+    public virtual CryptoSymbol Symbol { get; set; }
 
     public int? IntervalId { get; set; }
     [Computed]
-    public CryptoInterval Interval { get; set; }
+    public CryptoInterval? Interval { get; set; }
 
     public CryptoTradeSide Side { get; set; }
     [Computed]
-    public string SideText { get { return Side switch { CryptoTradeSide.Long => "long", CryptoTradeSide.Short => "short", _ => "?", }; } }
+    public string SideText { get { return Side.ToString().ToLower(); } }
+    //switch { CryptoTradeSide.Long => "long", CryptoTradeSide.Short => "short", _ => "?", }; } }
 
     [Computed]
     public string DisplayText { get { return Symbol.Name + " " + Interval.Name + " " + CreateTime.ToLocalTime() + " " + SideText + " " + StrategyText; } }
@@ -90,20 +91,31 @@ public class CryptoPosition
     public bool IsChanged { get; set; }
 
     [Computed]
-    public SortedList<int, CryptoPositionPart> Parts { get; set; } = [];
+    // todo -> rename to PartList!
+    public SortedList<int, CryptoPositionPart> PartList { get; set; } = [];
 
     [Computed]
     // Orders die uitstaan via de parts/steps
-    public SortedList<string, CryptoPositionStep> Orders { get; set; } = [];
+    // TODO -> rename to StepList!
+    public SortedList<string, CryptoPositionStep> StepOrderList { get; set; } = [];
 
     [Computed]
     public SemaphoreSlim Semaphore { get; set; } = new(1);
     [Computed]
     public bool ForceCheckPosition { get; set; } = false;
 
+
+
     [Computed]
     public bool HasOrdersAndTradesLoaded { get; set; } = false;
 
+    [Computed]
+    // Exchange orders (Key=OrderId, value=CryptoOrder)
+    public CryptoOrderList OrderList { get; set; } = [];
+ 
+    [Computed]
+    // Exchange trades (Key=TradeId, value=CryptoTrade)
+    public CryptoTradeList TradeList { get; set; } = [];
 }
 
 

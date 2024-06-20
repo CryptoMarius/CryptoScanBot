@@ -2,36 +2,11 @@
 
 namespace CryptoScanBot.Core.Model;
 
-public class CryptoOrderList: SortedList<string, SortedList<string, CryptoOrder>>
+public class CryptoOrderList: SortedList<string, CryptoOrder>
 {
-    // First key=symbolname
-    // Second key=OrderId
-
-    public bool HasSymbol(string symbolName)
+    public void AddOrder(CryptoOrder order, bool log = true)
     {
-        return ContainsKey(symbolName);
-    }
-
-    private bool AddOrderInternal(CryptoOrder order)
-    {
-        if (!TryGetValue(order.Symbol.Name, out SortedList<string, CryptoOrder>? list))
-        {
-            list = [];
-            Add(order.Symbol.Name, list);
-        }
-
-        if (!list.ContainsKey(order.OrderId))
-        {
-            list.Add(order.OrderId, order);
-            return true;
-        }
-
-        return false;
-    }
-
-    public void Add(CryptoOrder order, bool log = true)
-    {
-        if (GlobalData.TradeAccountList.TryGetValue(order.TradeAccountId, out CryptoTradeAccount? tradeAccount))
+        if (GlobalData.TradeAccountList.TryGetValue(order.TradeAccountId, out CryptoAccount? tradeAccount))
         {
             order.TradeAccount = tradeAccount;
 
@@ -43,36 +18,25 @@ public class CryptoOrderList: SortedList<string, SortedList<string, CryptoOrder>
                 {
                     order.Symbol = symbol;
 
-                    if (AddOrderInternal(order) && log)
-                        GlobalData.AddTextToLogTab($"{order.Symbol.Name} added order {order.CreateTime} {order.OrderId} {order.Status} (#{order.Id})");
+                    if (!ContainsKey(order.OrderId))
+                    {
+                        Add(order.OrderId, order);
+                        if (log)
+                            GlobalData.AddTextToLogTab($"{order.Symbol.Name} added order {order.CreateTime} {order.OrderId} {order.Status} (#{order.Id})");
+                    }
+
                 }
 
             }
         }
     }
 
-    public CryptoOrder? Find(CryptoSymbol symbol, string orderId)
+    public CryptoOrder? Find(string orderId)
     {
-        if (!TryGetValue(symbol.Name, out SortedList<string, CryptoOrder>? list))
-            return null;
-
-        if (list.TryGetValue(orderId, out CryptoOrder? order))
+        if (TryGetValue(orderId, out CryptoOrder? order))
             return order;
-        
-        return null;
+        else
+            return null;
     }
 
-    public void ClearOrdersFromSymbol(CryptoSymbol symbol)
-    {
-        if (ContainsKey(symbol.Name))
-            Remove(symbol.Name);
-    }
-
-    public SortedList<string, CryptoOrder> GetOrdersForSymbol(CryptoSymbol symbol)
-    {
-        if (TryGetValue(symbol.Name, out SortedList<string, CryptoOrder>? list))
-            return list!;
-
-        return [];
-    }
 }

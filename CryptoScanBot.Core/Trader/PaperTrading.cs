@@ -11,12 +11,18 @@ public class PaperTrading
 {
     public static async Task CreatePaperTradeObject(CryptoDatabase database, CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step, decimal price, DateTime LastCandle1mCloseTimeDate)
     {
+        // We have a stupid bug which adds duplicate orders (and trades)
+        // This leads to all kind of troubles, balance and fees are wrong
+        if (position.OrderList.Find(step.OrderId) != null)
+            return;
+
+
         // Als een surrogaat van de exchange...
         var symbol = position.Symbol;
 
         CryptoOrder order = new()
         {
-            TradeAccount = position.TradeAccount,
+            TradeAccount = position.Account,
             TradeAccountId = position.TradeAccountId,
             Exchange = symbol.Exchange,
             ExchangeId = position.ExchangeId,
@@ -46,13 +52,13 @@ public class PaperTrading
             order.Status = CryptoOrderStatus.Filled;
 
         database.Connection.Insert<CryptoOrder>(order);
-        position.TradeAccount.OrderList.Add(order);
+        position.OrderList.AddOrder(order);
 
 
 
         CryptoTrade trade = new()
         {
-            TradeAccount = position.TradeAccount,
+            TradeAccount = position.Account,
             TradeAccountId = position.TradeAccountId,
             Exchange = symbol.Exchange,
             ExchangeId = position.ExchangeId,
@@ -88,11 +94,14 @@ public class PaperTrading
             trade.Commission = (decimal)(step.Quantity * step.Price * feeRate / 100);
         }
         database.Connection.Insert<CryptoTrade>(trade);
-        position.TradeAccount.TradeList.Add(trade);
+        position.TradeList.AddTrade(trade);
+
+        
+        ScannerLog.Logger.Trace($"{position.Symbol.Name} created papertrade order #{order.Id} and trade #{trade.Id} for order {order.OrderId}");
 
 
         await TradeHandler.HandleTradeAsync(position.Symbol, CryptoOrderStatus.Filled, order);
-        PaperAssets.Change(position.TradeAccount, position.Symbol, step.Side, CryptoOrderStatus.Filled, order.Quantity, order.QuoteQuantity);
+        PaperAssets.Change(position.Account, position.Symbol, step.Side, CryptoOrderStatus.Filled, order.Quantity, order.QuoteQuantity);
     }
 
 
@@ -100,25 +109,25 @@ public class PaperTrading
     /// <summary>
     /// Controle van alle posities na het opnieuw opstarten
     /// </summary>
-    public static async Task CheckPositionsAfterRestart(CryptoTradeAccount tradeAccount)
+    public static async Task CheckPositionsAfterRestart(CryptoAccount tradeAccount)
     {
         // Positions - Parts - Steps 1 voor 1 bij langs om te zien of de prijs ooit boven of beneden de prijs is geweest
 
-        if (tradeAccount.PositionList.Count != 0)
+        if (tradeAccount.Data.PositionList.Count != 0)
         {
             CryptoDatabase database = new();
             database.Open();
 
-            foreach (var position in tradeAccount.PositionList.Values.ToList())
+            foreach (var position in tradeAccount.Data.PositionList.Values.ToList())
             {
                 SortedList<DateTime, (CryptoPositionPart part, CryptoPositionStep step)> indexList = [];
 
                 // Verzamel de open steps
-                foreach (var part in position.Parts.Values.ToList())
+                foreach (var part in position.PartList.Values.ToList())
                 {
                     if (!part.CloseTime.HasValue)
                     {
-                        foreach (var step in part.Steps.Values.ToList())
+                        foreach (var step in part.StepList.Values.ToList())
                         {
                             if (step.Status == CryptoOrderStatus.New)
                                 indexList.TryAdd(step.CreateTime, (part, step));
@@ -186,20 +195,20 @@ public class PaperTrading
     }
 
 
-    public static async Task PaperTradingCheckOrders(CryptoDatabase database, CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoCandle lastCandle1m)
+    public static async Task PaperTradingCheckOrders(CryptoDatabase database, CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoCandle lastCandle1m)
     {
         // Is er iets gekocht of verkocht?
         // Zoja dan de HandleTrade aanroepen.
 
-        if (tradeAccount.PositionList.TryGetValue(symbol.Name, out var position))
+        if (tradeAccount.Data.PositionList.TryGetValue(symbol.Name, out var position))
         {
-            foreach (CryptoPositionPart part in position.Parts.Values.ToList())
+            foreach (CryptoPositionPart part in position.PartList.Values.ToList())
             {
                 // reeds afgesloten
                 if (part.CloseTime.HasValue)
                     continue;
 
-                foreach (CryptoPositionStep step in part.Steps.Values.ToList())
+                foreach (CryptoPositionStep step in part.StepList.Values.ToList())
                 {
                     await PaperTradingCheckStep(database, position, part, step, lastCandle1m);
                 }

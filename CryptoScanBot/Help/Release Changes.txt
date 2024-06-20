@@ -1,9 +1,18 @@
 CryptoScanBot release historie:
 
 xx-xx-2024 1.9.3
+- Scanner - De trend berekening qua code "lichter" gemaakt door de ZigZag te cachen (aanzienlijk verschil in cpu)
 - Scanner - Er worden klines opgehaald van munten die slechts ~1 maand aanwezig zijn op de exchange (bybit spot)
 - Scanner - Extra instelling erbij om de volume controle over meerdere dagen uit te voeren waardoor er geen melding komt op een symbol met een (tijdelijk) hogere volume
 
+- Emulator - Introductie van de emulator (maar er gaat nu nog het eea niet goed, ietwat voorbarig wellicht)
+-geen signalen
+-geen posities
+-trading rules die 25% drops rapporteren
+-en dan zal de trend ook niet goed gaan lijkt me ;-)
+
+
+- Trading - De DCA gebruikte de multiply van de dca regels niet meer (na een onhandige actie).
 - Trading - De instelling "Geen nieuwe posities innemen" kon niet geconfigureerd worden
 - Trading - De profit percentage klopt niet (met name als de dust een hoog aantal is)
 - Trading - Instelling gemaakt om bestaande dust mee te nemen in een verkoop, deze staat standaard aan

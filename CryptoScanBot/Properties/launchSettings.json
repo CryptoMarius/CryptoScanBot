@@ -2,7 +2,8 @@
   "profiles": {
     "CryptoScanBot": {
       "commandName": "Project",
-      "commandLineArgs": "-e \"Bybit Spot\" -f \"CryptoScanBot\\CryptoScanBot 1.9.3\\Bybit Spot Test\""
+      "commandLineArgs": "-e \"Bybit Spot\" -f \"CryptoScanBot\\CryptoScanBot 1.9.3\\Bybit Spot Experiment\"",
+      "nativeDebugging": false
     }
   }
 }

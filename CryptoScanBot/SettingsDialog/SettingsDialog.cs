@@ -11,7 +11,7 @@ public partial class FrmSettings : Form
     private SettingsBasic settings;
 
     private readonly List<SettingsQuoteCoin> BaseCoinList = [];
-    private readonly SortedList<string, CryptoTradeAccountType> TradeVia = [];
+    private readonly SortedList<string, CryptoAccountType> TradeVia = [];
 
 
     public Core.Model.CryptoExchange NewExchange { get; set; }
@@ -37,8 +37,9 @@ public partial class FrmSettings : Form
 
         // Trading (excluding the backtest)
         //TradeVia.Add("Backtest", CryptoTradeAccountType.BackTest);
-        TradeVia.Add("Papertrading", CryptoTradeAccountType.PaperTrade);
-        TradeVia.Add("Trading", CryptoTradeAccountType.RealTrading);
+        TradeVia.Add("Papertrading", CryptoAccountType.PaperTrade);
+        TradeVia.Add("Trading exchange", CryptoAccountType.RealTrading);
+        TradeVia.Add("Altrady webhook", CryptoAccountType.Altrady);
 
         EditTradeVia.DataSource = new BindingSource(TradeVia, null);
         EditTradeVia.DisplayMember = "Key";
@@ -59,7 +60,7 @@ public partial class FrmSettings : Form
 
         // Deze worden na de overgang naar .net 7 regelmatig gereset naar 0
         // Benieuwd waarom dit gebeurd (het zijn er gelukkig niet zo veel)
-        EditGlobalBuyVarying.Minimum = -0.5m;
+        //EditGlobalBuyVarying.Minimum = -0.5m;
 
         EditAnalysisMinChangePercentage.Minimum = -100;
         EditAnalysisMinEffectivePercentage.Minimum = -1000;
@@ -269,31 +270,30 @@ public partial class FrmSettings : Form
         // Api
         EditApiKey.Text = GlobalData.TradingApi.Key;
         EditApiSecret.Text = GlobalData.TradingApi.Secret;
-        EditGlobalBuyVarying.Value = settings.Trading.GlobalBuyVarying;
+        //EditGlobalBuyVarying.Value = settings.Trading.GlobalBuyVarying;
         EditGlobalBuyCooldownTime.Value = settings.Trading.GlobalBuyCooldownTime;
 
         // slots
         EditSlotsMaximalLong.Value = settings.Trading.SlotsMaximalLong;
         EditSlotsMaximalShort.Value = settings.Trading.SlotsMaximalShort;
 
-        // Instap
+        // Entry conditions
         EditCheckIncreasingRsi.Checked = settings.Trading.CheckIncreasingRsi;
         EditCheckIncreasingMacd.Checked = settings.Trading.CheckIncreasingMacd;
         EditCheckIncreasingStoch.Checked = settings.Trading.CheckIncreasingStoch;
         EditCheckFurtherPriceMove.Checked = settings.Trading.CheckFurtherPriceMove;
 
-
-        UserControlTradeBuy.LoadConfig(settings.Trading);
+        // Entry/Dca/Tp/Sl
+        UserControlTradeEntry.LoadConfig(settings.Trading);
         UserControlTradeDca.LoadConfig(settings.Trading);
-        UserControlTradeSell.LoadConfig(settings.Trading);
+        UserControlTradeTakeProfit.LoadConfig(settings.Trading);
+        UserControlTradeStopLoss.LoadConfig(settings.Trading);
 
-        // Stop loss
-        //EditGlobalStopPercentage.Value = Math.Abs(settings.Trading.GlobalStopPercentage);
-        //EditGlobalStopLimitPercentage.Value = Math.Abs(settings.Trading.GlobalStopLimitPercentage);
-
+        // Futures
         EditLeverage.Value = settings.Trading.Leverage;
         EditCrossOrIsolated.SelectedIndex = settings.Trading.CrossOrIsolated;
 
+        // Loads of settings
         UserControlTradingLong.LoadConfig(settings.Trading.Long);
         UserControlTradingShort.LoadConfig(settings.Trading.Short);
         UserControlTradeRules.LoadConfig(settings.Trading);
@@ -334,13 +334,13 @@ public partial class FrmSettings : Form
     }
 
 
-    private void ButtonCancel_Click(object sender, EventArgs e)
+    private void ButtonCancel_Click(object? sender, EventArgs? e)
     {
         DialogResult = DialogResult.Cancel;
     }
 
 
-    private void ButtonOk_Click(object sender, EventArgs e)
+    private void ButtonOk_Click(object? sender, EventArgs? e)
     {
         // ------------------------------------------------------------------------------
         // General
@@ -509,7 +509,7 @@ public partial class FrmSettings : Form
         // --------------------------------------------------------------------------------
         // Trade bot
         // --------------------------------------------------------------------------------
-        settings.Trading.TradeVia = (CryptoTradeAccountType)EditTradeVia.SelectedValue;
+        settings.Trading.TradeVia = (CryptoAccountType)EditTradeVia.SelectedValue;
         settings.Trading.DisableNewPositions = EditDisableNewPositions.Checked;
         settings.General.SoundTradeNotification = EditSoundTradeNotification.Checked;
 
@@ -519,39 +519,37 @@ public partial class FrmSettings : Form
         // Api
         GlobalData.TradingApi.Key = EditApiKey.Text;
         GlobalData.TradingApi.Secret = EditApiSecret.Text;
-        settings.Trading.GlobalBuyVarying = EditGlobalBuyVarying.Value;
+        //settings.Trading.GlobalBuyVarying = EditGlobalBuyVarying.Value;
         settings.Trading.GlobalBuyCooldownTime = (int)EditGlobalBuyCooldownTime.Value;
 
         // slots
         settings.Trading.SlotsMaximalLong = (int)EditSlotsMaximalLong.Value;
         settings.Trading.SlotsMaximalShort = (int)EditSlotsMaximalShort.Value;
 
-        // Instap
+        // Entry conditions
         settings.Trading.CheckIncreasingRsi = EditCheckIncreasingRsi.Checked;
         settings.Trading.CheckIncreasingMacd = EditCheckIncreasingMacd.Checked;
         settings.Trading.CheckIncreasingStoch = EditCheckIncreasingStoch.Checked;
         settings.Trading.CheckFurtherPriceMove = EditCheckFurtherPriceMove.Checked;
 
-
-        UserControlTradeBuy.SaveConfig(settings.Trading);
+        // Entry/Dca/Tp/Sl
+        UserControlTradeEntry.SaveConfig(settings.Trading);
         UserControlTradeDca.SaveConfig(settings.Trading);
-        UserControlTradeSell.SaveConfig(settings.Trading);
+        UserControlTradeTakeProfit.SaveConfig(settings.Trading);
+        UserControlTradeStopLoss.SaveConfig(settings.Trading);
 
-        // Stop loss
-        //settings.Trading.GlobalStopPercentage = EditGlobalStopPercentage.Value;
-        //settings.Trading.GlobalStopLimitPercentage = EditGlobalStopLimitPercentage.Value;
-
+        // Futures
         settings.Trading.Leverage = EditLeverage.Value;
         settings.Trading.CrossOrIsolated = EditCrossOrIsolated.SelectedIndex;
 
-
+        // Loads of settings
         UserControlTradingLong.SaveConfig(settings.Trading.Long);
         UserControlTradingShort.SaveConfig(settings.Trading.Short);
         UserControlTradeRules.SaveConfig(settings.Trading);
 #endif
 
         // ------------------------------------------------------------------------------
-        // Balance bot
+        // Balance bot (out of action)
         // ------------------------------------------------------------------------------
 #if BALANCING
         //settings.BalanceBot.Active = EditBlanceBotActive.Checked;
@@ -567,10 +565,10 @@ public partial class FrmSettings : Form
         DialogResult = DialogResult.OK;
     }
 
-    private void ButtonTestSpeech_Click(object sender, EventArgs e) =>
+    private void ButtonTestSpeech_Click(object? sender, EventArgs? e) =>
         GlobalData.PlaySomeSpeech("Found a signal for BTCUSDT interval 1m (it is going to the moon)", true);
 
-    private void ButtonReset_Click(object sender, EventArgs e)
+    private void ButtonReset_Click(object? sender, EventArgs? e)
     {
         if (MessageBox.Show("Alle instellingen resetten?", "Attentie!", MessageBoxButtons.YesNo) == DialogResult.Yes)
         {
@@ -580,7 +578,7 @@ public partial class FrmSettings : Form
         }
     }
 
-    private void ButtonFontDialog_Click(object sender, EventArgs e)
+    private void ButtonFontDialog_Click(object? sender, EventArgs? e)
     {
         FontDialog dialog = new()
         {
@@ -593,7 +591,7 @@ public partial class FrmSettings : Form
 
     }
 
-    private void ButtonGotoAppDataFolder_Click(object sender, EventArgs e)
+    private void ButtonGotoAppDataFolder_Click(object? sender, EventArgs? e)
     {
         string folder = GlobalData.GetBaseDir();
         System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(folder) { UseShellExecute = true });

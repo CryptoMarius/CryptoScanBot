@@ -5,8 +5,9 @@ namespace CryptoScanBot.SettingsDialog;
 
 public partial class UserControlTradeDca : UserControl
 {
-    private readonly SortedList<string, CryptoEntryOrProfitMethod> DcaStepInMethod = new();
-    private readonly SortedList<string, CryptoBuyOrderMethod> DcaOrderMethod = new();
+    private readonly SortedList<string, CryptoOrderType> OrderTypeList = [];
+    private readonly SortedList<string, CryptoEntryOrDcaStrategy> StrategyList = new();
+    private readonly SortedList<string, CryptoEntryOrDcaPricing> PricingList = new();
     private readonly List<UserControlTradeDcaItem> UserControlDcaList = new();
 
     public UserControlTradeDca()
@@ -22,33 +23,42 @@ public partial class UserControlTradeDca : UserControl
         PanelDca.AutoSize = true;
         PanelDca.AutoSizeMode = AutoSizeMode.GrowAndShrink;
 
-        // DCA
-        //DcaStepInMethod.Add("Direct na het signaal", CryptoBuyStepInMethod.Immediately);
-        DcaStepInMethod.Add("Op het opgegeven percentage", CryptoEntryOrProfitMethod.FixedPercentage);
-        //DcaStepInMethod.Add("Na een signaal (sbm/stobb/enz)", CryptoEntryOrProfitMethod.AfterNextSignal);
-        //DcaStepInMethod.Add("Trace via de Keltner Channel en PSAR", CryptoEntryOrProfitMethod.TrailViaKcPsar);
+        // How to buy
+        //OrderTypeList.Add("Market order", CryptoOrderType.Market);
+        OrderTypeList.Add("Limit order", CryptoOrderType.Limit);
+        //OrderTypeList.Add("Stop limit order", CryptoOrderType.StopLimit);
+        //OrderTypeList.Add("Order cancels Order (OCO)", CryptoOrderType.Oco); // not relevant (not implemented for all exchanges I assume)
+
+        //StrategyList.Add("Direct na het signaal", CryptoBuyStepInMethod.Immediately);
+        StrategyList.Add("Op het opgegeven percentage", CryptoEntryOrDcaStrategy.FixedPercentage);
+        //StrategyList.Add("Na een signaal (sbm/stobb/enz)", CryptoEntryOrProfitMethod.AfterNextSignal);
+        //StrategyList.Add("Trace via de Keltner Channel en PSAR", CryptoEntryOrProfitMethod.TrailViaKcPsar);
 
 
         // Vanwege de beperkte mogelijkheden (DCA only ook alleen maar signaal prijs)
         // Deze optie is niet overbodig, want dit is altijd een fixed percentage + limit
-        //DcaOrderMethod.Add("Market order", CryptoBuyOrderMethod.MarketOrder);
-        DcaOrderMethod.Add("Limit order op DCA percentage", CryptoBuyOrderMethod.SignalPrice);
-        // Wordt niet door alle exchanges ondersteund
-        //BuyOrderMethod.Add("Limit order op bied prijs", CryptoBuyOrderMethod.BidPrice);
-        //BuyOrderMethod.Add("Limit order op vraag prijs", CryptoBuyOrderMethod.AskPrice);
+        //PricingList.Add("Market order", CryptoBuyOrderMethod.MarketOrder);
+        PricingList.Add("DCA percentage", CryptoEntryOrDcaPricing.SignalPrice);
+        //PricingList.Add("Limit order op bied prijs", CryptoBuyOrderMethod.BidPrice);
+        //PricingList.Add("Limit order op vraag prijs", CryptoBuyOrderMethod.AskPrice);
     }
 
     public void LoadConfig(SettingsTrading settings)
     {
-        EditDcaStepInMethod.DataSource = new BindingSource(DcaStepInMethod, null);
-        EditDcaStepInMethod.DisplayMember = "Key";
-        EditDcaStepInMethod.ValueMember = "Value";
-        EditDcaStepInMethod.SelectedValue = settings.DcaStepInMethod;
+        EditOrderType.DataSource = new BindingSource(OrderTypeList, null);
+        EditOrderType.DisplayMember = "Key";
+        EditOrderType.ValueMember = "Value";
+        EditOrderType.SelectedValue = settings.DcaOrderType;
 
-        EditDcaOrderMethod.DataSource = new BindingSource(DcaOrderMethod, null);
-        EditDcaOrderMethod.DisplayMember = "Key";
-        EditDcaOrderMethod.ValueMember = "Value";
-        EditDcaOrderMethod.SelectedValue = settings.DcaOrderMethod;
+        EditStrategy.DataSource = new BindingSource(StrategyList, null);
+        EditStrategy.DisplayMember = "Key";
+        EditStrategy.ValueMember = "Value";
+        EditStrategy.SelectedValue = settings.DcaStrategy;
+
+        EditPricing.DataSource = new BindingSource(PricingList, null);
+        EditPricing.DisplayMember = "Key";
+        EditPricing.ValueMember = "Value";
+        EditPricing.SelectedValue = settings.DcaOrderPrice;
 
         //EditDcaPercentage.Value = Math.Abs(settings.Trading.DcaPercentage);
         //EditDcaFactor.Value = settings.Trading.DcaFactor;
@@ -65,8 +75,9 @@ public partial class UserControlTradeDca : UserControl
 
     public void SaveConfig(SettingsTrading settings)
     {
-        settings.DcaStepInMethod = (CryptoEntryOrProfitMethod)EditDcaStepInMethod.SelectedValue;
-        settings.DcaOrderMethod = (CryptoBuyOrderMethod)EditDcaOrderMethod.SelectedValue;
+        settings.DcaOrderType = (CryptoOrderType)EditOrderType.SelectedValue;
+        settings.DcaStrategy = (CryptoEntryOrDcaStrategy)EditStrategy.SelectedValue;
+        settings.DcaOrderPrice = (CryptoEntryOrDcaPricing)EditPricing.SelectedValue;
 
         settings.DcaList.Clear();
         foreach (UserControlTradeDcaItem control in UserControlDcaList)
@@ -79,7 +90,7 @@ public partial class UserControlTradeDca : UserControl
         // validatie ontbreekt nog
     }
 
-    private void ButtonDcaAddClick(object sender, EventArgs e)
+    private void ButtonDcaAddClick(object? sender, EventArgs? e)
     {
         // Een item toevoegen
         CryptoDcaEntry dca = new();
@@ -107,7 +118,7 @@ public partial class UserControlTradeDca : UserControl
         control.LoadConfig(dca, UserControlDcaList.Count);
     }
 
-    private void ButtonDcaDelClick(object sender, EventArgs e)
+    private void ButtonDcaDelClick(object? sender, EventArgs? e)
     {
         // Verwijder het laatste item
         if (UserControlDcaList.Count != 0)

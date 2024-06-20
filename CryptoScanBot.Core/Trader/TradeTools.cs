@@ -19,12 +19,12 @@ public class TradeTools
         if (GlobalData.ActiveAccount != null)
         {
             // ALLE assets laden
-            GlobalData.ActiveAccount.AssetList.Clear();
+            GlobalData.ActiveAccount.Data.AssetList.Clear();
 
             using var database = new CryptoDatabase();
             foreach (CryptoAsset asset in database.Connection.GetAll<CryptoAsset>())
             {
-                GlobalData.ActiveAccount.AssetList.TryAdd(asset.Name, asset);
+                GlobalData.ActiveAccount.Data.AssetList.TryAdd(asset.Name, asset);
             }
         }
     }
@@ -33,10 +33,10 @@ public class TradeTools
     {
         // Alle gesloten posities lezen 
         // TODO - beperken tot de laatste 2 dagen? (en wat handigheden toevoegen wellicht)
-        GlobalData.AddTextToLogTab("Reading closed position");
+        GlobalData.AddTextToLogTab($"Reading closed position for {GlobalData.ActiveAccount!.AccountType}");
         string sql = "select * from position where not closetime is null and TradeAccountId=@TradeAccountId order by id desc";
         if (!GlobalData.BackTest)
-            sql += " limit 250";
+            sql += " limit 300";
         using var database = new CryptoDatabase();
 
         GlobalData.PositionsClosed.Clear();
@@ -47,13 +47,13 @@ public class TradeTools
     public static void LoadOpenPositions()
     {
         // Alle openstaande posities lezen 
-        GlobalData.AddTextToLogTab("Reading open position");
+        GlobalData.AddTextToLogTab($"Reading open position for {GlobalData.ActiveAccount!.AccountType}");
 
         using var database = new CryptoDatabase();
         string sql = "select * from position where closetime is null and status < 2 and TradeAccountId=@TradeAccountId";
         foreach (CryptoPosition position in database.Connection.Query<CryptoPosition>(sql, new { TradeAccountId = GlobalData.ActiveAccount!.Id }))
         {
-            if (!GlobalData.TradeAccountList.TryGetValue(position.TradeAccountId, out CryptoTradeAccount? tradeAccount))
+            if (!GlobalData.TradeAccountList.TryGetValue(position.TradeAccountId, out CryptoAccount? tradeAccount))
                 throw new Exception("Geen trade account gevonden");
 
             PositionTools.AddPosition(tradeAccount, position);
@@ -64,41 +64,47 @@ public class TradeTools
     public static async Task CheckOpenPositions()
     {
         // De openstaande posities controleren
-        GlobalData.AddTextToLogTab("Checking open positions");
+        GlobalData.AddTextToLogTab($"Checking open positions for {GlobalData.ActiveAccount!.AccountType}");
 
         using var database = new CryptoDatabase();
-        foreach (CryptoTradeAccount tradeAccount in GlobalData.TradeAccountList.Values.ToList())
+        foreach (CryptoAccount tradeAccount in GlobalData.TradeAccountList.Values.ToList())
         {
-            foreach (var position in tradeAccount.PositionList.Values.ToList())
+            foreach (var position in tradeAccount.Data.PositionList.Values.ToList())
             {
                 position.ForceCheckPosition = true;
-                await GlobalData.ThreadDoubleCheckPosition!.AddToQueue(position);
+                await GlobalData.ThreadCheckPosition!.AddToQueue(position);
             }
         }
     }
 
 
-    private static StringBuilder DumpPosition(CryptoPosition position)
-    {
-        StringBuilder stringBuilder = new(); // debug
-        stringBuilder.AppendLine($"positie {position.Symbol.Name}");
-        foreach (CryptoPositionPart part in position.Parts.Values.ToList())
-        {
-            stringBuilder.AppendLine($"dca {part.PartNumber} {part.Invested} {part.Commission} {part.CommissionQuote} {part.CommissionBase}");
-            foreach (CryptoPositionStep step in part.Steps.Values.ToList())
-            {
-                stringBuilder.AppendLine($"step {step.Side} {step.Status} {step.OrderId} {step.QuoteQuantityFilled} {step.Commission} {step.CommissionQuote} {step.CommissionBase}");
-            }
-        }
-        stringBuilder.AppendLine($"berekening={position.BreakEvenPrice}=({position.Invested}-{position.Returned}+{position.Commission})/({position.Quantity} + {position.CommissionBase})");
-        return stringBuilder;
-    }
+    //private static StringBuilder DumpPosition(CryptoPosition position)
+    //{
+    //    StringBuilder stringBuilder = new(); // debug
+    //    stringBuilder.AppendLine($"positie {position.Symbol.Name}");
+    //    foreach (CryptoPositionPart part in position.PartList.Values.ToList())
+    //    {
+    //        stringBuilder.AppendLine($"dca {part.PartNumber} {part.Invested} {part.Commission} {part.CommissionQuote} {part.CommissionBase}");
+    //        foreach (CryptoPositionStep step in part.StepList.Values.ToList())
+    //        {
+    //            stringBuilder.AppendLine($"step {step.Side} {step.Status} {step.OrderId} {step.QuoteQuantityFilled} {step.Commission} {step.CommissionQuote} {step.CommissionBase}");
+    //        }
+    //    }
+    //    stringBuilder.AppendLine($"berekening={position.BreakEvenPrice}=({position.Invested}-{position.Returned}+{position.Commission})/({position.Quantity} + {position.CommissionBase})");
+    //    return stringBuilder;
+    //}
 
     /// <summary>
     /// De break-even prijs berekenen vanuit de parts en steps
     /// </summary>
     public static void CalculateProfitAndBreakEvenPrice(CryptoPosition position)
     {
+        if (!position.HasOrdersAndTradesLoaded)
+        {
+            // debug
+            GlobalData.AddTextToLogTab($"{position.Symbol.Name} CalculateProfitAndBreakEvenPrice without orders and trades!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        }
+
         //----
         // De positie doorrekene,  er wordt alleen gerekend, geen beslissingen over status
         //https://dappgrid.com/binance-fees-explained-fee-calculation/
@@ -107,7 +113,7 @@ public class TradeTools
         // $199.8 worth of Bitcoin.To calculate these fees, you can also use our Binance fee calculator:
         // (als je verder gaat dan wordt het vanwege de kickback's tamelijk complex)
         // Op Bybit futures heb je de fundingrates, dat wordt in tijdblokken berekend met varierende fr..
-        StringBuilder stringBuilderOld = DumpPosition(position);
+        //StringBuilder stringBuilderOld = DumpPosition(position);
 
         position.Profit = 0;
         position.Quantity = 0;
@@ -129,8 +135,11 @@ public class TradeTools
 
         decimal totalValue = 0;
         decimal totalQuantity = 0;
+        CryptoPositionPart? partTp = null;
+        int steps = 0;
+        int stepCanceled = 0;
 
-        foreach (CryptoPositionPart part in position.Parts.Values.ToList())
+        foreach (CryptoPositionPart part in position.PartList.Values.ToList())
         {
             part.Quantity = 0;
             part.Invested = 0;
@@ -143,8 +152,12 @@ public class TradeTools
             part.BreakEvenPrice = 0;
 
             //int tradeCount = 0;
-            foreach (CryptoPositionStep step in part.Steps.Values.ToList())
+            foreach (CryptoPositionStep step in part.StepList.Values.ToList())
             {
+                steps++;
+                if (step.Side == entryOrderSide && step.Status >= CryptoOrderStatus.Canceled)
+                    stepCanceled++;
+
                 // || step.Status == CryptoOrderStatus.PartiallyFilled => niet doen, want dan worden de TP's iedere keer verplaatst..
                 // Wellicht moet dat gedeelte op een andere manier ingeregeld worden zodat we hier wel de echte BE kunnen uitrekenen?
                 if (step.Status.IsFilled()) // Filled or PartiallyFilledAndClosed
@@ -241,7 +254,10 @@ public class TradeTools
             }
             // fix..
             if (part.Purpose == CryptoPartPurpose.TakeProfit)
+            {
                 part.PartNumber = 9999;
+                partTp = part;
+            }
 
 
             //string t = string.Format("{0} CalculateProfit sell invested={1} profit={2} bought={3} sold={4} steps={5}",
@@ -257,6 +273,32 @@ public class TradeTools
             position.RemainingDust += part.RemainingDust;
             position.CommissionBase += part.CommissionBase;
             position.CommissionQuote += part.CommissionQuote;
+        }
+
+
+        // 3 strange conditions which should not have occured, but still here they are..
+        // The first condition is a fix that can probably be removed at this moment, but added logging to be sure
+        // The last 2 conditions will close the position if all entry orders are canceled (timeout etc) but the position was never closed..
+
+        // Reset closetime if there is quantity left (it should not have been closed)
+        if (partTp != null && position.Quantity > position.RemainingDust && partTp.CloseTime.HasValue)
+        {
+            partTp.CloseTime = null;
+            GlobalData.AddTextToLogTab($"{position.Symbol.Name} resetting closeTime of part {partTp.PartNumber} (debug, fixing position?)");
+        }
+
+        // Reset status if there is a timeout (status Trading should not have been set) - nothing wil happen otherwise
+        if (position.Quantity == 0 && position.Reserved == 0 && steps > 0 && steps == stepCanceled && position.Status == CryptoPositionStatus.Trading)
+        {
+            position.Status = CryptoPositionStatus.Timeout; // or timeout?
+            GlobalData.AddTextToLogTab($"{position.Symbol.Name} position takes up an open slot (debug, fixing position?)");
+        }
+
+        // Reset status if there is a timeout (status Trading should not have been set) - nothing wil happen otherwise
+        if (position.Quantity == 0 && position.Reserved == 0 && steps > 0 && steps == stepCanceled && position.Status == CryptoPositionStatus.Waiting)
+        {
+            position.Status = CryptoPositionStatus.Timeout; // or timeout?
+            GlobalData.AddTextToLogTab($"{position.Symbol.Name} position takes up an open slot (debug, fixing position?)");
         }
 
 
@@ -316,9 +358,9 @@ public class TradeTools
         if (BreakEvenPriceOld != position.BreakEvenPrice)
         {
             ScannerLog.Logger.Trace($"{position.Symbol.Name} aanpassing BE van {BreakEvenPriceOld} naar {position.BreakEvenPrice}");
-            ScannerLog.Logger.Trace(stringBuilderOld);
-            StringBuilder stringBuilderNew = DumpPosition(position);
-            ScannerLog.Logger.Trace(stringBuilderNew);
+            //ScannerLog.Logger.Trace(stringBuilderOld);
+            //StringBuilder stringBuilderNew = DumpPosition(position);
+            //ScannerLog.Logger.Trace(stringBuilderNew);
         }
     }
 
@@ -327,6 +369,12 @@ public class TradeTools
     {
         ScannerLog.Logger.Trace($"CalculateOrderFeeFromTrades: Positie {position.Symbol.Name} check step={step.OrderId}");
 
+        if (!position.HasOrdersAndTradesLoaded)
+        {
+            // debug
+            GlobalData.AddTextToLogTab($"{position.Symbol.Name} CalculateOrderFeeFromTrades without orders and trades!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        }
+
         // Calculate fee from the trades (Bybit V5 doesn't return fee via orders)
         // Afhankelijk van de asset wordt de commissie berekend (debug)
         // Voor de step is dit niet relevant (mits we het omrekenen naar base en quote)
@@ -334,15 +382,15 @@ public class TradeTools
         step.CommissionBase = 0;
         step.CommissionQuote = 0;
         step.CommissionAsset = "";
-        foreach (CryptoTrade trade in position.TradeAccount.TradeList.GetTradesForSymbol(position.Symbol).Values.ToList())
+        foreach (CryptoTrade trade in position.TradeList.Values.ToList())
         {
             if (trade != null && trade.OrderId == step.OrderId)
             {
                 ScannerLog.Logger.Trace($"CalculateOrderFeeFromTrades: Positie {position.Symbol.Name} check trade={trade.TradeId} order={trade.OrderId}");
                 if (trade.CommissionAsset == position.Symbol.Base) // fee in base quantity
                 {
-                    decimal value = (decimal)trade.Commission * (decimal)trade.Price;
-                    step.CommissionBase += (decimal)trade.Commission; // debug, not really relevant after this
+                    decimal value = trade.Commission * trade.Price;
+                    step.CommissionBase += trade.Commission; // debug, not really relevant after this
                     //step.CommissionQuote += value;
                     step.Commission += value;
                 }
@@ -350,8 +398,8 @@ public class TradeTools
                 {
                     //decimal value = (decimal)trade.Commission / (decimal)trade.Price;
                     //step.CommissionBase += value;
-                    step.CommissionQuote += (decimal)trade.Commission; // debug, not really relevant after this
-                    step.Commission += (decimal)trade.Commission;
+                    step.CommissionQuote += trade.Commission; // debug, not really relevant after this
+                    step.Commission += trade.Commission;
                 }
 
                 step.CommissionAsset = trade.CommissionAsset; // debug, not really relevant after this
@@ -388,9 +436,9 @@ public class TradeTools
 
         // Build the filled quantity via the present orders & calculate fees
         DateTime? lastDateTime = null;
-        foreach (CryptoOrder order in position.TradeAccount.OrderList.GetOrdersForSymbol(position.Symbol).Values.ToList())
+        foreach (CryptoOrder order in position.OrderList.Values.ToList())
         {
-            if (order != null && position.Orders.TryGetValue(order.OrderId, out CryptoPositionStep? step))
+            if (order != null && position.StepOrderList.TryGetValue(order.OrderId, out CryptoPositionStep? step))
             {
                 // Remember the last datetime so we can close the position with this date if needed
                 if (lastDateTime == null || order.UpdateTime > lastDateTime)
@@ -585,7 +633,7 @@ public class TradeTools
             CalculateProfitAndBreakEvenPrice(position);
 
             if (lastDateTime == null)
-                lastDateTime = GlobalData.GetCurrentDateTime(position.TradeAccount);
+                lastDateTime = GlobalData.GetCurrentDateTime(position.Account);
 
             // Er is in geinvesteerd en dus moet de positie ten minste actief zijn
             if (position.Quantity != 0 && position.Status == CryptoPositionStatus.Waiting)
@@ -632,7 +680,7 @@ public class TradeTools
             // Achteraf worden de trades alsnog ingeladen, wordt de positie opengezet, maar de part blijft gelosten en de trader doets niets...
             if (!position.CloseTime.HasValue)
             {
-                foreach (CryptoPositionPart part in position.Parts.Values.ToList())
+                foreach (CryptoPositionPart part in position.PartList.Values.ToList())
                 {
                     if (part.CloseTime.HasValue && part.Invested != 0 && part.Returned == 0)
                     {
@@ -647,9 +695,9 @@ public class TradeTools
             // De positie bewaren (dit kost nogal wat tijd, dus extra controle of het nodig is)
             if (orderStatusChanged || markedAsReady)
             {
-                foreach (CryptoPositionPart part in position.Parts.Values.ToList())
+                foreach (CryptoPositionPart part in position.PartList.Values.ToList())
                 {
-                    foreach (CryptoPositionStep step in part.Steps.Values.ToList())
+                    foreach (CryptoPositionStep step in part.StepList.Values.ToList())
                         database.Connection.Update<CryptoPositionStep>(step);
                     database.Connection.Update<CryptoPositionPart>(part);
                 }
@@ -661,8 +709,8 @@ public class TradeTools
             if (markedAsReady)
             {
                 position.ForceCheckPosition = true;
-                position.DelayUntil = GlobalData.GetCurrentDateTime(position.TradeAccount).AddSeconds(10);
-                await GlobalData.ThreadDoubleCheckPosition!.AddToQueue(position);
+                position.DelayUntil = GlobalData.GetCurrentDateTime(position.Account).AddSeconds(10);
+                await GlobalData.ThreadCheckPosition!.AddToQueue(position);
             }
         }
     }
@@ -671,35 +719,44 @@ public class TradeTools
 
     static private async Task<int> LoadOrdersFromDatabaseAndExchangeAsync(CryptoDatabase database, CryptoPosition position)
     {
-        if (!position.HasOrdersAndTradesLoaded)
-        {
-            //GlobalData.AddTextToLogTab($"TradeTools.LoadOrdersFromDatabaseAndExchangeAsync: Position {position.Symbol.Name} loading orders and trades from database {position.CreateTime}");
-            ScannerLog.Logger.Trace($"TradeTools.LoadOrdersFromDatabaseAndExchangeAsync: Position {position.Symbol.Name} loading orders and trades from database {position.CreateTime}");
-
-            // Vanwege tijd afrondingen (msec)
-            DateTime from = position.CreateTime.AddMinutes(-1);
-
-            // Bij het laden zijn niet alle trades in het geheugen ingelezen, dus deze alsnog inladen (of verversen)
-            string sql = "select * from [order] where SymbolId=@symbolId and CreateTime >= @fromDate and TradeAccountId=@account order by CreateTime";
-            foreach (CryptoOrder order in database.Connection.Query<CryptoOrder>(sql, new { symbolId = position.SymbolId, fromDate = from, account = position.TradeAccountId }))
-                position.TradeAccount.OrderList.Add(order, false);
-
-            sql = "select * from [trade] where SymbolId=@symbolId and TradeTime >= @fromDate and TradeAccountId=@account order by TradeTime";
-            foreach (CryptoTrade trade in database.Connection.Query<CryptoTrade>(sql, new { symbolId = position.SymbolId, fromDate = from, account = position.TradeAccountId }))
-                position.TradeAccount.TradeList.Add(trade, false);
-
-            position.HasOrdersAndTradesLoaded = true;
-        }
-
         int count = 0;
 
-        // Daarna de "nieuwe" orders van deze coin ophalen en die toegevoegen aan dezelfde orderlist
-        if (position.TradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading) // && loadFromExchange
-            count += await ExchangeHelper.GetOrdersAsync(database, position);
+        // Observed conflicts with GUI actions like Excel and Recalculate
+        //Monitor.Enter(position.TradeList);
+        try
+        {
+            if (!position.HasOrdersAndTradesLoaded)
+            {
+                //GlobalData.AddTextToLogTab($"TradeTools.LoadOrdersFromDatabaseAndExchangeAsync: Position {position.Symbol.Name} loading orders and trades from database {position.CreateTime}");
+                ScannerLog.Logger.Trace($"TradeTools.LoadOrdersFromDatabaseAndExchangeAsync: Position {position.Symbol.Name} loading orders and trades from database {position.CreateTime}");
 
-        // Daarna de "nieuwe" orders van deze coin ophalen en die toegevoegen aan dezelfde orderlist
-        if (position.TradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading) // && loadFromExchange
-            count += await ExchangeHelper.GetTradesAsync(database, position);
+                // Vanwege tijd afrondingen (msec)
+                DateTime from = position.CreateTime.AddMinutes(-1);
+
+                // Bij het laden zijn niet alle trades in het geheugen ingelezen, dus deze alsnog inladen (of verversen)
+                string sql = "select * from [order] where SymbolId=@symbolId and CreateTime >= @fromDate and TradeAccountId=@account order by CreateTime";
+                foreach (CryptoOrder order in database.Connection.Query<CryptoOrder>(sql, new { symbolId = position.SymbolId, fromDate = from, account = position.TradeAccountId }))
+                    position.OrderList.AddOrder(order, false);
+
+                sql = "select * from [trade] where SymbolId=@symbolId and TradeTime >= @fromDate and TradeAccountId=@account order by TradeTime";
+                foreach (CryptoTrade trade in database.Connection.Query<CryptoTrade>(sql, new { symbolId = position.SymbolId, fromDate = from, account = position.TradeAccountId }))
+                    position.TradeList.AddTrade(trade, false);
+
+                position.HasOrdersAndTradesLoaded = true;
+            }
+
+            // Daarna de "nieuwe" orders van deze coin ophalen en die toegevoegen aan dezelfde orderlist
+            if (position.Account.AccountType == CryptoAccountType.RealTrading) // && loadFromExchange
+                count += await ExchangeHelper.GetOrdersAsync(database, position);
+
+            // Daarna de "nieuwe" orders van deze coin ophalen en die toegevoegen aan dezelfde orderlist
+            if (position.Account.AccountType == CryptoAccountType.RealTrading) // && loadFromExchange
+                count += await ExchangeHelper.GetTradesAsync(database, position);
+        }
+        finally
+        {
+            //Monitor.Exit(position.TradeList);
+        }
 
         return count;
     }
@@ -719,7 +776,7 @@ public class TradeTools
         database.Connection.Update<CryptoPositionStep>(step);
 
         // Annuleer de order
-        var exchangeApi = ExchangeHelper.GetExchangeInstance(GlobalData.Settings.General.ExchangeId);
+        var exchangeApi = ExchangeHelper.GetApiInstance();
         var result = await exchangeApi.Cancel(position, part, step);
         if (result.succes)
         {
@@ -727,8 +784,8 @@ public class TradeTools
             step.CloseTime = currentTime;
             database.Connection.Update<CryptoPositionStep>(step);
 
-            if (position.TradeAccount.TradeAccountType == CryptoTradeAccountType.PaperTrade)
-                PaperAssets.Change(position.TradeAccount, position.Symbol, result.tradeParams.OrderSide,
+            if (position.Account.AccountType == CryptoAccountType.PaperTrade)
+                PaperAssets.Change(position.Account, position.Symbol, result.tradeParams.OrderSide,
                     CryptoOrderStatus.Canceled, result.tradeParams.Quantity, result.tradeParams.QuoteQuantity);
         }
         if (!result.succes || GlobalData.Settings.Trading.LogCanceledOrders)
@@ -752,7 +809,7 @@ public class TradeTools
 
 
         // Get available assets from the exchange (as late as possible because of webcall)
-        var (success, reaction) = await AssetTools.FetchAssetsAsync(position.TradeAccount, true);
+        var (success, reaction) = await AssetTools.FetchAssetsAsync(position.Account, true);
         if (!success)
         {
             GlobalData.AddTextToLogTab($"{position.Symbol.Name} {reaction}");
@@ -760,7 +817,7 @@ public class TradeTools
         }
 
         // Get asset amounts
-        var info = AssetTools.GetAsset(position.TradeAccount, symbol);
+        var info = AssetTools.GetAsset(position.Account, symbol);
         if (info.QuoteTotal <= 0)
         {
             GlobalData.AddTextToLogTab($"No assets available for {symbol.Quote}");
@@ -816,10 +873,9 @@ public class TradeTools
         CryptoOrderSide takeProfitOrderSide = position.GetTakeProfitOrderSide();
 
         (bool result, TradeParams? tradeParams) result;
-        var exchangeApi = ExchangeHelper.GetExchangeInstance(GlobalData.Settings.General.ExchangeId);
+        var exchangeApi = ExchangeHelper.GetApiInstance();
         result = await exchangeApi.PlaceOrder(database, position, part, currentTime,
             CryptoOrderType.Limit, takeProfitOrderSide, takeProfitQuantity, takeProfitPrice, null, null);
-
         if (result.tradeParams is not null)
         {
             if (result.result)
@@ -830,14 +886,16 @@ public class TradeTools
                 database.Connection.Insert<CryptoPositionStep>(step);
                 PositionTools.AddPositionPartStep(part, step);
 
-                part.ProfitMethod = CryptoEntryOrProfitMethod.FixedPercentage;
+                part.ProfitMethod = CryptoEntryOrDcaStrategy.FixedPercentage;
                 database.Connection.Update<CryptoPositionPart>(part);
                 database.Connection.Update<CryptoPosition>(position);
 
-                if (position.TradeAccount.TradeAccountType == CryptoTradeAccountType.PaperTrade)
-                    PaperAssets.Change(position.TradeAccount, position.Symbol, result.tradeParams.OrderSide,
+                if (position.Account.AccountType == CryptoAccountType.PaperTrade)
+                    PaperAssets.Change(position.Account, position.Symbol, result.tradeParams.OrderSide,
                         step.Status, result.tradeParams.Quantity, result.tradeParams.QuoteQuantity);
             }
+            else
+                position.ForceCheckPosition = true;
             ExchangeBase.Dump(position, result.result, result.tradeParams, extraText);
         }
     }
@@ -847,12 +905,12 @@ public class TradeTools
     /// <summary>
     /// Bepaal het entry bedrag 
     /// </summary>
-    public static decimal GetEntryAmount(CryptoSymbol symbol, decimal quoteAssetQuantity, CryptoTradeAccountType tradeAccountType)
+    public static decimal GetEntryAmount(CryptoSymbol symbol, decimal quoteAssetQuantity, CryptoAccountType tradeAccountType)
     {
         // Opmerking: Er is geen percentage bij papertrading mogelijk (of we moeten een werkende papertrade asset management implementeren)
 
         // Heeft de gebruiker een percentage of een aantal ingegeven?
-        if (tradeAccountType == CryptoTradeAccountType.RealTrading && symbol.QuoteData.EntryPercentage > 0m)
+        if (tradeAccountType == CryptoAccountType.RealTrading && symbol.QuoteData.EntryPercentage > 0m)
             return symbol.QuoteData.EntryPercentage * quoteAssetQuantity / 100;
         else
             return symbol.QuoteData.EntryAmount;

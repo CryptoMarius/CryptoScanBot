@@ -62,13 +62,13 @@ public partial class CryptoDataGridColumns : Form
 
     }
 
-    private void buttonOk_Click(object sender, EventArgs e)
+    private void buttonOk_Click(object? sender, EventArgs? e)
     {
         FormOkay();
         DialogResult = DialogResult.OK;
     }
 
-    private void buttonCancel_Click(object sender, EventArgs e)
+    private void buttonCancel_Click(object? sender, EventArgs? e)
     {
         DialogResult = DialogResult.Cancel;
     }

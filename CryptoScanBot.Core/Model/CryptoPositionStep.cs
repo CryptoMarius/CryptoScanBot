@@ -23,8 +23,8 @@ public class CryptoPositionStep
     public CryptoOrderType OrderType { get; set; } // (limit, stop limit, oco enz)
     public bool CancelInProgress { get; set; }
 
-    public string OrderId { get; set; } // Vanwege papertrading moet deze nullable zijn
-    public string Order2Id { get; set; } // Eventuele limit order  // not supported
+    public string? OrderId { get; set; } // Vanwege papertrading moet deze nullable zijn
+    public string? Order2Id { get; set; } // Eventuele limit order  // not supported
 
     public decimal Price { get; set; } // Tevens de LimitPrice indien het een OCO is
     public decimal Quantity { get; set; }

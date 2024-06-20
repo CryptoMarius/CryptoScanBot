@@ -13,15 +13,15 @@ public class CryptoTrade
 
     public int TradeAccountId { get; set; }
     [Computed]
-    public CryptoTradeAccount TradeAccount { get; set; }
+    public CryptoAccount? TradeAccount { get; set; }
 
     public int ExchangeId { get; set; }
     [Computed]
-    public CryptoExchange Exchange { get; set; }
+    public CryptoExchange? Exchange { get; set; }
 
     public int SymbolId { get; set; }
     [Computed]
-    public CryptoSymbol Symbol { get; set; }
+    public CryptoSymbol? Symbol { get; set; }
 
     public decimal Price { get; set; }
     public decimal Quantity { get; set; } // De gevulde quantity

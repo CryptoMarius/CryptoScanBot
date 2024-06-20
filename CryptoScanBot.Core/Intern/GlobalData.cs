@@ -28,16 +28,6 @@ public delegate void SetCandleTimerEnable(bool value);
 
 
 
-/// De laatst berekende barometer standen
-public class BarometerData
-{
-    public long? PriceDateTime { get; set; }
-    public decimal? PriceBarometer { get; set; }
-
-    public long? VolumeDateTime { get; set; }
-    public decimal? VolumeBarometer { get; set; }
-}
-
 
 static public class GlobalData
 {
@@ -56,9 +46,9 @@ static public class GlobalData
     public static DateTime BackTestDateTime { get; set; }
     public static CryptoCandle? BackTestCandle { get; set; }
 
-    public static DateTime GetCurrentDateTime(CryptoTradeAccount account)
+    public static DateTime GetCurrentDateTime(CryptoAccount account)
     {
-        if (account.TradeAccountType == CryptoTradeAccountType.BackTest)
+        if (account.AccountType == CryptoAccountType.BackTest)
             return BackTestDateTime; // or BackTestCandle.Date + 1 minute
         else
             return DateTime.UtcNow;
@@ -74,12 +64,17 @@ static public class GlobalData
     public static SettingsBasic Settings { get; set; } = new();
 
     /// <summary>
-    /// API gerelateerde instellingen
+    /// Exchange API settings
     /// </summary>
     public static SettingsExchangeApi TradingApi { get; set; } = new();
 
     /// <summary>
-    /// Instellingen zoals kolombreedte, kolom zichtbaar en laatste venster cooridinaten
+    /// Altrady API settings
+    /// </summary>
+    public static SettingsAltradyApi AltradyApi { get; set; } = new();
+    
+    /// <summary>
+    /// Settings for visability and widths of columns + window coordinates
     /// </summary>
     public static SettingsUser SettingsUser { get; set; } = new();
 
@@ -88,8 +83,6 @@ static public class GlobalData
     /// </summary>
     public static SettingsTelegram Telegram { get; set; } = new();
 
-
-    public static PauseRule PauseTrading { get; set; } = new();
 
     /// <summary>
     /// De url's van de exchanges en/of tradingapps
@@ -105,8 +98,6 @@ static public class GlobalData
     public static readonly SortedList<int, Model.CryptoExchange> ExchangeListId = [];
     public static readonly SortedList<string, Model.CryptoExchange> ExchangeListName = [];
 
-    // Probleem, de signallist wordt nooit opgeruimd!
-    public static readonly List<CryptoSignal> SignalList = [];
     public static readonly Queue<CryptoSignal> SignalQueue = new();
     public static readonly List<CryptoPosition> PositionsClosed = [];
 
@@ -130,15 +121,15 @@ static public class GlobalData
     public static AnalyseEvent? AnalyzeSignalCreated { get; set; }
 
     // All possible account (overkill)
-    public static readonly SortedList<int, CryptoTradeAccount> TradeAccountList = [];
-    public static CryptoTradeAccount? ActiveAccount { get; set; }
+    public static readonly SortedList<int, CryptoAccount> TradeAccountList = [];
+    public static CryptoAccount? ActiveAccount { get; set; }
 
 
     // Some running tasks/threads
     public static ThreadMonitorCandle? ThreadMonitorCandle { get; set; }
 #if TRADEBOT
     public static ThreadMonitorOrder? ThreadMonitorOrder { get; set; }
-    public static ThreadCheckFinishedPosition? ThreadDoubleCheckPosition { get; set; }
+    public static ThreadCheckFinishedPosition? ThreadCheckPosition { get; set; }
 #endif
 #if BALANCING
     static public ThreadBalanceSymbols ThreadBalanceSymbols { get; set; }
@@ -166,7 +157,7 @@ static public class GlobalData
         using var database = new CryptoDatabase();
         foreach (Model.CryptoExchange exchange in database.Connection.GetAll<Model.CryptoExchange>())
         {
-            if (exchange.IsActive)
+            if (exchange.IsSupported)
                 AddExchange(exchange);
         }
     }
@@ -179,7 +170,7 @@ static public class GlobalData
         TradeAccountList.Clear();
 
         using var database = new CryptoDatabase();
-        foreach (CryptoTradeAccount tradeAccount in database.Connection.GetAll<CryptoTradeAccount>())
+        foreach (CryptoAccount tradeAccount in database.Connection.GetAll<CryptoAccount>())
         {
             if (ExchangeListId.TryGetValue(tradeAccount.ExchangeId, out var exchange))
             {
@@ -194,16 +185,18 @@ static public class GlobalData
     public static void SetTradingAccounts()
     {
         ActiveAccount = null;
-        foreach (CryptoTradeAccount tradeAccount in TradeAccountList.Values)
+        foreach (CryptoAccount tradeAccount in TradeAccountList.Values)
         {
             // There are 3 accounts per exchange
             if (tradeAccount.ExchangeId == Settings.General.ExchangeId)
             {
-                if (GlobalData.BackTest && tradeAccount.TradeAccountType == CryptoTradeAccountType.BackTest) // ignore the GlobalData.Settings.Trading.TradeVia in this case
+                if (GlobalData.BackTest && tradeAccount.AccountType == CryptoAccountType.BackTest) // ignore the GlobalData.Settings.Trading.TradeVia in this case
                     ActiveAccount = tradeAccount;
-                if (!GlobalData.BackTest && tradeAccount.TradeAccountType == CryptoTradeAccountType.PaperTrade && GlobalData.Settings.Trading.TradeVia == CryptoTradeAccountType.PaperTrade)
+                if (!GlobalData.BackTest && tradeAccount.AccountType == CryptoAccountType.PaperTrade && GlobalData.Settings.Trading.TradeVia == CryptoAccountType.PaperTrade)
                     ActiveAccount = tradeAccount;
-                if (!GlobalData.BackTest && tradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading && GlobalData.Settings.Trading.TradeVia == CryptoTradeAccountType.RealTrading)
+                if (!GlobalData.BackTest && tradeAccount.AccountType == CryptoAccountType.RealTrading && GlobalData.Settings.Trading.TradeVia == CryptoAccountType.RealTrading)
+                    ActiveAccount = tradeAccount;
+                if (!GlobalData.BackTest && tradeAccount.AccountType == CryptoAccountType.Altrady && GlobalData.Settings.Trading.TradeVia == CryptoAccountType.Altrady)
                     ActiveAccount = tradeAccount;
             }
         }
@@ -256,10 +249,7 @@ static public class GlobalData
 
     static public void LoadSignals()
     {
-        // Een aantal signalen laden
-        // TODO - beperken tot de signalen die nog enigzins bruikbaar zijn??
-        AddTextToLogTab("Reading some signals");
-        SignalList.Clear();
+        GlobalData.AddTextToLogTab($"Reading some signals for {GlobalData.ActiveAccount!.AccountType}");
 
         if (BackTest)
         {
@@ -279,7 +269,6 @@ static public class GlobalData
                         if (IntervalListId.TryGetValue(signal.IntervalId, out CryptoInterval? interval))
                             signal.Interval = interval;
 
-                        SignalList.Add(signal);
                         SignalQueue.Enqueue(signal);
                     }
                 }
@@ -303,7 +292,6 @@ static public class GlobalData
                         if (IntervalListId.TryGetValue(signal.IntervalId, out CryptoInterval? interval))
                             signal.Interval = interval;
 
-                        SignalList.Add(signal);
                         SignalQueue.Enqueue(signal);
                     }
                 }
@@ -314,10 +302,6 @@ static public class GlobalData
 
     static public void AddExchange(Model.CryptoExchange exchange)
     {
-        // Deze exchange kan nog niet ondersteund worden (experimenteel)
-        if (exchange.Name.Equals("Kraken"))
-            return;
-
         if (!ExchangeListName.ContainsKey(exchange.Name))
         {
             ExchangeListId.Add(exchange.Id, exchange);
@@ -421,40 +405,6 @@ static public class GlobalData
     }
 
 
-    static public void InitBarometerSymbols(CryptoDatabase database)
-    {
-        // TODO: Deze routine is een discrepantie tussen de scanner en trader!
-        // De BarometerTools bevat een vergelijkbare routine, enkel de timing verschilt?
-
-        if (ExchangeListName.TryGetValue(Settings.General.ExchangeName, out Model.CryptoExchange? exchange))
-        {
-            foreach (CryptoQuoteData quoteData in Settings.QuoteCoins.Values)
-            {
-                if (quoteData.FetchCandles)
-                {
-                    if (!exchange.SymbolListName.ContainsKey(Constants.SymbolNameBarometerPrice + quoteData.Name))
-                    {
-                        CryptoSymbol symbol = new()
-                        {
-                            Exchange = exchange,
-                            ExchangeId = exchange.Id,
-                            Base = Constants.SymbolNameBarometerPrice, // De "munt"
-                            Quote = quoteData.Name, // USDT, BTC etc.
-                            Volume = 0,
-                            Status = 1,
-                        };
-                        symbol.Name = symbol.Base + symbol.Quote;
-
-                        using var transaction = database.Connection.BeginTransaction();
-                        database.Connection.Insert(symbol, transaction);
-                        transaction.Commit();
-
-                        AddSymbol(symbol);
-                    }
-                }
-            }
-        }
-    }
 
     static public void LoadBaseSettings()
     {
@@ -567,6 +517,23 @@ static public class GlobalData
             ScannerLog.Logger.Error(error, "");
             AddTextToLogTab($"Error loading {filename} " + error.ToString(), false);
         }
+
+
+        filename = $"{GlobalData.AppName}-altrady.json";
+        try
+        {
+            string fullName = GetBaseDir() + filename;
+            if (File.Exists(fullName))
+            {
+                string text = File.ReadAllText(fullName);
+                AltradyApi = JsonSerializer.Deserialize<SettingsAltradyApi>(text);
+            }
+        }
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Error(error, "");
+            AddTextToLogTab($"Error loading {filename} " + error.ToString(), false);
+        }
     }
 
 
@@ -651,6 +618,9 @@ static public class GlobalData
         text = JsonSerializer.Serialize(TradingApi, JsonSerializerIndented);
         File.WriteAllText(filename, text);
 
+        filename = baseFolder + $"{GlobalData.AppName}-altrady.json";
+        text = JsonSerializer.Serialize(AltradyApi, JsonSerializerIndented);
+        File.WriteAllText(filename, text);
 
         //#if DEBUG
         //        //// Ter debug om te zien of alles okay is
@@ -783,6 +753,39 @@ static public class GlobalData
         }
         return AppDataFolder;
     }
+
+
+    public static void InitializeExchange()
+    {
+        string exchangeName = ApplicationParams.Options.ExchangeName;
+        if (exchangeName != null)
+        {
+            // Default exchange is Bybit Spot
+            if (exchangeName == "")
+                exchangeName = "Bybit Spot";
+
+            // Migration (not needed but its cheap)
+            if (exchangeName == "Binance")
+                exchangeName = "Binance Spot";
+            if (exchangeName == "Bybit")
+                exchangeName = "Bybit Spot";
+            if (exchangeName == "Kraken")
+                exchangeName = "Kraken Spot";
+            if (exchangeName == "Kucoin")
+                exchangeName = "Kucoin Spot";
+            if (exchangeName == "Mexc")
+                exchangeName = "Mexc Spot";
+
+            if (GlobalData.ExchangeListName.TryGetValue(exchangeName, out var exchange))
+            {
+                GlobalData.Settings.General.Exchange = exchange;
+                GlobalData.Settings.General.ExchangeId = exchange.Id;
+                GlobalData.Settings.General.ExchangeName = exchange.Name;
+            }
+            else throw new Exception($"Exchange {exchangeName} bestaat niet");
+        }
+    }
+
 
     //public static void DumpSessionInformation()
     //{

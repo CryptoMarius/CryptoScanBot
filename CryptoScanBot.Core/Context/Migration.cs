@@ -1,4 +1,6 @@
-﻿using Dapper;
+﻿using CryptoScanBot.Core.Enums;
+
+using Dapper;
 using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot.Core.Context;
@@ -6,7 +8,7 @@ namespace CryptoScanBot.Core.Context;
 public class Migration
 {
     // De huidige database versie
-    public readonly static int CurrentDatabaseVersion = 17;
+    public readonly static int CurrentDatabaseVersion = 19;
 
 
     public static void Execute(CryptoDatabase database, int CurrentVersion)
@@ -439,8 +441,8 @@ public class Migration
                 database.Connection.Execute("update exchange set IsActive=1", transaction);
                 database.Connection.Execute("update exchange set IsActive=0 where Name like '%Kraken%'", transaction);
 
-                // New exchange Kucoin Futures (experiment)
-                database.Connection.Execute("insert into exchange(Name, FeeRate, IsActive) values('Kucoin Futures', 0.1, 1)", transaction);
+                // New exchange Kucoin Futures (experiment, failed on klines unitil now)
+                database.Connection.Execute("insert into exchange(Name, FeeRate, IsActive) values('Kucoin Futures', 0.1, 0)", transaction);
                 database.Connection.Execute("insert into TradeAccount(Short, Name, AccountType, TradeAccountType, ExchangeId, CanTrade) values('Trading', 'Kucoin Futures trading', 0, 2, 7, 1);", transaction);
                 database.Connection.Execute("insert into TradeAccount(Short, Name, AccountType, TradeAccountType, ExchangeId, CanTrade) values('Paper', 'Kucoin Futures paper', 0, 1, 7, 0);", transaction);
                 database.Connection.Execute("insert into TradeAccount(Short, Name, AccountType, TradeAccountType, ExchangeId, CanTrade) values('Backtest', 'Kucoin Futures backtest', 0, 0, 7, 0);", transaction);
@@ -453,6 +455,8 @@ public class Migration
                 database.Connection.Update(version, transaction);
                 transaction.Commit();
             }
+
+
 
 
             //***********************************************************
@@ -486,6 +490,118 @@ public class Migration
                 database.Connection.Update(version, transaction);
                 transaction.Commit();
             }
+
+
+
+            //***********************************************************
+            // 20240615 1.9.3 in progress
+            if (CurrentVersion > version.Version && version.Version == 17)
+            {
+                using var transaction = database.BeginTransaction();
+
+                // remove unused Symbol.LastOrderFetched 
+                database.Connection.Execute("alter table Symbol drop column LastOrderFetched", transaction);
+
+                // remove Symbol.TrendPercentage
+                database.Connection.Execute("alter table Symbol drop column TrendPercentage", transaction);
+
+                // remove Symbol.TrendInfoDate
+                database.Connection.Execute("alter table Symbol drop column TrendInfoDate", transaction);
+
+                // New exchange Kucoin Futures (experiment)
+                database.Connection.Execute("insert into exchange(Name, FeeRate, IsActive) values('Mexc Spot', 0.1, 0)", transaction);
+                database.Connection.Execute("insert into TradeAccount(Short, Name, AccountType, TradeAccountType, ExchangeId, CanTrade) values('Trading', 'Mexc Spot trading', 0, 2, 8, 1);", transaction);
+                database.Connection.Execute("insert into TradeAccount(Short, Name, AccountType, TradeAccountType, ExchangeId, CanTrade) values('Paper', 'Mexc Spot paper', 0, 1, 8, 0);", transaction);
+                database.Connection.Execute("insert into TradeAccount(Short, Name, AccountType, TradeAccountType, ExchangeId, CanTrade) values('Backtest', 'Mexc Spot backtest', 0, 0, 8, 0);", transaction);
+
+
+                // update version
+                version.Version += 1;
+                database.Connection.Update(version, transaction);
+                transaction.Commit();
+            }
+
+            //***********************************************************
+            // 20240618 1.9.3 in progress
+            if (CurrentVersion > version.Version && version.Version == 18)
+            {
+                using var transaction = database.BeginTransaction();
+
+                // Exchange, AccountType=spot or futures
+                database.Connection.Execute("alter table Exchange add TradingType Integer null", transaction);
+                database.Connection.Execute("update exchange set TradingType=0", transaction);
+                database.Connection.Execute("update exchange set TradingType=1 where Name like '%Futures%'", transaction);
+
+                // Purpose was if the exchange can be truely supported
+                database.Connection.Execute("alter table exchange rename column IsActive to IsSupported", transaction);
+
+                // Introduce an attribute for spot/futures
+                database.Connection.Execute("alter table Exchange add ExchangeType Integer null", transaction);
+                database.Connection.Execute($"update exchange set ExchangeType={(int)CryptoExchangeType.Binance} where Name like '%Binance%'", transaction);
+                database.Connection.Execute($"update exchange set ExchangeType={(int)CryptoExchangeType.Bybit} where Name like '%Bybit%'", transaction);
+                database.Connection.Execute($"update exchange set ExchangeType={(int)CryptoExchangeType.Kraken} where Name like '%Kraken%'", transaction);
+                database.Connection.Execute($"update exchange set ExchangeType={(int)CryptoExchangeType.Kucoin} where Name like '%Kucoin%'", transaction);
+                database.Connection.Execute($"update exchange set ExchangeType={(int)CryptoExchangeType.Mexc} where Name like '%Mexc%'", transaction);
+
+                // Remove redundant fields
+                database.Connection.Execute("drop index idxTradeAccountName", transaction);
+                database.Connection.Execute("alter table TradeAccount drop column Name", transaction);
+                database.Connection.Execute("alter table TradeAccount drop column Short", transaction);
+                database.Connection.Execute("alter table TradeAccount drop column AccountType", transaction);
+                database.Connection.Execute("alter table TradeAccount rename column TradeAccountType to AccountType", transaction);
+
+                // Add Altrady webhook accounts
+                database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(3, 1, 1);", transaction);
+                database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(3, 2, 1);", transaction);
+                database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(3, 3, 1);", transaction);
+                database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(3, 4, 1);", transaction);
+                database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(3, 5, 1);", transaction);
+                database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(3, 6, 1);", transaction);
+                database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(3, 7, 1);", transaction);
+                database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(3, 8, 1);", transaction);
+
+                //// in the model the table name is account -> TradeAccount
+                //// Would love to rename the table in the db as well, but there is a contraint position -> tradeaccount
+                //// And sqllite does not support dropping columns with contraints <really, what a weird database enigine>
+                //// Need to copy that table, recreate it without constraint and copy the data back <sigh>
+                //// There is however a rename table
+
+                ////database.Connection.Execute("alter table position add AccountId Integer null", transaction);
+                ////database.Connection.Execute("update position set AccountId=TradeAccountId", transaction);
+                ////database.Connection.Execute("alter table position drop TradeAccountId", transaction); // not possible because of positions
+
+                //database.Connection.Execute("drop INDEX IdxPositionId", transaction);
+                //database.Connection.Execute("drop INDEX IdxPositionExchangeId", transaction);
+                //database.Connection.Execute("drop INDEX IdxPositionSymbolId", transaction);
+                //database.Connection.Execute("drop INDEX IdxPositionCreateTime", transaction);
+                //database.Connection.Execute("drop INDEX IdxPositionCloseTime", transaction);
+                //database.Connection.Execute("drop INDEX IdxPositionTradeAccountId", transaction);
+
+                //database.Connection.Execute("alter table Position rename to PositionCopy", transaction);
+                //CryptoDatabase.CreateTablePosition(database, transaction);
+                ////database.Connection.Execute("insert into position select positionCopy.TradeAccountId as AccountId, positionCopy.* from positionCopy", transaction);
+                //database.Connection.Execute("insert into position select * from positionCopy", transaction);
+                //database.Connection.Execute("drop table if exists PositionCopy", transaction);
+                ////transaction.Commit();
+
+
+                //database.Connection.Execute("insert into Account select * from TradeAccount", transaction);
+                //database.Connection.Execute("drop table if exists TradeAccount", transaction);
+
+
+
+
+                // The table was created by the the database check
+                //database.Connection.Execute("drop table if exists Account", transaction);
+                //database.Connection.Execute("alter table TradeAccount rename to Account", transaction);
+                // fixed it by table attribute
+
+                // update version
+                version.Version += 1;
+                database.Connection.Update(version, transaction);
+                transaction.Commit();
+            }
+
         }
     }
 

@@ -23,13 +23,13 @@ public struct AssetInfo
 
 public class AssetTools
 {
-    public static async Task<(bool success, string reaction)> FetchAssetsAsync(CryptoTradeAccount tradeAccount, bool forceRefresh = false)
+    public static async Task<(bool success, string reaction)> FetchAssetsAsync(CryptoAccount tradeAccount, bool forceRefresh = false)
     {
         if (tradeAccount == null)
             return (false, "Invalid trade account");
 
 
-        if (tradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading)
+        if (tradeAccount.AccountType == CryptoAccountType.RealTrading)
         {
             if (GlobalData.TradingApi.Key == "" || GlobalData.TradingApi.Secret == "")
                 return (false, "No API credentials available");
@@ -40,11 +40,11 @@ public class AssetTools
 
 
         // Niet bij iedere keer de assets verversen (hammering) - difficult when not to refresh.. not to repeat the same action..
-        if (forceRefresh || tradeAccount.LastRefreshAssets == null || tradeAccount.LastRefreshAssets?.AddMinutes(1) < GlobalData.GetCurrentDateTime(tradeAccount))
+        if (forceRefresh || tradeAccount.Data.LastRefreshAssets == null || tradeAccount.Data.LastRefreshAssets?.AddMinutes(1) < GlobalData.GetCurrentDateTime(tradeAccount))
         {
             // De assets verversen (optioneel adhv account)
             await ExchangeHelper.GetAssetsAsync(tradeAccount);
-            tradeAccount.LastRefreshAssets = GlobalData.GetCurrentDateTime(tradeAccount);
+            tradeAccount.Data.LastRefreshAssets = GlobalData.GetCurrentDateTime(tradeAccount);
         }
 
         // okay
@@ -52,18 +52,18 @@ public class AssetTools
     }
 
 
-    public static AssetInfo GetAsset(CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
+    public static AssetInfo GetAsset(CryptoAccount tradeAccount, CryptoSymbol symbol)
     {
         // Hoeveel muntjes hebben we op dit moment van deze munt?
         // (Opmerking: een gedeelte hiervan kan in orders zitten!)
         AssetInfo info = new();
 
-        tradeAccount.AssetListSemaphore.Wait();
+        tradeAccount.Data.AssetListSemaphore.Wait();
         try
         {
-            if (tradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading)
+            if (tradeAccount.AccountType == CryptoAccountType.RealTrading)
             {
-                if (tradeAccount.AssetList.TryGetValue(symbol.Base, out CryptoAsset? asset))
+                if (tradeAccount.Data.AssetList.TryGetValue(symbol.Base, out CryptoAsset? asset))
                 {
                     info.BaseFree = asset.Free;
                     info.BaseTotal = asset.Total;
@@ -76,9 +76,9 @@ public class AssetTools
                 info.BaseTotal = 1000000m;
             }
 
-            if (tradeAccount.TradeAccountType == CryptoTradeAccountType.RealTrading)
+            if (tradeAccount.AccountType == CryptoAccountType.RealTrading)
             {
-                if (tradeAccount.AssetList.TryGetValue(symbol.Quote, out CryptoAsset? asset))
+                if (tradeAccount.Data.AssetList.TryGetValue(symbol.Quote, out CryptoAsset? asset))
                 {
                     info.QuoteFree = asset.Free;
                     info.QuoteTotal = asset.Total;
@@ -94,13 +94,13 @@ public class AssetTools
         }
         finally
         {
-            tradeAccount.AssetListSemaphore.Release();
+            tradeAccount.Data.AssetListSemaphore.Release();
         }
         return info;
     }
 
 
-    public static (bool success, decimal entryQuoteAsset, AssetInfo info, string reaction) CheckAvailableAssets(CryptoTradeAccount tradeAccount, CryptoSymbol symbol)
+    public static (bool success, decimal entryQuoteAsset, AssetInfo info, string reaction) CheckAvailableAssets(CryptoAccount tradeAccount, CryptoSymbol symbol)
     {
         // Get asset amounts
         var info = GetAsset(tradeAccount, symbol);
@@ -109,7 +109,7 @@ public class AssetTools
 
 
         // The entry value (in quote)
-        decimal entryQuoteAsset = TradeTools.GetEntryAmount(symbol, info.QuoteTotal, tradeAccount.TradeAccountType);
+        decimal entryQuoteAsset = TradeTools.GetEntryAmount(symbol, info.QuoteTotal, tradeAccount.AccountType);
         if (entryQuoteAsset <= 0)
             return (false, entryQuoteAsset, info, "No amount/percentage given");
 

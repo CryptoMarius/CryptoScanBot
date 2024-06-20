@@ -769,7 +769,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
     }
 
 
-    private void ClearOldSignals(object sender, EventArgs e)
+    private void ClearOldSignals(object? sender, EventArgs? e)
     {
         if (GlobalData.BackTest)
             return;
@@ -892,7 +892,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
         }
     }
 
-    private void RefreshInformation(object sender, EventArgs e)
+    private void RefreshInformation(object? sender, EventArgs? e)
     {
         if (GlobalData.ApplicationIsClosing)
             return;

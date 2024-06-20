@@ -15,7 +15,7 @@ static public class TradeHandler
     public static async Task HandleTradeAsync(CryptoSymbol symbol, CryptoOrderStatus orderStatus, CryptoOrder order)
     {
         // Find the open position
-        if (order.TradeAccount.PositionList.TryGetValue(symbol.Name, out CryptoPosition? position))
+        if (order.TradeAccount.Data.PositionList.TryGetValue(symbol.Name, out CryptoPosition? position))
         {
             // could also be done in ThreadDoubleCheckPosition
             if (!GlobalData.BackTest && orderStatus.IsFilled() && GlobalData.Settings.General.SoundTradeNotification)
@@ -23,9 +23,9 @@ static public class TradeHandler
 
             // De actie doorgeven naar een andere thread
             position.ForceCheckPosition = true;
-            position.DelayUntil = GlobalData.GetCurrentDateTime(position.TradeAccount).AddSeconds(10);
-            if (GlobalData.ThreadDoubleCheckPosition != null)
-                await GlobalData.ThreadDoubleCheckPosition.AddToQueue(position, order.OrderId, order.Status);
+            position.DelayUntil = GlobalData.GetCurrentDateTime(position.Account).AddSeconds(10);
+            if (GlobalData.ThreadCheckPosition != null)
+                await GlobalData.ThreadCheckPosition.AddToQueue(position, order.OrderId, order.Status);
         }
         // This leads to confusion if we signal stuff when the position is already closed, just keep it simple..
         //else

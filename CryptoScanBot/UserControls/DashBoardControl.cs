@@ -663,7 +663,7 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
 
         // Als je de openstaande posities zou verkopen, wat krijg je dan terug?
         decimal currentValue = 0;
-        foreach (var position in GlobalData.ActiveAccount.PositionList.Values)
+        foreach (var position in GlobalData.ActiveAccount.Data.PositionList.Values)
         {
             if (position.Symbol.Quote.Equals(QuoteData.Name))
                 currentValue += position.CurrentValue();
@@ -722,7 +722,7 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
         DoAdditionalData();
     }
 
-    public void RefreshInformation(object sender, EventArgs e)
+    public void RefreshInformation(object? sender, EventArgs? e)
     {
         // Dit heeft geen nut.. Zandloper is beter
         //if (Monitor.TryEnter(this))

@@ -429,15 +429,4 @@ public static class CandleTools
         }
     }
 
-    public static long StartOfIntervalCandle(CryptoInterval interval, long someUnixDate) //, bool fixFinalCandle
-    {
-        long diff = someUnixDate % interval!.Duration;
-        long lastCandleIntervalOpenTime = someUnixDate - diff;
-        // The candle cannot be final if it has a remainder, go 1 back
-        // (09:14 -> 09:05 because candle 09:10..09:14:59 cannot be finished)
-        //if (fixFinalCandle && diff != 0)
-        //    lastCandleIntervalOpenTime -= interval.Duration;
-        return lastCandleIntervalOpenTime;
-    }
-
 }

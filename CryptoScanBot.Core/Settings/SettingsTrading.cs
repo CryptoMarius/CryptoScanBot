@@ -77,7 +77,7 @@ public class SettingsTrading
     // Account - Positie gerelateerd
 
     // De 3 account types zijn raar gekozen
-    public CryptoTradeAccountType TradeVia { get; set; } = CryptoTradeAccountType.PaperTrade;
+    public CryptoAccountType TradeVia { get; set; } = CryptoAccountType.PaperTrade;
 
     // Trade via exchange (instelling enkel omdat we nu keuze hebben)
     public bool TradeViaExchange { get; set; } = false;
@@ -104,45 +104,41 @@ public class SettingsTrading
 
     //***************************
     // Entry
-    // Wanneer wordt de order geplaatst
-    public CryptoEntryOrProfitMethod BuyStepInMethod { get; set; } = CryptoEntryOrProfitMethod.AfterNextSignal;
-    // De manier waarop de buy order geplaatst wordt
-    public CryptoBuyOrderMethod BuyOrderMethod { get; set; } = CryptoBuyOrderMethod.MarketOrder;
+    public CryptoOrderType EntryOrderType { get; set; } = CryptoOrderType.Market;
+    public CryptoEntryOrDcaPricing EntryOrderPrice { get; set; } = CryptoEntryOrDcaPricing.SignalPrice; // alway's
+    public CryptoEntryOrDcaStrategy EntryStrategy { get; set; } = CryptoEntryOrDcaStrategy.AfterNextSignal; // Alway's for now, but can be trailing
     // Verwijder de order indien niet na zoveel minuten gevuld
-    public int GlobalBuyRemoveTime { get; set; } = 5;
-    //Het afwijkend percentage bij het kopen
-    public decimal GlobalBuyVarying { get; set; } = -0.01m; // verlagen
+    public int EntryRemoveTime { get; set; } = 5;
+    // Het afwijkend percentage bij het kopen
+    //public decimal GlobalBuyVarying { get; set; } = -0.01m; // verlagen
 
+    
     //***************************
     // Dca
-    // Wanneer plaatsen we de DCA?
-    public CryptoEntryOrProfitMethod DcaStepInMethod { get; set; } = CryptoEntryOrProfitMethod.FixedPercentage;
-    // De manier waarop de buy order geplaatst wordt
-    public CryptoBuyOrderMethod DcaOrderMethod { get; set; } = CryptoBuyOrderMethod.SignalPrice;
-
-
+    public CryptoOrderType DcaOrderType { get; set; } = CryptoOrderType.Limit; // Alway's! but stoplimit when trailing
+    public CryptoEntryOrDcaPricing DcaOrderPrice { get; set; } = CryptoEntryOrDcaPricing.SignalPrice; // alway's
+    public CryptoEntryOrDcaStrategy DcaStrategy { get; set; } = CryptoEntryOrDcaStrategy.FixedPercentage;
 
     // Tijd na een buy om niets te doen (om ladders te voorkomen)
     public int GlobalBuyCooldownTime { get; set; } = 30;
 
     //***************************
     // Take profit
+    public CryptoOrderType TakeProfitOrderType  { get; set; } = CryptoOrderType.Limit;
+    public CryptoTakeProfitStrategy TakeProfitStrategy { get; set; } = CryptoTakeProfitStrategy.FixedPercentage;
+
     // Het verkoop bedrag = buy bedrag * (100+profit / 100)
     public decimal ProfitPercentage { get; set; } = 1.01m;
-    // De manier waarop de order geplaatst wordt
-    public CryptoSellMethod SellMethod { get; set; } = CryptoSellMethod.FixedPercentage;
+    // Allow previous (small) dust to be added to the TP
+    public bool AddDustToTp { get; set; } = true;
     // Zet een OCO zodra we in de winst zijn (kan het geen verlies trade meer worden, samen met tracing)
     //public bool LockProfits { get; set; } = false;
 
-    // Allow previous (small) dust to be added to the TP
-    public bool AddDustToTp { get; set; } = true;
-    
 
     //***************************
-    // Stopp loss
-    // Vanwege ontbreken stoplimit op Bybit afgesterd (niet geheel waar, is technisch anders geregeld
-    //public decimal StopLossPercentage { get; set; } = 0m;
-    //public decimal StopLossLimitPercentage { get; set; } = 0m;
+    // Stop loss
+    public decimal StopLossPercentage { get; set; } = 0m;
+    public decimal StopLossLimitPercentage { get; set; } = 0m;
 
 
     //***************************

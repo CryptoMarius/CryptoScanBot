@@ -103,7 +103,7 @@ public class CommandTools
         }
     }
 
-    public static void ExecuteCommand(object sender, EventArgs e)
+    public static void ExecuteCommand(object? sender, EventArgs? e)
     {
         // Een poging om de meest gebruikte menu items te centraliseren
         if (sender is ToolStripMenuItemCommand item)

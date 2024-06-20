@@ -14,15 +14,15 @@ public class CryptoOrder
 
     public int TradeAccountId { get; set; }
     [Computed]
-    public CryptoTradeAccount TradeAccount { get; set; }
+    public virtual CryptoAccount TradeAccount { get; set; }
 
     public int ExchangeId { get; set; }
     [Computed]
-    public CryptoExchange Exchange { get; set; }
+    public virtual CryptoExchange Exchange { get; set; }
 
     public int SymbolId { get; set; }
     [Computed]
-    public CryptoSymbol Symbol { get; set; }
+    public virtual CryptoSymbol Symbol { get; set; }
 
     public string OrderId { get; set; }
     public CryptoOrderSide Side { get; set; }
@@ -38,7 +38,7 @@ public class CryptoOrder
     public decimal? QuoteQuantityFilled { get; set; }
 
     public decimal? Commission { get; set; }
-    public string CommissionAsset { get; set; }
+    public string? CommissionAsset { get; set; }
 
 
 }

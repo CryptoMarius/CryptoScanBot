@@ -170,7 +170,7 @@ public static class Helper
     }
 
 
-    public static bool CheckValidMinimalVolume(this CryptoSymbol symbol, out string text)
+    public static bool CheckValidMinimalVolume(this CryptoSymbol symbol, long candleStart, uint candleDuration, out string text)
     {
         if (symbol.QuoteData.MinimalVolume > 0)
         {
@@ -194,22 +194,29 @@ public static class Helper
                 CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1d);
                 if (symbolInterval.CandleList.Count > 0)
                 {
+                    long unixDate = IntervalTools.StartOfIntervalCandle2(candleStart, candleDuration, symbolInterval.Interval.Duration);
+                    //DateTime candleStartCheck = CandleTools.GetUnixDate(candleStart);
+                    long loop = unixDate;
                     int count = 7;
-                    CryptoCandle? candle = symbolInterval.CandleList.Values.Last();
                     while (count > 0)
                     {
-                        if (candle.Volume < symbol.QuoteData.MinimalVolume)
+                        //DateTime loopCheck = CandleTools.GetUnixDate(loop);
+                        if (symbolInterval.CandleList.TryGetValue(loop, out CryptoCandle? candle))
                         {
-                            text = $"{symbol.Name} volume in the last 7 day's not consistent above the minimum of {symbol.QuoteData.MinimalVolume.ToString0()}";
-                            return false;
-                        }
+                            if (candle.Volume < symbol.QuoteData.MinimalVolume)
+                            {
+                                text = $"{symbol.Name} volume in the last 7 day's not consistent above the minimum of {symbol.QuoteData.MinimalVolume.ToString0()}";
+                                return false;
+                            }
 
-                        // to the previous day
-                        if (!symbolInterval.CandleList.TryGetValue(candle.OpenTime - symbolInterval.Interval.Duration, out candle))
-                        {
-                            text = "Method enough volume - no 10 day's of candles available";
-                            return false;
+                            // to the previous day
+                            if (!symbolInterval.CandleList.TryGetValue(candle.OpenTime - symbolInterval.Interval.Duration, out candle))
+                            {
+                                text = "Method enough volume - no 10 day's of candles available";
+                                return false;
+                            }
                         }
+                        loop -= symbolInterval.Interval.Duration;
                         count--;
                     }
                 }
@@ -342,14 +349,14 @@ public static class Helper
     }
 
 
-    static public void ShowAssets(CryptoTradeAccount tradeAccount, StringBuilder stringBuilder, out decimal valueUsdt, out decimal valueBtc)
+    static public void ShowAssets(CryptoAccount tradeAccount, StringBuilder stringBuilder, out decimal valueUsdt, out decimal valueBtc)
     {
         valueBtc = 0;
         valueUsdt = 0;
 
         if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange? exchange))
         {
-            tradeAccount.AssetListSemaphore.Wait();
+            tradeAccount.Data.AssetListSemaphore.Wait();
             {
                 try
                 {
@@ -358,7 +365,7 @@ public static class Helper
                         stringBuilder.AppendLine("Assets:");
 
                         //AddTextToLogTab("Assets changed");
-                        foreach (CryptoAsset asset in tradeAccount.AssetList.Values)
+                        foreach (CryptoAsset asset in tradeAccount.Data.AssetList.Values)
                         {
                             if (asset.Total.ToString0() == asset.Free.ToString0())
                                 stringBuilder.AppendLine(string.Format("{0} {1}", asset.Name, asset.Total.ToString0()));
@@ -406,7 +413,7 @@ public static class Helper
                 }
                 finally
                 {
-                    tradeAccount.AssetListSemaphore.Release();
+                    tradeAccount.Data.AssetListSemaphore.Release();
                 }
             }
         }
@@ -431,11 +438,11 @@ public static class Helper
         int positionTotal = 0;
         foreach (var tradeAccount in GlobalData.TradeAccountList.Values)
         {
-            if (tradeAccount.PositionList.Count != 0)
+            if (tradeAccount.Data.PositionList.Count != 0)
             {
                 int positionCount = 0;
-                stringBuilder.AppendLine(tradeAccount.Name);
-                foreach (var position in tradeAccount.PositionList.Values)
+                stringBuilder.AppendLine(tradeAccount.AccountType.ToString());
+                foreach (var position in tradeAccount.Data.PositionList.Values)
                 {
                     //De muntparen toevoegen aan de userinterface
                     ShowPosition(stringBuilder, position);

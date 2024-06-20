@@ -153,7 +153,7 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
             ColumnsForGrid.Created => ObjectCompare.Compare(a.CreateTime, b.CreateTime),
             ColumnsForGrid.Closed => ObjectCompare.Compare(a.CloseTime, b.CloseTime),
             ColumnsForGrid.Duration => ObjectCompare.Compare(a.Duration().TotalSeconds, b.Duration().TotalSeconds),
-            ColumnsForGrid.Account => ObjectCompare.Compare(a.TradeAccount.Name, b.TradeAccount.Name),
+            ColumnsForGrid.Account => ObjectCompare.Compare(a.Account.AccountType, b.Account.AccountType),
             ColumnsForGrid.Exchange => ObjectCompare.Compare(a.Exchange.Name, b.Exchange.Name),
             ColumnsForGrid.Symbol => ObjectCompare.Compare(a.Symbol.Name, b.Symbol.Name),
             ColumnsForGrid.Interval => ObjectCompare.Compare(a.Interval.IntervalPeriod, b.Interval.IntervalPeriod),
@@ -226,7 +226,7 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
                 ColumnsForGrid.Created => position.CreateTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm"),
                 ColumnsForGrid.Closed => position.CloseTime?.ToLocalTime().ToString("yyyy-MM-dd HH:mm"),
                 ColumnsForGrid.Duration => position.DurationText(),
-                ColumnsForGrid.Account => position.TradeAccount.Name,
+                ColumnsForGrid.Account => position.Account.AccountType,
                 ColumnsForGrid .Exchange => position.Symbol.Exchange.Name,
                 ColumnsForGrid.Symbol => position.Symbol.Name,
                 ColumnsForGrid.Interval => position.Interval.Name,
@@ -320,7 +320,7 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
 
 
 #if TRADEBOT
-    private async void CommandPositionRecalculateExecute(object sender, EventArgs e)
+    private async void CommandPositionRecalculateExecute(object? sender, EventArgs? e)
     {
         CryptoPosition position = GetSelectedObject(out int rowIndex);
         if (position != null)
@@ -339,7 +339,7 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
     }
 
 
-    private void CommandPositionDeleteFromDatabase(object sender, EventArgs e)
+    private void CommandPositionDeleteFromDatabase(object? sender, EventArgs? e)
     {
         CryptoPosition position = GetSelectedObject(out int _);
         if (position != null)

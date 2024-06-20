@@ -14,29 +14,26 @@ public class StorageHistoricalData
     /// </summary>
     public static (DateTime start, DateTime end) GetPeriod(CryptoInterval interval, DateTime date)
     {
-
-        // 1m .. 30m
+        // 1m .. 30m - per day
         if (interval.IntervalPeriod < CryptoIntervalPeriod.interval1h)
         {
             DateTime start = new(date.Year, date.Month, date.Day, 0, 0, 0, DateTimeKind.Utc);
-            DateTime end = date.AddDays(1);
+            DateTime end = start.AddDays(1);
             return (start, end);
         }
 
-        // 1h .. 3h
+        // 1h .. 3h - per month
         if (interval.IntervalPeriod < CryptoIntervalPeriod.interval4h)
         {
             DateTime start = new(date.Year, date.Month, 1, 0, 0, 0, DateTimeKind.Utc);
-            DateTime end = date.AddMonths(1);
-            //int duration = DateTime.DaysInMonth(date.Year, date.Month);
+            DateTime end = start.AddMonths(1);
             return (start, end);
         }
 
-        // 4h and bigger
+        // 4h and bigger - per year
         {
             DateTime start = new(date.Year, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            DateTime end = date.AddYears(1);
-            //int duration = 365 + Convert.ToInt32(DateTime.IsLeapYear(date.Year));
+            DateTime end = start.AddYears(1);
             return (start, end);
         }
     }
@@ -104,7 +101,7 @@ public class StorageHistoricalData
 
             if (symbolInterval.CandleList.Values.Count > 0)
             {
-                // The storage name depends on the date (not very optimal)
+                // The storage name depends on the date
                 {
                     CryptoCandle candle = symbolInterval.CandleList.Values[0];
                     period = GetPeriod(interval, candle.Date);

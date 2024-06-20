@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "CryptoScanBot.Core": {
+      "commandName": "Project",
+      "nativeDebugging": false
+    }
+  }
+}

@@ -10,9 +10,9 @@ namespace CryptoScanBot.Core.Trader;
 /// </summary>
 public class PaperAssets
 {
-    public static void Change(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoOrderSide side, CryptoOrderStatus status, decimal quantity, decimal quoteQuantity)
+    public static void Change(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoOrderSide side, CryptoOrderStatus status, decimal quantity, decimal quoteQuantity)
     {
-        tradeAccount.AssetListSemaphore.Wait();
+        tradeAccount.Data.AssetListSemaphore.Wait();
         try
         {
             using CryptoDatabase database = new();
@@ -22,25 +22,25 @@ public class PaperAssets
 
 
             // Base asset
-            if (!tradeAccount.AssetList.TryGetValue(symbol.Base, out CryptoAsset? assetBase))
+            if (!tradeAccount.Data.AssetList.TryGetValue(symbol.Base, out CryptoAsset? assetBase))
             {
                 assetBase = new CryptoAsset()
                 {
                     Name = symbol.Base,
                     TradeAccountId = tradeAccount.Id,
                 };
-                tradeAccount.AssetList.Add(assetBase.Name, assetBase);
+                tradeAccount.Data.AssetList.Add(assetBase.Name, assetBase);
             }
 
             // Quote asset
-            if (!tradeAccount.AssetList.TryGetValue(symbol.Quote, out CryptoAsset? assetQuote))
+            if (!tradeAccount.Data.AssetList.TryGetValue(symbol.Quote, out CryptoAsset? assetQuote))
             {
                 assetQuote = new CryptoAsset()
                 {
                     Name = symbol.Quote,
                     TradeAccountId = tradeAccount.Id,
                 };
-                tradeAccount.AssetList.Add(assetQuote.Name, assetQuote);
+                tradeAccount.Data.AssetList.Add(assetQuote.Name, assetQuote);
             }
 
 
@@ -85,7 +85,7 @@ public class PaperAssets
                 database.Connection.Insert(assetBase, transaction);
             else if (assetBase.Total == 0)
             {
-                tradeAccount.AssetList.Remove(assetBase.Name);
+                tradeAccount.Data.AssetList.Remove(assetBase.Name);
                 database.Connection.Delete(assetBase, transaction);
             }
             else
@@ -97,7 +97,7 @@ public class PaperAssets
                 database.Connection.Insert(assetQuote, transaction);
             else if (assetQuote.Total == 0)
             {
-                tradeAccount.AssetList.Remove(assetQuote.Name);
+                tradeAccount.Data.AssetList.Remove(assetQuote.Name);
                 database.Connection.Delete(assetQuote, transaction);
             }
             else
@@ -107,7 +107,7 @@ public class PaperAssets
         }
         finally
         {
-            tradeAccount.AssetListSemaphore.Release();
+            tradeAccount.Data.AssetListSemaphore.Release();
         }
     }
 

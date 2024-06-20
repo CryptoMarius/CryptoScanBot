@@ -27,7 +27,7 @@ public class CryptoSignal
 
     //Hmmmm, de EventTime bevat de candle.OpenTime, maar niet gegarandeerd dat deze nog aanwezig is
     [Computed]
-    public virtual CryptoCandle Candle { get; set; }
+    public virtual CryptoCandle? Candle { get; set; }
 
     public bool BackTest { get; set; }
 
@@ -150,11 +150,11 @@ public class CryptoSignal
 
 
     // Een aantal trendindicatoren
-    public CryptoTrendIndicator? Trend15m { get; set; }
-    public CryptoTrendIndicator? Trend30m { get; set; }
-    public CryptoTrendIndicator? Trend1h { get; set; }
-    public CryptoTrendIndicator? Trend4h { get; set; }
-    public CryptoTrendIndicator? Trend12h { get; set; }
+    public CryptoTrendIndicator Trend15m { get; set; }
+    public CryptoTrendIndicator Trend30m { get; set; }
+    public CryptoTrendIndicator Trend1h { get; set; }
+    public CryptoTrendIndicator Trend4h { get; set; }
+    public CryptoTrendIndicator Trend12h { get; set; }
 
 
 #if TRADEBOT

@@ -25,28 +25,30 @@ public class CommandShowTrendInfo : CommandBase
 
             long percentageSum = 0;
             long maxPercentageSum = 0;
-            foreach (CryptoSymbolInterval symbolInterval in symbol.IntervalPeriodList)
+            AccountSymbolData accountSymbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
+            foreach (AccountSymbolIntervalData accountSymbolIntervalData in accountSymbolData.SymbolTrendDataList)
             {
                 log.AppendLine("");
                 log.AppendLine("----");
-                log.AppendLine("Interval " + symbolInterval.Interval.Name);
+                log.AppendLine("Interval " + accountSymbolIntervalData.Interval.Name);
 
                 // Wat is het maximale som (voor de eindberekening)
-                maxPercentageSum += symbolInterval.Interval.Duration;
+                maxPercentageSum += accountSymbolIntervalData.Interval.Duration;
 
-                TrendInterval.Calculate(symbolInterval, 0, 0, log);
-                if (symbolInterval.TrendIndicator == CryptoTrendIndicator.Bullish)
-                    percentageSum += symbolInterval.Interval.Duration;
-                else if (symbolInterval.TrendIndicator == CryptoTrendIndicator.Bearish)
-                    percentageSum -= symbolInterval.Interval.Duration;
+                CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(accountSymbolIntervalData.IntervalPeriod);
+                TrendInterval.Calculate(symbol, symbolInterval.CandleList, accountSymbolIntervalData, 0, 0, log);
+                if (accountSymbolIntervalData.TrendIndicator == CryptoTrendIndicator.Bullish)
+                    percentageSum += accountSymbolIntervalData.Interval.Duration;
+                else if (accountSymbolIntervalData.TrendIndicator == CryptoTrendIndicator.Bearish)
+                    percentageSum -= accountSymbolIntervalData.Interval.Duration;
 
                 string s = "";
-                if (symbolInterval.TrendIndicator == CryptoTrendIndicator.Bullish)
-                    s = string.Format("{0} {1}, trend=bullish", symbol.Name, symbolInterval.Interval.IntervalPeriod);
-                else if (symbolInterval.TrendIndicator == CryptoTrendIndicator.Bearish)
-                    s = string.Format("{0} {1}, trend=bearish", symbol.Name, symbolInterval.Interval.IntervalPeriod);
+                if (accountSymbolIntervalData.TrendIndicator == CryptoTrendIndicator.Bullish)
+                    s = string.Format("{0} {1}, trend=bullish", symbol.Name, accountSymbolIntervalData.Interval.IntervalPeriod);
+                else if (accountSymbolIntervalData.TrendIndicator == CryptoTrendIndicator.Bearish)
+                    s = string.Format("{0} {1}, trend=bearish", symbol.Name, accountSymbolIntervalData.Interval.IntervalPeriod);
                 else
-                    s = string.Format("{0} {1}, trend=sideway's", symbol.Name, symbolInterval.Interval.IntervalPeriod);
+                    s = string.Format("{0} {1}, trend=sideway's", symbol.Name, accountSymbolIntervalData.Interval.IntervalPeriod);
                 GlobalData.AddTextToLogTab(s);
                 log.AppendLine(s);
             }

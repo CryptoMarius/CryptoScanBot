@@ -281,7 +281,7 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         cms?.Show(dgv, e.Location);
     }
 
-    private void CommandAdjustColumns(object sender, EventArgs e)
+    private void CommandAdjustColumns(object? sender, EventArgs? e)
     {
         // tijdelijk, debug
         CryptoDataGridColumns f = new();
@@ -302,14 +302,14 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         }
     }
 
-    private void CommandResetColumnWidth1(object sender, EventArgs e)
+    private void CommandResetColumnWidth1(object? sender, EventArgs? e)
     {
         Grid.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCellsExceptHeader);
         GlobalData.SaveUserSettings();
         Grid.Invoke((MethodInvoker)(() => { Grid.Invalidate(); }));
     }
 
-    private void CommandResetColumnWidth2(object sender, EventArgs e)
+    private void CommandResetColumnWidth2(object? sender, EventArgs? e)
     {
         Grid.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCells);
         GlobalData.SaveUserSettings();
@@ -336,12 +336,12 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         GlobalData.SaveUserSettings();
     }
 
-    internal void ClearSelection(object sender, EventArgs e)
+    internal void ClearSelection(object? sender, EventArgs? e)
     {
         Grid.ClearSelection();
     }
 
-    public void MenuStripOpening(object sender, EventArgs e)
+    public void MenuStripOpening(object? sender, EventArgs? e)
     {
         if (Grid.SelectedRows.Count > 0)
         {
@@ -355,7 +355,7 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         }
     }
 
-    public void GridDoubleClick(object sender, EventArgs e)
+    public void GridDoubleClick(object? sender, EventArgs? e)
     {
         var point = Grid.PointToClient(Cursor.Position);
         var info = Grid.HitTest(point.X, point.Y);

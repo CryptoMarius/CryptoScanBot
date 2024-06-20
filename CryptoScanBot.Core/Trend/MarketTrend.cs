@@ -6,20 +6,31 @@ namespace CryptoScanBot.Core.Trend;
 
 public class MarketTrend
 {
-    public static void Calculate(CryptoSignal signal, long lastCandle1mCloseTime)
+    public static void Calculate(CryptoAccount? tradeAccount, CryptoSignal signal, long lastCandle1mCloseTime)
     {
-        //if (GlobalData.BackTest)
-        //    return;
+        // TODO: Remove Signal (it introduces noise, caller is responsible for that)
+        // We have multiple calls to calculate trends (Telegram, right mouse click etc)
+#if DEBUG
+        DateTime lastCandle1mCloseTimeDebug = CandleTools.GetUnixDate(lastCandle1mCloseTime);
+#endif
+
+        AccountSymbolData accountSymbolData = tradeAccount!.Data.GetSymbolData(signal.Symbol.Name);
 
         long percentageSum = 0;
         long maxPercentageSum = 0;
         try
         {
+
             foreach (CryptoInterval interval in GlobalData.IntervalList)
             {
+                // debug this shit..
+                //if (interval.IntervalPeriod != CryptoIntervalPeriod.interval1h)
+                //    continue;
+
                 CryptoSymbolInterval symbolInterval = signal.Symbol.GetSymbolInterval(interval.IntervalPeriod);
-                TrendInterval.Calculate(symbolInterval, 0, lastCandle1mCloseTime, null);
-                CryptoTrendIndicator trendIndicator = symbolInterval.TrendIndicator;
+                AccountSymbolIntervalData accountSymbolIntervalData = accountSymbolData.GetAccountSymbolIntervalData(interval.IntervalPeriod);
+                TrendInterval.Calculate(signal.Symbol, symbolInterval.CandleList, accountSymbolIntervalData, 0, lastCandle1mCloseTime, null);
+                CryptoTrendIndicator trendIndicator = accountSymbolIntervalData.TrendIndicator;
 
                 // save to the signal
                 if (interval.IntervalPeriod == signal.Interval.IntervalPeriod)
@@ -60,8 +71,8 @@ public class MarketTrend
 
             float trendPercentage = 100 * (float)percentageSum / maxPercentageSum;
             signal.TrendPercentage = trendPercentage;
-            signal.Symbol.TrendPercentage = trendPercentage;
-            signal.Symbol.TrendInfoDate = CandleTools.GetUnixDate(signal.EventTime);
+            accountSymbolData.TrendPercentage = trendPercentage;
+            accountSymbolData.TrendInfoDate = CandleTools.GetUnixDate(signal.EventTime);
         }
         catch (Exception error)
         {
@@ -70,8 +81,8 @@ public class MarketTrend
             GlobalData.AddTextToLogTab(error.ToString(), true);
 
             signal.TrendPercentage = 0;
-            signal.Symbol.TrendPercentage = 0;
-            signal.Symbol.TrendInfoDate = CandleTools.GetUnixDate(signal.EventTime);
+            accountSymbolData.TrendPercentage = 0;
+            accountSymbolData.TrendInfoDate = CandleTools.GetUnixDate(signal.EventTime);
         }
     }
 }

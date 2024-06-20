@@ -149,6 +149,21 @@ public class CryptoDatabase : IDisposable
         }
     }
 
+    private static List<Model.CryptoExchange> CreateExchangeList()
+    {
+        return
+        [
+            new() { Name = "Binance Spot", FeeRate = 0.1m, IsSupported = true, ExchangeType = CryptoExchangeType.Binance, TradingType=CryptoTradingType.Spot },
+            new() { Name = "Bybit Spot", FeeRate = 0.15m, IsSupported = true, ExchangeType = CryptoExchangeType.Bybit, TradingType=CryptoTradingType.Spot },
+            new() { Name = "Bybit Futures", FeeRate = 0.1m, IsSupported = true, ExchangeType = CryptoExchangeType.Bybit, TradingType=CryptoTradingType.Futures },
+            new() { Name = "Kucoin Spot", FeeRate = 0.1m, IsSupported = true, ExchangeType = CryptoExchangeType.Kucoin, TradingType=CryptoTradingType.Spot },
+            new() { Name = "Kraken Spot", FeeRate = 0.1m, IsSupported = false, ExchangeType = CryptoExchangeType.Kraken, TradingType=CryptoTradingType.Spot },
+            new() { Name = "Binance Futures", FeeRate = 0.1m, IsSupported = true, ExchangeType = CryptoExchangeType.Binance, TradingType=CryptoTradingType.Futures},
+            new() { Name = "Kucoin Futures", FeeRate = 0.1m, IsSupported = false, ExchangeType = CryptoExchangeType.Kucoin, TradingType=CryptoTradingType.Futures },
+            new() { Name = "Mexc Spot", FeeRate = 0.1m, IsSupported = false, ExchangeType = CryptoExchangeType.Mexc, TradingType=CryptoTradingType.Spot },
+        ];
+    }
+
     private static void CreateTableExchange(CryptoDatabase connection)
     {
         if (MissingTable(connection, "Exchange"))
@@ -156,9 +171,11 @@ public class CryptoDatabase : IDisposable
             connection.Connection.Execute("CREATE TABLE [Exchange] (" +
                  "Id integer primary key autoincrement not null," +
                  "LastTimeFetched TEXT NULL," +
-                 "IsActive Integer not NULL," +
+                 "IsSupported Integer not NULL," +
                  "Name TEXT not NULL," +
-                 "FeeRate TEXT not NULL" +
+                 "FeeRate TEXT not NULL," +
+                 "ExchangeType Integer not NULL," +
+                 "TradingType Integer not NULL" +
             ")");
             connection.Connection.Execute("CREATE INDEX IdxExchangeId ON Exchange(Id)");
             connection.Connection.Execute("CREATE INDEX IdxExchangeName ON Exchange(Name)");
@@ -167,26 +184,9 @@ public class CryptoDatabase : IDisposable
             // De ondersteunde exchanges toevoegen
             // NB: In de code wordt aannames van de ID gedaan dus gaarne niet knutselen met volgorde
             using var transaction = connection.Connection.BeginTransaction();
-            Model.CryptoExchange exchange = new() { Name = "Binance Spot", FeeRate = 0.1m, IsActive = true };
-            connection.Connection.Insert(exchange, transaction);
 
-            exchange = new() { Name = "Bybit Spot", FeeRate = 0.15m, IsActive = true };
-            connection.Connection.Insert(exchange, transaction);
-
-            exchange = new() { Name = "Bybit Futures", FeeRate = 0.1m, IsActive = true };
-            connection.Connection.Insert(exchange, transaction);
-
-            exchange = new() { Name = "Kucoin Spot", FeeRate = 0.1m, IsActive = true };
-            connection.Connection.Insert(exchange, transaction);
-
-            exchange = new() { Name = "Kraken Spot", FeeRate = 0.1m, IsActive = false };
-            connection.Connection.Insert(exchange, transaction);
-
-            exchange = new() { Name = "Binance Futures", FeeRate = 0.1m, IsActive = true };
-            connection.Connection.Insert(exchange, transaction);
-
-            exchange = new() { Name = "Kucoin Futures", FeeRate = 0.1m, IsActive = false };
-            connection.Connection.Insert(exchange, transaction);
+            foreach (var exchange in CreateExchangeList())
+                connection.Connection.Insert(exchange, transaction);
 
             transaction.Commit();
         }
@@ -198,285 +198,43 @@ public class CryptoDatabase : IDisposable
         {
             connection.Connection.Execute("CREATE TABLE [TradeAccount] (" +
                 "Id integer primary key autoincrement not null," +
-                "Name TEXT not NULL," +
-                "Short TEXT not NULL," +
                 "ExchangeId INTEGER NOT NULL," +
-                "AccountType INTEGER not NULL," +
-                "TradeAccountType Integer not NULL," +
-                "CanTrade INTEGER CanTrade not NULL" +
+                "AccountType Integer not NULL," +
+                "CanTrade INTEGER CanTrade not NULL," +
+
+                "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)" +
             ")");
             connection.Connection.Execute("CREATE INDEX IdxTradeAccountId ON TradeAccount(Id)");
-            connection.Connection.Execute("CREATE INDEX IdxTradeAccountName ON TradeAccount(Name)");
             connection.Connection.Execute("CREATE INDEX IdxTradeAccountExchangeId ON TradeAccount(ExchangeId)");
 
 
             // De exchanges moeten aanwezig zijn na initialisatie
             using var transaction = connection.Connection.BeginTransaction();
 
-            // *****************************************************
-            // Binance Spot
-            // *****************************************************
-
-            CryptoTradeAccount tradeAccount = new()
+            int id = 0;
+            foreach (var exchange in CreateExchangeList())
             {
-                Name = "Binance trading",
-                Short = "Trading",
-                CanTrade = false,
-                ExchangeId = 1,
-                AccountType = CryptoAccountType.Spot,
-                TradeAccountType = CryptoTradeAccountType.RealTrading,
-            };
-            connection.Connection.Insert(tradeAccount, transaction);
+                id++;
 
-            tradeAccount = new()
-            {
-                Name = "Binance paper",
-                Short = "Paper",
-                CanTrade = true,
-                ExchangeId = 1,
-                AccountType = CryptoAccountType.Spot,
-                TradeAccountType = CryptoTradeAccountType.PaperTrade,
-            };
-            connection.Connection.Insert(tradeAccount, transaction);
+                foreach (CryptoAccountType accountType in Enum.GetValues(typeof(CryptoAccountType)))
+                {
+                    CryptoAccount tradeAccount = new()
+                    {
+                        ExchangeId = id,
+                        CanTrade = exchange.IsSupported,
+                        AccountType = accountType,
+                    };
 
-            tradeAccount = new()
-            {
-                Name = "Binance backtest",
-                Short = "Backtest",
-                CanTrade = true,
-                ExchangeId = 1,
-                AccountType = CryptoAccountType.Spot,
-                TradeAccountType = CryptoTradeAccountType.BackTest,
-            };
-            connection.Connection.Insert(tradeAccount, transaction);
+                    // Only Bybit has been tested sofar
+                    if (exchange.ExchangeType != CryptoExchangeType.Bybit && tradeAccount.AccountType == CryptoAccountType.RealTrading)
+                        tradeAccount.CanTrade = false;
 
-            // *****************************************************
-            // Binance Spot
-            // *****************************************************
+                    connection.Connection.Insert(tradeAccount, transaction);
+                }
+            }
 
-            tradeAccount = new()
-            {
-                Name = "Binance Futures trading",
-                Short = "Trading",
-                CanTrade = false,
-                ExchangeId = 6,
-                AccountType = CryptoAccountType.Futures,
-                TradeAccountType = CryptoTradeAccountType.RealTrading,
-            };
-            connection.Connection.Insert(tradeAccount, transaction);
-
-            tradeAccount = new()
-            {
-                Name = "Binance Futures paper",
-                Short = "Paper",
-                CanTrade = true,
-                ExchangeId = 6,
-                AccountType = CryptoAccountType.Futures,
-                TradeAccountType = CryptoTradeAccountType.PaperTrade,
-            };
-            connection.Connection.Insert(tradeAccount, transaction);
-
-            tradeAccount = new()
-            {
-                Name = "Binance Futures backtest",
-                Short = "Backtest",
-                CanTrade = true,
-                ExchangeId = 6,
-                AccountType = CryptoAccountType.Futures,
-                TradeAccountType = CryptoTradeAccountType.BackTest,
-            };
-            connection.Connection.Insert(tradeAccount, transaction);
-
-
-            // *****************************************************
-            // Bybit spot
-            // *****************************************************
-
-            tradeAccount = new()
-            {
-                Name = "Bybit Spot trading",
-                Short = "Trading",
-                CanTrade = true,
-                ExchangeId = 2,
-                AccountType = CryptoAccountType.Spot,
-                TradeAccountType = CryptoTradeAccountType.RealTrading,
-            };
-            connection.Connection.Insert(tradeAccount, transaction);
-
-            tradeAccount = new()
-            {
-                Name = "Bybit Spot paper",
-                Short = "Paper",
-                CanTrade = true,
-                ExchangeId = 2,
-                AccountType = CryptoAccountType.Spot,
-                TradeAccountType = CryptoTradeAccountType.PaperTrade,
-            };
-            connection.Connection.Insert(tradeAccount, transaction);
-
-            tradeAccount = new()
-            {
-                Name = "Bybit Spot backtest",
-                Short = "Backtest",
-                CanTrade = true,
-                ExchangeId = 2,
-                AccountType = CryptoAccountType.Spot,
-                TradeAccountType = CryptoTradeAccountType.BackTest,
-            };
-            connection.Connection.Insert(tradeAccount, transaction);
-
-            // *****************************************************
-            // Bybit futures
-            // *****************************************************
-
-            tradeAccount = new()
-            {
-                Name = "Bybit Futures trading",
-                Short = "Trading",
-                CanTrade = true,
-                ExchangeId = 3,
-                AccountType = CryptoAccountType.Futures,
-                TradeAccountType = CryptoTradeAccountType.RealTrading,
-            };
-            connection.Connection.Insert(tradeAccount, transaction);
-
-            tradeAccount = new()
-            {
-                Name = "Bybit Futures paper",
-                Short = "Paper",
-                CanTrade = true,
-                ExchangeId = 3,
-                AccountType = CryptoAccountType.Futures,
-                TradeAccountType = CryptoTradeAccountType.PaperTrade,
-            };
-            connection.Connection.Insert(tradeAccount, transaction);
-
-            tradeAccount = new()
-            {
-                Name = "Bybit Futures backtest",
-                Short = "Backtest",
-                CanTrade = true,
-                ExchangeId = 3,
-                AccountType = CryptoAccountType.Futures,
-                TradeAccountType = CryptoTradeAccountType.BackTest,
-            };
-            connection.Connection.Insert(tradeAccount, transaction);
-
-
-            // *****************************************************
-            // Kucoin spot
-            // *****************************************************
-
-            tradeAccount = new()
-            {
-                Name = "Kucoin spot trading",
-                Short = "Trading",
-                CanTrade = false,
-                ExchangeId = 4,
-                AccountType = CryptoAccountType.Spot,
-                TradeAccountType = CryptoTradeAccountType.RealTrading,
-            };
-            connection.Connection.Insert(tradeAccount, transaction);
-
-            tradeAccount = new()
-            {
-                Name = "Kucoin spot paper",
-                Short = "Paper",
-                CanTrade = true,
-                ExchangeId = 4,
-                AccountType = CryptoAccountType.Spot,
-                TradeAccountType = CryptoTradeAccountType.PaperTrade,
-            };
-            connection.Connection.Insert(tradeAccount, transaction);
-
-            tradeAccount = new()
-            {
-                Name = "Kucoin spot backtest",
-                Short = "Backtest",
-                CanTrade = true,
-                ExchangeId = 4,
-                AccountType = CryptoAccountType.Spot,
-                TradeAccountType = CryptoTradeAccountType.BackTest,
-            };
-            connection.Connection.Insert(tradeAccount, transaction);
-
-
-            // *****************************************************
-            // Kraken
-            // *****************************************************
-
-            tradeAccount = new()
-            {
-                Name = "Kraken spot trading",
-                Short = "Trading",
-                CanTrade = false,
-                ExchangeId = 5,
-                AccountType = CryptoAccountType.Spot,
-                TradeAccountType = CryptoTradeAccountType.RealTrading,
-            };
-            connection.Connection.Insert(tradeAccount, transaction);
-
-            tradeAccount = new()
-            {
-                Name = "Kraken spot paper",
-                Short = "Paper",
-                CanTrade = true,
-                ExchangeId = 5,
-                AccountType = CryptoAccountType.Spot,
-                TradeAccountType = CryptoTradeAccountType.PaperTrade,
-            };
-            connection.Connection.Insert(tradeAccount, transaction);
-
-            tradeAccount = new()
-            {
-                Name = "Kraken spot backtest",
-                Short = "Backtest",
-                CanTrade = true,
-                ExchangeId = 5,
-                AccountType = CryptoAccountType.Spot,
-                TradeAccountType = CryptoTradeAccountType.BackTest,
-            };
-            connection.Connection.Insert(tradeAccount, transaction);
-
-
-
-            // *****************************************************
-            // Kucoin Futures
-            // *****************************************************
-
-            tradeAccount = new()
-            {
-                Name = "Kucoin Futures trading",
-                Short = "Trading",
-                CanTrade = false,
-                ExchangeId = 7,
-                AccountType = CryptoAccountType.Futures,
-                TradeAccountType = CryptoTradeAccountType.RealTrading,
-            };
-            connection.Connection.Insert(tradeAccount, transaction);
-
-            tradeAccount = new()
-            {
-                Name = "Kucoin Futures paper",
-                Short = "Paper",
-                CanTrade = true,
-                ExchangeId = 7,
-                AccountType = CryptoAccountType.Futures,
-                TradeAccountType = CryptoTradeAccountType.PaperTrade,
-            };
-            connection.Connection.Insert(tradeAccount, transaction);
-
-            tradeAccount = new()
-            {
-                Name = "Kucoin Futures backtest",
-                Short = "Backtest",
-                CanTrade = true,
-                ExchangeId = 7,
-                AccountType = CryptoAccountType.Futures,
-                TradeAccountType = CryptoTradeAccountType.BackTest,
-            };
-            connection.Connection.Insert(tradeAccount, transaction);
             transaction.Commit();
+
         }
     }
 
@@ -649,13 +407,13 @@ public class CryptoDatabase : IDisposable
     }
 
 
-    private static void CreateTablePosition(CryptoDatabase connection)
+    private static void CreateTablePosition(CryptoDatabase connection, SqliteTransaction? transaction = null)
     {
         if (MissingTable(connection, "Position"))
         {
             connection.Connection.Execute("CREATE TABLE [Position] (" +
                 "Id integer primary key autoincrement not null," +
-                "TradeAccountId integer," +
+                "TradeAccountId integer," + //"AccountId integer," +
 
                 "CreateTime TEXT NOT NULL," +
                 "UpdateTime TEXT NOT NULL," +
@@ -688,17 +446,19 @@ public class CryptoDatabase : IDisposable
                 "Percentage TEXT NULL," +
                 "Reposition Integer," +
 
+                //"FOREIGN KEY(AccountId) REFERENCES Account(Id)," +
                 "FOREIGN KEY(TradeAccountId) REFERENCES TradeAccount(Id)," +
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +
                 "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)," +
                 "FOREIGN KEY(IntervalId) REFERENCES Interval(Id)" +
-            ")");
-            connection.Connection.Execute("CREATE INDEX IdxPositionId ON Position(Id)");
-            connection.Connection.Execute("CREATE INDEX IdxPositionExchangeId ON Position(ExchangeId)");
-            connection.Connection.Execute("CREATE INDEX IdxPositionSymbolId ON Position(SymbolId)");
-            connection.Connection.Execute("CREATE INDEX IdxPositionCreateTime ON Position(CreateTime)");
-            connection.Connection.Execute("CREATE INDEX IdxPositionCloseTime ON Position(CloseTime)");
-            connection.Connection.Execute("CREATE INDEX IdxPositionTradeAccountId ON Position(TradeAccountId)");
+            ")", transaction);
+            connection.Connection.Execute("CREATE INDEX IdxPositionId ON Position(Id)", transaction);
+            connection.Connection.Execute("CREATE INDEX IdxPositionExchangeId ON Position(ExchangeId)", transaction);
+            connection.Connection.Execute("CREATE INDEX IdxPositionSymbolId ON Position(SymbolId)", transaction);
+            connection.Connection.Execute("CREATE INDEX IdxPositionCreateTime ON Position(CreateTime)", transaction);
+            connection.Connection.Execute("CREATE INDEX IdxPositionCloseTime ON Position(CloseTime)", transaction);
+            connection.Connection.Execute("CREATE INDEX IdxPositionTradeAccountId ON Position(TradeAccountId)", transaction);
+            //connection.Connection.Execute("CREATE INDEX IdxPositionAccountId ON Position(AccountId)", transaction);
         }
     }
 
@@ -948,6 +708,13 @@ public class CryptoDatabase : IDisposable
                 databaseThread.Connection.Execute("delete from signal where backtest=0 and opendate < @opendate", new { opendate = DateTime.UtcNow.AddDays(-14) });
                 transaction.Commit();
             }
+
+            // Clean account data?
+            //foreach (var x in GlobalData.Settings.General.Exchange.SymbolListName.Values)
+            //{
+            //    ?
+            //    x.
+            //}
         }
         catch (Exception error)
         {

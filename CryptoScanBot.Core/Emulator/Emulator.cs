@@ -1,5 +1,6 @@
 ﻿using System.Text;
 
+using CryptoScanBot.Core.Barometer;
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
@@ -92,87 +93,91 @@ public class Emulator
     {
         try
         {
-            if (GlobalData.ActiveAccount.TradeAccountType != CryptoTradeAccountType.BackTest)
+            if (GlobalData.ActiveAccount!.AccountType != CryptoAccountType.BackTest)
                 return;
 
 
             GlobalData.AddTextToLogTab($"Emulator {symbol.Name} started");
 
-            // (done) Adjust GetLuxIndicator (only uses the last 30 candles, needs start and enddate)
-            // (todo) rename TradingConfig to Config (not the Trader prefix because it is confusing)
-            // (done) The trend calculation is really really slow! Takes hours more if activated!!!
-
-
-            // Emulator boundaries
+            // Emulator date boundaries
             DateTime start = GlobalData.Settings.BackTest.BackTestStartTime;
             DateTime end = GlobalData.Settings.BackTest.BackTestEndTime;
 
 
-            // TODO: some kind of barometer calculation? (for now just a reset)
-            foreach (var interval in GlobalData.IntervalList)
-            {
-                BarometerData barometerData = symbol.QuoteData.BarometerList[interval.IntervalPeriod];
-                barometerData.PriceBarometer = 0.0m;
-                barometerData.VolumeBarometer = 0.0m;
-            }
+            // Todo: Restore afterwards!
+            symbol.LastTradeDate = null;
+            GlobalData.BackTestCandle = null;
+            GlobalData.BackTestDateTime = start;
+            GlobalData.ActiveAccount!.Data.Clear();
 
+
+            // Load the historic candles
             await LoadHistoricalData.Execute(btcSymbol, start, end); // for the trading rules ?
             await LoadHistoricalData.Execute(symbol, start, end);
 
 
-            // calculate the indicators for all intervals
+            // Calculate the indicators for all intervals
             foreach (var interval in GlobalData.IntervalList)
             {
                 CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
                 CandleIndicatorData.CalculateIndicators([.. symbolInterval.CandleList.Values], symbolInterval.CandleList.Count);
-                symbolInterval.TrendInfoDate = null;
-                symbolInterval.TrendInfoDate = null;
             }
 
+            bool exec = true;
 
-            // todo: Restore afterwards!
-            symbol.LastTradeDate = null;
-            GlobalData.ActiveAccount.Clear();
-            GlobalData.BackTestCandle = null;
-            GlobalData.BackTestDateTime = start;
-
-            // needs account (like position): Move declarations to account?
-            // problem: Symbol.OrderList
-            // problem: Symbol.TradeList
-
-
-            // slowest (interesting though)
+            CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
+            CryptoSymbolInterval symbolPeriod1Hour = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1h);
+            foreach (CryptoCandle candle in symbolPeriod.CandleList.Values.ToList())
             {
-                CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
-                foreach (CryptoCandle candle in symbolPeriod.CandleList.Values.ToList())
+                if (candle.Date < start)
+                    continue;
+                if (candle.Date > end)
+                    break;
+
+                if (candle.Date.Minute == 0 && candle.Date.Hour % 4 == 0)
                 {
-                    if (candle.Date < start)
-                        continue;
-                    if (candle.Date > end)
-                        break;
-
-                    if (candle.Date.Minute == 0)
-                    {
-                        // show some progress (quite minimal, but voila)
-                        GlobalData.AddTextToLogTab($"Emulator execute {candle.Date}");
-                    }
-
-                    //string t = $"Emulator execute {candle.Date}";
+                    // show some progress (quite minimal, but voila)
                     GlobalData.AddTextToLogTab($"Emulator execute {candle.Date}");
-                    //if (t.Equals("Emulator execute 2024-05-01 00:36:00"))
-                    //    t = t;
-
-
-                    // This is the last know price
-                    symbol.LastPrice = candle.Close;
-                    symbol.AskPrice = candle.Close;
-                    symbol.BidPrice = candle.Close;
-
-                    GlobalData.BackTestCandle = candle;
-                    GlobalData.BackTestDateTime = CandleTools. GetUnixDate(candle.OpenTime + 60);
-                    PositionMonitor positionMonitor = new(symbol, candle);
-                    await positionMonitor.NewCandleArrivedAsync();
                 }
+
+                //string t = $"Emulator execute {candle.Date}";
+                //GlobalData.AddTextToLogTab($"Emulator execute {candle.Date}");
+                //if (t.Equals("Emulator execute 2024-05-01 00:36:00"))
+                //    t = t;
+
+
+                // This is the last know price
+                symbol.LastPrice = candle.Close;
+                symbol.AskPrice = candle.Close;
+                symbol.BidPrice = candle.Close;
+
+                GlobalData.BackTestCandle = candle;
+                GlobalData.BackTestDateTime = CandleTools.GetUnixDate(candle.OpenTime + 60);
+
+                // Calculate barometer
+                if (exec)
+                {
+                    BarometerTools barometerTools = new();
+                    barometerTools.CalculatePriceBarometerForQuote(symbol.QuoteData);
+                    exec = false;
+                }
+
+                // Pickup the right volume of the symbol (its kind of an estimate from the last 24 hours)
+                // This can be made a litter bit quicker, but this wont hurt the cpu that much I assume...
+                int count = 24;
+                decimal volume = 0;
+                long unix = IntervalTools.StartOfIntervalCandle2(candle.OpenTime, 60, symbolPeriod1Hour.Interval.Duration);
+                while (count-- > 0)
+                {
+                    if (symbolPeriod1Hour.CandleList.TryGetValue(unix, out CryptoCandle? candleHour))
+                        volume += candleHour.Volume;
+                    unix -= symbolPeriod1Hour.Interval.Duration;
+                }
+                symbol.Volume = volume;
+
+                PositionMonitor positionMonitor = new(GlobalData.ActiveAccount!, symbol, candle);
+                await positionMonitor.NewCandleArrivedAsync();
+
             }
             GlobalData.BackTestCandle = null;
 

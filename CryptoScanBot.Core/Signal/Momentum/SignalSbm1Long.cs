@@ -20,7 +20,7 @@ public class SignalSbm1Long : SignalSbmBaseLong
         while (candleCount > 0)
         {
             // Er een candle onder de bb opent of sluit & een oversold situatie (beide moeten onder de 20 zitten)
-            if (last!.IsBelowBollingerBands(GlobalData.Settings.Signal.Sbm.UseLowHigh) && last.IsStochOversold())
+            if (last!.IsBelowBollingerBands(GlobalData.Settings.Signal.Sbm.UseLowHigh) && last!.IsStochOversold())
                 return true;
 
             if (!GetPrevCandle(last, out last))

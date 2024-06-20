@@ -458,9 +458,9 @@ public class SignalSbmBaseShort(CryptoSymbol symbol, CryptoInterval interval, Cr
 
         // ********************************************************************
         // Instaptijd verstreken (oneindig wachten is geen optie)
-        if (CandleLast.OpenTime - signal.EventTime > GlobalData.Settings.Trading.GlobalBuyRemoveTime * Interval.Duration)
+        if (CandleLast.OpenTime - signal.EventTime > GlobalData.Settings.Trading.EntryRemoveTime * Interval.Duration)
         {
-            ExtraText = $"Ophouden na {GlobalData.Settings.Trading.GlobalBuyRemoveTime} candles";
+            ExtraText = $"Ophouden na {GlobalData.Settings.Trading.EntryRemoveTime} candles";
             return true;
         }
 
@@ -528,7 +528,7 @@ public class SignalSbmBaseShort(CryptoSymbol symbol, CryptoInterval interval, Cr
         //    if (!SymbolTools.CheckValidBarometer(Symbol.QuoteData, entry.Key, entry.Value, out ExtraText))
         //        return true;
         //}
-        if (!BarometerHelper.ValidBarometerConditions(Symbol.QuoteData, TradingConfig.Trading[CryptoTradeSide.Short].Barometer, out ExtraText))
+        if (!BarometerHelper.ValidBarometerConditions(GlobalData.ActiveAccount!, Symbol.Quote, TradingConfig.Trading[CryptoTradeSide.Short].Barometer, out ExtraText))
             return true;
 
 

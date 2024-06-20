@@ -12,7 +12,7 @@ public partial class UserControlColorAndSound : UserControl
         buttonPlaySound.Click += ButtonPlaySound;
     }
 
-    private void ButtonSelectColor(object sender, EventArgs e)
+    private void ButtonSelectColor(object? sender, EventArgs? e)
     {
         ColorDialog dlg = new()
         {
@@ -24,7 +24,7 @@ public partial class UserControlColorAndSound : UserControl
         }
     }
 
-    private void ButtonSelectSound(object sender, EventArgs e)
+    private void ButtonSelectSound(object? sender, EventArgs? e)
     {
         OpenFileDialog openFileDialog = new()
         {
@@ -52,7 +52,7 @@ public partial class UserControlColorAndSound : UserControl
         }
     }
 
-    //private void SetGrayed(object sender, EventArgs e)
+    //private void SetGrayed(object? sender, EventArgs? e)
     //{
     //    //// Stobb
     //    //EditSoundStobbOverbought.Enabled = EditPlaySoundStobbSignal.Checked;
@@ -67,7 +67,7 @@ public partial class UserControlColorAndSound : UserControl
 
     //}
 
-    private void ButtonPlaySound(object sender, EventArgs e)
+    private void ButtonPlaySound(object? sender, EventArgs? e)
     {
         GlobalData.PlaySomeMusic(EditSoundFile.Text, true);
     }

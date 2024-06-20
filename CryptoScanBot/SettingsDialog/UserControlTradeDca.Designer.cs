@@ -31,12 +31,14 @@ partial class UserControlTradeDca
         groupBoxDca = new GroupBox();
         PanelDca = new FlowLayoutPanel();
         panelDcaMethod = new Panel();
+        label1 = new Label();
+        EditOrderType = new ComboBox();
         ButtonDcaDel = new Button();
         ButtonDcaAdd = new Button();
         label82 = new Label();
-        EditDcaStepInMethod = new ComboBox();
+        EditStrategy = new ComboBox();
         label60 = new Label();
-        EditDcaOrderMethod = new ComboBox();
+        EditPricing = new ComboBox();
         label54 = new Label();
         groupBoxDca.SuspendLayout();
         PanelDca.SuspendLayout();
@@ -46,13 +48,14 @@ partial class UserControlTradeDca
         // groupBoxDca
         // 
         groupBoxDca.AutoSize = true;
+        groupBoxDca.AutoSizeMode = AutoSizeMode.GrowAndShrink;
         groupBoxDca.Controls.Add(PanelDca);
         groupBoxDca.Controls.Add(label54);
         groupBoxDca.Dock = DockStyle.Fill;
         groupBoxDca.Location = new Point(0, 0);
         groupBoxDca.Name = "groupBoxDca";
         groupBoxDca.Padding = new Padding(5);
-        groupBoxDca.Size = new Size(416, 125);
+        groupBoxDca.Size = new Size(416, 168);
         groupBoxDca.TabIndex = 0;
         groupBoxDca.TabStop = false;
         groupBoxDca.Text = "DCA/Bijkoop";
@@ -67,28 +70,52 @@ partial class UserControlTradeDca
         PanelDca.FlowDirection = FlowDirection.TopDown;
         PanelDca.Location = new Point(5, 21);
         PanelDca.Name = "PanelDca";
-        PanelDca.Size = new Size(406, 99);
+        PanelDca.Size = new Size(406, 142);
         PanelDca.TabIndex = 331;
         // 
         // panelDcaMethod
         // 
         panelDcaMethod.AutoSize = true;
+        panelDcaMethod.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+        panelDcaMethod.Controls.Add(label1);
+        panelDcaMethod.Controls.Add(EditOrderType);
         panelDcaMethod.Controls.Add(ButtonDcaDel);
         panelDcaMethod.Controls.Add(ButtonDcaAdd);
         panelDcaMethod.Controls.Add(label82);
-        panelDcaMethod.Controls.Add(EditDcaStepInMethod);
+        panelDcaMethod.Controls.Add(EditStrategy);
         panelDcaMethod.Controls.Add(label60);
-        panelDcaMethod.Controls.Add(EditDcaOrderMethod);
+        panelDcaMethod.Controls.Add(EditPricing);
         panelDcaMethod.Dock = DockStyle.Top;
         panelDcaMethod.Location = new Point(3, 3);
         panelDcaMethod.MinimumSize = new Size(400, 90);
         panelDcaMethod.Name = "panelDcaMethod";
-        panelDcaMethod.Size = new Size(400, 93);
+        panelDcaMethod.Padding = new Padding(0, 0, 0, 5);
+        panelDcaMethod.Size = new Size(400, 136);
         panelDcaMethod.TabIndex = 331;
+        // 
+        // label1
+        // 
+        label1.AutoSize = true;
+        label1.Location = new Point(9, 14);
+        label1.Margin = new Padding(4, 0, 4, 0);
+        label1.Name = "label1";
+        label1.Size = new Size(64, 15);
+        label1.TabIndex = 340;
+        label1.Text = "Order Type";
+        // 
+        // EditOrderType
+        // 
+        EditOrderType.DropDownStyle = ComboBoxStyle.DropDownList;
+        EditOrderType.FormattingEnabled = true;
+        EditOrderType.Location = new Point(158, 11);
+        EditOrderType.Margin = new Padding(4, 3, 4, 3);
+        EditOrderType.Name = "EditOrderType";
+        EditOrderType.Size = new Size(226, 23);
+        EditOrderType.TabIndex = 339;
         // 
         // ButtonDcaDel
         // 
-        ButtonDcaDel.Location = new Point(198, 67);
+        ButtonDcaDel.Location = new Point(203, 105);
         ButtonDcaDel.Name = "ButtonDcaDel";
         ButtonDcaDel.Size = new Size(125, 23);
         ButtonDcaDel.TabIndex = 338;
@@ -98,7 +125,7 @@ partial class UserControlTradeDca
         // 
         // ButtonDcaAdd
         // 
-        ButtonDcaAdd.Location = new Point(67, 67);
+        ButtonDcaAdd.Location = new Point(72, 105);
         ButtonDcaAdd.Name = "ButtonDcaAdd";
         ButtonDcaAdd.Size = new Size(125, 23);
         ButtonDcaAdd.TabIndex = 337;
@@ -109,42 +136,42 @@ partial class UserControlTradeDca
         // label82
         // 
         label82.AutoSize = true;
-        label82.Location = new Point(10, 18);
+        label82.Location = new Point(9, 43);
         label82.Margin = new Padding(4, 0, 4, 0);
         label82.Name = "label82";
-        label82.Size = new Size(88, 15);
+        label82.Size = new Size(50, 15);
         label82.TabIndex = 335;
-        label82.Text = "Instap moment";
+        label82.Text = "Strategy";
         // 
-        // EditDcaStepInMethod
+        // EditStrategy
         // 
-        EditDcaStepInMethod.DropDownStyle = ComboBoxStyle.DropDownList;
-        EditDcaStepInMethod.FormattingEnabled = true;
-        EditDcaStepInMethod.Location = new Point(157, 10);
-        EditDcaStepInMethod.Margin = new Padding(4, 3, 4, 3);
-        EditDcaStepInMethod.Name = "EditDcaStepInMethod";
-        EditDcaStepInMethod.Size = new Size(226, 23);
-        EditDcaStepInMethod.TabIndex = 334;
+        EditStrategy.DropDownStyle = ComboBoxStyle.DropDownList;
+        EditStrategy.FormattingEnabled = true;
+        EditStrategy.Location = new Point(158, 40);
+        EditStrategy.Margin = new Padding(4, 3, 4, 3);
+        EditStrategy.Name = "EditStrategy";
+        EditStrategy.Size = new Size(226, 23);
+        EditStrategy.TabIndex = 334;
         // 
         // label60
         // 
         label60.AutoSize = true;
-        label60.Location = new Point(10, 42);
+        label60.Location = new Point(9, 72);
         label60.Margin = new Padding(4, 0, 4, 0);
         label60.Name = "label60";
-        label60.Size = new Size(86, 15);
+        label60.Size = new Size(44, 15);
         label60.TabIndex = 333;
-        label60.Text = "Koop methode";
+        label60.Text = "Pricing";
         // 
-        // EditDcaOrderMethod
+        // EditPricing
         // 
-        EditDcaOrderMethod.DropDownStyle = ComboBoxStyle.DropDownList;
-        EditDcaOrderMethod.FormattingEnabled = true;
-        EditDcaOrderMethod.Location = new Point(157, 38);
-        EditDcaOrderMethod.Margin = new Padding(4, 3, 4, 3);
-        EditDcaOrderMethod.Name = "EditDcaOrderMethod";
-        EditDcaOrderMethod.Size = new Size(226, 23);
-        EditDcaOrderMethod.TabIndex = 332;
+        EditPricing.DropDownStyle = ComboBoxStyle.DropDownList;
+        EditPricing.FormattingEnabled = true;
+        EditPricing.Location = new Point(158, 69);
+        EditPricing.Margin = new Padding(4, 3, 4, 3);
+        EditPricing.Name = "EditPricing";
+        EditPricing.Size = new Size(226, 23);
+        EditPricing.TabIndex = 332;
         // 
         // label54
         // 
@@ -166,7 +193,7 @@ partial class UserControlTradeDca
         Controls.Add(groupBoxDca);
         Margin = new Padding(0);
         Name = "UserControlTradeDca";
-        Size = new Size(416, 125);
+        Size = new Size(416, 168);
         groupBoxDca.ResumeLayout(false);
         groupBoxDca.PerformLayout();
         PanelDca.ResumeLayout(false);
@@ -184,9 +211,11 @@ partial class UserControlTradeDca
     private FlowLayoutPanel PanelDca;
     private Panel panelDcaMethod;
     private Label label82;
-    private ComboBox EditDcaStepInMethod;
+    private ComboBox EditStrategy;
     private Label label60;
-    private ComboBox EditDcaOrderMethod;
+    private ComboBox EditPricing;
     private Button ButtonDcaDel;
     private Button ButtonDcaAdd;
+    private Label label1;
+    private ComboBox EditOrderType;
 }

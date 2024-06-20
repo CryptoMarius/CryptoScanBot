@@ -187,7 +187,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
             ColumnsForGrid.Created => ObjectCompare.Compare(a.CreateTime, b.CreateTime),
             ColumnsForGrid.Updated => ObjectCompare.Compare(a.UpdateTime, b.UpdateTime),
             ColumnsForGrid.Duration => ObjectCompare.Compare(a.Duration().TotalSeconds, b.Duration().TotalSeconds),
-            ColumnsForGrid.Account => ObjectCompare.Compare(a.TradeAccount.Name, b.TradeAccount.Name),
+            ColumnsForGrid.Account => ObjectCompare.Compare(a.Account.AccountType, b.Account.AccountType),
             ColumnsForGrid.Exchange => ObjectCompare.Compare(a.Exchange.Name, b.Exchange.Name),
             ColumnsForGrid.Symbol => ObjectCompare.Compare(a.Symbol.Name, b.Symbol.Name),
             ColumnsForGrid.Interval => ObjectCompare.Compare(a.Interval.IntervalPeriod, b.Interval.IntervalPeriod),
@@ -274,7 +274,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
                     e.Value = position.DurationText();
                     break;
                 case ColumnsForGrid.Account:
-                    e.Value = position.TradeAccount.Name;
+                    e.Value = position.Account.AccountType;
                     break;
                 case ColumnsForGrid.Exchange:
                     e.Value = position.Symbol.Exchange.Name;
@@ -443,7 +443,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
 
 
 #if TRADEBOT
-    private async void CommandPositionRecalculateExecute(object sender, EventArgs e)
+    private async void CommandPositionRecalculateExecute(object? sender, EventArgs? e)
     {
         CryptoPosition position = GetSelectedObject(out int rowIndex);
         if (position != null)
@@ -462,7 +462,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
     }
 
 
-    private void CommandPositionDeleteFromDatabaseAsync(object sender, EventArgs e)
+    private void CommandPositionDeleteFromDatabaseAsync(object? sender, EventArgs? e)
     {
         CryptoPosition position = GetSelectedObject(out int _);
         if (position != null)
@@ -484,7 +484,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
                 transaction.Commit();
 
                 List.Remove((T)position);
-                PositionTools.RemovePosition(position.TradeAccount, position, false);
+                PositionTools.RemovePosition(position.Account, position, false);
                 GlobalData.AddTextToLogTab($"{position.Symbol.Name} handmatig positie {position.Id} uit de database verwijderd");
                 GlobalData.PositionsHaveChanged("");
             }
@@ -497,7 +497,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
     }
 
 
-    private async void CommandPositionCreateAdditionalDca(object sender, EventArgs e)
+    private async void CommandPositionCreateAdditionalDca(object? sender, EventArgs? e)
     {
         CryptoPosition position = GetSelectedObject(out int rowIndex);
         if (position != null)
@@ -548,7 +548,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
 
             // De positie uitbreiden nalv een nieuw signaal (de xe bijkoop wordt altijd een aparte DCA)
             PositionTools.ExtendPosition(databaseThread, position, CryptoPartPurpose.Dca, position.Interval, position.Strategy,
-                CryptoEntryOrProfitMethod.FixedPercentage, price, GlobalData.GetCurrentDateTime(position.TradeAccount), true);
+                CryptoEntryOrDcaStrategy.FixedPercentage, price, GlobalData.GetCurrentDateTime(position.Account), true);
             GlobalData.AddTextToLogTab($"{position.Symbol.Name} handmatig een DCA toegevoegd aan positie {position.Id}");
 
             //FillItemOpen(position, item);
@@ -560,7 +560,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
             if (symbolPeriod.CandleList.Count > 0)
             {
                 var lastCandle1m = symbolPeriod.CandleList.Values.Last();
-                PositionMonitor positionMonitor = new(position.Symbol, lastCandle1m);
+                PositionMonitor positionMonitor = new(position.Account, position.Symbol, lastCandle1m);
                 await positionMonitor.HandlePosition(position);
             }
         }
@@ -568,7 +568,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
     }
 
 
-    private async void CommandPositionRemoveAdditionalDca(object sender, EventArgs e)
+    private async void CommandPositionRemoveAdditionalDca(object? sender, EventArgs? e)
     {
         CryptoPosition position = GetSelectedObject(out int rowIndex);
         if (position != null)
@@ -588,16 +588,16 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
                 long lastCandle1mCloseTime = lastCandle1m.OpenTime + 60;
                 DateTime lastCandle1mCloseTimeDate = CandleTools.GetUnixDate(lastCandle1mCloseTime);
 
-                PositionMonitor positionMonitor = new(position.Symbol, lastCandle1m);
+                PositionMonitor positionMonitor = new(position.Account, position.Symbol, lastCandle1m);
                 await positionMonitor.HandlePosition(position);
 
 
                 var entryOrderSide = position.GetEntryOrderSide();
-                foreach (CryptoPositionPart part in position.Parts.Values.ToList())
+                foreach (CryptoPositionPart part in position.PartList.Values.ToList())
                 {
                     if (!part.CloseTime.HasValue && part.Purpose == CryptoPartPurpose.Dca)
                     {
-                        foreach (CryptoPositionStep step in part.Steps.Values.ToList())
+                        foreach (CryptoPositionStep step in part.StepList.Values.ToList())
                         {
                             if (!step.CloseTime.HasValue && step.Side == entryOrderSide)
                             {
@@ -626,7 +626,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
     }
 
 
-    //private async void CommandPositionLastPartTakeProfit(object sender, EventArgs e)
+    //private async void CommandPositionLastPartTakeProfit(object? sender, EventArgs? e)
     //{
 
     //    CryptoPosition position = GetSelectedObject(out int rowIndex);
@@ -705,7 +705,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
 #endif
 
 
-    private void RefreshInformation(object sender, EventArgs e)
+    private void RefreshInformation(object? sender, EventArgs? e)
     {
         if (GlobalData.ApplicationIsClosing)
             return;

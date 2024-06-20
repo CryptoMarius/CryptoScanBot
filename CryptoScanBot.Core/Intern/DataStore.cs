@@ -41,13 +41,14 @@ public class DataStore
                 }
 
                 // reset the precious collected trend data
-                foreach (CryptoSymbolInterval symbolInterval in symbol.IntervalPeriodList)
+                AccountSymbolData accountSymbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
+                foreach (AccountSymbolIntervalData accountSymbolIntervalData in accountSymbolData.SymbolTrendDataList)
                 {
-                    symbolInterval.TrendIndicator = CryptoTrendIndicator.Sideways;
-                    symbolInterval.LastCandleSynchronized = null;
-                    symbolInterval.TrendInfoUnix = null;
-                    symbolInterval.TrendInfoDate = null;
-                    symbolInterval.ZigZagCache = null;
+                    //accountSymbolIntervalData.LastCandleSynchronized = null;??
+                    accountSymbolIntervalData.TrendIndicator = CryptoTrendIndicator.Sideways;
+                    accountSymbolIntervalData.TrendInfoUnix = null;
+                    accountSymbolIntervalData.TrendInfoDate = null;
+                    accountSymbolIntervalData.ZigZagCache = null;
                 }
 
                 // Laad in 1x alle intervallen 

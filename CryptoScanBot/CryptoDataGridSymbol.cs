@@ -146,7 +146,7 @@ public class CryptoDataGridSymbol<T>(DataGridView grid, List<T> list, SortedList
     }
 
 #if TRADEBOT
-    private void CreatePosition(object sender, EventArgs e)
+    private void CreatePosition(object? sender, EventArgs? e)
     {
         //PositionTools.CreatePosition(GlobalData.Settings.General.)
     }

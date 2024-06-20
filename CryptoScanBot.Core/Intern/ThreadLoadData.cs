@@ -1,4 +1,5 @@
-﻿using CryptoScanBot.Core.Context;
+﻿using CryptoScanBot.Core.Barometer;
+using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Model;
@@ -220,8 +221,8 @@ public class ThreadLoadData
                 // Na het inlezen van de symbols de lijsten alsnog goed zetten
                 TradingConfig.InitWhiteAndBlackListSettings();
 
-                // De (interne) barometer symbols toevoegen
-                GlobalData.InitBarometerSymbols(databaseThread);
+                // Check the (internal) barometer symbols
+                BarometerTools.InitBarometerSymbols();
 
 
 
@@ -377,7 +378,7 @@ public class ThreadLoadData
                 }
 
                 GlobalData.AddTextToLogTab("Starting task for checking positions");
-                _ = Task.Run(async () => { await GlobalData.ThreadDoubleCheckPosition!.ExecuteAsync(); });
+                _ = Task.Run(async () => { await GlobalData.ThreadCheckPosition!.ExecuteAsync(); });
 
                 await TradeTools.CheckOpenPositions();
 
@@ -412,10 +413,12 @@ public class ThreadLoadData
 #endif
 
 
-
+                ScannerLog.Logger.Trace("");
+                ScannerLog.Logger.Trace(GlobalData.AppName + " " + GlobalData.AppVersion + " ready");
                 GlobalData.AddTextToLogTab(GlobalData.AppName + " " + GlobalData.AppVersion + " ready", true);
                 GlobalData.AddTextToTelegram(GlobalData.AppName + " " + GlobalData.AppVersion + " ready");
                 GlobalData.AddTextToTelegram("");
+
 
                 // Heb me dag lopen af te vragen waarom er geen signalen kwamen, iets met white&black, right
                 //if (GlobalData.Settings.UseWhiteListOversold)
@@ -435,7 +438,7 @@ public class ThreadLoadData
                 if (!checkPositions && GlobalData.ActiveAccount != null)
                 {
 #if TRADEBOT
-                    if (GlobalData.Settings.Trading.TradeVia != CryptoTradeAccountType.RealTrading)
+                    if (GlobalData.Settings.Trading.TradeVia != CryptoAccountType.RealTrading)
                         await PaperTrading.CheckPositionsAfterRestart(GlobalData.ActiveAccount!);
 #endif
                 }

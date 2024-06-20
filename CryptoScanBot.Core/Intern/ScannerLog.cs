@@ -108,6 +108,12 @@ public class ScannerLog
         rule = new NLog.Config.LoggingRule("*", LogLevel.Trace, fileTarget);
         config.LoggingRules.Add(rule);
 
+#if DEBUG
+        fileTarget = CreateTarget("trace", " Debug");
+        rule = new NLog.Config.LoggingRule("*", LogLevel.Debug, fileTarget);
+        config.LoggingRules.Add(rule);
+#endif
+
         LogManager.Configuration = config;
 
         //Logger.Info("");

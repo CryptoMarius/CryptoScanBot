@@ -27,7 +27,7 @@ public class CryptoPositionPart
 
     public int? IntervalId { get; set; }
     [Computed]
-    public CryptoInterval Interval { get; set; }
+    public CryptoInterval? Interval { get; set; }
 
     public CryptoPartPurpose Purpose { get; set; }
     public CryptoSignalStrategy Strategy { get; set; }
@@ -55,9 +55,9 @@ public class CryptoPositionPart
     public decimal SignalPrice { get; set; }
 
     // De bijkoop methode -> EntryMethod (zou wellicht uit de actuele instellingen gehaald kunnen worden)
-    public CryptoEntryOrProfitMethod EntryMethod { get; set; }
+    public CryptoEntryOrDcaStrategy EntryMethod { get; set; }
     // De verkoop methode -> ProfitMethod (zou wellicht uit de actuele instellingen gehaald kunnen worden)
-    public CryptoEntryOrProfitMethod ProfitMethod { get; set; }
+    public CryptoEntryOrDcaStrategy ProfitMethod { get; set; }
 
     // Eigenlijk zijn er maar 2 steps in een deelpositie die van belang zijn?
     // Helaas dat gaat niet 100% op, want die kunnen verdeeld zijn in meerdere orders
@@ -71,7 +71,7 @@ public class CryptoPositionPart
     public bool IsChanged { get; set; }
 
     [Computed]
-    public SortedList<int, CryptoPositionStep> Steps { get; set; } = [];
+    public SortedList<int, CryptoPositionStep> StepList { get; set; } = [];
 }
 
 

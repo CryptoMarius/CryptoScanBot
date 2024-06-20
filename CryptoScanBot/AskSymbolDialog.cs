@@ -41,7 +41,7 @@ namespace CryptoScanBot
 
         }
 
-        private void ButtonOk_Click(object sender, EventArgs e)
+        private void ButtonOk_Click(object? sender, EventArgs? e)
         {
             GlobalData.Settings.BackTest.BackTestSymbol = EditSymbol.Text.Trim();
             GlobalData.Settings.BackTest.BackTestStartTime = EditTimeStart.Value;
@@ -53,7 +53,7 @@ namespace CryptoScanBot
             DialogResult = DialogResult.OK;
         }
 
-        private void ButtonCancel_Click(object sender, EventArgs e)
+        private void ButtonCancel_Click(object? sender, EventArgs? e)
         {
             DialogResult = DialogResult.Cancel;
         }

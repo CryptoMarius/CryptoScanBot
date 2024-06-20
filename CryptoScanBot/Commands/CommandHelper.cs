@@ -7,7 +7,7 @@ public static class CommandHelper
 
     public static void AddSeperator(this ToolStripMenuItem menuStrip) => menuStrip.DropDownItems.Add(new ToolStripSeparator());
 
-    public static ToolStripMenuItemCommand AddCommand(this ContextMenuStrip menuStrip, CryptoDataGrid dataGrid, string text, Command command, EventHandler click = null)
+    public static ToolStripMenuItemCommand AddCommand(this ContextMenuStrip menuStrip, CryptoDataGrid? dataGrid, string text, Command command, EventHandler? click = null)
     {
         ToolStripMenuItemCommand menuItem = new()
         {
@@ -16,14 +16,14 @@ public static class CommandHelper
             Text = text
         };
         if (click == null)
-            menuItem.Click += CommandTools.ExecuteCommand;
+            menuItem.Click += click ?? CommandTools.ExecuteCommand;
         else 
             menuItem.Click += click;
         menuStrip.Items.Add(menuItem);
         return menuItem;
     }
 
-    public static ToolStripMenuItemCommand AddCommand(this ToolStripMenuItem menuStrip, CryptoDataGrid dataGrid, string text, Command command, EventHandler click = null)
+    public static ToolStripMenuItemCommand AddCommand(this ToolStripMenuItem menuStrip, CryptoDataGrid? dataGrid, string text, Command command, EventHandler? click = null)
     {
         ToolStripMenuItemCommand menuItem = new()
         {

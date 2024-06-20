@@ -7,7 +7,7 @@ namespace CryptoScanBot.Core.Model;
 static public class Constants
 {
     public const string SymbolNameBarometerPrice = "$BMP";
-    //public const string SymbolNameBarometerVolume = "$BMV";
+    //public const string SymbolNameBarometerVolume = "$BMV"; // an experiment, needs to be continued someday
 }
 
 [Table("Symbol")]
@@ -92,43 +92,35 @@ public class CryptoSymbol
     //public decimal? LowPrice { get; set; }
 
 
-    // Laatste waarde volgens de ticker
+    // Last value from the symbol ticker or candle.Close
     public decimal? LastPrice { get; set; }
     [Computed]
-    // Laatste waarde volgens de ticker
+    // Last value from the symbol ticker or candle.Close
     public decimal? BidPrice { get; set; }
     [Computed]
-    // Laatste waarde volgens de ticker
+    // Last value from the symbol ticker or candle.Close
     public decimal? AskPrice { get; set; }
 
 
     /// <summary>
-    /// Voor het ophalen van de trades
+    /// For fetching the trades
     /// </summary>
     public DateTime? LastTradeFetched { get; set; }
     public long? LastTradeIdFetched { get; set; }
-    public DateTime? LastOrderFetched { get; set; }
 
-    // De trend percentage (berekend uit de candlefetched.TrendIndicator)
-    public float? TrendPercentage { get; set; }
-    public DateTime? TrendInfoDate { get; set; }
 
     /// <summary>
-    /// Datum dat we de laatste keer hebben gekocht
+    /// Last time we traded on this symbol (cooldown)
     /// </summary>
     public DateTime? LastTradeDate { get; set; }
 
-    //[Computed]
-    //[JsonIgnore]
-    //public bool IsBalancing { get; set; }
-
     [Computed]
-    // gegevens quote, display format, barometers etc
-    public virtual CryptoQuoteData QuoteData { get; set; }
+    // Quote: display format
+    public virtual CryptoQuoteData? QuoteData { get; set; }
 
 
     [Computed]
-    // Interval related data like candles, last candle fetched, trend information etc.
+    // Interval related data like candles and last candle fetched
     public List<CryptoSymbolInterval> IntervalPeriodList { get; set; } = [];
 
     [Computed]
@@ -145,9 +137,6 @@ public class CryptoSymbol
 
 
     public CryptoSymbol()
-    //???
-    //    => IntervalPeriodList = GlobalData.IntervalList.Select(interval 
-    //    => new CryptoSymbolInterval { Interval = interval }).ToList();
     {
         IntervalPeriodList = [];
         foreach (CryptoInterval interval in GlobalData.IntervalList)
@@ -162,7 +151,9 @@ public class CryptoSymbol
     }
 
     public CryptoSymbolInterval GetSymbolInterval(CryptoIntervalPeriod intervalPeriod)
-        => IntervalPeriodList[(int)intervalPeriod];
+    {
+        return IntervalPeriodList[(int)intervalPeriod];
+    }
 
     public void ClearSignals()
     {

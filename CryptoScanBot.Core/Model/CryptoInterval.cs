@@ -21,7 +21,7 @@ public class CryptoInterval
     /// <summary>
     /// Number of seconds for this interval
     /// </summary>
-    public long Duration { get; set; }
+    public uint Duration { get; set; }
 
     /// <summary>
     /// Verwijzing naar een ander interval waar deze uit op te bouwen is
@@ -31,7 +31,7 @@ public class CryptoInterval
     public virtual CryptoInterval? ConstructFrom { get; set; }
 
 
-    public static CryptoInterval CreateInterval(CryptoIntervalPeriod intervalPeriod, string name, long duration, CryptoInterval? constructFrom)
+    public static CryptoInterval CreateInterval(CryptoIntervalPeriod intervalPeriod, string name, uint duration, CryptoInterval? constructFrom)
     {
         CryptoInterval cryptoInterval = new()
         {

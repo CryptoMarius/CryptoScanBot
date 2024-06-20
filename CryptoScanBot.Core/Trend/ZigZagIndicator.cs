@@ -18,10 +18,10 @@ public class ZigZagIndicator
     public readonly List<decimal> _highBuffer = [];
     public readonly List<decimal> _zigZagBuffer = [];
 
-    private Func<CryptoCandle, decimal> _currentValue = candle => candle.Close;
-    private int _depth;
-    private int _backStep;
-    private bool _needAdd = true;
+    //private Func<CryptoCandle, decimal> _currentValue = candle => candle.Close;
+    private int _depth = 12;
+    private int _backStep = 3;
+    //private bool _needAdd = true;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ZigZag"/>.
@@ -33,7 +33,7 @@ public class ZigZagIndicator
     }
 
     /// <summary>
-    /// Minimum number of bars between local maximums, minimums.
+    /// Minimum number of candles between local maximums, minimums.
     /// </summary>
     public int BackStep
     {
@@ -49,7 +49,7 @@ public class ZigZagIndicator
     }
 
     /// <summary>
-    /// Bars minimum, on which Zigzag will not build a second maximum (or minimum), if it is smaller (or larger) by a deviation of the previous respectively.
+    /// Candles minimum, on which Zigzag will not build a second maximum (or minimum), if it is smaller (or larger) by a deviation of the previous respectively.
     /// </summary>
     public int Depth
     {
@@ -89,95 +89,92 @@ public class ZigZagIndicator
     /// <summary>
     /// The converter, returning from the candle a price for search of maximum.
     /// </summary>
-    public Func<CryptoCandle, decimal> HighValueFunc
-    {
-        get => _highValue;
-        set
-        {
-            _highValue = value;
-            Reset();
-        }
-    }
+    //public Func<CryptoCandle, decimal> HighValueFunc
+    //{
+    //    get => _highValue;
+    //    set
+    //    {
+    //        _highValue = value;
+    //        Reset();
+    //    }
+    //}
 
     private Func<CryptoCandle, decimal> _lowValue = candle => Math.Min(candle.Open, candle.Close); // candle.Low;
     /// <summary>
     /// The converter, returning from the candle a price for search of minimum.
     /// </summary>
-    public Func<CryptoCandle, decimal> LowValueFunc
-    {
-        get => _lowValue;
-        set
-        {
-            _lowValue = value;
-            Reset();
-        }
-    }
+    //public Func<CryptoCandle, decimal> LowValueFunc
+    //{
+    //    get => _lowValue;
+    //    set
+    //    {
+    //        _lowValue = value;
+    //        Reset();
+    //    }
+    //}
 
-    /// <summary>
-    /// The converter, returning from the candle a price for the current value.
-    /// </summary>
-    public Func<CryptoCandle, decimal> CurrentValueFunc
-    {
-        get => _currentValue;
-        set
-        {
-            _currentValue = value;
-            Reset();
-        }
-    }
+    ///// <summary>
+    ///// The converter, returning from the candle a price for the current value.
+    ///// </summary>
+    //public Func<CryptoCandle, decimal> CurrentValueFunc
+    //{
+    //    get => _currentValue;
+    //    set
+    //    {
+    //        _currentValue = value;
+    //        Reset();
+    //    }
+    //}
 
     /// <summary>
     /// The indicator current value.
     /// </summary>
-    public decimal CurrentValue { get; private set; }
+    //public decimal CurrentValue { get; private set; }
 
     /// <summary>
     /// Shift for the last indicator value.
     /// </summary>
-    public int LastValueShift { get; private set; }
+    //public int LastValueShift { get; private set; } = 0;
 
     /// <inheritdoc />
     public void Reset()
     {
-        _needAdd = true;
+        //_needAdd = true;
         Candles.Clear();
         _lowBuffer.Clear();
         _highBuffer.Clear();
         _zigZagBuffer.Clear();
-        CurrentValue = 0;
-        LastValueShift = 0;
+        //CurrentValue = 0;
+        //LastValueShift = 0;
         //base.Reset();
     }
 
     /// <inheritdoc />
-    public void Calculate(CryptoCandle candle, bool isFinal)
+    public void Calculate(CryptoCandle candle)
     {
-        //var candle = input.GetValue<CryptoCandle>();
+        // Remark: New candle are placed in fron (unusual)
 
-        // Opmerking: De nieuwste candle staat vooraan in de lijst (even wennen)
-        // En qua lijst management niet zo handig (iedere keer alles verschuiven?)
-
-        if (_needAdd)
-        {
+        //if (true) // _needAdd
+        //{
             Candles.Insert(0, candle);
             _lowBuffer.Insert(0, 0);
             _highBuffer.Insert(0, 0);
             _zigZagBuffer.Insert(0, 0);
-        }
-        else
-        {
-            Candles[0] = candle;
-            _lowBuffer[0] = 0;
-            _highBuffer[0] = 0;
-            _zigZagBuffer[0] = 0;
-        }
+        //}
+        //else
+        //{
+        //    Candles[0] = candle;
+        //    _lowBuffer[0] = 0;
+        //    _highBuffer[0] = 0;
+        //    _zigZagBuffer[0] = 0;
+        //}
 
         const int level = 3;
         int limit;
         decimal lastHigh = 0;
         decimal lastLow = 0;
 
-        if (Candles.Count - 1 == 0)
+        if (Candles.Count - 1 == 0) // weird, but candlecount with < 1 count is useless anyway for zigzag
         {
             limit = Candles.Count - Depth;
         }
@@ -346,28 +343,27 @@ public class ZigZagIndicator
             }
         }
 
-        int valuesCount = 0, valueId = 0;
+        //int valuesCount = 0, valueId = 0;
 
-        for (; valueId < _zigZagBuffer.Count && valuesCount < 2; valueId++)
-        {
-            if (_zigZagBuffer[valueId] != 0)
-                valuesCount++;
-        }
+        //for (; valueId < _zigZagBuffer.Count && valuesCount < 2; valueId++)
+        //{
+        //    if (_zigZagBuffer[valueId] != 0)
+        //        valuesCount++;
+        //}
 
-        _needAdd = isFinal; // input.IsFinal;
+        //_needAdd = isFinal; // input.IsFinal;
 
-        if (valuesCount != 2)
-            return; // new DecimalIndicatorValue(this);
+        //if (valuesCount != 2)
+        //    return; // new DecimalIndicatorValue(this);
 
         //if (isFinal) //input.IsFinal
         //IsFormed = true;
 
-        LastValueShift = valueId - 1;
+        //LastValueShift = valueId - 1;
 
-        CurrentValue = _currentValue(Candles[0]);
-        return;
-
+        //CurrentValue = _currentValue(Candles[0]);
         //return new DecimalIndicatorValue(this, _zigZagBuffer[LastValueShift]);
+        return;
     }
 
     ///// <inheritdoc />

@@ -372,7 +372,7 @@ public partial class DashBoardInformation : UserControl
                 {
 
                     Color color;
-                    BarometerData barometerData = quoteData.BarometerList[intervalPeriod];
+                    BarometerData? barometerData = GlobalData.ActiveAccount.Data.GetBarometer(quoteData.Name, intervalPeriod);
                     if (barometerData?.PriceBarometer < 0)
                         color = Color.Red;
                     else
@@ -466,7 +466,7 @@ public partial class DashBoardInformation : UserControl
             if (!GlobalData.IntervalListPeriod.TryGetValue(intervalPeriod, out CryptoInterval interval))
                 return;
 
-            BarometerData barometerData = quoteData.BarometerList[intervalPeriod];
+            BarometerData? barometerData = GlobalData.ActiveAccount!.Data.GetBarometer(quoteData.Name, intervalPeriod);
             CreateBarometerBitmap(exchange, quoteData, interval);
         }
         catch (Exception error)
@@ -477,7 +477,7 @@ public partial class DashBoardInformation : UserControl
     }
 
 
-    public void ShowBarometerStuff(object sender, EventArgs e)
+    public void ShowBarometerStuff(object? sender, EventArgs? e)
     {
         // Dan wordt de basecoin bewaard voor een volgende keer
         GlobalData.Settings.General.SelectedBarometerQuote = EditBarometerQuote.Text;
@@ -644,10 +644,10 @@ public partial class DashBoardInformation : UserControl
                         int positionCount = 0; // hmm, in welk tradeAccount? Even quick en dirty
                         foreach (var tradeAccount in GlobalData.TradeAccountList.Values)
                         {
-                            if (tradeAccount.PositionList.Count != 0)
+                            if (tradeAccount.Data.PositionList.Count != 0)
                             {
                                 //De muntparen toevoegen aan de userinterface
-                                foreach (var position in tradeAccount.PositionList.Values)
+                                foreach (var position in tradeAccount.Data.PositionList.Values)
                                 {
                                     positionCount++;
                                 }
@@ -663,7 +663,7 @@ public partial class DashBoardInformation : UserControl
         }
     }
 
-    private void ListViewInformation_DoubleClick(object sender, EventArgs e)
+    private void ListViewInformation_DoubleClick(object? sender, EventArgs? e)
     {
         if (sender is Label target)
         {
@@ -709,7 +709,7 @@ public partial class DashBoardInformation : UserControl
         }
     }
 
-    public void TimerShowInformation_Tick(object sender, EventArgs e)
+    public void TimerShowInformation_Tick(object? sender, EventArgs? e)
     {
         if (IsHandleCreated)
         {

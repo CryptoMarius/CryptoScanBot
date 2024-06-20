@@ -1,6 +1,6 @@
 ﻿namespace CryptoScanBot.SettingsDialog;
 
-partial class UserControlTradeSell
+partial class UserControlTradeTakeProfit
 {
     /// <summary> 
     /// Required designer variable.
@@ -28,44 +28,68 @@ partial class UserControlTradeSell
     /// </summary>
     private void InitializeComponent()
     {
-        groupBoxDca = new GroupBox();
+        groupBox = new GroupBox();
+        label1 = new Label();
+        EditOrderType = new ComboBox();
         EditAddDustToTp = new CheckBox();
         EditLockProfits = new CheckBox();
         label63 = new Label();
-        EditSellMethod = new ComboBox();
+        EditMethod = new ComboBox();
         label72 = new Label();
         EditProfitPercentage = new NumericUpDown();
-        groupBoxDca.SuspendLayout();
+        groupBox.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)EditProfitPercentage).BeginInit();
         SuspendLayout();
         // 
-        // groupBoxDca
+        // groupBox
         // 
-        groupBoxDca.AutoSize = true;
-        groupBoxDca.Controls.Add(EditAddDustToTp);
-        groupBoxDca.Controls.Add(EditLockProfits);
-        groupBoxDca.Controls.Add(label63);
-        groupBoxDca.Controls.Add(EditSellMethod);
-        groupBoxDca.Controls.Add(label72);
-        groupBoxDca.Controls.Add(EditProfitPercentage);
-        groupBoxDca.Dock = DockStyle.Fill;
-        groupBoxDca.Location = new Point(0, 0);
-        groupBoxDca.Name = "groupBoxDca";
-        groupBoxDca.Padding = new Padding(5);
-        groupBoxDca.Size = new Size(386, 159);
-        groupBoxDca.TabIndex = 0;
-        groupBoxDca.TabStop = false;
-        groupBoxDca.Text = "Verkoop";
+        groupBox.AutoSize = true;
+        groupBox.Controls.Add(label1);
+        groupBox.Controls.Add(EditOrderType);
+        groupBox.Controls.Add(EditAddDustToTp);
+        groupBox.Controls.Add(EditLockProfits);
+        groupBox.Controls.Add(label63);
+        groupBox.Controls.Add(EditMethod);
+        groupBox.Controls.Add(label72);
+        groupBox.Controls.Add(EditProfitPercentage);
+        groupBox.Dock = DockStyle.Fill;
+        groupBox.Location = new Point(0, 0);
+        groupBox.Name = "groupBox";
+        groupBox.Padding = new Padding(5);
+        groupBox.Size = new Size(386, 188);
+        groupBox.TabIndex = 0;
+        groupBox.TabStop = false;
+        groupBox.Text = "Take profit";
+        // 
+        // label1
+        // 
+        label1.AutoSize = true;
+        label1.Location = new Point(9, 30);
+        label1.Margin = new Padding(4, 0, 4, 0);
+        label1.Name = "label1";
+        label1.Size = new Size(63, 15);
+        label1.TabIndex = 330;
+        label1.Text = "Order type";
+        // 
+        // EditOrderType
+        // 
+        EditOrderType.DropDownStyle = ComboBoxStyle.DropDownList;
+        EditOrderType.FormattingEnabled = true;
+        EditOrderType.Location = new Point(177, 27);
+        EditOrderType.Margin = new Padding(4, 3, 4, 3);
+        EditOrderType.Name = "EditOrderType";
+        EditOrderType.Size = new Size(200, 23);
+        EditOrderType.TabIndex = 1;
         // 
         // EditAddDustToTp
         // 
         EditAddDustToTp.AutoSize = true;
         EditAddDustToTp.Font = new Font("Segoe UI", 9F);
-        EditAddDustToTp.Location = new Point(9, 91);
+        EditAddDustToTp.Location = new Point(9, 120);
         EditAddDustToTp.Margin = new Padding(4, 3, 4, 3);
         EditAddDustToTp.Name = "EditAddDustToTp";
         EditAddDustToTp.Size = new Size(191, 19);
-        EditAddDustToTp.TabIndex = 328;
+        EditAddDustToTp.TabIndex = 4;
         EditAddDustToTp.Text = "Allow addition of previous dust";
         EditAddDustToTp.UseVisualStyleBackColor = true;
         // 
@@ -74,7 +98,7 @@ partial class UserControlTradeSell
         EditLockProfits.AutoSize = true;
         EditLockProfits.Enabled = false;
         EditLockProfits.Font = new Font("Segoe UI", 9F, FontStyle.Strikeout);
-        EditLockProfits.Location = new Point(9, 116);
+        EditLockProfits.Location = new Point(9, 145);
         EditLockProfits.Margin = new Padding(4, 3, 4, 3);
         EditLockProfits.Name = "EditLockProfits";
         EditLockProfits.Size = new Size(88, 19);
@@ -86,54 +110,54 @@ partial class UserControlTradeSell
         // label63
         // 
         label63.AutoSize = true;
-        label63.Location = new Point(9, 30);
+        label63.Location = new Point(9, 59);
         label63.Margin = new Padding(4, 0, 4, 0);
         label63.Name = "label63";
-        label63.Size = new Size(55, 15);
+        label63.Size = new Size(50, 15);
         label63.TabIndex = 326;
-        label63.Text = "Methode";
+        label63.Text = "Strategy";
         // 
-        // EditSellMethod
+        // EditMethod
         // 
-        EditSellMethod.DropDownStyle = ComboBoxStyle.DropDownList;
-        EditSellMethod.FormattingEnabled = true;
-        EditSellMethod.Location = new Point(177, 27);
-        EditSellMethod.Margin = new Padding(4, 3, 4, 3);
-        EditSellMethod.Name = "EditSellMethod";
-        EditSellMethod.Size = new Size(200, 23);
-        EditSellMethod.TabIndex = 325;
+        EditMethod.DropDownStyle = ComboBoxStyle.DropDownList;
+        EditMethod.FormattingEnabled = true;
+        EditMethod.Location = new Point(177, 56);
+        EditMethod.Margin = new Padding(4, 3, 4, 3);
+        EditMethod.Name = "EditMethod";
+        EditMethod.Size = new Size(200, 23);
+        EditMethod.TabIndex = 2;
         // 
         // label72
         // 
         label72.AutoSize = true;
-        label72.Location = new Point(9, 57);
+        label72.Location = new Point(9, 86);
         label72.Margin = new Padding(4, 0, 4, 0);
         label72.Name = "label72";
-        label72.Size = new Size(120, 15);
+        label72.Size = new Size(119, 15);
         label72.TabIndex = 322;
-        label72.Text = "Winst percentage (%)";
+        label72.Text = "Profit percentage (%)";
         // 
         // EditProfitPercentage
         // 
         EditProfitPercentage.DecimalPlaces = 2;
-        EditProfitPercentage.Location = new Point(177, 55);
+        EditProfitPercentage.Location = new Point(177, 84);
         EditProfitPercentage.Margin = new Padding(4, 3, 4, 3);
         EditProfitPercentage.Name = "EditProfitPercentage";
         EditProfitPercentage.Size = new Size(88, 23);
-        EditProfitPercentage.TabIndex = 323;
+        EditProfitPercentage.TabIndex = 3;
         EditProfitPercentage.Value = new decimal(new int[] { 75, 0, 0, 131072 });
         // 
-        // UserControlTradeSell
+        // UserControlTradeTakeProfit
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
         AutoSize = true;
         AutoSizeMode = AutoSizeMode.GrowAndShrink;
-        Controls.Add(groupBoxDca);
-        Name = "UserControlTradeSell";
-        Size = new Size(386, 159);
-        groupBoxDca.ResumeLayout(false);
-        groupBoxDca.PerformLayout();
+        Controls.Add(groupBox);
+        Name = "UserControlTradeTakeProfit";
+        Size = new Size(386, 188);
+        groupBox.ResumeLayout(false);
+        groupBox.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)EditProfitPercentage).EndInit();
         ResumeLayout(false);
         PerformLayout();
@@ -141,11 +165,13 @@ partial class UserControlTradeSell
 
     #endregion
 
-    private GroupBox groupBoxDca;
+    private GroupBox groupBox;
     private CheckBox EditLockProfits;
     private Label label63;
-    private ComboBox EditSellMethod;
+    private ComboBox EditMethod;
     private Label label72;
     private NumericUpDown EditProfitPercentage;
     private CheckBox EditAddDustToTp;
+    private Label label1;
+    private ComboBox EditOrderType;
 }

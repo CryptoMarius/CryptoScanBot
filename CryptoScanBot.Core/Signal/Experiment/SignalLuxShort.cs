@@ -85,7 +85,7 @@ public class SignalFluxShort : SignalSbmBaseShort
             return false;
         }
 
-        decimal percentage = 100 * CandleLast.Close / (decimal)CandleLast.CandleData.Ema5;
+        decimal percentage = 100 * CandleLast.Close / (decimal)CandleLast.CandleData.Ema5!;
         ExtraText = $"{percentage:N2}%";
         return true;
     }

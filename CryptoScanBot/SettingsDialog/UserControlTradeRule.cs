@@ -39,7 +39,7 @@ public partial class UserControlTradeRule : UserControl
         }
     }
 
-    private void ButtonDcaAddClick(object sender, EventArgs e)
+    private void ButtonDcaAddClick(object? sender, EventArgs? e)
     {
         // Een item toevoegen
         PauseTradingRule item = new();
@@ -58,7 +58,7 @@ public partial class UserControlTradeRule : UserControl
         control.LoadConfig(item, UserControlTradeRuleList.Count);
     }
 
-    private void ButtonDcaDelClick(object sender, EventArgs e)
+    private void ButtonDcaDelClick(object? sender, EventArgs? e)
     {
         // Verwijder het laatste item
         if (UserControlTradeRuleList.Count != 0)

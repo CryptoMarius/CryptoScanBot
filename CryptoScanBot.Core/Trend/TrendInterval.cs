@@ -1,7 +1,6 @@
 ﻿using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
-using CryptoScanBot.Core.Settings;
 using System.Text;
 
 namespace CryptoScanBot.Core.Trend;
@@ -164,114 +163,125 @@ public class TrendInterval
     }
 
 
-    public static void Calculate(CryptoSymbolInterval symbolInterval, long candleIntervalStart, long candleIntervalEnd, StringBuilder? log = null)
+    public static void Calculate(CryptoSymbol symbol, SortedList<long, CryptoCandle> candleList, AccountSymbolIntervalData accountSymbolIntervalData, long candleIntervalStart, long candleIntervalEnd, StringBuilder? log = null)
     {
-        // TODO - de parameter candleIntervalStart controleren! (staat nu nog op twee plekken op 0)
-        // Want voor een backtest heb je een eindpunt nodig en dan alleen de candles daarvoor gebruiken, niet allemaal!
-
-        // Methode 1 via een cAlgo ZigZag
-
-        //GlobalData.AddTextToLogTab("");
-        //GlobalData.AddTextToLogTab("");
-        //GlobalData.AddTextToLogTab("ZigZagTest cAlgo#1");
-        //GlobalData.AddTextToLogTab("");
-
-        //GlobalData.Logger.Trace($"CalculateTrend.Start {Symbol.Name} {Interval.Name}");
-        // Trend overnemen indien het reeds berekend is (scheelt aardig wat cpu)
-        // Elk interval moet na het arriveren van een nieuwe candle opnieuw berekend worden.
-        // De trend kan dan hergebruikt worden totdat er een nieuwe candle komt
-
-
-
-        // We cache the ZigZag indicator, this way we do not have to add all the candles.
-        // (hope this makes the scanner a more less cpu hungry)
-        // Question: problem: when is it ssave to clear the zigzag? to avoid memory overflow
-        // Anwer: We save and load the candles every 24 hours, so problem solved..
-        symbolInterval.ZigZagCache ??= new();
-        var cache = symbolInterval.ZigZagCache;
-
-
-        // Parameter start time (possible via a 1m candle datetime)
-        if (candleIntervalStart == 0)
-        {
-            var candle = symbolInterval.CandleList.Values.First();
-            candleIntervalStart = candle.OpenTime; // in the right interval
-        }
-        else
-            candleIntervalStart = CandleTools.StartOfIntervalCandle(symbolInterval.Interval, candleIntervalStart);
-        // correct the start with what we previously added
-        if (cache.LastCandleAdded.HasValue && cache.LastCandleAdded.Value >= candleIntervalStart)
-            candleIntervalStart = cache.LastCandleAdded.Value;
-
-
-        // It is already calculated
-        if (symbolInterval.TrendInfoUnix.HasValue && candleIntervalStart == symbolInterval.TrendInfoUnix)
-        {
-            //GlobalData.Logger.Trace($"SignalCreate.CalculateTrendStuff.Reused {Symbol.Name} {Interval.Name} {Side} {intervalPeriod} {symbolInterval.TrendInfoDate} {trendIndicator}");
-            return; // symbolInterval.TrendIndicator;
-        }
-
+#if DEBUG
+        string debugText = $"MarketTrend.Calculate {symbol.Name} {accountSymbolIntervalData.Interval.Name}";
+#endif
 
         // Unable to calculate - Note: in fact we need at least ~24 candles because of the zigzag parameters to identify H/L
-        if (symbolInterval.CandleList.Count == 0)
+        if (candleList.Count == 0)
         {
             // Hele discussies, maar als we niet genoeg candles hebben om een trend te berekenen
             // gebruiken we toch de sideway's om aan te geven dat het niet berekend kon worden.
             // Bij nieuwe munten, Flatliners (ethusdt) en andere gedrochten is het dus sideway's!
             //Signal.Reaction = string.Format("not enough quotes for {0} trend", interval.Name);
-            symbolInterval.TrendInfoUnix = null;
-            symbolInterval.TrendInfoDate = null;
-            symbolInterval.TrendIndicator = CryptoTrendIndicator.Sideways;
+            accountSymbolIntervalData.TrendInfoUnix = null;
+            accountSymbolIntervalData.TrendInfoDate = null;
+            accountSymbolIntervalData.TrendIndicator = CryptoTrendIndicator.Sideways;
+#if DEBUG
+            ScannerLog.Logger.Trace($"{debugText} {accountSymbolIntervalData.TrendInfoDate} {accountSymbolIntervalData.TrendIndicator} (no candles)");
+#endif
+            return;
+        }
+
+
+        // TODO - de parameter candleIntervalStart controleren! (staat nu nog op twee plekken op 0)
+
+        // We cache the ZigZag indicator, this way we do not have to add all the candles again and again.
+        // (We hope this makes the scanner a more less cpu hungry)
+        // Question however: when is it ssave to clear the zigzag? to avoid memory overflow in the long run?
+        // Anwer: We save and load the candles every 24 hours, perhaps there (TODO)
+        if (accountSymbolIntervalData.ZigZagCache == null)
+            accountSymbolIntervalData.ZigZagCache = new();
+        var cache = accountSymbolIntervalData.ZigZagCache; // alias
+
+
+        // start time
+        if (candleIntervalStart == 0)
+        {
+            var candle = candleList.Values.First();
+            if (candleIntervalEnd > 0)
+            {
+                // Need to set some limit or it will add 100.000 of candles (takes forever to initialize)
+                candleIntervalStart = candleIntervalEnd - 5000 * accountSymbolIntervalData.Interval.Duration;
+                if (candleIntervalStart < candle.OpenTime)
+                    candleIntervalStart = candle.OpenTime;
+            }
+            else
+            {
+                candleIntervalStart = candle.OpenTime; // in the right interval
+            }
+        }
+        else
+            candleIntervalStart = IntervalTools.StartOfIntervalCandle(accountSymbolIntervalData.Interval, candleIntervalStart);
+        // correct the start with what we previously added
+        if (cache.LastCandleAdded.HasValue && cache.LastCandleAdded.Value >= candleIntervalStart)
+            candleIntervalStart = cache.LastCandleAdded.Value;
+
+
+
+        // end time
+        if (candleIntervalEnd == 0)
+        {
+            var candle = candleList.Values.Last();
+            candleIntervalEnd = candle.OpenTime; // in the right interval
+        }
+        else
+            candleIntervalEnd = IntervalTools.StartOfIntervalCandle(accountSymbolIntervalData.Interval, candleIntervalEnd);
+        // go 1 candle back (date parameter was a low interval candle and higher interval not yet closed)
+        if (!candleList.ContainsKey(candleIntervalEnd))
+            candleIntervalEnd -= accountSymbolIntervalData.Interval.Duration;
+
+
+        // Already calculated?
+        //accountSymbolIntervalData.TrendIndicator != CryptoTrendIndicator.Sideways &&
+        if (accountSymbolIntervalData.TrendInfoUnix.HasValue && candleIntervalEnd == accountSymbolIntervalData.TrendInfoUnix)
+        {
+#if DEBUG
+            ScannerLog.Logger.Trace($"{debugText} {accountSymbolIntervalData.TrendInfoDate} {accountSymbolIntervalData.TrendIndicator} (reused)");
+#endif
             return;
         }
 
 
 
-        // Parameter end time 
-        if (candleIntervalEnd == 0)
-        {
-            var candle = symbolInterval.CandleList.Values.Last();
-            candleIntervalEnd = candle.OpenTime; // in the right interval
-        }
-        else
-            candleIntervalEnd = CandleTools.StartOfIntervalCandle(symbolInterval.Interval, candleIntervalEnd);
-        // go 1 candle back (date parameter was a low interval candle and higher interval not yet closed)
-        if (!symbolInterval.CandleList.ContainsKey(candleIntervalEnd))
-            candleIntervalEnd -= symbolInterval.Interval.Duration;
-
-
+#if DEBUG
+        int count = 0;
+        DateTime candleIntervalStartDebug = CandleTools.GetUnixDate(candleIntervalStart);
+        DateTime candleIntervalEndDebug = CandleTools.GetUnixDate(candleIntervalEnd);
+#endif
 
         // Add to the ZigZag indicator
         long loop = candleIntervalStart;
         while (loop <= candleIntervalEnd)
         {
-            if (symbolInterval.CandleList.TryGetValue(loop, out var candle))
+#if DEBUG
+            count++;
+            DateTime loopDebug = CandleTools.GetUnixDate(loop);
+#endif
+
+            if (candleList.TryGetValue(loop, out CryptoCandle? candle))
             {
-                cache.Indicator.Calculate(candle, true);
+                cache.Indicator.Calculate(candle);
                 cache.LastCandleAdded = loop;
             }
-            loop += symbolInterval.Interval.Duration;
+            loop += accountSymbolIntervalData.Interval.Duration;
         }
-        //GlobalData.Logger.Trace($"CalculateTrend.Pickup {Symbol.Name} {Interval.Name} {Candles.Values.Count}");
 
 
         // Maak van de gevonden punten een bruikbare ZigZag lijst
         List<ZigZagResult> zigZagList = PickupZigZagValues(cache.Indicator, log);
 
-        //GlobalData.Logger.Trace($"CalculateTrend.Interpret {Symbol.Name} {Interval.Name} {Candles.Values.Count} {zigZagList.Count}");
-
         CryptoTrendIndicator trendIndicator = InterpretZigZagValues(zigZagList, log);
+        accountSymbolIntervalData.TrendIndicator = trendIndicator;
+        accountSymbolIntervalData.TrendInfoUnix = candleIntervalEnd;
+        accountSymbolIntervalData.TrendInfoDate = CandleTools.GetUnixDate(candleIntervalEnd);
 
-        //GlobalData.Logger.Trace($"CalculateTrend.Done {Symbol.Name} {Interval.Name} {Candles.Values.Count} {trendIndicator}");
-
-        //GlobalData.Logger.Trace($"SignalCreate.CalculateTrendStuff.Start {Symbol.Name} {Interval.Name} {Side} {intervalPeriod} {symbolInterval.TrendInfoDate} candles={symbolInterval.CandleList.Count}");
-        //TrendInterval trendInterval = new();
-        //trendInterval.Calculate(symbolInterval, candleIntervalStart);
-
-        symbolInterval.TrendIndicator = trendIndicator;
-        symbolInterval.TrendInfoUnix = candleIntervalStart;
-        symbolInterval.TrendInfoDate = CandleTools.GetUnixDate(candleIntervalStart);
-        //GlobalData.Logger.Trace($"SignalCreate.CalculateTrendStuff.Done {Symbol.Name} {Interval.Name} {Side} {intervalPeriod} {symbolInterval.TrendInfoDate} {trendIndicator}");
+#if DEBUG
+        ScannerLog.Logger.Trace($"{debugText} z.cnt={cache.Indicator.Candles.Count} {accountSymbolIntervalData.TrendInfoDate} {accountSymbolIntervalData.TrendIndicator} added={count} {candleIntervalStartDebug}..{candleIntervalEndDebug} (executed)");
+#endif
+        return;
     }
 
 }

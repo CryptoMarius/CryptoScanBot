@@ -80,7 +80,7 @@ public static class ScannerSession
                 GlobalData.ThreadMonitorCandle = new ThreadMonitorCandle();
 #if TRADEBOT
                 GlobalData.ThreadMonitorOrder = new ThreadMonitorOrder();
-                GlobalData.ThreadDoubleCheckPosition = new ThreadCheckFinishedPosition();
+                GlobalData.ThreadCheckPosition = new ThreadCheckFinishedPosition();
                 if (GlobalData.TradingApi.Key != "")
                     _ = ExchangeHelper.UserTicker!.StartAsync();
 #endif
@@ -143,7 +143,7 @@ public static class ScannerSession
                 taskList.Add(task);
 
                 //GlobalData.ThreadDoubleCheckPosition?.Stop();
-                task = Task.Run(() => { GlobalData.ThreadDoubleCheckPosition?.Stop(); });
+                task = Task.Run(() => { GlobalData.ThreadCheckPosition?.Stop(); });
                 taskList.Add(task);
 
                 if (ExchangeHelper.UserTicker != null && !GlobalData.ApplicationIsClosing)
@@ -187,7 +187,7 @@ public static class ScannerSession
     }
 
 
-    private static async void TimerSaveCandleData_Tick(object sender, EventArgs e)
+    private static async void TimerSaveCandleData_Tick(object? sender, EventArgs? e)
     {
         // Save the candles each x hours..
         await DataStore.SaveCandlesAsync();
@@ -230,7 +230,7 @@ public static class ScannerSession
         TimerRestartStreams.InitTimerInterval(1 * 5);
     }
 
-    private static async void TimerRestartStreams_Tick(object sender, EventArgs e)
+    private static async void TimerRestartStreams_Tick(object? sender, EventArgs? e)
     {
         GlobalData.AddTextToLogTab("Debug: ScannerSession.Restart", true);
         GlobalData.AddTextToTelegram("Debug: ScannerSession.Restart");
@@ -255,7 +255,7 @@ public static class ScannerSession
 
 
 #if TRADEBOT
-    private static async void TimerCheckPositions_Tick(object sender, EventArgs e)
+    private static async void TimerCheckPositions_Tick(object? sender, EventArgs? e)
     {
         if (TimerCheckPositions.Enabled)
         {
@@ -270,7 +270,7 @@ public static class ScannerSession
     }
 #endif
 
-    private static void TimerCheckDataStream_Tick(object sender, EventArgs e)
+    private static void TimerCheckDataStream_Tick(object? sender, EventArgs? e)
     {
         if (ExchangeHelper.KLineTicker.NeedsRestart())
         {
@@ -323,7 +323,7 @@ public static class ScannerSession
     }
 
 
-    static private void TimerGetExchangeInfoAndCandles_Tick(object sender, EventArgs e)
+    static private void TimerGetExchangeInfoAndCandles_Tick(object? sender, EventArgs? e)
     {
         // Ophalen van candle candles bijwerken
         TimerGetExchangeInfoAndCandles.InitTimerInterval(GlobalData.Settings.General.GetCandleInterval * 60);
@@ -332,10 +332,13 @@ public static class ScannerSession
         Task.Run(async () =>
         {
             await ExchangeHelper.GetSymbolsAsync();
+            if (ExchangeHelper.KLineTicker != null)
             await ExchangeHelper.KLineTicker.CheckTickers(); // herstarten van ticker indien errors
-            await ExchangeHelper.PriceTicker.CheckTickers(); // herstarten van ticker indien errors
+            if (ExchangeHelper.PriceTicker != null)
+                await ExchangeHelper.PriceTicker.CheckTickers(); // herstarten van ticker indien errors
 #if TRADEBOT
-            await ExchangeHelper.UserTicker.CheckTickers(); // herstarten van ticker indien errors
+            if (ExchangeHelper.UserTicker != null)
+                await ExchangeHelper.UserTicker.CheckTickers(); // herstarten van ticker indien errors
 #endif
             await ExchangeHelper.GetCandlesAsync();
         });

@@ -2,36 +2,11 @@
 
 namespace CryptoScanBot.Core.Model;
 
-public class CryptoTradeList : SortedList<string, SortedList<string, CryptoTrade>>
+public class CryptoTradeList : SortedList<string, CryptoTrade>
 {
-    // First key=symbolname
-    // Second key=TradeId
-
-    public bool HasSymbol(string symbolName)
+    public void AddTrade(CryptoTrade trade, bool log = true)
     {
-        return ContainsKey(symbolName);
-    }
-
-    private bool AddTradeInternal(CryptoTrade trade)
-    {
-        if (!TryGetValue(trade.Symbol.Name, out SortedList<string, CryptoTrade>? list))
-        {
-            list = [];
-            Add(trade.Symbol.Name, list);
-        }
-
-        if (!list.ContainsKey(trade.OrderId))
-        {
-            list.Add(trade.OrderId, trade);
-            return true;
-        }
-
-        return false;
-    }
-
-    public void Add(CryptoTrade trade, bool log = true)
-    {
-        if (GlobalData.TradeAccountList.TryGetValue(trade.TradeAccountId, out CryptoTradeAccount? tradeAccount))
+        if (GlobalData.TradeAccountList.TryGetValue(trade.TradeAccountId, out CryptoAccount? tradeAccount))
         {
             trade.TradeAccount = tradeAccount;
 
@@ -43,36 +18,24 @@ public class CryptoTradeList : SortedList<string, SortedList<string, CryptoTrade
                 {
                     trade.Symbol = symbol;
 
-                    if (AddTradeInternal(trade) && log)
-                        GlobalData.AddTextToLogTab($"{trade.Symbol.Name} order {trade.TradeTime} {trade.OrderId} added trade {trade.TradeId} (#{trade.Id})");
+                    if (!ContainsKey(trade.TradeId))
+                    {
+                        Add(trade.TradeId, trade);
+                        if (log)
+                            GlobalData.AddTextToLogTab($"{trade.Symbol.Name} order {trade.TradeTime} {trade.OrderId} added trade {trade.TradeId} (#{trade.Id})");
+                    }
                 }
 
             }
         }
     }
 
-    public CryptoTrade? Find(CryptoSymbol symbol, string tradeId)
+    public CryptoTrade? Find(string tradeId)
     {
-        if (!TryGetValue(symbol.Name, out SortedList<string, CryptoTrade>? list))
-            return null;
-
-        if (list.TryGetValue(tradeId, out CryptoTrade? trade))
+        if (TryGetValue(tradeId, out CryptoTrade? trade))
             return trade!;
-
-        return null;
+        else
+            return null;
     }
 
-    public void ClearTradesFromSymbol(CryptoSymbol symbol)
-    {
-        if (ContainsKey(symbol.Name))
-            Remove(symbol.Name);
-    }
-
-    public SortedList<string, CryptoTrade> GetTradesForSymbol(CryptoSymbol symbol)
-    {
-        if (TryGetValue(symbol.Name, out SortedList<string, CryptoTrade>? list))
-            return list!;
-
-        return [];
-    }
 }

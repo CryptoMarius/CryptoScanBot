@@ -1,4 +1,6 @@
 ﻿using System.Text;
+
+using CryptoScanBot.Core.Barometer;
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
@@ -233,11 +235,11 @@ public class ThreadTelegramBotInstance
             // Even in de juiste volgorde toevoegen (je verwacht een vaste volgorde)
             SortedList<CryptoIntervalPeriod, (string, CryptoTrendIndicator)> a = [];
             a.TryAdd(signal.Interval.IntervalPeriod, (signal.Interval.Name, signal.TrendIndicator));
-            a.TryAdd(CryptoIntervalPeriod.interval15m, ("15m", signal.Trend15m.Value));
-            a.TryAdd(CryptoIntervalPeriod.interval30m, ("30m", signal.Trend30m.Value));
-            a.TryAdd(CryptoIntervalPeriod.interval1h, ("1h", signal.Trend1h.Value));
-            a.TryAdd(CryptoIntervalPeriod.interval4h, ("4h", signal.Trend4h.Value));
-            a.TryAdd(CryptoIntervalPeriod.interval12h, ("12h", signal.Trend12h.Value));
+            a.TryAdd(CryptoIntervalPeriod.interval15m, ("15m", signal.Trend15m));
+            a.TryAdd(CryptoIntervalPeriod.interval30m, ("30m", signal.Trend30m));
+            a.TryAdd(CryptoIntervalPeriod.interval1h, ("1h", signal.Trend1h));
+            a.TryAdd(CryptoIntervalPeriod.interval4h, ("4h", signal.Trend4h));
+            a.TryAdd(CryptoIntervalPeriod.interval12h, ("12h", signal.Trend12h));
 
             builder.Append("Trend: ");
             builder.Append(GetEmoiFromMarketTrend(signal.TrendPercentage));
@@ -262,7 +264,7 @@ public class ThreadTelegramBotInstance
             builder.Append("Barometer: ");
             foreach (KeyValuePair<CryptoIntervalPeriod, string> entry in b)
             {
-                BarometerData barometerData = signal.Symbol.QuoteData.BarometerList[entry.Key];
+                BarometerData? barometerData = GlobalData.ActiveAccount!.Data.GetBarometer(signal.Symbol.QuoteData.Name, entry.Key);
                 builder.Append($" {entry.Value} {barometerData.PriceBarometer?.ToString("N2")}");
             }
             builder.AppendLine();
@@ -473,42 +475,44 @@ public class ThreadTelegramBotInstance
     {
         // TODO duplicaat code, zie de trendberekening in de commands.cs!
 
-        string symbolstr = "";
+        string symbolName = "";
         string[] parameters = arguments.Split(' ');
         if (parameters.Length > 1)
-            symbolstr = parameters[1].Trim().ToUpper();
-        stringbuilder.AppendLine(string.Format("Trend {0}", symbolstr));
+            symbolName = parameters[1].Trim().ToUpper();
+        stringbuilder.AppendLine(string.Format("Trend {0}", symbolName));
 
         //Remark: Isn't this the same code as CommandShowTrendInfo?
 
         if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange? exchange))
         {
-            if (exchange.SymbolListName.TryGetValue(symbolstr, out CryptoSymbol? symbol))
+            if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
             {
                 int iterator = 0;
                 long percentageSum = 0;
                 long maxPercentageSum = 0;
-                foreach (CryptoSymbolInterval symbolInterval in symbol.IntervalPeriodList)
+                AccountSymbolData accountSymbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
+                foreach (AccountSymbolIntervalData accountSymbolIntervalData in accountSymbolData.SymbolTrendDataList)
                 {
                     iterator++;
-                    TrendInterval.Calculate(symbolInterval, 0, 0);
+                    CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(accountSymbolIntervalData.IntervalPeriod);
+                    TrendInterval.Calculate(symbol, symbolInterval.CandleList, accountSymbolIntervalData, 0, 0);
 
                     string s;
-                    if (symbolInterval.TrendIndicator == CryptoTrendIndicator.Bullish)
+                    if (accountSymbolIntervalData.TrendIndicator == CryptoTrendIndicator.Bullish)
                         s = "trend=bullish";
-                    else if (symbolInterval.TrendIndicator == CryptoTrendIndicator.Bearish)
+                    else if (accountSymbolIntervalData.TrendIndicator == CryptoTrendIndicator.Bearish)
                         s = "trend=bearish";
                     else
                         s = "trend=sideway's?";
-                    stringbuilder.AppendLine(string.Format("{0} {1:N2}", symbolInterval.Interval.Name, s));
+                    stringbuilder.AppendLine(string.Format("{0} {1:N2}", accountSymbolIntervalData.Interval.Name, s));
 
-                    if (symbolInterval.TrendIndicator == CryptoTrendIndicator.Bullish)
-                        percentageSum += (int)symbolInterval.IntervalPeriod * iterator;
-                    else if (symbolInterval.TrendIndicator == CryptoTrendIndicator.Bearish)
-                        percentageSum -= (int)symbolInterval.IntervalPeriod * iterator;
+                    if (accountSymbolIntervalData.TrendIndicator == CryptoTrendIndicator.Bullish)
+                        percentageSum += (int)accountSymbolIntervalData.IntervalPeriod * iterator;
+                    else if (accountSymbolIntervalData.TrendIndicator == CryptoTrendIndicator.Bearish)
+                        percentageSum -= (int)accountSymbolIntervalData.IntervalPeriod * iterator;
 
                     // Wat is het maximale som (voor de eindberekening)
-                    maxPercentageSum += (int)symbolInterval.IntervalPeriod * iterator;
+                    maxPercentageSum += (int)accountSymbolIntervalData.IntervalPeriod * iterator;
                 }
 
                 decimal trendPercentage = 100 * (decimal)percentageSum / maxPercentageSum;
@@ -535,13 +539,13 @@ public class ThreadTelegramBotInstance
         // Even een quick fix voor de barometer
         if (GlobalData.Settings.QuoteCoins.TryGetValue(quote, out CryptoQuoteData? quoteData))
         {
-            for (CryptoIntervalPeriod interval = CryptoIntervalPeriod.interval5m; interval <= CryptoIntervalPeriod.interval1d; interval++)
+            for (CryptoIntervalPeriod intervalPeriod = CryptoIntervalPeriod.interval5m; intervalPeriod <= CryptoIntervalPeriod.interval1d; intervalPeriod++)
             {
-                if (interval == CryptoIntervalPeriod.interval5m || interval == CryptoIntervalPeriod.interval15m || interval == CryptoIntervalPeriod.interval30m ||
-                     interval == CryptoIntervalPeriod.interval1h || interval == CryptoIntervalPeriod.interval4h || interval == CryptoIntervalPeriod.interval1d)
+                if (intervalPeriod == CryptoIntervalPeriod.interval5m || intervalPeriod == CryptoIntervalPeriod.interval15m || intervalPeriod == CryptoIntervalPeriod.interval30m ||
+                     intervalPeriod == CryptoIntervalPeriod.interval1h || intervalPeriod == CryptoIntervalPeriod.interval4h || intervalPeriod == CryptoIntervalPeriod.interval1d)
                 {
-                    BarometerData barometerData = quoteData.BarometerList[interval];
-                    stringbuilder.AppendLine(string.Format("{0} {1:N2}", interval, barometerData.PriceBarometer));
+                    BarometerData? barometerData = GlobalData.ActiveAccount!.Data.GetBarometer(quoteData.Name, intervalPeriod);
+                    stringbuilder.AppendLine(string.Format("{0} {1:N2}", intervalPeriod, barometerData.PriceBarometer));
                 }
             }
         }

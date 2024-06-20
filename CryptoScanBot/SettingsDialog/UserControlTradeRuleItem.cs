@@ -13,7 +13,7 @@ public partial class UserControlTradeRuleItem : UserControl
         InitializeComponent();
     }
 
-    public void LoadConfig(PauseTradingRule item, int index)
+    public void LoadConfig(Core.Settings.PauseTradingRule item, int index)
     {
         if (EditInterval.DataSource == null)
         {
@@ -35,7 +35,7 @@ public partial class UserControlTradeRuleItem : UserControl
         EditCoolDown.Value = item.CoolDown;
     }
 
-    public void SaveConfig(PauseTradingRule item)
+    public void SaveConfig(Core.Settings.PauseTradingRule item)
     {
         item.Symbol = EditSymbol.Text;
         item.Percentage = (double)EditPercent.Value;

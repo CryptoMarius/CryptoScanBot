@@ -13,12 +13,12 @@ public partial class UserControlTelegram : UserControl
         buttonTelegramStart.Click += ButtonTelegramStart_Click;
     }
 
-    private async void ButtonTelegramStart_Click(object sender, EventArgs e)
+    private async void ButtonTelegramStart_Click(object? sender, EventArgs? e)
     {
         await ThreadTelegramBot.Start(EditTelegramToken.Text, EditTelegramChatId.Text);
     }
 
-    private void ButtonTestTelegram_Click(object sender, EventArgs e)
+    private void ButtonTestTelegram_Click(object? sender, EventArgs? e)
     {
         ThreadTelegramBot.ChatId = EditTelegramChatId.Text;
         GlobalData.AddTextToTelegram("Dit is een test bericht");

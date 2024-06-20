@@ -248,7 +248,7 @@ internal class SettingsQuoteCoin : IDisposable
     }
 
 
-    private void PickColor_Click(object sender, EventArgs e)
+    private void PickColor_Click(object? sender, EventArgs? e)
     {
         ColorDialog dlg = new()
         {

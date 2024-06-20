@@ -9,7 +9,7 @@ public partial class UserControlBarometerInterval : UserControl
         EditIsActive.Click += EditIsActiveChecked;
     }
 
-    private void EditIsActiveChecked(object sender, EventArgs e)
+    private void EditIsActiveChecked(object? sender, EventArgs? e)
     {
         EditMinimal.Enabled = EditIsActive.Checked;
         EditMaximal.Enabled = EditIsActive.Checked;

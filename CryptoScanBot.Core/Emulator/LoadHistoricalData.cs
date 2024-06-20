@@ -1,4 +1,5 @@
 ﻿using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 
@@ -22,7 +23,10 @@ public class LoadHistoricalData
             CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
             backupArray[(int)symbolInterval.IntervalPeriod] = symbolInterval.LastCandleSynchronized;
             symbolInterval.LastCandleSynchronized = CandleTools.GetUnixTime(startExtra, 60);
-            DateTime test = CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized);
+#if DEBUG
+            DateTime testDebug = CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized);
+#endif
+
 
             DateTime loop = startExtra;
             while (loop < end)
@@ -44,7 +48,9 @@ public class LoadHistoricalData
 
 
         // fetch additional candles
-        await CryptoScanBot.Core.Exchange.BybitSpot.CandlesEmulator.ExecuteAsync(symbol, end);
+        long fetchEndUnix = CandleTools.GetUnixTime(end, 60);
+        var exchangeApi = ExchangeHelper.GetApiInstance();
+        await exchangeApi.GetCandlesForSymbolAsync(symbol, fetchEndUnix);
 
         // restore LastCandleSynchronized
         foreach (var interval in GlobalData.IntervalList)

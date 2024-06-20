@@ -62,11 +62,11 @@ public class SymbolTools
 
 
 
-    public static bool CheckValidMinimalVolume(CryptoSymbol symbol, out string reaction)
+    public static bool CheckValidMinimalVolume(CryptoSymbol symbol, long candleStart, uint candleDuration, out string reaction)
     {
         //Indien volume regels : Voldoende volume -> nee = signaal negeren
         //In principe is dit bij de CC signals al gedaan, maar een tweede keer kan geen kwaad
-        if (!symbol.CheckValidMinimalVolume(out string text))
+        if (!symbol.CheckValidMinimalVolume(candleStart, candleDuration, out string text))
         {
             reaction = text;
             return false;
@@ -213,12 +213,12 @@ public class SymbolTools
     /// <summary>
     /// Is er nog een slot beschikbaar (het aantal openstaande posities in 1 munt)
     /// </summary>
-    public static bool CheckAvailableSlotsSymbol(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, int slotLimit, out string reaction)
+    public static bool CheckAvailableSlotsSymbol(CryptoAccount tradeAccount, CryptoSymbol symbol, int slotLimit, out string reaction)
     {
         // Zijn er slots beschikbaar?
 
         int slotsOccupied = 0;
-        if (tradeAccount.PositionList.TryGetValue(symbol.Name, out _))
+        if (tradeAccount.Data.PositionList.TryGetValue(symbol.Name, out _))
         {
             slotsOccupied++;
         }
@@ -236,10 +236,10 @@ public class SymbolTools
     /// <summary>
     /// Is er nog een slot beschikbaar (het aantal openstaande posities ten opzichte van de configuratie)
     /// </summary>
-    public static bool CheckAvailableSlotsLongShort(CryptoTradeAccount tradeAccount, CryptoTradeSide side, int slotLimit, out string reaction)
+    public static bool CheckAvailableSlotsLongShort(CryptoAccount tradeAccount, CryptoTradeSide side, int slotLimit, out string reaction)
     {
         int slotsOccupied = 0;
-        foreach (var position in tradeAccount.PositionList.Values)
+        foreach (var position in tradeAccount.Data.PositionList.Values)
         {
             if (position.Side == side)
                 slotsOccupied++;
@@ -256,7 +256,7 @@ public class SymbolTools
     }
 
 
-    public static bool CheckAvailableSlots(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, CryptoTradeSide side, out string reaction)
+    public static bool CheckAvailableSlots(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoTradeSide side, out string reaction)
     {
         //if (!CheckAvailableSlotsExchange(tradeAccount, GlobalData.Settings.Trading.SlotsMaximalExchange, out reaction))
         //    return false;

@@ -4,6 +4,10 @@ Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep
 
 
 Scanner:
+- Scanner - Ondersteuning Mexc exchange?
+- Scanner - Mexc - Problemen met de 1m candles die maar steeds geladen blijven worden (wellicht ook voro Kucoin?)
+- Scanner - Mexc - Kline ticker valt iedere keer uit (net zoals kraken?)
+
 - Scanner - De berekening van de trend is enorm traag (zeker in de emulator)
 - Scanner - Gerapporteerd: Het geheugen loopt langzaam op gedurende meerdere weken
             https://memprofiler.com/
