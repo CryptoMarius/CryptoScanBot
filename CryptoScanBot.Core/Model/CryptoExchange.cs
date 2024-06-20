@@ -1,4 +1,6 @@
-﻿using Dapper.Contrib.Extensions;
+﻿using CryptoScanBot.Core.Enums;
+
+using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot.Core.Model;
 
@@ -7,13 +9,16 @@ public class CryptoExchange
 {
     [Key]
     public int Id { get; set; }
-    public string Name { get; set; }
-    public bool IsActive { get; set; }
+    public required string Name { get; set; }
+    public bool IsSupported { get; set; }
 
     // Datum dat de laatste keer de exchange informatie is opgehaald
     public DateTime? LastTimeFetched { get; set; }
 
     public decimal FeeRate { get; set; }
+
+    public CryptoExchangeType ExchangeType { get; set; }
+    public CryptoTradingType TradingType { get; set; }
 
     // Coins indexed on id and name
     [Computed]
