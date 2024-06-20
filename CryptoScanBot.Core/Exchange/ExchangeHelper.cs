@@ -7,6 +7,44 @@ using CryptoScanBot.Core.Model;
 
 namespace CryptoScanBot.Core.Exchange;
 
+public static class Helper
+{
+    public static ExchangeBase GetApiInstance(this Model.CryptoExchange exchange)
+    {
+        switch (exchange.ExchangeType)
+        {
+            case CryptoExchangeType.Binance:
+                if (exchange.TradingType == CryptoTradingType.Spot)
+                    return new Binance.Spot.Api();
+                else
+                    return new Binance.Futures.Api();
+            case CryptoExchangeType.Bybit:
+                if (exchange.TradingType == CryptoTradingType.Spot)
+                    return new BybitApi.Spot.Api();
+                else
+                    return new BybitApi.Futures.Api();
+            case CryptoExchangeType.Kraken:
+                if (exchange.TradingType == CryptoTradingType.Spot)
+                    return new Kraken.Spot.Api();
+                else
+                    throw new Exception("Niet ondersteunde exchange");
+            case CryptoExchangeType.Kucoin:
+                if (exchange.TradingType == CryptoTradingType.Spot)
+                    return new Kucoin.Spot.Api();
+                else
+                    throw new Exception("Niet ondersteunde exchange");
+            case CryptoExchangeType.Mexc:
+                if (exchange.TradingType == CryptoTradingType.Spot)
+                    return new Mexc.Spot.Api();
+                else
+                    throw new Exception("Niet ondersteunde exchange");
+            default:
+                throw new Exception("Niet ondersteunde exchange");
+        }
+    }
+}
+
+
 public class ExchangeHelper
 {
     public static CancellationTokenSource CancellationTokenSource { get; set; } = new();
@@ -20,31 +58,10 @@ public class ExchangeHelper
     public static Ticker? UserTicker { get; set; }
 #endif
 
-
-    public static ExchangeBase GetExchangeInstance(int exchangeId)
+ 
+    public static ExchangeBase GetApiInstance()
     {
-        // Yup, eventjes hardcoded voor nu, nog eens zien hoe dit verbeterd kan worden
-        if (exchangeId == 1)
-            return new BinanceSpot.Api();
-        else if (exchangeId == 2)
-            return new BybitSpot.Api();
-        else if (exchangeId == 3)
-            return new BybitFutures.Api();
-        else if (exchangeId == 4)
-            return new Kucoin.Spot.Api();
-        else if (exchangeId == 5)
-            return new KrakenSpot.Api();
-        else if (exchangeId == 6)
-            return new BinanceFutures.Api();
-        else if (exchangeId == 7)
-            return new Kucoin.Spot.Api(); // todo Futures
-        else
-            throw new Exception("Exchange not supported");
-    }
-
-    private static ExchangeBase GetApiInstance()
-    {
-        return GetExchangeInstance(GlobalData.Settings.General.ExchangeId);
+        return GlobalData.Settings.General.Exchange!.GetApiInstance();
     }
 
     public static void ExchangeDefaults()
@@ -59,14 +76,14 @@ public class ExchangeHelper
 
     public static async Task GetCandlesAsync()
     {
-        await GetApiInstance().GetCandlesAsync();
+        await GetApiInstance().GetCandlesForAllSymbolsAsync();
     }
 
 #if TRADEBOT
-    public static async Task GetAssetsAsync(CryptoTradeAccount tradeAccount)
+    public static async Task GetAssetsAsync(CryptoAccount tradeAccount)
     {
-        ScannerLog.Logger.Trace($"ExchangeHelper.GetAssetsAsync: Position {tradeAccount.Name}");
-        if (tradeAccount == null || tradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
+        ScannerLog.Logger.Trace($"ExchangeHelper.GetAssetsAsync: Position {tradeAccount.AccountType}");
+        if (tradeAccount == null || tradeAccount.AccountType != CryptoAccountType.RealTrading)
             return;
         await GetApiInstance().GetAssetsAsync(tradeAccount);
     }
@@ -74,7 +91,7 @@ public class ExchangeHelper
 	public static async Task<int> GetOrdersAsync(CryptoDatabase database, CryptoPosition position)
     {
         ScannerLog.Logger.Trace($"ExchangeHelper.GetOrdersAsync: Position {position.Symbol.Name}");
-        if (position.TradeAccount == null || position.TradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
+        if (position.Account == null || position.Account.AccountType != CryptoAccountType.RealTrading)
             return 0;
         return await GetApiInstance().GetOrdersAsync(database, position);
     }
@@ -82,7 +99,7 @@ public class ExchangeHelper
     public static async Task<int> GetTradesAsync(CryptoDatabase database, CryptoPosition position)
     {
         ScannerLog.Logger.Trace($"ExchangeHelper.GetTradesAsync: Position {position.Symbol.Name}");
-        if (position.TradeAccount.TradeAccountType != CryptoTradeAccountType.RealTrading)
+        if (position.Account.AccountType != CryptoAccountType.RealTrading)
             return 0;
         return await GetApiInstance().GetTradesAsync(database, position);
     }

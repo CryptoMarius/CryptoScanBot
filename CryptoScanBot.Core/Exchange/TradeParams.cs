@@ -23,4 +23,7 @@ public class TradeParams
     // if error
     public HttpStatusCode? ResponseStatusCode { get; set; }
     public Error? Error { get; internal set; }
+
+    // Debug (full json)
+    public string? DebugJson { get; set; }
 }

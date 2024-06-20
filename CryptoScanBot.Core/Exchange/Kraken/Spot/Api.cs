@@ -1,74 +1,50 @@
-﻿using CryptoExchange.Net.Objects;
+﻿using CryptoExchange.Net.Authentication;
+using CryptoExchange.Net.Objects;
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 
-using Kucoin.Net.Clients;
-using Kucoin.Net.Enums;
-using Kucoin.Net.Objects;
-using Kucoin.Net.Objects.Models.Spot;
+using Dapper.Contrib.Extensions;
 
-namespace CryptoScanBot.Core.Exchange.Kucoin.Spot;
+using Kraken.Net.Clients;
+using Kraken.Net.Enums;
+using Kraken.Net.Objects.Models;
 
+namespace CryptoScanBot.Core.Exchange.Kraken.Spot;
 
 public class Api : ExchangeBase
 {
     public override void ExchangeDefaults()
     {
-        ExchangeOptions.ExchangeName = "Kucoin Spot";
-        ExchangeOptions.SubscriptionLimitSymbols = 1;
-        ExchangeOptions.SubscriptionLimitClient = 20;
-        ExchangeOptions.LimitAmountOfSymbols = true;
+        ExchangeOptions.ExchangeName = "Kraken Spot";
+        ExchangeOptions.LimitAmountOfSymbols = false;
+        ExchangeOptions.SubscriptionLimitSymbols = 10; // onbekend
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
-        // Ik begrijp hier niet zoveel van.....
-        //var logFactory = new LoggerFactory();
-        //logFactory.AddProvider(new ConsoleLoggerProvider());
-        //var binanceClient = new KucoinRestClient(new HttpClient(), logFactory, options => { });
-
-        //var KucoinRestClient = new KucoinRestClient(null, factory, opts =>
-        //{
-        //    // set options
-        //});
-
-
-
         // Default opties voor deze exchange
-        KucoinRestClient.SetDefaultOptions(options =>
+        KrakenRestClient.SetDefaultOptions(options =>
         {
-            //options.OutputOriginalData = true;
-            //options.SpotOptions.AutoTimestamp = true;
             //options.ReceiveWindow = TimeSpan.FromSeconds(15);
-            options.RequestTimeout = TimeSpan.FromSeconds(40); // standard=20 seconds
             if (GlobalData.TradingApi.Key != "")
-                options.ApiCredentials = new KucoinApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret, GlobalData.TradingApi.PassPhrase);
+                options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
         });
 
-        KucoinSocketClient.SetDefaultOptions(options =>
+        KrakenSocketClient.SetDefaultOptions(options =>
         {
             options.AutoReconnect = true;
-
-            options.RequestTimeout = TimeSpan.FromSeconds(40); // standard=20 seconds
-            options.ReconnectInterval = TimeSpan.FromSeconds(10); // standard=5 seconds
-            options.SocketNoDataTimeout = TimeSpan.FromMinutes(1); // standard=30 seconds
-            //options.V5Options.SocketNoDataTimeout = options.SocketNoDataTimeout;
-            //options.SpotV3Options.SocketNoDataTimeout = options.SocketNoDataTimeout;
-            options.SocketSubscriptionsCombineTarget = 20;
-
+            options.ReconnectInterval = TimeSpan.FromSeconds(15);
             if (GlobalData.TradingApi.Key != "")
-                options.ApiCredentials = new KucoinApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret, GlobalData.TradingApi.PassPhrase);
+                options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
         });
 
-        ExchangeHelper.PriceTicker = new Ticker(ExchangeOptions, typeof(SubscriptionPriceTicker), CryptoTickerType.price)
-        {
-            Enabled = false // many many errors
-        };
+        ExchangeHelper.PriceTicker = new Ticker(ExchangeOptions, typeof(SubscriptionPriceTicker), CryptoTickerType.price);
         ExchangeHelper.KLineTicker = new Ticker(ExchangeOptions, typeof(SubscriptionKLineTicker), CryptoTickerType.kline);
 #if TRADEBOT
         ExchangeHelper.UserTicker = new Ticker(ExchangeOptions, typeof(SubscriptionUserTicker), CryptoTickerType.user);
 #endif
     }
+
 
     public override async Task GetSymbolsAsync()
     {
@@ -85,26 +61,23 @@ public class Api : ExchangeBase
         await Candle.GetCandlesForSymbolAsync(symbol, fetchEndUnix);
     }
 
-    //public override string ExchangeSymbolName(CryptoSymbol symbol)
-    //{
-    //    return symbol.Base + '-' + symbol.Quote;
-    //}
+
 
 #if TRADEBOT
-    //// Converteer de orderstatus van Exchange naar "intern"
-    //public static CryptoOrderType LocalOrderType(SpotOrderType orderType)
-    //{
-    //    CryptoOrderType localOrderType = orderType switch
-    //    {
-    //        SpotOrderType.Market => CryptoOrderType.Market,
-    //        SpotOrderType.Limit => CryptoOrderType.Limit,
-    //        SpotOrderType.StopLoss => CryptoOrderType.StopLimit,
-    //        SpotOrderType.StopLossLimit => CryptoOrderType.Oco,
-    //        _ => throw new Exception("Niet ondersteunde ordertype"),
-    //    };
+    // Converteer de orderstatus van Exchange naar "intern"
+    public static CryptoOrderType LocalOrderType(OrderType orderType)
+    {
+        CryptoOrderType localOrderType = orderType switch
+        {
+            OrderType.Market => CryptoOrderType.Market,
+            OrderType.Limit => CryptoOrderType.Limit,
+            OrderType.StopLoss => CryptoOrderType.StopLimit,
+            OrderType.StopLossLimit => CryptoOrderType.Oco,
+            _ => throw new Exception("Niet ondersteunde ordertype"),
+        };
 
-    //    return localOrderType;
-    //}
+        return localOrderType;
+    }
 
     // Converteer de orderstatus van Exchange naar "intern"
     public static CryptoOrderSide LocalOrderSide(OrderSide orderSide)
@@ -123,16 +96,13 @@ public class Api : ExchangeBase
     // Converteer de orderstatus van Exchange naar "intern"
     public static CryptoOrderStatus LocalOrderStatus(OrderStatus orderStatus)
     {
-
         CryptoOrderStatus localOrderStatus = orderStatus switch
         {
-            OrderStatus.Active => CryptoOrderStatus.New,
-            OrderStatus.Done => CryptoOrderStatus.Filled,
-            //OrderStatus.New => CryptoOrderStatus.New,
-            //OrderStatus.Filled => CryptoOrderStatus.Filled,
+            OrderStatus.Pending => CryptoOrderStatus.New,
+            OrderStatus.Open => CryptoOrderStatus.Filled,
             //OrderStatus.PartiallyFilled => CryptoOrderStatus.PartiallyFilled,
             //OrderStatus.Expired => CryptoOrderStatus.Expired,
-            //OrderStatus.Canceled => CryptoOrderStatus.Canceled,
+            OrderStatus.Canceled => CryptoOrderStatus.Canceled,
             _ => throw new Exception("Niet ondersteunde orderstatus"),
         };
 
@@ -148,7 +118,7 @@ public class Api : ExchangeBase
         // Controleer de limiten van de maximum en minimum bedrag en de quantity
         if (!position.Symbol.InsideBoundaries(quantity, price, out string text))
         {
-            GlobalData.AddTextToLogTab($"{position.Symbol.Name} {text} (debug={price} {quantity})");
+            GlobalData.AddTextToLogTab(string.Format("{0} {1} (debug={2} {3})", position.Symbol.Name, text, price, quantity));
             return (false, null);
         }
 
@@ -166,15 +136,13 @@ public class Api : ExchangeBase
             //OrderId = 0,
         };
         if (orderType == CryptoOrderType.StopLimit)
-            tradeParams.QuoteQuantity = tradeParams.StopPrice ?? 0 * tradeParams.Quantity;
+            tradeParams.QuoteQuantity = (tradeParams.StopPrice ?? 0) * tradeParams.Quantity;
         if (position.Account.AccountType != CryptoAccountType.RealTrading)
         {
             tradeParams.OrderId = database.CreateNewUniqueId();
             return (true, tradeParams);
         }
 
-
-        // BinanceWeights.WaitForFairBinanceWeight(1); flauwekul voor die ene tick (geen herhaling toch?)
 
         OrderSide side;
         if (orderSide == CryptoOrderSide.Buy)
@@ -185,15 +153,15 @@ public class Api : ExchangeBase
 
         // Plaats een order op de exchange *ze lijken op elkaar, maar het is net elke keer anders)
         //BinanceWeights.WaitForFairBinanceWeight(1); flauwekul voor die ene tick (geen herhaling toch?)
-        using KucoinRestClient client = new();
+        using KrakenRestClient client = new();
 
-        WebCallResult<KucoinNewOrder> result;
+        WebCallResult<KrakenPlacedOrder> result;
         switch (orderType)
         {
             case CryptoOrderType.Market:
                 {
                     result = await client.SpotApi.Trading.PlaceOrderAsync(position.Symbol.Name, side,
-                        NewOrderType.Market, quantity);
+                        OrderType.Market, quantity);
                     if (!result.Success)
                     {
                         tradeParams.Error = result.Error;
@@ -202,14 +170,14 @@ public class Api : ExchangeBase
                     if (result.Success && result.Data != null)
                     {
                         tradeParams.CreateTime = currentDate;
-                        tradeParams.OrderId = result.Data.Id;
+                        tradeParams.OrderId = "12345"; // long.Parse(result.Data.OrderIds); dat wordt een conversie!
                     }
                     return (result.Success, tradeParams);
                 }
             case CryptoOrderType.Limit:
                 {
                     result = await client.SpotApi.Trading.PlaceOrderAsync(position.Symbol.Name, side,
-                    NewOrderType.Limit, quantity, price: price, timeInForce: TimeInForce.GoodTillCanceled);
+                    OrderType.Limit, quantity, price: price, timeInForce: TimeInForce.GTC);
                     if (!result.Success)
                     {
                         tradeParams.Error = result.Error;
@@ -218,7 +186,7 @@ public class Api : ExchangeBase
                     if (result.Success && result.Data != null)
                     {
                         tradeParams.CreateTime = currentDate;
-                        tradeParams.OrderId = result.Data.Id;
+                        tradeParams.OrderId = "12345"; // long.Parse(result.Data.OrderIds); dat wordt een conversie!
                     }
                     return (result.Success, tradeParams);
                 }
@@ -226,7 +194,7 @@ public class Api : ExchangeBase
                 {
                     // wordt het nu wel of niet ondersteund? Het zou ook een extra optie van de limit kunnen (zie wel een tp)
                     //result = await client.V5Api.Trading.PlaceOrderAsync(Category.Linear, symbol.Name, side, NewOrderType.Market,
-                    //    quantity, price: price, timeInForce: TimeInForce.GoodTillCanceled);
+                    //    quantity, price: price, timeInForce: TimeInForce.GoodTillCanceled, isLeverage: false);
                     throw new Exception("${orderType} not supported");
                 }
             case CryptoOrderType.Oco:
@@ -241,7 +209,23 @@ public class Api : ExchangeBase
             default:
                 throw new Exception("${orderType} not supported");
         }
+
+        /*
+        exchange.create_order(
+    symbol='BTC/USDT:USDT',
+    type='limit',
+    side='sell',
+    amount=0.01,
+    price=21100,
+    params={
+        'leverage': 1,
+        'stopLossPrice': 20950,
+        'takeProfitPrice': 21950,
+    },
+)
+         */
     }
+
 
     public override async Task<(bool succes, TradeParams? tradeParams)> Cancel(CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step)
     {
@@ -262,7 +246,7 @@ public class Api : ExchangeBase
         };
         // Eigenlijk niet nodig
         if (step.OrderType == CryptoOrderType.StopLimit)
-            tradeParams.QuoteQuantity = tradeParams.StopPrice ?? 0 * tradeParams.Quantity;
+            tradeParams.QuoteQuantity = (tradeParams.StopPrice ?? 0) * tradeParams.Quantity;
 
         if (position.Account.AccountType != CryptoAccountType.RealTrading)
             return (true, tradeParams);
@@ -272,8 +256,8 @@ public class Api : ExchangeBase
         if (step.OrderId != "")
         {
             // BinanceWeights.WaitForFairBinanceWeight(1); flauwekul
-            using var client = new KucoinRestClient();
-            var result = await client.SpotApi.Trading.CancelOrderAsync(step.OrderId!);
+            using var client = new KrakenRestClient();
+            var result = await client.SpotApi.Trading.CancelOrderAsync(position.Symbol.Name, step.OrderId.ToString());
             if (!result.Success)
             {
                 tradeParams.Error = result.Error;
@@ -285,70 +269,21 @@ public class Api : ExchangeBase
         return (false, tradeParams);
     }
 
-
-    //static public void PickupAssets(CryptoTradeAccount tradeAccount, Dictionary<string, Kucoin> balances)
-    //{
-    //}
-
-
-    public override Task<int> GetTradesAsync(CryptoDatabase database, CryptoPosition position)
+    public override async Task<int> GetTradesAsync(CryptoDatabase database, CryptoPosition position)
     {
-        return Task.FromResult(0); // await GetTrades.FetchTradesForSymbolAsync(database, position);
+        return await Trade.FetchTradesForSymbolAsync(database, position);
     }
+
 
     public override Task<int> GetOrdersAsync(CryptoDatabase database, CryptoPosition position)
     {
         return Task.FromResult(0);
     }
 
-    public override Task GetAssetsAsync(CryptoAccount tradeAccount)
+
+    public async override Task GetAssetsAsync(CryptoAccount tradeAccount)
     {
-        //if (GlobalData.ExchangeListName.TryGetValue(ExchangeName, out Model.CryptoExchange? exchange))
-        {
-            try
-            {
-                GlobalData.AddTextToLogTab($"Reading asset information from {ExchangeOptions.ExchangeName} TODO!!!!");
-
-                //BybitWeights.WaitForFairWeight(1);
-
-                using var client = new KucoinRestClient();
-                {
-                    //https://openapi-sandbox.kucoin.com/api/v1/accounts
-
-                    //var accountInfo = await client.SpotApi.Account.get();
-
-                    //if (!accountInfo.Success)
-                    //{
-                    //    GlobalData.AddTextToLogTab("error getting accountinfo " + accountInfo.Error);
-                    //}
-
-                    ////Zo af en toe komt er geen data of is de Data niet gezet.
-                    ////De verbindingen naar extern kunnen (tijdelijk) geblokkeerd zijn
-                    //if (accountInfo == null | accountInfo.Data == null)
-                    //    throw new ExchangeException("Geen account data ontvangen");
-
-                    //try
-                    //{
-                    //    //PickupAssets(tradeAccount, accountInfo.Data.Assets);
-                    //    GlobalData.AssetsHaveChanged("");
-                    //}
-                    //catch (Exception error)
-                    //{
-                    //    ScannerLog.Logger.Error(error, "");
-                    //    GlobalData.AddTextToLogTab(error.ToString());
-                    //    throw;
-                    //}
-                }
-            }
-            catch (Exception error)
-            {
-                ScannerLog.Logger.Error(error, "");
-                GlobalData.AddTextToLogTab(error.ToString());
-                GlobalData.AddTextToLogTab("");
-            }
-
-        }
-        return Task.CompletedTask;
+        await Asset.GetAssetsAsync(tradeAccount);
     }
 
 #endif

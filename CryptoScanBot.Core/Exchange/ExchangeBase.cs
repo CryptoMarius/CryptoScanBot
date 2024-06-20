@@ -11,7 +11,8 @@ public abstract class ExchangeBase
     public static ExchangeOptions ExchangeOptions { get; } = new(); // made public for ExchangeTest project
     public abstract void ExchangeDefaults();
     public abstract Task GetSymbolsAsync();
-    public abstract Task GetCandlesAsync();
+    public abstract Task GetCandlesForSymbolAsync(CryptoSymbol symbol, long fetchEndUnix);
+    public abstract Task GetCandlesForAllSymbolsAsync();
 
     /// <summary>
     /// return the thechnical format of the symbol on the exchange name 
@@ -23,19 +24,22 @@ public abstract class ExchangeBase
 
 
 #if TRADEBOT
-    public abstract Task GetAssetsAsync(CryptoTradeAccount tradeAccount);
+    public abstract Task GetAssetsAsync(CryptoAccount tradeAccount);
     public abstract Task<int> GetTradesAsync(CryptoDatabase database, CryptoPosition position);
     public abstract Task<int> GetOrdersAsync(CryptoDatabase database, CryptoPosition position);
 
-    public abstract Task<(bool succes, TradeParams tradeParams)> Cancel(CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step);
+    public abstract Task<(bool succes, TradeParams? tradeParams)> Cancel(CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step);
     public abstract Task<(bool result, TradeParams? tradeParams)> PlaceOrder(CryptoDatabase database,
         CryptoPosition position, CryptoPositionPart part, DateTime currentDate,
         CryptoOrderType orderType, CryptoOrderSide orderSide,
-        decimal quantity, decimal price, decimal? stop, decimal? limit);
+        decimal quantity, decimal price, decimal? stop, decimal? limit, bool generateJsonDebug = false);
 
-    private static string DumpOrder(CryptoPosition position, TradeParams tradeParams, string extraText)
+
+    public static void Dump(CryptoPosition position, bool success, TradeParams tradeParams, string extraText)
     {
         StringBuilder builder = new();
+        if (!success)
+            builder.Append("ERROR ");
         builder.Append(position.Symbol.Name);
         if (extraText != "")
             builder.Append($" {extraText}");
@@ -50,33 +54,20 @@ public abstract class ExchangeBase
                 builder.Append($" stop={tradeParams.StopPrice?.ToString0()}");
             builder.Append($" quantity={tradeParams.Quantity.ToString0()}");
             _ = builder.Append($" value={tradeParams.QuoteQuantity.ToString(position.Symbol.QuoteData.DisplayFormat)}");
+
+            if (!success)
+                builder.Append($" {tradeParams.ResponseStatusCode}");
+            if (!success)
+                builder.Append($" {tradeParams.Error}");
+
+            if (tradeParams.DebugJson != null)
+            {
+                builder.AppendLine();
+                builder.AppendLine($" json={tradeParams.DebugJson}");
+            }
         }
 
-        return builder.ToString();
-    }
-
-    private static string DumpError(CryptoPosition position, TradeParams tradeParams, string extraText)
-    {
-        StringBuilder builder = new();
-        builder.Append("ERROR ");
-        builder.Append(DumpOrder(position, tradeParams, extraText));
-        if (tradeParams != null)
-        {
-            builder.Append($" {tradeParams.ResponseStatusCode}");
-            builder.Append($" {tradeParams.Error}");
-        }
-
-        return builder.ToString();
-    }
-
-    public static void Dump(CryptoPosition position, bool success, TradeParams tradeParams, string extraText)
-    {
-        string text;
-
-        if (success)
-            text = DumpOrder(position, tradeParams, extraText);
-        else
-            text = DumpError(position, tradeParams, extraText);
+        string text = builder.ToString();
 
         GlobalData.AddTextToLogTab(text);
         GlobalData.AddTextToTelegram(text, position);
