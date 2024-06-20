@@ -42,7 +42,7 @@ public class ExcelPositionDump(CryptoPosition position) : ExcelBase(position.Sym
         WriteCell(sheet, columns++, row, "Profit");
         WriteCell(sheet, columns++, row, "Percent");
 
-        var partList = position.Parts.Values.ToList();
+        var partList = position.PartList.Values.ToList();
         partList.Sort((x, y) => x.PartNumber.CompareTo(y.PartNumber));
         foreach (CryptoPositionPart part in partList)
         {
@@ -75,10 +75,10 @@ public class ExcelPositionDump(CryptoPosition position) : ExcelBase(position.Sym
             // Past er niet echt tussen..
             column++;
 
-            WriteCell(sheet, column++, row, part.EntryMethod == CryptoEntryOrProfitMethod.AfterNextSignal ? part.Strategy.ToString() : "Fixed");
+            WriteCell(sheet, column++, row, part.EntryMethod == CryptoEntryOrDcaStrategy.AfterNextSignal ? part.Strategy.ToString() : "Fixed");
             WriteCell(sheet, column++, row, part.Interval != null ? part.Interval.Name : position.Interval.Name);
 
-            foreach (CryptoPositionStep step in part.Steps.Values.ToList())
+            foreach (CryptoPositionStep step in part.StepList.Values.ToList())
             {
                 ++row;
                 column = 0;
@@ -185,9 +185,9 @@ public class ExcelPositionDump(CryptoPosition position) : ExcelBase(position.Sym
         decimal totalValue = 0;
         decimal totalQuantity = 0;
         decimal totalCommission = 0;
-        foreach (CryptoPositionPart part in position.Parts.Values.ToList())
+        foreach (CryptoPositionPart part in position.PartList.Values.ToList())
         {
-            foreach (CryptoPositionStep step in part.Steps.Values.ToList())
+            foreach (CryptoPositionStep step in part.StepList.Values.ToList())
             {
                 // Geannuleerde order of openstaande orders overslagen
                 if (step.Status >= CryptoOrderStatus.Canceled || !step.CloseTime.HasValue)
@@ -253,7 +253,7 @@ public class ExcelPositionDump(CryptoPosition position) : ExcelBase(position.Sym
         WriteCell(sheet, columns++, row, "Commission");
         WriteCell(sheet, columns++, row, "C. Asset");
 
-        List<CryptoOrder> orderList = [.. position.TradeAccount.OrderList.GetOrdersForSymbol(position.Symbol).Values];
+        List<CryptoOrder> orderList = [.. position.OrderList.Values];
         orderList.Sort((x, y) => x.CreateTime.CompareTo(y.CreateTime));
         foreach (CryptoOrder order in orderList)
         {
@@ -299,7 +299,7 @@ public class ExcelPositionDump(CryptoPosition position) : ExcelBase(position.Sym
         WriteCell(sheet, columns++, row, "C. Asset");
 
         //List<CryptoTrade> tradelist = [.. position.Symbol.TradeList.Values];
-        List<CryptoTrade> tradelist = [.. position.TradeAccount.TradeList.GetTradesForSymbol(position.Symbol).Values];
+        List<CryptoTrade> tradelist = [.. position.TradeList.Values];
         tradelist.Sort((x, y) => x.TradeTime.CompareTo(y.TradeTime));
         foreach (CryptoTrade trade in tradelist)
         {
@@ -334,32 +334,38 @@ public class ExcelPositionDump(CryptoPosition position) : ExcelBase(position.Sym
         WriteCell(sheet, row, column++, "Account");
         WriteCell(sheet, row, column++, "Symbol");
         WriteCell(sheet, row, column++, "Symbol Id");
+        WriteCell(sheet, row, column++, "Symbol Volume");
         WriteCell(sheet, row, column++, "Price ticksize");
         WriteCell(sheet, row, column++, "Quantity ticksize");
         WriteCell(sheet, row, column++, "Direction");
-        WriteCell(sheet, row, column++, "Geinvesteeerd");
-        WriteCell(sheet, row, column++, "Geretourneerd");
+        WriteCell(sheet, row, column++, "Invested");
+        WriteCell(sheet, row, column++, "Returned");
+        WriteCell(sheet, row, column++, "Reserved");
         WriteCell(sheet, row, column++, position.Status == CryptoPositionStatus.Ready ? "Winst/Verlies" : "Nu geinvesteerd");
-        WriteCell(sheet, row, column++, "Totale commissie");
+        WriteCell(sheet, row, column++, "Total commission");
         WriteCell(sheet, row, column++, "Markt waarde");
         WriteCell(sheet, row, column++, "Markt percentage");
         WriteCell(sheet, row, column++, "Geopend");
         WriteCell(sheet, row, column++, "Gesloten");
         WriteCell(sheet, row, column++, "Status");
         WriteCell(sheet, row, column++, "DCA count");
+        WriteCell(sheet, row, column++, "Quantity");
+        WriteCell(sheet, row, column++, "Remaining dust");
 
         row++;
         column = 0;
         WriteCell(sheet, row, column++, position.Id);
         WriteCell(sheet, row, column++, position.Exchange.Name);
-        WriteCell(sheet, row, column++, position.TradeAccount.Name);
+        WriteCell(sheet, row, column++, position.Account.AccountType.ToString());
         WriteCell(sheet, row, column++, position.Symbol.Name);
         WriteCell(sheet, row, column++, position.Symbol.Id);
+        WriteCell(sheet, row, column++, position.Symbol.Volume, CellStyleDecimalNormal);
         WriteCell(sheet, row, column++, position.Symbol.PriceTickSize, CellStyleDecimalNormal);
         WriteCell(sheet, row, column++, position.Symbol.QuantityTickSize, CellStyleDecimalNormal);
         WriteCell(sheet, row, column++, position.SideText);
         WriteCell(sheet, row, column++, position.Invested, CellStyleDecimalNormal);
         WriteCell(sheet, row, column++, position.Returned, CellStyleDecimalNormal);
+        WriteCell(sheet, row, column++, position.Reserved, CellStyleDecimalNormal);
 
         decimal investedInTrades = position.Invested - position.Returned - position.Commission;
         WriteCell(sheet, row, column++, investedInTrades, CellStyleDecimalNormal);
@@ -371,6 +377,8 @@ public class ExcelPositionDump(CryptoPosition position) : ExcelBase(position.Sym
         WriteCell(sheet, row, column++, position.CloseTime?.ToLocalTime(), CellStyleDate);
         WriteCell(sheet, row, column++, position.Status.ToString() ?? string.Empty);
         WriteCell(sheet, row, column++, position.PartCount);
+        WriteCell(sheet, row, column++, position.Quantity, CellStyleDecimalNormal);
+        WriteCell(sheet, row, column++, position.RemainingDust, CellStyleDecimalNormal);
 
         AutoSize(sheet, 6);
     }
