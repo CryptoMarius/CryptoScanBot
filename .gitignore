@@ -396,3 +396,4 @@ FodyWeavers.xsd
 *.sln.iml
 /CryptoScanner-Data.lnk
 /CryptoScanner data.lnk
+/CryptoScanBot.exe - -e Bybit Spot -f Bybit Spot Test.lnk
