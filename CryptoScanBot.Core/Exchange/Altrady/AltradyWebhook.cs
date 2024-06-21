@@ -71,7 +71,7 @@ public class AltradyWebhook
                     dca_orders.Add(dca);
 
                     dca.price_percentage = dcaItem.Percentage;
-                    dca.quantity_percentage = dcaItem.Factor;
+                    dca.quantity_percentage = 100 * dcaItem.Factor;
                 }
             }
 

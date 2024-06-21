@@ -138,6 +138,12 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
+    <Compile Update="SettingsDialog\UserControlExchangeApi.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="SettingsDialog\UserControlAltradyApi.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
     <Compile Update="SettingsDialog\UserControlTradeStopLoss.cs">
       <SubType>UserControl</SubType>
     </Compile>

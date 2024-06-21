@@ -205,10 +205,6 @@ partial class FrmSettings
         EditCrossOrIsolated = new ComboBox();
         label23 = new Label();
         EditLeverage = new NumericUpDown();
-        EditApiSecret = new TextBox();
-        EditApiKey = new TextBox();
-        label80 = new Label();
-        label65 = new Label();
         EditLogCanceledOrders = new CheckBox();
         EditSoundTradeNotification = new CheckBox();
         EditDisableNewPositions = new CheckBox();
@@ -217,8 +213,6 @@ partial class FrmSettings
         EditSlotsMaximalLong = new NumericUpDown();
         label52 = new Label();
         EditSlotsMaximalShort = new NumericUpDown();
-        EditGlobalBuyVarying = new NumericUpDown();
-        label47 = new Label();
         tabTradingLong = new TabPage();
         UserControlTradingLong = new SettingsDialog.UserControlEverything();
         tabTradingShort = new TabPage();
@@ -246,6 +240,8 @@ partial class FrmSettings
         label49 = new Label();
         toolTip1 = new ToolTip(components);
         colorDialog1 = new ColorDialog();
+        UserControlAltradyApi = new SettingsDialog.UserControlAltradyApi();
+        UserControlExchangeApi = new SettingsDialog.UserControlExchangeApi();
         panelButtons.SuspendLayout();
         panelFill.SuspendLayout();
         tabControlMain.SuspendLayout();
@@ -326,7 +322,6 @@ partial class FrmSettings
         groupBoxSlots.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)EditSlotsMaximalLong).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditSlotsMaximalShort).BeginInit();
-        ((System.ComponentModel.ISupportInitialize)EditGlobalBuyVarying).BeginInit();
         tabTradingLong.SuspendLayout();
         tabTradingShort.SuspendLayout();
         tabPageTradingRules.SuspendLayout();
@@ -2147,6 +2142,8 @@ partial class FrmSettings
         flowLayoutPanel1.Controls.Add(UserControlTradeTakeProfit);
         flowLayoutPanel1.Controls.Add(UserControlTradeStopLoss);
         flowLayoutPanel1.Controls.Add(UserControlTradeDca);
+        flowLayoutPanel1.Controls.Add(UserControlExchangeApi);
+        flowLayoutPanel1.Controls.Add(UserControlAltradyApi);
         flowLayoutPanel1.Dock = DockStyle.Fill;
         flowLayoutPanel1.FlowDirection = FlowDirection.TopDown;
         flowLayoutPanel1.Location = new Point(275, 3);
@@ -2206,16 +2203,10 @@ partial class FrmSettings
         panel7.Controls.Add(EditGlobalBuyCooldownTime);
         panel7.Controls.Add(groupBoxInstap);
         panel7.Controls.Add(groupBoxFutures);
-        panel7.Controls.Add(EditApiSecret);
-        panel7.Controls.Add(EditApiKey);
-        panel7.Controls.Add(label80);
-        panel7.Controls.Add(label65);
         panel7.Controls.Add(EditLogCanceledOrders);
         panel7.Controls.Add(EditSoundTradeNotification);
         panel7.Controls.Add(EditDisableNewPositions);
         panel7.Controls.Add(groupBoxSlots);
-        panel7.Controls.Add(EditGlobalBuyVarying);
-        panel7.Controls.Add(label47);
         panel7.Dock = DockStyle.Left;
         panel7.Location = new Point(3, 3);
         panel7.Name = "panel7";
@@ -2245,7 +2236,7 @@ partial class FrmSettings
         // label73
         // 
         label73.AutoSize = true;
-        label73.Location = new Point(7, 480);
+        label73.Location = new Point(11, 434);
         label73.Margin = new Padding(4, 0, 4, 0);
         label73.Name = "label73";
         label73.Size = new Size(114, 15);
@@ -2254,7 +2245,7 @@ partial class FrmSettings
         // 
         // EditGlobalBuyCooldownTime
         // 
-        EditGlobalBuyCooldownTime.Location = new Point(154, 478);
+        EditGlobalBuyCooldownTime.Location = new Point(142, 432);
         EditGlobalBuyCooldownTime.Margin = new Padding(4, 3, 4, 3);
         EditGlobalBuyCooldownTime.Maximum = new decimal(new int[] { 276447231, 23283, 0, 0 });
         EditGlobalBuyCooldownTime.Name = "EditGlobalBuyCooldownTime";
@@ -2267,7 +2258,7 @@ partial class FrmSettings
         groupBoxInstap.Controls.Add(EditCheckIncreasingMacd);
         groupBoxInstap.Controls.Add(EditCheckIncreasingStoch);
         groupBoxInstap.Controls.Add(EditCheckIncreasingRsi);
-        groupBoxInstap.Location = new Point(12, 352);
+        groupBoxInstap.Location = new Point(12, 126);
         groupBoxInstap.Name = "groupBoxInstap";
         groupBoxInstap.Size = new Size(234, 120);
         groupBoxInstap.TabIndex = 346;
@@ -2324,7 +2315,7 @@ partial class FrmSettings
         groupBoxFutures.Controls.Add(EditCrossOrIsolated);
         groupBoxFutures.Controls.Add(label23);
         groupBoxFutures.Controls.Add(EditLeverage);
-        groupBoxFutures.Location = new Point(12, 260);
+        groupBoxFutures.Location = new Point(12, 340);
         groupBoxFutures.Name = "groupBoxFutures";
         groupBoxFutures.Size = new Size(234, 86);
         groupBoxFutures.TabIndex = 345;
@@ -2372,44 +2363,6 @@ partial class FrmSettings
         EditLeverage.TabIndex = 271;
         EditLeverage.Value = new decimal(new int[] { 1, 0, 0, 0 });
         // 
-        // EditApiSecret
-        // 
-        EditApiSecret.Location = new Point(143, 143);
-        EditApiSecret.Margin = new Padding(4, 3, 4, 3);
-        EditApiSecret.Name = "EditApiSecret";
-        EditApiSecret.PasswordChar = '*';
-        EditApiSecret.Size = new Size(88, 23);
-        EditApiSecret.TabIndex = 343;
-        // 
-        // EditApiKey
-        // 
-        EditApiKey.Location = new Point(143, 117);
-        EditApiKey.Margin = new Padding(4, 3, 4, 3);
-        EditApiKey.Name = "EditApiKey";
-        EditApiKey.PasswordChar = '*';
-        EditApiKey.Size = new Size(88, 23);
-        EditApiKey.TabIndex = 341;
-        // 
-        // label80
-        // 
-        label80.AutoSize = true;
-        label80.Location = new Point(12, 146);
-        label80.Margin = new Padding(4, 0, 4, 0);
-        label80.Name = "label80";
-        label80.Size = new Size(59, 15);
-        label80.TabIndex = 344;
-        label80.Text = "API secret";
-        // 
-        // label65
-        // 
-        label65.AutoSize = true;
-        label65.Location = new Point(12, 120);
-        label65.Margin = new Padding(4, 0, 4, 0);
-        label65.Name = "label65";
-        label65.Size = new Size(46, 15);
-        label65.TabIndex = 342;
-        label65.Text = "API key";
-        // 
         // EditLogCanceledOrders
         // 
         EditLogCanceledOrders.AutoSize = true;
@@ -2450,7 +2403,7 @@ partial class FrmSettings
         groupBoxSlots.Controls.Add(label52);
         groupBoxSlots.Controls.Add(EditSlotsMaximalShort);
         groupBoxSlots.Font = new Font("Segoe UI", 9F);
-        groupBoxSlots.Location = new Point(12, 172);
+        groupBoxSlots.Location = new Point(12, 252);
         groupBoxSlots.Name = "groupBoxSlots";
         groupBoxSlots.Size = new Size(234, 82);
         groupBoxSlots.TabIndex = 334;
@@ -2494,30 +2447,6 @@ partial class FrmSettings
         EditSlotsMaximalShort.Size = new Size(88, 23);
         EditSlotsMaximalShort.TabIndex = 197;
         EditSlotsMaximalShort.Value = new decimal(new int[] { 25, 0, 0, 0 });
-        // 
-        // EditGlobalBuyVarying
-        // 
-        EditGlobalBuyVarying.DecimalPlaces = 2;
-        EditGlobalBuyVarying.Font = new Font("Segoe UI", 9F, FontStyle.Strikeout);
-        EditGlobalBuyVarying.Location = new Point(153, 507);
-        EditGlobalBuyVarying.Margin = new Padding(4, 3, 4, 3);
-        EditGlobalBuyVarying.Maximum = new decimal(new int[] { 5, 0, 0, 65536 });
-        EditGlobalBuyVarying.Minimum = new decimal(new int[] { 5, 0, 0, -2147418112 });
-        EditGlobalBuyVarying.Name = "EditGlobalBuyVarying";
-        EditGlobalBuyVarying.Size = new Size(88, 23);
-        EditGlobalBuyVarying.TabIndex = 329;
-        EditGlobalBuyVarying.Value = new decimal(new int[] { 1, 0, 0, -2147418112 });
-        // 
-        // label47
-        // 
-        label47.AutoSize = true;
-        label47.Font = new Font("Segoe UI", 9F, FontStyle.Strikeout);
-        label47.Location = new Point(7, 506);
-        label47.Margin = new Padding(4, 0, 4, 0);
-        label47.Name = "label47";
-        label47.Size = new Size(108, 15);
-        label47.TabIndex = 328;
-        label47.Text = "Instap verlagen (%)";
         // 
         // tabTradingLong
         // 
@@ -2788,6 +2717,26 @@ partial class FrmSettings
         label49.TabIndex = 222;
         label49.Text = "(1 munt per regel met een optionele opmerking erachter)";
         // 
+        // UserControlAltradyApi
+        // 
+        UserControlAltradyApi.AutoScroll = true;
+        UserControlAltradyApi.AutoSize = true;
+        UserControlAltradyApi.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+        UserControlAltradyApi.Location = new Point(406, 295);
+        UserControlAltradyApi.Name = "UserControlAltradyApi";
+        UserControlAltradyApi.Size = new Size(350, 108);
+        UserControlAltradyApi.TabIndex = 338;
+        // 
+        // UserControlExchangeApi
+        // 
+        UserControlExchangeApi.AutoScroll = true;
+        UserControlExchangeApi.AutoSize = true;
+        UserControlExchangeApi.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+        UserControlExchangeApi.Location = new Point(406, 181);
+        UserControlExchangeApi.Name = "UserControlExchangeApi";
+        UserControlExchangeApi.Size = new Size(350, 108);
+        UserControlExchangeApi.TabIndex = 339;
+        // 
         // FrmSettings
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
@@ -2907,7 +2856,6 @@ partial class FrmSettings
         groupBoxSlots.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)EditSlotsMaximalLong).EndInit();
         ((System.ComponentModel.ISupportInitialize)EditSlotsMaximalShort).EndInit();
-        ((System.ComponentModel.ISupportInitialize)EditGlobalBuyVarying).EndInit();
         tabTradingLong.ResumeLayout(false);
         tabTradingLong.PerformLayout();
         tabTradingShort.ResumeLayout(false);
@@ -3115,10 +3063,6 @@ partial class FrmSettings
     private ComboBox EditCrossOrIsolated;
     private Label label23;
     private NumericUpDown EditLeverage;
-    private TextBox EditApiSecret;
-    private TextBox EditApiKey;
-    private Label label80;
-    private Label label65;
     private CheckBox EditLogCanceledOrders;
     private CheckBox EditSoundTradeNotification;
     private CheckBox EditDisableNewPositions;
@@ -3127,8 +3071,6 @@ partial class FrmSettings
     private NumericUpDown EditSlotsMaximalLong;
     private Label label52;
     private NumericUpDown EditSlotsMaximalShort;
-    private NumericUpDown EditGlobalBuyVarying;
-    private Label label47;
     private FlowLayoutPanel flowLayoutPanel1;
     private SettingsDialog.UserControlTradeDca UserControlTradeDca;
     private Label label73;
@@ -3153,4 +3095,6 @@ partial class FrmSettings
     private SettingsDialog.UserControlTradeEntry UserControlTradeEntry;
     private SettingsDialog.UserControlTradeTakeProfit UserControlTradeTakeProfit;
     private SettingsDialog.UserControlTradeStopLoss UserControlTradeStopLoss;
+    private SettingsDialog.UserControlExchangeApi UserControlExchangeApi;
+    private SettingsDialog.UserControlAltradyApi UserControlAltradyApi;
 }

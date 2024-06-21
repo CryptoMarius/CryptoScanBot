@@ -267,10 +267,6 @@ public partial class FrmSettings : Form
         // Logging
         EditLogCanceledOrders.Checked = settings.Trading.LogCanceledOrders;
 
-        // Api
-        EditApiKey.Text = GlobalData.TradingApi.Key;
-        EditApiSecret.Text = GlobalData.TradingApi.Secret;
-        //EditGlobalBuyVarying.Value = settings.Trading.GlobalBuyVarying;
         EditGlobalBuyCooldownTime.Value = settings.Trading.GlobalBuyCooldownTime;
 
         // slots
@@ -297,6 +293,8 @@ public partial class FrmSettings : Form
         UserControlTradingLong.LoadConfig(settings.Trading.Long);
         UserControlTradingShort.LoadConfig(settings.Trading.Short);
         UserControlTradeRules.LoadConfig(settings.Trading);
+        UserControlAltradyApi.LoadConfig(GlobalData.AltradyApi);
+        UserControlExchangeApi.LoadConfig(GlobalData.TradingApi);
 #endif
 
         // --------------------------------------------------------------------------------
@@ -516,10 +514,6 @@ public partial class FrmSettings : Form
         // Logging
         settings.Trading.LogCanceledOrders = EditLogCanceledOrders.Checked;
 
-        // Api
-        GlobalData.TradingApi.Key = EditApiKey.Text;
-        GlobalData.TradingApi.Secret = EditApiSecret.Text;
-        //settings.Trading.GlobalBuyVarying = EditGlobalBuyVarying.Value;
         settings.Trading.GlobalBuyCooldownTime = (int)EditGlobalBuyCooldownTime.Value;
 
         // slots
@@ -546,6 +540,8 @@ public partial class FrmSettings : Form
         UserControlTradingLong.SaveConfig(settings.Trading.Long);
         UserControlTradingShort.SaveConfig(settings.Trading.Short);
         UserControlTradeRules.SaveConfig(settings.Trading);
+        UserControlAltradyApi.SaveConfig(GlobalData.AltradyApi);
+        UserControlExchangeApi.SaveConfig(GlobalData.TradingApi);
 #endif
 
         // ------------------------------------------------------------------------------
