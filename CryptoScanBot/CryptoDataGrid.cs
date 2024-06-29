@@ -423,7 +423,7 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
 
     public void InitCommandCaptions()
     {
-        string text = GlobalData.ExternalUrls.GetTradingAppName(GlobalData.Settings.General.TradingApp, GlobalData.Settings.General.ExchangeName);
+        string text = CryptoExternalUrlList.GetTradingAppName(GlobalData.Settings.General.TradingApp, GlobalData.Settings.General.ExchangeName);
         Grid.ContextMenuStrip.Items[0].Text = text;
 
         //if (GlobalData.Settings.General.ApplyFontSettings)
