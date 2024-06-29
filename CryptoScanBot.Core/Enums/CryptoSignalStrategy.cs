@@ -13,8 +13,7 @@ public enum CryptoSignalStrategy
     IchimokuKumoBreakout = 9, // nazoeken, in de juiste positieve of negatieve trend doet ie het prima
 
     StoRsi = 10, // WGHM - STOSCH en RSI momentum indicator
-#if EXTRASTRATEGIESPSARRSI
-    PSarRsi = 15,
-#endif
     RsiStochK = 19,
+
+    Ross = 99, // just a test
 }
