@@ -441,12 +441,12 @@ static public class GlobalData
             {
                 string text = File.ReadAllText(fullName);
                 ExternalUrls = JsonSerializer.Deserialize<CryptoExternalUrlList>(text);
-                ExternalUrls.InitializeUrls();
+                ExternalUrls!.InitializeUrls(); // add new exchanges
             }
             else
             {
-                ExternalUrls.InitializeUrls();
-                //het bestand in ieder geval aanmaken(updates moeten achteraf gepushed worden)
+                ExternalUrls.InitializeUrls(); // add new exchanges
+                // het bestand in ieder geval aanmaken(updates moeten achteraf gepushed worden)
                 string text = JsonSerializer.Serialize(ExternalUrls, JsonSerializerIndented);
                 File.WriteAllText(fullName, text);
             }
@@ -687,7 +687,7 @@ static public class GlobalData
             if (position is not null)
             {
                 string symbol = position.Symbol.Name.ToUpper();
-                (string Url, CryptoExternalUrlType Execute) = ExternalUrls.GetExternalRef(Settings.General.TradingApp, true, position.Symbol, position.Interval);
+                (string Url, CryptoExternalUrlType Execute) = GlobalData.ExternalUrls.GetExternalRef(Settings.General.TradingApp, true, position.Symbol, position.Interval);
                 if (Url != "")
                 {
                     string x = $"<a href='{Url}'>{symbol}</a>";
@@ -712,7 +712,7 @@ static public class GlobalData
             if (symbol is not null)
             {
                 string symbolName = symbol.Name.ToUpper();
-                (string Url, CryptoExternalUrlType Execute) = ExternalUrls.GetExternalRef(Settings.General.TradingApp, true, symbol, IntervalList[0]);
+                (string Url, CryptoExternalUrlType Execute) = GlobalData.ExternalUrls.GetExternalRef(Settings.General.TradingApp, true, symbol, IntervalList[0]);
                 if (Url != "")
                 {
                     string x = $"<a href='{Url}'>{symbolName}</a>";

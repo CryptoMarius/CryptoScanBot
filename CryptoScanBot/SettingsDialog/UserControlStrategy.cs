@@ -1,6 +1,5 @@
 ﻿using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Signal;
-using CryptoScanBot.Signal;
 
 namespace CryptoScanBot.SettingsDialog;
 public partial class UserControlStrategy : UserControl
@@ -15,7 +14,7 @@ public partial class UserControlStrategy : UserControl
 
     public void InitControls(bool isForTrading, CryptoTradeSide tradeSide)
     {
-        foreach (var signalDefinition in SignalHelper.AlgorithmDefinitionIndex.Values)
+        foreach (var signalDefinition in SignalHelper.AlgorithmDefinitionList.Values)
         {
             if (isForTrading && signalDefinition.Strategy == CryptoSignalStrategy.Jump)
                 continue;
@@ -27,7 +26,7 @@ public partial class UserControlStrategy : UserControl
             {
                 AutoSize = true,
                 UseVisualStyleBackColor = true,
-                Text = SignalHelper.GetSignalAlgorithmText(signalDefinition.Strategy),
+                Text = SignalHelper.GetAlgorithm(signalDefinition.Strategy),
             };
             flowLayoutPanel1.Controls.Add(checkbox);
 

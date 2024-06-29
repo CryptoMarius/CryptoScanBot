@@ -12,9 +12,14 @@ public class CryptoExternalUrl
     public string? Telegram { get; set; }
 }
 
+public class CryptoExternalUrlAltrady : CryptoExternalUrl
+{
+    public string? Code { get; set; }
+}
+
 public class CryptoExternalUrls
 {
-    public CryptoExternalUrl? Altrady { get; set; }
+    public CryptoExternalUrlAltrady? Altrady { get; set; }
     public CryptoExternalUrl? HyperTrader { get; set; }
     public CryptoExternalUrl? TradingView { get; set; }
     public CryptoExternalUrl? ExchangeUrl { get; set; }
@@ -26,11 +31,40 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
     public void InitializeUrls()
     {
         Remove("Binance");
+        this.TryAdd("Binance Futures",
+            new()
+            {
+                Altrady = new() // werkt niet
+                {
+                    Code = "BIFU",
+                    Execute = CryptoExternalUrlType.Internal,
+                    Url = "https://app.altrady.com/d/BIFU_{QUOTE}_{BASE}:{interval}",
+                },
+                HyperTrader = new() // werkt niet
+                {
+                    Execute = CryptoExternalUrlType.External,
+                    Url = "hypertrader://binance/{BASE}-{QUOTE}/{interval}",
+                    Telegram = "http://www.ccscanner.nl/hypertrader/?e=binance&a={BASE}&b={QUOTE}&i={interval}",
+                },
+                TradingView = new() // werkt
+                {
+                    Execute = CryptoExternalUrlType.External,
+                    Url = "https://www.tradingview.com/chart/?symbol=BINANCE:{BASE}{QUOTE}.P&interval={interval}"
+                },
+                ExchangeUrl = new() // werkt niet
+                {
+                    Execute = CryptoExternalUrlType.External,
+                    Url = "https://www.binance.com/en/trade/{BASE}_{QUOTE}?_from=markets&type=futures",
+                }
+            }
+        );
+
         this.TryAdd("Binance Spot",
             new()
             {
                 Altrady = new()
                 {
+                    Code = "BINA",
                     Execute = CryptoExternalUrlType.Internal,
                     Url = "https://app.altrady.com/d/BINA_{QUOTE}_{BASE}:{interval}",
                 },
@@ -53,38 +87,14 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
             }
         );
 
-        this.TryAdd("Binance Futures",
-            new()
-            {
-                Altrady = new() // werkt niet
-                {
-                    Execute = CryptoExternalUrlType.Internal,
-                    Url = "https://app.altrady.com/d/BINAF_{QUOTE}_{BASE}:{interval}",
-                },
-                HyperTrader = new() // werkt niet
-                {
-                    Execute = CryptoExternalUrlType.External,
-                    Url = "hypertrader://binance/{BASE}-{QUOTE}/{interval}",
-                    Telegram = "http://www.ccscanner.nl/hypertrader/?e=binance&a={BASE}&b={QUOTE}&i={interval}",
-                },
-                TradingView = new() // werkt
-                {
-                    Execute = CryptoExternalUrlType.External,
-                    Url = "https://www.tradingview.com/chart/?symbol=BINANCE:{BASE}{QUOTE}.P&interval={interval}"
-                },
-                ExchangeUrl = new() // werkt niet
-                {
-                    Execute = CryptoExternalUrlType.External,
-                    Url = "https://www.binance.com/en/trade/{BASE}_{QUOTE}?_from=markets&type=futures",
-                }
-            }
-        );
 
+        Remove("Bybit");
         this.TryAdd("Bybit Futures",
             new()
             {
                 Altrady = new()
                 {
+                    Code = "BYBIF",
                     Execute = CryptoExternalUrlType.Internal,
                     Url = "https://app.altrady.com/d/BYBIF_{QUOTE}_{BASE}:{interval}",
                 },
@@ -107,12 +117,12 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
             }
         );
 
-        Remove("Bybit");
         this.TryAdd("Bybit Spot",
             new()
             {
                 Altrady = new()
                 {
+                    Code = "BYBI",
                     Execute = CryptoExternalUrlType.Internal,
                     Url = "https://app.altrady.com/d/BYBI_{QUOTE}_{BASE}:{interval}",
                 },
@@ -136,11 +146,23 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
         );
 
         Remove("Kucoin");
+        this.TryAdd("Kucoin Futures",
+            new()
+            {
+                Altrady = new()
+                {
+                    Code = "KUCNF",
+                    Execute = CryptoExternalUrlType.Internal,
+                    Url = "https://app.altrady.com/d/KUCNF_{QUOTE}_{BASE}:{interval}",
+                },
+            }
+        );
         this.TryAdd("Kucoin Spot",
             new()
             {
                 Altrady = new()
                 {
+                    Code = "KUCN",
                     Execute = CryptoExternalUrlType.Internal,
                     Url = "https://app.altrady.com/d/KUCN_{QUOTE}_{BASE}:{interval}",
                 },
@@ -164,12 +186,37 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
             }
         );
 
-        // Kucoin Futures?
-        // Kraken Spot
-        // Mexc Spot
+        Remove("Kraken");
+        this.TryAdd("Kraken Spot",
+            new()
+            {
+                Altrady = new()
+                {
+                    Code = "KRKN",
+                    Execute = CryptoExternalUrlType.Internal,
+                    Url = "https://app.altrady.com/d/KRKN_{QUOTE}_{BASE}:{interval}",
+                },
+            }
+        );
+
+
+        Remove("Mexc");
+        this.TryAdd("Mexc Spot",
+            new()
+            {
+                Altrady = new()
+                {
+                    Code = "MEXC",
+                    Execute = CryptoExternalUrlType.Internal,
+                    Url = "https://app.altrady.com/d/MEXC_{QUOTE}_{BASE}:{interval}",
+                },
+            }
+        );
+
+
     }
 
-    public string GetTradingAppName(CryptoTradingApp tradingApp, string exchangeName)
+    public static string GetTradingAppName(CryptoTradingApp tradingApp, string exchangeName)
     {
         string text = tradingApp switch
         {
@@ -202,11 +249,17 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
     }
 
 
+    public bool GetExternalRef(Model.CryptoExchange exchange, out CryptoExternalUrls? externalUrls)
+    {
+        //GlobalData.LoadLinkSettings();
+        return this.TryGetValue(exchange.Name, out externalUrls);
+    }
+
     public (string Url, CryptoExternalUrlType Execute) GetExternalRef(Model.CryptoExchange exchange, CryptoTradingApp externalApp, bool telegram, CryptoSymbol symbol, CryptoInterval interval)
     {
-        GlobalData.LoadLinkSettings();
-        if (GlobalData.ExternalUrls.TryGetValue(exchange.Name, out CryptoExternalUrls? externalUrls))
+        if (GetExternalRef(exchange, out CryptoExternalUrls? externalUrls0))
         {
+            CryptoExternalUrls externalUrls = externalUrls0!;
 
             CryptoExternalUrl? externalUrl = externalApp switch
             {

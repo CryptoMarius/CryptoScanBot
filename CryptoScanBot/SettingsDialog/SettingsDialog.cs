@@ -128,7 +128,7 @@ public partial class FrmSettings : Form
         {
             if (quoteData.SymbolList.Count > 0) //|| quoteData.Name.Equals("BTC") || quoteData.Name.Equals("USDT")
             {
-                var baseCoin = new SettingsQuoteCoin(quoteData, yPos, tabBasismunten.Controls);
+                var baseCoin = new SettingsQuoteCoin(quoteData, yPos, tabBasecoin.Controls);
                 BaseCoinList.Add(baseCoin);
 
                 if (yInc == 0)
@@ -144,7 +144,7 @@ public partial class FrmSettings : Form
 
         foreach (SettingsQuoteCoin x in BaseCoinList)
             x.SetControlValues();
-        BaseCoinList[0].AddHeaderLabels(40, tabBasismunten.Controls);
+        BaseCoinList[0].AddHeaderLabels(40, tabBasecoin.Controls);
 
         // ------------------------------------------------------------------------------
         // Signals

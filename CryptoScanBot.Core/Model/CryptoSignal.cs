@@ -1,6 +1,5 @@
 ﻿using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Signal;
-using CryptoScanBot.Signal;
 
 using Dapper.Contrib.Extensions;
 
@@ -67,7 +66,7 @@ public class CryptoSignal
 
     public CryptoSignalStrategy Strategy { get; set; }
     [Computed]
-    public string StrategyText { get { return SignalHelper.GetSignalAlgorithmText(Strategy); } }
+    public string StrategyText { get { return SignalHelper.GetAlgorithm(Strategy); } }
 
 
     public double Last24HoursChange { get; set; }

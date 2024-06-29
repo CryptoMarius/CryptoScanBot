@@ -1,26 +1,49 @@
 ﻿using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
-using CryptoScanBot.Core.Signal;
 using CryptoScanBot.Core.Signal.Experiment;
 using CryptoScanBot.Core.Signal.Momentum;
 using CryptoScanBot.Core.Signal.Other;
 
-namespace CryptoScanBot.Signal;
+namespace CryptoScanBot.Core.Signal;
 
 public static class SignalHelper
 {
-    /// Een lijst met alle mogelijke strategieën (en attributen)
-    static public readonly List<AlgorithmDefinition> AlgorithmDefinitionList = [];
+    /// <summary>
+    /// All available strategies + indexed
+    /// </summary>
+    static public readonly SortedList<CryptoSignalStrategy, AlgorithmDefinition> AlgorithmDefinitionList = [];
 
-    // Alle beschikbare strategieën, nu geindexeerd
-    static public readonly SortedList<CryptoSignalStrategy, AlgorithmDefinition> AlgorithmDefinitionIndex = [];
+
+    public static void Register(AlgorithmDefinition algorithmDefinition)
+    {
+        AlgorithmDefinitionList.Add(algorithmDefinition.Strategy, algorithmDefinition);
+    }
+
+    // a class contructor get called later (when something of the class is touched, cannot use it to register something)
+
+    //public static void RegisterLong(CryptoSignalStrategy strategy, string name, Type? analyzeType)
+    //{
+    //    if (!GetAlgorithm(strategy, out AlgorithmDefinition? definition))
+    //        Register(new AlgorithmDefinition() { Name = name, Strategy = strategy, AnalyzeLongType = null, AnalyzeShortType = analyzeType, });
+
+    //    definition!.AnalyzeLongType = analyzeType;
+    //}
+
+    //public static void RegisterShort(CryptoSignalStrategy strategy, string name, Type? analyzeType)
+    //{
+    //    if (!GetAlgorithm(strategy, out AlgorithmDefinition? definition))
+    //        Register(new AlgorithmDefinition() { Name = name, Strategy = strategy, AnalyzeLongType = null, AnalyzeShortType = analyzeType, });
+
+    //    definition!.AnalyzeShortType = analyzeType;
+    //}
+
 
     static SignalHelper()
     {
         //***************************************************
         // Jump
         //***************************************************
-        AlgorithmDefinitionList.Add(new AlgorithmDefinition()
+        Register(new AlgorithmDefinition()
         {
             Name = "jump",
             Strategy = CryptoSignalStrategy.Jump,
@@ -31,7 +54,7 @@ public static class SignalHelper
         //***************************************************
         // SBMx (a special kind of STOBB)
         //***************************************************
-        AlgorithmDefinitionList.Add(new AlgorithmDefinition()
+        Register(new AlgorithmDefinition()
         {
             Name = "sbm1",
             Strategy = CryptoSignalStrategy.Sbm1,
@@ -39,7 +62,7 @@ public static class SignalHelper
             AnalyzeShortType = typeof(SignalSbm1Short),
         });
 
-        AlgorithmDefinitionList.Add(new AlgorithmDefinition()
+        Register(new AlgorithmDefinition()
         {
             Name = "sbm2",
             Strategy = CryptoSignalStrategy.Sbm2,
@@ -48,7 +71,7 @@ public static class SignalHelper
         });
 
 
-        AlgorithmDefinitionList.Add(new AlgorithmDefinition()
+        Register(new AlgorithmDefinition()
         {
             Name = "sbm3",
             Strategy = CryptoSignalStrategy.Sbm3,
@@ -61,7 +84,7 @@ public static class SignalHelper
         //***************************************************
         // STOBB
         //***************************************************
-        AlgorithmDefinitionList.Add(new AlgorithmDefinition()
+        Register(new AlgorithmDefinition()
         {
             Name = "stobb",
             Strategy = CryptoSignalStrategy.Stobb,
@@ -74,7 +97,7 @@ public static class SignalHelper
         // WGHBM - Momentum indicator that shows arrows when the Stochastic and the RSI are at the same time in the oversold or overbought area.
         //***************************************************
         // https://www.tradingview.com/script/0F1sNM49-WGHBM/ (not available anymore)
-        AlgorithmDefinitionList.Add(new AlgorithmDefinition()
+        Register(new AlgorithmDefinition()
         {
             Name = "storsi", // was WGHM = We Gaan Het Meemaken.. 
             Strategy = CryptoSignalStrategy.StoRsi,
@@ -88,31 +111,31 @@ public static class SignalHelper
         // PSAR + RSI
         // https://blog.elearnmarkets.com/trading-signals-using-parabolic-sar-rsi/
         //***************************************************
-        AlgorithmDefinitionList.Add(new AlgorithmDefinition()
+        Register(new AlgorithmDefinition()
         {
             Name = "psar rsi",
             Strategy = CryptoSignalStrategy.PSarRsi,
             AnalyzeLongType = typeof(SignalPSarRsiLong),
             AnalyzeShortType = typeof(SignalPSarRsiShort),
         });
-#endif
 
         //***************************************************
         // Experiment RSI - Stoch.K
         //***************************************************
-        AlgorithmDefinitionList.Add(new AlgorithmDefinition()
+        Register(new AlgorithmDefinition()
         {
             Name = "rsi/stoch.k",
             Strategy = CryptoSignalStrategy.RsiStochK,
             AnalyzeLongType = typeof(SignalRsiStochKLong),
             AnalyzeShortType = typeof(SignalRsiStochKShort),
         });
+#endif
 
 
         //***************************************************
         // Experiment FLUX - JanH
         //***************************************************
-        AlgorithmDefinitionList.Add(new AlgorithmDefinition()
+        Register(new AlgorithmDefinition()
         {
             Name = "lux",
             Strategy = CryptoSignalStrategy.Lux,
@@ -121,31 +144,58 @@ public static class SignalHelper
         });
 
 
+        //***************************************************
+        // Experiment Ross - Ross Cameron
+        //***************************************************
+        Register(new AlgorithmDefinition()
+        {
+            Name = "ross",
+            Strategy = CryptoSignalStrategy.Ross,
+            AnalyzeLongType = typeof(SignalRossLong),
+            AnalyzeShortType = null,
+        });
 
-        // En de lijst eenmalig indexeren
-        AlgorithmDefinitionIndex.Clear();
-        foreach (AlgorithmDefinition algorithmDefinition in AlgorithmDefinitionList)
-            AlgorithmDefinitionIndex.Add(algorithmDefinition.Strategy, algorithmDefinition);
+
+
+
+        //// En de lijst eenmalig indexeren
+        //AlgorithmDefinitionIndex.Clear();
+        //foreach (AlgorithmDefinition algorithmDefinition in AlgorithmDefinitionList)
+        //    AlgorithmDefinitionIndex.Add(algorithmDefinition.Strategy, algorithmDefinition);
     }
 
 
-
-    public static SignalCreateBase? GetSignalAlgorithm(CryptoTradeSide mode, CryptoSignalStrategy strategy, CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle)
+    /// <summary>
+    /// Return the algorithm definition
+    /// </summary>
+    public static bool GetAlgorithm(CryptoSignalStrategy strategy, out AlgorithmDefinition? definition)
     {
-        if (AlgorithmDefinitionIndex.TryGetValue(strategy, out AlgorithmDefinition? definition))
+        return AlgorithmDefinitionList.TryGetValue(strategy, out definition);
+    }
+
+    /// <summary>
+    /// Return the name of the algorithm
+    /// </summary>
+    public static string GetAlgorithm(CryptoSignalStrategy strategy)
+    {
+        if (GetAlgorithm(strategy, out AlgorithmDefinition? definition))
+            return definition!.Name;
+        return strategy.ToString();
+    }
+
+    /// <summary>
+    /// Return an instance of the algorithm (long/short)
+    /// </summary>
+    public static SignalCreateBase? GetAlgorithm(CryptoTradeSide mode, CryptoSignalStrategy strategy, CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle)
+    {
+        if (GetAlgorithm(strategy, out AlgorithmDefinition? definition))
         {
-            if (mode == CryptoTradeSide.Long && definition.AnalyzeLongType != null)
+            if (mode == CryptoTradeSide.Long && definition!.AnalyzeLongType != null)
                 return definition.InstantiateAnalyzeLong(symbol, interval, candle);
-            if (mode == CryptoTradeSide.Short && definition.AnalyzeShortType != null)
+            if (mode == CryptoTradeSide.Short && definition!.AnalyzeShortType != null)
                 return definition.InstantiateAnalyzeShort(symbol, interval, candle);
         }
         return null;
     }
 
-    public static string GetSignalAlgorithmText(CryptoSignalStrategy strategy)
-    {
-        if (AlgorithmDefinitionIndex.TryGetValue(strategy, out AlgorithmDefinition? definition))
-            return definition.Name;
-        return strategy.ToString();
-    }
 }

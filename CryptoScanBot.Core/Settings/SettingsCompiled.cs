@@ -3,7 +3,6 @@ using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Signal;
-using CryptoScanBot.Signal;
 
 namespace CryptoScanBot.Core.Settings;
 
@@ -98,7 +97,7 @@ public class SettingsCompiled
         Strategy.Clear();
         StrategySbmStob.Clear();
         StrategyOthers.Clear();
-        foreach (AlgorithmDefinition strategyDef in SignalHelper.AlgorithmDefinitionList)
+        foreach (AlgorithmDefinition strategyDef in SignalHelper.AlgorithmDefinitionList.Values)
         {
             if (settings.Strategy.Contains(strategyDef.Name))
             {

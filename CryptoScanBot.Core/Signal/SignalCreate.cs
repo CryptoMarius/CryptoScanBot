@@ -5,7 +5,6 @@ using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Settings;
 using CryptoScanBot.Core.Trader;
 using CryptoScanBot.Core.Trend;
-using CryptoScanBot.Signal;
 
 using Dapper.Contrib.Extensions;
 
@@ -619,9 +618,9 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
             // Ze staan alfabetisch, sbm1, sbm2, sbm3, stobb dat gaat per ongeluk goed
             foreach (CryptoSignalStrategy strategy in TradingConfig.Signals[Side].StrategySbmStob.ToList())
             {
-                if (SignalHelper.AlgorithmDefinitionIndex.TryGetValue(strategy, out AlgorithmDefinition? strategyDefinition))
+                if (SignalHelper.GetAlgorithm(strategy, out AlgorithmDefinition? strategyDefinition))
                 {
-                    if (ExecuteAlgorithm(strategyDefinition))
+                    if (ExecuteAlgorithm(strategyDefinition!))
                         break;
                 }
             }
@@ -629,9 +628,9 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
             // En de overige waaronder de jump
             foreach (CryptoSignalStrategy strategy in TradingConfig.Signals[Side].StrategyOthers.ToList())
             {
-                if (SignalHelper.AlgorithmDefinitionIndex.TryGetValue(strategy, out AlgorithmDefinition? strategyDefinition))
+                if (SignalHelper.GetAlgorithm(strategy, out AlgorithmDefinition? strategyDefinition))
                 {
-                    ExecuteAlgorithm(strategyDefinition);
+                    ExecuteAlgorithm(strategyDefinition!);
                 }
             }
 

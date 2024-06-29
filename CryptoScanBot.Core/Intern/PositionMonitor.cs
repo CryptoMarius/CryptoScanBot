@@ -5,7 +5,6 @@ using CryptoScanBot.Core.Signal;
 using CryptoScanBot.Core.Trader;
 using CryptoScanBot.Core.Exchange;
 using Dapper.Contrib.Extensions;
-using CryptoScanBot.Signal;
 using CryptoScanBot.Core.Barometer;
 using CryptoScanBot.Core.Exchange.Altrady;
 
@@ -371,7 +370,7 @@ public class PositionMonitor : IDisposable
                 }
 
                 // Bestaan het gekozen strategy wel, klinkt raar, maar is (op dit moment) niet altijd geimplementeerd
-                SignalCreateBase? algorithm = SignalHelper.GetSignalAlgorithm(signal.Side, signal.Strategy, signal.Symbol, signal.Interval, candleInterval);
+                SignalCreateBase? algorithm = SignalHelper.GetAlgorithm(signal.Side, signal.Strategy, signal.Symbol, signal.Interval, candleInterval);
                 if (algorithm == null)
                 {
                     GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " unknown algorithm (removed)");

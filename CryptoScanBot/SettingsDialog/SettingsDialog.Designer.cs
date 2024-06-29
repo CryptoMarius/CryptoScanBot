@@ -37,7 +37,7 @@ partial class FrmSettings
         buttonOk = new Button();
         panelFill = new Panel();
         tabControlMain = new TabControl();
-        tabAlgemeen = new TabPage();
+        tabGeneral = new TabPage();
         flowLayoutPanel5 = new FlowLayoutPanel();
         groupBox1 = new GroupBox();
         label22 = new Label();
@@ -73,8 +73,8 @@ partial class FrmSettings
         label2 = new Label();
         EditTradingApp = new ComboBox();
         UserControlTelegram = new SettingsDialog.UserControlTelegram();
-        tabBasismunten = new TabPage();
-        tabSignals = new TabPage();
+        tabBasecoin = new TabPage();
+        tabSignal = new TabPage();
         tabControlSignals = new TabControl();
         tabSignalsGeneral = new TabPage();
         EditCheckWeekVolume = new CheckBox();
@@ -240,12 +240,14 @@ partial class FrmSettings
         label49 = new Label();
         toolTip1 = new ToolTip(components);
         colorDialog1 = new ColorDialog();
-        UserControlAltradyApi = new SettingsDialog.UserControlAltradyApi();
+        tabApi = new TabPage();
+        flowLayoutPanel3 = new FlowLayoutPanel();
         UserControlExchangeApi = new SettingsDialog.UserControlExchangeApi();
+        UserControlAltradyApi = new SettingsDialog.UserControlAltradyApi();
         panelButtons.SuspendLayout();
         panelFill.SuspendLayout();
         tabControlMain.SuspendLayout();
-        tabAlgemeen.SuspendLayout();
+        tabGeneral.SuspendLayout();
         flowLayoutPanel5.SuspendLayout();
         groupBox1.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)EditBbStdDeviation).BeginInit();
@@ -258,7 +260,7 @@ partial class FrmSettings
         ((System.ComponentModel.ISupportInitialize)EditGetCandleInterval).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditGlobalDataRemoveSignalAfterxCandles).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditSoundHeartBeatMinutes).BeginInit();
-        tabSignals.SuspendLayout();
+        tabSignal.SuspendLayout();
         tabControlSignals.SuspendLayout();
         tabSignalsGeneral.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)EditAnalysisMinEffective10DaysPercentage).BeginInit();
@@ -335,6 +337,8 @@ partial class FrmSettings
         panel5.SuspendLayout();
         tabShortBlackList.SuspendLayout();
         panel6.SuspendLayout();
+        tabApi.SuspendLayout();
+        flowLayoutPanel3.SuspendLayout();
         SuspendLayout();
         // 
         // panelButtons
@@ -417,10 +421,11 @@ partial class FrmSettings
         // tabControlMain
         // 
         tabControlMain.Appearance = TabAppearance.FlatButtons;
-        tabControlMain.Controls.Add(tabAlgemeen);
-        tabControlMain.Controls.Add(tabBasismunten);
-        tabControlMain.Controls.Add(tabSignals);
+        tabControlMain.Controls.Add(tabGeneral);
+        tabControlMain.Controls.Add(tabBasecoin);
+        tabControlMain.Controls.Add(tabSignal);
         tabControlMain.Controls.Add(tabTrading);
+        tabControlMain.Controls.Add(tabApi);
         tabControlMain.Controls.Add(tabWhiteBlack);
         tabControlMain.Dock = DockStyle.Fill;
         tabControlMain.Location = new Point(0, 0);
@@ -430,17 +435,17 @@ partial class FrmSettings
         tabControlMain.Size = new Size(1150, 646);
         tabControlMain.TabIndex = 100;
         // 
-        // tabAlgemeen
+        // tabGeneral
         // 
-        tabAlgemeen.Controls.Add(flowLayoutPanel5);
-        tabAlgemeen.Location = new Point(4, 27);
-        tabAlgemeen.Margin = new Padding(4, 3, 4, 3);
-        tabAlgemeen.Name = "tabAlgemeen";
-        tabAlgemeen.Padding = new Padding(4, 3, 4, 3);
-        tabAlgemeen.Size = new Size(1142, 615);
-        tabAlgemeen.TabIndex = 6;
-        tabAlgemeen.Text = "Algemeen";
-        tabAlgemeen.UseVisualStyleBackColor = true;
+        tabGeneral.Controls.Add(flowLayoutPanel5);
+        tabGeneral.Location = new Point(4, 27);
+        tabGeneral.Margin = new Padding(4, 3, 4, 3);
+        tabGeneral.Name = "tabGeneral";
+        tabGeneral.Padding = new Padding(4, 3, 4, 3);
+        tabGeneral.Size = new Size(1142, 615);
+        tabGeneral.TabIndex = 6;
+        tabGeneral.Text = "Algemeen";
+        tabGeneral.UseVisualStyleBackColor = true;
         // 
         // flowLayoutPanel5
         // 
@@ -833,28 +838,28 @@ partial class FrmSettings
         UserControlTelegram.Size = new Size(451, 180);
         UserControlTelegram.TabIndex = 248;
         // 
-        // tabBasismunten
+        // tabBasecoin
         // 
-        tabBasismunten.Location = new Point(4, 27);
-        tabBasismunten.Margin = new Padding(4, 3, 4, 3);
-        tabBasismunten.Name = "tabBasismunten";
-        tabBasismunten.Padding = new Padding(4, 3, 4, 3);
-        tabBasismunten.Size = new Size(1142, 615);
-        tabBasismunten.TabIndex = 0;
-        tabBasismunten.Text = "Basismunten";
-        tabBasismunten.UseVisualStyleBackColor = true;
+        tabBasecoin.Location = new Point(4, 27);
+        tabBasecoin.Margin = new Padding(4, 3, 4, 3);
+        tabBasecoin.Name = "tabBasecoin";
+        tabBasecoin.Padding = new Padding(4, 3, 4, 3);
+        tabBasecoin.Size = new Size(1142, 615);
+        tabBasecoin.TabIndex = 0;
+        tabBasecoin.Text = "Basismunten";
+        tabBasecoin.UseVisualStyleBackColor = true;
         // 
-        // tabSignals
+        // tabSignal
         // 
-        tabSignals.Controls.Add(tabControlSignals);
-        tabSignals.Location = new Point(4, 27);
-        tabSignals.Margin = new Padding(4, 3, 4, 3);
-        tabSignals.Name = "tabSignals";
-        tabSignals.Padding = new Padding(4, 3, 4, 3);
-        tabSignals.Size = new Size(1142, 615);
-        tabSignals.TabIndex = 10;
-        tabSignals.Text = "Signalen";
-        tabSignals.UseVisualStyleBackColor = true;
+        tabSignal.Controls.Add(tabControlSignals);
+        tabSignal.Location = new Point(4, 27);
+        tabSignal.Margin = new Padding(4, 3, 4, 3);
+        tabSignal.Name = "tabSignal";
+        tabSignal.Padding = new Padding(4, 3, 4, 3);
+        tabSignal.Size = new Size(1142, 615);
+        tabSignal.TabIndex = 10;
+        tabSignal.Text = "Signalen";
+        tabSignal.UseVisualStyleBackColor = true;
         // 
         // tabControlSignals
         // 
@@ -2142,8 +2147,6 @@ partial class FrmSettings
         flowLayoutPanel1.Controls.Add(UserControlTradeTakeProfit);
         flowLayoutPanel1.Controls.Add(UserControlTradeStopLoss);
         flowLayoutPanel1.Controls.Add(UserControlTradeDca);
-        flowLayoutPanel1.Controls.Add(UserControlExchangeApi);
-        flowLayoutPanel1.Controls.Add(UserControlAltradyApi);
         flowLayoutPanel1.Dock = DockStyle.Fill;
         flowLayoutPanel1.FlowDirection = FlowDirection.TopDown;
         flowLayoutPanel1.Location = new Point(275, 3);
@@ -2717,25 +2720,48 @@ partial class FrmSettings
         label49.TabIndex = 222;
         label49.Text = "(1 munt per regel met een optionele opmerking erachter)";
         // 
-        // UserControlAltradyApi
+        // tabApi
         // 
-        UserControlAltradyApi.AutoScroll = true;
-        UserControlAltradyApi.AutoSize = true;
-        UserControlAltradyApi.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-        UserControlAltradyApi.Location = new Point(406, 295);
-        UserControlAltradyApi.Name = "UserControlAltradyApi";
-        UserControlAltradyApi.Size = new Size(350, 108);
-        UserControlAltradyApi.TabIndex = 338;
+        tabApi.Controls.Add(flowLayoutPanel3);
+        tabApi.Location = new Point(4, 27);
+        tabApi.Name = "tabApi";
+        tabApi.Padding = new Padding(3);
+        tabApi.Size = new Size(1142, 615);
+        tabApi.TabIndex = 14;
+        tabApi.Text = "API keys";
+        tabApi.UseVisualStyleBackColor = true;
+        // 
+        // flowLayoutPanel3
+        // 
+        flowLayoutPanel3.AutoSize = true;
+        flowLayoutPanel3.Controls.Add(UserControlExchangeApi);
+        flowLayoutPanel3.Controls.Add(UserControlAltradyApi);
+        flowLayoutPanel3.Dock = DockStyle.Fill;
+        flowLayoutPanel3.FlowDirection = FlowDirection.TopDown;
+        flowLayoutPanel3.Location = new Point(3, 3);
+        flowLayoutPanel3.Name = "flowLayoutPanel3";
+        flowLayoutPanel3.Size = new Size(1136, 609);
+        flowLayoutPanel3.TabIndex = 342;
         // 
         // UserControlExchangeApi
         // 
         UserControlExchangeApi.AutoScroll = true;
         UserControlExchangeApi.AutoSize = true;
         UserControlExchangeApi.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-        UserControlExchangeApi.Location = new Point(406, 181);
+        UserControlExchangeApi.Location = new Point(3, 3);
         UserControlExchangeApi.Name = "UserControlExchangeApi";
-        UserControlExchangeApi.Size = new Size(350, 108);
-        UserControlExchangeApi.TabIndex = 339;
+        UserControlExchangeApi.Size = new Size(350, 96);
+        UserControlExchangeApi.TabIndex = 343;
+        // 
+        // UserControlAltradyApi
+        // 
+        UserControlAltradyApi.AutoScroll = true;
+        UserControlAltradyApi.AutoSize = true;
+        UserControlAltradyApi.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+        UserControlAltradyApi.Location = new Point(3, 105);
+        UserControlAltradyApi.Name = "UserControlAltradyApi";
+        UserControlAltradyApi.Size = new Size(350, 96);
+        UserControlAltradyApi.TabIndex = 342;
         // 
         // FrmSettings
         // 
@@ -2751,8 +2777,8 @@ partial class FrmSettings
         panelButtons.ResumeLayout(false);
         panelFill.ResumeLayout(false);
         tabControlMain.ResumeLayout(false);
-        tabAlgemeen.ResumeLayout(false);
-        tabAlgemeen.PerformLayout();
+        tabGeneral.ResumeLayout(false);
+        tabGeneral.PerformLayout();
         flowLayoutPanel5.ResumeLayout(false);
         flowLayoutPanel5.PerformLayout();
         groupBox1.ResumeLayout(false);
@@ -2769,7 +2795,7 @@ partial class FrmSettings
         ((System.ComponentModel.ISupportInitialize)EditGetCandleInterval).EndInit();
         ((System.ComponentModel.ISupportInitialize)EditGlobalDataRemoveSignalAfterxCandles).EndInit();
         ((System.ComponentModel.ISupportInitialize)EditSoundHeartBeatMinutes).EndInit();
-        tabSignals.ResumeLayout(false);
+        tabSignal.ResumeLayout(false);
         tabControlSignals.ResumeLayout(false);
         tabSignalsGeneral.ResumeLayout(false);
         tabSignalsGeneral.PerformLayout();
@@ -2880,6 +2906,10 @@ partial class FrmSettings
         tabShortBlackList.PerformLayout();
         panel6.ResumeLayout(false);
         panel6.PerformLayout();
+        tabApi.ResumeLayout(false);
+        tabApi.PerformLayout();
+        flowLayoutPanel3.ResumeLayout(false);
+        flowLayoutPanel3.PerformLayout();
         ResumeLayout(false);
     }
 
@@ -2894,9 +2924,9 @@ partial class FrmSettings
     private ColorDialog colorDialog1;
     private Button buttonGotoAppDataFolder;
     private TabControl tabControlMain;
-    private TabPage tabAlgemeen;
-    private TabPage tabBasismunten;
-    private TabPage tabSignals;
+    private TabPage tabGeneral;
+    private TabPage tabBasecoin;
+    private TabPage tabSignal;
     private TabControl tabControlSignals;
     private TabPage tabSignalsGeneral;
     private Label label86;
@@ -3095,6 +3125,8 @@ partial class FrmSettings
     private SettingsDialog.UserControlTradeEntry UserControlTradeEntry;
     private SettingsDialog.UserControlTradeTakeProfit UserControlTradeTakeProfit;
     private SettingsDialog.UserControlTradeStopLoss UserControlTradeStopLoss;
+    private TabPage tabApi;
+    private FlowLayoutPanel flowLayoutPanel3;
     private SettingsDialog.UserControlExchangeApi UserControlExchangeApi;
     private SettingsDialog.UserControlAltradyApi UserControlAltradyApi;
 }

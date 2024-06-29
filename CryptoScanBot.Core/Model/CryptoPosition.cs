@@ -1,5 +1,5 @@
 ﻿using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Signal;
+using CryptoScanBot.Core.Signal;
 
 using Dapper.Contrib.Extensions;
 
@@ -44,7 +44,7 @@ public class CryptoPosition
 
     public CryptoSignalStrategy Strategy { get; set; }
     [Computed]
-    public string StrategyText { get { return SignalHelper.GetSignalAlgorithmText(Strategy); } }
+    public string StrategyText { get { return SignalHelper.GetAlgorithm(Strategy); } }
 
     // Globale status van de positie (new, closed, wellicht andere enum?)
     public CryptoPositionStatus? Status { get; set; }

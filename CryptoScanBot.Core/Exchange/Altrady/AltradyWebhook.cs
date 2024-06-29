@@ -1,5 +1,6 @@
 ﻿using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
+using CryptoScanBot.Core.Settings;
 
 using Newtonsoft.Json.Linq;
 
@@ -12,7 +13,7 @@ namespace CryptoScanBot.Core.Exchange.Altrady;
 public class AltradyWebhook
 {
 
-    public static async void DelegateControlToAltrady(CryptoPosition position)
+    public static void DelegateControlToAltrady(CryptoPosition position)
     {
         if (GlobalData.AltradyApi.Key == "" || GlobalData.AltradyApi.Secret == "")
         {
@@ -40,9 +41,16 @@ public class AltradyWebhook
             request.api_key = GlobalData.AltradyApi.Key;
             request.api_secret = GlobalData.AltradyApi.Secret;
 
-            // TODO, codes look at the SettingsLink..
-            request.exchange = "BYBI";  //"BINA";
-            request.symbol = $"BYBI_{position.Symbol.Quote}_{position.Symbol.Base}";
+            GlobalData.ExternalUrls.GetExternalRef(position.Symbol.Exchange, out CryptoExternalUrls? externalUrls);
+            if (externalUrls == null || externalUrls.Altrady.Code == "")
+            {
+                GlobalData.AddTextToLogTab($"error webhook {position.Symbol.Name} {position.Interval!.Name} no exchange code available");
+                return;
+            }
+
+
+            request.exchange = externalUrls.Altrady.Code;
+            request.symbol = $"{externalUrls.Altrady.Code}_{position.Symbol.Quote}_{position.Symbol.Base}";
             request.signal_price = position.EntryPrice;
             request.adjust_fee = true;
 

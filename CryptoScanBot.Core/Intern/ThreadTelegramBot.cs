@@ -213,7 +213,7 @@ public class ThreadTelegramBotInstance
                     builder.Append($" {signal.SideText}");
             }
 
-            string text = GlobalData.ExternalUrls.GetTradingAppName(GlobalData.Settings.General.TradingApp, signal.Exchange.Name);
+            string text = Settings.CryptoExternalUrlList.GetTradingAppName(GlobalData.Settings.General.TradingApp, signal.Exchange.Name);
             (string Url, CryptoExternalUrlType Execute) = GlobalData.ExternalUrls.GetExternalRef(GlobalData.Settings.General.TradingApp, true, signal.Symbol, signal.Interval);
             if (Url != "")
                 builder.Append($" <a href='{Url}'>{text}</a>");

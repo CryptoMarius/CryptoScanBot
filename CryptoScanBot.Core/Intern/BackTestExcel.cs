@@ -2,7 +2,6 @@
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Signal;
 using CryptoScanBot.Core.Signal.Momentum;
-using CryptoScanBot.Signal;
 
 using NPOI.HPSF;
 using NPOI.HSSF.UserModel;
@@ -361,7 +360,7 @@ public class BackTestExcel(CryptoSymbol symbol, List<CryptoCandle> history)
         }
 
 
-        string text = SignalHelper.GetSignalAlgorithmText(strategy);
+        string text = SignalHelper.GetAlgorithm(strategy);
         GlobalData.AddTextToLogTab(string.Format("Backtest {0} {1} ready", Symbol.Name, text));
 
         string folder = GlobalData.GetBaseDir() + @"\BackTest\";
