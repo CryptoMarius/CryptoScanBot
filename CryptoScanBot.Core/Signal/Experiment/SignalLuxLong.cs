@@ -5,6 +5,9 @@ using CryptoScanBot.Core.Signal.Momentum;
 
 namespace CryptoScanBot.Core.Signal.Experiment;
 
+/// <summary>
+/// Signal if the coin is oversold and the distance between price and EMA5 is at a peak
+/// </summary>
 public class SignalLuxLong : SignalSbmBaseLong
 {
     public SignalLuxLong(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
@@ -107,31 +110,30 @@ public class SignalLuxLong : SignalSbmBaseLong
         // Begins to looks like the SBM method with distances, actually kind of interesting..
         // ==> rubber bands methology & recovery signs
         decimal percentage = 100 * (decimal)CandleLast.CandleData.Ema5 / CandleLast.Close;
-        if (percentage < 100.25m)
+        if (percentage < 100.35m)
         {
             ExtraText = $"distance close and ema5 not ok {percentage:N2}";
             return false;
         }
 
 
-        // ********************************************************************
-        // Lux Algo indicator (but can be a long time on 100%)
-        LuxIndicator.Calculate(Symbol, out int luxOverSold, out int _, CryptoIntervalPeriod.interval5m, CandleLast.OpenTime + Interval.Duration);
-        if (luxOverSold < 100)
-        {
-            ExtraText = $"flux oversold {luxOverSold} below 100";
-            return false;
-        }
+        // stupid lux?
+        //// ********************************************************************
+        //// Lux Algo indicator (but can be a long time on 100%)
+        //LuxIndicator.Calculate(Symbol, out int luxOverSold, out int _, CryptoIntervalPeriod.interval5m, CandleLast.OpenTime + Interval.Duration);
+        //if (luxOverSold < 100)
+        //{
+        //    ExtraText = $"flux oversold {luxOverSold} below 100";
+        //    return false;
+        //}
 
 
 
         // idea, geef de signaal af op het moment dat het van 100% naar < 100% gaat?
 
 
-
-
         //percentage = 100 * (decimal)CandleLast.CandleData.Ema5 / CandleLast.Close;
-        ExtraText = $"{percentage:N2}%";
+        //ExtraText = $"{percentage:N2}%";
         return true;
     }
 

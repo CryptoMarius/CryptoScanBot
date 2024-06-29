@@ -20,7 +20,7 @@ public class SignalFluxShort : SignalSbmBaseShort
 
         // ********************************************************************
         // Price must to above BB.upper
-        if (CandleLast.Close <= (decimal)CandleLast.CandleData.BollingerBandsUpperBand)
+        if (CandleLast.Close <= (decimal)CandleLast.CandleData!.BollingerBandsUpperBand!)
         {
             ExtraText = "price below bb.high";
             return false;
@@ -28,8 +28,8 @@ public class SignalFluxShort : SignalSbmBaseShort
 
         // ********************************************************************
         // percentage ema5 and close at least 1%
-        decimal percentage = 100 * CandleLast.Close / (decimal)CandleLast.CandleData.Ema5;
-        if (percentage < 100.25m)
+        decimal percentage = 100 * CandleLast.Close / (decimal)CandleLast.CandleData!.Ema5!;
+        if (percentage < 100.35m)
         {
             response = $"distance close and ema5 not ok {percentage:N2}";
             return false;
@@ -62,14 +62,14 @@ public class SignalFluxShort : SignalSbmBaseShort
         // BB width is within certain percentages
         if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Sbm.BBMinPercentage, GlobalData.Settings.Signal.Sbm.BBMaxPercentage))
         {
-            ExtraText = "bb.width te klein " + CandleLast.CandleData.BollingerBandsPercentage?.ToString("N2");
+            ExtraText = "bb.width te klein " + CandleLast.CandleData!.BollingerBandsPercentage?.ToString("N2");
             return false;
         }
 
 
         // ********************************************************************
         // Rsi
-        if (CandleLast.CandleData.Rsi < GlobalData.Settings.General.RsiValueOverbought)
+        if (CandleLast.CandleData!.Rsi < GlobalData.Settings.General.RsiValueOverbought)
         {
             ExtraText = $"rsi {CandleLast.CandleData.Rsi} not below {GlobalData.Settings.General.RsiValueOverbought}";
             return false;
