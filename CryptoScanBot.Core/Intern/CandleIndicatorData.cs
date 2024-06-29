@@ -77,6 +77,8 @@ public class CandleIndicatorData
     //public double? KeltnerCenterLine { get; set; }
     //public double? KeltnerCenterLineSlope { get; set; }
 
+    public double? Vwap { get; set; }
+    
     // Voor de SMA lookback willen we 60 sma200's erin, dus 200 + 60
     private const int maxCandles = 260;
 
@@ -274,6 +276,7 @@ public class CandleIndicatorData
         //List<AtrResult> atrList = (List<AtrResult>)Indicator.GetAtr(history);
         List<RsiResult> rsiList = (List<RsiResult>)history.GetRsi();
         List<MacdResult> macdList = (List<MacdResult>)history.GetMacd();
+        List<VwapResult> vwapList = (List<VwapResult>)history.GetVwap();
 #if EXTRASTRATEGIES
         List<MacdResult> macdLtList = (List<MacdResult>)history.GetMacd(34, 144);
 #endif
@@ -372,6 +375,8 @@ public class CandleIndicatorData
                 candleData.MacdValue = macdList[index].Macd;
                 candleData.MacdSignal = macdList[index].Signal;
                 candleData.MacdHistogram = macdList[index].Histogram;
+
+                candleData.Vwap = vwapList[index].Vwap;
 
 #if EXTRASTRATEGIES
                 //candleData.MacdLtValue = macdLtList[index].Macd;
