@@ -744,21 +744,41 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                 case ColumnsForGrid.PriceMinPerc:
                     {
                         double value = signal.PriceMinPerc;
-                        if (value <= 0)
-                            foreColor = Color.Red;
+                        if (signal.Side == CryptoTradeSide.Long)
+                        {
+                            if (value <= 0)
+                                foreColor = Color.Red;
+                            else
+                                foreColor = Color.Green;
+                        }
                         else
-                            foreColor = Color.Green;
+                        {
+                            if (value <= 0)
+                                foreColor = Color.Green;
+                            else
+                                foreColor = Color.Red;
+                        }
                     }
                     break;
                 case ColumnsForGrid.PriceMaxPerc:
                     {
                         double value = signal.PriceMaxPerc;
-                        if (value <= 0)
-                            foreColor = Color.Red;
+                        if (signal.Side == CryptoTradeSide.Long)
+                        {
+                            if (value <= 0)
+                                foreColor = Color.Red;
+                            else
+                                foreColor = Color.Green;
+                        }
                         else
-                            foreColor = Color.Green;
-                    }
-                    break;
+                        {
+                            if (value <= 0)
+                                foreColor = Color.Green;
+                            else
+                                foreColor = Color.Red;
+                        }
+            }
+            break;
 
             }
 
