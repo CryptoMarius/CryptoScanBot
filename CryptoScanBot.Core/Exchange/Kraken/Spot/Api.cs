@@ -32,7 +32,7 @@ public class Api : ExchangeBase
 
         KrakenSocketClient.SetDefaultOptions(options =>
         {
-            options.AutoReconnect = true;
+            //options.AutoReconnect = true;
             options.ReconnectInterval = TimeSpan.FromSeconds(15);
             if (GlobalData.TradingApi.Key != "")
                 options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);

@@ -43,7 +43,7 @@ public class Api : ExchangeBase
 
         BybitSocketClient.SetDefaultOptions(options =>
         {
-            options.AutoReconnect = true;
+            //options.AutoReconnect = true;
 
             options.RequestTimeout = TimeSpan.FromSeconds(40); // standard=20 seconds
             options.ReconnectInterval = TimeSpan.FromSeconds(10); // standard=5 seconds

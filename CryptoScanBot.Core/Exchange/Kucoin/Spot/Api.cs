@@ -47,7 +47,7 @@ public class Api : ExchangeBase
 
         KucoinSocketClient.SetDefaultOptions(options =>
         {
-            options.AutoReconnect = true;
+            //options.AutoReconnect = true;
 
             options.RequestTimeout = TimeSpan.FromSeconds(40); // standard=20 seconds
             options.ReconnectInterval = TimeSpan.FromSeconds(10); // standard=5 seconds
@@ -187,7 +187,7 @@ public class Api : ExchangeBase
         //BinanceWeights.WaitForFairBinanceWeight(1); flauwekul voor die ene tick (geen herhaling toch?)
         using KucoinRestClient client = new();
 
-        WebCallResult<KucoinNewOrder> result;
+        WebCallResult<KucoinOrderId> result;
         switch (orderType)
         {
             case CryptoOrderType.Market:
