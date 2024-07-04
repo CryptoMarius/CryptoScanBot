@@ -158,14 +158,15 @@ public class CryptoDatabase : IDisposable
             new() { Name = "Bybit Futures", FeeRate = 0.1m, IsSupported = true, ExchangeType = CryptoExchangeType.Bybit, TradingType=CryptoTradingType.Futures },
             new() { Name = "Kucoin Spot", FeeRate = 0.1m, IsSupported = true, ExchangeType = CryptoExchangeType.Kucoin, TradingType=CryptoTradingType.Spot },
 
-            // not supported
+            // not supported (kline streams not working properly)
             new() { Name = "Kraken Spot", FeeRate = 0.1m, IsSupported = false, ExchangeType = CryptoExchangeType.Kraken, TradingType=CryptoTradingType.Spot },
 
             new() { Name = "Binance Futures", FeeRate = 0.1m, IsSupported = true, ExchangeType = CryptoExchangeType.Binance, TradingType=CryptoTradingType.Futures},
 
-            // not supported
+            // not supported (meeds additional work)
             new() { Name = "Kucoin Futures", FeeRate = 0.1m, IsSupported = false, ExchangeType = CryptoExchangeType.Kucoin, TradingType=CryptoTradingType.Futures },
-            new() { Name = "Mexc Spot", FeeRate = 0.1m, IsSupported = false, ExchangeType = CryptoExchangeType.Mexc, TradingType=CryptoTradingType.Spot },
+
+            new() { Name = "Mexc Spot", FeeRate = 0.1m, IsSupported = true, ExchangeType = CryptoExchangeType.Mexc, TradingType=CryptoTradingType.Spot },
         ];
     }
 
