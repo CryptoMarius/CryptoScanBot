@@ -9,6 +9,8 @@ using Mexc.Net.Clients;
 using Mexc.Net.Enums;
 using Mexc.Net.Objects.Models.Spot;
 
+using System.Text.Json;
+
 namespace CryptoScanBot.Core.Exchange.Mexc.Spot;
 
 public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
@@ -23,10 +25,10 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
     static double GetInterval()
     {
-        // bewust 5 seconden en een beetje layer zodat we zeker weten dat de kline er is
+        // bewust 6 seconden zodat we zeker weten dat de kline er is
         // (anders zou deze 60 seconden later alsnog verwerkt worden, maar dat is te laat)
         DateTime now = DateTime.Now;
-        return 5050 + ((60 - now.Second) * 1000 - now.Millisecond);
+        return 6000 + ((60 - now.Second) * 1000 - now.Millisecond);
     }
 
 
@@ -52,16 +54,17 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
         // Implementatie kline ticker (via cache, wordt door de timer verwerkt)
         TickerGroup!.SocketClient ??= new MexcSocketClient();
+        TickerGroup!.SocketClient.ClientOptions.OutputOriginalData = true;
         var subscriptionResult = await ((MexcSocketClient)TickerGroup.SocketClient).SpotApi.SubscribeToKlineUpdatesAsync(symbolName, KlineInterval.OneMinute, data =>
         {
             Task taskKline = Task.Run(() =>
             {
                 MexcStreamKline kline = data.Data;
-                //string json = JsonSerializer.Serialize(kline, ExchangeHelper.JsonSerializerNotIndented);
-                //ScannerLog.Logger.Trace($"kline ticker {data.Topic} {json}");
+                string json = JsonSerializer.Serialize(data, GlobalData.JsonSerializerNotIndented);
+                GlobalData.AddTextToLogTab($"kline ticker {data.Symbol} {json}");
 
                 //TickerCount++;
-                //ScannerLog.Logger.Trace(String.Format("{0} Candle {1} start processing", topic, kline.Timestamp.ToLocalTime()));
+                //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", data.Symbol, kline.Timestamp.ToLocalTime()));
 
                 Monitor.Enter(Symbol.CandleList);
                 try
@@ -69,7 +72,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                     // Toevoegen aan de lokale cache en/of aanvullen
                     // (via de cache omdat de candle in opbouw is)
                     // (bij veel updates is dit stukje cpu-intensief?)
-                    long candleOpenUnix = CandleTools.GetUnixTime(kline.StartTime, 60);
+                    long candleOpenUnix = CandleTools.GetUnixTime(kline.Timestamp, 60);
                     if (!klineListTemp.TryGetValue(candleOpenUnix, out CryptoCandle? candle))
                     {
                         //TickerCount++;
@@ -83,7 +86,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                     candle.Low = kline.LowPrice;
                     candle.Close = kline.ClosePrice;
                     candle.Volume = kline.QuoteVolume;
-                    //ScannerLog.Logger.Trace($"candle update {candle.OhlcText(Symbol, interval, Symbol.PriceDisplayFormat, true, true)}");
+                    //GlobalData.AddTextToLogTab($"kline received {candle.OhlcText(Symbol, interval, Symbol.PriceDisplayFormat, true, true)}");
 
                     // Dit is de laatste bekende prijs (de priceticker vult eventueel aan)
                     Symbol.LastPrice = kline.ClosePrice;
@@ -167,8 +170,8 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                                 if (interval.ConstructFrom != null && candle1mCloseTime % interval.Duration == 0)
                                 {
                                     CandleTools.CalculateCandleForInterval(interval, interval.ConstructFrom, Symbol, candle1mCloseTime);
-                                    CandleTools.UpdateCandleFetched(Symbol, interval);
                                 }
+                                CandleTools.UpdateCandleFetched(Symbol, interval);
                             }
 
                             // This is the last know price (the priceticker corrects the price later)
@@ -176,15 +179,15 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                             Symbol.AskPrice = candle.Close;
                             Symbol.BidPrice = candle.Close;
 
-                            //if (candle.IsDuplicated)
-                            //    ScannerLog.Logger.Trace("Dup candle " + candle.OhlcText(Symbol, interval, Symbol.PriceDisplayFormat, true, true));
-                            //else
-                            //    ScannerLog.Logger.Trace("New candle " + candle.OhlcText(Symbol, interval, Symbol.PriceDisplayFormat, true, true));
+                            if (candle.IsDuplicated)
+                                GlobalData.AddTextToLogTab("Dup candle " + candle.OhlcText(Symbol, interval, Symbol.PriceDisplayFormat, true, true));
+                            else
+                                GlobalData.AddTextToLogTab("New candle " + candle.OhlcText(Symbol, interval, Symbol.PriceDisplayFormat, true, true));
 
                             // Aanbieden voor analyse (dit gebeurd zowel in de ticker als ProcessCandles)
                             if (candle.OpenTime == expectedCandlesUpto)
                             {
-                                //ScannerLog.Logger.Trace("Aanbieden analyze " + candle.OhlcText(Symbol, interval, Symbol.PriceDisplayFormat, true, true));
+                                GlobalData.AddTextToLogTab("Aanbieden analyze " + candle.OhlcText(Symbol, interval, Symbol.PriceDisplayFormat, true, true));
                                 TickerCount++;
                                 if (GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
                                     GlobalData.ThreadMonitorCandle?.AddToQueue(Symbol, candle);

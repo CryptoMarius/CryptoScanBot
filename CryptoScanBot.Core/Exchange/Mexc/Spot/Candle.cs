@@ -12,6 +12,10 @@ namespace CryptoScanBot.Core.Exchange.Mexc.Spot;
 /// </summary>
 public class Candle
 {
+#if MEXCDEBUG
+    private static int tickerIndex = 0;
+#endif
+
     // Prevent multiple sessions
     private static readonly SemaphoreSlim Semaphore = new(1);
 
@@ -82,16 +86,15 @@ public class Candle
             }
 
             //SaveInformation(symbol, result.Data.List);
-#if KUCOINDEBUG
+#if MEXCDEBUG
                 // Debug, wat je al niet moet doen voor een exchange...
                 tickerIndex++;
                 long unix = CandleTools.GetUnixTime(DateTime.UtcNow, 0);
-                string filename = GlobalData.GetBaseDir() + $@"\Kucoin\Candles-{symbol.Name}-{interval.Name}-{unix}-#{tickerIndex}.json";
-                string text = System.Text.Json.JsonSerializer.Serialize(result, new System.Text.Json.JsonSerializerOptions {
-                    Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true});
+                string filename = $@"{GlobalData.GetBaseDir()}\Mexc Spot\Candles-{symbol.Name}-{interval.Name}-{unix}-#{tickerIndex}.json";
+                string text = System.Text.Json.JsonSerializer.Serialize(result, GlobalData.JsonSerializerIndented);
                 File.WriteAllText(filename, text);
 #endif
-        }
+}
         finally
         {
             Monitor.Exit(symbol.CandleList);
@@ -139,7 +142,7 @@ public class Candle
             Monitor.Enter(symbol.CandleList);
             try
             {
-                // Fill missing candles (at only place we know it can be done safely)
+                // Fill missing candles (the only place we know it can be done safely)
                 if (symbolInterval.CandleList.Count != 0)
                 {
                     CryptoCandle stickOld = symbolInterval.CandleList.Values.First();
@@ -181,12 +184,12 @@ public class Candle
                         candleHigherTimeFrameStart -= candleHigherTimeFrameStart % intervalHigherTimeFrame.Duration;
                         DateTime candleHigherTimeFrameStartDate = CandleTools.GetUnixDate(candleHigherTimeFrameStart);
 
-                        long candleHigherTimeFrameEinde = candlesLowerTimeFrame.Values.Last().OpenTime;
-                        candleHigherTimeFrameEinde -= candleHigherTimeFrameEinde % intervalHigherTimeFrame.Duration;
-                        DateTime candleHigherTimeFrameEindeDate = CandleTools.GetUnixDate(candleHigherTimeFrameEinde);
+                        long candleHigherTimeFrameEnd = candlesLowerTimeFrame.Values.Last().OpenTime;
+                        candleHigherTimeFrameEnd -= candleHigherTimeFrameEnd % intervalHigherTimeFrame.Duration;
+                        DateTime candleHigherTimeFrameEindeDate = CandleTools.GetUnixDate(candleHigherTimeFrameEnd);
 
                         // Bulk calculation
-                        while (candleHigherTimeFrameStart <= candleHigherTimeFrameEinde)
+                        while (candleHigherTimeFrameStart <= candleHigherTimeFrameEnd)
                         {
                             // Die laatste parameter is de closetime van een candle
                             candleHigherTimeFrameStart += intervalHigherTimeFrame.Duration;
