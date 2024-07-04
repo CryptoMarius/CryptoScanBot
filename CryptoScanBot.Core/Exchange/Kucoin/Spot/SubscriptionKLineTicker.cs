@@ -55,7 +55,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
             Task taskKline = Task.Run(() =>
             {
                 KucoinKline kline = data.Data.Candles;
-                //string json = JsonSerializer.Serialize(kline, ExchangeHelper.JsonSerializerNotIndented);
+                //string json = JsonSerializer.Serialize(kline, GlobalData.JsonSerializerNotIndented);
                 //ScannerLog.Logger.Trace($"kline ticker {data.Topic} {json}");
 
                 //TickerCount++;
@@ -165,8 +165,8 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                                 if (interval.ConstructFrom != null && candle1mCloseTime % interval.Duration == 0)
                                 {
                                     CandleTools.CalculateCandleForInterval(interval, interval.ConstructFrom, Symbol, candle1mCloseTime);
-                                    CandleTools.UpdateCandleFetched(Symbol, interval);
                                 }
+                                CandleTools.UpdateCandleFetched(Symbol, interval);
                             }
 
                             // This is the last know price (the priceticker corrects the price later)

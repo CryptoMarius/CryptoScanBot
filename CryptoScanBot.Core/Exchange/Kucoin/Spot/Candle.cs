@@ -93,9 +93,8 @@ public class Candle
                 // Debug, wat je al niet moet doen voor een exchange...
                 tickerIndex++;
                 long unix = CandleTools.GetUnixTime(DateTime.UtcNow, 0);
-                string filename = GlobalData.GetBaseDir() + $@"\Kucoin\Candles-{symbol.Name}-{interval.Name}-{unix}-#{tickerIndex}.json";
-                string text = System.Text.Json.JsonSerializer.Serialize(result, new System.Text.Json.JsonSerializerOptions {
-                    Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true});
+                string filename = $@"{GlobalData.GetBaseDir()}\Kucoin Spot\Candles-{symbol.Name}-{interval.Name}-{unix}-#{tickerIndex}.json";
+                string text = System.Text.Json.JsonSerializer.Serialize(result, GlobalData.JsonSerializerIndented);
                 File.WriteAllText(filename, text);
 #endif
             }
