@@ -44,6 +44,11 @@ public partial class FrmSettings : Form
         EditTradeVia.DataSource = new BindingSource(TradeVia, null);
         EditTradeVia.DisplayMember = "Key";
         EditTradeVia.ValueMember = "Value";
+
+        EditActivateExchange.Items.Clear();
+        EditActivateExchange.Items.Add("De actieve exchange");
+        foreach (var exchange in GlobalData.ExchangeListName.Values)
+            EditActivateExchange.Items.Add(exchange.Name);
     }
 
 

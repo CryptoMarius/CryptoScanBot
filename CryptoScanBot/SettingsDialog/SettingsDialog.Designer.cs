@@ -220,6 +220,10 @@ partial class FrmSettings
         tabPageTradingRules = new TabPage();
         UserControlTradeRules = new SettingsDialog.UserControlTradeRule();
         label59 = new Label();
+        tabApi = new TabPage();
+        flowLayoutPanel3 = new FlowLayoutPanel();
+        UserControlExchangeApi = new SettingsDialog.UserControlExchangeApi();
+        UserControlAltradyApi = new SettingsDialog.UserControlAltradyApi();
         tabWhiteBlack = new TabPage();
         tabControlWhiteBlack = new TabControl();
         tabLongWhiteList = new TabPage();
@@ -240,10 +244,6 @@ partial class FrmSettings
         label49 = new Label();
         toolTip1 = new ToolTip(components);
         colorDialog1 = new ColorDialog();
-        tabApi = new TabPage();
-        flowLayoutPanel3 = new FlowLayoutPanel();
-        UserControlExchangeApi = new SettingsDialog.UserControlExchangeApi();
-        UserControlAltradyApi = new SettingsDialog.UserControlAltradyApi();
         panelButtons.SuspendLayout();
         panelFill.SuspendLayout();
         tabControlMain.SuspendLayout();
@@ -327,6 +327,8 @@ partial class FrmSettings
         tabTradingLong.SuspendLayout();
         tabTradingShort.SuspendLayout();
         tabPageTradingRules.SuspendLayout();
+        tabApi.SuspendLayout();
+        flowLayoutPanel3.SuspendLayout();
         tabWhiteBlack.SuspendLayout();
         tabControlWhiteBlack.SuspendLayout();
         tabLongWhiteList.SuspendLayout();
@@ -337,8 +339,6 @@ partial class FrmSettings
         panel5.SuspendLayout();
         tabShortBlackList.SuspendLayout();
         panel6.SuspendLayout();
-        tabApi.SuspendLayout();
-        flowLayoutPanel3.SuspendLayout();
         SuspendLayout();
         // 
         // panelButtons
@@ -686,7 +686,6 @@ partial class FrmSettings
         // 
         EditActivateExchange.DropDownStyle = ComboBoxStyle.DropDownList;
         EditActivateExchange.FormattingEnabled = true;
-        EditActivateExchange.Items.AddRange(new object[] { "De actieve exchange", "Binance Futures", "Binance Spot", "Bybit Spot", "Bybit Futures", "Kucoin Spot" });
         EditActivateExchange.Location = new Point(153, 89);
         EditActivateExchange.Margin = new Padding(4, 3, 4, 3);
         EditActivateExchange.Name = "EditActivateExchange";
@@ -2527,6 +2526,49 @@ partial class FrmSettings
         label59.TabIndex = 271;
         label59.Text = "Instap condities:";
         // 
+        // tabApi
+        // 
+        tabApi.Controls.Add(flowLayoutPanel3);
+        tabApi.Location = new Point(4, 27);
+        tabApi.Name = "tabApi";
+        tabApi.Padding = new Padding(3);
+        tabApi.Size = new Size(1142, 615);
+        tabApi.TabIndex = 14;
+        tabApi.Text = "API keys";
+        tabApi.UseVisualStyleBackColor = true;
+        // 
+        // flowLayoutPanel3
+        // 
+        flowLayoutPanel3.AutoSize = true;
+        flowLayoutPanel3.Controls.Add(UserControlExchangeApi);
+        flowLayoutPanel3.Controls.Add(UserControlAltradyApi);
+        flowLayoutPanel3.Dock = DockStyle.Fill;
+        flowLayoutPanel3.FlowDirection = FlowDirection.TopDown;
+        flowLayoutPanel3.Location = new Point(3, 3);
+        flowLayoutPanel3.Name = "flowLayoutPanel3";
+        flowLayoutPanel3.Size = new Size(1136, 609);
+        flowLayoutPanel3.TabIndex = 342;
+        // 
+        // UserControlExchangeApi
+        // 
+        UserControlExchangeApi.AutoScroll = true;
+        UserControlExchangeApi.AutoSize = true;
+        UserControlExchangeApi.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+        UserControlExchangeApi.Location = new Point(3, 3);
+        UserControlExchangeApi.Name = "UserControlExchangeApi";
+        UserControlExchangeApi.Size = new Size(350, 96);
+        UserControlExchangeApi.TabIndex = 343;
+        // 
+        // UserControlAltradyApi
+        // 
+        UserControlAltradyApi.AutoScroll = true;
+        UserControlAltradyApi.AutoSize = true;
+        UserControlAltradyApi.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+        UserControlAltradyApi.Location = new Point(3, 105);
+        UserControlAltradyApi.Name = "UserControlAltradyApi";
+        UserControlAltradyApi.Size = new Size(350, 96);
+        UserControlAltradyApi.TabIndex = 342;
+        // 
         // tabWhiteBlack
         // 
         tabWhiteBlack.Controls.Add(tabControlWhiteBlack);
@@ -2720,49 +2762,6 @@ partial class FrmSettings
         label49.TabIndex = 222;
         label49.Text = "(1 munt per regel met een optionele opmerking erachter)";
         // 
-        // tabApi
-        // 
-        tabApi.Controls.Add(flowLayoutPanel3);
-        tabApi.Location = new Point(4, 27);
-        tabApi.Name = "tabApi";
-        tabApi.Padding = new Padding(3);
-        tabApi.Size = new Size(1142, 615);
-        tabApi.TabIndex = 14;
-        tabApi.Text = "API keys";
-        tabApi.UseVisualStyleBackColor = true;
-        // 
-        // flowLayoutPanel3
-        // 
-        flowLayoutPanel3.AutoSize = true;
-        flowLayoutPanel3.Controls.Add(UserControlExchangeApi);
-        flowLayoutPanel3.Controls.Add(UserControlAltradyApi);
-        flowLayoutPanel3.Dock = DockStyle.Fill;
-        flowLayoutPanel3.FlowDirection = FlowDirection.TopDown;
-        flowLayoutPanel3.Location = new Point(3, 3);
-        flowLayoutPanel3.Name = "flowLayoutPanel3";
-        flowLayoutPanel3.Size = new Size(1136, 609);
-        flowLayoutPanel3.TabIndex = 342;
-        // 
-        // UserControlExchangeApi
-        // 
-        UserControlExchangeApi.AutoScroll = true;
-        UserControlExchangeApi.AutoSize = true;
-        UserControlExchangeApi.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-        UserControlExchangeApi.Location = new Point(3, 3);
-        UserControlExchangeApi.Name = "UserControlExchangeApi";
-        UserControlExchangeApi.Size = new Size(350, 96);
-        UserControlExchangeApi.TabIndex = 343;
-        // 
-        // UserControlAltradyApi
-        // 
-        UserControlAltradyApi.AutoScroll = true;
-        UserControlAltradyApi.AutoSize = true;
-        UserControlAltradyApi.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-        UserControlAltradyApi.Location = new Point(3, 105);
-        UserControlAltradyApi.Name = "UserControlAltradyApi";
-        UserControlAltradyApi.Size = new Size(350, 96);
-        UserControlAltradyApi.TabIndex = 342;
-        // 
         // FrmSettings
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
@@ -2888,6 +2887,10 @@ partial class FrmSettings
         tabTradingShort.PerformLayout();
         tabPageTradingRules.ResumeLayout(false);
         tabPageTradingRules.PerformLayout();
+        tabApi.ResumeLayout(false);
+        tabApi.PerformLayout();
+        flowLayoutPanel3.ResumeLayout(false);
+        flowLayoutPanel3.PerformLayout();
         tabWhiteBlack.ResumeLayout(false);
         tabControlWhiteBlack.ResumeLayout(false);
         tabLongWhiteList.ResumeLayout(false);
@@ -2906,10 +2909,6 @@ partial class FrmSettings
         tabShortBlackList.PerformLayout();
         panel6.ResumeLayout(false);
         panel6.PerformLayout();
-        tabApi.ResumeLayout(false);
-        tabApi.PerformLayout();
-        flowLayoutPanel3.ResumeLayout(false);
-        flowLayoutPanel3.PerformLayout();
         ResumeLayout(false);
     }
 
