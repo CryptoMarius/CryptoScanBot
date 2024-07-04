@@ -561,7 +561,6 @@ static public class GlobalData
             {
                 Name = "ETH",
                 FetchCandles = false,
-                CreateSignals = false,
                 MinimalVolume = 6500000,
                 MinimalPrice = 0.00000001m
             };
@@ -571,7 +570,6 @@ static public class GlobalData
             {
                 Name = "USDT",
                 FetchCandles = true,
-                CreateSignals = true,
                 MinimalVolume = 6500000,
                 MinimalPrice = 0.00000001m
             };
@@ -581,7 +579,6 @@ static public class GlobalData
             {
                 Name = "BTC",
                 FetchCandles = false,
-                CreateSignals = false,
                 MinimalVolume = 250,
                 MinimalPrice = 0.00000001m
             };

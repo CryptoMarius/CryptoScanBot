@@ -57,7 +57,6 @@ public class SettingsBasic
         {
             Name = "USDT",
             FetchCandles = true,
-            CreateSignals = true,
             MinimalVolume = 4500000,
         };
 

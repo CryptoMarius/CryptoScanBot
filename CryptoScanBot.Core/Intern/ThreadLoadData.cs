@@ -180,7 +180,7 @@ public class ThreadLoadData
         // Verwijder de quotes die geen symbols bevatten
         foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values.ToList())
         {
-            if (quoteData.SymbolList.Count == 0 && !quoteData.FetchCandles && !quoteData.CreateSignals)
+            if (quoteData.SymbolList.Count == 0 && !quoteData.FetchCandles)
                 GlobalData.Settings.QuoteCoins.Remove(quoteData.Name);
 
         }

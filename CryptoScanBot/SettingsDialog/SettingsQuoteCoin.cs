@@ -11,7 +11,6 @@ internal class SettingsQuoteCoin : IDisposable
     public CheckBox FetchCandles;
     public NumericUpDown MinVolume;
     public NumericUpDown MinPrice;
-    public CheckBox CreateSignals;
 
     // Display settings
     public Panel PanelColor;
@@ -29,7 +28,6 @@ internal class SettingsQuoteCoin : IDisposable
         if (FetchCandles != null) { FetchCandles.Dispose(); FetchCandles = null; }
         if (MinVolume != null) { MinVolume.Dispose(); MinVolume = null; }
         if (MinPrice != null) { MinPrice.Dispose(); MinPrice = null; }
-        if (CreateSignals != null) { CreateSignals.Dispose(); CreateSignals = null; }
         if (PanelColor != null) { PanelColor.Dispose(); PanelColor = null; }
         if (ButtonColor != null) { ButtonColor.Dispose(); ButtonColor = null; }
 #if TRADEBOT
@@ -55,16 +53,6 @@ internal class SettingsQuoteCoin : IDisposable
         };
         xPos += FetchCandles.Size.Width + 50;
         controls.Add(FetchCandles);
-
-        CreateSignals = new()
-        {
-            AutoSize = true,
-            Location = new Point(xPos, yPos + 3),
-            Size = new Size(15, 23),
-            UseVisualStyleBackColor = true
-        };
-        xPos += CreateSignals.Size.Width + 50;
-        controls.Add(CreateSignals);
 
         // Minimum Volume
         MinVolume = new()
@@ -205,14 +193,6 @@ internal class SettingsQuoteCoin : IDisposable
         };
         controls.Add(label);
 
-        label = new()
-        {
-            AutoSize = true,
-            Text = "Signalen",
-            Location = new Point(CreateSignals.Location.X - correct, yPos),
-        };
-        controls.Add(label);
-
 #if TRADEBOT
         label = new()
         {
@@ -265,7 +245,6 @@ internal class SettingsQuoteCoin : IDisposable
         FetchCandles.Checked = QuoteData.FetchCandles;
         MinVolume.Value = QuoteData.MinimalVolume;
         MinPrice.Value = QuoteData.MinimalPrice;
-        CreateSignals.Checked = QuoteData.CreateSignals;
         PanelColor.BackColor = QuoteData.DisplayColor;
         // TODO: nieuwe trading controls!
 
@@ -282,7 +261,6 @@ internal class SettingsQuoteCoin : IDisposable
         QuoteData.FetchCandles = FetchCandles.Checked;
         QuoteData.MinimalVolume = MinVolume.Value;
         QuoteData.MinimalPrice = MinPrice.Value;
-        QuoteData.CreateSignals = CreateSignals.Checked;
         QuoteData.DisplayColor = PanelColor.BackColor;
 #if TRADEBOT
         QuoteData.EntryAmount = BuyAmount.Value;

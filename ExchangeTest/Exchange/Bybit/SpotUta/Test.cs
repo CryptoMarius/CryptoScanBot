@@ -23,7 +23,7 @@ internal class Test
 
         BybitSocketClient.SetDefaultOptions(options =>
         {
-            options.AutoReconnect = true;
+            //options.AutoReconnect = true;
             options.OutputOriginalData = true;
             options.ReconnectInterval = TimeSpan.FromSeconds(15);
             if (GlobalData.TradingApi.Key != "")

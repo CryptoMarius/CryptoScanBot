@@ -12,7 +12,6 @@ public class CryptoQuoteData
 
     // Basecoin data
     public bool FetchCandles { get; set; }
-    public bool CreateSignals { get; set; }
     public decimal MinimalVolume { get; set; }
     public decimal MinimalPrice { get; set; }
     // Trading: The initial entry amount

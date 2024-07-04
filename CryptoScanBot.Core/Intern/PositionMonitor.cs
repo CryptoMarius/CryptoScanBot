@@ -1727,7 +1727,7 @@ public class PositionMonitor : IDisposable
     {
         List<CryptoSignal> signalList = [];
         //GlobalData.Logger.Info($"CreateSignals(start):" + LastCandle1m.OhlcText(Symbol, GlobalData.IntervalList[0], Symbol.PriceDisplayFormat, true, false, true));
-        if (GlobalData.Settings.Signal.Active && Symbol.QuoteData.CreateSignals && Symbol.Status == 1)
+        if (GlobalData.Settings.Signal.Active && Symbol.QuoteData!.FetchCandles && Symbol.Status == 1)
         {
             // Is de munt te nieuw? (hebben we vertrouwen in nieuwe munten?)
             if (!SymbolTools.CheckNewCoin(Symbol, out string reaction))

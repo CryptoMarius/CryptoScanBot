@@ -119,7 +119,6 @@ public partial class FrmSettings : Form
             {
                 Name = "USDT",
                 FetchCandles = true,
-                CreateSignals = true,
                 MinimalVolume = 4500000,
             };
 
@@ -143,7 +142,6 @@ public partial class FrmSettings : Form
             else
             {
                 quoteData.FetchCandles = false;
-                quoteData.CreateSignals = false;
             }
         }
 

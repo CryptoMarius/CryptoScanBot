@@ -4,11 +4,12 @@ Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep
 
 
 Scanner:
-- Scanner - Ondersteuning Mexc exchange?
+- Scanner - Ondersteuning Mexc exchange
 - Scanner - Mexc - Problemen met de 1m candles die maar steeds geladen blijven worden (wellicht ook voro Kucoin?)
 - Scanner - Mexc - Kline ticker valt iedere keer uit (net zoals kraken?)
+- Scanner - Mexc - De candle informatie lijkt niet te kloppen (JKorf gevraagd)
 
-- Scanner - De berekening van de trend is enorm traag (zeker in de emulator)
+
 - Scanner - Gerapporteerd: Het geheugen loopt langzaam op gedurende meerdere weken
             https://memprofiler.com/
             https://www.red-gate.com/products/ants-performance-profiler/
@@ -17,7 +18,6 @@ Scanner:
             https://learn.microsoft.com/en-us/visualstudio/profiling/memory-usage?view=vs-2022
             CLRProfiler 
 
-- Scanner - Binance Futures deeplink url werkt niet
 - Scanner - Nieuwe munten die toegevoegd worden op de exchange terwijl de scanner loopt worden niet automatisch toegevoegd aan de price- en kline tickers
 - Scanner - Limit rates voor Kucoin verder uitwerken (ophalen candles geeft soms een foutmelding, wordt bij een volgende herstart wel hersteld, maar hoort niet zo)
             error getting klines [ServerRateLimitError] 429: Server rate limit exceeded: {"code":"429000","msg":"too many request"}
@@ -57,6 +57,8 @@ Scanner:
 
 Trading:
 - Trading - Documentatie bijwerken - Een klusje..
+- Trading - Stop loss introduceren voor Bybit
+- Trading - Stop loss introduceren voor Binance
 - Trading - De laatste X posities dumpen naar Excel voor een overzichtje
 - Trading - Controle inbouwen op het short gaan, in futures kan dat, maar in spot lukt dat natuurlijk alleen als er assets beschikbaar zijn
 - Trading - De trader zet soms (zeg maar gerust in een enkele keer) correct afgehandelde posities weg als zijnde een takeover. Daar is/was geen aanleiding voor dus dat moet wel een bug zijn!
