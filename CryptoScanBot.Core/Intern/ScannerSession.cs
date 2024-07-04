@@ -340,6 +340,8 @@ public static class ScannerSession
             if (ExchangeHelper.UserTicker != null)
                 await ExchangeHelper.UserTicker.CheckTickers(); // herstarten van ticker indien errors
 #endif
+
+            //GlobalData.AddTextToLogTab("Debug: GetCandles() eventjes uit vanwege debug!");
             await ExchangeHelper.GetCandlesAsync();
         });
         //_ = ExchangeHelper.KLineTicker.CheckKlineTickers(); // herstarten van ticker indien errors
