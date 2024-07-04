@@ -83,14 +83,16 @@ public class AltradyWebhook
                 }
             }
 
-            // SL body // Or was it the limitPercentage?
+            // SL body
             if (GlobalData.Settings.Trading.StopLossPercentage > 0)
             {
-                dynamic stop_loss = new JObject();
-                request.stop_loss = stop_loss;
-                stop_loss.stop_percentage = GlobalData.Settings.Trading.StopLossPercentage;
-                stop_loss.cool_down_amount = 0;
-                stop_loss.cool_down_time_frame = "minute";
+                //dynamic stop_loss = new JObject();
+                //request.stop_loss = stop_loss;
+                //stop_loss.stop_percentage = GlobalData.Settings.Trading.StopLossPercentage;
+                //stop_loss.cool_down_amount = 0;
+                //stop_loss.cool_down_time_frame = "minute";
+
+                request.stop_loss_percentage = GlobalData.Settings.Trading.StopLossPercentage;
             }
 
 
