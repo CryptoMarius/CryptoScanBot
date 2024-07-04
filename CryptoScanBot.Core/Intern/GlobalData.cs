@@ -145,6 +145,8 @@ static public class GlobalData
     public static readonly JsonSerializerOptions JsonSerializerIndented = new()
     { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true, IncludeFields = true };
 
+    public static readonly JsonSerializerOptions JsonSerializerNotIndented = new()
+    { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = false };
 
     static public void LoadExchanges()
     {
@@ -344,17 +346,19 @@ static public class GlobalData
           //symbol.Name.Equals("ADAUSDT") ||
           //  symbol.Name.Equals("AAVE3SUSDT") ||
           //  symbol.Name.Equals("DASHUSDT") ||
-          symbol.Name.Equals("ADAUSDT") ||
-          symbol.Name.Equals("WLDUSDT") ||
-          symbol.Name.Equals("STORJUSDT") ||
+          //symbol.Name.Equals("ADAUSDT") ||
+          //symbol.Name.Equals("WLDUSDT") ||
+          //symbol.Name.Equals("STORJUSDT") ||
+          //symbol.Name.Equals("AEETH") ||
+          symbol.Name.Equals("SENSOETH") ||
 
 
+
+          symbol.Name.Equals("$BMPBTC") ||
+          symbol.Name.Equals("$BMPETH") ||
           symbol.Name.Equals("$BMPUSDT") ||
-          //symbol.Name.Equals("ADABTC") ||
-          //symbol.Name.Equals("COMPBTC") ||
-          //symbol.Name.Equals("VEGAUSDT") ||
-          //symbol.Name.Equals("UNICUSDT") ||
-          symbol.Name.Equals("$BMPBTC")
+          symbol.Name.Equals("$BMPUSDC") ||
+          symbol.Name.Equals("$BMPTUSD")
           )
 #endif
 
