@@ -899,6 +899,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                             if (changed)
                             {
                                 using CryptoDatabase databaseThread = new();
+                                databaseThread.Open();
                                 databaseThread.Connection.Update(signal);
                             }
                         }
