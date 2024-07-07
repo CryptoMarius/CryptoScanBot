@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 
 namespace CryptoScanBot.Core.Intern;
@@ -223,26 +222,29 @@ public static class CandleTools
     }
 
     // Move?
-    public static void Process1mCandle(CryptoSymbol symbol, DateTime openTime, decimal open, decimal high, decimal low, decimal close, decimal volume)
+    public static CryptoCandle Process1mCandle(CryptoSymbol symbol, DateTime openTime, decimal open, decimal high, decimal low, decimal close, decimal volume, bool duplicated = false)
     {
         Monitor.Enter(symbol.CandleList);
         try
         {
             // Last known price (and the price ticker will adjust)
             if (!GlobalData.BackTest)
+            {
                 symbol.LastPrice = close;
+                symbol.AskPrice = close;
+                symbol.BidPrice = close;
+            }
 
             // Process the single 1m candle
-            CryptoCandle candle = HandleFinalCandleData(symbol, GlobalData.IntervalList[0], openTime, open, high, low, close, volume, false);
+            CryptoCandle candle = HandleFinalCandleData(symbol, GlobalData.IntervalList[0], openTime, open, high, low, close, volume, duplicated);
             UpdateCandleFetched(symbol, GlobalData.IntervalList[0]);
 #if SHOWTIMING
 
-            GlobalData.Logger.Info($"ticker(1m):" + candle.OhlcText(symbol, GlobalData.IntervalList[0], symbol.PriceDisplayFormat, true, false, true));
+            GlobalData.AddTextToLogTab($"ticker(1m):" + candle.OhlcText(symbol, GlobalData.IntervalList[0], symbol.PriceDisplayFormat, true, false, true));
 #endif
 
 
-            // Calculate higher timeframes
-            //long candle1mOpenTime = candle.OpenTime;
+            // Calculate the higher timeframes
             long candle1mCloseTime = candle.OpenTime + 60;
             foreach (CryptoInterval interval in GlobalData.IntervalList)
             {
@@ -252,15 +254,12 @@ public static class CandleTools
                     UpdateCandleFetched(symbol, interval);
 #if SHOWTIMING
 
-                    GlobalData.Logger.Info($"ticker({interval.Name}):" + candleNew.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, false, true));
+                    GlobalData.AddTextToLogTab($"ticker({interval.Name}):" + candleNew.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, false, true));
 #endif
-
                 }
             }
 
-            // Aanbieden voor analyse (dit gebeurd zowel in de ticker als ProcessCandles)
-            if (!GlobalData.BackTest && GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
-                GlobalData.ThreadMonitorCandle!.AddToQueue(symbol, candle);
+            return candle;
         }
         finally
         {
