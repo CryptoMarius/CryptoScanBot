@@ -27,6 +27,7 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
+    <DefineConstants>$(DefineConstants);TRADEBOT</DefineConstants>
   </PropertyGroup>
   <PropertyGroup />
   <PropertyGroup>

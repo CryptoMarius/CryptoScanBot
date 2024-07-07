@@ -10,6 +10,10 @@
     <DefineConstants>$(DefineConstants);TRADEBOT</DefineConstants>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DefineConstants>$(DefineConstants);TRADEBOT</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <Compile Remove="Exchange\Kucoin\Futures\**" />
     <EmbeddedResource Remove="Exchange\Kucoin\Futures\**" />
@@ -78,6 +82,10 @@
     <None Update="Sounds\sound-trade-notification.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Exchange\Mexc\Spot\NewFolder\" />
   </ItemGroup>
 
 </Project>
