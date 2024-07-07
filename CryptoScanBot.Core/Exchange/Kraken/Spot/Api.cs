@@ -19,7 +19,7 @@ public class Api : ExchangeBase
     {
         ExchangeOptions.ExchangeName = "Kraken Spot";
         ExchangeOptions.LimitAmountOfSymbols = false;
-        ExchangeOptions.SubscriptionLimitSymbols = 10; // onbekend
+        ExchangeOptions.SymbolLimitPerSubscription = 10; // onbekend
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         // Default opties voor deze exchange

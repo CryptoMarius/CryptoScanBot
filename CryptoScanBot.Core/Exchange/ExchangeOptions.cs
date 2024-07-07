@@ -8,12 +8,13 @@ public class ExchangeOptions
     //public Type ApiType { get; set; }
 
     // Aantal symbols per subscription (een limiet van de exchange)
-    public int SubscriptionLimitSymbols { get; set; }
+    public int SymbolLimitPerSubscription { get; set; }
 
     // Aantal subscriptions per client (een keuze in de techniek)
-    public int SubscriptionLimitClient { get; set; } = 10;
+    public int SubscriptionLimitPerClient { get; set; } = 10;
 
     // Reduceer het aantal symbols adhv het volume (indien mogelijk)
-    // - Specifiek voor Kucoin vanwege het aantal low volume coins
+    // - Specificly build for Kucoin because of the amount of symbols
+    // - Skip symbol if specified volume if to low (quotedata volume limit)
     public bool LimitAmountOfSymbols { get; set; }
 }

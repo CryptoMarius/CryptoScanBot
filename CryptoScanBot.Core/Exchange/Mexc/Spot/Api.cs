@@ -14,12 +14,9 @@ public class Api : ExchangeBase
     public override void ExchangeDefaults()
     {
         ExchangeOptions.ExchangeName = "Mexc Spot";
-        ExchangeOptions.LimitAmountOfSymbols = false;
-        //ExchangeOptions.SubscriptionLimitSymbols = 30;
-
-        // kucoin settings
-        ExchangeOptions.SubscriptionLimitSymbols = 1;
-        ExchangeOptions.SubscriptionLimitClient = 30;
+        ExchangeOptions.LimitAmountOfSymbols = true;
+        ExchangeOptions.SymbolLimitPerSubscription = 3; // 10 was okay for limited amount, but errors with 2500+ symbols, back to 1
+        ExchangeOptions.SubscriptionLimitPerClient = 10;
 
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
@@ -38,7 +35,7 @@ public class Api : ExchangeBase
         MexcSocketClient.SetDefaultOptions(options =>
         {
             //options.AutoReconnect = true;
-            options.RequestTimeout = TimeSpan.FromSeconds(40); // standard=20 seconds
+            options.RequestTimeout = TimeSpan.FromSeconds(60); // standard=20 seconds
             options.ReconnectInterval = TimeSpan.FromSeconds(10); // standard=5 seconds
             options.SocketNoDataTimeout = TimeSpan.FromMinutes(1); // standard=30 seconds
 

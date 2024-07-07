@@ -91,7 +91,7 @@ public class Api : ExchangeBase
     {
         ExchangeOptions.ExchangeName = "Binance Spot";
         ExchangeOptions.LimitAmountOfSymbols = false;
-        ExchangeOptions.SubscriptionLimitSymbols = 200;
+        ExchangeOptions.SymbolLimitPerSubscription = 200;
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         // Default opties voor deze exchange

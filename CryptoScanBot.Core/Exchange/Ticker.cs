@@ -58,8 +58,6 @@ public class Ticker(ExchangeOptions exchangeOptions, Type userTickerItemType, Cr
                 {
                     foreach (var symbol in symbols.ToList())
                     {
-                        if (symbol.Name.Equals("KONUSDT"))
-                            continue; // debug
                         if (symbol.QuoteData.MinimalVolume > 0 && symbol.Volume < 0.1m * symbol.QuoteData.MinimalVolume)
                             symbols.Remove(symbol);
                     }
@@ -74,7 +72,7 @@ public class Ticker(ExchangeOptions exchangeOptions, Type userTickerItemType, Cr
                         ticker.GroupName = $"{quoteData.Name}#{groupCount}";
                         ticker.TickerType = TickerType;
                         tickers.Add(ticker);
-                        x -= ExchangeOptions.SubscriptionLimitSymbols;
+                        x -= ExchangeOptions.SymbolLimitPerSubscription;
                         groupCount++;
                     }
                 }
@@ -147,7 +145,7 @@ public class Ticker(ExchangeOptions exchangeOptions, Type userTickerItemType, Cr
             tickerGroup.SocketClient = null; // todo
 
             // Dit zou ook met een Take() kunnen, maar ach dit werkt ook
-            while (tickerList.Count > 0 && tickerGroup.TickerList.Count < ExchangeOptions.SubscriptionLimitClient)
+            while (tickerList.Count > 0 && tickerGroup.TickerList.Count < ExchangeOptions.SubscriptionLimitPerClient)
             {
                 var ticker = tickerList[0];
                 ticker.TickerGroup = tickerGroup;

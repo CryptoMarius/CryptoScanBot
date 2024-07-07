@@ -26,7 +26,7 @@ public class Api : ExchangeBase
     {
         ExchangeOptions.ExchangeName = "Bybit Futures";
         ExchangeOptions.LimitAmountOfSymbols = false;
-        ExchangeOptions.SubscriptionLimitSymbols = 10;
+        ExchangeOptions.SymbolLimitPerSubscription = 10;
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         // Default opties voor deze exchange

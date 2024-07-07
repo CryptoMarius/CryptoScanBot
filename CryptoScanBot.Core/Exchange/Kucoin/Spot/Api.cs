@@ -17,8 +17,8 @@ public class Api : ExchangeBase
     public override void ExchangeDefaults()
     {
         ExchangeOptions.ExchangeName = "Kucoin Spot";
-        ExchangeOptions.SubscriptionLimitSymbols = 1;
-        ExchangeOptions.SubscriptionLimitClient = 20;
+        ExchangeOptions.SymbolLimitPerSubscription = 1;
+        ExchangeOptions.SubscriptionLimitPerClient = 20;
         ExchangeOptions.LimitAmountOfSymbols = true;
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
@@ -49,7 +49,7 @@ public class Api : ExchangeBase
         {
             //options.AutoReconnect = true;
 
-            options.RequestTimeout = TimeSpan.FromSeconds(40); // standard=20 seconds
+            options.RequestTimeout = TimeSpan.FromSeconds(60); // standard=20 seconds
             options.ReconnectInterval = TimeSpan.FromSeconds(10); // standard=5 seconds
             options.SocketNoDataTimeout = TimeSpan.FromMinutes(1); // standard=30 seconds
             //options.V5Options.SocketNoDataTimeout = options.SocketNoDataTimeout;
