@@ -220,10 +220,10 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
     {
         string text = tradingApp switch
         {
-            CryptoTradingApp.Altrady => "Altrady",
-            CryptoTradingApp.Hypertrader => "Hypertrader",
-            CryptoTradingApp.TradingView => "TradingView",
-            CryptoTradingApp.ExchangeUrl => exchangeName,
+            CryptoTradingApp.Altrady => $"Altrady {exchangeName}",
+            CryptoTradingApp.Hypertrader => $"Hypertrader {exchangeName}",
+            CryptoTradingApp.TradingView => $"TradingView {exchangeName}",
+            CryptoTradingApp.ExchangeUrl => $"Exchange {exchangeName}",
             _ => "",
         };
         return text;

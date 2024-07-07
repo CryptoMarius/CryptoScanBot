@@ -21,10 +21,10 @@ public class CandleIndicatorData
 #endif
 
     // Exponential Moving Average
-    public double? Ema5 { get; set; }
+    public double? Ema9 { get; set; }
     //public double? Ema8 { get; set; }
 #if EXTRASTRATEGIES
-    public double? Ema9 { get; set; }
+    public double? Ema5 { get; set; }
     public double? Ema26 { get; set; }
 
     public double? Ema20 { get; set; }
@@ -245,10 +245,10 @@ public class CandleIndicatorData
 
         //List<TemaResult> temaList = (List<TemaResult>)Indicator.GetTema(history, 5);
 
+        List<EmaResult> emaList9 = (List<EmaResult>)history.GetEma(9);
+#if EXTRASTRATEGIES
         List<EmaResult> emaList5 = (List<EmaResult>)history.GetEma(5);
         //List<EmaResult> emaList8 = (List<EmaResult>)history.GetEma(8);
-#if EXTRASTRATEGIES
-        List<EmaResult> emaList9 = (List<EmaResult>)history.GetEma(9);
         List<EmaResult> emaList26 = (List<EmaResult>)history.GetEma(26);
         //List<EmaResult> emaList100 = (List<EmaResult>)history.GetEma(100);
         //List<EmaResult> emaList200 = (List<EmaResult>)history.GetEma(200);
@@ -341,7 +341,7 @@ public class CandleIndicatorData
             try
             {
                 //// EMA's
-                candleData.Ema5 = emaList5[index].Ema;
+                candleData.Ema9 = emaList9[index].Ema;
                 ////candleData.Ema8 = emaList8[index].Ema;
 #if EXTRASTRATEGIES
                 candleData.Ema9 = emaList9[index].Ema;

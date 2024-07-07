@@ -1,4 +1,5 @@
-﻿using CryptoScanBot.Core.Model;
+﻿using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Model;
 using System.Collections.Concurrent;
 
 namespace CryptoScanBot.Core.Intern;
@@ -19,7 +20,8 @@ public class ThreadMonitorCandle
 
     public void AddToQueue(CryptoSymbol symbol, CryptoCandle candle)
     {
-        Queue.Add((symbol, candle));
+        if (!GlobalData.BackTest && GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
+            Queue.Add((symbol, candle));
     }
 
 

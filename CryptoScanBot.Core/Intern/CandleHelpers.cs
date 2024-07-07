@@ -60,6 +60,9 @@ public static class Helper
         if (includeInterval)
             s = s + " interval=" + interval.Name;
 
+        //if (fmt == "N0")
+          //  fmt = "N2";
+
         s = s + " open=" + candle.Open.ToString(fmt);
         s = s + " high=" + candle.High.ToString(fmt);
         s = s + " low=" + candle.Low.ToString(fmt);

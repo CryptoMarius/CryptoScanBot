@@ -337,7 +337,7 @@ static public class GlobalData
     static public void AddSymbol(CryptoSymbol symbol)
     {
 #if LIMITSYMBOLS
-        // Testje met gelimiteerd aantal symbols
+        // Test with limits anount of symbols for debugging purposes
         if (
             symbol.Name.Equals("BTCUSDT") ||
           //  symbol.Name.Equals("BNBUSDT") ||
@@ -349,8 +349,10 @@ static public class GlobalData
           //symbol.Name.Equals("ADAUSDT") ||
           //symbol.Name.Equals("WLDUSDT") ||
           //symbol.Name.Equals("STORJUSDT") ||
-          //symbol.Name.Equals("AEETH") ||
+          symbol.Name.Equals("CRVETH") ||
+          symbol.Name.Equals("AEETH") ||
           symbol.Name.Equals("SENSOETH") ||
+          symbol.Name.Equals("DEGOETH") ||
 
 
 
