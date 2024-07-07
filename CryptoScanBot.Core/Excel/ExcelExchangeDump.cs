@@ -73,11 +73,22 @@ public class ExcelExchangeDump(Model.CryptoExchange exchange) : ExcelBase(exchan
     {
         ISheet sheet = Book.CreateSheet("Information");
 
-        WriteCell(sheet, 0, 1, "Exchange");
-        WriteCell(sheet, 0, 2, "Aantal symbols");
+        int row = 0;
+        WriteCell(sheet, 0, row, "Exchange");
+        WriteCell(sheet, 1, row, exchange.Name);
 
-        WriteCell(sheet, 1, 1, exchange.Name);
-        WriteCell(sheet, 1, 2, exchange.SymbolListName.Count);
+        row++;
+        WriteCell(sheet, 0, row, "Symbol count");
+        WriteCell(sheet, 1, row, exchange.SymbolListName.Count);
+
+        row += 2;
+        WriteCell(sheet, 0, row, "Quote information");
+        foreach (var quote in GlobalData.Settings.QuoteCoins.Values)
+        {
+            row++;
+            WriteCell(sheet, 0, row, quote.Name);
+            WriteCell(sheet, 1, row, quote.SymbolList.Count);
+        }
 
         AutoSize(sheet, 6);
     }
@@ -86,8 +97,8 @@ public class ExcelExchangeDump(Model.CryptoExchange exchange) : ExcelBase(exchan
     {
         try
         {
-            DumpSymbols();
             DumpInformation();
+            DumpSymbols();
 
             StartExcell("Symbols", exchange.Name);
 
