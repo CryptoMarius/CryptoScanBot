@@ -15,5 +15,6 @@ public enum CryptoSignalStrategy
     StoRsi = 10, // WGHM - STOSCH en RSI momentum indicator
     RsiStochK = 19,
 
+    Ross2 = 98, // just a test
     Ross = 99, // just a test
 }

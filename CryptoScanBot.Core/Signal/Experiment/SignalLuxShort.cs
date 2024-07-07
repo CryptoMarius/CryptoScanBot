@@ -14,41 +14,15 @@ public class SignalFluxShort : SignalSbmBaseShort
     }
 
 
-    public override bool AdditionalChecks(CryptoCandle candle, out string response)
+    public override bool IndicatorsOkay(CryptoCandle candle)
     {
-        response = "";
-
-        // ********************************************************************
-        // Price must to above BB.upper
-        if (CandleLast.Close <= (decimal)CandleLast.CandleData!.BollingerBandsUpperBand!)
-        {
-            ExtraText = "price below bb.high";
+        if (candle == null
+           || candle.CandleData == null
+           || candle.CandleData.Rsi == null
+           || candle.CandleData.Ema9 == null
+           || candle.CandleData.StochSignal == null
+           )
             return false;
-        }
-
-        // ********************************************************************
-        // percentage ema5 and close at least 1%
-        decimal percentage = 100 * CandleLast.Close / (decimal)CandleLast.CandleData!.Ema5!;
-        if (percentage < 100.35m)
-        {
-            response = $"distance close and ema5 not ok {percentage:N2}";
-            return false;
-        }
-
-        //// ********************************************************************
-        //// MA lines without psar
-        //if (!CandleLast.IsSbmConditionsOverbought(false))
-        //{
-        //    response = "geen sbm condities";
-        //    return false;
-        //}
-
-        //// ********************************************************************
-        //if (!IsRsiDecreasingInTheLast(3, 1))
-        //{
-        //    response = string.Format("RSI niet afnemend in de laatste 3,1");
-        //    return false;
-        //}
 
         return true;
     }
@@ -76,16 +50,47 @@ public class SignalFluxShort : SignalSbmBaseShort
         }
 
 
+        //if (!GetPrevCandle(CandleLast, out CryptoCandle? prevCandle))
+        //    return false;
+
+        //// ********************************************************************
+        //// Need some sign of recovery (weak)
+        //if (CandleLast.CandleData.Rsi > prevCandle!.CandleData!.Rsi)
+        //{
+        //    ExtraText = $"rsi {CandleLast.CandleData.Rsi} still increasing";
+        //    return false;
+        //}
+
+        //// ********************************************************************
+        //// Need some sign of recovery (weak)
+        //if (CandleLast.CandleData.StochSignal > prevCandle.CandleData.StochSignal)
+        //{
+        //    ExtraText = $"stoch {CandleLast.CandleData.Rsi} still increasing";
+        //    return false;
+        //}
+
         // ********************************************************************
-        // Flux
-        LuxIndicator.Calculate(Symbol, out int _, out int luxOverBought, CryptoIntervalPeriod.interval5m, CandleLast.OpenTime + Interval.Duration);
-        if (luxOverBought < 100)
+        // the distance between ema5 and close needs to be as big as possible (weak)
+        // Begins to looks like the SBM method with distances, actually kind of interesting..
+        // ==> rubber bands methology & recovery signs
+        decimal percentage = 100 * (decimal)CandleLast.CandleData.Ema9! / CandleLast.Close;
+        if (percentage < 101m)
         {
-            ExtraText = $"flux overbought {luxOverBought} below 100";
+            ExtraText = $"distance close and ema9 not ok {percentage:N2}";
             return false;
         }
+        percentage -= 100;
 
-        decimal percentage = 100 * CandleLast.Close / (decimal)CandleLast.CandleData.Ema5!;
+        // stupid lux?
+        //// ********************************************************************
+        //// Flux
+        //LuxIndicator.Calculate(Symbol, out int _, out int luxOverBought, CryptoIntervalPeriod.interval5m, CandleLast.OpenTime + Interval.Duration);
+        //if (luxOverBought < 100)
+        //{
+        //    ExtraText = $"flux overbought {luxOverBought} below 100";
+        //    return false;
+        //}
+
         ExtraText = $"{percentage:N2}%";
         return true;
     }

@@ -132,30 +132,39 @@ public static class SignalHelper
 #endif
 
 
-        //***************************************************
-        // Experiment FLUX - JanH
-        //***************************************************
-        Register(new AlgorithmDefinition()
-        {
-            Name = "lux",
-            Strategy = CryptoSignalStrategy.Lux,
-            AnalyzeLongType = typeof(SignalLuxLong),
-            AnalyzeShortType = typeof(SignalFluxShort),
-        });
+        ////***************************************************
+        //// Experiment FLUX
+        ////***************************************************
+        //Register(new AlgorithmDefinition()
+        //{
+        //    Name = "ema9.d",
+        //    Strategy = CryptoSignalStrategy.Lux,
+        //    AnalyzeLongType = typeof(SignalLuxLong),
+        //    AnalyzeShortType = typeof(SignalFluxShort),
+        //});
 
 
-        //***************************************************
-        // Experiment Ross - Ross Cameron
-        //***************************************************
-        Register(new AlgorithmDefinition()
-        {
-            Name = "ross",
-            Strategy = CryptoSignalStrategy.Ross,
-            AnalyzeLongType = typeof(SignalRossLong),
-            AnalyzeShortType = null,
-        });
+        ////***************************************************
+        //// Experiment Ross - Ross Cameron
+        ////***************************************************
+        //Register(new AlgorithmDefinition()
+        //{
+        //    Name = "vol.5x",
+        //    Strategy = CryptoSignalStrategy.Ross,
+        //    AnalyzeLongType = typeof(SignalRossLong),
+        //    AnalyzeShortType = typeof(SignalRossShort),
+        //});
 
-
+        ////***************************************************
+        //// Experiment Ross - Ross Cameron
+        ////***************************************************
+        //Register(new AlgorithmDefinition()
+        //{
+        //    Name = "vwap.c",
+        //    Strategy = CryptoSignalStrategy.Ross2,
+        //    AnalyzeLongType = typeof(SignalRoss2Long),
+        //    AnalyzeShortType = typeof(SignalRoss2Short),
+        //});
 
 
         //// En de lijst eenmalig indexeren

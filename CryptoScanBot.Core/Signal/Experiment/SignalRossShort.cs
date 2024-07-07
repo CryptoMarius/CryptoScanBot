@@ -10,26 +10,12 @@ namespace CryptoScanBot.Core.Signal.Experiment;
 // Btw: I found volume based trading very interesting and this is just a little experiment in that corner..
 // Sofar long signals (I did not check 100%) have at least 1% profit (from the scanner's monitoring system)
 
-public class SignalRossLong : SignalCreateBase
+public class SignalRossShort: SignalCreateBase
 {
-    static string blablaName;
-    static CryptoTradeSide blablaSide;
-    static CryptoSignalStrategy blablaAlgorithm;
-
-    static SignalRossLong()
+    public SignalRossShort(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        blablaName = "ross";
-        blablaSide = CryptoTradeSide.Long;
-        blablaAlgorithm = CryptoSignalStrategy.Ross;
-    }
-
-    public SignalRossLong(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
-    {
-        //SignalSide = CryptoTradeSide.Long;
-        //SignalStrategy = CryptoSignalStrategy.Ross;
-
-        SignalSide = blablaSide;
-        SignalStrategy = blablaAlgorithm;
+        SignalSide = CryptoTradeSide.Short;
+        SignalStrategy = CryptoSignalStrategy.Ross;
     }
 
     public override bool AdditionalChecks(CryptoCandle candle, out string response)
@@ -88,18 +74,18 @@ public class SignalRossLong : SignalCreateBase
 
         // ********************************************************************
         // macd histogram positief
-        if (CandleLast.CandleData.MacdHistogram < 0)
+        if (CandleLast.CandleData.MacdHistogram > 0)
         {
-            ExtraText = $"macd histogram not positive {CandleLast.CandleData.MacdHistogram}";
+            ExtraText = $"macd histogram not negative {CandleLast.CandleData.MacdHistogram}";
             return false;
         }
 
 
         // ********************************************************************
-        // price > vwap
-        if (CandleLast.Close < (decimal)CandleLast.CandleData.Vwap!)
+        // price < vwap
+        if (CandleLast.Close > (decimal)CandleLast.CandleData.Vwap!)
         {
-            ExtraText = $"price below vwap {CandleLast.CandleData.Vwap}";
+            ExtraText = $"price above vwap {CandleLast.CandleData.Vwap}";
             return false;
         }
 
@@ -112,21 +98,23 @@ public class SignalRossLong : SignalCreateBase
         {
             count--;
             sumVolume += candle!.Volume;
+            //if (candle!.CandleData != null) // we only have around 60 macd values...
+                //sumMacd += (decimal)candle!.CandleData!.MacdHistogram!;
             if (!GetPrevCandle(candle, out candle))
                 return false;
         }
         decimal avgVolume = sumVolume / 500;
 
 
-        // need 5 candles with > 5x avg volume on green candles
+        // need 5 candles with > 5x avg volume on red candles
         count = 3;
         candle = CandleLast;
         while (count > 0)
         {
             count--;
-            // On a green candle
-            if (candle!.Close < candle.Open)
-              return false;
+            // On a red candle
+            if (candle!.Close > candle.Open)
+                return false;
             // with 4.5 x the avg volume
             if (candle!.Volume < 4.5m * avgVolume)
                 return false;

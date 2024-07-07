@@ -16,43 +16,15 @@ public class SignalLuxLong : SignalSbmBaseLong
         SignalStrategy = CryptoSignalStrategy.Lux;
     }
 
-    public override bool AdditionalChecks(CryptoCandle candle, out string response)
+    public override bool IndicatorsOkay(CryptoCandle candle)
     {
-        response = "";
-
-        // ********************************************************************
-        // Price must be below BB.Low
-        if (CandleLast.Close >= (decimal)CandleLast.CandleData.BollingerBandsLowerBand)
-        {
-            ExtraText = "price above bb.low";
+        if (candle == null
+           || candle.CandleData == null
+           || candle.CandleData.Rsi == null
+           || candle.CandleData.Ema9 == null
+           || candle.CandleData.StochSignal == null
+           )
             return false;
-        }
-
-        // ********************************************************************
-        // percentage ema5 and close at least 1%
-        decimal percentage = 100 * (decimal)CandleLast.CandleData.Ema5 / CandleLast.Close;
-        if (percentage < 100.25m)
-        {
-            response = $"distance close and ema5 not ok {percentage:N2}";
-            return false;
-        }
-
-
-        //// ********************************************************************
-        //// MA lines without psar
-        //if (!CandleLast.IsSbmConditionsOversold(false))
-        //{
-        //    response = "geen sbm condities";
-        //    return false;
-        //}
-
-        //// ********************************************************************
-        //if (!IsRsiIncreasingInTheLast(3, 1))
-        //{
-        //    response = string.Format("RSI niet oplopend in de laatste 3,1");
-        //    return false;
-        //}
-
 
         return true;
     }
@@ -62,60 +34,55 @@ public class SignalLuxLong : SignalSbmBaseLong
     {
         ExtraText = "";
 
-        //RSI 100 % oversold: Komt ook niet vaak voor, wwl die rode spikes een drop naar beneden
-        //icm de ema5 kijk ik meer naar maar
-        //de rsi is niet heilig
-        //Check natuurlijk ook dat koers is onder BB, en ik doe alles op de 5 min chart
-
-
         // ********************************************************************
         // BB width is within certain percentages
         if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Sbm.BBMinPercentage, GlobalData.Settings.Signal.Sbm.BBMaxPercentage))
         {
-            ExtraText = "bb.width te klein " + CandleLast.CandleData.BollingerBandsPercentage?.ToString("N2");
+            ExtraText = "bb.width te klein " + CandleLast.CandleData!.BollingerBandsPercentage?.ToString("N2");
             return false;
         }
 
 
         // ********************************************************************
         // Rsi
-        if (CandleLast.CandleData.Rsi > GlobalData.Settings.General.RsiValueOversold)
+        if (CandleLast.CandleData!.Rsi > GlobalData.Settings.General.RsiValueOversold)
         {
             ExtraText = $"rsi {CandleLast.CandleData.Rsi} not above {GlobalData.Settings.General.RsiValueOversold}";
             return false;
         }
 
 
-        if (!GetPrevCandle(CandleLast, out CryptoCandle? prevCandle))
-            return false;
+        //if (!GetPrevCandle(CandleLast, out CryptoCandle? prevCandle))
+        //    return false;
+
+        //// ********************************************************************
+        //// Need some sign of recovery (weak)
+        //if (CandleLast.CandleData.Rsi < prevCandle!.CandleData!.Rsi)
+        //{
+        //    ExtraText = $"rsi {CandleLast.CandleData.Rsi} still decreasing";
+        //    return false;
+        //}
+
+        //// ********************************************************************
+        //// Need some sign of recovery (weak)
+        //if (CandleLast.CandleData.StochSignal < prevCandle.CandleData.StochSignal)
+        //{
+        //    ExtraText = $"stoch {CandleLast.CandleData.Rsi} still decreasing";
+        //    return false;
+        //}
 
         // ********************************************************************
-        // Need some sign of recovery (weak)
-        if (CandleLast.CandleData.Rsi < prevCandle.CandleData.Rsi)
-        {
-            ExtraText = $"rsi {CandleLast.CandleData.Rsi} still decreasing";
-            return false;
-        }
-
-        // ********************************************************************
-        // Need some sign of recovery (weak)
-        if (CandleLast.CandleData.StochSignal < prevCandle.CandleData.StochSignal)
-        {
-            ExtraText = $"stoch {CandleLast.CandleData.Rsi} still decreasing";
-            return false;
-        }
-
-        // ********************************************************************
-        // the distance between ema5 and close needs to be as big as possible (weak)
+        // the distance between ema9 and close needs to be as big as possible (weak)
         // Begins to looks like the SBM method with distances, actually kind of interesting..
         // ==> rubber bands methology & recovery signs
-        decimal percentage = 100 * (decimal)CandleLast.CandleData.Ema5 / CandleLast.Close;
-        if (percentage < 100.35m)
+        decimal percentage = 100 * (decimal)CandleLast.CandleData.Ema9! / CandleLast.Close;
+        if (percentage < 101.0m)
         {
-            ExtraText = $"distance close and ema5 not ok {percentage:N2}";
+            ExtraText = $"distance close and ema9 not ok {percentage:N2}";
             return false;
         }
 
+        percentage -= 100;
 
         // stupid lux?
         //// ********************************************************************
@@ -128,12 +95,7 @@ public class SignalLuxLong : SignalSbmBaseLong
         //}
 
 
-
-        // idea, geef de signaal af op het moment dat het van 100% naar < 100% gaat?
-
-
-        //percentage = 100 * (decimal)CandleLast.CandleData.Ema5 / CandleLast.Close;
-        //ExtraText = $"{percentage:N2}%";
+        ExtraText = $"{percentage:N2}%";
         return true;
     }
 
