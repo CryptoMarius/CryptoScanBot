@@ -192,9 +192,9 @@ public partial class FrmMain : Form
 
     private void TestShowTickerInformationClick(object? sender, EventArgs? e)
     {
-        ExchangeHelper.KLineTicker!.DumpTickerInfo();
-        ExchangeHelper.PriceTicker!.DumpTickerInfo();
-        ExchangeHelper.UserTicker!.DumpTickerInfo();
+        ExchangeHelper.KLineTicker?.DumpTickerInfo();
+        ExchangeHelper.PriceTicker?.DumpTickerInfo();
+        ExchangeHelper.UserTicker?.DumpTickerInfo();
     }
 #endif
 
