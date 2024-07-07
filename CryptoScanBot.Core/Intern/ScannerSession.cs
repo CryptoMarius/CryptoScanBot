@@ -1,4 +1,5 @@
-﻿using CryptoScanBot.Core.Enums;
+﻿using CryptoScanBot.Core.Context;
+using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Trader;

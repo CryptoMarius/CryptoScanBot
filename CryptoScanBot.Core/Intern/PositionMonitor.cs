@@ -36,9 +36,9 @@ public class PositionMonitor : IDisposable
     {
         TradeAccount = tradeAccount;
         Symbol = symbol;
+        LastCandle1m = lastCandle1m;
 
         // De laatste 1m candle die definitief is
-        LastCandle1m = lastCandle1m;
         LastCandle1mCloseTime = lastCandle1m.OpenTime + 60;
         LastCandle1mCloseTimeDate = CandleTools.GetUnixDate(LastCandle1mCloseTime);
 
@@ -1795,9 +1795,9 @@ public class PositionMonitor : IDisposable
                         if (c.CandleData != null)
                         {
                             c.CandleData = null;
-#if SHOWTIMING
-                            GlobalData.Logger.Info($"removed candledata({interval.Name}):" + c.OhlcText(Symbol, GlobalData.IntervalList[0], Symbol.PriceDisplayFormat, true, false, true));
-#endif
+//#if SHOWTIMING
+//                            GlobalData.AddTextToLogTab($"removed candledata({interval.Name}):" + c.OhlcText(Symbol, GlobalData.IntervalList[0], Symbol.PriceDisplayFormat, true, false, true));
+//#endif
                         }
                         else break;
                     }
@@ -1812,9 +1812,9 @@ public class PositionMonitor : IDisposable
                         if (c.OpenTime < startFetchUnix)
                         {
                             candles.Remove(c.OpenTime);
-#if SHOWTIMING
-                            GlobalData.Logger.Info($"removed({interval.Name}):" + c.OhlcText(Symbol, interval, Symbol.PriceDisplayFormat, true, false, true));
-#endif
+//#if SHOWTIMING
+//                            GlobalData.AddTextToLogTab($"removed({interval.Name}):" + c.OhlcText(Symbol, interval, Symbol.PriceDisplayFormat, true, false, true));
+//#endif
                         }
                         else break;
                     }
