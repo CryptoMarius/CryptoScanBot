@@ -15,6 +15,7 @@ public class Candle
 #if KUCOINDEBUG
     private static int tickerIndex = 0;
 #endif
+
     // Prevent multiple sessions
     private static readonly SemaphoreSlim Semaphore = new(1);
 
@@ -48,7 +49,6 @@ public class Candle
                     Thread.Sleep(10000);
                     continue;
                 }
-
                 // Might do something better than this
                 GlobalData.AddTextToLogTab($"{prefix} error getting klines {result.Error}");
                 return 0;
@@ -72,7 +72,7 @@ public class Candle
                 // Combine candles, calculating other interval's
                 foreach (var kline in result.Data)
                 {
-                    // Quoted = volume * price (expressed in usdt/eth/btc etc), base is coins
+                    // Combine candles, calculating other interval's
                     CryptoCandle candle = CandleTools.HandleFinalCandleData(symbol, interval, kline.OpenTime,
                         kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.QuoteVolume, false);
 
@@ -81,7 +81,7 @@ public class Candle
                         last = candle.OpenTime + interval.Duration; // new (saves 1 candle)
                 }
 
-                // Voor de volgende GetCandlesForInterval() sessie
+                // For the next session
                 if (last > long.MinValue)
                 {
                     symbolInterval.LastCandleSynchronized = last;
@@ -146,7 +146,7 @@ public class Candle
             Monitor.Enter(symbol.CandleList);
             try
             {
-                // Fill missing candles (at only place we know it can be done safely)
+                // Fill missing candles (the only place we know it can be done safely)
                 if (symbolInterval.CandleList.Count != 0)
                 {
                     CryptoCandle stickOld = symbolInterval.CandleList.Values.First();
@@ -188,12 +188,12 @@ public class Candle
                         candleHigherTimeFrameStart -= candleHigherTimeFrameStart % intervalHigherTimeFrame.Duration;
                         DateTime candleHigherTimeFrameStartDate = CandleTools.GetUnixDate(candleHigherTimeFrameStart);
 
-                        long candleHigherTimeFrameEinde = candlesLowerTimeFrame.Values.Last().OpenTime;
-                        candleHigherTimeFrameEinde -= candleHigherTimeFrameEinde % intervalHigherTimeFrame.Duration;
-                        DateTime candleHigherTimeFrameEindeDate = CandleTools.GetUnixDate(candleHigherTimeFrameEinde);
+                        long candleHigherTimeFrameEnd = candlesLowerTimeFrame.Values.Last().OpenTime;
+                        candleHigherTimeFrameEnd -= candleHigherTimeFrameEnd % intervalHigherTimeFrame.Duration;
+                        DateTime candleHigherTimeFrameEindeDate = CandleTools.GetUnixDate(candleHigherTimeFrameEnd);
 
                         // Bulk calculation
-                        while (candleHigherTimeFrameStart <= candleHigherTimeFrameEinde)
+                        while (candleHigherTimeFrameStart <= candleHigherTimeFrameEnd)
                         {
                             // Die laatste parameter is de closetime van een candle
                             candleHigherTimeFrameStart += intervalHigherTimeFrame.Duration;
@@ -298,7 +298,7 @@ public class Candle
                         if (!symbol.IsSpotTradingAllowed || symbol.Status == 0 || symbol.IsBarometerSymbol())
                             continue;
 
-                        if (symbol.QuoteData.FetchCandles)
+                        if (symbol.QuoteData!.FetchCandles)
                         {
                             if (symbol.QuoteData.MinimalVolume == 0 || (symbol.QuoteData.MinimalVolume > 0 && symbol.Volume > 0.1m * symbol.QuoteData.MinimalVolume))
                                 //if (symbol.Name.Equals("BTCUSDT") || symbol.Name.Equals("ETHUSDT") || symbol.Name.Equals("ADABTC") || symbol.Name.Equals("LEVERBTC"))
