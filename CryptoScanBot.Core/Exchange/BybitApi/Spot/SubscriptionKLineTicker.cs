@@ -3,6 +3,8 @@ using Bybit.Net.Enums;
 using Bybit.Net.Objects.Models.V5;
 using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
+
+using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 
@@ -36,7 +38,8 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                 Interlocked.Increment(ref TickerCount);
                 //ScannerLog.Logger.Trace($"kline ticker {topic} process");
                 //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", topic, kline.Timestamp.ToLocalTime()));
-                CandleTools.Process1mCandle(symbol, kline.StartTime, kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.Volume);
+                var candle = CandleTools.Process1mCandle(symbol, kline.StartTime, kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.Volume);
+                GlobalData.ThreadMonitorCandle!.AddToQueue(symbol, candle);
             }
         }
 

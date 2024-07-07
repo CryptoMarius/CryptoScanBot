@@ -3,6 +3,8 @@ using Binance.Net.Enums;
 using Binance.Net.Objects.Models.Spot.Socket;
 using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
+
+using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 
@@ -30,8 +32,8 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                 //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", temp.Symbol, temp.Data.OpenTime.ToLocalTime()));
                 //string json = JsonSerializer.Serialize(kline, ExchangeHelper.JsonSerializerNotIndented);
                 //ScannerLog.Logger.Trace($"kline ticker {symbol.Name} {json}");
-                CandleTools.Process1mCandle(symbol, kline.Data.OpenTime, kline.Data.OpenPrice, kline.Data.HighPrice, kline.Data.LowPrice, kline.Data.ClosePrice, kline.Data.Volume);
-
+                var candle = CandleTools.Process1mCandle(symbol, kline.Data.OpenTime, kline.Data.OpenPrice, kline.Data.HighPrice, kline.Data.LowPrice, kline.Data.ClosePrice, kline.Data.Volume);
+                GlobalData.ThreadMonitorCandle!.AddToQueue(symbol, candle);
             }
         }
 

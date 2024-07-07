@@ -39,7 +39,8 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                 Interlocked.Increment(ref TickerCount);
                 //ScannerLog.Logger.Trace($"kline ticker {topic} process");
                 //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", topic, kline.Timestamp.ToLocalTime()));
-                CandleTools.Process1mCandle(symbol, kline.StartTime, kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.Volume);
+                var candle = CandleTools.Process1mCandle(symbol, kline.StartTime, kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.Volume);
+                GlobalData.ThreadMonitorCandle!.AddToQueue(symbol, candle);
             }
         }
 

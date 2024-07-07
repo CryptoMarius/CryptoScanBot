@@ -1,5 +1,7 @@
 ﻿using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
+
+using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using Kraken.Net.Clients;
@@ -20,7 +22,8 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
             {
                 Interlocked.Increment(ref TickerCount);
                 //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", topic, kline.Timestamp.ToLocalTime()));
-                CandleTools.Process1mCandle(symbol, kline.OpenTime, kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.Volume);
+                var candle = CandleTools.Process1mCandle(symbol, kline.OpenTime, kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.Volume);
+                GlobalData.ThreadMonitorCandle!.AddToQueue(symbol, candle);
             }
         }
     }
