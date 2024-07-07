@@ -13,22 +13,20 @@ public class SubscriptionPriceTicker(ExchangeOptions exchangeOptions) : Subscrip
     {
         // TODO: quick en dirty code hier, nog eens verbeteren
         // We verwachten (helaas) slechts 1 symbol per ticker
-        string symbolName = "";
+        List<string> symbols = [];
+        //string symbolName = "";
         foreach (var symbol in SymbolList)
         {
             //if (symbolName == "")
-            //    symbolName = symbol.Base + "-" + symbol.Quote;
+            //    symbolName = symbol.Name;
             //else
-            //    symbolName += "," + symbol.Base + "-" + symbol.Quote;
-            if (symbolName == "")
-                symbolName = symbol.Name;
-            else
-                symbolName += "," + symbol.Name;
+            //    symbolName += "," + symbol.Name;
+            symbols.Add(symbol.Name);
         }
 
 
         TickerGroup!.SocketClient ??= new MexcSocketClient();
-        CallResult<UpdateSubscription> subscriptionResult = await ((MexcSocketClient)TickerGroup.SocketClient).SpotApi.SubscribeToMiniTickerUpdatesAsync(symbolName, data =>
+        CallResult<UpdateSubscription> subscriptionResult = await ((MexcSocketClient)TickerGroup.SocketClient).SpotApi.SubscribeToMiniTickerUpdatesAsync(symbols, data =>
         {
             if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
             {

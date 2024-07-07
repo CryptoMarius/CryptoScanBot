@@ -28,84 +28,87 @@ public class Candle
         LimitRate.WaitForFairWeight(1);
         string prefix = $"{ExchangeBase.ExchangeOptions.ExchangeName} {symbol.Name} {interval!.Name}";
 
-        // The maximum is 1000 candles
-        // (suprise) the sort order can be from new to old..
+        // This exchange is alway's returning the last 1000 candles (not what we asked, but voila)
         DateTime dateStart = CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized);
-        var result = await client.SpotApi.ExchangeData.GetKlinesAsync(symbol.Name, (KlineInterval)exchangeInterval, startTime: dateStart, limit: 1000);
-        if (!result.Success)
+        while (true)
         {
-            // We doen het gewoon over (dat is tenminste het advies)
-            // 13-07-2023 14:08:00 AOA-BTC 30m error getting klines 429000: Too Many Requests
-            //if (result.Error?.Code == 429000)
-            //{
-            //    GlobalData.AddTextToLogTab($"{prefix} delay needed for weight: (because of rate limits)");
-            //    Thread.Sleep(10000);
-            //    continue;
-            //}
-            // Might do something better than this
-            GlobalData.AddTextToLogTab($"{prefix} error getting klines {result.Error}");
-            return 0;
-        }
-
-
-        // Might have problems with no internet etc.
-        if (result == null || result.Data == null || !result.Data.Any())
-        {
-            GlobalData.AddTextToLogTab($"{prefix} fetch from {CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized)} no candles received");
-            return 0;
-        }
-
-        // Remember
-        long? startFetchDate = symbolInterval.LastCandleSynchronized;
-
-        Monitor.Enter(symbol.CandleList);
-        try
-        {
-            long last = long.MinValue;
-            // Combine candles, calculating other interval's
-            foreach (var kline in result.Data)
+            var result = await client.SpotApi.ExchangeData.GetKlinesAsync(symbol.Name, (KlineInterval)exchangeInterval, startTime: dateStart, limit: 1000);
+            if (!result.Success)
             {
+                // This is based on the kucoin error number,, does Mexc have an error for overloading the exchange as wel?
+                // We doen het gewoon over (dat is tenminste het advies)
+                // 13-07-2023 14:08:00 AOA-BTC 30m error getting klines 429: Too Many Requests
+                if (result.Error?.Code == 429)
+                {
+                    GlobalData.AddTextToLogTab($"{prefix} delay needed for weight: (because of rate limits)");
+                    Thread.Sleep(10000);
+                    continue;
+                }
+                // Might do something better than this
+                GlobalData.AddTextToLogTab($"{prefix} error getting klines {result.Error}");
+                return 0;
+            }
+
+
+            // Might have problems with no internet etc.
+            if (result == null || result.Data == null || !result.Data.Any())
+            {
+                GlobalData.AddTextToLogTab($"{prefix} fetch from {CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized)} no candles received");
+                return 0;
+            }
+
+            // Remember
+            long? startFetchDate = symbolInterval.LastCandleSynchronized;
+
+            Monitor.Enter(symbol.CandleList);
+            try
+            {
+                long last = long.MinValue;
                 // Combine candles, calculating other interval's
-                CryptoCandle candle = CandleTools.HandleFinalCandleData(symbol, interval, kline.OpenTime,
-                    kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.QuoteVolume, false);
+                foreach (var kline in result.Data)
+                {
+                    // Combine candles, calculating other interval's
+                    CryptoCandle candle = CandleTools.HandleFinalCandleData(symbol, interval, kline.OpenTime,
+                        kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.QuoteVolume, false);
 
-                //GlobalData.AddTextToLogTab("Debug: Fetched candle " + symbol.Name + " " + interval.Name + " " + candle.DateLocal);
+                    //GlobalData.AddTextToLogTab("Debug: Fetched candle " + symbol.Name + " " + interval.Name + " " + candle.DateLocal);
 
-                // Onthoud de laatste candle, t/m die datum is alles binnen gehaald.
-                // NB: De candle volgorde is niet gegarandeerd (op bybit zelfs omgedraaid)
-                if (candle.OpenTime > last)
-                    last = candle.OpenTime + interval.Duration; // new (saves 1 candle)
-            }
+                    // Onthoud de laatste candle, t/m die datum is alles binnen gehaald.
+                    // NB: De candle volgorde is niet gegarandeerd (op bybit zelfs omgedraaid)
+                    if (candle.OpenTime > last)
+                        last = candle.OpenTime + interval.Duration; // new (saves 1 candle)
+                }
 
-            // For the next session
-            if (last > long.MinValue)
-            {
-                symbolInterval.LastCandleSynchronized = last;
-                // Alternatief (maar als er gaten in de candles zijn geeft dit problemen, endless loops)
-                //CandleTools.UpdateCandleFetched(symbol, interval);
-            }
+                // For the next session
+                if (last > long.MinValue)
+                {
+                    symbolInterval.LastCandleSynchronized = last;
+                    // Alternatief (maar als er gaten in de candles zijn geeft dit problemen, endless loops)
+                    //CandleTools.UpdateCandleFetched(symbol, interval);
+                }
 
-            //SaveInformation(symbol, result.Data.List);
+                //SaveInformation(symbol, result.Data.List);
 #if MEXCDEBUG
                 // Debug, wat je al niet moet doen voor een exchange...
-                tickerIndex++;
+                Interlocked.Increment(ref tickerIndex);
                 long unix = CandleTools.GetUnixTime(DateTime.UtcNow, 0);
                 string filename = $@"{GlobalData.GetBaseDir()}\Mexc Spot\Candles-{symbol.Name}-{interval.Name}-{unix}-#{tickerIndex}.json";
                 string text = System.Text.Json.JsonSerializer.Serialize(result, GlobalData.JsonSerializerIndented);
                 File.WriteAllText(filename, text);
 #endif
-}
-        finally
-        {
-            Monitor.Exit(symbol.CandleList);
+            }
+            finally
+            {
+                Monitor.Exit(symbol.CandleList);
+            }
+
+
+            CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
+            SortedList<long, CryptoCandle> candles = symbolPeriod.CandleList;
+            string s = symbol.Exchange.Name + " " + symbol.Name + " " + interval.Name + " fetch from " + CandleTools.GetUnixDate(startFetchDate).ToLocalTime() + " UTC tot " + CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized).ToLocalTime() + " UTC";
+            GlobalData.AddTextToLogTab(s + " received: " + result.Data.Count() + " totaal: " + candles.Count.ToString());
+            return result.Data.Count();
         }
-
-
-        CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
-        SortedList<long, CryptoCandle> candles = symbolPeriod.CandleList;
-        string s = symbol.Exchange.Name + " " + symbol.Name + " " + interval.Name + " fetch from " + CandleTools.GetUnixDate(startFetchDate).ToLocalTime() + " UTC tot " + CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized).ToLocalTime() + " UTC";
-        GlobalData.AddTextToLogTab(s + " received: " + result.Data.Count() + " totaal: " + candles.Count.ToString());
-        return result.Data.Count();
     }
 
 

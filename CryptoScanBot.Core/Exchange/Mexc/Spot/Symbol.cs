@@ -27,11 +27,59 @@ public class Symbol
                 database.Open();
 
                 using var client = new MexcRestClient();
-                var exchangeInfo = await client.SpotApi.ExchangeData.GetExchangeInfoAsync() ?? throw new ExchangeException("Geen exchange data ontvangen (1)");
-                if (!exchangeInfo.Success)
-                    GlobalData.AddTextToLogTab("error getting exchangeinfo " + exchangeInfo.Error, true);
-                if (exchangeInfo.Data == null)
-                    throw new ExchangeException("Geen exchange data ontvangen (2)");
+
+                // exchangeInfo for symbols...
+                var exchangeData = await client.SpotApi.ExchangeData.GetExchangeInfoAsync();
+                if (exchangeData == null)
+                    throw new ExchangeException("No exchange data received");
+                if (!exchangeData.Success)
+                    GlobalData.AddTextToLogTab($"error getting exchangeinfo {exchangeData.Error}", true);
+
+                // Save for debug purposes
+                {
+                    string filename = $@"{GlobalData.GetBaseDir()}\{exchange.Name}\";
+                    Directory.CreateDirectory(filename);
+                    filename += "symbols.json";
+
+                    string text = JsonSerializer.Serialize(exchangeData, GlobalData.JsonSerializerIndented);
+                    File.WriteAllText(filename, text);
+                }
+
+
+                // tickers for volumes... (need volume because of filtered kline and price tickers)
+                GlobalData.AddTextToLogTab($"Reading symbol ticker information from {ExchangeBase.ExchangeOptions.ExchangeName}");
+                var tickerData = await client.SpotApi.ExchangeData.GetTickersAsync();
+                if (tickerData == null)
+                    throw new ExchangeException("No ticker data received");
+                if (!tickerData.Success)
+                    GlobalData.AddTextToLogTab("error getting symbol ticker {tickersInfos.Error}");
+
+
+                // Save for debug purposes
+                {
+                    string filename = $@"{GlobalData.GetBaseDir()}\{exchange.Name}\";
+                    Directory.CreateDirectory(filename);
+                    filename += "tickers.json";
+
+                    string text = JsonSerializer.Serialize(tickerData, GlobalData.JsonSerializerIndented);
+                    //var accountFile = new FileInfo(filename);
+                    File.WriteAllText(filename, text);
+                }
+
+                // index volume
+                SortedList<string, decimal> volumeTicker = [];
+                if (tickerData.Data != null && tickerData.Data != null)
+                {
+                    foreach (var tickerInfo in tickerData.Data)
+                    {
+                        if (tickerInfo.QuoteVolume.HasValue)
+                        {
+                            string symbolName = tickerInfo.Symbol.Replace("-", "");
+                            volumeTicker.Add(symbolName, tickerInfo.QuoteVolume.Value);
+                        }
+                    }
+                }
+
 
 
                 // Om achteraf de niet aangeboden munten te deactiveren
@@ -45,7 +93,7 @@ public class Symbol
                     {
                         //BybitSpotSymbol
                         //WebCallResult<BybitResponse<BybitSpotSymbol>> x;
-                        foreach (var symbolData in exchangeInfo.Data.Symbols)
+                        foreach (var symbolData in exchangeData.Data.Symbols)
                         {
                             //if (coin != "")
                             {
@@ -54,31 +102,36 @@ public class Symbol
 
                                 // https://api.bybit.com/v5/market/instruments-info?category=spot
                                 /*
-                                    {
-                                    "Name": "HFTUSDT",
-                                    "BaseAsset": "HFT",
-                                    "QuoteAsset": "USDT",
-                                    "Status": 1,
-                                    "MarginTrading": 2,
-                                    "Innovation": false,
-                                    "LotSizeFilter": {
-                                        "BasePrecision": 0.01,
-                                        "QuotePrecision": 0.000001,
-                                        "MinOrderQuantity": 2.5,
-                                        "MaxOrderQuantity": 738825.267824,
-                                        "MinOrderValue": 1,
-                                        "MaxOrderValue": 200000
-                                    },
-                                    "PriceFilter": {
-                                        "TickSize": 0.0001
-                                    },
-                                    "PricePercentageFilter": {
-                                        "LimitPricePercentageLimit": 0.03,
-                                        "MarketPricePercentageLimit": 0.03
-                                    }
-                                    },
+                                {
+                                "Name": "OGNUSDT",
+                                "BaseAssetName": "Origin",
+                                "Status": "ENABLED",
+                                "BaseAsset": "OGN",
+                                "BaseAssetPrecision": 2,
+                                "QuoteAsset": "USDT",
+                                "QuoteAssetPrecision": 4,
+                                "QuoteAssetFeePrecision": 4,
+                                "BaseAssetFeePrecision": 2,
+                                "OrderTypes": [
+                                    0,
+                                    1,
+                                    2
+                                ],
+                                "QuoteOrderQuantityMarketAllowed": false,
+                                "IsSpotTradingAllowed": false,
+                                "IsMarginTradingAllowed": false,
+                                "QuoteQuantityPrecision": 5.0000000000000000000000000000,
+                                "BaseQuantityPrecision": 0.01,
+                                "Permissions": [
+                                    "SPOT"
+                                ],
+                                "MaxQuoteQuantity": 2000000.0000000000000000000000,
+                                "MakerFee": 0,
+                                "TakerFee": 0,
+                                "QuoteQuantityPrecisionMarket": 5.0000000000000000000000000000,
+                                "MaxQuoteQuantityMarket": 100000.00000000000000000000000
+                                },
                                
-                                enzovoort..
                                 */
                                 //Eventueel symbol toevoegen
                                 if (!exchange.SymbolListName.TryGetValue(symbolData.Name, out CryptoSymbol? symbol))
@@ -96,12 +149,15 @@ public class Symbol
 
 
                                 // min, max en tick (in base amount)
-                                //symbol.QuantityTickSize = symbolData.BaseAssetPrecision / 100;
+                                symbol.QuantityTickSize = 1;
+                                for (int x = symbolData.BaseAssetPrecision; x > 0; x--)
+                                    symbol.QuantityTickSize /= 10;
+
                                 //symbol.QuantityMinimum = symbolData.LotSizeFilter?.MinOrderQuantity ?? 0;
                                 //symbol.QuantityMaximum = symbolData.LotSizeFilter?.MaxOrderQuantity ?? 0;
 
                                 //symbol.QuoteValueMinimum = symbolData.LotSizeFilter?.MinOrderValue ?? 0;
-                                //symbol.QuoteValueMaximum = symbolData.LotSizeFilter?.MaxOrderValue ?? 0;
+                                symbol.QuoteValueMaximum = symbolData.MaxQuoteQuantity;
 
 
                                 // De minimale en maximale prijs voor een order (in base price)
@@ -110,15 +166,22 @@ public class Symbol
                                 //symbol.PriceMinimum = symbolData.LotSizeFilter.MinOrderValue;
                                 //symbol.PriceMaximum = symbolData.LotSizeFilter.MaxOrderValue;
 
-                                //symbol.PriceTickSize = symbolData.PriceFilter?.TickSize ?? 0;
+                                symbol.PriceTickSize = 1;
+                                for (int x = symbolData.QuoteAssetPrecision; x > 0; x--)
+                                    symbol.PriceTickSize /= 10;
 
-                                symbol.IsSpotTradingAllowed = true; // symbolData.IsSpotTradingAllowed;
-                                symbol.IsMarginTradingAllowed = false; //symbolData.IsMarginTradingAllowed;
+                                symbol.IsSpotTradingAllowed = true; // symbolData.IsSpotTradingAllowed; // confusing, there is a Permissions flag as well (read doumentation once..)
+                                symbol.IsMarginTradingAllowed = symbolData.IsMarginTradingAllowed;
 
                                 if (symbolData.Status == "ENABLED")
                                     symbol.Status = 1;
                                 else
                                     symbol.Status = 0; //Zet de status door (PreTrading, PostTrading of Halt)
+
+
+                                // volume from the tickers
+                                if (volumeTicker.TryGetValue(symbol.Name, out decimal volume))
+                                    symbol.Volume = volume;
 
                                 if (symbol.Id == 0)
                                 {
@@ -146,20 +209,6 @@ public class Symbol
                             GlobalData.AddTextToLogTab($"{deactivated} munten gedeactiveerd");
 
                         transaction.Commit();
-
-
-                        // Bewaren voor debug werkzaamheden
-                        {
-                            string filename = GlobalData.GetBaseDir();
-                            filename += $@"\{ExchangeBase.ExchangeOptions.ExchangeName}\";
-                            Directory.CreateDirectory(filename);
-                            filename += "symbols.json";
-
-                            string text = JsonSerializer.Serialize(exchangeInfo, GlobalData.JsonSerializerIndented);
-                            File.WriteAllText(filename, text);
-                        }
-
-
 
                         // De nieuwe symbols toevoegen aan de lijst
                         // (omdat de symbols pas tijdens de BulkInsert een id krijgen)
