@@ -2,9 +2,9 @@ CryptoScanBot release historie:
 
 xx-xx-2024 1.9.3
 - Scanner - De instelling "signalen maken" verwijderd
-- Scanner - Ondersteuning Mexc exchange (werkt nu gedeeltelijk)
+- Scanner - Ondersteuning Mexc exchange (eerste release)
 - Scanner - Binance Futures deeplink url werkt nu voor Altrady
-- Scanner - Binance Futures toevoegen aan de combobox Activeer exchange
+- Scanner - Binance Futures ontbreekt in de mogelijkheden van de "Activeer exchange"
 - Scanner - De berekening van de trend is vrij traag (met name in de emulator)
 - Scanner - De trend berekening qua code "lichter" gemaakt door de ZigZag te cachen (aanzienlijk verschil in cpu)
 - Scanner - Er worden klines opgehaald van munten die slechts ~1 maand aanwezig zijn op de exchange (bybit spot)
@@ -14,6 +14,7 @@ xx-xx-2024 1.9.3
 - Emulator - Introductie van de emulator (maar er gaat nu nog het eea niet goed, ietwat voorbarig wellicht)
              ???-geen signalen, geen posities, trading rules die 25% drops rapporteren en dan zal de trend ook niet goed gaan lijkt me ;-)
 
+- Trading - De Altrady Webhook opnieuw geintroduceerd.
 - Trading - Introductie van een stop loss (wordt nu alleen voor Altrady webhook gebruikt)
 - Trading - De DCA gebruikte de multiply van de dca regels niet meer (na een onhandige actie).
 - Trading - De instelling "Geen nieuwe posities innemen" kon niet geconfigureerd worden

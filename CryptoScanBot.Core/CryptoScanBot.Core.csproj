@@ -16,8 +16,11 @@
 
   <ItemGroup>
     <Compile Remove="Exchange\Kucoin\Futures\**" />
+    <Compile Remove="Exchange\Mexc\Spot\NewFolder\**" />
     <EmbeddedResource Remove="Exchange\Kucoin\Futures\**" />
+    <EmbeddedResource Remove="Exchange\Mexc\Spot\NewFolder\**" />
     <None Remove="Exchange\Kucoin\Futures\**" />
+    <None Remove="Exchange\Mexc\Spot\NewFolder\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -82,10 +85,6 @@
     <None Update="Sounds\sound-trade-notification.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Exchange\Mexc\Spot\NewFolder\" />
   </ItemGroup>
 
 </Project>
