@@ -536,6 +536,7 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
         //GlobalData.Logger.Trace($"SignalCreate.Prepare.Start {Symbol.Name} {Interval.Name} {Side}");
 
         Candle = null;
+        string response = "";
 
         if (!Symbol.LastPrice.HasValue)
         {
@@ -546,7 +547,7 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
 
 
         // Is het volume binnen de gestelde grenzen          
-        if (!HasOpenPosition() && !Symbol.CheckValidMinimalVolume(candleOpenTime, Interval.Duration, out string response))
+        if (!HasOpenPosition() && !Symbol.CheckValidMinimalVolume(candleOpenTime, Interval.Duration, out response))
         {
             if (GlobalData.Settings.Signal.LogMinimalVolume)
                 GlobalData.AddTextToLogTab("Analyse " + response);
@@ -568,7 +569,7 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
         {
 #if DEBUG
             //if (GlobalData.Settings.Signal.LogNotEnoughCandles)
-            GlobalData.AddTextToLogTab("Analyse " + response);
+            GlobalData.AddTextToLogTab($"Analyse {response}");
 #endif
             return false;
         }
