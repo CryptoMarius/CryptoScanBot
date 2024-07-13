@@ -89,7 +89,7 @@ partial class CryptoDataGridColumns
         Controls.Add(flowLayoutPanel);
         Controls.Add(panelButtons);
         Name = "CryptoDataGridColumns";
-        Text = "DataGridColumnsSelect";
+        Text = "Select your columns";
         panelButtons.ResumeLayout(false);
         ResumeLayout(false);
         PerformLayout();
