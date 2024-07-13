@@ -4,6 +4,7 @@ public enum Command
 {
     None,
     ActivateTradingApp,
+    ActivateActiveExchange,
     ActivateTradingviewIntern,
     ActivateTradingviewExtern,
     ShowTrendInformation,

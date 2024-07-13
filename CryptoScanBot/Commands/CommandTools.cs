@@ -57,6 +57,9 @@ public class CommandTools
                         tradingAppInternExtern = GlobalData.Settings.General.TradingAppInternExtern;
                     LinkTools.ActivateTradingApp(GlobalData.Settings.General.TradingApp, symbol, interval, tradingAppInternExtern);
                     break;
+                case Command.ActivateActiveExchange:
+                    LinkTools.ActivateTradingApp(CryptoTradingApp.ExchangeUrl, symbol, interval, CryptoExternalUrlType.External);
+                    break;
                 case Command.ActivateTradingviewIntern:
                     LinkTools.ActivateTradingApp(CryptoTradingApp.TradingView, symbol, interval, CryptoExternalUrlType.Internal);
                     break;
