@@ -81,8 +81,8 @@ public class Candle
 
         CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
         SortedList<long, CryptoCandle> candles = symbolPeriod.CandleList;
-        string s = symbol.Exchange.Name + " " + symbol.Name + " " + interval.Name + " fetch from " + CandleTools.GetUnixDate(startFetchDate).ToLocalTime() + " UTC tot " + CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized).ToLocalTime() + " UTC";
-        GlobalData.AddTextToLogTab(s + " received: " + result.Data.List.Count() + " totaal: " + candles.Count.ToString());
+        string s = symbol.Exchange.Name + " " + symbol.Name + " " + interval.Name + " fetch from " + CandleTools.GetUnixDate(startFetchDate).ToLocalTime() + " UTC .. " + CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized).ToLocalTime() + " UTC";
+        GlobalData.AddTextToLogTab(s + " received: " + result.Data.List.Count() + " total: " + candles.Count.ToString());
         return result.Data.List.Count();
     }
 
