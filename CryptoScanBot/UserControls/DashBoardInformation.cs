@@ -619,7 +619,11 @@ public partial class DashBoardInformation : UserControl
                     string e = GlobalData.Settings.General.ExchangeName;
                     if (ExchangeHelper.PriceTicker != null)
                     {
-                        text = ExchangeHelper.PriceTicker.Count().ToString("N0");
+                        // The heavy cpu strain of the Kucoin priceticker is killing the scanner, so its disabled
+                        if (!ExchangeHelper.PriceTicker.Enabled)
+                            text = "disabled";
+                        else
+                            text = ExchangeHelper.PriceTicker.Count().ToString("N0");
                         symbol = GlobalData.Settings.ShowSymbolInformation[0];
                         ShowSymbolPrice(SymbolHistList[0], InformationRowList[0], exchange, quoteData, symbol, "Price ticker count", text);
                     }
