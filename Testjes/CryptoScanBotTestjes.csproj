@@ -30,7 +30,7 @@
     <PackageReference Include="Dapper.Contrib" Version="2.0.78" />
     <PackageReference Include="KrakenExchange.Net" Version="4.8.1" />
     <PackageReference Include="Kucoin.Net" Version="5.8.3" />
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.6" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.7" />
     <PackageReference Include="Skender.Stock.Indicators" Version="2.5.0" />
     <PackageReference Include="System.Net.Http" Version="4.3.4" />
     <PackageReference Include="Telegram.Bot" Version="19.0.0" />

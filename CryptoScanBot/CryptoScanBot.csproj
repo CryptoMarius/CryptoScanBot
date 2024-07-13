@@ -27,7 +27,6 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
-    <DefineConstants>$(DefineConstants);TRADEBOT</DefineConstants>
   </PropertyGroup>
   <PropertyGroup />
   <PropertyGroup>
@@ -105,7 +104,7 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="System.Windows.Forms.DataVisualization" Version="1.0.0-prerelease.20110.1" />
-    <PackageReference Include="Microsoft.Windows.Compatibility" Version="8.0.6" />
+    <PackageReference Include="Microsoft.Windows.Compatibility" Version="8.0.7" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <WebView2UseWinRT>False</WebView2UseWinRT>
