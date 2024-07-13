@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using CryptoScanBot.Commands;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Settings;
 
 namespace CryptoScanBot;
@@ -225,7 +226,7 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         int count = 0;
         foreach (DataGridViewColumn column in Grid.Columns)
         {
-            if (!ColumnList.TryGetValue(column.HeaderText, out ColumnSetting columnSetting))
+            if (!ColumnList.TryGetValue(column.HeaderText, out ColumnSetting? columnSetting))
             {
                 columnSetting = new();
                 ColumnList.Add(column.HeaderText, columnSetting);
@@ -283,8 +284,10 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
 
     private void CommandAdjustColumns(object? sender, EventArgs? e)
     {
-        // tijdelijk, debug
-        CryptoDataGridColumns f = new();
+        CryptoDataGridColumns f = new()
+        {
+                StartPosition = FormStartPosition.CenterParent
+        };
         f.AddColumns(this);
         f.ShowDialog();
 
@@ -292,7 +295,7 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         {
             foreach (DataGridViewColumn column in Grid.Columns)
             {
-                if (ColumnList.TryGetValue(column.HeaderText, out ColumnSetting columnSetting))
+                if (ColumnList.TryGetValue(column.HeaderText, out ColumnSetting? columnSetting))
                 {
                     column.Visible = columnSetting.Visible;
                 }
@@ -323,7 +326,7 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         {
             if (column.HeaderText != "")
             {
-                if (!ColumnList.TryGetValue(column.HeaderText, out ColumnSetting columnSetting))
+                if (!ColumnList.TryGetValue(column.HeaderText, out ColumnSetting? columnSetting))
                 {
                     columnSetting = new();
                     ColumnList.Add(column.HeaderText, columnSetting);
@@ -425,6 +428,14 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
     {
         string text = CryptoExternalUrlList.GetTradingAppName(GlobalData.Settings.General.TradingApp, GlobalData.Settings.General.ExchangeName);
         Grid.ContextMenuStrip.Items[0].Text = text;
+
+        //CryptoSymbol symbol = new();
+        //(string Url, CryptoExternalUrlType Execute) ref1 = GlobalData.ExternalUrls.GetExternalRef(CryptoTradingApp.ExchangeUrl, false, symbol, GlobalData.IntervalList[0]);
+
+        //text = CryptoExternalUrlList.GetTradingAppName(CryptoTradingApp.ExchangeUrl, GlobalData.Settings.General.ExchangeName);
+        //Grid.ContextMenuStrip.Items[3].Text = text;
+        //Grid.ContextMenuStrip.Items[3].Visible = ref1.Url != "";
+
 
         //if (GlobalData.Settings.General.ApplyFontSettings)
         //{
