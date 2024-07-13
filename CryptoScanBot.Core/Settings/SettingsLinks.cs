@@ -155,6 +155,11 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
                     Execute = CryptoExternalUrlType.Internal,
                     Url = "https://app.altrady.com/d/KUCNF_{QUOTE}_{BASE}:{interval}",
                 },
+                TradingView = new()
+                {
+                    Execute = CryptoExternalUrlType.External,
+                    Url = "https://www.tradingview.com/chart/?symbol=KUCOIN:{BASE}{QUOTE}.P&interval={interval}",
+                },
             }
         );
         this.TryAdd("Kucoin Spot",
