@@ -32,7 +32,7 @@ public class TradeTools
     {
         // Alle gesloten posities lezen 
         // TODO - beperken tot de laatste 2 dagen? (en wat handigheden toevoegen wellicht)
-        GlobalData.AddTextToLogTab($"Reading closed position for {GlobalData.ActiveAccount!.AccountType}");
+        GlobalData.AddTextToLogTab("Reading closed positions");
         string sql = "select * from position where not closetime is null and TradeAccountId=@TradeAccountId order by id desc";
         if (!GlobalData.BackTest)
             sql += " limit 300";
@@ -46,14 +46,14 @@ public class TradeTools
     public static void LoadOpenPositions()
     {
         // Alle openstaande posities lezen 
-        GlobalData.AddTextToLogTab($"Reading open position for {GlobalData.ActiveAccount!.AccountType}");
+        GlobalData.AddTextToLogTab("Reading open positions");
 
         using var database = new CryptoDatabase();
         string sql = "select * from position where closetime is null and status < 2 and TradeAccountId=@TradeAccountId";
         foreach (CryptoPosition position in database.Connection.Query<CryptoPosition>(sql, new { TradeAccountId = GlobalData.ActiveAccount!.Id }))
         {
             if (!GlobalData.TradeAccountList.TryGetValue(position.TradeAccountId, out CryptoAccount? tradeAccount))
-                throw new Exception("Geen trade account gevonden");
+                throw new Exception("No trading account found");
 
             PositionTools.AddPosition(tradeAccount, position);
             PositionTools.LoadPosition(database, position);
