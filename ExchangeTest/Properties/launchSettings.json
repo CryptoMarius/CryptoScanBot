@@ -2,7 +2,7 @@
   "profiles": {
     "ExchangeTest": {
       "commandName": "Project",
-      "commandLineArgs": "-e \"Bybit Spot\" -f \"CryptoScanBot\\CryptoScanBot 1.9.3\\Bybit Spot Experiment\""
+      "commandLineArgs": "-e \"Bybit Spot\" -f \"CryptoScanBot\\CryptoScanBot 1.9.3\\Bybit Spot Altrady\""
     }
   }
 }

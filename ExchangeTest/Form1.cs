@@ -12,6 +12,8 @@ using Bybit.Net.Clients;
 using Bybit.Net.Objects.Models.V5;
 using CryptoExchange.Net.Objects;
 using Bybit.Net.Enums;
+using CryptoScanBot.Core.Model;
+using CryptoScanBot.Experiment.Exchange.Altrady;
 
 
 namespace CryptoScanBot.Experiment;
@@ -231,5 +233,48 @@ public partial class Form1 : Form
         //////    bool? reduceOnly = null, bool? closeOnTrigger = null, bool? marketMakerProtection = null, StopLossTakeProfitMode? stopLossTakeProfitMode = null, 
         //////    SelfMatchPreventionType? selfMatchPreventionType = null, MarketUnit? marketUnit = null, CancellationToken ct = default(CancellationToken));
 
+    }
+
+    private CryptoPosition? SetupPosition()
+    {
+        CryptoPosition position = new();
+
+        string symbolName = "NAKAUSDT";
+        if (GlobalData.ExchangeListName.TryGetValue("Bybit Spot", out Core.Model.CryptoExchange? exchange))
+        {
+            if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
+            {
+                position.Symbol = symbol;
+                position.Exchange = symbol.Exchange;
+                position.Interval = GlobalData.IntervalList[3];
+                return position;
+            }
+        }
+
+        return null;
+    }
+
+    private void ButtonAltradyOpenClick(object sender, EventArgs e)
+    {
+        CryptoPosition? position = SetupPosition();
+        AltradyWebhook.DelegateAllToAltrady(position, "https://api.altrady.com/v2/signal_bot_positions", "Altrady - Position open");
+    }
+
+    private void ButtonAltradyIncreasePositionClick(object sender, EventArgs e)
+    {
+        CryptoPosition? position = SetupPosition();
+        AltradyWebhook.DelegateAllToAltrady(position, "https://api.altrady.com/v2/signal_bot_positions", "Altrady - Position increase");
+    }
+
+    private void ButtonAltradyAddTpClick(object sender, EventArgs e)
+    {
+        CryptoPosition? position = SetupPosition();
+        AltradyWebhook.DelegateAllToAltrady(position, "https://api.altrady.com/v2/signal_bot_positions", "Altrady - Position set tp");
+    }
+
+    private void ButtonAltradyCancelClick(object sender, EventArgs e)
+    {
+        CryptoPosition? position = SetupPosition();
+        AltradyWebhook.DelegateAllToAltrady(position, "https://api.altrady.com/v2/signal_bot_positions", "Altrady - Position cancel");
     }
 }
