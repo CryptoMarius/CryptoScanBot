@@ -9,7 +9,6 @@ using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot.Core.Trader;
 
-#if TRADEBOT
 public class TradeTools
 {
     public static void LoadAssets()
@@ -954,4 +953,3 @@ public class TradeTools
         return entryQuantity;
     }
 }
-#endif
