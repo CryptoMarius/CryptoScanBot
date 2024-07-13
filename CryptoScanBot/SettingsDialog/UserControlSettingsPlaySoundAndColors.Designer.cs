@@ -49,7 +49,7 @@ partial class UserControlSettingsPlaySoundAndColors
         groupBox1.Size = new Size(794, 156);
         groupBox1.TabIndex = 0;
         groupBox1.TabStop = false;
-        groupBox1.Text = "Geluid en kleuren";
+        groupBox1.Text = "Sound and colors";
         // 
         // UserControlShort
         // 
