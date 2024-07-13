@@ -26,21 +26,6 @@ public class AltradyWebhook
 
         try
         {
-            // some documentation (nicely done, thanks!)
-            // https://support.altrady.com/en/article/webhook-signals-testing-and-errors-1pl7g40/
-            // https://support.altrady.com/en/article/webhook-signals-open-close-increase-or-reverse-a-position-5sr46f/#4-optional-settings-for-the-open-and-reverse-signal
-            dynamic request = new JObject();
-
-            // Request body
-            request.test = false;
-            request.action = "open";
-            if (position.Side == Enums.CryptoTradeSide.Long)
-                request.side = "long";
-            else
-                request.side = "short";
-            request.api_key = GlobalData.AltradyApi.Key;
-            request.api_secret = GlobalData.AltradyApi.Secret;
-
             GlobalData.ExternalUrls.GetExternalRef(position.Symbol.Exchange, out CryptoExternalUrls? externalUrls);
             if (externalUrls == null || externalUrls.Altrady.Code == "")
             {
@@ -49,10 +34,31 @@ public class AltradyWebhook
             }
 
 
+            // some documentation (nicely done, thanks!)
+            // https://support.altrady.com/en/article/webhook-signals-testing-and-errors-1pl7g40/
+            // https://support.altrady.com/en/article/webhook-signals-open-close-increase-or-reverse-a-position-5sr46f/#4-optional-settings-for-the-open-and-reverse-signal
+            dynamic request = new JObject();
+
+            // Request body
+            request.test = false;
+            request.action = "open"; // ['open', 'close', 'reverse', 'increase', 'start_bot', 'start_and_open', 'stop_bot', 'stop_and_close'],
+            if (position.Side == Enums.CryptoTradeSide.Long)
+                request.side = "long";
+            else
+                request.side = "short";
+            request.api_key = GlobalData.AltradyApi.Key;
+            request.api_secret = GlobalData.AltradyApi.Secret;
+
+
+            request.signal_id = $"MyPositionId{position.Id}"; // optional
             request.exchange = externalUrls.Altrady.Code;
             request.symbol = $"{externalUrls.Altrady.Code}_{position.Symbol.Quote}_{position.Symbol.Base}";
+            request.order_type = "market"; // ['limit', 'market']
+            request.adjust_fee = true; // Adjust the order size to ensure there is enough to pay the fee (problems when managing position from our side)
             request.signal_price = position.EntryPrice;
-            request.adjust_fee = true;
+            //leverage (integer, optional): The leverage for a futures position ,
+            //quote_amount(number, optional): Specifies quote amount of the entry order, if left blank, the signal bot setting will be used. ,
+            //base_amount(number, optional): Specifies base amount of the entry order, if left blank, the signal bot setting will be used. ,
 
             // TP body (just 1)
             {
