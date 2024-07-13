@@ -54,6 +54,10 @@ public partial class FrmMain : Form
     {
         InitializeComponent();
 
+        logQueue.EnsureCapacity(1500);
+
+
+
         //decimal? bla = null;
         //decimal entryValue = bla ?? 0 * 1000;
 
