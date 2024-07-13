@@ -54,6 +54,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
         menuStrip.AddCommand(this, "Activate trading app", Command.ActivateTradingApp);
         menuStrip.AddCommand(this, "TradingView internal", Command.ActivateTradingviewIntern);
         menuStrip.AddCommand(this, "TradingView external", Command.ActivateTradingviewExtern);
+        //menuStrip.AddCommand(this, "Exchange ", Command.ActivateActiveExchange);
 
 #if TRADEBOT
         menuStrip.AddSeperator();

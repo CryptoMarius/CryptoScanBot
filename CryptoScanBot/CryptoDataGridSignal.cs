@@ -9,7 +9,7 @@ using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot;
 
-public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList<string, ColumnSetting> columnList) : 
+public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList<string, ColumnSetting> columnList) :
     CryptoDataGrid<T>(grid, list, columnList) where T : CryptoSignal
 {
     private enum ColumnsForGrid
@@ -52,11 +52,13 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
 #if TRADEBOT
         MinimumEntry,
 #endif
+#if DEBUG
         // statistics
         PriceMin,
         PriceMax,
         PriceMinPerc,
         PriceMaxPerc,
+#endif
     }
 
     private System.Windows.Forms.Timer TimerClearOldSignals;
@@ -68,6 +70,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
         menuStrip.AddCommand(this, "Activate trading app", Command.ActivateTradingApp);
         menuStrip.AddCommand(this, "TradingView internal", Command.ActivateTradingviewIntern);
         menuStrip.AddCommand(this, "TradingView external", Command.ActivateTradingviewExtern);
+        //menuStrip.AddCommand(this, "Exchange ", Command.ActivateActiveExchange);
         menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Copy symbol name", Command.CopySymbolInformation);
         menuStrip.AddCommand(this, "Trend information (log)", Command.ShowTrendInformation);
@@ -210,9 +213,10 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                     break;
 #if TRADEBOT
                 case ColumnsForGrid.MinimumEntry:
-                    CreateColumn("M.Entry", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42);
+                    CreateColumn("M.Entry", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42).Visible = false;
                     break;
 #endif
+#if DEBUG
                 case ColumnsForGrid.PriceMin:
                     CreateColumn("PriceMin", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 70).Visible = false;
                     break;
@@ -225,9 +229,10 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                 case ColumnsForGrid.PriceMaxPerc:
                     CreateColumn("PriceMaxPerc", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 70).Visible = false;
                     break;
+#endif
             }
         }
-        
+
     }
 
     private int Compare(CryptoSignal a, CryptoSignal b)
@@ -271,10 +276,12 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
 #if TRADEBOT
             ColumnsForGrid.MinimumEntry => ObjectCompare.Compare(a.MinEntry, b.MinEntry),
 #endif
+#if DEBUG
             ColumnsForGrid.PriceMin => ObjectCompare.Compare(a.PriceMin, b.PriceMin),
             ColumnsForGrid.PriceMax => ObjectCompare.Compare(a.PriceMax, b.PriceMax),
             ColumnsForGrid.PriceMinPerc => ObjectCompare.Compare(a.PriceMinPerc, b.PriceMinPerc),
             ColumnsForGrid.PriceMaxPerc => ObjectCompare.Compare(a.PriceMaxPerc, b.PriceMaxPerc),
+#endif
             _ => 0
         };
 
@@ -452,6 +459,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                     e.Value = signal.MinEntry.ToString(signal.Symbol.QuoteData.DisplayFormat);
                     break;
 #endif
+#if DEBUG
                 case ColumnsForGrid.PriceMin:
                     if (signal.PriceMin! != 0m)
                         e.Value = signal.PriceMin.ToString(signal.Symbol.PriceDisplayFormat);
@@ -468,7 +476,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                     if (signal.PriceMaxPerc! != 0)
                         e.Value = signal.PriceMaxPerc.ToString("N2");
                     break;
-
+#endif
                 default:
                     e.Value = '?';
                     break;
@@ -721,7 +729,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                 case ColumnsForGrid.Trend12h:
                     foreColor = TrendIndicatorColor(signal.Trend12h);
                     break;
-
+#if DEBUG
                 case ColumnsForGrid.PriceMin:
                     {
                         decimal value = signal.PriceMin;
@@ -779,7 +787,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                         }
             }
             break;
-
+#endif
             }
 
             DataGridViewCell cell = Grid.Rows[e.RowIndex].Cells[e.ColumnIndex];
@@ -787,6 +795,33 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
             cell.Style.ForeColor = foreColor;
         }
     }
+
+
+#if DEBUG
+    private static bool CalcSignal(CryptoSignal signal)
+    {
+        decimal? price = signal.Symbol.LastPrice;
+        if (!signal.BackTest && price.HasValue && signal.Strategy != CryptoSignalStrategy.Jump)
+        {
+            bool changed = false;
+            if (price < signal.PriceMin)
+            {
+                changed = true;
+                signal.PriceMin = price.Value;
+                signal.PriceMinPerc = signal.PriceDiff.Value;
+            }
+
+            if (price > signal.PriceMax)
+            {
+                changed = true;
+                signal.PriceMax = price.Value;
+                signal.PriceMaxPerc = signal.PriceDiff.Value;
+            }
+            return changed;
+        }
+        else return false;
+    }
+#endif
 
 
     private void ClearOldSignals(object? sender, EventArgs? e)
@@ -802,36 +837,23 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                 // Circa 1x per minuut de verouderde signalen opruimen
                 if (List.Count > 0)
                 {
+#if DEBUG
                     using CryptoDatabase databaseThread = new();
+#endif
 
                     bool removedObject = false;
                     for (int index = List.Count - 1; index >= 0; index--)
                     {
                         CryptoSignal signal = List[index];
 
-                        // TODO: Long/Short..?
-                        // statistics (not sure where to put it right now)
-                        decimal? price = signal.Symbol.LastPrice;
-                        if (!signal.BackTest && price.HasValue)
-                        {
-                            if (price < signal.PriceMin)
-                            {
-                                signal.PriceMin = price.Value;
-                                signal.PriceMinPerc = signal.PriceDiff.Value;
-                            }
-
-                            if (price > signal.PriceMax)
-                            {
-                                signal.PriceMax = price.Value;
-                                signal.PriceMaxPerc = signal.PriceDiff.Value;
-                            }
-                        }
-
                         DateTime expirationDate = signal.CloseDate.AddSeconds(GlobalData.Settings.General.RemoveSignalAfterxCandles * signal.Interval.Duration);
                         if (expirationDate < DateTime.UtcNow)
                         {
+#if DEBUG
+                            CalcSignal(signal);
                             databaseThread.Open();
                             databaseThread.Connection.Update(signal);
+#endif
                             List.RemoveAt(index);
                             removedObject = true;
                         }
@@ -849,6 +871,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
     }
 
 
+#if DEBUG
     static long LastStatisticUpdate = 0;
 
     private void UpdateStatistics()
@@ -858,7 +881,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
             return;
 
         // Avoid needless updates
-        long x = CandleTools.GetUnixTime(DateTime.UtcNow, 45);
+        long x = CandleTools.GetUnixTime(DateTime.UtcNow, 60);
         if (x == LastStatisticUpdate)
             return;
         LastStatisticUpdate = x;
@@ -868,7 +891,11 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
         {
             try
             {
-                // Circa 1x per minuut de verouderde signalen opruimen
+                (double avg, double sum, int count) statsMinLong = (0, 0, 0);
+                (double avg, double sum, int count) statsMaxLong = (0, 0, 0);
+                (double avg, double sum, int count) statsMinShort = (0, 0, 0);
+                (double avg, double sum, int count) statsMaxShort = (0, 0, 0);
+
                 if (List.Count > 0)
                 {
                     for (int index = List.Count - 1; index >= 0; index--)
@@ -876,42 +903,65 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                         CryptoSignal signal = List[index];
 
                         decimal? price = signal.Symbol.LastPrice;
-                        if (!signal.BackTest && price.HasValue)
+                        if (!signal.BackTest && !signal.IsInvalid && price.HasValue)
                         {
-                            // TODO: Long/Short..?
-                            bool changed = false;
-
-                            if (price < signal.PriceMin)
-                            {
-                                changed = true;
-                                signal.PriceMin = price.Value;
-                                signal.PriceMinPerc = signal.PriceDiff.Value;
-                            }
-
-                            if (price > signal.PriceMax)
-                            {
-                                changed = true;
-                                signal.PriceMax = price.Value;
-                                signal.PriceMaxPerc = signal.PriceDiff.Value;
-                            }
-
-                            // cpu killer?
-                            if (changed)
+                            if (CalcSignal(signal))
                             {
                                 using CryptoDatabase databaseThread = new();
                                 databaseThread.Open();
                                 databaseThread.Connection.Update(signal);
                             }
+
+                            // need some of sense of time, 60*10 minutes is already a long period (mayby only 1 or 3 min?)
+                            if (signal.Interval.IntervalPeriod < CryptoIntervalPeriod.interval10m)
+                            {
+                                double value = signal.PriceMinPerc;
+                                if (signal.Side == CryptoTradeSide.Long)
+                                {
+                                    statsMinLong.count++;
+                                    statsMinLong.sum += value;
+                                }
+                                else
+                                {
+                                    statsMinShort.count++;
+                                    statsMinShort.sum += value;
+                                }
+
+                                value = signal.PriceMaxPerc;
+                                if (signal.Side == CryptoTradeSide.Long)
+                                {
+                                    statsMaxLong.count++;
+                                    statsMaxLong.sum += value;
+                                }
+                                else
+                                {
+                                    statsMaxShort.count++;
+                                    statsMaxShort.sum += value;
+                                }
+                            }
                         }
                     }
-                }
-            }
+
+                    if (statsMinLong.count > 0)
+                        statsMinLong.avg = statsMinLong.sum / statsMinLong.count;
+                    if (statsMaxLong.count > 0)
+                        statsMaxLong.avg = statsMaxLong.sum / statsMaxLong.count;
+
+                    if (statsMinShort.count > 0)
+                        statsMinShort.avg = statsMinShort.sum / statsMinShort.count;
+                    if (statsMaxShort.count > 0)
+                        statsMaxShort.avg = statsMaxShort.sum / statsMaxShort.count;
+
+                    GlobalData.AddTextToLogTab($"Long: {statsMinLong.avg:N2}..{statsMaxLong.avg:N2} Short: {statsMinShort.avg:N2}..{statsMaxShort.avg:N2}");
+    }
+}
             finally
             {
                 Monitor.Exit(List);
             }
-        }
     }
+}
+#endif
 
     private void RefreshInformation(object? sender, EventArgs? e)
     {
@@ -926,12 +976,14 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                 Grid.InvalidateColumn((int)ColumnsForGrid.Price);
                 Grid.InvalidateColumn((int)ColumnsForGrid.PriceChange);
 
+#if DEBUG
+                UpdateStatistics();
                 Grid.InvalidateColumn((int)ColumnsForGrid.PriceMin);
                 Grid.InvalidateColumn((int)ColumnsForGrid.PriceMax);
                 Grid.InvalidateColumn((int)ColumnsForGrid.PriceMinPerc);
                 Grid.InvalidateColumn((int)ColumnsForGrid.PriceMaxPerc);
+#endif
 
-                UpdateStatistics();
             }
             finally
             {
