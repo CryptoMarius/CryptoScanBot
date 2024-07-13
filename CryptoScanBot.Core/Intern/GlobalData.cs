@@ -109,10 +109,8 @@ static public class GlobalData
     // Events for refresing data
     public static event AddTextEvent? SymbolsHaveChangedEvent;
     public static event AddTextEvent? TelegramHasChangedEvent;
-#if TRADEBOT
     public static event AddTextEvent? AssetsHaveChangedEvent;
     public static event AddTextEvent? PositionsHaveChangedEvent;
-#endif
     public static AddTextEvent? ApplicationHasStarted { get; set; }
 
     // Ophalen van historische candles duurt lang, dus niet halverwege nog 1 starten (en nog 1 en...)
@@ -251,7 +249,7 @@ static public class GlobalData
 
     static public void LoadSignals()
     {
-        GlobalData.AddTextToLogTab($"Reading some signals for {GlobalData.ActiveAccount!.AccountType}");
+        GlobalData.AddTextToLogTab("Reading some signals");
 
         if (BackTest)
         {
