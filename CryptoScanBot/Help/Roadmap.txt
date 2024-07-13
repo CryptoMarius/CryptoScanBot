@@ -4,6 +4,7 @@ Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep
 
 
 Scanner:
+- Scanner - Keuze maken welke PSAR berekening we willen blijven hanteren (TA-LIB, Tulip, of Dave)
 - Scanner - Alle exchanges rechtstreeks kunnen benaderen via een url
 - Scanner - Gerapporteerd: Het geheugen loopt langzaam op gedurende meerdere weken
             https://memprofiler.com/
