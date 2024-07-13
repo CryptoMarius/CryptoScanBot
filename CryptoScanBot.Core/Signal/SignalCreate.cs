@@ -243,7 +243,6 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
         signal.Strategy = algorithm.SignalStrategy;
         signal.LastPrice = Symbol.LastPrice;
 
-        string response;
         List<string> eventText = [];
         if (algorithm.ExtraText != "")
             eventText.Add(algorithm.ExtraText);
@@ -251,7 +250,7 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
 
         // Extra attributen erbij halen (dat lukt niet bij een backtest vanwege het ontbreken van een "history list")
         CalculateAdditionalSignalProperties(signal, history!, 60);
-        if (!HasOpenPosition() && !CheckAdditionalAlarmProperties(signal, out response))
+        if (!HasOpenPosition() && !CheckAdditionalAlarmProperties(signal, out string response))
         {
             eventText.Add(response);
             signal.IsInvalid = true;
@@ -537,7 +536,6 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
         //GlobalData.Logger.Trace($"SignalCreate.Prepare.Start {Symbol.Name} {Interval.Name} {Side}");
 
         Candle = null;
-        string response = "";
 
         if (!Symbol.LastPrice.HasValue)
         {
@@ -548,7 +546,7 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
 
 
         // Is het volume binnen de gestelde grenzen          
-        if (!HasOpenPosition() && !Symbol.CheckValidMinimalVolume(candleOpenTime, Interval.Duration, out response))
+        if (!HasOpenPosition() && !Symbol.CheckValidMinimalVolume(candleOpenTime, Interval.Duration, out string response))
         {
             if (GlobalData.Settings.Signal.LogMinimalVolume)
                 GlobalData.AddTextToLogTab("Analyse " + response);

@@ -192,8 +192,7 @@ public class TrendInterval
         // (We hope this makes the scanner a more less cpu hungry)
         // Question however: when is it ssave to clear the zigzag? to avoid memory overflow in the long run?
         // Anwer: We save and load the candles every 24 hours, perhaps there (TODO)
-        if (accountSymbolIntervalData.ZigZagCache == null)
-            accountSymbolIntervalData.ZigZagCache = new();
+        accountSymbolIntervalData.ZigZagCache ??= new();
         var cache = accountSymbolIntervalData.ZigZagCache; // alias
 
 

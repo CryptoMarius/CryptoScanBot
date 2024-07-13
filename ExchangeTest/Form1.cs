@@ -35,7 +35,7 @@ public partial class Form1 : Form
         {
             ApplicationParams.InitApplicationOptions();
 
-            string exchangeName = ApplicationParams.Options.ExchangeName;
+            string? exchangeName = ApplicationParams.Options.ExchangeName;
             if (exchangeName != null)
             {
                 // De default exchange is Binance (geen goede keuze in NL op dit moment)
@@ -235,7 +235,7 @@ public partial class Form1 : Form
 
     }
 
-    private CryptoPosition? SetupPosition()
+    private static CryptoPosition? SetupPosition()
     {
         CryptoPosition position = new();
 

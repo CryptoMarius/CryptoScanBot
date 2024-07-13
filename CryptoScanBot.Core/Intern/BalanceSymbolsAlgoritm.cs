@@ -220,7 +220,7 @@ public class BalanceSymbolsAlgoritm
             TotalValue += basketAsset.QuoteQuantity;
 
             // Quick en dirty wat USDT prijzen en waarden berekenen voor de display
-             if ((Exchange.SymbolListName.TryGetValue(basketAsset.Base + useUsdQuote, out CryptoSymbol symbol2)) && symbol2.LastPrice.HasValue)
+             if ((Exchange.SymbolListName.TryGetValue(basketAsset.Base + useUsdQuote, out CryptoSymbol? symbol2)) && symbol2.LastPrice.HasValue)
                 basketAsset.ValueUsdt = basketAsset.Quantity * (decimal)symbol2.LastPrice;
             else
                 basketAsset.ValueUsdt = 0;
@@ -243,7 +243,7 @@ public class BalanceSymbolsAlgoritm
                 return (decimal)symbol.LastPrice * quantity;
             else return 0;
         }
-        else if (symbol.Exchange.SymbolListName.TryGetValue(symbol.Base + useUsdQuote, out CryptoSymbol SymbolXxx))
+        else if (symbol.Exchange.SymbolListName.TryGetValue(symbol.Base + useUsdQuote, out CryptoSymbol? SymbolXxx))
         {
             if (SymbolXxx.LastPrice.HasValue)
                 return (decimal)SymbolXxx.LastPrice * quantity;
@@ -550,7 +550,7 @@ public class BalanceSymbolsAlgoritm
 
     private BasketAsset AddSymbolToBasket(string symbolName, decimal percentage)
     {
-        if (Exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol symbol))
+        if (Exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
         {
             foreach (BasketAsset b in Basket)
             {

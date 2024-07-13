@@ -102,7 +102,7 @@ private async Task KucoinTest()
             foreach (var x in iets.Data.Data)
             {
                 string symbolName1 = x.Symbol.Replace("-", "");
-                if (exchange.SymbolListName.TryGetValue(symbolName1, out CryptoSymbol symbol1))
+                if (exchange.SymbolListName.TryGetValue(symbolName1, out CryptoSymbol? symbol1))
                 {
                     if (x.QuoteVolume.HasValue)
                         symbol1.Volume = (decimal)x.QuoteVolume;
@@ -165,7 +165,7 @@ private async Task KucoinTest()
         //            if (GlobalData.ExchangeListName.TryGetValue(CryptoScanBot.Exchange.Kucoin.ExchangeOptions.ExchangeName, out CryptoScanBot.Model.CryptoExchange exchange))
         //            {
         //                string symbolName = data.Topic.Replace("-", "");
-        //                if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol symbol))
+        //                if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
         //                {
         //                    TickerCount++;
         //                    //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", topic, kline.Timestamp.ToLocalTime()));

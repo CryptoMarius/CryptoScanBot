@@ -49,8 +49,8 @@ internal class EmulatorTest
         GlobalData.Settings.BackTest.BackTestSymbol = "ONDOUSDT";
         if (GlobalData.ExchangeListName.TryGetValue("Bybit Spot", out CryptoScanBot.Core.Model.CryptoExchange exchange))
         {
-            if (exchange.SymbolListName.TryGetValue(GlobalData.Settings.BackTest.BackTestSymbol, out CryptoSymbol symbol) &&
-                  exchange.SymbolListName.TryGetValue("BTCUSDT", out CryptoSymbol btcSymbol))
+            if (exchange.SymbolListName.TryGetValue(GlobalData.Settings.BackTest.BackTestSymbol, out CryptoSymbol? symbol) &&
+                  exchange.SymbolListName.TryGetValue("BTCUSDT", out CryptoSymbol? btcSymbol))
             {
                 var whateverx = Task.Run(async () => { await Emulator.Execute(btcSymbol, symbol); });
             }

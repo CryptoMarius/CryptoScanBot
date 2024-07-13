@@ -665,9 +665,9 @@ public partial class TestForm : Form
 
     private async void Button2_Click(object? sender, EventArgs? e)
     {
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange? exchange))
         {
-            if (exchange.SymbolListName.TryGetValue("ETHUSDT", out CryptoSymbol symbol))
+            if (exchange.SymbolListName.TryGetValue("ETHUSDT", out CryptoSymbol? symbol))
             {
                 //Correctie naar beneden als huidige prijs lager is (gezet door de miniticker)
                 decimal price = 54m;
@@ -838,7 +838,7 @@ public partial class TestForm : Form
     {
         //if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange? exchange))
         //{
-        //    if (exchange.SymbolListName.TryGetValue("ALCXBTC", out CryptoSymbol symbol))
+        //    if (exchange.SymbolListName.TryGetValue("ALCXBTC", out CryptoSymbol? symbol))
         //    {
         //        DateTime dateCandleStart = DateTime.SpecifyKind(new DateTime(2023, 02, 1, 0, 0, 0), DateTimeKind.Utc);
         //        DateTime dateCandleEinde = DateTime.SpecifyKind(new DateTime(2023, 05, 1, 0, 0, 0), DateTimeKind.Utc);
@@ -1131,10 +1131,10 @@ public partial class TestForm : Form
         //trend.assignvaluecolor( if pos == -1 then color.red else if pos == 1 then color.green else color.blue);
 
 
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange? exchange))
         {
 
-            if (exchange.SymbolListName.TryGetValue("NEBLUSDT", out CryptoSymbol symbol))
+            if (exchange.SymbolListName.TryGetValue("NEBLUSDT", out CryptoSymbol? symbol))
             {
                 if ((symbol.Quote.Equals("USDT")) && (symbol.Status == 1))
                 {
@@ -1377,15 +1377,15 @@ public partial class TestForm : Form
         //GlobalData.Settings.Signal.AnalysisShowCandleJumpUp = false;
 
 
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange? exchange))
         {
-            if (exchange.SymbolListName.TryGetValue("WANBTC", out CryptoSymbol symbol))
+            if (exchange.SymbolListName.TryGetValue("WANBTC", out CryptoSymbol? symbol))
             {
                 DateTime dateCandleStart = DateTime.SpecifyKind(new DateTime(2022, 11, 21, 00, 00, 0), DateTimeKind.Utc);
                 DateTime dateCandleEinde = DateTime.SpecifyKind(new DateTime(2022, 12, 01, 00, 00, 0), DateTimeKind.Utc);
 
                 // Voor de SignalCreate moet ook de 1m geladen worden
-                if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1m, out CryptoInterval interval))
+                if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1m, out CryptoInterval? interval))
                     return;
                 LoadSymbolCandles(symbol, interval, dateCandleStart, dateCandleEinde);
 
@@ -1494,9 +1494,9 @@ public partial class TestForm : Form
         int intWidth = pictureBox1.Width;
         int intHeight = pictureBox1.Height;
 
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange? exchange))
         {
-            if ((quoteData != null) && (exchange.SymbolListName.TryGetValue(Core.Model.Constants.SymbolNameBarometerPrice + quoteData.Name, out CryptoSymbol symbol)))
+            if ((quoteData != null) && (exchange.SymbolListName.TryGetValue(Core.Model.Constants.SymbolNameBarometerPrice + quoteData.Name, out CryptoSymbol? symbol)))
             {
                 CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
                 SortedList<long, CryptoCandle> candleList = symbolPeriod.CandleList;
@@ -1733,9 +1733,9 @@ public partial class TestForm : Form
         //GlobalData.Settings.Signal.AnalysisShowCandleJumpUp = false;
 
 
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange? exchange))
         {
-            if (exchange.SymbolListName.TryGetValue(Core.Model.Constants.SymbolNameBarometerPrice + "USDT", out CryptoSymbol symbol)) //"BTCUSDT"
+            if (exchange.SymbolListName.TryGetValue(Core.Model.Constants.SymbolNameBarometerPrice + "USDT", out CryptoSymbol? symbol)) //"BTCUSDT"
             {
                 DateTime dateCandleStart = DateTime.SpecifyKind(new DateTime(2023, 03, 01, 05, 00, 0), DateTimeKind.Utc);
                 DateTime dateCandleEinde = DateTime.SpecifyKind(new DateTime(2023, 04, 02, 00, 00, 0), DateTimeKind.Utc);
@@ -1743,7 +1743,7 @@ public partial class TestForm : Form
 
 
                 // Voor de SignalCreate moet ook de 1m geladen worden
-                if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1h, out CryptoInterval interval))
+                if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1h, out CryptoInterval? interval))
                     return;
                 LoadSymbolCandles(symbol, interval, dateCandleStart, dateCandleEinde);
 
@@ -2383,7 +2383,7 @@ public partial class TestForm : Form
                 Results.ShowHeader(header, false);
                 GlobalData.AddTextToLogTab(header.ToString());
 
-                if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange exchange))
+                if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange? exchange))
                 {
                     string baseFolder = GlobalData.GetBaseDir();
                     baseFolder += @"\backtest\" + exchange.Name + @"\" + strategy.ToString() + @"\";
@@ -2392,9 +2392,9 @@ public partial class TestForm : Form
                     // De symbols van/voor de pauseer regels inlezen
                     foreach (Core.Settings.PauseTradingRule rule in GlobalData.Settings.Trading.PauseTradingRules)
                     {
-                        if (exchange.SymbolListName.TryGetValue(rule.Symbol, out CryptoSymbol symbolX))
+                        if (exchange.SymbolListName.TryGetValue(rule.Symbol, out CryptoSymbol? symbolX))
                         {
-                            if (GlobalData.IntervalListPeriod.TryGetValue(rule.Interval, out CryptoInterval intervalX))
+                            if (GlobalData.IntervalListPeriod.TryGetValue(rule.Interval, out CryptoInterval? intervalX))
                             {
                                 LoadSymbolCandles(symbolX, intervalX, config.DateStart, config.DateEinde);
                             }
@@ -2426,7 +2426,7 @@ public partial class TestForm : Form
                     // Inlezen barometers
                     foreach (string quote in quoteList)
                     {
-                        if (exchange.SymbolListName.TryGetValue("$BMP" + quote, out CryptoSymbol symbol))
+                        if (exchange.SymbolListName.TryGetValue("$BMP" + quote, out CryptoSymbol? symbol))
                         {
                             foreach (CryptoInterval intervalX in GlobalData.IntervalListPeriod.Values)
                             {
@@ -2600,9 +2600,9 @@ public partial class TestForm : Form
 
     private void Button2_Click_2(object? sender, EventArgs? e)
     {
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange? exchange))
         {
-            if (exchange.SymbolListName.TryGetValue("ADAUSDT", out CryptoSymbol symbol))
+            if (exchange.SymbolListName.TryGetValue("ADAUSDT", out CryptoSymbol? symbol))
             {
                 CryptoSignal signal = new()
                 {
@@ -2669,9 +2669,9 @@ public partial class TestForm : Form
 
     private void Button4_Click(object? sender, EventArgs? e)
     {
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange? exchange))
         {
-            if (exchange.SymbolListName.TryGetValue("PAXGUSDT", out CryptoSymbol symbol))
+            if (exchange.SymbolListName.TryGetValue("PAXGUSDT", out CryptoSymbol? symbol))
             {
                 CryptoSignal signal = new()
                 {

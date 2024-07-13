@@ -113,7 +113,7 @@ internal class FileName
 
     //CryptoScanBot.Core.Model.CryptoExchange exchange = GlobalData.Settings.General.Exchange;
 
-    //if (!exchange.SymbolListName.TryGetValue("IDUSDT", out CryptoSymbol symbol))
+    //if (!exchange.SymbolListName.TryGetValue("IDUSDT", out CryptoSymbol? symbol))
     //return;
     //CryptoSymbol symbol = new()
     //{
@@ -233,7 +233,7 @@ internal class FileName
     //            //{
     //            //tickerCount++;
 
-    //            //if (exchange.SymbolListName.TryGetValue(data.Topic, out CryptoSymbol symbol))
+    //            //if (exchange.SymbolListName.TryGetValue(data.Topic, out CryptoSymbol? symbol))
     //            //{
     //            // Waarschijnlijk ALLEMAAL gebaseerd op de 24h prijs
     //            //symbol.OpenPrice = tick.OpenPrice;

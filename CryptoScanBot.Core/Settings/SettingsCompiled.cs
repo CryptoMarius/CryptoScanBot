@@ -20,33 +20,33 @@ public class SettingsCompiled
 {
     // Welke intervallen zijn actief
     [JsonIgnore]
-    public List<CryptoInterval> Interval { get; set; } = new();
-    public SortedList<CryptoIntervalPeriod, bool> IntervalPeriod { get; set; } = new();
+    public List<CryptoInterval> Interval { get; set; } = [];
+    public SortedList<CryptoIntervalPeriod, bool> IntervalPeriod { get; set; } = [];
 
 
     // Welke strategien zijn actief (en speciaal voor de CreateSignal een onderverdeling)
-    public SortedList<CryptoSignalStrategy, bool> Strategy { get; set; } = new();
-    public List<CryptoSignalStrategy> StrategySbmStob { get; set; } = new();
-    public List<CryptoSignalStrategy> StrategyOthers { get; set; } = new();
+    public SortedList<CryptoSignalStrategy, bool> Strategy { get; set; } = [];
+    public List<CryptoSignalStrategy> StrategySbmStob { get; set; } = [];
+    public List<CryptoSignalStrategy> StrategyOthers { get; set; } = [];
 
 
     // Interval trend + Value (bullisch, bearish)
-    public Dictionary<CryptoIntervalPeriod, CryptoTrendIndicator> Trend { get; set; } = new();
+    public Dictionary<CryptoIntervalPeriod, CryptoTrendIndicator> Trend { get; set; } = [];
     public bool TrendLog = false;
 
     // Markt trend + Value (percentage)
-    public List<(decimal minValue, decimal maxValue)> MarketTrend { get; set; } = new();
+    public List<(decimal minValue, decimal maxValue)> MarketTrend { get; set; } = [];
     public bool MarketTrendLog = false;
 
     // Via interval + Value (ranged)
     // Minimale barometer om de meldingen te genereren
-    public Dictionary<CryptoIntervalPeriod, (decimal minValue, decimal maxValue)> Barometer { get; set; } = new();
+    public Dictionary<CryptoIntervalPeriod, (decimal minValue, decimal maxValue)> Barometer { get; set; } = [];
     public bool BarometerLog = false;
 
 
     // The black- and whitelist
-    public SortedList<string, bool> BlackList { get; } = new();
-    public SortedList<string, bool> WhiteList { get; } = new();
+    public SortedList<string, bool> BlackList { get; } = [];
+    public SortedList<string, bool> WhiteList { get; } = [];
 
 
 

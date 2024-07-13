@@ -225,7 +225,7 @@ public partial class DashBoardInformation : UserControl
         int intWidth = pictureBox1.Width;
         int intHeight = pictureBox1.Height;
 
-        if (quoteData != null && exchange.SymbolListName.TryGetValue(Constants.SymbolNameBarometerPrice + quoteData.Name, out CryptoSymbol symbol))
+        if (quoteData != null && exchange.SymbolListName.TryGetValue(Constants.SymbolNameBarometerPrice + quoteData.Name, out CryptoSymbol? symbol))
         {
             CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
             SortedList<long, CryptoCandle> candleList = symbolPeriod.CandleList;
@@ -494,7 +494,7 @@ public partial class DashBoardInformation : UserControl
 
 
         // subitem 0, 1 en 2
-        if (exchange.SymbolListName.TryGetValue(baseCoin + quoteData.Name, out CryptoSymbol symbol) || exchange.SymbolListName.TryGetValue(baseCoin + "USDT", out symbol))
+        if (exchange.SymbolListName.TryGetValue(baseCoin + quoteData.Name, out CryptoSymbol? symbol) || exchange.SymbolListName.TryGetValue(baseCoin + "USDT", out symbol))
         {
             decimal value;
             item.SymbolName.Text = symbol.Name;
@@ -676,11 +676,11 @@ public partial class DashBoardInformation : UserControl
                 if (x.SymbolName == target || x.SymbolPrice == target || x.SymbolVolume == target)
                 {
                     string symbolName = x.SymbolName.Text;
-                    if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange exchange))
+                    if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange? exchange))
                     {
-                        if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol symbol))
+                        if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
                         {
-                            if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1m, out CryptoInterval interval))
+                            if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1m, out CryptoInterval? interval))
                                 return;
 
                             LinkTools.ActivateExternalTradingApp(GlobalData.Settings.General.TradingApp, symbol, interval);

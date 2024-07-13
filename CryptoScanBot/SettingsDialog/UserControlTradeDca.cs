@@ -6,9 +6,9 @@ namespace CryptoScanBot.SettingsDialog;
 public partial class UserControlTradeDca : UserControl
 {
     private readonly SortedList<string, CryptoOrderType> OrderTypeList = [];
-    private readonly SortedList<string, CryptoEntryOrDcaStrategy> StrategyList = new();
-    private readonly SortedList<string, CryptoEntryOrDcaPricing> PricingList = new();
-    private readonly List<UserControlTradeDcaItem> UserControlDcaList = new();
+    private readonly SortedList<string, CryptoEntryOrDcaStrategy> StrategyList = [];
+    private readonly SortedList<string, CryptoEntryOrDcaPricing> PricingList = [];
+    private readonly List<UserControlTradeDcaItem> UserControlDcaList = [];
 
     public UserControlTradeDca()
     {

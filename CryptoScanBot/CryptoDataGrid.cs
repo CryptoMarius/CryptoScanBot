@@ -51,7 +51,7 @@ public class CryptoDataGrid
 {
     // references
     internal DataGridView Grid;
-    internal Object SelectedObject;
+    internal Object? SelectedObject;
     internal int SelectedObjectIndex;
     internal SortedList<string, ColumnSetting> ColumnList;
 }

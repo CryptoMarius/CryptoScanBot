@@ -19,13 +19,13 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
     CryptoSymbol Symbol = null!;
 
-    static double GetInterval()
-    {
-        // bewust 5 seconden en een beetje layer zodat we zeker weten dat de kline er is
-        // (anders zou deze 60 seconden later alsnog verwerkt worden, maar dat is te laat)
-        DateTime now = DateTime.Now;
-        return 5050 + ((60 - now.Second) * 1000 - now.Millisecond);
-    }
+    //static double GetInterval()
+    //{
+    //    // bewust 5 seconden en een beetje layer zodat we zeker weten dat de kline er is
+    //    // (anders zou deze 60 seconden later alsnog verwerkt worden, maar dat is te laat)
+    //    DateTime now = DateTime.Now;
+    //    return 5050 + ((60 - now.Second) * 1000 - now.Millisecond);
+    //}
 
 
     public override async Task<CallResult<UpdateSubscription>?> Subscribe()
@@ -42,10 +42,10 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                 symbolName += "," + symbol.Base + "-" + symbol.Quote;
         }
 
-        SortedList<long, CryptoCandle> klineListTemp = [];
+        //SortedList<long, CryptoCandle> klineListTemp = [];
 
-        if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1m, out CryptoInterval? interval))
-            throw new Exception("Geen intervallen?");
+        //if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1m, out CryptoInterval? interval))
+        //    throw new Exception("Geen intervallen?");
 
 
 //TODO!!!!

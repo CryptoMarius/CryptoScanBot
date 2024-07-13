@@ -67,7 +67,7 @@ partial class CryptoDataGridColumns
         buttonCancel.TabIndex = 1;
         buttonCancel.Text = "&Cancel";
         buttonCancel.UseVisualStyleBackColor = true;
-        buttonCancel.Click += buttonCancel_Click;
+        buttonCancel.Click += ButtonCancelClick;
         // 
         // buttonOk
         // 
@@ -79,7 +79,7 @@ partial class CryptoDataGridColumns
         buttonOk.TabIndex = 0;
         buttonOk.Text = "&Ok";
         buttonOk.UseVisualStyleBackColor = true;
-        buttonOk.Click += buttonOk_Click;
+        buttonOk.Click += ButtonOkClick;
         // 
         // CryptoDataGridColumns
         // 

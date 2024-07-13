@@ -151,9 +151,9 @@ internal class FileName
 
     private static async void ByBitGetOrders(string symbolName)
     {
-        if (GlobalData.ExchangeListName.TryGetValue("Bybit Spot", out CryptoScanBot.Core.Model.CryptoExchange exchange))
+        if (GlobalData.ExchangeListName.TryGetValue("Bybit Spot", out CryptoScanBot.Core.Model.CryptoExchange? exchange))
         {
-            if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol symbol))
+            if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
             {
                 GlobalData.AddTextToLogTab("");
                 GlobalData.AddTextToLogTab($"Bybit GetOrders for {symbolName}");

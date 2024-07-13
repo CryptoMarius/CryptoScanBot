@@ -426,7 +426,7 @@ public class ExcelPositionDump(CryptoPosition position) : ExcelBase(position.Sym
     //    //            {
     //    //                signal.Exchange = exchange2;
 
-    //    //                if (exchange2.SymbolListId.TryGetValue(signal.SymbolId, out CryptoSymbol symbol))
+    //    //                if (exchange2.SymbolListId.TryGetValue(signal.SymbolId, out CryptoSymbol? symbol))
     //    //                {
     //    //                    signal.Symbol = symbol;
 

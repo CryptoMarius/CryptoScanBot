@@ -747,7 +747,7 @@ public class BackTest
         //                // barometer initialiseren
         //                if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange exchangeX))
         //                {
-        //                    if (exchangeX.SymbolListName.TryGetValue("$BMP" + Symbol.Quote, out CryptoSymbol symbolX))
+        //                    if (exchangeX.SymbolListName.TryGetValue("$BMP" + Symbol.Quote, out CryptoSymbol? symbolX))
         //                    {
         //                        CryptoSymbolInterval cryptoSymbolIntervalX = symbolX.GetSymbolInterval(CryptoIntervalPeriod.interval1h);
         //                        BarometerData? barometerData = GlobalData.ActiveAccount!.Data.GetBarometer(symbolX.Quote, CryptoIntervalPeriod.interval1h);

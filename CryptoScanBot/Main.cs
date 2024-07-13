@@ -202,7 +202,7 @@ public partial class FrmMain : Form
     }
 #endif
 
-    private void FrmMain_FormClosing(object sender, FormClosingEventArgs e)
+    private void FrmMain_FormClosing(object? sender, FormClosingEventArgs? e)
     {
         GlobalData.ApplicationIsClosing = true;
         AsyncContext.Run(ScannerSession.StopAsync);

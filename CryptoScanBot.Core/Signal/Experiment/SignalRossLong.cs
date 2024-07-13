@@ -12,24 +12,10 @@ namespace CryptoScanBot.Core.Signal.Experiment;
 
 public class SignalRossLong : SignalCreateBase
 {
-    static string blablaName;
-    static CryptoTradeSide blablaSide;
-    static CryptoSignalStrategy blablaAlgorithm;
-
-    static SignalRossLong()
-    {
-        blablaName = "ross";
-        blablaSide = CryptoTradeSide.Long;
-        blablaAlgorithm = CryptoSignalStrategy.Ross;
-    }
-
     public SignalRossLong(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        //SignalSide = CryptoTradeSide.Long;
-        //SignalStrategy = CryptoSignalStrategy.Ross;
-
-        SignalSide = blablaSide;
-        SignalStrategy = blablaAlgorithm;
+        SignalSide = CryptoTradeSide.Long;
+        SignalStrategy = CryptoSignalStrategy.Ross;
     }
 
     public override bool AdditionalChecks(CryptoCandle candle, out string response)
