@@ -3,12 +3,14 @@ CryptoScanBot release historie:
 xx-xx-2024 1.9.3
 - Scanner - De instelling "signalen maken" verwijderd
 - Scanner - Ondersteuning Mexc exchange (eerste release)
+- Scanner - De Kucoin deeplink url voor Altrady werkt niet
 - Scanner - Binance Futures deeplink url werkt nu voor Altrady
 - Scanner - Binance Futures ontbreekt in de mogelijkheden van de "Activeer exchange"
 - Scanner - De berekening van de trend is vrij traag (met name in de emulator)
 - Scanner - De trend berekening qua code "lichter" gemaakt door de ZigZag te cachen (aanzienlijk verschil in cpu)
 - Scanner - Er worden klines opgehaald van munten die slechts ~1 maand aanwezig zijn op de exchange (bybit spot)
-- Scanner - Extra instelling erbij om de volume controle over meerdere dagen uit te voeren waardoor er geen melding komt op een symbol met een (tijdelijk) hogere volume
+- Scanner - Extra instelling erbij om de volume controle over meerdere dagen uit te voeren waardoor er geen melding komt op een symbol met een (tijdelijk) hogere volume (7 dagen)
+- Scanner - Plaatsing van popup venster voor selecteren van kolommen gecentreerd ten op zichte van hoofdscherm
 
 - Emulator - De berekening van de trend is traag (verbeterd dmv caching)
 - Emulator - Introductie van de emulator (maar er gaat nu nog het eea niet goed, ietwat voorbarig wellicht)
