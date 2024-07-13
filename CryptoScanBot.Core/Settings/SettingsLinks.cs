@@ -196,6 +196,11 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
                     Execute = CryptoExternalUrlType.Internal,
                     Url = "https://app.altrady.com/d/KRKN_{QUOTE}_{BASE}:{interval}",
                 },
+                TradingView = new()
+                {
+                    Execute = CryptoExternalUrlType.External,
+                    Url = "https://www.tradingview.com/chart/?symbol=KRAKEN:{BASE}{QUOTE}&interval={interval}",
+                },
             }
         );
 
@@ -209,6 +214,11 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
                     Code = "MEXC",
                     Execute = CryptoExternalUrlType.Internal,
                     Url = "https://app.altrady.com/d/MEXC_{QUOTE}_{BASE}:{interval}",
+                },
+                TradingView = new()
+                {
+                    Execute = CryptoExternalUrlType.External,
+                    Url = "https://www.tradingview.com/chart/?symbol=MEXC:{BASE}{QUOTE}&interval={interval}",
                 },
             }
         );
