@@ -152,14 +152,39 @@ public class ZigZagIndicator
     /// <inheritdoc />
     public void Calculate(CryptoCandle candle)
     {
-        // Remark: New candle are placed in fron (unusual)
+        // Remark: New candle are placed in front (unusual)
 
         //if (true) // _needAdd
         //{
+
+        if (Candles.Count == 0)
+            Candles.Add(candle); 
+        else
             Candles.Insert(0, candle);
+
+
+        if (_lowBuffer.Count == 0)
+            _lowBuffer.Add(0);
+        else
             _lowBuffer.Insert(0, 0);
+
+        if (_highBuffer.Count == 0)
+            _highBuffer.Add(0);
+        else
             _highBuffer.Insert(0, 0);
+
+        if (_zigZagBuffer.Count == 0)
+            _zigZagBuffer.Add(0);
+        else
             _zigZagBuffer.Insert(0, 0);
+
+        //Candles.Insert(0, candle);
+        //error System.ArgumentException: Source array was not long enough. Check the source index, length, and the array's lower bounds
+        // (this worked but after a few day's this error, why?)
+        //_lowBuffer.Insert(0, 0);
+        //_highBuffer.Insert(0, 0);
+        //_zigZagBuffer.Insert(0, 0);
+
         //}
         //else
         //{
