@@ -12,6 +12,7 @@ public class SubscriptionPriceTicker(ExchangeOptions exchangeOptions) : Subscrip
     public override async Task<CallResult<UpdateSubscription>?> Subscribe()
     {
         TickerGroup!.SocketClient ??= new KucoinSocketClient();
+        // alternative=SubscribeToTickerUpdatesAsync (we dont need to update all symbols, just the quote-ones we have selected)
         CallResult<UpdateSubscription> subscriptionResult = await ((KucoinSocketClient)TickerGroup.SocketClient).SpotApi.SubscribeToAllTickerUpdatesAsync(data =>
         {
             if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))

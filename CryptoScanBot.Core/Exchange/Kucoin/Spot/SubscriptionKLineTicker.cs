@@ -21,8 +21,6 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
     //private static int tickerIndex = 0;
     //#endif
 
-    //CryptoSymbol Symbol = null!;
-
     static double GetInterval()
     {
         // bewust 6 seconden zodat we zeker weten dat de kline er is
@@ -67,8 +65,8 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
             Task taskKline = Task.Run(() =>
             {
                 KucoinKline kline = data.Data.Candles;
-                string json = JsonSerializer.Serialize(data.Data, GlobalData.JsonSerializerNotIndented);
-                GlobalData.AddTextToLogTab($"kline ticker {data.Symbol} {json}");
+                //string json = JsonSerializer.Serialize(data.Data, GlobalData.JsonSerializerNotIndented);
+                //GlobalData.AddTextToLogTab($"kline ticker {data.Symbol} {json}");
 
                 if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
                 {
@@ -172,6 +170,9 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                             if (candle.OpenTime <= expectedCandlesUpto)
                             {
                                 tempList.Remove(candle.OpenTime);
+                                Interlocked.Increment(ref TickerCount);
+                                if (TickerCount > 999999999)
+                                    TickerCount = 0;
 
                                 //ScannerLog.Logger.Trace($"kline ticker {topic} process");
                                 //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", topic, kline.Timestamp.ToLocalTime()));
@@ -187,10 +188,6 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                                 // Aanbieden voor analyse (dit gebeurd zowel in de ticker als ProcessCandles)
                                 if (candle.OpenTime == expectedCandlesUpto)
                                 {
-                                    Interlocked.Increment(ref TickerCount);
-                                    if (TickerCount > 999999999)
-                                        TickerCount = 0;
-
                                     //GlobalData.AddTextToLogTab("Aanbieden analyze " + candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true));
                                     GlobalData.ThreadMonitorCandle?.AddToQueue(symbol, candle);
                                 }
