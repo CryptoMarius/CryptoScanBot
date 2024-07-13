@@ -1982,15 +1982,15 @@ partial class FrmSettings
         label26.Location = new Point(25, 36);
         label26.Margin = new Padding(4, 0, 4, 0);
         label26.Name = "label26";
-        label26.Size = new Size(38, 15);
+        label26.Size = new Size(60, 15);
         label26.TabIndex = 125;
-        label26.Text = "Add ..";
+        label26.Text = "Add value";
         // 
         // EditStorsiAddAmount
         // 
-        EditStorsiAddAmount.Increment = new decimal(new int[] { 25, 0, 0, 131072 });
         EditStorsiAddAmount.Location = new Point(157, 34);
         EditStorsiAddAmount.Margin = new Padding(4, 3, 4, 3);
+        EditStorsiAddAmount.Maximum = new decimal(new int[] { 20, 0, 0, 0 });
         EditStorsiAddAmount.Name = "EditStorsiAddAmount";
         EditStorsiAddAmount.Size = new Size(56, 23);
         EditStorsiAddAmount.TabIndex = 126;

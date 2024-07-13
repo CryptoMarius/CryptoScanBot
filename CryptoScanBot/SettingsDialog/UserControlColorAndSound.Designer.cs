@@ -67,7 +67,7 @@ partial class UserControlColorAndSound
         buttonColor.Name = "buttonColor";
         buttonColor.Size = new Size(88, 27);
         buttonColor.TabIndex = 162;
-        buttonColor.Text = "Achtergrond";
+        buttonColor.Text = "Background";
         buttonColor.UseVisualStyleBackColor = true;
         // 
         // buttonPlaySound

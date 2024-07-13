@@ -61,6 +61,8 @@ public partial class FrmSettings : Form
         settings.Trading.Active = false;
         tabTrading.Parent = null;
         tabControlMain.TabPages.Remove(tabTrading);
+        tabApi.Parent = null;
+        tabControlMain.TabPages.Remove(tabApi);
 #endif
 
         // Deze worden na de overgang naar .net 7 regelmatig gereset naar 0
