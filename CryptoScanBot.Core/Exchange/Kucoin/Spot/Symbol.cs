@@ -52,21 +52,19 @@ public class Symbol
                 ]
                 */
 
-                var exchangeInfo = await client.SpotApi.ExchangeData.GetSymbolsAsync() ?? throw new ExchangeException("Geen exchange data ontvangen (1)");
-                if (!exchangeInfo.Success)
-                    GlobalData.AddTextToLogTab($"error getting exchangeinfo {exchangeInfo.Error}", true);
-                //if (exchangeInfo.Data == null)
-                //    throw new ExchangeException($"Geen exchange data ontvangen (2) {exchangeInfo.Error}");
+                var exchangeData = await client.SpotApi.ExchangeData.GetSymbolsAsync();
+                if (exchangeData == null) 
+                    throw new ExchangeException("No exchange data received");
+                if (!exchangeData.Success)
+                    GlobalData.AddTextToLogTab($"error getting exchangeinfo {exchangeData.Error}", true);
 
-                // Bewaren voor debug werkzaamheden
+                // Save for debug purposes
                 {
-                    string filename = GlobalData.GetBaseDir();
-                    filename += $@"\{exchange.Name}\";
+                    string filename = $@"{GlobalData.GetBaseDir()}\{exchange.Name}\";
                     Directory.CreateDirectory(filename);
                     filename += "symbols.json";
 
-                    string text = JsonSerializer.Serialize(exchangeInfo, GlobalData.JsonSerializerIndented);
-                    //var accountFile = new FileInfo(filename);
+                    string text = JsonSerializer.Serialize(exchangeData, GlobalData.JsonSerializerIndented);
                     File.WriteAllText(filename, text);
                 }
 
@@ -92,28 +90,41 @@ public class Symbol
                     "MakerCoefficient": 1
                   },
                 */
-                // Aanvullend de tickers aanroepen voor het volume...
-                GlobalData.AddTextToLogTab($"Reading symbol ticker information from {ExchangeBase.ExchangeOptions.ExchangeName}");
-                var tickersInfos = await client.SpotApi.ExchangeData.GetTickersAsync() ?? throw new ExchangeException("Geen symbol ticker data ontvangen (1)");
-                if (!tickersInfos.Success)
-                    GlobalData.AddTextToLogTab("error getting symbol ticker " + tickersInfos.Error + "\r\n");
-                //if (tickersInfos.Data == null)
-                //    throw new ExchangeException("Geen symbol ticker data ontvangen (2)");
 
-                // Bewaren voor debug werkzaamheden
+                // tickers for volumes... (need volume because of filtered kline and price tickers)
+                GlobalData.AddTextToLogTab($"Reading symbol ticker information from {ExchangeBase.ExchangeOptions.ExchangeName}");
+                var tickerData = await client.SpotApi.ExchangeData.GetTickersAsync();
+                if (tickerData == null)
+                    throw new ExchangeException("No ticker data received");
+                if (!tickerData.Success)
+                    GlobalData.AddTextToLogTab("error getting symbol ticker {tickersInfos.Error}");
+
+                // Save for debug purposes
                 {
-                    string filename = GlobalData.GetBaseDir();
-                    filename += $@"\{exchange.Name}\";
+                    string filename = $@"{GlobalData.GetBaseDir()}\{exchange.Name}\";
                     Directory.CreateDirectory(filename);
                     filename += "tickers.json";
 
-                    string text = JsonSerializer.Serialize(tickersInfos, GlobalData.JsonSerializerIndented);
-                    //var accountFile = new FileInfo(filename);
+                    string text = JsonSerializer.Serialize(tickerData, GlobalData.JsonSerializerIndented);
                     File.WriteAllText(filename, text);
                 }
 
+                // index volume
+                SortedList<string, decimal> volumeTicker = [];
+                if (tickerData.Data != null && tickerData.Data.Data != null)
+                {
+                    foreach (var tickerInfo in tickerData.Data.Data)
+                    {
+                        if (tickerInfo.QuoteVolume.HasValue)
+                        {
+                            string symbolName = tickerInfo.Symbol.Replace("-", "");
+                            volumeTicker.Add(symbolName, tickerInfo.QuoteVolume.Value);
+                        }
+                    }
+                }
 
-                if (exchangeInfo.Data != null && tickersInfos.Data != null && tickersInfos.Data.Data != null)
+
+                if (exchangeData.Data != null)
                 {
 
                     // Om achteraf de niet aangeboden munten te deactiveren
@@ -125,7 +136,7 @@ public class Symbol
                         List<CryptoSymbol> cache = [];
                         try
                         {
-                            foreach (var symbolData in exchangeInfo.Data)
+                            foreach (var symbolData in exchangeData.Data)
                             {
                                 // https://docs.kucoin.com/#symbols-amp-ticker
                                 // https://api.kucoin.com/api/v1/symbols
@@ -176,6 +187,10 @@ public class Symbol
                                 else
                                     symbol.Status = 0; //Zet de status door (PreTrading, PostTrading of Halt)
 
+                                // volume from the tickers
+                                if (volumeTicker.TryGetValue(symbol.Name, out decimal volume))
+                                    symbol.Volume = volume;
+
                                 if (symbol.Id == 0)
                                 {
                                     database.Connection.Insert(symbol, transaction);
@@ -198,7 +213,7 @@ public class Symbol
                                 }
                             }
                             if (deactivated > 0)
-                                GlobalData.AddTextToLogTab($"{deactivated} munten gedeactiveerd");
+                                GlobalData.AddTextToLogTab($"{deactivated} symbols deactivated");
 
 
                             // De nieuwe symbols toevoegen aan de lijst
@@ -208,21 +223,6 @@ public class Symbol
                                 GlobalData.AddSymbol(symbol);
                             }
 
-
-
-                            // Aanvullend de tickers aanroepen voor het volume...
-                            foreach (var tickerInfo in tickersInfos.Data.Data)
-                            {
-                                string symbolName = tickerInfo.Symbol.Replace("-", "");
-                                if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
-                                {
-                                    if (tickerInfo.QuoteVolume.HasValue)
-                                    {
-                                        symbol.Volume = (decimal)tickerInfo.QuoteVolume;
-                                        database.Connection.Update(symbol, transaction);
-                                    }
-                                }
-                            }
 
                             transaction.Commit();
                         }
