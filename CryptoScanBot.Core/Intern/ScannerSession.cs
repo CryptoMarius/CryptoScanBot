@@ -278,7 +278,7 @@ public static class ScannerSession
             GlobalData.AddTextToLogTab("Debug: Een van de 1m kline tickers is gestopt!", true);
 
             // Schedule a rest of the streams
-            if (!TimerRestartStreams.Enabled)
+            if (!TimerRestartStreams.Enabled || TimerRestartStreams.Interval > 60 * 1000)
                 TimerRestartStreams.InitTimerInterval(1 * 60);
         }
     }
