@@ -55,7 +55,7 @@ public class AltradyWebhook
             request.symbol = $"{externalUrls.Altrady.Code}_{position.Symbol.Quote}_{position.Symbol.Base}";
             request.order_type = "market"; // ['limit', 'market']
             request.adjust_fee = true; // Adjust the order size to ensure there is enough to pay the fee (problems when managing position from our side)
-            request.signal_price = position.EntryPrice;
+            //request.signal_price = position.EntryPrice;
             //leverage (integer, optional): The leverage for a futures position ,
             //quote_amount(number, optional): Specifies quote amount of the entry order, if left blank, the signal bot setting will be used. ,
             //base_amount(number, optional): Specifies base amount of the entry order, if left blank, the signal bot setting will be used. ,
