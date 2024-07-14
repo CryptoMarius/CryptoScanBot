@@ -162,7 +162,7 @@ static public class GlobalData
         }
     }
 
-    static public void LoadAccounts()
+    public static void LoadAccounts()
     {
         // Load & index the accounts
         AddTextToLogTab("Reading account information");
@@ -758,13 +758,11 @@ static public class GlobalData
 
     public static void InitializeExchange()
     {
-        string exchangeName = ApplicationParams.Options.ExchangeName;
+        // If application params contain an exchange this is leading
+        // Otherwise we take the one from the settings
+        string? exchangeName = ApplicationParams.Options!.ExchangeName;
         if (exchangeName != null)
         {
-            // Default exchange is Bybit Spot
-            if (exchangeName == "")
-                exchangeName = "Bybit Spot";
-
             // Migration (not needed but its cheap)
             if (exchangeName == "Binance")
                 exchangeName = "Binance Spot";
@@ -777,14 +775,18 @@ static public class GlobalData
             if (exchangeName == "Mexc")
                 exchangeName = "Mexc Spot";
 
-            if (GlobalData.ExchangeListName.TryGetValue(exchangeName, out var exchange))
-            {
-                GlobalData.Settings.General.Exchange = exchange;
-                GlobalData.Settings.General.ExchangeId = exchange.Id;
-                GlobalData.Settings.General.ExchangeName = exchange.Name;
-            }
-            else throw new Exception($"Exchange {exchangeName} bestaat niet");
+            // New exchange
+            GlobalData.Settings.General.ExchangeName = exchangeName;
         }
+
+
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out var exchange))
+        {
+            GlobalData.Settings.General.Exchange = exchange;
+            GlobalData.Settings.General.ExchangeId = exchange.Id;
+            GlobalData.Settings.General.ExchangeName = exchange.Name;
+        }
+        else throw new Exception($"Exchange {exchangeName} bestaat niet");
     }
 
 
