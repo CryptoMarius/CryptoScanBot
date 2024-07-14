@@ -10,7 +10,7 @@ public class ApplicationParams
     public string? AppDataFolder { get; set; }
 
     // Een idee? Dan hoeven we niet zo raar te switchen (soms midden in het ophalen van candles <met alle problemen van dien>)
-    [Option('e', "exchange", Required = false, HelpText = "De te gebruiken exchange (Binance, Bybit Spot, ByBit Futures of Kucoin")]
+    [Option('e', "exchange", Required = false, HelpText = "De te gebruiken exchange (Binance Spot, Binance Futures, Bybit Spot, ByBit Futures, Mexc Spot of Kucoin Spot")]
     public string? ExchangeName { get; set; }
 
     static public ApplicationParams? Options { get; set; }

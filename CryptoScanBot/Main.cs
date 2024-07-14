@@ -253,15 +253,12 @@ public partial class FrmMain : Form
 
     private void ApplySettings()
     {
-        // De exchange overnemen die is ingesteld (vanuit dialoog wordt het wel gedaan, bij laden)
-        if (GlobalData.Settings.General.Exchange == null)
+        // Is done multiple times, but that is okay
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange? exchange))
         {
-            if (GlobalData.ExchangeListId.TryGetValue(GlobalData.Settings.General.ExchangeId, out Core.Model.CryptoExchange? exchange))
-            {
-                GlobalData.Settings.General.Exchange = exchange;
-                GlobalData.Settings.General.ExchangeId = exchange.Id;
-                GlobalData.Settings.General.ExchangeName = exchange.Name;
-            }
+            GlobalData.Settings.General.Exchange = exchange;
+            GlobalData.Settings.General.ExchangeId = exchange.Id;
+            GlobalData.Settings.General.ExchangeName = exchange.Name;
         }
 
         // Het juiste trading coount in de globale variabelen zetten
