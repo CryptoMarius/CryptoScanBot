@@ -10,6 +10,7 @@ using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 using System.Text.Json;
+using Bybit.Net;
 
 namespace CryptoScanBot.Core.Exchange.BybitApi.Spot;
 
@@ -63,6 +64,7 @@ public class Api : ExchangeBase
             //options.SpotOptions.AutoTimestamp = true;
             options.ReceiveWindow = TimeSpan.FromSeconds(15);
             options.RequestTimeout = TimeSpan.FromSeconds(40); // standard=20 seconds
+            //options.Environment = BybitEnvironment.Testnet;
             //options.SpotOptions.RateLimiters = ?
             if (GlobalData.TradingApi.Key != "")
                 options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
