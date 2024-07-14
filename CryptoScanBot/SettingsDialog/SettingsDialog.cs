@@ -350,7 +350,7 @@ public partial class FrmSettings : Form
         // ------------------------------------------------------------------------------
         settings.General.ExtraCaption = EditExtraCaption.Text;
         NewExchange = (Core.Model.CryptoExchange)EditExchange.SelectedValue;
-        // Niet direct zetten, eerst moet alles uitgezet worden
+        // Don't save immediately, lots of data still in memory etc
         //settings.General.Exchange = (Model.CryptoExchange)EditExchange.SelectedValue;
         //settings.General.ExchangeId = settings.General.Exchange.Id;
         //settings.General.ExchangeName = settings.General.Exchange.Name;
