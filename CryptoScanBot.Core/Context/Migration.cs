@@ -508,7 +508,7 @@ public class Migration
                 // remove Symbol.TrendInfoDate
                 database.Connection.Execute("alter table Symbol drop column TrendInfoDate", transaction);
 
-                // New exchange Kucoin Futures (experiment)
+                // New exchange Mexc Spot
                 database.Connection.Execute("insert into exchange(Name, FeeRate, IsActive) values('Mexc Spot', 0.1, 0)", transaction);
                 database.Connection.Execute("insert into TradeAccount(Short, Name, AccountType, TradeAccountType, ExchangeId, CanTrade) values('Trading', 'Mexc Spot trading', 0, 2, 8, 1);", transaction);
                 database.Connection.Execute("insert into TradeAccount(Short, Name, AccountType, TradeAccountType, ExchangeId, CanTrade) values('Paper', 'Mexc Spot paper', 0, 1, 8, 0);", transaction);
@@ -603,6 +603,30 @@ public class Migration
             }
 
         }
-    }
 
+
+
+        //***********************************************************
+        if (CurrentVersion > version.Version && version.Version == 19)
+        {
+            using var transaction = database.BeginTransaction();
+
+            // Er is nog geen nuget library die deze ondersteund
+
+            //// New exchange Mexc Futures (experiment)
+            //database.Connection.Execute("insert into exchange(Name, FeeRate, IsSupported, ExchangeType, TradingType) values('Mexc Futures', 0.1, 0, 5, 1)", transaction);
+
+            //database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(0, 9, 1);", transaction);
+            //database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(1, 9, 1);", transaction);
+            //database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(2, 9, 1);", transaction);
+            //database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(3, 9, 1);", transaction);
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+    }
 }
+
