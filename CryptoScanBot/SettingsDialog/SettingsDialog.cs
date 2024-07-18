@@ -253,7 +253,8 @@ public partial class FrmSettings : Form
         EditCandlesWithFlatPrice.Value = settings.Signal.CandlesWithFlatPrice;
         EditCandlesWithFlatPriceCheck.Checked = settings.Signal.CandlesWithFlatPriceCheck;
 
-        EditCheckWeekVolume.Checked = settings.Signal.CheckWeekVolume;
+        EditCheckVolumeOverPeriod.Checked = settings.Signal.CheckVolumeOverPeriod;
+        EditCheckVolumeOverDays.Value = settings.Signal.CheckVolumeOverDays;
 
         // --------------------------------------------------------------------------------
         UserControlSignalLong.LoadConfig(settings.Signal.Long);
@@ -485,7 +486,8 @@ public partial class FrmSettings : Form
         settings.Signal.CandlesWithFlatPrice = (int)EditCandlesWithFlatPrice.Value;
         settings.Signal.CandlesWithFlatPriceCheck = EditCandlesWithFlatPriceCheck.Checked;
 
-        settings.Signal.CheckWeekVolume = EditCheckWeekVolume.Checked;
+        settings.Signal.CheckVolumeOverPeriod = EditCheckVolumeOverPeriod.Checked;
+        settings.Signal.CheckVolumeOverDays = (int)EditCheckVolumeOverDays.Value;
 
 
         // --------------------------------------------------------------------------------

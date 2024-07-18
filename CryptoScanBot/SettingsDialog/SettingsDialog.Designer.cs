@@ -77,7 +77,8 @@ partial class FrmSettings
         tabSignal = new TabPage();
         tabControlSignals = new TabControl();
         tabSignalsGeneral = new TabPage();
-        EditCheckWeekVolume = new CheckBox();
+        EditCheckVolumeOverDays = new NumericUpDown();
+        EditCheckVolumeOverPeriod = new CheckBox();
         label86 = new Label();
         EditAnalysisMinEffective10DaysPercentage = new NumericUpDown();
         EditAnalysisMaxEffective10DaysPercentage = new NumericUpDown();
@@ -263,6 +264,7 @@ partial class FrmSettings
         tabSignal.SuspendLayout();
         tabControlSignals.SuspendLayout();
         tabSignalsGeneral.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)EditCheckVolumeOverDays).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditAnalysisMinEffective10DaysPercentage).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditAnalysisMaxEffective10DaysPercentage).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditAnalysisMinEffectivePercentage).BeginInit();
@@ -879,7 +881,8 @@ partial class FrmSettings
         // 
         // tabSignalsGeneral
         // 
-        tabSignalsGeneral.Controls.Add(EditCheckWeekVolume);
+        tabSignalsGeneral.Controls.Add(EditCheckVolumeOverDays);
+        tabSignalsGeneral.Controls.Add(EditCheckVolumeOverPeriod);
         tabSignalsGeneral.Controls.Add(label86);
         tabSignalsGeneral.Controls.Add(EditAnalysisMinEffective10DaysPercentage);
         tabSignalsGeneral.Controls.Add(EditAnalysisMaxEffective10DaysPercentage);
@@ -919,16 +922,27 @@ partial class FrmSettings
         tabSignalsGeneral.Text = "Signalen algemeen";
         tabSignalsGeneral.UseVisualStyleBackColor = true;
         // 
-        // EditCheckWeekVolume
+        // EditCheckVolumeOverDays
         // 
-        EditCheckWeekVolume.AutoSize = true;
-        EditCheckWeekVolume.Location = new Point(21, 406);
-        EditCheckWeekVolume.Margin = new Padding(4, 3, 4, 3);
-        EditCheckWeekVolume.Name = "EditCheckWeekVolume";
-        EditCheckWeekVolume.Size = new Size(212, 19);
-        EditCheckWeekVolume.TabIndex = 284;
-        EditCheckWeekVolume.Text = "Controleer het volume van 7 dagen";
-        EditCheckWeekVolume.UseVisualStyleBackColor = true;
+        EditCheckVolumeOverDays.Location = new Point(347, 405);
+        EditCheckVolumeOverDays.Margin = new Padding(4, 3, 4, 3);
+        EditCheckVolumeOverDays.Maximum = new decimal(new int[] { 25, 0, 0, 0 });
+        EditCheckVolumeOverDays.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
+        EditCheckVolumeOverDays.Name = "EditCheckVolumeOverDays";
+        EditCheckVolumeOverDays.Size = new Size(88, 23);
+        EditCheckVolumeOverDays.TabIndex = 285;
+        EditCheckVolumeOverDays.Value = new decimal(new int[] { 1, 0, 0, 0 });
+        // 
+        // EditCheckVolumeOverPeriod
+        // 
+        EditCheckVolumeOverPeriod.AutoSize = true;
+        EditCheckVolumeOverPeriod.Location = new Point(21, 406);
+        EditCheckVolumeOverPeriod.Margin = new Padding(4, 3, 4, 3);
+        EditCheckVolumeOverPeriod.Name = "EditCheckVolumeOverPeriod";
+        EditCheckVolumeOverPeriod.Size = new Size(260, 19);
+        EditCheckVolumeOverPeriod.TabIndex = 284;
+        EditCheckVolumeOverPeriod.Text = "Controleer het volume over meerdere dagen";
+        EditCheckVolumeOverPeriod.UseVisualStyleBackColor = true;
         // 
         // label86
         // 
@@ -2798,6 +2812,7 @@ partial class FrmSettings
         tabControlSignals.ResumeLayout(false);
         tabSignalsGeneral.ResumeLayout(false);
         tabSignalsGeneral.PerformLayout();
+        ((System.ComponentModel.ISupportInitialize)EditCheckVolumeOverDays).EndInit();
         ((System.ComponentModel.ISupportInitialize)EditAnalysisMinEffective10DaysPercentage).EndInit();
         ((System.ComponentModel.ISupportInitialize)EditAnalysisMaxEffective10DaysPercentage).EndInit();
         ((System.ComponentModel.ISupportInitialize)EditAnalysisMinEffectivePercentage).EndInit();
@@ -3120,7 +3135,7 @@ partial class FrmSettings
     private GroupBox groupBox6;
     private Label label26;
     private NumericUpDown EditStorsiAddAmount;
-    private CheckBox EditCheckWeekVolume;
+    private CheckBox EditCheckVolumeOverPeriod;
     private SettingsDialog.UserControlTradeEntry UserControlTradeEntry;
     private SettingsDialog.UserControlTradeTakeProfit UserControlTradeTakeProfit;
     private SettingsDialog.UserControlTradeStopLoss UserControlTradeStopLoss;
@@ -3128,4 +3143,5 @@ partial class FrmSettings
     private FlowLayoutPanel flowLayoutPanel3;
     private SettingsDialog.UserControlExchangeApi UserControlExchangeApi;
     private SettingsDialog.UserControlAltradyApi UserControlAltradyApi;
+    private NumericUpDown EditCheckVolumeOverDays;
 }

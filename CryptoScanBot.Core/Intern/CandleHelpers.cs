@@ -192,7 +192,7 @@ public static class Helper
             }
 
             // Check the volume of multiple day's (so we know its not just a stupid temporary spike in volume)
-            if (GlobalData.Settings.Signal.CheckWeekVolume) // Need setting?
+            if (GlobalData.Settings.Signal.CheckVolumeOverPeriod) // Need setting?
             {
                 CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1d);
                 if (symbolInterval.CandleList.Count > 0)
@@ -200,7 +200,7 @@ public static class Helper
                     long unixDate = IntervalTools.StartOfIntervalCandle2(candleStart, candleDuration, symbolInterval.Interval.Duration);
                     //DateTime candleStartCheck = CandleTools.GetUnixDate(candleStart);
                     long loop = unixDate;
-                    int count = 7;
+                    int count = GlobalData.Settings.Signal.CheckVolumeOverDays;
                     while (count > 0)
                     {
                         //DateTime loopCheck = CandleTools.GetUnixDate(loop);
@@ -208,7 +208,7 @@ public static class Helper
                         {
                             if (candle.Volume < symbol.QuoteData.MinimalVolume)
                             {
-                                text = $"{symbol.Name} volume in the last 7 day's not consistent above the minimum of {symbol.QuoteData.MinimalVolume.ToString0()}";
+                                text = $"{symbol.Name} volume in the last {GlobalData.Settings.Signal.CheckVolumeOverPeriod} days not above {symbol.QuoteData.MinimalVolume.ToString0()}";
                                 return false;
                             }
 
