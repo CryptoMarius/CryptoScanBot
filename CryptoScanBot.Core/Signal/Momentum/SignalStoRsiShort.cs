@@ -32,17 +32,9 @@ public class SignalStoRsiShort : SignalSbmBaseShort
     }
 
 
-    public override string DisplayText()
-    {
-        return string.Format("stoch.oscillator={0:N8} stoch.signal={1:N8}",
-            CandleLast.CandleData.StochOscillator,
-            CandleLast.CandleData.StochSignal
-        );
-    }
-
-
     public override bool AdditionalChecks(CryptoCandle candle, out string response)
     {
+        // disable sbm conditions
         response = "";
         return true;
     }
@@ -50,37 +42,26 @@ public class SignalStoRsiShort : SignalSbmBaseShort
 
     public override bool IsSignal()
     {
-        // De breedte van de bb is ten minste 1.5%
         if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, 100))
         {
-            ExtraText = "bb.width te klein " + CandleLast.CandleData!.BollingerBandsPercentage?.ToString("N2");
+            ExtraText = "bb.width too small " + CandleLast.CandleData!.BollingerBandsPercentage?.ToString("N2");
             return false;
         }
 
-        //if (!IsInUpperPartOfBollingerBands(2, 2.5m))
-        //{
-        //    ExtraText = "geen hoge prijs in de laatste x candles";
-        //    return false;
-        //}
-
-        // Sprake van een overbought situatie
         if (!CandleLast.IsStochOverbought(GlobalData.Settings.Signal.StoRsi.AddAmount))
         {
-            ExtraText = "stoch niet overbought";
+            ExtraText = "stoch not overbought";
             return false;
         }
 
-        // Sprake van een overbought situatie
         if (!CandleLast.IsRsiOverbought(GlobalData.Settings.Signal.StoRsi.AddAmount))
         {
-            ExtraText = "rsi niet overbought";
+            ExtraText = "rsi not overbought";
             return false;
         }
-
 
         ExtraText = "";
         return true;
     }
-
 
 }

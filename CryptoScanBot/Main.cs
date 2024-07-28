@@ -733,7 +733,7 @@ public partial class FrmMain : Form
     private void AnalyzeSignalCreated(CryptoSignal signal)
     {
         GlobalData.CreatedSignalCount++;
-        string text = "Analyze signal " + signal.Symbol.Name + " " + signal.Interval.Name + " " + signal.SideText + " " + signal.StrategyText + " " + signal.EventText;
+        string text = "Signal " + signal.Symbol.Name + " " + signal.Interval.Name + " " + signal.SideText + " " + signal.StrategyText + " " + signal.EventText;
         GlobalData.AddTextToLogTab(text);
 
 

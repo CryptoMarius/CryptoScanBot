@@ -116,7 +116,7 @@ public class SignalCreateBase
             if (candle is not null && candle.IsRsiOversold())
                 return true;
 
-            if (candle is not null && !GetPrevCandle(candle, out candle))
+            if (!GetPrevCandle(candle, out candle))
                 return false;
             candleCount--;
         }
@@ -136,7 +136,7 @@ public class SignalCreateBase
             if (candle is not null && candle.IsRsiOverbought())
                 return true;
 
-            if (candle is not null && !GetPrevCandle(candle, out candle))
+            if (!GetPrevCandle(candle, out candle))
                 return false;
             candleCount--;
         }
@@ -169,7 +169,7 @@ public class SignalCreateBase
                     return candle;
             }
 
-            if (candle is not null && !GetPrevCandle(candle, out candle))
+            if (!GetPrevCandle(candle, out candle))
                 return null;
             candleCount--;
         }

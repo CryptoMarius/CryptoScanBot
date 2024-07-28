@@ -374,18 +374,18 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
             }
 
 
-            // En aanvullend specifiek voro de STOBB ook een controle op de markettrend
+            // And additional for STOBB a check on markettrend (bit overkill)
             if (signal.Strategy == CryptoSignalStrategy.Stobb)
             {
-                if (signal.Side == CryptoTradeSide.Long && GlobalData.Settings.Signal.Stobb.TrendLong > -99m && (decimal)signal.TrendPercentage < GlobalData.Settings.Signal.Stobb.TrendLong)
+                if (signal.Side == CryptoTradeSide.Long && GlobalData.Settings.Signal.Stobb.TrendLong > -999m && (decimal)signal.TrendPercentage < GlobalData.Settings.Signal.Stobb.TrendLong)
                 {
-                    eventText.Add("de trend% is te laag");
+                    eventText.Add("markettrend% is too low");
                     signal.IsInvalid = true;
                 }
                 // Die -99 begint verwarrend te werken
-                if (signal.Side == CryptoTradeSide.Short && GlobalData.Settings.Signal.Stobb.TrendShort > -99m && (decimal)signal.TrendPercentage > GlobalData.Settings.Signal.Stobb.TrendShort)
+                if (signal.Side == CryptoTradeSide.Short && GlobalData.Settings.Signal.Stobb.TrendShort > -999m && (decimal)signal.TrendPercentage > GlobalData.Settings.Signal.Stobb.TrendShort)
                 {
-                    eventText.Add("de trend% is te hoog");
+                    eventText.Add("markettrend% is too high");
                     signal.IsInvalid = true;
                 }
             }
@@ -503,6 +503,8 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
         signal.Sma200 = candle.CandleData?.Sma200;
         //signal.SlopeSma20 = candle.CandleData.SlopeSma20;
         //signal.SlopeSma50 = candle.CandleData.SlopeSma50;
+
+        signal.Bbr = candle.CandleData?.Bbr;
 
         return signal;
     }

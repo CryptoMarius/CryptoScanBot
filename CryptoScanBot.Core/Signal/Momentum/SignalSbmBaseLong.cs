@@ -190,7 +190,7 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
                     return true;
             }
 
-            if (last is not null && !GetPrevCandle(last, out last))
+            if (!GetPrevCandle(last, out last))
                 return false;
             candleCount--;
         }

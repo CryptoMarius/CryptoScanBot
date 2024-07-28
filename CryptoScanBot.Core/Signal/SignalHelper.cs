@@ -91,7 +91,13 @@ public static class SignalHelper
             AnalyzeLongType = typeof(SignalStobbLong),
             AnalyzeShortType = typeof(SignalStobbShort),
         });
-
+        Register(new AlgorithmDefinition()
+        {
+            Name = "stobb.multi",
+            Strategy = CryptoSignalStrategy.StobbMulti,
+            AnalyzeLongType = typeof(SignalStobbMultiLong),
+            AnalyzeShortType = typeof(SignalStobbMultiShort),
+        });
 
         //***************************************************
         // WGHBM - Momentum indicator that shows arrows when the Stochastic and the RSI are at the same time in the oversold or overbought area.
@@ -105,72 +111,28 @@ public static class SignalHelper
             AnalyzeShortType = typeof(SignalStoRsiShort),
         });
 
+        // anotehr combined with a higher timeframe
+        Register(new AlgorithmDefinition()
+        {
+            Name = "storsi.multi",
+            Strategy = CryptoSignalStrategy.StoRsiMulti,
+            AnalyzeLongType = typeof(SignalStoRsiMultiLong),
+            AnalyzeShortType = typeof(SignalStoRsiMultiShort),
+        });
 
-#if EXTRASTRATEGIESPSARRSI
+
+
         //***************************************************
-        // PSAR + RSI
-        // https://blog.elearnmarkets.com/trading-signals-using-parabolic-sar-rsi/
+        // Experiment Ross - Ross Cameron
         //***************************************************
         Register(new AlgorithmDefinition()
         {
-            Name = "psar rsi",
-            Strategy = CryptoSignalStrategy.PSarRsi,
-            AnalyzeLongType = typeof(SignalPSarRsiLong),
-            AnalyzeShortType = typeof(SignalPSarRsiShort),
+            Name = "vol2.5x",
+            Strategy = CryptoSignalStrategy.Ross,
+            AnalyzeLongType = typeof(SignalRossLong),
+            AnalyzeShortType = typeof(SignalRossShort),
         });
 
-        //***************************************************
-        // Experiment RSI - Stoch.K
-        //***************************************************
-        Register(new AlgorithmDefinition()
-        {
-            Name = "rsi/stoch.k",
-            Strategy = CryptoSignalStrategy.RsiStochK,
-            AnalyzeLongType = typeof(SignalRsiStochKLong),
-            AnalyzeShortType = typeof(SignalRsiStochKShort),
-        });
-#endif
-
-
-        ////***************************************************
-        //// Experiment FLUX
-        ////***************************************************
-        //Register(new AlgorithmDefinition()
-        //{
-        //    Name = "ema9.d",
-        //    Strategy = CryptoSignalStrategy.Lux,
-        //    AnalyzeLongType = typeof(SignalLuxLong),
-        //    AnalyzeShortType = typeof(SignalFluxShort),
-        //});
-
-
-        ////***************************************************
-        //// Experiment Ross - Ross Cameron
-        ////***************************************************
-        //Register(new AlgorithmDefinition()
-        //{
-        //    Name = "vol.5x",
-        //    Strategy = CryptoSignalStrategy.Ross,
-        //    AnalyzeLongType = typeof(SignalRossLong),
-        //    AnalyzeShortType = typeof(SignalRossShort),
-        //});
-
-        ////***************************************************
-        //// Experiment Ross - Ross Cameron
-        ////***************************************************
-        //Register(new AlgorithmDefinition()
-        //{
-        //    Name = "vwap.c",
-        //    Strategy = CryptoSignalStrategy.Ross2,
-        //    AnalyzeLongType = typeof(SignalRoss2Long),
-        //    AnalyzeShortType = typeof(SignalRoss2Short),
-        //});
-
-
-        //// En de lijst eenmalig indexeren
-        //AlgorithmDefinitionIndex.Clear();
-        //foreach (AlgorithmDefinition algorithmDefinition in AlgorithmDefinitionList)
-        //    AlgorithmDefinitionIndex.Add(algorithmDefinition.Strategy, algorithmDefinition);
     }
 
 

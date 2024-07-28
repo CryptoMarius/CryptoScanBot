@@ -23,7 +23,7 @@ public class MarketTrend
 
             foreach (CryptoInterval interval in GlobalData.IntervalList)
             {
-                // debug this shit..
+                // debug
                 //if (interval.IntervalPeriod != CryptoIntervalPeriod.interval1h)
                 //    continue;
 

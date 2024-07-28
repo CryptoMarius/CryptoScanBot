@@ -39,6 +39,8 @@ public class SignalSbm3Long : SignalSbmBaseLong
                 return false;
             candleCount--;
         }
+        if (minValue == 0)
+            return false;
 
         // NB: Ik denk dat we alleen de laatste value willen hebben (zodat het niet van max naar min gaat)
         // Daar komt waarschijnlijk ook de verwarring weg met de voorgaande oplossing

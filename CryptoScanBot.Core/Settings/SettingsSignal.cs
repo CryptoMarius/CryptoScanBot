@@ -14,7 +14,7 @@ public class SettingsSignal
     // Aantal dagen dat de munt moet bestaan
     public int SymbolMustExistsDays { get; set; } = 60;
     public bool LogSymbolMustExistsDays { get; set; } = false;
-    public bool CheckVolumeOverPeriod { get; set; } = true;
+    public bool CheckVolumeOverPeriod { get; set; } = false;
     public int CheckVolumeOverDays { get; set; } = 10;
 
     // Vermijden van "barcode" charts

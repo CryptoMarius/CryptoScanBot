@@ -740,10 +740,11 @@ partial class FrmSettings
         EditGetCandleInterval.Location = new Point(289, 232);
         EditGetCandleInterval.Margin = new Padding(4, 3, 4, 3);
         EditGetCandleInterval.Maximum = new decimal(new int[] { 300, 0, 0, 0 });
+        EditGetCandleInterval.Minimum = new decimal(new int[] { 30, 0, 0, 0 });
         EditGetCandleInterval.Name = "EditGetCandleInterval";
         EditGetCandleInterval.Size = new Size(57, 23);
         EditGetCandleInterval.TabIndex = 275;
-        EditGetCandleInterval.Value = new decimal(new int[] { 25, 0, 0, 0 });
+        EditGetCandleInterval.Value = new decimal(new int[] { 30, 0, 0, 0 });
         // 
         // label6
         // 
