@@ -30,12 +30,14 @@ public class CommandShowTrendInfo : CommandBase
             {
                 log.AppendLine("");
                 log.AppendLine("----");
-                log.AppendLine("Interval " + accountSymbolIntervalData.Interval.Name);
+                log.AppendLine($"Interval {accountSymbolIntervalData.Interval.Name}");
 
                 // Wat is het maximale som (voor de eindberekening)
                 maxPercentageSum += accountSymbolIntervalData.Interval.Duration;
 
                 CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(accountSymbolIntervalData.IntervalPeriod);
+                log.AppendLine($"Candles {symbolInterval.CandleList.Count}");
+                
                 TrendInterval.Calculate(symbol, symbolInterval.CandleList, accountSymbolIntervalData, 0, 0, log);
                 if (accountSymbolIntervalData.TrendIndicator == CryptoTrendIndicator.Bullish)
                     percentageSum += accountSymbolIntervalData.Interval.Duration;
