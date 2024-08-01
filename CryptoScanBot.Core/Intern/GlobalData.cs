@@ -405,6 +405,11 @@ static public class GlobalData
             symbol.QuantityDisplayFormat = "N" + numberOfDecimalPlaces.ToString();
             //if (symbol.QuantityTickSize == 1.0m)
             //    symbol.QuantityDisplayFormat = "N8";
+
+            // reset last prices
+            symbol.AskPrice = null;
+            symbol.BidPrice = null;
+            symbol.LastPrice = null;
         }
     }
 
@@ -426,6 +431,11 @@ static public class GlobalData
                 string text = File.ReadAllText(filename);
                 Settings = JsonSerializer.Deserialize<SettingsBasic>(text, JsonSerializerIndented);
             }
+
+            // Fix, sometimes people set this at 1 and that is not what I expected
+            if (Settings.General.GetCandleInterval < 30)
+                Settings.General.GetCandleInterval = 30;
+
         }
         catch (Exception error)
         {

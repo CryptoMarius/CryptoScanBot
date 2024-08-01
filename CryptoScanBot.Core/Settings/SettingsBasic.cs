@@ -48,7 +48,7 @@ public class SettingsBasic
     public SettingsBackTest BackTest { get; set; } = new();
 
     // What symbols to show
-    public List<string> ShowSymbolInformation { get; set; } = new(new string[] { "BTC", "PAXG", "ETH", "XRP", "SOL", "ADA" });
+    public List<string> ShowSymbolInformation { get; set; } = new(["BTC", "PAXG", "ETH", "XRP", "SOL", "ADA"]);
 
     public SettingsBasic()
     {

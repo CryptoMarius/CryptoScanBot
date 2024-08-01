@@ -227,6 +227,7 @@ public static class CandleTools
         Monitor.Enter(symbol.CandleList);
         try
         {
+            //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", topic, kline.Timestamp.ToLocalTime()));
             // Last known price (and the price ticker will adjust)
             if (!GlobalData.BackTest)
             {

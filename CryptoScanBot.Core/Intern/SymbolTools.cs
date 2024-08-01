@@ -62,7 +62,7 @@ public class SymbolTools
 
 
 
-    public static bool CheckValidMinimalVolume(CryptoSymbol symbol, long candleStart, uint candleDuration, out string reaction)
+    public static bool CheckValidMinimalVolume(CryptoSymbol symbol, long candleStart, int candleDuration, out string reaction)
     {
         //Indien volume regels : Voldoende volume -> nee = signaal negeren
         //In principe is dit bij de CC signals al gedaan, maar een tweede keer kan geen kwaad

@@ -173,7 +173,7 @@ public static class Helper
     }
 
 
-    public static bool CheckValidMinimalVolume(this CryptoSymbol symbol, long candleStart, uint candleDuration, out string text)
+    public static bool CheckValidMinimalVolume(this CryptoSymbol symbol, long candleStart, int candleDuration, out string text)
     {
         if (symbol.QuoteData.MinimalVolume > 0)
         {
@@ -213,7 +213,7 @@ public static class Helper
                             }
 
                             // to the previous day
-                            if (!symbolInterval.CandleList.TryGetValue(candle.OpenTime - symbolInterval.Interval.Duration, out candle))
+                            if (!symbolInterval.CandleList.TryGetValue(candle.OpenTime - symbolInterval.Interval.Duration, out _))
                             {
                                 text = "Method enough volume - no 10 day's of candles available";
                                 return false;

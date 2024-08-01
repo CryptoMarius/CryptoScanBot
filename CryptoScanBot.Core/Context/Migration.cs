@@ -621,6 +621,9 @@ public class Migration
             //database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(2, 9, 1);", transaction);
             //database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(3, 9, 1);", transaction);
 
+            // symbol, drop LastPrice
+            // signal, add bbr (?)
+
             // update version
             version.Version += 1;
             database.Connection.Update(version, transaction);

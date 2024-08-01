@@ -30,6 +30,9 @@ public class DataStore
 
             foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
             {
+                symbol.AskPrice = null;
+                symbol.BidPrice = null;
+                symbol.LastPrice = null;
                 string dirSymbol = dirExchange + symbol.Quote.ToLower() + @"\";
 
                 // Verwijder het bestand indien niet relevant of niet actief
@@ -44,13 +47,7 @@ public class DataStore
                 // reset the precious collected trend data
                 AccountSymbolData accountSymbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
                 foreach (AccountSymbolIntervalData accountSymbolIntervalData in accountSymbolData.SymbolTrendDataList)
-                {
-                    //accountSymbolIntervalData.LastCandleSynchronized = null;??
-                    accountSymbolIntervalData.TrendIndicator = CryptoTrendIndicator.Sideways;
-                    accountSymbolIntervalData.TrendInfoUnix = null;
-                    accountSymbolIntervalData.TrendInfoDate = null;
-                    accountSymbolIntervalData.ZigZagCache = null;
-                }
+                    accountSymbolIntervalData.Reset();
 
                 // Laad in 1x alle intervallen 
                 if (File.Exists(filename))
