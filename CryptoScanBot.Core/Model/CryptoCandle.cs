@@ -32,6 +32,15 @@ public class CryptoCandle : IQuote
     [Computed]
     [JsonIgnore]
     public bool IsDuplicated { get; set; }
+
+
+    [Computed]
+    [JsonIgnore]
+    public double ZigZagHigh { get; set; }
+
+    [Computed]
+    [JsonIgnore]
+    public double ZigZagLow { get; set; }
 }
 
 //
