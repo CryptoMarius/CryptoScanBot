@@ -613,6 +613,7 @@ public class Migration
 
             // Er is nog geen nuget library die deze ondersteund
 
+            // Mexc Futures does not have a proper api
             //// New exchange Mexc Futures (experiment)
             //database.Connection.Execute("insert into exchange(Name, FeeRate, IsSupported, ExchangeType, TradingType) values('Mexc Futures', 0.1, 0, 5, 1)", transaction);
 
@@ -621,8 +622,12 @@ public class Migration
             //database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(2, 9, 1);", transaction);
             //database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(3, 9, 1);", transaction);
 
-            // symbol, drop LastPrice
-            // signal, add bbr (?)
+            // symbol, drop LastPrice/BestBid/BestAsk
+            // signal remove "PSarDave TEXT NULL," +
+            // signal remove "PSarJason TEXT NULL," +
+            // signal remove "PSarTulip TEXT NULL," +
+            // signal remove public double? KeltnerUpperBand { get; set; }
+            // signal remove public double? KeltnerLowerBand { get; set; }
 
             // update version
             version.Version += 1;

@@ -1,18 +1,15 @@
 ﻿using System.Text;
 
-using CryptoScanBot.Core.Barometer;
-using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Signal;
-using Newtonsoft.Json;
 using Skender.Stock.Indicators;
 
 namespace CryptoScanBot.BackTest;
 
 public class BackTest
 {
-    public static int UniqueId = 0;
+    //public static int UniqueId = 0;
 
 
 
@@ -262,7 +259,7 @@ public class BackTest
         List<SlopeResult> slopeSma50List = (List<SlopeResult>)smaList50.GetSlope(3);
 
         // Berekend vanuit de EMA 20 en de upper en lowerband ontstaat uit 2x de ATR
-        List<KeltnerResult> keltnerList = (List<KeltnerResult>)Indicator.GetKeltner(history, 20, 1);
+        //List<KeltnerResult> keltnerList = (List<KeltnerResult>)Indicator.GetKeltner(history, 20, 1);
 
         //List<AtrResult> atrList = (List<AtrResult>)Indicator.GetAtr(history);
         List<RsiResult> rsiList = (List<RsiResult>)history.GetRsi();
@@ -275,48 +272,33 @@ public class BackTest
         List<StochResult> stochList = (List<StochResult>)history.GetStoch(14, 3, 1); // 18-11-22: omgedraaid naar 1, 3...
 
 
+        List<ParabolicSarResult> psarListDave = (List<ParabolicSarResult>)Indicator.GetParabolicSar(history);
 #if DEBUG
-        //List<ParabolicSarResult> psarListDave = (List<ParabolicSarResult>)Indicator.GetParabolicSar(history);
         //List<ParabolicSarResult> psarListJason = (List<ParabolicSarResult>)Indicators.CalcParabolicSarJasonLam(history);
         //List<ParabolicSarResult> psarListTulip = (List<ParabolicSarResult>)Indicators.CalcParabolicSarTulip(history);
 #endif
         List<BollingerBandsResult> bollingerBandsList = (List<BollingerBandsResult>)history.GetBollingerBands();
 
-        // Because Skender.Psar has different results  we use the old ta-lib (I dont like that)
-        //var inOpen = history.Select(x => Convert.ToDouble(x.Open)).ToArray();
-        var inHigh = history.Select(x => Convert.ToDouble(x.High)).ToArray();
-        var inLow = history.Select(x => Convert.ToDouble(x.Low)).ToArray();
-        //var inClose = history.Select(x => Convert.ToDouble(x.Close)).ToArray();
+        //// Because Skender.Psar has different results  we use the old ta-lib (I dont like that)
+        ////var inOpen = history.Select(x => Convert.ToDouble(x.Open)).ToArray();
+        //var inHigh = history.Select(x => Convert.ToDouble(x.High)).ToArray();
+        //var inLow = history.Select(x => Convert.ToDouble(x.Low)).ToArray();
+        ////var inClose = history.Select(x => Convert.ToDouble(x.Close)).ToArray();
 
-        int startIdx = 0;
-        int endIdx = history.Count - 1;
-        //int outNbElement; // aantal elementen in de array vanaf 0
-        TicTacTec.TA.Library.Core.RetCode retCode;
+        //int startIdx = 0;
+        //int endIdx = history.Count - 1;
+        ////int outNbElement; // aantal elementen in de array vanaf 0
+        //TicTacTec.TA.Library.Core.RetCode retCode;
 
-        double[] psarValues = new double[history.Count];
-        retCode = TicTacTec.TA.Library.Core.Sar(startIdx, endIdx, inHigh, inLow, 0.02, 0.2,
-            out int outBegIdxPSar, out int outNbElement, psarValues);
+        //double[] psarValues = new double[history.Count];
+        //retCode = TicTacTec.TA.Library.Core.Sar(startIdx, endIdx, inHigh, inLow, 0.02, 0.2,
+        //    out int outBegIdxPSar, out int outNbElement, psarValues);
 
-        // We might do everything via ta-lib, but its a tricky library (only use it for psar)
-        //int outBegIdxBb;
-        //double[] bboutputUpper = new double[history.Count];
-        //double[] bboutputMiddle = new double[history.Count];
-        //double[] bboutputLower = new double[history.Count];
-        //retCode = TicTacTec.TA.Library.Core.Bbands(startIdx, endIdx, inClose, 20, 2.0, 2.0, TicTacTec.TA.Library.Core.MAType.Sma,
-        //    out outBegIdxBb, out outNbElement, bboutputUpper, bboutputMiddle, bboutputLower);
-        //output will be SMA values
 
 
         // Fill the last x candles with the indicator data
-        //int index = 0;
         for (int index = history.Count - 1; index >= 0; index--)
         {
-            // Maximaal 60 records aanvullen
-            //iteration++;
-            //if (iteration > 61)
-            //    break;
-
-
             candle = history[index];
 
             CandleIndicatorData candleData = new();
@@ -362,16 +344,18 @@ public class BackTest
                 candleData.BollingerBandsDeviation = 0.5 * (BollingerBandsUpperBand - BollingerBandsLowerBand);
                 candleData.BollingerBandsPercentage = 100 * ((BollingerBandsUpperBand / BollingerBandsLowerBand) - 1);
 
-                if (index >= outBegIdxPSar)
-                    candleData.PSar = psarValues[index - outBegIdxPSar];
+                //if (index >= outBegIdxPSar)
+                //    candleData.PSar = psarValues[index - outBegIdxPSar];
+                if (psarListDave[index].Sar != null)
+                    candleData.PSar = psarListDave[index].Sar;
 #if DEBUG
                 //if (psarListDave[index].Sar != null)
-                //    candleData.PSarDave = psarListDave[index].Sar;
+                //candleData.PSarDave = psarListDave[index].Sar;
                 //candleData.PSarJason = psarListJason[index].Sar;
                 //candleData.PSarTulip = psarListTulip[index].Sar;
 #endif
-                candleData.KeltnerUpperBand = keltnerList[index].UpperBand;
-                candleData.KeltnerLowerBand = keltnerList[index].LowerBand;
+                //candleData.KeltnerUpperBand = keltnerList[index].UpperBand;
+                //candleData.KeltnerLowerBand = keltnerList[index].LowerBand;
             }
             catch (Exception error)
             {

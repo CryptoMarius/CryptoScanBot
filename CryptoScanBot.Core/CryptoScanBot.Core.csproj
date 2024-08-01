@@ -53,7 +53,6 @@
     <PackageReference Include="NLog" Version="5.3.2" />
     <PackageReference Include="NPOI" Version="2.7.1" />
     <PackageReference Include="Skender.Stock.Indicators" Version="2.5.0" />
-    <PackageReference Include="TA-Lib" Version="0.5.0.3" />
     <PackageReference Include="Telegram.Bot" Version="19.0.0" />
   </ItemGroup>
 

@@ -62,18 +62,18 @@ public class CandleIndicatorData
     public double? StochSignal { get; set; } // D
 
     public double? PSar { get; set; }
-    #if DEBUG
-    public double? PSarDave { get; set; }
-    public double? PSarJason { get; set; }
-    public double? PSarTulip { get; set; }
-    #endif
+    //#if DEBUG
+    //public double? PSarDave { get; set; }
+    //public double? PSarJason { get; set; }
+    //public double? PSarTulip { get; set; }
+    //#endif
     public double? BollingerBandsUpperBand { get { return Sma20 + BollingerBandsDeviation; } }
     public double? BollingerBandsLowerBand { get { return Sma20 - BollingerBandsDeviation; } }
     public double? BollingerBandsPercentage { get; set; }
     public double? BollingerBandsDeviation { get; set; }
 
-    public double? KeltnerUpperBand { get; set; }
-    public double? KeltnerLowerBand { get; set; }
+    //public double? KeltnerUpperBand { get; set; }
+    //public double? KeltnerLowerBand { get; set; }
     //public double? KeltnerCenterLine { get; set; }
     //public double? KeltnerCenterLineSlope { get; set; }
 
@@ -269,7 +269,7 @@ public class CandleIndicatorData
 #endif
 
         // Berekend vanuit de EMA 20 en de upper en lowerband ontstaat uit 2x de ATR
-        List<KeltnerResult> keltnerList = (List<KeltnerResult>)Indicator.GetKeltner(history, 20, 1);
+        //List<KeltnerResult> keltnerList = (List<KeltnerResult>)Indicator.GetKeltner(history, 20, 1);
 
         //List<AtrResult> atrList = (List<AtrResult>)Indicator.GetAtr(history);
         List<RsiResult> rsiList = (List<RsiResult>)history.GetRsi();
@@ -284,33 +284,34 @@ public class CandleIndicatorData
         // (volgens de telegram groepen op 14,3,1 ipv de standaard 14,3,3)
         List<StochResult> stochList = (List<StochResult>)history.GetStoch(14, 3, 1); // 18-11-22: omgedraaid naar 1, 3...
 
-
-#if DEBUG
         List<ParabolicSarResult> psarListDave = (List<ParabolicSarResult>)history.GetParabolicSar();
-        List<ParabolicSarResult> psarListJason = (List<ParabolicSarResult>)history.CalcParabolicSarJasonLam();
-        List<ParabolicSarResult> psarListTulip = (List<ParabolicSarResult>)history.CalcParabolicSarTulip();
 
-        List<StdDevResult> stdDevList = (List<StdDevResult>)history.GetStdDev(20);
+        //#if DEBUG
+        //        List<ParabolicSarResult> psarListDave = (List<ParabolicSarResult>)history.GetParabolicSar();
+        //        List<ParabolicSarResult> psarListJason = (List<ParabolicSarResult>)history.CalcParabolicSarJasonLam();
+        //        List<ParabolicSarResult> psarListTulip = (List<ParabolicSarResult>)history.CalcParabolicSarTulip();
 
-#endif
+        //        List<StdDevResult> stdDevList = (List<StdDevResult>)history.GetStdDev(20);
+
+        //#endif
         // dan kan nu ook met de stdDev * setting.... Maar komt het wel overeen?
         List<BollingerBandsResult> bollingerBandsList = (List<BollingerBandsResult>)history.GetBollingerBands(
             standardDeviations: GlobalData.Settings.General.BbStdDeviation);
 
-        // Because Skender.Psar has different results  we use the old ta-lib (I dont like that)
-        //var inOpen = history.Select(x => Convert.ToDouble(x.Open)).ToArray();
-        var inHigh = history.Select(x => Convert.ToDouble(x.High)).ToArray();
-        var inLow = history.Select(x => Convert.ToDouble(x.Low)).ToArray();
-        //var inClose = history.Select(x => Convert.ToDouble(x.Close)).ToArray();
+        //// Because Skender.Psar has different results  we use the old ta-lib (I dont like that)
+        ////var inOpen = history.Select(x => Convert.ToDouble(x.Open)).ToArray();
+        //var inHigh = history.Select(x => Convert.ToDouble(x.High)).ToArray();
+        //var inLow = history.Select(x => Convert.ToDouble(x.Low)).ToArray();
+        ////var inClose = history.Select(x => Convert.ToDouble(x.Close)).ToArray();
 
-        int startIdx = 0;
-        int endIdx = history.Count - 1;
-        //int outNbElement; // aantal elementen in de array vanaf 0
-        TicTacTec.TA.Library.Core.RetCode retCode;
+        //int startIdx = 0;
+        //int endIdx = history.Count - 1;
+        ////int outNbElement; // aantal elementen in de array vanaf 0
+        //TicTacTec.TA.Library.Core.RetCode retCode;
 
-        double[] psarValues = new double[history.Count];
-        retCode = TicTacTec.TA.Library.Core.Sar(startIdx, endIdx, inHigh, inLow, 0.02, 0.2,
-            out int outBegIdxPSar, out int outNbElement, psarValues);
+        //double[] psarValues = new double[history.Count];
+        //retCode = TicTacTec.TA.Library.Core.Sar(startIdx, endIdx, inHigh, inLow, 0.02, 0.2,
+        //    out int outBegIdxPSar, out int outNbElement, psarValues);
 
 
         //// We might do everything via ta-lib, but its a tricky library
@@ -395,16 +396,18 @@ public class CandleIndicatorData
                 candleData.BollingerBandsDeviation = 0.5 * (BollingerBandsUpperBand - BollingerBandsLowerBand);
                 candleData.BollingerBandsPercentage = 100 * ((BollingerBandsUpperBand / BollingerBandsLowerBand) - 1);
 
-                if (index >= outBegIdxPSar)
-                    candleData.PSar = psarValues[index - outBegIdxPSar];
-#if DEBUG
+                //if (index >= outBegIdxPSar)
+                //    candleData.PSar = psarValues[index - outBegIdxPSar];
                 if (psarListDave[index].Sar != null)
-                    candleData.PSarDave = psarListDave[index].Sar;
-                candleData.PSarJason = psarListJason[index].Sar;
-                candleData.PSarTulip = psarListTulip[index].Sar;
-#endif
-                candleData.KeltnerUpperBand = keltnerList[index].UpperBand;
-                candleData.KeltnerLowerBand = keltnerList[index].LowerBand;
+                    candleData.PSar = psarListDave[index].Sar;
+                //#if DEBUG
+                //                if (psarListDave[index].Sar != null)
+                //                    candleData.PSarDave = psarListDave[index].Sar;
+                //                candleData.PSarJason = psarListJason[index].Sar;
+                //                candleData.PSarTulip = psarListTulip[index].Sar;
+                //#endif
+                //candleData.KeltnerUpperBand = keltnerList[index].UpperBand;
+                //candleData.KeltnerLowerBand = keltnerList[index].LowerBand;
                 //candleData.KeltnerCenterLine = keltnerList[index].Centerline;
                 //candleData.KeltnerCenterLineSlope = keltnerSlopeList[index].Slope;
             }

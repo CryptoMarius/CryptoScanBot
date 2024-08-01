@@ -922,61 +922,61 @@ public class PositionMonitor : IDisposable
 
                 // todo: Gaat deze vergelijking goed als er ook dust aanwezig kan zijn?
                 // Moet de bestaande verplaatst worden (cq annuleren + opnieuw plaatsen)?
-                if (step != null && part.Quantity == 0 && step.Trailing == CryptoTrailing.Trailing)
-                {
-                    if (position.Side == CryptoTradeSide.Long)
-                    {
-                        decimal x = (decimal)Math.Max(candleInterval.CandleData?.KeltnerUpperBand ?? 0, candleInterval.CandleData?.PSar ?? 0) + Symbol.PriceTickSize;
-                        if (x < step.StopPrice && Symbol.LastPrice < x && candleInterval.High < x)
-                        {
-                            entryPrice = x;
-                            await TradeTools.CancelOrder(Database, position, part, step,
-                                LastCandle1mCloseTimeDate, CryptoOrderStatus.TrailingChange, "adjusting trailing");
-                        }
-                    }
-                    else
-                    {
-                        decimal x = (decimal)Math.Min(candleInterval.CandleData?.KeltnerLowerBand ?? 0, candleInterval.CandleData?.PSar ?? 0) - Symbol.PriceTickSize;
-                        if (x > step.StopPrice && Symbol.LastPrice > x && candleInterval.Low > x)
-                        {
-                            entryPrice = x;
-                            await TradeTools.CancelOrder(Database, position, part, step,
-                                LastCandle1mCloseTimeDate, CryptoOrderStatus.TrailingChange, "adjusting trailing");
-                        }
-                    }
-                }
+                //if (step != null && part.Quantity == 0 && step.Trailing == CryptoTrailing.Trailing)
+                //{
+                //    if (position.Side == CryptoTradeSide.Long)
+                //    {
+                //        decimal x = (decimal)Math.Max(candleInterval.CandleData?.KeltnerUpperBand ?? 0, candleInterval.CandleData?.PSar ?? 0) + Symbol.PriceTickSize;
+                //        if (x < step.StopPrice && Symbol.LastPrice < x && candleInterval.High < x)
+                //        {
+                //            entryPrice = x;
+                //            await TradeTools.CancelOrder(Database, position, part, step,
+                //                LastCandle1mCloseTimeDate, CryptoOrderStatus.TrailingChange, "adjusting trailing");
+                //        }
+                //    }
+                //    else
+                //    {
+                //        decimal x = (decimal)Math.Min(candleInterval.CandleData?.KeltnerLowerBand ?? 0, candleInterval.CandleData?.PSar ?? 0) - Symbol.PriceTickSize;
+                //        if (x > step.StopPrice && Symbol.LastPrice > x && candleInterval.Low > x)
+                //        {
+                //            entryPrice = x;
+                //            await TradeTools.CancelOrder(Database, position, part, step,
+                //                LastCandle1mCloseTimeDate, CryptoOrderStatus.TrailingChange, "adjusting trailing");
+                //        }
+                //    }
+                //}
 
-                if (step == null && part.Quantity == 0) // entry
-                {
-                    if (position.Side == CryptoTradeSide.Long)
-                    {
-                        // Alleen in een neergaande "trend" beginnen we met trailen (niet in een opgaande)
-                        // Dit is een fix om te voorkomen dat we direct na het kopen een trailing sell starten (maar of dit okay is?)
-                        if (Symbol.LastPrice >= (decimal?)candleInterval.CandleData?.PSar)
-                            return;
+                //if (step == null && part.Quantity == 0) // entry
+                //{
+                //    if (position.Side == CryptoTradeSide.Long)
+                //    {
+                //        // Alleen in een neergaande "trend" beginnen we met trailen (niet in een opgaande)
+                //        // Dit is een fix om te voorkomen dat we direct na het kopen een trailing sell starten (maar of dit okay is?)
+                //        if (Symbol.LastPrice >= (decimal?)candleInterval.CandleData?.PSar)
+                //            return;
 
-                        decimal x = (decimal)Math.Max(candleInterval.CandleData?.KeltnerUpperBand ?? 0, candleInterval.CandleData?.PSar ?? 0) + Symbol.PriceTickSize;
-                        if (Symbol.LastPrice < x && candleInterval.High < x)
-                        {
-                            logText = "trailing";
-                            entryPrice = x;
-                        }
-                    }
-                    else
-                    {
-                        // Alleen in een opgaande "trend" beginnen we met trailen (niet in een neergaande)
-                        // Dit is een fix om te voorkomen dat we direct na het kopen een trailing buy starten (maar of dit okay is?)
-                        if (Symbol.LastPrice <= (decimal?)candleInterval.CandleData?.PSar)
-                            return;
+                //        decimal x = (decimal)Math.Max(candleInterval.CandleData?.KeltnerUpperBand ?? 0, candleInterval.CandleData?.PSar ?? 0) + Symbol.PriceTickSize;
+                //        if (Symbol.LastPrice < x && candleInterval.High < x)
+                //        {
+                //            logText = "trailing";
+                //            entryPrice = x;
+                //        }
+                //    }
+                //    else
+                //    {
+                //        // Alleen in een opgaande "trend" beginnen we met trailen (niet in een neergaande)
+                //        // Dit is een fix om te voorkomen dat we direct na het kopen een trailing buy starten (maar of dit okay is?)
+                //        if (Symbol.LastPrice <= (decimal?)candleInterval.CandleData?.PSar)
+                //            return;
 
-                        decimal x = (decimal)Math.Min(candleInterval.CandleData?.KeltnerLowerBand ?? 0, candleInterval.CandleData?.PSar ?? 0) - Symbol.PriceTickSize;
-                        if (Symbol.LastPrice > x && candleInterval.Low > x)
-                        {
-                            logText = "trailing";
-                            entryPrice = x;
-                        }
-                    }
-                }
+                //        decimal x = (decimal)Math.Min(candleInterval.CandleData?.KeltnerLowerBand ?? 0, candleInterval.CandleData?.PSar ?? 0) - Symbol.PriceTickSize;
+                //        if (Symbol.LastPrice > x && candleInterval.Low > x)
+                //        {
+                //            logText = "trailing";
+                //            entryPrice = x;
+                //        }
+                //    }
+                //}
                 break;
             default:
                 throw new Exception($"{strategy} niet ondersteund");

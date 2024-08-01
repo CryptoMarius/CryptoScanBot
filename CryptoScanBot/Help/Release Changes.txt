@@ -13,6 +13,7 @@ xx-xx-2024 1.9.3
 - Scanner - Er worden klines opgehaald van munten die slechts ~1 maand aanwezig zijn op de exchange (bybit spot)
 - Scanner - Extra instelling erbij om de volume controle over meerdere dagen uit te voeren waardoor er geen melding komt op een symbol met een (tijdelijk) hogere volume (7 dagen)
 - Scanner - Plaatsing van popup venster voor selecteren van kolommen gecentreerd ten op zichte van hoofdscherm
+- Scanner - De TA-Lib is verouderd en onveilig verklaard en is daarom verwijderd, dat kan echter effect op de SBM meldingen icm andere PSAR waarden dan TradingView
 
 - Emulator - De berekening van de trend is traag (verbeterd dmv caching)
 - Emulator - Introductie van de emulator (maar er gaat nu nog het eea niet goed, ietwat voorbarig wellicht)

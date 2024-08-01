@@ -37,11 +37,6 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
         Sma50,
         Sma20,
         PSar,
-#if DEBUG
-        PSarDave,
-        PSarJason,
-        PSarTulip,
-#endif
         Lux5m,
         FundingRate,
         Trend15m,
@@ -170,24 +165,9 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                 case ColumnsForGrid.Sma20:
                     CreateColumn("Sma20", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
                     break;
-#if !DEBUG
                 case ColumnsForGrid.PSar:
                     CreateColumn("PSar", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
                     break;
-#else
-                case ColumnsForGrid.PSar:
-                    CreateColumn("P.TaLib", typeof(decimal), "##0.#0000000", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
-                    break;
-                case ColumnsForGrid.PSarDave:
-                    CreateColumn("P.Dave", typeof(decimal), "##0.#0000000", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
-                    break;
-                case ColumnsForGrid.PSarJason:
-                    CreateColumn("P.Jason", typeof(decimal), "##0.#0000000", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
-                    break;
-                case ColumnsForGrid.PSarTulip:
-                    CreateColumn("P.Tulip", typeof(decimal), "##0.#0000000", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
-                    break;
-#endif
                 case ColumnsForGrid.Lux5m:
                     CreateColumn("Lux 5m", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 45).Visible = false;
                     break;
@@ -261,11 +241,6 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
             ColumnsForGrid.Sma50 => ObjectCompare.Compare(a.Sma50, b.Sma50),
             ColumnsForGrid.Sma20 => ObjectCompare.Compare(a.Sma20, b.Sma20),
             ColumnsForGrid.PSar => ObjectCompare.Compare(a.PSar, b.PSar),
-#if DEBUG
-            ColumnsForGrid.PSarDave => ObjectCompare.Compare(a.PSarDave, b.PSarDave),
-            ColumnsForGrid.PSarJason => ObjectCompare.Compare(a.PSarJason, b.PSarJason),
-            ColumnsForGrid.PSarTulip => ObjectCompare.Compare(a.PSarTulip, b.PSarTulip),
-#endif
             ColumnsForGrid.Lux5m => ObjectCompare.Compare(a.LuxIndicator5m, b.LuxIndicator5m),
             ColumnsForGrid.FundingRate => ObjectCompare.Compare(a.Symbol.FundingRate, b.Symbol.FundingRate),
             ColumnsForGrid.Trend15m => ObjectCompare.Compare(a.Trend15m, b.Trend15m),
@@ -421,17 +396,6 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                 case ColumnsForGrid.PSar:
                     e.Value = signal.PSar;
                     break;
-#if DEBUG
-                case ColumnsForGrid.PSarDave:
-                    e.Value = signal.PSarDave;
-                    break;
-                case ColumnsForGrid.PSarJason:
-                    e.Value = signal.PSarJason;
-                    break;
-                case ColumnsForGrid.PSarTulip:
-                    e.Value = signal.PSarTulip;
-                    break;
-#endif
                 case ColumnsForGrid.Lux5m:
                     e.Value = signal.LuxIndicator5m;
                     break;
@@ -675,36 +639,6 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                             foreColor = Color.Red;
                     }
                     break;
-
-#if DEBUG
-                case ColumnsForGrid.PSarDave:
-                    {
-                        string value = signal.PSarDave?.ToString("N12");
-                        if (value != signal.PSar?.ToString("N12"))
-                            foreColor = Color.Red;
-                        else
-                            foreColor = Color.Green;
-                    }
-                    break;
-                case ColumnsForGrid.PSarJason:
-                    {
-                        string value = signal.PSarJason?.ToString("N12");
-                        if (value != signal.PSarDave?.ToString("N12"))
-                            foreColor = Color.Red;
-                        else
-                            foreColor = Color.Green;
-                    }
-                    break;
-                case ColumnsForGrid.PSarTulip:
-                    {
-                        string value = signal.PSarTulip?.ToString("N12");
-                        if (value != signal.PSarDave?.ToString("N12"))
-                            foreColor = Color.Red;
-                        else
-                            foreColor = Color.Green;
-                    }
-                    break;
-#endif
 
                 case ColumnsForGrid.FundingRate:
                     {
