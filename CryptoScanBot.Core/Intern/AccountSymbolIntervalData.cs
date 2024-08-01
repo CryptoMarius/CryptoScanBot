@@ -9,21 +9,24 @@ public class AccountSymbolIntervalData
     public required virtual CryptoInterval Interval { get; set; }
     public required CryptoIntervalPeriod IntervalPeriod { get; set; }
 
-
     // The last calculated trend & generated date
-    public CryptoTrendIndicator TrendIndicator { get; set; }
-    public DateTime? TrendInfoDate { get; set; }
     public long? TrendInfoUnix { get; set; }
-    // Caching ZigZag indicator because of emulator speed
-    public ZigZagIndicatorCache? ZigZagCache { get; set; }
+    public DateTime? TrendInfoDate { get; set; }
+    public CryptoTrendIndicator TrendIndicator { get; set; }
 
+    // Caching ZigZag indicator because of emulator speed
+    public long? ZigZagLastCandleAdded { get; set; }
+    public ZigZagIndicator3? ZigZagIndicator = null;
 
     public void Reset()
     {
-        TrendIndicator = CryptoTrendIndicator.Sideways;
-        TrendInfoDate = null;
         TrendInfoUnix = null;
-        ZigZagCache = null;
-    }
-}
+        TrendInfoDate = null;
+        TrendIndicator = CryptoTrendIndicator.Sideways;
 
+        ZigZagIndicator = null;
+        ZigZagLastCandleAdded = null;
+    }
+
+
+}

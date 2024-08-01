@@ -925,6 +925,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
         {
             try
             {
+                // todo - simplify, make an official "indicator value" of this?
                 int statsLong = 0;
                 int statsShort = 0;
                 SortedList<string, bool> uniqueListLong = [];
@@ -980,8 +981,6 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                                     statsMaxShort.count++;
                                     statsMaxShort.sum += value;
                                 }
-
-
                             }
                         }
                     }

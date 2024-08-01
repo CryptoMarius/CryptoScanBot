@@ -12,8 +12,8 @@ public class AccountSymbolData
 
 
     // The markettrend percentage
-    public float? TrendPercentage { get; set; }
-    public DateTime? TrendInfoDate { get; set; }
+    public long? MarketTrendDate { get; set; }
+    public float? MarketTrendPercentage { get; set; }
 
     ///// <summary>
     ///// Datum dat we de laatste keer hebben gekocht

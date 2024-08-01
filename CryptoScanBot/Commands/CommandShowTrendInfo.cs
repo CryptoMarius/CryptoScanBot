@@ -16,15 +16,14 @@ public class CommandShowTrendInfo : CommandBase
     {
         if (sender is CryptoSymbol symbol)
         {
-
             StringBuilder log = new();
             log.AppendLine("Trend " + symbol.Name);
 
             GlobalData.AddTextToLogTab("");
             GlobalData.AddTextToLogTab("Trend " + symbol.Name);
 
-            long percentageSum = 0;
-            long maxPercentageSum = 0;
+            MarketTrend.CalculateMarketTrend(GlobalData.ActiveAccount, symbol, 0, 0, log);
+
             AccountSymbolData accountSymbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
             foreach (AccountSymbolIntervalData accountSymbolIntervalData in accountSymbolData.SymbolTrendDataList)
             {
@@ -32,19 +31,10 @@ public class CommandShowTrendInfo : CommandBase
                 log.AppendLine("----");
                 log.AppendLine($"Interval {accountSymbolIntervalData.Interval.Name}");
 
-                // Wat is het maximale som (voor de eindberekening)
-                maxPercentageSum += accountSymbolIntervalData.Interval.Duration;
-
                 CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(accountSymbolIntervalData.IntervalPeriod);
                 log.AppendLine($"Candles {symbolInterval.CandleList.Count}");
-                
-                TrendInterval.Calculate(symbol, symbolInterval.CandleList, accountSymbolIntervalData, 0, 0, log);
-                if (accountSymbolIntervalData.TrendIndicator == CryptoTrendIndicator.Bullish)
-                    percentageSum += accountSymbolIntervalData.Interval.Duration;
-                else if (accountSymbolIntervalData.TrendIndicator == CryptoTrendIndicator.Bearish)
-                    percentageSum -= accountSymbolIntervalData.Interval.Duration;
 
-                string s = "";
+                string s;
                 if (accountSymbolIntervalData.TrendIndicator == CryptoTrendIndicator.Bullish)
                     s = string.Format("{0} {1}, trend=bullish", symbol.Name, accountSymbolIntervalData.Interval.IntervalPeriod);
                 else if (accountSymbolIntervalData.TrendIndicator == CryptoTrendIndicator.Bearish)
@@ -55,13 +45,9 @@ public class CommandShowTrendInfo : CommandBase
                 log.AppendLine(s);
             }
 
-            if (maxPercentageSum > 0)
-            {
-                decimal trendPercentage = 100 * (decimal)percentageSum / maxPercentageSum;
-                string t = string.Format("{0} {1:N2}", symbol.Name, trendPercentage);
-                GlobalData.AddTextToLogTab(t);
-                log.AppendLine(t);
-            }
+            string t = $"{symbol.Name} {accountSymbolData.MarketTrendPercentage:N2}";
+            GlobalData.AddTextToLogTab(t);
+            log.AppendLine(t);
 
 
 

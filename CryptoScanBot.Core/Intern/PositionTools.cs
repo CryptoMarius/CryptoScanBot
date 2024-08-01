@@ -294,7 +294,7 @@ public static class PositionTools
         if (marketTrend.Count != 0)
         {
             AccountSymbolData accountSymbolData = tradeAccount.Data.GetSymbolData(symbol.Name);
-            if (!accountSymbolData.TrendPercentage.HasValue)
+            if (!accountSymbolData.MarketTrendPercentage.HasValue)
             {
                 reaction = $"Markettrend {symbol.Name} is niet berekend";
                 return false;
@@ -302,7 +302,7 @@ public static class PositionTools
 
             foreach ((decimal minValue, decimal maxValue) in marketTrend)
             {
-                decimal trendPercentage = (decimal)accountSymbolData.TrendPercentage;
+                decimal trendPercentage = (decimal)accountSymbolData.MarketTrendPercentage;
                 if (!trendPercentage.IsBetween(minValue, maxValue))
                 {
                     string minValueStr = minValue.ToString0("N2");
@@ -311,7 +311,7 @@ public static class PositionTools
                     string maxValueStr = maxValue.ToString0("N2");
                     if (maxValue == decimal.MaxValue)
                         maxValueStr = "+maxint";
-                    reaction = $"Markettrend {symbol.Name} {accountSymbolData.TrendPercentage?.ToString("N2")} niet tussen {minValueStr} en {maxValueStr}";
+                    reaction = $"Markettrend {symbol.Name} {accountSymbolData.MarketTrendPercentage?.ToString("N2")} niet tussen {minValueStr} en {maxValueStr}";
                     return false;
                 }
             }

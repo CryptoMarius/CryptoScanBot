@@ -18,7 +18,7 @@ public class IntervalTools
     }
 
 
-    public static long StartOfIntervalCandle2(long sourceDateStart, uint sourceDuration, uint targetDuration)
+    public static long StartOfIntervalCandle2(long sourceDateStart, int sourceDuration, int targetDuration)
     {
         // sourceDate should be the candle.OpenTime and sourceDuration the duration of the candle.
         // This works for lower time frame to higher timeframe and wont work the other way

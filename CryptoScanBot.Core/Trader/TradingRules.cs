@@ -7,7 +7,7 @@ namespace CryptoScanBot.Core.Trader;
 
 public static class TradingRules
 {
-    private static void CalculateTradingRules(PauseTradingRule pause, long candleUnixDate, uint candleDuration)
+    private static void CalculateTradingRules(PauseTradingRule pause, long candleUnixDate, int candleDuration)
     {
         // Als een munt (met name BTC) snel gedaald is dan stoppen
         if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange? exchange))
@@ -79,7 +79,7 @@ public static class TradingRules
     }
 
 
-    public static bool CheckTradingRules(PauseTradingRule pause, long candleDate, uint candleDuration)
+    public static bool CheckTradingRules(PauseTradingRule pause, long candleDate, int candleDuration)
     {
         // Controleer de trading pauseer regels
 

@@ -1,9 +1,7 @@
-﻿using CryptoScanBot.Core.Enums;
+﻿namespace CryptoScanBot.Core.Trend;
 
-namespace CryptoScanBot.Core.Trend;
-
-public class ZigZagIndicatorCache
+public class ZigZagIndicatorCacheGone
 {
     public long? LastCandleAdded { get; set; }
-    public ZigZagIndicator Indicator = new();
+    public ZigZagIndicator2? Indicator = null;
 }

@@ -473,30 +473,21 @@ public class ThreadTelegramBotInstance
 
     private static void ShowTrend(string arguments, StringBuilder stringbuilder)
     {
-        // TODO duplicaat code, zie de trendberekening in de commands.cs!
-
         string symbolName = "";
         string[] parameters = arguments.Split(' ');
         if (parameters.Length > 1)
             symbolName = parameters[1].Trim().ToUpper();
         stringbuilder.AppendLine(string.Format("Trend {0}", symbolName));
 
-        //Remark: Isn't this the same code as CommandShowTrendInfo?
-
         if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange? exchange))
         {
             if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
             {
-                int iterator = 0;
-                long percentageSum = 0;
-                long maxPercentageSum = 0;
+                MarketTrend.CalculateMarketTrend(GlobalData.ActiveAccount, symbol, 0, 0);
+
                 AccountSymbolData accountSymbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
                 foreach (AccountSymbolIntervalData accountSymbolIntervalData in accountSymbolData.SymbolTrendDataList)
                 {
-                    iterator++;
-                    CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(accountSymbolIntervalData.IntervalPeriod);
-                    TrendInterval.Calculate(symbol, symbolInterval.CandleList, accountSymbolIntervalData, 0, 0);
-
                     string s;
                     if (accountSymbolIntervalData.TrendIndicator == CryptoTrendIndicator.Bullish)
                         s = "trend=bullish";
@@ -504,24 +495,16 @@ public class ThreadTelegramBotInstance
                         s = "trend=bearish";
                     else
                         s = "trend=sideway's?";
-                    stringbuilder.AppendLine(string.Format("{0} {1:N2}", accountSymbolIntervalData.Interval.Name, s));
-
-                    if (accountSymbolIntervalData.TrendIndicator == CryptoTrendIndicator.Bullish)
-                        percentageSum += (int)accountSymbolIntervalData.IntervalPeriod * iterator;
-                    else if (accountSymbolIntervalData.TrendIndicator == CryptoTrendIndicator.Bearish)
-                        percentageSum -= (int)accountSymbolIntervalData.IntervalPeriod * iterator;
-
-                    // Wat is het maximale som (voor de eindberekening)
-                    maxPercentageSum += (int)accountSymbolIntervalData.IntervalPeriod * iterator;
+                    stringbuilder.AppendLine($"{accountSymbolIntervalData.Interval.Name} {s}");
                 }
 
-                decimal trendPercentage = 100 * (decimal)percentageSum / maxPercentageSum;
-                if (trendPercentage < 0)
-                    stringbuilder.AppendLine(string.Format("Symbol trend {0} bearish", (-trendPercentage).ToString("N2")));
-                else if (trendPercentage > 0)
-                    stringbuilder.AppendLine(string.Format("Symbol trend {0} bullish", trendPercentage.ToString("N2")));
+                float marketTrend = (float)accountSymbolData.MarketTrendPercentage;
+                if (marketTrend < 0)
+                    stringbuilder.AppendLine(string.Format("Symbol trend {0} bearish", marketTrend.ToString("N2")));
+                else if (marketTrend > 0)
+                    stringbuilder.AppendLine(string.Format("Symbol trend {0} bullish", marketTrend.ToString("N2")));
                 else
-                    stringbuilder.AppendLine(string.Format("Symbol trend {0} unknown", trendPercentage.ToString("N2")));
+                    stringbuilder.AppendLine(string.Format("Symbol trend {0} unknown", marketTrend.ToString("N2")));
             }
         }
     }
