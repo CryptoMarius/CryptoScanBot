@@ -1,6 +1,5 @@
 ﻿using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
-using CryptoScanBot.Core.Signal.Experiment;
 using CryptoScanBot.Core.Signal.Momentum;
 using CryptoScanBot.Core.Signal.Other;
 
@@ -151,9 +150,9 @@ public static class SignalHelper
         if (GetAlgorithm(strategy, out AlgorithmDefinition? definition))
         {
             if (mode == CryptoTradeSide.Long && definition!.AnalyzeLongType != null)
-                return definition.InstantiateAnalyzeLong(symbol, interval, candle);
+                return (SignalCreateBase?)Activator.CreateInstance(definition!.AnalyzeLongType, [symbol, interval, candle]);
             if (mode == CryptoTradeSide.Short && definition!.AnalyzeShortType != null)
-                return definition.InstantiateAnalyzeShort(symbol, interval, candle);
+                return (SignalCreateBase?)Activator.CreateInstance(definition!.AnalyzeShortType, [symbol, interval, candle]);
         }
         return null;
     }

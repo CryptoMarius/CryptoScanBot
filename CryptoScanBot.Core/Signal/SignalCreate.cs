@@ -350,7 +350,7 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
 
 
         // Calculate MarketTrend and the individual interval trends (reasonably CPU heavy and thatswhy it is on the end of the routine)
-        MarketTrend.CalculateMarketTrend(tradeAccount, signal.Symbol, 0, lastCandle1mCloseTime);
+        MarketTrend.CalculateMarketTrend(tradeAccount, signal.Symbol, 0, LastCandle1mCloseTime);
         AccountSymbolData accountSymbolData = tradeAccount!.Data.GetSymbolData(signal.Symbol.Name);
         AccountSymbolIntervalData accountSymbolIntervalData = accountSymbolData.GetAccountSymbolIntervalData(signal.Interval.IntervalPeriod);
         signal.TrendIndicator = accountSymbolIntervalData.TrendIndicator;
@@ -523,12 +523,7 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
 
     private bool ExecuteAlgorithm(AlgorithmDefinition strategyDefinition)
     {
-        SignalCreateBase? algorithm;
-        if (Side == CryptoTradeSide.Long)
-            algorithm = strategyDefinition.InstantiateAnalyzeLong(Symbol, Interval, Candle!);
-        else
-            algorithm = strategyDefinition.InstantiateAnalyzeShort(Symbol, Interval, Candle!);
-
+        SignalCreateBase? algorithm = SignalHelper.GetAlgorithm(Side, strategyDefinition.Strategy, Symbol, Interval, Candle);
         if (algorithm != null)
         {
             //GlobalData.Logger.Trace($"SignalCreate.Done {Symbol.Name} {Interval.Name} {strategyDefinition.Name} {Side}");

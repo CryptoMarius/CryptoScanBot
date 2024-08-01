@@ -4,8 +4,9 @@ Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep
 
 
 Scanner:
+- Scanner - De basismunten scrollable maken (Binance sport heeft veel basismunten)
 - Scanner - Keuze maken welke PSAR berekening we willen blijven hanteren (TA-LIB, Tulip, of Dave)
-- Scanner - Alle exchanges rechtstreeks kunnen benaderen via een url
+- Scanner - Alle exchanges rechtstreeks kunnen benaderen via een url (dat is nogal wat uitzoekwerk)
 - Scanner - Gerapporteerd: Het geheugen loopt langzaam op gedurende meerdere weken
             https://memprofiler.com/
             https://www.red-gate.com/products/ants-performance-profiler/
@@ -17,13 +18,14 @@ Scanner:
 - Scanner - Nieuwe munten die toegevoegd worden op de exchange terwijl de scanner loopt worden niet automatisch toegevoegd aan de price- en kline tickers
 - Scanner - Limit rates voor Kucoin verder uitwerken (ophalen candles geeft soms een foutmelding, wordt bij een volgende herstart wel hersteld, maar hoort niet zo)
             error getting klines [ServerRateLimitError] 429: Server rate limit exceeded: {"code":"429000","msg":"too many request"}
-- Scanner - Bij wisselen van basismunten (of exchange?) komt er soms een SQLite Error 5: 'database is locked? (oorzaak nog onbekend)
 - Scanner - Rate limits van de libraries bestuderen en eventueel de ingebouwde vervangen (de interne is aan de voorzichtige kant)
+- Scanner - Bij wisselen van basismunten (of exchange?) komt er soms een SQLite Error 5: 'database is locked? (oorzaak nog onbekend)
+- Scanner - Bij het inserten van een nieuw signaal is er soms een SQLite Error 5: 'database is locked? (oorzaak nog onbekend)
 - Trading - De barometer naar Excel kunnen exporteren voor een overzichtje (liefst met een op te geven datum/tijd)
 - Scanner - Het geheugen loopt gemeten over meerdere dagen op. Een oorzaak kan wellicht de barometer zijn (wat intern gewoon een muntje met candles is, maar waarin de candles niet opgeruimd worden)
 - Scanner - De FundingRate kolom automatisch uitzetten indien geen derivaten.futues?
 - Scanner - Telegram meldingen sturen met een extra link naar TV (optioneel maken via de instelllingen).
-- Scanner - locking inbouwen zodat dezelfde scanner niet twee keer opgestart kan worden
+- Scanner - locking inbouwen zodat dezelfde scanner niet twee keer opgestart kan worden (menselijke fouten <including me>)
 - Scanner - De scanner is soms onzichtbaar omdat het window buiten het scherm valt of te klein is (2x gemeld) (oorzaak onduidelijk)
 - Bij kleine(re) beeldschermen zijn bepaalde instellingen niet in zijn geheel zichtbaar (de OK en Cancel knop vallen onder andere weg)
 - Het normale logbestand bevat op het einde een .0, waar komt deze vandaag? Doet NLog alsnog een archive ofzo? Wat apart in die hoek?
@@ -46,8 +48,8 @@ Scanner:
 - Het font van de menuitem (en popup?) wordt niet aangepast (indien een ander lettertype of grootte wordt gekozen)
 - Algemeen - Black theming  https://stackoverflow.com/questions/61145347/c-how-to-make-a-dark-mode-theme-in-windows-forms-separate-form-as-select-the <geen prio>
   Er is nu een slappe variant die iets met grijs doet (omdat anders de scrollbars en headers zo'n lelijk getoond worden), ik ben er niet tevreden over.
-- Scanner - We rekenen intern nu met het aantal seconden vanaf X waardoor een long nodig is, dat kan ook met een minuten vanaf X dat scheelt mogelijk opslag en geheugen
-  (maar zijn die paar megabytes wel de moeite waard voor het vele werk?)
+- Scanner - We rekenen intern nu met het aantal seconden vanaf X waardoor een long nodig is, dat kan ook met een minuten vanaf X dat scheelt mogelijk opslag en geheugen ruimte
+  (maar zijn die "paar" megabytes wel de moeite waard met het vele (test)werk wat hiervoor nodig is?)
 
 
 Trading:
