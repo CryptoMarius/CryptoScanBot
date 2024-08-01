@@ -492,11 +492,6 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
         //signal.SlopeRsi = candle.CandleData.SlopeRsi;
 
         signal.PSar = candle.CandleData?.PSar;
-//#if DEBUG
-//        signal.PSarDave = candle.CandleData?.PSarDave;
-//        signal.PSarJason = candle.CandleData?.PSarJason;
-//        signal.PSarTulip = candle.CandleData?.PSarTulip;
-//#endif
         signal.StochSignal = candle.CandleData?.StochSignal;
         signal.StochOscillator = candle.CandleData?.StochOscillator;
         //signal.Ema8 = candle.CandleData.Ema8;

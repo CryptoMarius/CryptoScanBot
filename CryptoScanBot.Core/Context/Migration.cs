@@ -623,11 +623,14 @@ public class Migration
             //database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(3, 9, 1);", transaction);
 
             // symbol, drop LastPrice/BestBid/BestAsk
+            // signal remove public double? KeltnerUpperBand { get; set; }
+            // signal remove public double? KeltnerLowerBand { get; set; }
             // signal remove "PSarDave TEXT NULL," +
             // signal remove "PSarJason TEXT NULL," +
             // signal remove "PSarTulip TEXT NULL," +
-            // signal remove public double? KeltnerUpperBand { get; set; }
-            // signal remove public double? KeltnerLowerBand { get; set; }
+            //database.Connection.Execute("alter table signal drop column PSarDave Text null", transaction);
+            //database.Connection.Execute("alter table signal drop column PSarJason Text null", transaction);
+            //database.Connection.Execute("alter table signal drop column PSarTulip Text null", transaction);
 
             // update version
             version.Version += 1;

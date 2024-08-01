@@ -106,9 +106,6 @@ public class CryptoSignal
 
     // PSAR waarden
     public double? PSar { get; set; }
-    //public double? PSarDave { get; set; }
-    //public double? PSarJason { get; set; }
-    //public double? PSarTulip { get; set; }
 
     //public double? KeltnerUpperBand { get; set; }
     //public double? KeltnerLowerBand { get; set; }

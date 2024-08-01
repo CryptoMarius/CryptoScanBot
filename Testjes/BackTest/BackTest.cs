@@ -61,172 +61,6 @@ public class BackTest
 
 
 
-    ///// <summary>
-    ///// Geheugen teruggeven door de berekende candledata te verwijderen (vanuit main)
-    ///// </summary>
-    //public void ClearCandleData()
-    //{
-    //    Symbol.LastTradefetched = null;
-    //    foreach (CryptoInterval intervalX in GlobalData.IntervalListPeriod.Values)
-    //    {
-    //        SortedList<long, CryptoCandle> candles = Symbol.GetSymbolInterval(intervalX.IntervalPeriod).CandleList;
-    //        foreach (CryptoCandle candle in candles.Values)
-    //        {
-    //            candle.CandleData = null;
-    //        }
-    //    }
-    //}
-
-    //public static void CalculateAllIndicatorsViaTaLib(List<CryptoCandle> candleList)
-    //{
-    //    //List<ParabolicSarResult> PSarList = (List<ParabolicSarResult>)Indicator.GetParabolicSar(candleList);
-    //    // Vanwege discrepanties in psar in de telegram groepen een de ta-lib erbij gehaald
-    //    var inOpen = candleList.Select(x => Convert.ToDouble(x.Open)).ToArray();
-    //    var inHigh = candleList.Select(x => Convert.ToDouble(x.High)).ToArray();
-    //    var inLow = candleList.Select(x => Convert.ToDouble(x.Low)).ToArray();
-    //    var inClose = candleList.Select(x => Convert.ToDouble(x.Close)).ToArray();
-
-    //    TicTacTec.TA.Library.Core.RetCode retCode;
-
-    //    int startIdx = 0;
-    //    int endIdx = candleList.Count - 1;
-    //    int outNbElement; // aantal elementen in de array vanaf 0
-
-    //    double[] pSarOutput = new[candleList.Count];
-    //    int outBegIdxPSar; // noodzakelijke offset (beetje vervelend), idem voor de rest
-    //    retCode = TicTacTec.TA.Library.Core.Sar(startIdx, endIdx, inHigh, inLow, 0.02, 0.2,
-    //        out outBegIdxPSar, out outNbElement, pSarOutput);
-
-    //    int outBegIdxMa200;
-    //    double[] ma200Output = new[candleList.Count];
-    //    retCode = TicTacTec.TA.Library.Core.MovingAverage(startIdx, endIdx, inClose, 200, TicTacTec.TA.Library.Core.MAType.Sma,
-    //        out outBegIdxMa200, out outNbElement, ma200Output);
-
-    //    int outBegIdxMa100;
-    //    double[] ma100Output = new[candleList.Count];
-    //    retCode = TicTacTec.TA.Library.Core.MovingAverage(startIdx, endIdx, inClose, 100, TicTacTec.TA.Library.Core.MAType.Sma,
-    //        out outBegIdxMa100, out outNbElement, ma100Output);
-
-    //    int outBegIdxMa50;
-    //    double[] ma50Output = new[candleList.Count];
-    //    retCode = TicTacTec.TA.Library.Core.MovingAverage(startIdx, endIdx, inClose, 50, TicTacTec.TA.Library.Core.MAType.Sma,
-    //        out outBegIdxMa50, out outNbElement, ma50Output);
-
-    //    int outBegIdxMa20;
-    //    double[] ma20Output = new[candleList.Count];
-    //    retCode = TicTacTec.TA.Library.Core.MovingAverage(startIdx, endIdx, inClose, 20, TicTacTec.TA.Library.Core.MAType.Sma,
-    //        out outBegIdxMa20, out outNbElement, ma20Output);
-
-    //    int outBegIdxBb;
-    //    double[] bboutputUpper = new [candleList.Count];
-    //    double[] bboutputMiddle = new [candleList.Count];
-    //    double[] bboutputLower = new [candleList.Count];
-    //    retCode = TicTacTec.TA.Library.Core.Bbands(startIdx, endIdx, inClose, 20, 2.0, 2.0, TicTacTec.TA.Library.Core.MAType.Sma,
-    //        out outBegIdxBb, out outNbElement, bboutputUpper, bboutputMiddle, bboutputLower);
-
-    //    int outBegIdxMacd;
-    //    double[] macdoutput = new [candleList.Count];
-    //    double[] macdsignaloutput = new [candleList.Count];
-    //    double[] macdhistoutput = new [candleList.Count];
-    //    retCode = TicTacTec.TA.Library.Core.Macd(startIdx, endIdx, inClose, 12, 26, 9,
-    //        out outBegIdxMacd, out outNbElement, macdoutput, macdsignaloutput, macdhistoutput);
-
-    //    int outBegIdxRsi;
-    //    double[] rsioutput = new [candleList.Count];
-    //    retCode = TicTacTec.TA.Library.Core.Rsi(startIdx, endIdx, inClose, 10,
-    //        out outBegIdxRsi, out outNbElement, rsioutput);
-
-    //    int outBegIdxCmo;
-    //    double[] cmooutput = new [candleList.Count];
-    //    retCode = TicTacTec.TA.Library.Core.Cmo(startIdx, endIdx, inClose, 9,
-    //        out outBegIdxCmo, out outNbElement, cmooutput);
-
-    //    int outBegIdxStoch;
-    //    double[] stochkoutput = new [candleList.Count];
-    //    double[] stochdoutput = new [candleList.Count];
-    //    retCode = TicTacTec.TA.Library.Core.Stoch(startIdx, endIdx, inHigh, inLow, inClose, 14, 3, TicTacTec.TA.Library.Core.MAType.Sma, 1, TicTacTec.TA.Library.Core.MAType.Sma,
-    //        out outBegIdxStoch, out outNbElement, stochkoutput, stochdoutput);
-
-
-    //    List<MacdResult> macdList = (List<MacdResult>)Indicator.GetMacd(candleList);
-
-
-    //    // NB: Candles hoeven in theorie niet aan te sluiten (houden we geen rekening mee)
-    //    // De Last en Prev hoeven niet als we de voorlaatste candle onthouden (jammer)
-    //    // De eerste 210 is een aanloop periode voor de macd (enzovoort)
-    //    int index = 0;
-    //    foreach (CryptoCandle candle in candleList)
-    //    {
-    //        CandleData candleData = new();
-    //        candle.CandleData = candleData;
-
-    //        // Onderstaande is niet gevalideerd (en er zitten (best grote) verschillen in met Skender, wellicht vanwege parameters e.d.)
-
-    //        if (index >= outBegIdxMacd)
-    //        {
-    //            candleData.Macd = new(candle.Date);
-    //            candleData.Macd.Macd = macdoutput[index - outBegIdxMacd];
-    //            candleData.Macd.Signal = macdsignaloutput[index - outBegIdxMacd];
-    //            candleData.Macd.Histogram = macdhistoutput[index - outBegIdxMacd];
-    //        }
-
-    //        if (index >= outBegIdxMa50)
-    //        {
-    //            candleData.Sma50 = new(candle.Date);
-    //            candleData.Sma50.Sma = ma50Output[index - outBegIdxMa50];
-    //        }
-
-
-    //        if (index >= outBegIdxMa100)
-    //        {
-    //            candleData.Sma100 = new(candle.Date);
-    //            candleData.Sma100.Sma = ma100Output[index - outBegIdxMa100];
-    //        }
-
-
-    //        if (index >= outBegIdxMa200)
-    //        {
-    //            candleData.Sma200 = new(candle.Date);
-    //            candleData.Sma200.Sma = ma200Output[index - outBegIdxMa200];
-    //        }
-
-    //        if (index >= outBegIdxRsi)
-    //        {
-    //            candleData.Rsi = new(candle.Date);
-    //            candleData.Rsi.Rsi = rsioutput[index - outBegIdxRsi];
-    //        }
-
-    //        //if (index >= outBegIdxCmo)
-    //        //{
-    //        //    candleData.Cmo20 = new(candle.Date);
-    //        //    candleData.Cmo20.Cmo = cmooutput[index - outBegIdxCmo];
-    //        //}
-
-
-    //        if (index >= outBegIdxStoch)
-    //        {
-    //            candleData.Stoch = new(candle.Date);
-    //            candleData.Stoch.Signal = stochkoutput[index - outBegIdxStoch];
-    //            candleData.Stoch.Oscillator = stochkoutput[index - outBegIdxStoch];
-    //        }
-
-    //        if (index >= outBegIdxBb)
-    //        {
-    //            candleData.BollingerBands = new(candle.Date);
-    //            candleData.BollingerBands.UpperBand = bboutputUpper[index - outBegIdxBb];
-    //            candleData.BollingerBands.Sma = bboutputMiddle[index - outBegIdxBb];
-    //            candleData.BollingerBands.LowerBand = bboutputLower[index - outBegIdxBb];
-    //            candleData.BollingerBands.Width = 100 * (candleData.BollingerBands.UpperBand - candleData.BollingerBands.LowerBand) / candleData.BollingerBands.LowerBand;
-    //        }
-
-    //        if (index >= outBegIdxPSar)
-    //        {
-    //            candleData.PSar = (decimal)pSarOutput[index - outBegIdxPSar];
-    //        }
-
-    //        index++;
-    //    }
-    //}
 
 
     /// <summary>
@@ -270,31 +104,8 @@ public class BackTest
 
         // (volgens de telegram groepen op 14,3,1 ipv de standaard 14,3,3)
         List<StochResult> stochList = (List<StochResult>)history.GetStoch(14, 3, 1); // 18-11-22: omgedraaid naar 1, 3...
-
-
-        List<ParabolicSarResult> psarListDave = (List<ParabolicSarResult>)Indicator.GetParabolicSar(history);
-#if DEBUG
-        //List<ParabolicSarResult> psarListJason = (List<ParabolicSarResult>)Indicators.CalcParabolicSarJasonLam(history);
-        //List<ParabolicSarResult> psarListTulip = (List<ParabolicSarResult>)Indicators.CalcParabolicSarTulip(history);
-#endif
+        List<ParabolicSarResult> psarList = (List<ParabolicSarResult>)Indicator.GetParabolicSar(history);
         List<BollingerBandsResult> bollingerBandsList = (List<BollingerBandsResult>)history.GetBollingerBands();
-
-        //// Because Skender.Psar has different results  we use the old ta-lib (I dont like that)
-        ////var inOpen = history.Select(x => Convert.ToDouble(x.Open)).ToArray();
-        //var inHigh = history.Select(x => Convert.ToDouble(x.High)).ToArray();
-        //var inLow = history.Select(x => Convert.ToDouble(x.Low)).ToArray();
-        ////var inClose = history.Select(x => Convert.ToDouble(x.Close)).ToArray();
-
-        //int startIdx = 0;
-        //int endIdx = history.Count - 1;
-        ////int outNbElement; // aantal elementen in de array vanaf 0
-        //TicTacTec.TA.Library.Core.RetCode retCode;
-
-        //double[] psarValues = new double[history.Count];
-        //retCode = TicTacTec.TA.Library.Core.Sar(startIdx, endIdx, inHigh, inLow, 0.02, 0.2,
-        //    out int outBegIdxPSar, out int outNbElement, psarValues);
-
-
 
         // Fill the last x candles with the indicator data
         for (int index = history.Count - 1; index >= 0; index--)
@@ -344,16 +155,8 @@ public class BackTest
                 candleData.BollingerBandsDeviation = 0.5 * (BollingerBandsUpperBand - BollingerBandsLowerBand);
                 candleData.BollingerBandsPercentage = 100 * ((BollingerBandsUpperBand / BollingerBandsLowerBand) - 1);
 
-                //if (index >= outBegIdxPSar)
-                //    candleData.PSar = psarValues[index - outBegIdxPSar];
-                if (psarListDave[index].Sar != null)
-                    candleData.PSar = psarListDave[index].Sar;
-#if DEBUG
-                //if (psarListDave[index].Sar != null)
-                //candleData.PSarDave = psarListDave[index].Sar;
-                //candleData.PSarJason = psarListJason[index].Sar;
-                //candleData.PSarTulip = psarListTulip[index].Sar;
-#endif
+                if (psarList[index].Sar != null)
+                    candleData.PSar = psarList[index].Sar;
                 //candleData.KeltnerUpperBand = keltnerList[index].UpperBand;
                 //candleData.KeltnerLowerBand = keltnerList[index].LowerBand;
             }
