@@ -95,6 +95,7 @@
 
   <ItemGroup>
     <Folder Include="Properties\" />
+    <Folder Include="Signal\Experiment\" />
   </ItemGroup>
 
 </Project>

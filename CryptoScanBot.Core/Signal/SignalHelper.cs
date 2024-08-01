@@ -99,6 +99,8 @@ public static class SignalHelper
             AnalyzeShortType = typeof(SignalStobbMultiShort),
         });
 
+
+
         //***************************************************
         // WGHBM - Momentum indicator that shows arrows when the Stochastic and the RSI are at the same time in the oversold or overbought area.
         //***************************************************
@@ -118,19 +120,6 @@ public static class SignalHelper
             Strategy = CryptoSignalStrategy.StoRsiMulti,
             AnalyzeLongType = typeof(SignalStoRsiMultiLong),
             AnalyzeShortType = typeof(SignalStoRsiMultiShort),
-        });
-
-
-
-        //***************************************************
-        // Experiment Ross - Ross Cameron
-        //***************************************************
-        Register(new AlgorithmDefinition()
-        {
-            Name = "vol2.5x",
-            Strategy = CryptoSignalStrategy.Ross,
-            AnalyzeLongType = typeof(SignalRossLong),
-            AnalyzeShortType = typeof(SignalRossShort),
         });
 
     }

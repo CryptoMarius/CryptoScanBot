@@ -58,7 +58,6 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
         PriceMax,
         PriceMinPerc,
         PriceMaxPerc,
-        bbr,
 #endif
     }
 
@@ -230,11 +229,6 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                 case ColumnsForGrid.PriceMaxPerc:
                     CreateColumn("MaxPerc", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 70).Visible = false;
                     break;
-
-                case ColumnsForGrid.bbr:
-                    CreateColumn("bbr", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
-                    break;
-                    
 #endif
             }
         }
@@ -287,7 +281,6 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
             ColumnsForGrid.PriceMax => ObjectCompare.Compare(a.PriceMax, b.PriceMax),
             ColumnsForGrid.PriceMinPerc => ObjectCompare.Compare(a.PriceMinPerc, b.PriceMinPerc),
             ColumnsForGrid.PriceMaxPerc => ObjectCompare.Compare(a.PriceMaxPerc, b.PriceMaxPerc),
-            ColumnsForGrid.bbr => ObjectCompare.Compare(a.Bbr, b.Bbr),
 #endif
             _ => 0
         };
@@ -483,10 +476,6 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                     if (signal.PriceMaxPerc! != 0)
                         e.Value = signal.PriceMaxPerc.ToString("N2");
                     break;
-                case ColumnsForGrid.bbr:
-                        e.Value = signal.Bbr?.ToString("N2");
-                    break;
-                    
 #endif
                 default:
                     e.Value = '?';

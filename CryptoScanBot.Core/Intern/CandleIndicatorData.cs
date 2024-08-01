@@ -21,7 +21,7 @@ public class CandleIndicatorData
 #endif
 
     // Exponential Moving Average
-    public double? Ema9 { get; set; }
+    //public double? Ema9 { get; set; }
     //public double? Ema8 { get; set; }
 #if EXTRASTRATEGIES
     public double? Ema5 { get; set; }
@@ -77,8 +77,6 @@ public class CandleIndicatorData
     //public double? KeltnerCenterLine { get; set; }
     //public double? KeltnerCenterLineSlope { get; set; }
 
-    public double? Vwap { get; set; }
-    
     // Voor de SMA lookback willen we 60 sma200's erin, dus 200 + 60
     private const int maxCandles = 260;
 
@@ -245,7 +243,7 @@ public class CandleIndicatorData
 
         //List<TemaResult> temaList = (List<TemaResult>)Indicator.GetTema(history, 5);
 
-        List<EmaResult> emaList9 = (List<EmaResult>)history.GetEma(9);
+        //List<EmaResult> emaList9 = (List<EmaResult>)history.GetEma(9);
 #if EXTRASTRATEGIES
         List<EmaResult> emaList5 = (List<EmaResult>)history.GetEma(5);
         //List<EmaResult> emaList8 = (List<EmaResult>)history.GetEma(8);
@@ -276,7 +274,7 @@ public class CandleIndicatorData
         //List<AtrResult> atrList = (List<AtrResult>)Indicator.GetAtr(history);
         List<RsiResult> rsiList = (List<RsiResult>)history.GetRsi();
         List<MacdResult> macdList = (List<MacdResult>)history.GetMacd();
-        List<VwapResult> vwapList = (List<VwapResult>)history.GetVwap();
+        //List<VwapResult> vwapList = (List<VwapResult>)history.GetVwap();
 #if EXTRASTRATEGIES
         List<MacdResult> macdLtList = (List<MacdResult>)history.GetMacd(34, 144);
 #endif
@@ -291,7 +289,11 @@ public class CandleIndicatorData
         List<ParabolicSarResult> psarListDave = (List<ParabolicSarResult>)history.GetParabolicSar();
         List<ParabolicSarResult> psarListJason = (List<ParabolicSarResult>)history.CalcParabolicSarJasonLam();
         List<ParabolicSarResult> psarListTulip = (List<ParabolicSarResult>)history.CalcParabolicSarTulip();
+
+        List<StdDevResult> stdDevList = (List<StdDevResult>)history.GetStdDev(20);
+
 #endif
+        // dan kan nu ook met de stdDev * setting.... Maar komt het wel overeen?
         List<BollingerBandsResult> bollingerBandsList = (List<BollingerBandsResult>)history.GetBollingerBands(
             standardDeviations: GlobalData.Settings.General.BbStdDeviation);
 
@@ -309,6 +311,7 @@ public class CandleIndicatorData
         double[] psarValues = new double[history.Count];
         retCode = TicTacTec.TA.Library.Core.Sar(startIdx, endIdx, inHigh, inLow, 0.02, 0.2,
             out int outBegIdxPSar, out int outNbElement, psarValues);
+
 
         //// We might do everything via ta-lib, but its a tricky library
         //// (for now we only use it for the correct psar values)
@@ -341,7 +344,7 @@ public class CandleIndicatorData
             try
             {
                 //// EMA's
-                candleData.Ema9 = emaList9[index].Ema;
+                //candleData.Ema9 = emaList9[index].Ema;
                 ////candleData.Ema8 = emaList8[index].Ema;
 #if EXTRASTRATEGIES
                 candleData.Ema9 = emaList9[index].Ema;
@@ -376,7 +379,7 @@ public class CandleIndicatorData
                 candleData.MacdSignal = macdList[index].Signal;
                 candleData.MacdHistogram = macdList[index].Histogram;
 
-                candleData.Vwap = vwapList[index].Vwap;
+                //candleData.Vwap = vwapList[index].Vwap;
 
 #if EXTRASTRATEGIES
                 //candleData.MacdLtValue = macdLtList[index].Macd;

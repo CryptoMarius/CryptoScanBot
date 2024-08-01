@@ -517,8 +517,6 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
         //signal.SlopeSma20 = candle.CandleData.SlopeSma20;
         //signal.SlopeSma50 = candle.CandleData.SlopeSma50;
 
-        signal.Bbr = candle.CandleData?.Bbr;
-
         return signal;
     }
 

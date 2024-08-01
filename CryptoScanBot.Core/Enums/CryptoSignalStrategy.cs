@@ -8,12 +8,10 @@ public enum CryptoSignalStrategy
     Sbm2 = 2,
     Sbm3 = 3,
     Stobb = 6,
-    
-    Lux = 8,
+    StobbMulti = 7,
+
     IchimokuKumoBreakout = 9, // nazoeken, in de juiste positieve of negatieve trend doet ie het prima
 
     StoRsi = 10, // WGHM - STOSCH en RSI momentum indicator
-    RsiStochK = 19,
-
-    Ross = 99, // just a test
+    StoRsiMulti = 11, // WGHM - STOSCH en RSI momentum indicator
 }
