@@ -1,4 +1,5 @@
-﻿using CryptoScanBot.Core.Model;
+﻿using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Model;
 
 namespace CryptoScanBot.SettingsDialog;
 
@@ -232,11 +233,13 @@ internal class SettingsQuoteCoin : IDisposable
     {
         ColorDialog dlg = new()
         {
-            Color = PanelColor.BackColor
+            Color = PanelColor.BackColor,
+            CustomColors = GlobalData.SettingsUser.CustomColors
         };
         if (dlg.ShowDialog() == DialogResult.OK)
         {
             PanelColor.BackColor = dlg.Color;
+            GlobalData.SettingsUser.CustomColors = dlg.CustomColors;
         }
     }
 

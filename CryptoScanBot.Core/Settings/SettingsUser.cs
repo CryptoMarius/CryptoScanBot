@@ -17,6 +17,9 @@ public class SettingsUser
     public Rectangle WindowPosition { get; set; } = new Rectangle();
     public int WindowState { get; set; } = 0;
 
+
+    public int[] CustomColors { get; set; } = [];
+
     // Welke kolommen zijn zichtbaar in de diverse grids
     public SortedList<string, ColumnSetting> GridColumnsSignal { get; set; } = [];
     public SortedList<string, ColumnSetting> GridColumnsSymbol { get; set; } = [];

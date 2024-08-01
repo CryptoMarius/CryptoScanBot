@@ -244,7 +244,6 @@ partial class FrmSettings
         panel6 = new Panel();
         label49 = new Label();
         toolTip1 = new ToolTip(components);
-        colorDialog1 = new ColorDialog();
         panelButtons.SuspendLayout();
         panelFill.SuspendLayout();
         tabControlMain.SuspendLayout();
@@ -2936,7 +2935,6 @@ partial class FrmSettings
     private ToolTip toolTip1;
     private Button buttonTestSpeech;
     private Button buttonReset;
-    private ColorDialog colorDialog1;
     private Button buttonGotoAppDataFolder;
     private TabControl tabControlMain;
     private TabPage tabGeneral;

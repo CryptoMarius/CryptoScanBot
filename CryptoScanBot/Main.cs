@@ -521,6 +521,7 @@ public partial class FrmMain : Form
                 return;
 
             GlobalData.SaveSettings();
+            GlobalData.SaveUserSettings(); // custom colors
             GetReloadRelatedSettings(out string activeQuotes2);
 
             // Detectie of we hebben gewisseld van Exchange (reload) of QuoteData (reload)

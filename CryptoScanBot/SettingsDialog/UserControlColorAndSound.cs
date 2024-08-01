@@ -16,11 +16,13 @@ public partial class UserControlColorAndSound : UserControl
     {
         ColorDialog dlg = new()
         {
-            Color = PanelColor.BackColor
+            Color = PanelColor.BackColor,
+            CustomColors = GlobalData.SettingsUser.CustomColors
         };
         if (dlg.ShowDialog() == DialogResult.OK)
         {
             PanelColor.BackColor = dlg.Color;
+            GlobalData.SettingsUser.CustomColors = dlg.CustomColors;
         }
     }
 
