@@ -77,7 +77,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                         try
                         {
                             // Add or update the local cache
-                            long candleOpenUnix = CandleTools.GetUnixTime(kline.Timestamp, 60);
+                            long candleOpenUnix = CandleTools.GetUnixTime(kline.StartTime, 60);
                             SortedList<long, CryptoCandle> tempList = klineListTemp[symbolName];
                             if (!tempList.TryGetValue(candleOpenUnix, out CryptoCandle? candle))
                             {
