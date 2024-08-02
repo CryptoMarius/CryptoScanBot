@@ -18,7 +18,8 @@ namespace CryptoScanBot.Core.Exchange.Binance.Futures;
 
 internal class Asset
 {
-    public static void PickupAssets(CryptoAccount tradeAccount, IEnumerable<BinanceFuturesAccountAsset> balances)
+    //IEnumerable<BinanceFuturesAccountInfoAsset> Assets
+    public static void PickupAssets(CryptoAccount tradeAccount, IEnumerable<BinanceFuturesAccountInfoAsset> assetList)
     {
         tradeAccount.Data.AssetListSemaphore.Wait();
         try
@@ -29,7 +30,7 @@ internal class Asset
             using var transaction = databaseThread.BeginTransaction();
             try
             {
-                foreach (var assetInfo in balances)
+                foreach (var assetInfo in assetList)
                 {
                     if (assetInfo.WalletBalance > 0)
                     {
@@ -93,7 +94,7 @@ internal class Asset
 
                 using var client = new BinanceRestClient();
                 {
-                    WebCallResult<BinanceFuturesAccountInfo> accountInfo = await client.UsdFuturesApi.Account.GetAccountInfoAsync();
+                    WebCallResult<BinanceFuturesAccountInfoV3> accountInfo = await client.UsdFuturesApi.Account.GetAccountInfoAsync();
                     if (!accountInfo.Success)
                     {
                         GlobalData.AddTextToLogTab("error getting accountinfo " + accountInfo.Error);
