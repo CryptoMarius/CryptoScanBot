@@ -273,7 +273,9 @@ public class TrendInterval
             else log?.AppendLine($"unable to find candle {loop}");
             loop += accountSymbolIntervalData.Interval.Duration;
         }
+#if DEBUG
         log?.AppendLine($"Added {count} candles");
+#endif
         //}
         //finally
         //{

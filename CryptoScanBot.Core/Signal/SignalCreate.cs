@@ -352,6 +352,8 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
         // Calculate MarketTrend and the individual interval trends (reasonably CPU heavy and thatswhy it is on the end of the routine)
         MarketTrend.CalculateMarketTrend(tradeAccount, signal.Symbol, 0, LastCandle1mCloseTime);
         AccountSymbolData accountSymbolData = tradeAccount!.Data.GetSymbolData(signal.Symbol.Name);
+        signal.TrendPercentage = (float)accountSymbolData.MarketTrendPercentage;
+
         AccountSymbolIntervalData accountSymbolIntervalData = accountSymbolData.GetAccountSymbolIntervalData(signal.Interval.IntervalPeriod);
         signal.TrendIndicator = accountSymbolIntervalData.TrendIndicator;
         accountSymbolIntervalData = accountSymbolData.GetAccountSymbolIntervalData(CryptoIntervalPeriod.interval15m);
@@ -470,10 +472,12 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
             IntervalId = Interval.Id,
             BackTest = GlobalData.BackTest,
             Price = candle.Close,
+#if DEBUG
             PriceMin = candle.Close, // statistics
             PriceMax = candle.Close, // statistics
             PriceMinPerc = 0, // statistics
             PriceMaxPerc = 0, // statistics
+#endif
             Volume = Symbol.Volume,
             EventTime = candle.OpenTime,
             OpenDate = CandleTools.GetUnixDate(candle.OpenTime),

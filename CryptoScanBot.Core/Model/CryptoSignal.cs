@@ -77,11 +77,13 @@ public class CryptoSignal
     public string EventText { get; set; }
     public decimal Price { get; set; }
 
+#if DEBUG
     // Statistics, the min and max differences against the signalprice
     public decimal PriceMin { get; set; }
     public double PriceMinPerc { get; set; }
     public decimal PriceMax { get; set; }
     public double PriceMaxPerc { get; set; }
+#endif
 
     [Computed]
     public decimal? LastPrice { get; set; }
