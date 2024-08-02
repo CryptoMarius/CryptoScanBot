@@ -4,6 +4,7 @@ Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep
 
 
 Scanner:
+- Scanner - De optie "Signalen maken" in het linkerboven menu kan wel weg (core business scanner)
 - Scanner - Gerapporteerd: Dubbele munten (zelfs de BTCUSDT, wellicht na wisselen van exchanges?)
 - Scanner - De basismunten scrollable maken (Binance sport heeft veel basismunten)
 - Scanner - Alle exchanges rechtstreeks kunnen benaderen via een url (dat is nogal wat uitzoekwerk)
