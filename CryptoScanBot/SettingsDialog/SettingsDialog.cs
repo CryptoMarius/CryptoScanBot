@@ -38,7 +38,7 @@ public partial class FrmSettings : Form
         // Trading (excluding the backtest)
         //TradeVia.Add("Backtest", CryptoTradeAccountType.BackTest);
         TradeVia.Add("Papertrading", CryptoAccountType.PaperTrade);
-        TradeVia.Add("Trading exchange", CryptoAccountType.RealTrading);
+        //TradeVia.Add("Trading exchange", CryptoAccountType.RealTrading); removed until further notice
         TradeVia.Add("Altrady webhook", CryptoAccountType.Altrady);
 
         EditTradeVia.DataSource = new BindingSource(TradeVia, null);
