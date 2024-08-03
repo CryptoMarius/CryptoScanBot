@@ -33,7 +33,7 @@ public class Emulator
         b.AppendLine("delete from positionStep where positionstep.PositionId in");
         b.AppendLine("(select position.id from position");
         b.AppendLine("inner join TradeAccount on position.TradeAccountId = TradeAccount.Id");
-        b.AppendLine("where TradeAccount.TradeAccountType = 0)");
+        b.AppendLine("where TradeAccount.AccountType = 0)");
         database.Connection.Execute(b.ToString(), transaction);
 
 
@@ -43,7 +43,7 @@ public class Emulator
         b.AppendLine("delete from positionPart where positionPart.PositionId in");
         b.AppendLine("(select position.id from position");
         b.AppendLine("inner join TradeAccount on position.TradeAccountId = TradeAccount.Id");
-        b.AppendLine("where TradeAccount.TradeAccountType = 0)");
+        b.AppendLine("where TradeAccount.AccountType = 0)");
         database.Connection.Execute(b.ToString(), transaction);
 
 
@@ -53,7 +53,7 @@ public class Emulator
         b.AppendLine("delete from position where position.Id in");
         b.AppendLine("(select position.id from position");
         b.AppendLine("inner join TradeAccount on position.TradeAccountId = TradeAccount.Id");
-        b.AppendLine("where TradeAccount.TradeAccountType = 0)");
+        b.AppendLine("where TradeAccount.AccountType = 0)");
         database.Connection.Execute(b.ToString(), transaction);
 
 
@@ -63,7 +63,7 @@ public class Emulator
         b.AppendLine("delete from [order] where [order].Id in");
         b.AppendLine("(select [order].id from [order]");
         b.AppendLine("inner join TradeAccount on [order].TradeAccountId = TradeAccount.Id");
-        b.AppendLine("where TradeAccount.TradeAccountType = 0)");
+        b.AppendLine("where TradeAccount.AccountType = 0)");
         database.Connection.Execute(b.ToString(), transaction);
 
 
@@ -73,7 +73,7 @@ public class Emulator
         b.AppendLine("delete from [trade] where [trade].Id in");
         b.AppendLine("(select [trade].id from [trade]");
         b.AppendLine("inner join TradeAccount on [trade].TradeAccountId = TradeAccount.Id");
-        b.AppendLine("where TradeAccount.TradeAccountType = 0)");
+        b.AppendLine("where TradeAccount.AccountType = 0)");
         database.Connection.Execute(b.ToString(), transaction);
 
 
@@ -83,7 +83,7 @@ public class Emulator
         b.AppendLine("delete from asset where asset.Id in");
         b.AppendLine("(select asset.id from asset");
         b.AppendLine("inner join TradeAccount on asset.TradeAccountId = TradeAccount.Id");
-        b.AppendLine("where TradeAccount.TradeAccountType = 0)");
+        b.AppendLine("where TradeAccount.AccountType = 0)");
         database.Connection.Execute(b.ToString(), transaction);
 
         transaction.Commit();
