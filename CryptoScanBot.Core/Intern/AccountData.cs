@@ -50,7 +50,7 @@ public class AccountData
         if (!QuoteDataList.TryGetValue(quoteName, out AccountQuoteData? quoteData))
         {
             quoteData = new() { QuoteName = quoteName};
-            QuoteDataList.Add(quoteName, quoteData);
+            QuoteDataList.TryAdd(quoteName, quoteData);
         }
         return quoteData;
     }
@@ -75,7 +75,7 @@ public class AccountData
         if (!SymbolDataList.TryGetValue(symbolName, out AccountSymbolData? symbolData))
         {
             symbolData = new() { SymbolName = symbolName};
-            SymbolDataList.Add(symbolName, symbolData);
+            SymbolDataList.TryAdd(symbolName, symbolData);
         }
         return symbolData;
     }

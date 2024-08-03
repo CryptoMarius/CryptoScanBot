@@ -20,7 +20,7 @@ public class CryptoOrderList: SortedList<string, CryptoOrder>
 
                     if (!ContainsKey(order.OrderId))
                     {
-                        Add(order.OrderId, order);
+                        this.TryAdd(order.OrderId, order);
                         if (log)
                             GlobalData.AddTextToLogTab($"{order.Symbol.Name} added order {order.CreateTime} {order.OrderId} {order.Status} (#{order.Id})");
                     }
