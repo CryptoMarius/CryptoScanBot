@@ -150,13 +150,13 @@
             // tabControl
             // 
             tabControl.Appearance = TabAppearance.FlatButtons;
-            tabControl.Controls.Add(tabPageDashBoard);
+            tabControl.Controls.Add(tabPagewebViewDummy);
             tabControl.Controls.Add(tabPageSignals);
             tabControl.Controls.Add(tabPageBrowser);
             tabControl.Controls.Add(tabPagePositionsOpen);
             tabControl.Controls.Add(tabPagePositionsClosed);
+            tabControl.Controls.Add(tabPageDashBoard);
             tabControl.Controls.Add(tabPageLog);
-            tabControl.Controls.Add(tabPagewebViewDummy);
             tabControl.Dock = DockStyle.Fill;
             tabControl.Location = new Point(0, 0);
             tabControl.Margin = new Padding(2);
