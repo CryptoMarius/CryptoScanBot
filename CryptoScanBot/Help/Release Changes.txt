@@ -19,6 +19,8 @@ xx-xx-2024 1.9.3
 - Emulator - Introductie van de emulator (maar er gaat nu nog het eea niet goed, ietwat voorbarig wellicht)
              ???-geen signalen, geen posities, trading rules die 25% drops rapporteren en dan zal de trend ook niet goed gaan lijkt me ;-)
 
+- Trading - De trader definitief toegevoegd in de officiele release (3 extra tabbladen en wat instellingen)
+- Trading - De exchange trading verwijderd (er is alleen papertrading en Altrady webhook trading mogelijk)
 - Trading - De Altrady Webhook (opnieuw) geintroduceerd.
 - Trading - Introductie van een stop loss (wordt nu alleen voor Altrady webhook gebruikt)
 - Trading - De DCA gebruikte de multiply van de dca regels niet meer (na een onhandige actie).

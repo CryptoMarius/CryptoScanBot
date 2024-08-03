@@ -65,6 +65,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
         menuStrip.AddCommand(this, "Activate trading app", Command.ActivateTradingApp);
         menuStrip.AddCommand(this, "TradingView internal", Command.ActivateTradingviewIntern);
         menuStrip.AddCommand(this, "TradingView external", Command.ActivateTradingviewExtern);
+        // todo direct link
         //menuStrip.AddCommand(this, "Exchange ", Command.ActivateActiveExchange);
         menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Copy symbol name", Command.CopySymbolInformation);
