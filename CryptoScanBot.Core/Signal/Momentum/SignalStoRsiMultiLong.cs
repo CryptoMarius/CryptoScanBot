@@ -65,7 +65,7 @@ public class SignalStoRsiMultiShort : SignalSbmBaseShort
                 CandleIndicatorData.CalculateIndicators(history);
             }
 
-            if (candle.IsStochOverbought(GlobalData.Settings.Signal.StoRsi.AddAmount) && candle.IsRsiOverbought(GlobalData.Settings.Signal.StoRsi.AddAmount))
+            if (IndicatorsOkay(candle!) && candle.IsStochOverbought(GlobalData.Settings.Signal.StoRsi.AddAmount) && candle.IsRsiOverbought(GlobalData.Settings.Signal.StoRsi.AddAmount))
             {
                 if (ExtraText != "")
                     ExtraText += ',';

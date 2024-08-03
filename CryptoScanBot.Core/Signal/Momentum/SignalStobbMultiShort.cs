@@ -127,7 +127,7 @@ public class SignalStobbMultiShort : SignalSbmBaseShort
                 CandleIndicatorData.CalculateIndicators(history);
             }
 
-            if (candle.IsStochOverbought() && candle.IsAboveBollingerBands(GlobalData.Settings.Signal.Stobb.UseLowHigh))
+            if (IndicatorsOkay(candle!) && candle.IsStochOverbought() && candle.IsAboveBollingerBands(GlobalData.Settings.Signal.Stobb.UseLowHigh))
             {
                 if (ExtraText != "")
                     ExtraText += ',';
