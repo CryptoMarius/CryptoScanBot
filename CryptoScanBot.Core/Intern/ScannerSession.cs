@@ -67,7 +67,7 @@ public static class ScannerSession
 
     public static void Start(int delay)
     {
-        GlobalData.AddTextToLogTab("Debug: ScannerSession.Start", true);
+        GlobalData.AddTextToLogTab("Debug: ScannerSession.Start");
         ScannerLog.Logger.Trace($"ScannerSession.Starting");
         if (!IsStarted)
         {
@@ -233,7 +233,7 @@ public static class ScannerSession
 
     private static async void TimerRestartStreams_Tick(object? sender, EventArgs? e)
     {
-        GlobalData.AddTextToLogTab("Debug: ScannerSession.Restart", true);
+        GlobalData.AddTextToLogTab("Debug: ScannerSession.Restart");
         GlobalData.AddTextToTelegram("Debug: ScannerSession.Restart");
 
         TimerRestartStreams.Enabled = false;
@@ -275,7 +275,7 @@ public static class ScannerSession
     {
         if (ExchangeHelper.KLineTicker.NeedsRestart())
         {
-            GlobalData.AddTextToLogTab("Debug: Een van de 1m kline tickers is gestopt!", true);
+            GlobalData.AddTextToLogTab("Debug: Een van de 1m kline tickers is gestopt!");
 
             // Schedule a rest of the streams
             if (!TimerRestartStreams.Enabled || TimerRestartStreams.Interval > 60 * 1000)
@@ -288,7 +288,7 @@ public static class ScannerSession
         ConnectionWasLostEvent?.Invoke(text);
     }
 
-    static private void ConnectionWasLostEvent_Tick(string text, bool extraLineFeed = false)
+    static private void ConnectionWasLostEvent_Tick(string text)
     {
         // Plan alvast een verversing omdat er een connection timeout was.
         // Dit kan een aantal berekeningen onderbroken hebben
@@ -303,7 +303,7 @@ public static class ScannerSession
         ConnectionWasRestoredEvent?.Invoke(text);
     }
 
-    static private void ConnectionWasRestoredEvent_Tick(string text, bool extraLineFeed = false)
+    static private void ConnectionWasRestoredEvent_Tick(string text)
     {
         // Pas de geplande verversing omdat er een connection timeout was.
         // Dit kan een aantal berekeningen onderbroken hebben

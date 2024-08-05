@@ -321,7 +321,7 @@ public class Candle
                     }
                     await Task.WhenAll(taskList).ConfigureAwait(false);
 
-                    GlobalData.AddTextToLogTab("Candles ophalen klaar", true);
+                    GlobalData.AddTextToLogTab("Candles ophalen klaar");
                 }
                 finally
                 {
@@ -334,7 +334,7 @@ public class Candle
             catch (Exception error)
             {
                 ScannerLog.Logger.Error(error, "");
-                GlobalData.AddTextToLogTab("error get prices " + error.ToString() + "\r\n");
+                GlobalData.AddTextToLogTab("error get prices " + error.ToString());
             }
         }
     }

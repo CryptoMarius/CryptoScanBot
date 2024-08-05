@@ -21,7 +21,7 @@ public class Symbols
                 using var client = new KucoinRestClient();
                 var exchangeInfo = await client.FuturesApi.ExchangeData.GetOpenContractsAsync() ?? throw new ExchangeException("Geen exchange data ontvangen (1)");
                 if (!exchangeInfo.Success)
-                    GlobalData.AddTextToLogTab($"error getting exchangeinfo {exchangeInfo.Error}", true);
+                    GlobalData.AddTextToLogTab($"error getting exchangeinfo {exchangeInfo.Error}");
 
                 // Save for debugging
                 {

@@ -100,14 +100,14 @@ public class DataStore
                         // Een vorig formaat
                         File.Delete(filename);
                         ScannerLog.Logger.Error(error, symbol.Name);
-                        GlobalData.AddTextToLogTab(error.ToString() + "\r\n");
+                        GlobalData.AddTextToLogTab(error.ToString());
                         //throw;
                     }
                     catch (Exception error)
                     {
                         GlobalData.AddTextToLogTab("Problem " + symbol.Name);
                         ScannerLog.Logger.Error(error, "");
-                        GlobalData.AddTextToLogTab(error.ToString() + "\r\n");
+                        GlobalData.AddTextToLogTab(error.ToString());
                         // Een vorig formaat
                         File.Delete(filename);
                         //throw;
@@ -202,7 +202,7 @@ public class DataStore
                     {
                         ScannerLog.Logger.Error(error, "");
                         GlobalData.AddTextToLogTab($"Problem {symbol.Name}");
-                        GlobalData.AddTextToLogTab(error.ToString(), true);
+                        GlobalData.AddTextToLogTab(error.ToString());
                     }
                 }
             }

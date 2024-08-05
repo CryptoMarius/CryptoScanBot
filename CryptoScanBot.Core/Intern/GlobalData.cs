@@ -17,7 +17,7 @@ namespace CryptoScanBot.Core.Intern;
 /// <summary>
 /// Om vanuit de threads tekst in het main scherm te zetten
 /// </summary>
-public delegate void AddTextEvent(string text, bool extraLineFeed = false);
+public delegate void AddTextEvent(string text);
 
 public delegate void PlayMediaEvent(string text, bool test = false);
 
@@ -440,7 +440,7 @@ static public class GlobalData
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            AddTextToLogTab("Error loading setting " + error.ToString(), false);
+            AddTextToLogTab("Error loading setting " + error.ToString());
         }
     }
 
@@ -468,7 +468,7 @@ static public class GlobalData
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            AddTextToLogTab($"Error loading {filename} " + error.ToString(), false);
+            AddTextToLogTab($"Error loading {filename} " + error.ToString());
         }
     }
 
@@ -491,7 +491,7 @@ static public class GlobalData
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            AddTextToLogTab($"Error loading {filename} " + error.ToString(), false);
+            AddTextToLogTab($"Error loading {filename} " + error.ToString());
         }
     }
 
@@ -510,7 +510,7 @@ static public class GlobalData
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            AddTextToLogTab($"Error loading {filename} " + error.ToString(), false);
+            AddTextToLogTab($"Error loading {filename} " + error.ToString());
         }
     }
 
@@ -529,7 +529,7 @@ static public class GlobalData
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            AddTextToLogTab($"Error loading {filename} " + error.ToString(), false);
+            AddTextToLogTab($"Error loading {filename} " + error.ToString());
         }
 
 
@@ -546,7 +546,7 @@ static public class GlobalData
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            AddTextToLogTab($"Error loading {filename} " + error.ToString(), false);
+            AddTextToLogTab($"Error loading {filename} " + error.ToString());
         }
     }
 
@@ -659,7 +659,7 @@ static public class GlobalData
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            AddTextToLogTab("Error playing music " + error.ToString(), false);
+            AddTextToLogTab("Error playing music " + error.ToString());
         }
     }
 
@@ -672,7 +672,7 @@ static public class GlobalData
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            AddTextToLogTab("Error playing speech " + error.ToString(), false);
+            AddTextToLogTab("Error playing speech " + error.ToString());
         }
     }
 
@@ -685,7 +685,7 @@ static public class GlobalData
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            AddTextToLogTab(" error telegram thread(1)" + error.ToString(), false);
+            AddTextToLogTab(" error telegram thread(1)" + error.ToString());
         }
     }
 
@@ -710,7 +710,7 @@ static public class GlobalData
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            AddTextToLogTab(" error telegram thread(1)" + error.ToString(), false);
+            AddTextToLogTab(" error telegram thread(1)" + error.ToString());
         }
     }
 
@@ -735,11 +735,11 @@ static public class GlobalData
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            AddTextToLogTab(" error telegram thread(2)" + error.ToString(), false);
+            AddTextToLogTab(" error telegram thread(2)" + error.ToString());
         }
     }
 
-    static public void AddTextToLogTab(string text, bool extraLineFeed = false) => LogToLogTabEvent?.Invoke(text, extraLineFeed);
+    static public void AddTextToLogTab(string text) => LogToLogTabEvent?.Invoke(text);
     static public void SymbolsHaveChanged(string text) => SymbolsHaveChangedEvent?.Invoke(text);
 
 #if TRADEBOT

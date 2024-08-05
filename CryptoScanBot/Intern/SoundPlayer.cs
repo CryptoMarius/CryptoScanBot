@@ -71,7 +71,7 @@ static public class ThreadSoundPlayer
         {
             ScannerLog.Logger.Error(error, "");
             GlobalData.AddTextToLogTab("");
-            GlobalData.AddTextToLogTab(error.ToString(), true);
+            GlobalData.AddTextToLogTab(error.ToString());
         }
     }
 }

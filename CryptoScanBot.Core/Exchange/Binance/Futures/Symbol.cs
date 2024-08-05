@@ -26,7 +26,7 @@ public class Symbol
                 using var client = new BinanceRestClient();
                 var exchangeInfo = await client.UsdFuturesApi.ExchangeData.GetExchangeInfoAsync() ?? throw new ExchangeException("Geen exchange data ontvangen (1)");
                 if (!exchangeInfo.Success)
-                    GlobalData.AddTextToLogTab("error getting exchangeinfo " + exchangeInfo.Error, true);
+                    GlobalData.AddTextToLogTab("error getting exchangeinfo " + exchangeInfo.Error);
                 if (exchangeInfo.Data == null)
                     throw new ExchangeException("Geen exchange data ontvangen (2)");
 

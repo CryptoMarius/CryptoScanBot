@@ -33,7 +33,7 @@ public class Symbol
                 if (exchangeData == null)
                     throw new ExchangeException("No exchange data received");
                 if (!exchangeData.Success)
-                    GlobalData.AddTextToLogTab($"error getting exchangeinfo {exchangeData.Error}", true);
+                    GlobalData.AddTextToLogTab($"error getting exchangeinfo {exchangeData.Error}");
 
                 // Save for debug purposes
                 {

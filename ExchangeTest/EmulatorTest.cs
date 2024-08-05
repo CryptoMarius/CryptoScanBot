@@ -10,7 +10,7 @@ internal class EmulatorTest
     {
         GlobalData.CreatedSignalCount++;
         string text = signal.CloseDate.ToLocalTime() + " Analyze signal " + signal.Symbol.Name + " " + signal.Interval.Name + " " + signal.SideText + " " + signal.StrategyText + " " + signal.EventText;
-        GlobalData.AddTextToLogTab(text, false);
+        GlobalData.AddTextToLogTab(text);
 
         if (signal.BackTest)
             return;

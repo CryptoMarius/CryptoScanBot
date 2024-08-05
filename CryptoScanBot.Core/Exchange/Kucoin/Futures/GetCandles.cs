@@ -318,7 +318,7 @@ public class GetCandles
             catch (Exception error)
             {
                 ScannerLog.Logger.Error(error, "");
-                GlobalData.AddTextToLogTab("error get prices " + error.ToString() + "\r\n");
+                GlobalData.AddTextToLogTab("error get prices " + error.ToString());
             }
         }
     }

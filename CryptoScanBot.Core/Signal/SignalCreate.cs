@@ -451,7 +451,7 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
         {
             ScannerLog.Logger.Error(error, "");
             GlobalData.AddTextToLogTab("");
-            GlobalData.AddTextToLogTab(error.ToString(), true);
+            GlobalData.AddTextToLogTab(error.ToString());
             return false;
         }
 

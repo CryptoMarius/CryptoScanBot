@@ -54,8 +54,8 @@ public class SignalStoRsiMultiShort : SignalSbmBaseShort
         {
             CryptoSymbolInterval higherInterval = Symbol.GetSymbolInterval(intervalPeriod);
             long candleOpenTime = IntervalTools.StartOfIntervalCandle2(unixDate, Interval.Duration, higherInterval.Interval.Duration);
-            // todo, not working for emulator!
-            CryptoCandle candle = higherInterval.CandleList.Values[^1];
+            if (!higherInterval.CandleList.TryGetValue(candleOpenTime, out CryptoCandle? candle))
+                return false;
 
             if (candle.CandleData == null)
             {

@@ -96,7 +96,7 @@ public class GetSymbols
                 //GlobalData.AddTextToLogTab($"Reading symbol ticker information from {ExchangeBase.ExchangeOptions.ExchangeName}");
                 //var tickersInfos = await client.FuturesApi.ExchangeData.GetTickersAsync() ?? throw new ExchangeException("Geen symbol ticker data ontvangen (1)");
                 //if (!tickersInfos.Success)
-                //    GlobalData.AddTextToLogTab("error getting symbol ticker " + tickersInfos.Error + "\r\n");
+                //    GlobalData.AddTextToLogTab("error getting symbol ticker " + tickersInfos.Error);
                 ////if (tickersInfos.Data == null)
                 ////    throw new ExchangeException("Geen symbol ticker data ontvangen (2)");
 

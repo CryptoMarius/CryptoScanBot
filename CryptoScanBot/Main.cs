@@ -113,8 +113,8 @@ public partial class FrmMain : Form
 #endif
 #if TRADEBOT
         MenuMain.AddSeperator();
-        ApplicationBackTestMode = MenuMain.AddCommand(null, "Test - Backtest mode", Command.None, ApplicationBackTestMode_Click);
-        ApplicationBackTestExec = MenuMain.AddCommand(null, "Test - Backtest exec", Command.None, BacktestToolStripMenuItem_Click);
+        ApplicationBackTestMode = MenuMain.AddCommand(null, "Backtest mode", Command.None, ApplicationBackTestMode_Click);
+        ApplicationBackTestExec = MenuMain.AddCommand(null, "Backtest exec", Command.None, BacktestToolStripMenuItem_Click);
         //ApplicationBackTestExec.Enabled = GlobalData.BackTest;
 #endif
 
@@ -377,7 +377,7 @@ public partial class FrmMain : Form
         }
     }
 
-    private void AddTextToTelegram(string text, bool extraLineFeed = false)
+    private void AddTextToTelegram(string text)
     {
         if (IsHandleCreated)
         {
@@ -386,12 +386,11 @@ public partial class FrmMain : Form
         }
     }
 
-    private void AddTextToLogTab(string text, bool extraLineFeed = false)
+    private void AddTextToLogTab(string text)
     {
         // Via queue want afzonderlijk regels toevoegen kost relatief veel tijd
-
-        text = text.TrimEnd();
         ScannerLog.Logger.Info(text);
+        text = text.Trim();
 
         if (text != "")
         {
@@ -399,31 +398,11 @@ public partial class FrmMain : Form
                 text = GlobalData.BackTestDateTime.ToLocalTime() + " " + text;
             else
                 text = DateTime.Now.ToLocalTime() + " " + text;
+            logQueue.Enqueue(text);
         }
-        //if (extraLineFeed)
-        //    text += "\r\n\r\n";
-        //else
-        //    text += "\r\n";
-
-        //if (InvokeRequired)
-        //    Invoke((MethodInvoker)(() => TextBoxLog.AppendText(text)));
-        //else
-        //    TextBoxLog.AppendText(text);
-
-        //testen!
-        if (extraLineFeed)
-            text += "\r\n";
-        logQueue.Enqueue(text);
-
-        //// even rechstreeks
-        //text = text.TrimEnd() + "\r\n";
-        //if (InvokeRequired)
-        //    Invoke((MethodInvoker)(() => TextBoxLog.AppendText(text)));
-        //else
-        //    TextBoxLog.AppendText(text);
     }
 
-    private void TelegramHasChangedEvent(string text, bool extraLineFeed = false)
+    private void TelegramHasChangedEvent(string text)
     {
 #if TRADEBOT
         Invoke((System.Windows.Forms.MethodInvoker)(() => ApplicationTradingBot.Checked = GlobalData.Settings.Trading.Active));
@@ -437,7 +416,7 @@ public partial class FrmMain : Form
     /// <summary>
     /// Dan is er in de achtergrond een verversing actie geweest, display bijwerken!
     /// </summary>
-    private void AssetsHaveChangedEvent(string text, bool extraLineFeed = false)
+    private void AssetsHaveChangedEvent(string text)
     {
         // TODO: Activeren!
         //if (components != null && IsHandleCreated)
@@ -694,24 +673,28 @@ public partial class FrmMain : Form
                         stringBuilder.AppendLine(text);
                     }
 
-                    // verwerken..
-                    Task.Factory.StartNew(() =>
+                    string allText = stringBuilder.ToString().Trim();
+                    if (allText != "")
                     {
-                        Invoke(new Action(() =>
+                        // verwerken..
+                        Task.Factory.StartNew(() =>
                         {
-                            string text = stringBuilder.ToString().TrimEnd() + "\r\n";
-                            if (!GlobalData.ApplicationIsClosing)
+                            Invoke(new Action(() =>
                             {
-                                if (InvokeRequired)
-                                    Invoke((System.Windows.Forms.MethodInvoker)(() =>
-                                    {
-                                        TextBoxLog.AppendText(text);
-                                    }));
-                                else
-                                    TextBoxLog.AppendText(text);
-                            }
-                        }));
-                    });
+                                allText += "\r\n";
+                                if (!GlobalData.ApplicationIsClosing)
+                                {
+                                    if (InvokeRequired)
+                                        Invoke((System.Windows.Forms.MethodInvoker)(() =>
+                                        {
+                                            TextBoxLog.AppendText(allText);
+                                        }));
+                                    else
+                                        TextBoxLog.AppendText(allText);
+                                }
+                            }));
+                        });
+                    }
                 }
                 finally
                 {
@@ -930,7 +913,7 @@ public partial class FrmMain : Form
 #endif
 
 
-    private void ApplicationHasStarted(string text, bool extraLineFeed = false)
+    private void ApplicationHasStarted(string text)
     {
         GlobalData.SymbolsHaveChanged("");
 
@@ -944,7 +927,7 @@ public partial class FrmMain : Form
     }
 
 
-    private void SymbolsHaveChangedEvent(string text, bool extraLineFeed = false)
+    private void SymbolsHaveChangedEvent(string text)
     {
         if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange? exchange))
         {
@@ -1008,7 +991,7 @@ public partial class FrmMain : Form
     }
 
 #if TRADEBOT
-    private void PositionsHaveChangedEvent(string text, bool extraLineFeed = false)
+    private void PositionsHaveChangedEvent(string text)
     {
         if (!GlobalData.ApplicationIsClosing && GlobalData.ActiveAccount != null)
         {

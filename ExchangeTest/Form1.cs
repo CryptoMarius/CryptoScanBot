@@ -76,25 +76,21 @@ public partial class Form1 : Form
 
     }
 
-    private void AddTextToLogTab(string text, bool extraLineFeed = false)
+    private void AddTextToLogTab(string text)
     {
         if (IsHandleCreated)
         {
-            text = text.TrimEnd();
+            text = text.Trim();
             ScannerLog.Logger.Info(text);
 
             if (text != "")
-                text = DateTime.Now.ToLocalTime() + " " + text;
-            if (extraLineFeed)
-                text += "\r\n\r\n";
-            else
-                text += "\r\n";
-
-            if (InvokeRequired)
-                Invoke((MethodInvoker)(() => textBox1.AppendText(text)));
-            else
-                textBox1.AppendText(text);
-
+            {
+                text = DateTime.Now.ToLocalTime() + " " + text + "\r\n";
+                if (InvokeRequired)
+                    Invoke((MethodInvoker)(() => textBox1.AppendText(text)));
+                else
+                    textBox1.AppendText(text);
+            }
             //File.AppendAllText(@"D:\Shares\Projects\.Net\CryptoScanBot\Testjes\bin\Debug\data\backtest.txt", text);
         }
     }
@@ -117,7 +113,7 @@ public partial class Form1 : Form
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab($"Error loading {filename} " + error.ToString(), false);
+            GlobalData.AddTextToLogTab($"Error loading {filename} " + error.ToString());
         }
 
 
@@ -136,7 +132,7 @@ public partial class Form1 : Form
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab($"Error loading {filename} " + error.ToString(), false);
+            GlobalData.AddTextToLogTab($"Error loading {filename} " + error.ToString());
         }
     }
 

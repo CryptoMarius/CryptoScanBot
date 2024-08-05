@@ -80,7 +80,7 @@ public class StorageHistoricalData
             catch (Exception error)
             {
                 ScannerLog.Logger.Error(error, "");
-                GlobalData.AddTextToLogTab($"Error loading {filename} {error}", false);
+                GlobalData.AddTextToLogTab($"Error loading {filename} {error}");
             }
         }
     }
@@ -137,7 +137,7 @@ public class StorageHistoricalData
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab($"Error saving {filename} {error}", false);
+            GlobalData.AddTextToLogTab($"Error saving {filename} {error}");
         }
     }
 

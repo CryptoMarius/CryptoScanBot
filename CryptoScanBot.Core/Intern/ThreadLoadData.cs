@@ -415,7 +415,7 @@ public class ThreadLoadData
 
                 ScannerLog.Logger.Trace("");
                 ScannerLog.Logger.Trace(GlobalData.AppName + " " + GlobalData.AppVersion + " ready");
-                GlobalData.AddTextToLogTab(GlobalData.AppName + " " + GlobalData.AppVersion + " ready", true);
+                GlobalData.AddTextToLogTab(GlobalData.AppName + " " + GlobalData.AppVersion + " ready");
                 GlobalData.AddTextToTelegram(GlobalData.AppName + " " + GlobalData.AppVersion + " ready");
                 GlobalData.AddTextToTelegram("");
 
