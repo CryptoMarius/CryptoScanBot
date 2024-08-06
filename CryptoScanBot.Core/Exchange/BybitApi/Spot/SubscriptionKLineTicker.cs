@@ -15,7 +15,7 @@ namespace CryptoScanBot.Core.Exchange.BybitApi.Spot;
 /// </summary>
 public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
 {
-    private void ProcessCandle(string? topic, BybitKlineUpdate kline)
+    private void ProcessCandle(string? symbolName, BybitKlineUpdate kline)
     {
         // Aantekeningen
         // De Base volume is the volume in terms of the first currency pair.
@@ -27,10 +27,9 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         //ScannerLog.Logger.Trace($"kline ticker {topic}");
 
         // De interval wordt geprefixed in de topic "kline.1.SymbolName"
-        if (string.IsNullOrEmpty(topic))
+        if (string.IsNullOrEmpty(symbolName))
             return;
 
-        string symbolName = topic;
         if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
         {
             if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
