@@ -4,7 +4,12 @@ Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep
 
 
 Scanner:
+- Scanner - Kucoin spot bleef qua klines ticker hangen en staakte alle diensen (was wel gedurende de BTC dipje van 5 aug, dus veel signalen/drukte op de exchange)
 - Scanner - Uitzoeken volume van Bybit Spot, op dag niveau lijkt dat af te wijken ten opzichte van TradingView, op 1h niveau lijkt het okay, wat gaat er mis?
+- Scanner - Uitzoeken volume van Bybit Spot, op uur niveau wordt er wel eens volume=0 ingevuld (een herhaling van de voorgaande candle om gaten te vullen, 
+            dit gebeurd best vaak. Maar ligt dat nu aan de exchange of ligt het aan de scanner. Het is in ieder geval vervelend voor de controle op het volume)
+            Dit escaleert uiteindelijk naar de hoogste intervallen, dat moet echt nagezocht worden (effect is dat je een paar munten mist qua meldingen)
+
 
 - Scanner - De optie "Signalen maken" in het linkerboven menu kan wel weg (core business scanner)
 - Scanner - Gerapporteerd: Dubbele munten (zelfs de BTCUSDT, wellicht na wisselen van exchanges?)

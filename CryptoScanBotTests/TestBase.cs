@@ -37,12 +37,9 @@ public class TestBase
         SetupOnce();
     }
 
-    internal static void AddTextToLogTab(string text, bool extraLineFeed = false)
+    internal static void AddTextToLogTab(string text)
     {
-        text = text.TrimEnd();
-        if (extraLineFeed)
-            text += "\r\n";
-
+        text = text.Trim();
         Console.WriteLine(text);
     }
 
