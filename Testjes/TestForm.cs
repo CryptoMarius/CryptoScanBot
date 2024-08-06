@@ -326,7 +326,7 @@ public partial class TestForm : Form
     }
 
 
-    private void AddTextToTelegram(string text, bool extraLineFeed = false)
+    private void AddTextToTelegram(string text)
     {
         if (IsHandleCreated)
         {
@@ -336,26 +336,22 @@ public partial class TestForm : Form
     }
 
 
-    private void AddTextToLogTab(string text, bool extraLineFeed = false)
+    private void AddTextToLogTab(string text)
     {
         if (IsHandleCreated)
         {
-            text = text.TrimEnd();
+            text = text.Trim();
             ScannerLog.Logger.Info(text);
 
-            //if (text != "")
-            //  text = DateTime.Now.ToLocalTime() + " " + text;
-            if (extraLineFeed)
-                text += "\r\n\r\n";
-            else
+            if (text != "")
+            {
                 text += "\r\n";
-
-            if (InvokeRequired)
-                Invoke((MethodInvoker)(() => textBox1.AppendText(text)));
-            else
-                textBox1.AppendText(text);
-
-            //File.AppendAllText(@"D:\Shares\Projects\.Net\CryptoScanBot\Testjes\bin\Debug\data\backtest.txt", text);
+                if (InvokeRequired)
+                    Invoke((MethodInvoker)(() => textBox1.AppendText(text)));
+                else
+                    textBox1.AppendText(text);
+                //File.AppendAllText(@"D:\Shares\Projects\.Net\CryptoScanBot\Testjes\bin\Debug\data\backtest.txt", text);
+            }
         }
     }
 
@@ -2519,7 +2515,7 @@ public partial class TestForm : Form
                 }
 
             }
-            GlobalData.AddTextToLogTab(samenvatting.ToString(), true);
+            GlobalData.AddTextToLogTab(samenvatting.ToString());
         }
 
     }
