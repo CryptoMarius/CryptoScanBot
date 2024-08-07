@@ -27,6 +27,7 @@ public class Symbol
                 database.Open();
 
                 using var client = new MexcRestClient();
+                client.ClientOptions.OutputOriginalData = true;
 
                 // exchangeInfo for symbols...
                 var exchangeData = await client.SpotApi.ExchangeData.GetExchangeInfoAsync();
@@ -52,7 +53,7 @@ public class Symbol
                 if (tickerData == null)
                     throw new ExchangeException("No ticker data received");
                 if (!tickerData.Success)
-                    GlobalData.AddTextToLogTab("error getting symbol ticker {tickersInfos.Error}");
+                    GlobalData.AddTextToLogTab($"error getting symbol ticker {tickerData.Error}");
 
 
                 // Save for debug purposes
@@ -227,8 +228,11 @@ public class Symbol
                     }
                 }
 
-                exchange.LastTimeFetched = DateTime.UtcNow;
-                database.Connection.Update(exchange);
+                if (tickerData.Success && tickerData.Success)
+                {
+                    exchange.LastTimeFetched = DateTime.UtcNow;
+                    database.Connection.Update(exchange);
+                }
 
             }
             catch (Exception error)
