@@ -1,6 +1,6 @@
 CryptoScanBot release historie:
 
-xx-xx-2024 1.9.3
+09-08-2024 1.9.3
 - Scanner - De als favoriet ingestelde kleuren van de gebruiker onthouden
 - Scanner - De zigzag indicator voor de berekening van de markt- en interval trend aangepast
 - Scanner - De instelling "signalen maken" verwijderd
