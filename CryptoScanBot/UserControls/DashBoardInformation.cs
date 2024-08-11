@@ -164,10 +164,6 @@ public partial class DashBoardInformation : UserControl
         GlobalData.Settings.General.SelectedBarometerInterval = EditBarometerInterval.Text;
     }
 
-    public string GetActiveBarometerQuote()
-    {
-        return EditBarometerQuote.Text;
-    }
 
     public void InitializeBarometer()
     {
@@ -189,8 +185,7 @@ public partial class DashBoardInformation : UserControl
             if (EditBarometerQuote.Items.Count == 0)
                 EditBarometerQuote.Items.Add("USDT");
 
-            EditBarometerQuote.SelectedIndex = EditBarometerQuote.Items.IndexOf(GlobalData.Settings.General.SelectedBarometerQuote);
-            //EditBarometerQuote.Text = GlobalData.Settings.General.SelectedBarometerQuote;
+            try { EditBarometerQuote.SelectedIndex = EditBarometerQuote.Items.IndexOf(GlobalData.Settings.General.SelectedBarometerQuote); } catch { }
             if (EditBarometerQuote.SelectedIndex < 0)
                 EditBarometerQuote.SelectedIndex = 0;
 
@@ -201,8 +196,7 @@ public partial class DashBoardInformation : UserControl
             EditBarometerInterval.Items.Add("4H");
             EditBarometerInterval.Items.Add("1D");
 
-            EditBarometerInterval.SelectedIndex = EditBarometerInterval.Items.IndexOf(GlobalData.Settings.General.SelectedBarometerInterval);
-            //EditBarometerInterval.Text = GlobalData.Settings.General.SelectedBarometerInterval;
+            try { EditBarometerInterval.SelectedIndex = EditBarometerInterval.Items.IndexOf(GlobalData.Settings.General.SelectedBarometerInterval); } catch { }
             if (EditBarometerInterval.SelectedIndex < 0)
                 EditBarometerInterval.SelectedIndex = 0;
         }

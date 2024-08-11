@@ -89,9 +89,9 @@ public partial class FrmSettings : Form
         EditExchange.SelectedValue = settings.General.Exchange;
 
         EditBlackTheming.Checked = settings.General.BlackTheming;
-        EditTradingApp.SelectedIndex = (int)settings.General.TradingApp;
-        EditActivateExchange.SelectedIndex = (int)settings.General.ActivateExchange;
-        EditActivateExchangeInternExtern.SelectedIndex = (int)settings.General.TradingAppInternExtern;
+        try { EditTradingApp.SelectedIndex = (int)settings.General.TradingApp; } catch { } 
+        try { EditActivateExchange.SelectedIndex = (int)settings.General.ActivateExchange; } catch { } 
+        try { EditActivateExchangeInternExtern.SelectedIndex = (int)settings.General.TradingAppInternExtern; } catch { }
         EditSoundHeartBeatMinutes.Value = settings.General.SoundHeartBeatMinutes;
         EditGetCandleInterval.Value = settings.General.GetCandleInterval;
 
@@ -293,7 +293,7 @@ public partial class FrmSettings : Form
 
         // Futures
         EditLeverage.Value = settings.Trading.Leverage;
-        EditCrossOrIsolated.SelectedIndex = settings.Trading.CrossOrIsolated;
+        try { EditCrossOrIsolated.SelectedIndex = settings.Trading.CrossOrIsolated; } catch { }
 
         // Loads of settings
         UserControlTradingLong.LoadConfig(settings.Trading.Long);
@@ -601,3 +601,4 @@ public partial class FrmSettings : Form
     }
 
 }
+ 
