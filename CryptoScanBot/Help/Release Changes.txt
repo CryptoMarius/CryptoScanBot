@@ -1,5 +1,13 @@
 CryptoScanBot release historie:
 
+xx-xx-2024 1.9.4
+
+- Scanner - Parameters trimmen zodat spaties spontaan verwijderd worden
+- Scanner - Reload weblinks url's zodat je deze via het tekstbestand kan manipuleren
+- Scanner - Als de hoogte of breedte van een formulier 0 zijn het formulier op 1000*800 zetten
+
+- Trader - De Exchange api/key zijn overbodig (vanwege de beslissing om via Altrady te gaan traden)
+
 09-08-2024 1.9.3
 - Scanner - De als favoriet ingestelde kleuren van de gebruiker onthouden
 - Scanner - De zigzag indicator voor de berekening van de markt- en interval trend aangepast
