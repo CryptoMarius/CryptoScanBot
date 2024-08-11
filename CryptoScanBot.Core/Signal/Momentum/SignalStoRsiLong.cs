@@ -45,13 +45,13 @@ public class SignalStoRsiLong : SignalSbmBaseLong
             return false;
         }
 
-        if (!CandleLast.IsStochOversold(GlobalData.Settings.Signal.StoRsi.AddAmount))
+        if (!CandleLast.IsStochOversold(GlobalData.Settings.Signal.StoRsi.AddStochAmount))
         {
             ExtraText = "stoch not oversold";
             return false;
         }
 
-        if (!CandleLast.IsRsiOversold(GlobalData.Settings.Signal.StoRsi.AddAmount))
+        if (!CandleLast.IsRsiOversold(GlobalData.Settings.Signal.StoRsi.AddRsiAmount))
         {
             ExtraText = "rsi not oversold";
             return false;

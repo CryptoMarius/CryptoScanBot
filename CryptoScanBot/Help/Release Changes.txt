@@ -2,6 +2,7 @@ CryptoScanBot release historie:
 
 xx-xx-2024 1.9.4
 
+- Scanner - RSI en STOCH add waarde gesplitst in de STORSI instellingen
 - Scanner - Parameters trimmen zodat spaties spontaan verwijderd worden
 - Scanner - Reload weblinks url's zodat je deze via het tekstbestand kan manipuleren
 - Scanner - Als de hoogte of breedte van een formulier 0 zijn het formulier op 1000*800 zetten

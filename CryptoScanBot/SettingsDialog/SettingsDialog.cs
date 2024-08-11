@@ -226,7 +226,8 @@ public partial class FrmSettings : Form
 
         // STORSI
         UserControlSettingsSoundAndColorsStoRsi.LoadConfig("STORSI", settings.Signal.StoRsi);
-        EditStorsiAddAmount.Value = settings.Signal.StoRsi.AddAmount;
+        EditStorsiAddRsiAmount.Value = settings.Signal.StoRsi.AddRsiAmount;
+        EditStorsiAddStochAmount.Value = settings.Signal.StoRsi.AddStochAmount;
 
 
         // JUMP
@@ -301,6 +302,7 @@ public partial class FrmSettings : Form
         UserControlTradeRules.LoadConfig(settings.Trading);
         UserControlAltradyApi.LoadConfig(GlobalData.AltradyApi);
         UserControlExchangeApi.LoadConfig(GlobalData.TradingApi);
+        UserControlExchangeApi.Visible = false;
 #endif
 
         // --------------------------------------------------------------------------------
@@ -461,7 +463,8 @@ public partial class FrmSettings : Form
 
         // STORSI
         UserControlSettingsSoundAndColorsStoRsi.SaveConfig(settings.Signal.StoRsi);
-        settings.Signal.StoRsi.AddAmount = (int)EditStorsiAddAmount.Value;
+        settings.Signal.StoRsi.AddRsiAmount = (int)EditStorsiAddRsiAmount.Value;
+        settings.Signal.StoRsi.AddStochAmount = (int)EditStorsiAddStochAmount.Value;
 
 
         // JUMP

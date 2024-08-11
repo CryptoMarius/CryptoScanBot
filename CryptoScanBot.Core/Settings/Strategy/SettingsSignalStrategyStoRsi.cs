@@ -2,7 +2,8 @@
 
 public class SettingsSignalStrategyStoRsi : SettingsSignalStrategyBase
 {
-    public int AddAmount { get; set; } = 0;
+    public int AddRsiAmount { get; set; } = 0;
+    public int AddStochAmount { get; set; } = 0;
 
     public SettingsSignalStrategyStoRsi() : base()
     {

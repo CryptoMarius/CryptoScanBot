@@ -48,13 +48,13 @@ public class SignalStoRsiShort : SignalSbmBaseShort
             return false;
         }
 
-        if (!CandleLast.IsStochOverbought(GlobalData.Settings.Signal.StoRsi.AddAmount))
+        if (!CandleLast.IsStochOverbought(GlobalData.Settings.Signal.StoRsi.AddStochAmount))
         {
             ExtraText = "stoch not overbought";
             return false;
         }
 
-        if (!CandleLast.IsRsiOverbought(GlobalData.Settings.Signal.StoRsi.AddAmount))
+        if (!CandleLast.IsRsiOverbought(GlobalData.Settings.Signal.StoRsi.AddRsiAmount))
         {
             ExtraText = "rsi not overbought";
             return false;

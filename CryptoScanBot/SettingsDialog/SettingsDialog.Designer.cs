@@ -173,7 +173,7 @@ partial class FrmSettings
         UserControlSettingsSoundAndColorsStoRsi = new SettingsDialog.UserControlSettingsPlaySoundAndColors();
         groupBox6 = new GroupBox();
         label26 = new Label();
-        EditStorsiAddAmount = new NumericUpDown();
+        EditStorsiAddRsiAmount = new NumericUpDown();
         tabSignalJump = new TabPage();
         flowLayoutPanel8 = new FlowLayoutPanel();
         UserControlSettingsSoundAndColorsJump = new SettingsDialog.UserControlSettingsPlaySoundAndColors();
@@ -244,6 +244,8 @@ partial class FrmSettings
         panel6 = new Panel();
         label49 = new Label();
         toolTip1 = new ToolTip(components);
+        label24 = new Label();
+        EditStorsiAddStochAmount = new NumericUpDown();
         panelButtons.SuspendLayout();
         panelFill.SuspendLayout();
         tabControlMain.SuspendLayout();
@@ -307,7 +309,7 @@ partial class FrmSettings
         tabSignalStoRsi.SuspendLayout();
         flowLayoutPanel2.SuspendLayout();
         groupBox6.SuspendLayout();
-        ((System.ComponentModel.ISupportInitialize)EditStorsiAddAmount).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)EditStorsiAddRsiAmount).BeginInit();
         tabSignalJump.SuspendLayout();
         flowLayoutPanel8.SuspendLayout();
         groupBox5.SuspendLayout();
@@ -340,6 +342,7 @@ partial class FrmSettings
         panel5.SuspendLayout();
         tabShortBlackList.SuspendLayout();
         panel6.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)EditStorsiAddStochAmount).BeginInit();
         SuspendLayout();
         // 
         // panelButtons
@@ -1979,13 +1982,15 @@ partial class FrmSettings
         // groupBox6
         // 
         groupBox6.AutoSize = true;
+        groupBox6.Controls.Add(label24);
+        groupBox6.Controls.Add(EditStorsiAddStochAmount);
         groupBox6.Controls.Add(label26);
-        groupBox6.Controls.Add(EditStorsiAddAmount);
+        groupBox6.Controls.Add(EditStorsiAddRsiAmount);
         groupBox6.Location = new Point(10, 186);
         groupBox6.Margin = new Padding(10);
         groupBox6.Name = "groupBox6";
         groupBox6.Padding = new Padding(10);
-        groupBox6.Size = new Size(227, 86);
+        groupBox6.Size = new Size(227, 110);
         groupBox6.TabIndex = 160;
         groupBox6.TabStop = false;
         groupBox6.Text = "Instellingen";
@@ -1993,21 +1998,21 @@ partial class FrmSettings
         // label26
         // 
         label26.AutoSize = true;
-        label26.Location = new Point(25, 36);
+        label26.Location = new Point(30, 31);
         label26.Margin = new Padding(4, 0, 4, 0);
         label26.Name = "label26";
-        label26.Size = new Size(60, 15);
+        label26.Size = new Size(79, 15);
         label26.TabIndex = 125;
-        label26.Text = "Add value";
+        label26.Text = "Add RSI value";
         // 
-        // EditStorsiAddAmount
+        // EditStorsiAddRsiAmount
         // 
-        EditStorsiAddAmount.Location = new Point(157, 34);
-        EditStorsiAddAmount.Margin = new Padding(4, 3, 4, 3);
-        EditStorsiAddAmount.Maximum = new decimal(new int[] { 20, 0, 0, 0 });
-        EditStorsiAddAmount.Name = "EditStorsiAddAmount";
-        EditStorsiAddAmount.Size = new Size(56, 23);
-        EditStorsiAddAmount.TabIndex = 126;
+        EditStorsiAddRsiAmount.Location = new Point(157, 29);
+        EditStorsiAddRsiAmount.Margin = new Padding(4, 3, 4, 3);
+        EditStorsiAddRsiAmount.Maximum = new decimal(new int[] { 20, 0, 0, 0 });
+        EditStorsiAddRsiAmount.Name = "EditStorsiAddRsiAmount";
+        EditStorsiAddRsiAmount.Size = new Size(56, 23);
+        EditStorsiAddRsiAmount.TabIndex = 126;
         // 
         // tabSignalJump
         // 
@@ -2776,6 +2781,25 @@ partial class FrmSettings
         label49.TabIndex = 222;
         label49.Text = "(1 munt per regel met een optionele opmerking erachter)";
         // 
+        // label24
+        // 
+        label24.AutoSize = true;
+        label24.Location = new Point(30, 60);
+        label24.Margin = new Padding(4, 0, 4, 0);
+        label24.Name = "label24";
+        label24.Size = new Size(100, 15);
+        label24.TabIndex = 127;
+        label24.Text = "Add STOCH value";
+        // 
+        // EditStorsiAddStochAmount
+        // 
+        EditStorsiAddStochAmount.Location = new Point(157, 58);
+        EditStorsiAddStochAmount.Margin = new Padding(4, 3, 4, 3);
+        EditStorsiAddStochAmount.Maximum = new decimal(new int[] { 20, 0, 0, 0 });
+        EditStorsiAddStochAmount.Name = "EditStorsiAddStochAmount";
+        EditStorsiAddStochAmount.Size = new Size(56, 23);
+        EditStorsiAddStochAmount.TabIndex = 128;
+        // 
         // FrmSettings
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
@@ -2869,7 +2893,7 @@ partial class FrmSettings
         flowLayoutPanel2.PerformLayout();
         groupBox6.ResumeLayout(false);
         groupBox6.PerformLayout();
-        ((System.ComponentModel.ISupportInitialize)EditStorsiAddAmount).EndInit();
+        ((System.ComponentModel.ISupportInitialize)EditStorsiAddRsiAmount).EndInit();
         tabSignalJump.ResumeLayout(false);
         tabSignalJump.PerformLayout();
         flowLayoutPanel8.ResumeLayout(false);
@@ -2924,6 +2948,7 @@ partial class FrmSettings
         tabShortBlackList.PerformLayout();
         panel6.ResumeLayout(false);
         panel6.PerformLayout();
+        ((System.ComponentModel.ISupportInitialize)EditStorsiAddStochAmount).EndInit();
         ResumeLayout(false);
     }
 
@@ -3133,7 +3158,7 @@ partial class FrmSettings
     private NumericUpDown EditBbStdDeviation;
     private GroupBox groupBox6;
     private Label label26;
-    private NumericUpDown EditStorsiAddAmount;
+    private NumericUpDown EditStorsiAddRsiAmount;
     private CheckBox EditCheckVolumeOverPeriod;
     private SettingsDialog.UserControlTradeEntry UserControlTradeEntry;
     private SettingsDialog.UserControlTradeTakeProfit UserControlTradeTakeProfit;
@@ -3143,4 +3168,6 @@ partial class FrmSettings
     private SettingsDialog.UserControlExchangeApi UserControlExchangeApi;
     private SettingsDialog.UserControlAltradyApi UserControlAltradyApi;
     private NumericUpDown EditCheckVolumeOverDays;
+    private Label label24;
+    private NumericUpDown EditStorsiAddStochAmount;
 }
