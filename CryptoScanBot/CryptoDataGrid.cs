@@ -428,24 +428,6 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
     {
         string text = CryptoExternalUrlList.GetTradingAppName(GlobalData.Settings.General.TradingApp, GlobalData.Settings.General.ExchangeName);
         Grid.ContextMenuStrip.Items[0].Text = text;
-
-        //CryptoSymbol symbol = new();
-        //(string Url, CryptoExternalUrlType Execute) ref1 = GlobalData.ExternalUrls.GetExternalRef(CryptoTradingApp.ExchangeUrl, false, symbol, GlobalData.IntervalList[0]);
-
-        //text = CryptoExternalUrlList.GetTradingAppName(CryptoTradingApp.ExchangeUrl, GlobalData.Settings.General.ExchangeName);
-        //Grid.ContextMenuStrip.Items[3].Text = text;
-        //Grid.ContextMenuStrip.Items[3].Visible = ref1.Url != "";
-
-
-        //if (GlobalData.Settings.General.ApplyFontSettings)
-        //{
-        //    // https://learn.microsoft.com/en-us/dotnet/desktop/winforms/advanced/how-to-obtain-font-metrics?view=netframeworkdesktop-4.8
-        //    var font = new Font(GlobalData.Settings.General.FontNameNew, GlobalData.Settings.General.FontSizeNew);
-        //    var fontFamily = font.FontFamily;
-        //    float lineSpacing = fontFamily.GetLineSpacing(FontStyle.Regular);
-        //    var lineSpacingPixel = font.Size * lineSpacing / fontFamily.GetEmHeight(FontStyle.Regular);
-        //    Grid.RowTemplate.Height = 8 + (int)Math.Round(lineSpacingPixel, 1, MidpointRounding.AwayFromZero);
-        //}
     }
 
     internal static Color GetBackgroudColorForStrategy(CryptoSignalStrategy strategy, CryptoTradeSide side)

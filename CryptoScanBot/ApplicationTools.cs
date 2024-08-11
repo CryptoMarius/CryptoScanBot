@@ -24,6 +24,7 @@ static class ApplicationTools
         form.WindowState = FormWindowState.Normal;
         form.StartPosition = FormStartPosition.WindowsDefaultBounds;
 
+        
         // check if the saved bounds are nonzero and visible on any screen
         if (GlobalData.SettingsUser.WindowPosition != Rectangle.Empty && IsVisibleOnAnyScreen(GlobalData.SettingsUser.WindowPosition))
         {
@@ -46,14 +47,20 @@ static class ApplicationTools
                 form.Size = GlobalData.SettingsUser.WindowPosition.Size;
             }
         }
+
+        // Sometime the height or width becomes zero, not sure why..
+        if (form.DesktopBounds.Size.Width == 0 || form.DesktopBounds.Size.Height == 0)
+        {
+            form.StartPosition = FormStartPosition.CenterScreen;
+            form.DesktopBounds = new Rectangle(150, 150, 1000, 800);
+        }
     }
 
 
     private static bool IsVisibleOnAnyScreen(Rectangle rect)
-      => Screen.AllScreens.Any(screen => screen.WorkingArea.IntersectsWith(rect));
-
-    
-
+    {
+        return Screen.AllScreens.Any(screen => screen.WorkingArea.IntersectsWith(rect));
+    }
     
 
 }

@@ -714,30 +714,30 @@ static public class GlobalData
         }
     }
 
-    static public void AddTextToTelegram(string text, CryptoSymbol symbol)
-    {
-        if (LogToTelegram is null)
-            return;
-        try
-        {
-            if (symbol is not null)
-            {
-                string symbolName = symbol.Name.ToUpper();
-                (string Url, CryptoExternalUrlType Execute) = GlobalData.ExternalUrls.GetExternalRef(Settings.General.TradingApp, true, symbol, IntervalList[0]);
-                if (Url != "")
-                {
-                    string x = $"<a href='{Url}'>{symbolName}</a>";
-                    text = text.Replace(symbolName, x);
-                }
-            }
-            LogToTelegram(text);
-        }
-        catch (Exception error)
-        {
-            ScannerLog.Logger.Error(error, "");
-            AddTextToLogTab(" error telegram thread(2)" + error.ToString());
-        }
-    }
+    //static public void AddTextToTelegram(string text, CryptoSymbol symbol)
+    //{
+    //    if (LogToTelegram is null)
+    //        return;
+    //    try
+    //    {
+    //        if (symbol is not null)
+    //        {
+    //            string symbolName = symbol.Name.ToUpper();
+    //            (string Url, CryptoExternalUrlType Execute) = GlobalData.ExternalUrls.GetExternalRef(Settings.General.TradingApp, true, symbol, IntervalList[0]);
+    //            if (Url != "")
+    //            {
+    //                string x = $"<a href='{Url}'>{symbolName}</a>";
+    //                text = text.Replace(symbolName, x);
+    //            }
+    //        }
+    //        LogToTelegram(text);
+    //    }
+    //    catch (Exception error)
+    //    {
+    //        ScannerLog.Logger.Error(error, "");
+    //        AddTextToLogTab(" error telegram thread(2)" + error.ToString());
+    //    }
+    //}
 
     static public void AddTextToLogTab(string text) => LogToLogTabEvent?.Invoke(text);
     static public void SymbolsHaveChanged(string text) => SymbolsHaveChangedEvent?.Invoke(text);
