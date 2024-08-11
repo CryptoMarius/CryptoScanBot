@@ -28,6 +28,9 @@ public class CryptoExternalUrls
 public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
 {
 
+    /// <summary>
+    /// Defaults for the url's
+    /// </summary>
     public void InitializeUrls()
     {
         Remove("Binance");
@@ -266,8 +269,7 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
 
     public bool GetExternalRef(Model.CryptoExchange exchange, out CryptoExternalUrls? externalUrls)
     {
-        //GlobalData.LoadLinkSettings();
-        return this.TryGetValue(exchange.Name, out externalUrls);
+        return TryGetValue(exchange.Name, out externalUrls);
     }
 
     public (string Url, CryptoExternalUrlType Execute) GetExternalRef(Model.CryptoExchange exchange, CryptoTradingApp externalApp, bool telegram, CryptoSymbol symbol, CryptoInterval interval)

@@ -55,15 +55,19 @@ public class CommandTools
                     // Voor Altrady en Hypertrader werkt dit kunstje natuurlijk niet
                     if (GlobalData.Settings.General.TradingApp == CryptoTradingApp.TradingView || GlobalData.Settings.General.TradingApp == CryptoTradingApp.ExchangeUrl)
                         tradingAppInternExtern = GlobalData.Settings.General.TradingAppInternExtern;
+                    GlobalData.LoadLinkSettings(); // refresh links
                     LinkTools.ActivateTradingApp(GlobalData.Settings.General.TradingApp, symbol, interval, tradingAppInternExtern);
                     break;
                 case Command.ActivateActiveExchange:
+                    GlobalData.LoadLinkSettings(); // refresh links
                     LinkTools.ActivateTradingApp(CryptoTradingApp.ExchangeUrl, symbol, interval, CryptoExternalUrlType.External);
                     break;
                 case Command.ActivateTradingviewIntern:
+                    GlobalData.LoadLinkSettings(); // refresh links
                     LinkTools.ActivateTradingApp(CryptoTradingApp.TradingView, symbol, interval, CryptoExternalUrlType.Internal);
                     break;
                 case Command.ActivateTradingviewExtern:
+                    GlobalData.LoadLinkSettings(); // refresh links
                     LinkTools.ActivateTradingApp(CryptoTradingApp.TradingView, symbol, interval, CryptoExternalUrlType.External);
                     break;
                 case Command.ShowTrendInformation:
