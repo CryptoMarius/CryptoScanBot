@@ -760,18 +760,25 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
             if (symbolInterval.CandleList.Count > 0)
             {
                 CryptoCandle candle = symbolInterval.CandleList.Values[^1]; // todo, not working for emulator!
-                if (candle.Low < signal.PriceMin)
+                try
                 {
-                    signal.PriceMin = candle.Low;
-                    signal.PriceMinPerc = (double)(100 * (signal.PriceMin / signal.Price - 1));
-                    return true;
-                }
+                    if (candle.Low < signal.PriceMin)
+                    {
+                        signal.PriceMin = candle.Low;
+                        signal.PriceMinPerc = (double)(100 * (signal.PriceMin / signal.Price - 1));
+                        return true;
+                    }
 
-                if (candle.High > signal.PriceMax)
+                    if (candle.High > signal.PriceMax)
+                    {
+                        signal.PriceMax = candle.High;
+                        signal.PriceMaxPerc = (double)(100 * (signal.PriceMax / signal.Price - 1));
+                        return true;
+                    }
+                }
+                catch
                 {
-                    signal.PriceMax = candle.High;
-                    signal.PriceMaxPerc = (double)(100 * (signal.PriceMax / signal.Price - 1));
-                    return true;
+                    // ignore (sometimes low of high value not set, need locking?)
                 }
             }
         }
