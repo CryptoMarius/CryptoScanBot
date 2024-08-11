@@ -78,16 +78,11 @@ public static class LinkTools
         }
     }
 
-    public static void ActivateInternalTradingApp(CryptoTradingApp externalTradingApp, CryptoSymbol symbol, CryptoInterval interval, bool activateTab = true)
-    {
-        // Activeer de interne Tradingview Browser op het zoveelste tabblad
-        ActivateTradingApp(externalTradingApp, symbol, interval, CryptoExternalUrlType.Internal, activateTab);
-    }
-
 
     public static void ActivateExternalTradingApp(CryptoTradingApp externalTradingApp, CryptoSymbol symbol, CryptoInterval interval)
     {
         // Activeer de externe applicatie (soms gebruik makend van de dummy browser)
+        GlobalData.LoadLinkSettings(); // refresh links
         ActivateTradingApp(externalTradingApp, symbol, interval, CryptoExternalUrlType.External);
     }
 
