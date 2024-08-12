@@ -8,7 +8,7 @@ namespace CryptoScanBot.Core.Context;
 public class Migration
 {
     // De huidige database versie
-    public readonly static int CurrentDatabaseVersion = 19;
+    public readonly static int CurrentDatabaseVersion = 20;
 
 
     public static void Execute(CryptoDatabase database, int CurrentVersion)
@@ -605,32 +605,21 @@ public class Migration
         }
 
 
-
         //***********************************************************
         if (CurrentVersion > version.Version && version.Version == 19)
         {
             using var transaction = database.BeginTransaction();
 
-            // Er is nog geen nuget library die deze ondersteund
+            // Mexc Spot fix
+            database.Connection.Execute("update Exchange set IsSupported=1 where name='Mexc Spot'", transaction);
 
-            // Mexc Futures does not have a proper api
-            //// New exchange Mexc Futures (experiment)
-            //database.Connection.Execute("insert into exchange(Name, FeeRate, IsSupported, ExchangeType, TradingType) values('Mexc Futures', 0.1, 0, 5, 1)", transaction);
+            // symbol, drop LastPrice
+            database.Connection.Execute("alter table symbol drop column LastPrice", transaction);
 
-            //database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(0, 9, 1);", transaction);
-            //database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(1, 9, 1);", transaction);
-            //database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(2, 9, 1);", transaction);
-            //database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(3, 9, 1);", transaction);
-
-            // symbol, drop LastPrice/BestBid/BestAsk
-            // signal remove public double? KeltnerUpperBand { get; set; }
-            // signal remove public double? KeltnerLowerBand { get; set; }
-            // signal remove "PSarDave TEXT NULL," +
-            // signal remove "PSarJason TEXT NULL," +
-            // signal remove "PSarTulip TEXT NULL," +
-            //database.Connection.Execute("alter table signal drop column PSarDave Text null", transaction);
-            //database.Connection.Execute("alter table signal drop column PSarJason Text null", transaction);
-            //database.Connection.Execute("alter table signal drop column PSarTulip Text null", transaction);
+            // signal, drop psar comparison columns
+            database.Connection.Execute("alter table signal drop column PSarDave", transaction);
+            database.Connection.Execute("alter table signal drop column PSarJason", transaction);
+            database.Connection.Execute("alter table signal drop column PSarTulip", transaction);
 
             // update version
             version.Version += 1;
@@ -638,6 +627,30 @@ public class Migration
             transaction.Commit();
         }
 
+
+        //***********************************************************
+        if (CurrentVersion > version.Version && version.Version == 20)
+        {
+            using var transaction = database.BeginTransaction();
+
+            //.....
+            //.....
+            //.....
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+
+        // Mexc Futures (experimental), but Mexc Futures does not have a proper api yet
+        //database.Connection.Execute("insert into exchange(Name, FeeRate, IsSupported, ExchangeType, TradingType) values('Mexc Futures', 0.1, 0, 5, 1)", transaction);
+        //database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(0, 9, 1);", transaction);
+        //database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(1, 9, 1);", transaction);
+        //database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(2, 9, 1);", transaction);
+        //database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(3, 9, 1);", transaction);
     }
 }
 

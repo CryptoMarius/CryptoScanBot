@@ -276,7 +276,7 @@ public class CryptoDatabase : IDisposable
 
                 "IsSpotTradingAllowed INTEGER NULL," +
                 "IsMarginTradingAllowed INTEGER NULL," +
-                "LastPrice TEXT NULL," +
+                //"LastPrice TEXT NULL," +
                 "TrendInfoDate TEXT NULL," +
                 "TrendPercentage TEXT NULL," +
                 "LastTradeDate TEXT NULL," +
@@ -371,9 +371,9 @@ public class CryptoDatabase : IDisposable
                 "SlopeRsi TEXT NULL," +
 
                 "Psar TEXT NULL," +
-                "PSarDave TEXT NULL," +
-                "PSarJason TEXT NULL," +
-                "PSarTulip TEXT NULL," +
+                //"PSarDave TEXT NULL," +
+                //"PSarJason TEXT NULL," +
+                //"PSarTulip TEXT NULL," +
 
                 "sma20 TEXT NULL," +
                 "ema50 TEXT NULL," +
