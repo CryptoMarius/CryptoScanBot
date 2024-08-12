@@ -27,7 +27,7 @@ public class ZigZagIndicator2(SortedList<long, CryptoCandle> candleList, bool us
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private double GetHighValue(CryptoCandle candle)
     {
-        if (useHighLow)
+        if (UseHighLow)
             return (double)candle.High;
         else
             return (double)Math.Max(candle.Open, candle.Close);
@@ -36,7 +36,7 @@ public class ZigZagIndicator2(SortedList<long, CryptoCandle> candleList, bool us
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private double GetLowValue(CryptoCandle candle)
     {
-        if (useHighLow)
+        if (UseHighLow)
             return (double)candle.Low;
         else
             return (double)Math.Min(candle.Open, candle.Close);
