@@ -10,13 +10,11 @@ public class TrendInterval
 {
     private static bool ResolveStartAndEndDate(SortedList<long, CryptoCandle> candleList, AccountSymbolIntervalData accountSymbolIntervalData, ref long candleIntervalStart, ref long candleIntervalEnd)
     {
-        // TODO - de parameter candleIntervalStart controleren! (staat nu nog op twee plekken op 0)
-
         // We cache the ZigZag indicator, this way we do not have to add all the candles again and again.
         // (We hope this makes the scanner a more less cpu hungry)
         // Question however: when is it ssave to clear the zigzag? to avoid memory overflow in the long run?
         // Anwer: We save and load the candles every 24 hours, perhaps there (TODO)
-        accountSymbolIntervalData.ZigZagIndicator ??= new(candleList, true);
+        accountSymbolIntervalData.ZigZagIndicator ??= new(candleList, false);
 
 
         // start time
