@@ -142,7 +142,7 @@ public class ZigZagIndicator3(SortedList<long, CryptoCandle> candleList, bool us
             Previous = c;
         }
 
-        // Woud be lovely though if it could build a proper zigzag list (without having to iterate the candlelist again)
+        // Would be lovely though if it could build a proper zigzag list (without having to iterate the candlelist again)
 
     }
 }
