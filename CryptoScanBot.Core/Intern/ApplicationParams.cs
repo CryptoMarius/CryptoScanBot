@@ -1,6 +1,6 @@
 ﻿using CommandLine;
 
-namespace CryptoScanBot.Core;
+namespace CryptoScanBot.Core.Intern;
 
 // Define a class to receive parsed values
 public class ApplicationParams
