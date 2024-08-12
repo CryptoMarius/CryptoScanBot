@@ -31,9 +31,9 @@ public class SignalCreateBase
     public SignalCreateBase(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle)
     {
         Symbol = symbol;
-        Exchange = symbol.Exchange;
+        Exchange = symbol.Exchange!;
         Interval = interval;
-        QuoteData = symbol.QuoteData;
+        QuoteData = symbol.QuoteData!;
         CandleLast = candle;
 
         SymbolInterval = Symbol.GetSymbolInterval(Interval.IntervalPeriod);
