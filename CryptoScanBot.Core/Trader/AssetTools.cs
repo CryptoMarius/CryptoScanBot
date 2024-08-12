@@ -32,8 +32,15 @@ public class AssetTools
         if (tradeAccount.AccountType == CryptoAccountType.RealTrading)
         {
             if (GlobalData.TradingApi.Key == "" || GlobalData.TradingApi.Secret == "")
-                return (false, "No API credentials available");
+                return (false, "No Exchange API credentials available");
+            // TODO Kucoin - check additional password conditions
+            // TODO: Make check in the space of the exchange
+        }
 
+        if (tradeAccount.AccountType == CryptoAccountType.Altrady)
+        {
+            if (GlobalData.AltradyApi.Key == "" || GlobalData.AltradyApi.Secret == "")
+                return (false, "No Altrady API credentials available");
             // TODO Kucoin - check additional password conditions
             // TODO: Make check in the space of the exchange
         }
