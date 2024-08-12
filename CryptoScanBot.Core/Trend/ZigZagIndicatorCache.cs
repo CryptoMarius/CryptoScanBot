@@ -3,5 +3,5 @@
 public class ZigZagIndicatorCacheGone
 {
     public long? LastCandleAdded { get; set; }
-    public ZigZagIndicator2? Indicator = null;
+    public ZigZagIndicator3? Indicator = null;
 }
