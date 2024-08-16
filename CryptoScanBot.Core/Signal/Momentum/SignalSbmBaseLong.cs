@@ -350,7 +350,7 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
             // De %D en %K moeten elkaar gekruist hebben. Dus %K(snel/blauw) > %D(traag/rood)
             if (CandleLast?.CandleData?.StochSignal > CandleLast?.CandleData?.StochOscillator)
             {
-                ExtraText = string.Format("Stoch.%D {0:N8} heeft de %K {1:N8} niet gekruist", candlePrev?.CandleData?.StochSignal, candlePrev?.CandleData?.StochOscillator);
+                ExtraText = $"Stoch.%D {candlePrev?.CandleData?.StochSignal:N8} heeft de %K {candlePrev?.CandleData?.StochOscillator:N8} niet gekruist";
                 return false;
             }
         }
@@ -362,16 +362,17 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
         // Profiteren van een nog lagere prijs?
         if (GlobalData.Settings.Trading.CheckFurtherPriceMove)
         {
-            if (Symbol.LastPrice < signal.LastPrice)
+            if (CandleLast!.Close < signal.LastPrice)
             {
-                if (Symbol.LastPrice != signal.LastPrice)
+                if (CandleLast!.Close != signal.LastPrice)
                 {
-                    ExtraText = string.Format("Symbol.LastPrice {0:N8} gaat verder naar beneden {1:N8}", Symbol.LastPrice, signal.LastPrice);
+                    ExtraText = $"Symbol.LastPrice {CandleLast!.Close:N8} gaat verder naar beneden {signal.LastPrice:N8}";
                 }
+                GlobalData.AddTextToLogTab($"Symbol.LastPrice {CandleLast!.Close:N8} gaat verder naar beneden {signal.LastPrice:N8}");
                 return false;
             }
         }
-        signal.LastPrice = Symbol.LastPrice;
+        signal.LastPrice = CandleLast!.Close;
 
         // Koop als de close vlak bij de bb.lower is (c.q. niet te ver naar boven zit)
         // Werkt goed!!! (toch even experimenteren) - maar negeert hierdoor ook veel signalen die wel bruikbaar waren

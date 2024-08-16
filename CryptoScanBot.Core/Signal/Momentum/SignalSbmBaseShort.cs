@@ -34,7 +34,7 @@ public static class SignalSbmBaseOverboughtHelper
                 return false;
 
             // Dan is de psar omgeslagen (hoort hier niet?)
-            if ((decimal)candle.CandleData?.PSar >= candle.Close)
+            if ((decimal)candle.CandleData?.PSar! >= candle.Close)
                 return false;
         }
 
@@ -44,8 +44,8 @@ public static class SignalSbmBaseOverboughtHelper
     public static bool IsSma200AndSma50OkayOverbought(this CryptoCandle candle, decimal percentage, out string response)
     {
         // En aanvullend, de ma lijnen moeten afwijken (bij benadering, dat hoeft niet geheel exact)
-        decimal value = (decimal)candle.CandleData?.Sma50 - (decimal)candle.CandleData?.Sma200;
-        decimal value2 = ((decimal)candle.CandleData?.Sma50 + (decimal)candle.CandleData?.Sma200) / 2;
+        decimal value = (decimal)candle.CandleData?.Sma50! - (decimal)candle.CandleData?.Sma200!;
+        decimal value2 = ((decimal)candle.CandleData?.Sma50! + (decimal)candle.CandleData?.Sma200!) / 2;
         decimal perc = 100 * value / value2;
         if (perc < percentage)
         {
@@ -60,8 +60,8 @@ public static class SignalSbmBaseOverboughtHelper
 
     public static bool IsSma50AndSma20OkayOverbought(this CryptoCandle candle, decimal percentage, out string response)
     {
-        decimal value = (decimal)candle.CandleData?.Sma20 - (decimal)candle.CandleData?.Sma50;
-        decimal value2 = ((decimal)candle.CandleData?.Sma20 + (decimal)candle.CandleData?.Sma50) / 2;
+        decimal value = (decimal)candle.CandleData?.Sma20! - (decimal)candle.CandleData?.Sma50!;
+        decimal value2 = ((decimal)candle.CandleData?.Sma20! + (decimal)candle.CandleData?.Sma50!) / 2;
         decimal perc = 100 * value / value2;
         if (perc < percentage)
         {
@@ -77,8 +77,8 @@ public static class SignalSbmBaseOverboughtHelper
     public static bool IsSma200AndSma20OkayOverbought(this CryptoCandle candle, decimal percentage, out string response)
     {
         // En aanvullend, de ma lijnen moeten afwijken (bij benadering, dat hoeft niet geheel exact)
-        decimal value = (decimal)candle!.CandleData?.Sma20 - (decimal)candle.CandleData?.Sma200;
-        decimal value2 = ((decimal)candle!.CandleData?.Sma20 + (decimal)candle.CandleData?.Sma200) / 2;
+        decimal value = (decimal)candle!.CandleData?.Sma20! - (decimal)candle.CandleData?.Sma200!;
+        decimal value2 = ((decimal)candle!.CandleData?.Sma20! + (decimal)candle.CandleData?.Sma200!) / 2;
         decimal perc = 100 * value / value2;
         if (perc < percentage)
         {
@@ -178,8 +178,8 @@ public class SignalSbmBaseShort(CryptoSymbol symbol, CryptoInterval interval, Cr
         CryptoCandle? last = CandleLast;
         while (candleCount > 0)
         {
-            decimal value = (decimal)last!.CandleData?.BollingerBandsUpperBand;
-            value -= (decimal)last!.CandleData?.BollingerBandsDeviation * percentage / 100m;
+            decimal value = (decimal)last!.CandleData?.BollingerBandsUpperBand!;
+            value -= (decimal)last!.CandleData?.BollingerBandsDeviation! * percentage / 100m;
 
             if (GlobalData.Settings.Signal.Sbm.Sbm2UseLowHigh)
             {
@@ -411,16 +411,17 @@ public class SignalSbmBaseShort(CryptoSymbol symbol, CryptoInterval interval, Cr
         // Profiteren van een nog hogere prijs?
         if (GlobalData.Settings.Trading.CheckFurtherPriceMove)
         {
-            if (Symbol.LastPrice > signal.LastPrice)
+            if (CandleLast!.Close > signal.LastPrice)
             {
-                if (Symbol.LastPrice != signal.LastPrice)
+                if (CandleLast!.Close != signal.LastPrice)
                 {
-                    ExtraText = string.Format("Symbol.LastPrice {0:N8} gaat verder naar boven {1:N8}", Symbol.LastPrice, signal.LastPrice);
+                    ExtraText = string.Format("Symbol.LastPrice {0:N8} gaat verder naar boven {1:N8}", CandleLast!.Close, signal.LastPrice);
                 }
                 return false;
             }
         }
-        signal.LastPrice = (decimal)Symbol.LastPrice;
+        //signal.LastPrice = (decimal)Symbol.LastPrice;
+        signal.LastPrice = CandleLast!.Close;
 
         // Koop als de close vlak bij de bb.upper is (c.q. niet te ver naar boven zit)
         // Werkt goed!!! (toch even experimenteren) - maar negeert hierdoor ook veel signalen die wel bruikbaar waren
