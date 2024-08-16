@@ -35,6 +35,10 @@ public class CommandTools
             case Command.ScannerSessionDebug:
                 ScannerSession.ScheduleRefresh();
                 return;
+
+            case Command.TradingViewImportList:
+                CommandTradingViewImportList.ExportList();
+                return;
         }
 
 

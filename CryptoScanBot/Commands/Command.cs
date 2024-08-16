@@ -16,6 +16,7 @@ public enum Command
     CopySymbolInformation,
     ScannerSessionDebug,
     PositionCalculate,
+    TradingViewImportList,
     About
 }
 
