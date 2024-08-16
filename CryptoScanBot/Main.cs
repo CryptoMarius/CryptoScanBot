@@ -102,6 +102,7 @@ public partial class FrmMain : Form
         MenuMain.AddCommand(null, "Refresh information", Command.None, ToolStripMenuItemRefresh_Click_1);
         MenuMain.AddCommand(null, "Clear log en ticker count", Command.None, MainMenuClearAll_Click);
         MenuMain.AddCommand(null, "Exchange information (Excel)", Command.ExcelExchangeInformation);
+        MenuMain.AddCommand(null, "Tradingview import files", Command.TradingViewImportList);
         MenuMain.AddCommand(null, "About", Command.About);
 
 #if DEBUG
