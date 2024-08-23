@@ -4,6 +4,7 @@ using CryptoScanBot.Core.Model;
 
 namespace CryptoScanBot.Core.Signal.Momentum;
 
+// WGHM - Wave Generation High Momentum
 
 // https://www.tradingview.com/script/0F1sNM49-WGHBM/
 // Momentum indicator that shows arrows when the Stochastic and the RSI are at the same time in the oversold or overbought area.
