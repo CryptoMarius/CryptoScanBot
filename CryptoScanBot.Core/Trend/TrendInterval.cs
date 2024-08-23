@@ -14,7 +14,7 @@ public class TrendInterval
         // (We hope this makes the scanner a more less cpu hungry)
         // Question however: when is it ssave to clear the zigzag? to avoid memory overflow in the long run?
         // Anwer: We save and load the candles every 24 hours, perhaps there (TODO)
-        accountSymbolIntervalData.ZigZagIndicator ??= new(candleList, false);
+        //accountSymbolIntervalData.ZigZagIndicator ??= new(candleList, false);
 
 
         // start time
@@ -58,62 +58,6 @@ public class TrendInterval
     }
 
 
-    /// <summary>
-    /// collect the lows en highs in 1 single list
-    /// (unfortunately a full sweep)
-    /// </summary>
-    public static List<ZigZagResult> PickupZigZagPoints(SortedList<long, CryptoCandle> candleList)
-    {
-        List<ZigZagResult> zigZagList = [];
-        //ZigZagResult? last; // = null;
-
-        for (int x = 0; x < candleList.Count; x++)
-        {
-            CryptoCandle candle = candleList.Values[x];
-
-            if (candle.ZigZagHigh != 0)
-            {
-                // remove repeated high values
-                //if (last != null && last.PointType == 'H' && candle.ZigZagHigh >= last.Value)
-                //{
-                //    last.Candle = candle;
-                //    last.Value = candle.ZigZagHigh;
-                //}
-                //else
-                {
-                    ZigZagResult last = new()
-                    {
-                        PointType = 'H',
-                        Candle = candle,
-                        Value = candle.ZigZagHigh
-                    };
-                    zigZagList.Add(last);
-                }
-            }
-
-            if (candle.ZigZagLow != 0)
-            {
-                // remove repeated low values
-                //if (last != null && last.PointType == 'L' && candle.ZigZagLow <= last.Value)
-                //{
-                //    last.Candle = candle;
-                //    last.Value = candle.ZigZagLow;
-                //}
-                //else
-                {
-                    ZigZagResult last = new()
-                    {
-                        PointType = 'L',
-                        Candle = candle,
-                        Value = candle.ZigZagLow
-                    };
-                    zigZagList.Add(last);
-                }
-            }
-        }
-
-        return zigZagList;
-    }
 
 
 
@@ -245,9 +189,19 @@ public class TrendInterval
         DateTime candleIntervalEndDebug = CandleTools.GetUnixDate(candleIntervalEnd);
 #endif
 
-
         // We cache the ZigZag indicator, this way we do not have to add all the candles again and again.
-        accountSymbolIntervalData.ZigZagIndicator ??= new(candleList, true);
+        if (accountSymbolIntervalData.ZigZagIndicators == null)
+        {
+            accountSymbolIntervalData.ZigZagIndicators = [];
+            for (int d = 1; d <= 10; d++)
+            {
+                ZigZagIndicator7 indicator = new(candleList, true)
+                {
+                    Deviation = d
+                };
+            }
+        }
+
 
 
 
@@ -262,10 +216,12 @@ public class TrendInterval
 #if DEBUG
             count++;
 #endif
-
             if (candleList.TryGetValue(loop, out CryptoCandle? candle))
             {
-                accountSymbolIntervalData.ZigZagIndicator.Calculate(candle, accountSymbolIntervalData.Interval.Duration);
+                foreach (var indicator in accountSymbolIntervalData.ZigZagIndicators)
+                {
+                    indicator.Calculate(candle, accountSymbolIntervalData.Interval.Duration);
+                }
                 accountSymbolIntervalData.ZigZagLastCandleAdded = loop;
             }
             else log?.AppendLine($"unable to find candle {loop}");
@@ -281,11 +237,24 @@ public class TrendInterval
         //}
 
 
-        // Make a list (without the empry values)
-        List<ZigZagResult> zigZagList = PickupZigZagPoints(candleList);
+        // Make a list (without the empty values)
+        //List<ZigZagResult> zigZagList = ZigZagIndicator7.PickupZigZagPoints(accountSymbolIntervalData.ZigZagIndicator.ZigZagList, accountSymbolIntervalData.Interval.Duration);
+
+        ZigZagIndicator7? bestIndicator = null;
+        foreach (var indicator in accountSymbolIntervalData.ZigZagIndicators)
+        {
+            if (indicator.ZigZagList.Count > 50)
+            {
+                bestIndicator = indicator;
+                break;
+            }
+        }
+        if (bestIndicator == null)
+            bestIndicator = accountSymbolIntervalData.ZigZagIndicators[4]; // Deviation=5%
+
 
         // Interpret the zigzag list
-        CryptoTrendIndicator trendIndicator = InterpretZigZagPoints(zigZagList, log);
+        CryptoTrendIndicator trendIndicator = InterpretZigZagPoints(bestIndicator.ZigZagList, log);
         accountSymbolIntervalData.TrendIndicator = trendIndicator;
         accountSymbolIntervalData.TrendInfoUnix = candleIntervalEnd;
         accountSymbolIntervalData.TrendInfoDate = CandleTools.GetUnixDate(candleIntervalEnd);

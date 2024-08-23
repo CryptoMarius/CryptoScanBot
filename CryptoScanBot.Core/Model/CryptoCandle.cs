@@ -17,11 +17,9 @@ public class CryptoCandle : IQuote
     public decimal Volume { get; set; }
 
     [Computed]
-    //[JsonIgnore]
     public DateTime Date { get { return CandleTools.GetUnixDate(OpenTime); } }
 
     [Computed]
-    //[JsonIgnore]
     public DateTime DateLocal { get { return CandleTools.GetUnixDate(OpenTime).ToLocalTime(); } }
 
     [Computed]
@@ -32,15 +30,6 @@ public class CryptoCandle : IQuote
     [Computed]
     [JsonIgnore]
     public bool IsDuplicated { get; set; }
-
-
-    [Computed]
-    [JsonIgnore]
-    public double ZigZagHigh { get; set; }
-
-    [Computed]
-    [JsonIgnore]
-    public double ZigZagLow { get; set; }
 }
 
 //

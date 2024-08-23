@@ -1,9 +1,9 @@
 CryptoScanBot release historie:
 
-xx-xx-2024 1.9.4
+xx-08-2024 1.9.4
 
 - Scanner - De exchange Mexc Spot via migratie aanmelden
-- Scanner - Trend via de open/close inplaats van de low/high
+- Scanner - Trend (weer) via de open/close inplaats van de low/high
 - Scanner - RSI en STOCH add waarde gesplitst in de STORSI instellingen
 - Scanner - Parameters trimmen zodat spaties spontaan verwijderd worden
 - Scanner - Reload weblinks url's zodat je deze via het tekstbestand kan manipuleren

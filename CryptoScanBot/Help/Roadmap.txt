@@ -4,6 +4,13 @@ Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep
 
 
 Scanner:
+- Scanner - De Binance Futures Altrady link werkt niet?
+- Scanner - BB% staat nog niet in het document
+- Scanner - De correctie voor Storsi staat nog niet in het document (of wel?)
+- Scanner - ZigZag algoritme bevat fouten (en mogelijk dus ook de markttrend)
+- Scanner - ZigZag algoritme negeert de snelle bewegingen niet (de backstep van 3 candles)
+- Scanner - ZigZag algoritme bevat te weining pivot punten voor een correcte markttrend berekening (meerdere zigzags met hogere of lagere threshold nodig)
+
 - Scanner - Kucoin spot bleef qua klines ticker hangen en staakte alle diensen (was wel gedurende de BTC dipje van 5 aug, dus veel signalen/drukte op de exchange)
 - Scanner - Uitzoeken volume van Bybit Spot, op dag niveau lijkt dat af te wijken ten opzichte van TradingView, op 1h niveau lijkt het okay, wat gaat er mis?
 - Scanner - Uitzoeken volume van Bybit Spot, op uur niveau wordt er wel eens volume=0 ingevuld (een herhaling van de voorgaande candle om gaten te vullen, 
