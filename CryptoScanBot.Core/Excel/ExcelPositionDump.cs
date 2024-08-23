@@ -103,7 +103,7 @@ public class ExcelPositionDump(CryptoPosition position) : ExcelBase(position.Sym
                 WriteCell(sheet, column++, row, step.Price, CellStyleDecimalNormal);
                 WriteCell(sheet, column++, row, step.StopPrice, CellStyleDecimalNormal);
                 WriteCell(sheet, column++, row, step.Quantity * step.StopLimitPrice, CellStyleDecimalNormal);
-                if (step.QuoteQuantityFilled <= 0)
+                if (step.Status == CryptoOrderStatus.New)
                     WriteCell(sheet, column++, row, step.Quantity * step.Price, CellStyleDecimalNormal); // estimated
                 else
                     WriteCell(sheet, column++, row, step.QuoteQuantityFilled, CellStyleDecimalNormal);
