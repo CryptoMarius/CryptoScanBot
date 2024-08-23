@@ -318,6 +318,22 @@ public class SignalSbmBaseShort(CryptoSymbol symbol, CryptoInterval interval, Cr
         return true;
     }
 
+    // Check if price goes up even more
+    public bool CheckPriceGoingUp(CryptoSignal signal)
+    {
+        if (CandleLast.Close >= signal.LastPrice)
+        {
+            // suppress messages
+            if (Symbol.LastPrice != CandleLast.Close)
+                ExtraText = $"Price {Symbol.LastPrice:N8} goes up even more {CandleLast.Close:N8}";
+            signal.LastPrice = CandleLast.Close;
+            return true;
+        }
+
+        signal.LastPrice = CandleLast.Close;
+        return false;
+    }
+
 
     public override bool AllowStepIn(CryptoSignal signal)
     {
@@ -406,22 +422,8 @@ public class SignalSbmBaseShort(CryptoSymbol symbol, CryptoInterval interval, Cr
 
 
         // ********************************************************************
-        // Extra?
-
-        // Profiteren van een nog hogere prijs?
-        if (GlobalData.Settings.Trading.CheckFurtherPriceMove)
-        {
-            if (CandleLast!.Close > signal.LastPrice)
-            {
-                if (CandleLast!.Close != signal.LastPrice)
-                {
-                    ExtraText = string.Format("Symbol.LastPrice {0:N8} gaat verder naar boven {1:N8}", CandleLast!.Close, signal.LastPrice);
-                }
-                return false;
-            }
-        }
-        //signal.LastPrice = (decimal)Symbol.LastPrice;
-        signal.LastPrice = CandleLast!.Close;
+        if (GlobalData.Settings.Trading.CheckFurtherPriceMove && CheckPriceGoingUp(signal))
+            return false;
 
         // Koop als de close vlak bij de bb.upper is (c.q. niet te ver naar boven zit)
         // Werkt goed!!! (toch even experimenteren) - maar negeert hierdoor ook veel signalen die wel bruikbaar waren
