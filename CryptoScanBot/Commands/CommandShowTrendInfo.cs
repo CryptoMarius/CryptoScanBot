@@ -20,38 +20,39 @@ public class CommandShowTrendInfo : CommandBase
             log.AppendLine("Trend " + symbol.Name);
 
             GlobalData.AddTextToLogTab("");
-            GlobalData.AddTextToLogTab("Trend " + symbol.Name);
+            GlobalData.AddTextToLogTab($"Trend {symbol.Name}");
 
             MarketTrend.CalculateMarketTrend(GlobalData.ActiveAccount, symbol, 0, 0, log);
+            log.AppendLine("");
+            log.AppendLine("");
 
             AccountSymbolData accountSymbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
             foreach (AccountSymbolIntervalData accountSymbolIntervalData in accountSymbolData.SymbolTrendDataList)
             {
-                log.AppendLine("");
-                log.AppendLine("----");
-                log.AppendLine($"Interval {accountSymbolIntervalData.Interval.Name}");
-
-                CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(accountSymbolIntervalData.IntervalPeriod);
-                log.AppendLine($"Candles {symbolInterval.CandleList.Count}");
-
                 string s;
                 if (accountSymbolIntervalData.TrendIndicator == CryptoTrendIndicator.Bullish)
-                    s = string.Format("{0} {1}, trend=bullish", symbol.Name, accountSymbolIntervalData.Interval.IntervalPeriod);
+                    s = $"{symbol.Name} {accountSymbolIntervalData.Interval.Name} trend=bullish";
                 else if (accountSymbolIntervalData.TrendIndicator == CryptoTrendIndicator.Bearish)
-                    s = string.Format("{0} {1}, trend=bearish", symbol.Name, accountSymbolIntervalData.Interval.IntervalPeriod);
+                    s = $"{symbol.Name} {accountSymbolIntervalData.Interval.Name} trend=bearish";
                 else
-                    s = string.Format("{0} {1}, trend=sideway's", symbol.Name, accountSymbolIntervalData.Interval.IntervalPeriod);
+                    s = $"{symbol.Name} {accountSymbolIntervalData.Interval.Name} trend=sideway's";
                 GlobalData.AddTextToLogTab(s);
                 log.AppendLine(s);
             }
 
-            string t = $"{symbol.Name} {accountSymbolData.MarketTrendPercentage:N2}";
+            string t;
+            float marketTrend = (float)accountSymbolData.MarketTrendPercentage!;
+            if (marketTrend < 0)
+                t = $"{symbol.Name} Markettrend={marketTrend:N2}% bearish";
+            else if (marketTrend > 0)
+                t = $"{symbol.Name} Markettrend={marketTrend:N2}% bullish";
+            else
+                t = $"{symbol.Name} Markettrend={marketTrend:N2}% unknown";
             GlobalData.AddTextToLogTab(t);
             log.AppendLine(t);
 
 
-
-            //Laad de gecachte (langere historie, minder overhad)
+            // debug
             string filename = GlobalData.GetBaseDir() + "Trend information.txt";
             File.WriteAllText(filename, log.ToString());
         }

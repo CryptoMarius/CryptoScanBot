@@ -477,7 +477,7 @@ public class ThreadTelegramBotInstance
         string[] parameters = arguments.Split(' ');
         if (parameters.Length > 1)
             symbolName = parameters[1].Trim().ToUpper();
-        stringbuilder.AppendLine(string.Format("Trend {0}", symbolName));
+        stringbuilder.AppendLine($"Trend {symbolName}");
 
         if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange? exchange))
         {
@@ -498,13 +498,13 @@ public class ThreadTelegramBotInstance
                     stringbuilder.AppendLine($"{accountSymbolIntervalData.Interval.Name} {s}");
                 }
 
-                float marketTrend = (float)accountSymbolData.MarketTrendPercentage;
+                float marketTrend = (float)accountSymbolData.MarketTrendPercentage!;
                 if (marketTrend < 0)
-                    stringbuilder.AppendLine(string.Format("Symbol trend {0} bearish", marketTrend.ToString("N2")));
+                    stringbuilder.AppendLine($"Symbol trend {marketTrend:N2}% bearish");
                 else if (marketTrend > 0)
-                    stringbuilder.AppendLine(string.Format("Symbol trend {0} bullish", marketTrend.ToString("N2")));
+                    stringbuilder.AppendLine($"Symbol trend {marketTrend:N2}% bullish");
                 else
-                    stringbuilder.AppendLine(string.Format("Symbol trend {0} unknown", marketTrend.ToString("N2")));
+                    stringbuilder.AppendLine($"Symbol trend {marketTrend:N2}% unknown");
             }
         }
     }

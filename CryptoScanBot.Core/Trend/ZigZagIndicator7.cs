@@ -9,6 +9,7 @@ public class ZigZagIndicator7(SortedList<long, CryptoCandle> candleList, bool us
     public double Deviation { get; set; } = 5.0;
     public int BackStep { get; set; } = 3;
 
+    public int CandleCount { get; set; } = 0;
     public readonly List<ZigZagResult> ZigZagList = [];
     private readonly SortedList<long, CryptoCandle> CandleList = candleList;
 
@@ -37,6 +38,8 @@ public class ZigZagIndicator7(SortedList<long, CryptoCandle> candleList, bool us
 
     public void Calculate(CryptoCandle candle, int duration)
     {
+        CandleCount++;
+
         // Get the low and high value from the last (count=depth) candles
         long key = candle.OpenTime - duration;
         double lowFromLastDepth = GetLowValue(candle);
