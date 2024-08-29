@@ -459,6 +459,7 @@ static public class GlobalData
             }
             else
             {
+                ExternalUrls = []; // start from scratch (do not cache in memory)
                 ExternalUrls.InitializeUrls(); // add new exchanges
                 // het bestand in ieder geval aanmaken(updates moeten achteraf gepushed worden)
                 string text = JsonSerializer.Serialize(ExternalUrls, JsonSerializerIndented);
