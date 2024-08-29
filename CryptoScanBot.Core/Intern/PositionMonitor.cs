@@ -1337,7 +1337,7 @@ public class PositionMonitor : IDisposable
 
 
                 // De positie uitbreiden nalv een nieuw signaal (de xe bijkoop wordt altijd een aparte DCA)
-                PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.Dca, position.Interval, position.Strategy,
+                PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.Dca, position.Interval!, position.Strategy,
                     CryptoEntryOrDcaStrategy.FixedPercentage, price, LastCandle1mCloseTimeDate);
             }
         }
@@ -1628,7 +1628,7 @@ public class PositionMonitor : IDisposable
         if (position.Quantity > 0)
         {
             // Always create a separate take profit part (if it didn't exist)
-            takeProfitPart ??= PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.TakeProfit, position.Interval,
+            takeProfitPart ??= PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.TakeProfit, position.Interval!,
                 position.Strategy, CryptoEntryOrDcaStrategy.FixedPercentage, 0, GlobalData.GetCurrentDateTime(position.Account));
             CryptoPositionStep? takeProfitOrder = PositionTools.FindPositionPartStep(takeProfitPart, takeProfitOrderSide, false);
 
