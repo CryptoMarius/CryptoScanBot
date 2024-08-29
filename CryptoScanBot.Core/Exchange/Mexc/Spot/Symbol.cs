@@ -174,7 +174,7 @@ public class Symbol
                                 symbol.IsSpotTradingAllowed = true; // symbolData.IsSpotTradingAllowed; // confusing, there is a Permissions flag as well (read doumentation once..)
                                 symbol.IsMarginTradingAllowed = symbolData.IsMarginTradingAllowed;
 
-                                if (symbolData.Status == "ENABLED")
+                                if (symbolData.Status == "ENABLED" || symbolData.Status == "1")
                                     symbol.Status = 1;
                                 else
                                     symbol.Status = 0; //Zet de status door (PreTrading, PostTrading of Halt)

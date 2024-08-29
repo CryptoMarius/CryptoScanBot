@@ -94,7 +94,7 @@ internal class Asset
 
                 using var client = new BinanceRestClient();
                 {
-                    WebCallResult<BinanceFuturesAccountInfoV3> accountInfo = await client.UsdFuturesApi.Account.GetAccountInfoAsync();
+                    WebCallResult<BinanceFuturesAccountInfoV3> accountInfo = await client.UsdFuturesApi.Account.GetAccountInfoV3Async(); //GetAccountInfoAsync();
                     if (!accountInfo.Success)
                     {
                         GlobalData.AddTextToLogTab("error getting accountinfo " + accountInfo.Error);
