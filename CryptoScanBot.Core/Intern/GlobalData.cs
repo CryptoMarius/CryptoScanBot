@@ -436,6 +436,9 @@ static public class GlobalData
             if (Settings.General.GetCandleInterval < 30)
                 Settings.General.GetCandleInterval = 30;
 
+            if (Settings.General.ActivateExchangeName == "")
+                Settings.General.ActivateExchangeName = Settings.General.ExchangeName;
+
         }
         catch (Exception error)
         {

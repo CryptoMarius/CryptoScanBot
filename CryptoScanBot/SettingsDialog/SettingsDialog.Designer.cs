@@ -43,7 +43,7 @@ partial class FrmSettings
         label22 = new Label();
         EditBbStdDeviation = new NumericUpDown();
         label15 = new Label();
-        EditActivateExchangeInternExtern = new ComboBox();
+        EditTradingAppInternExtern = new ComboBox();
         groupBoxStoch = new GroupBox();
         EditStochValueOversold = new NumericUpDown();
         label88 = new Label();
@@ -474,7 +474,7 @@ partial class FrmSettings
         groupBox1.Controls.Add(label22);
         groupBox1.Controls.Add(EditBbStdDeviation);
         groupBox1.Controls.Add(label15);
-        groupBox1.Controls.Add(EditActivateExchangeInternExtern);
+        groupBox1.Controls.Add(EditTradingAppInternExtern);
         groupBox1.Controls.Add(groupBoxStoch);
         groupBox1.Controls.Add(groupBoxRsi);
         groupBox1.Controls.Add(EditExtraCaption);
@@ -534,16 +534,16 @@ partial class FrmSettings
         label15.TabIndex = 287;
         label15.Text = "Intern of extern activeren";
         // 
-        // EditActivateExchangeInternExtern
+        // EditTradingAppInternExtern
         // 
-        EditActivateExchangeInternExtern.DropDownStyle = ComboBoxStyle.DropDownList;
-        EditActivateExchangeInternExtern.FormattingEnabled = true;
-        EditActivateExchangeInternExtern.Items.AddRange(new object[] { "Internal browser", "External browser" });
-        EditActivateExchangeInternExtern.Location = new Point(153, 147);
-        EditActivateExchangeInternExtern.Margin = new Padding(4, 3, 4, 3);
-        EditActivateExchangeInternExtern.Name = "EditActivateExchangeInternExtern";
-        EditActivateExchangeInternExtern.Size = new Size(190, 23);
-        EditActivateExchangeInternExtern.TabIndex = 286;
+        EditTradingAppInternExtern.DropDownStyle = ComboBoxStyle.DropDownList;
+        EditTradingAppInternExtern.FormattingEnabled = true;
+        EditTradingAppInternExtern.Items.AddRange(new object[] { "Internal browser", "External browser" });
+        EditTradingAppInternExtern.Location = new Point(153, 147);
+        EditTradingAppInternExtern.Margin = new Padding(4, 3, 4, 3);
+        EditTradingAppInternExtern.Name = "EditActivateExchangeInternExtern";
+        EditTradingAppInternExtern.Size = new Size(190, 23);
+        EditTradingAppInternExtern.TabIndex = 286;
         // 
         // groupBoxStoch
         // 
@@ -3181,7 +3181,7 @@ partial class FrmSettings
     private FlowLayoutPanel flowLayoutPanel2;
     private SettingsDialog.UserControlSettingsPlaySoundAndColors UserControlSettingsSoundAndColorsStoRsi;
     private Label label15;
-    private ComboBox EditActivateExchangeInternExtern;
+    private ComboBox EditTradingAppInternExtern;
     private CheckBox EditCheckFurtherPriceMove;
     private Label label83;
     private ComboBox EditTradeVia;

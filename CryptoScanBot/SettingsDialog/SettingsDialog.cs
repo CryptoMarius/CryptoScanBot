@@ -14,6 +14,7 @@ public partial class FrmSettings : Form
 
 
     public Core.Model.CryptoExchange NewExchange { get; set; }
+   
 
 
     public FrmSettings()
@@ -44,10 +45,13 @@ public partial class FrmSettings : Form
         EditTradeVia.DisplayMember = "Key";
         EditTradeVia.ValueMember = "Value";
 
-        EditActivateExchange.Items.Clear();
-        EditActivateExchange.Items.Add("De actieve exchange");
-        foreach (var exchange in GlobalData.ExchangeListName.Values)
-            EditActivateExchange.Items.Add(exchange.Name);
+        //EditActivateExchange.Items.Clear();
+        //EditActivateExchange.Items.Add("De actieve exchange");
+        //foreach (var exchange in GlobalData.ExchangeListName.Values)
+        //{
+        //    if (exchange.IsSupported)
+        //        EditActivateExchange.Items.Add(exchange.Name);
+        //}
     }
 
 
@@ -85,12 +89,21 @@ public partial class FrmSettings : Form
         EditExchange.DataSource = new BindingSource(GlobalData.ExchangeListName, null);
         EditExchange.DisplayMember = "Key";
         EditExchange.ValueMember = "Value";
-        EditExchange.SelectedValue = settings.General.Exchange;
+        try { EditExchange.SelectedValue = settings.General.Exchange; } catch { }
+
+
+        EditActivateExchange.DataSource = new BindingSource(GlobalData.ExchangeListName, null);
+        EditActivateExchange.DisplayMember = "Key";
+        EditActivateExchange.ValueMember = "Value";
+        if (GlobalData.ExchangeListName.TryGetValue(settings.General.ActivateExchangeName, out Core.Model.CryptoExchange? exchange))
+            try { EditActivateExchange.SelectedValue = exchange; } catch { }
+        else
+            try { EditActivateExchange.SelectedValue = settings.General.Exchange; } catch { }
+
 
         EditBlackTheming.Checked = settings.General.BlackTheming;
-        try { EditTradingApp.SelectedIndex = (int)settings.General.TradingApp; } catch { } 
-        try { EditActivateExchange.SelectedIndex = (int)settings.General.ActivateExchange; } catch { } 
-        try { EditActivateExchangeInternExtern.SelectedIndex = (int)settings.General.TradingAppInternExtern; } catch { }
+        try { EditTradingApp.SelectedIndex = (int)settings.General.TradingApp; } catch { }
+        try { EditTradingAppInternExtern.SelectedIndex = (int)settings.General.TradingAppInternExtern; } catch { }
         EditSoundHeartBeatMinutes.Value = settings.General.SoundHeartBeatMinutes;
         EditGetCandleInterval.Value = settings.General.GetCandleInterval;
 
@@ -167,7 +180,7 @@ public partial class FrmSettings : Form
         EditStobIncludeSbmMaLines.Checked = settings.Signal.Stobb.IncludeSoftSbm;
         EditStobIncludeSbmPercAndCrossing.Checked = settings.Signal.Stobb.IncludeSbmPercAndCrossing;
         EditStobOnlyIfPreviousStobb.Checked = settings.Signal.Stobb.OnlyIfPreviousStobb;
-        
+
         EditStobTrendLong.Value = settings.Signal.Stobb.TrendLong;
         EditStobTrendShort.Value = settings.Signal.Stobb.TrendShort;
 
@@ -248,7 +261,7 @@ public partial class FrmSettings : Form
         // ------------------------------------------------------------------------------
 
         // Hoe gaan we traden
-        EditTradeVia.SelectedValue = settings.Trading.TradeVia;
+        try { EditTradeVia.SelectedValue = settings.Trading.TradeVia; } catch { }
         EditDisableNewPositions.Checked = settings.Trading.DisableNewPositions;
         EditSoundTradeNotification.Checked = settings.General.SoundTradeNotification;
 
@@ -334,14 +347,22 @@ public partial class FrmSettings : Form
         // ------------------------------------------------------------------------------
         settings.General.ExtraCaption = EditExtraCaption.Text;
         NewExchange = (Core.Model.CryptoExchange)EditExchange.SelectedValue;
+        Core.Model.CryptoExchange? NewActivateExchange = (Core.Model.CryptoExchange)EditActivateExchange.SelectedValue;
+        if (NewActivateExchange != null)
+            settings.General.ActivateExchangeName = NewActivateExchange.Name;
+        else
+            settings.General.ActivateExchangeName = NewExchange.Name;
+
+
+        //settings.General.ActivateExchange = EditActivateExchange.SelectedIndex;
+
         // Don't save immediately, lots of data still in memory etc
         //settings.General.Exchange = (Model.CryptoExchange)EditExchange.SelectedValue;
         //settings.General.ExchangeId = settings.General.Exchange.Id;
         //settings.General.ExchangeName = settings.General.Exchange.Name;
         settings.General.BlackTheming = EditBlackTheming.Checked;
         settings.General.TradingApp = (CryptoTradingApp)EditTradingApp.SelectedIndex;
-        settings.General.ActivateExchange = EditActivateExchange.SelectedIndex;
-        settings.General.TradingAppInternExtern = (CryptoExternalUrlType)EditActivateExchangeInternExtern.SelectedIndex;
+        settings.General.TradingAppInternExtern = (CryptoExternalUrlType)EditTradingAppInternExtern.SelectedIndex;
         settings.General.SoundHeartBeatMinutes = (int)EditSoundHeartBeatMinutes.Value;
         settings.General.GetCandleInterval = (int)EditGetCandleInterval.Value;
         settings.General.FontNameNew = Font.Name;
@@ -587,4 +608,3 @@ public partial class FrmSettings : Form
     }
 
 }
- 

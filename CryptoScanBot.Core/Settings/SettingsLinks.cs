@@ -258,11 +258,8 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
     public (string Url, CryptoExternalUrlType Execute) GetExternalRef(CryptoTradingApp externalApp, bool telegram, CryptoSymbol symbol, CryptoInterval interval)
     {
         Model.CryptoExchange? exchange = symbol.Exchange;
-        if (GlobalData.Settings.General.ActivateExchange > 0)
-        {
-            if (!GlobalData.ExchangeListId.TryGetValue(GlobalData.Settings.General.ActivateExchange, out exchange))
-                return ("", CryptoExternalUrlType.Internal);
-        }
+        if (!GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ActivateExchangeName, out exchange))
+            exchange = GlobalData.Settings.General.Exchange;
         return GetExternalRef(exchange, externalApp, telegram, symbol, interval);
     }
 
