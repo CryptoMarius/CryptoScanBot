@@ -70,13 +70,18 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
         WriteCell(sheet, columns++, row, "Volume");
         WriteCell(sheet, columns++, row, "Duplicated");
 
+        CryptoCandle? last = null;
         foreach (CryptoCandle candle in symbolInterval.CandleList.Values.ToList())
         {
             row++;
             int column = 0;
+            bool attention = (last != null && last.OpenTime + symbolInterval.Interval!.Duration != candle.OpenTime || candle.IsDuplicated);
 
             WriteCell(sheet, column++, row, candle.OpenTime);
-            WriteCell(sheet, column++, row, candle.DateLocal, CellStyleDate);
+            if (attention)
+                WriteCell(sheet, column++, row, candle.DateLocal, CellStyleDate);
+            else
+                WriteCell(sheet, column++, row, candle.DateLocal, CellStyleDateRed);
             WriteCell(sheet, column++, row, candle.DateLocal.AddSeconds(symbolInterval.Interval?.Duration ?? 0), CellStyleDate);
             WriteCell(sheet, column++, row, candle.Open, CellStyleDecimalNormal);
             WriteCell(sheet, column++, row, candle.High, CellStyleDecimalNormal);
@@ -84,6 +89,9 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
             WriteCell(sheet, column++, row, candle.Close, CellStyleDecimalNormal);
             WriteCell(sheet, column++, row, candle.Volume, CellStyleDecimalNormal);
             WriteCell(sheet, column++, row, candle.IsDuplicated.ToString());
+
+
+            last = candle;
         }
 
         AutoSize(sheet, columns);

@@ -11,6 +11,7 @@ public abstract class ExcelBase
 {
     protected HSSFWorkbook Book;
     protected ICellStyle CellStyleDate;
+    protected ICellStyle CellStyleDateRed;
     protected ICellStyle CellStyleStringGreen;
     protected ICellStyle CellStyleStringRed;
     protected ICellStyle CellStyleDecimalNormal;
@@ -41,6 +42,14 @@ public abstract class ExcelBase
         CellStyleDate = Book.CreateCellStyle();
         CellStyleDate.DataFormat = format.GetFormat("dd-MM-yyyy HH:mm");
         CellStyleDate.Alignment = HorizontalAlignment.Left;
+
+        CellStyleDateRed = Book.CreateCellStyle();
+        CellStyleDateRed.DataFormat = format.GetFormat("dd-MM-yyyy HH:mm");
+        CellStyleDateRed.FillForegroundColor = HSSFColor.Red.Index;
+        CellStyleDateRed.FillPattern = FillPattern.SolidForeground;
+        CellStyleDateRed.FillBackgroundColor = HSSFColor.Red.Index;
+        CellStyleDateRed.Alignment = HorizontalAlignment.Left;
+
 
         CellStyleStringGreen = Book.CreateCellStyle();
         CellStyleStringGreen.FillForegroundColor = HSSFColor.LightGreen.Index;
