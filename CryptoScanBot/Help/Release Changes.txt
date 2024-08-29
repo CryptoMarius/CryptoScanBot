@@ -2,12 +2,19 @@ CryptoScanBot release historie:
 
 xx-08-2024 1.9.4
 
-- Scanner - De exchange Mexc Spot via migratie aanmelden
+- Scanner - Uitleg van de BB% staat niet in het help document
+- Scanner - Uitleg van de Stoch correctie voor de Storsi staan niet in het help document
+- Scanner - Ma het selecteren een exchange (Mexc Spot in dit geval) wil het configuratie scherm niet meer openen (Index was out of range)
+- Scanner - ZigZag algoritme negeert de snelle bewegingen niet (de backstep van 3 candles)
+- Scanner - Het ZigZag algoritme bevat fouten in de vorm van meerdere highs of lows achter elkaar (dat beinvloed de markttrend)
+- Scanner - ZigZag algoritme bevat te weining pivot punten voor een correcte markttrend berekening (er is een lagere threshold nodig)
+- Scanner - De exchange Mexc Spot via migratie netjes aanmelden
 - Scanner - Trend (weer) via de open/close inplaats van de low/high
 - Scanner - RSI en STOCH add waarde gesplitst in de STORSI instellingen
-- Scanner - Parameters trimmen zodat spaties spontaan verwijderd worden
+- Scanner - De exchange parameter trimmen zodat spaties verwijderd worden
 - Scanner - Reload weblinks url's zodat je deze via het tekstbestand kan manipuleren
-- Scanner - Als de hoogte of breedte van een formulier 0 zijn het formulier op 1000*800 zetten
+- Scanner - Als de hoogte of breedte van een formulier te klein is gezet het formulier op 1000*800 zetten (hybernate?)
+- Scanner - Extra menu optie om een import-lijst te maken voor tradingview per quote (en alle munten)
 
 09-08-2024 1.9.3
 - Scanner - De als favoriet ingestelde kleuren van de gebruiker onthouden

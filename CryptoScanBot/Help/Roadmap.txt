@@ -4,20 +4,11 @@ Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep
 
 
 Scanner:
-- Scanner - De Binance Futures Altrady link werkt niet?
-- Scanner - BB% staat nog niet in het document
-- Scanner - De correctie voor Storsi staat nog niet in het document (of wel?)
-- Scanner - ZigZag algoritme bevat fouten (en mogelijk dus ook de markttrend)
-- Scanner - ZigZag algoritme negeert de snelle bewegingen niet (de backstep van 3 candles)
-- Scanner - ZigZag algoritme bevat te weining pivot punten voor een correcte markttrend berekening (meerdere zigzags met hogere of lagere threshold nodig)
-
 - Scanner - Kucoin spot bleef qua klines ticker hangen en staakte alle diensen (was wel gedurende de BTC dipje van 5 aug, dus veel signalen/drukte op de exchange)
 - Scanner - Uitzoeken volume van Bybit Spot, op dag niveau lijkt dat af te wijken ten opzichte van TradingView, op 1h niveau lijkt het okay, wat gaat er mis?
 - Scanner - Uitzoeken volume van Bybit Spot, op uur niveau wordt er wel eens volume=0 ingevuld (een herhaling van de voorgaande candle om gaten te vullen, 
             dit gebeurd best vaak. Maar ligt dat nu aan de exchange of ligt het aan de scanner. Het is in ieder geval vervelend voor de controle op het volume)
             Dit escaleert uiteindelijk naar de hoogste intervallen, dat moet echt nagezocht worden (effect is dat je een paar munten mist qua meldingen)
-
-
 - Scanner - De optie "Signalen maken" in het linkerboven menu kan wel weg (core business scanner)
 - Scanner - Gerapporteerd: Dubbele munten (zelfs de BTCUSDT, wellicht na wisselen van exchanges?)
 - Scanner - De basismunten scrollable maken (Binance sport heeft veel basismunten)
@@ -29,45 +20,43 @@ Scanner:
             https://www.telerik.com/
             https://learn.microsoft.com/en-us/visualstudio/profiling/memory-usage?view=vs-2022
             CLRProfiler 
-
 - Scanner - Nieuwe munten die toegevoegd worden op de exchange terwijl de scanner loopt worden niet automatisch toegevoegd aan de price- en kline tickers
 - Scanner - Limit rates voor Kucoin verder uitwerken (ophalen candles geeft soms een foutmelding, wordt bij een volgende herstart wel hersteld, maar hoort niet zo)
             error getting klines [ServerRateLimitError] 429: Server rate limit exceeded: {"code":"429000","msg":"too many request"}
 - Scanner - Rate limits van de libraries bestuderen en eventueel de ingebouwde vervangen (de interne is aan de voorzichtige kant)
 - Scanner - Bij wisselen van basismunten (of exchange?) komt er soms een SQLite Error 5: 'database is locked? (oorzaak nog onbekend)
 - Scanner - Bij het inserten van een nieuw signaal is er soms een SQLite Error 5: 'database is locked? (oorzaak nog onbekend)
-- Trading - De barometer naar Excel kunnen exporteren voor een overzichtje (liefst met een op te geven datum/tijd)
 - Scanner - Het geheugen loopt gemeten over meerdere dagen op. Een oorzaak kan wellicht de barometer zijn (wat intern gewoon een muntje met candles is, maar waarin de candles niet opgeruimd worden)
 - Scanner - De FundingRate kolom automatisch uitzetten indien geen derivaten.futues?
 - Scanner - Telegram meldingen sturen met een extra link naar TV (optioneel maken via de instelllingen).
 - Scanner - locking inbouwen zodat dezelfde scanner niet twee keer opgestart kan worden (menselijke fouten <including me>)
 - Scanner - De scanner is soms onzichtbaar omdat het window buiten het scherm valt of te klein is (2x gemeld) (oorzaak onduidelijk)
-- Bij kleine(re) beeldschermen zijn bepaalde instellingen niet in zijn geheel zichtbaar (de OK en Cancel knop vallen onder andere weg)
-- Het normale logbestand bevat op het einde een .0, waar komt deze vandaag? Doet NLog alsnog een archive ofzo? Wat apart in die hoek?
+- Scanner - Bij kleine(re) beeldschermen zijn bepaalde instellingen niet in zijn geheel zichtbaar (de OK en Cancel knop vallen onder andere weg)
+- Scanner - Het normale logbestand bevat op het einde een .0, waar komt deze vandaag? Doet NLog alsnog een archive ofzo? Wat apart in die hoek?
 - Scanner/Trader: Een dashboard introduceren, totaal aantal signalen afgelopen dag/week, indeling per categorie, short/long
   Trading: Totaal geinvesteerd, returned, gemiddelde profit, de uitschieters (max), de tegenvallers (min).
-- Bij aanpassing van het lettertype lopen de labels over in de control waardoor tekst minder leesbaar wordt
-- Bij aanpassing van het lettertype worden de scrollbars in bovenste listview getoond waardoor de onderste regel niet leesbaar is
-- Via coindelist een munt direct op de blacklist zetten voor zowel oversold als overbought (optioneel) - 1e poging lukt niet
-- Meldingen naar een externe applicatie c.q. script sturen - event of dropbox inbouwen
-- Meldingen naar een syslog server sturen (statistiek) - de signalen worden nu wel opgeslagen in de signal tabel
-- Indien de applicatie traag(?) afsluit wordt tijdens het afsluiten opnieuw begonnen met het activeren van de scanner (ophalen candles enzovoort) - nog niet kunnen herproduceren!
-- Teksten kunnen vertalen (de NL en EN lopen nu vaak door elkaar, tenenkrommend, maar ach)
-  Een eerste aanzet zit er nu in, inclusief een beetje uitleg over hou je het maakt en configureert
-- Experiment om een Mac versie te bouwen dmv MAUI XAML (een compleet nieuwe aanvliegroute van Microsoft)
+- Scanner - Bij aanpassing van het lettertype lopen de labels over in de control waardoor tekst minder leesbaar wordt
+- Scanner - Bij aanpassing van het lettertype worden de scrollbars in bovenste listview getoond waardoor de onderste regel niet leesbaar is
+- Scanner - Via coindelist een munt direct op de blacklist zetten voor zowel oversold als overbought (optioneel) - 1e poging lukt niet
+- Scanner - Meldingen naar een externe applicatie c.q. script sturen - event of dropbox inbouwen
+- Scanner - Meldingen naar een syslog server sturen (statistiek) - de signalen worden nu wel opgeslagen in de signal tabel
+- Scanner - Indien de applicatie traag(?) afsluit wordt tijdens het afsluiten opnieuw begonnen met het activeren van de scanner (ophalen candles enzovoort) - nog niet kunnen herproduceren!
+- Scanner - Teksten kunnen vertalen (de NL en EN lopen nu vaak door elkaar, tenenkrommend, maar ach)
+- Scanner - Experiment om een Mac versie te bouwen dmv MAUI XAML (een compleet nieuwe aanvliegroute van Microsoft)
   Maar ik verwacht een duizendtal nieuwe problemen met geluid, voice, storage, sockets, hibernate/sleep enzovoort)
   (ondertussen is er een VM met een Mac installatie, Mac is geheel nieuw voor mij, dat gaat even duren)
-- Visuele herkenning dat de scanner loopt (de getallen linksboven zeggen de mensen niet zoveel)
+- Scanner - Visuele herkenning dat de scanner loopt (de getallen linksboven zeggen de mensen niet zoveel)
   (ik heb hier eigenlijk geen alternatief voor, als iemand goede ideen heet laat het me weten aub)
   Misschien dat de introductie van een dashboard hier nog iets in kan betekenen t.z.t.
-- Het font van de menuitem (en popup?) wordt niet aangepast (indien een ander lettertype of grootte wordt gekozen)
-- Algemeen - Black theming  https://stackoverflow.com/questions/61145347/c-how-to-make-a-dark-mode-theme-in-windows-forms-separate-form-as-select-the <geen prio>
-  Er is nu een slappe variant die iets met grijs doet (omdat anders de scrollbars en headers zo'n lelijk getoond worden), ik ben er niet tevreden over.
+- Scanner - Het font van de menuitem (en popup?) wordt niet aangepast (indien een ander lettertype of grootte wordt gekozen)
+- Scanner - Algemeen - Black theming  https://stackoverflow.com/questions/61145347/c-how-to-make-a-dark-mode-theme-in-windows-forms-separate-form-as-select-the <geen prio>
+            Er is nu een slappe variant die iets met grijs doet (omdat anders de scrollbars en headers zo'n lelijk getoond worden), ik ben er niet tevreden over.
 - Scanner - We rekenen intern nu met het aantal seconden vanaf X waardoor een long nodig is, dat kan ook met een minuten vanaf X dat scheelt mogelijk opslag en geheugen ruimte
   (maar zijn die "paar" megabytes wel de moeite waard met het vele (test)werk wat hiervoor nodig is?)
 
 
 Trading:
+- Trading - De barometer naar Excel kunnen exporteren voor een overzichtje (liefst met een op te geven datum/tijd)
 - Trading - Documentatie bijwerken - Een klusje..
 - Trading - Stop loss introduceren voor Bybit
 - Trading - Stop loss introduceren voor Binance
