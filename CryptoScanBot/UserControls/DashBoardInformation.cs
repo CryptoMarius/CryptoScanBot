@@ -4,7 +4,6 @@ using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.TradingView;
-using CryptoScanBot.Core.Settings;
 using CryptoScanBot.Intern;
 using CryptoScanBot.Core.Barometer;
 
