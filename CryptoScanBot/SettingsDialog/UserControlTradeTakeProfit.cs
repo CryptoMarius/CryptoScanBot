@@ -14,7 +14,7 @@ public partial class UserControlTradeTakeProfit : UserControl
 
         //TakeProfitOrderType.Add("Market order", CryptoOrderType.Market); // not relevant (and not implemented)
         OrderTypeList.Add("Limit order", CryptoOrderType.Limit);
-        OrderTypeList.Add("Stop limit order", CryptoOrderType.StopLimit);
+        //OrderTypeList.Add("Stop limit order", CryptoOrderType.StopLimit);
         //TakeProfitOrderType.Add("Order cancels Order (OCO)", CryptoOrderType.Oco); // not relevant (not implemented for all exchanges I assume)
 
         StrategyList.Add("Fixed percentage", CryptoTakeProfitStrategy.FixedPercentage);
