@@ -205,7 +205,6 @@ public class TrendInterval
         if (accountSymbolIntervalData.ZigZagIndicators == null)
         {
             accountSymbolIntervalData.ZigZagIndicators = [];
-            //for (int deviation = 4; deviation <= 40; deviation++)
             for (double deviation = 10.0; deviation >= 1; deviation -= 0.25)
             {
                 ZigZagIndicator7 indicator = new(candleList, false)
