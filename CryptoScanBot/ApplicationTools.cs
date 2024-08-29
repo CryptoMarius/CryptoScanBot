@@ -49,7 +49,7 @@ static class ApplicationTools
         }
 
         // Sometime the height or width becomes zero, not sure why..
-        if (form.DesktopBounds.Size.Width == 0 || form.DesktopBounds.Size.Height == 0)
+        if (form.DesktopBounds.Size.Width == 0 || form.DesktopBounds.Size.Height == 0 || (form.DesktopBounds.Size.Width < 350 && form.DesktopBounds.Size.Height < 350))
         {
             form.StartPosition = FormStartPosition.CenterScreen;
             form.DesktopBounds = new Rectangle(150, 150, 1000, 800);
