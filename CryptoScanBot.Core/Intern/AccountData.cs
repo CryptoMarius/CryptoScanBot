@@ -74,7 +74,7 @@ public class AccountData
     {
         if (!SymbolDataList.TryGetValue(symbolName, out AccountSymbolData? symbolData))
         {
-            symbolData = new() { SymbolName = symbolName};
+            symbolData = new() { SymbolName = symbolName };
             SymbolDataList.TryAdd(symbolName, symbolData);
         }
         return symbolData;

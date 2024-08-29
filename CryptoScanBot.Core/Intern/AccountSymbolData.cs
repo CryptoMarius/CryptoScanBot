@@ -8,19 +8,15 @@ public class AccountSymbolData
     public required string SymbolName { get; set; }
 
     // The generated signals for each symbol
-    public List<CryptoSignal> SymbolSignalList { get; set; } = [];
+    //public List<CryptoSignal> SymbolSignalList { get; set; } = [];
 
 
-    // The markettrend percentage
+    // Markettrend 
     public long? MarketTrendDate { get; set; }
     public float? MarketTrendPercentage { get; set; }
 
-    ///// <summary>
-    ///// Datum dat we de laatste keer hebben gekocht
-    ///// </summary>
-    //public DateTime? LastTradeDate { get; set; }
 
-    // The trend data for each interval
+    // Trend data for each interval
     public List<AccountSymbolIntervalData> SymbolTrendDataList { get; set; } = [];
 
 
@@ -38,13 +34,21 @@ public class AccountSymbolData
         }
     }
 
+
     public AccountSymbolIntervalData GetAccountSymbolIntervalData(CryptoIntervalPeriod intervalPeriod)
-        => SymbolTrendDataList[(int)intervalPeriod];
+    {
+        return SymbolTrendDataList[(int)intervalPeriod];
+    }
 
 
     public void Reset()
     {
+        MarketTrendDate = null;
+        MarketTrendPercentage = null;
+
         foreach (AccountSymbolIntervalData accountSymbolIntervalData in SymbolTrendDataList)
+        {
             accountSymbolIntervalData.Reset();
+        }
     }
 }
