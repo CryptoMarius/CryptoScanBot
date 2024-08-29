@@ -10,7 +10,6 @@ public partial class FrmSettings : Form
 {
     private SettingsBasic settings;
 
-    private readonly List<SettingsQuoteCoin> BaseCoinList = [];
     private readonly SortedList<string, CryptoAccountType> TradeVia = [];
 
 
@@ -113,43 +112,25 @@ public partial class FrmSettings : Form
         // ------------------------------------------------------------------------------
         // Base coins
         // ------------------------------------------------------------------------------
-        // Er moet er eentje zijn, de USDT maar toevoegen
+        // There has to be one, add USDT if needed
         if (GlobalData.Settings.QuoteCoins.Count == 0)
         {
-            // Als default toch iets inschieten
             CryptoQuoteData quoteData = new()
             {
                 Name = "USDT",
                 FetchCandles = true,
                 MinimalVolume = 4500000,
             };
-
             GlobalData.Settings.QuoteCoins.Add(quoteData.Name, quoteData);
         }
 
-        // Hey, een ouderwetse control, zou eigenlijk meerdere usercontrol moeten zijn die op een flowpanel worden geplaatst... later...
-        int yInc = 0;
-        int yPos = 75;
+
         foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
         {
-            if (quoteData.SymbolList.Count > 0) //|| quoteData.Name.Equals("BTC") || quoteData.Name.Equals("USDT")
-            {
-                var baseCoin = new SettingsQuoteCoin(quoteData, yPos, tabBasecoin.Controls);
-                BaseCoinList.Add(baseCoin);
-
-                if (yInc == 0)
-                    yInc = (int)(baseCoin.MinVolume.Height * 1.2m);
-                yPos += yInc;
-            }
-            else
-            {
-                quoteData.FetchCandles = false;
-            }
+            UserControlQuote control = new();
+            flowLayoutPanelQuotes.Controls.Add(control);
+            control.LoadConfig(quoteData);
         }
-
-        foreach (SettingsQuoteCoin x in BaseCoinList)
-            x.SetControlValues();
-        BaseCoinList[0].AddHeaderLabels(40, tabBasecoin.Controls);
 
         // ------------------------------------------------------------------------------
         // Signals
@@ -384,9 +365,11 @@ public partial class FrmSettings : Form
         // ------------------------------------------------------------------------------
         // Base coins
         // ------------------------------------------------------------------------------
-        foreach (SettingsQuoteCoin x in BaseCoinList)
-            x.GetControlValues();
-
+        foreach (var control in flowLayoutPanelQuotes.Controls)
+        {
+            if (control is UserControlQuote controlQuote)
+                controlQuote.SaveConfig(controlQuote.QuoteData);
+        }
 
         // ------------------------------------------------------------------------------
         // Signals

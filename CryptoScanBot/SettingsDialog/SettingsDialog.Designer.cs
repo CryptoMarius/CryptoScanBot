@@ -74,6 +74,8 @@ partial class FrmSettings
         EditTradingApp = new ComboBox();
         UserControlTelegram = new SettingsDialog.UserControlTelegram();
         tabBasecoin = new TabPage();
+        flowLayoutPanelQuotes = new FlowLayoutPanel();
+        userControlQuoteHeader1 = new SettingsDialog.UserControlQuoteHeader();
         tabSignal = new TabPage();
         tabControlSignals = new TabControl();
         tabSignalsGeneral = new TabPage();
@@ -172,6 +174,8 @@ partial class FrmSettings
         flowLayoutPanel2 = new FlowLayoutPanel();
         UserControlSettingsSoundAndColorsStoRsi = new SettingsDialog.UserControlSettingsPlaySoundAndColors();
         groupBox6 = new GroupBox();
+        label24 = new Label();
+        EditStorsiAddStochAmount = new NumericUpDown();
         label26 = new Label();
         EditStorsiAddRsiAmount = new NumericUpDown();
         tabSignalJump = new TabPage();
@@ -244,8 +248,6 @@ partial class FrmSettings
         panel6 = new Panel();
         label49 = new Label();
         toolTip1 = new ToolTip(components);
-        label24 = new Label();
-        EditStorsiAddStochAmount = new NumericUpDown();
         panelButtons.SuspendLayout();
         panelFill.SuspendLayout();
         tabControlMain.SuspendLayout();
@@ -262,6 +264,8 @@ partial class FrmSettings
         ((System.ComponentModel.ISupportInitialize)EditGetCandleInterval).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditGlobalDataRemoveSignalAfterxCandles).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditSoundHeartBeatMinutes).BeginInit();
+        tabBasecoin.SuspendLayout();
+        flowLayoutPanelQuotes.SuspendLayout();
         tabSignal.SuspendLayout();
         tabControlSignals.SuspendLayout();
         tabSignalsGeneral.SuspendLayout();
@@ -309,6 +313,7 @@ partial class FrmSettings
         tabSignalStoRsi.SuspendLayout();
         flowLayoutPanel2.SuspendLayout();
         groupBox6.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)EditStorsiAddStochAmount).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditStorsiAddRsiAmount).BeginInit();
         tabSignalJump.SuspendLayout();
         flowLayoutPanel8.SuspendLayout();
@@ -342,7 +347,6 @@ partial class FrmSettings
         panel5.SuspendLayout();
         tabShortBlackList.SuspendLayout();
         panel6.SuspendLayout();
-        ((System.ComponentModel.ISupportInitialize)EditStorsiAddStochAmount).BeginInit();
         SuspendLayout();
         // 
         // panelButtons
@@ -844,6 +848,7 @@ partial class FrmSettings
         // 
         // tabBasecoin
         // 
+        tabBasecoin.Controls.Add(flowLayoutPanelQuotes);
         tabBasecoin.Location = new Point(4, 27);
         tabBasecoin.Margin = new Padding(4, 3, 4, 3);
         tabBasecoin.Name = "tabBasecoin";
@@ -852,6 +857,28 @@ partial class FrmSettings
         tabBasecoin.TabIndex = 0;
         tabBasecoin.Text = "Basismunten";
         tabBasecoin.UseVisualStyleBackColor = true;
+        // 
+        // flowLayoutPanelQuotes
+        // 
+        flowLayoutPanelQuotes.AutoScroll = true;
+        flowLayoutPanelQuotes.AutoSize = true;
+        flowLayoutPanelQuotes.Controls.Add(userControlQuoteHeader1);
+        flowLayoutPanelQuotes.Dock = DockStyle.Fill;
+        flowLayoutPanelQuotes.FlowDirection = FlowDirection.TopDown;
+        flowLayoutPanelQuotes.Location = new Point(4, 3);
+        flowLayoutPanelQuotes.Margin = new Padding(0);
+        flowLayoutPanelQuotes.Name = "flowLayoutPanelQuotes";
+        flowLayoutPanelQuotes.Size = new Size(1134, 609);
+        flowLayoutPanelQuotes.TabIndex = 0;
+        // 
+        // userControlQuoteHeader1
+        // 
+        userControlQuoteHeader1.AutoSize = true;
+        userControlQuoteHeader1.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+        userControlQuoteHeader1.Location = new Point(3, 3);
+        userControlQuoteHeader1.Name = "userControlQuoteHeader1";
+        userControlQuoteHeader1.Size = new Size(687, 23);
+        userControlQuoteHeader1.TabIndex = 0;
         // 
         // tabSignal
         // 
@@ -1995,6 +2022,25 @@ partial class FrmSettings
         groupBox6.TabStop = false;
         groupBox6.Text = "Instellingen";
         // 
+        // label24
+        // 
+        label24.AutoSize = true;
+        label24.Location = new Point(30, 60);
+        label24.Margin = new Padding(4, 0, 4, 0);
+        label24.Name = "label24";
+        label24.Size = new Size(100, 15);
+        label24.TabIndex = 127;
+        label24.Text = "Add STOCH value";
+        // 
+        // EditStorsiAddStochAmount
+        // 
+        EditStorsiAddStochAmount.Location = new Point(157, 58);
+        EditStorsiAddStochAmount.Margin = new Padding(4, 3, 4, 3);
+        EditStorsiAddStochAmount.Maximum = new decimal(new int[] { 20, 0, 0, 0 });
+        EditStorsiAddStochAmount.Name = "EditStorsiAddStochAmount";
+        EditStorsiAddStochAmount.Size = new Size(56, 23);
+        EditStorsiAddStochAmount.TabIndex = 128;
+        // 
         // label26
         // 
         label26.AutoSize = true;
@@ -2781,25 +2827,6 @@ partial class FrmSettings
         label49.TabIndex = 222;
         label49.Text = "(1 munt per regel met een optionele opmerking erachter)";
         // 
-        // label24
-        // 
-        label24.AutoSize = true;
-        label24.Location = new Point(30, 60);
-        label24.Margin = new Padding(4, 0, 4, 0);
-        label24.Name = "label24";
-        label24.Size = new Size(100, 15);
-        label24.TabIndex = 127;
-        label24.Text = "Add STOCH value";
-        // 
-        // EditStorsiAddStochAmount
-        // 
-        EditStorsiAddStochAmount.Location = new Point(157, 58);
-        EditStorsiAddStochAmount.Margin = new Padding(4, 3, 4, 3);
-        EditStorsiAddStochAmount.Maximum = new decimal(new int[] { 20, 0, 0, 0 });
-        EditStorsiAddStochAmount.Name = "EditStorsiAddStochAmount";
-        EditStorsiAddStochAmount.Size = new Size(56, 23);
-        EditStorsiAddStochAmount.TabIndex = 128;
-        // 
         // FrmSettings
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
@@ -2832,6 +2859,10 @@ partial class FrmSettings
         ((System.ComponentModel.ISupportInitialize)EditGetCandleInterval).EndInit();
         ((System.ComponentModel.ISupportInitialize)EditGlobalDataRemoveSignalAfterxCandles).EndInit();
         ((System.ComponentModel.ISupportInitialize)EditSoundHeartBeatMinutes).EndInit();
+        tabBasecoin.ResumeLayout(false);
+        tabBasecoin.PerformLayout();
+        flowLayoutPanelQuotes.ResumeLayout(false);
+        flowLayoutPanelQuotes.PerformLayout();
         tabSignal.ResumeLayout(false);
         tabControlSignals.ResumeLayout(false);
         tabSignalsGeneral.ResumeLayout(false);
@@ -2893,6 +2924,7 @@ partial class FrmSettings
         flowLayoutPanel2.PerformLayout();
         groupBox6.ResumeLayout(false);
         groupBox6.PerformLayout();
+        ((System.ComponentModel.ISupportInitialize)EditStorsiAddStochAmount).EndInit();
         ((System.ComponentModel.ISupportInitialize)EditStorsiAddRsiAmount).EndInit();
         tabSignalJump.ResumeLayout(false);
         tabSignalJump.PerformLayout();
@@ -2948,7 +2980,6 @@ partial class FrmSettings
         tabShortBlackList.PerformLayout();
         panel6.ResumeLayout(false);
         panel6.PerformLayout();
-        ((System.ComponentModel.ISupportInitialize)EditStorsiAddStochAmount).EndInit();
         ResumeLayout(false);
     }
 
@@ -3170,4 +3201,6 @@ partial class FrmSettings
     private NumericUpDown EditCheckVolumeOverDays;
     private Label label24;
     private NumericUpDown EditStorsiAddStochAmount;
+    private FlowLayoutPanel flowLayoutPanelQuotes;
+    private SettingsDialog.UserControlQuoteHeader userControlQuoteHeader1;
 }
