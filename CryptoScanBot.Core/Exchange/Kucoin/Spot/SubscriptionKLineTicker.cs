@@ -93,7 +93,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                             candle.Close = kline.ClosePrice;
                             candle.Volume = kline.QuoteVolume;
 
-                            //if (symbol.Name == "GAMEUSDT") // debug?
+                            //if (symbol.Name == "GAMEUSDT") // debug very low volume symbol
                             //    GlobalData.AddTextToLogTab($"candle update {candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true)}");
 
                             // Last price (because the Kucoin price-ticker is turned off completely)
@@ -161,9 +161,8 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                                     nextCandle.Volume = 0; // no volume (flat candle)
                                     lastCandle = nextCandle;
 
-                                    // debug?
-                                    if (symbol.Name == "GAMEUSDT")
-                                        GlobalData.AddTextToLogTab($"candle prev added {nextCandle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true)}");
+                                    //if (symbol.Name == "GAMEUSDT") // debug very low volume symbol
+                                    //    GlobalData.AddTextToLogTab($"candle prev added {nextCandle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true)}");
 
                                 }
                                 else break;
@@ -186,9 +185,8 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                                 //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", topic, kline.Timestamp.ToLocalTime()));
                                 CandleTools.Process1mCandle(symbol, candle.Date, candle.Open, candle.High, candle.Low, candle.Close, candle.Volume, candle.IsDuplicated);
 
-                                // debug?
-                                if (symbol.Name == "GAMEUSDT")
-                                    GlobalData.AddTextToLogTab($"candle added {candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true)}");
+                                //if (symbol.Name == "GAMEUSDT") // debug very low volume symbol
+                                //    GlobalData.AddTextToLogTab($"candle added {candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true)}");
 
                                 // Debug...
                                 //if (candle.IsDuplicated)
