@@ -192,7 +192,7 @@ public class Ticker(ExchangeOptions exchangeOptions, Type userTickerItemType, Cr
         {
             foreach (var ticker in tickerGroup.TickerList)
             {
-                if (ticker.ErrorDuringStartup)
+                if (ticker.ErrorDuringStartup || ticker.NeedsRestart)
                 {
                     Task task = Task.Run(ticker.StartAsync);
                     taskList.Add(task);
@@ -271,16 +271,19 @@ public class Ticker(ExchangeOptions exchangeOptions, Type userTickerItemType, Cr
                 // Is deze ooit gestart?
                 if (ticker.TickerCount != 0)
                 {
-                    // Is ie blijven staan? Netwerk storing enzovoort?
+                    // Is there still activity (otherwise restart it)
                     if (ticker.TickerCount == ticker.TickerCountLast)
+                    {
                         restart = true;
-                    else
-                        ticker.TickerCountLast = ticker.TickerCount;
+                        ticker.NeedsRestart = true;
+                    }
+                    ticker.TickerCountLast = ticker.TickerCount;
                 }
             }
         }
         return restart;
     }
+
 
     public virtual async Task CheckTickers()
     {
@@ -290,7 +293,7 @@ public class Ticker(ExchangeOptions exchangeOptions, Type userTickerItemType, Cr
         {
             foreach (var ticker in tickerGroup.TickerList)
             {
-                if (ticker.ConnectionLostCount > 0 || ticker.ErrorDuringStartup)
+                if (ticker.ConnectionLostCount > 0 || ticker.ErrorDuringStartup || ticker.NeedsRestart)
                 {
                     tickerCount += tickerGroup.TickerList.Count;
                     tickerGroups.Add(tickerGroup);
@@ -352,7 +355,7 @@ public class Ticker(ExchangeOptions exchangeOptions, Type userTickerItemType, Cr
         {
             foreach (var ticker in tickerGroup.TickerList)
             {
-                GlobalData.AddTextToLogTab($"Ticker {ticker.GroupName} ErrorDuringStartup={ticker.ErrorDuringStartup} ConnectionLostCount={ticker.ConnectionLostCount} {ticker.SymbolOverview}");
+                GlobalData.AddTextToLogTab($"Ticker {ticker.GroupName} ErrorDuringStartup={ticker.ErrorDuringStartup} ConnectionLostCount={ticker.ConnectionLostCount} count={ticker.TickerCount} last={ticker.TickerCountLast} {ticker.NeedsRestart} {ticker.SymbolOverview}");
             }
         }
     }
