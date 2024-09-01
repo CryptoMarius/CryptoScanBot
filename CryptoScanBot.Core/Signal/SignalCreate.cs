@@ -526,6 +526,7 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
         if (algorithm != null)
         {
             //GlobalData.Logger.Trace($"SignalCreate.Done {Symbol.Name} {Interval.Name} {strategyDefinition.Name} {Side}");
+            //GlobalData.AddTextToLogTab($"SignalCreate.Done {Symbol.Name} {Interval.Name} {strategyDefinition.Name} {Side}");
             if (algorithm.IndicatorsOkay(Candle!) && algorithm.IsSignal())
                 return PrepareAndSendSignal(algorithm);
         }
@@ -594,7 +595,8 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
 
     public bool Analyze(long candleIntervalOpenTime)
     {
-        //GlobalData.Logger.Trace($"SignalCreate.Start {Symbol.Name} {Interval.Name}");
+        //ScannerLog.Logger.Trace($"SignalCreate.Start {Symbol.Name} {Interval.Name}");
+        //GlobalData.AddTextToLogTab($"SignalCreate.Start {Symbol.Name} {Interval.Name} {Side}");
         // Eenmalig de indicators klaarzetten
         if (Prepare(candleIntervalOpenTime))
         {
