@@ -79,9 +79,9 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
 
             WriteCell(sheet, column++, row, candle.OpenTime);
             if (attention)
-                WriteCell(sheet, column++, row, candle.DateLocal, CellStyleDate);
-            else
                 WriteCell(sheet, column++, row, candle.DateLocal, CellStyleDateRed);
+            else
+                WriteCell(sheet, column++, row, candle.DateLocal, CellStyleDate);
             WriteCell(sheet, column++, row, candle.DateLocal.AddSeconds(symbolInterval.Interval?.Duration ?? 0), CellStyleDate);
             WriteCell(sheet, column++, row, candle.Open, CellStyleDecimalNormal);
             WriteCell(sheet, column++, row, candle.High, CellStyleDecimalNormal);
