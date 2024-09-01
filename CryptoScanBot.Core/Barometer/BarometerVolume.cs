@@ -1,7 +1,8 @@
 ﻿namespace CryptoScanBot.Core.Barometer;
 
 // Old methods calculating the volume barometer
-// This is still interesting (if we can get it to work properly without killing cpu)
+// This is still interesting (if we can get it to work properly without killing the cpu)
+
 internal class BarometerVolume
 {
     //private decimal CheckVolume(CryptoSymbol symbol, CryptoInterval interval, long unixDate)

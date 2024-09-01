@@ -61,9 +61,9 @@ public class BarometerTools
     private static void CalculateBarometerInternal(CryptoSymbol bmSymbol, CryptoInterval interval, CryptoQuoteData quoteData, CalcBarometerMethod calcBarometerMethod, bool priceBarometer)
     {
         //if (priceBarometer)
-        //    GlobalData.AddTextToLogTab($"Calculating price barometer chart {quoteData.Name}");
+        //    GlobalData.AddTextToLogTab($"Calculating price barometer chart {quoteData.Name} {interval.Name}");
         //else
-        //    GlobalData.AddTextToLogTab($"Calculating volume barometer chart {quoteData.Name}");
+        //    GlobalData.AddTextToLogTab($"Calculating volume barometer chart {quoteData.Name} {interval.Name}");
 
         CryptoSymbolInterval symbolInterval = bmSymbol.GetSymbolInterval(interval.IntervalPeriod);
         SortedList<long, CryptoCandle> candles = symbolInterval.CandleList;
