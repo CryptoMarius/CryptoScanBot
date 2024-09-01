@@ -13,11 +13,6 @@ using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 
-using Dapper.Contrib.Extensions;
-
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-
 namespace CryptoScanBot.Core.Exchange.Binance.Spot;
 
 
@@ -143,54 +138,6 @@ public class Api : ExchangeBase
 
 
 #if TRADEBOT
-
-    // Converteer de orderstatus van Exchange naar "intern"
-    public static CryptoOrderType LocalOrderType(SpotOrderType orderType)
-    {
-        CryptoOrderType localOrderType = orderType switch
-        {
-            SpotOrderType.Market => CryptoOrderType.Market,
-            SpotOrderType.Limit => CryptoOrderType.Limit,
-            SpotOrderType.StopLoss => CryptoOrderType.StopLimit,
-            SpotOrderType.StopLossLimit => CryptoOrderType.Oco, // negatief gevuld (denk ik)
-            SpotOrderType.LimitMaker => CryptoOrderType.Oco, // postief gevuld
-            _ => throw new Exception("Niet ondersteunde ordertype " + orderType.ToString()),
-        };
-
-        return localOrderType;
-    }
-
-    // Converteer de orderstatus van Exchange naar "intern"
-    public static CryptoOrderSide LocalOrderSide(OrderSide orderSide)
-    {
-        CryptoOrderSide localOrderSide = orderSide switch
-        {
-            OrderSide.Buy => CryptoOrderSide.Buy,
-            OrderSide.Sell => CryptoOrderSide.Sell,
-            _ => throw new Exception("Niet ondersteunde orderside " + orderSide.ToString()),
-        };
-
-        return localOrderSide;
-    }
-
-
-    // Converteer de orderstatus van Exchange naar "intern"
-    public static CryptoOrderStatus LocalOrderStatus(OrderStatus orderStatus)
-    {
-        CryptoOrderStatus localOrderStatus = orderStatus switch
-        {
-            OrderStatus.New => CryptoOrderStatus.New,
-            OrderStatus.Filled => CryptoOrderStatus.Filled,
-            OrderStatus.PartiallyFilled => CryptoOrderStatus.PartiallyFilled,
-            OrderStatus.Expired => CryptoOrderStatus.Expired,
-            OrderStatus.Canceled => CryptoOrderStatus.Canceled,
-            _ => throw new Exception("Niet ondersteunde orderstatus " + orderStatus.ToString()),
-        };
-
-        return localOrderStatus;
-    }
-
-
     //public override async Task<(bool succes, TradeParams tradeParams)> BuyOrSell(CryptoDatabase database,
     //    CryptoTradeAccount tradeAccount, CryptoSymbol symbol, DateTime currentDate,
     //    CryptoOrderType orderType, CryptoOrderSide orderSide,

@@ -109,52 +109,6 @@ public class Api : ExchangeBase
 
 
 #if TRADEBOT
-    // Converteer de orderstatus van Exchange naar "intern"
-    public static CryptoOrderType LocalOrderType(OrderType orderType)
-    {
-        CryptoOrderType localOrderType = orderType switch
-        {
-            OrderType.Market => CryptoOrderType.Market,
-            OrderType.Limit => CryptoOrderType.Limit,
-            OrderType.LimitMaker => CryptoOrderType.StopLimit, /// ????????????????????????????????????????????????
-            _ => throw new Exception("Niet ondersteunde ordertype"),
-        };
-
-        return localOrderType;
-    }
-
-    // Converteer de orderstatus van Exchange naar "intern"
-    public static CryptoOrderSide LocalOrderSide(OrderSide orderSide)
-    {
-        CryptoOrderSide localOrderSide = orderSide switch
-        {
-            OrderSide.Buy => CryptoOrderSide.Buy,
-            OrderSide.Sell => CryptoOrderSide.Sell,
-            _ => throw new Exception("Niet ondersteunde orderside"),
-        };
-
-        return localOrderSide;
-    }
-
-
-    // Converteer de orderstatus van Exchange naar "intern"
-    public static CryptoOrderStatus LocalOrderStatus(Bybit.Net.Enums.V5.OrderStatus orderStatus)
-    {
-        CryptoOrderStatus localOrderStatus = orderStatus switch
-        {
-            Bybit.Net.Enums.V5.OrderStatus.New => CryptoOrderStatus.New,
-            Bybit.Net.Enums.V5.OrderStatus.Filled => CryptoOrderStatus.Filled,
-            Bybit.Net.Enums.V5.OrderStatus.PartiallyFilled => CryptoOrderStatus.PartiallyFilled,
-            Bybit.Net.Enums.V5.OrderStatus.PartiallyFilledCanceled => CryptoOrderStatus.PartiallyAndClosed, // niet alles kon omgezet worden, iets minder gekregen
-            //Bybit.Net.Enums.V5.OrderStatus.Expired => CryptoOrderStatus.Expired,
-            Bybit.Net.Enums.V5.OrderStatus.Cancelled => CryptoOrderStatus.Canceled,
-            _ => throw new Exception("Niet ondersteunde orderstatus"),
-        };
-
-        return localOrderStatus;
-    }
-
-
     public override async Task<(bool result, TradeParams? tradeParams)> PlaceOrder(CryptoDatabase database,
         CryptoPosition position, CryptoPositionPart part, 
         DateTime currentDate, CryptoOrderType orderType, CryptoOrderSide orderSide,

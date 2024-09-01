@@ -3,6 +3,7 @@ using Bybit.Net.Enums;
 using Bybit.Net.Objects.Models.V5;
 
 using CryptoScanBot.Core.Context;
+using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 
@@ -14,6 +15,49 @@ namespace CryptoScanBot.Core.Exchange.BybitApi.Futures;
 
 public class Order
 {
+    // Converteer de orderstatus van Exchange naar "intern"
+    public static CryptoOrderType LocalOrderType(OrderType orderType)
+    {
+        CryptoOrderType localOrderType = orderType switch
+        {
+            OrderType.Market => CryptoOrderType.Market,
+            OrderType.Limit => CryptoOrderType.Limit,
+            OrderType.LimitMaker => CryptoOrderType.StopLimit, /// ????????????????????????????????????????????????
+            _ => throw new Exception("Niet ondersteunde ordertype"),
+        };
+
+        return localOrderType;
+    }
+
+    // Converteer de orderstatus van Exchange naar "intern"
+    public static CryptoOrderSide LocalOrderSide(OrderSide orderSide)
+    {
+        CryptoOrderSide localOrderSide = orderSide switch
+        {
+            OrderSide.Buy => CryptoOrderSide.Buy,
+            OrderSide.Sell => CryptoOrderSide.Sell,
+            _ => throw new Exception("Niet ondersteunde orderside"),
+        };
+
+        return localOrderSide;
+    }
+
+
+    // Converteer de orderstatus van Exchange naar "intern"
+    public static CryptoOrderStatus LocalOrderStatus(Bybit.Net.Enums.V5.OrderStatus orderStatus)
+    {
+        CryptoOrderStatus localOrderStatus = orderStatus switch
+        {
+            Bybit.Net.Enums.V5.OrderStatus.New => CryptoOrderStatus.New,
+            Bybit.Net.Enums.V5.OrderStatus.Filled => CryptoOrderStatus.Filled,
+            Bybit.Net.Enums.V5.OrderStatus.PartiallyFilled => CryptoOrderStatus.PartiallyFilled,
+            //Bybit.Net.Enums.V5.OrderStatus.Expired => CryptoOrderStatus.Expired,
+            Bybit.Net.Enums.V5.OrderStatus.Cancelled => CryptoOrderStatus.Canceled,
+            _ => throw new Exception("Niet ondersteunde orderstatus"),
+        };
+
+        return localOrderStatus;
+    }
 
     public static void PickupOrder(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoOrder order, Bybit.Net.Objects.Models.V5.BybitOrderUpdate item)
     {
@@ -28,9 +72,9 @@ public class Order
         order.SymbolId = symbol.Id;
 
         order.OrderId = item.OrderId;
-        order.Type = Api.LocalOrderType(item.OrderType);
-        order.Side = Api.LocalOrderSide(item.Side);
-        order.Status = Api.LocalOrderStatus(item.Status);
+        order.Type = LocalOrderType(item.OrderType);
+        order.Side = LocalOrderSide(item.Side);
+        order.Status = LocalOrderStatus(item.Status);
 
         order.Price = item.Price ?? 0;
         order.Quantity = item.Quantity;

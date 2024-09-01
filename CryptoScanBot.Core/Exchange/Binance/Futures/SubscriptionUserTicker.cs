@@ -65,7 +65,7 @@ public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscript
                             symbol,
                             //Api.LocalOrderType(data.Data.UpdateData.Type), 
                             //Api.LocalOrderSide(data.Data.UpdateData.Side), 
-                            Api.LocalOrderStatus(data.Data.UpdateData.Status),
+                            Order.LocalOrderStatus(data.Data.UpdateData.Status),
                             orderTemp));
                     }
                 }

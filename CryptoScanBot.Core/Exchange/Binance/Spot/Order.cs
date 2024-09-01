@@ -22,6 +22,53 @@ namespace CryptoScanBot.Core.Exchange.Binance.Spot;
 
 public class Order
 {
+    // Converteer de orderstatus van Exchange naar "intern"
+    public static CryptoOrderType LocalOrderType(SpotOrderType orderType)
+    {
+        CryptoOrderType localOrderType = orderType switch
+        {
+            SpotOrderType.Market => CryptoOrderType.Market,
+            SpotOrderType.Limit => CryptoOrderType.Limit,
+            SpotOrderType.StopLoss => CryptoOrderType.StopLimit,
+            SpotOrderType.StopLossLimit => CryptoOrderType.Oco, // negatief gevuld (denk ik)
+            SpotOrderType.LimitMaker => CryptoOrderType.Oco, // postief gevuld
+            _ => throw new Exception("Niet ondersteunde ordertype " + orderType.ToString()),
+        };
+
+        return localOrderType;
+    }
+
+    // Converteer de orderstatus van Exchange naar "intern"
+    public static CryptoOrderSide LocalOrderSide(OrderSide orderSide)
+    {
+        CryptoOrderSide localOrderSide = orderSide switch
+        {
+            OrderSide.Buy => CryptoOrderSide.Buy,
+            OrderSide.Sell => CryptoOrderSide.Sell,
+            _ => throw new Exception("Niet ondersteunde orderside " + orderSide.ToString()),
+        };
+
+        return localOrderSide;
+    }
+
+
+    // Converteer de orderstatus van Exchange naar "intern"
+    public static CryptoOrderStatus LocalOrderStatus(OrderStatus orderStatus)
+    {
+        CryptoOrderStatus localOrderStatus = orderStatus switch
+        {
+            OrderStatus.New => CryptoOrderStatus.New,
+            OrderStatus.Filled => CryptoOrderStatus.Filled,
+            OrderStatus.PartiallyFilled => CryptoOrderStatus.PartiallyFilled,
+            OrderStatus.Expired => CryptoOrderStatus.Expired,
+            OrderStatus.Canceled => CryptoOrderStatus.Canceled,
+            _ => throw new Exception("Niet ondersteunde orderstatus " + orderStatus.ToString()),
+        };
+
+        return localOrderStatus;
+    }
+
+
     public static void PickupOrder(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoOrder order, BinanceStreamOrderUpdate item)
     {
         order.CreateTime = item.CreateTime;
@@ -35,9 +82,9 @@ public class Order
         order.SymbolId = symbol.Id;
 
         order.OrderId = item.Id.ToString();
-        order.Type = Api.LocalOrderType(item.Type);
-        order.Side = Api.LocalOrderSide(item.Side);
-        order.Status = Api.LocalOrderStatus(item.Status);
+        order.Type = LocalOrderType(item.Type);
+        order.Side = LocalOrderSide(item.Side);
+        order.Status = LocalOrderStatus(item.Status);
 
         order.Price = item.Price;
         order.Quantity = item.Quantity;
