@@ -46,15 +46,15 @@ public class Interval
         // candles from a lower timeframe so we can calculate the candles.
         foreach (CryptoInterval interval in GlobalData.IntervalList)
         {
-            CryptoInterval? loopInterval = interval;
-            while (GetExchangeInterval(loopInterval) == null)
+            CryptoInterval? lowerInterval = interval;
+            while (GetExchangeInterval(lowerInterval) == null)
             {
                 // Retrieve more candles from a lower timeframe
-                loopInterval = loopInterval.ConstructFrom;
+                lowerInterval = lowerInterval.ConstructFrom;
 
                 // Extend if we need more (because of the interval nog being supported on the exchange)
-                long startFromUnixTime = CandleIndicatorData.GetCandleFetchStart(symbol, loopInterval!, fetchEndDate);
-                fetchFrom[(int)loopInterval!.IntervalPeriod] = startFromUnixTime;
+                long startFromUnixTime = CandleIndicatorData.GetCandleFetchStart(symbol, lowerInterval!, fetchEndDate);
+                fetchFrom[(int)lowerInterval!.IntervalPeriod] = startFromUnixTime;
             }
         }
 

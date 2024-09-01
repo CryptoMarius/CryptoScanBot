@@ -24,7 +24,7 @@ public class Interval
             CryptoIntervalPeriod.interval8h => KlineInterval.EightHours,
             CryptoIntervalPeriod.interval12h => KlineInterval.TwelveHours,
             CryptoIntervalPeriod.interval1d => KlineInterval.OneDay,
-            _ => null, 
+            _ => null,
         };
     }
 
@@ -35,15 +35,14 @@ public class Interval
     /// </summary>
     public static long[] DetermineFetchStartDate(CryptoSymbol symbol, long fetchEndUnix)
     {
+        // TODO: Find a better place, problem is the method "Interval.GetExchangeInterval" which is exchange specific
         DateTime fetchEndDate = CandleTools.GetUnixDate(fetchEndUnix);
 
-        long[] fetchFrom = new long[Enum.GetNames(typeof(CryptoIntervalPeriod)).Length];
-
-
         // Determine the maximum startdate per interval
+        long[] fetchFrom = new long[Enum.GetNames(typeof(CryptoIntervalPeriod)).Length];
         foreach (CryptoInterval interval in GlobalData.IntervalList)
         {
-            // Calculate date what we need for the calculation of indicators (and markettrend)
+            // Calculate date what we need for the (full) calculation of the indicators (and markettrend)
             long startFromUnixTime = CandleIndicatorData.GetCandleFetchStart(symbol, interval, fetchEndDate);
             fetchFrom[(int)interval.IntervalPeriod] = startFromUnixTime;
         }
@@ -53,15 +52,15 @@ public class Interval
         // candles from a lower timeframe so we can calculate the candles.
         foreach (CryptoInterval interval in GlobalData.IntervalList)
         {
-            CryptoInterval? loopInterval = interval;
-            while (GetExchangeInterval(loopInterval) == null)
+            CryptoInterval? lowerInterval = interval;
+            while (GetExchangeInterval(lowerInterval) == null)
             {
                 // Retrieve more candles from a lower timeframe
-                loopInterval = loopInterval.ConstructFrom;
+                lowerInterval = lowerInterval.ConstructFrom;
 
-                // Calculate date what we need for the calculation of indicators (and markettrend)
-                long startFromUnixTime = CandleIndicatorData.GetCandleFetchStart(symbol, loopInterval!, fetchEndDate);
-                fetchFrom[(int)loopInterval!.IntervalPeriod] = startFromUnixTime;
+                // Extend if we need more (because of the interval nog being supported on the exchange)
+                long startFromUnixTime = CandleIndicatorData.GetCandleFetchStart(symbol, lowerInterval!, fetchEndDate);
+                fetchFrom[(int)lowerInterval!.IntervalPeriod] = startFromUnixTime;
             }
         }
 
@@ -73,6 +72,7 @@ public class Interval
             if (symbolInterval.LastCandleSynchronized.HasValue)
             {
                 long alreadyFetched = (long)symbolInterval.LastCandleSynchronized;
+                // Huray, retrieve less candles
                 if (alreadyFetched > fetchFrom[(int)interval.IntervalPeriod])
                     fetchFrom[(int)interval.IntervalPeriod] = alreadyFetched;
             }
