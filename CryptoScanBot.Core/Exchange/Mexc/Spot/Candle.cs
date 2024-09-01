@@ -28,20 +28,22 @@ public class Candle
         LimitRate.WaitForFairWeight(1);
         string prefix = $"{ExchangeBase.ExchangeOptions.ExchangeName} {symbol.Name} {interval!.Name}";
 
-        // This exchange is alway's returning the last 1000 candles (not what we asked, but voila)
+
+        // Fetch candles, sorting is not guaranteed (its even recersed on bybit)
         DateTime dateStart = CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized);
         while (true)
         {
-            var result = await client.SpotApi.ExchangeData.GetKlinesAsync(symbol.Name, (KlineInterval)exchangeInterval, startTime: dateStart, limit: 1000);
+            DateTime dateEnd = dateStart.AddSeconds(1000 * symbolInterval.Interval.Duration);  // To create a valid date period
+            var result = await client.SpotApi.ExchangeData.GetKlinesAsync(symbol.Name, (KlineInterval)exchangeInterval, startTime: dateStart, endTime: dateEnd, limit: 1000);
+            //GlobalData.AddTextToLogTab($"Debug: {symbol.Name} {interval.Name} volume={symbol.Volume} start={dateStart} end={dateEnd} url={result.RequestUrl}");
             if (!result.Success)
             {
                 // This is based on the kucoin error number,, does Mexc have an error for overloading the exchange as wel?
-                // We doen het gewoon over (dat is tenminste het advies)
                 // 13-07-2023 14:08:00 AOA-BTC 30m error getting klines 429: Too Many Requests
-                if (result.Error?.Code == 429)
+                if (result.Error?.Code == 429) // not sure if this error exists on Mexc? Copied?
                 {
                     GlobalData.AddTextToLogTab($"{prefix} delay needed for weight: (because of rate limits)");
-                    Thread.Sleep(10000);
+                    Thread.Sleep(10000); // We just retry after a delay
                     continue;
                 }
                 // Might do something better than this
@@ -57,37 +59,28 @@ public class Candle
                 return 0;
             }
 
-            // Remember
+            // Remember for reporting
             long? startFetchDate = symbolInterval.LastCandleSynchronized;
 
             Monitor.Enter(symbol.CandleList);
             try
             {
                 long last = long.MinValue;
-                // Combine candles, calculating other interval's
                 foreach (var kline in result.Data)
                 {
-                    // Combine candles, calculating other interval's
+                    // Add candle & overwriting all previous data
                     CryptoCandle candle = CandleTools.HandleFinalCandleData(symbol, interval, kline.OpenTime,
                         kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.QuoteVolume, false);
 
                     //GlobalData.AddTextToLogTab("Debug: Fetched candle " + symbol.Name + " " + interval.Name + " " + candle.DateLocal);
-
-                    // Onthoud de laatste candle, t/m die datum is alles binnen gehaald.
-                    // NB: De candle volgorde is niet gegarandeerd (op bybit zelfs omgedraaid)
+                    // Remember the last candle
+                    // We assume we have fetched all candles up to this point in time
+                    // (FYI: Sorting is not guaranteed (its even recersed on bybit))
                     if (candle.OpenTime > last)
-                        last = candle.OpenTime + interval.Duration; // new (saves 1 candle)
+                        last = candle.OpenTime;
                 }
+                symbolInterval.LastCandleSynchronized = last + interval.Duration; // For the next session && the + saves retrieving 1 candle)
 
-                // For the next session
-                if (last > long.MinValue)
-                {
-                    symbolInterval.LastCandleSynchronized = last;
-                    // Alternatief (maar als er gaten in de candles zijn geeft dit problemen, endless loops)
-                    //CandleTools.UpdateCandleFetched(symbol, interval);
-                }
-
-                //SaveInformation(symbol, result.Data.List);
 #if MEXCDEBUG
                 // Debug, wat je al niet moet doen voor een exchange...
                 Interlocked.Increment(ref tickerIndex);
@@ -203,6 +196,8 @@ public class Candle
                     }
                 }
 
+                //GlobalData.AddTextToLogTab("Debug: LastSynchronized " + symbol.Name + " " + interval.Name + " " + CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized).ToLocalTime());
+
             }
             finally
             {
@@ -239,7 +234,7 @@ public class Candle
 
                 if (symbol.ExchangeId == GlobalData.Settings.General.ExchangeId)
                 {
-                    Interval.DetermineFetchStartDate(symbol, fetchEndUnix);
+                    Interval.DetermineFetchStartDate(symbol, fetchEndUnix); // corrects the symbolInterval.LastCandleSynchronized
                     await FetchCandlesInternal(client, symbol, fetchEndUnix);
                 }
             }
