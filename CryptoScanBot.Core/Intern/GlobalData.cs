@@ -338,27 +338,8 @@ static public class GlobalData
         // Test with limits anount of symbols for debugging purposes
         if (
             symbol.Name.Equals("BTCUSDT") ||
-          //  symbol.Name.Equals("BNBUSDT") ||
-          //symbol.Name.Equals("ETHUSDT") ||
-          //symbol.Name.Equals("XRPUSDT") ||
-          //symbol.Name.Equals("ADAUSDT") ||
-          //  symbol.Name.Equals("AAVE3SUSDT") ||
-          //  symbol.Name.Equals("DASHUSDT") ||
-          //symbol.Name.Equals("ADAUSDT") ||
-          //symbol.Name.Equals("WLDUSDT") ||
-          //symbol.Name.Equals("STORJUSDT") ||
-          symbol.Name.Equals("CRVETH") ||
-          symbol.Name.Equals("AEETH") ||
-          symbol.Name.Equals("SENSOETH") ||
-          symbol.Name.Equals("DEGOETH") ||
-
-
-
-          symbol.Name.Equals("$BMPBTC") ||
-          symbol.Name.Equals("$BMPETH") ||
-          symbol.Name.Equals("$BMPUSDT") ||
-          symbol.Name.Equals("$BMPUSDC") ||
-          symbol.Name.Equals("$BMPTUSD")
+            symbol.Name.Equals("TRXUSDT") ||
+            symbol.Name.StartsWith("$BMP")
           )
 #endif
 
