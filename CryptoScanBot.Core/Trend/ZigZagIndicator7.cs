@@ -70,7 +70,10 @@ public class ZigZagIndicator7(SortedList<long, CryptoCandle> candleList, bool us
                 if (Previous.PointType == 'L' && lowFromLastDepth <= Previous.Value)
                 {
                     ZigZagList.Remove(Previous); // repeated low, remove last zigzag point
-                    Previous = ZigZagList.LastOrDefault();
+                    if (ZigZagList.Count > 0)
+                        Previous = ZigZagList.Last();
+                    else
+                        Previous = null;
                 }
                 else if (Previous.PointType == 'L' && lowFromLastDepth > Previous.Value)
                     return; // repeated low, previous was lower
@@ -101,7 +104,10 @@ public class ZigZagIndicator7(SortedList<long, CryptoCandle> candleList, bool us
                 if (Previous.PointType == 'H' && highFromLastDepth >= Previous.Value)
                 {
                     ZigZagList.Remove(Previous); // repeated high, remove the last zigzag point
-                    Previous = ZigZagList.LastOrDefault();
+                    if (ZigZagList.Count > 0)
+                        Previous = ZigZagList.Last();
+                    else
+                        Previous = null;
                 }
                 else if (Previous.PointType == 'H' && highFromLastDepth < Previous.Value)
                     return; // repeated high, previous was higher
