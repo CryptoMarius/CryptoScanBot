@@ -1,10 +1,9 @@
 ﻿using System.Text;
-
 using CryptoScanBot.Core.Barometer;
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
-using CryptoScanBot.Core.Trend;
 using Dapper;
 
 using Telegram.Bot;
@@ -12,7 +11,7 @@ using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
-namespace CryptoScanBot.Core.Intern;
+namespace CryptoScanBot.Core.Telegram;
 
 
 // Talk to BotFather on Telegram
@@ -471,68 +470,6 @@ public class ThreadTelegramBotInstance
     }
 
 
-    private static void ShowTrend(string arguments, StringBuilder stringbuilder)
-    {
-        string symbolName = "";
-        string[] parameters = arguments.Split(' ');
-        if (parameters.Length > 1)
-            symbolName = parameters[1].Trim().ToUpper();
-        stringbuilder.AppendLine($"Trend {symbolName}");
-
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange? exchange))
-        {
-            if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
-            {
-                MarketTrend.CalculateMarketTrend(GlobalData.ActiveAccount, symbol, 0, 0);
-
-                AccountSymbolData accountSymbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
-                foreach (AccountSymbolIntervalData accountSymbolIntervalData in accountSymbolData.SymbolTrendDataList)
-                {
-                    string s;
-                    if (accountSymbolIntervalData.TrendIndicator == CryptoTrendIndicator.Bullish)
-                        s = "trend=bullish";
-                    else if (accountSymbolIntervalData.TrendIndicator == CryptoTrendIndicator.Bearish)
-                        s = "trend=bearish";
-                    else
-                        s = "trend=sideway's?";
-                    stringbuilder.AppendLine($"{accountSymbolIntervalData.Interval.Name} {s}");
-                }
-
-                float marketTrend = (float)accountSymbolData.MarketTrendPercentage!;
-                if (marketTrend < 0)
-                    stringbuilder.AppendLine($"Symbol trend {marketTrend:N2}% bearish");
-                else if (marketTrend > 0)
-                    stringbuilder.AppendLine($"Symbol trend {marketTrend:N2}% bullish");
-                else
-                    stringbuilder.AppendLine($"Symbol trend {marketTrend:N2}% unknown");
-            }
-        }
-    }
-
-    private static void ShowBarometer(string arguments, StringBuilder stringbuilder)
-    {
-        //string text = "\\\Bla /Bla , Bla, hello 'h'";
-        string quote = "USDT";
-        string[] parameters = arguments.Split(' ');
-        if (parameters.Length > 1)
-            quote = parameters[1].Trim().ToUpper();
-
-        stringbuilder.AppendLine(string.Format("Barometer {0}", quote));
-
-        // Even een quick fix voor de barometer
-        if (GlobalData.Settings.QuoteCoins.TryGetValue(quote, out CryptoQuoteData? quoteData))
-        {
-            for (CryptoIntervalPeriod intervalPeriod = CryptoIntervalPeriod.interval5m; intervalPeriod <= CryptoIntervalPeriod.interval1d; intervalPeriod++)
-            {
-                if (intervalPeriod == CryptoIntervalPeriod.interval5m || intervalPeriod == CryptoIntervalPeriod.interval15m || intervalPeriod == CryptoIntervalPeriod.interval30m ||
-                     intervalPeriod == CryptoIntervalPeriod.interval1h || intervalPeriod == CryptoIntervalPeriod.interval4h || intervalPeriod == CryptoIntervalPeriod.interval1d)
-                {
-                    BarometerData? barometerData = GlobalData.ActiveAccount!.Data.GetBarometer(quoteData.Name, intervalPeriod);
-                    stringbuilder.AppendLine(string.Format("{0} {1:N2}", intervalPeriod, barometerData.PriceBarometer));
-                }
-            }
-        }
-    }
 
 #if TRADEBOT
     private static void CommandSlots(string arguments, StringBuilder stringbuilder)
@@ -600,109 +537,6 @@ public class ThreadTelegramBotInstance
         stringbuilder.AppendLine($"{sumPositions} positions, invested {sumInvested:N2}, profits {sumProfit:N2}, {percentage:N2}%");
     }
 #endif
-
-    private static void ShowStatus(string arguments, StringBuilder stringbuilder)
-    {
-        if (arguments.Length != 1000)
-            stringbuilder.AppendLine("not supported");
-
-        //Bot status
-        if (GlobalData.Settings.Trading.Active)
-            stringbuilder.AppendLine($"Trade bot is active! (slots long={GlobalData.Settings.Trading.SlotsMaximalLong}, slots short={GlobalData.Settings.Trading.SlotsMaximalShort})");
-        else
-            stringbuilder.AppendLine("Trade bot is not active!");
-
-#if BALANCING
-        // Balance bot status
-        if (GlobalData.Settings.BalanceBot.Active)
-            stringbuilder.AppendLine("Balance bot is active!");
-        else
-            stringbuilder.AppendLine("Balance bot is not active!");
-
-        // Balance bot advice status
-        if (GlobalData.Settings.BalanceBot.ShowAdviceOnly)
-            stringbuilder.AppendLine("Balance bot showing advice!");
-#endif
-
-        // Create signals
-        if (GlobalData.Settings.Signal.Active)
-            stringbuilder.AppendLine("Signal bot is active!");
-        else
-            stringbuilder.AppendLine("Signal bot is not active!");
-
-        //// Create sound
-        //if (GlobalData.Settings.Signal.SoundSignalNotification)
-        //    stringbuilder.AppendLine("Signal sound is active!");
-        //else
-        //    stringbuilder.AppendLine("Signal sound is not active!");
-
-        // Trade sound
-        if (GlobalData.Settings.General.SoundTradeNotification)
-            stringbuilder.AppendLine("Trade sound is active!");
-        else
-            stringbuilder.AppendLine("Trade sound is not active!");
-    }
-
-
-    private static void ShowCoins(string arguments, StringBuilder stringbuilder)
-    {
-        //string value;
-        //string[] parameters = arguments.Split(' ');
-        //if (parameters.Length >= 2)
-        //    value = parameters[1];
-        //else
-        //    value = GlobalData.Settings.ShowSymbolInformation.ToList();
-        //        //"BTCUSDT,ETHUSDT,PAXGUSDT,BNBUSDT";
-        //parameters = value.Split(',');
-        var parameters = GlobalData.Settings.ShowSymbolInformation;
-
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange? exchange))
-        {
-            foreach (string symbolName in parameters)
-            {
-                if (exchange.SymbolListName.TryGetValue(symbolName + "USDT", out CryptoSymbol? symbol))
-                {
-                    if (symbol.LastPrice.HasValue)
-                    {
-                        string text = string.Format("{0} waarde {1:N2}", symbolName, (decimal)symbol.LastPrice);
-                        stringbuilder.AppendLine(text);
-                    }
-                }
-
-            }
-        }
-    }
-
-
-    private static void ShowHelp(StringBuilder stringBuilder)
-    {
-        stringBuilder.AppendLine("status        show status bots");
-
-#if TRADEBOT
-        stringBuilder.AppendLine("start         start trade bot");
-        stringBuilder.AppendLine("stop          stop trade bot");
-        stringBuilder.AppendLine("positions     show positions trade bot");
-        stringBuilder.AppendLine("profits       show profits trade bot (today)");
-#endif
-#if BALANCING
-        stringBuilder.AppendLine("balancestart  start balancing bot");
-        stringBuilder.AppendLine("balancestop   stop balancing bot");
-        stringBuilder.AppendLine("advicestart   start advice balancing bot");
-        stringBuilder.AppendLine("advicestop    stop advice balancing bot");
-        stringBuilder.AppendLine("balance       show balance overview");
-#endif
-
-        stringBuilder.AppendLine("signalstart   start signal bot");
-        stringBuilder.AppendLine("signalstop    stop signal bot");
-
-        stringBuilder.AppendLine("value         show value BTC,BNB and ETH"); // todo, de juiste basismunten tonen
-        stringBuilder.AppendLine("barometer     show barometer BTC/ETH/USDT"); // todo, de juiste basismunten tonen
-#if TRADEBOT
-        stringBuilder.AppendLine("assets        show asset overview");
-#endif
-        stringBuilder.AppendLine("chatid        ChatId configuratie");
-        stringBuilder.AppendLine("help          this help screen");
-    }
 
 
     public async Task ExecuteAsync(string token)
@@ -779,7 +613,7 @@ public class ThreadTelegramBotInstance
 #if TRADEBOT
                                         if (command == ".")
                                         {
-                                            ShowBarometer(arguments, stringBuilder);
+                                            TelegramShowBarometer.ShowBarometer(arguments, stringBuilder);
                                             stringBuilder.AppendLine();
                                             Helper.ShowPositions(stringBuilder);
                                             stringBuilder.AppendLine();
@@ -787,14 +621,14 @@ public class ThreadTelegramBotInstance
                                             stringBuilder.AppendLine();
                                             Helper.ShowAssets(GlobalData.ActiveAccount!, stringBuilder, out decimal _, out decimal _);
                                             stringBuilder.AppendLine();
-                                            ShowCoins(command, stringBuilder);
+                                            TelegramShowValue.ShowValue(command, stringBuilder);
                                         }
                                         else
 #endif
                                         if (command == "STATUS")
-                                            ShowStatus(command, stringBuilder);
+                                            TelegramShowStatus.ShowStatus(command, stringBuilder);
                                         else if (command == "VALUE")
-                                            ShowCoins(command, stringBuilder);
+                                            TelegramShowValue.ShowValue(command, stringBuilder);
 #if TRADEBOT
                                         else if (command == "POSITIONS")
                                             Helper.ShowPositions(stringBuilder);
@@ -824,7 +658,7 @@ public class ThreadTelegramBotInstance
                                             StopBot("command balancing", stringBuilder);
 #endif
                                         else if (command == "BAROMETER")
-                                            ShowBarometer(arguments, stringBuilder);
+                                            TelegramShowBarometer.ShowBarometer(arguments, stringBuilder);
 #if BALANCING
                                         else if (command == "BALANCE")
                                             stringBuilder.Append(BalanceSymbolsAlgoritm.LastOverviewMessage);
@@ -836,9 +670,9 @@ public class ThreadTelegramBotInstance
                                         }
 #endif
                                         else if (command == "TREND")
-                                            ShowTrend(arguments, stringBuilder);
+                                            TelegramShowTrend.ShowTrend(arguments, stringBuilder);
                                         else if (command == "HELP")
-                                            ShowHelp(stringBuilder);
+                                            TelegramShowHelp.ShowHelp(stringBuilder);
                                         else if (command == "CHATID")
                                             stringBuilder.AppendLine("ChatId: " + update.Message.Chat.Id.ToString());
                                         else stringBuilder.Append("Not a command..");
