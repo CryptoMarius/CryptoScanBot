@@ -71,7 +71,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                 if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
                 {
                     var tick = data.Data;
-                    string symbolName = data.Symbol!;
+                    string symbolName = tick.Symbol!.Replace("-", "");
                     if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
                     {
                         Monitor.Enter(symbol.CandleList);
@@ -92,7 +92,9 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                             candle.Low = kline.LowPrice;
                             candle.Close = kline.ClosePrice;
                             candle.Volume = kline.QuoteVolume;
-                            //ScannerLog.Logger.Trace($"candle update {candle.OhlcText(Symbol, interval, Symbol.PriceDisplayFormat, true, true)}");
+
+                            //if (symbol.Name == "GAMEUSDT") // debug?
+                            //    GlobalData.AddTextToLogTab($"candle update {candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true)}");
 
                             // Last price (because the Kucoin price-ticker is turned off completely)
                             if (!GlobalData.BackTest)
@@ -158,6 +160,11 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                                     nextCandle.Close = lastCandle.Close;
                                     nextCandle.Volume = 0; // no volume (flat candle)
                                     lastCandle = nextCandle;
+
+                                    // debug?
+                                    if (symbol.Name == "GAMEUSDT")
+                                        GlobalData.AddTextToLogTab($"candle prev added {nextCandle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true)}");
+
                                 }
                                 else break;
                             }
@@ -172,12 +179,16 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                                 tempList.Remove(candle.OpenTime);
                                 Interlocked.Increment(ref TickerCount);
                                 if (TickerCount > 999999999)
-                                    TickerCount = 0;
+                                    Interlocked.Exchange(ref TickerCount, 0);
+                                
 
                                 //ScannerLog.Logger.Trace($"kline ticker {topic} process");
                                 //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", topic, kline.Timestamp.ToLocalTime()));
                                 CandleTools.Process1mCandle(symbol, candle.Date, candle.Open, candle.High, candle.Low, candle.Close, candle.Volume, candle.IsDuplicated);
 
+                                // debug?
+                                if (symbol.Name == "GAMEUSDT")
+                                    GlobalData.AddTextToLogTab($"candle added {candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true)}");
 
                                 // Debug...
                                 //if (candle.IsDuplicated)

@@ -168,7 +168,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                                 tempList.Remove(candle.OpenTime);
                                 Interlocked.Increment(ref TickerCount);
                                 if (TickerCount > 999999999)
-                                    TickerCount = 0;
+                                    Interlocked.Exchange(ref TickerCount, 0);
 
                                 //ScannerLog.Logger.Trace($"kline ticker {topic} process");
                                 //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", topic, kline.Timestamp.ToLocalTime()));
