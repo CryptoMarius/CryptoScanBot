@@ -12,6 +12,7 @@ public abstract class SubscriptionTicker(ExchangeOptions exchangeOptions)
     public int TickerCount = 0;
     public int TickerCountLast = 0;
 
+    public bool NeedsRestart = false;
     public int ConnectionLostCount = 0;
     public bool ErrorDuringStartup = false;
 
@@ -36,6 +37,7 @@ public abstract class SubscriptionTicker(ExchangeOptions exchangeOptions)
             return;
         }
 
+        NeedsRestart = false;
         ConnectionLostCount = 0;
         ErrorDuringStartup = false;
         ScannerLog.Logger.Trace($"{TickerType} ticker for group {GroupName} starting");
@@ -64,6 +66,7 @@ public abstract class SubscriptionTicker(ExchangeOptions exchangeOptions)
             //socketClient = null;
 
             ConnectionLostCount++;
+            NeedsRestart = true;
             ErrorDuringStartup = true;
 
             ScannerLog.Logger.Trace($"{TickerType} ticker for group {GroupName} error {subscriptionResult?.Error?.Message} {SymbolOverview}");
