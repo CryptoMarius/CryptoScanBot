@@ -263,6 +263,8 @@ public class Ticker(ExchangeOptions exchangeOptions, Type userTickerItemType, Cr
 
     public virtual bool NeedsRestart()
     {
+        // this get called every 4 or 5 candles, if there was no activity in that period we will schedule a restart
+
         bool restart = false;
         foreach (var tickerGroup in TickerGroupList)
         {
