@@ -51,6 +51,7 @@ using CryptoScanBot.Core.Signal;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core;
 using CryptoScanBot.Core.Barometer;
+using CryptoScanBot.Core.Telegram;
 
 namespace CryptoScanBot;
 

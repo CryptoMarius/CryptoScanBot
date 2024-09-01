@@ -1,11 +1,11 @@
 ﻿using CryptoScanBot.Commands;
-using CryptoScanBot.Core;
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Emulator;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
+using CryptoScanBot.Core.Telegram;
 using CryptoScanBot.Core.Settings;
 using CryptoScanBot.Core.Trader;
 using CryptoScanBot.Intern;
@@ -399,8 +399,8 @@ public partial class FrmMain : Form
                 text = GlobalData.BackTestDateTime.ToLocalTime() + " " + text;
             else
                 text = DateTime.Now.ToLocalTime() + " " + text;
-            logQueue.Enqueue(text);
         }
+        logQueue.Enqueue(text);
     }
 
     private void TelegramHasChangedEvent(string text)

@@ -1,7 +1,7 @@
 ﻿using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Exchange;
-using CryptoScanBot.Core.Model;
+using CryptoScanBot.Core.Telegram;
 using CryptoScanBot.Core.Trader;
 
 namespace CryptoScanBot.Core.Intern;
