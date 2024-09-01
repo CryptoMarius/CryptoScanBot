@@ -380,12 +380,9 @@ public class CandleIndicatorData
             if (interval.IntervalPeriod == CryptoIntervalPeriod.interval1m)
                 startFetchUnix = CandleTools.GetUnixTime(utcNow, 60) - InitialCandleCountFetch;
             else
-                // de 0 was eerst een 10 (en later 49) en bedoeld om meldingen met terugwerkende kracht te berekenen bij de start
-                startFetchUnix = CandleTools.GetUnixTime(utcNow, 60) - ((49 + maxCandles) * interval.Duration) * 2;
+                // Eerst een 10 (en later 49, daarna 50) en was bedoeld om meldingen met terugwerkende kracht te berekenen bij de start (maar dat is nooit doorgegaan)
+                startFetchUnix = CandleTools.GetUnixTime(utcNow, 60) - ((50 + maxCandles) * interval.Duration) * 2;
             startFetchUnix -= startFetchUnix % interval.Duration;
-
-            // Lets extend that with 1 extra candle just in case...
-            //startFetchUnix -= interval.Duration;
         }
         //DateTime symbolfetchCandleDebug = CandleTools.GetUnixDate(startFetchUnix);  //debug
         return startFetchUnix;
