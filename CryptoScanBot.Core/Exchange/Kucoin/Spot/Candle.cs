@@ -33,8 +33,6 @@ public class Candle
         DateTime dateStart = CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized - 10 * interval.Duration);
         while (true)
         {
-            long dateNow = CandleTools.GetUnixTime(DateTime.UtcNow, 0);
-
 
             DateTime dateEnd = dateStart.AddSeconds(1500 * interval.Duration);
             var result = await client.SpotApi.ExchangeData.GetKlinesAsync(symbol.Base + '-' + symbol.Quote, (KlineInterval)exchangeInterval, dateStart, dateEnd);
@@ -76,22 +74,20 @@ public class Candle
                     CryptoCandle candle = CandleTools.HandleFinalCandleData(symbol, interval, kline.OpenTime,
                         kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.QuoteVolume, false);
 
-                    // Onthoud de laatste aangeleverde candle, t/m die datum is ten minste alles binnen gehaald
+                    //GlobalData.AddTextToLogTab("Debug: Fetched candle " + symbol.Name + " " + interval.Name + " " + candle.DateLocal);
+
+                    // Onthoud de laatste candle, t/m die datum is alles binnen gehaald.
+                    // NB: De candle volgorde is niet gegarandeerd (op bybit zelfs omgedraaid)
                     if (candle.OpenTime > last)
-                        last = candle.OpenTime + interval.Duration; // new (saves 1 candle)
+                        last = candle.OpenTime;
                 }
 
                 // For the next session
-                if (last > long.MinValue)
-                {
-                    symbolInterval.LastCandleSynchronized = last;
-                    // Alternatief (maar als er gaten in de candles zijn geeft dit problemen, endless loops)
-                    //CandleTools.UpdateCandleFetched(symbol, interval);
-                }
-
+                symbolInterval.LastCandleSynchronized = last + interval.Duration; // new (saves 1 candle)
+                //SaveInformation(symbol, result.Data.List);
 #if KUCOINDEBUG
                 // Debug, wat je al niet moet doen voor een exchange...
-                tickerIndex++;
+                Interlocked.Increment(ref tickerIndex);
                 long unix = CandleTools.GetUnixTime(DateTime.UtcNow, 0);
                 string filename = $@"{GlobalData.GetBaseDir()}\Kucoin Spot\Candles-{symbol.Name}-{interval.Name}-{unix}-#{tickerIndex}.json";
                 string text = System.Text.Json.JsonSerializer.Serialize(result, GlobalData.JsonSerializerIndented);
@@ -106,7 +102,7 @@ public class Candle
 
             CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
             SortedList<long, CryptoCandle> candles = symbolPeriod.CandleList;
-            string s = symbol.Exchange.Name + " " + symbol.Name + " " + interval.Name + " fetch from " + CandleTools.GetUnixDate(startFetchDate).ToLocalTime() + " UTC ,, " + CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized).ToLocalTime() + " UTC";
+            string s = symbol.Exchange.Name + " " + symbol.Name + " " + interval.Name + " fetch from " + CandleTools.GetUnixDate(startFetchDate).ToLocalTime() + " UTC .. " + CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized).ToLocalTime() + " UTC";
             GlobalData.AddTextToLogTab(s + " received: " + result.Data.Count() + " total: " + candles.Count.ToString());
             return result.Data.Count();
         }
@@ -203,6 +199,8 @@ public class Candle
                         CandleTools.UpdateCandleFetched(symbol, intervalHigherTimeFrame);
                     }
                 }
+
+                //GlobalData.AddTextToLogTab("Debug: LastSynchronized " + symbol.Name + " " + interval.Name + " " + CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized).ToLocalTime());
 
             }
             finally
