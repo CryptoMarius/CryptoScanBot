@@ -134,7 +134,7 @@ public class CryptoDataGridSymbol<T>(DataGridView grid, List<T> list, SortedList
             switch ((ColumnsForGrid)e.ColumnIndex)
             {
                 case ColumnsForGrid.Volume:
-                    if (symbol.Volume >= symbol.QuoteData.MinimalVolume)
+                    if (symbol.Volume >= symbol.QuoteData!.MinimalVolume)
                         foreColor = Color.Green;
                     else
                         foreColor = Color.Red;

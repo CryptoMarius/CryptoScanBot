@@ -46,7 +46,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
         DustValue,
     }
 
-    private System.Windows.Forms.Timer TimerRefreshInformation;
+    private System.Windows.Forms.Timer? TimerRefreshInformation = null;
 
 
     public override void InitializeCommands(ContextMenuStrip menuStrip)
@@ -191,7 +191,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
             ColumnsForGrid.Account => ObjectCompare.Compare(a.Account.AccountType, b.Account.AccountType),
             ColumnsForGrid.Exchange => ObjectCompare.Compare(a.Exchange.Name, b.Exchange.Name),
             ColumnsForGrid.Symbol => ObjectCompare.Compare(a.Symbol.Name, b.Symbol.Name),
-            ColumnsForGrid.Interval => ObjectCompare.Compare(a.Interval.IntervalPeriod, b.Interval.IntervalPeriod),
+            ColumnsForGrid.Interval => ObjectCompare.Compare(a.Interval!.IntervalPeriod, b.Interval!.IntervalPeriod),
             ColumnsForGrid.Strategy => ObjectCompare.Compare(a.StrategyText, b.StrategyText),
             ColumnsForGrid.Side => ObjectCompare.Compare(a.SideText, b.SideText),
             ColumnsForGrid.Status => ObjectCompare.Compare(a.Status, b.Status),
@@ -229,9 +229,9 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
             if (compareResult == 0)
             {
                 if (SortOrder == SortOrder.Ascending)
-                    compareResult = ObjectCompare.Compare(a.Interval.IntervalPeriod, b.Interval.IntervalPeriod);
+                    compareResult = ObjectCompare.Compare(a.Interval!.IntervalPeriod, b.Interval!.IntervalPeriod);
                 else
-                    compareResult = ObjectCompare.Compare(b.Interval.IntervalPeriod, a.Interval.IntervalPeriod);
+                    compareResult = ObjectCompare.Compare(b.Interval!.IntervalPeriod, a.Interval!.IntervalPeriod);
             }
         }
 
@@ -284,7 +284,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
                     e.Value = position.Symbol.Name;
                     break;
                 case ColumnsForGrid.Interval:
-                    e.Value = position.Interval.Name;
+                    e.Value = position.Interval!.Name;
                     break;
                 case ColumnsForGrid.Strategy:
                     e.Value = position.StrategyText;
@@ -296,13 +296,13 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
                     e.Value = position.Status.ToString();
                     break;
                 case ColumnsForGrid.Invested:
-                    e.Value = position.Invested.ToString(position.Symbol.QuoteData.DisplayFormat);
+                    e.Value = position.Invested.ToString(position.Symbol.QuoteData!.DisplayFormat);
                     break;
                 case ColumnsForGrid.Returned:
-                    e.Value = position.Returned.ToString(position.Symbol.QuoteData.DisplayFormat);
+                    e.Value = position.Returned.ToString(position.Symbol.QuoteData!.DisplayFormat);
                     break;
                 case ColumnsForGrid.Commission:
-                    e.Value = position.Commission.ToString(position.Symbol.QuoteData.DisplayFormat);
+                    e.Value = position.Commission.ToString(position.Symbol.QuoteData!.DisplayFormat);
                     break;
                 case ColumnsForGrid.BreakEven:
                     if (position.Status == CryptoPositionStatus.Waiting)
@@ -314,10 +314,10 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
                     e.Value = position.Quantity.ToString0(position.Symbol.QuantityDisplayFormat);
                     break;
                 case ColumnsForGrid.Open:
-                    e.Value = (position.Invested - position.Returned).ToString(position.Symbol.QuoteData.DisplayFormat);
+                    e.Value = (position.Invested - position.Returned).ToString(position.Symbol.QuoteData!.DisplayFormat);
                     break;
                 case ColumnsForGrid.Profit:
-                    e.Value = position.CurrentProfit().ToString(position.Symbol.QuoteData.DisplayFormat);
+                    e.Value = position.CurrentProfit().ToString(position.Symbol.QuoteData!.DisplayFormat);
                     break;
                 case ColumnsForGrid.Percentage:
                     e.Value = position.CurrentProfitPercentage().ToString("N2");
@@ -383,7 +383,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
             switch ((ColumnsForGrid)e.ColumnIndex)
             {
                 case ColumnsForGrid.Symbol: // symbol
-                    Color displayColor = position.Symbol.QuoteData.DisplayColor;
+                    Color displayColor = position.Symbol.QuoteData!.DisplayColor;
                     if (displayColor != Color.White)
                         backColor = displayColor;
                     break;
@@ -407,7 +407,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
                     break;
 
                 case ColumnsForGrid.Open: // Open value
-                    if (position.Invested - position.Returned > 7 * position.Symbol.QuoteData.EntryAmount) // just an indication how deep we are in a trade
+                    if (position.Invested - position.Returned > 7 * position.Symbol.QuoteData!.EntryAmount) // just an indication how deep we are in a trade
                         foreColor = Color.Red;
                     break;
 
@@ -520,49 +520,53 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
 
             //decimal adjust = GlobalData.Settings.Trading.DcaPercentage * step.Price / 100m;
 
-            // Corrigeer de prijs indien de koers ondertussen lager of hoger ligt
-            decimal price = (decimal)position.Symbol.LastPrice;
-            if (position.Side == CryptoTradeSide.Long)
+            if (position.Symbol.LastPrice.HasValue)
             {
-                //price = step.Price - adjust;
-                if (position.Symbol.LastPrice.HasValue && position.Symbol.LastPrice < price)
-                    price = (decimal)position.Symbol.LastPrice - position.Symbol.PriceTickSize;
-            }
-            else
-            {
-                //price = step.Price + adjust;
-                if (position.Symbol.LastPrice.HasValue && position.Symbol.LastPrice > price)
-                    price = (decimal)position.Symbol.LastPrice + position.Symbol.PriceTickSize;
-            }
+
+                // Corrigeer de prijs indien de koers ondertussen lager of hoger ligt
+                decimal price = (decimal)position.Symbol.LastPrice;
+                if (position.Side == CryptoTradeSide.Long)
+                {
+                    //price = step.Price - adjust;
+                    if (position.Symbol.LastPrice.HasValue && position.Symbol.LastPrice < price)
+                        price = (decimal)position.Symbol.LastPrice - position.Symbol.PriceTickSize;
+                }
+                else
+                {
+                    //price = step.Price + adjust;
+                    if (position.Symbol.LastPrice.HasValue && position.Symbol.LastPrice > price)
+                        price = (decimal)position.Symbol.LastPrice + position.Symbol.PriceTickSize;
+                }
 
 
-            // Zo laat mogelijk controleren vanwege extra calls naar de exchange
-            //var resultCheckAssets = await CheckApiAndAssetsAsync(position.TradeAccount);
-            //if (!resultCheckAssets.success)
-            //{
-            //    string text = $"{position.Symbol.Name} + DCA bijplaatsen op {price.ToString0(position.Symbol.PriceDisplayFormat)}";
-            //    GlobalData.AddTextToLogTab(text + " " + resultCheckAssets.reaction);
-            //    Symbol.ClearSignals();
-            //    return;
-            //}
+                // Zo laat mogelijk controleren vanwege extra calls naar de exchange
+                //var resultCheckAssets = await CheckApiAndAssetsAsync(position.TradeAccount);
+                //if (!resultCheckAssets.success)
+                //{
+                //    string text = $"{position.Symbol.Name} + DCA bijplaatsen op {price.ToString0(position.Symbol.PriceDisplayFormat)}";
+                //    GlobalData.AddTextToLogTab(text + " " + resultCheckAssets.reaction);
+                //    Symbol.ClearSignals();
+                //    return;
+                //}
 
 
-            // De positie uitbreiden nalv een nieuw signaal (de xe bijkoop wordt altijd een aparte DCA)
-            PositionTools.ExtendPosition(databaseThread, position, CryptoPartPurpose.Dca, position.Interval, position.Strategy,
-                CryptoEntryOrDcaStrategy.FixedPercentage, price, GlobalData.GetCurrentDateTime(position.Account), true);
-            GlobalData.AddTextToLogTab($"{position.Symbol.Name} handmatig een DCA toegevoegd aan positie {position.Id}");
+                // De positie uitbreiden nalv een nieuw signaal (de xe bijkoop wordt altijd een aparte DCA)
+                PositionTools.ExtendPosition(databaseThread, position, CryptoPartPurpose.Dca, position.Interval, position.Strategy,
+                    CryptoEntryOrDcaStrategy.FixedPercentage, price, GlobalData.GetCurrentDateTime(position.Account), true);
+                GlobalData.AddTextToLogTab($"{position.Symbol.Name} handmatig een DCA toegevoegd aan positie {position.Id}");
 
-            //FillItemOpen(position, item);
-            Grid.InvalidateRow(rowIndex);
+                //FillItemOpen(position, item);
+                Grid.InvalidateRow(rowIndex);
 
 
-            // Er is een 1m candle gearriveerd, acties adhv deze candle..
-            var symbolPeriod = position.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
-            if (symbolPeriod.CandleList.Count > 0)
-            {
-                var lastCandle1m = symbolPeriod.CandleList.Values.Last();
-                PositionMonitor positionMonitor = new(position.Account, position.Symbol, lastCandle1m);
-                await positionMonitor.HandlePosition(position);
+                // Er is een 1m candle gearriveerd, acties adhv deze candle..
+                var symbolPeriod = position.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
+                if (symbolPeriod.CandleList.Count > 0)
+                {
+                    var lastCandle1m = symbolPeriod.CandleList.Values.Last();
+                    PositionMonitor positionMonitor = new(position.Account, position.Symbol, lastCandle1m);
+                    await positionMonitor.HandlePosition(position);
+                }
             }
         }
 

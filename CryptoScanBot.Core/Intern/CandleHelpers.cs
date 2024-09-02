@@ -275,7 +275,7 @@ public static class Helper
         else
             value = Math.Min(candle.Open, candle.Close);
         double? band = candle.CandleData!.Sma20 - candle.CandleData.BollingerBandsDeviation;
-        if (value <= (decimal)band)
+        if (band.HasValue && value <= (decimal)band)
             return true;
         return false;
     }
@@ -290,7 +290,7 @@ public static class Helper
         else
             value = Math.Max(candle.Open, candle.Close);
         double? band = candle.CandleData!.Sma20 + candle.CandleData.BollingerBandsDeviation;
-        if (value >= (decimal)band)
+        if (band.HasValue && value >= (decimal)band)
             return true;
         return false;
     }
