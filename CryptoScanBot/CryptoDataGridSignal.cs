@@ -56,8 +56,8 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
 #endif
     }
 
-    private System.Windows.Forms.Timer TimerClearOldSignals;
-    private System.Windows.Forms.Timer TimerRefreshInformation;
+    private System.Windows.Forms.Timer? TimerClearOldSignals = null;
+    private System.Windows.Forms.Timer? TimerRefreshInformation = null;
 
 
     public override void InitializeCommands(ContextMenuStrip menuStrip)
@@ -421,7 +421,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                     break;
 #if TRADEBOT
                 case ColumnsForGrid.MinimumEntry:
-                    e.Value = signal.MinEntry.ToString(signal.Symbol.QuoteData.DisplayFormat);
+                    e.Value = signal.MinEntry.ToString(signal.Symbol.QuoteData!.DisplayFormat);
                     break;
 #endif
 #if DEBUG
@@ -493,7 +493,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                     {
                         if (!signal.IsInvalid)
                         {
-                            Color displayColor = signal.Symbol.QuoteData.DisplayColor;
+                            Color displayColor = signal.Symbol.QuoteData!.DisplayColor;
                             if (displayColor != Color.White)
                                 backColor = displayColor;
                         }
@@ -536,20 +536,23 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                     break;
                 case ColumnsForGrid.PriceChange:
                     {
-                        double x = signal.PriceDiff.Value;
-                        if (signal.Side == CryptoTradeSide.Long)
+                        if (signal.PriceDiff.HasValue)
                         {
-                            if (x > 0)
-                                foreColor = Color.Green;
-                            else if (x < 0)
-                                foreColor = Color.Red;
-                        }
-                        else
-                        {
-                            if (x < 0)
-                                foreColor = Color.Green;
-                            else if (x > 0)
-                                foreColor = Color.Red;
+                            double x = signal.PriceDiff!.Value;
+                            if (signal.Side == CryptoTradeSide.Long)
+                            {
+                                if (x > 0)
+                                    foreColor = Color.Green;
+                                else if (x < 0)
+                                    foreColor = Color.Red;
+                            }
+                            else
+                            {
+                                if (x < 0)
+                                    foreColor = Color.Green;
+                                else if (x > 0)
+                                    foreColor = Color.Red;
+                            }
                         }
                     }
                     break;
@@ -800,10 +803,6 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                 // Circa 1x per minuut de verouderde signalen opruimen
                 if (List.Count > 0)
                 {
-#if DEBUG
-                    using CryptoDatabase databaseThread = new();
-#endif
-
                     bool removedObject = false;
                     for (int index = List.Count - 1; index >= 0; index--)
                     {
@@ -815,8 +814,26 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
 #if DEBUG
                             if (CalcSignal(signal))
                             {
-                                databaseThread.Open();
-                                databaseThread.Connection.Update(signal);
+                                CryptoDatabase databaseThread = new();
+                                try
+                                {
+                                    databaseThread.Open();
+                                    var transaction = databaseThread.BeginTransaction();
+                                    try
+                                    {
+                                        databaseThread.Connection.Update(signal, transaction);
+                                        transaction.Commit();
+                                    }
+                                    catch (Exception)
+                                    {
+                                        transaction.Rollback();
+                                        // just ignore, its not that important
+                                    }
+                                }
+                                finally
+                                {
+                                    databaseThread.Close();
+                                }
                             }
 #endif
                             List.RemoveAt(index);

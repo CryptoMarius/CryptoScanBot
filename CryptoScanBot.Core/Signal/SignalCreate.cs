@@ -436,14 +436,28 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
                 }
             }
 
-            // Signal naar database wegschrijven (niet echt noodzakelijk, we doen er later niets mee)
-            using CryptoDatabase databaseThread = new();
-            databaseThread.Open();
-            using var transaction = databaseThread.BeginTransaction();
+
+            CryptoDatabase databaseThread = new();
+            try
             {
-                databaseThread.Connection.Insert(signal, transaction);
-                transaction.Commit();
+                databaseThread.Open();
+                var transaction = databaseThread.BeginTransaction();
+                try
+                {
+                    databaseThread.Connection.Insert(signal, transaction);
+                    transaction.Commit();
+                }
+                catch (Exception)
+                {
+                    transaction.Rollback();
+                    throw;
+                }
             }
+            finally
+            {
+                databaseThread.Close();
+            }
+
 
             GlobalData.AnalyzeSignalCreated?.Invoke(signal);
         }
