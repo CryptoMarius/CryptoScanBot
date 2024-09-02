@@ -69,11 +69,24 @@ public class ZigZagIndicator7(SortedList<long, CryptoCandle> candleList, bool us
             {
                 if (Previous.PointType == 'L' && lowFromLastDepth <= Previous.Value)
                 {
-                    ZigZagList.Remove(Previous); // repeated low, remove last zigzag point
-                    if (ZigZagList.Count > 0)
-                        Previous = ZigZagList.Last();
-                    else
-                        Previous = null;
+                    Monitor.Enter(ZigZagList);
+                    try
+                    {
+                        // System.ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection. (Parameter 'index')
+                        //ZigZagList.Remove(Previous); // repeated low, remove last zigzag point
+                        int index = ZigZagList.IndexOf(Previous);
+                        if (index >= 0)
+                            ZigZagList.RemoveAt(index);
+
+                        if (ZigZagList.Count > 0)
+                            Previous = ZigZagList.Last();
+                        else
+                            Previous = null;
+                    }
+                    finally
+                    {
+                        Monitor.Exit(ZigZagList);
+                    }
                 }
                 else if (Previous.PointType == 'L' && lowFromLastDepth > Previous.Value)
                     return; // repeated low, previous was lower
@@ -103,11 +116,24 @@ public class ZigZagIndicator7(SortedList<long, CryptoCandle> candleList, bool us
             {
                 if (Previous.PointType == 'H' && highFromLastDepth >= Previous.Value)
                 {
-                    ZigZagList.Remove(Previous); // repeated high, remove the last zigzag point
-                    if (ZigZagList.Count > 0)
-                        Previous = ZigZagList.Last();
-                    else
-                        Previous = null;
+                    // System.ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection. (Parameter 'index')
+                    //ZigZagList.Remove(Previous); // repeated high, remove the last zigzag point
+                    Monitor.Enter(ZigZagList);
+                    try
+                    {
+                        int index = ZigZagList.IndexOf(Previous);
+                        if (index >= 0)
+                            ZigZagList.RemoveAt(index);
+
+                        if (ZigZagList.Count > 0)
+                            Previous = ZigZagList.Last();
+                        else
+                            Previous = null;
+                    }
+                    finally
+                    {
+                        Monitor.Exit(ZigZagList);
+                    }
                 }
                 else if (Previous.PointType == 'H' && highFromLastDepth < Previous.Value)
                     return; // repeated high, previous was higher
