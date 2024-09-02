@@ -30,10 +30,6 @@ public class BarometerTools
         {
             if (!exchange.SymbolListName.TryGetValue(baseName + quoteData.Name, out CryptoSymbol? symbol))
             {
-                using CryptoDatabase databaseThread = new();
-                databaseThread.Close();
-                databaseThread.Open();
-
                 symbol = new CryptoSymbol
                 {
                     Exchange = exchange,
@@ -45,9 +41,26 @@ public class BarometerTools
                 };
                 symbol.Name = symbol.Base + symbol.Quote;
 
-                using var transaction = databaseThread.BeginTransaction();
-                databaseThread.Connection.Insert(symbol, transaction);
-                transaction.Commit();
+                CryptoDatabase databaseThread = new();
+                try
+                {
+                    databaseThread.Open();
+                    var transaction = databaseThread.BeginTransaction();
+                    try
+                    {
+                        databaseThread.Connection.Insert(symbol, transaction);
+                        transaction.Commit();
+                    }
+                    catch (Exception)
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+                finally
+                {
+                    databaseThread.Close();
+                }
 
                 GlobalData.AddSymbol(symbol);
             }
