@@ -62,13 +62,13 @@ public class Candle
                 // Onthoud de laatste candle, t/m die datum is alles binnen gehaald.
                 // NB: De candle volgorde is niet gegarandeerd (op bybit zelfs omgedraaid)
                 if (candle.OpenTime > last)
-                    last = candle.OpenTime + interval.Duration; // new (saves 1 candle)
+                    last = candle.OpenTime;
             }
 
             // For the next session
             if (last > long.MinValue)
             {
-                symbolInterval.LastCandleSynchronized = last;
+                symbolInterval.LastCandleSynchronized = last + interval.Duration; // new (saves 1 candle)
                 // Alternatief (maar als er gaten in de candles zijn geeft dit problemen, endless loops)
                 //CandleTools.UpdateCandleFetched(symbol, interval);
             }
