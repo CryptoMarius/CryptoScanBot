@@ -35,6 +35,16 @@ public class SignalStoRsiShort : SignalSbmBaseShort
 
     public override bool AdditionalChecks(CryptoCandle candle, out string response)
     {
+        // Check above/below STOBB BB bands
+        if (GlobalData.Settings.Signal.StoRsi.CheckBollingerBandsCondition)
+        {
+            if (!CandleLast.IsAboveBollingerBands(GlobalData.Settings.Signal.Stobb.UseLowHigh))
+            {
+                response = "not above bb.upper";
+                return false;
+            }
+        }
+
         // disable sbm conditions
         response = "";
         return true;

@@ -248,6 +248,7 @@ partial class FrmSettings
         panel6 = new Panel();
         label49 = new Label();
         toolTip1 = new ToolTip(components);
+        EditCheckBollingerBandsCondition = new CheckBox();
         panelButtons.SuspendLayout();
         panelFill.SuspendLayout();
         tabControlMain.SuspendLayout();
@@ -541,7 +542,7 @@ partial class FrmSettings
         EditTradingAppInternExtern.Items.AddRange(new object[] { "Internal browser", "External browser" });
         EditTradingAppInternExtern.Location = new Point(153, 147);
         EditTradingAppInternExtern.Margin = new Padding(4, 3, 4, 3);
-        EditTradingAppInternExtern.Name = "EditActivateExchangeInternExtern";
+        EditTradingAppInternExtern.Name = "EditTradingAppInternExtern";
         EditTradingAppInternExtern.Size = new Size(190, 23);
         EditTradingAppInternExtern.TabIndex = 286;
         // 
@@ -875,9 +876,11 @@ partial class FrmSettings
         // 
         userControlQuoteHeader1.AutoSize = true;
         userControlQuoteHeader1.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-        userControlQuoteHeader1.Location = new Point(3, 3);
+        userControlQuoteHeader1.Location = new Point(0, 0);
+        userControlQuoteHeader1.Margin = new Padding(0);
         userControlQuoteHeader1.Name = "userControlQuoteHeader1";
-        userControlQuoteHeader1.Size = new Size(687, 23);
+        userControlQuoteHeader1.Padding = new Padding(0, 0, 0, 3);
+        userControlQuoteHeader1.Size = new Size(618, 23);
         userControlQuoteHeader1.TabIndex = 0;
         // 
         // tabSignal
@@ -2009,6 +2012,7 @@ partial class FrmSettings
         // groupBox6
         // 
         groupBox6.AutoSize = true;
+        groupBox6.Controls.Add(EditCheckBollingerBandsCondition);
         groupBox6.Controls.Add(label24);
         groupBox6.Controls.Add(EditStorsiAddStochAmount);
         groupBox6.Controls.Add(label26);
@@ -2017,7 +2021,7 @@ partial class FrmSettings
         groupBox6.Margin = new Padding(10);
         groupBox6.Name = "groupBox6";
         groupBox6.Padding = new Padding(10);
-        groupBox6.Size = new Size(227, 110);
+        groupBox6.Size = new Size(306, 141);
         groupBox6.TabIndex = 160;
         groupBox6.TabStop = false;
         groupBox6.Text = "Instellingen";
@@ -2034,6 +2038,7 @@ partial class FrmSettings
         // 
         // EditStorsiAddStochAmount
         // 
+        EditStorsiAddStochAmount.DecimalPlaces = 2;
         EditStorsiAddStochAmount.Location = new Point(157, 58);
         EditStorsiAddStochAmount.Margin = new Padding(4, 3, 4, 3);
         EditStorsiAddStochAmount.Maximum = new decimal(new int[] { 20, 0, 0, 0 });
@@ -2053,9 +2058,10 @@ partial class FrmSettings
         // 
         // EditStorsiAddRsiAmount
         // 
+        EditStorsiAddRsiAmount.DecimalPlaces = 2;
         EditStorsiAddRsiAmount.Location = new Point(157, 29);
         EditStorsiAddRsiAmount.Margin = new Padding(4, 3, 4, 3);
-        EditStorsiAddRsiAmount.Maximum = new decimal(new int[] { 20, 0, 0, 0 });
+        EditStorsiAddRsiAmount.Maximum = new decimal(new int[] { 30, 0, 0, 0 });
         EditStorsiAddRsiAmount.Name = "EditStorsiAddRsiAmount";
         EditStorsiAddRsiAmount.Size = new Size(56, 23);
         EditStorsiAddRsiAmount.TabIndex = 126;
@@ -2827,6 +2833,17 @@ partial class FrmSettings
         label49.TabIndex = 222;
         label49.Text = "(1 munt per regel met een optionele opmerking erachter)";
         // 
+        // EditCheckBollingerBandsCondition
+        // 
+        EditCheckBollingerBandsCondition.AutoSize = true;
+        EditCheckBollingerBandsCondition.Location = new Point(30, 93);
+        EditCheckBollingerBandsCondition.Margin = new Padding(4, 3, 4, 3);
+        EditCheckBollingerBandsCondition.Name = "EditCheckBollingerBandsCondition";
+        EditCheckBollingerBandsCondition.Size = new Size(262, 19);
+        EditCheckBollingerBandsCondition.TabIndex = 169;
+        EditCheckBollingerBandsCondition.Text = "Controleer of deprijs buiten de BB banden is)";
+        EditCheckBollingerBandsCondition.UseVisualStyleBackColor = true;
+        // 
         // FrmSettings
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
@@ -3203,4 +3220,5 @@ partial class FrmSettings
     private NumericUpDown EditStorsiAddStochAmount;
     private FlowLayoutPanel flowLayoutPanelQuotes;
     private SettingsDialog.UserControlQuoteHeader userControlQuoteHeader1;
+    private CheckBox EditCheckBollingerBandsCondition;
 }

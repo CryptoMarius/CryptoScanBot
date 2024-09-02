@@ -8,12 +8,12 @@ namespace CryptoScanBot;
 
 public partial class FrmSettings : Form
 {
-    private SettingsBasic settings;
+    private SettingsBasic? settings;
 
     private readonly SortedList<string, CryptoAccountType> TradeVia = [];
 
 
-    public Core.Model.CryptoExchange NewExchange { get; set; }
+    public Core.Model.CryptoExchange? NewExchange { get; set; }
    
 
 
@@ -222,6 +222,7 @@ public partial class FrmSettings : Form
         UserControlSettingsSoundAndColorsStoRsi.LoadConfig("STORSI", settings.Signal.StoRsi);
         EditStorsiAddRsiAmount.Value = settings.Signal.StoRsi.AddRsiAmount;
         EditStorsiAddStochAmount.Value = settings.Signal.StoRsi.AddStochAmount;
+        EditCheckBollingerBandsCondition.Checked = settings.Signal.StoRsi.CheckBollingerBandsCondition;
 
 
         // JUMP
@@ -345,7 +346,7 @@ public partial class FrmSettings : Form
         // ------------------------------------------------------------------------------
         // General
         // ------------------------------------------------------------------------------
-        settings.General.ExtraCaption = EditExtraCaption.Text;
+        settings!.General.ExtraCaption = EditExtraCaption.Text;
         NewExchange = (Core.Model.CryptoExchange)EditExchange.SelectedValue;
         Core.Model.CryptoExchange? NewActivateExchange = (Core.Model.CryptoExchange)EditActivateExchange.SelectedValue;
         if (NewActivateExchange != null)
@@ -469,6 +470,7 @@ public partial class FrmSettings : Form
         UserControlSettingsSoundAndColorsStoRsi.SaveConfig(settings.Signal.StoRsi);
         settings.Signal.StoRsi.AddRsiAmount = (int)EditStorsiAddRsiAmount.Value;
         settings.Signal.StoRsi.AddStochAmount = (int)EditStorsiAddStochAmount.Value;
+        settings.Signal.StoRsi.CheckBollingerBandsCondition = EditCheckBollingerBandsCondition.Checked;
 
 
         // JUMP
