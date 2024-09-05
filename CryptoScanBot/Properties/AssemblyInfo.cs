@@ -7,7 +7,7 @@ using System.Runtime.Versioning;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("CryptoScanBot")]
-[assembly: AssemblyDescription("STOBB and SBM signal scanner")]
+[assembly: AssemblyDescription("STOBB, SBM, STORSI signal scanner")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Marius")]
 [assembly: AssemblyProduct("CryptoScanBot")]
@@ -33,7 +33,7 @@ using System.Runtime.Versioning;
 // You can specify all the values or you can default the Build and Revision Numbers
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.9.4")]
-[assembly: AssemblyFileVersion("1.9.4")]
+[assembly: AssemblyVersion("1.9.4.0903")]
+[assembly: AssemblyFileVersion("1.9.4.0903")]
 
 [assembly: SupportedOSPlatform("windows")]

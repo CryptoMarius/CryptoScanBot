@@ -58,7 +58,7 @@ public class Ticker(ExchangeOptions exchangeOptions, Type userTickerItemType, Cr
                 {
                     foreach (var symbol in symbols.ToList())
                     {
-                        if (symbol.QuoteData.MinimalVolume > 0 && symbol.Volume < 0.1m * symbol.QuoteData.MinimalVolume)
+                        if (symbol.QuoteData!.MinimalVolume > 0 && symbol.Volume < 0.1m * symbol.QuoteData.MinimalVolume)
                             symbols.Remove(symbol);
                     }
                 }
@@ -265,11 +265,14 @@ public class Ticker(ExchangeOptions exchangeOptions, Type userTickerItemType, Cr
     {
         // this get called every 4 or 5 candles, if there was no activity in that period we will schedule a restart
 
+        int count = 0;
         bool restart = false;
+
         foreach (var tickerGroup in TickerGroupList)
         {
             foreach (var ticker in tickerGroup.TickerList)
             {
+                count++;
                 // Is deze ooit gestart?
                 if (ticker.TickerCount != 0)
                 {
@@ -283,6 +286,8 @@ public class Ticker(ExchangeOptions exchangeOptions, Type userTickerItemType, Cr
                 }
             }
         }
+
+        GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} check for restart {TickerType} tickers {restart} (count={count})");
         return restart;
     }
 
@@ -357,7 +362,13 @@ public class Ticker(ExchangeOptions exchangeOptions, Type userTickerItemType, Cr
         {
             foreach (var ticker in tickerGroup.TickerList)
             {
-                GlobalData.AddTextToLogTab($"Ticker {ticker.GroupName} ErrorDuringStartup={ticker.ErrorDuringStartup} ConnectionLostCount={ticker.ConnectionLostCount} count={ticker.TickerCount} last={ticker.TickerCountLast} {ticker.NeedsRestart} {ticker.SymbolOverview}");
+                GlobalData.AddTextToLogTab($"{TickerType} Ticker {ticker.GroupName} " +
+                    $"ErrorDuringStartup={ticker.ErrorDuringStartup} " +
+                    $"ConnectionLostCount={ticker.ConnectionLostCount} " +
+                    $"TickerCount={ticker.TickerCount} " +
+                    $"TickerCountLast={ticker.TickerCountLast} " +
+                    $"NeedsRestart={ticker.NeedsRestart} " +
+                    $"{ticker.SymbolOverview}");
             }
         }
     }

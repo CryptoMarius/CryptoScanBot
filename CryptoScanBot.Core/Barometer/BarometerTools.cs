@@ -172,6 +172,10 @@ public class BarometerTools
                 // Willen we dat hier wel bijwerken, zie ook opmerking hierboven
                 if (periodStart > symbolInterval.LastCandleSynchronized)
                     symbolInterval.LastCandleSynchronized = periodStart;
+
+                if (GlobalData.Settings.General.DebugKLineReceive)
+                    GlobalData.AddTextToLogTab($"Debug Barometer({bmSymbol.Name}, {interval.Name}, {candle.DateLocal}, {candle.Close})");
+
             }
 
             // Naar de volgende 1m candle 

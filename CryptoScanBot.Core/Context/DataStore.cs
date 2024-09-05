@@ -15,6 +15,87 @@ public class DataStore
     // Prevent multiple sessions
     private static readonly SemaphoreSlim Semaphore = new(1);
 
+    public static void LoadCandleForSymbol(string exchangeStoragePath, CryptoSymbol symbol)
+    {
+        symbol.AskPrice = null;
+        symbol.BidPrice = null;
+        symbol.LastPrice = null;
+        string dirSymbol = exchangeStoragePath + symbol.Quote.ToLower() + @"\";
+
+        // Verwijder het bestand indien niet relevant of niet actief
+        string filename = dirSymbol + symbol.Base.ToLower(); // + ".json.bin";
+
+        // reset the precious collected trend data (once a day is preferred)
+        AccountSymbolData accountSymbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
+        accountSymbolData.Reset();
+
+        // Laad in 1x alle intervallen 
+        if (File.Exists(filename))
+        {
+            try
+            {
+                // Een experiment (vanwege de obfuscator)
+                using FileStream readStream = new(filename, FileMode.Open);
+
+                using (BinaryReader binaryReader = new(readStream, Encoding.UTF8, false))
+                {
+                    // Iets met een version
+                    int version = binaryReader.ReadInt32();
+                    string text = binaryReader.ReadString();
+
+                    while (readStream.Position != readStream.Length)
+                    {
+                        CryptoIntervalPeriod intervalPeriod = (CryptoIntervalPeriod)binaryReader.ReadInt32();
+                        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(intervalPeriod);
+                        symbolInterval.LastCandleSynchronized = binaryReader.ReadInt64();
+                        if (symbolInterval.LastCandleSynchronized == 0)
+                            symbolInterval.LastCandleSynchronized = null;
+
+                        long startFetchUnix = CandleIndicatorData.GetCandleFetchStart(symbol, symbolInterval.Interval, DateTime.UtcNow);
+
+                        int candleCount = binaryReader.ReadInt32();
+                        while (candleCount > 0)
+                        {
+                            CryptoCandle candle = new()
+                            {
+                                OpenTime = binaryReader.ReadInt64(),
+                                Open = binaryReader.ReadDecimal(),
+                                High = binaryReader.ReadDecimal(),
+                                Low = binaryReader.ReadDecimal(),
+                                Close = binaryReader.ReadDecimal(),
+                                Volume = binaryReader.ReadDecimal()
+                            };
+
+                            if (candle.OpenTime >= startFetchUnix)
+                                symbolInterval.CandleList.TryAdd(candle.OpenTime, candle);
+
+                            candleCount--;
+                        }
+                    }
+                }
+                readStream.Close();
+            }
+            catch (InvalidCastException error)
+            {
+                // Een vorig formaat
+                File.Delete(filename);
+                ScannerLog.Logger.Error(error, symbol.Name);
+                GlobalData.AddTextToLogTab(error.ToString());
+                //throw;
+            }
+            catch (Exception error)
+            {
+                GlobalData.AddTextToLogTab("Problem " + symbol.Name);
+                ScannerLog.Logger.Error(error, "");
+                GlobalData.AddTextToLogTab(error.ToString());
+                // Een vorig formaat
+                File.Delete(filename);
+                //throw;
+            }
+
+        }
+    }
+
     public static void LoadCandles()
     {
         // De candles uit de database lezen
@@ -23,96 +104,15 @@ public class DataStore
         GlobalData.AddTextToLogTab("Loading candle information (please wait!)");
 
         //int aantaltotaal = 0;
-        string basedir = GlobalData.GetBaseDir();
+        string baseStoragePath = GlobalData.GetBaseDir();
         if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange? exchange))
         {
-            string dirExchange = basedir + exchange.Name.ToLower() + @"\";
+            string exchangeStoragePath = baseStoragePath + exchange.Name.ToLower() + @"\";
 
             foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
             {
-                symbol.AskPrice = null;
-                symbol.BidPrice = null;
-                symbol.LastPrice = null;
-                string dirSymbol = dirExchange + symbol.Quote.ToLower() + @"\";
-
-                // Verwijder het bestand indien niet relevant of niet actief
-                string filename = dirSymbol + symbol.Base.ToLower(); // + ".json.bin";
-                if (!symbol.IsBarometerSymbol() && (!symbol.QuoteData!.FetchCandles || !symbol.IsSpotTradingAllowed))
-                {
-                    //if (File.Exists(filename))
-                    //    File.Delete(filename);
-                    continue;
-                }
-
-                // reset the precious collected trend data (once a day is preferred)
-                AccountSymbolData accountSymbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
-                accountSymbolData.Reset();
-
-                // Laad in 1x alle intervallen 
-                if (File.Exists(filename))
-                {
-                    try
-                    {
-                        // Een experiment (vanwege de obfuscator)
-                        using FileStream readStream = new(filename, FileMode.Open);
-
-                        using (BinaryReader binaryReader = new(readStream, Encoding.UTF8, false))
-                        {
-                            // Iets met een version
-                            int version = binaryReader.ReadInt32();
-                            string text = binaryReader.ReadString();
-
-                            while (readStream.Position != readStream.Length)
-                            {
-                                CryptoIntervalPeriod intervalPeriod = (CryptoIntervalPeriod)binaryReader.ReadInt32();
-                                CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(intervalPeriod);
-                                symbolInterval.LastCandleSynchronized = binaryReader.ReadInt64();
-                                if (symbolInterval.LastCandleSynchronized == 0)
-                                    symbolInterval.LastCandleSynchronized = null;
-
-                                long startFetchUnix = CandleIndicatorData.GetCandleFetchStart(symbol, symbolInterval.Interval, DateTime.UtcNow);
-
-                                int candleCount = binaryReader.ReadInt32();
-                                while (candleCount > 0)
-                                {
-                                    CryptoCandle candle = new()
-                                    {
-                                        OpenTime = binaryReader.ReadInt64(),
-                                        Open = binaryReader.ReadDecimal(),
-                                        High = binaryReader.ReadDecimal(),
-                                        Low = binaryReader.ReadDecimal(),
-                                        Close = binaryReader.ReadDecimal(),
-                                        Volume = binaryReader.ReadDecimal()
-                                    };
-
-                                    if (candle.OpenTime >= startFetchUnix)
-                                        symbolInterval.CandleList.TryAdd(candle.OpenTime, candle);
-
-                                    candleCount--;
-                                }
-                            }
-                        }
-                        readStream.Close();
-                    }
-                    catch (InvalidCastException error)
-                    {
-                        // Een vorig formaat
-                        File.Delete(filename);
-                        ScannerLog.Logger.Error(error, symbol.Name);
-                        GlobalData.AddTextToLogTab(error.ToString());
-                        //throw;
-                    }
-                    catch (Exception error)
-                    {
-                        GlobalData.AddTextToLogTab("Problem " + symbol.Name);
-                        ScannerLog.Logger.Error(error, "");
-                        GlobalData.AddTextToLogTab(error.ToString());
-                        // Een vorig formaat
-                        File.Delete(filename);
-                        //throw;
-                    }
-
-                }
+                if (!symbol.IsBarometerSymbol() && (!symbol.QuoteData!.FetchCandles && symbol.IsSpotTradingAllowed))
+                    LoadCandleForSymbol(exchangeStoragePath, symbol);
             }
         }
         //GlobalData.AddTextToLogTab("Information loaded");
@@ -126,15 +126,15 @@ public class DataStore
         {
             GlobalData.AddTextToLogTab("Saving candle information (please wait!)");
 
-            string basedir = GlobalData.GetBaseDir();
+            string baseStoragePath = GlobalData.GetBaseDir();
             foreach (Model.CryptoExchange exchange in GlobalData.ExchangeListName.Values.ToList())
             {
-                string dirExchange = basedir + exchange.Name.ToLower() + @"\";
+                string exchangeStoragePath = baseStoragePath + exchange.Name.ToLower() + @"\";
 
                 for (int i = 0; i < exchange.SymbolListName.Count; i++)
                 {
                     CryptoSymbol symbol = exchange.SymbolListName.Values[i];
-                    string dirSymbol = dirExchange + symbol.Quote.ToLower() + @"\";
+                    string dirSymbol = exchangeStoragePath + symbol.Quote.ToLower() + @"\";
                     try
                     {
 

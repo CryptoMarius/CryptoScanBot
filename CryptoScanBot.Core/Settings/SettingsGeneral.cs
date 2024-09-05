@@ -68,7 +68,12 @@ public class SettingsGeneral
     /// Standard Deviation for the Bollingerbands indicator
     /// </summary>
     public double BbStdDeviation { get; set; } = 2.0;
-    
+
+
+
+    public bool DebugKLineReceive { get; set; } = false;
+    public bool DebugSignalCreate { get; set; } = false;
+    public bool DebugSignalStrength { get; set; } = false;
 
 
     //// Op welk interval moet de totale markttrend berekend worden (standaard op alle intervallen)

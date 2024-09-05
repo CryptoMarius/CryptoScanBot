@@ -40,8 +40,11 @@ partial class FrmSettings
         tabGeneral = new TabPage();
         flowLayoutPanel5 = new FlowLayoutPanel();
         groupBox1 = new GroupBox();
+        groupBox7 = new GroupBox();
         label22 = new Label();
         EditBbStdDeviation = new NumericUpDown();
+        EditDebugSignalCreate = new CheckBox();
+        EditDebugKLineReceive = new CheckBox();
         label15 = new Label();
         EditTradingAppInternExtern = new ComboBox();
         groupBoxStoch = new GroupBox();
@@ -174,6 +177,7 @@ partial class FrmSettings
         flowLayoutPanel2 = new FlowLayoutPanel();
         UserControlSettingsSoundAndColorsStoRsi = new SettingsDialog.UserControlSettingsPlaySoundAndColors();
         groupBox6 = new GroupBox();
+        EditCheckBollingerBandsCondition = new CheckBox();
         label24 = new Label();
         EditStorsiAddStochAmount = new NumericUpDown();
         label26 = new Label();
@@ -248,13 +252,14 @@ partial class FrmSettings
         panel6 = new Panel();
         label49 = new Label();
         toolTip1 = new ToolTip(components);
-        EditCheckBollingerBandsCondition = new CheckBox();
+        EditDebugSignalStrength = new CheckBox();
         panelButtons.SuspendLayout();
         panelFill.SuspendLayout();
         tabControlMain.SuspendLayout();
         tabGeneral.SuspendLayout();
         flowLayoutPanel5.SuspendLayout();
         groupBox1.SuspendLayout();
+        groupBox7.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)EditBbStdDeviation).BeginInit();
         groupBoxStoch.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)EditStochValueOversold).BeginInit();
@@ -472,8 +477,11 @@ partial class FrmSettings
         // groupBox1
         // 
         groupBox1.AutoSize = true;
-        groupBox1.Controls.Add(label22);
-        groupBox1.Controls.Add(EditBbStdDeviation);
+        groupBox1.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+        groupBox1.Controls.Add(EditDebugSignalStrength);
+        groupBox1.Controls.Add(groupBox7);
+        groupBox1.Controls.Add(EditDebugSignalCreate);
+        groupBox1.Controls.Add(EditDebugKLineReceive);
         groupBox1.Controls.Add(label15);
         groupBox1.Controls.Add(EditTradingAppInternExtern);
         groupBox1.Controls.Add(groupBoxStoch);
@@ -500,30 +508,63 @@ partial class FrmSettings
         groupBox1.Margin = new Padding(10);
         groupBox1.Name = "groupBox1";
         groupBox1.Padding = new Padding(10);
-        groupBox1.Size = new Size(631, 401);
+        groupBox1.Size = new Size(631, 425);
         groupBox1.TabIndex = 249;
         groupBox1.TabStop = false;
         groupBox1.Text = "Algemeen";
         // 
+        // groupBox7
+        // 
+        groupBox7.Controls.Add(label22);
+        groupBox7.Controls.Add(EditBbStdDeviation);
+        groupBox7.Location = new Point(384, 255);
+        groupBox7.Name = "groupBox7";
+        groupBox7.Size = new Size(234, 58);
+        groupBox7.TabIndex = 177;
+        groupBox7.TabStop = false;
+        groupBox7.Text = "Bollinger bands";
+        // 
         // label22
         // 
         label22.AutoSize = true;
-        label22.Location = new Point(393, 266);
+        label22.Location = new Point(9, 26);
         label22.Margin = new Padding(4, 0, 4, 0);
         label22.Name = "label22";
-        label22.Size = new Size(94, 15);
-        label22.TabIndex = 288;
-        label22.Text = "BB Std Deviation";
+        label22.Size = new Size(104, 15);
+        label22.TabIndex = 290;
+        label22.Text = "Standaard deviatie";
         // 
         // EditBbStdDeviation
         // 
         EditBbStdDeviation.DecimalPlaces = 2;
-        EditBbStdDeviation.Location = new Point(514, 264);
+        EditBbStdDeviation.Location = new Point(130, 22);
         EditBbStdDeviation.Margin = new Padding(4, 3, 4, 3);
         EditBbStdDeviation.Name = "EditBbStdDeviation";
         EditBbStdDeviation.Size = new Size(88, 23);
-        EditBbStdDeviation.TabIndex = 289;
+        EditBbStdDeviation.TabIndex = 291;
         EditBbStdDeviation.Value = new decimal(new int[] { 20, 0, 0, 65536 });
+        // 
+        // EditDebugSignalCreate
+        // 
+        EditDebugSignalCreate.AutoSize = true;
+        EditDebugSignalCreate.Location = new Point(393, 352);
+        EditDebugSignalCreate.Margin = new Padding(4, 3, 4, 3);
+        EditDebugSignalCreate.Name = "EditDebugSignalCreate";
+        EditDebugSignalCreate.Size = new Size(127, 19);
+        EditDebugSignalCreate.TabIndex = 291;
+        EditDebugSignalCreate.Text = "DebugSignalCreate";
+        EditDebugSignalCreate.UseVisualStyleBackColor = true;
+        // 
+        // EditDebugKLineReceive
+        // 
+        EditDebugKLineReceive.AutoSize = true;
+        EditDebugKLineReceive.Location = new Point(393, 327);
+        EditDebugKLineReceive.Margin = new Padding(4, 3, 4, 3);
+        EditDebugKLineReceive.Name = "EditDebugKLineReceive";
+        EditDebugKLineReceive.Size = new Size(130, 19);
+        EditDebugKLineReceive.TabIndex = 290;
+        EditDebugKLineReceive.Text = "DebugKLineReceive";
+        EditDebugKLineReceive.UseVisualStyleBackColor = true;
         // 
         // label15
         // 
@@ -841,7 +882,7 @@ partial class FrmSettings
         // 
         UserControlTelegram.AutoScroll = true;
         UserControlTelegram.AutoSize = true;
-        UserControlTelegram.Location = new Point(3, 424);
+        UserControlTelegram.Location = new Point(654, 3);
         UserControlTelegram.Name = "UserControlTelegram";
         UserControlTelegram.Padding = new Padding(10);
         UserControlTelegram.Size = new Size(451, 180);
@@ -2026,6 +2067,17 @@ partial class FrmSettings
         groupBox6.TabStop = false;
         groupBox6.Text = "Instellingen";
         // 
+        // EditCheckBollingerBandsCondition
+        // 
+        EditCheckBollingerBandsCondition.AutoSize = true;
+        EditCheckBollingerBandsCondition.Location = new Point(30, 93);
+        EditCheckBollingerBandsCondition.Margin = new Padding(4, 3, 4, 3);
+        EditCheckBollingerBandsCondition.Name = "EditCheckBollingerBandsCondition";
+        EditCheckBollingerBandsCondition.Size = new Size(262, 19);
+        EditCheckBollingerBandsCondition.TabIndex = 169;
+        EditCheckBollingerBandsCondition.Text = "Controleer of deprijs buiten de BB banden is)";
+        EditCheckBollingerBandsCondition.UseVisualStyleBackColor = true;
+        // 
         // label24
         // 
         label24.AutoSize = true;
@@ -2833,16 +2885,16 @@ partial class FrmSettings
         label49.TabIndex = 222;
         label49.Text = "(1 munt per regel met een optionele opmerking erachter)";
         // 
-        // EditCheckBollingerBandsCondition
+        // EditDebugSignalStrength
         // 
-        EditCheckBollingerBandsCondition.AutoSize = true;
-        EditCheckBollingerBandsCondition.Location = new Point(30, 93);
-        EditCheckBollingerBandsCondition.Margin = new Padding(4, 3, 4, 3);
-        EditCheckBollingerBandsCondition.Name = "EditCheckBollingerBandsCondition";
-        EditCheckBollingerBandsCondition.Size = new Size(262, 19);
-        EditCheckBollingerBandsCondition.TabIndex = 169;
-        EditCheckBollingerBandsCondition.Text = "Controleer of deprijs buiten de BB banden is)";
-        EditCheckBollingerBandsCondition.UseVisualStyleBackColor = true;
+        EditDebugSignalStrength.AutoSize = true;
+        EditDebugSignalStrength.Location = new Point(393, 377);
+        EditDebugSignalStrength.Margin = new Padding(4, 3, 4, 3);
+        EditDebugSignalStrength.Name = "EditDebugSignalStrength";
+        EditDebugSignalStrength.Size = new Size(138, 19);
+        EditDebugSignalStrength.TabIndex = 292;
+        EditDebugSignalStrength.Text = "DebugSignalStrength";
+        EditDebugSignalStrength.UseVisualStyleBackColor = true;
         // 
         // FrmSettings
         // 
@@ -2864,6 +2916,8 @@ partial class FrmSettings
         flowLayoutPanel5.PerformLayout();
         groupBox1.ResumeLayout(false);
         groupBox1.PerformLayout();
+        groupBox7.ResumeLayout(false);
+        groupBox7.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)EditBbStdDeviation).EndInit();
         groupBoxStoch.ResumeLayout(false);
         groupBoxStoch.PerformLayout();
@@ -3202,8 +3256,6 @@ partial class FrmSettings
     private CheckBox EditCheckFurtherPriceMove;
     private Label label83;
     private ComboBox EditTradeVia;
-    private Label label22;
-    private NumericUpDown EditBbStdDeviation;
     private GroupBox groupBox6;
     private Label label26;
     private NumericUpDown EditStorsiAddRsiAmount;
@@ -3221,4 +3273,10 @@ partial class FrmSettings
     private FlowLayoutPanel flowLayoutPanelQuotes;
     private SettingsDialog.UserControlQuoteHeader userControlQuoteHeader1;
     private CheckBox EditCheckBollingerBandsCondition;
+    private GroupBox groupBox7;
+    private CheckBox EditDebugSignalCreate;
+    private CheckBox EditDebugKLineReceive;
+    private Label label22;
+    private NumericUpDown EditBbStdDeviation;
+    private CheckBox EditDebugSignalStrength;
 }

@@ -469,6 +469,9 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
             return false;
         }
 
+        if (GlobalData.Settings.General.DebugSignalCreate)
+            GlobalData.AddTextToLogTab($"Debug Signal created {Symbol.Name} {Interval.Name} {signal.StrategyText} {signal.Side}");
+
         return true;
     }
 
@@ -539,6 +542,8 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
         SignalCreateBase? algorithm = SignalHelper.GetAlgorithm(Side, strategyDefinition.Strategy, Symbol, Interval, Candle);
         if (algorithm != null)
         {
+            if (GlobalData.Settings.General.DebugSignalCreate)
+                GlobalData.AddTextToLogTab($"Debug Signal create {Symbol.Name} {Interval.Name} {strategyDefinition.Name} {Side}");
             //GlobalData.Logger.Trace($"SignalCreate.Done {Symbol.Name} {Interval.Name} {strategyDefinition.Name} {Side}");
             //GlobalData.AddTextToLogTab($"SignalCreate.Done {Symbol.Name} {Interval.Name} {strategyDefinition.Name} {Side}");
             if (algorithm.IndicatorsOkay(Candle!) && algorithm.IsSignal())
@@ -609,6 +614,8 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
 
     public bool Analyze(long candleIntervalOpenTime)
     {
+        if (GlobalData.Settings.General.DebugSignalCreate)
+            GlobalData.AddTextToLogTab($"Debug Signal create {Symbol.Name} {Interval.Name} {Side}");
         //ScannerLog.Logger.Trace($"SignalCreate.Start {Symbol.Name} {Interval.Name}");
         //GlobalData.AddTextToLogTab($"SignalCreate.Start {Symbol.Name} {Interval.Name} {Side}");
         // Eenmalig de indicators klaarzetten

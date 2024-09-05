@@ -100,7 +100,8 @@ public class ZigZagIndicator7(SortedList<long, CryptoCandle> candleList, bool us
             {
                 PointType = 'L',
                 Candle = candle,
-                Value = lowFromLastDepth
+                Value = lowFromLastDepth,
+                Dominant = false,
             };
             ZigZagList.Add(last);
             Previous = last;
@@ -147,7 +148,8 @@ public class ZigZagIndicator7(SortedList<long, CryptoCandle> candleList, bool us
             {
                 PointType = 'H',
                 Candle = candle,
-                Value = highFromLastDepth
+                Value = highFromLastDepth,
+                Dominant = false,
             };
             ZigZagList.Add(last);
             Previous = last;

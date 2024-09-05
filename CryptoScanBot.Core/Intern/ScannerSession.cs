@@ -273,15 +273,19 @@ public static class ScannerSession
 
     private static void TimerCheckDataStream_Tick(object? sender, EventArgs? e)
     {
-        if (ExchangeHelper.KLineTicker.NeedsRestart())
+        if (ExchangeHelper.KLineTicker != null)
         {
-            GlobalData.AddTextToLogTab("Debug: Een van de 1m kline tickers is gestopt!");
+            if (ExchangeHelper.KLineTicker.NeedsRestart())
+            {
+                GlobalData.AddTextToLogTab($"Debug: Een van de {ExchangeHelper.KLineTicker.TickerType} tickers is gestopt!");
 
-            // Schedule a restart of the streams in 1m max
-            if (!TimerRestartStreams.Enabled || TimerRestartStreams.Interval > 60 * 1000)
-                TimerRestartStreams.InitTimerInterval(1 * 60);
+                // Schedule a restart of the streams in 1m max
+                if (!TimerRestartStreams.Enabled || TimerRestartStreams.Interval > 60 * 1000)
+                    TimerRestartStreams.InitTimerInterval(1 * 60);
+            }
         }
     }
+
 
     static public void ConnectionWasLost(string text)
     {

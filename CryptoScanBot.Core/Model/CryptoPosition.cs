@@ -20,19 +20,19 @@ public class CryptoPosition
 
     public int TradeAccountId { get; set; }
     [Computed]
-    public virtual CryptoAccount Account { get; set; }
+    public required virtual CryptoAccount Account { get; set; }
 
     public int ExchangeId { get; set; }
     [Computed]
-    public virtual CryptoExchange Exchange { get; set; }
+    public required virtual CryptoExchange Exchange { get; set; }
 
     public int SymbolId { get; set; }
     [Computed]
-    public virtual CryptoSymbol Symbol { get; set; }
+    public required virtual CryptoSymbol Symbol { get; set; }
 
     public int? IntervalId { get; set; }
     [Computed]
-    public CryptoInterval? Interval { get; set; }
+    public required CryptoInterval? Interval { get; set; }
 
     public CryptoTradeSide Side { get; set; }
     [Computed]
@@ -40,7 +40,7 @@ public class CryptoPosition
     //switch { CryptoTradeSide.Long => "long", CryptoTradeSide.Short => "short", _ => "?", }; } }
 
     [Computed]
-    public string DisplayText { get { return Symbol.Name + " " + Interval.Name + " " + CreateTime.ToLocalTime() + " " + SideText + " " + StrategyText; } }
+    public string DisplayText { get { return Symbol.Name + " " + Interval!.Name + " " + CreateTime.ToLocalTime() + " " + SideText + " " + StrategyText; } }
 
     public CryptoSignalStrategy Strategy { get; set; }
     [Computed]
@@ -75,7 +75,7 @@ public class CryptoPosition
     public decimal? ProfitPrice { get; set; }
 
     // Een experiment (die weg kan, we zetten er nu even de naam van de munt in, handig)
-    public string Data { get; set; }
+    public string Data { get; set; } = "";
 
     // Is de Parts.Count (met een active DCA)
     public int PartCount { get; set; }

@@ -975,13 +975,15 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                 Grid.InvalidateColumn((int)ColumnsForGrid.PriceChange);
 
 #if DEBUG
-                UpdateStatistics();
-                Grid.InvalidateColumn((int)ColumnsForGrid.PriceMin);
-                Grid.InvalidateColumn((int)ColumnsForGrid.PriceMax);
-                Grid.InvalidateColumn((int)ColumnsForGrid.PriceMinPerc);
-                Grid.InvalidateColumn((int)ColumnsForGrid.PriceMaxPerc);
+                if (GlobalData.Settings.General.DebugSignalStrength)
+                {
+                    UpdateStatistics();
+                    Grid.InvalidateColumn((int)ColumnsForGrid.PriceMin);
+                    Grid.InvalidateColumn((int)ColumnsForGrid.PriceMax);
+                    Grid.InvalidateColumn((int)ColumnsForGrid.PriceMinPerc);
+                    Grid.InvalidateColumn((int)ColumnsForGrid.PriceMaxPerc);
+                }
 #endif
-
             }
             finally
             {

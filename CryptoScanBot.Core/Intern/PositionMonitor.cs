@@ -1868,8 +1868,13 @@ public class PositionMonitor : IDisposable
     {
         try
         {
+            if (GlobalData.Settings.General.DebugKLineReceive)
+                GlobalData.AddTextToLogTab($"Debug Candle({Symbol.Name}, 1m, {LastCandle1m.DateLocal}, {LastCandle1m.Close})");
+
             if (!Symbol.IsSpotTradingAllowed || Symbol.Status == 0)
                 return;
+
+            //GlobalData.Logger.Trace($"SignalCreate.Prepare.Start {Symbol.Name} {Interval.Name} {Side}");
 
             //string traceText = LastCandle1m.OhlcText(Symbol, GlobalData.IntervalList[0], Symbol.PriceDisplayFormat, true, false, true);
             //ScannerLog.Logger.Trace($"NewCandleArrivedAsync.Signals " + traceText);

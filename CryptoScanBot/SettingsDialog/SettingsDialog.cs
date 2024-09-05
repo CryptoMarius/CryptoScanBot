@@ -60,6 +60,11 @@ public partial class FrmSettings : Form
     {
         this.settings = settings;
 
+#if !DEBUG
+        EditDebugKLineReceive.Visible = false;
+        EditDebugSignalCreate.Visible = false;
+        EditDebugSignalStrength.Visible = false;
+#endif
 #if !TRADEBOT
         settings.Trading.Active = false;
         tabTrading.Parent = null;
@@ -121,6 +126,11 @@ public partial class FrmSettings : Form
 
         UserControlTelegram.LoadConfig();
 
+#if DEBUG
+        EditDebugKLineReceive.Checked = settings.General.DebugKLineReceive;
+        EditDebugSignalCreate.Checked = settings.General.DebugSignalCreate;
+        EditDebugSignalStrength.Checked = settings.General.DebugSignalStrength;
+#endif
 
         // ------------------------------------------------------------------------------
         // Base coins
@@ -383,6 +393,16 @@ public partial class FrmSettings : Form
 
         UserControlTelegram.SaveConfig();
 
+
+#if DEBUG
+        settings.General.DebugKLineReceive = EditDebugKLineReceive.Checked;
+        settings.General.DebugSignalCreate = EditDebugSignalCreate.Checked;
+        settings.General.DebugSignalStrength = EditDebugSignalStrength.Checked;
+#else
+        settings.General.DebugKLineReceive = false;
+        settings.General.DebugSignalCreate = false;
+        settings.General.DebugSignalStrength = false;
+#endif
 
         // ------------------------------------------------------------------------------
         // Base coins

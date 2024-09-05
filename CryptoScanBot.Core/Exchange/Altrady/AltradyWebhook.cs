@@ -24,6 +24,8 @@ public class AltradyWebhook
 
         GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval!.Name} send to Altrady webhook LastTradeDate={position.Symbol.LastTradeDate}");
 
+        HttpWebRequest? httpWebRequest = null;
+        HttpWebResponse? httpResponse = null;
         try
         {
             GlobalData.ExternalUrls.GetExternalRef(position.Symbol.Exchange, out CryptoExternalUrls? externalUrls);
@@ -117,7 +119,7 @@ public class AltradyWebhook
             //var jsonData = await httpClient.GetFromJsonAsync<request>("https://api.alternative.me/fng/");
             //await httpClient.SendAsync("/api/v3/exchangeInfo", HttpMethod.Post);????
 
-            HttpWebRequest httpWebRequest = (HttpWebRequest)WebRequest.Create("https://api.altrady.com/v2/signal_bot_positions");
+            httpWebRequest = (HttpWebRequest)WebRequest.Create("https://api.altrady.com/v2/signal_bot_positions");
             httpWebRequest.ContentType = "application/json";
             httpWebRequest.Method = "POST";
 
@@ -130,7 +132,7 @@ public class AltradyWebhook
             GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval!.Name} send to Altrady webhook");
             ScannerLog.Logger.Trace($"{position.Symbol.Name} {position.Interval.Name} send to Altrady webhook {json}");
 
-            var httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
+            httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
             using StreamReader streamReader = new(httpResponse.GetResponseStream());
             var result = streamReader.ReadToEnd();
 
@@ -138,14 +140,32 @@ public class AltradyWebhook
             //string text = JsonSerializer.Serialize(result, GlobalData.JsonSerializerIndented);
             GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval.Name} result Altrady webhook {result}");
             ScannerLog.Logger.Trace($"{position.Symbol.Name} {position.Interval.Name} result Altrady webhook {result}");
+
+            //string text = "";
+            //text += "Altrady webhook request:\r\n";
+            //text += JsonSerializer.Serialize(httpWebRequest, GlobalData.JsonSerializerIndented);
+            //text += "\r\n";
+            //text += "\r\n";
+            //text += "Altrady webhook response:\r\n";
+            //text += JsonSerializer.Serialize(httpResponse, GlobalData.JsonSerializerIndented);
+            //text += "\r\n";
+            //GlobalData.AddTextToLogTab($"Webhook: {position.Symbol.Name} {position.Interval!.Name} {text}");
         }
         catch (Exception error)
         {
-            ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab($"error webhook {position.Symbol.Name} {position.Interval!.Name} error={error}");
+            string text = "";
+            text += "Altrady webhook request:\r\n";
+            text += JsonSerializer.Serialize(httpWebRequest, GlobalData.JsonSerializerIndented);
+            text += "\r\n";
+            text += "\r\n";
+            text += "Altrady webhook response:\r\n";
+            text += JsonSerializer.Serialize(httpResponse, GlobalData.JsonSerializerIndented);
+            text += "\r\n";
+
+            ScannerLog.Logger.Error(error, text);
+            GlobalData.AddTextToLogTab($"Webhook error: {position.Symbol.Name} {position.Interval!.Name} error={error}");
         }
 
     }
-
 
 }
