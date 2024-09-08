@@ -71,7 +71,6 @@ public class CryptoSignal
 
     public double Last24HoursChange { get; set; }
     public double Last24HoursEffective { get; set; }
-    [Computed]
     public double Last10DaysEffective { get; set; }
 
     public string EventText { get; set; }

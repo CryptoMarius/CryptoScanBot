@@ -577,6 +577,7 @@ public class PositionMonitor : IDisposable
 
                             // De positie + entry aanmaken
                             position = PositionTools.CreatePosition(TradeAccount, Symbol, signal.Strategy, signal.Side, symbolInterval, LastCandle1mCloseTimeDate);
+                            PositionTools.AddSignalProperties(position, signal);
                             Database.Connection.Insert(position);
                             PositionTools.AddPosition(TradeAccount, position);
                             PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.Entry, signal.Interval, signal.Strategy,

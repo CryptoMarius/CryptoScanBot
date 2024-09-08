@@ -341,6 +341,7 @@ public class CryptoDatabase : IDisposable
                 "Last24HoursChange TEXT NULL," +
                 "Last48Hours TEXT NULL," +
                 "Last24HoursEffective TEXT NULL," +
+                "Last10DaysEffective TEXT NULL," +
                 "Volume TEXT NULL," +
                 "OpenDate TEXT NULL," +
                 "CloseDate TEXT NULL," +
@@ -454,7 +455,64 @@ public class CryptoDatabase : IDisposable
                 "Percentage TEXT NULL," +
                 "Reposition Integer," +
 
-                //"FOREIGN KEY(AccountId) REFERENCES Account(Id)," +
+
+                /// --------------------------------------------------------------
+                /// added from the signal...
+                /// --------------------------------------------------------------
+                "SignalEventTime TEXT NOT NULL," +
+                "SignalPrice TEXT NOT NULL," +
+                "SignalVolume TEXT NULL," +
+
+                "Last24HoursChange TEXT NULL," +
+                "Last24HoursEffective TEXT NULL," +
+                "Last10DaysEffective TEXT NULL," +
+
+                "TrendIndicator INTEGER NULL," +
+                "TrendPercentage TEXT NULL," +
+
+                "BarcodePercentage TEXT NULL," +
+                "CandlesWithZeroVolume INTEGER NULL," +
+                "CandlesWithFlatPrice INTEGER NULL," +
+                "AboveBollingerBandsSma INTEGER NULL," +
+                "AboveBollingerBandsUpper INTEGER NULL," +
+
+                "StochSignal TEXT NULL," +
+                "StochOscillator TEXT NULL," +
+
+                "BollingerBandsLowerBand TEXT NULL," +
+                "BollingerBandsUpperBand TEXT NULL," +
+                "BollingerBandsPercentage TEXT NULL," +
+
+                "KeltnerLowerBand TEXT NULL," +
+                "KeltnerUpperBand TEXT NULL," +
+
+                "Rsi TEXT NULL," +
+                "SlopeRsi TEXT NULL," +
+
+                "Psar TEXT NULL," +
+
+                "sma20 TEXT NULL," +
+                "ema50 TEXT NULL," +
+                "ema100 TEXT NULL," +
+                "ema200 TEXT NULL," +
+                "SlopeEma20 TEXT NULL," +
+                "SlopeEma50 TEXT NULL," +
+
+                "ema20 TEXT NULL," +
+                "sma200 TEXT NULL," +
+                "sma100 TEXT NULL," +
+                "sma50 TEXT NULL," +
+                "SlopeSma50 TEXT NULL," +
+                "SlopeSma20 TEXT NULL," +
+
+                "LuxIndicator5m TEXT NULL," +
+
+                "Trend15m INTEGER NULL," +
+                "Trend30m INTEGER NULL," +
+                "Trend1h INTEGER NULL," +
+                "Trend4h INTEGER NULL," +
+                "Trend12h INTEGER NULL," +
+
                 "FOREIGN KEY(TradeAccountId) REFERENCES TradeAccount(Id)," +
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +
                 "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)," +

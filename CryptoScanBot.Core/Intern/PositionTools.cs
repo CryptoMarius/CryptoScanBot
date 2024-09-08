@@ -73,6 +73,72 @@ public static class PositionTools
         return position;
     }
 
+    public static void AddSignalProperties(CryptoPosition position, CryptoSignal signal)
+    {
+        position.SignalEventTime = signal.CloseDate;
+        position.SignalPrice = signal.Price;
+        position.SignalVolume = signal.Volume;
+
+        position.Last24HoursChange = signal.Last24HoursChange;
+        position.Last24HoursEffective = signal.Last24HoursEffective;
+        position.Last10DaysEffective = signal.Last10DaysEffective;
+
+        position.TrendPercentage = signal.TrendPercentage;
+        position.TrendIndicator = signal.TrendIndicator;
+
+        // Stochastic waarden
+        position.StochOscillator = signal.StochOscillator;
+        position.StochSignal = signal.StochSignal;
+
+        // Bollinger Bands
+        position.BollingerBandsUpperBand = signal.BollingerBandsUpperBand;
+        position.BollingerBandsLowerBand = signal.BollingerBandsLowerBand;
+        position.BollingerBandsPercentage = signal.BollingerBandsPercentage;
+
+        // PSAR waarden
+        position.PSar = signal.PSar;
+
+        //public double? KeltnerUpperBand { get; set; }
+        //public double? KeltnerLowerBand { get; set; }
+
+        // RSI waarden
+        position.Rsi = signal.Rsi;
+        //public double? SlopeRsi { get; set; }
+
+        position.LuxIndicator5m = signal.LuxIndicator5m;
+
+        //uitgezet
+        ////public double? Ema8 { get; set; }
+        //public double? Ema20 { get; set; }
+        //public double? Ema50 { get; set; }
+        ////public double? Ema100 { get; set; }
+        //public double? Ema200 { get; set; }
+        //public double? SlopeEma20 { get; set; }
+        //public double? SlopeEma50 { get; set; }
+
+        // SMA waarden
+        //public double? Sma8 { get; set; }
+        position.Sma20 = signal.Sma20;
+        position.Sma50 = signal.Sma50;
+        //public double? Sma100 { get; set; }
+        position.Sma200 = signal.Sma200;
+        //public double? SlopeSma20 { get; set; } uitgezet
+        //public double? SlopeSma50 { get; set; } uitgezet
+
+
+        // Wellicht introduceren en weghalen uit de "Alarm"?
+        position.CandlesWithZeroVolume = signal.CandlesWithZeroVolume;
+        position.CandlesWithFlatPrice = signal.CandlesWithFlatPrice;
+        position.AboveBollingerBandsSma = signal.AboveBollingerBandsSma;
+        position.AboveBollingerBandsUpper = signal.AboveBollingerBandsUpper;
+
+        // Een aantal trendindicatoren
+        position.Trend15m = signal.Trend15m;
+        position.Trend30m = signal.Trend30m;
+        position.Trend1h = signal.Trend1h;
+        position.Trend4h = signal.Trend4h;
+        position.Trend12h = signal.Trend12h;
+    }
 
     public static CryptoPositionPart ExtendPosition(CryptoDatabase database, CryptoPosition position, CryptoPartPurpose purpose, CryptoInterval interval,
         CryptoSignalStrategy strategy, CryptoEntryOrDcaStrategy stepInMethod, decimal signalPrice, DateTime currentDate, bool manualOrder = false)

@@ -8,7 +8,7 @@ namespace CryptoScanBot.Core.Context;
 public class Migration
 {
     // De huidige database versie
-    public readonly static int CurrentDatabaseVersion = 20;
+    public readonly static int CurrentDatabaseVersion = 21;
 
 
     public static void Execute(CryptoDatabase database, int CurrentVersion)
@@ -633,9 +633,51 @@ public class Migration
         {
             using var transaction = database.BeginTransaction();
 
-            //.....
-            //.....
-            //.....
+            // unused field afaics
+            database.Connection.Execute("alter table Signal drop column InfoDate", transaction);
+            database.Connection.Execute("alter table Signal drop column Last48Hours", transaction);
+
+            // Added a long time ago, but not in db?
+            database.Connection.Execute("alter table Signal add Last10DaysEffective text", transaction);
+
+
+            // add data from the original signal (for statistics etc)
+            database.Connection.Execute("alter table Position add SignalEventTime Text null", transaction);
+            database.Connection.Execute("alter table Position add SignalPrice Text null", transaction);
+            database.Connection.Execute("alter table Position add SignalVolume Text null", transaction);
+
+            database.Connection.Execute("alter table Position add Last24HoursChange Text null", transaction);
+            database.Connection.Execute("alter table Position add Last24HoursEffective Text null", transaction);
+            database.Connection.Execute("alter table Position add Last10DaysEffective Text null", transaction);
+
+            database.Connection.Execute("alter table Position add TrendPercentage Text null", transaction);
+            database.Connection.Execute("alter table Position add TrendIndicator Text null", transaction);
+
+            database.Connection.Execute("alter table Position add StochOscillator Text null", transaction);
+            database.Connection.Execute("alter table Position add StochSignal Text null", transaction);
+
+            database.Connection.Execute("alter table Position add BollingerBandsUpperBand Text null", transaction);
+            database.Connection.Execute("alter table Position add BollingerBandsLowerBand Text null", transaction);
+            database.Connection.Execute("alter table Position add BollingerBandsPercentage Text null", transaction);
+
+            database.Connection.Execute("alter table Position add PSar Text null", transaction);
+            database.Connection.Execute("alter table Position add Rsi Text null", transaction);
+            database.Connection.Execute("alter table Position add LuxIndicator5m Text null", transaction);
+
+            database.Connection.Execute("alter table Position add Sma20 Text null", transaction);
+            database.Connection.Execute("alter table Position add Sma50 Text null", transaction);
+            database.Connection.Execute("alter table Position add Sma200 Text null", transaction);
+
+            database.Connection.Execute("alter table Position add CandlesWithZeroVolume Text null", transaction);
+            database.Connection.Execute("alter table Position add CandlesWithFlatPrice Text null", transaction);
+            database.Connection.Execute("alter table Position add AboveBollingerBandsSma Text null", transaction);
+            database.Connection.Execute("alter table Position add AboveBollingerBandsUpper Text null", transaction);
+
+            database.Connection.Execute("alter table Position add Trend15m Integer", transaction);
+            database.Connection.Execute("alter table Position add Trend30m Integer", transaction);
+            database.Connection.Execute("alter table Position add Trend1h Integer", transaction);
+            database.Connection.Execute("alter table Position add Trend4h Integer", transaction);
+            database.Connection.Execute("alter table Position add Trend12h Integer", transaction);
 
             // update version
             version.Version += 1;
@@ -644,6 +686,16 @@ public class Migration
         }
 
 
+        //***********************************************************
+        if (CurrentVersion > version.Version && version.Version == 21)
+        {
+            using var transaction = database.BeginTransaction();
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
 
         // Mexc Futures (experimental), but Mexc Futures does not have a proper api yet
         //database.Connection.Execute("insert into exchange(Name, FeeRate, IsSupported, ExchangeType, TradingType) values('Mexc Futures', 0.1, 0, 5, 1)", transaction);
@@ -652,5 +704,5 @@ public class Migration
         //database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(2, 9, 1);", transaction);
         //database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(3, 9, 1);", transaction);
     }
-}
+    }
 
