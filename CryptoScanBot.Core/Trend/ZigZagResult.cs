@@ -16,4 +16,18 @@ public class ZigZagResult
     public double Percentage { get; set; }
 
     public CryptoCandle? InvalidOn { get; set; } = null;
+
+    public void ReusePoint(CryptoCandle candle, double value)
+    {
+        // Intention is to reset stuff because we are going to reuse a pivot point, clear the other stuff
+        Value = value;
+        Candle = candle;
+
+        // Reset other stuff
+        Dominant = false;
+        Top = 0;
+        Bottom = 0;
+        Percentage = 0;
+        InvalidOn = null;
+    }
 }

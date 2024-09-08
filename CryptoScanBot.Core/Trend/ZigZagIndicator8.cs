@@ -67,7 +67,7 @@ public class ZigZagIndicator8(SortedList<long, CryptoCandle> candleList, bool us
         {
             if (Previous != null)
             {
-                // ignore multiple low's after each other (remove the previous low)
+                // ignore multiple low's after each other (reuse/remove the previous low)
                 if (Previous != null && Previous.PointType == 'L' && lowFromLastDepth < Previous.Value)
                 {
                     //int index = ZigZagList.Count;
@@ -78,9 +78,9 @@ public class ZigZagIndicator8(SortedList<long, CryptoCandle> candleList, bool us
                     //    Previous = ZigZagList[index - 1];
                     //else
                     //    Previous = null;
-                    Previous.Candle = candle;
-                    Previous.Dominant = false;
-                    Previous.Value = lowFromLastDepth;
+                    Previous.ReusePoint(candle, lowFromLastDepth);
+                    //Previous.Candle = candle;
+                    //Previous.Value = lowFromLastDepth;
                     return;
                 }
                 else if (Previous != null && Previous.PointType == 'L' && lowFromLastDepth > Previous.Value)
@@ -110,7 +110,7 @@ public class ZigZagIndicator8(SortedList<long, CryptoCandle> candleList, bool us
         {
             if (Previous != null)
             {
-                // ignore multiple high's after each other (remove the previous high)
+                // ignore multiple high's after each other (reuse/remove the previous high)
                 if (Previous != null && Previous.PointType == 'H' && highFromLastDepth > Previous.Value)
                 {
                     //int index = ZigZagList.Count;
@@ -121,9 +121,9 @@ public class ZigZagIndicator8(SortedList<long, CryptoCandle> candleList, bool us
                     //    Previous = ZigZagList[index - 1];
                     //else
                     //    Previous = null;
-                    Previous.Candle = candle;
-                    Previous.Dominant = false;
-                    Previous.Value = highFromLastDepth;
+                    //Previous.Candle = candle;
+                    //Previous.Value = highFromLastDepth;
+                    Previous.ReusePoint(candle, highFromLastDepth);
                     return;
                 }
                 else if (Previous != null && Previous.PointType == 'H' && highFromLastDepth < Previous.Value)

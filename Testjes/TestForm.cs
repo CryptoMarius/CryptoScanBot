@@ -380,11 +380,7 @@ public partial class TestForm : Form
 
         stringBuilder.AppendLine(s);
         stringBuilder.AppendLine("Total 24 hour volume " + signal.Symbol.Volume.ToString("N0") + ", candles zonder volume " + signal.CandlesWithZeroVolume.ToString() + " van 60");
-        //stringBuilder.AppendLine("Stoch Oscillator " + alarm.StochOscillator.ToString("N2") + " Signal " + alarm.StochSignal.ToString("N2") + " Stoch RSI " + alarm.StochRsiValue.ToString("N2") + " RSI " + alarm.Rsi.ToString("N2") + " MFI " + alarm.Mfi.ToString("N2"));
         stringBuilder.AppendLine("Bollingerbands " + signal.BollingerBandsPercentage?.ToString("N2") + "%" + " (low " + signal.BollingerBandsLowerBand?.ToString("N6") + " high " + signal.BollingerBandsUpperBand?.ToString("N6") + ")");
-        //stringBuilder.AppendLine("1h " + alarm.Last01Hours.ToString("N2") + "% 2h " + alarm.Last02Hours.ToString("N2") + "% 4h " + alarm.Last04Hours.ToString("N2") + "% 12h " + alarm.Last12Hours.ToString("N2") + "% 1d " + alarm.Last24Hours.ToString("N2") + "% 2d " + alarm.Last48Hours.ToString("N2") + "%");
-        //stringBuilder.AppendLine(String.Format("C-flat={0} C-novolume={1} avgBB={2:N2} aboveBB.sma={3} aboveBB.Upper={4}", signal.CandlesWithFlatPrice, signal.CandlesWithZeroVolume,
-        //    signal.AboveBollingerBandsSma, signal.AboveBollingerBandsSma, signal.AboveBollingerBandsUpper));
 
 
         s = "";
@@ -562,11 +558,6 @@ public partial class TestForm : Form
                 item1.SubItems.Add(signal.Last24HoursChange.ToString("N2")).ForeColor = Color.Red;
             else
                 item1.SubItems.Add(signal.Last24HoursChange.ToString("N2")).ForeColor = Color.Green;
-
-            //if (signal.Last48Hours < 0)
-            //    item1.SubItems.Add(signal.Last48Hours.ToString0("N2")).ForeColor = Color.Red;
-            //else
-            //    item1.SubItems.Add(signal.Last48Hours.ToString0("N2")).ForeColor = Color.Green;
 
             item1.SubItems.Add(signal.BollingerBandsPercentage?.ToString("N2"));
 
