@@ -1,11 +1,8 @@
-﻿using CryptoScanBot.Core.Intern;
-using CryptoScanBot.Core.Model;
-
-using System.Text.Json;
+﻿using CryptoScanBot.Core.Model;
 
 namespace CryptoScanBot.Core.Trend;
 
-public class ZigZagIndicator7(SortedList<long, CryptoCandle> candleList, bool useHighLow)
+public class ZigZagIndicator8(SortedList<long, CryptoCandle> candleList, bool useHighLow)
 {
     public bool UseHighLow = useHighLow;
     public int Depth { get; set; } = 12;
@@ -73,14 +70,18 @@ public class ZigZagIndicator7(SortedList<long, CryptoCandle> candleList, bool us
                 // ignore multiple low's after each other (remove the previous low)
                 if (Previous != null && Previous.PointType == 'L' && lowFromLastDepth < Previous.Value)
                 {
-                    int index = ZigZagList.Count;
-                    if (index > 0)
-                        ZigZagList.RemoveAt(index - 1);
-                    index = ZigZagList.Count;
-                    if (index > 0)
-                        Previous = ZigZagList[index - 1];
-                    else
-                        Previous = null;
+                    //int index = ZigZagList.Count;
+                    //if (index > 0)
+                    //    ZigZagList.RemoveAt(index - 1);
+                    //index = ZigZagList.Count;
+                    //if (index > 0)
+                    //    Previous = ZigZagList[index - 1];
+                    //else
+                    //    Previous = null;
+                    Previous.Candle = candle;
+                    Previous.Dominant = false;
+                    Previous.Value = lowFromLastDepth;
+                    return;
                 }
                 else if (Previous != null && Previous.PointType == 'L' && lowFromLastDepth > Previous.Value)
                     return; // repeated low, previous was lower
@@ -112,14 +113,18 @@ public class ZigZagIndicator7(SortedList<long, CryptoCandle> candleList, bool us
                 // ignore multiple high's after each other (remove the previous high)
                 if (Previous != null && Previous.PointType == 'H' && highFromLastDepth > Previous.Value)
                 {
-                    int index = ZigZagList.Count;
-                    if (index > 0)
-                        ZigZagList.RemoveAt(index - 1);
-                    index = ZigZagList.Count;
-                    if (index > 0)
-                        Previous = ZigZagList[index - 1];
-                    else
-                        Previous = null;
+                    //int index = ZigZagList.Count;
+                    //if (index > 0)
+                    //    ZigZagList.RemoveAt(index - 1);
+                    //index = ZigZagList.Count;
+                    //if (index > 0)
+                    //    Previous = ZigZagList[index - 1];
+                    //else
+                    //    Previous = null;
+                    Previous.Candle = candle;
+                    Previous.Dominant = false;
+                    Previous.Value = highFromLastDepth;
+                    return;
                 }
                 else if (Previous != null && Previous.PointType == 'H' && highFromLastDepth < Previous.Value)
                     return; // repeated high, previous was higher

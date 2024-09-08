@@ -287,7 +287,7 @@ public class Ticker(ExchangeOptions exchangeOptions, Type userTickerItemType, Cr
             }
         }
 
-        GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} check for restart {TickerType} tickers {restart} (count={count})");
+        GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} check for restart {count} {TickerType} tickers {restart}");
         return restart;
     }
 

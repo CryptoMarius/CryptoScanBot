@@ -1,12 +1,9 @@
-﻿using CryptoScanBot.Core.Context;
-using CryptoScanBot.Core.Enums;
+﻿using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Settings;
 using CryptoScanBot.Core.Trader;
 using CryptoScanBot.Core.Trend;
-
-using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot.Core.Signal;
 
@@ -352,20 +349,23 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
         // Calculate MarketTrend and the individual interval trends (reasonably CPU heavy and thatswhy it is on the end of the routine)
         MarketTrend.CalculateMarketTrend(tradeAccount, signal.Symbol, 0, LastCandle1mCloseTime);
         AccountSymbolData accountSymbolData = tradeAccount!.Data.GetSymbolData(signal.Symbol.Name);
-        signal.TrendPercentage = (float)accountSymbolData.MarketTrendPercentage;
+        if (accountSymbolData.MarketTrendPercentage.HasValue) // Kucoin causes a problem
+        {
+            signal.TrendPercentage = (float)accountSymbolData.MarketTrendPercentage;
 
-        AccountSymbolIntervalData accountSymbolIntervalData = accountSymbolData.GetAccountSymbolIntervalData(signal.Interval.IntervalPeriod);
-        signal.TrendIndicator = accountSymbolIntervalData.TrendIndicator;
-        accountSymbolIntervalData = accountSymbolData.GetAccountSymbolIntervalData(CryptoIntervalPeriod.interval15m);
-        signal.Trend15m = accountSymbolIntervalData.TrendIndicator;
-        accountSymbolIntervalData = accountSymbolData.GetAccountSymbolIntervalData(CryptoIntervalPeriod.interval30m);
-        signal.Trend30m = accountSymbolIntervalData.TrendIndicator;
-        accountSymbolIntervalData = accountSymbolData.GetAccountSymbolIntervalData(CryptoIntervalPeriod.interval1h);
-        signal.Trend1h = accountSymbolIntervalData.TrendIndicator;
-        accountSymbolIntervalData = accountSymbolData.GetAccountSymbolIntervalData(CryptoIntervalPeriod.interval4h);
-        signal.Trend4h = accountSymbolIntervalData.TrendIndicator;
-        accountSymbolIntervalData = accountSymbolData.GetAccountSymbolIntervalData(CryptoIntervalPeriod.interval12h);
-        signal.Trend12h = accountSymbolIntervalData.TrendIndicator;
+            AccountSymbolIntervalData accountSymbolIntervalData = accountSymbolData.GetAccountSymbolIntervalData(signal.Interval.IntervalPeriod);
+            signal.TrendIndicator = accountSymbolIntervalData.TrendIndicator;
+            accountSymbolIntervalData = accountSymbolData.GetAccountSymbolIntervalData(CryptoIntervalPeriod.interval15m);
+            signal.Trend15m = accountSymbolIntervalData.TrendIndicator;
+            accountSymbolIntervalData = accountSymbolData.GetAccountSymbolIntervalData(CryptoIntervalPeriod.interval30m);
+            signal.Trend30m = accountSymbolIntervalData.TrendIndicator;
+            accountSymbolIntervalData = accountSymbolData.GetAccountSymbolIntervalData(CryptoIntervalPeriod.interval1h);
+            signal.Trend1h = accountSymbolIntervalData.TrendIndicator;
+            accountSymbolIntervalData = accountSymbolData.GetAccountSymbolIntervalData(CryptoIntervalPeriod.interval4h);
+            signal.Trend4h = accountSymbolIntervalData.TrendIndicator;
+            accountSymbolIntervalData = accountSymbolData.GetAccountSymbolIntervalData(CryptoIntervalPeriod.interval12h);
+            signal.Trend12h = accountSymbolIntervalData.TrendIndicator;
+        }
 
 
 
@@ -437,28 +437,7 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
             }
 
 
-            CryptoDatabase databaseThread = new();
-            try
-            {
-                databaseThread.Open();
-                var transaction = databaseThread.BeginTransaction();
-                try
-                {
-                    databaseThread.Connection.Insert(signal, transaction);
-                    transaction.Commit();
-                }
-                catch (Exception)
-                {
-                    transaction.Rollback();
-                    throw;
-                }
-            }
-            finally
-            {
-                databaseThread.Close();
-            }
-
-
+            GlobalData.ThreadSaveObjects!.AddToQueue(signal);
             GlobalData.AnalyzeSignalCreated?.Invoke(signal);
         }
         catch (Exception error)

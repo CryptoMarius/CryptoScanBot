@@ -64,7 +64,7 @@ public class TrendInterval
     /// <summary>
     /// Interpret the zigzag values en try to identify a trend
     /// </summary>
-    public static CryptoTrendIndicator InterpretZigZagPoints(ZigZagIndicator7 indicator, StringBuilder? log)
+    public static CryptoTrendIndicator InterpretZigZagPoints(ZigZagIndicator8 indicator, StringBuilder? log)
     {
         var zigZagList = indicator.ZigZagList;
         CryptoTrendIndicator trend = CryptoTrendIndicator.Sideways;
@@ -206,7 +206,7 @@ public class TrendInterval
             accountSymbolIntervalData.ZigZagIndicators = [];
             for (double deviation = 10.0; deviation >= 1; deviation -= 0.25)
             {
-                ZigZagIndicator7 indicator = new(candleList, false)
+                ZigZagIndicator8 indicator = new(candleList, false)
                 {
                     Deviation = deviation
                 };
@@ -258,7 +258,7 @@ public class TrendInterval
 
         // What is the best? Technically we need at least 4 pivot points, would be nice if we have a lot of pivots.
         // On the other hand, we do not want small percentages als this can give fake trend & reversal signals.
-        ZigZagIndicator7? bestIndicator = null;
+        ZigZagIndicator8? bestIndicator = null;
         foreach (var indicator in accountSymbolIntervalData.ZigZagIndicators)
         {
             int zigZagCount = indicator.ZigZagList.Count;
