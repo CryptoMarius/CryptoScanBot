@@ -2,13 +2,15 @@ CryptoScanBot release historie:
 
 xx-08-2024 1.9.4
 
+- Scanner - Het berekenen van de trend gaat soms fout (threading problemen)
+- Scanner - Bij het inserten van een nieuw signaal is er soms een SQLite Error 5: 'database is locked of een "SQLite Error 1"
 - Scanner - De signalen na 1 week verwijderen (op basis van de expiratiedatum) - beperkte statistiek mogelijk
-- Scanner - Meldingen van/naar Altrady beter traceren / debuggen
-- Scanner - De te activeren exchange werkte niet meer (configuratie probleem)
+- Scanner - De te activeren exchange werkte niet meer (stom probleem in de configuratie)
 - Scanner - Uitleg van de BB% staat niet in het help document
 - Scanner - Uitleg van de Stoch correctie voor de Storsi staan niet in het help document
 - Scanner - RSI en STOCH add waarde gesplitst in de STORSI instellingen
 - Scanner - Quote configuratie aangepast in verband met het meeschalen van het lettertype
+- Scanner - De basismunten scrollable maken (Binance sport heeft best veel basismunten)
 - Scanner - Mexc - veel meldingen met "Analyse **** Not enough candles available for interval 3m count=211 requested=260" (met name hogere intervallen)
 - Scanner - Mexc - Na het selecteren een exchange (Mexc Spot in dit geval) wil het configuratie scherm niet meer openen (Index was out of range)
 - Scanner - Mexc - De exchange Mexc Spot via migratie netjes aanmelden
@@ -22,7 +24,10 @@ xx-08-2024 1.9.4
 - Scanner - Reload weblinks url's zodat je deze via het tekstbestand kan manipuleren
 - Scanner - Als de hoogte of breedte van een formulier te klein is gezet het formulier op 1000*800 zetten (hybernate?)
 - Scanner - Extra menu optie om een import-lijst te maken voor tradingview per quote (en alle munten)
+- Scanner - De FundingRate kolom standaard uitzetten bij de signalen (het is niet relevant voor de spot markten)
 
+- Trader - De gegevens van het originele signaal overnemen in de positie voor statistiek (signalen worden na 1 week verwijderd)
+- Trader - Altrady - (Fout)meldingen van/naar Altrady beter vastleggen (met veel dank aan Benoist)
 - Trader - Altrady - Ondersteuning van limit order (deed tot dusver een market order, maar Altrady doet er niets mee)
 - Trader - Altrady - Ondersteuning van base_amount (werd tot dusver niet meegestuurd, experimenteel)
 
