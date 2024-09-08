@@ -703,26 +703,19 @@ public class CryptoDatabase : IDisposable
         }
     }
 
+
     public static void CleanUpDatabase()
     {
-        // Database een beetje opruimen
-        // Zou ook voor de posities mogen? (hoe ver wil je terug?)
+        // Database cleanup (there is no need for old signals)
         try
         {
             using CryptoDatabase databaseThread = new();
             databaseThread.Open();
             using var transaction = databaseThread.BeginTransaction();
             {
-                databaseThread.Connection.Execute("delete from signal where backtest=0 and opendate < @opendate", new { opendate = DateTime.UtcNow.AddDays(-14) });
+                databaseThread.Connection.Execute("delete from signal where ExpirationDate < @opendate", new { opendate = DateTime.UtcNow.AddDays(-7) });
                 transaction.Commit();
             }
-
-            // Clean account data?
-            //foreach (var x in GlobalData.Settings.General.Exchange.SymbolListName.Values)
-            //{
-            //    ?
-            //    x.
-            //}
         }
         catch (Exception error)
         {
@@ -730,6 +723,7 @@ public class CryptoDatabase : IDisposable
             GlobalData.AddTextToLogTab("ERROR " + error.ToString());
         }
     }
+
 
     public static void CreateDatabase()
     {
