@@ -329,7 +329,9 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
             switch ((ColumnsForGrid)e.ColumnIndex)
             {
                 case ColumnsForGrid.Date:
-                    e.Value = signal.OpenDate.ToLocalTime().ToString("yyyy-MM-dd HH:mm") + " - " + signal.OpenDate.AddSeconds(signal.Interval.Duration).ToLocalTime().ToString("HH:mm");
+                    // there is a signal.CloseDate
+                    //+ signal.OpenDate.AddSeconds(signal.Interval.Duration).ToLocalTime().ToString("HH:mm");
+                    e.Value = signal.OpenDate.ToLocalTime().ToString("yyyy-MM-dd HH:mm") + " - " + signal.CloseDate.ToLocalTime().ToString("HH:mm");
                     break;
                 case ColumnsForGrid.Exchange:
                     e.Value = signal.Exchange.Name;
