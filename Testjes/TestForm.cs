@@ -139,6 +139,7 @@ public partial class TestForm : Form
         GlobalData.LogToTelegram += new AddTextEvent(AddTextToTelegram);
         GlobalData.LogToLogTabEvent += new AddTextEvent(AddTextToLogTab);
 
+        GlobalData.ThreadSaveObjects = new ThreadSaveObjects();
         GlobalData.ThreadMonitorCandle = new ThreadMonitorCandle();
         GlobalData.AnalyzeSignalCreated = AnalyzeSignalCreated;
 

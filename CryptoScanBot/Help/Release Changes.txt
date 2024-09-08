@@ -2,6 +2,8 @@ CryptoScanBot release historie:
 
 xx-08-2024 1.9.4
 
+- Scanner - De signalen na 1 week verwijderen (op basis van de expiratiedatum) - beperkte statistiek mogelijk
+- Scanner - Meldingen van/naar Altrady beter traceren / debuggen
 - Scanner - De te activeren exchange werkte niet meer (configuratie probleem)
 - Scanner - Uitleg van de BB% staat niet in het help document
 - Scanner - Uitleg van de Stoch correctie voor de Storsi staan niet in het help document
