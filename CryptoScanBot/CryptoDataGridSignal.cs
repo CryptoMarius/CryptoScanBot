@@ -1,11 +1,8 @@
 ﻿using CryptoScanBot.Commands;
-using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Settings;
-
-using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot;
 
@@ -813,28 +810,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                         {
 #if DEBUG
                             if (CalcSignal(signal))
-                            {
-                                CryptoDatabase databaseThread = new();
-                                try
-                                {
-                                    databaseThread.Open();
-                                    var transaction = databaseThread.BeginTransaction();
-                                    try
-                                    {
-                                        databaseThread.Connection.Update(signal, transaction);
-                                        transaction.Commit();
-                                    }
-                                    catch (Exception)
-                                    {
-                                        transaction.Rollback();
-                                        // just ignore, its not that important
-                                    }
-                                }
-                                finally
-                                {
-                                    databaseThread.Close();
-                                }
-                            }
+                                GlobalData.ThreadSaveObjects!.AddToQueue(signal);
 #endif
                             List.RemoveAt(index);
                             removedObject = true;
@@ -894,9 +870,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                         {
                             if (CalcSignal(signal))
                             {
-                                using CryptoDatabase databaseThread = new();
-                                databaseThread.Open();
-                                databaseThread.Connection.Update(signal);
+                                GlobalData.ThreadSaveObjects!.AddToQueue(signal);
                             }
 
                             // need some of sense of time, 60*10 minutes is already a long period (mayby check only the first 3 timeframes?)

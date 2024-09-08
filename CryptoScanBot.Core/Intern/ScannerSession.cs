@@ -30,7 +30,7 @@ public static class ScannerSession
 
     // Timer voor het verversen van de exchange symbols (en bijbehorende volume enzovoort)
     private static readonly System.Timers.Timer TimerGetExchangeInfoAndCandles = new() { Enabled = false };
-    // Iedere x uren de candles bewaren 9anders zoveel achterstand)
+    // Iedere x uren de candles bewaren (anders veel achterstand bij crash)
     private static readonly System.Timers.Timer TimerSaveCandleData = new() { Enabled = false };
     // Draaien de streams nog steeds, check + restart indien het een duwtje nodig heeft
     private static readonly System.Timers.Timer TimerCheckDataStream = new() { Enabled = false };
@@ -78,6 +78,7 @@ public static class ScannerSession
                 ExchangeHelper.CancellationTokenSource = new();
                 ExchangeHelper.CancellationToken = ExchangeHelper.CancellationTokenSource.Token;
 
+                GlobalData.ThreadSaveObjects = new ThreadSaveObjects();
                 GlobalData.ThreadMonitorCandle = new ThreadMonitorCandle();
 #if TRADEBOT
                 GlobalData.ThreadMonitorOrder = new ThreadMonitorOrder();
@@ -134,7 +135,9 @@ public static class ScannerSession
                 task = Task.Run(ThreadTelegramBot.Stop);
                 taskList.Add(task);
 
-                //GlobalData.ThreadMonitorCandle?.Stop();
+                task = Task.Run(() => { GlobalData.ThreadSaveObjects?.Stop(); });
+                taskList.Add(task);
+
                 task = Task.Run(() => { GlobalData.ThreadMonitorCandle?.Stop(); });
                 taskList.Add(task);
 

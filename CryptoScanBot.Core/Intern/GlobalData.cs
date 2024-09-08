@@ -124,6 +124,7 @@ static public class GlobalData
 
 
     // Some running tasks/threads
+    public static ThreadSaveObjects? ThreadSaveObjects { get; set; }
     public static ThreadMonitorCandle? ThreadMonitorCandle { get; set; }
 #if TRADEBOT
     public static ThreadMonitorOrder? ThreadMonitorOrder { get; set; }

@@ -6,7 +6,7 @@ namespace CryptoScanBot.Core.Intern;
 
 public class ThreadMonitorCandle
 {
-    private readonly SemaphoreSlim Semaphore = new(3); // X threads tegelijk
+    private readonly SemaphoreSlim Semaphore = new(4); // X threads tegelijk
     private readonly BlockingCollection<(CryptoSymbol symbol, CryptoCandle candle)> Queue = [];
     private readonly CancellationTokenSource cancellationToken = new();
 

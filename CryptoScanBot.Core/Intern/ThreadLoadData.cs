@@ -366,6 +366,7 @@ public class ThreadLoadData
                 //************************************************************************************
                 // Nu we de achterstand ingehaald hebben kunnen/mogen we analyseren (signals maken)
                 //************************************************************************************
+                _ = Task.Run(GlobalData.ThreadSaveObjects!.Execute).ConfigureAwait(false);
                 _ = Task.Run(GlobalData.ThreadMonitorCandle!.Execute).ConfigureAwait(false);
 
 #if TRADEBOT
