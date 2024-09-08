@@ -151,6 +151,37 @@ public class AltradyWebhook
             //text += "\r\n";
             //GlobalData.AddTextToLogTab($"Webhook: {position.Symbol.Name} {position.Interval!.Name} {text}");
         }
+        catch (WebException error)
+        {
+            string errorResponseBody = "";
+            if (error.Response is HttpWebResponse errorResponse) // && errorResponse.StatusCode == (HttpStatusCode)422)
+            {
+                using StreamReader errorStreamReader = new(errorResponse.GetResponseStream());
+                errorResponseBody = errorStreamReader.ReadToEnd();
+            }
+
+            string text = "";
+            text += "Altrady webhook request:\r\n";
+            text += JsonSerializer.Serialize(httpWebRequest, GlobalData.JsonSerializerIndented);
+            text += "\r\n";
+            text += "\r\n";
+            text += "Altrady webhook response:\r\n";
+            text += JsonSerializer.Serialize(httpResponse, GlobalData.JsonSerializerIndented);
+            text += "\r\n";
+            // overkill?
+            text += "Altrady webhook response#2:\r\n";
+            text += JsonSerializer.Serialize(error.Response, GlobalData.JsonSerializerIndented);
+            text += "\r\n";
+            text += "Altrady webhook response#3:\r\n";
+            text += $"{errorResponseBody}";
+            text += "\r\n";
+            text += "Altrady webhook response#4:\r\n";
+            text += JsonSerializer.Serialize(error, GlobalData.JsonSerializerIndented);
+            text += "\r\n";
+
+            ScannerLog.Logger.Error(error, text);
+            GlobalData.AddTextToLogTab($"Webhook error: {position.Symbol.Name} {position.Interval!.Name} error={error}");
+        }
         catch (Exception error)
         {
             string text = "";
