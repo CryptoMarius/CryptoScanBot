@@ -1,6 +1,8 @@
 ﻿using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
+using CryptoScanBot.Core.Trend;
+
 using NPOI.SS.UserModel;
 
 namespace CryptoScanBot.Core.Excel;
@@ -87,8 +89,15 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
             WriteCell(sheet, column++, row, candle.High, CellStyleDecimalNormal);
             WriteCell(sheet, column++, row, candle.Low, CellStyleDecimalNormal);
             WriteCell(sheet, column++, row, candle.Close, CellStyleDecimalNormal);
-            WriteCell(sheet, column++, row, candle.Volume, CellStyleDecimalNormal);
-            WriteCell(sheet, column++, row, candle.IsDuplicated.ToString());
+            if (candle.Volume == 0m)
+                WriteCell(sheet, column++, row, candle.Volume, CellStyleDecimalRed);
+            else
+                WriteCell(sheet, column++, row, candle.Volume, CellStyleDecimalNormal);
+
+            if (candle.IsDuplicated)
+                WriteCell(sheet, column++, row, candle.IsDuplicated.ToString());
+            //else
+            //    WriteCell(sheet, column++, row, zigZag.IsDuplicated.ToString());
 
 
             last = candle;
@@ -96,6 +105,49 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
 
         AutoSize(sheet, columns);
     }
+
+
+    private void DumpZigZagInterval(AccountSymbolIntervalData data)
+    {
+        ISheet sheet = Book.CreateSheet("Zigzag" + data.Interval?.Name);
+        int row = 0;
+
+        foreach (var indicator in data.ZigZagIndicators!)
+        {
+            //DumpZigZagInterval(trendDataList.Interval, indicator);
+            //+ 
+            WriteCell(sheet, 0, row, "Deviation");
+            WriteCell(sheet, 1, row, indicator.Deviation.ToString(), CellStyleDecimalNormal);
+
+
+            // Columns...
+            row++;
+            row++;
+            int columns = 0;
+            WriteCell(sheet, columns++, row, "OpenTime");
+            WriteCell(sheet, columns++, row, "Type");
+            WriteCell(sheet, columns++, row, "Value");
+
+
+            foreach (ZigZagResult zigZag in indicator.ZigZagList)
+            {
+                row++;
+                int column = 0;
+
+                WriteCell(sheet, column++, row, zigZag.Candle.DateLocal, CellStyleDate);
+                WriteCell(sheet, column++, row, zigZag.PointType);
+                WriteCell(sheet, column++, row, zigZag.Value, CellStyleDecimalNormal);
+            }
+
+            row++;
+            row++;
+            row++;
+        }
+
+        AutoSize(sheet, 3);
+    }
+
+
 
     public void ExportToExcel()
     {
@@ -106,6 +158,14 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
             foreach (CryptoSymbolInterval symbolInterval in Symbol.IntervalPeriodList.ToList())
                 DumpInterval(symbolInterval);
 
+            AccountSymbolData accountSymbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(Symbol.Name);
+            foreach (var trendDataList in accountSymbolData.SymbolTrendDataList)
+            {
+                if (trendDataList.ZigZagIndicators != null)
+                {
+                    DumpZigZagInterval(trendDataList);
+                }
+            }
             StartExcell("Candles", Symbol.Name);
         }
         catch (Exception error)
