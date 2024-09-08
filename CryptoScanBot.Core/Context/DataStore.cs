@@ -111,7 +111,7 @@ public class DataStore
 
             foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
             {
-                if (!symbol.IsBarometerSymbol() && (!symbol.QuoteData!.FetchCandles && symbol.IsSpotTradingAllowed))
+                if (!symbol.IsBarometerSymbol() && (symbol.QuoteData!.FetchCandles && symbol.IsSpotTradingAllowed))
                     LoadCandleForSymbol(exchangeStoragePath, symbol);
             }
         }
