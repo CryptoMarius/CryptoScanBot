@@ -178,7 +178,6 @@ public class TrendInterval
             // Bij nieuwe munten, Flatliners (ethusdt) en andere gedrochten is het dus sideway's!
             //Signal.Reaction = string.Format("not enough quotes for {0} trend", interval.Name);
             accountSymbolIntervalData.Reset();
-
 #if DEBUG
             log?.AppendLine($"{symbol.Name} {interval.Name} calculated at {accountSymbolIntervalData.TrendInfoDate} {accountSymbolIntervalData.TrendIndicator} (no candles)");
             ScannerLog.Logger.Trace($"MarketTrend.Calculate {symbol.Name} {interval.Name} {accountSymbolIntervalData.TrendInfoDate} {accountSymbolIntervalData.TrendIndicator} (no candles)");
@@ -229,7 +228,7 @@ public class TrendInterval
                 }
                 accountSymbolIntervalData.ZigZagLastCandleAdded = loop;
             }
-            else log?.AppendLine($"unable to find candle {loop}");
+            //else log?.AppendLine($"unable to find candle {loop}");
             loop += accountSymbolIntervalData.Interval.Duration;
         }
 
@@ -245,8 +244,11 @@ public class TrendInterval
             {
                 countX++;
                 sum += indicator.ZigZagList.Count;
-                log?.AppendLine($"{symbol.Name} {interval.Name} candles={candleList.Count} deviation={indicator.Deviation}% candlecount={indicator.CandleCount} zigzagcount={indicator.ZigZagList.Count}");
-                ScannerLog.Logger.Trace($"{symbol.Name} {interval.Name} candles={candleList.Count} deviation={indicator.Deviation}% candlecount={indicator.CandleCount} zigzagcount={indicator.ZigZagList.Count}");
+                if (GlobalData.Settings.General.DebugTrendCalculation)
+                {
+                    log?.AppendLine($"{symbol.Name} {interval.Name} candles={candleList.Count} deviation={indicator.Deviation}% candlecount={indicator.CandleCount} zigzagcount={indicator.ZigZagList.Count}");
+                    ScannerLog.Logger.Trace($"{symbol.Name} {interval.Name} candles={candleList.Count} deviation={indicator.Deviation}% candlecount={indicator.CandleCount} zigzagcount={indicator.ZigZagList.Count}");
+                }
             }
         }
         double avg = sum / countX;
@@ -291,13 +293,14 @@ public class TrendInterval
         // Note: We could also do something like take the average trend over the last x zigzag indicators??
         // We still need to choose a proper indicator to do our analysis though on s/r & s/d and liquidity zones
 
-#if DEBUG
-        string text = $"{symbol.Name} {interval.Name} candles={candleList.Count} calculated at {accountSymbolIntervalData.TrendInfoDate} " +
+        if (GlobalData.Settings.General.DebugTrendCalculation)
+        {
+            string text = $"{symbol.Name} {interval.Name} candles={candleList.Count} calculated at {accountSymbolIntervalData.TrendInfoDate} " +
             $"avg={avg} best={bestIndicator.Deviation}% zigzagcount={bestIndicator.ZigZagList.Count} {accountSymbolIntervalData.TrendIndicator} " +
             $"{candleIntervalStartDebug}..{candleIntervalEndDebug}";
-        log?.AppendLine(text);
-        ScannerLog.Logger.Trace("MarketTrend.Calculate "+ text);
-#endif
+            log?.AppendLine(text);
+            ScannerLog.Logger.Trace("MarketTrend.Calculate " + text);
+        }
         return;
     }
 
