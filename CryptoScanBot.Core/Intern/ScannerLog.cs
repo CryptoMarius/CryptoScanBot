@@ -15,7 +15,7 @@ public class ScannerLog
         {
             Name = name,
             KeepFileOpen = true,
-            MaxArchiveDays = 10,
+            MaxArchiveDays = 7,
             FileName = filename + extra + ".log",
             ArchiveDateFormat = "yyyy-MM-dd",
             ArchiveFileName = filename + " {#}" + extra + ".log",
