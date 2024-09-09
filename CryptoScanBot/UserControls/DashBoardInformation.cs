@@ -425,11 +425,6 @@ public partial class DashBoardInformation : UserControl
             if (GlobalData.ApplicationStatus != CryptoApplicationStatus.Running)
                 return;
 
-            //#if TRADEBOT
-            //            if (GlobalData.Settings.Trading.Active)
-            //                TradingRules.CheckNeedBotPause();
-            //#endif
-
             // Bereken de laatste barometer waarden
             BarometerTools barometerTools = new();
             barometerTools.ExecuteAsync();
