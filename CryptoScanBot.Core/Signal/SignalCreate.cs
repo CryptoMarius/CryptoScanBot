@@ -1,4 +1,5 @@
-﻿using CryptoScanBot.Core.Enums;
+﻿using CryptoScanBot.Core.Barometer;
+using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Settings;
@@ -23,24 +24,18 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
     //public bool CreatedSignal = false;
     public List<CryptoSignal> SignalList { get; set; } = [];
 
-#if TRADEBOT
     bool hasOpenPosistion = false;
     bool hasOpenPosistionCalculated = false;
-#endif
 
     private bool HasOpenPosition()
     {
         // Signalen blijven maken als er een positie openstaat (en het volume e.d. sterk afgenomen is)
-#if TRADEBOT
         if (!hasOpenPosistionCalculated)
         {
             hasOpenPosistionCalculated = true;
             hasOpenPosistion = GlobalData.Settings.Trading.Active && PositionTools.HasPosition(Symbol) && GlobalData.Settings.Trading.DcaStrategy == CryptoEntryOrDcaStrategy.AfterNextSignal;
         }
         return hasOpenPosistion;
-#else
-        return false;
-#endif
     }
 
     public static void CalculateAdditionalSignalProperties(CryptoSignal signal, List<CryptoCandle> history, int candleCount, long unixFrom = 0)
@@ -277,6 +272,37 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
             signal.IsInvalid = true;
         }
 
+        // Barometers
+        BarometerData barometerData = GlobalData.ActiveAccount!.Data.GetBarometer(symbol.Quote, CryptoIntervalPeriod.interval15m);
+        if (barometerData.PriceBarometer.HasValue)
+            signal.Barometer15m = barometerData.PriceBarometer.Value;
+        else
+            signal.Barometer15m = null;
+
+        barometerData = GlobalData.ActiveAccount!.Data.GetBarometer(symbol.Quote, CryptoIntervalPeriod.interval30m);
+        if (barometerData.PriceBarometer.HasValue)
+            signal.Barometer30m = barometerData.PriceBarometer.Value;
+        else
+            signal.Barometer30m = 0;
+
+        barometerData = GlobalData.ActiveAccount!.Data.GetBarometer(symbol.Quote, CryptoIntervalPeriod.interval1h);
+        if (barometerData.PriceBarometer.HasValue)
+            signal.Barometer1h = barometerData.PriceBarometer.Value;
+        else
+            signal.Barometer1h = 0;
+
+        barometerData = GlobalData.ActiveAccount!.Data.GetBarometer(symbol.Quote, CryptoIntervalPeriod.interval4h);
+        if (barometerData.PriceBarometer.HasValue)
+            signal.Barometer4h = barometerData.PriceBarometer.Value;
+        else
+            signal.Barometer4h = 0;
+
+        barometerData = GlobalData.ActiveAccount!.Data.GetBarometer(symbol.Quote, CryptoIntervalPeriod.interval1d);
+        if (barometerData.PriceBarometer.HasValue)
+            signal.Barometer1d = barometerData.PriceBarometer.Value;
+        else
+            signal.Barometer1d = 0;
+
 
         // de 24 change moet in een bepaald interval zitten
         signal.Last24HoursChange = CalculateLastPeriodsInInterval(signal, 24 * 60 * 60);
@@ -363,8 +389,8 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
             signal.Trend1h = accountSymbolIntervalData.TrendIndicator;
             accountSymbolIntervalData = accountSymbolData.GetAccountSymbolIntervalData(CryptoIntervalPeriod.interval4h);
             signal.Trend4h = accountSymbolIntervalData.TrendIndicator;
-            accountSymbolIntervalData = accountSymbolData.GetAccountSymbolIntervalData(CryptoIntervalPeriod.interval12h);
-            signal.Trend12h = accountSymbolIntervalData.TrendIndicator;
+            accountSymbolIntervalData = accountSymbolData.GetAccountSymbolIntervalData(CryptoIntervalPeriod.interval1d);
+            signal.Trend1d = accountSymbolIntervalData.TrendIndicator;
         }
 
 

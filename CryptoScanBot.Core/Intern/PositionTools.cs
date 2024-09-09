@@ -11,7 +11,6 @@ namespace CryptoScanBot.Core.Intern;
 
 public static class PositionTools
 {
-#if TRADEBOT
 
     /// <summary>
     /// Retourneer de part met id=x
@@ -137,7 +136,14 @@ public static class PositionTools
         position.Trend30m = signal.Trend30m;
         position.Trend1h = signal.Trend1h;
         position.Trend4h = signal.Trend4h;
-        position.Trend12h = signal.Trend12h;
+        position.Trend1d = signal.Trend1d;
+
+        // Barometers
+        position.Barometer15m = signal.Barometer15m;
+        position.Barometer30m = signal.Barometer30m;
+        position.Barometer1h = signal.Barometer1h;
+        position.Barometer4h = signal.Barometer4h;
+        position.Barometer1d = signal.Barometer1d;
     }
 
     public static CryptoPositionPart ExtendPosition(CryptoDatabase database, CryptoPosition position, CryptoPartPurpose purpose, CryptoInterval interval,
@@ -333,7 +339,6 @@ public static class PositionTools
         return false;
     }
 
-#endif
 
     /// <summary>
     /// Zijn de aangevinkte intervallen UP?

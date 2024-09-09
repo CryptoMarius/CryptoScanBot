@@ -147,15 +147,21 @@ public class CryptoSignal
     public int ItemIndex { get; set; }
 
 
+    // Barometers
+    public decimal? Barometer15m { get; set; }
+    public decimal? Barometer30m { get; set; }
+    public decimal? Barometer1h { get; set; }
+    public decimal? Barometer4h { get; set; }
+    public decimal? Barometer1d { get; set; }
+
     // Een aantal trendindicatoren
     public CryptoTrendIndicator Trend15m { get; set; }
     public CryptoTrendIndicator Trend30m { get; set; }
     public CryptoTrendIndicator Trend1h { get; set; }
     public CryptoTrendIndicator Trend4h { get; set; }
-    public CryptoTrendIndicator Trend12h { get; set; }
+    public CryptoTrendIndicator Trend1d { get; set; }
 
 
-#if TRADEBOT
     [Computed]
     public decimal MinEntry
     {
@@ -171,5 +177,4 @@ public class CryptoSignal
             return minEntryValue; 
         }
     }
-#endif
 }

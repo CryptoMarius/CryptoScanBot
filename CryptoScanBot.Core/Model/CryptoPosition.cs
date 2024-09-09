@@ -179,12 +179,19 @@ public class CryptoPosition
     public int AboveBollingerBandsSma { get; set; } // Aantal candles die boven de BB.Sma uitkomen
     public int AboveBollingerBandsUpper { get; set; } // Aantal candles die boven de BB.Upper uitkomen
 
+    // Barometers
+    public decimal? Barometer15m { get; set; }
+    public decimal? Barometer30m { get; set; }
+    public decimal? Barometer1h { get; set; }
+    public decimal? Barometer4h { get; set; }
+    public decimal? Barometer1d { get; set; }
+
     // Een aantal trendindicatoren
     public CryptoTrendIndicator Trend15m { get; set; }
     public CryptoTrendIndicator Trend30m { get; set; }
     public CryptoTrendIndicator Trend1h { get; set; }
     public CryptoTrendIndicator Trend4h { get; set; }
-    public CryptoTrendIndicator Trend12h { get; set; }
+    public CryptoTrendIndicator Trend1d { get; set; }
 }
 
 
