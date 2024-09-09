@@ -40,6 +40,7 @@ partial class FrmSettings
         tabGeneral = new TabPage();
         flowLayoutPanel5 = new FlowLayoutPanel();
         groupBox1 = new GroupBox();
+        EditDebugSignalStrength = new CheckBox();
         groupBox7 = new GroupBox();
         label22 = new Label();
         EditBbStdDeviation = new NumericUpDown();
@@ -252,7 +253,6 @@ partial class FrmSettings
         panel6 = new Panel();
         label49 = new Label();
         toolTip1 = new ToolTip(components);
-        EditDebugSignalStrength = new CheckBox();
         panelButtons.SuspendLayout();
         panelFill.SuspendLayout();
         tabControlMain.SuspendLayout();
@@ -512,6 +512,17 @@ partial class FrmSettings
         groupBox1.TabIndex = 249;
         groupBox1.TabStop = false;
         groupBox1.Text = "Algemeen";
+        // 
+        // EditDebugSignalStrength
+        // 
+        EditDebugSignalStrength.AutoSize = true;
+        EditDebugSignalStrength.Location = new Point(393, 377);
+        EditDebugSignalStrength.Margin = new Padding(4, 3, 4, 3);
+        EditDebugSignalStrength.Name = "EditDebugSignalStrength";
+        EditDebugSignalStrength.Size = new Size(138, 19);
+        EditDebugSignalStrength.TabIndex = 292;
+        EditDebugSignalStrength.Text = "DebugSignalStrength";
+        EditDebugSignalStrength.UseVisualStyleBackColor = true;
         // 
         // groupBox7
         // 
@@ -2062,7 +2073,7 @@ partial class FrmSettings
         groupBox6.Margin = new Padding(10);
         groupBox6.Name = "groupBox6";
         groupBox6.Padding = new Padding(10);
-        groupBox6.Size = new Size(306, 141);
+        groupBox6.Size = new Size(291, 144);
         groupBox6.TabIndex = 160;
         groupBox6.TabStop = false;
         groupBox6.Text = "Instellingen";
@@ -2070,27 +2081,26 @@ partial class FrmSettings
         // EditCheckBollingerBandsCondition
         // 
         EditCheckBollingerBandsCondition.AutoSize = true;
-        EditCheckBollingerBandsCondition.Location = new Point(30, 93);
+        EditCheckBollingerBandsCondition.Location = new Point(16, 96);
         EditCheckBollingerBandsCondition.Margin = new Padding(4, 3, 4, 3);
         EditCheckBollingerBandsCondition.Name = "EditCheckBollingerBandsCondition";
-        EditCheckBollingerBandsCondition.Size = new Size(262, 19);
+        EditCheckBollingerBandsCondition.Size = new Size(261, 19);
         EditCheckBollingerBandsCondition.TabIndex = 169;
-        EditCheckBollingerBandsCondition.Text = "Controleer of deprijs buiten de BB banden is)";
+        EditCheckBollingerBandsCondition.Text = "Controleer of de prijs buiten de BB banden is";
         EditCheckBollingerBandsCondition.UseVisualStyleBackColor = true;
         // 
         // label24
         // 
         label24.AutoSize = true;
-        label24.Location = new Point(30, 60);
+        label24.Location = new Point(16, 60);
         label24.Margin = new Padding(4, 0, 4, 0);
         label24.Name = "label24";
-        label24.Size = new Size(100, 15);
+        label24.Size = new Size(95, 15);
         label24.TabIndex = 127;
-        label24.Text = "Add STOCH value";
+        label24.Text = "Correctie STOCH";
         // 
         // EditStorsiAddStochAmount
         // 
-        EditStorsiAddStochAmount.DecimalPlaces = 2;
         EditStorsiAddStochAmount.Location = new Point(157, 58);
         EditStorsiAddStochAmount.Margin = new Padding(4, 3, 4, 3);
         EditStorsiAddStochAmount.Maximum = new decimal(new int[] { 20, 0, 0, 0 });
@@ -2101,16 +2111,15 @@ partial class FrmSettings
         // label26
         // 
         label26.AutoSize = true;
-        label26.Location = new Point(30, 31);
+        label26.Location = new Point(16, 31);
         label26.Margin = new Padding(4, 0, 4, 0);
         label26.Name = "label26";
-        label26.Size = new Size(79, 15);
+        label26.Size = new Size(74, 15);
         label26.TabIndex = 125;
-        label26.Text = "Add RSI value";
+        label26.Text = "Correctie RSI";
         // 
         // EditStorsiAddRsiAmount
         // 
-        EditStorsiAddRsiAmount.DecimalPlaces = 2;
         EditStorsiAddRsiAmount.Location = new Point(157, 29);
         EditStorsiAddRsiAmount.Margin = new Padding(4, 3, 4, 3);
         EditStorsiAddRsiAmount.Maximum = new decimal(new int[] { 30, 0, 0, 0 });
@@ -2884,17 +2893,6 @@ partial class FrmSettings
         label49.Size = new Size(308, 15);
         label49.TabIndex = 222;
         label49.Text = "(1 munt per regel met een optionele opmerking erachter)";
-        // 
-        // EditDebugSignalStrength
-        // 
-        EditDebugSignalStrength.AutoSize = true;
-        EditDebugSignalStrength.Location = new Point(393, 377);
-        EditDebugSignalStrength.Margin = new Padding(4, 3, 4, 3);
-        EditDebugSignalStrength.Name = "EditDebugSignalStrength";
-        EditDebugSignalStrength.Size = new Size(138, 19);
-        EditDebugSignalStrength.TabIndex = 292;
-        EditDebugSignalStrength.Text = "DebugSignalStrength";
-        EditDebugSignalStrength.UseVisualStyleBackColor = true;
         // 
         // FrmSettings
         // 

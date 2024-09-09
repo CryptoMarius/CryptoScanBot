@@ -30,10 +30,8 @@ public partial class FrmSettings : Form
         UserControlSignalLong.InitControls(false, CryptoTradeSide.Long);
         UserControlSignalShort.InitControls(false, CryptoTradeSide.Short);
 
-#if TRADEBOT
         UserControlTradingLong.InitControls(true, CryptoTradeSide.Long);
         UserControlTradingShort.InitControls(true, CryptoTradeSide.Short);
-#endif
 
         // Trading (excluding the backtest)
         //TradeVia.Add("Backtest", CryptoTradeAccountType.BackTest);
@@ -65,13 +63,6 @@ public partial class FrmSettings : Form
         EditDebugSignalCreate.Visible = false;
         EditDebugSignalStrength.Visible = false;
 #endif
-#if !TRADEBOT
-        settings.Trading.Active = false;
-        tabTrading.Parent = null;
-        tabControlMain.TabPages.Remove(tabTrading);
-        tabApi.Parent = null;
-        tabControlMain.TabPages.Remove(tabApi);
-#endif
 
         // Deze worden na de overgang naar .net 7 regelmatig gereset naar 0
         // Benieuwd waarom dit gebeurd (het zijn er gelukkig niet zo veel)
@@ -85,6 +76,11 @@ public partial class FrmSettings : Form
 
         EditStobTrendLong.Minimum = -1000;
         EditStobTrendShort.Minimum = -1000;
+
+        EditStorsiAddRsiAmount.Minimum = -100;
+        EditStorsiAddRsiAmount.Maximum = +100;
+        EditStorsiAddStochAmount.Minimum = -100;
+        EditStorsiAddStochAmount.Maximum = +100;
 
         // ------------------------------------------------------------------------------
         // General
@@ -266,7 +262,6 @@ public partial class FrmSettings : Form
         UserControlSignalLong.LoadConfig(settings.Signal.Long);
         UserControlSignalShort.LoadConfig(settings.Signal.Short);
 
-#if TRADEBOT
         // ------------------------------------------------------------------------------
         // Trading
         // ------------------------------------------------------------------------------
@@ -308,7 +303,6 @@ public partial class FrmSettings : Form
         UserControlAltradyApi.LoadConfig(GlobalData.AltradyApi);
         UserControlExchangeApi.LoadConfig(GlobalData.TradingApi);
         UserControlExchangeApi.Visible = false;
-#endif
 
         // --------------------------------------------------------------------------------
         // Black & White list
@@ -539,7 +533,6 @@ public partial class FrmSettings : Form
         settings.WhiteListOverbought = [.. textBoxWhiteListOverbought.Text.Trim().Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries)];
         settings.WhiteListOverbought.Sort();
 
-#if TRADEBOT
         // --------------------------------------------------------------------------------
         // Trade bot
         // --------------------------------------------------------------------------------
@@ -578,7 +571,6 @@ public partial class FrmSettings : Form
         UserControlTradeRules.SaveConfig(settings.Trading);
         UserControlAltradyApi.SaveConfig(GlobalData.AltradyApi);
         UserControlExchangeApi.SaveConfig(GlobalData.TradingApi);
-#endif
 
         // ------------------------------------------------------------------------------
         // Balance bot (out of action)
