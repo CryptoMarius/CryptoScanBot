@@ -19,9 +19,11 @@ public partial class CryptoDataGridColumns : Form
 
         foreach (DataGridViewColumn column in Grid.Grid.Columns)
         {
-            if (!Grid.ColumnList.TryGetValue(column.HeaderText, out ColumnSetting columnSetting))
+            if (!Grid.ColumnList.TryGetValue(column.HeaderText, out ColumnSetting? columnSetting))
             {
                 columnSetting = new();
+                if (column.Tag is bool alwaysVisible)
+                    columnSetting.AlwaysVisible = alwaysVisible;
                 Grid.ColumnList.Add(column.HeaderText, columnSetting);
             }
 
@@ -31,7 +33,7 @@ public partial class CryptoDataGridColumns : Form
                 Text = column.HeaderText,
                 Size = new Size(100, 22),
                 CheckState = CheckState.Unchecked,
-                Checked = columnSetting.Visible,
+                Checked = columnSetting.Visible || columnSetting.AlwaysVisible,
             };
             flowLayoutPanel.Controls.Add(item);
             List.Add(item);
@@ -40,26 +42,15 @@ public partial class CryptoDataGridColumns : Form
 
     public void FormOkay()
     {
-        int count = 0;
         foreach (var item in List)
         {
-            if (!Grid.ColumnList.TryGetValue(item.Text, out ColumnSetting columnSetting))
+            if (!Grid.ColumnList.TryGetValue(item.Text, out ColumnSetting? columnSetting))
             {
                 columnSetting = new();
                 Grid.ColumnList.Add(item.Text, columnSetting);
             }
-
-            columnSetting.Visible = item.Checked;
-            if (columnSetting.Visible)
-                count++;
+            columnSetting.Visible = item.Checked || columnSetting.AlwaysVisible;
         }
-
-        // Restore a column (otherwise the complete header is gone)
-        if (count == 0)
-        {
-            Grid.ColumnList.Values[0].Visible = true;
-        }
-
     }
 
     private void ButtonOkClick(object? sender, EventArgs? e)

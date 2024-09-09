@@ -53,7 +53,7 @@ public class CryptoDataGrid
     internal DataGridView Grid;
     internal Object? SelectedObject;
     internal int SelectedObjectIndex;
-    internal SortedList<string, ColumnSetting> ColumnList;
+    internal SortedList<string, ColumnSetting> ColumnList = [];
 }
 
 
@@ -128,7 +128,7 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         }
     }
 
-    internal DataGridViewTextBoxColumn CreateColumn(string headerText, Type type, string format, DataGridViewContentAlignment align, int width = 0)
+    internal DataGridViewTextBoxColumn CreateColumn(string headerText, Type type, string format, DataGridViewContentAlignment align, int width = 0, bool alwaysVisible = false)
     {
         DataGridViewTextBoxColumn c = new()
         {
@@ -149,6 +149,7 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         }
         c.DefaultCellStyle.Format = format;
         c.DefaultCellStyle.Alignment = align;
+        c.Tag = alwaysVisible;
 
         Grid.Columns.Add(c);
         return c;
@@ -223,7 +224,6 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         CommandHelper.AddCommand(MenuStripHeader, null, "Reset column width (cell+header)", Command.None, CommandResetColumnWidth2);
 
 
-        int count = 0;
         foreach (DataGridViewColumn column in Grid.Columns)
         {
             if (!ColumnList.TryGetValue(column.HeaderText, out ColumnSetting? columnSetting))
@@ -232,8 +232,10 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
                 ColumnList.Add(column.HeaderText, columnSetting);
                 columnSetting.Visible = column.Visible;
             }
+            if (column.Tag is bool alwaysVisible)
+                columnSetting.AlwaysVisible = alwaysVisible;
 
-            column.Visible = columnSetting.Visible;
+            column.Visible = columnSetting.Visible || columnSetting.AlwaysVisible;
             if (columnSetting.Width > 0)
                 column.Width = columnSetting.Width;
             else
@@ -241,16 +243,8 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
 
             column.ContextMenuStrip = MenuStripHeader;
             column.AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
-            if (column.Visible)
-                count++;
         }
 
-        // Restore a column (otherwise the complete header is gone)
-        if (count == 0)
-        {
-            Grid.Columns[0].Visible = true;
-            ColumnList.Values[0].Visible = true;
-        }
         Grid.ColumnWidthChanged += ColumnWidthChanged;
     }
 
@@ -329,10 +323,12 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
                 if (!ColumnList.TryGetValue(column.HeaderText, out ColumnSetting? columnSetting))
                 {
                     columnSetting = new();
+                    if (column.Tag is bool alwaysVisible)
+                        columnSetting.AlwaysVisible = alwaysVisible;
                     ColumnList.Add(column.HeaderText, columnSetting);
                 }
                 columnSetting.Width = column.Width;
-                columnSetting.Visible = column.Visible;
+                columnSetting.Visible = column.Visible || columnSetting.AlwaysVisible;
             }
         }
 
@@ -470,4 +466,40 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         return Color.White;
     }
 
+    internal static string TrendIndicatorText(CryptoTrendIndicator? trend)
+    {
+        if (!trend.HasValue)
+            return "";
+
+        return trend switch
+        {
+            CryptoTrendIndicator.Bullish => "up",
+            CryptoTrendIndicator.Bearish => "down",
+            _ => "",
+        };
+    }
+
+    internal Color TrendIndicatorColor(CryptoTrendIndicator? trend)
+    {
+        if (trend.HasValue)
+        {
+            if (trend == CryptoTrendIndicator.Bullish)
+                return Color.Green;
+            if (trend == CryptoTrendIndicator.Bearish)
+                return Color.Red;
+        }
+        return Grid.DefaultCellStyle.BackColor;
+    }
+
+    internal Color SimpleColor(decimal? value)
+    {
+        if (value.HasValue)
+        {
+            if (value > 0)
+                return Color.Green;
+            if (value < 0)
+                return Color.Red;
+        }
+        return Grid.DefaultCellStyle.BackColor;
+    }
 }

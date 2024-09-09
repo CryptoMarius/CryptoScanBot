@@ -8,6 +8,7 @@ public class ColumnSetting
 {
     public int Width { get; set; } = -1;
     public bool Visible { get; set; } = true;
+    public bool AlwaysVisible { get; set; } = false;
 }
 
 [Serializable]

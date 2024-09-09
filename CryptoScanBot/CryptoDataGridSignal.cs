@@ -40,10 +40,15 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
         Trend30m,
         Trend1h,
         Trend4h,
-        Trend12h,
-#if TRADEBOT
+        Trend1d,
+
+        Barometer15m,
+        Barometer30m,
+        Barometer1h,
+        Barometer4h,
+        Barometer1d,
+
         MinimumEntry,
-#endif
 #if DEBUG
         // statistics
         PriceMin,
@@ -107,7 +112,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                     CreateColumn("Exchange", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleLeft, 125).Visible = false;
                     break;
                 case ColumnsForGrid.Symbol:
-                    CreateColumn("Symbol", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleLeft, 100);
+                    CreateColumn("Symbol", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleLeft, 100, true);
                     break;
                 case ColumnsForGrid.Interval:
                     CreateColumn("Interval", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 45);
@@ -186,14 +191,29 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                 case ColumnsForGrid.Trend4h:
                     CreateColumn("4h", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42);
                     break;
-                case ColumnsForGrid.Trend12h:
-                    CreateColumn("12h", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42);
+                case ColumnsForGrid.Trend1d:
+                    CreateColumn("1d", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42);
                     break;
-#if TRADEBOT
+
+                case ColumnsForGrid.Barometer15m:
+                    CreateColumn("Bm 15m", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42).Visible = false;
+                    break;
+                case ColumnsForGrid.Barometer30m:
+                    CreateColumn("Bm 30m", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42).Visible = false;
+                    break;
+                case ColumnsForGrid.Barometer1h:
+                    CreateColumn("Bm 1h", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42).Visible = false;
+                    break;
+                case ColumnsForGrid.Barometer4h:
+                    CreateColumn("Bm 4h", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42).Visible = false;
+                    break;
+                case ColumnsForGrid.Barometer1d:
+                    CreateColumn("Bm 1d", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42).Visible = false;
+                    break;
+
                 case ColumnsForGrid.MinimumEntry:
                     CreateColumn("M.Entry", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42).Visible = false;
                     break;
-#endif
 #if DEBUG
                 case ColumnsForGrid.PriceMin:
                     CreateColumn("MinPrice", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 70).Visible = false;
@@ -245,10 +265,13 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
             ColumnsForGrid.Trend30m => ObjectCompare.Compare(a.Trend30m, b.Trend30m),
             ColumnsForGrid.Trend1h => ObjectCompare.Compare(a.Trend1h, b.Trend1h),
             ColumnsForGrid.Trend4h => ObjectCompare.Compare(a.Trend4h, b.Trend4h),
-            ColumnsForGrid.Trend12h => ObjectCompare.Compare(a.Trend12h, b.Trend12h),
-#if TRADEBOT
+            ColumnsForGrid.Trend1d => ObjectCompare.Compare(a.Trend1d, b.Trend1d),
+            ColumnsForGrid.Barometer15m => ObjectCompare.Compare(a.Barometer15m, b.Barometer15m),
+            ColumnsForGrid.Barometer30m => ObjectCompare.Compare(a.Barometer30m, b.Barometer30m),
+            ColumnsForGrid.Barometer1h => ObjectCompare.Compare(a.Barometer1h, b.Barometer1h),
+            ColumnsForGrid.Barometer4h => ObjectCompare.Compare(a.Barometer4h, b.Barometer4h),
+            ColumnsForGrid.Barometer1d => ObjectCompare.Compare(a.Barometer1d, b.Barometer1d),
             ColumnsForGrid.MinimumEntry => ObjectCompare.Compare(a.MinEntry, b.MinEntry),
-#endif
 #if DEBUG
             ColumnsForGrid.PriceMin => ObjectCompare.Compare(a.PriceMin, b.PriceMin),
             ColumnsForGrid.PriceMax => ObjectCompare.Compare(a.PriceMax, b.PriceMax),
@@ -296,18 +319,6 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
     }
 
 
-    private static string TrendIndicatorText(CryptoTrendIndicator? trend)
-    {
-        if (!trend.HasValue)
-            return "";
-
-        return trend switch
-        {
-            CryptoTrendIndicator.Bullish => "up",
-            CryptoTrendIndicator.Bearish => "down",
-            _ => "",
-        };
-    }
 
     private static string SymbolName(CryptoSignal signal)
     {
@@ -415,14 +426,27 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                 case ColumnsForGrid.Trend4h:
                     e.Value = TrendIndicatorText(signal.Trend4h);
                     break;
-                case ColumnsForGrid.Trend12h:
-                    e.Value = TrendIndicatorText(signal.Trend12h);
+                case ColumnsForGrid.Trend1d:
+                    e.Value = TrendIndicatorText(signal.Trend1d);
                     break;
-#if TRADEBOT
+                case ColumnsForGrid.Barometer15m:
+                    e.Value = signal.Barometer15m?.ToString("N2");
+                    break;
+                case ColumnsForGrid.Barometer30m:
+                    e.Value = signal.Barometer30m?.ToString("N2");
+                    break;
+                case ColumnsForGrid.Barometer1h:
+                    e.Value = signal.Barometer1h?.ToString("N2");
+                    break;
+                case ColumnsForGrid.Barometer4h:
+                    e.Value = signal.Barometer4h?.ToString("N2");
+                    break;
+                case ColumnsForGrid.Barometer1d:
+                    e.Value = signal.Barometer1d?.ToString("N2");
+                    break;
                 case ColumnsForGrid.MinimumEntry:
                     e.Value = signal.MinEntry.ToString(signal.Symbol.QuoteData!.DisplayFormat);
                     break;
-#endif
 #if DEBUG
                 case ColumnsForGrid.PriceMin:
                     if (signal.PriceMin! != 0m)
@@ -446,21 +470,6 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                     break;
             }
         }
-    }
-
-
-
-    private Color TrendIndicatorColor(CryptoTrendIndicator? trend)
-    {
-        if (!trend.HasValue)
-            return Grid.DefaultCellStyle.BackColor;
-
-        return trend switch
-        {
-            CryptoTrendIndicator.Bullish => Color.Green,
-            CryptoTrendIndicator.Bearish => Color.Red,
-            _ => Grid.DefaultCellStyle.BackColor,
-        };
     }
 
 
@@ -584,9 +593,9 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                     {
                         // Oversold/overbougt
                         double? value = signal.Rsi; // 0..100
-                        if (value < 30f)
+                        if (value < GlobalData.Settings.General.RsiValueOversold)
                             foreColor = Color.Red;
-                        else if (value > 70f)
+                        else if (value > GlobalData.Settings.General.RsiValueOverbought)
                             foreColor = Color.Green;
                     }
                     break;
@@ -595,9 +604,9 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                     {
                         // Oversold/overbougt
                         double? value = signal.StochOscillator;
-                        if (value < 20f)
+                        if (value < GlobalData.Settings.General.StochValueOversold)
                             foreColor = Color.Red;
-                        else if (value > 80f)
+                        else if (value > GlobalData.Settings.General.StochValueOverbought)
                             foreColor = Color.Green;
                     }
                     break;
@@ -663,9 +672,26 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                 case ColumnsForGrid.Trend4h:
                     foreColor = TrendIndicatorColor(signal.Trend4h);
                     break;
-                case ColumnsForGrid.Trend12h:
-                    foreColor = TrendIndicatorColor(signal.Trend12h);
+                case ColumnsForGrid.Trend1d:
+                    foreColor = TrendIndicatorColor(signal.Trend1d);
                     break;
+
+                case ColumnsForGrid.Barometer15m:
+                    foreColor = SimpleColor(signal.Barometer15m);
+                    break;
+                case ColumnsForGrid.Barometer30m:
+                    foreColor = SimpleColor(signal.Barometer30m);
+                    break;
+                case ColumnsForGrid.Barometer1h:
+                    foreColor = SimpleColor(signal.Barometer1h);
+                    break;
+                case ColumnsForGrid.Barometer4h:
+                    foreColor = SimpleColor(signal.Barometer4h);
+                    break;
+                case ColumnsForGrid.Barometer1d:
+                    foreColor = SimpleColor(signal.Barometer1d);
+                    break;
+
 #if DEBUG
                 case ColumnsForGrid.PriceMin:
                     {

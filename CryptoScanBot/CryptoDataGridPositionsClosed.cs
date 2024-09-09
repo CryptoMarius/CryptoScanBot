@@ -37,6 +37,36 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
         QuantityTick,
         RemainingDust,
         DustValue,
+
+        //Signal information
+        SignalDate,
+        SignalPrice,
+        SignalVolume,
+        TfTrend,
+        MarketTrend,
+        Change24h,
+        Move24h,
+        BB,
+        RSI,
+        Stoch,
+        Signal,
+        Sma200,
+        Sma50,
+        Sma20,
+        PSar,
+        Lux5m,
+        //FundingRate,
+        Trend15m,
+        Trend30m,
+        Trend1h,
+        Trend4h,
+        Trend1d,
+
+        Barometer15m,
+        Barometer30m,
+        Barometer1h,
+        Barometer4h,
+        Barometer1d,
     }
 
     public override void InitializeCommands(ContextMenuStrip menuStrip)
@@ -46,13 +76,11 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
         menuStrip.AddCommand(this, "TradingView external", Command.ActivateTradingviewExtern);
         //menuStrip.AddCommand(this, "Exchange ", Command.ActivateActiveExchange);
 
-#if TRADEBOT
         menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Position recalculate", Command.None, CommandPositionRecalculateExecute);
         //menuStrip.AddCommand(this, "Position recalculate2", Command.PositionCalculate);
         menuStrip.AddCommand(this, "Position delete from database", Command.None, CommandPositionDeleteFromDatabase);
         menuStrip.AddCommand(this, "Position information (Excel)", Command.ExcelPositionInformation);
-#endif
 
         menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Copy symbol name", Command.CopySymbolInformation);
@@ -92,7 +120,7 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
                     CreateColumn("Exchange", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleLeft, 125).Visible = false;
                     break;
                 case ColumnsForGrid.Symbol:
-                    CreateColumn("Symbol", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleLeft, 100);
+                    CreateColumn("Symbol", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleLeft, 100, true);
                     break;
                 case ColumnsForGrid.Interval:
                     CreateColumn("Interval", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 55);
@@ -139,6 +167,88 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
                 case ColumnsForGrid.DustValue:
                     CreateColumn("DustValue", typeof(decimal), "#,##0.##", DataGridViewContentAlignment.MiddleRight, 75);
                     break;
+
+
+                case ColumnsForGrid.SignalDate:
+                    CreateColumn("Candle date", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleLeft, 140).Visible = false;
+                    break;
+                case ColumnsForGrid.SignalPrice:
+                    CreateColumn("Price", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 70).Visible = false;
+                    break;
+                case ColumnsForGrid.SignalVolume:
+                    CreateColumn("Volume", typeof(decimal), "#,##0", DataGridViewContentAlignment.MiddleRight, 80).Visible = false;
+                    break;
+                case ColumnsForGrid.TfTrend:
+                    CreateColumn("TF trend", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 50).Visible = false;
+                    break;
+                case ColumnsForGrid.MarketTrend:
+                    CreateColumn("Market trend%", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                    break;
+                case ColumnsForGrid.Change24h:
+                    CreateColumn("24h Change", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                    break;
+                case ColumnsForGrid.Move24h:
+                    CreateColumn("24h Move", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                    break;
+                case ColumnsForGrid.BB:
+                    CreateColumn("BB%", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                    break;
+                case ColumnsForGrid.RSI:
+                    CreateColumn("RSI", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                    break;
+                case ColumnsForGrid.Stoch:
+                    CreateColumn("Stoch", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                    break;
+                case ColumnsForGrid.Signal:
+                    CreateColumn("Signal", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                    break;
+                case ColumnsForGrid.Sma200:
+                    CreateColumn("Sma200", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                    break;
+                case ColumnsForGrid.Sma50:
+                    CreateColumn("Sma50", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                    break;
+                case ColumnsForGrid.Sma20:
+                    CreateColumn("Sma20", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                    break;
+                case ColumnsForGrid.PSar:
+                    CreateColumn("PSar", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                    break;
+                case ColumnsForGrid.Lux5m:
+                    CreateColumn("Lux 5m", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 45).Visible = false;
+                    break;
+                case ColumnsForGrid.Trend15m:
+                    CreateColumn("15m", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42).Visible = false;
+                    break;
+                case ColumnsForGrid.Trend30m:
+                    CreateColumn("30m", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42).Visible = false;
+                    break;
+                case ColumnsForGrid.Trend1h:
+                    CreateColumn("1h", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42).Visible = false;
+                    break;
+                case ColumnsForGrid.Trend4h:
+                    CreateColumn("4h", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42).Visible = false;
+                    break;
+                case ColumnsForGrid.Trend1d:
+                    CreateColumn("1d", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42).Visible = false;
+                    break;
+
+                case ColumnsForGrid.Barometer15m:
+                    CreateColumn("Bm 15m", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42).Visible = false;
+                    break;
+                case ColumnsForGrid.Barometer30m:
+                    CreateColumn("Bm 30m", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42).Visible = false;
+                    break;
+                case ColumnsForGrid.Barometer1h:
+                    CreateColumn("Bm 1h", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42).Visible = false;
+                    break;
+                case ColumnsForGrid.Barometer4h:
+                    CreateColumn("Bm 4h", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42).Visible = false;
+                    break;
+                case ColumnsForGrid.Barometer1d:
+                    CreateColumn("Bm 1d", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42).Visible = false;
+                    break;
+
                 default: 
                     throw new NotImplementedException();
             };
@@ -172,6 +282,34 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
             ColumnsForGrid.QuantityTick => ObjectCompare.Compare(a.Symbol.QuantityTickSize, b.Symbol.QuantityTickSize),
             ColumnsForGrid.RemainingDust => ObjectCompare.Compare(a.RemainingDust, b.RemainingDust),
             ColumnsForGrid.DustValue => ObjectCompare.Compare(a.RemainingDust * a.Symbol.LastPrice, b.RemainingDust * b.Symbol.LastPrice),
+
+            // Signal information
+            ColumnsForGrid.SignalDate => ObjectCompare.Compare(a.SignalEventTime, b.SignalEventTime),
+            ColumnsForGrid.SignalPrice => ObjectCompare.Compare(a.SignalPrice, b.SignalPrice),
+            ColumnsForGrid.SignalVolume => ObjectCompare.Compare(a.SignalVolume, b.SignalVolume),
+            ColumnsForGrid.TfTrend => ObjectCompare.Compare(a.TrendIndicator, b.TrendIndicator),
+            ColumnsForGrid.MarketTrend => ObjectCompare.Compare(a.TrendPercentage, b.TrendPercentage),
+            ColumnsForGrid.Change24h => ObjectCompare.Compare(a.Last24HoursChange, b.Last24HoursChange),
+            ColumnsForGrid.Move24h => ObjectCompare.Compare(a.Last24HoursEffective, b.Last24HoursEffective),
+            ColumnsForGrid.BB => ObjectCompare.Compare(a.BollingerBandsPercentage, b.BollingerBandsPercentage),
+            ColumnsForGrid.RSI => ObjectCompare.Compare(a.Rsi, b.Rsi),
+            ColumnsForGrid.Stoch => ObjectCompare.Compare(a.StochOscillator, b.StochOscillator),
+            ColumnsForGrid.Signal => ObjectCompare.Compare(a.StochSignal, b.StochSignal),
+            ColumnsForGrid.Sma200 => ObjectCompare.Compare(a.Sma200, b.Sma200),
+            ColumnsForGrid.Sma50 => ObjectCompare.Compare(a.Sma50, b.Sma50),
+            ColumnsForGrid.Sma20 => ObjectCompare.Compare(a.Sma20, b.Sma20),
+            ColumnsForGrid.PSar => ObjectCompare.Compare(a.PSar, b.PSar),
+            ColumnsForGrid.Lux5m => ObjectCompare.Compare(a.LuxIndicator5m, b.LuxIndicator5m),
+            ColumnsForGrid.Trend15m => ObjectCompare.Compare(a.Trend15m, b.Trend15m),
+            ColumnsForGrid.Trend30m => ObjectCompare.Compare(a.Trend30m, b.Trend30m),
+            ColumnsForGrid.Trend1h => ObjectCompare.Compare(a.Trend1h, b.Trend1h),
+            ColumnsForGrid.Trend4h => ObjectCompare.Compare(a.Trend4h, b.Trend4h),
+            ColumnsForGrid.Trend1d => ObjectCompare.Compare(a.Trend1d, b.Trend1d),
+            ColumnsForGrid.Barometer15m => ObjectCompare.Compare(a.Barometer15m, b.Barometer15m),
+            ColumnsForGrid.Barometer30m => ObjectCompare.Compare(a.Barometer30m, b.Barometer30m),
+            ColumnsForGrid.Barometer1h => ObjectCompare.Compare(a.Barometer1h, b.Barometer1h),
+            ColumnsForGrid.Barometer4h => ObjectCompare.Compare(a.Barometer4h, b.Barometer4h),
+            ColumnsForGrid.Barometer1d => ObjectCompare.Compare(a.Barometer1d, b.Barometer1d),
             _ => 0
         };
 
@@ -221,33 +359,161 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
         CryptoPosition position = GetCellObject(e.RowIndex);
         if (position != null)
         {
-            e.Value = (ColumnsForGrid)e.ColumnIndex switch
+            switch ((ColumnsForGrid)e.ColumnIndex)
             {
-                ColumnsForGrid.Id => position.Id.ToString(),
-                ColumnsForGrid.Created => position.CreateTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm"),
-                ColumnsForGrid.Closed => position.CloseTime?.ToLocalTime().ToString("yyyy-MM-dd HH:mm"),
-                ColumnsForGrid.Duration => position.DurationText(),
-                ColumnsForGrid.Account => position.Account.AccountType,
-                ColumnsForGrid .Exchange => position.Symbol.Exchange.Name,
-                ColumnsForGrid.Symbol => position.Symbol.Name,
-                ColumnsForGrid.Interval => position.Interval.Name,
-                ColumnsForGrid.Strategy => position.StrategyText,
-                ColumnsForGrid.Side => position.SideText,
-                ColumnsForGrid.Status => position.Status.ToString(),
-                ColumnsForGrid.Invested => position.Invested.ToString(position.Symbol.QuoteData.DisplayFormat),
-                ColumnsForGrid.Returned => position.Returned.ToString(position.Symbol.QuoteData.DisplayFormat),
-                ColumnsForGrid.Commission => position.Commission.ToString(position.Symbol.QuoteData.DisplayFormat),
-                ColumnsForGrid.Profit => position.Profit.ToString(position.Symbol.QuoteData.DisplayFormat),
-                ColumnsForGrid.Percentage => position.Percentage.ToString("N2"),
-                ColumnsForGrid.Parts => position.PartCountText(false),
-                //ColumnsForGrid.EntryPrice => position.EntryPrice?.ToString(position.Symbol.PriceDisplayFormat),
-                //ColumnsForGrid.ProfitPrice => position.ProfitPrice?.ToString(position.Symbol.PriceDisplayFormat),
+                case ColumnsForGrid.Id:
+                    e.Value = position.Id.ToString();
+                    break;
+                case ColumnsForGrid.Created:
+                    e.Value = position.CreateTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm");
+                    break;
+                case ColumnsForGrid.Closed:
+                    e.Value = position.CloseTime?.ToLocalTime().ToString("yyyy-MM-dd HH:mm");
+                    break;
+                case ColumnsForGrid.Duration:
+                    e.Value = position.DurationText();
+                    break;
+                case ColumnsForGrid.Account:
+                    e.Value = position.Account.AccountType;
+                    break;
+                case ColumnsForGrid.Exchange:
+                    e.Value = position.Symbol.Exchange.Name;
+                    break;
+                case ColumnsForGrid.Symbol:
+                    e.Value = position.Symbol.Name;
+                    break;
+                case ColumnsForGrid.Interval:
+                    e.Value = position.Interval!.Name;
+                    break;
+                case ColumnsForGrid.Strategy:
+                    e.Value = position.StrategyText;
+                    break;
+                case ColumnsForGrid.Side:
+                    e.Value = position.SideText;
+                    break;
+                case ColumnsForGrid.Status:
+                    e.Value = position.Status.ToString();
+                    break;
+                case ColumnsForGrid.Invested:
+                    e.Value = position.Invested.ToString(position.Symbol.QuoteData.DisplayFormat);
+                    break;
+                case ColumnsForGrid.Returned:
+                    e.Value = position.Returned.ToString(position.Symbol.QuoteData.DisplayFormat);
+                    break;
+                case ColumnsForGrid.Commission:
+                    e.Value = position.Commission.ToString(position.Symbol.QuoteData.DisplayFormat);
+                    break;
+                case ColumnsForGrid.Profit:
+                    e.Value = position.Profit.ToString(position.Symbol.QuoteData.DisplayFormat);
+                    break;
+                case ColumnsForGrid.Percentage:
+                    e.Value = position.Percentage.ToString("N2");
+                    break;
+                case ColumnsForGrid.Parts:
+                    e.Value = position.PartCountText(false);
+                    break;
+                //case ColumnsForGrid.EntryPrice:
+                //e.Value = position.EntryPrice?.ToString(position.Symbol.PriceDisplayFormat),
+                //case ColumnsForGrid.ProfitPrice:
+                //e.Value = position.ProfitPrice?.ToString(position.Symbol.PriceDisplayFormat),
                 // ter debug..
-                ColumnsForGrid.QuantityTick => position.Symbol?.QuantityTickSize.ToString0(),
-                ColumnsForGrid.RemainingDust => position.RemainingDust.ToString("N8"),
-                ColumnsForGrid.DustValue => (position.RemainingDust * position.Symbol.LastPrice).ToString0("N8"),
-                _ => '?',
-            };
+                case ColumnsForGrid.QuantityTick:
+                    e.Value = position.Symbol?.QuantityTickSize.ToString0();
+                    break;
+                case ColumnsForGrid.RemainingDust:
+                    e.Value = position.RemainingDust.ToString("N8");
+                    break;
+                case ColumnsForGrid.DustValue:
+                    e.Value = (position.RemainingDust * position.Symbol.LastPrice).ToString0("N8");
+                    break;
+
+
+
+                case ColumnsForGrid.SignalDate:
+                    // there is a signal.CloseDate
+                    //+ signal.OpenDate.AddSeconds(signal.Interval.Duration).ToLocalTime().ToString("HH:mm");
+                    e.Value = position.SignalEventTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm");
+                    break;
+                case ColumnsForGrid.SignalPrice:
+                    e.Value = position.SignalPrice.ToString(position.Symbol.PriceDisplayFormat);
+                    break;
+                case ColumnsForGrid.SignalVolume:
+                    e.Value = position.SignalVolume;
+                    break;
+                case ColumnsForGrid.TfTrend:
+                    e.Value = TrendIndicatorText(position.TrendIndicator);
+                    break;
+                case ColumnsForGrid.MarketTrend:
+                    e.Value = position.TrendPercentage;
+                    break;
+                case ColumnsForGrid.Change24h:
+                    e.Value = position.Last24HoursChange;
+                    break;
+                case ColumnsForGrid.Move24h:
+                    e.Value = position.Last24HoursEffective;
+                    break;
+                case ColumnsForGrid.BB:
+                    e.Value = position.BollingerBandsPercentage;
+                    break;
+                case ColumnsForGrid.RSI:
+                    e.Value = position.Rsi;
+                    break;
+                case ColumnsForGrid.Stoch:
+                    e.Value = position.StochOscillator;
+                    break;
+                case ColumnsForGrid.Signal:
+                    e.Value = position.StochSignal;
+                    break;
+                case ColumnsForGrid.Sma200:
+                    e.Value = position.Sma200;
+                    break;
+                case ColumnsForGrid.Sma50:
+                    e.Value = position.Sma50;
+                    break;
+                case ColumnsForGrid.Sma20:
+                    e.Value = position.Sma20;
+                    break;
+                case ColumnsForGrid.PSar:
+                    e.Value = position.PSar;
+                    break;
+                case ColumnsForGrid.Lux5m:
+                    e.Value = position.LuxIndicator5m;
+                    break;
+                case ColumnsForGrid.Trend15m:
+                    e.Value = TrendIndicatorText(position.Trend15m);
+                    break;
+                case ColumnsForGrid.Trend30m:
+                    e.Value = TrendIndicatorText(position.Trend30m);
+                    break;
+                case ColumnsForGrid.Trend1h:
+                    e.Value = TrendIndicatorText(position.Trend1h);
+                    break;
+                case ColumnsForGrid.Trend4h:
+                    e.Value = TrendIndicatorText(position.Trend4h);
+                    break;
+                case ColumnsForGrid.Trend1d:
+                    e.Value = TrendIndicatorText(position.Trend1d);
+                    break;
+                case ColumnsForGrid.Barometer15m:
+                    e.Value = position.Barometer15m?.ToString("N2");
+                    break;
+                case ColumnsForGrid.Barometer30m:
+                    e.Value = position.Barometer30m?.ToString("N2");
+                    break;
+                case ColumnsForGrid.Barometer1h:
+                    e.Value = position.Barometer1h?.ToString("N2");
+                    break;
+                case ColumnsForGrid.Barometer4h:
+                    e.Value = position.Barometer4h?.ToString("N2");
+                    break;
+                case ColumnsForGrid.Barometer1d:
+                    e.Value = position.Barometer1d?.ToString("N2");
+                    break;
+
+                default:
+                    e.Value = '?';
+                    break;
+            }
         }
     }
 
@@ -273,11 +539,10 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
         CryptoPosition position = GetCellObject(e.RowIndex);
         if (position != null)
         {
-
             switch ((ColumnsForGrid)e.ColumnIndex)
             {
                 case ColumnsForGrid.Symbol: // symbol
-                    Color displayColor = position.Symbol.QuoteData.DisplayColor;
+                    Color displayColor = position.Symbol.QuoteData!.DisplayColor;
                     if (displayColor != Color.White)
                         backColor = displayColor;
                     break;
@@ -311,6 +576,60 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
                         foreColor = Color.Red;
                     break;
 
+                case ColumnsForGrid.RSI:
+                    {
+                        // Oversold/overbougt
+                        double? value = position.Rsi; // 0..100
+                        if (value < GlobalData.Settings.General.RsiValueOversold)
+                            foreColor = Color.Red;
+                        else if (value > GlobalData.Settings.General.RsiValueOverbought)
+                            foreColor = Color.Green;
+                    }
+                    break;
+
+                case ColumnsForGrid.Stoch:
+                    {
+                        // Oversold/overbougt
+                        double? value = position.StochOscillator;
+                        if (value < GlobalData.Settings.General.StochValueOversold)
+                            foreColor = Color.Red;
+                        else if (value > GlobalData.Settings.General.StochValueOverbought)
+                            foreColor = Color.Green;
+                    }
+                    break;
+
+                case ColumnsForGrid.Trend15m:
+                    foreColor = TrendIndicatorColor(position.Trend15m);
+                    break;
+                case ColumnsForGrid.Trend30m:
+                    foreColor = TrendIndicatorColor(position.Trend30m);
+                    break;
+                case ColumnsForGrid.Trend1h:
+                    foreColor = TrendIndicatorColor(position.Trend1h);
+                    break;
+                case ColumnsForGrid.Trend4h:
+                    foreColor = TrendIndicatorColor(position.Trend4h);
+                    break;
+                case ColumnsForGrid.Trend1d:
+                    foreColor = TrendIndicatorColor(position.Trend1d);
+                    break;
+
+                case ColumnsForGrid.Barometer15m:
+                    foreColor = SimpleColor(position.Barometer15m);
+                    break;
+                case ColumnsForGrid.Barometer30m:
+                    foreColor = SimpleColor(position.Barometer30m);
+                    break;
+                case ColumnsForGrid.Barometer1h:
+                    foreColor = SimpleColor(position.Barometer1h);
+                    break;
+                case ColumnsForGrid.Barometer4h:
+                    foreColor = SimpleColor(position.Barometer4h);
+                    break;
+                case ColumnsForGrid.Barometer1d:
+                    foreColor = SimpleColor(position.Barometer1d);
+                    break;
+
             }
         }
 
@@ -320,7 +639,6 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
     }
 
 
-#if TRADEBOT
     private async void CommandPositionRecalculateExecute(object? sender, EventArgs? e)
     {
         CryptoPosition position = GetSelectedObject(out int rowIndex);
@@ -345,6 +663,7 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
         CryptoPosition position = GetSelectedObject(out int _);
         if (position != null)
         {
+
             if (MessageBox.Show($"Delete position {position.Symbol.Name}", "Delete position?", MessageBoxButtons.YesNo) != DialogResult.Yes)
                 return;
 
@@ -372,6 +691,5 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
             }
         }
     }
-#endif
 
 }
