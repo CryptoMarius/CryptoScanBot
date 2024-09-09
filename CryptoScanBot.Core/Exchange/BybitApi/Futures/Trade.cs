@@ -13,7 +13,6 @@ using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot.Core.Exchange.BybitApi.Futures;
 
-#if TRADEBOT
 /// <summary>
 /// De Trades ophalen
 /// </summary>
@@ -150,4 +149,3 @@ public class Trade
 
 }
 
-#endif

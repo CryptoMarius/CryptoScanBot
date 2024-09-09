@@ -8,7 +8,7 @@ namespace CryptoScanBot.Core.Context;
 public class Migration
 {
     // De huidige database versie
-    public readonly static int CurrentDatabaseVersion = 21;
+    public readonly static int CurrentDatabaseVersion = 22;
 
 
     public static void Execute(CryptoDatabase database, int CurrentVersion)
@@ -176,7 +176,7 @@ public class Migration
                 database.Connection.Execute("alter table Signal add Trend30m Integer", transaction);
                 database.Connection.Execute("alter table Signal add Trend1h Integer", transaction);
                 database.Connection.Execute("alter table Signal add Trend4h Integer", transaction);
-                database.Connection.Execute("alter table Signal add Trend12h Integer", transaction);
+                database.Connection.Execute("alter table Signal add Trend1d Integer", transaction);
 
                 // update version
                 version.Version += 1;
@@ -677,7 +677,7 @@ public class Migration
             database.Connection.Execute("alter table Position add Trend30m Integer", transaction);
             database.Connection.Execute("alter table Position add Trend1h Integer", transaction);
             database.Connection.Execute("alter table Position add Trend4h Integer", transaction);
-            database.Connection.Execute("alter table Position add Trend12h Integer", transaction);
+            database.Connection.Execute("alter table Position add Trend1d Integer", transaction);
 
             // update version
             version.Version += 1;
@@ -691,11 +691,25 @@ public class Migration
         {
             using var transaction = database.BeginTransaction();
 
+            database.Connection.Execute("alter table Signal add Barometer15m Text null", transaction);
+            database.Connection.Execute("alter table Signal add Barometer30m Text null", transaction);
+            database.Connection.Execute("alter table Signal add Barometer1h Text null", transaction);
+            database.Connection.Execute("alter table Signal add Barometer4h Text null", transaction);
+            database.Connection.Execute("alter table Signal add Barometer1d Text null", transaction);
+
+            database.Connection.Execute("alter table Position add Barometer15m Text null", transaction);
+            database.Connection.Execute("alter table Position add Barometer30m Text null", transaction);
+            database.Connection.Execute("alter table Position add Barometer1h Text null", transaction);
+            database.Connection.Execute("alter table Position add Barometer4h Text null", transaction);
+            database.Connection.Execute("alter table Position add Barometer1d Text null", transaction);
+
             // update version
             version.Version += 1;
             database.Connection.Update(version, transaction);
             transaction.Commit();
         }
+
+
 
         // Mexc Futures (experimental), but Mexc Futures does not have a proper api yet
         //database.Connection.Execute("insert into exchange(Name, FeeRate, IsSupported, ExchangeType, TradingType) values('Mexc Futures', 0.1, 0, 5, 1)", transaction);

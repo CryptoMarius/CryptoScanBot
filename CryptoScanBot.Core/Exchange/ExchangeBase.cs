@@ -23,7 +23,6 @@ public abstract class ExchangeBase
     }
 
 
-#if TRADEBOT
     public abstract Task GetAssetsAsync(CryptoAccount tradeAccount);
     public abstract Task<int> GetTradesAsync(CryptoDatabase database, CryptoPosition position);
     public abstract Task<int> GetOrdersAsync(CryptoDatabase database, CryptoPosition position);
@@ -72,7 +71,5 @@ public abstract class ExchangeBase
         GlobalData.AddTextToLogTab(text);
         GlobalData.AddTextToTelegram(text, position);
     }
-
-#endif
 
 }

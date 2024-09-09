@@ -12,7 +12,6 @@ using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot.Core.Exchange.Binance.Spot;
 
-#if TRADEBOT
 /// <summary>
 /// De Trades ophalen
 /// </summary>
@@ -147,4 +146,3 @@ public class Trade
 
 }
 
-#endif

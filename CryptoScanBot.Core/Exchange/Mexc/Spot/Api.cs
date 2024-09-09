@@ -45,9 +45,7 @@ public class Api : ExchangeBase
 
         ExchangeHelper.PriceTicker = new Ticker(ExchangeOptions, typeof(SubscriptionPriceTicker), CryptoTickerType.price);
         ExchangeHelper.KLineTicker = new Ticker(ExchangeOptions, typeof(SubscriptionKLineTicker), CryptoTickerType.kline);
-#if TRADEBOT
        // ExchangeHelper.UserTicker = new Ticker(ExchangeOptions, typeof(SubscriptionUserTicker), CryptoTickerType.user);
-#endif
     }
 
 
@@ -67,7 +65,6 @@ public class Api : ExchangeBase
     }
 
 
-#if TRADEBOT
     // Converteer de orderstatus van Exchange naar "intern"
     public static CryptoOrderType LocalOrderType(OrderType orderType)
     {
@@ -151,6 +148,5 @@ public class Api : ExchangeBase
         return Task.CompletedTask;
     }
 
-#endif
 
 }

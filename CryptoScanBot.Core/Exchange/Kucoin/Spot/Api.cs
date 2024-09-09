@@ -65,9 +65,7 @@ public class Api : ExchangeBase
             Enabled = false // many many errors
         };
         ExchangeHelper.KLineTicker = new Ticker(ExchangeOptions, typeof(SubscriptionKLineTicker), CryptoTickerType.kline);
-#if TRADEBOT
         ExchangeHelper.UserTicker = new Ticker(ExchangeOptions, typeof(SubscriptionUserTicker), CryptoTickerType.user);
-#endif
     }
 
     public override async Task GetSymbolsAsync()
@@ -90,7 +88,6 @@ public class Api : ExchangeBase
     //    return symbol.Base + '-' + symbol.Quote;
     //}
 
-#if TRADEBOT
     //// Converteer de orderstatus van Exchange naar "intern"
     //public static CryptoOrderType LocalOrderType(SpotOrderType orderType)
     //{
@@ -350,7 +347,5 @@ public class Api : ExchangeBase
         }
         return Task.CompletedTask;
     }
-
-#endif
 
 }

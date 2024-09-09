@@ -8,7 +8,7 @@ using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 
 namespace CryptoScanBot.Core.Exchange.BybitApi.Futures;
-#if TRADEBOT
+
 public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
 {
     public override async Task<CallResult<UpdateSubscription>?> Subscribe()
@@ -65,5 +65,3 @@ public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscript
     }
 
 }
-
-#endif

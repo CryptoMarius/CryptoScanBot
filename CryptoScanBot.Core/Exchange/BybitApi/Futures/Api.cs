@@ -57,9 +57,7 @@ public class Api : ExchangeBase
 
         ExchangeHelper.PriceTicker = new Ticker(ExchangeOptions, typeof(SubscriptionPriceTicker), CryptoTickerType.price);
         ExchangeHelper.KLineTicker = new Ticker(ExchangeOptions, typeof(SubscriptionKLineTicker), CryptoTickerType.kline);
-#if TRADEBOT
         ExchangeHelper.UserTicker = new Ticker(ExchangeOptions, typeof(SubscriptionUserTicker), CryptoTickerType.user);
-#endif
     }
 
 
@@ -79,7 +77,6 @@ public class Api : ExchangeBase
     }
 
 
-#if TRADEBOT
     public static async Task<bool> DoSwitchCrossIsolatedMarginAsync(BybitRestClient client, CryptoSymbol symbol)
     {
         //await client.V5Api.Account.SetLeverageAsync(Category, symbol.Name, 1, 1);
@@ -425,7 +422,5 @@ public class Api : ExchangeBase
 
         //}
     }
-
-#endif
 
 }

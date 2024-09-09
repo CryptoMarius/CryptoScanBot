@@ -12,7 +12,6 @@ using Kraken.Net.Objects.Models;
 
 namespace CryptoScanBot.Core.Exchange.Kraken.Spot;
 
-#if TRADEBOT
 /// <summary>
 /// De Trades ophalen
 /// </summary>
@@ -137,4 +136,3 @@ public class Trade
 
 }
 
-#endif

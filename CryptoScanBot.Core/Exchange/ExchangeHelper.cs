@@ -54,9 +54,7 @@ public class ExchangeHelper
 
     public static Ticker? PriceTicker { get; set; }
     public static Ticker? KLineTicker { get; set; }
-#if TRADEBOT
     public static Ticker? UserTicker { get; set; }
-#endif
 
  
     public static ExchangeBase GetApiInstance()
@@ -79,7 +77,6 @@ public class ExchangeHelper
         await GetApiInstance().GetCandlesForAllSymbolsAsync();
     }
 
-#if TRADEBOT
     public static async Task GetAssetsAsync(CryptoAccount tradeAccount)
     {
         ScannerLog.Logger.Trace($"ExchangeHelper.GetAssetsAsync: Position {tradeAccount.AccountType}");
@@ -103,7 +100,5 @@ public class ExchangeHelper
             return 0;
         return await GetApiInstance().GetTradesAsync(database, position);
     }
-
-#endif
 
 }

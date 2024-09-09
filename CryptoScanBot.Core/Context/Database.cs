@@ -396,7 +396,13 @@ public class CryptoDatabase : IDisposable
                 "Trend30m INTEGER NULL," +
                 "Trend1h INTEGER NULL," +
                 "Trend4h INTEGER NULL," +
-                "Trend12h INTEGER NULL," +
+                "Trend1d INTEGER NULL," +
+
+                "Barometer15m TEXT NULL," +
+                "Barometer30m TEXT NULL," +
+                "Barometer1h TEXT NULL," +
+                "Barometer4h TEXT NULL," +
+                "Barometer1d TEXT NULL," +
 
                 // statistics
                 "PriceMin TEXT NULL," +
@@ -511,7 +517,13 @@ public class CryptoDatabase : IDisposable
                 "Trend30m INTEGER NULL," +
                 "Trend1h INTEGER NULL," +
                 "Trend4h INTEGER NULL," +
-                "Trend12h INTEGER NULL," +
+                "Trend1d INTEGER NULL," +
+
+                "Barometer15m TEXT NULL," +
+                "Barometer30m TEXT NULL," +
+                "Barometer1h TEXT NULL," +
+                "Barometer4h TEXT NULL," +
+                "Barometer1d TEXT NULL," +
 
                 "FOREIGN KEY(TradeAccountId) REFERENCES TradeAccount(Id)," +
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +

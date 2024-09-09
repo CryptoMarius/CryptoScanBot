@@ -10,8 +10,6 @@ using Kraken.Net.Objects.Models.Socket;
 
 namespace CryptoScanBot.Core.Exchange.Kraken.Spot;
 
-#if TRADEBOT
-
 public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
 {
     public override async Task<CallResult<UpdateSubscription>?> Subscribe()
@@ -77,4 +75,3 @@ public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscript
     }
 }
 
-#endif

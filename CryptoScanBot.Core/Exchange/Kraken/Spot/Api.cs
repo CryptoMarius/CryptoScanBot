@@ -38,9 +38,7 @@ public class Api : ExchangeBase
 
         ExchangeHelper.PriceTicker = new Ticker(ExchangeOptions, typeof(SubscriptionPriceTicker), CryptoTickerType.price);
         ExchangeHelper.KLineTicker = new Ticker(ExchangeOptions, typeof(SubscriptionKLineTicker), CryptoTickerType.kline);
-#if TRADEBOT
         ExchangeHelper.UserTicker = new Ticker(ExchangeOptions, typeof(SubscriptionUserTicker), CryptoTickerType.user);
-#endif
     }
 
 
@@ -61,7 +59,6 @@ public class Api : ExchangeBase
 
 
 
-#if TRADEBOT
     public override async Task<(bool result, TradeParams? tradeParams)> PlaceOrder(CryptoDatabase database,
         CryptoPosition position, CryptoPositionPart part, DateTime currentDate,
         CryptoOrderType orderType, CryptoOrderSide orderSide,
@@ -237,7 +234,5 @@ public class Api : ExchangeBase
     {
         await Asset.GetAssetsAsync(tradeAccount);
     }
-
-#endif
 
 }

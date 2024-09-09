@@ -11,7 +11,6 @@ using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot.Core.Exchange.Binance.Futures;
 
-#if TRADEBOT
 public class Trade
 {
     public static void PickupTrade(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoTrade trade, BinanceFuturesUsdtTrade item)
@@ -141,5 +140,3 @@ public class Trade
     }
 
 }
-
-#endif

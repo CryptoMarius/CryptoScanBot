@@ -5,7 +5,6 @@ using CryptoScanBot.Core.Settings;
 using Newtonsoft.Json.Linq;
 
 using System.Net;
-using System.Net.Http.Json;
 using System.Text.Json;
 
 namespace CryptoScanBot.Core.Exchange.Altrady;
