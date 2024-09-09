@@ -38,7 +38,6 @@ public partial class FrmMain : Form
 
     private readonly ToolStripMenuItemCommand ApplicationPlaySounds;
     private readonly ToolStripMenuItemCommand ApplicationCreateSignals;
-#if TRADEBOT
     private readonly ToolStripMenuItemCommand ApplicationTradingBot;
     private readonly ToolStripMenuItemCommand ApplicationBackTestMode;
     private readonly ToolStripMenuItemCommand ApplicationBackTestExec;
@@ -48,7 +47,6 @@ public partial class FrmMain : Form
 
     private readonly List<CryptoPosition> PositionClosedListView = [];
     private readonly CryptoDataGridPositionsClosed<CryptoPosition> GridPositionClosedView;
-#endif
 
     public FrmMain()
     {
@@ -94,10 +92,9 @@ public partial class FrmMain : Form
         ApplicationPlaySounds.Checked = true;
         ApplicationCreateSignals = MenuMain.AddCommand(null, "Create signals", Command.None, ApplicationCreateSignals_Click);
         ApplicationCreateSignals.Checked = true;
-#if TRADEBOT
         ApplicationTradingBot = MenuMain.AddCommand(null, "Trading bot active", Command.None, ApplicationTradingBot_Click);
         ApplicationTradingBot.Checked = true;
-#endif
+
         MenuMain.AddCommand(null, "Settings", Command.None, ToolStripMenuItemSettings_Click);
         MenuMain.AddCommand(null, "Refresh information", Command.None, ToolStripMenuItemRefresh_Click_1);
         MenuMain.AddCommand(null, "Clear log en ticker count", Command.None, MainMenuClearAll_Click);
@@ -112,12 +109,10 @@ public partial class FrmMain : Form
         MenuMain.AddCommand(null, "Test - Create url testfile", Command.None, TestCreateUrlTestFileClick);
         MenuMain.AddCommand(null, "Test - Dump ticker information", Command.None, TestShowTickerInformationClick);
 #endif
-#if TRADEBOT
         MenuMain.AddSeperator();
         ApplicationBackTestMode = MenuMain.AddCommand(null, "Backtest mode", Command.None, ApplicationBackTestMode_Click);
         ApplicationBackTestExec = MenuMain.AddCommand(null, "Backtest exec", Command.None, BacktestToolStripMenuItem_Click);
         //ApplicationBackTestExec.Enabled = GlobalData.BackTest;
-#endif
 
         //Console.Write("Hello world 1");
         //System.Diagnostics.Debug.WriteLine("Hello world 2");
@@ -139,10 +134,8 @@ public partial class FrmMain : Form
 
         // Niet echt een text event, meer misbruik van het event type
         GlobalData.SymbolsHaveChangedEvent += new AddTextEvent(SymbolsHaveChangedEvent);
-#if TRADEBOT
         GlobalData.AssetsHaveChangedEvent += new AddTextEvent(AssetsHaveChangedEvent);
         GlobalData.PositionsHaveChangedEvent += new AddTextEvent(PositionsHaveChangedEvent);
-#endif
 
         GlobalData.AnalyzeSignalCreated = AnalyzeSignalCreated;
         GlobalData.ApplicationHasStarted += new AddTextEvent(ApplicationHasStarted);
@@ -159,10 +152,8 @@ public partial class FrmMain : Form
 
         GridSymbolView = new(dataGridViewSymbols, SymbolListView, GlobalData.SettingsUser.GridColumnsSymbol);
         GridSignalView = new(dataGridViewSignals, SignalListView, GlobalData.SettingsUser.GridColumnsSignal);
-#if TRADEBOT
         GridPositionOpenView = new(dataGridViewPositionOpen, PositionOpenListView, GlobalData.SettingsUser.GridColumnsPositionsOpen);
         GridPositionClosedView = new(dataGridViewPositionClosed, PositionClosedListView, GlobalData.SettingsUser.GridColumnsPositionsClosed);
-#endif
 
         // Dummy browser verbergen, is een browser om het extra confirmatie dialoog in externe browser te vermijden
         LinkTools.TabControl = tabControl;
@@ -170,13 +161,6 @@ public partial class FrmMain : Form
         LinkTools.WebViewDummy = webViewDummy;
         LinkTools.WebViewTradingView = webViewTradingView;
         tabControl.TabPages.Remove(tabPagewebViewDummy);
-
-#if !TRADEBOT
-        GlobalData.Settings.Trading.Active = false;
-        tabControl.TabPages.Remove(tabPageDashBoard);
-        tabControl.TabPages.Remove(tabPagePositionsOpen);
-        tabControl.TabPages.Remove(tabPagePositionsClosed);
-#endif
 
         CryptoDatabase.SetDatabaseDefaults();
         GlobalData.LoadExchanges();
@@ -240,13 +224,11 @@ public partial class FrmMain : Form
         GlobalData.LoadSymbols();
         GlobalData.SymbolsHaveChanged("");
         GlobalData.LoadSignals();
-#if TRADEBOT
         TradeTools.LoadAssets();
         TradeTools.LoadOpenPositions();
         TradeTools.LoadClosedPositions();
         //ClosedPositionsHaveChangedEvent();
         PositionsHaveChangedEvent("");
-#endif
 
         ScannerSession.Start(0);
     }
@@ -279,10 +261,8 @@ public partial class FrmMain : Form
         GridSymbolView.InitCommandCaptions();
         GridSignalView.InitCommandCaptions();
 
-#if TRADEBOT
         GridPositionOpenView.InitCommandCaptions();
         GridPositionClosedView.InitCommandCaptions();
-#endif
 
 
         TradingConfig.IndexStrategyInternally();
@@ -304,9 +284,7 @@ public partial class FrmMain : Form
         }
         ChangeTheme(theme, this);
 
-#if TRADEBOT
         ApplicationTradingBot.Checked = GlobalData.Settings.Trading.Active;
-#endif
         ApplicationPlaySounds.Checked = GlobalData.Settings.Signal.SoundsActive;
         ApplicationCreateSignals.Checked = GlobalData.Settings.Signal.Active;
 
@@ -405,15 +383,12 @@ public partial class FrmMain : Form
 
     private void TelegramHasChangedEvent(string text)
     {
-#if TRADEBOT
         Invoke((System.Windows.Forms.MethodInvoker)(() => ApplicationTradingBot.Checked = GlobalData.Settings.Trading.Active));
-#endif
         Invoke((System.Windows.Forms.MethodInvoker)(() => ApplicationPlaySounds.Checked = GlobalData.Settings.Signal.SoundsActive));
         Invoke((System.Windows.Forms.MethodInvoker)(() => ApplicationCreateSignals.Checked = GlobalData.Settings.Signal.Active));
     }
 
 
-#if TRADEBOT
     /// <summary>
     /// Dan is er in de achtergrond een verversing actie geweest, display bijwerken!
     /// </summary>
@@ -443,7 +418,6 @@ public partial class FrmMain : Form
         //GlobalData.AddTextToLogTab(stringBuilder.ToString());
         //}
     }
-#endif
 
     private void ToolStripMenuItemRefresh_Click_1(object? sender, EventArgs? e)
     {
@@ -454,10 +428,8 @@ public partial class FrmMain : Form
                 await ExchangeHelper.KLineTicker!.CheckTickers(); // herstarten van ticker indien errors
             if (ExchangeHelper.PriceTicker != null)
                 await ExchangeHelper.PriceTicker!.CheckTickers(); // herstarten van ticker indien errors
-#if TRADEBOT
             if (ExchangeHelper.UserTicker != null)
                 await ExchangeHelper.UserTicker!.CheckTickers(); // herstarten van ticker indien errors
-#endif
             await ExchangeHelper.GetCandlesAsync(); // niet wachten tot deze klaar is
         });
     }
@@ -482,9 +454,7 @@ public partial class FrmMain : Form
         Core.Model.CryptoExchange? oldExchange = GlobalData.Settings.General.Exchange;
 
         // Dan wordt de basecoin en coordinaten etc. bewaard voor een volgende keer
-#if TRADEBOT
         GlobalData.Settings.Trading.Active = ApplicationTradingBot.Checked;
-#endif
         GlobalData.Settings.Signal.SoundsActive = ApplicationPlaySounds.Checked;
         GlobalData.Settings.Signal.Active = ApplicationCreateSignals.Checked;
         dashBoardInformation1.PickupBarometerProperties();
@@ -904,14 +874,12 @@ public partial class FrmMain : Form
     }
 
 
-#if TRADEBOT
     private void ApplicationTradingBot_Click(object? sender, EventArgs? e)
     {
         ApplicationTradingBot.Checked = !ApplicationTradingBot.Checked;
         GlobalData.Settings.Trading.Active = ApplicationTradingBot.Checked;
         GlobalData.SaveSettings();
     }
-#endif
 
 
     private void ApplicationHasStarted(string text)
@@ -921,10 +889,8 @@ public partial class FrmMain : Form
         // De barometer een zetje geven...
         Invoke((System.Windows.Forms.MethodInvoker)(() => dashBoardInformation1.ShowBarometerStuff(null, null)));
 
-#if TRADEBOT
         // Toon de ingelezen posities
         GlobalData.PositionsHaveChanged("");
-#endif
     }
 
 
@@ -991,7 +957,6 @@ public partial class FrmMain : Form
         }
     }
 
-#if TRADEBOT
     private void PositionsHaveChangedEvent(string text)
     {
         if (!GlobalData.ApplicationIsClosing && GlobalData.ActiveAccount != null)
@@ -1041,7 +1006,6 @@ public partial class FrmMain : Form
             });
         }
     }
-#endif
 
     private void TabControl_SelectedIndexChanged(object? sender, EventArgs? e)
     {
@@ -1109,25 +1073,20 @@ public partial class FrmMain : Form
     {
         // Refresh displayed information
         GridSignalView.Clear();
-#if TRADEBOT
         GridPositionOpenView.Clear();
         GridPositionClosedView.Clear();
         GlobalData.PositionsClosed.Clear(); // weird, move to account?
-#endif
         // weird queue setup
         GlobalData.LoadSignals();
         GridSignalView.Grid.Invalidate();
 
-#if TRADEBOT
         // another weird queue
         GlobalData.ActiveAccount!.Data.PositionList.Clear();
         TradeTools.LoadOpenPositions();
         TradeTools.LoadClosedPositions();
         PositionsHaveChangedEvent("");
-#endif
     }
 
-#if TRADEBOT
     private void ApplicationBackTestMode_Click(object? sender, EventArgs? e)
     {
         ApplicationBackTestMode.Checked = !ApplicationBackTestMode.Checked;
@@ -1228,6 +1187,5 @@ public partial class FrmMain : Form
         });
         return;
     }
-#endif
 
 }
