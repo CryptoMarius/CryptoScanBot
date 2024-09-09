@@ -37,10 +37,8 @@ public static class ScannerSession
     // Vervolg van check, herstel actie in de vorm van exchangeinfo + achterstand candles inhalen
     private static readonly System.Timers.Timer TimerRestartStreams = new() { Enabled = false };
 
-#if TRADEBOT
     // Voor het geval de user ticker het laat afwaten controleren we de posities ook 1x per uur
     private static readonly System.Timers.Timer TimerCheckPositions = new() { Enabled = false };
-#endif
 
     // Exchange events
     private static AddTextEvent ConnectionWasLostEvent { get; set; }
@@ -49,9 +47,7 @@ public static class ScannerSession
 
     static ScannerSession()
     {
-#if TRADEBOT
         TimerCheckPositions.Elapsed += TimerCheckPositions_Tick;
-#endif
         TimerCheckDataStream.Elapsed += TimerCheckDataStream_Tick;
         TimerRestartStreams.Elapsed += TimerRestartStreams_Tick;
 
@@ -80,12 +76,10 @@ public static class ScannerSession
 
                 GlobalData.ThreadSaveObjects = new ThreadSaveObjects();
                 GlobalData.ThreadMonitorCandle = new ThreadMonitorCandle();
-#if TRADEBOT
                 GlobalData.ThreadMonitorOrder = new ThreadMonitorOrder();
                 GlobalData.ThreadCheckPosition = new ThreadCheckFinishedPosition();
                 if (GlobalData.TradingApi.Key != "")
                     _ = ExchangeHelper.UserTicker!.StartAsync();
-#endif
 #if BALANCING
         GlobalData.ThreadBalanceSymbols = new ThreadBalanceSymbols();
 #endif
@@ -116,9 +110,7 @@ public static class ScannerSession
             GlobalData.ApplicationStatus = CryptoApplicationStatus.Initializing;
             try
             {
-#if TRADEBOT
                 TimerCheckPositions.Enabled = false;
-#endif
                 TimerCheckDataStream.Enabled = false;
                 TimerRestartStreams.Enabled = false;
                 TimerSoundHeartBeat.Enabled = false;
@@ -141,7 +133,6 @@ public static class ScannerSession
                 task = Task.Run(() => { GlobalData.ThreadMonitorCandle?.Stop(); });
                 taskList.Add(task);
 
-#if TRADEBOT
                 //GlobalData.ThreadMonitorOrder?.Stop();
                 task = Task.Run(() => { GlobalData.ThreadMonitorOrder?.Stop(); });
                 taskList.Add(task);
@@ -155,7 +146,6 @@ public static class ScannerSession
                     task = Task.Run(async () => { await ExchangeHelper.UserTicker?.StopAsync(); });
                     taskList.Add(task);
                 }
-#endif
 #if BALANCING
                 //GlobalData.ThreadBalanceSymbols?.Stop();
                 //task = Task.Run(async() => { await GlobalData.ThreadBalanceSymbols?.Stop(); });
@@ -219,10 +209,8 @@ public static class ScannerSession
         // Maak de log leeg iedere 24 uur
         TimerClearMemo.InitTimerInterval(24 * 60 * 60); // 24 hours
 
-#if TRADEBOT
         // Controleer de posities (fix probleem user ticker)
         TimerCheckPositions.InitTimerInterval(1 * 60 * 60); // 1 hours
-#endif
 
         // Interval voor het ophalen van de exchange info (delisted coins) + bijwerken candles 
         TimerGetExchangeInfoAndCandles.InitTimerInterval(GlobalData.Settings.General.GetCandleInterval * 60);
@@ -258,7 +246,6 @@ public static class ScannerSession
     }
 
 
-#if TRADEBOT
     private static async void TimerCheckPositions_Tick(object? sender, EventArgs? e)
     {
         if (TimerCheckPositions.Enabled)
@@ -272,7 +259,6 @@ public static class ScannerSession
         //    //?
         //}
     }
-#endif
 
     private static void TimerCheckDataStream_Tick(object? sender, EventArgs? e)
     {
@@ -344,10 +330,8 @@ public static class ScannerSession
             await ExchangeHelper.KLineTicker.CheckTickers(); // herstarten van ticker indien errors
             if (ExchangeHelper.PriceTicker != null)
                 await ExchangeHelper.PriceTicker.CheckTickers(); // herstarten van ticker indien errors
-#if TRADEBOT
             if (ExchangeHelper.UserTicker != null)
                 await ExchangeHelper.UserTicker.CheckTickers(); // herstarten van ticker indien errors
-#endif
 
             //GlobalData.AddTextToLogTab("Debug: GetCandles() eventjes uit vanwege debug!");
             await ExchangeHelper.GetCandlesAsync();

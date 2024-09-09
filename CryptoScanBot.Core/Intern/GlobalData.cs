@@ -126,10 +126,8 @@ static public class GlobalData
     // Some running tasks/threads
     public static ThreadSaveObjects? ThreadSaveObjects { get; set; }
     public static ThreadMonitorCandle? ThreadMonitorCandle { get; set; }
-#if TRADEBOT
     public static ThreadMonitorOrder? ThreadMonitorOrder { get; set; }
     public static ThreadCheckFinishedPosition? ThreadCheckPosition { get; set; }
-#endif
 #if BALANCING
     static public ThreadBalanceSymbols ThreadBalanceSymbols { get; set; }
 #endif
@@ -728,11 +726,8 @@ static public class GlobalData
     static public void AddTextToLogTab(string text) => LogToLogTabEvent?.Invoke(text);
     static public void SymbolsHaveChanged(string text) => SymbolsHaveChangedEvent?.Invoke(text);
 
-#if TRADEBOT
-
     static public void AssetsHaveChanged(string text) => AssetsHaveChangedEvent?.Invoke(text);
     static public void PositionsHaveChanged(string text) => PositionsHaveChangedEvent?.Invoke(text);
-#endif
 
     static public void TelegramHasChanged(string text) => TelegramHasChangedEvent?.Invoke(text);
     static public void SetCandleTimerEnable(bool value) => SetCandleTimerEnableEvent?.Invoke(value);

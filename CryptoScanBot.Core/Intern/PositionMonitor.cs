@@ -18,9 +18,7 @@ public class PositionMonitor : IDisposable
 
     public CryptoAccount TradeAccount { get; set; }
     public CryptoSymbol Symbol { get; set; }
-#if TRADEBOT
     private static readonly SemaphoreSlim Semaphore = new(1);
-#endif
 
     // De laatste gesloten 1m candle
     public CryptoCandle LastCandle1m { get; set; }
@@ -64,7 +62,6 @@ public class PositionMonitor : IDisposable
         }
     }
 
-#if TRADEBOT
     private bool CanOpenAdditionalDca(CryptoPosition position,
         out CryptoPositionStep? step, out decimal percentage, out decimal dcaPrice, out string reaction)
     {
@@ -1721,7 +1718,6 @@ public class PositionMonitor : IDisposable
         //    }
         //}
     }
-#endif
 
 
     public List<CryptoSignal> CreateSignals()
@@ -1831,7 +1827,6 @@ public class PositionMonitor : IDisposable
 
 
 
-#if TRADEBOT
     public async Task CheckThePosition(CryptoPosition position)
     {
         // Pauzeren vanwege de trading regels of te lage barometer
@@ -1858,7 +1853,6 @@ public class PositionMonitor : IDisposable
             //Monitor.Exit(position);
         }
     }
-#endif
 
 
     /// <summary>
@@ -1885,7 +1879,6 @@ public class PositionMonitor : IDisposable
             List<CryptoSignal> signalList = CreateSignals();
 
 
-#if TRADEBOT
             //GlobalData.Logger.Trace($"NewCandleArrivedAsync.Positions " + traceText);
 
             // Simulate Trade indien openstaande orders gevuld zijn
@@ -1903,7 +1896,6 @@ public class PositionMonitor : IDisposable
             // Check the positions
             if (TradeAccount.Data.PositionList.TryGetValue(Symbol.Name, out CryptoPosition? position))
                 await GlobalData.ThreadCheckPosition!.AddToQueue(position!);
-#endif
 
             //GlobalData.Logger.Trace($"NewCandleArrivedAsync.Clean " + traceText);
 

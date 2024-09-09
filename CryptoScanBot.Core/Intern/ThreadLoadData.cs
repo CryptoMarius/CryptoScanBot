@@ -369,7 +369,6 @@ public class ThreadLoadData
                 _ = Task.Run(GlobalData.ThreadSaveObjects!.Execute).ConfigureAwait(false);
                 _ = Task.Run(GlobalData.ThreadMonitorCandle!.Execute).ConfigureAwait(false);
 
-#if TRADEBOT
                 //************************************************************************************
                 // Nu we de achterstand ingehaald hebben kunnen/mogen we analyseren (signals maken)
                 //************************************************************************************
@@ -412,7 +411,6 @@ public class ThreadLoadData
 
                 // Toon de ingelezen posities
                 //GlobalData.PositionsHaveChanged("");
-#endif
 
 
                 ScannerLog.Logger.Trace("");
@@ -439,10 +437,8 @@ public class ThreadLoadData
 
                 if (!checkPositions && GlobalData.ActiveAccount != null)
                 {
-#if TRADEBOT
                     if (GlobalData.Settings.Trading.TradeVia != CryptoAccountType.RealTrading)
                         await PaperTrading.CheckPositionsAfterRestart(GlobalData.ActiveAccount!);
-#endif
                 }
 
                 // Assume we now can run

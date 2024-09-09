@@ -50,9 +50,7 @@ public class AssetTools
         if (forceRefresh || tradeAccount.Data.LastRefreshAssets == null || tradeAccount.Data.LastRefreshAssets?.AddMinutes(1) < GlobalData.GetCurrentDateTime(tradeAccount))
         {
             // De assets verversen (optioneel adhv account)
-#if TRADEBOT
             await ExchangeHelper.GetAssetsAsync(tradeAccount);
-#endif
             tradeAccount.Data.LastRefreshAssets = GlobalData.GetCurrentDateTime(tradeAccount);
         }
 

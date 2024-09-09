@@ -23,11 +23,11 @@
     <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DefineConstants>$(DefineConstants);TRADEBOT</DefineConstants>
+    <DefineConstants>$(DefineConstants)</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
-    <DefineConstants>$(DefineConstants);TRADEBOT</DefineConstants>
+    <DefineConstants>$(DefineConstants)</DefineConstants>
   </PropertyGroup>
   <PropertyGroup />
   <PropertyGroup>

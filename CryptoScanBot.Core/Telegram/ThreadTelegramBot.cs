@@ -238,7 +238,7 @@ public class ThreadTelegramBotInstance
             a.TryAdd(CryptoIntervalPeriod.interval30m, ("30m", signal.Trend30m));
             a.TryAdd(CryptoIntervalPeriod.interval1h, ("1h", signal.Trend1h));
             a.TryAdd(CryptoIntervalPeriod.interval4h, ("4h", signal.Trend4h));
-            a.TryAdd(CryptoIntervalPeriod.interval12h, ("12h", signal.Trend12h));
+            a.TryAdd(CryptoIntervalPeriod.interval12h, ("12h", signal.Trend1d));
 
             builder.Append("Trend: ");
             builder.Append(GetEmoiFromMarketTrend(signal.TrendPercentage));
@@ -471,7 +471,6 @@ public class ThreadTelegramBotInstance
 
 
 
-#if TRADEBOT
     private static void CommandSlots(string arguments, StringBuilder stringbuilder)
     {
         bool slotsLong = false;
@@ -536,7 +535,6 @@ public class ThreadTelegramBotInstance
 
         stringbuilder.AppendLine($"{sumPositions} positions, invested {sumInvested:N2}, profits {sumProfit:N2}, {percentage:N2}%");
     }
-#endif
 
 
     public async Task ExecuteAsync(string token)
@@ -610,7 +608,6 @@ public class ThreadTelegramBotInstance
                                         if (parameters.Length > 0)
                                             command = parameters[0].Trim().ToUpper();
 
-#if TRADEBOT
                                         if (command == ".")
                                         {
                                             TelegramShowBarometer.ShowBarometer(arguments, stringBuilder);
@@ -624,51 +621,42 @@ public class ThreadTelegramBotInstance
                                             TelegramShowValue.ShowValue(command, stringBuilder);
                                         }
                                         else
-#endif
                                         if (command == "STATUS")
                                             TelegramShowStatus.ShowStatus(command, stringBuilder);
                                         else if (command == "VALUE")
                                             TelegramShowValue.ShowValue(command, stringBuilder);
-#if TRADEBOT
                                         else if (command == "POSITIONS")
                                             Helper.ShowPositions(stringBuilder);
                                         else if (command == "PROFITS")
                                             CommandShowProfits(stringBuilder);
                                         else if (command == "SLOTS")
                                             CommandSlots(arguments, stringBuilder);
-#endif
                                         else if (command == "START")
                                             StartBot(arguments, stringBuilder);
                                         else if (command == "SIGNALSTART")
                                             StartBot("command signals", stringBuilder);
-#if TRADEBOT
                                         else if (command == "ADVICESTARTS")
                                             StopBot("command advice", stringBuilder);
                                         else if (command == "BALANCESTART")
                                             StartBot("command balancing", stringBuilder);
-#endif
                                         else if (command == "STOP")
                                             StopBot(arguments, stringBuilder);
                                         else if (command == "SIGNALSTOP")
                                             StopBot("command signals", stringBuilder);
-#if TRADEBOT
                                         else if (command == "ADVICESTOP")
                                             StopBot("command advice", stringBuilder);
                                         else if (command == "BALANCESTOP")
                                             StopBot("command balancing", stringBuilder);
-#endif
                                         else if (command == "BAROMETER")
                                             TelegramShowBarometer.ShowBarometer(arguments, stringBuilder);
 #if BALANCING
                                         else if (command == "BALANCE")
                                             stringBuilder.Append(BalanceSymbolsAlgoritm.LastOverviewMessage);
 #endif
-#if TRADEBOT
                                         else if (command == "ASSETS")
                                         {
                                             Helper.ShowAssets(GlobalData.ActiveAccount!, stringBuilder, out decimal _, out decimal _);
                                         }
-#endif
                                         else if (command == "TREND")
                                             TelegramShowTrend.ShowTrend(arguments, stringBuilder);
                                         else if (command == "HELP")

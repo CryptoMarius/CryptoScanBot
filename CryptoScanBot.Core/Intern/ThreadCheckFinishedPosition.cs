@@ -6,7 +6,6 @@ using CryptoScanBot.Core.Trader;
 
 namespace CryptoScanBot.Core.Intern;
 
-#if TRADEBOT
 
 public class ThreadCheckFinishedPosition
 {
@@ -279,4 +278,3 @@ public class ThreadCheckFinishedPosition
         GlobalData.AddTextToLogTab("ThreadCheckFinishedPosition thread exit");
     }
 }
-#endif

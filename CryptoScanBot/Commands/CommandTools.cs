@@ -83,7 +83,6 @@ public class CommandTools
                 case Command.ExcelSymbolInformation:
                     _ = Task.Run(() => { new ExcelSymbolDump(symbol).ExportToExcel(); });
                     break;
-#if TRADEBOT
                 case Command.PositionCalculate:
                     using (CryptoDatabase databaseThread = new())
                     {
@@ -109,7 +108,6 @@ public class CommandTools
                         _ = Task.Run(() => { new ExcelPositionDump(position).ExportToExcel(); });
                     }
                     break;
-#endif
             }
         }
     }

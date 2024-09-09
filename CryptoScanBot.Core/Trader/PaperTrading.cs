@@ -6,7 +6,6 @@ using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot.Core.Trader;
 
-#if TRADEBOT
 public class PaperTrading
 {
     public static async Task CreatePaperTradeObject(CryptoDatabase database, CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step, decimal price, DateTime LastCandle1mCloseTimeDate)
@@ -217,4 +216,3 @@ public class PaperTrading
         }
     }
 }
-#endif

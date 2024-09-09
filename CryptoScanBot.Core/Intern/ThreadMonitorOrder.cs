@@ -5,7 +5,6 @@ using CryptoScanBot.Core.Trader;
 
 namespace CryptoScanBot.Core.Intern;
 
-#if TRADEBOT
 public class ThreadMonitorOrder
 {
     private readonly CancellationTokenSource cancellationToken = new();
@@ -43,4 +42,3 @@ public class ThreadMonitorOrder
         GlobalData.AddTextToLogTab("Task order monitor stopped");
     }
 }
-#endif

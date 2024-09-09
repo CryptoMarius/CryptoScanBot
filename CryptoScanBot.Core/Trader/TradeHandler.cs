@@ -4,7 +4,6 @@ using CryptoScanBot.Core.Model;
 
 namespace CryptoScanBot.Core.Trader;
 
-#if TRADEBOT
 static public class TradeHandler
 {
     /// <summary>
@@ -38,4 +37,3 @@ static public class TradeHandler
         //}
     }
 }
-#endif
