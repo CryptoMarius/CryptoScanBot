@@ -267,7 +267,7 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
             ColumnsForGrid.Account => ObjectCompare.Compare(a.Account.AccountType, b.Account.AccountType),
             ColumnsForGrid.Exchange => ObjectCompare.Compare(a.Exchange.Name, b.Exchange.Name),
             ColumnsForGrid.Symbol => ObjectCompare.Compare(a.Symbol.Name, b.Symbol.Name),
-            ColumnsForGrid.Interval => ObjectCompare.Compare(a.Interval.IntervalPeriod, b.Interval.IntervalPeriod),
+            ColumnsForGrid.Interval => ObjectCompare.Compare(a.Interval!.IntervalPeriod, b.Interval!.IntervalPeriod),
             ColumnsForGrid.Strategy => ObjectCompare.Compare(a.StrategyText, b.StrategyText),
             ColumnsForGrid.Side => ObjectCompare.Compare(a.SideText, b.SideText),
             ColumnsForGrid.Status => ObjectCompare.Compare(a.Status, b.Status),
@@ -328,9 +328,9 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
             if (compareResult == 0)
             {
                 if (SortOrder == SortOrder.Ascending)
-                    compareResult = ObjectCompare.Compare(a.Interval.IntervalPeriod, b.Interval.IntervalPeriod);
+                    compareResult = ObjectCompare.Compare(a.Interval!.IntervalPeriod, b.Interval!.IntervalPeriod);
                 else
-                    compareResult = ObjectCompare.Compare(b.Interval.IntervalPeriod, a.Interval.IntervalPeriod);
+                    compareResult = ObjectCompare.Compare(b.Interval!.IntervalPeriod, a.Interval!.IntervalPeriod);
             }
         }
 
@@ -395,16 +395,16 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
                     e.Value = position.Status.ToString();
                     break;
                 case ColumnsForGrid.Invested:
-                    e.Value = position.Invested.ToString(position.Symbol.QuoteData.DisplayFormat);
+                    e.Value = position.Invested.ToString(position.Symbol.QuoteData!.DisplayFormat);
                     break;
                 case ColumnsForGrid.Returned:
-                    e.Value = position.Returned.ToString(position.Symbol.QuoteData.DisplayFormat);
+                    e.Value = position.Returned.ToString(position.Symbol.QuoteData!.DisplayFormat);
                     break;
                 case ColumnsForGrid.Commission:
-                    e.Value = position.Commission.ToString(position.Symbol.QuoteData.DisplayFormat);
+                    e.Value = position.Commission.ToString(position.Symbol.QuoteData!.DisplayFormat);
                     break;
                 case ColumnsForGrid.Profit:
-                    e.Value = position.Profit.ToString(position.Symbol.QuoteData.DisplayFormat);
+                    e.Value = position.Profit.ToString(position.Symbol.QuoteData!.DisplayFormat);
                     break;
                 case ColumnsForGrid.Percentage:
                     e.Value = position.Percentage.ToString("N2");
