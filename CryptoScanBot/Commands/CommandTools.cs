@@ -29,7 +29,7 @@ public class CommandTools
 
             case Command.ExcelExchangeInformation:
                 // Die valt qua parameters buiten de boot
-                _ = Task.Run(() => { new ExcelExchangeDump(GlobalData.Settings.General.Exchange).ExportToExcel(); });
+                _ = Task.Run(() => { new ExcelExchangeDump(GlobalData.Settings.General.Exchange!).ExportToExcel(); });
                 return;
 
             case Command.ScannerSessionDebug:
