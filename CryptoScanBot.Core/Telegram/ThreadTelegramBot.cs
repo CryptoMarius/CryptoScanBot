@@ -232,7 +232,7 @@ public class ThreadTelegramBotInstance
 
             // De trend informatie
             // Even in de juiste volgorde toevoegen (je verwacht een vaste volgorde)
-            SortedList<CryptoIntervalPeriod, (string, CryptoTrendIndicator)> a = [];
+            SortedList<CryptoIntervalPeriod, (string, CryptoTrendIndicator?)> a = [];
             a.TryAdd(signal.Interval.IntervalPeriod, (signal.Interval.Name, signal.TrendIndicator));
             a.TryAdd(CryptoIntervalPeriod.interval15m, ("15m", signal.Trend15m));
             a.TryAdd(CryptoIntervalPeriod.interval30m, ("30m", signal.Trend30m));
@@ -245,7 +245,7 @@ public class ThreadTelegramBotInstance
             builder.Append(' ');
             builder.Append(signal.TrendPercentage.ToString("N2") + "%");
 
-            foreach (KeyValuePair<CryptoIntervalPeriod, (string name, CryptoTrendIndicator trendIndicator)> entry in a)
+            foreach (KeyValuePair<CryptoIntervalPeriod, (string name, CryptoTrendIndicator? trendIndicator)> entry in a)
             {
                 builder.Append(' ');
                 builder.Append(GetEmoiFromTrend(entry.Value.trendIndicator));
