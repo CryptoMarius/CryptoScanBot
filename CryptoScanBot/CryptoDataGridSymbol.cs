@@ -45,7 +45,7 @@ public class CryptoDataGridSymbol<T>(DataGridView grid, List<T> list, SortedList
         {
             DataGridViewTextBoxColumn _ = column switch
             {
-                ColumnsForGrid.Symbol => CreateColumn("Symbol", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleLeft, 100),
+                ColumnsForGrid.Symbol => CreateColumn("Symbol", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleLeft, 100, true),
                 ColumnsForGrid.Volume => CreateColumn("Volume", typeof(decimal), "#,##0", DataGridViewContentAlignment.MiddleRight, 75),
                 //ColumnsForGrid.Price => CreateColumn("Price", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 70),
                 _ => throw new NotImplementedException(),
