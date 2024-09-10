@@ -55,10 +55,10 @@ public class ThreadSaveObjects
                             databaseThread.Connection.Update(signal, transaction);
                         transaction.Commit();
                     }
-                    catch (Exception)
+                    catch (Exception error)
                     {
                         transaction.Rollback();
-                        throw;
+                        ScannerLog.Logger.Error(error, "");
                     }
                 }
                 finally
