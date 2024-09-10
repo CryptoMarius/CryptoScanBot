@@ -365,7 +365,7 @@ public partial class DashBoardInformation : UserControl
                 {
 
                     Color color;
-                    BarometerData? barometerData = GlobalData.ActiveAccount.Data.GetBarometer(quoteData.Name, intervalPeriod);
+                    BarometerData? barometerData = GlobalData.ActiveAccount!.Data.GetBarometer(quoteData.Name, intervalPeriod);
                     if (barometerData?.PriceBarometer < 0)
                         color = Color.Red;
                     else
@@ -429,12 +429,12 @@ public partial class DashBoardInformation : UserControl
             BarometerTools barometerTools = new();
             barometerTools.ExecuteAsync();
 
-            if (!GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange exchange))
+            if (!GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange? exchange))
                 return;
 
             string baseCoin = "";
             Invoke((MethodInvoker)(() => baseCoin = EditBarometerQuote.Text));
-            if (!GlobalData.Settings.QuoteCoins.TryGetValue(baseCoin, out CryptoQuoteData quoteData))
+            if (!GlobalData.Settings.QuoteCoins.TryGetValue(baseCoin, out CryptoQuoteData? quoteData))
                 return;
 
             // Het grafiek gedeelte
@@ -451,7 +451,7 @@ public partial class DashBoardInformation : UserControl
                 intervalPeriod = CryptoIntervalPeriod.interval1d;
             else
                 return;
-            if (!GlobalData.IntervalListPeriod.TryGetValue(intervalPeriod, out CryptoInterval interval))
+            if (!GlobalData.IntervalListPeriod.TryGetValue(intervalPeriod, out CryptoInterval? interval))
                 return;
 
             BarometerData? barometerData = GlobalData.ActiveAccount!.Data.GetBarometer(quoteData.Name, intervalPeriod);
@@ -597,11 +597,11 @@ public partial class DashBoardInformation : UserControl
             }
 
             // Toon de prijzen en volume van een aantal symbols
-            if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange exchange))
+            if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange? exchange))
             {
                 string baseCoin = "";
                 Invoke((MethodInvoker)(() => baseCoin = EditBarometerQuote.Text));
-                if (GlobalData.Settings.QuoteCoins.TryGetValue(baseCoin, out CryptoQuoteData quoteData))
+                if (GlobalData.Settings.QuoteCoins.TryGetValue(baseCoin, out CryptoQuoteData? quoteData))
                 {
                     string text, symbol;
                     string e = GlobalData.Settings.General.ExchangeName;
