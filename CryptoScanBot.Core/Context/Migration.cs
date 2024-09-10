@@ -729,7 +729,7 @@ public class Migration
         {
             using var transaction = database.BeginTransaction();
 
-            database.Connection.Execute("alter table Position add Trend1d Integer", transaction);
+            //database.Connection.Execute("alter table Position add Trend1d Integer", transaction); already there
 
             // update version
             version.Version += 1;

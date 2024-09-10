@@ -832,8 +832,8 @@ public class CryptoDatabase : IDisposable
         CreateTableAsset(connection);
 
         //CreateTableBalancing(connection); -- todo ooit
-        CreateTableSequence(connection); // Fake-ID's tbv orders en trades
-        CreateTableVersion(connection); // Administratie database & migraties
+        CreateTableSequence(connection); // Fake-ID's for orders en trades
+        CreateTableVersion(connection); // Administration database & migration
 
 
         // Indien noodzakelijk database upgraden 
