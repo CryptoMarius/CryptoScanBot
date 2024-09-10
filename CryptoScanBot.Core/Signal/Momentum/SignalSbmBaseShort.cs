@@ -398,7 +398,7 @@ public class SignalSbmBaseShort(CryptoSymbol symbol, CryptoInterval interval, Cr
 
             // Afgesterd - 27-04-2023 10:12
             // Met name de %K..
-            if (CandleLast.CandleData?.StochOscillator > candlePrev.CandleData?.StochOscillator)
+            if (CandleLast.CandleData?.StochOscillator > candlePrev!.CandleData?.StochOscillator)
             {
                 ExtraText = string.Format("Stoch.K {0:N8} hersteld niet > {1:N8}", candlePrev.CandleData?.StochOscillator, CandleLast.CandleData?.StochOscillator);
                 return false;
