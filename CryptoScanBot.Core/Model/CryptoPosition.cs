@@ -186,12 +186,12 @@ public class CryptoPosition
     public decimal? Barometer4h { get; set; }
     public decimal? Barometer1d { get; set; }
 
-    // Een aantal trendindicatoren
-    public CryptoTrendIndicator Trend15m { get; set; }
-    public CryptoTrendIndicator Trend30m { get; set; }
-    public CryptoTrendIndicator Trend1h { get; set; }
-    public CryptoTrendIndicator Trend4h { get; set; }
-    public CryptoTrendIndicator Trend1d { get; set; }
+    // Trend
+    public CryptoTrendIndicator? Trend15m { get; set; }
+    public CryptoTrendIndicator? Trend30m { get; set; }
+    public CryptoTrendIndicator? Trend1h { get; set; }
+    public CryptoTrendIndicator? Trend4h { get; set; }
+    public CryptoTrendIndicator? Trend1d { get; set; }
 }
 
 
