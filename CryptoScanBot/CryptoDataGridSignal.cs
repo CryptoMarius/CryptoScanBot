@@ -230,8 +230,8 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
 #endif
             }
         }
-
     }
+
 
     private int Compare(CryptoSignal a, CryptoSignal b)
     {
@@ -296,9 +296,9 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
             if (compareResult == 0)
             {
                 if (SortOrder == SortOrder.Ascending)
-                    compareResult = ObjectCompare.Compare(a.Interval.IntervalPeriod, b.Interval.IntervalPeriod);
+                    compareResult = ObjectCompare.Compare(a.Interval!.IntervalPeriod, b.Interval!.IntervalPeriod);
                 else
-                    compareResult = ObjectCompare.Compare(b.Interval.IntervalPeriod, a.Interval.IntervalPeriod);
+                    compareResult = ObjectCompare.Compare(b.Interval!.IntervalPeriod, a.Interval!.IntervalPeriod);
             }
         }
 

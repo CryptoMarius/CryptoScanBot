@@ -12,7 +12,7 @@ using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot;
 
-public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, SortedList<string, ColumnSetting> columnList) : 
+public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, SortedList<string, ColumnSetting> columnList) :
     CryptoDataGrid<T>(grid, list, columnList) where T : CryptoPosition
 {
     private enum ColumnsForGrid
@@ -109,6 +109,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
         };
         TimerRefreshInformation.Tick += RefreshInformation;
     }
+
 
     public override void InitializeHeaders()
     {
@@ -283,7 +284,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
                     CreateColumn("Bm 1d", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42).Visible = false;
                     break;
 
-                default: 
+                default:
                     throw new NotImplementedException();
             };
         }
@@ -352,6 +353,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
             _ => 0
         };
 
+
         // extend if still the same
         if (compareResult == 0)
         {
@@ -363,7 +365,6 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
                 else
                     compareResult = ObjectCompare.Compare(b.Symbol.Name, a.Symbol.Name);
             }
-
             if (compareResult == 0)
             {
                 if (SortOrder == SortOrder.Ascending)
@@ -572,7 +573,6 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
                 case ColumnsForGrid.Barometer1d:
                     e.Value = position.Barometer1d?.ToString("N2");
                     break;
-
 
                 default:
                     e.Value = '?';
@@ -884,7 +884,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
                             if (!step.CloseTime.HasValue && step.Side == entryOrderSide)
                             {
                                 string cancelReason = $"annuleren vanwege handmatig annuleren DCA positie {position.Id}";
-                                var (success, _) = await TradeTools.CancelOrder(databaseThread, position, part, step, 
+                                var (success, _) = await TradeTools.CancelOrder(databaseThread, position, part, step,
                                     lastCandle1mCloseTimeDate, CryptoOrderStatus.ManuallyByUser, cancelReason);
                                 if (success)
                                 {
@@ -893,7 +893,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
 
                                     position.ActiveDca = false;
                                     databaseThread.Connection.Update<CryptoPosition>(position);
-                                     
+
                                     GlobalData.AddTextToLogTab($"{position.Symbol.Name} positie {position.Id} handmatig de openstaande DCA {part.PartNumber} annuleren");
                                 }
                             }
@@ -991,17 +991,25 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
         if (GlobalData.ApplicationIsClosing)
             return;
 
-        Grid.SuspendDrawing();
         try
         {
-            Grid.InvalidateColumn((int)ColumnsForGrid.Duration);
-            Grid.InvalidateColumn((int)ColumnsForGrid.Status);
-            Grid.InvalidateColumn((int)ColumnsForGrid.Profit);
-            Grid.InvalidateColumn((int)ColumnsForGrid.Percentage);
+            Grid.SuspendDrawing();
+            try
+            {
+                Grid.InvalidateColumn((int)ColumnsForGrid.Duration);
+                Grid.InvalidateColumn((int)ColumnsForGrid.Status);
+                Grid.InvalidateColumn((int)ColumnsForGrid.Profit);
+                Grid.InvalidateColumn((int)ColumnsForGrid.Percentage);
+            }
+            finally
+            {
+                Grid.ResumeDrawing();
+            }
         }
-        finally
+        catch (Exception error)
         {
-            Grid.ResumeDrawing();
+            ScannerLog.Logger.Error(error, "");
+            GlobalData.AddTextToLogTab($"Error RefreshInformation {error}");
         }
     }
 

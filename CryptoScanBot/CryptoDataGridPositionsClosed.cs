@@ -249,7 +249,7 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
                     CreateColumn("Bm 1d", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42).Visible = false;
                     break;
 
-                default: 
+                default:
                     throw new NotImplementedException();
             };
         }
@@ -313,6 +313,7 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
             _ => 0
         };
 
+
         // extend if still the same
         if (compareResult == 0)
         {
@@ -324,7 +325,6 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
                 else
                     compareResult = ObjectCompare.Compare(b.Symbol.Name, a.Symbol.Name);
             }
-
             if (compareResult == 0)
             {
                 if (SortOrder == SortOrder.Ascending)
@@ -417,13 +417,13 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
                 //case ColumnsForGrid.ProfitPrice:
                 //e.Value = position.ProfitPrice?.ToString(position.Symbol.PriceDisplayFormat),
                 // ter debug..
-                case ColumnsForGrid.QuantityTick:
+                case ColumnsForGrid.QuantityTick:// ter debug..
                     e.Value = position.Symbol?.QuantityTickSize.ToString0();
                     break;
-                case ColumnsForGrid.RemainingDust:
+                case ColumnsForGrid.RemainingDust: // ter debug
                     e.Value = position.RemainingDust.ToString("N8");
                     break;
-                case ColumnsForGrid.DustValue:
+                case ColumnsForGrid.DustValue: // ter debug
                     e.Value = (position.RemainingDust * position.Symbol.LastPrice).ToString0("N8");
                     break;
 
