@@ -6,16 +6,15 @@ Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep
 Scanner:
 - Dashboard - Aantal meldingen per dag / week? Iets wat het aantal meldingen laat zien in iedere geval..
               Zie je ook wat als ke geen trader gebruikt?
-
-- Scanner - Meldingen van/naar Altrady beter traceren / debuggen
-- Scanner - Bybit blijft af en toe stil staan (of lijkt stil te staan), wat kan ik hier aan verbeteren?
-- Scanner - Uitzoeken volume van Bybit Spot, op dag niveau lijkt dat af te wijken ten opzichte van TradingView, op 1h niveau lijkt het okay, wat gaat er mis?
-- Scanner - Uitzoeken volume van Bybit Spot, op uur niveau wordt er wel eens volume=0 ingevuld (een herhaling van de voorgaande candle om gaten te vullen, 
+- Documentatie - Uitleg van de Add Value voor de WGHM/STORSI uitbreiden, er zijn aardig wat vragen over.
+- Scanner - Kucoin - Het ophalen van candles bij Kucoin wordt heel vaak gedaan, soms elke 5 minuten, dat lijkt overbodig (tenzij het allemaal flatlines zijn)?
+- Scanner - Kucoin - Het ophalen van candles bij Kucoin wordt 2x gedaan (aldus het logbestand)
+- Scanner - Bybit - Bybit blijft af en toe stil staan (of lijkt stil te staan), wat kan ik hier aan verbeteren?
+- Scanner - Bybit - Uitzoeken volume van Bybit Spot, op dag niveau lijkt dat af te wijken ten opzichte van TradingView, op 1h niveau lijkt het okay, wat gaat er mis?
+- Scanner - Bybit - Uitzoeken volume van Bybit Spot, op uur niveau wordt er wel eens volume=0 ingevuld (een herhaling van de voorgaande candle om gaten te vullen, 
             dit gebeurd best vaak. Maar ligt dat nu aan de exchange of ligt het aan de scanner. Het is in vervelend voor de controle op het volume)
             Dit escaleert uiteindelijk naar de hoogste intervallen, dat moet echt nagezocht worden (effect is dat je een paar munten mist qua meldingen)
-- Scanner - De optie "Signalen maken" in het linkerboven menu kan wel weg (core business scanner)
 - Scanner - Gerapporteerd: Dubbele munten (zelfs de BTCUSDT, wellicht na wisselen van exchanges?)
-- Scanner - De basismunten scrollable maken (Binance sport heeft veel basismunten)
 - Scanner - Alle exchanges rechtstreeks kunnen benaderen via een url (dat is nogal wat uitzoekwerk)
 - Scanner - Gerapporteerd: Het geheugen loopt langzaam op gedurende meerdere weken
             https://memprofiler.com/
@@ -25,13 +24,12 @@ Scanner:
             https://learn.microsoft.com/en-us/visualstudio/profiling/memory-usage?view=vs-2022
             CLRProfiler 
 - Scanner - Nieuwe munten die toegevoegd worden op de exchange terwijl de scanner loopt worden niet automatisch toegevoegd aan de price- en kline tickers
+            (maar vanwege de herstart na 24 uur worden ze dan wel meegenomen, hoe relevant zijn nieuwe munten?)
 - Scanner - Limit rates voor Kucoin verder uitwerken (ophalen candles geeft soms een foutmelding, wordt bij een volgende herstart wel hersteld, maar hoort niet zo)
             error getting klines [ServerRateLimitError] 429: Server rate limit exceeded: {"code":"429000","msg":"too many request"}
 - Scanner - Rate limits van de libraries bestuderen en eventueel de ingebouwde vervangen (de interne is aan de voorzichtige kant)
 - Scanner - Bij wisselen van basismunten (of exchange?) komt er soms een SQLite Error 5: 'database is locked? (oorzaak nog onbekend)
-- Scanner - Bij het inserten van een nieuw signaal is er soms een SQLite Error 5: 'database is locked? (oorzaak nog onbekend)
 - Scanner - Het geheugen loopt gemeten over meerdere dagen op. Een oorzaak kan wellicht de barometer zijn (wat intern gewoon een muntje met candles is, maar waarin de candles niet opgeruimd worden)
-- Scanner - De FundingRate kolom automatisch uitzetten indien geen derivaten.futues?
 - Scanner - Telegram meldingen sturen met een extra link naar TV (optioneel maken via de instelllingen).
 - Scanner - locking inbouwen zodat dezelfde scanner niet twee keer opgestart kan worden (menselijke fouten <including me>)
 - Scanner - De scanner is soms onzichtbaar omdat het window buiten het scherm valt of te klein is (2x gemeld) (oorzaak onduidelijk)
@@ -60,7 +58,6 @@ Scanner:
 
 
 Trading:
-- Trading - De barometer naar Excel kunnen exporteren voor een overzichtje (liefst met een op te geven datum/tijd)
 - Trading - Documentatie bijwerken - Een klusje..
 - Trading - Stop loss introduceren voor Bybit
 - Trading - Stop loss introduceren voor Binance

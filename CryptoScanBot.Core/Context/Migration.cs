@@ -8,7 +8,7 @@ namespace CryptoScanBot.Core.Context;
 public class Migration
 {
     // De huidige database versie
-    public readonly static int CurrentDatabaseVersion = 23;
+    public readonly static int CurrentDatabaseVersion = 24;
 
 
     public static void Execute(CryptoDatabase database, int CurrentVersion)
@@ -717,6 +717,20 @@ public class Migration
 
             database.Connection.Execute("alter table signal drop column Trend12h", transaction);
             database.Connection.Execute("alter table signal add Trend1d Integer", transaction);
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+        //***********************************************************
+        if (CurrentVersion > version.Version && version.Version == 23)
+        {
+            using var transaction = database.BeginTransaction();
+
+            database.Connection.Execute("alter table Position drop column Trend12h", transaction);
+            database.Connection.Execute("alter table Position add Trend1d Integer", transaction);
 
             // update version
             version.Version += 1;
