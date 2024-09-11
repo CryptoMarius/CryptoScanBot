@@ -84,40 +84,6 @@ public class CryptoPosition
     // Zou computed kunnen, maar voor de zekerheid in de database
     public bool Reposition { get; set; }
 
-    [Computed]
-    public DateTime? DelayUntil { get; set; }
-
-    [Computed]
-    public bool IsChanged { get; set; }
-
-    [Computed]
-    // todo -> rename to PartList!
-    public SortedList<int, CryptoPositionPart> PartList { get; set; } = [];
-
-    [Computed]
-    // Orders die uitstaan via de parts/steps
-    // TODO -> rename to StepList!
-    public SortedList<string, CryptoPositionStep> StepOrderList { get; set; } = [];
-
-    [Computed]
-    public SemaphoreSlim Semaphore { get; set; } = new(1);
-    [Computed]
-    public bool ForceCheckPosition { get; set; } = false;
-
-
-
-    [Computed]
-    public bool HasOrdersAndTradesLoaded { get; set; } = false;
-
-    [Computed]
-    // Exchange orders (Key=OrderId, value=CryptoOrder)
-    public CryptoOrderList OrderList { get; set; } = [];
- 
-    [Computed]
-    // Exchange trades (Key=TradeId, value=CryptoTrade)
-    public CryptoTradeList TradeList { get; set; } = [];
-
-
 
     /// --------------------------------------------------------------
     /// added from the signal...
@@ -192,6 +158,37 @@ public class CryptoPosition
     public CryptoTrendIndicator? Trend1h { get; set; }
     public CryptoTrendIndicator? Trend4h { get; set; }
     public CryptoTrendIndicator? Trend1d { get; set; }
+
+
+    [Computed]
+    public DateTime? DelayUntil { get; set; }
+
+    [Computed]
+    public bool IsChanged { get; set; }
+
+    [Computed]
+    // todo -> rename to PartList!
+    public SortedList<int, CryptoPositionPart> PartList { get; set; } = [];
+
+    [Computed]
+    public SortedList<string, CryptoPositionStep> StepOrderList { get; set; } = [];
+
+    [Computed]
+    public SemaphoreSlim Semaphore { get; set; } = new(1);
+
+    [Computed]
+    public bool ForceCheckPosition { get; set; } = false;
+
+    [Computed]
+    public bool HasOrdersAndTradesLoaded { get; set; } = false;
+
+    [Computed]
+    // Exchange orders (Key=OrderId, value=CryptoOrder)
+    public CryptoOrderList OrderList { get; set; } = [];
+
+    [Computed]
+    // Exchange trades (Key=TradeId, value=CryptoTrade)
+    public CryptoTradeList TradeList { get; set; } = [];
 }
 
 
