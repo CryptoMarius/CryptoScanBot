@@ -466,18 +466,6 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         return Color.White;
     }
 
-    internal static string TrendIndicatorText(CryptoTrendIndicator? trend)
-    {
-        if (!trend.HasValue)
-            return "";
-
-        return trend switch
-        {
-            CryptoTrendIndicator.Bullish => "up",
-            CryptoTrendIndicator.Bearish => "down",
-            _ => "",
-        };
-    }
 
     internal Color TrendIndicatorColor(CryptoTrendIndicator? trend)
     {

@@ -3,6 +3,7 @@ using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Settings;
+using CryptoScanBot.Core.Trend;
 
 namespace CryptoScanBot;
 
@@ -372,7 +373,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                     e.Value = signal.Volume;
                     break;
                 case ColumnsForGrid.TfTrend:
-                    e.Value = TrendIndicatorText(signal.TrendIndicator);
+                    e.Value = TrendTools.TrendIndicatorText(signal.TrendIndicator);
                     break;
                 case ColumnsForGrid.MarketTrend:
                     e.Value = signal.TrendPercentage;
@@ -415,19 +416,19 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                         e.Value = signal.Symbol.FundingRate;
                     break;
                 case ColumnsForGrid.Trend15m:
-                    e.Value = TrendIndicatorText(signal.Trend15m);
+                    e.Value = TrendTools.TrendIndicatorText(signal.Trend15m);
                     break;
                 case ColumnsForGrid.Trend30m:
-                    e.Value = TrendIndicatorText(signal.Trend30m);
+                    e.Value = TrendTools.TrendIndicatorText(signal.Trend30m);
                     break;
                 case ColumnsForGrid.Trend1h:
-                    e.Value = TrendIndicatorText(signal.Trend1h);
+                    e.Value = TrendTools.TrendIndicatorText(signal.Trend1h);
                     break;
                 case ColumnsForGrid.Trend4h:
-                    e.Value = TrendIndicatorText(signal.Trend4h);
+                    e.Value = TrendTools.TrendIndicatorText(signal.Trend4h);
                     break;
                 case ColumnsForGrid.Trend1d:
-                    e.Value = TrendIndicatorText(signal.Trend1d);
+                    e.Value = TrendTools.TrendIndicatorText(signal.Trend1d);
                     break;
                 case ColumnsForGrid.Barometer15m:
                     e.Value = signal.Barometer15m?.ToString("N2");

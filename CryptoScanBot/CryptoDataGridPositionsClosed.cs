@@ -1,10 +1,12 @@
 ﻿using CryptoScanBot.Commands;
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Excel;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Settings;
 using CryptoScanBot.Core.Trader;
+using CryptoScanBot.Core.Trend;
 
 using Dapper;
 
@@ -81,6 +83,7 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
         //menuStrip.AddCommand(this, "Position recalculate2", Command.PositionCalculate);
         menuStrip.AddCommand(this, "Position delete from database", Command.None, CommandPositionDeleteFromDatabase);
         menuStrip.AddCommand(this, "Position information (Excel)", Command.ExcelPositionInformation);
+        menuStrip.AddCommand(this, "Positions information (Excel)", Command.None, DumpPositions);
 
         menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Copy symbol name", Command.CopySymbolInformation);
@@ -441,7 +444,7 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
                     e.Value = position.SignalVolume;
                     break;
                 case ColumnsForGrid.TfTrend:
-                    e.Value = TrendIndicatorText(position.TrendIndicator);
+                    e.Value = TrendTools.TrendIndicatorText(position.TrendIndicator);
                     break;
                 case ColumnsForGrid.MarketTrend:
                     e.Value = position.TrendPercentage;
@@ -480,19 +483,19 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
                     e.Value = position.LuxIndicator5m;
                     break;
                 case ColumnsForGrid.Trend15m:
-                    e.Value = TrendIndicatorText(position.Trend15m);
+                    e.Value = TrendTools.TrendIndicatorText(position.Trend15m);
                     break;
                 case ColumnsForGrid.Trend30m:
-                    e.Value = TrendIndicatorText(position.Trend30m);
+                    e.Value = TrendTools.TrendIndicatorText(position.Trend30m);
                     break;
                 case ColumnsForGrid.Trend1h:
-                    e.Value = TrendIndicatorText(position.Trend1h);
+                    e.Value = TrendTools.TrendIndicatorText(position.Trend1h);
                     break;
                 case ColumnsForGrid.Trend4h:
-                    e.Value = TrendIndicatorText(position.Trend4h);
+                    e.Value = TrendTools.TrendIndicatorText(position.Trend4h);
                     break;
                 case ColumnsForGrid.Trend1d:
-                    e.Value = TrendIndicatorText(position.Trend1d);
+                    e.Value = TrendTools.TrendIndicatorText(position.Trend1d);
                     break;
                 case ColumnsForGrid.Barometer15m:
                     e.Value = position.Barometer15m?.ToString("N2");
@@ -691,5 +694,11 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
             }
         }
     }
+
+    private void DumpPositions(object? sender, EventArgs? e)
+    {
+        List<CryptoPosition>? a = List as List<CryptoPosition>;
+        _ = Task.Run(() => { new ExcelPostionsDump(a!).ExportToExcel(); });
+}
 
 }
