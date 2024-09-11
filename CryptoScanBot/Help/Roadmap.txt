@@ -4,9 +4,11 @@ Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep
 
 
 Scanner:
+- Documentatie - Uitleg van de Add Value voor de WGHM/STORSI uitbreiden, er zijn aardig wat vragen over.
+
 - Dashboard - Aantal meldingen per dag / week? Iets wat het aantal meldingen laat zien in iedere geval..
               Zie je ook wat als ke geen trader gebruikt?
-- Documentatie - Uitleg van de Add Value voor de WGHM/STORSI uitbreiden, er zijn aardig wat vragen over.
+
 - Scanner - Kucoin - Het ophalen van candles bij Kucoin wordt heel vaak gedaan, soms elke 5 minuten, dat lijkt overbodig (tenzij het allemaal flatlines zijn)?
 - Scanner - Kucoin - Het ophalen van candles bij Kucoin wordt 2x gedaan (aldus het logbestand)
 - Scanner - Bybit - Bybit blijft af en toe stil staan (of lijkt stil te staan), wat kan ik hier aan verbeteren?
@@ -28,7 +30,6 @@ Scanner:
 - Scanner - Limit rates voor Kucoin verder uitwerken (ophalen candles geeft soms een foutmelding, wordt bij een volgende herstart wel hersteld, maar hoort niet zo)
             error getting klines [ServerRateLimitError] 429: Server rate limit exceeded: {"code":"429000","msg":"too many request"}
 - Scanner - Rate limits van de libraries bestuderen en eventueel de ingebouwde vervangen (de interne is aan de voorzichtige kant)
-- Scanner - Bij wisselen van basismunten (of exchange?) komt er soms een SQLite Error 5: 'database is locked? (oorzaak nog onbekend)
 - Scanner - Het geheugen loopt gemeten over meerdere dagen op. Een oorzaak kan wellicht de barometer zijn (wat intern gewoon een muntje met candles is, maar waarin de candles niet opgeruimd worden)
 - Scanner - Telegram meldingen sturen met een extra link naar TV (optioneel maken via de instelllingen).
 - Scanner - locking inbouwen zodat dezelfde scanner niet twee keer opgestart kan worden (menselijke fouten <including me>)
@@ -56,12 +57,10 @@ Scanner:
 - Scanner - We rekenen intern nu met het aantal seconden vanaf X waardoor een long nodig is, dat kan ook met een minuten vanaf X dat scheelt mogelijk opslag en geheugen ruimte
   (maar zijn die "paar" megabytes wel de moeite waard met het vele (test)werk wat hiervoor nodig is?)
 
-
 Trading:
 - Trading - Documentatie bijwerken - Een klusje..
 - Trading - Stop loss introduceren voor Bybit
 - Trading - Stop loss introduceren voor Binance
-- Trading - De laatste X posities dumpen naar Excel voor een overzichtje
 - Trading - Controle inbouwen op het short gaan, in futures kan dat, maar in spot lukt dat natuurlijk alleen als er assets beschikbaar zijn
 - Trading - De trader zet soms (zeg maar gerust in een enkele keer) correct afgehandelde posities weg als zijnde een takeover. Daar is/was geen aanleiding voor dus dat moet wel een bug zijn!
 - Trading - In de open posities is de kolom BE perc te hoog indien er een JoJo heeft plaatsgevonden (invested=42, returned=39, BE% = 14.49%), maar het is slechts 1x gerapporteerd, incident?

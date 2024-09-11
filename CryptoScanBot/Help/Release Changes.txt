@@ -2,6 +2,7 @@ CryptoScanBot release historie:
 
 xx-08-2024 1.9.4
 
+- Trading - De open en gesloten posities kunnen dumpen naar Excel voor een overzichtje
 - Scanner - Barometer velden toegevoegd aan de signalen (+ kolommen toegevoegd)
 - Scanner - De correctie waarden voor de WGHM/STORSI mogen nu negatief zijn (-100..+100).
 - Scanner - Grids - Na het verwijderen van de laatste kolom kun ze niet meer aanzetten (dialoog niet bereikbaar)
