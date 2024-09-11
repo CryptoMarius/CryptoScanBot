@@ -1,9 +1,14 @@
 ﻿using CryptoScanBot.Commands;
+using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Exchange.Altrady;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Settings;
+using CryptoScanBot.Core.Trader;
 using CryptoScanBot.Core.Trend;
+
+using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot;
 
@@ -78,6 +83,9 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
 
         menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Hide grid selection", Command.None, ClearSelection);
+#if DEBUG
+        menuStrip.AddCommand(this, "Test - Open position", Command.None, CreatePosition);
+#endif
 
         TimerClearOldSignals = new()
         {
@@ -1000,4 +1008,68 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
         }
     }
 
+    internal void CreatePosition(object? sender, EventArgs? e)
+    {
+        if (GlobalData.ApplicationIsClosing)
+            return;
+
+        // De rest van de commando's heeft een object nodig
+        var (succes, _, _, signal, _, _) = CommandTools.GetAttributesFromSender(SelectedObject);
+        if (succes && (GlobalData.ActiveAccount!.AccountType == CryptoAccountType.Altrady))
+        {
+            CryptoSymbolInterval symbolInterval = signal.Symbol.GetSymbolInterval(signal.Interval.IntervalPeriod);
+            CryptoPosition position = PositionTools.CreatePosition(GlobalData.ActiveAccount!, signal.Symbol, signal.Strategy, signal.Side, symbolInterval, signal.CloseDate);
+            PositionTools.AddSignalProperties(position, signal);
+
+            CryptoDatabase database = new();
+            try
+            {
+                database.Open();
+                database.Connection.Insert(position);
+                PositionTools.AddPosition(GlobalData.ActiveAccount!, position);
+                var part = PositionTools.ExtendPosition(database, position, CryptoPartPurpose.Entry, signal.Interval, signal.Strategy,
+                    CryptoEntryOrDcaStrategy.AfterNextSignal, signal.Price, signal.CloseDate);
+
+                 
+                {
+                    decimal entryValue = signal.Symbol.QuoteData!.EntryAmount;
+
+                    // Voor market en limit nemen we de actionprice (quantiry berekenen)
+                    decimal price = signal.Price;
+                    if (price == 0)
+                        price = signal.Symbol.LastPrice ?? 0;
+
+                    if (position.Side == CryptoTradeSide.Long)
+                        price = price * 0.97m;
+                    if (position.Side == CryptoTradeSide.Short)
+                        price = price * 1.04m;
+                    price = price.Clamp(signal.Symbol.PriceMinimum, signal.Symbol.PriceMaximum, signal.Symbol.PriceTickSize);
+
+                    decimal entryQuantity = entryValue / price; // "afgerond"
+                    entryQuantity = entryQuantity.Clamp(signal.Symbol.QuantityMinimum, signal.Symbol.QuantityMaximum, signal.Symbol.QuantityTickSize);
+                    if (position.Invested == 0)
+                        entryQuantity = TradeTools.CorrectEntryQuantityIfWayLess(signal.Symbol, entryValue, entryQuantity, price);
+
+                    part.CloseTime = signal.CloseDate;
+                    database.Connection.Update(part);
+
+                    position.Reposition = false;
+                    position.EntryPrice = signal.Price;
+                    position.EntryAmount = entryQuantity;
+                    position.CloseTime = signal.CloseDate;
+                    position.Status = CryptoPositionStatus.Altrady;
+                    database.Connection.Update(position);
+
+                    GlobalData.PositionsHaveChanged("");
+
+                    AltradyWebhook.DelegateControlToAltrady(position);
+                }
+
+            }
+            finally
+            {
+                database.Close();
+            }
+        }
+    }
 }
