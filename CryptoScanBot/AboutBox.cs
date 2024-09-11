@@ -16,9 +16,7 @@ partial class AboutBox : Form
         labelCompanyName.Text = AssemblyCompany;
 
         StringBuilder builder = new();
-        builder.AppendLine(AssemblyDescription);
-        builder.AppendLine("for");
-        builder.AppendLine("");
+        builder.AppendLine(AssemblyDescription + " for:");
         foreach (Core.Model.CryptoExchange exchange in GlobalData.ExchangeListName.Values)
             builder.AppendLine($"-{exchange.Name}");
         textBoxDescription.Text = builder.ToString();
