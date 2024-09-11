@@ -54,40 +54,6 @@ public partial class FrmMain : Form
 
         logQueue.EnsureCapacity(1500);
 
-
-
-        //decimal? bla = null;
-        //decimal entryValue = bla ?? 0 * 1000;
-
-        //bla = 10;
-        //entryValue = bla ?? 0 * 1000;
-
-        //DateTime date = new DateTime(2024, 6, 7, 17, 13, 0, DateTimeKind.Utc);
-        //long sourceDate = CandleTools.GetUnixTime(date, 60);
-        //long targetDate = IntervalTools.StartOfIntervalCandle2(sourceDate, 60, 15 * 60, true);
-        //DateTime newDate = CandleTools.GetUnixDate(targetDate);
-
-        //date = new DateTime(2024, 6, 7, 17, 14, 0, DateTimeKind.Utc);
-        //sourceDate = CandleTools.GetUnixTime(date, 60);
-        //targetDate = IntervalTools.StartOfIntervalCandle2(sourceDate, 60, 15 * 60, true);
-        //newDate = CandleTools.GetUnixDate(targetDate);
-
-        //date = new DateTime(2024, 6, 7, 17, 15, 0, DateTimeKind.Utc);
-        //sourceDate = CandleTools.GetUnixTime(date, 60);
-        //targetDate = IntervalTools.StartOfIntervalCandle2(sourceDate, 60, 15 * 60, true);
-        //newDate = CandleTools.GetUnixDate(targetDate);
-
-        //date = new DateTime(2024, 6, 7, 17, 16, 0, DateTimeKind.Utc);
-        //sourceDate = CandleTools.GetUnixTime(date, 60);
-        //targetDate = IntervalTools.StartOfIntervalCandle2(sourceDate, 60, 15 * 60, true);
-        //newDate = CandleTools.GetUnixDate(targetDate);
-
-        //date = new DateTime(2024, 6, 7, 17, 0, 0, DateTimeKind.Utc);
-        //sourceDate = CandleTools.GetUnixTime(date, 60);
-        //targetDate = IntervalTools.StartOfIntervalCandle2(sourceDate, 3*60, 2 * 60, true);
-        //newDate = CandleTools.GetUnixDate(targetDate);
-
-
         ApplicationPlaySounds = MenuMain.AddCommand(null, "Play sounds", Command.None, ApplicationPlaySounds_Click);
         ApplicationPlaySounds.Checked = true;
         ApplicationCreateSignals = MenuMain.AddCommand(null, "Create signals", Command.None, ApplicationCreateSignals_Click);
@@ -100,6 +66,9 @@ public partial class FrmMain : Form
         MenuMain.AddCommand(null, "Clear log en ticker count", Command.None, MainMenuClearAll_Click);
         MenuMain.AddCommand(null, "Exchange information (Excel)", Command.ExcelExchangeInformation);
         MenuMain.AddCommand(null, "Tradingview import files", Command.TradingViewImportList);
+        MenuMain.AddSeperator();
+        ApplicationBackTestMode = MenuMain.AddCommand(null, "Backtest mode", Command.None, ApplicationBackTestMode_Click);
+        ApplicationBackTestExec = MenuMain.AddCommand(null, "Backtest exec", Command.None, BacktestToolStripMenuItem_Click);
         MenuMain.AddCommand(null, "About", Command.About);
 
 #if DEBUG
@@ -109,13 +78,7 @@ public partial class FrmMain : Form
         MenuMain.AddCommand(null, "Test - Create url testfile", Command.None, TestCreateUrlTestFileClick);
         MenuMain.AddCommand(null, "Test - Dump ticker information", Command.None, TestShowTickerInformationClick);
 #endif
-        MenuMain.AddSeperator();
-        ApplicationBackTestMode = MenuMain.AddCommand(null, "Backtest mode", Command.None, ApplicationBackTestMode_Click);
-        ApplicationBackTestExec = MenuMain.AddCommand(null, "Backtest exec", Command.None, BacktestToolStripMenuItem_Click);
         //ApplicationBackTestExec.Enabled = GlobalData.BackTest;
-
-        //Console.Write("Hello world 1");
-        //System.Diagnostics.Debug.WriteLine("Hello world 2");
 
         // De events pas op het laatst zetten
         SystemEvents.PowerModeChanged += OnPowerChange;
