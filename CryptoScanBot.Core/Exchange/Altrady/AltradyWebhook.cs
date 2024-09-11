@@ -52,8 +52,8 @@ public class AltradyWebhook
             request.api_key = GlobalData.AltradyApi.Key;
             request.api_secret = GlobalData.AltradyApi.Secret;
 
+            //request.signal_id = $"MyPositionId{position.Id}"; // optional (problem, this is not a unique id <after deleting the db for example>)
 
-            request.signal_id = $"MyPositionId{position.Id}"; // optional
             request.exchange = externalUrls.Altrady.Code;
             request.symbol = $"{externalUrls.Altrady.Code}_{position.Symbol.Quote}_{position.Symbol.Base}";
             request.adjust_fee = true; // Adjust the order size to ensure there is enough to pay the fee (problems when managing position from our side)
@@ -128,7 +128,7 @@ public class AltradyWebhook
             using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
             {
                 streamWriter.Write(json);
-                //GlobalData.AddTextToLogTab(json);
+                GlobalData.AddTextToLogTab(json);
             }
             ScannerLog.Logger.Trace($"{position.Symbol.Name} {position.Interval!.Name} Altrady webhook json {json}");
 
