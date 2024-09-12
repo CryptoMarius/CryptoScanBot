@@ -725,11 +725,25 @@ public class Migration
         }
 
         //***********************************************************
-        if (CurrentVersion > version.Version && version.Version == 23)
+        if (CurrentVersion > version.Version && version.Version == 24)
         {
             using var transaction = database.BeginTransaction();
 
-            //database.Connection.Execute("alter table Position add Trend1d Integer", transaction); already there
+            // its empty because i f..d up this db update
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        //***********************************************************
+        if (CurrentVersion > version.Version && version.Version == 25)
+        {
+            using var transaction = database.BeginTransaction();
+
+            // Note: Add a AT signal string to the position table from the Altrady response 
 
             // update version
             version.Version += 1;
