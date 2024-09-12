@@ -601,7 +601,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                 case ColumnsForGrid.RSI:
                     {
                         // Oversold/overbougt
-                        double? value = signal.Rsi; // 0..100
+                        double? value = signal.Rsi;
                         if (value < GlobalData.Settings.General.RsiValueOversold)
                             foreColor = Color.Red;
                         else if (value > GlobalData.Settings.General.RsiValueOverbought)
@@ -1061,6 +1061,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                     database.Connection.Update(position);
 
                     GlobalData.PositionsHaveChanged("");
+
 
                     AltradyWebhook.DelegateControlToAltrady(position);
                 }
