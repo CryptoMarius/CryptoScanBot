@@ -744,6 +744,8 @@ public class Migration
             using var transaction = database.BeginTransaction();
 
             // Note: Add a AT signal string to the position table from the Altrady response 
+            //"ExternalPositionId TEXT NULL," +
+            database.Connection.Execute("alter table Position add ExternalPositionId Text null", transaction);
 
             // update version
             version.Version += 1;
