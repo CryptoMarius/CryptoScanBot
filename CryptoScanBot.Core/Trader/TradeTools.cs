@@ -720,9 +720,7 @@ public class TradeTools
     {
         int count = 0;
 
-        // Observed conflicts with GUI actions like Excel and Recalculate
-        //Monitor.Enter(position.TradeList);
-        await position.Semaphore.WaitAsync();
+        await position.OrdersAndTradesSemaphore.WaitAsync();
         try
         {
             if (!position.HasOrdersAndTradesLoaded)
@@ -755,8 +753,7 @@ public class TradeTools
         }
         finally
         {
-            //Monitor.Exit(position.TradeList);
-            position.Semaphore.Release();
+            position.OrdersAndTradesSemaphore.Release();
         }
 
         return count;
