@@ -2,9 +2,10 @@ CryptoScanBot release historie:
 
 xx-08-2024 1.9.4
 
-- Trading - De open en gesloten posities kunnen dumpen naar Excel voor een overzichtje
+- Scanner - De getoonde signalen kunnen dumpen naar Excel voor een overzichtje
 - Scanner - Barometer velden toegevoegd aan de signalen (+ kolommen toegevoegd)
 - Scanner - De correctie waarden voor de WGHM/STORSI mogen nu negatief zijn (-100..+100).
+- Scanner - Herintroductie van kopieeren data cells (die was weggevallen na interne refactoring van het grid)
 - Scanner - Grids - Na het verwijderen van de laatste kolom kun ze niet meer aanzetten (dialoog niet bereikbaar)
 - Scanner - De kleuren van de rsi en stoch worden nu bepaald op basis van vaste waarden, maar die zijn configurabel dus dat klopt niet meer.
 - Scanner - Het berekenen van de trend gaat soms fout (wat knullige threading problemen uiteindelijk)
@@ -31,6 +32,7 @@ xx-08-2024 1.9.4
 - Scanner - Extra menu optie om een import-lijst te maken voor tradingview per quote (en alle munten)
 - Scanner - De FundingRate kolom standaard uitzetten bij de signalen (het is niet relevant voor de spot markten)
 
+- Trader - De open en gesloten posities kunnen dumpen naar Excel voor een overzichtje
 - Trader - Barometer velden toegevoegd aan de open en geloten posities (+ kolommen toegevoegd)
 - Trader - De originele signaal waarden worden nu toegevoegd aan de open en geloten posities (+ kolommen toegevoegd)
 - Trader - De gegevens van het originele signaal overnemen in de positie voor statistiek (signalen worden na 1 week verwijderd)

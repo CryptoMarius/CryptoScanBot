@@ -64,12 +64,14 @@ public partial class FrmMain : Form
         MenuMain.AddCommand(null, "Settings", Command.None, ToolStripMenuItemSettings_Click);
         MenuMain.AddCommand(null, "Refresh information", Command.None, ToolStripMenuItemRefresh_Click_1);
         MenuMain.AddCommand(null, "Clear log en ticker count", Command.None, MainMenuClearAll_Click);
-        MenuMain.AddCommand(null, "Exchange information (Excel)", Command.ExcelExchangeInformation);
         MenuMain.AddCommand(null, "Tradingview import files", Command.TradingViewImportList);
+        MenuMain.AddSeperator();
+        MenuMain.AddCommand(null, "Exchange information (Excel)", Command.ExcelExchangeInformation);
+        MenuMain.AddCommand(null, "Signals information (Excel)", Command.ExcelSignalsInformation);
+        MenuMain.AddCommand(null, "Positions information (Excel)", Command.ExcelPositionsInformation);
         MenuMain.AddSeperator();
         ApplicationBackTestMode = MenuMain.AddCommand(null, "Backtest mode", Command.None, ApplicationBackTestMode_Click);
         ApplicationBackTestExec = MenuMain.AddCommand(null, "Backtest exec", Command.None, BacktestToolStripMenuItem_Click);
-        MenuMain.AddCommand(null, "About", Command.About);
 
 #if DEBUG
         MenuMain.AddSeperator();
@@ -78,7 +80,8 @@ public partial class FrmMain : Form
         MenuMain.AddCommand(null, "Test - Create url testfile", Command.None, TestCreateUrlTestFileClick);
         MenuMain.AddCommand(null, "Test - Dump ticker information", Command.None, TestShowTickerInformationClick);
 #endif
-        //ApplicationBackTestExec.Enabled = GlobalData.BackTest;
+        MenuMain.AddSeperator();
+        MenuMain.AddCommand(null, "About", Command.About);
 
         // De events pas op het laatst zetten
         SystemEvents.PowerModeChanged += OnPowerChange;

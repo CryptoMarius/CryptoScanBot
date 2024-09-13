@@ -4,10 +4,14 @@ Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep
 
 
 Scanner:
+- Trader - De positie ID van Altrady overnemen in de database
 - Documentatie - Uitleg van de Add Value voor de WGHM/STORSI uitbreiden, er zijn aardig wat vragen over.
 
 - Dashboard - Aantal meldingen per dag / week? Iets wat het aantal meldingen laat zien in iedere geval..
               Zie je ook wat als ke geen trader gebruikt?
+
+- Scanner - Marco - kijken naar de EMA/WGM/MACD strategie, wat is het, wat is de winrate, realistisch?
+- Scanner - StoRsi - de grenzen van de BB kunnen opgeven (net zoals bij de STOBB en SBM)
 
 - Scanner - Kucoin - Het ophalen van candles bij Kucoin wordt heel vaak gedaan, soms elke 5 minuten, dat lijkt overbodig (tenzij het allemaal flatlines zijn)?
 - Scanner - Kucoin - Het ophalen van candles bij Kucoin wordt 2x gedaan (aldus het logbestand)
