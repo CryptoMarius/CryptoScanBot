@@ -1,5 +1,6 @@
 ﻿using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
+using CryptoScanBot.Core.Signal.Experiment;
 using CryptoScanBot.Core.Signal.Momentum;
 using CryptoScanBot.Core.Signal.Other;
 
@@ -121,6 +122,24 @@ public static class SignalHelper
             AnalyzeShortType = typeof(SignalStoRsiMultiShort),
         });
 
+
+        
+
+        Register(new AlgorithmDefinition()
+        {
+            Name = "test.ema",
+            Strategy = CryptoSignalStrategy.Test1,
+            AnalyzeLongType = typeof(SignalTest1Long),
+            AnalyzeShortType = null,
+        });
+
+        Register(new AlgorithmDefinition()
+        {
+            Name = "test.tema",
+            Strategy = CryptoSignalStrategy.Test2,
+            AnalyzeLongType = typeof(SignalTest2Long),
+            AnalyzeShortType = null,
+        });
     }
 
 

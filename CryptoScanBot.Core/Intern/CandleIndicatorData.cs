@@ -7,7 +7,7 @@ namespace CryptoScanBot.Core.Intern;
 
 public class CandleIndicatorData
 {
-    //public double? Tema { get; set; }
+    public double? Tema { get; set; }
 
     // Simple Moving Average
     //public double? Sma8 { get; set; }
@@ -21,7 +21,7 @@ public class CandleIndicatorData
 #endif
 
     // Exponential Moving Average
-    //public double? Ema9 { get; set; }
+    public double? Ema9 { get; set; }
     //public double? Ema8 { get; set; }
 #if EXTRASTRATEGIES
     public double? Ema5 { get; set; }
@@ -37,11 +37,13 @@ public class CandleIndicatorData
     public double? SlopeEma50 { get; set; }
 #endif
 
+    public double? Wma30 { get; set; }
+
     public double? Rsi { get; set; }
     //public double? SlopeRsi { get; set; }
 
-    public double? MacdValue { get; set; }
-    public double? MacdSignal { get; set; }
+    public double? MacdValue { get; set; } // blue - Oscillator
+    public double? MacdSignal { get; set; } // red - moving average
     public double? MacdHistogram { get; set; } // kan ook calculated worden (signal - value of andersom)
 #if EXTRASTRATEGIES
     public double? MacdHistogram2 { get { return MacdSignal - MacdValue; } }
@@ -210,9 +212,9 @@ public class CandleIndicatorData
         if (candle.CandleData != null)
             return;
 
-        //List<TemaResult> temaList = (List<TemaResult>)Indicator.GetTema(history, 5);
+        List<TemaResult> temaList = (List<TemaResult>)Indicator.GetTema(history, 5);
 
-        //List<EmaResult> emaList9 = (List<EmaResult>)history.GetEma(9);
+        List<EmaResult> emaList9 = (List<EmaResult>)history.GetEma(9);
 #if EXTRASTRATEGIES
         List<EmaResult> emaList5 = (List<EmaResult>)history.GetEma(5);
         //List<EmaResult> emaList8 = (List<EmaResult>)history.GetEma(8);
@@ -236,6 +238,9 @@ public class CandleIndicatorData
         List<SlopeResult> slopeSma20List = (List<SlopeResult>)smaList20.GetSlope(3);
         List<SlopeResult> slopeSma50List = (List<SlopeResult>)smaList50.GetSlope(3);
 #endif
+
+
+        List<WmaResult> wmaList30 = (List<WmaResult>)history.GetWma(30);
 
         // Berekend vanuit de EMA 20 en de upper en lowerband ontstaat uit 2x de ATR
         //List<KeltnerResult> keltnerList = (List<KeltnerResult>)Indicator.GetKeltner(history, 20, 1);
@@ -276,7 +281,7 @@ public class CandleIndicatorData
             try
             {
                 //// EMA's
-                //candleData.Ema9 = emaList9[index].Ema;
+                candleData.Ema9 = emaList9[index].Ema;
                 ////candleData.Ema8 = emaList8[index].Ema;
 #if EXTRASTRATEGIES
                 candleData.Ema9 = emaList9[index].Ema;
@@ -291,7 +296,7 @@ public class CandleIndicatorData
                 candleData.SlopeEma50 = slopeEma50List[index].Slope;
 #endif
 
-                //candleData.Tema = temaList[index].Tema;
+                candleData.Tema = temaList[index].Tema;
 
                 // SMA's
                 //candleData.Sma8 = smaList8[index].Sma;
@@ -310,6 +315,8 @@ public class CandleIndicatorData
                 candleData.MacdValue = macdList[index].Macd;
                 candleData.MacdSignal = macdList[index].Signal;
                 candleData.MacdHistogram = macdList[index].Histogram;
+
+                candleData.Wma30 = wmaList30[index].Wma;
 
                 //candleData.Vwap = vwapList[index].Vwap;
 
