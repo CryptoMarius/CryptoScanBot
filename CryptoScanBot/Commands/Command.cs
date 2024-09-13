@@ -9,10 +9,12 @@ public enum Command
     ActivateTradingviewExtern,
     ShowTrendInformation,
     ExcelSignalInformation,
+    ExcelSignalsInformation,
     ExcelSymbolInformation,
     ExcelExchangeInformation,
     ExcelPositionInformation,
-    //CopySignalInformation,
+    ExcelPositionsInformation,
+    CopyDataGridCells,
     CopySymbolInformation,
     ScannerSessionDebug,
     PositionCalculate,
@@ -26,5 +28,4 @@ public enum Command
 public abstract class CommandBase
 {
     public abstract void Execute(object sender);
-    public abstract string CommandName();
 }

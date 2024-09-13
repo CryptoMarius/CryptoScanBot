@@ -4,9 +4,6 @@ namespace CryptoScanBot.Commands;
 
 public class CommandCopySymbolInfo : CommandBase
 {
-    public override string CommandName()
-        => "Copy";
-
     public override void Execute(object sender)
     {
         string text = "";

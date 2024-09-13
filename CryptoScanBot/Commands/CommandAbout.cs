@@ -2,10 +2,6 @@
 
 public class CommandAbout : CommandBase
 {
-    public override string CommandName() 
-        => "About";
-
-
     public override void Execute(object sender)
     {
         AboutBox form = new()

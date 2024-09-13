@@ -10,117 +10,129 @@ namespace CryptoScanBot.Commands;
 
 public class CommandTools
 {
-    public static (bool succes, Core.Model.CryptoExchange exchange, CryptoSymbol symbol, CryptoSignal signal, CryptoInterval interval, CryptoPosition position) GetAttributesFromSender(object sender) => sender switch
+    public static (bool succes, Core.Model.CryptoExchange exchange, CryptoSymbol symbol, CryptoSignal signal, CryptoInterval interval, CryptoPosition position)
+        GetAttributesFromSender(object sender)
     {
-        CryptoSymbol symbol => (true, symbol.Exchange, symbol, null, GlobalData.IntervalList[5], null),
-        CryptoSignal signal => (true, signal.Exchange, signal.Symbol, signal, signal.Interval, null),
-        CryptoPosition position => (true, position.Exchange, position.Symbol, null, position.Interval, position),
-        _ => (false, null, null, null, null, null)
-    };
+        return sender switch
+        {
+            CryptoSymbol symbol => (true, symbol.Exchange!, symbol, null, GlobalData.IntervalList[5], null),
+            CryptoSignal signal => (true, signal.Exchange!, signal.Symbol, signal, signal.Interval, null),
+            CryptoPosition position => (true, position.Exchange, position.Symbol, null, position.Interval, position),
+            _ => (false, null, null, null, null, null)
+        };
+    }
 
-    public static async void ExecuteSomething(object sender, int index, Command cmd)
+    public static async Task ExecuteCommandAsync(object sender, EventArgs e)
     {
-        // Global commands
-        switch (cmd)
+        if (sender is ToolStripMenuItemCommand item)
         {
-            case Command.About:
-                new CommandAbout().Execute(null);
-                return;
-
-            case Command.ExcelExchangeInformation:
-                // Die valt qua parameters buiten de boot
-                _ = Task.Run(() => { new ExcelExchangeDump(GlobalData.Settings.General.Exchange!).ExportToExcel(); });
-                return;
-
-            case Command.ScannerSessionDebug:
-                ScannerSession.ScheduleRefresh();
-                return;
-
-            case Command.TradingViewImportList:
-                CommandTradingViewImportList.ExportList();
-                return;
-        }
-
-
-        // De rest van de commando's heeft een object nodig
-        var (succes, exchange, symbol, signal, interval, position) = GetAttributesFromSender(sender);
-        if (succes)
-        {
-            switch (cmd)
+            // Global commands
+            switch (item.Command)
             {
-                case Command.CopySymbolInformation:
-                    new CommandCopySymbolInfo().Execute(symbol);
-                    break;
-                //case Command.CopySignalInformation:
-                //   new CommandCopySignalInfo().Execute(sender);
-                //    break;
-                case Command.ActivateTradingApp:
-                    CryptoExternalUrlType tradingAppInternExtern = CryptoExternalUrlType.External;
-                    // Voor Altrady en Hypertrader werkt dit kunstje natuurlijk niet
-                    if (GlobalData.Settings.General.TradingApp == CryptoTradingApp.TradingView || GlobalData.Settings.General.TradingApp == CryptoTradingApp.ExchangeUrl)
-                        tradingAppInternExtern = GlobalData.Settings.General.TradingAppInternExtern;
-                    GlobalData.LoadLinkSettings(); // refresh links
-                    LinkTools.ActivateTradingApp(GlobalData.Settings.General.TradingApp, symbol, interval, tradingAppInternExtern);
-                    break;
-                case Command.ActivateActiveExchange:
-                    GlobalData.LoadLinkSettings(); // refresh links
-                    LinkTools.ActivateTradingApp(CryptoTradingApp.ExchangeUrl, symbol, interval, CryptoExternalUrlType.External);
-                    break;
-                case Command.ActivateTradingviewIntern:
-                    GlobalData.LoadLinkSettings(); // refresh links
-                    LinkTools.ActivateTradingApp(CryptoTradingApp.TradingView, symbol, interval, CryptoExternalUrlType.Internal);
-                    break;
-                case Command.ActivateTradingviewExtern:
-                    GlobalData.LoadLinkSettings(); // refresh links
-                    LinkTools.ActivateTradingApp(CryptoTradingApp.TradingView, symbol, interval, CryptoExternalUrlType.External);
-                    break;
-                case Command.ShowTrendInformation:
-                    new CommandShowTrendInfo().Execute(symbol);
-                    break;
-                case Command.ExcelSignalInformation:
-                    _ = Task.Run(() => { new ExcelSignalDump(signal).ExportToExcel(); });
-                    break;
-                case Command.ExcelSymbolInformation:
-                    _ = Task.Run(() => { new ExcelSymbolDump(symbol).ExportToExcel(); });
-                    break;
-                case Command.PositionCalculate:
-                    using (CryptoDatabase databaseThread = new())
+                case Command.About:
+                    new CommandAbout().Execute(sender);
+                    return;
+
+                case Command.ExcelExchangeInformation:
+                    // Die valt qua parameters buiten de boot
+                    _ = Task.Run(() => { new ExcelExchangeDump(GlobalData.Settings.General.Exchange!).ExportToExcel(); });
+                    return;
+
+                case Command.ExcelSignalsInformation:
+                    _ = Task.Run(() => { new ExcelSignalsDump().ExportToExcel(); });
+                    return;
+                case Command.ExcelPositionsInformation:
+                    _ = Task.Run(() => { new ExcelPostionsDump().ExportToExcel(); });
+                    return;
+
+                case Command.ScannerSessionDebug:
+                    ScannerSession.ScheduleRefresh();
+                    return;
+
+                case Command.TradingViewImportList:
+                    CommandTradingViewImportList.ExportList();
+                    return;
+
+                case Command.CopyDataGridCells:
+                    if (item.DataGrid is CryptoDataGrid dataGrid2)
+                        new CommandCopyDataCells().Execute(dataGrid2);
+                    return;
+            }
+
+
+            // All the other command need an object
+            if (item.DataGrid is CryptoDataGrid dataGrid)
+            {
+                var (succes, exchange, symbol, signal, interval, position) = GetAttributesFromSender(dataGrid.SelectedObject);
+                if (succes)
+                {
+                    switch (item.Command)
                     {
-                        if (position.Status >= CryptoPositionStatus.Ready)
-                        {
-                            databaseThread.Open();
-                            PositionTools.LoadPosition(databaseThread, position);
-                        }
-                        GlobalData.AddTextToLogTab($"{position.Symbol.Name} positie {position.Id} handmatig herberekenen");
-                        await TradeTools.CalculatePositionResultsViaOrders(databaseThread, position, forceCalculation: true);
+                        case Command.CopySymbolInformation:
+                            new CommandCopySymbolInfo().Execute(symbol);
+                            break;
+                        case Command.ActivateTradingApp:
+                            CryptoExternalUrlType tradingAppInternExtern = CryptoExternalUrlType.External;
+                            // Voor Altrady en Hypertrader werkt dit kunstje natuurlijk niet
+                            if (GlobalData.Settings.General.TradingApp == CryptoTradingApp.TradingView || GlobalData.Settings.General.TradingApp == CryptoTradingApp.ExchangeUrl)
+                                tradingAppInternExtern = GlobalData.Settings.General.TradingAppInternExtern;
+                            GlobalData.LoadLinkSettings(); // refresh links
+                            LinkTools.ActivateTradingApp(GlobalData.Settings.General.TradingApp, symbol, interval, tradingAppInternExtern);
+                            break;
+                        case Command.ActivateActiveExchange:
+                            GlobalData.LoadLinkSettings(); // refresh links
+                            LinkTools.ActivateTradingApp(CryptoTradingApp.ExchangeUrl, symbol, interval, CryptoExternalUrlType.External);
+                            break;
+                        case Command.ActivateTradingviewIntern:
+                            GlobalData.LoadLinkSettings(); // refresh links
+                            LinkTools.ActivateTradingApp(CryptoTradingApp.TradingView, symbol, interval, CryptoExternalUrlType.Internal);
+                            break;
+                        case Command.ActivateTradingviewExtern:
+                            GlobalData.LoadLinkSettings(); // refresh links
+                            LinkTools.ActivateTradingApp(CryptoTradingApp.TradingView, symbol, interval, CryptoExternalUrlType.External);
+                            break;
+                        case Command.ShowTrendInformation:
+                            new CommandShowTrendInfo().Execute(symbol);
+                            break;
+                        case Command.ExcelSignalInformation:
+                            _ = Task.Run(() => { new ExcelSignalDump(signal).ExportToExcel(); });
+                            break;
+                        case Command.ExcelSymbolInformation:
+                            _ = Task.Run(() => { new ExcelSymbolDump(symbol).ExportToExcel(); });
+                            break;
+                        case Command.PositionCalculate:
+                            using (CryptoDatabase databaseThread = new())
+                            {
+                                if (position.Status >= CryptoPositionStatus.Ready)
+                                {
+                                    databaseThread.Open();
+                                    PositionTools.LoadPosition(databaseThread, position);
+                                }
+                                GlobalData.AddTextToLogTab($"{position.Symbol.Name} position {position.Id} recalculate manual");
+                                await TradeTools.CalculatePositionResultsViaOrders(databaseThread, position, forceCalculation: true);
+                            }
+                            break;
+                        case Command.ExcelPositionInformation:
+                            using (CryptoDatabase databaseThread = new())
+                            {
+                                if (position.Status >= CryptoPositionStatus.Ready)
+                                {
+                                    databaseThread.Open();
+                                    PositionTools.LoadPosition(databaseThread, position);
+                                }
+                                GlobalData.AddTextToLogTab($"{position.Symbol.Name} position {position.Id} manual for Excel");
+                                await TradeTools.CalculatePositionResultsViaOrders(databaseThread, position, forceCalculation: true);
+                                _ = Task.Run(() => { new ExcelPositionDump(position).ExportToExcel(); });
+                            }
+                            break;
                     }
-                    break;
-                case Command.ExcelPositionInformation:
-                    using (CryptoDatabase databaseThread = new())
-                    {
-                        if (position.Status >= CryptoPositionStatus.Ready)
-                        {
-                            databaseThread.Open();
-                            PositionTools.LoadPosition(databaseThread, position);
-                        }
-                        GlobalData.AddTextToLogTab($"{position.Symbol.Name} positie {position.Id} herberekenen voor Excel");
-                        await TradeTools.CalculatePositionResultsViaOrders(databaseThread, position, forceCalculation: true);
-                        _ = Task.Run(() => { new ExcelPositionDump(position).ExportToExcel(); });
-                    }
-                    break;
+                }
             }
         }
     }
 
     public static void ExecuteCommand(object? sender, EventArgs? e)
     {
-        // Een poging om de meest gebruikte menu items te centraliseren
-        if (sender is ToolStripMenuItemCommand item)
-        {
-            if (item.DataGrid is CryptoDataGrid dataGrid)
-                ExecuteSomething(dataGrid.SelectedObject, dataGrid.SelectedObjectIndex, item.Command);
-            else
-                ExecuteSomething(sender, -1, item.Command);
-        }
+        ExecuteCommandAsync(sender, e);
     }
 }

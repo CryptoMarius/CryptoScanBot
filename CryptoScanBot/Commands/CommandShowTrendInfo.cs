@@ -8,10 +8,6 @@ namespace CryptoScanBot.Commands;
 
 public class CommandShowTrendInfo : CommandBase
 {
-    public override string CommandName()
-        => "Show trend";
-
-
     public override void Execute(object sender)
     {
         if (sender is CryptoSymbol symbol)
