@@ -34,7 +34,7 @@ public class ThreadCheckFinishedPosition
             await QueueSemaphore.WaitAsync();
             try
             {
-                ////await position.Semaphore.WaitAsync();
+                ////await position.ProcessPositionSemaphore.WaitAsync();
                 //try
                 //{
                 //var bla = Queue.Contains(position);
@@ -52,7 +52,7 @@ public class ThreadCheckFinishedPosition
                 //}
                 //finally
                 //{
-                //    //Semaphore.Release();
+                //    //ProcessPositionSemaphore.Release();
                 //}
 
                 //Queue.Add((position, orderId, status));
@@ -156,7 +156,7 @@ public class ThreadCheckFinishedPosition
         try
         {
             if (!GlobalData.BackTest)
-                await position.Semaphore.WaitAsync();
+                await position.ProcessPositionSemaphore.WaitAsync();
             try
             {
                 // Geef de exchange en de aansturende code de kans om de administratie af te ronden
@@ -231,7 +231,7 @@ public class ThreadCheckFinishedPosition
             finally
             {
                 if (!GlobalData.BackTest) 
-                    position.Semaphore.Release();
+                    position.ProcessPositionSemaphore.Release();
             }
 
         }
@@ -244,6 +244,8 @@ public class ThreadCheckFinishedPosition
 
     public async Task ExecuteAsync()
     {
+        GlobalData.AddTextToLogTab("ThreadCheckFinishedPosition thread start");
+
         cancellationToken.TryReset();
         using CryptoDatabase database = new();
         database.Open();
