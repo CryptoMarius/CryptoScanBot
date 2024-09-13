@@ -32,6 +32,7 @@ public class SignalStoRsiLong : SignalSbmBaseLong
         return true;
     }
 
+
     public override bool AdditionalChecks(CryptoCandle candle, out string response)
     {
         // Check above/below STOBB BB bands
@@ -48,6 +49,7 @@ public class SignalStoRsiLong : SignalSbmBaseLong
         response = "";
         return true;
     }
+
 
     public override bool IsSignal()
     {
@@ -69,10 +71,8 @@ public class SignalStoRsiLong : SignalSbmBaseLong
             return false;
         }
 
-
         ExtraText = "";
         return true;
     }
-
 
 }

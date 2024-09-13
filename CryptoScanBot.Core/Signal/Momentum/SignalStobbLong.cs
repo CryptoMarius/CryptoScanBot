@@ -31,8 +31,8 @@ public class SignalStobbLong : SignalSbmBaseLong
     public override string DisplayText()
     {
         return string.Format("stoch.oscillator={0:N8} stoch.signal={1:N8}",
-            CandleLast!.CandleData.StochOscillator,
-            CandleLast!.CandleData.StochSignal
+            CandleLast!.CandleData!.StochOscillator,
+            CandleLast!.CandleData!.StochSignal
         );
     }
 
@@ -45,7 +45,7 @@ public class SignalStobbLong : SignalSbmBaseLong
         {
             if (!CandleLast!.IsSbmConditionsOversold(false))
             {
-                response = "geen sbm condities";
+                response = "no sbm conditions";
                 return false;
             }
         }
@@ -67,13 +67,13 @@ public class SignalStobbLong : SignalSbmBaseLong
         // Controle op de RSI
         if (GlobalData.Settings.Signal.Stobb.IncludeRsi && !CandleLast.IsRsiOversold())
         {
-            response = "rsi niet oversold";
+            response = "rsi not oversold";
             return false;
         }
 
         if (GlobalData.Settings.Signal.Stobb.OnlyIfPreviousStobb && HadStobbInThelastXCandles(SignalSide, 5, 60) == null)
         {
-            response = "geen voorgaande stobb gevonden";
+            response = "no previous stobb found";
             return false;
         }
 
@@ -95,14 +95,14 @@ public class SignalStobbLong : SignalSbmBaseLong
         // Er een candle onder de bb opent of sluit
         if (!CandleLast.IsBelowBollingerBands(GlobalData.Settings.Signal.Stobb.UseLowHigh))
         {
-            ExtraText = "niet beneden de bb.lower";
+            ExtraText = "not below bb.lower";
             return false;
         }
 
         // Sprake van een oversold situatie (beide moeten onder de 20 zitten)
         if (!CandleLast.IsStochOversold())
         {
-            ExtraText = "stoch niet oversold";
+            ExtraText = "stoch not oversold";
             return false;
         }
 

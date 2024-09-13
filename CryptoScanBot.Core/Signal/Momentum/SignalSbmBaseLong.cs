@@ -90,6 +90,7 @@ public static class SignalSbmBaseOversoldHelper
         return true;
     }
 
+
     public static bool IsStochOversold(this CryptoCandle candle, int correction = 0)
     {
         // Stochastic Oscillator: K en D (langzaam) moeten kleiner zijn dan 20% (oversold)
@@ -99,6 +100,7 @@ public static class SignalSbmBaseOversoldHelper
             return false;
         return true;
     }
+
 
     public static bool IsRsiOversold(this CryptoCandle candle, int correction = 0)
     {
@@ -134,7 +136,7 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
         if (last.CandleData?.MacdHistogram > 0)
         {
             //ExtraText = string.Format("De MACD.Hist is groen {0:N8}", last.CandleData.MacdHistogram);
-            return true; // niet echt een juiste controle
+            return true;
         }
 
         // Is er "herstel" ten opzichte van de vorige macd histogram candle?
@@ -308,24 +310,29 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
 
 
         // ********************************************************************
-        // RSI
+        // RSI increasing
         if (GlobalData.Settings.Trading.CheckIncreasingRsi)
         {
-            // Is there any RSI recovery visible (a bit weak)
-            if (CandleLast?.CandleData?.Rsi < GlobalData.Settings.General.RsiValueOversold)
+            // At least x which is kind of a minimum (normally 30-70), hardcoded because we can change it
+            double? boundary = 10;
+            if (CandleLast?.CandleData!.Rsi < boundary)
             {
-                ExtraText = $"RSI {CandleLast.CandleData.Rsi:N8} niet boven de {GlobalData.Settings.General.RsiValueOversold}";
+                ExtraText = $"RSI {CandleLast?.CandleData!.Rsi:N8} not above {boundary:N0}";
                 return false;
             }
 
-            // 2023-04-28 15:11 Afgesterd, hierdoor stappen we te laat in?
-            // 2023-04-29 12:15 Weer geactiveerd: Het vermijden van glijbanen.
-            // Dus we stappen nu later in, maar met een beetje meer zekerheid?
-            if (!IsRsiIncreasingInTheLast(3, 1))
+            // RSI should recover
+            if (CandleLast?.CandleData?.Rsi <= candlePrev?.CandleData?.Rsi)
             {
-                ExtraText = string.Format("RSI niet oplopend in de laatste 3,1");
+                ExtraText = $"Rsi {candlePrev.CandleData.Rsi:N8} not recovering <= {CandleLast.CandleData.Rsi:N8}";
                 return false;
             }
+
+            //if (!IsRsiIncreasingInTheLast(3, 1))
+            //{
+            //    ExtraText = string.Format("RSI not increasing in the last 3,1");
+            //    return false;
+            //}
         }
 
         // ********************************************************************
@@ -339,35 +346,34 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
 
         // ********************************************************************
         // STOCH
-        // Stochastic: Omdat ik ze door elkaar haal
-        // Rood %D = signal, het gemiddelde van de laatste 3 %K waarden
-        // Blauw %K = Oscilator berekend over een lookback periode van 14 candles
+        // Stochastic:
+        // Red %D = signal, average from the last 3 %K values
+        // Blue %K = Oscilator calculated from the last 14 candles
         if (GlobalData.Settings.Trading.CheckIncreasingStoch)
         {
             // Stochastic: Omdat ik ze door elkaar haal
             // Rood %D = signal, het gemiddelde van de laatste 3 %K waarden
             // Blauw %K = Oscilator berekend over een lookback periode van 14 candles
 
-            // Afgesterd - 27-04-2023 10:12
-            // Met name de %K moet herstellen
-            if (candlePrev?.CandleData?.StochOscillator >= CandleLast?.CandleData?.StochOscillator)
+            // At least x which is kind of a minimum (normally 20-80), hardcoded because we can change it
+            double? boundary = 10;
+            if (CandleLast?.CandleData!.StochOscillator < boundary)
             {
-                ExtraText = string.Format("Stoch.K {0:N8} hersteld niet < {1:N8}", candlePrev.CandleData.StochOscillator, CandleLast.CandleData.StochOscillator);
+                ExtraText = $"Stoch.%K {CandleLast?.CandleData!.StochOscillator:N8} not above {boundary:N0}";
                 return false;
             }
 
-            // Afgesterd - 27-04-2023 10:12
-            //double? minimumStoch = 25;
-            //if (CandleLast.CandleData.StochOscillator < minimumStoch)
-            //{
-            //    ExtraText = string.Format("Stoch.K {0:N8} niet boven de {1:N0}", candlePrev.CandleData.StochOscillator, minimumStoch);
-            //    return false;
-            //}
-
-            // De %D en %K moeten elkaar gekruist hebben. Dus %K(snel/blauw) > %D(traag/rood)
-            if (CandleLast?.CandleData?.StochSignal > CandleLast?.CandleData?.StochOscillator)
+            // %K should recover
+            if (CandleLast?.CandleData?.StochOscillator <= candlePrev?.CandleData?.StochOscillator)
             {
-                ExtraText = $"Stoch.%D {candlePrev?.CandleData?.StochSignal:N8} heeft de %K {candlePrev?.CandleData?.StochOscillator:N8} niet gekruist";
+                ExtraText = $"Stoch.K {candlePrev.CandleData.StochOscillator:N8} not recovering < {CandleLast.CandleData.StochOscillator:N8}";
+                return false;
+            }
+
+            // De %D en %K should moeten elkaar gekruist hebben. Dus %K(snel/blauw) > %D(traag/rood)
+            if (CandleLast?.CandleData?.StochSignal <= CandleLast?.CandleData?.StochOscillator)
+            {
+                ExtraText = $"Stoch.%D {candlePrev?.CandleData?.StochSignal:N8} not above %K {candlePrev?.CandleData?.StochOscillator:N8}";
                 return false;
             }
         }
@@ -406,7 +412,7 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
         // De breedte van de bb is ten minste 1.5%
         if (!CandleLast!.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Sbm.BBMinPercentage, GlobalData.Settings.Signal.Sbm.BBMaxPercentage))
         {
-            ExtraText = "bb.width te klein " + CandleLast?.CandleData?.BollingerBandsPercentage?.ToString("N2");
+            ExtraText = "bb.width to small" + CandleLast?.CandleData?.BollingerBandsPercentage?.ToString("N2");
             return true;
         }
 
@@ -416,7 +422,7 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
         // Instaptijd verstreken (oneindig wachten is geen optie)
         if (CandleLast?.OpenTime - signal.EventTime > GlobalData.Settings.Trading.EntryRemoveTime * Interval.Duration)
         {
-            ExtraText = $"Ophouden na {GlobalData.Settings.Trading.EntryRemoveTime} candles";
+            ExtraText = $"Stop after {GlobalData.Settings.Trading.EntryRemoveTime} candles";
             return true;
         }
 
@@ -449,7 +455,7 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
 
         if (CandleLast?.Close > (decimal?)CandleLast?.CandleData?.BollingerBandsUpperBand || Symbol.LastPrice > (decimal?)CandleLast?.CandleData?.BollingerBandsUpperBand)
         {
-            ExtraText = "Close of LastPrice boven de bb.upper";
+            ExtraText = "Close of LastPrice above bb.upper";
             return true;
         }
 
@@ -478,12 +484,6 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
 
         // ********************************************************************
         // Barometer(s)
-        // Als de barometer alsnog daalt/stijgt dan stoppen
-        //foreach (KeyValuePair<CryptoIntervalPeriod, (decimal minValue, decimal maxValue)> entry in TradingConfig.Trading[CryptoTradeSide.Long].Barometer)
-        //{
-        //    if (!SymbolTools.CheckValidBarometer(Symbol.QuoteData, entry.Key, entry.Value, out ExtraText))
-        //        return true;
-        //}
         if (!BarometerHelper.ValidBarometerConditions(GlobalData.ActiveAccount!, Symbol.Quote, TradingConfig.Trading[CryptoTradeSide.Long].Barometer, out ExtraText))
             return true;
 

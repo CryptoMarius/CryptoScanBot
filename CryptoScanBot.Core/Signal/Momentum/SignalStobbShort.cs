@@ -31,10 +31,11 @@ public class SignalStobbShort : SignalSbmBaseShort
     public override string DisplayText()
     {
         return string.Format("stoch.oscillator={0:N8} stoch.signal={1:N8}",
-            CandleLast.CandleData!.StochOscillator,
-            CandleLast.CandleData!.StochSignal
+            CandleLast!.CandleData!.StochOscillator,
+            CandleLast!.CandleData!.StochSignal
         );
     }
+
 
 
     public override bool AdditionalChecks(CryptoCandle candle, out string response)
@@ -44,7 +45,7 @@ public class SignalStobbShort : SignalSbmBaseShort
         {
             if (!CandleLast.IsSbmConditionsOverbought(false))
             {
-                response = "geen sbm condities";
+                response = "no sbm conditions";
                 return false;
             }
         }
@@ -66,13 +67,13 @@ public class SignalStobbShort : SignalSbmBaseShort
         // Controle op de RSI
         if (GlobalData.Settings.Signal.Stobb.IncludeRsi && !CandleLast.IsRsiOverbought())
         {
-            response = "rsi niet overbought";
+            response = "rsi not overbought";
             return false;
         }
 
         if (GlobalData.Settings.Signal.Stobb.OnlyIfPreviousStobb && HadStobbInThelastXCandles(SignalSide, 5, 60) == null)
         {
-            response = "geen voorgaande stobb gevonden";
+            response = "no previous stobb found";
             return false;
         }
 
@@ -94,14 +95,14 @@ public class SignalStobbShort : SignalSbmBaseShort
         // Er een candle onder de bb opent of sluit
         if (!CandleLast.IsAboveBollingerBands(GlobalData.Settings.Signal.Stobb.UseLowHigh))
         {
-            ExtraText = "niet boven de bb";
+            ExtraText = "not above bb.upper";
             return false;
         }
 
         // Sprake van een overbought situatie (beide moeten onder de 20 zitten)
         if (!CandleLast.IsStochOverbought())
         {
-            ExtraText = "stoch niet overbought";
+            ExtraText = "stoch not overbought";
             return false;
         }
 

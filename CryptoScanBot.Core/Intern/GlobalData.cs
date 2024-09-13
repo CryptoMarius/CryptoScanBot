@@ -662,39 +662,45 @@ static public class GlobalData
 
     static public void AddTextToTelegram(string text)
     {
-        try
+        if (!GlobalData.BackTest)
         {
-            LogToTelegram?.Invoke(text);
-        }
-        catch (Exception error)
-        {
-            ScannerLog.Logger.Error(error, "");
-            AddTextToLogTab(" error telegram thread(1)" + error.ToString());
+            try
+            {
+                LogToTelegram?.Invoke(text);
+            }
+            catch (Exception error)
+            {
+                ScannerLog.Logger.Error(error, "");
+                AddTextToLogTab(" error telegram thread(1)" + error.ToString());
+            }
         }
     }
 
     static public void AddTextToTelegram(string text, CryptoPosition position)
     {
-        if (LogToTelegram is null)
-            return;
-        try
+        if (!GlobalData.BackTest)
         {
-            if (position is not null)
+            if (LogToTelegram is null)
+                return;
+            try
             {
-                string symbol = position.Symbol.Name.ToUpper();
-                (string Url, CryptoExternalUrlType Execute) = GlobalData.ExternalUrls.GetExternalRef(Settings.General.TradingApp, true, position.Symbol, position.Interval);
-                if (Url != "")
+                if (position is not null)
                 {
-                    string x = $"<a href='{Url}'>{symbol}</a>";
-                    text = text.Replace(symbol, x);
+                    string symbol = position.Symbol.Name.ToUpper();
+                    (string Url, CryptoExternalUrlType Execute) = GlobalData.ExternalUrls.GetExternalRef(Settings.General.TradingApp, true, position.Symbol, position.Interval);
+                    if (Url != "")
+                    {
+                        string x = $"<a href='{Url}'>{symbol}</a>";
+                        text = text.Replace(symbol, x);
+                    }
                 }
+                LogToTelegram(text);
             }
-            LogToTelegram(text);
-        }
-        catch (Exception error)
-        {
-            ScannerLog.Logger.Error(error, "");
-            AddTextToLogTab(" error telegram thread(1)" + error.ToString());
+            catch (Exception error)
+            {
+                ScannerLog.Logger.Error(error, "");
+                AddTextToLogTab(" error telegram thread(1)" + error.ToString());
+            }
         }
     }
 

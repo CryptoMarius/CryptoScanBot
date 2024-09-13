@@ -233,7 +233,7 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
         CryptoSignal signal = CreateSignal(Candle!);
         signal.Side = algorithm.SignalSide;
         signal.Strategy = algorithm.SignalStrategy;
-        signal.LastPrice = Symbol.LastPrice;
+        signal.LastPrice = Candle!.Close;
 
         List<string> eventText = [];
         if (algorithm.ExtraText != "")

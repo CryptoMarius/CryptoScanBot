@@ -55,13 +55,13 @@ public class CandleIndicatorData
 #endif
 
     /// <summary>
-    /// Stoch Oscillator %K (blue)
+    /// Stoch Oscillator %K (blue), calculated from the last 14 candles
     /// </summary>
-    public double? StochOscillator { get; set; } // K
+    public double? StochOscillator { get; set; }
     /// <summary>
-    /// Stoch Signal %D (red)
+    /// Stoch Signal %D (red), average from the last 3 %K values
     /// </summary>
-    public double? StochSignal { get; set; } // D
+    public double? StochSignal { get; set; }
 
     public double? PSar { get; set; }
 
