@@ -66,9 +66,9 @@ public partial class FrmMain : Form
         MenuMain.AddCommand(null, "Clear log en ticker count", Command.None, MainMenuClearAll_Click);
         MenuMain.AddCommand(null, "Tradingview import files", Command.TradingViewImportList);
         MenuMain.AddSeperator();
-        MenuMain.AddCommand(null, "Exchange information (Excel)", Command.ExcelExchangeInformation);
-        MenuMain.AddCommand(null, "Signals information (Excel)", Command.ExcelSignalsInformation);
-        MenuMain.AddCommand(null, "Positions information (Excel)", Command.ExcelPositionsInformation);
+        MenuMain.AddCommand(null, "Export all exchange information to Excel", Command.ExcelExchangeInformation);
+        MenuMain.AddCommand(null, "Export all signal information to Excel", Command.ExcelSignalsInformation);
+        MenuMain.AddCommand(null, "Export all position information to Excel", Command.ExcelPositionsInformation);
         MenuMain.AddSeperator();
         ApplicationBackTestMode = MenuMain.AddCommand(null, "Backtest mode", Command.None, ApplicationBackTestMode_Click);
         ApplicationBackTestExec = MenuMain.AddCommand(null, "Backtest exec", Command.None, BacktestToolStripMenuItem_Click);

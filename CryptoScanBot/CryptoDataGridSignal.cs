@@ -73,16 +73,15 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
         menuStrip.AddCommand(this, "Activate trading app", Command.ActivateTradingApp);
         menuStrip.AddCommand(this, "TradingView internal", Command.ActivateTradingviewIntern);
         menuStrip.AddCommand(this, "TradingView external", Command.ActivateTradingviewExtern);
-        // todo direct link
-        //menuStrip.AddCommand(this, "Exchange ", Command.ActivateActiveExchange);
+        //menuStrip.AddCommand(this, "Exchange ", Command.ActivateActiveExchange); // todo direct link?
         menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Copy symbol name", Command.CopySymbolInformation);
         menuStrip.AddCommand(this, "Copy data cells", Command.CopyDataGridCells);
         menuStrip.AddSeperator();
-        menuStrip.AddCommand(this, "Trend information (log)", Command.ShowTrendInformation);
-        menuStrip.AddCommand(this, "Signal information (Excel)", Command.ExcelSignalInformation);
-        menuStrip.AddCommand(this, "Symbol information (Excel)", Command.ExcelSymbolInformation);
-        menuStrip.AddCommand(this, "Signals information (Excel)", Command.ExcelSignalsInformation);
+        menuStrip.AddCommand(this, "Export trend information to log", Command.ShowTrendInformation);
+        menuStrip.AddCommand(this, "Export signal information to Excel", Command.ExcelSignalInformation);
+        menuStrip.AddCommand(this, "Export symbol information to Excel", Command.ExcelSymbolInformation);
+        menuStrip.AddCommand(this, "Export all signal information to Excel", Command.ExcelSignalsInformation);
 
         menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Hide grid selection", Command.None, ClearSelection);

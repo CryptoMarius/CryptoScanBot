@@ -93,14 +93,14 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
         menuStrip.AddCommand(this, "Position add additional DCA", Command.None, CommandPositionCreateAdditionalDca);
         menuStrip.AddCommand(this, "Position cancel open DCA", Command.None, CommandPositionRemoveAdditionalDca);
         //menuStrip.AddCommand(this, "Position take profit (if possible)", Command.None, CommandPositionLastPartTakeProfit);
-        menuStrip.AddCommand(this, "Position information (Excel)", Command.ExcelPositionInformation);
-        menuStrip.AddCommand(this, "Positions information (Excel)", Command.ExcelPositionsInformation);
+        menuStrip.AddCommand(this, "Export position information to Excel", Command.ExcelPositionInformation);
+        menuStrip.AddCommand(this, "Export all positions information to Excel", Command.ExcelPositionsInformation);
 
         menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Copy symbol name", Command.CopySymbolInformation);
-        menuStrip.AddCommand(this, "Copy data cells", Command.CopyDataGridCells);
-        menuStrip.AddCommand(this, "Trend information (log)", Command.ShowTrendInformation);
-        menuStrip.AddCommand(this, "Symbol information (Excel)", Command.ExcelSymbolInformation);
+        menuStrip.AddCommand(this, "Copy all data cells", Command.CopyDataGridCells);
+        menuStrip.AddCommand(this, "Export trend information to log", Command.ShowTrendInformation);
+        menuStrip.AddCommand(this, "Export symbol information to Excel", Command.ExcelSymbolInformation);
 
         menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Hide selection", Command.None, ClearSelection);

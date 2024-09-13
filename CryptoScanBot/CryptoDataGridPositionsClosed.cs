@@ -79,14 +79,14 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
         menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Position recalculate", Command.None, CommandPositionRecalculateExecute);
         menuStrip.AddCommand(this, "Position delete from database", Command.None, CommandPositionDeleteFromDatabase);
-        menuStrip.AddCommand(this, "Position information (Excel)", Command.ExcelPositionInformation);
-        menuStrip.AddCommand(this, "Positions information (Excel)", Command.ExcelPositionsInformation);
+        menuStrip.AddCommand(this, "Export position information to Excel", Command.ExcelPositionInformation);
+        menuStrip.AddCommand(this, "Export all position information to Excel", Command.ExcelPositionsInformation);
 
         menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Copy symbol name", Command.CopySymbolInformation);
-        menuStrip.AddCommand(this, "Copy data cells", Command.CopyDataGridCells);
-        menuStrip.AddCommand(this, "Trend information (log)", Command.ShowTrendInformation);
-        menuStrip.AddCommand(this, "Symbol information (Excel)", Command.ExcelSymbolInformation);
+        menuStrip.AddCommand(this, "Copy all data cells", Command.CopyDataGridCells);
+        menuStrip.AddCommand(this, "Export trend information to log", Command.ShowTrendInformation);
+        menuStrip.AddCommand(this, "Export symbol information to Excel", Command.ExcelSymbolInformation);
 
         menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Hide selection", Command.None, ClearSelection);
