@@ -57,7 +57,10 @@ internal class FileName
             return;
         }
 
-        CryptoAccount tradeAccount = new();
+        CryptoAccount tradeAccount = new()
+        {
+            Exchange = null,
+        };
 
         foreach (var assetInfo in balances.Balances)
         {

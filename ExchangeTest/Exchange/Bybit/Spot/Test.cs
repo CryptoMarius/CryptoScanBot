@@ -31,10 +31,11 @@ internal class Test
                 {
                     CryptoPosition position = new()
                     {
-                        Symbol = symbol,
+                        Account = tradeAccount,
                         Exchange = exchange,
+                        Symbol = symbol,
+                        Interval = GlobalData.IntervalList[3],
                         Side = CryptoTradeSide.Long,
-                        Account = tradeAccount
                     };
 
                     CryptoPositionPart part = new();

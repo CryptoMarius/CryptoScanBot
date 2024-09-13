@@ -174,7 +174,9 @@ public class CryptoPosition
     public SortedList<string, CryptoPositionStep> StepOrderList { get; set; } = [];
 
     [Computed]
-    public SemaphoreSlim Semaphore { get; set; } = new(1);
+    public SemaphoreSlim ProcessPositionSemaphore { get; set; } = new(1);
+    [Computed]
+    public SemaphoreSlim OrdersAndTradesSemaphore { get; set; } = new(1);
 
     [Computed]
     public bool ForceCheckPosition { get; set; } = false;

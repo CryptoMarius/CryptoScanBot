@@ -2183,7 +2183,7 @@ public partial class TestForm : Form
         //CryptoInterval interval1m = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m).Interval;
 
         //// De symbol candles inlezen en controleren
-        //Semaphore.Wait();
+        //ProcessPositionSemaphore.Wait();
         //try
         //{
         //    // Altijd 1m inlezen (de basis voor de emulator, blij wordt ik er niet van, maar zo werkt het systeem nu eenmaal, voila!)
@@ -2212,7 +2212,7 @@ public partial class TestForm : Form
         //}
         //finally
         //{
-        //    Semaphore.Release();
+        //    ProcessPositionSemaphore.Release();
         //}
 
 
@@ -2535,7 +2535,9 @@ public partial class TestForm : Form
                     OpenDate = DateTime.UtcNow.AddHours(SignalList.Count),
                     Price = 0.12345m,
                     Symbol = symbol,
-                    Exchange = exchange
+                    Exchange = exchange,
+                    Interval = GlobalData.IntervalList[3],
+                    Candle = null,
                 };
                 if (i % 2 == 0)
                     signal.Side = CryptoTradeSide.Long;
@@ -2600,7 +2602,8 @@ public partial class TestForm : Form
                     Symbol = symbol,
                     Exchange = exchange,
                     Side = CryptoTradeSide.Long,
-                    Interval = GlobalData.IntervalList[3]
+                    Interval = GlobalData.IntervalList[3],
+                    Candle = null,
                 };
                 SignalList.Add(signal);
             }
@@ -2614,7 +2617,8 @@ public partial class TestForm : Form
                     Symbol = symbol,
                     Exchange = exchange,
                     Interval = GlobalData.IntervalList[5],
-                    Side = CryptoTradeSide.Short
+                    Side = CryptoTradeSide.Short,
+                    Candle = null,
                 };
                 SignalList.Add(signal);
             }
@@ -2628,7 +2632,8 @@ public partial class TestForm : Form
                     Symbol = symbol,
                     Exchange = exchange,
                     Side = CryptoTradeSide.Long,
-                    Interval = GlobalData.IntervalList[3]
+                    Interval = GlobalData.IntervalList[3],
+                    Candle = null,
                 };
                 SignalList.Add(signal);
             }
@@ -2642,7 +2647,8 @@ public partial class TestForm : Form
                     Symbol = symbol,
                     Exchange = exchange,
                     Interval = GlobalData.IntervalList[5],
-                    Side = CryptoTradeSide.Short
+                    Side = CryptoTradeSide.Short,
+                    Candle = null,
                 };
                 SignalList.Add(signal);
             }
@@ -2669,7 +2675,8 @@ public partial class TestForm : Form
                     Symbol = symbol,
                     Exchange = exchange,
                     Side = CryptoTradeSide.Long,
-                    Interval = GlobalData.IntervalList[3]
+                    Interval = GlobalData.IntervalList[3],
+                    Candle = null,
                 };
                 SignalList.Insert(0, signal);
             }

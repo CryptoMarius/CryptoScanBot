@@ -14,15 +14,15 @@ public class CryptoOrder
 
     public int TradeAccountId { get; set; }
     [Computed]
-    public virtual CryptoAccount TradeAccount { get; set; }
+    public virtual required CryptoAccount TradeAccount { get; set; }
 
     public int ExchangeId { get; set; }
     [Computed]
-    public virtual CryptoExchange Exchange { get; set; }
+    public virtual required CryptoExchange Exchange { get; set; }
 
     public int SymbolId { get; set; }
     [Computed]
-    public virtual CryptoSymbol Symbol { get; set; }
+    public virtual required CryptoSymbol Symbol { get; set; }
 
     public string OrderId { get; set; }
     public CryptoOrderSide Side { get; set; }

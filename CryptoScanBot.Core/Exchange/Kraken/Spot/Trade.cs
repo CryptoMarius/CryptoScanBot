@@ -86,7 +86,12 @@ public class Trade
                             CryptoTrade? trade = position.TradeList.Find(tradeId);
                             if (trade == null)
                             {
-                                trade = new();
+                                trade = new()
+                                {
+                                    TradeAccount = position.Account!,
+                                    Exchange = position.Exchange,
+                                    Symbol = position.Symbol,
+                                };
                                 PickupTrade(position.Account, position.Symbol, trade, item);
                                 string text = JsonSerializer.Serialize(item, ExchangeHelper.JsonSerializerNotIndented).Trim();
                                 ScannerLog.Logger.Trace($"{item.Symbol} Trade added json={text}");

@@ -229,6 +229,7 @@ public class CryptoDatabase : IDisposable
                     CryptoAccount tradeAccount = new()
                     {
                         ExchangeId = id,
+                        Exchange = exchange,
                         CanTrade = exchange.IsSupported,
                         AccountType = accountType,
                     };
@@ -461,6 +462,7 @@ public class CryptoDatabase : IDisposable
                 "Percentage TEXT NULL," +
                 "Reposition Integer," +
 
+                "ExternalPositionId TEXT NULL," +
 
                 /// --------------------------------------------------------------
                 /// added from the signal...

@@ -14,19 +14,19 @@ public class CryptoSignal
 
     public int ExchangeId { get; set; }
     [Computed]
-    public virtual CryptoExchange Exchange { get; set; }
+    public virtual required CryptoExchange Exchange { get; set; }
 
     public int SymbolId { get; set; }
     [Computed]
-    public virtual CryptoSymbol Symbol { get; set; }
+    public virtual required CryptoSymbol Symbol { get; set; }
 
     public int IntervalId { get; set; }
     [Computed]
-    public virtual CryptoInterval Interval { get; set; }
+    public virtual required CryptoInterval Interval { get; set; }
 
     //Hmmmm, de EventTime bevat de candle.OpenTime, maar niet gegarandeerd dat deze nog aanwezig is
     [Computed]
-    public virtual CryptoCandle? Candle { get; set; }
+    public virtual required CryptoCandle? Candle { get; set; }
 
     public bool BackTest { get; set; }
 

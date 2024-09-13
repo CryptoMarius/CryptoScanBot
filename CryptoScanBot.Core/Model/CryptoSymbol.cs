@@ -17,7 +17,7 @@ public class CryptoSymbol
     public int Id { get; set; }
     public int ExchangeId { get; set; }
     [Computed]
-    public virtual CryptoExchange Exchange { get; set; }
+    public virtual required CryptoExchange Exchange { get; set; }
 
     public string Name { get; set; }
     public string Base { get; set; } //De munt zelf (NKN, THETA, AION enzovoort)

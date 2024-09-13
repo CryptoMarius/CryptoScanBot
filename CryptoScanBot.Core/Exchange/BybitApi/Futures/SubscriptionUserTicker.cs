@@ -43,7 +43,12 @@ public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscript
                         if (exchange.SymbolListName.TryGetValue(data.Symbol, out CryptoSymbol? symbol))
                         {
                             // Converteer de data naar een (tijdelijke) trade
-                            CryptoOrder orderTemp = new();
+                            CryptoOrder orderTemp = new()
+                            {
+                                TradeAccount = GlobalData.ActiveAccount!,
+                                Exchange = symbol.Exchange,
+                                Symbol = symbol,
+                            };
                             Order.PickupOrder(GlobalData.ActiveAccount!, symbol, orderTemp, data);
 
                             GlobalData.ThreadMonitorOrder?.AddToQueue((

@@ -12,7 +12,7 @@ public class CryptoAccount
 
     public int ExchangeId { get; set; }
     [Computed]
-    public virtual CryptoExchange Exchange { get; set; }
+    public virtual required CryptoExchange Exchange { get; set; }
 
     public CryptoAccountType AccountType { get; set; }
 

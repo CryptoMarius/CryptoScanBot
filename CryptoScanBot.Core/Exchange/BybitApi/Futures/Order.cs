@@ -136,7 +136,12 @@ public class Order
                         text = JsonSerializer.Serialize(item, ExchangeHelper.JsonSerializerNotIndented).Trim();
                         ScannerLog.Logger.Trace($"{item.Symbol} order added json={text}");
 
-                        order = new();
+                        order = new()
+                        {
+                            TradeAccount = position.Account!,
+                            Exchange = position.Exchange,
+                            Symbol = position.Symbol,
+                        };
                         PickupOrder(position.Account, position.Symbol, order, (BybitOrderUpdate)item);
                         database.Connection.Insert(order);
                         position.OrderList.AddOrder(order);

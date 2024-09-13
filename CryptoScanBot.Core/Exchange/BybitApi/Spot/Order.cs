@@ -169,7 +169,13 @@ public class Order
                         text = JsonSerializer.Serialize(item, ExchangeHelper.JsonSerializerNotIndented).Trim();
                         ScannerLog.Logger.Trace($"{item.Symbol} order added json={text}");
 
-                        order = new();
+                        order = new()
+                        {
+                            TradeAccount = GlobalData.ActiveAccount!,
+                            Exchange = position.Exchange,
+                            Symbol = position.Symbol,
+                        };
+
                         Order.PickupOrder(position.Account, position.Symbol, order, item);
                         database.Connection.Insert(order);
                         position.OrderList.AddOrder(order);

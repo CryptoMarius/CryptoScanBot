@@ -167,6 +167,7 @@ public partial class Form1 : Form
         using MexcRestClient client = new();
         CryptoSymbol symbol = new()
         {
+            Exchange = null,
             Name = "BTCUSDT",
             Quote = "USDT",
             Base = "BTC",
@@ -352,16 +353,18 @@ public partial class Form1 : Form
 
     private static CryptoPosition? SetupPosition()
     {
-        CryptoPosition position = new();
-
         string symbolName = "NAKAUSDT";
         if (GlobalData.ExchangeListName.TryGetValue("Bybit Spot", out Core.Model.CryptoExchange? exchange))
         {
             if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
             {
-                position.Symbol = symbol;
-                position.Exchange = symbol.Exchange;
-                position.Interval = GlobalData.IntervalList[3];
+                CryptoPosition position = new()
+                {
+                    Account = null,
+                    Exchange = symbol.Exchange,
+                    Symbol = symbol,
+                    Interval = GlobalData.IntervalList[3]
+                };
                 return position;
             }
         }
