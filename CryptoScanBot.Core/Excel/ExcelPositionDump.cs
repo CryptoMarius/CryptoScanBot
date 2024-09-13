@@ -444,6 +444,7 @@ public class ExcelPositionDump(CryptoPosition position) : ExcelBase(position.Sym
 
     public void ExportToExcel()
     {
+        GlobalData.AddTextToLogTab($"Dumping position to Excel");
         try
         {
             DumpParts();

@@ -1,18 +1,45 @@
-﻿using CryptoScanBot.Core.Intern;
+﻿using CryptoScanBot.Core.Context;
+using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Trend;
+
+using Dapper;
 
 using NPOI.SS.UserModel;
 
 namespace CryptoScanBot.Core.Excel;
 
-public class ExcelPostionsDump(List<CryptoPosition> positionList) : ExcelBase("Positions")
+public class ExcelPostionsDump() : ExcelBase("Positions")
 {
-    readonly List<CryptoPosition> PositionList = positionList;
+    readonly List<CryptoPosition> PositionList = [];
+
+    public void LoadPositions(string sql)
+    {
+        using var database = new CryptoDatabase();
+        foreach (CryptoPosition position in database.Connection.Query<CryptoPosition>(sql, new { TradeAccountId = GlobalData.ActiveAccount!.Id }))
+        {
+            if (GlobalData.TradeAccountList.TryGetValue(position.TradeAccountId, out CryptoAccount? tradeAccount))
+            {
+                position.Account = tradeAccount;
+                if (GlobalData.ExchangeListId.TryGetValue(position.ExchangeId, out Model.CryptoExchange? exchange))
+                {
+                    position.Exchange = exchange;
+                    if (exchange.SymbolListId.TryGetValue(position.SymbolId, out CryptoSymbol? symbol))
+                    {
+                        position.Symbol = symbol;
+                        if (GlobalData.IntervalListId.TryGetValue((int)position.IntervalId!, out CryptoInterval? interval))
+                            position.Interval = interval!;
+
+                        PositionList.Add(position);
+                    }
+                }
+            }
+        }
+    }
 
     public void DumpPositions()
     {
-        ISheet sheet = Book.CreateSheet("Orders");
+        ISheet sheet = Book.CreateSheet("Positions");
         int row = 0;
 
         int columns = 0;
@@ -140,8 +167,11 @@ public class ExcelPostionsDump(List<CryptoPosition> positionList) : ExcelBase("P
 
    public void ExportToExcel()
     {
+        GlobalData.AddTextToLogTab($"Dumping positions to Excel");
         try
         {
+            LoadPositions("select * from position where closetime is null and status < 2 and TradeAccountId=@TradeAccountId");
+            LoadPositions("select * from position where not closetime is null and TradeAccountId=@TradeAccountId order by id desc");
             DumpPositions();
 
             StartExcell("position", "Positions");
@@ -149,7 +179,7 @@ public class ExcelPostionsDump(List<CryptoPosition> positionList) : ExcelBase("P
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab("ERROR postion dump " + error.ToString());
+            GlobalData.AddTextToLogTab("ERROR postions dump " + error.ToString());
         }
     }
 }

@@ -6,6 +6,7 @@ namespace CryptoScanBot.Core.Excel;
 
 public class ExcelExchangeDump(Model.CryptoExchange exchange) : ExcelBase(exchange.Name)
 {
+
     private static int OHLCHeaders(ISheet sheet, int row)
     {
         int column = 0;
@@ -95,6 +96,7 @@ public class ExcelExchangeDump(Model.CryptoExchange exchange) : ExcelBase(exchan
 
     public void ExportToExcel()
     {
+        GlobalData.AddTextToLogTab($"Dumping exchange to Excel");
         try
         {
             DumpInformation();

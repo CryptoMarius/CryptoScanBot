@@ -139,6 +139,7 @@ public class ExcelSignalDump(CryptoSignal Signal) : ExcelBase(Signal.Symbol.Name
 
     public void ExportToExcel()
     {
+        GlobalData.AddTextToLogTab($"Dumping signal to Excel");
         try
         {
             DumpCandeData();
