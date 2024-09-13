@@ -77,9 +77,12 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
         //menuStrip.AddCommand(this, "Exchange ", Command.ActivateActiveExchange);
         menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Copy symbol name", Command.CopySymbolInformation);
+        menuStrip.AddCommand(this, "Copy data cells", Command.CopyDataGridCells);
+        menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Trend information (log)", Command.ShowTrendInformation);
         menuStrip.AddCommand(this, "Signal information (Excel)", Command.ExcelSignalInformation);
         menuStrip.AddCommand(this, "Symbol information (Excel)", Command.ExcelSymbolInformation);
+        menuStrip.AddCommand(this, "Signals information (Excel)", Command.ExcelSignalsInformation);
 
         menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Hide grid selection", Command.None, ClearSelection);
@@ -101,7 +104,6 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
         };
         TimerRefreshInformation.Tick += RefreshInformation;
     }
-
 
     public override void InitializeHeaders()
     {
@@ -1073,4 +1075,5 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
             }
         }
     }
+
 }

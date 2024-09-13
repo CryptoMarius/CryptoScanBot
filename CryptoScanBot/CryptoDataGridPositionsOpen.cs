@@ -86,7 +86,6 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
         menuStrip.AddCommand(this, "Activate trading app", Command.ActivateTradingApp);
         menuStrip.AddCommand(this, "TradingView internal", Command.ActivateTradingviewIntern);
         menuStrip.AddCommand(this, "TradingView external", Command.ActivateTradingviewExtern);
-        //menuStrip.AddCommand(this, "Exchange ", Command.ActivateActiveExchange);
 
         menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Position recalculate", Command.None, CommandPositionRecalculateExecute);
@@ -95,10 +94,11 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
         menuStrip.AddCommand(this, "Position cancel open DCA", Command.None, CommandPositionRemoveAdditionalDca);
         //menuStrip.AddCommand(this, "Position take profit (if possible)", Command.None, CommandPositionLastPartTakeProfit);
         menuStrip.AddCommand(this, "Position information (Excel)", Command.ExcelPositionInformation);
-        menuStrip.AddCommand(this, "Positions information (Excel)", Command.None, DumpPositions);
+        menuStrip.AddCommand(this, "Positions information (Excel)", Command.ExcelPositionsInformation);
 
         menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Copy symbol name", Command.CopySymbolInformation);
+        menuStrip.AddCommand(this, "Copy data cells", Command.CopyDataGridCells);
         menuStrip.AddCommand(this, "Trend information (log)", Command.ShowTrendInformation);
         menuStrip.AddCommand(this, "Symbol information (Excel)", Command.ExcelSymbolInformation);
 
@@ -1016,9 +1016,4 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
         }
     }
 
-    private void DumpPositions(object? sender, EventArgs? e)
-    {
-        List<CryptoPosition>? a = List as List<CryptoPosition>;
-        _ = Task.Run(() => { new ExcelPostionsDump(a!).ExportToExcel(); });
-    }
 }

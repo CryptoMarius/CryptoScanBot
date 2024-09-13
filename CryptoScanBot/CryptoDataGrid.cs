@@ -47,13 +47,15 @@ public static class ControlHelper
 // extra basis class omdat we anders niet bij de Selected kunnen komen
 // (de compiler doet wat moeilijk over die generics)
 
-public class CryptoDataGrid
+public abstract class CryptoDataGrid
 {
     // references
     internal DataGridView Grid;
     internal Object? SelectedObject;
     internal int SelectedObjectIndex;
     internal SortedList<string, ColumnSetting> ColumnList = [];
+
+    public abstract void GetTextFunction(object sender, DataGridViewCellValueEventArgs e);
 }
 
 
@@ -90,7 +92,7 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
 
     public abstract void InitializeHeaders();
     public abstract void InitializeCommands(ContextMenuStrip menuStrip);
-    public abstract void GetTextFunction(object sender, DataGridViewCellValueEventArgs e);
+    //public abstract void GetTextFunction(object sender, DataGridViewCellValueEventArgs e);
     public abstract void CellFormattingEvent(object sender, DataGridViewCellFormattingEventArgs e);
     public abstract void SortFunction();
 
@@ -490,4 +492,5 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         }
         return Grid.DefaultCellStyle.BackColor;
     }
+
 }
