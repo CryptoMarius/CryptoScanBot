@@ -42,12 +42,10 @@ public class TradingViewJsonPayloadObject
     public required string N { get; set; }
     public required string S { get; set; }
     public required object V { get; set; }
-
 }
 
 public class TradingViewMarketStatusObject
 {
     public required string Phase { get; set; }
     public required string Tradingday { get; set; }
-
 }

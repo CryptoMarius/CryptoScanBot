@@ -13,7 +13,7 @@ public class MarketTrend
         AccountSymbolData accountSymbolData = tradeAccount!.Data.GetSymbolData(symbol.Name);
         try
         {
-            lock (accountSymbolData.SymbolTrendDataList);
+            lock (accountSymbolData.SymbolTrendDataList)
             {
                 if (accountSymbolData.MarketTrendDate == null || accountSymbolData.MarketTrendDate < candleIntervalEnd)
                 {
