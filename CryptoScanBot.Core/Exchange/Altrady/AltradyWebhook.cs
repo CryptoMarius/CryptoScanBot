@@ -9,8 +9,75 @@ using System.Text.Json;
 
 namespace CryptoScanBot.Core.Exchange.Altrady;
 
+// {
+// "signalBotPositions":
+//   {
+//     "id":14974903,
+//     "coinraySymbol":"BYBI_USDT_DMAIL",
+//     "status":"new","message":null,
+//     "createdAt":"2024-09-12T11:48:01.953Z",
+//     "signalData":
+//     {
+//        "markAsTest":false,
+//        "signalId":"g-ea3ffffb-fb10-4373-85c3-c324c4179ba8",
+//        "marketId":1578894,
+//        "side":"long",
+//        "leverage":null,
+//        "signalPrice":"0.2421",
+//        "takeProfits":[
+//         {
+//             "pricePercentage":"1.2","positionPercentage":"100.0"
+//         }
+//         ],
+//         "dcaOrders":[],
+//         "stopLoss":null,
+//         "quoteAmount":null,
+//         "baseAmount":"413.06",
+//         "adjustFee":true
+//      }
+//   }
+// }
+
+public class AltradyWebhookSignalData
+{
+    public required string SignalId { get; set; }
+}
+
+public class AltradyWebhookBotPositions
+{
+    public required int Id { get; set; }
+    public required string CoinraySymbol { get; set; }
+    public required AltradyWebhookSignalData SignalData { get; set; }
+}
+
+public class AltradyWebhookPayload
+{
+    public required AltradyWebhookBotPositions SignalBotPositions { get; set; }
+}
+
 public class AltradyWebhook
 {
+    public static AltradyWebhookPayload? TryParse(string message)
+    {
+        //JsonDocument?
+        try
+        {
+            if (!message.StartsWith("{\"m"))
+                return null;
+
+            JsonSerializerOptions options = new() { PropertyNameCaseInsensitive = true };
+            var root = JsonSerializer.Deserialize<AltradyWebhookPayload>(message, options);
+
+            //return JsonDocument.Parse(branch?.V?.ToString() ?? "");
+            return root;
+        }
+        catch (Exception e)
+        {
+            ScannerLog.Logger.Error(e, "");
+            return null;
+        }
+    }
+
 
     public static void DelegateControlToAltrady(CryptoPosition position)
     {
@@ -23,8 +90,8 @@ public class AltradyWebhook
 
         //GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval!.Name} send to Altrady webhook"); //  LastTradeDate={position.Symbol.LastTradeDate}
 
-        HttpWebRequest? httpWebRequest = null;
-        HttpWebResponse? httpResponse = null;
+        HttpWebRequest? httpWebRequest;
+        HttpWebResponse? httpResponse;
         try
         {
             GlobalData.ExternalUrls.GetExternalRef(position.Symbol.Exchange, out CryptoExternalUrls? externalUrls);
@@ -134,13 +201,30 @@ public class AltradyWebhook
 
             httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
             using StreamReader streamReader = new(httpResponse.GetResponseStream());
-            var result = streamReader.ReadToEnd();
-
-            // log response
-            GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval.Name} Altrady webhook result {result}");
-            ScannerLog.Logger.Trace($"{position.Symbol.Name} {position.Interval.Name}Altrady webhook result {result}");
+            string result = streamReader.ReadToEnd();
 
             //GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval!.Name} send to Altrady webhook");
+
+            string info = "";
+            try
+            {
+                //string result = "{\"signalBotPositions\":{\"id\":14974903,\"coinraySymbol\":\"BYBI_USDT_DMAIL\",\"status\":\"new\",\"message\":null,\"createdAt\":\"2024-09-12T11:48:01.953Z\",\"signalData\":{\"markAsTest\":false,\"signalId\":\"g-ea3ffffb-fb10-4373-85c3-c324c4179ba8\",\"marketId\":1578894,\"side\":\"long\",\"leverage\":null,\"signalPrice\":\"0.2421\",\"takeProfits\":[{\"pricePercentage\":\"1.2\",\"positionPercentage\":\"100.0\"}],\"dcaOrders\":[],\"stopLoss\":null,\"quoteAmount\":null,\"baseAmount\":\"413.06\",\"adjustFee\":true}}}";
+                var resultObject = TryParse(result);
+
+                if (resultObject == null)
+                    info = "null";
+                else
+                    info = $"id={resultObject.SignalBotPositions?.Id} SignalId={resultObject.SignalBotPositions?.SignalData.SignalId}";
+            }
+            catch (Exception error)
+            {
+                info = "error " + error.Message;
+            }
+
+            // log response
+            GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval.Name} Altrady webhook result {result} {info}");
+            ScannerLog.Logger.Trace($"{position.Symbol.Name} {position.Interval.Name}Altrady webhook result {result} {info}");
+
         }
         catch (WebException error)
         {
