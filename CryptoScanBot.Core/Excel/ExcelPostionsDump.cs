@@ -99,6 +99,8 @@ public class ExcelPostionsDump() : ExcelBase("Positions")
         WriteCell(sheet, columns++, row, "Barometer4h");
         WriteCell(sheet, columns++, row, "Barometer1d");
 
+        WriteCell(sheet, columns++, row, "AltradyId"); 
+
         foreach (CryptoPosition position in PositionList.ToList())
         {
             ++row;
@@ -159,6 +161,8 @@ public class ExcelPostionsDump() : ExcelBase("Positions")
             WriteCell(sheet, column++, row, position.Barometer1h, CellStyleDecimalNormal);
             WriteCell(sheet, column++, row, position.Barometer4h, CellStyleDecimalNormal);
             WriteCell(sheet, column++, row, position.Barometer1d, CellStyleDecimalNormal);
+
+            WriteCell(sheet, column++, row, position.AltradyPositionId);
         }
 
         AutoSize(sheet, columns);

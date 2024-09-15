@@ -1065,6 +1065,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
 
 
                     AltradyWebhook.DelegateControlToAltrady(position);
+                    database.Connection.Update(position);
                 }
 
             }

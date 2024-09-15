@@ -1099,6 +1099,7 @@ public class PositionMonitor : IDisposable
                 Database.Connection.Update(position);
 
                 AltradyWebhook.DelegateControlToAltrady(position);
+                Database.Connection.Update(position);
             }
             else
             {

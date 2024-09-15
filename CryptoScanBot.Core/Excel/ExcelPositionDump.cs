@@ -354,6 +354,7 @@ public class ExcelPositionDump(CryptoPosition position) : ExcelBase(position.Sym
         WriteCell(sheet, row, column++, "DCA count");
         WriteCell(sheet, row, column++, "Quantity");
         WriteCell(sheet, row, column++, "Remaining dust");
+        WriteCell(sheet, row, column++, "Altrady position id");
 
         row++;
         column = 0;
@@ -382,6 +383,8 @@ public class ExcelPositionDump(CryptoPosition position) : ExcelBase(position.Sym
         WriteCell(sheet, row, column++, position.PartCount);
         WriteCell(sheet, row, column++, position.Quantity, CellStyleDecimalNormal);
         WriteCell(sheet, row, column++, position.RemainingDust, CellStyleDecimalNormal);
+        WriteCell(sheet, row, column++, position.AltradyPositionId);
+        
 
         AutoSize(sheet, 6);
     }

@@ -84,6 +84,9 @@ public class CryptoPosition
     // Zou computed kunnen, maar voor de zekerheid in de database
     public bool Reposition { get; set; }
 
+   
+    public string? AltradyPositionId { get; set; }
+
 
     /// --------------------------------------------------------------
     /// added from the signal...

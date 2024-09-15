@@ -462,7 +462,7 @@ public class CryptoDatabase : IDisposable
                 "Percentage TEXT NULL," +
                 "Reposition Integer," +
 
-                //"ExternalPositionId TEXT NULL," +
+                "AltradyPositionId TEXT NULL," +
 
                 /// --------------------------------------------------------------
                 /// added from the signal...

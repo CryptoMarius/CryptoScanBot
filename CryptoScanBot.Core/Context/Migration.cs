@@ -8,7 +8,7 @@ namespace CryptoScanBot.Core.Context;
 public class Migration
 {
     // De huidige database versie
-    public readonly static int CurrentDatabaseVersion = 24;
+    public readonly static int CurrentDatabaseVersion = 26;
 
 
     public static void Execute(CryptoDatabase database, int CurrentVersion)
@@ -626,6 +626,12 @@ public class Migration
             database.Connection.Update(version, transaction);
             transaction.Commit();
         }
+        // Mexc Futures (experimental), but Mexc Futures does not have a proper api yet
+        //database.Connection.Execute("insert into exchange(Name, FeeRate, IsSupported, ExchangeType, TradingType) values('Mexc Futures', 0.1, 0, 5, 1)", transaction);
+        //database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(0, 9, 1);", transaction);
+        //database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(1, 9, 1);", transaction);
+        //database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(2, 9, 1);", transaction);
+        //database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(3, 9, 1);", transaction);
 
 
         //***********************************************************
@@ -729,7 +735,7 @@ public class Migration
         {
             using var transaction = database.BeginTransaction();
 
-            // its empty because i f..d up this db update
+            // This update is empty because I made a mess put of it..
 
             // update version
             version.Version += 1;
@@ -744,8 +750,7 @@ public class Migration
             using var transaction = database.BeginTransaction();
 
             // Note: Add a AT signal string to the position table from the Altrady response 
-            //"ExternalPositionId TEXT NULL," +
-            database.Connection.Execute("alter table Position add ExternalPositionId Text null", transaction);
+            database.Connection.Execute("alter table Position add AltradyPositionId Text null", transaction);
 
             // update version
             version.Version += 1;
@@ -754,12 +759,6 @@ public class Migration
         }
 
 
-        // Mexc Futures (experimental), but Mexc Futures does not have a proper api yet
-        //database.Connection.Execute("insert into exchange(Name, FeeRate, IsSupported, ExchangeType, TradingType) values('Mexc Futures', 0.1, 0, 5, 1)", transaction);
-        //database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(0, 9, 1);", transaction);
-        //database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(1, 9, 1);", transaction);
-        //database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(2, 9, 1);", transaction);
-        //database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(3, 9, 1);", transaction);
     }
 }
 

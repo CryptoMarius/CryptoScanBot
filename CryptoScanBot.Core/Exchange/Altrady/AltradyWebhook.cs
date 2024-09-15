@@ -45,14 +45,14 @@ public class AltradyWebhookSignalData
 
 public class AltradyWebhookBotPositions
 {
-    public required int Id { get; set; }
-    public required string CoinraySymbol { get; set; }
-    public required AltradyWebhookSignalData SignalData { get; set; }
+    public int Id { get; set; }
+    public string CoinraySymbol { get; set; }
+    public AltradyWebhookSignalData SignalData { get; set; }
 }
 
 public class AltradyWebhookPayload
 {
-    public required AltradyWebhookBotPositions SignalBotPositions { get; set; }
+    public AltradyWebhookBotPositions SignalBotPositions { get; set; }
 }
 
 public class AltradyWebhook
@@ -62,7 +62,7 @@ public class AltradyWebhook
         //JsonDocument?
         try
         {
-            if (!message.StartsWith("{\"m"))
+            if (!message.StartsWith('{'))
                 return null;
 
             JsonSerializerOptions options = new() { PropertyNameCaseInsensitive = true };
@@ -212,9 +212,15 @@ public class AltradyWebhook
                 var resultObject = TryParse(result);
 
                 if (resultObject == null)
+                {
                     info = "null";
+                    position.AltradyPositionId = null;
+                }
                 else
+                {
+                    position.AltradyPositionId = resultObject.SignalBotPositions?.SignalData.SignalId;
                     info = $"id={resultObject.SignalBotPositions?.Id} SignalId={resultObject.SignalBotPositions?.SignalData.SignalId}";
+                }
             }
             catch (Exception error)
             {
