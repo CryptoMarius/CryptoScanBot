@@ -46,6 +46,23 @@ public static class PositionTools
         return null;
     }
 
+    public static CryptoPositionStep? FindOpenStep(CryptoPosition position, CryptoOrderSide side, CryptoPartPurpose purpose)
+    {
+        foreach (CryptoPositionPart part in position.PartList.Values.ToList())
+        {
+            if (!part.CloseTime.HasValue && part.Purpose == purpose)
+            {
+                foreach (CryptoPositionStep step in part.StepList.Values.ToList())
+                {
+                    if (!step.CloseTime.HasValue && step.Side == side)
+                    {
+                        return step;
+                    }
+                }
+            }
+        }
+        return null;
+    }
 
     public static CryptoPosition CreatePosition(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoSignalStrategy strategy, CryptoTradeSide side, 
         CryptoSymbolInterval symbolInterval, DateTime currentDate)
