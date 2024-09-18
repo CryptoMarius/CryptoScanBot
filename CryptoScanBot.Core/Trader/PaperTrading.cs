@@ -169,11 +169,8 @@ public class PaperTrading
             {
                 if (step.OrderType == CryptoOrderType.Market) // is reeds afgehandeld
                     await CreatePaperTradeObject(database, position, part, step, lastCandle1m.Close, lastCandle1m.Date.AddMinutes(1));
-                if (step.StopPrice.HasValue)
-                {
-                    if (lastCandle1m.High > step.StopPrice)
-                        await CreatePaperTradeObject(database, position, part, step, (decimal)step.StopPrice, lastCandle1m.Date.AddMinutes(1));
-                }
+                if (step.StopPrice.HasValue && lastCandle1m.High >= step.StopPrice)
+                    await CreatePaperTradeObject(database, position, part, step, (decimal)step.StopPrice, lastCandle1m.Date.AddMinutes(1));
                 else if (lastCandle1m.Low < step.Price)
                     await CreatePaperTradeObject(database, position, part, step, step.Price, lastCandle1m.Date.AddMinutes(1));
             }
@@ -181,11 +178,8 @@ public class PaperTrading
             {
                 if (step.OrderType == CryptoOrderType.Market)  // is reeds afgehandeld
                     await CreatePaperTradeObject(database, position, part, step, lastCandle1m.Close, lastCandle1m.Date.AddMinutes(1));
-                else if (step.StopPrice.HasValue)
-                {
-                    if (lastCandle1m.Low < step.StopPrice)
-                        await CreatePaperTradeObject(database, position, part, step, (decimal)step.StopPrice, lastCandle1m.Date.AddMinutes(1));
-                }
+                else if (step.StopPrice.HasValue && lastCandle1m.Low <= step.StopPrice)
+                     await CreatePaperTradeObject(database, position, part, step, (decimal)step.StopPrice, lastCandle1m.Date.AddMinutes(1));
                 else if (lastCandle1m.High > step.Price)
                     await CreatePaperTradeObject(database, position, part, step, step.Price, lastCandle1m.Date.AddMinutes(1));
 
