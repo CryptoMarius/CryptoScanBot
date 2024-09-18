@@ -2,6 +2,8 @@ CryptoScanBot release historie:
 
 xx-08-2024 1.9.4
 
+- Emulator - Telegram messages worden nu tijdens uitvoeren emulator niet meer gestuurd
+
 - Scanner - De getoonde signalen kunnen dumpen naar Excel voor een overzichtje
 - Scanner - Barometer velden toegevoegd aan de signalen (+ kolommen toegevoegd)
 - Scanner - De correctie waarden voor de WGHM/STORSI mogen nu negatief zijn (-100..+100).
@@ -32,6 +34,7 @@ xx-08-2024 1.9.4
 - Scanner - Extra menu optie om een import-lijst te maken voor tradingview per quote (en alle munten)
 - Scanner - De FundingRate kolom standaard uitzetten bij de signalen (het is niet relevant voor de spot markten)
 
+- Trader - De instelling controlleer dalende/stijgende RSI geeft problemen bij de StoRsi vanwege de correctie waarde
 - Trader - De open en gesloten posities kunnen dumpen naar Excel voor een overzichtje
 - Trader - Barometer velden toegevoegd aan de open en geloten posities (+ kolommen toegevoegd)
 - Trader - De originele signaal waarden worden nu toegevoegd aan de open en geloten posities (+ kolommen toegevoegd)
