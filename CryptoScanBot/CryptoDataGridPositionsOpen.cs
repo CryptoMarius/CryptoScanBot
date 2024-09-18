@@ -125,7 +125,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
             switch (column)
             {
                 case ColumnsForGrid.Id:
-                    CreateColumn("Id", typeof(int), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42);
+                    CreateColumn("Id", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 50).Visible = false;
                     break;
                 case ColumnsForGrid.Created:
                     CreateColumn("Created", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleLeft, 100);

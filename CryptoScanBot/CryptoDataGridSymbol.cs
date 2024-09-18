@@ -10,6 +10,7 @@ public class CryptoDataGridSymbol<T>(DataGridView grid, List<T> list, SortedList
 {
     private enum ColumnsForGrid
     {
+        Id,
         //Exchange,
         Symbol,
         Volume,
@@ -43,13 +44,22 @@ public class CryptoDataGridSymbol<T>(DataGridView grid, List<T> list, SortedList
         var columns = Enum.GetValues(typeof(ColumnsForGrid));
         foreach (ColumnsForGrid column in columns)
         {
-            DataGridViewTextBoxColumn _ = column switch
+            switch (column)
             {
-                ColumnsForGrid.Symbol => CreateColumn("Symbol", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleLeft, 100, true),
-                ColumnsForGrid.Volume => CreateColumn("Volume", typeof(decimal), "#,##0", DataGridViewContentAlignment.MiddleRight, 75),
-                //ColumnsForGrid.Price => CreateColumn("Price", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 70),
-                _ => throw new NotImplementedException(),
-            };
+                case ColumnsForGrid.Id:
+                    CreateColumn("Id", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 50).Visible = false;
+                    break;
+                case ColumnsForGrid.Symbol:
+                    CreateColumn("Symbol", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleLeft, 100, true);
+                    break;
+                case ColumnsForGrid.Volume:
+                    CreateColumn("Volume", typeof(decimal), "#,##0", DataGridViewContentAlignment.MiddleRight, 75);
+                    break;
+                    //case ColumnsForGrid.Price :
+                    //CreateColumn("Price", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 70);
+                    //break;
+                    //_ => throw new NotImplementedException(),
+            }
         }
 
     }
@@ -59,6 +69,7 @@ public class CryptoDataGridSymbol<T>(DataGridView grid, List<T> list, SortedList
     {
         int compareResult = (ColumnsForGrid)SortColumn switch
         {
+            ColumnsForGrid.Id => ObjectCompare.Compare(a.Id, b.Id),
             ColumnsForGrid.Symbol => ObjectCompare.Compare(a.Name, b.Name),
             ColumnsForGrid.Volume => ObjectCompare.Compare(a.Volume, b.Volume),
             //ColumnsForGrid.Price => ObjectCompare.Compare(a.LastPrice, b.LastPrice),
@@ -99,6 +110,7 @@ public class CryptoDataGridSymbol<T>(DataGridView grid, List<T> list, SortedList
         {           
             e.Value = (ColumnsForGrid)e.ColumnIndex switch
             {
+                ColumnsForGrid.Id => symbol.Id,
                 ColumnsForGrid.Symbol => symbol.Name,
                 ColumnsForGrid.Volume => symbol.Volume.ToString("N0"),
                 //ColumnsForGrid.Price => symbol.LastPrice?.ToString(symbol.PriceDisplayFormat),

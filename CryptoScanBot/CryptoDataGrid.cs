@@ -194,8 +194,16 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         Grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single; // Raised;
 
         Grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-        //Grid.DefaultCellStyle.SelectionBackColor = Grid.DefaultCellStyle.BackColor;
-        //Grid.DefaultCellStyle.SelectionForeColor = Grid.DefaultCellStyle.ForeColor;
+        //if (GlobalData.Settings.General.ShowInvalidSignals)
+        //{
+        //    Grid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(255, 0, 120, 215);
+        //    Grid.DefaultCellStyle.SelectionForeColor = Color.FromArgb(255, 255, 255, 255);
+        //}
+        //else
+        //{
+        //    Grid.DefaultCellStyle.SelectionBackColor = Grid.DefaultCellStyle.BackColor;
+        //    Grid.DefaultCellStyle.SelectionForeColor = Grid.DefaultCellStyle.ForeColor;
+        //}
 
         Grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None; // AllCellsExceptHeader; // AllCells; // DisplayedCells;
         Grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single; // Kader rond de header cells
@@ -426,6 +434,16 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
     {
         string text = CryptoExternalUrlList.GetTradingAppName(GlobalData.Settings.General.TradingApp, GlobalData.Settings.General.ExchangeName);
         Grid.ContextMenuStrip.Items[0].Text = text;
+        if (GlobalData.Settings.General.HideSelectedRow)
+        {
+            Grid.DefaultCellStyle.SelectionBackColor = Grid.DefaultCellStyle.BackColor;
+            Grid.DefaultCellStyle.SelectionForeColor = Grid.DefaultCellStyle.ForeColor;
+        }
+        else
+        {
+            Grid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(255, 0, 120, 215);
+            Grid.DefaultCellStyle.SelectionForeColor = Color.FromArgb(255, 255, 255, 255);
+        }
     }
 
     internal static Color GetBackgroudColorForStrategy(CryptoSignalStrategy strategy, CryptoTradeSide side)

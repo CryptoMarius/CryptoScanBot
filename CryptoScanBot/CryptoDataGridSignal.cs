@@ -17,7 +17,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
 {
     private enum ColumnsForGrid
     {
-        //Id,
+        Id,
         Date,
         Exchange,
         Symbol,
@@ -114,7 +114,9 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
         {
             switch (column)
             {
-                //CreateColumn("Id", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 50);
+                case ColumnsForGrid.Id:
+                    CreateColumn("Id", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 50).Visible = false;
+                    break;
                 case ColumnsForGrid.Date:
                     CreateColumn("Candle date", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleLeft, 140);
                     break;
@@ -247,6 +249,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
     {
         int compareResult = (ColumnsForGrid)SortColumn switch
         {
+            ColumnsForGrid.Id => ObjectCompare.Compare(a.Id, b.Id),
             ColumnsForGrid.Date => ObjectCompare.Compare(a.CloseDate, b.CloseDate),
             ColumnsForGrid.Exchange => ObjectCompare.Compare(a.Exchange.Name, b.Exchange.Name),
             ColumnsForGrid.Symbol => ObjectCompare.Compare(a.Symbol.Name, b.Symbol.Name),
@@ -349,6 +352,9 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
         {
             switch ((ColumnsForGrid)e.ColumnIndex)
             {
+                case ColumnsForGrid.Id:
+                    e.Value = signal.Id;
+                    break;
                 case ColumnsForGrid.Date:
                     // there is a signal.CloseDate
                     //+ signal.OpenDate.AddSeconds(signal.Interval.Duration).ToLocalTime().ToString("HH:mm");
@@ -963,6 +969,12 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                         text += $" Short({statsShort}, {uniqueListShort.Count}): {statsMaxShort.avg:N2} .. {statsMinShort.avg:N2}";
                     if (statsShort + statsLong > 0)
                         GlobalData.AddTextToLogTab(text);
+
+
+                    GlobalData.SignalStrength.LongCount = statsMinLong.count;
+                    GlobalData.SignalStrength.LongAvg = statsMaxLong.avg;
+                    GlobalData.SignalStrength.ShortCount = statsMinShort.count;
+                    GlobalData.SignalStrength.ShortAvg = statsMaxShort.avg;
                 }
             }
             finally
@@ -1041,9 +1053,9 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                         price = signal.Symbol.LastPrice ?? 0;
 
                     if (position.Side == CryptoTradeSide.Long)
-                        price = price * 0.97m;
+                        price *= 0.97m;
                     if (position.Side == CryptoTradeSide.Short)
-                        price = price * 1.04m;
+                        price *= 1.04m;
                     price = price.Clamp(signal.Symbol.PriceMinimum, signal.Symbol.PriceMaximum, signal.Symbol.PriceTickSize);
 
                     decimal entryQuantity = entryValue / price; // "afgerond"
