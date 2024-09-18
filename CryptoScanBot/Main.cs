@@ -54,6 +54,7 @@ public partial class FrmMain : Form
 
         logQueue.EnsureCapacity(1500);
 
+
         ApplicationPlaySounds = MenuMain.AddCommand(null, "Play sounds", Command.None, ApplicationPlaySounds_Click);
         ApplicationPlaySounds.Checked = true;
         ApplicationCreateSignals = MenuMain.AddCommand(null, "Create signals", Command.None, ApplicationCreateSignals_Click);
@@ -226,7 +227,6 @@ public partial class FrmMain : Form
 
         GridSymbolView.InitCommandCaptions();
         GridSignalView.InitCommandCaptions();
-
         GridPositionOpenView.InitCommandCaptions();
         GridPositionClosedView.InitCommandCaptions();
 
