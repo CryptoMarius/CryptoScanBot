@@ -40,6 +40,8 @@ partial class FrmSettings
         tabGeneral = new TabPage();
         flowLayoutPanel5 = new FlowLayoutPanel();
         groupBox1 = new GroupBox();
+        EditDebugSymbol = new TextBox();
+        LabelDebugSymbol = new Label();
         EditDebugSignalStrength = new CheckBox();
         groupBox7 = new GroupBox();
         label22 = new Label();
@@ -206,10 +208,16 @@ partial class FrmSettings
         label73 = new Label();
         EditGlobalBuyCooldownTime = new NumericUpDown();
         groupBoxInstap = new GroupBox();
+        EditCheckSignalStrength = new CheckBox();
         EditCheckFurtherPriceMove = new CheckBox();
         EditCheckIncreasingMacd = new CheckBox();
         EditCheckIncreasingStoch = new CheckBox();
         EditCheckIncreasingRsi = new CheckBox();
+        groupBoxSlots = new GroupBox();
+        label50 = new Label();
+        EditSlotsMaximalLong = new NumericUpDown();
+        label52 = new Label();
+        EditSlotsMaximalShort = new NumericUpDown();
         groupBoxFutures = new GroupBox();
         label19 = new Label();
         EditCrossOrIsolated = new ComboBox();
@@ -218,11 +226,6 @@ partial class FrmSettings
         EditLogCanceledOrders = new CheckBox();
         EditSoundTradeNotification = new CheckBox();
         EditDisableNewPositions = new CheckBox();
-        groupBoxSlots = new GroupBox();
-        label50 = new Label();
-        EditSlotsMaximalLong = new NumericUpDown();
-        label52 = new Label();
-        EditSlotsMaximalShort = new NumericUpDown();
         tabTradingLong = new TabPage();
         UserControlTradingLong = new SettingsDialog.UserControlEverything();
         tabTradingShort = new TabPage();
@@ -253,6 +256,7 @@ partial class FrmSettings
         panel6 = new Panel();
         label49 = new Label();
         toolTip1 = new ToolTip(components);
+        EditHideSelectedRow = new CheckBox();
         panelButtons.SuspendLayout();
         panelFill.SuspendLayout();
         tabControlMain.SuspendLayout();
@@ -333,11 +337,11 @@ partial class FrmSettings
         panel7.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)EditGlobalBuyCooldownTime).BeginInit();
         groupBoxInstap.SuspendLayout();
-        groupBoxFutures.SuspendLayout();
-        ((System.ComponentModel.ISupportInitialize)EditLeverage).BeginInit();
         groupBoxSlots.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)EditSlotsMaximalLong).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditSlotsMaximalShort).BeginInit();
+        groupBoxFutures.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)EditLeverage).BeginInit();
         tabTradingLong.SuspendLayout();
         tabTradingShort.SuspendLayout();
         tabPageTradingRules.SuspendLayout();
@@ -478,6 +482,9 @@ partial class FrmSettings
         // 
         groupBox1.AutoSize = true;
         groupBox1.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+        groupBox1.Controls.Add(EditHideSelectedRow);
+        groupBox1.Controls.Add(EditDebugSymbol);
+        groupBox1.Controls.Add(LabelDebugSymbol);
         groupBox1.Controls.Add(EditDebugSignalStrength);
         groupBox1.Controls.Add(groupBox7);
         groupBox1.Controls.Add(EditDebugSignalCreate);
@@ -508,10 +515,29 @@ partial class FrmSettings
         groupBox1.Margin = new Padding(10);
         groupBox1.Name = "groupBox1";
         groupBox1.Padding = new Padding(10);
-        groupBox1.Size = new Size(631, 425);
+        groupBox1.Size = new Size(631, 454);
         groupBox1.TabIndex = 249;
         groupBox1.TabStop = false;
         groupBox1.Text = "Algemeen";
+        // 
+        // EditDebugSymbol
+        // 
+        EditDebugSymbol.CharacterCasing = CharacterCasing.Upper;
+        EditDebugSymbol.Location = new Point(482, 402);
+        EditDebugSymbol.Margin = new Padding(4, 3, 4, 3);
+        EditDebugSymbol.Name = "EditDebugSymbol";
+        EditDebugSymbol.Size = new Size(103, 23);
+        EditDebugSymbol.TabIndex = 293;
+        // 
+        // LabelDebugSymbol
+        // 
+        LabelDebugSymbol.AutoSize = true;
+        LabelDebugSymbol.Location = new Point(390, 405);
+        LabelDebugSymbol.Margin = new Padding(4, 0, 4, 0);
+        LabelDebugSymbol.Name = "LabelDebugSymbol";
+        LabelDebugSymbol.Size = new Size(84, 15);
+        LabelDebugSymbol.TabIndex = 294;
+        LabelDebugSymbol.Text = "Debug symbol";
         // 
         // EditDebugSignalStrength
         // 
@@ -830,7 +856,7 @@ partial class FrmSettings
         // EditBlackTheming
         // 
         EditBlackTheming.AutoSize = true;
-        EditBlackTheming.Location = new Point(12, 353);
+        EditBlackTheming.Location = new Point(9, 390);
         EditBlackTheming.Margin = new Padding(4, 3, 4, 3);
         EditBlackTheming.Name = "EditBlackTheming";
         EditBlackTheming.Size = new Size(84, 19);
@@ -840,7 +866,7 @@ partial class FrmSettings
         // 
         // buttonFontDialog
         // 
-        buttonFontDialog.Location = new Point(9, 319);
+        buttonFontDialog.Location = new Point(7, 347);
         buttonFontDialog.Margin = new Padding(4, 3, 4, 3);
         buttonFontDialog.Name = "buttonFontDialog";
         buttonFontDialog.Size = new Size(139, 27);
@@ -2340,7 +2366,6 @@ partial class FrmSettings
         panel7.Controls.Add(EditLogCanceledOrders);
         panel7.Controls.Add(EditSoundTradeNotification);
         panel7.Controls.Add(EditDisableNewPositions);
-        panel7.Controls.Add(groupBoxSlots);
         panel7.Dock = DockStyle.Left;
         panel7.Location = new Point(3, 3);
         panel7.Name = "panel7";
@@ -2370,7 +2395,7 @@ partial class FrmSettings
         // label73
         // 
         label73.AutoSize = true;
-        label73.Location = new Point(11, 434);
+        label73.Location = new Point(10, 468);
         label73.Margin = new Padding(4, 0, 4, 0);
         label73.Name = "label73";
         label73.Size = new Size(114, 15);
@@ -2379,7 +2404,7 @@ partial class FrmSettings
         // 
         // EditGlobalBuyCooldownTime
         // 
-        EditGlobalBuyCooldownTime.Location = new Point(142, 432);
+        EditGlobalBuyCooldownTime.Location = new Point(141, 466);
         EditGlobalBuyCooldownTime.Margin = new Padding(4, 3, 4, 3);
         EditGlobalBuyCooldownTime.Maximum = new decimal(new int[] { 276447231, 23283, 0, 0 });
         EditGlobalBuyCooldownTime.Name = "EditGlobalBuyCooldownTime";
@@ -2388,16 +2413,29 @@ partial class FrmSettings
         // 
         // groupBoxInstap
         // 
+        groupBoxInstap.Controls.Add(EditCheckSignalStrength);
         groupBoxInstap.Controls.Add(EditCheckFurtherPriceMove);
         groupBoxInstap.Controls.Add(EditCheckIncreasingMacd);
         groupBoxInstap.Controls.Add(EditCheckIncreasingStoch);
         groupBoxInstap.Controls.Add(EditCheckIncreasingRsi);
+        groupBoxInstap.Controls.Add(groupBoxSlots);
         groupBoxInstap.Location = new Point(12, 126);
         groupBoxInstap.Name = "groupBoxInstap";
-        groupBoxInstap.Size = new Size(234, 120);
+        groupBoxInstap.Size = new Size(234, 230);
         groupBoxInstap.TabIndex = 346;
         groupBoxInstap.TabStop = false;
         groupBoxInstap.Text = "Instap condities";
+        // 
+        // EditCheckSignalStrength
+        // 
+        EditCheckSignalStrength.AutoSize = true;
+        EditCheckSignalStrength.Location = new Point(21, 115);
+        EditCheckSignalStrength.Margin = new Padding(4, 3, 4, 3);
+        EditCheckSignalStrength.Name = "EditCheckSignalStrength";
+        EditCheckSignalStrength.Size = new Size(160, 19);
+        EditCheckSignalStrength.TabIndex = 335;
+        EditCheckSignalStrength.Text = "Controleer signaal sterkte";
+        EditCheckSignalStrength.UseVisualStyleBackColor = true;
         // 
         // EditCheckFurtherPriceMove
         // 
@@ -2443,13 +2481,65 @@ partial class FrmSettings
         EditCheckIncreasingRsi.Text = "RSI moet oplopen/aflopen";
         EditCheckIncreasingRsi.UseVisualStyleBackColor = true;
         // 
+        // groupBoxSlots
+        // 
+        groupBoxSlots.Controls.Add(label50);
+        groupBoxSlots.Controls.Add(EditSlotsMaximalLong);
+        groupBoxSlots.Controls.Add(label52);
+        groupBoxSlots.Controls.Add(EditSlotsMaximalShort);
+        groupBoxSlots.Font = new Font("Segoe UI", 9F);
+        groupBoxSlots.Location = new Point(0, 140);
+        groupBoxSlots.Name = "groupBoxSlots";
+        groupBoxSlots.Size = new Size(234, 82);
+        groupBoxSlots.TabIndex = 334;
+        groupBoxSlots.TabStop = false;
+        groupBoxSlots.Text = "Slot limits";
+        // 
+        // label50
+        // 
+        label50.AutoSize = true;
+        label50.Location = new Point(5, 26);
+        label50.Margin = new Padding(4, 0, 4, 0);
+        label50.Name = "label50";
+        label50.Size = new Size(34, 15);
+        label50.TabIndex = 194;
+        label50.Text = "Long";
+        // 
+        // EditSlotsMaximalLong
+        // 
+        EditSlotsMaximalLong.Location = new Point(129, 24);
+        EditSlotsMaximalLong.Margin = new Padding(4, 3, 4, 3);
+        EditSlotsMaximalLong.Name = "EditSlotsMaximalLong";
+        EditSlotsMaximalLong.Size = new Size(88, 23);
+        EditSlotsMaximalLong.TabIndex = 195;
+        EditSlotsMaximalLong.Value = new decimal(new int[] { 25, 0, 0, 0 });
+        // 
+        // label52
+        // 
+        label52.AutoSize = true;
+        label52.Location = new Point(5, 53);
+        label52.Margin = new Padding(4, 0, 4, 0);
+        label52.Name = "label52";
+        label52.Size = new Size(35, 15);
+        label52.TabIndex = 196;
+        label52.Text = "Short";
+        // 
+        // EditSlotsMaximalShort
+        // 
+        EditSlotsMaximalShort.Location = new Point(129, 50);
+        EditSlotsMaximalShort.Margin = new Padding(4, 3, 4, 3);
+        EditSlotsMaximalShort.Name = "EditSlotsMaximalShort";
+        EditSlotsMaximalShort.Size = new Size(88, 23);
+        EditSlotsMaximalShort.TabIndex = 197;
+        EditSlotsMaximalShort.Value = new decimal(new int[] { 25, 0, 0, 0 });
+        // 
         // groupBoxFutures
         // 
         groupBoxFutures.Controls.Add(label19);
         groupBoxFutures.Controls.Add(EditCrossOrIsolated);
         groupBoxFutures.Controls.Add(label23);
         groupBoxFutures.Controls.Add(EditLeverage);
-        groupBoxFutures.Location = new Point(12, 340);
+        groupBoxFutures.Location = new Point(12, 362);
         groupBoxFutures.Name = "groupBoxFutures";
         groupBoxFutures.Size = new Size(234, 86);
         groupBoxFutures.TabIndex = 345;
@@ -2529,58 +2619,6 @@ partial class FrmSettings
         EditDisableNewPositions.TabIndex = 338;
         EditDisableNewPositions.Text = "Geen nieuwe posities innemen";
         EditDisableNewPositions.UseVisualStyleBackColor = true;
-        // 
-        // groupBoxSlots
-        // 
-        groupBoxSlots.Controls.Add(label50);
-        groupBoxSlots.Controls.Add(EditSlotsMaximalLong);
-        groupBoxSlots.Controls.Add(label52);
-        groupBoxSlots.Controls.Add(EditSlotsMaximalShort);
-        groupBoxSlots.Font = new Font("Segoe UI", 9F);
-        groupBoxSlots.Location = new Point(12, 252);
-        groupBoxSlots.Name = "groupBoxSlots";
-        groupBoxSlots.Size = new Size(234, 82);
-        groupBoxSlots.TabIndex = 334;
-        groupBoxSlots.TabStop = false;
-        groupBoxSlots.Text = "Slot limits";
-        // 
-        // label50
-        // 
-        label50.AutoSize = true;
-        label50.Location = new Point(5, 26);
-        label50.Margin = new Padding(4, 0, 4, 0);
-        label50.Name = "label50";
-        label50.Size = new Size(34, 15);
-        label50.TabIndex = 194;
-        label50.Text = "Long";
-        // 
-        // EditSlotsMaximalLong
-        // 
-        EditSlotsMaximalLong.Location = new Point(129, 24);
-        EditSlotsMaximalLong.Margin = new Padding(4, 3, 4, 3);
-        EditSlotsMaximalLong.Name = "EditSlotsMaximalLong";
-        EditSlotsMaximalLong.Size = new Size(88, 23);
-        EditSlotsMaximalLong.TabIndex = 195;
-        EditSlotsMaximalLong.Value = new decimal(new int[] { 25, 0, 0, 0 });
-        // 
-        // label52
-        // 
-        label52.AutoSize = true;
-        label52.Location = new Point(5, 53);
-        label52.Margin = new Padding(4, 0, 4, 0);
-        label52.Name = "label52";
-        label52.Size = new Size(35, 15);
-        label52.TabIndex = 196;
-        label52.Text = "Short";
-        // 
-        // EditSlotsMaximalShort
-        // 
-        EditSlotsMaximalShort.Location = new Point(129, 50);
-        EditSlotsMaximalShort.Margin = new Padding(4, 3, 4, 3);
-        EditSlotsMaximalShort.Name = "EditSlotsMaximalShort";
-        EditSlotsMaximalShort.Size = new Size(88, 23);
-        EditSlotsMaximalShort.TabIndex = 197;
-        EditSlotsMaximalShort.Value = new decimal(new int[] { 25, 0, 0, 0 });
         // 
         // tabTradingLong
         // 
@@ -2894,6 +2932,17 @@ partial class FrmSettings
         label49.TabIndex = 222;
         label49.Text = "(1 munt per regel met een optionele opmerking erachter)";
         // 
+        // EditHideSelectedRow
+        // 
+        EditHideSelectedRow.AutoSize = true;
+        EditHideSelectedRow.Location = new Point(12, 320);
+        EditHideSelectedRow.Margin = new Padding(4, 3, 4, 3);
+        EditHideSelectedRow.Name = "EditHideSelectedRow";
+        EditHideSelectedRow.Size = new Size(145, 19);
+        EditHideSelectedRow.TabIndex = 295;
+        EditHideSelectedRow.Text = "Verberg selectie in grid";
+        EditHideSelectedRow.UseVisualStyleBackColor = true;
+        // 
         // FrmSettings
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
@@ -3014,13 +3063,13 @@ partial class FrmSettings
         ((System.ComponentModel.ISupportInitialize)EditGlobalBuyCooldownTime).EndInit();
         groupBoxInstap.ResumeLayout(false);
         groupBoxInstap.PerformLayout();
-        groupBoxFutures.ResumeLayout(false);
-        groupBoxFutures.PerformLayout();
-        ((System.ComponentModel.ISupportInitialize)EditLeverage).EndInit();
         groupBoxSlots.ResumeLayout(false);
         groupBoxSlots.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)EditSlotsMaximalLong).EndInit();
         ((System.ComponentModel.ISupportInitialize)EditSlotsMaximalShort).EndInit();
+        groupBoxFutures.ResumeLayout(false);
+        groupBoxFutures.PerformLayout();
+        ((System.ComponentModel.ISupportInitialize)EditLeverage).EndInit();
         tabTradingLong.ResumeLayout(false);
         tabTradingLong.PerformLayout();
         tabTradingShort.ResumeLayout(false);
@@ -3277,4 +3326,8 @@ partial class FrmSettings
     private Label label22;
     private NumericUpDown EditBbStdDeviation;
     private CheckBox EditDebugSignalStrength;
+    private CheckBox EditCheckSignalStrength;
+    private TextBox EditDebugSymbol;
+    private Label LabelDebugSymbol;
+    private CheckBox EditHideSelectedRow;
 }

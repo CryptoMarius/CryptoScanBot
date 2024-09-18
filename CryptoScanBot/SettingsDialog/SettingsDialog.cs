@@ -62,6 +62,8 @@ public partial class FrmSettings : Form
         EditDebugKLineReceive.Visible = false;
         EditDebugSignalCreate.Visible = false;
         EditDebugSignalStrength.Visible = false;
+        EditDebugSymbol.Visible = false;
+        LabelDebugSymbol.Visible = false;
 #endif
 
         // Deze worden na de overgang naar .net 7 regelmatig gereset naar 0
@@ -111,6 +113,7 @@ public partial class FrmSettings : Form
         EditShowInvalidSignals.Checked = settings.General.ShowInvalidSignals;
         EditHideSymbolsOnTheLeft.Checked = settings.General.HideSymbolsOnTheLeft;
         EditGlobalDataRemoveSignalAfterxCandles.Value = settings.General.RemoveSignalAfterxCandles;
+        EditHideSelectedRow.Checked = settings.General.HideSelectedRow;
 
         // Grenswaarden voor oversold en overbought
         EditRsiValueOversold.Value = (decimal)settings.General.RsiValueOversold;
@@ -126,6 +129,7 @@ public partial class FrmSettings : Form
         EditDebugKLineReceive.Checked = settings.General.DebugKLineReceive;
         EditDebugSignalCreate.Checked = settings.General.DebugSignalCreate;
         EditDebugSignalStrength.Checked = settings.General.DebugSignalStrength;
+        EditDebugSymbol.Text = settings.General.DebugSymbol.Trim();
 #endif
 
         // ------------------------------------------------------------------------------
@@ -285,6 +289,7 @@ public partial class FrmSettings : Form
         EditCheckIncreasingMacd.Checked = settings.Trading.CheckIncreasingMacd;
         EditCheckIncreasingStoch.Checked = settings.Trading.CheckIncreasingStoch;
         EditCheckFurtherPriceMove.Checked = settings.Trading.CheckFurtherPriceMove;
+        EditCheckSignalStrength.Checked = settings.Trading.CheckSignalStrength;
 
         // Entry/Dca/Tp/Sl
         UserControlTradeEntry.LoadConfig(settings.Trading);
@@ -376,6 +381,7 @@ public partial class FrmSettings : Form
         settings.General.ShowInvalidSignals = EditShowInvalidSignals.Checked;
         settings.General.HideSymbolsOnTheLeft = EditHideSymbolsOnTheLeft.Checked;
         settings.General.RemoveSignalAfterxCandles = (int)EditGlobalDataRemoveSignalAfterxCandles.Value;
+        settings.General.HideSelectedRow = EditHideSelectedRow.Checked;
 
         // Grenswaarden voor oversold en overbought
         settings.General.RsiValueOversold = (double)EditRsiValueOversold.Value;
@@ -392,7 +398,9 @@ public partial class FrmSettings : Form
         settings.General.DebugKLineReceive = EditDebugKLineReceive.Checked;
         settings.General.DebugSignalCreate = EditDebugSignalCreate.Checked;
         settings.General.DebugSignalStrength = EditDebugSignalStrength.Checked;
+        settings.General.DebugSymbol = EditDebugSymbol.Text.Trim();
 #else
+        settings.General.DebugSymbol = "";
         settings.General.DebugKLineReceive = false;
         settings.General.DebugSignalCreate = false;
         settings.General.DebugSignalStrength = false;
@@ -554,6 +562,7 @@ public partial class FrmSettings : Form
         settings.Trading.CheckIncreasingMacd = EditCheckIncreasingMacd.Checked;
         settings.Trading.CheckIncreasingStoch = EditCheckIncreasingStoch.Checked;
         settings.Trading.CheckFurtherPriceMove = EditCheckFurtherPriceMove.Checked;
+        settings.Trading.CheckSignalStrength = EditCheckSignalStrength.Checked;
 
         // Entry/Dca/Tp/Sl
         UserControlTradeEntry.SaveConfig(settings.Trading);

@@ -173,7 +173,7 @@ public class BarometerTools
                 if (periodStart > symbolInterval.LastCandleSynchronized)
                     symbolInterval.LastCandleSynchronized = periodStart;
 
-                if (GlobalData.Settings.General.DebugKLineReceive)
+                if (GlobalData.Settings.General.DebugKLineReceive && (GlobalData.Settings.General.DebugSymbol == bmSymbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
                     GlobalData.AddTextToLogTab($"Debug Barometer({bmSymbol.Name}, {interval.Name}, {candle.DateLocal}, {candle.Close})");
 
             }
