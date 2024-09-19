@@ -158,9 +158,6 @@ public class Order
                             ScannerLog.Logger.Trace($"GetOrdersForPositionAsync {position.Symbol.Name} updated order {item.OrderId}");
                             text = JsonSerializer.Serialize(item, ExchangeHelper.JsonSerializerNotIndented).Trim();
                             ScannerLog.Logger.Trace($"{item.Symbol} order updated json={text}");
-#if DEBUG
-                            ScannerLog.Logger.Debug($"{item} json={text}");
-#endif
                             count++;
                         }
                     }

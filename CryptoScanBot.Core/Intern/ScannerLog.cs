@@ -109,9 +109,9 @@ public class ScannerLog
         rule = new NLog.Config.LoggingRule("*", LogLevel.Trace, fileTarget);
         config.LoggingRules.Add(rule);
 
-        fileTarget = CreateTarget("trace", " Debug");
-        rule = new NLog.Config.LoggingRule("*", LogLevel.Debug, fileTarget);
-        config.LoggingRules.Add(rule);
+        //fileTarget = CreateTarget("debug", " Debug");
+        //rule = new NLog.Config.LoggingRule("*", LogLevel.Debug, fileTarget);
+        //config.LoggingRules.Add(rule);
 #endif
 
         LogManager.Configuration = config;

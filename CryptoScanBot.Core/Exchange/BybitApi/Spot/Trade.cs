@@ -114,10 +114,6 @@ public class Trade
                                 PickupTradeV3(position.Account, position.Symbol, trade, item);
                                 string text = JsonSerializer.Serialize(item, ExchangeHelper.JsonSerializerNotIndented).Trim();
                                 ScannerLog.Logger.Trace($"{item.Symbol} Trade added json={text}");
-#if DEBUG
-                                ScannerLog.Logger.Debug($"{item} json={text}");
-#endif
-
                                 tradeCache.Add(trade);
                                 position.TradeList.AddTrade(trade);
 

@@ -30,9 +30,6 @@ public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscript
                 string text = JsonSerializer.Serialize(data, GlobalData.JsonSerializerIndented).Trim();
                 GlobalData.AddTextToLogTab(info);
                 ScannerLog.Logger.Trace($"{info} json={text}");
-#if DEBUG
-                ScannerLog.Logger.Debug($"{info} json={text}");
-#endif
 
                 // We zijn slechts geinteresseerd in een paar statussen (de andere zijn niet interessant voor de afhandeling van de order)
                 if (data.Status == OrderStatus.New ||
