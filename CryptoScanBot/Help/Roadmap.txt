@@ -5,8 +5,7 @@ Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep
 
 Scanner:
 - Emulator - De Barometer wordt niet correct berekend (of wordt verkeerd opgehaald)
-- Trader - De positie ID van Altrady overnemen in de database
-- Documentatie - Uitleg van de Add Value voor de WGHM/STORSI uitbreiden, er zijn aardig wat vragen over.
+- Documentatie - Uitleg van de Add Value voor de WGHM/STORSI uitbreiden, er zijn wel wat vragen over geweest.
 
 - Dashboard - Aantal meldingen per dag / week? Iets wat het aantal meldingen laat zien in iedere geval..
               Zie je ook wat als ke geen trader gebruikt?
