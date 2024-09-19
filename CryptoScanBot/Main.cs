@@ -70,6 +70,7 @@ public partial class FrmMain : Form
         MenuMain.AddCommand(null, "Export all exchange information to Excel", Command.ExcelExchangeInformation);
         MenuMain.AddCommand(null, "Export all signal information to Excel", Command.ExcelSignalsInformation);
         MenuMain.AddCommand(null, "Export all position information to Excel", Command.ExcelPositionsInformation);
+
         MenuMain.AddSeperator();
         ApplicationBackTestMode = MenuMain.AddCommand(null, "Backtest mode", Command.None, ApplicationBackTestMode_Click);
         ApplicationBackTestExec = MenuMain.AddCommand(null, "Backtest exec", Command.None, BacktestToolStripMenuItem_Click);

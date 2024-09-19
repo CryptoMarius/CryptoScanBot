@@ -359,7 +359,7 @@ public partial class DashBoardInformation : UserControl
                 //Pen blackPen = new Pen(Color.Black, 1);
                 //Rectangle rect1 = new(0, 0, intWidth, intHeight);
                 //Font drawFont1 = new(this.Font.Name, this.Font.Size);s
-                CryptoIntervalPeriod[] list = { CryptoIntervalPeriod.interval1h, CryptoIntervalPeriod.interval4h, CryptoIntervalPeriod.interval1d };
+                CryptoIntervalPeriod[] list = [CryptoIntervalPeriod.interval1h, CryptoIntervalPeriod.interval4h, CryptoIntervalPeriod.interval1d];
 
                 foreach (CryptoIntervalPeriod intervalPeriod in list)
                 {
