@@ -8,11 +8,11 @@ namespace CryptoScanBot.Core.Signal.Experiment;
 // https://www.tradingview.com/script/0F1sNM49-WGHBM/
 // Momentum indicator that shows arrows when the Stochastic and the RSI are at the same time in the oversold or overbought area.
 
-public class SignalTest2Long : SignalSbmBaseLong
+public class SignalTest2Short: SignalSbmBaseShort
 {
-    public SignalTest2Long(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
+    public SignalTest2Short(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        SignalSide = CryptoTradeSide.Long;
+        SignalSide = CryptoTradeSide.Short;
         SignalStrategy = CryptoSignalStrategy.Test2;
     }
 
@@ -51,19 +51,19 @@ public class SignalTest2Long : SignalSbmBaseLong
         }
 
         // psar below price (strage condition)
-        if (CandleLast.CandleData!.PSar < (double)CandleLast.Close)
+        if (CandleLast.CandleData!.PSar > (double)CandleLast.Close)
         {
             // need previous
             if (GetPrevCandle(CandleLast!, out CryptoCandle? candlePrev))
             {
                 // tema crossing the wma30 upwards
-                if (candlePrev!.CandleData!.Tema < candlePrev.CandleData!.Wma30 && CandleLast.CandleData!.Tema > CandleLast.CandleData!.Wma30)
+                if (candlePrev!.CandleData!.Tema > candlePrev.CandleData!.Wma30 && CandleLast.CandleData!.Tema < CandleLast.CandleData!.Wma30)
                 {
                     // macd blue above macd red and green macd candles
-                    if (CandleLast.CandleData!.MacdValue > CandleLast.CandleData!.MacdSignal && CandleLast.CandleData!.MacdHistogram > 0)
+                    if (CandleLast.CandleData!.MacdValue < CandleLast.CandleData!.MacdSignal && CandleLast.CandleData!.MacdHistogram < 0)
                     {
                         // there was a drop in the period before this
-                        if (IsInLowerPartOfBollingerBands(45, 5.0m) != null)
+                        if (IsInUpperPartOfBollingerBands(45, 5.0m) != null)
                         {
                             return true;
                         }

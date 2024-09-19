@@ -123,23 +123,24 @@ public static class SignalHelper
         });
 
 
-        
 
-        Register(new AlgorithmDefinition()
-        {
-            Name = "test.ema",
-            Strategy = CryptoSignalStrategy.Test1,
-            AnalyzeLongType = typeof(SignalTest1Long),
-            AnalyzeShortType = null,
-        });
+//#if DEBUG
+//        Register(new AlgorithmDefinition()
+//        {
+//            Name = "test.ema",
+//            Strategy = CryptoSignalStrategy.Test1,
+//            AnalyzeLongType = typeof(SignalTest1Long),
+//            AnalyzeShortType = typeof(SignalTest1Short),
+//        });
 
-        Register(new AlgorithmDefinition()
-        {
-            Name = "test.tema",
-            Strategy = CryptoSignalStrategy.Test2,
-            AnalyzeLongType = typeof(SignalTest2Long),
-            AnalyzeShortType = null,
-        });
+//        Register(new AlgorithmDefinition()
+//        {
+//            Name = "test.tema",
+//            Strategy = CryptoSignalStrategy.Test2,
+//            AnalyzeLongType = typeof(SignalTest2Long),
+//            AnalyzeShortType = typeof(SignalTest2Short),
+//        });
+//#endif
     }
 
 

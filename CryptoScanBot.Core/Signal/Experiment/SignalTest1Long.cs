@@ -63,7 +63,7 @@ public class SignalTest1Long : SignalSbmBaseLong
                     if (CandleLast.CandleData!.MacdValue > CandleLast.CandleData!.MacdSignal && CandleLast.CandleData!.MacdHistogram > 0)
                     {
                         // there was a drop in the period before this
-                        if (HadStobbInThelastXCandles(CryptoTradeSide.Long, 2, 30) != null)
+                        if (IsInLowerPartOfBollingerBands(45, 5.0m) != null)
                         {
                             return true;
                         }

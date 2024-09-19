@@ -8,12 +8,12 @@ namespace CryptoScanBot.Core.Signal.Experiment;
 // https://www.tradingview.com/script/0F1sNM49-WGHBM/
 // Momentum indicator that shows arrows when the Stochastic and the RSI are at the same time in the oversold or overbought area.
 
-public class SignalTest2Long : SignalSbmBaseLong
+public class SignalTest1Short : SignalSbmBaseShort
 {
-    public SignalTest2Long(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
+    public SignalTest1Short(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        SignalSide = CryptoTradeSide.Long;
-        SignalStrategy = CryptoSignalStrategy.Test2;
+        SignalSide = CryptoTradeSide.Short;
+        SignalStrategy = CryptoSignalStrategy.Test1;
     }
 
 
@@ -23,7 +23,7 @@ public class SignalTest2Long : SignalSbmBaseLong
            || candle.CandleData == null
            || candle.CandleData.Rsi == null
            || candle.CandleData.PSar == null
-           || candle.CandleData.Tema == null
+           || candle.CandleData.Ema9 == null
            || candle.CandleData.Wma30 == null
            || candle.CandleData.MacdSignal == null
            || candle.CandleData.StochSignal == null
@@ -51,22 +51,23 @@ public class SignalTest2Long : SignalSbmBaseLong
         }
 
         // psar below price (strage condition)
-        if (CandleLast.CandleData!.PSar < (double)CandleLast.Close)
+        if (CandleLast.CandleData!.PSar > (double)CandleLast.Close)
         {
             // need previous
             if (GetPrevCandle(CandleLast!, out CryptoCandle? candlePrev))
             {
-                // tema crossing the wma30 upwards
-                if (candlePrev!.CandleData!.Tema < candlePrev.CandleData!.Wma30 && CandleLast.CandleData!.Tema > CandleLast.CandleData!.Wma30)
+                // ema9 crossing the wma30 upwards
+                if (candlePrev!.CandleData!.Ema9 > candlePrev.CandleData!.Wma30 && CandleLast.CandleData!.Ema9 < CandleLast.CandleData!.Wma30)
                 {
                     // macd blue above macd red and green macd candles
-                    if (CandleLast.CandleData!.MacdValue > CandleLast.CandleData!.MacdSignal && CandleLast.CandleData!.MacdHistogram > 0)
+                    if (CandleLast.CandleData!.MacdValue < CandleLast.CandleData!.MacdSignal && CandleLast.CandleData!.MacdHistogram < 0)
                     {
                         // there was a drop in the period before this
-                        if (IsInLowerPartOfBollingerBands(45, 5.0m) != null)
+                        if (IsInUpperPartOfBollingerBands(45, 5.0m) != null)
                         {
                             return true;
                         }
+                        
                     }
                 }
             }
