@@ -7,45 +7,6 @@ namespace CryptoScanBot.Core.Signal.Momentum;
 public class SignalSbmBase(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : SignalCreateBase(symbol, interval, candle)
 {
 
-#if DEBUG
-    private static string Toelichting(CryptoCandle candle)
-    {
-        string text = "";
-
-        if (candle == null)
-        {
-            text += "candle==null";
-            return text;
-        }
-
-        if (candle.CandleData == null)
-        {
-            text += "geen candledata";
-            return text;
-        }
-
-        if (candle.CandleData.PSar == 0)
-            text += "geen candledata.psar";
-        if (candle.CandleData.StochSignal == null)
-            text += "geen candledata.stoch.signal";
-        if (candle.CandleData.StochOscillator == null)
-            text += "geen candledata.stoch.Oscillator";
-
-        if (candle.CandleData.Sma20 == null)
-            text += "geen candledata.sma20.sma";
-        if (candle.CandleData.Sma50 == null)
-            text += "geen candledata.sma50.sma";
-        if (candle.CandleData.Sma200 == null)
-            text += "geen candledata.sma200.sma";
-
-        if (candle.CandleData.BollingerBandsDeviation == null)
-            text += "geen candledata.BollingerBands";
-
-        return text;
-    }
-#endif
-
-
     public override string DisplayText()
     {
         return string.Format("ma200={0:N8} ma50={1:N8} ma20={2:N8} psar={3:N8} macd.h={4:N8} bb%={5:N2} rsi=={6:N2}",
@@ -89,21 +50,9 @@ public class SignalSbmBase(CryptoSymbol symbol, CryptoInterval interval, CryptoC
                                 lastCandle.CandleData!.Sma50 <= lastCandle.CandleData.Sma200)
                             return true;
                     }
-#if DEBUG
-                    else
-                    {
-                        // toelichting geven?
-                        GlobalData.AddTextToLogTab(lastCandle.DateLocal.ToString() + " " + Symbol.Name + " " + Interval.Name + " ma200-50, geen candledata! " +
-                            Candles.Count + " " + candleCount + " prevcandle= " + Toelichting(prevCandle) + " lastcandle=" + Toelichting(lastCandle));
-                    }
-#endif
                 }
             }
-            //#if DEBUG
-            //Right, lastcandle is er niet, wat onaardig en onoplettend
-            //else GlobalData.AddTextToLogTab(lastCandle.DateLocal.ToString() + " " + Symbol.Name + " " + Interval.Name + " ma200-50, geen candle! " + Candles.Count);
-            //#endif
-
+            
             candlesAgo++;
             candleCount--;
             prevCandle = lastCandle;
@@ -142,20 +91,8 @@ public class SignalSbmBase(CryptoSymbol symbol, CryptoInterval interval, CryptoC
                                 lastCandle.CandleData!.Sma20 <= lastCandle.CandleData.Sma200)
                             return true;
                     }
-#if DEBUG
-                    else
-                    {
-                        // toelichting geven?
-                        GlobalData.AddTextToLogTab(lastCandle.DateLocal.ToString() + " " + Symbol.Name + " " + Interval.Name + " ma200-20, geen candledata! " +
-                        Candles.Count + " " + candleCount + " prevcandle= " + Toelichting(prevCandle) + " lastcandle=" + Toelichting(lastCandle));
-                    }
-#endif
                 }
             }
-            //#if DEBUG
-            //Right, lastcandle is er niet, wat onaardig en onoplettend
-            //else GlobalData.AddTextToLogTab(lastCandle.DateLocal.ToString() + " " + Symbol.Name + " " + Interval.Name + " ma200-20, geen candle! " + Candles.Count);
-            //#endif
             candlesAgo++;
             candleCount--;
             prevCandle = lastCandle;
@@ -195,20 +132,8 @@ public class SignalSbmBase(CryptoSymbol symbol, CryptoInterval interval, CryptoC
                                 lastCandle.CandleData!.Sma50 <= lastCandle.CandleData.Sma20)
                             return true;
                     }
-#if DEBUG
-                    else
-                    {
-                        // toelichting geven?
-                        GlobalData.AddTextToLogTab(lastCandle.DateLocal.ToString() + " " + Symbol.Name + " " + Interval.Name + " ma50-20, geen candledata! " +
-                        Candles.Count + " " + candleCount + " prevcandle= " + Toelichting(prevCandle) + " lastcandle=" + Toelichting(lastCandle));
-                    }
-#endif
                 }
             }
-            //#if DEBUG
-            //Right, lastcandle is er niet, wat onaardig en onoplettend
-            //else GlobalData.AddTextToLogTab(lastCandle.DateLocal.ToString() + " " + Symbol.Name + " " + Interval.Name + " ma50-20, geen candle! " + Candles.Count);
-            //#endif
 
             candlesAgo++;
             candleCount--;
