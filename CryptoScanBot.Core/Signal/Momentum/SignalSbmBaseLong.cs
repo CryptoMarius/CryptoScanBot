@@ -132,12 +132,12 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
     {
         CryptoCandle last = CandleLast!;
 
-        // Hoe positief wil je het hebben?
-        if (last.CandleData?.MacdHistogram > 0)
-        {
-            //ExtraText = string.Format("De MACD.Hist is groen {0:N8}", last.CandleData.MacdHistogram);
-            return true;
-        }
+        //// Hoe positief wil je het hebben?
+        //if (last.CandleData?.MacdHistogram >= 0)
+        //{
+        //    //ExtraText = string.Format("De MACD.Hist is groen {0:N8}", last.CandleData.MacdHistogram);
+        //    return true;
+        //}
 
         // Is er "herstel" ten opzichte van de vorige macd histogram candle?
         int iterator = 0;
@@ -146,21 +146,23 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
             if (!GetPrevCandle(last, out CryptoCandle? prev))
                 return false;
 
+            if (last.CandleData?.MacdHistogram <= prev!.CandleData?.MacdHistogram)
+                return false;
 
-            if (last.CandleData?.MacdHistogram <= prev!.CandleData?.MacdHistogram || last.CandleData?.MacdHistogram >= 0)
-            {
-                // Vermeld ik wel de juiste kleur(en)? 
-                if (last.CandleData.MacdHistogram >= 0)
-                {
-                    // Hoe positief wil je het hebben?
-                    //ExtraText = string.Format("De MACD[{0:N0}].Hist is groen {1:N8} {2:N8}", iterator, prev.CandleData.MacdHistogram, last.CandleData.MacdHistogram);
-                }
-                else
-                {
-                    //ExtraText = string.Format("De MACD[{0:N0}].Hist is niet roze {1:N8} {2:N8}", iterator, prev.CandleData.MacdHistogram, last.CandleData.MacdHistogram);
-                    return false;
-                }
-            }
+            //if (last.CandleData?.MacdHistogram <= prev!.CandleData?.MacdHistogram || last.CandleData?.MacdHistogram >= 0)
+            //{
+            //    // Vermeld ik wel de juiste kleur(en)? 
+            //    if (last.CandleData.MacdHistogram >= 0)
+            //    {
+            //        // Hoe positief wil je het hebben?
+            //        //ExtraText = string.Format("De MACD[{0:N0}].Hist is groen {1:N8} {2:N8}", iterator, prev.CandleData.MacdHistogram, last.CandleData.MacdHistogram);
+            //    }
+            //    else
+            //    {
+            //        //ExtraText = string.Format("De MACD[{0:N0}].Hist is niet roze {1:N8} {2:N8}", iterator, prev.CandleData.MacdHistogram, last.CandleData.MacdHistogram);
+            //        return false;
+            //    }
+            //}
 
             iterator--;
             last = prev;
@@ -271,32 +273,61 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
         return true;
     }
 
-    // Check if price goes down even more
-    public bool CheckPriceGoingDown(CryptoSignal signal)
-    {
-        if (CandleLast.Close <= signal.LastPrice)
-        {
-            // suppress messages
-            if (Symbol.LastPrice != CandleLast.Close)
-                ExtraText = $"Price {Symbol.LastPrice:N8} goes down even more {CandleLast.Close:N8}";
-            signal.LastPrice = CandleLast.Close;
-            return true;
-        }
+    //// Check if price goes down even more
+    //public bool CheckPriceGoingDown(CryptoSignal signal)
+    //{
+    //    if (CandleLast.Close <= signal.LastPrice)
+    //    {
+    //        // suppress messages
+    //        if (Symbol.LastPrice != CandleLast.Close)
+    //            ExtraText = $"Price {Symbol.LastPrice:N8} goes down even more {CandleLast.Close:N8}";
+    //        signal.LastPrice = CandleLast.Close;
+    //        return true;
+    //    }
 
-        // remember
-        signal.LastPrice = CandleLast.Close;
-        return false;
-    }
+    //    // remember
+    //    signal.LastPrice = CandleLast.Close;
+    //    return false;
+    //}
 
 
     public override bool AllowStepIn(CryptoSignal signal)
     {
-        // Deze routine is een beetje back to the basics, gewoon een nette SBM, vervolgens
-        // 2 MACD herstel candles, wat rsi en stoch condities om glijbanen te voorkomen
-
         if (!GetPrevCandle(CandleLast!, out CryptoCandle? candlePrev))
             return false;
 
+
+        // ********************************************************************
+        if (GlobalData.Settings.Trading.CheckSignalStrength)
+        {
+            // LongAvg is a positive number
+            if ((double)GlobalData.Settings.Trading.ProfitPercentage <= GlobalData.SignalStrength.LongAvg) 
+            {
+                ExtraText = $"Price {GlobalData.Settings.Trading.ProfitPercentage!:N2} signalstrength <= {GlobalData.SignalStrength.LongAvg:N2}";
+                return false;
+            }
+        }
+        
+
+        // ********************************************************************
+        if (GlobalData.Settings.Trading.CheckFurtherPriceMove)
+        {
+            if (CandleLast.Close <= candlePrev!.Close)
+            {
+                ExtraText = $"Price {candlePrev!.Close:N8} goes down even more {CandleLast.Close:N8}";
+                return false;
+            }
+
+            //if (CheckPriceGoingDown(signal))
+            //{
+            //    ExtraText = $"Price going down";
+            //    return false;
+            //}
+        }
+
+
+        // Deze routine is een beetje back to the basics, gewoon een nette SBM, vervolgens
+        // 2 MACD herstel candles, wat rsi en stoch condities om glijbanen te voorkomen
         // ********************************************************************
         // MACD
         if (GlobalData.Settings.Trading.CheckIncreasingMacd)
@@ -314,7 +345,7 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
         if (GlobalData.Settings.Trading.CheckIncreasingRsi)
         {
             // At least x which is kind of a minimum (normally 30-70), hardcoded because we can change it
-            double? boundary = 10;
+            double? boundary = 15;
             if (CandleLast?.CandleData!.Rsi < boundary)
             {
                 ExtraText = $"RSI {CandleLast?.CandleData!.Rsi:N8} not above {boundary:N0}";
@@ -356,7 +387,7 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
             // Blauw %K = Oscilator berekend over een lookback periode van 14 candles
 
             // At least x which is kind of a minimum (normally 20-80), hardcoded because we can change it
-            double? boundary = 10;
+            double? boundary = 12;
             if (CandleLast?.CandleData!.StochOscillator < boundary)
             {
                 ExtraText = $"Stoch.%K {CandleLast?.CandleData!.StochOscillator:N8} not above {boundary:N0}";
@@ -371,17 +402,12 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
             }
 
             // De %D en %K should moeten elkaar gekruist hebben. Dus %K(snel/blauw) > %D(traag/rood)
-            if (CandleLast?.CandleData?.StochSignal <= CandleLast?.CandleData?.StochOscillator)
+            if (CandleLast?.CandleData?.StochOscillator <= CandleLast?.CandleData?.StochSignal)
             {
                 ExtraText = $"Stoch.%D {candlePrev?.CandleData?.StochSignal:N8} not above %K {candlePrev?.CandleData?.StochOscillator:N8}";
                 return false;
             }
         }
-
-
-        // ********************************************************************
-        if (GlobalData.Settings.Trading.CheckFurtherPriceMove && CheckPriceGoingDown(signal))
-            return false;
 
 
         // Koop als de close vlak bij de bb.lower is (c.q. niet te ver naar boven zit)
