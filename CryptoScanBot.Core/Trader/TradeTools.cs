@@ -795,7 +795,7 @@ public class TradeTools
 
 
     static public async Task PlaceTakeProfitOrderAtPrice(CryptoDatabase database, CryptoPosition position, CryptoPositionPart part,
-        decimal takeProfitPrice, DateTime currentTime, string extraText)
+        decimal takeProfitPrice, decimal? tpStop, decimal? tpLimit, DateTime currentTime, string extraText)
     {
         CryptoSymbol symbol = position.Symbol;
 
@@ -873,7 +873,7 @@ public class TradeTools
         (bool result, TradeParams? tradeParams) result;
         var exchangeApi = ExchangeHelper.GetApiInstance();
         result = await exchangeApi.PlaceOrder(database, position, part, currentTime,
-            CryptoOrderType.Limit, takeProfitOrderSide, takeProfitQuantity, takeProfitPrice, null, null);
+                CryptoOrderType.Limit, takeProfitOrderSide, takeProfitQuantity, takeProfitPrice, tpStop, tpLimit);
         if (result.tradeParams is not null)
         {
             if (result.result)
