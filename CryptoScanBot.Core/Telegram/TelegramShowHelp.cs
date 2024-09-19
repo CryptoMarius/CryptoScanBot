@@ -11,13 +11,6 @@ public class TelegramShowHelp
         stringBuilder.AppendLine("stop          stop trade bot");
         stringBuilder.AppendLine("positions     show positions trade bot");
         stringBuilder.AppendLine("profits       show profits trade bot (today)");
-#if BALANCING
-        stringBuilder.AppendLine("balancestart  start balancing bot");
-        stringBuilder.AppendLine("balancestop   stop balancing bot");
-        stringBuilder.AppendLine("advicestart   start advice balancing bot");
-        stringBuilder.AppendLine("advicestop    stop advice balancing bot");
-        stringBuilder.AppendLine("balance       show balance overview");
-#endif
 
         stringBuilder.AppendLine("signalstart   start signal bot");
         stringBuilder.AppendLine("signalstop    stop signal bot");

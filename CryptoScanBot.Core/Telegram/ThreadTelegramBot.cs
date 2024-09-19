@@ -649,10 +649,6 @@ public class ThreadTelegramBotInstance
                                             StopBot("command balancing", stringBuilder);
                                         else if (command == "BAROMETER")
                                             TelegramShowBarometer.ShowBarometer(arguments, stringBuilder);
-#if BALANCING
-                                        else if (command == "BALANCE")
-                                            stringBuilder.Append(BalanceSymbolsAlgoritm.LastOverviewMessage);
-#endif
                                         else if (command == "ASSETS")
                                         {
                                             Helper.ShowAssets(GlobalData.ActiveAccount!, stringBuilder, out decimal _, out decimal _);

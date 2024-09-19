@@ -16,17 +16,6 @@ public class TelegramShowStatus
         else
             stringbuilder.AppendLine("Trade bot is not active!");
 
-#if BALANCING
-        // Balance bot status
-        if (GlobalData.Settings.BalanceBot.Active)
-            stringbuilder.AppendLine("Balance bot is active!");
-        else
-            stringbuilder.AppendLine("Balance bot is not active!");
-
-        // Balance bot advice status
-        if (GlobalData.Settings.BalanceBot.ShowAdviceOnly)
-            stringbuilder.AppendLine("Balance bot showing advice!");
-#endif
 
         // Create signals
         if (GlobalData.Settings.Signal.Active)

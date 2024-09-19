@@ -319,20 +319,6 @@ public partial class FrmSettings : Form
 
 
 
-        // ------------------------------------------------------------------------------
-        // Balance bot
-        // ------------------------------------------------------------------------------
-#if BALANCING
-        //EditBlanceBotActive.Checked = settings.BalanceBot.Active;
-        //numericStartAmount.Value = settings.BalanceBot.StartAmount;
-        //EditShowAdviceOnly.Checked = settings.BalanceBot.ShowAdviceOnly;
-        //EditIntervalPeriod.Value = settings.BalanceBot.IntervalPeriod;
-        //EditMinimalBuyBarometer.Value = settings.BalanceBot.MinimalBuyBarometer;
-        //EditMinimalSellBarometer.Value = settings.BalanceBot.MinimalSellBarometer;
-        //EditBuyBalanceThreshold.Value = settings.BalanceBot.BuyThresholdPercentage;
-        //EditSellBalanceThreshold.Value = settings.BalanceBot.SellThresholdPercentage;
-#endif
-
         // --------------------------------------------------------------------------------
         // Font (pas op het einde zodat de dynamisch gegenereerde controls netjes meesizen)
         // --------------------------------------------------------------------------------
@@ -581,19 +567,6 @@ public partial class FrmSettings : Form
         UserControlAltradyApi.SaveConfig(GlobalData.AltradyApi);
         UserControlExchangeApi.SaveConfig(GlobalData.TradingApi);
 
-        // ------------------------------------------------------------------------------
-        // Balance bot (out of action)
-        // ------------------------------------------------------------------------------
-#if BALANCING
-        //settings.BalanceBot.Active = EditBlanceBotActive.Checked;
-        //settings.BalanceBot.StartAmount = numericStartAmount.Value;
-        //settings.BalanceBot.IntervalPeriod = (int)EditIntervalPeriod.Value;
-        //settings.BalanceBot.ShowAdviceOnly = EditShowAdviceOnly.Checked;
-        //settings.BalanceBot.MinimalBuyBarometer = EditMinimalBuyBarometer.Value;
-        //settings.BalanceBot.MinimalSellBarometer = EditMinimalSellBarometer.Value;
-        //settings.BalanceBot.BuyThresholdPercentage = EditBuyBalanceThreshold.Value;
-        //settings.BalanceBot.SellThresholdPercentage = EditSellBalanceThreshold.Value;
-#endif
 
         DialogResult = DialogResult.OK;
     }

@@ -387,14 +387,6 @@ public class ThreadLoadData
 
                 if (GlobalData.TradingApi.Key != "")
                 {
-#if BALANCING
-                    //************************************************************************************
-                    // Nu we de achterstand ingehaald hebben kunnen/mogen we balancen
-                    //************************************************************************************
-                    GlobalData.AddTextToLogTab("Starting task for balancing assets");
-                    _ = Task.Run(async () => { await GlobalData.ThreadBalanceSymbols.ExecuteAsync(); });
-#endif
-
 
                     //************************************************************************************
                     // Alle data van de exchange monitoren

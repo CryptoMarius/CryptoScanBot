@@ -80,9 +80,6 @@ public static class ScannerSession
                 GlobalData.ThreadCheckPosition = new ThreadCheckFinishedPosition();
                 if (GlobalData.TradingApi.Key != "")
                     _ = ExchangeHelper.UserTicker!.StartAsync();
-#if BALANCING
-        GlobalData.ThreadBalanceSymbols = new ThreadBalanceSymbols();
-#endif
                 // Vanuit hybernate wachten ivm netwerk verbindingen..
                 if (delay > 0)
                     Thread.Sleep(delay);
@@ -146,11 +143,6 @@ public static class ScannerSession
                     task = Task.Run(async () => { await ExchangeHelper.UserTicker?.StopAsync(); });
                     taskList.Add(task);
                 }
-#if BALANCING
-                //GlobalData.ThreadBalanceSymbols?.Stop();
-                //task = Task.Run(async() => { await GlobalData.ThreadBalanceSymbols?.Stop(); });
-                //taskList.Add(task);
-#endif
 
                 if (ExchangeHelper.KLineTicker != null && !GlobalData.ApplicationIsClosing)
                 {

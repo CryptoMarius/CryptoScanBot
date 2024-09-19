@@ -138,9 +138,6 @@ static public class GlobalData
     public static ThreadMonitorCandle? ThreadMonitorCandle { get; set; }
     public static ThreadMonitorOrder? ThreadMonitorOrder { get; set; }
     public static ThreadCheckFinishedPosition? ThreadCheckPosition { get; set; }
-#if BALANCING
-    static public ThreadBalanceSymbols ThreadBalanceSymbols { get; set; }
-#endif
 
     // On special request of a hardcore trader..
     public static SymbolValue FearAndGreedIndex { get; set; } = new();
