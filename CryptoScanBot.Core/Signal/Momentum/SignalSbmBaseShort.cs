@@ -348,18 +348,6 @@ public class SignalSbmBaseShort(CryptoSymbol symbol, CryptoInterval interval, Cr
 
 
         // ********************************************************************
-        if (GlobalData.Settings.Trading.CheckSignalStrength)
-        {
-            // ShortAvg is a negative number
-            if (-(double)GlobalData.Settings.Trading.ProfitPercentage >= GlobalData.SignalStrength.ShortAvg)
-            {
-                ExtraText = $"Price {GlobalData.Settings.Trading.ProfitPercentage!:N2} signalstrength <= {GlobalData.SignalStrength.ShortAvg:N2}";
-                return false;
-            }
-        }
-        
-
-        // ********************************************************************
         if (GlobalData.Settings.Trading.CheckFurtherPriceMove)
         {
             if (CandleLast.Close >= candlePrev!.Close)
@@ -394,13 +382,13 @@ public class SignalSbmBaseShort(CryptoSymbol symbol, CryptoInterval interval, Cr
         // RSI decreasing
         if (GlobalData.Settings.Trading.CheckIncreasingRsi)
         {
-            // At least x which is kind of a minimum (normally 30-70), hardcoded because we can change it
-            double? boundary = 85;
-            if (CandleLast?.CandleData!.Rsi > boundary)
-            {
-                ExtraText = $"RSI {CandleLast?.CandleData!.Rsi:N8} not below {boundary:N0}";
-                return false;
-            }
+            //// At least x which is kind of a minimum (normally 30-70), hardcoded because we can change it
+            //double? boundary = 85;
+            //if (CandleLast?.CandleData!.Rsi > boundary)
+            //{
+            //    ExtraText = $"RSI {CandleLast?.CandleData!.Rsi:N8} not below {boundary:N0}";
+            //    return false;
+            //}
 
             // RSI should recover
             if (CandleLast?.CandleData?.Rsi >= candlePrev?.CandleData?.Rsi)
@@ -436,13 +424,13 @@ public class SignalSbmBaseShort(CryptoSymbol symbol, CryptoInterval interval, Cr
             // Rood %D = signal, het gemiddelde van de laatste 3 %K waarden
             // Blauw %K = Oscilator berekend over een lookback periode van 14 candles
 
-            // At least 80 which is kind of a minimum (normally 20-80), hardcoded because we can change it
-            double? boundary = 88;
-            if (CandleLast?.CandleData!.StochOscillator > boundary)
-            {
-                ExtraText = $"Stoch.%K {CandleLast?.CandleData!.StochOscillator:N8} not below {boundary:N0}";
-                return false;
-            }
+            //// At least 80 which is kind of a minimum (normally 20-80), hardcoded because we can change it
+            //double? boundary = 88;
+            //if (CandleLast?.CandleData!.StochOscillator > boundary)
+            //{
+            //    ExtraText = $"Stoch.%K {CandleLast?.CandleData!.StochOscillator:N8} not below {boundary:N0}";
+            //    return false;
+            //}
 
             // %K should recover
             if (CandleLast?.CandleData!.StochOscillator >= candlePrev?.CandleData?.StochOscillator)
