@@ -106,8 +106,8 @@ public class ExcelSignalsDump() : ExcelBase("Signals")
             //WriteCell(sheet, column++, row, signal.RemainingDust * signal.Symbol.LastPrice, CellStyleDecimalNormal);
 
             WriteCell(sheet, column++, row, signal.CloseDate.ToLocalTime(), CellStyleDate);
-            WriteCell(sheet, column++, row, signal.Price, CellStyleDecimalNormal);
-            WriteCell(sheet, column++, row, signal.Volume, CellStyleDecimalNormal);
+            WriteCell(sheet, column++, row, signal.SignalPrice, CellStyleDecimalNormal);
+            WriteCell(sheet, column++, row, signal.SignalVolume, CellStyleDecimalNormal);
             WriteCell(sheet, column++, row, TrendTools.TrendIndicatorText(signal.TrendIndicator));
             WriteCell(sheet, column++, row, signal.TrendPercentage, CellStyleDecimalNormal);
             WriteCell(sheet, column++, row, signal.Last24HoursChange, CellStyleDecimalNormal);
@@ -136,10 +136,12 @@ public class ExcelSignalsDump() : ExcelBase("Signals")
             WriteCell(sheet, column++, row, signal.Barometer4h, CellStyleDecimalNormal);
             WriteCell(sheet, column++, row, signal.Barometer1d, CellStyleDecimalNormal);
 
+#if DEBUG
             WriteCell(sheet, column++, row, signal.PriceMin, CellStyleDecimalNormal);
             WriteCell(sheet, column++, row, signal.PriceMax, CellStyleDecimalNormal);
             WriteCell(sheet, column++, row, signal.PriceMinPerc, CellStyleDecimalNormal);
             WriteCell(sheet, column++, row, signal.PriceMaxPerc, CellStyleDecimalNormal);
+#endif
         }
 
         AutoSize(sheet, columns);

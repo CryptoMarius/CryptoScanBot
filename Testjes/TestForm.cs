@@ -376,7 +376,7 @@ public partial class TestForm : Form
         s += " high " + signal.Candle.High.ToString();
         s += " low " + signal.Candle.Low.ToString();
         s += " close " + signal.Candle.Close.ToString();
-        //s += " volume " + alarm.Stick.Volume.ToString();
+        //s += " volume " + alarm.Stick.SignalVolume.ToString();
 
         stringBuilder.AppendLine(s);
         stringBuilder.AppendLine("Total 24 hour volume " + signal.Symbol.Volume.ToString("N0") + ", candles zonder volume " + signal.CandlesWithZeroVolume.ToString() + " van 60");
@@ -473,7 +473,7 @@ public partial class TestForm : Form
         //imageListLarge.Images.Add(Bitmap.FromFile(@"C:\inetpub\Sites\Cryptobot\wwwroot\images\coins\act.png"));
         //imageListLarge.Images.Add(Bitmap.FromFile(@"C:\inetpub\Sites\Cryptobot\wwwroot\images\coins\act.png"));
 
-        // Assign the ImageList objects to the ListView.
+        // AssignValues the ImageList objects to the ListView.
         //listView1.LargeImageList = imageListLarge;
         //listView1.SmallImageList = imageListSmall;
 
@@ -525,7 +525,7 @@ public partial class TestForm : Form
             };
 
             s = signal.Symbol.Base + "/" + @signal.Symbol.Quote;
-            decimal tickPercentage = 100 * signal.Symbol.PriceTickSize / signal.Price;
+            decimal tickPercentage = 100 * signal.Symbol.PriceTickSize / signal.SignalPrice;
             if (tickPercentage > 0.2m)
             {
                 s += tickPercentage.ToString("N2");
@@ -545,8 +545,8 @@ public partial class TestForm : Form
 
             item1.SubItems.Add(signal.StrategyText);
             item1.SubItems.Add(signal.EventText);
-            item1.SubItems.Add(signal.Price.ToString0());
-            item1.SubItems.Add(signal.Volume.ToString0("N0"));
+            item1.SubItems.Add(signal.SignalPrice.ToString0());
+            item1.SubItems.Add(signal.SignalVolume.ToString0("N0"));
             item1.SubItems.Add(signal.TrendIndicator.ToString());
 
             if (signal.TrendPercentage < 0)
@@ -1266,7 +1266,7 @@ public partial class TestForm : Form
 
 
                                 // is in de afgelopen 25 candles er een oversold situatie geweest
-                                // Of is er een RSI oversold geweest
+                                // Of is er een Rsi oversold geweest
 
                                 int count = 25;
                                 for (int y = x; y > 0; y--)
@@ -2113,14 +2113,14 @@ public partial class TestForm : Form
         //                            candleTmp.High = decimal.Parse(items[2]);
         //                            candleTmp.Low = decimal.Parse(items[3]);
         //                            candleTmp.Close = decimal.Parse(items[4]);
-        //                            candleTmp.Volume = decimal.Parse(items[7]);
+        //                            candleTmp.SignalVolume = decimal.Parse(items[7]);
         //                            //6=closetime
         //                            //7=Quote asset volume (wellicht deze?)
         //                            //SaveCandle?
 
         //                            // Vul het aan met andere attributen
         //                            CryptoCandle candle = CandleTools.HandleFinalCandleData(symbol, interval, candleTmp.Date,
-        //                                candleTmp.Open, candleTmp.High, candleTmp.Low, candleTmp.Close, candleTmp.Volume, false);
+        //                                candleTmp.Open, candleTmp.High, candleTmp.Low, candleTmp.Close, candleTmp.SignalVolume, false);
         //                            candleCache.Add(candle);
         //                        }
 
@@ -2533,7 +2533,7 @@ public partial class TestForm : Form
                 CryptoSignal signal = new()
                 {
                     OpenDate = DateTime.UtcNow.AddHours(SignalList.Count),
-                    Price = 0.12345m,
+                    SignalPrice = 0.12345m,
                     Symbol = symbol,
                     Exchange = exchange,
                     Interval = GlobalData.IntervalList[3],
@@ -2555,9 +2555,9 @@ public partial class TestForm : Form
                     signal.Strategy = CryptoSignalStrategy.Stobb;
 
                 if (i % 2 == 0)
-                    signal.Symbol.LastPrice = signal.Price - 1;
+                    signal.Symbol.LastPrice = signal.SignalPrice - 1;
                 else 
-                    signal.Symbol.LastPrice = signal.Price + 1;
+                    signal.Symbol.LastPrice = signal.SignalPrice + 1;
 
                 signal.Last24HoursChange = 12345.12;
                 signal.Last24HoursEffective= 82345.12;
@@ -2572,7 +2572,7 @@ public partial class TestForm : Form
                 SignalList.Add(signal);
 
                 symbol.Volume = SignalList.Count * 12345678.01m;
-                signal.Volume = symbol.Volume;
+                signal.SignalVolume = symbol.Volume;
                 signal.TrendIndicator = CryptoTrendIndicator.Bearish;
                 signal.TrendPercentage = 85.85f;
                 symbol.FundingRate = 0.0001m;
@@ -2598,7 +2598,7 @@ public partial class TestForm : Form
                 CryptoSignal signal = new()
                 {
                     OpenDate = DateTime.UtcNow.AddHours(SignalList.Count),
-                    Price = 0.12345m,
+                    SignalPrice = 0.12345m,
                     Symbol = symbol,
                     Exchange = exchange,
                     Side = CryptoTradeSide.Long,
@@ -2613,7 +2613,7 @@ public partial class TestForm : Form
                 CryptoSignal signal = new()
                 {
                     OpenDate = DateTime.UtcNow.AddHours(SignalList.Count),
-                    Price = 0.12345m,
+                    SignalPrice = 0.12345m,
                     Symbol = symbol,
                     Exchange = exchange,
                     Interval = GlobalData.IntervalList[5],
@@ -2628,7 +2628,7 @@ public partial class TestForm : Form
                 CryptoSignal signal = new()
                 {
                     OpenDate = DateTime.UtcNow.AddHours(SignalList.Count),
-                    Price = 0.12345m,
+                    SignalPrice = 0.12345m,
                     Symbol = symbol,
                     Exchange = exchange,
                     Side = CryptoTradeSide.Long,
@@ -2643,7 +2643,7 @@ public partial class TestForm : Form
                 CryptoSignal signal = new()
                 {
                     OpenDate = DateTime.UtcNow.AddHours(SignalList.Count),
-                    Price = 0.12345m,
+                    SignalPrice = 0.12345m,
                     Symbol = symbol,
                     Exchange = exchange,
                     Interval = GlobalData.IntervalList[5],
@@ -2671,7 +2671,7 @@ public partial class TestForm : Form
                 CryptoSignal signal = new()
                 {
                     OpenDate = DateTime.UtcNow.AddHours(SignalList.Count),
-                    Price = 0.12345m,
+                    SignalPrice = 0.12345m,
                     Symbol = symbol,
                     Exchange = exchange,
                     Side = CryptoTradeSide.Long,

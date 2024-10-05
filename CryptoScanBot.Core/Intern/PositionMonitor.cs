@@ -578,7 +578,7 @@ public class PositionMonitor : IDisposable
                             Database.Connection.Insert(position);
                             PositionTools.AddPosition(TradeAccount, position);
                             PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.Entry, signal.Interval, signal.Strategy,
-                                CryptoEntryOrDcaStrategy.AfterNextSignal, signal.Price, LastCandle1mCloseTimeDate);
+                                CryptoEntryOrDcaStrategy.AfterNextSignal, signal.SignalPrice, LastCandle1mCloseTimeDate);
                         }
                         finally
                         {
@@ -595,8 +595,8 @@ public class PositionMonitor : IDisposable
                     {
                         // long positie: Alleen bijkopen als we ONDER de break-even prijs zitten
                         // short positie: Alleen bijkopen als we BOVEN de break-even prijs zitten
-                        if ((position.Side == CryptoTradeSide.Long && signal.Price < position.BreakEvenPrice) ||
-                            (position.Side == CryptoTradeSide.Short && signal.Price > position.BreakEvenPrice))
+                        if ((position.Side == CryptoTradeSide.Long && signal.SignalPrice < position.BreakEvenPrice) ||
+                            (position.Side == CryptoTradeSide.Short && signal.SignalPrice > position.BreakEvenPrice))
                         {
                             // En een paar aanvullende condities...
                             if (!CanOpenAdditionalDca(position, out CryptoPositionStep? step, out decimal percentage, out decimal dcaPrice, out reaction))
