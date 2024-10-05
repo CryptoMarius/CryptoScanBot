@@ -14,16 +14,16 @@ public partial class DashBoardInformation : UserControl
 {
     private class InformationRow
     {
-        public Label SymbolName { get; set; }
-        public Label SymbolPrice { get; set; }
-        public Label SymbolVolume { get; set; }
+        public required Label SymbolName { get; set; }
+        public required Label SymbolPrice { get; set; }
+        public required Label SymbolVolume { get; set; }
 
-        public Label Symbol2Name { get; set; }
-        public Label Symbol2Value { get; set; }
-        public SymbolValue Symbol2Object { get; set; }
+        public required Label Symbol2Name { get; set; }
+        public required Label Symbol2Value { get; set; }
+        public required SymbolValue Symbol2Object { get; set; }
 
-        public Label InfoName { get; set; }
-        public Label InfoValue { get; set; }
+        public required Label InfoName { get; set; }
+        public required Label InfoValue { get; set; }
     }
 
     private class SymbolHist

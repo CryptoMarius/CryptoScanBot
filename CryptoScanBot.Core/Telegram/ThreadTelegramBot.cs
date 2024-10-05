@@ -23,7 +23,7 @@ namespace CryptoScanBot.Core.Telegram;
 // 1: Choose a name for your bot: <BotName>
 // 2: Choose a username for your bot: <BotName>Bot
 //
-// Copy the Token (4105020626:AAFGrpm2gmBhX7Oi5AnM2sQjTooG-zerX2g)
+// Copy the Token (like:1234567890:12345678901234567890123456789012345)
 // Paste it into the "Telegram Token" field of the Scanner telegram settings 
 
 // Go the suggested Chat BotFather created

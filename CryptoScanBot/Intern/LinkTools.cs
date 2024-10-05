@@ -11,11 +11,11 @@ public static class LinkTools
     private static bool WebViewDummyInitialized;
     private static bool WebViewTradingViewInitialized;
 
-    public static TabControl TabControl;
-    public static TabPage TabPageBrowser;
+    public static TabControl? TabControl;
+    public static TabPage? TabPageBrowser;
 
-    public static Microsoft.Web.WebView2.WinForms.WebView2 WebViewDummy;
-    public static Microsoft.Web.WebView2.WinForms.WebView2 WebViewTradingView;
+    public static Microsoft.Web.WebView2.WinForms.WebView2? WebViewDummy;
+    public static Microsoft.Web.WebView2.WinForms.WebView2? WebViewTradingView;
 
 
     private static async Task InitializeWebView(Microsoft.Web.WebView2.WinForms.WebView2 webView2)

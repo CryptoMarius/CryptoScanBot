@@ -277,7 +277,7 @@ public class Candle
 
     public static async Task GetCandlesForSymbolAsync(CryptoSymbol symbol, long fetchEndUnix)
     {
-        if (!symbol.IsSpotTradingAllowed || symbol.Status == 0 || symbol.IsBarometerSymbol() || !symbol.QuoteData.FetchCandles)
+        if (!symbol.IsSpotTradingAllowed || symbol.Status == 0 || symbol.IsBarometerSymbol() || !symbol.QuoteData!.FetchCandles)
             return;
 
         //GlobalData.AddTextToLogTab($"Fetching historical candles {symbol.Name}");

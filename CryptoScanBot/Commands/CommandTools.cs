@@ -10,7 +10,7 @@ namespace CryptoScanBot.Commands;
 
 public class CommandTools
 {
-    public static (bool succes, Core.Model.CryptoExchange exchange, CryptoSymbol symbol, CryptoSignal signal, CryptoInterval interval, CryptoPosition position)
+    public static (bool succes, Core.Model.CryptoExchange? exchange, CryptoSymbol? symbol, CryptoSignal? signal, CryptoInterval? interval, CryptoPosition? position)
         GetAttributesFromSender(object sender)
     {
         return sender switch
@@ -61,7 +61,7 @@ public class CommandTools
 
 
             // All the other command need an object
-            if (item.DataGrid is CryptoDataGrid dataGrid)
+            if (item.DataGrid is CryptoDataGrid dataGrid && dataGrid.SelectedObject != null)
             {
                 var (succes, exchange, symbol, signal, interval, position) = GetAttributesFromSender(dataGrid.SelectedObject);
                 if (succes)
@@ -69,7 +69,8 @@ public class CommandTools
                     switch (item.Command)
                     {
                         case Command.CopySymbolInformation:
-                            new CommandCopySymbolInfo().Execute(symbol);
+                            if (symbol != null)
+                                new CommandCopySymbolInfo().Execute(symbol);
                             break;
                         case Command.ActivateTradingApp:
                             CryptoExternalUrlType tradingAppInternExtern = CryptoExternalUrlType.External;
@@ -77,52 +78,65 @@ public class CommandTools
                             if (GlobalData.Settings.General.TradingApp == CryptoTradingApp.TradingView || GlobalData.Settings.General.TradingApp == CryptoTradingApp.ExchangeUrl)
                                 tradingAppInternExtern = GlobalData.Settings.General.TradingAppInternExtern;
                             GlobalData.LoadLinkSettings(); // refresh links
-                            LinkTools.ActivateTradingApp(GlobalData.Settings.General.TradingApp, symbol, interval, tradingAppInternExtern);
+                            if (symbol != null && interval != null)
+                                LinkTools.ActivateTradingApp(GlobalData.Settings.General.TradingApp, symbol, interval, tradingAppInternExtern);
                             break;
                         case Command.ActivateActiveExchange:
                             GlobalData.LoadLinkSettings(); // refresh links
-                            LinkTools.ActivateTradingApp(CryptoTradingApp.ExchangeUrl, symbol, interval, CryptoExternalUrlType.External);
+                            if (symbol != null && interval != null)
+                                LinkTools.ActivateTradingApp(CryptoTradingApp.ExchangeUrl, symbol, interval, CryptoExternalUrlType.External);
                             break;
                         case Command.ActivateTradingviewIntern:
                             GlobalData.LoadLinkSettings(); // refresh links
-                            LinkTools.ActivateTradingApp(CryptoTradingApp.TradingView, symbol, interval, CryptoExternalUrlType.Internal);
+                            if (symbol != null && interval != null)
+                                LinkTools.ActivateTradingApp(CryptoTradingApp.TradingView, symbol, interval, CryptoExternalUrlType.Internal);
                             break;
                         case Command.ActivateTradingviewExtern:
                             GlobalData.LoadLinkSettings(); // refresh links
-                            LinkTools.ActivateTradingApp(CryptoTradingApp.TradingView, symbol, interval, CryptoExternalUrlType.External);
+                            if (symbol != null && interval != null)
+                                LinkTools.ActivateTradingApp(CryptoTradingApp.TradingView, symbol, interval, CryptoExternalUrlType.External);
                             break;
                         case Command.ShowTrendInformation:
-                            new CommandShowTrendInfo().Execute(symbol);
+                            if (symbol != null)
+                                new CommandShowTrendInfo().Execute(symbol);
                             break;
                         case Command.ExcelSignalInformation:
-                            _ = Task.Run(() => { new ExcelSignalDump(signal).ExportToExcel(); });
+                            if (signal != null)
+                                _ = Task.Run(() => { new ExcelSignalDump(signal).ExportToExcel(); });
                             break;
                         case Command.ExcelSymbolInformation:
-                            _ = Task.Run(() => { new ExcelSymbolDump(symbol).ExportToExcel(); });
+                            if (symbol != null)
+                                _ = Task.Run(() => { new ExcelSymbolDump(symbol).ExportToExcel(); });
                             break;
                         case Command.PositionCalculate:
-                            using (CryptoDatabase databaseThread = new())
+                            if (position != null)
                             {
-                                if (position.Status >= CryptoPositionStatus.Ready)
+                                using (CryptoDatabase databaseThread = new())
                                 {
-                                    databaseThread.Open();
-                                    PositionTools.LoadPosition(databaseThread, position);
+                                    if (position.Status >= CryptoPositionStatus.Ready)
+                                    {
+                                        databaseThread.Open();
+                                        PositionTools.LoadPosition(databaseThread, position);
+                                    }
+                                    GlobalData.AddTextToLogTab($"{position.Symbol.Name} position {position.Id} recalculate manual");
+                                    await TradeTools.CalculatePositionResultsViaOrders(databaseThread, position, forceCalculation: true);
                                 }
-                                GlobalData.AddTextToLogTab($"{position.Symbol.Name} position {position.Id} recalculate manual");
-                                await TradeTools.CalculatePositionResultsViaOrders(databaseThread, position, forceCalculation: true);
                             }
                             break;
                         case Command.ExcelPositionInformation:
-                            using (CryptoDatabase databaseThread = new())
+                            if (position != null)
                             {
-                                if (position.Status >= CryptoPositionStatus.Ready)
+                                using (CryptoDatabase databaseThread = new())
                                 {
-                                    databaseThread.Open();
-                                    PositionTools.LoadPosition(databaseThread, position);
+                                    if (position.Status >= CryptoPositionStatus.Ready)
+                                    {
+                                        databaseThread.Open();
+                                        PositionTools.LoadPosition(databaseThread, position);
+                                    }
+                                    GlobalData.AddTextToLogTab($"{position.Symbol.Name} position {position.Id} manual for Excel");
+                                    await TradeTools.CalculatePositionResultsViaOrders(databaseThread, position, forceCalculation: true);
+                                    _ = Task.Run(() => { new ExcelPositionDump(position).ExportToExcel(); });
                                 }
-                                GlobalData.AddTextToLogTab($"{position.Symbol.Name} position {position.Id} manual for Excel");
-                                await TradeTools.CalculatePositionResultsViaOrders(databaseThread, position, forceCalculation: true);
-                                _ = Task.Run(() => { new ExcelPositionDump(position).ExportToExcel(); });
                             }
                             break;
                     }
@@ -131,8 +145,8 @@ public class CommandTools
         }
     }
 
-    public static void ExecuteCommand(object? sender, EventArgs? e)
+    public static void ExecuteCommand(object sender, EventArgs e)
     {
-        ExecuteCommandAsync(sender, e);
+        _ = ExecuteCommandAsync(sender, e);
     }
 }
