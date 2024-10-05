@@ -100,7 +100,6 @@ public class SettingsTrading
     public bool CheckIncreasingMacd { get; set; } = false;
     public bool CheckIncreasingStoch { get; set; } = false;
     public bool CheckFurtherPriceMove { get; set; } = false;
-    public bool CheckSignalStrength { get; set; } = false;
 
 
     //***************************
