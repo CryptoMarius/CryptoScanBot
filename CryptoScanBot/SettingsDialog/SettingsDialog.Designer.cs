@@ -40,6 +40,7 @@ partial class FrmSettings
         tabGeneral = new TabPage();
         flowLayoutPanel5 = new FlowLayoutPanel();
         groupBox1 = new GroupBox();
+        EditHideSelectedRow = new CheckBox();
         EditDebugSymbol = new TextBox();
         LabelDebugSymbol = new Label();
         EditDebugSignalStrength = new CheckBox();
@@ -208,7 +209,6 @@ partial class FrmSettings
         label73 = new Label();
         EditGlobalBuyCooldownTime = new NumericUpDown();
         groupBoxInstap = new GroupBox();
-        EditCheckSignalStrength = new CheckBox();
         EditCheckFurtherPriceMove = new CheckBox();
         EditCheckIncreasingMacd = new CheckBox();
         EditCheckIncreasingStoch = new CheckBox();
@@ -256,7 +256,6 @@ partial class FrmSettings
         panel6 = new Panel();
         label49 = new Label();
         toolTip1 = new ToolTip(components);
-        EditHideSelectedRow = new CheckBox();
         panelButtons.SuspendLayout();
         panelFill.SuspendLayout();
         tabControlMain.SuspendLayout();
@@ -519,6 +518,17 @@ partial class FrmSettings
         groupBox1.TabIndex = 249;
         groupBox1.TabStop = false;
         groupBox1.Text = "Algemeen";
+        // 
+        // EditHideSelectedRow
+        // 
+        EditHideSelectedRow.AutoSize = true;
+        EditHideSelectedRow.Location = new Point(12, 320);
+        EditHideSelectedRow.Margin = new Padding(4, 3, 4, 3);
+        EditHideSelectedRow.Name = "EditHideSelectedRow";
+        EditHideSelectedRow.Size = new Size(145, 19);
+        EditHideSelectedRow.TabIndex = 295;
+        EditHideSelectedRow.Text = "Verberg selectie in grid";
+        EditHideSelectedRow.UseVisualStyleBackColor = true;
         // 
         // EditDebugSymbol
         // 
@@ -2413,7 +2423,6 @@ partial class FrmSettings
         // 
         // groupBoxInstap
         // 
-        groupBoxInstap.Controls.Add(EditCheckSignalStrength);
         groupBoxInstap.Controls.Add(EditCheckFurtherPriceMove);
         groupBoxInstap.Controls.Add(EditCheckIncreasingMacd);
         groupBoxInstap.Controls.Add(EditCheckIncreasingStoch);
@@ -2425,17 +2434,6 @@ partial class FrmSettings
         groupBoxInstap.TabIndex = 346;
         groupBoxInstap.TabStop = false;
         groupBoxInstap.Text = "Instap condities";
-        // 
-        // EditCheckSignalStrength
-        // 
-        EditCheckSignalStrength.AutoSize = true;
-        EditCheckSignalStrength.Location = new Point(21, 115);
-        EditCheckSignalStrength.Margin = new Padding(4, 3, 4, 3);
-        EditCheckSignalStrength.Name = "EditCheckSignalStrength";
-        EditCheckSignalStrength.Size = new Size(160, 19);
-        EditCheckSignalStrength.TabIndex = 335;
-        EditCheckSignalStrength.Text = "Controleer signaal sterkte";
-        EditCheckSignalStrength.UseVisualStyleBackColor = true;
         // 
         // EditCheckFurtherPriceMove
         // 
@@ -2932,17 +2930,6 @@ partial class FrmSettings
         label49.TabIndex = 222;
         label49.Text = "(1 munt per regel met een optionele opmerking erachter)";
         // 
-        // EditHideSelectedRow
-        // 
-        EditHideSelectedRow.AutoSize = true;
-        EditHideSelectedRow.Location = new Point(12, 320);
-        EditHideSelectedRow.Margin = new Padding(4, 3, 4, 3);
-        EditHideSelectedRow.Name = "EditHideSelectedRow";
-        EditHideSelectedRow.Size = new Size(145, 19);
-        EditHideSelectedRow.TabIndex = 295;
-        EditHideSelectedRow.Text = "Verberg selectie in grid";
-        EditHideSelectedRow.UseVisualStyleBackColor = true;
-        // 
         // FrmSettings
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
@@ -3326,7 +3313,6 @@ partial class FrmSettings
     private Label label22;
     private NumericUpDown EditBbStdDeviation;
     private CheckBox EditDebugSignalStrength;
-    private CheckBox EditCheckSignalStrength;
     private TextBox EditDebugSymbol;
     private Label LabelDebugSymbol;
     private CheckBox EditHideSelectedRow;

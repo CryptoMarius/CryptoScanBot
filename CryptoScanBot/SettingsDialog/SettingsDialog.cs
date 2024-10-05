@@ -289,7 +289,6 @@ public partial class FrmSettings : Form
         EditCheckIncreasingMacd.Checked = settings.Trading.CheckIncreasingMacd;
         EditCheckIncreasingStoch.Checked = settings.Trading.CheckIncreasingStoch;
         EditCheckFurtherPriceMove.Checked = settings.Trading.CheckFurtherPriceMove;
-        EditCheckSignalStrength.Checked = settings.Trading.CheckSignalStrength;
 
         // Entry/Dca/Tp/Sl
         UserControlTradeEntry.LoadConfig(settings.Trading);
@@ -441,6 +440,7 @@ public partial class FrmSettings : Form
         settings.Signal.Stobb.OnlyIfPreviousStobb = EditStobOnlyIfPreviousStobb.Checked;
         settings.Signal.Stobb.TrendLong = EditStobTrendLong.Value;
         settings.Signal.Stobb.TrendShort = EditStobTrendShort.Value;
+        settings.Signal.Stobb.UseLowHigh = EditStobbUseLowHigh.Checked;
 
 
         // SBM
@@ -448,7 +448,7 @@ public partial class FrmSettings : Form
 
         settings.Signal.Sbm.BBMinPercentage = (double)EditSbmBBMinPercentage.Value;
         settings.Signal.Sbm.BBMaxPercentage = (double)EditSbmBBMaxPercentage.Value;
-        settings.Signal.Sbm.UseLowHigh = EditStobbUseLowHigh.Checked;
+        settings.Signal.Sbm.UseLowHigh = EditSbmUseLowHigh.Checked;
 
         // SBM 1
         settings.Signal.Sbm.Sbm1CandlesLookbackCount = (int)EditSbm1CandlesLookbackCount.Value;
@@ -548,8 +548,7 @@ public partial class FrmSettings : Form
         settings.Trading.CheckIncreasingMacd = EditCheckIncreasingMacd.Checked;
         settings.Trading.CheckIncreasingStoch = EditCheckIncreasingStoch.Checked;
         settings.Trading.CheckFurtherPriceMove = EditCheckFurtherPriceMove.Checked;
-        settings.Trading.CheckSignalStrength = EditCheckSignalStrength.Checked;
-
+        
         // Entry/Dca/Tp/Sl
         UserControlTradeEntry.SaveConfig(settings.Trading);
         UserControlTradeDca.SaveConfig(settings.Trading);
