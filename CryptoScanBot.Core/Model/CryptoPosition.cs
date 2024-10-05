@@ -10,7 +10,7 @@ namespace CryptoScanBot.Core.Model;
 /// Een position is 1 een samenvatting van 1 of meerdere orders
 /// </summary>
 [Table("Position")]
-public class CryptoPosition
+public class CryptoPosition : CryptoData2
 {
     [Key]
     public int Id { get; set; }
@@ -34,17 +34,8 @@ public class CryptoPosition
     [Computed]
     public required CryptoInterval? Interval { get; set; }
 
-    public CryptoTradeSide Side { get; set; }
-    [Computed]
-    public string SideText { get { return Side.ToString().ToLower(); } }
-    //switch { CryptoTradeSide.Long => "long", CryptoTradeSide.Short => "short", _ => "?", }; } }
-
     [Computed]
     public string DisplayText { get { return Symbol.Name + " " + Interval!.Name + " " + CreateTime.ToLocalTime() + " " + SideText + " " + StrategyText; } }
-
-    public CryptoSignalStrategy Strategy { get; set; }
-    [Computed]
-    public string StrategyText { get { return SignalHelper.GetAlgorithm(Strategy); } }
 
     // Globale status van de positie (new, closed, wellicht andere enum?)
     public CryptoPositionStatus? Status { get; set; }
@@ -91,77 +82,7 @@ public class CryptoPosition
     /// --------------------------------------------------------------
     /// added from the signal...
     /// --------------------------------------------------------------
-    public DateTime SignalEventTime { get; set; }
-    public decimal SignalPrice { get; set; }
-    public decimal SignalVolume { get; set; }
-
-    public double Last24HoursChange { get; set; }
-    public double Last24HoursEffective { get; set; }
-    public double Last10DaysEffective { get; set; }
-
-    public float TrendPercentage { get; set; }
-    public CryptoTrendIndicator TrendIndicator { get; set; }
-
-    // Stochastic waarden
-    public double? StochOscillator { get; set; } // Stochastic oscillator %K
-    public double? StochSignal { get; set; }  // Stochastic oscillator %D
-
-    // Bollinger Bands
-    public double? BollingerBandsUpperBand { get; set; }
-    public double? BollingerBandsLowerBand { get; set; }
-    public double? BollingerBandsPercentage { get; set; }
-
-    // PSAR waarden
-    public double? PSar { get; set; }
-
-    //public double? KeltnerUpperBand { get; set; }
-    //public double? KeltnerLowerBand { get; set; }
-
-    // RSI waarden
-    public double? Rsi { get; set; }
-    //public double? SlopeRsi { get; set; }
-
-    public int LuxIndicator5m { get; set; }
-
-    //uitgezet
-    ////public double? Ema8 { get; set; }
-    //public double? Ema20 { get; set; }
-    //public double? Ema50 { get; set; }
-    ////public double? Ema100 { get; set; }
-    //public double? Ema200 { get; set; }
-    //public double? SlopeEma20 { get; set; }
-    //public double? SlopeEma50 { get; set; }
-
-    // SMA waarden
-    //public double? Sma8 { get; set; }
-    public double? Sma20 { get; set; }
-    public double? Sma50 { get; set; }
-    //public double? Sma100 { get; set; }
-    public double? Sma200 { get; set; }
-    //public double? SlopeSma20 { get; set; } uitgezet
-    //public double? SlopeSma50 { get; set; } uitgezet
-
-
-    // Wellicht introduceren en weghalen uit de "Alarm"?
-    public int CandlesWithZeroVolume { get; set; } // Candles zonder volume
-    public int CandlesWithFlatPrice { get; set; } // De zogenaamde platte candles
-    public int AboveBollingerBandsSma { get; set; } // Aantal candles die boven de BB.Sma uitkomen
-    public int AboveBollingerBandsUpper { get; set; } // Aantal candles die boven de BB.Upper uitkomen
-
-    // Barometers
-    public decimal? Barometer15m { get; set; }
-    public decimal? Barometer30m { get; set; }
-    public decimal? Barometer1h { get; set; }
-    public decimal? Barometer4h { get; set; }
-    public decimal? Barometer1d { get; set; }
-
-    // Trend
-    public CryptoTrendIndicator? Trend15m { get; set; }
-    public CryptoTrendIndicator? Trend30m { get; set; }
-    public CryptoTrendIndicator? Trend1h { get; set; }
-    public CryptoTrendIndicator? Trend4h { get; set; }
-    public CryptoTrendIndicator? Trend1d { get; set; }
-
+    public DateTime SignalEventTime { get; set; } // close date candle which triggered the signal
 
     [Computed]
     public DateTime? DelayUntil { get; set; }

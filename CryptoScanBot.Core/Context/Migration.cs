@@ -8,7 +8,7 @@ namespace CryptoScanBot.Core.Context;
 public class Migration
 {
     // De huidige database versie
-    public readonly static int CurrentDatabaseVersion = 26;
+    public readonly static int CurrentDatabaseVersion = 28;
 
 
     public static void Execute(CryptoDatabase database, int CurrentVersion)
@@ -759,6 +759,52 @@ public class Migration
         }
 
 
+        //***********************************************************
+        // 04-10-2024, added slopes + make signal and position table more the same
+        if (CurrentVersion > version.Version && version.Version == 26)
+        {
+            using var transaction = database.BeginTransaction();
+
+            database.Connection.Execute("alter table Signal add SlopeSma100 Text null", transaction);
+            database.Connection.Execute("alter table Position add SlopeSma100 Text null", transaction);
+
+            database.Connection.Execute("alter table Signal add SlopeSma200 Text null", transaction);
+            database.Connection.Execute("alter table Position add SlopeSma200 Text null", transaction);
+
+            database.Connection.Execute("alter table Signal add MacDValue Text null", transaction);
+            database.Connection.Execute("alter table Signal add MacdSignal Text null", transaction);
+            database.Connection.Execute("alter table Signal add MacdHistogram Text null", transaction);
+
+            database.Connection.Execute("alter table Position add MacDValue Text null", transaction);
+            database.Connection.Execute("alter table Position add MacdSignal Text null", transaction);
+            database.Connection.Execute("alter table Position add MacdHistogram Text null", transaction);
+
+            database.Connection.Execute("alter table Position add BollingerBandsDeviation Text null", transaction);
+            database.Connection.Execute("alter table Position drop column BollingerBandsLowerBand", transaction);
+            database.Connection.Execute("alter table Position drop column BollingerBandsUpperBand", transaction);
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+
+        //***********************************************************
+        // 04-10-2024, make signal and position table more the same
+        if (CurrentVersion > version.Version && version.Version == 27)
+        {
+            using var transaction = database.BeginTransaction();
+
+            database.Connection.Execute("alter table Signal rename column Price to SignalPrice", transaction);
+            database.Connection.Execute("alter table Signal rename column Volume to SignalVolume", transaction);
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
     }
 }
 

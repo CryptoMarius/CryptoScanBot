@@ -361,8 +361,6 @@ public class CryptoDatabase : IDisposable
 
                 "StochSignal TEXT NULL," +
                 "StochOscillator TEXT NULL," +
-                //"BollingerBandsLowerBand TEXT NULL," +
-                //"BollingerBandsUpperBand TEXT NULL," +
                 "BollingerBandsDeviation TEXT NULL," +
                 "BollingerBandsPercentage TEXT NULL," +
 
@@ -373,23 +371,24 @@ public class CryptoDatabase : IDisposable
                 "SlopeRsi TEXT NULL," +
 
                 "Psar TEXT NULL," +
-                //"PSarDave TEXT NULL," +
-                //"PSarJason TEXT NULL," +
-                //"PSarTulip TEXT NULL," +
 
-                "sma20 TEXT NULL," +
-                "ema50 TEXT NULL," +
-                "ema100 TEXT NULL," +
-                "ema200 TEXT NULL," +
+                "Ema20 TEXT NULL," +
                 "SlopeEma20 TEXT NULL," +
+                "Ema50 TEXT NULL," +
                 "SlopeEma50 TEXT NULL," +
+                "Ema100 TEXT NULL," +
+                "SlopeEma100 TEXT NULL," +
+                "Ema200 TEXT NULL," +
+                "SlopeEma200 TEXT NULL," +
 
-                "ema20 TEXT NULL," +
-                "sma200 TEXT NULL," +
-                "sma100 TEXT NULL," +
-                "sma50 TEXT NULL," +
-                "SlopeSma50 TEXT NULL," +
+                "Sma20 TEXT NULL," +
                 "SlopeSma20 TEXT NULL," +
+                "Sma50 TEXT NULL," +
+                "SlopeSma50 TEXT NULL," +
+                "Sma100 TEXT NULL," +
+                "SlopeSma100 TEXT NULL," +
+                "Sma200 TEXT NULL," +
+                "SlopeSma200 TEXT NULL," +
 
                 "LuxIndicator5m TEXT NULL," +
 
@@ -487,8 +486,7 @@ public class CryptoDatabase : IDisposable
                 "StochSignal TEXT NULL," +
                 "StochOscillator TEXT NULL," +
 
-                "BollingerBandsLowerBand TEXT NULL," +
-                "BollingerBandsUpperBand TEXT NULL," +
+                "BollingerBandsDeviation TEXT NULL," +
                 "BollingerBandsPercentage TEXT NULL," +
 
                 "KeltnerLowerBand TEXT NULL," +
@@ -499,19 +497,23 @@ public class CryptoDatabase : IDisposable
 
                 "Psar TEXT NULL," +
 
-                "sma20 TEXT NULL," +
-                "ema50 TEXT NULL," +
-                "ema100 TEXT NULL," +
-                "ema200 TEXT NULL," +
+                "Ema20 TEXT NULL," +
                 "SlopeEma20 TEXT NULL," +
+                "Ema50 TEXT NULL," +
                 "SlopeEma50 TEXT NULL," +
+                "Ema100 TEXT NULL," +
+                "SlopeEma100 TEXT NULL," +
+                "Ema200 TEXT NULL," +
+                "SlopeEma200 TEXT NULL," +
 
-                "ema20 TEXT NULL," +
-                "sma200 TEXT NULL," +
-                "sma100 TEXT NULL," +
-                "sma50 TEXT NULL," +
-                "SlopeSma50 TEXT NULL," +
+                "Sma20 TEXT NULL," +
                 "SlopeSma20 TEXT NULL," +
+                "Sma50 TEXT NULL," +
+                "SlopeSma50 TEXT NULL," +
+                "Sma100 TEXT NULL," +
+                "SlopeSma100 TEXT NULL," +
+                "Sma200 TEXT NULL," +
+                "SlopeSma200 TEXT NULL," +
 
                 "LuxIndicator5m TEXT NULL," +
 

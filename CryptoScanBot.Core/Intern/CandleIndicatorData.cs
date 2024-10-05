@@ -5,46 +5,15 @@ using Skender.Stock.Indicators;
 
 namespace CryptoScanBot.Core.Intern;
 
-public class CandleIndicatorData
+public class CandleIndicatorData: CryptoData
 {
+    private const int SlopeCount = 2;
+
+    // Test
+    public double? Ema9 { get; set; }
+    public double? Wma30 { get; set; }
     public double? Tema { get; set; }
 
-    // Simple Moving Average
-    //public double? Sma8 { get; set; }
-    public double? Sma20 { get; set; }
-    public double? Sma50 { get; set; }
-    //public double? Sma100 { get; set; }
-    public double? Sma200 { get; set; }
-#if EXTRASTRATEGIESSLOPESMA
-    public double? SlopeSma20 { get; set; }
-    public double? SlopeSma50 { get; set; }
-#endif
-
-    // Exponential Moving Average
-    public double? Ema9 { get; set; }
-    //public double? Ema8 { get; set; }
-#if EXTRASTRATEGIES
-    public double? Ema5 { get; set; }
-    public double? Ema26 { get; set; }
-
-    public double? Ema20 { get; set; }
-    public double? Ema50 { get; set; }
-    //public double? Ema100 { get; set; }
-    //public double? Ema200 { get; set; }
-#endif
-#if EXTRASTRATEGIESSLOPEEMA
-    public double? SlopeEma20 { get; set; }
-    public double? SlopeEma50 { get; set; }
-#endif
-
-    public double? Wma30 { get; set; }
-
-    public double? Rsi { get; set; }
-    //public double? SlopeRsi { get; set; }
-
-    public double? MacdValue { get; set; } // blue - Oscillator
-    public double? MacdSignal { get; set; } // red - moving average
-    public double? MacdHistogram { get; set; } // kan ook calculated worden (signal - value of andersom)
 #if EXTRASTRATEGIES
     public double? MacdHistogram2 { get { return MacdSignal - MacdValue; } }
 
@@ -54,26 +23,6 @@ public class CandleIndicatorData
     //public double? MacdLtHistogram2 { get { return MacdLtSignal - MacdLtValue; } }
 #endif
 
-    /// <summary>
-    /// Stoch Oscillator %K (blue), calculated from the last 14 candles
-    /// </summary>
-    public double? StochOscillator { get; set; }
-    /// <summary>
-    /// Stoch Signal %D (red), average from the last 3 %K values
-    /// </summary>
-    public double? StochSignal { get; set; }
-
-    public double? PSar { get; set; }
-
-    public double? BollingerBandsUpperBand { get { return Sma20 + BollingerBandsDeviation; } }
-    public double? BollingerBandsLowerBand { get { return Sma20 - BollingerBandsDeviation; } }
-    public double? BollingerBandsPercentage { get; set; }
-    public double? BollingerBandsDeviation { get; set; }
-
-    //public double? KeltnerUpperBand { get; set; }
-    //public double? KeltnerLowerBand { get; set; }
-    //public double? KeltnerCenterLine { get; set; }
-    //public double? KeltnerCenterLineSlope { get; set; }
 
     // Voor de SMA lookback willen we 60 sma200's erin, dus 200 + 60
     private const int maxCandles = 260;
@@ -225,19 +174,19 @@ public class CandleIndicatorData
 #if EXTRASTRATEGIESSLOPEEMA
         List<EmaResult> emaList20 = (List<EmaResult>)history.GetEma(20);
         List<EmaResult> emaList50 = (List<EmaResult>)history.GetEma(50);
-        List<SlopeResult> slopeEma20List = (List<SlopeResult>)emaList20.GetSlope(3);
-        List<SlopeResult> slopeEma50List = (List<SlopeResult>)emaList50.GetSlope(3);
+        List<SlopeResult> slopeEma20List = (List<SlopeResult>)emaList20.GetSlope(SlopeCount);
+        List<SlopeResult> slopeEma50List = (List<SlopeResult>)emaList50.GetSlope(SlopeCount);
 #endif
 
         //List<SmaResult> smaList8 = (List<SmaResult>)Indicator.GetSma(history, 8);
         List<SmaResult> smaList20 = (List<SmaResult>)Indicator.GetSma(history, 20);
+        List<SlopeResult> slopeSma20List = (List<SlopeResult>)smaList20.GetSlope(SlopeCount);
         List<SmaResult> smaList50 = (List<SmaResult>)history.GetSma(50);
-        //List<SmaResult> smaList100 = (List<SmaResult>)Indicator.GetSma(history, 100);
+        List<SlopeResult> slopeSma50List = (List<SlopeResult>)smaList50.GetSlope(SlopeCount);
+        List<SmaResult> smaList100 = (List<SmaResult>)Indicator.GetSma(history, 100);
+        List<SlopeResult> slopeSma100List = (List<SlopeResult>)smaList100.GetSlope(SlopeCount);
         List<SmaResult> smaList200 = (List<SmaResult>)history.GetSma(200);
-#if EXTRASTRATEGIESSLOPESMA
-        List<SlopeResult> slopeSma20List = (List<SlopeResult>)smaList20.GetSlope(3);
-        List<SlopeResult> slopeSma50List = (List<SlopeResult>)smaList50.GetSlope(3);
-#endif
+        List<SlopeResult> slopeSma200List = (List<SlopeResult>)smaList200.GetSlope(SlopeCount);
 
 
         List<WmaResult> wmaList30 = (List<WmaResult>)history.GetWma(30);
@@ -248,15 +197,17 @@ public class CandleIndicatorData
         //List<AtrResult> atrList = (List<AtrResult>)Indicator.GetAtr(history);
         List<RsiResult> rsiList = (List<RsiResult>)history.GetRsi();
         List<MacdResult> macdList = (List<MacdResult>)history.GetMacd();
+        List<SlopeResult> slopeMacdList = (List<SlopeResult>)macdList.GetSlope(SlopeCount);
         //List<VwapResult> vwapList = (List<VwapResult>)history.GetVwap();
 #if EXTRASTRATEGIES
         List<MacdResult> macdLtList = (List<MacdResult>)history.GetMacd(34, 144);
 #endif
 
-        //List<SlopeResult> slopeRsiList = (List<SlopeResult>)rsiList.GetSma(25).GetSlope(3);
+        List<SlopeResult> slopeRsiList = (List<SlopeResult>)rsiList.GetSlope(SlopeCount);
 
         // (volgens de telegram groepen op 14,3,1 ipv de standaard 14,3,3)
         List<StochResult> stochList = (List<StochResult>)history.GetStoch(14, 3, 1); // 18-11-22: omgedraaid naar 1, 3...
+        List<SlopeResult> slopeStochList = (List<SlopeResult>)stochList.GetSlope(SlopeCount);
 
         List<ParabolicSarResult> psarList = (List<ParabolicSarResult>)history.GetParabolicSar();
 
@@ -280,11 +231,9 @@ public class CandleIndicatorData
             candle.CandleData = candleData;
             try
             {
-                //// EMA's
-                candleData.Ema9 = emaList9[index].Ema;
-                ////candleData.Ema8 = emaList8[index].Ema;
+                // EMA's
 #if EXTRASTRATEGIES
-                candleData.Ema9 = emaList9[index].Ema;
+                ////candleData.Ema8 = emaList8[index].Ema;
                 candleData.Ema26 = emaList26[index].Ema;
                 candleData.Ema20 = emaList20[index].Ema;
                 candleData.Ema50 = emaList50[index].Ema;
@@ -296,26 +245,29 @@ public class CandleIndicatorData
                 candleData.SlopeEma50 = slopeEma50List[index].Slope;
 #endif
 
-                candleData.Tema = temaList[index].Tema;
 
                 // SMA's
                 //candleData.Sma8 = smaList8[index].Sma;
                 candleData.Sma20 = bollingerBandsList[index].Sma;
-                candleData.Sma50 = smaList50[index].Sma;
-                //candleData.Sma100 = smaList100[index].Sma;
-                candleData.Sma200 = smaList200[index].Sma;
-#if EXTRASTRATEGIESSLOPESMA
                 candleData.SlopeSma20 = slopeSma20List[index].Slope;
+                candleData.Sma50 = smaList50[index].Sma;
                 candleData.SlopeSma50 = slopeSma50List[index].Slope;
-#endif
+                candleData.Sma100 = smaList100[index].Sma;
+                candleData.SlopeSma100 = slopeSma100List[index].Slope;
+                candleData.Sma200 = smaList200[index].Sma;
+                candleData.SlopeSma200 = slopeSma200List[index].Slope;
 
                 candleData.Rsi = rsiList[index].Rsi;
-                //candleData.SlopeRsi = slopeRsiList[index].Slope;
+                candleData.SlopeRsi = slopeRsiList[index].Slope;
 
                 candleData.MacdValue = macdList[index].Macd;
                 candleData.MacdSignal = macdList[index].Signal;
                 candleData.MacdHistogram = macdList[index].Histogram;
+                candleData.SlopeMacd = slopeMacdList[index].Slope;
 
+                // Test
+                candleData.Ema9 = emaList9[index].Ema;
+                candleData.Tema = temaList[index].Tema;
                 candleData.Wma30 = wmaList30[index].Wma;
 
                 //candleData.Vwap = vwapList[index].Vwap;
@@ -328,6 +280,8 @@ public class CandleIndicatorData
 
                 candleData.StochSignal = stochList[index].Signal;
                 candleData.StochOscillator = stochList[index].Oscillator;
+                candleData.SlopeStoch = slopeStochList[index].Slope;
+                
 
                 double? BollingerBandsLowerBand = bollingerBandsList[index].LowerBand;
                 double? BollingerBandsUpperBand = bollingerBandsList[index].UpperBand;
@@ -428,104 +382,104 @@ public class CandleIndicatorData
 }
 
 
-public static class KeltnerHelper
-{
-    // parameter validation
-    private static void ValidateSlope(int lookbackPeriods)
-    {
-        // check parameter arguments
-        if (lookbackPeriods <= 1)
-        {
-            throw new ArgumentOutOfRangeException(nameof(lookbackPeriods), lookbackPeriods,
-                "Lookback periods must be greater than 1 for Slope/Linear Regression.");
-        }
-    }
+//public static class KeltnerHelper
+//{
+//    // parameter validation
+//    private static void ValidateSlope(int lookbackPeriods)
+//    {
+//        // check parameter arguments
+//        if (lookbackPeriods <= 1)
+//        {
+//            throw new ArgumentOutOfRangeException(nameof(lookbackPeriods), lookbackPeriods,
+//                "Lookback periods must be greater than 1 for Slope/Linear Regression.");
+//        }
+//    }
 
-    // calculate series
-    internal static List<SlopeResult> GetSlope(this List<KeltnerResult> tpList, int lookbackPeriods)
-    {
-        // check parameter arguments
-        ValidateSlope(lookbackPeriods);
+//    // calculate series
+//    internal static List<SlopeResult> GetSlope(this List<KeltnerResult> tpList, int lookbackPeriods)
+//    {
+//        // check parameter arguments
+//        ValidateSlope(lookbackPeriods);
 
-        // initialize
-        int length = tpList.Count;
-        List<SlopeResult> results = new(length);
+//        // initialize
+//        int length = tpList.Count;
+//        List<SlopeResult> results = new(length);
 
-        // roll through quotes
-        for (int i = 0; i < length; i++)
-        {
-            KeltnerResult x = tpList[i];
+//        // roll through quotes
+//        for (int i = 0; i < length; i++)
+//        {
+//            KeltnerResult x = tpList[i];
 
-            SlopeResult r = new(x.Date);
-            results.Add(r);
+//            SlopeResult r = new(x.Date);
+//            results.Add(r);
 
-            // skip initialization period
-            if (i + 1 < lookbackPeriods)
-            {
-                continue;
-            }
+//            // skip initialization period
+//            if (i + 1 < lookbackPeriods)
+//            {
+//                continue;
+//            }
 
-            // get averages for period
-            double sumX = 0;
-            double sumY = 0;
+//            // get averages for period
+//            double sumX = 0;
+//            double sumY = 0;
 
-            for (int p = i - lookbackPeriods + 1; p <= i; p++)
-            {
-                KeltnerResult x2 = tpList[p];
+//            for (int p = i - lookbackPeriods + 1; p <= i; p++)
+//            {
+//                KeltnerResult x2 = tpList[p];
 
-                sumX += p + 1d;
-                if (x2.Centerline.HasValue)
-                    sumY += (double)x2.Centerline;
-            }
+//                sumX += p + 1d;
+//                if (x2.Centerline.HasValue)
+//                    sumY += (double)x2.Centerline;
+//            }
 
-            double avgX = sumX / lookbackPeriods;
-            double avgY = sumY / lookbackPeriods;
+//            double avgX = sumX / lookbackPeriods;
+//            double avgY = sumY / lookbackPeriods;
 
-            // least squares method
-            double sumSqX = 0;
-            double sumSqY = 0;
-            double sumSqXY = 0;
+//            // least squares method
+//            double sumSqX = 0;
+//            double sumSqY = 0;
+//            double sumSqXY = 0;
 
-            for (int p = i - lookbackPeriods + 1; p <= i; p++)
-            {
-                KeltnerResult x3 = tpList[p];
+//            for (int p = i - lookbackPeriods + 1; p <= i; p++)
+//            {
+//                KeltnerResult x3 = tpList[p];
 
-                double devX = p + 1d - avgX;
-                double devY = 0;
-                if (x3.Centerline.HasValue)
-                    devY = (double)x3.Centerline - avgY;
+//                double devX = p + 1d - avgX;
+//                double devY = 0;
+//                if (x3.Centerline.HasValue)
+//                    devY = (double)x3.Centerline - avgY;
 
-                sumSqX += devX * devX;
-                sumSqY += devY * devY;
-                sumSqXY += devX * devY;
-            }
+//                sumSqX += devX * devX;
+//                sumSqY += devY * devY;
+//                sumSqXY += devX * devY;
+//            }
 
-            r.Slope = (sumSqXY / sumSqX).NaN2Null();
-            r.Intercept = (avgY - r.Slope * avgX).NaN2Null();
+//            r.Slope = (sumSqXY / sumSqX).NaN2Null();
+//            r.Intercept = (avgY - r.Slope * avgX).NaN2Null();
 
-            // calculate Standard Deviation and R-Squared
-            double stdDevX = Math.Sqrt(sumSqX / lookbackPeriods);
-            double stdDevY = Math.Sqrt(sumSqY / lookbackPeriods);
-            r.StdDev = stdDevY.NaN2Null();
+//            // calculate Standard Deviation and R-Squared
+//            double stdDevX = Math.Sqrt(sumSqX / lookbackPeriods);
+//            double stdDevY = Math.Sqrt(sumSqY / lookbackPeriods);
+//            r.StdDev = stdDevY.NaN2Null();
 
-            if (stdDevX * stdDevY != 0)
-            {
-                double arrr = sumSqXY / (stdDevX * stdDevY) / lookbackPeriods;
-                r.RSquared = (arrr * arrr).NaN2Null();
-            }
-        }
+//            if (stdDevX * stdDevY != 0)
+//            {
+//                double arrr = sumSqXY / (stdDevX * stdDevY) / lookbackPeriods;
+//                r.RSquared = (arrr * arrr).NaN2Null();
+//            }
+//        }
 
-        // add last Line (y = mx + b)
-        if (length >= lookbackPeriods)
-        {
-            SlopeResult last = results.LastOrDefault();
-            for (int p = length - lookbackPeriods; p < length; p++)
-            {
-                SlopeResult d = results[p];
-                d.Line = (decimal?)(last?.Slope * (p + 1) + last?.Intercept).NaN2Null();
-            }
-        }
+//        // add last Line (y = mx + b)
+//        if (length >= lookbackPeriods)
+//        {
+//            SlopeResult last = results.LastOrDefault();
+//            for (int p = length - lookbackPeriods; p < length; p++)
+//            {
+//                SlopeResult d = results[p];
+//                d.Line = (decimal?)(last?.Slope * (p + 1) + last?.Intercept).NaN2Null();
+//            }
+//        }
 
-        return results;
-    }
-}
+//        return results;
+//    }
+//}
