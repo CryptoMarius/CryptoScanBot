@@ -59,6 +59,7 @@ public partial class FrmSettings : Form
         this.settings = settings;
 
 #if !DEBUG
+        EditDebugTrendCalculation.Visible = false;
         EditDebugKLineReceive.Visible = false;
         EditDebugSignalCreate.Visible = false;
         EditDebugSignalStrength.Visible = false;
@@ -126,6 +127,7 @@ public partial class FrmSettings : Form
         UserControlTelegram.LoadConfig();
 
 #if DEBUG
+        EditDebugTrendCalculation.Checked = settings.General.DebugTrendCalculation;
         EditDebugKLineReceive.Checked = settings.General.DebugKLineReceive;
         EditDebugSignalCreate.Checked = settings.General.DebugSignalCreate;
         EditDebugSignalStrength.Checked = settings.General.DebugSignalStrength;
@@ -380,6 +382,7 @@ public partial class FrmSettings : Form
 
 
 #if DEBUG
+        settings.General.DebugTrendCalculation = EditDebugTrendCalculation.Checked;
         settings.General.DebugKLineReceive = EditDebugKLineReceive.Checked;
         settings.General.DebugSignalCreate = EditDebugSignalCreate.Checked;
         settings.General.DebugSignalStrength = EditDebugSignalStrength.Checked;

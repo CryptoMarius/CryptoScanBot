@@ -13,11 +13,9 @@ public class CommandShowTrendInfo : CommandBase
         if (sender is CryptoSymbol symbol)
         {
             StringBuilder log = new();
-            log.AppendLine("Trend " + symbol.Name);
-
+            log.AppendLine($"Markettrend {symbol.Name}");
             GlobalData.AddTextToLogTab("");
-            GlobalData.AddTextToLogTab($"Trend {symbol.Name}");
-
+            GlobalData.AddTextToLogTab($"Markettrend {symbol.Name}");
             MarketTrend.CalculateMarketTrend(GlobalData.ActiveAccount, symbol, 0, 0, log);
             log.AppendLine("");
             log.AppendLine("");

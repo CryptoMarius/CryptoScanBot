@@ -40,6 +40,7 @@ partial class FrmSettings
         tabGeneral = new TabPage();
         flowLayoutPanel5 = new FlowLayoutPanel();
         groupBox1 = new GroupBox();
+        EditDebugTrendCalculation = new CheckBox();
         EditHideSelectedRow = new CheckBox();
         EditDebugSymbol = new TextBox();
         LabelDebugSymbol = new Label();
@@ -481,6 +482,7 @@ partial class FrmSettings
         // 
         groupBox1.AutoSize = true;
         groupBox1.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+        groupBox1.Controls.Add(EditDebugTrendCalculation);
         groupBox1.Controls.Add(EditHideSelectedRow);
         groupBox1.Controls.Add(EditDebugSymbol);
         groupBox1.Controls.Add(LabelDebugSymbol);
@@ -514,10 +516,21 @@ partial class FrmSettings
         groupBox1.Margin = new Padding(10);
         groupBox1.Name = "groupBox1";
         groupBox1.Padding = new Padding(10);
-        groupBox1.Size = new Size(631, 454);
+        groupBox1.Size = new Size(631, 474);
         groupBox1.TabIndex = 249;
         groupBox1.TabStop = false;
         groupBox1.Text = "Algemeen";
+        // 
+        // EditDebugTrendCalculation
+        // 
+        EditDebugTrendCalculation.AutoSize = true;
+        EditDebugTrendCalculation.Location = new Point(393, 322);
+        EditDebugTrendCalculation.Margin = new Padding(4, 3, 4, 3);
+        EditDebugTrendCalculation.Name = "EditDebugTrendCalculation";
+        EditDebugTrendCalculation.Size = new Size(150, 19);
+        EditDebugTrendCalculation.TabIndex = 296;
+        EditDebugTrendCalculation.Text = "DebugTrendCalculation";
+        EditDebugTrendCalculation.UseVisualStyleBackColor = true;
         // 
         // EditHideSelectedRow
         // 
@@ -533,7 +546,7 @@ partial class FrmSettings
         // EditDebugSymbol
         // 
         EditDebugSymbol.CharacterCasing = CharacterCasing.Upper;
-        EditDebugSymbol.Location = new Point(482, 402);
+        EditDebugSymbol.Location = new Point(482, 422);
         EditDebugSymbol.Margin = new Padding(4, 3, 4, 3);
         EditDebugSymbol.Name = "EditDebugSymbol";
         EditDebugSymbol.Size = new Size(103, 23);
@@ -542,7 +555,7 @@ partial class FrmSettings
         // LabelDebugSymbol
         // 
         LabelDebugSymbol.AutoSize = true;
-        LabelDebugSymbol.Location = new Point(390, 405);
+        LabelDebugSymbol.Location = new Point(390, 425);
         LabelDebugSymbol.Margin = new Padding(4, 0, 4, 0);
         LabelDebugSymbol.Name = "LabelDebugSymbol";
         LabelDebugSymbol.Size = new Size(84, 15);
@@ -552,7 +565,7 @@ partial class FrmSettings
         // EditDebugSignalStrength
         // 
         EditDebugSignalStrength.AutoSize = true;
-        EditDebugSignalStrength.Location = new Point(393, 377);
+        EditDebugSignalStrength.Location = new Point(393, 397);
         EditDebugSignalStrength.Margin = new Padding(4, 3, 4, 3);
         EditDebugSignalStrength.Name = "EditDebugSignalStrength";
         EditDebugSignalStrength.Size = new Size(138, 19);
@@ -594,7 +607,7 @@ partial class FrmSettings
         // EditDebugSignalCreate
         // 
         EditDebugSignalCreate.AutoSize = true;
-        EditDebugSignalCreate.Location = new Point(393, 352);
+        EditDebugSignalCreate.Location = new Point(393, 372);
         EditDebugSignalCreate.Margin = new Padding(4, 3, 4, 3);
         EditDebugSignalCreate.Name = "EditDebugSignalCreate";
         EditDebugSignalCreate.Size = new Size(127, 19);
@@ -605,7 +618,7 @@ partial class FrmSettings
         // EditDebugKLineReceive
         // 
         EditDebugKLineReceive.AutoSize = true;
-        EditDebugKLineReceive.Location = new Point(393, 327);
+        EditDebugKLineReceive.Location = new Point(393, 347);
         EditDebugKLineReceive.Margin = new Padding(4, 3, 4, 3);
         EditDebugKLineReceive.Name = "EditDebugKLineReceive";
         EditDebugKLineReceive.Size = new Size(130, 19);
@@ -3316,4 +3329,5 @@ partial class FrmSettings
     private TextBox EditDebugSymbol;
     private Label LabelDebugSymbol;
     private CheckBox EditHideSelectedRow;
+    private CheckBox EditDebugTrendCalculation;
 }

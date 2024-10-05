@@ -15,7 +15,7 @@ public class MarketTrend
         {
             lock (accountSymbolData.SymbolTrendDataList)
             {
-                if (accountSymbolData.MarketTrendDate == null || accountSymbolData.MarketTrendDate < candleIntervalEnd)
+                if (accountSymbolData.MarketTrendDate == null || accountSymbolData.MarketTrendDate < candleIntervalEnd || log != null)
                 {
                     int weightSum1 = 0;
                     int weightMax1 = 0;

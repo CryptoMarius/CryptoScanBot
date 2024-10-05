@@ -296,8 +296,11 @@ public class TrendInterval
         if (GlobalData.Settings.General.DebugTrendCalculation)
         {
             string text = $"{symbol.Name} {interval.Name} candles={candleList.Count} calculated at {accountSymbolIntervalData.TrendInfoDate} " +
-            $"avg={avg} best={bestIndicator.Deviation}% zigzagcount={bestIndicator.ZigZagList.Count} {accountSymbolIntervalData.TrendIndicator} " +
-            $"{candleIntervalStartDebug}..{candleIntervalEndDebug}";
+            $"avg={avg} best={bestIndicator.Deviation}% zigzagcount={bestIndicator.ZigZagList.Count} {accountSymbolIntervalData.TrendIndicator} "
+#if DEBUG
+             + $"{candleIntervalStartDebug}..{candleIntervalEndDebug}"
+#endif
+            ;
             log?.AppendLine(text);
             ScannerLog.Logger.Trace("MarketTrend.Calculate " + text);
         }
