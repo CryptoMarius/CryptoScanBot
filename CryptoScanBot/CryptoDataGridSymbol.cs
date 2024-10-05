@@ -157,9 +157,5 @@ public class CryptoDataGridSymbol<T>(DataGridView grid, List<T> list, SortedList
         cell.Style.ForeColor = foreColor;
     }
 
-    //private void CreatePosition(object? sender, EventArgs? e)
-    //{
-    //    //PositionTools.CreatePosition(GlobalData.Settings.General.)
-    //}
 
 }

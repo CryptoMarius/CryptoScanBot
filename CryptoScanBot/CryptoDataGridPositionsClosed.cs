@@ -24,8 +24,8 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
         Exchange,
         Symbol,
         Interval,
-        Strategy,
         Side,
+        Strategy,
         Status,
         Invested,
         Returned,
@@ -48,7 +48,11 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
         Change24h,
         Move24h,
         BB,
-        RSI,
+        Rsi,
+        SlopeRsi,
+        MacdValue,
+        MacdSignal,
+        MacdHistogram,
         Stoch,
         Signal,
         Sma200,
@@ -56,6 +60,7 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
         Sma20,
         PSar,
         Lux5m,
+
         //FundingRate,
         Trend15m,
         Trend30m,
@@ -194,8 +199,20 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
                 case ColumnsForGrid.BB:
                     CreateColumn("BB%", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
                     break;
-                case ColumnsForGrid.RSI:
-                    CreateColumn("RSI", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                case ColumnsForGrid.Rsi:
+                    CreateColumn("Rsi", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                    break;
+                case ColumnsForGrid.MacdValue:
+                    CreateColumn("Macd Value", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                    break;
+                case ColumnsForGrid.MacdSignal:
+                    CreateColumn("Macd Signal", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                    break;
+                case ColumnsForGrid.MacdHistogram:
+                    CreateColumn("Macd Histo", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                    break;
+                case ColumnsForGrid.SlopeRsi:
+                    CreateColumn("Slope RSI", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
                     break;
                 case ColumnsForGrid.Stoch:
                     CreateColumn("Stoch", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
@@ -219,19 +236,19 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
                     CreateColumn("Lux 5m", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 45).Visible = false;
                     break;
                 case ColumnsForGrid.Trend15m:
-                    CreateColumn("15m", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42).Visible = false;
+                    CreateColumn("Trend 15m", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42).Visible = false;
                     break;
                 case ColumnsForGrid.Trend30m:
-                    CreateColumn("30m", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42).Visible = false;
+                    CreateColumn("Trend 30m", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42).Visible = false;
                     break;
                 case ColumnsForGrid.Trend1h:
-                    CreateColumn("1h", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42).Visible = false;
+                    CreateColumn("Trend 1h", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42).Visible = false;
                     break;
                 case ColumnsForGrid.Trend4h:
-                    CreateColumn("4h", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42).Visible = false;
+                    CreateColumn("Trend 4h", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42).Visible = false;
                     break;
                 case ColumnsForGrid.Trend1d:
-                    CreateColumn("1d", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42).Visible = false;
+                    CreateColumn("Trend 1d", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42).Visible = false;
                     break;
 
                 case ColumnsForGrid.Barometer15m:
@@ -293,7 +310,11 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
             ColumnsForGrid.Change24h => ObjectCompare.Compare(a.Last24HoursChange, b.Last24HoursChange),
             ColumnsForGrid.Move24h => ObjectCompare.Compare(a.Last24HoursEffective, b.Last24HoursEffective),
             ColumnsForGrid.BB => ObjectCompare.Compare(a.BollingerBandsPercentage, b.BollingerBandsPercentage),
-            ColumnsForGrid.RSI => ObjectCompare.Compare(a.Rsi, b.Rsi),
+            ColumnsForGrid.MacdValue => ObjectCompare.Compare(a.MacdValue, b.MacdValue),
+            ColumnsForGrid.MacdSignal => ObjectCompare.Compare(a.MacdSignal, b.MacdSignal),
+            ColumnsForGrid.MacdHistogram => ObjectCompare.Compare(a.MacdHistogram, b.MacdHistogram),
+            ColumnsForGrid.Rsi => ObjectCompare.Compare(a.Rsi, b.Rsi),
+            ColumnsForGrid.SlopeRsi => ObjectCompare.Compare(a.SlopeRsi, b.SlopeRsi),
             ColumnsForGrid.Stoch => ObjectCompare.Compare(a.StochOscillator, b.StochOscillator),
             ColumnsForGrid.Signal => ObjectCompare.Compare(a.StochSignal, b.StochSignal),
             ColumnsForGrid.Sma200 => ObjectCompare.Compare(a.Sma200, b.Sma200),
@@ -456,8 +477,20 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
                 case ColumnsForGrid.BB:
                     e.Value = position.BollingerBandsPercentage;
                     break;
-                case ColumnsForGrid.RSI:
+                case ColumnsForGrid.Rsi:
                     e.Value = position.Rsi;
+                    break;
+                case ColumnsForGrid.MacdValue:
+                    e.Value = position.MacdValue;
+                    break;
+                case ColumnsForGrid.MacdSignal:
+                    e.Value = position.MacdSignal;
+                    break;
+                case ColumnsForGrid.MacdHistogram:
+                    e.Value = position.MacdHistogram;
+                    break;
+                case ColumnsForGrid.SlopeRsi:
+                    e.Value = position.SlopeRsi;
                     break;
                 case ColumnsForGrid.Stoch:
                     e.Value = position.StochOscillator;
@@ -577,13 +610,23 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
                         foreColor = Color.Red;
                     break;
 
-                case ColumnsForGrid.RSI:
+                case ColumnsForGrid.Rsi:
                     {
                         // Oversold/overbougt
                         double? value = position.Rsi; // 0..100
                         if (value < GlobalData.Settings.General.RsiValueOversold)
                             foreColor = Color.Red;
                         else if (value > GlobalData.Settings.General.RsiValueOverbought)
+                            foreColor = Color.Green;
+                    }
+                    break;
+
+                case ColumnsForGrid.SlopeRsi:
+                    {
+                        double? value = position.SlopeRsi;
+                        if (value < 0)
+                            foreColor = Color.Red;
+                        else if (value > 0)
                             foreColor = Color.Green;
                     }
                     break;

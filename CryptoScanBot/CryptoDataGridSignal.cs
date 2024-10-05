@@ -22,18 +22,22 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
         Exchange,
         Symbol,
         Interval,
-        Mode,
+        Side,
         Strategy,
         Text,
-        Price,
+        SignalPrice,
         PriceChange,
-        Volume,
+        SignalVolume,
         TfTrend,
         MarketTrend,
         Change24h,
         Move24h,
         BB,
-        RSI,
+        Rsi,
+        SlopeRsi,
+        MacdValue,
+        MacdSignal,
+        MacdHistogram,
         Stoch,
         Signal,
         Sma200,
@@ -42,6 +46,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
         PSar,
         Lux5m,
         FundingRate,
+
         Trend15m,
         Trend30m,
         Trend1h,
@@ -129,7 +134,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                 case ColumnsForGrid.Interval:
                     CreateColumn("Interval", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 45);
                     break;
-                case ColumnsForGrid.Mode:
+                case ColumnsForGrid.Side:
                     CreateColumn("Side", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 40);
                     break;
                 case ColumnsForGrid.Strategy:
@@ -138,13 +143,13 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                 case ColumnsForGrid.Text:
                     CreateColumn("Text", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleLeft, 50).Visible = false;
                     break;
-                case ColumnsForGrid.Price:
+                case ColumnsForGrid.SignalPrice:
                     CreateColumn("Price", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 70);
                     break;
                 case ColumnsForGrid.PriceChange:
                     CreateColumn("Change", typeof(decimal), "#,##0.#0", DataGridViewContentAlignment.MiddleRight, 50);
                     break;
-                case ColumnsForGrid.Volume:
+                case ColumnsForGrid.SignalVolume:
                     CreateColumn("Volume", typeof(decimal), "#,##0", DataGridViewContentAlignment.MiddleRight, 80);
                     break;
                 case ColumnsForGrid.TfTrend:
@@ -162,8 +167,20 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                 case ColumnsForGrid.BB:
                     CreateColumn("BB%", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50);
                     break;
-                case ColumnsForGrid.RSI:
-                    CreateColumn("RSI", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                case ColumnsForGrid.Rsi:
+                    CreateColumn("Rsi", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                    break;
+                case ColumnsForGrid.MacdValue:
+                    CreateColumn("Macd Value", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                    break;
+                case ColumnsForGrid.MacdSignal:
+                    CreateColumn("Macd Signal", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                    break;
+                case ColumnsForGrid.MacdHistogram:
+                    CreateColumn("Macd Histo", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                    break;
+                case ColumnsForGrid.SlopeRsi:
+                    CreateColumn("Slope RSI", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
                     break;
                 case ColumnsForGrid.Stoch:
                     CreateColumn("Stoch", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
@@ -192,19 +209,19 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                     //if (GlobalData.Settings.General.ActivateExchange. Futures ...  disable the column...
                     break;
                 case ColumnsForGrid.Trend15m:
-                    CreateColumn("15m", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42);
+                    CreateColumn("Trend 15m", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42);
                     break;
                 case ColumnsForGrid.Trend30m:
-                    CreateColumn("30m", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42);
+                    CreateColumn("Trend 30m", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42);
                     break;
                 case ColumnsForGrid.Trend1h:
-                    CreateColumn("1h", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42);
+                    CreateColumn("Trend 1h", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42);
                     break;
                 case ColumnsForGrid.Trend4h:
-                    CreateColumn("4h", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42);
+                    CreateColumn("Trend 4h", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42);
                     break;
                 case ColumnsForGrid.Trend1d:
-                    CreateColumn("1d", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42);
+                    CreateColumn("Trend 1d", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42);
                     break;
 
                 case ColumnsForGrid.Barometer15m:
@@ -254,18 +271,22 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
             ColumnsForGrid.Exchange => ObjectCompare.Compare(a.Exchange.Name, b.Exchange.Name),
             ColumnsForGrid.Symbol => ObjectCompare.Compare(a.Symbol.Name, b.Symbol.Name),
             ColumnsForGrid.Interval => ObjectCompare.Compare(a.Interval.IntervalPeriod, b.Interval.IntervalPeriod),
-            ColumnsForGrid.Mode => ObjectCompare.Compare(a.SideText, b.SideText),
+            ColumnsForGrid.Side => ObjectCompare.Compare(a.SideText, b.SideText),
             ColumnsForGrid.Strategy => ObjectCompare.Compare(a.StrategyText, b.StrategyText),
             ColumnsForGrid.Text => ObjectCompare.Compare(a.EventText, b.EventText),
-            ColumnsForGrid.Price => ObjectCompare.Compare(a.Price, b.Price),
+            ColumnsForGrid.SignalPrice => ObjectCompare.Compare(a.SignalPrice, b.SignalPrice),
             ColumnsForGrid.PriceChange => ObjectCompare.Compare(a.PriceDiff, b.PriceDiff),
-            ColumnsForGrid.Volume => ObjectCompare.Compare(a.Volume, b.Volume),
+            ColumnsForGrid.SignalVolume => ObjectCompare.Compare(a.SignalVolume, b.SignalVolume),
             ColumnsForGrid.TfTrend => ObjectCompare.Compare(a.TrendIndicator, b.TrendIndicator),
             ColumnsForGrid.MarketTrend => ObjectCompare.Compare(a.TrendPercentage, b.TrendPercentage),
             ColumnsForGrid.Change24h => ObjectCompare.Compare(a.Last24HoursChange, b.Last24HoursChange),
             ColumnsForGrid.Move24h => ObjectCompare.Compare(a.Last24HoursEffective, b.Last24HoursEffective),
             ColumnsForGrid.BB => ObjectCompare.Compare(a.BollingerBandsPercentage, b.BollingerBandsPercentage),
-            ColumnsForGrid.RSI => ObjectCompare.Compare(a.Rsi, b.Rsi),
+            ColumnsForGrid.MacdValue => ObjectCompare.Compare(a.MacdValue, b.MacdValue),
+            ColumnsForGrid.MacdSignal => ObjectCompare.Compare(a.MacdSignal, b.MacdSignal),
+            ColumnsForGrid.MacdHistogram => ObjectCompare.Compare(a.MacdHistogram, b.MacdHistogram),
+            ColumnsForGrid.Rsi => ObjectCompare.Compare(a.Rsi, b.Rsi),
+            ColumnsForGrid.SlopeRsi => ObjectCompare.Compare(a.SlopeRsi, b.SlopeRsi),
             ColumnsForGrid.Stoch => ObjectCompare.Compare(a.StochOscillator, b.StochOscillator),
             ColumnsForGrid.Signal => ObjectCompare.Compare(a.StochSignal, b.StochSignal),
             ColumnsForGrid.Sma200 => ObjectCompare.Compare(a.Sma200, b.Sma200),
@@ -336,7 +357,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
     private static string SymbolName(CryptoSignal signal)
     {
         string s = signal.Symbol.Base + "/" + @signal.Symbol.Quote;
-        decimal tickPercentage = 100 * signal.Symbol.PriceTickSize / signal.Price;
+        decimal tickPercentage = 100 * signal.Symbol.PriceTickSize / signal.SignalPrice;
         if (tickPercentage > GlobalData.Settings.Signal.MinimumTickPercentage)
             s += " " + tickPercentage.ToString("N2");
         return s;
@@ -369,7 +390,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                 case ColumnsForGrid.Interval:
                     e.Value = signal.Interval.Name;
                     break;
-                case ColumnsForGrid.Mode:
+                case ColumnsForGrid.Side:
                     e.Value = signal.SideText;
                     break;
                 case ColumnsForGrid.Strategy:
@@ -378,14 +399,14 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                 case ColumnsForGrid.Text:
                     e.Value = signal.EventText;
                     break;
-                case ColumnsForGrid.Price:
-                    e.Value = signal.Price.ToString(signal.Symbol.PriceDisplayFormat);
+                case ColumnsForGrid.SignalPrice:
+                    e.Value = signal.SignalPrice.ToString(signal.Symbol.PriceDisplayFormat);
                     break;
                 case ColumnsForGrid.PriceChange:
                     e.Value = signal.PriceDiff;
                     break;
-                case ColumnsForGrid.Volume:
-                    e.Value = signal.Volume;
+                case ColumnsForGrid.SignalVolume:
+                    e.Value = signal.SignalVolume;
                     break;
                 case ColumnsForGrid.TfTrend:
                     e.Value = TrendTools.TrendIndicatorText(signal.TrendIndicator);
@@ -402,8 +423,20 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                 case ColumnsForGrid.BB:
                     e.Value = signal.BollingerBandsPercentage;
                     break;
-                case ColumnsForGrid.RSI:
+                case ColumnsForGrid.Rsi:
                     e.Value = signal.Rsi;
+                    break;
+                case ColumnsForGrid.MacdValue:
+                    e.Value = signal.MacdValue;
+                    break;
+                case ColumnsForGrid.MacdSignal:
+                    e.Value = signal.MacdSignal;
+                    break;
+                case ColumnsForGrid.MacdHistogram:
+                    e.Value = signal.MacdHistogram;
+                    break;
+                case ColumnsForGrid.SlopeRsi:
+                    e.Value = signal.SlopeRsi;
                     break;
                 case ColumnsForGrid.Stoch:
                     e.Value = signal.StochOscillator;
@@ -526,7 +559,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                     }
                     break;
 
-                case ColumnsForGrid.Mode:
+                case ColumnsForGrid.Side:
                     {
                         if (!signal.IsInvalid)
                         {
@@ -550,11 +583,11 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                         }
                     }
                     break;
-                case ColumnsForGrid.Price:
+                case ColumnsForGrid.SignalPrice:
                     {
-                        if (signal.Symbol.LastPrice > signal.Price)
+                        if (signal.Symbol.LastPrice > signal.SignalPrice)
                             foreColor = Color.Green;
-                        else if (signal.Symbol.LastPrice < signal.Price)
+                        else if (signal.Symbol.LastPrice < signal.SignalPrice)
                             foreColor = Color.Red;
                     }
                     break;
@@ -605,13 +638,23 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                     }
                     break;
 
-                case ColumnsForGrid.RSI:
+                case ColumnsForGrid.Rsi:
                     {
                         // Oversold/overbougt
                         double? value = signal.Rsi;
                         if (value < GlobalData.Settings.General.RsiValueOversold)
                             foreColor = Color.Red;
                         else if (value > GlobalData.Settings.General.RsiValueOverbought)
+                            foreColor = Color.Green;
+                    }
+                    break;
+
+                case ColumnsForGrid.SlopeRsi:
+                    {
+                        double? value = signal.SlopeRsi;
+                        if (value < 0)
+                            foreColor = Color.Red;
+                        else if (value > 0)
                             foreColor = Color.Green;
                     }
                     break;
@@ -809,14 +852,14 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                     if (candle.Low < signal.PriceMin)
                     {
                         signal.PriceMin = candle.Low;
-                        signal.PriceMinPerc = (double)(100 * (signal.PriceMin / signal.Price - 1));
+                        signal.PriceMinPerc = (double)(100 * (signal.PriceMin / signal.SignalPrice - 1));
                         return true;
                     }
 
                     if (candle.High > signal.PriceMax)
                     {
                         signal.PriceMax = candle.High;
-                        signal.PriceMaxPerc = (double)(100 * (signal.PriceMax / signal.Price - 1));
+                        signal.PriceMaxPerc = (double)(100 * (signal.PriceMax / signal.SignalPrice - 1));
                         return true;
                     }
                 }
@@ -995,7 +1038,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
             Grid.SuspendDrawing();
             try
             {
-                Grid.InvalidateColumn((int)ColumnsForGrid.Price);
+                Grid.InvalidateColumn((int)ColumnsForGrid.SignalPrice);
                 Grid.InvalidateColumn((int)ColumnsForGrid.PriceChange);
 
 #if DEBUG
@@ -1041,14 +1084,14 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                 database.Connection.Insert(position);
                 PositionTools.AddPosition(GlobalData.ActiveAccount!, position);
                 var part = PositionTools.ExtendPosition(database, position, CryptoPartPurpose.Entry, signal.Interval, signal.Strategy,
-                    CryptoEntryOrDcaStrategy.AfterNextSignal, signal.Price, signal.CloseDate);
+                    CryptoEntryOrDcaStrategy.AfterNextSignal, signal.SignalPrice, signal.CloseDate);
 
                  
                 {
                     decimal entryValue = signal.Symbol.QuoteData!.EntryAmount;
 
                     // Voor market en limit nemen we de actionprice (quantiry berekenen)
-                    decimal price = signal.Price;
+                    decimal price = signal.SignalPrice;
                     if (price == 0)
                         price = signal.Symbol.LastPrice ?? 0;
 
@@ -1067,7 +1110,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                     database.Connection.Update(part);
 
                     position.Reposition = false;
-                    position.EntryPrice = signal.Price;
+                    position.EntryPrice = signal.SignalPrice;
                     position.EntryAmount = entryQuantity;
                     position.CloseTime = signal.CloseDate;
                     position.Status = CryptoPositionStatus.Altrady;

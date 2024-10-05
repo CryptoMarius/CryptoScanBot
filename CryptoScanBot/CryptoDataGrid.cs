@@ -93,7 +93,7 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
     public abstract void InitializeHeaders();
     public abstract void InitializeCommands(ContextMenuStrip menuStrip);
     //public abstract void GetTextFunction(object sender, DataGridViewCellValueEventArgs e);
-    public abstract void CellFormattingEvent(object sender, DataGridViewCellFormattingEventArgs e);
+    public abstract void CellFormattingEvent(object? sender, DataGridViewCellFormattingEventArgs e);
     public abstract void SortFunction();
 
     internal T GetSelectedObject(out int rowIndex)
@@ -194,16 +194,6 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         Grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single; // Raised;
 
         Grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-        //if (GlobalData.Settings.General.ShowInvalidSignals)
-        //{
-        //    Grid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(255, 0, 120, 215);
-        //    Grid.DefaultCellStyle.SelectionForeColor = Color.FromArgb(255, 255, 255, 255);
-        //}
-        //else
-        //{
-        //    Grid.DefaultCellStyle.SelectionBackColor = Grid.DefaultCellStyle.BackColor;
-        //    Grid.DefaultCellStyle.SelectionForeColor = Grid.DefaultCellStyle.ForeColor;
-        //}
 
         Grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None; // AllCellsExceptHeader; // AllCells; // DisplayedCells;
         Grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single; // Kader rond de header cells
@@ -223,7 +213,6 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         Grid.ContextMenuStrip = MenuStripCells;
         MenuStripCells.Opening += MenuStripOpening;
         InitializeCommands(MenuStripCells);
-
     }
 
 
@@ -418,9 +407,6 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         newSortColumn.HeaderCell.Style.Font = new(Grid.ColumnHeadersDefaultCellStyle.Font.Name, Grid.ColumnHeadersDefaultCellStyle.Font.Size, FontStyle.Bold);
     }
 
-    public void AdjustRowHeight()
-    {
-    }
 
     public void ApplySorting()
     {
@@ -433,11 +419,13 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
     public void InitCommandCaptions()
     {
         string text = CryptoExternalUrlList.GetTradingAppName(GlobalData.Settings.General.TradingApp, GlobalData.Settings.General.ExchangeName);
-        Grid.ContextMenuStrip.Items[0].Text = text;
+        Grid.ContextMenuStrip!.Items[0].Text = text;
         if (GlobalData.Settings.General.HideSelectedRow)
         {
             Grid.DefaultCellStyle.SelectionBackColor = Grid.DefaultCellStyle.BackColor;
             Grid.DefaultCellStyle.SelectionForeColor = Grid.DefaultCellStyle.ForeColor;
+            //Grid.DefaultCellStyle.SelectionBackColor = Color.Transparent; // becomes black
+            //Grid.DefaultCellStyle.SelectionForeColor = Color.Transparent; // becomes black
         }
         else
         {
