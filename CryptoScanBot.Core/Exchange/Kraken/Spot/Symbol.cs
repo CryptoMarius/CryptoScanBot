@@ -6,6 +6,7 @@ using CryptoScanBot.Core.Model;
 using Dapper.Contrib.Extensions;
 
 using Kraken.Net.Clients;
+using Kraken.Net.Enums;
 
 namespace CryptoScanBot.Core.Exchange.Kraken.Spot;
 
@@ -104,7 +105,7 @@ public class Symbol
                                 symbol.IsSpotTradingAllowed = true; // binanceSymbol.IsSpotTradingAllowed;
                                 symbol.IsMarginTradingAllowed = false; // binanceSymbol.MarginTading; ???
 
-                                if (symbolData.Status == "online")
+                                if (symbolData.Status == SymbolStatus.Online)
                                     symbol.Status = 1;
                                 else
                                     symbol.Status = 0;
