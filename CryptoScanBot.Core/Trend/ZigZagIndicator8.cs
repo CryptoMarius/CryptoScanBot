@@ -59,7 +59,8 @@ public class ZigZagIndicator8(SortedList<long, CryptoCandle> candleList, bool us
         }
 
 
-
+        if (candle.Date >= new DateTime(2024, 09, 16, 03, 00, 00, 00, 0, DateTimeKind.Utc))
+            candle = candle; // debug 
 
         // is the current candle a new low?
         double lowFromLastCandle = GetLowValue(candle);
@@ -68,26 +69,17 @@ public class ZigZagIndicator8(SortedList<long, CryptoCandle> candleList, bool us
             if (Previous != null)
             {
                 // ignore multiple low's after each other (reuse/remove the previous low)
-                if (Previous != null && Previous.PointType == 'L' && lowFromLastDepth < Previous.Value)
+                if (Previous.PointType == 'L' && lowFromLastDepth <= Previous.Value)
                 {
-                    //int index = ZigZagList.Count;
-                    //if (index > 0)
-                    //    ZigZagList.RemoveAt(index - 1);
-                    //index = ZigZagList.Count;
-                    //if (index > 0)
-                    //    Previous = ZigZagList[index - 1];
-                    //else
-                    //    Previous = null;
+                    //if (lowFromLastDepth < Previous.Value) // use the last candle as pivot
                     Previous.ReusePoint(candle, lowFromLastDepth);
-                    //Previous.Candle = candle;
-                    //Previous.Value = lowFromLastDepth;
                     return;
                 }
-                else if (Previous != null && Previous.PointType == 'L' && lowFromLastDepth > Previous.Value)
+                else if (Previous.PointType == 'L' && lowFromLastDepth > Previous.Value)
                     return; // repeated low, previous was lower
-                else if (Previous != null && Previous.PointType == 'H' && Math.Abs(lowFromLastDepth - Previous.Value) < Deviation * lowFromLastDepth / 100)
+                else if (Previous.PointType == 'H' && Math.Abs(lowFromLastDepth - Previous.Value) < Deviation * lowFromLastDepth / 100)
                     return; // not past the threshold
-                else if (Previous != null && Previous.Candle!.OpenTime + BackStep * duration >= candle!.OpenTime)
+                else if (Previous.Candle!.OpenTime + BackStep * duration >= candle!.OpenTime)
                     return; // no pivot allowed within X candles
             }
 
@@ -111,26 +103,17 @@ public class ZigZagIndicator8(SortedList<long, CryptoCandle> candleList, bool us
             if (Previous != null)
             {
                 // ignore multiple high's after each other (reuse/remove the previous high)
-                if (Previous != null && Previous.PointType == 'H' && highFromLastDepth > Previous.Value)
+                if (Previous.PointType == 'H' && highFromLastDepth >= Previous.Value)
                 {
-                    //int index = ZigZagList.Count;
-                    //if (index > 0)
-                    //    ZigZagList.RemoveAt(index - 1);
-                    //index = ZigZagList.Count;
-                    //if (index > 0)
-                    //    Previous = ZigZagList[index - 1];
-                    //else
-                    //    Previous = null;
-                    //Previous.Candle = candle;
-                    //Previous.Value = highFromLastDepth;
+                    //if (highFromLastDepth > Previous.Value) // use the last candle as pivot
                     Previous.ReusePoint(candle, highFromLastDepth);
                     return;
                 }
-                else if (Previous != null && Previous.PointType == 'H' && highFromLastDepth < Previous.Value)
+                else if (Previous.PointType == 'H' && highFromLastDepth < Previous.Value)
                     return; // repeated high, previous was higher
-                else if (Previous != null && Previous.PointType == 'L' && Math.Abs(highFromLastDepth - Previous.Value) < Deviation * highFromLastDepth / 100)
+                else if (Previous.PointType == 'L' && Math.Abs(highFromLastDepth - Previous.Value) < Deviation * highFromLastDepth / 100)
                     return; // not past the threshold
-                else if (Previous != null && Previous.Candle!.OpenTime + BackStep * duration >= candle!.OpenTime)
+                else if (Previous.Candle!.OpenTime + BackStep * duration >= candle!.OpenTime)
                     return; // no pivot allowed within X candles
             }
 
