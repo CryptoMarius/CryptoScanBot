@@ -60,13 +60,11 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
         Barometer1d,
 
         MinimumEntry,
-#if DEBUG
         // statistics
         PriceMin,
         PriceMax,
         PriceMinPerc,
         PriceMaxPerc,
-#endif
     }
 
     private System.Windows.Forms.Timer? TimerClearOldSignals = null;
@@ -243,7 +241,6 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                 case ColumnsForGrid.MinimumEntry:
                     CreateColumn("M.Entry", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42).Visible = false;
                     break;
-#if DEBUG
                 case ColumnsForGrid.PriceMin:
                     CreateColumn("MinPrice", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 70).Visible = false;
                     break;
@@ -256,7 +253,8 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                 case ColumnsForGrid.PriceMaxPerc:
                     CreateColumn("MaxPerc", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 70).Visible = false;
                     break;
-#endif
+                default:
+                    throw new NotImplementedException();
             }
         }
     }
@@ -306,12 +304,10 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
             ColumnsForGrid.Barometer4h => ObjectCompare.Compare(a.Barometer4h, b.Barometer4h),
             ColumnsForGrid.Barometer1d => ObjectCompare.Compare(a.Barometer1d, b.Barometer1d),
             ColumnsForGrid.MinimumEntry => ObjectCompare.Compare(a.MinEntry, b.MinEntry),
-#if DEBUG
             ColumnsForGrid.PriceMin => ObjectCompare.Compare(a.PriceMin, b.PriceMin),
             ColumnsForGrid.PriceMax => ObjectCompare.Compare(a.PriceMax, b.PriceMax),
             ColumnsForGrid.PriceMinPerc => ObjectCompare.Compare(a.PriceMinPerc, b.PriceMinPerc),
             ColumnsForGrid.PriceMaxPerc => ObjectCompare.Compare(a.PriceMaxPerc, b.PriceMaxPerc),
-#endif
             _ => 0
         };
 
@@ -496,7 +492,6 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                 case ColumnsForGrid.MinimumEntry:
                     e.Value = signal.MinEntry.ToString(signal.Symbol.QuoteData!.DisplayFormat);
                     break;
-#if DEBUG
                 case ColumnsForGrid.PriceMin:
                     if (signal.PriceMin! != 0m)
                         e.Value = signal.PriceMin.ToString(signal.Symbol.PriceDisplayFormat);
@@ -513,7 +508,6 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                     if (signal.PriceMaxPerc! != 0)
                         e.Value = signal.PriceMaxPerc.ToString("N2");
                     break;
-#endif
                 default:
                     e.Value = '?';
                     break;
@@ -751,7 +745,6 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                     foreColor = SimpleColor(signal.Barometer1d);
                     break;
 
-#if DEBUG
                 case ColumnsForGrid.PriceMin:
                     {
                         decimal value = signal.PriceMin;
@@ -809,7 +802,6 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                         }
             }
             break;
-#endif
             }
 
             DataGridViewCell cell = Grid.Rows[e.RowIndex].Cells[e.ColumnIndex];
@@ -819,29 +811,10 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
     }
 
 
-#if DEBUG
-    private static bool CalcSignal(CryptoSignal signal)
+    private static bool UpdateSignalStatistics(CryptoSignal signal)
     {
         if (!signal.BackTest) //  && signal.Strategy != CryptoSignalStrategy.Jump
         {
-            // Looks like LastPrice is not propertly updated, why?
-            //decimal? price = signal.Symbol.LastPrice;
-            //if (price.HasValue)
-            //{
-            //    if (price < signal.PriceMin)
-            //    {
-            //        signal.PriceMin = price.Value;
-            //        signal.PriceMinPerc = signal.PriceDiff.Value;
-            //        return true;
-            //    }
-
-            //    if (price > signal.PriceMax)
-            //    {
-            //        signal.PriceMax = price.Value;
-            //        signal.PriceMaxPerc = signal.PriceDiff.Value;
-            //        return true;
-            //    }
-            //}
 
             CryptoSymbolInterval symbolInterval = signal.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
             if (symbolInterval.CandleList.Count > 0)
@@ -849,14 +822,14 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                 CryptoCandle candle = symbolInterval.CandleList.Values[^1]; // todo, not working for emulator!
                 try
                 {
-                    if (candle.Low < signal.PriceMin)
+                    if (candle.Low < signal.PriceMin || signal.PriceMin == 0)
                     {
                         signal.PriceMin = candle.Low;
                         signal.PriceMinPerc = (double)(100 * (signal.PriceMin / signal.SignalPrice - 1));
                         return true;
                     }
 
-                    if (candle.High > signal.PriceMax)
+                    if (candle.High > signal.PriceMax || signal.PriceMax == 0)
                     {
                         signal.PriceMax = candle.High;
                         signal.PriceMaxPerc = (double)(100 * (signal.PriceMax / signal.SignalPrice - 1));
@@ -871,7 +844,6 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
         }
         return false;
     }
-#endif
 
 
     private void ClearOldSignals(object? sender, EventArgs? e)
@@ -895,10 +867,11 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                         DateTime expirationDate = signal.CloseDate.AddSeconds(GlobalData.Settings.General.RemoveSignalAfterxCandles * signal.Interval.Duration);
                         if (expirationDate < DateTime.UtcNow)
                         {
-#if DEBUG
-                            if (CalcSignal(signal))
-                                GlobalData.ThreadSaveObjects!.AddToQueue(signal);
-#endif
+                            if (GlobalData.Settings.General.DebugSignalStrength)
+                            {
+                                if (UpdateSignalStatistics(signal))
+                                    GlobalData.ThreadSaveObjects!.AddToQueue(signal);
+                            }
                             List.RemoveAt(index);
                             removedObject = true;
                         }
@@ -936,88 +909,18 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
         {
             try
             {
-                // todo - simplify, make an official "indicator value" of this?
-                int statsLong = 0;
-                int statsShort = 0;
-                SortedList<string, bool> uniqueListLong = [];
-                SortedList<string, bool> uniqueListShort = [];
-                (double avg, double sum, int count) statsMinLong = (0, 0, 0);
-                (double avg, double sum, int count) statsMaxLong = (0, 0, 0);
-                (double avg, double sum, int count) statsMinShort = (0, 0, 0);
-                (double avg, double sum, int count) statsMaxShort = (0, 0, 0);
-
                 if (List.Count > 0)
                 {
                     for (int index = List.Count - 1; index >= 0; index--)
                     {
                         CryptoSignal signal = List[index];
-
-                        decimal? price = signal.Symbol.LastPrice;
-                        if (!signal.BackTest && price.HasValue)
+                        if (GlobalData.Settings.General.DebugSignalStrength)
                         {
-                            if (CalcSignal(signal))
-                            {
+                            if (UpdateSignalStatistics(signal))
                                 GlobalData.ThreadSaveObjects!.AddToQueue(signal);
-                            }
-
-                            // need some of sense of time, 60*10 minutes is already a long period (mayby check only the first 3 timeframes?)
-                            if (signal.Interval.IntervalPeriod < CryptoIntervalPeriod.interval10m && signal.Strategy != CryptoSignalStrategy.Jump)
-                            {
-                                double value = signal.PriceMinPerc;
-                                if (signal.Side == CryptoTradeSide.Long)
-                                {
-                                    statsLong++;
-                                    statsMinLong.count++;
-                                    statsMinLong.sum += value;
-                                    uniqueListLong.TryAdd(signal.Symbol.Name, true);
-                                }
-                                else
-                                {
-                                    statsShort++;
-                                    statsMinShort.count++;
-                                    statsMinShort.sum += value;
-                                    uniqueListShort.TryAdd(signal.Symbol.Name, true);
-                                }
-
-                                value = signal.PriceMaxPerc;
-                                if (signal.Side == CryptoTradeSide.Long)
-                                {
-                                    statsMaxLong.count++;
-                                    statsMaxLong.sum += value;
-                                }
-                                else
-                                {
-                                    statsMaxShort.count++;
-                                    statsMaxShort.sum += value;
-                                }
-                            }
                         }
                     }
 
-                    if (statsMinLong.count > 0)
-                        statsMinLong.avg = statsMinLong.sum / statsMinLong.count;
-                    if (statsMaxLong.count > 0)
-                        statsMaxLong.avg = statsMaxLong.sum / statsMaxLong.count;
-
-                    if (statsMinShort.count > 0)
-                        statsMinShort.avg = statsMinShort.sum / statsMinShort.count;
-                    if (statsMaxShort.count > 0)
-                        statsMaxShort.avg = statsMaxShort.sum / statsMaxShort.count;
-
-
-                    string text = "Signal strength";
-                    if (statsLong > 0)
-                        text += $" Long({statsLong}, {uniqueListLong.Count}): {statsMinLong.avg:N2} .. {statsMaxLong.avg:N2}";
-                    if (statsShort > 0)
-                        text += $" Short({statsShort}, {uniqueListShort.Count}): {statsMaxShort.avg:N2} .. {statsMinShort.avg:N2}";
-                    if (statsShort + statsLong > 0)
-                        GlobalData.AddTextToLogTab(text);
-
-
-                    GlobalData.SignalStrength.LongCount = statsMinLong.count;
-                    GlobalData.SignalStrength.LongAvg = statsMaxLong.avg;
-                    GlobalData.SignalStrength.ShortCount = statsMinShort.count;
-                    GlobalData.SignalStrength.ShortAvg = statsMaxShort.avg;
                 }
             }
             finally
