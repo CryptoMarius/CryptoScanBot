@@ -1,6 +1,16 @@
 CryptoScanBot release historie:
 
-xx-08-2024 1.9.4
+08-10-2024 1.9.4-10.08 prerelease
+- Scanner - De trend berekening laat de aanvullende informatie niet meer zien
+- Scanner - De trend berekening van STX dev=2, 1h heeft herhalende pivot punten (LL of HH), het zijn punten met exact dezelfde prijs!
+- Scanner - De instelling voor STOBB icm open/close of high/low werkt niet (verwisseld met sbm)
+- Scanner - Nieuwe libraries voor de verschillende exchanges geinstalleerd
+- Scanner - Macd kolommen toegevoegd (macd oscilator, signal en histogram)
+- Scanner - De captions van kolommen aangepast (RSI=>Rsi, 15m => Trend 15m enzovoort)
+- Scanner - De slope van de rsi, macd, stoch en ma's berekenen (wordt in Excel getoond, is ter test)
+- Scanner - De "controleer signaal sterkte" werkt niet zonder een ander verborgen vinkje (die alleen zichtbaar is in een debug release)
+
+10-09-2024 1.9.4-10.09 prerelease
 - Emulator - Telegram messages worden nu tijdens uitvoeren emulator niet meer gestuurd
 
 - Scanner - De getoonde signalen kunnen dumpen naar Excel voor een overzichtje
@@ -34,6 +44,7 @@ xx-08-2024 1.9.4
 - Scanner - De FundingRate kolom standaard uitzetten bij de signalen (het is niet relevant voor de spot markten)
 
 - Trader - De positie ID van Altrady overnemen in de database (en Excel enzovoort)
+- Trader - Stop loss introduceren voor papertrading via de Trader (met Altrady Webhook moet je het bij AT opgeven)
 - Trader - De instelling controlleer dalende/stijgende RSI geeft problemen bij de StoRsi vanwege de correctie waarde
 - Trader - De open en gesloten posities kunnen dumpen naar Excel voor een overzichtje
 - Trader - Barometer velden toegevoegd aan de open en geloten posities (+ kolommen toegevoegd)

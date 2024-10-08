@@ -2,15 +2,33 @@ Openstaande punten zijn de bevindingen, ideeën, diverse todo's tot dusver.
 Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep.
 (groot kans dat datgene we besproken hebben tussen wal en schip is beland)
 
+Check:
+- Trader - Met een ingevulde SL blijft de bestaande SL staan als er een DCA gezet wordt, SL kan boven de DCA staan, klopt niet!
 
 Scanner:
+- Scanner - Zelf de regels kunnen maken, maar dat is best veel werk qua invoer. Via de bestaande indicator waarden
+- Trader  - De aanwezigheid van meerdere signalen per munt zorgt ervoor dat enkel eigenlijk op de lagere tf's wordt ingestapt
+            Het lijkt erop dat bij een timeout van een lager tf de hogere ook wordt verwijderd (nazoeken)
+            Het is me nog niet geheel duidelijk wat de prioriteit bij meerdere meldingen eigenlijk is
+
+- Scanner - De laatst bekende Rsi, Stoch, enzovoort bij de munt opnemen zodat je ook een pair scanner oid van kunt maken.
+            Echter, dan moet dat wel continue allemaal berekend worden en dat betekend dat er meer cpu en geheugen aan te pas komt
+- Scanner - (als extra voor de gui) De trend berekening laat de aanvullende informatie niet meer zien
+            (todo: Waar/hoe het vinkje te plaatsen, toch een debug tabsheet of extra dialoog maken, of excel sheet?)
+- Trader - De Telegram profits commando gaat zo te zien niet goed om met short posities (verlies trades kan, maar dit was iets teveel)
+- Scanner - Nieuwe libraries voor Skender indicator testen/bekijken/stabiel? (dat is namelijk een pre-release)
+- Scanner/Trader - Een status/indicator die de status van de scanner en trader aangeeft + soort van verklikker van trading rulez?
+
+- Emulator - De trading rulez worden niet correct berekend (worden waarschijnlijk niet correct gereset bij een nieuwe sessie)
 - Emulator - De Barometer wordt niet correct berekend (of wordt verkeerd opgehaald)
+- Emulator - Als de emulator draait de menu optie onbereikbaar maken (anders 2 emulator sessies)
+
 - Documentatie - Uitleg van de Add Value voor de WGHM/STORSI uitbreiden, er zijn wel wat vragen over geweest.
 
 - Dashboard - Aantal meldingen per dag / week? Iets wat het aantal meldingen laat zien in iedere geval..
               Zie je ook wat als ke geen trader gebruikt?
 
-- Scanner - Marco - kijken naar de EMA/WGM/MACD strategie, wat is het, wat is de winrate, realistisch?
+- Scanner - De grid tekst kleur is zwart in de actuele regel (als je de selectie uitzet met de nieuwe instelling)
 - Scanner - StoRsi - de grenzen van de BB kunnen opgeven (net zoals bij de STOBB en SBM)
 
 - Scanner - Kucoin - Het ophalen van candles bij Kucoin wordt heel vaak gedaan, soms elke 5 minuten, dat lijkt overbodig (tenzij het allemaal flatlines zijn)?
@@ -62,6 +80,7 @@ Scanner:
   (maar zijn die "paar" megabytes wel de moeite waard met het vele (test)werk wat hiervoor nodig is?)
 
 Trading:
+- Trading - Ergens in de logging wordt 2x dezelfde tekst achter elkaar gezet
 - Trading - Documentatie bijwerken - Een klusje..
 - Trading - Stop loss introduceren voor Bybit
 - Trading - Stop loss introduceren voor Binance
