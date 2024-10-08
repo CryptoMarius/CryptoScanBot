@@ -1,6 +1,9 @@
 CryptoScanBot release historie:
 
 08-10-2024 1.9.4-10.08 prerelease
+- Scanner - Er is een Debug tabblad waarin je instellingen kan doen voor uitgebreidere meldingen en/of statistiek
+- Scanner - Signaal en posities hebben nu een slope op de rsi, sma20, sma50 en sma200
+- Scanner - Posities hebben nu een min- en max price en perc zodat je statistiek hebt hoe hoog cq. laag de prijs komt ten opzichte van de signaalprijs
 - Scanner - De trend berekening laat de aanvullende informatie niet meer zien
 - Scanner - De trend berekening van STX dev=2, 1h heeft herhalende pivot punten (LL of HH), het zijn punten met exact dezelfde prijs!
 - Scanner - De instelling voor STOBB icm open/close of high/low werkt niet (verwisseld met sbm)
