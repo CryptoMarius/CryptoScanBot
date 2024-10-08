@@ -330,30 +330,30 @@ public class CryptoDatabase : IDisposable
                 "ExchangeId INTEGER NOT NULL," +
                 "SymbolId INTEGER NOT NULL," +
                 "IntervalId INTEGER NULL," +
+                "Strategy INTEGER NULL," +
+                "Side INTEGER NOT NULL," +
 
                 "BackTest INTEGER NOT NULL," +
                 "IsInvalid INTEGER NOT NULL," +
 
                 "EventTime bigint NOT NULL," +
-                "Side INTEGER NOT NULL," +
-                "Price TEXT NOT NULL," +
+                "OpenDate TEXT NULL," +
+                "CloseDate TEXT NULL," +
+                "ExpirationDate TEXT NULL," +
+
+                "SignalPrice TEXT NOT NULL," +
+                "SignalVolume TEXT NULL," +
                 "EventText TEXT NULL," +
 
                 "Last24HoursChange TEXT NULL," +
                 "Last48Hours TEXT NULL," +
                 "Last24HoursEffective TEXT NULL," +
                 "Last10DaysEffective TEXT NULL," +
-                "Volume TEXT NULL," +
-                "OpenDate TEXT NULL," +
-                "CloseDate TEXT NULL," +
-                "ExpirationDate TEXT NULL," +
 
                 "TrendIndicator INTEGER NULL," +
                 "TrendPercentage TEXT NULL," +
 
-                "infodate TEXT NULL," +
                 "BarcodePercentage TEXT NULL," +
-                "Strategy INTEGER NULL," +
                 "CandlesWithZeroVolume INTEGER NULL," +
                 "CandlesWithFlatPrice INTEGER NULL," +
                 "AboveBollingerBandsSma INTEGER NULL," +
@@ -361,11 +361,16 @@ public class CryptoDatabase : IDisposable
 
                 "StochSignal TEXT NULL," +
                 "StochOscillator TEXT NULL," +
+
                 "BollingerBandsDeviation TEXT NULL," +
                 "BollingerBandsPercentage TEXT NULL," +
 
                 "KeltnerLowerBand TEXT NULL," +
                 "KeltnerUpperBand TEXT NULL," +
+
+                "MacdValue TEXT NULL," +
+                "MacdSignal TEXT NULL," +
+                "MacdHistogram TEXT NULL," +
 
                 "Rsi TEXT NULL," +
                 "SlopeRsi TEXT NULL," +
@@ -437,9 +442,10 @@ public class CryptoDatabase : IDisposable
                 "ExchangeId Integer NOT NULL," +
                 "SymbolId Integer NOT NULL," +
                 "IntervalId Integer NOT NULL," +
-                "Status Integer NOT NULL," +
-                "Side Integer NOT NULL," +
                 "Strategy Integer NOT NULL," +
+                "Side Integer NOT NULL," +
+
+                "Status Integer NOT NULL," +
                 "data TEXT NULL," +
 
                 "EntryPrice TEXT NULL," +
@@ -492,6 +498,10 @@ public class CryptoDatabase : IDisposable
                 "KeltnerLowerBand TEXT NULL," +
                 "KeltnerUpperBand TEXT NULL," +
 
+                "MacdValue TEXT NULL," +
+                "MacdSignal TEXT NULL," +
+                "MacdHistogram TEXT NULL," +
+
                 "Rsi TEXT NULL," +
                 "SlopeRsi TEXT NULL," +
 
@@ -528,6 +538,12 @@ public class CryptoDatabase : IDisposable
                 "Barometer1h TEXT NULL," +
                 "Barometer4h TEXT NULL," +
                 "Barometer1d TEXT NULL," +
+
+                // statistics
+                "PriceMin TEXT NULL," +
+                "PriceMax TEXT NULL," +
+                "PriceMinPerc TEXT NULL," +
+                "PriceMaxPerc TEXT NULL," +
 
                 "FOREIGN KEY(TradeAccountId) REFERENCES TradeAccount(Id)," +
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +

@@ -27,15 +27,6 @@ public delegate void PlayMediaEvent(string text, bool test = false);
 public delegate void SetCandleTimerEnable(bool value);
 
 
-public class SignalStrength
-{
-    public int LongCount { get; set; }
-    public double LongAvg { get; set; }
-
-    public int ShortCount { get; set; }
-    public double ShortAvg { get; set; }
-}
-
 static public class GlobalData
 {
     public static string AppName { get; set; } = "";
@@ -89,10 +80,6 @@ static public class GlobalData
     /// Telegram gerelateerde instellingen
     /// </summary>
     public static SettingsTelegram Telegram { get; set; } = new();
-
-    // Experiment
-    public static SignalStrength SignalStrength { get; set; } = new();
-   
 
     /// <summary>
     /// De url's van de exchanges en/of tradingapps

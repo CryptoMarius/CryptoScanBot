@@ -8,7 +8,7 @@ namespace CryptoScanBot.Core.Context;
 public class Migration
 {
     // De huidige database versie
-    public readonly static int CurrentDatabaseVersion = 28;
+    public readonly static int CurrentDatabaseVersion = 29;
 
 
     public static void Execute(CryptoDatabase database, int CurrentVersion)
@@ -771,11 +771,11 @@ public class Migration
             database.Connection.Execute("alter table Signal add SlopeSma200 Text null", transaction);
             database.Connection.Execute("alter table Position add SlopeSma200 Text null", transaction);
 
-            database.Connection.Execute("alter table Signal add MacDValue Text null", transaction);
+            database.Connection.Execute("alter table Signal add MacdValue Text null", transaction);
             database.Connection.Execute("alter table Signal add MacdSignal Text null", transaction);
             database.Connection.Execute("alter table Signal add MacdHistogram Text null", transaction);
 
-            database.Connection.Execute("alter table Position add MacDValue Text null", transaction);
+            database.Connection.Execute("alter table Position add MacdValue Text null", transaction);
             database.Connection.Execute("alter table Position add MacdSignal Text null", transaction);
             database.Connection.Execute("alter table Position add MacdHistogram Text null", transaction);
 
@@ -805,6 +805,24 @@ public class Migration
             database.Connection.Update(version, transaction);
             transaction.Commit();
         }
+
+        //***********************************************************
+        // 08-10-2024, make signal and position table more the same (added statistics)
+        if (CurrentVersion > version.Version && version.Version == 28)
+        {
+            using var transaction = database.BeginTransaction();
+
+            database.Connection.Execute("alter table Position add PriceMin Text null", transaction);
+            database.Connection.Execute("alter table Position add PriceMax Text null", transaction);
+            database.Connection.Execute("alter table Position add PriceMinPerc Text null", transaction);
+            database.Connection.Execute("alter table Position add PriceMaxPerc Text null", transaction);
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
     }
 }
 

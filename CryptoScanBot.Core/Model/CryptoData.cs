@@ -136,7 +136,6 @@ public class CryptoData2: CryptoData
     public CryptoTradeSide Side { get; set; }
     [Computed]
     public string SideText { get { return Side.ToString().ToLower(); } }
-    //switch { CryptoTradeSide.Long => "long", CryptoTradeSide.Short => "short", _ => "?", }; } }
 
     public CryptoSignalStrategy Strategy { get; set; }
     [Computed]
@@ -172,6 +171,11 @@ public class CryptoData2: CryptoData
     public CryptoTrendIndicator? Trend4h { get; set; }
     public CryptoTrendIndicator? Trend1d { get; set; }
 
+    // Statistics, the min and max differences against the signalprice
+    public decimal PriceMin { get; set; }
+    public double PriceMinPerc { get; set; }
+    public decimal PriceMax { get; set; }
+    public double PriceMaxPerc { get; set; }
 
 
     public override void AssignValues(CryptoData source)
@@ -211,6 +215,11 @@ public class CryptoData2: CryptoData
             Barometer1h = source2.Barometer1h;
             Barometer4h = source2.Barometer4h;
             Barometer1d = source2.Barometer1d;
+
+            PriceMin = source2.PriceMin;
+            PriceMax = source2.PriceMax;
+            PriceMinPerc = source2.PriceMinPerc;
+            PriceMaxPerc = source2.PriceMaxPerc;
         }
     }
 }

@@ -94,6 +94,11 @@ public static class PositionTools
         position.SignalEventTime = signal.CloseDate;
         // Copy common indicator values
         position.AssignValues(signal);
+        // Reset the statistics though
+        position.PriceMin = signal.SignalPrice;
+        position.PriceMax = signal.SignalPrice;
+        position.PriceMinPerc = 0;
+        position.PriceMaxPerc = 0;
     }
 
     public static CryptoPositionPart ExtendPosition(CryptoDatabase database, CryptoPosition position, CryptoPartPurpose purpose, CryptoInterval interval,

@@ -50,13 +50,6 @@ public class CryptoSignal: CryptoData2
 
     public string EventText { get; set; }
 
-#if DEBUG
-    // Statistics, the min and max differences against the signalprice
-    public decimal PriceMin { get; set; }
-    public double PriceMinPerc { get; set; }
-    public decimal PriceMax { get; set; }
-    public double PriceMaxPerc { get; set; }
-#endif
 
     [Computed]
     public decimal? LastPrice { get; set; }

@@ -18,20 +18,20 @@ namespace CryptoScanBot.Core.Intern;
 public class ThreadSaveObjects
 {
 
-    private readonly BlockingCollection<CryptoSignal> Queue = [];
+    private readonly BlockingCollection<object> Queue = [];
     private readonly CancellationTokenSource cancellationToken = new();
 
 
     public void Stop()
     {
         cancellationToken.Cancel();
-        GlobalData.AddTextToLogTab(string.Format("Stop monitor candle"));
+        GlobalData.AddTextToLogTab(string.Format("Stop saving objects"));
     }
 
 
-    public void AddToQueue(CryptoSignal signal)
+    public void AddToQueue(object o)
     {
-        Queue.Add((signal));
+        Queue.Add(o);
     }
 
 
@@ -40,7 +40,7 @@ public class ThreadSaveObjects
         GlobalData.AddTextToLogTab("Starting task for saving objects");
         try
         {
-            foreach (CryptoSignal signal in Queue.GetConsumingEnumerable(cancellationToken.Token))
+            foreach (object o in Queue.GetConsumingEnumerable(cancellationToken.Token))
             {
                 CryptoDatabase databaseThread = new();
                 try
@@ -49,10 +49,21 @@ public class ThreadSaveObjects
                     var transaction = databaseThread.BeginTransaction();
                     try
                     {
-                        if (signal.Id == 0)
-                            databaseThread.Connection.Insert(signal, transaction);
-                        else
-                            databaseThread.Connection.Update(signal, transaction);
+                        if (o is CryptoSignal signal)
+                        {
+                            if (signal.Id == 0)
+                                databaseThread.Connection.Insert(signal, transaction);
+                            else
+                                databaseThread.Connection.Update(signal, transaction);
+                        }
+                        else if (o is CryptoPosition position)
+                        {
+                            if (position.Id == 0)
+                                databaseThread.Connection.Insert(position, transaction);
+                            else
+                                databaseThread.Connection.Update(position, transaction);
+                        }
+
                         transaction.Commit();
                     }
                     catch (Exception error)

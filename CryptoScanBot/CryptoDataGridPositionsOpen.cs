@@ -81,6 +81,12 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
         Barometer1h,
         Barometer4h,
         Barometer1d,
+
+        // statistics
+        PriceMin,
+        PriceMax,
+        PriceMinPerc,
+        PriceMaxPerc,
     }
 
     private System.Windows.Forms.Timer? TimerRefreshInformation = null;
@@ -303,10 +309,21 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
                 case ColumnsForGrid.Barometer1d:
                     CreateColumn("Bm 1d", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42).Visible = false;
                     break;
-
+                case ColumnsForGrid.PriceMin:
+                    CreateColumn("MinPrice", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 70).Visible = false;
+                    break;
+                case ColumnsForGrid.PriceMax:
+                    CreateColumn("MaxPrice", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 70).Visible = false;
+                    break;
+                case ColumnsForGrid.PriceMinPerc:
+                    CreateColumn("MinPerc", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 70).Visible = false;
+                    break;
+                case ColumnsForGrid.PriceMaxPerc:
+                    CreateColumn("MaxPerc", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 70).Visible = false;
+                    break;
                 default:
                     throw new NotImplementedException();
-            };
+            }
         }
     }
 
@@ -374,6 +391,10 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
             ColumnsForGrid.Barometer1h => ObjectCompare.Compare(a.Barometer1h, b.Barometer1h),
             ColumnsForGrid.Barometer4h => ObjectCompare.Compare(a.Barometer4h, b.Barometer4h),
             ColumnsForGrid.Barometer1d => ObjectCompare.Compare(a.Barometer1d, b.Barometer1d),
+            ColumnsForGrid.PriceMin => ObjectCompare.Compare(a.PriceMin, b.PriceMin),
+            ColumnsForGrid.PriceMax => ObjectCompare.Compare(a.PriceMax, b.PriceMax),
+            ColumnsForGrid.PriceMinPerc => ObjectCompare.Compare(a.PriceMinPerc, b.PriceMinPerc),
+            ColumnsForGrid.PriceMaxPerc => ObjectCompare.Compare(a.PriceMaxPerc, b.PriceMaxPerc),
             _ => 0
         };
 
@@ -609,7 +630,22 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
                 case ColumnsForGrid.Barometer1d:
                     e.Value = position.Barometer1d?.ToString("N2");
                     break;
-
+                case ColumnsForGrid.PriceMin:
+                    if (position.PriceMin! != 0m)
+                        e.Value = position.PriceMin.ToString(position.Symbol.PriceDisplayFormat);
+                    break;
+                case ColumnsForGrid.PriceMax:
+                    if (position.PriceMax! != 0m)
+                        e.Value = position.PriceMax.ToString(position.Symbol.PriceDisplayFormat);
+                    break;
+                case ColumnsForGrid.PriceMinPerc:
+                    if (position.PriceMinPerc! != 0)
+                        e.Value = position.PriceMinPerc.ToString("N2");
+                    break;
+                case ColumnsForGrid.PriceMaxPerc:
+                    if (position.PriceMaxPerc! != 0)
+                        e.Value = position.PriceMaxPerc.ToString("N2");
+                    break;
                 default:
                     e.Value = '?';
                     break;
@@ -758,6 +794,63 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
                     foreColor = SimpleColor(position.Barometer1d);
                     break;
 
+                case ColumnsForGrid.PriceMin:
+                    {
+                        decimal value = position.PriceMin;
+                        if (value <= 0)
+                            foreColor = Color.Red;
+                        else
+                            foreColor = Color.Green;
+                    }
+                    break;
+                case ColumnsForGrid.PriceMax:
+                    {
+                        decimal value = position.PriceMax;
+                        if (value <= 0)
+                            foreColor = Color.Red;
+                        else
+                            foreColor = Color.Green;
+                    }
+                    break;
+
+                case ColumnsForGrid.PriceMinPerc:
+                    {
+                        double value = position.PriceMinPerc;
+                        if (position.Side == CryptoTradeSide.Long)
+                        {
+                            if (value <= 0)
+                                foreColor = Color.Red;
+                            else
+                                foreColor = Color.Green;
+                        }
+                        else
+                        {
+                            if (value <= 0)
+                                foreColor = Color.Green;
+                            else
+                                foreColor = Color.Red;
+                        }
+                    }
+                    break;
+                case ColumnsForGrid.PriceMaxPerc:
+                    {
+                        double value = position.PriceMaxPerc;
+                        if (position.Side == CryptoTradeSide.Long)
+                        {
+                            if (value <= 0)
+                                foreColor = Color.Red;
+                            else
+                                foreColor = Color.Green;
+                        }
+                        else
+                        {
+                            if (value <= 0)
+                                foreColor = Color.Green;
+                            else
+                                foreColor = Color.Red;
+                        }
+            }
+            break;
             }
         }
 

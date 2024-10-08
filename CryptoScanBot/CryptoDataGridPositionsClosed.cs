@@ -73,6 +73,14 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
         Barometer1h,
         Barometer4h,
         Barometer1d,
+
+#if DEBUG
+        // statistics
+        PriceMin,
+        PriceMax,
+        PriceMinPerc,
+        PriceMaxPerc,
+#endif
     }
 
     public override void InitializeCommands(ContextMenuStrip menuStrip)
@@ -96,6 +104,7 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
         menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Hide selection", Command.None, ClearSelection);
     }
+
 
     public override void InitializeHeaders()
     {
@@ -267,9 +276,23 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
                     CreateColumn("Bm 1d", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42).Visible = false;
                     break;
 
+#if DEBUG
+                case ColumnsForGrid.PriceMin:
+                    CreateColumn("MinPrice", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 70).Visible = false;
+                    break;
+                case ColumnsForGrid.PriceMax:
+                    CreateColumn("MaxPrice", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 70).Visible = false;
+                    break;
+                case ColumnsForGrid.PriceMinPerc:
+                    CreateColumn("MinPerc", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 70).Visible = false;
+                    break;
+                case ColumnsForGrid.PriceMaxPerc:
+                    CreateColumn("MaxPerc", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 70).Visible = false;
+                    break;
+#endif
                 default:
                     throw new NotImplementedException();
-            };
+            }
         }
     }
 
@@ -332,6 +355,12 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
             ColumnsForGrid.Barometer1h => ObjectCompare.Compare(a.Barometer1h, b.Barometer1h),
             ColumnsForGrid.Barometer4h => ObjectCompare.Compare(a.Barometer4h, b.Barometer4h),
             ColumnsForGrid.Barometer1d => ObjectCompare.Compare(a.Barometer1d, b.Barometer1d),
+#if DEBUG
+            ColumnsForGrid.PriceMin => ObjectCompare.Compare(a.PriceMin, b.PriceMin),
+            ColumnsForGrid.PriceMax => ObjectCompare.Compare(a.PriceMax, b.PriceMax),
+            ColumnsForGrid.PriceMinPerc => ObjectCompare.Compare(a.PriceMinPerc, b.PriceMinPerc),
+            ColumnsForGrid.PriceMaxPerc => ObjectCompare.Compare(a.PriceMaxPerc, b.PriceMaxPerc),
+#endif
             _ => 0
         };
 
@@ -544,6 +573,24 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
                     e.Value = position.Barometer1d?.ToString("N2");
                     break;
 
+#if DEBUG
+                case ColumnsForGrid.PriceMin:
+                    if (position.PriceMin! != 0m)
+                        e.Value = position.PriceMin.ToString(position.Symbol.PriceDisplayFormat);
+                    break;
+                case ColumnsForGrid.PriceMax:
+                    if (position.PriceMax! != 0m)
+                        e.Value = position.PriceMax.ToString(position.Symbol.PriceDisplayFormat);
+                    break;
+                case ColumnsForGrid.PriceMinPerc:
+                    if (position.PriceMinPerc! != 0)
+                        e.Value = position.PriceMinPerc.ToString("N2");
+                    break;
+                case ColumnsForGrid.PriceMaxPerc:
+                    if (position.PriceMaxPerc! != 0)
+                        e.Value = position.PriceMaxPerc.ToString("N2");
+                    break;
+#endif
                 default:
                     e.Value = '?';
                     break;
@@ -674,6 +721,65 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
                     foreColor = SimpleColor(position.Barometer1d);
                     break;
 
+#if DEBUG
+                case ColumnsForGrid.PriceMin:
+                    {
+                        decimal value = position.PriceMin;
+                        if (value <= 0)
+                            foreColor = Color.Red;
+                        else
+                            foreColor = Color.Green;
+                    }
+                    break;
+                case ColumnsForGrid.PriceMax:
+                    {
+                        decimal value = position.PriceMax;
+                        if (value <= 0)
+                            foreColor = Color.Red;
+                        else
+                            foreColor = Color.Green;
+                    }
+                    break;
+
+                case ColumnsForGrid.PriceMinPerc:
+                    {
+                        double value = position.PriceMinPerc;
+                        if (position.Side == CryptoTradeSide.Long)
+                        {
+                            if (value <= 0)
+                                foreColor = Color.Red;
+                            else
+                                foreColor = Color.Green;
+                        }
+                        else
+                        {
+                            if (value <= 0)
+                                foreColor = Color.Green;
+                            else
+                                foreColor = Color.Red;
+                        }
+                    }
+                    break;
+                case ColumnsForGrid.PriceMaxPerc:
+                    {
+                        double value = position.PriceMaxPerc;
+                        if (position.Side == CryptoTradeSide.Long)
+                        {
+                            if (value <= 0)
+                                foreColor = Color.Red;
+                            else
+                                foreColor = Color.Green;
+                        }
+                        else
+                        {
+                            if (value <= 0)
+                                foreColor = Color.Green;
+                            else
+                                foreColor = Color.Red;
+                        }
+            }
+            break;
+#endif
             }
         }
 

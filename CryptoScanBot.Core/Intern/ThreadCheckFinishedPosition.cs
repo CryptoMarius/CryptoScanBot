@@ -65,6 +65,39 @@ public class ThreadCheckFinishedPosition
         }
     }
 
+    private static bool UpdatePositionStatistics(CryptoPosition position)
+    {
+        if (position.CloseTime == null && position.Account.AccountType != CryptoAccountType.BackTest)
+        {
+            CryptoSymbolInterval symbolInterval = position.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
+            if (symbolInterval.CandleList.Count > 0)
+            {
+                CryptoCandle candle = symbolInterval.CandleList.Values[^1]; // todo, not working for emulator!
+                try
+                {
+                    if (candle.Low < position.PriceMin || position.PriceMin == 0)
+                    {
+                        position.PriceMin = candle.Low;
+                        position.PriceMinPerc = (double)(100 * (position.PriceMin / position.SignalPrice - 1));
+                        return true;
+                    }
+
+                    if (candle.High > position.PriceMax || position.PriceMax == 0)
+                    {
+                        position.PriceMax = candle.High;
+                        position.PriceMaxPerc = (double)(100 * (position.PriceMax / position.SignalPrice - 1));
+                        return true;
+                    }
+                }
+                catch
+                {
+                    // ignore (sometimes low of high value not set, need locking?)
+                }
+            }
+        }
+        return false;
+    }
+
 
     private async Task PositionReadyCancelAllOrderAndMove(CryptoDatabase database, CryptoPosition position)
     {
@@ -222,6 +255,13 @@ public class ThreadCheckFinishedPosition
                     return;
                 }
 
+                if (GlobalData.Settings.General.DebugSignalStrength)
+                {
+                    if (UpdatePositionStatistics(position))
+                    {
+                        GlobalData.ThreadSaveObjects!.AddToQueue(position);
+                    }
+                }
 
                 if (position.Status >= CryptoPositionStatus.Ready) // (Ready, Timeout and TakeOver)
                     await PositionReadyCancelAllOrderAndMove(database, position);

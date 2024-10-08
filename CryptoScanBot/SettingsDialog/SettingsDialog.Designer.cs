@@ -40,16 +40,10 @@ partial class FrmSettings
         tabGeneral = new TabPage();
         flowLayoutPanel5 = new FlowLayoutPanel();
         groupBox1 = new GroupBox();
-        EditDebugTrendCalculation = new CheckBox();
         EditHideSelectedRow = new CheckBox();
-        EditDebugSymbol = new TextBox();
-        LabelDebugSymbol = new Label();
-        EditDebugSignalStrength = new CheckBox();
         groupBox7 = new GroupBox();
         label22 = new Label();
         EditBbStdDeviation = new NumericUpDown();
-        EditDebugSignalCreate = new CheckBox();
-        EditDebugKLineReceive = new CheckBox();
         label15 = new Label();
         EditTradingAppInternExtern = new ComboBox();
         groupBoxStoch = new GroupBox();
@@ -256,7 +250,15 @@ partial class FrmSettings
         textBoxBlackListOverbought = new TextBox();
         panel6 = new Panel();
         label49 = new Label();
+        tabPageOptions = new TabPage();
+        EditDebugTrendCalculation = new CheckBox();
+        EditDebugSymbol = new TextBox();
+        LabelDebugSymbol = new Label();
+        EditDebugSignalStrength = new CheckBox();
+        EditDebugSignalCreate = new CheckBox();
+        EditDebugKLineReceive = new CheckBox();
         toolTip1 = new ToolTip(components);
+        label27 = new Label();
         panelButtons.SuspendLayout();
         panelFill.SuspendLayout();
         tabControlMain.SuspendLayout();
@@ -357,6 +359,7 @@ partial class FrmSettings
         panel5.SuspendLayout();
         tabShortBlackList.SuspendLayout();
         panel6.SuspendLayout();
+        tabPageOptions.SuspendLayout();
         SuspendLayout();
         // 
         // panelButtons
@@ -445,6 +448,7 @@ partial class FrmSettings
         tabControlMain.Controls.Add(tabTrading);
         tabControlMain.Controls.Add(tabApi);
         tabControlMain.Controls.Add(tabWhiteBlack);
+        tabControlMain.Controls.Add(tabPageOptions);
         tabControlMain.Dock = DockStyle.Fill;
         tabControlMain.Location = new Point(0, 0);
         tabControlMain.Margin = new Padding(4, 3, 4, 3);
@@ -482,14 +486,8 @@ partial class FrmSettings
         // 
         groupBox1.AutoSize = true;
         groupBox1.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-        groupBox1.Controls.Add(EditDebugTrendCalculation);
         groupBox1.Controls.Add(EditHideSelectedRow);
-        groupBox1.Controls.Add(EditDebugSymbol);
-        groupBox1.Controls.Add(LabelDebugSymbol);
-        groupBox1.Controls.Add(EditDebugSignalStrength);
         groupBox1.Controls.Add(groupBox7);
-        groupBox1.Controls.Add(EditDebugSignalCreate);
-        groupBox1.Controls.Add(EditDebugKLineReceive);
         groupBox1.Controls.Add(label15);
         groupBox1.Controls.Add(EditTradingAppInternExtern);
         groupBox1.Controls.Add(groupBoxStoch);
@@ -516,21 +514,10 @@ partial class FrmSettings
         groupBox1.Margin = new Padding(10);
         groupBox1.Name = "groupBox1";
         groupBox1.Padding = new Padding(10);
-        groupBox1.Size = new Size(631, 474);
+        groupBox1.Size = new Size(631, 438);
         groupBox1.TabIndex = 249;
         groupBox1.TabStop = false;
         groupBox1.Text = "Algemeen";
-        // 
-        // EditDebugTrendCalculation
-        // 
-        EditDebugTrendCalculation.AutoSize = true;
-        EditDebugTrendCalculation.Location = new Point(393, 322);
-        EditDebugTrendCalculation.Margin = new Padding(4, 3, 4, 3);
-        EditDebugTrendCalculation.Name = "EditDebugTrendCalculation";
-        EditDebugTrendCalculation.Size = new Size(150, 19);
-        EditDebugTrendCalculation.TabIndex = 296;
-        EditDebugTrendCalculation.Text = "DebugTrendCalculation";
-        EditDebugTrendCalculation.UseVisualStyleBackColor = true;
         // 
         // EditHideSelectedRow
         // 
@@ -542,36 +529,6 @@ partial class FrmSettings
         EditHideSelectedRow.TabIndex = 295;
         EditHideSelectedRow.Text = "Verberg selectie in grid";
         EditHideSelectedRow.UseVisualStyleBackColor = true;
-        // 
-        // EditDebugSymbol
-        // 
-        EditDebugSymbol.CharacterCasing = CharacterCasing.Upper;
-        EditDebugSymbol.Location = new Point(482, 422);
-        EditDebugSymbol.Margin = new Padding(4, 3, 4, 3);
-        EditDebugSymbol.Name = "EditDebugSymbol";
-        EditDebugSymbol.Size = new Size(103, 23);
-        EditDebugSymbol.TabIndex = 293;
-        // 
-        // LabelDebugSymbol
-        // 
-        LabelDebugSymbol.AutoSize = true;
-        LabelDebugSymbol.Location = new Point(390, 425);
-        LabelDebugSymbol.Margin = new Padding(4, 0, 4, 0);
-        LabelDebugSymbol.Name = "LabelDebugSymbol";
-        LabelDebugSymbol.Size = new Size(84, 15);
-        LabelDebugSymbol.TabIndex = 294;
-        LabelDebugSymbol.Text = "Debug symbol";
-        // 
-        // EditDebugSignalStrength
-        // 
-        EditDebugSignalStrength.AutoSize = true;
-        EditDebugSignalStrength.Location = new Point(393, 397);
-        EditDebugSignalStrength.Margin = new Padding(4, 3, 4, 3);
-        EditDebugSignalStrength.Name = "EditDebugSignalStrength";
-        EditDebugSignalStrength.Size = new Size(138, 19);
-        EditDebugSignalStrength.TabIndex = 292;
-        EditDebugSignalStrength.Text = "DebugSignalStrength";
-        EditDebugSignalStrength.UseVisualStyleBackColor = true;
         // 
         // groupBox7
         // 
@@ -603,28 +560,6 @@ partial class FrmSettings
         EditBbStdDeviation.Size = new Size(88, 23);
         EditBbStdDeviation.TabIndex = 291;
         EditBbStdDeviation.Value = new decimal(new int[] { 20, 0, 0, 65536 });
-        // 
-        // EditDebugSignalCreate
-        // 
-        EditDebugSignalCreate.AutoSize = true;
-        EditDebugSignalCreate.Location = new Point(393, 372);
-        EditDebugSignalCreate.Margin = new Padding(4, 3, 4, 3);
-        EditDebugSignalCreate.Name = "EditDebugSignalCreate";
-        EditDebugSignalCreate.Size = new Size(127, 19);
-        EditDebugSignalCreate.TabIndex = 291;
-        EditDebugSignalCreate.Text = "DebugSignalCreate";
-        EditDebugSignalCreate.UseVisualStyleBackColor = true;
-        // 
-        // EditDebugKLineReceive
-        // 
-        EditDebugKLineReceive.AutoSize = true;
-        EditDebugKLineReceive.Location = new Point(393, 347);
-        EditDebugKLineReceive.Margin = new Padding(4, 3, 4, 3);
-        EditDebugKLineReceive.Name = "EditDebugKLineReceive";
-        EditDebugKLineReceive.Size = new Size(130, 19);
-        EditDebugKLineReceive.TabIndex = 290;
-        EditDebugKLineReceive.Text = "DebugKLineReceive";
-        EditDebugKLineReceive.UseVisualStyleBackColor = true;
         // 
         // label15
         // 
@@ -1015,6 +950,7 @@ partial class FrmSettings
         // 
         // tabSignalsGeneral
         // 
+        tabSignalsGeneral.Controls.Add(label27);
         tabSignalsGeneral.Controls.Add(EditCheckVolumeOverDays);
         tabSignalsGeneral.Controls.Add(EditCheckVolumeOverPeriod);
         tabSignalsGeneral.Controls.Add(label86);
@@ -2943,6 +2879,95 @@ partial class FrmSettings
         label49.TabIndex = 222;
         label49.Text = "(1 munt per regel met een optionele opmerking erachter)";
         // 
+        // tabPageOptions
+        // 
+        tabPageOptions.Controls.Add(EditDebugTrendCalculation);
+        tabPageOptions.Controls.Add(EditDebugSymbol);
+        tabPageOptions.Controls.Add(LabelDebugSymbol);
+        tabPageOptions.Controls.Add(EditDebugSignalStrength);
+        tabPageOptions.Controls.Add(EditDebugSignalCreate);
+        tabPageOptions.Controls.Add(EditDebugKLineReceive);
+        tabPageOptions.Location = new Point(4, 27);
+        tabPageOptions.Name = "tabPageOptions";
+        tabPageOptions.Padding = new Padding(3);
+        tabPageOptions.Size = new Size(1142, 615);
+        tabPageOptions.TabIndex = 15;
+        tabPageOptions.Text = "Debug";
+        tabPageOptions.UseVisualStyleBackColor = true;
+        // 
+        // EditDebugTrendCalculation
+        // 
+        EditDebugTrendCalculation.AutoSize = true;
+        EditDebugTrendCalculation.Location = new Point(23, 32);
+        EditDebugTrendCalculation.Margin = new Padding(4, 3, 4, 3);
+        EditDebugTrendCalculation.Name = "EditDebugTrendCalculation";
+        EditDebugTrendCalculation.Size = new Size(325, 19);
+        EditDebugTrendCalculation.TabIndex = 302;
+        EditDebugTrendCalculation.Text = "Show more information during TrendCalculation  (in file)";
+        EditDebugTrendCalculation.UseVisualStyleBackColor = true;
+        // 
+        // EditDebugSymbol
+        // 
+        EditDebugSymbol.CharacterCasing = CharacterCasing.Upper;
+        EditDebugSymbol.Location = new Point(23, 132);
+        EditDebugSymbol.Margin = new Padding(4, 3, 4, 3);
+        EditDebugSymbol.Name = "EditDebugSymbol";
+        EditDebugSymbol.Size = new Size(103, 23);
+        EditDebugSymbol.TabIndex = 300;
+        // 
+        // LabelDebugSymbol
+        // 
+        LabelDebugSymbol.AutoSize = true;
+        LabelDebugSymbol.Location = new Point(134, 135);
+        LabelDebugSymbol.Margin = new Padding(4, 0, 4, 0);
+        LabelDebugSymbol.Name = "LabelDebugSymbol";
+        LabelDebugSymbol.Size = new Size(273, 15);
+        LabelDebugSymbol.TabIndex = 301;
+        LabelDebugSymbol.Text = "Limit Debug stuff to this symbol (less information)";
+        // 
+        // EditDebugSignalStrength
+        // 
+        EditDebugSignalStrength.AutoSize = true;
+        EditDebugSignalStrength.Location = new Point(23, 57);
+        EditDebugSignalStrength.Margin = new Padding(4, 3, 4, 3);
+        EditDebugSignalStrength.Name = "EditDebugSignalStrength";
+        EditDebugSignalStrength.Size = new Size(394, 19);
+        EditDebugSignalStrength.TabIndex = 299;
+        EditDebugSignalStrength.Text = "Calculate statistics (min and max price + perc for signal and position) ";
+        EditDebugSignalStrength.UseVisualStyleBackColor = true;
+        // 
+        // EditDebugSignalCreate
+        // 
+        EditDebugSignalCreate.AutoSize = true;
+        EditDebugSignalCreate.Location = new Point(23, 186);
+        EditDebugSignalCreate.Margin = new Padding(4, 3, 4, 3);
+        EditDebugSignalCreate.Name = "EditDebugSignalCreate";
+        EditDebugSignalCreate.Size = new Size(269, 19);
+        EditDebugSignalCreate.TabIndex = 298;
+        EditDebugSignalCreate.Text = "Debug SignalCreate (does coin go to analyzer)";
+        EditDebugSignalCreate.UseVisualStyleBackColor = true;
+        // 
+        // EditDebugKLineReceive
+        // 
+        EditDebugKLineReceive.AutoSize = true;
+        EditDebugKLineReceive.Location = new Point(23, 161);
+        EditDebugKLineReceive.Margin = new Padding(4, 3, 4, 3);
+        EditDebugKLineReceive.Name = "EditDebugKLineReceive";
+        EditDebugKLineReceive.Size = new Size(258, 19);
+        EditDebugKLineReceive.TabIndex = 297;
+        EditDebugKLineReceive.Text = "Debug KLineReceive (does kline ticker work)";
+        EditDebugKLineReceive.UseVisualStyleBackColor = true;
+        // 
+        // label27
+        // 
+        label27.AutoSize = true;
+        label27.Location = new Point(457, 407);
+        label27.Margin = new Padding(4, 0, 4, 0);
+        label27.Name = "label27";
+        label27.Size = new Size(40, 15);
+        label27.TabIndex = 286;
+        label27.Text = "dagen";
+        // 
         // FrmSettings
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
@@ -3098,6 +3123,8 @@ partial class FrmSettings
         tabShortBlackList.PerformLayout();
         panel6.ResumeLayout(false);
         panel6.PerformLayout();
+        tabPageOptions.ResumeLayout(false);
+        tabPageOptions.PerformLayout();
         ResumeLayout(false);
     }
 
@@ -3321,13 +3348,15 @@ partial class FrmSettings
     private SettingsDialog.UserControlQuoteHeader userControlQuoteHeader1;
     private CheckBox EditCheckBollingerBandsCondition;
     private GroupBox groupBox7;
-    private CheckBox EditDebugSignalCreate;
-    private CheckBox EditDebugKLineReceive;
     private Label label22;
     private NumericUpDown EditBbStdDeviation;
-    private CheckBox EditDebugSignalStrength;
+    private CheckBox EditHideSelectedRow;
+    private TabPage tabPageOptions;
+    private CheckBox EditDebugTrendCalculation;
     private TextBox EditDebugSymbol;
     private Label LabelDebugSymbol;
-    private CheckBox EditHideSelectedRow;
-    private CheckBox EditDebugTrendCalculation;
+    private CheckBox EditDebugSignalStrength;
+    private CheckBox EditDebugSignalCreate;
+    private CheckBox EditDebugKLineReceive;
+    private Label label27;
 }
