@@ -450,15 +450,6 @@ public class PositionMonitor : IDisposable
                             return;
                         }
 
-                        //// Is de munt te nieuw? (hebben we vertrouwen in nieuwe munten?)
-                        // Duplicaat code: Dit wordt nu gedaan voordat er signalen worden gemaakt (zie PositionMonitor.CreateSignals())
-                        //if (!SymbolTools.CheckNewCoin(Symbol, out reaction))
-                        //{
-                        //    GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                        //    Symbol.ClearSignals();
-                        //    return;
-                        //}
-
                         // Munten waarvan de ticksize perc nogal groot is (barcode charts)
                         if (!SymbolTools.CheckMinimumTickPercentage(Symbol, out reaction))
                         {
@@ -572,7 +563,7 @@ public class PositionMonitor : IDisposable
                             }
 
 
-                            // De positie + entry aanmaken
+                            // Create position + entry part
                             position = PositionTools.CreatePosition(TradeAccount, Symbol, signal.Strategy, signal.Side, symbolInterval, LastCandle1mCloseTimeDate);
                             PositionTools.AddSignalProperties(position, signal);
                             Database.Connection.Insert(position);
@@ -1651,21 +1642,21 @@ public class PositionMonitor : IDisposable
             CryptoPositionStep? takeProfitOrder = PositionTools.FindPositionPartStep(takeProfitPart, takeProfitOrderSide, false);
 
             (decimal price, decimal? stop, decimal? limit) tp = CalculateTpPrices(position);
-            if (takeProfitOrder == null || takeProfitOrder.Price != tp.price || takeProfitOrder.StopPrice != tp.stop)
+            if (takeProfitOrder == null || takeProfitOrder.Price != tp.price || takeProfitOrder.StopPrice != tp.stop || takeProfitOrder.StopLimitPrice != tp.limit)
             {
                 if (takeProfitOrder != null)
                     GlobalData.AddTextToLogTab($"{Symbol.Name} SELL correction: {takeProfitOrder.Price:N6} to {tp.price.ToString0()}");
 
-                string text = $"placing {takeProfitPart.Purpose}";
+                string text = $"placing ";
                 // position.Quantity is not clamped
                 decimal quantity = position.Quantity.Clamp(Symbol.QuantityMinimum, Symbol.QuantityMaximum, Symbol.QuantityTickSize);
                 if (takeProfitOrder != null && takeProfitOrder.Quantity != quantity)
-                    text = $"modyfying {takeProfitPart.Purpose}";
+                    text = $"modyfying ";
 
                 // Cancel all open take profit orders
                 if (await CancelAllOrders(position, takeProfitOrderSide))
                 {
-                    // Calculate the BE price (without the previous commission for the TP order) // ???????????
+                    // Calculate the BE price (without the previous commission for the TP order)
                     //decimal xx = position.BreakEvenPrice;
                     TradeTools.CalculateProfitAndBreakEvenPrice(position);
                     tp = CalculateTpPrices(position);
