@@ -8,7 +8,7 @@ namespace CryptoScanBot.Core.Context;
 public class Migration
 {
     // De huidige database versie
-    public readonly static int CurrentDatabaseVersion = 29;
+    public readonly static int CurrentDatabaseVersion = 31;
 
 
     public static void Execute(CryptoDatabase database, int CurrentVersion)
@@ -735,7 +735,7 @@ public class Migration
         {
             using var transaction = database.BeginTransaction();
 
-            // This update is empty because I made a mess put of it..
+            // This update is empty because I made a mess..
 
             // update version
             version.Version += 1;
@@ -823,6 +823,51 @@ public class Migration
             transaction.Commit();
         }
 
+
+        //***********************************************************
+        if (CurrentVersion > version.Version && version.Version == 29)
+        {
+            using var transaction = database.BeginTransaction();
+
+            // This update is empty because I made a mess..
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+        //***********************************************************
+        // 08-10-2024, problems with the slope fields (added way back perhaps, or not?)
+        if (CurrentVersion > version.Version && version.Version == 30)
+        {
+            using var transaction = database.BeginTransaction();
+
+            try { database.Connection.Execute("alter table Signal add Sma20 Text null", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table Signal add Sma50 Text null", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table Signal add Sma100 Text null", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table Signal add Sma200 Text null", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table Signal add SlopeRsi Text null", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table Signal add SlopeSma20 Text null", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table Signal add SlopeSma50 Text null", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table Signal add SlopeSma100 Text null", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table Signal add SlopeSma200 Text null", transaction); } catch { } // ignore
+
+            try { database.Connection.Execute("alter table Position add Sma20 Text null", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table Position add Sma50 Text null", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table Position add Sma100 Text null", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table Position add Sma200 Text null", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table Position add SlopeRsi Text null", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table Position add SlopeSma20 Text null", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table Position add SlopeSma50 Text null", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table Position add SlopeSma100 Text null", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table Position add SlopeSma200 Text null", transaction); } catch { } // ignore
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
     }
 }
 
