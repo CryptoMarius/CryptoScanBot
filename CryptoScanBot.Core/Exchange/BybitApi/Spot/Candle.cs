@@ -139,7 +139,8 @@ public class Candle
                                 High = stickOld.Close,
                                 Low = stickOld.Close,
                                 Close = stickOld.Close,
-                                Volume = 0
+                                Volume = 0,
+                                IsDuplicated = true // retry fetch
                             };
                             symbolInterval.CandleList.Add(candle.OpenTime, candle);
                             //GlobalData.AddTextToLogTab(symbol.Name + " " + interval.Name + " Added missing candle " + CandleTools.GetUnixDate(candle.OpenTime).ToLocalTime());
@@ -173,7 +174,7 @@ public class Candle
                         {
                             // Die laatste parameter is de closetime van een candle
                             candleHigherTimeFrameStart += intervalHigherTimeFrame.Duration;
-                            CandleTools.CalculateCandleForInterval(intervalHigherTimeFrame, intervalLowerTimeFrame, symbol, candleHigherTimeFrameStart);
+                            CandleTools.CalculateCandleForInterval(symbol, intervalHigherTimeFrame, intervalLowerTimeFrame, candleHigherTimeFrameStart);
                         }
 
                         CandleTools.UpdateCandleFetched(symbol, intervalHigherTimeFrame);

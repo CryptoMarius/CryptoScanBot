@@ -170,7 +170,7 @@ public class Candle
                         {
                             // Die laatste parameter is de closetime van een candle
                             candleHigherTimeFrameStart += intervalHigherTimeFrame.Duration;
-                            CandleTools.CalculateCandleForInterval(intervalHigherTimeFrame, intervalLowerTimeFrame, symbol, candleHigherTimeFrameStart);
+                            CandleTools.CalculateCandleForInterval(symbol, intervalHigherTimeFrame, intervalLowerTimeFrame, candleHigherTimeFrameStart);
                         }
 
                         CandleTools.UpdateCandleFetched(symbol, intervalHigherTimeFrame);
