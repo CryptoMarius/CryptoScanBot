@@ -40,7 +40,7 @@ public class CandleToolsTests : TestBase
                 if (interval.ConstructFrom != null && candle1mCloseTime % interval.Duration == 0)
                 {
                     // Deze doet een call naar de TaskSaveCandles en de UpdateCandleFetched (overlappend?)
-                    CryptoCandle candleX = CandleTools.CalculateCandleForInterval(interval, interval.ConstructFrom, symbol, candle1mCloseTime);
+                    CryptoCandle candleX = CandleTools.CalculateCandleForInterval(symbol, interval, interval.ConstructFrom, candle1mCloseTime);
                     CandleTools.UpdateCandleFetched(symbol, interval);
                     string text2 = $"ticker({interval.Name}):" + candleX.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, false, true);
                     Console.WriteLine(text2);
