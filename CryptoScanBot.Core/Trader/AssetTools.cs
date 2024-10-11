@@ -78,7 +78,7 @@ public class AssetTools
             }
             else
             {
-                // Enought for backtest or papertrading?
+                // Enough for backtest or papertrading?
                 info.BaseFree = 1000000m;
                 info.BaseTotal = 1000000m;
             }
@@ -93,7 +93,7 @@ public class AssetTools
             }
             else
             {
-                // Enought for backtest or papertrading?
+                // Enough for backtest or papertrading?
                 info.QuoteFree = 1000000m;
                 info.QuoteTotal = 1000000m;
             }

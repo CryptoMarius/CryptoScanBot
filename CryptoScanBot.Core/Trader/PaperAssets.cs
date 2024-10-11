@@ -20,8 +20,10 @@ public class PaperAssets
 
             var transaction = database.BeginTransaction();
 
+            // Manipulate assets (example BTCUSDT)
 
-            // Base asset
+
+            // Base asset (BTC)
             if (!tradeAccount.Data.AssetList.TryGetValue(symbol.Base, out CryptoAsset? assetBase))
             {
                 assetBase = new CryptoAsset()
@@ -32,7 +34,7 @@ public class PaperAssets
                 tradeAccount.Data.AssetList.Add(assetBase.Name, assetBase);
             }
 
-            // Quote asset
+            // Quote asset (USDT)
             if (!tradeAccount.Data.AssetList.TryGetValue(symbol.Quote, out CryptoAsset? assetQuote))
             {
                 assetQuote = new CryptoAsset()
@@ -44,14 +46,14 @@ public class PaperAssets
             }
 
 
-            // Manipulate assets (voorbeeld is BTCUSDT)
+            // When placing an order the locked USDT will be higher
+            // When cancelling/filling an order the locked USDT will be lower
+            // When an order is filled the total USDT will be higher and BTC will be lower
             if (side == CryptoOrderSide.Buy)
             {
                 if (status == CryptoOrderStatus.New)
-                    // Bij het plaatsen van een buy order wordt de hoeveelheid locked USDT hoger
                     assetQuote.Locked += quoteQuantity;
                 else
-                    // Bij het annuleren/vullen van een buy order wordt de hoeveelheid locked USDT lager
                     assetQuote.Locked -= quoteQuantity;
 
                 if (status.IsFilled())
@@ -61,13 +63,13 @@ public class PaperAssets
                 }
             }
 
+            // When placing an order the locked BTC will be higher
+            // When cancelling/filling an order the locked BTC will be lower
             if (side == CryptoOrderSide.Sell)
             {
                 if (status == CryptoOrderStatus.New)
-                    // Bij het plaatsen van een sell order wordt de hoeveelheid locked BTC hoger
                     assetBase.Locked += quantity;
                 else
-                    // Bij het annuleren/vullen van een sell order wordt de hoeveelheid locked BTC lager
                     assetBase.Locked -= quantity;
 
                 if (status.IsFilled())
