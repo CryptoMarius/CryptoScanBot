@@ -99,6 +99,27 @@ public static class Helper
         return text;
     }
 
+    public static string ToString0(this double? value, string fmt = "N8")
+    {
+        // Een alternatief hievoor is de Normalize() functie herboven
+        // (maar dat zal qua performance niet veel uitmaken denk ik)
+        string text = value.HasValue ? ((double)value).ToString(fmt) : "0"; //Get the stock string
+
+        //If there is a decimal point present
+        string seperator = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
+        if (text.Contains(seperator))
+        {
+            //Remove all trailing zeros
+            text = text.TrimEnd('0');
+
+            //If all we are left with is a decimal point
+            if (text.EndsWith(seperator)) //then remove it
+                text = text.TrimEnd(seperator[0]);
+        }
+
+        return text;
+    }
+
     /// <summary>
     /// Remove any trailing 0's 
     /// </summary>
