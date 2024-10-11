@@ -88,9 +88,9 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
 
         menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Hide grid selection", Command.None, ClearSelection);
-#if DEBUG
-        menuStrip.AddCommand(this, "Test - Open position", Command.None, CreatePosition);
-#endif
+//#if DEBUG
+//        menuStrip.AddCommand(this, "Test - Open position", Command.None, CreatePosition);
+//#endif
 
         TimerClearOldSignals = new()
         {
@@ -169,13 +169,13 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                     CreateColumn("Rsi", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
                     break;
                 case ColumnsForGrid.MacdValue:
-                    CreateColumn("Macd Value", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                    CreateColumn("Macd Value", typeof(decimal), string.Empty, DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
                     break;
                 case ColumnsForGrid.MacdSignal:
-                    CreateColumn("Macd Signal", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                    CreateColumn("Macd Signal", typeof(decimal), string.Empty, DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
                     break;
                 case ColumnsForGrid.MacdHistogram:
-                    CreateColumn("Macd Histo", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                    CreateColumn("Macd Histo", typeof(decimal), string.Empty, DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
                     break;
                 case ColumnsForGrid.SlopeRsi:
                     CreateColumn("Slope RSI", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
@@ -423,13 +423,13 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                     e.Value = signal.Rsi;
                     break;
                 case ColumnsForGrid.MacdValue:
-                    e.Value = signal.MacdValue;
+                    e.Value = signal.MacdValue.ToString0(signal.Symbol.PriceDisplayFormat);
                     break;
                 case ColumnsForGrid.MacdSignal:
-                    e.Value = signal.MacdSignal;
+                    e.Value = signal.MacdSignal.ToString0(signal.Symbol.PriceDisplayFormat);
                     break;
                 case ColumnsForGrid.MacdHistogram:
-                    e.Value = signal.MacdHistogram;
+                    e.Value = signal.MacdHistogram.ToString0(signal.Symbol.PriceDisplayFormat);
                     break;
                 case ColumnsForGrid.SlopeRsi:
                     e.Value = signal.SlopeRsi;
@@ -967,71 +967,71 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
         }
     }
 
-    internal void CreatePosition(object? sender, EventArgs? e)
-    {
-        if (GlobalData.ApplicationIsClosing)
-            return;
+    //internal void CreatePosition(object? sender, EventArgs? e)
+    //{
+    //    if (GlobalData.ApplicationIsClosing)
+    //        return;
 
-        // De rest van de commando's heeft een object nodig
-        var (succes, _, _, signal, _, _) = CommandTools.GetAttributesFromSender(SelectedObject);
-        if (succes && (GlobalData.ActiveAccount!.AccountType == CryptoAccountType.Altrady))
-        {
-            CryptoSymbolInterval symbolInterval = signal.Symbol.GetSymbolInterval(signal.Interval.IntervalPeriod);
-            CryptoPosition position = PositionTools.CreatePosition(GlobalData.ActiveAccount!, signal.Symbol, signal.Strategy, signal.Side, symbolInterval, signal.CloseDate);
-            PositionTools.AddSignalProperties(position, signal);
+    //    // De rest van de commando's heeft een object nodig
+    //    var (succes, _, _, signal, _, _) = CommandTools.GetAttributesFromSender(SelectedObject);
+    //    if (succes && (GlobalData.ActiveAccount!.AccountType == CryptoAccountType.Altrady))
+    //    {
+    //        CryptoSymbolInterval symbolInterval = signal.Symbol.GetSymbolInterval(signal.Interval.IntervalPeriod);
+    //        CryptoPosition position = PositionTools.CreatePosition(GlobalData.ActiveAccount!, signal.Symbol, signal.Strategy, signal.Side, symbolInterval, signal.CloseDate);
+    //        PositionTools.AddSignalProperties(position, signal);
 
-            CryptoDatabase database = new();
-            try
-            {
-                database.Open();
-                database.Connection.Insert(position);
-                PositionTools.AddPosition(GlobalData.ActiveAccount!, position);
-                var part = PositionTools.ExtendPosition(database, position, CryptoPartPurpose.Entry, signal.Interval, signal.Strategy,
-                    CryptoEntryOrDcaStrategy.AfterNextSignal, signal.SignalPrice, signal.CloseDate);
+    //        CryptoDatabase database = new();
+    //        try
+    //        {
+    //            database.Open();
+    //            database.Connection.Insert(position);
+    //            PositionTools.AddPosition(GlobalData.ActiveAccount!, position);
+    //            var part = PositionTools.ExtendPosition(database, position, CryptoPartPurpose.Entry, signal.Interval, signal.Strategy,
+    //                CryptoEntryOrDcaStrategy.AfterNextSignal, signal.SignalPrice, signal.CloseDate);
 
                  
-                {
-                    decimal entryValue = signal.Symbol.QuoteData!.EntryAmount;
+    //            {
+    //                decimal entryValue = signal.Symbol.QuoteData!.EntryAmount;
 
-                    // Voor market en limit nemen we de actionprice (quantiry berekenen)
-                    decimal price = signal.SignalPrice;
-                    if (price == 0)
-                        price = signal.Symbol.LastPrice ?? 0;
+    //                // Voor market en limit nemen we de actionprice (quantiry berekenen)
+    //                decimal price = signal.SignalPrice;
+    //                if (price == 0)
+    //                    price = signal.Symbol.LastPrice ?? 0;
 
-                    if (position.Side == CryptoTradeSide.Long)
-                        price *= 0.97m;
-                    if (position.Side == CryptoTradeSide.Short)
-                        price *= 1.04m;
-                    price = price.Clamp(signal.Symbol.PriceMinimum, signal.Symbol.PriceMaximum, signal.Symbol.PriceTickSize);
+    //                if (position.Side == CryptoTradeSide.Long)
+    //                    price *= 0.97m;
+    //                if (position.Side == CryptoTradeSide.Short)
+    //                    price *= 1.04m;
+    //                price = price.Clamp(signal.Symbol.PriceMinimum, signal.Symbol.PriceMaximum, signal.Symbol.PriceTickSize);
 
-                    decimal entryQuantity = entryValue / price; // "afgerond"
-                    entryQuantity = entryQuantity.Clamp(signal.Symbol.QuantityMinimum, signal.Symbol.QuantityMaximum, signal.Symbol.QuantityTickSize);
-                    if (position.Invested == 0)
-                        entryQuantity = TradeTools.CorrectEntryQuantityIfWayLess(signal.Symbol, entryValue, entryQuantity, price);
+    //                decimal entryQuantity = entryValue / price; // "afgerond"
+    //                entryQuantity = entryQuantity.Clamp(signal.Symbol.QuantityMinimum, signal.Symbol.QuantityMaximum, signal.Symbol.QuantityTickSize);
+    //                if (position.Invested == 0)
+    //                    entryQuantity = TradeTools.CorrectEntryQuantityIfWayLess(signal.Symbol, entryValue, entryQuantity, price);
 
-                    part.CloseTime = signal.CloseDate;
-                    database.Connection.Update(part);
+    //                part.CloseTime = signal.CloseDate;
+    //                database.Connection.Update(part);
 
-                    position.Reposition = false;
-                    position.EntryPrice = signal.SignalPrice;
-                    position.EntryAmount = entryQuantity;
-                    position.CloseTime = signal.CloseDate;
-                    position.Status = CryptoPositionStatus.Altrady;
-                    database.Connection.Update(position);
+    //                position.Reposition = false;
+    //                position.EntryPrice = signal.SignalPrice;
+    //                position.EntryAmount = entryQuantity;
+    //                position.CloseTime = signal.CloseDate;
+    //                position.Status = CryptoPositionStatus.Altrady;
+    //                database.Connection.Update(position);
 
-                    GlobalData.PositionsHaveChanged("");
+    //                GlobalData.PositionsHaveChanged("");
 
 
-                    AltradyWebhook.DelegateControlToAltrady(position);
-                    database.Connection.Update(position);
-                }
+    //                AltradyWebhook.DelegateControlToAltrady(position);
+    //                database.Connection.Update(position);
+    //            }
 
-            }
-            finally
-            {
-                database.Close();
-            }
-        }
-    }
+    //        }
+    //        finally
+    //        {
+    //            database.Close();
+    //        }
+    //    }
+    //}
 
 }

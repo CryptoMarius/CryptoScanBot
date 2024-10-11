@@ -33,8 +33,9 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
         Profit,
         Percentage,
         Parts,
-        //EntryPrice,
-        //ProfitPrice,
+        EntryPrice,
+        ProfitPrice,
+        FundingRate,
         QuantityTick,
         RemainingDust,
         DustValue,
@@ -74,13 +75,12 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
         Barometer4h,
         Barometer1d,
 
-#if DEBUG
+        MinimumEntry,
         // statistics
         PriceMin,
         PriceMax,
         PriceMinPerc,
         PriceMaxPerc,
-#endif
     }
 
     public override void InitializeCommands(ContextMenuStrip menuStrip)
@@ -167,12 +167,15 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
                 case ColumnsForGrid.Parts:
                     CreateColumn("Parts", typeof(int), string.Empty, DataGridViewContentAlignment.MiddleCenter, 34);
                     break;
-                //case ColumnsForGrid.EntryPrice:
-                //    CreateColumn("Entry Price", typeof(decimal), "#,##0.##", DataGridViewContentAlignment.MiddleRight, 75);
-                //    break;
-                //case ColumnsForGrid.ProfitPrice:
-                //    CreateColumn("Profit Price", typeof(decimal), "#,##0.##", DataGridViewContentAlignment.MiddleRight, 75);
-                //    break;
+                case ColumnsForGrid.EntryPrice:
+                    CreateColumn("Entry Price", typeof(decimal), "#,##0.##", DataGridViewContentAlignment.MiddleRight, 75).Visible = false;
+                    break;
+                case ColumnsForGrid.ProfitPrice:
+                    CreateColumn("Profit Price", typeof(decimal), "#,##0.##", DataGridViewContentAlignment.MiddleRight, 75).Visible = false;
+                    break;
+                case ColumnsForGrid.FundingRate:
+                    CreateColumn("Funding Rate", typeof(decimal), "#,##0.##", DataGridViewContentAlignment.MiddleRight, 55).Visible = false;
+                    break;
                 case ColumnsForGrid.QuantityTick:
                     CreateColumn("Q Tick", typeof(decimal), "#,##0.##", DataGridViewContentAlignment.MiddleRight, 75);
                     break;
@@ -212,13 +215,13 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
                     CreateColumn("Rsi", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
                     break;
                 case ColumnsForGrid.MacdValue:
-                    CreateColumn("Macd Value", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                    CreateColumn("Macd Value", typeof(decimal), string.Empty, DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
                     break;
                 case ColumnsForGrid.MacdSignal:
-                    CreateColumn("Macd Signal", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                    CreateColumn("Macd Signal", typeof(decimal), string.Empty, DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
                     break;
                 case ColumnsForGrid.MacdHistogram:
-                    CreateColumn("Macd Histo", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                    CreateColumn("Macd Histo", typeof(decimal), string.Empty, DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
                     break;
                 case ColumnsForGrid.SlopeRsi:
                     CreateColumn("Slope RSI", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
@@ -276,7 +279,9 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
                     CreateColumn("Bm 1d", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42).Visible = false;
                     break;
 
-#if DEBUG
+                case ColumnsForGrid.MinimumEntry:
+                    CreateColumn("M.Entry", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42).Visible = false;
+                    break;
                 case ColumnsForGrid.PriceMin:
                     CreateColumn("MinPrice", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 70).Visible = false;
                     break;
@@ -289,7 +294,6 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
                 case ColumnsForGrid.PriceMaxPerc:
                     CreateColumn("MaxPerc", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 70).Visible = false;
                     break;
-#endif
                 default:
                     throw new NotImplementedException();
             }
@@ -316,10 +320,11 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
             ColumnsForGrid.Returned => ObjectCompare.Compare(a.Returned, b.Returned),
             ColumnsForGrid.Commission => ObjectCompare.Compare(a.Commission, b.Commission),
             ColumnsForGrid.Profit => ObjectCompare.Compare(a.Profit, b.Profit),
-            ColumnsForGrid.Percentage => ObjectCompare.Compare(a.Percentage, b.Percentage),
             ColumnsForGrid.Parts => ObjectCompare.Compare(a.PartCount - Convert.ToInt32(a.ActiveDca), b.PartCount - Convert.ToInt32(b.ActiveDca)),
-            //ColumnsForGrid.EntryPrice => ObjectCompare.Compare(a.EntryPrice, b.EntryPrice),
-            //ColumnsForGrid.ProfitPrice => ObjectCompare.Compare(a.ProfitPrice, b.ProfitPrice),
+            ColumnsForGrid.EntryPrice => ObjectCompare.Compare(a.EntryPrice, b.EntryPrice),
+            ColumnsForGrid.ProfitPrice => ObjectCompare.Compare(a.ProfitPrice, b.ProfitPrice),
+            ColumnsForGrid.Percentage => ObjectCompare.Compare(a.Percentage, b.Percentage),
+            ColumnsForGrid.FundingRate => ObjectCompare.Compare(a.Symbol.FundingRate, b.Symbol.FundingRate),
             ColumnsForGrid.QuantityTick => ObjectCompare.Compare(a.Symbol.QuantityTickSize, b.Symbol.QuantityTickSize),
             ColumnsForGrid.RemainingDust => ObjectCompare.Compare(a.RemainingDust, b.RemainingDust),
             ColumnsForGrid.DustValue => ObjectCompare.Compare(a.RemainingDust * a.Symbol.LastPrice, b.RemainingDust * b.Symbol.LastPrice),
@@ -355,12 +360,11 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
             ColumnsForGrid.Barometer1h => ObjectCompare.Compare(a.Barometer1h, b.Barometer1h),
             ColumnsForGrid.Barometer4h => ObjectCompare.Compare(a.Barometer4h, b.Barometer4h),
             ColumnsForGrid.Barometer1d => ObjectCompare.Compare(a.Barometer1d, b.Barometer1d),
-#if DEBUG
+            ColumnsForGrid.MinimumEntry => ObjectCompare.Compare(a.MinEntry, b.MinEntry),
             ColumnsForGrid.PriceMin => ObjectCompare.Compare(a.PriceMin, b.PriceMin),
             ColumnsForGrid.PriceMax => ObjectCompare.Compare(a.PriceMax, b.PriceMax),
             ColumnsForGrid.PriceMinPerc => ObjectCompare.Compare(a.PriceMinPerc, b.PriceMinPerc),
             ColumnsForGrid.PriceMaxPerc => ObjectCompare.Compare(a.PriceMaxPerc, b.PriceMaxPerc),
-#endif
             _ => 0
         };
 
@@ -463,11 +467,16 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
                 case ColumnsForGrid.Parts:
                     e.Value = position.PartCountText(false);
                     break;
-                //case ColumnsForGrid.EntryPrice:
-                //e.Value = position.EntryPrice?.ToString(position.Symbol.PriceDisplayFormat),
-                //case ColumnsForGrid.ProfitPrice:
-                //e.Value = position.ProfitPrice?.ToString(position.Symbol.PriceDisplayFormat),
-                // ter debug..
+                case ColumnsForGrid.EntryPrice:
+                    e.Value = position.EntryPrice?.ToString(position.Symbol.PriceDisplayFormat);
+                    break;
+                case ColumnsForGrid.ProfitPrice:
+                    e.Value = position.ProfitPrice?.ToString(position.Symbol.PriceDisplayFormat);
+                    break;
+                case ColumnsForGrid.FundingRate:
+                    if (position.Status == CryptoPositionStatus.Trading && position.Symbol.FundingRate != 0.0m)
+                        e.Value = position.Symbol.FundingRate.ToString();
+                    break;
                 case ColumnsForGrid.QuantityTick:// ter debug..
                     e.Value = position.Symbol?.QuantityTickSize.ToString0();
                     break;
@@ -477,8 +486,6 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
                 case ColumnsForGrid.DustValue: // ter debug
                     e.Value = (position.RemainingDust * position.Symbol.LastPrice).ToString0("N8");
                     break;
-
-
 
                 case ColumnsForGrid.SignalDate:
                     // there is a signal.CloseDate
@@ -510,13 +517,13 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
                     e.Value = position.Rsi;
                     break;
                 case ColumnsForGrid.MacdValue:
-                    e.Value = position.MacdValue;
+                    e.Value = position.MacdValue.ToString0(position.Symbol.PriceDisplayFormat);
                     break;
                 case ColumnsForGrid.MacdSignal:
-                    e.Value = position.MacdSignal;
+                    e.Value = position.MacdSignal.ToString0(position.Symbol.PriceDisplayFormat);
                     break;
                 case ColumnsForGrid.MacdHistogram:
-                    e.Value = position.MacdHistogram;
+                    e.Value = position.MacdHistogram.ToString0(position.Symbol.PriceDisplayFormat);
                     break;
                 case ColumnsForGrid.SlopeRsi:
                     e.Value = position.SlopeRsi;
@@ -572,8 +579,9 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
                 case ColumnsForGrid.Barometer1d:
                     e.Value = position.Barometer1d?.ToString("N2");
                     break;
-
-#if DEBUG
+                case ColumnsForGrid.MinimumEntry:
+                    e.Value = position.MinEntry.ToString(position.Symbol.QuoteData!.DisplayFormat);
+                    break;
                 case ColumnsForGrid.PriceMin:
                     if (position.PriceMin! != 0m)
                         e.Value = position.PriceMin.ToString(position.Symbol.PriceDisplayFormat);
@@ -590,7 +598,6 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
                     if (position.PriceMaxPerc! != 0)
                         e.Value = position.PriceMaxPerc.ToString("N2");
                     break;
-#endif
                 default:
                     e.Value = '?';
                     break;
@@ -641,7 +648,7 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
                         foreColor = Color.Red;
                     break;
 
-                case ColumnsForGrid.Profit:
+                case ColumnsForGrid.Profit: // Current profit
                     decimal NetPnlPerc1 = position.Profit;
                     if (NetPnlPerc1 > 0)
                         foreColor = Color.Green;
@@ -654,6 +661,13 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
                     if (bePerc > 100)
                         foreColor = Color.Green;
                     else if (bePerc < 100)
+                        foreColor = Color.Red;
+                    break;
+
+                case ColumnsForGrid.FundingRate: // fundingrate
+                    if (position.Symbol.FundingRate > 0)
+                        foreColor = Color.Green;
+                    else if (position.Symbol.FundingRate < 0)
                         foreColor = Color.Red;
                     break;
 
@@ -721,7 +735,6 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
                     foreColor = SimpleColor(position.Barometer1d);
                     break;
 
-#if DEBUG
                 case ColumnsForGrid.PriceMin:
                     {
                         decimal value = position.PriceMin;
@@ -779,7 +792,6 @@ public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, S
                         }
             }
             break;
-#endif
             }
         }
 

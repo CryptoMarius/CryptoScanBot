@@ -85,6 +85,22 @@ public class CryptoPosition : CryptoData2
     public DateTime SignalEventTime { get; set; } // close date candle which triggered the signal
 
     [Computed]
+    public decimal MinEntry
+    {
+        get
+        {
+            decimal minEntryValue = 0;
+            if (Symbol.LastPrice.HasValue)
+                minEntryValue = Symbol.QuantityMinimum * (decimal)Symbol.LastPrice;
+
+            if (Symbol.QuoteValueMinimum > 0 && Symbol.QuoteValueMinimum > minEntryValue)
+                minEntryValue = Symbol.QuoteValueMinimum;
+
+            return minEntryValue;
+        }
+    }
+
+    [Computed]
     public DateTime? DelayUntil { get; set; }
 
     [Computed]

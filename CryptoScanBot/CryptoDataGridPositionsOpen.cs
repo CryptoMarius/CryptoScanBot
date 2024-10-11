@@ -82,6 +82,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
         Barometer4h,
         Barometer1d,
 
+        MinimumEntry,
         // statistics
         PriceMin,
         PriceMax,
@@ -205,7 +206,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
                     CreateColumn("Profit Price", typeof(decimal), "#,##0.##", DataGridViewContentAlignment.MiddleRight, 75);
                     break;
                 case ColumnsForGrid.FundingRate:
-                    CreateColumn("Funding Rate", typeof(decimal), "#,##0.##", DataGridViewContentAlignment.MiddleRight, 55);
+                    CreateColumn("Funding Rate", typeof(decimal), "#,##0.##", DataGridViewContentAlignment.MiddleRight, 55).Visible = false;
                     break;
                 case ColumnsForGrid.QuantityTick:
                     CreateColumn("Q Tick", typeof(decimal), "#,##0.##", DataGridViewContentAlignment.MiddleRight, 75);
@@ -246,13 +247,13 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
                     CreateColumn("Rsi", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
                     break;
                 case ColumnsForGrid.MacdValue:
-                    CreateColumn("Macd Value", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                    CreateColumn("Macd Value", typeof(decimal), string.Empty, DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
                     break;
                 case ColumnsForGrid.MacdSignal:
-                    CreateColumn("Macd Signal", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                    CreateColumn("Macd Signal", typeof(decimal), string.Empty, DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
                     break;
                 case ColumnsForGrid.MacdHistogram:
-                    CreateColumn("Macd Histo", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                    CreateColumn("Macd Histo", typeof(decimal), string.Empty, DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
                     break;
                 case ColumnsForGrid.SlopeRsi:
                     CreateColumn("Slope RSI", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
@@ -308,6 +309,10 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
                     break;
                 case ColumnsForGrid.Barometer1d:
                     CreateColumn("Bm 1d", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42).Visible = false;
+                    break;
+
+                case ColumnsForGrid.MinimumEntry:
+                    CreateColumn("M.Entry", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42).Visible = false;
                     break;
                 case ColumnsForGrid.PriceMin:
                     CreateColumn("MinPrice", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 70).Visible = false;
@@ -391,6 +396,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
             ColumnsForGrid.Barometer1h => ObjectCompare.Compare(a.Barometer1h, b.Barometer1h),
             ColumnsForGrid.Barometer4h => ObjectCompare.Compare(a.Barometer4h, b.Barometer4h),
             ColumnsForGrid.Barometer1d => ObjectCompare.Compare(a.Barometer1d, b.Barometer1d),
+            ColumnsForGrid.MinimumEntry => ObjectCompare.Compare(a.MinEntry, b.MinEntry),
             ColumnsForGrid.PriceMin => ObjectCompare.Compare(a.PriceMin, b.PriceMin),
             ColumnsForGrid.PriceMax => ObjectCompare.Compare(a.PriceMax, b.PriceMax),
             ColumnsForGrid.PriceMinPerc => ObjectCompare.Compare(a.PriceMinPerc, b.PriceMinPerc),
@@ -536,8 +542,6 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
                     }
                     break;
 
-
-
                 case ColumnsForGrid.SignalDate:
                     // there is a signal.CloseDate
                     //+ signal.OpenDate.AddSeconds(signal.Interval.Duration).ToLocalTime().ToString("HH:mm");
@@ -568,13 +572,13 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
                     e.Value = position.Rsi;
                     break;
                 case ColumnsForGrid.MacdValue:
-                    e.Value = position.MacdValue;
+                    e.Value = position.MacdValue.ToString0(position.Symbol.PriceDisplayFormat);
                     break;
                 case ColumnsForGrid.MacdSignal:
-                    e.Value = position.MacdSignal;
+                    e.Value = position.MacdSignal.ToString0(position.Symbol.PriceDisplayFormat);
                     break;
                 case ColumnsForGrid.MacdHistogram:
-                    e.Value = position.MacdHistogram;
+                    e.Value = position.MacdHistogram.ToString0(position.Symbol.PriceDisplayFormat);
                     break;
                 case ColumnsForGrid.SlopeRsi:
                     e.Value = position.SlopeRsi;
@@ -629,6 +633,9 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
                     break;
                 case ColumnsForGrid.Barometer1d:
                     e.Value = position.Barometer1d?.ToString("N2");
+                    break;
+                case ColumnsForGrid.MinimumEntry:
+                    e.Value = position.MinEntry.ToString(position.Symbol.QuoteData!.DisplayFormat);
                     break;
                 case ColumnsForGrid.PriceMin:
                     if (position.PriceMin! != 0m)
