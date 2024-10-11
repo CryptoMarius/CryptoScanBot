@@ -635,7 +635,7 @@ public class TradeTools
                 lastDateTime = GlobalData.GetCurrentDateTime(position.Account);
 
             // Er is in geinvesteerd en dus moet de positie ten minste actief zijn
-            if (position.Quantity != 0 && position.Status == CryptoPositionStatus.Waiting)
+            if (position.Status == CryptoPositionStatus.Waiting && position.Quantity != 0)
             {
                 orderStatusChanged = true;
                 position.CloseTime = null;
@@ -646,13 +646,12 @@ public class TradeTools
             }
 
             // Als alles verkocht is de positie alsnog sluiten. Maar wanneer weet je of alles echt verkocht is?
-            if (position.Quantity != 0 && position.Status == CryptoPositionStatus.Trading)
+            if (position.Status == CryptoPositionStatus.Trading) // && position.Quantity != 0
             {
                 // Close if q=0 or less than the minimum amount we can sell
                 decimal remaining = position.Quantity - position.RemainingDust;
                 if (remaining <= 0 || remaining < position.Symbol.QuantityMinimum || 
                     remaining * position.Symbol.LastPrice < position.Symbol.QuoteValueMinimum)
-                //if (remaining <= 0)
                 {
                     markedAsReady = true;
                     orderStatusChanged = true;
@@ -760,7 +759,7 @@ public class TradeTools
     }
 
 
-    static public async Task<(bool cancelled, TradeParams tradeParams)> CancelOrder(CryptoDatabase database,
+    static public async Task<(bool cancelled, TradeParams? tradeParams)> CancelOrder(CryptoDatabase database,
         CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step,
         DateTime currentTime, CryptoOrderStatus newStatus, string cancelReason)
     {
