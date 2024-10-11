@@ -215,7 +215,7 @@ public class Candles
                             long unixLoop = unixFirst;
                             while (unixLoop <= unixLast)
                             {
-                                CandleTools.CalculateCandleForInterval(intervalCalc, intervalCalc.ConstructFrom, symbol, unixLoop);
+                                CandleTools.CalculateCandleForInterval(symbol, intervalCalc, intervalCalc.ConstructFrom, unixLoop);
                                 unixLoop += intervalCalc.Duration;
                             }
                             CandleTools.UpdateCandleFetched(symbol, intervalCalc);
