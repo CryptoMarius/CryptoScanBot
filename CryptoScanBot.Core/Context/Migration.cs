@@ -730,6 +730,21 @@ public class Migration
             transaction.Commit();
         }
 
+
+        //***********************************************************
+        if (CurrentVersion > version.Version && version.Version == 23)
+        {
+            using var transaction = database.BeginTransaction();
+
+            // This update is empty because I made a mess..
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
         //***********************************************************
         if (CurrentVersion > version.Version && version.Version == 24)
         {
