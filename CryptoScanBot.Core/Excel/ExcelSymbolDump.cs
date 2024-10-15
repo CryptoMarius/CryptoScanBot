@@ -9,6 +9,76 @@ namespace CryptoScanBot.Core.Excel;
 
 public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
 {
+
+    //static private void ExportToExcel(Model.CryptoExchange exchange, CryptoSymbol symbol, CryptoInterval interval, SortedList<long, CryptoCandle> candleList)
+    //{
+    //    //Deze is op dit moment specifiek voor de TradeView aanpak gemaakt (datum er ff uitgehaald en vervangen met unix 1000's)
+    //    try
+
+    //    {
+    //        var csv = new StringBuilder();
+    //        var newLine = string.Format("{0},{1},{2},{3},{4},{5},{6}", "Timestamp", "Symbol", "Open", "High", "Low", "Close", "Volume");
+    //        csv.AppendLine(newLine);
+
+    //        //Monitor.Enter(candleList);
+    //        //try
+    //        //{
+    //        for (int i = 0; i < candleList.Count; i++)
+    //        {
+    //            CryptoCandle candle = candleList.Values[i];
+
+    //            newLine = string.Format("{0}000,{1},{2},{3},{4},{5},{6}",
+    //            candle.OpenTime.ToString(),
+    //            //CandleTools.GetUnixDate(candle.OpenTime).ToString(),
+    //            symbol.Name,
+    //            //candle.Interval.ToString(),
+    //            candle.Open.ToString(),
+    //            candle.High.ToString(),
+    //            candle.Low.ToString(),
+    //            candle.Close.ToString(),
+    //            //GetUnixDate(candle.CloseTime).ToString(),
+    //            candle.Volume.ToString());
+    //            //candle.Trades.ToString());
+
+    //            csv.AppendLine(newLine);
+    //        }
+    //        //}
+    //        //finally
+    //        //{
+    //        //    Monitor.Exit(candleList);
+    //        //}
+    //        string filename = GlobalData.GetBaseDir();
+    //        filename = filename + @"\data\" + exchange.Name + @"\Candles\" + symbol.Name + @"\"; // + interval.Name + @"\";
+    //        Directory.CreateDirectory(filename);
+    //        File.WriteAllText(filename + symbol.Name + "-" + interval.Name + ".csv", csv.ToString());
+
+    //    }
+    //    catch (Exception error)
+    //    {
+    //        ScannerLog.Logger.Error(error, "");
+    //        // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
+    //        //GlobalData.AddTextToLogTab(error.ToString());
+    //    }
+    //}
+
+
+    //static public void ExportToExcelAll()
+    //{
+    //    foreach (Model.CryptoExchange exchange in GlobalData.ExchangeListName.Values)
+    //    {
+    //        ExportSymbolsToExcel(exchange);
+
+    //        foreach (var symbol in exchange.SymbolListName.Values)
+    //        {
+    //            foreach (CryptoInterval interval in GlobalData.IntervalList)
+    //            {
+    //                CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
+    //                ExportToExcel(exchange, symbol, interval, symbolPeriod.CandleList);
+    //            }
+    //        }
+    //    }
+    //}
+
     private void DumpInformation()
     {
         // Overzichts van de aanwezige candles
@@ -69,7 +139,8 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
         WriteCell(sheet, columns++, row, "High");
         WriteCell(sheet, columns++, row, "Low");
         WriteCell(sheet, columns++, row, "Close");
-        WriteCell(sheet, columns++, row, "Volume");
+        WriteCell(sheet, columns++, row, "BaseVolume");
+        WriteCell(sheet, columns++, row, "QuoteVolume");
         WriteCell(sheet, columns++, row, "Duplicated");
 
         WriteCell(sheet, columns++, row, "SlopeRsi");
@@ -97,6 +168,12 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
             WriteCell(sheet, column++, row, candle.High, CellStyleDecimalNormal);
             WriteCell(sheet, column++, row, candle.Low, CellStyleDecimalNormal);
             WriteCell(sheet, column++, row, candle.Close, CellStyleDecimalNormal);
+
+            if (candle.BaseVolume == 0m)
+                WriteCell(sheet, column++, row, candle.BaseVolume, CellStyleDecimalRed);
+            else
+                WriteCell(sheet, column++, row, candle.BaseVolume, CellStyleDecimalNormal);
+
             if (candle.Volume == 0m)
                 WriteCell(sheet, column++, row, candle.Volume, CellStyleDecimalRed);
             else

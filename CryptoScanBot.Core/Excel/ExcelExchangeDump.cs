@@ -7,6 +7,39 @@ namespace CryptoScanBot.Core.Excel;
 public class ExcelExchangeDump(Model.CryptoExchange exchange) : ExcelBase(exchange.Name)
 {
 
+    //static private void ExportSymbolsToExcel(Model.CryptoExchange exchange)
+    //{
+    //    try
+    //    {
+    //        var csv = new StringBuilder();
+    //        var newLine = string.Format("{0};{1};{2}", "Exchange", "Symbol", "Volume");
+    //        csv.AppendLine(newLine);
+
+    //        for (int i = 0; i < exchange.SymbolListName.Values.Count; i++)
+    //        {
+    //            CryptoSymbol symbol = exchange.SymbolListName.Values[i];
+
+    //            newLine = string.Format("{0};{1};{2}",
+    //            symbol.Exchange.Name,
+    //            symbol.Name,
+    //            symbol.Volume.ToString());
+
+    //            csv.AppendLine(newLine);
+    //        }
+    //        string filename = GlobalData.GetBaseDir();
+    //        filename = filename + @"\data\" + exchange.Name + @"\";
+    //        Directory.CreateDirectory(filename);
+    //        File.WriteAllText(filename + "symbols.csv", csv.ToString());
+
+    //    }
+    //    catch (Exception error)
+    //    {
+    //        ScannerLog.Logger.Error(error, "");
+    //        // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
+    //        //GlobalData.AddTextToLogTab(error.ToString());
+    //    }
+    //}
+
     private static int OHLCHeaders(ISheet sheet, int row)
     {
         int column = 0;
