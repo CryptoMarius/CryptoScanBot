@@ -174,8 +174,7 @@ public class BarometerTools
                     symbolInterval.LastCandleSynchronized = periodStart;
 
                 if (GlobalData.Settings.General.DebugKLineReceive && (GlobalData.Settings.General.DebugSymbol == bmSymbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
-                    GlobalData.AddTextToLogTab($"Debug Barometer({bmSymbol.Name}, {interval.Name}, {candle.DateLocal}, {candle.Close})");
-
+                    GlobalData.AddTextToLogTab($"Debug candle {candle.OhlcText(bmSymbol, GlobalData.IntervalList[0], bmSymbol.PriceDisplayFormat, true, true, true)}");
             }
 
             // Naar de volgende 1m candle 
