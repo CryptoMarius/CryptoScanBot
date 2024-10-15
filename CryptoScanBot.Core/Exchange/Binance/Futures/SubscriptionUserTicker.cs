@@ -23,7 +23,7 @@ public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscript
             //}
 
 
-            var subscriptionResult = await ((BinanceSocketClient)TickerGroup.SocketClient).UsdFuturesApi.SubscribeToUserDataUpdatesAsync(
+            var subscriptionResult = await ((BinanceSocketClient)TickerGroup.SocketClient).UsdFuturesApi.Account.SubscribeToUserDataUpdatesAsync(
                 userStreamResult.Data,
 
                 onOrderUpdate: OnOrderUpdate

@@ -12,7 +12,7 @@ public class SubscriptionPriceTicker(ExchangeOptions exchangeOptions) : Subscrip
     public override async Task<CallResult<UpdateSubscription>?> Subscribe()
     {
         TickerGroup!.SocketClient ??= new BinanceSocketClient();
-        CallResult<UpdateSubscription> subscriptionResult = await ((BinanceSocketClient)TickerGroup.SocketClient).UsdFuturesApi.SubscribeToAllTickerUpdatesAsync((data) =>
+        CallResult<UpdateSubscription> subscriptionResult = await ((BinanceSocketClient)TickerGroup.SocketClient).UsdFuturesApi.ExchangeData.SubscribeToAllTickerUpdatesAsync((data) =>
         {
             if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
             {
