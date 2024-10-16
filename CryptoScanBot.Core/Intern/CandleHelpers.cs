@@ -68,7 +68,16 @@ public static class Helper
         s = s + " low=" + candle.Low.ToString(fmt);
         s = s + " close=" + candle.Close.ToString(fmt);
         if (includeVolume)
+        {
             s = s + " volume=" + candle.Volume.ToString();
+#if SUPPORTBASEVOLUME
+            s = s + " BaseVolume=" + candle.BaseVolume.ToString();
+#endif
+        }
+        if (candle.IsDuplicated)
+        {
+            s = s + " DUPLICATED";
+        }
         return s;
     }
 

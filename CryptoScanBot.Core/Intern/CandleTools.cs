@@ -66,8 +66,8 @@ public static class CandleTools
     /// <summary>
     /// Add the final candle in the right interval
     /// </summary>
-    static public CryptoCandle HandleFinalCandleData(CryptoSymbol symbol, CryptoInterval interval,
-        DateTime openTime, decimal open, decimal high, decimal low, decimal close, decimal volume, bool isDuplicated)
+    static public CryptoCandle CreateCandle(CryptoSymbol symbol, CryptoInterval interval, DateTime openTime, 
+        decimal open, decimal high, decimal low, decimal close, decimal baseVolume, decimal quoteVolume, bool isDuplicated)
     {
         CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
         SortedList<long, CryptoCandle> candles = symbolPeriod.CandleList;
@@ -85,73 +85,80 @@ public static class CandleTools
         candle.High = high;
         candle.Low = low;
         candle.Close = close;
-        candle.Volume = volume;
+        candle.Volume = quoteVolume;
+#if SUPPORTBASEVOLUME
+        candle.BaseVolume = baseVolume;
+#endif
         candle.IsDuplicated = isDuplicated;
 
-        return candle;
+        if (GlobalData.Settings.General.DebugKLineReceive && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
+            GlobalData.AddTextToLogTab($"Create candle {candle?.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true, true)}");
+        return candle!;
     }
 
     /// <summary>
     /// Calculate the candle using the candles from the lower timeframes
     /// </summary>
-    static public CryptoCandle CalculateCandleForInterval(CryptoSymbol symbol, CryptoInterval higherInterval, CryptoInterval lowerInterval, long candleLowerTimeFrameCloseTime)
+    static public CryptoCandle? CalculateCandleForInterval(CryptoSymbol symbol, CryptoInterval sourceInterval, CryptoInterval targetInterval, long candle1mOpenTime)
     {
         // The higher timeframe & the starttime of it
-        CryptoSymbolInterval higherSymbolInterval = symbol.GetSymbolInterval(higherInterval.IntervalPeriod);
-        SortedList<long, CryptoCandle> candlesHigherTimeFrame = higherSymbolInterval.CandleList;
-        long candleHigherTimeFrameOpenTime = candleLowerTimeFrameCloseTime - higherInterval.Duration;
-
+        CryptoSymbolInterval targetSymbolInterval = symbol.GetSymbolInterval(targetInterval.IntervalPeriod);
+        SortedList<long, CryptoCandle> candlesTargetTimeFrame = targetSymbolInterval.CandleList;
+        var (_, candleTargetStart) = IntervalTools.StartOfIntervalCandle3(candle1mOpenTime, sourceInterval.Duration, targetInterval.Duration);
+        long candleTargetClose = candleTargetStart + targetInterval.Duration;
+#if DEBUG
+        DateTime candleTargetStartDebug = GetUnixDate(candleTargetStart);
+        DateTime candleTargetCloseDebug = GetUnixDate(candleTargetClose);
+#endif
 
         // The lower timeframe & the starttime of the first of the range
-        CryptoSymbolInterval lowerSymbolInterval = symbol.GetSymbolInterval(lowerInterval.IntervalPeriod);
-        SortedList<long, CryptoCandle> candlesLowerTimeFrame = lowerSymbolInterval.CandleList;
-        int candleCountInLowerTimeFrame = higherInterval.Duration / lowerInterval.Duration;
-        long candleLowerTimeFrameStart = candleLowerTimeFrameCloseTime - candleCountInLowerTimeFrame * lowerInterval.Duration;
-
+        CryptoSymbolInterval lowerSymbolInterval = symbol.GetSymbolInterval(sourceInterval.IntervalPeriod);
+        SortedList<long, CryptoCandle> candlesSource = lowerSymbolInterval.CandleList;
+        int candleCountInSource = targetInterval.Duration / sourceInterval.Duration;
+        long candleSourceStart = candleTargetClose - candleCountInSource * sourceInterval.Duration;
+        long candleSourceClose = candleSourceStart + sourceInterval.Duration;
 #if DEBUG
-        // Checks, kint of overkill, butit wont hurt either
-        if (candleCountInLowerTimeFrame * lowerInterval.Duration != higherInterval.Duration)
-            throw new Exception("Probleem met de definitie van de intervallen");
-
-        if (higherInterval.Duration % lowerInterval.Duration > 0)
-            throw new Exception("Probleem met de definitie van de intervallen");
-
-        DateTime candleHigherTimeFrameDate = GetUnixDate(candleHigherTimeFrameOpenTime); // debug 
-        DateTime candleLowerTimeFrameStartDate = GetUnixDate(candleLowerTimeFrameStart); // debug 
-        DateTime candleLowerTimeFrameEindeDate = GetUnixDate(candleLowerTimeFrameCloseTime); // debug 
+        DateTime candleSourceStartDebug = GetUnixDate(candleSourceStart);
+        DateTime candleSourceCloseDebug = GetUnixDate(candleSourceClose); // ????? just the first candle..
 #endif
 
 
         // Create the higher timeframe candle (it will be added later when its data is fully calculated)
-        if (!candlesHigherTimeFrame.TryGetValue(candleHigherTimeFrameOpenTime, out CryptoCandle? candleNew))
+        if (!candlesTargetTimeFrame.TryGetValue(candleTargetStart, out CryptoCandle? candleNew))
         {
             candleNew = new CryptoCandle()
             {
-                OpenTime = candleHigherTimeFrameOpenTime,
+                OpenTime = candleTargetStart,
                 Open = 0,
                 High = decimal.MinValue,
                 Low = decimal.MaxValue,
-                Close = 0
+                Close = 0,
+                Volume = 0,
+#if SUPPORTBASEVOLUME
+                BaseVolume = 0,
+#endif
             };
         }
 
         // reset volume && error status
-        candleNew.Volume = 0;
-        candleNew.IsDuplicated = false; // ? Should we rest this one?
+        decimal volume = 0;
+#if SUPPORTBASEVOLUME
+        decimal baseVolume = 0;
+#endif
+        candleNew.IsDuplicated = false; // ? Should we reset this?
 
         // The candle  in the higher timeframe contains x candles from the lower timeframe
         bool firstCandle = true;
-        int candleCount = candleCountInLowerTimeFrame;
-        long candleOpenUnixLoop = candleLowerTimeFrameStart;
-        while (candleOpenUnixLoop < candleLowerTimeFrameCloseTime)
+        int candleCount = candleCountInSource;
+        long loop = candleSourceStart;
+        while (loop < candleTargetClose)
         {
-            //DateTime candleOpenDateLoop = GetUnixDate(candleOpenUnixLoop); // debug
-            if (candlesLowerTimeFrame.TryGetValue(candleOpenUnixLoop, out CryptoCandle? candle))
+            DateTime loopDebug = GetUnixDate(loop);
+            if (candlesSource.TryGetValue(loop, out CryptoCandle? candle))
             {
                 candleCount--;
 
                 // Open is 
-                //if (candleNew.Open == 0 || candleOpenUnixLoop == candleHigherTimeFrameOpenTime)
                 if (firstCandle)
                     candleNew.Open = candle.Open;
 
@@ -165,32 +172,44 @@ public static class CandleTools
                     candleNew.Low = candle.Low;
 
                 // Dat gaat  fout als niet de hele "periode" aangeboden wordt
-                candleNew.Volume += candle.Volume;
-
-                if (candle.IsDuplicated) // && lowerInterval.IntervalPeriod != Enums.CryptoIntervalPeriod.interval1m???
+                volume += candle.Volume;
+#if SUPPORTBASEVOLUME
+                baseVolume += candle.BaseVolume;
+#endif
+                if (candle.IsDuplicated)
                     candleNew.IsDuplicated = true; // Forward error flag
                 firstCandle = false;
             }
             //else break; // the lower interval is not complete, stop? (see remarks)
 
-            candleOpenUnixLoop += lowerInterval.Duration;
+            loop += sourceInterval.Duration;
         }
-
-
-        // Duplicated is some kind of error status
+        // Keep old calculated volume
+        if (volume > candleNew.Volume)
+            candleNew.Volume = volume;
+#if SUPPORTBASEVOLUME
+        if (baseVolume > candleNew.BaseVolume)
+            candleNew.BaseVolume = baseVolume;
+#endif
+        // Duplicated is indicating an error status
         // on the 1m is the data of the previous candle
         // on higher timeframes it indicates missing candles
+        // BUT, if we calculate an old candle which does not have any lower timeframe candles it is set also...
         if (candleCount != 0)
             candleNew.IsDuplicated = true;
 
 
+
         // If there was some data add candle to the higher timeframe list if needed
-        if (!candlesHigherTimeFrame.ContainsKey(candleNew.OpenTime) && candleCount != candleCountInLowerTimeFrame)
+        if (candleNew.Open != 0.0m && !candlesTargetTimeFrame.ContainsKey(candleNew.OpenTime) && candleCount != candleCountInSource)
         {
-            candlesHigherTimeFrame.Add(candleNew.OpenTime, candleNew);
-            UpdateCandleFetched(symbol, higherInterval);
+            candlesTargetTimeFrame.Add(candleNew.OpenTime, candleNew);
+            UpdateCandleFetched(symbol, targetInterval);
         }
 
+
+        if (GlobalData.Settings.General.DebugKLineReceive && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
+            GlobalData.AddTextToLogTab($"Calc candle {candleNew.OhlcText(symbol, targetInterval, symbol.PriceDisplayFormat, true, true, true)}");
 
         // remark about the break and the -1 comparison:
         // remark: 1 missing candle will alway's trigger problems!
@@ -207,12 +226,13 @@ public static class CandleTools
 
 
     
-    public static CryptoCandle Process1mCandle(CryptoSymbol symbol, DateTime openTime, decimal open, decimal high, decimal low, decimal close, decimal volume, bool duplicated = false)
+    public static CryptoCandle Process1mCandle(CryptoSymbol symbol, DateTime openTime, decimal open, decimal high, decimal low, decimal close, 
+        decimal baseVolume, decimal quoteVolume, bool duplicated = false)
     {
         Monitor.Enter(symbol.CandleList);
         try
         {
-            //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", topic, kline.Timestamp.ToLocalTime()));
+            //GlobalData.AddTextToLogTab($"Process1mCandle {symbol.Name} Candle 1m {openTime.ToLocalTime()} start processing");
             // Last known price (and the price ticker will adjust)
             if (!GlobalData.BackTest)
             {
@@ -222,28 +242,25 @@ public static class CandleTools
             }
 
             // Process the single 1m candle
-            CryptoCandle candle = HandleFinalCandleData(symbol, GlobalData.IntervalList[0], openTime, open, high, low, close, volume, duplicated);
-
+            CryptoCandle? candle = CreateCandle(symbol, GlobalData.IntervalList[0], openTime, open, high, low, close, baseVolume, quoteVolume, duplicated);
             // Update administration of the last processed candle
             UpdateCandleFetched(symbol, GlobalData.IntervalList[0]);
-#if SHOWTIMING
-            GlobalData.AddTextToLogTab($"ticker(1m):" + candle.OhlcText(symbol, GlobalData.IntervalList[0], symbol.PriceDisplayFormat, true, false, true));
-#endif
 
 
             // Calculate the higher timeframes
-            long candle1mCloseTime = candle.OpenTime + 60;
+            long candle1mCloseTime = candle!.OpenTime + 60;
             foreach (CryptoInterval interval in GlobalData.IntervalList)
             {
                 if (interval.ConstructFrom != null && candle1mCloseTime % interval.Duration == 0)
                 {
-                    // Calculate the candle using the candles from the lower timeframes
-                    CryptoCandle candleNew = CalculateCandleForInterval(symbol, interval, interval.ConstructFrom, candle1mCloseTime);
-                    // Update administration of the last processed candle
-                    UpdateCandleFetched(symbol, interval);
-#if SHOWTIMING
-                    GlobalData.AddTextToLogTab($"ticker({interval.Name}):" + candleNew.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, false, true));
-#endif
+                    var (outside, targetStart) = IntervalTools.StartOfIntervalCandle3(candle.OpenTime, interval.ConstructFrom.Duration, interval.Duration);
+                    if (!outside) //  && targetStart + interval.Duration <= candle!.OpenTime
+                    {
+                        // Calculate the candle using the candles from the lower timeframes
+                        CalculateCandleForInterval(symbol, interval.ConstructFrom, interval, targetStart); //candle.OpenTime ? candle1mCloseTime
+                        // Update administration of the last processed candle
+                        UpdateCandleFetched(symbol, interval);
+                    }
                 }
             }
 
@@ -255,49 +272,97 @@ public static class CandleTools
         }
     }
 
-    //    /// <summary>
-    //    /// Voeg de ontbrekende candles to aan de lijst (een nadeel van de stream)
-    //    /// </summary>
-    //    static public void AddMissingSticks(SortedList<long, CryptoCandle> candles, long candleUnixTime, CryptoInterval interval)
-    //    {
-    //        // De eventueel ontbrekende candles maken (dat kan een hele reeks zijn)
-    //        // Die zetten we op de close van laatste candle (wat moeten we anders?)
-    //        // (niet bedoeld om ontbrekende <tussenliggende> candles in te voegen)
+    static public void BulkAddMissingCandles(CryptoSymbol symbol, CryptoInterval interval)
+    {
+        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+        SortedList<long, CryptoCandle> candleList = symbolInterval.CandleList;
 
-    //        if (candles.Count > 0)
-    //        {
-    //            CryptoCandle stickOld = candles.Values.Last();
+        if (candleList.Count != 0)
+        {
+            CryptoCandle stickOld = candleList.Values.First();
+            //GlobalData.AddTextToLogTab(symbol.Name + " " + interval.Name + " Debug missing candle " + CandleTools.GetUnixDate(stickOld.OpenTime).ToLocalTime());
+            long unixTime = stickOld.OpenTime;
+            while (unixTime < symbolInterval.LastCandleSynchronized)
+            {
+                // TODO: Replace with CandleTools.CreateCandle? (or optimize)
+                if (!candleList.TryGetValue(unixTime, out CryptoCandle? candle))
+                {
+                    candle = new()
+                    {
+                        OpenTime = unixTime,
+                        Open = stickOld.Close,
+                        High = stickOld.Close,
+                        Low = stickOld.Close,
+                        Close = stickOld.Close,
+#if SUPPORTBASEVOLUME
+                        BaseVolume = 0,
+#endif
+                        Volume = 0,
+                        IsDuplicated = true // retry fetch
+                    };
+                    candleList.Add(candle.OpenTime, candle);
+                    if (GlobalData.Settings.General.DebugKLineReceive && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
+                        GlobalData.AddTextToLogTab($"Debug calculating candle {candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true)} (duplicated)");
+                }
+                stickOld = candle;
+                unixTime += interval.Duration;
+            }
+        }
+    }
 
-    //            long currentCandleUnix = candleUnixTime;
-    //            //DateTime currentCandleDate = GetUnixDate(currentCandleUnix);
 
-    //            //De verwachte datum van de volgende candle in deze reeks
-    //            long nextCandleUnix = stickOld.OpenTime + interval.Duration;
-    //            //DateTime nextCandleDate = GetUnixDate(nextCandleUnix); //debug
+    static public void BulkCalculateCandles(CryptoSymbol symbol, CryptoInterval sourceInterval, CryptoInterval targetInterval, long fetchEndUnix)
+    {
+        //GlobalData.AddTextToLogTab($"{symbol.Name} BulkCalculateCandles {sourceInterval.Name} {targetInterval.Name}");
+        CryptoSymbolInterval symbolSourceInterval = symbol.GetSymbolInterval(sourceInterval.IntervalPeriod);
+        SortedList<long, CryptoCandle> candleSourceInterval = symbolSourceInterval.CandleList;
+        if (candleSourceInterval.Values.Any())
+        {
+            DateTime firstCandleDateDebug;
+            DateTime lastCandleDateDebug;
+            DateTime fetchEndUnixDate = CandleTools.GetUnixDate(fetchEndUnix);
 
-    //            while (nextCandleUnix < currentCandleUnix)
-    //            {
-    //                if (!candles.ContainsKey(nextCandleUnix))
-    //                {
-    //                    CryptoCandle stickNew = new()
-    //                    {
-    //                        OpenTime = nextCandleUnix,
-    //                        Open = stickOld.Close,
-    //                        Close = stickOld.Close,
-    //                        Low = stickOld.Close,
-    //                        High = stickOld.Close,
-    //                        Volume = 0
-    //                    };
-    //                    candles.Add(nextCandleUnix, stickNew);
-    //                }
+            CryptoCandle firstCandle = candleSourceInterval.Values.First();
+            var (firstOutside, firstCandleDate) = IntervalTools.StartOfIntervalCandle3(firstCandle.OpenTime, sourceInterval.Duration, targetInterval.Duration);
+            firstCandleDateDebug = CandleTools.GetUnixDate(firstCandleDate);
+            if (firstOutside || firstCandleDate < firstCandle.OpenTime) // Has candles outside and will not be complete and will be flagged as error
+            {
+                firstCandleDate += targetInterval.Duration;
+                firstCandleDateDebug = CandleTools.GetUnixDate(firstCandleDate);
+            }
 
-    //                // De gegevens voor de volgende candle (bevat dezelfde gegevens)
-    //                nextCandleUnix += interval.Duration;
-    //                //nextCandleDate = GetUnixDate(nextCandleUnix); //debug
-    //            }
-    //        }
+            CryptoCandle lastCandle = candleSourceInterval.Values.Last();
+            var (lastOutside, lastCandleDate) = IntervalTools.StartOfIntervalCandle3(lastCandle.OpenTime, sourceInterval.Duration, targetInterval.Duration);
+            lastCandleDateDebug = CandleTools.GetUnixDate(lastCandleDate);
+            if (lastOutside || lastCandleDate + targetInterval.Duration > fetchEndUnix) // Has candles outside and will not be complete and will be flagged as error (also future candle)
+            {
+                lastCandleDate -= targetInterval.Duration;
+                lastCandleDateDebug = CandleTools.GetUnixDate(lastCandleDate);
+            }
 
-    //    }
+            // Bulk calculate all higher interval candles (ranging from the firstLowerCandle to the last candle)
+            long loop = firstCandleDate;
+#if DEBUG
+            DateTime loopDebug = CandleTools.GetUnixDate(loop);
+#endif
+            while (loop <= lastCandleDate)
+            {
+                CryptoCandle? candle = CandleTools.CalculateCandleForInterval(symbol, sourceInterval, targetInterval, loop);
+                if (candle!.IsDuplicated)
+                    candle = CandleTools.CalculateCandleForInterval(symbol, sourceInterval, targetInterval, loop);
+
+                loop += targetInterval.Duration;
+#if DEBUG
+                loopDebug = CandleTools.GetUnixDate(loop);
+#endif
+
+                //if (GlobalData.Settings.General.DebugKLineReceive && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
+                //    GlobalData.AddTextToLogTab($"Debug calculating candle {candle?.OhlcText(symbol, targetInterval, symbol.PriceDisplayFormat, true, true, true)}");
+            }
+
+            CandleTools.UpdateCandleFetched(symbol, targetInterval);
+        }
+    }
 
 
     static public void UpdateCandleFetched(CryptoSymbol symbol, CryptoInterval interval)
@@ -314,103 +379,44 @@ public static class CandleTools
         }
     }
 
-    static private void ExportSymbolsToExcel(Model.CryptoExchange exchange)
+
+    static public void CleanCandleData(CryptoSymbol symbol, long? lastCandle1mCloseTime)
     {
-        try
-        {
-            var csv = new StringBuilder();
-            var newLine = string.Format("{0};{1};{2}", "Exchange", "Symbol", "Volume");
-            csv.AppendLine(newLine);
+        // We nemen aardig wat geheugen in beslag door alles in het geheugen te berekenen, probeer in 
+        // ieder geval de CandleData te clearen. Vanaf x candles terug tot de eerste de beste die null is.
 
-            for (int i = 0; i < exchange.SymbolListName.Values.Count; i++)
+        foreach (CryptoInterval interval in GlobalData.IntervalList)
+        {
+            if (lastCandle1mCloseTime == null || lastCandle1mCloseTime % interval.Duration == 0)
             {
-                CryptoSymbol symbol = exchange.SymbolListName.Values[i];
-
-                newLine = string.Format("{0};{1};{2}",
-                symbol.Exchange.Name,
-                symbol.Name,
-                symbol.Volume.ToString());
-
-                csv.AppendLine(newLine);
-            }
-            string filename = GlobalData.GetBaseDir();
-            filename = filename + @"\data\" + exchange.Name + @"\";
-            Directory.CreateDirectory(filename);
-            File.WriteAllText(filename + "symbols.csv", csv.ToString());
-
-        }
-        catch (Exception error)
-        {
-            ScannerLog.Logger.Error(error, "");
-            // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
-            //GlobalData.AddTextToLogTab(error.ToString());
-        }
-    }
-
-    static private void ExportToExcel(Model.CryptoExchange exchange, CryptoSymbol symbol, CryptoInterval interval, SortedList<long, CryptoCandle> candleList)
-    {
-        //Deze is op dit moment specifiek voor de TradeView aanpak gemaakt (datum er ff uitgehaald en vervangen met unix 1000's)
-        try
-
-        {
-            var csv = new StringBuilder();
-            var newLine = string.Format("{0},{1},{2},{3},{4},{5},{6}", "Timestamp", "Symbol", "Open", "High", "Low", "Close", "Volume");
-            csv.AppendLine(newLine);
-
-            //Monitor.Enter(candleList);
-            //try
-            //{
-            for (int i = 0; i < candleList.Count; i++)
-            {
-                CryptoCandle candle = candleList.Values[i];
-
-                newLine = string.Format("{0}000,{1},{2},{3},{4},{5},{6}",
-                candle.OpenTime.ToString(),
-                //CandleTools.GetUnixDate(candle.OpenTime).ToString(),
-                symbol.Name,
-                //candle.Interval.ToString(),
-                candle.Open.ToString(),
-                candle.High.ToString(),
-                candle.Low.ToString(),
-                candle.Close.ToString(),
-                //GetUnixDate(candle.CloseTime).ToString(),
-                candle.Volume.ToString());
-                //candle.Trades.ToString());
-
-                csv.AppendLine(newLine);
-            }
-            //}
-            //finally
-            //{
-            //    Monitor.Exit(candleList);
-            //}
-            string filename = GlobalData.GetBaseDir();
-            filename = filename + @"\data\" + exchange.Name + @"\Candles\" + symbol.Name + @"\"; // + interval.Name + @"\";
-            Directory.CreateDirectory(filename);
-            File.WriteAllText(filename + symbol.Name + "-" + interval.Name + ".csv", csv.ToString());
-
-        }
-        catch (Exception error)
-        {
-            ScannerLog.Logger.Error(error, "");
-            // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
-            //GlobalData.AddTextToLogTab(error.ToString());
-        }
-    }
-
-
-    static public void ExportToExcelAll()
-    {
-        foreach (Model.CryptoExchange exchange in GlobalData.ExchangeListName.Values)
-        {
-            ExportSymbolsToExcel(exchange);
-
-            foreach (var symbol in exchange.SymbolListName.Values)
-            {
-                foreach (CryptoInterval interval in GlobalData.IntervalList)
+                Monitor.Enter(symbol.CandleList);
+                try
                 {
-                    CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
-                    ExportToExcel(exchange, symbol, interval, symbolPeriod.CandleList);
+                    // Remove old indicator data
+                    SortedList<long, CryptoCandle> candles = symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList;
+                    for (int i = candles.Count - 62; i > 0; i--)
+                    {
+                        CryptoCandle c = candles.Values[i];
+                        if (c.CandleData != null)
+                            c.CandleData = null;
+                        else break;
+                    }
+
+
+                    // Remove old candles
+                    long startFetchUnix = CandleIndicatorData.GetCandleFetchStart(symbol, interval, DateTime.UtcNow);
+                    DateTime startFetchUnixDate = CandleTools.GetUnixDate(startFetchUnix);
+                    while (candles.Values.Any())
+                    {
+                        CryptoCandle c = candles.Values[0];
+                        if (c.OpenTime < startFetchUnix)
+                            candles.Remove(c.OpenTime);
+                        else break;
+                    }
+                }
+                finally
+                {
+                    Monitor.Exit(symbol.CandleList);
                 }
             }
         }

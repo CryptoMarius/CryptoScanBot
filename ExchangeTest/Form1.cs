@@ -226,8 +226,8 @@ public partial class Form1 : Form
                 //long first = long.MaxValue;
                 foreach (var kline in result.Data)
                 {
-                    CryptoCandle candle = CandleTools.HandleFinalCandleData(symbol, interval, kline.OpenTime,
-                        kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.QuoteVolume, false);
+                    CryptoCandle candle = CandleTools.CreateCandle(symbol, interval, kline.OpenTime,
+                        kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, 0, kline.QuoteVolume, false);
 
                     //GlobalData.AddTextToLogTab("Debug: Fetched candle " + symbol.Name + " " + interval.Name + " " + candle.DateLocal);
 
@@ -258,6 +258,9 @@ public partial class Form1 : Form
                             High = stickOld.Close,
                             Low = stickOld.Close,
                             Close = stickOld.Close,
+#if SUPPORTBASEVOLUME
+                            BaseVolume = 0,
+#endif
                             Volume = 0
                         };
                         symbolInterval.CandleList.Add(candle.OpenTime, candle);

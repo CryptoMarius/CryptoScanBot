@@ -9,8 +9,6 @@ using Mexc.Net.Clients;
 using Mexc.Net.Enums;
 using Mexc.Net.Objects.Models.Spot;
 
-using System.Text.Json;
-
 namespace CryptoScanBot.Core.Exchange.Mexc.Spot;
 
 public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
@@ -90,6 +88,9 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                             candle.High = kline.HighPrice;
                             candle.Low = kline.LowPrice;
                             candle.Close = kline.ClosePrice;
+#if SUPPORTBASEVOLUME
+                            candle.BaseVolume = kline.Volume;
+#endif
                             candle.Volume = kline.QuoteVolume;
                             //GlobalData.AddTextToLogTab($"kline received {candle.OhlcText(Symbol, interval, Symbol.PriceDisplayFormat, true, true)}");
 
@@ -172,7 +173,13 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
                                 //ScannerLog.Logger.Trace($"kline ticker {topic} process");
                                 //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", topic, kline.Timestamp.ToLocalTime()));
-                                CandleTools.Process1mCandle(symbol, candle.Date, candle.Open, candle.High, candle.Low, candle.Close, candle.Volume, candle.IsDuplicated);
+                                CandleTools.Process1mCandle(symbol, candle.Date, candle.Open, candle.High, candle.Low, candle.Close,
+#if SUPPORTBASEVOLUME
+                                    candle.BaseVolume, 
+#else
+                                    0,
+#endif
+                                    candle.Volume, candle.IsDuplicated);
 
 
                                 // Debug...

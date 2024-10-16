@@ -4,10 +4,8 @@ using Bybit.Net.Objects.Models.V5;
 
 using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
-using CryptoExchange.Net.Sockets;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
-using CryptoScanBot.Core.Enums;
 
 namespace CryptoScanBot.Core.Exchange.BybitApi.Futures;
 
@@ -38,8 +36,11 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                 Interlocked.Increment(ref TickerCount);
                 //ScannerLog.Logger.Trace($"kline ticker {topic} process");
                 //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", topic, kline.Timestamp.ToLocalTime()));
-                var candle = CandleTools.Process1mCandle(symbol, kline.StartTime, kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.Volume);
+                var candle = CandleTools.Process1mCandle(symbol, kline.StartTime, kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.Volume, kline.Turnover);
                 GlobalData.ThreadMonitorCandle!.AddToQueue(symbol, candle);
+
+                //if (GlobalData.Settings.General.DebugKLineReceive && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
+                //    GlobalData.AddTextToLogTab($"Debug candle {symbol.Name} 1m {JsonSerializer.Serialize(kline, GlobalData.JsonSerializerNotIndented)}");
             }
         }
 

@@ -86,4 +86,19 @@ public class AccountData
         AccountSymbolData symbolData = GetSymbolData(symbolName);
         return symbolData.GetAccountSymbolIntervalData(intervalPeriod);
     }
+
+
+    //public static void GetAssetsFromDatabase(CryptoDatabase database, CryptoPosition position)
+    //{
+    //    // De parts
+    //    string sql = string.Format("select * from asset where TradeAccountId={0}", accountId);
+    //    foreach (CryptoPositionPart part in database.Connection.Query<CryptoPositionPart>(sql))
+    //    {
+    //        if (part.IntervalId.HasValue && GlobalData.IntervalListId.TryGetValue((int)position.IntervalId!, out CryptoInterval? interval))
+    //            part.Interval = interval!;
+    //        AddPositionPart(position, part);
+    //    }
+
+    //}
+
 }

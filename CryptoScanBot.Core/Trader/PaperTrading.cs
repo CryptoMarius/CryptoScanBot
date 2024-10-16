@@ -98,9 +98,7 @@ public class PaperTrading
         
         ScannerLog.Logger.Trace($"{position.Symbol.Name} created papertrade order #{order.Id} and trade #{trade.Id} for order {order.OrderId}");
 
-
         await TradeHandler.HandleTradeAsync(position.Symbol, CryptoOrderStatus.Filled, order);
-        PaperAssets.Change(position.Account, position.Symbol, step.Side, CryptoOrderStatus.Filled, order.Quantity, order.QuoteQuantity);
     }
 
 

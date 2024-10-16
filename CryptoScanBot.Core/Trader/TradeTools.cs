@@ -9,6 +9,18 @@ using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot.Core.Trader;
 
+public static class OrderHelper
+{
+    public static string ToString(this CryptoOrderStatus status)
+    {
+        // The text "PartiallyAndClosed" is actually filled with an additional an internal purpose
+        if (status == CryptoOrderStatus.PartiallyAndClosed)
+            return "Filled";
+        else
+            return status.ToString();
+    }
+}
+
 public class TradeTools
 {
     public static void LoadAssets()
@@ -217,8 +229,6 @@ public class TradeTools
                 if (part.Quantity > 0)
                     //part.BreakEvenPrice = (part.Invested - part.Returned + part.Commission) / (part.Quantity + part.CommissionBase);
                     part.BreakEvenPrice = (part.Invested - part.Returned + part.Commission) / part.Quantity;
-                //else
-                  //  part.BreakEvenPrice = 0;
             }
             else
             {
@@ -231,8 +241,6 @@ public class TradeTools
                 if (part.Quantity > 0)
                     //part.BreakEvenPrice = (part.Invested - part.Returned - part.Commission) / (part.Quantity + part.CommissionBase);
                     part.BreakEvenPrice = (part.Invested - part.Returned - part.Commission) / part.Quantity;
-                //else
-                  //  part.BreakEvenPrice = 0;
             }
 
             // De parts opnieuw instellen
@@ -650,7 +658,7 @@ public class TradeTools
             {
                 // Close if q=0 or less than the minimum amount we can sell
                 decimal remaining = position.Quantity - position.RemainingDust;
-                if (remaining <= 0 || remaining < position.Symbol.QuantityMinimum || 
+                if (remaining <= 0 || remaining < position.Symbol.QuantityMinimum ||
                     remaining * position.Symbol.LastPrice < position.Symbol.QuoteValueMinimum)
                 {
                     markedAsReady = true;
@@ -781,9 +789,8 @@ public class TradeTools
             step.CloseTime = currentTime;
             database.Connection.Update<CryptoPositionStep>(step);
 
-            if (position.Account.AccountType == CryptoAccountType.PaperTrade)
-                PaperAssets.Change(position.Account, position.Symbol, result.tradeParams.OrderSide,
-                    CryptoOrderStatus.Canceled, result.tradeParams.Quantity, result.tradeParams.QuoteQuantity);
+            PaperAssets.Change(position.Account, position.Symbol, position.Side, result.tradeParams!.OrderSide,
+                CryptoOrderStatus.Canceled, result.tradeParams.Quantity, result.tradeParams.QuoteQuantity);
         }
         if (!result.succes || GlobalData.Settings.Trading.LogCanceledOrders)
             ExchangeBase.Dump(position, result.succes, result.tradeParams, cancelReason);
@@ -887,9 +894,8 @@ public class TradeTools
                 database.Connection.Update<CryptoPositionPart>(part);
                 database.Connection.Update<CryptoPosition>(position);
 
-                if (position.Account.AccountType == CryptoAccountType.PaperTrade)
-                    PaperAssets.Change(position.Account, position.Symbol, result.tradeParams.OrderSide,
-                        step.Status, result.tradeParams.Quantity, result.tradeParams.QuoteQuantity);
+                PaperAssets.Change(position.Account, position.Symbol, position.Side, result.tradeParams.OrderSide,
+                    step.Status, result.tradeParams.Quantity, result.tradeParams.QuoteQuantity);
             }
             else
                 position.ForceCheckPosition = true;
@@ -907,10 +913,10 @@ public class TradeTools
         // Opmerking: Er is geen percentage bij papertrading mogelijk (of we moeten een werkende papertrade asset management implementeren)
 
         // Heeft de gebruiker een percentage of een aantal ingegeven?
-        if (tradeAccountType == CryptoAccountType.RealTrading && symbol.QuoteData.EntryPercentage > 0m)
+        if (tradeAccountType == CryptoAccountType.RealTrading && symbol.QuoteData!.EntryPercentage > 0m)
             return symbol.QuoteData.EntryPercentage * quoteAssetQuantity / 100;
         else
-            return symbol.QuoteData.EntryAmount;
+            return symbol.QuoteData!.EntryAmount;
     }
 
 

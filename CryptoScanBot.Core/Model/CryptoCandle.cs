@@ -15,6 +15,9 @@ public class CryptoCandle : IQuote
     public decimal Low { get; set; }
     public decimal Close { get; set; }
     public decimal Volume { get; set; }
+#if SUPPORTBASEVOLUME
+    public decimal BaseVolume { get; set; }
+#endif
 
     [Computed]
     public DateTime Date { get { return CandleTools.GetUnixDate(OpenTime); } }

@@ -28,7 +28,7 @@ public class CandleToolsTests : TestBase
         for (int count = 60; count <= 24*60*60; count+=60) // een complete dag
         {
             startTime = CandleTools.GetUnixDate(startTimeUnix);
-            CryptoCandle candle = CandleTools.HandleFinalCandleData(symbol, GlobalData.IntervalList[0], startTime, value, value, value, value, 1, false);
+            CryptoCandle candle = CandleTools.CreateCandle(symbol, GlobalData.IntervalList[0], startTime, value, value, value, value, 1, 1, false);
             CandleTools.UpdateCandleFetched(symbol, GlobalData.IntervalList[0]);
             string text = $"ticker(1m):" + candle.OhlcText(symbol, GlobalData.IntervalList[0], symbol.PriceDisplayFormat, true, false, true);
             Console.WriteLine(text);
@@ -40,10 +40,13 @@ public class CandleToolsTests : TestBase
                 if (interval.ConstructFrom != null && candle1mCloseTime % interval.Duration == 0)
                 {
                     // Deze doet een call naar de TaskSaveCandles en de UpdateCandleFetched (overlappend?)
-                    CryptoCandle candleX = CandleTools.CalculateCandleForInterval(symbol, interval, interval.ConstructFrom, candle1mCloseTime);
+                    CryptoCandle? candleX = CandleTools.CalculateCandleForInterval(symbol, interval.ConstructFrom, interval, candle1mCloseTime);
                     CandleTools.UpdateCandleFetched(symbol, interval);
-                    string text2 = $"ticker({interval.Name}):" + candleX.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, false, true);
-                    Console.WriteLine(text2);
+                    if (candleX != null)
+                    {
+                        string text2 = $"ticker({interval.Name}):" + candleX.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, false, true);
+                        Console.WriteLine(text2);
+                    }
                 }
             }
 

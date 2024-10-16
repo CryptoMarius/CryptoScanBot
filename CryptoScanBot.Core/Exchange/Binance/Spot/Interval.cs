@@ -38,10 +38,10 @@ public class Interval
         DateTime fetchEndDate = CandleTools.GetUnixDate(fetchEndUnix);
 
         // Determine the maximum startdate per interval
+        // Calculate what we need for the (full) calculation of the indicators (and markettrend)
         long[] fetchFrom = new long[Enum.GetNames(typeof(CryptoIntervalPeriod)).Length];
         foreach (CryptoInterval interval in GlobalData.IntervalList)
         {
-            // Calculate date what we need for the (full) calculation of the indicators (and markettrend)
             long startFromUnixTime = CandleIndicatorData.GetCandleFetchStart(symbol, interval, fetchEndDate);
             fetchFrom[(int)interval.IntervalPeriod] = startFromUnixTime;
         }
@@ -51,27 +51,25 @@ public class Interval
         // candles from a lower timeframe so we can calculate the candles.
         foreach (CryptoInterval interval in GlobalData.IntervalList)
         {
-            CryptoInterval? loopInterval = interval;
-            while (GetExchangeInterval(loopInterval) == null)
+            CryptoInterval? lowerInterval = interval;
+            while (GetExchangeInterval(lowerInterval) == null)
             {
-                // Retrieve more candles from a lower timeframe
-                loopInterval = loopInterval.ConstructFrom;
-
-                // Extend if we need more (because of the interval nog being supported on the exchange)
-                long startFromUnixTime = CandleIndicatorData.GetCandleFetchStart(symbol, loopInterval!, fetchEndDate);
-                fetchFrom[(int)loopInterval!.IntervalPeriod] = startFromUnixTime;
+                lowerInterval = lowerInterval.ConstructFrom;
+                long startFromUnixTime = fetchFrom[(int)interval!.IntervalPeriod];
+                if (startFromUnixTime < fetchFrom[(int)lowerInterval!.IntervalPeriod])
+                    fetchFrom[(int)lowerInterval!.IntervalPeriod] = startFromUnixTime;
             }
         }
 
 
-        // Correct the (worst case scenario) startdate with what we previously collected..
+        // Correct the (worst case) startdate with what we previously collected..
         foreach (CryptoInterval interval in GlobalData.IntervalList)
         {
             CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
             if (symbolInterval.LastCandleSynchronized.HasValue)
             {
                 long alreadyFetched = (long)symbolInterval.LastCandleSynchronized;
-                // Huray, retrieve less candles
+                // Huray, retrieve less candles, less work, more free time
                 if (alreadyFetched > fetchFrom[(int)interval.IntervalPeriod])
                     fetchFrom[(int)interval.IntervalPeriod] = alreadyFetched;
             }

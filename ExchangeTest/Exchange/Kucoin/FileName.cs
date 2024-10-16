@@ -75,6 +75,7 @@ private async Task KucoinTest()
             Base = "ONE",
             Quote = "USDT",
             Name = "ONEUSDT",
+            BaseVolume = 0,
             Volume = 0,
             Status = 1,
             PriceTickSize = 0.000001m,
@@ -129,7 +130,7 @@ private async Task KucoinTest()
                 foreach (var kline in result.Data)
                 {
                     // Quoted = volume * price (expressed in usdt/eth/btc etc), base is coins
-                    CryptoCandle candle = CandleTools.HandleFinalCandleData(symbol, interval, kline.OpenTime,
+                    CryptoCandle candle = CandleTools.CreateCandle(symbol, interval, kline.OpenTime,
                         kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.QuoteVolume, false);
                 }
 
@@ -283,7 +284,7 @@ private async Task KucoinTest()
         //            if (candle.OpenTime <= expectedCandlesUpto)
         //            {
         //                klineList.Remove(candle.OpenTime);
-        //                CandleTools.HandleFinalCandleData(symbol, interval, candle.Date,
+        //                CandleTools.CreateCandle(symbol, interval, candle.Date,
         //                    candle.Open, candle.High, candle.Low, candle.Close, candle.Volume);
         //                SaveCandleAndUpdateHigherTimeFrames(symbol, candle);
 
@@ -330,7 +331,7 @@ private async Task KucoinTest()
 
     //    void SaveCandleAndUpdateHigherTimeFrames(CryptoSymbol symbol, CryptoCandle candle)
     //    {
-    
+
     //        // Calculate the higher timeframes
     //        foreach (CryptoInterval interval in GlobalData.IntervalList)
     //        {

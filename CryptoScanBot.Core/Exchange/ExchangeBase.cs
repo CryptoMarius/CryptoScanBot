@@ -34,7 +34,7 @@ public abstract class ExchangeBase
         decimal quantity, decimal price, decimal? stop, decimal? limit, bool generateJsonDebug = false);
 
 
-    public static void Dump(CryptoPosition position, bool success, TradeParams tradeParams, string extraText)
+    public static void Dump(CryptoPosition position, bool success, TradeParams? tradeParams, string extraText)
     {
         StringBuilder builder = new();
         if (!success)
@@ -52,7 +52,7 @@ public abstract class ExchangeBase
             if (tradeParams.StopPrice.HasValue)
                 builder.Append($" stop={tradeParams.StopPrice?.ToString0()}");
             builder.Append($" quantity={tradeParams.Quantity.ToString0()}");
-            _ = builder.Append($" value={tradeParams.QuoteQuantity.ToString(position.Symbol.QuoteData.DisplayFormat)}");
+            _ = builder.Append($" value={tradeParams.QuoteQuantity.ToString(position.Symbol.QuoteData!.DisplayFormat)}");
 
             if (!success)
                 builder.Append($" {tradeParams.ResponseStatusCode}");

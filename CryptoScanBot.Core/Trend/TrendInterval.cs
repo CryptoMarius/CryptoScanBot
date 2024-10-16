@@ -34,7 +34,7 @@ public class TrendInterval
             }
         }
         else
-            candleIntervalStart = IntervalTools.StartOfIntervalCandle(accountSymbolIntervalData.Interval, candleIntervalStart);
+            candleIntervalStart = IntervalTools.StartOfIntervalCandle(candleIntervalStart, accountSymbolIntervalData.Interval.Duration);
         // correct the start with what we previously added
         if (accountSymbolIntervalData.ZigZagLastCandleAdded.HasValue && accountSymbolIntervalData.ZigZagLastCandleAdded.Value >= candleIntervalStart)
             candleIntervalStart = (long)accountSymbolIntervalData.ZigZagLastCandleAdded;
@@ -48,7 +48,7 @@ public class TrendInterval
             candleIntervalEnd = candle.OpenTime; // in the right interval
         }
         else
-            candleIntervalEnd = IntervalTools.StartOfIntervalCandle(accountSymbolIntervalData.Interval, candleIntervalEnd);
+            candleIntervalEnd = IntervalTools.StartOfIntervalCandle(candleIntervalEnd, accountSymbolIntervalData.Interval.Duration);
         // go 1 candle back (date parameter was a low interval candle and higher interval not yet closed)
         if (!candleList.ContainsKey(candleIntervalEnd))
             candleIntervalEnd -= accountSymbolIntervalData.Interval.Duration;

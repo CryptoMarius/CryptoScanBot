@@ -95,8 +95,8 @@ public class Candles
                 foreach (var kline in result.Data)
                 {
                     // Quoted = volume * price (expressed in usdt/eth/btc etc), base is coins
-                    CryptoCandle candle = CandleTools.HandleFinalCandleData(symbol, interval, kline.OpenTime,
-                        kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.Volume, false);
+                    CryptoCandle candle = CandleTools.CreateCandle(symbol, interval, kline.OpenTime,
+                        kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, 0, kline.Volume, false);
 
                     // Onthoud de laatste aangeleverde candle, t/m die datum is ten minste alles binnen gehaald
                     if (candle.OpenTime > last)
@@ -182,6 +182,9 @@ public class Candles
                                 High = stickOld.Close,
                                 Low = stickOld.Close,
                                 Close = stickOld.Close,
+#if SUPPORTBASEVOLUME
+                                BaseVolume = 0,
+#endif
                                 Volume = 0
                             };
                             symbolInterval.CandleList.Add(candle.OpenTime, candle);
@@ -215,7 +218,7 @@ public class Candles
                             long unixLoop = unixFirst;
                             while (unixLoop <= unixLast)
                             {
-                                CandleTools.CalculateCandleForInterval(symbol, intervalCalc, intervalCalc.ConstructFrom, unixLoop);
+                                CandleTools.CalculateCandleForInterval(symbol, intervalCalc.ConstructFrom, intervalCalc, unixLoop);
                                 unixLoop += intervalCalc.Duration;
                             }
                             CandleTools.UpdateCandleFetched(symbol, intervalCalc);

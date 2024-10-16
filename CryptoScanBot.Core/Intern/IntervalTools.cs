@@ -4,38 +4,85 @@ namespace CryptoScanBot.Core.Intern;
 
 public class IntervalTools
 {
-    public static long StartOfIntervalCandle(CryptoInterval interval, long sourceDate) //, bool fixFinalCandle
+    public static long StartOfIntervalCandle(long sourceStart, int sourceDuration)
     {
-        long diff = sourceDate % interval!.Duration;
-        long lastCandleIntervalOpenTime = sourceDate - diff;
-        // The candle cannot be final if it has a remainder, go 1 back
-        // This is true for candles in progress, NOT for historic candles.
-        // (for example the emulator), let the user decide what todo
-        // (09:14 -> 09:05 because candle 09:10..09:14:59 cannot be finished)
-        //if (fixFinalCandle && diff != 0)
-        //    lastCandleIntervalOpenTime -= interval.Duration;
-        return lastCandleIntervalOpenTime;
+        long diff = sourceStart % sourceDuration;
+        long targetStart = sourceStart - diff;
+        return targetStart;
     }
 
 
-    public static long StartOfIntervalCandle2(long sourceDateStart, int sourceDuration, int targetDuration)
+    // TODO: Delete method, replace with 3
+    public static long StartOfIntervalCandle2(long sourceStart, int sourceDuration, int targetDuration)
     {
-        // sourceDate should be the candle.OpenTime and sourceDuration the duration of the candle.
-        // This works for lower time frame to higher timeframe and wont work the other way
+        // SourceDate should be the candle.OpenTime and sourceDuration the duration of the candle.
+        // It is the same result as the StartOfIntervalCandle() but corrected if the higher candle can't be calculated
 
         if (targetDuration == sourceDuration)
-            return sourceDateStart;
+            return sourceStart;
 
-        long sourceDateEnd = sourceDateStart + sourceDuration;
-        long diff = sourceDateEnd % targetDuration;
-        long targetDateStart = sourceDateEnd - diff;
+        // This works for lower time frame to higher timeframe and wont work the other way
+        if (targetDuration < sourceDuration)
+            throw new Exception("Target interval should be higher than source interval");
 
-        // The target candle cannot be final if is above the end of the start candle (it would be an in progress candle)
-        long targetDateEnd = targetDateStart + targetDuration;
-        if (targetDateEnd >= sourceDateEnd)
-            targetDateStart -= targetDuration;
+        long diff = sourceStart % targetDuration;
+        long targetStart = sourceStart - diff;
 
-        return targetDateStart;
+        // The target candle cannot be final/complete if is above the end of the start candle
+        // (it would be a next candle or an in progress candle)
+        long sourceDateEnd = sourceStart + sourceDuration;
+        long targetDateEnd = targetStart + targetDuration;
+        if (targetDateEnd > sourceDateEnd)
+            targetStart -= targetDuration;
 
+#if DEBUG
+        DateTime sourceStartDate = CandleTools.GetUnixDate(sourceStart);
+        DateTime sourceEndDate = CandleTools.GetUnixDate(sourceStart + sourceDuration);
+
+        DateTime targetStartDate = CandleTools.GetUnixDate(targetStart);
+        DateTime targetEndDate = CandleTools.GetUnixDate(targetStart + targetDuration);
+#endif
+        return targetStart;
     }
+
+
+    public static (bool outside, long targetStart) StartOfIntervalCandle3(long sourceStart, int sourceDuration, int targetDuration)
+    {
+        // SourceDate should be the candle.OpenTime and sourceDuration the duration of the candle.
+        // It is the same result as the StartOfIntervalCandle() but corrected if the higher candle can't be calculated
+        // Same as the 2 but with extended results to avoid unneccesary calculations
+
+        if (targetDuration == sourceDuration)
+            return (false, sourceStart);
+
+        // This works for lower time frame to higher timeframe and wont work the other way
+        if (targetDuration < sourceDuration)
+            throw new Exception("Target interval should be higher than source interval");
+
+        long diff = sourceStart % targetDuration;
+        long targetStart = sourceStart - diff;
+
+        bool outside = false;
+        bool targetShifted = false;
+
+
+        // The target candle cannot be final/complete if is above the end of the start candle
+        // (it would be a next candle or an in progress candle)
+        long sourceDateEnd = sourceStart + sourceDuration;
+        long targetDateEnd = targetStart + targetDuration;
+        if (targetDateEnd > sourceDateEnd)
+        {
+            outside = true;
+        }
+
+#if DEBUG
+        DateTime sourceStartDebug = CandleTools.GetUnixDate(sourceStart);
+        DateTime sourceCloseDebug = CandleTools.GetUnixDate(sourceStart + sourceDuration);
+
+        DateTime targetStartDebug = CandleTools.GetUnixDate(targetStart);
+        DateTime targetCloseDebug = CandleTools.GetUnixDate(targetStart + targetDuration);
+#endif
+        return (outside, targetStart);
+    }
+
 }

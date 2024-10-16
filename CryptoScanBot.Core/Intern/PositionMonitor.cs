@@ -1123,7 +1123,7 @@ public class PositionMonitor : IDisposable
                     if (result.result)
                     {
                         part.EntryMethod = strategy;
-                        if (part.Purpose == CryptoPartPurpose.Entry) // PartNumber == 0
+                        if (part.Purpose == CryptoPartPurpose.Entry)
                         {
                             position.EntryPrice = result.tradeParams.Price;
                             position.EntryAmount = result.tradeParams.QuoteQuantity;
@@ -1136,6 +1136,10 @@ public class PositionMonitor : IDisposable
 
                         ExchangeBase.Dump(position, result.result, result.tradeParams, logText);
 
+                        PaperAssets.Change(position.Account, position.Symbol, position.Side, result.tradeParams.OrderSide,
+                            step.Status, result.tradeParams.Quantity, result.tradeParams.QuoteQuantity);
+
+
                         // Een eventuele market order direct laten vullen
                         if (position.Account.AccountType != CryptoAccountType.RealTrading && step.OrderType == CryptoOrderType.Market)
                         {
@@ -1145,7 +1149,6 @@ public class PositionMonitor : IDisposable
                     }
                     else
                     {
-                        //position.ForceCheckPosition = true;
                         ExchangeBase.Dump(position, result.result, result.tradeParams, logText);
                     }
                 }
@@ -1786,61 +1789,6 @@ public class PositionMonitor : IDisposable
     }
 
 
-    private void CleanSymbolData()
-    {
-        // We nemen aardig wat geheugen in beslag door alles in het geheugen te berekenen, probeer in 
-        // ieder geval de CandleData te clearen. Vanaf x candles terug tot de eerste de beste die null is.
-
-        foreach (CryptoInterval interval in GlobalData.IntervalList)
-        {
-            if (LastCandle1mCloseTime % interval.Duration == 0)
-            {
-                Monitor.Enter(Symbol.CandleList);
-                try
-                {
-                    // Remove old indicator data
-                    SortedList<long, CryptoCandle> candles = Symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList;
-                    for (int i = candles.Count - 62; i > 0; i--)
-                    {
-                        CryptoCandle c = candles.Values[i];
-                        if (c.CandleData != null)
-                        {
-                            c.CandleData = null;
-//#if SHOWTIMING
-//                            GlobalData.AddTextToLogTab($"removed candledata({interval.Name}):" + c.OhlcText(Symbol, GlobalData.IntervalList[0], Symbol.PriceDisplayFormat, true, false, true));
-//#endif
-                        }
-                        else break;
-                    }
-
-
-                    // Remove old candles (not for backtest)
-                    long startFetchUnix = CandleIndicatorData.GetCandleFetchStart(Symbol, interval, DateTime.UtcNow);
-                    DateTime startFetchUnixDate = CandleTools.GetUnixDate(startFetchUnix);
-                    while (candles.Values.Any())
-                    {
-                        CryptoCandle c = candles.Values[0];
-                        if (c.OpenTime < startFetchUnix)
-                        {
-                            candles.Remove(c.OpenTime);
-//#if SHOWTIMING
-//                            GlobalData.AddTextToLogTab($"removed({interval.Name}):" + c.OhlcText(Symbol, interval, Symbol.PriceDisplayFormat, true, false, true));
-//#endif
-                        }
-                        else break;
-                    }
-                }
-                finally
-                {
-                    Monitor.Exit(Symbol.CandleList);
-                }
-            }
-        }
-    }
-
-
-
-
     public async Task CheckThePosition(CryptoPosition position)
     {
         // Pauzeren vanwege de trading regels of te lage barometer
@@ -1877,9 +1825,6 @@ public class PositionMonitor : IDisposable
     {
         try
         {
-            if (GlobalData.Settings.General.DebugKLineReceive && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
-                GlobalData.AddTextToLogTab($"Debug Candle({Symbol.Name}, 1m, {LastCandle1m.DateLocal}, {LastCandle1m.Close})");
-
             if (!Symbol.IsSpotTradingAllowed || Symbol.Status == 0)
                 return;
 
@@ -1915,7 +1860,7 @@ public class PositionMonitor : IDisposable
 
             // Remove old candles or CandleData
             if (!GlobalData.BackTest)
-                CleanSymbolData();
+                CandleTools.CleanCandleData(Symbol, LastCandle1mCloseTime);
 
             //GlobalData.Logger.Trace($"NewCandleArrivedAsync.Done " + traceText);
         }

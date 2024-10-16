@@ -2119,7 +2119,7 @@ public partial class TestForm : Form
         //                            //SaveCandle?
 
         //                            // Vul het aan met andere attributen
-        //                            CryptoCandle candle = CandleTools.HandleFinalCandleData(symbol, interval, candleTmp.Date,
+        //                            CryptoCandle candle = CandleTools.CreateCandle(symbol, interval, candleTmp.Date,
         //                                candleTmp.Open, candleTmp.High, candleTmp.Low, candleTmp.Close, candleTmp.SignalVolume, false);
         //                            candleCache.Add(candle);
         //                        }

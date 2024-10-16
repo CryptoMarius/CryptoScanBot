@@ -242,7 +242,7 @@ public class BarometerTools
                 }
 
                 // Nu de barometer uitgerekend is mag het aantal 1m candles naar beneden
-                CandleIndicatorData.SetInitialCandleCountFetch(24 * 60 * 60 + 10 * 60); // 10 extra, maar dat is een quick en dirty fix voor iets anders
+                CandleIndicatorData.SetInitialCandleCountFetch(24 * 60 + 10);
             }
         }
         catch (Exception error)

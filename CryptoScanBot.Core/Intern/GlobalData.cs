@@ -331,7 +331,7 @@ static public class GlobalData
         // Test with limits anount of symbols for debugging purposes
         if (
             symbol.Name.Equals("BTCUSDT") ||
-            symbol.Name.Equals("TRXUSDT") ||
+            //symbol.Name.Equals("TRXUSDT") ||
             symbol.Name.StartsWith("$BMP")
           )
 #endif

@@ -25,15 +25,8 @@ static public class TradeHandler
             position.DelayUntil = GlobalData.GetCurrentDateTime(position.Account).AddSeconds(10);
             if (GlobalData.ThreadCheckPosition != null)
                 await GlobalData.ThreadCheckPosition.AddToQueue(position, order.OrderId, order.Status);
+
+            PaperAssets.Change(position.Account, position.Symbol, position.Side, order.Side, CryptoOrderStatus.Filled, order.Quantity, order.QuoteQuantity);
         }
-        // This leads to confusion if we signal stuff when the position is already closed, just keep it simple..
-        //else
-        //{
-        //    //...if (!symbol.OrderList.TryGetValue(order.OrderId, out CryptoOrder tempOrder)) // closed?
-        //    string s = $"Handletrade {symbol.Name} side={orderSide} type={orderType} status={orderStatus} order={order.OrderId} " +
-        //        $"price={order.Price.ToString0()} quantity={order.Quantity.ToString0()} value={order.QuoteQuantity.ToString0()}";
-        //    GlobalData.AddTextToLogTab(s);
-        //    GlobalData.AddTextToTelegram(s, symbol);
-        //}
     }
 }

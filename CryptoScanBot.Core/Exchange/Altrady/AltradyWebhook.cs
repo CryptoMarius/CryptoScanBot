@@ -230,6 +230,7 @@ public class AltradyWebhook
             // log response
             GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval.Name} Altrady webhook result {result} {info}");
             ScannerLog.Logger.Trace($"{position.Symbol.Name} {position.Interval.Name}Altrady webhook result {result} {info}");
+            GlobalData.AddTextToTelegram($"{position.Symbol.Name} {position.Interval.Name} Altrady webhook {position.Side} price={position.EntryPrice}");
 
         }
         catch (WebException error)
@@ -261,7 +262,6 @@ public class AltradyWebhook
             //ScannerLog.Logger.Trace($"{position.Symbol.Name} {position.Interval.Name} Altrady webhook error {error.Message}");
             GlobalData.AddTextToLogTab($" {position.Symbol.Name} {position.Interval!.Name} Webhook error:error={error}");
         }
-
     }
 
     private static string Dump(string caption, CryptoPosition position, object? obj)

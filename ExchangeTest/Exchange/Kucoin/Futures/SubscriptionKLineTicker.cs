@@ -161,7 +161,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         //                            klineListTemp.Remove(candle.OpenTime);
 
         //                            //Process1mCandle(Symbol, candle.Date, candle.Open, candle.High, candle.Low, candle.Close, candle.Volume);
-        //                            CandleTools.HandleFinalCandleData(Symbol, interval, candle.Date, candle.Open, candle.High, candle.Low, candle.Close, candle.Volume, candle.IsDuplicated);
+        //                            CandleTools.CreateCandle(Symbol, interval, candle.Date, candle.Open, candle.High, candle.Low, candle.Close, candle.Volume, candle.IsDuplicated);
         //                            //SaveCandleAndUpdateHigherTimeFrames(Symbol, candle);
         //                            // Calculate higher timeframes
         //                            long candle1mCloseTime = candle.OpenTime + interval.Duration;

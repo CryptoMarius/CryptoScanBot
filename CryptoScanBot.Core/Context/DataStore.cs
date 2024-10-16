@@ -63,9 +63,18 @@ public class DataStore
                                 High = binaryReader.ReadDecimal(),
                                 Low = binaryReader.ReadDecimal(),
                                 Close = binaryReader.ReadDecimal(),
-                                Volume = binaryReader.ReadDecimal()
+                                Volume = binaryReader.ReadDecimal(),
+#if SUPPORTBASEVOLUME
+                                BaseVolume = 0,
+#endif
                             };
 
+#if SUPPORTBASEVOLUME
+                            if (version > 1)
+                            {
+                                candle.BaseVolume = binaryReader.ReadDecimal();
+                            }
+#endif
                             if (candle.OpenTime >= startFetchUnix)
                                 symbolInterval.CandleList.TryAdd(candle.OpenTime, candle);
 
@@ -182,6 +191,9 @@ public class DataStore
                                             binaryWriter.Write(candle.Low);
                                             binaryWriter.Write(candle.Close);
                                             binaryWriter.Write(candle.Volume);
+#if SUPPORTBASEVOLUME
+                                            binaryWriter.Write(candle.BaseVolume); // version 2
+#endif
                                         }
                                     }
                                     Directory.CreateDirectory(dirSymbol);

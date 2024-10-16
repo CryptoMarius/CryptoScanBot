@@ -139,7 +139,9 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
         WriteCell(sheet, columns++, row, "High");
         WriteCell(sheet, columns++, row, "Low");
         WriteCell(sheet, columns++, row, "Close");
+#if SUPPORTBASEVOLUME
         WriteCell(sheet, columns++, row, "BaseVolume");
+#endif
         WriteCell(sheet, columns++, row, "QuoteVolume");
         WriteCell(sheet, columns++, row, "Duplicated");
 
@@ -169,11 +171,12 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
             WriteCell(sheet, column++, row, candle.Low, CellStyleDecimalNormal);
             WriteCell(sheet, column++, row, candle.Close, CellStyleDecimalNormal);
 
+#if SUPPORTBASEVOLUME
             if (candle.BaseVolume == 0m)
                 WriteCell(sheet, column++, row, candle.BaseVolume, CellStyleDecimalRed);
             else
                 WriteCell(sheet, column++, row, candle.BaseVolume, CellStyleDecimalNormal);
-
+#endif
             if (candle.Volume == 0m)
                 WriteCell(sheet, column++, row, candle.Volume, CellStyleDecimalRed);
             else

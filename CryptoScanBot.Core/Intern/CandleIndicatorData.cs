@@ -26,6 +26,7 @@ public class CandleIndicatorData: CryptoData
 
     // Voor de SMA lookback willen we 60 sma200's erin, dus 200 + 60
     private const int maxCandles = 260;
+    //private const int maxCandles = 310 * 2; // extended to 620 because of markettrend calculation
 
 
     /// <summary>
@@ -101,6 +102,9 @@ public class CandleIndicatorData: CryptoData
                         Low = candleLast.Close,
                         High = candleLast.Close,
                         Close = candleLast.Close,
+#if SUPPORTBASEVOLUME
+                        BaseVolume = 0,
+#endif
                         Volume = 0,
                         IsDuplicated = true
                     };
@@ -324,8 +328,9 @@ public class CandleIndicatorData: CryptoData
         }
     }
 
-    // Extended with 1 day + 9 hours because of the 24 hour market climate (or barometer).  (we show ~6 hours of that in the display)
-    private static long InitialCandleCountFetch = ((24 + 7) * 60 * 60) * 2;
+    // We need 1 day + X hours because of the barometr calculation (we show ~6 hours in the display)
+    // As soon as the barometer has been calculated it will be lowered to 1 day + 10 candles..
+    private static long InitialCandleCountFetch = (24 + 7) * 60;
 
     public static void SetInitialCandleCountFetch(long value)
     {
@@ -339,28 +344,16 @@ public class CandleIndicatorData: CryptoData
 
         // Since the market climate is also a coin we must make an exception, it needs more candles because of the 24h bm calculation
         if (symbol.IsBarometerSymbol())
-        {
-            startFetchUnix = CandleTools.GetUnixTime(utcNow, 60) - 1440 * 60; // interval.Duration;
-        }
+            startFetchUnix = CandleTools.GetUnixTime(utcNow, 60) - 5 * 60 * GlobalData.IntervalList[0].Duration; // 7 hours graph
         else
         {
-            // Bepaal de start datum (we willen niet "teveel" data uit de database of bestanden ophalen)
-            // Voor de 1m tenminste 2 dagen (die zijn nodig voor de (prijs & volume) berekening van de 24h barometer
-            // --> Als we de volume berekening achterwege laten dan zijn het er 24*60=1440 (volume doen we vanwege hoge cpu niet meer)
-            // En anders tenminste 215 candles voor de indicators (215 vanwege de 200 sma of macd indicator)
-
-            // NB: Achteraf hebben we een markttrend geintroduceerd en deze heeft meer candles nodig dan we in gedachten hadden..
-            // Achteraf beredeneerd wordt de markttrend dus niet correct berekend vanwege het (minimaal) aantal aanwezige candles..
-            // Met deze nieuwe kennis: Zou het een idee zijn om oude zigzag waarden (per interval) te bewaren?
-            // (zodat we niet een volledige hoeveelheid candles hoeven in te laden?)
-            // Maar dan heb je dus wel de voorgeschiedenis nodig, beetje kip/ei
-            // Voorlopig heb ik het aantal candles verdubbeld, we zien het wel.....
-
             if (interval.IntervalPeriod == CryptoIntervalPeriod.interval1m)
-                startFetchUnix = CandleTools.GetUnixTime(utcNow, 60) - InitialCandleCountFetch;
+                // For the 1m we need initially ~2 day's because of the barometer calculation
+                startFetchUnix = CandleTools.GetUnixTime(utcNow, 60) - InitialCandleCountFetch * interval.Duration;
             else
-                // Eerst een 10 (en later 49, daarna 50) en was bedoeld om meldingen met terugwerkende kracht te berekenen bij de start (maar dat is nooit doorgegaan)
-                startFetchUnix = CandleTools.GetUnixTime(utcNow, 60) - ((50 + maxCandles) * interval.Duration) * 2;
+                // We extended the amount because we of the markettrend calculation
+                // 260 would be enough for calculating the standard indicator data
+                startFetchUnix = CandleTools.GetUnixTime(utcNow, 60) - 500 * interval.Duration;
             startFetchUnix -= startFetchUnix % interval.Duration;
         }
         //DateTime symbolfetchCandleDebug = CandleTools.GetUnixDate(startFetchUnix);  //debug

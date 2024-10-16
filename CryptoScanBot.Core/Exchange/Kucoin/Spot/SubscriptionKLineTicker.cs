@@ -91,6 +91,9 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                             candle.High = kline.HighPrice;
                             candle.Low = kline.LowPrice;
                             candle.Close = kline.ClosePrice;
+#if SUPPORTBASEVOLUME
+                            candle.BaseVolume = kline.Volume;
+#endif
                             candle.Volume = kline.QuoteVolume;
 
                             //if (symbol.Name == "GAMEUSDT") // debug very low volume symbol
@@ -158,11 +161,11 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                                     nextCandle.High = lastCandle.Close;
                                     nextCandle.Low = lastCandle.Close;
                                     nextCandle.Close = lastCandle.Close;
+#if SUPPORTBASEVOLUME
+                                    nextCandle.BaseVolume = 0; // no volume (flat candle)
+#endif
                                     nextCandle.Volume = 0; // no volume (flat candle)
                                     lastCandle = nextCandle;
-
-                                    //if (symbol.Name == "GAMEUSDT") // debug very low volume symbol
-                                    //    GlobalData.AddTextToLogTab($"candle prev added {nextCandle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true)}");
 
                                 }
                                 else break;
@@ -183,7 +186,13 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
                                 //ScannerLog.Logger.Trace($"kline ticker {topic} process");
                                 //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", topic, kline.Timestamp.ToLocalTime()));
-                                CandleTools.Process1mCandle(symbol, candle.Date, candle.Open, candle.High, candle.Low, candle.Close, candle.Volume, candle.IsDuplicated);
+                                CandleTools.Process1mCandle(symbol, candle.Date, candle.Open, candle.High, candle.Low, candle.Close,
+#if SUPPORTBASEVOLUME
+                                    candle.BaseVolume, 
+#else
+                                    0,
+#endif
+                                    candle.Volume, candle.IsDuplicated);
 
                                 //if (symbol.Name == "GAMEUSDT") // debug very low volume symbol
                                 //    GlobalData.AddTextToLogTab($"candle added {candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true)}");

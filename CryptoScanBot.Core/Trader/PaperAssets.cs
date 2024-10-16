@@ -1,5 +1,6 @@
 ﻿using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using Dapper.Contrib.Extensions;
 
@@ -10,8 +11,12 @@ namespace CryptoScanBot.Core.Trader;
 /// </summary>
 public class PaperAssets
 {
-    public static void Change(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoOrderSide side, CryptoOrderStatus status, decimal quantity, decimal quoteQuantity)
+    public static void Change(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoTradeSide tradeSide, CryptoOrderSide side, CryptoOrderStatus status, decimal quantity, decimal quoteQuantity)
     {
+        // No asset management for these available (although, would be very nice for Altraady)
+        if (tradeAccount.AccountType == CryptoAccountType.RealTrading || tradeAccount.AccountType == CryptoAccountType.Altrady)
+            return;
+
         tradeAccount.Data.AssetListSemaphore.Wait();
         try
         {
@@ -45,43 +50,84 @@ public class PaperAssets
                 tradeAccount.Data.AssetList.Add(assetQuote.Name, assetQuote);
             }
 
+            GlobalData.AddTextToLogTab($"Debug asset before {symbol.Name} {tradeSide} {side} {assetBase.Name} total={assetBase.Total} locked={assetBase.Locked}  {assetQuote.Name} total={assetQuote.Total} locked={assetQuote.Locked}");
 
-            // When placing an order the locked USDT will be higher
-            // When cancelling/filling an order the locked USDT will be lower
-            // When an order is filled the total USDT will be higher and BTC will be lower
-            if (side == CryptoOrderSide.Buy)
+
+            if (tradeSide == CryptoTradeSide.Long)
             {
-                if (status == CryptoOrderStatus.New)
-                    assetQuote.Locked += quoteQuantity;
-                else
-                    assetQuote.Locked -= quoteQuantity;
-
-                if (status.IsFilled())
+                // When placing an order the locked USDT will be higher
+                // When cancelling/filling an order the locked USDT will be lower
+                // When an order is filled the total USDT will be higher and BTC will be lower
+                if (side == CryptoOrderSide.Buy)
                 {
-                    assetBase.Total += quantity;
-                    assetQuote.Total -= quoteQuantity;
+                    if (status == CryptoOrderStatus.New)
+                        assetQuote.Locked += quoteQuantity;
+                    else
+                        assetQuote.Locked -= quoteQuantity;
+
+                    if (status.IsFilled())
+                    {
+                        assetBase.Total += quantity;
+                        assetQuote.Total -= quoteQuantity;
+                    }
+                }
+
+                // When placing an order the locked BTC will be higher
+                // When cancelling/filling an order the locked BTC will be lower
+                // When an order is filled the total USDT will be lower and BTC will be higher
+                if (side == CryptoOrderSide.Sell)
+                {
+                    if (status == CryptoOrderStatus.New)
+                        assetBase.Locked += quantity;
+                    else
+                        assetBase.Locked -= quantity;
+
+                    if (status.IsFilled())
+                    {
+                        assetBase.Total -= quantity;
+                        assetQuote.Total += quoteQuantity;
+                    }
                 }
             }
-
-            // When placing an order the locked BTC will be higher
-            // When cancelling/filling an order the locked BTC will be lower
-            if (side == CryptoOrderSide.Sell)
+            else
             {
-                if (status == CryptoOrderStatus.New)
-                    assetBase.Locked += quantity;
-                else
-                    assetBase.Locked -= quantity;
-
-                if (status.IsFilled())
+                if (side == CryptoOrderSide.Sell)
                 {
-                    assetBase.Total -= quantity;
-                    assetQuote.Total += quoteQuantity;
+                    if (status == CryptoOrderStatus.New)
+                        assetQuote.Locked += quoteQuantity;
+                    else
+                        assetQuote.Locked -= quoteQuantity;
+
+                    if (status.IsFilled())
+                    {
+                        assetQuote.Total -= quoteQuantity;
+                        assetBase.Total += quantity;
+                    }
+                }
+
+                if (side == CryptoOrderSide.Buy)
+                {
+                    if (status == CryptoOrderStatus.New)
+                        assetBase.Locked += quantity;
+                    else
+                        assetBase.Locked -= quantity;
+
+                    if (status.IsFilled())
+                    {
+                        assetQuote.Total += quoteQuantity;
+                        assetBase.Total -= quantity;
+                    }
                 }
             }
 
 
 
             // Base
+            //if (assetBase.Total < 0)
+            //    assetBase.Total = 0; // fix
+            //if (assetBase.Locked < 0)
+            //    assetBase.Locked = 0; // fix
+
             assetBase.Free = assetBase.Total - assetBase.Locked;
             if (assetBase.Id == 0)
                 database.Connection.Insert(assetBase, transaction);
@@ -94,6 +140,11 @@ public class PaperAssets
                 database.Connection.Update(assetBase, transaction);
 
             // Quote
+            //if (assetQuote.Total < 0)
+            //    assetQuote.Total = 0; // fix
+            //if (assetQuote.Locked < 0)
+            //    assetQuote.Locked = 0; // fix
+
             assetQuote.Free = assetQuote.Total - assetQuote.Locked;
             if (assetQuote.Id == 0)
                 database.Connection.Insert(assetQuote, transaction);
@@ -106,6 +157,8 @@ public class PaperAssets
                 database.Connection.Update(assetQuote, transaction);
 
             transaction.Commit();
+
+            GlobalData.AddTextToLogTab($"Debug asset after {symbol.Name} {tradeSide} {side} {assetBase.Name} total={assetBase.Total} locked={assetBase.Locked}  {assetQuote.Name} total={assetQuote.Total} locked={assetQuote.Locked}");
         }
         finally
         {

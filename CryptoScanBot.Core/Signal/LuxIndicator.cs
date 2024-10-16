@@ -86,7 +86,7 @@ public class LuxIndicator
     public static void CalculateNew(CryptoSymbol symbol, out int luxOverSold, out int luxOverBought, CryptoIntervalPeriod cryptoIntervalPeriod, long candleCloseTime)
     {
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(cryptoIntervalPeriod);
-        long candleIntervalOpenTimeEnd = IntervalTools.StartOfIntervalCandle(symbolInterval.Interval, candleCloseTime);
+        long candleIntervalOpenTimeEnd = IntervalTools.StartOfIntervalCandle(candleCloseTime, symbolInterval.Interval.Duration);
         if (!symbolInterval.CandleList.ContainsKey(candleIntervalOpenTimeEnd))
             candleIntervalOpenTimeEnd -= symbolInterval.Interval.Duration;
 
