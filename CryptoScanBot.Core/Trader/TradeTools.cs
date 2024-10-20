@@ -9,18 +9,6 @@ using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot.Core.Trader;
 
-public static class OrderHelper
-{
-    public static string ToString(this CryptoOrderStatus status)
-    {
-        // The text "PartiallyAndClosed" is actually filled with an additional an internal purpose
-        if (status == CryptoOrderStatus.PartiallyAndClosed)
-            return "Filled";
-        else
-            return status.ToString();
-    }
-}
-
 public class TradeTools
 {
     public static void LoadAssets()
@@ -458,7 +446,7 @@ public class TradeTools
 
                     CryptoPositionPart part = PositionTools.FindPositionPart(position, step.PositionPartId) ?? throw new Exception("Problem finding parent part");
                     string msgInfo = $"{position.Symbol.Name} " +
-                        $"{order.Status.ToString().ToLower()} " + // PartiallyAndClosed -> Filled
+                        $"{order.Status.ToText().ToLower()} " + // ToText = PartiallyAndClosed -> Filled
                         $"{part.Purpose.ToString().ToLower()} " +
                         $"{order.Side.ToString().ToLower()} " +
                         $"{order.Type.ToString().ToLower()} " +

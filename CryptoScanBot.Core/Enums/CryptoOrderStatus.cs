@@ -20,3 +20,16 @@ public enum CryptoOrderStatus
     TrailingChange,
     ManuallyByUser
 }
+
+public static class OrderHelper
+{
+    public static string ToText(this CryptoOrderStatus status)
+    {
+        // The text "PartiallyAndClosed" is actually filled with an additional an internal purpose
+        if (status == CryptoOrderStatus.PartiallyAndClosed)
+            return "Filled";
+        else
+            return status.ToString();
+    }
+}
+

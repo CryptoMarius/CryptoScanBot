@@ -39,6 +39,5 @@ public class CryptoOrder
 
     public decimal? Commission { get; set; }
     public string? CommissionAsset { get; set; }
-
-
 }
+
