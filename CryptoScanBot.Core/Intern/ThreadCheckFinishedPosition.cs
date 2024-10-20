@@ -99,6 +99,7 @@ public class ThreadCheckFinishedPosition
     }
 
 
+
     private async Task PositionReadyCancelAllOrderAndMove(CryptoDatabase database, CryptoPosition position)
     {
         bool removePosition = true;
@@ -139,6 +140,8 @@ public class ThreadCheckFinishedPosition
             }
         }
     }
+
+
 
     private static async Task PositionOpenAsUsual(CryptoPosition position, string? orderId)
     {
@@ -281,6 +284,9 @@ public class ThreadCheckFinishedPosition
             GlobalData.AddTextToLogTab($"{position.Symbol.Name} ERROR position ThreadCheckFinishedPosition thread {error.Message}");
         }
     }
+
+
+
 
     public async Task ExecuteAsync()
     {
