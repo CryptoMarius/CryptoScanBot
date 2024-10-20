@@ -270,7 +270,7 @@ public class ExcelPositionDump(CryptoPosition position) : ExcelBase(position.Sym
 
             WriteCell(sheet, column++, row, order.Id);
             WriteCell(sheet, column++, row, order.OrderId);
-            WriteCell(sheet, column++, row, order.Status.ToString());
+            WriteCell(sheet, column++, row, order.Status.ToText());
             WriteCell(sheet, column++, row, order.Side.ToString());
             WriteCell(sheet, column++, row, order.CreateTime.ToLocalTime(), CellStyleDate);
             WriteCell(sheet, column++, row, order.UpdateTime.ToLocalTime(), CellStyleDate);
