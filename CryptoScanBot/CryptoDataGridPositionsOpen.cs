@@ -20,6 +20,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
     private enum ColumnsForGrid
     {
         Id,
+        AltradyId,
         Created,
         Updated,
         Duration,
@@ -139,6 +140,9 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
                 case ColumnsForGrid.Id:
                     CreateColumn("Id", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 50).Visible = false;
                     break;
+                case ColumnsForGrid.AltradyId:
+                    CreateColumn("AltradyId", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 50).Visible = false;
+                    break;                    
                 case ColumnsForGrid.Created:
                     CreateColumn("Created", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleLeft, 100);
                     break;
@@ -338,6 +342,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
         int compareResult = (ColumnsForGrid)SortColumn switch
         {
             ColumnsForGrid.Id => ObjectCompare.Compare(a.Id, b.Id),
+            ColumnsForGrid.AltradyId => ObjectCompare.Compare(a.AltradyPositionId, b.AltradyPositionId),
             ColumnsForGrid.Created => ObjectCompare.Compare(a.CreateTime, b.CreateTime),
             ColumnsForGrid.Updated => ObjectCompare.Compare(a.UpdateTime, b.UpdateTime),
             ColumnsForGrid.Duration => ObjectCompare.Compare(a.Duration().TotalSeconds, b.Duration().TotalSeconds),
@@ -454,6 +459,9 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
             {
                 case ColumnsForGrid.Id:
                     e.Value = position.Id.ToString();
+                    break;
+                case ColumnsForGrid.AltradyId:
+                    e.Value = position.AltradyPositionId;
                     break;
                 case ColumnsForGrid.Created:
                     e.Value = position.CreateTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm");
