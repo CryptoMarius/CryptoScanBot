@@ -158,14 +158,14 @@ public class SignalCreateBase
             {
                 if (isOverBought) // Een short melding! Nee ongeldig!
                     return null;
-                if (skipCandleCount <= 0 && isOverSold)
+                if (skipCandleCount < 0 && isOverSold)
                     return candle;
             }
             else
             {
                 if (isOverSold) // Een long melding! Nee ongeldig!
                     return null;
-                if (skipCandleCount <= 0 && isOverBought)
+                if (skipCandleCount < 0 && isOverBought)
                     return candle;
             }
 
@@ -242,6 +242,39 @@ public class SignalCreateBase
         }
 
         return true;
+    }
+
+    public CryptoCandle? HadStorsiInThelastXCandles(CryptoTradeSide side, int skipCandleCount, int candleCount)
+    {
+        // Is de prijs onlangs dicht bij de onderste bb geweest?
+        CryptoCandle? candle = CandleLast;
+        while (candleCount > 0)
+        {
+            skipCandleCount--;
+            bool isOverSold = candle is not null && candle.IsStochOversold(GlobalData.Settings.Signal.StoRsi.AddStochAmount) && CandleLast.IsRsiOversold(GlobalData.Settings.Signal.StoRsi.AddRsiAmount);
+            bool isOverBought = candle is not null && candle.IsStochOverbought(GlobalData.Settings.Signal.StoRsi.AddStochAmount) && CandleLast.IsRsiOverbought(GlobalData.Settings.Signal.StoRsi.AddRsiAmount);
+
+            if (side == CryptoTradeSide.Long)
+            {
+                if (isOverBought) // short signal! Invalid
+                    return null;
+                if (skipCandleCount < 0 && isOverSold)
+                    return candle;
+            }
+            else
+            {
+                if (isOverSold) // long signal! Invalid
+                    return null;
+                if (skipCandleCount < 0 && isOverBought)
+                    return candle;
+            }
+
+            if (!GetPrevCandle(candle, out candle))
+                return null;
+            candleCount--;
+        }
+
+        return null;
     }
 
 }
