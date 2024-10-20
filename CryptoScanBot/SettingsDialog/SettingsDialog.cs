@@ -231,15 +231,16 @@ public partial class FrmSettings : Form
 
 
         // STORSI
+        EditStorsiBBMinPercentage.Value = (decimal)settings.Signal.StoRsi.BBMinPercentage;
+        EditStorsiBBMaxPercentage.Value = (decimal)settings.Signal.StoRsi.BBMaxPercentage;
         UserControlSettingsSoundAndColorsStoRsi.LoadConfig("STORSI", settings.Signal.StoRsi);
         EditStorsiAddRsiAmount.Value = settings.Signal.StoRsi.AddRsiAmount;
         EditStorsiAddStochAmount.Value = settings.Signal.StoRsi.AddStochAmount;
+        EditSkipFirstSignal.Checked = settings.Signal.StoRsi.SkipFirstSignal;
         EditCheckBollingerBandsCondition.Checked = settings.Signal.StoRsi.CheckBollingerBandsCondition;
-
 
         // JUMP
         UserControlSettingsSoundAndColorsJump.LoadConfig("Jump", settings.Signal.Jump);
-
         EditAnalysisCandleJumpPercentage.Value = settings.Signal.Jump.CandlePercentage;
         EditJumpCandlesLookbackCount.Value = settings.Signal.Jump.CandlesLookbackCount;
         EditJumpUseLowHighCalculation.Checked = settings.Signal.Jump.UseLowHighCalculation;
@@ -478,15 +479,16 @@ public partial class FrmSettings : Form
         settings.Signal.Sbm.Ma50AndMa20Lookback = (int)EditSbmMa50AndMa20Lookback.Value;
 
         // STORSI
+        settings.Signal.StoRsi.BBMinPercentage = (double)EditStorsiBBMinPercentage.Value;
+        settings.Signal.StoRsi.BBMaxPercentage = (double)EditStorsiBBMaxPercentage.Value;
         UserControlSettingsSoundAndColorsStoRsi.SaveConfig(settings.Signal.StoRsi);
         settings.Signal.StoRsi.AddRsiAmount = (int)EditStorsiAddRsiAmount.Value;
         settings.Signal.StoRsi.AddStochAmount = (int)EditStorsiAddStochAmount.Value;
+        settings.Signal.StoRsi.SkipFirstSignal = EditSkipFirstSignal.Checked;
         settings.Signal.StoRsi.CheckBollingerBandsCondition = EditCheckBollingerBandsCondition.Checked;
-
 
         // JUMP
         UserControlSettingsSoundAndColorsJump.SaveConfig(settings.Signal.Jump);
-
         settings.Signal.Jump.CandlePercentage = EditAnalysisCandleJumpPercentage.Value;
         settings.Signal.Jump.CandlesLookbackCount = (int)EditJumpCandlesLookbackCount.Value;
         settings.Signal.Jump.UseLowHighCalculation = EditJumpUseLowHighCalculation.Checked;

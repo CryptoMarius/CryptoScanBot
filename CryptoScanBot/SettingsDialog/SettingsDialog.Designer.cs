@@ -81,6 +81,7 @@ partial class FrmSettings
         tabSignal = new TabPage();
         tabControlSignals = new TabControl();
         tabSignalsGeneral = new TabPage();
+        label27 = new Label();
         EditCheckVolumeOverDays = new NumericUpDown();
         EditCheckVolumeOverPeriod = new CheckBox();
         label86 = new Label();
@@ -176,6 +177,7 @@ partial class FrmSettings
         flowLayoutPanel2 = new FlowLayoutPanel();
         UserControlSettingsSoundAndColorsStoRsi = new SettingsDialog.UserControlSettingsPlaySoundAndColors();
         groupBox6 = new GroupBox();
+        EditSkipFirstSignal = new CheckBox();
         EditCheckBollingerBandsCondition = new CheckBox();
         label24 = new Label();
         EditStorsiAddStochAmount = new NumericUpDown();
@@ -258,7 +260,9 @@ partial class FrmSettings
         EditDebugSignalCreate = new CheckBox();
         EditDebugKLineReceive = new CheckBox();
         toolTip1 = new ToolTip(components);
-        label27 = new Label();
+        label28 = new Label();
+        EditStorsiBBMinPercentage = new NumericUpDown();
+        EditStorsiBBMaxPercentage = new NumericUpDown();
         panelButtons.SuspendLayout();
         panelFill.SuspendLayout();
         tabControlMain.SuspendLayout();
@@ -360,6 +364,8 @@ partial class FrmSettings
         tabShortBlackList.SuspendLayout();
         panel6.SuspendLayout();
         tabPageOptions.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)EditStorsiBBMinPercentage).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)EditStorsiBBMaxPercentage).BeginInit();
         SuspendLayout();
         // 
         // panelButtons
@@ -992,6 +998,16 @@ partial class FrmSettings
         tabSignalsGeneral.Text = "Signalen algemeen";
         tabSignalsGeneral.UseVisualStyleBackColor = true;
         // 
+        // label27
+        // 
+        label27.AutoSize = true;
+        label27.Location = new Point(457, 407);
+        label27.Margin = new Padding(4, 0, 4, 0);
+        label27.Name = "label27";
+        label27.Size = new Size(40, 15);
+        label27.TabIndex = 286;
+        label27.Text = "dagen";
+        // 
         // EditCheckVolumeOverDays
         // 
         EditCheckVolumeOverDays.Location = new Point(347, 405);
@@ -1460,7 +1476,7 @@ partial class FrmSettings
         // EditStobbBBMinPercentage
         // 
         EditStobbBBMinPercentage.DecimalPlaces = 2;
-        EditStobbBBMinPercentage.Location = new Point(131, 21);
+        EditStobbBBMinPercentage.Location = new Point(129, 29);
         EditStobbBBMinPercentage.Margin = new Padding(4, 3, 4, 3);
         EditStobbBBMinPercentage.Name = "EditStobbBBMinPercentage";
         EditStobbBBMinPercentage.Size = new Size(65, 23);
@@ -1471,7 +1487,7 @@ partial class FrmSettings
         // EditStobbBBMaxPercentage
         // 
         EditStobbBBMaxPercentage.DecimalPlaces = 2;
-        EditStobbBBMaxPercentage.Location = new Point(216, 21);
+        EditStobbBBMaxPercentage.Location = new Point(213, 29);
         EditStobbBBMaxPercentage.Margin = new Padding(4, 3, 4, 3);
         EditStobbBBMaxPercentage.Name = "EditStobbBBMaxPercentage";
         EditStobbBBMaxPercentage.Size = new Size(65, 23);
@@ -2049,6 +2065,10 @@ partial class FrmSettings
         // groupBox6
         // 
         groupBox6.AutoSize = true;
+        groupBox6.Controls.Add(label28);
+        groupBox6.Controls.Add(EditStorsiBBMinPercentage);
+        groupBox6.Controls.Add(EditStorsiBBMaxPercentage);
+        groupBox6.Controls.Add(EditSkipFirstSignal);
         groupBox6.Controls.Add(EditCheckBollingerBandsCondition);
         groupBox6.Controls.Add(label24);
         groupBox6.Controls.Add(EditStorsiAddStochAmount);
@@ -2058,10 +2078,21 @@ partial class FrmSettings
         groupBox6.Margin = new Padding(10);
         groupBox6.Name = "groupBox6";
         groupBox6.Padding = new Padding(10);
-        groupBox6.Size = new Size(291, 144);
+        groupBox6.Size = new Size(291, 198);
         groupBox6.TabIndex = 160;
         groupBox6.TabStop = false;
         groupBox6.Text = "Instellingen";
+        // 
+        // EditSkipFirstSignal
+        // 
+        EditSkipFirstSignal.AutoSize = true;
+        EditSkipFirstSignal.Location = new Point(16, 121);
+        EditSkipFirstSignal.Margin = new Padding(4, 3, 4, 3);
+        EditSkipFirstSignal.Name = "EditSkipFirstSignal";
+        EditSkipFirstSignal.Size = new Size(213, 19);
+        EditSkipFirstSignal.TabIndex = 170;
+        EditSkipFirstSignal.Text = "Alleen als er een voorgaand storsi is";
+        EditSkipFirstSignal.UseVisualStyleBackColor = true;
         // 
         // EditCheckBollingerBandsCondition
         // 
@@ -2958,15 +2989,37 @@ partial class FrmSettings
         EditDebugKLineReceive.Text = "Debug KLineReceive (does kline ticker work)";
         EditDebugKLineReceive.UseVisualStyleBackColor = true;
         // 
-        // label27
+        // label28
         // 
-        label27.AutoSize = true;
-        label27.Location = new Point(457, 407);
-        label27.Margin = new Padding(4, 0, 4, 0);
-        label27.Name = "label27";
-        label27.Size = new Size(40, 15);
-        label27.TabIndex = 286;
-        label27.Text = "dagen";
+        label28.AutoSize = true;
+        label28.Location = new Point(13, 150);
+        label28.Margin = new Padding(4, 0, 4, 0);
+        label28.Name = "label28";
+        label28.Size = new Size(77, 15);
+        label28.TabIndex = 171;
+        label28.Text = "Filter on BB%";
+        // 
+        // EditStorsiBBMinPercentage
+        // 
+        EditStorsiBBMinPercentage.DecimalPlaces = 2;
+        EditStorsiBBMinPercentage.Location = new Point(121, 146);
+        EditStorsiBBMinPercentage.Margin = new Padding(4, 3, 4, 3);
+        EditStorsiBBMinPercentage.Name = "EditStorsiBBMinPercentage";
+        EditStorsiBBMinPercentage.Size = new Size(65, 23);
+        EditStorsiBBMinPercentage.TabIndex = 172;
+        toolTip1.SetToolTip(EditStorsiBBMinPercentage, "Een BB heeft een bepaalde breedte, je kunt hier filteren waardoor op de minimale en maximale breedte kan worden gefilterd.");
+        EditStorsiBBMinPercentage.Value = new decimal(new int[] { 150, 0, 0, 131072 });
+        // 
+        // EditStorsiBBMaxPercentage
+        // 
+        EditStorsiBBMaxPercentage.DecimalPlaces = 2;
+        EditStorsiBBMaxPercentage.Location = new Point(205, 146);
+        EditStorsiBBMaxPercentage.Margin = new Padding(4, 3, 4, 3);
+        EditStorsiBBMaxPercentage.Name = "EditStorsiBBMaxPercentage";
+        EditStorsiBBMaxPercentage.Size = new Size(65, 23);
+        EditStorsiBBMaxPercentage.TabIndex = 173;
+        toolTip1.SetToolTip(EditStorsiBBMaxPercentage, "Een BB heeft een bepaalde breedte, je kunt hier filteren waardoor op de minimale en maximale breedte kan worden gefilterd.");
+        EditStorsiBBMaxPercentage.Value = new decimal(new int[] { 6, 0, 0, 0 });
         // 
         // FrmSettings
         // 
@@ -3125,6 +3178,8 @@ partial class FrmSettings
         panel6.PerformLayout();
         tabPageOptions.ResumeLayout(false);
         tabPageOptions.PerformLayout();
+        ((System.ComponentModel.ISupportInitialize)EditStorsiBBMinPercentage).EndInit();
+        ((System.ComponentModel.ISupportInitialize)EditStorsiBBMaxPercentage).EndInit();
         ResumeLayout(false);
     }
 
@@ -3359,4 +3414,8 @@ partial class FrmSettings
     private CheckBox EditDebugSignalCreate;
     private CheckBox EditDebugKLineReceive;
     private Label label27;
+    private CheckBox EditSkipFirstSignal;
+    private Label label28;
+    private NumericUpDown EditStorsiBBMinPercentage;
+    private NumericUpDown EditStorsiBBMaxPercentage;
 }

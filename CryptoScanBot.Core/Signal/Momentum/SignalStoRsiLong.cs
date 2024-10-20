@@ -46,7 +46,16 @@ public class SignalStoRsiLong : SignalSbmBaseLong
             }
         }
 
-        // disable sbm conditions
+        if (GlobalData.Settings.Signal.StoRsi.SkipFirstSignal)
+        {
+            if (HadStorsiInThelastXCandles(SignalSide, 1, 3) == null)
+            {
+                response = "skip first storsi";
+                return false;
+            }
+        }
+
+        // disable sbm conditions (inheritance)
         response = "";
         return true;
     }
@@ -54,7 +63,7 @@ public class SignalStoRsiLong : SignalSbmBaseLong
 
     public override bool IsSignal()
     {
-        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, 100))
+        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.StoRsi.BBMinPercentage, GlobalData.Settings.Signal.StoRsi.BBMaxPercentage))
         {
             ExtraText = "bb.width too small " + CandleLast.CandleData!.BollingerBandsPercentage?.ToString("N2");
             return false;
