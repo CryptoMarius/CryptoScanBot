@@ -20,33 +20,38 @@ public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscript
         if (!tokenResult.Success)
             return default;
 
-        CallResult<UpdateSubscription> subscriptionResult = await ((KrakenSocketClient)TickerGroup.SocketClient).SpotApi.SubscribeToOrderUpdatesAsync(tokenResult.Data.Token,
-            OnOrderUpdate, ExchangeHelper.CancellationToken).ConfigureAwait(false);
+        CallResult<UpdateSubscription> subscriptionResult = await ((KrakenSocketClient)TickerGroup.SocketClient).SpotApi.SubscribeToOrderUpdatesAsync( //tokenResult.Data.Token,
+            OnOrderUpdate, null, null, ExchangeHelper.CancellationToken).ConfigureAwait(false);
 
         return subscriptionResult;
     }
+    //Task<CallResult<UpdateSubscription>> SubscribeToOrderUpdatesAsync(
+    //    Action<DataEvent<IEnumerable<KrakenOrderUpdate>>> updateHandler,
+    //    bool? snapshotOrder = null,
+    //    bool? snapshotTrades = null,
+    //    CancellationToken ct = default);
 
-    private void OnOrderUpdate(DataEvent<IEnumerable<KrakenStreamOrder>> dataList)
+    private void OnOrderUpdate(DataEvent<IEnumerable<KrakenOrderUpdate>> dataList)
     {
         try
         {
             foreach (var data in dataList.Data)
             {
-                string symbolName = data.OrderDetails.Symbol;
+                string symbolName = data.Symbol;
                 symbolName = symbolName.Replace("/", "");
 
 
                 // We melden voorlopig alles
-                string info = $"{symbolName} UserTicker {data.OrderDetails.Side} {data.Status} order={data.Id} quantity={data.Quantity} price={data.Price} value={data.Price * data.QuantityFilled}";
+                string info = $"{symbolName} UserTicker {data.OrderSide} {data.OrderStatus} order={data.OrderId} quantity={data.OrderQuantity} price={data.LimitPrice} value={data.LimitPrice * data.QuantityFilled}";
                 string text = JsonSerializer.Serialize(data, GlobalData.JsonSerializerIndented).Trim();
                 GlobalData.AddTextToLogTab(info);
                 ScannerLog.Logger.Trace($"{info} json={text}");
 
                 // We zijn slechts geinteresseerd in een paar statussen (de andere zijn niet interessant voor de afhandeling van de order)
-                if (data.Status == OrderStatus.Pending ||
-                    data.Status == OrderStatus.Open || //Active, not (fully) filled
-                    data.Status == OrderStatus.Closed || // Fully filled
-                    data.Status == OrderStatus.Canceled)
+                if (data.OrderStatus == OrderStatusUpdate.Pending ||
+                    data.OrderStatus == OrderStatusUpdate.PartiallyFilled || //Active, not (fully) filled
+                    data.OrderStatus == OrderStatusUpdate.Filled || // Fully filled
+                    data.OrderStatus == OrderStatusUpdate.Canceled)
                 {
                     if (GlobalData.ExchangeListName.TryGetValue(ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
                     {
@@ -65,7 +70,7 @@ public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscript
                                 symbol,
                                 //Api.LocalOrderType(data.OrderDetails.Type),
                                 //Api.LocalOrderSide(data.OrderDetails.Side),
-                                Order.LocalOrderStatus(data.Status),
+                                Order.LocalOrderStatus((OrderStatus)data.OrderStatus),
                                 orderTemp));
                         }
                     }

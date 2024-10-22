@@ -7,12 +7,13 @@ using CryptoScanBot.Core.Model;
 using Kraken.Net.Clients;
 using Kraken.Net.Enums;
 using Kraken.Net.Objects.Models;
+using Kraken.Net.Objects.Models.Socket;
 
 namespace CryptoScanBot.Core.Exchange.Kraken.Spot;
 
 public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
 {
-    private void ProcessCandle(string topic, KrakenStreamKline kline)
+    private void ProcessCandle(string topic, KrakenKlineUpdate kline)
     {
         // De interval wordt geprefixed in de topic
         string symbolName = topic.Replace("/", "");
@@ -40,9 +41,9 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         var subscriptionResult = await ((KrakenSocketClient)TickerGroup.SocketClient).SpotApi.SubscribeToKlineUpdatesAsync(
             symbolList, KlineInterval.OneMinute, data =>
         {
-            //foreach (KrakenStreamKline kline in data.Data)
+            foreach (KrakenKlineUpdate kline in data.Data)
             {
-                Task.Run(() => { ProcessCandle(data.Symbol?? "", data.Data); });
+                Task.Run(() => { ProcessCandle(data.Symbol?? "", kline); });
             }
         }, ExchangeHelper.CancellationToken).ConfigureAwait(false);
 

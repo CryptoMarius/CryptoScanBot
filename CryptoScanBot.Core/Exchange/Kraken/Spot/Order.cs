@@ -3,6 +3,7 @@ using CryptoScanBot.Core.Model;
 
 using Kraken.Net.Enums;
 using Kraken.Net.Objects.Models;
+using Kraken.Net.Objects.Models.Socket;
 
 namespace CryptoScanBot.Core.Exchange.Kraken.Spot;
 
@@ -55,10 +56,10 @@ public class Order
 
 
 
-    static public void PickupOrder(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoOrder order, KrakenStreamOrder item)
+    static public void PickupOrder(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoOrder order, KrakenOrderUpdate item)
     {
-        order.CreateTime = item.CreateTime;
-        order.UpdateTime = item.CreateTime; // TODO??? 
+        order.CreateTime = item.Timestamp;
+        order.UpdateTime = item.Timestamp; // TODO??? 
 
         order.TradeAccount = tradeAccount;
         order.TradeAccountId = tradeAccount.Id;
@@ -67,18 +68,14 @@ public class Order
         order.Symbol = symbol;
         order.SymbolId = symbol.Id;
 
-        order.OrderId = item.Id;
-        order.Side = LocalOrderSide(item.OrderDetails.Side);
+        order.OrderId = item.OrderId;
+        order.Side = LocalOrderSide((OrderSide)item.OrderSide);
 
-        order.Price = item.Price;
-        order.Quantity = item.Quantity;
-        order.QuoteQuantity = item.Price * item.Quantity;
+        order.Price = item.LimitPrice;
+        order.Quantity = (decimal)item.OrderQuantity;
+        order.QuoteQuantity = (decimal)item.QuoteOrderQuantity;
 
-        order.Price = item.Price;
-        order.Quantity = item.Quantity;
-        order.QuoteQuantity = item.Price * item.Quantity;
-
-        order.Commission = item.Fee;
+        order.Commission = 0; // (decimal)item.Fees;
         order.CommissionAsset = symbol.Quote;
     }
 

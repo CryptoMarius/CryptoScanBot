@@ -30,10 +30,10 @@ public class SubscriptionPriceTicker(ExchangeOptions exchangeOptions) : Subscrip
 
                         if (!GlobalData.BackTest)
                         {
-                            symbol.LastPrice = tick.LastTrade.Price;
-                            symbol.BidPrice = tick.BestBids.Price;
-                            symbol.AskPrice = tick.BestAsks.Price;
-                            symbol.Volume = tick.Volume.Value24H;
+                            symbol.LastPrice = tick.LastPrice;
+                            symbol.BidPrice = tick.BestBidPrice;
+                            symbol.AskPrice = tick.BestAskPrice;
+                            symbol.Volume = tick.Volume;
                         }
                     }
                 }
