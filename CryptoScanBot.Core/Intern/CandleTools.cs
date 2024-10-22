@@ -63,6 +63,22 @@ public static class CandleTools
     }
 
 
+    static public decimal GetHighValue(this CryptoCandle candle, bool useHighLow)
+    {
+        if (useHighLow)
+            return candle.High;
+        else
+            return Math.Max(candle.Open, candle.Close);
+    }
+
+    static public decimal GetLowValue(this CryptoCandle candle, bool useHighLow)
+    {
+        if (useHighLow)
+            return candle.Low;
+        else
+            return Math.Min(candle.Open, candle.Close);
+    }
+
     /// <summary>
     /// Add the final candle in the right interval
     /// </summary>
