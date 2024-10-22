@@ -59,6 +59,99 @@ public class TrendInterval
 
 
 
+    public static void Collapse(ZigZagIndicator8 indicator)
+    {
+        // new idea... nice, not sure how..
+        // https://youtu.be/plhWMmmgZj4?t=450
+        // Reduces a lot, but a bit to much also..
+
+        List<ZigZagResult> NewZigZagList = [];
+
+        var zigZagList = indicator.ZigZagList;
+
+        ZigZagResult zigZag;
+        ZigZagResult? previousLow = null;
+        ZigZagResult? previousHigh = null;
+        for (int i = 0; i < zigZagList.Count; i++)
+        {
+            zigZag = zigZagList[i];
+            zigZag.Index = i;
+            if (zigZag.PointType == 'H')
+            {
+                if (previousHigh == null)
+                {
+                    previousHigh = zigZag;
+                    NewZigZagList.Add(zigZag);
+                }
+                else
+                {
+                    if (zigZag.Value > previousHigh.Value)
+                    {
+                        // We have a new high, determine the lowest swingpoint, it will be the next low
+                        if (previousLow != null)
+                        {
+                            ZigZagResult? swingLow = null;
+                            for (int index = previousHigh.Index + 1; index < zigZag.Index; index++)
+                            {
+                                var zigZagTemp = zigZagList[index];
+
+                                if (zigZagTemp.PointType == 'L')
+                                {
+                                    if (swingLow == null || zigZagTemp.Value < swingLow.Value)
+                                        swingLow = zigZagTemp;
+                                }
+                            }
+                            if (swingLow != null)
+                            {
+                                previousLow = swingLow;
+                                NewZigZagList.Add(swingLow);
+                            }
+                        }
+                        previousHigh = zigZag;
+                        NewZigZagList.Add(zigZag);
+                    }
+                }
+            }
+            else
+            {
+                if (previousLow == null)
+                {
+                    previousLow = zigZag;
+                    NewZigZagList.Add(zigZag);
+                }
+                else
+                {
+                    if (zigZag.Value < previousLow.Value)
+                    {
+                        // We have a new high, determine the last swingpoint, it will be the next high
+                        if (previousHigh != null)
+                        {
+                            ZigZagResult? swingHigh = null;
+                            for (int index = previousLow.Index + 1; index < zigZag.Index; index++)
+                            {
+                                var zigZagTemp = zigZagList[index];
+
+                                if (zigZagTemp.PointType == 'H')
+                                {
+                                    if (swingHigh == null || zigZagTemp.Value > swingHigh.Value)
+                                        swingHigh = zigZagTemp;
+                                }
+                            }
+                            if (swingHigh != null)
+                            {
+                                previousHigh = swingHigh;
+                                NewZigZagList.Add(swingHigh);
+                            }
+                        }
+                        previousLow = zigZag;
+                        NewZigZagList.Add(zigZag);
+                    }
+                }
+            }
+        }
+        
+        indicator.ZigZagList = NewZigZagList;
+    }
 
 
     /// <summary>
@@ -283,6 +376,7 @@ public class TrendInterval
         //        log.AppendLine(s);
         //    }
         //}
+
 
         // Interpret the pivot points and put Charles Dow theory at work
         CryptoTrendIndicator trendIndicator = InterpretZigZagPoints(bestIndicator, log);
