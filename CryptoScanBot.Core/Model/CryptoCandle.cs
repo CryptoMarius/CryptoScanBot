@@ -23,6 +23,7 @@ public class CryptoCandle : IQuote
     public DateTime Date { get { return CandleTools.GetUnixDate(OpenTime); } }
 
     [Computed]
+    [JsonIgnore]
     public DateTime DateLocal { get { return CandleTools.GetUnixDate(OpenTime).ToLocalTime(); } }
 
     [Computed]
