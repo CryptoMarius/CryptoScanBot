@@ -630,6 +630,34 @@ public class TradeTools
             if (lastDateTime == null)
                 lastDateTime = GlobalData.GetCurrentDateTime(position.Account);
 
+            // quick fix to close positions with nothing attached to it... It does not belong here, just a quick and dirty fix for now....
+            if (position.Status == CryptoPositionStatus.Waiting && position.PartList.Count == 0 && position.CreateTime.AddHours(1) < lastDateTime)
+            {
+                // Close if q=0 or less than the minimum amount we can sell
+                decimal remaining = position.Quantity - position.RemainingDust;
+                if (remaining <= 0 || remaining < position.Symbol.QuantityMinimum ||
+                    remaining * position.Symbol.LastPrice < position.Symbol.QuoteValueMinimum)
+                {
+                    markedAsReady = true;
+                    orderStatusChanged = true;
+                    position.Reposition = false;
+                    position.CloseTime = lastDateTime;
+                    position.UpdateTime = lastDateTime;
+                    position.Status = CryptoPositionStatus.Timeout;
+
+                    GlobalData.AddTextToLogTab($"TradeTools: Position {position.Symbol.Name} status aangepast naar {position.Status}");
+                    GlobalData.AddTextToLogTab($"TradeTools: debug ? Quantity={position.Quantity}");
+                    GlobalData.AddTextToLogTab($"TradeTools: debug ? Dust={position.RemainingDust}");
+                    GlobalData.AddTextToLogTab($"TradeTools: debug ? Remaining={remaining}");
+                    GlobalData.AddTextToLogTab($"TradeTools: debug ? Symbol.LastPrice={position.Symbol.LastPrice}");
+                    GlobalData.AddTextToLogTab($"TradeTools: debug ? Symbol.QuantityMinimum={position.Symbol.QuantityMinimum}");
+                    GlobalData.AddTextToLogTab($"TradeTools: debug ? Symbol.QuoteValueMinimum={position.Symbol.QuoteValueMinimum}");
+                    GlobalData.AddTextToLogTab($"TradeTools: debug ? closing if ({remaining} <= 0)");
+                    GlobalData.AddTextToLogTab($"TradeTools: debug ? closing if ({position.Quantity} < {position.Symbol.QuantityMinimum})");
+                    GlobalData.AddTextToLogTab($"TradeTools: debug ? closing if ({remaining * position.Symbol.LastPrice} < {position.Symbol.QuoteValueMinimum})");
+                }
+            }
+
             // Er is in geinvesteerd en dus moet de positie ten minste actief zijn
             if (position.Status == CryptoPositionStatus.Waiting && position.Quantity != 0)
             {
