@@ -418,7 +418,10 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
 
     public void InitCommandCaptions()
     {
-        string text = CryptoExternalUrlList.GetTradingAppName(GlobalData.Settings.General.TradingApp, GlobalData.Settings.General.ExchangeName);
+        if (GlobalData.Settings.General.Exchange == null)
+            return;
+
+        string text = CryptoExternalUrlList.GetTradingAppName(GlobalData.Settings.General.TradingApp, GlobalData.Settings.General.Exchange.Name);
         Grid.ContextMenuStrip!.Items[0].Text = text;
         if (GlobalData.Settings.General.HideSelectedRow)
         {

@@ -26,7 +26,8 @@ public class BarometerTools
 
     private static CryptoSymbol? CheckBarometerSymbolPrecence(string baseName, CryptoQuoteData quoteData)
     {
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange? exchange))
+        var exchange = GlobalData.Settings.General.Exchange;
+        if (exchange != null)
         {
             if (!exchange.SymbolListName.TryGetValue(baseName + quoteData.Name, out CryptoSymbol? symbol))
             {

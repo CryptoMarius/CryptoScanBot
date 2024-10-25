@@ -18,7 +18,8 @@ public class TelegramShowValue
         //parameters = value.Split(',');
         var parameters = GlobalData.Settings.ShowSymbolInformation;
 
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange? exchange))
+        var exchange = GlobalData.Settings.General.Exchange;
+        if (exchange != null)
         {
             foreach (string symbolName in parameters)
             {

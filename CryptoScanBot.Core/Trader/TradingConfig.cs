@@ -47,7 +47,8 @@ public static class TradingConfig
                     if (!target.ContainsKey(symbol))
                         target.Add(symbol, true);
 
-                    if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange? exchange))
+                    var exchange = GlobalData.Settings.General.Exchange;
+                    if (exchange != null)
                     {
                         if (!exchange.SymbolListName.ContainsKey(symbol))
                         {

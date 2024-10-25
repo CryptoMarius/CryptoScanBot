@@ -654,7 +654,8 @@ public partial class TestForm : Form
 
     private async void Button2_Click(object? sender, EventArgs? e)
     {
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange? exchange))
+        var exchange = GlobalData.Settings.General.Exchange;
+        if (exchange != null)
         {
             if (exchange.SymbolListName.TryGetValue("ETHUSDT", out CryptoSymbol? symbol))
             {
@@ -922,7 +923,8 @@ public partial class TestForm : Form
         GlobalData.AddTextToLogTab("");
         List<VolatiteitStat> a = [];
 
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange exchange))
+        var exchange = GlobalData.Settings.General.Exchange;
+        if (exchange != null)
         {
             //CryptoSymbol symbol;
             foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
@@ -1120,7 +1122,8 @@ public partial class TestForm : Form
         //trend.assignvaluecolor( if pos == -1 then color.red else if pos == 1 then color.green else color.blue);
 
 
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange? exchange))
+        var exchange = GlobalData.Settings.General.Exchange;
+        if (exchange != null)
         {
 
             if (exchange.SymbolListName.TryGetValue("NEBLUSDT", out CryptoSymbol? symbol))
@@ -1366,7 +1369,8 @@ public partial class TestForm : Form
         //GlobalData.Settings.Signal.AnalysisShowCandleJumpUp = false;
 
 
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange? exchange))
+        var exchange = GlobalData.Settings.General.Exchange;
+        if (exchange != null)
         {
             if (exchange.SymbolListName.TryGetValue("WANBTC", out CryptoSymbol? symbol))
             {
@@ -1483,7 +1487,8 @@ public partial class TestForm : Form
         int intWidth = pictureBox1.Width;
         int intHeight = pictureBox1.Height;
 
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange? exchange))
+        var exchange = GlobalData.Settings.General.Exchange;
+        if (exchange != null)
         {
             if ((quoteData != null) && (exchange.SymbolListName.TryGetValue(Core.Model.Constants.SymbolNameBarometerPrice + quoteData.Name, out CryptoSymbol? symbol)))
             {
@@ -1722,7 +1727,8 @@ public partial class TestForm : Form
         //GlobalData.Settings.Signal.AnalysisShowCandleJumpUp = false;
 
 
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange? exchange))
+        var exchange = GlobalData.Settings.General.Exchange;
+        if (exchange != null)
         {
             if (exchange.SymbolListName.TryGetValue(Core.Model.Constants.SymbolNameBarometerPrice + "USDT", out CryptoSymbol? symbol)) //"BTCUSDT"
             {
@@ -2372,7 +2378,8 @@ public partial class TestForm : Form
                 Results.ShowHeader(header, false);
                 GlobalData.AddTextToLogTab(header.ToString());
 
-                if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange? exchange))
+                var exchange = GlobalData.Settings.General.Exchange;
+                if (exchange != null)
                 {
                     string baseFolder = GlobalData.GetBaseDir();
                     baseFolder += @"\backtest\" + exchange.Name + @"\" + strategy.ToString() + @"\";
@@ -2525,7 +2532,8 @@ public partial class TestForm : Form
     {
         tabControl.SelectedTab = tabPage1;
 
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange exchange))
+        var exchange = GlobalData.Settings.General.Exchange;
+        if (exchange != null)
         {
             int i = 0;
             foreach (CryptoSymbol symbol in exchange.SymbolListId.Values)
@@ -2591,7 +2599,8 @@ public partial class TestForm : Form
 
     private void Button2_Click_2(object? sender, EventArgs? e)
     {
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange? exchange))
+        var exchange = GlobalData.Settings.General.Exchange;
+        if (exchange != null)
         {
             if (exchange.SymbolListName.TryGetValue("ADAUSDT", out CryptoSymbol? symbol))
             {
@@ -2664,7 +2673,8 @@ public partial class TestForm : Form
 
     private void Button4_Click(object? sender, EventArgs? e)
     {
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange? exchange))
+        var exchange = GlobalData.Settings.General.Exchange;
+        if (exchange != null)
         {
             if (exchange.SymbolListName.TryGetValue("PAXGUSDT", out CryptoSymbol? symbol))
             {

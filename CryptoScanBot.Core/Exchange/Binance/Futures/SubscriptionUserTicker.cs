@@ -52,7 +52,7 @@ public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscript
             {
                 // Nieuwe thread opstarten en de data meegeven zodat er een sell wordt gedaan of administratie wordt bijgewerkt.
                 // Het triggeren van een stoploss of een DCA zal op een andere manier gedaan moeten worden (maar hoe en waar?)
-                if (GlobalData.ExchangeListName.TryGetValue(ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
+                if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
                 {
                     if (exchange.SymbolListName.TryGetValue(data.Data.UpdateData.Symbol, out CryptoSymbol? symbol))
                     {

@@ -387,7 +387,8 @@ public static class Helper
         valueBtc = 0;
         valueUsdt = 0;
 
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange? exchange))
+        var exchange = GlobalData.Settings.General.Exchange;
+        if (exchange != null)
         {
             tradeAccount.Data.AssetListSemaphore.Wait();
             {

@@ -17,7 +17,8 @@ public class TelegramShowTrend
             symbolName = parameters[1].Trim().ToUpper();
         stringbuilder.AppendLine($"Trend {symbolName}");
 
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange? exchange))
+        var exchange = GlobalData.Settings.General.Exchange;
+        if (exchange != null)
         {
             if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
             {

@@ -429,7 +429,7 @@ public partial class DashBoardInformation : UserControl
             BarometerTools barometerTools = new();
             barometerTools.ExecuteAsync();
 
-            if (!GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange? exchange))
+            if (GlobalData.Settings.General.Exchange == null)
                 return;
 
             string baseCoin = "";
@@ -455,7 +455,7 @@ public partial class DashBoardInformation : UserControl
                 return;
 
             BarometerData? barometerData = GlobalData.ActiveAccount!.Data.GetBarometer(quoteData.Name, intervalPeriod);
-            CreateBarometerBitmap(exchange, quoteData, interval);
+            CreateBarometerBitmap(GlobalData.Settings.General.Exchange, quoteData, interval);
         }
         catch (Exception error)
         {
@@ -597,7 +597,8 @@ public partial class DashBoardInformation : UserControl
             }
 
             // Toon de prijzen en volume van een aantal symbols
-            if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange? exchange))
+            var exchange = GlobalData.Settings.General.Exchange;
+            if (exchange != null)
             {
                 string baseCoin = "";
                 Invoke((MethodInvoker)(() => baseCoin = EditBarometerQuote.Text));
@@ -664,9 +665,9 @@ public partial class DashBoardInformation : UserControl
                 if (x.SymbolName == target || x.SymbolPrice == target || x.SymbolVolume == target)
                 {
                     string symbolName = x.SymbolName.Text;
-                    if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange? exchange))
+                    if (GlobalData.Settings.General.Exchange != null)
                     {
-                        if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
+                        if (GlobalData.Settings.General.Exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
                         {
                             if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1m, out CryptoInterval? interval))
                                 return;

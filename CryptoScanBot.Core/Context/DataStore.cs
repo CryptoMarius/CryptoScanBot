@@ -114,7 +114,8 @@ public class DataStore
 
         //int aantaltotaal = 0;
         string baseStoragePath = GlobalData.GetBaseDir();
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange? exchange))
+        var exchange = GlobalData.Settings.General.Exchange;
+        if (exchange != null)
         {
             string exchangeStoragePath = baseStoragePath + exchange.Name.ToLower() + @"\";
 

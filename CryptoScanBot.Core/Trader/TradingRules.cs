@@ -10,7 +10,8 @@ public static class TradingRules
     private static void CalculateTradingRules(PauseTradingRule pause, long candleUnixDate, int candleDuration)
     {
         // Als een munt (met name BTC) snel gedaald is dan stoppen
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange? exchange))
+        var exchange = GlobalData.Settings.General.Exchange;
+        if (exchange != null)
         {
             int index = 0;
             foreach (Settings.PauseTradingRule rule in GlobalData.Settings.Trading.PauseTradingRules)

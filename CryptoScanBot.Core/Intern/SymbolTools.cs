@@ -320,7 +320,8 @@ public class SymbolTools
         // TODO: Probleem: De barometer is afhankelijk van alle symbols en wordt x seconden NA het minuut berekend
         // dat betekend dat de laatste candle (nog) niet aanwezig hoeft te zijn (en de candleOpenTime impliceert)
 
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange? exchange))
+        var exchange = GlobalData.Settings.General.Exchange;
+        if (exchange != null)
         {
             if (exchange.SymbolListName.TryGetValue(Constants.SymbolNameBarometerPrice, out CryptoSymbol? symbol))
             {

@@ -38,7 +38,7 @@ public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscript
                     data.Status == OrderStatus.PartiallyFilledCanceled ||
                     data.Status == OrderStatus.Cancelled)
                 {
-                    if (GlobalData.ExchangeListName.TryGetValue(ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
+                    if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
                     {
                         if (exchange.SymbolListName.TryGetValue(data.Symbol, out CryptoSymbol? symbol))
                         {
