@@ -1,5 +1,38 @@
 CryptoScanBot release historie:
 
+xx-10-2024 1.9.4-.....
+
+- Scanner - StoRsi - de grenzen van de BB kunnen opgeven (net zoals bij de STOBB en SBM)
+- Scanner - De opstart parameters voor het selecteren van de exchange is hoofdletter gevoelig (ook voorloop spaties kunnen meekomen)
+- Scanner - Het aantal dagen voor de (voorheen) 10 dagen effectief kun je nu zelf instellen (net zoals het x dagen volume)
+- Scanner - De instellingen voor de minimale effectieve waarden kunnen weg, want de waarde is altijd positief (verschil van min..max in %)
+- Scanner - Introductie van een nieuwe instelling om de 1e storsi melding over te slagen (ter test)
+- Scanner - Introductie van een minimale en maximale BB bij de storsi methode (standaard 1.5 t/m 100)
+- Scanner - Het aantal candles om de trend te berekenen is gereduceerd naar 500 candles
+- Scanner - Het aantal candles voor de (interne) barometer symbols is gereduceerd naar 7 uur
+- Scanner - De routine om het juiste aantal candles om ieder interval op te halen is aangepast (niet alle intervallen worden ondersteund)
+- Scanner - Trend berekening negeert L or H's als ze te dicht bij elkaar liggen, moet een keuze maken om de vorige te "extenden"
+- Scanner - Het aantal candles voor de 10m, 3h en 8h zijn te laag (het zijn de intervallen die niet door de exchange ondersteund worden)
+- Scanner - Bybit - Als er candles worden opgehaald dan wordt door Bybit ook de toekomstige (in opbouw zijnde) candles aangeleverd. Het is niet de
+            bedoeling dat deze candles toegevoegd worden want dan kun je (als je niet oppast) op basis van niet complete candles beslissingen nemen.
+            Nu worden die toekomstige candles in de berekeningen voor de signalen niet gebruikt, maar wel in de trend berekening en emulator.
+            Die extra candle(s) zijn dus ongewenst en worden vanaf nu niet meer opgenomen.
+- Scanner - Bybit - Het volume werd niet goed overgenomen uit de kline ticker (basis volume en quote volume verwisseld, c.q. Volume ipv Turnover).
+            Dit betekend dat het volume filter de fout in kan gaan want het maakt beslissingen op basis van het base-volume ipv quoted-volume
+            (voorbeeld BTCUSDT, basis=BTC, quoted=USDT) (nu worden er ieder uur alsnog candles opgehaald dus wellicht valt dat in het geheel niet zo op?)
+- Scanner - Bybit - Bij een niet complete 30m candle (*) worden wordt de candle niet opgenomen en klopt uiteindelijk het volume van de hogere intervallen 
+            niet (en kan deze weggefilterd worden vanwege minimum volume). Besloten om de candle nu altijd op te nemen ook al mist er een candle in de 
+            onderliggende reeks waardoor er in ieder geval een betere volume gecalculeerd wordt.
+            (*)=er mist een onderliggende candle van de 10m bijvoorbeeld
+- Scanner - Database migration probleem opgelost, de migratie bleef hangen bij versie 23 (er miste een stukje code om vanaf de ~1.9.3 te kunnen migreren)
+
+- Trader - Het Telegram melding voor de Altrady webhook uitbreiden met een link naar de Altrady app/symbol/interval
+- Trader - Als een positie wordt geopend via de Altrady webhook dan een telegram melding versturen
+- Trader - De Altrady webhook signalId toegevoegd als een kolom in de openstaande en gesloten posities (blijft lastig te correleren)
+- Trader - Een afgesloten positie kan blijven hangen indien de quantity precies 0 is (normaal is er wel wat dust en wordt ie automatisch gesloten)
+- Trader - De tekst "Partiallyandclosed" is vervangen met "Filled" (partiallyandclosed is een aparte status die intern een iets andere betekenis heeft)
+
+
 08-10-2024 1.9.4-10.08 prerelease
 - Scanner - Er is een Debug tabblad waarin je instellingen kan doen voor uitgebreidere meldingen en/of statistiek
 - Scanner - Signaal en posities hebben nu een slope op de rsi, sma20, sma50 en sma200
