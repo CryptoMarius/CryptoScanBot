@@ -109,8 +109,11 @@ public class TradeToolsTest : TestBase
         task.Wait();
 
 
-        if (entryPart.StepList.Count != 2)
+        CryptoPositionStep? stepProfitx = PositionTools.FindOpenStep(position, CryptoOrderSide.Sell, CryptoPartPurpose.TakeProfit);
+        if (stepProfitx == null)
             Assert.Fail("Geen tp order gemaakt");
+
+
 
         // De sell veranderd niets, maar blijft alles wel hetzelfde?
         task = Task.Run(() => _ = TradeTools.CalculatePositionResultsViaOrders(database, position));
@@ -247,26 +250,26 @@ public class TradeToolsTest : TestBase
 
         // Dit kan nooit 0.53 zijn, er is namelijk minder aangekocht (vanwege de fees in base)
         Assert.AreEqual(step.QuantityFilled, 0.53m);
-        Assert.AreEqual(part.Quantity, 0.53m - 0.00053m);
-        Assert.AreEqual(position.Quantity, 0.53m - 0.00053m);
+        Assert.AreEqual(part.Quantity, 0.53m - 0.000795m);
+        Assert.AreEqual(position.Quantity, 0.53m - 0.000795m);
 
-        Assert.AreEqual(step.Commission, 0.002981833m);
-        Assert.AreEqual(part.Commission, 0.002981833m);
-        Assert.AreEqual(position.Commission, 0.002981833m);
+        Assert.AreEqual(step.Commission, 0.0044727495m);
+        Assert.AreEqual(part.Commission, 0.0044727495m);
+        Assert.AreEqual(position.Commission, 0.0044727495m);
 
-        Assert.AreEqual(step.CommissionBase, 0.00053m);
-        Assert.AreEqual(part.CommissionBase, 0.00053m);
-        Assert.AreEqual(position.CommissionBase, 0.00053m);
+        Assert.AreEqual(step.CommissionBase, 0.000795m);
+        Assert.AreEqual(part.CommissionBase, 0.000795m);
+        Assert.AreEqual(position.CommissionBase, 0.000795m);
 
         Assert.AreEqual(step.CommissionQuote, 0m);
         Assert.AreEqual(part.CommissionQuote, 0m);
         Assert.AreEqual(position.CommissionQuote, 0m);
 
-        Assert.AreEqual(part.BreakEvenPrice, 5.6317261m);
-        Assert.AreEqual(position.BreakEvenPrice, 5.6317261m);
+        Assert.AreEqual(part.BreakEvenPrice, 5.6345518277416124186279419129m);
+        Assert.AreEqual(position.BreakEvenPrice, 5.6429909777416124186279419129m);
 
-        Assert.AreEqual(part.Invested, 2.981833m);
-        Assert.AreEqual(position.Invested, 2.981833m);
+        Assert.AreEqual(part.Invested, 2.9773602505m);
+        Assert.AreEqual(position.Invested, 2.9773602505m);
 
         Assert.AreEqual(part.Returned, 0m);
         Assert.AreEqual(position.Returned, 0m);

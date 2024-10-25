@@ -25,6 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\CryptoScanBot.Core\CryptoScanBot.Core.csproj" />
     <ProjectReference Include="..\CryptoScanBot\CryptoScanBot.csproj" />
   </ItemGroup>
 
