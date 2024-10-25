@@ -878,6 +878,8 @@ public class Migration
             try { database.Connection.Execute("alter table Position add SlopeSma100 Text null", transaction); } catch { } // ignore
             try { database.Connection.Execute("alter table Position add SlopeSma200 Text null", transaction); } catch { } // ignore
 
+            try { database.Connection.Execute("delete from asset", transaction); } catch { } // ignore, start from scratch
+
             // update version
             version.Version += 1;
             database.Connection.Update(version, transaction);
