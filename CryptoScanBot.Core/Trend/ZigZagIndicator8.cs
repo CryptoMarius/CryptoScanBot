@@ -10,7 +10,7 @@ public class ZigZagIndicator8(SortedList<long, CryptoCandle> candleList, bool us
     public int BackStep { get; set; } = 3;
 
     public int CandleCount { get; set; } = 0;
-    public readonly List<ZigZagResult> ZigZagList = [];
+    public List<ZigZagResult> ZigZagList { get; set; } = [];
     private readonly SortedList<long, CryptoCandle> CandleList = candleList;
 
     // for remove duplicate highs/lows
@@ -59,40 +59,44 @@ public class ZigZagIndicator8(SortedList<long, CryptoCandle> candleList, bool us
         }
 
 
-        if (candle.Date >= new DateTime(2024, 09, 16, 03, 00, 00, 00, 0, DateTimeKind.Utc))
-            candle = candle; // debug 
+        //if (candle.DateLocal >= new DateTime(2024, 10, 17, 17, 0, 0, DateTimeKind.Local))
+        //    candle = candle; // debug 
 
         // is the current candle a new low?
         double lowFromLastCandle = GetLowValue(candle);
         if (Math.Abs(lowFromLastCandle - lowFromLastDepth) == 0)
         {
+            bool Addzigzag = true;
             if (Previous != null)
             {
                 // ignore multiple low's after each other (reuse/remove the previous low)
                 if (Previous.PointType == 'L' && lowFromLastDepth <= Previous.Value)
                 {
-                    //if (lowFromLastDepth < Previous.Value) // use the last candle as pivot
+                    //if (candle.Low < Previous.Candle.Low)
                     Previous.ReusePoint(candle, lowFromLastDepth);
                     return;
                 }
                 else if (Previous.PointType == 'L' && lowFromLastDepth > Previous.Value)
-                    return; // repeated low, previous was lower
+                    Addzigzag = false; // repeated low, previous was lower
                 else if (Previous.PointType == 'H' && Math.Abs(lowFromLastDepth - Previous.Value) < Deviation * lowFromLastDepth / 100)
-                    return; // not past the threshold
+                    Addzigzag = false; // not past the threshold
                 else if (Previous.Candle!.OpenTime + BackStep * duration >= candle!.OpenTime)
-                    return; // no pivot allowed within X candles
+                    Addzigzag = false; // no pivot allowed within X candles
             }
 
-            ZigZagResult last = new()
+            if (Addzigzag)
             {
-                PointType = 'L',
-                Candle = candle,
-                Value = lowFromLastDepth,
-                Dominant = false,
-            };
-            ZigZagList.Add(last);
-            Previous = last;
-            return;
+                ZigZagResult last = new()
+                {
+                    PointType = 'L',
+                    Candle = candle,
+                    Value = lowFromLastDepth,
+                    Dominant = false,
+                };
+                ZigZagList.Add(last);
+                Previous = last;
+                return;
+            }
         }
 
 
@@ -100,33 +104,37 @@ public class ZigZagIndicator8(SortedList<long, CryptoCandle> candleList, bool us
         double highFromLastCandle = GetHighValue(candle);
         if (Math.Abs(highFromLastCandle - highFromLastDepth) == 0)
         {
+            bool Addzigzag = true;
             if (Previous != null)
             {
                 // ignore multiple high's after each other (reuse/remove the previous high)
                 if (Previous.PointType == 'H' && highFromLastDepth >= Previous.Value)
                 {
-                    //if (highFromLastDepth > Previous.Value) // use the last candle as pivot
-                    Previous.ReusePoint(candle, highFromLastDepth);
+                    //if (candle.High > Previous.Candle.High)
+                        Previous.ReusePoint(candle, highFromLastDepth);
                     return;
                 }
                 else if (Previous.PointType == 'H' && highFromLastDepth < Previous.Value)
-                    return; // repeated high, previous was higher
+                    Addzigzag = false; // repeated high, previous was higher
                 else if (Previous.PointType == 'L' && Math.Abs(highFromLastDepth - Previous.Value) < Deviation * highFromLastDepth / 100)
-                    return; // not past the threshold
+                    Addzigzag = false; // not past the threshold
                 else if (Previous.Candle!.OpenTime + BackStep * duration >= candle!.OpenTime)
-                    return; // no pivot allowed within X candles
+                    Addzigzag = false; // no pivot allowed within X candles
             }
 
-            ZigZagResult last = new()
+            if (Addzigzag)
             {
-                PointType = 'H',
-                Candle = candle,
-                Value = highFromLastDepth,
-                Dominant = false,
-            };
-            ZigZagList.Add(last);
-            Previous = last;
-            return;
+                ZigZagResult last = new()
+                {
+                    PointType = 'H',
+                    Candle = candle,
+                    Value = highFromLastDepth,
+                    Dominant = false,
+                };
+                ZigZagList.Add(last);
+                Previous = last;
+                return;
+            }
         }
     }
 
