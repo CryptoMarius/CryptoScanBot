@@ -14,7 +14,7 @@ public partial class FrmSettings : Form
 
 
     public Core.Model.CryptoExchange? NewExchange { get; set; }
-   
+
 
 
     public FrmSettings()
@@ -42,14 +42,6 @@ public partial class FrmSettings : Form
         EditTradeVia.DataSource = new BindingSource(TradeVia, null);
         EditTradeVia.DisplayMember = "Key";
         EditTradeVia.ValueMember = "Value";
-
-        //EditActivateExchange.Items.Clear();
-        //EditActivateExchange.Items.Add("De actieve exchange");
-        //foreach (var exchange in GlobalData.ExchangeListName.Values)
-        //{
-        //    if (exchange.IsSupported)
-        //        EditActivateExchange.Items.Add(exchange.Name);
-        //}
     }
 
 
@@ -67,14 +59,8 @@ public partial class FrmSettings : Form
         LabelDebugSymbol.Visible = false;
 #endif
 
-        // Deze worden na de overgang naar .net 7 regelmatig gereset naar 0
-        // Benieuwd waarom dit gebeurd (het zijn er gelukkig niet zo veel)
-        //EditGlobalBuyVarying.Minimum = -0.5m;
-
         EditAnalysisMinChangePercentage.Minimum = -100;
-        EditAnalysisMinEffectivePercentage.Minimum = -1000;
         EditAnalysisMaxEffectivePercentage.Maximum = +1000;
-        EditAnalysisMinEffective10DaysPercentage.Minimum = -1000;
         EditAnalysisMaxEffective10DaysPercentage.Maximum = +1000;
 
         EditStobTrendLong.Minimum = -1000;
@@ -164,11 +150,10 @@ public partial class FrmSettings : Form
         EditAnalysisMaxChangePercentage.Value = (decimal)settings.Signal.AnalysisMaxChangePercentage;
         EditLogAnalysisMinMaxChangePercentage.Checked = settings.Signal.LogAnalysisMinMaxChangePercentage;
 
-        EditAnalysisMinEffectivePercentage.Value = (decimal)settings.Signal.AnalysisMinEffectivePercentage;
         EditAnalysisMaxEffectivePercentage.Value = (decimal)settings.Signal.AnalysisMaxEffectivePercentage;
         EditLogAnalysisMinMaxEffectivePercentage.Checked = settings.Signal.LogAnalysisMinMaxEffectivePercentage;
 
-        EditAnalysisMinEffective10DaysPercentage.Value = (decimal)settings.Signal.AnalysisMinEffective10DaysPercentage;
+        EditAnalysisMaxEffectiveDays.Value = (decimal)settings.Signal.AnalysisMaxEffectiveDays;
         EditAnalysisMaxEffective10DaysPercentage.Value = (decimal)settings.Signal.AnalysisMaxEffective10DaysPercentage;
         EditLogAnalysisMinMaxEffective10DaysPercentage.Checked = settings.Signal.LogAnalysisMinMaxEffective10DaysPercentage;
 
@@ -343,6 +328,7 @@ public partial class FrmSettings : Form
         // ------------------------------------------------------------------------------
         // General
         // ------------------------------------------------------------------------------
+        // Don't save exchange immediately, lots of data still in memory etc
         settings!.General.ExtraCaption = EditExtraCaption.Text;
         NewExchange = (Core.Model.CryptoExchange)EditExchange.SelectedValue;
         Core.Model.CryptoExchange? NewActivateExchange = (Core.Model.CryptoExchange)EditActivateExchange.SelectedValue;
@@ -351,13 +337,12 @@ public partial class FrmSettings : Form
         else
             settings.General.ActivateExchangeName = NewExchange.Name;
 
-
-        //settings.General.ActivateExchange = EditActivateExchange.SelectedIndex;
-
         // Don't save immediately, lots of data still in memory etc
+        //settings.General.ActivateExchange = EditActivateExchange.SelectedIndex;
         //settings.General.Exchange = (Model.CryptoExchange)EditExchange.SelectedValue;
         //settings.General.ExchangeId = settings.General.Exchange.Id;
         //settings.General.ExchangeName = settings.General.Exchange.Name;
+
         settings.General.BlackTheming = EditBlackTheming.Checked;
         settings.General.TradingApp = (CryptoTradingApp)EditTradingApp.SelectedIndex;
         settings.General.TradingAppInternExtern = (CryptoExternalUrlType)EditTradingAppInternExtern.SelectedIndex;
@@ -411,16 +396,12 @@ public partial class FrmSettings : Form
         settings.Signal.AnalysisMaxChangePercentage = (double)EditAnalysisMaxChangePercentage.Value;
         settings.Signal.LogAnalysisMinMaxChangePercentage = EditLogAnalysisMinMaxChangePercentage.Checked;
 
-        settings.Signal.AnalysisMinEffectivePercentage = (double)EditAnalysisMinEffectivePercentage.Value;
         settings.Signal.AnalysisMaxEffectivePercentage = (double)EditAnalysisMaxEffectivePercentage.Value;
         settings.Signal.LogAnalysisMinMaxEffectivePercentage = EditLogAnalysisMinMaxEffectivePercentage.Checked;
 
-        settings.Signal.AnalysisMinEffective10DaysPercentage = (double)EditAnalysisMinEffective10DaysPercentage.Value;
+        settings.Signal.AnalysisMaxEffectiveDays = (int)EditAnalysisMaxEffectiveDays.Value;
         settings.Signal.AnalysisMaxEffective10DaysPercentage = (double)EditAnalysisMaxEffective10DaysPercentage.Value;
         settings.Signal.LogAnalysisMinMaxEffective10DaysPercentage = EditLogAnalysisMinMaxEffective10DaysPercentage.Checked;
-
-        //settings.Signal.Barometer1hMinimal = EditBarometerLong1hMinimal.Value;
-        //settings.Signal.LogBarometerToLow = EditBarometerLong1hMinimalLog.Checked;
 
         settings.Signal.SymbolMustExistsDays = (int)EditSymbolMustExistsDays.Value;
         settings.Signal.LogSymbolMustExistsDays = EditLogSymbolMustExistsDays.Checked;
@@ -553,7 +534,7 @@ public partial class FrmSettings : Form
         settings.Trading.CheckIncreasingMacd = EditCheckIncreasingMacd.Checked;
         settings.Trading.CheckIncreasingStoch = EditCheckIncreasingStoch.Checked;
         settings.Trading.CheckFurtherPriceMove = EditCheckFurtherPriceMove.Checked;
-        
+
         // Entry/Dca/Tp/Sl
         UserControlTradeEntry.SaveConfig(settings.Trading);
         UserControlTradeDca.SaveConfig(settings.Trading);
