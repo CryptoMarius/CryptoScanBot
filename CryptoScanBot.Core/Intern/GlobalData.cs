@@ -8,6 +8,7 @@ using Dapper;
 using Dapper.Contrib.Extensions;
 
 using System.Globalization;
+using System.Linq;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 
@@ -765,6 +766,12 @@ static public class GlobalData
                 exchangeName = "Kucoin Spot";
             if (exchangeName == "Mexc")
                 exchangeName = "Mexc Spot";
+
+            // People forget to use the right casing
+            exchangeName = exchangeName.Trim().ToLower();
+            string? found = GlobalData.ExchangeListName.Values.Where(x => x.Name.Equals(exchangeName, StringComparison.CurrentCultureIgnoreCase)).SingleOrDefault()?.Name;
+            if (found != null)
+                exchangeName = found;
 
             // New exchange
             GlobalData.Settings.General.ExchangeName = exchangeName;
