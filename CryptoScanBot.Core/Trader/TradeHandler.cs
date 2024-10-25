@@ -26,7 +26,8 @@ static public class TradeHandler
             if (GlobalData.ThreadCheckPosition != null)
                 await GlobalData.ThreadCheckPosition.AddToQueue(position, order.OrderId, order.Status);
 
-            PaperAssets.Change(position.Account, position.Symbol, position.Side, order.Side, CryptoOrderStatus.Filled, order.Quantity, order.QuoteQuantity);
+            // Moved to ThreadCheckPosition (we need the trades for the exact fees)
+            //PaperAssets.Change(position.Account, position.Symbol, position.Side, order.Side, CryptoOrderStatus.Filled, order.Quantity, order.QuoteQuantity);
         }
     }
 }
