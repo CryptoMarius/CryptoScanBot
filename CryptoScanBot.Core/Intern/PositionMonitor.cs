@@ -1136,9 +1136,9 @@ public class PositionMonitor : IDisposable
 
                         ExchangeBase.Dump(position, result.result, result.tradeParams, logText);
 
+                        // Reserve the assets on papertrading/emulator
                         PaperAssets.Change(position.Account, position.Symbol, position.Side, result.tradeParams.OrderSide,
                             step.Status, result.tradeParams.Quantity, result.tradeParams.QuoteQuantity);
-
 
                         // Een eventuele market order direct laten vullen
                         if (position.Account.AccountType != CryptoAccountType.RealTrading && step.OrderType == CryptoOrderType.Market)
