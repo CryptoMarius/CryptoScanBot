@@ -79,7 +79,7 @@ public class ExchangeHelper
 
     public static async Task GetAssetsAsync(CryptoAccount tradeAccount)
     {
-        ScannerLog.Logger.Trace($"ExchangeHelper.GetAssetsAsync: Position {tradeAccount.AccountType}");
+        ScannerLog.Logger.Trace($"ExchangeHelper.GetAssetsAsync: account {tradeAccount.AccountType}");
         if (tradeAccount == null || tradeAccount.AccountType != CryptoAccountType.RealTrading)
             return;
         await GetApiInstance().GetAssetsAsync(tradeAccount);
