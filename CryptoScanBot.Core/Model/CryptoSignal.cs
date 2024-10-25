@@ -60,6 +60,8 @@ public class CryptoSignal: CryptoData2
     [Computed]
     public int ItemIndex { get; set; }
 
+    [Computed]
+    public double AvgBB { get; set; }
 
     [Computed]
     public decimal MinEntry

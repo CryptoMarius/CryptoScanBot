@@ -41,6 +41,8 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
     public static void CalculateAdditionalSignalProperties(CryptoSignal signal, List<CryptoCandle> history, int candleCount, long unixFrom = 0)
     {
         // dit zou ook bij het verzamelen van de history lijst kunnen (scheelt een iteratie)
+        double AvgBB = 0;
+        int AvgBBCount = 0;
         int candlesWithFlatPrice = 0;
         int candlesWithZeroVolume = 0;
         int countBollingerBandSma = 0;
@@ -57,6 +59,9 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
             // Voor de backtest, pas tellen vanaf het moment dat het nodig is
             if (unixFrom > 0 && CandleLast.OpenTime > unixFrom)
                 continue;
+
+            AvgBBCount++;
+            AvgBB += (double)CandleLast.CandleData?.BollingerBandsPercentage!;
 
             // Aantal candles die vlak zijn (geen beweging)
             if (CandleLast.Close == CandleLast.Open && CandleLast.Close == CandleLast.High && CandleLast.Close == CandleLast.Low)
@@ -106,6 +111,11 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
             if (iterations >= candleCount)
                 break;
         }
+
+        if (AvgBBCount > 0)
+            signal.AvgBB = AvgBB / AvgBBCount;
+        else
+            signal.AvgBB = 0;
         signal.CandlesWithFlatPrice = candlesWithFlatPrice;
         signal.CandlesWithZeroVolume = candlesWithZeroVolume;
         signal.AboveBollingerBandsSma = countBollingerBandSma;
@@ -319,11 +329,12 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
 
         // de 1 * 1d effectief moet in een bepaald interval zitten
         signal.Last24HoursEffective = CalculateMaxMovementInInterval(signal.EventTime, CryptoIntervalPeriod.interval15m, 1 * 96); // 1 * 24 / 15 = 96
-        if (!HasOpenPosition() && !signal.Last24HoursEffective.IsBetween(GlobalData.Settings.Signal.AnalysisMinEffectivePercentage, GlobalData.Settings.Signal.AnalysisMaxEffectivePercentage))
+        if (!HasOpenPosition() && !signal.Last24HoursEffective.IsBetween(0, GlobalData.Settings.Signal.AnalysisMaxEffectivePercentage))
         {
             if (GlobalData.Settings.Signal.LogAnalysisMinMaxEffectivePercentage)
             {
-                string text = string.Format("Analyse {0} 1d change effective {1} not between {2} .. {3}", Symbol.Name, signal.Last24HoursEffective.ToString("N2"), GlobalData.Settings.Signal.AnalysisMinEffectivePercentage.ToString(), GlobalData.Settings.Signal.AnalysisMaxEffectivePercentage.ToString());
+                string text = string.Format("Analyse {0} 1d change effective {1} not between {2} .. {3}", Symbol.Name, signal.Last24HoursEffective.ToString("N2"), 
+                    "0", GlobalData.Settings.Signal.AnalysisMaxEffectivePercentage.ToString());
                 GlobalData.AddTextToLogTab(text);
             }
             eventText.Add("1d effective% to high");
@@ -331,12 +342,14 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
         }
 
         // de 10 * 1d effectief moet in een bepaald interval zitten
-        signal.Last10DaysEffective = CalculateMaxMovementInInterval(signal.EventTime, CryptoIntervalPeriod.interval6h, 1 * 40); // 10 * 24 / 6 = 40
-        if (!HasOpenPosition() && !signal.Last10DaysEffective.IsBetween(GlobalData.Settings.Signal.AnalysisMinEffective10DaysPercentage, GlobalData.Settings.Signal.AnalysisMaxEffective10DaysPercentage))
+        int countInInterval6H = GlobalData.Settings.Signal.AnalysisMaxEffectiveDays * 4; // 40 * 6 = 240 = day's (check)
+        signal.Last10DaysEffective = CalculateMaxMovementInInterval(signal.EventTime, CryptoIntervalPeriod.interval6h, countInInterval6H); 
+        if (!HasOpenPosition() && !signal.Last10DaysEffective.IsBetween(0, GlobalData.Settings.Signal.AnalysisMaxEffective10DaysPercentage))
         {
             if (GlobalData.Settings.Signal.LogAnalysisMinMaxEffective10DaysPercentage)
             {
-                string text = string.Format("Analyse {0} 10d change effective {1} not between {2} .. {3}", Symbol.Name, signal.Last10DaysEffective.ToString("N2"), GlobalData.Settings.Signal.AnalysisMinEffective10DaysPercentage.ToString(), GlobalData.Settings.Signal.AnalysisMaxEffective10DaysPercentage.ToString());
+                string text = string.Format("Analyse {0} 10d change effective {1} not between {2} .. {3}", Symbol.Name, signal.Last10DaysEffective.ToString("N2"), 
+                    "0", GlobalData.Settings.Signal.AnalysisMaxEffective10DaysPercentage.ToString());
                 GlobalData.AddTextToLogTab(text);
             }
             eventText.Add("10d effective% to high");

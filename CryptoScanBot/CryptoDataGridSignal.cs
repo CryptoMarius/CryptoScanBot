@@ -33,6 +33,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
         Change24h,
         Move24h,
         BB,
+        AvgBB,
         Rsi,
         SlopeRsi,
         MacdValue,
@@ -165,6 +166,9 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                 case ColumnsForGrid.BB:
                     CreateColumn("BB%", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50);
                     break;
+                case ColumnsForGrid.AvgBB:
+                    CreateColumn("AvgBB%", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50);
+                    break;
                 case ColumnsForGrid.Rsi:
                     CreateColumn("Rsi", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
                     break;
@@ -280,6 +284,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
             ColumnsForGrid.Change24h => ObjectCompare.Compare(a.Last24HoursChange, b.Last24HoursChange),
             ColumnsForGrid.Move24h => ObjectCompare.Compare(a.Last24HoursEffective, b.Last24HoursEffective),
             ColumnsForGrid.BB => ObjectCompare.Compare(a.BollingerBandsPercentage, b.BollingerBandsPercentage),
+            ColumnsForGrid.AvgBB => ObjectCompare.Compare(a.AvgBB, b.AvgBB),
             ColumnsForGrid.MacdValue => ObjectCompare.Compare(a.MacdValue, b.MacdValue),
             ColumnsForGrid.MacdSignal => ObjectCompare.Compare(a.MacdSignal, b.MacdSignal),
             ColumnsForGrid.MacdHistogram => ObjectCompare.Compare(a.MacdHistogram, b.MacdHistogram),
@@ -418,6 +423,9 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                     break;
                 case ColumnsForGrid.BB:
                     e.Value = signal.BollingerBandsPercentage;
+                    break;
+                case ColumnsForGrid.AvgBB:
+                    e.Value = signal.AvgBB;
                     break;
                 case ColumnsForGrid.Rsi:
                     e.Value = signal.Rsi;
@@ -639,6 +647,17 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
                         if (value < GlobalData.Settings.General.RsiValueOversold)
                             foreColor = Color.Red;
                         else if (value > GlobalData.Settings.General.RsiValueOverbought)
+                            foreColor = Color.Green;
+                    }
+                    break;
+
+                case ColumnsForGrid.AvgBB:
+                    {
+                        // Oversold/overbougt
+                        double? value = signal.AvgBB;
+                        if (value < 1.5)
+                            foreColor = Color.Red;
+                        else if (value > 1.5)
                             foreColor = Color.Green;
                     }
                     break;
