@@ -425,6 +425,7 @@ public class TradeTools
         int count = await LoadOrdersFromDatabaseAndExchangeAsync(database, position);
         if (count > 0)
             forceCalculation = true;
+        var oldPositionStatus = position.Status;
 
         ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} {position.Status} force={forceCalculation}");
 
@@ -610,6 +611,12 @@ public class TradeTools
                             GlobalData.AddTextToLogTab(msgInfo);
                             GlobalData.AddTextToTelegram(msgInfo, position);
                         }
+
+                        // Claim the profits (on )papertrading/emulator)
+                        PaperAssets.Change(position.Account, position.Symbol, position.Side, order.Side, CryptoOrderStatus.Filled, step.Quantity, step.QuoteQuantityFilled);
+                        // Extract the initial base commission (papertrading/emulator)
+                        if (step.CommissionBase > 0)
+                            PaperAssets.Change(position.Account, position.Symbol, position.Side, order.Side, CryptoOrderStatus.Filled, step.CommissionBase, step.Commission);
                     }
 
                     // De reden van annuleren niet overschrijven
@@ -733,6 +740,14 @@ public class TradeTools
                 position.ForceCheckPosition = true;
                 position.DelayUntil = GlobalData.GetCurrentDateTime(position.Account).AddSeconds(10);
                 await GlobalData.ThreadCheckPosition!.AddToQueue(position);
+            }
+
+            // Can only be done when closing the position, because the Change does not know the entry/tp values
+            if (oldPositionStatus != position.Status && position.Status == CryptoPositionStatus.Ready && position.Side == CryptoTradeSide.Short) //position.Exchange.TradingType == CryptoTradingType.Futures && 
+            {
+                // This will increase the amount of quote on futures/perpetual (entry=sell, tp=buy, profit=technically a loss when success)
+                CryptoOrderSide takeProfitOrderSide = position.GetTakeProfitOrderSide();
+                PaperAssets.Change(position.Account, position.Symbol, position.Side, takeProfitOrderSide, CryptoOrderStatus.Filled, 0, 2 * position.Profit);
             }
         }
     }
