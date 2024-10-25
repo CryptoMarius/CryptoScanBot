@@ -28,7 +28,6 @@ public class AssetTools
         if (tradeAccount == null)
             return (false, "Invalid trade account");
 
-
         if (tradeAccount.AccountType == CryptoAccountType.RealTrading)
         {
             if (GlobalData.TradingApi.Key == "" || GlobalData.TradingApi.Secret == "")
@@ -45,14 +44,17 @@ public class AssetTools
             // TODO: Make check in the space of the exchange
         }
 
-
+        // Refresh assets?
         // Niet bij iedere keer de assets verversen (hammering) - difficult when not to refresh.. not to repeat the same action..
         if (forceRefresh || tradeAccount.Data.LastRefreshAssets == null || tradeAccount.Data.LastRefreshAssets?.AddMinutes(1) < GlobalData.GetCurrentDateTime(tradeAccount))
         {
-            // De assets verversen (optioneel adhv account)
-            await ExchangeHelper.GetAssetsAsync(tradeAccount);
+            if (tradeAccount.AccountType == CryptoAccountType.RealTrading || tradeAccount.AccountType == CryptoAccountType.Altrady)
+                await ExchangeHelper.GetAssetsAsync(tradeAccount); // from exchange
+            else
+                PaperAssets.LoadAssets(tradeAccount); // from db
             tradeAccount.Data.LastRefreshAssets = GlobalData.GetCurrentDateTime(tradeAccount);
         }
+
 
         // okay
         return (true, "");
