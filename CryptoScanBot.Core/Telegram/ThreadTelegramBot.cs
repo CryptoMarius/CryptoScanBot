@@ -4,6 +4,8 @@ using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
+using CryptoScanBot.Core.Trader;
+
 using Dapper;
 
 using Telegram.Bot;
@@ -651,6 +653,7 @@ public class ThreadTelegramBotInstance
                                             TelegramShowBarometer.ShowBarometer(arguments, stringBuilder);
                                         else if (command == "ASSETS")
                                         {
+                                            AssetTools.FetchAssetsAsync(GlobalData.ActiveAccount!);
                                             Helper.ShowAssets(GlobalData.ActiveAccount!, stringBuilder, out decimal _, out decimal _);
                                         }
                                         else if (command == "TREND")
