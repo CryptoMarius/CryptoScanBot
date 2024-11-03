@@ -366,27 +366,30 @@ public partial class DashBoardInformation : UserControl
 
                     Color color;
                     BarometerData? barometerData = GlobalData.ActiveAccount!.Data.GetBarometer(quoteData.Name, intervalPeriod);
-                    if (barometerData?.PriceBarometer < 0)
-                        color = Color.Red;
-                    else
-                        color = Color.Green;
+                    if (barometerData != null)
+                    {
+                        if (barometerData.PriceBarometer < 0)
+                            color = Color.Red;
+                        else
+                            color = Color.Green;
 
-                    //TextRenderer.DrawText(g, "1h", drawFont1, rect1, Color.Black, Color.Transparent, TextFormatFlags.Top);
-                    //SolidBrush solidBrush = new(color);
-                    //g.FillEllipse(solidBrush, offset, y, 14, 14);
+                        //TextRenderer.DrawText(g, "1h", drawFont1, rect1, Color.Black, Color.Transparent, TextFormatFlags.Top);
+                        //SolidBrush solidBrush = new(color);
+                        //g.FillEllipse(solidBrush, offset, y, 14, 14);
 
-                    //rect1 = new Rectangle(offsetValue, y, intWidth, intHeight);
-                    //TextRenderer.DrawText(g, barometerData?.PriceBarometer?.ToString("N2"), drawFont1, rect1, color, Color.Transparent, TextFormatFlags.Top);
-                    //y += 19;
-                    //offset += 19;
+                        //rect1 = new Rectangle(offsetValue, y, intWidth, intHeight);
+                        //TextRenderer.DrawText(g, barometerData?.PriceBarometer?.ToString("N2"), drawFont1, rect1, color, Color.Transparent, TextFormatFlags.Top);
+                        //y += 19;
+                        //offset += 19;
 
-                    string text = barometerData?.PriceBarometer?.ToString("N2");
-                    if (intervalPeriod == CryptoIntervalPeriod.interval1h)
-                        Invoke((MethodInvoker)(() => { labelBm1h.Text = text + " 1h"; labelBm1h.ForeColor = color; }));
-                    else if (intervalPeriod == CryptoIntervalPeriod.interval4h)
-                        Invoke((MethodInvoker)(() => { labelBm4h.Text = text + " 4h"; labelBm4h.ForeColor = color; }));
-                    else if (intervalPeriod == CryptoIntervalPeriod.interval1d)
-                        Invoke((MethodInvoker)(() => { labelBm1d.Text = text + " 1d"; labelBm1d.ForeColor = color; }));
+                        string text = barometerData.PriceBarometer?.ToString("N2");
+                        if (intervalPeriod == CryptoIntervalPeriod.interval1h)
+                            Invoke((MethodInvoker)(() => { labelBm1h.Text = text + " 1h"; labelBm1h.ForeColor = color; }));
+                        else if (intervalPeriod == CryptoIntervalPeriod.interval4h)
+                            Invoke((MethodInvoker)(() => { labelBm4h.Text = text + " 4h"; labelBm4h.ForeColor = color; }));
+                        else if (intervalPeriod == CryptoIntervalPeriod.interval1d)
+                            Invoke((MethodInvoker)(() => { labelBm1d.Text = text + " 1d"; labelBm1d.ForeColor = color; }));
+                    }
                 }
 
             }
@@ -684,15 +687,18 @@ public partial class DashBoardInformation : UserControl
                     if (tvValues == null)
                         return;
 
-                    string href;
+                    string? href;
                     if (tvValues.Ticker == null)
                         href = tvValues.Url;
                     else
                         href = string.Format("https://www.tradingview.com/chart/?symbol={0}&interval=60", tvValues.Ticker);
 
-                    Uri uri = new(href);
-                    LinkTools.WebViewTradingView.Source = uri;
-                    LinkTools.TabControl.SelectedTab = LinkTools.TabPageBrowser;
+                    if (href != null)
+                    {
+                        Uri uri = new(href);
+                        LinkTools.WebViewTradingView.Source = uri;
+                        LinkTools.TabControl.SelectedTab = LinkTools.TabPageBrowser;
+                    }
                 }
 
                 //if (x.InfoName == target || x.InfoValue == target)

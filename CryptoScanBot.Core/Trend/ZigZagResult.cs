@@ -8,12 +8,15 @@ namespace CryptoScanBot.Core.Trend;
 public class ZigZagResult
 {
     public required char PointType { get; set; } // indicates a specific point and type e.g. H or L
-    public required double Value { get; set; }
+    public required decimal Value { get; set; }
     public required CryptoCandle Candle { get; set; }
 
     // Some call this Strong or Weak instead of Dominant, its the same concept
     public bool Dominant { get; set; } = false;
+    public bool Dummy { get; set; } = false;
 
+    // Zone
+    //public DateTime StartTime { get; set; }         zigZag.StartTime = zigZag.Candle.Date;
     public decimal Top { get; set; }
     public decimal Bottom { get; set; }
     public double Percentage { get; set; }
@@ -22,7 +25,7 @@ public class ZigZagResult
 
     public int Index { get; set; }
 
-    public void ReusePoint(CryptoCandle candle, double value)
+    public void ReusePoint(CryptoCandle candle, decimal value)
     {
         // Intention is to reset stuff because we are going to reuse a pivot point, clear the other stuff
         Value = value;

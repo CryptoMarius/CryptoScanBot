@@ -30,6 +30,7 @@ public partial class CryptoDataGridColumns : Form
             CheckBox item = new()
             {
                 Tag = column,
+                AutoSize = true,
                 Text = column.HeaderText,
                 Size = new Size(100, 22),
                 CheckState = CheckState.Unchecked,

@@ -47,7 +47,7 @@ public partial class DashBoardControl : UserControl
     {
         public DateTime TradeTime { get; set; }
         public CryptoOrderSide Side { get; set; }
-        public string Quote { get; set; }
+        public string Quote { get; set; } = "";
 
         // Wat totalen
         public decimal Value { get; set; }

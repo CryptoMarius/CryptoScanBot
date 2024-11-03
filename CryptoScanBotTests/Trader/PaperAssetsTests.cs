@@ -50,13 +50,13 @@ public class PaperAssetsTests : TestBase
         // act
         TradeParams tradeParams = CreateTradeParams(database, startTime, CryptoOrderSide.Buy, CryptoOrderType.Market, 5.6261m, 0.53m);
         PaperAssets.Change(position.Account, symbol, CryptoTradeSide.Long, tradeParams.OrderSide,
-            CryptoOrderStatus.New, tradeParams.Quantity, tradeParams.QuoteQuantity);
+            CryptoOrderStatus.New, tradeParams.Quantity, tradeParams.QuoteQuantity, "test1.1");
         Assert.AreEqual(assetQuote.Total, 1000m);
         Assert.AreEqual(assetQuote.Locked, 2.981833m);
         Assert.AreEqual(assetQuote.Free, 997.018167m);
 
         PaperAssets.Change(position.Account, symbol, CryptoTradeSide.Long, tradeParams.OrderSide,
-            CryptoOrderStatus.Filled, tradeParams.Quantity, tradeParams.QuoteQuantity);
+            CryptoOrderStatus.Filled, tradeParams.Quantity, tradeParams.QuoteQuantity, "test1.2");
         Assert.AreEqual(assetQuote.Total, 1000m - 2.981833m);
         Assert.AreEqual(assetQuote.Locked, 0);
         Assert.AreEqual(assetQuote.Free, 997.018167m);

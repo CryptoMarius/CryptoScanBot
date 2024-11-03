@@ -426,7 +426,11 @@ public static class CandleTools
                     {
                         CryptoCandle c = candles.Values[0];
                         if (c.OpenTime < startFetchUnix)
+                        {
                             candles.Remove(c.OpenTime);
+                            //GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} candle {c.DateLocal} removed");
+
+                        }
                         else break;
                     }
                 }

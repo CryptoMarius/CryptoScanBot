@@ -362,6 +362,7 @@ public class CryptoDatabase : IDisposable
                 "StochSignal TEXT NULL," +
                 "StochOscillator TEXT NULL," +
 
+                "AvgBb TEXT NULL," +
                 "BollingerBandsDeviation TEXT NULL," +
                 "BollingerBandsPercentage TEXT NULL," +
 
@@ -492,6 +493,7 @@ public class CryptoDatabase : IDisposable
                 "StochSignal TEXT NULL," +
                 "StochOscillator TEXT NULL," +
 
+                "AvgBb TEXT NULL," +
                 "BollingerBandsDeviation TEXT NULL," +
                 "BollingerBandsPercentage TEXT NULL," +
 
@@ -639,6 +641,7 @@ public class CryptoDatabase : IDisposable
                 "CommissionAsset NULL," +
                 "RemainingDust Text null," +
                 "Trailing INTEGER NULL," +
+                "IsCalculated Integer null," +
                 "FOREIGN KEY(PositionId) REFERENCES Position(Id)," +
                 "FOREIGN KEY(PositionPartId) REFERENCES PositionPart(Id)" +
             ")");
@@ -747,6 +750,34 @@ public class CryptoDatabase : IDisposable
     }
 
 
+    private static void CreateTableZone(CryptoDatabase connection)
+    {
+        if (MissingTable(connection, "Zone"))
+        {
+            connection.Connection.Execute("CREATE TABLE [Zone] (" +
+                "Id integer primary key autoincrement not null," +
+                "AccountId Integer NOT NULL," +
+                "ExchangeId Integer NOT NULL," +
+                "SymbolId Integer NOT NULL," +
+                "Strategy Integer NOT NULL," +
+                "Side integer not null," +
+                "Top TEXT not null," +
+                "Bottom TEXT not null," +
+                "AlarmPrice TEXT not null," +
+                "AlarmDate TEXT," +
+                "ExpirationPrice TEXT null," +
+                "ExpirationDate TEXT NULL," +
+                "FOREIGN KEY(AccountId) REFERENCES TradeAccount(Id)," +
+                "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +
+                "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)" +
+            ")");
+            connection.Connection.Execute("CREATE INDEX IdxZoneId ON Zone(Id)");
+            connection.Connection.Execute("CREATE INDEX IdxZoneExchangeId ON Zone(ExchangeId)");
+            connection.Connection.Execute("CREATE INDEX IdxZoneSymbolId ON Zone(SymbolId)");
+            connection.Connection.Execute("CREATE INDEX IdxZoneAccountId ON Zone(AccountId)");
+        }
+    }
+
     //private static void CreateTableBalancing(CryptoDatabase connection)
     //{
     //    //// Balance (echt? weet niet waarom we dit op deze manier opslaan, balanceren doe je binnen groep, die mis ik, een oude versie wellicht?)
@@ -850,6 +881,8 @@ public class CryptoDatabase : IDisposable
         CreateTableOrder(connection);
         CreateTableTrade(connection);
         CreateTableAsset(connection);
+
+        CreateTableZone(connection);
 
         //CreateTableBalancing(connection); -- todo ooit
         CreateTableSequence(connection); // Fake-ID's for orders en trades

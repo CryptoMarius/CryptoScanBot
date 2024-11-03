@@ -33,6 +33,10 @@ public class CryptoDataGridSymbol<T>(DataGridView grid, List<T> list, SortedList
         menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Hide selection", Command.None, ClearSelection);
 
+#if DEBUG
+        menuStrip.AddSeperator();
+        menuStrip.AddCommand(this, "Test - Show graph information", Command.ShowGraph);
+#endif
     }
 
 
@@ -100,12 +104,12 @@ public class CryptoDataGridSymbol<T>(DataGridView grid, List<T> list, SortedList
     }
 
 
-    public override void GetTextFunction(object sender, DataGridViewCellValueEventArgs e)
+    public override void GetTextFunction(object? sender, DataGridViewCellValueEventArgs e)
     {
         if (GlobalData.ApplicationIsClosing)
             return;
 
-        CryptoSymbol symbol = GetCellObject(e.RowIndex);
+        CryptoSymbol? symbol = GetCellObject(e.RowIndex);
         if (symbol != null)
         {           
             e.Value = (ColumnsForGrid)e.ColumnIndex switch
@@ -120,7 +124,7 @@ public class CryptoDataGridSymbol<T>(DataGridView grid, List<T> list, SortedList
     }
 
 
-    public override void CellFormattingEvent(object sender, DataGridViewCellFormattingEventArgs e)
+    public override void CellFormattingEvent(object? sender, DataGridViewCellFormattingEventArgs e)
     {
         if (GlobalData.ApplicationIsClosing)
             return;
@@ -138,7 +142,7 @@ public class CryptoDataGridSymbol<T>(DataGridView grid, List<T> list, SortedList
             backColor = Grid.DefaultCellStyle.BackColor;
 
         Color foreColor = Color.Black;
-        CryptoSymbol symbol = GetCellObject(e.RowIndex);
+        CryptoSymbol? symbol = GetCellObject(e.RowIndex);
         if (symbol != null)
         {
             switch ((ColumnsForGrid)e.ColumnIndex)

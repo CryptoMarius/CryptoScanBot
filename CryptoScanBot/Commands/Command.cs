@@ -19,7 +19,9 @@ public enum Command
     ScannerSessionDebug,
     PositionCalculate,
     TradingViewImportList,
-    About
+    ShowGraph,
+    About,
+    CalculateLiquidityZones,
 }
 
 // Work in progres, opzetje tichting ICommand (teveel werk op dit moment)

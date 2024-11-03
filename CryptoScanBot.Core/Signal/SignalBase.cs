@@ -15,6 +15,7 @@ namespace CryptoScanBot.Core.Signal;
 
 public class SignalCreateBase
 {
+    protected CryptoAccount Account;
     protected Model.CryptoExchange Exchange;
     protected CryptoSymbol Symbol;
     protected CryptoSymbolInterval SymbolInterval;
@@ -26,10 +27,10 @@ public class SignalCreateBase
     public CryptoSignalStrategy SignalStrategy;
     public CryptoCandle CandleLast;
     public string ExtraText = "";
-    public bool ReplaceSignal = true;
 
-    public SignalCreateBase(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle)
+    public SignalCreateBase(CryptoAccount account, CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle)
     {
+        Account = account;
         Symbol = symbol;
         Exchange = symbol.Exchange!;
         Interval = interval;

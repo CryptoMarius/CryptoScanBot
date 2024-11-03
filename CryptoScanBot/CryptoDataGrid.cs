@@ -96,13 +96,13 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
     public abstract void CellFormattingEvent(object? sender, DataGridViewCellFormattingEventArgs e);
     public abstract void SortFunction();
 
-    internal T GetSelectedObject(out int rowIndex)
+    internal T? GetSelectedObject(out int rowIndex)
     {
         rowIndex = SelectedObjectIndex;
-        return (T)SelectedObject;
+        return (T?)SelectedObject;
     }
 
-    internal T GetCellObject(int rowIndex)
+    internal T? GetCellObject(int rowIndex)
     {
         if (rowIndex >= 0 && rowIndex < List.Count)
             return List[rowIndex];
@@ -254,7 +254,7 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
             return;
 
         var dgv = (DataGridView)sender;
-        ContextMenuStrip cms = null;
+        ContextMenuStrip? cms = null;
         var hit = dgv.HitTest(e.X, e.Y);
         switch (hit.Type)
         {

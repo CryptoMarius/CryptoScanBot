@@ -205,7 +205,7 @@ public static class Helper
 
     public static bool CheckValidMinimalVolume(this CryptoSymbol symbol, long candleStart, int candleDuration, out string text)
     {
-        if (symbol.QuoteData.MinimalVolume > 0)
+        if (symbol.QuoteData!.MinimalVolume > 0)
         {
             // Controleer of de munt actief is (beetje raar)
             if (!symbol.QuoteData.FetchCandles)

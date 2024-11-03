@@ -43,7 +43,7 @@ partial class CryptoDataGridColumns
         flowLayoutPanel.Location = new Point(0, 0);
         flowLayoutPanel.Name = "flowLayoutPanel";
         flowLayoutPanel.Padding = new Padding(5);
-        flowLayoutPanel.Size = new Size(387, 434);
+        flowLayoutPanel.Size = new Size(416, 434);
         flowLayoutPanel.TabIndex = 1;
         // 
         // panelButtons
@@ -54,13 +54,13 @@ partial class CryptoDataGridColumns
         panelButtons.Location = new Point(0, 434);
         panelButtons.Margin = new Padding(4, 3, 4, 3);
         panelButtons.Name = "panelButtons";
-        panelButtons.Size = new Size(387, 46);
+        panelButtons.Size = new Size(416, 46);
         panelButtons.TabIndex = 2;
         // 
         // buttonCancel
         // 
         buttonCancel.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-        buttonCancel.Location = new Point(286, 10);
+        buttonCancel.Location = new Point(315, 10);
         buttonCancel.Margin = new Padding(4, 3, 4, 3);
         buttonCancel.Name = "buttonCancel";
         buttonCancel.Size = new Size(88, 27);
@@ -72,7 +72,7 @@ partial class CryptoDataGridColumns
         // buttonOk
         // 
         buttonOk.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-        buttonOk.Location = new Point(190, 10);
+        buttonOk.Location = new Point(219, 10);
         buttonOk.Margin = new Padding(4, 3, 4, 3);
         buttonOk.Name = "buttonOk";
         buttonOk.Size = new Size(88, 27);
@@ -85,7 +85,8 @@ partial class CryptoDataGridColumns
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
-        ClientSize = new Size(387, 480);
+        AutoSizeMode = AutoSizeMode.GrowAndShrink;
+        ClientSize = new Size(416, 480);
         Controls.Add(flowLayoutPanel);
         Controls.Add(panelButtons);
         Name = "CryptoDataGridColumns";

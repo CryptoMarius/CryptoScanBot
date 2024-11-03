@@ -16,9 +16,10 @@ public class AccountSymbolIntervalData
 
     // Caching ZigZag indicator because of emulator speed
     public long? ZigZagLastCandleAdded { get; set; }
-    public List<ZigZagIndicator8>? ZigZagIndicators = null;
-    public ZigZagIndicator8? BestIndicator = null;
-    
+    public List<ZigZagIndicator9>? ZigZagIndicators = null;
+    public ZigZagIndicator9? BestIndicator = null;
+    //public ZigZagIndicator9? Indicator = null;
+
 
     public void Reset()
     {
@@ -29,6 +30,7 @@ public class AccountSymbolIntervalData
         ZigZagLastCandleAdded = null;
         ZigZagIndicators = null;
         BestIndicator = null;
+        //Indicator = null;
     }
 
 

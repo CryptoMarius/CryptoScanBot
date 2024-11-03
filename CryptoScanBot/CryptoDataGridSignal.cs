@@ -1,14 +1,9 @@
 ﻿using CryptoScanBot.Commands;
-using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Exchange.Altrady;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Settings;
-using CryptoScanBot.Core.Trader;
 using CryptoScanBot.Core.Trend;
-
-using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot;
 
@@ -89,9 +84,14 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
 
         menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Hide grid selection", Command.None, ClearSelection);
-//#if DEBUG
-//        menuStrip.AddCommand(this, "Test - Open position", Command.None, CreatePosition);
-//#endif
+        //#if DEBUG
+        //        menuStrip.AddCommand(this, "Test - Open position", Command.None, CreatePosition);
+        //#endif
+
+#if DEBUG
+        menuStrip.AddSeperator();
+        menuStrip.AddCommand(this, "Test - Show graph information", Command.ShowGraph);
+#endif
 
         TimerClearOldSignals = new()
         {
@@ -369,7 +369,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
         if (GlobalData.ApplicationIsClosing)
             return;
 
-        CryptoSignal signal = GetCellObject(e.RowIndex);
+        CryptoSignal? signal = GetCellObject(e.RowIndex);
         if (signal != null)
         {
             switch ((ColumnsForGrid)e.ColumnIndex)
@@ -524,7 +524,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
     }
 
 
-    public override void CellFormattingEvent(object sender, DataGridViewCellFormattingEventArgs e)
+    public override void CellFormattingEvent(object? sender, DataGridViewCellFormattingEventArgs e)
     {
         if (GlobalData.ApplicationIsClosing)
             return;
@@ -542,7 +542,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
             backColor = Grid.DefaultCellStyle.BackColor;
 
         Color foreColor = Color.Black;
-        CryptoSignal signal = GetCellObject(e.RowIndex);
+        CryptoSignal? signal = GetCellObject(e.RowIndex);
         if (signal != null)
         {
 

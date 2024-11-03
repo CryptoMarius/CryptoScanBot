@@ -17,6 +17,7 @@ public class MarketTrend
             {
                 if (accountSymbolData.MarketTrendDate == null || accountSymbolData.MarketTrendDate < candleIntervalEnd || log != null)
                 {
+                    string text;
                     int weightSum1 = 0;
                     int weightMax1 = 0;
                     //int weightSum2 = 0;
@@ -41,6 +42,10 @@ public class MarketTrend
                         //else if (accountSymbolIntervalData.TrendIndicator == CryptoTrendIndicator.Bearish)
                         //    weightSum2 -= weight2;
                         //weightMax2 += weight2;
+
+                        text = $"{symbol.Name} {accountSymbolIntervalData.Interval.Name} weight={weight1} sum={weightSum1}";
+                        log?.AppendLine(text);
+                        ScannerLog.Logger.Trace("MarketTrend.Calculate " + text);
                     }
 
                     //float marketTrendPercentage1 = 100 * (float)weightSum1 / weightMax1;
@@ -48,6 +53,13 @@ public class MarketTrend
                     //GlobalData.AddTextToLogTab($"Markettrend debug {symbol.Name} {marketTrendPercentage1:N2}={weightSum1}/{weightMax1}  {marketTrendPercentage2:N2}={weightSum2}/{weightMax2}");
                     accountSymbolData.MarketTrendDate = candleIntervalEnd;
                     accountSymbolData.MarketTrendPercentage = 100 * (float)weightSum1 / weightMax1; // marketTrendPercentage1; // 
+
+                    log?.AppendLine("");
+                    ScannerLog.Logger.Trace("");
+                    text = $"{symbol.Name} sum ={weightSum1} / {weightMax1} = {accountSymbolData.MarketTrendPercentage:N2}";
+                    log?.AppendLine(text);
+                    ScannerLog.Logger.Trace("MarketTrend.Calculate " + text);
+
                 }
             }
         }

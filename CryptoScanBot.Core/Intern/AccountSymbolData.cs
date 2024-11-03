@@ -19,6 +19,9 @@ public class AccountSymbolData
     // Trend data for each interval
     public List<AccountSymbolIntervalData> SymbolTrendDataList { get; set; } = [];
 
+    // Active zones
+    public List<CryptoZone> ZoneListLong { get; set; } = [];
+    public List<CryptoZone> ZoneListShort { get; set; } = [];
 
     public AccountSymbolData()
     {
@@ -40,11 +43,25 @@ public class AccountSymbolData
         return SymbolTrendDataList[(int)intervalPeriod];
     }
 
+    public void ResetZoneData()
+    {
+        // Does this work (for the reset every hour)
+        ZoneListLong.Clear();
+        ZoneListShort.Clear();
+    }
+
+    public void ResetTrendData()
+    {
+        // Does this work (for the reset every hour)
+        MarketTrendDate = null;
+        MarketTrendPercentage = null;
+    }
 
     public void Reset()
     {
-        MarketTrendDate = null;
-        MarketTrendPercentage = null;
+        ResetZoneData();
+
+        ResetTrendData();
 
         foreach (AccountSymbolIntervalData accountSymbolIntervalData in SymbolTrendDataList)
         {

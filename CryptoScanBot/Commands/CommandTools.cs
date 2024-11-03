@@ -1,6 +1,7 @@
 ﻿using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Excel;
+using CryptoScanBot.Core.Experimental;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Trader;
@@ -22,7 +23,7 @@ public class CommandTools
         };
     }
 
-    public static async Task ExecuteCommandAsync(object sender, EventArgs e)
+    public static async Task ExecuteCommandAsync(object? sender, EventArgs e)
     {
         if (sender is ToolStripMenuItemCommand item)
         {
@@ -57,6 +58,11 @@ public class CommandTools
                     if (item.DataGrid is CryptoDataGrid dataGrid2)
                         new CommandCopyDataCells().Execute(dataGrid2);
                     return;
+
+                case Command.CalculateLiquidityZones:
+                    _ = Task.Run(() => { _ = LiquidityZones.CalculateAllSymbolsAsync(sender); });
+                    return;
+                    
             }
 
 
@@ -139,13 +145,20 @@ public class CommandTools
                                 }
                             }
                             break;
+                        case Command.ShowGraph:
+                            if (symbol != null && interval != null)
+                            {
+                                CommandShowGraph command = new();
+                                command.Execute(symbol);
+                            }
+                            break;
                     }
                 }
             }
         }
     }
 
-    public static void ExecuteCommand(object sender, EventArgs e)
+    public static void ExecuteCommand(object? sender, EventArgs e)
     {
         _ = ExecuteCommandAsync(sender, e);
     }

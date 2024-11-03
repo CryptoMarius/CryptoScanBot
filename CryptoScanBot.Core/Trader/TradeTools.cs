@@ -612,11 +612,17 @@ public class TradeTools
                             GlobalData.AddTextToTelegram(msgInfo, position);
                         }
 
-                        // Claim the profits (on )papertrading/emulator)
-                        PaperAssets.Change(position.Account, position.Symbol, position.Side, order.Side, CryptoOrderStatus.Filled, step.Quantity, step.QuoteQuantityFilled);
-                        // Extract the initial base commission (papertrading/emulator)
-                        if (step.CommissionBase > 0)
-                            PaperAssets.Change(position.Account, position.Symbol, position.Side, order.Side, CryptoOrderStatus.Filled, step.CommissionBase, step.Commission);
+                        if (!step.IsCalculated)
+                        {
+                            // Claim the profits (on )papertrading/emulator)
+                            PaperAssets.Change(position.Account, position.Symbol, position.Side, order.Side, CryptoOrderStatus.Filled, step.Quantity, step.QuoteQuantityFilled, "TradeTools.CalculatePositionResultsViaOrders.Filled");
+                            // Extract the initial base commission (papertrading/emulator)
+                            if (step.CommissionBase > 0 || step.CommissionQuote > 0)
+                                PaperAssets.Change(position.Account, position.Symbol, position.Side, order.Side, CryptoOrderStatus.Filled, -step.CommissionBase, -step.CommissionQuote, "TradeTools.CalculatePositionResultsViaOrders.Fees");
+
+                            step.IsCalculated = true;
+                            database.Connection.Update<CryptoPositionStep>(step);
+                        }
                     }
 
                     // De reden van annuleren niet overschrijven
@@ -747,7 +753,7 @@ public class TradeTools
             {
                 // This will increase the amount of quote on futures/perpetual (entry=sell, tp=buy, profit=technically a loss when success)
                 CryptoOrderSide takeProfitOrderSide = position.GetTakeProfitOrderSide();
-                PaperAssets.Change(position.Account, position.Symbol, position.Side, takeProfitOrderSide, CryptoOrderStatus.Filled, 0, 2 * position.Profit);
+                PaperAssets.Change(position.Account, position.Symbol, position.Side, takeProfitOrderSide, CryptoOrderStatus.Filled, 0, 2 * position.Profit, "TradeTools.CalculatePositionResultsViaOrders.Profits++");
             }
         }
     }
@@ -821,7 +827,7 @@ public class TradeTools
             database.Connection.Update<CryptoPositionStep>(step);
 
             PaperAssets.Change(position.Account, position.Symbol, position.Side, result.tradeParams!.OrderSide,
-                CryptoOrderStatus.Canceled, result.tradeParams.Quantity, result.tradeParams.QuoteQuantity);
+                CryptoOrderStatus.Canceled, result.tradeParams.Quantity, result.tradeParams.QuoteQuantity, "TradeTools.CancelOrder");
         }
         if (!result.succes || GlobalData.Settings.Trading.LogCanceledOrders)
             ExchangeBase.Dump(position, result.succes, result.tradeParams, cancelReason);
@@ -926,7 +932,7 @@ public class TradeTools
                 database.Connection.Update<CryptoPosition>(position);
 
                 PaperAssets.Change(position.Account, position.Symbol, position.Side, result.tradeParams.OrderSide,
-                    step.Status, result.tradeParams.Quantity, result.tradeParams.QuoteQuantity);
+                    step.Status, result.tradeParams.Quantity, result.tradeParams.QuoteQuantity, "TradeTools.PlaceTakeProfitOrderAtPrice");
             }
             else
                 position.ForceCheckPosition = true;

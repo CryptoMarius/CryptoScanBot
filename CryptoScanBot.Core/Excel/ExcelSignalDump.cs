@@ -1,6 +1,9 @@
 ﻿using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
+
+using Dapper;
+
 using NPOI.SS.UserModel;
 
 namespace CryptoScanBot.Core.Excel;

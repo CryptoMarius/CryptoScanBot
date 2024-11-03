@@ -2,6 +2,7 @@ CryptoScanBot release historie:
 
 xx-10-2024 1.9.4-.....
 
+- Scanner - Change columns grid - Automatisch de checkboxes breder maken als de tekst er niet in past (Market trend is dan wel zichtbaar)
 - Scanner - StoRsi - de grenzen van de BB kunnen opgeven (net zoals bij de STOBB en SBM)
 - Scanner - De opstart parameters voor het selecteren van de exchange is hoofdletter gevoelig (ook voorloop spaties kunnen meekomen)
 - Scanner - Het aantal dagen voor de (voorheen) 10 dagen effectief kun je nu zelf instellen (net zoals het x dagen volume)

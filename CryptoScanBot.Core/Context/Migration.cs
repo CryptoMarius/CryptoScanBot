@@ -8,7 +8,7 @@ namespace CryptoScanBot.Core.Context;
 public class Migration
 {
     // De huidige database versie
-    public readonly static int CurrentDatabaseVersion = 31;
+    public readonly static int CurrentDatabaseVersion = 33;
 
 
     public static void Execute(CryptoDatabase database, int CurrentVersion)
@@ -880,11 +880,50 @@ public class Migration
 
             try { database.Connection.Execute("delete from asset", transaction); } catch { } // ignore, start from scratch
 
+            database.Connection.Execute("alter table PositionStep add IsCalculated Text null", transaction);
+
             // update version
             version.Version += 1;
             database.Connection.Update(version, transaction);
             transaction.Commit();
         }
+
+
+        //***********************************************************
+        // 29-10-2024, problems with paper asset management
+        if (CurrentVersion > version.Version && version.Version == 31)
+        {
+            using var transaction = database.BeginTransaction();
+
+            try { database.Connection.Execute("delete from asset", transaction); } catch { } // ignore, start from scratch
+            database.Connection.Execute("alter table PositionStep add IsCalculated Integer null", transaction);
+            
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        //***********************************************************
+        // 30-10-2024, AvgBb introduced properly
+        if (CurrentVersion > version.Version && version.Version == 32)
+        {
+            using var transaction = database.BeginTransaction();
+
+            database.Connection.Execute("alter table Signal add AvgBb Text null", transaction);
+            database.Connection.Execute("alter table Position add AvgBb Text null", transaction);
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        // todo:
+        // add Zone.LastSignalDate om tevoorkomen dat je iedere x minuten een melding krijgt??????
+        // other changes to zone object?
     }
 }
 

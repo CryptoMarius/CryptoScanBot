@@ -23,7 +23,7 @@ public class GetCandles
 
     private static async Task<long> GetCandlesForInterval(BinanceRestClient client, CryptoSymbol symbol, CryptoInterval interval, CryptoSymbolInterval symbolInterval, long fetchEndUnix)
     {
-        KlineInterval? exchangeInterval = Interval.GetExchangeInterval(interval);
+        KlineInterval? exchangeInterval = Interval.GetExchangeInterval(interval.IntervalPeriod);
         if (exchangeInterval == null)
             return 0;
 
@@ -126,7 +126,7 @@ public class GetCandles
             CryptoInterval interval = GlobalData.IntervalList[i];
             CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
 
-            bool intervalSupported = Interval.GetExchangeInterval(interval) != null;
+            bool intervalSupported = Interval.GetExchangeInterval(interval.IntervalPeriod) != null;
             if (intervalSupported)
             {
                 // Fetch the candles
@@ -173,7 +173,7 @@ public class GetCandles
         // Adjust the administration for the not supported interval's
         foreach (CryptoSymbolInterval symbolInterval in symbol.IntervalPeriodList)
         {
-            bool intervalSupported = Interval.GetExchangeInterval(symbolInterval.Interval) != null;
+            bool intervalSupported = Interval.GetExchangeInterval(symbolInterval.IntervalPeriod) != null;
             if (!intervalSupported && symbolInterval.CandleList.Count > 0)
             {
                 CryptoCandle candle = symbolInterval.CandleList.Values.Last();

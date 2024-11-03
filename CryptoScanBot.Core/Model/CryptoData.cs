@@ -177,7 +177,6 @@ public class CryptoData2: CryptoData
     public decimal PriceMax { get; set; }
     public double PriceMaxPerc { get; set; }
 
-    [Computed]
     public double AvgBB { get; set; }
 
     public override void AssignValues(CryptoData source)

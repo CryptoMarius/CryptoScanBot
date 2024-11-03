@@ -367,7 +367,7 @@ public class PositionMonitor : IDisposable
                 }
 
                 // Bestaan het gekozen strategy wel, klinkt raar, maar is (op dit moment) niet altijd geimplementeerd
-                SignalCreateBase? algorithm = SignalHelper.GetAlgorithm(signal.Side, signal.Strategy, signal.Symbol, signal.Interval, candleInterval);
+                SignalCreateBase? algorithm = SignalHelper.GetAlgorithm(signal.Side, signal.Strategy, TradeAccount, signal.Symbol, signal.Interval, candleInterval);
                 if (algorithm == null)
                 {
                     GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " unknown algorithm (removed)");
@@ -658,7 +658,7 @@ public class PositionMonitor : IDisposable
             {
                 string t = string.Format("candle 1m interval: {0}", LastCandle1m.DateLocal.ToString()) + ".." + LastCandle1mCloseTimeDate.ToLocalTime() + "\r\n" +
                 string.Format("is de candle op het {0} interval echt missing in action?", interval.Name) + "\r\n" +
-                    string.Format("position.CreateDate = {0}", position.CreateTime.ToString()) + "\r\n";
+                string.Format("position.CreateDate = {0}", position.CreateTime.ToString()) + "\r\n";
                 //throw new Exception($"Candle niet aanwezig? {t}");
                 GlobalData.AddTextToLogTab($"Analyse {position.Symbol.Name} {t}");
                 return false;
@@ -1138,7 +1138,7 @@ public class PositionMonitor : IDisposable
 
                         // Reserve the assets on papertrading/emulator
                         PaperAssets.Change(position.Account, position.Symbol, position.Side, result.tradeParams.OrderSide,
-                            step.Status, result.tradeParams.Quantity, result.tradeParams.QuoteQuantity);
+                            step.Status, result.tradeParams.Quantity, result.tradeParams.QuoteQuantity, "HandleEntryPart.HandleEntryPart");
 
                         // Een eventuele market order direct laten vullen
                         if (position.Account.AccountType != CryptoAccountType.RealTrading && step.OrderType == CryptoOrderType.Market)
@@ -1859,7 +1859,7 @@ public class PositionMonitor : IDisposable
             //GlobalData.Logger.Trace($"NewCandleArrivedAsync.Clean " + traceText);
 
             // Remove old candles or CandleData
-            if (!GlobalData.BackTest)
+            if (!GlobalData.BackTest && !Symbol.CalculatingZones)
                 CandleTools.CleanCandleData(Symbol, LastCandle1mCloseTime);
 
             //GlobalData.Logger.Trace($"NewCandleArrivedAsync.Done " + traceText);

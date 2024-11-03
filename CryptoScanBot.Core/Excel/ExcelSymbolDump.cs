@@ -223,12 +223,15 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
         ISheet sheet = Book.CreateSheet("Zigzag" + data.Interval?.Name);
         int row = 0;
 
+        //var indicator = data.Indicator;
         foreach (var indicator in data.ZigZagIndicators!)
+        //if (indicator != null)
         {
             //DumpZigZagInterval(trendDataList.Interval, indicator);
             //+ 
             WriteCell(sheet, 0, row, "Deviation");
             WriteCell(sheet, 1, row, indicator.Deviation.ToString(), CellStyleDecimalNormal);
+            WriteCell(sheet, 1, row, "Auto");
 
 
             // Columns...
@@ -239,17 +242,18 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
             WriteCell(sheet, columns++, row, "Type");
             WriteCell(sheet, columns++, row, "Value");
 
-
-            foreach (ZigZagResult zigZag in indicator.ZigZagList)
+            if (indicator.ZigZagList != null)
             {
-                row++;
-                int column = 0;
+                foreach (ZigZagResult zigZag in indicator.ZigZagList)
+                {
+                    row++;
+                    int column = 0;
 
-                WriteCell(sheet, column++, row, zigZag.Candle.DateLocal, CellStyleDate);
-                WriteCell(sheet, column++, row, zigZag.PointType);
-                WriteCell(sheet, column++, row, zigZag.Value, CellStyleDecimalNormal);
+                    WriteCell(sheet, column++, row, zigZag.Candle.DateLocal, CellStyleDate);
+                    WriteCell(sheet, column++, row, zigZag.PointType);
+                    WriteCell(sheet, column++, row, zigZag.Value, CellStyleDecimalNormal);
+                }
             }
-
             row++;
             row++;
             row++;
@@ -277,6 +281,7 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
                 {
                     DumpZigZagInterval(trendDataList);
                 }
+                //DumpZigZagInterval(trendDataList);
             }
             StartExcell("Candles", Symbol.Name);
         }

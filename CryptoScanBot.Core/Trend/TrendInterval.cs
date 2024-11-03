@@ -59,105 +59,105 @@ public class TrendInterval
 
 
 
-    public static void Collapse(ZigZagIndicator8 indicator)
-    {
-        // new idea... nice, not sure how..
-        // https://youtu.be/plhWMmmgZj4?t=450
-        // Reduces a lot, but a bit to much also..
+    //public static void Collapse(ZigZagIndicator9 indicator)
+    //{
+    //    // new idea... nice, not sure how..
+    //    // https://youtu.be/plhWMmmgZj4?t=450
+    //    // Reduces a lot, but a bit to much also..
 
-        List<ZigZagResult> NewZigZagList = [];
+    //    List<ZigZagResult> NewZigZagList = [];
 
-        var zigZagList = indicator.ZigZagList;
+    //    var zigZagList = indicator.ZigZagList;
 
-        ZigZagResult zigZag;
-        ZigZagResult? previousLow = null;
-        ZigZagResult? previousHigh = null;
-        for (int i = 0; i < zigZagList.Count; i++)
-        {
-            zigZag = zigZagList[i];
-            zigZag.Index = i;
-            if (zigZag.PointType == 'H')
-            {
-                if (previousHigh == null)
-                {
-                    previousHigh = zigZag;
-                    NewZigZagList.Add(zigZag);
-                }
-                else
-                {
-                    if (zigZag.Value > previousHigh.Value)
-                    {
-                        // We have a new high, determine the lowest swingpoint, it will be the next low
-                        if (previousLow != null)
-                        {
-                            ZigZagResult? swingLow = null;
-                            for (int index = previousHigh.Index + 1; index < zigZag.Index; index++)
-                            {
-                                var zigZagTemp = zigZagList[index];
+    //    ZigZagResult zigZag;
+    //    ZigZagResult? previousLow = null;
+    //    ZigZagResult? previousHigh = null;
+    //    for (int i = 0; i < zigZagList.Count; i++)
+    //    {
+    //        zigZag = zigZagList[i];
+    //        zigZag.Index = i;
+    //        if (zigZag.PointType == 'H')
+    //        {
+    //            if (previousHigh == null)
+    //            {
+    //                previousHigh = zigZag;
+    //                NewZigZagList.Add(zigZag);
+    //            }
+    //            else
+    //            {
+    //                if (zigZag.Value > previousHigh.Value)
+    //                {
+    //                    // We have a new high, determine the lowest swingpoint, it will be the next low
+    //                    if (previousLow != null)
+    //                    {
+    //                        ZigZagResult? swingLow = null;
+    //                        for (int index = previousHigh.Index + 1; index < zigZag.Index; index++)
+    //                        {
+    //                            var zigZagTemp = zigZagList[index];
 
-                                if (zigZagTemp.PointType == 'L')
-                                {
-                                    if (swingLow == null || zigZagTemp.Value < swingLow.Value)
-                                        swingLow = zigZagTemp;
-                                }
-                            }
-                            if (swingLow != null)
-                            {
-                                previousLow = swingLow;
-                                NewZigZagList.Add(swingLow);
-                            }
-                        }
-                        previousHigh = zigZag;
-                        NewZigZagList.Add(zigZag);
-                    }
-                }
-            }
-            else
-            {
-                if (previousLow == null)
-                {
-                    previousLow = zigZag;
-                    NewZigZagList.Add(zigZag);
-                }
-                else
-                {
-                    if (zigZag.Value < previousLow.Value)
-                    {
-                        // We have a new high, determine the last swingpoint, it will be the next high
-                        if (previousHigh != null)
-                        {
-                            ZigZagResult? swingHigh = null;
-                            for (int index = previousLow.Index + 1; index < zigZag.Index; index++)
-                            {
-                                var zigZagTemp = zigZagList[index];
+    //                            if (zigZagTemp.PointType == 'L')
+    //                            {
+    //                                if (swingLow == null || zigZagTemp.Value < swingLow.Value)
+    //                                    swingLow = zigZagTemp;
+    //                            }
+    //                        }
+    //                        if (swingLow != null)
+    //                        {
+    //                            previousLow = swingLow;
+    //                            NewZigZagList.Add(swingLow);
+    //                        }
+    //                    }
+    //                    previousHigh = zigZag;
+    //                    NewZigZagList.Add(zigZag);
+    //                }
+    //            }
+    //        }
+    //        else
+    //        {
+    //            if (previousLow == null)
+    //            {
+    //                previousLow = zigZag;
+    //                NewZigZagList.Add(zigZag);
+    //            }
+    //            else
+    //            {
+    //                if (zigZag.Value < previousLow.Value)
+    //                {
+    //                    // We have a new high, determine the last swingpoint, it will be the next high
+    //                    if (previousHigh != null)
+    //                    {
+    //                        ZigZagResult? swingHigh = null;
+    //                        for (int index = previousLow.Index + 1; index < zigZag.Index; index++)
+    //                        {
+    //                            var zigZagTemp = zigZagList[index];
 
-                                if (zigZagTemp.PointType == 'H')
-                                {
-                                    if (swingHigh == null || zigZagTemp.Value > swingHigh.Value)
-                                        swingHigh = zigZagTemp;
-                                }
-                            }
-                            if (swingHigh != null)
-                            {
-                                previousHigh = swingHigh;
-                                NewZigZagList.Add(swingHigh);
-                            }
-                        }
-                        previousLow = zigZag;
-                        NewZigZagList.Add(zigZag);
-                    }
-                }
-            }
-        }
+    //                            if (zigZagTemp.PointType == 'H')
+    //                            {
+    //                                if (swingHigh == null || zigZagTemp.Value > swingHigh.Value)
+    //                                    swingHigh = zigZagTemp;
+    //                            }
+    //                        }
+    //                        if (swingHigh != null)
+    //                        {
+    //                            previousHigh = swingHigh;
+    //                            NewZigZagList.Add(swingHigh);
+    //                        }
+    //                    }
+    //                    previousLow = zigZag;
+    //                    NewZigZagList.Add(zigZag);
+    //                }
+    //            }
+    //        }
+    //    }
         
-        indicator.ZigZagList = NewZigZagList;
-    }
+    //    indicator.ZigZagList = NewZigZagList;
+    //}
 
 
     /// <summary>
     /// Interpret the zigzag values en try to identify a trend
     /// </summary>
-    public static CryptoTrendIndicator InterpretZigZagPoints(ZigZagIndicator8 indicator, StringBuilder? log)
+    public static CryptoTrendIndicator InterpretZigZagPoints(ZigZagIndicator9 indicator, StringBuilder? log)
     {
         var zigZagList = indicator.ZigZagList;
         CryptoTrendIndicator trend = CryptoTrendIndicator.Sideways;
@@ -165,7 +165,8 @@ public class TrendInterval
         if (log != null)
         {
             log.AppendLine("");
-            log.AppendLine($"Deviation={indicator.Deviation}% ZigZag points={zigZagList.Count}:");
+            //log.AppendLine($"Deviation={indicator.Deviation}% ZigZag points={zigZagList.Count}:");
+            log.AppendLine($"ZigZag points={zigZagList.Count}:");
         }
 
         // We need at least two points to make an assumption
@@ -178,8 +179,8 @@ public class TrendInterval
 
         // Configure a start value
         int count = 0;
-        double lastLow;
-        double lastHigh;
+        decimal lastLow;
+        decimal lastHigh;
         if (zigZagList[1].Value > zigZagList[0].Value)
         {
             lastLow = zigZagList[0].Value;
@@ -203,7 +204,7 @@ public class TrendInterval
             zigZag = zigZagList[i];
 
             // Pickup last value
-            double value;
+            decimal value;
             if (zigZag.PointType == 'H')
                 value = lastHigh;
             else
@@ -293,19 +294,21 @@ public class TrendInterval
 
 
 
-        // We cache the ZigZag indicator and we create a lot of them with different deviations
+        //// We cache the ZigZag indicator and we create a lot of them with different deviations
         if (accountSymbolIntervalData.ZigZagIndicators == null)
         {
             accountSymbolIntervalData.ZigZagIndicators = [];
-            for (double deviation = 10.0; deviation >= 1; deviation -= 0.25)
+            for (decimal deviation = 2.5m; deviation >= 0m; deviation -= 0.25m)
             {
-                ZigZagIndicator8 indicator = new(candleList, false)
+                ZigZagIndicator9 indicator = new(candleList, GlobalData.Settings.General.UseHighLowInTrendCalculation, deviation)
                 {
                     Deviation = deviation
                 };
                 accountSymbolIntervalData.ZigZagIndicators.Add(indicator);
             }
+
         }
+        //accountSymbolIntervalData.Indicator ??= new(candleList, GlobalData.Settings.General.UseHighLowInTrendCalculation, 1m);
 
 
 
@@ -319,6 +322,7 @@ public class TrendInterval
                 {
                     indicator.Calculate(candle, accountSymbolIntervalData.Interval.Duration);
                 }
+                //accountSymbolIntervalData.Indicator.Calculate(candle, accountSymbolIntervalData.Interval.Duration);
                 accountSymbolIntervalData.ZigZagLastCandleAdded = loop;
             }
             //else log?.AppendLine($"unable to find candle {loop}");
@@ -327,7 +331,7 @@ public class TrendInterval
 
 
 
-        
+
         // Calculate the average amount of pivots for the valid zigzag indicators
         int countX = 0;
         double sum = 0;
@@ -351,7 +355,7 @@ public class TrendInterval
 
         // What is the best? Technically we need at least 4 pivot points, would be nice if we have a lot of pivots.
         // On the other hand, we do not want small percentages als this can give fake trend & reversal signals.
-        ZigZagIndicator8? bestIndicator = null;
+        ZigZagIndicator9? bestIndicator = null;
         foreach (var indicator in accountSymbolIntervalData.ZigZagIndicators)
         {
             int zigZagCount = indicator.ZigZagList.Count;
@@ -367,18 +371,19 @@ public class TrendInterval
 
 
 
-        //if (log != null)
-        //{
-        //    log.AppendLine($"{bestIndicator.Deviation} {bestIndicator.ZigZagList} pivots");
-        //    foreach (var zigZag in bestIndicator.ZigZagList)
-        //    {
-        //        string s = string.Format("date={0} H {1:N8} rsi={2:N8}", zigZag.Candle.Date.ToLocalTime(), zigZag.Value, zigZag.Candle.CandleData?.Rsi);
-        //        log.AppendLine(s);
-        //    }
-        //}
+        if (log != null)
+        {
+            log.AppendLine($"{bestIndicator.Deviation} {bestIndicator.ZigZagList} pivots");
+            foreach (var zigZag in bestIndicator.ZigZagList)
+            {
+                string s = string.Format("date={0} H {1:N8} rsi={2:N8}", zigZag.Candle.Date.ToLocalTime(), zigZag.Value, zigZag.Candle.CandleData?.Rsi);
+                log.AppendLine(s);
+            }
+        }
 
 
         // Interpret the pivot points and put Charles Dow theory at work
+        //ZigZagIndicator9? bestIndicator = accountSymbolIntervalData.Indicator;
         CryptoTrendIndicator trendIndicator = InterpretZigZagPoints(bestIndicator, log);
         accountSymbolIntervalData.TrendIndicator = trendIndicator;
         accountSymbolIntervalData.TrendInfoUnix = candleIntervalEnd;
@@ -389,8 +394,10 @@ public class TrendInterval
 
         if (GlobalData.Settings.General.DebugTrendCalculation)
         {
+            //string text = $"{symbol.Name} {interval.Name} candles={candleList.Count} calculated at {accountSymbolIntervalData.TrendInfoDate} " +
+            //$"avg={avg} best={bestIndicator.Deviation}% zigzagcount={bestIndicator.ZigZagList.Count} {accountSymbolIntervalData.TrendIndicator} "
             string text = $"{symbol.Name} {interval.Name} candles={candleList.Count} calculated at {accountSymbolIntervalData.TrendInfoDate} " +
-            $"avg={avg} best={bestIndicator.Deviation}% zigzagcount={bestIndicator.ZigZagList.Count} {accountSymbolIntervalData.TrendIndicator} "
+            $"zigzagcount={bestIndicator.ZigZagList.Count} {accountSymbolIntervalData.TrendIndicator} "
 #if DEBUG
              + $"{candleIntervalStartDebug}..{candleIntervalEndDebug}"
 #endif

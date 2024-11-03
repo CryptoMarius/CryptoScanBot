@@ -55,8 +55,10 @@ public partial class FrmSettings : Form
         EditDebugKLineReceive.Visible = false;
         EditDebugSignalCreate.Visible = false;
         EditDebugSignalStrength.Visible = false;
+        EditUseHighLowInTrendCalculation.Visible = false;
         EditDebugSymbol.Visible = false;
         LabelDebugSymbol.Visible = false;
+        EditDebugAssetManagement.Visible = false;
 #endif
 
         EditAnalysisMinChangePercentage.Minimum = -100;
@@ -117,6 +119,8 @@ public partial class FrmSettings : Form
         EditDebugKLineReceive.Checked = settings.General.DebugKLineReceive;
         EditDebugSignalCreate.Checked = settings.General.DebugSignalCreate;
         EditDebugSignalStrength.Checked = settings.General.DebugSignalStrength;
+        EditUseHighLowInTrendCalculation.Checked = settings.General.UseHighLowInTrendCalculation;
+        EditDebugAssetManagement.Checked = settings.General.DebugAssetManagement;
         EditDebugSymbol.Text = settings.General.DebugSymbol.Trim();
 #endif
 
@@ -372,6 +376,8 @@ public partial class FrmSettings : Form
         settings.General.DebugKLineReceive = EditDebugKLineReceive.Checked;
         settings.General.DebugSignalCreate = EditDebugSignalCreate.Checked;
         settings.General.DebugSignalStrength = EditDebugSignalStrength.Checked;
+        settings.General.DebugAssetManagement = EditDebugAssetManagement.Checked;
+        settings.General.UseHighLowInTrendCalculation = EditUseHighLowInTrendCalculation.Checked;
         settings.General.DebugSymbol = EditDebugSymbol.Text.Trim();
 #else
         settings.General.DebugSymbol = "";

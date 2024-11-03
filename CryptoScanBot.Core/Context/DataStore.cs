@@ -25,9 +25,9 @@ public class DataStore
         // Verwijder het bestand indien niet relevant of niet actief
         string filename = dirSymbol + symbol.Base.ToLower(); // + ".json.bin";
 
-        // reset the precious collected trend data (once a day is preferred)
+        // reset the previous collected trend data (once a day is preferred)
         AccountSymbolData accountSymbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
-        accountSymbolData.Reset();
+        accountSymbolData.ResetTrendData();
 
         // Laad in 1x alle intervallen 
         if (File.Exists(filename))

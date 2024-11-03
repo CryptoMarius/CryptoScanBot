@@ -116,7 +116,8 @@ public class PaperAssets
         }
     }
 
-    public static void Change(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoTradeSide tradeSide, CryptoOrderSide side, CryptoOrderStatus status, decimal quantity, decimal quoteQuantity)
+    public static void Change(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoTradeSide tradeSide, CryptoOrderSide side, 
+        CryptoOrderStatus status, decimal quantity, decimal quoteQuantity, string debugText)
     {
         // No asset management for these available (although, would be very nice for Altraady)
         if (tradeAccount.AccountType == CryptoAccountType.RealTrading || tradeAccount.AccountType == CryptoAccountType.Altrady)
@@ -127,7 +128,8 @@ public class PaperAssets
         {
             CryptoAsset assetBase = FindOrCreateAsset(tradeAccount, symbol.Base); // Base asset (BTC)
             CryptoAsset assetQuote = FindOrCreateAsset(tradeAccount, symbol.Quote); // Quote asset (USDT)
-            GlobalData.AddTextToLogTab($"Debug asset before {symbol.Name} {tradeSide} {side} {assetBase.Name} total={assetBase.Total} locked={assetBase.Locked}  {assetQuote.Name} total={assetQuote.Total} locked={assetQuote.Locked}");
+            if (GlobalData.Settings.General.DebugAssetManagement)
+                GlobalData.AddTextToLogTab($"Debug asset before {symbol.Name} {tradeSide} {side} {assetBase.Name} total={assetBase.Total} locked={assetBase.Locked}  {assetQuote.Name} total={assetQuote.Total} locked={assetQuote.Locked} {debugText}");
 
 
             // Manipulate assets (example BTCUSDT)
@@ -171,7 +173,7 @@ public class PaperAssets
 
                 if (side == CryptoOrderSide.Sell) // entry
                 {
-                    AddLocked(assetQuote, status, quantity);
+                    AddLocked(assetQuote, status, quoteQuantity);
                     //if (status == CryptoOrderStatus.New) asset.Locked += quoteQuantity; else asset.Locked -= quoteQuantity;
                     if (status.IsFilled())
                     {
@@ -244,7 +246,8 @@ public class PaperAssets
             //}
             transaction.Commit();
 
-            GlobalData.AddTextToLogTab($"Debug asset after {symbol.Name} {tradeSide} {side} {assetBase.Name} total={assetBase.Total} locked={assetBase.Locked}  {assetQuote.Name} total={assetQuote.Total} locked={assetQuote.Locked}");
+            if (GlobalData.Settings.General.DebugAssetManagement)
+                GlobalData.AddTextToLogTab($"Debug asset after {symbol.Name} {tradeSide} {side} {assetBase.Name} total={assetBase.Total} locked={assetBase.Locked}  {assetQuote.Name} total={assetQuote.Total} locked={assetQuote.Locked} {debugText}");
         }
         finally
         {

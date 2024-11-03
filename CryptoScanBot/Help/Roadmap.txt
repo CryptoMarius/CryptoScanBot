@@ -7,7 +7,21 @@ Trend berekening aanpassen, Lewis Kelly legt het hier mooi uit en de scanner doe
 https://www.youtube.com/watch?v=plhWMmmgZj4
 
 
+todo: Optimalisatie van de IsSupported interval *die nu common is)
+
 Scanner:
+- Scanner - Grafiek, weer terug naar local tijd (gaf uiteraard problemen tijdens de wisseling)
+- Scanner - Dominante zones, ophalen van de candles optimaliseren en delen met de emulator
+            De tussenliggende intervallen eventueel ook kunnen berekenen..
+- Scanner - Dominante zones, percentage kunnen configureren (en kan de AlarmPrice weg..)
+- Scanner - Dominante zones inzien via een extra formulier
+- Scanner - Dominante zones laten calculeren via een batch process
+- Scanner - Dominante zones melden indien ze binnen 1% komen te liggen
+- Scanner - Dominante zones configuratie van geluidje, percentage en wellicht nog andere zaken?
+- Scanner - Dominante zones hergebruiken en niet elke keer verwijderen en opnieuw inschieten (ivm signalering)
+- Scanner - De nieuwe grafief (die ook de trend laat zien) verrijken met de laatste signalen en/of lopende posities
+- Scanner - Een instelling toevoegen die bepaalt hoe de trend berekend wordt, met name of de trend wacht op een bevestiging van een HH + HL (of HH, LH) of aan een CHOC genoeg heeft?
+- Scanner - Een zone tabel toevoegen waarmee liq. zones wgm, s/r of s/d, of value gap kan worden geadministreerd
 - Scanner - Een wat vreemde, de logging naar het logtab kan stoppen? 
             (eens gedetecteerd tijdens het debuggen, geen reden of oplossing gevonden)
 - Scanner - Een splitter toepassen tussen de symbols en het signaal grid

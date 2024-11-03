@@ -6,7 +6,7 @@ public class ZigZagIndicator8(SortedList<long, CryptoCandle> candleList, bool us
 {
     public bool UseHighLow = useHighLow;
     public int Depth { get; set; } = 12;
-    public double Deviation { get; set; } = 5.0;
+    public decimal Deviation { get; set; } = 5.0m;
     public int BackStep { get; set; } = 3;
 
     public int CandleCount { get; set; } = 0;
@@ -18,21 +18,21 @@ public class ZigZagIndicator8(SortedList<long, CryptoCandle> candleList, bool us
 
 
     //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private double GetHighValue(CryptoCandle candle)
+    private decimal GetHighValue(CryptoCandle candle)
     {
         if (UseHighLow)
-            return (double)candle.High;
+            return candle.High;
         else
-            return (double)Math.Max(candle.Open, candle.Close);
+            return Math.Max(candle.Open, candle.Close);
     }
 
     //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private double GetLowValue(CryptoCandle candle)
+    private decimal GetLowValue(CryptoCandle candle)
     {
         if (UseHighLow)
-            return (double)candle.Low;
+            return candle.Low;
         else
-            return (double)Math.Min(candle.Open, candle.Close);
+            return Math.Min(candle.Open, candle.Close);
     }
 
 
@@ -42,13 +42,13 @@ public class ZigZagIndicator8(SortedList<long, CryptoCandle> candleList, bool us
 
         // Get the low and high value from the last (count=depth) candles
         long key = candle.OpenTime - duration;
-        double lowFromLastDepth = GetLowValue(candle);
-        double highFromLastDepth = GetHighValue(candle);
+        decimal lowFromLastDepth = GetLowValue(candle);
+        decimal highFromLastDepth = GetHighValue(candle);
         for (int count = 0; count < Depth - 1; count++)
         {
             if (CandleList.TryGetValue(key, out CryptoCandle? x))
             {
-                double value = GetLowValue(x);
+                decimal value = GetLowValue(x);
                 if (value < lowFromLastDepth)
                     lowFromLastDepth = value;
                 value = GetHighValue(x);
@@ -63,7 +63,7 @@ public class ZigZagIndicator8(SortedList<long, CryptoCandle> candleList, bool us
         //    candle = candle; // debug 
 
         // is the current candle a new low?
-        double lowFromLastCandle = GetLowValue(candle);
+        decimal lowFromLastCandle = GetLowValue(candle);
         if (Math.Abs(lowFromLastCandle - lowFromLastDepth) == 0)
         {
             bool Addzigzag = true;
@@ -101,7 +101,7 @@ public class ZigZagIndicator8(SortedList<long, CryptoCandle> candleList, bool us
 
 
         // is the current candle a new high?
-        double highFromLastCandle = GetHighValue(candle);
+        decimal highFromLastCandle = GetHighValue(candle);
         if (Math.Abs(highFromLastCandle - highFromLastDepth) == 0)
         {
             bool Addzigzag = true;

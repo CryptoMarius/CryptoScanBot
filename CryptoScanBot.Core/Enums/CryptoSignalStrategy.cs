@@ -16,4 +16,6 @@ public enum CryptoSignalStrategy
     StoRsiMulti = 11, // WGHM - STOSCH en RSI momentum indicator
     StoRsi2 = 12, // = STORSI, repeated storsi
     StoRsi3 = 13, // = STORSI, 2, but different
+
+    DominantLevel = 1000, // = STORSI, 2, but different
 }

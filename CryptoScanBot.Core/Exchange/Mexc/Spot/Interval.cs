@@ -7,9 +7,9 @@ namespace CryptoScanBot.Core.Exchange.Mexc.Spot;
 
 public class Interval
 {
-    public static KlineInterval? GetExchangeInterval(CryptoInterval interval)
+    public static KlineInterval? GetExchangeInterval(CryptoIntervalPeriod interval)
     {
-        return interval.IntervalPeriod switch
+        return interval switch
         {
             CryptoIntervalPeriod.interval1m => KlineInterval.OneMinute,
             CryptoIntervalPeriod.interval5m => KlineInterval.FiveMinutes,
@@ -47,7 +47,7 @@ public class Interval
         foreach (CryptoInterval interval in GlobalData.IntervalList)
         {
             CryptoInterval? lowerInterval = interval;
-            while (GetExchangeInterval(lowerInterval) == null)
+            while (GetExchangeInterval(lowerInterval.IntervalPeriod) == null)
             {
                 lowerInterval = lowerInterval.ConstructFrom;
                 long startFromUnixTime = fetchFrom[(int)interval!.IntervalPeriod];

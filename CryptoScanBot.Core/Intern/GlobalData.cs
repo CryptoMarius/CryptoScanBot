@@ -32,6 +32,7 @@ static public class GlobalData
 {
     public static string AppName { get; set; } = "";
     public static string AppPath { get; set; } = "";
+    public static string LogName { get; set; } = "";
     public static string AppVersion { get; set; } = "";
     private static string? AppDataFolder { get; set; } = ""; // depends on starup parameters
 

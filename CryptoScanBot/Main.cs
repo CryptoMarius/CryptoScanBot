@@ -81,6 +81,7 @@ public partial class FrmMain : Form
         MenuMain.AddCommand(null, "Test - Save Candles", Command.None, TestSaveCandlesClick);
         MenuMain.AddCommand(null, "Test - Create url testfile", Command.None, TestCreateUrlTestFileClick);
         MenuMain.AddCommand(null, "Test - Dump ticker information", Command.None, TestShowTickerInformationClick);
+        MenuMain.AddCommand(null, "Test - Calculate all liquidity zones (slow!)", Command.CalculateLiquidityZones);
 #endif
         MenuMain.AddSeperator();
         MenuMain.AddCommand(null, "About", Command.About);
@@ -140,6 +141,7 @@ public partial class FrmMain : Form
         GlobalData.InitializeExchange();
     }
 
+
 #if DEBUG
     private async void TestSaveCandlesClick(object? sender, EventArgs? e)
     {
@@ -193,6 +195,7 @@ public partial class FrmMain : Form
         GlobalData.SymbolsHaveChanged("");
         GlobalData.LoadSignals();
         TradeTools.LoadAssets();
+        ZoneTools.LoadActiveZones();
         TradeTools.LoadOpenPositions();
         TradeTools.LoadClosedPositions();
         //ClosedPositionsHaveChangedEvent();
@@ -916,7 +919,7 @@ public partial class FrmMain : Form
         }
     }
 
-    private void SymbolFilter_KeyDown(object sender, KeyEventArgs e)
+    private void SymbolFilter_KeyDown(object? sender, KeyEventArgs e)
     {
         if (e.KeyCode == Keys.Enter)
         {

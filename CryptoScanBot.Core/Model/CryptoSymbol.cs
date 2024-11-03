@@ -119,6 +119,9 @@ public class CryptoSymbol
     // Quote: display format
     public virtual CryptoQuoteData? QuoteData { get; set; }
 
+    
+    [Computed]
+    public bool CalculatingZones { get; set; }
 
     [Computed]
     // Interval related data like candles and last candle fetched

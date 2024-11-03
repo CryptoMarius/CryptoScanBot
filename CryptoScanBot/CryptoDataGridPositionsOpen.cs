@@ -119,6 +119,11 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
         menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Hide selection", Command.None, ClearSelection);
 
+#if DEBUG
+        menuStrip.AddSeperator();
+        menuStrip.AddCommand(this, "Test - Show graph information", Command.ShowGraph);
+#endif
+
         TimerRefreshInformation = new()
         {
             Enabled = true,
@@ -452,12 +457,12 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
     }
 
 
-    public override void GetTextFunction(object sender, DataGridViewCellValueEventArgs e)
+    public override void GetTextFunction(object? sender, DataGridViewCellValueEventArgs e)
     {
         if (GlobalData.ApplicationIsClosing)
             return;
 
-        CryptoPosition position = GetCellObject(e.RowIndex);
+        CryptoPosition? position = GetCellObject(e.RowIndex);
         if (position != null)
         {
             switch ((ColumnsForGrid)e.ColumnIndex)
@@ -677,7 +682,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
     }
 
 
-    public override void CellFormattingEvent(object sender, DataGridViewCellFormattingEventArgs e)
+    public override void CellFormattingEvent(object? sender, DataGridViewCellFormattingEventArgs e)
     {
         if (GlobalData.ApplicationIsClosing)
             return;
@@ -695,7 +700,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
             backColor = Grid.DefaultCellStyle.BackColor;
 
         Color foreColor = Color.Black;
-        CryptoPosition position = GetCellObject(e.RowIndex);
+        CryptoPosition? position = GetCellObject(e.RowIndex);
         if (position != null)
         {
             switch ((ColumnsForGrid)e.ColumnIndex)
@@ -896,7 +901,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
 
     private async void CommandPositionRecalculateExecute(object? sender, EventArgs? e)
     {
-        CryptoPosition position = GetSelectedObject(out int rowIndex);
+        CryptoPosition? position = GetSelectedObject(out int rowIndex);
         if (position != null)
         {
             using CryptoDatabase databaseThread = new();
@@ -915,7 +920,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
 
     private void CommandPositionDeleteFromDatabaseAsync(object? sender, EventArgs? e)
     {
-        CryptoPosition position = GetSelectedObject(out int _);
+        CryptoPosition? position = GetSelectedObject(out int _);
         if (position != null)
         {
 
@@ -950,7 +955,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
 
     private async void CommandPositionCreateAdditionalDca(object? sender, EventArgs? e)
     {
-        CryptoPosition position = GetSelectedObject(out int rowIndex);
+        CryptoPosition? position = GetSelectedObject(out int rowIndex);
         if (position != null)
         {
 
@@ -1025,7 +1030,7 @@ public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, Sor
 
     private async void CommandPositionRemoveAdditionalDca(object? sender, EventArgs? e)
     {
-        CryptoPosition position = GetSelectedObject(out int rowIndex);
+        CryptoPosition? position = GetSelectedObject(out int rowIndex);
         if (position != null)
         {
             using CryptoDatabase databaseThread = new();

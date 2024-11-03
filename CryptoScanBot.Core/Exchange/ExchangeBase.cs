@@ -33,7 +33,6 @@ public abstract class ExchangeBase
         CryptoOrderType orderType, CryptoOrderSide orderSide,
         decimal quantity, decimal price, decimal? stop, decimal? limit, bool generateJsonDebug = false);
 
-
     public static void Dump(CryptoPosition position, bool success, TradeParams? tradeParams, string extraText)
     {
         StringBuilder builder = new();
