@@ -49,6 +49,8 @@ public class SettingsSignal
     // JUMP
     public SettingsSignalStrategyJump Jump = new();
 
+    // Dominant zones
+    public SettingsSignalStrategyDominant Zones = new ();
 
     // Logging
     public bool LogMinimalVolume { get; set; } = false;
