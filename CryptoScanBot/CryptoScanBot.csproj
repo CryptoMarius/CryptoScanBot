@@ -93,6 +93,7 @@
       <Version>1.0.2792.45</Version>
     </PackageReference>
     <PackageReference Include="Nito.AsyncEx.Context" Version="5.1.2" />
+    <PackageReference Include="OxyPlot.WindowsForms" Version="2.2.0" />
     <PackageReference Include="System.Reflection.Emit">
       <Version>4.7.0</Version>
     </PackageReference>
@@ -131,6 +132,9 @@
     <ProjectReference Include="..\CryptoScanBot.Core\CryptoScanBot.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Update="CryptoVisualisation.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Update="Main.PositionsClosed.cs" />
     <Compile Update="Properties\Settings.Designer.cs">
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
