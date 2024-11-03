@@ -11,7 +11,7 @@ namespace CryptoScanBot.Core.Signal.Momentum;
 
 public class SignalStoRsiLong : SignalSbmBaseLong
 {
-    public SignalStoRsiLong(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
+    public SignalStoRsiLong(CryptoAccount account, CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(account, symbol, interval, candle)
     {
         SignalSide = CryptoTradeSide.Long;
         SignalStrategy = CryptoSignalStrategy.StoRsi;

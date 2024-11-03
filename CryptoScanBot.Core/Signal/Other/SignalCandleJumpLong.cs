@@ -6,7 +6,7 @@ namespace CryptoScanBot.Core.Signal.Other;
 
 public class SignalCandleJumpLong : SignalCreateBase
 {
-    public SignalCandleJumpLong(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
+    public SignalCandleJumpLong(CryptoAccount account, CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(account, symbol, interval, candle)
     {
         SignalSide = CryptoTradeSide.Long;
         SignalStrategy = CryptoSignalStrategy.Jump;

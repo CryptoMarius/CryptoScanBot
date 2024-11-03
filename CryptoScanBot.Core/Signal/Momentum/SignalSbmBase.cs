@@ -4,7 +4,7 @@ using CryptoScanBot.Core.Enums;
 
 namespace CryptoScanBot.Core.Signal.Momentum;
 
-public class SignalSbmBase(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : SignalCreateBase(symbol, interval, candle)
+public class SignalSbmBase(CryptoAccount account, CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : SignalCreateBase(account, symbol, interval, candle)
 {
 
     public override string DisplayText()

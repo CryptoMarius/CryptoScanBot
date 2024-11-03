@@ -111,7 +111,7 @@ public static class SignalHelper
             AnalyzeShortType = typeof(SignalStoRsiShort),
         });
 
-        // anotehr combined with a higher timeframe
+        // another combined with a higher timeframe
         Register(new AlgorithmDefinition()
         {
             Name = "storsi.multi",
@@ -119,6 +119,19 @@ public static class SignalHelper
             AnalyzeLongType = typeof(SignalStoRsiMultiLong),
             AnalyzeShortType = typeof(SignalStoRsiMultiShort),
         });
+
+
+        //***************************************************
+        // Level approaching
+        //***************************************************
+        Register(new AlgorithmDefinition()
+        {
+            Name = "dom.nearby",
+            Strategy = CryptoSignalStrategy.DominantLevel,
+            AnalyzeLongType = typeof(DominantLevelLong),
+            AnalyzeShortType = typeof(DominantLevelShort),
+        });
+        
 
     }
 
@@ -144,14 +157,14 @@ public static class SignalHelper
     /// <summary>
     /// Return an instance of the algorithm (long/short)
     /// </summary>
-    public static SignalCreateBase? GetAlgorithm(CryptoTradeSide mode, CryptoSignalStrategy strategy, CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle)
+    public static SignalCreateBase? GetAlgorithm(CryptoTradeSide mode, CryptoSignalStrategy strategy, CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle)
     {
         if (GetAlgorithm(strategy, out AlgorithmDefinition? definition))
         {
             if (mode == CryptoTradeSide.Long && definition!.AnalyzeLongType != null)
-                return (SignalCreateBase?)Activator.CreateInstance(definition!.AnalyzeLongType, [symbol, interval, candle]);
+                return (SignalCreateBase?)Activator.CreateInstance(definition!.AnalyzeLongType, [tradeAccount, symbol, interval, candle]);
             if (mode == CryptoTradeSide.Short && definition!.AnalyzeShortType != null)
-                return (SignalCreateBase?)Activator.CreateInstance(definition!.AnalyzeShortType, [symbol, interval, candle]);
+                return (SignalCreateBase?)Activator.CreateInstance(definition!.AnalyzeShortType, [tradeAccount, symbol, interval, candle]);
         }
         return null;
     }

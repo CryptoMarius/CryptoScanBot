@@ -21,7 +21,6 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
     private CryptoCandle? Candle { get; set; }
     public List<CryptoCandle>? history = null;
 
-    //public bool CreatedSignal = false;
     public List<CryptoSignal> SignalList { get; set; } = [];
 
     bool hasOpenPosistion = false;
@@ -283,31 +282,31 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
         }
 
         // Barometers
-        BarometerData barometerData = GlobalData.ActiveAccount!.Data.GetBarometer(symbol.Quote, CryptoIntervalPeriod.interval15m);
+        BarometerData barometerData = TradeAccount.Data.GetBarometer(symbol.Quote, CryptoIntervalPeriod.interval15m);
         if (barometerData.PriceBarometer.HasValue)
             signal.Barometer15m = barometerData.PriceBarometer.Value;
         else
             signal.Barometer15m = null;
 
-        barometerData = GlobalData.ActiveAccount!.Data.GetBarometer(symbol.Quote, CryptoIntervalPeriod.interval30m);
+        barometerData = TradeAccount.Data.GetBarometer(symbol.Quote, CryptoIntervalPeriod.interval30m);
         if (barometerData.PriceBarometer.HasValue)
             signal.Barometer30m = barometerData.PriceBarometer.Value;
         else
             signal.Barometer30m = 0;
 
-        barometerData = GlobalData.ActiveAccount!.Data.GetBarometer(symbol.Quote, CryptoIntervalPeriod.interval1h);
+        barometerData = TradeAccount.Data.GetBarometer(symbol.Quote, CryptoIntervalPeriod.interval1h);
         if (barometerData.PriceBarometer.HasValue)
             signal.Barometer1h = barometerData.PriceBarometer.Value;
         else
             signal.Barometer1h = 0;
 
-        barometerData = GlobalData.ActiveAccount!.Data.GetBarometer(symbol.Quote, CryptoIntervalPeriod.interval4h);
+        barometerData = TradeAccount.Data.GetBarometer(symbol.Quote, CryptoIntervalPeriod.interval4h);
         if (barometerData.PriceBarometer.HasValue)
             signal.Barometer4h = barometerData.PriceBarometer.Value;
         else
             signal.Barometer4h = 0;
 
-        barometerData = GlobalData.ActiveAccount!.Data.GetBarometer(symbol.Quote, CryptoIntervalPeriod.interval1d);
+        barometerData = TradeAccount.Data.GetBarometer(symbol.Quote, CryptoIntervalPeriod.interval1d);
         if (barometerData.PriceBarometer.HasValue)
             signal.Barometer1d = barometerData.PriceBarometer.Value;
         else
@@ -464,12 +463,12 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
                         CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(Interval.IntervalPeriod);
                         if (symbolInterval.Signal == null || symbolInterval.Signal?.EventTime != signal.EventTime)
                         {
-                            if (symbolInterval.Signal == null || algorithm.ReplaceSignal)
-                            {
-                                symbolInterval.Signal = signal;
-                                //CreatedSignal = true;
-                                SignalList.Add(signal);
-                            }
+                            //if (symbolInterval.Signal == null || algorithm.ReplaceSignal) // alway's
+                            //{
+                            symbolInterval.Signal = signal;
+                            //CreatedSignal = true;
+                            SignalList.Add(signal);
+                            //}
                         }
                     }
                 }
@@ -531,7 +530,7 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
 
     private bool ExecuteAlgorithm(AlgorithmDefinition strategyDefinition)
     {
-        SignalCreateBase? algorithm = SignalHelper.GetAlgorithm(Side, strategyDefinition.Strategy, Symbol, Interval, Candle);
+        SignalCreateBase? algorithm = SignalHelper.GetAlgorithm(Side, strategyDefinition.Strategy, TradeAccount, Symbol, Interval, Candle);
         if (algorithm != null)
         {
             if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))

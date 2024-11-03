@@ -6,7 +6,7 @@ namespace CryptoScanBot.Core.Signal.Momentum;
 
 public class SignalStobbMultiLong : SignalSbmBaseLong
 {
-    public SignalStobbMultiLong(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
+    public SignalStobbMultiLong(CryptoAccount account, CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(account, symbol, interval, candle)
     {
         SignalSide = CryptoTradeSide.Long;
         SignalStrategy = CryptoSignalStrategy.StobbMulti;
@@ -32,7 +32,7 @@ public class SignalStobbMultiLong : SignalSbmBaseLong
     public override string DisplayText()
     {
         return string.Format("stoch.oscillator={0:N8} stoch.signal={1:N8}",
-            CandleLast!.CandleData.StochOscillator,
+            CandleLast!.CandleData!.StochOscillator,
             CandleLast!.CandleData.StochSignal
         );
     }

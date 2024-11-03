@@ -7,7 +7,7 @@ namespace CryptoScanBot.Core.Signal.Momentum;
 
 public class SignalSbm3Short : SignalSbmBaseShort
 {
-    public SignalSbm3Short(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
+    public SignalSbm3Short(CryptoAccount account, CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(account, symbol, interval, candle)
     {
         SignalSide = CryptoTradeSide.Short;
         SignalStrategy = CryptoSignalStrategy.Sbm3;
@@ -25,12 +25,12 @@ public class SignalSbm3Short : SignalSbmBaseShort
         if (candleCount <= 0)
             return false;
 
-        decimal minValue = (decimal)CandleLast.CandleData.BollingerBandsPercentage;
+        decimal minValue = (decimal)CandleLast.CandleData!.BollingerBandsPercentage!;
         CryptoCandle? last = CandleLast;
         while (candleCount > 0)
         {
             decimal value;
-            value = (decimal)last!.CandleData.BollingerBandsPercentage;
+            value = (decimal)last!.CandleData!.BollingerBandsPercentage!;
             if (value < minValue)
                 minValue = value;
 

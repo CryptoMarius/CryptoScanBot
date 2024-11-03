@@ -6,7 +6,7 @@ namespace CryptoScanBot.Core.Signal.Momentum;
 
 public class SignalSbm1Short : SignalSbmBaseShort
 {
-    public SignalSbm1Short(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
+    public SignalSbm1Short(CryptoAccount account, CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(account, symbol, interval, candle)
     {
         SignalSide = CryptoTradeSide.Short;
         SignalStrategy = CryptoSignalStrategy.Sbm1;
@@ -19,6 +19,8 @@ public class SignalSbm1Short : SignalSbmBaseShort
         CryptoCandle? last = CandleLast;
         while (candleCount > 0)
         {
+            if (last == null)
+                return false;
             // Er een candle onder de bb opent of sluit & een overbought situatie (beide moeten onder de 20 zitten)
             if (last!.IsAboveBollingerBands(GlobalData.Settings.Signal.Sbm.UseLowHigh) && last.IsStochOverbought())
                 return true;
