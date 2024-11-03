@@ -37,16 +37,16 @@ partial class CryptoVisualisation
         EditIntervalName = new ComboBox();
         EditUseHighLow = new CheckBox();
         label4 = new Label();
-        EditOptimize = new NumericUpDown();
+        EditDeviation = new NumericUpDown();
         EditShowLiqBoxes = new CheckBox();
         EditZoomLiqBoxes = new CheckBox();
         EditShowZigZag = new CheckBox();
         label9 = new Label();
         EditCandleCount = new NumericUpDown();
         ButtonCalculate = new Button();
-        Button1 = new Button();
+        ButtonZoomLast = new Button();
         flowLayoutPanel1.SuspendLayout();
-        ((System.ComponentModel.ISupportInitialize)EditOptimize).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)EditDeviation).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditCandleCount).BeginInit();
         SuspendLayout();
         // 
@@ -61,14 +61,14 @@ partial class CryptoVisualisation
         flowLayoutPanel1.Controls.Add(EditIntervalName);
         flowLayoutPanel1.Controls.Add(EditUseHighLow);
         flowLayoutPanel1.Controls.Add(label4);
-        flowLayoutPanel1.Controls.Add(EditOptimize);
+        flowLayoutPanel1.Controls.Add(EditDeviation);
         flowLayoutPanel1.Controls.Add(EditShowLiqBoxes);
         flowLayoutPanel1.Controls.Add(EditZoomLiqBoxes);
         flowLayoutPanel1.Controls.Add(EditShowZigZag);
         flowLayoutPanel1.Controls.Add(label9);
         flowLayoutPanel1.Controls.Add(EditCandleCount);
         flowLayoutPanel1.Controls.Add(ButtonCalculate);
-        flowLayoutPanel1.Controls.Add(Button1);
+        flowLayoutPanel1.Controls.Add(ButtonZoomLast);
         flowLayoutPanel1.Dock = DockStyle.Left;
         flowLayoutPanel1.FlowDirection = FlowDirection.TopDown;
         flowLayoutPanel1.Location = new Point(0, 0);
@@ -141,18 +141,18 @@ partial class CryptoVisualisation
         label4.AutoSize = true;
         label4.Location = new Point(6, 160);
         label4.Name = "label4";
-        label4.Size = new Size(55, 15);
+        label4.Size = new Size(57, 15);
         label4.TabIndex = 16;
-        label4.Text = "Optimize";
+        label4.Text = "Deviation";
         // 
-        // EditOptimize
+        // EditDeviation
         // 
-        EditOptimize.DecimalPlaces = 2;
-        EditOptimize.Increment = new decimal(new int[] { 25, 0, 0, 131072 });
-        EditOptimize.Location = new Point(6, 178);
-        EditOptimize.Name = "EditOptimize";
-        EditOptimize.Size = new Size(120, 23);
-        EditOptimize.TabIndex = 1;
+        EditDeviation.DecimalPlaces = 2;
+        EditDeviation.Increment = new decimal(new int[] { 25, 0, 0, 131072 });
+        EditDeviation.Location = new Point(6, 178);
+        EditDeviation.Name = "EditDeviation";
+        EditDeviation.Size = new Size(120, 23);
+        EditDeviation.TabIndex = 1;
         // 
         // EditShowLiqBoxes
         // 
@@ -210,14 +210,14 @@ partial class CryptoVisualisation
         ButtonCalculate.Text = "Calculate";
         ButtonCalculate.UseVisualStyleBackColor = true;
         // 
-        // Button1
+        // ButtonZoomLast
         // 
-        Button1.Location = new Point(6, 355);
-        Button1.Name = "Button1";
-        Button1.Size = new Size(75, 23);
-        Button1.TabIndex = 14;
-        Button1.Text = "Zoom last";
-        Button1.UseVisualStyleBackColor = true;
+        ButtonZoomLast.Location = new Point(6, 355);
+        ButtonZoomLast.Name = "ButtonZoomLast";
+        ButtonZoomLast.Size = new Size(75, 23);
+        ButtonZoomLast.TabIndex = 14;
+        ButtonZoomLast.Text = "Zoom last";
+        ButtonZoomLast.UseVisualStyleBackColor = true;
         // 
         // CryptoVisualisation
         // 
@@ -230,7 +230,7 @@ partial class CryptoVisualisation
         Text = "Form1";
         flowLayoutPanel1.ResumeLayout(false);
         flowLayoutPanel1.PerformLayout();
-        ((System.ComponentModel.ISupportInitialize)EditOptimize).EndInit();
+        ((System.ComponentModel.ISupportInitialize)EditDeviation).EndInit();
         ((System.ComponentModel.ISupportInitialize)EditCandleCount).EndInit();
         ResumeLayout(false);
         PerformLayout();
@@ -254,5 +254,6 @@ partial class CryptoVisualisation
     private ComboBox EditSymbolQuote;
     private Button Button1;
     private Label label4;
-    private NumericUpDown EditOptimize;
+    private NumericUpDown EditDeviation;
+    private Button ButtonZoomLast;
 }

@@ -44,7 +44,7 @@ public partial class CryptoVisualisation : Form
         EditSymbolQuote.KeyDown += ButtonKeyDown;
         EditIntervalName.KeyDown += ButtonKeyDown;
         ButtonCalculate.Click += ButtonCalculateClick;
-        Button1.Click += Button1_Click;
+        ButtonZoomLast.Click += Button1_Click;
 
         //EditSymbolBase.DataSource = new BindingSource(GlobalData.Settings.General.Exchange.SymbolListName, null);
         //EditSymbolBase.DisplayMember = "Key";
@@ -74,7 +74,7 @@ public partial class CryptoVisualisation : Form
         EditShowLiqBoxes.Checked = Session.ShowLiqBoxes;
         EditZoomLiqBoxes.Checked = Session.ZoomLiqBoxes;
         EditShowZigZag.Checked = Session.ShowZigZag;
-        EditOptimize.Value = Session.OptimizeZigZag;
+        EditDeviation.Value = Session.OptimizeZigZag;
         EditCandleCount.Value = GlobalData.Settings.Signal.Zones.CandleCount;
     }
 
@@ -104,7 +104,7 @@ public partial class CryptoVisualisation : Form
         Session.ShowLiqBoxes = EditShowLiqBoxes.Checked;
         Session.ZoomLiqBoxes = EditZoomLiqBoxes.Checked;
         Session.ShowZigZag = EditShowZigZag.Checked;
-        Session.OptimizeZigZag = EditOptimize.Value;
+        Session.OptimizeZigZag = EditDeviation.Value;
         Session.SaveSessionSettings();
         if (!PrepareSessionData(out string reason))
         {
@@ -196,6 +196,9 @@ public partial class CryptoVisualisation : Form
         try
         {
             // avoind candles being removed...
+            ButtonZoomLast.Enabled = false;
+            ButtonCalculate.Enabled = false;
+            Cursor.Current = Cursors.WaitCursor;
             Data.Symbol.CalculatingZones = true;
             try
             {
@@ -230,8 +233,8 @@ public partial class CryptoVisualisation : Form
                 plotView.Model = plotModel;
                 plotView.Model.InvalidatePlot(true);
 
-                string extraText = Data.Indicator.AddedExtraZigZag1 == null ? "" : "!!!!!!";
-                plotModel.Title = $"ZigZag {Data.Exchange.Name} {Session.SymbolBase}-{Session.SymbolQuote} {Data.Interval.Name} UTC " +
+                string extraText = Data.Indicator.AddedExtraZigZag1 == null ? "" : "!";
+                plotModel.Title = $"{Session.SymbolBase}{Session.SymbolQuote} {Data.Interval.Name} UTC " +
                 $"trend={trend} deviation={Data.Indicator.Deviation} (best={best.Deviation}) candles={Data.SymbolInterval.CandleList.Count} pivots={Data.Indicator.ZigZagList.Count} {extraText}";
 
 
@@ -247,18 +250,13 @@ public partial class CryptoVisualisation : Form
                 plotView.Model = plotModel;
                 plotView.Controller = new PlotController();
                 //plotView.Controller.UnbindAll();
-                //plotView.Controller.BindMouseDown(OxyMouseButton.Left, PlotCommands.PanAt);
-                //plotView.Controller.UnbindMouseDown(OxyMouseButton.Right);
 
-                plotView.Controller.BindMouseDown(OxyMouseButton.Left, OxyModifierKeys.Control, PlotCommands.ZoomRectangle);
-                plotView.Controller.BindMouseDown(OxyMouseButton.Right, OxyModifierKeys.Control | OxyModifierKeys.Alt, PlotCommands.ZoomRectangle);
-
-                //// Reset bindings: Same as zoom rectangle, but double click / A key
-                plotView.Controller.BindMouseDown(OxyMouseButton.Left, OxyModifierKeys.Control, 2, PlotCommands.ResetAt);
-                plotView.Controller.BindMouseDown(OxyMouseButton.Right, OxyModifierKeys.Control | OxyModifierKeys.Alt, 2, PlotCommands.ResetAt);
-
-                //// Pan bindings: RMB / alt LMB / Up/down/left/right keys (panning direction on axis is opposite of key as it is more intuitive)
                 plotView.Controller.BindMouseDown(OxyMouseButton.Left, PlotCommands.PanAt);
+                plotView.Controller.BindMouseDown(OxyMouseButton.Left, OxyModifierKeys.Control, PlotCommands.ZoomRectangle);
+                plotView.Controller.BindMouseDown(OxyMouseButton.Left, OxyModifierKeys.Control | OxyModifierKeys.Alt, 2, PlotCommands.ResetAt);
+
+                plotView.Controller.BindMouseDown(OxyMouseButton.Right, OxyModifierKeys.Control | OxyModifierKeys.Alt, PlotCommands.ZoomRectangle);
+                plotView.Controller.BindMouseDown(OxyMouseButton.Right, OxyModifierKeys.Control, 2, PlotCommands.ResetAt);
                 plotView.Controller.BindMouseDown(OxyMouseButton.Right, OxyModifierKeys.Alt, PlotCommands.PanAt);
 
 
@@ -269,6 +267,9 @@ public partial class CryptoVisualisation : Form
             finally
             {
                 Data.Symbol.CalculatingZones = false;
+                ButtonZoomLast.Enabled = true;
+                ButtonCalculate.Enabled = true;
+                Cursor.Current = Cursors.Default;
             }
         }
         catch (Exception e)
