@@ -185,16 +185,19 @@ public class DataStore
 
                                         for (int j = 0; j < symbolInterval.CandleList.Count; j++)
                                         {
-                                            CryptoCandle candle = symbolInterval.CandleList.Values[j];
-                                            binaryWriter.Write(candle.OpenTime);
-                                            binaryWriter.Write(candle.Open);
-                                            binaryWriter.Write(candle.High);
-                                            binaryWriter.Write(candle.Low);
-                                            binaryWriter.Write(candle.Close);
-                                            binaryWriter.Write(candle.Volume);
+                                            CryptoCandle? candle = symbolInterval.CandleList.Values[j];
+                                            if (candle != null)
+                                            {
+                                                binaryWriter.Write(candle.OpenTime);
+                                                binaryWriter.Write(candle.Open);
+                                                binaryWriter.Write(candle.High);
+                                                binaryWriter.Write(candle.Low);
+                                                binaryWriter.Write(candle.Close);
+                                                binaryWriter.Write(candle.Volume);
 #if SUPPORTBASEVOLUME
-                                            binaryWriter.Write(candle.BaseVolume); // version 2
+                                                binaryWriter.Write(candle.BaseVolume); // version 2
 #endif
+                                            }
                                         }
                                     }
                                     Directory.CreateDirectory(dirSymbol);

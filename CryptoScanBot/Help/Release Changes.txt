@@ -1,7 +1,10 @@
 CryptoScanBot release historie:
 
-xx-10-2024 1.9.4-.....
+03-11-2024 1.9.4-.....
 
+- Scanner - Dominante zones inzien via een extra formulier
+- Scanner - Dominante zones laten calculeren via een batch process
+- Scanner - Dominante zones melden indien ze binnen 1% komen te liggen
 - Scanner - Change columns grid - Automatisch de checkboxes breder maken als de tekst er niet in past (Market trend is dan wel zichtbaar)
 - Scanner - StoRsi - de grenzen van de BB kunnen opgeven (net zoals bij de STOBB en SBM)
 - Scanner - De opstart parameters voor het selecteren van de exchange is hoofdletter gevoelig (ook voorloop spaties kunnen meekomen)
@@ -30,7 +33,7 @@ xx-10-2024 1.9.4-.....
 - Trader - Het Telegram melding voor de Altrady webhook uitbreiden met een link naar de Altrady app/symbol/interval
 - Trader - Als een positie wordt geopend via de Altrady webhook dan een telegram melding versturen
 - Trader - De Altrady webhook signalId toegevoegd als een kolom in de openstaande en gesloten posities (blijft lastig te correleren)
-- Trader - Een afgesloten positie kan blijven hangen indien de quantity precies 0 is (normaal is er wel wat dust en wordt ie automatisch gesloten)
+- Trader - Een afgesloten positie kan blijven hangen indien de quantity precies 0 is (normaal is er wel wat dust en wordt deze automatisch gesloten)
 - Trader - De tekst "Partiallyandclosed" is vervangen met "Filled" (partiallyandclosed is een aparte status die intern een iets andere betekenis heeft)
 
 
