@@ -202,6 +202,9 @@ public class TrendInterval
         for (int i = 0; i < zigZagList.Count; i++)
         {
             zigZag = zigZagList[i];
+            // Nope, the dummies are the most important as it can be a BOS (break of structure)
+            //if (zigZag.Dummy)
+            //    continue;
 
             // Pickup last value
             decimal value;

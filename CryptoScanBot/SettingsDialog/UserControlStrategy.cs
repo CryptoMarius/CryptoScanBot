@@ -14,7 +14,7 @@ public partial class UserControlStrategy : UserControl
 
     public void InitControls(bool isForTrading, CryptoTradeSide tradeSide)
     {
-        foreach (var signalDefinition in SignalHelper.AlgorithmDefinitionList.Values)
+        foreach (var signalDefinition in RegisterAlgorithms.AlgorithmDefinitionList.Values)
         {
             if (isForTrading && signalDefinition.Strategy == CryptoSignalStrategy.Jump)
                 continue;
@@ -26,7 +26,7 @@ public partial class UserControlStrategy : UserControl
             {
                 AutoSize = true,
                 UseVisualStyleBackColor = true,
-                Text = SignalHelper.GetAlgorithm(signalDefinition.Strategy),
+                Text = RegisterAlgorithms.GetAlgorithm(signalDefinition.Strategy),
             };
             flowLayoutPanel1.Controls.Add(checkbox);
 

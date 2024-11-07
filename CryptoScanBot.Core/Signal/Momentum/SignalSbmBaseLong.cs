@@ -90,24 +90,6 @@ public static class SignalSbmBaseOversoldHelper
         return true;
     }
 
-
-    public static bool IsStochOversold(this CryptoCandle candle, int correction = 0)
-    {
-        // Stochastic Oscillator: K en D (langzaam) moeten kleiner zijn dan 20% (oversold)
-        if (candle.CandleData?.StochSignal > GlobalData.Settings.General.StochValueOversold - correction)
-            return false;
-        if (candle.CandleData?.StochOscillator > GlobalData.Settings.General.StochValueOversold - correction)
-            return false;
-        return true;
-    }
-
-
-    public static bool IsRsiOversold(this CryptoCandle candle, int correction = 0)
-    {
-        if (candle.CandleData?.Rsi > GlobalData.Settings.General.RsiValueOversold - correction)
-            return false;
-        return true;
-    }
 }
 
 

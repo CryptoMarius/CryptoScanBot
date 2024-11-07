@@ -139,7 +139,7 @@ public class CryptoData2: CryptoData
 
     public CryptoSignalStrategy Strategy { get; set; }
     [Computed]
-    public string StrategyText { get { return SignalHelper.GetAlgorithm(Strategy); } }
+    public string StrategyText { get { return RegisterAlgorithms.GetAlgorithm(Strategy); } }
 
 
     public double Last24HoursChange { get; set; }

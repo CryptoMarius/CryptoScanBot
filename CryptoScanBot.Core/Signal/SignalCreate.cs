@@ -530,7 +530,7 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
 
     private bool ExecuteAlgorithm(AlgorithmDefinition strategyDefinition)
     {
-        SignalCreateBase? algorithm = SignalHelper.GetAlgorithm(Side, strategyDefinition.Strategy, TradeAccount, Symbol, Interval, Candle);
+        SignalCreateBase? algorithm = RegisterAlgorithms.GetAlgorithm(Side, strategyDefinition.Strategy, TradeAccount, Symbol, Interval, Candle);
         if (algorithm != null)
         {
             if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
@@ -638,7 +638,7 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
             // Ze staan alfabetisch, sbm1, sbm2, sbm3, stobb dat gaat per ongeluk goed
             foreach (CryptoSignalStrategy strategy in TradingConfig.Signals[Side].StrategySbmStob.ToList())
             {
-                if (SignalHelper.GetAlgorithm(strategy, out AlgorithmDefinition? strategyDefinition))
+                if (RegisterAlgorithms.GetAlgorithm(strategy, out AlgorithmDefinition? strategyDefinition))
                 {
                     if (ExecuteAlgorithm(strategyDefinition!))
                         break;
@@ -648,7 +648,7 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
             // En de overige waaronder de jump
             foreach (CryptoSignalStrategy strategy in TradingConfig.Signals[Side].StrategyOthers.ToList())
             {
-                if (SignalHelper.GetAlgorithm(strategy, out AlgorithmDefinition? strategyDefinition))
+                if (RegisterAlgorithms.GetAlgorithm(strategy, out AlgorithmDefinition? strategyDefinition))
                 {
                     ExecuteAlgorithm(strategyDefinition!);
                 }

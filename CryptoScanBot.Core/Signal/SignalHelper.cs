@@ -1,172 +1,87 @@
-﻿using CryptoScanBot.Core.Enums;
+﻿using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
-using CryptoScanBot.Core.Signal.Momentum;
-using CryptoScanBot.Core.Signal.Other;
 
 namespace CryptoScanBot.Core.Signal;
 
 public static class SignalHelper
 {
-    /// <summary>
-    /// All available strategies + indexed
-    /// </summary>
-    static public readonly SortedList<CryptoSignalStrategy, AlgorithmDefinition> AlgorithmDefinitionList = [];
-
-
-    public static void Register(AlgorithmDefinition algorithmDefinition)
+   public static bool IsStochOversold(this CryptoCandle candle, int correction = 0)
     {
-        AlgorithmDefinitionList.Add(algorithmDefinition.Strategy, algorithmDefinition);
-    }
-
-    // a class contructor get called later (when something of the class is touched, cannot use it to register something)
-
-    //public static void RegisterLong(CryptoSignalStrategy strategy, string name, Type? analyzeType)
-    //{
-    //    if (!GetAlgorithm(strategy, out AlgorithmDefinition? definition))
-    //        Register(new AlgorithmDefinition() { Name = name, Strategy = strategy, AnalyzeLongType = null, AnalyzeShortType = analyzeType, });
-
-    //    definition!.AnalyzeLongType = analyzeType;
-    //}
-
-    //public static void RegisterShort(CryptoSignalStrategy strategy, string name, Type? analyzeType)
-    //{
-    //    if (!GetAlgorithm(strategy, out AlgorithmDefinition? definition))
-    //        Register(new AlgorithmDefinition() { Name = name, Strategy = strategy, AnalyzeLongType = null, AnalyzeShortType = analyzeType, });
-
-    //    definition!.AnalyzeShortType = analyzeType;
-    //}
-
-    static SignalHelper()
-    {
-        //***************************************************
-        // Jump
-        //***************************************************
-        Register(new AlgorithmDefinition()
-        {
-            Name = "jump",
-            Strategy = CryptoSignalStrategy.Jump,
-            AnalyzeLongType = typeof(SignalCandleJumpShort),
-            AnalyzeShortType = typeof(SignalCandleJumpLong),
-        });
-
-        //***************************************************
-        // SBMx (a special kind of STOBB)
-        //***************************************************
-        Register(new AlgorithmDefinition()
-        {
-            Name = "sbm1",
-            Strategy = CryptoSignalStrategy.Sbm1,
-            AnalyzeLongType = typeof(SignalSbm1Long),
-            AnalyzeShortType = typeof(SignalSbm1Short),
-        });
-
-        Register(new AlgorithmDefinition()
-        {
-            Name = "sbm2",
-            Strategy = CryptoSignalStrategy.Sbm2,
-            AnalyzeLongType = typeof(SignalSbm2Long),
-            AnalyzeShortType = typeof(SignalSbm2Short),
-        });
-
-
-        Register(new AlgorithmDefinition()
-        {
-            Name = "sbm3",
-            Strategy = CryptoSignalStrategy.Sbm3,
-            AnalyzeLongType = typeof(SignalSbm3Long),
-            AnalyzeShortType = typeof(SignalSbm3Short),
-        });
-
-
-
-        //***************************************************
-        // STOBB
-        //***************************************************
-        Register(new AlgorithmDefinition()
-        {
-            Name = "stobb",
-            Strategy = CryptoSignalStrategy.Stobb,
-            AnalyzeLongType = typeof(SignalStobbLong),
-            AnalyzeShortType = typeof(SignalStobbShort),
-        });
-        Register(new AlgorithmDefinition()
-        {
-            Name = "stobb.multi",
-            Strategy = CryptoSignalStrategy.StobbMulti,
-            AnalyzeLongType = typeof(SignalStobbMultiLong),
-            AnalyzeShortType = typeof(SignalStobbMultiShort),
-        });
-
-
-
-        //***************************************************
-        // WGHBM - Momentum indicator that shows arrows when the Stochastic and the RSI are at the same time in the oversold or overbought area.
-        //***************************************************
-        // https://www.tradingview.com/script/0F1sNM49-WGHBM/ (not available anymore)
-        Register(new AlgorithmDefinition()
-        {
-            Name = "storsi", // was WGHM = We Gaan Het Meemaken.. 
-            Strategy = CryptoSignalStrategy.StoRsi,
-            AnalyzeLongType = typeof(SignalStoRsiLong),
-            AnalyzeShortType = typeof(SignalStoRsiShort),
-        });
-
-        // another combined with a higher timeframe
-        Register(new AlgorithmDefinition()
-        {
-            Name = "storsi.multi",
-            Strategy = CryptoSignalStrategy.StoRsiMulti,
-            AnalyzeLongType = typeof(SignalStoRsiMultiLong),
-            AnalyzeShortType = typeof(SignalStoRsiMultiShort),
-        });
-
-
-        //***************************************************
-        // Level approaching
-        //***************************************************
-        Register(new AlgorithmDefinition()
-        {
-            Name = "dom.nearby",
-            Strategy = CryptoSignalStrategy.DominantLevel,
-            AnalyzeLongType = typeof(DominantLevelLong),
-            AnalyzeShortType = typeof(DominantLevelShort),
-        });
-        
-
+        // Stochastic Oscillator: K en D (langzaam) moeten kleiner zijn dan 20% (oversold)
+        if (candle.CandleData?.StochSignal > GlobalData.Settings.General.StochValueOversold - correction)
+            return false;
+        if (candle.CandleData?.StochOscillator > GlobalData.Settings.General.StochValueOversold - correction)
+            return false;
+        return true;
     }
 
 
-    /// <summary>
-    /// Return the algorithm definition
-    /// </summary>
-    public static bool GetAlgorithm(CryptoSignalStrategy strategy, out AlgorithmDefinition? definition)
+    public static bool IsRsiOversold(this CryptoCandle candle, int correction = 0)
     {
-        return AlgorithmDefinitionList.TryGetValue(strategy, out definition);
+        if (candle.CandleData?.Rsi > GlobalData.Settings.General.RsiValueOversold - correction)
+            return false;
+        return true;
     }
 
-    /// <summary>
-    /// Return the name of the algorithm
-    /// </summary>
-    public static string GetAlgorithm(CryptoSignalStrategy strategy)
+    public static bool IsStochOverbought(this CryptoCandle candle, int correction = 0)
     {
-        if (GetAlgorithm(strategy, out AlgorithmDefinition? definition))
-            return definition!.Name;
-        return strategy.ToString();
+        // Stochastic Oscillator: K en D (langzaam) moeten groter zijn dan 80% (overbought)
+        if (candle.CandleData?.StochSignal < GlobalData.Settings.General.StochValueOverbought + correction)
+            return false;
+        if (candle.CandleData?.StochOscillator < GlobalData.Settings.General.StochValueOverbought + correction)
+            return false;
+        return true;
     }
 
-    /// <summary>
-    /// Return an instance of the algorithm (long/short)
-    /// </summary>
-    public static SignalCreateBase? GetAlgorithm(CryptoTradeSide mode, CryptoSignalStrategy strategy, CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle)
+
+    public static bool IsRsiOverbought(this CryptoCandle candle, int correction = 0)
     {
-        if (GetAlgorithm(strategy, out AlgorithmDefinition? definition))
-        {
-            if (mode == CryptoTradeSide.Long && definition!.AnalyzeLongType != null)
-                return (SignalCreateBase?)Activator.CreateInstance(definition!.AnalyzeLongType, [tradeAccount, symbol, interval, candle]);
-            if (mode == CryptoTradeSide.Short && definition!.AnalyzeShortType != null)
-                return (SignalCreateBase?)Activator.CreateInstance(definition!.AnalyzeShortType, [tradeAccount, symbol, interval, candle]);
-        }
-        return null;
+        if (candle.CandleData?.Rsi < GlobalData.Settings.General.RsiValueOverbought + correction)
+            return false;
+        return true;
     }
 
+
+    public static bool CheckBollingerBandsWidth(this CryptoCandle candle, double minValue, double maxValue)
+    {
+        double boundary = minValue;
+        if (boundary > 0 && candle.CandleData!.BollingerBandsPercentage <= boundary)
+            return false;
+
+        boundary = maxValue;
+        if (boundary > 0 && candle.CandleData!.BollingerBandsPercentage >= boundary)
+            return false;
+
+        return true;
+    }
+
+
+    public static bool IsBelowBollingerBands(this CryptoCandle candle, bool useLowHigh)
+    {
+        // Geopend of gesloten onder de bollinger band
+        decimal value;
+        if (useLowHigh)
+            value = candle.Low;
+        else
+            value = Math.Min(candle.Open, candle.Close);
+        double? band = candle.CandleData!.Sma20 - candle.CandleData.BollingerBandsDeviation;
+        if (band.HasValue && value <= (decimal)band)
+            return true;
+        return false;
+    }
+
+
+    public static bool IsAboveBollingerBands(this CryptoCandle candle, bool useLowHigh)
+    {
+        // Geopend of gesloten boven de bollinger band
+        decimal value;
+        if (useLowHigh)
+            value = candle.High;
+        else
+            value = Math.Max(candle.Open, candle.Close);
+        double? band = candle.CandleData!.Sma20 + candle.CandleData.BollingerBandsDeviation;
+        if (band.HasValue && value >= (decimal)band)
+            return true;
+        return false;
+    }
 }

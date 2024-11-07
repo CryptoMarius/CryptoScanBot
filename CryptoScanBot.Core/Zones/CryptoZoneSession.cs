@@ -11,7 +11,7 @@ public class CryptoZoneSession
     public string SymbolQuote { get; set; } = "USDT";
     public string IntervalName { get; set; } = "1h";
 
-    public bool UseHighLow { get; set; } = false;
+    //public bool UseHighLow { get; set; } = false;
 
     public bool ZoomLiqBoxes { get; set; } = true;
     public bool ShowLiqBoxes { get; set; } = true;

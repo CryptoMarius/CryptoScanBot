@@ -94,7 +94,7 @@ public class SignalStobbMultiLong : SignalSbmBaseLong
         }
 
         //// Er een candle onder de bb opent of sluit
-        //if (!CandleLast.IsBelowBollingerBands(GlobalData.Settings.Signal.Stobb.UseLowHigh))
+        //if (!CandleLast.IsBelowBollingerBands(GlobalData.Settings.Signal.Stobb.UseHighLow))
         //{
         //    ExtraText = "niet beneden de bb.lower";
         //    return false;

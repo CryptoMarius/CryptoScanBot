@@ -35,19 +35,15 @@ partial class CryptoVisualisation
         EditSymbolQuote = new ComboBox();
         label2 = new Label();
         EditIntervalName = new ComboBox();
-        EditUseHighLow = new CheckBox();
         label4 = new Label();
         EditDeviation = new NumericUpDown();
         EditShowLiqBoxes = new CheckBox();
         EditZoomLiqBoxes = new CheckBox();
         EditShowZigZag = new CheckBox();
-        label9 = new Label();
-        EditCandleCount = new NumericUpDown();
         ButtonCalculate = new Button();
         ButtonZoomLast = new Button();
         flowLayoutPanel1.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)EditDeviation).BeginInit();
-        ((System.ComponentModel.ISupportInitialize)EditCandleCount).BeginInit();
         SuspendLayout();
         // 
         // flowLayoutPanel1
@@ -59,14 +55,11 @@ partial class CryptoVisualisation
         flowLayoutPanel1.Controls.Add(EditSymbolQuote);
         flowLayoutPanel1.Controls.Add(label2);
         flowLayoutPanel1.Controls.Add(EditIntervalName);
-        flowLayoutPanel1.Controls.Add(EditUseHighLow);
         flowLayoutPanel1.Controls.Add(label4);
         flowLayoutPanel1.Controls.Add(EditDeviation);
         flowLayoutPanel1.Controls.Add(EditShowLiqBoxes);
         flowLayoutPanel1.Controls.Add(EditZoomLiqBoxes);
         flowLayoutPanel1.Controls.Add(EditShowZigZag);
-        flowLayoutPanel1.Controls.Add(label9);
-        flowLayoutPanel1.Controls.Add(EditCandleCount);
         flowLayoutPanel1.Controls.Add(ButtonCalculate);
         flowLayoutPanel1.Controls.Add(ButtonZoomLast);
         flowLayoutPanel1.Dock = DockStyle.Left;
@@ -126,20 +119,10 @@ partial class CryptoVisualisation
         EditIntervalName.Size = new Size(121, 23);
         EditIntervalName.TabIndex = 9;
         // 
-        // EditUseHighLow
-        // 
-        EditUseHighLow.AutoSize = true;
-        EditUseHighLow.Location = new Point(6, 138);
-        EditUseHighLow.Name = "EditUseHighLow";
-        EditUseHighLow.Size = new Size(101, 19);
-        EditUseHighLow.TabIndex = 6;
-        EditUseHighLow.Text = "Use High/Low";
-        EditUseHighLow.UseVisualStyleBackColor = true;
-        // 
         // label4
         // 
         label4.AutoSize = true;
-        label4.Location = new Point(6, 160);
+        label4.Location = new Point(6, 135);
         label4.Name = "label4";
         label4.Size = new Size(57, 15);
         label4.TabIndex = 16;
@@ -149,7 +132,7 @@ partial class CryptoVisualisation
         // 
         EditDeviation.DecimalPlaces = 2;
         EditDeviation.Increment = new decimal(new int[] { 25, 0, 0, 131072 });
-        EditDeviation.Location = new Point(6, 178);
+        EditDeviation.Location = new Point(6, 153);
         EditDeviation.Name = "EditDeviation";
         EditDeviation.Size = new Size(120, 23);
         EditDeviation.TabIndex = 1;
@@ -157,7 +140,7 @@ partial class CryptoVisualisation
         // EditShowLiqBoxes
         // 
         EditShowLiqBoxes.AutoSize = true;
-        EditShowLiqBoxes.Location = new Point(6, 207);
+        EditShowLiqBoxes.Location = new Point(6, 182);
         EditShowLiqBoxes.Name = "EditShowLiqBoxes";
         EditShowLiqBoxes.Size = new Size(111, 19);
         EditShowLiqBoxes.TabIndex = 5;
@@ -167,7 +150,7 @@ partial class CryptoVisualisation
         // EditZoomLiqBoxes
         // 
         EditZoomLiqBoxes.AutoSize = true;
-        EditZoomLiqBoxes.Location = new Point(6, 232);
+        EditZoomLiqBoxes.Location = new Point(6, 207);
         EditZoomLiqBoxes.Name = "EditZoomLiqBoxes";
         EditZoomLiqBoxes.Size = new Size(111, 19);
         EditZoomLiqBoxes.TabIndex = 4;
@@ -177,33 +160,16 @@ partial class CryptoVisualisation
         // EditShowZigZag
         // 
         EditShowZigZag.AutoSize = true;
-        EditShowZigZag.Location = new Point(6, 257);
+        EditShowZigZag.Location = new Point(6, 232);
         EditShowZigZag.Name = "EditShowZigZag";
         EditShowZigZag.Size = new Size(95, 19);
         EditShowZigZag.TabIndex = 7;
         EditShowZigZag.Text = "Show ZigZag";
         EditShowZigZag.UseVisualStyleBackColor = true;
         // 
-        // label9
-        // 
-        label9.AutoSize = true;
-        label9.Location = new Point(6, 279);
-        label9.Name = "label9";
-        label9.Size = new Size(49, 15);
-        label9.TabIndex = 11;
-        label9.Text = "Candles";
-        // 
-        // EditCandleCount
-        // 
-        EditCandleCount.Location = new Point(6, 297);
-        EditCandleCount.Maximum = new decimal(new int[] { 10000, 0, 0, 0 });
-        EditCandleCount.Name = "EditCandleCount";
-        EditCandleCount.Size = new Size(120, 23);
-        EditCandleCount.TabIndex = 10;
-        // 
         // ButtonCalculate
         // 
-        ButtonCalculate.Location = new Point(6, 326);
+        ButtonCalculate.Location = new Point(6, 257);
         ButtonCalculate.Name = "ButtonCalculate";
         ButtonCalculate.Size = new Size(75, 23);
         ButtonCalculate.TabIndex = 8;
@@ -212,7 +178,7 @@ partial class CryptoVisualisation
         // 
         // ButtonZoomLast
         // 
-        ButtonZoomLast.Location = new Point(6, 355);
+        ButtonZoomLast.Location = new Point(6, 286);
         ButtonZoomLast.Name = "ButtonZoomLast";
         ButtonZoomLast.Size = new Size(75, 23);
         ButtonZoomLast.TabIndex = 14;
@@ -231,7 +197,6 @@ partial class CryptoVisualisation
         flowLayoutPanel1.ResumeLayout(false);
         flowLayoutPanel1.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)EditDeviation).EndInit();
-        ((System.ComponentModel.ISupportInitialize)EditCandleCount).EndInit();
         ResumeLayout(false);
         PerformLayout();
     }
@@ -244,12 +209,9 @@ partial class CryptoVisualisation
     private Label label2;
     private CheckBox EditZoomLiqBoxes;
     private CheckBox EditShowLiqBoxes;
-    private CheckBox EditUseHighLow;
     private CheckBox EditShowZigZag;
     private Button ButtonCalculate;
     private ComboBox EditIntervalName;
-    private Label label9;
-    private NumericUpDown EditCandleCount;
     private Label label3;
     private ComboBox EditSymbolQuote;
     private Button Button1;

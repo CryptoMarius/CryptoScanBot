@@ -196,6 +196,13 @@ partial class FrmSettings
         EditJumpUseLowHighCalculation = new CheckBox();
         label3 = new Label();
         EditAnalysisCandleJumpPercentage = new NumericUpDown();
+        tabSignalDominantLevel = new TabPage();
+        flowLayoutPanel4 = new FlowLayoutPanel();
+        UserControlSettingsSoundAndColorsDominantLevel = new SettingsDialog.UserControlSettingsPlaySoundAndColors();
+        groupBox8 = new GroupBox();
+        EditZonesUseLowHigh = new CheckBox();
+        label32 = new Label();
+        EditZonesWarnPercentage = new NumericUpDown();
         tabTrading = new TabPage();
         tabControlTrading = new TabControl();
         tabTradingGeneral = new TabPage();
@@ -257,6 +264,7 @@ partial class FrmSettings
         panel6 = new Panel();
         label49 = new Label();
         tabPageOptions = new TabPage();
+        EditDebugAssetManagement = new CheckBox();
         EditUseHighLowInTrendCalculation = new CheckBox();
         EditDebugTrendCalculation = new CheckBox();
         EditDebugSymbol = new TextBox();
@@ -265,7 +273,9 @@ partial class FrmSettings
         EditDebugSignalCreate = new CheckBox();
         EditDebugKLineReceive = new CheckBox();
         toolTip1 = new ToolTip(components);
-        EditDebugAssetManagement = new CheckBox();
+        label30 = new Label();
+        EditZonesCandleCount = new NumericUpDown();
+        label33 = new Label();
         panelButtons.SuspendLayout();
         panelFill.SuspendLayout();
         tabControlMain.SuspendLayout();
@@ -341,6 +351,10 @@ partial class FrmSettings
         groupBox5.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)EditJumpCandlesLookbackCount).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditAnalysisCandleJumpPercentage).BeginInit();
+        tabSignalDominantLevel.SuspendLayout();
+        flowLayoutPanel4.SuspendLayout();
+        groupBox8.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)EditZonesWarnPercentage).BeginInit();
         tabTrading.SuspendLayout();
         tabControlTrading.SuspendLayout();
         tabTradingGeneral.SuspendLayout();
@@ -369,6 +383,7 @@ partial class FrmSettings
         tabShortBlackList.SuspendLayout();
         panel6.SuspendLayout();
         tabPageOptions.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)EditZonesCandleCount).BeginInit();
         SuspendLayout();
         // 
         // panelButtons
@@ -950,6 +965,7 @@ partial class FrmSettings
         tabControlSignals.Controls.Add(tabSignalSbm);
         tabControlSignals.Controls.Add(tabSignalStoRsi);
         tabControlSignals.Controls.Add(tabSignalJump);
+        tabControlSignals.Controls.Add(tabSignalDominantLevel);
         tabControlSignals.Dock = DockStyle.Fill;
         tabControlSignals.Location = new Point(4, 3);
         tabControlSignals.Name = "tabControlSignals";
@@ -2296,6 +2312,90 @@ partial class FrmSettings
         EditAnalysisCandleJumpPercentage.Size = new Size(56, 23);
         EditAnalysisCandleJumpPercentage.TabIndex = 126;
         // 
+        // tabSignalDominantLevel
+        // 
+        tabSignalDominantLevel.Controls.Add(flowLayoutPanel4);
+        tabSignalDominantLevel.Location = new Point(4, 27);
+        tabSignalDominantLevel.Name = "tabSignalDominantLevel";
+        tabSignalDominantLevel.Padding = new Padding(3);
+        tabSignalDominantLevel.Size = new Size(1126, 578);
+        tabSignalDominantLevel.TabIndex = 12;
+        tabSignalDominantLevel.Text = "Dominant Level";
+        tabSignalDominantLevel.UseVisualStyleBackColor = true;
+        // 
+        // flowLayoutPanel4
+        // 
+        flowLayoutPanel4.AutoScroll = true;
+        flowLayoutPanel4.AutoSize = true;
+        flowLayoutPanel4.Controls.Add(UserControlSettingsSoundAndColorsDominantLevel);
+        flowLayoutPanel4.Controls.Add(groupBox8);
+        flowLayoutPanel4.Dock = DockStyle.Fill;
+        flowLayoutPanel4.FlowDirection = FlowDirection.TopDown;
+        flowLayoutPanel4.Location = new Point(3, 3);
+        flowLayoutPanel4.Name = "flowLayoutPanel4";
+        flowLayoutPanel4.Size = new Size(1120, 572);
+        flowLayoutPanel4.TabIndex = 160;
+        // 
+        // UserControlSettingsSoundAndColorsDominantLevel
+        // 
+        UserControlSettingsSoundAndColorsDominantLevel.AutoScroll = true;
+        UserControlSettingsSoundAndColorsDominantLevel.AutoSize = true;
+        UserControlSettingsSoundAndColorsDominantLevel.Location = new Point(0, 0);
+        UserControlSettingsSoundAndColorsDominantLevel.Margin = new Padding(0);
+        UserControlSettingsSoundAndColorsDominantLevel.Name = "UserControlSettingsSoundAndColorsDominantLevel";
+        UserControlSettingsSoundAndColorsDominantLevel.Padding = new Padding(10);
+        UserControlSettingsSoundAndColorsDominantLevel.Size = new Size(807, 176);
+        UserControlSettingsSoundAndColorsDominantLevel.TabIndex = 158;
+        // 
+        // groupBox8
+        // 
+        groupBox8.AutoSize = true;
+        groupBox8.Controls.Add(label33);
+        groupBox8.Controls.Add(label30);
+        groupBox8.Controls.Add(EditZonesCandleCount);
+        groupBox8.Controls.Add(EditZonesUseLowHigh);
+        groupBox8.Controls.Add(label32);
+        groupBox8.Controls.Add(EditZonesWarnPercentage);
+        groupBox8.Location = new Point(10, 186);
+        groupBox8.Margin = new Padding(10);
+        groupBox8.Name = "groupBox8";
+        groupBox8.Padding = new Padding(10);
+        groupBox8.Size = new Size(306, 149);
+        groupBox8.TabIndex = 159;
+        groupBox8.TabStop = false;
+        groupBox8.Text = "Settings";
+        // 
+        // EditZonesUseLowHigh
+        // 
+        EditZonesUseLowHigh.AutoSize = true;
+        EditZonesUseLowHigh.Location = new Point(29, 65);
+        EditZonesUseLowHigh.Margin = new Padding(4, 3, 4, 3);
+        EditZonesUseLowHigh.Name = "EditZonesUseLowHigh";
+        EditZonesUseLowHigh.Size = new Size(242, 19);
+        EditZonesUseLowHigh.TabIndex = 127;
+        EditZonesUseLowHigh.Text = "Calculate via wicks instead of open/close";
+        EditZonesUseLowHigh.UseVisualStyleBackColor = true;
+        // 
+        // label32
+        // 
+        label32.AutoSize = true;
+        label32.Location = new Point(28, 36);
+        label32.Margin = new Padding(4, 0, 4, 0);
+        label32.Name = "label32";
+        label32.Size = new Size(97, 15);
+        label32.TabIndex = 125;
+        label32.Text = "Warn percentage";
+        // 
+        // EditZonesWarnPercentage
+        // 
+        EditZonesWarnPercentage.DecimalPlaces = 2;
+        EditZonesWarnPercentage.Increment = new decimal(new int[] { 25, 0, 0, 131072 });
+        EditZonesWarnPercentage.Location = new Point(157, 34);
+        EditZonesWarnPercentage.Margin = new Padding(4, 3, 4, 3);
+        EditZonesWarnPercentage.Name = "EditZonesWarnPercentage";
+        EditZonesWarnPercentage.Size = new Size(56, 23);
+        EditZonesWarnPercentage.TabIndex = 126;
+        // 
         // tabTrading
         // 
         tabTrading.Controls.Add(tabControlTrading);
@@ -2976,6 +3076,17 @@ partial class FrmSettings
         tabPageOptions.Text = "Debug";
         tabPageOptions.UseVisualStyleBackColor = true;
         // 
+        // EditDebugAssetManagement
+        // 
+        EditDebugAssetManagement.AutoSize = true;
+        EditDebugAssetManagement.Location = new Point(23, 211);
+        EditDebugAssetManagement.Margin = new Padding(4, 3, 4, 3);
+        EditDebugAssetManagement.Name = "EditDebugAssetManagement";
+        EditDebugAssetManagement.Size = new Size(296, 19);
+        EditDebugAssetManagement.TabIndex = 304;
+        EditDebugAssetManagement.Text = "Debug asset management (papertrading/emulator)";
+        EditDebugAssetManagement.UseVisualStyleBackColor = true;
+        // 
         // EditUseHighLowInTrendCalculation
         // 
         EditUseHighLowInTrendCalculation.AutoSize = true;
@@ -3050,16 +3161,34 @@ partial class FrmSettings
         EditDebugKLineReceive.Text = "Debug KLineReceive (does kline ticker work)";
         EditDebugKLineReceive.UseVisualStyleBackColor = true;
         // 
-        // EditDebugAssetManagement
+        // label30
         // 
-        EditDebugAssetManagement.AutoSize = true;
-        EditDebugAssetManagement.Location = new Point(23, 211);
-        EditDebugAssetManagement.Margin = new Padding(4, 3, 4, 3);
-        EditDebugAssetManagement.Name = "EditDebugAssetManagement";
-        EditDebugAssetManagement.Size = new Size(296, 19);
-        EditDebugAssetManagement.TabIndex = 304;
-        EditDebugAssetManagement.Text = "Debug asset management (papertrading/emulator)";
-        EditDebugAssetManagement.UseVisualStyleBackColor = true;
+        label30.AutoSize = true;
+        label30.Location = new Point(28, 99);
+        label30.Margin = new Padding(4, 0, 4, 0);
+        label30.Name = "label30";
+        label30.Size = new Size(77, 15);
+        label30.TabIndex = 128;
+        label30.Text = "Candles back";
+        // 
+        // EditZonesCandleCount
+        // 
+        EditZonesCandleCount.Location = new Point(157, 97);
+        EditZonesCandleCount.Margin = new Padding(4, 3, 4, 3);
+        EditZonesCandleCount.Maximum = new decimal(new int[] { 6000, 0, 0, 0 });
+        EditZonesCandleCount.Name = "EditZonesCandleCount";
+        EditZonesCandleCount.Size = new Size(56, 23);
+        EditZonesCandleCount.TabIndex = 129;
+        // 
+        // label33
+        // 
+        label33.AutoSize = true;
+        label33.Location = new Point(221, 99);
+        label33.Margin = new Padding(4, 0, 4, 0);
+        label33.Name = "label33";
+        label33.Size = new Size(71, 15);
+        label33.TabIndex = 130;
+        label33.Text = "(1h candles)";
         // 
         // FrmSettings
         // 
@@ -3173,6 +3302,13 @@ partial class FrmSettings
         groupBox5.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)EditJumpCandlesLookbackCount).EndInit();
         ((System.ComponentModel.ISupportInitialize)EditAnalysisCandleJumpPercentage).EndInit();
+        tabSignalDominantLevel.ResumeLayout(false);
+        tabSignalDominantLevel.PerformLayout();
+        flowLayoutPanel4.ResumeLayout(false);
+        flowLayoutPanel4.PerformLayout();
+        groupBox8.ResumeLayout(false);
+        groupBox8.PerformLayout();
+        ((System.ComponentModel.ISupportInitialize)EditZonesWarnPercentage).EndInit();
         tabTrading.ResumeLayout(false);
         tabTrading.PerformLayout();
         tabControlTrading.ResumeLayout(false);
@@ -3221,6 +3357,7 @@ partial class FrmSettings
         panel6.PerformLayout();
         tabPageOptions.ResumeLayout(false);
         tabPageOptions.PerformLayout();
+        ((System.ComponentModel.ISupportInitialize)EditZonesCandleCount).EndInit();
         ResumeLayout(false);
     }
 
@@ -3462,4 +3599,14 @@ partial class FrmSettings
     private NumericUpDown EditAnalysisMaxEffective10DaysPercentage;
     private CheckBox EditUseHighLowInTrendCalculation;
     private CheckBox EditDebugAssetManagement;
+    private TabPage tabSignalDominantLevel;
+    private FlowLayoutPanel flowLayoutPanel4;
+    private SettingsDialog.UserControlSettingsPlaySoundAndColors UserControlSettingsSoundAndColorsDominantLevel;
+    private GroupBox groupBox8;
+    private Label label30;
+    private NumericUpDown EditZonesCandleCount;
+    private CheckBox EditZonesUseLowHigh;
+    private Label label32;
+    private NumericUpDown EditZonesWarnPercentage;
+    private Label label33;
 }

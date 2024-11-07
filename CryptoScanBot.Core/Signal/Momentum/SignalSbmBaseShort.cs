@@ -89,25 +89,6 @@ public static class SignalSbmBaseOverboughtHelper
         response = "";
         return true;
     }
-
-
-    public static bool IsStochOverbought(this CryptoCandle candle, int correction = 0)
-    {
-        // Stochastic Oscillator: K en D (langzaam) moeten groter zijn dan 80% (overbought)
-        if (candle.CandleData?.StochSignal < GlobalData.Settings.General.StochValueOverbought + correction)
-            return false;
-        if (candle.CandleData?.StochOscillator < GlobalData.Settings.General.StochValueOverbought + correction)
-            return false;
-        return true;
-    }
-
-
-    public static bool IsRsiOverbought(this CryptoCandle candle, int correction = 0)
-    {
-        if (candle.CandleData?.Rsi < GlobalData.Settings.General.RsiValueOverbought + correction)
-            return false;
-        return true;
-    }
 }
 
 

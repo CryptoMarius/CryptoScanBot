@@ -551,6 +551,10 @@ public partial class FrmMain : Form
     private long LastSignalSoundStobbOverbought = 0;
     private long LastSignalSoundCandleJumpUp = 0;
     private long LastSignalSoundCandleJumpDown = 0;
+    private long LastSignalSoundStoRsiOversold = 0;
+    private long LastSignalSoundStoRsiOverbought = 0;
+    private long LastSignalSoundZonesOversold = 0;
+    private long LastSignalSoundZonesOverbought = 0;
 
 
     private readonly Queue<string> logQueue = new();
@@ -709,10 +713,19 @@ public partial class FrmMain : Form
                 case CryptoSignalStrategy.StoRsi:
                     if (signal.Side == CryptoTradeSide.Long)
                         PlaySound(signal, GlobalData.Settings.Signal.StoRsi.PlaySound, GlobalData.Settings.Signal.StoRsi.PlaySpeech,
-                            GlobalData.Settings.Signal.StoRsi.SoundFileLong, ref LastSignalSoundStobbOversold);
+                            GlobalData.Settings.Signal.StoRsi.SoundFileLong, ref LastSignalSoundStoRsiOversold);
                     if (signal.Side == CryptoTradeSide.Short)
                         PlaySound(signal, GlobalData.Settings.Signal.StoRsi.PlaySound, GlobalData.Settings.Signal.StoRsi.PlaySpeech,
-                            GlobalData.Settings.Signal.StoRsi.SoundFileShort, ref LastSignalSoundStobbOverbought);
+                            GlobalData.Settings.Signal.StoRsi.SoundFileShort, ref LastSignalSoundStoRsiOverbought);
+                    break;
+
+                case CryptoSignalStrategy.DominantLevel:
+                    if (signal.Side == CryptoTradeSide.Long)
+                        PlaySound(signal, GlobalData.Settings.Signal.Zones.PlaySound, GlobalData.Settings.Signal.Zones.PlaySpeech,
+                            GlobalData.Settings.Signal.Zones.SoundFileLong, ref LastSignalSoundZonesOversold);
+                    if (signal.Side == CryptoTradeSide.Short)
+                        PlaySound(signal, GlobalData.Settings.Signal.Zones.PlaySound, GlobalData.Settings.Signal.Zones.PlaySpeech,
+                            GlobalData.Settings.Signal.Zones.SoundFileShort, ref LastSignalSoundZonesOverbought);
                     break;
             }
 

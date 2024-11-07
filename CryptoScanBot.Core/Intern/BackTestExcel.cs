@@ -360,7 +360,7 @@ public class BackTestExcel(CryptoSymbol symbol, List<CryptoCandle> history)
         }
 
 
-        string text = SignalHelper.GetAlgorithm(strategy);
+        string text = RegisterAlgorithms.GetAlgorithm(strategy);
         GlobalData.AddTextToLogTab(string.Format("Backtest {0} {1} ready", Symbol.Name, text));
 
         string folder = GlobalData.GetBaseDir() + @"\BackTest\";

@@ -68,9 +68,6 @@ public static class CryptoCandles
 
     public static async Task GetCandleData(CryptoSymbol symbol, CryptoSymbolInterval symbolInterval, StringBuilder log, long fetchFrom, bool fetchAll, int okayCount)
     {
-        //fetchAll = true;
-        //if (LoadedCandlesInMemory.TryGetValue(SymbolInterval.IntervalPeriod, out bool _))
-        //    return;
         KlineInterval? intervalEnumX = Exchange.BybitApi.Spot.Interval.GetExchangeInterval(symbolInterval.IntervalPeriod);
         if (intervalEnumX == null)
             throw new Exception("Not supported interval");
@@ -111,8 +108,6 @@ public static class CryptoCandles
 
         int available = 0;
         long unixStartTime = IntervalTools.StartOfIntervalCandle(fetchFrom, symbolInterval.Interval.Duration);
-        //if (unixStartTime == 1730170800 && symbolInterval.Interval.Name == "3m")
-        //    unixStartTime = unixStartTime;
         while (symbolInterval.CandleList!.ContainsKey(unixStartTime))
         {
             available++;
@@ -125,7 +120,6 @@ public static class CryptoCandles
                 //GlobalData.AddTextToLogTab($"Fetch historical data {symbol.Name}, {symbolInterval.Interval!.Name} candles available, no refresh needed {text2}");
                 return;
             }
-
             unixStartTime += symbolInterval.Interval.Duration;
         }
 
@@ -245,6 +239,29 @@ public static class CryptoCandles
                 //    writeStream.Close();
                 //}
                 LoadedCandlesInMemory[symbolInterval.IntervalPeriod] = false;
+            }
+        }
+    }
+
+
+    public static void CleanLoadedCandles(CryptoSymbol symbol)
+    {
+        foreach (var symbolInterval in symbol.IntervalPeriodList)
+        {
+            // Remove old candles
+            // TODO: Need end date instead of DateTime.UtcNow (works in SignalGrid, but not here)
+            long startFetchUnix = CandleIndicatorData.GetCandleFetchStart(symbol, symbolInterval.Interval, DateTime.UtcNow);
+            //DateTime startFetchUnixDate = CandleTools.GetUnixDate(startFetchUnix);
+            while (symbolInterval.CandleList.Values.Any())
+            {
+                CryptoCandle c = symbolInterval.CandleList.Values[0];
+                if (c.OpenTime < startFetchUnix)
+                {
+                    symbolInterval.CandleList.Remove(c.OpenTime);
+                    //GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} candle {c.DateLocal} removed");
+
+                }
+                else break;
             }
         }
     }

@@ -30,22 +30,6 @@ public static class Helper
         return value / 1.000000000000000000000000000000000m;
     }
 
-    public static decimal GetLowest(this CryptoCandle candle, bool useWicks)
-    {
-        if (useWicks)
-            return candle.Low;
-        else
-            return Math.Min(candle.Open, candle.Close);
-    }
-
-    public static decimal GetHighest(this CryptoCandle candle, bool useWicks)
-    {
-        if (useWicks)
-            return candle.High;
-        else
-            return Math.Max(candle.Open, candle.Close);
-    }
-
 
     public static string OhlcText(this CryptoCandle candle, CryptoSymbol symbol, CryptoInterval interval,
         string fmt, bool includeSymbol = false, bool includeInterval = false, bool includeVolume = false)
@@ -279,50 +263,6 @@ public static class Helper
 
         text = "";
         return true;
-    }
-
-
-    public static bool CheckBollingerBandsWidth(this CryptoCandle candle, double minValue, double maxValue)
-    {
-        double boundary = minValue;
-        if (boundary > 0 && candle.CandleData!.BollingerBandsPercentage <= boundary)
-            return false;
-
-        boundary = maxValue;
-        if (boundary > 0 && candle.CandleData!.BollingerBandsPercentage >= boundary)
-            return false;
-
-        return true;
-    }
-
-
-    public static bool IsBelowBollingerBands(this CryptoCandle candle, bool useLowHigh)
-    {
-        // Geopend of gesloten onder de bollinger band
-        decimal value;
-        if (useLowHigh)
-            value = candle.Low;
-        else
-            value = Math.Min(candle.Open, candle.Close);
-        double? band = candle.CandleData!.Sma20 - candle.CandleData.BollingerBandsDeviation;
-        if (band.HasValue && value <= (decimal)band)
-            return true;
-        return false;
-    }
-
-
-    public static bool IsAboveBollingerBands(this CryptoCandle candle, bool useLowHigh)
-    {
-        // Geopend of gesloten boven de bollinger band
-        decimal value;
-        if (useLowHigh)
-            value = candle.High;
-        else
-            value = Math.Max(candle.Open, candle.Close);
-        double? band = candle.CandleData!.Sma20 + candle.CandleData.BollingerBandsDeviation;
-        if (band.HasValue && value >= (decimal)band)
-            return true;
-        return false;
     }
 
 

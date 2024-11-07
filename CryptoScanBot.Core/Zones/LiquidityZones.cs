@@ -48,12 +48,14 @@ public class LiquidityZones
 
             // Calculate the Indicator
             ScannerLog.Logger.Info($"Creating zigzag indicator");
-            data.Indicator = new(data.SymbolInterval.CandleList, session.UseHighLow, session.OptimizeZigZag);
+            data.Indicator = new(data.SymbolInterval.CandleList, GlobalData.Settings.Signal.Zones.UseHighLow, session.OptimizeZigZag);
+            data.Indicator.PostponeFinish = true;
             foreach (var candle in data.SymbolInterval.CandleList.Values)
             {
                 if (candle.OpenTime >= fetchFrom)
                     data.Indicator.Calculate(candle, data.Interval.Duration);
             }
+            data.Indicator.FinishJob();
             CryptoTrendIndicator trend = TrendInterval.InterpretZigZagPoints(data.Indicator, null);
             ScannerLog.Logger.Info($"Done adding zigzag candles {trend}");
 
@@ -90,6 +92,9 @@ public class LiquidityZones
             ScannerLog.Logger.Info($"ERROR {e}");
             CryptoCandles.SaveAddedCandleData(data.Symbol, log);
         }
+
+        if (sender == null)
+            CryptoCandles.CleanLoadedCandles(data.Symbol);
     }
 
     public static async Task CalculateAllSymbolsAsync(object? sender)
@@ -105,14 +110,15 @@ public class LiquidityZones
 
                     if (symbol.QuoteData.MinimalVolume == 0 || symbol.Volume >= symbol.QuoteData.MinimalVolume)
                     {
-                        CryptoZoneSession session = new();
-                        session.SymbolBase = symbol.Base;
-                        session.SymbolQuote = symbol.Quote;
-                        session.IntervalName = "1h";
-                        session.UseHighLow = false;
-                        session.ShowLiqBoxes = true;
-                        session.ZoomLiqBoxes = true;
-                        session.ShowZigZag = false;
+                        CryptoZoneSession session = new()
+                        {
+                            SymbolBase = symbol.Base,
+                            SymbolQuote = symbol.Quote,
+                            IntervalName = "1h",
+                            ShowLiqBoxes = true,
+                            ZoomLiqBoxes = true,
+                            ShowZigZag = false
+                        };
 
                         var symbolInterval = symbol.GetSymbolInterval(GlobalData.Settings.Signal.Zones.Interval);
                         session.IntervalName = symbolInterval.Interval.Name; // fix
@@ -123,7 +129,7 @@ public class LiquidityZones
                             Symbol = symbol,
                             Interval = symbolInterval.Interval,
                             SymbolInterval = symbolInterval,
-                            Indicator = new(symbolInterval.CandleList, session.UseHighLow, session.OptimizeZigZag),
+                            Indicator = new(symbolInterval.CandleList, GlobalData.Settings.Signal.Zones.UseHighLow, session.OptimizeZigZag),
                         };
 
                         // avoid candles being removed...

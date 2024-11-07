@@ -18,7 +18,7 @@ public class CryptoCalculation
 
 
     public static async Task MakeDominantAndZoomInAsync(object? sender, CryptoSymbol symbol, CryptoInterval interval, ZigZagResult zigZag,
-                    decimal top, decimal bottom, bool zoomFurther, bool useHighLow, StringBuilder log)
+                    decimal top, decimal bottom, bool zoomFurther, StringBuilder log)
     {
         //if (zigZag.Candle.DateLocal >= new DateTime(2024, 10, 19, 11, 0, 0, DateTimeKind.Local))
         //    zigZag = zigZag;
@@ -42,7 +42,7 @@ public class CryptoCalculation
                     //zigZag.Candle = candle;
                     zigZag.Top = Math.Max(candle.Close, candle.Open);
                     zigZag.Bottom = candle.Low;
-                    zigZag.Value = candle.GetLowValue(useHighLow);
+                    zigZag.Value = candle.GetLowValue(GlobalData.Settings.Signal.Zones.UseHighLow);
                 }
             }
             if (symbolInterval.CandleList.TryGetValue(zigZag.Candle.OpenTime - interval.Duration, out candle))
@@ -52,7 +52,7 @@ public class CryptoCalculation
                     //zigZag.Candle = candle;
                     zigZag.Top = Math.Max(candle.Close, candle.Open);
                     zigZag.Bottom = candle.Low;
-                    zigZag.Value = candle.GetLowValue(useHighLow);
+                    zigZag.Value = candle.GetLowValue(GlobalData.Settings.Signal.Zones.UseHighLow);
                 }
             }
         }
@@ -66,7 +66,7 @@ public class CryptoCalculation
                     //zigZag.Candle = candle;
                     zigZag.Top = candle.High;
                     zigZag.Bottom = Math.Min(candle.Close, candle.Open);
-                    zigZag.Value = candle.GetHighValue(useHighLow);
+                    zigZag.Value = candle.GetHighValue(GlobalData.Settings.Signal.Zones.UseHighLow);
                 }
 
             }
@@ -77,7 +77,7 @@ public class CryptoCalculation
                     //zigZag.Candle = candle;
                     zigZag.Top = candle.High;
                     zigZag.Bottom = Math.Min(candle.Close, candle.Open);
-                    zigZag.Value = candle.GetHighValue(useHighLow);
+                    zigZag.Value = candle.GetHighValue(GlobalData.Settings.Signal.Zones.UseHighLow);
                 }
             }
         }
@@ -183,12 +183,12 @@ public class CryptoCalculation
                 // Check: a dominant Low leading to a new Higher High
                 if (zigZag.PointType == 'H' && previous.PointType == 'L' && previous2.PointType == 'H' && previous2.Value < zigZag.Value)
                     await MakeDominantAndZoomInAsync(sender, data.Symbol, data.SymbolInterval.Interval, previous,
-                        Math.Max(previous.Candle.Open, previous.Candle.Close), previous.Candle.Low, session.ZoomLiqBoxes, session.UseHighLow, log);
+                        Math.Max(previous.Candle.Open, previous.Candle.Close), previous.Candle.Low, session.ZoomLiqBoxes, log);
 
                 // Check: a dominant High leading to a new Lower Low
                 if (zigZag.PointType == 'L' && previous.PointType == 'H' && previous2.PointType == 'L' && previous2.Value > zigZag.Value)
                     await MakeDominantAndZoomInAsync(sender, data.Symbol, data.SymbolInterval.Interval, previous,
-                        previous.Candle.High, Math.Min(previous.Candle.Open, previous.Candle.Close), session.ZoomLiqBoxes, session.UseHighLow, log);
+                        previous.Candle.High, Math.Min(previous.Candle.Open, previous.Candle.Close), session.ZoomLiqBoxes, log);
             }
             previous2 = previous;
             previous = zigZag;
@@ -222,20 +222,20 @@ public class CryptoCalculation
                         // We need a BOS before we can invalidate the liq.box
                         if (!brokenBos)
                         {
-                            if (zigzag.PointType == 'H' && candle.GetLowValue(session.UseHighLow) <= prevZigZag.Value)
+                            if (zigzag.PointType == 'H' && candle.GetLowValue(GlobalData.Settings.Signal.Zones.UseHighLow) <= prevZigZag.Value)
                                 brokenBos = true;
-                            if (zigzag.PointType == 'L' && candle.GetHighValue(session.UseHighLow) >= prevZigZag.Value)
+                            if (zigzag.PointType == 'L' && candle.GetHighValue(GlobalData.Settings.Signal.Zones.UseHighLow) >= prevZigZag.Value)
                                 brokenBos = true;
                         }
                         else
                         {
-                            //if (zigzag.PointType == 'H' && (candle.High >= zigzag.Top || candle.GetHighValue(session.UseHighLow) >= zigzag.Bottom))
+                            //if (zigzag.PointType == 'H' && (candle.High >= zigzag.Top || candle.GetHighValue(GlobalData.Settings.Signal.Zones.UseHighLow) >= zigzag.Bottom))
                             if (zigzag.PointType == 'H' && (candle.High >= zigzag.Top || Math.Max(candle.Open, candle.Close) >= zigzag.Bottom))
                             {
                                 zigzag.InvalidOn = candle;
                                 break;
                             }
-                            //if (zigzag.PointType == 'L' && (candle.Low <= zigzag.Bottom || candle.GetLowValue(session.UseHighLow) <= zigzag.Top))
+                            //if (zigzag.PointType == 'L' && (candle.Low <= zigzag.Bottom || candle.GetLowValue(GlobalData.Settings.Signal.Zones.UseHighLow) <= zigzag.Top))
                             if (zigzag.PointType == 'L' && (candle.Low <= zigzag.Bottom || Math.Min(candle.Open, candle.Close) <= zigzag.Top))
                             {
                                 zigzag.InvalidOn = candle;

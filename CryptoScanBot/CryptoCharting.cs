@@ -2,6 +2,7 @@
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Trend;
 
+
 using OxyPlot;
 using OxyPlot.Annotations;
 using OxyPlot.Axes;
@@ -13,31 +14,25 @@ public class CryptoCharting
 {
     public static void DrawCandleSerie(PlotModel chart, CryptoSymbolInterval symbolInterval, long unix)
     {
-        var candleSerie = new CandleStickSeries
+        var candleSerie = new CandleStickSeries //CandleStickAndVolumeSeries -> obsolete, mwhee
         {
             Title = "Candles",
             IncreasingColor = OxyColors.LightGreen,
             DecreasingColor = OxyColors.DarkOrange,
+            //TrackerFormatString = "Date: {0}\nHigh: {1}\nLow: {2}\nOpen: {3}\nClose: {4}" ???
         };
 
-        // Series, out of order candle? We use SortedList, but have daylight saving, how to fix that? ;-)
-        //double? prevDate = null;
-        //CryptoCandle? prevCandle = null;
-        //HighLowItem? prevHighLow = null;
-        foreach (var curCandle in symbolInterval.CandleList.Values)
+
+        foreach (var c in symbolInterval.CandleList.Values)
         {
-            if (curCandle.OpenTime > unix)
+            if (c.OpenTime > unix)
             {
-                var curDate = DateTimeAxis.ToDouble(curCandle.Date);
-                var curHighLow = new HighLowItem(curDate, (double)curCandle.High, (double)curCandle.Low, (double)curCandle.Open, (double)curCandle.Close);
+                //if (c.Date == new DateTime(2024, 11, 01, 12, 0, 0, DateTimeKind.Utc))
+                //    symbolInterval = symbolInterval; // debug 
+
+                var curDate = DateTimeAxis.ToDouble(c.Date);
+                var curHighLow = new HighLowItem(curDate, (double)c.High, (double)c.Low, (double)c.Open, (double)c.Close); //OhlcvItem
                 candleSerie.Items.Add(curHighLow);
-
-                //if (prevHighLow != null && prevHighLow.X >= curHighLow.X)
-                //    prevHighLow = prevHighLow;
-
-                //prevCandle = curCandle;
-                //prevHighLow = curHighLow;
-                //prevDate = curDate;
             }
         }
 
@@ -46,7 +41,7 @@ public class CryptoCharting
 
 
 
-    public static void DrawZigZagSerie(PlotModel chart, ZigZagIndicator9 indicator, long unix)
+    public static void DrawZigZagSerie(CryptoSymbol symbol, PlotModel chart, ZigZagIndicator9 indicator, long unix)
     {
         var seriesZigZag = new LineSeries { Title = "ZigZag", Color = OxyColors.White };
         var seriesHigh = new ScatterSeries { Title = "Markers high", MarkerSize = 4, MarkerFill = OxyColors.Red, MarkerType = MarkerType.Circle, };
@@ -66,6 +61,13 @@ public class CryptoCharting
         chart.Series.Add(seriesLow);
         chart.Series.Add(seriesHigh);
         chart.Series.Add(seriesZigZag);
+
+        //string format = symbol.PriceDisplayFormat[1..];
+        //string text = "Date: {yyyy-MM-dd HH:mm}\nPrice: {$:0.00}";
+        //text = text.Replace("$", format);
+        //seriesLow.TrackerFormatString = text;
+        //seriesHigh.TrackerFormatString = text;
+        //seriesZigZag.TrackerFormatString = text;
     }
 
     public static void DrawLiqBoxes(PlotModel chart, CryptoZoneData data, long unix, CryptoCandle lastCandle)
@@ -80,7 +82,7 @@ public class CryptoCharting
 
             if (zigzag.Candle!.OpenTime > unix && zigzag.Dominant)
             {
-                OxyColor color = OxyColors.SkyBlue;
+                OxyColor color;
                 if (zigzag.PointType == 'L')
                     color = OxyColors.Green;
                 else
@@ -108,6 +110,7 @@ public class CryptoCharting
                 };
                 chart.Annotations.Add(rectangle);
             }
+            //chart.Annotations.TrackerFormatString = "X: {2:0.00}\nY: {4:0.00}";
         }
     }
 

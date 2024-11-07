@@ -21,6 +21,19 @@ public class DominantLevelShort : SignalCreateBase
         ExtraText = "";
         bool result = false;
 
+        if (!CandleLast.IsStochOverbought(0)) // GlobalData.Settings.Signal.StoRsi.AddStochAmount
+        {
+            ExtraText = "stoch not overbought";
+            return false;
+        }
+
+        if (!CandleLast.IsRsiOverbought()) // GlobalData.Settings.Signal.StoRsi.AddRsiAmount
+        {
+            ExtraText = "rsi not overbought";
+            return false;
+        }
+
+
         AccountSymbolData symbolData = Account.Data.GetSymbolData(Symbol.Name);
         foreach (var zone in symbolData.ZoneListShort)
         {

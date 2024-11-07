@@ -367,7 +367,7 @@ public class PositionMonitor : IDisposable
                 }
 
                 // Bestaan het gekozen strategy wel, klinkt raar, maar is (op dit moment) niet altijd geimplementeerd
-                SignalCreateBase? algorithm = SignalHelper.GetAlgorithm(signal.Side, signal.Strategy, TradeAccount, signal.Symbol, signal.Interval, candleInterval);
+                SignalCreateBase? algorithm = RegisterAlgorithms.GetAlgorithm(signal.Side, signal.Strategy, TradeAccount, signal.Symbol, signal.Interval, candleInterval);
                 if (algorithm == null)
                 {
                     GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " unknown algorithm (removed)");

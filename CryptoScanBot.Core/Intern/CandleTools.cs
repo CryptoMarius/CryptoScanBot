@@ -79,6 +79,22 @@ public static class CandleTools
             return Math.Min(candle.Open, candle.Close);
     }
 
+    //public static decimal GetLowest(this CryptoCandle candle, bool useWicks)
+    //{
+    //    if (useWicks)
+    //        return candle.Low;
+    //    else
+    //        return Math.Min(candle.Open, candle.Close);
+    //}
+
+    //public static decimal GetHighest(this CryptoCandle candle, bool useWicks)
+    //{
+    //    if (useWicks)
+    //        return candle.High;
+    //    else
+    //        return Math.Max(candle.Open, candle.Close);
+    //}
+
     /// <summary>
     /// Add the final candle in the right interval
     /// </summary>
@@ -222,6 +238,9 @@ public static class CandleTools
             candlesTargetTimeFrame.Add(candleNew.OpenTime, candleNew);
             UpdateCandleFetched(symbol, targetInterval);
         }
+
+        if (candleNew.Open == candleNew.Close && candleNew.Low == candleNew.Close && candleNew.High > candleNew.Open)
+            GlobalData.AddTextToLogTab($"Reconstructed candle {candleNew.OhlcText(symbol, targetInterval, symbol.PriceDisplayFormat, true, true, true)}?????");
 
 
         if (GlobalData.Settings.General.DebugKLineReceive && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
@@ -421,7 +440,7 @@ public static class CandleTools
 
                     // Remove old candles
                     long startFetchUnix = CandleIndicatorData.GetCandleFetchStart(symbol, interval, DateTime.UtcNow);
-                    DateTime startFetchUnixDate = CandleTools.GetUnixDate(startFetchUnix);
+                    //DateTime startFetchUnixDate = CandleTools.GetUnixDate(startFetchUnix);
                     while (candles.Values.Any())
                     {
                         CryptoCandle c = candles.Values[0];

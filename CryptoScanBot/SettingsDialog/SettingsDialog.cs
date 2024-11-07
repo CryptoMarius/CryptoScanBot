@@ -234,6 +234,13 @@ public partial class FrmSettings : Form
         EditJumpCandlesLookbackCount.Value = settings.Signal.Jump.CandlesLookbackCount;
         EditJumpUseLowHighCalculation.Checked = settings.Signal.Jump.UseLowHighCalculation;
 
+        // Zones
+        UserControlSettingsSoundAndColorsDominantLevel.LoadConfig("Zones", settings.Signal.Zones);
+
+        EditZonesWarnPercentage.Value = (decimal)settings.Signal.Zones.WarnPercentage;
+        EditZonesUseLowHigh.Checked = settings.Signal.Zones.UseHighLow;
+        EditZonesCandleCount.Value = settings.Signal.Zones.CandleCount;
+        //EditZonesInterval.Value = settings.Signal.Zones.Interval; hardcoded 1h for now
 
         // --------------------------------------------------------------------------------
         // Extra instap condities
@@ -479,6 +486,14 @@ public partial class FrmSettings : Form
         settings.Signal.Jump.CandlePercentage = EditAnalysisCandleJumpPercentage.Value;
         settings.Signal.Jump.CandlesLookbackCount = (int)EditJumpCandlesLookbackCount.Value;
         settings.Signal.Jump.UseLowHighCalculation = EditJumpUseLowHighCalculation.Checked;
+
+        // Zones
+        UserControlSettingsSoundAndColorsDominantLevel.SaveConfig(settings.Signal.Zones);
+
+        settings.Signal.Zones.WarnPercentage = EditZonesWarnPercentage.Value;
+        settings.Signal.Zones.UseHighLow = EditZonesUseLowHigh.Checked;
+        settings.Signal.Zones.CandleCount = (int)EditZonesCandleCount.Value;
+        //settings.Signal.Zones.Interval = EditZonesInterval.Value; hardcoded 1h for now
 
         // --------------------------------------------------------------------------------
         // Extra instap condities

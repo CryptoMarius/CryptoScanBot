@@ -32,14 +32,14 @@ public class SignalCandleJumpLong : SignalCreateBase
             CryptoCandle? candle = CandleLast;
             while (candleCount > 0)
             {
-                decimal value = candle.GetLowest(GlobalData.Settings.Signal.Jump.UseLowHighCalculation);
+                decimal value = candle.GetLowValue(GlobalData.Settings.Signal.Jump.UseLowHighCalculation);
                 if (value < minValue)
                 {
                     minValue = value;
                     minDate = candle.OpenTime;
                 }
 
-                value = candle.GetHighest(GlobalData.Settings.Signal.Jump.UseLowHighCalculation);
+                value = candle.GetHighValue(GlobalData.Settings.Signal.Jump.UseLowHighCalculation);
                 if (value > maxValue)
                 {
                     maxValue = value;

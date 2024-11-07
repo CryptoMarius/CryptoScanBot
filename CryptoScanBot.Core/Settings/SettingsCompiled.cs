@@ -97,7 +97,7 @@ public class SettingsCompiled
         Strategy.Clear();
         StrategySbmStob.Clear();
         StrategyOthers.Clear();
-        foreach (AlgorithmDefinition strategyDef in SignalHelper.AlgorithmDefinitionList.Values)
+        foreach (AlgorithmDefinition strategyDef in RegisterAlgorithms.AlgorithmDefinitionList.Values)
         {
             if (settings.Strategy.Contains(strategyDef.Name))
             {
