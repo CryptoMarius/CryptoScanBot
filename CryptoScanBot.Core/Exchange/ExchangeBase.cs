@@ -6,6 +6,8 @@ using CryptoScanBot.Core.Intern;
 
 namespace CryptoScanBot.Core.Exchange;
 
+// ExchangeBroker
+
 public abstract class ExchangeBase
 {
     public static ExchangeOptions ExchangeOptions { get; } = new(); // made public for ExchangeTest project

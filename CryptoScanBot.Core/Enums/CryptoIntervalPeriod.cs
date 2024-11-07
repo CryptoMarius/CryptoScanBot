@@ -1,5 +1,6 @@
 ﻿namespace CryptoScanBot.Core.Enums;
 
+// Timeframe
 public enum CryptoIntervalPeriod
 {
     interval1m, //0
