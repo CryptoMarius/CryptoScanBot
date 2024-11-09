@@ -15,15 +15,15 @@ public class CryptoPositionPart
 
     public int PositionId { get; set; }
     [Computed]
-    public virtual CryptoPosition Position { get; set; }
+    public virtual required CryptoPosition Position { get; set; }
 
     public int ExchangeId { get; set; }
     [Computed]
-    public virtual CryptoExchange Exchange { get; set; }
+    public virtual required CryptoExchange Exchange { get; set; }
 
     public int SymbolId { get; set; }
     [Computed]
-    public virtual CryptoSymbol Symbol { get; set; }
+    public virtual required CryptoSymbol Symbol { get; set; }
 
     public int? IntervalId { get; set; }
     [Computed]

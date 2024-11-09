@@ -49,7 +49,7 @@ public class SubscriptionPriceTicker(ExchangeOptions exchangeOptions) : Subscrip
                             // Kortom: Beslissingen op basis van niet voltooide candles moet je vermijden.
                             //try
                             //{
-                            //Monitor.Enter(symbol.CandleList);
+                            //Monitor.Enter(symbol.CandleList); await symbol.CandleLock.WaitAsync();
                             //try
                             //{
                             //    //symbol.HandleExchangeMiniTick(GlobalData.Settings, symbol, tick);

@@ -9,14 +9,14 @@ using System.Text.Encodings.Web;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
 
-namespace CryptoScanBot.Core.Experimental;
+namespace CryptoScanBot.Core.Zones;
 
 public static class CryptoCandles
 {
     public static DateTime StartupTime { get; set; } = DateTime.UtcNow;
 
     public static string LoadedCandlesFrom { get; set; } = "";
-    public static SortedList<CryptoIntervalPeriod, bool> LoadedCandlesInMemory { get; set;} = [];
+    public static SortedList<CryptoIntervalPeriod, bool> LoadedCandlesInMemory { get; set; } = [];
 
     public static readonly JsonSerializerOptions JsonSerializerIndented = new()
     { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true, IncludeFields = true };
@@ -111,7 +111,7 @@ public static class CryptoCandles
         while (symbolInterval.CandleList!.ContainsKey(unixStartTime))
         {
             available++;
-            if (available >= okayCount)
+            if (!fetchAll && available >= okayCount)
             {
                 // okay
                 //string text2 = $"available={available}, need={okayCount}";
@@ -124,9 +124,12 @@ public static class CryptoCandles
         }
 
         // calculate the "current" time
-        long unixMaxTime = CandleTools.GetUnixTime(StartupTime, symbolInterval.Interval.Duration);
+        long unixMaxTime = CandleTools.GetUnixTime(StartupTime, 0);
+        unixMaxTime = IntervalTools.StartOfIntervalCandle(unixMaxTime, symbolInterval.Interval.Duration);
+        DateTime unixMaxTimeDebug = CandleTools.GetUnixDate(unixMaxTime);
         if (unixStartTime >= unixMaxTime)
             return;
+
 
         int maxFetch = 1000;
         DateTime startTime = CandleTools.GetUnixDate(unixStartTime);
@@ -244,25 +247,60 @@ public static class CryptoCandles
     }
 
 
-    public static void CleanLoadedCandles(CryptoSymbol symbol)
+    public static async Task CleanLoadedCandlesAsync(CryptoSymbol symbol)
     {
-        foreach (var symbolInterval in symbol.IntervalPeriodList)
+        await symbol.CandleLock.WaitAsync();
+        try
         {
-            // Remove old candles
-            // TODO: Need end date instead of DateTime.UtcNow (works in SignalGrid, but not here)
-            long startFetchUnix = CandleIndicatorData.GetCandleFetchStart(symbol, symbolInterval.Interval, DateTime.UtcNow);
-            //DateTime startFetchUnixDate = CandleTools.GetUnixDate(startFetchUnix);
-            while (symbolInterval.CandleList.Values.Any())
+            foreach (var symbolInterval in symbol.IntervalPeriodList)
             {
-                CryptoCandle c = symbolInterval.CandleList.Values[0];
-                if (c.OpenTime < startFetchUnix)
+                // Remove old candles
+                if (symbolInterval.CandleList.Count > 0)
                 {
-                    symbolInterval.CandleList.Remove(c.OpenTime);
-                    //GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} candle {c.DateLocal} removed");
+                    // TODO: Need end date instead of DateTime.UtcNow (works in SignalGrid, but not here)
+                    long startFetchUnix = CandleIndicatorData.GetCandleFetchStart(symbol, symbolInterval.Interval, DateTime.UtcNow);
 
+                    // investigate the first, does it need removal?
+                    CryptoCandle c = symbolInterval.CandleList.Values.First();
+                    if (c.OpenTime < startFetchUnix)
+                    {
+                        // This really takes forever to delete 100.000 of candles!!
+                        //DateTime startFetchUnixDate = CandleTools.GetUnixDate(startFetchUnix);
+                        //while (symbolInterval.CandleList.Values.Any())
+                        //{
+                        //    CryptoCandle c = symbolInterval.CandleList.Values[0];
+                        //    if (c.OpenTime < startFetchUnix)
+                        //    {
+                        //        symbolInterval.CandleList.Remove(c.OpenTime);
+                        //        //GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} candle {c.DateLocal} removed");
+
+                        //    }
+                        //    else break;
+
+                        //    startFetchUnix += symbolInterval.Interval.Duration;
+                        //}
+
+                        // There are a *huge* amount of candles, just copy them to a new list
+                        // This copies worst case 500 for the higher intervals, a bit more for the 1m
+                        SortedList<long, CryptoCandle> newList = [];
+
+                        int index = symbolInterval.CandleList.Count - 1;
+                        while (index > 0)
+                        {
+                            c = symbolInterval.CandleList.Values[index];
+                            if (c.OpenTime < startFetchUnix)
+                                break;
+                            newList.Add(c.OpenTime, c);
+                            index--;
+                        }
+                        symbolInterval.CandleList = newList;
+                    }
                 }
-                else break;
             }
+        }
+        finally
+        {
+            symbol.CandleLock.Release();
         }
     }
 }

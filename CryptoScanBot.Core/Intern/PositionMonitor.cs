@@ -631,7 +631,7 @@ public class PositionMonitor : IDisposable
     }
 
 
-    private bool Prepare(CryptoPosition position, CryptoPositionPart part, out CryptoCandle? candleInterval)
+    private async Task<(bool success, CryptoCandle? candleInterval)> PrepareAsync(CryptoPosition position, CryptoPositionPart part)
     {
         // Stukje migratie, het interval van de part kan null zijn
         CryptoInterval interval = position.Interval;
@@ -643,14 +643,15 @@ public class PositionMonitor : IDisposable
 
         // Maak beslissingen als de candle van het interval afgesloten is (dus NIET die van de 1m candle!)
         // Dus ook niet zomaar een laatste candle nemen in verband met Backtesting (echt even berekenen)
-        candleInterval = null;
+        CryptoCandle? candleInterval = null;
         if (LastCandle1mCloseTime % interval.Duration != 0)
-            return false;
+            return (false, candleInterval);
         long candleOpenTimeInterval = LastCandle1mCloseTime - interval.Duration;
 
 
         // Die indicator berekening had ik niet verwacht (cooldown?)
-        Monitor.Enter(position.Symbol.CandleList);
+        //Monitor.Enter(position.Symbol.CandleList);
+        await position.Symbol.CandleLock.WaitAsync();
         try
         {
             // Niet zomaar een laatste candle nemen in verband met Backtesting
@@ -661,7 +662,7 @@ public class PositionMonitor : IDisposable
                 string.Format("position.CreateDate = {0}", position.CreateTime.ToString()) + "\r\n";
                 //throw new Exception($"Candle niet aanwezig? {t}");
                 GlobalData.AddTextToLogTab($"Analyse {position.Symbol.Name} {t}");
-                return false;
+                return (false, candleInterval);
             }
 
             if (candleInterval.CandleData == null)
@@ -672,7 +673,7 @@ public class PositionMonitor : IDisposable
                 {
                     GlobalData.AddTextToLogTab("Analyse " + response + $"{position.Symbol.Name} Candle {interval.Name} {candleInterval.DateLocal} niet berekend? {response}");
                     //throw new Exception($"{position.Symbol.Name} Candle {interval.Name} {candleInterval.DateLocal} niet berekend? {response}");
-                    return false;
+                    return (false, candleInterval);
                 }
 
                 // Eenmalig de indicators klaarzetten
@@ -681,11 +682,12 @@ public class PositionMonitor : IDisposable
         }
         finally
         {
-            Monitor.Exit(position.Symbol.CandleList);
+            //Monitor.Exit(position.Symbol.CandleList);
+            position.Symbol.CandleLock.Release();
         }
 
 
-        return true;
+        return (true, candleInterval);
     }
 
     private decimal CorrectBuyOrDcaPrice(CryptoPosition position, decimal price)
@@ -1598,7 +1600,8 @@ public class PositionMonitor : IDisposable
             if (!part.CloseTime.HasValue && part.Purpose != CryptoPartPurpose.TakeProfit)
             {
                 // De prepare controleert of we een geldige candle in het interval (van de part of positie) hebben!
-                if (Prepare(position, part, out CryptoCandle? candleInterval))
+                var (success, candleInterval) = await PrepareAsync(position, part);
+                if (success)
                 {
                     if (!PauseBecauseOfTradingRules && candleInterval is not null)
                     {
@@ -1860,7 +1863,7 @@ public class PositionMonitor : IDisposable
 
             // Remove old candles or CandleData
             if (!GlobalData.BackTest && !Symbol.CalculatingZones)
-                CandleTools.CleanCandleData(Symbol, LastCandle1mCloseTime);
+                await CandleTools.CleanCandleDataAsync(Symbol, LastCandle1mCloseTime);
 
             //GlobalData.Logger.Trace($"NewCandleArrivedAsync.Done " + traceText);
         }

@@ -39,9 +39,9 @@ namespace CryptoScanBot.Core.Telegram;
 
 public static class ThreadTelegramBot
 {
-    public static string Token { get; set; }
-    public static string ChatId { get; set; }
-    private static ThreadTelegramBotInstance bot;
+    public static string Token { get; set; } = "";
+    public static string ChatId { get; set; } = "";
+    private static ThreadTelegramBotInstance? bot;
 
 
     public static async Task Start(string token, string chatId)
@@ -194,7 +194,7 @@ public class ThreadTelegramBotInstance
         {
             StringBuilder builder = new();
             builder.Append(signal.Symbol.Name + " " + signal.Interval.Name + " ");
-            builder.Append(CandleTools.GetUnixDate(signal.Candle.OpenTime).ToLocalTime().ToString("dd MMM HH:mm"));
+            builder.Append(CandleTools.GetUnixDate(signal.Candle?.OpenTime).ToLocalTime().ToString("dd MMM HH:mm"));
             builder.Append(" " + signal.StrategyText + "");
             //builder.Append(" " + signal.SideText + " ");
 
@@ -653,7 +653,7 @@ public class ThreadTelegramBotInstance
                                             TelegramShowBarometer.ShowBarometer(arguments, stringBuilder);
                                         else if (command == "ASSETS")
                                         {
-                                            AssetTools.FetchAssetsAsync(GlobalData.ActiveAccount!);
+                                            await AssetTools.FetchAssetsAsync(GlobalData.ActiveAccount!);
                                             Helper.ShowAssets(GlobalData.ActiveAccount!, stringBuilder, out decimal _, out decimal _);
                                         }
                                         else if (command == "TREND")

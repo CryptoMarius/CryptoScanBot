@@ -38,7 +38,8 @@ public class DominantLevelLong : SignalCreateBase
         foreach (var zone in symbolData.ZoneListLong)
         {
             bool changed = false;
-            if (zone.ExpirationDate == null && CandleLast.Low <= zone.AlarmPrice)
+            decimal alarmPrice = zone.Top * (100 + GlobalData.Settings.Signal.Zones.WarnPercentage) / 100;
+            if (zone.ExpirationDate == null && CandleLast.Low <= alarmPrice)
             {
                 if (!result && zone.AlarmDate == null || CandleLast.Date > zone.AlarmDate?.AddMinutes(5))
                 {

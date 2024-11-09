@@ -1,7 +1,7 @@
 ﻿using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Trend;
 
-namespace CryptoScanBot.Core.Experimental;
+namespace CryptoScanBot.Core.Zones;
 
 public class CryptoZoneData
 {

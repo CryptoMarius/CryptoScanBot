@@ -1,25 +1,23 @@
-using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Exchange;
-using CryptoScanBot.Core.Experimental;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Trend;
+using CryptoScanBot.Core.Zones;
 
 using OxyPlot;
 using OxyPlot.Annotations;
-using OxyPlot.Axes;
-using OxyPlot.Series;
-using OxyPlot.WindowsForms;
 
+using System.Diagnostics;
 using System.Text;
 
-namespace CryptoShowTrend;
+namespace CryptoScanBot;
 
 public partial class CryptoVisualisation : Form
 {
-    private PlotView? plotView;
     private PlotModel? plotModel;
+    private LineAnnotation? verticalLine;
+    private LineAnnotation? horizontalLine;
     private readonly CryptoZoneSession Session = new();
     private CryptoZoneData Data;
 
@@ -27,7 +25,6 @@ public partial class CryptoVisualisation : Form
     {
         InitializeComponent();
 
-        //ScannerLog.Logger.Info("Starting app");
         //CryptoDatabase.SetDatabaseDefaults();
         //GlobalData.LoadExchanges();
         //GlobalData.LoadIntervals();
@@ -46,7 +43,7 @@ public partial class CryptoVisualisation : Form
         EditSymbolQuote.KeyDown += ButtonKeyDown;
         EditIntervalName.KeyDown += ButtonKeyDown;
         ButtonCalculate.Click += ButtonCalculateClick;
-        ButtonZoomLast.Click += Button1_Click;
+        ButtonZoomLast.Click += ButtonFocusLastCandlesClick;
 
         //EditSymbolBase.DataSource = new BindingSource(GlobalData.Settings.General.Exchange.SymbolListName, null);
         //EditSymbolBase.DisplayMember = "Key";
@@ -117,27 +114,51 @@ public partial class CryptoVisualisation : Form
     }
 
 
+    public void ShowProgress(string text)
+    {
+        Text = text;
+    }
 
     private async Task ButtonCalculate_ClickAsync()
     {
+        //ScannerLog.Logger.Info("ButtonCalculate_ClickAsync.Start");
+
+        ButtonZoomLast.Enabled = false;
+        ButtonCalculate.Enabled = false;
+        Cursor.Current = Cursors.WaitCursor;
         try
         {
-            Text = $"{Data.Exchange.Name}.{Session.SymbolBase}{Session.SymbolQuote} {Session.IntervalName} Calculating...";
-            await CalculateAndPlotZigZagAsync();
-            Button1_Click(null, EventArgs.Empty);
-            Text = $"{Session.SymbolBase}{Session.SymbolQuote}";
+            try
+            {
+                long startTime = Stopwatch.GetTimestamp();
+                Text = $"{Data.Exchange.Name}.{Session.SymbolBase}{Session.SymbolQuote} {Session.IntervalName} Calculating...";
+                await CalculateAndPlotZigZagAsync();
+                ButtonFocusLastCandlesClick(ShowProgress, EventArgs.Empty);
+                Text = $"{Session.SymbolBase}{Session.SymbolQuote} ({Stopwatch.GetElapsedTime(startTime).TotalSeconds} seconds)";
+                
+            }
+            catch (Exception error)
+            {
+                GlobalData.AddTextToLogTab(error.ToString());
+                Text = $"{Data.Exchange.Name}.{Session.SymbolBase}{Session.SymbolQuote} {Session.IntervalName} Error {error.Message}";
+                ScannerLog.Logger.Info("ButtonCalculate_ClickAsync.Error " + Text);
+            }
         }
-        catch (Exception error)
+        finally
         {
-            GlobalData.AddTextToLogTab(error.ToString());
-            Text = $"{Data.Exchange.Name}.{Session.SymbolBase}{Session.SymbolQuote} {Session.IntervalName} Error {error.Message}";
+            ButtonZoomLast.Enabled = true;
+            ButtonCalculate.Enabled = true;
+            Cursor.Current = Cursors.Default;
         }
+        //ScannerLog.Logger.Info("ButtonCalculate_ClickAsync.Stop " + Stopwatch.GetElapsedTime(startTime).TotalSeconds.ToString());
     }
 
 
 
     private bool PrepareSessionData(out string reason)
     {
+        //long startTime = Stopwatch.GetTimestamp();
+        //ScannerLog.Logger.Info("PrepareSessionData.Start");
         var exchange = GlobalData.Settings.General.Exchange;
         if (exchange == null)
         {
@@ -183,9 +204,9 @@ public partial class CryptoVisualisation : Form
             Interval = interval,
             SymbolInterval = symbolInterval,
             Indicator = new(symbolInterval.CandleList, GlobalData.Settings.Signal.Zones.UseHighLow, Session.OptimizeZigZag),
-            //Indicator.Deviation = 1; Grrrr
         };
         reason = "";
+        //ScannerLog.Logger.Info("PrepareSessionData.Stop " + Stopwatch.GetElapsedTime(startTime).TotalSeconds.ToString());
         return true;
     }
 
@@ -193,28 +214,26 @@ public partial class CryptoVisualisation : Form
 
     private async Task CalculateAndPlotZigZagAsync()
     {
+        //long startTime = Stopwatch.GetTimestamp();
+        //ScannerLog.Logger.Info("CalculateAndPlotZigZagAsync.Start");
         Text = $"{Data.Exchange.Name}.{Session.SymbolBase}{Session.SymbolQuote} {Session.IntervalName}";
         StringBuilder log = new();
         try
         {
-            // avoind candles being removed...
-            ButtonZoomLast.Enabled = false;
-            ButtonCalculate.Enabled = false;
-            Cursor.Current = Cursors.WaitCursor;
+            // Avoid candles being removed...
+            verticalLine = null;
+            horizontalLine = null;
             Data.Symbol.CalculatingZones = true;
             try
             {
-                if (plotView != null)
-                    Controls.Remove(plotView);
-
-                ScannerLog.Logger.Info($"Start calculating data");
-                await LiquidityZones.CalculateSymbolAsync(this, Session, Data);
+                //ScannerLog.Logger.Info($"Start calculating data");
+                await LiquidityZones.CalculateSymbolAsync(ShowProgress, Session, Data);
                 CryptoTrendIndicator trend = TrendInterval.InterpretZigZagPoints(Data.Indicator, null);
                 //var best = Data.Indicator; 
                 var best = ZigZagGetBest.CalculateBestIndicator(Data.SymbolInterval);
 
                 // start from unix date
-                ScannerLog.Logger.Info($"Start plotting data");
+                //ScannerLog.Logger.Info($"Start plotting data");
                 long unix = 0;
                 if (Data.SymbolInterval.CandleList.Count > GlobalData.Settings.Signal.Zones.CandleCount)
                 {
@@ -224,24 +243,18 @@ public partial class CryptoVisualisation : Form
                 var lastCandle = Data.SymbolInterval.CandleList.Values.Last();
 
 
-                if (plotView != null)
-                    Controls.Remove(plotView);
-                plotView = new()
-                {
-                    BackColor = Color.Black,
-                    Dock = DockStyle.Fill
-                };
-                //plotModel.MouseDown += MyPlotModel_MouseDown;
-                Controls.Add(plotView);
+                //if (plotView != null)
+                //    Controls.Remove(plotView);
+                //plotView = new()
+                //{
+                //    BackColor = Color.Black,
+                //    Dock = DockStyle.Fill
+                //};
+                //Controls.Add(plotView);
 
-                CryptoCharting.CreateChart(out plotModel, Data.Symbol);
-                plotView.Model = plotModel;
-                plotView.Model.InvalidatePlot(true);
-
-                string extraText = Data.Indicator.AddedExtraZigZag1 == null ? "" : "!";
+                plotModel = CryptoCharting.CreateChart(Data, out horizontalLine, out verticalLine);
                 plotModel.Title = $"{Session.SymbolBase}{Session.SymbolQuote} {Data.Interval.Name} UTC " +
-                $"trend={trend} deviation={Data.Indicator.Deviation} (best={best.Deviation}) candles={Data.SymbolInterval.CandleList.Count} pivots={Data.Indicator.ZigZagList.Count} {extraText}";
-
+                $"trend={trend} deviation={Data.Indicator.Deviation} (best={best.Deviation}) candles={Data.SymbolInterval.CandleList.Count} pivots={Data.Indicator.ZigZagList.Count}";
 
                 CryptoCharting.DrawCandleSerie(plotModel, Data.SymbolInterval, unix);
                 if (Session.ShowZigZag)
@@ -252,33 +265,13 @@ public partial class CryptoVisualisation : Form
                 CryptoCalculation.TrySomethingWithFib();
 
 
-                plotView.Model = plotModel;
-                //plotView.Controller = new PlotController();
-                ////plotView.Controller.UnbindAll();
-
-                //plotView.Controller.BindMouseDown(OxyMouseButton.Left, PlotCommands.PanAt);
-                //plotView.Controller.BindMouseDown(OxyMouseButton.Left, OxyModifierKeys.Control, PlotCommands.ZoomRectangle);
-                //plotView.Controller.BindMouseDown(OxyMouseButton.Left, OxyModifierKeys.Control | OxyModifierKeys.Alt, 2, PlotCommands.ResetAt);
-
-                //plotView.Controller.BindMouseDown(OxyMouseButton.Right, OxyModifierKeys.Control | OxyModifierKeys.Alt, PlotCommands.ZoomRectangle);
-                //plotView.Controller.BindMouseDown(OxyMouseButton.Right, OxyModifierKeys.Control, 2, PlotCommands.ResetAt);
-                //plotView.Controller.BindMouseDown(OxyMouseButton.Right, OxyModifierKeys.Alt, PlotCommands.PanAt);
-
-
-                //plotView.Model.InvalidatePlot(true);
-                //plotView.Model.MouseDown += OnChartClick;
-                ScannerLog.Logger.Info($"Done plotting data");
-
-
-                plotModel.Subtitle = " ";
-                plotModel.SubtitleColor = OxyColors.GhostWhite;
-                plotModel.SubtitleFontSize = plotModel.TitleFontSize - 4;
-
-                // Maak de crosshair-lijnen aan, maar voeg ze nog niet toe aan het model
-                verticalLine = new LineAnnotation { Type = LineAnnotationType.Vertical, Color = OxyColors.DarkGray, LineStyle = LineStyle.Dash, StrokeThickness = 0.5,};
-                horizontalLine = new LineAnnotation { Type = LineAnnotationType.Horizontal, Color = OxyColors.DarkGray, LineStyle = LineStyle.Dash, StrokeThickness = 0.5, };
-                plotModel.Annotations.Add(verticalLine);
-                plotModel.Annotations.Add(horizontalLine);
+                plotView.Controller = new PlotController();
+                plotView.Controller.BindMouseDown(OxyMouseButton.Left, PlotCommands.PanAt);
+                plotView.Controller.BindMouseDown(OxyMouseButton.Left, OxyModifierKeys.Control, PlotCommands.ZoomRectangle);
+                plotView.Controller.BindMouseDown(OxyMouseButton.Left, OxyModifierKeys.Control | OxyModifierKeys.Alt, 2, PlotCommands.ResetAt);
+                plotView.Controller.BindMouseDown(OxyMouseButton.Right, OxyModifierKeys.Control | OxyModifierKeys.Alt, PlotCommands.ZoomRectangle);
+                plotView.Controller.BindMouseDown(OxyMouseButton.Right, OxyModifierKeys.Control, 2, PlotCommands.ResetAt);
+                plotView.Controller.BindMouseDown(OxyMouseButton.Right, OxyModifierKeys.Alt, PlotCommands.PanAt);
 
                 //plotView.MouseDown += PlotView_MouseDown;
                 plotView.MouseMove += PlotView_MouseMove;
@@ -286,11 +279,8 @@ public partial class CryptoVisualisation : Form
             }
             finally
             {
-                CryptoCandles.CleanLoadedCandles(Data.Symbol);
+                await CryptoCandles.CleanLoadedCandlesAsync(Data.Symbol);
                 Data.Symbol.CalculatingZones = false;
-                ButtonZoomLast.Enabled = true;
-                ButtonCalculate.Enabled = true;
-                Cursor.Current = Cursors.Default;
             }
         }
         catch (Exception e)
@@ -298,101 +288,76 @@ public partial class CryptoVisualisation : Form
             log.AppendLine(e.ToString());
             ScannerLog.Logger.Info($"ERROR {e}");
         }
+        //ScannerLog.Logger.Info("CalculateAndPlotZigZagAsync.Stop " + Stopwatch.GetElapsedTime(startTime).TotalSeconds.ToString());
     }
-
-    private LineAnnotation verticalLine;
-    private LineAnnotation horizontalLine;
-    //private bool isCrosshairActive;
-
-
-    //private void PlotView_MouseUp(object? sender, MouseEventArgs e)
-    //{
-    //    if (e.Button == MouseButtons.Left)
-    //    {
-    //        isCrosshairActive = false;
-
-    //        var model = plotView.Model;
-    //        model.Annotations.Remove(verticalLine);
-    //        model.Annotations.Remove(horizontalLine);
-
-    //        plotView.InvalidatePlot(true);
-    //    }
-    //}
 
     private void PlotView_MouseMove(object? sender, MouseEventArgs e)
     {
-        //if (isCrosshairActive)
+        if (horizontalLine != null && verticalLine != null) // exception on drawing annotations? whats wrong?
         {
             try
             {
                 var model = plotView.Model;
-                var xAxis = (DateTimeAxis)model.Axes[0];
+                var xAxis = model.Axes[0];
                 var yAxis = model.Axes[1];
 
                 var screenPoint = new ScreenPoint(e.X, e.Y);
 
-                // Zet ScreenPoint om naar data-coördinaten
                 double x = xAxis.InverseTransform(screenPoint.X);
                 double y = yAxis.InverseTransform(screenPoint.Y);
 
-                // Update de positie van de crosshair lijnen
-                verticalLine.X = x;
-                horizontalLine.Y = y;
+                long unix = (long)x + Data.Interval.Duration / 2;
+                unix = IntervalTools.StartOfIntervalCandle(unix, Data.Interval.Duration); //+ Data.Interval.Duration;
 
-                DateTime xValue = xAxis.ConvertToDateTime(x);
-                long unix = CandleTools.GetUnixTime(xValue, Data.Interval.Duration);
-                DateTime date = CandleTools.GetUnixDate(unix).ToLocalTime();
-                string s = $"Date: {date:yyyy-MM-dd HH:mm}, price: " + y.ToString(Data.Symbol.PriceDisplayFormat);
+                // Update croshair coordinates
+                verticalLine.X = unix;
+                horizontalLine.Y = y;
+                 
+                string s;
                 if (Data.SymbolInterval.CandleList.TryGetValue(unix, out CryptoCandle? candle))
                 {
-                    s += " (open: " + candle.Open.ToString(Data.Symbol.PriceDisplayFormat);
-                    s += " high: " + candle.High.ToString(Data.Symbol.PriceDisplayFormat);
-                    s += " low: " + candle.Low.ToString(Data.Symbol.PriceDisplayFormat);
-                    s += " close: " + candle.Close.ToString(Data.Symbol.PriceDisplayFormat);
-                    s += " volume: " + candle.Volume.ToString() + ')';
+                    s = $"{candle.Date:yyyy-MM-dd HH:mm}, price: " + y.ToString(Data.Symbol.PriceDisplayFormat);
+                    s += " (o: " + candle.Open.ToString(Data.Symbol.PriceDisplayFormat);
+                    s += " h: " + candle.High.ToString(Data.Symbol.PriceDisplayFormat);
+                    s += " l: " + candle.Low.ToString(Data.Symbol.PriceDisplayFormat);
+                    s += " c: " + candle.Close.ToString(Data.Symbol.PriceDisplayFormat);
+                    s += " v: " + candle.Volume.ToString0() + ')';
                 }
+                else
+                {
+                    DateTime date = CandleTools.GetUnixDate(unix); //.ToLocalTime();
+                    s = $"{date:yyyy-MM-dd HH:mm}, price: " + y.ToString(Data.Symbol.PriceDisplayFormat);
+                }
+                //long u = (long)x % Data.Interval.Duration;
+                //DateTime date2 = CandleTools.GetUnixDate(unix); //.ToLocalTime();
+                //s += "\r\n" + $" x: {x} {unix} {date2} {u}";
                 model.Subtitle = s;
 
-                // Forceer de plot om opnieuw te tekenen
-                //model.Annotations.Add(verticalLine);
-                //model.Annotations.Add(horizontalLine);
                 plotView.InvalidatePlot(true);
             }
-            catch (Exception)
+            catch (Exception error)
             {
-                // ignore
+                ScannerLog.Logger.Info("PlotView_MouseMove.Error " + error.ToString());
             }
         }
     }
 
-    //private void PlotView_MouseDown(object? sender, MouseEventArgs e)
-    //{
-    //    if (e.Button == MouseButtons.Left)
-    //    {
-    //        isCrosshairActive = true;
-
-    //        var model = plotView.Model;
-    //        if (!model.Annotations.Contains(verticalLine))
-    //            model.Annotations.Add(verticalLine);
-    //        if (!model.Annotations.Contains(horizontalLine))
-    //            model.Annotations.Add(horizontalLine);
-    //    }
-    //}
-
-
-
-
-    private void Button1_Click(object? sender, EventArgs e)
+    private void ButtonFocusLastCandlesClick(object? sender, EventArgs e)
     {
+        //plotView!.Model = plotModel;
+        //plotModel?.InvalidatePlot(true);
+        ////var axis = plotView.ActualModel.Axes[0];
+        //return;
+
         if (Data.SymbolInterval.CandleList.Count > 0)
         {
             decimal l = decimal.MaxValue;
             decimal h = decimal.MinValue;
             CryptoCandle candleLast = Data.SymbolInterval.CandleList.Values.Last();
             long unix = candleLast.OpenTime;
-            int count = 200;
-            DateTime xfirst = candleLast.Date;
-            DateTime xlast = candleLast.Date;
+            int count = 150;
+            CryptoCandle xlast = candleLast;
+            CryptoCandle xfirst = candleLast;
             while (count > 0)
             {
                 if (Data.SymbolInterval.CandleList.TryGetValue(unix, out CryptoCandle? candle))
@@ -401,37 +366,29 @@ public partial class CryptoVisualisation : Form
                         h = candle.High;
                     if (candle.Low < l)
                         l = candle.Low;
-                    if (candle.Date < xfirst)
-                        xfirst = candle.Date;
+                    if (candle.Date < xfirst.Date)
+                        xfirst = candle;
                 }
                 unix -= Data.Interval.Duration;
                 count--;
             }
 
-
-            //foreach (var ax in plotModel.Axes)
-            //    ax.Maximum = ax.Minimum = Double.NaN;
-            //plotModel.ResetAllAxes();
+            plotView!.Model = plotModel;
 
             // X axis
             plotView.ActualModel.Axes[0].Reset();
-            plotView.ActualModel.Axes[0].Minimum = DateTimeAxis.ToDouble(xfirst);
-            plotView.ActualModel.Axes[0].Maximum = DateTimeAxis.ToDouble(xlast);
+            plotView.ActualModel.Axes[0].Minimum = xfirst.OpenTime; // + 3600;
+            plotView.ActualModel.Axes[0].Maximum = xlast.OpenTime; // + 3600;
 
             // Y axis
-            l = l - 0.02m * l;
-            h = h + 0.02m * h;
+            l -= 0.02m * l;
+            h += 0.02m * h;
             plotView.ActualModel.Axes[1].Reset();
             plotView.ActualModel.Axes[1].Minimum = (double)l;
             plotView.ActualModel.Axes[1].Maximum = (double)h;
 
-            plotView.InvalidatePlot(true);
-
-            //foreach (var ax in plotModel.Axes)
-            //    ax.Maximum = ax.Minimum = Double.NaN;
-            //plotModel.ResetAllAxes();
+            plotModel?.InvalidatePlot(true);
         }
     }
-
 
 }

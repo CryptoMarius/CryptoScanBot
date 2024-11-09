@@ -9,7 +9,6 @@ public class ZigZagIndicator9(SortedList<long, CryptoCandle> candleList, bool us
     //public int Depth { get; set; } = 12;
     public decimal Deviation { get; set; } = deviation;
     //public int BackStep { get; set; } = 3;
-    //public bool OptimizeZigZag = optimizeZigZag;
     public bool PostponeFinish = false; // Delay finishing touch (for UI)
 
 
@@ -44,13 +43,12 @@ public class ZigZagIndicator9(SortedList<long, CryptoCandle> candleList, bool us
     private CryptoCandle? previous2 = null;
     private CryptoCandle? previous1 = null;
 
-    private List<CryptoCandle> buffer = [];
-    
-    private ZigZagResult? Previous = null;
-    private ZigZagResult? LastSwingLow = null;
-    private ZigZagResult? LastSwingHigh = null;
-    public ZigZagResult? AddedExtraZigZag1 { get; set; } = null;
-    public ZigZagResult? AddedExtraZigZag2 { get; set; } = null;
+    private ZigZagResult? Previous = null; // the last ZigZag added
+    private ZigZagResult? LastSwingLow = null; // the last Low ZigZag
+    private ZigZagResult? LastSwingHigh = null; // the last High ZigZag
+
+    private readonly List<CryptoCandle> buffer = []; // for creating a low/high after BOS
+    private readonly List<ZigZagResult> AddedDummyZigZag = []; // dummy points at the end because of BOS
 
 
     private bool GetLowFromBuffer(out CryptoCandle? swing)
@@ -162,22 +160,12 @@ public class ZigZagIndicator9(SortedList<long, CryptoCandle> candleList, bool us
                 LastSwingHigh = AddToZigZag(previous3!, 'H');
             else if (candleValue > GetHighValue(LastSwingHigh.Candle)) // if the candle1 broke the last swing high we can calculate the lowest point
             {
-                //decimal diff = candleValue - GetHighValue(LastSwingHigh.Candle);
-                //decimal perc = 100 * diff / candleValue;
-                //if (perc < (decimal)Deviation)
-                //{
-                //    buffer.Clear();
-                //    LastSwingHigh.ReusePoint(previous3!, candleValue);
-                //}
-                //else
-                {
-                    if (GetLowFromBuffer(out CryptoCandle? swing) && GetLowValue(swing!) < LastSwingHigh.Value)
-                        LastSwingLow = AddToZigZag(swing!, 'L');
-                    LastSwingHigh = AddToZigZag(previous3!, 'H');
-                }
+                if (GetLowFromBuffer(out CryptoCandle? swing) && GetLowValue(swing!) < LastSwingHigh.Value)
+                    LastSwingLow = AddToZigZag(swing!, 'L');
+                LastSwingHigh = AddToZigZag(previous3!, 'H');
             }
             else
-                buffer.Add(previous3!); // for calculating high or low
+                buffer.Add(previous3!); // for calculating high or low after BOS
         }
     }
 
@@ -192,19 +180,12 @@ public class ZigZagIndicator9(SortedList<long, CryptoCandle> candleList, bool us
                 LastSwingLow = AddToZigZag(previous3!, 'L');
             else if (candleValue < GetLowValue(LastSwingLow.Candle)) // if the candle1 broke the last swing low we can calculate the highest point
             {
-                //decimal diff = GetLowValue(LastSwingLow.Candle) - candleValue;
-                //decimal perc = 100 * diff / candleValue;
-                //if (perc < (decimal)Deviation)
-                //    LastSwingLow.ReusePoint(previous3!, candleValue);
-                //else
-                {
-                    if (GetHighFromBuffer(out CryptoCandle? swing) && GetHighValue(swing!) > LastSwingLow.Value)
-                        LastSwingHigh = AddToZigZag(swing!, 'H');
-                    LastSwingLow = AddToZigZag(previous3!, 'L');
-                }
+                if (GetHighFromBuffer(out CryptoCandle? swing) && GetHighValue(swing!) > LastSwingLow.Value)
+                    LastSwingHigh = AddToZigZag(swing!, 'H');
+                LastSwingLow = AddToZigZag(previous3!, 'L');
             }
             else
-                buffer.Add(previous3!); // for calculating high or low
+                buffer.Add(previous3!); // for calculating high or low after BOS
         }
     }
 
@@ -212,21 +193,15 @@ public class ZigZagIndicator9(SortedList<long, CryptoCandle> candleList, bool us
 
     private void Init()
     {
-        // Remove the unnoticed BOS (see Finish)
-        if (AddedExtraZigZag1 != null)
-        {
-            ZigZagList.Remove(AddedExtraZigZag1);
-            AddedExtraZigZag1 = null;
-        }
-        if (AddedExtraZigZag2 != null)
-        {
-            ZigZagList.Remove(AddedExtraZigZag2);
-            AddedExtraZigZag2 = null;
-        }
+        // Fixes because of unnoticed BOS at the right
+        foreach (var zigZag in AddedDummyZigZag)
+            ZigZagList.Remove(zigZag);
+        AddedDummyZigZag.Clear();
     }
 
     private void Finish()
     {
+        // Fixes because of unnoticed BOS at the right
         // Did we have an unnoticed BOS (because there didn't form a L or H in the last
         // 5 candles but the candle1 was lower/higher! (important for trend decisions)
         // Fix: add a dummy ZigZagResult and remove it in the next call
@@ -240,13 +215,10 @@ public class ZigZagIndicator9(SortedList<long, CryptoCandle> candleList, bool us
                 else
                     lastZigZag = LastSwingHigh;
 
-                //ZigZagResult p1 = ZigZagList[^1];
-                //ZigZagResult p2 = ZigZagList[^2];
                 List<CryptoCandle> list = [];
                 list.Add(CandleList.Values[^1]);
                 list.Add(CandleList.Values[^2]);
                 list.Add(CandleList.Values[^3]);
-
 
                 foreach (CryptoCandle candle in list)
                 {
@@ -257,23 +229,36 @@ public class ZigZagIndicator9(SortedList<long, CryptoCandle> candleList, bool us
                     {
                         if (lastZigZag.PointType != 'H' && GetHighFromBuffer(out CryptoCandle? swing))
                         {
-                            AddedExtraZigZag2 = new() { PointType = 'H', Candle = swing!, Value = swing!.GetHighValue(UseHighLow), Dominant = false, Dummy = true, };
-                            ZigZagList.Add(AddedExtraZigZag2);
+                            ZigZagResult dummyHigh = new() { PointType = 'H', Candle = swing!, Value = swing!.GetHighValue(UseHighLow), Dominant = false, Dummy = true, };
+                            ZigZagList.Add(dummyHigh);
+                            AddedDummyZigZag.Add(dummyHigh);
                         }
-                        AddedExtraZigZag1 = new() { PointType = 'L', Candle = candle, Value = candle.GetLowValue(UseHighLow), Dominant = false, Dummy = true, };
-                        ZigZagList.Add(AddedExtraZigZag1);
+
+                        ZigZagResult last = ZigZagList[^1];
+                        if (last.PointType != 'L') // dont repeat it 
+                        {
+                            ZigZagResult dummyLow = new() { PointType = 'L', Candle = candle, Value = candle.GetLowValue(UseHighLow), Dominant = false, Dummy = true, };
+                            ZigZagList.Add(dummyLow);
+                            AddedDummyZigZag.Add(dummyLow);
+                        }
                         break;
                     }
                     else if (candle.GetHighValue(UseHighLow) > LastSwingHigh.Value)
                     {
                         if (lastZigZag.PointType != 'L' && GetLowFromBuffer(out CryptoCandle? swing))
                         {
-                            AddedExtraZigZag2 = new() { PointType = 'L', Candle = swing!, Value = swing!.GetLowValue(UseHighLow), Dominant = false, Dummy = true, };
-                            ZigZagList.Add(AddedExtraZigZag2);
+                            ZigZagResult dummyLow = new() { PointType = 'L', Candle = swing!, Value = swing!.GetLowValue(UseHighLow), Dominant = false, Dummy = true, };
+                            ZigZagList.Add(dummyLow);
+                            AddedDummyZigZag.Add(dummyLow);
                         }
 
-                        AddedExtraZigZag1 = new() { PointType = 'H', Candle = candle, Value = candle.GetHighValue(UseHighLow), Dominant = false, Dummy = true, };
-                        ZigZagList.Add(AddedExtraZigZag1);
+                        ZigZagResult last = ZigZagList[^1];
+                        if (last.PointType != 'H') // dont repeat it 
+                        {
+                            ZigZagResult dummyHigh = new() { PointType = 'H', Candle = candle, Value = candle.GetHighValue(UseHighLow), Dominant = false, Dummy = true, };
+                            ZigZagList.Add(dummyHigh);
+                            AddedDummyZigZag.Add(dummyHigh);
+                        }
                         break;
                     }
                 }
@@ -283,7 +268,14 @@ public class ZigZagIndicator9(SortedList<long, CryptoCandle> candleList, bool us
 
     public void OptimizeList()
     {
-        int index = 1;
+        if (Deviation <= 0)
+            return;
+
+        // Dont need to iterate all, the last couple of points is enough
+        int index = ZigZagList.Count - 6;
+        if (index < 1)
+            index = 1;
+
         bool recalculate = false;
         while (index < ZigZagList.Count)
         {
@@ -318,14 +310,16 @@ public class ZigZagIndicator9(SortedList<long, CryptoCandle> candleList, bool us
             else index++;
         }
 
-        // could have removed the last swing high/low, recalculate them
+        // We could have removed the last swing high/low, recalculate them
         if (recalculate)
         {
+            Previous = null;
             LastSwingLow = null;
             LastSwingHigh = null;
             if (ZigZagList.Count > 0)
             {
                 var l = ZigZagList[^1];
+                Previous = l;
                 if (l.PointType == 'L')
                     LastSwingLow = l;
                 else
@@ -365,12 +359,9 @@ public class ZigZagIndicator9(SortedList<long, CryptoCandle> candleList, bool us
                 Init();
             TestSwingLow();
             TestSwingHigh();
+            OptimizeList();
             if (!PostponeFinish)
-            {
-                if (Deviation > 0)
-                    OptimizeList();
                 Finish();
-            }
         }
     }
 
@@ -378,8 +369,7 @@ public class ZigZagIndicator9(SortedList<long, CryptoCandle> candleList, bool us
     public void FinishJob()
     {
         Init();
-        if (Deviation > 0)
-            OptimizeList();
+        OptimizeList();
         Finish();
     }
 

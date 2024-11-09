@@ -14,7 +14,7 @@ namespace CryptoScanBot.Core.Exchange.Binance.Spot;
 /// </summary>
 public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
 {
-    private void ProcessCandle(IBinanceStreamKlineData kline)
+    private async Task ProcessCandleAsync(IBinanceStreamKlineData kline)
     {
         // Aantekeningen
         // De Base volume is the volume in terms of the first currency pair.
@@ -29,7 +29,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
             {
                 Interlocked.Increment(ref TickerCount);
                 //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", temp.Symbol, temp.Data.OpenTime.ToLocalTime()));
-                var candle = CandleTools.Process1mCandle(symbol, kline.Data.OpenTime, kline.Data.OpenPrice, kline.Data.HighPrice, kline.Data.LowPrice, kline.Data.ClosePrice, kline.Data.Volume, kline.Data.QuoteVolume);
+                var candle = await CandleTools.Process1mCandleAsync(symbol, kline.Data.OpenTime, kline.Data.OpenPrice, kline.Data.HighPrice, kline.Data.LowPrice, kline.Data.ClosePrice, kline.Data.Volume, kline.Data.QuoteVolume);
                 GlobalData.ThreadMonitorCandle!.AddToQueue(symbol, candle);
             }
         }
@@ -45,7 +45,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         {
             if (data.Data.Data.Final)
             {
-                Task.Run(() => { ProcessCandle(data.Data); });
+                Task.Run(async () => { await ProcessCandleAsync(data.Data); });
             }
         }, ExchangeHelper.CancellationToken).ConfigureAwait(false);
 

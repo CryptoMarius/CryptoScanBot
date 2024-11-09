@@ -35,12 +35,13 @@ public class BarometerTools
                 {
                     Exchange = exchange,
                     ExchangeId = exchange.Id,
+                    Name = symbol?.Base + symbol?.Quote,
                     Base = baseName, //De "munt"
                     Quote = quoteData.Name, //USDT, BTC etc.
+                    QuoteData = quoteData,
                     Volume = 0,
                     Status = 1,
                 };
-                symbol.Name = symbol.Base + symbol.Quote;
 
                 CryptoDatabase databaseThread = new();
                 try

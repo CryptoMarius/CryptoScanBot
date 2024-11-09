@@ -290,7 +290,7 @@ public class Api : ExchangeBase
 
 
         // Annuleer de order 
-        if (step.OrderId != "")
+        if (step.OrderId != null && step.OrderId != "")
         {
             // BinanceWeights.WaitForFairBinanceWeight(1);
             using var client = new BinanceRestClient();

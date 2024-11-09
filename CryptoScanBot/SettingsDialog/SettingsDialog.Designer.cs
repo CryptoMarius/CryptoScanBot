@@ -200,6 +200,9 @@ partial class FrmSettings
         flowLayoutPanel4 = new FlowLayoutPanel();
         UserControlSettingsSoundAndColorsDominantLevel = new SettingsDialog.UserControlSettingsPlaySoundAndColors();
         groupBox8 = new GroupBox();
+        label33 = new Label();
+        label30 = new Label();
+        EditZonesCandleCount = new NumericUpDown();
         EditZonesUseLowHigh = new CheckBox();
         label32 = new Label();
         EditZonesWarnPercentage = new NumericUpDown();
@@ -273,9 +276,9 @@ partial class FrmSettings
         EditDebugSignalCreate = new CheckBox();
         EditDebugKLineReceive = new CheckBox();
         toolTip1 = new ToolTip(components);
-        label30 = new Label();
-        EditZonesCandleCount = new NumericUpDown();
-        label33 = new Label();
+        EditZoomLowerTimeFrames = new CheckBox();
+        label34 = new Label();
+        EditZoomPercentage = new NumericUpDown();
         panelButtons.SuspendLayout();
         panelFill.SuspendLayout();
         tabControlMain.SuspendLayout();
@@ -354,6 +357,7 @@ partial class FrmSettings
         tabSignalDominantLevel.SuspendLayout();
         flowLayoutPanel4.SuspendLayout();
         groupBox8.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)EditZonesCandleCount).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditZonesWarnPercentage).BeginInit();
         tabTrading.SuspendLayout();
         tabControlTrading.SuspendLayout();
@@ -383,7 +387,7 @@ partial class FrmSettings
         tabShortBlackList.SuspendLayout();
         panel6.SuspendLayout();
         tabPageOptions.SuspendLayout();
-        ((System.ComponentModel.ISupportInitialize)EditZonesCandleCount).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)EditZoomPercentage).BeginInit();
         SuspendLayout();
         // 
         // panelButtons
@@ -2350,6 +2354,9 @@ partial class FrmSettings
         // groupBox8
         // 
         groupBox8.AutoSize = true;
+        groupBox8.Controls.Add(label34);
+        groupBox8.Controls.Add(EditZoomPercentage);
+        groupBox8.Controls.Add(EditZoomLowerTimeFrames);
         groupBox8.Controls.Add(label33);
         groupBox8.Controls.Add(label30);
         groupBox8.Controls.Add(EditZonesCandleCount);
@@ -2360,15 +2367,44 @@ partial class FrmSettings
         groupBox8.Margin = new Padding(10);
         groupBox8.Name = "groupBox8";
         groupBox8.Padding = new Padding(10);
-        groupBox8.Size = new Size(306, 149);
+        groupBox8.Size = new Size(305, 200);
         groupBox8.TabIndex = 159;
         groupBox8.TabStop = false;
         groupBox8.Text = "Settings";
         // 
+        // label33
+        // 
+        label33.AutoSize = true;
+        label33.Location = new Point(220, 150);
+        label33.Margin = new Padding(4, 0, 4, 0);
+        label33.Name = "label33";
+        label33.Size = new Size(71, 15);
+        label33.TabIndex = 130;
+        label33.Text = "(1h candles)";
+        // 
+        // label30
+        // 
+        label30.AutoSize = true;
+        label30.Location = new Point(13, 150);
+        label30.Margin = new Padding(4, 0, 4, 0);
+        label30.Name = "label30";
+        label30.Size = new Size(77, 15);
+        label30.TabIndex = 128;
+        label30.Text = "Candles back";
+        // 
+        // EditZonesCandleCount
+        // 
+        EditZonesCandleCount.Location = new Point(141, 148);
+        EditZonesCandleCount.Margin = new Padding(4, 3, 4, 3);
+        EditZonesCandleCount.Maximum = new decimal(new int[] { 6000, 0, 0, 0 });
+        EditZonesCandleCount.Name = "EditZonesCandleCount";
+        EditZonesCandleCount.Size = new Size(56, 23);
+        EditZonesCandleCount.TabIndex = 129;
+        // 
         // EditZonesUseLowHigh
         // 
         EditZonesUseLowHigh.AutoSize = true;
-        EditZonesUseLowHigh.Location = new Point(29, 65);
+        EditZonesUseLowHigh.Location = new Point(14, 29);
         EditZonesUseLowHigh.Margin = new Padding(4, 3, 4, 3);
         EditZonesUseLowHigh.Name = "EditZonesUseLowHigh";
         EditZonesUseLowHigh.Size = new Size(242, 19);
@@ -2379,7 +2415,7 @@ partial class FrmSettings
         // label32
         // 
         label32.AutoSize = true;
-        label32.Location = new Point(28, 36);
+        label32.Location = new Point(13, 117);
         label32.Margin = new Padding(4, 0, 4, 0);
         label32.Name = "label32";
         label32.Size = new Size(97, 15);
@@ -2390,7 +2426,7 @@ partial class FrmSettings
         // 
         EditZonesWarnPercentage.DecimalPlaces = 2;
         EditZonesWarnPercentage.Increment = new decimal(new int[] { 25, 0, 0, 131072 });
-        EditZonesWarnPercentage.Location = new Point(157, 34);
+        EditZonesWarnPercentage.Location = new Point(141, 115);
         EditZonesWarnPercentage.Margin = new Padding(4, 3, 4, 3);
         EditZonesWarnPercentage.Name = "EditZonesWarnPercentage";
         EditZonesWarnPercentage.Size = new Size(56, 23);
@@ -3161,34 +3197,36 @@ partial class FrmSettings
         EditDebugKLineReceive.Text = "Debug KLineReceive (does kline ticker work)";
         EditDebugKLineReceive.UseVisualStyleBackColor = true;
         // 
-        // label30
+        // EditZoomLowerTimeFrames
         // 
-        label30.AutoSize = true;
-        label30.Location = new Point(28, 99);
-        label30.Margin = new Padding(4, 0, 4, 0);
-        label30.Name = "label30";
-        label30.Size = new Size(77, 15);
-        label30.TabIndex = 128;
-        label30.Text = "Candles back";
+        EditZoomLowerTimeFrames.AutoSize = true;
+        EditZoomLowerTimeFrames.Location = new Point(14, 54);
+        EditZoomLowerTimeFrames.Margin = new Padding(4, 3, 4, 3);
+        EditZoomLowerTimeFrames.Name = "EditZoomLowerTimeFrames";
+        EditZoomLowerTimeFrames.Size = new Size(167, 19);
+        EditZoomLowerTimeFrames.TabIndex = 131;
+        EditZoomLowerTimeFrames.Text = "Zoom in on lower intervals";
+        EditZoomLowerTimeFrames.UseVisualStyleBackColor = true;
         // 
-        // EditZonesCandleCount
+        // label34
         // 
-        EditZonesCandleCount.Location = new Point(157, 97);
-        EditZonesCandleCount.Margin = new Padding(4, 3, 4, 3);
-        EditZonesCandleCount.Maximum = new decimal(new int[] { 6000, 0, 0, 0 });
-        EditZonesCandleCount.Name = "EditZonesCandleCount";
-        EditZonesCandleCount.Size = new Size(56, 23);
-        EditZonesCandleCount.TabIndex = 129;
+        label34.AutoSize = true;
+        label34.Location = new Point(13, 81);
+        label34.Margin = new Padding(4, 0, 4, 0);
+        label34.Name = "label34";
+        label34.Size = new Size(101, 15);
+        label34.TabIndex = 132;
+        label34.Text = "Zoom percentage";
         // 
-        // label33
+        // EditZoomPercentage
         // 
-        label33.AutoSize = true;
-        label33.Location = new Point(221, 99);
-        label33.Margin = new Padding(4, 0, 4, 0);
-        label33.Name = "label33";
-        label33.Size = new Size(71, 15);
-        label33.TabIndex = 130;
-        label33.Text = "(1h candles)";
+        EditZoomPercentage.DecimalPlaces = 2;
+        EditZoomPercentage.Increment = new decimal(new int[] { 25, 0, 0, 131072 });
+        EditZoomPercentage.Location = new Point(142, 79);
+        EditZoomPercentage.Margin = new Padding(4, 3, 4, 3);
+        EditZoomPercentage.Name = "EditZoomPercentage";
+        EditZoomPercentage.Size = new Size(56, 23);
+        EditZoomPercentage.TabIndex = 133;
         // 
         // FrmSettings
         // 
@@ -3308,6 +3346,7 @@ partial class FrmSettings
         flowLayoutPanel4.PerformLayout();
         groupBox8.ResumeLayout(false);
         groupBox8.PerformLayout();
+        ((System.ComponentModel.ISupportInitialize)EditZonesCandleCount).EndInit();
         ((System.ComponentModel.ISupportInitialize)EditZonesWarnPercentage).EndInit();
         tabTrading.ResumeLayout(false);
         tabTrading.PerformLayout();
@@ -3357,7 +3396,7 @@ partial class FrmSettings
         panel6.PerformLayout();
         tabPageOptions.ResumeLayout(false);
         tabPageOptions.PerformLayout();
-        ((System.ComponentModel.ISupportInitialize)EditZonesCandleCount).EndInit();
+        ((System.ComponentModel.ISupportInitialize)EditZoomPercentage).EndInit();
         ResumeLayout(false);
     }
 
@@ -3609,4 +3648,7 @@ partial class FrmSettings
     private Label label32;
     private NumericUpDown EditZonesWarnPercentage;
     private Label label33;
+    private Label label34;
+    private NumericUpDown EditZoomPercentage;
+    private CheckBox EditZoomLowerTimeFrames;
 }

@@ -42,6 +42,7 @@ partial class CryptoVisualisation
         EditShowZigZag = new CheckBox();
         ButtonCalculate = new Button();
         ButtonZoomLast = new Button();
+        plotView = new OxyPlot.WindowsForms.PlotView();
         flowLayoutPanel1.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)EditDeviation).BeginInit();
         SuspendLayout();
@@ -185,11 +186,26 @@ partial class CryptoVisualisation
         ButtonZoomLast.Text = "Zoom last";
         ButtonZoomLast.UseVisualStyleBackColor = true;
         // 
+        // plotView
+        // 
+        plotView.BackColor = Color.Black;
+        plotView.Dock = DockStyle.Fill;
+        plotView.Location = new Point(133, 0);
+        plotView.Name = "plotView";
+        plotView.PanCursor = Cursors.Hand;
+        plotView.Size = new Size(1051, 761);
+        plotView.TabIndex = 1;
+        plotView.Text = "plotView1";
+        plotView.ZoomHorizontalCursor = Cursors.SizeWE;
+        plotView.ZoomRectangleCursor = Cursors.SizeNWSE;
+        plotView.ZoomVerticalCursor = Cursors.SizeNS;
+        // 
         // CryptoVisualisation
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
         ClientSize = new Size(1184, 761);
+        Controls.Add(plotView);
         Controls.Add(flowLayoutPanel1);
         Name = "CryptoVisualisation";
         StartPosition = FormStartPosition.CenterScreen;
@@ -218,4 +234,5 @@ partial class CryptoVisualisation
     private Label label4;
     private NumericUpDown EditDeviation;
     private Button ButtonZoomLast;
+    private OxyPlot.WindowsForms.PlotView plotView;
 }

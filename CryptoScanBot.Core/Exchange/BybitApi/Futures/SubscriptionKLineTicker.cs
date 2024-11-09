@@ -14,7 +14,7 @@ namespace CryptoScanBot.Core.Exchange.BybitApi.Futures;
 /// </summary>
 public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
 {
-    private void ProcessCandle(string? symbolName, BybitKlineUpdate kline)
+    private async Task ProcessCandleAsync(string? symbolName, BybitKlineUpdate kline)
     {
         // Aantekeningen
         // De Base volume is the volume in terms of the first currency pair.
@@ -36,7 +36,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                 Interlocked.Increment(ref TickerCount);
                 //ScannerLog.Logger.Trace($"kline ticker {topic} process");
                 //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", topic, kline.Timestamp.ToLocalTime()));
-                var candle = CandleTools.Process1mCandle(symbol, kline.StartTime, kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.Volume, kline.Turnover);
+                var candle = await CandleTools.Process1mCandleAsync(symbol, kline.StartTime, kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.Volume, kline.Turnover);
                 GlobalData.ThreadMonitorCandle!.AddToQueue(symbol, candle);
 
                 //if (GlobalData.Settings.General.DebugKLineReceive && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
@@ -58,7 +58,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
             foreach (BybitKlineUpdate kline in data.Data)
             {
                 if (kline.Confirm) // Het is een definitieve candle (niet eentje in opbouw)
-                    Task.Run(() => { ProcessCandle(data.Symbol, kline); });
+                    Task.Run(() => { ProcessCandleAsync(data.Symbol, kline); });
             }
         }, ExchangeHelper.CancellationToken).ConfigureAwait(false);
 

@@ -144,6 +144,8 @@ public class Symbol
                                 string symbolName = symbolData.Name.Replace("-", "");
                                 if (!exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
                                 {
+                                    var quoteData = GlobalData.AddQuoteData(symbolData.QuoteAsset);
+
                                     symbol = new()
                                     {
                                         Exchange = exchange,
@@ -151,6 +153,7 @@ public class Symbol
                                         Name = symbolName,
                                         Base = symbolData.BaseAsset,
                                         Quote = symbolData.QuoteAsset,
+                                        QuoteData = quoteData,
                                         Status = 1,
                                     };
                                 }

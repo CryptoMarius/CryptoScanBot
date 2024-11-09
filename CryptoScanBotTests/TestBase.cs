@@ -49,6 +49,7 @@ public class TestBase
         {
             if (!exchange.SymbolListName.TryGetValue("MASKUSDT", out CryptoSymbol? symbol))
             {
+                var quoteData = GlobalData.AddQuoteData("USDT");
                 symbol = new()
                 {
                     Status = 1,
@@ -57,6 +58,7 @@ public class TestBase
                     Name = "MASKUSDT",
                     Exchange = exchange,
                     ExchangeId = exchange.Id,
+                    QuoteData = quoteData,
 
                     QuantityTickSize = 0.01m,
                     QuantityMinimum = 0.2m,

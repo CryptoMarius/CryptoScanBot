@@ -1,4 +1,5 @@
 ﻿using System.Text;
+
 using CryptoScanBot.Core.Model;
 
 namespace CryptoScanBot.Core.Intern;
@@ -239,8 +240,8 @@ public static class CandleTools
             UpdateCandleFetched(symbol, targetInterval);
         }
 
-        if (candleNew.Open == candleNew.Close && candleNew.Low == candleNew.Close && candleNew.High > candleNew.Open)
-            GlobalData.AddTextToLogTab($"Reconstructed candle {candleNew.OhlcText(symbol, targetInterval, symbol.PriceDisplayFormat, true, true, true)}?????");
+        //if (candleNew.Open == candleNew.Close && candleNew.Low == candleNew.Close && candleNew.High > candleNew.Open)
+        //    GlobalData.AddTextToLogTab($"Reconstructed candle {candleNew.OhlcText(symbol, targetInterval, symbol.PriceDisplayFormat, true, true, true)}?????");
 
 
         if (GlobalData.Settings.General.DebugKLineReceive && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
@@ -261,10 +262,11 @@ public static class CandleTools
 
 
     
-    public static CryptoCandle Process1mCandle(CryptoSymbol symbol, DateTime openTime, decimal open, decimal high, decimal low, decimal close, 
+    public static async Task<CryptoCandle> Process1mCandleAsync(CryptoSymbol symbol, DateTime openTime, decimal open, decimal high, decimal low, decimal close, 
         decimal baseVolume, decimal quoteVolume, bool duplicated = false)
     {
-        Monitor.Enter(symbol.CandleList);
+        //Monitor.Enter(symbol.CandleList);
+        await symbol.CandleLock.WaitAsync();
         try
         {
             //GlobalData.AddTextToLogTab($"Process1mCandle {symbol.Name} Candle 1m {openTime.ToLocalTime()} start processing");
@@ -303,7 +305,8 @@ public static class CandleTools
         }
         finally
         {
-            Monitor.Exit(symbol.CandleList);
+            //Monitor.Exit(symbol.CandleList);
+            symbol.CandleLock.Release();
         }
     }
 
@@ -415,7 +418,7 @@ public static class CandleTools
     }
 
 
-    static public void CleanCandleData(CryptoSymbol symbol, long? lastCandle1mCloseTime)
+    static public async Task CleanCandleDataAsync(CryptoSymbol symbol, long? lastCandle1mCloseTime)
     {
         // We nemen aardig wat geheugen in beslag door alles in het geheugen te berekenen, probeer in 
         // ieder geval de CandleData te clearen. Vanaf x candles terug tot de eerste de beste die null is.
@@ -424,7 +427,8 @@ public static class CandleTools
         {
             if (lastCandle1mCloseTime == null || lastCandle1mCloseTime % interval.Duration == 0)
             {
-                Monitor.Enter(symbol.CandleList);
+                //Monitor.Enter(symbol.CandleList);
+                await symbol.CandleLock.WaitAsync();
                 try
                 {
                     // Remove old indicator data
@@ -455,7 +459,8 @@ public static class CandleTools
                 }
                 finally
                 {
-                    Monitor.Exit(symbol.CandleList);
+                    //Monitor.Exit(symbol.CandleList);
+                    symbol.CandleLock.Release();
                 }
             }
         }

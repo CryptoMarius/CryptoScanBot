@@ -11,7 +11,7 @@ namespace CryptoScanBot.Core.Exchange.Binance.Futures;
 
 public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
 {
-    private void ProcessCandle(BinanceStreamKlineData kline)
+    private async Task ProcessCandleAsync(BinanceStreamKlineData kline)
     {
         if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
         {
@@ -21,7 +21,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                 //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", temp.Symbol, temp.Data.OpenTime.ToLocalTime()));
                 //string json = JsonSerializer.Serialize(kline, ExchangeHelper.JsonSerializerNotIndented);
                 //ScannerLog.Logger.Trace($"kline ticker {symbol.Name} {json}");
-                var candle = CandleTools.Process1mCandle(symbol, kline.Data.OpenTime, kline.Data.OpenPrice, kline.Data.HighPrice, kline.Data.LowPrice, kline.Data.ClosePrice, kline.Data.Volume, kline.Data.QuoteVolume);
+                var candle = await CandleTools.Process1mCandleAsync(symbol, kline.Data.OpenTime, kline.Data.OpenPrice, kline.Data.HighPrice, kline.Data.LowPrice, kline.Data.ClosePrice, kline.Data.Volume, kline.Data.QuoteVolume);
                 GlobalData.ThreadMonitorCandle!.AddToQueue(symbol, candle);
             }
         }
@@ -36,7 +36,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         {
             if (data.Data.Data.Final)
             {
-                Task.Run(() => { ProcessCandle((BinanceStreamKlineData)data.Data); });
+                Task.Run(async () => { await ProcessCandleAsync((BinanceStreamKlineData)data.Data); });
             }
         }, ExchangeHelper.CancellationToken).ConfigureAwait(false);
         return subscriptionResult;

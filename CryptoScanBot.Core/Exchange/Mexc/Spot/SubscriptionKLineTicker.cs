@@ -59,7 +59,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         //TickerGroup!.SocketClient.ClientOptions.OutputOriginalData = true;
         var subscriptionResult = await ((MexcSocketClient)TickerGroup.SocketClient).SpotApi.SubscribeToKlineUpdatesAsync(symbols, KlineInterval.OneMinute, data =>
         {
-            Task taskKline = Task.Run(() =>
+            Task taskKline = Task.Run(async () =>
             {
                 MexcStreamKline kline = data.Data;
                 //string json = JsonSerializer.Serialize(data.Data, GlobalData.JsonSerializerNotIndented);
@@ -71,7 +71,8 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                     string symbolName = data.Symbol!;
                     if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
                     {
-                        Monitor.Enter(symbol.CandleList);
+                        //Monitor.Enter(symbol.CandleList);
+                        await symbol.CandleLock.WaitAsync();
                         try
                         {
                             // Add or update the local cache
@@ -101,7 +102,8 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                         }
                         finally
                         {
-                            Monitor.Exit(symbol.CandleList);
+                            //Monitor.Exit(symbol.CandleList);
+                            symbol.CandleLock.Release();
                         }
                     }
                 }
@@ -120,7 +122,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
             {
                 AutoReset = false,
             };
-            timerKline.Elapsed += new System.Timers.ElapsedEventHandler((sender, e) =>
+            timerKline.Elapsed += new System.Timers.ElapsedEventHandler(async (sender, e) =>
             {
                 foreach (var symbol in SymbolList)
                 {
@@ -128,7 +130,8 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                     CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
                     long expectedCandlesUpto = CandleTools.GetUnixTime(DateTime.UtcNow, 60) - interval.Duration;
 
-                    Monitor.Enter(symbol.CandleList);
+                    //Monitor.Enter(symbol.CandleList);
+                    await symbol.CandleLock.WaitAsync();
                     try
                     {
                         // If needed add dummy candle(s) with the same price as the last candle
@@ -173,7 +176,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
                                 //ScannerLog.Logger.Trace($"kline ticker {topic} process");
                                 //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", topic, kline.Timestamp.ToLocalTime()));
-                                CandleTools.Process1mCandle(symbol, candle.Date, candle.Open, candle.High, candle.Low, candle.Close,
+                                await CandleTools.Process1mCandleAsync(symbol, candle.Date, candle.Open, candle.High, candle.Low, candle.Close,
 #if SUPPORTBASEVOLUME
                                     candle.BaseVolume, 
 #else
@@ -202,7 +205,8 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                     }
                     finally
                     {
-                        Monitor.Exit(symbol.CandleList);
+                        //Monitor.Exit(symbol.CandleList);
+                        symbol.CandleLock.Release();
                     }
                 }
 

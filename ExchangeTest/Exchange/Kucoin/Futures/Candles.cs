@@ -87,7 +87,8 @@ public class Candles
             // Remember
             long? startFetchDate = symbolInterval.LastCandleSynchronized;
 
-            Monitor.Enter(symbol.CandleList);
+            //Monitor.Enter(symbol.CandleList);
+            await symbol.CandleLock.WaitAsync();
             try
             {
                 long last = long.MinValue;
@@ -123,7 +124,8 @@ public class Candles
             }
             finally
             {
-                Monitor.Exit(symbol.CandleList);
+                //Monitor.Exit(symbol.CandleList);
+                symbol.CandleLock.Release();
             }
 
 
@@ -160,7 +162,8 @@ public class Candles
                     break;
             }
 
-            Monitor.Enter(symbol.CandleList);
+            //Monitor.Enter(symbol.CandleList);
+            await symbol.CandleLock.WaitAsync();
             try
             {
                 // Fill missing candles (the only place we know fore it can be done)
@@ -229,7 +232,8 @@ public class Candles
             }
             finally
             {
-                Monitor.Exit(symbol.CandleList);
+                //Monitor.Exit(symbol.CandleList);
+                symbol.CandleLock.Release();
             }
         }
     }

@@ -46,13 +46,13 @@ public class AltradyWebhookSignalData
 public class AltradyWebhookBotPositions
 {
     public int Id { get; set; }
-    public string CoinraySymbol { get; set; }
-    public AltradyWebhookSignalData SignalData { get; set; }
+    public required string CoinraySymbol { get; set; }
+    public required AltradyWebhookSignalData SignalData { get; set; }
 }
 
 public class AltradyWebhookPayload
 {
-    public AltradyWebhookBotPositions SignalBotPositions { get; set; }
+    public required AltradyWebhookBotPositions SignalBotPositions { get; set; }
 }
 
 public class AltradyWebhook

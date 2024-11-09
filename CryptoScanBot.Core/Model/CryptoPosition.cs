@@ -7,7 +7,7 @@ namespace CryptoScanBot.Core.Model;
 
 
 /// <summary>
-/// Een position is 1 een samenvatting van 1 of meerdere orders
+/// Een position is een samenvatting van 1 of meerdere orders
 /// </summary>
 [Table("Position")]
 public class CryptoPosition : CryptoData2

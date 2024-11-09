@@ -38,7 +38,12 @@ internal class Test
                         Side = CryptoTradeSide.Long,
                     };
 
-                    CryptoPositionPart part = new();
+                    CryptoPositionPart part = new()
+                    {
+                        Position = position,
+                        Exchange = exchange,
+                        Symbol = symbol,
+                    };
 
                     CryptoScanBot.Core.Exchange.BybitApi.Spot.Api api = new();
                     api.ExchangeDefaults();

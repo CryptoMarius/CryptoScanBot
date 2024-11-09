@@ -64,12 +64,15 @@ public class Symbols
 
                                 if (!exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
                                 {
+                                    var quoteData = GlobalData.AddQuoteData(symbolData.QuoteAsset);
                                     symbol = new()
                                     {
+                                        Name = symbolName,
                                         Exchange = exchange,
                                         ExchangeId = exchange.Id,
                                         Base = symbolData.BaseAsset,
                                         Quote = symbolData.QuoteAsset,
+                                        QuoteData = quoteData,
                                         Status = 1,
                                     };
                                 }

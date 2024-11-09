@@ -11,7 +11,7 @@ namespace CryptoScanBot.Intern.Tests;
 public class CandleToolsTests : TestBase
 {
     [TestMethod()]
-    public void CalculateCandleForIntervalTest()
+    public async Task CalculateCandleForIntervalTestAsync()
     {
         InitTestSession();
         CryptoDatabase database = new();
@@ -31,7 +31,7 @@ public class CandleToolsTests : TestBase
 
             // Use Process1mCandle?
 
-            CryptoCandle candle = CandleTools.Process1mCandle(symbol, startTime, value, value, value, value, 1, 1, false);
+            CryptoCandle candle = await CandleTools.Process1mCandleAsync(symbol, startTime, value, value, value, value, 1, 1, false);
             CandleTools.UpdateCandleFetched(symbol, GlobalData.IntervalList[0]);
             string text = $"ticker(1m):" + candle.OhlcText(symbol, GlobalData.IntervalList[0], symbol.PriceDisplayFormat, true, false, true);
             Console.WriteLine(text);

@@ -19,7 +19,7 @@ public class ZigZagResult
     //public DateTime StartTime { get; set; }         zigZag.StartTime = zigZag.Candle.Date;
     public decimal Top { get; set; }
     public decimal Bottom { get; set; }
-    public double Percentage { get; set; }
+    public decimal Percentage { get; set; }
 
     public CryptoCandle? InvalidOn { get; set; } = null;
 

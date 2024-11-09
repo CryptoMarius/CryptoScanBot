@@ -2,7 +2,7 @@
 
 using System.Text.Json;
 
-namespace CryptoScanBot.Core.Experimental;
+namespace CryptoScanBot.Core.Zones;
 
 [Serializable]
 public class CryptoZoneSession

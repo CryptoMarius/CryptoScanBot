@@ -48,7 +48,7 @@ public class CryptoSignal: CryptoData2
     [Computed]
     public string DisplayText { get { return Symbol.Name + " " + Interval.Name + " signal=" + OpenDate.ToLocalTime() + " " + SideText + " " + StrategyText; } }
 
-    public string EventText { get; set; }
+    public string? EventText { get; set; }
 
 
     [Computed]
@@ -60,7 +60,7 @@ public class CryptoSignal: CryptoData2
     [Computed]
     public int ItemIndex { get; set; }
 
-    public double AvgBB { get; set; }
+    //public double AvgBB { get; set; }
 
     [Computed]
     public decimal MinEntry

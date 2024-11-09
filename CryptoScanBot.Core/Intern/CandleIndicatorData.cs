@@ -56,7 +56,7 @@ public class CandleIndicatorData: CryptoData
         List<CryptoCandle> candlesForHistory = [];
 
 
-        //Monitor.Enter(symbol.CandleList);
+        //Monitor.Enter(symbol.CandleList);await symbol.CandleLock.WaitAsync();
         //try
         //{
         // Geen verandering als het goed is (is reeds afgerond als het goed is)

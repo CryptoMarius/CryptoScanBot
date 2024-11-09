@@ -29,7 +29,7 @@ public class CryptoZone
     public required decimal Bottom { get; set; }
 
     // Create a signal when this price triggers (once)
-    public decimal AlarmPrice { get; set; }
+    public decimal AlarmPrice { get; set; } // obsolete, just for debugging
     public DateTime? AlarmDate { get; set; }
 
     // Remove the zone when this price has been triggered (once)

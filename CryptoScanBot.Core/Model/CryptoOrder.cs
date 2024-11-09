@@ -24,7 +24,7 @@ public class CryptoOrder
     [Computed]
     public virtual required CryptoSymbol Symbol { get; set; }
 
-    public string OrderId { get; set; }
+    public string? OrderId { get; set; }
     public CryptoOrderSide Side { get; set; }
     public CryptoOrderType Type { get; set; }
     public CryptoOrderStatus Status { get; set; }

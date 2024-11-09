@@ -106,6 +106,7 @@ public static class PositionTools
     {
         CryptoPositionPart part = new()
         {
+            Position = position,
             Purpose = purpose,
             PartNumber = position.PartList.Count, //position.PartCount + 1, // 
             Strategy = strategy,

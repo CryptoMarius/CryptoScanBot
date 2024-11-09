@@ -50,12 +50,12 @@ public static class ControlHelper
 public abstract class CryptoDataGrid
 {
     // references
-    internal DataGridView Grid;
+    internal DataGridView? Grid;
     internal Object? SelectedObject;
     internal int SelectedObjectIndex;
     internal SortedList<string, ColumnSetting> ColumnList = [];
 
-    public abstract void GetTextFunction(object sender, DataGridViewCellValueEventArgs e);
+    public abstract void GetTextFunction(object? sender, DataGridViewCellValueEventArgs e);
 }
 
 
@@ -373,7 +373,7 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         Grid.Invoke((MethodInvoker)(() => { Grid.RowCount = List.Count; Grid.Invalidate(); }));
     }
 
-    private void HeaderClick(object sender, DataGridViewCellMouseEventArgs e)
+    private void HeaderClick(object? sender, DataGridViewCellMouseEventArgs e)
     {
         int column = e.ColumnIndex;
         if (SortColumn >= 0)

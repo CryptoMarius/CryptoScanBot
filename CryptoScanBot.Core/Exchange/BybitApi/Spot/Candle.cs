@@ -46,7 +46,8 @@ public class Candle
         // Remember
         long? startFetchDate = symbolInterval.LastCandleSynchronized;
 
-        Monitor.Enter(symbol.CandleList);
+        //Monitor.Enter(symbol.CandleList);
+        await symbol.CandleLock.WaitAsync();
         try
         {
             long last = long.MinValue;
@@ -86,7 +87,8 @@ public class Candle
         }
         finally
         {
-            Monitor.Exit(symbol.CandleList);
+            //Monitor.Exit(symbol.CandleList);
+            symbol.CandleLock.Release();
         }
 
 
@@ -129,7 +131,8 @@ public class Candle
             }
 
 
-            Monitor.Enter(symbol.CandleList);
+            //Monitor.Enter(symbol.CandleList);
+            await symbol.CandleLock.WaitAsync();
             try
             {
                 // Add missing candles (the only place we know it can be done safely)
@@ -145,7 +148,8 @@ public class Candle
             }
             finally
             {
-                Monitor.Exit(symbol.CandleList);
+                //Monitor.Exit(symbol.CandleList);
+                symbol.CandleLock.Release();
             }
         }
     
@@ -161,7 +165,7 @@ public class Candle
         }
 
         // Remove the candles we needed because of the not supported intervals & bulk calculation
-        CandleTools.CleanCandleData(symbol, null);
+        await CandleTools.CleanCandleDataAsync(symbol, null);
     }
 
 

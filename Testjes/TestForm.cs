@@ -903,8 +903,8 @@ public partial class TestForm : Form
 
     internal class VolatiteitStat
     {
-        public string Base;
-        public string Quote;
+        public string Base = "";
+        public string Quote = "";
         public decimal avgDiff;
         public double stddev;
         //public double stddev1h;

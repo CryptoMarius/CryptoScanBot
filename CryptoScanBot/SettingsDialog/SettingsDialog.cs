@@ -240,6 +240,8 @@ public partial class FrmSettings : Form
         EditZonesWarnPercentage.Value = (decimal)settings.Signal.Zones.WarnPercentage;
         EditZonesUseLowHigh.Checked = settings.Signal.Zones.UseHighLow;
         EditZonesCandleCount.Value = settings.Signal.Zones.CandleCount;
+        EditZoomPercentage.Value = settings.Signal.Zones.ZoomPercentage;
+        EditZoomLowerTimeFrames.Checked = settings.Signal.Zones.ZoomLowerTimeFrames;
         //EditZonesInterval.Value = settings.Signal.Zones.Interval; hardcoded 1h for now
 
         // --------------------------------------------------------------------------------
@@ -493,6 +495,8 @@ public partial class FrmSettings : Form
         settings.Signal.Zones.WarnPercentage = EditZonesWarnPercentage.Value;
         settings.Signal.Zones.UseHighLow = EditZonesUseLowHigh.Checked;
         settings.Signal.Zones.CandleCount = (int)EditZonesCandleCount.Value;
+        settings.Signal.Zones.ZoomPercentage = EditZoomPercentage.Value;
+        settings.Signal.Zones.ZoomLowerTimeFrames = EditZoomLowerTimeFrames.Checked;
         //settings.Signal.Zones.Interval = EditZonesInterval.Value; hardcoded 1h for now
 
         // --------------------------------------------------------------------------------

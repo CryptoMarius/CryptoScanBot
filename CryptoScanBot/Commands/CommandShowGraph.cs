@@ -1,7 +1,5 @@
 ﻿using CryptoScanBot.Core.Model;
 
-using CryptoShowTrend;
-
 namespace CryptoScanBot.Commands;
 
 public class CommandShowGraph : CommandBase

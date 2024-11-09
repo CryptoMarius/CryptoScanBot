@@ -1,10 +1,10 @@
 ﻿using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Excel;
-using CryptoScanBot.Core.Experimental;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Trader;
+using CryptoScanBot.Core.Zones;
 using CryptoScanBot.Intern;
 
 namespace CryptoScanBot.Commands;
@@ -60,7 +60,7 @@ public class CommandTools
                     return;
 
                 case Command.CalculateLiquidityZones:
-                    _ = Task.Run(() => { _ = LiquidityZones.CalculateAllSymbolsAsync(sender); });
+                    _ = Task.Run(() => { _ = LiquidityZones.CalculateAllSymbolsAsync(null); });
                     return;
                     
             }

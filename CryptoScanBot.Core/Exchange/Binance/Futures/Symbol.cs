@@ -78,6 +78,8 @@ public class Symbol
                             //Eventueel symbol toevoegen
                             if (!exchange.SymbolListName.TryGetValue(symbolData.Name, out CryptoSymbol? symbol))
                             {
+                                var quoteData = GlobalData.AddQuoteData(symbolData.QuoteAsset);
+
                                 symbol = new()
                                 {
                                     Exchange = exchange,
@@ -85,6 +87,7 @@ public class Symbol
                                     Name = symbolData.Name,
                                     Base = symbolData.BaseAsset,
                                     Quote = symbolData.QuoteAsset,
+                                    QuoteData = quoteData,
                                     Status = 1,
                                 };
                             }

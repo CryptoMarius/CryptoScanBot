@@ -1,5 +1,6 @@
 ﻿namespace CryptoScanBot.Core.Settings;
 
+#if balancing
 [Serializable]
 public class BalanceSymbol
 {
@@ -48,3 +49,4 @@ public class SettingsBalanceBot
         MinimalSellBarometer = -999;
     }
 }
+#endif

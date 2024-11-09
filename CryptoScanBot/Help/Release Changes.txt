@@ -2,10 +2,11 @@ CryptoScanBot release historie:
 
 ??-11-2024 1.9.4-.....
 
-- Scanner - Dominante zones inzien, UTC display
+- Scanner - Dominante zones optimaliseren, niet alles hoeft elke keer berekend te worden (verwijderen zigzags bij deviation%)
+- Scanner - Dominante zones inzien, UTC / local display? (dat loopt nu vreemd door elkaar zo te zien, controleren!)
 - Scanner - Dominante zones inzien, coordinaten en een croshair toegevoegd
-- Scanner - Trend berekening, een bugje aangepast waardoor een extra H of L wordt toegevoegd die de trend verziekt
-
+- Scanner - Dominante zones inzien, de extra H of L die worden toegevoegd laten zien dmv witte bolletjes
+- Scanner - Trend berekening, een bugje aangepast waardoor een extra H of L werdt toegevoegd die de trend mogelijk kan verstoren
 
 03-11-2024 1.9.4.1104
 

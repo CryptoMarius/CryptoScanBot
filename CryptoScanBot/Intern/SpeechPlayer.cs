@@ -6,7 +6,7 @@ namespace CryptoScanBot.Intern;
 
 static public class ThreadSpeechPlayer
 {
-    private static Thread speechPlayThread;
+    private static Thread? speechPlayThread;
     private static readonly BlockingCollection<string> speechQueue = [];
     private static readonly CancellationTokenSource speechCancelToken = new();
 

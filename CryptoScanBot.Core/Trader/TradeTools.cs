@@ -434,7 +434,7 @@ public class TradeTools
         DateTime? lastDateTime = null;
         foreach (CryptoOrder order in position.OrderList.Values.ToList())
         {
-            if (order != null && position.StepOrderList.TryGetValue(order.OrderId, out CryptoPositionStep? step))
+            if (order != null && order.OrderId != null && position.StepOrderList.TryGetValue(order.OrderId, out CryptoPositionStep? step))
             {
                 // Remember the last datetime so we can close the position with this date if needed
                 if (lastDateTime == null || order.UpdateTime > lastDateTime)

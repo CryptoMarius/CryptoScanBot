@@ -19,9 +19,9 @@ public class CryptoSymbol
     [Computed]
     public virtual required CryptoExchange Exchange { get; set; }
 
-    public string Name { get; set; }
-    public string Base { get; set; } //De munt zelf (NKN, THETA, AION enzovoort)
-    public string Quote { get; set; } //De basismunt (BTC, ETH, USDT enzovoort)
+    public required string Name { get; set; }
+    public required string Base { get; set; } //De munt zelf (NKN, THETA, AION enzovoort)
+    public required string Quote { get; set; } //De basismunt (BTC, ETH, USDT enzovoort)
     public int Status { get; set; } //0 voor inactief, 1 voor actief
 
     // Ongebruikt, weg ermee
@@ -117,7 +117,7 @@ public class CryptoSymbol
 
     [Computed]
     // Quote: display format
-    public virtual CryptoQuoteData? QuoteData { get; set; }
+    public required virtual CryptoQuoteData QuoteData { get; set; }
 
     
     [Computed]
@@ -131,6 +131,9 @@ public class CryptoSymbol
     // Quick reference to the first intervalSymbol
     public SortedList<long, CryptoCandle> CandleList { get { return IntervalPeriodList[0].CandleList; } }
 
+    [Computed]
+    // Lock the candlelist to manipulates candles
+    public SemaphoreSlim CandleLock { get; set; } = new(1, 1);
 
     //// Quick en dirty voor het testen van de performance van balanceren
     //// Waarom kies ik ervoor om het altijd quick en dirty te doen??????

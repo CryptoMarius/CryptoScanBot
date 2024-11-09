@@ -44,7 +44,7 @@ public class CryptoPositionStep
     public decimal Commission { get; set; }
     public decimal CommissionBase { get; set; } 
     public decimal CommissionQuote { get; set; }
-    public string CommissionAsset { get; set; }
+    public string? CommissionAsset { get; set; }
 
     public bool IsCalculated { get; set; }
 }
