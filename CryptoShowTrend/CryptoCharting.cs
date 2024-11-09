@@ -50,14 +50,14 @@ public class CryptoCharting
     }
 
 
-    public static void DrawZigZagSerie(CryptoSymbol symbol, PlotModel chart, ZigZagIndicator9 indicator, long unix)
+    public static void DrawZigZagSerie(PlotModel chart, CryptoZoneData data, long unix)
     {
         var seriesZigZag = new LineSeries { Title = "ZigZag", Color = OxyColors.White };
         var seriesHigh = new ScatterSeries { Title = "Markers high", MarkerSize = 4, MarkerFill = OxyColors.Red, MarkerType = MarkerType.Circle, };
         var seriesLow = new ScatterSeries { Title = "Markers low", MarkerSize = 4, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Circle, };
         var seriesDummyHigh = new ScatterSeries { Title = "Markers dummy", MarkerSize = 4, MarkerFill = OxyColors.Red, MarkerType = MarkerType.Square, };
         var seriesDummyLow = new ScatterSeries { Title = "Markers dummy", MarkerSize = 4, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Square, };
-        foreach (var zigzag in indicator.ZigZagList)
+        foreach (var zigzag in data.Indicator.ZigZagList)
         {
             if (zigzag.Candle!.OpenTime > unix)
             {

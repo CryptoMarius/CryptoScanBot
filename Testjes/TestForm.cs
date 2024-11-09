@@ -1452,7 +1452,7 @@ public partial class TestForm : Form
     //Point zoomOrigin = Point.Empty;   // updated in MouseMove when button is pressed
     readonly float zoomFactor = 2f;
 
-    private void PictureBox_Paint(object sender, PaintEventArgs e)
+    private void PictureBox_Paint(object? sender, PaintEventArgs e)
     {
         // normal drawing
         //DrawStuff(e.Graphics);

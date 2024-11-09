@@ -3,20 +3,14 @@ using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Intern;
 
-using CryptoScanBot.Core;
 using CryptoScanBot.Core.Trader;
 using CryptoScanBot.Core.Barometer;
 using System.Text.Json;
 using CryptoScanBot.Core.Settings;
-using Bybit.Net.Clients;
-using Bybit.Net.Objects.Models.V5;
-using CryptoExchange.Net.Objects;
-using Bybit.Net.Enums;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Experiment.Exchange.Altrady;
 
 using Mexc.Net.Clients;
-using Mexc.Net.Enums;
 
 
 namespace CryptoScanBot.Experiment;
@@ -382,28 +376,28 @@ public partial class Form1 : Form
         return null;
     }
 
-    private void ButtonAltradyOpenClick(object sender, EventArgs e)
+    private void ButtonAltradyOpenClick(object? sender, EventArgs e)
     {
         CryptoPosition? position = SetupPosition();
         if (position != null)
             AltradyWebhook.DelegateAllToAltrady(position, "https://api.altrady.com/v2/signal_bot_positions", "Altrady - Position open");
     }
 
-    private void ButtonAltradyIncreasePositionClick(object sender, EventArgs e)
+    private void ButtonAltradyIncreasePositionClick(object? sender, EventArgs e)
     {
         CryptoPosition? position = SetupPosition();
         if (position != null)
             AltradyWebhook.DelegateAllToAltrady(position, "https://api.altrady.com/v2/signal_bot_positions", "Altrady - Position increase");
     }
 
-    private void ButtonAltradyAddTpClick(object sender, EventArgs e)
+    private void ButtonAltradyAddTpClick(object? sender, EventArgs e)
     {
         CryptoPosition? position = SetupPosition();
         if (position != null)
             AltradyWebhook.DelegateAllToAltrady(position, "https://api.altrady.com/v2/signal_bot_positions", "Altrady - Position set tp");
     }
 
-    private void ButtonAltradyCancelClick(object sender, EventArgs e)
+    private void ButtonAltradyCancelClick(object? sender, EventArgs e)
     {
         CryptoPosition? position = SetupPosition();
         if (position != null)

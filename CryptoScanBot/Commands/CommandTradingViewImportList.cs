@@ -29,7 +29,7 @@ public class CommandTradingViewImportList
                 {
                     // Parse the exchange code "BINANCE" or "BYBIT" + symbol and suffix..
                     //Url = "https://www.tradingview.com/chart/?symbol=BINANCE:{BASE}{QUOTE}&interval={interval}"
-                    (string url, CryptoExternalUrlType execute) = GlobalData.ExternalUrls.GetExternalRef(CryptoTradingApp.TradingView, false, symbol, GlobalData.IntervalList[0]);
+                    (string url, _) = GlobalData.ExternalUrls.GetExternalRef(CryptoTradingApp.TradingView, false, symbol, GlobalData.IntervalList[0]);
                     string[] subs = url.Split(new string[] { "symbol=", "&interval=" }, StringSplitOptions.None);
                     if (subs.Length > 1)
                     {

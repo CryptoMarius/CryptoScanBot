@@ -230,7 +230,6 @@ partial class CryptoVisualisation
     private ComboBox EditIntervalName;
     private Label label3;
     private ComboBox EditSymbolQuote;
-    private Button Button1;
     private Label label4;
     private NumericUpDown EditDeviation;
     private Button ButtonZoomLast;

@@ -67,7 +67,7 @@ public class LiquidityZones
             if (session.ShowLiqBoxes)
             {
                 await CryptoCalculation.CalculateLiqBoxesAsync(sender, data, session, log);
-                CryptoCalculation.CalculateBrokenBoxes(sender, data, session, log);
+                CryptoCalculation.CalculateBrokenBoxes(data);
             }
 
 
@@ -83,7 +83,7 @@ public class LiquidityZones
             var lastCandle = data.SymbolInterval.CandleList.Values.Last();
 
 
-            CryptoCalculation.SaveToZoneTable(data, session);
+            CryptoCalculation.SaveToZoneTable(data);
 
             //plotView.Model = plotModel;
             //plotView.Model.InvalidatePlot(true);

@@ -3,7 +3,7 @@ using System.Text;
 
 namespace CryptoScanBot.Core.TradingView;
 
-public delegate void DataFetchedEvent(object sender, List<string> e);
+public delegate void DataFetchedEvent(object? sender, List<string> e);
 
 // Gebaseerd op https://github.com/mli2805/WebListener/tree/master/BalisStandard/Pollers/TradingView
 // https://github.com/mli2805/WebListener/blob/master/BalisStandard/Pollers/TradingView/TikerExt.cs

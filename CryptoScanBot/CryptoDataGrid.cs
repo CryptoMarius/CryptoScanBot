@@ -92,7 +92,6 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
 
     public abstract void InitializeHeaders();
     public abstract void InitializeCommands(ContextMenuStrip menuStrip);
-    //public abstract void GetTextFunction(object sender, DataGridViewCellValueEventArgs e);
     public abstract void CellFormattingEvent(object? sender, DataGridViewCellFormattingEventArgs e);
     public abstract void SortFunction();
 
@@ -248,7 +247,7 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
     }
 
 
-    private void ShowPopupMenu(object sender, MouseEventArgs e)
+    private void ShowPopupMenu(object? sender, MouseEventArgs e)
     {
         if (e.Button != MouseButtons.Right)
             return;
@@ -313,7 +312,7 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
     }
 
 
-    private void ColumnWidthChanged(object sender, DataGridViewColumnEventArgs e)
+    private void ColumnWidthChanged(object? sender, DataGridViewColumnEventArgs e)
     {
         foreach (DataGridViewColumn column in Grid.Columns)
         {

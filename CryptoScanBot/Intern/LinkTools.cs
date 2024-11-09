@@ -11,8 +11,8 @@ public static class LinkTools
     private static bool WebViewDummyInitialized;
     private static bool WebViewTradingViewInitialized;
 
-    public static TabControl? TabControl;
-    public static TabPage? TabPageBrowser;
+    public static TabControl? TabControl = null;
+    public static TabPage? TabPageBrowser = null;
 
     public static Microsoft.Web.WebView2.WinForms.WebView2? WebViewDummy;
     public static Microsoft.Web.WebView2.WinForms.WebView2? WebViewTradingView;
@@ -58,8 +58,9 @@ public static class LinkTools
             {
                 await InitializeWebViewTradingView();
 
-                WebViewTradingView.Source = new(Url);
-                if (activateTab)
+                if (WebViewTradingView != null)
+                    WebViewTradingView.Source = new(Url);
+                if (activateTab && TabControl!=null)
                     TabControl.SelectedTab = TabPageBrowser;
             }
             else
@@ -67,7 +68,8 @@ public static class LinkTools
                 if (Execute == CryptoExternalUrlType.Internal)
                 {
                     await InitializeWebViewDummy();
-                    WebViewDummy.Source = new(Url);
+                    if (WebViewDummy != null)
+                        WebViewDummy.Source = new(Url);
                 }
                 else
                 {

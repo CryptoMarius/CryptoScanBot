@@ -123,6 +123,7 @@ public partial class CryptoVisualisation : Form
     {
         //ScannerLog.Logger.Info("ButtonCalculate_ClickAsync.Start");
 
+        UseWaitCursor = true;
         ButtonZoomLast.Enabled = false;
         ButtonCalculate.Enabled = false;
         Cursor.Current = Cursors.WaitCursor;
@@ -149,6 +150,7 @@ public partial class CryptoVisualisation : Form
             ButtonZoomLast.Enabled = true;
             ButtonCalculate.Enabled = true;
             Cursor.Current = Cursors.Default;
+            UseWaitCursor = false;
         }
         //ScannerLog.Logger.Info("ButtonCalculate_ClickAsync.Stop " + Stopwatch.GetElapsedTime(startTime).TotalSeconds.ToString());
     }
@@ -258,7 +260,7 @@ public partial class CryptoVisualisation : Form
 
                 CryptoCharting.DrawCandleSerie(plotModel, Data.SymbolInterval, unix);
                 if (Session.ShowZigZag)
-                    CryptoCharting.DrawZigZagSerie(Data.Symbol, plotModel, Data.Indicator, unix);
+                    CryptoCharting.DrawZigZagSerie(plotModel, Data, unix);
                 if (Session.ShowLiqBoxes)
                     CryptoCharting.DrawLiqBoxes(plotModel, Data, unix, lastCandle);
 
@@ -377,8 +379,8 @@ public partial class CryptoVisualisation : Form
 
             // X axis
             plotView.ActualModel.Axes[0].Reset();
-            plotView.ActualModel.Axes[0].Minimum = xfirst.OpenTime; // + 3600;
-            plotView.ActualModel.Axes[0].Maximum = xlast.OpenTime; // + 3600;
+            plotView.ActualModel.Axes[0].Minimum = xfirst.OpenTime - 5 * Data.Interval.Duration;
+            plotView.ActualModel.Axes[0].Maximum = xlast.OpenTime + 5 * Data.Interval.Duration;
 
             // Y axis
             l -= 0.02m * l;

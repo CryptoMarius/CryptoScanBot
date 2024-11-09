@@ -41,7 +41,7 @@ public partial class UserControlQuote : UserControl
         quoteData.EntryPercentage = EditEntryPercentage.Value;
     }
 
-    private void ButtonColor_Click(object sender, EventArgs e)
+    private void ButtonColor_Click(object? sender, EventArgs e)
     {
         ColorDialog dlg = new()
         {
@@ -55,7 +55,7 @@ public partial class UserControlQuote : UserControl
         }
     }
 
-    private void PanelColor_DoubleClick(object sender, EventArgs e)
+    private void PanelColor_DoubleClick(object? sender, EventArgs e)
     {
         ButtonColor_Click(sender, e);
     }

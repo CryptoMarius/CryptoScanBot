@@ -365,7 +365,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
         return s;
     }
 
-    public override void GetTextFunction(object sender, DataGridViewCellValueEventArgs e)
+    public override void GetTextFunction(object? sender, DataGridViewCellValueEventArgs e)
     {
         if (GlobalData.ApplicationIsClosing)
             return;

@@ -46,7 +46,7 @@ static class Program
     }
 
 
-    static void UnhandledException(object sender, UnhandledExceptionEventArgs eventArgs)
+    static void UnhandledException(object? sender, UnhandledExceptionEventArgs eventArgs)
     {
         //MessageBox.Show("UnhandledException!!!!");
         Exception e = (Exception)eventArgs.ExceptionObject;
@@ -56,7 +56,7 @@ static class Program
             ScannerLog.Logger.Error(e, "UnhandledException (not terminating)");
     }
 
-    static void OnThreadException(object sender, ThreadExceptionEventArgs eventArgs)
+    static void OnThreadException(object? sender, ThreadExceptionEventArgs eventArgs)
     {
         ScannerLog.Logger.Info("");
         ScannerLog.Logger.Info("Error " + eventArgs.Exception.Message);

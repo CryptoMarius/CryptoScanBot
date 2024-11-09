@@ -17,7 +17,7 @@ public class CryptoCalculation
 {
 
 
-    public static async Task MakeDominantAndZoomInAsync(object? sender, CryptoSymbol symbol, CryptoInterval interval,
+    public static async Task MakeDominantAndZoomInAsync(CryptoSymbol symbol, CryptoInterval interval,
         ZigZagResult zigZag, decimal top, decimal bottom, bool zoomFurther, StringBuilder log)
     {
         zigZag.Top = top;
@@ -108,7 +108,7 @@ public class CryptoCalculation
                     long loop = IntervalTools.StartOfIntervalCandle(unixStart, zoomInterval.Interval.Duration);
                     while (loop < unixEinde && zigZag.Percentage >= GlobalData.Settings.Signal.Zones.ZoomPercentage)
                     {
-                        DateTime loopDebug = CandleTools.GetUnixDate(loop);
+                        //DateTime loopDebug = CandleTools.GetUnixDate(loop);
                         if (loop >= zigZag.Candle.OpenTime) //really?
                         {
                             if (zoomInterval.CandleList.TryGetValue(loop, out CryptoCandle? candle))
@@ -170,12 +170,12 @@ public class CryptoCalculation
 
                 // Check: a dominant Low leading to a new Higher High
                 if (zigZag.PointType == 'H' && previous.PointType == 'L' && previous2.PointType == 'H' && previous2.Value < zigZag.Value)
-                    await MakeDominantAndZoomInAsync(sender, data.Symbol, data.SymbolInterval.Interval, previous,
+                    await MakeDominantAndZoomInAsync(data.Symbol, data.SymbolInterval.Interval, previous,
                         Math.Max(previous.Candle.Open, previous.Candle.Close), previous.Candle.Low, session.ZoomLiqBoxes, log);
 
                 // Check: a dominant High leading to a new Lower Low
                 if (zigZag.PointType == 'L' && previous.PointType == 'H' && previous2.PointType == 'L' && previous2.Value > zigZag.Value)
-                    await MakeDominantAndZoomInAsync(sender, data.Symbol, data.SymbolInterval.Interval, previous,
+                    await MakeDominantAndZoomInAsync(data.Symbol, data.SymbolInterval.Interval, previous,
                         previous.Candle.High, Math.Min(previous.Candle.Open, previous.Candle.Close), session.ZoomLiqBoxes, log);
             }
             previous2 = previous;
@@ -185,7 +185,7 @@ public class CryptoCalculation
     }
 
 
-    public static void CalculateBrokenBoxes(object? sender, CryptoZoneData data, CryptoZoneSession session, StringBuilder log)
+    public static void CalculateBrokenBoxes(CryptoZoneData data)
     {
         GlobalData.AddTextToLogTab($"{data.Symbol.Name} Calculating dominant pivots and zones");
         // Determine if level is broken (not accurate! right now just for display purposes)
@@ -303,7 +303,7 @@ public class CryptoCalculation
         //}
     }
 
-    public static void SaveToZoneTable(CryptoZoneData data, CryptoZoneSession session)
+    public static void SaveToZoneTable(CryptoZoneData data)
     {
         using CryptoDatabase databaseThread = new();
         databaseThread.Connection.Open();
