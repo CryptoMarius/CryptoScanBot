@@ -9,8 +9,14 @@ public class SettingsSignalStrategyDominant : SettingsSignalStrategyBase
 
     public CryptoIntervalPeriod Interval { get; set; } = CryptoIntervalPeriod.interval1h;
 
-    public decimal ZoomPercentage { get; set; } = 0.7m;
+    // Limits unzoomed box
+    public decimal MinimumUnZoomedPercentage { get; set; } = 0.2m;
+    public decimal MaximumUnZoomedPercentage { get; set; } = 10.0m;
+
+    // Limits box after zooming
     public bool ZoomLowerTimeFrames { get; set; } = true;
+    public decimal MinimumZoomedPercentage { get; set; } = 0.2m;
+    public decimal MaximumZoomedPercentage { get; set; } = 0.7m;
 
     // Signal percentage
     public decimal WarnPercentage { get; set; } = 1.0m;

@@ -240,8 +240,11 @@ public partial class FrmSettings : Form
         EditZonesWarnPercentage.Value = (decimal)settings.Signal.Zones.WarnPercentage;
         EditZonesUseLowHigh.Checked = settings.Signal.Zones.UseHighLow;
         EditZonesCandleCount.Value = settings.Signal.Zones.CandleCount;
-        EditZoomPercentage.Value = settings.Signal.Zones.ZoomPercentage;
         EditZoomLowerTimeFrames.Checked = settings.Signal.Zones.ZoomLowerTimeFrames;
+        EditMinimumZoomedPercentage.Value = settings.Signal.Zones.MinimumZoomedPercentage;
+        EditMinimumZoomedPercentage.Value = settings.Signal.Zones.MaximumZoomedPercentage;
+        EditMinimumUnZoomedPercentage.Value = settings.Signal.Zones.MinimumUnZoomedPercentage;
+        EditMaximumUnZoomedPercentage.Value = settings.Signal.Zones.MaximumUnZoomedPercentage;
         //EditZonesInterval.Value = settings.Signal.Zones.Interval; hardcoded 1h for now
 
         // --------------------------------------------------------------------------------
@@ -495,9 +498,12 @@ public partial class FrmSettings : Form
         settings.Signal.Zones.WarnPercentage = EditZonesWarnPercentage.Value;
         settings.Signal.Zones.UseHighLow = EditZonesUseLowHigh.Checked;
         settings.Signal.Zones.CandleCount = (int)EditZonesCandleCount.Value;
-        settings.Signal.Zones.ZoomPercentage = EditZoomPercentage.Value;
         settings.Signal.Zones.ZoomLowerTimeFrames = EditZoomLowerTimeFrames.Checked;
-        //settings.Signal.Zones.Interval = EditZonesInterval.Value; hardcoded 1h for now
+        settings.Signal.Zones.MinimumZoomedPercentage = EditMinimumZoomedPercentage.Value;
+        settings.Signal.Zones.MaximumZoomedPercentage = EditMinimumZoomedPercentage.Value;
+        settings.Signal.Zones.MinimumUnZoomedPercentage = EditMinimumUnZoomedPercentage.Value;
+        settings.Signal.Zones.MaximumUnZoomedPercentage = EditMaximumUnZoomedPercentage.Value;
+        //settings.Signal.Zones.Interval = CryptoIntervalPeriod.interval1h; //EditZonesInterval.Value; hardcoded 1h for now
 
         // --------------------------------------------------------------------------------
         // Extra instap condities
