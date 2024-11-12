@@ -1,4 +1,6 @@
-﻿using CryptoScanBot.Core.Intern;
+﻿using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Model;
 
 using System.Text.Json;
 
@@ -19,6 +21,8 @@ public class CryptoZoneSession
     public bool ShowZigZag { get; set; } = true;
     public decimal OptimizeZigZag { get; set; } = 1m;
 
+    public CryptoIntervalPeriod ActiveInterval { get; set; } = CryptoIntervalPeriod.interval1h;
+    public long StartFromUnix { get; set; }
 
     public static CryptoZoneSession LoadSessionSettings()
     {
