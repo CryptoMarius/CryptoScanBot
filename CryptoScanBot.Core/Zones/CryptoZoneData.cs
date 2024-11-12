@@ -10,4 +10,5 @@ public class CryptoZoneData
     public required CryptoSymbolInterval SymbolInterval { get; set; }
     public required CryptoInterval Interval { get; set; }
     public required ZigZagIndicator9 Indicator { get; set; }
+    public required ZigZagIndicator9 IndicatorFib { get; set; }
 }

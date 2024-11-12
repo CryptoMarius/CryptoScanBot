@@ -19,7 +19,7 @@ public class CryptoZoneSession
     public bool ShowLiqBoxes { get; set; } = true;
 
     public bool ShowZigZag { get; set; } = true;
-    public decimal OptimizeZigZag { get; set; } = 1m;
+    public decimal Deviation { get; set; } = 1m;
 
     public CryptoIntervalPeriod ActiveInterval { get; set; } = CryptoIntervalPeriod.interval1h;
     public long StartFromUnix { get; set; }

@@ -48,16 +48,20 @@ public class LiquidityZones
 
             // Calculate the Indicator
             //ScannerLog.Logger.Info($"Creating zigzag indicator");
-            //data.Indicator = new(data.SymbolInterval.CandleList, GlobalData.Settings.Signal.Zones.UseHighLow, session.OptimizeZigZag)
+            //data.Indicator = new(data.SymbolInterval.CandleList, GlobalData.Settings.Signal.Zones.UseHighLow, session.Deviation)
             //{
             //    PostponeFinish = true
             //};
             foreach (var candle in data.SymbolInterval.CandleList.Values)
             {
                 if (candle.OpenTime >= fetchFrom)
+                {
                     data.Indicator.Calculate(candle, data.Interval.Duration);
+                    data.IndicatorFib.Calculate(candle, data.Interval.Duration);
+                }
             }
             data.Indicator.FinishJob();
+            data.IndicatorFib.FinishJob();
             CryptoTrendIndicator trend = TrendInterval.InterpretZigZagPoints(data.Indicator, null);
             //ScannerLog.Logger.Info($"Done adding zigzag candles {trend}");
 
@@ -135,7 +139,8 @@ public class LiquidityZones
                             Symbol = symbol,
                             Interval = symbolInterval.Interval,
                             SymbolInterval = symbolInterval,
-                            Indicator = new(symbolInterval.CandleList, GlobalData.Settings.Signal.Zones.UseHighLow, session.OptimizeZigZag),
+                            Indicator = new(symbolInterval.CandleList, GlobalData.Settings.Signal.Zones.UseHighLow, session.Deviation),
+                            IndicatorFib = new(symbolInterval.CandleList, true, session.Deviation),
                         };
 
                         // avoid candles being removed...

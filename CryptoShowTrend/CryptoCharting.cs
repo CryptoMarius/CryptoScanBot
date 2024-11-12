@@ -50,7 +50,7 @@ public class CryptoCharting
 
     public static void TrySomethingWithFib(PlotModel chart, CryptoZoneData data)
     {
-        var indicator = data.Indicator;
+        var indicator = data.IndicatorFib;
         //// Mhh, fib levels proberen te zetten
         //// !!! Dit lijkt alvast niet te werken!!!!
         //// eerst maar eens iets verder uitdenken

@@ -50,14 +50,14 @@ public class CryptoCharting
 
     public static void TrySomethingWithFib(PlotModel chart, CryptoZoneData data)
     {
-        var indicator = data.Indicator;
+        var indicator = data.IndicatorFib;
         //// Mhh, fib levels proberen te zetten
         //// !!! Dit lijkt alvast niet te werken!!!!
         //// eerst maar eens iets verder uitdenken
         if (indicator.LastSwingHigh != null && indicator.LastSwingLow != null)
         {
-            //Place a Fibonacci grid from low to high in an uptrend and high to low in a downtrend
-            List<(decimal value, decimal percent, OxyColor color)> fibRetracement = Retracement1(indicator.LastSwingHigh.Value, indicator.LastSwingLow.Value);
+            // Place a Fibonacci grid from low to high in an uptrend and high to low in a downtrend
+            List<(decimal value, decimal percent, OxyColor color)> fibRetracement;
 
             //ZigZagResult first;
             ZigZagResult last;
@@ -65,6 +65,7 @@ public class CryptoCharting
             {
                 //first = indicator.LastSwingLow;
                 last = indicator.LastSwingHigh;
+                fibRetracement = Retracement1(indicator.LastSwingHigh.Value, indicator.LastSwingLow.Value);
             }
             else
             {

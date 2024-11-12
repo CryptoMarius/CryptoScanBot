@@ -45,6 +45,7 @@ public partial class CryptoVisualisation : Form
         EditIntervalName.KeyDown += ButtonKeyDown;
         ButtonCalculate.Click += ButtonCalculateClick;
         ButtonZoomLast.Click += ButtonFocusLastCandlesClick;
+        EditDeviation.Click += ButtonFocusLastCandlesClick;
 
 
         //EditSymbolBase.DataSource = new BindingSource(GlobalData.Settings.General.Exchange.SymbolListName, null);
@@ -74,7 +75,7 @@ public partial class CryptoVisualisation : Form
         EditShowLiqBoxes.Checked = Session.ShowLiqBoxes;
         EditZoomLiqBoxes.Checked = Session.ZoomLiqBoxes;
         EditShowZigZag.Checked = Session.ShowZigZag;
-        EditDeviation.Value = Session.OptimizeZigZag;
+        EditDeviation.Value = Session.Deviation;
     }
 
     internal void BlaAsync(CryptoSymbol symbol)
@@ -105,7 +106,8 @@ public partial class CryptoVisualisation : Form
         Session.ShowLiqBoxes = EditShowLiqBoxes.Checked;
         Session.ZoomLiqBoxes = EditZoomLiqBoxes.Checked;
         Session.ShowZigZag = EditShowZigZag.Checked;
-        Session.OptimizeZigZag = EditDeviation.Value;
+        Session.Deviation = EditDeviation.Value;
+        Session.ActiveInterval = CryptoIntervalPeriod.interval1h;
         Session.SaveSessionSettings();
         if (!PrepareSessionData(out string reason))
         {
@@ -207,7 +209,8 @@ public partial class CryptoVisualisation : Form
             Symbol = symbol,
             Interval = interval,
             SymbolInterval = symbolInterval,
-            Indicator = new(symbolInterval.CandleList, GlobalData.Settings.Signal.Zones.UseHighLow, Session.OptimizeZigZag),
+            Indicator = new(symbolInterval.CandleList, GlobalData.Settings.Signal.Zones.UseHighLow, Session.Deviation),
+            IndicatorFib = new(symbolInterval.CandleList, true, Session.Deviation),
         };
         reason = "";
         //ScannerLog.Logger.Info("PrepareSessionData.Stop " + Stopwatch.GetElapsedTime(startTime).TotalSeconds.ToString());

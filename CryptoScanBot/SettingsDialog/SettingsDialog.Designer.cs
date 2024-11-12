@@ -196,10 +196,16 @@ partial class FrmSettings
         EditJumpUseLowHighCalculation = new CheckBox();
         label3 = new Label();
         EditAnalysisCandleJumpPercentage = new NumericUpDown();
-        tabSignalDominantLevel = new TabPage();
+        tabSignalZones = new TabPage();
         flowLayoutPanel4 = new FlowLayoutPanel();
         UserControlSettingsSoundAndColorsDominantLevel = new SettingsDialog.UserControlSettingsPlaySoundAndColors();
         groupBox8 = new GroupBox();
+        label36 = new Label();
+        EditMaximumUnZoomedPercentage = new NumericUpDown();
+        label40 = new Label();
+        EditMinimumUnZoomedPercentage = new NumericUpDown();
+        label35 = new Label();
+        EditMaximumZoomedPercentage = new NumericUpDown();
         label34 = new Label();
         EditMinimumZoomedPercentage = new NumericUpDown();
         EditZoomLowerTimeFrames = new CheckBox();
@@ -279,12 +285,6 @@ partial class FrmSettings
         EditDebugSignalCreate = new CheckBox();
         EditDebugKLineReceive = new CheckBox();
         toolTip1 = new ToolTip(components);
-        label35 = new Label();
-        EditMaximumZoomedPercentage = new NumericUpDown();
-        label36 = new Label();
-        EditMaximumUnZoomedPercentage = new NumericUpDown();
-        label40 = new Label();
-        EditMinimumUnZoomedPercentage = new NumericUpDown();
         panelButtons.SuspendLayout();
         panelFill.SuspendLayout();
         tabControlMain.SuspendLayout();
@@ -360,9 +360,12 @@ partial class FrmSettings
         groupBox5.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)EditJumpCandlesLookbackCount).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditAnalysisCandleJumpPercentage).BeginInit();
-        tabSignalDominantLevel.SuspendLayout();
+        tabSignalZones.SuspendLayout();
         flowLayoutPanel4.SuspendLayout();
         groupBox8.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)EditMaximumUnZoomedPercentage).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)EditMinimumUnZoomedPercentage).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)EditMaximumZoomedPercentage).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditMinimumZoomedPercentage).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditZonesCandleCount).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditZonesWarnPercentage).BeginInit();
@@ -394,9 +397,6 @@ partial class FrmSettings
         tabShortBlackList.SuspendLayout();
         panel6.SuspendLayout();
         tabPageOptions.SuspendLayout();
-        ((System.ComponentModel.ISupportInitialize)EditMaximumZoomedPercentage).BeginInit();
-        ((System.ComponentModel.ISupportInitialize)EditMaximumUnZoomedPercentage).BeginInit();
-        ((System.ComponentModel.ISupportInitialize)EditMinimumUnZoomedPercentage).BeginInit();
         SuspendLayout();
         // 
         // panelButtons
@@ -978,7 +978,7 @@ partial class FrmSettings
         tabControlSignals.Controls.Add(tabSignalSbm);
         tabControlSignals.Controls.Add(tabSignalStoRsi);
         tabControlSignals.Controls.Add(tabSignalJump);
-        tabControlSignals.Controls.Add(tabSignalDominantLevel);
+        tabControlSignals.Controls.Add(tabSignalZones);
         tabControlSignals.Dock = DockStyle.Fill;
         tabControlSignals.Location = new Point(4, 3);
         tabControlSignals.Name = "tabControlSignals";
@@ -2325,16 +2325,16 @@ partial class FrmSettings
         EditAnalysisCandleJumpPercentage.Size = new Size(56, 23);
         EditAnalysisCandleJumpPercentage.TabIndex = 126;
         // 
-        // tabSignalDominantLevel
+        // tabSignalZones
         // 
-        tabSignalDominantLevel.Controls.Add(flowLayoutPanel4);
-        tabSignalDominantLevel.Location = new Point(4, 27);
-        tabSignalDominantLevel.Name = "tabSignalDominantLevel";
-        tabSignalDominantLevel.Padding = new Padding(3);
-        tabSignalDominantLevel.Size = new Size(1126, 578);
-        tabSignalDominantLevel.TabIndex = 12;
-        tabSignalDominantLevel.Text = "Dominant Level";
-        tabSignalDominantLevel.UseVisualStyleBackColor = true;
+        tabSignalZones.Controls.Add(flowLayoutPanel4);
+        tabSignalZones.Location = new Point(4, 27);
+        tabSignalZones.Name = "tabSignalZones";
+        tabSignalZones.Padding = new Padding(3);
+        tabSignalZones.Size = new Size(1126, 578);
+        tabSignalZones.TabIndex = 12;
+        tabSignalZones.Text = "Zones";
+        tabSignalZones.UseVisualStyleBackColor = true;
         // 
         // flowLayoutPanel4
         // 
@@ -2386,6 +2386,66 @@ partial class FrmSettings
         groupBox8.TabIndex = 159;
         groupBox8.TabStop = false;
         groupBox8.Text = "Settings";
+        // 
+        // label36
+        // 
+        label36.AutoSize = true;
+        label36.Location = new Point(13, 153);
+        label36.Margin = new Padding(4, 0, 4, 0);
+        label36.Name = "label36";
+        label36.Size = new Size(182, 15);
+        label36.TabIndex = 138;
+        label36.Text = "Minimum unzoomed percentage";
+        // 
+        // EditMaximumUnZoomedPercentage
+        // 
+        EditMaximumUnZoomedPercentage.DecimalPlaces = 2;
+        EditMaximumUnZoomedPercentage.Increment = new decimal(new int[] { 25, 0, 0, 131072 });
+        EditMaximumUnZoomedPercentage.Location = new Point(220, 151);
+        EditMaximumUnZoomedPercentage.Margin = new Padding(4, 3, 4, 3);
+        EditMaximumUnZoomedPercentage.Name = "EditMaximumUnZoomedPercentage";
+        EditMaximumUnZoomedPercentage.Size = new Size(56, 23);
+        EditMaximumUnZoomedPercentage.TabIndex = 139;
+        // 
+        // label40
+        // 
+        label40.AutoSize = true;
+        label40.Location = new Point(13, 124);
+        label40.Margin = new Padding(4, 0, 4, 0);
+        label40.Name = "label40";
+        label40.Size = new Size(182, 15);
+        label40.TabIndex = 136;
+        label40.Text = "Minimum unzoomed percentage";
+        // 
+        // EditMinimumUnZoomedPercentage
+        // 
+        EditMinimumUnZoomedPercentage.DecimalPlaces = 2;
+        EditMinimumUnZoomedPercentage.Increment = new decimal(new int[] { 25, 0, 0, 131072 });
+        EditMinimumUnZoomedPercentage.Location = new Point(220, 122);
+        EditMinimumUnZoomedPercentage.Margin = new Padding(4, 3, 4, 3);
+        EditMinimumUnZoomedPercentage.Name = "EditMinimumUnZoomedPercentage";
+        EditMinimumUnZoomedPercentage.Size = new Size(56, 23);
+        EditMinimumUnZoomedPercentage.TabIndex = 137;
+        // 
+        // label35
+        // 
+        label35.AutoSize = true;
+        label35.Location = new Point(13, 223);
+        label35.Margin = new Padding(4, 0, 4, 0);
+        label35.Name = "label35";
+        label35.Size = new Size(168, 15);
+        label35.TabIndex = 134;
+        label35.Text = "Minimum zoomed percentage";
+        // 
+        // EditMaximumZoomedPercentage
+        // 
+        EditMaximumZoomedPercentage.DecimalPlaces = 2;
+        EditMaximumZoomedPercentage.Increment = new decimal(new int[] { 25, 0, 0, 131072 });
+        EditMaximumZoomedPercentage.Location = new Point(220, 221);
+        EditMaximumZoomedPercentage.Margin = new Padding(4, 3, 4, 3);
+        EditMaximumZoomedPercentage.Name = "EditMaximumZoomedPercentage";
+        EditMaximumZoomedPercentage.Size = new Size(56, 23);
+        EditMaximumZoomedPercentage.TabIndex = 135;
         // 
         // label34
         // 
@@ -3243,66 +3303,6 @@ partial class FrmSettings
         EditDebugKLineReceive.Text = "Debug KLineReceive (does kline ticker work)";
         EditDebugKLineReceive.UseVisualStyleBackColor = true;
         // 
-        // label35
-        // 
-        label35.AutoSize = true;
-        label35.Location = new Point(13, 223);
-        label35.Margin = new Padding(4, 0, 4, 0);
-        label35.Name = "label35";
-        label35.Size = new Size(168, 15);
-        label35.TabIndex = 134;
-        label35.Text = "Minimum zoomed percentage";
-        // 
-        // EditMaximumZoomedPercentage
-        // 
-        EditMaximumZoomedPercentage.DecimalPlaces = 2;
-        EditMaximumZoomedPercentage.Increment = new decimal(new int[] { 25, 0, 0, 131072 });
-        EditMaximumZoomedPercentage.Location = new Point(220, 221);
-        EditMaximumZoomedPercentage.Margin = new Padding(4, 3, 4, 3);
-        EditMaximumZoomedPercentage.Name = "EditMaximumZoomedPercentage";
-        EditMaximumZoomedPercentage.Size = new Size(56, 23);
-        EditMaximumZoomedPercentage.TabIndex = 135;
-        // 
-        // label36
-        // 
-        label36.AutoSize = true;
-        label36.Location = new Point(13, 153);
-        label36.Margin = new Padding(4, 0, 4, 0);
-        label36.Name = "label36";
-        label36.Size = new Size(182, 15);
-        label36.TabIndex = 138;
-        label36.Text = "Minimum unzoomed percentage";
-        // 
-        // EditMaximumUnZoomedPercentage
-        // 
-        EditMaximumUnZoomedPercentage.DecimalPlaces = 2;
-        EditMaximumUnZoomedPercentage.Increment = new decimal(new int[] { 25, 0, 0, 131072 });
-        EditMaximumUnZoomedPercentage.Location = new Point(220, 151);
-        EditMaximumUnZoomedPercentage.Margin = new Padding(4, 3, 4, 3);
-        EditMaximumUnZoomedPercentage.Name = "EditMaximumUnZoomedPercentage";
-        EditMaximumUnZoomedPercentage.Size = new Size(56, 23);
-        EditMaximumUnZoomedPercentage.TabIndex = 139;
-        // 
-        // label40
-        // 
-        label40.AutoSize = true;
-        label40.Location = new Point(13, 124);
-        label40.Margin = new Padding(4, 0, 4, 0);
-        label40.Name = "label40";
-        label40.Size = new Size(182, 15);
-        label40.TabIndex = 136;
-        label40.Text = "Minimum unzoomed percentage";
-        // 
-        // EditMinimumUnZoomedPercentage
-        // 
-        EditMinimumUnZoomedPercentage.DecimalPlaces = 2;
-        EditMinimumUnZoomedPercentage.Increment = new decimal(new int[] { 25, 0, 0, 131072 });
-        EditMinimumUnZoomedPercentage.Location = new Point(220, 122);
-        EditMinimumUnZoomedPercentage.Margin = new Padding(4, 3, 4, 3);
-        EditMinimumUnZoomedPercentage.Name = "EditMinimumUnZoomedPercentage";
-        EditMinimumUnZoomedPercentage.Size = new Size(56, 23);
-        EditMinimumUnZoomedPercentage.TabIndex = 137;
-        // 
         // FrmSettings
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
@@ -3415,12 +3415,15 @@ partial class FrmSettings
         groupBox5.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)EditJumpCandlesLookbackCount).EndInit();
         ((System.ComponentModel.ISupportInitialize)EditAnalysisCandleJumpPercentage).EndInit();
-        tabSignalDominantLevel.ResumeLayout(false);
-        tabSignalDominantLevel.PerformLayout();
+        tabSignalZones.ResumeLayout(false);
+        tabSignalZones.PerformLayout();
         flowLayoutPanel4.ResumeLayout(false);
         flowLayoutPanel4.PerformLayout();
         groupBox8.ResumeLayout(false);
         groupBox8.PerformLayout();
+        ((System.ComponentModel.ISupportInitialize)EditMaximumUnZoomedPercentage).EndInit();
+        ((System.ComponentModel.ISupportInitialize)EditMinimumUnZoomedPercentage).EndInit();
+        ((System.ComponentModel.ISupportInitialize)EditMaximumZoomedPercentage).EndInit();
         ((System.ComponentModel.ISupportInitialize)EditMinimumZoomedPercentage).EndInit();
         ((System.ComponentModel.ISupportInitialize)EditZonesCandleCount).EndInit();
         ((System.ComponentModel.ISupportInitialize)EditZonesWarnPercentage).EndInit();
@@ -3472,9 +3475,6 @@ partial class FrmSettings
         panel6.PerformLayout();
         tabPageOptions.ResumeLayout(false);
         tabPageOptions.PerformLayout();
-        ((System.ComponentModel.ISupportInitialize)EditMaximumZoomedPercentage).EndInit();
-        ((System.ComponentModel.ISupportInitialize)EditMaximumUnZoomedPercentage).EndInit();
-        ((System.ComponentModel.ISupportInitialize)EditMinimumUnZoomedPercentage).EndInit();
         ResumeLayout(false);
     }
 
@@ -3716,7 +3716,7 @@ partial class FrmSettings
     private NumericUpDown EditAnalysisMaxEffective10DaysPercentage;
     private CheckBox EditUseHighLowInTrendCalculation;
     private CheckBox EditDebugAssetManagement;
-    private TabPage tabSignalDominantLevel;
+    private TabPage tabSignalZones;
     private FlowLayoutPanel flowLayoutPanel4;
     private SettingsDialog.UserControlSettingsPlaySoundAndColors UserControlSettingsSoundAndColorsDominantLevel;
     private GroupBox groupBox8;
