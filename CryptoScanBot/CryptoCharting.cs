@@ -18,8 +18,86 @@ public class CryptoCharting
 {
     static public CryptoInterval? _interval;
 
-    public static void DrawCandleSerie(PlotModel chart, CryptoSymbolInterval symbolInterval, long unix)
+    public static List<(decimal value, decimal percent, OxyColor color)> Retracement1(decimal high, decimal low)
     {
+        List<(decimal, decimal, OxyColor color)> retracements = [];
+        decimal difference = high - low;
+        retracements.Add((high - difference * 0.000m, 0.000m, OxyColors.Gray));
+        retracements.Add((high - difference * 0.236m, 0.236m, OxyColors.LightGray));
+        retracements.Add((high - difference * 0.382m, 0.382m, OxyColors.LightGray));
+        retracements.Add((high - difference * 0.500m, 0.500m, OxyColors.Yellow));
+        retracements.Add((high - difference * 0.618m, 0.618m, OxyColors.Yellow));
+        //retracements.Add((high + difference * 0.650m, 0.650m, OxyColors.LightGray));
+        retracements.Add((high - difference * 0.786m, 0.786m, OxyColors.LightGray));
+        retracements.Add((high - difference * 1.000m, 1.000m, OxyColors.Gray));
+        return retracements;
+    }
+
+    public static List<(decimal value, decimal percent, OxyColor color)> Retracement2(decimal high, decimal low)
+    {
+        List<(decimal, decimal, OxyColor color)> retracements = [];
+        decimal difference = high - low;
+        retracements.Add((low +difference * 0.000m, 0.000m, OxyColors.Gray));
+        retracements.Add((low + difference * 0.236m, 0.236m, OxyColors.LightGray));
+        retracements.Add((low + difference * 0.382m, 0.382m, OxyColors.LightGray));
+        retracements.Add((low + difference * 0.500m, 0.500m, OxyColors.Yellow));
+        retracements.Add((low + difference * 0.618m, 0.618m, OxyColors.Yellow));
+        //retracements.Add((low + difference * 0.650m, 0.650m, OxyColors.LightGray));
+        retracements.Add((low + difference * 0.786m, 0.786m, OxyColors.LightGray));
+        retracements.Add((low + difference * 1.000m, 1.000m, OxyColors.Gray));
+        return retracements;
+    }
+
+    public static void TrySomethingWithFib(PlotModel chart, CryptoZoneData data)
+    {
+        var indicator = data.Indicator;
+        //// Mhh, fib levels proberen te zetten
+        //// !!! Dit lijkt alvast niet te werken!!!!
+        //// eerst maar eens iets verder uitdenken
+        if (indicator.LastSwingHigh != null && indicator.LastSwingLow != null)
+        {
+            //Place a Fibonacci grid from low to high in an uptrend and high to low in a downtrend
+            List<(decimal value, decimal percent, OxyColor color)> fibRetracement = Retracement1(indicator.LastSwingHigh.Value, indicator.LastSwingLow.Value);
+
+            //ZigZagResult first;
+            ZigZagResult last;
+            if (indicator.LastSwingHigh.Candle.OpenTime > indicator.LastSwingLow.Candle.OpenTime)
+            {
+                //first = indicator.LastSwingLow;
+                last = indicator.LastSwingHigh;
+            }
+            else
+            {
+                //first = indicator.LastSwingHigh;
+                last = indicator.LastSwingLow;
+                fibRetracement = Retracement2(indicator.LastSwingHigh.Value, indicator.LastSwingLow.Value);
+            }
+
+            long start = last.Candle.OpenTime + data.Interval.Duration;
+            var lastCandle = data.SymbolInterval.CandleList.Values.Last();
+            long stop = lastCandle.OpenTime + 10 * data.Interval.Duration;
+
+
+            foreach (var (value, percent, color) in fibRetracement)
+            {
+                var fibLevel = new LineSeries { Title = "fib", Color = color, LineStyle = LineStyle.Dot };
+                fibLevel.Points.Add(new DataPoint(start, (double)value));
+                fibLevel.Points.Add(new DataPoint(stop, (double)value));
+                chart.Series.Add(fibLevel);
+
+                chart.Annotations.Add(new TextAnnotation { 
+                    TextPosition = new DataPoint(stop + data.Interval.Duration * 4, (double)value), 
+                    TextVerticalAlignment = VerticalAlignment.Middle,
+                    Text = $"{percent:N3}" });
+            }
+        }
+    }
+
+    public static void DrawCandleSerie(PlotModel chart, CryptoZoneData data, CryptoZoneSession session)
+    {
+
+        CryptoSymbolInterval symbolInterval = data.Symbol.GetSymbolInterval(session.ActiveInterval);
+
         var candleSerie = new CandleStickSeries //CandleStickAndVolumeSeries -> obsolete, x...
         {
             Title = "Candles",
@@ -30,7 +108,7 @@ public class CryptoCharting
 
         foreach (var c in symbolInterval.CandleList.Values)
         {
-            if (c.OpenTime > unix)
+            if (c.OpenTime > session.StartFromUnix)
             {
                 try
                 {
@@ -50,7 +128,7 @@ public class CryptoCharting
     }
 
 
-    public static void DrawZigZagSerie(PlotModel chart, CryptoZoneData data, long unix)
+    public static void DrawZigZagSerie(PlotModel chart, CryptoZoneData data, CryptoZoneSession session)
     {
         var seriesZigZag = new LineSeries { Title = "ZigZag", Color = OxyColors.White };
         var seriesHigh = new ScatterSeries { Title = "Markers high", MarkerSize = 4, MarkerFill = OxyColors.Red, MarkerType = MarkerType.Circle, };
@@ -59,7 +137,7 @@ public class CryptoCharting
         var seriesDummyLow = new ScatterSeries { Title = "Markers dummy", MarkerSize = 4, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Square, };
         foreach (var zigzag in data.Indicator.ZigZagList)
         {
-            if (zigzag.Candle!.OpenTime > unix)
+            if (zigzag.Candle!.OpenTime > session.StartFromUnix)
             {
                 ScatterSeries? series;
                 if (zigzag.Dummy)
@@ -95,7 +173,7 @@ public class CryptoCharting
         //seriesZigZag.TrackerFormatString = text;
     }
 
-    public static void DrawLiqBoxes(PlotModel chart, CryptoZoneData data, long unix, CryptoCandle lastCandle)
+    public static void DrawLiqBoxes(PlotModel chart, CryptoZoneData data, CryptoZoneSession session, CryptoCandle lastCandle)
     {
         var lastZigZag = data.Indicator.ZigZagList.Last();
         foreach (var zigzag in data.Indicator.ZigZagList)
@@ -104,7 +182,7 @@ public class CryptoCharting
             if (zigzag == lastZigZag || !zigzag.Dominant)
                 continue;
 
-            if (zigzag.Candle!.OpenTime > unix && zigzag.Dominant)
+            if (zigzag.Candle!.OpenTime > session.StartFromUnix && zigzag.Dominant)
             {
                 OxyColor color;
                 if (zigzag.PointType == 'L')

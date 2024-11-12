@@ -42,7 +42,10 @@ partial class CryptoVisualisation
         EditShowZigZag = new CheckBox();
         ButtonCalculate = new Button();
         ButtonZoomLast = new Button();
+        ButtonPlus = new Button();
+        ButtonMinus = new Button();
         plotView = new OxyPlot.WindowsForms.PlotView();
+        labelInterval = new Label();
         flowLayoutPanel1.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)EditDeviation).BeginInit();
         SuspendLayout();
@@ -63,6 +66,9 @@ partial class CryptoVisualisation
         flowLayoutPanel1.Controls.Add(EditShowZigZag);
         flowLayoutPanel1.Controls.Add(ButtonCalculate);
         flowLayoutPanel1.Controls.Add(ButtonZoomLast);
+        flowLayoutPanel1.Controls.Add(ButtonMinus);
+        flowLayoutPanel1.Controls.Add(ButtonPlus);
+        flowLayoutPanel1.Controls.Add(labelInterval);
         flowLayoutPanel1.Dock = DockStyle.Left;
         flowLayoutPanel1.FlowDirection = FlowDirection.TopDown;
         flowLayoutPanel1.Location = new Point(0, 0);
@@ -186,6 +192,26 @@ partial class CryptoVisualisation
         ButtonZoomLast.Text = "Zoom last";
         ButtonZoomLast.UseVisualStyleBackColor = true;
         // 
+        // ButtonPlus
+        // 
+        ButtonPlus.Location = new Point(6, 344);
+        ButtonPlus.Name = "ButtonPlus";
+        ButtonPlus.Size = new Size(25, 23);
+        ButtonPlus.TabIndex = 17;
+        ButtonPlus.Text = "+";
+        ButtonPlus.UseVisualStyleBackColor = true;
+        ButtonPlus.Click += ButtonPlusClick;
+        // 
+        // ButtonMinus
+        // 
+        ButtonMinus.Location = new Point(6, 315);
+        ButtonMinus.Name = "ButtonMinus";
+        ButtonMinus.Size = new Size(25, 23);
+        ButtonMinus.TabIndex = 18;
+        ButtonMinus.Text = "-";
+        ButtonMinus.UseVisualStyleBackColor = true;
+        ButtonMinus.Click += ButtonMinusClick;
+        // 
         // plotView
         // 
         plotView.BackColor = Color.Black;
@@ -199,6 +225,15 @@ partial class CryptoVisualisation
         plotView.ZoomHorizontalCursor = Cursors.SizeWE;
         plotView.ZoomRectangleCursor = Cursors.SizeNWSE;
         plotView.ZoomVerticalCursor = Cursors.SizeNS;
+        // 
+        // labelInterval
+        // 
+        labelInterval.AutoSize = true;
+        labelInterval.Location = new Point(6, 370);
+        labelInterval.Name = "labelInterval";
+        labelInterval.Size = new Size(38, 15);
+        labelInterval.TabIndex = 19;
+        labelInterval.Text = "label5";
         // 
         // CryptoVisualisation
         // 
@@ -234,4 +269,7 @@ partial class CryptoVisualisation
     private NumericUpDown EditDeviation;
     private Button ButtonZoomLast;
     private OxyPlot.WindowsForms.PlotView plotView;
+    private Button ButtonPlus;
+    private Button ButtonMinus;
+    private Label labelInterval;
 }

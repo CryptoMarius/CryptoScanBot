@@ -39,11 +39,13 @@ public partial class CryptoVisualisation : Form
         Session = CryptoZoneSession.LoadSessionSettings();
         LoadEdits();
 
+        labelInterval.Text = "";
         EditSymbolBase.KeyDown += ButtonKeyDown;
         EditSymbolQuote.KeyDown += ButtonKeyDown;
         EditIntervalName.KeyDown += ButtonKeyDown;
         ButtonCalculate.Click += ButtonCalculateClick;
         ButtonZoomLast.Click += ButtonFocusLastCandlesClick;
+
 
         //EditSymbolBase.DataSource = new BindingSource(GlobalData.Settings.General.Exchange.SymbolListName, null);
         //EditSymbolBase.DisplayMember = "Key";
@@ -94,7 +96,7 @@ public partial class CryptoVisualisation : Form
 
     private void ButtonCalculateClick(object? sender, EventArgs e)
     {
-        
+
         CryptoCandles.StartupTime = DateTime.UtcNow;
 
         Session.SymbolBase = EditSymbolBase.Text.ToUpper().Trim();
@@ -136,7 +138,7 @@ public partial class CryptoVisualisation : Form
                 await CalculateAndPlotZigZagAsync();
                 ButtonFocusLastCandlesClick(ShowProgress, EventArgs.Empty);
                 Text = $"{Session.SymbolBase}{Session.SymbolQuote} ({Stopwatch.GetElapsedTime(startTime).TotalSeconds} seconds)";
-                
+
             }
             catch (Exception error)
             {
@@ -223,11 +225,18 @@ public partial class CryptoVisualisation : Form
         try
         {
             // Avoid candles being removed...
+            if (plotModel != null)
+            {
+                plotModel.Annotations.Remove(verticalLine);
+                plotModel.Annotations.Remove(horizontalLine);
+            }
             verticalLine = null;
             horizontalLine = null;
             Data.Symbol.CalculatingZones = true;
             try
             {
+                //GlobalData.Settings.Signal.Zones.use
+
                 //ScannerLog.Logger.Info($"Start calculating data");
                 await LiquidityZones.CalculateSymbolAsync(ShowProgress, Session, Data);
                 CryptoTrendIndicator trend = TrendInterval.InterpretZigZagPoints(Data.Indicator, null);
@@ -243,7 +252,7 @@ public partial class CryptoVisualisation : Form
                     unix = candle.OpenTime;
                 }
                 var lastCandle = Data.SymbolInterval.CandleList.Values.Last();
-
+                Session.StartFromUnix = unix;
 
                 //if (plotView != null)
                 //    Controls.Remove(plotView);
@@ -258,13 +267,13 @@ public partial class CryptoVisualisation : Form
                 plotModel.Title = $"{Session.SymbolBase}{Session.SymbolQuote} {Data.Interval.Name} UTC " +
                 $"trend={trend} deviation={Data.Indicator.Deviation} (best={best.Deviation}) candles={Data.SymbolInterval.CandleList.Count} pivots={Data.Indicator.ZigZagList.Count}";
 
-                CryptoCharting.DrawCandleSerie(plotModel, Data.SymbolInterval, unix);
+                CryptoCharting.DrawCandleSerie(plotModel, Data, Session);
                 if (Session.ShowZigZag)
-                    CryptoCharting.DrawZigZagSerie(plotModel, Data, unix);
+                    CryptoCharting.DrawZigZagSerie(plotModel, Data, Session);
                 if (Session.ShowLiqBoxes)
-                    CryptoCharting.DrawLiqBoxes(plotModel, Data, unix, lastCandle);
+                    CryptoCharting.DrawLiqBoxes(plotModel, Data, Session, lastCandle);
 
-                CryptoCalculation.TrySomethingWithFib();
+                CryptoCharting.TrySomethingWithFib(plotModel, Data);
 
 
                 plotView.Controller = new PlotController();
@@ -314,7 +323,7 @@ public partial class CryptoVisualisation : Form
                 // Update croshair coordinates
                 verticalLine.X = unix;
                 horizontalLine.Y = y;
-                 
+
                 string s;
                 if (Data.SymbolInterval.CandleList.TryGetValue(unix, out CryptoCandle? candle))
                 {
@@ -335,6 +344,7 @@ public partial class CryptoVisualisation : Form
                 //s += "\r\n" + $" x: {x} {unix} {date2} {u}";
                 model.Subtitle = s;
 
+                labelInterval.Text = Session.ActiveInterval.ToString();
                 plotView.InvalidatePlot(true);
             }
             catch (Exception error)
@@ -351,7 +361,7 @@ public partial class CryptoVisualisation : Form
         ////var axis = plotView.ActualModel.Axes[0];
         //return;
 
-        if (Data.SymbolInterval.CandleList.Count > 0)
+        if (Data != null && Data.SymbolInterval.CandleList.Count > 0)
         {
             decimal l = decimal.MaxValue;
             decimal h = decimal.MinValue;
@@ -389,6 +399,47 @@ public partial class CryptoVisualisation : Form
             plotView.ActualModel.Axes[1].Minimum = (double)l;
             plotView.ActualModel.Axes[1].Maximum = (double)h;
 
+            labelInterval.Text = Session.ActiveInterval.ToString();
+            plotModel?.InvalidatePlot(true);
+        }
+    }
+
+    private void ButtonPlusClick(object sender, EventArgs e)
+    {
+        if (Data != null && Session.ActiveInterval < CryptoIntervalPeriod.interval1d)
+        {
+            Session.ActiveInterval += 1;
+            foreach (var serie in plotModel.Series)
+            {
+                if (serie.Title == "Candles")
+                {
+                    plotModel.Series.Remove(serie);
+                    break;
+                }
+            }
+
+            CryptoCharting.DrawCandleSerie(plotModel, Data, Session);
+            labelInterval.Text = Session.ActiveInterval.ToString();
+            plotModel?.InvalidatePlot(true);
+        }
+    }
+
+    private void ButtonMinusClick(object sender, EventArgs e)
+    {
+        if (Data != null && Session.ActiveInterval > CryptoIntervalPeriod.interval1m)
+        {
+            Session.ActiveInterval -= 1;
+            foreach (var serie in plotModel.Series)
+            {
+                if (serie.Title == "Candles")
+                {
+                    plotModel.Series.Remove(serie);
+                    break;
+                }
+            }
+
+            CryptoCharting.DrawCandleSerie(plotModel, Data, Session);
+            labelInterval.Text = Session.ActiveInterval.ToString();
             plotModel?.InvalidatePlot(true);
         }
     }
