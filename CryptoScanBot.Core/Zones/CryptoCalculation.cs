@@ -16,6 +16,57 @@ namespace CryptoScanBot.Core.Zones;
 public class CryptoCalculation
 {
 
+    private static bool UnzoomedPercentageBelowMinimum(ZigZagResult zigZag, CryptoSymbol symbol, CryptoInterval interval)
+    {
+        var value = GlobalData.Settings.Signal.Zones.MinimumUnZoomedPercentage;
+        if (value > 0 && zigZag.Percentage < value)
+        {
+            zigZag.Dominant = false;
+            ScannerLog.Logger.Trace($"{symbol.Name} {interval.Name} Unzoomed box ignored {zigZag.Percentage:N2} < {value:N2} {zigZag.Candle.DateLocal} {zigZag.PointType} top {zigZag.Top} bottom {zigZag.Bottom} perc={zigZag.Percentage:N2}");
+            return true;
+        }
+        return false;
+    }
+
+
+    private static bool UnzoomedPercentageAboveMaximum(ZigZagResult zigZag, CryptoSymbol symbol, CryptoInterval interval)
+    {
+        var value = GlobalData.Settings.Signal.Zones.MaximumUnZoomedPercentage;
+        if (value > 0 && zigZag.Percentage > value)
+        {
+            zigZag.Dominant = false;
+            ScannerLog.Logger.Trace($"{symbol.Name} {interval.Name} Unzoomed box ignored {zigZag.Percentage:N2} > {value:N2} {zigZag.Candle.DateLocal} {zigZag.PointType} top {zigZag.Top} bottom {zigZag.Bottom} perc={zigZag.Percentage:N2}");
+            return true;
+        }
+
+        return false;
+    }
+
+ 
+    private static bool ZoomedPercentageBelowMinimum(ZigZagResult zigZag, CryptoSymbol symbol, CryptoInterval interval)
+    {
+        var value = GlobalData.Settings.Signal.Zones.MinimumZoomedPercentage;
+        if (value > 0 && zigZag.Percentage < value)
+        {
+            zigZag.Dominant = false;
+            ScannerLog.Logger.Trace($"{symbol.Name} {interval.Name} Zoomed box ignored {zigZag.Percentage:N2} < {value:N2} {zigZag.Candle.DateLocal} {zigZag.PointType} top {zigZag.Top} bottom {zigZag.Bottom} perc={zigZag.Percentage:N2}");
+            return true;
+        }
+        return false;
+    }
+
+    private static bool ZoomedPercentageAboveMaximum(ZigZagResult zigZag, CryptoSymbol symbol, CryptoInterval interval)
+    {
+        var value = GlobalData.Settings.Signal.Zones.MaximumZoomedPercentage;
+        if (value > 0 && zigZag.Percentage > value)
+        {
+            zigZag.Dominant = false;
+            ScannerLog.Logger.Trace($"{symbol.Name} {interval.Name} Zoomed box ignored {zigZag.Percentage:N2} > {value:N2} {zigZag.Candle.DateLocal} {zigZag.PointType} top {zigZag.Top} bottom {zigZag.Bottom} perc={zigZag.Percentage:N2}");
+            return true;
+        }
+        return false;
+    }
+
 
     public static async Task MakeDominantAndZoomInAsync(CryptoSymbol symbol, CryptoInterval interval,
         ZigZagResult zigZag, decimal top, decimal bottom, bool zoomFurther, StringBuilder log)
@@ -82,9 +133,17 @@ public class CryptoCalculation
             ScannerLog.Logger.Trace($"{symbol.Name} {interval.Name} Dominant pivot corrected {zigZag.Candle.DateLocal} {zigZag.PointType} top {zigZag.Top} bottom {zigZag.Bottom} perc={zigZag.Percentage:N2}");
         }
 
+        // Is the (unzoomed) percentage between the configured limits? 
+        // Or is the percentage alread below the zoom-limit? (saves time)
+        if (UnzoomedPercentageBelowMinimum(zigZag, symbol, interval) 
+            || UnzoomedPercentageAboveMaximum(zigZag, symbol, interval)
+            || ZoomedPercentageBelowMinimum(zigZag, symbol, interval))
+            return; // (mark the point as not dominant + exit)
+
+
 
         // If the found percentage is obove 0.7% zoom in on the lower intervals (withing the boundaries of the current candle)
-        if (zigZag.Percentage >= GlobalData.Settings.Signal.Zones.ZoomPercentage && zoomFurther)
+        if (zigZag.Percentage >= GlobalData.Settings.Signal.Zones.MaximumZoomedPercentage && zoomFurther)
         {
             CryptoIntervalPeriod zoom = interval!.IntervalPeriod;
             long unixStart = zigZag.Candle.OpenTime;
@@ -93,7 +152,7 @@ public class CryptoCalculation
             //DateTime unixEindeDebug = CandleTools.GetUnixDate(unixEinde);
             int durationForThisCandle = (int)(unixEinde - unixStart);
 
-            while (zigZag.Percentage >= GlobalData.Settings.Signal.Zones.ZoomPercentage && zoom > CryptoIntervalPeriod.interval1m)
+            while (zigZag.Percentage >= GlobalData.Settings.Signal.Zones.MaximumZoomedPercentage && zoom > CryptoIntervalPeriod.interval1m)
             {
                 zoom--;
                 ScannerLog.Logger.Trace($"{symbol.Name} {interval.Name} Dominant pivot zooming {zoom} {zigZag.Percentage:N2}%");
@@ -106,7 +165,7 @@ public class CryptoCalculation
                     await CryptoCandles.GetCandleData(symbol, zoomInterval, log, unixStart, false, count);
 
                     long loop = IntervalTools.StartOfIntervalCandle(unixStart, zoomInterval.Interval.Duration);
-                    while (loop < unixEinde && zigZag.Percentage >= GlobalData.Settings.Signal.Zones.ZoomPercentage)
+                    while (loop < unixEinde && zigZag.Percentage >= GlobalData.Settings.Signal.Zones.MaximumZoomedPercentage)
                     {
                         //DateTime loopDebug = CandleTools.GetUnixDate(loop);
                         if (loop >= zigZag.Candle.OpenTime) //really?
@@ -119,7 +178,7 @@ public class CryptoCalculation
                                     if (bodyTop < zigZag.Top)
                                     {
                                         decimal percentage = 100 * ((bodyTop - zigZag.Bottom) / zigZag.Bottom);
-                                        if (percentage >= 0)
+                                        if (percentage >= GlobalData.Settings.Signal.Zones.MinimumUnZoomedPercentage)
                                         {
                                             zigZag.Top = bodyTop;
                                             zigZag.Percentage = percentage;
@@ -133,7 +192,7 @@ public class CryptoCalculation
                                     if (bodyBottom > zigZag.Bottom)
                                     {
                                         decimal percentage = 100 * ((zigZag.Top - bodyBottom) / bodyBottom);
-                                        if (percentage >= 0)
+                                        if (percentage >= GlobalData.Settings.Signal.Zones.MinimumUnZoomedPercentage)
                                         {
                                             zigZag.Bottom = bodyBottom;
                                             zigZag.Percentage = percentage;
@@ -147,10 +206,14 @@ public class CryptoCalculation
                     }
                 }
 
-                if (zigZag.Percentage <= GlobalData.Settings.Signal.Zones.ZoomPercentage)
+                if (zigZag.Percentage <= GlobalData.Settings.Signal.Zones.MaximumZoomedPercentage)
                     break;
             }
         }
+
+        // Is the zoomed percentage between the configured limits?
+        if (ZoomedPercentageBelowMinimum(zigZag, symbol, interval) || ZoomedPercentageAboveMaximum(zigZag, symbol, interval))
+            return; // (mark the point as not dominant + exit)
     }
 
     public static async Task CalculateLiqBoxesAsync(AddTextEvent? sender, CryptoZoneData data, CryptoZoneSession session, StringBuilder log)
@@ -242,66 +305,6 @@ public class CryptoCalculation
         }
     }
 
-
-    public static void TrySomethingWithFib()
-    {
-        //// Mhh, fib levels proberen te zetten
-        //// !!! Dit lijkt alvast niet te werken!!!!
-        //// eerst maar eens iets verder uitdenken
-        //if (Indicator.ZigZagList.Count > 0)
-        //{
-        //    // iets met een vloer bepalen, daarna terug zoeken
-        //    // als de vloer geraakt wordt eruit anders indien hoger dan onthouden
-        //    // dus dan heb je uiteindelijk een vloer en een zolder
-
-        //    ZigZagResult? lowest = null;
-        //    ZigZagResult? highest = null;
-
-        //    ZigZagResult? first = null;
-        //    var last = Indicator.ZigZagList.Last();
-
-        //    for (int i = Indicator.ZigZagList.Count - 1; i > 0; i--)
-        //    {
-        //        var zigzag = Indicator.ZigZagList[i];
-        //        if (lowest == null | zigzag.Candle.GetLowValue(obj.UseHighLow) < lowest.Candle.GetLowValue(obj.UseHighLow))
-        //            lowest = zigzag;
-        //        if (highest == null | zigzag.Candle.GetHighValue(obj.UseHighLow) > highest.Candle.GetHighValue(obj.UseHighLow))
-        //            highest = zigzag;
-        //        break;
-        //    }
-
-
-        //    for (int i = Indicator.ZigZagList.Count - 1; i > 0; i--)
-        //    {
-        //        var zigzag = Indicator.ZigZagList[i];
-        //        if (zigzag.PointType == last.PointType && zigzag.PointType == 'L')
-        //        {
-        //            if (zigzag.Candle.GetLowValue(obj.UseHighLow) < last.Candle.GetLowValue(obj.UseHighLow))
-        //            {
-        //                first = zigzag;
-        //            }
-        //            else break;
-        //        }
-
-        //        if (zigzag.PointType == last.PointType && zigzag.PointType == 'H')
-        //        {
-        //            if (zigzag.Candle.GetHighValue(obj.UseHighLow) > last.Candle.GetHighValue(obj.UseHighLow))
-        //            {
-        //                first = zigzag;
-        //            }
-        //            else break;
-        //        }
-        //    }
-
-        //    if (first != null && last != null)
-        //    {
-        //        var mymarkers = new ScatterSeries { Title = "CryptoData", MarkerSize = 10, MarkerFill = Color.Yellow, MarkerType = MarkerType.Diamond, };
-        //        mymarkers.Points.Add(new ScatterPoint(DateTimeAxis.ToDouble(first.Candle!.Date), (double)first.Value));
-        //        mymarkers.Points.Add(new ScatterPoint(DateTimeAxis.ToDouble(last.Candle!.Date), (double)last.Value));
-        //        plotModel.Series.Add(mymarkers);
-        //    }
-        //}
-    }
 
     public static void SaveToZoneTable(CryptoZoneData data)
     {
