@@ -28,8 +28,8 @@ public class ZigZagGetBest
         }
 
         // Add candles to the ZigZag indicators
-        foreach (var indicator in accountSymbolIntervalData.ZigZagIndicators)
-            indicator.PostponeFinish = true;
+        //foreach (var indicator in accountSymbolIntervalData.ZigZagIndicators)
+        //    indicator.PostponeFinish = true;
         foreach (var candle in symbolInterval.CandleList.Values)
         {
             foreach (var indicator in accountSymbolIntervalData.ZigZagIndicators)

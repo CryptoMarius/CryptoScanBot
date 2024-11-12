@@ -48,10 +48,10 @@ public class LiquidityZones
 
             // Calculate the Indicator
             //ScannerLog.Logger.Info($"Creating zigzag indicator");
-            data.Indicator = new(data.SymbolInterval.CandleList, GlobalData.Settings.Signal.Zones.UseHighLow, session.OptimizeZigZag)
-            {
-                PostponeFinish = true
-            };
+            //data.Indicator = new(data.SymbolInterval.CandleList, GlobalData.Settings.Signal.Zones.UseHighLow, session.OptimizeZigZag)
+            //{
+            //    PostponeFinish = true
+            //};
             foreach (var candle in data.SymbolInterval.CandleList.Values)
             {
                 if (candle.OpenTime >= fetchFrom)
