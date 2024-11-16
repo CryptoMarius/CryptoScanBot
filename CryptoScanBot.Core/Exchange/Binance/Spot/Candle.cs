@@ -217,7 +217,7 @@ public class GetCandles
 
                 if (symbol.ExchangeId == GlobalData.Settings.General.ExchangeId)
                 {
-                    Interval.DetermineFetchStartDate(symbol, fetchEndUnix);
+                    CandleTools.DetermineFetchStartDate(symbol, fetchEndUnix);
                     await FetchCandlesInternal(client, symbol, fetchEndUnix);
                 }
             }

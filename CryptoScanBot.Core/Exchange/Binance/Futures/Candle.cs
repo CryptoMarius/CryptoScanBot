@@ -217,7 +217,7 @@ public class Candle
                 // Did we switch exchange (it takes a long time)
                 if (symbol.ExchangeId == GlobalData.Settings.General.ExchangeId)
                 {
-                    Interval.DetermineFetchStartDate(symbol, fetchEndUnix);
+                    CandleTools.DetermineFetchStartDate(symbol, fetchEndUnix);
                     await FetchCandlesInternal(client, symbol, fetchEndUnix);
                 }
             }

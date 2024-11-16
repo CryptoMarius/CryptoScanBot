@@ -1,8 +1,19 @@
 CryptoScanBot release historie:
 
-??-11-2024 1.9.4-.....
+xx-11-2024 1.9.4.11xx
 
+- Scanner - Nieuwe geluiden
+- Scanner - Dominante zones - Replay knoppen ingebouwd
+- Scanner - Dominante zones - Opmeten met shift-click, shift ingedrukt houden en selectie maken
+- Scanner - Dominante zones - Het laatste punt van de trend wordt soms niet goed berekend. Dit kan een verkeerde markttrend of fib betekenen
+
+12-11-2024 1.9.4.1112
+
+- Scanner - Dominante zones configuratie van geluidjes, percentages.
+- Scanner - Dominante zones configuratie van filtermogelijkheden op de "ruwe" zone en de ingezoomde zones
+- Scanner - De fib bij de zones tonen (een zigzag op high/low komt niet altijd overeen met de open/close)
 - Scanner - Dominante zones optimaliseren, niet alles hoeft elke keer berekend te worden (verwijderen zigzags bij deviation%)
+- Scanner - Dominante zones inzien, tonen van een croshair en coordinaten in de sub-titel
 - Scanner - Dominante zones inzien, UTC / local display? (dat loopt nu vreemd door elkaar zo te zien, controleren!)
 - Scanner - Dominante zones inzien, coordinaten en een croshair toegevoegd
 - Scanner - Dominante zones inzien, de extra H of L die worden toegevoegd laten zien dmv witte bolletjes
@@ -10,6 +21,7 @@ CryptoScanBot release historie:
 
 03-11-2024 1.9.4.1104
 
+- Scanner - Een zone tabel toevoegen waarmee liq. zones wgm, s/r of s/d, of value gap kan worden geadministreerd
 - Scanner - Dominante zones inzien via een extra formulier
 - Scanner - Dominante zones laten calculeren via een batch process
 - Scanner - Dominante zones melden indien ze binnen 1% komen te liggen

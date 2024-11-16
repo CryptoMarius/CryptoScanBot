@@ -129,7 +129,7 @@ public class CryptoSymbol
 
     [Computed]
     // Quick reference to the first intervalSymbol
-    public SortedList<long, CryptoCandle> CandleList { get { return IntervalPeriodList[0].CandleList; } }
+    public CryptoCandleList CandleList { get { return IntervalPeriodList[0].CandleList; } }
 
     [Computed]
     // Lock the candlelist to manipulates candles

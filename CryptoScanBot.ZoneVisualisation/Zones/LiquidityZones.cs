@@ -1,10 +1,11 @@
 ﻿using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Trend;
+using CryptoScanBot.Core.Zones;
 
 using System.Text;
 
-namespace CryptoScanBot.Core.Zones;
+namespace CryptoScanBot.ZoneVisualisation.Zones;
 
 public class LiquidityZones
 {
@@ -12,38 +13,21 @@ public class LiquidityZones
     {
         //long startTime = Stopwatch.GetTimestamp();
         //ScannerLog.Logger.Info("CalculateSymbolAsync.Start");
-        CryptoCandles.LoadedCandlesFrom = ""; // force
-        CryptoCandles.LoadedCandlesInMemory.Clear(); // force
 
         //Text = $"{data.Exchange.Name}.{session.SymbolBase}{session.SymbolQuote} {session.IntervalName}";
         StringBuilder log = new();
         try
         {
-            //// Load candles from the CryptoBaseScanner
-            //CryptoCandles.StartupTime = DateTime.UtcNow;
-            //log.AppendLine($"loading available candles");
-            //string baseStorageFolder = GlobalData.GetBaseDir();
-            //string exchangeStorageFolder = baseStorageFolder + data.Exchange.Name.ToLower() + @"\";
-            ////DataStore.LoadCandleForSymbol(exchangeStorageFolder, data.Symbol!);
-
-            //// Load candles from the Exchange
-            //if (CryptoCandles.LoadedCandlesFrom != data.Symbol.Name)
-            //{
-            //    CryptoCandles.LoadedCandlesInMemory = [];
-            //    CryptoCandles.LoadedCandlesFrom = data.Symbol.Name;
-            //    DataStore.LoadCandleForSymbol(exchangeStorageFolder, data.Symbol);
-            //}
-
             // Load candles from the Exchange
-            long unixStartUp = CandleTools.GetUnixTime(CryptoCandles.StartupTime, 0);
-
+            long unixStartUp = CandleTools.GetUnixTime(CandleEngine.StartupTime, 0); // todo Emulator date?
             long fetchFrom = IntervalTools.StartOfIntervalCandle(unixStartUp, data.SymbolInterval.Interval.Duration);
             fetchFrom -= GlobalData.Settings.Signal.Zones.CandleCount * data.SymbolInterval.Interval.Duration;
-            await CryptoCandles.GetCandleData(data.Symbol, data.SymbolInterval, log, fetchFrom, true, GlobalData.Settings.Signal.Zones.CandleCount);
-            CryptoCandles.SaveAddedCandleData(data.Symbol, log);
+            //await CryptoCandles.GetCandleData(data.Symbol, data.SymbolInterval, log, fetchFrom, true, GlobalData.Settings.Signal.Zones.CandleCount);
+            CandleEngine.LoadDataFromDisk(data.Symbol, data.Interval, data.SymbolInterval.CandleList);
+            if (await CandleEngine.FetchFrom(data.Symbol, data.Interval, data.SymbolInterval.CandleList, log, fetchFrom, GlobalData.Settings.Signal.Zones.CandleCount))
+                CandleEngine.LoadedCandlesInMemory[data.Interval.IntervalPeriod] = true;
             if (data.SymbolInterval.CandleList.Count == 0)
                 return;
-
 
 
             // Calculate the Indicator
@@ -54,17 +38,16 @@ public class LiquidityZones
             //};
             foreach (var candle in data.SymbolInterval.CandleList.Values)
             {
-                if (candle.OpenTime >= fetchFrom)
+                if (candle.OpenTime >= session.MinUnix && candle.OpenTime <= session.MaxUnix)
                 {
-                    data.Indicator.Calculate(candle, data.Interval.Duration);
-                    data.IndicatorFib.Calculate(candle, data.Interval.Duration);
+                    data.Indicator.Calculate(candle);
+                    data.IndicatorFib.Calculate(candle);
                 }
             }
             data.Indicator.FinishJob();
             data.IndicatorFib.FinishJob();
             CryptoTrendIndicator trend = TrendInterval.InterpretZigZagPoints(data.Indicator, null);
             //ScannerLog.Logger.Info($"Done adding zigzag candles {trend}");
-
 
 
             // Mark the dominant lows or highs
@@ -76,36 +59,26 @@ public class LiquidityZones
 
 
 
-            // start from unix date
-            //ScannerLog.Logger.Info($"Start plotting data");
-            long unix = 0;
-            if (data.SymbolInterval.CandleList.Count > GlobalData.Settings.Signal.Zones.CandleCount)
-            {
-                var candle = data.SymbolInterval.CandleList.Values[data.SymbolInterval.CandleList.Count - GlobalData.Settings.Signal.Zones.CandleCount];
-                unix = candle.OpenTime;
-            }
-            var lastCandle = data.SymbolInterval.CandleList.Values.Last();
-
-
             CryptoCalculation.SaveToZoneTable(data);
 
             //plotView.Model = plotModel;
             //plotView.Model.InvalidatePlot(true);
             //plotView.Model.MouseDown += OnChartClick;
             //ScannerLog.Logger.Info($"Done plotting data");
-            CryptoCandles.SaveAddedCandleData(data.Symbol, log);
+            CandleEngine.SaveAddedCandleData(data.Symbol, log);
         }
         catch (Exception e)
         {
             log.AppendLine(e.ToString());
             ScannerLog.Logger.Info($"ERROR {e}");
-            CryptoCandles.SaveAddedCandleData(data.Symbol, log);
+            CandleEngine.SaveAddedCandleData(data.Symbol, log);
         }
 
         if (sender == null)
-            _ = CryptoCandles.CleanLoadedCandlesAsync(data.Symbol);
+            _ = CandleEngine.CleanLoadedCandlesAsync(data.Symbol);
         //ScannerLog.Logger.Info("CalculateSymbolAsync.Stop " + Stopwatch.GetElapsedTime(startTime).TotalSeconds.ToString());
     }
+
 
     public static async Task CalculateAllSymbolsAsync(AddTextEvent? sender)
     {

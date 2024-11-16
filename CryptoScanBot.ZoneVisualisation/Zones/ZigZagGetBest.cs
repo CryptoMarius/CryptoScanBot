@@ -6,7 +6,7 @@ namespace CryptoScanBot.Core.Zones;
 
 public class ZigZagGetBest
 {
-    public static ZigZagIndicator9 CalculateBestIndicator(CryptoSymbolInterval symbolInterval)
+    public static ZigZagIndicator9 CalculateBestIndicator(CryptoSymbolInterval symbolInterval, long maxUnixTime = -1)
     {
 //        long startTime = Stopwatch.GetTimestamp();
 //        ScannerLog.Logger.Info("CalculateBestIndicator.Start");
@@ -32,9 +32,11 @@ public class ZigZagGetBest
         //    indicator.PostponeFinish = true;
         foreach (var candle in symbolInterval.CandleList.Values)
         {
+            if (maxUnixTime > 0 && candle.OpenTime > maxUnixTime)
+                break;
             foreach (var indicator in accountSymbolIntervalData.ZigZagIndicators)
             {
-                indicator.Calculate(candle, accountSymbolIntervalData.Interval.Duration);
+                indicator.Calculate(candle);
             }
         }
         foreach (var indicator in accountSymbolIntervalData.ZigZagIndicators)

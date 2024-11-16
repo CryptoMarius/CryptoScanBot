@@ -17,5 +17,5 @@ public class CryptoSymbolInterval
     public CryptoSignal? Signal { get; set; }
 
     // The candles for this interval
-    public SortedList<long, CryptoCandle> CandleList { get; set; } = [];
+    public CryptoCandleList CandleList { get; set; } = [];
 }

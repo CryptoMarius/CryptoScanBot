@@ -4,8 +4,8 @@ using CryptoScanBot.Core.Excel;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Trader;
-using CryptoScanBot.Core.Zones;
 using CryptoScanBot.Intern;
+using CryptoScanBot.ZoneVisualisation.Zones;
 
 namespace CryptoScanBot.Commands;
 

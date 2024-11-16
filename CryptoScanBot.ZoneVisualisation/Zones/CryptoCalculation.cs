@@ -6,6 +6,7 @@ using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Trend;
+using CryptoScanBot.ZoneVisualisation.Zones;
 
 using Dapper;
 using Dapper.Contrib.Extensions;
@@ -162,7 +163,9 @@ public class CryptoCalculation
                 if (symbol.Exchange.IsIntervalSupported(zoomInterval.IntervalPeriod))
                 {
                     int count = durationForThisCandle / zoomInterval.Interval.Duration;
-                    await CryptoCandles.GetCandleData(symbol, zoomInterval, log, unixStart, false, count);
+                    CandleEngine.LoadDataFromDisk(symbol, zoomInterval.Interval, zoomInterval.CandleList);
+                    if (await CandleEngine.FetchFrom(symbol, zoomInterval.Interval, zoomInterval.CandleList, log, unixStart, count))
+                        CandleEngine.LoadedCandlesInMemory[zoomInterval.Interval.IntervalPeriod] = true;
 
                     long loop = IntervalTools.StartOfIntervalCandle(unixStart, zoomInterval.Interval.Duration);
                     while (loop < unixEinde && zigZag.Percentage >= GlobalData.Settings.Signal.Zones.MaximumZoomedPercentage)
@@ -269,7 +272,7 @@ public class CryptoCalculation
                 // skip a couple of candles
                 bool brokenBos = false;
                 long key = zigzag.Candle.OpenTime;
-                long checkUpTo = CandleTools.GetUnixTime(CryptoCandles.StartupTime, data.SymbolInterval.Interval.Duration);
+                long checkUpTo = CandleTools.GetUnixTime(CandleEngine.StartupTime, data.SymbolInterval.Interval.Duration);
                 while (zigzag.Dominant && key <= checkUpTo)
                 {
                     key += data.SymbolInterval.Interval.Duration;

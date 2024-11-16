@@ -10,18 +10,11 @@ https://www.youtube.com/watch?v=plhWMmmgZj4
 todo: Optimalisatie van de IsSupported interval *die nu common is)
 
 Scanner:
-- Scanner - Grafiek, weer terug naar local tijd (gaf uiteraard problemen tijdens de wisseling)
+- Scanner - Dominante zones automatisch laten calculeren via een achtergrond proces
+- Scanner - Grafiek, op de x-as de lokale tijd tonen (dat gaf problemen tijdens de wisseling)
 - Scanner - Dominante zones, ophalen van de candles optimaliseren en delen met de emulator
             De tussenliggende intervallen eventueel ook kunnen berekenen..
-- Scanner - Dominante zones, percentage kunnen configureren (en kan de AlarmPrice weg..)
-- Scanner - Dominante zones inzien via een extra formulier
-- Scanner - Dominante zones laten calculeren via een batch process
-- Scanner - Dominante zones melden indien ze binnen 1% komen te liggen
-- Scanner - Dominante zones configuratie van geluidje, percentage en wellicht nog andere zaken?
-- Scanner - Dominante zones hergebruiken en niet elke keer verwijderen en opnieuw inschieten (ivm signalering)
 - Scanner - De nieuwe grafief (die ook de trend laat zien) verrijken met de laatste signalen en/of lopende posities
-- Scanner - Een instelling toevoegen die bepaalt hoe de trend berekend wordt, met name of de trend wacht op een bevestiging van een HH + HL (of HH, LH) of aan een CHOC genoeg heeft?
-- Scanner - Een zone tabel toevoegen waarmee liq. zones wgm, s/r of s/d, of value gap kan worden geadministreerd
 - Scanner - Een wat vreemde, de logging naar het logtab kan stoppen? 
             (eens gedetecteerd tijdens het debuggen, geen reden of oplossing gevonden)
 - Scanner - Een splitter toepassen tussen de symbols en het signaal grid
@@ -91,6 +84,7 @@ Emulator:
 - Emulator - Het ophalen van candles gaat niet altijd goed indien de munt nog maar "kort" bestaat, er ontstaat een eindeloze lus
 
 Trading:
+- Trading - test account, ENAUSDT, 12-11, standaard papertrade, heeft 2x een sell tp gezet en dus ook 2x verkocht (zo wordt je snel rijk). Wat gaat daar precies fout?
 - Trading - De Telegram profits commando gaat zo te zien niet goed om met short posities (verlies trades kan, maar dit was iets teveel)
 - Trading - Met een ingevulde SL blijft de bestaande SL staan als er een DCA gezet wordt, SL kan boven de DCA staan, klopt niet!
 - Trading - De aanwezigheid van meerdere signalen per munt zorgt ervoor dat enkel eigenlijk op de lagere tf's wordt ingestapt

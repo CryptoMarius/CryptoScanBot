@@ -202,6 +202,7 @@ public class TrendInterval
         for (int i = 0; i < zigZagList.Count; i++)
         {
             zigZag = zigZagList[i];
+
             // Nope, the dummies are the most important as it can be a BOS (break of structure)
             //if (zigZag.Dummy)
             //    continue;
@@ -258,7 +259,7 @@ public class TrendInterval
 
 
 
-    public static void Calculate(CryptoSymbol symbol, SortedList<long, CryptoCandle> candleList, AccountSymbolIntervalData accountSymbolIntervalData, long candleIntervalStart, long candleIntervalEnd, StringBuilder? log = null)
+    public static void Calculate(CryptoSymbol symbol, CryptoCandleList candleList, AccountSymbolIntervalData accountSymbolIntervalData, long candleIntervalStart, long candleIntervalEnd, StringBuilder? log = null)
     {
         var interval = accountSymbolIntervalData.Interval;
 
@@ -324,7 +325,7 @@ public class TrendInterval
             {
                 foreach (var indicator in accountSymbolIntervalData.ZigZagIndicators)
                 {
-                    indicator.Calculate(candle, accountSymbolIntervalData.Interval.Duration);
+                    indicator.Calculate(candle);
                     added++;
                 }
                 //accountSymbolIntervalData.Indicator.Calculate(candle, accountSymbolIntervalData.Interval.Duration);

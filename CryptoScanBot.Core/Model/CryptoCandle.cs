@@ -36,6 +36,10 @@ public class CryptoCandle : IQuote
     public bool IsDuplicated { get; set; }
 }
 
+public class CryptoCandleList : SortedList<long, CryptoCandle>
+{
+}
+
 //
 // Voor een toekomstige Helperclass wellicht? (naar een StringStream oid)
 //

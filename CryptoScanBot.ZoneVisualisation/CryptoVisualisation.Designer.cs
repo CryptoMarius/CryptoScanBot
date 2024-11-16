@@ -1,4 +1,4 @@
-﻿namespace CryptoShowTrend;
+﻿namespace CryptoScanBot.ZoneVisualisation;
 
 partial class CryptoVisualisation
 {
@@ -40,14 +40,22 @@ partial class CryptoVisualisation
         EditShowLiqBoxes = new CheckBox();
         EditZoomLiqBoxes = new CheckBox();
         EditShowZigZag = new CheckBox();
+        EditShowFib = new CheckBox();
         ButtonCalculate = new Button();
         ButtonZoomLast = new Button();
+        panel1 = new Panel();
+        labelInterval = new Label();
         ButtonPlus = new Button();
         ButtonMinus = new Button();
+        panel2 = new Panel();
+        labelMaxTime = new Label();
+        ButtonGoRight = new Button();
+        ButtonGoLeft = new Button();
         plotView = new OxyPlot.WindowsForms.PlotView();
-        labelInterval = new Label();
         flowLayoutPanel1.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)EditDeviation).BeginInit();
+        panel1.SuspendLayout();
+        panel2.SuspendLayout();
         SuspendLayout();
         // 
         // flowLayoutPanel1
@@ -64,11 +72,11 @@ partial class CryptoVisualisation
         flowLayoutPanel1.Controls.Add(EditShowLiqBoxes);
         flowLayoutPanel1.Controls.Add(EditZoomLiqBoxes);
         flowLayoutPanel1.Controls.Add(EditShowZigZag);
+        flowLayoutPanel1.Controls.Add(EditShowFib);
         flowLayoutPanel1.Controls.Add(ButtonCalculate);
         flowLayoutPanel1.Controls.Add(ButtonZoomLast);
-        flowLayoutPanel1.Controls.Add(ButtonMinus);
-        flowLayoutPanel1.Controls.Add(ButtonPlus);
-        flowLayoutPanel1.Controls.Add(labelInterval);
+        flowLayoutPanel1.Controls.Add(panel1);
+        flowLayoutPanel1.Controls.Add(panel2);
         flowLayoutPanel1.Dock = DockStyle.Left;
         flowLayoutPanel1.FlowDirection = FlowDirection.TopDown;
         flowLayoutPanel1.Location = new Point(0, 0);
@@ -174,9 +182,19 @@ partial class CryptoVisualisation
         EditShowZigZag.Text = "Show ZigZag";
         EditShowZigZag.UseVisualStyleBackColor = true;
         // 
+        // EditShowFib
+        // 
+        EditShowFib.AutoSize = true;
+        EditShowFib.Location = new Point(6, 257);
+        EditShowFib.Name = "EditShowFib";
+        EditShowFib.Size = new Size(72, 19);
+        EditShowFib.TabIndex = 20;
+        EditShowFib.Text = "Show fib";
+        EditShowFib.UseVisualStyleBackColor = true;
+        // 
         // ButtonCalculate
         // 
-        ButtonCalculate.Location = new Point(6, 257);
+        ButtonCalculate.Location = new Point(6, 282);
         ButtonCalculate.Name = "ButtonCalculate";
         ButtonCalculate.Size = new Size(75, 23);
         ButtonCalculate.TabIndex = 8;
@@ -185,32 +203,90 @@ partial class CryptoVisualisation
         // 
         // ButtonZoomLast
         // 
-        ButtonZoomLast.Location = new Point(6, 286);
+        ButtonZoomLast.Location = new Point(6, 311);
         ButtonZoomLast.Name = "ButtonZoomLast";
         ButtonZoomLast.Size = new Size(75, 23);
         ButtonZoomLast.TabIndex = 14;
         ButtonZoomLast.Text = "Zoom last";
         ButtonZoomLast.UseVisualStyleBackColor = true;
         // 
+        // panel1
+        // 
+        panel1.Controls.Add(labelInterval);
+        panel1.Controls.Add(ButtonPlus);
+        panel1.Controls.Add(ButtonMinus);
+        panel1.Location = new Point(6, 340);
+        panel1.Name = "panel1";
+        panel1.Size = new Size(95, 66);
+        panel1.TabIndex = 21;
+        // 
+        // labelInterval
+        // 
+        labelInterval.AutoSize = true;
+        labelInterval.Location = new Point(11, 43);
+        labelInterval.Name = "labelInterval";
+        labelInterval.Size = new Size(38, 15);
+        labelInterval.TabIndex = 21;
+        labelInterval.Text = "label5";
+        // 
         // ButtonPlus
         // 
-        ButtonPlus.Location = new Point(6, 344);
+        ButtonPlus.Location = new Point(47, 10);
         ButtonPlus.Name = "ButtonPlus";
         ButtonPlus.Size = new Size(25, 23);
-        ButtonPlus.TabIndex = 17;
+        ButtonPlus.TabIndex = 20;
         ButtonPlus.Text = "+";
         ButtonPlus.UseVisualStyleBackColor = true;
         ButtonPlus.Click += ButtonPlusClick;
         // 
         // ButtonMinus
         // 
-        ButtonMinus.Location = new Point(6, 315);
+        ButtonMinus.Location = new Point(13, 10);
         ButtonMinus.Name = "ButtonMinus";
         ButtonMinus.Size = new Size(25, 23);
-        ButtonMinus.TabIndex = 18;
+        ButtonMinus.TabIndex = 19;
         ButtonMinus.Text = "-";
         ButtonMinus.UseVisualStyleBackColor = true;
         ButtonMinus.Click += ButtonMinusClick;
+        // 
+        // panel2
+        // 
+        panel2.Controls.Add(labelMaxTime);
+        panel2.Controls.Add(ButtonGoRight);
+        panel2.Controls.Add(ButtonGoLeft);
+        panel2.Location = new Point(6, 412);
+        panel2.Name = "panel2";
+        panel2.Size = new Size(95, 65);
+        panel2.TabIndex = 22;
+        // 
+        // labelMaxTime
+        // 
+        labelMaxTime.AutoSize = true;
+        labelMaxTime.Location = new Point(13, 40);
+        labelMaxTime.Name = "labelMaxTime";
+        labelMaxTime.Size = new Size(38, 15);
+        labelMaxTime.TabIndex = 23;
+        labelMaxTime.Text = "label5";
+        // 
+        // ButtonGoRight
+        // 
+        ButtonGoRight.Location = new Point(49, 8);
+        ButtonGoRight.Name = "ButtonGoRight";
+        ButtonGoRight.Size = new Size(25, 23);
+        ButtonGoRight.TabIndex = 22;
+        ButtonGoRight.Text = ">";
+        ButtonGoRight.UseVisualStyleBackColor = true;
+        ButtonGoRight.Click += ButtonGoRightClick;
+        // 
+        // ButtonGoLeft
+        // 
+        ButtonGoLeft.Location = new Point(13, 8);
+        ButtonGoLeft.Name = "ButtonGoLeft";
+        ButtonGoLeft.Size = new Size(25, 23);
+        ButtonGoLeft.TabIndex = 21;
+        ButtonGoLeft.Text = "<";
+        ButtonGoLeft.UseVisualStyleBackColor = true;
+        ButtonGoLeft.Click += ButtonGoLeftClick;
         // 
         // plotView
         // 
@@ -226,15 +302,6 @@ partial class CryptoVisualisation
         plotView.ZoomRectangleCursor = Cursors.SizeNWSE;
         plotView.ZoomVerticalCursor = Cursors.SizeNS;
         // 
-        // labelInterval
-        // 
-        labelInterval.AutoSize = true;
-        labelInterval.Location = new Point(6, 370);
-        labelInterval.Name = "labelInterval";
-        labelInterval.Size = new Size(38, 15);
-        labelInterval.TabIndex = 19;
-        labelInterval.Text = "label5";
-        // 
         // CryptoVisualisation
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
@@ -248,6 +315,10 @@ partial class CryptoVisualisation
         flowLayoutPanel1.ResumeLayout(false);
         flowLayoutPanel1.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)EditDeviation).EndInit();
+        panel1.ResumeLayout(false);
+        panel1.PerformLayout();
+        panel2.ResumeLayout(false);
+        panel2.PerformLayout();
         ResumeLayout(false);
         PerformLayout();
     }
@@ -269,7 +340,13 @@ partial class CryptoVisualisation
     private NumericUpDown EditDeviation;
     private Button ButtonZoomLast;
     private OxyPlot.WindowsForms.PlotView plotView;
+    private CheckBox EditShowFib;
+    private Panel panel1;
     private Button ButtonPlus;
     private Button ButtonMinus;
+    private Panel panel2;
+    private Button ButtonGoRight;
+    private Button ButtonGoLeft;
     private Label labelInterval;
+    private Label labelMaxTime;
 }

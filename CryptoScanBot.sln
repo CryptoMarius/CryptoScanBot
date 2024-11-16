@@ -17,6 +17,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoScanBot.Core", "Crypt
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoShowTrend", "CryptoShowTrend\CryptoShowTrend.csproj", "{54C6E99D-A297-447C-B2F5-01A6E886B0A0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoScanBot.ZoneVisualisation", "CryptoScanBot.ZoneVisualisation\CryptoScanBot.ZoneVisualisation.csproj", "{05F2DDF6-C7E5-40C0-91A3-F042759CECEC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -72,6 +74,14 @@ Global
 		{54C6E99D-A297-447C-B2F5-01A6E886B0A0}.Release|Any CPU.Build.0 = Release|Any CPU
 		{54C6E99D-A297-447C-B2F5-01A6E886B0A0}.Release|x86.ActiveCfg = Release|Any CPU
 		{54C6E99D-A297-447C-B2F5-01A6E886B0A0}.Release|x86.Build.0 = Release|Any CPU
+		{05F2DDF6-C7E5-40C0-91A3-F042759CECEC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{05F2DDF6-C7E5-40C0-91A3-F042759CECEC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{05F2DDF6-C7E5-40C0-91A3-F042759CECEC}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{05F2DDF6-C7E5-40C0-91A3-F042759CECEC}.Debug|x86.Build.0 = Debug|Any CPU
+		{05F2DDF6-C7E5-40C0-91A3-F042759CECEC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{05F2DDF6-C7E5-40C0-91A3-F042759CECEC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{05F2DDF6-C7E5-40C0-91A3-F042759CECEC}.Release|x86.ActiveCfg = Release|Any CPU
+		{05F2DDF6-C7E5-40C0-91A3-F042759CECEC}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

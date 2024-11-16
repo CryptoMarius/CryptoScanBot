@@ -266,7 +266,7 @@ public class Candles
                 // Er is niet geswicthed van exchange (omdat het ophalen zo lang duurt)
                 if (symbol.ExchangeId == GlobalData.Settings.General.ExchangeId)
                 {
-                    ApiAlias.Interval.DetermineFetchStartDate(symbol, fetchEndUnix);
+                    CandleTools.DetermineFetchStartDate(symbol, fetchEndUnix);
                     await FetchCandlesInternal(client, symbol, fetchEndUnix);
                 }
             }

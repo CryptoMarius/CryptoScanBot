@@ -3,7 +3,7 @@ using CryptoScanBot.Core.Model;
 
 namespace CryptoScanBot.Core.Trend;
 
-public class ZigZagIndicator9(SortedList<long, CryptoCandle> candleList, bool useHighLow, decimal deviation)
+public class ZigZagIndicator9(CryptoCandleList candleList, bool useHighLow, decimal deviation)
 {
     public bool UseHighLow = useHighLow;
     //public int Depth { get; set; } = 12;
@@ -12,7 +12,7 @@ public class ZigZagIndicator9(SortedList<long, CryptoCandle> candleList, bool us
 
     public int CandleCount { get; set; } = 0;
     public List<ZigZagResult> ZigZagList { get; set; } = [];
-    private readonly SortedList<long, CryptoCandle> CandleList = candleList;
+    private readonly CryptoCandleList CandleList = candleList;
 
     private CryptoCandle? previous5 = null;
     private CryptoCandle? previous4 = null;
@@ -341,7 +341,7 @@ public class ZigZagIndicator9(SortedList<long, CryptoCandle> candleList, bool us
 
 
 
-    public void Calculate(CryptoCandle candle, int duration)
+    public void Calculate(CryptoCandle candle)
     {
         //if (candle!.DateLocal >= new DateTime(2024, 11, 07, 18, 00, 0, DateTimeKind.Local))
         //    candle = candle; // debug 
@@ -371,12 +371,25 @@ public class ZigZagIndicator9(SortedList<long, CryptoCandle> candleList, bool us
         // I'm not sure how this exactly works out, we make a temporary point more or less permanent!!
         // Chances are high a BOS will lead to another high/low, but technically if can go the other way..
         var candleValue = GetLowValue(previous1!);
-        if (LastSwingLow != null && candleValue < LastSwingLow.Value && GetLowValue(previous2!) >= candleValue && GetLowValue(previous1!) >= candleValue)
+        if (LastSwingLow != null && candleValue < LastSwingLow.Value && GetLowValue(previous2!) >= candleValue && GetLowValue(previous3!) >= candleValue)
             AddNewLow(previous1!, candleValue);
+        else
+        {
+            candleValue = GetLowValue(previous2!);
+            if (LastSwingLow != null && candleValue < LastSwingLow.Value && GetLowValue(previous3!) >= candleValue && GetLowValue(previous4!) >= candleValue)
+                AddNewLow(previous1!, candleValue);
+        }
+
 
         candleValue = GetHighValue(previous1!);
-        if (LastSwingHigh != null && candleValue > LastSwingHigh.Value && GetLowValue(previous2!) <= candleValue && GetLowValue(previous1!) <= candleValue)
+        if (LastSwingHigh != null && candleValue > LastSwingHigh.Value && GetHighValue(previous2!) <= candleValue && GetHighValue(previous3!) <= candleValue)
             AddNewHigh(previous1!, candleValue);
+        else
+        {
+            candleValue = GetLowValue(previous2!);
+            if (LastSwingHigh != null && candleValue > LastSwingHigh.Value && GetHighValue(previous3!) <= candleValue && GetHighValue(previous4!) <= candleValue)
+                AddNewHigh(previous1!, candleValue);
+        }
 
         //Init();
         OptimizeList();

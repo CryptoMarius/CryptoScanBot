@@ -130,11 +130,9 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CryptoScanBot.Core\CryptoScanBot.Core.csproj" />
+    <ProjectReference Include="..\CryptoScanBot.ZoneVisualisation\CryptoScanBot.ZoneVisualisation.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Update="CryptoVisualisation.cs">
-      <SubType>Form</SubType>
-    </Compile>
     <Compile Update="Main.PositionsClosed.cs" />
     <Compile Update="Properties\Settings.Designer.cs">
       <DesignTimeSharedInput>True</DesignTimeSharedInput>

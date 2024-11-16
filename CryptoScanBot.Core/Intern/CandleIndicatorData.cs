@@ -328,35 +328,35 @@ public class CandleIndicatorData: CryptoData
         }
     }
 
-    // We need 1 day + X hours because of the barometr calculation (we show ~6 hours in the display)
+    // We need 1 day + X hours because of the barometr calculation (we show ~5 hours in the display)
     // As soon as the barometer has been calculated it will be lowered to 1 day + 10 candles..
-    private static long InitialCandleCountFetch = (24 + 7) * 60;
+    private const int barometerGraphHours = 5;
+    private static long InitialCandleCountFetch = (24 + barometerGraphHours) * 60;
+
 
     public static void SetInitialCandleCountFetch(long value)
     {
-        // Ter debug uitgezet
         InitialCandleCountFetch = value;
     }
+
 
     public static long GetCandleFetchStart(CryptoSymbol symbol, CryptoInterval interval, DateTime utcNow)
     {
         long startFetchUnix;
-
         // Since the market climate is also a coin we must make an exception, it needs more candles because of the 24h bm calculation
         if (symbol.IsBarometerSymbol())
-            startFetchUnix = CandleTools.GetUnixTime(utcNow, 60) - 5 * 60 * GlobalData.IntervalList[0].Duration; // 7 hours graph
+            startFetchUnix = CandleTools.GetUnixTime(utcNow, 60) - barometerGraphHours * 60 * GlobalData.IntervalList[0].Duration;
         else
         {
             if (interval.IntervalPeriod == CryptoIntervalPeriod.interval1m)
-                // For the 1m we need initially ~2 day's because of the barometer calculation
+                // For the 1m we need *initially* ~1 day plus the data needed for the barometer graph
                 startFetchUnix = CandleTools.GetUnixTime(utcNow, 60) - InitialCandleCountFetch * interval.Duration;
             else
-                // We extended the amount because we of the markettrend calculation
-                // 260 would be enough for calculating the standard indicator data
+                // 260 would be enough for calculating the standard indicator data.
+                // But we extended that amount because of the markettrend calculation.
                 startFetchUnix = CandleTools.GetUnixTime(utcNow, 60) - 500 * interval.Duration;
             startFetchUnix -= startFetchUnix % interval.Duration;
         }
-        //DateTime symbolfetchCandleDebug = CandleTools.GetUnixDate(startFetchUnix);  //debug
         return startFetchUnix;
     }
 

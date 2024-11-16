@@ -1,4 +1,5 @@
 ﻿using CryptoScanBot.Core.Model;
+using CryptoScanBot.ZoneVisualisation;
 
 namespace CryptoScanBot.Commands;
 
@@ -13,7 +14,7 @@ public class CommandShowGraph : CommandBase
                 StartPosition = FormStartPosition.CenterParent
             };
             //ChangeTheme(Main.theme, dialog);
-            dialog.BlaAsync(symbol);
+            dialog.StartWithSymbolAsync(symbol);
 
             //if (dialog.ShowDialog() != DialogResult.OK)
             //    return;
