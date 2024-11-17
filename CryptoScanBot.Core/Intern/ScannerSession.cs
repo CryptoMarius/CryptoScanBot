@@ -71,15 +71,15 @@ public static class ScannerSession
             {
                 GlobalData.ApplicationStatus = CryptoApplicationStatus.Initializing;
 
-                ExchangeHelper.CancellationTokenSource = new();
-                ExchangeHelper.CancellationToken = ExchangeHelper.CancellationTokenSource.Token;
+                ExchangeBase.CancellationTokenSource = new();
+                ExchangeBase.CancellationToken = ExchangeBase.CancellationTokenSource.Token;
 
                 GlobalData.ThreadSaveObjects = new ThreadSaveObjects();
                 GlobalData.ThreadMonitorCandle = new ThreadMonitorCandle();
                 GlobalData.ThreadMonitorOrder = new ThreadMonitorOrder();
                 GlobalData.ThreadCheckPosition = new ThreadCheckFinishedPosition();
                 if (GlobalData.TradingApi.Key != "")
-                    _ = ExchangeHelper.UserTicker!.StartAsync();
+                    _ = ExchangeBase.UserTicker!.StartAsync();
                 // Vanuit hybernate wachten ivm netwerk verbindingen..
                 if (delay > 0)
                     Thread.Sleep(delay);
@@ -116,7 +116,7 @@ public static class ScannerSession
                 TimerSaveCandleData.Enabled = false;
 
                 ScannerLog.Logger.Trace($"Debug: Request for ticker cancel");
-                ExchangeHelper.CancellationTokenSource.Cancel();
+                ExchangeBase.CancellationTokenSource.Cancel();
 
                 Task task;
                 List<Task> taskList = [];
@@ -138,23 +138,23 @@ public static class ScannerSession
                 task = Task.Run(() => { GlobalData.ThreadCheckPosition?.Stop(); });
                 taskList.Add(task);
 
-                if (ExchangeHelper.UserTicker != null && !GlobalData.ApplicationIsClosing)
+                if (ExchangeBase.UserTicker != null && !GlobalData.ApplicationIsClosing)
                 {
-                    task = Task.Run(async () => { await ExchangeHelper.UserTicker?.StopAsync(); });
+                    task = Task.Run(async () => { await ExchangeBase.UserTicker?.StopAsync(); });
                     taskList.Add(task);
                 }
 
-                if (ExchangeHelper.KLineTicker != null && !GlobalData.ApplicationIsClosing)
+                if (ExchangeBase.KLineTicker != null && !GlobalData.ApplicationIsClosing)
                 {
                     //await ExchangeHelper.KLineTicker?.StopAsync();
-                    task = Task.Run(() => { ExchangeHelper.KLineTicker?.StopAsync(); });
+                    task = Task.Run(() => { ExchangeBase.KLineTicker?.StopAsync(); });
                     taskList.Add(task);
                 }
 
-                if (ExchangeHelper.PriceTicker != null && !GlobalData.ApplicationIsClosing)
+                if (ExchangeBase.PriceTicker != null && !GlobalData.ApplicationIsClosing)
                 {
                     //await ExchangeHelper.PriceTicker?.Stop();
-                    task = Task.Run(() => { ExchangeHelper.PriceTicker?.StopAsync(); });
+                    task = Task.Run(() => { ExchangeBase.PriceTicker?.StopAsync(); });
                     taskList.Add(task);
                 }
 
@@ -254,11 +254,11 @@ public static class ScannerSession
 
     private static void TimerCheckDataStream_Tick(object? sender, EventArgs? e)
     {
-        if (ExchangeHelper.KLineTicker != null)
+        if (ExchangeBase.KLineTicker != null)
         {
-            if (ExchangeHelper.KLineTicker.NeedsRestart())
+            if (ExchangeBase.KLineTicker.NeedsRestart())
             {
-                GlobalData.AddTextToLogTab($"Debug: Een van de {ExchangeHelper.KLineTicker.TickerType} tickers is gestopt!");
+                GlobalData.AddTextToLogTab($"Debug: Een van de {ExchangeBase.KLineTicker.TickerType} tickers is gestopt!");
 
                 // Schedule a restart of the streams in 1m max
                 if (!TimerRestartStreams.Enabled || TimerRestartStreams.Interval > 60 * 1000)
@@ -314,19 +314,21 @@ public static class ScannerSession
         // Ophalen van candle candles bijwerken
         TimerGetExchangeInfoAndCandles.InitTimerInterval(GlobalData.Settings.General.GetCandleInterval * 60);
 
-        // herstarten van ticker indien errors
+        // restart tickers if errors
         Task.Run(async () =>
         {
-            await ExchangeHelper.GetSymbolsAsync();
-            if (ExchangeHelper.KLineTicker != null)
-            await ExchangeHelper.KLineTicker.CheckTickers(); // herstarten van ticker indien errors
-            if (ExchangeHelper.PriceTicker != null)
-                await ExchangeHelper.PriceTicker.CheckTickers(); // herstarten van ticker indien errors
-            if (ExchangeHelper.UserTicker != null)
-                await ExchangeHelper.UserTicker.CheckTickers(); // herstarten van ticker indien errors
+            var api = GlobalData.Settings.General.Exchange!.GetApiInstance();
 
-            //GlobalData.AddTextToLogTab("Debug: GetCandles() eventjes uit vanwege debug!");
-            await ExchangeHelper.GetCandlesAsync();
+            await api.Symbol.GetSymbolsAsync();
+
+            if (ExchangeBase.KLineTicker != null)
+            await ExchangeBase.KLineTicker.CheckTickers(); // herstarten van ticker indien errors
+            if (ExchangeBase.PriceTicker != null)
+                await ExchangeBase.PriceTicker.CheckTickers(); // herstarten van ticker indien errors
+            if (ExchangeBase.UserTicker != null)
+                await ExchangeBase.UserTicker.CheckTickers(); // herstarten van ticker indien errors
+
+            await api.Candle.GetCandlesAsync();
         });
         //_ = ExchangeHelper.KLineTicker.CheckKlineTickers(); // herstarten van ticker indien errors
         //_ = ExchangeHelper.FetchCandlesAsync(); // niet wachten tot deze klaar is

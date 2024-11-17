@@ -51,7 +51,9 @@ partial class CryptoVisualisation
         labelMaxTime = new Label();
         ButtonGoRight = new Button();
         ButtonGoLeft = new Button();
+        EditTransparant = new CheckBox();
         plotView = new OxyPlot.WindowsForms.PlotView();
+        EditShowFibZigZag = new CheckBox();
         flowLayoutPanel1.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)EditDeviation).BeginInit();
         panel1.SuspendLayout();
@@ -73,10 +75,12 @@ partial class CryptoVisualisation
         flowLayoutPanel1.Controls.Add(EditZoomLiqBoxes);
         flowLayoutPanel1.Controls.Add(EditShowZigZag);
         flowLayoutPanel1.Controls.Add(EditShowFib);
+        flowLayoutPanel1.Controls.Add(EditShowFibZigZag);
         flowLayoutPanel1.Controls.Add(ButtonCalculate);
         flowLayoutPanel1.Controls.Add(ButtonZoomLast);
         flowLayoutPanel1.Controls.Add(panel1);
         flowLayoutPanel1.Controls.Add(panel2);
+        flowLayoutPanel1.Controls.Add(EditTransparant);
         flowLayoutPanel1.Dock = DockStyle.Left;
         flowLayoutPanel1.FlowDirection = FlowDirection.TopDown;
         flowLayoutPanel1.Location = new Point(0, 0);
@@ -177,9 +181,9 @@ partial class CryptoVisualisation
         EditShowZigZag.AutoSize = true;
         EditShowZigZag.Location = new Point(6, 232);
         EditShowZigZag.Name = "EditShowZigZag";
-        EditShowZigZag.Size = new Size(95, 19);
+        EditShowZigZag.Size = new Size(114, 19);
         EditShowZigZag.TabIndex = 7;
-        EditShowZigZag.Text = "Show ZigZag";
+        EditShowZigZag.Text = "Show liq. ZigZag";
         EditShowZigZag.UseVisualStyleBackColor = true;
         // 
         // EditShowFib
@@ -187,14 +191,14 @@ partial class CryptoVisualisation
         EditShowFib.AutoSize = true;
         EditShowFib.Location = new Point(6, 257);
         EditShowFib.Name = "EditShowFib";
-        EditShowFib.Size = new Size(72, 19);
+        EditShowFib.Size = new Size(96, 19);
         EditShowFib.TabIndex = 20;
-        EditShowFib.Text = "Show fib";
+        EditShowFib.Text = "Show fib retr.";
         EditShowFib.UseVisualStyleBackColor = true;
         // 
         // ButtonCalculate
         // 
-        ButtonCalculate.Location = new Point(6, 282);
+        ButtonCalculate.Location = new Point(6, 307);
         ButtonCalculate.Name = "ButtonCalculate";
         ButtonCalculate.Size = new Size(75, 23);
         ButtonCalculate.TabIndex = 8;
@@ -203,7 +207,7 @@ partial class CryptoVisualisation
         // 
         // ButtonZoomLast
         // 
-        ButtonZoomLast.Location = new Point(6, 311);
+        ButtonZoomLast.Location = new Point(6, 336);
         ButtonZoomLast.Name = "ButtonZoomLast";
         ButtonZoomLast.Size = new Size(75, 23);
         ButtonZoomLast.TabIndex = 14;
@@ -215,7 +219,7 @@ partial class CryptoVisualisation
         panel1.Controls.Add(labelInterval);
         panel1.Controls.Add(ButtonPlus);
         panel1.Controls.Add(ButtonMinus);
-        panel1.Location = new Point(6, 340);
+        panel1.Location = new Point(6, 365);
         panel1.Name = "panel1";
         panel1.Size = new Size(95, 66);
         panel1.TabIndex = 21;
@@ -254,7 +258,7 @@ partial class CryptoVisualisation
         panel2.Controls.Add(labelMaxTime);
         panel2.Controls.Add(ButtonGoRight);
         panel2.Controls.Add(ButtonGoLeft);
-        panel2.Location = new Point(6, 412);
+        panel2.Location = new Point(6, 437);
         panel2.Name = "panel2";
         panel2.Size = new Size(95, 65);
         panel2.TabIndex = 22;
@@ -288,6 +292,16 @@ partial class CryptoVisualisation
         ButtonGoLeft.UseVisualStyleBackColor = true;
         ButtonGoLeft.Click += ButtonGoLeftClick;
         // 
+        // EditTransparant
+        // 
+        EditTransparant.AutoSize = true;
+        EditTransparant.Location = new Point(6, 508);
+        EditTransparant.Name = "EditTransparant";
+        EditTransparant.Size = new Size(87, 19);
+        EditTransparant.TabIndex = 23;
+        EditTransparant.Text = "Transparant";
+        EditTransparant.UseVisualStyleBackColor = true;
+        // 
         // plotView
         // 
         plotView.BackColor = Color.Black;
@@ -301,6 +315,16 @@ partial class CryptoVisualisation
         plotView.ZoomHorizontalCursor = Cursors.SizeWE;
         plotView.ZoomRectangleCursor = Cursors.SizeNWSE;
         plotView.ZoomVerticalCursor = Cursors.SizeNS;
+        // 
+        // EditShowFibZigZag
+        // 
+        EditShowFibZigZag.AutoSize = true;
+        EditShowFibZigZag.Location = new Point(6, 282);
+        EditShowFibZigZag.Name = "EditShowFibZigZag";
+        EditShowFibZigZag.Size = new Size(112, 19);
+        EditShowFibZigZag.TabIndex = 24;
+        EditShowFibZigZag.Text = "Show fib ZigZag";
+        EditShowFibZigZag.UseVisualStyleBackColor = true;
         // 
         // CryptoVisualisation
         // 
@@ -349,4 +373,6 @@ partial class CryptoVisualisation
     private Button ButtonGoLeft;
     private Label labelInterval;
     private Label labelMaxTime;
+    private CheckBox EditTransparant;
+    private CheckBox EditShowFibZigZag;
 }

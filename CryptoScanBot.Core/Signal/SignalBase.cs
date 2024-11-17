@@ -21,7 +21,7 @@ public class SignalCreateBase
     protected CryptoSymbolInterval SymbolInterval;
     protected CryptoInterval Interval;
     protected CryptoQuoteData QuoteData;
-    protected SortedList<long, CryptoCandle> Candles;
+    protected CryptoCandleList Candles;
 
     public CryptoTradeSide SignalSide;
     public CryptoSignalStrategy SignalStrategy;

@@ -130,7 +130,7 @@ public class Candles
 
 
             CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
-            SortedList<long, CryptoCandle> candles = symbolPeriod.CandleList;
+            CryptoCandleList candles = symbolPeriod.CandleList;
             string s = symbol.Exchange.Name + " " + symbol.Name + " " + interval.Name + " fetch from " + CandleTools.GetUnixDate(startFetchDate).ToLocalTime() + " .. " + CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized).ToLocalTime();
             GlobalData.AddTextToLogTab(s + " fetched: " + result.Data.Count() + " total: " + candles.Count.ToString());
             return result.Data.Count();
@@ -206,7 +206,7 @@ public class Candles
                     {
                         // Naar het lagere tijd interval om de eerste en laatste candle te achterhalen
                         CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(intervalCalc.ConstructFrom!.IntervalPeriod);
-                        SortedList<long, CryptoCandle> candlesLowerInterval = symbolPeriod.CandleList;
+                        CryptoCandleList candlesLowerInterval = symbolPeriod.CandleList;
                         if (candlesLowerInterval.Values.Any())
                         {
                             long unixFirst = candlesLowerInterval.Values.First().OpenTime;
@@ -296,7 +296,7 @@ public class Candles
 
                     // Bij het opstarten is deze (vanuit de LoadData) reeds uitgevoerd
                     //if (GlobalData.ApplicationStatus != CryptoApplicationStatus.Initializing)
-                    //    await Task.Run(GetSymbols.ExecuteAsync);
+                    //    await Task.Run(GetSymbols.GetSymbolsAsync);
 
                     // TODO: Niet alle symbols zijn actief
                     GlobalData.AddTextToLogTab($"Aantal symbols={exchange.SymbolListName.Values.Count}");

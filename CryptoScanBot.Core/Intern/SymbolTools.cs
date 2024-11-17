@@ -12,7 +12,7 @@ public class SymbolTools
     protected CryptoSymbolInterval SymbolInterval;
     protected CryptoInterval Interval;
     protected CryptoQuoteData QuoteData;
-    protected SortedList<long, CryptoCandle> Candles;
+    protected CryptoCandleList Candles;
 
 
     public SymbolTools(CryptoSymbol symbol, CryptoInterval interval)

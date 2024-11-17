@@ -36,7 +36,7 @@ public class CandleIndicatorData: CryptoData
     static public List<CryptoCandle>? CalculateCandles(CryptoSymbol symbol, CryptoInterval interval, long firstCandleOpenTime, out string errorstr)
     {
         CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
-        SortedList<long, CryptoCandle> intervalCandles = symbolPeriod.CandleList;
+        CryptoCandleList intervalCandles = symbolPeriod.CandleList;
         if (intervalCandles.Count < maxCandles)
         {
             errorstr = $"{symbol.Name} Not enough candles available for interval {interval.Name} count={intervalCandles.Count} requested={maxCandles}";

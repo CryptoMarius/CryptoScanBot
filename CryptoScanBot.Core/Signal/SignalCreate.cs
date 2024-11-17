@@ -204,7 +204,7 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
         // Op een iets hoger interval gaan we x candles naar achteren en meten de echte beweging
         // (de 24% change is wat effectief overblijft, maar dat is duidelijk niet de echte beweging)
         CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(intervalPeriod);
-        SortedList<long, CryptoCandle> candles = symbolInterval.CandleList;
+        CryptoCandleList candles = symbolInterval.CandleList;
 
 
         double min = double.MaxValue;

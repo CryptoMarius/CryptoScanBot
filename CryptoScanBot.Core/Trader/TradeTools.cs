@@ -789,11 +789,13 @@ public class TradeTools
 
             // Daarna de "nieuwe" orders van deze coin ophalen en die toegevoegen aan dezelfde orderlist
             if (position.Account.AccountType == CryptoAccountType.RealTrading) // && loadFromExchange
-                count += await ExchangeHelper.GetOrdersAsync(database, position);
+            {
+                count += await GlobalData.Settings.General.Exchange!.GetApiInstance().Order.GetOrdersAsync(database, position);
+            }
 
             // Daarna de "nieuwe" orders van deze coin ophalen en die toegevoegen aan dezelfde orderlist
             if (position.Account.AccountType == CryptoAccountType.RealTrading) // && loadFromExchange
-                count += await ExchangeHelper.GetTradesAsync(database, position);
+                count += await GlobalData.Settings.General.Exchange!.GetApiInstance().Trade.GetTradesAsync(database, position);
         }
         finally
         {
@@ -818,7 +820,7 @@ public class TradeTools
         database.Connection.Update<CryptoPositionStep>(step);
 
         // Annuleer de order
-        var exchangeApi = ExchangeHelper.GetApiInstance();
+        var exchangeApi = GlobalData.Settings.General.Exchange!.GetApiInstance();
         var result = await exchangeApi.Cancel(position, part, step);
         if (result.succes)
         {
@@ -914,7 +916,7 @@ public class TradeTools
         CryptoOrderSide takeProfitOrderSide = position.GetTakeProfitOrderSide();
 
         (bool result, TradeParams? tradeParams) result;
-        var exchangeApi = ExchangeHelper.GetApiInstance();
+        var exchangeApi = GlobalData.Settings.General.Exchange!.GetApiInstance();
         result = await exchangeApi.PlaceOrder(database, position, part, currentTime,
                 CryptoOrderType.Limit, takeProfitOrderSide, takeProfitQuantity, takeProfitPrice, tpStop, tpLimit);
         if (result.tradeParams is not null)

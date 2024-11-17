@@ -285,6 +285,8 @@ partial class FrmSettings
         EditDebugSignalCreate = new CheckBox();
         EditDebugKLineReceive = new CheckBox();
         toolTip1 = new ToolTip(components);
+        label42 = new Label();
+        EditDoubleClickAction = new ComboBox();
         panelButtons.SuspendLayout();
         panelFill.SuspendLayout();
         tabControlMain.SuspendLayout();
@@ -523,6 +525,8 @@ partial class FrmSettings
         // 
         groupBox1.AutoSize = true;
         groupBox1.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+        groupBox1.Controls.Add(label42);
+        groupBox1.Controls.Add(EditDoubleClickAction);
         groupBox1.Controls.Add(EditHideSelectedRow);
         groupBox1.Controls.Add(groupBox7);
         groupBox1.Controls.Add(label15);
@@ -551,7 +555,7 @@ partial class FrmSettings
         groupBox1.Margin = new Padding(10);
         groupBox1.Name = "groupBox1";
         groupBox1.Padding = new Padding(10);
-        groupBox1.Size = new Size(631, 438);
+        groupBox1.Size = new Size(631, 474);
         groupBox1.TabIndex = 249;
         groupBox1.TabStop = false;
         groupBox1.Text = "Algemeen";
@@ -559,7 +563,7 @@ partial class FrmSettings
         // EditHideSelectedRow
         // 
         EditHideSelectedRow.AutoSize = true;
-        EditHideSelectedRow.Location = new Point(12, 320);
+        EditHideSelectedRow.Location = new Point(9, 356);
         EditHideSelectedRow.Margin = new Padding(4, 3, 4, 3);
         EditHideSelectedRow.Name = "EditHideSelectedRow";
         EditHideSelectedRow.Size = new Size(145, 19);
@@ -746,7 +750,7 @@ partial class FrmSettings
         // EditHideSymbolsOnTheLeft
         // 
         EditHideSymbolsOnTheLeft.AutoSize = true;
-        EditHideSymbolsOnTheLeft.Location = new Point(12, 295);
+        EditHideSymbolsOnTheLeft.Location = new Point(9, 331);
         EditHideSymbolsOnTheLeft.Margin = new Padding(4, 3, 4, 3);
         EditHideSymbolsOnTheLeft.Name = "EditHideSymbolsOnTheLeft";
         EditHideSymbolsOnTheLeft.Size = new Size(182, 19);
@@ -777,7 +781,7 @@ partial class FrmSettings
         // EditShowInvalidSignals
         // 
         EditShowInvalidSignals.AutoSize = true;
-        EditShowInvalidSignals.Location = new Point(12, 268);
+        EditShowInvalidSignals.Location = new Point(9, 304);
         EditShowInvalidSignals.Margin = new Padding(4, 3, 4, 3);
         EditShowInvalidSignals.Name = "EditShowInvalidSignals";
         EditShowInvalidSignals.Size = new Size(175, 19);
@@ -808,7 +812,7 @@ partial class FrmSettings
         // label16
         // 
         label16.AutoSize = true;
-        label16.Location = new Point(9, 235);
+        label16.Location = new Point(6, 271);
         label16.Margin = new Padding(4, 0, 4, 0);
         label16.Name = "label16";
         label16.Size = new Size(263, 15);
@@ -817,7 +821,7 @@ partial class FrmSettings
         // 
         // EditGetCandleInterval
         // 
-        EditGetCandleInterval.Location = new Point(289, 232);
+        EditGetCandleInterval.Location = new Point(286, 268);
         EditGetCandleInterval.Margin = new Padding(4, 3, 4, 3);
         EditGetCandleInterval.Maximum = new decimal(new int[] { 300, 0, 0, 0 });
         EditGetCandleInterval.Minimum = new decimal(new int[] { 30, 0, 0, 0 });
@@ -829,7 +833,7 @@ partial class FrmSettings
         // label6
         // 
         label6.AutoSize = true;
-        label6.Location = new Point(9, 210);
+        label6.Location = new Point(6, 246);
         label6.Margin = new Padding(4, 0, 4, 0);
         label6.Name = "label6";
         label6.Size = new Size(186, 15);
@@ -838,7 +842,7 @@ partial class FrmSettings
         // 
         // EditGlobalDataRemoveSignalAfterxCandles
         // 
-        EditGlobalDataRemoveSignalAfterxCandles.Location = new Point(289, 206);
+        EditGlobalDataRemoveSignalAfterxCandles.Location = new Point(286, 242);
         EditGlobalDataRemoveSignalAfterxCandles.Margin = new Padding(4, 3, 4, 3);
         EditGlobalDataRemoveSignalAfterxCandles.Maximum = new decimal(new int[] { 60, 0, 0, 0 });
         EditGlobalDataRemoveSignalAfterxCandles.Minimum = new decimal(new int[] { 2, 0, 0, 0 });
@@ -851,7 +855,7 @@ partial class FrmSettings
         // EditBlackTheming
         // 
         EditBlackTheming.AutoSize = true;
-        EditBlackTheming.Location = new Point(9, 390);
+        EditBlackTheming.Location = new Point(6, 426);
         EditBlackTheming.Margin = new Padding(4, 3, 4, 3);
         EditBlackTheming.Name = "EditBlackTheming";
         EditBlackTheming.Size = new Size(84, 19);
@@ -861,7 +865,7 @@ partial class FrmSettings
         // 
         // buttonFontDialog
         // 
-        buttonFontDialog.Location = new Point(7, 347);
+        buttonFontDialog.Location = new Point(4, 383);
         buttonFontDialog.Margin = new Padding(4, 3, 4, 3);
         buttonFontDialog.Name = "buttonFontDialog";
         buttonFontDialog.Size = new Size(139, 27);
@@ -872,7 +876,7 @@ partial class FrmSettings
         // label18
         // 
         label18.AutoSize = true;
-        label18.Location = new Point(9, 183);
+        label18.Location = new Point(6, 219);
         label18.Margin = new Padding(4, 0, 4, 0);
         label18.Name = "label18";
         label18.Size = new Size(257, 15);
@@ -881,7 +885,7 @@ partial class FrmSettings
         // 
         // EditSoundHeartBeatMinutes
         // 
-        EditSoundHeartBeatMinutes.Location = new Point(289, 180);
+        EditSoundHeartBeatMinutes.Location = new Point(286, 216);
         EditSoundHeartBeatMinutes.Margin = new Padding(4, 3, 4, 3);
         EditSoundHeartBeatMinutes.Maximum = new decimal(new int[] { 60, 0, 0, 0 });
         EditSoundHeartBeatMinutes.Name = "EditSoundHeartBeatMinutes";
@@ -903,7 +907,7 @@ partial class FrmSettings
         // 
         EditTradingApp.DropDownStyle = ComboBoxStyle.DropDownList;
         EditTradingApp.FormattingEnabled = true;
-        EditTradingApp.Items.AddRange(new object[] { "Altrady", "Hypertrader", "TradingView", "Via de exchange" });
+        EditTradingApp.Items.AddRange(new object[] { "Altrady", "Hypertrader", "TradingView", "Via de exchange", "Charting form" });
         EditTradingApp.Location = new Point(153, 118);
         EditTradingApp.Margin = new Padding(4, 3, 4, 3);
         EditTradingApp.Name = "EditTradingApp";
@@ -3303,6 +3307,27 @@ partial class FrmSettings
         EditDebugKLineReceive.Text = "Debug KLineReceive (does kline ticker work)";
         EditDebugKLineReceive.UseVisualStyleBackColor = true;
         // 
+        // label42
+        // 
+        label42.AutoSize = true;
+        label42.Location = new Point(5, 181);
+        label42.Margin = new Padding(4, 0, 4, 0);
+        label42.Name = "label42";
+        label42.Size = new Size(91, 15);
+        label42.TabIndex = 297;
+        label42.Text = "Dubbelklik actie";
+        // 
+        // EditDoubleClickAction
+        // 
+        EditDoubleClickAction.DropDownStyle = ComboBoxStyle.DropDownList;
+        EditDoubleClickAction.FormattingEnabled = true;
+        EditDoubleClickAction.Items.AddRange(new object[] { "Toon trading app", "Toon chart formulier" });
+        EditDoubleClickAction.Location = new Point(153, 176);
+        EditDoubleClickAction.Margin = new Padding(4, 3, 4, 3);
+        EditDoubleClickAction.Name = "EditDoubleClickAction";
+        EditDoubleClickAction.Size = new Size(190, 23);
+        EditDoubleClickAction.TabIndex = 296;
+        // 
         // FrmSettings
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
@@ -3735,4 +3760,6 @@ partial class FrmSettings
     private NumericUpDown EditMaximumUnZoomedPercentage;
     private Label label40;
     private NumericUpDown EditMinimumUnZoomedPercentage;
+    private Label label42;
+    private ComboBox EditDoubleClickAction;
 }

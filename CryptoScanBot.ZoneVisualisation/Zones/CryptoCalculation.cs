@@ -6,12 +6,12 @@ using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Trend;
-using CryptoScanBot.ZoneVisualisation.Zones;
+using CryptoScanBot.Core.Zones;
 
 using Dapper;
 using Dapper.Contrib.Extensions;
 
-namespace CryptoScanBot.Core.Zones;
+namespace CryptoScanBot.ZoneVisualisation.Zones;
 
 
 public class CryptoCalculation
@@ -43,7 +43,7 @@ public class CryptoCalculation
         return false;
     }
 
- 
+
     private static bool ZoomedPercentageBelowMinimum(ZigZagResult zigZag, CryptoSymbol symbol, CryptoInterval interval)
     {
         var value = GlobalData.Settings.Signal.Zones.MinimumZoomedPercentage;
@@ -136,7 +136,7 @@ public class CryptoCalculation
 
         // Is the (unzoomed) percentage between the configured limits? 
         // Or is the percentage alread below the zoom-limit? (saves time)
-        if (UnzoomedPercentageBelowMinimum(zigZag, symbol, interval) 
+        if (UnzoomedPercentageBelowMinimum(zigZag, symbol, interval)
             || UnzoomedPercentageAboveMaximum(zigZag, symbol, interval)
             || ZoomedPercentageBelowMinimum(zigZag, symbol, interval))
             return; // (mark the point as not dominant + exit)
@@ -219,7 +219,7 @@ public class CryptoCalculation
             return; // (mark the point as not dominant + exit)
     }
 
-    public static async Task CalculateLiqBoxesAsync(AddTextEvent? sender, CryptoZoneData data, CryptoZoneSession session, StringBuilder log)
+    public static async Task CalculateLiqBoxesAsync(AddTextEvent? sender, CryptoZoneData data, bool zoomLiqBoxes, StringBuilder log)
     {
         //long startTime = Stopwatch.GetTimestamp();
         //ScannerLog.Logger.Info("CalculateLiqBoxesAsync.Start");
@@ -232,17 +232,17 @@ public class CryptoCalculation
             {
                 //if (zigZag.Candle.DateLocal >= new DateTime(2024, 10, 19, 11, 0, 0, DateTimeKind.Local))
                 //    previous = previous;
-                sender?.Invoke($"Calculating Bybit.Spot.{session.SymbolQuote} {zigZag.Candle.Date}");
+                sender?.Invoke($"Calculating Bybit.Spot.{data.Symbol.Name} {zigZag.Candle.Date}");
 
                 // Check: a dominant Low leading to a new Higher High
                 if (zigZag.PointType == 'H' && previous.PointType == 'L' && previous2.PointType == 'H' && previous2.Value < zigZag.Value)
                     await MakeDominantAndZoomInAsync(data.Symbol, data.SymbolInterval.Interval, previous,
-                        Math.Max(previous.Candle.Open, previous.Candle.Close), previous.Candle.Low, session.ZoomLiqBoxes, log);
+                        Math.Max(previous.Candle.Open, previous.Candle.Close), previous.Candle.Low, zoomLiqBoxes, log);
 
                 // Check: a dominant High leading to a new Lower Low
                 if (zigZag.PointType == 'L' && previous.PointType == 'H' && previous2.PointType == 'L' && previous2.Value > zigZag.Value)
                     await MakeDominantAndZoomInAsync(data.Symbol, data.SymbolInterval.Interval, previous,
-                        previous.Candle.High, Math.Min(previous.Candle.Open, previous.Candle.Close), session.ZoomLiqBoxes, log);
+                        previous.Candle.High, Math.Min(previous.Candle.Open, previous.Candle.Close), zoomLiqBoxes, log);
             }
             previous2 = previous;
             previous = zigZag;

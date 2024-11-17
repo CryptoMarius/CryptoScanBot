@@ -61,7 +61,7 @@ public partial class Form1 : Form
         BarometerTools.InitBarometerSymbols();
         TradingConfig.InitWhiteAndBlackListSettings(); // after loading symbols
 
-        ExchangeHelper.ExchangeDefaults();
+        GlobalData.Settings.General.Exchange!.GetApiInstance().ExchangeDefaults();
         ThreadLoadData.IndexQuoteDataSymbols(GlobalData.Settings.General.Exchange);
 
 
@@ -106,7 +106,7 @@ public partial class Form1 : Form
             }
             else
                 throw new Exception($"file not found {filename}");
-            ExchangeHelper.ExchangeDefaults();
+            GlobalData.Settings.General.Exchange!.GetApiInstance().ExchangeDefaults();
         }
         catch (Exception error)
         {

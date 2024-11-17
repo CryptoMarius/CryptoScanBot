@@ -221,7 +221,7 @@ public partial class DashBoardInformation : UserControl
         if (quoteData != null && exchange.SymbolListName.TryGetValue(Constants.SymbolNameBarometerPrice + quoteData.Name, out CryptoSymbol? symbol))
         {
             CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
-            SortedList<long, CryptoCandle> candleList = symbolPeriod.CandleList;
+            CryptoCandleList candleList = symbolPeriod.CandleList;
 
             // determine range of data
             long loX = long.MaxValue;
@@ -609,19 +609,19 @@ public partial class DashBoardInformation : UserControl
                 {
                     string text, symbol;
                     string e = GlobalData.Settings.General.ExchangeName;
-                    if (ExchangeHelper.PriceTicker != null)
+                    if (ExchangeBase.PriceTicker != null)
                     {
                         // The heavy cpu strain of the Kucoin priceticker is killing the scanner, so its disabled
-                        if (!ExchangeHelper.PriceTicker.Enabled)
+                        if (!ExchangeBase.PriceTicker.Enabled)
                             text = "disabled";
                         else
-                            text = ExchangeHelper.PriceTicker.Count().ToString("N0");
+                            text = ExchangeBase.PriceTicker.Count().ToString("N0");
                         symbol = GlobalData.Settings.ShowSymbolInformation[0];
                         ShowSymbolPrice(SymbolHistList[0], InformationRowList[0], exchange, quoteData, symbol, "Price ticker count", text);
                     }
-                    if (ExchangeHelper.KLineTicker != null)
+                    if (ExchangeBase.KLineTicker != null)
                     {
-                        text = ExchangeHelper.KLineTicker.Count().ToString("N0");
+                        text = ExchangeBase.KLineTicker.Count().ToString("N0");
                         symbol = GlobalData.Settings.ShowSymbolInformation[1];
                         ShowSymbolPrice(SymbolHistList[1], InformationRowList[1], exchange, quoteData, symbol, "Kline ticker count", text);
                     }

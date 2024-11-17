@@ -19,11 +19,11 @@ public class BackTest
     
     private readonly CryptoInterval Interval;
     private readonly CryptoSymbolInterval SymbolInterval;
-    private readonly SortedList<long, CryptoCandle> Candles;
+    private readonly CryptoCandleList Candles;
 
     private readonly CryptoInterval Interval1m;
     private readonly CryptoSymbolInterval SymbolInterval1m;
-    private readonly SortedList<long, CryptoCandle> Candles1m;
+    private readonly CryptoCandleList Candles1m;
 
     public StringBuilder Log = new();
     public string HeaderText;
@@ -262,9 +262,9 @@ public class BackTest
     ///// <summary>
     ///// Candles uit de database halen voor de gevraagde interval X indien deze niet aanwezig zijn
     ///// </summary>
-    //private SortedList<long, CryptoCandle> LoadSymbolCandles(CryptoInterval interval, DateTime dateCandleStart, DateTime dateCandleEinde)
+    //private CryptoCandleList LoadSymbolCandles(CryptoInterval interval, DateTime dateCandleStart, DateTime dateCandleEinde)
     //{
-    //    SortedList<long, CryptoCandle> candles = Symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList;
+    //    CryptoCandleList candles = Symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList;
     //    if (candles.Count == 0)
     //    {
     //        using (SqlConnection database = new SqlConnection(GlobalData.ConnectionString))
@@ -603,7 +603,7 @@ public class BackTest
 
         //    // Bewaar de candles (voor debug en test)
         //    {
-        //        SortedList<long, CryptoCandle> candles = Symbol.GetSymbolInterval(Interval.IntervalPeriod).CandleList;
+        //        CryptoCandleList candles = Symbol.GetSymbolInterval(Interval.IntervalPeriod).CandleList;
         //        string filename = baseFolder + Symbol.Name + ".json";
         //        string text = JsonConvert.SerializeObject(candles.Values, Formatting.Indented);
         //        System.IO.File.WriteAllText(filename, text);

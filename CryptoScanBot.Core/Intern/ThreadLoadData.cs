@@ -43,7 +43,7 @@ public class ThreadLoadData
     //                        if (interval.ConstructFrom != null)
     //                        {
     //                            // Voeg een candle toe aan een hogere tijd interval (eventueel uit db laden)
-    //                            SortedList<long, CryptoCandle> candlesInterval = symbolPeriod.CandleList;
+    //                            CryptoCandleList candlesInterval = symbolPeriod.CandleList;
     //                            if (candlesInterval.Values.Count > 0)
     //                            {
     //                                // Periode start
@@ -207,16 +207,12 @@ public class ThreadLoadData
 
             if (GlobalData.ExchangeListId.TryGetValue(GlobalData.Settings.General.ExchangeId, out Model.CryptoExchange? exchange))
             {
-
-
-
-
                 //************************************************************************************
                 // Alle symbols van de exchange halen en mergen met de ingelezen symbols.
                 // Via een event worden de muntparen in de userinterface gezet (dat duurt even)
                 //************************************************************************************
                 if (!exchange.LastTimeFetched.HasValue || exchange.LastTimeFetched?.AddHours(1) < DateTime.UtcNow)
-                    await ExchangeHelper.GetSymbolsAsync();
+                    await GlobalData.Settings.General.Exchange!.GetApiInstance().Symbol.GetSymbolsAsync();
                 IndexQuoteDataSymbols(exchange);
 
                 // Na het inlezen van de symbols de lijsten alsnog goed zetten
@@ -348,17 +344,18 @@ public class ThreadLoadData
                 // (Dit moet overlappen met "achterstand bijwerken" want anders ontstaan er gaten)
                 // BUG/Probleem! na nieuwe munt of instellingen wordt dit niet opnieuw gedaan (herstart nodig)
                 //************************************************************************************
-                await ExchangeHelper.KLineTicker!.StartAsync();
+                await ExchangeBase.KLineTicker!.StartAsync();
 
                 //************************************************************************************
                 // Om het volume per symbol en laatste prijs te achterhalen
                 //************************************************************************************
-                await ExchangeHelper.PriceTicker!.StartAsync();
+                await ExchangeBase.PriceTicker!.StartAsync();
 
                 //************************************************************************************
                 // De (ontbrekende) candles downloaden (en de achterstand inhalen, blocking!)
                 //************************************************************************************
-                await ExchangeHelper.GetCandlesAsync();
+                var api = GlobalData.Settings.General.Exchange!.GetApiInstance();
+                await api.Candle.GetCandlesAsync();
 
                 //Ze zijn er wel, deze is eigenlijk overbodig geworden (zit alleen zoveel werk in!)
                 //CalculateMissingCandles();
@@ -391,14 +388,14 @@ public class ThreadLoadData
                     //************************************************************************************
                     // Alle data van de exchange monitoren
                     //************************************************************************************
-                    _ = ExchangeHelper.UserTicker!.StartAsync();
+                    _ = ExchangeBase.UserTicker!.StartAsync();
 
 
                     //************************************************************************************              
                     // De assets van de exchange halen (overlappend met exchange monitoring om niets te missen)
                     // Via een event worden de assets in de userinterface gezet (dat duurt even)
                     //************************************************************************************
-                    await ExchangeHelper.GetAssetsAsync(GlobalData.ActiveAccount!);
+                    await api.Asset.GetAssetsAsync(GlobalData.ActiveAccount!);
                 }
 
                 // Toon de ingelezen posities

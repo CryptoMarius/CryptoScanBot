@@ -42,7 +42,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                 symbolName += "," + symbol.Base + "-" + symbol.Quote;
         }
 
-        //SortedList<long, CryptoCandle> klineListTemp = [];
+        //CryptoCandleList klineListTemp = [];
 
         //if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1m, out CryptoInterval? interval))
         //    throw new Exception("Geen intervallen?");
@@ -98,7 +98,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         //            Monitor.Exit(Symbol.CandleList);
         //        }
         //    });
-        //}, ExchangeHelper.CancellationToken).ConfigureAwait(false);
+        //}, ExchangeBase.CancellationToken).ConfigureAwait(false);
 
 
         // Implementatie kline timer (fix)

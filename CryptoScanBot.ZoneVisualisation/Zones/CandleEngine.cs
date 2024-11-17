@@ -29,7 +29,7 @@ public class CandleEngine
             if (File.Exists(filename))
             {
                 string text = File.ReadAllText(filename);
-                var list = JsonSerializer.Deserialize<CryptoCandleList>(text, JsonSerializerIndented); //SortedList<long, CryptoCandle>
+                var list = JsonSerializer.Deserialize<CryptoCandleList>(text, JsonSerializerIndented); //CryptoCandleList
                 if (list != null)
                 {
                     foreach (var c in list.Values)

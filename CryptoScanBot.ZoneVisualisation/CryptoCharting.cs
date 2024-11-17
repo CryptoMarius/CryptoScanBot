@@ -3,7 +3,7 @@ using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Trend;
 using CryptoScanBot.Core.Zones;
-
+using CryptoScanBot.ZoneVisualisation.Zones;
 
 using OxyPlot;
 using OxyPlot.Annotations;
@@ -17,6 +17,7 @@ namespace CryptoScanBot.ZoneVisualisation;
 public class CryptoCharting
 {
     private const int OxyFontSize = 14;
+    static private string? _priceFormat;
     static private CryptoInterval? _interval;
 
     public static List<(decimal value, decimal percent, OxyColor color)> RetracementX(CryptoTradeSide side, decimal low, decimal high)
@@ -43,7 +44,7 @@ public class CryptoCharting
         return retracements;
     }
 
-    public static void TrySomethingWithFib(PlotModel chart, CryptoZoneData data)
+    public static void DrawFibRetracement(PlotModel chart, CryptoZoneData data)
     {
         var indicator = data.IndicatorFib;
         //// Mhh, fib levels proberen te zetten
@@ -128,14 +129,14 @@ public class CryptoCharting
     }
 
 
-    public static void DrawZigZagSerie(PlotModel chart, CryptoZoneData data, CryptoZoneSession session)
+    public static void DrawZigZag(PlotModel chart, CryptoZoneSession session, List<ZigZagResult> zigZagList, string caption)
     {
-        var seriesZigZag = new LineSeries { Title = "ZigZag", Color = OxyColors.White };
+        var seriesZigZag = new LineSeries { Title = caption, Color = OxyColors.White };
         var seriesHigh = new ScatterSeries { Title = "Markers high", MarkerSize = 4, MarkerFill = OxyColors.Red, MarkerType = MarkerType.Circle, };
         var seriesLow = new ScatterSeries { Title = "Markers low", MarkerSize = 4, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Circle, };
         var seriesDummyHigh = new ScatterSeries { Title = "Markers dummy", MarkerSize = 4, MarkerFill = OxyColors.Red, MarkerType = MarkerType.Square, };
         var seriesDummyLow = new ScatterSeries { Title = "Markers dummy", MarkerSize = 4, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Square, };
-        foreach (var zigzag in data.Indicator.ZigZagList)
+        foreach (var zigzag in zigZagList)
         {
             if (zigzag.Candle!.OpenTime >= session.MinUnix && zigzag.Candle!.OpenTime <= session.MaxUnix)
             {
@@ -239,9 +240,16 @@ public class CryptoCharting
         return s;
     }
 
+    private static string LabelFormatterY(double x)
+    {
+        string s = x.ToString(_priceFormat);
+        return s;
+    }
+
     public static PlotModel CreateChart(CryptoZoneData data, out LineAnnotation horizontalLine, out LineAnnotation verticalLine)
     {
         _interval = data.Interval;
+        _priceFormat = data.Symbol.PriceDisplayFormat;
 
         PlotModel chart = new()
         {
@@ -281,6 +289,7 @@ public class CryptoCharting
 
         chart.Axes.Add(new LinearAxis
         {
+            LabelFormatter = LabelFormatterY,
             FontSize = OxyFontSize,
             //Font = chart.TitleFont,
             TextColor = OxyColors.White,

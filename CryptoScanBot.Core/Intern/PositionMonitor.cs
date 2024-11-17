@@ -1116,7 +1116,7 @@ public class PositionMonitor : IDisposable
             else
             {
                 // Place the entry order (paper trading, exchange trading or backtest)
-                var exchangeApi = ExchangeHelper.GetApiInstance();
+                var exchangeApi = GlobalData.Settings.General.Exchange!.GetApiInstance();
                 (bool result, TradeParams? tradeParams) result = await exchangeApi.PlaceOrder(Database,
                     position, part, LastCandle1mCloseTimeDate,
                     entryOrderType, entryOrderSide, entryQuantity, price, stop, limit);

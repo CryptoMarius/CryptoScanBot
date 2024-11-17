@@ -49,7 +49,10 @@ public class AssetTools
         if (forceRefresh || tradeAccount.Data.LastRefreshAssets == null || tradeAccount.Data.LastRefreshAssets?.AddMinutes(1) < GlobalData.GetCurrentDateTime(tradeAccount))
         {
             if (tradeAccount.AccountType == CryptoAccountType.RealTrading || tradeAccount.AccountType == CryptoAccountType.Altrady)
-                await ExchangeHelper.GetAssetsAsync(tradeAccount); // from exchange
+            {
+                var api = GlobalData.Settings.General.Exchange!.GetApiInstance();
+                await api.Asset.GetAssetsAsync(tradeAccount); // from exchange
+            }
             else
                 PaperAssets.LoadAssets(tradeAccount); // from db
             tradeAccount.Data.LastRefreshAssets = GlobalData.GetCurrentDateTime(tradeAccount);

@@ -6,6 +6,12 @@ using System.Text.Json.Serialization;
 
 namespace CryptoScanBot.Core.Settings;
 
+public enum CryptoDoubleClickAction
+{
+    ActivateTradingApp,
+    ActivateChartForm,
+}
+
 [Serializable]
 public class SettingsGeneral
 {
@@ -25,6 +31,7 @@ public class SettingsGeneral
     public bool BlackTheming { get; set; } = false;
     public CryptoTradingApp TradingApp { get; set; } = CryptoTradingApp.Altrady;
     public CryptoExternalUrlType TradingAppInternExtern { get; set; } = CryptoExternalUrlType.External;
+    public CryptoDoubleClickAction DoubleClickAction { get; set; } = CryptoDoubleClickAction.ActivateTradingApp;
 
     public bool SoundTradeNotification { get; set; }
     public string SelectedBarometerQuote { get; set; } = "USDT";

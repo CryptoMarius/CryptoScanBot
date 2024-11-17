@@ -32,7 +32,7 @@ internal class Test
 
 
         //string symbolName = "SUSHIUSDTM";
-        //await CryptoScanBot.Kucoin.Futures.Symbols.ExecuteAsync();
-        //await ExchangeTest.Exchange.Bybit.SpotUta.Candles.ExecuteAsync(symbolName);
+        //await CryptoScanBot.Kucoin.Futures.Symbols.GetSymbolsAsync();
+        //await ExchangeTest.Exchange.Bybit.SpotUta.Candles.GetSymbolsAsync(symbolName);
     }
 }

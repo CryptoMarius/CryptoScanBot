@@ -105,7 +105,7 @@ public static class CandleTools
         decimal open, decimal high, decimal low, decimal close, decimal baseVolume, decimal quoteVolume, bool isDuplicated)
     {
         CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
-        SortedList<long, CryptoCandle> candles = symbolPeriod.CandleList;
+        CryptoCandleList candles = symbolPeriod.CandleList;
 
         // Add the candle if it does not exist
         long candleOpenUnix = GetUnixTime(openTime, 60);
@@ -138,7 +138,7 @@ public static class CandleTools
     {
         // The higher timeframe & the starttime of it
         CryptoSymbolInterval targetSymbolInterval = symbol.GetSymbolInterval(targetInterval.IntervalPeriod);
-        SortedList<long, CryptoCandle> candlesTargetTimeFrame = targetSymbolInterval.CandleList;
+        CryptoCandleList candlesTargetTimeFrame = targetSymbolInterval.CandleList;
         var (_, candleTargetStart) = IntervalTools.StartOfIntervalCandle3(candle1mOpenTime, sourceInterval.Duration, targetInterval.Duration);
         long candleTargetClose = candleTargetStart + targetInterval.Duration;
 #if DEBUG
@@ -148,7 +148,7 @@ public static class CandleTools
 
         // The lower timeframe & the starttime of the first of the range
         CryptoSymbolInterval lowerSymbolInterval = symbol.GetSymbolInterval(sourceInterval.IntervalPeriod);
-        SortedList<long, CryptoCandle> candlesSource = lowerSymbolInterval.CandleList;
+        CryptoCandleList candlesSource = lowerSymbolInterval.CandleList;
         int candleCountInSource = targetInterval.Duration / sourceInterval.Duration;
         long candleSourceStart = candleTargetClose - candleCountInSource * sourceInterval.Duration;
         long candleSourceClose = candleSourceStart + sourceInterval.Duration;
@@ -315,7 +315,7 @@ public static class CandleTools
     static public void BulkAddMissingCandles(CryptoSymbol symbol, CryptoInterval interval)
     {
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-        SortedList<long, CryptoCandle> candleList = symbolInterval.CandleList;
+        CryptoCandleList candleList = symbolInterval.CandleList;
 
         if (candleList.Count != 0)
         {
@@ -355,7 +355,7 @@ public static class CandleTools
     {
         //GlobalData.AddTextToLogTab($"{symbol.Name} BulkCalculateCandles {sourceInterval.Name} {targetInterval.Name}");
         CryptoSymbolInterval symbolSourceInterval = symbol.GetSymbolInterval(sourceInterval.IntervalPeriod);
-        SortedList<long, CryptoCandle> candleSourceInterval = symbolSourceInterval.CandleList;
+        CryptoCandleList candleSourceInterval = symbolSourceInterval.CandleList;
         if (candleSourceInterval.Values.Any())
         {
             DateTime firstCandleDateDebug;
@@ -434,7 +434,7 @@ public static class CandleTools
                 try
                 {
                     // Remove old indicator data
-                    SortedList<long, CryptoCandle> candles = symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList;
+                    CryptoCandleList candles = symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList;
                     for (int i = candles.Count - 62; i > 0; i--)
                     {
                         CryptoCandle c = candles.Values[i];

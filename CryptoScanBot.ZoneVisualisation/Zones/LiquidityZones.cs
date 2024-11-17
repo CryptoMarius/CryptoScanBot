@@ -9,20 +9,21 @@ namespace CryptoScanBot.ZoneVisualisation.Zones;
 
 public class LiquidityZones
 {
-    public static async Task CalculateSymbolAsync(AddTextEvent? sender, CryptoZoneSession session, CryptoZoneData data)
+    public static async Task CalculateZonesForSymbolAsync(AddTextEvent? sender, CryptoZoneSession session, CryptoZoneData data)
     {
         //long startTime = Stopwatch.GetTimestamp();
-        //ScannerLog.Logger.Info("CalculateSymbolAsync.Start");
+        //ScannerLog.Logger.Info("CalculateZonesForSymbolAsync.Start");
 
         //Text = $"{data.Exchange.Name}.{session.SymbolBase}{session.SymbolQuote} {session.IntervalName}";
         StringBuilder log = new();
         try
         {
-            // Load candles from the Exchange
+            // Determine dates
             long unixStartUp = CandleTools.GetUnixTime(CandleEngine.StartupTime, 0); // todo Emulator date?
             long fetchFrom = IntervalTools.StartOfIntervalCandle(unixStartUp, data.SymbolInterval.Interval.Duration);
             fetchFrom -= GlobalData.Settings.Signal.Zones.CandleCount * data.SymbolInterval.Interval.Duration;
-            //await CryptoCandles.GetCandleData(data.Symbol, data.SymbolInterval, log, fetchFrom, true, GlobalData.Settings.Signal.Zones.CandleCount);
+
+            // Load candles from disk and exchange
             CandleEngine.LoadDataFromDisk(data.Symbol, data.Interval, data.SymbolInterval.CandleList);
             if (await CandleEngine.FetchFrom(data.Symbol, data.Interval, data.SymbolInterval.CandleList, log, fetchFrom, GlobalData.Settings.Signal.Zones.CandleCount))
                 CandleEngine.LoadedCandlesInMemory[data.Interval.IntervalPeriod] = true;
@@ -30,12 +31,7 @@ public class LiquidityZones
                 return;
 
 
-            // Calculate the Indicator
-            //ScannerLog.Logger.Info($"Creating zigzag indicator");
-            //data.Indicator = new(data.SymbolInterval.CandleList, GlobalData.Settings.Signal.Zones.UseHighLow, session.Deviation)
-            //{
-            //    PostponeFinish = true
-            //};
+            // Calculate indicators
             foreach (var candle in data.SymbolInterval.CandleList.Values)
             {
                 if (candle.OpenTime >= session.MinUnix && candle.OpenTime <= session.MaxUnix)
@@ -47,13 +43,12 @@ public class LiquidityZones
             data.Indicator.FinishJob();
             data.IndicatorFib.FinishJob();
             CryptoTrendIndicator trend = TrendInterval.InterpretZigZagPoints(data.Indicator, null);
-            //ScannerLog.Logger.Info($"Done adding zigzag candles {trend}");
 
 
             // Mark the dominant lows or highs
             if (session.ShowLiqBoxes)
             {
-                await CryptoCalculation.CalculateLiqBoxesAsync(sender, data, session, log);
+                await CryptoCalculation.CalculateLiqBoxesAsync(sender, data, session.ZoomLiqBoxes, log);
                 CryptoCalculation.CalculateBrokenBoxes(data);
             }
 
@@ -76,11 +71,11 @@ public class LiquidityZones
 
         if (sender == null)
             _ = CandleEngine.CleanLoadedCandlesAsync(data.Symbol);
-        //ScannerLog.Logger.Info("CalculateSymbolAsync.Stop " + Stopwatch.GetElapsedTime(startTime).TotalSeconds.ToString());
+        //ScannerLog.Logger.Info("CalculateZonesForSymbolAsync.Stop " + Stopwatch.GetElapsedTime(startTime).TotalSeconds.ToString());
     }
 
 
-    public static async Task CalculateAllSymbolsAsync(AddTextEvent? sender)
+    public static async Task CalculateZonesForAllSymbolsAsync(AddTextEvent? sender)
     {
         if (GlobalData.Settings.General.Exchange != null)
         {
@@ -89,7 +84,6 @@ public class LiquidityZones
                 if (symbol.QuoteData!.FetchCandles && symbol.Status == 1 && !symbol.IsBarometerSymbol())
                 {
                     //if (symbol.Base == "ADA" || symbol.Base == "BTC" || symbol.Base == "DOGE") // test
-                    //{
 
                     if (symbol.QuoteData.MinimalVolume == 0 || symbol.Volume >= symbol.QuoteData.MinimalVolume)
                     {
@@ -100,7 +94,9 @@ public class LiquidityZones
                             IntervalName = "1h", // overridden later
                             ShowLiqBoxes = true,
                             ZoomLiqBoxes = GlobalData.Settings.Signal.Zones.ZoomLowerTimeFrames,
-                            ShowZigZag = false
+                            ShowLiqZigZag = false,
+                            ShowFib = false,
+                            ShowFibZigZag = false,
                         };
 
                         var symbolInterval = symbol.GetSymbolInterval(GlobalData.Settings.Signal.Zones.Interval);
@@ -114,13 +110,14 @@ public class LiquidityZones
                             SymbolInterval = symbolInterval,
                             Indicator = new(symbolInterval.CandleList, GlobalData.Settings.Signal.Zones.UseHighLow, session.Deviation),
                             IndicatorFib = new(symbolInterval.CandleList, true, session.Deviation),
+                            //AccountSymbolIntervalData = GlobalData.ActiveAccount!.Data.GetSymbolTrendData(symbol.Name, symbolInterval.Interval.IntervalPeriod),
                         };
 
                         // avoid candles being removed...
                         data.Symbol.CalculatingZones = true;
                         try
                         {
-                            await CalculateSymbolAsync(sender, session, data);
+                            await CalculateZonesForSymbolAsync(sender, session, data);
                         }
                         finally
                         {
@@ -128,7 +125,6 @@ public class LiquidityZones
                         }
                     }
                 }
-                //}
             }
         }
     }

@@ -153,7 +153,7 @@ private async Task KucoinTest()
 
 
         //// Implementatie kline ticker (via cache, wordt door de timer verwerkt)
-        //SortedList<long, CryptoCandle> klineList = new();
+        //CryptoCandleList klineList = new();
         //    var socketClient = new KucoinSocketClient();
         //    var subscriptionResult = await socketClient.SpotApi.SubscribeToKlineUpdatesAsync(symbolName,
         //        (Kucoin.Net.Enums.KlineInterval)KlineInterval.OneMinute, data =>

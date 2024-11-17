@@ -96,6 +96,8 @@ public partial class FrmSettings : Form
         EditBlackTheming.Checked = settings.General.BlackTheming;
         try { EditTradingApp.SelectedIndex = (int)settings.General.TradingApp; } catch { }
         try { EditTradingAppInternExtern.SelectedIndex = (int)settings.General.TradingAppInternExtern; } catch { }
+        try { EditDoubleClickAction.SelectedIndex = (int)settings.General.DoubleClickAction; } catch { }
+        
         EditSoundHeartBeatMinutes.Value = settings.General.SoundHeartBeatMinutes;
         EditGetCandleInterval.Value = settings.General.GetCandleInterval;
 
@@ -362,6 +364,7 @@ public partial class FrmSettings : Form
         settings.General.BlackTheming = EditBlackTheming.Checked;
         settings.General.TradingApp = (CryptoTradingApp)EditTradingApp.SelectedIndex;
         settings.General.TradingAppInternExtern = (CryptoExternalUrlType)EditTradingAppInternExtern.SelectedIndex;
+        settings.General.DoubleClickAction = (CryptoDoubleClickAction)EditDoubleClickAction.SelectedIndex;
         settings.General.SoundHeartBeatMinutes = (int)EditSoundHeartBeatMinutes.Value;
         settings.General.GetCandleInterval = (int)EditGetCandleInterval.Value;
         settings.General.FontNameNew = Font.Name;

@@ -151,9 +151,9 @@ public partial class FrmMain : Form
 
     private void TestShowTickerInformationClick(object? sender, EventArgs? e)
     {
-        ExchangeHelper.KLineTicker?.DumpTickerInfo();
-        ExchangeHelper.PriceTicker?.DumpTickerInfo();
-        ExchangeHelper.UserTicker?.DumpTickerInfo();
+        ExchangeBase.KLineTicker?.DumpTickerInfo();
+        ExchangeBase.PriceTicker?.DumpTickerInfo();
+        ExchangeBase.UserTicker?.DumpTickerInfo();
     }
 #endif
 
@@ -187,7 +187,7 @@ public partial class FrmMain : Form
     {
         ApplicationTools.WindowLocationRestore(this);
 
-        ExchangeHelper.ExchangeDefaults();
+        GlobalData.Settings.General.Exchange!.GetApiInstance().ExchangeDefaults();
         GlobalData.LoadAccounts();
         ApplySettings();
 
@@ -393,14 +393,15 @@ public partial class FrmMain : Form
     {
         Task.Run(async () =>
         {
-            await ExchangeHelper.GetSymbolsAsync(); // niet wachten tot deze klaar is
-            if (ExchangeHelper.KLineTicker != null)
-                await ExchangeHelper.KLineTicker!.CheckTickers(); // herstarten van ticker indien errors
-            if (ExchangeHelper.PriceTicker != null)
-                await ExchangeHelper.PriceTicker!.CheckTickers(); // herstarten van ticker indien errors
-            if (ExchangeHelper.UserTicker != null)
-                await ExchangeHelper.UserTicker!.CheckTickers(); // herstarten van ticker indien errors
-            await ExchangeHelper.GetCandlesAsync(); // niet wachten tot deze klaar is
+            var api = GlobalData.Settings.General.Exchange!.GetApiInstance();
+            await api.Symbol.GetSymbolsAsync(); // niet wachten tot deze klaar is
+            if (ExchangeBase.KLineTicker != null)
+                await ExchangeBase.KLineTicker!.CheckTickers(); // herstarten van ticker indien errors
+            if (ExchangeBase.PriceTicker != null)
+                await ExchangeBase.PriceTicker!.CheckTickers(); // herstarten van ticker indien errors
+            if (ExchangeBase.UserTicker != null)
+                await ExchangeBase.UserTicker!.CheckTickers(); // herstarten van ticker indien errors
+            await api.Candle.GetCandlesAsync(); // niet wachten tot deze klaar is
         });
     }
 
@@ -501,7 +502,7 @@ public partial class FrmMain : Form
                     await ThreadTelegramBot.Start(GlobalData.Telegram.Token, GlobalData.Telegram.ChatId);
                 ThreadTelegramBot.ChatId = GlobalData.Telegram.ChatId;
 
-                ExchangeHelper.ExchangeDefaults();
+                GlobalData.Settings.General.Exchange!.GetApiInstance().ExchangeDefaults();
                 MainMenuClearAll_Click(null, null);
                 // Schedule een reload of data
                 ScannerSession.ScheduleRefresh();
@@ -523,8 +524,8 @@ public partial class FrmMain : Form
         GlobalData.CreatedSignalCount = 0;
 
         PositionMonitor.ResetAnalyseCount();
-        ExchangeHelper.KLineTicker!.Reset();
-        ExchangeHelper.PriceTicker!.Reset();
+        ExchangeBase.KLineTicker!.Reset();
+        ExchangeBase.PriceTicker!.Reset();
     }
 
 

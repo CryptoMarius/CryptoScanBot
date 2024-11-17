@@ -15,18 +15,19 @@ public class CryptoZoneSession
     public string IntervalName { get; set; } = "1h";
 
     //public bool UseHighLow { get; set; } = false;
-
-    public bool ZoomLiqBoxes { get; set; } = true;
-    public bool ShowLiqBoxes { get; set; } = true;
-
-    public bool ShowFib { get; set; } = true;
-    public bool ShowZigZag { get; set; } = true;
     public decimal Deviation { get; set; } = 1m;
-
     // Period = UtcNow - X candles
     public long MinUnix { get; set; }
     public long MaxUnix { get; set; }
     public CryptoIntervalPeriod ActiveInterval { get; set; } = CryptoIntervalPeriod.interval1h;
+
+    public bool ZoomLiqBoxes { get; set; } = true;
+    public bool ShowLiqBoxes { get; set; } = true;
+    public bool ShowLiqZigZag { get; set; } = true;
+
+    public bool ShowFib { get; set; } = true;
+    public bool ShowFibZigZag { get; set; } = false;
+    
 
 
     public static CryptoZoneSession LoadSessionSettings()

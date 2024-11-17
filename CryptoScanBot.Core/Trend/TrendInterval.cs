@@ -8,7 +8,7 @@ namespace CryptoScanBot.Core.Trend;
 
 public class TrendInterval
 {
-    private static bool ResolveStartAndEndDate(SortedList<long, CryptoCandle> candleList, AccountSymbolIntervalData accountSymbolIntervalData, ref long candleIntervalStart, ref long candleIntervalEnd)
+    private static bool ResolveStartAndEndDate(CryptoCandleList candleList, AccountSymbolIntervalData accountSymbolIntervalData, ref long candleIntervalStart, ref long candleIntervalEnd)
     {
         // We cache the ZigZag indicator, this way we do not have to add all the candles again and again.
         // (We hope this makes the scanner a more less cpu hungry)
@@ -259,7 +259,8 @@ public class TrendInterval
 
 
 
-    public static void Calculate(CryptoSymbol symbol, CryptoCandleList candleList, AccountSymbolIntervalData accountSymbolIntervalData, long candleIntervalStart, long candleIntervalEnd, StringBuilder? log = null)
+    public static void Calculate(CryptoSymbol symbol, CryptoCandleList candleList, AccountSymbolIntervalData accountSymbolIntervalData, 
+        long candleIntervalStart, long candleIntervalEnd, StringBuilder? log = null)
     {
         var interval = accountSymbolIntervalData.Interval;
 
@@ -310,7 +311,6 @@ public class TrendInterval
                 };
                 accountSymbolIntervalData.ZigZagIndicators.Add(indicator);
             }
-
         }
         //accountSymbolIntervalData.Indicator ??= new(candleList, GlobalData.Settings.General.UseHighLowInTrendCalculation, 1m);
 

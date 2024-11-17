@@ -180,7 +180,7 @@ public partial class TestForm : Form
         ApplicationParams.InitApplicationOptions();
 
         // Na het selecteren van een account
-        ExchangeHelper.ExchangeDefaults();
+        GlobalData.Settings.General.Exchange!.GetApiInstance().ExchangeDefaults();
         GlobalData.LoadAccounts();
 
         databaseMain = new();
@@ -289,12 +289,12 @@ public partial class TestForm : Form
     /// <summary>
     /// Candles uit de database halen voor de gevraagde interval X indien deze niet aanwezig zijn
     /// </summary>
-    private static SortedList<long, CryptoCandle> LoadSymbolCandles(CryptoSymbol symbol, CryptoInterval interval, DateTime dateCandleStart, DateTime dateCandleEinde)
+    private static CryptoCandleList LoadSymbolCandles(CryptoSymbol symbol, CryptoInterval interval, DateTime dateCandleStart, DateTime dateCandleEinde)
     {
         Semaphore.Wait();
         try
         {
-            SortedList<long, CryptoCandle> candles = symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList;
+            CryptoCandleList candles = symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList;
             if (candles.Count == 0)
             {
                 using CryptoDatabase database = new();
@@ -734,7 +734,7 @@ public partial class TestForm : Form
     }
 
 
-    static public List<CryptoCandle> CalculateHistory(SortedList<long, CryptoCandle> candleSticks, int maxCandles)
+    static public List<CryptoCandle> CalculateHistory(CryptoCandleList candleSticks, int maxCandles)
     {
         //Transporteer de candles naar de Stock list
         //Jammer dat we met tussen-array's moeten werken
@@ -845,7 +845,7 @@ public partial class TestForm : Form
         //            if (!GlobalData.IntervalListPeriod.TryGetValue(intervalPeriod, out CryptoInterval interval))
         //                return;
         //            LoadSymbolCandles(symbol, interval, dateCandleStart, dateCandleEinde);
-        //            //SortedList<long, CryptoCandle> candles = symbol.GetSymbolInterval(intervalPeriod).CandleList;
+        //            //CryptoCandleList candles = symbol.GetSymbolInterval(intervalPeriod).CandleList;
 
         //            TrendIndicator trendIndicatorClass = new(symbol, interval);
         //            CryptoTrendIndicator trendIndicator = trendIndicatorClass.CalculateTrend();
@@ -935,7 +935,7 @@ public partial class TestForm : Form
                     int count = 0;
                     decimal diffSum = 0;
                     CryptoIntervalPeriod intervalPeriod;
-                    SortedList<long, CryptoCandle> candles;
+                    CryptoCandleList candles;
                     DateTime dateCandleStart = DateTime.SpecifyKind(new DateTime(2023, 02, 1, 0, 0, 0), DateTimeKind.Utc);
                     DateTime dateCandleEinde = DateTime.SpecifyKind(new DateTime(2023, 05, 1, 0, 0, 0), DateTimeKind.Utc);
 
@@ -1132,7 +1132,7 @@ public partial class TestForm : Form
                 {
 
                     CryptoIntervalPeriod intervalPeriod;
-                    SortedList<long, CryptoCandle> candles;
+                    CryptoCandleList candles;
                     DateTime dateCandleStart = DateTime.SpecifyKind(new DateTime(2023, 02, 1, 0, 0, 0), DateTimeKind.Utc);
                     DateTime dateCandleEinde = DateTime.SpecifyKind(new DateTime(2023, 04, 1, 0, 0, 0), DateTimeKind.Utc);
 
@@ -1391,8 +1391,8 @@ public partial class TestForm : Form
                 CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
 
                 //List<CryptoCandle> allCandles = symbolPeriod.CandleList.Values.ToList();
-                //symbolPeriod.CandleList = new SortedList<long, CryptoCandle>();
-                SortedList<long, CryptoCandle> candleList = symbolPeriod.CandleList;
+                //symbolPeriod.CandleList = new CryptoCandleList();
+                CryptoCandleList candleList = symbolPeriod.CandleList;
 
 
 
@@ -1493,7 +1493,7 @@ public partial class TestForm : Form
             if ((quoteData != null) && (exchange.SymbolListName.TryGetValue(Core.Model.Constants.SymbolNameBarometerPrice + quoteData.Name, out CryptoSymbol? symbol)))
             {
                 CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
-                SortedList<long, CryptoCandle> candleList = symbolPeriod.CandleList;
+                CryptoCandleList candleList = symbolPeriod.CandleList;
 
                 // determine range of data
                 long loX = long.MaxValue;
@@ -1752,8 +1752,8 @@ public partial class TestForm : Form
                 //CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
 
                 ////List<CryptoCandle> allCandles = symbolPeriod.CandleList.Values.ToList();
-                ////symbolPeriod.CandleList = new SortedList<long, CryptoCandle>();
-                //SortedList<long, CryptoCandle> candleList = symbolPeriod.CandleList;
+                ////symbolPeriod.CandleList = new CryptoCandleList();
+                //CryptoCandleList candleList = symbolPeriod.CandleList;
 
                 //// bepaal de range van de te tonen punten
                 //long loX = long.MaxValue;
@@ -2033,7 +2033,7 @@ public partial class TestForm : Form
     //private static void CheckCandlesComplete(CryptoSymbol symbol, CryptoInterval interval)
     //{
         //SortedList<long, DateTime> dateList = new();
-        //SortedList<long, CryptoCandle> candles = symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList;
+        //CryptoCandleList candles = symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList;
 
         //// Zijn de candles compleet?
         //if (candles.Count > 0)
@@ -2159,7 +2159,7 @@ public partial class TestForm : Form
 
     public static bool AcceptSymbol(CryptoSymbol symbol, CryptoInterval interval, CryptoBackConfig config)
     {
-        SortedList<long, CryptoCandle> candles = symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList;
+        CryptoCandleList candles = symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList;
 
         // munten met een hele lage Satoshi waardering (1 Satoshi = 1E-8)
         CryptoCandle candle = candles.Values.First();
@@ -2195,7 +2195,7 @@ public partial class TestForm : Form
         //    // Altijd 1m inlezen (de basis voor de emulator, blij wordt ik er niet van, maar zo werkt het systeem nu eenmaal, voila!)
         //    LoadSymbolCandles(symbol, interval1m, config.DateStart, config.DateEinde);
 
-        //    SortedList<long, CryptoCandle> candles = LoadSymbolCandles(symbol, interval, config.DateStart, config.DateEinde);
+        //    CryptoCandleList candles = LoadSymbolCandles(symbol, interval, config.DateStart, config.DateEinde);
         //    if (candles.Count == 0)
         //    {
         //        GlobalData.AddTextToLogTab(string.Format("{0} {1} no candles", DateTime.Now.ToLocalTime(), symbol.Name));
