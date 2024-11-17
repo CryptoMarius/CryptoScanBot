@@ -61,7 +61,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                 if (kline.Confirm) // Het is een definitieve candle (niet eentje in opbouw)
                     Task.Run(async () => { await ProcessCandleAsync(data.Symbol, kline); });
             }
-        }, ExchangeHelper.CancellationToken).ConfigureAwait(false);
+        }, ExchangeBase.CancellationToken).ConfigureAwait(false);
 
         return subscriptionResult;
     }

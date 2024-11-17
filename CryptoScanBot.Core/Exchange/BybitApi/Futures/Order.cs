@@ -13,7 +13,7 @@ using System.Text.Json;
 
 namespace CryptoScanBot.Core.Exchange.BybitApi.Futures;
 
-public class Order
+public class Order(ExchangeBase api) : OrderBase(api), IOrder
 {
     // Converteer de orderstatus van Exchange naar "intern"
     public static CryptoOrderType LocalOrderType(OrderType orderType)
@@ -89,7 +89,7 @@ public class Order
     }
 
     
-    public static async Task<int> GetOrdersAsync(CryptoDatabase database, CryptoPosition position)
+    public async Task<int> GetOrdersAsync(CryptoDatabase database, CryptoPosition position)
     {
         //ScannerLog.Logger.Trace($"Exchange.BybitSpot.GetOrdersForPositionAsync: Positie {position.Symbol.Name}");
         // Behoorlijk weinig error control ...... 
@@ -126,14 +126,14 @@ public class Order
                         if (oldStatus != order.Status || oldQuoteQuantityFilled != order.QuoteQuantityFilled)
                         {
                             ScannerLog.Logger.Trace($"GetOrdersForPositionAsync {position.Symbol.Name} updated order {item.OrderId}");
-                            text = JsonSerializer.Serialize(item, ExchangeHelper.JsonSerializerNotIndented).Trim();
+                            text = JsonSerializer.Serialize(item, GlobalData.JsonSerializerNotIndented).Trim();
                             ScannerLog.Logger.Trace($"{item.Symbol} order updated json={text}");
                             count++;
                         }
                     }
                     else
                     {
-                        text = JsonSerializer.Serialize(item, ExchangeHelper.JsonSerializerNotIndented).Trim();
+                        text = JsonSerializer.Serialize(item, GlobalData.JsonSerializerNotIndented).Trim();
                         ScannerLog.Logger.Trace($"{item.Symbol} order added json={text}");
 
                         order = new()

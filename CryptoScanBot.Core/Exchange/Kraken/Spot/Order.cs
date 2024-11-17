@@ -1,13 +1,13 @@
-﻿using CryptoScanBot.Core.Enums;
+﻿using CryptoScanBot.Core.Context;
+using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 
 using Kraken.Net.Enums;
-using Kraken.Net.Objects.Models;
 using Kraken.Net.Objects.Models.Socket;
 
 namespace CryptoScanBot.Core.Exchange.Kraken.Spot;
 
-public class Order
+public class Order(ExchangeBase api) : OrderBase(api), IOrder
 {
     // Converteer de orderstatus van Exchange naar "intern"
     public static CryptoOrderType LocalOrderType(OrderType orderType)
@@ -79,4 +79,8 @@ public class Order
         order.CommissionAsset = symbol.Quote;
     }
 
+    public Task<int> GetOrdersAsync(CryptoDatabase database, CryptoPosition position)
+    {
+        return Task.FromResult<int>(0);
+    }
 }

@@ -1,9 +1,4 @@
-﻿using System.Text.Encodings.Web;
-using System.Text.Json;
-using CryptoScanBot.Core.Context;
-using CryptoScanBot.Core.Intern;
-using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Model;
+﻿using CryptoScanBot.Core.Enums;
 
 namespace CryptoScanBot.Core.Exchange;
 
@@ -79,60 +74,4 @@ public static class Helper
 }
 
 
-public class ExchangeHelper
-{
-    public static CancellationTokenSource CancellationTokenSource { get; set; } = new();
-    public static CancellationToken CancellationToken { get; set; } = CancellationTokenSource.Token;
-    public static readonly JsonSerializerOptions JsonSerializerNotIndented = new()
-    { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = false };
 
-    public static Ticker? PriceTicker { get; set; }
-    public static Ticker? KLineTicker { get; set; }
-    public static Ticker? UserTicker { get; set; }
-
- 
-    public static ExchangeBase GetApiInstance()
-    {
-        return GlobalData.Settings.General.Exchange!.GetApiInstance();
-    }
-
-    public static void ExchangeDefaults()
-    {
-        GetApiInstance().ExchangeDefaults();
-    }
-
-    public static async Task GetSymbolsAsync()
-    {
-        await GetApiInstance().GetSymbolsAsync();
-    }
-
-    public static async Task GetCandlesAsync()
-    {
-        await GetApiInstance().GetCandlesForAllSymbolsAsync();
-    }
-
-    public static async Task GetAssetsAsync(CryptoAccount tradeAccount)
-    {
-        ScannerLog.Logger.Trace($"ExchangeHelper.GetAssetsAsync: account {tradeAccount.AccountType}");
-        if (tradeAccount == null || tradeAccount.AccountType != CryptoAccountType.RealTrading)
-            return;
-        await GetApiInstance().GetAssetsAsync(tradeAccount);
-    }
-
-	public static async Task<int> GetOrdersAsync(CryptoDatabase database, CryptoPosition position)
-    {
-        ScannerLog.Logger.Trace($"ExchangeHelper.GetOrdersAsync: Position {position.Symbol.Name}");
-        if (position.Account == null || position.Account.AccountType != CryptoAccountType.RealTrading)
-            return 0;
-        return await GetApiInstance().GetOrdersAsync(database, position);
-    }
-
-    public static async Task<int> GetTradesAsync(CryptoDatabase database, CryptoPosition position)
-    {
-        ScannerLog.Logger.Trace($"ExchangeHelper.GetTradesAsync: Position {position.Symbol.Name}");
-        if (position.Account.AccountType != CryptoAccountType.RealTrading)
-            return 0;
-        return await GetApiInstance().GetTradesAsync(database, position);
-    }
-
-}

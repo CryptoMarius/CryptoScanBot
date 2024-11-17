@@ -6,15 +6,65 @@ using CryptoScanBot.Core.Intern;
 
 namespace CryptoScanBot.Core.Exchange;
 
-// ExchangeBroker
+// todo: Introduce units for the interfaces
 
+public interface IOrder
+{
+    public Task<int> GetOrdersAsync(CryptoDatabase database, CryptoPosition position);
+}
+
+public interface ITrade
+{
+    public Task<int> GetTradesAsync(CryptoDatabase database, CryptoPosition position);
+}
+
+public interface IAsset
+{
+    public Task GetAssetsAsync(CryptoAccount tradeAccount);
+}
+
+public interface ISymbol
+{
+    public Task GetSymbolsAsync();
+}
+
+public interface ICandle
+{
+    public Task GetCandlesForIntervalAsync(IDisposable? clientBase, CryptoSymbol symbol, CryptoInterval interval, long fetchEndUnix);
+    public Task GetCandlesForAllIntervalsAsync(CryptoSymbol symbol, long fetchEndUnix);
+    public Task GetCandlesAsync();
+}
+
+public interface IApi
+{
+    public IAsset Asset { get; set; }
+    public ICandle Candle { get; set; }
+    public ISymbol Symbol { get; set; }
+    public IOrder Order { get; set; }
+    public ITrade Trade { get; set; }
+    //Rates?
+}
+
+
+// Name: ExchangeBroker?
 public abstract class ExchangeBase
 {
-    public static ExchangeOptions ExchangeOptions { get; } = new(); // made public for ExchangeTest project
+    public IAsset Asset { get; set; }
+    public ICandle Candle { get; set; }
+    public ISymbol Symbol { get; set; }
+    public IOrder Order { get; set; }
+    public ITrade Trade { get; set; }
+
+    public abstract IDisposable GetClient();
     public abstract void ExchangeDefaults();
-    public abstract Task GetSymbolsAsync();
-    public abstract Task GetCandlesForSymbolAsync(CryptoSymbol symbol, long fetchEndUnix);
-    public abstract Task GetCandlesForAllSymbolsAsync();
+
+    public static Ticker? PriceTicker { get; set; }
+    public static Ticker? KLineTicker { get; set; }
+    public static Ticker? UserTicker { get; set; }
+
+    public static ExchangeOptions ExchangeOptions { get; } = new(); // made public for ExchangeTest project
+    public static CancellationTokenSource CancellationTokenSource { get; set; } = new();
+    public static CancellationToken CancellationToken { get; set; } = CancellationTokenSource.Token;
 
     /// <summary>
     /// return the thechnical format of the symbol on the exchange name 
@@ -23,11 +73,6 @@ public abstract class ExchangeBase
     {
         return symbol.Name;
     }
-
-
-    public abstract Task GetAssetsAsync(CryptoAccount tradeAccount);
-    public abstract Task<int> GetTradesAsync(CryptoDatabase database, CryptoPosition position);
-    public abstract Task<int> GetOrdersAsync(CryptoDatabase database, CryptoPosition position);
 
     public abstract Task<(bool succes, TradeParams? tradeParams)> Cancel(CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step);
     public abstract Task<(bool result, TradeParams? tradeParams)> PlaceOrder(CryptoDatabase database,

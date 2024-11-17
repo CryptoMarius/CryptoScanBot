@@ -32,7 +32,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
     public override async Task<CallResult<UpdateSubscription>?> Subscribe()
     {
-        SortedList<string, SortedList<long, CryptoCandle>> klineListTemp = [];
+        SortedList<string, CryptoCandleList> klineListTemp = [];
 
         // TODO: quick en dirty code hier, nog eens verbeteren
         // We verwachten (helaas) slechts 1 symbol per ticker
@@ -80,7 +80,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                         {
                             // Add or update the local cache
                             long candleOpenUnix = CandleTools.GetUnixTime(kline.OpenTime, 60);
-                            SortedList<long, CryptoCandle> tempList = klineListTemp[symbolName];
+                            CryptoCandleList tempList = klineListTemp[symbolName];
                             if (!tempList.TryGetValue(candleOpenUnix, out CryptoCandle? candle))
                             {
                                 candle = new();
@@ -116,7 +116,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                     }
                 }
             });
-        }, ExchangeHelper.CancellationToken).ConfigureAwait(false);
+        }, ExchangeBase.CancellationToken).ConfigureAwait(false);
 
 
         // Implementatie kline timer (fix)
@@ -134,7 +134,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
             {
                 foreach (var symbol in SymbolList)
                 {
-                    SortedList<long, CryptoCandle> tempList = klineListTemp[symbol.Name];
+                    CryptoCandleList tempList = klineListTemp[symbol.Name];
                     CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
                     long expectedCandlesUpto = CandleTools.GetUnixTime(DateTime.UtcNow, 60) - interval.Duration;
 

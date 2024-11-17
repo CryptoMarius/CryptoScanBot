@@ -1,9 +1,7 @@
-﻿using System.Text.Encodings.Web;
-using System.Text.Json;
+﻿using System.Text.Json;
 
 using Bybit.Net.Clients;
 using Bybit.Net.Enums;
-using Bybit.Net.Objects.Models.Socket;
 using Bybit.Net.Objects.Models.V5;
 
 using CryptoExchange.Net.Authentication;
@@ -13,7 +11,6 @@ using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 
-using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot.Core.Exchange.BybitApi.Futures;
 
@@ -21,6 +18,19 @@ public class Api : ExchangeBase
 {
     private static readonly Category Category = Category.Linear;
 
+    public Api()
+    {
+        Asset = new Asset(this);
+        Candle = new Candle(this);
+        Symbol = new Symbol(this);
+        Order = new Order(this);
+        Trade = new Trade(this);
+    }
+
+    public override IDisposable GetClient()
+    {
+        return new BybitRestClient();
+    }
 
     public override void ExchangeDefaults()
     {
@@ -55,26 +65,22 @@ public class Api : ExchangeBase
                 options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
         });
 
-        ExchangeHelper.PriceTicker = new Ticker(ExchangeOptions, typeof(SubscriptionPriceTicker), CryptoTickerType.price);
-        ExchangeHelper.KLineTicker = new Ticker(ExchangeOptions, typeof(SubscriptionKLineTicker), CryptoTickerType.kline);
-        ExchangeHelper.UserTicker = new Ticker(ExchangeOptions, typeof(SubscriptionUserTicker), CryptoTickerType.user);
+        PriceTicker = new Ticker(ExchangeOptions, typeof(SubscriptionPriceTicker), CryptoTickerType.price);
+        KLineTicker = new Ticker(ExchangeOptions, typeof(SubscriptionKLineTicker), CryptoTickerType.kline);
+        UserTicker = new Ticker(ExchangeOptions, typeof(SubscriptionUserTicker), CryptoTickerType.user);
     }
 
 
-    public override async Task GetSymbolsAsync()
-    {
-        await Symbol.ExecuteAsync();
-    }
+    //public override async Task GetSymbolsAsync()
+    //{
+    //    await Symbol.GetSymbolsAsync();
+    //}
 
-    public override async Task GetCandlesForAllSymbolsAsync()
-    {
-        await Candle.GetCandlesForAllSymbolsAsync();
-    }
 
-    public override async Task GetCandlesForSymbolAsync(CryptoSymbol symbol, long fetchEndUnix)
-    {
-        await Candle.GetCandlesForSymbolAsync(symbol, fetchEndUnix);
-    }
+    //public override async Task GetCandlesForAllIntervalsAsync(CryptoSymbol symbol, long fetchEndUnix)
+    //{
+    //    await Candle.GetCandlesForAllIntervalsAsync(symbol, fetchEndUnix);
+    //}
 
 
     public static async Task<bool> DoSwitchCrossIsolatedMarginAsync(BybitRestClient client, CryptoSymbol symbol)
@@ -101,7 +107,7 @@ public class Api : ExchangeBase
         }
 
         // Vanwege een onverwachte liquidatie gaan we deze ook uitgebreid loggen
-        string text = JsonSerializer.Serialize(result, ExchangeHelper.JsonSerializerNotIndented);
+        string text = JsonSerializer.Serialize(result, GlobalData.JsonSerializerNotIndented);
         GlobalData.AddTextToLogTab("SwitchCrossIsolatedMarginAsync :" + text);
 
 
@@ -301,126 +307,4 @@ public class Api : ExchangeBase
 
         return (false, tradeParams);
     }
-
-
-    public override async Task<int> GetTradesAsync(CryptoDatabase database, CryptoPosition position)
-    {
-        return await Trade.FetchTradesForSymbolAsync(database, position);
-    }
-
-    public override async Task<int> GetOrdersAsync(CryptoDatabase database, CryptoPosition position)
-    {
-        return await Order.GetOrdersAsync(database, position);
-
-        ////ScannerLog.Logger.Trace($"Exchange.BybitSpot.GetOrdersForPositionAsync: Positie {position.Symbol.Name}");
-        //// Behoorlijk weinig error control ...... 
-
-        //int count = 0;
-        //DateTime? from; // = position.Symbol.LastOrderFetched;
-        ////if (from == null)
-        //// altijd alles ophalen, geeft wat veel logging, maar ach..
-        //from = position.CreateTime.AddMinutes(-1);
-
-        //ScannerLog.Logger.Trace($"GetOrdersForPositionAsync {position.Symbol.Name} fetching orders from exchange {from}");
-
-        //using var client = new BybitRestClient();
-        //var info = await client.V5Api.Trading.GetOrderHistoryAsync(
-        //    Category.Spot, symbol: position.Symbol.Name,
-        //    startTime: from);
-
-
-        //if (info.Success && info.Data != null)
-        //{
-        //    string text;
-        //    foreach (var item in info.Data.List)
-        //    {
-        //        if (position.StepOrderList.ContainsKey(item.OrderId))
-        //        {
-        //            CryptoOrder? order = position.OrderList.Find(item.OrderId);
-        //            if (order != null)
-        //            {
-        //                var oldStatus = order.Status;
-        //                var oldQuoteQuantityFilled = order.QuoteQuantityFilled;
-        //                PickupOrder(position.TradeAccount, position.Symbol, order, (BybitOrderUpdate)item);
-        //                database.Connection.Update(order);
-
-        //                if (oldStatus != order.Status || oldQuoteQuantityFilled != order.QuoteQuantityFilled)
-        //                {
-        //                    ScannerLog.Logger.Trace($"GetOrdersForPositionAsync {position.Symbol.Name} updated order {item.OrderId}");
-        //                    text = JsonSerializer.Serialize(item, ExchangeHelper.JsonSerializerNotIndented).Trim();
-        //                    ScannerLog.Logger.Trace($"{item.Symbol} order updated json={text}");
-        //                    count++;
-        //                }
-        //            }
-        //            else
-        //            {
-        //                text = JsonSerializer.Serialize(item, ExchangeHelper.JsonSerializerNotIndented).Trim();
-        //                ScannerLog.Logger.Trace($"{item.Symbol} order added json={text}");
-
-        //                order = new();
-        //                PickupOrder(position.TradeAccount, position.Symbol, order, (BybitOrderUpdate)item);
-        //                database.Connection.Insert(order);
-        //                position.OrderList.AddOrder(order);
-        //                count++;
-        //            }
-
-        //            //if (position.Symbol.LastOrderFetched == null || order.CreateTime > position.Symbol.LastOrderFetched)
-        //            //    position.Symbol.LastOrderFetched = order.CreateTime;
-        //        }
-        //    }
-        //    database.Connection.Update(position.Symbol);
-        //}
-        //else
-        //    GlobalData.AddTextToLogTab($"Error reading orders from {ExchangeOptions.ExchangeName} for {position.Symbol.Name} {info.Error}");
-
-        //return count;
-    }
-
-    public async override Task GetAssetsAsync(CryptoAccount tradeAccount)
-    {
-        await Asset.GetAssetsAsync(tradeAccount);
-        ////if (GlobalData.ExchangeListName.TryGetValue(ExchangeName, out Model.CryptoExchange? exchange))
-        //{
-        //    try
-        //    {
-        //        GlobalData.AddTextToLogTab($"Reading asset information from {ExchangeOptions.ExchangeName}");
-
-        //        LimitRate.WaitForFairWeight(1);
-
-        //        using var client = new BybitRestClient();
-        //        {
-        //            var accountInfo = await client.V5Api.Account.GetAllAssetBalancesAsync(AccountType.Contract);
-        //            if (!accountInfo.Success)
-        //            {
-        //                GlobalData.AddTextToLogTab("error getting accountinfo " + accountInfo.Error);
-        //            }
-
-        //            //Zo af en toe komt er geen data of is de Data niet gezet.
-        //            //De verbindingen naar extern kunnen (tijdelijk) geblokkeerd zijn
-        //            if (accountInfo?.Data is null)
-        //                throw new ExchangeException("No account data received");
-
-        //            try
-        //            {
-        //                PickupAssets(tradeAccount, accountInfo.Data);
-        //                GlobalData.AssetsHaveChanged("");
-        //            }
-        //            catch (Exception error)
-        //            {
-        //                ScannerLog.Logger.Error(error, "");
-        //                GlobalData.AddTextToLogTab(error.ToString());
-        //                throw;
-        //            }
-        //        }
-        //    }
-        //    catch (Exception error)
-        //    {
-        //        ScannerLog.Logger.Error(error, "");
-        //        GlobalData.AddTextToLogTab(error.ToString());
-        //        GlobalData.AddTextToLogTab("");
-        //    }
-
-        //}
-    }
-
 }

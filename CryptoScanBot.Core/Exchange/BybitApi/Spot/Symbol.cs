@@ -1,9 +1,7 @@
-﻿using System.Text.Encodings.Web;
-using System.Text.Json;
+﻿using System.Text.Json;
 
 using Bybit.Net.Clients;
 using Bybit.Net.Enums;
-using Bybit.Net.Objects.Models.V5;
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
@@ -11,10 +9,10 @@ using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot.Core.Exchange.BybitApi.Spot;
 
-public class Symbol
+public class Symbol(ExchangeBase api) : SymbolBase(api), ISymbol
 {
 
-    public static async Task ExecuteAsync()
+    public async Task GetSymbolsAsync()
     {
         if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
         {

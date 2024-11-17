@@ -19,6 +19,21 @@ public class Api : ExchangeBase
     private static readonly Category Category = Category.Spot;
 
 
+    public Api()
+    {
+        Asset = new Asset(this);
+        Candle = new Candle(this);
+        Symbol = new Symbol(this);
+        Order = new Order(this);
+        Trade = new Trade(this);
+    }
+
+
+    public override IDisposable GetClient()
+    {
+        return new BybitRestClient();
+    }
+
     //internal static BybitRestClient CreateRestClient()
     //{
     //    // Ik snap er helemaal niets van.. Heb een paar classes verkeerd begrepen log en logger
@@ -84,25 +99,9 @@ public class Api : ExchangeBase
                 options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
         });
 
-        ExchangeHelper.PriceTicker = new Ticker(ExchangeOptions, typeof(SubscriptionPriceTicker), CryptoTickerType.price);
-        ExchangeHelper.KLineTicker = new Ticker(ExchangeOptions, typeof(SubscriptionKLineTicker), CryptoTickerType.kline);
-        ExchangeHelper.UserTicker = new Ticker(ExchangeOptions, typeof(SubscriptionUserTicker), CryptoTickerType.user);
-    }
-
-
-    public override async Task GetSymbolsAsync()
-    {
-        await Symbol.ExecuteAsync();
-    }
-
-    public override async Task GetCandlesForAllSymbolsAsync()
-    {
-        await Candle.GetCandlesForAllSymbolsAsync();
-    }
-
-    public override async Task GetCandlesForSymbolAsync(CryptoSymbol symbol, long fetchEndUnix)
-    {
-        await Candle.GetCandlesForSymbolAsync(symbol, fetchEndUnix);
+        PriceTicker = new Ticker(ExchangeOptions, typeof(SubscriptionPriceTicker), CryptoTickerType.price);
+        KLineTicker = new Ticker(ExchangeOptions, typeof(SubscriptionKLineTicker), CryptoTickerType.kline);
+        UserTicker = new Ticker(ExchangeOptions, typeof(SubscriptionUserTicker), CryptoTickerType.user);
     }
 
 
@@ -348,25 +347,6 @@ public class Api : ExchangeBase
         }
 
         return (false, tradeParams);
-    }
-
-
-    public override async Task<int> GetTradesAsync(CryptoDatabase database, CryptoPosition position)
-    {
-        return await Trade.FetchTradesForSymbolAsync(database, position);
-    }
-
-
-
-    public override async Task<int> GetOrdersAsync(CryptoDatabase database, CryptoPosition position)
-    {
-        return await Order.GetOrdersAsync(database, position);
-    }
-
-
-    public async override Task GetAssetsAsync(CryptoAccount tradeAccount)
-    {
-        await Asset.GetAssetsAsync(tradeAccount);
     }
 
 }

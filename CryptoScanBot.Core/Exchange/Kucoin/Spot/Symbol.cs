@@ -1,19 +1,16 @@
-﻿using System.Text.Encodings.Web;
-using System.Text.Json;
+﻿using System.Text.Json;
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using Dapper.Contrib.Extensions;
 
 using Kucoin.Net.Clients;
-using Kucoin.Net.Objects.Models.Spot;
 
 namespace CryptoScanBot.Core.Exchange.Kucoin.Spot;
 
-public class Symbol
+public class Symbol(ExchangeBase api) : SymbolBase(api), ISymbol
 {
-
-    public static async Task ExecuteAsync()
+    public async Task GetSymbolsAsync()
     {
         if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
         {
@@ -53,10 +50,10 @@ public class Symbol
                 */
 
                 var exchangeData = await client.SpotApi.ExchangeData.GetSymbolsAsync();
-                if (exchangeData == null) 
-                    throw new ExchangeException("No exchange data received");
                 if (!exchangeData.Success)
                     GlobalData.AddTextToLogTab($"error getting exchangeinfo {exchangeData.Error}");
+                if (exchangeData == null)
+                    throw new ExchangeException("No exchange data received");
 
                 // Save for debug purposes
                 {
@@ -94,10 +91,10 @@ public class Symbol
                 // tickers for volumes... (need volume because of filtered kline and price tickers)
                 GlobalData.AddTextToLogTab($"Reading symbol ticker information from {ExchangeBase.ExchangeOptions.ExchangeName}");
                 var tickerData = await client.SpotApi.ExchangeData.GetTickersAsync();
-                if (tickerData == null)
-                    throw new ExchangeException("No ticker data received");
                 if (!tickerData.Success)
                     GlobalData.AddTextToLogTab("error getting symbol ticker {tickersInfos.Error}");
+                if (tickerData == null)
+                    throw new ExchangeException("No ticker data received");
 
                 // Save for debug purposes
                 {

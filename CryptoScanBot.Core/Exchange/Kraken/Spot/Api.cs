@@ -13,6 +13,20 @@ namespace CryptoScanBot.Core.Exchange.Kraken.Spot;
 
 public class Api : ExchangeBase
 {
+    public Api()
+    {
+        Asset = new Asset(this);
+        Candle = new Candle(this);
+        Symbol = new Symbol(this);
+        Order = new Order(this);
+        Trade = new Trade(this);
+    }
+
+    public override IDisposable GetClient()
+    {
+        return new KrakenRestClient();
+    }
+
     public override void ExchangeDefaults()
     {
         ExchangeOptions.ExchangeName = "Kraken Spot";
@@ -36,27 +50,10 @@ public class Api : ExchangeBase
                 options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
         });
 
-        ExchangeHelper.PriceTicker = new Ticker(ExchangeOptions, typeof(SubscriptionPriceTicker), CryptoTickerType.price);
-        ExchangeHelper.KLineTicker = new Ticker(ExchangeOptions, typeof(SubscriptionKLineTicker), CryptoTickerType.kline);
-        ExchangeHelper.UserTicker = new Ticker(ExchangeOptions, typeof(SubscriptionUserTicker), CryptoTickerType.user);
+        PriceTicker = new Ticker(ExchangeOptions, typeof(SubscriptionPriceTicker), CryptoTickerType.price);
+        KLineTicker = new Ticker(ExchangeOptions, typeof(SubscriptionKLineTicker), CryptoTickerType.kline);
+        UserTicker = new Ticker(ExchangeOptions, typeof(SubscriptionUserTicker), CryptoTickerType.user);
     }
-
-
-    public override async Task GetSymbolsAsync()
-    {
-        await Symbol.ExecuteAsync();
-    }
-
-    public override async Task GetCandlesForAllSymbolsAsync()
-    {
-        await Candle.GetCandlesForAllSymbolsAsync();
-    }
-
-    public override async Task GetCandlesForSymbolAsync(CryptoSymbol symbol, long fetchEndUnix)
-    {
-        await Candle.GetCandlesForSymbolAsync(symbol, fetchEndUnix);
-    }
-
 
 
     public override async Task<(bool result, TradeParams? tradeParams)> PlaceOrder(CryptoDatabase database,
@@ -216,23 +213,6 @@ public class Api : ExchangeBase
         }
 
         return (false, tradeParams);
-    }
-
-    public override async Task<int> GetTradesAsync(CryptoDatabase database, CryptoPosition position)
-    {
-        return await Trade.FetchTradesForSymbolAsync(database, position);
-    }
-
-
-    public override Task<int> GetOrdersAsync(CryptoDatabase database, CryptoPosition position)
-    {
-        return Task.FromResult(0);
-    }
-
-
-    public async override Task GetAssetsAsync(CryptoAccount tradeAccount)
-    {
-        await Asset.GetAssetsAsync(tradeAccount);
     }
 
 }

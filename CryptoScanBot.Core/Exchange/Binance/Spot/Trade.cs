@@ -1,6 +1,5 @@
 ﻿using System.Text.Json;
 
-using Binance.Net;
 using Binance.Net.Clients;
 using Binance.Net.ExtensionMethods;
 using Binance.Net.Objects.Models.Spot;
@@ -15,7 +14,7 @@ namespace CryptoScanBot.Core.Exchange.Binance.Spot;
 /// <summary>
 /// De Trades ophalen
 /// </summary>
-public class Trade
+public class Trade(ExchangeBase api) : TradeBase(api), ITrade
 {
     public static void PickupTrade(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoTrade trade, BinanceTrade item)
     {
@@ -42,7 +41,7 @@ public class Trade
     /// <summary>
     /// Haal de trades van 1 symbol op
     /// </summary>
-    public static async Task<int> FetchTradesForSymbolAsync(CryptoDatabase database, CryptoPosition position)
+    public async Task<int> GetTradesAsync(CryptoDatabase database, CryptoPosition position)
     {
         int tradeCount = 0;
         using BinanceRestClient client = new();
@@ -103,7 +102,7 @@ public class Trade
                                     Symbol = position.Symbol,
                                 };
                                 PickupTrade(position.Account, position.Symbol, trade, item);
-                                string text = JsonSerializer.Serialize(item, ExchangeHelper.JsonSerializerNotIndented).Trim();
+                                string text = JsonSerializer.Serialize(item, GlobalData.JsonSerializerNotIndented).Trim();
                                 ScannerLog.Logger.Trace($"{item.Symbol} Trade added json={text}");
                                 tradeCache.Add(trade);
                                 position.TradeList.AddTrade(trade);

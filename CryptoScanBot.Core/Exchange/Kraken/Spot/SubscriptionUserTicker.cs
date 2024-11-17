@@ -21,7 +21,7 @@ public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscript
             return default;
 
         CallResult<UpdateSubscription> subscriptionResult = await ((KrakenSocketClient)TickerGroup.SocketClient).SpotApi.SubscribeToOrderUpdatesAsync( //tokenResult.Data.Token,
-            OnOrderUpdate, null, null, ExchangeHelper.CancellationToken).ConfigureAwait(false);
+            OnOrderUpdate, null, null, ExchangeBase.CancellationToken).ConfigureAwait(false);
 
         return subscriptionResult;
     }

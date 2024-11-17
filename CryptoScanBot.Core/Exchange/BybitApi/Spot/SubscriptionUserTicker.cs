@@ -14,7 +14,7 @@ public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscript
     {
         TickerGroup!.SocketClient ??= new BybitSocketClient();
         var subscriptionResult = await ((BybitSocketClient)TickerGroup.SocketClient).V5PrivateApi.SubscribeToOrderUpdatesAsync(
-            OnOrderUpdate, ExchangeHelper.CancellationToken).ConfigureAwait(false);
+            OnOrderUpdate, ExchangeBase.CancellationToken).ConfigureAwait(false);
         return subscriptionResult;
     }
 

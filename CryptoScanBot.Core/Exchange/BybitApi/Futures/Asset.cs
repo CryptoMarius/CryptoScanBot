@@ -10,7 +10,7 @@ using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot.Core.Exchange.BybitApi.Futures;
 
-public class Asset
+public class Asset(ExchangeBase api) : AssetBase(api), IAsset
 {
     static public void PickupAssets(CryptoAccount tradeAccount, BybitAllAssetBalances balances)
     {
@@ -82,7 +82,7 @@ public class Asset
 
 
 
-    public async static Task GetAssetsAsync(CryptoAccount tradeAccount)
+    public async Task GetAssetsAsync(CryptoAccount tradeAccount)
     {
         //if (GlobalData.ExchangeListName.TryGetValue(ExchangeName, out Model.CryptoExchange? exchange))
         {

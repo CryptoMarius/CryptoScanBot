@@ -9,10 +9,9 @@ using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot.Core.Exchange.Binance.Spot;
 
-public class Symbol
+public class Symbol(ExchangeBase api) : SymbolBase(api), ISymbol
 {
-
-    public static async Task ExecuteAsync()
+    public async Task GetSymbolsAsync()
     {
         if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
         {

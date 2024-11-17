@@ -15,7 +15,7 @@ namespace CryptoScanBot.Core.Exchange.Kraken.Spot;
 /// <summary>
 /// De Trades ophalen
 /// </summary>
-public class Trade
+public class Trade(ExchangeBase api) : TradeBase(api), ITrade
 {
     static public void PickupTrade(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoTrade trade, KrakenUserTrade item)
     {
@@ -42,7 +42,7 @@ public class Trade
     /// <summary>
     /// Haal de trades van 1 symbol op
     /// </summary>
-    public static async Task<int> FetchTradesForSymbolAsync(CryptoDatabase database, CryptoPosition position)
+    public async Task<int> GetTradesAsync(CryptoDatabase database, CryptoPosition position)
     {
         using KrakenRestClient client = new();
         int tradeCount = 0;
@@ -93,7 +93,7 @@ public class Trade
                                     Symbol = position.Symbol,
                                 };
                                 PickupTrade(position.Account, position.Symbol, trade, item);
-                                string text = JsonSerializer.Serialize(item, ExchangeHelper.JsonSerializerNotIndented).Trim();
+                                string text = JsonSerializer.Serialize(item, GlobalData.JsonSerializerNotIndented).Trim();
                                 ScannerLog.Logger.Trace($"{item.Symbol} Trade added json={text}");
 
                                 tradeCache.Add(trade);

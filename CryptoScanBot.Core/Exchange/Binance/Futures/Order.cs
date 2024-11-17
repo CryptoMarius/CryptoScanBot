@@ -1,22 +1,13 @@
-﻿using Binance.Net.Clients;
-using Binance.Net.Enums;
-using Binance.Net.Objects.Models.Futures;
+﻿using Binance.Net.Enums;
 using Binance.Net.Objects.Models.Futures.Socket;
-//using Binance.Net.Objects.Models.Spot;
-//using Binance.Net.Objects.Models.Spot.Socket;
 
-using CryptoExchange.Net.Authentication;
-using CryptoExchange.Net.Objects;
 using CryptoScanBot.Core.Context;
-using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 
-using Dapper.Contrib.Extensions;
-
 namespace CryptoScanBot.Core.Exchange.Binance.Futures;
 
-internal class Order
+public class Order(ExchangeBase api) : OrderBase(api), IOrder
 {
     // Converteer de orderstatus van Exchange naar "intern"
     public static CryptoOrderType LocalOrderType(FuturesOrderType orderType)
@@ -92,4 +83,8 @@ internal class Order
         order.CommissionAsset = item.FeeAsset;
     }
 
+    public Task<int> GetOrdersAsync(CryptoDatabase database, CryptoPosition position)
+    {
+        return Task.FromResult<int>(0);
+    }
 }

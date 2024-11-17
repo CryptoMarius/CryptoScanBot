@@ -10,15 +10,11 @@ namespace CryptoScanBot.Core.Exchange.Kucoin.Spot;
 /// <summary>
 /// Fetch candles from the exchange
 /// </summary>
-public class Candle
+public class Candle(ExchangeBase api) : CandleBase(api), ICandle
 {
 #if KUCOINDEBUG
     private static int tickerIndex = 0;
 #endif
-
-    // Prevent multiple sessions
-    private static readonly SemaphoreSlim Semaphore = new(1);
-
 
     private static async Task<long> GetCandlesForInterval(KucoinRestClient client, CryptoSymbol symbol, CryptoInterval interval, CryptoSymbolInterval symbolInterval, long fetchEndUnix)
     {
@@ -118,204 +114,90 @@ public class Candle
     }
 
 
-    private static async Task FetchCandlesInternal(KucoinRestClient client, CryptoSymbol symbol, long fetchEndUnix)
-    {
-        for (int i = 0; i < GlobalData.IntervalList.Count; i++)
-        {
-            CryptoInterval interval = GlobalData.IntervalList[i];
-            CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-
-            bool intervalSupported = Interval.GetExchangeInterval(interval.IntervalPeriod) != null;
-            if (intervalSupported)
-            {
-                // Fetch the candles
-                while (symbolInterval.LastCandleSynchronized < fetchEndUnix)
-                {
-                    if (symbolInterval.LastCandleSynchronized + interval.Duration > fetchEndUnix)
-                        break;
-
-                    long lastDate = (long)symbolInterval.LastCandleSynchronized;
-                    //DateTime dateStart = CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized);
-                    //GlobalData.AddTextToLogTab("Debug: Fetching " + symbol.Name + " " + interval.Name + " " + dateStart.ToLocalTime());
-
-
-                    // Nothing more? (we have coins stopping, beaware for endless loops)
-                    long candleCount = await GetCandlesForInterval(client, symbol, interval, symbolInterval, fetchEndUnix);
-
-                    if (candleCount == 0 && symbolInterval.LastCandleSynchronized > fetchEndUnix)
-                        symbolInterval.LastCandleSynchronized = fetchEndUnix; // reset
-                    CandleTools.UpdateCandleFetched(symbol, interval);
-
-                    if (candleCount == 0 && symbolInterval.LastCandleSynchronized == lastDate)
-                        break;
-                }
-            }
-
-
-            //Monitor.Enter(symbol.CandleList);
-            await symbol.CandleLock.WaitAsync();
-            try
-            {
-                // Add missing candles (the only place we know it can be done safely)
-                CandleTools.BulkAddMissingCandles(symbol, interval);
-
-                // Bulk calculate the higher interval candles
-                if (i + 1 < GlobalData.IntervalList.Count)
-                {
-                    CryptoInterval targetInterval = GlobalData.IntervalList[i + 1];
-                    CryptoInterval sourceInterval = targetInterval.ConstructFrom!;
-                    CandleTools.BulkCalculateCandles(symbol, sourceInterval, targetInterval, fetchEndUnix);
-                }
-            }
-            finally
-            {
-                //Monitor.Exit(symbol.CandleList);
-                symbol.CandleLock.Release();
-            }
-        }
-
-        // Adjust the administration for the not supported interval's
-        foreach (CryptoSymbolInterval symbolInterval in symbol.IntervalPeriodList)
-        {
-            bool intervalSupported = Interval.GetExchangeInterval(symbolInterval.IntervalPeriod) != null;
-            if (!intervalSupported && symbolInterval.CandleList.Count > 0)
-            {
-                CryptoCandle candle = symbolInterval.CandleList.Values.Last();
-                symbolInterval.LastCandleSynchronized = candle.OpenTime + symbolInterval.Interval.Duration;
-            }
-        }
-
-        // Remove the candles we needed because of the not supported intervals & bulk calculation
-        await CandleTools.CleanCandleDataAsync(symbol, null);
-    }
-
-
-    public static async Task FetchCandlesAsync(long fetchEndUnix, Queue<CryptoSymbol> queue)
-    {
-        try
-        {
-            // Reuse the socket in this thread, because:
-            // "An operation on a socket could not be performed because the system lacked sufficient buffer space or because a queue was full"
-            using KucoinRestClient client = new();
-
-            while (true)
-            {
-                CryptoSymbol symbol;
-
-                Monitor.Enter(queue);
-                try
-                {
-                    if (queue.Count > 0)
-                        symbol = queue.Dequeue();
-                    else
-                        break;
-                }
-                finally
-                {
-                    Monitor.Exit(queue);
-                }
-
-                if (symbol.ExchangeId == GlobalData.Settings.General.ExchangeId)
-                {
-                    CandleTools.DetermineFetchStartDate(symbol, fetchEndUnix);
-                    await FetchCandlesInternal(client, symbol, fetchEndUnix);
-                }
-            }
-        }
-        catch (Exception error)
-        {
-            ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab("error getting candles " + error.ToString()); // symbol.Text + " " + 
-        }
-    }
-
-
-    public static async Task GetCandlesForSymbolAsync(CryptoSymbol symbol, long fetchEndUnix)
+    public async Task GetCandlesForIntervalAsync(IDisposable? clientBase, CryptoSymbol symbol, CryptoInterval interval, long fetchEndUnix)
     {
         if (!symbol.IsSpotTradingAllowed || symbol.Status == 0 || symbol.IsBarometerSymbol() || !symbol.QuoteData.FetchCandles)
             return;
 
-        //GlobalData.AddTextToLogTab($"Fetching historical candles {symbol.Name}");
+        // Weird piece of code, unable todo: (!clientBase is KucoinRestClient client1)
+        KucoinRestClient client;
+        if (clientBase is KucoinRestClient client1)
+            client = client1;
+        else
+            throw new Exception("Expected KucoinRestClient");
 
-        using KucoinRestClient client = new();
-        await FetchCandlesInternal(client, symbol, fetchEndUnix);
+        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
 
-        //GlobalData.AddTextToLogTab("Candles ophalen klaar", true);
-    }
-
-
-    public static async Task GetCandlesForAllSymbolsAsync()
-    {
-        //GlobalData.AddTextToLogTab("Fetching historical candles");
-
-        if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
+        bool intervalSupported = Interval.GetExchangeInterval(interval.IntervalPeriod) != null;
+        if (intervalSupported)
         {
-            GlobalData.AddTextToLogTab("");
-            GlobalData.AddTextToLogTab($"Fetching {exchange.Name} information");
-            try
+            // Fetch the candles
+            while (symbolInterval.LastCandleSynchronized < fetchEndUnix)
             {
-                await Semaphore.WaitAsync();
-                try
-                {
-                    GlobalData.SetCandleTimerEnable(false);
-                    //GlobalData.AddTextToLogTab("");
-                    //GlobalData.AddTextToLogTab("Ophalen " + exchange.Name);
+                if (symbolInterval.LastCandleSynchronized + interval.Duration > fetchEndUnix)
+                    break;
 
-                    // Bij het opstarten is deze (vanuit de LoadData) reeds uitgevoerd
-                    if (GlobalData.ApplicationStatus != CryptoApplicationStatus.Initializing)
-                        await Task.Run(Symbol.ExecuteAsync);
-
-                    // TODO: Niet alle symbols zijn actief
-                    GlobalData.AddTextToLogTab($"Aantal symbols={exchange.SymbolListName.Values.Count}");
+                long lastDate = (long)symbolInterval.LastCandleSynchronized;
+                //DateTime dateStart = CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized);
+                //GlobalData.AddTextToLogTab("Debug: Fetching " + symbol.Name + " " + interval.Name + " " + dateStart.ToLocalTime());
 
 
-                    Queue<CryptoSymbol> queue = new();
-                    foreach (var symbol in exchange.SymbolListName.Values)
-                    {
-                        if (!symbol.IsSpotTradingAllowed || symbol.Status == 0 || symbol.IsBarometerSymbol())
-                            continue;
+                // Nothing more? (we have coins stopping, beaware for endless loops)
+                long candleCount = await GetCandlesForInterval(client, symbol, interval, symbolInterval, fetchEndUnix);
 
-                        if (symbol.QuoteData!.FetchCandles)
-                        {
-                            if (symbol.QuoteData.MinimalVolume == 0 || (symbol.QuoteData.MinimalVolume > 0 && symbol.Volume > 0.1m * symbol.QuoteData.MinimalVolume))
-                                //if (symbol.Name.Equals("BTCUSDT") || symbol.Name.Equals("ETHUSDT") || symbol.Name.Equals("ADABTC") || symbol.Name.Equals("LEVERBTC"))
-                                queue.Enqueue(symbol);
-                        }
-                    }
+                if (candleCount == 0 && symbolInterval.LastCandleSynchronized > fetchEndUnix)
+                    symbolInterval.LastCandleSynchronized = fetchEndUnix; // reset
+                CandleTools.UpdateCandleFetched(symbol, interval);
 
-
-                    // Haal de candles op en zorg dat deze overlapt met de candles van de socket stream(s)
-                    // De datum en tijd tot na het activeren van beide streams (overlap)
-                    DateTime fetchEndUnixDate = DateTimeOffset.UtcNow.UtcDateTime;
-                    long fetchEndUnix = CandleTools.GetUnixTime(fetchEndUnixDate, 60);
-
-
-                    // En dan door x tasks de queue leeg laten trekken
-                    List<Task> taskList = [];
-                    while (taskList.Count < 5)
-                    {
-                        Task task = Task.Run(async () => { await FetchCandlesAsync(fetchEndUnix, queue); });
-                        taskList.Add(task);
-                    }
-                    await Task.WhenAll(taskList).ConfigureAwait(false);
-
-                    GlobalData.AddTextToLogTab("Candles ophalen klaar");
-                }
-                finally
-                {
-                    // Enabled analysing
-                    GlobalData.SetCandleTimerEnable(true);
-
-                    Semaphore.Release();
-                }
+                if (candleCount == 0 && symbolInterval.LastCandleSynchronized == lastDate)
+                    break;
             }
-            catch (Exception error)
+        }
+
+        await symbol.CandleLock.WaitAsync();
+        try
+        {
+            // Add missing candles (the only place we know it can be done safely)
+            CandleTools.BulkAddMissingCandles(symbol, interval);
+
+            // Bulk calculate the higher interval candles
+            if (interval.IntervalPeriod < Enum.GetValues(typeof(CryptoIntervalPeriod)).Cast<CryptoIntervalPeriod>().Last())
             {
-                ScannerLog.Logger.Error(error, "");
-                GlobalData.AddTextToLogTab("error get prices " + error.ToString());
+                CryptoInterval targetInterval = GlobalData.IntervalListPeriod[interval.IntervalPeriod + 1];
+                CryptoInterval sourceInterval = targetInterval.ConstructFrom!;
+                CandleTools.BulkCalculateCandles(symbol, sourceInterval, targetInterval, fetchEndUnix);
             }
+        }
+        finally
+        {
+            symbol.CandleLock.Release();
+        }
+
+
+        // Adjust the administration for the not supported interval's
+        if (!intervalSupported && symbolInterval.CandleList.Count > 0)
+        {
+            CryptoCandle candle = symbolInterval.CandleList.Values.Last();
+            symbolInterval.LastCandleSynchronized = candle.OpenTime + symbolInterval.Interval.Duration;
         }
     }
 
+
+    public async Task GetCandlesForAllIntervalsAsync(CryptoSymbol symbol, long fetchEndUnix)
+    {
+        if (!symbol.IsSpotTradingAllowed || symbol.Status == 0 || symbol.IsBarometerSymbol() || !symbol.QuoteData.FetchCandles)
+            return;
+
+        using KucoinRestClient client = new();
+        for (int i = 0; i < GlobalData.IntervalList.Count; i++)
+        {
+            CryptoInterval interval = GlobalData.IntervalList[i];
+            await GetCandlesForIntervalAsync(client, symbol, interval, fetchEndUnix);
+        }
+
+
+        // Remove the candles we needed because of the not supported intervals & bulk calculation
+        await CandleTools.CleanCandleDataAsync(symbol, null);
+    }
 
 }

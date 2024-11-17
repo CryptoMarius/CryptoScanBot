@@ -9,7 +9,7 @@ using Kraken.Net.Objects.Models;
 
 namespace CryptoScanBot.Core.Exchange.Kraken.Spot;
 
-public class Asset
+public class Asset(ExchangeBase api) : AssetBase(api), IAsset
 {
     public static void PickupAssets(CryptoAccount tradeAccount, Dictionary<string, KrakenBalanceAvailable> balances)
     {
@@ -74,7 +74,7 @@ public class Asset
     }
 
 
-    public static async Task GetAssetsAsync(CryptoAccount tradeAccount)
+    public async Task GetAssetsAsync(CryptoAccount tradeAccount)
     {
         //if (GlobalData.ExchangeListName.TryGetValue(ExchangeName, out Model.CryptoExchange? exchange))
         {

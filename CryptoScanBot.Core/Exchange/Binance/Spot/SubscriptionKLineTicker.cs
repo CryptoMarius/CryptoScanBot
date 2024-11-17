@@ -47,7 +47,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
             {
                 Task.Run(async () => { await ProcessCandleAsync(data.Data); });
             }
-        }, ExchangeHelper.CancellationToken).ConfigureAwait(false);
+        }, ExchangeBase.CancellationToken).ConfigureAwait(false);
 
 
         return subscriptionResult;

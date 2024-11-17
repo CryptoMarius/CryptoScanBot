@@ -49,8 +49,8 @@ public class LoadHistoricalData
 
         // fetch additional candles
         long fetchEndUnix = CandleTools.GetUnixTime(end, 60);
-        var exchangeApi = ExchangeHelper.GetApiInstance();
-        await exchangeApi.GetCandlesForSymbolAsync(symbol, fetchEndUnix);
+        var api = GlobalData.Settings.General.Exchange!.GetApiInstance();
+        await api.Candle.GetCandlesForAllIntervalsAsync(symbol, fetchEndUnix);
 
         // restore LastCandleSynchronized
         foreach (var interval in GlobalData.IntervalList)

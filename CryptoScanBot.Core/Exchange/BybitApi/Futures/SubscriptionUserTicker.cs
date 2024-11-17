@@ -27,7 +27,7 @@ public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscript
             {
                 // We krijgen duplicaat json berichten binnen (even een quick & dirty fix)
                 string info = $"{data.Symbol} UserTicker {data.Side} {data.Status} order={data.OrderId} quantity={data.Quantity} price={data.Price} value={data.Price * data.QuantityFilled}";
-                string text = JsonSerializer.Serialize(data, ExchangeHelper.JsonSerializerNotIndented).Trim();
+                string text = JsonSerializer.Serialize(data, GlobalData.JsonSerializerNotIndented).Trim();
                 GlobalData.AddTextToLogTab(info);
                 ScannerLog.Logger.Trace($"{info} json={text}");
 

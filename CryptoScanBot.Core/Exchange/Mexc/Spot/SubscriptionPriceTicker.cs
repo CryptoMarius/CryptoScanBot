@@ -47,7 +47,7 @@ public class SubscriptionPriceTicker(ExchangeOptions exchangeOptions) : Subscrip
                 if (TickerCount > 999999999)
                     Interlocked.Exchange(ref TickerCount, 0);
             }
-        }, null, ExchangeHelper.CancellationToken).ConfigureAwait(false);
+        }, null, ExchangeBase.CancellationToken).ConfigureAwait(false);
 
         return subscriptionResult;
     }

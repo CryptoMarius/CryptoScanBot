@@ -81,7 +81,7 @@ public class BarometerTools
         //    GlobalData.AddTextToLogTab($"Calculating volume barometer chart {quoteData.Name} {interval.Name}");
 
         CryptoSymbolInterval symbolInterval = bmSymbol.GetSymbolInterval(interval.IntervalPeriod);
-        SortedList<long, CryptoCandle> candles = symbolInterval.CandleList;
+        CryptoCandleList candles = symbolInterval.CandleList;
 
         // Remove old candles from the barometer symbol (< 24 hours, 1440 candles)
         if (!GlobalData.BackTest)

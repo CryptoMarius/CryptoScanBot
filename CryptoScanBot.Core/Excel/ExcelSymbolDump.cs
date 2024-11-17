@@ -10,7 +10,7 @@ namespace CryptoScanBot.Core.Excel;
 public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
 {
 
-    //static private void ExportToExcel(Model.CryptoExchange exchange, CryptoSymbol symbol, CryptoInterval interval, SortedList<long, CryptoCandle> candleList)
+    //static private void ExportToExcel(Model.CryptoExchange exchange, CryptoSymbol symbol, CryptoInterval interval, CryptoCandleList candleList)
     //{
     //    //Deze is op dit moment specifiek voor de TradeView aanpak gemaakt (datum er ff uitgehaald en vervangen met unix 1000's)
     //    try

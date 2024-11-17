@@ -1,26 +1,17 @@
-﻿using Binance.Net;
-using Binance.Net.Clients;
-using Binance.Net.Enums;
-using Binance.Net.Objects;
-using Binance.Net.Objects.Models;
+﻿using Binance.Net.Clients;
 using Binance.Net.Objects.Models.Spot;
 using Binance.Net.Objects.Models.Spot.Socket;
 
-using CryptoExchange.Net.Authentication;
 using CryptoExchange.Net.Objects;
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Intern;
-using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 
 using Dapper.Contrib.Extensions;
 
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-
 namespace CryptoScanBot.Core.Exchange.Binance.Spot;
 
-public class Asset
+public class Asset(ExchangeBase api) : AssetBase(api), IAsset
 {
     public static void PickupAssets(CryptoAccount tradeAccount, IEnumerable<BinanceStreamBalance> balances)
     {
@@ -126,7 +117,7 @@ public class Asset
 
 
 
-    public static async Task GetAssetsAsync(CryptoAccount tradeAccount)
+    public async Task GetAssetsAsync(CryptoAccount tradeAccount)
     {
         //ScannerLog.Logger.Trace($"Exchange.Binance.GetAssetsForAccountAsync: Positie {tradeAccount.Name}");
         //if (GlobalData.ExchangeListName.TryGetValue(ExchangeName, out Model.CryptoExchange? exchange))

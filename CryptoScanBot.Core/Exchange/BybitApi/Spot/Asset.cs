@@ -9,7 +9,7 @@ using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot.Core.Exchange.BybitApi.Spot;
 
-public class Asset
+public class Asset(ExchangeBase api) : AssetBase(api), IAsset
 {
     static public void PickupAssets(CryptoAccount tradeAccount, BybitAllAssetBalances balances)
     {
@@ -80,7 +80,7 @@ public class Asset
     }
 
 
-    public static async Task GetAssetsAsync(CryptoAccount tradeAccount)
+    public async Task GetAssetsAsync(CryptoAccount tradeAccount)
     {
         //ScannerLog.Logger.Trace($"Exchange.BybitSpot.GetAssetsForAccountAsync: Positie {tradeAccount.Name}");
         //if (GlobalData.ExchangeListName.TryGetValue(ExchangeName, out Model.CryptoExchange? exchange))

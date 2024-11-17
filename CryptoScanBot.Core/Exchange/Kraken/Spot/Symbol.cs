@@ -1,5 +1,4 @@
-﻿using System.Text.Encodings.Web;
-using System.Text.Json;
+﻿using System.Text.Json;
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
@@ -10,10 +9,9 @@ using Kraken.Net.Enums;
 
 namespace CryptoScanBot.Core.Exchange.Kraken.Spot;
 
-public class Symbol
+public class Symbol(ExchangeBase api) : SymbolBase(api), ISymbol
 {
-
-    public static async Task ExecuteAsync()
+    public async Task GetSymbolsAsync()
     {
         if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
         {
