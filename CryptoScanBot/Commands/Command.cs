@@ -19,7 +19,7 @@ public enum Command
     ScannerSessionDebug,
     PositionCalculate,
     TradingViewImportList,
-    ShowGraph,
+    ShowSymbolGraph,
     About,
     CalculateLiquidityZones,
 }
@@ -29,5 +29,5 @@ public enum Command
 
 public abstract class CommandBase
 {
-    public abstract void Execute(object sender);
+    public abstract void Execute(ToolStripMenuItemCommand item, object sender);
 }

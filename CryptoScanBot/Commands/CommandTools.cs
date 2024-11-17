@@ -31,7 +31,7 @@ public class CommandTools
             switch (item.Command)
             {
                 case Command.About:
-                    new CommandAbout().Execute(sender);
+                    new CommandAbout().Execute(item, sender);
                     return;
 
                 case Command.ExcelExchangeInformation:
@@ -56,11 +56,11 @@ public class CommandTools
 
                 case Command.CopyDataGridCells:
                     if (item.DataGrid is CryptoDataGrid dataGrid2)
-                        new CommandCopyDataCells().Execute(dataGrid2);
+                        new CommandCopyDataCells().Execute(item, dataGrid2);
                     return;
 
                 case Command.CalculateLiquidityZones:
-                    _ = Task.Run(() => { _ = LiquidityZones.CalculateAllSymbolsAsync(null); });
+                    _ = Task.Run(() => { _ = LiquidityZones.CalculateZonesForAllSymbolsAsync(null); });
                     return;
                     
             }
@@ -76,7 +76,7 @@ public class CommandTools
                     {
                         case Command.CopySymbolInformation:
                             if (symbol != null)
-                                new CommandCopySymbolInfo().Execute(symbol);
+                                new CommandCopySymbolInfo().Execute(item, symbol);
                             break;
                         case Command.ActivateTradingApp:
                             CryptoExternalUrlType tradingAppInternExtern = CryptoExternalUrlType.External;
@@ -104,7 +104,7 @@ public class CommandTools
                             break;
                         case Command.ShowTrendInformation:
                             if (symbol != null)
-                                new CommandShowTrendInfo().Execute(symbol);
+                                new CommandShowTrendInfo().Execute(item, symbol);
                             break;
                         case Command.ExcelSignalInformation:
                             if (signal != null)
@@ -145,11 +145,11 @@ public class CommandTools
                                 }
                             }
                             break;
-                        case Command.ShowGraph:
+                        case Command.ShowSymbolGraph:
                             if (symbol != null && interval != null)
                             {
                                 CommandShowGraph command = new();
-                                command.Execute(symbol);
+                                command.Execute(item, symbol);
                             }
                             break;
                     }

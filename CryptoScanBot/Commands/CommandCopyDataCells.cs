@@ -4,7 +4,7 @@ namespace CryptoScanBot.Commands;
 
 public class CommandCopyDataCells : CommandBase
 {
-    public override void Execute(object sender)
+    public override void Execute(ToolStripMenuItemCommand item, object sender)
     {
         string text = "";
         if (sender is CryptoDataGrid grid)
@@ -15,7 +15,7 @@ public class CommandCopyDataCells : CommandBase
 
                 for (int columnIndex = 0; columnIndex < grid.Grid.ColumnCount - 1; columnIndex++)
                 {
-                    var item = grid.Grid.Rows[rowIndex].Cells[columnIndex];
+                    //var item = grid.Grid.Rows[rowIndex].Cells[columnIndex];
                     DataGridViewCellValueEventArgs e = new(columnIndex, rowIndex);
                     grid.GetTextFunction(sender, e);
                     text += e.Value?.ToString() + ";";

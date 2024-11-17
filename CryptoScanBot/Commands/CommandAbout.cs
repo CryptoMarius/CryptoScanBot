@@ -2,7 +2,7 @@
 
 public class CommandAbout : CommandBase
 {
-    public override void Execute(object sender)
+    public override void Execute(ToolStripMenuItemCommand item, object sender)
     {
         AboutBox form = new()
         {

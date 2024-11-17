@@ -4,7 +4,7 @@ namespace CryptoScanBot.Commands;
 
 public class CommandCopySymbolInfo : CommandBase
 {
-    public override void Execute(object sender)
+    public override void Execute(ToolStripMenuItemCommand item, object sender)
     {
         string text = "";
         if (sender is CryptoSymbol symbol)

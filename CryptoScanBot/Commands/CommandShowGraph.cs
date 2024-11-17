@@ -5,7 +5,7 @@ namespace CryptoScanBot.Commands;
 
 public class CommandShowGraph : CommandBase
 {
-    public override void Execute(object sender)
+    public override void Execute(ToolStripMenuItemCommand item, object sender)
     {
         if (sender is CryptoSymbol symbol)
         {
@@ -19,7 +19,12 @@ public class CommandShowGraph : CommandBase
             //if (dialog.ShowDialog() != DialogResult.OK)
             //    return;
 
-            dialog.Show();
+            Form parent = null;
+            if (item.DataGrid != null)
+                parent = item.DataGrid.Grid.FindForm();
+            //var x = item.GetCurrentParent().Owner;
+            //Form parent = x!.FindForm(item);
+            dialog.Show(parent);
         }
     }
 

@@ -8,7 +8,7 @@ namespace CryptoScanBot.Commands;
 
 public class CommandShowTrendInfo : CommandBase
 {
-    public override void Execute(object sender)
+    public override void Execute(ToolStripMenuItemCommand item, object sender)
     {
         if (sender is CryptoSymbol symbol)
         {
