@@ -76,7 +76,7 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
         menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Copy symbol name", Command.CopySymbolInformation);
         menuStrip.AddCommand(this, "Copy data cells", Command.CopyDataGridCells);
-        menuStrip.AddCommand(this, "Show symbol chart", Command.ShowGraph);
+        menuStrip.AddCommand(this, "Show symbol chart", Command.ShowSymbolGraph);
         menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Export trend information to log", Command.ShowTrendInformation);
         menuStrip.AddCommand(this, "Export signal information to Excel", Command.ExcelSignalInformation);
@@ -89,10 +89,6 @@ public class CryptoDataGridSignal<T>(DataGridView grid, List<T> list, SortedList
         //        menuStrip.AddCommand(this, "Test - Open position", Command.None, CreatePosition);
         //#endif
 
-#if DEBUG
-        menuStrip.AddSeperator();
-        menuStrip.AddCommand(this, "Test - Show graph information", Command.ShowGraph);
-#endif
 
         TimerClearOldSignals = new()
         {

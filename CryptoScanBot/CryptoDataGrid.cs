@@ -354,12 +354,34 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
 
     public void GridDoubleClick(object? sender, EventArgs? e)
     {
-        var point = Grid.PointToClient(Cursor.Position);
-        var info = Grid.HitTest(point.X, point.Y);
-        if (info.RowIndex >= 0)
+        if (Grid != null)
         {
-            MenuStripOpening(sender, e);
-            MenuStripCells.Items[0].PerformClick();
+            var point = Grid.PointToClient(Cursor.Position);
+            var info = Grid.HitTest(point.X, point.Y);
+            if (info.RowIndex >= 0)
+            {
+                MenuStripOpening(sender, e);
+                //MenuStripCells.Items[0].PerformClick(); // first item = tradingapp
+                
+                Command command;
+                if (GlobalData.Settings.General.DoubleClickAction == CryptoDoubleClickAction.ActivateTradingApp)
+                    command = Command.ActivateTradingApp;
+                else
+                    command = Command.ShowSymbolGraph;
+
+
+                foreach (var menuItem in MenuStripCells.Items)
+                {
+                    if (menuItem is ToolStripMenuItemCommand item)
+                    {
+                        if (item.Command == command)
+                        {
+                            item.PerformClick();
+                            break;
+                        }
+                    }
+                }
+            }
         }
     }
 

@@ -26,7 +26,7 @@ public class CryptoDataGridSymbol<T>(DataGridView grid, List<T> list, SortedList
 
         menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Copy symbol name", Command.CopySymbolInformation);
-        menuStrip.AddCommand(this, "Show symbol chart", Command.ShowGraph);
+        menuStrip.AddCommand(this, "Show symbol chart", Command.ShowSymbolGraph);
         menuStrip.AddCommand(this, "Export trend information to log", Command.ShowTrendInformation);
         menuStrip.AddCommand(this, "Export symbol information to Excel", Command.ExcelSymbolInformation);
         //menuStrip.AddCommand(this, "Create Position", Command.None, CreatePosition);
