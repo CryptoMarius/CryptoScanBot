@@ -153,7 +153,6 @@ public class ThreadCheckFinishedPosition
 
             // Deze routine is vanwege de Last() niet geschikt voor de emulator
             // Hoe lossen we dat nu weer op, want wordt strakt een echt probleem.
-            //Monitor.Enter(position.Symbol.CandleList);
             await position.Symbol.CandleLock.WaitAsync();
             try
             {
@@ -168,7 +167,6 @@ public class ThreadCheckFinishedPosition
             }
             finally
             {
-                //Monitor.Exit(position.Symbol.CandleList);
                 position.Symbol.CandleLock.Release();
             }
 

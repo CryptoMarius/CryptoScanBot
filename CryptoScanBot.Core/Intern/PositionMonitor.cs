@@ -650,7 +650,6 @@ public class PositionMonitor : IDisposable
 
 
         // Die indicator berekening had ik niet verwacht (cooldown?)
-        //Monitor.Enter(position.Symbol.CandleList);
         await position.Symbol.CandleLock.WaitAsync();
         try
         {
@@ -682,7 +681,6 @@ public class PositionMonitor : IDisposable
         }
         finally
         {
-            //Monitor.Exit(position.Symbol.CandleList);
             position.Symbol.CandleLock.Release();
         }
 

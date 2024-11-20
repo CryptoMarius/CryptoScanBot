@@ -32,6 +32,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
     public override async Task<CallResult<UpdateSubscription>?> Subscribe()
     {
+        SemaphoreSlim symbolListSemaphore = new(1, 1);
         SortedList<string, CryptoCandleList> klineListTemp = [];
 
         // TODO: quick en dirty code hier, nog eens verbeteren
@@ -71,8 +72,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                     string symbolName = data.Symbol!;
                     if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
                     {
-                        //Monitor.Enter(symbol.CandleList);
-                        await symbol.CandleLock.WaitAsync();
+                        await symbolListSemaphore.WaitAsync();
                         try
                         {
                             // Add or update the local cache
@@ -102,8 +102,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                         }
                         finally
                         {
-                            //Monitor.Exit(symbol.CandleList);
-                            symbol.CandleLock.Release();
+                            symbolListSemaphore.Release();
                         }
                     }
                 }
@@ -130,8 +129,8 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                     CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
                     long expectedCandlesUpto = CandleTools.GetUnixTime(DateTime.UtcNow, 60) - interval.Duration;
 
-                    //Monitor.Enter(symbol.CandleList);
-                    await symbol.CandleLock.WaitAsync();
+                    //await symbol.Lock("kucoin kline ticker2");
+                    await symbolListSemaphore.WaitAsync();
                     try
                     {
                         // If needed add dummy candle(s) with the same price as the last candle
@@ -156,6 +155,9 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                                     nextCandle.High = lastCandle.Close;
                                     nextCandle.Low = lastCandle.Close;
                                     nextCandle.Close = lastCandle.Close;
+#if SUPPORTBASEVOLUME
+                                    nextCandle.BaseVolume = 0; // no volume (flat candle)
+#endif
                                     nextCandle.Volume = 0; // no volume (flat candle)
                                     lastCandle = nextCandle;
                                 }
@@ -174,6 +176,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                                 if (TickerCount > 999999999)
                                     Interlocked.Exchange(ref TickerCount, 0);
 
+
                                 //ScannerLog.Logger.Trace($"kline ticker {topic} process");
                                 //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", topic, kline.Timestamp.ToLocalTime()));
                                 await CandleTools.Process1mCandleAsync(symbol, candle.Date, candle.Open, candle.High, candle.Low, candle.Close,
@@ -184,6 +187,8 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 #endif
                                     candle.Volume, candle.IsDuplicated);
 
+                                //if (symbol.Name == "GAMEUSDT") // debug very low volume symbol
+                                //    GlobalData.AddTextToLogTab($"candle added {candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true)}");
 
                                 // Debug...
                                 //if (candle.IsDuplicated)
@@ -194,8 +199,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                                 // Aanbieden voor analyse (dit gebeurd zowel in de ticker als ProcessCandles)
                                 if (candle.OpenTime == expectedCandlesUpto)
                                 {
- 
-                                    //GlobalData.AddTextToLogTab("Aanbieden analyze " + candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true));
+                                     //GlobalData.AddTextToLogTab("Aanbieden analyze " + candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true));
                                     GlobalData.ThreadMonitorCandle?.AddToQueue(symbol, candle);
                                 }
                             }
@@ -205,8 +209,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                     }
                     finally
                     {
-                        //Monitor.Exit(symbol.CandleList);
-                        symbol.CandleLock.Release();
+                        symbolListSemaphore.Release();
                     }
                 }
 

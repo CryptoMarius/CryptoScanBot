@@ -131,6 +131,9 @@ public static class CandleTools
         return candle!;
     }
 
+
+
+
     /// <summary>
     /// Calculate the candle using the candles from the lower timeframes
     /// </summary>
@@ -267,7 +270,7 @@ public static class CandleTools
     public static async Task<CryptoCandle> Process1mCandleAsync(CryptoSymbol symbol, DateTime openTime, decimal open, decimal high, decimal low, decimal close, 
         decimal baseVolume, decimal quoteVolume, bool duplicated = false)
     {
-        //Monitor.Enter(symbol.CandleList);
+        //await symbol.Lock("Process1mCandleAsync");
         await symbol.CandleLock.WaitAsync();
         try
         {
@@ -307,8 +310,8 @@ public static class CandleTools
         }
         finally
         {
-            //Monitor.Exit(symbol.CandleList);
             symbol.CandleLock.Release();
+            //symbol.Unlock("Process1mCandleAsync");
         }
     }
 
@@ -429,7 +432,7 @@ public static class CandleTools
         {
             if (lastCandle1mCloseTime == null || lastCandle1mCloseTime % interval.Duration == 0)
             {
-                //Monitor.Enter(symbol.CandleList);
+                //await symbol.Lock("CleanCandleDataAsync");
                 await symbol.CandleLock.WaitAsync();
                 try
                 {
@@ -461,7 +464,7 @@ public static class CandleTools
                 }
                 finally
                 {
-                    //Monitor.Exit(symbol.CandleList);
+                    //symbol.Unlock("CleanCandleDataAsync");
                     symbol.CandleLock.Release();
                 }
             }

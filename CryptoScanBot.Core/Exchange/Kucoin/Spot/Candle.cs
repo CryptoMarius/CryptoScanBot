@@ -61,7 +61,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
             // Remember
             long? startFetchDate = symbolInterval.LastCandleSynchronized;
 
-            //Monitor.Enter(symbol.CandleList);
+            //await symbol.Lock("kucoin candle");
             await symbol.CandleLock.WaitAsync();
             try
             {
@@ -102,8 +102,8 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
             }
             finally
             {
-                //Monitor.Exit(symbol.CandleList);
                 symbol.CandleLock.Release();
+                //symbol.Unlock("kucoin candle");
             }
 
 
