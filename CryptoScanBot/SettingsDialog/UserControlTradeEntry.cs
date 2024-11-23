@@ -52,9 +52,9 @@ public partial class UserControlTradeEntry : UserControl
 
     public void SaveConfig(SettingsTrading settings)
     {
-        settings.EntryOrderType = (CryptoOrderType)EditOrderType.SelectedValue;
-        settings.EntryStrategy = (CryptoEntryOrDcaStrategy)EditStrategy.SelectedValue;
-        settings.EntryOrderPrice = (CryptoEntryOrDcaPricing)EditPricing.SelectedValue;
+        settings.EntryOrderType = (CryptoOrderType)EditOrderType.SelectedValue!;
+        settings.EntryStrategy = (CryptoEntryOrDcaStrategy)EditStrategy.SelectedValue!;
+        settings.EntryOrderPrice = (CryptoEntryOrDcaPricing)EditPricing.SelectedValue!;
         settings.EntryRemoveTime = (int)EditGlobalBuyRemoveTime.Value;
 
         // fix: if market order then use marketprice

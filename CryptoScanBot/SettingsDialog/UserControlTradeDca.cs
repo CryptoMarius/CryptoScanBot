@@ -75,9 +75,9 @@ public partial class UserControlTradeDca : UserControl
 
     public void SaveConfig(SettingsTrading settings)
     {
-        settings.DcaOrderType = (CryptoOrderType)EditOrderType.SelectedValue;
-        settings.DcaStrategy = (CryptoEntryOrDcaStrategy)EditStrategy.SelectedValue;
-        settings.DcaOrderPrice = (CryptoEntryOrDcaPricing)EditPricing.SelectedValue;
+        settings.DcaOrderType = (CryptoOrderType)EditOrderType.SelectedValue!;
+        settings.DcaStrategy = (CryptoEntryOrDcaStrategy)EditStrategy.SelectedValue!;
+        settings.DcaOrderPrice = (CryptoEntryOrDcaPricing)EditPricing.SelectedValue!;
 
         settings.DcaList.Clear();
         foreach (UserControlTradeDcaItem control in UserControlDcaList)

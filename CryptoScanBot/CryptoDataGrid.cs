@@ -50,10 +50,10 @@ public static class ControlHelper
 public abstract class CryptoDataGrid
 {
     // references
-    internal DataGridView? Grid;
+    public required DataGridView Grid;
     internal Object? SelectedObject;
     internal int SelectedObjectIndex;
-    internal SortedList<string, ColumnSetting> ColumnList = [];
+    public required SortedList<string, ColumnSetting> ColumnList = [];
 
     public abstract void GetTextFunction(object? sender, DataGridViewCellValueEventArgs e);
 }
@@ -61,7 +61,7 @@ public abstract class CryptoDataGrid
 
 public abstract class CryptoDataGrid<T>: CryptoDataGrid
 {
-    internal readonly List<T> List;
+    public required List<T> List;
     internal ContextMenuStrip MenuStripCells = new();
     internal ContextMenuStrip MenuStripHeader = new();
 
@@ -75,18 +75,15 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
     internal Color VeryLightGray2 = Color.FromArgb(0xa1, 0xa1, 0xa1);
 
 
-    public CryptoDataGrid(DataGridView grid, List<T> list, SortedList<string, ColumnSetting> columnList)
+    internal void InitGrid()
     {
-        Grid = grid;
-        List = list;
-        ColumnList = columnList;
-        int count = columnList.Count;
+        int count = ColumnList.Count;
 
         InitializeGrid();
         InitializeHeaders();
         ShowSortIndicator();
         FillColumnPopup();
-        if (columnList.Count != count)
+        if (ColumnList.Count != count)
             GlobalData.SaveUserSettings();
     }
 
@@ -111,21 +108,25 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
 
     public void AdjustObjectCount()
     {
-        Grid.RowCount = List.Count;
+        if (Grid != null)
+            Grid.RowCount = List.Count;
     }
 
     public void Clear()
     {
-        Grid.SuspendDrawing();
-        try
+        if (Grid != null)
         {
-            List.Clear();
-            Grid.RowCount = List.Count;
-            Grid.Invalidate();
-        }
-        finally
-        {
-            Grid.ResumeDrawing();
+            Grid.SuspendDrawing();
+            try
+            {
+                List.Clear();
+                Grid.RowCount = List.Count;
+                Grid.Invalidate();
+            }
+            finally
+            {
+                Grid.ResumeDrawing();
+            }
         }
     }
 

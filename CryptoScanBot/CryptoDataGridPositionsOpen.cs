@@ -14,8 +14,7 @@ using CryptoScanBot.Core.Trend;
 
 namespace CryptoScanBot;
 
-public class CryptoDataGridPositionsOpen<T>(DataGridView grid, List<T> list, SortedList<string, ColumnSetting> columnList) :
-    CryptoDataGrid<T>(grid, list, columnList) where T : CryptoPosition
+public class CryptoDataGridPositionsOpen<T>() : CryptoDataGrid<T>() where T : CryptoPosition
 {
     private enum ColumnsForGrid
     {

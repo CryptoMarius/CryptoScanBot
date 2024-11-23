@@ -24,7 +24,7 @@ public class LiquidityZones
             fetchFrom -= GlobalData.Settings.Signal.Zones.CandleCount * data.SymbolInterval.Interval.Duration;
 
             // Load candles from disk and exchange
-            CandleEngine.LoadDataFromDisk(data.Symbol, data.Interval, data.SymbolInterval.CandleList);
+            CandleEngine.LoadCandleDataFromDisk(data.Symbol, data.Interval, data.SymbolInterval.CandleList);
             if (await CandleEngine.FetchFrom(data.Symbol, data.Interval, data.SymbolInterval.CandleList, log, fetchFrom, GlobalData.Settings.Signal.Zones.CandleCount))
                 CandleEngine.LoadedCandlesInMemory[data.Interval.IntervalPeriod] = true;
             if (data.SymbolInterval.CandleList.Count == 0)
@@ -69,13 +69,13 @@ public class LiquidityZones
             //plotView.Model.InvalidatePlot(true);
             //plotView.Model.MouseDown += OnChartClick;
             //ScannerLog.Logger.Info($"Done plotting data");
-            CandleEngine.SaveAddedCandleData(data.Symbol, log);
+            CandleEngine.SaveCandleDataToDisk(data.Symbol, log);
         }
         catch (Exception e)
         {
             log.AppendLine(e.ToString());
             ScannerLog.Logger.Info($"ERROR {e}");
-            CandleEngine.SaveAddedCandleData(data.Symbol, log);
+            CandleEngine.SaveCandleDataToDisk(data.Symbol, log);
         }
 
         if (sender == null)

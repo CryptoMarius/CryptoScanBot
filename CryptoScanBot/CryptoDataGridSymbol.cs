@@ -5,8 +5,7 @@ using CryptoScanBot.Core.Settings;
 
 namespace CryptoScanBot;
 
-public class CryptoDataGridSymbol<T>(DataGridView grid, List<T> list, SortedList<string, ColumnSetting> columnList) : 
-    CryptoDataGrid<T>(grid, list, columnList) where T : CryptoSymbol
+public class CryptoDataGridSymbol<T>() : CryptoDataGrid<T>() where T : CryptoSymbol
 {
     private enum ColumnsForGrid
     {

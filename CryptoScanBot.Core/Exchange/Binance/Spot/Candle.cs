@@ -178,22 +178,4 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         }
     }
 
-
-    public async Task GetCandlesForAllIntervalsAsync(CryptoSymbol symbol, long fetchEndUnix)
-    {
-        if (!symbol.IsSpotTradingAllowed || symbol.Status == 0 || symbol.IsBarometerSymbol() || !symbol.QuoteData.FetchCandles)
-            return;
-
-        using BinanceRestClient client = new();
-        for (int i = 0; i < GlobalData.IntervalList.Count; i++)
-        {
-            CryptoInterval interval = GlobalData.IntervalList[i];
-            await GetCandlesForIntervalAsync(client, symbol, interval, fetchEndUnix);
-        }
-
-
-        // Remove the candles we needed because of the not supported intervals & bulk calculation
-        await CandleTools.CleanCandleDataAsync(symbol, null);
-    }
-
 }

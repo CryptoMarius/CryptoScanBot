@@ -119,10 +119,17 @@ public partial class FrmMain : Form
         // Instelling laden
         GlobalData.LoadSettings();
 
-        GridSymbolView = new(dataGridViewSymbols, SymbolListView, GlobalData.SettingsUser.GridColumnsSymbol);
-        GridSignalView = new(dataGridViewSignals, SignalListView, GlobalData.SettingsUser.GridColumnsSignal);
-        GridPositionOpenView = new(dataGridViewPositionOpen, PositionOpenListView, GlobalData.SettingsUser.GridColumnsPositionsOpen);
-        GridPositionClosedView = new(dataGridViewPositionClosed, PositionClosedListView, GlobalData.SettingsUser.GridColumnsPositionsClosed);
+        GridSymbolView = new() {  Grid = dataGridViewSymbols, List = SymbolListView, ColumnList = GlobalData.SettingsUser.GridColumnsSymbol };
+        GridSymbolView.InitGrid();
+
+        GridSignalView = new() { Grid = dataGridViewSignals, List = SignalListView, ColumnList = GlobalData.SettingsUser.GridColumnsSignal };
+        GridSignalView.InitGrid();
+
+        GridPositionOpenView = new() { Grid = dataGridViewPositionOpen, List = PositionOpenListView, ColumnList = GlobalData.SettingsUser.GridColumnsPositionsOpen};
+        GridPositionOpenView.InitGrid();
+
+        GridPositionClosedView = new() { Grid = dataGridViewPositionClosed, List = PositionClosedListView, ColumnList = GlobalData.SettingsUser.GridColumnsPositionsClosed };
+        GridPositionClosedView.InitGrid();
 
         // Dummy browser verbergen, is een browser om het extra confirmatie dialoog in externe browser te vermijden
         LinkTools.TabControl = tabControl;
@@ -299,7 +306,7 @@ public partial class FrmMain : Form
 
             if (components != null)
             {
-                LinkTools.WebViewDummy.Dispose();
+                LinkTools.WebViewDummy?.Dispose();
                 components.Dispose();
             }
         }
@@ -447,7 +454,7 @@ public partial class FrmMain : Form
 
             // Detectie of we hebben gewisseld van Exchange (reload) of QuoteData (reload)
             bool reloadQuoteChange = activeQuotes != activeQuotes2;
-            bool reloadExchangeChange = dialog.NewExchange.Id != GlobalData.Settings.General.ExchangeId;
+            bool reloadExchangeChange = dialog.NewExchange?.Id != GlobalData.Settings.General.ExchangeId;
             if (reloadQuoteChange || reloadExchangeChange)
             {
                 GlobalData.AddTextToLogTab("");

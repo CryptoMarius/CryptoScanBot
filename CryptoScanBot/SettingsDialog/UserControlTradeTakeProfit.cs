@@ -41,8 +41,8 @@ public partial class UserControlTradeTakeProfit : UserControl
 
     public void SaveConfig(SettingsTrading settings)
     {
-        settings.TakeProfitOrderType = (CryptoOrderType)EditOrderType.SelectedValue;
-        settings.TakeProfitStrategy = (CryptoTakeProfitStrategy)EditMethod.SelectedValue;
+        settings.TakeProfitOrderType = (CryptoOrderType)EditOrderType.SelectedValue!;
+        settings.TakeProfitStrategy = (CryptoTakeProfitStrategy)EditMethod.SelectedValue!;
         settings.ProfitPercentage = EditProfitPercentage.Value;
         settings.AddDustToTp = EditAddDustToTp.Checked;
         //settings.LockProfits = EditLockProfits.Checked;

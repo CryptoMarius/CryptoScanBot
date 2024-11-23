@@ -154,7 +154,7 @@ public class CryptoCalculation
                 if (symbol.Exchange.IsIntervalSupported(zoomInterval.IntervalPeriod))
                 {
                     int count = durationForThisCandle / zoomInterval.Interval.Duration;
-                    CandleEngine.LoadDataFromDisk(symbol, zoomInterval.Interval, zoomInterval.CandleList);
+                    CandleEngine.LoadCandleDataFromDisk(symbol, zoomInterval.Interval, zoomInterval.CandleList);
                     if (await CandleEngine.FetchFrom(symbol, zoomInterval.Interval, zoomInterval.CandleList, log, unixStart, count))
                         CandleEngine.LoadedCandlesInMemory[zoomInterval.Interval.IntervalPeriod] = true;
 

@@ -16,15 +16,18 @@ public class CommandShowGraph : CommandBase
             //ChangeTheme(Main.theme, dialog);
             dialog.StartWithSymbolAsync(symbol);
 
-            //if (dialog.ShowDialog() != DialogResult.OK)
-            //    return;
 
-            Form parent = null;
-            if (item.DataGrid != null)
+            Form? parent = null;
+            if (item.DataGrid != null && item.DataGrid.Grid != null)
                 parent = item.DataGrid.Grid.FindForm();
-            //var x = item.GetCurrentParent().Owner;
-            //Form parent = x!.FindForm(item);
-            dialog.Show(parent);
+            if (parent != null)
+            {
+                dialog.StartPosition = FormStartPosition.Manual;
+                dialog.Location = new Point(
+                    (parent.Location.X + parent.Width / 2) - (dialog.Width / 2),
+                    (parent.Location.Y + parent.Height / 2) - (dialog.Height / 2));
+            }
+            dialog.Show();
         }
     }
 

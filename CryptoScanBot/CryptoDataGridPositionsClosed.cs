@@ -11,8 +11,7 @@ using Dapper;
 
 namespace CryptoScanBot;
 
-public class CryptoDataGridPositionsClosed<T>(DataGridView grid, List<T> list, SortedList<string, ColumnSetting> columnList) : 
-    CryptoDataGrid<T>(grid, list, columnList) where T : CryptoPosition
+public class CryptoDataGridPositionsClosed<T>() : CryptoDataGrid<T>() where T : CryptoPosition
 {
     private enum ColumnsForGrid
     {

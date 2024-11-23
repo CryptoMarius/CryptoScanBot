@@ -26,7 +26,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CryptoPivotPointsPlot\CryptoPivotPointsPlot.csproj" />
     <ProjectReference Include="..\CryptoScanBot.Core\CryptoScanBot.Core.csproj" />
   </ItemGroup>
 
