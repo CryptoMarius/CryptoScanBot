@@ -23,7 +23,7 @@ public class ZigZagResult
 
     public CryptoCandle? InvalidOn { get; set; } = null;
 
-    public int Index { get; set; }
+    public int PivotIndex { get; set; }
 
     public void ReusePoint(CryptoCandle candle, decimal value)
     {

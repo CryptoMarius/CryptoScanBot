@@ -78,7 +78,7 @@ public class CryptoCalculation
         zigZag.Percentage = 100 * ((zigZag.Top - zigZag.Bottom) / zigZag.Bottom);
         ScannerLog.Logger.Trace($"{symbol.Name} {interval.Name} Dominant pivot at {zigZag.Candle.DateLocal} {zigZag.PointType} top {zigZag.Top} bottom {zigZag.Bottom} perc={zigZag.Percentage:N2}");
 
-        // Borrow the wick from the neighbour if higher/lower
+        // Borrow the wick from the neighbour if higher or lower
         if (zigZag.PointType == 'L')
         {
             CryptoSymbolInterval symbolInterval = symbol!.GetSymbolInterval(interval!.IntervalPeriod);
@@ -86,20 +86,16 @@ public class CryptoCalculation
             {
                 if (candle.Low < zigZag.Bottom)
                 {
-                    //zigZag.Candle = candle; // dont
                     zigZag.Top = Math.Max(candle.Close, candle.Open);
                     zigZag.Bottom = candle.Low;
-                    zigZag.Value = candle.GetLowValue(GlobalData.Settings.Signal.Zones.UseHighLow);
                 }
             }
             if (symbolInterval.CandleList.TryGetValue(zigZag.Candle.OpenTime - interval.Duration, out candle))
             {
                 if (candle.Low < zigZag.Bottom)
                 {
-                    //zigZag.Candle = candle; // dont
                     zigZag.Top = Math.Max(candle.Close, candle.Open);
                     zigZag.Bottom = candle.Low;
-                    zigZag.Value = candle.GetLowValue(GlobalData.Settings.Signal.Zones.UseHighLow);
                 }
             }
         }
@@ -110,21 +106,16 @@ public class CryptoCalculation
             {
                 if (candle.High > zigZag.Top)
                 {
-                    //zigZag.Candle = candle;
                     zigZag.Top = candle.High;
                     zigZag.Bottom = Math.Min(candle.Close, candle.Open);
-                    zigZag.Value = candle.GetHighValue(GlobalData.Settings.Signal.Zones.UseHighLow);
                 }
-
             }
             if (symbolInterval.CandleList.TryGetValue(zigZag.Candle.OpenTime - interval.Duration, out candle))
             {
                 if (candle.High > zigZag.Top)
                 {
-                    //zigZag.Candle = candle;
                     zigZag.Top = candle.High;
                     zigZag.Bottom = Math.Min(candle.Close, candle.Open);
-                    zigZag.Value = candle.GetHighValue(GlobalData.Settings.Signal.Zones.UseHighLow);
                 }
             }
         }
@@ -253,7 +244,6 @@ public class CryptoCalculation
 
     public static void CalculateBrokenBoxes(CryptoZoneData data)
     {
-        GlobalData.AddTextToLogTab($"{data.Symbol.Name} Calculating dominant pivots and zones");
         // Determine if level is broken (not accurate! right now just for display purposes)
         // TODO: Its only a dominant point when the BOS has occurred!
         // from there we need to invalidate the liq.box (the 3 candles below is just plain wrong!)

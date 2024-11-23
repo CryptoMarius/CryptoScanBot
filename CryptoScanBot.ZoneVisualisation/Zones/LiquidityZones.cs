@@ -31,6 +31,12 @@ public class LiquidityZones
                 return;
 
 
+            if (session.UseBatchProcess)
+            {
+                data.Indicator.StartBatch();
+                data.IndicatorFib.StartBatch();
+            }
+
             // Calculate indicators
             foreach (var candle in data.SymbolInterval.CandleList.Values)
             {
@@ -40,8 +46,11 @@ public class LiquidityZones
                     data.IndicatorFib.Calculate(candle);
                 }
             }
-            data.Indicator.FinishJob();
-            data.IndicatorFib.FinishJob();
+            if (session.UseBatchProcess)
+            {
+                data.Indicator.FinishBatch();
+                data.IndicatorFib.FinishBatch();
+            }
             CryptoTrendIndicator trend = TrendInterval.InterpretZigZagPoints(data.Indicator, null);
 
 
@@ -108,8 +117,8 @@ public class LiquidityZones
                             Symbol = symbol,
                             Interval = symbolInterval.Interval,
                             SymbolInterval = symbolInterval,
-                            Indicator = new(symbolInterval.CandleList, GlobalData.Settings.Signal.Zones.UseHighLow, session.Deviation),
-                            IndicatorFib = new(symbolInterval.CandleList, true, session.Deviation),
+                            Indicator = new(symbolInterval.CandleList, GlobalData.Settings.Signal.Zones.UseHighLow, session.Deviation, symbolInterval.Interval.Duration),
+                            IndicatorFib = new(symbolInterval.CandleList, true, session.Deviation, symbolInterval.Interval.Duration),
                             //AccountSymbolIntervalData = GlobalData.ActiveAccount!.Data.GetSymbolTrendData(symbol.Name, symbolInterval.Interval.IntervalPeriod),
                         };
 

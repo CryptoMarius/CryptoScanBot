@@ -305,7 +305,7 @@ public class TrendInterval
             accountSymbolIntervalData.ZigZagIndicators = [];
             for (decimal deviation = 2.5m; deviation >= 0.5m; deviation -= 0.25m)
             {
-                ZigZagIndicator9 indicator = new(candleList, GlobalData.Settings.General.UseHighLowInTrendCalculation, deviation)
+                ZigZagIndicator9 indicator = new(candleList, GlobalData.Settings.General.UseHighLowInTrendCalculation, deviation, interval.Duration)
                 {
                     Deviation = deviation
                 };
@@ -317,6 +317,11 @@ public class TrendInterval
 
 
         // Add candles to the ZigZag indicators
+        foreach (var indicator in accountSymbolIntervalData.ZigZagIndicators)
+        {
+            indicator.StartBatch();
+        }
+
         int added = 0;
         long loop = candleIntervalStart;
         while (loop <= candleIntervalEnd)
@@ -338,8 +343,7 @@ public class TrendInterval
         {
             foreach (var indicator in accountSymbolIntervalData.ZigZagIndicators)
             {
-                indicator.FinishJob();
-                added++;
+                indicator.FinishBatch();
             }
         }
 

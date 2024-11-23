@@ -21,13 +21,19 @@ public class CryptoZoneSession
     public long MaxUnix { get; set; }
     public CryptoIntervalPeriod ActiveInterval { get; set; } = CryptoIntervalPeriod.interval1h;
 
+    public bool UseOptimizing { get; set; } = true;
+
     public bool ZoomLiqBoxes { get; set; } = true;
     public bool ShowLiqBoxes { get; set; } = true;
     public bool ShowLiqZigZag { get; set; } = true;
 
     public bool ShowFib { get; set; } = true;
     public bool ShowFibZigZag { get; set; } = false;
+    public bool ShowSecondary { get; set; } = false;
+    public bool ShowPivots { get; set; } = false;
+    public bool UseBatchProcess { get; set; } = false;
     
+
 
 
     public static CryptoZoneSession LoadSessionSettings()

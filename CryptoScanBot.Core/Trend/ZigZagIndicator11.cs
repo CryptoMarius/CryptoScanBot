@@ -446,7 +446,7 @@ public class ZigZagIndicator11(CryptoCandleList candleList, bool useHighLow, dec
         // LAST candle was a lower/higher then the previous H/L! (this is important for trend decisions)
         // Fix: add a dummy ZigZagResult and remove it in the next call
 
-        // Remark: What if we add it regulary? Do we need this? Simple comparison in the CheckNewHigh and CheckNewLow!
+        // Remark: What if we add it regulary? Do we need this? Simple comparison in the IsHighPoint and IsLowPoint!
         // Or even better, add the last added candle 2 times extra? The Optimize will filter the point away ...
         // (no, if we add the candle the Previous* will be off, but the idea is still interesting).
 
@@ -624,9 +624,9 @@ public class ZigZagIndicator11(CryptoCandleList candleList, bool useHighLow, dec
         //        AddNewHigh(candleminus1!, candleValue);
         //}
 
-        //Init();
+        //RemoveDummyPoints();
         OptimizeList();
-        //Finish();
+        //TryAddDummyPoints();
     }
 
 }

@@ -23,7 +23,7 @@ public partial class CryptoVisualisation : Form
     private LineAnnotation? horizontalLine;
     private readonly CryptoZoneSession Session = new();
     private CryptoZoneData Data;
-    private CryptoAccount Account { get; set; }
+    //private CryptoAccount Account { get; set; }
 
     private string OldSymbolBase = "";
     private string OldSymbolQuote = "";
@@ -112,6 +112,12 @@ public partial class CryptoVisualisation : Form
         EditDeviation.Value = Session.Deviation;
         EditShowFib.Checked = Session.ShowFib;
         EditShowFibZigZag.Checked = Session.ShowFibZigZag;
+        EditShowPivots.Checked = Session.ShowPivots;
+        EditShowSecondary.Checked = Session.ShowSecondary;
+        EditUseOptimizing.Checked = Session.UseOptimizing;
+        EditUseBatchProcess.Checked = Session.UseBatchProcess;
+
+
     }
 
     public void ShowProgress(string text)
@@ -169,7 +175,7 @@ public partial class CryptoVisualisation : Form
 
         if (Control.ModifierKeys == Keys.Shift && mouseDownPointX != null && mouseDownPointY != null)
         {
-            ScreenPoint mouseUpPoint = new ScreenPoint(e.X, e.Y);
+            ScreenPoint mouseUpPoint = new(e.X, e.Y);
             // assuming your x-axis is at the bottom and your y-axis is at the left.
             Axis xAxis = plotModel.Axes.FirstOrDefault(a => a.Position == AxisPosition.Bottom);
             Axis yAxis = plotModel.Axes.FirstOrDefault(a => a.Position == AxisPosition.Right);
@@ -365,6 +371,7 @@ public partial class CryptoVisualisation : Form
     private async Task ButtonCalculate_ClickAsync()
     {
         //ScannerLog.Logger.Info("ButtonCalculate_ClickAsync.Start");
+        PickupEdits();
         labelInterval.Text = Session.ActiveInterval.ToString();
         labelMaxTime.Text = CandleTools.GetUnixDate(Session.MaxUnix).ToString("dd MMM HH:mm");
 
@@ -424,8 +431,22 @@ public partial class CryptoVisualisation : Form
             {
                 // reset data
                 CandleEngine.LoadedCandlesInMemory.Clear(); // force loading because we clean them afterwards
-                Data.IndicatorFib = new(Data.SymbolInterval.CandleList, true, Session.Deviation);
-                Data.Indicator = new(Data.SymbolInterval.CandleList, GlobalData.Settings.Signal.Zones.UseHighLow, Session.Deviation);
+                Data.IndicatorFib = new(Data.SymbolInterval.CandleList, true, Session.Deviation, Data.Interval.Duration);
+                Data.Indicator = new(Data.SymbolInterval.CandleList, GlobalData.Settings.Signal.Zones.UseHighLow, Session.Deviation, Data.Interval.Duration);
+
+                //
+                Data.Indicator.MaxTime = Session.MaxUnix;
+                Data.Indicator.ShowSecondary = Session.ShowSecondary;
+                Data.Indicator.UseOptimizing = Session.UseOptimizing;
+                if (Session.UseBatchProcess)
+                    Data.Indicator.StartBatch();
+
+                Data.IndicatorFib.MaxTime = Session.MaxUnix;
+                Data.IndicatorFib.ShowSecondary = Session.ShowSecondary;
+                Data.IndicatorFib.UseOptimizing = Session.UseOptimizing;
+                if (Session.UseBatchProcess)
+                    Data.IndicatorFib.StartBatch();
+
 
                 // calculate zones
                 await LiquidityZones.CalculateZonesForSymbolAsync(ShowProgress, Session, Data);
@@ -442,6 +463,8 @@ public partial class CryptoVisualisation : Form
 
                 CryptoCharting.DrawCandleSerie(plotModel, Data, Session);
 
+                if (Session.ShowPivots)
+                    CryptoCharting.DrawPivots(plotModel, Session, Data.Indicator.PivotList);
                 if (Session.ShowLiqZigZag)
                     CryptoCharting.DrawZigZag(plotModel, Session, Data.Indicator.ZigZagList, "liq");
                 if (Session.ShowLiqBoxes)
@@ -476,7 +499,6 @@ public partial class CryptoVisualisation : Form
             }
             finally
             {
-
                 await CandleEngine.CleanLoadedCandlesAsync(Data.Symbol);
                 Data.Symbol.CalculatingZones = false;
             }
@@ -538,8 +560,8 @@ public partial class CryptoVisualisation : Form
             Symbol = symbol,
             Interval = interval,
             SymbolInterval = symbolInterval,
-            IndicatorFib = new(symbolInterval.CandleList, true, Session.Deviation),
-            Indicator = new(symbolInterval.CandleList, GlobalData.Settings.Signal.Zones.UseHighLow, Session.Deviation),
+            IndicatorFib = new(symbolInterval.CandleList, true, Session.Deviation, symbolInterval.Interval.Duration),
+            Indicator = new(symbolInterval.CandleList, GlobalData.Settings.Signal.Zones.UseHighLow, Session.Deviation, symbolInterval.Interval.Duration),
             //AccountSymbolIntervalData = GlobalData.ActiveAccount!.Data.GetSymbolTrendData(symbol.Name, interval.IntervalPeriod),
         };
 
@@ -581,9 +603,8 @@ public partial class CryptoVisualisation : Form
         }
     }
 
-    private void ButtonCalculateClick(object? sender, EventArgs e)
+    private void PickupEdits()
     {
-        CandleEngine.StartupTime = DateTime.UtcNow;
         Session.SymbolBase = EditSymbolBase.Text.ToUpper().Trim();
         Session.SymbolQuote = EditSymbolQuote.Text.ToUpper().Trim();
         Session.IntervalName = EditIntervalName.Text.ToLower().Trim();
@@ -594,7 +615,18 @@ public partial class CryptoVisualisation : Form
         Session.Deviation = EditDeviation.Value;
         Session.ShowFib = EditShowFib.Checked;
         Session.ShowFibZigZag = EditShowFibZigZag.Checked;
-        
+        Session.ShowSecondary = EditShowSecondary.Checked;
+        Session.UseOptimizing = EditUseOptimizing.Checked;
+        Session.ShowPivots = EditShowPivots.Checked;
+        Session.UseBatchProcess = EditUseBatchProcess.Checked;
+
+    }
+
+    private void ButtonCalculateClick(object? sender, EventArgs e)
+    {
+        CandleEngine.StartupTime = DateTime.UtcNow;
+        PickupEdits();
+
         Session.ActiveInterval = CryptoIntervalPeriod.interval1h;
         Session.SaveSessionSettings();
         if (PrepareSessionData(out string reason))

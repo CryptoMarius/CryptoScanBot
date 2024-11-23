@@ -129,13 +129,34 @@ public class CryptoCharting
     }
 
 
+    internal static void DrawPivots(PlotModel chart, CryptoZoneSession session, List<ZigZagResult> pivotList)
+    {
+        var seriesHigh = new ScatterSeries { Title = "p high", MarkerSize = 2, MarkerFill = OxyColors.Red, MarkerType = MarkerType.Square, };
+        var seriesLow = new ScatterSeries { Title = "p low", MarkerSize = 2, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Square, };
+        foreach (var zigzag in pivotList)
+        {
+            if (zigzag.Candle!.OpenTime >= session.MinUnix && zigzag.Candle!.OpenTime <= session.MaxUnix)
+            {
+                ScatterSeries? series;
+                    if (zigzag.PointType == 'L')
+                        series = seriesLow;
+                    else
+                        series = seriesHigh;
+                series?.Points.Add(new ScatterPoint(zigzag.Candle.OpenTime, (double)zigzag.Value));
+            }
+        }
+
+        chart.Series.Add(seriesLow);
+        chart.Series.Add(seriesHigh);
+    }
+
     public static void DrawZigZag(PlotModel chart, CryptoZoneSession session, List<ZigZagResult> zigZagList, string caption)
     {
         var seriesZigZag = new LineSeries { Title = caption, Color = OxyColors.White };
         var seriesHigh = new ScatterSeries { Title = "Markers high", MarkerSize = 4, MarkerFill = OxyColors.Red, MarkerType = MarkerType.Circle, };
         var seriesLow = new ScatterSeries { Title = "Markers low", MarkerSize = 4, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Circle, };
-        var seriesDummyHigh = new ScatterSeries { Title = "Markers dummy", MarkerSize = 4, MarkerFill = OxyColors.Red, MarkerType = MarkerType.Square, };
-        var seriesDummyLow = new ScatterSeries { Title = "Markers dummy", MarkerSize = 4, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Square, };
+        var seriesDummyHigh = new ScatterSeries { Title = "Markers dummy", MarkerSize = 5, MarkerFill = OxyColors.Red, MarkerType = MarkerType.Square, };
+        var seriesDummyLow = new ScatterSeries { Title = "Markers dummy", MarkerSize = 5, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Square, };
         foreach (var zigzag in zigZagList)
         {
             if (zigzag.Candle!.OpenTime >= session.MinUnix && zigzag.Candle!.OpenTime <= session.MaxUnix)

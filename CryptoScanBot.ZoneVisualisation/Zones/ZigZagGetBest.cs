@@ -2,14 +2,14 @@
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Trend;
 
-namespace CryptoScanBot.Core.Zones;
+namespace CryptoScanBot.ZoneVisualisation.Zones;
 
 public class ZigZagGetBest
 {
     public static ZigZagIndicator9 CalculateBestIndicator(CryptoSymbolInterval symbolInterval, long maxUnixTime = -1)
     {
-//        long startTime = Stopwatch.GetTimestamp();
-//        ScannerLog.Logger.Info("CalculateBestIndicator.Start");
+        //        long startTime = Stopwatch.GetTimestamp();
+        //        ScannerLog.Logger.Info("CalculateBestIndicator.Start");
         AccountSymbolIntervalData accountSymbolIntervalData = new()
         {
             Interval = symbolInterval.Interval,
@@ -22,14 +22,14 @@ public class ZigZagGetBest
             accountSymbolIntervalData.ZigZagIndicators = [];
             for (decimal deviation = 2m; deviation >= 0.5m; deviation -= 0.25m)
             {
-                ZigZagIndicator9 indicator = new(symbolInterval.CandleList, GlobalData.Settings.General.UseHighLowInTrendCalculation, deviation);
+                ZigZagIndicator9 indicator = new(symbolInterval.CandleList, GlobalData.Settings.General.UseHighLowInTrendCalculation, deviation, symbolInterval.Interval.Duration);
                 accountSymbolIntervalData.ZigZagIndicators.Add(indicator);
             }
         }
 
         // Add candles to the ZigZag indicators
-        //foreach (var indicator in accountSymbolIntervalData.ZigZagIndicators)
-        //    indicator.PostponeFinish = true;
+        foreach (var indicator in accountSymbolIntervalData.ZigZagIndicators)
+            indicator.StartBatch();
         foreach (var candle in symbolInterval.CandleList.Values)
         {
             if (maxUnixTime > 0 && candle.OpenTime > maxUnixTime)
@@ -40,7 +40,7 @@ public class ZigZagGetBest
             }
         }
         foreach (var indicator in accountSymbolIntervalData.ZigZagIndicators)
-            indicator.FinishJob();
+            indicator.FinishBatch();
 
 
 
@@ -77,7 +77,7 @@ public class ZigZagGetBest
         bestIndicator ??= accountSymbolIntervalData.ZigZagIndicators.Last();
         accountSymbolIntervalData.BestIndicator = bestIndicator;
 
-//        ScannerLog.Logger.Info("CalculateBestIndicator.Stop " + Stopwatch.GetElapsedTime(startTime).TotalSeconds.ToString());
+        //        ScannerLog.Logger.Info("CalculateBestIndicator.Stop " + Stopwatch.GetElapsedTime(startTime).TotalSeconds.ToString());
         return bestIndicator;
     }
 }
