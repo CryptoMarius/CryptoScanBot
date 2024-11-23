@@ -78,6 +78,7 @@ https://api-testnet.bybit.com/spot/v3/public/symbols
 
 public class Api : ExchangeBase
 {
+    [System.Diagnostics.CodeAnalysis.SetsRequiredMembersAttribute]
     public Api()
     {
         Asset = new Asset(this);

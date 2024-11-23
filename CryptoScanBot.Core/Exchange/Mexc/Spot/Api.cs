@@ -11,6 +11,7 @@ namespace CryptoScanBot.Core.Exchange.Mexc.Spot;
 
 public class Api : ExchangeBase
 {
+    [System.Diagnostics.CodeAnalysis.SetsRequiredMembersAttribute]
     public Api()
     {
         Asset = new Asset(this);

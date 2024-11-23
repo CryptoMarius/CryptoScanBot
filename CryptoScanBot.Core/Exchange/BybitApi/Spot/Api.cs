@@ -19,6 +19,7 @@ public class Api : ExchangeBase
     private static readonly Category Category = Category.Spot;
 
 
+    [System.Diagnostics.CodeAnalysis.SetsRequiredMembersAttribute]
     public Api()
     {
         Asset = new Asset(this);

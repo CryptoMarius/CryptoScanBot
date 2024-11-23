@@ -22,19 +22,19 @@ public static class Helper
                 if (exchange.TradingType == CryptoTradingType.Spot)
                     return new Kraken.Spot.Api();
                 else
-                    throw new Exception("Niet ondersteunde exchange");
+                    throw new Exception("Kraken Futures not supported");
             case CryptoExchangeType.Kucoin:
                 if (exchange.TradingType == CryptoTradingType.Spot)
                     return new Kucoin.Spot.Api();
                 else
-                    throw new Exception("Niet ondersteunde exchange");
+                    throw new Exception("Kucoin Futures not supported");
             case CryptoExchangeType.Mexc:
                 if (exchange.TradingType == CryptoTradingType.Spot)
                     return new Mexc.Spot.Api();
                 else
-                    throw new Exception("Niet ondersteunde exchange");
+                    throw new Exception("Mexc Futures not supported");
             default:
-                throw new Exception("Niet ondersteunde exchange");
+                throw new Exception("Exchange not supported");
         }
     }
 

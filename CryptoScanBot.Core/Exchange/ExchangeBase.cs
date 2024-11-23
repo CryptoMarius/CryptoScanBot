@@ -49,11 +49,11 @@ public interface IApi
 // Name: ExchangeBroker?
 public abstract class ExchangeBase
 {
-    public IAsset Asset { get; set; }
-    public ICandle Candle { get; set; }
-    public ISymbol Symbol { get; set; }
-    public IOrder Order { get; set; }
-    public ITrade Trade { get; set; }
+    public required IAsset Asset { get; set; }
+    public required ICandle Candle { get; set; }
+    public required ISymbol Symbol { get; set; }
+    public required IOrder Order { get; set; }
+    public required ITrade Trade { get; set; }
 
     public abstract IDisposable GetClient();
     public abstract void ExchangeDefaults();
