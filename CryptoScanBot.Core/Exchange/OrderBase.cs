@@ -1,6 +1,6 @@
 ﻿namespace CryptoScanBot.Core.Exchange;
 
-public class OrderBase(ExchangeBase api)
+public class OrderBase()
 {
 
 }

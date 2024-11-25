@@ -7,7 +7,7 @@ using CryptoScanBot.Core.Model;
 
 namespace CryptoScanBot.Core.Exchange.Binance.Futures;
 
-public class Order(ExchangeBase api) : OrderBase(api), IOrder
+public class Order() : OrderBase(), IOrder
 {
     // Converteer de orderstatus van Exchange naar "intern"
     public static CryptoOrderType LocalOrderType(FuturesOrderType orderType)

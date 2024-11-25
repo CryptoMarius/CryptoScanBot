@@ -13,7 +13,7 @@ using System.Text.Json;
 
 namespace CryptoScanBot.Core.Exchange.BybitApi.Futures;
 
-public class Order(ExchangeBase api) : OrderBase(api), IOrder
+public class Order() : OrderBase(), IOrder
 {
     // Converteer de orderstatus van Exchange naar "intern"
     public static CryptoOrderType LocalOrderType(OrderType orderType)

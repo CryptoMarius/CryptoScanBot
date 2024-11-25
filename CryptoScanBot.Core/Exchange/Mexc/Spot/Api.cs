@@ -14,10 +14,10 @@ public class Api : ExchangeBase
     [System.Diagnostics.CodeAnalysis.SetsRequiredMembersAttribute]
     public Api()
     {
-        Asset = new Asset(this);
+        Asset = new Asset();
         Candle = new Candle(this);
         Symbol = new Symbol(this);
-        Order = new Order(this);
+        Order = new Order();
         Trade = new Trade(this);
     }
 

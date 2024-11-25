@@ -26,7 +26,7 @@ public class BackTest
     private readonly CryptoCandleList Candles1m;
 
     public StringBuilder Log = new();
-    public string HeaderText;
+    public string HeaderText = "";
     public string Outcome = "";
     public CryptoBackTestResults Results;
 
@@ -77,20 +77,20 @@ public class BackTest
 
         // Dit werkt niet voor de EMA (en psar)!
         //List<EmaResult> emaList8 = (List<EmaResult>)history.GetEma(8);
-        List<EmaResult> emaList20 = (List<EmaResult>)history.GetEma(20);
-        List<EmaResult> emaList50 = (List<EmaResult>)history.GetEma(50);
+        //List<EmaResult> emaList20 = (List<EmaResult>)history.GetEma(20);
+        //List<EmaResult> emaList50 = (List<EmaResult>)history.GetEma(50);
         //List<EmaResult> emaList100 = (List<EmaResult>)history.GetEma(100);
-        List<EmaResult> emaList200 = (List<EmaResult>)history.GetEma(200);
-        List<SlopeResult> slopeEma20List = (List<SlopeResult>)emaList20.GetSlope(3);
-        List<SlopeResult> slopeEma50List = (List<SlopeResult>)emaList50.GetSlope(3);
+        //List<EmaResult> emaList200 = (List<EmaResult>)history.GetEma(200);
+        //List<SlopeResult> slopeEma20List = (List<SlopeResult>)emaList20.GetSlope(3);
+        //List<SlopeResult> slopeEma50List = (List<SlopeResult>)emaList50.GetSlope(3);
 
         //List<SmaResult> smaList8 = (List<SmaResult>)Indicator.GetSma(history, 8);
-        List<SmaResult> smaList20 = (List<SmaResult>)Indicator.GetSma(history, 20);
+        //List<SmaResult> smaList20 = (List<SmaResult>)Indicator.GetSma(history, 20);
         List<SmaResult> smaList50 = (List<SmaResult>)history.GetSma(50);
         //List<SmaResult> smaList100 = (List<SmaResult>)Indicator.GetSma(history, 100);
         List<SmaResult> smaList200 = (List<SmaResult>)history.GetSma(200);
-        List<SlopeResult> slopeSma20List = (List<SlopeResult>)smaList20.GetSlope(3);
-        List<SlopeResult> slopeSma50List = (List<SlopeResult>)smaList50.GetSlope(3);
+        //List<SlopeResult> slopeSma20List = (List<SlopeResult>)smaList20.GetSlope(3);
+        //List<SlopeResult> slopeSma50List = (List<SlopeResult>)smaList50.GetSlope(3);
 
         // Berekend vanuit de EMA 20 en de upper en lowerband ontstaat uit 2x de ATR
         //List<KeltnerResult> keltnerList = (List<KeltnerResult>)Indicator.GetKeltner(history, 20, 1);
@@ -98,9 +98,9 @@ public class BackTest
         //List<AtrResult> atrList = (List<AtrResult>)Indicator.GetAtr(history);
         List<RsiResult> rsiList = (List<RsiResult>)history.GetRsi();
         List<MacdResult> macdList = (List<MacdResult>)history.GetMacd();
-        List<MacdResult> macdLtList = (List<MacdResult>)history.GetMacd(34, 144);
+        //List<MacdResult> macdLtList = (List<MacdResult>)history.GetMacd(34, 144);
 
-        List<SlopeResult> slopeRsiList = (List<SlopeResult>)rsiList.GetSma(25).GetSlope(3);
+        //List<SlopeResult> slopeRsiList = (List<SlopeResult>)rsiList.GetSma(25).GetSlope(3);
 
         // (volgens de telegram groepen op 14,3,1 ipv de standaard 14,3,3)
         List<StochResult> stochList = (List<StochResult>)history.GetStoch(14, 3, 1); // 18-11-22: omgedraaid naar 1, 3...
@@ -168,7 +168,7 @@ public class BackTest
                 GlobalData.AddTextToLogTab("error indicators");
                 GlobalData.AddTextToLogTab(error.ToString());
                 GlobalData.AddTextToLogTab("");
-                GlobalData.AddTextToLogTab(history.ToString());
+                //GlobalData.AddTextToLogTab(history.ToString());
                 throw;
             }
         }
@@ -476,8 +476,8 @@ public class BackTest
     //}
 
 
-    public async Task Execute(SignalCreateBase cryptoBackTest, string baseFolder)
-    {
+    //public static Task Execute(SignalCreateBase cryptoBackTest, string baseFolder)
+    //{
         // Het idee is simpel, itereer door de candles en bied deze 1 voor 1 aan het gekozen algoritme.
 
         // Weetjes:
@@ -616,6 +616,7 @@ public class BackTest
         //    GlobalData.AddTextToLogTab("");
         //    GlobalData.AddTextToLogTab(error.ToString(), true);
         //}
-    }
+        //return Task.CompletedTask;
+    //}
 
 }

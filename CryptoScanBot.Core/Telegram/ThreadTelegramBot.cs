@@ -221,10 +221,10 @@ public class ThreadTelegramBotInstance
                 builder.Append($" <a href='{Url}'>{text}</a>");
             builder.AppendLine();
 
-            builder.Append("Candle: open " + signal.Candle.Open.ToString0());
-            builder.Append(" high " + signal.Candle.High.ToString0());
-            builder.Append(" low " + signal.Candle.Low.ToString0());
-            builder.Append(" close " + signal.Candle.Close.ToString0());
+            builder.Append("Candle: open " + signal.Candle?.Open.ToString0());
+            builder.Append(" high " + signal.Candle?.High.ToString0());
+            builder.Append(" low " + signal.Candle?.Low.ToString0());
+            builder.Append(" close " + signal.Candle?.Close.ToString0());
             builder.AppendLine();
 
             builder.Append("Volume 24h: " + signal.Symbol.Volume.ToString("N0"));

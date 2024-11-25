@@ -69,7 +69,7 @@ public class TradingViewSymbolInfo
         }
     }
 
-    private void OnValueFetched(object sender, List<string> values)
+    private void OnValueFetched(object? sender, List<string> values)
     {
         try
         {

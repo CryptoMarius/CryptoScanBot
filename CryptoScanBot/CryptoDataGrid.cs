@@ -279,7 +279,8 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
     {
         CryptoDataGridColumns f = new()
         {
-                StartPosition = FormStartPosition.CenterParent
+            Grid = this,
+            StartPosition = FormStartPosition.CenterParent,
         };
         f.AddColumns(this);
         f.ShowDialog();

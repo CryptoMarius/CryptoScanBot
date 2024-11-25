@@ -69,12 +69,14 @@ public class StorageHistoricalData
             {
                 string text = File.ReadAllText(filename);
                 List<CryptoCandle>? candleList = JsonSerializer.Deserialize<List<CryptoCandle>>(text, JsonTools.JsonSerializerIndented);
-
-                CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-                foreach (var candle in candleList)
+                if (candleList != null)
                 {
-                    if (!symbolInterval.CandleList.ContainsKey(candle.OpenTime))
-                        symbolInterval.CandleList.Add(candle.OpenTime, candle);
+                    CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+                    foreach (var candle in candleList)
+                    {
+                        if (!symbolInterval.CandleList.ContainsKey(candle.OpenTime))
+                            symbolInterval.CandleList.Add(candle.OpenTime, candle);
+                    }
                 }
             }
             catch (Exception error)

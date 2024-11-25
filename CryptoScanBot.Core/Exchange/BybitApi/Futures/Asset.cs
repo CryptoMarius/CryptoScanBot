@@ -10,7 +10,7 @@ using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot.Core.Exchange.BybitApi.Futures;
 
-public class Asset(ExchangeBase api) : AssetBase(api), IAsset
+public class Asset() : AssetBase(), IAsset
 {
     static public void PickupAssets(CryptoAccount tradeAccount, BybitAllAssetBalances balances)
     {

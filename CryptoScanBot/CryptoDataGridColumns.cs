@@ -4,7 +4,7 @@ namespace CryptoScanBot;
 
 public partial class CryptoDataGridColumns : Form
 {
-    private CryptoDataGrid Grid;
+    public required CryptoDataGrid Grid;
     private readonly List<CheckBox> List = [];
 
     public CryptoDataGridColumns()

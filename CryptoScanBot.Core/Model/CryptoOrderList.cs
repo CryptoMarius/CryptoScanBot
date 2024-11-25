@@ -18,7 +18,7 @@ public class CryptoOrderList: SortedList<string, CryptoOrder>
                 {
                     order.Symbol = symbol;
 
-                    if (!ContainsKey(order.OrderId))
+                    if (order.OrderId != null && !ContainsKey(order.OrderId))
                     {
                         this.TryAdd(order.OrderId, order);
                         if (log)

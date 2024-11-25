@@ -1,0 +1,14 @@
+{
+  "test": false,
+  "api_key": "079a28d2-02ca-4678-8092-dddafc0d92b2",
+  "api_secret": "71f6646f-b7c7-4d6d-83a6-7500a8be3a3f",
+
+  "exchange": "BYBI",
+  "symbol": "BYBI_USDT_NAKA",
+  "signal_id": "testpositionidnaka_4",
+
+  "action": "close",
+  "side": "long",
+  "order_type": "market",
+  "_signal_price": 1.200
+}

@@ -3,7 +3,7 @@ using CryptoScanBot.Core.Model;
 
 namespace CryptoScanBot.Core.Exchange.Mexc.Spot;
 
-public class Asset(ExchangeBase api) : AssetBase(api), IAsset
+public class Asset() : AssetBase(), IAsset
 {
     public Task GetAssetsAsync(CryptoAccount tradeAccount)
     {

@@ -9,7 +9,7 @@ using Kraken.Net.Objects.Models;
 
 namespace CryptoScanBot.Core.Exchange.Kraken.Spot;
 
-public class Asset(ExchangeBase api) : AssetBase(api), IAsset
+public class Asset() : AssetBase(), IAsset
 {
     public static void PickupAssets(CryptoAccount tradeAccount, Dictionary<string, KrakenBalanceAvailable> balances)
     {

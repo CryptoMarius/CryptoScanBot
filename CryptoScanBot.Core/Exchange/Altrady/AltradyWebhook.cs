@@ -57,6 +57,8 @@ public class AltradyWebhookPayload
 
 public class AltradyWebhook
 {
+    private static readonly JsonSerializerOptions AltradySerializerOptions = new() { PropertyNameCaseInsensitive = true };
+
     public static AltradyWebhookPayload? TryParse(string message)
     {
         //JsonDocument?
@@ -65,8 +67,7 @@ public class AltradyWebhook
             if (!message.StartsWith('{'))
                 return null;
 
-            JsonSerializerOptions options = new() { PropertyNameCaseInsensitive = true };
-            var root = JsonSerializer.Deserialize<AltradyWebhookPayload>(message, options);
+            var root = JsonSerializer.Deserialize<AltradyWebhookPayload>(message, AltradySerializerOptions);
 
             //return JsonDocument.Parse(branch?.V?.ToString() ?? "");
             return root;
