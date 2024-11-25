@@ -210,7 +210,7 @@ public class BackTest
     //    signal.EventTime = candle.OpenTime; // Candle.OpenTime (unix)
     //    signal.OpenDate = CandleTools.GetUnixDate(candle.OpenTime); // Candle.OpenTime
     //    signal.CloseDate = signal.OpenDate.AddSeconds(Interval.Duration); // Candle.CloseTime
-    //    signal.ExpirationDate = signal.CloseDate.AddSeconds(15 * Interval.Duration); // 15 candles verder (om het aantal meldingen te reduceren)
+    //    signal.CloseDate = signal.CloseDate.AddSeconds(15 * Interval.Duration); // 15 candles verder (om het aantal meldingen te reduceren)
     //    signal.Candle = candle; //Dit is de laatste candle voor de opgegeven eindtijd
     //    signal.Price = candle.Close;
     //    signal.Volume = Symbol.Volume;

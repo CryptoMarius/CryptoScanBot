@@ -21,7 +21,7 @@ public class ZigZagResult
     public decimal Bottom { get; set; }
     public decimal Percentage { get; set; }
 
-    public CryptoCandle? InvalidOn { get; set; } = null;
+    public long? CloseDate { get; set; }
 
     public int PivotIndex { get; set; }
 
@@ -36,6 +36,6 @@ public class ZigZagResult
         Top = 0;
         Bottom = 0;
         Percentage = 0;
-        InvalidOn = null;
+        CloseDate = null;
     }
 }

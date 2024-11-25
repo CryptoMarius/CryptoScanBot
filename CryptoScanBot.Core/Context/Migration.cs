@@ -8,7 +8,7 @@ namespace CryptoScanBot.Core.Context;
 public class Migration
 {
     // De huidige database versie
-    public readonly static int CurrentDatabaseVersion = 33;
+    public readonly static int CurrentDatabaseVersion = 34;
 
 
     public static void Execute(CryptoDatabase database, int CurrentVersion)
@@ -917,9 +917,40 @@ public class Migration
         }
 
 
-        // todo:
-        // add Zone.LastSignalDate om tevoorkomen dat je iedere x minuten een melding krijgt??????
-        // other changes to zone object?
+
+        //***********************************************************
+        // 24-11-2024, zones, startdate
+        if (CurrentVersion > version.Version && version.Version == 33)
+        {
+            using var transaction = database.BeginTransaction();
+
+            // conflicting types (long/date)
+            database.Connection.Execute("delete from zone", transaction);
+
+            database.Connection.Execute("alter table Zone add CreateTime Text not null", transaction);
+            // Optional start date for a zone
+            database.Connection.Execute("alter table Zone add OpenTime Text null", transaction);
+
+            // Holds the percentage for the zone
+            database.Connection.Execute("alter table Zone add Description Text null", transaction);
+            
+            
+            // better name for the expiration (not something in the future but the moment of closing)
+            database.Connection.Execute("alter table Zone add ClosePrice Text null", transaction);
+            database.Connection.Execute("alter table Zone add CloseDate Text null", transaction);
+            database.Connection.Execute("alter table Zone drop column ExpirationPrice", transaction);
+            database.Connection.Execute("alter table Zone drop column ExpirationDate", transaction);
+
+            // TODO: Avoid to many signals on this zone
+            database.Connection.Execute("alter table Zone add LastSignalDate Text null", transaction);
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
     }
+
 }
 

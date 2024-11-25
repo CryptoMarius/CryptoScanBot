@@ -37,36 +37,39 @@ public class DominantLevelLong : SignalCreateBase
         AccountSymbolData symbolData = Account.Data.GetSymbolData(Symbol.Name);
         foreach (var zone in symbolData.ZoneListLong)
         {
-            bool changed = false;
-            decimal alarmPrice = zone.Top * (100 + GlobalData.Settings.Signal.Zones.WarnPercentage) / 100;
-            if (zone.ExpirationDate == null && CandleLast.Low <= alarmPrice)
+            if (zone.OpenTime != null && CandleLast.OpenTime >= zone.OpenTime && zone.CloseDate == null)
             {
-                if (!result && zone.AlarmDate == null || CandleLast.Date > zone.AlarmDate?.AddMinutes(5))
+                bool changed = false;
+                decimal alarmPrice = zone.Top * (100 + GlobalData.Settings.Signal.Zones.WarnPercentage) / 100;
+                if (CandleLast.Low <= alarmPrice)
                 {
-                    ExtraText = $"{zone.Bottom} .. {zone.Top} (#{zone.Id})";
-                    zone.AlarmDate = CandleLast.Date;
-                    zone.AlarmPrice = CandleLast.Low;
-                    changed = true;
-                    result = true;
+                    if (!result && zone.AlarmDate == null || CandleLast.Date > zone.AlarmDate?.AddMinutes(5))
+                    {
+                        ExtraText = $"{zone.Bottom} .. {zone.Top} (#{zone.Id})";
+                        zone.AlarmDate = CandleLast.Date;
+                        zone.AlarmPrice = CandleLast.Low;
+                        changed = true;
+                        result = true;
+                    }
                 }
-            }
 
-            // todo, delete the zone somewhere else?
-            if (zone.ExpirationDate == null && CandleLast.Low <= zone.Bottom)
-            {
-                zone.ExpirationDate = CandleLast.Date;
-                zone.ExpirationPrice = CandleLast.Low;
-                changed = true;
-            }
+                // todo, delete the zone somewhere else?
+                if (zone.CloseDate == null && CandleLast.Low <= zone.Bottom)
+                {
+                    zone.CloseDate = CandleLast.OpenTime;
+                    zone.ClosePrice = CandleLast.Low;
+                    changed = true;
+                }
 
-            if (changed)
-            {
-                using var database = new CryptoDatabase();
-                database.Connection.Update(zone);
+                if (changed)
+                {
+                    using var database = new CryptoDatabase();
+                    database.Connection.Update(zone);
+                }
+
+                if (result)
+                    break;
             }
-            
-            if (result)
-                break;
         }
         return result;
     }

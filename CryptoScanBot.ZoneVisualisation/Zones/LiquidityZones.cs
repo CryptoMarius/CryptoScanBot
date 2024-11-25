@@ -55,15 +55,16 @@ public class LiquidityZones
 
 
             // Mark the dominant lows or highs
-            if (session.ShowLiqBoxes)
+            if (session.ShowLiqBoxes && session.ForceCalculation)
             {
                 await CryptoCalculation.CalculateLiqBoxesAsync(sender, data, session.ZoomLiqBoxes, log);
                 CryptoCalculation.CalculateBrokenBoxes(data);
             }
 
 
-
-            CryptoCalculation.SaveToZoneTable(data);
+            // Create the zones and save them
+            if (session.ForceCalculation)
+                ZoneTools.SaveZonesForSymbol(data.Symbol, data.Indicator.ZigZagList);
 
             //plotView.Model = plotModel;
             //plotView.Model.InvalidatePlot(true);
@@ -76,6 +77,7 @@ public class LiquidityZones
             log.AppendLine(e.ToString());
             ScannerLog.Logger.Info($"ERROR {e}");
             CandleEngine.SaveCandleDataToDisk(data.Symbol, log);
+            GlobalData.AddTextToLogTab($"ERROR {e}");
         }
 
         if (sender == null)
@@ -106,6 +108,7 @@ public class LiquidityZones
                             ShowLiqZigZag = false,
                             ShowFib = false,
                             ShowFibZigZag = false,
+                            ForceCalculation = true,
                         };
 
                         var symbolInterval = symbol.GetSymbolInterval(GlobalData.Settings.Signal.Zones.Interval);

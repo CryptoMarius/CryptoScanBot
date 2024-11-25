@@ -25,15 +25,23 @@ public class CryptoZone
     public required CryptoTradeSide Side { get; set; }
     public required CryptoSignalStrategy Strategy { get; set; }
 
+    // Created on..
+    public required DateTime CreateTime { get; set; }
+
+    // Zone starts on this date
+    public long? OpenTime { get; set; } // for limited types of zones
     public required decimal Top { get; set; }
     public required decimal Bottom { get; set; }
+    // Zone ends on this date
+    public decimal? ClosePrice { get; set; }
+    public long? CloseDate { get; set; }
 
     // Create a signal when this price triggers (once)
     public decimal AlarmPrice { get; set; } // obsolete, just for debugging
     public DateTime? AlarmDate { get; set; }
 
-    // Remove the zone when this price has been triggered (once)
-    public decimal? ExpirationPrice { get; set; }
-    public DateTime? ExpirationDate { get; set; }
+    public long? LastSignalDate { get; set; }
 
+    // Percentage of the zone or other text
+    public string Description { get; set; } = "";
 }

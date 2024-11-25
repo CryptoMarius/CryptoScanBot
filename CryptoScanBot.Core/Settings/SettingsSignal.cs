@@ -26,16 +26,10 @@ public class SettingsSignal
     public double AnalysisMaxChangePercentage { get; set; } = 25;
     public bool LogAnalysisMinMaxChangePercentage { get; set; } = false;
 
-    // de 24 effectief moet binnen dit interval zitten (de echte beweging)
-    //public double AnalysisMinEffectivePercentage { get; set; } = -40;
-    public double AnalysisMaxEffectivePercentage { get; set; } = 40;
-    public bool LogAnalysisMinMaxEffectivePercentage { get; set; } = false;
-
-    // de 10 dagen effectief moet binnen dit interval zitten (de echte beweging)
-    //public double AnalysisMinEffective10DaysPercentage { get; set; } = -75;
-    public int AnalysisMaxEffectiveDays { get; set; } = 10;
-    public double AnalysisMaxEffective10DaysPercentage { get; set; } = 75;
-    public bool LogAnalysisMinMaxEffective10DaysPercentage { get; set; } = false;
+    // de x dagen effectief moet binnen dit interval zitten (de echte beweging)
+    public int AnalysisEffectiveDays { get; set; } = 5;
+    public double AnalysisEffectivePercentage { get; set; } = 35;
+    public bool AnalysisMaxEffectiveLog { get; set; } = false;
 
     // STOBB signals
     public SettingsSignalStrategyStobb Stobb = new();

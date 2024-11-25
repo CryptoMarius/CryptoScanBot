@@ -1,8 +1,15 @@
 CryptoScanBot release historie:
 
-xx-11-2024 1.9.4.11xx
 
-- Scanner - Nieuwe geluiden
+xx-11-2024 1.9.5.11xx
+
+- Scanner - Dominante zones, de haircursor en het tonen van de % op dezelfde manier doen als TV (shift click om te beginnen, en een enkele click om te beeindigen)
+- Scanner - Dominante zones, de berekende zones uit de database laten zien, calculeren berekend de zones en bewaard ze (dit ter controle van de laatste berekende zones)
+- Scanner - Dominante zones, de foutmelding zien op te lossen (die soms bovenin de chart komt te staan)
+- Scanner - Trend aanpassingen om deze optimaler te laten lopen (het toevoegen van een laatste punt gaf wederom problemen)
+- Scanner - De controle op 1d effectief is vervallen, deze is nu vervangen met de controle efefctief dmv meerdere dagen (opnieuw instellen!)
+- Scanner - Nieuwe instelling om bij een dubbelklik het trend en zone formulier te openen in plaats van de exchange
+- Scanner - Nieuwe geluiden, de oude geluiden staan in de subfolder
 - Scanner - Dominante zones - Replay knoppen ingebouwd
 - Scanner - Dominante zones - Opmeten met shift-click, shift ingedrukt houden en selectie maken
 - Scanner - Dominante zones - Het laatste punt van de trend wordt soms niet goed berekend. Dit kan een verkeerde markttrend of fib betekenen

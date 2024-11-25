@@ -202,7 +202,7 @@ public partial class FrmMain : Form
         GlobalData.SymbolsHaveChanged("");
         GlobalData.LoadSignals();
         TradeTools.LoadAssets();
-        ZoneTools.LoadActiveZones();
+        ZoneTools.LoadAllZones();
         TradeTools.LoadOpenPositions();
         TradeTools.LoadClosedPositions();
         //ClosedPositionsHaveChangedEvent();
@@ -502,7 +502,7 @@ public partial class FrmMain : Form
                 }
 
                 // Bij wijzigingen aantal signalen)
-                //signal.ExpirationDate = signal.CloseDate.AddSeconds(GlobalData.Settings.General.RemoveSignalAfterxCandles * Interval.Duration);
+                //signal.CloseDate = signal.CloseDate.AddSeconds(GlobalData.Settings.General.RemoveSignalAfterxCandles * Interval.Duration);
 
                 // Optioneel een herstart van de Telegram bot
                 if (GlobalData.Telegram.Token != ThreadTelegramBot.Token)

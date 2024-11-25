@@ -326,29 +326,29 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
             signal.IsInvalid = true;
         }
 
-        // de 1 * 1d effectief moet in een bepaald interval zitten
-        signal.Last24HoursEffective = CalculateMaxMovementInInterval(signal.EventTime, CryptoIntervalPeriod.interval15m, 1 * 96); // 1 * 24 / 15 = 96
-        if (!HasOpenPosition() && !signal.Last24HoursEffective.IsBetween(0, GlobalData.Settings.Signal.AnalysisMaxEffectivePercentage))
-        {
-            if (GlobalData.Settings.Signal.LogAnalysisMinMaxEffectivePercentage)
-            {
-                string text = string.Format("Analyse {0} 1d change effective {1} not between {2} .. {3}", Symbol.Name, signal.Last24HoursEffective.ToString("N2"), 
-                    "0", GlobalData.Settings.Signal.AnalysisMaxEffectivePercentage.ToString());
-                GlobalData.AddTextToLogTab(text);
-            }
-            eventText.Add("1d effective% to high");
-            signal.IsInvalid = true;
-        }
+        //// de 1 * 1d effectief moet in een bepaald interval zitten
+        //signal.Last24HoursEffective = CalculateMaxMovementInInterval(signal.EventTime, CryptoIntervalPeriod.interval15m, 1 * 96); // 1 * 24 / 15 = 96
+        //if (!HasOpenPosition() && !signal.Last24HoursEffective.IsBetween(0, GlobalData.Settings.Signal.AnalysisMaxEffectivePercentage))
+        //{
+        //    if (GlobalData.Settings.Signal.LogAnalysisMinMaxEffectivePercentage)
+        //    {
+        //        string text = string.Format("Analyse {0} 1d change effective {1} not between {2} .. {3}", Symbol.Name, signal.Last24HoursEffective.ToString("N2"), 
+        //            "0", GlobalData.Settings.Signal.AnalysisMaxEffectivePercentage.ToString());
+        //        GlobalData.AddTextToLogTab(text);
+        //    }
+        //    eventText.Add("1d effective% to high");
+        //    signal.IsInvalid = true;
+        //}
 
-        // de 10 * 1d effectief moet in een bepaald interval zitten
-        int countInInterval6H = GlobalData.Settings.Signal.AnalysisMaxEffectiveDays * 4; // 40 * 6 = 240 = day's (check)
+        // Check effictive over multiple day's
+        int countInInterval6H = GlobalData.Settings.Signal.AnalysisEffectiveDays * 4; // 40 * 6 = 240 = day's (check)
         signal.Last10DaysEffective = CalculateMaxMovementInInterval(signal.EventTime, CryptoIntervalPeriod.interval6h, countInInterval6H); 
-        if (!HasOpenPosition() && !signal.Last10DaysEffective.IsBetween(0, GlobalData.Settings.Signal.AnalysisMaxEffective10DaysPercentage))
+        if (!HasOpenPosition() && !signal.Last10DaysEffective.IsBetween(0, GlobalData.Settings.Signal.AnalysisEffectivePercentage))
         {
-            if (GlobalData.Settings.Signal.LogAnalysisMinMaxEffective10DaysPercentage)
+            if (GlobalData.Settings.Signal.AnalysisMaxEffectiveLog)
             {
                 string text = string.Format("Analyse {0} 10d change effective {1} not between {2} .. {3}", Symbol.Name, signal.Last10DaysEffective.ToString("N2"), 
-                    "0", GlobalData.Settings.Signal.AnalysisMaxEffective10DaysPercentage.ToString());
+                    "0", GlobalData.Settings.Signal.AnalysisEffectivePercentage.ToString());
                 GlobalData.AddTextToLogTab(text);
             }
             eventText.Add("10d effective% to high");

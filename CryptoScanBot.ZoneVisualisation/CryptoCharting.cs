@@ -99,7 +99,7 @@ public class CryptoCharting
 
         CryptoSymbolInterval symbolInterval = data.Symbol.GetSymbolInterval(session.ActiveInterval);
 
-        var candleSerie = new CandleStickSeries //CandleStickAndVolumeSeries -> obsolete, x...
+        var candleSerie = new CandleStickSeries //CandleStickAndVolumeSeries -> obsolete, symbolData...
         {
             Title = "Candles",
             IncreasingColor = OxyColors.LightGreen,
@@ -150,9 +150,9 @@ public class CryptoCharting
         chart.Series.Add(seriesHigh);
     }
 
-    public static void DrawZigZag(PlotModel chart, CryptoZoneSession session, List<ZigZagResult> zigZagList, string caption)
+    public static void DrawZigZag(PlotModel chart, CryptoZoneSession session, List<ZigZagResult> zigZagList, string caption, OxyColor color)
     {
-        var seriesZigZag = new LineSeries { Title = caption, Color = OxyColors.White };
+        var seriesZigZag = new LineSeries { Title = caption, Color = color };
         var seriesHigh = new ScatterSeries { Title = "Markers high", MarkerSize = 4, MarkerFill = OxyColors.Red, MarkerType = MarkerType.Circle, };
         var seriesLow = new ScatterSeries { Title = "Markers low", MarkerSize = 4, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Circle, };
         var seriesDummyHigh = new ScatterSeries { Title = "Markers dummy", MarkerSize = 5, MarkerFill = OxyColors.Red, MarkerType = MarkerType.Square, };
@@ -195,46 +195,93 @@ public class CryptoCharting
         //seriesZigZag.TrackerFormatString = text;
     }
 
+    private static void DrawLiqBoxesInternal(PlotModel chart, CryptoZone zone, CryptoZoneSession session)
+    {
+        if (zone.OpenTime >= session.MinUnix && zone.OpenTime <= session.MaxUnix)
+        {
+            OxyColor color;
+            if (zone.Side == CryptoTradeSide.Long)
+                color = OxyColors.Green;
+            else
+                color = OxyColors.OrangeRed;
+
+            long dateOpen;
+            if (zone.OpenTime != null)
+                dateOpen = (long)zone.OpenTime;
+            else
+                dateOpen = session.MinUnix;
+
+            long dateLast;
+            if (zone.CloseDate != null)
+                dateLast = (long)zone.CloseDate;
+            else
+                dateLast = session.MaxUnix;
+
+            // Create a rectangle annotation
+            var rectangle = new RectangleAnnotation
+            {
+                MinimumX = dateOpen,  // X-coordinate of the lower-left corner
+                MinimumY = (double)zone.Bottom,  // Y-coordinate of the lower-left corner
+                MaximumX = dateLast,  // X-coordinate of the upper-right corner
+                MaximumY = (double)zone.Top,  // Y-coordinate of the upper-right corner
+                                              //Fill = Color.LightGray,  // Rectangle fill color
+                Fill = OxyColor.FromArgb(128, color.R, color.G, color.B),
+                Stroke = OxyColor.FromArgb(128 + 64 + 32 + 16 + 8 + 4 + 2, color.R, color.G, color.B), // rectangle
+                StrokeThickness = 0,          // Border thickness
+                Text = zone.Description,
+            };
+            chart.Annotations.Add(rectangle);
+        }
+    }
+
+
     public static void DrawLiqBoxes(PlotModel chart, CryptoZoneData data, CryptoZoneSession session)
     {
-        var lastZigZag = data.Indicator.ZigZagList.Last();
-        foreach (var zigzag in data.Indicator.ZigZagList)
-        {
-            // Laatste zigZag is niet relevant (niet bevestigd?)
-            if (zigzag == lastZigZag || !zigzag.Dominant)
-                continue;
+        var symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(data.Symbol.Name);
+        foreach (var zone in symbolData.ZoneListLong)
+            DrawLiqBoxesInternal(chart, zone, session);
+        foreach (var zone in symbolData.ZoneListShort)
+            DrawLiqBoxesInternal(chart, zone, session);
 
-            if (zigzag.Candle!.OpenTime >= session.MinUnix && zigzag.Candle!.OpenTime <= session.MaxUnix && zigzag.Dominant)
-            {
-                OxyColor color;
-                if (zigzag.PointType == 'L')
-                    color = OxyColors.Green;
-                else
-                    color = OxyColors.OrangeRed;
 
-                long dateLast;
-                if (zigzag.InvalidOn != null)
-                    dateLast = zigzag.InvalidOn.OpenTime;
-                else
-                    dateLast = session.MaxUnix;
-                //dateLast -= data.Interval.Duration;
+        //var lastZigZag = data.Indicator.ZigZagList.Last();
+        //foreach (var zigzag in data.Indicator.ZigZagList)
+        //{
+        //    // Laatste zigZag is niet relevant (niet bevestigd?)
+        //    if (zigzag == lastZigZag || !zigzag.Dominant)
+        //        continue;
 
-                // Create a rectangle annotation
-                var rectangle = new RectangleAnnotation
-                {
-                    MinimumX = zigzag.Candle.OpenTime,  // X-coordinate of the lower-left corner
-                    MinimumY = (double)zigzag.Bottom,  // Y-coordinate of the lower-left corner
-                    MaximumX = dateLast,  // X-coordinate of the upper-right corner
-                    MaximumY = (double)zigzag.Top,  // Y-coordinate of the upper-right corner
-                                                    //Fill = Color.LightGray,  // Rectangle fill color
-                    Fill = OxyColor.FromArgb(128, color.R, color.G, color.B),
-                    Stroke = OxyColor.FromArgb(128 + 64 + 32 + 16 + 8 + 4 + 2, color.R, color.G, color.B), // rectangle
-                    StrokeThickness = 0,          // Border thickness
-                    Text = zigzag.Percentage.ToString("N2")
-                };
-                chart.Annotations.Add(rectangle);
-            }
-        }
+        //    if (zigzag.Candle!.OpenTime >= session.MinUnix && zigzag.Candle!.OpenTime <= session.MaxUnix && zigzag.Dominant)
+        //    {
+        //        OxyColor color;
+        //        if (zigzag.PointType == 'L')
+        //            color = OxyColors.Green;
+        //        else
+        //            color = OxyColors.OrangeRed;
+
+        //        long dateLast;
+        //        if (zigzag.CloseDate != null)
+        //            dateLast = (long)zigzag.CloseDate;
+        //        else
+        //            dateLast = session.MaxUnix;
+        //        //dateLast -= data.Interval.Duration;
+
+        //        // Create a rectangle annotation
+        //        var rectangle = new RectangleAnnotation
+        //        {
+        //            MinimumX = zigzag.Candle.OpenTime,  // X-coordinate of the lower-left corner
+        //            MinimumY = (double)zigzag.Bottom,  // Y-coordinate of the lower-left corner
+        //            MaximumX = dateLast,  // X-coordinate of the upper-right corner
+        //            MaximumY = (double)zigzag.Top,  // Y-coordinate of the upper-right corner
+        //                                            //Fill = Color.LightGray,  // Rectangle fill color
+        //            Fill = OxyColor.FromArgb(128, color.R, color.G, color.B),
+        //            Stroke = OxyColor.FromArgb(128 + 64 + 32 + 16 + 8 + 4 + 2, color.R, color.G, color.B), // rectangle
+        //            StrokeThickness = 0,          // Border thickness
+        //            Text = zigzag.Percentage.ToString("N2")
+        //        };
+        //        chart.Annotations.Add(rectangle);
+        //    }
+        //}
     }
 
 

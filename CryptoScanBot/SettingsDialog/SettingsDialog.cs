@@ -62,8 +62,7 @@ public partial class FrmSettings : Form
 #endif
 
         EditAnalysisMinChangePercentage.Minimum = -100;
-        EditAnalysisMaxEffectivePercentage.Maximum = +1000;
-        EditAnalysisMaxEffective10DaysPercentage.Maximum = +1000;
+        EditAnalysisEffectivePercentage.Maximum = +1000;
 
         EditStobTrendLong.Minimum = -1000;
         EditStobTrendShort.Minimum = -1000;
@@ -156,12 +155,9 @@ public partial class FrmSettings : Form
         EditAnalysisMaxChangePercentage.Value = (decimal)settings.Signal.AnalysisMaxChangePercentage;
         EditLogAnalysisMinMaxChangePercentage.Checked = settings.Signal.LogAnalysisMinMaxChangePercentage;
 
-        EditAnalysisMaxEffectivePercentage.Value = (decimal)settings.Signal.AnalysisMaxEffectivePercentage;
-        EditLogAnalysisMinMaxEffectivePercentage.Checked = settings.Signal.LogAnalysisMinMaxEffectivePercentage;
-
-        EditAnalysisMaxEffectiveDays.Value = (decimal)settings.Signal.AnalysisMaxEffectiveDays;
-        EditAnalysisMaxEffective10DaysPercentage.Value = (decimal)settings.Signal.AnalysisMaxEffective10DaysPercentage;
-        EditLogAnalysisMinMaxEffective10DaysPercentage.Checked = settings.Signal.LogAnalysisMinMaxEffective10DaysPercentage;
+        EditAnalysisEffectiveDays.Value = (decimal)settings.Signal.AnalysisEffectiveDays;
+        EditAnalysisEffectivePercentage.Value = (decimal)settings.Signal.AnalysisEffectivePercentage;
+        EditAnalysisMaxEffectiveLog.Checked = settings.Signal.AnalysisMaxEffectiveLog;
 
         EditSymbolMustExistsDays.Value = settings.Signal.SymbolMustExistsDays;
         EditLogSymbolMustExistsDays.Checked = settings.Signal.LogSymbolMustExistsDays;
@@ -417,12 +413,9 @@ public partial class FrmSettings : Form
         settings.Signal.AnalysisMaxChangePercentage = (double)EditAnalysisMaxChangePercentage.Value;
         settings.Signal.LogAnalysisMinMaxChangePercentage = EditLogAnalysisMinMaxChangePercentage.Checked;
 
-        settings.Signal.AnalysisMaxEffectivePercentage = (double)EditAnalysisMaxEffectivePercentage.Value;
-        settings.Signal.LogAnalysisMinMaxEffectivePercentage = EditLogAnalysisMinMaxEffectivePercentage.Checked;
-
-        settings.Signal.AnalysisMaxEffectiveDays = (int)EditAnalysisMaxEffectiveDays.Value;
-        settings.Signal.AnalysisMaxEffective10DaysPercentage = (double)EditAnalysisMaxEffective10DaysPercentage.Value;
-        settings.Signal.LogAnalysisMinMaxEffective10DaysPercentage = EditLogAnalysisMinMaxEffective10DaysPercentage.Checked;
+        settings.Signal.AnalysisEffectiveDays = (int)EditAnalysisEffectiveDays.Value;
+        settings.Signal.AnalysisEffectivePercentage = (double)EditAnalysisEffectivePercentage.Value;
+        settings.Signal.AnalysisMaxEffectiveLog = EditAnalysisMaxEffectiveLog.Checked;
 
         settings.Signal.SymbolMustExistsDays = (int)EditSymbolMustExistsDays.Value;
         settings.Signal.LogSymbolMustExistsDays = EditLogSymbolMustExistsDays.Checked;

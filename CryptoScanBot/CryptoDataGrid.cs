@@ -75,7 +75,7 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
     internal Color VeryLightGray2 = Color.FromArgb(0xa1, 0xa1, 0xa1);
 
 
-    internal void InitGrid()
+    public void InitGrid()
     {
         int count = ColumnList.Count;
 

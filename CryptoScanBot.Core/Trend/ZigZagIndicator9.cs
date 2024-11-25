@@ -49,7 +49,7 @@ public class ZigZagIndicator9(CryptoCandleList candleList, bool useHighLow, deci
         for (int i = index; i < PivotList.Count; i ++)
         {
             var zigZag = PivotList[i];
-            if (zigZag.Candle.OpenTime < MaxTime)
+            if (MaxTime == -1 || (MaxTime > 0 && zigZag.Candle.OpenTime < MaxTime))
             {
                 if (swing == null || GetLowValue(zigZag.Candle) < GetLowValue(swing))
                     swing = zigZag.Candle;
@@ -71,7 +71,7 @@ public class ZigZagIndicator9(CryptoCandleList candleList, bool useHighLow, deci
         for (int i = index; i < PivotList.Count; i++)
         {
             var zigZag = PivotList[i];
-            if (zigZag.Candle.OpenTime < MaxTime)
+            if (MaxTime == -1 || (MaxTime > 0 && zigZag.Candle.OpenTime < MaxTime))
             {
                 if (swing == null || GetHighValue(zigZag.Candle) > GetHighValue(swing))
                     swing = zigZag.Candle;
@@ -319,25 +319,53 @@ public class ZigZagIndicator9(CryptoCandleList candleList, bool useHighLow, deci
 
 
             // old code, iterate all candles from the last swing point
-            //if (!added)
-            //{
+            if (!added)
+            {
+            //    CryptoCandle? lowest = null;
+            //    CryptoCandle? highest = null;
+
             //    long unix = ZigZagLanceBeggs.queue[7].OpenTime;
             //    List<CryptoCandle> list = [];
             //    while (unix > LastSwingPoint.Candle.OpenTime)
             //    {
             //        if (unix < MaxTime && CandleList.TryGetValue(unix, out CryptoCandle? candle))
-            //            list.Add(candle);
+            //        {
+            //            var candleValue = GetLowValue(candle);
+            //            if (lowest == null || candleValue < GetLowValue(lowest) || (LastSwingLow != null && candleValue < LastSwingLow.Value))
+            //                lowest = candle;
+            //            candleValue = GetHighValue(candle);
+            //            if (highest == null || candleValue > GetHighValue(highest) || (LastSwingHigh != null && candleValue > LastSwingHigh.Value))
+            //                highest = candle;
+                        
+            //        }
             //        unix -= Duration;
             //    }
 
+            //    // Okay, todo, sort it instead of this shtt
+
+            //    if (lowest != null && highest != null)
+            //    {
+            //        if (lowest.OpenTime > highest.OpenTime)
+            //        {
+            //            list.Add(highest);
+            //            list.Add(lowest);
+            //        }
+            //        else
+            //        {
+            //            list.Add(lowest);
+            //            list.Add(highest);
+            //        }
+            //    }
+            //    else if (lowest != null)
+            //        list.Add(lowest);
+            //    else if (highest != null)
+            //        list.Add(highest);
+
+
             //    foreach (CryptoCandle candle in list)
             //    {
-            //        if (candle.OpenTime <= LastSwingLow.Candle.OpenTime)
-            //            break;
-
-            //        candleValue = GetLowValue(candle);
-            //        if (CanAddNewLow(candleValue))
-            //        //if (candle.GetLowValue(UseHighLow) < LastSwingLow.Value)
+            //        var candleValue = GetLowValue(candle);
+            //        //if (CanAddNewLow(candleValue))
             //        {
             //            if (LastSwingLow != null && GetHighFromBuffer(out CryptoCandle? swing))
             //            {
@@ -345,26 +373,10 @@ public class ZigZagIndicator9(CryptoCandleList candleList, bool useHighLow, deci
             //                    LastSwingHigh = AddZigZagPoint(swing!, 'H', true, PivotList.Count + 1);
             //            }
             //            LastSwingLow = AddZigZagPoint(candle, 'L', true, PivotList.Count + 1);
-            //            break;
-            //            //if (LastSwingLow.PointType != 'H' && GetHighFromBuffer(out CryptoCandle? swing))
-            //            //{
-            //            //    ZigZagResult dummyHigh = new() { PointType = 'H', Candle = swing!, Value = swing!.GetHighValue(UseHighLow), Dominant = false, Dummy = true, };
-            //            //    AddedDummyZigZag.Add(dummyHigh);
-            //            //    ZigZagList.Add(dummyHigh);
-            //            //    break;
-            //            //}
-
-            //            //if (LastSwingLow.PointType != 'L') // dont repeat it 
-            //            //{
-            //            //    ZigZagResult dummyLow = new() { PointType = 'L', Candle = candle, Value = candle.GetLowValue(UseHighLow), Dominant = false, Dummy = true, };
-            //            //    AddedDummyZigZag.Add(dummyLow);
-            //            //    ZigZagList.Add(dummyLow);
-            //            //    break;
-            //            //}
             //        }
+
             //        candleValue = GetHighValue(candle);
-            //        if (CanAddNewHigh(candleValue))
-            //        //else if (candle.GetHighValue(UseHighLow) > LastSwingHigh.Value)
+            //        //if (CanAddNewHigh(candleValue))
             //        {
             //            if (LastSwingHigh != null && GetLowFromBuffer(out CryptoCandle? swing))
             //            {
@@ -372,27 +384,74 @@ public class ZigZagIndicator9(CryptoCandleList candleList, bool useHighLow, deci
             //                    LastSwingLow = AddZigZagPoint(swing!, 'L', true, PivotList.Count + 1);
             //            }
             //            LastSwingHigh = AddZigZagPoint(candle, 'H', true, PivotList.Count + 1);
-            //            break;
-
-
-            //            //if (LastSwingLow.PointType != 'L' && GetLowFromBuffer(out CryptoCandle? swing))
-            //            //{
-            //            //    ZigZagResult dummyLow = new() { PointType = 'L', Candle = swing!, Value = swing!.GetLowValue(UseHighLow), Dominant = false, Dummy = true, };
-            //            //    AddedDummyZigZag.Add(dummyLow);
-            //            //    ZigZagList.Add(dummyLow);
-            //            //    break;
-            //            //}
-
-            //            //if (LastSwingLow.PointType != 'H') // dont repeat it 
-            //            //{
-            //            //    ZigZagResult dummyHigh = new() { PointType = 'H', Candle = candle, Value = candle.GetHighValue(UseHighLow), Dominant = false, Dummy = true, };
-            //            //    AddedDummyZigZag.Add(dummyHigh);
-            //            //    ZigZagList.Add(dummyHigh);
-            //            //    break;
-            //            //}
             //        }
             //    }
-            //}
+
+
+
+                //foreach (CryptoCandle candle in list)
+                //{
+                //    if (candle.OpenTime <= LastSwingLow.Candle.OpenTime)
+                //        break;
+
+                //    var candleValue = GetLowValue(candle);
+                //    if (CanAddNewLow(candleValue))
+                //    //if (candle.GetLowValue(UseHighLow) < LastSwingLow.Value)
+                //    {
+                //        if (LastSwingLow != null && GetHighFromBuffer(out CryptoCandle? swing))
+                //        {
+                //            if (ShowSecondary || (!ShowSecondary && GetHighValue(swing!) > LastSwingLow.Value))
+                //                LastSwingHigh = AddZigZagPoint(swing!, 'H', true, PivotList.Count + 1);
+                //        }
+                //        LastSwingLow = AddZigZagPoint(candle, 'L', true, PivotList.Count + 1);
+                //        //break;
+                //        //if (LastSwingLow.PointType != 'H' && GetHighFromBuffer(out CryptoCandle? swing))
+                //        //{
+                //        //    ZigZagResult dummyHigh = new() { PointType = 'H', Candle = swing!, Value = swing!.GetHighValue(UseHighLow), Dominant = false, Dummy = true, };
+                //        //    AddedDummyZigZag.Add(dummyHigh);
+                //        //    ZigZagList.Add(dummyHigh);
+                //        //    break;
+                //        //}
+
+                //        //if (LastSwingLow.PointType != 'L') // dont repeat it 
+                //        //{
+                //        //    ZigZagResult dummyLow = new() { PointType = 'L', Candle = candle, Value = candle.GetLowValue(UseHighLow), Dominant = false, Dummy = true, };
+                //        //    AddedDummyZigZag.Add(dummyLow);
+                //        //    ZigZagList.Add(dummyLow);
+                //        //    break;
+                //        //}
+                //    }
+                //    candleValue = GetHighValue(candle);
+                //    if (CanAddNewHigh(candleValue))
+                //    //else if (candle.GetHighValue(UseHighLow) > LastSwingHigh.Value)
+                //    {
+                //        if (LastSwingHigh != null && GetLowFromBuffer(out CryptoCandle? swing))
+                //        {
+                //            if (ShowSecondary || (!ShowSecondary && GetLowValue(swing!) < LastSwingHigh.Value))
+                //                LastSwingLow = AddZigZagPoint(swing!, 'L', true, PivotList.Count + 1);
+                //        }
+                //        LastSwingHigh = AddZigZagPoint(candle, 'H', true, PivotList.Count + 1);
+                //        //break;
+
+
+                //        //if (LastSwingLow.PointType != 'L' && GetLowFromBuffer(out CryptoCandle? swing))
+                //        //{
+                //        //    ZigZagResult dummyLow = new() { PointType = 'L', Candle = swing!, Value = swing!.GetLowValue(UseHighLow), Dominant = false, Dummy = true, };
+                //        //    AddedDummyZigZag.Add(dummyLow);
+                //        //    ZigZagList.Add(dummyLow);
+                //        //    break;
+                //        //}
+
+                //        //if (LastSwingLow.PointType != 'H') // dont repeat it 
+                //        //{
+                //        //    ZigZagResult dummyHigh = new() { PointType = 'H', Candle = candle, Value = candle.GetHighValue(UseHighLow), Dominant = false, Dummy = true, };
+                //        //    AddedDummyZigZag.Add(dummyHigh);
+                //        //    ZigZagList.Add(dummyHigh);
+                //        //    break;
+                //        //}
+                //    }
+                //}
+            }
         }
     }
 
@@ -425,6 +484,13 @@ public class ZigZagIndicator9(CryptoCandleList candleList, bool useHighLow, deci
 
             if ((p1.PointType == 'L' && p2.PointType == 'H' && p3.PointType == 'L') || p1.PointType == 'H' && p2.PointType == 'L' && p3.PointType == 'H')
             {
+                // Are we in the back of the list...?
+				if (p1.Dummy || p2.Dummy || p3.Dummy || index == ZigZagList.Count - 1)
+                {
+                    index++;
+                    continue;
+                }
+
                 decimal value1;
                 decimal value2;
                 decimal value3;

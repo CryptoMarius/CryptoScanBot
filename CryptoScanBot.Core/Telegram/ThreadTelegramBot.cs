@@ -115,7 +115,8 @@ public class ThreadTelegramBotInstance
 
         try
         {
-            await bot.SendTextMessageAsync(ThreadTelegramBot.ChatId, text, parseMode: ParseMode.Html, disableWebPagePreview: true);
+            var DisableLink = new LinkPreviewOptions { IsDisabled = true };
+            await bot.SendMessage(ThreadTelegramBot.ChatId, text, parseMode: ParseMode.Html, linkPreviewOptions: DisableLink);
         }
         catch (Exception error)
         {
@@ -289,8 +290,8 @@ public class ThreadTelegramBotInstance
             //bot.send_message(chat_id = update.message.chat_id, text = "<a href='https://www.google.com/'>Google</a>", parse_mode = ParseMode.HTML)
             //bot.send_message(chat_id = update.message.chat_id, text = "<b>Bold font</b>", parse_mode = ParseMode.HTML)
 
-            await bot.SendTextMessageAsync(ThreadTelegramBot.ChatId, builder.ToString(), parseMode: ParseMode.Html, disableWebPagePreview: true);
-
+            var DisableLink = new LinkPreviewOptions { IsDisabled = true };
+            await bot.SendMessage(ThreadTelegramBot.ChatId, builder.ToString(), parseMode: ParseMode.Html, linkPreviewOptions: DisableLink);
         }
         catch (Exception error)
         {

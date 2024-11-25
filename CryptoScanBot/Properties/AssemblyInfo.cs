@@ -33,7 +33,7 @@ using System.Runtime.Versioning;
 // You can specify all the values or you can default the Build and Revision Numbers
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.9.4.1112")]
-[assembly: AssemblyFileVersion("1.9.4.1112")]
+[assembly: AssemblyVersion("1.9.5.1124")]
+[assembly: AssemblyFileVersion("1.9.5.1124")]
 
 [assembly: SupportedOSPlatform("windows")]

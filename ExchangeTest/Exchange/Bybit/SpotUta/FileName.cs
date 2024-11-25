@@ -4,6 +4,7 @@ using System.Text.Json;
 using Bybit.Net.Clients;
 using Bybit.Net.Enums;
 using Bybit.Net.Objects.Models.V5;
+using Bybit.Net.Objects.Options;
 
 using CryptoExchange.Net.Authentication;
 
@@ -11,6 +12,7 @@ using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace ExchangeTest.Bybit.SpotUta;
 
@@ -37,15 +39,16 @@ internal class FileName
         //NLog.LogFactory Factory1 = new LogFactory();
         //LoadNLogConfigurationOnFactory(Factory1);
 
-
-        BybitRestClient client = new(null, LogFactory, options =>
+        var options = new BybitRestOptions()
         {
-            //options.Environment = _environment;
-            options.OutputOriginalData = true;
-            options.ReceiveWindow = TimeSpan.FromSeconds(15);
-            if (GlobalData.TradingApi.Key != "")
-                options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
-        });
+            //options.Environment = _environment,
+            OutputOriginalData = true,
+            ReceiveWindow = TimeSpan.FromSeconds(15),
+        };
+        if (GlobalData.TradingApi.Key != "")
+            options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
+
+        BybitRestClient client = new(null, LogFactory, Options.Create(options));
         return client;
     }
 

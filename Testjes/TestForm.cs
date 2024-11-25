@@ -130,9 +130,11 @@ public partial class TestForm : Form
 
         tabControl.SelectedTab = tabPageLog;
 
-        GridSignals = new(dataGridViewSignal, SignalList, GlobalData.SettingsUser.GridColumnsSignal);
-        GridSymbols = new(dataGridViewSymbol, SymbolList, GlobalData.SettingsUser.GridColumnsSymbol);
-        
+        GridSignals = new() { Grid = dataGridViewSignal, List = SignalList, ColumnList = GlobalData.SettingsUser.GridColumnsSignal };
+        GridSignals.InitGrid();
+        GridSymbols = new() { Grid = dataGridViewSymbol, List = SymbolList, ColumnList = GlobalData.SettingsUser.GridColumnsSymbol };
+        GridSymbols.InitGrid();
+
 
 
         //Om vanuit achtergrond threads iets te kunnen loggen (kan charmanter?)

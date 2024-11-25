@@ -6,10 +6,6 @@ using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Trend;
-using CryptoScanBot.Core.Zones;
-
-using Dapper;
-using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot.ZoneVisualisation.Zones;
 
@@ -253,7 +249,7 @@ public class CryptoCalculation
         foreach (var zigzag in data.Indicator.ZigZagList)
         {
             if (prevZigZag == null)
-                zigzag.InvalidOn = zigzag.Candle; //Just to show it..
+                zigzag.CloseDate = zigzag.Candle.OpenTime; //Just to show it..
             else
             {
                 //if (zigzag.Candle!.DateLocal >= new DateTime(2024, 10, 10, 18, 0, 0, DateTimeKind.Local))
@@ -281,13 +277,13 @@ public class CryptoCalculation
                             //if (zigzag.PointType == 'H' && (candle.High >= zigzag.Top || candle.GetHighValue(GlobalData.Settings.Signal.Zones.UseHighLow) >= zigzag.Bottom))
                             if (zigzag.PointType == 'H' && (candle.High >= zigzag.Top || Math.Max(candle.Open, candle.Close) >= zigzag.Bottom))
                             {
-                                zigzag.InvalidOn = candle;
+                                zigzag.CloseDate = candle.OpenTime;
                                 break;
                             }
                             //if (zigzag.PointType == 'L' && (candle.Low <= zigzag.Bottom || candle.GetLowValue(GlobalData.Settings.Signal.Zones.UseHighLow) <= zigzag.Top))
                             if (zigzag.PointType == 'L' && (candle.Low <= zigzag.Bottom || Math.Min(candle.Open, candle.Close) <= zigzag.Top))
                             {
-                                zigzag.InvalidOn = candle;
+                                zigzag.CloseDate = candle.OpenTime;
                                 break;
                             }
                         }
@@ -299,52 +295,4 @@ public class CryptoCalculation
     }
 
 
-    public static void SaveToZoneTable(CryptoZoneData data)
-    {
-        using CryptoDatabase databaseThread = new();
-        databaseThread.Connection.Open();
-
-        using var transaction = databaseThread.BeginTransaction();
-        databaseThread.Connection.Execute($"delete from zone where symbolId={data.Symbol.Id}", transaction);
-        transaction.Commit();
-
-        var x = GlobalData.ActiveAccount!.Data.GetSymbolData(data.Symbol.Name);
-        x.ResetZoneData();
-
-        foreach (var zigZag in data.Indicator.ZigZagList)
-        {
-            if (zigZag.Dominant && zigZag.InvalidOn == null) //zigZag.Bottom > 0 && 
-            {
-                CryptoZone zone = new()
-                {
-                    AccountId = GlobalData.ActiveAccount.Id,
-                    Account = GlobalData.ActiveAccount,
-                    ExchangeId = data.Exchange.Id,
-                    Exchange = data.Exchange,
-                    SymbolId = data.Symbol.Id,
-                    Symbol = data.Symbol,
-                    Top = zigZag.Top,
-                    Bottom = zigZag.Bottom,
-                    Side = CryptoTradeSide.Long,
-                    Strategy = CryptoSignalStrategy.DominantLevel,
-                };
-
-                if (zigZag.PointType == 'L')
-                {
-                    zone.Side = CryptoTradeSide.Long;
-                    zone.AlarmPrice = zone.Top * (100 + GlobalData.Settings.Signal.Zones.WarnPercentage) / 100;
-                    x.ZoneListLong.Add(zone);
-                }
-                else
-                {
-                    zone.Side = CryptoTradeSide.Short;
-                    zone.AlarmPrice = zone.Bottom * (100 - GlobalData.Settings.Signal.Zones.WarnPercentage) / 100;
-                    x.ZoneListShort.Add(zone);
-                }
-
-                databaseThread.Connection.Insert(zone);
-
-            }
-        }
-    }
 }

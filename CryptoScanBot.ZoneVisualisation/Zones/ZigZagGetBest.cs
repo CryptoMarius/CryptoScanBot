@@ -6,10 +6,13 @@ namespace CryptoScanBot.ZoneVisualisation.Zones;
 
 public class ZigZagGetBest
 {
-    public static ZigZagIndicator9 CalculateBestIndicator(CryptoSymbolInterval symbolInterval, long maxUnixTime = -1)
+    const int MinimumPivots = 4; 
+
+    public static ZigZagIndicator9 CalculateBestIndicator(CryptoSymbolInterval symbolInterval, long minDate, long maxDate)
     {
         //        long startTime = Stopwatch.GetTimestamp();
         //        ScannerLog.Logger.Info("CalculateBestIndicator.Start");
+
         AccountSymbolIntervalData accountSymbolIntervalData = new()
         {
             Interval = symbolInterval.Interval,
@@ -17,30 +20,51 @@ public class ZigZagGetBest
         };
 
         // We cache the ZigZag indicator and we create a lot of them with different deviations
-        if (accountSymbolIntervalData.ZigZagIndicators == null)
-        {
-            accountSymbolIntervalData.ZigZagIndicators = [];
-            for (decimal deviation = 2m; deviation >= 0.5m; deviation -= 0.25m)
-            {
-                ZigZagIndicator9 indicator = new(symbolInterval.CandleList, GlobalData.Settings.General.UseHighLowInTrendCalculation, deviation, symbolInterval.Interval.Duration);
-                accountSymbolIntervalData.ZigZagIndicators.Add(indicator);
-            }
-        }
+        TrendTools.CreateAllTrendIndicators(accountSymbolIntervalData, symbolInterval.CandleList);
+        //if (accountSymbolIntervalData.ZigZagIndicators == null)
+        //{
+        //    accountSymbolIntervalData.ZigZagIndicators = [];
+        //    for (decimal deviation = 2.5m; deviation >= 0.25m; deviation -= 0.25m)
+        //    {
+        //        ZigZagIndicator9 indicator = new(symbolInterval.CandleList, GlobalData.Settings.General.UseHighLowInTrendCalculation, deviation, symbolInterval.Interval.Duration)
+        //        {
+        //            Deviation = deviation,
+        //        };
+        //        accountSymbolIntervalData.ZigZagIndicators.Add(indicator);
+        //    }
+        //}
+
+
 
         // Add candles to the ZigZag indicators
-        foreach (var indicator in accountSymbolIntervalData.ZigZagIndicators)
-            indicator.StartBatch();
-        foreach (var candle in symbolInterval.CandleList.Values)
-        {
-            if (maxUnixTime > 0 && candle.OpenTime > maxUnixTime)
-                break;
-            foreach (var indicator in accountSymbolIntervalData.ZigZagIndicators)
-            {
-                indicator.Calculate(candle);
-            }
-        }
-        foreach (var indicator in accountSymbolIntervalData.ZigZagIndicators)
-            indicator.FinishBatch();
+        TrendTools.AddCandlesToIndicators(accountSymbolIntervalData, symbolInterval.CandleList, minDate, maxDate);
+
+        //foreach (var indicator in accountSymbolIntervalData.ZigZagIndicators)
+        //    indicator.StartBatch();
+
+        //int added = 0;
+        //long loop = minDate;
+        //while (loop <= maxDate)
+        //{
+        //    if (symbolInterval.CandleList.TryGetValue(loop, out CryptoCandle? candle))
+        //    {
+        //        foreach (var indicator in accountSymbolIntervalData.ZigZagIndicators)
+        //        {
+        //            indicator.Calculate(candle);
+        //            added++;
+        //        }
+        //        //accountSymbolIntervalData.ZigZagLastCandleAdded = loop;
+        //    }
+        //    //else log?.AppendLine($"unable to find candle {loop}");
+        //    loop += accountSymbolIntervalData.Interval.Duration;
+        //}
+        //if (added > 0)
+        //{
+        //    foreach (var indicator in accountSymbolIntervalData.ZigZagIndicators)
+        //    {
+        //        indicator.FinishBatch();
+        //    }
+        //}
 
 
 
@@ -50,7 +74,7 @@ public class ZigZagGetBest
         double sum = 0;
         foreach (var indicator in accountSymbolIntervalData.ZigZagIndicators)
         {
-            if (indicator.ZigZagList.Count > 4)
+            if (indicator.ZigZagList.Count > MinimumPivots)
             {
                 countX++;
                 sum += indicator.ZigZagList.Count;
@@ -67,7 +91,7 @@ public class ZigZagGetBest
         foreach (var indicator in accountSymbolIntervalData.ZigZagIndicators)
         {
             int zigZagCount = indicator.ZigZagList.Count;
-            if (indicator.ZigZagList.Count > 4 && zigZagCount > avg)
+            if (indicator.ZigZagList.Count > MinimumPivots && zigZagCount > avg)
             {
                 bestIndicator = indicator;
                 break;
