@@ -118,32 +118,28 @@ public class CommandTools
                         case Command.PositionCalculate:
                             if (position != null)
                             {
-                                using (CryptoDatabase databaseThread = new())
+                                using CryptoDatabase databaseThread = new();
+                                if (position.Status >= CryptoPositionStatus.Ready)
                                 {
-                                    if (position.Status >= CryptoPositionStatus.Ready)
-                                    {
-                                        databaseThread.Open();
-                                        PositionTools.LoadPosition(databaseThread, position);
-                                    }
-                                    GlobalData.AddTextToLogTab($"{position.Symbol.Name} position {position.Id} recalculate manual");
-                                    await TradeTools.CalculatePositionResultsViaOrders(databaseThread, position, forceCalculation: true);
+                                    databaseThread.Open();
+                                    PositionTools.LoadPosition(databaseThread, position);
                                 }
+                                GlobalData.AddTextToLogTab($"{position.Symbol.Name} position {position.Id} recalculate manual");
+                                await TradeTools.CalculatePositionResultsViaOrders(databaseThread, position, forceCalculation: true);
                             }
                             break;
                         case Command.ExcelPositionInformation:
                             if (position != null)
                             {
-                                using (CryptoDatabase databaseThread = new())
+                                using CryptoDatabase databaseThread = new();
+                                if (position.Status >= CryptoPositionStatus.Ready)
                                 {
-                                    if (position.Status >= CryptoPositionStatus.Ready)
-                                    {
-                                        databaseThread.Open();
-                                        PositionTools.LoadPosition(databaseThread, position);
-                                    }
-                                    GlobalData.AddTextToLogTab($"{position.Symbol.Name} position {position.Id} manual for Excel");
-                                    await TradeTools.CalculatePositionResultsViaOrders(databaseThread, position, forceCalculation: true);
-                                    _ = Task.Run(() => { new ExcelPositionDump(position).ExportToExcel(); });
+                                    databaseThread.Open();
+                                    PositionTools.LoadPosition(databaseThread, position);
                                 }
+                                GlobalData.AddTextToLogTab($"{position.Symbol.Name} position {position.Id} manual for Excel");
+                                await TradeTools.CalculatePositionResultsViaOrders(databaseThread, position, forceCalculation: true);
+                                _ = Task.Run(() => { new ExcelPositionDump(position).ExportToExcel(); });
                             }
                             break;
                         case Command.ShowSymbolGraph:

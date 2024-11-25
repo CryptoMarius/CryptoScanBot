@@ -13,47 +13,37 @@ namespace CryptoScanBot.ZoneVisualisation.Zones;
 public class CandleEngine
 {
     public static DateTime StartupTime { get; set; }
-    public static SortedList<CryptoIntervalPeriod, bool> LoadedCandlesInMemory { get; set; } = [];
-
-    public static readonly JsonSerializerOptions JsonSerializerIndented = new()
-    { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true, IncludeFields = true };
-
 
     public static void LoadCandleDataFromDisk(CryptoSymbol symbol, CryptoInterval interval, CryptoCandleList candleList)
     {
-        if (!LoadedCandlesInMemory.TryGetValue(interval.IntervalPeriod, out bool _))
+        // load candles (kind of quick and dirty)
+        string baseFolder = GlobalData.GetBaseDir() + @"Pivots\";
+        string filename = baseFolder + $"{symbol.Name}-{interval.Name}.json";
+        if (File.Exists(filename))
         {
-            // load candles (kind of quick and dirty)
-            string baseFolder = GlobalData.GetBaseDir() + @"Pivots\";
-            string filename = baseFolder + $"{symbol.Name}-{interval.Name}.json";
-            if (File.Exists(filename))
+            string text = File.ReadAllText(filename);
+            var list = JsonSerializer.Deserialize<CryptoCandleList>(text, JsonTools.JsonSerializerIndented);
+            if (list != null)
             {
-                string text = File.ReadAllText(filename);
-                var list = JsonSerializer.Deserialize<CryptoCandleList>(text, JsonSerializerIndented);
-                if (list != null)
-                {
-                    foreach (var c in list.Values)
-                        candleList.TryAdd(c.OpenTime, c);
-                }
-                //GlobalData.AddTextToLogTab($"{symbol.Name} {symbolInterval.Interval!.Name} Loading file {filename} {added} candles added");
+                foreach (var c in list.Values)
+                    candleList.TryAdd(c.OpenTime, c);
             }
-            LoadedCandlesInMemory.Add(interval.IntervalPeriod, false); // in memory, nothing changed
+            //GlobalData.AddTextToLogTab($"{symbol.Name} {symbolInterval.Interval!.Name} Loading file {filename} {added} candles added");
         }
-
     }
 
 
-    public static void SaveCandleDataToDisk(CryptoSymbol symbol, StringBuilder log)
+    public static void SaveCandleDataToDisk(CryptoSymbol symbol, StringBuilder log, SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
     {
         foreach (CryptoSymbolInterval symbolInterval in symbol.IntervalPeriodList)
         {
-            if (LoadedCandlesInMemory.TryGetValue(symbolInterval.IntervalPeriod, out bool changed) && changed)
+            if (loadedCandlesInMemory.TryGetValue(symbolInterval.IntervalPeriod, out bool changed) && changed)
             {
                 // Save candles (kind of quick and dirty)
                 string baseFolder = GlobalData.GetBaseDir() + @"Pivots\";
                 string filename = baseFolder + $"{symbol.Name}-{symbolInterval.Interval.Name}.json";
                 Directory.CreateDirectory(baseFolder);
-                string text = JsonSerializer.Serialize(symbolInterval.CandleList, JsonSerializerIndented);
+                string text = JsonSerializer.Serialize(symbolInterval.CandleList, JsonTools.JsonSerializerIndented);
                 File.WriteAllText(filename, text);
 
                 log.AppendLine($"saving {filename}");
@@ -65,7 +55,7 @@ public class CandleEngine
                 //    formatter.Serialize(writeStream, SymbolInterval.CandleList);
                 //    writeStream.Close();
                 //}
-                LoadedCandlesInMemory[symbolInterval.IntervalPeriod] = false; // in memory, nothing changed
+                loadedCandlesInMemory[symbolInterval.IntervalPeriod] = false; // in memory, nothing changed
             }
         }
     }
@@ -183,6 +173,7 @@ public class CandleEngine
             string text = $"Fetch historical data {symbol.Name} {interval!.Name} from {minTime.ToLocalTime()} up to {maxTime.ToLocalTime()}";
 
             KlineInterval? intervalEnumX = Core.Exchange.BybitApi.Spot.Interval.GetExchangeInterval(interval.IntervalPeriod);
+            // lines gets to long if optimized 
             if (intervalEnumX == null)
                 throw new Exception("Not supported interval");
             KlineInterval intervalEnum = (KlineInterval)intervalEnumX;

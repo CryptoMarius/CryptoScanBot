@@ -8,8 +8,6 @@ namespace CryptoScanBot.Core.Trend;
 
 public class TrendInterval
 {
-    const int MinimumPivots = 4;
-
     private static bool ResolveStartAndEndDate(CryptoCandleList candleList, AccountSymbolIntervalData accountSymbolIntervalData, ref long minDate, ref long maxDate)
     {
         // We cache the ZigZag indicator, this way we do not have to add all the candles again and again.
@@ -179,7 +177,7 @@ public class TrendInterval
         // Unable to calculate - Note: in fact we need at least ~24 candles because of the zigzag parameters to identify H/L
         if (candleList.Count == 0)
         {
-            // Hele discussies, maar als we niet genoeg candles hebben om een trend te berekenen
+            // Lots of discussion, maar als we niet genoeg candles hebben om een trend te berekenen
             // gebruiken we toch de sideway's om aan te geven dat het niet berekend kon worden.
             // Bij nieuwe munten, Flatliners (ethusdt) en andere gedrochten is het dus sideway's!
             //Signal.Reaction = string.Format("not enough quotes for {0} trend", interval.Name);
@@ -203,112 +201,18 @@ public class TrendInterval
         DateTime candleIntervalEndDebug = CandleTools.GetUnixDate(maxDate);
 #endif
 
-
-
-
         // We cache the ZigZag indicator and we create a lot of them with different deviations
         TrendTools.CreateAllTrendIndicators(accountSymbolIntervalData, candleList);
-        //if (accountSymbolIntervalData.ZigZagIndicators == null)
-        //{
-        //    accountSymbolIntervalData.ZigZagIndicators = [];
-        //    for (decimal deviation = 2.5m; deviation >= 0.25m; deviation -= 0.25m)
-        //    {
-        //        ZigZagIndicator9 indicator = new(candleList, GlobalData.Settings.General.UseHighLowInTrendCalculation, deviation, interval.Duration)
-        //        {
-        //            Deviation = deviation,
-        //        };
-        //        accountSymbolIntervalData.ZigZagIndicators.Add(indicator);
-        //    }
-        //}
-
-
 
         // Add candles to the ZigZag indicators
-        accountSymbolIntervalData.ZigZagLastCandleAdded = TrendTools.AddCandlesToIndicators(accountSymbolIntervalData, candleList, minDate, maxDate);
-        
-        //// Add candles to the ZigZag indicators
-        //foreach (var indicator in accountSymbolIntervalData.ZigZagIndicators!)
-        //    indicator.StartBatch();
+        accountSymbolIntervalData.ZigZagLastCandleAdded = TrendTools.AddCandlesToTrendIndicators(accountSymbolIntervalData, candleList, minDate, maxDate);
 
-        //int added = 0;
-        //long loop = minDate;
-        //while (loop <= maxDate)
-        //{
-        //    if (candleList.TryGetValue(loop, out CryptoCandle? candle))
-        //    {
-        //        foreach (var indicator in accountSymbolIntervalData.ZigZagIndicators)
-        //        {
-        //            indicator.Calculate(candle);
-        //            added++;
-        //        }
-        //        accountSymbolIntervalData.ZigZagLastCandleAdded = loop;
-        //    }
-        //    loop += accountSymbolIntervalData.Interval.Duration;
-        //}
-        //if (added > 0)
-        //{
-        //    foreach (var indicator in accountSymbolIntervalData.ZigZagIndicators)
-        //    {
-        //        indicator.FinishBatch();
-        //    }
-        //}
-
-
-
-
-        // Calculate the average amount of pivots for the valid zigzag indicators
-        int countX = 0;
-        double sum = 0;
-        foreach (var indicator in accountSymbolIntervalData.ZigZagIndicators)
-        {
-            if (indicator.ZigZagList.Count > MinimumPivots)
-            {
-                countX++;
-                sum += indicator.ZigZagList.Count;
-                if (GlobalData.Settings.General.DebugTrendCalculation)
-                {
-                    log?.AppendLine($"{symbol.Name} {interval.Name} candles={candleList.Count} deviation={indicator.Deviation}% candlecount={indicator.CandleCount} zigzagcount={indicator.ZigZagList.Count}");
-                    ScannerLog.Logger.Trace($"{symbol.Name} {interval.Name} candles={candleList.Count} deviation={indicator.Deviation}% candlecount={indicator.CandleCount} zigzagcount={indicator.ZigZagList.Count}");
-                }
-            }
-        }
-        double avg = sum / countX;
-
-
-
-
-        // What is the best? Technically we need at least 4 pivot points, would be nice if we have a lot of pivots.
-        // On the other hand, we do not want small percentages als this can give fake trend & reversal signals.
-        ZigZagIndicator9? bestIndicator = null;
-        foreach (var indicator in accountSymbolIntervalData.ZigZagIndicators)
-        {
-            int zigZagCount = indicator.ZigZagList.Count;
-            if (indicator.ZigZagList.Count > MinimumPivots && zigZagCount > avg)
-            {
-                bestIndicator = indicator;
-                break;
-            }
-        }
-        // Fallback on the last ZigZag with deviation=1%, which should have the most pivots (not alway's the case!)
-        bestIndicator ??= accountSymbolIntervalData.ZigZagIndicators.Last();
-        accountSymbolIntervalData.BestIndicator = bestIndicator;
-
-
-
-        if (log != null)
-        {
-            log.AppendLine("");
-            log.AppendLine($"Best indicator with deviation={bestIndicator.Deviation} {bestIndicator.ZigZagList.Count} pivots");
-            foreach (var zigZag in bestIndicator.ZigZagList)
-            {
-                string s = string.Format("date={0} H {1:N8} rsi={2:N8}", zigZag.Candle.Date.ToLocalTime(), zigZag.Value, zigZag.Candle.CandleData?.Rsi);
-                log.AppendLine(s);
-            }
-        }
+        // Deterimine the best indicator based on avg count of pivots
+        TrendTools.GetBestTrendIndicator(accountSymbolIntervalData, symbol, candleList, log);
 
 
         // Interpret the pivot points and put Charles Dow theory at work
-        //ZigZagIndicator9? bestIndicator = accountSymbolIntervalData.Indicator;
+        var bestIndicator = accountSymbolIntervalData.BestIndicator!;
         CryptoTrendIndicator trendIndicator = InterpretZigZagPoints(bestIndicator, log);
         accountSymbolIntervalData.TrendIndicator = trendIndicator;
         accountSymbolIntervalData.TrendInfoUnix = maxDate;

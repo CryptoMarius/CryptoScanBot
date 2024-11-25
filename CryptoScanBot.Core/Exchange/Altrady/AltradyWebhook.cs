@@ -271,7 +271,7 @@ public class AltradyWebhook
         }
         else
         {
-            return $"{caption} {position.Symbol.Name} {position.Interval!.Name} {JsonSerializer.Serialize(obj, GlobalData.JsonSerializerIndented)}";
+            return $"{caption} {position.Symbol.Name} {position.Interval!.Name} {JsonSerializer.Serialize(obj, JsonTools.JsonSerializerIndented)}";
         }
     }
 

@@ -135,12 +135,6 @@ static public class GlobalData
     public static SymbolValue TradingViewBitcoinDominance { get; set; } = new();
     public static SymbolValue TradingViewMarketCapTotal { get; set; } = new();
 
-    public static readonly JsonSerializerOptions JsonSerializerIndented = new()
-    { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true, IncludeFields = true };
-
-    public static readonly JsonSerializerOptions JsonSerializerNotIndented = new()
-    { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = false };
-
     static public void LoadExchanges()
     {
         // Load & index the exchanges
@@ -405,7 +399,7 @@ static public class GlobalData
                 //    readStream.Close();
                 //}
                 string text = File.ReadAllText(filename);
-                Settings = JsonSerializer.Deserialize<SettingsBasic>(text, JsonSerializerIndented);
+                Settings = JsonSerializer.Deserialize<SettingsBasic>(text, JsonTools.JsonSerializerIndented);
             }
 
             // Fix, sometimes people set this at 1 and that is not what I expected
@@ -441,7 +435,7 @@ static public class GlobalData
                 ExternalUrls = []; // start from scratch (do not cache in memory)
                 ExternalUrls.InitializeUrls(); // add new exchanges
                 // het bestand in ieder geval aanmaken(updates moeten achteraf gepushed worden)
-                string text = JsonSerializer.Serialize(ExternalUrls, JsonSerializerIndented);
+                string text = JsonSerializer.Serialize(ExternalUrls, JsonTools.JsonSerializerIndented);
                 File.WriteAllText(fullName, text);
             }
         }
@@ -581,7 +575,7 @@ static public class GlobalData
         var baseFolder = GetBaseDir();
         Directory.CreateDirectory(baseFolder);
         var filename = baseFolder + $"{GlobalData.AppName}-user.json";
-        string text = JsonSerializer.Serialize(SettingsUser, JsonSerializerIndented);
+        string text = JsonSerializer.Serialize(SettingsUser, JsonTools.JsonSerializerIndented);
         File.WriteAllText(filename, text);
     }
 
@@ -598,19 +592,19 @@ static public class GlobalData
         //}
 
         string filename = baseFolder + $"{GlobalData.AppName}-settings.json";
-        string text = JsonSerializer.Serialize(Settings, JsonSerializerIndented);
+        string text = JsonSerializer.Serialize(Settings, JsonTools.JsonSerializerIndented);
         File.WriteAllText(filename, text);
 
         filename = baseFolder + $"{GlobalData.AppName}-telegram.json";
-        text = JsonSerializer.Serialize(Telegram, JsonSerializerIndented);
+        text = JsonSerializer.Serialize(Telegram, JsonTools.JsonSerializerIndented);
         File.WriteAllText(filename, text);
 
         filename = baseFolder + $"{GlobalData.AppName}-exchange.json";
-        text = JsonSerializer.Serialize(TradingApi, JsonSerializerIndented);
+        text = JsonSerializer.Serialize(TradingApi, JsonTools.JsonSerializerIndented);
         File.WriteAllText(filename, text);
 
         filename = baseFolder + $"{GlobalData.AppName}-altrady.json";
-        text = JsonSerializer.Serialize(AltradyApi, JsonSerializerIndented);
+        text = JsonSerializer.Serialize(AltradyApi, JsonTools.JsonSerializerIndented);
         File.WriteAllText(filename, text);
 
         //#if DEBUG
@@ -683,7 +677,7 @@ static public class GlobalData
                 if (position is not null)
                 {
                     string symbol = position.Symbol.Name.ToUpper();
-                    (string Url, CryptoExternalUrlType Execute) = GlobalData.ExternalUrls.GetExternalRef(Settings.General.TradingApp, true, position.Symbol, position.Interval);
+                    (string Url, CryptoExternalUrlType Execute) = GlobalData.ExternalUrls.GetExternalRef(Settings.General.TradingApp, true, position.Symbol, position.Interval!);
                     if (Url != "")
                     {
                         string x = $"<a href='{Url}'>{symbol}</a>";

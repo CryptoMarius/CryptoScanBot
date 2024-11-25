@@ -30,7 +30,7 @@ public class Symbols
                     Directory.CreateDirectory(filename);
                     filename += "symbols.json";
 
-                    string text = JsonSerializer.Serialize(exchangeInfo, GlobalData.JsonSerializerIndented);
+                    string text = JsonSerializer.Serialize(exchangeInfo, JsonTools.JsonSerializerIndented);
                     File.WriteAllText(filename, text);
                 }
 

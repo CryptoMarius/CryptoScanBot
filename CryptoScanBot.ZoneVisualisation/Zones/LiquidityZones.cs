@@ -1,7 +1,6 @@
 ﻿using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Trend;
-using CryptoScanBot.Core.Zones;
 
 using System.Text;
 
@@ -9,7 +8,7 @@ namespace CryptoScanBot.ZoneVisualisation.Zones;
 
 public class LiquidityZones
 {
-    public static async Task CalculateZonesForSymbolAsync(AddTextEvent? sender, CryptoZoneSession session, CryptoZoneData data)
+    public static async Task CalculateZonesForSymbolAsync(AddTextEvent? sender, CryptoZoneSession session, CryptoZoneData data, SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
     {
         //long startTime = Stopwatch.GetTimestamp();
         //ScannerLog.Logger.Info("CalculateZonesForSymbolAsync.Start");
@@ -24,9 +23,12 @@ public class LiquidityZones
             fetchFrom -= GlobalData.Settings.Signal.Zones.CandleCount * data.SymbolInterval.Interval.Duration;
 
             // Load candles from disk and exchange
-            CandleEngine.LoadCandleDataFromDisk(data.Symbol, data.Interval, data.SymbolInterval.CandleList);
+            if (!loadedCandlesInMemory.TryGetValue(data.Interval.IntervalPeriod, out bool _))
+                CandleEngine.LoadCandleDataFromDisk(data.Symbol, data.Interval, data.SymbolInterval.CandleList);
+            loadedCandlesInMemory.Add(data.Interval.IntervalPeriod, false); // in memory, nothing changed
+
             if (await CandleEngine.FetchFrom(data.Symbol, data.Interval, data.SymbolInterval.CandleList, log, fetchFrom, GlobalData.Settings.Signal.Zones.CandleCount))
-                CandleEngine.LoadedCandlesInMemory[data.Interval.IntervalPeriod] = true;
+                loadedCandlesInMemory[data.Interval.IntervalPeriod] = true;
             if (data.SymbolInterval.CandleList.Count == 0)
                 return;
 
@@ -40,7 +42,7 @@ public class LiquidityZones
             // Calculate indicators
             foreach (var candle in data.SymbolInterval.CandleList.Values)
             {
-                if (candle.OpenTime >= session.MinUnix && candle.OpenTime <= session.MaxUnix)
+                if (candle.OpenTime >= session.MinDate && candle.OpenTime <= session.MaxDate)
                 {
                     data.Indicator.Calculate(candle);
                     data.IndicatorFib.Calculate(candle);
@@ -57,7 +59,7 @@ public class LiquidityZones
             // Mark the dominant lows or highs
             if (session.ShowLiqBoxes && session.ForceCalculation)
             {
-                await CryptoCalculation.CalculateLiqBoxesAsync(sender, data, session.ZoomLiqBoxes, log);
+                await CryptoCalculation.CalculateLiqBoxesAsync(sender, data, session.ZoomLiqBoxes, log, loadedCandlesInMemory);
                 CryptoCalculation.CalculateBrokenBoxes(data);
             }
 
@@ -70,13 +72,13 @@ public class LiquidityZones
             //plotView.Model.InvalidatePlot(true);
             //plotView.Model.MouseDown += OnChartClick;
             //ScannerLog.Logger.Info($"Done plotting data");
-            CandleEngine.SaveCandleDataToDisk(data.Symbol, log);
+            CandleEngine.SaveCandleDataToDisk(data.Symbol, log, loadedCandlesInMemory);
         }
         catch (Exception e)
         {
             log.AppendLine(e.ToString());
             ScannerLog.Logger.Info($"ERROR {e}");
-            CandleEngine.SaveCandleDataToDisk(data.Symbol, log);
+            CandleEngine.SaveCandleDataToDisk(data.Symbol, log, loadedCandlesInMemory);
             GlobalData.AddTextToLogTab($"ERROR {e}");
         }
 
@@ -129,7 +131,8 @@ public class LiquidityZones
                         data.Symbol.CalculatingZones = true;
                         try
                         {
-                            await CalculateZonesForSymbolAsync(sender, session, data);
+                            SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory = [];
+                            await CalculateZonesForSymbolAsync(sender, session, data, loadedCandlesInMemory);
                         }
                         finally
                         {

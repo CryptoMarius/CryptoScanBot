@@ -43,7 +43,7 @@ public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscript
 
                 // We melden voorlopig alles
                 string info = $"{symbolName} UserTicker {data.OrderSide} {data.OrderStatus} order={data.OrderId} quantity={data.OrderQuantity} price={data.LimitPrice} value={data.LimitPrice * data.QuantityFilled}";
-                string text = JsonSerializer.Serialize(data, GlobalData.JsonSerializerIndented).Trim();
+                string text = JsonSerializer.Serialize(data, JsonTools.JsonSerializerIndented).Trim();
                 GlobalData.AddTextToLogTab(info);
                 ScannerLog.Logger.Trace($"{info} json={text}");
 

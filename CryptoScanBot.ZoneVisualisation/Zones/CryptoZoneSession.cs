@@ -1,11 +1,10 @@
 ﻿using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
-using CryptoScanBot.ZoneVisualisation.Zones;
 
 using System.Text.Json;
 
-namespace CryptoScanBot.Core.Zones;
+namespace CryptoScanBot.ZoneVisualisation.Zones;
 
 [Serializable]
 public class CryptoZoneSession
@@ -17,8 +16,8 @@ public class CryptoZoneSession
     //public bool UseHighLow { get; set; } = false;
     public decimal Deviation { get; set; } = 1m;
     // Period = UtcNow - X candles
-    public long MinUnix { get; set; }
-    public long MaxUnix { get; set; }
+    public long MinDate { get; set; }
+    public long MaxDate { get; set; }
     public CryptoIntervalPeriod ActiveInterval { get; set; } = CryptoIntervalPeriod.interval1h;
 
     public bool UseOptimizing { get; set; } = true;
@@ -33,7 +32,7 @@ public class CryptoZoneSession
     public bool ShowPivots { get; set; } = false;
     public bool UseBatchProcess { get; set; } = false;
     public bool ForceCalculation { get; set; } = false;
-    
+
 
 
 
@@ -46,7 +45,9 @@ public class CryptoZoneSession
         if (File.Exists(filename))
         {
             string text = File.ReadAllText(filename);
-            return JsonSerializer.Deserialize<CryptoZoneSession>(text, CandleEngine.JsonSerializerIndented);
+            var session = JsonSerializer.Deserialize<CryptoZoneSession>(text, JsonTools.JsonSerializerIndented);
+            if (session != null)
+                return session;
         }
 
         return new();
@@ -58,7 +59,7 @@ public class CryptoZoneSession
         string baseFolder = GlobalData.GetBaseDir() + @"\Pivots\";
         string filename = baseFolder + $"session.json";
         Directory.CreateDirectory(baseFolder);
-        string text = JsonSerializer.Serialize(this, CandleEngine.JsonSerializerIndented);
+        string text = JsonSerializer.Serialize(this, JsonTools.JsonSerializerIndented);
         File.WriteAllText(filename, text);
     }
 }

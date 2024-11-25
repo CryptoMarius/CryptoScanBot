@@ -61,7 +61,7 @@ public class Symbol(ExchangeBase api) : SymbolBase(api), ISymbol
                     Directory.CreateDirectory(filename);
                     filename += "symbols.json";
 
-                    string text = JsonSerializer.Serialize(exchangeData, GlobalData.JsonSerializerIndented);
+                    string text = JsonSerializer.Serialize(exchangeData, JsonTools.JsonSerializerIndented);
                     File.WriteAllText(filename, text);
                 }
 
@@ -102,7 +102,7 @@ public class Symbol(ExchangeBase api) : SymbolBase(api), ISymbol
                     Directory.CreateDirectory(filename);
                     filename += "tickers.json";
 
-                    string text = JsonSerializer.Serialize(tickerData, GlobalData.JsonSerializerIndented);
+                    string text = JsonSerializer.Serialize(tickerData, JsonTools.JsonSerializerIndented);
                     File.WriteAllText(filename, text);
                 }
 

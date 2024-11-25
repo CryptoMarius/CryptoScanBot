@@ -321,7 +321,7 @@ public class CandleIndicatorData: CryptoData
                 GlobalData.AddTextToLogTab("error indicators");
                 GlobalData.AddTextToLogTab(error.ToString());
                 GlobalData.AddTextToLogTab("");
-                GlobalData.AddTextToLogTab(history.ToString());
+                //GlobalData.AddTextToLogTab(history.ToString());
                 throw;
             }
 
@@ -367,7 +367,7 @@ public class CandleIndicatorData: CryptoData
         if (candle.CandleData == null)
         {
             // De 1m candle is nu definitief, doe een herberekening van de relevante intervallen
-            List<CryptoCandle> History = CalculateCandles(symbol, symbolInterval.Interval, candle.OpenTime, out reaction);
+            List<CryptoCandle>? History = CalculateCandles(symbol, symbolInterval.Interval, candle.OpenTime, out reaction);
             if (History == null)
             {
                 //GlobalData.AddTextToLogTab(signal.DisplayText + " " + reaction + " (removed)");

@@ -76,7 +76,7 @@ public class ExcelPositionDump(CryptoPosition position) : ExcelBase(position.Sym
             column++;
 
             WriteCell(sheet, column++, row, part.EntryMethod == CryptoEntryOrDcaStrategy.AfterNextSignal ? part.Strategy.ToString() : "Fixed");
-            WriteCell(sheet, column++, row, part.Interval != null ? part.Interval.Name : position.Interval.Name);
+            WriteCell(sheet, column++, row, part.Interval != null ? part.Interval.Name : position.Interval!.Name);
 
             foreach (CryptoPositionStep step in part.StepList.Values.ToList())
             {
@@ -262,6 +262,8 @@ public class ExcelPositionDump(CryptoPosition position) : ExcelBase(position.Sym
         orderList.Sort((x, y) => x.CreateTime.CompareTo(y.CreateTime));
         foreach (CryptoOrder order in orderList)
         {
+            if (order.OrderId == null)
+                continue;
             if (!OrderList.ContainsKey(order.OrderId))
                 continue;
 

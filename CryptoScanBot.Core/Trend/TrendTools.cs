@@ -40,7 +40,7 @@ public class TrendTools
     }
 
 
-    public static long? AddCandlesToIndicators(AccountSymbolIntervalData accountSymbolIntervalData, CryptoCandleList candleList, long minDate, long maxDate)
+    public static long? AddCandlesToTrendIndicators(AccountSymbolIntervalData accountSymbolIntervalData, CryptoCandleList candleList, long minDate, long maxDate)
     {
         long? zigZagLastCandleAdded = null;
 
@@ -75,7 +75,7 @@ public class TrendTools
     }
 
 
-    public static void GetBestIndicator(AccountSymbolIntervalData accountSymbolIntervalData, CryptoSymbol symbol, CryptoCandleList candleList, StringBuilder? log = null)
+    public static void GetBestTrendIndicator(AccountSymbolIntervalData accountSymbolIntervalData, CryptoSymbol symbol, CryptoCandleList candleList, StringBuilder? log = null)
     {
         const int MinimumPivots = 4;
 
@@ -93,7 +93,7 @@ public class TrendTools
                 if (GlobalData.Settings.General.DebugTrendCalculation)
                 {
                     log?.AppendLine($"{symbol.Name} {interval.Name} candles={candleList.Count} deviation={indicator.Deviation}% candlecount={indicator.CandleCount} zigzagcount={indicator.ZigZagList.Count}");
-                    ScannerLog.Logger.Trace($"{symbol.Name} {interval.Name} candles={candleList.Count} deviation={indicator.Deviation}% candlecount={indicator.CandleCount} zigzagcount={indicator.ZigZagList.Count}");
+                    //ScannerLog.Logger.Trace($"{symbol.Name} {interval.Name} candles={candleList.Count} deviation={indicator.Deviation}% candlecount={indicator.CandleCount} zigzagcount={indicator.ZigZagList.Count}");
                 }
             }
         }

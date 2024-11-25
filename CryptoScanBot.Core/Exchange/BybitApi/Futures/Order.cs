@@ -126,14 +126,14 @@ public class Order(ExchangeBase api) : OrderBase(api), IOrder
                         if (oldStatus != order.Status || oldQuoteQuantityFilled != order.QuoteQuantityFilled)
                         {
                             ScannerLog.Logger.Trace($"GetOrdersForPositionAsync {position.Symbol.Name} updated order {item.OrderId}");
-                            text = JsonSerializer.Serialize(item, GlobalData.JsonSerializerNotIndented).Trim();
+                            text = JsonSerializer.Serialize(item, JsonTools.JsonSerializerNotIndented).Trim();
                             ScannerLog.Logger.Trace($"{item.Symbol} order updated json={text}");
                             count++;
                         }
                     }
                     else
                     {
-                        text = JsonSerializer.Serialize(item, GlobalData.JsonSerializerNotIndented).Trim();
+                        text = JsonSerializer.Serialize(item, JsonTools.JsonSerializerNotIndented).Trim();
                         ScannerLog.Logger.Trace($"{item.Symbol} order added json={text}");
 
                         order = new()

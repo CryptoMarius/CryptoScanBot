@@ -2,7 +2,6 @@
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Trend;
-using CryptoScanBot.Core.Zones;
 using CryptoScanBot.ZoneVisualisation.Zones;
 
 using OxyPlot;
@@ -109,7 +108,7 @@ public class CryptoCharting
 
         foreach (var c in symbolInterval.CandleList.Values)
         {
-            if (c.OpenTime >= session.MinUnix && c.OpenTime <= session.MaxUnix)
+            if (c.OpenTime >= session.MinDate && c.OpenTime <= session.MaxDate)
             {
                 try
                 {
@@ -135,7 +134,7 @@ public class CryptoCharting
         var seriesLow = new ScatterSeries { Title = "p low", MarkerSize = 2, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Square, };
         foreach (var zigzag in pivotList)
         {
-            if (zigzag.Candle!.OpenTime >= session.MinUnix && zigzag.Candle!.OpenTime <= session.MaxUnix)
+            if (zigzag.Candle!.OpenTime >= session.MinDate && zigzag.Candle!.OpenTime <= session.MaxDate)
             {
                 ScatterSeries? series;
                     if (zigzag.PointType == 'L')
@@ -159,7 +158,7 @@ public class CryptoCharting
         var seriesDummyLow = new ScatterSeries { Title = "Markers dummy", MarkerSize = 5, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Square, };
         foreach (var zigzag in zigZagList)
         {
-            if (zigzag.Candle!.OpenTime >= session.MinUnix && zigzag.Candle!.OpenTime <= session.MaxUnix)
+            if (zigzag.Candle!.OpenTime >= session.MinDate && zigzag.Candle!.OpenTime <= session.MaxDate)
             {
                 ScatterSeries? series;
                 if (zigzag.Dummy)
@@ -197,7 +196,7 @@ public class CryptoCharting
 
     private static void DrawLiqBoxesInternal(PlotModel chart, CryptoZone zone, CryptoZoneSession session)
     {
-        if (zone.OpenTime >= session.MinUnix && zone.OpenTime <= session.MaxUnix)
+        if (zone.OpenTime >= session.MinDate && zone.OpenTime <= session.MaxDate)
         {
             OxyColor color;
             if (zone.Side == CryptoTradeSide.Long)
@@ -209,13 +208,13 @@ public class CryptoCharting
             if (zone.OpenTime != null)
                 dateOpen = (long)zone.OpenTime;
             else
-                dateOpen = session.MinUnix;
+                dateOpen = session.MinDate;
 
             long dateLast;
             if (zone.CloseDate != null)
                 dateLast = (long)zone.CloseDate;
             else
-                dateLast = session.MaxUnix;
+                dateLast = session.MaxDate;
 
             // Create a rectangle annotation
             var rectangle = new RectangleAnnotation
@@ -251,7 +250,7 @@ public class CryptoCharting
         //    if (zigzag == lastZigZag || !zigzag.Dominant)
         //        continue;
 
-        //    if (zigzag.Candle!.OpenTime >= session.MinUnix && zigzag.Candle!.OpenTime <= session.MaxUnix && zigzag.Dominant)
+        //    if (zigzag.Candle!.OpenTime >= session.MinDate && zigzag.Candle!.OpenTime <= session.MaxDate && zigzag.Dominant)
         //    {
         //        OxyColor color;
         //        if (zigzag.PointType == 'L')
@@ -263,7 +262,7 @@ public class CryptoCharting
         //        if (zigzag.CloseDate != null)
         //            dateLast = (long)zigzag.CloseDate;
         //        else
-        //            dateLast = session.MaxUnix;
+        //            dateLast = session.MaxDate;
         //        //dateLast -= data.Interval.Duration;
 
         //        // Create a rectangle annotation

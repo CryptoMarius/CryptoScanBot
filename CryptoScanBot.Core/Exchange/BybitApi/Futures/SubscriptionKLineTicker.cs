@@ -40,7 +40,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                 GlobalData.ThreadMonitorCandle!.AddToQueue(symbol, candle);
 
                 //if (GlobalData.Settings.General.DebugKLineReceive && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
-                //    GlobalData.AddTextToLogTab($"Debug candle {symbol.Name} 1m {JsonSerializer.Serialize(kline, GlobalData.JsonSerializerNotIndented)}");
+                //    GlobalData.AddTextToLogTab($"Debug candle {symbol.Name} 1m {JsonSerializer.Serialize(kline, JsonTools.JsonSerializerNotIndented)}");
             }
         }
 

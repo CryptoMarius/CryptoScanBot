@@ -4,7 +4,6 @@ using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Trend;
-using CryptoScanBot.Core.Zones;
 using CryptoScanBot.ZoneVisualisation.Zones;
 
 using OxyPlot;
@@ -22,7 +21,7 @@ public partial class CryptoVisualisation : Form
     private LineAnnotation? verticalLine;
     private LineAnnotation? horizontalLine;
     private readonly CryptoZoneSession Session = new();
-    private CryptoZoneData Data;
+    private CryptoZoneData? Data;
     private bool StandAlone { get; set; } = false;
 
     private string OldSymbolBase = "";
@@ -127,7 +126,7 @@ public partial class CryptoVisualisation : Form
 
     private void PlotView_MouseMove(object? sender, MouseEventArgs e)
     {
-        if (horizontalLine != null && verticalLine != null) // exception on drawing annotations? whats wrong?
+        if (Data != null && horizontalLine != null && verticalLine != null) // exception on drawing annotations? whats wrong?
         {
             var model = plotView.Model;
             var screenPoint = new ScreenPoint(e.X, e.Y);
@@ -181,8 +180,10 @@ public partial class CryptoVisualisation : Form
         {
             ScreenPoint mouseUpPoint = new(e.X, e.Y);
             // assuming your x-axis is at the bottom and your y-axis is at the left.
-            Axis xAxis = plotModel.Axes.FirstOrDefault(a => a.Position == AxisPosition.Bottom);
-            Axis yAxis = plotModel.Axes.FirstOrDefault(a => a.Position == AxisPosition.Right);
+            Axis? xAxis = plotModel!.Axes.FirstOrDefault(a => a.Position == AxisPosition.Bottom);
+            Axis? yAxis = plotModel!.Axes.FirstOrDefault(a => a.Position == AxisPosition.Right);
+            if (xAxis == null || yAxis == null)
+                return;
 
             double xstart = xAxis.InverseTransform((double)mouseDownPointX);
             double ystart = yAxis.InverseTransform((double)mouseDownPointY);
@@ -309,7 +310,7 @@ public partial class CryptoVisualisation : Form
     {
         if (Data != null && plotModel != null)
         {
-            Session.MaxUnix -= Data.Interval.Duration;
+            Session.MaxDate -= Data.Interval.Duration;
             _ = ButtonCalculate_ClickAsync();
         }
     }
@@ -319,7 +320,7 @@ public partial class CryptoVisualisation : Form
     {
         if (Data != null && plotModel != null)
         {
-            Session.MaxUnix += Data.Interval.Duration;
+            Session.MaxDate += Data.Interval.Duration;
             _ = ButtonCalculate_ClickAsync();
         }
     }
@@ -379,7 +380,7 @@ public partial class CryptoVisualisation : Form
         ScannerLog.Logger.Info($"Exchange {exchange.Name}");
 
 
-        if (!exchange.SymbolListName.TryGetValue(Session.SymbolBase + Session.SymbolQuote, out CryptoSymbol symbol))
+        if (!exchange.SymbolListName.TryGetValue(Session.SymbolBase + Session.SymbolQuote, out CryptoSymbol? symbol))
         {
             reason = "Symbol not found";
             ScannerLog.Logger.Info($"{reason}");
@@ -428,12 +429,12 @@ public partial class CryptoVisualisation : Form
             OldIntervalName = Session.IntervalName;
 
             Session.ActiveInterval = Data.Interval.IntervalPeriod;
-            Session.MaxUnix = CandleTools.GetUnixTime(DateTime.UtcNow, 60);
-            Session.MaxUnix = IntervalTools.StartOfIntervalCandle(Session.MaxUnix, Data.Interval.Duration);
-            Session.MinUnix = Session.MaxUnix - GlobalData.Settings.Signal.Zones.CandleCount * Data.Interval.Duration;
+            Session.MaxDate = CandleTools.GetUnixTime(DateTime.UtcNow, 60);
+            Session.MaxDate = IntervalTools.StartOfIntervalCandle(Session.MaxDate, Data.Interval.Duration);
+            Session.MinDate = Session.MaxDate - GlobalData.Settings.Signal.Zones.CandleCount * Data.Interval.Duration;
 
             labelInterval.Text = Session.ActiveInterval.ToString();
-            labelMaxTime.Text = CandleTools.GetUnixDate(Session.MaxUnix).ToString("dd MMM HH:mm");
+            labelMaxTime.Text = CandleTools.GetUnixDate(Session.MaxDate).ToString("dd MMM HH:mm");
         }
 
 
@@ -475,7 +476,7 @@ public partial class CryptoVisualisation : Form
     {
         //long startTime = Stopwatch.GetTimestamp();
         //ScannerLog.Logger.Info("CalculateZonesAndPlotZigZagAsync.Start");
-        Text = $"{Data.Exchange.Name}.{Session.SymbolBase}{Session.SymbolQuote} {Session.IntervalName}";
+        Text = $"{Data!.Exchange.Name}.{Session.SymbolBase}{Session.SymbolQuote} {Session.IntervalName}";
         StringBuilder log = new();
         try
         {
@@ -494,44 +495,59 @@ public partial class CryptoVisualisation : Form
             // - The Deviation is fixed in the visualisation while it is calculated right now (that's is okay)
             // - For the visualisation we only need the 1h (but that has no impact)
             // - For the visualisation we use a MinDate and MaxDate
-            // Conclusion, we cannot use the indicator from the AccountSymbolData
-            AccountSymbolData accountSymbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(Data.Symbol.Name);
-            AccountSymbolIntervalData accountSymbolIntervalData = accountSymbolData.GetAccountSymbolIntervalData(Data.Interval.IntervalPeriod);
+            // Conclusion, we cannot use the AccountSymbolData shared with the sacanner.
+            // However, we can reuse the AccountSymbolData class and calculate our own..
+            AccountSymbolData accountScannerSymbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(Data.Symbol.Name);
+            AccountSymbolIntervalData accountScannerSymbolIntervalData = accountScannerSymbolData.GetAccountSymbolIntervalData(Data.Interval.IntervalPeriod);
 
 
             Data.Symbol.CalculatingZones = true;
             try
             {
                 // reset data
-                CandleEngine.LoadedCandlesInMemory.Clear(); // force loading because we clean them afterwards
+                SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory = []; // bool = if it needs saving
 
                 // Load the zones, otherwise reuse the ones in memory
                 if (StandAlone)
                     ZoneTools.LoadAllZones(); // Sync just to be sure
 
 
-                Data.IndicatorFib = new(Data.SymbolInterval.CandleList, true, Session.Deviation, Data.Interval.Duration);
-                Data.Indicator = new(Data.SymbolInterval.CandleList, GlobalData.Settings.Signal.Zones.UseHighLow, Session.Deviation, Data.Interval.Duration);
-
-                //
-                Data.Indicator.MaxTime = Session.MaxUnix;
-                Data.Indicator.ShowSecondary = Session.ShowSecondary;
-                Data.Indicator.UseOptimizing = Session.UseOptimizing;
-                if (Session.UseBatchProcess)
-                    Data.Indicator.StartBatch();
-
-                Data.IndicatorFib.MaxTime = Session.MaxUnix;
-                Data.IndicatorFib.ShowSecondary = Session.ShowSecondary;
-                Data.IndicatorFib.UseOptimizing = Session.UseOptimizing;
+                Data.IndicatorFib = new(Data.SymbolInterval.CandleList, true, Session.Deviation, Data.Interval.Duration)
+                {
+                    MaxTime = Session.MaxDate,
+                    ShowSecondary = Session.ShowSecondary,
+                    UseOptimizing = Session.UseOptimizing
+                };
                 if (Session.UseBatchProcess)
                     Data.IndicatorFib.StartBatch();
 
+                Data.Indicator = new(Data.SymbolInterval.CandleList, GlobalData.Settings.Signal.Zones.UseHighLow, Session.Deviation, Data.Interval.Duration)
+                {
+                    MaxTime = Session.MaxDate,
+                    ShowSecondary = Session.ShowSecondary,
+                    UseOptimizing = Session.UseOptimizing
+                };
+                if (Session.UseBatchProcess)
+                    Data.Indicator.StartBatch();
 
-                // calculate zones
-                await LiquidityZones.CalculateZonesForSymbolAsync(ShowProgress, Session, Data);
+
+                // calculate (and save) the zones
+                await LiquidityZones.CalculateZonesForSymbolAsync(ShowProgress, Session, Data, loadedCandlesInMemory);
                 CryptoTrendIndicator trend = TrendInterval.InterpretZigZagPoints(Data.Indicator, null);
-                var best = ZigZagGetBest.CalculateBestIndicator(Data.SymbolInterval, Session.MinUnix, Session.MaxUnix);
+
+
+                // What is the best deviation for the indicator?
+                AccountSymbolIntervalData accountSymbolIntervalData = new()
+                {
+                    Interval = Data.SymbolInterval.Interval,
+                    IntervalPeriod = Data.SymbolInterval.IntervalPeriod,
+                };
+                TrendTools.CreateAllTrendIndicators(accountSymbolIntervalData, Data.SymbolInterval.CandleList);
+                TrendTools.AddCandlesToTrendIndicators(accountSymbolIntervalData, Data.SymbolInterval.CandleList, Session.MinDate, Session.MaxDate);
+                TrendTools.GetBestTrendIndicator(accountSymbolIntervalData, Data.Symbol, Data.SymbolInterval.CandleList, log);
+                var best = accountSymbolIntervalData.BestIndicator!;
                 //var best = Data.Indicator; 
+
 
 
                 // display data
@@ -542,8 +558,8 @@ public partial class CryptoVisualisation : Form
 
                 CryptoCharting.DrawCandleSerie(plotModel, Data, Session);
 
-                if (accountSymbolIntervalData.BestIndicator != null && accountSymbolIntervalData.BestIndicator.ZigZagList != null)
-                    CryptoCharting.DrawZigZag(plotModel, Session, accountSymbolIntervalData.BestIndicator.ZigZagList, "tst", OxyColors.Yellow);
+                if (accountScannerSymbolIntervalData.BestIndicator != null && accountScannerSymbolIntervalData.BestIndicator.ZigZagList != null)
+                    CryptoCharting.DrawZigZag(plotModel, Session, accountScannerSymbolIntervalData.BestIndicator.ZigZagList, "tst", OxyColors.Yellow);
 
                 if (Session.ShowPivots)
                     CryptoCharting.DrawPivots(plotModel, Session, Data.Indicator.PivotList);
@@ -572,7 +588,9 @@ public partial class CryptoVisualisation : Form
                 plotView.Controller.BindMouseDown(OxyMouseButton.Right, OxyModifierKeys.Shift, PlotCommands.SnapTrack);
 
                 plotView.MouseMove += PlotView_MouseMove;
-                plotModel.MouseDown += PlotModel_MouseDown;
+#pragma warning disable CS0618 // Type or member is obsolete
+                plotModel.MouseDown += PlotModel_MouseDown; // Declarared obsolete, there is no workaround/new method, kind of ridiculous?
+#pragma warning restore CS0618 // Type or member is obsolete
             }
             finally
             {
@@ -594,7 +612,7 @@ public partial class CryptoVisualisation : Form
         //ScannerLog.Logger.Info("ButtonCalculate_ClickAsync.Start");
         PickupEdits();
         labelInterval.Text = Session.ActiveInterval.ToString();
-        labelMaxTime.Text = CandleTools.GetUnixDate(Session.MaxUnix).ToString("dd MMM HH:mm");
+        labelMaxTime.Text = CandleTools.GetUnixDate(Session.MaxDate).ToString("dd MMM HH:mm");
 
         UseWaitCursor = true;
         ButtonZoomLast.Enabled = false;
@@ -605,16 +623,16 @@ public partial class CryptoVisualisation : Form
             try
             {
                 long startTime = Stopwatch.GetTimestamp();
-                Text = $"{Data.Exchange.Name}.{Session.SymbolBase}{Session.SymbolQuote} {Session.IntervalName} Calculating...";
+                Text = $"{Data!.Exchange.Name}.{Session.SymbolBase}{Session.SymbolQuote} {Session.IntervalName} Calculating...";
                 await CalculateZonesAndPlotZigZagAsync();
-                ButtonFocusLastCandlesClick(ShowProgress, EventArgs.Empty);
+                ButtonFocusLastCandlesClick(null, EventArgs.Empty);
                 Text = $"{Session.SymbolBase}{Session.SymbolQuote} ({Stopwatch.GetElapsedTime(startTime).TotalSeconds} seconds)";
 
             }
             catch (Exception error)
             {
                 GlobalData.AddTextToLogTab(error.ToString());
-                Text = $"{Data.Exchange.Name}.{Session.SymbolBase}{Session.SymbolQuote} {Session.IntervalName} Error {error.Message}";
+                Text = $"{Data!.Exchange.Name}.{Session.SymbolBase}{Session.SymbolQuote} {Session.IntervalName} Error {error.Message}";
                 ScannerLog.Logger.Info("ButtonCalculate_ClickAsync.Error " + Text);
             }
         }

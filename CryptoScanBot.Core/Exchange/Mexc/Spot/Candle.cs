@@ -95,7 +95,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
                 Interlocked.Increment(ref tickerIndex);
                 long unix = CandleTools.GetUnixTime(DateTime.UtcNow, 0);
                 string filename = $@"{GlobalData.GetBaseDir()}\{Api.ExchangeOptions.ExchangeName}\Candles-{symbol.Name}-{interval.Name}-{unix}-#{tickerIndex}.json";
-                string text = System.Text.Json.JsonSerializer.Serialize(result, GlobalData.JsonSerializerIndented);
+                string text = System.Text.Json.JsonSerializer.Serialize(result, JsonTools.JsonSerializerIndented);
                 File.WriteAllText(filename, text);
 #endif
             }

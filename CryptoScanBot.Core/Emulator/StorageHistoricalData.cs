@@ -68,7 +68,7 @@ public class StorageHistoricalData
             try
             {
                 string text = File.ReadAllText(filename);
-                List<CryptoCandle>? candleList = JsonSerializer.Deserialize<List<CryptoCandle>>(text, GlobalData.JsonSerializerIndented);
+                List<CryptoCandle>? candleList = JsonSerializer.Deserialize<List<CryptoCandle>>(text, JsonTools.JsonSerializerIndented);
 
                 CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
                 foreach (var candle in candleList)
@@ -113,7 +113,7 @@ public class StorageHistoricalData
                     if (candle.Date >= period.end)
                     {
                         // flush what we have collected
-                        string text = JsonSerializer.Serialize<List<CryptoCandle>>(candleList, GlobalData.JsonSerializerIndented);
+                        string text = JsonSerializer.Serialize<List<CryptoCandle>>(candleList, JsonTools.JsonSerializerIndented);
                         File.WriteAllText(filename, text);
 
                         // reset
@@ -128,7 +128,7 @@ public class StorageHistoricalData
                 if (filename != "" && candleList.Count > 0)
                 {
                     // flush what we have collected
-                    string text = JsonSerializer.Serialize<List<CryptoCandle>>(candleList, GlobalData.JsonSerializerIndented);
+                    string text = JsonSerializer.Serialize<List<CryptoCandle>>(candleList, JsonTools.JsonSerializerIndented);
                     File.WriteAllText(filename, text);
                 }
             }

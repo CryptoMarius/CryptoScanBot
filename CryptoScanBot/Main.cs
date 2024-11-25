@@ -1017,7 +1017,7 @@ public partial class FrmMain : Form
         GlobalData.ExternalUrls.Clear();
         GlobalData.ExternalUrls.InitializeUrls();
         string filename = GlobalData.GetBaseDir() + $"{GlobalData.AppName}-weblinks.json";
-        string text = JsonSerializer.Serialize(GlobalData.ExternalUrls, GlobalData.JsonSerializerIndented);
+        string text = JsonSerializer.Serialize(GlobalData.ExternalUrls, JsonTools.JsonSerializerIndented);
         File.WriteAllText(filename, text);
 
 

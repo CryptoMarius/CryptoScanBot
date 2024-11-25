@@ -66,7 +66,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
             Task taskKline = Task.Run(async () =>
             {
                 KucoinKline kline = data.Data.Candles;
-                //string json = JsonSerializer.Serialize(data.Data, GlobalData.JsonSerializerNotIndented);
+                //string json = JsonSerializer.Serialize(data.Data, JsonTools.JsonSerializerNotIndented);
                 //GlobalData.AddTextToLogTab($"kline ticker {data.Symbol} {json}");
 
                 if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))

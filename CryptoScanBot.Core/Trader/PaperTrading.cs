@@ -12,6 +12,8 @@ public class PaperTrading
     {
         // We have a stupid bug which adds duplicate orders (and trades)
         // This leads to all kind of troubles, balance and fees are wrong
+        if (step.OrderId == null)
+            return;
         if (position.OrderList.Find(step.OrderId) != null)
             return;
 

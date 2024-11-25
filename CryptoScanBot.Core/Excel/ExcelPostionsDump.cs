@@ -108,7 +108,7 @@ public class ExcelPostionsDump() : ExcelBase("Positions")
 
             WriteCell(sheet, column++, row, position.Id);
             WriteCell(sheet, column++, row, position.Exchange.Name);
-            WriteCell(sheet, column++, row, position.Symbol.Name);
+            WriteCell(sheet, column++, row, position.Symbol!.Name);
             WriteCell(sheet, column++, row, position.Interval!.Name);
 
             WriteCell(sheet, column++, row, position.StrategyText.ToString());

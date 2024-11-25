@@ -634,7 +634,7 @@ public class PositionMonitor : IDisposable
     private async Task<(bool success, CryptoCandle? candleInterval)> PrepareAsync(CryptoPosition position, CryptoPositionPart part)
     {
         // Stukje migratie, het interval van de part kan null zijn
-        CryptoInterval interval = position.Interval;
+        CryptoInterval interval = position.Interval!;
         if (part.Interval != null)
             interval = part.Interval;
         CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(interval.IntervalPeriod);
@@ -1400,7 +1400,7 @@ public class PositionMonitor : IDisposable
                         else if (part.Purpose == CryptoPartPurpose.Entry && step.Trailing == CryptoTrailing.None)
                         {
                             // Is de order ouder dan X minuten dan deze verwijderen
-                            CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(part.Interval.IntervalPeriod);
+                            CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(part.Interval!.IntervalPeriod);
                             if (step.CreateTime.AddSeconds(GlobalData.Settings.Trading.EntryRemoveTime * symbolInterval.Interval?.Duration ?? 0) < LastCandle1mCloseTimeDate)
                             {
                                 // Trades worden niet altijd op het juiste tijdstip opgemerkt (de user ticker ligt er vaak uit)

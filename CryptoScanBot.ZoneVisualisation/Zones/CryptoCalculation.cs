@@ -66,7 +66,8 @@ public class CryptoCalculation
 
 
     public static async Task MakeDominantAndZoomInAsync(CryptoSymbol symbol, CryptoInterval interval,
-        ZigZagResult zigZag, decimal top, decimal bottom, bool zoomFurther, StringBuilder log)
+        ZigZagResult zigZag, decimal top, decimal bottom, bool zoomFurther, StringBuilder log, 
+        SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
     {
         zigZag.Top = top;
         zigZag.Bottom = bottom;
@@ -149,10 +150,13 @@ public class CryptoCalculation
                 CryptoSymbolInterval zoomInterval = symbol!.GetSymbolInterval(zoom);
                 if (symbol.Exchange.IsIntervalSupported(zoomInterval.IntervalPeriod))
                 {
+                    if (!loadedCandlesInMemory.TryGetValue(interval.IntervalPeriod, out bool _))
+                        CandleEngine.LoadCandleDataFromDisk(symbol, zoomInterval.Interval, zoomInterval.CandleList);
+                    loadedCandlesInMemory.Add(interval.IntervalPeriod, false); // in memory, nothing changed
+
                     int count = durationForThisCandle / zoomInterval.Interval.Duration;
-                    CandleEngine.LoadCandleDataFromDisk(symbol, zoomInterval.Interval, zoomInterval.CandleList);
                     if (await CandleEngine.FetchFrom(symbol, zoomInterval.Interval, zoomInterval.CandleList, log, unixStart, count))
-                        CandleEngine.LoadedCandlesInMemory[zoomInterval.Interval.IntervalPeriod] = true;
+                        loadedCandlesInMemory[zoomInterval.Interval.IntervalPeriod] = true;
 
                     long loop = IntervalTools.StartOfIntervalCandle(unixStart, zoomInterval.Interval.Duration);
                     while (loop < unixEinde && zigZag.Percentage >= GlobalData.Settings.Signal.Zones.MaximumZoomedPercentage)
@@ -206,7 +210,7 @@ public class CryptoCalculation
             return; // (mark the point as not dominant + exit)
     }
 
-    public static async Task CalculateLiqBoxesAsync(AddTextEvent? sender, CryptoZoneData data, bool zoomLiqBoxes, StringBuilder log)
+    public static async Task CalculateLiqBoxesAsync(AddTextEvent? sender, CryptoZoneData data, bool zoomLiqBoxes, StringBuilder log, SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
     {
         //long startTime = Stopwatch.GetTimestamp();
         //ScannerLog.Logger.Info("CalculateLiqBoxesAsync.Start");
@@ -224,12 +228,12 @@ public class CryptoCalculation
                 // Check: a dominant Low leading to a new Higher High
                 if (zigZag.PointType == 'H' && previous.PointType == 'L' && previous2.PointType == 'H' && previous2.Value < zigZag.Value)
                     await MakeDominantAndZoomInAsync(data.Symbol, data.SymbolInterval.Interval, previous,
-                        Math.Max(previous.Candle.Open, previous.Candle.Close), previous.Candle.Low, zoomLiqBoxes, log);
+                        Math.Max(previous.Candle.Open, previous.Candle.Close), previous.Candle.Low, zoomLiqBoxes, log, loadedCandlesInMemory);
 
                 // Check: a dominant High leading to a new Lower Low
                 if (zigZag.PointType == 'L' && previous.PointType == 'H' && previous2.PointType == 'L' && previous2.Value > zigZag.Value)
                     await MakeDominantAndZoomInAsync(data.Symbol, data.SymbolInterval.Interval, previous,
-                        previous.Candle.High, Math.Min(previous.Candle.Open, previous.Candle.Close), zoomLiqBoxes, log);
+                        previous.Candle.High, Math.Min(previous.Candle.Open, previous.Candle.Close), zoomLiqBoxes, log, loadedCandlesInMemory);
             }
             previous2 = previous;
             previous = zigZag;

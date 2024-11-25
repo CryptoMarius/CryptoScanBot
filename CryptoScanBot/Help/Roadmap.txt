@@ -14,6 +14,8 @@ Error's / dodo's
    at CryptoScanBot.Core.Exchange.BybitApi.Spot.Asset.GetAssetsAsync(CryptoAccount tradeAccount) in E:\Projects\CryptoScanBot\CryptoScanBot.Core\Exchange\BybitApi\Spot\Asset.cs:line 105
 
 - Scanner - Initieel wordt de barometer grafiek niet getoond, wat is de reden hiervan? Testen met de oudere versies (van scratch)
+- Scanner - Zone instellingen, 2x minimum unzoomed, en de default staat op 0..
+
 
 Scanner:
 - Scanner - Dominante zones automatisch laten calculeren via een achtergrond proces

@@ -63,7 +63,6 @@ public class IntervalTools
         long targetStart = sourceStart - diff;
 
         bool outside = false;
-        bool targetShifted = false;
 
 
         // The target candle cannot be final/complete if is above the end of the start candle

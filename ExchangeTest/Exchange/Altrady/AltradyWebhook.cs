@@ -128,7 +128,7 @@ public class AltradyWebhook
     //        var result = streamReader.ReadToEnd();
 
     //        // log response
-    //        //string text = JsonSerializer.Serialize(result, GlobalData.JsonSerializerIndented);
+    //        //string text = JsonSerializer.Serialize(result, JsonTools.JsonSerializerIndented);
     //        GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval.Name} result Altrady webhook {result}");
     //        ScannerLog.Logger.Trace($"{position.Symbol.Name} {position.Interval.Name} result Altrady webhook {result}");
     //    }
@@ -189,7 +189,7 @@ public class AltradyWebhook
             var result = streamReader.ReadToEnd();
 
             // log response
-            //text = JsonSerializer.Serialize(result., GlobalData.JsonSerializerIndented);
+            //text = JsonSerializer.Serialize(result., JsonTools.JsonSerializerIndented);
             GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval.Name} result Altrady webhook {result}");
             
         }

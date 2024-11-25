@@ -221,7 +221,7 @@ internal class FileName
                     string text = "client.SpotApiV3.Trading.GetUserTradesAsync";
                     System.Diagnostics.Debug.WriteLine(text);
                     var resultData = await client.V5Api.Trading.GetUserTradesAsync(Category.Spot, symbol.Name); //fromId: fromId
-                    text = JsonSerializer.Serialize(resultData, GlobalData.JsonSerializerIndented);
+                    text = JsonSerializer.Serialize(resultData, JsonTools.JsonSerializerIndented);
                     System.Diagnostics.Debug.WriteLine(text);
                     GlobalData.AddTextToLogTab(text);
 

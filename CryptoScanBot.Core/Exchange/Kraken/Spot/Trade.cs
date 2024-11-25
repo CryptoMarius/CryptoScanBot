@@ -93,7 +93,7 @@ public class Trade(ExchangeBase api) : TradeBase(api), ITrade
                                     Symbol = position.Symbol,
                                 };
                                 PickupTrade(position.Account, position.Symbol, trade, item);
-                                string text = JsonSerializer.Serialize(item, GlobalData.JsonSerializerNotIndented).Trim();
+                                string text = JsonSerializer.Serialize(item, JsonTools.JsonSerializerNotIndented).Trim();
                                 ScannerLog.Logger.Trace($"{item.Symbol} Trade added json={text}");
 
                                 tradeCache.Add(trade);

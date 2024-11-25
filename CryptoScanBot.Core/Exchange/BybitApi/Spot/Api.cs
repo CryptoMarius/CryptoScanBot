@@ -198,7 +198,7 @@ public class Api : ExchangeBase
                     }
                     //if (generateJsonDebug)
                     //{
-                    //    tradeParams.DebugJson = JsonSerializer.Serialize(result, GlobalData.JsonSerializerIndented).Trim();
+                    //    tradeParams.DebugJson = JsonSerializer.Serialize(result, JsonTools.JsonSerializerIndented).Trim();
                     //    client.ClientOptions.OutputOriginalData = false;
                     //}
 
@@ -266,7 +266,7 @@ public class Api : ExchangeBase
                     //}
                     ////if (generateJsonDebug)
                     ////{
-                    ////    tradeParams.DebugJson = JsonSerializer.Serialize(result, GlobalData.JsonSerializerIndented).Trim();
+                    ////    tradeParams.DebugJson = JsonSerializer.Serialize(result, JsonTools.JsonSerializerIndented).Trim();
                     ////    client.ClientOptions.OutputOriginalData = false;
                     ////}
 

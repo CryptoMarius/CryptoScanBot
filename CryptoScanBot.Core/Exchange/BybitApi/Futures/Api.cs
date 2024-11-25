@@ -108,7 +108,7 @@ public class Api : ExchangeBase
         }
 
         // Vanwege een onverwachte liquidatie gaan we deze ook uitgebreid loggen
-        string text = JsonSerializer.Serialize(result, GlobalData.JsonSerializerNotIndented);
+        string text = JsonSerializer.Serialize(result, JsonTools.JsonSerializerNotIndented);
         GlobalData.AddTextToLogTab("SwitchCrossIsolatedMarginAsync :" + text);
 
 
