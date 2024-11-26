@@ -32,10 +32,8 @@ public class CryptoZoneSession
     public bool ShowPivots { get; set; } = false;
     public bool UseBatchProcess { get; set; } = false;
     public bool ForceCalculation { get; set; } = false;
-
-
-
-
+    public bool ShowSignals { get; set; } = false;
+    public bool ShowPositions { get; set; } = false;
 
     public static CryptoZoneSession LoadSessionSettings()
     {

@@ -501,7 +501,7 @@ public class CryptoDataGridPositionsClosed<T>() : CryptoDataGrid<T>() where T : 
                     break;
 
                 case ColumnsForGrid.SignalDate:
-                    // there is a signal.CloseDate
+                    // there is a signal.CloseTime
                     //+ signal.OpenDate.AddSeconds(signal.Interval.Duration).ToLocalTime().ToString("HH:mm");
                     e.Value = position.SignalEventTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm");
                     break;

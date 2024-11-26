@@ -37,7 +37,7 @@ public class DominantLevelShort : SignalCreateBase
         AccountSymbolData symbolData = Account.Data.GetSymbolData(Symbol.Name);
         foreach (var zone in symbolData.ZoneListShort)
         {
-            if (zone.OpenTime != null && CandleLast.OpenTime >= zone.OpenTime && zone.CloseDate == null)
+            if (zone.OpenTime != null && CandleLast.OpenTime >= zone.OpenTime && zone.CloseTime == null)
             {
                 bool changed = false;
                 decimal alarmPrice = zone.Bottom * (100 - GlobalData.Settings.Signal.Zones.WarnPercentage) / 100;
@@ -54,9 +54,9 @@ public class DominantLevelShort : SignalCreateBase
                 }
 
                 // todo, delete the zone somewhere else?
-                if (zone.CloseDate == null && CandleLast.High >= zone.Top)
+                if (zone.CloseTime == null && CandleLast.High >= zone.Top)
                 {
-                    zone.CloseDate = CandleLast.OpenTime;
+                    zone.CloseTime = CandleLast.OpenTime;
                     zone.ClosePrice = CandleLast.Low;
                     changed = true;
                 }

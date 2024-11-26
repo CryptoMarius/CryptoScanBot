@@ -756,19 +756,19 @@ public class CryptoDatabase : IDisposable
         {
             connection.Connection.Execute("CREATE TABLE [Zone] (" +
                 "Id integer primary key autoincrement not null," +
+                "CreateTime TEXT not NULL," +
                 "AccountId Integer NOT NULL," +
                 "ExchangeId Integer NOT NULL," +
                 "SymbolId Integer NOT NULL," +
                 "Strategy Integer NOT NULL," +
                 "Side integer not null," +
-                "CreateTime TEXT not NULL," +
                 "OpenTime TEXT NULL," +
                 "Top TEXT not null," +
                 "Bottom TEXT not null," +
                 "AlarmPrice TEXT not null," +
                 "AlarmDate TEXT," +
                 "ClosePrice TEXT null," +
-                "CloseDate TEXT NULL," +
+                "CloseTime TEXT NULL," +
                 "LastSignalDate TEXT NULL," +
                 "Description TEXT NULL," +
                 "FOREIGN KEY(AccountId) REFERENCES TradeAccount(Id)," +

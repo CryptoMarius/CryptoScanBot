@@ -374,7 +374,7 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                     e.Value = signal.Id;
                     break;
                 case ColumnsForGrid.Date:
-                    // there is a signal.CloseDate
+                    // there is a signal.CloseTime
                     //+ signal.OpenDate.AddSeconds(signal.Interval.Duration).ToLocalTime().ToString("HH:mm");
                     e.Value = signal.OpenDate.ToLocalTime().ToString("yyyy-MM-dd HH:mm") + " - " + signal.CloseDate.ToLocalTime().ToString("HH:mm");
                     break;
@@ -992,7 +992,7 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
     //    if (succes && (GlobalData.ActiveAccount!.AccountType == CryptoAccountType.Altrady))
     //    {
     //        CryptoSymbolInterval symbolInterval = signal.Symbol.GetSymbolInterval(signal.Interval.IntervalPeriod);
-    //        CryptoPosition position = PositionTools.CreatePosition(GlobalData.ActiveAccount!, signal.Symbol, signal.Strategy, signal.Side, symbolInterval, signal.CloseDate);
+    //        CryptoPosition position = PositionTools.CreatePosition(GlobalData.ActiveAccount!, signal.Symbol, signal.Strategy, signal.Side, symbolInterval, signal.CloseTime);
     //        PositionTools.AddSignalProperties(position, signal);
 
     //        CryptoDatabase database = new();
@@ -1002,7 +1002,7 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
     //            database.Connection.Insert(position);
     //            PositionTools.AddPosition(GlobalData.ActiveAccount!, position);
     //            var part = PositionTools.ExtendPosition(database, position, CryptoPartPurpose.Entry, signal.Interval, signal.Strategy,
-    //                CryptoEntryOrDcaStrategy.AfterNextSignal, signal.SignalPrice, signal.CloseDate);
+    //                CryptoEntryOrDcaStrategy.AfterNextSignal, signal.SignalPrice, signal.CloseTime);
 
                  
     //            {
@@ -1024,13 +1024,13 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
     //                if (position.Invested == 0)
     //                    entryQuantity = TradeTools.CorrectEntryQuantityIfWayLess(signal.Symbol, entryValue, entryQuantity, price);
 
-    //                part.CloseTime = signal.CloseDate;
+    //                part.CloseTime = signal.CloseTime;
     //                database.Connection.Update(part);
 
     //                position.Reposition = false;
     //                position.EntryPrice = signal.SignalPrice;
     //                position.EntryAmount = entryQuantity;
-    //                position.CloseTime = signal.CloseDate;
+    //                position.CloseTime = signal.CloseTime;
     //                position.Status = CryptoPositionStatus.Altrady;
     //                database.Connection.Update(position);
 

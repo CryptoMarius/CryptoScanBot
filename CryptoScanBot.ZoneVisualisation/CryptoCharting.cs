@@ -149,6 +149,37 @@ public class CryptoCharting
         chart.Series.Add(seriesHigh);
     }
 
+
+    internal static void DrawSignals(PlotModel chart, CryptoZoneSession session, List<CryptoSignal> signalList)
+    {
+        var seriesShort = new ScatterSeries { Title = "s high", MarkerSize = 2, MarkerFill = OxyColors.Red, MarkerType = MarkerType.Diamond, };
+        var seriesLong = new ScatterSeries { Title = "s low", MarkerSize = 2, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Diamond, };
+        foreach (var signal in signalList)
+        {
+            if (signal.EventTime >= session.MinDate && signal.EventTime <= session.MaxDate)
+            {
+                decimal y;
+                ScatterSeries? series;
+                if (signal.Side == CryptoTradeSide.Long)
+                {
+                    series = seriesLong;
+                    y = 0.99m * signal.SignalPrice;
+                }
+                else
+                {
+                    series = seriesShort;
+                    y = 1.01m * signal.SignalPrice;
+                }
+
+                series?.Points.Add(new ScatterPoint(signal.EventTime, (double)y));
+            }
+        }
+
+        chart.Series.Add(seriesLong);
+        chart.Series.Add(seriesShort);
+    }
+
+
     public static void DrawZigZag(PlotModel chart, CryptoZoneSession session, List<ZigZagResult> zigZagList, string caption, OxyColor color)
     {
         var seriesZigZag = new LineSeries { Title = caption, Color = color };
@@ -189,8 +220,8 @@ public class CryptoCharting
         //string format = symbol.PriceDisplayFormat[1..];
         //string text = "Date: {yyyy-MM-dd HH:mm}\nPrice: {$:0.00}";
         //text = text.Replace("$", format);
-        //seriesLow.TrackerFormatString = text;
-        //seriesHigh.TrackerFormatString = text;
+        //seriesLong.TrackerFormatString = text;
+        //seriesShort.TrackerFormatString = text;
         //seriesZigZag.TrackerFormatString = text;
     }
 
@@ -211,8 +242,8 @@ public class CryptoCharting
                 dateOpen = session.MinDate;
 
             long dateLast;
-            if (zone.CloseDate != null)
-                dateLast = (long)zone.CloseDate;
+            if (zone.CloseTime != null)
+                dateLast = (long)zone.CloseTime;
             else
                 dateLast = session.MaxDate;
 
@@ -244,23 +275,23 @@ public class CryptoCharting
 
 
         //var lastZigZag = data.Indicator.ZigZagList.Last();
-        //foreach (var zigzag in data.Indicator.ZigZagList)
+        //foreach (var signal in data.Indicator.ZigZagList)
         //{
         //    // Laatste zigZag is niet relevant (niet bevestigd?)
-        //    if (zigzag == lastZigZag || !zigzag.Dominant)
+        //    if (signal == lastZigZag || !signal.Dominant)
         //        continue;
 
-        //    if (zigzag.Candle!.OpenTime >= session.MinDate && zigzag.Candle!.OpenTime <= session.MaxDate && zigzag.Dominant)
+        //    if (signal.Candle!.OpenTime >= session.MinDate && signal.Candle!.OpenTime <= session.MaxDate && signal.Dominant)
         //    {
         //        OxyColor color;
-        //        if (zigzag.PointType == 'L')
+        //        if (signal.PointType == 'L')
         //            color = OxyColors.Green;
         //        else
         //            color = OxyColors.OrangeRed;
 
         //        long dateLast;
-        //        if (zigzag.CloseDate != null)
-        //            dateLast = (long)zigzag.CloseDate;
+        //        if (signal.CloseTime != null)
+        //            dateLast = (long)signal.CloseTime;
         //        else
         //            dateLast = session.MaxDate;
         //        //dateLast -= data.Interval.Duration;
@@ -268,15 +299,15 @@ public class CryptoCharting
         //        // Create a rectangle annotation
         //        var rectangle = new RectangleAnnotation
         //        {
-        //            MinimumX = zigzag.Candle.OpenTime,  // X-coordinate of the lower-left corner
-        //            MinimumY = (double)zigzag.Bottom,  // Y-coordinate of the lower-left corner
+        //            MinimumX = signal.Candle.OpenTime,  // X-coordinate of the lower-left corner
+        //            MinimumY = (double)signal.Bottom,  // Y-coordinate of the lower-left corner
         //            MaximumX = dateLast,  // X-coordinate of the upper-right corner
-        //            MaximumY = (double)zigzag.Top,  // Y-coordinate of the upper-right corner
+        //            MaximumY = (double)signal.Top,  // Y-coordinate of the upper-right corner
         //                                            //Fill = Color.LightGray,  // Rectangle fill color
         //            Fill = OxyColor.FromArgb(128, color.R, color.G, color.B),
         //            Stroke = OxyColor.FromArgb(128 + 64 + 32 + 16 + 8 + 4 + 2, color.R, color.G, color.B), // rectangle
         //            StrokeThickness = 0,          // Border thickness
-        //            Text = zigzag.Percentage.ToString("N2")
+        //            Text = signal.Percentage.ToString("N2")
         //        };
         //        chart.Annotations.Add(rectangle);
         //    }

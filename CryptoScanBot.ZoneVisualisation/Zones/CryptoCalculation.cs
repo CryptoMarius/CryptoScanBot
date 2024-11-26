@@ -150,10 +150,12 @@ public class CryptoCalculation
                 CryptoSymbolInterval zoomInterval = symbol!.GetSymbolInterval(zoom);
                 if (symbol.Exchange.IsIntervalSupported(zoomInterval.IntervalPeriod))
                 {
-                    if (!loadedCandlesInMemory.TryGetValue(interval.IntervalPeriod, out bool _))
+                    // Load candles from disk
+                    if (!loadedCandlesInMemory.TryGetValue(zoomInterval.IntervalPeriod, out bool _))
                         CandleEngine.LoadCandleDataFromDisk(symbol, zoomInterval.Interval, zoomInterval.CandleList);
-                    loadedCandlesInMemory.Add(interval.IntervalPeriod, false); // in memory, nothing changed
+                    loadedCandlesInMemory.TryAdd(zoomInterval.IntervalPeriod, false); // in memory, nothing changed
 
+                    // Load candles from the exchange
                     int count = durationForThisCandle / zoomInterval.Interval.Duration;
                     if (await CandleEngine.FetchFrom(symbol, zoomInterval.Interval, zoomInterval.CandleList, log, unixStart, count))
                         loadedCandlesInMemory[zoomInterval.Interval.IntervalPeriod] = true;
@@ -214,7 +216,7 @@ public class CryptoCalculation
     {
         //long startTime = Stopwatch.GetTimestamp();
         //ScannerLog.Logger.Info("CalculateLiqBoxesAsync.Start");
-        GlobalData.AddTextToLogTab($"{data.Symbol.Name} Calculating dominant pivots and zones");
+        GlobalData.AddTextToLogTab($"{data.Symbol.Name} Calculating zones");
         ZigZagResult? previous = null;
         ZigZagResult? previous2 = null;
         foreach (var zigZag in data.Indicator.ZigZagList)

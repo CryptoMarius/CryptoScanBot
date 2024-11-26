@@ -212,7 +212,7 @@ public class TrendInterval
 
 
         // Interpret the pivot points and put Charles Dow theory at work
-        var bestIndicator = accountSymbolIntervalData.BestIndicator!;
+        var bestIndicator = accountSymbolIntervalData.BestZigZagIndicator!;
         CryptoTrendIndicator trendIndicator = InterpretZigZagPoints(bestIndicator, log);
         accountSymbolIntervalData.TrendIndicator = trendIndicator;
         accountSymbolIntervalData.TrendInfoUnix = maxDate;

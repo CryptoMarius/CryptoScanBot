@@ -34,7 +34,7 @@ public class CryptoZone
     public required decimal Bottom { get; set; }
     // Zone ends on this date
     public decimal? ClosePrice { get; set; }
-    public long? CloseDate { get; set; }
+    public long? CloseTime { get; set; }
 
     // Create a signal when this price triggers (once)
     public decimal AlarmPrice { get; set; } // obsolete, just for debugging

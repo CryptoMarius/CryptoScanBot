@@ -89,7 +89,7 @@ public class TradeToolsTest : TestBase
         CheckAfterMarketBuy(position, entryPart, step, CryptoOrderStatus.PartiallyAndClosed);
 
         // TODO: Verkeerde datum in de stepo voor emulator /backtest, dat moet de laatste datum van de order of trade zijn!
-        //step.CloseTime = lastCandle.Date.AddMinutes(1); // CloseDate
+        //step.CloseTime = lastCandle.Date.AddMinutes(1); // CloseTime
 
 
 

@@ -502,7 +502,7 @@ public partial class FrmMain : Form
                 }
 
                 // Bij wijzigingen aantal signalen)
-                //signal.CloseDate = signal.CloseDate.AddSeconds(GlobalData.Settings.General.RemoveSignalAfterxCandles * Interval.Duration);
+                //signal.CloseTime = signal.CloseTime.AddSeconds(GlobalData.Settings.General.RemoveSignalAfterxCandles * Interval.Duration);
 
                 // Optioneel een herstart van de Telegram bot
                 if (GlobalData.Telegram.Token != ThreadTelegramBot.Token)

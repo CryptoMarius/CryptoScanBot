@@ -45,12 +45,14 @@ public partial class CryptoVisualisation : Form
 
         labelInterval.Text = "";
         labelMaxTime.Text = "";
+        Closing += Form1Closing;
+        ButtonRefresh.Click += ButtonRefreshClick;
         ButtonCalculate.Click += ButtonCalculateClick;
         ButtonZoomLast.Click += ButtonFocusLastCandlesClick;
         EditDeviation.Click += ButtonFocusLastCandlesClick;
         EditTransparant.Click += TransparentClick;
 
-
+        InitIntervalItems();
         //EditSymbolBase.DataSource = new BindingSource(GlobalData.Settings.General.Exchange.SymbolListName, null);
         //EditSymbolBase.DisplayMember = "Key";
         //EditSymbolBase.ValueMember = "Value";
@@ -66,9 +68,22 @@ public partial class CryptoVisualisation : Form
         //EditIntervalName.ValueMember = "Value";
         //try { EditIntervalName.SelectedValue = Session.IntervalName; } catch { };
 
+        ButtonRefreshClick(null, EventArgs.Empty);
+    }
+
+    private void ButtonRefreshClick(object? sender, EventArgs e)
+    {
         ButtonCalculateClick(null, EventArgs.Empty);
     }
 
+    public void InitIntervalItems()
+    {
+        foreach (var interval in GlobalData.IntervalList)
+        {
+            if (GlobalData.Settings.General.Exchange!.IsIntervalSupported(interval.IntervalPeriod))
+                EditIntervalName.Items.Add(interval.Name);
+        }
+    }
 
     public static void InitializeApplicationStuff()
     {
@@ -83,6 +98,13 @@ public partial class CryptoVisualisation : Form
         GlobalData.LoadSymbols();
         ZoneTools.LoadAllZones();
     }
+
+    private void Form1Closing(object? sender, System.ComponentModel.CancelEventArgs e)
+    {
+        PickupEdits();
+        Session.SaveSessionSettings();
+    }
+
 
     private void TransparentClick(object? sender, EventArgs e)
     {
@@ -117,6 +139,9 @@ public partial class CryptoVisualisation : Form
         EditShowSecondary.Checked = Session.ShowSecondary;
         EditUseOptimizing.Checked = Session.UseOptimizing;
         EditUseBatchProcess.Checked = Session.UseBatchProcess;
+        EditShowSignals.Checked = Session.ShowSignals;
+        EditShowPositions.Checked = Session.ShowPositions;
+        EditShowPositions.Enabled = false;
     }
 
     public void ShowProgress(string text)
@@ -149,7 +174,7 @@ public partial class CryptoVisualisation : Form
                 string s;
                 if (symbolInterval.CandleList.TryGetValue(unix, out CryptoCandle? candle))
                 {
-                    s = $"{candle.Date:yyyy-MM-dd HH:mm}, price: " + y.ToString(Data.Symbol.PriceDisplayFormat);
+                    s = $"{candle.Date:ddd yyyy-MM-dd HH:mm}, price: " + y.ToString(Data.Symbol.PriceDisplayFormat);
                     s += " (o: " + candle.Open.ToString(Data.Symbol.PriceDisplayFormat);
                     s += " h: " + candle.High.ToString(Data.Symbol.PriceDisplayFormat);
                     s += " l: " + candle.Low.ToString(Data.Symbol.PriceDisplayFormat);
@@ -412,6 +437,7 @@ public partial class CryptoVisualisation : Form
         var symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
         Data = new()
         {
+            Account = GlobalData.ActiveAccount!,
             Exchange = exchange,
             Symbol = symbol,
             Interval = interval,
@@ -437,6 +463,12 @@ public partial class CryptoVisualisation : Form
             labelMaxTime.Text = CandleTools.GetUnixDate(Session.MaxDate).ToString("dd MMM HH:mm");
         }
 
+
+        // signals
+        ExtraData.LoadSignalsForSymbol(Data);
+
+        // positions
+        //ExtraData.LoadPositionsForSymbol(Data);
 
         reason = "";
         return true;
@@ -468,7 +500,8 @@ public partial class CryptoVisualisation : Form
         Session.UseOptimizing = EditUseOptimizing.Checked;
         Session.ShowPivots = EditShowPivots.Checked;
         Session.UseBatchProcess = EditUseBatchProcess.Checked;
-
+        Session.ShowSignals = EditShowSignals.Checked;
+        Session.ShowPositions = EditShowPositions.Checked;
     }
 
 
@@ -545,7 +578,7 @@ public partial class CryptoVisualisation : Form
                 TrendTools.CreateAllTrendIndicators(accountSymbolIntervalData, Data.SymbolInterval.CandleList);
                 TrendTools.AddCandlesToTrendIndicators(accountSymbolIntervalData, Data.SymbolInterval.CandleList, Session.MinDate, Session.MaxDate);
                 TrendTools.GetBestTrendIndicator(accountSymbolIntervalData, Data.Symbol, Data.SymbolInterval.CandleList, log);
-                var best = accountSymbolIntervalData.BestIndicator!;
+                var best = accountSymbolIntervalData.BestZigZagIndicator!;
                 //var best = Data.Indicator; 
 
 
@@ -557,9 +590,11 @@ public partial class CryptoVisualisation : Form
 
 
                 CryptoCharting.DrawCandleSerie(plotModel, Data, Session);
+                if (Session.ShowSignals)
+                    CryptoCharting.DrawSignals(plotModel, Session, Data.Signals);
 
-                if (accountScannerSymbolIntervalData.BestIndicator != null && accountScannerSymbolIntervalData.BestIndicator.ZigZagList != null)
-                    CryptoCharting.DrawZigZag(plotModel, Session, accountScannerSymbolIntervalData.BestIndicator.ZigZagList, "tst", OxyColors.Yellow);
+                if (accountScannerSymbolIntervalData.BestZigZagIndicator != null && accountScannerSymbolIntervalData.BestZigZagIndicator.ZigZagList != null)
+                    CryptoCharting.DrawZigZag(plotModel, Session, accountScannerSymbolIntervalData.BestZigZagIndicator.ZigZagList, "tst", OxyColors.Yellow);
 
                 if (Session.ShowPivots)
                     CryptoCharting.DrawPivots(plotModel, Session, Data.Indicator.PivotList);
@@ -601,7 +636,7 @@ public partial class CryptoVisualisation : Form
         catch (Exception e)
         {
             log.AppendLine(e.ToString());
-            ScannerLog.Logger.Info($"ERROR {e}");
+            ScannerLog.Logger.Error($"ERROR {e}");
         }
         //ScannerLog.Logger.Info("CalculateZonesAndPlotZigZagAsync.Stop " + Stopwatch.GetElapsedTime(startTime).TotalSeconds.ToString());
     }
@@ -649,16 +684,24 @@ public partial class CryptoVisualisation : Form
     
     private void ButtonCalculateClick(object? sender, EventArgs e)
     {
-        CandleEngine.StartupTime = DateTime.UtcNow;
-        PickupEdits();
+        try
+        {
+            CandleEngine.StartupTime = DateTime.UtcNow;
+            PickupEdits();
 
-        Session.ForceCalculation = sender != null;
-        Session.ActiveInterval = CryptoIntervalPeriod.interval1h;
-        Session.SaveSessionSettings();
-        if (PrepareSessionData(out string reason))
-            _ = ButtonCalculate_ClickAsync();
-        else
-            Text = $"{Data?.Exchange?.Name}.{Session.SymbolBase}{Session.SymbolQuote} {Session.IntervalName} Problem preparing {reason}";
+            Session.ForceCalculation = sender != null;
+            Session.ActiveInterval = CryptoIntervalPeriod.interval1h;
+            Session.SaveSessionSettings();
+            if (PrepareSessionData(out string reason))
+                _ = ButtonCalculate_ClickAsync();
+            else
+                Text = $"{Data?.Exchange?.Name}.{Session.SymbolBase}{Session.SymbolQuote} {Session.IntervalName} Problem preparing {reason}";
+        }
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Error(error, "");
+            GlobalData.AddTextToLogTab("ERROR settings " + error.ToString());
+        }
     }
-
+       
 }

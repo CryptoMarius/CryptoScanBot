@@ -15,6 +15,8 @@ Error's / dodo's
 
 - Scanner - Initieel wordt de barometer grafiek niet getoond, wat is de reden hiervan? Testen met de oudere versies (van scratch)
 - Scanner - Zone instellingen, 2x minimum unzoomed, en de default staat op 0..
+- Scanner - Testen: Werkt de trend menu item wel (Jan melde een probleem hierover)
+- Scanner - De candles van de nieuwe munten worden wel opgehaald, maar het ophalen blijft steken in niemandsland (wil niet naar het begin)
 
 
 Scanner:

@@ -113,7 +113,7 @@ public class TrendTools
         }
         // Fallback on the last ZigZag with deviation=1%, which should have the most pivots (not alway's the case!)
         bestIndicator ??= accountSymbolIntervalData.ZigZagIndicators.Last();
-        accountSymbolIntervalData.BestIndicator = bestIndicator;
+        accountSymbolIntervalData.BestZigZagIndicator = bestIndicator;
 
 
 

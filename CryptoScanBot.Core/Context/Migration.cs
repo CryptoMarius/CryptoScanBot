@@ -8,7 +8,7 @@ namespace CryptoScanBot.Core.Context;
 public class Migration
 {
     // De huidige database versie
-    public readonly static int CurrentDatabaseVersion = 34;
+    public readonly static int CurrentDatabaseVersion = 35;
 
 
     public static void Execute(CryptoDatabase database, int CurrentVersion)
@@ -950,6 +950,22 @@ public class Migration
             transaction.Commit();
         }
 
+
+        //***********************************************************
+        // 25-11-2024, CloseTime -> CloseTime
+        if (CurrentVersion > version.Version && version.Version == 34)
+        {
+            using var transaction = database.BeginTransaction();
+
+            database.Connection.Execute("alter table Zone add CloseTime Text null", transaction);
+            database.Connection.Execute("update Zone set CloseTime=CloseDate", transaction);
+            database.Connection.Execute("alter table Zone drop column CloseDate", transaction);
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
     }
 
 }

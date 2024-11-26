@@ -21,7 +21,7 @@ public class ZoneTools
             
 
         using var database = new CryptoDatabase();
-        string sql = "select * from zone"; // where CloseDate is null
+        string sql = "select * from zone"; // where CloseTime is null
         foreach (CryptoZone zone in database.Connection.Query<CryptoZone>(sql))
         {
             if (GlobalData.TradeAccountList.TryGetValue(zone.AccountId, out CryptoAccount? tradeAccount))
@@ -45,7 +45,7 @@ public class ZoneTools
         }
     }
 
-    public static void SaveZonesForSymbol(CryptoSymbol symbol, List<ZigZagResult> zigZagList)
+    public static void SaveZonesForSymbol(CryptoSymbol symbol, CryptoInterval interval, List<ZigZagResult> zigZagList)
     {
         using CryptoDatabase databaseThread = new();
         databaseThread.Connection.Open();
@@ -59,7 +59,7 @@ public class ZoneTools
 
         foreach (var zigZag in zigZagList)
         {
-            if (zigZag.Dominant) //zigZag.Bottom > 0 && zigZag.CloseDate == null
+            if (zigZag.Dominant) //zigZag.Bottom > 0 && zigZag.CloseTime == null
             {
                 CryptoZone zone = new()
                 {
@@ -75,10 +75,10 @@ public class ZoneTools
                     Bottom = zigZag.Bottom,
                     Side = CryptoTradeSide.Long,
                     Strategy = CryptoSignalStrategy.DominantLevel,
-                    Description = zigZag.Percentage.ToString("N2"),
+                    Description = $"{interval.Name}: {zigZag.Percentage:N2}",
                 };
                 if (zigZag.CloseDate != null)
-                    zone.CloseDate = zigZag.CloseDate;
+                    zone.CloseTime = zigZag.CloseDate;
 
                 if (zigZag.PointType == 'L')
                 {
