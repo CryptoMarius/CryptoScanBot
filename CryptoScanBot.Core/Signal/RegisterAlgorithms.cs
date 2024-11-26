@@ -131,8 +131,18 @@ public static class RegisterAlgorithms
             AnalyzeLongType = typeof(DominantLevelLong),
             AnalyzeShortType = typeof(DominantLevelShort),
         });
-        
 
+        
+        //***************************************************
+        // Test
+        //***************************************************
+        Register(new AlgorithmDefinition()
+        {
+            Name = "BbRsiEngulf",
+            Strategy = CryptoSignalStrategy.BbRsiEngulfing,
+            AnalyzeLongType = typeof(SignalBbRsiEngulfingLong),
+            AnalyzeShortType = typeof(SignalBbRsiEngulfingShort),
+        });
     }
 
 
