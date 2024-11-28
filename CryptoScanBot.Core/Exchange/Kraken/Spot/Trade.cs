@@ -1,8 +1,10 @@
 ﻿using System.Text.Json;
 
 using CryptoExchange.Net.Objects;
+
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Json;
 using CryptoScanBot.Core.Model;
 
 using Dapper.Contrib.Extensions;
@@ -15,7 +17,7 @@ namespace CryptoScanBot.Core.Exchange.Kraken.Spot;
 /// <summary>
 /// De Trades ophalen
 /// </summary>
-public class Trade(ExchangeBase api) : TradeBase(api), ITrade
+public class Trade(ExchangeBase api) : TradeBase(), ITrade
 {
     static public void PickupTrade(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoTrade trade, KrakenUserTrade item)
     {

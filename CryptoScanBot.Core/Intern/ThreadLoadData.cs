@@ -325,7 +325,7 @@ public class ThreadLoadData
                 //************************************************************************************
                 if (GlobalData.Telegram.Token != "")
                 {
-                    var whateverx = Task.Run(async () => { await ThreadTelegramBot.Start(GlobalData.Telegram.Token, GlobalData.Telegram.ChatId); });
+                    var _ = Task.Run(async () => { await ThreadTelegramBot.Start(GlobalData.Telegram.Token, GlobalData.Telegram.ChatId); });
                 }
 
 
@@ -355,7 +355,7 @@ public class ThreadLoadData
                 // De (ontbrekende) candles downloaden (en de achterstand inhalen, blocking!)
                 //************************************************************************************
                 var api = GlobalData.Settings.General.Exchange!.GetApiInstance();
-                await api.Candle.GetCandlesAsync();
+                await api.Candle.GetCandlesForAllSymbolsAndIntervalsAsync();
 
                 //Ze zijn er wel, deze is eigenlijk overbodig geworden (zit alleen zoveel werk in!)
                 //CalculateMissingCandles();

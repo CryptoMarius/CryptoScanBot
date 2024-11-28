@@ -18,7 +18,7 @@ internal class BinanceWeight
 public static class LimitRate
 {
     static public long CurrentWeight { get; set; }
-    static private List<BinanceWeight> List { get; } = new List<BinanceWeight>();
+    static private List<BinanceWeight> List { get; } = [];
 
     static public void WaitForFairWeight(long newWeight)
     {

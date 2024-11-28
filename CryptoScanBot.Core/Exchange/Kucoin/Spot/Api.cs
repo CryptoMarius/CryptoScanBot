@@ -31,6 +31,7 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
+        ExchangeOptions.CandleLimit = 1500;
         ExchangeOptions.ExchangeName = "Kucoin Spot";
         ExchangeOptions.SymbolLimitPerSubscription = 1;
         ExchangeOptions.SubscriptionLimitPerClient = 20;

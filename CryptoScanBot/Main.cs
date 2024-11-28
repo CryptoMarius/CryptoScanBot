@@ -16,6 +16,7 @@ using Nito.AsyncEx;
 
 using System.Text;
 using System.Text.Json;
+using CryptoScanBot.Core.Json;
 
 namespace CryptoScanBot;
 
@@ -408,7 +409,7 @@ public partial class FrmMain : Form
                 await ExchangeBase.PriceTicker!.CheckTickers(); // herstarten van ticker indien errors
             if (ExchangeBase.UserTicker != null)
                 await ExchangeBase.UserTicker!.CheckTickers(); // herstarten van ticker indien errors
-            await api.Candle.GetCandlesAsync(); // niet wachten tot deze klaar is
+            await api.Candle.GetCandlesForAllSymbolsAndIntervalsAsync(); // niet wachten tot deze klaar is
         });
     }
 

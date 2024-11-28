@@ -30,9 +30,36 @@ public interface ISymbol
 
 public interface ICandle
 {
-    public Task GetCandlesForIntervalAsync(IDisposable? clientBase, CryptoSymbol symbol, CryptoInterval interval, long fetchEndUnix);
+    /// <summary>
+    /// retrieve candles for 1 interval for 1 symbol from the exchange
+    /// </summary>
+    public Task GetCandlesForIntervalAsync(IDisposable clientBase, CryptoSymbol symbol, CryptoInterval interval, long fetchMax);
+
+    /// <summary>
+    /// retrieve candles for all intervals for 1 symbol from the exchange 
+    /// uses GetCandlesForIntervalAsync
+    /// </summary>
     public Task GetCandlesForAllIntervalsAsync(CryptoSymbol symbol, long fetchEndUnix);
-    public Task GetCandlesAsync();
+
+    /// <summary>
+    /// retrieve candles for all symbols and all intervals from the exchange
+    /// Queue the suitable symbols and run in x parallel tasks
+    /// </summary>
+    public Task GetCandlesForAllSymbolsAndIntervalsAsync();
+
+
+    /// <summary>
+    /// retrieve candles of this interval in daterange (fetch and map from exchange to local)
+    /// This method is for the virualisation of the zones and emulator
+    /// </summary>
+    public Task<long> GetCandlesForInterval(IDisposable clientBase, CryptoSymbol symbol, CryptoInterval interval, CryptoSymbolInterval symbolInterval, long minFetch, long maxFetch);
+
+    /// <summary>
+    /// retrieve candles of this interval in daterange
+    /// (uses GetCandlesForInterval)
+    /// This method is for the virualisation of the zones and emulator
+    /// </summary>
+    public Task<bool> FetchFrom(CryptoSymbol symbol, CryptoInterval interval, CryptoCandleList candleList, long unixLoop, long unixMax);
 }
 
 public interface IApi
@@ -42,7 +69,7 @@ public interface IApi
     public ISymbol Symbol { get; set; }
     public IOrder Order { get; set; }
     public ITrade Trade { get; set; }
-    //Rates?
+    //Limit rates?
 }
 
 
@@ -62,7 +89,7 @@ public abstract class ExchangeBase
     public static Ticker? KLineTicker { get; set; }
     public static Ticker? UserTicker { get; set; }
 
-    public static ExchangeOptions ExchangeOptions { get; } = new(); // made public for ExchangeTest project
+    public static ExchangeOptions ExchangeOptions { get; } = new() { ExchangeName = "?", }; // made public for ExchangeTest project
     public static CancellationTokenSource CancellationTokenSource { get; set; } = new();
     public static CancellationToken CancellationToken { get; set; } = CancellationTokenSource.Token;
 

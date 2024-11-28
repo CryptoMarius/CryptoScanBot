@@ -10,6 +10,7 @@ using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
+using CryptoScanBot.Core.Json;
 
 
 namespace CryptoScanBot.Core.Exchange.BybitApi.Futures;
@@ -35,6 +36,7 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
+        ExchangeOptions.CandleLimit = 1000;
         ExchangeOptions.ExchangeName = "Bybit Futures";
         ExchangeOptions.LimitAmountOfSymbols = false;
         ExchangeOptions.SymbolLimitPerSubscription = 10;

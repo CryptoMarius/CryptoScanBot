@@ -67,6 +67,7 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
+        ExchangeOptions.CandleLimit = 1000;
         ExchangeOptions.ExchangeName = "Bybit Spot";
         ExchangeOptions.LimitAmountOfSymbols = false;
         ExchangeOptions.SymbolLimitPerSubscription = 10;

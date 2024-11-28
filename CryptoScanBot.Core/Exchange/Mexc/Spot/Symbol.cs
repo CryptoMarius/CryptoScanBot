@@ -2,7 +2,9 @@
 
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Json;
 using CryptoScanBot.Core.Model;
+
 using Dapper.Contrib.Extensions;
 
 using Mexc.Net.Clients;

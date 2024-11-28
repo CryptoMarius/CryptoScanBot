@@ -8,13 +8,13 @@ namespace CryptoScanBot.ZoneVisualisation.Zones;
 public class ExtraData
 {
 
-    public static void LoadSignalsForSymbol(CryptoZoneData data)
+    public static void LoadSignalsForSymbol(CryptoZoneData data, long from)
     {
         data.Signals.Clear();
-        string sql = "select * from signal where BackTest=0 and SymbolId = @SymbolId order by Id desc limit 50";
+        string sql = "select * from signal where BackTest=0 and SymbolId = @SymbolId and EventTime > @eventTime";
 
         using var database = new CryptoDatabase();
-        foreach (CryptoSignal signal in database.Connection.Query<CryptoSignal>(sql, new { SymbolId = data.Symbol.Id }))
+        foreach (CryptoSignal signal in database.Connection.Query<CryptoSignal>(sql, new { SymbolId = data.Symbol.Id, eventTime = from }))
         {
             if (GlobalData.ExchangeListId.TryGetValue(signal.ExchangeId, out Core.Model.CryptoExchange? exchange2))
             {
@@ -34,10 +34,10 @@ public class ExtraData
 
     }
 
-    public static void LoadPositionsForSymbol(CryptoZoneData data)
+    public static void LoadPositionsForSymbol(CryptoZoneData data, long from)
     {
         data.Positions.Clear();
-        //using var database = new CryptoDatabase();
+        using var database = new CryptoDatabase();
         //string sql = "select * from position where TradeAccountId=@TradeAccountId and SymbolId = @SymbolId order by id desc limit 50";
         //foreach (CryptoPosition position in database.Connection.Query<CryptoPosition>(sql, new { TradeAccountId = GlobalData.ActiveAccount!.Id }))
         //{

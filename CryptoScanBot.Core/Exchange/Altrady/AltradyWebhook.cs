@@ -1,4 +1,5 @@
 ﻿using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Json;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Settings;
 

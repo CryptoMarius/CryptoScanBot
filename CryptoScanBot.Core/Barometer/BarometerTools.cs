@@ -35,7 +35,7 @@ public class BarometerTools
                 {
                     Exchange = exchange,
                     ExchangeId = exchange.Id,
-                    Name = symbol?.Base + symbol?.Quote,
+                    Name = baseName + quoteData.Name,
                     Base = baseName, //De "munt"
                     Quote = quoteData.Name, //USDT, BTC etc.
                     QuoteData = quoteData,
@@ -43,28 +43,23 @@ public class BarometerTools
                     Status = 1,
                 };
 
-                CryptoDatabase databaseThread = new();
+                using CryptoDatabase databaseThread = new();
+                databaseThread.Open();
+                var transaction = databaseThread.BeginTransaction();
                 try
                 {
-                    databaseThread.Open();
-                    var transaction = databaseThread.BeginTransaction();
-                    try
-                    {
-                        databaseThread.Connection.Insert(symbol, transaction);
-                        transaction.Commit();
-                    }
-                    catch (Exception)
-                    {
-                        transaction.Rollback();
-                        throw;
-                    }
+                    databaseThread.Connection.Insert(symbol, transaction);
+                    transaction.Commit();
                 }
-                finally
+                catch (Exception error)
                 {
-                    databaseThread.Close();
+                    ScannerLog.Logger.Error(error.ToString());
+                    transaction.Rollback();
+                    throw;
                 }
 
                 GlobalData.AddSymbol(symbol);
+                GlobalData.AddTextToLogTab($"Created barometer {symbol.Name}");
             }
             symbol.Status = 1;
             return symbol;
@@ -206,7 +201,7 @@ public class BarometerTools
     }
 
     // Separate call because of emulator (calculate only 1 quote)
-    public void CalculatePriceBarometerForQuote(CryptoQuoteData quoteData)
+    public static void CalculatePriceBarometerForQuote(CryptoQuoteData quoteData)
     {
         CryptoSymbol? symbol = CheckBarometerSymbolPrecence(Constants.SymbolNameBarometerPrice, quoteData);
         if (symbol != null)

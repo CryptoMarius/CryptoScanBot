@@ -1,8 +1,10 @@
 ﻿using Binance.Net.Clients;
 using Binance.Net.Enums;
 using Binance.Net.Objects.Models.Futures.Socket;
+
 using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
+
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 

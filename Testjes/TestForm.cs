@@ -1,55 +1,31 @@
 ﻿using System.Drawing.Drawing2D;
-using System.IO.Compression;
-using System.Net;
 using System.Speech.Synthesis;
 using System.Text;
 
 using Binance.Net.Clients;
 using Binance.Net.Enums;
-using Binance.Net.Objects;
 using Binance.Net.Objects.Models;
 using Binance.Net.Objects.Models.Spot;
 
 using CryptoExchange.Net.Objects;
 
 using CryptoScanBot.BackTest;
-using CryptoScanBot.Intern;
 
 using Dapper;
 using Dapper.Contrib.Extensions;
 
-using Microsoft.Data.Sqlite;
-using Microsoft.Data.SqlClient;
-
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-
-using NPOI.SS.Formula.Functions;
 
 using Skender.Stock.Indicators;
 
-using NPOI.HPSF;
-using NPOI.SS.UserModel;
-using Microsoft.Identity.Client;
-using static System.Net.Mime.MediaTypeNames;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
-using System;
-using System.Security.Cryptography.Xml;
-using System.Transactions;
-using CryptoExchange.Net.Authentication;
 using Font = System.Drawing.Font;
-using CryptoScanBot.TradingView;
-using System.ComponentModel;
-using System.Data;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Exchange;
-using CryptoScanBot.Core.Settings;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Trader;
 using CryptoScanBot.Core.Signal;
 using CryptoScanBot.Core.Intern;
-using CryptoScanBot.Core;
 using CryptoScanBot.Core.Barometer;
 using CryptoScanBot.Core.Telegram;
 

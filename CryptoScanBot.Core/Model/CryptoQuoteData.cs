@@ -1,4 +1,4 @@
-﻿using CryptoScanBot.Core.Intern;
+﻿using CryptoScanBot.Core.Json;
 using Dapper.Contrib.Extensions;
 using System.Text.Json.Serialization;
 

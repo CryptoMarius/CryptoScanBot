@@ -3,8 +3,10 @@
 using Binance.Net.Clients;
 using Binance.Net.ExtensionMethods;
 using Binance.Net.Objects.Models.Spot;
+
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Json;
 using CryptoScanBot.Core.Model;
 
 using Dapper.Contrib.Extensions;
@@ -14,7 +16,7 @@ namespace CryptoScanBot.Core.Exchange.Binance.Spot;
 /// <summary>
 /// De Trades ophalen
 /// </summary>
-public class Trade(ExchangeBase api) : TradeBase(api), ITrade
+public class Trade(ExchangeBase api) : TradeBase(), ITrade
 {
     public static void PickupTrade(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoTrade trade, BinanceTrade item)
     {

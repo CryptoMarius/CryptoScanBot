@@ -1,5 +1,6 @@
 ﻿using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Json;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Settings;
 using CryptoScanBot.Core.Signal;

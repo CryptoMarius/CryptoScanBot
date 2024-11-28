@@ -1,7 +1,7 @@
 ﻿using System.Text.Encodings.Web;
 using System.Text.Json;
 
-namespace CryptoScanBot.Core.Intern;
+namespace CryptoScanBot.Core.Json;
 
 public class JsonTools
 {

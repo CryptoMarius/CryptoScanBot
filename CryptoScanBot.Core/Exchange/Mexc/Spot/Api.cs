@@ -28,6 +28,7 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
+        ExchangeOptions.CandleLimit = 500;
         ExchangeOptions.ExchangeName = "Mexc Spot";
         ExchangeOptions.LimitAmountOfSymbols = true;
         ExchangeOptions.SymbolLimitPerSubscription = 3; // 10 was okay for limited amount, but errors with 2500+ symbols, back to 1

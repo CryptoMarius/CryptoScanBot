@@ -158,7 +158,7 @@ public class Emulator
                 if (exec)
                 {
                     BarometerTools barometerTools = new();
-                    barometerTools.CalculatePriceBarometerForQuote(symbol.QuoteData);
+                    BarometerTools.CalculatePriceBarometerForQuote(symbol.QuoteData);
                     exec = false;
                 }
 

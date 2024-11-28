@@ -328,7 +328,7 @@ public static class ScannerSession
             if (ExchangeBase.UserTicker != null)
                 await ExchangeBase.UserTicker.CheckTickers(); // herstarten van ticker indien errors
 
-            await api.Candle.GetCandlesAsync();
+            await api.Candle.GetCandlesForAllSymbolsAndIntervalsAsync();
         });
         //_ = ExchangeHelper.KLineTicker.CheckKlineTickers(); // herstarten van ticker indien errors
         //_ = ExchangeHelper.FetchCandlesAsync(); // niet wachten tot deze klaar is

@@ -83,6 +83,12 @@ partial class FrmSettings
         tabSignal = new TabPage();
         tabControlSignals = new TabControl();
         tabSignalsGeneral = new TabPage();
+        groupBox10 = new GroupBox();
+        label46 = new Label();
+        label27 = new Label();
+        EditCheckVolumeOverDays = new NumericUpDown();
+        label45 = new Label();
+        EditCheckVolumeOverPeriod = new CheckBox();
         groupBox9 = new GroupBox();
         EditAnalysisMinChangePercentage = new NumericUpDown();
         EditAnalysisMaxChangePercentage = new NumericUpDown();
@@ -104,6 +110,7 @@ partial class FrmSettings
         EditCandlesWithFlatPriceCheck = new CheckBox();
         EditCandlesWithZeroVolumeCheck = new CheckBox();
         EditMinimumAboveBollingerBandsSmaCheck = new CheckBox();
+        EditMinimumAboveBollingerBandsUpperCheck = new CheckBox();
         EditCandlesWithZeroVolume = new NumericUpDown();
         EditCandlesWithFlatPrice = new NumericUpDown();
         EditMinimumAboveBollingerBandsUpper = new NumericUpDown();
@@ -283,13 +290,6 @@ partial class FrmSettings
         EditDebugSignalCreate = new CheckBox();
         EditDebugKLineReceive = new CheckBox();
         toolTip1 = new ToolTip(components);
-        groupBox10 = new GroupBox();
-        EditMinimumAboveBollingerBandsUpperCheck = new CheckBox();
-        EditCheckVolumeOverPeriod = new CheckBox();
-        label45 = new Label();
-        EditCheckVolumeOverDays = new NumericUpDown();
-        label27 = new Label();
-        label46 = new Label();
         panelButtons.SuspendLayout();
         panelFill.SuspendLayout();
         tabControlMain.SuspendLayout();
@@ -312,6 +312,8 @@ partial class FrmSettings
         tabSignal.SuspendLayout();
         tabControlSignals.SuspendLayout();
         tabSignalsGeneral.SuspendLayout();
+        groupBox10.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)EditCheckVolumeOverDays).BeginInit();
         groupBox9.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)EditAnalysisMinChangePercentage).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditAnalysisMaxChangePercentage).BeginInit();
@@ -401,8 +403,6 @@ partial class FrmSettings
         tabShortBlackList.SuspendLayout();
         panel6.SuspendLayout();
         tabPageOptions.SuspendLayout();
-        groupBox10.SuspendLayout();
-        ((System.ComponentModel.ISupportInitialize)EditCheckVolumeOverDays).BeginInit();
         SuspendLayout();
         // 
         // panelButtons
@@ -1047,6 +1047,74 @@ partial class FrmSettings
         tabSignalsGeneral.Text = "Signalen algemeen";
         tabSignalsGeneral.UseVisualStyleBackColor = true;
         // 
+        // groupBox10
+        // 
+        groupBox10.AutoSize = true;
+        groupBox10.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+        groupBox10.Controls.Add(label46);
+        groupBox10.Controls.Add(label27);
+        groupBox10.Controls.Add(EditCheckVolumeOverDays);
+        groupBox10.Controls.Add(label45);
+        groupBox10.Controls.Add(EditCheckVolumeOverPeriod);
+        groupBox10.Location = new Point(352, 124);
+        groupBox10.Name = "groupBox10";
+        groupBox10.Size = new Size(284, 119);
+        groupBox10.TabIndex = 292;
+        groupBox10.TabStop = false;
+        groupBox10.Text = "Check volume over multiple day's";
+        // 
+        // label46
+        // 
+        label46.AutoSize = true;
+        label46.Location = new Point(18, 85);
+        label46.Margin = new Padding(4, 0, 4, 0);
+        label46.Name = "label46";
+        label46.Size = new Size(258, 15);
+        label46.TabIndex = 312;
+        label46.Text = "(using the minimal volume from the basecoins)";
+        // 
+        // label27
+        // 
+        label27.AutoSize = true;
+        label27.Location = new Point(246, 59);
+        label27.Margin = new Padding(4, 0, 4, 0);
+        label27.Name = "label27";
+        label27.Size = new Size(31, 15);
+        label27.TabIndex = 311;
+        label27.Text = "days";
+        // 
+        // EditCheckVolumeOverDays
+        // 
+        EditCheckVolumeOverDays.Location = new Point(137, 55);
+        EditCheckVolumeOverDays.Margin = new Padding(4, 3, 4, 3);
+        EditCheckVolumeOverDays.Maximum = new decimal(new int[] { 25, 0, 0, 0 });
+        EditCheckVolumeOverDays.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
+        EditCheckVolumeOverDays.Name = "EditCheckVolumeOverDays";
+        EditCheckVolumeOverDays.Size = new Size(88, 23);
+        EditCheckVolumeOverDays.TabIndex = 310;
+        EditCheckVolumeOverDays.Value = new decimal(new int[] { 1, 0, 0, 0 });
+        // 
+        // label45
+        // 
+        label45.AutoSize = true;
+        label45.Location = new Point(17, 59);
+        label45.Margin = new Padding(4, 0, 4, 0);
+        label45.Name = "label45";
+        label45.Size = new Size(96, 15);
+        label45.TabIndex = 309;
+        label45.Text = "Check over day's";
+        // 
+        // EditCheckVolumeOverPeriod
+        // 
+        EditCheckVolumeOverPeriod.AutoSize = true;
+        EditCheckVolumeOverPeriod.Location = new Point(17, 26);
+        EditCheckVolumeOverPeriod.Margin = new Padding(4, 3, 4, 3);
+        EditCheckVolumeOverPeriod.Name = "EditCheckVolumeOverPeriod";
+        EditCheckVolumeOverPeriod.Size = new Size(260, 19);
+        EditCheckVolumeOverPeriod.TabIndex = 285;
+        EditCheckVolumeOverPeriod.Text = "Controleer het volume over meerdere dagen";
+        EditCheckVolumeOverPeriod.UseVisualStyleBackColor = true;
+        // 
         // groupBox9
         // 
         groupBox9.AutoSize = true;
@@ -1277,6 +1345,17 @@ partial class FrmSettings
         EditMinimumAboveBollingerBandsSmaCheck.TabIndex = 268;
         EditMinimumAboveBollingerBandsSmaCheck.Text = "Controleer aantal boven de bb.sma";
         EditMinimumAboveBollingerBandsSmaCheck.UseVisualStyleBackColor = true;
+        // 
+        // EditMinimumAboveBollingerBandsUpperCheck
+        // 
+        EditMinimumAboveBollingerBandsUpperCheck.AutoSize = true;
+        EditMinimumAboveBollingerBandsUpperCheck.Location = new Point(23, 467);
+        EditMinimumAboveBollingerBandsUpperCheck.Margin = new Padding(4, 3, 4, 3);
+        EditMinimumAboveBollingerBandsUpperCheck.Name = "EditMinimumAboveBollingerBandsUpperCheck";
+        EditMinimumAboveBollingerBandsUpperCheck.Size = new Size(220, 19);
+        EditMinimumAboveBollingerBandsUpperCheck.TabIndex = 267;
+        EditMinimumAboveBollingerBandsUpperCheck.Text = "Controleer aantal boven de bb.upper";
+        EditMinimumAboveBollingerBandsUpperCheck.UseVisualStyleBackColor = true;
         // 
         // EditCandlesWithZeroVolume
         // 
@@ -2376,9 +2455,9 @@ partial class FrmSettings
         label36.Location = new Point(13, 153);
         label36.Margin = new Padding(4, 0, 4, 0);
         label36.Name = "label36";
-        label36.Size = new Size(182, 15);
+        label36.Size = new Size(184, 15);
         label36.TabIndex = 138;
-        label36.Text = "Minimum unzoomed percentage";
+        label36.Text = "Maximum unzoomed percentage";
         // 
         // EditMaximumUnZoomedPercentage
         // 
@@ -3286,85 +3365,6 @@ partial class FrmSettings
         EditDebugKLineReceive.Text = "Debug KLineReceive (does kline ticker work)";
         EditDebugKLineReceive.UseVisualStyleBackColor = true;
         // 
-        // groupBox10
-        // 
-        groupBox10.AutoSize = true;
-        groupBox10.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-        groupBox10.Controls.Add(label46);
-        groupBox10.Controls.Add(label27);
-        groupBox10.Controls.Add(EditCheckVolumeOverDays);
-        groupBox10.Controls.Add(label45);
-        groupBox10.Controls.Add(EditCheckVolumeOverPeriod);
-        groupBox10.Location = new Point(352, 124);
-        groupBox10.Name = "groupBox10";
-        groupBox10.Size = new Size(284, 119);
-        groupBox10.TabIndex = 292;
-        groupBox10.TabStop = false;
-        groupBox10.Text = "Check volume over multiple day's";
-        // 
-        // EditMinimumAboveBollingerBandsUpperCheck
-        // 
-        EditMinimumAboveBollingerBandsUpperCheck.AutoSize = true;
-        EditMinimumAboveBollingerBandsUpperCheck.Location = new Point(23, 467);
-        EditMinimumAboveBollingerBandsUpperCheck.Margin = new Padding(4, 3, 4, 3);
-        EditMinimumAboveBollingerBandsUpperCheck.Name = "EditMinimumAboveBollingerBandsUpperCheck";
-        EditMinimumAboveBollingerBandsUpperCheck.Size = new Size(220, 19);
-        EditMinimumAboveBollingerBandsUpperCheck.TabIndex = 267;
-        EditMinimumAboveBollingerBandsUpperCheck.Text = "Controleer aantal boven de bb.upper";
-        EditMinimumAboveBollingerBandsUpperCheck.UseVisualStyleBackColor = true;
-        // 
-        // EditCheckVolumeOverPeriod
-        // 
-        EditCheckVolumeOverPeriod.AutoSize = true;
-        EditCheckVolumeOverPeriod.Location = new Point(17, 26);
-        EditCheckVolumeOverPeriod.Margin = new Padding(4, 3, 4, 3);
-        EditCheckVolumeOverPeriod.Name = "EditCheckVolumeOverPeriod";
-        EditCheckVolumeOverPeriod.Size = new Size(260, 19);
-        EditCheckVolumeOverPeriod.TabIndex = 285;
-        EditCheckVolumeOverPeriod.Text = "Controleer het volume over meerdere dagen";
-        EditCheckVolumeOverPeriod.UseVisualStyleBackColor = true;
-        // 
-        // label45
-        // 
-        label45.AutoSize = true;
-        label45.Location = new Point(17, 59);
-        label45.Margin = new Padding(4, 0, 4, 0);
-        label45.Name = "label45";
-        label45.Size = new Size(96, 15);
-        label45.TabIndex = 309;
-        label45.Text = "Check over day's";
-        // 
-        // EditCheckVolumeOverDays
-        // 
-        EditCheckVolumeOverDays.Location = new Point(137, 55);
-        EditCheckVolumeOverDays.Margin = new Padding(4, 3, 4, 3);
-        EditCheckVolumeOverDays.Maximum = new decimal(new int[] { 25, 0, 0, 0 });
-        EditCheckVolumeOverDays.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
-        EditCheckVolumeOverDays.Name = "EditCheckVolumeOverDays";
-        EditCheckVolumeOverDays.Size = new Size(88, 23);
-        EditCheckVolumeOverDays.TabIndex = 310;
-        EditCheckVolumeOverDays.Value = new decimal(new int[] { 1, 0, 0, 0 });
-        // 
-        // label27
-        // 
-        label27.AutoSize = true;
-        label27.Location = new Point(246, 59);
-        label27.Margin = new Padding(4, 0, 4, 0);
-        label27.Name = "label27";
-        label27.Size = new Size(31, 15);
-        label27.TabIndex = 311;
-        label27.Text = "days";
-        // 
-        // label46
-        // 
-        label46.AutoSize = true;
-        label46.Location = new Point(18, 85);
-        label46.Margin = new Padding(4, 0, 4, 0);
-        label46.Name = "label46";
-        label46.Size = new Size(258, 15);
-        label46.TabIndex = 312;
-        label46.Text = "(using the minimal volume from the basecoins)";
-        // 
         // FrmSettings
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
@@ -3407,6 +3407,9 @@ partial class FrmSettings
         tabControlSignals.ResumeLayout(false);
         tabSignalsGeneral.ResumeLayout(false);
         tabSignalsGeneral.PerformLayout();
+        groupBox10.ResumeLayout(false);
+        groupBox10.PerformLayout();
+        ((System.ComponentModel.ISupportInitialize)EditCheckVolumeOverDays).EndInit();
         groupBox9.ResumeLayout(false);
         groupBox9.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)EditAnalysisMinChangePercentage).EndInit();
@@ -3537,9 +3540,6 @@ partial class FrmSettings
         panel6.PerformLayout();
         tabPageOptions.ResumeLayout(false);
         tabPageOptions.PerformLayout();
-        groupBox10.ResumeLayout(false);
-        groupBox10.PerformLayout();
-        ((System.ComponentModel.ISupportInitialize)EditCheckVolumeOverDays).EndInit();
         ResumeLayout(false);
     }
 

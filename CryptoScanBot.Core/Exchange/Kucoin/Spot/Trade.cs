@@ -3,7 +3,7 @@ using CryptoScanBot.Core.Model;
 
 namespace CryptoScanBot.Core.Exchange.Kucoin.Spot;
 
-public class Trade(ExchangeBase api) : TradeBase(api), ITrade
+public class Trade(ExchangeBase api) : TradeBase(), ITrade
 {
     public Task<int> GetTradesAsync(CryptoDatabase database, CryptoPosition position)
     {

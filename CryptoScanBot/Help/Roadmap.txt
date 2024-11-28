@@ -10,13 +10,8 @@ https://www.youtube.com/watch?v=plhWMmmgZj4
 todo: Optimalisatie van de IsSupported interval *die nu common is)
 
 Error's / dodo's
-2024-11-24 09:58:01.1211|ERROR|CryptoScanBot.Core.Intern.ScannerLog||CryptoScanBot.Core.Intern.ExchangeException: No account data received
-   at CryptoScanBot.Core.Exchange.BybitApi.Spot.Asset.GetAssetsAsync(CryptoAccount tradeAccount) in E:\Projects\CryptoScanBot\CryptoScanBot.Core\Exchange\BybitApi\Spot\Asset.cs:line 105
-
-- Scanner - Initieel wordt de barometer grafiek niet getoond, wat is de reden hiervan? Testen met de oudere versies (van scratch)
-- Scanner - Zone instellingen, 2x minimum unzoomed, en de default staat op 0..
-- Scanner - Testen: Werkt de trend menu item wel (Jan melde een probleem hierover)
-- Scanner - De candles van de nieuwe munten worden wel opgehaald, maar het ophalen blijft steken in niemandsland (wil niet naar het begin)
+- Scanner - Testen: Werkt de trend menu item wel (Jan melde een probleem hierover) - ja, lijkt het prima te doen in deze versie
+- Scanner - Refactor - LimitRates per exchange, is nu alleen voor Binance goed geregeld..
 
 
 Scanner:

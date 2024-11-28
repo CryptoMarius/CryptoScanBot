@@ -1,8 +1,12 @@
 ﻿using System.Text.Json;
+
 using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
+
 using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Json;
 using CryptoScanBot.Core.Model;
+
 using Kraken.Net.Clients;
 using Kraken.Net.Enums;
 using Kraken.Net.Objects.Models;

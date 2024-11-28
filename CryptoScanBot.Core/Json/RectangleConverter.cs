@@ -3,7 +3,7 @@ using System.Drawing;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace CryptoScanBot.Core.Intern;
+namespace CryptoScanBot.Core.Json;
 
 public class RectangleConverter : JsonConverter<Rectangle>
 {

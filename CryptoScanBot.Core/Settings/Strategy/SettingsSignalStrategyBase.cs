@@ -11,13 +11,13 @@ public class SettingsSignalStrategyBase
     public bool PlaySound { get; set; } = false;
     public bool PlaySpeech { get; set; } = false;
 
-    [JsonConverter(typeof(Intern.ColorConverter))]
+    [JsonConverter(typeof(Json.ColorConverter))]
     public Color ColorLong { get; set; } = Color.White;
     public string SoundFileLong { get; set; } = "";
     //string text = ColorTranslator.ToHtml(Color);
     //Color color = ColorTranslator.FromHtml(text);
 
-    [JsonConverter(typeof(Intern.ColorConverter))]
+    [JsonConverter(typeof(Json.ColorConverter))]
     public Color ColorShort { get; set; } = Color.White;
     public string SoundFileShort { get; set; } = "";
 

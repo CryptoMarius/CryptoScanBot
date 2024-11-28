@@ -10,11 +10,6 @@ public class LiquidityZones
 {
     public static async Task CalculateZonesForSymbolAsync(AddTextEvent? sender, CryptoZoneSession session, CryptoZoneData data, SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
     {
-        //long startTime = Stopwatch.GetTimestamp();
-        //ScannerLog.Logger.Info("CalculateZonesForSymbolAsync.Start");
-
-        //Text = $"{data.Exchange.Name}.{session.SymbolBase}{session.SymbolQuote} {session.IntervalName}";
-        StringBuilder log = new();
         try
         {
             // Determine dates
@@ -28,7 +23,7 @@ public class LiquidityZones
             loadedCandlesInMemory.TryAdd(data.Interval.IntervalPeriod, false); // in memory, nothing changed
 
             // Load candles from the exchange
-            if (await CandleEngine.FetchFrom(data.Symbol, data.Interval, data.SymbolInterval.CandleList, log, fetchFrom, GlobalData.Settings.Signal.Zones.CandleCount))
+            if (await CandleEngine.FetchFrom(data.Symbol, data.Interval, data.SymbolInterval.CandleList, fetchFrom, GlobalData.Settings.Signal.Zones.CandleCount))
                 loadedCandlesInMemory[data.Interval.IntervalPeriod] = true;
             if (data.SymbolInterval.CandleList.Count == 0)
                 return;
@@ -63,7 +58,7 @@ public class LiquidityZones
             // Mark the dominant lows or highs
             if (session.ShowLiqBoxes && session.ForceCalculation)
             {
-                await CryptoCalculation.CalculateLiqBoxesAsync(sender, data, session.ZoomLiqBoxes, log, loadedCandlesInMemory);
+                await CryptoCalculation.CalculateLiqBoxesAsync(sender, data, session.ZoomLiqBoxes, loadedCandlesInMemory);
                 CryptoCalculation.CalculateBrokenBoxes(data);
             }
 
@@ -72,19 +67,17 @@ public class LiquidityZones
             if (session.ForceCalculation)
                 ZoneTools.SaveZonesForSymbol(data.Symbol, data.Interval, data.Indicator.ZigZagList);
 
-            CandleEngine.SaveCandleDataToDisk(data.Symbol, log, loadedCandlesInMemory);
+            CandleEngine.SaveCandleDataToDisk(data.Symbol, loadedCandlesInMemory);
         }
         catch (Exception error)
         {
-            log.AppendLine(error.ToString());
             ScannerLog.Logger.Info($"ERROR {error}");
             GlobalData.AddTextToLogTab($"ERROR {error}");
-            CandleEngine.SaveCandleDataToDisk(data.Symbol, log, loadedCandlesInMemory);
+            CandleEngine.SaveCandleDataToDisk(data.Symbol, loadedCandlesInMemory);
         }
 
         if (sender == null)
             _ = CandleEngine.CleanLoadedCandlesAsync(data.Symbol);
-        //ScannerLog.Logger.Info("CalculateZonesForSymbolAsync.Stop " + Stopwatch.GetElapsedTime(startTime).TotalSeconds.ToString());
     }
 
 

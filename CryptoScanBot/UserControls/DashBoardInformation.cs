@@ -1,11 +1,11 @@
 ﻿using System.Drawing.Drawing2D;
 using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.TradingView;
 using CryptoScanBot.Intern;
 using CryptoScanBot.Core.Barometer;
+using CryptoScanBot.Core.Exchange;
 
 namespace CryptoScanBot.TradingView;
 

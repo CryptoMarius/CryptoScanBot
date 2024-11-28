@@ -1,11 +1,10 @@
-﻿using Bybit.Net.Clients;
-using Bybit.Net.Enums;
-using CryptoScanBot.Core.Enums;
+﻿using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Json;
 using CryptoScanBot.Core.Model;
+
 using System.Text;
-using System.Text.Encodings.Web;
 using System.Text.Json;
 
 namespace CryptoScanBot.ZoneVisualisation.Zones;
@@ -33,7 +32,7 @@ public class CandleEngine
     }
 
 
-    public static void SaveCandleDataToDisk(CryptoSymbol symbol, StringBuilder log, SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
+    public static void SaveCandleDataToDisk(CryptoSymbol symbol, SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
     {
         foreach (CryptoSymbolInterval symbolInterval in symbol.IntervalPeriodList)
         {
@@ -46,21 +45,18 @@ public class CandleEngine
                 string text = JsonSerializer.Serialize(symbolInterval.CandleList, JsonTools.JsonSerializerIndented);
                 File.WriteAllText(filename, text);
 
-                log.AppendLine($"saving {filename}");
+                //log.AppendLine($"saving {filename}");
                 ScannerLog.Logger.Info($"Saving {filename}");
-
-                //using (FileStream writeStream = new FileStream(filename, FileMode.Create))
-                //{
-                //    BinaryFormatter formatter = new BinaryFormatter();
-                //    formatter.Serialize(writeStream, SymbolInterval.CandleList);
-                //    writeStream.Close();
-                //}
                 loadedCandlesInMemory[symbolInterval.IntervalPeriod] = false; // in memory, nothing changed
             }
         }
     }
 
 
+    /// <summary>
+    /// Remove the not needed candles (using a copy because that is quicker)
+    /// There is another clean method which removes the candles 1 by 1, but that is slow with large amounts of candles
+    /// </summary>
     public static async Task CleanLoadedCandlesAsync(CryptoSymbol symbol)
     {
         await symbol.CandleLock.WaitAsync();
@@ -79,24 +75,9 @@ public class CandleEngine
                     if (c.OpenTime < startFetchUnix)
                     {
                         // It takes forever to delete 100.000 of candles!!
-                        //DateTime startFetchUnixDate = CandleTools.GetUnixDate(startFetchUnix);
-                        //while (symbolInterval.CandleList.Values.Any())
-                        //{
-                        //    CryptoCandle c = symbolInterval.CandleList.Values[0];
-                        //    if (c.OpenTime < startFetchUnix)
-                        //    {
-                        //        symbolInterval.CandleList.Remove(c.OpenTime);
-                        //        //GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} candle {c.DateLocal} removed");
-
-                        //    }
-                        //    else break;
-
-                        //    startFetchUnix += symbolInterval.Interval.Duration;
-                        //}
-
-                        // There are a *huge* amount of candles, just copy them to a new list
+                        // There is a *huge* amount of candles, just copy them to a new list
                         // This copies worst case 500 for the higher intervals, a bit more for the 1m
-                        // TODO: Use TakeLast() does not work with sortedlist
+                        // TODO: Use TakeLast() does not work with sortedlist (investigate)
                         CryptoCandleList newList = [];
                         int index = symbolInterval.CandleList.Count - 1;
                         while (index > 0)
@@ -119,12 +100,38 @@ public class CandleEngine
     }
 
 
-    private static (long unixMin, long unixMax) CalculateDates(CryptoInterval interval, long fetchFrom, int fetchCount)
+    /// <summary>
+    /// Check if all candles in a date range are present
+    /// </summary>
+    private static (long unixStartTime, bool dataAllLocal) IsDataLocal(long minTime, long maxTime, CryptoInterval interval, CryptoCandleList candleList)
     {
-        long unixMinTime = IntervalTools.StartOfIntervalCandle(fetchFrom, interval.Duration);
+        while (candleList!.ContainsKey(minTime))
+        {
+            if (minTime >= maxTime)
+            {
+                //string text2 = $"available={available}, need={okayCount}";
+                //log.AppendLine($"Fetch historical data {symbol.Name}, {symbolInterval.Interval!.Name} candles available, no refresh needed {text2}");
+                //ScannerLog.Logger.Info($"Fetch historical data {symbol.Name}, {symbolInterval.Interval!.Name} candles available, no refresh needed {text2}");
+                //GlobalData.AddTextToLogTab($"Fetch historical data {symbol.Name}, {symbolInterval.Interval!.Name} candles available, no refresh needed {text2}");
+                return (minTime, true);
+            }
+            minTime += interval.Duration;
+        }
+        return (minTime, false);
+    }
+
+
+    /// <summary>
+    /// Calculate the date range needed to get x candles from a certain date
+    /// </summary>
+    private static (long unixMin, long unixMax) CalculateDates(CryptoInterval interval, long startTime, int candleCount)
+    {
+        long unixMinTime = IntervalTools.StartOfIntervalCandle(startTime, interval.Duration);
+        long unixMaxTime = unixMinTime + candleCount * interval.Duration;
+
         long unixNowTime = CandleTools.GetUnixTime(StartupTime, 0); // todo, emulator date?
         unixNowTime = IntervalTools.StartOfIntervalCandle(unixNowTime, interval.Duration);
-        long unixMaxTime = unixMinTime + fetchCount * interval.Duration;
+
         if (unixMaxTime > unixNowTime)
             return (unixMinTime, unixNowTime);
         else
@@ -132,109 +139,19 @@ public class CandleEngine
     }
 
 
-    private static (long unixStartTime, bool dataAllLocal) IsDataLocal(long unixMinTime, long unixMaxTime, CryptoInterval interval, CryptoCandleList candleList)
+    public static async Task<bool> FetchFrom(CryptoSymbol symbol, CryptoInterval interval, CryptoCandleList candleList, long fetchFrom, int fetchCount)
     {
-        while (candleList!.ContainsKey(unixMinTime))
-        {
-            if (unixMinTime >= unixMaxTime)
-            {
-                //string text2 = $"available={available}, need={okayCount}";
-                //log.AppendLine($"Fetch historical data {symbol.Name}, {symbolInterval.Interval!.Name} candles available, no refresh needed {text2}");
-                //ScannerLog.Logger.Info($"Fetch historical data {symbol.Name}, {symbolInterval.Interval!.Name} candles available, no refresh needed {text2}");
-                //GlobalData.AddTextToLogTab($"Fetch historical data {symbol.Name}, {symbolInterval.Interval!.Name} candles available, no refresh needed {text2}");
-                return (unixMinTime, true);
-            }
-            unixMinTime += interval.Duration;
-        }
-        return (unixMinTime, false);
-    }
+        if (!symbol.Exchange.IsIntervalSupported(interval.IntervalPeriod))
+            throw new Exception("Not supported interval");
 
-
-    public static async Task<bool> FetchFrom(CryptoSymbol symbol, CryptoInterval interval, CryptoCandleList candleList, StringBuilder log, long fetchFrom, int fetchCount = -1)
-    {
         (long unixMin, long unixMax) = CalculateDates(interval, fetchFrom, fetchCount);
         (long unixLoop, bool dataAllLocal) = IsDataLocal(unixMin, unixMax, interval, candleList);
         if (dataAllLocal)
             return false;
 
-        if (!symbol.Exchange.IsIntervalSupported(interval.IntervalPeriod))
-            throw new Exception("Not supported interval");
-
-
-        //string text3 = $"need={fetchCount}"; 
-        //GlobalData.AddTextToLogTab($"Fetch historical data {symbol.Name} {symbolInterval.Interval!.Name} need more data {text3} {minTime.ToLocalTime()} .. {maxTime.ToLocalTime()}");
-
-        int maxFetchCount = 1000;
-        using var client = new BybitRestClient();
-        while (unixLoop <= unixMax)
-        {
-            DateTime minTime = CandleTools.GetUnixDate(unixLoop);
-            DateTime maxTime = minTime.AddSeconds((maxFetchCount - 1) * interval.Duration);
-            string text = $"Fetch historical data {symbol.Name} {interval!.Name} from {minTime.ToLocalTime()} up to {maxTime.ToLocalTime()}";
-
-            KlineInterval? intervalEnumX = Core.Exchange.BybitApi.Spot.Interval.GetExchangeInterval(interval.IntervalPeriod);
-            // lines gets to long if optimized 
-            if (intervalEnumX == null)
-                throw new Exception("Not supported interval");
-            KlineInterval intervalEnum = (KlineInterval)intervalEnumX;
-
-            var result = await client.V5Api.ExchangeData.GetKlinesAsync(Category.Spot, symbol.Name, intervalEnum, startTime: minTime, endTime: maxTime, limit: maxFetchCount);
-            if (!result.Success)
-            {
-                string text2 = $"{text} Error fetching data: {result.Error!.Message}";
-                log.AppendLine(text2);
-                ScannerLog.Logger.Info(text2);
-                GlobalData.AddTextToLogTab(text2);
-                break;
-            }
-            if (result.Data == null)
-            {
-                string text2 = $"{text} Failed to fetch historical data.";
-                log.AppendLine(text2);
-                ScannerLog.Logger.Info(text2);
-                GlobalData.AddTextToLogTab(text2);
-                break;
-            }
-
-            int added = 0;
-            foreach (var data in result.Data.List)
-            {
-                long time = CandleTools.GetUnixTime(data.StartTime, 60);
-                if (!candleList.ContainsKey(time))
-                {
-                    candleList.TryAdd(time, new CryptoCandle
-                    {
-                        OpenTime = time,
-                        Open = data.OpenPrice,
-                        High = data.HighPrice,
-                        Low = data.LowPrice,
-                        Close = data.ClosePrice,
-                        Volume = data.Volume
-                    });
-                    added++;
-                }
-            }
-            string text3 = $"{text} retrieved={result.Data.List.Count()} added={added} total={candleList.Count}"; // {period.RequestUrl}
-            log.AppendLine(text3);
-            ScannerLog.Logger.Info(text3);
-            GlobalData.AddTextToLogTab(text3);
-
-            //if (added > 0) // mark interval dirty so it will be saved
-            //    LoadedCandlesInMemory[interval.IntervalPeriod] = true;
-
-            // goto next period (we *assume* we got all the data)
-            unixLoop += maxFetchCount * interval.Duration;
-            while (candleList!.ContainsKey(unixLoop))
-                unixLoop += interval.Duration;
-
-            //if (fetchCount > 0 && added >= fetchCount) added is max 1000
-            //    break;
-            //if (fetchCount > 0 && (unixLoop - unixMin) / interval.Duration > fetchCount)
-            //    break;
-
-            //Thread.Sleep(1000);
-        }
-        return true;
+        //string text3 = $"need={candleCount}"; 
+        //GlobalData.AddTextToLogTab($"Fetch historical data {symbol.Name} {symbolInterval.Interval!.Name} need more data {text3} {minDate.ToLocalTime()} .. {maxDate.ToLocalTime()}");
+        return await symbol.Exchange.GetApiInstance().Candle.FetchFrom(symbol, interval, candleList, unixLoop, unixMax);
     }
 
 }

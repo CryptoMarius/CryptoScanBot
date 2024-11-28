@@ -1,6 +1,5 @@
 ﻿namespace CryptoScanBot.Core.Exchange;
 
-public class TradeBase()
+public class LimitRatesBase()
 {
-
 }

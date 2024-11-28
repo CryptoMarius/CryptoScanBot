@@ -2,6 +2,7 @@
 
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Json;
 using CryptoScanBot.Core.Model;
 
 namespace CryptoScanBot.Core.Emulator;

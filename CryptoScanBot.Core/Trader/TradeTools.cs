@@ -1,9 +1,11 @@
 ﻿using System.Text;
+
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
+
 using Dapper;
 using Dapper.Contrib.Extensions;
 

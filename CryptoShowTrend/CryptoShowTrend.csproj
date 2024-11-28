@@ -9,10 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="OxyPlot.WindowsForms" Version="2.2.0" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\CryptoScanBot.Core\CryptoScanBot.Core.csproj" />
     <ProjectReference Include="..\CryptoScanBot.ZoneVisualisation\CryptoScanBot.ZoneVisualisation.csproj" />
   </ItemGroup>

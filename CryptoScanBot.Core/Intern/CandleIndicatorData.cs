@@ -336,7 +336,11 @@ public class CandleIndicatorData: CryptoData
 
     public static void SetInitialCandleCountFetch(long value)
     {
-        InitialCandleCountFetch = value;
+        if (InitialCandleCountFetch != value)
+        {
+            //GlobalData.AddTextToLogTab($"SetInitialCandleCountFetch from {InitialCandleCountFetch} to {value}");
+            InitialCandleCountFetch = value;
+        }
     }
 
 

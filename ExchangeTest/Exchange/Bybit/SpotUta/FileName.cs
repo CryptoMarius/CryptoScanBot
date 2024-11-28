@@ -9,6 +9,7 @@ using Bybit.Net.Objects.Options;
 using CryptoExchange.Net.Authentication;
 
 using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Json;
 using CryptoScanBot.Core.Model;
 
 using Microsoft.Extensions.Logging;

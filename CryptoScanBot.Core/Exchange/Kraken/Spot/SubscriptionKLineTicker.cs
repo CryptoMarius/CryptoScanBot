@@ -4,6 +4,7 @@ using CryptoExchange.Net.Objects.Sockets;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
+
 using Kraken.Net.Clients;
 using Kraken.Net.Enums;
 using Kraken.Net.Objects.Models;

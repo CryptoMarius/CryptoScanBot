@@ -132,7 +132,7 @@ public static class RegisterAlgorithms
             AnalyzeShortType = typeof(DominantLevelShort),
         });
 
-        
+
         //***************************************************
         // Test
         //***************************************************

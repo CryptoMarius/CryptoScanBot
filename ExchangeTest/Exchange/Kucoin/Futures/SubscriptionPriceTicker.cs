@@ -1,8 +1,10 @@
 ﻿using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
+
 using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
+
 using Kucoin.Net.Clients;
 
 namespace ExchangeTest.Exchange.Kucoin.Futures;

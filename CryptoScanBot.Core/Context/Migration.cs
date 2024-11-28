@@ -961,6 +961,11 @@ public class Migration
             database.Connection.Execute("update Zone set CloseTime=CloseDate", transaction);
             database.Connection.Execute("alter table Zone drop column CloseDate", transaction);
 
+            // Barometer problem, clean symbols without a name and dump the price and volume barometer
+            database.Connection.Execute("delete from symbol where name = ''", transaction);
+            database.Connection.Execute("delete from symbol where name like '$BMP%'", transaction);
+            database.Connection.Execute("delete from symbol where name like '$BMV%'", transaction);
+
             // update version
             version.Version += 1;
             database.Connection.Update(version, transaction);

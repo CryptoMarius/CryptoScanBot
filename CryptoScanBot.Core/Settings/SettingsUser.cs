@@ -14,7 +14,7 @@ public class ColumnSetting
 [Serializable]
 public class SettingsUser
 {
-    [JsonConverter(typeof(Intern.RectangleConverter))]
+    [JsonConverter(typeof(Json.RectangleConverter))]
     public Rectangle WindowPosition { get; set; } = new Rectangle();
     public int WindowState { get; set; } = 0;
 

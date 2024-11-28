@@ -5,7 +5,7 @@ using CryptoScanBot.Core.Model;
 using Kucoin.Net.Clients;
 using Kucoin.Net.Enums;
 
-using ApiAlias = CryptoScanBot.Core.Exchange.Kucoin.Futures;
+//using ApiAlias = CryptoScanBot.Core.Exchange.Kucoin.Futures;
 
 namespace ExchangeTest.Exchange.Kucoin.Futures;
 
@@ -146,17 +146,13 @@ public class Candles
             // Fetch the candles
             while (symbolInterval.LastCandleSynchronized < fetchEndUnix)
             {
-                long lastDate = (long)symbolInterval.LastCandleSynchronized;
-                //DateTime dateStart = CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized);
-                //GlobalData.AddTextToLogTab("Debug: Fetching " + symbol.Name + " " + interval.Name + " " + dateStart.ToLocalTime());
-
-
+                long lastTime = (long)symbolInterval.LastCandleSynchronized;
                 if (symbolInterval.LastCandleSynchronized + interval.Duration > fetchEndUnix)
                     break;
 
                 // Nothing more? (we have coins stopping, be aware for endless loops)
                 long candleCount = await GetCandlesForInterval(client, symbol, interval, symbolInterval);
-                if (symbolInterval.LastCandleSynchronized == lastDate || candleCount == 0)
+                if (symbolInterval.LastCandleSynchronized == lastTime || candleCount == 0)
                     break;
             }
 

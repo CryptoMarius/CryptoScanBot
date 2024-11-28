@@ -1,7 +1,9 @@
 ﻿using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
+
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
+
 using Kraken.Net.Clients;
 
 namespace CryptoScanBot.Core.Exchange.Kraken.Spot;

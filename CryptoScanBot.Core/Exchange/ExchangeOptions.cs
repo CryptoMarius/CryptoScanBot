@@ -3,9 +3,7 @@
 public class ExchangeOptions
 {
     // Official exchange name (registered in database)
-    public string ExchangeName { get; set; } = "";
-
-    //public Type ApiType { get; set; }
+    public required string ExchangeName { get; set; } = "";
 
     // Aantal symbols per subscription (een limiet van de exchange)
     public int SymbolLimitPerSubscription { get; set; }
@@ -17,4 +15,7 @@ public class ExchangeOptions
     // - Specificly build for Kucoin because of the amount of symbols
     // - Skip symbol if specified volume if to low (quotedata volume limit)
     public bool LimitAmountOfSymbols { get; set; }
+
+    // Limit for fetching candles
+    public int CandleLimit { get; set; } = 1000;
 }

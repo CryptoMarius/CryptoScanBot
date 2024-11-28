@@ -465,10 +465,10 @@ public partial class CryptoVisualisation : Form
 
 
         // signals
-        ExtraData.LoadSignalsForSymbol(Data);
+        ExtraData.LoadSignalsForSymbol(Data, Session.MinDate);
 
         // positions
-        //ExtraData.LoadPositionsForSymbol(Data);
+        ExtraData.LoadPositionsForSymbol(Data, Session.MinDate);
 
         reason = "";
         return true;
@@ -507,8 +507,6 @@ public partial class CryptoVisualisation : Form
 
     private async Task CalculateZonesAndPlotZigZagAsync()
     {
-        //long startTime = Stopwatch.GetTimestamp();
-        //ScannerLog.Logger.Info("CalculateZonesAndPlotZigZagAsync.Start");
         Text = $"{Data!.Exchange.Name}.{Session.SymbolBase}{Session.SymbolQuote} {Session.IntervalName}";
         StringBuilder log = new();
         try
@@ -530,8 +528,8 @@ public partial class CryptoVisualisation : Form
             // - For the visualisation we use a MinDate and MaxDate
             // Conclusion, we cannot use the AccountSymbolData shared with the sacanner.
             // However, we can reuse the AccountSymbolData class and calculate our own..
-            AccountSymbolData accountScannerSymbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(Data.Symbol.Name);
-            AccountSymbolIntervalData accountScannerSymbolIntervalData = accountScannerSymbolData.GetAccountSymbolIntervalData(Data.Interval.IntervalPeriod);
+            //AccountSymbolData accountScannerSymbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(Data.Symbol.Name);
+            //AccountSymbolIntervalData accountScannerSymbolIntervalData = accountScannerSymbolData.GetAccountSymbolIntervalData(Data.Interval.IntervalPeriod);
 
 
             Data.Symbol.CalculatingZones = true;
@@ -590,11 +588,8 @@ public partial class CryptoVisualisation : Form
 
 
                 CryptoCharting.DrawCandleSerie(plotModel, Data, Session);
-                if (Session.ShowSignals)
-                    CryptoCharting.DrawSignals(plotModel, Session, Data.Signals);
-
-                if (accountScannerSymbolIntervalData.BestZigZagIndicator != null && accountScannerSymbolIntervalData.BestZigZagIndicator.ZigZagList != null)
-                    CryptoCharting.DrawZigZag(plotModel, Session, accountScannerSymbolIntervalData.BestZigZagIndicator.ZigZagList, "tst", OxyColors.Yellow);
+                //if (accountScannerSymbolIntervalData.BestZigZagIndicator != null && accountScannerSymbolIntervalData.BestZigZagIndicator.ZigZagList != null)
+                //    CryptoCharting.DrawZigZag(plotModel, Session, accountScannerSymbolIntervalData.BestZigZagIndicator.ZigZagList, "tst", OxyColors.Yellow);
 
                 if (Session.ShowPivots)
                     CryptoCharting.DrawPivots(plotModel, Session, Data.Indicator.PivotList);
@@ -602,11 +597,12 @@ public partial class CryptoVisualisation : Form
                     CryptoCharting.DrawZigZag(plotModel, Session, Data.Indicator.ZigZagList, "liq", OxyColors.White);
                 if (Session.ShowLiqBoxes)
                     CryptoCharting.DrawLiqBoxes(plotModel, Data, Session);
-
                 if (Session.ShowFib)
                     CryptoCharting.DrawFibRetracement(plotModel, Data);
                 if (Session.ShowFibZigZag)
                     CryptoCharting.DrawZigZag(plotModel, Session, Data.IndicatorFib.ZigZagList, "fib", OxyColors.White);
+                if (Session.ShowSignals)
+                    CryptoCharting.DrawSignals(plotModel, Session, Data.Signals);
 
 
                 plotView.Controller = new PlotController();
@@ -638,13 +634,11 @@ public partial class CryptoVisualisation : Form
             log.AppendLine(e.ToString());
             ScannerLog.Logger.Error($"ERROR {e}");
         }
-        //ScannerLog.Logger.Info("CalculateZonesAndPlotZigZagAsync.Stop " + Stopwatch.GetElapsedTime(startTime).TotalSeconds.ToString());
     }
 
 
     private async Task ButtonCalculate_ClickAsync()
     {
-        //ScannerLog.Logger.Info("ButtonCalculate_ClickAsync.Start");
         PickupEdits();
         labelInterval.Text = Session.ActiveInterval.ToString();
         labelMaxTime.Text = CandleTools.GetUnixDate(Session.MaxDate).ToString("dd MMM HH:mm");
@@ -678,7 +672,6 @@ public partial class CryptoVisualisation : Form
             Cursor.Current = Cursors.Default;
             UseWaitCursor = false;
         }
-        //ScannerLog.Logger.Info("ButtonCalculate_ClickAsync.Stop " + Stopwatch.GetElapsedTime(startTime).TotalSeconds.ToString());
     }
 
     

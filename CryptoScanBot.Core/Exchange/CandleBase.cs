@@ -28,7 +28,7 @@ public class CandleBase(ExchangeBase api)
     }
 
 
-    public virtual async Task GetCandlesAsync()
+    public virtual async Task GetCandlesForAllSymbolsAndIntervalsAsync()
     {
         if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
         {
@@ -130,5 +130,98 @@ public class CandleBase(ExchangeBase api)
         }
     }
 
+
+    public async Task GetCandlesForIntervalAsync(IDisposable client, CryptoSymbol symbol, CryptoInterval interval, long fetchMax)
+    {
+        if (!symbol.IsSpotTradingAllowed || symbol.Status == 0 || symbol.IsBarometerSymbol() || !symbol.QuoteData!.FetchCandles)
+            return;
+
+        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+
+        bool intervalSupported = symbol.Exchange.IsIntervalSupported(interval.IntervalPeriod);
+        if (intervalSupported)
+        {
+            // Fetch the candles (we have coins starting and stopping, be aware for endless loops)
+            while (symbolInterval.LastCandleSynchronized < fetchMax)
+            {
+                if (symbolInterval.LastCandleSynchronized + interval.Duration > fetchMax)
+                    break;
+
+                long lastTime = (long)symbolInterval.LastCandleSynchronized!;
+                symbolInterval.LastCandleSynchronized = await Api.Candle.GetCandlesForInterval(client, symbol, interval, symbolInterval, lastTime, fetchMax);
+                CandleTools.UpdateCandleFetched(symbol, interval);
+                if (symbolInterval.LastCandleSynchronized == lastTime) // not moving forward
+                    break;
+            }
+        }
+
+
+        await symbol.CandleLock.WaitAsync();
+        try
+        {
+            // Add missing candles (the only place we know it can be done safely)
+            CandleTools.BulkAddMissingCandles(symbol, interval);
+
+            // Bulk calculate the higher interval candles
+            if (interval.IntervalPeriod < Enum.GetValues(typeof(CryptoIntervalPeriod)).Cast<CryptoIntervalPeriod>().Last())
+            {
+                CryptoInterval targetInterval = GlobalData.IntervalListPeriod[interval.IntervalPeriod + 1];
+                CryptoInterval sourceInterval = targetInterval.ConstructFrom!;
+                CandleTools.BulkCalculateCandles(symbol, sourceInterval, targetInterval, fetchMax);
+            }
+        }
+        finally
+        {
+            symbol.CandleLock.Release();
+        }
+
+
+        // Adjust the administration for the not supported interval's
+        if (!intervalSupported && symbolInterval.CandleList.Count > 0)
+        {
+            CryptoCandle candle = symbolInterval.CandleList.Values.Last();
+            symbolInterval.LastCandleSynchronized = candle.OpenTime + symbolInterval.Interval.Duration;
+        }
+    }
+
+    public async Task<bool> FetchFrom(CryptoSymbol symbol, CryptoInterval interval, CryptoCandleList candleList, long unixLoop, long unixMax)
+    {
+        // Fetch the candles (we have coins starting and stopping, be aware for endless loops)
+        // Kind of the same as the CandleBase.GetCandlesForIntervalAsync, but also different because 
+        // of the symbolInterval.LastCandleSynchronized and calculation of higher interval candles
+        int totalFetched = 0;
+        var api = symbol.Exchange.GetApiInstance();
+        using IDisposable client = api.GetClient();
+        while (unixLoop < unixMax)
+        {
+            if (unixLoop + interval.Duration > unixMax)
+                break;
+
+            long minTime = unixLoop;
+            DateTime minDate = CandleTools.GetUnixDate(minTime);
+            long maxTime = unixLoop + (ExchangeBase.ExchangeOptions.CandleLimit - 1) * interval.Duration;
+            DateTime maxDate = CandleTools.GetUnixDate(maxTime);
+            //string text = $"Fetch historical klines {symbol.Name} {interval!.Name} from {minDate.ToLocalTime()} up to {maxDate.ToLocalTime()}";
+
+            long lastDate = minTime;
+            CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+            int countBefore = symbolInterval.CandleList.Count;
+            unixLoop = await symbol.Exchange.GetApiInstance().Candle.GetCandlesForInterval(client, symbol, interval, symbolInterval, minTime, maxTime);
+
+            int added = symbolInterval.CandleList.Count - countBefore;
+            totalFetched += added;
+
+            //string text3 = $"{text} retrieved={added} total={candleList.Count}";
+            //ScannerLog.Logger.Info(text3);
+            //GlobalData.AddTextToLogTab(text3);
+
+            while (candleList!.ContainsKey(unixLoop))
+                unixLoop += interval.Duration;
+
+            if (unixLoop == minTime) // not moving forward
+                break;
+        }
+        return totalFetched > 0;
+    }
 
 }

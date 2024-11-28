@@ -2,6 +2,7 @@
 using Binance.Net.Objects.Models.Futures;
 
 using CryptoExchange.Net.Objects;
+
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
