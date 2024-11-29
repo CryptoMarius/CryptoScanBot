@@ -28,13 +28,13 @@ public class LiquidityZones
             if (data.SymbolInterval.CandleList.Count == 0)
                 return;
 
+            
 
             // Set Batch mode and add all the candles to the indicators
             if (session.UseBatchProcess)
             {
                 data.Indicator.StartBatch();
-                if (session.ShowFib || session.ShowFibZigZag)
-                    data.IndicatorFib.StartBatch();
+                data.IndicatorFib.StartBatch();
             }
             // Calculate indicators
             foreach (var candle in data.SymbolInterval.CandleList.Values)
@@ -42,21 +42,19 @@ public class LiquidityZones
                 if (candle.OpenTime >= session.MinDate && candle.OpenTime <= session.MaxDate)
                 {
                     data.Indicator.Calculate(candle);
-                    if (session.ShowFib || session.ShowFibZigZag)
-                        data.IndicatorFib.Calculate(candle);
+                    data.IndicatorFib.Calculate(candle);
                 }
             }
             if (session.UseBatchProcess)
             {
                 data.Indicator.FinishBatch();
-                if (session.ShowFib || session.ShowFibZigZag)
-                    data.IndicatorFib.FinishBatch();
+                data.IndicatorFib.FinishBatch();
             }
 
 
 
             // Mark the dominant lows or highs
-            if (session.ShowLiqBoxes && session.ForceCalculation)
+            if (session.ForceCalculation)
             {
                 await CryptoCalculation.CalculateLiqBoxesAsync(sender, data, session.ZoomLiqBoxes, loadedCandlesInMemory);
                 CryptoCalculation.CalculateBrokenBoxes(data);
