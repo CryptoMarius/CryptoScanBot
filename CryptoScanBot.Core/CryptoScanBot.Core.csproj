@@ -32,6 +32,7 @@
     <Compile Remove="Signal\SignalMacdTestLong.cs" />
     <Compile Remove="Signal\SignalMacdTestShort .cs" />
     <Compile Remove="Trend\ZigZagIndicator10.cs" />
+    <Compile Remove="Trend\ZigZagIndicator11.cs" />
     <Compile Remove="Trend\ZigZagIndicator7.cs" />
   </ItemGroup>
 
