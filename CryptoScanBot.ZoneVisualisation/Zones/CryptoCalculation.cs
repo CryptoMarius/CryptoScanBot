@@ -238,9 +238,7 @@ public class CryptoCalculation
 
     public static void CalculateBrokenBoxes(CryptoZoneData data)
     {
-        // Determine if level is broken (not accurate! right now just for display purposes)
-        // TODO: Its only a dominant point when the BOS has occurred!
-        // from there we need to invalidate the liq.box (the 3 candles below is just plain wrong!)
+        // Determine if a liq. box/zone has been broken
         ZigZagResult? prevZigZag = null;
         //ScannerLog.Logger.Info($"{data.Symbol.Name} Start marking broken zones");
         //GlobalData.AddTextToLogTab($"{data.Symbol.Name} Start marking broken zones");
@@ -250,10 +248,6 @@ public class CryptoCalculation
                 zigzag.CloseDate = zigzag.Candle.OpenTime; //Just to show it..
             else
             {
-                //if (zigzag.Candle!.DateLocal >= new DateTime(2024, 10, 10, 18, 0, 0, DateTimeKind.Local))
-                //    zigzag.Candle = zigzag.Candle; // debug 
-
-                // skip a couple of candles
                 bool brokenBos = false;
                 long key = zigzag.Candle.OpenTime;
                 long checkUpTo = CandleTools.GetUnixTime(CandleEngine.StartupTime, data.SymbolInterval.Interval.Duration);
@@ -272,13 +266,11 @@ public class CryptoCalculation
                         }
                         else
                         {
-                            //if (zigzag.PointType == 'H' && (candle.High >= zigzag.Top || candle.GetHighValue(GlobalData.Settings.Signal.Zones.UseHighLow) >= zigzag.Bottom))
                             if (zigzag.PointType == 'H' && (candle.High >= zigzag.Top || Math.Max(candle.Open, candle.Close) >= zigzag.Bottom))
                             {
                                 zigzag.CloseDate = candle.OpenTime;
                                 break;
                             }
-                            //if (zigzag.PointType == 'L' && (candle.Low <= zigzag.Bottom || candle.GetLowValue(GlobalData.Settings.Signal.Zones.UseHighLow) <= zigzag.Top))
                             if (zigzag.PointType == 'L' && (candle.Low <= zigzag.Bottom || Math.Min(candle.Open, candle.Close) <= zigzag.Top))
                             {
                                 zigzag.CloseDate = candle.OpenTime;
