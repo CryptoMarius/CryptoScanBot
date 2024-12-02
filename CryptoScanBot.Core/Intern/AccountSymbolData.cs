@@ -20,8 +20,8 @@ public class AccountSymbolData
     public List<AccountSymbolIntervalData> SymbolTrendDataList { get; set; } = [];
 
     // Active zones
-    public List<CryptoZone> ZoneListLong { get; set; } = [];
-    public List<CryptoZone> ZoneListShort { get; set; } = [];
+    public SortedList<decimal, CryptoZone> ZoneListLong { get; set; } = new(new ListHelper.DuplicateKeyComparer<decimal>());
+    public SortedList<decimal, CryptoZone> ZoneListShort { get; set; } = new(new ListHelper.DuplicateKeyComparer<decimal>());
 
     public AccountSymbolData()
     {
