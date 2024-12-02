@@ -1,9 +1,6 @@
 ﻿using Binance.Net.Clients;
 using Binance.Net.Enums;
 using Binance.Net.ExtensionMethods;
-using Binance.Net.Interfaces;
-
-using CryptoExchange.Net.Objects;
 
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;

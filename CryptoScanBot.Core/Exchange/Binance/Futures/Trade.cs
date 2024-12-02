@@ -13,7 +13,7 @@ using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot.Core.Exchange.Binance.Futures;
 
-public class Trade(ExchangeBase api) : TradeBase(), ITrade
+public class Trade() : TradeBase(), ITrade
 {
     public static void PickupTrade(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoTrade trade, BinanceFuturesUsdtTrade item)
     {
