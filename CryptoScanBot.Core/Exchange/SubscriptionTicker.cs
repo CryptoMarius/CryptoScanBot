@@ -1,5 +1,6 @@
 ﻿using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
+
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 
@@ -88,7 +89,7 @@ public abstract class SubscriptionTicker(ExchangeOptions exchangeOptions)
         _subscription.ConnectionLost -= TickerConnectionLost;
         _subscription.ConnectionRestored -= TickerConnectionRestored;
 
-        if(TickerGroup!.SocketClient is not null)
+        if (TickerGroup!.SocketClient is not null)
             await TickerGroup.SocketClient.UnsubscribeAsync(_subscription);
 
         _subscription = null;
@@ -120,4 +121,3 @@ public abstract class SubscriptionTicker(ExchangeOptions exchangeOptions)
     }
 
 }
-
