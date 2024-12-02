@@ -18,7 +18,8 @@ public class CryptoSymbolInterval
     // The last generated signal
     // TODO: Interesting: We create signals with lots of strategies, but have only place for 1 signal, that does not sound right!
     // Suggestion: CreateSignal will return a list of signals, not sure if this fitts the internal setup, this is not 100%.
-    public CryptoSignal? Signal { get; set; }
+    //public CryptoSignal? Signal { get; set; }
+    public List<CryptoSignal> SignalList { get; set; } = [];
 
     // The candles for this interval
     public CryptoCandleList CandleList { get; set; } = [];
