@@ -2,24 +2,17 @@ Openstaande punten zijn de bevindingen, ideeën, diverse todo's tot dusver.
 Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep.
 (groot kans dat datgene we besproken hebben tussen wal en schip is beland)
 
-TODO:
-Trend berekening aanpassen, Lewis Kelly legt het hier mooi uit en de scanner doet het "anders"
-https://www.youtube.com/watch?v=plhWMmmgZj4
-
-
-todo: Optimalisatie van de IsSupported interval *die nu common is)
-
-Error's / dodo's
-- Scanner - Testen: Werkt de trend menu item wel (Jan melde een probleem hierover) - ja, lijkt het prima te doen in deze versie
-- Scanner - Refactor - LimitRates per exchange, is nu alleen voor Binance goed geregeld..
-
+Todo:
+- Deze lijst doornemen en uitdunnen
+- De documentatie bijwerken voor zover mogelijk..
 
 Scanner:
+- Scanner - Refactor - LimitRates per exchange, is nu alleen voor Binance geregeld, de rest is op basis van aantal aanroepen per minuut
 - Scanner - Dominante zones automatisch laten calculeren via een achtergrond proces
 - Scanner - Grafiek, op de x-as de lokale tijd tonen (dat gaf problemen tijdens de wisseling)
 - Scanner - Dominante zones, ophalen van de candles optimaliseren en delen met de emulator
             De tussenliggende intervallen eventueel ook kunnen berekenen..
-- Scanner - De nieuwe grafief (die ook de trend laat zien) verrijken met de laatste signalen en/of lopende posities
+- Scanner - In het nieuwe grafiek formulier de laatste posities laten zien
 - Scanner - Een wat vreemde, de logging naar het logtab kan stoppen? 
             (eens gedetecteerd tijdens het debuggen, geen reden of oplossing gevonden)
 - Scanner - Een splitter toepassen tussen de symbols en het signaal grid

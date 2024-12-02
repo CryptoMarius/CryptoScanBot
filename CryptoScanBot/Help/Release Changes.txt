@@ -1,8 +1,11 @@
 CryptoScanBot release historie:
 
 
-xx-11-2024 1.9.5.11xx
+28-11-2024 1.9.5.1128
 
+- Trading - Recentere signalen overschrijven de vorige waardoor hogere timeframes mogelijk niet aan bod komen
+
+- Scanner - In het nieuwe grafiek formulier de laatste signalen laten zien
 - Scanner - Dominante zones het chart formulier multiexchange maken (was Bybit Spot specifiek)
             (dat is een grote refactoring geweest, zou effect kunnen hebben op ophalen candles)
 - Scanner - Opgelost: De candles van de nieuwe munten worden wel opgehaald, maar het ophalen blijft steken in niemandsland (wil niet naar het begin)
@@ -13,6 +16,7 @@ xx-11-2024 1.9.5.11xx
 - Scanner - Dominante zones de berekende zones uit de database laten zien, calculeren berekend de zones en bewaard ze (dit ter controle van de laatste berekende zones)
 - Scanner - Dominante zones: de foutmelding zien op te lossen (die soms bovenin de chart komt te staan)
 - Scanner - Trend aanpassingen om deze optimaler te laten lopen (het toevoegen van een laatste punt gaf wederom problemen)
+            Lewis Kelly legt het hier mooi uit: https://www.youtube.com/watch?v=plhWMmmgZj4
 - Scanner - De controle op 1d effectief is vervallen, deze is nu vervangen met de controle efefctief dmv meerdere dagen (opnieuw instellen!)
 - Scanner - Nieuwe instelling om bij een dubbelklik het trend en zone formulier te openen in plaats van de exchange
 - Scanner - Nieuwe geluiden: de oude geluiden staan in de subfolder
