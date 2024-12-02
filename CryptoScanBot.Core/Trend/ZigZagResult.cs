@@ -14,6 +14,8 @@ public class ZigZagResult
     // Some call this Strong or Weak instead of Dominant, its the same concept
     public bool Dominant { get; set; } = false;
     public bool Dummy { get; set; } = false;
+    public decimal? BackupValue { get; set; }
+    public CryptoCandle? BackupCandle { get; set; }
 
     // Zone
     //public DateTime StartTime { get; set; }         zigZag.StartTime = zigZag.Candle.Date;
@@ -25,11 +27,13 @@ public class ZigZagResult
 
     public int PivotIndex { get; set; }
 
-    public void ReusePoint(CryptoCandle candle, decimal value)
+    public void ReusePoint(CryptoCandle candle, decimal value, bool dummy)
     {
         // Intention is to reset stuff because we are going to reuse a pivot point, clear the other stuff
         Value = value;
         Candle = candle;
+        if (!dummy)
+            Backup();
 
         // Reset other stuff
         Dominant = false;
@@ -37,5 +41,19 @@ public class ZigZagResult
         Bottom = 0;
         Percentage = 0;
         CloseDate = null;
+    }
+
+    public void Backup()
+    {
+        BackupValue = Value;
+        BackupCandle = Candle;
+    }
+
+    public void Restore()
+    {
+        if (BackupValue != null)
+            Value = BackupValue.Value;
+        if (BackupCandle != null)
+            Candle = BackupCandle;
     }
 }

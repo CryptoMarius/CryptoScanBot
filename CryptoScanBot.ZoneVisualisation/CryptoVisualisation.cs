@@ -135,7 +135,7 @@ public partial class CryptoVisualisation : Form
         EditDeviation.Value = Session.Deviation;
         EditShowFib.Checked = Session.ShowFib;
         EditShowFibZigZag.Checked = Session.ShowFibZigZag;
-        EditShowPivots.Checked = Session.ShowPivots;
+        EditShowPivots.Checked = Session.ShowPoints;
         EditShowSecondary.Checked = Session.ShowSecondary;
         EditUseOptimizing.Checked = Session.UseOptimizing;
         EditUseBatchProcess.Checked = Session.UseBatchProcess;
@@ -175,11 +175,11 @@ public partial class CryptoVisualisation : Form
                 if (symbolInterval.CandleList.TryGetValue(unix, out CryptoCandle? candle))
                 {
                     s = $"{candle.Date:ddd yyyy-MM-dd HH:mm}, price: " + y.ToString(Data.Symbol.PriceDisplayFormat);
-                    s += " (o: " + candle.Open.ToString(Data.Symbol.PriceDisplayFormat);
-                    s += " h: " + candle.High.ToString(Data.Symbol.PriceDisplayFormat);
-                    s += " l: " + candle.Low.ToString(Data.Symbol.PriceDisplayFormat);
-                    s += " c: " + candle.Close.ToString(Data.Symbol.PriceDisplayFormat);
-                    s += " v: " + candle.Volume.ToString0() + ')';
+                    s += " (O: " + candle.Open.ToString(Data.Symbol.PriceDisplayFormat);
+                    s += " H: " + candle.High.ToString(Data.Symbol.PriceDisplayFormat);
+                    s += " L: " + candle.Low.ToString(Data.Symbol.PriceDisplayFormat);
+                    s += " C: " + candle.Close.ToString(Data.Symbol.PriceDisplayFormat);
+                    s += " V: " + candle.Volume.ToString0() + ')';
                 }
                 else
                 {
@@ -498,7 +498,7 @@ public partial class CryptoVisualisation : Form
         Session.ShowFibZigZag = EditShowFibZigZag.Checked;
         Session.ShowSecondary = EditShowSecondary.Checked;
         Session.UseOptimizing = EditUseOptimizing.Checked;
-        Session.ShowPivots = EditShowPivots.Checked;
+        Session.ShowPoints = EditShowPivots.Checked;
         Session.UseBatchProcess = EditUseBatchProcess.Checked;
         Session.ShowSignals = EditShowSignals.Checked;
         Session.ShowPositions = EditShowPositions.Checked;
@@ -549,8 +549,6 @@ public partial class CryptoVisualisation : Form
                     ShowSecondary = Session.ShowSecondary,
                     UseOptimizing = Session.UseOptimizing
                 };
-                if (Session.UseBatchProcess)
-                    Data.IndicatorFib.StartBatch();
 
                 Data.Indicator = new(Data.SymbolInterval.CandleList, GlobalData.Settings.Signal.Zones.UseHighLow, Session.Deviation, Data.Interval.Duration)
                 {
@@ -558,8 +556,6 @@ public partial class CryptoVisualisation : Form
                     ShowSecondary = Session.ShowSecondary,
                     UseOptimizing = Session.UseOptimizing
                 };
-                if (Session.UseBatchProcess)
-                    Data.Indicator.StartBatch();
 
 
                 // calculate (and save) the zones
@@ -591,8 +587,8 @@ public partial class CryptoVisualisation : Form
                 //if (accountScannerSymbolIntervalData.BestZigZagIndicator != null && accountScannerSymbolIntervalData.BestZigZagIndicator.ZigZagList != null)
                 //    CryptoCharting.DrawZigZag(plotModel, Session, accountScannerSymbolIntervalData.BestZigZagIndicator.ZigZagList, "tst", OxyColors.Yellow);
 
-                if (Session.ShowPivots)
-                    CryptoCharting.DrawPivots(plotModel, Session, Data.Indicator.PivotList);
+                if (Session.ShowPoints)
+                    CryptoCharting.DrawPoints(plotModel, Session, Data.Indicator.PivotList);
                 if (Session.ShowLiqZigZag)
                     CryptoCharting.DrawZigZag(plotModel, Session, Data.Indicator.ZigZagList, "liq", OxyColors.White);
                 if (Session.ShowLiqBoxes)

@@ -30,7 +30,7 @@ public class CryptoZoneSession
     public bool ShowFib { get; set; } = true;
     public bool ShowFibZigZag { get; set; } = false;
     public bool ShowSecondary { get; set; } = false;
-    public bool ShowPivots { get; set; } = false;
+    public bool ShowPoints { get; set; } = false;
     public bool UseBatchProcess { get; set; } = false;
     public bool ForceCalculation { get; set; } = false;
     public bool ShowSignals { get; set; } = false;

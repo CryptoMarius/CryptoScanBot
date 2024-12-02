@@ -45,30 +45,20 @@ public class TrendTools
         long? zigZagLastCandleAdded = null;
 
         // Add candles to all the ZigZag indicators
-        foreach (var indicator in accountSymbolIntervalData.ZigZagIndicators!)
-            indicator.StartBatch();
-
-        int added = 0;
         long loop = minDate;
         while (loop <= maxDate)
         {
             if (candleList.TryGetValue(loop, out CryptoCandle? candle))
             {
-                foreach (var indicator in accountSymbolIntervalData.ZigZagIndicators)
-                {
-                    indicator.Calculate(candle);
-                    added++;
-                }
+                foreach (var indicator in accountSymbolIntervalData.ZigZagIndicators!)
+                    indicator.Calculate(candle, true);
                 zigZagLastCandleAdded = loop;
             }
             loop += accountSymbolIntervalData.Interval.Duration;
         }
-        if (added > 0)
+        foreach (var indicator in accountSymbolIntervalData.ZigZagIndicators!)
         {
-            foreach (var indicator in accountSymbolIntervalData.ZigZagIndicators)
-            {
-                indicator.FinishBatch();
-            }
+            indicator.FinishBatch();
         }
 
         return zigZagLastCandleAdded;

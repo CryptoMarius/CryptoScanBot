@@ -1,8 +1,5 @@
 ﻿using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
-using CryptoScanBot.Core.Trend;
-
-using System.Text;
 
 namespace CryptoScanBot.ZoneVisualisation.Zones;
 
@@ -30,19 +27,13 @@ public class LiquidityZones
 
             
 
-            // Set Batch mode and add all the candles to the indicators
-            if (session.UseBatchProcess)
-            {
-                data.Indicator.StartBatch();
-                data.IndicatorFib.StartBatch();
-            }
             // Calculate indicators
             foreach (var candle in data.SymbolInterval.CandleList.Values)
             {
                 if (candle.OpenTime >= session.MinDate && candle.OpenTime <= session.MaxDate)
                 {
-                    data.Indicator.Calculate(candle);
-                    data.IndicatorFib.Calculate(candle);
+                    data.Indicator.Calculate(candle, session.UseBatchProcess);
+                    data.IndicatorFib.Calculate(candle, session.UseBatchProcess);
                 }
             }
             if (session.UseBatchProcess)

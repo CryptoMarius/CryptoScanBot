@@ -16,6 +16,7 @@ namespace CryptoScanBot.ZoneVisualisation;
 public class CryptoCharting
 {
     private const int OxyFontSize = 14;
+    private const string OxyFontName = "Arial";
     static private string? _priceFormat;
     static private CryptoInterval? _interval;
 
@@ -80,15 +81,20 @@ public class CryptoCharting
 
             foreach (var (value, percent, color) in fibRetracement)
             {
-                var fibLevel = new LineSeries { Title = "fib", Color = color, LineStyle = LineStyle.Dot, FontSize = OxyFontSize };
+                var fibLevel = new LineSeries { Title = "fib", Color = color, LineStyle = LineStyle.Dot, Font = OxyFontName };
                 fibLevel.Points.Add(new DataPoint(start, (double)value));
                 fibLevel.Points.Add(new DataPoint(stop, (double)value));
                 chart.Series.Add(fibLevel);
 
-                chart.Annotations.Add(new TextAnnotation { 
+                chart.Annotations.Add(new TextAnnotation {
+                    TextColor = OxyColors.White,
                     TextPosition = new DataPoint(stop + data.Interval.Duration * 4, (double)value), 
                     TextVerticalAlignment = VerticalAlignment.Middle,
-                    Text = $"{percent:N3}" });
+                    Text = $"{percent:N3}%",
+                    Font = OxyFontName,
+                    //FontSize = OxyFontSize,
+                    //FontWeight = FontWeights.Bold,
+                });
             }
         }
     }
@@ -128,7 +134,7 @@ public class CryptoCharting
     }
 
 
-    internal static void DrawPivots(PlotModel chart, CryptoZoneSession session, List<ZigZagResult> pivotList)
+    internal static void DrawPoints(PlotModel chart, CryptoZoneSession session, List<ZigZagResult> pivotList)
     {
         var seriesHigh = new ScatterSeries { Title = "p high", MarkerSize = 2, MarkerFill = OxyColors.Red, MarkerType = MarkerType.Square, };
         var seriesLow = new ScatterSeries { Title = "p low", MarkerSize = 2, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Square, };
@@ -136,12 +142,19 @@ public class CryptoCharting
         {
             if (zigzag.Candle!.OpenTime >= session.MinDate && zigzag.Candle!.OpenTime <= session.MaxDate)
             {
+                decimal value;
                 ScatterSeries? series;
-                    if (zigzag.PointType == 'L')
-                        series = seriesLow;
-                    else
-                        series = seriesHigh;
-                series?.Points.Add(new ScatterPoint(zigzag.Candle.OpenTime, (double)zigzag.Value));
+                if (zigzag.PointType == 'L')
+                {
+                    series = seriesLow;
+                    value = zigzag.Value * 0.995m;
+                }
+                else
+                {
+                    value = zigzag.Value * 1.005m;
+                    series = seriesHigh;
+                }
+                series?.Points.Add(new ScatterPoint(zigzag.Candle.OpenTime, (double)value));
             }
         }
 
@@ -268,9 +281,9 @@ public class CryptoCharting
     public static void DrawLiqBoxes(PlotModel chart, CryptoZoneData data, CryptoZoneSession session)
     {
         var symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(data.Symbol.Name);
-        foreach (var zone in symbolData.ZoneListLong)
+        foreach (var zone in symbolData.ZoneListLong.Values)
             DrawLiqBoxesInternal(chart, zone, session);
-        foreach (var zone in symbolData.ZoneListShort)
+        foreach (var zone in symbolData.ZoneListShort.Values)
             DrawLiqBoxesInternal(chart, zone, session);
 
 
@@ -352,15 +365,17 @@ public class CryptoCharting
         PlotModel chart = new()
         {
             Subtitle = " ",
+            TitleFont = OxyFontName,
             TextColor = OxyColors.White,
-            //SubtitleColor = OxyColors.LightGray
+            SubtitleFont = OxyFontName,
+            SubtitleColor = OxyColors.White,
+            SubtitleFontWeight = FontWeights.Bold,
         };
-
 
         chart.Axes.Add(new LinearAxis
         {
+            Font = OxyFontName,
             FontSize = OxyFontSize,
-            //Font = chart.TitleFont,
             TextColor = OxyColors.White,
             Position = AxisPosition.Bottom,
             LabelFormatter = LabelFormatterX,
@@ -388,6 +403,7 @@ public class CryptoCharting
         chart.Axes.Add(new LinearAxis
         {
             LabelFormatter = LabelFormatterY,
+            Font = OxyFontName,
             FontSize = OxyFontSize,
             //Font = chart.TitleFont,
             TextColor = OxyColors.White,

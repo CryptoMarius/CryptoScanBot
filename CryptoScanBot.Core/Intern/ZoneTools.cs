@@ -36,9 +36,9 @@ public class ZoneTools
 
                         AccountSymbolData symbolData = tradeAccount.Data.GetSymbolData(symbol.Name);
                         if (zone.Side == Enums.CryptoTradeSide.Long)
-                            symbolData.ZoneListLong.Add(zone);
+                            symbolData.ZoneListLong.Add(zone.Top, zone);
                         else
-                            symbolData.ZoneListShort.Add(zone);
+                            symbolData.ZoneListShort.Add(zone.Bottom, zone);
                     }
                 }
             }
@@ -63,7 +63,7 @@ public class ZoneTools
             {
                 CryptoZone zone = new()
                 {
-                    CreateTime = CandleTools.GetUnixDate(zigZag.Candle.OpenTime),
+                    CreateTime = DateTime.UtcNow,
                     AccountId = GlobalData.ActiveAccount.Id,
                     Account = GlobalData.ActiveAccount,
                     ExchangeId = symbol.Exchange.Id,
@@ -75,22 +75,25 @@ public class ZoneTools
                     Bottom = zigZag.Bottom,
                     Side = CryptoTradeSide.Long,
                     Strategy = CryptoSignalStrategy.DominantLevel,
-                    Description = $"{interval.Name}: {zigZag.Percentage:N2}",
+                    Description = $"{interval.Name}: {zigZag.Percentage:N2}%",
                 };
                 if (zigZag.CloseDate != null)
+                {
                     zone.CloseTime = zigZag.CloseDate;
+                    zone.AlarmDate = zigZag.Candle.Date;
+                }
 
                 if (zigZag.PointType == 'L')
                 {
                     zone.Side = CryptoTradeSide.Long;
                     zone.AlarmPrice = zone.Top * (100 + GlobalData.Settings.Signal.Zones.WarnPercentage) / 100;
-                    x.ZoneListLong.Add(zone);
+                    x.ZoneListLong.Add(zone.Top, zone);
                 }
                 else
                 {
                     zone.Side = CryptoTradeSide.Short;
                     zone.AlarmPrice = zone.Bottom * (100 - GlobalData.Settings.Signal.Zones.WarnPercentage) / 100;
-                    x.ZoneListShort.Add(zone);
+                    x.ZoneListShort.Add(zone.Bottom, zone);
                 }
 
                 databaseThread.Connection.Insert(zone);
