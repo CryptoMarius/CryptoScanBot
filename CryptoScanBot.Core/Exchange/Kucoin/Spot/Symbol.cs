@@ -11,7 +11,7 @@ using Kucoin.Net.Clients;
 
 namespace CryptoScanBot.Core.Exchange.Kucoin.Spot;
 
-public class Symbol(ExchangeBase api) : SymbolBase(api), ISymbol
+public class Symbol() : SymbolBase(), ISymbol
 {
     public async Task GetSymbolsAsync()
     {

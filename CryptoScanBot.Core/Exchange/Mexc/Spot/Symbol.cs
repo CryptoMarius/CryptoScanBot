@@ -12,7 +12,7 @@ using Mexc.Net.Enums;
 
 namespace CryptoScanBot.Core.Exchange.Mexc.Spot;
 
-public class Symbol(ExchangeBase api) : SymbolBase(api), ISymbol
+public class Symbol() : SymbolBase(), ISymbol
 {
     public async Task GetSymbolsAsync()
     {

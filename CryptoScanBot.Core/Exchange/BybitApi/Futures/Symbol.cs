@@ -12,7 +12,7 @@ using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot.Core.Exchange.BybitApi.Futures;
 
-public class Symbol(ExchangeBase api) : SymbolBase(api), ISymbol
+public class Symbol() : SymbolBase(), ISymbol
 {
     public async Task GetSymbolsAsync()
     {
