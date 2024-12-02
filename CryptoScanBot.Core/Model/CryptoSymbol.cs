@@ -106,8 +106,8 @@ public class CryptoSymbol
     /// <summary>
     /// For fetching the trades
     /// </summary>
-    public DateTime? LastTradeFetched { get; set; }
     public long? LastTradeIdFetched { get; set; }
+    public DateTime? LastTradeFetched { get; set; }
 
 
     /// <summary>
@@ -135,13 +135,6 @@ public class CryptoSymbol
     // Lock the candlelist to manipulates candles
     public SemaphoreSlim CandleLock { get; set; } = new(1, 1);
 
-    //// Quick en dirty voor het testen van de performance van balanceren
-    //// Waarom kies ik ervoor om het altijd quick en dirty te doen??????
-    //[Computed]
-    //public Decimal QuantityTest { get; set; }
-    //[Computed]
-    //public Decimal QuoteQuantityTest { get; set; }
-
 
     public CryptoSymbol()
     {
@@ -162,9 +155,4 @@ public class CryptoSymbol
         return IntervalPeriodList[(int)intervalPeriod];
     }
 
-    public void ClearSignals()
-    {
-        foreach (CryptoSymbolInterval symbolInterval in IntervalPeriodList)
-            symbolInterval.Signal = null;
-    }
 }

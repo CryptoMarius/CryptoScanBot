@@ -461,14 +461,10 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
                     if (TradingConfig.Trading[signal.Side].Strategy.ContainsKey(signal.Strategy))
                     {
                         CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(Interval.IntervalPeriod);
-                        if (symbolInterval.Signal == null || symbolInterval.Signal?.EventTime != signal.EventTime)
+                        //if (symbolInterval.Signal == null || symbolInterval.Signal?.EventTime != signal.EventTime) ????
                         {
-                            //if (symbolInterval.Signal == null || algorithm.ReplaceSignal) // alway's
-                            //{
-                            symbolInterval.Signal = signal;
-                            //CreatedSignal = true;
                             SignalList.Add(signal);
-                            //}
+                            symbolInterval.SignalList.Add(signal);
                         }
                     }
                 }

@@ -62,6 +62,12 @@ public class PositionMonitor : IDisposable
         }
     }
 
+    public void ClearSignals()
+    {
+        foreach (CryptoSymbolInterval symbolInterval in Symbol.IntervalPeriodList)
+            symbolInterval.SignalList.Clear();
+    }
+
     private bool CanOpenAdditionalDca(CryptoPosition position,
         out CryptoPositionStep? step, out decimal percentage, out decimal dcaPrice, out string reaction)
     {
@@ -143,7 +149,7 @@ public class PositionMonitor : IDisposable
         if (step.CloseTime?.AddMinutes(GlobalData.Settings.Trading.GlobalBuyCooldownTime) > LastCandle1mCloseTimeDate)
         {
             reaction = "het is te vroeg voor een bijkoop vanwege de cooldown";
-            Symbol.ClearSignals();
+            ClearSignals();
             return false;
         }
 
@@ -249,14 +255,10 @@ public class PositionMonitor : IDisposable
 
 
 
-    public async Task CreateOrExtendPositionAsync() // List<CryptoSignal> signalList
+    public async Task CreateOrExtendPositionAsync()
     {
         string? lastPrice = Symbol.LastPrice?.ToString(Symbol.PriceDisplayFormat);
-        string text = "Monitor " + Symbol.Name;
-        // Anders is het erg lastig traceren
-        //if (GlobalData.BackTest)
-        //    text += " candle=" + LastCandle1m.DateLocal;
-        text += " price=" + lastPrice;
+        string text = "Monitor " + Symbol.Name + " price=" + lastPrice;
 
 
         string reaction;
@@ -270,7 +272,7 @@ public class PositionMonitor : IDisposable
         {
             reaction = "trade-bot deactivated";
             GlobalData.AddTextToLogTab($"{text} {reaction} (removed)");
-            Symbol.ClearSignals();
+            ClearSignals();
             return;
         }
 
@@ -279,7 +281,7 @@ public class PositionMonitor : IDisposable
         {
             reaction = "symbol price null";
             GlobalData.AddTextToLogTab($"{text} {reaction} (removed)");
-            Symbol.ClearSignals();
+            ClearSignals();
             return;
         }
 
@@ -288,7 +290,7 @@ public class PositionMonitor : IDisposable
         {
             reaction = "is in cooldown";
             GlobalData.AddTextToLogTab($"{text} {reaction} (removed)");
-            Symbol.ClearSignals();
+            ClearSignals();
             return;
         }
 
@@ -297,7 +299,7 @@ public class PositionMonitor : IDisposable
         {
             reaction = $"the bot is paused because {TradeAccount.Data.PauseTrading.Text}";
             GlobalData.AddTextToLogTab($"{text} {reaction} (removed)");
-            Symbol.ClearSignals();
+            ClearSignals();
             return;
         }
 
@@ -313,320 +315,325 @@ public class PositionMonitor : IDisposable
             // (0 % 180 = 0, 60 % 180 = 60, 120 % 180 = 120, 180 % 180 = 0)
             if (LastCandle1mCloseTime % symbolInterval.Interval?.Duration == 0)
             {
-                CryptoSignal? signal = symbolInterval.Signal;
-                if (signal is null)
-                    continue;
-
-                text = "Monitor " + signal.DisplayText;
-                //if (GlobalData.BackTest)
-                //    text += " candle=" + LastCandle1m.DateLocal;
-                text += " price=" + lastPrice;
-
-
-                // Mogen we traden op dit interval
-                if (!TradingConfig.Trading[signal.Side].IntervalPeriod.ContainsKey(signal.Interval.IntervalPeriod))
+                //CryptoSignal? signal = symbolInterval.Signal;
+                //if (signal is null)
+                //    continue;
+                foreach (CryptoSignal signal in symbolInterval.SignalList.ToList())
                 {
-                    GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " not trading on this interval (removed)");
-                    symbolInterval.Signal = null;
-                    continue;
-                }
-
-                // Mogen we traden met deze strategy
-                if (!TradingConfig.Trading[signal.Side].Strategy.ContainsKey(signal.Strategy))
-                {
-                    GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " not trading on this strategy (removed)");
-                    symbolInterval.Signal = null;
-                    continue;
-                }
-
-                // Er zijn (technisch) niet altijd candles aanwezig
-                if (symbolInterval.CandleList.Count == 0)
-                {
-                    GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " no candles on this interval (removed)");
-                    symbolInterval.Signal = null;
-                    continue;
-                }
-
-                // De candle van het signaal terugzoeken (niet zomaar de laatste candle nemen, dit vanwege backtest!)
-                long unix = LastCandle1mCloseTime - symbolInterval.Interval!.Duration;
-                //long unix = CandleTools.GetUnixTime(lastCandle1m.OpenTime, symbolInterval.Interval.Duration);
-                //long unix = CandleTools.GetUnixTime(candleCloseTime - symbolInterval.Interval.Duration, symbolInterval.Interval.Duration);
-                if (!symbolInterval.CandleList.TryGetValue(unix, out CryptoCandle? candleInterval))
-                {
-                    GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " no candles on this interval (removed)");
-                    symbolInterval.Signal = null;
-                    continue;
-                }
-
-                // Indicators uitrekenen (indien noodzakelijk)
-                if (!CandleIndicatorData.PrepareIndicators(Symbol, symbolInterval, candleInterval, out reaction))
-                {
-                    GlobalData.AddTextToLogTab(signal.DisplayText + " " + reaction + " (removed)");
-                    symbolInterval.Signal = null;
-                    continue;
-                }
-
-                // Bestaan het gekozen strategy wel, klinkt raar, maar is (op dit moment) niet altijd geimplementeerd
-                SignalCreateBase? algorithm = RegisterAlgorithms.GetAlgorithm(signal.Side, signal.Strategy, TradeAccount, signal.Symbol, signal.Interval, candleInterval);
-                if (algorithm == null)
-                {
-                    GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " unknown algorithm (removed)");
-                    symbolInterval.Signal = null;
-                    continue;
-                }
-
-                if (algorithm.GiveUp(signal))
-                {
-                    GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " " + algorithm.ExtraText + " giveup (removed)");
-                    symbolInterval.Signal = null;
-                    continue;
-                }
-
-                if (!algorithm.AllowStepIn(signal))
-                {
-                    GlobalData.AddTextToLogTab(text + " " + algorithm.ExtraText + "  (not allowed yet, waiting)");
-                    continue;
-                }
+                    text = "Monitor " + signal.DisplayText + " price=" + lastPrice;
 
 
-                //******************************************
-                // GO!GO!GO! kan een aankoop of bijkoop zijn
-                // (kan aangeroepen worden op meerdere TF's)
-                //******************************************
-
-                {
-                    CryptoPosition? position = PositionTools.HasPosition(TradeAccount, Symbol);
-                    if (position == null)
+                    // Does the user want to trade on this interval
+                    if (!TradingConfig.Trading[signal.Side].IntervalPeriod.ContainsKey(signal.Interval.IntervalPeriod))
                     {
-                        if (GlobalData.Settings.Trading.DisableNewPositions)
-                        {
-                            reaction = "openen van nieuwe posities niet toegestaan";
-                            GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                            Symbol.ClearSignals();
-                            return;
-                        }
+                        GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " not trading on this interval (removed)");
+                        symbolInterval.SignalList.Remove(signal);
+                        //symbolInterval.Signal = null;
+                        continue;
+                    }
 
-                        // Controles die noodzakelijk zijn voor een entry
-                        // (inclusief de overhead van controles van de analyser)
-                        // Deze code alleen uitvoeren voor de entry (niet een dca bijkoop)
+                    // Does the user want to trade with this strategy
+                    if (!TradingConfig.Trading[signal.Side].Strategy.ContainsKey(signal.Strategy))
+                    {
+                        GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " not trading on this strategy (removed)");
+                        symbolInterval.SignalList.Remove(signal);
+                        //symbolInterval.Signal = null;
+                        continue;
+                    }
 
-                        // Is de barometer goed genoeg dat we willen traden?
-                        if (!TradingRules.CheckBarometerConditions(TradeAccount, Symbol.Quote, signal.Side, LastCandle1m.OpenTime, 60, out reaction))
-                        {
-                            GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                            Symbol.ClearSignals();
-                            return;
-                        }
+                    // Er zijn (technisch) niet altijd candles aanwezig
+                    if (symbolInterval.CandleList.Count == 0)
+                    {
+                        GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " no candles on this interval (removed)");
+                        symbolInterval.SignalList.Remove(signal);
+                        //symbolInterval.Signal = null;
+                        continue;
+                    }
 
-                        // Staat op de whitelist (kan leeg zijn)
-                        if (!SymbolTools.CheckSymbolWhiteListOversold(Symbol, signal.Side, out reaction))
-                        {
-                            GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                            Symbol.ClearSignals();
-                            return;
-                        }
+                    // De candle van het signaal terugzoeken (niet zomaar de laatste candle nemen, dit vanwege backtest!)
+                    long unix = LastCandle1mCloseTime - symbolInterval.Interval!.Duration;
+                    //long unix = CandleTools.GetUnixTime(lastCandle1m.OpenTime, symbolInterval.Interval.Duration);
+                    //long unix = CandleTools.GetUnixTime(candleCloseTime - symbolInterval.Interval.Duration, symbolInterval.Interval.Duration);
+                    if (!symbolInterval.CandleList.TryGetValue(unix, out CryptoCandle? candleInterval))
+                    {
+                        GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " no candles on this interval (removed)");
+                        symbolInterval.SignalList.Remove(signal);
+                        //symbolInterval.Signal = null;
+                        continue;
+                    }
 
-                        // Staat niet in de blacklist
-                        if (!SymbolTools.CheckSymbolBlackListOversold(Symbol, signal.Side, out reaction))
-                        {
-                            GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                            Symbol.ClearSignals();
-                            return;
-                        }
+                    // Indicators uitrekenen (indien noodzakelijk)
+                    if (!CandleIndicatorData.PrepareIndicators(Symbol, symbolInterval, candleInterval, out reaction))
+                    {
+                        GlobalData.AddTextToLogTab(signal.DisplayText + " " + reaction + " (removed)");
+                        symbolInterval.SignalList.Remove(signal);
+                        //symbolInterval.Signal = null;
+                        continue;
+                    }
 
-                        // Heeft de munt genoeg 24h volume
-                        if (!SymbolTools.CheckValidMinimalVolume(Symbol, LastCandle1m.OpenTime, 60, out reaction))
-                        {
-                            GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                            Symbol.ClearSignals();
-                            return;
-                        }
+                    // Bestaan het gekozen strategy wel, klinkt raar, maar is (op dit moment) niet altijd geimplementeerd
+                    SignalCreateBase? algorithm = RegisterAlgorithms.GetAlgorithm(signal.Side, signal.Strategy, TradeAccount, signal.Symbol, signal.Interval, candleInterval);
+                    if (algorithm == null)
+                    {
+                        GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " unknown algorithm (removed)");
+                        symbolInterval.SignalList.Remove(signal);
+                        //symbolInterval.Signal = null;
+                        continue;
+                    }
 
-                        // Heeft de munt een redelijke prijs
-                        if (!SymbolTools.CheckValidMinimalPrice(Symbol, out reaction))
-                        {
-                            GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                            Symbol.ClearSignals();
-                            return;
-                        }
+                    if (algorithm.GiveUp(signal))
+                    {
+                        GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " " + algorithm.ExtraText + " giveup (removed)");
+                        symbolInterval.SignalList.Remove(signal);
+                        //symbolInterval.Signal = null;
+                        continue;
+                    }
 
-                        // Munten waarvan de ticksize perc nogal groot is (barcode charts)
-                        if (!SymbolTools.CheckMinimumTickPercentage(Symbol, out reaction))
-                        {
-                            GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                            Symbol.ClearSignals();
-                            return;
-                        }
+                    if (!algorithm.AllowStepIn(signal))
+                    {
+                        GlobalData.AddTextToLogTab(text + " " + algorithm.ExtraText + "  (not allowed yet, waiting)");
+                        continue;
+                    }
 
-                        // Controle of bepaalde intervallen in een uptrend of in een downtrend zijn
-                        if (!PositionTools.ValidTrendConditions(TradeAccount, signal.Symbol.Name, TradingConfig.Trading[signal.Side].Trend, out reaction))
+
+                    //******************************************
+                    // GO!GO!GO! kan een aankoop of bijkoop zijn
+                    // (kan aangeroepen worden op meerdere TF's)
+                    //******************************************
+
+                    {
+                        CryptoPosition? position = PositionTools.HasPosition(TradeAccount, Symbol);
+                        if (position == null)
                         {
-                            if (TradingConfig.Trading[signal.Side].TrendLog)
+                            if (GlobalData.Settings.Trading.DisableNewPositions)
+                            {
+                                reaction = "openen van nieuwe posities niet toegestaan";
                                 GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                            Symbol.ClearSignals();
-                            continue;
-                        }
+                                ClearSignals();
+                                return;
+                            }
 
-                        // Filter op de markettrend waarvan je wil dat die qua perc bullisch of bearisch zijn
-                        if (!PositionTools.ValidMarketTrendConditions(TradeAccount, signal.Symbol, TradingConfig.Trading[signal.Side].MarketTrend, out reaction))
-                        {
-                            GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                            Symbol.ClearSignals();
-                            continue;
-                        }
+                            // Controles die noodzakelijk zijn voor een entry
+                            // (inclusief de overhead van controles van de analyser)
+                            // Deze code alleen uitvoeren voor de entry (niet een dca bijkoop)
 
-                        // Alleen deze 2 ondersteunen we op dit moment (bool CanTrade introduceren ofzo)
-                        // Voorlopig alleen traden op Bybit Spot en Futures (alleen daar kan ik het testen)
-                        if (!TradeAccount.CanTrade)
-                        {
-                            GlobalData.AddTextToLogTab(text + $" trader niet ondersteund op {TradeAccount.AccountType} (removed)");
-                            Symbol.ClearSignals();
-                            return;
-                        }
-
-
-                        // Locking omdat het aantal posities over de slot limits kunnen gaan
-                        // (er zijn x threads tegelijk met deze code aan de gang)
-                        await Semaphore.WaitAsync();
-                        try
-                        {
-                            // We willen 1 slot per symbol en x slots voor de long en shorts
-                            if (!SymbolTools.CheckAvailableSlots(TradeAccount, Symbol, signal.Side, out reaction))
+                            // Is de barometer goed genoeg dat we willen traden?
+                            if (!TradingRules.CheckBarometerConditions(TradeAccount, Symbol.Quote, signal.Side, LastCandle1m.OpenTime, 60, out reaction))
                             {
-                                GlobalData.AddTextToLogTab($"{text} {reaction} (removed)");
-                                Symbol.ClearSignals();
+                                GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
+                                ClearSignals();
+                                return;
+                            }
+
+                            // Staat op de whitelist (kan leeg zijn)
+                            if (!SymbolTools.CheckSymbolWhiteListOversold(Symbol, signal.Side, out reaction))
+                            {
+                                GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
+                                ClearSignals();
+                                return;
+                            }
+
+                            // Staat niet in de blacklist
+                            if (!SymbolTools.CheckSymbolBlackListOversold(Symbol, signal.Side, out reaction))
+                            {
+                                GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
+                                ClearSignals();
+                                return;
+                            }
+
+                            // Heeft de munt genoeg 24h volume
+                            if (!SymbolTools.CheckValidMinimalVolume(Symbol, LastCandle1m.OpenTime, 60, out reaction))
+                            {
+                                GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
+                                ClearSignals();
+                                return;
+                            }
+
+                            // Heeft de munt een redelijke prijs
+                            if (!SymbolTools.CheckValidMinimalPrice(Symbol, out reaction))
+                            {
+                                GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
+                                ClearSignals();
+                                return;
+                            }
+
+                            // Munten waarvan de ticksize perc nogal groot is (barcode charts)
+                            if (!SymbolTools.CheckMinimumTickPercentage(Symbol, out reaction))
+                            {
+                                GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
+                                ClearSignals();
+                                return;
+                            }
+
+                            // Controle of bepaalde intervallen in een uptrend of in een downtrend zijn
+                            if (!PositionTools.ValidTrendConditions(TradeAccount, signal.Symbol.Name, TradingConfig.Trading[signal.Side].Trend, out reaction))
+                            {
+                                if (TradingConfig.Trading[signal.Side].TrendLog)
+                                    GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
+                                ClearSignals();
+                                continue;
+                            }
+
+                            // Filter op de markettrend waarvan je wil dat die qua perc bullisch of bearisch zijn
+                            if (!PositionTools.ValidMarketTrendConditions(TradeAccount, signal.Symbol, TradingConfig.Trading[signal.Side].MarketTrend, out reaction))
+                            {
+                                GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
+                                ClearSignals();
+                                continue;
+                            }
+
+                            // Alleen deze 2 ondersteunen we op dit moment (bool CanTrade introduceren ofzo)
+                            // Voorlopig alleen traden op Bybit Spot en Futures (alleen daar kan ik het testen)
+                            if (!TradeAccount.CanTrade)
+                            {
+                                GlobalData.AddTextToLogTab(text + $" trader niet ondersteund op {TradeAccount.AccountType} (removed)");
+                                ClearSignals();
                                 return;
                             }
 
 
-                            // Get available assets from the exchange (as late as possible because of webcall)
-                            var resultFetchAssets = await AssetTools.FetchAssetsAsync(TradeAccount, true);
-                            if (!resultFetchAssets.success)
+                            // Locking omdat het aantal posities over de slot limits kunnen gaan
+                            // (er zijn x threads tegelijk met deze code aan de gang)
+                            await Semaphore.WaitAsync();
+                            try
                             {
-                                GlobalData.AddTextToLogTab($"{text} {resultFetchAssets.reaction}");
-                                Symbol.ClearSignals();
-                                return;
-                            }
-
-                            // Enough stuff to take position? + entryAmount
-                            var resultAvailableAssets = AssetTools.CheckAvailableAssets(TradeAccount, Symbol);
-                            if (!resultAvailableAssets.success)
-                            {
-                                GlobalData.AddTextToLogTab($"{text} {resultAvailableAssets.reaction}");
-                                Symbol.ClearSignals();
-                                return;
-                            }
-                            var info = resultAvailableAssets.info; // short alias
-                            decimal entryQuote = resultAvailableAssets.entryQuoteAsset;
-
-                            // Check the assets, the symbol limits..
-                            {
-                                // Bepaal het entry bedrag 
-                                decimal entryPrice = Symbol.LastPrice.Value.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
-                                decimal entryBase = entryQuote / entryPrice;
-                                entryBase = entryBase.Clamp(Symbol.QuantityMinimum, Symbol.QuantityMaximum, Symbol.QuantityTickSize);
-                                entryBase = TradeTools.CorrectEntryQuantityIfWayLess(Symbol, entryQuote, entryBase, entryPrice);
-
-                                // Its rounded towards zero
-                                if (entryBase <= 0)
+                                // We willen 1 slot per symbol en x slots voor de long en shorts
+                                if (!SymbolTools.CheckAvailableSlots(TradeAccount, Symbol, signal.Side, out reaction))
                                 {
-                                    GlobalData.AddTextToLogTab(text + $" vanwege de minimum quantity {Symbol.QuantityMinimum} en aankoopbedrag {entryQuote} lukt de aankoop niet");
-                                    Symbol.ClearSignals();
+                                    GlobalData.AddTextToLogTab($"{text} {reaction} (removed)");
+                                    ClearSignals();
                                     return;
                                 }
 
-                                // Below the minimum allowed quantity
-                                if (entryBase == Symbol.QuantityMinimum)
+
+                                // Get available assets from the exchange (as late as possible because of webcall)
+                                var resultFetchAssets = await AssetTools.FetchAssetsAsync(TradeAccount, true);
+                                if (!resultFetchAssets.success)
                                 {
-                                    GlobalData.AddTextToLogTab(text + $" vanwege de minimum quantity {entryBase} < {Symbol.QuantityMinimum} lukt de aankoop niet (te weinig)");
-                                    Symbol.ClearSignals();
+                                    GlobalData.AddTextToLogTab($"{text} {resultFetchAssets.reaction}");
+                                    ClearSignals();
                                     return;
                                 }
 
-                                // Below the minimum allowed value
-                                if (Symbol.QuoteValueMinimum > 0 && entryQuote < Symbol.QuoteValueMinimum)
+                                // Enough stuff to take position? + entryAmount
+                                var resultAvailableAssets = AssetTools.CheckAvailableAssets(TradeAccount, Symbol);
+                                if (!resultAvailableAssets.success)
                                 {
-                                    GlobalData.AddTextToLogTab(text + $" vanwege de minimum value {entryQuote} < {Symbol.QuoteValueMinimum} lukt de aankoop niet (te weinig)");
-                                    Symbol.ClearSignals();
+                                    GlobalData.AddTextToLogTab($"{text} {resultAvailableAssets.reaction}");
+                                    ClearSignals();
                                     return;
                                 }
+                                var info = resultAvailableAssets.info; // short alias
+                                decimal entryQuote = resultAvailableAssets.entryQuoteAsset;
 
-                                if (TradeAccount.AccountType == CryptoAccountType.RealTrading && TradeAccount.Exchange.TradingType == CryptoTradingType.Spot)
+                                // Check the assets, the symbol limits..
                                 {
-                                    if (info.QuoteFree == 0 || entryBase * entryPrice > info.QuoteTotal)
+                                    // Bepaal het entry bedrag 
+                                    decimal entryPrice = Symbol.LastPrice.Value.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
+                                    decimal entryBase = entryQuote / entryPrice;
+                                    entryBase = entryBase.Clamp(Symbol.QuantityMinimum, Symbol.QuantityMaximum, Symbol.QuantityTickSize);
+                                    entryBase = TradeTools.CorrectEntryQuantityIfWayLess(Symbol, entryQuote, entryBase, entryPrice);
+
+                                    // Its rounded towards zero
+                                    if (entryBase <= 0)
                                     {
-                                        GlobalData.AddTextToLogTab($"{text} not enough assets available for trade entry {entryBase * entryPrice} > {info.QuoteTotal})");
-                                        Symbol.ClearSignals();
+                                        GlobalData.AddTextToLogTab(text + $" vanwege de minimum quantity {Symbol.QuantityMinimum} en aankoopbedrag {entryQuote} lukt de aankoop niet");
+                                        ClearSignals();
                                         return;
                                     }
+
+                                    // Below the minimum allowed quantity
+                                    if (entryBase == Symbol.QuantityMinimum)
+                                    {
+                                        GlobalData.AddTextToLogTab(text + $" vanwege de minimum quantity {entryBase} < {Symbol.QuantityMinimum} lukt de aankoop niet (te weinig)");
+                                        ClearSignals();
+                                        return;
+                                    }
+
+                                    // Below the minimum allowed value
+                                    if (Symbol.QuoteValueMinimum > 0 && entryQuote < Symbol.QuoteValueMinimum)
+                                    {
+                                        GlobalData.AddTextToLogTab(text + $" vanwege de minimum value {entryQuote} < {Symbol.QuoteValueMinimum} lukt de aankoop niet (te weinig)");
+                                        ClearSignals();
+                                        return;
+                                    }
+
+                                    if (TradeAccount.AccountType == CryptoAccountType.RealTrading && TradeAccount.Exchange.TradingType == CryptoTradingType.Spot)
+                                    {
+                                        if (info.QuoteFree == 0 || entryBase * entryPrice > info.QuoteTotal)
+                                        {
+                                            GlobalData.AddTextToLogTab($"{text} not enough assets available for trade entry {entryBase * entryPrice} > {info.QuoteTotal})");
+                                            ClearSignals();
+                                            return;
+                                        }
+                                    }
                                 }
+
+
+                                // Create position + entry part
+                                position = PositionTools.CreatePosition(TradeAccount, Symbol, signal.Strategy, signal.Side, symbolInterval, LastCandle1mCloseTimeDate);
+                                PositionTools.AddSignalProperties(position, signal);
+                                Database.Connection.Insert(position);
+                                PositionTools.AddPosition(TradeAccount, position);
+                                PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.Entry, signal.Interval, signal.Strategy,
+                                    CryptoEntryOrDcaStrategy.AfterNextSignal, signal.SignalPrice, LastCandle1mCloseTimeDate);
                             }
-
-
-                            // Create position + entry part
-                            position = PositionTools.CreatePosition(TradeAccount, Symbol, signal.Strategy, signal.Side, symbolInterval, LastCandle1mCloseTimeDate);
-                            PositionTools.AddSignalProperties(position, signal);
-                            Database.Connection.Insert(position);
-                            PositionTools.AddPosition(TradeAccount, position);
-                            PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.Entry, signal.Interval, signal.Strategy,
-                                CryptoEntryOrDcaStrategy.AfterNextSignal, signal.SignalPrice, LastCandle1mCloseTimeDate);
-                        }
-                        finally
-                        {
-                            Semaphore.Release();
-                        }
-
-                        // Aanmelden van een nieuwe positie
-                        if (GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
-                            GlobalData.PositionsHaveChanged("");
-
-                        return;
-                    }
-                    else
-                    {
-                        // long positie: Alleen bijkopen als we ONDER de break-even prijs zitten
-                        // short positie: Alleen bijkopen als we BOVEN de break-even prijs zitten
-                        if ((position.Side == CryptoTradeSide.Long && signal.SignalPrice < position.BreakEvenPrice) ||
-                            (position.Side == CryptoTradeSide.Short && signal.SignalPrice > position.BreakEvenPrice))
-                        {
-                            // En een paar aanvullende condities...
-                            if (!CanOpenAdditionalDca(position, out CryptoPositionStep? step, out decimal percentage, out decimal dcaPrice, out reaction))
+                            finally
                             {
-                                if (reaction != "")
-                                    GlobalData.AddTextToLogTab($"{text} {symbolInterval.Interval.Name} {reaction} (removed)");
-                                Symbol.ClearSignals();
-                                return;
+                                Semaphore.Release();
                             }
 
-                            // Zo laat mogelijk controleren vanwege extra calls naar de exchange
-                            var (success, reaction2) = await AssetTools.FetchAssetsAsync(TradeAccount);
-                            if (!success)
-                            {
-                                GlobalData.AddTextToLogTab(text + " " + reaction2);
-                                Symbol.ClearSignals();
-                                return;
-                            }
+                            // Aanmelden van een nieuwe positie
+                            if (GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
+                                GlobalData.PositionsHaveChanged("");
 
-                            var resultCheckAssets = AssetTools.CheckAvailableAssets(TradeAccount, Symbol);
-                            if (!resultCheckAssets.success)
-                            {
-                                GlobalData.AddTextToLogTab(text + " " + resultCheckAssets.reaction);
-                                Symbol.ClearSignals();
-                                return;
-                            }
-
-                            // De positie uitbreiden nalv een nieuw signaal (wordt een aparte DCA)
-                            // dcaPrice is gebaseerd op gefixeerde perc (wellicht niet meer geschikt voor trailing?)
-                            PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.Dca, signal.Interval, signal.Strategy,
-                                CryptoEntryOrDcaStrategy.AfterNextSignal, dcaPrice, LastCandle1mCloseTimeDate);
                             return;
                         }
+                        else
+                        {
+                            // We have an open position in this symbol (less checks)
+
+                            // long positie: Alleen bijkopen als we ONDER de break-even prijs zitten
+                            // short positie: Alleen bijkopen als we BOVEN de break-even prijs zitten
+                            if ((position.Side == CryptoTradeSide.Long && signal.SignalPrice < position.BreakEvenPrice) ||
+                                (position.Side == CryptoTradeSide.Short && signal.SignalPrice > position.BreakEvenPrice))
+                            {
+                                // En een paar aanvullende condities...
+                                if (!CanOpenAdditionalDca(position, out CryptoPositionStep? step, out decimal percentage, out decimal dcaPrice, out reaction))
+                                {
+                                    if (reaction != "")
+                                        GlobalData.AddTextToLogTab($"{text} {symbolInterval.Interval.Name} {reaction} (removed)");
+                                    ClearSignals();
+                                    return;
+                                }
+
+                                // Zo laat mogelijk controleren vanwege extra calls naar de exchange
+                                var (success, reaction2) = await AssetTools.FetchAssetsAsync(TradeAccount);
+                                if (!success)
+                                {
+                                    GlobalData.AddTextToLogTab(text + " " + reaction2);
+                                    ClearSignals();
+                                    return;
+                                }
+
+                                var resultCheckAssets = AssetTools.CheckAvailableAssets(TradeAccount, Symbol);
+                                if (!resultCheckAssets.success)
+                                {
+                                    GlobalData.AddTextToLogTab(text + " " + resultCheckAssets.reaction);
+                                    ClearSignals();
+                                    return;
+                                }
+
+                                // De positie uitbreiden nalv een nieuw signaal (wordt een aparte DCA)
+                                // dcaPrice is gebaseerd op gefixeerde perc (wellicht niet meer geschikt voor trailing?)
+                                PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.Dca, signal.Interval, signal.Strategy,
+                                    CryptoEntryOrDcaStrategy.AfterNextSignal, dcaPrice, LastCandle1mCloseTimeDate);
+                                return;
+                            }
+                        }
                     }
-
                 }
-
             }
-
         }
     }
 
@@ -1335,7 +1342,7 @@ public class PositionMonitor : IDisposable
                 if (!success)
                 {
                     GlobalData.AddTextToLogTab(text + " " + reaction);
-                    Symbol.ClearSignals();
+                    ClearSignals();
                     return;
                 }
 
@@ -1343,7 +1350,7 @@ public class PositionMonitor : IDisposable
                 if (!resultCheckAssets.success)
                 {
                     GlobalData.AddTextToLogTab(text + " " + resultCheckAssets.reaction);
-                    Symbol.ClearSignals();
+                    ClearSignals();
                     return;
                 }
 
@@ -1749,7 +1756,7 @@ public class PositionMonitor : IDisposable
             {
                 if (GlobalData.Settings.Signal.LogSymbolMustExistsDays)
                     GlobalData.AddTextToLogTab($"Monitor {Symbol.Name} {reaction} (removed)");
-                Symbol.ClearSignals();
+                ClearSignals();
                 return [];
             }
 
@@ -1828,6 +1835,10 @@ public class PositionMonitor : IDisposable
         {
             if (!Symbol.IsSpotTradingAllowed || Symbol.Status == 0)
                 return;
+
+            //AccountSymbolData accountSymbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(Symbol.Name);
+            //int offset = accountSymbolData.ZoneListLong.Keys.BinarySearchIndexOf(LastCandle1m.Close);
+
 
             //GlobalData.Logger.Trace($"SignalCreate.Prepare.Start {Symbol.Name} {Interval.Name} {Side}");
 
