@@ -65,11 +65,11 @@ public class SignalBbRsiEngulfingShort : SignalCreateBase
             return false;
         }
 
-        if (HadStorsiInThelastXCandles(SignalSide, 0, 25) == null)
-        {
-            ExtraText = "no previous storsi found";
-            return false;
-        }
+        //if (HadStorsiInThelastXCandles(SignalSide, 0, 25) == null)
+        //{
+        //    ExtraText = "no previous storsi found";
+        //    return false;
+        //}
 
         return true;
     }
