@@ -651,8 +651,29 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
             }
 
         }
-        return SignalList.Count > 0;
         //GlobalData.Logger.Trace($"SignalCreate.Done {Symbol.Name} {Interval.Name}");
+        return SignalList.Count > 0;
+    }
+
+
+
+    public bool AnalyzeZones(long candleIntervalOpenTime)
+    {
+        if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
+            GlobalData.AddTextToLogTab($"Debug Signal create {Symbol.Name} {Interval.Name} {Side} zones");
+        //ScannerLog.Logger.Trace($"SignalCreate.Start {Symbol.Name} {Interval.Name} zones");
+        //GlobalData.AddTextToLogTab($"SignalCreate.Start {Symbol.Name} {Interval.Name} {Side} zones");
+
+        // Eenmalig de indicators klaarzetten
+        if (Prepare(candleIntervalOpenTime))
+        {
+            if (RegisterAlgorithms.AlgorithmDefinitionList.TryGetValue(CryptoSignalStrategy.DominantLevel, out AlgorithmDefinition? algorithmDefinition))
+            {
+                ExecuteAlgorithm(algorithmDefinition!);
+            }
+        }
+        //GlobalData.Logger.Trace($"SignalCreate.Done {Symbol.Name} {Interval.Name} zones");
+        return SignalList.Count > 0;
     }
 
 }
