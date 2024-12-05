@@ -922,27 +922,30 @@ public class Migration
         // 24-11-2024, zones, startdate
         if (CurrentVersion > version.Version && version.Version == 33)
         {
+            // problem, timing of introduction of zone table depend on start.
+            // On older systems the full table will be created by database check!
+
             using var transaction = database.BeginTransaction();
 
             // conflicting types (long/date)
             database.Connection.Execute("delete from zone", transaction);
 
-            database.Connection.Execute("alter table Zone add CreateTime Text not null", transaction);
+            try { database.Connection.Execute("alter table Zone add CreateTime Text not null", transaction); } catch { } // ignore
             // Optional start date for a zone
-            database.Connection.Execute("alter table Zone add OpenTime Text null", transaction);
+            try { database.Connection.Execute("alter table Zone add OpenTime Text null", transaction); } catch { } // ignore
 
             // Holds the percentage for the zone
-            database.Connection.Execute("alter table Zone add Description Text null", transaction);
-            
-            
+            try { database.Connection.Execute("alter table Zone add Description Text null", transaction); } catch { } // ignore
+
+
             // better name for the expiration (not something in the future but the moment of closing)
-            database.Connection.Execute("alter table Zone add ClosePrice Text null", transaction);
-            database.Connection.Execute("alter table Zone add CloseDate Text null", transaction);
-            database.Connection.Execute("alter table Zone drop column ExpirationPrice", transaction);
-            database.Connection.Execute("alter table Zone drop column ExpirationDate", transaction);
+            try { database.Connection.Execute("alter table Zone add ClosePrice Text null", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table Zone add CloseDate Text null", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table Zone drop column ExpirationPrice", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table Zone drop column ExpirationDate", transaction); } catch { } // ignore
 
             // TODO: Avoid to many signals on this zone
-            database.Connection.Execute("alter table Zone add LastSignalDate Text null", transaction);
+            try { database.Connection.Execute("alter table Zone add LastSignalDate Text null", transaction); } catch { } // ignore
 
             // update version
             version.Version += 1;
@@ -955,11 +958,14 @@ public class Migration
         // 25-11-2024, CloseTime -> CloseTime
         if (CurrentVersion > version.Version && version.Version == 34)
         {
+            // problem, timing of introduction of zone table depend on start.
+            // On older systems the full table will be created by database check!
+
             using var transaction = database.BeginTransaction();
 
-            database.Connection.Execute("alter table Zone add CloseTime Text null", transaction);
-            database.Connection.Execute("update Zone set CloseTime=CloseDate", transaction);
-            database.Connection.Execute("alter table Zone drop column CloseDate", transaction);
+            try { database.Connection.Execute("alter table Zone add CloseTime Text null", transaction); } catch { } // ignore
+            try { database.Connection.Execute("update Zone set CloseTime=CloseDate", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table Zone drop column CloseDate", transaction); } catch { } // ignore
 
             // Barometer problem, clean symbols without a name and dump the price and volume barometer
             database.Connection.Execute("delete from symbol where name = ''", transaction);
