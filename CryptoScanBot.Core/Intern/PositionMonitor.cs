@@ -1772,6 +1772,7 @@ public class PositionMonitor : IDisposable
                 }
                 else
                 {
+                    // Only for certain strategies and intervals
                     foreach (CryptoInterval interval in TradingConfig.Signals[side].Interval.ToList())
                     {
                         // (0 % 180 = 0, 60 % 180 = 60, 120 % 180 = 120, 180 % 180 = 0)
@@ -1788,6 +1789,14 @@ public class PositionMonitor : IDisposable
                             Interlocked.Increment(ref analyseCount);
                         }
                     }
+                }
+
+                // Only for the 1m interval
+                if (GlobalData.Settings.Signal.Zones.ShowZoneSignals)
+                {
+                    SignalCreate createSignal = new(TradeAccount, Symbol, GlobalData.IntervalList[0], side, LastCandle1mCloseTime);
+                    if (createSignal.AnalyzeZones(LastCandle1mCloseTime - GlobalData.IntervalList[0].Duration))
+                        signalList.AddRange(createSignal.SignalList);
                 }
             }
         }
