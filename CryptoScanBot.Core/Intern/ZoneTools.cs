@@ -12,7 +12,7 @@ public class ZoneTools
     public static void LoadAllZones()
     {
         // Alle openstaande posities lezen 
-        GlobalData.AddTextToLogTab("Reading open zones");
+        //GlobalData.AddTextToLogTab("Reading open zones");
 
         foreach (var x in GlobalData.ActiveAccount!.Data.SymbolDataList.Values)
         {
