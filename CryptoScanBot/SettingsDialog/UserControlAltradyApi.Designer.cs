@@ -33,6 +33,8 @@ partial class UserControlAltradyApi
         EditSecret = new TextBox();
         EditKey = new TextBox();
         label15 = new Label();
+        LabelApiKeyDisplay = new Label();
+        LabelApiSecretDisplay = new Label();
         groupBoxTelegram.SuspendLayout();
         SuspendLayout();
         // 
@@ -40,6 +42,8 @@ partial class UserControlAltradyApi
         // 
         groupBoxTelegram.AutoSize = true;
         groupBoxTelegram.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+        groupBoxTelegram.Controls.Add(LabelApiSecretDisplay);
+        groupBoxTelegram.Controls.Add(LabelApiKeyDisplay);
         groupBoxTelegram.Controls.Add(label24);
         groupBoxTelegram.Controls.Add(EditSecret);
         groupBoxTelegram.Controls.Add(EditKey);
@@ -47,7 +51,7 @@ partial class UserControlAltradyApi
         groupBoxTelegram.Dock = DockStyle.Fill;
         groupBoxTelegram.Location = new Point(0, 0);
         groupBoxTelegram.Name = "groupBoxTelegram";
-        groupBoxTelegram.Size = new Size(350, 96);
+        groupBoxTelegram.Size = new Size(407, 96);
         groupBoxTelegram.TabIndex = 0;
         groupBoxTelegram.TabStop = false;
         groupBoxTelegram.Text = "Altrady API key ";
@@ -62,7 +66,7 @@ partial class UserControlAltradyApi
         label24.TabIndex = 180;
         label24.Text = "API secret";
         // 
-        // EditSecret
+        // EditApiSecret
         // 
         EditSecret.Location = new Point(116, 51);
         EditSecret.Margin = new Padding(4, 3, 4, 3);
@@ -71,7 +75,7 @@ partial class UserControlAltradyApi
         EditSecret.Size = new Size(227, 23);
         EditSecret.TabIndex = 179;
         // 
-        // EditKey
+        // EditApiKey
         // 
         EditKey.Location = new Point(116, 22);
         EditKey.Margin = new Padding(4, 3, 4, 3);
@@ -90,6 +94,26 @@ partial class UserControlAltradyApi
         label15.TabIndex = 178;
         label15.Text = "API key";
         // 
+        // LabelTelegramToken
+        // 
+        LabelApiKeyDisplay.AutoSize = true;
+        LabelApiKeyDisplay.Location = new Point(354, 25);
+        LabelApiKeyDisplay.Margin = new Padding(4, 0, 4, 0);
+        LabelApiKeyDisplay.Name = "LabelApiKeyDisplay";
+        LabelApiKeyDisplay.Size = new Size(46, 15);
+        LabelApiKeyDisplay.TabIndex = 181;
+        LabelApiKeyDisplay.Text = "API key";
+        // 
+        // LabelTelegramChatId
+        // 
+        LabelApiSecretDisplay.AutoSize = true;
+        LabelApiSecretDisplay.Location = new Point(354, 54);
+        LabelApiSecretDisplay.Margin = new Padding(4, 0, 4, 0);
+        LabelApiSecretDisplay.Name = "LabelApiSecretDisplay";
+        LabelApiSecretDisplay.Size = new Size(46, 15);
+        LabelApiSecretDisplay.TabIndex = 182;
+        LabelApiSecretDisplay.Text = "API key";
+        // 
         // UserControlAltradyApi
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
@@ -99,7 +123,7 @@ partial class UserControlAltradyApi
         AutoSizeMode = AutoSizeMode.GrowAndShrink;
         Controls.Add(groupBoxTelegram);
         Name = "UserControlAltradyApi";
-        Size = new Size(350, 96);
+        Size = new Size(407, 96);
         groupBoxTelegram.ResumeLayout(false);
         groupBoxTelegram.PerformLayout();
         ResumeLayout(false);
@@ -113,4 +137,6 @@ partial class UserControlAltradyApi
     private TextBox EditSecret;
     private TextBox EditKey;
     private Label label15;
+    private Label LabelApiSecretDisplay;
+    private Label LabelApiKeyDisplay;
 }

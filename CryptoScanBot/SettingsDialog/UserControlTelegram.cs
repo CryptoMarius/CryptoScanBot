@@ -9,6 +9,9 @@ public partial class UserControlTelegram : UserControl
     {
         InitializeComponent();
 
+        EditTelegramToken.TextChanged += EditTokenChanged;
+        EditTelegramChatId.TextChanged += EditChatIdChanged;
+        
         ButtonTestTelegram.Click += ButtonTestTelegram_Click;
         buttonTelegramStart.Click += ButtonTelegramStart_Click;
     }
@@ -30,6 +33,9 @@ public partial class UserControlTelegram : UserControl
         EditTelegramChatId.Text = GlobalData.Telegram.ChatId;
         EditUseEmojiInTrend.Checked = GlobalData.Telegram.EmojiInTrend;
         EditSendSignalsToTelegram.Checked = GlobalData.Telegram.SendSignalsToTelegram;
+    
+        EditTokenChanged(null, EventArgs.Empty);
+        EditChatIdChanged(null, EventArgs.Empty);
     }
 
     public void SaveConfig()
@@ -38,6 +44,21 @@ public partial class UserControlTelegram : UserControl
         GlobalData.Telegram.ChatId = EditTelegramChatId.Text.Trim();
         GlobalData.Telegram.EmojiInTrend = EditUseEmojiInTrend.Checked;
         GlobalData.Telegram.SendSignalsToTelegram = EditSendSignalsToTelegram.Checked;
+    }
+
+    private static string GetDisplayApiKey(string text)
+    {
+        return text.Length < 4 ? "" : $"{text[..3]}.. {text[^3..]}";
+    }
+
+    private void EditTokenChanged(object? sender, EventArgs e)
+    {
+        LabelTelegramToken.Text = GetDisplayApiKey(EditTelegramToken.Text);
+    }
+
+    private void EditChatIdChanged(object? sender, EventArgs e)
+    {
+        LabelTelegramChatId.Text = GetDisplayApiKey(EditTelegramChatId.Text);
     }
 
 }

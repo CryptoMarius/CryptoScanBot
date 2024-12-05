@@ -235,15 +235,24 @@ public partial class FrmSettings : Form
         // Zones
         UserControlSettingsSoundAndColorsDominantLevel.LoadConfig("Zones", settings.Signal.Zones);
 
-        EditZonesWarnPercentage.Value = (decimal)settings.Signal.Zones.WarnPercentage;
+        EditShowZoneSignals.Checked = settings.Signal.Zones.ShowZoneSignals;
         EditZonesUseLowHigh.Checked = settings.Signal.Zones.UseHighLow;
         EditZonesCandleCount.Value = settings.Signal.Zones.CandleCount;
+        EditZonesWarnPercentage.Value = (decimal)settings.Signal.Zones.WarnPercentage;
+        //EditZonesInterval.Value = settings.Signal.Zones.Interval; hardcoded 1h for now
+
         EditZoomLowerTimeFrames.Checked = settings.Signal.Zones.ZoomLowerTimeFrames;
         EditMinimumZoomedPercentage.Value = settings.Signal.Zones.MinimumZoomedPercentage;
         EditMaximumZoomedPercentage.Value = settings.Signal.Zones.MaximumZoomedPercentage;
+
+        EditZonesApplyUnzoomed.Checked = settings.Signal.Zones.ZonesApplyUnzoomed;
         EditMinimumUnZoomedPercentage.Value = settings.Signal.Zones.MinimumUnZoomedPercentage;
         EditMaximumUnZoomedPercentage.Value = settings.Signal.Zones.MaximumUnZoomedPercentage;
-        //EditZonesInterval.Value = settings.Signal.Zones.Interval; hardcoded 1h for now
+
+        // Filter
+        EditZoneStartApply.Checked = settings.Signal.Zones.ZoneStartApply;
+        EditZoneStartCandleCount.Value = settings.Signal.Zones.ZoneStartCandleCount;
+        EditZoneStartPercentage.Value = settings.Signal.Zones.ZoneStartPercentage;
 
         // --------------------------------------------------------------------------------
         // Extra instap condities
@@ -488,18 +497,29 @@ public partial class FrmSettings : Form
         settings.Signal.Jump.CandlesLookbackCount = (int)EditJumpCandlesLookbackCount.Value;
         settings.Signal.Jump.UseLowHighCalculation = EditJumpUseLowHighCalculation.Checked;
 
+
         // Zones
         UserControlSettingsSoundAndColorsDominantLevel.SaveConfig(settings.Signal.Zones);
 
-        settings.Signal.Zones.WarnPercentage = EditZonesWarnPercentage.Value;
+        settings.Signal.Zones.ShowZoneSignals = EditShowZoneSignals.Checked;
         settings.Signal.Zones.UseHighLow = EditZonesUseLowHigh.Checked;
         settings.Signal.Zones.CandleCount = (int)EditZonesCandleCount.Value;
+        settings.Signal.Zones.WarnPercentage = EditZonesWarnPercentage.Value;
+        //settings.Signal.Zones.Interval = CryptoIntervalPeriod.interval1h; //EditZonesInterval.Value; hardcoded 1h for now
+
         settings.Signal.Zones.ZoomLowerTimeFrames = EditZoomLowerTimeFrames.Checked;
         settings.Signal.Zones.MinimumZoomedPercentage = EditMinimumZoomedPercentage.Value;
         settings.Signal.Zones.MaximumZoomedPercentage = EditMaximumZoomedPercentage.Value;
+
+        settings.Signal.Zones.ZonesApplyUnzoomed = EditZonesApplyUnzoomed.Checked;
         settings.Signal.Zones.MinimumUnZoomedPercentage = EditMinimumUnZoomedPercentage.Value;
         settings.Signal.Zones.MaximumUnZoomedPercentage = EditMaximumUnZoomedPercentage.Value;
-        //settings.Signal.Zones.Interval = CryptoIntervalPeriod.interval1h; //EditZonesInterval.Value; hardcoded 1h for now
+
+        // Filter
+        settings.Signal.Zones.ZoneStartApply = EditZoneStartApply.Checked;
+        settings.Signal.Zones.ZoneStartCandleCount = (int)EditZoneStartCandleCount.Value;
+        settings.Signal.Zones.ZoneStartPercentage = EditZoneStartPercentage.Value;
+
 
         // --------------------------------------------------------------------------------
         // Extra instap condities

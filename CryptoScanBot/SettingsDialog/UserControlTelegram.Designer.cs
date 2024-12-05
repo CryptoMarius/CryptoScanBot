@@ -29,6 +29,8 @@ partial class UserControlTelegram
     private void InitializeComponent()
     {
         groupBoxTelegram = new GroupBox();
+        LabelTelegramChatId = new Label();
+        LabelTelegramToken = new Label();
         EditUseEmojiInTrend = new CheckBox();
         buttonTelegramStart = new Button();
         EditSendSignalsToTelegram = new CheckBox();
@@ -43,6 +45,8 @@ partial class UserControlTelegram
         // groupBoxTelegram
         // 
         groupBoxTelegram.AutoSize = true;
+        groupBoxTelegram.Controls.Add(LabelTelegramChatId);
+        groupBoxTelegram.Controls.Add(LabelTelegramToken);
         groupBoxTelegram.Controls.Add(EditUseEmojiInTrend);
         groupBoxTelegram.Controls.Add(buttonTelegramStart);
         groupBoxTelegram.Controls.Add(EditSendSignalsToTelegram);
@@ -59,6 +63,26 @@ partial class UserControlTelegram
         groupBoxTelegram.TabStop = false;
         groupBoxTelegram.Text = "Telegram ";
         // 
+        // LabelTelegramChatId
+        // 
+        LabelTelegramChatId.AutoSize = true;
+        LabelTelegramChatId.Location = new Point(352, 66);
+        LabelTelegramChatId.Margin = new Padding(4, 0, 4, 0);
+        LabelTelegramChatId.Name = "LabelTelegramChatId";
+        LabelTelegramChatId.Size = new Size(46, 15);
+        LabelTelegramChatId.TabIndex = 186;
+        LabelTelegramChatId.Text = "API key";
+        // 
+        // LabelTelegramToken
+        // 
+        LabelTelegramToken.AutoSize = true;
+        LabelTelegramToken.Location = new Point(352, 39);
+        LabelTelegramToken.Margin = new Padding(4, 0, 4, 0);
+        LabelTelegramToken.Name = "LabelTelegramToken";
+        LabelTelegramToken.Size = new Size(46, 15);
+        LabelTelegramToken.TabIndex = 185;
+        LabelTelegramToken.Text = "API key";
+        // 
         // EditUseEmojiInTrend
         // 
         EditUseEmojiInTrend.AutoSize = true;
@@ -72,7 +96,7 @@ partial class UserControlTelegram
         // 
         // buttonTelegramStart
         // 
-        buttonTelegramStart.Location = new Point(350, 34);
+        buttonTelegramStart.Location = new Point(245, 94);
         buttonTelegramStart.Name = "buttonTelegramStart";
         buttonTelegramStart.Size = new Size(75, 23);
         buttonTelegramStart.TabIndex = 183;
@@ -92,7 +116,7 @@ partial class UserControlTelegram
         // 
         // ButtonTestTelegram
         // 
-        ButtonTestTelegram.Location = new Point(350, 63);
+        ButtonTestTelegram.Location = new Point(326, 94);
         ButtonTestTelegram.Name = "ButtonTestTelegram";
         ButtonTestTelegram.Size = new Size(75, 23);
         ButtonTestTelegram.TabIndex = 181;
@@ -163,4 +187,6 @@ partial class UserControlTelegram
     private TextBox EditTelegramToken;
     private Label label15;
     private CheckBox EditUseEmojiInTrend;
+    private Label LabelTelegramChatId;
+    private Label LabelTelegramToken;
 }
