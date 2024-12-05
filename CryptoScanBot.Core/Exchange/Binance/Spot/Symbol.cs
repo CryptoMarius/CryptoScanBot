@@ -78,6 +78,12 @@ public class Symbol() : SymbolBase(), ISymbol
                             //Het is erg belangrijk om de delisted munten zo snel mogelijk te detecteren.
                             //(ik heb wat slechte ervaringen met de Altrady bot die op paniek pieken handelt)
 
+                            if (symbolData.Name != symbolData.BaseAsset + symbolData.QuoteAsset)
+                            {
+                                GlobalData.AddTextToLogTab($"Ignoring symbol {symbolData.Name} {symbolData.BaseAsset} {symbolData.QuoteAsset} weird name?");
+                                continue;
+                            }
+
                             //Eventueel symbol toevoegen
                             if (!exchange.SymbolListName.TryGetValue(symbolData.Name, out CryptoSymbol? symbol))
                             {

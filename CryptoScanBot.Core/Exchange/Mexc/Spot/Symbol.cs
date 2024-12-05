@@ -134,6 +134,13 @@ public class Symbol() : SymbolBase(), ISymbol
                                 },
                                
                                 */
+
+                                if (symbolData.Name != symbolData.BaseAsset + symbolData.QuoteAsset)
+                                {
+                                    GlobalData.AddTextToLogTab($"Ignoring symbol {symbolData.Name} {symbolData.BaseAsset} {symbolData.QuoteAsset} weird name?");
+                                    continue;
+                                }
+                                
                                 //Eventueel symbol toevoegen
                                 if (!exchange.SymbolListName.TryGetValue(symbolData.Name, out CryptoSymbol? symbol))
                                 {

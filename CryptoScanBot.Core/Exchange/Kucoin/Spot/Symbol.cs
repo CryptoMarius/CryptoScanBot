@@ -142,6 +142,13 @@ public class Symbol() : SymbolBase(), ISymbol
                                 // https://api.kucoin.com/api/v1/symbols
                                 //Eventueel symbol toevoegen
                                 string symbolName = symbolData.Name.Replace("-", "");
+
+                                if (symbolName != symbolData.BaseAsset + symbolData.QuoteAsset)
+                                {
+                                    GlobalData.AddTextToLogTab($"Ignoring symbol {symbolName} {symbolData.BaseAsset} {symbolData.QuoteAsset} weird name?");
+                                    continue;
+                                }
+
                                 if (!exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
                                 {
                                     var quoteData = GlobalData.AddQuoteData(symbolData.QuoteAsset);

@@ -58,11 +58,16 @@ namespace CryptoScanBot.Core.Exchange.Kraken.Spot;
                                     name = nameParts[0] + nameParts[1];
 
 
-                                    /*
-                                        enzovoort..
-                                    */
-                                    //Eventueel symbol toevoegen
-                                    if (!exchange.SymbolListName.TryGetValue(name, out CryptoSymbol? symbol))
+                                /*
+                                    enzovoort..
+                                */
+                                //if (symbolData.Name != symbolData.BaseAsset + symbolData.QuoteAsset)
+                                //{
+                                //    GlobalData.AddTextToLogTab($"Ignoring symbol {symbolData.Name} {symbolData.BaseAsset} {symbolData.QuoteAsset} weird name?");
+                                //    continue;
+                                //}
+                                //Eventueel symbol toevoegen
+                                if (!exchange.SymbolListName.TryGetValue(name, out CryptoSymbol? symbol))
                                     {
                                         var quoteData = GlobalData.AddQuoteData(symbolData.QuoteAsset);
 
