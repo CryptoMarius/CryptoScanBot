@@ -55,24 +55,6 @@ public partial class FrmMain : Form
 
         logQueue.EnsureCapacity(1500);
 
-        //SortedList<decimal, bool> list = new(new ListHelper.DuplicateKeyComparer<decimal>());
-        //for (int i = 0; i < 1000; i++)
-        //{
-        //    list.Add((decimal)i / 4, false);
-        //}
-
-        //int offset;
-
-        //offset = list.Keys.BinarySearchIndexOf(-1234.0m);
-        //offset = list.Keys.BinarySearchIndexOf(1234.0m);
-
-        //offset = list.Keys.BinarySearchIndexOf(0.00m);
-        //offset = list.Keys.BinarySearchIndexOf(0.25m);
-        //offset = list.Keys.BinarySearchIndexOf(1.25m);
-
-
-
-
         ApplicationPlaySounds = MenuMain.AddCommand(null, "Play sounds", Command.None, ApplicationPlaySounds_Click);
         ApplicationPlaySounds.Checked = true;
         ApplicationCreateSignals = MenuMain.AddCommand(null, "Create signals", Command.None, ApplicationCreateSignals_Click);
