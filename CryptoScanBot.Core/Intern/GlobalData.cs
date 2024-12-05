@@ -139,7 +139,7 @@ static public class GlobalData
     static public void LoadExchanges()
     {
         // Load & index the exchanges
-        AddTextToLogTab("Reading exchange information");
+        //AddTextToLogTab("Reading exchange information");
 
         ExchangeListId.Clear();
         ExchangeListName.Clear();
@@ -155,7 +155,7 @@ static public class GlobalData
     public static void LoadAccounts()
     {
         // Load & index the accounts
-        AddTextToLogTab("Reading account information");
+        //AddTextToLogTab("Reading account information");
 
         TradeAccountList.Clear();
 
@@ -196,7 +196,7 @@ static public class GlobalData
     static public void LoadIntervals()
     {
         // Load & index all the available intervals
-        AddTextToLogTab("Reading interval information");
+        //AddTextToLogTab("Reading interval information");
 
         IntervalList.Clear();
         IntervalListId.Clear();
@@ -228,7 +228,7 @@ static public class GlobalData
     {
         // De symbols uit de database lezen (ook van andere exchanges)
         // Dat doen we om de symbol van voorgaande signalen en/of posities te laten zien
-        AddTextToLogTab("Reading symbol information");
+        //AddTextToLogTab("Reading symbol information");
         //string sql = $"select * from symbol where exchangeid={exchange.Id}";
         string sql = "select * from symbol";
 
@@ -239,7 +239,7 @@ static public class GlobalData
 
     static public void LoadSignals()
     {
-        GlobalData.AddTextToLogTab("Reading some signals");
+        //GlobalData.AddTextToLogTab("Reading some signals");
 
         if (BackTest)
         {
