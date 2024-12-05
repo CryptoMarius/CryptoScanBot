@@ -12,6 +12,28 @@ using OxyPlot.Series;
 using System.Globalization;
 
 namespace CryptoScanBot.ZoneVisualisation;
+//PointAnnotation
+public class TooltipRectangleAnnotation : RectangleAnnotation
+{
+    /// <summary>
+    ///     gets or sets the tooltip text
+    /// </summary>
+    public string Tooltip { get; set; } = "Hello world";
+
+    public override void Render(IRenderContext rc)
+    //public override void Render(IRenderContext rc, PlotModel model)
+    {
+
+        /*  get render context */
+        //ShapesRenderContext src = rc as ShapesRenderContext;
+
+        /* set tooltip to render context if it exists */
+        rc?.SetToolTip(Tooltip);
+
+        /* draw elements the tooltip may apply to (text and images) */
+        base.Render(rc);
+    }
+}
 
 public class CryptoCharting
 {
@@ -261,7 +283,7 @@ public class CryptoCharting
                 dateLast = session.MaxDate;
 
             // Create a rectangle annotation
-            var rectangle = new RectangleAnnotation
+            var rectangle = new TooltipRectangleAnnotation //RectangleAnnotation
             {
                 MinimumX = dateOpen,  // X-coordinate of the lower-left corner
                 MinimumY = (double)zone.Bottom,  // Y-coordinate of the lower-left corner
@@ -271,7 +293,8 @@ public class CryptoCharting
                 Fill = OxyColor.FromArgb(128, color.R, color.G, color.B),
                 Stroke = OxyColor.FromArgb(128 + 64 + 32 + 16 + 8 + 4 + 2, color.R, color.G, color.B), // rectangle
                 StrokeThickness = 0,          // Border thickness
-                Text = zone.Description,
+                Text = $"{zone.Description}",
+                Tooltip = $"#{zone.Id} {zone.Description}",
             };
             chart.Annotations.Add(rectangle);
         }

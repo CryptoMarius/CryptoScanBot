@@ -580,7 +580,7 @@ public partial class CryptoVisualisation : Form
                 // display data
                 plotModel = CryptoCharting.CreateChart(Data, out horizontalLine, out verticalLine);
                 plotModel.Title = $"{Session.SymbolBase}{Session.SymbolQuote} {Data.Interval.Name} UTC " +
-                $"trend={trend} deviation={Data.Indicator.Deviation} (best={best.Deviation}) candles={Data.Indicator.CandleCount} points={Data.Indicator.ZigZagList.Count}";
+                $"{trend} dev={Data.Indicator.Deviation} (best={best.Deviation}) candles={Data.Indicator.CandleCount} points={Data.Indicator.ZigZagList.Count}";
 
 
                 CryptoCharting.DrawCandleSerie(plotModel, Data, Session);

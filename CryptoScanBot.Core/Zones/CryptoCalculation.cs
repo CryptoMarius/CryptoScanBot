@@ -12,12 +12,15 @@ public class CryptoCalculation
 
     private static bool UnzoomedPercentageBelowMinimum(ZigZagResult zigZag) //, CryptoSymbol symbol, CryptoInterval interval)
     {
-        var value = GlobalData.Settings.Signal.Zones.MinimumUnZoomedPercentage;
-        if (value > 0 && zigZag.Percentage < value)
+        if (GlobalData.Settings.Signal.Zones.ZonesApplyUnzoomed)
         {
-            zigZag.Dominant = false;
-            //ScannerLog.Logger.Trace($"{symbol.Name} {interval.Name} Unzoomed box ignored {zigZag.Percentage:N2} < {value:N2} {zigZag.Candle.DateLocal} {zigZag.PointType} top {zigZag.Top} bottom {zigZag.Bottom} perc={zigZag.Percentage:N2}");
-            return true;
+            var value = GlobalData.Settings.Signal.Zones.MinimumUnZoomedPercentage;
+            if (value > 0 && zigZag.Percentage < value)
+            {
+                zigZag.Dominant = false;
+                //ScannerLog.Logger.Trace($"{symbol.Name} {interval.Name} Unzoomed box ignored {zigZag.Percentage:N2} < {value:N2} {zigZag.Candle.DateLocal} {zigZag.PointType} top {zigZag.Top} bottom {zigZag.Bottom} perc={zigZag.Percentage:N2}");
+                return true;
+            }
         }
         return false;
     }
@@ -25,14 +28,16 @@ public class CryptoCalculation
 
     private static bool UnzoomedPercentageAboveMaximum(ZigZagResult zigZag) //, CryptoSymbol symbol, CryptoInterval interval)
     {
-        var value = GlobalData.Settings.Signal.Zones.MaximumUnZoomedPercentage;
-        if (value > 0 && zigZag.Percentage > value)
+        if (GlobalData.Settings.Signal.Zones.ZonesApplyUnzoomed)
         {
-            zigZag.Dominant = false;
-            //ScannerLog.Logger.Trace($"{symbol.Name} {interval.Name} Unzoomed box ignored {zigZag.Percentage:N2} > {value:N2} {zigZag.Candle.DateLocal} {zigZag.PointType} top {zigZag.Top} bottom {zigZag.Bottom} perc={zigZag.Percentage:N2}");
-            return true;
+            var value = GlobalData.Settings.Signal.Zones.MaximumUnZoomedPercentage;
+            if (value > 0 && zigZag.Percentage > value)
+            {
+                zigZag.Dominant = false;
+                //ScannerLog.Logger.Trace($"{symbol.Name} {interval.Name} Unzoomed box ignored {zigZag.Percentage:N2} > {value:N2} {zigZag.Candle.DateLocal} {zigZag.PointType} top {zigZag.Top} bottom {zigZag.Bottom} perc={zigZag.Percentage:N2}");
+                return true;
+            }
         }
-
         return false;
     }
 

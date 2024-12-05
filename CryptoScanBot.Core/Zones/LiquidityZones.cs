@@ -100,6 +100,7 @@ public class LiquidityZones
                             ShowFibZigZag = false,
                             ForceCalculation = true,
                             UseBatchProcess = true,
+                            UseOptimizing = true,
                         };
 
                         CryptoZoneData data = new()
