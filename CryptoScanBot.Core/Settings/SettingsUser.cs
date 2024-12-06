@@ -18,6 +18,7 @@ public class SettingsUser
     public Rectangle WindowPosition { get; set; } = new Rectangle();
     public int WindowState { get; set; } = 0;
 
+    public int SplitterDistance { get; set; } = 0;
 
     public int[] CustomColors { get; set; } = [];
 

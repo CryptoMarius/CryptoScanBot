@@ -2,6 +2,7 @@
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Settings;
+using CryptoScanBot.ZoneVisualisation;
 
 namespace CryptoScanBot;
 
@@ -25,7 +26,7 @@ public class CryptoDataGridSymbol<T>() : CryptoDataGrid<T>() where T : CryptoSym
 
         menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Copy symbol name", Command.CopySymbolInformation);
-        menuStrip.AddCommand(this, "Show symbol chart", Command.ShowSymbolGraph);
+        menuStrip.AddCommand(this, "Show symbol chart", Command.ShowSymbolGraph, CommandShowGraph);
         menuStrip.AddCommand(this, "Export trend information to log", Command.ShowTrendInformation);
         menuStrip.AddCommand(this, "Export symbol information to Excel", Command.ExcelSymbolInformation);
         //menuStrip.AddCommand(this, "Create Position", Command.None, CreatePosition);
@@ -156,5 +157,29 @@ public class CryptoDataGridSymbol<T>() : CryptoDataGrid<T>() where T : CryptoSym
         cell.Style.ForeColor = foreColor;
     }
 
+
+    public CryptoSymbol? GetNextSymbol(CryptoSymbol currentSymbol, int direction = 1)
+    {
+        return GetNextObject((T)currentSymbol, direction);
+    }
+
+
+    private void CommandShowGraph(object? sender, EventArgs e)
+    {
+        if (sender is ToolStripMenuItemCommand item)
+        {
+            if (Grid.SelectedRows.Count > 0)
+            {
+                int index = Grid.SelectedRows[0].Index;
+                CryptoSymbol symbol = List[index];
+
+                // A wrapper to avoid moving the Windows Grid units into Core..
+                CryptoVisualisation.GetNextSymbol = GetNextSymbol;
+
+                CommandShowGraph command = new();
+                command.Execute(item, symbol);
+            }
+        }
+    }
 
 }

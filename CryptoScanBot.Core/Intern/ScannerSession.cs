@@ -3,6 +3,7 @@ using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Telegram;
 using CryptoScanBot.Core.Trader;
+using CryptoScanBot.Core.Zones;
 
 namespace CryptoScanBot.Core.Intern;
 
@@ -63,7 +64,7 @@ public static class ScannerSession
 
     public static void Start(int delay)
     {
-        GlobalData.AddTextToLogTab("Debug: ScannerSession.Start");
+        //GlobalData.AddTextToLogTab("Debug: ScannerSession.Start");
         ScannerLog.Logger.Trace($"ScannerSession.Starting");
         if (!IsStarted)
         {
@@ -78,6 +79,8 @@ public static class ScannerSession
                 GlobalData.ThreadMonitorCandle = new ThreadMonitorCandle();
                 GlobalData.ThreadMonitorOrder = new ThreadMonitorOrder();
                 GlobalData.ThreadCheckPosition = new ThreadCheckFinishedPosition();
+                GlobalData.ThreadZoneCalculate = new ThreadZoneCalculate();
+
                 if (GlobalData.TradingApi.Key != "")
                     _ = ExchangeBase.UserTicker!.StartAsync();
                 // Vanuit hybernate wachten ivm netwerk verbindingen..
@@ -137,6 +140,9 @@ public static class ScannerSession
                 //GlobalData.ThreadDoubleCheckPosition?.Stop();
                 task = Task.Run(() => { GlobalData.ThreadCheckPosition?.Stop(); });
                 taskList.Add(task);
+
+                task = Task.Run(() => { GlobalData.ThreadZoneCalculate?.Stop(); });
+                taskList.Add(task);                
 
                 if (ExchangeBase.UserTicker != null && !GlobalData.ApplicationIsClosing)
                 {

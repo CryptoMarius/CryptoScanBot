@@ -516,7 +516,7 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
         };
 
         signal.CloseDate = signal.OpenDate.AddSeconds(Interval.Duration);
-        signal.ExpirationDate = signal.CloseDate.AddSeconds(GlobalData.Settings.General.RemoveSignalAfterxCandles * Interval.Duration);
+        signal.ExpirationDate = signal.GetExpirationDate(Interval);
 
         // Copy common indicator values
         signal.AssignValues(candle.CandleData!);

@@ -129,29 +129,78 @@ public class CryptoCharting
         var candleSerie = new CandleStickSeries //CandleStickAndVolumeSeries -> obsolete, symbolData...
         {
             Title = "Candles",
-            IncreasingColor = OxyColors.LightGreen,
+            //IncreasingColor = OxyColors.LightGreen,
             DecreasingColor = OxyColors.DarkOrange,
+            Color = OxyColors.Black,
+            IncreasingColor = OxyColors.DarkGreen,
+            //DecreasingColor = OxyColors.Red,
+            //DataFieldX = "QTime",
+            //DataFieldHigh = "H",
+            //DataFieldLow = "L",
+            //DataFieldOpen = "O",
+            //DataFieldClose = "C",
             //TrackerFormatString = "Date: {0}\nHigh: {1}\nLow: {2}\nOpen: {3}\nClose: {4}" ???
+            TrackerFormatString = "High: {3:0.00}\nLow: {4:0.00}\nOpen: {5:0.00}\nClose: {6:0.00}\nAsOf:{2:yyyy-MM-dd}",
         };
 
-        foreach (var c in symbolInterval.CandleList.Values)
+        if (symbolInterval.CandleList.Count > 0)
         {
-            if (c.OpenTime >= session.MinDate && c.OpenTime <= session.MaxDate)
+            CryptoCandle? last = null;
+            foreach (var c in symbolInterval.CandleList.Values)
             {
-                try
+                if (c.OpenTime >= session.MinDate && c.OpenTime <= session.MaxDate)
                 {
-                    var curHighLow = new HighLowItem(c.OpenTime, (double)c.High, (double)c.Low, (double)c.Open, (double)c.Close); //OhlcvItem
-                    candleSerie.Items.Add(curHighLow);
+                    try
+                    {
+                        var curHighLow = new HighLowItem(c.OpenTime, (double)c.High, (double)c.Low, (double)c.Open, (double)c.Close); //OhlcvItem
+                        candleSerie.Items.Add(curHighLow);
+                        last = c;
+                    }
+                    catch (Exception error)
+                    {
+                        // daytimesaving problemo?
+                        //
+                        ScannerLog.Logger.Info($"Error {error}");
+                    }
                 }
-                catch (Exception error)
+            }
+
+
+            // Build the last candle from scratch from the 1m candles
+            if (last != null)
+            {
+                long x = last.OpenTime + symbolInterval.Interval.Duration;
+                CryptoSymbolInterval symbolInterval1m = data.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
+                CryptoCandle newCandle = new()
                 {
-                    // daytimesaving problemo?
-                    //
-                    ScannerLog.Logger.Info($"Error {error}");
+                    Low = decimal.MaxValue,
+                    High = decimal.MinValue
+                };
+                while (symbolInterval1m.CandleList.TryGetValue(x, out CryptoCandle? c))
+                {
+                    if (c.OpenTime >= session.MinDate && c.OpenTime <= session.MaxDate)
+                    {
+                        if (newCandle.OpenTime == 0)
+                        {
+                            newCandle.OpenTime = c.OpenTime;
+                            newCandle.Open = c.Open;
+                        }
+                        if (c.Low < newCandle.Low)
+                            newCandle.Low = c.Low;
+                        if (c.High > newCandle.High)
+                            newCandle.High = c.High;
+                        newCandle.Close = c.Close;
+                    }
+                    x += symbolInterval1m.Interval.Duration;
+                }
+                if (newCandle.OpenTime > 0)
+                {
+                    var c = newCandle;
+                    var curHighLow = new HighLowItem(c.OpenTime, (double)c.High, (double)c.Low, (double)c.Open, (double)c.Close);
+                    candleSerie.Items.Add(curHighLow);
                 }
             }
         }
-
         chart.Series.Add(candleSerie);
     }
 

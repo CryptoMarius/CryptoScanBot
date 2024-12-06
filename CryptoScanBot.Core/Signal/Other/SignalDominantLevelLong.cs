@@ -81,7 +81,7 @@ public class DominantLevelLong : SignalCreateBase
                 }
 
                 // todo, delete the zone somewhere else?
-                if (CandleLast.Low <= zone.Bottom)
+                if (CandleLast.Low < zone.Top || CandleLast.Close <= zone.Top || CandleLast.Close <= zone.Top)
                 {
                     zone.CloseTime = CandleLast.OpenTime;
                     zone.ClosePrice = CandleLast.Low;
@@ -94,7 +94,6 @@ public class DominantLevelLong : SignalCreateBase
                     {
                         using var database = new CryptoDatabase();
                         database.Connection.Update(zone);
-                        GlobalData.AddTextToLogTab($"Closed zone {zone.Id} {zone.Side} {zone.Description}");
                     }
                     catch (Exception error)
                     {
@@ -108,72 +107,23 @@ public class DominantLevelLong : SignalCreateBase
         }
 
 
-        // close higher zones
-        try
-        {
-            for (int index = indexLow; index < symbolData.ZoneListLong.Count; index++)
-            {
-                var zone = symbolData.ZoneListLong.Values[index];
-
-                if (zone.CloseTime == null && zone.Top > CandleLast.Low)
-                {
-                    zone.CloseTime = CandleLast.OpenTime;
-                    zone.ClosePrice = CandleLast.Low;
-
-                    try
-                    {
-                        using var database = new CryptoDatabase();
-                        database.Connection.Update(zone);
-                    }
-                    catch (Exception error)
-                    {
-                        ScannerLog.Logger.Error(error, "");
-                        GlobalData.AddTextToLogTab(error.ToString());
-                    }
-                }
-            }
-        }
-        catch (Exception error)
-        {
-            ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab(error.ToString());
-        }
-
-
-
-
-        //foreach (var zone in symbolData.ZoneListLong.Values)
+        //// close higher zones
+        //try
         //{
-        //    if (zone.OpenTime != null && CandleLast.OpenTime >= zone.OpenTime && zone.CloseTime == null)
+        //    for (int index = indexLow; index < symbolData.ZoneListLong.Count; index++)
         //    {
-        //        bool changed = false;
-        //        decimal alarmPrice = zone.Top * (100 + GlobalData.Settings.Signal.Zones.WarnPercentage) / 100;
-        //        if (CandleLast.Low <= alarmPrice)
-        //        {
-        //            if (zone.AlarmDate == null || CandleLast.Date > zone.AlarmDate?.AddMinutes(5)) //!result && ?
-        //            {
-        //                ExtraText = $"{zone.Bottom} .. {zone.Top} (#{zone.Id})";
-        //                zone.AlarmPrice = CandleLast.Low;
-        //                zone.AlarmDate = CandleLast.Date;
-        //                changed = true;
-        //                result = true;
-        //            }
-        //        }
+        //        var zone = symbolData.ZoneListLong.Values[index];
 
-        //        // todo, delete the zone somewhere else?
-        //        if (zone.CloseTime == null && CandleLast.Low <= zone.Bottom)
+        //        if (zone.CloseTime == null && zone.Top > CandleLast.Low)
         //        {
         //            zone.CloseTime = CandleLast.OpenTime;
         //            zone.ClosePrice = CandleLast.Low;
-        //            changed = true;
-        //        }
 
-        //        if (changed)
-        //        {
         //            try
         //            {
         //                using var database = new CryptoDatabase();
         //                database.Connection.Update(zone);
+        //                GlobalData.AddTextToLogTab($"Closed zone {zone.Id} {zone.Side} {zone.Description} (bulk)");
         //            }
         //            catch (Exception error)
         //            {
@@ -181,12 +131,14 @@ public class DominantLevelLong : SignalCreateBase
         //                GlobalData.AddTextToLogTab(error.ToString());
         //            }
         //        }
-
-        //        // How about multiple zones overlapping?
-        //        if (result)
-        //            break;
         //    }
         //}
+        //catch (Exception error)
+        //{
+        //    ScannerLog.Logger.Error(error, "");
+        //    GlobalData.AddTextToLogTab(error.ToString());
+        //}
+
         return result;
     }
 

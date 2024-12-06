@@ -4,6 +4,7 @@ using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Trend;
+using CryptoScanBot.Core.Zones;
 using CryptoScanBot.ZoneVisualisation.Zones;
 
 using OxyPlot;
@@ -14,6 +15,9 @@ using System.Diagnostics;
 using System.Text;
 
 namespace CryptoScanBot.ZoneVisualisation;
+
+public delegate CryptoSymbol? GetNextSymbol(CryptoSymbol currentObject, int direction = 1);
+
 
 public partial class CryptoVisualisation : Form
 {
@@ -27,6 +31,8 @@ public partial class CryptoVisualisation : Form
     private string OldSymbolBase = "";
     private string OldSymbolQuote = "";
     private string OldIntervalName = "";
+
+    public static GetNextSymbol? GetNextSymbol = null;
 
 
     public CryptoVisualisation()
@@ -52,6 +58,9 @@ public partial class CryptoVisualisation : Form
         EditDeviation.Click += ButtonFocusLastCandlesClick;
         EditTransparant.Click += TransparentClick;
 
+        KeyPreview = true;
+        KeyDown += new KeyEventHandler(FormKeyDown);
+
         InitIntervalItems();
         //EditSymbolBase.DataSource = new BindingSource(GlobalData.Settings.General.Exchange.SymbolListName, null);
         //EditSymbolBase.DisplayMember = "Key";
@@ -68,7 +77,8 @@ public partial class CryptoVisualisation : Form
         //EditIntervalName.ValueMember = "Value";
         //try { EditIntervalName.SelectedValue = Session.IntervalName; } catch { };
 
-        ButtonRefreshClick(null, EventArgs.Empty);
+        if (StandAlone)
+            ButtonRefreshClick(null, EventArgs.Empty);
     }
 
     private void ButtonRefreshClick(object? sender, EventArgs e)
@@ -290,7 +300,7 @@ public partial class CryptoVisualisation : Form
             decimal h = decimal.MinValue;
             CryptoCandle candleLast = Data.SymbolInterval.CandleList.Values.Last();
             long unix = candleLast.OpenTime;
-            int count = 150;
+            int count = 100;
             CryptoCandle xlast = candleLast;
             CryptoCandle xfirst = candleLast;
             while (count > 0)
@@ -692,5 +702,24 @@ public partial class CryptoVisualisation : Form
             GlobalData.AddTextToLogTab("ERROR settings " + error.ToString());
         }
     }
-       
+
+
+    private void FormKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (Data != null && GetNextSymbol != null)
+        {
+            if (e.Control && e.Alt && e.KeyCode == Keys.Left)
+            {
+                CryptoSymbol? nextSymbol = GetNextSymbol(Data.Symbol, -1);
+                if (nextSymbol != null)
+                    StartWithSymbolAsync(nextSymbol);
+            }
+            if (e.Control && e.Alt && e.KeyCode == Keys.Right)
+            {
+                CryptoSymbol? nextSymbol = GetNextSymbol(Data.Symbol, +1);
+                if (nextSymbol != null)
+                    StartWithSymbolAsync(nextSymbol);
+            }
+        }
+    }
 }

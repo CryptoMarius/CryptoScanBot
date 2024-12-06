@@ -78,3 +78,5 @@ public class CryptoSignal: CryptoData2
         }
     }
 }
+
+

@@ -81,7 +81,7 @@ public class DominantLevelShort : SignalCreateBase
                     }
 
                     // todo, delete the zone somewhere else?
-                    if (CandleLast.High >= zone.Top)
+                    if (CandleLast.High > zone.Bottom || CandleLast.Close >= zone.Bottom || CandleLast.Open >= zone.Bottom)
                     {
                         zone.CloseTime = CandleLast.OpenTime;
                         zone.ClosePrice = CandleLast.Low;
@@ -109,28 +109,28 @@ public class DominantLevelShort : SignalCreateBase
             }
         }
 
-        // close higher zones
-        for (int index = 0; index < indexLow; index++)
-        {
-            var zone = symbolData.ZoneListShort.Values[index];
+        //// close higher zones
+        //for (int index = 0; index < indexLow; index++)
+        //{
+        //    var zone = symbolData.ZoneListShort.Values[index];
 
-            if (zone.CloseTime == null && zone.Bottom < CandleLast.Low)
-            {
-                zone.CloseTime = CandleLast.OpenTime;
-                zone.ClosePrice = CandleLast.Low;
-                try
-                {
-                    using var database = new CryptoDatabase();
-                    database.Connection.Update(zone);
-                    GlobalData.AddTextToLogTab($"Closed zone {zone.Id} {zone.Side} {zone.Description}");
-                }
-                catch (Exception error)
-                {
-                    ScannerLog.Logger.Error(error, "");
-                    GlobalData.AddTextToLogTab(error.ToString());
-                }
-            }
-        }
+        //    if (zone.CloseTime == null && zone.Bottom < CandleLast.Low)
+        //    {
+        //        zone.CloseTime = CandleLast.OpenTime;
+        //        zone.ClosePrice = CandleLast.Low;
+        //        try
+        //        {
+        //            using var database = new CryptoDatabase();
+        //            database.Connection.Update(zone);
+        //            GlobalData.AddTextToLogTab($"Closed zone {zone.Id} {zone.Side} {zone.Description} (bulk)");
+        //        }
+        //        catch (Exception error)
+        //        {
+        //            ScannerLog.Logger.Error(error, "");
+        //            GlobalData.AddTextToLogTab(error.ToString());
+        //        }
+        //    }
+        //}
 
 
         return result;

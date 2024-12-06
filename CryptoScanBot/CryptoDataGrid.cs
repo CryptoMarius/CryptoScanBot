@@ -525,4 +525,22 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         return Grid.DefaultCellStyle.BackColor;
     }
 
+
+    public delegate T? GetNextGridObject(T currentObject, int direction = 1);
+
+    public T? GetNextObject(T currentObject, int direction = 1)
+    {
+        if (Grid.SelectedRows.Count > 0)
+        {
+            int index = List.IndexOf((T)currentObject);
+            index += direction;
+            if (index >= 0 && index < List.Count)
+            {
+                Grid.ClearSelection();
+                Grid.SelectedRows[index].Selected = true;
+                return List[index];
+            }
+        }
+        return default;
+    }
 }

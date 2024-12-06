@@ -7,6 +7,15 @@ namespace CryptoScanBot.Core.Intern;
 
 public static class Helper
 {
+    public static DateTime GetExpirationDate(this CryptoSignal signal, CryptoInterval interval)
+    {
+        // Keep these longer
+        if (signal.Strategy == CryptoSignalStrategy.DominantLevel)
+            return signal.CloseDate.AddSeconds(GlobalData.Settings.General.RemoveSignalAfterxCandles * interval.Duration * 2);
+        else
+            return signal.CloseDate.AddSeconds(GlobalData.Settings.General.RemoveSignalAfterxCandles * interval.Duration);
+    }
+
     public static decimal ConvertRadiansToDegrees(this decimal radians)
     {
         double degrees = (double)radians * (180 / Math.PI);

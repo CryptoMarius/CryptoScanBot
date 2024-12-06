@@ -28,6 +28,7 @@ using CryptoScanBot.Core.Signal;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Barometer;
 using CryptoScanBot.Core.Telegram;
+using CryptoScanBot.Core.Zones;
 
 namespace CryptoScanBot;
 
@@ -117,9 +118,11 @@ public partial class TestForm : Form
         GlobalData.LogToTelegram += new AddTextEvent(AddTextToTelegram);
         GlobalData.LogToLogTabEvent += new AddTextEvent(AddTextToLogTab);
 
+        
         GlobalData.ThreadSaveObjects = new ThreadSaveObjects();
         GlobalData.ThreadMonitorCandle = new ThreadMonitorCandle();
         GlobalData.AnalyzeSignalCreated = AnalyzeSignalCreated;
+        GlobalData.ThreadZoneCalculate = new ThreadZoneCalculate();
 
         //string APIKEY = "?";
         //string APISECRET = "?";

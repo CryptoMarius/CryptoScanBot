@@ -16,6 +16,7 @@ public class ZigZagResult
     public bool Dummy { get; set; } = false;
     public decimal? BackupValue { get; set; }
     public CryptoCandle? BackupCandle { get; set; }
+    public bool IsValid { get; set; } = false;
 
     // Zone
     //public DateTime StartTime { get; set; }         zigZag.StartTime = zigZag.Candle.Date;

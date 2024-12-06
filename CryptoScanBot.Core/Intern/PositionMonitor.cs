@@ -7,6 +7,7 @@ using CryptoScanBot.Core.Exchange;
 using Dapper.Contrib.Extensions;
 using CryptoScanBot.Core.Barometer;
 using CryptoScanBot.Core.Exchange.Altrady;
+using CryptoScanBot.Core.Trend;
 
 namespace CryptoScanBot.Core.Intern;
 
@@ -663,11 +664,11 @@ public class PositionMonitor : IDisposable
             // Niet zomaar een laatste candle nemen in verband met Backtesting
             if (!symbolInterval.CandleList.TryGetValue(candleOpenTimeInterval, out candleInterval))
             {
-                string t = string.Format("candle 1m interval: {0}", LastCandle1m.DateLocal.ToString()) + ".." + LastCandle1mCloseTimeDate.ToLocalTime() + "\r\n" +
-                string.Format("is de candle op het {0} interval echt missing in action?", interval.Name) + "\r\n" +
-                string.Format("position.CreateDate = {0}", position.CreateTime.ToString()) + "\r\n";
+                //string t = string.Format("candle 1m interval: {0}", LastCandle1m.DateLocal.ToString()) + ".." + LastCandle1mCloseTimeDate.ToLocalTime() + "\r\n" +
+                //string.Format("is de candle op het {0} interval echt missing in action?", interval.Name) + "\r\n" +
+                //string.Format("position.CreateDate = {0}", position.CreateTime.ToString()) + "\r\n";
                 //throw new Exception($"Candle niet aanwezig? {t}");
-                GlobalData.AddTextToLogTab($"Analyse {position.Symbol.Name} {t}");
+                //GlobalData.AddTextToLogTab($"Analyse {position.Symbol.Name} {t}");
                 return (false, candleInterval);
             }
 
@@ -1790,6 +1791,25 @@ public class PositionMonitor : IDisposable
                         }
                     }
                 }
+
+
+                // First try to automaticly calculate the zones
+                CryptoInterval intervalX = GlobalData.IntervalListPeriod[GlobalData.Settings.Signal.Zones.Interval];
+                if (LastCandle1mCloseTime % intervalX.Duration == 0)
+                {
+                    AccountSymbolData symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(Symbol.Name);
+                    AccountSymbolIntervalData symbolIntervalData = symbolData.GetAccountSymbolIntervalData(intervalX.IntervalPeriod);
+
+                    CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(symbolIntervalData.IntervalPeriod);
+                    TrendInterval.Calculate(Symbol, symbolInterval.CandleList, symbolIntervalData, 0, LastCandle1mCloseTime);
+                    if (symbolIntervalData.BestZigZagIndicator != null && symbolIntervalData.BestZigZagIndicator.LastSwingPoint != null)
+                    {
+                        long? lastSwingTime = symbolIntervalData.BestZigZagIndicator.GetLastRealZigZag();
+                        if (lastSwingTime == null || symbolIntervalData.LastZigZagPoint == null || symbolIntervalData.LastZigZagPoint > lastSwingTime)
+                            GlobalData.ThreadZoneCalculate?.AddToQueue(Symbol);
+                    }
+                }
+
 
                 // Only for the 1m interval
                 if (GlobalData.Settings.Signal.Zones.ShowZoneSignals)

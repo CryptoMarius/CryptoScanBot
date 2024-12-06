@@ -879,7 +879,7 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                     {
                         CryptoSignal signal = List[index];
 
-                        DateTime expirationDate = signal.CloseDate.AddSeconds(GlobalData.Settings.General.RemoveSignalAfterxCandles * signal.Interval.Duration);
+                        DateTime expirationDate = signal.GetExpirationDate(signal.Interval);
                         if (expirationDate < DateTime.UtcNow)
                         {
                             if (GlobalData.Settings.General.DebugSignalStrength)

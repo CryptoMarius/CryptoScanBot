@@ -21,9 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="CryptoVisualisation.cs">
-      <SubType>Form</SubType>
-    </Compile>
+    <Compile Update="CryptoVisualisation.cs" />
   </ItemGroup>
 
 </Project>

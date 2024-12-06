@@ -462,6 +462,17 @@ public class ZigZagIndicator9(CryptoCandleList candleList, bool useHighLow, deci
         }
     }
 
+    public long? GetLastRealZigZag()
+    {
+        for (int i = ZigZagList.Count - 1; i >= 0; i--)
+        {
+            var zigZag = ZigZagList[i];
+            if (!zigZag.Dummy)
+                return zigZag.Candle.OpenTime;
+        }
+
+        return null;
+    }
 
     public void Calculate(CryptoCandle candle, bool batchProcess)
     {

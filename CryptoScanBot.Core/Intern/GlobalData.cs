@@ -5,6 +5,8 @@ using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Settings;
 using CryptoScanBot.Core.Signal;
 using CryptoScanBot.Core.TradingView;
+using CryptoScanBot.Core.Zones;
+
 using Dapper;
 using Dapper.Contrib.Extensions;
 
@@ -117,6 +119,7 @@ static public class GlobalData
     public static event SetCandleTimerEnable? SetCandleTimerEnableEvent;
 
     public static AnalyseEvent? AnalyzeSignalCreated { get; set; }
+    
 
     // All possible account (overkill)
     public static readonly SortedList<int, CryptoAccount> TradeAccountList = [];
@@ -128,6 +131,8 @@ static public class GlobalData
     public static ThreadMonitorCandle? ThreadMonitorCandle { get; set; }
     public static ThreadMonitorOrder? ThreadMonitorOrder { get; set; }
     public static ThreadCheckFinishedPosition? ThreadCheckPosition { get; set; }
+    public static ThreadZoneCalculate? ThreadZoneCalculate { get; set; }
+
 
     // On special request of a hardcore trader..
     public static SymbolValue FearAndGreedIndex { get; set; } = new();

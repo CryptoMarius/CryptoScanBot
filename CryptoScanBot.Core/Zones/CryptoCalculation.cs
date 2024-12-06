@@ -73,6 +73,7 @@ public class CryptoCalculation
     {
         zigZag.Top = top;
         zigZag.Bottom = bottom;
+        zigZag.IsValid = true;
         zigZag.Dominant = true;
         zigZag.Percentage = 100 * ((zigZag.Top - zigZag.Bottom) / zigZag.Bottom);
         //ScannerLog.Logger.Trace($"{symbol.Name} {interval.Name} Dominant pivot at {zigZag.Candle.DateLocal} {zigZag.PointType} top {zigZag.Top} bottom {zigZag.Bottom} perc={zigZag.Percentage:N2}");
@@ -129,7 +130,10 @@ public class CryptoCalculation
         if (UnzoomedPercentageBelowMinimum(zigZag)
             || UnzoomedPercentageAboveMaximum(zigZag)
             || ZoomedPercentageBelowMinimum(zigZag))
+        {
+            zigZag.IsValid = false;
             return; // (mark the point as not dominant + exit)
+        }
 
 
 
@@ -211,7 +215,10 @@ public class CryptoCalculation
 
         // Is the zoomed percentage between the configured limits?
         if (ZoomedPercentageBelowMinimum(zigZag) || ZoomedPercentageAboveMaximum(zigZag))
+        {
+            zigZag.IsValid = false;
             return; // (mark the point as not dominant + exit)
+        }
     }
 
     public static async Task CalculateLiqBoxesAsync(AddTextEvent? sender, CryptoZoneData data, bool zoomLiqBoxes, SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
@@ -271,12 +278,13 @@ public class CryptoCalculation
                         }
                         else
                         {
-                            if (zigzag.PointType == 'H' && (candle.High >= zigzag.Top || Math.Max(candle.Open, candle.Close) >= zigzag.Bottom))
+                            //decimal halfWay = (zigzag.Bottom + zigzag.Top) / 2;
+                            if (zigzag.PointType == 'H' && (candle.High > zigzag.Bottom || Math.Max(candle.Open, candle.Close) >= zigzag.Bottom))
                             {
                                 zigzag.CloseDate = candle.OpenTime;
                                 break;
                             }
-                            if (zigzag.PointType == 'L' && (candle.Low <= zigzag.Bottom || Math.Min(candle.Open, candle.Close) <= zigzag.Top))
+                            if (zigzag.PointType == 'L' && (candle.Low < zigzag.Top || Math.Min(candle.Open, candle.Close) <= zigzag.Top))
                             {
                                 zigzag.CloseDate = candle.OpenTime;
                                 break;

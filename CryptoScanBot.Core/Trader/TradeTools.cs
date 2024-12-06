@@ -65,7 +65,7 @@ public class TradeTools
     public static async Task CheckOpenPositions()
     {
         // De openstaande posities controleren
-        GlobalData.AddTextToLogTab($"Checking open positions for {GlobalData.ActiveAccount!.AccountType}");
+        //GlobalData.AddTextToLogTab($"Checking open positions for {GlobalData.ActiveAccount!.AccountType}");
 
         using var database = new CryptoDatabase();
         foreach (CryptoAccount tradeAccount in GlobalData.TradeAccountList.Values.ToList())
