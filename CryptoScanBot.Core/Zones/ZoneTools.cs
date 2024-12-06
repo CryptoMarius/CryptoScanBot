@@ -59,19 +59,26 @@ public class ZoneTools
 
         var symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
 
-        SortedList<(decimal, decimal, CryptoTradeSide), CryptoZone> zoneIndex = new(new ListHelper.DuplicateKeyComparer<(decimal, decimal, CryptoTradeSide)>());
+        // Oops, there are duplicate zones (strange, didn't expect this!)
+        // We remove the duplicates with this code which is fine for now.
+        // (still curious why this is happening..... ENAUSDT 14 Aug 23:00 UTC)
+        SortedList<(decimal, decimal, CryptoTradeSide), CryptoZone> zoneIndex = [];
         foreach (var zone in symbolData.ZoneListLong.Values)
-            zoneIndex.Add((zone.Bottom, zone.Top, zone.Side), zone);
+            zoneIndex.TryAdd((zone.Bottom, zone.Top, zone.Side), zone);
         foreach (var zone in symbolData.ZoneListShort.Values)
-            zoneIndex.Add((zone.Bottom, zone.Top, zone.Side), zone);
+            zoneIndex.TryAdd((zone.Bottom, zone.Top, zone.Side), zone);
         symbolData.ResetZoneData();
 
-
+        int inserted = 0;
+        int deleted = 0;
+        int modified = 0;
         foreach (var zigZag in zigZagList)
         {
             if (zigZag.Dominant && !zigZag.Dummy && zigZag.IsValid) // all zones (also the closed ones)
             {
                 CryptoTradeSide side = zigZag.PointType == 'L' ? CryptoTradeSide.Long : CryptoTradeSide.Short;
+
+                // Try to reuse the previous zones.
                 if (!zoneIndex.TryGetValue((zigZag.Bottom, zigZag.Top, side), out CryptoZone? zone))
                 {
                     zone = new()
@@ -106,18 +113,26 @@ public class ZoneTools
                 }
 
                 if (zone.Id > 0)
+                {
+                    modified++;
                     databaseThread.Connection.Update(zone);
+                }
                 else
+                {
+                    inserted++;
                     databaseThread.Connection.Insert(zone);
-
+                }
                 zoneIndex.Remove((zigZag.Bottom, zigZag.Top, side));
             }
         }
 
         // delete the remaining zones
         foreach (var zone in zoneIndex.Values)
+        {
+            deleted++;
             databaseThread.Connection.Delete(zone);
-
+        }
+        GlobalData.AddTextToLogTab($"{symbol.Name} Zones calculated, inserted={inserted} modified={modified} deleted={deleted}");
     }
 
 }
