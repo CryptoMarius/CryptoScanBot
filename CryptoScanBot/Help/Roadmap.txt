@@ -6,23 +6,24 @@ Todo:
 - Deze lijst doornemen en uitdunnen
 - De documentatie bijwerken voor zover mogelijk..
 
+- Scanner - Dominante zones, optimaliseren van bewaren van zones, wordt nu altijd verwijderd en opnieuw bewaard dat is nogal wat overhead
+- Scanner/Trader - Een status/indicator die de status van de scanner en trader aangeeft + soort van verklikker van trading rulez?
+            Het zijn dus 3 lampjes die de status van de scanner, trader en rulez laten zien.
+            Eventueel een geluidje laten horen
+
+
 Scanner:
 - Scanner - Refactor - LimitRates per exchange, is nu alleen voor Binance geregeld, de rest is op basis van aantal aanroepen per minuut
-- Scanner - Dominante zones automatisch laten calculeren via een achtergrond proces
-- Scanner - Grafiek, op de x-as de lokale tijd tonen (dat gaf problemen tijdens de wisseling)
+- Scanner - Grafiek, op de x-as de lokale tijd tonen (maar dat gaf problemen tijdens de wisseling, component verwacht geen dubbele data)
 - Scanner - Dominante zones, ophalen van de candles optimaliseren en delen met de emulator
             De tussenliggende intervallen eventueel ook kunnen berekenen..
-- Scanner - In het nieuwe grafiek formulier de laatste posities laten zien
+- Scanner - Dominante zones: De laatste open of gesloten posities laten zien (bij papertrading)
 - Scanner - Een wat vreemde, de logging naar het logtab kan stoppen? 
             (eens gedetecteerd tijdens het debuggen, geen reden of oplossing gevonden)
-- Scanner - Een splitter toepassen tussen de symbols en het signaal grid
 - Scanner - (als extra voor de gui) De trend berekening laat de aanvullende informatie niet meer zien
             (todo: Waar/hoe het vinkje te plaatsen, toch een debug tabsheet of extra dialoog maken, of excel sheet?)
             Staat nu voorlopig even op de debug tabsheet, weet nog niet wat de beste method c.q. plek is
 - Scanner - Nieuwe libraries voor Skender indicator testen/bekijken/stabiel? (dat is namelijk een pre-release)
-- Scanner/Trader - Een status/indicator die de status van de scanner en trader aangeeft + soort van verklikker van trading rulez?
-            Het zijn dus 3 lampjes die de status van de scanner, trader en rulez laten zien.
-            Eventueel een geluidje laten horen
 - Scanner - Documentatie - Uitleg van de Add Value voor de WGHM/STORSI uitbreiden, er zijn wel wat vragen over geweest.
 - Scanner - Dashboard - Aantal meldingen per dag / week? Iets wat het aantal meldingen laat zien in iedere geval (zie je ook wat als je geen trader gebruikt)
 - Scanner - De grid tekst kleur is zwart in de actuele regel (als je de selectie uitzet met de nieuwe instelling)
@@ -30,7 +31,7 @@ Scanner:
 - Scanner - Kucoin - Het ophalen van candles bij Kucoin wordt 2x gedaan (aldus het logbestand)
 - Scanner - Bybit - Bybit blijft af en toe stil staan (of lijkt stil te staan), wat kan ik hier aan verbeteren?
 - Scanner - Gerapporteerd: Dubbele munten (zelfs de BTCUSDT, wellicht na wisselen van exchanges?)
-- Scanner - Alle exchanges rechtstreeks kunnen benaderen via een url (dat is nogal wat uitzoekwerk)
+- Scanner - Alle exchanges rechtstreeks kunnen benaderen via een url (dat is flink wat uitzoekwerk)
 - Scanner - Gerapporteerd: Het geheugen loopt langzaam op gedurende meerdere weken
             https://memprofiler.com/
             https://www.red-gate.com/products/ants-performance-profiler/
@@ -39,7 +40,7 @@ Scanner:
             https://learn.microsoft.com/en-us/visualstudio/profiling/memory-usage?view=vs-2022
             CLRProfiler 
 - Scanner - Nieuwe munten die toegevoegd worden op de exchange terwijl de scanner loopt worden niet automatisch toegevoegd aan de price- en kline tickers
-            (maar vanwege de herstart na 24 uur worden ze dan wel meegenomen, hoe relevant zijn nieuwe munten?)
+            (maar vanwege de herstart na 24 uur worden ze dan wel meegenomen, hoe relevant zijn nieuwe munten voor de scanner?)
 - Scanner - Limit rates voor Kucoin verder uitwerken (ophalen candles geeft soms een foutmelding, wordt bij een volgende herstart wel hersteld, maar hoort niet zo)
             error getting klines [ServerRateLimitError] 429: Server rate limit exceeded: {"code":"429000","msg":"too many request"}
 - Scanner - Rate limits van de libraries bestuderen en eventueel de ingebouwde vervangen (de interne is aan de voorzichtige kant)
@@ -82,6 +83,7 @@ Emulator:
 - Emulator - Het ophalen van candles gaat niet altijd goed indien de munt nog maar "kort" bestaat, er ontstaat een eindeloze lus
 
 Trading:
+- Trading - Een mogelijkheid inbouwen om de papertrade te resetten (en wellicht ook de assets te configureren)
 - Trading - test account, ENAUSDT, 12-11, standaard papertrade, heeft 2x een sell tp gezet en dus ook 2x verkocht (zo wordt je snel rijk). Wat gaat daar precies fout?
 - Trading - De Telegram profits commando gaat zo te zien niet goed om met short posities (verlies trades kan, maar dit was iets teveel)
 - Trading - Met een ingevulde SL blijft de bestaande SL staan als er een DCA gezet wordt, SL kan boven de DCA staan, klopt niet!

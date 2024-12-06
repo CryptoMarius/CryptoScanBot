@@ -5,7 +5,17 @@ CryptoScanBot release historie:
 
 - Trading - Recentere signalen overschrijven de vorige waardoor hogere timeframes mogelijk niet aan bod komen
 
-- Scanner - In het nieuwe grafiek formulier de laatste signalen laten zien
+- Scanner - Een splitter toepassen tussen de symbols en het signaal grid +bewaren van de breedte
+- Scanner - Dominante zones: Ook de laatste in bewerking zijnde candle tekenen (op basis van de lagere timeframes)
+- Scanner - Dominante zones: Via een shortcut naar de volgende symbol kunnen gaan (ctrl + alt + arrow left/right)
+- Scanner - Dominante zones: Automatisch laten calculeren via een achtergrond proces
+- Scanner - De testknop voor de geluiden werkt een tweede keer niet
+- Scanner - Database update problemen, SQLite Error 1: 'duplicate column name: CreateTime'.
+- Scanner - De eerste en laatste 3 karakters van alle api's en webhooks laten zien (ter controle)..
+- Scanner - Dominante zones: De "spook" zone meldingen opgelost
+- Scanner - Negeren van munten zoals de BTCUSDT_241227, BTCUSDT_250328 en ETHUSDT_241227 (naam komt niet overeen met de base+quote).
+            De scanner denkt dat het dezelfde is als de BTCUSDT of ETHUSDT en dat geeft onverwachte meldingen en/of zones
+- Scanner - Dominante zones: De laatste signalen laten zien (kleine rode puntjes)
 - Scanner - Dominante zones het chart formulier multiexchange maken (was Bybit Spot specifiek)
             (dat is een grote refactoring geweest, zou effect kunnen hebben op ophalen candles)
 - Scanner - Opgelost: De candles van de nieuwe munten worden wel opgehaald, maar het ophalen blijft steken in niemandsland (wil niet naar het begin)
@@ -28,13 +38,13 @@ CryptoScanBot release historie:
 
 - Scanner - Dominante zones configuratie van geluidjes, percentages.
 - Scanner - Dominante zones configuratie van filtermogelijkheden op de "ruwe" zone en de ingezoomde zones
-- Scanner - De fib bij de zones tonen (een zigzag op high/low komt niet altijd overeen met de open/close)
-- Scanner - Dominante zones optimaliseren, niet alles hoeft elke keer berekend te worden (verwijderen zigzags bij deviation%)
-- Scanner - Dominante zones inzien, tonen van een croshair en coordinaten in de sub-titel
-- Scanner - Dominante zones inzien, UTC / local display? (dat loopt nu vreemd door elkaar zo te zien, controleren!)
-- Scanner - Dominante zones inzien, coordinaten en een croshair toegevoegd
-- Scanner - Dominante zones inzien, de extra H of L die worden toegevoegd laten zien dmv witte bolletjes
-- Scanner - Trend berekening, een bugje aangepast waardoor een extra H of L werdt toegevoegd die de trend mogelijk kan verstoren
+- Scanner - Dominante zones: De fib bij de zones tonen (een zigzag op high/low komt niet altijd overeen met de open/close)
+- Scanner - Dominante zones: Optimaliseren, niet alles hoeft elke keer berekend te worden (verwijderen zigzags bij deviation%)
+- Scanner - Dominante zones: Tonen van een croshair verbeterd en de coordinaten in de sub-titel laten zien
+- Scanner - Dominante zones: UTC / local display? (dat loopt nu vreemd door elkaar zo te zien, controleren!)
+- Scanner - Dominante zones: Coordinaten en een croshair toegevoegd
+- Scanner - Dominante zones: De extra H of L die worden toegevoegd laten zien dmv witte bolletjes
+- Scanner - Trend berekening: Een bugje aangepast waardoor een extra H of L werdt toegevoegd die de trend mogelijk kan verstoren
 
 03-11-2024 1.9.4.1104
 
