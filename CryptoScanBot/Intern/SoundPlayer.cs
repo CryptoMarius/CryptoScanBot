@@ -7,12 +7,12 @@ namespace CryptoScanBot.Intern;
 static public class ThreadSoundPlayer
 {
     private static Thread? soundThread = null;
-    private static readonly BlockingCollection<string> soundQueue = new();
+    private static readonly BlockingCollection<(string soundFile, bool test)> soundQueue = new();
     private static readonly CancellationTokenSource soundCancelToken = new();
 
-    public static void AddToQueue(string filename)
+    public static void AddToQueue(string soundFile, bool test)
     {
-        soundQueue.Add(filename);
+        soundQueue.Add((soundFile, test));
         StartSoundThread();
     }
 
@@ -43,16 +43,16 @@ static public class ThreadSoundPlayer
         {
             // https://stackoverflow.com/questions/22208258/how-to-play-sounds-asynchronuously-but-themselves-in-a-queue
             using System.Media.SoundPlayer soundPlayer = new();
-            foreach (string text in soundQueue.GetConsumingEnumerable(soundCancelToken.Token))
+            foreach ((string soundFile, bool test) in soundQueue.GetConsumingEnumerable(soundCancelToken.Token))
             {
                 string fileName;
-                if (Path.GetDirectoryName(text) != "")
-                    fileName = text;
+                if (Path.GetDirectoryName(soundFile) != "")
+                    fileName = soundFile;
                 else
-                    fileName = GlobalData.AppPath + @"\Sounds\" + text;
+                    fileName = GlobalData.AppPath + @"\Sounds\" + soundFile;
 
                 // Als we binnen x seconden hetzelfde bestand afspelen negeren we het (anders een eindeloze reeks met pingeltjes)
-                if (lastFile == fileName && (DateTime.Now - last).TotalSeconds < 15)
+                if (!test && lastFile == fileName && (DateTime.Now - last).TotalSeconds < 15)
                     continue;
 
                 last = DateTime.Now;

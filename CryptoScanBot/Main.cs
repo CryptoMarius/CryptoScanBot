@@ -17,6 +17,7 @@ using Nito.AsyncEx;
 using System.Text;
 using System.Text.Json;
 using CryptoScanBot.Core.Json;
+using CryptoScanBot.Core.Zones;
 
 namespace CryptoScanBot;
 
@@ -119,13 +120,13 @@ public partial class FrmMain : Form
         // Instelling laden
         GlobalData.LoadSettings();
 
-        GridSymbolView = new() {  Grid = dataGridViewSymbols, List = SymbolListView, ColumnList = GlobalData.SettingsUser.GridColumnsSymbol };
+        GridSymbolView = new() { Grid = dataGridViewSymbols, List = SymbolListView, ColumnList = GlobalData.SettingsUser.GridColumnsSymbol };
         GridSymbolView.InitGrid();
 
         GridSignalView = new() { Grid = dataGridViewSignals, List = SignalListView, ColumnList = GlobalData.SettingsUser.GridColumnsSignal };
         GridSignalView.InitGrid();
 
-        GridPositionOpenView = new() { Grid = dataGridViewPositionOpen, List = PositionOpenListView, ColumnList = GlobalData.SettingsUser.GridColumnsPositionsOpen};
+        GridPositionOpenView = new() { Grid = dataGridViewPositionOpen, List = PositionOpenListView, ColumnList = GlobalData.SettingsUser.GridColumnsPositionsOpen };
         GridPositionOpenView.InitGrid();
 
         GridPositionClosedView = new() { Grid = dataGridViewPositionClosed, List = PositionClosedListView, ColumnList = GlobalData.SettingsUser.GridColumnsPositionsClosed };
@@ -173,7 +174,12 @@ public partial class FrmMain : Form
 
     private void FrmMain_Shown(object? sender, EventArgs? e)
     {
+        // This does not work in the Load, so moved to the Show..
+        if (GlobalData.SettingsUser.SplitterDistance > 0)
+            splitContainer1.SplitterDistance = GlobalData.SettingsUser.SplitterDistance;
         GlobalData.ApplicationIsShowed = true;
+        // This event also reacts on the form resize, so manually..
+        splitContainer1.SplitterMoved += SplitContainerSplitterMoved;
     }
 
 
@@ -265,7 +271,9 @@ public partial class FrmMain : Form
         ApplicationPlaySounds.Checked = GlobalData.Settings.Signal.SoundsActive;
         ApplicationCreateSignals.Checked = GlobalData.Settings.Signal.Active;
 
-        panelLeft.Visible = !GlobalData.Settings.General.HideSymbolsOnTheLeft;
+
+        splitContainer1.Panel1Collapsed = GlobalData.Settings.General.HideSymbolsOnTheLeft;
+        //panelLeft.Visible = !GlobalData.Settings.General.HideSymbolsOnTheLeft;
 
         SetApplicationTitle();
 
@@ -320,7 +328,7 @@ public partial class FrmMain : Form
         if (IsHandleCreated)
         {
             if (GlobalData.Settings.Signal.SoundsActive)
-                ThreadSoundPlayer.AddToQueue(text);
+                ThreadSoundPlayer.AddToQueue(text, test);
         }
     }
 
@@ -1143,7 +1151,7 @@ public partial class FrmMain : Form
                 {
                     ApplicationBackTestMode_Click(sender, e);
                     if (GlobalData.ActiveAccount!.AccountType == CryptoAccountType.PaperTrade)
-                        await PaperTrading.CheckPositionsAfterRestart(GlobalData.ActiveAccount!); 
+                        await PaperTrading.CheckPositionsAfterRestart(GlobalData.ActiveAccount!);
                 }
 
                 BackTestAsync();
@@ -1171,7 +1179,8 @@ public partial class FrmMain : Form
         Emulator.DeletePreviousData();
         RefreshDataGrids();
 
-        var _ = Task.Run(async () => { 
+        var _ = Task.Run(async () =>
+        {
             await Emulator.Execute(btcSymbol, symbol);
             PositionsHaveChangedEvent("");
             RefreshDataGrids();
@@ -1179,4 +1188,14 @@ public partial class FrmMain : Form
         return;
     }
 
+
+    private void SplitContainerSplitterMoved(object? sender, SplitterEventArgs e)
+    {
+        // save SplitterDistance to user settings
+        if (GlobalData.SettingsUser.SplitterDistance != splitContainer1.SplitterDistance)
+        {
+            GlobalData.SettingsUser.SplitterDistance = splitContainer1.SplitterDistance;
+            GlobalData.SaveUserSettings();
+        }
+    }
 }

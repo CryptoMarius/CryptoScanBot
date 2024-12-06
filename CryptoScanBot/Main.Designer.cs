@@ -25,8 +25,8 @@
             symbolFilter = new TextBox();
             panelClient = new Panel();
             tabControl = new TabControl();
-            tabPageDashBoard = new TabPage();
-            dashBoardControl1 = new DashBoardControl();
+            tabPagewebViewDummy = new TabPage();
+            webViewDummy = new Microsoft.Web.WebView2.WinForms.WebView2();
             tabPageSignals = new TabPage();
             dataGridViewSignals = new DataGridView();
             tabPageBrowser = new TabPage();
@@ -35,14 +35,15 @@
             dataGridViewPositionOpen = new DataGridView();
             tabPagePositionsClosed = new TabPage();
             dataGridViewPositionClosed = new DataGridView();
+            tabPageDashBoard = new TabPage();
+            dashBoardControl1 = new DashBoardControl();
             tabPageLog = new TabPage();
             TextBoxLog = new TextBox();
-            tabPagewebViewDummy = new TabPage();
-            webViewDummy = new Microsoft.Web.WebView2.WinForms.WebView2();
             panelClient1 = new Panel();
             dashBoardInformation1 = new TradingView.DashBoardInformation();
             MenuMain = new ToolStripMenuItem();
             applicationMenuStrip = new MenuStrip();
+            splitContainer1 = new SplitContainer();
             panelLeft.SuspendLayout();
             tabControlSymbols.SuspendLayout();
             tabPageSymbols.SuspendLayout();
@@ -50,7 +51,8 @@
             panelLeftTop.SuspendLayout();
             panelClient.SuspendLayout();
             tabControl.SuspendLayout();
-            tabPageDashBoard.SuspendLayout();
+            tabPagewebViewDummy.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)webViewDummy).BeginInit();
             tabPageSignals.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dataGridViewSignals).BeginInit();
             tabPageBrowser.SuspendLayout();
@@ -59,22 +61,27 @@
             ((System.ComponentModel.ISupportInitialize)dataGridViewPositionOpen).BeginInit();
             tabPagePositionsClosed.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dataGridViewPositionClosed).BeginInit();
+            tabPageDashBoard.SuspendLayout();
             tabPageLog.SuspendLayout();
-            tabPagewebViewDummy.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)webViewDummy).BeginInit();
             panelClient1.SuspendLayout();
             applicationMenuStrip.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
+            splitContainer1.Panel1.SuspendLayout();
+            splitContainer1.Panel2.SuspendLayout();
+            splitContainer1.SuspendLayout();
             SuspendLayout();
             // 
             // panelLeft
             // 
+            panelLeft.AutoSize = true;
+            panelLeft.AutoSizeMode = AutoSizeMode.GrowAndShrink;
             panelLeft.Controls.Add(tabControlSymbols);
             panelLeft.Controls.Add(panelLeftTop);
-            panelLeft.Dock = DockStyle.Left;
-            panelLeft.Location = new Point(0, 24);
+            panelLeft.Dock = DockStyle.Fill;
+            panelLeft.Location = new Point(0, 0);
             panelLeft.Margin = new Padding(2);
             panelLeft.Name = "panelLeft";
-            panelLeft.Size = new Size(236, 723);
+            panelLeft.Size = new Size(225, 723);
             panelLeft.TabIndex = 12;
             // 
             // tabControlSymbols
@@ -85,7 +92,7 @@
             tabControlSymbols.Location = new Point(0, 103);
             tabControlSymbols.Name = "tabControlSymbols";
             tabControlSymbols.SelectedIndex = 0;
-            tabControlSymbols.Size = new Size(236, 620);
+            tabControlSymbols.Size = new Size(225, 620);
             tabControlSymbols.TabIndex = 2;
             // 
             // tabPageSymbols
@@ -93,7 +100,7 @@
             tabPageSymbols.Controls.Add(dataGridViewSymbols);
             tabPageSymbols.Location = new Point(4, 27);
             tabPageSymbols.Name = "tabPageSymbols";
-            tabPageSymbols.Size = new Size(228, 589);
+            tabPageSymbols.Size = new Size(217, 589);
             tabPageSymbols.TabIndex = 0;
             tabPageSymbols.Text = "Symbols";
             tabPageSymbols.UseVisualStyleBackColor = true;
@@ -104,7 +111,7 @@
             dataGridViewSymbols.Dock = DockStyle.Fill;
             dataGridViewSymbols.Location = new Point(0, 0);
             dataGridViewSymbols.Name = "dataGridViewSymbols";
-            dataGridViewSymbols.Size = new Size(228, 589);
+            dataGridViewSymbols.Size = new Size(217, 589);
             dataGridViewSymbols.TabIndex = 0;
             // 
             // panelLeftTop
@@ -115,7 +122,7 @@
             panelLeftTop.Location = new Point(0, 0);
             panelLeftTop.Margin = new Padding(2);
             panelLeftTop.Name = "panelLeftTop";
-            panelLeftTop.Size = new Size(236, 103);
+            panelLeftTop.Size = new Size(225, 103);
             panelLeftTop.TabIndex = 1;
             // 
             // label1
@@ -144,7 +151,7 @@
             panelClient.Location = new Point(0, 103);
             panelClient.Margin = new Padding(2);
             panelClient.Name = "panelClient";
-            panelClient.Size = new Size(1314, 620);
+            panelClient.Size = new Size(1321, 620);
             panelClient.TabIndex = 13;
             // 
             // tabControl
@@ -162,140 +169,10 @@
             tabControl.Margin = new Padding(2);
             tabControl.Name = "tabControl";
             tabControl.SelectedIndex = 0;
-            tabControl.Size = new Size(1314, 620);
+            tabControl.Size = new Size(1321, 620);
             tabControl.TabIndex = 12;
             tabControl.SelectedIndexChanged += TabControl_SelectedIndexChanged;
             tabControl.TabIndexChanged += TimerClearMemo_Tick;
-            // 
-            // tabPageDashBoard
-            // 
-            tabPageDashBoard.Controls.Add(dashBoardControl1);
-            tabPageDashBoard.Font = new Font("Segoe UI", 9F);
-            tabPageDashBoard.Location = new Point(4, 27);
-            tabPageDashBoard.Name = "tabPageDashBoard";
-            tabPageDashBoard.Padding = new Padding(3);
-            tabPageDashBoard.Size = new Size(1306, 589);
-            tabPageDashBoard.TabIndex = 9;
-            tabPageDashBoard.Text = "Dashboard";
-            tabPageDashBoard.UseVisualStyleBackColor = true;
-            // 
-            // dashBoardControl1
-            // 
-            dashBoardControl1.Dock = DockStyle.Fill;
-            dashBoardControl1.Location = new Point(3, 3);
-            dashBoardControl1.Name = "dashBoardControl1";
-            dashBoardControl1.Size = new Size(1300, 583);
-            dashBoardControl1.TabIndex = 0;
-            // 
-            // tabPageSignals
-            // 
-            tabPageSignals.Controls.Add(dataGridViewSignals);
-            tabPageSignals.Location = new Point(4, 27);
-            tabPageSignals.Margin = new Padding(4, 3, 4, 3);
-            tabPageSignals.Name = "tabPageSignals";
-            tabPageSignals.Padding = new Padding(4, 3, 4, 3);
-            tabPageSignals.Size = new Size(1306, 589);
-            tabPageSignals.TabIndex = 4;
-            tabPageSignals.Text = "Signals";
-            tabPageSignals.UseVisualStyleBackColor = true;
-            // 
-            // dataGridViewSignals
-            // 
-            dataGridViewSignals.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridViewSignals.Dock = DockStyle.Fill;
-            dataGridViewSignals.Location = new Point(4, 3);
-            dataGridViewSignals.Name = "dataGridViewSignals";
-            dataGridViewSignals.Size = new Size(1298, 583);
-            dataGridViewSignals.TabIndex = 1;
-            // 
-            // tabPageBrowser
-            // 
-            tabPageBrowser.Controls.Add(webViewTradingView);
-            tabPageBrowser.Location = new Point(4, 27);
-            tabPageBrowser.Margin = new Padding(4, 3, 4, 3);
-            tabPageBrowser.Name = "tabPageBrowser";
-            tabPageBrowser.Padding = new Padding(4, 3, 4, 3);
-            tabPageBrowser.Size = new Size(1306, 589);
-            tabPageBrowser.TabIndex = 5;
-            tabPageBrowser.Text = "Tradingview";
-            tabPageBrowser.UseVisualStyleBackColor = true;
-            // 
-            // webViewTradingView
-            // 
-            webViewTradingView.AllowExternalDrop = true;
-            webViewTradingView.CreationProperties = null;
-            webViewTradingView.DefaultBackgroundColor = Color.White;
-            webViewTradingView.Dock = DockStyle.Fill;
-            webViewTradingView.Location = new Point(4, 3);
-            webViewTradingView.Margin = new Padding(4, 3, 4, 3);
-            webViewTradingView.Name = "webViewTradingView";
-            webViewTradingView.Size = new Size(1298, 583);
-            webViewTradingView.TabIndex = 0;
-            webViewTradingView.ZoomFactor = 1D;
-            // 
-            // tabPagePositionsOpen
-            // 
-            tabPagePositionsOpen.Controls.Add(dataGridViewPositionOpen);
-            tabPagePositionsOpen.Location = new Point(4, 27);
-            tabPagePositionsOpen.Name = "tabPagePositionsOpen";
-            tabPagePositionsOpen.Padding = new Padding(3);
-            tabPagePositionsOpen.Size = new Size(1306, 589);
-            tabPagePositionsOpen.TabIndex = 7;
-            tabPagePositionsOpen.Text = "Open positions";
-            tabPagePositionsOpen.UseVisualStyleBackColor = true;
-            // 
-            // dataGridViewPositionOpen
-            // 
-            dataGridViewPositionOpen.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridViewPositionOpen.Dock = DockStyle.Fill;
-            dataGridViewPositionOpen.Location = new Point(3, 3);
-            dataGridViewPositionOpen.Name = "dataGridViewPositionOpen";
-            dataGridViewPositionOpen.Size = new Size(1300, 583);
-            dataGridViewPositionOpen.TabIndex = 1;
-            // 
-            // tabPagePositionsClosed
-            // 
-            tabPagePositionsClosed.Controls.Add(dataGridViewPositionClosed);
-            tabPagePositionsClosed.Location = new Point(4, 27);
-            tabPagePositionsClosed.Name = "tabPagePositionsClosed";
-            tabPagePositionsClosed.Padding = new Padding(3);
-            tabPagePositionsClosed.Size = new Size(1306, 589);
-            tabPagePositionsClosed.TabIndex = 8;
-            tabPagePositionsClosed.Text = "Closed positions";
-            tabPagePositionsClosed.UseVisualStyleBackColor = true;
-            // 
-            // dataGridViewPositionClosed
-            // 
-            dataGridViewPositionClosed.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridViewPositionClosed.Dock = DockStyle.Fill;
-            dataGridViewPositionClosed.Location = new Point(3, 3);
-            dataGridViewPositionClosed.Name = "dataGridViewPositionClosed";
-            dataGridViewPositionClosed.Size = new Size(1300, 583);
-            dataGridViewPositionClosed.TabIndex = 1;
-            // 
-            // tabPageLog
-            // 
-            tabPageLog.Controls.Add(TextBoxLog);
-            tabPageLog.Location = new Point(4, 27);
-            tabPageLog.Margin = new Padding(2);
-            tabPageLog.Name = "tabPageLog";
-            tabPageLog.Padding = new Padding(2);
-            tabPageLog.Size = new Size(1306, 589);
-            tabPageLog.TabIndex = 1;
-            tabPageLog.Text = "Log";
-            tabPageLog.UseVisualStyleBackColor = true;
-            // 
-            // TextBoxLog
-            // 
-            TextBoxLog.BorderStyle = BorderStyle.None;
-            TextBoxLog.Dock = DockStyle.Fill;
-            TextBoxLog.Location = new Point(2, 2);
-            TextBoxLog.Margin = new Padding(2);
-            TextBoxLog.Multiline = true;
-            TextBoxLog.Name = "TextBoxLog";
-            TextBoxLog.ScrollBars = ScrollBars.Both;
-            TextBoxLog.Size = new Size(1302, 585);
-            TextBoxLog.TabIndex = 1;
             // 
             // tabPagewebViewDummy
             // 
@@ -304,7 +181,7 @@
             tabPagewebViewDummy.Margin = new Padding(4, 3, 4, 3);
             tabPagewebViewDummy.Name = "tabPagewebViewDummy";
             tabPagewebViewDummy.Padding = new Padding(4, 3, 4, 3);
-            tabPagewebViewDummy.Size = new Size(1306, 589);
+            tabPagewebViewDummy.Size = new Size(1313, 589);
             tabPagewebViewDummy.TabIndex = 6;
             tabPagewebViewDummy.Text = "WebView (dummy)";
             tabPagewebViewDummy.UseVisualStyleBackColor = true;
@@ -318,19 +195,149 @@
             webViewDummy.Location = new Point(4, 3);
             webViewDummy.Margin = new Padding(4, 3, 4, 3);
             webViewDummy.Name = "webViewDummy";
-            webViewDummy.Size = new Size(1298, 583);
+            webViewDummy.Size = new Size(1305, 583);
             webViewDummy.TabIndex = 1;
             webViewDummy.ZoomFactor = 1D;
+            // 
+            // tabPageSignals
+            // 
+            tabPageSignals.Controls.Add(dataGridViewSignals);
+            tabPageSignals.Location = new Point(4, 27);
+            tabPageSignals.Margin = new Padding(4, 3, 4, 3);
+            tabPageSignals.Name = "tabPageSignals";
+            tabPageSignals.Padding = new Padding(4, 3, 4, 3);
+            tabPageSignals.Size = new Size(1313, 589);
+            tabPageSignals.TabIndex = 4;
+            tabPageSignals.Text = "Signals";
+            tabPageSignals.UseVisualStyleBackColor = true;
+            // 
+            // dataGridViewSignals
+            // 
+            dataGridViewSignals.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dataGridViewSignals.Dock = DockStyle.Fill;
+            dataGridViewSignals.Location = new Point(4, 3);
+            dataGridViewSignals.Name = "dataGridViewSignals";
+            dataGridViewSignals.Size = new Size(1305, 583);
+            dataGridViewSignals.TabIndex = 1;
+            // 
+            // tabPageBrowser
+            // 
+            tabPageBrowser.Controls.Add(webViewTradingView);
+            tabPageBrowser.Location = new Point(4, 27);
+            tabPageBrowser.Margin = new Padding(4, 3, 4, 3);
+            tabPageBrowser.Name = "tabPageBrowser";
+            tabPageBrowser.Padding = new Padding(4, 3, 4, 3);
+            tabPageBrowser.Size = new Size(1313, 589);
+            tabPageBrowser.TabIndex = 5;
+            tabPageBrowser.Text = "Tradingview";
+            tabPageBrowser.UseVisualStyleBackColor = true;
+            // 
+            // webViewTradingView
+            // 
+            webViewTradingView.AllowExternalDrop = true;
+            webViewTradingView.CreationProperties = null;
+            webViewTradingView.DefaultBackgroundColor = Color.White;
+            webViewTradingView.Dock = DockStyle.Fill;
+            webViewTradingView.Location = new Point(4, 3);
+            webViewTradingView.Margin = new Padding(4, 3, 4, 3);
+            webViewTradingView.Name = "webViewTradingView";
+            webViewTradingView.Size = new Size(1305, 583);
+            webViewTradingView.TabIndex = 0;
+            webViewTradingView.ZoomFactor = 1D;
+            // 
+            // tabPagePositionsOpen
+            // 
+            tabPagePositionsOpen.Controls.Add(dataGridViewPositionOpen);
+            tabPagePositionsOpen.Location = new Point(4, 27);
+            tabPagePositionsOpen.Name = "tabPagePositionsOpen";
+            tabPagePositionsOpen.Padding = new Padding(3);
+            tabPagePositionsOpen.Size = new Size(1313, 589);
+            tabPagePositionsOpen.TabIndex = 7;
+            tabPagePositionsOpen.Text = "Open positions";
+            tabPagePositionsOpen.UseVisualStyleBackColor = true;
+            // 
+            // dataGridViewPositionOpen
+            // 
+            dataGridViewPositionOpen.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dataGridViewPositionOpen.Dock = DockStyle.Fill;
+            dataGridViewPositionOpen.Location = new Point(3, 3);
+            dataGridViewPositionOpen.Name = "dataGridViewPositionOpen";
+            dataGridViewPositionOpen.Size = new Size(1307, 583);
+            dataGridViewPositionOpen.TabIndex = 1;
+            // 
+            // tabPagePositionsClosed
+            // 
+            tabPagePositionsClosed.Controls.Add(dataGridViewPositionClosed);
+            tabPagePositionsClosed.Location = new Point(4, 27);
+            tabPagePositionsClosed.Name = "tabPagePositionsClosed";
+            tabPagePositionsClosed.Padding = new Padding(3);
+            tabPagePositionsClosed.Size = new Size(1313, 589);
+            tabPagePositionsClosed.TabIndex = 8;
+            tabPagePositionsClosed.Text = "Closed positions";
+            tabPagePositionsClosed.UseVisualStyleBackColor = true;
+            // 
+            // dataGridViewPositionClosed
+            // 
+            dataGridViewPositionClosed.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dataGridViewPositionClosed.Dock = DockStyle.Fill;
+            dataGridViewPositionClosed.Location = new Point(3, 3);
+            dataGridViewPositionClosed.Name = "dataGridViewPositionClosed";
+            dataGridViewPositionClosed.Size = new Size(1307, 583);
+            dataGridViewPositionClosed.TabIndex = 1;
+            // 
+            // tabPageDashBoard
+            // 
+            tabPageDashBoard.Controls.Add(dashBoardControl1);
+            tabPageDashBoard.Font = new Font("Segoe UI", 9F);
+            tabPageDashBoard.Location = new Point(4, 27);
+            tabPageDashBoard.Name = "tabPageDashBoard";
+            tabPageDashBoard.Padding = new Padding(3);
+            tabPageDashBoard.Size = new Size(1313, 589);
+            tabPageDashBoard.TabIndex = 9;
+            tabPageDashBoard.Text = "Dashboard";
+            tabPageDashBoard.UseVisualStyleBackColor = true;
+            // 
+            // dashBoardControl1
+            // 
+            dashBoardControl1.Dock = DockStyle.Fill;
+            dashBoardControl1.Location = new Point(3, 3);
+            dashBoardControl1.Name = "dashBoardControl1";
+            dashBoardControl1.Size = new Size(1307, 583);
+            dashBoardControl1.TabIndex = 0;
+            // 
+            // tabPageLog
+            // 
+            tabPageLog.Controls.Add(TextBoxLog);
+            tabPageLog.Location = new Point(4, 27);
+            tabPageLog.Margin = new Padding(2);
+            tabPageLog.Name = "tabPageLog";
+            tabPageLog.Padding = new Padding(2);
+            tabPageLog.Size = new Size(1313, 589);
+            tabPageLog.TabIndex = 1;
+            tabPageLog.Text = "Log";
+            tabPageLog.UseVisualStyleBackColor = true;
+            // 
+            // TextBoxLog
+            // 
+            TextBoxLog.BorderStyle = BorderStyle.None;
+            TextBoxLog.Dock = DockStyle.Fill;
+            TextBoxLog.Location = new Point(2, 2);
+            TextBoxLog.Margin = new Padding(2);
+            TextBoxLog.Multiline = true;
+            TextBoxLog.Name = "TextBoxLog";
+            TextBoxLog.ScrollBars = ScrollBars.Both;
+            TextBoxLog.Size = new Size(1309, 585);
+            TextBoxLog.TabIndex = 1;
             // 
             // panelClient1
             // 
             panelClient1.Controls.Add(panelClient);
             panelClient1.Controls.Add(dashBoardInformation1);
             panelClient1.Dock = DockStyle.Fill;
-            panelClient1.Location = new Point(236, 24);
+            panelClient1.Location = new Point(0, 0);
             panelClient1.Margin = new Padding(2);
             panelClient1.Name = "panelClient1";
-            panelClient1.Size = new Size(1314, 723);
+            panelClient1.Size = new Size(1321, 723);
             panelClient1.TabIndex = 12;
             // 
             // dashBoardInformation1
@@ -338,7 +345,7 @@
             dashBoardInformation1.Dock = DockStyle.Top;
             dashBoardInformation1.Location = new Point(0, 0);
             dashBoardInformation1.Name = "dashBoardInformation1";
-            dashBoardInformation1.Size = new Size(1314, 103);
+            dashBoardInformation1.Size = new Size(1321, 103);
             dashBoardInformation1.TabIndex = 15;
             // 
             // MenuMain
@@ -359,13 +366,29 @@
             applicationMenuStrip.TabIndex = 16;
             applicationMenuStrip.Text = "menuStrip1";
             // 
+            // splitContainer1
+            // 
+            splitContainer1.Dock = DockStyle.Fill;
+            splitContainer1.Location = new Point(0, 24);
+            splitContainer1.Name = "splitContainer1";
+            // 
+            // splitContainer1.Panel1
+            // 
+            splitContainer1.Panel1.Controls.Add(panelLeft);
+            // 
+            // splitContainer1.Panel2
+            // 
+            splitContainer1.Panel2.Controls.Add(panelClient1);
+            splitContainer1.Size = new Size(1550, 723);
+            splitContainer1.SplitterDistance = 225;
+            splitContainer1.TabIndex = 17;
+            // 
             // FrmMain
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1550, 747);
-            Controls.Add(panelClient1);
-            Controls.Add(panelLeft);
+            Controls.Add(splitContainer1);
             Controls.Add(applicationMenuStrip);
             Icon = (Icon)resources.GetObject("$this.Icon");
             Margin = new Padding(2);
@@ -379,7 +402,8 @@
             panelLeftTop.PerformLayout();
             panelClient.ResumeLayout(false);
             tabControl.ResumeLayout(false);
-            tabPageDashBoard.ResumeLayout(false);
+            tabPagewebViewDummy.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)webViewDummy).EndInit();
             tabPageSignals.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)dataGridViewSignals).EndInit();
             tabPageBrowser.ResumeLayout(false);
@@ -388,13 +412,17 @@
             ((System.ComponentModel.ISupportInitialize)dataGridViewPositionOpen).EndInit();
             tabPagePositionsClosed.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)dataGridViewPositionClosed).EndInit();
+            tabPageDashBoard.ResumeLayout(false);
             tabPageLog.ResumeLayout(false);
             tabPageLog.PerformLayout();
-            tabPagewebViewDummy.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)webViewDummy).EndInit();
             panelClient1.ResumeLayout(false);
             applicationMenuStrip.ResumeLayout(false);
             applicationMenuStrip.PerformLayout();
+            splitContainer1.Panel1.ResumeLayout(false);
+            splitContainer1.Panel1.PerformLayout();
+            splitContainer1.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
+            splitContainer1.ResumeLayout(false);
             ResumeLayout(false);
             PerformLayout();
         }
@@ -427,6 +455,7 @@
         private DataGridView dataGridViewSignals;
         private DataGridView dataGridViewPositionOpen;
         private DataGridView dataGridViewPositionClosed;
+        private SplitContainer splitContainer1;
     }
 }
 

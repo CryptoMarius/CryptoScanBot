@@ -60,6 +60,7 @@ public partial class FrmSettings : Form
         LabelDebugSymbol.Visible = false;
         EditDebugAssetManagement.Visible = false;
 #endif
+        EditGlobalDataRemoveSignalAfterxCandles.Maximum = +120;
 
         EditAnalysisMinChangePercentage.Minimum = -100;
         EditAnalysisEffectivePercentage.Maximum = +1000;
