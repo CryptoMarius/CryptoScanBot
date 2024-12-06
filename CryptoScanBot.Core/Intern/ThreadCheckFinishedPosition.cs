@@ -290,7 +290,7 @@ public class ThreadCheckFinishedPosition
 
     public async Task ExecuteAsync()
     {
-        GlobalData.AddTextToLogTab("ThreadCheckFinishedPosition thread start");
+        //GlobalData.AddTextToLogTab("ThreadCheckFinishedPosition thread start");
 
         cancellationToken.TryReset();
         using CryptoDatabase database = new();
@@ -323,6 +323,6 @@ public class ThreadCheckFinishedPosition
                 await ProcessPosition(database, item.Value.position, item.Value.orderId, item.Value.status);
         }
 
-        GlobalData.AddTextToLogTab("ThreadCheckFinishedPosition thread exit");
+        //GlobalData.AddTextToLogTab("ThreadCheckFinishedPosition thread exit");
     }
 }

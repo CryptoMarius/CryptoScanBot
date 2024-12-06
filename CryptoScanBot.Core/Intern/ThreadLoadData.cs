@@ -365,17 +365,19 @@ public class ThreadLoadData
                 //************************************************************************************
                 _ = Task.Run(GlobalData.ThreadSaveObjects!.Execute).ConfigureAwait(false);
                 _ = Task.Run(GlobalData.ThreadMonitorCandle!.Execute).ConfigureAwait(false);
+                _ = Task.Run(GlobalData.ThreadZoneCalculate!.ExecuteAsync).ConfigureAwait(false);
+               
 
                 //************************************************************************************
                 // Nu we de achterstand ingehaald hebben kunnen/mogen we analyseren (signals maken)
                 //************************************************************************************
                 if (GlobalData.TradingApi.Key != "")
                 {
-                    GlobalData.AddTextToLogTab("Starting task for handling orders");
+                    //GlobalData.AddTextToLogTab("Starting task for handling orders");
                     _ = Task.Run(async () => { await GlobalData.ThreadMonitorOrder!.ExecuteAsync(); });
                 }
 
-                GlobalData.AddTextToLogTab("Starting task for checking positions");
+                //GlobalData.AddTextToLogTab("Starting task for checking positions");
                 _ = Task.Run(async () => { await GlobalData.ThreadCheckPosition!.ExecuteAsync(); });
 
                 await TradeTools.CheckOpenPositions();

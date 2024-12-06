@@ -50,7 +50,7 @@ public static class ThreadTelegramBot
         if (bot != null)
             Stop();
 
-        GlobalData.AddTextToLogTab(string.Format("Start telegram handler"));
+        //GlobalData.AddTextToLogTab(string.Format("Start telegram handler"));
         Token = token;
         ChatId = chatId;
 
@@ -63,7 +63,7 @@ public static class ThreadTelegramBot
     {
         if (bot != null)
         {
-            GlobalData.AddTextToLogTab(string.Format("Stop telegram handler"));
+            //GlobalData.AddTextToLogTab(string.Format("Stop telegram handler"));
             bot.Stop();
         }
     }

@@ -25,7 +25,7 @@ public class ThreadSaveObjects
     public void Stop()
     {
         cancellationToken.Cancel();
-        GlobalData.AddTextToLogTab(string.Format("Stop saving objects"));
+        //GlobalData.AddTextToLogTab(string.Format("Stop saving objects"));
     }
 
 
@@ -37,7 +37,7 @@ public class ThreadSaveObjects
 
     public void Execute()
     {
-        GlobalData.AddTextToLogTab("Starting task for saving objects");
+        //GlobalData.AddTextToLogTab("Starting task for saving objects");
         try
         {
             foreach (object o in Queue.GetConsumingEnumerable(cancellationToken.Token))

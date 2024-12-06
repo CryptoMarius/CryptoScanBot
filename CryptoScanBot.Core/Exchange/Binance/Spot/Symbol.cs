@@ -158,7 +158,7 @@ public class Symbol() : SymbolBase(), ISymbol
                         if (reportSymbols.Count != 0)
                         {
                             var symbols = string.Join(',', [.. reportSymbols]);
-                            GlobalData.AddTextToLogTab($"{reportSymbols.Count} munten gedeactiveerd {symbols}");
+                            GlobalData.AddTextToLogTab($"{reportSymbols.Count} symbols deactivated {symbols}");
                         }
 
 

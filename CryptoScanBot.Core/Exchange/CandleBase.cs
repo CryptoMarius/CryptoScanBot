@@ -48,7 +48,7 @@ public class CandleBase(ExchangeBase api)
                         await Api.Symbol.GetSymbolsAsync();
 
                     // TODO: Niet alle symbols zijn actief
-                    GlobalData.AddTextToLogTab($"Aantal symbols={exchange.SymbolListName.Values.Count}");
+                    GlobalData.AddTextToLogTab($"{exchange.Name} symbols={exchange.SymbolListName.Values.Count}");
 
 
                     Queue<CryptoSymbol> queue = new();
@@ -112,7 +112,7 @@ public class CandleBase(ExchangeBase api)
                     }
                     await Task.WhenAll(taskList).ConfigureAwait(false);
 
-                    GlobalData.AddTextToLogTab("Candles ophalen klaar");
+                    //GlobalData.AddTextToLogTab("Candles ophalen klaar");
                 }
                 finally
                 {

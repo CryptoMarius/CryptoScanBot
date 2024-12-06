@@ -14,7 +14,7 @@ public class ThreadMonitorCandle
     public void Stop()
     {
         cancellationToken.Cancel();
-        GlobalData.AddTextToLogTab(string.Format("Stop monitor candle"));
+        //GlobalData.AddTextToLogTab(string.Format("Stop monitor candle"));
     }
 
 
@@ -27,7 +27,7 @@ public class ThreadMonitorCandle
 
     public void Execute()
     {
-        GlobalData.AddTextToLogTab("Starting task for creating signals");
+        //GlobalData.AddTextToLogTab("Starting task for creating signals");
         try
         {
             foreach ((CryptoSymbol symbol, CryptoCandle candle) in Queue.GetConsumingEnumerable(cancellationToken.Token))
