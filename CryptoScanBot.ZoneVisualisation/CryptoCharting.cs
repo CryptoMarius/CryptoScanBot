@@ -129,18 +129,12 @@ public class CryptoCharting
         var candleSerie = new CandleStickSeries //CandleStickAndVolumeSeries -> obsolete, symbolData...
         {
             Title = "Candles",
-            //IncreasingColor = OxyColors.LightGreen,
+            //DecreasingColor = OxyColors.Red,
             DecreasingColor = OxyColors.DarkOrange,
             Color = OxyColors.Black,
+            //IncreasingColor = OxyColors.LightGreen,
             IncreasingColor = OxyColors.DarkGreen,
-            //DecreasingColor = OxyColors.Red,
-            //DataFieldX = "QTime",
-            //DataFieldHigh = "H",
-            //DataFieldLow = "L",
-            //DataFieldOpen = "O",
-            //DataFieldClose = "C",
-            //TrackerFormatString = "Date: {0}\nHigh: {1}\nLow: {2}\nOpen: {3}\nClose: {4}" ???
-            TrackerFormatString = "High: {3:0.00}\nLow: {4:0.00}\nOpen: {5:0.00}\nClose: {6:0.00}\nAsOf:{2:yyyy-MM-dd}",
+            TrackerFormatString = "Date: {0}\nHigh: {1}\nLow: {2}\nOpen: {3}\nClose: {4}"
         };
 
         if (symbolInterval.CandleList.Count > 0)
