@@ -6,7 +6,6 @@ Todo:
 - Deze lijst doornemen en uitdunnen
 - De documentatie bijwerken voor zover mogelijk..
 
-- Scanner - Dominante zones, optimaliseren van bewaren van zones, wordt nu altijd verwijderd en opnieuw bewaard dat is nogal wat overhead
 - Scanner/Trader - Een status/indicator die de status van de scanner en trader aangeeft + soort van verklikker van trading rulez?
             Het zijn dus 3 lampjes die de status van de scanner, trader en rulez laten zien.
             Eventueel een geluidje laten horen

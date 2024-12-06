@@ -5,6 +5,7 @@ CryptoScanBot release historie:
 
 - Trading - Recentere signalen overschrijven de vorige waardoor hogere timeframes mogelijk niet aan bod komen
 
+- Scanner - Dominante zones: Optimaliseren van bewaren van zones, wordt nu verwijderd en bewaard (nogal wat overhead)
 - Scanner - Een splitter toepassen tussen de symbols en het signaal grid +bewaren van de breedte
 - Scanner - Dominante zones: Ook de laatste in bewerking zijnde candle tekenen (op basis van de lagere timeframes)
 - Scanner - Dominante zones: Via een shortcut naar de volgende symbol kunnen gaan (ctrl + alt + arrow left/right)
