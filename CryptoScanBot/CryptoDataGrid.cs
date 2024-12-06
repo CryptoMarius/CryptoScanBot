@@ -537,7 +537,8 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
             if (index >= 0 && index < List.Count)
             {
                 Grid.ClearSelection();
-                Grid.SelectedRows[index].Selected = true;
+                //Grid//.CurrentRow = Grid.Rows[index];
+                Grid.Rows[index].Selected = true;
                 return List[index];
             }
         }
