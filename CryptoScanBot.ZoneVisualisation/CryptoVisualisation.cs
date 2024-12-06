@@ -579,11 +579,14 @@ public partial class CryptoVisualisation : Form
                     Interval = Data.SymbolInterval.Interval,
                     IntervalPeriod = Data.SymbolInterval.IntervalPeriod,
                 };
+#if DEBUGZIGZAG
+                var best = Data.Indicator; 
+#else
                 TrendTools.CreateAllTrendIndicators(accountSymbolIntervalData, Data.SymbolInterval.CandleList);
                 TrendTools.AddCandlesToTrendIndicators(accountSymbolIntervalData, Data.SymbolInterval.CandleList, Session.MinDate, Session.MaxDate);
                 TrendTools.GetBestTrendIndicator(accountSymbolIntervalData, Data.Symbol, Data.SymbolInterval.CandleList, log);
                 var best = accountSymbolIntervalData.BestZigZagIndicator!;
-                //var best = Data.Indicator; 
+#endif
 
 
 

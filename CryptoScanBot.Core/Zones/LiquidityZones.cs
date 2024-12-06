@@ -35,13 +35,17 @@ public class LiquidityZones
                 if (candle.OpenTime >= session.MinDate && candle.OpenTime <= session.MaxDate)
                 {
                     data.Indicator.Calculate(candle, session.UseBatchProcess);
+#if !DEBUGZIGZAG
                     data.IndicatorFib.Calculate(candle, session.UseBatchProcess);
+#endif
                 }
             }
             if (session.UseBatchProcess)
             {
                 data.Indicator.FinishBatch();
-                data.IndicatorFib.FinishBatch();
+#if !DEBUGZIGZAG
+                //data.IndicatorFib.FinishBatch();
+#endif
             }
 
 
