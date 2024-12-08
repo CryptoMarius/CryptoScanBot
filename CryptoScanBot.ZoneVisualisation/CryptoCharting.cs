@@ -12,28 +12,8 @@ using OxyPlot.Series;
 using System.Globalization;
 
 namespace CryptoScanBot.ZoneVisualisation;
-//PointAnnotation
-public class TooltipRectangleAnnotation : RectangleAnnotation
-{
-    /// <summary>
-    ///     gets or sets the tooltip text
-    /// </summary>
-    public string Tooltip { get; set; } = "Hello world";
 
-    public override void Render(IRenderContext rc)
-    //public override void Render(IRenderContext rc, PlotModel model)
-    {
 
-        /*  get render context */
-        //ShapesRenderContext src = rc as ShapesRenderContext;
-
-        /* set tooltip to render context if it exists */
-        rc?.SetToolTip(Tooltip);
-
-        /* draw elements the tooltip may apply to (text and images) */
-        base.Render(rc);
-    }
-}
 
 public class CryptoCharting
 {
@@ -41,6 +21,12 @@ public class CryptoCharting
     private const string OxyFontName = "Arial";
     static private string? _priceFormat;
     static private CryptoInterval? _interval;
+
+
+    //public class MyHighLowItem(string date, double x, double high, double low, double open = double.NaN, double close = double.NaN) : HighLowItem(x, high, low, open, close)
+    //{
+    //    public string Description { get; set; } = date;
+    //}
 
     public static List<(decimal value, decimal percent, OxyColor color)> RetracementX(CryptoTradeSide side, decimal low, decimal high)
     {
@@ -126,7 +112,7 @@ public class CryptoCharting
 
         CryptoSymbolInterval symbolInterval = data.Symbol.GetSymbolInterval(session.ActiveInterval);
 
-        var candleSerie = new CandleStickSeries //CandleStickAndVolumeSeries -> obsolete, symbolData...
+        var candleSerie = new CandleStickSeries
         {
             Title = "Candles",
             //DecreasingColor = OxyColors.Red,
@@ -134,7 +120,11 @@ public class CryptoCharting
             Color = OxyColors.Black,
             //IncreasingColor = OxyColors.LightGreen,
             IncreasingColor = OxyColors.DarkGreen,
-            TrackerFormatString = "Date: {0}\nHigh: {1}\nLow: {2}\nOpen: {3}\nClose: {4}"
+            //TrackerFormatString = "Date: {0}\nHigh: {1}\nLow: {2}\nOpen: {3}\nClose: {4}"
+            //The default format string for CandleStickSeries is "{0}\n{1}: {2}\nHigh: {3:0.###}\nLow: {4:0.###}\nOpen: {5:0.###}\nClose: {6:0.###}"
+            //TrackerFormatString = "{0}\n {1}\n {2}\nOpen: {5:0.###}\nHigh: {3:0.###}\nLow: {4:0.###}\nClose: {6:0.###} {DateX}"
+            //TrackerFormatString = "Open: {5}\nHigh: {3}\nLow: {4}\nClose: {6}\n{Description}"
+            TrackerFormatString = "Open: {5}\nHigh: {3}\nLow: {4}\nClose: {6}"
         };
 
         if (symbolInterval.CandleList.Count > 0)
@@ -146,6 +136,7 @@ public class CryptoCharting
                 {
                     try
                     {
+                        //var curHighLow = new MyHighLowItem(c.Date.ToString(), c.OpenTime, (double)c.High, (double)c.Low, (double)c.Open, (double)c.Close); //OhlcvItem
                         var curHighLow = new HighLowItem(c.OpenTime, (double)c.High, (double)c.Low, (double)c.Open, (double)c.Close); //OhlcvItem
                         candleSerie.Items.Add(curHighLow);
                         last = c;
@@ -326,7 +317,7 @@ public class CryptoCharting
                 dateLast = session.MaxDate;
 
             // Create a rectangle annotation
-            var rectangle = new TooltipRectangleAnnotation //RectangleAnnotation
+            var rectangle = new RectangleAnnotation
             {
                 MinimumX = dateOpen,  // X-coordinate of the lower-left corner
                 MinimumY = (double)zone.Bottom,  // Y-coordinate of the lower-left corner
@@ -336,8 +327,7 @@ public class CryptoCharting
                 Fill = OxyColor.FromArgb(128, color.R, color.G, color.B),
                 Stroke = OxyColor.FromArgb(128 + 64 + 32 + 16 + 8 + 4 + 2, color.R, color.G, color.B), // rectangle
                 StrokeThickness = 0,          // Border thickness
-                Text = $"{zone.Description}",
-                Tooltip = $"#{zone.Id} {zone.Description}",
+                Text = zone.Description,
             };
             chart.Annotations.Add(rectangle);
         }
