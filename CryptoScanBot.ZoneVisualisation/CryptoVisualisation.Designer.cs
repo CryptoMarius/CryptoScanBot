@@ -32,7 +32,6 @@ partial class CryptoVisualisation
         EditTransparant = new CheckBox();
         EditShowPivots = new CheckBox();
         EditShowSignals = new CheckBox();
-        EditShowPositions = new CheckBox();
         label1 = new Label();
         EditSymbolBase = new ComboBox();
         label3 = new Label();
@@ -41,16 +40,16 @@ partial class CryptoVisualisation
         EditIntervalName = new ComboBox();
         label4 = new Label();
         EditDeviation = new NumericUpDown();
-        EditUseBatchProcess = new CheckBox();
         EditUseOptimizing = new CheckBox();
         EditShowLiqBoxes = new CheckBox();
         EditZoomLiqBoxes = new CheckBox();
         EditShowZigZag = new CheckBox();
-        EditShowFib = new CheckBox();
-        EditShowFibZigZag = new CheckBox();
         EditShowSecondary = new CheckBox();
+        ButtonRefresh = new Button();
         ButtonCalculate = new Button();
         ButtonZoomLast = new Button();
+        EditShowFib = new CheckBox();
+        EditShowFibZigZag = new CheckBox();
         panel1 = new Panel();
         labelInterval = new Label();
         ButtonPlus = new Button();
@@ -59,8 +58,9 @@ partial class CryptoVisualisation
         labelMaxTime = new Label();
         ButtonGoRight = new Button();
         ButtonGoLeft = new Button();
+        EditShowPositions = new CheckBox();
+        EditUseBatchProcess = new CheckBox();
         plotView = new OxyPlot.WindowsForms.PlotView();
-        ButtonRefresh = new Button();
         flowLayoutPanel1.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)EditDeviation).BeginInit();
         panel1.SuspendLayout();
@@ -73,7 +73,6 @@ partial class CryptoVisualisation
         flowLayoutPanel1.Controls.Add(EditTransparant);
         flowLayoutPanel1.Controls.Add(EditShowPivots);
         flowLayoutPanel1.Controls.Add(EditShowSignals);
-        flowLayoutPanel1.Controls.Add(EditShowPositions);
         flowLayoutPanel1.Controls.Add(label1);
         flowLayoutPanel1.Controls.Add(EditSymbolBase);
         flowLayoutPanel1.Controls.Add(label3);
@@ -82,25 +81,26 @@ partial class CryptoVisualisation
         flowLayoutPanel1.Controls.Add(EditIntervalName);
         flowLayoutPanel1.Controls.Add(label4);
         flowLayoutPanel1.Controls.Add(EditDeviation);
-        flowLayoutPanel1.Controls.Add(EditUseBatchProcess);
         flowLayoutPanel1.Controls.Add(EditUseOptimizing);
         flowLayoutPanel1.Controls.Add(EditShowLiqBoxes);
         flowLayoutPanel1.Controls.Add(EditZoomLiqBoxes);
         flowLayoutPanel1.Controls.Add(EditShowZigZag);
-        flowLayoutPanel1.Controls.Add(EditShowFib);
-        flowLayoutPanel1.Controls.Add(EditShowFibZigZag);
         flowLayoutPanel1.Controls.Add(EditShowSecondary);
         flowLayoutPanel1.Controls.Add(ButtonRefresh);
         flowLayoutPanel1.Controls.Add(ButtonCalculate);
         flowLayoutPanel1.Controls.Add(ButtonZoomLast);
+        flowLayoutPanel1.Controls.Add(EditShowFib);
+        flowLayoutPanel1.Controls.Add(EditShowFibZigZag);
         flowLayoutPanel1.Controls.Add(panel1);
         flowLayoutPanel1.Controls.Add(panel2);
+        flowLayoutPanel1.Controls.Add(EditShowPositions);
+        flowLayoutPanel1.Controls.Add(EditUseBatchProcess);
         flowLayoutPanel1.Dock = DockStyle.Left;
         flowLayoutPanel1.FlowDirection = FlowDirection.TopDown;
         flowLayoutPanel1.Location = new Point(0, 0);
         flowLayoutPanel1.Name = "flowLayoutPanel1";
         flowLayoutPanel1.Padding = new Padding(3);
-        flowLayoutPanel1.Size = new Size(151, 761);
+        flowLayoutPanel1.Size = new Size(151, 802);
         flowLayoutPanel1.TabIndex = 0;
         // 
         // EditTransparant
@@ -133,20 +133,10 @@ partial class CryptoVisualisation
         EditShowSignals.Text = "Show signals";
         EditShowSignals.UseVisualStyleBackColor = true;
         // 
-        // EditShowPositions
-        // 
-        EditShowPositions.AutoSize = true;
-        EditShowPositions.Location = new Point(6, 81);
-        EditShowPositions.Name = "EditShowPositions";
-        EditShowPositions.Size = new Size(106, 19);
-        EditShowPositions.TabIndex = 30;
-        EditShowPositions.Text = "Show positions";
-        EditShowPositions.UseVisualStyleBackColor = true;
-        // 
         // label1
         // 
         label1.AutoSize = true;
-        label1.Location = new Point(6, 103);
+        label1.Location = new Point(6, 78);
         label1.Name = "label1";
         label1.Size = new Size(74, 15);
         label1.TabIndex = 2;
@@ -154,7 +144,7 @@ partial class CryptoVisualisation
         // 
         // EditSymbolBase
         // 
-        EditSymbolBase.Location = new Point(6, 121);
+        EditSymbolBase.Location = new Point(6, 96);
         EditSymbolBase.Name = "EditSymbolBase";
         EditSymbolBase.Size = new Size(121, 23);
         EditSymbolBase.TabIndex = 9;
@@ -162,7 +152,7 @@ partial class CryptoVisualisation
         // label3
         // 
         label3.AutoSize = true;
-        label3.Location = new Point(6, 147);
+        label3.Location = new Point(6, 122);
         label3.Name = "label3";
         label3.Size = new Size(81, 15);
         label3.TabIndex = 13;
@@ -170,15 +160,15 @@ partial class CryptoVisualisation
         // 
         // EditSymbolQuote
         // 
-        EditSymbolQuote.Location = new Point(6, 165);
+        EditSymbolQuote.Location = new Point(6, 140);
         EditSymbolQuote.Name = "EditSymbolQuote";
-        EditSymbolQuote.Size = new Size(100, 23);
+        EditSymbolQuote.Size = new Size(120, 23);
         EditSymbolQuote.TabIndex = 12;
         // 
         // label2
         // 
         label2.AutoSize = true;
-        label2.Location = new Point(6, 191);
+        label2.Location = new Point(6, 166);
         label2.Name = "label2";
         label2.Size = new Size(46, 15);
         label2.TabIndex = 3;
@@ -187,7 +177,7 @@ partial class CryptoVisualisation
         // EditIntervalName
         // 
         EditIntervalName.FormattingEnabled = true;
-        EditIntervalName.Location = new Point(6, 209);
+        EditIntervalName.Location = new Point(6, 184);
         EditIntervalName.Name = "EditIntervalName";
         EditIntervalName.Size = new Size(121, 23);
         EditIntervalName.TabIndex = 9;
@@ -195,7 +185,7 @@ partial class CryptoVisualisation
         // label4
         // 
         label4.AutoSize = true;
-        label4.Location = new Point(6, 235);
+        label4.Location = new Point(6, 210);
         label4.Name = "label4";
         label4.Size = new Size(57, 15);
         label4.TabIndex = 16;
@@ -205,25 +195,15 @@ partial class CryptoVisualisation
         // 
         EditDeviation.DecimalPlaces = 2;
         EditDeviation.Increment = new decimal(new int[] { 25, 0, 0, 131072 });
-        EditDeviation.Location = new Point(6, 253);
+        EditDeviation.Location = new Point(6, 228);
         EditDeviation.Name = "EditDeviation";
         EditDeviation.Size = new Size(120, 23);
         EditDeviation.TabIndex = 1;
         // 
-        // EditUseBatchProcess
-        // 
-        EditUseBatchProcess.AutoSize = true;
-        EditUseBatchProcess.Location = new Point(6, 282);
-        EditUseBatchProcess.Name = "EditUseBatchProcess";
-        EditUseBatchProcess.Size = new Size(99, 19);
-        EditUseBatchProcess.TabIndex = 28;
-        EditUseBatchProcess.Text = "Batch process";
-        EditUseBatchProcess.UseVisualStyleBackColor = true;
-        // 
         // EditUseOptimizing
         // 
         EditUseOptimizing.AutoSize = true;
-        EditUseOptimizing.Location = new Point(6, 307);
+        EditUseOptimizing.Location = new Point(6, 257);
         EditUseOptimizing.Name = "EditUseOptimizing";
         EditUseOptimizing.Size = new Size(92, 19);
         EditUseOptimizing.TabIndex = 26;
@@ -233,7 +213,7 @@ partial class CryptoVisualisation
         // EditShowLiqBoxes
         // 
         EditShowLiqBoxes.AutoSize = true;
-        EditShowLiqBoxes.Location = new Point(6, 332);
+        EditShowLiqBoxes.Location = new Point(6, 282);
         EditShowLiqBoxes.Name = "EditShowLiqBoxes";
         EditShowLiqBoxes.Size = new Size(111, 19);
         EditShowLiqBoxes.TabIndex = 5;
@@ -243,7 +223,7 @@ partial class CryptoVisualisation
         // EditZoomLiqBoxes
         // 
         EditZoomLiqBoxes.AutoSize = true;
-        EditZoomLiqBoxes.Location = new Point(6, 357);
+        EditZoomLiqBoxes.Location = new Point(6, 307);
         EditZoomLiqBoxes.Name = "EditZoomLiqBoxes";
         EditZoomLiqBoxes.Size = new Size(111, 19);
         EditZoomLiqBoxes.TabIndex = 4;
@@ -253,17 +233,54 @@ partial class CryptoVisualisation
         // EditShowZigZag
         // 
         EditShowZigZag.AutoSize = true;
-        EditShowZigZag.Location = new Point(6, 382);
+        EditShowZigZag.Location = new Point(6, 332);
         EditShowZigZag.Name = "EditShowZigZag";
         EditShowZigZag.Size = new Size(101, 19);
         EditShowZigZag.TabIndex = 7;
         EditShowZigZag.Text = "Show liq. lines";
         EditShowZigZag.UseVisualStyleBackColor = true;
         // 
+        // EditShowSecondary
+        // 
+        EditShowSecondary.AutoSize = true;
+        EditShowSecondary.Location = new Point(6, 357);
+        EditShowSecondary.Name = "EditShowSecondary";
+        EditShowSecondary.Size = new Size(115, 19);
+        EditShowSecondary.TabIndex = 25;
+        EditShowSecondary.Text = "Show secondairy";
+        EditShowSecondary.UseVisualStyleBackColor = true;
+        // 
+        // ButtonRefresh
+        // 
+        ButtonRefresh.Location = new Point(6, 382);
+        ButtonRefresh.Name = "ButtonRefresh";
+        ButtonRefresh.Size = new Size(75, 23);
+        ButtonRefresh.TabIndex = 31;
+        ButtonRefresh.Text = "Refresh";
+        ButtonRefresh.UseVisualStyleBackColor = true;
+        // 
+        // ButtonCalculate
+        // 
+        ButtonCalculate.Location = new Point(6, 411);
+        ButtonCalculate.Name = "ButtonCalculate";
+        ButtonCalculate.Size = new Size(75, 23);
+        ButtonCalculate.TabIndex = 8;
+        ButtonCalculate.Text = "Calculate";
+        ButtonCalculate.UseVisualStyleBackColor = true;
+        // 
+        // ButtonZoomLast
+        // 
+        ButtonZoomLast.Location = new Point(6, 440);
+        ButtonZoomLast.Name = "ButtonZoomLast";
+        ButtonZoomLast.Size = new Size(75, 23);
+        ButtonZoomLast.TabIndex = 14;
+        ButtonZoomLast.Text = "Zoom last";
+        ButtonZoomLast.UseVisualStyleBackColor = true;
+        // 
         // EditShowFib
         // 
         EditShowFib.AutoSize = true;
-        EditShowFib.Location = new Point(6, 407);
+        EditShowFib.Location = new Point(6, 469);
         EditShowFib.Name = "EditShowFib";
         EditShowFib.Size = new Size(139, 19);
         EditShowFib.TabIndex = 20;
@@ -273,50 +290,23 @@ partial class CryptoVisualisation
         // EditShowFibZigZag
         // 
         EditShowFibZigZag.AutoSize = true;
-        EditShowFibZigZag.Location = new Point(6, 432);
+        EditShowFibZigZag.Location = new Point(6, 494);
         EditShowFibZigZag.Name = "EditShowFibZigZag";
         EditShowFibZigZag.Size = new Size(99, 19);
         EditShowFibZigZag.TabIndex = 24;
         EditShowFibZigZag.Text = "Show fib lines";
         EditShowFibZigZag.UseVisualStyleBackColor = true;
         // 
-        // EditShowSecondary
-        // 
-        EditShowSecondary.AutoSize = true;
-        EditShowSecondary.Location = new Point(6, 457);
-        EditShowSecondary.Name = "EditShowSecondary";
-        EditShowSecondary.Size = new Size(115, 19);
-        EditShowSecondary.TabIndex = 25;
-        EditShowSecondary.Text = "Show secondairy";
-        EditShowSecondary.UseVisualStyleBackColor = true;
-        // 
-        // ButtonCalculate
-        // 
-        ButtonCalculate.Location = new Point(6, 511);
-        ButtonCalculate.Name = "ButtonCalculate";
-        ButtonCalculate.Size = new Size(75, 23);
-        ButtonCalculate.TabIndex = 8;
-        ButtonCalculate.Text = "Calculate";
-        ButtonCalculate.UseVisualStyleBackColor = true;
-        // 
-        // ButtonZoomLast
-        // 
-        ButtonZoomLast.Location = new Point(6, 540);
-        ButtonZoomLast.Name = "ButtonZoomLast";
-        ButtonZoomLast.Size = new Size(75, 23);
-        ButtonZoomLast.TabIndex = 14;
-        ButtonZoomLast.Text = "Zoom last";
-        ButtonZoomLast.UseVisualStyleBackColor = true;
-        // 
         // panel1
         // 
         panel1.Controls.Add(labelInterval);
         panel1.Controls.Add(ButtonPlus);
         panel1.Controls.Add(ButtonMinus);
-        panel1.Location = new Point(6, 569);
+        panel1.Location = new Point(6, 519);
         panel1.Name = "panel1";
         panel1.Size = new Size(95, 66);
         panel1.TabIndex = 21;
+        panel1.Visible = false;
         // 
         // labelInterval
         // 
@@ -352,10 +342,11 @@ partial class CryptoVisualisation
         panel2.Controls.Add(labelMaxTime);
         panel2.Controls.Add(ButtonGoRight);
         panel2.Controls.Add(ButtonGoLeft);
-        panel2.Location = new Point(6, 641);
+        panel2.Location = new Point(6, 591);
         panel2.Name = "panel2";
         panel2.Size = new Size(95, 65);
         panel2.TabIndex = 22;
+        panel2.Visible = false;
         // 
         // labelMaxTime
         // 
@@ -386,6 +377,29 @@ partial class CryptoVisualisation
         ButtonGoLeft.UseVisualStyleBackColor = true;
         ButtonGoLeft.Click += ButtonGoLeftClick;
         // 
+        // EditShowPositions
+        // 
+        EditShowPositions.AutoSize = true;
+        EditShowPositions.Enabled = false;
+        EditShowPositions.Location = new Point(6, 662);
+        EditShowPositions.Name = "EditShowPositions";
+        EditShowPositions.Size = new Size(106, 19);
+        EditShowPositions.TabIndex = 30;
+        EditShowPositions.Text = "Show positions";
+        EditShowPositions.UseVisualStyleBackColor = true;
+        EditShowPositions.Visible = false;
+        // 
+        // EditUseBatchProcess
+        // 
+        EditUseBatchProcess.AutoSize = true;
+        EditUseBatchProcess.Location = new Point(6, 687);
+        EditUseBatchProcess.Name = "EditUseBatchProcess";
+        EditUseBatchProcess.Size = new Size(99, 19);
+        EditUseBatchProcess.TabIndex = 28;
+        EditUseBatchProcess.Text = "Batch process";
+        EditUseBatchProcess.UseVisualStyleBackColor = true;
+        EditUseBatchProcess.Visible = false;
+        // 
         // plotView
         // 
         plotView.BackColor = Color.Black;
@@ -393,27 +407,18 @@ partial class CryptoVisualisation
         plotView.Location = new Point(151, 0);
         plotView.Name = "plotView";
         plotView.PanCursor = Cursors.Hand;
-        plotView.Size = new Size(1033, 761);
+        plotView.Size = new Size(1190, 802);
         plotView.TabIndex = 1;
         plotView.Text = "plotView1";
         plotView.ZoomHorizontalCursor = Cursors.SizeWE;
         plotView.ZoomRectangleCursor = Cursors.SizeNWSE;
         plotView.ZoomVerticalCursor = Cursors.SizeNS;
         // 
-        // ButtonRefresh
-        // 
-        ButtonRefresh.Location = new Point(6, 482);
-        ButtonRefresh.Name = "ButtonRefresh";
-        ButtonRefresh.Size = new Size(75, 23);
-        ButtonRefresh.TabIndex = 31;
-        ButtonRefresh.Text = "Refresh";
-        ButtonRefresh.UseVisualStyleBackColor = true;
-        // 
         // CryptoVisualisation
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
-        ClientSize = new Size(1184, 761);
+        ClientSize = new Size(1341, 802);
         Controls.Add(plotView);
         Controls.Add(flowLayoutPanel1);
         Name = "CryptoVisualisation";

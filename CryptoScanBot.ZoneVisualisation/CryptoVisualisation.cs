@@ -47,6 +47,8 @@ public partial class CryptoVisualisation : Form
         }
 
         Session = CryptoZoneSession.LoadSessionSettings();
+        Session.UseBatchProcess = true;
+        Session.ShowPositions = false;
         LoadEdits();
 
         labelInterval.Text = "";
@@ -61,6 +63,7 @@ public partial class CryptoVisualisation : Form
         KeyPreview = true;
         KeyDown += new KeyEventHandler(FormKeyDown);
 
+        InitQuoteItems();
         InitIntervalItems();
         //EditSymbolBase.DataSource = new BindingSource(GlobalData.Settings.General.Exchange.SymbolListName, null);
         //EditSymbolBase.DisplayMember = "Key";
@@ -92,6 +95,15 @@ public partial class CryptoVisualisation : Form
         {
             if (GlobalData.Settings.General.Exchange!.IsIntervalSupported(interval.IntervalPeriod))
                 EditIntervalName.Items.Add(interval.Name);
+        }
+    }
+
+    private void InitQuoteItems()
+    {
+        foreach (var quoteData in GlobalData.Settings.QuoteCoins.Values)
+        {
+            if (quoteData.FetchCandles)
+                EditSymbolQuote.Items.Add(quoteData.Name);
         }
     }
 
@@ -426,7 +438,6 @@ public partial class CryptoVisualisation : Form
 
         // Is the Interval supported by this tool?
         var interval = GlobalData.IntervalList.Find(x => x.Name.Equals(Session.IntervalName));
-        interval ??= GlobalData.IntervalList.Find(x => x.Name.Equals(Session.IntervalName));
         if (interval == null)
         {
             reason = "Interval not supported";
@@ -444,7 +455,8 @@ public partial class CryptoVisualisation : Form
             return false;
         }
 
-        var symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+
         Data = new()
         {
             Account = GlobalData.ActiveAccount!,
@@ -452,9 +464,8 @@ public partial class CryptoVisualisation : Form
             Symbol = symbol,
             Interval = interval,
             SymbolInterval = symbolInterval,
-            IndicatorFib = new(symbolInterval.CandleList, true, Session.Deviation, symbolInterval.Interval.Duration),
-            Indicator = new(symbolInterval.CandleList, GlobalData.Settings.Signal.Zones.UseHighLow, Session.Deviation, symbolInterval.Interval.Duration),
-            //AccountSymbolIntervalData = GlobalData.ActiveAccount!.Data.GetSymbolTrendData(symbol.Name, interval.IntervalPeriod),
+            IndicatorFib = new(symbolInterval.CandleList, true, Session.Deviation, interval.Duration),
+            Indicator = new(symbolInterval.CandleList, false, Session.Deviation, interval.Duration),
         };
 
 
@@ -553,14 +564,14 @@ public partial class CryptoVisualisation : Form
                     ZoneTools.LoadAllZones(); // Sync just to be sure
 
 
-                Data.IndicatorFib = new(Data.SymbolInterval.CandleList, true, Session.Deviation, Data.Interval.Duration)
+                Data.Indicator = new(Data.SymbolInterval.CandleList, false, Session.Deviation, Data.Interval.Duration)
                 {
                     MaxTime = Session.MaxDate,
                     ShowSecondary = Session.ShowSecondary,
                     UseOptimizing = Session.UseOptimizing
                 };
 
-                Data.Indicator = new(Data.SymbolInterval.CandleList, GlobalData.Settings.Signal.Zones.UseHighLow, Session.Deviation, Data.Interval.Duration)
+                Data.IndicatorFib = new(Data.SymbolInterval.CandleList, true, Session.Deviation, Data.Interval.Duration)
                 {
                     MaxTime = Session.MaxDate,
                     ShowSecondary = Session.ShowSecondary,

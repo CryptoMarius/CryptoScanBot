@@ -271,9 +271,9 @@ public class CryptoCalculation
                         // We need a BOS before we can invalidate the liq.box
                         if (!brokenBos)
                         {
-                            if (zigzag.PointType == 'H' && candle.GetLowValue(GlobalData.Settings.Signal.Zones.UseHighLow) <= prevZigZag.Value)
+                            if (zigzag.PointType == 'H' && candle.GetLowValue(false) <= prevZigZag.Value)
                                 brokenBos = true;
-                            if (zigzag.PointType == 'L' && candle.GetHighValue(GlobalData.Settings.Signal.Zones.UseHighLow) >= prevZigZag.Value)
+                            if (zigzag.PointType == 'L' && candle.GetHighValue(false) >= prevZigZag.Value)
                                 brokenBos = true;
                         }
                         else

@@ -5,6 +5,7 @@ Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep
 Todo:
 - Deze lijst doornemen en uitdunnen
 - De documentatie bijwerken voor zover mogelijk..
+- testunits voor de zones  (want de zone detectie werkt niet goed genoeg) irritant!
 
 - Scanner/Trader - Een status/indicator die de status van de scanner en trader aangeeft + soort van verklikker van trading rulez?
             Het zijn dus 3 lampjes die de status van de scanner, trader en rulez laten zien.
@@ -82,7 +83,8 @@ Emulator:
 - Emulator - Het ophalen van candles gaat niet altijd goed indien de munt nog maar "kort" bestaat, er ontstaat een eindeloze lus
 
 Trading:
-- Trading - Een mogelijkheid inbouwen om de papertrade te resetten (en wellicht ook de assets te configureren)
+- Trading - Handmatig een positie kunnen openen en/of sluiten
+- Trading - Het resetten (c.q. wissen) van de papertrade posities en statistiek (en wellicht ook de begin-assets configureren)
 - Trading - test account, ENAUSDT, 12-11, standaard papertrade, heeft 2x een sell tp gezet en dus ook 2x verkocht (zo wordt je snel rijk). Wat gaat daar precies fout?
 - Trading - De Telegram profits commando gaat zo te zien niet goed om met short posities (verlies trades kan, maar dit was iets teveel)
 - Trading - Met een ingevulde SL blijft de bestaande SL staan als er een DCA gezet wordt, SL kan boven de DCA staan, klopt niet!

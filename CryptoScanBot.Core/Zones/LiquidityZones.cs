@@ -68,7 +68,7 @@ public class LiquidityZones
             // Set the date of the last swing point for the automatic zone calculation
             AccountSymbolData symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(data.Symbol.Name);
             AccountSymbolIntervalData symbolIntervalData = symbolData.GetAccountSymbolIntervalData(data.Interval.IntervalPeriod);
-            symbolIntervalData.LastZigZagPoint = data.Indicator.GetLastRealZigZag();
+            symbolIntervalData.LastSwingPointTime = data.Indicator.GetLastRealZigZag();
         }
         catch (Exception error)
         {
@@ -95,7 +95,8 @@ public class LiquidityZones
             {
                 GlobalData.AddTextToLogTab($"Calculation zones for {symbol.Name}");
 
-                var symbolInterval = symbol.GetSymbolInterval(GlobalData.Settings.Signal.Zones.Interval);
+                CryptoInterval interval = GlobalData.IntervalListPeriod[GlobalData.Settings.Signal.Zones.Interval];
+                CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
 
                 CryptoZoneSession session = new()
                 {
@@ -111,23 +112,25 @@ public class LiquidityZones
                     ForceCalculation = true,
                     UseBatchProcess = true,
                     UseOptimizing = true,
+                    ShowSecondary = false,
+                    Deviation = 1.0m,
                 };
+
 
                 CryptoZoneData data = new()
                 {
                     Account = GlobalData.ActiveAccount!,
                     Exchange = symbol.Exchange,
                     Symbol = symbol,
-                    Interval = symbolInterval.Interval,
+                    Interval = interval,
                     SymbolInterval = symbolInterval,
-                    Indicator = new(symbolInterval.CandleList, GlobalData.Settings.Signal.Zones.UseHighLow, session.Deviation, symbolInterval.Interval.Duration),
-                    IndicatorFib = new(symbolInterval.CandleList, true, session.Deviation, symbolInterval.Interval.Duration),
-                    //AccountSymbolIntervalData = GlobalData.ActiveAccount!.Data.GetSymbolTrendData(symbol.Name, symbolInterval.Interval.IntervalPeriod),
+                    Indicator = new(symbolInterval.CandleList, false, session.Deviation, interval.Duration),
+                    IndicatorFib = new(symbolInterval.CandleList, true, session.Deviation, interval.Duration),
                 };
 
                 session.MaxDate = CandleTools.GetUnixTime(DateTime.UtcNow, 60);
-                session.MaxDate = IntervalTools.StartOfIntervalCandle(session.MaxDate, data.Interval.Duration);
-                session.MinDate = session.MaxDate - GlobalData.Settings.Signal.Zones.CandleCount * data.Interval.Duration;
+                session.MaxDate = IntervalTools.StartOfIntervalCandle(session.MaxDate, interval.Duration);
+                session.MinDate = session.MaxDate - GlobalData.Settings.Signal.Zones.CandleCount * interval.Duration;
 
                 // avoid candles being removed...
                 data.Symbol.CalculatingZones = true;
