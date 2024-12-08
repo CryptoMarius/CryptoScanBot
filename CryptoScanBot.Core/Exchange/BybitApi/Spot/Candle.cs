@@ -7,6 +7,12 @@ using CryptoScanBot.Core.Model;
 
 namespace CryptoScanBot.Core.Exchange.BybitApi.Spot;
 
+// https://api.bybit.com/v5/market/kline?category=spot&end=1727265780000&interval=3&limit=1000&start=1727265720000&symbol=BTCUSDT
+//{"retCode":0,"retMsg":"OK","result":{"category":"spot","symbol":"BTCUSDT","list":[
+//["1727265780000","63793.89","63804.34","63766.76","63783.56","65.081143","4151231.31551695"],
+//["1727265600000","63843.6","63847.81","63793.88","63793.89","32.339743","2063972.41347612"]]},
+//"retExtInfo":{ },"time":1733503221768}
+
 /// <summary>
 /// Fetch klines/candles from the exchange
 /// </summary>
