@@ -21,7 +21,7 @@ public class AccountSymbolIntervalData
     //public ZigZagIndicator9? FibIndicator { get; set; } = null;
 
     // Administration liquidity zones calculation?? How?
-    public long? LastZigZagPoint { get; set; } = null;
+    public long? LastSwingPointTime { get; set; } = null;
     //public bool? NeedsZoneCalculation { get; set; } = true;
 
 
@@ -36,7 +36,7 @@ public class AccountSymbolIntervalData
         BestZigZagIndicator = null;
         //FibIndicator = null;
 
-        //LastZigZagPoint = null;
+        //LastSwingPointTime = null;
         //NeedsZoneCalculation = true;
     }
 

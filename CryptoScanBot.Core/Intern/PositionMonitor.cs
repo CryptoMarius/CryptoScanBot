@@ -1804,8 +1804,8 @@ public class PositionMonitor : IDisposable
                     TrendInterval.Calculate(Symbol, symbolInterval.CandleList, symbolIntervalData, 0, LastCandle1mCloseTime);
                     if (symbolIntervalData.BestZigZagIndicator != null && symbolIntervalData.BestZigZagIndicator.LastSwingPoint != null)
                     {
-                        long? lastSwingTime = symbolIntervalData.BestZigZagIndicator.GetLastRealZigZag();
-                        if (lastSwingTime == null || symbolIntervalData.LastZigZagPoint == null || symbolIntervalData.LastZigZagPoint > lastSwingTime)
+                        long? lastSwingPointTime = symbolIntervalData.BestZigZagIndicator.GetLastRealZigZag();
+                        if (lastSwingPointTime == null || symbolIntervalData.LastSwingPointTime == null || symbolIntervalData.LastSwingPointTime > lastSwingPointTime)
                             GlobalData.ThreadZoneCalculate?.AddToQueue(Symbol);
                     }
                 }
