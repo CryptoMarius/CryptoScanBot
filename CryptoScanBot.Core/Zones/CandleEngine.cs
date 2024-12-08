@@ -148,10 +148,18 @@ public class CandleEngine
         (long unixLoop, bool dataAllLocal) = IsDataLocal(unixMin, unixMax, interval, candleList);
         if (dataAllLocal)
             return false;
-
-        //string text3 = $"need={candleCount}"; 
-        //GlobalData.AddTextToLogTab($"Fetch historical data {symbol.Name} {symbolInterval.Interval!.Name} need more data {text3} {minDate.ToLocalTime()} .. {maxDate.ToLocalTime()}");
-        return await symbol.Exchange.GetApiInstance().Candle.FetchFrom(symbol, interval, candleList, unixLoop, unixMax);
+        try
+        {
+            //string text3 = $"need={candleCount}"; 
+            //GlobalData.AddTextToLogTab($"Fetch historical data {symbol.Name} {symbolInterval.Interval!.Name} need more data {text3} {minDate.ToLocalTime()} .. {maxDate.ToLocalTime()}");
+            return await symbol.Exchange.GetApiInstance().Candle.FetchFrom(symbol, interval, candleList, unixLoop, unixMax);
+        }
+        catch (Exception error)
+        {
+            // some stupid error i need to trace..
+            GlobalData.AddTextToLogTab($"ERROR FetchFrom {symbol.Name} {interval.Name} from={fetchFrom} count={fetchCount} min={unixMin} max={unixMax} loop={unixLoop} {error.Message}");
+            throw;
+        }
     }
 
 }
