@@ -19,7 +19,7 @@ public class LiquidityZones
             // Load candles from disk
             if (!loadedCandlesInMemory.TryGetValue(data.Interval.IntervalPeriod, out bool _))
                 CandleEngine.LoadCandleDataFromDisk(data.Symbol, data.Interval, data.SymbolInterval.CandleList);
-            loadedCandlesInMemory.TryAdd(data.Interval.IntervalPeriod, false); // in memory, nothing changed
+            loadedCandlesInMemory.TryAdd(data.Interval.IntervalPeriod, true); // in memory, nothing changed (save alway's)
 
             // Load candles from the exchange
             if (await CandleEngine.FetchFrom(data.Symbol, data.Interval, data.SymbolInterval.CandleList, fetchFrom, GlobalData.Settings.Signal.Zones.CandleCount))
