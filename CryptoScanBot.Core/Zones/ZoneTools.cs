@@ -72,10 +72,12 @@ public class ZoneTools
         int inserted = 0;
         int deleted = 0;
         int modified = 0;
+        int untouched = 0;
         foreach (var zigZag in zigZagList)
         {
             if (zigZag.Dominant && !zigZag.Dummy && zigZag.IsValid) // all zones (also the closed ones)
             {
+                bool changed = false;
                 CryptoTradeSide side = zigZag.PointType == 'L' ? CryptoTradeSide.Long : CryptoTradeSide.Short;
 
                 // Try to reuse the previous zones.
@@ -97,31 +99,44 @@ public class ZoneTools
                         Strategy = CryptoSignalStrategy.DominantLevel,
                         Description = $"{interval.Name}: {zigZag.Percentage:N2}%",
                     };
+                    changed = true;
                 }
-                zone.CloseTime = zigZag.CloseDate;
-
-
+                if (zone.CloseTime != zigZag.CloseDate)
+                {
+                    changed = true;
+                    zone.CloseTime = zigZag.CloseDate;
+                }
+                decimal alarmPrice;
                 if (side == CryptoTradeSide.Long)
                 {
-                    zone.AlarmPrice = zone.Top * (100 + GlobalData.Settings.Signal.Zones.WarnPercentage) / 100;
+                    alarmPrice = zone.Top * (100 + GlobalData.Settings.Signal.Zones.WarnPercentage) / 100;
                     symbolData.ZoneListLong.Add(zone.Top, zone);
                 }
                 else
                 {
-                    zone.AlarmPrice = zone.Bottom * (100 - GlobalData.Settings.Signal.Zones.WarnPercentage) / 100;
+                    alarmPrice = zone.Bottom * (100 - GlobalData.Settings.Signal.Zones.WarnPercentage) / 100;
                     symbolData.ZoneListShort.Add(zone.Bottom, zone);
                 }
+                if (zone.AlarmPrice != alarmPrice)
+                {
+                    changed = true;
+                    zone.AlarmPrice = alarmPrice;
+                }
 
-                if (zone.Id > 0)
+                if (changed)
                 {
-                    modified++;
-                    databaseThread.Connection.Update(zone);
+                    if (zone.Id > 0)
+                    {
+                        modified++;
+                        databaseThread.Connection.Update(zone);
+                    }
+                    else
+                    {
+                        inserted++;
+                        databaseThread.Connection.Insert(zone);
+                    }
                 }
-                else
-                {
-                    inserted++;
-                    databaseThread.Connection.Insert(zone);
-                }
+                else untouched++;
                 zoneIndex.Remove((zigZag.Bottom, zigZag.Top, side));
             }
         }
@@ -132,7 +147,7 @@ public class ZoneTools
             deleted++;
             databaseThread.Connection.Delete(zone);
         }
-        GlobalData.AddTextToLogTab($"{symbol.Name} Zones calculated, inserted={inserted} modified={modified} deleted={deleted}");
+        GlobalData.AddTextToLogTab($"{symbol.Name} Zones calculated, inserted={inserted} modified={modified} deleted={deleted} untouched={untouched}");
     }
 
 }
