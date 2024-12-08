@@ -44,20 +44,19 @@ public class DominantLevelShort : SignalCreateBase
 
         // The ZoneList is sorted from low to high
 
-        // High index
-        int indexHigh = symbolData.ZoneListShort.Keys.BinarySearchIndexOf(boundaryHigh);
-        if (indexHigh < 0)
-            indexHigh = 0;
-        if (indexHigh >= symbolData.ZoneListShort.Count)
-            indexHigh = symbolData.ZoneListShort.Count - 1;
-
         // Low index
-        int indexLow = symbolData.ZoneListShort.Keys.BinarySearchIndexOf(boundaryLow);
+        int indexLow = symbolData.ZoneListShort.Keys.BinarySearchIndexOf(boundaryLow) - 1;
         if (indexLow < 0)
             indexLow = 0;
         if (indexLow >= symbolData.ZoneListShort.Count)
             indexLow = symbolData.ZoneListShort.Count - 1;
 
+        // High index
+        int indexHigh = symbolData.ZoneListShort.Keys.BinarySearchIndexOf(boundaryHigh) + 1;
+        if (indexHigh < 0)
+            indexHigh = 0;
+        if (indexHigh >= symbolData.ZoneListShort.Count)
+            indexHigh = symbolData.ZoneListShort.Count - 1;
 
         for (int index = indexLow; index < indexHigh; index++)
         {
@@ -109,28 +108,28 @@ public class DominantLevelShort : SignalCreateBase
             }
         }
 
-        //// close higher zones
-        //for (int index = 0; index < indexLow; index++)
-        //{
-        //    var zone = symbolData.ZoneListShort.Values[index];
+        // close lower zones (they should not be there)
+        for (int index = 0; index <= indexLow; index++)
+        {
+            var zone = symbolData.ZoneListShort.Values[index];
 
-        //    if (zone.CloseTime == null && zone.Bottom < CandleLast.Low)
-        //    {
-        //        zone.CloseTime = CandleLast.OpenTime;
-        //        zone.ClosePrice = CandleLast.Low;
-        //        try
-        //        {
-        //            using var database = new CryptoDatabase();
-        //            database.Connection.Update(zone);
-        //            GlobalData.AddTextToLogTab($"Closed zone {zone.Id} {zone.Side} {zone.Description} (bulk)");
-        //        }
-        //        catch (Exception error)
-        //        {
-        //            ScannerLog.Logger.Error(error, "");
-        //            GlobalData.AddTextToLogTab(error.ToString());
-        //        }
-        //    }
-        //}
+            if (zone.CloseTime == null && zone.Bottom > CandleLast.High)
+            {
+                zone.CloseTime = CandleLast.OpenTime;
+                zone.ClosePrice = CandleLast.Low;
+                try
+                {
+                    using var database = new CryptoDatabase();
+                    database.Connection.Update(zone);
+                    GlobalData.AddTextToLogTab($"Closed zone {zone.Id} {zone.Side} {zone.Description} (bulk)");
+                }
+                catch (Exception error)
+                {
+                    ScannerLog.Logger.Error(error, "");
+                    GlobalData.AddTextToLogTab(error.ToString());
+                }
+            }
+        }
 
 
         return result;
