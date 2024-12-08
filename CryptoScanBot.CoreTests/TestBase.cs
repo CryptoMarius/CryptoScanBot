@@ -80,6 +80,10 @@ public class TestBase
                 GlobalData.AddSymbol(symbol);
                 database.Connection.Insert(symbol);
             }
+
+
+            foreach (var symbolInterval in symbol.IntervalPeriodList)
+                symbolInterval.CandleList.Clear();
             return symbol;
         }
 

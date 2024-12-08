@@ -1,13 +1,10 @@
-﻿using CryptoScanBot.Core.Trader;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-
-using CryptoScanBotTests;
-using CryptoScanBot.Core.Context;
+﻿using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Exchange;
 using Dapper.Contrib.Extensions;
+using CryptoScanBot.CoreTests;
 
 namespace CryptoScanBot.Core.Trader.Tests;
 
