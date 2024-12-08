@@ -101,17 +101,17 @@ public class ZigZagIndicator9(CryptoCandleList candleList, bool useHighLow, deci
             if (pointType == 'L')
             {
                 if (value == LastSwingPoint.Value && candle.Low > LastSwingPoint.Candle.Low)
-                    LastSwingPoint.ReusePoint(candle, value, dummy); // prefer the one with the biggest wick
+                    LastSwingPoint.ReusePoint(candle, value, dummy, pivotIndex); // prefer the one with the biggest wick
                 else if (value < LastSwingPoint.Value)
-                    LastSwingPoint.ReusePoint(candle, value, dummy); // repeated low
+                    LastSwingPoint.ReusePoint(candle, value, dummy, pivotIndex); // repeated low
                 return LastSwingPoint;
             }
             else
             {
                 if (value == LastSwingPoint.Value && candle.High < LastSwingPoint.Candle.High)
-                    LastSwingPoint.ReusePoint(candle, value, dummy); // prefer the one with the biggest wick
+                    LastSwingPoint.ReusePoint(candle, value, dummy, pivotIndex); // prefer the one with the biggest wick
                 else if (value > LastSwingPoint.Value)
-                    LastSwingPoint.ReusePoint(candle, value, dummy); // repeated high
+                    LastSwingPoint.ReusePoint(candle, value, dummy, pivotIndex); // repeated high
                 return LastSwingPoint;
             }
         }
