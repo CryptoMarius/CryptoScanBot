@@ -237,7 +237,6 @@ public partial class FrmSettings : Form
         UserControlSettingsSoundAndColorsDominantLevel.LoadConfig("Zones", settings.Signal.Zones);
 
         EditShowZoneSignals.Checked = settings.Signal.Zones.ShowZoneSignals;
-        EditZonesUseLowHigh.Checked = settings.Signal.Zones.UseHighLow;
         EditZonesCandleCount.Value = settings.Signal.Zones.CandleCount;
         EditZonesWarnPercentage.Value = (decimal)settings.Signal.Zones.WarnPercentage;
         //EditZonesInterval.Value = settings.Signal.Zones.Interval; hardcoded 1h for now
@@ -503,7 +502,6 @@ public partial class FrmSettings : Form
         UserControlSettingsSoundAndColorsDominantLevel.SaveConfig(settings.Signal.Zones);
 
         settings.Signal.Zones.ShowZoneSignals = EditShowZoneSignals.Checked;
-        settings.Signal.Zones.UseHighLow = EditZonesUseLowHigh.Checked;
         settings.Signal.Zones.CandleCount = (int)EditZonesCandleCount.Value;
         settings.Signal.Zones.WarnPercentage = EditZonesWarnPercentage.Value;
         //settings.Signal.Zones.Interval = CryptoIntervalPeriod.interval1h; //EditZonesInterval.Value; hardcoded 1h for now

@@ -209,7 +209,6 @@ partial class FrmSettings
         label60 = new Label();
         label62 = new Label();
         EditZonesCandleCount = new NumericUpDown();
-        EditZonesUseLowHigh = new CheckBox();
         label63 = new Label();
         EditZonesWarnPercentage = new NumericUpDown();
         groupBox12 = new GroupBox();
@@ -961,7 +960,7 @@ partial class FrmSettings
         UserControlTelegram.Location = new Point(654, 3);
         UserControlTelegram.Name = "UserControlTelegram";
         UserControlTelegram.Padding = new Padding(10);
-        UserControlTelegram.Size = new Size(451, 180);
+        UserControlTelegram.Size = new Size(427, 180);
         UserControlTelegram.TabIndex = 248;
         // 
         // tabBasecoin
@@ -2447,13 +2446,12 @@ partial class FrmSettings
         groupBox11.Controls.Add(label60);
         groupBox11.Controls.Add(label62);
         groupBox11.Controls.Add(EditZonesCandleCount);
-        groupBox11.Controls.Add(EditZonesUseLowHigh);
         groupBox11.Controls.Add(label63);
         groupBox11.Controls.Add(EditZonesWarnPercentage);
         groupBox11.Location = new Point(10, 186);
         groupBox11.Margin = new Padding(10);
         groupBox11.Name = "groupBox11";
-        groupBox11.Size = new Size(291, 150);
+        groupBox11.Size = new Size(291, 123);
         groupBox11.TabIndex = 160;
         groupBox11.TabStop = false;
         groupBox11.Text = "Settings";
@@ -2498,21 +2496,10 @@ partial class FrmSettings
         EditZonesCandleCount.Size = new Size(56, 23);
         EditZonesCandleCount.TabIndex = 129;
         // 
-        // EditZonesUseLowHigh
-        // 
-        EditZonesUseLowHigh.AutoSize = true;
-        EditZonesUseLowHigh.Location = new Point(7, 74);
-        EditZonesUseLowHigh.Margin = new Padding(4, 3, 4, 3);
-        EditZonesUseLowHigh.Name = "EditZonesUseLowHigh";
-        EditZonesUseLowHigh.Size = new Size(242, 19);
-        EditZonesUseLowHigh.TabIndex = 127;
-        EditZonesUseLowHigh.Text = "Calculate via wicks instead of open/close";
-        EditZonesUseLowHigh.UseVisualStyleBackColor = true;
-        // 
         // label63
         // 
         label63.AutoSize = true;
-        label63.Location = new Point(6, 107);
+        label63.Location = new Point(7, 80);
         label63.Margin = new Padding(4, 0, 4, 0);
         label63.Name = "label63";
         label63.Size = new Size(167, 15);
@@ -2523,7 +2510,7 @@ partial class FrmSettings
         // 
         EditZonesWarnPercentage.DecimalPlaces = 2;
         EditZonesWarnPercentage.Increment = new decimal(new int[] { 25, 0, 0, 131072 });
-        EditZonesWarnPercentage.Location = new Point(214, 105);
+        EditZonesWarnPercentage.Location = new Point(215, 78);
         EditZonesWarnPercentage.Margin = new Padding(4, 3, 4, 3);
         EditZonesWarnPercentage.Name = "EditZonesWarnPercentage";
         EditZonesWarnPercentage.Size = new Size(56, 23);
@@ -2537,7 +2524,7 @@ partial class FrmSettings
         groupBox12.Controls.Add(EditMaximumUnZoomedPercentage);
         groupBox12.Controls.Add(label54);
         groupBox12.Controls.Add(EditMinimumUnZoomedPercentage);
-        groupBox12.Location = new Point(10, 356);
+        groupBox12.Location = new Point(10, 329);
         groupBox12.Margin = new Padding(10);
         groupBox12.Name = "groupBox12";
         groupBox12.Size = new Size(276, 120);
@@ -3185,7 +3172,7 @@ partial class FrmSettings
         UserControlExchangeApi.AutoSizeMode = AutoSizeMode.GrowAndShrink;
         UserControlExchangeApi.Location = new Point(3, 3);
         UserControlExchangeApi.Name = "UserControlExchangeApi";
-        UserControlExchangeApi.Size = new Size(350, 96);
+        UserControlExchangeApi.Size = new Size(404, 96);
         UserControlExchangeApi.TabIndex = 343;
         // 
         // UserControlAltradyApi
@@ -3195,7 +3182,7 @@ partial class FrmSettings
         UserControlAltradyApi.AutoSizeMode = AutoSizeMode.GrowAndShrink;
         UserControlAltradyApi.Location = new Point(3, 105);
         UserControlAltradyApi.Name = "UserControlAltradyApi";
-        UserControlAltradyApi.Size = new Size(350, 96);
+        UserControlAltradyApi.Size = new Size(407, 96);
         UserControlAltradyApi.TabIndex = 342;
         // 
         // tabWhiteBlack
@@ -3943,7 +3930,6 @@ partial class FrmSettings
     private CheckBox EditZoomLowerTimeFrames;
     private Label label60;
     private Label label62;
-    private CheckBox EditZonesUseLowHigh;
     private Label label63;
     private GroupBox groupBox12;
     private CheckBox EditShowZoneSignals;
