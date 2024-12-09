@@ -8,7 +8,7 @@ namespace CryptoScanBot.Core.Context;
 public class Migration
 {
     // De huidige database versie
-    public readonly static int CurrentDatabaseVersion = 35;
+    public readonly static int CurrentDatabaseVersion = 36;
 
 
     public static void Execute(CryptoDatabase database, int CurrentVersion)
@@ -971,6 +971,22 @@ public class Migration
             database.Connection.Execute("delete from symbol where name = ''", transaction);
             database.Connection.Execute("delete from symbol where name like '$BMP%'", transaction);
             database.Connection.Execute("delete from symbol where name like '$BMV%'", transaction);
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        //***********************************************************
+        // 09-12-2024, deleted two columns
+        if (CurrentVersion > version.Version && version.Version == 35)
+        {
+            using var transaction = database.BeginTransaction();
+
+            try { database.Connection.Execute("alter table Zone drop column AlarmPrice", transaction); } catch { }
+            try { database.Connection.Execute("alter table Zone drop column ClosePrice", transaction); } catch { }
 
             // update version
             version.Version += 1;

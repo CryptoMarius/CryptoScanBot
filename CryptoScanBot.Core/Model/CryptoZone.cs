@@ -28,16 +28,12 @@ public class CryptoZone
     // Created on..
     public required DateTime CreateTime { get; set; }
 
-    // Zone starts on this date
-    public long? OpenTime { get; set; } // for limited types of zones
+    public long? OpenTime { get; set; } // Zone starts on this date, for limited types of zones
     public required decimal Top { get; set; }
     public required decimal Bottom { get; set; }
-    // Zone ends on this date
-    public decimal? ClosePrice { get; set; }
-    public long? CloseTime { get; set; }
+    public long? CloseTime { get; set; } // Zone ends on this date
 
     // Create a signal when this price triggers (once)
-    public decimal AlarmPrice { get; set; } // obsolete, just for debugging
     public DateTime? AlarmDate { get; set; }
 
     public long? LastSignalDate { get; set; }

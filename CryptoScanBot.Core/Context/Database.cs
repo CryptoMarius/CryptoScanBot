@@ -765,9 +765,7 @@ public class CryptoDatabase : IDisposable
                 "OpenTime TEXT NULL," +
                 "Top TEXT not null," +
                 "Bottom TEXT not null," +
-                "AlarmPrice TEXT not null," +
                 "AlarmDate TEXT," +
-                "ClosePrice TEXT null," +
                 "CloseTime TEXT NULL," +
                 "LastSignalDate TEXT NULL," +
                 "Description TEXT NULL," +
