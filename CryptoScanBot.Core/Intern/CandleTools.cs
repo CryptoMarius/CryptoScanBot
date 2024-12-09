@@ -255,7 +255,7 @@ public static class CandleTools
         // remark about the break and the -1 comparison:
         // remark: 1 missing candle will alway's trigger problems!
         // remark: not only for this interval but for the higher timeframes as well.....
-        // TODO: Make decision: Use incomplete data OR incorrect data (including missing candles)
+        // TODO: Make decision: Use targetComplete data OR incorrect data (including missing candles)
 
         // I Say: a missing 1m candle should not trigger missing 1D candles (I would opt for slight different data?)
         // Could also be dangerous, we should dive into this problem more, why are they missing, error of simply not there?
@@ -295,11 +295,11 @@ public static class CandleTools
             {
                 if (interval.ConstructFrom != null && candle1mCloseTime % interval.Duration == 0)
                 {
-                    var (outside, targetStart) = IntervalTools.StartOfIntervalCandle3(candle.OpenTime, interval.ConstructFrom.Duration, interval.Duration);
-                    if (!outside) //  && targetStart + interval.Duration <= candle!.OpenTime
+                    var (targetComplete, targetStart) = IntervalTools.StartOfIntervalCandle3(candle.OpenTime, interval.ConstructFrom.Duration, interval.Duration);
+                    if (targetComplete)
                     {
                         // Calculate the candle using the candles from the lower timeframes
-                        CalculateCandleForInterval(symbol, interval.ConstructFrom, interval, targetStart); //candle.OpenTime ? candle1mCloseTime
+                        CalculateCandleForInterval(symbol, interval.ConstructFrom, interval, targetStart);
                         // Update administration of the last processed candle
                         UpdateCandleFetched(symbol, interval);
                     }
@@ -359,28 +359,28 @@ public static class CandleTools
         //GlobalData.AddTextToLogTab($"{symbol.Name} BulkCalculateCandles {sourceInterval.Name} {targetInterval.Name}");
         CryptoSymbolInterval symbolSourceInterval = symbol.GetSymbolInterval(sourceInterval.IntervalPeriod);
         CryptoCandleList candleSourceInterval = symbolSourceInterval.CandleList;
-        if (candleSourceInterval.Values.Any())
+        if (candleSourceInterval.Count > 0)
         {
-            DateTime firstCandleDateDebug;
-            DateTime lastCandleDateDebug;
-            DateTime fetchEndUnixDate = CandleTools.GetUnixDate(fetchEndUnix);
+            //DateTime firstCandleDateDebug;
+            //DateTime lastCandleDateDebug;
+            //DateTime fetchEndUnixDate = CandleTools.GetUnixDate(fetchEndUnix);
 
             CryptoCandle firstCandle = candleSourceInterval.Values.First();
-            var (firstOutside, firstCandleDate) = IntervalTools.StartOfIntervalCandle3(firstCandle.OpenTime, sourceInterval.Duration, targetInterval.Duration);
-            firstCandleDateDebug = CandleTools.GetUnixDate(firstCandleDate);
-            if (firstOutside || firstCandleDate < firstCandle.OpenTime) // Has candles outside and will not be complete and will be flagged as error
+            var (firstComplete, firstCandleDate) = IntervalTools.StartOfIntervalCandle3(firstCandle.OpenTime, sourceInterval.Duration, targetInterval.Duration);
+            //firstCandleDateDebug = CandleTools.GetUnixDate(firstCandleDate);
+            if (!firstComplete || firstCandleDate < firstCandle.OpenTime) // Has candles targetComplete and will not be complete and will be flagged as error
             {
                 firstCandleDate += targetInterval.Duration;
-                firstCandleDateDebug = CandleTools.GetUnixDate(firstCandleDate);
+                //firstCandleDateDebug = CandleTools.GetUnixDate(firstCandleDate);
             }
 
             CryptoCandle lastCandle = candleSourceInterval.Values.Last();
-            var (lastOutside, lastCandleDate) = IntervalTools.StartOfIntervalCandle3(lastCandle.OpenTime, sourceInterval.Duration, targetInterval.Duration);
-            lastCandleDateDebug = CandleTools.GetUnixDate(lastCandleDate);
-            if (lastOutside || lastCandleDate + targetInterval.Duration > fetchEndUnix) // Has candles outside and will not be complete and will be flagged as error (also future candle)
+            var (lastComplete, lastCandleDate) = IntervalTools.StartOfIntervalCandle3(lastCandle.OpenTime, sourceInterval.Duration, targetInterval.Duration);
+            //lastCandleDateDebug = CandleTools.GetUnixDate(lastCandleDate);
+            if (!lastComplete || lastCandleDate + targetInterval.Duration > fetchEndUnix) // Has candles targetComplete and will not be complete and will be flagged as error (also future candle)
             {
                 lastCandleDate -= targetInterval.Duration;
-                lastCandleDateDebug = CandleTools.GetUnixDate(lastCandleDate);
+                //lastCandleDateDebug = CandleTools.GetUnixDate(lastCandleDate);
             }
 
             // Bulk calculate all higher interval candles (ranging from the firstLowerCandle to the last candle)

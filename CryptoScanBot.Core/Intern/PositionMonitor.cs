@@ -1793,27 +1793,27 @@ public class PositionMonitor : IDisposable
                 }
 
 
-                // First try to automaticly calculate the zones
-                CryptoInterval intervalX = GlobalData.IntervalListPeriod[GlobalData.Settings.Signal.Zones.Interval];
-                if (LastCandle1mCloseTime % intervalX.Duration == 0)
-                {
-                    AccountSymbolData symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(Symbol.Name);
-                    AccountSymbolIntervalData symbolIntervalData = symbolData.GetAccountSymbolIntervalData(intervalX.IntervalPeriod);
-
-                    CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(symbolIntervalData.IntervalPeriod);
-                    TrendInterval.Calculate(Symbol, symbolInterval.CandleList, symbolIntervalData, 0, LastCandle1mCloseTime);
-                    if (symbolIntervalData.BestZigZagIndicator != null && symbolIntervalData.BestZigZagIndicator.LastSwingPoint != null)
-                    {
-                        long? lastSwingPointTime = symbolIntervalData.BestZigZagIndicator.GetLastRealZigZag();
-                        if (lastSwingPointTime == null || symbolIntervalData.LastSwingPointTime == null || symbolIntervalData.LastSwingPointTime > lastSwingPointTime)
-                            GlobalData.ThreadZoneCalculate?.AddToQueue(Symbol);
-                    }
-                }
-
-
-                // Only for the 1m interval
                 if (GlobalData.Settings.Signal.Zones.ShowZoneSignals)
                 {
+                    // First try to automaticly calculate the zones
+                    CryptoInterval intervalX = GlobalData.IntervalListPeriod[GlobalData.Settings.Signal.Zones.Interval];
+                    if (LastCandle1mCloseTime % intervalX.Duration == 0)
+                    {
+                        AccountSymbolData symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(Symbol.Name);
+                        AccountSymbolIntervalData symbolIntervalData = symbolData.GetAccountSymbolIntervalData(intervalX.IntervalPeriod);
+
+                        CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(symbolIntervalData.IntervalPeriod);
+                        TrendInterval.Calculate(Symbol, symbolInterval.CandleList, symbolIntervalData, 0, LastCandle1mCloseTime);
+                        if (symbolIntervalData.BestZigZagIndicator != null && symbolIntervalData.BestZigZagIndicator.LastSwingPoint != null)
+                        {
+                            long? lastSwingPointTime = symbolIntervalData.BestZigZagIndicator.GetLastRealZigZag();
+                            if (lastSwingPointTime == null || symbolIntervalData.LastSwingPointTime == null || symbolIntervalData.LastSwingPointTime > lastSwingPointTime)
+                                GlobalData.ThreadZoneCalculate?.AddToQueue(Symbol);
+                        }
+                    }
+
+
+                    // Only for the 1m interval
                     SignalCreate createSignal = new(TradeAccount, Symbol, GlobalData.IntervalList[0], side, LastCandle1mCloseTime);
                     if (createSignal.AnalyzeZones(LastCandle1mCloseTime - GlobalData.IntervalList[0].Duration))
                         signalList.AddRange(createSignal.SignalList);

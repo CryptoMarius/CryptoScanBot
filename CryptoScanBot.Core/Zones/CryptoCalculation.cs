@@ -262,7 +262,7 @@ public class CryptoCalculation
             {
                 bool brokenBos = false;
                 long key = zigzag.Candle.OpenTime;
-                long checkUpTo = CandleTools.GetUnixTime(CandleEngine.StartupTime, data.SymbolInterval.Interval.Duration);
+                long checkUpTo = CandleTools.GetUnixTime(DateTime.UtcNow, data.SymbolInterval.Interval.Duration);
                 while (zigzag.Dominant && key <= checkUpTo)
                 {
                     key += data.SymbolInterval.Interval.Duration;
