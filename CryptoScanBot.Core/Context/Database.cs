@@ -154,17 +154,17 @@ public class CryptoDatabase : IDisposable
         return
         [
             new() { Name = "Binance Spot", FeeRate = 0.1m, IsSupported = true, ExchangeType = CryptoExchangeType.Binance, TradingType=CryptoTradingType.Spot },
+            new() { Name = "Binance Futures", FeeRate = 0.0m, IsSupported = true, ExchangeType = CryptoExchangeType.Binance, TradingType=CryptoTradingType.Futures},
+
             new() { Name = "Bybit Spot", FeeRate = 0.15m, IsSupported = true, ExchangeType = CryptoExchangeType.Bybit, TradingType=CryptoTradingType.Spot },
-            new() { Name = "Bybit Futures", FeeRate = 0.1m, IsSupported = true, ExchangeType = CryptoExchangeType.Bybit, TradingType=CryptoTradingType.Futures },
+            new() { Name = "Bybit Futures", FeeRate = 0.0m, IsSupported = true, ExchangeType = CryptoExchangeType.Bybit, TradingType=CryptoTradingType.Futures },
+
             new() { Name = "Kucoin Spot", FeeRate = 0.1m, IsSupported = true, ExchangeType = CryptoExchangeType.Kucoin, TradingType=CryptoTradingType.Spot },
+            // not supported (meeds additional work)
+            new() { Name = "Kucoin Futures", FeeRate = 0.0m, IsSupported = false, ExchangeType = CryptoExchangeType.Kucoin, TradingType=CryptoTradingType.Futures },
 
             // not supported (kline streams not working properly)
             new() { Name = "Kraken Spot", FeeRate = 0.1m, IsSupported = false, ExchangeType = CryptoExchangeType.Kraken, TradingType=CryptoTradingType.Spot },
-
-            new() { Name = "Binance Futures", FeeRate = 0.1m, IsSupported = true, ExchangeType = CryptoExchangeType.Binance, TradingType=CryptoTradingType.Futures},
-
-            // not supported (meeds additional work)
-            new() { Name = "Kucoin Futures", FeeRate = 0.1m, IsSupported = false, ExchangeType = CryptoExchangeType.Kucoin, TradingType=CryptoTradingType.Futures },
 
             new() { Name = "Mexc Spot", FeeRate = 0.1m, IsSupported = true, ExchangeType = CryptoExchangeType.Mexc, TradingType=CryptoTradingType.Spot },
             // Er is nog geen nuget library die deze ondersteund
@@ -219,16 +219,13 @@ public class CryptoDatabase : IDisposable
             // De exchanges moeten aanwezig zijn na initialisatie
             using var transaction = connection.Connection.BeginTransaction();
 
-            int id = 0;
             foreach (var exchange in CreateExchangeList())
             {
-                id++;
-
                 foreach (CryptoAccountType accountType in Enum.GetValues(typeof(CryptoAccountType)))
                 {
                     CryptoAccount tradeAccount = new()
                     {
-                        ExchangeId = id,
+                        ExchangeId = exchange.Id,
                         Exchange = exchange,
                         CanTrade = exchange.IsSupported,
                         AccountType = accountType,
@@ -241,9 +238,7 @@ public class CryptoDatabase : IDisposable
                     connection.Connection.Insert(tradeAccount, transaction);
                 }
             }
-
             transaction.Commit();
-
         }
     }
 

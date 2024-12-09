@@ -988,6 +988,9 @@ public class Migration
             try { database.Connection.Execute("alter table Zone drop column AlarmPrice", transaction); } catch { }
             try { database.Connection.Execute("alter table Zone drop column ClosePrice", transaction); } catch { }
 
+            // set the feerates of futures to 0
+            try { database.Connection.Execute("update table exchange set feerate=0 where TradingType=1", transaction); } catch { }
+
             // update version
             version.Version += 1;
             database.Connection.Update(version, transaction);
