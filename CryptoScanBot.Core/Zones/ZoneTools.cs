@@ -40,6 +40,14 @@ public class ZoneTools
                             symbolData.ZoneListLong.Add(zone.Top, zone);
                         else
                             symbolData.ZoneListShort.Add(zone.Bottom, zone);
+
+                        // the highest creation date is the last date
+                        long lastCalculation = CandleTools.GetUnixTime(zone.CreateTime, 0);
+                        CryptoInterval interval = GlobalData.IntervalListPeriod[GlobalData.Settings.Signal.Zones.Interval];
+                        AccountSymbolIntervalData symbolIntervalData = symbolData.GetAccountSymbolIntervalData(interval.IntervalPeriod);
+
+                        if (symbolIntervalData.LastSwingPointTime == null || lastCalculation > symbolIntervalData.LastSwingPointTime)
+                            symbolIntervalData.LastSwingPointTime = lastCalculation;
                     }
                 }
             }
@@ -85,7 +93,7 @@ public class ZoneTools
                 {
                     zone = new()
                     {
-                        CreateTime = DateTime.UtcNow,
+                        CreateTime = zigZag.Candle.Date,
                         AccountId = GlobalData.ActiveAccount.Id,
                         Account = GlobalData.ActiveAccount,
                         ExchangeId = symbol.Exchange.Id,
@@ -101,27 +109,15 @@ public class ZoneTools
                     };
                     changed = true;
                 }
-                if (zone.CloseTime != zigZag.CloseDate)
+                if (zone.CloseTime == null && zigZag.CloseDate != null)
                 {
                     changed = true;
                     zone.CloseTime = zigZag.CloseDate;
                 }
-                decimal alarmPrice;
                 if (side == CryptoTradeSide.Long)
-                {
-                    alarmPrice = zone.Top * (100 + GlobalData.Settings.Signal.Zones.WarnPercentage) / 100;
                     symbolData.ZoneListLong.Add(zone.Top, zone);
-                }
                 else
-                {
-                    alarmPrice = zone.Bottom * (100 - GlobalData.Settings.Signal.Zones.WarnPercentage) / 100;
                     symbolData.ZoneListShort.Add(zone.Bottom, zone);
-                }
-                if (zone.AlarmPrice != alarmPrice)
-                {
-                    changed = true;
-                    zone.AlarmPrice = alarmPrice;
-                }
 
                 if (changed)
                 {

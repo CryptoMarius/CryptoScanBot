@@ -38,29 +38,30 @@ public class DominantLevelShort : SignalCreateBase
         if (symbolData.ZoneListShort.Count == 0)
             return false;
 
-        // Every zone that is overlapping with this zone must be signalled
-        decimal boundaryHigh = CandleLast.High * (100 + GlobalData.Settings.Signal.Zones.WarnPercentage) / 100;
-        decimal boundaryLow = CandleLast.Low;
+        //// Every zone that is overlapping with this zone must be signalled
+        //decimal boundaryHigh = CandleLast.High * (100 + GlobalData.Settings.Signal.Zones.WarnPercentage) / 100;
+        //decimal boundaryLow = CandleLast.Low;
 
-        // The ZoneList is sorted from low to high
+        //// The ZoneList is sorted from low to high
 
-        // Low index
-        int indexLow = symbolData.ZoneListShort.Keys.BinarySearchIndexOf(boundaryLow) - 1;
-        if (indexLow < 0)
-            indexLow = 0;
-        if (indexLow >= symbolData.ZoneListShort.Count)
-            indexLow = symbolData.ZoneListShort.Count - 1;
+        //// Low index
+        //int indexLow = symbolData.ZoneListShort.Keys.BinarySearchIndexOf(boundaryLow) - 1;
+        //if (indexLow < 0)
+        //    indexLow = 0;
+        //if (indexLow >= symbolData.ZoneListShort.Count)
+        //    indexLow = symbolData.ZoneListShort.Count - 1;
 
-        // High index
-        int indexHigh = symbolData.ZoneListShort.Keys.BinarySearchIndexOf(boundaryHigh) + 1;
-        if (indexHigh < 0)
-            indexHigh = 0;
-        if (indexHigh >= symbolData.ZoneListShort.Count)
-            indexHigh = symbolData.ZoneListShort.Count - 1;
+        //// High index
+        //int indexHigh = symbolData.ZoneListShort.Keys.BinarySearchIndexOf(boundaryHigh) + 1;
+        //if (indexHigh < 0)
+        //    indexHigh = 0;
+        //if (indexHigh >= symbolData.ZoneListShort.Count)
+        //    indexHigh = symbolData.ZoneListShort.Count - 1;
 
-        for (int index = indexLow; index < indexHigh; index++)
+        //for (int index = indexLow; index < indexHigh; index++)
+        foreach (var zone in symbolData.ZoneListShort.Values)
         {
-            var zone = symbolData.ZoneListShort.Values[index];
+            //var zone = symbolData.ZoneListShort.Values[index];
             if (zone.OpenTime != null && CandleLast.OpenTime >= zone.OpenTime && zone.CloseTime == null)
             {
                 if (zone.CloseTime == null)
@@ -71,20 +72,19 @@ public class DominantLevelShort : SignalCreateBase
                     {
                         if (zone.AlarmDate == null || CandleLast.Date > zone.AlarmDate?.AddMinutes(5))
                         {
-                            ExtraText = $"{zone.Bottom} .. {zone.Top} (#{zone.Id})";
-                            zone.AlarmPrice = CandleLast.High;
-                            zone.AlarmDate = CandleLast.Date;
-                            changed = true;
                             result = true;
+                            changed = true;
+                            zone.AlarmDate = CandleLast.Date;
+                            ExtraText = $"{zone.Bottom} .. {zone.Top} (#{zone.Id})";
                         }
                     }
 
                     // todo, delete the zone somewhere else?
                     if (CandleLast.High > zone.Bottom || CandleLast.Close >= zone.Bottom || CandleLast.Open >= zone.Bottom)
                     {
-                        zone.CloseTime = CandleLast.OpenTime;
-                        zone.ClosePrice = CandleLast.Low;
                         changed = true;
+                        zone.CloseTime = CandleLast.OpenTime;
+                        GlobalData.AddTextToLogTab($"Closed zone {zone.Id} {zone.Side} {zone.Description}");
                     }
 
                     if (changed)
@@ -109,14 +109,14 @@ public class DominantLevelShort : SignalCreateBase
         }
 
         // close lower zones (they should not be there)
-        for (int index = 0; index <= indexLow; index++)
+        //for (int index = 0; index <= indexLow; index++)
+        foreach (var zone in symbolData.ZoneListShort.Values)
         {
-            var zone = symbolData.ZoneListShort.Values[index];
+            //var zone = symbolData.ZoneListShort.Values[index];
 
             if (zone.CloseTime == null && zone.Bottom > CandleLast.High)
             {
                 zone.CloseTime = CandleLast.OpenTime;
-                zone.ClosePrice = CandleLast.Low;
                 try
                 {
                     using var database = new CryptoDatabase();
