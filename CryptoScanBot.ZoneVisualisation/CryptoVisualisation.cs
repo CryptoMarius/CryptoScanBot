@@ -30,7 +30,9 @@ public partial class CryptoVisualisation : Form
 
     private string OldSymbolBase = "";
     private string OldSymbolQuote = "";
+#if DEBUGZIGZAG
     private string OldIntervalName = "";
+#endif
 
     public static GetNextSymbol? GetNextSymbol = null;
 
@@ -64,21 +66,9 @@ public partial class CryptoVisualisation : Form
         KeyDown += new KeyEventHandler(FormKeyDown);
 
         InitQuoteItems();
+#if DEBUGZIGZAG
         InitIntervalItems();
-        //EditSymbolBase.DataSource = new BindingSource(GlobalData.Settings.General.Exchange.SymbolListName, null);
-        //EditSymbolBase.DisplayMember = "Key";
-        //EditSymbolBase.ValueMember = "Value";
-        //try { EditSymbolBase.SelectedValue = Session.SymbolBase; } catch { };
-
-        //EditSymbolQuote.DataSource = new BindingSource(GlobalData.Settings.QuoteCoins, null);
-        //EditSymbolQuote.DisplayMember = "Key";
-        //EditSymbolQuote.ValueMember = "Value";
-        //try { EditSymbolQuote.SelectedValue = Session.SymbolQuote; } catch { };
-
-        //EditIntervalName.DataSource = new BindingSource(GlobalData.IntervalListPeriodName, null);
-        //EditIntervalName.DisplayMember = "Key";
-        //EditIntervalName.ValueMember = "Value";
-        //try { EditIntervalName.SelectedValue = Session.IntervalName; } catch { };
+#endif
 
         if (StandAlone)
             ButtonRefreshClick(null, EventArgs.Empty);
@@ -89,6 +79,7 @@ public partial class CryptoVisualisation : Form
         ButtonCalculateClick(null, EventArgs.Empty);
     }
 
+#if DEBUGZIGZAG
     public void InitIntervalItems()
     {
         foreach (var interval in GlobalData.IntervalList)
@@ -97,6 +88,7 @@ public partial class CryptoVisualisation : Form
                 EditIntervalName.Items.Add(interval.Name);
         }
     }
+#endif
 
     private void InitQuoteItems()
     {
@@ -150,7 +142,17 @@ public partial class CryptoVisualisation : Form
     {
         EditSymbolBase.Text = Session.SymbolBase;
         EditSymbolQuote.Text = Session.SymbolQuote;
+#if DEBUGZIGZAG
         EditIntervalName.Text = Session.IntervalName;
+        EditShowPositions.Checked = Session.ShowPositions;
+        EditUseBatchProcess.Checked = Session.UseBatchProcess;
+#else
+        PanelPlayBack.Visible = false;
+        labelInterval2.Visible = false;
+        EditIntervalName.Visible = false;
+        EditShowPositions.Visible = false;
+        EditUseBatchProcess.Visible = false;
+#endif
         EditShowLiqBoxes.Checked = Session.ShowLiqBoxes;
         EditZoomLiqBoxes.Checked = Session.ZoomLiqBoxes;
         EditShowZigZag.Checked = Session.ShowLiqZigZag;
@@ -160,10 +162,7 @@ public partial class CryptoVisualisation : Form
         EditShowPivots.Checked = Session.ShowPoints;
         EditShowSecondary.Checked = Session.ShowSecondary;
         EditUseOptimizing.Checked = Session.UseOptimizing;
-        EditUseBatchProcess.Checked = Session.UseBatchProcess;
         EditShowSignals.Checked = Session.ShowSignals;
-        EditShowPositions.Checked = Session.ShowPositions;
-        EditShowPositions.Enabled = false;
     }
 
     public void ShowProgress(string text)
@@ -436,6 +435,7 @@ public partial class CryptoVisualisation : Form
         ScannerLog.Logger.Info($"Symbol {symbol.Name}");
 
 
+#if DEBUGZIGZAG
         // Is the Interval supported by this tool?
         var interval = GlobalData.IntervalList.Find(x => x.Name.Equals(Session.IntervalName));
         if (interval == null)
@@ -446,7 +446,6 @@ public partial class CryptoVisualisation : Form
         }
         ScannerLog.Logger.Info($"Interval {interval.Name}");
 
-
         // Is the Interval supported on the Exchange?
         if (!exchange.IsIntervalSupported(interval.IntervalPeriod))
         {
@@ -454,7 +453,9 @@ public partial class CryptoVisualisation : Form
             ScannerLog.Logger.Info($"{reason}");
             return false;
         }
-
+#else
+        var interval = GlobalData.IntervalListPeriod[GlobalData.Settings.Signal.Zones.Interval];
+#endif
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
 
         Data = new()
@@ -469,12 +470,17 @@ public partial class CryptoVisualisation : Form
         };
 
 
-        if (OldSymbolBase != Session.SymbolBase || OldSymbolQuote != Session.SymbolQuote || OldIntervalName != Session.IntervalName)
+        if (OldSymbolBase != Session.SymbolBase || OldSymbolQuote != Session.SymbolQuote
+#if DEBUGZIGZAG
+            || OldIntervalName != Session.IntervalName
+#endif
+            )
         {
             OldSymbolBase = Session.SymbolBase;
             OldSymbolQuote = Session.SymbolQuote;
+#if DEBUGZIGZAG
             OldIntervalName = Session.IntervalName;
-
+#endif
             Session.ActiveInterval = Data.Interval.IntervalPeriod;
             Session.MaxDate = CandleTools.GetUnixTime(DateTime.UtcNow, 60);
             Session.MaxDate = IntervalTools.StartOfIntervalCandle(Session.MaxDate, Data.Interval.Duration);
@@ -509,8 +515,15 @@ public partial class CryptoVisualisation : Form
     {
         Session.SymbolBase = EditSymbolBase.Text.ToUpper().Trim();
         Session.SymbolQuote = EditSymbolQuote.Text.ToUpper().Trim();
+#if DEBUGZIGZAG
         Session.IntervalName = EditIntervalName.Text.ToLower().Trim();
-
+        Session.ShowPositions = EditShowPositions.Checked;
+        Session.UseBatchProcess = EditUseBatchProcess.Checked;
+#else
+        Session.IntervalName = "1h";
+        Session.ShowPositions = false;
+        Session.UseBatchProcess = true;
+#endif
         Session.ShowLiqBoxes = EditShowLiqBoxes.Checked;
         Session.ZoomLiqBoxes = EditZoomLiqBoxes.Checked;
         Session.ShowLiqZigZag = EditShowZigZag.Checked;
@@ -520,9 +533,7 @@ public partial class CryptoVisualisation : Form
         Session.ShowSecondary = EditShowSecondary.Checked;
         Session.UseOptimizing = EditUseOptimizing.Checked;
         Session.ShowPoints = EditShowPivots.Checked;
-        Session.UseBatchProcess = EditUseBatchProcess.Checked;
         Session.ShowSignals = EditShowSignals.Checked;
-        Session.ShowPositions = EditShowPositions.Checked;
     }
 
 
