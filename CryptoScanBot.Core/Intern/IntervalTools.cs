@@ -67,20 +67,20 @@ public class IntervalTools
 
         // The target candle cannot be final/complete if is above the end of the start candle
         // (it would be a next candle or an in progress candle)
-        long sourceDateEnd = sourceStart + sourceDuration;
+        long sourceDateEnd = sourceStart + sourceDuration; // sourceStart could not be the start of the base interval ? need testunit...
         long targetDateEnd = targetStart + targetDuration;
         if (targetDateEnd > sourceDateEnd)
         {
             outside = true;
         }
 
-#if DEBUG
-        DateTime sourceStartDebug = CandleTools.GetUnixDate(sourceStart);
-        DateTime sourceCloseDebug = CandleTools.GetUnixDate(sourceStart + sourceDuration);
+//#if DEBUG
+//        DateTime sourceStartDebug = CandleTools.GetUnixDate(sourceStart);
+//        DateTime sourceCloseDebug = CandleTools.GetUnixDate(sourceStart + sourceDuration);
 
-        DateTime targetStartDebug = CandleTools.GetUnixDate(targetStart);
-        DateTime targetCloseDebug = CandleTools.GetUnixDate(targetStart + targetDuration);
-#endif
+//        DateTime targetStartDebug = CandleTools.GetUnixDate(targetStart);
+//        DateTime targetCloseDebug = CandleTools.GetUnixDate(targetStart + targetDuration);
+//#endif
         return (outside, targetStart);
     }
 
