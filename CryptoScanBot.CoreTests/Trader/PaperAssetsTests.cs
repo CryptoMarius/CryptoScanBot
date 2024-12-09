@@ -8,7 +8,7 @@ using CryptoScanBot.CoreTests;
 
 namespace CryptoScanBot.Core.Trader.Tests;
 
-[TestClass()]
+[TestClass]
 public class PaperAssetsTests : TestBase
 {
     [TestMethod()]

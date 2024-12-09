@@ -5,7 +5,7 @@ using CryptoScanBot.CoreTests;
 
 namespace CryptoScanBot.Intern.Tests;
 
-[TestClass()]
+[TestClass]
 public class CandleToolsTests : TestBase
 {
     [TestMethod()]
