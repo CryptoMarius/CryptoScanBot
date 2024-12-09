@@ -46,7 +46,7 @@ public class IntervalTools
     }
 
 
-    public static (bool outside, long targetStart) StartOfIntervalCandle3(long sourceStart, int sourceDuration, int targetDuration)
+    public static (bool targetComplete, long targetStart) StartOfIntervalCandle3(long sourceStart, int sourceDuration, int targetDuration)
     {
         // SourceDate should be the candle.OpenTime and sourceDuration the duration of the candle.
         // It is the same result as the StartOfIntervalCandle() but corrected if the higher candle can't be calculated
@@ -59,29 +59,19 @@ public class IntervalTools
         if (targetDuration < sourceDuration)
             throw new Exception("Target interval should be higher than source interval");
 
-        long diff = sourceStart % targetDuration;
-        long targetStart = sourceStart - diff;
+        // Calculate source (just in case)
+        sourceStart -= sourceStart % sourceDuration;
+        
+        // Calculate target
+        long targetStart = sourceStart - sourceStart % targetDuration;
 
-        bool outside = false;
 
-
-        // The target candle cannot be final/complete if is above the end of the start candle
-        // (it would be a next candle or an in progress candle)
-        long sourceDateEnd = sourceStart + sourceDuration; // sourceStart could not be the start of the base interval ? need testunit...
+        // Test if the target candle is final/complete (not a in progress candle)
+        long sourceDateEnd = sourceStart + sourceDuration;
         long targetDateEnd = targetStart + targetDuration;
-        if (targetDateEnd > sourceDateEnd)
-        {
-            outside = true;
-        }
+        bool targetComplete = targetDateEnd == sourceDateEnd;
 
-//#if DEBUG
-//        DateTime sourceStartDebug = CandleTools.GetUnixDate(sourceStart);
-//        DateTime sourceCloseDebug = CandleTools.GetUnixDate(sourceStart + sourceDuration);
-
-//        DateTime targetStartDebug = CandleTools.GetUnixDate(targetStart);
-//        DateTime targetCloseDebug = CandleTools.GetUnixDate(targetStart + targetDuration);
-//#endif
-        return (outside, targetStart);
+        return (targetComplete, targetStart);
     }
 
 }
