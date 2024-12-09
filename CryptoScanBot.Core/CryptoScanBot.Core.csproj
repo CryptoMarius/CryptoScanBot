@@ -42,18 +42,19 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Binance.Net" Version="10.11.0" />
-    <PackageReference Include="Bybit.Net" Version="3.17.0" />
+    <PackageReference Include="Binance.Net" Version="10.13.2" />
+    <PackageReference Include="Bybit.Net" Version="3.18.1" />
     <PackageReference Include="CommandLineParser" Version="2.9.1" />
     <PackageReference Include="Dapper" Version="2.1.42" />
     <PackageReference Include="Dapper.Contrib" Version="2.0.78" />
-    <PackageReference Include="JK.Mexc.Net" Version="1.12.0" />
-    <PackageReference Include="KrakenExchange.Net" Version="5.3.0" />
-    <PackageReference Include="Kucoin.Net" Version="5.20.0" />
+    <PackageReference Include="JK.Mexc.Net" Version="1.13.1" />
+    <PackageReference Include="KrakenExchange.Net" Version="5.4.1" />
+    <PackageReference Include="Kucoin.Net" Version="5.22.0" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.0" />
     <PackageReference Include="NLog" Version="5.3.4" />
     <PackageReference Include="NPOI" Version="2.7.2" />
     <PackageReference Include="Skender.Stock.Indicators" Version="2.6.0" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
     <PackageReference Include="Telegram.Bot" Version="19.0.0" />
   </ItemGroup>
 
