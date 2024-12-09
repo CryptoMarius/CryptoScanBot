@@ -21,7 +21,8 @@ public enum Command
     TradingViewImportList,
     ShowSymbolGraph,
     About,
-    CalculateLiquidityZones,
+    CalculateAllLiquidityZones,
+    CalculateSymbolLiquidityZones,
 }
 
 // Work in progres, opzetje tichting ICommand (teveel werk op dit moment)

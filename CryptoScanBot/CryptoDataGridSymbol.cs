@@ -2,6 +2,7 @@
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Settings;
+using CryptoScanBot.Core.Zones;
 using CryptoScanBot.ZoneVisualisation;
 
 namespace CryptoScanBot;
@@ -27,6 +28,8 @@ public class CryptoDataGridSymbol<T>() : CryptoDataGrid<T>() where T : CryptoSym
         menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Copy symbol name", Command.CopySymbolInformation);
         menuStrip.AddCommand(this, "Show symbol chart", Command.ShowSymbolGraph, CommandShowGraph);
+        menuStrip.AddCommand(this, "Calculate liquidity zones", Command.CalculateSymbolLiquidityZones);
+
         menuStrip.AddCommand(this, "Export trend information to log", Command.ShowTrendInformation);
         menuStrip.AddCommand(this, "Export symbol information to Excel", Command.ExcelSymbolInformation);
         //menuStrip.AddCommand(this, "Create Position", Command.None, CreatePosition);

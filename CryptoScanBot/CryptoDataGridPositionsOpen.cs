@@ -106,6 +106,7 @@ public class CryptoDataGridPositionsOpen<T>() : CryptoDataGrid<T>() where T : Cr
         menuStrip.AddCommand(this, "Position add additional DCA", Command.None, CommandPositionCreateAdditionalDca);
         menuStrip.AddCommand(this, "Position cancel open DCA", Command.None, CommandPositionRemoveAdditionalDca);
         //menuStrip.AddCommand(this, "Position take profit (if possible)", Command.None, CommandPositionLastPartTakeProfit);
+
         menuStrip.AddCommand(this, "Export position information to Excel", Command.ExcelPositionInformation);
         menuStrip.AddCommand(this, "Export all positions information to Excel", Command.ExcelPositionsInformation);
 
@@ -113,6 +114,7 @@ public class CryptoDataGridPositionsOpen<T>() : CryptoDataGrid<T>() where T : Cr
         menuStrip.AddCommand(this, "Copy symbol name", Command.CopySymbolInformation);
         menuStrip.AddCommand(this, "Copy all data cells", Command.CopyDataGridCells);
         menuStrip.AddCommand(this, "Show symbol chart", Command.ShowSymbolGraph);
+        menuStrip.AddCommand(this, "Calculate liquidity zones", Command.CalculateSymbolLiquidityZones);
         menuStrip.AddCommand(this, "Export trend information to log", Command.ShowTrendInformation);
         menuStrip.AddCommand(this, "Export symbol information to Excel", Command.ExcelSymbolInformation);
 

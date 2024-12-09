@@ -59,10 +59,10 @@ public class CommandTools
                         new CommandCopyDataCells().Execute(item, dataGrid2);
                     return;
 
-                case Command.CalculateLiquidityZones:
+                case Command.CalculateAllLiquidityZones:
                     _ = Task.Run(() => { _ = LiquidityZones.CalculateZonesForAllSymbolsAsync(null); });
                     return;
-                    
+
             }
 
 
@@ -146,6 +146,13 @@ public class CommandTools
                             {
                                 CommandShowGraph command = new();
                                 command.Execute(item, symbol);
+                            }
+                            break;
+
+                        case Command.CalculateSymbolLiquidityZones:
+                            if (symbol != null)
+                            {
+                                GlobalData.ThreadZoneCalculate?.AddToQueue(symbol);
                             }
                             break;
                     }
