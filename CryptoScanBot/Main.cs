@@ -82,7 +82,7 @@ public partial class FrmMain : Form
         MenuMain.AddCommand(null, "Test - Save Candles", Command.None, TestSaveCandlesClick);
         MenuMain.AddCommand(null, "Test - Create url testfile", Command.None, TestCreateUrlTestFileClick);
         MenuMain.AddCommand(null, "Test - Dump ticker information", Command.None, TestShowTickerInformationClick);
-        MenuMain.AddCommand(null, "Test - Calculate all liquidity zones (slow!)", Command.CalculateLiquidityZones);
+        MenuMain.AddCommand(null, "Test - Calculate all liquidity zones (slow!)", Command.CalculateAllLiquidityZones);
 #endif
         MenuMain.AddSeperator();
         MenuMain.AddCommand(null, "About", Command.About);
