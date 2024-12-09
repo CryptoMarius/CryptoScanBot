@@ -34,6 +34,10 @@ public class DataStore
         {
             try
             {
+                // For some reason we can have corrupted candles.
+                // Killed scanner because it had a loop until maxLong!
+                long futureCandles = CandleTools.GetUnixTime(DateTime.UtcNow.AddDays(7), 60);
+
                 // Een experiment (vanwege de obfuscator)
                 using FileStream readStream = new(filename, FileMode.Open);
 
@@ -75,8 +79,15 @@ public class DataStore
                                 candle.BaseVolume = binaryReader.ReadDecimal();
                             }
 #endif
+                            // We had some data corruption and 1 candle in the year 2150...
+                            // It isn't nice, but skip those please, really weird ...
                             if (candle.OpenTime >= startFetchUnix)
-                                symbolInterval.CandleList.TryAdd(candle.OpenTime, candle);
+                            {
+                                if (candle.OpenTime < futureCandles)
+                                    symbolInterval.CandleList.TryAdd(candle.OpenTime, candle);
+                                else
+                                    GlobalData.AddTextToLogTab($"{symbol.Name} skipped corrupted candle {candle.DateLocal}");
+                            }
 
                             candleCount--;
                         }
