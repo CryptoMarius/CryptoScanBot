@@ -208,10 +208,8 @@ public partial class FrmMain : Form
         GlobalData.SymbolsHaveChanged("");
         GlobalData.LoadSignals();
         TradeTools.LoadAssets();
-        ZoneTools.LoadAllZones();
         TradeTools.LoadOpenPositions();
         TradeTools.LoadClosedPositions();
-        //ClosedPositionsHaveChangedEvent();
         PositionsHaveChangedEvent("");
 
         ScannerSession.Start(0);

@@ -6,6 +6,7 @@ using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Telegram;
 using CryptoScanBot.Core.Trader;
 using CryptoScanBot.Core.TradingView;
+using CryptoScanBot.Core.Zones;
 
 using Dapper;
 
@@ -222,88 +223,13 @@ public class ThreadLoadData
                 BarometerTools.InitBarometerSymbols();
 
 
-
                 GlobalData.AddTextToLogTab("Reading candle information");
-
                 DataStore.LoadCandles();
-
 
                 //************************************************************************************
                 // Vanaf dit moment worden de candles (en candleperiod) bewaard 
                 // (het herberekenen kan definitieve candles produceren)
                 //************************************************************************************
-
-                ////************************************************************************************
-                //// Alle intervallen herberekenen (het is een bulk hercalculatie voor de laatste in het geheugen gelezen candles)
-                //// In theorie is dit allemaal reeds in de database opgeslagen, maar baat het niet dan schaad het niet
-                ////************************************************************************************
-                //GlobalData.AddTextToLogTab("Calculating candle intervals for " + exchange.Name + " (" + exchange.SymbolListName.Count.ToString() + " symbols)");
-                //foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
-                //{
-                //    // De "barometer" munten overslagen AUB, die hebben slechts 3 intervallen (beetje quick en dirty allemaal)
-                //    if (symbol.IsBarometerSymbol())
-                //        continue;
-
-                //    if (symbol.CandleList.Any())
-                //    {
-                //        try
-                //        {
-                //            // Van laag naar hoog zodat de hogere intervallen worden berekend
-                //            foreach (CryptoSymbolInterval symbolInterval in symbol.IntervalPeriodList)
-                //            {
-                //                CryptoInterval interval = symbolInterval.Interval;
-                //                if (interval.ConstructFrom != null)
-                //                {
-                //                    // Voeg een candle toe aan een hogere tijd interval (eventueel uit db laden)
-                //                    var candlesInterval = symbolInterval.CandleList;
-                //                    if (candlesInterval.Values.Count > 0)
-                //                    {
-                //                        // Periode start
-                //                        long unixFirst = candlesInterval.Values.First().OpenTime;
-                //                        unixFirst -= unixFirst % interval.Duration;
-                //                        DateTime dateFirst = CandleTools.GetUnixDate(unixFirst);
-
-                //                        // Periode einde
-                //                        long unixLast = candlesInterval.Values.Last().OpenTime;
-                //                        unixLast -= unixLast % interval.Duration;
-                //                        DateTime dateLast = CandleTools.GetUnixDate(unixLast);
-
-
-                //                        // TODO: Het aantal variabelen verminderen
-                //                        long unixLoop = unixFirst;
-                //                        DateTime dateLoop = CandleTools.GetUnixDate(unixLoop);
-
-                //                        //long candle1mOpenTime = candle.OpenTime;
-                //                        //long candle1mCloseTime = candle1mOpenTime + 60;
-                //                        //foreach (CryptoInterval interval in GlobalData.IntervalList)
-                //                        //{
-                //                        //    if (interval.ConstructFrom != null && candle1mCloseTime % interval.Duration == 0)
-
-                //                        // Herbereken deze periode opnieuw uit het onderliggende interval
-                //                        while (unixLoop <= unixLast)
-                //                        {
-                //                            if (unixLoop % interval.Duration == 0)
-                //                                CandleTools.CalculateCandleForInterval(interval, interval.ConstructFrom, symbol, unixLoop);
-
-                //                            unixLoop += interval.Duration;
-                //                            dateLoop = CandleTools.GetUnixDate(unixLoop); //ter debug want een unix date is onleesbaar
-                //                        }
-                //                    }
-                //                }
-
-                //                // De laatste datum bijwerken (zodat we minder candles hoeven op te halen)
-                //                CandleTools.UpdateCandleFetched(symbol, interval); // alleen relevant voor 1m
-                //            }
-                //        }
-                //        catch (Exception error)
-                //        {
-                //            ScannerLog.Logger.Error(error, "");
-                //            GlobalData.AddTextToLogTab(error.ToString());
-                //            throw;
-                //        }
-
-                //    }
-                //}
 
 
 
@@ -321,7 +247,7 @@ public class ThreadLoadData
 
 
                 //************************************************************************************
-                // De Telegram bot opstarten
+                // Start the Telegram bot
                 //************************************************************************************
                 if (GlobalData.Telegram.Token != "")
                 {
@@ -381,6 +307,7 @@ public class ThreadLoadData
                 _ = Task.Run(async () => { await GlobalData.ThreadCheckPosition!.ExecuteAsync(); });
 
                 await TradeTools.CheckOpenPositions();
+                ZoneTools.LoadAllZones();
 
 
 
