@@ -48,6 +48,11 @@ public class AccountSymbolData
         // Does this work (for the reset every hour)
         ZoneListLong.Clear();
         ZoneListShort.Clear();
+
+        foreach (AccountSymbolIntervalData accountSymbolIntervalData in SymbolTrendDataList)
+        {
+            accountSymbolIntervalData.LastSwingPointTime = null;
+        }
     }
 
     public void ResetTrendData()
