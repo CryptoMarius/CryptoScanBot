@@ -2,7 +2,7 @@
   "profiles": {
     "CryptoSbmTestjes": {
       "commandName": "Project",
-      "commandLineArgs": "-e \"Bybit Futures\" -f CryptoScanner.Bybit.Futures.Live"
+      "commandLineArgs": "-e \"Bybit Spot\" -f \"CryptoScanBot\\CryptoScanBot 1.9.4\\Bybit Spot Test\""
     }
   }
 }

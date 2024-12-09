@@ -71,6 +71,7 @@ namespace CryptoScanBot
             toolStripMenuItem9 = new ToolStripMenuItem();
             toolStripMenuItem10 = new ToolStripMenuItem();
             timerClearEvents = new System.Windows.Forms.Timer(components);
+            button5 = new Button();
             panel1.SuspendLayout();
             tabControl.SuspendLayout();
             tabPageLog.SuspendLayout();
@@ -87,6 +88,7 @@ namespace CryptoScanBot
             // 
             // panel1
             // 
+            panel1.Controls.Add(button5);
             panel1.Controls.Add(button4);
             panel1.Controls.Add(button3);
             panel1.Controls.Add(button2);
@@ -418,6 +420,16 @@ namespace CryptoScanBot
             toolStripMenuItem10.Size = new Size(186, 22);
             toolStripMenuItem10.Text = "toolStripMenuItem10";
             // 
+            // button5
+            // 
+            button5.Location = new Point(1016, 19);
+            button5.Name = "button5";
+            button5.Size = new Size(75, 23);
+            button5.TabIndex = 17;
+            button5.Text = "Encrypt DPAPI";
+            button5.UseVisualStyleBackColor = true;
+            button5.Click += ButtonEncryptDecrypt;
+            // 
             // TestForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -485,6 +497,7 @@ namespace CryptoScanBot
         private DataGridView dataGridViewSignal;
         private TabPage tabPage2;
         private DataGridView dataGridViewSymbol;
+        private Button button5;
     }
 }
 
