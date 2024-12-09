@@ -179,7 +179,7 @@ public class TrendInterval
         {
             // Lots of discussion, maar als we niet genoeg candles hebben om een trend te berekenen
             // gebruiken we toch de sideway's om aan te geven dat het niet berekend kon worden.
-            // Bij nieuwe munten, Flatliners (ethusdt) en andere gedrochten is het dus sideway's!
+            // Bij new munten, flatliners en andere gedrochten is het dus sideway's!
             //Signal.Reaction = string.Format("not enough quotes for {0} trend", interval.Name);
             accountSymbolIntervalData.Reset();
 #if DEBUG
