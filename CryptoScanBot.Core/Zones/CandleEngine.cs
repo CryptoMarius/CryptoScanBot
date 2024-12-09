@@ -11,8 +11,6 @@ namespace CryptoScanBot.ZoneVisualisation.Zones;
 
 public class CandleEngine
 {
-    public static DateTime StartupTime { get; set; }
-
     public static void LoadCandleDataFromDisk(CryptoSymbol symbol, CryptoInterval interval, CryptoCandleList candleList)
     {
         // load candles (kind of quick and dirty)
@@ -129,7 +127,7 @@ public class CandleEngine
         long unixMinTime = IntervalTools.StartOfIntervalCandle(startTime, interval.Duration);
         long unixMaxTime = unixMinTime + candleCount * interval.Duration;
 
-        long unixNowTime = CandleTools.GetUnixTime(StartupTime, 0); // todo, emulator date?
+        long unixNowTime = CandleTools.GetUnixTime(DateTime.UtcNow, 0); // todo, emulator date?
         unixNowTime = IntervalTools.StartOfIntervalCandle(unixNowTime, interval.Duration);
 
         if (unixMaxTime > unixNowTime)

@@ -12,7 +12,7 @@ public class LiquidityZones
         try
         {
             // Determine dates
-            long unixStartUp = CandleTools.GetUnixTime(CandleEngine.StartupTime, 0); // todo Emulator date?
+            long unixStartUp = CandleTools.GetUnixTime(DateTime.UtcNow, 0); // todo Emulator date?
             long fetchFrom = IntervalTools.StartOfIntervalCandle(unixStartUp, data.SymbolInterval.Interval.Duration);
             fetchFrom -= GlobalData.Settings.Signal.Zones.CandleCount * data.SymbolInterval.Interval.Duration;
 
@@ -98,6 +98,7 @@ public class LiquidityZones
                 CryptoInterval interval = GlobalData.IntervalListPeriod[GlobalData.Settings.Signal.Zones.Interval];
                 CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
 
+                // Would be nice if we got rid of this one
                 CryptoZoneSession session = new()
                 {
                     SymbolBase = symbol.Base,

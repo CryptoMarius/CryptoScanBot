@@ -60,7 +60,6 @@ public class CommandTools
                     return;
 
                 case Command.CalculateLiquidityZones:
-                    CandleEngine.StartupTime = DateTime.UtcNow;
                     _ = Task.Run(() => { _ = LiquidityZones.CalculateZonesForAllSymbolsAsync(null); });
                     return;
                     

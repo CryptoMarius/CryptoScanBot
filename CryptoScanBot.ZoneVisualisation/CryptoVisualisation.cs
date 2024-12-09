@@ -710,7 +710,6 @@ public partial class CryptoVisualisation : Form
     {
         try
         {
-            CandleEngine.StartupTime = DateTime.UtcNow;
             PickupEdits();
 
             Session.ForceCalculation = sender != null;
