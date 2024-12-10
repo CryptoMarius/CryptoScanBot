@@ -1,13 +1,17 @@
-﻿namespace CryptoScanBot.Core.Settings;
+﻿using CryptoScanBot.Core.Json;
+
+using System.Text.Json.Serialization;
+
+namespace CryptoScanBot.Core.Settings;
 
 [Serializable]
 public class SettingsExchangeApi
 {
     // TODO: Iedere exchange heeft 0 of meer key/secret's
-    // (ze moeten ook nog ff versleuteld worden lijkt me)
-    // Liefst in database zodat ze niet leesbaar in json staan
-    // https://stackoverflow.com/questions/10168240/encrypting-decrypting-a-string-in-c-sharp
+    [JsonConverter(typeof(SecureStringConverter))]
     public string Key { get; set; } = "";
+    [JsonConverter(typeof(SecureStringConverter))]
     public string Secret { get; set; } = "";
+    [JsonConverter(typeof(SecureStringConverter))]
     public string PassPhrase { get; set; } = ""; // Kucoin
 }

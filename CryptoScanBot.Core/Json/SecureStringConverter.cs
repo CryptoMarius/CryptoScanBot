@@ -3,7 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace CryptoScanBot;
+namespace CryptoScanBot.Core.Json;
 
 public class SecureStringConverter : JsonConverter<string>
 {
@@ -25,6 +25,8 @@ public class SecureStringConverter : JsonConverter<string>
                 , optionalEntropy != null ? Encoding.UTF8.GetBytes(optionalEntropy) : null
                 , scope));
     }
+
+    public override bool HandleNull => true;
 
 
     public override string Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
@@ -52,7 +54,7 @@ public class SecureStringConverter : JsonConverter<string>
         {
             output = string.Empty;
         }
-        else if (value.EndsWith('='))
+        else if (value.StartsWith(prefix))
         {
             output = value;
         }

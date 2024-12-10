@@ -12,9 +12,6 @@ using CryptoExchange.Net.Objects;
 using CryptoScanBot.BackTest;
 
 using Dapper;
-using Dapper.Contrib.Extensions;
-
-using Newtonsoft.Json;
 
 using Skender.Stock.Indicators;
 
@@ -30,6 +27,9 @@ using CryptoScanBot.Core.Barometer;
 using CryptoScanBot.Core.Telegram;
 using CryptoScanBot.Core.Zones;
 using System.Security.Cryptography;
+using System.Text.Json;
+using CryptoScanBot.Core.Json;
+using System.Text.Json.Serialization;
 
 namespace CryptoScanBot;
 
@@ -765,7 +765,7 @@ public partial class TestForm : Form
         if (System.IO.File.Exists(filename))
         {
             string text = System.IO.File.ReadAllText(filename);
-            config = JsonConvert.DeserializeObject<CryptoBackConfig>(text);
+            config = JsonSerializer.Deserialize<CryptoBackConfig>(text);
         }
     }
 
@@ -778,7 +778,7 @@ public partial class TestForm : Form
         filename += @"\backtest\";
         //Directory.CreateDirectory(filename);
         filename += "backtest.json";
-        string text = JsonConvert.SerializeObject(config, Formatting.Indented);
+        string text = JsonSerializer.Serialize(config, JsonTools.JsonSerializerIndented);
         System.IO.File.WriteAllText(filename, text);
     }
 
@@ -2717,9 +2717,14 @@ public partial class TestForm : Form
         TestObject test = new();
         test.Password = "Hello World";
        
-        string text = JsonConvert.SerializeObject(test, Formatting.Indented);
-        var test2 = JsonConvert.DeserializeObject<TestObject>(text);
+        string text = JsonSerializer.Serialize(test, JsonTools.JsonSerializerIndented);
+        var test2 = JsonSerializer.Deserialize<TestObject>(text);
 
+        text = JsonSerializer.Serialize(test, JsonTools.JsonSerializerIndented);
+        test2 = JsonSerializer.Deserialize<TestObject>(text);
+
+        text = JsonSerializer.Serialize(test, JsonTools.JsonSerializerIndented);
+        test2 = JsonSerializer.Deserialize<TestObject>(text);
         //
 
     }
