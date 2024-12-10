@@ -41,13 +41,13 @@ public class ZoneTools
                         else
                             symbolData.ZoneListShort.Add(zone.Bottom, zone);
 
-                        // the highest creation date is the last date
-                        long lastCalculation = CandleTools.GetUnixTime(zone.CreateTime, 0);
+                        // Creation date is the date of the last swing point (SH/SL)
+                        long timeLastSwingPoint = CandleTools.GetUnixTime(zone.CreateTime, 0);
                         CryptoInterval interval = GlobalData.IntervalListPeriod[GlobalData.Settings.Signal.Zones.Interval];
                         AccountSymbolIntervalData symbolIntervalData = symbolData.GetAccountSymbolIntervalData(interval.IntervalPeriod);
 
-                        if (symbolIntervalData.LastSwingPointTime == null || lastCalculation > symbolIntervalData.LastSwingPointTime)
-                            symbolIntervalData.LastSwingPointTime = lastCalculation;
+                        if (symbolIntervalData.TimeLastSwingPoint == null || timeLastSwingPoint > symbolIntervalData.TimeLastSwingPoint)
+                            symbolIntervalData.TimeLastSwingPoint = timeLastSwingPoint;
                     }
                 }
             }
@@ -105,10 +105,21 @@ public class ZoneTools
                         Bottom = zigZag.Bottom,
                         Side = side,
                         Strategy = CryptoSignalStrategy.DominantLevel,
-                        Description = $"{interval.Name}: {zigZag.Percentage:N2}%",
                     };
                     changed = true;
                 }
+
+                // mark the zone as interesting because of a large move into the zone
+                string description = $"{interval.Name}: {zigZag.Percentage:N2}%";
+                if (zigZag.NiceIntro != "")
+                    description += " !!! " + zigZag.NiceIntro;
+                if (description != zone.Description)
+                {
+                    changed = true;
+                    zone.Description = description;
+                }
+
+
                 if (zone.CloseTime == null && zigZag.CloseDate != null)
                 {
                     changed = true;
