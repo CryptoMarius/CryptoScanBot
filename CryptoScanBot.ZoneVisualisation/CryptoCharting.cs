@@ -316,6 +316,16 @@ public class CryptoCharting
             else
                 dateLast = session.MaxDate;
 
+            OxyColor col;
+            if (GlobalData.Settings.Signal.Zones.ZoneStartApply)
+            {
+                if (zone.Description.Contains('!'))
+                    col = OxyColor.FromArgb(128, color.R, color.G, color.B);
+                else
+                    col = OxyColor.FromArgb(64, color.R, color.G, color.B);
+            }
+            else col = OxyColor.FromArgb(128, color.R, color.G, color.B);
+
             // Create a rectangle annotation
             var rectangle = new RectangleAnnotation
             {
@@ -324,7 +334,7 @@ public class CryptoCharting
                 MaximumX = dateLast,  // X-coordinate of the upper-right corner
                 MaximumY = (double)zone.Top,  // Y-coordinate of the upper-right corner
                                               //Fill = Color.LightGray,  // Rectangle fill color
-                Fill = OxyColor.FromArgb(128, color.R, color.G, color.B),
+                Fill = col, //OxyColor.FromArgb(128, color.R, color.G, color.B),
                 Stroke = OxyColor.FromArgb(128 + 64 + 32 + 16 + 8 + 4 + 2, color.R, color.G, color.B), // rectangle
                 StrokeThickness = 0,          // Border thickness
                 Text = zone.Description,
