@@ -180,6 +180,7 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         Grid.AllowUserToResizeRows = false;
         Grid.AllowUserToResizeColumns = true;
         Grid.AllowUserToOrderColumns = true;
+        Grid.AllowUserToDeleteRows = false;
 
         // Hide header cell highlight stuff
         Grid.EnableHeadersVisualStyles = false;
