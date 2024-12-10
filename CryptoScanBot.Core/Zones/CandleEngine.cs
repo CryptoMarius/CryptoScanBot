@@ -11,7 +11,7 @@ namespace CryptoScanBot.ZoneVisualisation.Zones;
 
 public class CandleEngine
 {
-    public static void LoadCandleDataFromDisk(CryptoSymbol symbol, CryptoInterval interval, CryptoCandleList candleList)
+    public static async Task LoadCandleDataFromDiskAsync(CryptoSymbol symbol, CryptoInterval interval, CryptoCandleList candleList)
     {
         // load candles (kind of quick and dirty)
         string baseFolder = GlobalData.GetBaseDir() + @"Pivots\";
@@ -19,33 +19,53 @@ public class CandleEngine
         if (File.Exists(filename))
         {
             string text = File.ReadAllText(filename);
-            var list = JsonSerializer.Deserialize<CryptoCandleList>(text, JsonTools.JsonSerializerIndented);
-            if (list != null)
+
+            await symbol.CandleLock.WaitAsync();
+            try
             {
-                foreach (var c in list.Values)
-                    candleList.TryAdd(c.OpenTime, c);
+                var list = JsonSerializer.Deserialize<CryptoCandleList>(text, JsonTools.JsonSerializerIndented);
+                if (list != null)
+                {
+                    foreach (var c in list.Values)
+                        candleList.TryAdd(c.OpenTime, c);
+                }
             }
+            finally
+            {
+                symbol.CandleLock.Release();
+            }
+
             //GlobalData.AddTextToLogTab($"{symbol.Name} {symbolInterval.Interval!.Name} Loading file {filename} {added} candles added");
         }
     }
 
 
-    public static void SaveCandleDataToDisk(CryptoSymbol symbol, SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
+    public static async Task SaveCandleDataToDiskAsync(CryptoSymbol symbol, SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
     {
         foreach (CryptoSymbolInterval symbolInterval in symbol.IntervalPeriodList)
         {
             if (loadedCandlesInMemory.TryGetValue(symbolInterval.IntervalPeriod, out bool changed) && changed)
             {
-                // Save candles (kind of quick and dirty)
-                string baseFolder = GlobalData.GetBaseDir() + @"Pivots\";
-                string filename = baseFolder + $"{symbol.Name}-{symbolInterval.Interval.Name}.json";
-                Directory.CreateDirectory(baseFolder);
-                string text = JsonSerializer.Serialize(symbolInterval.CandleList, JsonTools.JsonSerializerIndented);
-                File.WriteAllText(filename, text);
 
-                //log.AppendLine($"saving {filename}");
-                ScannerLog.Logger.Info($"Saving {filename}");
-                loadedCandlesInMemory[symbolInterval.IntervalPeriod] = false; // in memory, nothing changed
+                await symbol.CandleLock.WaitAsync();
+                try
+                {
+                    // Save candles (kind of quick and dirty)
+                    string baseFolder = GlobalData.GetBaseDir() + @"Pivots\";
+                    string filename = baseFolder + $"{symbol.Name}-{symbolInterval.Interval.Name}.json";
+                    Directory.CreateDirectory(baseFolder);
+                    string text = JsonSerializer.Serialize(symbolInterval.CandleList, JsonTools.JsonSerializerIndented);
+                    File.WriteAllText(filename, text);
+
+                    //log.AppendLine($"saving {filename}");
+                    ScannerLog.Logger.Info($"Saving {filename}");
+                    loadedCandlesInMemory[symbolInterval.IntervalPeriod] = false; // in memory, nothing changed
+
+                }
+                finally
+                {
+                    symbol.CandleLock.Release();
+                }
             }
         }
     }
