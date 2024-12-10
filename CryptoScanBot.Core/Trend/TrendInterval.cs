@@ -164,7 +164,7 @@ public class TrendInterval
 
 
 
-    public static void Calculate(CryptoSymbol symbol, CryptoCandleList candleList, AccountSymbolIntervalData accountSymbolIntervalData, 
+    public static async Task CalculateAsync(CryptoSymbol symbol, CryptoCandleList candleList, AccountSymbolIntervalData accountSymbolIntervalData, 
         long minDate, long maxDate, StringBuilder? log = null)
     {
         var interval = accountSymbolIntervalData.Interval;
@@ -205,7 +205,7 @@ public class TrendInterval
         TrendTools.CreateAllTrendIndicators(accountSymbolIntervalData, candleList);
 
         // Add candles to the ZigZag indicators
-        accountSymbolIntervalData.ZigZagLastCandleAdded = TrendTools.AddCandlesToTrendIndicators(accountSymbolIntervalData, candleList, minDate, maxDate);
+        accountSymbolIntervalData.ZigZagLastCandleAdded = await TrendTools.AddCandlesToTrendIndicatorsAsync(accountSymbolIntervalData, symbol, candleList, minDate, maxDate);
 
         // Deterimine the best indicator based on avg count of pivots
         TrendTools.GetBestTrendIndicator(accountSymbolIntervalData, symbol, candleList, log);

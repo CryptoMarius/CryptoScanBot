@@ -385,7 +385,7 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
 
 
         // Calculate MarketTrend and the individual interval trends (reasonably CPU heavy and thatswhy it is on the end of the routine)
-        MarketTrend.CalculateMarketTrend(tradeAccount, signal.Symbol, 0, LastCandle1mCloseTime);
+        MarketTrend.CalculateMarketTrendAsync(tradeAccount, signal.Symbol, 0, LastCandle1mCloseTime);
         AccountSymbolData accountSymbolData = tradeAccount!.Data.GetSymbolData(signal.Symbol.Name);
         if (accountSymbolData.MarketTrendPercentage.HasValue) // Kucoin causes a problem
         {

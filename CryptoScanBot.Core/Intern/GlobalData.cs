@@ -11,8 +11,6 @@ using Dapper;
 using Dapper.Contrib.Extensions;
 
 using System.Globalization;
-using System.Linq;
-using System.Text.Encodings.Web;
 using System.Text.Json;
 
 namespace CryptoScanBot.Core.Intern;

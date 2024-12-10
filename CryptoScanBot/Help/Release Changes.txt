@@ -1,5 +1,13 @@
 CryptoScanBot release historie:
 
+12-09-2024 1.9.5.1209
+- Scanner - In de 4 grids kun je niet meer met DEL een rij weggooien
+- Scanner - Dominante zones: Enkele instellingen verwijderd (batch, posities en nog wat)
+- Scanner - Dominante zones: Automatisch berekenen als er een nieuw swingpoint bijkomt)
+- Scanner - Dominante zones: Interressante zones highlighten (zie zone instellingen), ze krijgen een iets andere kleur..
+- Scanner - Api key/secret en Telegram Api + token wordt nu versleuteld opgeslagen.
+            Ze kunnen alleen ontcijfert worden in de context van de computer (via Windows DPAPI)
+            Met het versleutelde ap/key/wachtwoord (in de json bestanden) kun je niets mee aanvangen.
 
 28-11-2024 1.9.5.1128
 

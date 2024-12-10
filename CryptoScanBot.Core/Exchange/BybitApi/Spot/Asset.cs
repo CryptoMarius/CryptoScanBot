@@ -97,13 +97,17 @@ public class Asset() : AssetBase(), IAsset
                     var accountInfo = await client.V5Api.Account.GetAllAssetBalancesAsync(AccountType.Spot);
                     if (!accountInfo.Success)
                     {
-                        GlobalData.AddTextToLogTab("error getting accountinfo " + accountInfo.Error);
+                        GlobalData.AddTextToLogTab($"{Api.ExchangeOptions.ExchangeName} error getting accountinfo " + accountInfo.Error);
+                        return;
                     }
 
-                    //Zo af en toe komt er geen data of is de Data niet gezet.
-                    //De verbindingen naar extern kunnen (tijdelijk) geblokkeerd zijn
+                    // Zo af en toe komt er geen data of is de Data niet gezet.
+                    // De verbindingen naar extern kunnen (tijdelijk) geblokkeerd zijn
                     if (accountInfo?.Data is null)
-                        throw new ExchangeException("No account data received");
+                    {
+                        GlobalData.AddTextToLogTab($"{Api.ExchangeOptions.ExchangeName} No account data received {accountInfo?.Error}");
+                        return;
+                    }
 
                     try
                     {

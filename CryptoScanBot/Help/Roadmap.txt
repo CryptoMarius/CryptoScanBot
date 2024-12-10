@@ -11,6 +11,8 @@ Todo:
             Het zijn dus 3 lampjes die de status van de scanner, trader en rulez laten zien.
             Eventueel een geluidje laten horen
 
+dogeusdt, intro filter lijkt de verkeerde candle te hebben! Wellicht toch de zones gebruiken ipv zigzaf stuff..?
+melding weird symbol (van de exchange info) weghalen / onderdrukken
 
 Scanner:
 - Scanner - Refactor - LimitRates per exchange, is nu alleen voor Binance geregeld, de rest is op basis van aantal aanroepen per minuut

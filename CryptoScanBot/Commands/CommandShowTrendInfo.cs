@@ -16,7 +16,7 @@ public class CommandShowTrendInfo : CommandBase
             log.AppendLine($"Markettrend {symbol.Name}");
             GlobalData.AddTextToLogTab("");
             GlobalData.AddTextToLogTab($"Markettrend {symbol.Name}");
-            MarketTrend.CalculateMarketTrend(GlobalData.ActiveAccount, symbol, 0, 0, log);
+            MarketTrend.CalculateMarketTrendAsync(GlobalData.ActiveAccount, symbol, 0, 0, log);
             log.AppendLine("");
             log.AppendLine("");
 

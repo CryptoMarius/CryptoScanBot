@@ -1,6 +1,5 @@
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Trend;
@@ -605,7 +604,7 @@ public partial class CryptoVisualisation : Form
                 var best = Data.Indicator; 
 #else
                 TrendTools.CreateAllTrendIndicators(accountSymbolIntervalData, Data.SymbolInterval.CandleList);
-                TrendTools.AddCandlesToTrendIndicators(accountSymbolIntervalData, Data.SymbolInterval.CandleList, Session.MinDate, Session.MaxDate);
+                await TrendTools.AddCandlesToTrendIndicatorsAsync(accountSymbolIntervalData, Data.Symbol, Data.SymbolInterval.CandleList, Session.MinDate, Session.MaxDate);
                 TrendTools.GetBestTrendIndicator(accountSymbolIntervalData, Data.Symbol, Data.SymbolInterval.CandleList, log);
                 var best = accountSymbolIntervalData.BestZigZagIndicator!;
 #endif

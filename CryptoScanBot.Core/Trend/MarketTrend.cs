@@ -8,12 +8,13 @@ namespace CryptoScanBot.Core.Trend;
 
 public class MarketTrend
 {
-    public static void CalculateMarketTrend(CryptoAccount? tradeAccount, CryptoSymbol symbol, long candleIntervalStart, long candleIntervalEnd, StringBuilder? log = null)
+    public static async Task CalculateMarketTrendAsync(CryptoAccount? tradeAccount, CryptoSymbol symbol, long candleIntervalStart, long candleIntervalEnd, StringBuilder? log = null)
     {
-        AccountSymbolData accountSymbolData = tradeAccount!.Data.GetSymbolData(symbol.Name);
         try
         {
-            lock (accountSymbolData.SymbolTrendDataList)
+            AccountSymbolData accountSymbolData = tradeAccount!.Data.GetSymbolData(symbol.Name);
+            await accountSymbolData.TrendLock.WaitAsync();
+            try
             {
                 if (accountSymbolData.MarketTrendDate == null || accountSymbolData.MarketTrendDate < candleIntervalEnd || log != null)
                 {
@@ -27,7 +28,7 @@ public class MarketTrend
                     {
                         //iterarator++;
                         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(accountSymbolIntervalData.IntervalPeriod);
-                        TrendInterval.Calculate(symbol, symbolInterval.CandleList, accountSymbolIntervalData, candleIntervalStart, candleIntervalEnd, log);
+                        await TrendInterval.CalculateAsync(symbol, symbolInterval.CandleList, accountSymbolIntervalData, candleIntervalStart, candleIntervalEnd, log);
 
                         int weight1 = accountSymbolIntervalData.Interval.Duration;
                         if (accountSymbolIntervalData.TrendIndicator == CryptoTrendIndicator.Bullish)
@@ -59,8 +60,11 @@ public class MarketTrend
                     text = $"{symbol.Name} sum ={weightSum1} / {weightMax1} = {accountSymbolData.MarketTrendPercentage:N2}";
                     log?.AppendLine(text);
                     ScannerLog.Logger.Trace("MarketTrend.Calculate " + text);
-
                 }
+            }
+            finally
+            {
+                accountSymbolData.TrendLock.Release();
             }
         }
         catch (Exception error)

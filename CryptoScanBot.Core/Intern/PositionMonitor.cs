@@ -1746,7 +1746,7 @@ public class PositionMonitor : IDisposable
     }
 
 
-    public List<CryptoSignal> CreateSignals()
+    public async Task<List<CryptoSignal>> CreateSignalsAsync()
     {
         List<CryptoSignal> signalList = [];
         //GlobalData.Logger.Info($"CreateSignals(start):" + LastCandle1m.OhlcText(Symbol, GlobalData.IntervalList[0], Symbol.PriceDisplayFormat, true, false, true));
@@ -1803,11 +1803,11 @@ public class PositionMonitor : IDisposable
                         AccountSymbolIntervalData symbolIntervalData = symbolData.GetAccountSymbolIntervalData(intervalX.IntervalPeriod);
 
                         CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(symbolIntervalData.IntervalPeriod);
-                        TrendInterval.Calculate(Symbol, symbolInterval.CandleList, symbolIntervalData, 0, LastCandle1mCloseTime);
+                        await TrendInterval.CalculateAsync(Symbol, symbolInterval.CandleList, symbolIntervalData, 0, LastCandle1mCloseTime);
                         if (symbolIntervalData.BestZigZagIndicator != null && symbolIntervalData.BestZigZagIndicator.LastSwingPoint != null)
                         {
                             long? lastSwingPointTime = symbolIntervalData.BestZigZagIndicator.GetLastRealZigZag();
-                            if (lastSwingPointTime == null || symbolIntervalData.LastSwingPointTime == null || symbolIntervalData.LastSwingPointTime > lastSwingPointTime)
+                            if (lastSwingPointTime == null || symbolIntervalData.TimeLastSwingPoint == null || symbolIntervalData.TimeLastSwingPoint > lastSwingPointTime)
                                 GlobalData.ThreadZoneCalculate?.AddToQueue(Symbol);
                         }
                     }
@@ -1876,7 +1876,7 @@ public class PositionMonitor : IDisposable
 
             // Create signals per interval
             //GlobalData.Logger.Info($"analyze.CreateSignals({Symbol.Name})");
-            List<CryptoSignal> signalList = CreateSignals();
+            List<CryptoSignal> signalList = await CreateSignalsAsync();
 
 
             //GlobalData.Logger.Trace($"NewCandleArrivedAsync.Positions " + traceText);

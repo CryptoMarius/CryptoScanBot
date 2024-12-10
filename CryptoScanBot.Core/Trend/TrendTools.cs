@@ -40,25 +40,33 @@ public class TrendTools
     }
 
 
-    public static long? AddCandlesToTrendIndicators(AccountSymbolIntervalData accountSymbolIntervalData, CryptoCandleList candleList, long minDate, long maxDate)
+    public static async Task<long?> AddCandlesToTrendIndicatorsAsync(AccountSymbolIntervalData accountSymbolIntervalData, CryptoSymbol symbol, CryptoCandleList candleList, long minDate, long maxDate)
     {
         long? zigZagLastCandleAdded = null;
 
-        // Add candles to all the ZigZag indicators
-        long loop = minDate;
-        while (loop <= maxDate)
+        await symbol.CandleLock.WaitAsync();
+        try
         {
-            if (candleList.TryGetValue(loop, out CryptoCandle? candle))
+            // Add candles to all the ZigZag indicators
+            long loop = minDate;
+            while (loop <= maxDate)
             {
-                foreach (var indicator in accountSymbolIntervalData.ZigZagIndicators!)
-                    indicator.Calculate(candle, true);
-                zigZagLastCandleAdded = loop;
+                if (candleList.TryGetValue(loop, out CryptoCandle? candle))
+                {
+                    foreach (var indicator in accountSymbolIntervalData.ZigZagIndicators!)
+                        indicator.Calculate(candle, true);
+                    zigZagLastCandleAdded = loop;
+                }
+                loop += accountSymbolIntervalData.Interval.Duration;
             }
-            loop += accountSymbolIntervalData.Interval.Duration;
+            foreach (var indicator in accountSymbolIntervalData.ZigZagIndicators!)
+            {
+                indicator.FinishBatch();
+            }
         }
-        foreach (var indicator in accountSymbolIntervalData.ZigZagIndicators!)
+        finally
         {
-            indicator.FinishBatch();
+            symbol.CandleLock.Release();
         }
 
         return zigZagLastCandleAdded;

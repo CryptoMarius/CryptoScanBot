@@ -1,6 +1,8 @@
 ﻿using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 
+using Dapper.Contrib.Extensions;
+
 namespace CryptoScanBot.Core.Intern;
 
 public class AccountSymbolData
@@ -15,6 +17,10 @@ public class AccountSymbolData
     public long? MarketTrendDate { get; set; }
     public float? MarketTrendPercentage { get; set; }
 
+
+    [Computed]
+    // Lock the candlelist to manipulates candles
+    public SemaphoreSlim TrendLock { get; set; } = new(1, 1);
 
     // Trend data for each interval
     public List<AccountSymbolIntervalData> SymbolTrendDataList { get; set; } = [];
@@ -51,7 +57,7 @@ public class AccountSymbolData
 
         foreach (AccountSymbolIntervalData accountSymbolIntervalData in SymbolTrendDataList)
         {
-            accountSymbolIntervalData.LastSwingPointTime = null;
+            accountSymbolIntervalData.TimeLastSwingPoint = null;
         }
     }
 

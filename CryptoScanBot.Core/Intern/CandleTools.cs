@@ -441,7 +441,7 @@ public static class CandleTools
                     for (int i = candles.Count - 62; i > 0; i--)
                     {
                         CryptoCandle c = candles.Values[i];
-                        if (c.CandleData != null)
+                        if (c != null && c.CandleData != null)
                             c.CandleData = null;
                         else break;
                     }

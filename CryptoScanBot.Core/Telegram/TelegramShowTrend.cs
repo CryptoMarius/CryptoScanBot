@@ -22,7 +22,7 @@ public class TelegramShowTrend
         {
             if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
             {
-                MarketTrend.CalculateMarketTrend(GlobalData.ActiveAccount, symbol, 0, 0);
+                MarketTrend.CalculateMarketTrendAsync(GlobalData.ActiveAccount, symbol, 0, 0);
 
                 AccountSymbolData accountSymbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
                 foreach (AccountSymbolIntervalData accountSymbolIntervalData in accountSymbolData.SymbolTrendDataList)

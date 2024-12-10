@@ -280,7 +280,8 @@ public class CandleIndicatorData: CryptoData
                     candleData.SlopeSma200 = slopeSma200List[index].Slope;
 
                 candleData.Rsi = rsiList[index].Rsi;
-                candleData.SlopeRsi = slopeRsiList[index].Slope;
+                if (slopeRsiList != null && index < slopeRsiList.Count)
+                    candleData.SlopeRsi = slopeRsiList[index].Slope;
 
                 candleData.MacdValue = macdList[index].Macd;
                 candleData.MacdSignal = macdList[index].Signal;

@@ -18,7 +18,7 @@ public class LiquidityZones
 
             // Load candles from disk
             if (!loadedCandlesInMemory.TryGetValue(data.Interval.IntervalPeriod, out bool _))
-                CandleEngine.LoadCandleDataFromDisk(data.Symbol, data.Interval, data.SymbolInterval.CandleList);
+                await CandleEngine.LoadCandleDataFromDiskAsync(data.Symbol, data.Interval, data.SymbolInterval.CandleList);
             loadedCandlesInMemory.TryAdd(data.Interval.IntervalPeriod, true); // in memory, nothing changed (save alway's)
 
             // Load candles from the exchange
@@ -27,25 +27,32 @@ public class LiquidityZones
             if (data.SymbolInterval.CandleList.Count == 0)
                 return;
 
-            
 
-            // Calculate indicators
-            foreach (var candle in data.SymbolInterval.CandleList.Values)
+            await data.Symbol.CandleLock.WaitAsync();
+            try
             {
-                if (candle.OpenTime >= session.MinDate && candle.OpenTime <= session.MaxDate)
+                // Calculate indicators
+                foreach (var candle in data.SymbolInterval.CandleList.Values)
                 {
-                    data.Indicator.Calculate(candle, session.UseBatchProcess);
+                    if (candle.OpenTime >= session.MinDate && candle.OpenTime <= session.MaxDate)
+                    {
+                        data.Indicator.Calculate(candle, session.UseBatchProcess);
 #if !DEBUGZIGZAG
-                    data.IndicatorFib.Calculate(candle, session.UseBatchProcess);
+                        data.IndicatorFib.Calculate(candle, session.UseBatchProcess);
+#endif
+                    }
+                }
+                if (session.UseBatchProcess)
+                {
+                    data.Indicator.FinishBatch();
+#if !DEBUGZIGZAG
+                    //data.IndicatorFib.FinishBatch();
 #endif
                 }
             }
-            if (session.UseBatchProcess)
+            finally
             {
-                data.Indicator.FinishBatch();
-#if !DEBUGZIGZAG
-                //data.IndicatorFib.FinishBatch();
-#endif
+                data.Symbol.CandleLock.Release();
             }
 
 
@@ -54,6 +61,7 @@ public class LiquidityZones
             if (session.ForceCalculation)
             {
                 await CryptoCalculation.CalculateLiqBoxesAsync(sender, data, session.ZoomLiqBoxes, loadedCandlesInMemory);
+                CryptoCalculation.CalculateExtraFilters(data);
                 CryptoCalculation.CalculateBrokenBoxes(data);
             }
 
@@ -62,19 +70,19 @@ public class LiquidityZones
             if (session.ForceCalculation)
                 ZoneTools.SaveZonesForSymbol(data.Symbol, data.Interval, data.Indicator.ZigZagList);
 
-            CandleEngine.SaveCandleDataToDisk(data.Symbol, loadedCandlesInMemory);
+            await CandleEngine.SaveCandleDataToDiskAsync(data.Symbol, loadedCandlesInMemory);
 
 
             // Set the date of the last swing point for the automatic zone calculation
             AccountSymbolData symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(data.Symbol.Name);
             AccountSymbolIntervalData symbolIntervalData = symbolData.GetAccountSymbolIntervalData(data.Interval.IntervalPeriod);
-            symbolIntervalData.LastSwingPointTime = data.Indicator.GetLastRealZigZag();
+            symbolIntervalData.TimeLastSwingPoint = data.Indicator.GetLastRealZigZag();
         }
         catch (Exception error)
         {
             ScannerLog.Logger.Info($"ERROR {error}");
             GlobalData.AddTextToLogTab($"ERROR {error}");
-            CandleEngine.SaveCandleDataToDisk(data.Symbol, loadedCandlesInMemory);
+            await CandleEngine.SaveCandleDataToDiskAsync(data.Symbol, loadedCandlesInMemory);
         }
 
         if (sender == null)
