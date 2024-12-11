@@ -146,7 +146,7 @@ public static class ScannerSession
 
                 if (ExchangeBase.UserTicker != null && !GlobalData.ApplicationIsClosing)
                 {
-                    task = Task.Run(async () => { await ExchangeBase.UserTicker?.StopAsync(); });
+                    task = Task.Run(async () => { await ExchangeBase.UserTicker.StopAsync(); });
                     taskList.Add(task);
                 }
 

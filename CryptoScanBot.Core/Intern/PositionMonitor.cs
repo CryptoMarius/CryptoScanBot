@@ -1783,7 +1783,7 @@ public class PositionMonitor : IDisposable
 
                             // We geven als tijd het begin van de "laatste" candle (van dat interval)
                             SignalCreate createSignal = new(TradeAccount, Symbol, interval, side, LastCandle1mCloseTime);
-                            if (createSignal.Analyze(LastCandle1mCloseTime - interval.Duration))
+                            if (await createSignal.AnalyzeAsync(LastCandle1mCloseTime - interval.Duration))
                                 signalList.AddRange(createSignal.SignalList);
 
                             // Teller voor op het beeldscherm zodat je ziet dat deze thread iets doet en actief blijft.
@@ -1815,7 +1815,7 @@ public class PositionMonitor : IDisposable
 
                     // Only for the 1m interval
                     SignalCreate createSignal = new(TradeAccount, Symbol, GlobalData.IntervalList[0], side, LastCandle1mCloseTime);
-                    if (createSignal.AnalyzeZones(LastCandle1mCloseTime - GlobalData.IntervalList[0].Duration))
+                    if (await createSignal.AnalyzeZonesAsync(LastCandle1mCloseTime - GlobalData.IntervalList[0].Duration))
                         signalList.AddRange(createSignal.SignalList);
                 }
             }

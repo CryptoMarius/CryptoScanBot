@@ -61,6 +61,8 @@ public static class CandleTools
     /// </summary>
     static public DateTime GetUnixDate(long? unixDate)
     {
+        if (unixDate == null)
+            throw new Exception("GetUnixDate null argument");
         DateTime datetime = DateTimeOffset.FromUnixTimeSeconds((long)unixDate).UtcDateTime;
         return datetime;
     }

@@ -11,7 +11,7 @@ public class ColorConverter : JsonConverter<Color>
     {
         if (reader.TokenType is JsonTokenType.String)
         {
-            string text = reader.GetString();
+            string? text = reader.GetString();
             if (!string.IsNullOrEmpty(text))
             {
                 if (text.Contains(','))
@@ -50,16 +50,16 @@ public class ColorConverter : JsonConverter<Color>
             if (value.A < 255)
             {
                 args = new string[4];
-                args[nArg++] = intConverter.ConvertToString(value.A);
+                args[nArg++] = intConverter.ConvertToString(value.A)!;
             }
             else
             {
                 args = new string[3];
             }
 
-            args[nArg++] = intConverter.ConvertToString(value.R);
-            args[nArg++] = intConverter.ConvertToString(value.G);
-            args[nArg++] = intConverter.ConvertToString(value.B);
+            args[nArg++] = intConverter.ConvertToString(value.R)!;
+            args[nArg++] = intConverter.ConvertToString(value.G)!;
+            args[nArg++] = intConverter.ConvertToString(value.B)!;
 
             output = string.Join(", ", args);
         }

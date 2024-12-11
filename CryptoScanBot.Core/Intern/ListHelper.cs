@@ -8,9 +8,9 @@ public static class ListHelper
 
     public class DuplicateKeyComparer<TKey> : IComparer<TKey> where TKey : IComparable
     {
-        public int Compare(TKey x, TKey y)
+        public int Compare(TKey? x, TKey? y)
         {
-            int result = x.CompareTo(y);
+            int result = x!.CompareTo(y!);
 
             // Handle equality as being greater.
             // Note: this will break Remove(key) or IndexOfKey(key) since the comparer never returns 0 to signal key equality
@@ -31,7 +31,7 @@ public static class ListHelper
 
         int lower = 0;
         int upper = list.Count - 1;
-        comparer = comparer ?? Comparer<T>.Default;
+        comparer ??= Comparer<T>.Default;
 
         while (lower <= upper)
         {

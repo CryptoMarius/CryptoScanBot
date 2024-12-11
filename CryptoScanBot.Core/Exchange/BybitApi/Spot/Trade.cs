@@ -54,8 +54,10 @@ public class Trade(ExchangeBase api) : TradeBase(), ITrade
         trade.Price = item.Price;
         trade.Quantity = item.Quantity;
         trade.QuoteQuantity = item.Price * item.Quantity;
-        trade.Commission = (decimal)item.Fee;
-        trade.CommissionAsset = item.FeeAsset;
+        if (item.Fee != null)
+            trade.Commission = (decimal)item.Fee;
+        if (item.FeeAsset != null)
+            trade.CommissionAsset = item.FeeAsset;
     }
 
 

@@ -178,13 +178,13 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
     }
 
 
-    private double CalculateLastPeriodsInInterval(CryptoSignal signal, long interval)
+    private double CalculateLastPeriodsInInterval(CryptoCandle candle, long interval)
     {
         //Dit moet via de standaard 1m candles omdat de lijst niet alle candles bevat
-        //(dit om de berekeningen allemaal wat sneller te maken)
+        //(om de berekeningen allemaal wat sneller te maken)
 
         // Vanwege backtest altijd redeneren vanaf het signaal (en niet de laatste candle)
-        CryptoCandle candle = signal.Candle; // Symbol.CandleList.Values.Last();
+        //CryptoCandle candle = signal.Candle; // Symbol.CandleList.Values.Last();
         long openTime = CandleTools.GetUnixTime(candle.Date, 60);
         if (!Symbol.CandleList.TryGetValue(openTime - interval, out CryptoCandle? candlePrev))
             candlePrev = Symbol.CandleList.Values.First(); // niet helemaal okay maar beter dan 0
@@ -237,7 +237,7 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
 
 
 
-    private bool PrepareAndSendSignal(SignalCreateBase algorithm)
+    private async Task<bool> PrepareAndSendSignalAsync(SignalCreateBase algorithm)
     {
         CryptoSignal signal = CreateSignal(Candle!);
         signal.Side = algorithm.SignalSide;
@@ -314,16 +314,19 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
 
 
         // de 24 change moet in een bepaald interval zitten
-        signal.Last24HoursChange = CalculateLastPeriodsInInterval(signal, 24 * 60 * 60);
-        if (!HasOpenPosition() && !signal.Last24HoursChange.IsBetween(GlobalData.Settings.Signal.AnalysisMinChangePercentage, GlobalData.Settings.Signal.AnalysisMaxChangePercentage))
+        if (signal.Candle != null)
         {
-            if (GlobalData.Settings.Signal.LogAnalysisMinMaxChangePercentage)
+            signal.Last24HoursChange = CalculateLastPeriodsInInterval(signal.Candle, 24 * 60 * 60);
+            if (!HasOpenPosition() && !signal.Last24HoursChange.IsBetween(GlobalData.Settings.Signal.AnalysisMinChangePercentage, GlobalData.Settings.Signal.AnalysisMaxChangePercentage))
             {
-                string text = string.Format("Analyse {0} 1d change {1} not between {2} .. {3}", Symbol.Name, signal.Last24HoursChange.ToString("N2"), GlobalData.Settings.Signal.AnalysisMinChangePercentage.ToString(), GlobalData.Settings.Signal.AnalysisMaxChangePercentage.ToString());
-                GlobalData.AddTextToLogTab(text);
+                if (GlobalData.Settings.Signal.LogAnalysisMinMaxChangePercentage)
+                {
+                    string text = string.Format("Analyse {0} 1d change {1} not between {2} .. {3}", Symbol.Name, signal.Last24HoursChange.ToString("N2"), GlobalData.Settings.Signal.AnalysisMinChangePercentage.ToString(), GlobalData.Settings.Signal.AnalysisMaxChangePercentage.ToString());
+                    GlobalData.AddTextToLogTab(text);
+                }
+                eventText.Add("1d change% to high");
+                signal.IsInvalid = true;
             }
-            eventText.Add("1d change% to high");
-            signal.IsInvalid = true;
         }
 
         //// de 1 * 1d effectief moet in een bepaald interval zitten
@@ -385,7 +388,7 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
 
 
         // Calculate MarketTrend and the individual interval trends (reasonably CPU heavy and thatswhy it is on the end of the routine)
-        MarketTrend.CalculateMarketTrendAsync(tradeAccount, signal.Symbol, 0, LastCandle1mCloseTime);
+        await MarketTrend.CalculateMarketTrendAsync(tradeAccount, signal.Symbol, 0, LastCandle1mCloseTime);
         AccountSymbolData accountSymbolData = tradeAccount!.Data.GetSymbolData(signal.Symbol.Name);
         if (accountSymbolData.MarketTrendPercentage.HasValue) // Kucoin causes a problem
         {
@@ -524,7 +527,7 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
     }
 
 
-    private bool ExecuteAlgorithm(AlgorithmDefinition strategyDefinition)
+    private async Task<bool> ExecuteAlgorithmAsync(AlgorithmDefinition strategyDefinition)
     {
         SignalCreateBase? algorithm = RegisterAlgorithms.GetAlgorithm(Side, strategyDefinition.Strategy, TradeAccount, Symbol, Interval, Candle);
         if (algorithm != null)
@@ -534,7 +537,7 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
             //GlobalData.Logger.Trace($"SignalCreate.Done {Symbol.Name} {Interval.Name} {strategyDefinition.Name} {Side}");
             //GlobalData.AddTextToLogTab($"SignalCreate.Done {Symbol.Name} {Interval.Name} {strategyDefinition.Name} {Side}");
             if (algorithm.IndicatorsOkay(Candle!) && algorithm.IsSignal())
-                return PrepareAndSendSignal(algorithm);
+                return await PrepareAndSendSignalAsync(algorithm);
         }
         return false;
     }
@@ -599,7 +602,7 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
 
 
 
-    public bool Analyze(long candleIntervalOpenTime)
+    public async Task<bool> AnalyzeAsync(long candleIntervalOpenTime)
     {
         if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
             GlobalData.AddTextToLogTab($"Debug Signal create {Symbol.Name} {Interval.Name} {Side}");
@@ -636,7 +639,7 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
             {
                 if (RegisterAlgorithms.GetAlgorithm(strategy, out AlgorithmDefinition? strategyDefinition))
                 {
-                    if (ExecuteAlgorithm(strategyDefinition!))
+                    if (await ExecuteAlgorithmAsync(strategyDefinition!))
                         break;
                 }
             }
@@ -646,7 +649,7 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
             {
                 if (RegisterAlgorithms.GetAlgorithm(strategy, out AlgorithmDefinition? strategyDefinition))
                 {
-                    ExecuteAlgorithm(strategyDefinition!);
+                    await ExecuteAlgorithmAsync(strategyDefinition!);
                 }
             }
 
@@ -657,7 +660,7 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
 
 
 
-    public bool AnalyzeZones(long candleIntervalOpenTime)
+    public async Task<bool> AnalyzeZonesAsync(long candleIntervalOpenTime)
     {
         if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
             GlobalData.AddTextToLogTab($"Debug Signal create {Symbol.Name} {Interval.Name} {Side} zones");
@@ -669,7 +672,7 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
         {
             if (RegisterAlgorithms.AlgorithmDefinitionList.TryGetValue(CryptoSignalStrategy.DominantLevel, out AlgorithmDefinition? algorithmDefinition))
             {
-                ExecuteAlgorithm(algorithmDefinition!);
+                await ExecuteAlgorithmAsync(algorithmDefinition!);
             }
         }
         //GlobalData.Logger.Trace($"SignalCreate.Done {Symbol.Name} {Interval.Name} zones");

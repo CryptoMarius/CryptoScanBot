@@ -69,11 +69,14 @@ public class Order() : OrderBase(), IOrder
         order.SymbolId = symbol.Id;
 
         order.OrderId = item.OrderId;
-        order.Side = LocalOrderSide((OrderSide)item.OrderSide);
+        if (item.OrderSide != null)
+            order.Side = LocalOrderSide((OrderSide)item.OrderSide);
 
         order.Price = item.LimitPrice;
-        order.Quantity = (decimal)item.OrderQuantity;
-        order.QuoteQuantity = (decimal)item.QuoteOrderQuantity;
+        if (item.OrderQuantity != null)
+            order.Quantity = (decimal)item.OrderQuantity;
+        if (item.QuoteOrderQuantity != null)
+            order.QuoteQuantity = (decimal)item.QuoteOrderQuantity;
 
         order.Commission = 0; // (decimal)item.Fees;
         order.CommissionAsset = symbol.Quote;

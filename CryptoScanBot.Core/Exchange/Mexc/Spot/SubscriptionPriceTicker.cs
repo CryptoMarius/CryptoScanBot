@@ -33,7 +33,7 @@ public class SubscriptionPriceTicker(ExchangeOptions exchangeOptions) : Subscrip
             {
                 var tick = data.Data;
                 {
-                    if (exchange.SymbolListName.TryGetValue(data.Symbol, out CryptoSymbol? symbol))
+                    if (data.Symbol != null && exchange.SymbolListName.TryGetValue(data.Symbol, out CryptoSymbol? symbol))
                     {
                         Interlocked.Increment(ref TickerCount);
 

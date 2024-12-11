@@ -8,7 +8,7 @@ public class CryptoExternalUrl
 {
     // Alleen HyperTrader gebruikt een execute link
     public CryptoExternalUrlType Execute { get; set; } = CryptoExternalUrlType.External;
-    public string? Url { get; set; }
+    public string Url { get; set; } = "";
     public string? Telegram { get; set; }
 }
 

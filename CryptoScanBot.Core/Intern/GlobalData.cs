@@ -403,11 +403,15 @@ static public class GlobalData
                 //    readStream.Close();
                 //}
                 string text = File.ReadAllText(filename);
-                Settings = JsonSerializer.Deserialize<SettingsBasic>(text, JsonTools.JsonSerializerIndented);
+                var value = JsonSerializer.Deserialize<SettingsBasic>(text, JsonTools.JsonSerializerIndented);
+                if (value != null)
+                    Settings = value;
+                else
+                    Settings = new();
             }
 
             // Fix, sometimes people set this at 1 and that is not what I expected
-            if (Settings.General.GetCandleInterval < 30)
+            if (Settings!.General.GetCandleInterval < 30)
                 Settings.General.GetCandleInterval = 30;
 
             if (Settings.General.ActivateExchangeName == "")
@@ -431,7 +435,11 @@ static public class GlobalData
             if (File.Exists(fullName))
             {
                 string text = File.ReadAllText(fullName);
-                ExternalUrls = JsonSerializer.Deserialize<CryptoExternalUrlList>(text);
+                var value = JsonSerializer.Deserialize<CryptoExternalUrlList>(text);
+                if (value != null)
+                    ExternalUrls = value;
+                else
+                    ExternalUrls = [];
                 ExternalUrls!.InitializeUrls(); // add new exchanges
             }
             else
@@ -463,7 +471,11 @@ static public class GlobalData
             if (File.Exists(fullName))
             {
                 string text = File.ReadAllText(fullName);
-                SettingsUser = JsonSerializer.Deserialize<SettingsUser>(text);
+                var value = JsonSerializer.Deserialize<SettingsUser>(text);
+                if (value != null)
+                    SettingsUser = value;
+                else
+                    SettingsUser = new();
             }
         }
         catch (Exception error)
@@ -482,7 +494,11 @@ static public class GlobalData
             if (File.Exists(fullName))
             {
                 string text = File.ReadAllText(fullName);
-                Telegram = JsonSerializer.Deserialize<SettingsTelegram>(text);
+                var value = JsonSerializer.Deserialize<SettingsTelegram>(text);
+                if (value != null)
+                    Telegram = value;
+                else
+                    Telegram = new();
             }
         }
         catch (Exception error)
@@ -501,7 +517,11 @@ static public class GlobalData
             if (File.Exists(fullName))
             {
                 string text = File.ReadAllText(fullName);
-                TradingApi = JsonSerializer.Deserialize<SettingsExchangeApi>(text);
+                var value = JsonSerializer.Deserialize<SettingsExchangeApi>(text);
+                if (value != null)
+                    TradingApi = value;
+                else
+                    TradingApi = new();
             }
         }
         catch (Exception error)
@@ -518,7 +538,11 @@ static public class GlobalData
             if (File.Exists(fullName))
             {
                 string text = File.ReadAllText(fullName);
-                AltradyApi = JsonSerializer.Deserialize<SettingsAltradyApi>(text);
+                var value = JsonSerializer.Deserialize<SettingsAltradyApi>(text);
+                if (value != null)
+                    AltradyApi = value;
+                else
+                    AltradyApi = new();
             }
         }
         catch (Exception error)

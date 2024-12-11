@@ -9,7 +9,7 @@ namespace CryptoScanBot.Core.Settings;
 /// Controle hoe een munt zich gedraagt
 public class PauseTradingRule
 {
-    public string Symbol { get; set; }
+    public string Symbol { get; set; } = "";
     public double Percentage { get; set; }
     public int Candles { get; set; }
     public CryptoIntervalPeriod Interval { get; set; }
