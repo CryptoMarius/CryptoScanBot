@@ -1324,7 +1324,7 @@ public partial class TestForm : Form
     }
 
 
-    private void Button3_Click_1(object? sender, EventArgs? e)
+    private async Task Button3_Click_1Async(object? sender, EventArgs? e)
     {
         // Achtergrond hiervan:
         // Ik lijk STOB meldingen te missen in de JOEBTC chart (andere mensen hebben die melding wel gehad).
@@ -1418,7 +1418,7 @@ public partial class TestForm : Form
                     {
                         //GlobalData.AddTextToLogTab(candle.OhlcText(symbol.Format) + " " + candle.Id.ToString());
                         SignalCreate createSignal = new(null, symbol, interval, CryptoTradeSide.Long, candle.OpenTime + 60);
-                        createSignal.Analyze(candle.OpenTime);
+                        await createSignal.AnalyzeAsync(candle.OpenTime);
                     }
                 }
 
