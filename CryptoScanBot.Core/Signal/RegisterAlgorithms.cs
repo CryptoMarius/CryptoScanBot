@@ -133,16 +133,18 @@ public static class RegisterAlgorithms
         });
 
 
-        //***************************************************
-        // Test
-        //***************************************************
-        Register(new AlgorithmDefinition()
-        {
-            Name = "BbRsiEngulf",
-            Strategy = CryptoSignalStrategy.BbRsiEngulfing,
-            AnalyzeLongType = typeof(SignalBbRsiEngulfingLong),
-            AnalyzeShortType = typeof(SignalBbRsiEngulfingShort),
-        });
+        ////***************************************************
+        //// Test
+        ////***************************************************
+        //Register(new AlgorithmDefinition()
+        //{
+        //    Name = "BbRsiEngulf",
+        //    Strategy = CryptoSignalStrategy.BbRsiEngulfing,
+        //    AnalyzeLongType = typeof(SignalBbRsiEngulfingLong),
+        //    AnalyzeShortType = typeof(SignalBbRsiEngulfingShort),
+        //});
+
+       
     }
 
 
