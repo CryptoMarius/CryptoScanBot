@@ -16,7 +16,7 @@ namespace CryptoScanBot.Core.Exchange.Binance.Spot;
 /// <summary>
 /// De Trades ophalen
 /// </summary>
-public class Trade(ExchangeBase api) : TradeBase(), ITrade
+public class Trade() : TradeBase(), ITrade
 {
     public static void PickupTrade(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoTrade trade, BinanceTrade item)
     {

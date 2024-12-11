@@ -20,7 +20,7 @@ public class Api : ExchangeBase
         Candle = new Candle(this);
         Symbol = new Symbol();
         Order = new Order();
-        Trade = new Trade(this);
+        Trade = new Trade();
     }
 
     public override IDisposable GetClient()

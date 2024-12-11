@@ -16,7 +16,7 @@ namespace CryptoScanBot.Core.Exchange.BybitApi.Futures;
 /// <summary>
 /// De Trades ophalen
 /// </summary>
-public class Trade(ExchangeBase api) : TradeBase(), ITrade
+public class Trade() : TradeBase(), ITrade
 {
     static public void PickupTrade(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoTrade trade, BybitUserTrade item)
     {

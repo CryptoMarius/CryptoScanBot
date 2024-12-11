@@ -17,7 +17,7 @@ namespace CryptoScanBot.Core.Exchange.Kraken.Spot;
 /// <summary>
 /// De Trades ophalen
 /// </summary>
-public class Trade(ExchangeBase api) : TradeBase(), ITrade
+public class Trade() : TradeBase(), ITrade
 {
     static public void PickupTrade(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoTrade trade, KrakenUserTrade item)
     {
