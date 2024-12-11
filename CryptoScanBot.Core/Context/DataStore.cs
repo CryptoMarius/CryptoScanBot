@@ -86,7 +86,7 @@ public class DataStore
                                 if (candle.OpenTime < futureCandles)
                                     symbolInterval.CandleList.TryAdd(candle.OpenTime, candle);
                                 else
-                                    GlobalData.AddTextToLogTab($"{symbol.Name} skipped corrupted candle {candle.DateLocal}");
+                                    GlobalData.AddTextToLogTab($"{symbol.Name} skipped corrupted candle {candle.OpenTime}");
                             }
 
                             candleCount--;
