@@ -80,7 +80,7 @@ public class DominantLevelLong : SignalCreateBase
                 }
 
                 // todo, delete the zone somewhere else?
-                if (CandleLast.Low < zone.Top || CandleLast.Close <= zone.Top || CandleLast.Close <= zone.Top)
+                if (CandleLast.Low < zone.Top) // || CandleLast.Close <= zone.Top || CandleLast.Close <= zone.Top
                 {
                     changed = true;
                     zone.CloseTime = CandleLast.OpenTime;
@@ -106,15 +106,14 @@ public class DominantLevelLong : SignalCreateBase
         }
 
 
-        // close higher zones (they should not be there)
+        // close higher long zones (they should not be there)
         try
         {
             //for (int index = indexLow; index < symbolData.ZoneListLong.Count; index++)
             foreach (var zone in symbolData.ZoneListShort.Values)
             {
                 //var zone = symbolData.ZoneListLong.Values[index];
-
-                if (zone.CloseTime == null && zone.Top > CandleLast.Low)
+                if (zone.CloseTime == null && CandleLast.Low < zone.Top)
                 {
                     zone.CloseTime = CandleLast.OpenTime;
 
