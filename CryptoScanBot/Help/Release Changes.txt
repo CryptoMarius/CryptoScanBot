@@ -1,6 +1,7 @@
 CryptoScanBot release historie:
 
 12-09-2024 1.9.5.1209
+- Scanner/Trader - Een status/indicator die de status van de scanner, trader en rulez aangeeft.
 - Scanner - In de 4 grids kun je niet meer met DEL een rij weggooien
 - Scanner - Dominante zones: Enkele instellingen verwijderd (batch, posities en nog wat)
 - Scanner - Dominante zones: Automatisch berekenen als er een nieuw swingpoint bijkomt)

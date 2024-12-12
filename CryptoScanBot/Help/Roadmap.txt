@@ -2,24 +2,18 @@ Openstaande punten zijn de bevindingen, ideeën, diverse todo's tot dusver.
 Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep.
 (groot kans dat datgene we besproken hebben tussen wal en schip is beland)
 
+
 Todo:
 - Deze lijst doornemen en uitdunnen
 - De documentatie bijwerken voor zover mogelijk..
-- testunits voor de zones  (want de zone detectie werkt niet goed genoeg) irritant!
-
-- Scanner/Trader - Een status/indicator die de status van de scanner en trader aangeeft + soort van verklikker van trading rulez?
-            Het zijn dus 3 lampjes die de status van de scanner, trader en rulez laten zien.
-            Eventueel een geluidje laten horen
-
-dogeusdt, intro filter lijkt de verkeerde candle te hebben! Wellicht toch de zones gebruiken ipv zigzaf stuff..?
-melding weird symbol (van de exchange info) weghalen / onderdrukken
+- dogeusdt, zone intro "filter" lijkt de verkeerde candle te hebben! Wellicht toch de zones gebruiken ipv zigzag objecten?
 
 Scanner:
+- Scanner - Altcoin season index toevoegen https://www.blockchaincenter.net/en/altcoin-season-index/, maar die site heeft geen api?
 - Scanner - Refactor - LimitRates per exchange, is nu alleen voor Binance geregeld, de rest is op basis van aantal aanroepen per minuut
-- Scanner - Grafiek, op de x-as de lokale tijd tonen (maar dat gaf problemen tijdens de wisseling, component verwacht geen dubbele data)
+- Scanner - Grafiek, op de x-as de lokale tijd tonen (gaf problemen tijdens de wisseling, component verwacht geen dubbele data)
 - Scanner - Dominante zones, ophalen van de candles optimaliseren en delen met de emulator
             De tussenliggende intervallen eventueel ook kunnen berekenen..
-- Scanner - Dominante zones: De laatste open of gesloten posities laten zien (bij papertrading)
 - Scanner - Een wat vreemde, de logging naar het logtab kan stoppen? 
             (eens gedetecteerd tijdens het debuggen, geen reden of oplossing gevonden)
 - Scanner - (als extra voor de gui) De trend berekening laat de aanvullende informatie niet meer zien
@@ -85,6 +79,8 @@ Emulator:
 - Emulator - Het ophalen van candles gaat niet altijd goed indien de munt nog maar "kort" bestaat, er ontstaat een eindeloze lus
 
 Trading:
+- Trading - Dominante zones: De laatste open of gesloten posities laten zien (bij papertrading)
+- Trading - Als verklikker van trading rulez een geluidje laten horen
 - Trading - Handmatig een positie kunnen openen en/of sluiten
 - Trading - Het resetten (c.q. wissen) van de papertrade posities en statistiek (en wellicht ook de begin-assets configureren)
 - Trading - test account, ENAUSDT, 12-11, standaard papertrade, heeft 2x een sell tp gezet en dus ook 2x verkocht (zo wordt je snel rijk). Wat gaat daar precies fout?
