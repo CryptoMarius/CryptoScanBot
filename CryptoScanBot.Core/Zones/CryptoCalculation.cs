@@ -248,65 +248,142 @@ public class CryptoCalculation
     }
 
 
-    public static void CalculateBrokenBoxes(CryptoZoneData data)
+    //public static void CalculateBrokenBoxes(CryptoZoneData data)
+    //{
+    //    // Determine if a liq. box/zone has been broken
+    //    ZigZagResult? prevZigZag = null;
+    //    //ScannerLog.Logger.Info($"{data.Symbol.Name} Start marking broken zones");
+    //    //GlobalData.AddTextToLogTab($"{data.Symbol.Name} Start marking broken zones");
+    //    foreach (var zigZag in data.Indicator.ZigZagList)
+    //    {
+    //        if (prevZigZag == null)
+    //            zigZag.CloseDate = zigZag.Candle.OpenTime; //Just to show it..
+    //        else
+    //        {
+    //            if (zigZag.Dominant && !zigZag.Dummy && zigZag.IsValid) // all zones (also the closed ones)
+    //            {
+    //                bool brokenBos = false;
+    //                long key = zigZag.Candle.OpenTime;
+    //                long checkUpTo = CandleTools.GetUnixTime(DateTime.UtcNow, data.SymbolInterval.Interval.Duration);
+    //                while (key <= checkUpTo)
+    //                {
+    //                    key += data.SymbolInterval.Interval.Duration;
+    //                    if (data.SymbolInterval.CandleList.TryGetValue(key, out CryptoCandle? candle))
+    //                    {
+    //                        // We need a BOS before we can invalidate the liq.box
+    //                        if (!brokenBos)
+    //                        {
+    //                            if (zigZag.PointType == 'H' && candle.GetLowValue(false) <= prevZigZag.Value)
+    //                                brokenBos = true;
+    //                            if (zigZag.PointType == 'L' && candle.GetHighValue(false) >= prevZigZag.Value)
+    //                                brokenBos = true;
+    //                        }
+    //                        else
+    //                        {
+    //                            if (zigZag.PointType == 'H' && candle.High > zigZag.Bottom)
+    //                            {
+    //                                zigZag.CloseDate = candle.OpenTime;
+    //                                break;
+    //                            }
+    //                            if (zigZag.PointType == 'L' && candle.Low < zigZag.Top)
+    //                            {
+    //                                zigZag.CloseDate = candle.OpenTime;
+    //                                break;
+    //                            }
+    //                        }
+    //                    }
+    //                }
+    //            }
+    //        }
+    //        prevZigZag = zigZag;
+    //    }
+    //}
+
+    public static void CheckZones(CryptoZoneData data, ref long key, long checkUpTo, long delay, List<ZigZagResult> zonesLong, List<ZigZagResult> zonesShort)
     {
-        // Determine if a liq. box/zone has been broken
-        ZigZagResult? prevZigZag = null;
-        //ScannerLog.Logger.Info($"{data.Symbol.Name} Start marking broken zones");
-        //GlobalData.AddTextToLogTab($"{data.Symbol.Name} Start marking broken zones");
-        foreach (var zigZag in data.Indicator.ZigZagList)
+        // public because of testing (yeah, q&d)
+
+        while (key <= checkUpTo)
         {
-            if (prevZigZag == null)
-                zigZag.CloseDate = zigZag.Candle.OpenTime; //Just to show it..
-            else
+            if (data.SymbolInterval.CandleList.TryGetValue(key, out CryptoCandle? candle))
             {
-                if (zigZag.Dominant && !zigZag.Dummy && zigZag.IsValid) // all zones (also the closed ones)
+                // Note: A candle can break multiple long or short boxes
+
+                foreach (var x in zonesLong)
                 {
-                    bool brokenBos = false;
-                    long key = zigZag.Candle.OpenTime;
-                    long checkUpTo = CandleTools.GetUnixTime(DateTime.UtcNow, data.SymbolInterval.Interval.Duration);
-                    while (key <= checkUpTo)
+                    if (key > x.Candle.OpenTime + delay && candle.Low < x.Top)
                     {
-                        key += data.SymbolInterval.Interval.Duration;
-                        if (data.SymbolInterval.CandleList.TryGetValue(key, out CryptoCandle? candle))
-                        {
-                            // We need a BOS before we can invalidate the liq.box
-                            if (!brokenBos)
-                            {
-                                if (zigZag.PointType == 'H' && candle.GetLowValue(false) <= prevZigZag.Value)
-                                    brokenBos = true;
-                                if (zigZag.PointType == 'L' && candle.GetHighValue(false) >= prevZigZag.Value)
-                                    brokenBos = true;
-                            }
-                            else
-                            {
-                                if (zigZag.PointType == 'H' && (candle.High > zigZag.Bottom || Math.Max(candle.Open, candle.Close) >= zigZag.Bottom))
-                                {
-                                    zigZag.CloseDate = candle.OpenTime;
-                                    break;
-                                }
-                                if (zigZag.PointType == 'L' && (candle.Low < zigZag.Top || Math.Min(candle.Open, candle.Close) <= zigZag.Top))
-                                {
-                                    zigZag.CloseDate = candle.OpenTime;
-                                    break;
-                                }
-                            }
-                        }
+                        x.CloseDate = candle.OpenTime;
+                        zonesLong.Remove(x);
+                        break;
+                    }
+                }
+                foreach (var x in zonesShort)
+                {
+                    if (key > x.Candle.OpenTime + delay && candle.High > x.Bottom)
+                    {
+                        x.CloseDate = candle.OpenTime;
+                        zonesShort.Remove(x);
+                        break;
                     }
                 }
             }
-            prevZigZag = zigZag;
+            key += data.SymbolInterval.Interval.Duration;
         }
     }
 
-    internal static void CalculateExtraFilters(CryptoZoneData data)
+    public static void CalculateBrokenBoxes(CryptoZoneData data)
+    {
+        List<ZigZagResult> zonesLong = [];
+        List<ZigZagResult> zonesShort = [];
+
+        long delay = 6 * data.SymbolInterval.Interval.Duration;
+        long maxTime = CandleTools.GetUnixTime(DateTime.UtcNow, 60);
+
+        if (data.Indicator.ZigZagList.Count > 0)
+        {
+            // brute force, this is going to take a lot of iterations..
+            int last = data.Indicator.ZigZagList.Count - 1;
+            long key = data.Indicator.ZigZagList.First().Candle.OpenTime + delay;
+
+            for (int i = 0; i <= last; i++)
+            {
+                var zigZag = data.Indicator.ZigZagList[i];
+
+                if (zigZag.Dominant && !zigZag.Dummy) // all zones (also the closed ones) //  && zigZag.IsValid
+                {
+                    // The zones are growing as we iterate, broken zones will be removed to keep the list small
+                    if (zigZag.PointType == 'L')
+                        zonesLong.Add(zigZag);
+                    else
+                        zonesShort.Add(zigZag);
+
+                    long checkUpTo;
+                    if (i < last)
+                        checkUpTo = zigZag.Candle.OpenTime;
+                    else
+                        checkUpTo = maxTime;
+
+                    CheckZones(data, ref key, checkUpTo, delay, zonesLong, zonesShort);
+                }
+                else
+                {
+                    // Close it just to be sure..
+                    zigZag.CloseDate = zigZag.Candle.OpenTime;
+                }
+            }
+            CheckZones(data, ref key, maxTime, delay, zonesLong, zonesShort);
+        }
+    }
+
+    internal static void CalculateIntroZone(CryptoZoneData data)
     {
         // Determine if a liq. box/zone has an interesting intro
         if (GlobalData.Settings.Signal.Zones.ZoneStartApply)
         {
             foreach (var zigZag in data.Indicator.ZigZagList)
             {
-                if (zigZag.Dominant && !zigZag.Dummy && zigZag.IsValid) // all zones (also the closed ones)
+                if (zigZag.Dominant && !zigZag.Dummy) //  && zigZag.IsValid all zones (also the closed ones)
                 {
                     decimal minPrice = decimal.MaxValue;
                     decimal maxPrice = decimal.MinValue;

@@ -22,7 +22,7 @@ public class ZigZagIndicator9(CryptoCandleList candleList, bool useHighLow, deci
 
     private readonly List<ZigZagResult> AddedDummyZigZag = []; // collected points for recreating a low/high after a BOS formed
 
-    public readonly List<ZigZagResult> PivotList = []; // All l/h points (for determining high/low)
+    public List<ZigZagResult> PivotList = []; // All l/h points (for determining high/low)
     public List<ZigZagResult> ZigZagList { get; set; } = []; // The resulting zigzag points
 
     public ZigZagResult? LastSwingLow = null; // the last Low ZigZag

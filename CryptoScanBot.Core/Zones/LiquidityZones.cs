@@ -61,7 +61,7 @@ public class LiquidityZones
             if (session.ForceCalculation)
             {
                 await CryptoCalculation.CalculateLiqBoxesAsync(sender, data, session.ZoomLiqBoxes, loadedCandlesInMemory);
-                CryptoCalculation.CalculateExtraFilters(data);
+                CryptoCalculation.CalculateIntroZone(data);
                 CryptoCalculation.CalculateBrokenBoxes(data);
             }
 
