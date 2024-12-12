@@ -55,7 +55,9 @@ static public class GlobalData
             return DateTime.UtcNow;
     }
 
-    public static CryptoApplicationStatus ApplicationStatus { get; set; } = CryptoApplicationStatus.Initializing;
+    private static CryptoApplicationStatus _applicationStatus = CryptoApplicationStatus.Initializing;
+    public static CryptoApplicationStatus ApplicationStatus { get { return _applicationStatus; } 
+        set { _applicationStatus = value; GlobalData.StatusesHaveChangedEvent?.Invoke(""); } }
 
     public static int CreatedSignalCount { get; set; } // Tellertje met het aantal meldingen (komt in de taakbalk c.q. applicatie titel)
 
@@ -112,6 +114,7 @@ static public class GlobalData
     public static event AddTextEvent? AssetsHaveChangedEvent;
     public static event AddTextEvent? PositionsHaveChangedEvent;
     public static AddTextEvent? ApplicationHasStarted { get; set; }
+    public static AddTextEvent? StatusesHaveChangedEvent { get; set; }
 
     // Ophalen van historische candles duurt lang, dus niet halverwege nog 1 starten (en nog 1 en...)
     public static event SetCandleTimerEnable? SetCandleTimerEnableEvent;
@@ -748,6 +751,7 @@ static public class GlobalData
     //}
 
     static public void AddTextToLogTab(string text) => LogToLogTabEvent?.Invoke(text);
+    static public void StatusesHaveChanged(string text) => StatusesHaveChangedEvent?.Invoke(text);
     static public void SymbolsHaveChanged(string text) => SymbolsHaveChangedEvent?.Invoke(text);
 
     static public void AssetsHaveChanged(string text) => AssetsHaveChangedEvent?.Invoke(text);

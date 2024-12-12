@@ -20,7 +20,6 @@
             tabPageSymbols = new TabPage();
             dataGridViewSymbols = new DataGridView();
             panelLeftTop = new Panel();
-            pictureBox1 = new PictureBox();
             label1 = new Label();
             symbolFilter = new TextBox();
             panelClient = new Panel();
@@ -49,7 +48,6 @@
             tabPageSymbols.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dataGridViewSymbols).BeginInit();
             panelLeftTop.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             panelClient.SuspendLayout();
             tabControl.SuspendLayout();
             tabPagewebViewDummy.SuspendLayout();
@@ -117,7 +115,6 @@
             // 
             // panelLeftTop
             // 
-            panelLeftTop.Controls.Add(pictureBox1);
             panelLeftTop.Controls.Add(label1);
             panelLeftTop.Controls.Add(symbolFilter);
             panelLeftTop.Dock = DockStyle.Top;
@@ -126,14 +123,6 @@
             panelLeftTop.Name = "panelLeftTop";
             panelLeftTop.Size = new Size(225, 103);
             panelLeftTop.TabIndex = 1;
-            // 
-            // pictureBox1
-            // 
-            pictureBox1.Location = new Point(10, 13);
-            pictureBox1.Name = "pictureBox1";
-            pictureBox1.Size = new Size(36, 34);
-            pictureBox1.TabIndex = 72;
-            pictureBox1.TabStop = false;
             // 
             // label1
             // 
@@ -409,7 +398,6 @@
             ((System.ComponentModel.ISupportInitialize)dataGridViewSymbols).EndInit();
             panelLeftTop.ResumeLayout(false);
             panelLeftTop.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
             panelClient.ResumeLayout(false);
             tabControl.ResumeLayout(false);
             tabPagewebViewDummy.ResumeLayout(false);
@@ -466,7 +454,6 @@
         private DataGridView dataGridViewPositionOpen;
         private DataGridView dataGridViewPositionClosed;
         private SplitContainer splitContainer1;
-        private PictureBox pictureBox1;
     }
 }
 

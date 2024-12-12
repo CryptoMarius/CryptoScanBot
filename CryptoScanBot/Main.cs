@@ -17,7 +17,7 @@ using Nito.AsyncEx;
 using System.Text;
 using System.Text.Json;
 using CryptoScanBot.Core.Json;
-using CryptoScanBot.Core.Zones;
+using System.Reflection;
 
 namespace CryptoScanBot;
 
@@ -107,6 +107,7 @@ public partial class FrmMain : Form
         GlobalData.SymbolsHaveChangedEvent += new AddTextEvent(SymbolsHaveChangedEvent);
         GlobalData.AssetsHaveChangedEvent += new AddTextEvent(AssetsHaveChangedEvent);
         GlobalData.PositionsHaveChangedEvent += new AddTextEvent(PositionsHaveChangedEvent);
+        GlobalData.StatusesHaveChangedEvent += new AddTextEvent(StatusesHaveChangedEvent);
 
         GlobalData.AnalyzeSignalCreated = AnalyzeSignalCreated;
         GlobalData.ApplicationHasStarted += new AddTextEvent(ApplicationHasStarted);
@@ -145,13 +146,8 @@ public partial class FrmMain : Form
         GlobalData.LoadIntervals();
 
         // Is er via de command line aangegeven dat we default een andere exchange willen?
-
         ApplicationParams.InitApplicationOptions();
         GlobalData.InitializeExchange();
-
-        //pictureBox1.Image = Properties.Resources.;
-        //pictureBox1.Image = ;
-        pictureBox1.SizeMode = PictureBoxSizeMode.AutoSize;
     }
 
 
@@ -274,10 +270,9 @@ public partial class FrmMain : Form
         ApplicationPlaySounds.Checked = GlobalData.Settings.Signal.SoundsActive;
         ApplicationCreateSignals.Checked = GlobalData.Settings.Signal.Active;
 
-
         splitContainer1.Panel1Collapsed = GlobalData.Settings.General.HideSymbolsOnTheLeft;
-        //panelLeft.Visible = !GlobalData.Settings.General.HideSymbolsOnTheLeft;
 
+        GlobalData.StatusesHaveChangedEvent?.Invoke("");
         SetApplicationTitle();
 
         Refresh(); // Redraw
@@ -866,6 +861,7 @@ public partial class FrmMain : Form
         ApplicationCreateSignals.Checked = !ApplicationCreateSignals.Checked;
         GlobalData.Settings.Signal.Active = ApplicationCreateSignals.Checked;
         GlobalData.SaveSettings();
+        GlobalData.StatusesHaveChangedEvent?.Invoke("");
     }
 
     private void ApplicationPlaySounds_Click(object? sender, EventArgs? e)
@@ -873,6 +869,7 @@ public partial class FrmMain : Form
         ApplicationPlaySounds.Checked = !ApplicationPlaySounds.Checked;
         GlobalData.Settings.Signal.SoundsActive = ApplicationPlaySounds.Checked;
         GlobalData.SaveSettings();
+        GlobalData.StatusesHaveChangedEvent?.Invoke("");
     }
 
 
@@ -881,20 +878,27 @@ public partial class FrmMain : Form
         ApplicationTradingBot.Checked = !ApplicationTradingBot.Checked;
         GlobalData.Settings.Trading.Active = ApplicationTradingBot.Checked;
         GlobalData.SaveSettings();
+        GlobalData.StatusesHaveChangedEvent?.Invoke("");
     }
 
 
     private void ApplicationHasStarted(string text)
     {
+        // Show the symbols
         GlobalData.SymbolsHaveChanged("");
 
-        // De barometer een zetje geven...
+        // Show barometer and that it is running
         Invoke((System.Windows.Forms.MethodInvoker)(() => dashBoardInformation1.ShowBarometerStuff(null, null)));
 
-        // Toon de ingelezen posities
+        // Show the positions
         GlobalData.PositionsHaveChanged("");
     }
 
+
+    private void StatusesHaveChangedEvent(string text)
+    {
+        Invoke((System.Windows.Forms.MethodInvoker)(() => { dashBoardInformation1.ShowStatusesStuff(); }));
+    }
 
     private void SymbolsHaveChangedEvent(string text)
     {
@@ -1201,4 +1205,5 @@ public partial class FrmMain : Form
             GlobalData.SaveUserSettings();
         }
     }
+
 }

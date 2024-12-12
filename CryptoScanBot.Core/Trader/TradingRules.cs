@@ -95,6 +95,7 @@ public static class TradingRules
             //GlobalData.AddTextToLogTab("CheckTradingRules()");
             CalculateTradingRules(pause, candleDate, candleDuration);
 
+            GlobalData.StatusesHaveChangedEvent?.Invoke("");
             if (pause.Text != "")
                 return false;
         }

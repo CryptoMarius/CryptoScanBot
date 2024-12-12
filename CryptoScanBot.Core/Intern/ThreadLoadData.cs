@@ -286,6 +286,9 @@ public class ThreadLoadData
                 //Ze zijn er wel, deze is eigenlijk overbodig geworden (zit alleen zoveel werk in!)
                 //CalculateMissingCandles();
 
+                long currentTime = CandleTools.GetUnixTime(DateTime.UtcNow, 60);
+                TradingRules.CheckTradingRules(GlobalData.ActiveAccount!.Data.PauseTrading, currentTime, 60);
+
                 //************************************************************************************
                 // Nu we de achterstand ingehaald hebben kunnen/mogen we analyseren (signals maken)
                 //************************************************************************************
