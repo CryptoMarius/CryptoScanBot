@@ -40,4 +40,6 @@ public class CryptoZone
 
     // Percentage of the zone or other text
     public string Description { get; set; } = "";
+
+    public bool IsValid { get; set; }
 }

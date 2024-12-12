@@ -83,7 +83,7 @@ public class ZoneTools
         int untouched = 0;
         foreach (var zigZag in zigZagList)
         {
-            if (zigZag.Dominant && !zigZag.Dummy && zigZag.IsValid) // all zones (also the closed ones)
+            if (zigZag.Dominant && !zigZag.Dummy) //  && zigZag.IsValid all zones (also the closed ones)
             {
                 bool changed = false;
                 CryptoTradeSide side = zigZag.PointType == 'L' ? CryptoTradeSide.Long : CryptoTradeSide.Short;
@@ -113,6 +113,8 @@ public class ZoneTools
                 string description = $"{interval.Name}: {zigZag.Percentage:N2}%";
                 if (zigZag.NiceIntro != "")
                     description += " !!! " + zigZag.NiceIntro;
+                if (!zigZag.IsValid)
+                    description += " not valid";
                 if (description != zone.Description)
                 {
                     changed = true;
@@ -125,6 +127,21 @@ public class ZoneTools
                     changed = true;
                     zone.CloseTime = zigZag.CloseDate;
                 }
+                else if (zone.CloseTime != null && zigZag.CloseDate == null)
+                {
+                    // rat race?
+                    changed = true;
+                    zone.CloseTime = null;
+                }
+
+                
+                if (zigZag.IsValid != zone.IsValid)
+                {
+                    changed = true;
+                    zone.IsValid = zigZag.IsValid;
+                }
+
+
                 if (side == CryptoTradeSide.Long)
                     symbolData.ZoneListLong.Add(zone.Top, zone);
                 else

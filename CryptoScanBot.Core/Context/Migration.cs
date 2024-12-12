@@ -8,7 +8,7 @@ namespace CryptoScanBot.Core.Context;
 public class Migration
 {
     // De huidige database versie
-    public readonly static int CurrentDatabaseVersion = 36;
+    public readonly static int CurrentDatabaseVersion = 37;
 
 
     public static void Execute(CryptoDatabase database, int CurrentVersion)
@@ -996,6 +996,22 @@ public class Migration
             database.Connection.Update(version, transaction);
             transaction.Commit();
         }
+
+        //***********************************************************
+        // 11-12-2024, to show invalid zones
+        if (CurrentVersion > version.Version && version.Version == 36)
+        {
+            using var transaction = database.BeginTransaction();
+
+            // if the zone is valid
+            try { database.Connection.Execute("alter table Zone add IsValid integer", transaction); } catch { }
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+        
     }
 
 }

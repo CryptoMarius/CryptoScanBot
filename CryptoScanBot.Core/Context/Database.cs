@@ -764,6 +764,7 @@ public class CryptoDatabase : IDisposable
                 "CloseTime TEXT NULL," +
                 "LastSignalDate TEXT NULL," +
                 "Description TEXT NULL," +
+                "IsValid integer not null," +
                 "FOREIGN KEY(AccountId) REFERENCES TradeAccount(Id)," +
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +
                 "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)" +
