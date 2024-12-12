@@ -48,6 +48,10 @@
     <AdditionalFiles Remove="C:\Users\Marius\.nuget\packages\microsoft.dotnet.upgradeassistant.extensions.default.analyzers\0.4.421302\build\\WebTypeReplacements.typemap" />
   </ItemGroup>
   <ItemGroup>
+    <None Remove="Resources\ButtonOnOffGreen.png" />
+    <None Remove="Resources\ButtonOnOffRed.png" />
+  </ItemGroup>  
+  <ItemGroup>
     <Reference Include="System.Speech" />
   </ItemGroup>
   <ItemGroup>
@@ -81,6 +85,9 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Resources\icons.ico" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers">
       <Version>9.0.0</Version>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -109,7 +116,6 @@
     <WebView2UseWinRT>False</WebView2UseWinRT>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>icons.ico</ApplicationIcon>
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationManifest>Properties\app.manifest</ApplicationManifest>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -117,15 +123,20 @@
     <BaseOutputPath></BaseOutputPath>
     <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
     <Nullable>enable</Nullable>
+    <ApplicationIcon>Resources\icons.ico</ApplicationIcon>
   </PropertyGroup>
   <Target Name="AfterCompile">
     <Exec Command="echo Release@@Win32&#xD;&#xA;if &quot;$(ConfigurationName)&quot; == &quot;Release&quot; (if &quot;$(PlatformName)&quot; == &quot;Win32&quot; (&quot;$(ProjectDir)_Obfuscar\Obfuscar.Console.exe&quot; &quot;$(ProjectDir)_Obfuscar\obfuscar_Release_Win32.xml&quot;&#xD;&#xA;xcopy /e /v &quot;$(ProjectDir)obj\Win32\Release\\Out\&quot; &quot;$(ProjectDir)obj\Win32\Release\&quot; /Y))" />
   </Target>
   <ItemGroup>
-    <EmbeddedResource Remove="Main.PositionsClosed.resx" />
-    <EmbeddedResource Remove="Main.PositionsOpen.resx" />
-    <EmbeddedResource Remove="Main.Signals.resx" />
-    <EmbeddedResource Remove="Main.Symbols.resx" />
+    <EmbeddedResource Include="Resources\ButtonOnOffGreen.png" />
+    <EmbeddedResource Include="Resources\ButtonOnOffRed.png" />
+    <EmbeddedResource Include="Resources\icons.ico" />
+    <EmbeddedResource Include="Resources\logoPictureBox.Image.jpg" />
+    <EmbeddedResource Include="Resources\open-folder.png" />
+    <EmbeddedResource Include="Resources\open-folder1.png" />
+    <EmbeddedResource Include="Resources\open-folderblack.png" />
+    <EmbeddedResource Include="Resources\volume.png" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CryptoScanBot.Core\CryptoScanBot.Core.csproj" />
