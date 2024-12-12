@@ -84,7 +84,7 @@ public class DominantLevelShort : SignalCreateBase
                     {
                         changed = true;
                         zone.CloseTime = CandleLast.OpenTime;
-                        GlobalData.AddTextToLogTab($"Closed zone {zone.Id} {zone.Side} {zone.Description}");
+                        GlobalData.AddTextToLogTab($"{Symbol.Name} Closed zone {zone.Id} {zone.Side} {zone.Description}");
                     }
 
                     if (changed)
@@ -108,27 +108,27 @@ public class DominantLevelShort : SignalCreateBase
             }
         }
 
-        // close lower short zones (they should not be there)
-        //for (int index = 0; index <= indexLow; index++)
-        foreach (var zone in symbolData.ZoneListShort.Values)
-        {
-            //var zone = symbolData.ZoneListShort.Values[index];
-            if (zone.CloseTime == null && CandleLast.High > zone.Bottom)
-            {
-                zone.CloseTime = CandleLast.OpenTime;
-                try
-                {
-                    using var database = new CryptoDatabase();
-                    database.Connection.Update(zone);
-                    GlobalData.AddTextToLogTab($"Closed zone {zone.Id} {zone.Side} {zone.Description} (bulk)");
-                }
-                catch (Exception error)
-                {
-                    ScannerLog.Logger.Error(error, "");
-                    GlobalData.AddTextToLogTab(error.ToString());
-                }
-            }
-        }
+        //// close lower short zones (they should not be there)
+        ////for (int index = 0; index <= indexLow; index++)
+        //foreach (var zone in symbolData.ZoneListShort.Values)
+        //{
+        //    //var zone = symbolData.ZoneListShort.Values[index];
+        //    if (zone.CloseTime == null && CandleLast.High > zone.Bottom)
+        //    {
+        //        zone.CloseTime = CandleLast.OpenTime;
+        //        try
+        //        {
+        //            using var database = new CryptoDatabase();
+        //            database.Connection.Update(zone);
+        //            GlobalData.AddTextToLogTab($"{Symbol.Name} Closed zone {zone.Id} {zone.Side} {zone.Description} (bulk)");
+        //        }
+        //        catch (Exception error)
+        //        {
+        //            ScannerLog.Logger.Error(error, "");
+        //            GlobalData.AddTextToLogTab(error.ToString());
+        //        }
+        //    }
+        //}
 
 
         return result;

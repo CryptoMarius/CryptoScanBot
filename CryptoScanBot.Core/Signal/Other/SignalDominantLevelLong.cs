@@ -59,7 +59,7 @@ public class DominantLevelLong : SignalCreateBase
         //    indexHigh = symbolData.ZoneListLong.Count - 1;
 
         //for (int index = indexLow; index < indexHigh; index++)
-        foreach (var zone in symbolData.ZoneListShort.Values)
+        foreach (var zone in symbolData.ZoneListLong.Values)
         {
             //var zone = symbolData.ZoneListLong.Values[index];
 
@@ -84,7 +84,7 @@ public class DominantLevelLong : SignalCreateBase
                 {
                     changed = true;
                     zone.CloseTime = CandleLast.OpenTime;
-                    GlobalData.AddTextToLogTab($"Closed zone {zone.Id} {zone.Side} {zone.Description}");
+                    GlobalData.AddTextToLogTab($"{Symbol.Name} Closed zone {zone.Id} {zone.Side} {zone.Description}");
                 }
 
                 if (changed)
@@ -106,36 +106,28 @@ public class DominantLevelLong : SignalCreateBase
         }
 
 
-        // close higher long zones (they should not be there)
-        try
-        {
-            //for (int index = indexLow; index < symbolData.ZoneListLong.Count; index++)
-            foreach (var zone in symbolData.ZoneListShort.Values)
-            {
-                //var zone = symbolData.ZoneListLong.Values[index];
-                if (zone.CloseTime == null && CandleLast.Low < zone.Top)
-                {
-                    zone.CloseTime = CandleLast.OpenTime;
+        //// close higher long zones (they should not be there)
+        ////for (int index = indexLow; index < symbolData.ZoneListLong.Count; index++)
+        //foreach (var zone in symbolData.ZoneListShort.Values)
+        //{
+        //    //var zone = symbolData.ZoneListLong.Values[index];
+        //    if (zone.CloseTime == null && CandleLast.Low < zone.Top)
+        //    {
+        //        zone.CloseTime = CandleLast.OpenTime;
 
-                    try
-                    {
-                        using var database = new CryptoDatabase();
-                        database.Connection.Update(zone);
-                        GlobalData.AddTextToLogTab($"Closed zone {zone.Id} {zone.Side} {zone.Description} (bulk)");
-                    }
-                    catch (Exception error)
-                    {
-                        ScannerLog.Logger.Error(error, "");
-                        GlobalData.AddTextToLogTab(error.ToString());
-                    }
-                }
-            }
-        }
-        catch (Exception error)
-        {
-            ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab(error.ToString());
-        }
+        //        try
+        //        {
+        //            using var database = new CryptoDatabase();
+        //            database.Connection.Update(zone);
+        //            GlobalData.AddTextToLogTab($"{Symbol.Name} Closed zone {zone.Id} {zone.Side} {zone.Description} (bulk)");
+        //        }
+        //        catch (Exception error)
+        //        {
+        //            ScannerLog.Logger.Error(error, "");
+        //            GlobalData.AddTextToLogTab(error.ToString());
+        //        }
+        //    }
+        //}
 
         return result;
     }
