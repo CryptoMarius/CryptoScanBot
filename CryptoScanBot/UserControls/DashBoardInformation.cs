@@ -6,6 +6,7 @@ using CryptoScanBot.Core.TradingView;
 using CryptoScanBot.Intern;
 using CryptoScanBot.Core.Barometer;
 using CryptoScanBot.Core.Exchange;
+using CryptoScanBot.Core.Trader;
 
 namespace CryptoScanBot.TradingView;
 
@@ -40,6 +41,7 @@ public partial class DashBoardInformation : UserControl
     public DashBoardInformation()
     {
         InitializeComponent();
+        labelAppicationStatus.Text = "";
 
         // Wat event handles zetten
         EditBarometerQuote.SelectedIndexChanged += ShowBarometerStuff;
@@ -714,5 +716,24 @@ public partial class DashBoardInformation : UserControl
         {
             Invoke((MethodInvoker)(() => TimerShowInformationInternal()));
         }
+    }
+
+    internal void ShowStatusesStuff()
+    {
+        if (GlobalData.Settings.Trading.Active && GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
+            pictureBoxTrader.Image = Resource1.ButtonOnOffGreen;
+        else
+            pictureBoxTrader.Image = Resource1.ButtonOnOffRed;
+
+        if (GlobalData.Settings.Signal.Active && GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
+            pictureBoxScanner.Image = Resource1.ButtonOnOffGreen;
+        else
+            pictureBoxScanner.Image = Resource1.ButtonOnOffRed;
+
+        var pause = GlobalData.ActiveAccount!.Data.PauseTrading;
+        if (!pause.Calculated.HasValue || (pause.Until.HasValue && pause.Until > DateTime.UtcNow))
+            pictureBoxRulez.Image = Resource1.ButtonOnOffRed;
+        else
+            pictureBoxRulez.Image = Resource1.ButtonOnOffGreen;
     }
 }

@@ -72,13 +72,19 @@ partial class DashBoardInformation
         labelBm1h = new Label();
         pictureBox1 = new PictureBox();
         labelAppicationStatus = new Label();
+        pictureBoxRulez = new PictureBox();
+        pictureBoxTrader = new PictureBox();
+        pictureBoxScanner = new PictureBox();
         ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)pictureBoxRulez).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)pictureBoxTrader).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)pictureBoxScanner).BeginInit();
         SuspendLayout();
         // 
         // labelBarometerDateValue
         // 
         labelBarometerDateValue.AutoSize = true;
-        labelBarometerDateValue.Location = new Point(6, 64);
+        labelBarometerDateValue.Location = new Point(35, 64);
         labelBarometerDateValue.Margin = new Padding(4, 0, 4, 0);
         labelBarometerDateValue.Name = "labelBarometerDateValue";
         labelBarometerDateValue.Size = new Size(62, 15);
@@ -89,7 +95,7 @@ partial class DashBoardInformation
         // 
         EditBarometerInterval.DropDownStyle = ComboBoxStyle.DropDownList;
         EditBarometerInterval.FormattingEnabled = true;
-        EditBarometerInterval.Location = new Point(6, 34);
+        EditBarometerInterval.Location = new Point(35, 34);
         EditBarometerInterval.Margin = new Padding(2);
         EditBarometerInterval.Name = "EditBarometerInterval";
         EditBarometerInterval.Size = new Size(70, 23);
@@ -99,7 +105,7 @@ partial class DashBoardInformation
         // 
         EditBarometerQuote.DropDownStyle = ComboBoxStyle.DropDownList;
         EditBarometerQuote.FormattingEnabled = true;
-        EditBarometerQuote.Location = new Point(6, 6);
+        EditBarometerQuote.Location = new Point(35, 6);
         EditBarometerQuote.Margin = new Padding(2);
         EditBarometerQuote.Name = "EditBarometerQuote";
         EditBarometerQuote.Size = new Size(70, 23);
@@ -108,7 +114,7 @@ partial class DashBoardInformation
         // labelSymbol1Name
         // 
         labelSymbol1Name.AutoSize = true;
-        labelSymbol1Name.Location = new Point(550, 4);
+        labelSymbol1Name.Location = new Point(565, 4);
         labelSymbol1Name.Name = "labelSymbol1Name";
         labelSymbol1Name.Size = new Size(38, 15);
         labelSymbol1Name.TabIndex = 79;
@@ -117,7 +123,7 @@ partial class DashBoardInformation
         // labelSymbol2Name
         // 
         labelSymbol2Name.AutoSize = true;
-        labelSymbol2Name.Location = new Point(550, 24);
+        labelSymbol2Name.Location = new Point(565, 24);
         labelSymbol2Name.Name = "labelSymbol2Name";
         labelSymbol2Name.Size = new Size(38, 15);
         labelSymbol2Name.TabIndex = 80;
@@ -126,7 +132,7 @@ partial class DashBoardInformation
         // labelSymbol3Name
         // 
         labelSymbol3Name.AutoSize = true;
-        labelSymbol3Name.Location = new Point(550, 44);
+        labelSymbol3Name.Location = new Point(565, 44);
         labelSymbol3Name.Name = "labelSymbol3Name";
         labelSymbol3Name.Size = new Size(38, 15);
         labelSymbol3Name.TabIndex = 81;
@@ -135,7 +141,7 @@ partial class DashBoardInformation
         // labelSymbol4Name
         // 
         labelSymbol4Name.AutoSize = true;
-        labelSymbol4Name.Location = new Point(550, 64);
+        labelSymbol4Name.Location = new Point(565, 64);
         labelSymbol4Name.Name = "labelSymbol4Name";
         labelSymbol4Name.Size = new Size(38, 15);
         labelSymbol4Name.TabIndex = 82;
@@ -144,7 +150,7 @@ partial class DashBoardInformation
         // labelSymbol5Name
         // 
         labelSymbol5Name.AutoSize = true;
-        labelSymbol5Name.Location = new Point(550, 84);
+        labelSymbol5Name.Location = new Point(565, 84);
         labelSymbol5Name.Name = "labelSymbol5Name";
         labelSymbol5Name.Size = new Size(38, 15);
         labelSymbol5Name.TabIndex = 83;
@@ -152,7 +158,7 @@ partial class DashBoardInformation
         // 
         // labelSymbol1Price
         // 
-        labelSymbol1Price.Location = new Point(622, 4);
+        labelSymbol1Price.Location = new Point(637, 4);
         labelSymbol1Price.Name = "labelSymbol1Price";
         labelSymbol1Price.Size = new Size(60, 15);
         labelSymbol1Price.TabIndex = 84;
@@ -161,7 +167,7 @@ partial class DashBoardInformation
         // 
         // label7
         // 
-        label7.Location = new Point(622, 24);
+        label7.Location = new Point(637, 24);
         label7.Name = "label7";
         label7.Size = new Size(60, 15);
         label7.TabIndex = 85;
@@ -170,7 +176,7 @@ partial class DashBoardInformation
         // 
         // label8
         // 
-        label8.Location = new Point(622, 44);
+        label8.Location = new Point(637, 44);
         label8.Name = "label8";
         label8.Size = new Size(60, 15);
         label8.TabIndex = 86;
@@ -179,7 +185,7 @@ partial class DashBoardInformation
         // 
         // label9
         // 
-        label9.Location = new Point(622, 64);
+        label9.Location = new Point(637, 64);
         label9.Name = "label9";
         label9.Size = new Size(60, 15);
         label9.TabIndex = 87;
@@ -188,7 +194,7 @@ partial class DashBoardInformation
         // 
         // label10
         // 
-        label10.Location = new Point(622, 84);
+        label10.Location = new Point(637, 84);
         label10.Name = "label10";
         label10.Size = new Size(60, 15);
         label10.TabIndex = 88;
@@ -197,7 +203,7 @@ partial class DashBoardInformation
         // 
         // labelSymbol1Volume
         // 
-        labelSymbol1Volume.Location = new Point(703, 4);
+        labelSymbol1Volume.Location = new Point(718, 4);
         labelSymbol1Volume.Name = "labelSymbol1Volume";
         labelSymbol1Volume.Size = new Size(75, 15);
         labelSymbol1Volume.TabIndex = 89;
@@ -206,7 +212,7 @@ partial class DashBoardInformation
         // 
         // label12
         // 
-        label12.Location = new Point(703, 24);
+        label12.Location = new Point(718, 24);
         label12.Name = "label12";
         label12.Size = new Size(75, 15);
         label12.TabIndex = 90;
@@ -215,7 +221,7 @@ partial class DashBoardInformation
         // 
         // label13
         // 
-        label13.Location = new Point(703, 44);
+        label13.Location = new Point(718, 44);
         label13.Name = "label13";
         label13.Size = new Size(75, 15);
         label13.TabIndex = 91;
@@ -224,7 +230,7 @@ partial class DashBoardInformation
         // 
         // label14
         // 
-        label14.Location = new Point(703, 64);
+        label14.Location = new Point(718, 64);
         label14.Name = "label14";
         label14.Size = new Size(75, 15);
         label14.TabIndex = 92;
@@ -233,7 +239,7 @@ partial class DashBoardInformation
         // 
         // label15
         // 
-        label15.Location = new Point(703, 84);
+        label15.Location = new Point(718, 84);
         label15.Name = "label15";
         label15.Size = new Size(75, 15);
         label15.TabIndex = 93;
@@ -243,7 +249,7 @@ partial class DashBoardInformation
         // label16
         // 
         label16.AutoSize = true;
-        label16.Location = new Point(813, 4);
+        label16.Location = new Point(828, 4);
         label16.Name = "label16";
         label16.Size = new Size(44, 15);
         label16.TabIndex = 94;
@@ -252,7 +258,7 @@ partial class DashBoardInformation
         // label17
         // 
         label17.AutoSize = true;
-        label17.Location = new Point(813, 24);
+        label17.Location = new Point(828, 24);
         label17.Name = "label17";
         label17.Size = new Size(44, 15);
         label17.TabIndex = 95;
@@ -261,7 +267,7 @@ partial class DashBoardInformation
         // label18
         // 
         label18.AutoSize = true;
-        label18.Location = new Point(813, 44);
+        label18.Location = new Point(828, 44);
         label18.Name = "label18";
         label18.Size = new Size(44, 15);
         label18.TabIndex = 96;
@@ -270,7 +276,7 @@ partial class DashBoardInformation
         // label19
         // 
         label19.AutoSize = true;
-        label19.Location = new Point(813, 64);
+        label19.Location = new Point(828, 64);
         label19.Name = "label19";
         label19.Size = new Size(44, 15);
         label19.TabIndex = 97;
@@ -279,7 +285,7 @@ partial class DashBoardInformation
         // label20
         // 
         label20.AutoSize = true;
-        label20.Location = new Point(813, 84);
+        label20.Location = new Point(828, 84);
         label20.Name = "label20";
         label20.Size = new Size(44, 15);
         label20.TabIndex = 98;
@@ -287,7 +293,7 @@ partial class DashBoardInformation
         // 
         // label21
         // 
-        label21.Location = new Point(939, 4);
+        label21.Location = new Point(954, 4);
         label21.Name = "label21";
         label21.Size = new Size(95, 15);
         label21.TabIndex = 99;
@@ -296,7 +302,7 @@ partial class DashBoardInformation
         // 
         // label22
         // 
-        label22.Location = new Point(939, 24);
+        label22.Location = new Point(954, 24);
         label22.Name = "label22";
         label22.Size = new Size(95, 15);
         label22.TabIndex = 100;
@@ -305,7 +311,7 @@ partial class DashBoardInformation
         // 
         // label23
         // 
-        label23.Location = new Point(939, 44);
+        label23.Location = new Point(954, 44);
         label23.Name = "label23";
         label23.Size = new Size(95, 15);
         label23.TabIndex = 101;
@@ -314,7 +320,7 @@ partial class DashBoardInformation
         // 
         // label24
         // 
-        label24.Location = new Point(939, 64);
+        label24.Location = new Point(954, 64);
         label24.Name = "label24";
         label24.Size = new Size(95, 15);
         label24.TabIndex = 102;
@@ -323,7 +329,7 @@ partial class DashBoardInformation
         // 
         // label25
         // 
-        label25.Location = new Point(939, 84);
+        label25.Location = new Point(954, 84);
         label25.Name = "label25";
         label25.Size = new Size(95, 15);
         label25.TabIndex = 103;
@@ -333,7 +339,7 @@ partial class DashBoardInformation
         // label26
         // 
         label26.AutoSize = true;
-        label26.Location = new Point(1059, 4);
+        label26.Location = new Point(1074, 4);
         label26.Name = "label26";
         label26.Size = new Size(44, 15);
         label26.TabIndex = 104;
@@ -342,7 +348,7 @@ partial class DashBoardInformation
         // label27
         // 
         label27.AutoSize = true;
-        label27.Location = new Point(1059, 24);
+        label27.Location = new Point(1074, 24);
         label27.Name = "label27";
         label27.Size = new Size(44, 15);
         label27.TabIndex = 105;
@@ -351,7 +357,7 @@ partial class DashBoardInformation
         // label28
         // 
         label28.AutoSize = true;
-        label28.Location = new Point(1059, 43);
+        label28.Location = new Point(1074, 43);
         label28.Name = "label28";
         label28.Size = new Size(44, 15);
         label28.TabIndex = 106;
@@ -360,7 +366,7 @@ partial class DashBoardInformation
         // label29
         // 
         label29.AutoSize = true;
-        label29.Location = new Point(1059, 64);
+        label29.Location = new Point(1074, 64);
         label29.Name = "label29";
         label29.Size = new Size(44, 15);
         label29.TabIndex = 107;
@@ -369,7 +375,7 @@ partial class DashBoardInformation
         // label30
         // 
         label30.AutoSize = true;
-        label30.Location = new Point(1059, 84);
+        label30.Location = new Point(1074, 84);
         label30.Name = "label30";
         label30.Size = new Size(44, 15);
         label30.TabIndex = 108;
@@ -377,7 +383,7 @@ partial class DashBoardInformation
         // 
         // label31
         // 
-        label31.Location = new Point(1215, 4);
+        label31.Location = new Point(1230, 4);
         label31.Name = "label31";
         label31.Size = new Size(60, 15);
         label31.TabIndex = 109;
@@ -386,7 +392,7 @@ partial class DashBoardInformation
         // 
         // label32
         // 
-        label32.Location = new Point(1215, 24);
+        label32.Location = new Point(1230, 24);
         label32.Name = "label32";
         label32.Size = new Size(60, 15);
         label32.TabIndex = 110;
@@ -395,7 +401,7 @@ partial class DashBoardInformation
         // 
         // label33
         // 
-        label33.Location = new Point(1215, 44);
+        label33.Location = new Point(1230, 44);
         label33.Name = "label33";
         label33.Size = new Size(60, 15);
         label33.TabIndex = 111;
@@ -404,7 +410,7 @@ partial class DashBoardInformation
         // 
         // label34
         // 
-        label34.Location = new Point(1215, 64);
+        label34.Location = new Point(1230, 64);
         label34.Name = "label34";
         label34.Size = new Size(60, 15);
         label34.TabIndex = 112;
@@ -413,7 +419,7 @@ partial class DashBoardInformation
         // 
         // label35
         // 
-        label35.Location = new Point(1215, 84);
+        label35.Location = new Point(1230, 84);
         label35.Name = "label35";
         label35.Size = new Size(60, 15);
         label35.TabIndex = 113;
@@ -422,40 +428,40 @@ partial class DashBoardInformation
         // 
         // labelBm4h
         // 
-        labelBm4h.Location = new Point(82, 24);
+        labelBm4h.Location = new Point(115, 27);
         labelBm4h.Margin = new Padding(4, 0, 4, 0);
         labelBm4h.Name = "labelBm4h";
-        labelBm4h.Size = new Size(60, 15);
+        labelBm4h.Size = new Size(40, 15);
         labelBm4h.TabIndex = 126;
         labelBm4h.Text = "4h";
         labelBm4h.TextAlign = ContentAlignment.MiddleRight;
         // 
         // labelBm1d
         // 
-        labelBm1d.Location = new Point(82, 44);
+        labelBm1d.Location = new Point(115, 47);
         labelBm1d.Margin = new Padding(4, 0, 4, 0);
         labelBm1d.Name = "labelBm1d";
-        labelBm1d.Size = new Size(60, 15);
+        labelBm1d.Size = new Size(40, 15);
         labelBm1d.TabIndex = 125;
         labelBm1d.Text = "1d";
         labelBm1d.TextAlign = ContentAlignment.MiddleRight;
         // 
         // labelBmTime
         // 
-        labelBmTime.Location = new Point(92, 64);
+        labelBmTime.Location = new Point(123, 70);
         labelBmTime.Margin = new Padding(4, 0, 4, 0);
         labelBmTime.Name = "labelBmTime";
-        labelBmTime.Size = new Size(50, 15);
+        labelBmTime.Size = new Size(31, 15);
         labelBmTime.TabIndex = 124;
         labelBmTime.Text = "time";
         labelBmTime.TextAlign = ContentAlignment.MiddleCenter;
         // 
         // labelBm1h
         // 
-        labelBm1h.Location = new Point(82, 4);
+        labelBm1h.Location = new Point(115, 7);
         labelBm1h.Margin = new Padding(4, 0, 4, 0);
         labelBm1h.Name = "labelBm1h";
-        labelBm1h.Size = new Size(60, 15);
+        labelBm1h.Size = new Size(40, 15);
         labelBm1h.TabIndex = 123;
         labelBm1h.Text = "1h";
         labelBm1h.TextAlign = ContentAlignment.MiddleRight;
@@ -463,7 +469,7 @@ partial class DashBoardInformation
         // pictureBox1
         // 
         pictureBox1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
-        pictureBox1.Location = new Point(144, 0);
+        pictureBox1.Location = new Point(155, 0);
         pictureBox1.Name = "pictureBox1";
         pictureBox1.Size = new Size(403, 103);
         pictureBox1.TabIndex = 127;
@@ -479,10 +485,37 @@ partial class DashBoardInformation
         labelAppicationStatus.TabIndex = 128;
         labelAppicationStatus.Text = "Barometer";
         // 
+        // pictureBoxRulez
+        // 
+        pictureBoxRulez.Location = new Point(3, 70);
+        pictureBoxRulez.Name = "pictureBoxRulez";
+        pictureBoxRulez.Size = new Size(25, 25);
+        pictureBoxRulez.TabIndex = 131;
+        pictureBoxRulez.TabStop = false;
+        // 
+        // pictureBoxTrader
+        // 
+        pictureBoxTrader.Location = new Point(3, 37);
+        pictureBoxTrader.Name = "pictureBoxTrader";
+        pictureBoxTrader.Size = new Size(25, 26);
+        pictureBoxTrader.TabIndex = 130;
+        pictureBoxTrader.TabStop = false;
+        // 
+        // pictureBoxScanner
+        // 
+        pictureBoxScanner.Location = new Point(3, 6);
+        pictureBoxScanner.Name = "pictureBoxScanner";
+        pictureBoxScanner.Size = new Size(27, 23);
+        pictureBoxScanner.TabIndex = 129;
+        pictureBoxScanner.TabStop = false;
+        // 
         // DashBoardInformation
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
+        Controls.Add(pictureBoxRulez);
+        Controls.Add(pictureBoxTrader);
+        Controls.Add(pictureBoxScanner);
         Controls.Add(labelAppicationStatus);
         Controls.Add(pictureBox1);
         Controls.Add(labelBm4h);
@@ -528,8 +561,11 @@ partial class DashBoardInformation
         Controls.Add(EditBarometerInterval);
         Controls.Add(EditBarometerQuote);
         Name = "DashBoardInformation";
-        Size = new Size(1385, 103);
+        Size = new Size(1396, 103);
         ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
+        ((System.ComponentModel.ISupportInitialize)pictureBoxRulez).EndInit();
+        ((System.ComponentModel.ISupportInitialize)pictureBoxTrader).EndInit();
+        ((System.ComponentModel.ISupportInitialize)pictureBoxScanner).EndInit();
         ResumeLayout(false);
         PerformLayout();
     }
@@ -579,4 +615,7 @@ partial class DashBoardInformation
     private Label labelBm1h;
     private PictureBox pictureBox1;
     private Label labelAppicationStatus;
+    private PictureBox pictureBoxRulez;
+    private PictureBox pictureBoxTrader;
+    private PictureBox pictureBoxScanner;
 }
