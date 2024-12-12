@@ -1,6 +1,7 @@
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Json;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Trend;
 using CryptoScanBot.Core.Zones;
@@ -12,6 +13,7 @@ using OxyPlot.Axes;
 
 using System.Diagnostics;
 using System.Text;
+using System.Text.Json;
 
 namespace CryptoScanBot.ZoneVisualisation;
 
@@ -40,6 +42,8 @@ public partial class CryptoVisualisation : Form
     {
         StartPosition = FormStartPosition.CenterParent;
         InitializeComponent();
+
+        Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
 
         if (GlobalData.IntervalList.Count == 0)
         {
@@ -351,7 +355,7 @@ public partial class CryptoVisualisation : Form
     }
 
 
-    private void ButtonGoLeftClick(object sender, EventArgs e)
+    private void ButtonGoLeftClick(object? sender, EventArgs e)
     {
         if (Data != null && plotModel != null)
         {
@@ -361,7 +365,7 @@ public partial class CryptoVisualisation : Form
     }
 
 
-    private void ButtonGoRightClick(object sender, EventArgs e)
+    private void ButtonGoRightClick(object? sender, EventArgs e)
     {
         if (Data != null && plotModel != null)
         {
@@ -371,7 +375,7 @@ public partial class CryptoVisualisation : Form
     }
 
 
-    private void ButtonMinusClick(object sender, EventArgs e)
+    private void ButtonMinusClick(object? sender, EventArgs e)
     {
         if (Data != null && plotModel != null && Session.ActiveInterval > CryptoIntervalPeriod.interval1m)
         {
@@ -392,7 +396,7 @@ public partial class CryptoVisualisation : Form
     }
 
 
-    private void ButtonPlusClick(object sender, EventArgs e)
+    private void ButtonPlusClick(object? sender, EventArgs e)
     {
         if (Data != null && plotModel != null && Session.ActiveInterval < CryptoIntervalPeriod.interval1d)
         {
@@ -704,7 +708,7 @@ public partial class CryptoVisualisation : Form
         }
     }
 
-    
+
     private void ButtonCalculateClick(object? sender, EventArgs e)
     {
         try
@@ -745,4 +749,19 @@ public partial class CryptoVisualisation : Form
             }
         }
     }
+
+    private void SaveSituationForDebug(object? sender, EventArgs e)
+    {
+        if (Data != null)
+        {
+            string filename = $"{GlobalData.AppName}-pivots.json";
+            string fullName = GlobalData.GetBaseDir() + filename;
+            // het bestand in ieder geval aanmaken(updates moeten achteraf gepushed worden)
+            string text = JsonSerializer.Serialize(Data.Indicator.ZigZagList, JsonTools.JsonSerializerIndented);
+            File.WriteAllText(fullName, text);
+        }
+
+    }
+
+
 }

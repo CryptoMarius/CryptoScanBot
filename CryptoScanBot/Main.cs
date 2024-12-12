@@ -53,6 +53,7 @@ public partial class FrmMain : Form
     public FrmMain()
     {
         InitializeComponent();
+        Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
 
         logQueue.EnsureCapacity(1500);
 
@@ -147,6 +148,10 @@ public partial class FrmMain : Form
 
         ApplicationParams.InitApplicationOptions();
         GlobalData.InitializeExchange();
+
+        //pictureBox1.Image = Properties.Resources.;
+        //pictureBox1.Image = ;
+        pictureBox1.SizeMode = PictureBoxSizeMode.AutoSize;
     }
 
 
@@ -471,7 +476,7 @@ public partial class FrmMain : Form
                 AsyncContext.Run(ScannerSession.StopAsync);
 
                 GlobalData.Settings.General.Exchange = dialog.NewExchange;
-                GlobalData.Settings.General.ExchangeId = dialog.NewExchange.Id;
+                GlobalData.Settings.General.ExchangeId = dialog.NewExchange!.Id;
                 GlobalData.Settings.General.ExchangeName = dialog.NewExchange.Name;
                 GlobalData.SaveSettings();
 
@@ -491,7 +496,7 @@ public partial class FrmMain : Form
                 // Clear candle data
                 if (reloadQuoteChange || reloadExchangeChange)
                 {
-                    foreach (var s in GlobalData.Settings.General.Exchange.SymbolListId.Values)
+                    foreach (var s in GlobalData.Settings.General.Exchange!.SymbolListId.Values)
                     {
                         if ((!s.QuoteData.FetchCandles || s.Status == 0) && s.CandleList.Count != 0)
                         {

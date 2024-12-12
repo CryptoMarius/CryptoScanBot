@@ -20,6 +20,7 @@ public partial class FrmSettings : Form
     public FrmSettings()
     {
         InitializeComponent();
+        Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
 
         buttonReset.Click += ButtonReset_Click;
         buttonTestSpeech.Click += ButtonTestSpeech_Click;
