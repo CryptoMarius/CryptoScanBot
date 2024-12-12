@@ -181,7 +181,7 @@ public class CryptoCharting
                 if (newCandle.OpenTime > 0)
                 {
                     var c = newCandle;
-                    var curHighLow = new HighLowItem(c.OpenTime, (double)c.High, (double)c.Low, (double)c.Open, (double)c.Close);
+                    var curHighLow = new HighLowItem(x, (double)c.High, (double)c.Low, (double)c.Open, (double)c.Close);
                     candleSerie.Items.Add(curHighLow);
                 }
             }
